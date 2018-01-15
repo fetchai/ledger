@@ -1,0 +1,36 @@
+#!/bin/bash
+
+CMD=
+
+if command -v clang-format-mp-3.9 >/dev/null 2>&1 ; then
+    CMD=clang-format-mp-3.9
+else 
+    if command -v clang-format-3.6 >/dev/null 2>&1 ; then
+        CMD=clang-format-3.6
+    else        
+        echo "Could not find clang format."
+        echo "Please install it."
+        exit -1
+    fi;
+fi
+echo "Using $CMD"
+
+for f in `find $1 -type f | grep "\.hpp"` ; do
+    $CMD -style=Google $f > correct_style.hpp    
+    if ! cmp $f correct_style.hpp >/dev/null 2>&1 ; then
+        echo "Correcting style of $f"
+        cp correct_style.hpp $f
+    fi
+done
+rm -f correct_style.hpp
+
+for f in `find $1 -type f | grep "\.cpp"` ; do
+
+    $CMD -style=Google $f > correct_style.cpp
+    if ! cmp $f correct_style.cpp >/dev/null 2>&1 ; then
+      echo "Correcting style of $f"    
+      cp correct_style.cpp $f
+    fi    
+
+done
+rm -f correct_style.cpp

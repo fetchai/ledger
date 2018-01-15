@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+import os
+import sys
+import glob
+
+root_path = os.path.abspath(os.path.dirname(__file__))
+libai_path = os.path.join(root_path, "build", "site-packages")
+if len(glob.glob(os.path.join(libai_path, "libai"))) == 0:
+    print "Please build the project in the folder 'build'"
+    exit(-1)
+
+sys.path.append(libai_path)
+if not 'PYTHONPATH' in os.environ: os.environ['PYTHONPATH'] = ""
+os.environ['PYTHONPATH'] = libai_path + ":" + os.environ['PYTHONPATH'] 
+
+os.chdir(os.path.abspath( os.path.join(root_path, "python","notebooks") ))
+
+from IPython.terminal.ipapp import launch_new_instance
+from IPython.lib import passwd
+from socket import gethostname
+import warnings
+warnings.filterwarnings("ignore", module = "zmq.*")
+sys.argv.append("notebook")
+launch_new_instance()
