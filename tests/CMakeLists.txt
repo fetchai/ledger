@@ -34,7 +34,7 @@ standard_test( crypto_sha256 crypto/sha256.cpp )
 standard_test( load_image_read_exceptions image/load_image_read_exceptions.cpp )
 
 
-
+standard_test(referenced_byte_array_thread_safety byte_array/referenced_byte_array_thread_safety.cpp)
 standard_test(referenced_byte_array serializers/referenced_byte_array.cpp)
 standard_test(versioned_random_access_stack storage/versioned_random_access_stack.cpp)
 standard_test(variant_stack storage/variant_stack.cpp)
@@ -49,6 +49,7 @@ standard_test(variant_test script/variant.cpp)
 standard_test(tokenizer_test byte_array/tokenizer/tokenizer.cpp)
 standard_test(referenced_byte_array_test byte_array/referenced_byte_array.cpp)
 
+standard_test(shared_array_thread_safety memory/shared_array_thread_safety.cpp)
 standard_test(shared_array memory/shared_array_test.cpp)
 standard_test(shared_square_array memory/shared_square_array_test.cpp)
 standard_test(exp math/test_exp.cpp)

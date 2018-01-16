@@ -1,7 +1,7 @@
 #ifndef BYTE_ARRAY_REFERENCED_BYTE_ARRAY_HPP
 #define BYTE_ARRAY_REFERENCED_BYTE_ARRAY_HPP
 
-#include <memory/shared_array.hpp>
+#include "memory/shared_array.hpp"
 
 #include <algorithm>
 #include <cassert>

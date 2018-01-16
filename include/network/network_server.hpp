@@ -2,6 +2,7 @@
 #define NETWORK_NETWORK_SERVER_HPP
 
 #include "network/client_connection.hpp"
+#include "mutex.hpp"
 
 #include <asio.hpp>
 #include <deque>
@@ -22,7 +23,7 @@ class NetworkServer : public AbstractNetworkServer {
   NetworkServer(uint16_t port)
       : acceptor_(io_service_,
                   asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
-        socket_(io_service_) {
+        socket_(io_service_), request_mutex_(__LINE__, __FILE__) {
     manager_ = new ClientManager(*this);
   }
 
@@ -48,7 +49,7 @@ class NetworkServer : public AbstractNetworkServer {
   }
 
   void PushRequest(handle_type client, message_type const& msg) override {
-    std::lock_guard<std::mutex> lock(request_mutex_);
+    std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
     requests_.push_back({client, msg});
   }
 
@@ -57,25 +58,25 @@ class NetworkServer : public AbstractNetworkServer {
   }
 
   bool has_requests() {
-    std::lock_guard<std::mutex> lock(request_mutex_);
+    std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
     bool ret = (requests_.size() != 0);
     return ret;
   }
 
   Request Top() {
-    std::lock_guard<std::mutex> lock(request_mutex_);
+    std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
     Request top = requests_.front();
     return top;
   }
 
   void Pop() {
-    std::lock_guard<std::mutex> lock(request_mutex_);
+    std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
     requests_.pop_front();
   }
 
  private:
   std::deque<Request> requests_;
-  std::mutex request_mutex_;
+  fetch::mutex::Mutex request_mutex_;
 
   void Accept() {
     auto cb = [this](std::error_code ec) {
@@ -92,7 +93,7 @@ class NetworkServer : public AbstractNetworkServer {
   }
 
   static handle_type global_handle_counter_;
-  static std::mutex global_handle_mutex_;
+  static fetch::mutex::Mutex global_handle_mutex_;
 
   std::thread* thread_ = nullptr;
   asio::io_service io_service_;

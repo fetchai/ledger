@@ -14,7 +14,7 @@ message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")
 link_libraries(crypto)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/asio/asio/include")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/catch2/include")
+include_directories("${OPENSSL_INCLUDE_DIR}")
 
 add_definitions(-DASIO_STANDALONE -DASIO_HEADER_ONLY -DASIO_HAS_STD_SYSTEM_ERROR)
 

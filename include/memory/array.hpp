@@ -1,11 +1,10 @@
-#ifndef MEMORY_SHARED_ARRAY_HPP
-#define MEMORY_SHARED_ARRAY_HPP
+#ifndef MEMORY_ARRAY_HPP
+#define MEMORY_ARRAY_HPP
 #include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <type_traits>
-#include
 #include "iterator.hpp"
 #include "meta/log2.hpp"
 namespace fetch {
@@ -18,16 +17,12 @@ std::size_t total_shared_objects = 0;
 #endif
 
 template <typename T>
-class SharedArray {
+class Array {
  public:
   typedef std::atomic<uint64_t> counter_type;
-
-
-  // to make thread-unsafe:
-  // typedef uint64_t counter_type;
   typedef ForwardIterator<T> iterator;
   typedef BackwardIterator<T> reverse_iterator;
-  typedef SharedArray<T> self_type;
+  typedef Array<T> self_type;
   typedef T type;
 
   enum {
@@ -39,11 +34,8 @@ class SharedArray {
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT),
                 "type does not fit in SIMD");
 
-  SharedArray(std::size_t const &n) {
-    ref_count_ = new counter_type(1);
-    ;
-    size_ = new std::size_t(n);
-
+  Array(std::size_t const &n) {
+    size_ = n;
     if (n > 0) data_ = new type[padded_size()];
 
 #ifdef FETCH_TESTING_ENABLED
@@ -51,24 +43,27 @@ class SharedArray {
 #endif
   }
 
-  SharedArray() : SharedArray(0) {}
+  Array() : Array(0) {}
 
-  SharedArray(SharedArray const &other) { Assign(other); }
+  Array(Array const &other) {
+    this->operator=(other);
+}
 
-  SharedArray(SharedArray &&other) {
+  Array(Array &&other) {
     std::swap(size_, other.size_);
-    std::swap(ref_count_, other.ref_count_);
     std::swap(data_, other.data_);
   }
 
-  SharedArray &operator=(SharedArray &&other) {
+  
+  Array &operator=(Array &&other) {
     std::swap(size_, other.size_);
-    std::swap(ref_count_, other.ref_count_);
     std::swap(data_, other.data_);
     return *this;
   }
 
-  ~SharedArray() { Decrease(); }
+  ~Array() {
+    if(data_ != nullptr) delete[] data_;
+  }
 
   iterator begin() { return iterator(data_, data_ + size()); }
   iterator end() { return iterator(data_ + size(), data_ + size()); }
@@ -108,63 +103,39 @@ class SharedArray {
     return v;
   }
 
-  self_type &operator=(SharedArray const &other) {
+  self_type &operator=(Array const &other) {
     if (&other == this) return *this;
 
-    Decrease();
-    Assign(other);
-
+    if(data_ != nullptr) delete[] data_;
+    data_ = new T[other.padded_size()];
+    size_ = other.size();
+    
+    for(std::size_t i=0; i < size_; ++i)
+      data_[i] = other[i];
+    
     return *this;
   }
 
-  uint64_t reference_count() const {
-    assert(ref_count_ != nullptr);
-    return *ref_count_;
-  }
-
   std::size_t simd_size() const {
-    assert(size_ != nullptr);
-    return (*size_) >> E_LOG_SIMD_COUNT;
+    return (size_) >> E_LOG_SIMD_COUNT;
   }
 
   std::size_t size() const {
-    assert(size_ != nullptr);
-    return *size_;
+    return size_;
   }
 
   std::size_t padded_size() const {
-    assert(size_ != nullptr);
-    std::size_t padded = std::size_t((*size_) >> E_LOG_SIMD_COUNT)
+    std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT)
                          << E_LOG_SIMD_COUNT;
-    if (padded < *size_) padded += E_SIMD_COUNT;
+    if (padded < size_) padded += E_SIMD_COUNT;
     return padded;
   }
 
   type *pointer() const { return data_; }
 
  private:
-  void Decrease() {
-    assert(ref_count_ != nullptr);
-    --(*ref_count_);
-    if ((*ref_count_) == 0) {
-      if (size_) delete size_;
-      if (data_) delete[] data_;
 
-      if (ref_count_) delete ref_count_;
-#ifdef FETCH_TESTING_ENABLED
-      --testing::total_shared_objects;
-#endif
-    }
-  }
-  void Assign(self_type const &other) {
-    size_ = other.size_;
-    ref_count_ = other.ref_count_;
-    data_ = other.data_;
-    ++(*ref_count_);
-  }
-
-  std::size_t *size_ = nullptr;
-  counter_type *ref_count_ = nullptr;
+  std::size_t size_ = 0;
   T *data_ = nullptr;
 };
 };

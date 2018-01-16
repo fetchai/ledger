@@ -5,6 +5,7 @@
 #include "network/message.hpp"
 #include "serializer/byte_array_buffer.hpp"
 #include "serializer/referenced_byte_array.hpp"
+#include "mutex.hpp"
 
 #include <asio.hpp>
 
@@ -19,15 +20,19 @@ class ClientConnection : public AbstractClientConnection,
   typedef ClientManager::handle_type handle_type;
 
   ClientConnection(asio::ip::tcp::tcp::socket socket, ClientManager& manager)
-      : socket_(std::move(socket)), manager_(manager) {}
+    : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__) {}
 
+  ~ClientConnection() {
+    manager_.Leave(handle_);
+  }
+  
   void Start() {
     handle_ = manager_.Join(shared_from_this());
     ReadHeader();
   }
 
   void Send(message_type const& msg) {
-    std::lock_guard<std::mutex> lock(write_mutex_);
+    std::lock_guard<fetch::mutex::Mutex> lock(write_mutex_);
     bool write_in_progress = !write_queue_.empty();  // TODO: add mutex
     write_queue_.push_back(msg);
     if (!write_in_progress) {
@@ -91,7 +96,7 @@ class ClientConnection : public AbstractClientConnection,
   asio::ip::tcp::tcp::socket socket_;
   ClientManager& manager_;
   message_queue_type write_queue_;
-  std::mutex write_mutex_;
+  fetch::mutex::Mutex write_mutex_;
   handle_type handle_;
 
   union {

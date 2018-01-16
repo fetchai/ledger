@@ -2,6 +2,7 @@
 #define RPC_PROMISE_HPP
 
 #include "serializer/exception.hpp"
+#include "mutex.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -55,12 +56,12 @@ class PromiseImplementation {
     return promise;
   }
 
-  static promise_counter_type promise_counter_;
-  static std::mutex counter_mutex_;
+  static promise_counter_type promise_counter_; 
+  static fetch::mutex::Mutex counter_mutex_;
 };
 PromiseImplementation::promise_counter_type
     PromiseImplementation::promise_counter_ = 0;
-std::mutex PromiseImplementation::counter_mutex_;
+fetch::mutex::Mutex PromiseImplementation::counter_mutex_(__LINE__, __FILE__);
 }
 
 class Promise {

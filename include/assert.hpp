@@ -26,4 +26,9 @@ struct Printer {
   std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; \
   exit(-1)
 
+#define TODO(...)                                                        \
+  fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
+  std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; 
+
+
 #endif
