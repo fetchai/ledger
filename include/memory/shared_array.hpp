@@ -20,7 +20,7 @@ std::size_t total_shared_objects = 0;
 template <typename T>
 class SharedArray {
  public:
-  typedef std::shared_ptr<uint64_t> size_type;
+  typedef std::shared_ptr< std::size_t > size_type;
   typedef std::shared_ptr<T> data_type;
 
   typedef ForwardIterator<T> iterator;
@@ -38,7 +38,7 @@ class SharedArray {
                 "type does not fit in SIMD");
 
   SharedArray(std::size_t const &n) {   
-    size_ = std::shared_ptr<uint64_t>( new uint64_t(n) );
+    size_ = std::shared_ptr< std::size_t  >( new std::size_t (n) );
 
     if (n > 0) data_ = std::shared_ptr<T>( new type[padded_size()], std::default_delete<type[]>() );
   }

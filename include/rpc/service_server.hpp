@@ -98,7 +98,7 @@ class ServiceServer : public network::NetworkServer {
 
 
         PendingMessage pm;
-        std::cout << "Got message" << std::endl;
+        std::cout << "Messages left: " << messages_.size() << std::endl;
         has_messages = (!messages_.empty());
         if(has_messages) { // To ensure we can make a worker pool in the future
           pm = messages_.front();
@@ -136,6 +136,7 @@ class ServiceServer : public network::NetworkServer {
         result << RPC_ERROR << id << e;
       }
 
+      std::cerr << " --  responding to " << client << " / " <<  id << std::endl;
       Respond(client, result.data());
     } else {
       TODO_FAIL("call type not implemented yet");

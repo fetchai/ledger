@@ -32,9 +32,11 @@ class ClientConnection : public AbstractClientConnection,
   }
 
   void Send(message_type const& msg) {
-    std::lock_guard<fetch::mutex::Mutex> lock(write_mutex_);
-    bool write_in_progress = !write_queue_.empty();  // TODO: add mutex
+    write_mutex_.lock();
+    bool write_in_progress = !write_queue_.empty();  // TODO: add mutex    
     write_queue_.push_back(msg);
+    write_mutex_.unlock();
+    
     if (!write_in_progress) {
       Write();
     }
@@ -75,12 +77,17 @@ class ClientConnection : public AbstractClientConnection,
 
   void Write() {
     serializers::Byte_ArrayBuffer buffer;
+    write_mutex_.lock();    
     buffer << write_queue_.front();
+    write_mutex_.unlock();
 
     auto cb = [this](std::error_code ec, std::size_t) {
       if (!ec) {
+        write_mutex_.lock();
         write_queue_.pop_front();
-        if (!write_queue_.empty()) {
+        bool write_more = !write_queue_.empty();
+        write_mutex_.unlock();  
+        if (write_more) {
           Write();
         }
       } else {

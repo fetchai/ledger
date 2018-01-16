@@ -27,6 +27,8 @@ class NetworkClient {
 
   ~NetworkClient() {
     Stop();
+    std::cerr << "ERROR 4" << std::endl;
+    exit(-1);
     socket_.close();
   }
 
@@ -89,6 +91,8 @@ class NetworkClient {
         // TODO: Take care of endianness
         ReadBody();
       } else {
+        std::cerr << "ERROR" << std::endl;
+        exit(-1);
         socket_.close();
       }
     };
@@ -106,6 +110,8 @@ class NetworkClient {
         PushMessage(message);
         ReadHeader();
       } else {
+        std::cerr << "ERROR 2" << std::endl;
+        exit(-1);
         socket_.close();
       }
     };
@@ -125,6 +131,8 @@ class NetworkClient {
           Write();
         }
       } else {
+        std::cerr << "ERROR 3" << std::endl;
+        exit(-1);
         socket_.close();
       }
     };

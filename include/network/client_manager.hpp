@@ -23,12 +23,17 @@ class ClientManager {
 
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
     clients_[handle] = client;
+    std::cout << "Client " << handle << " joined!!" << std::endl;    
     return handle;
   }
 
-  void Leave(handle_type handle) {
+  void Leave(handle_type handle) {    
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
-    clients_.erase(handle);
+
+    if( clients_.find(handle) != clients_.end() ) {
+      std::cout << "Client " << handle << " left!!" << std::endl;
+      clients_.erase(handle);
+    }
   }
 
   void Send(handle_type client, message_type const& msg) {

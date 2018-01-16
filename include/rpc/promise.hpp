@@ -50,7 +50,7 @@ class PromiseImplementation {
   byte_array_type value_;
 
   static uint64_t next_promise_id() {
-    std::lock_guard<std::mutex> lock(counter_mutex_);
+    std::lock_guard<fetch::mutex::Mutex> lock(counter_mutex_);
     uint64_t promise = promise_counter_;
     ++promise_counter_;
     return promise;
@@ -74,7 +74,8 @@ class Promise {
 
   void Wait() {
     while (!is_fulfilled()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(2));
+      std::cout << "Waiting " << std::endl;
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     if (has_failed()) {
       throw reference_->exception();

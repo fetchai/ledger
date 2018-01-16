@@ -4,7 +4,7 @@
 using namespace fetch::rpc;
 using namespace fetch::byte_array;
 
-int main() {
+int main2() {
   // Client setup
   ServiceClient client("localhost", 8080);
   client.Start();
@@ -40,11 +40,11 @@ int main() {
   auto t_start = std::chrono::high_resolution_clock::now();
   fetch::rpc::Promise last_promise;
 
-  std::size_t N = 1000;
+  std::size_t N = 100000;
   for(std::size_t i=0; i < N; ++i) {
     last_promise = client.Call( "Mod","Add", 4, 3 );
   }
-    
+  
   std::cout << "Waiting for last promise: " << last_promise.id() << std::endl;
   last_promise.Wait();
   auto t_end = std::chrono::high_resolution_clock::now();
@@ -61,4 +61,9 @@ int main() {
 
   return 0;
 
+}
+
+int main() {
+  while(true) main2();
+  return 0;
 }
