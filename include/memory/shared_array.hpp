@@ -5,7 +5,7 @@
 #include <cassert>
 #include <cstdint>
 #include <type_traits>
-#include
+#include <memory>
 #include "iterator.hpp"
 #include "meta/log2.hpp"
 namespace fetch {
@@ -20,11 +20,9 @@ std::size_t total_shared_objects = 0;
 template <typename T>
 class SharedArray {
  public:
-  typedef std::atomic<uint64_t> counter_type;
+  typedef std::shared_ptr<uint64_t> size_type;
+  typedef std::shared_ptr<T> data_type;
 
-
-  // to make thread-unsafe:
-  // typedef uint64_t counter_type;
   typedef ForwardIterator<T> iterator;
   typedef BackwardIterator<T> reverse_iterator;
   typedef SharedArray<T> self_type;
@@ -39,88 +37,70 @@ class SharedArray {
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT),
                 "type does not fit in SIMD");
 
-  SharedArray(std::size_t const &n) {
-    ref_count_ = new counter_type(1);
-    ;
-    size_ = new std::size_t(n);
+  SharedArray(std::size_t const &n) {   
+    size_ = std::shared_ptr<uint64_t>( new uint64_t(n) );
 
-    if (n > 0) data_ = new type[padded_size()];
-
-#ifdef FETCH_TESTING_ENABLED
-    ++testing::total_shared_objects;
-#endif
+    if (n > 0) data_ = std::shared_ptr<T>( new type[padded_size()], std::default_delete<type[]>() );
   }
-
   SharedArray() : SharedArray(0) {}
-
-  SharedArray(SharedArray const &other) { Assign(other); }
+  SharedArray(SharedArray const &other)
+    :size_(other.size_), data_(other.data_) { }
 
   SharedArray(SharedArray &&other) {
     std::swap(size_, other.size_);
-    std::swap(ref_count_, other.ref_count_);
     std::swap(data_, other.data_);
   }
 
   SharedArray &operator=(SharedArray &&other) {
     std::swap(size_, other.size_);
-    std::swap(ref_count_, other.ref_count_);
     std::swap(data_, other.data_);
     return *this;
   }
 
-  ~SharedArray() { Decrease(); }
+  ~SharedArray() { }
 
-  iterator begin() { return iterator(data_, data_ + size()); }
-  iterator end() { return iterator(data_ + size(), data_ + size()); }
+  iterator begin() { return iterator(data_.get(), data_.get() + size()); }
+  iterator end() { return iterator(data_.get() + size(), data_.get() + size()); }
   reverse_iterator rbegin() {
-    return reverse_iterator(data_ + size() - 1, data_ - 1);
+    return reverse_iterator(data_.get() + size() - 1, data_.get() - 1);
   }
-  reverse_iterator rend() { return reverse_iterator(data_ - 1, data_ - 1); }
+  reverse_iterator rend() { return reverse_iterator(data_.get() - 1, data_.get() - 1); }
 
   T &operator[](std::size_t const &n) {
-    assert(data_ != nullptr);
     assert(n < size());
-    return data_[n];
+    return data_.get()[n];
   }
 
   T const &operator[](std::size_t const &n) const {
-    assert(data_ != nullptr);
     assert(n < size());
-    return data_[n];
+    return data_.get()[n];
   }
 
   T &At(std::size_t const &n) {
-    assert(data_ != nullptr);
     assert(n < size());
-    return data_[n];
+    return data_.get()[n];
   }
 
   T const &At(std::size_t const &n) const {
-    assert(data_ != nullptr);
     assert(n < size());
-    return data_[n];
+    return data_.get()[n];
   }
 
   T const &Set(std::size_t const &n, T const &v) {
-    assert(data_ != nullptr);
     assert(n < size());
-    data_[n] = v;
+    data_.get()[n] = v;
     return v;
   }
 
   self_type &operator=(SharedArray const &other) {
     if (&other == this) return *this;
 
-    Decrease();
-    Assign(other);
+    size_ = other.size_;
+    data_ = other.data_;
 
     return *this;
   }
 
-  uint64_t reference_count() const {
-    assert(ref_count_ != nullptr);
-    return *ref_count_;
-  }
 
   std::size_t simd_size() const {
     assert(size_ != nullptr);
@@ -140,32 +120,11 @@ class SharedArray {
     return padded;
   }
 
-  type *pointer() const { return data_; }
+  type *pointer() const { return data_.get(); }
 
  private:
-  void Decrease() {
-    assert(ref_count_ != nullptr);
-    --(*ref_count_);
-    if ((*ref_count_) == 0) {
-      if (size_) delete size_;
-      if (data_) delete[] data_;
-
-      if (ref_count_) delete ref_count_;
-#ifdef FETCH_TESTING_ENABLED
-      --testing::total_shared_objects;
-#endif
-    }
-  }
-  void Assign(self_type const &other) {
-    size_ = other.size_;
-    ref_count_ = other.ref_count_;
-    data_ = other.data_;
-    ++(*ref_count_);
-  }
-
-  std::size_t *size_ = nullptr;
-  counter_type *ref_count_ = nullptr;
-  T *data_ = nullptr;
+  size_type size_;
+  data_type data_;
 };
 };
 };

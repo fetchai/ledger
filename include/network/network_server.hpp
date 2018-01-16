@@ -21,9 +21,9 @@ class NetworkServer : public AbstractNetworkServer {
   };
 
   NetworkServer(uint16_t port)
-      : acceptor_(io_service_,
+    : request_mutex_(__LINE__, __FILE__), acceptor_(io_service_,
                   asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
-        socket_(io_service_), request_mutex_(__LINE__, __FILE__) {
+        socket_(io_service_) {
     manager_ = new ClientManager(*this);
   }
 
