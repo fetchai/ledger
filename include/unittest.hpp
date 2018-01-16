@@ -223,9 +223,9 @@ shared_inserter_type NewNestedProgram(A... Args) {
 ProgramInserter& last_inserter() { return *inserted_programs.back(); }
 };
 
-#define GIVEN(EXPLANATION, ARGS...)                            \
-  self->NewContext<fetch::unittest::TestContext>(EXPLANATION); \
-  (*self->last()) = [ARGS](                                    \
+#define SECTION_REF(EXPLANATION)                                        \
+  self->NewContext<fetch::unittest::TestContext>(EXPLANATION);          \
+  (*self->last()) = [&](                                                \
       fetch::unittest::TestContext::self_shared_type self) mutable
 
 #define SECTION(EXPLANATION)                                                \
@@ -247,8 +247,11 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
 #define CAPTURE(EXPRESSION) \
   (*self) << #EXPRESSION << " := " << EXPRESSION << "\n";
 
-#define EXPECT(EXPRESSION)                                                  \
-  (*self) << "     - " << #EXPRESSION;                                      \
+#define INFO(EXPRESSION)                                                    \
+  (*self) << "     - " << #EXPRESSION << "\n";                                      
+
+
+#define EXPECT_FAIL_SUCCESS(EXPRESSION)\
   if (EXPRESSION) {                                                         \
     (*self) << fetch::commandline::VT100::Return                            \
             << fetch::commandline::VT100::Right(70);                        \
@@ -262,13 +265,37 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
     (*self) << " [ " << fetch::commandline::VT100::Bold;                    \
     (*self) << fetch::commandline::VT100::GetColor("red", "default");       \
     (*self) << "FAIL" << fetch::commandline::VT100::DefaultAttributes()     \
-            << " ]\n\n\n";                                              \
+            << " ]\n\n\n";                                                  \
     (*self) << "Expect failed " << __FILE__ << " on line " << __LINE__      \
             << ": \n\n";                                                    \
     (*self) << "    " << #EXPRESSION << "\n\nwhich expands to:\n\n    ";    \
     (*self) << (fetch::unittest::ExpressionStart() * EXPRESSION) << "\n\n\n\n"; \
+    exit(-1);                                                               \
   }
 
+#define EXPECT(EXPRESSION)                                                  \
+  (*self) << "     - " << #EXPRESSION;                                      \
+  EXPECT_FAIL_SUCCESS(EXPRESSION)
+
+#define CHECK(TEXT, EXPRESSION)                                             \
+  (*self) << "     - " << TEXT;                                             \
+  EXPECT_FAIL_SUCCESS(EXPRESSION)
+
+#define SILENT_EXPECT(EXPRESSION)                                            \
+  if(!(EXPRESSION)) {                                                       \
+    (*self) << fetch::commandline::VT100::Return                            \
+            << fetch::commandline::VT100::Right(70);                        \
+    (*self) << " [ " << fetch::commandline::VT100::Bold;                    \
+    (*self) << fetch::commandline::VT100::GetColor("red", "default");       \
+    (*self) << "FAIL" << fetch::commandline::VT100::DefaultAttributes()     \
+            << " ]\n\n\n";                                                  \
+    (*self) << "Expect failed " << __FILE__ << " on line " << __LINE__      \
+            << ": \n\n";                                                    \
+    (*self) << "    " << #EXPRESSION << "\n\nwhich expands to:\n\n    ";    \
+    (*self) << (fetch::unittest::ExpressionStart() * EXPRESSION) << "\n\n\n\n"; \
+    exit(-1);                                                               \
+ }
+  
 #define DETAILED_EXPECT(EXPRESSION, CAPTURE...)                               \
   fetch::unittest::details::NewNestedProgram([=](                             \
       fetch::unittest::ProgramInserter::sub_function_type sub) {              \
@@ -278,6 +305,7 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
       (*self) << "    " << #EXPRESSION << "\n\nwhich expands to:\n\n    ";    \
       (*self) << (fetch::unittest::ExpressionStart() * EXPRESSION) << "\n\n"; \
       sub(self);                                                              \
+      exit(-1);                                                               \
     }                                                                         \
   });                                                                         \
   fetch::unittest::details::last_inserter() = [CAPTURE](                      \
