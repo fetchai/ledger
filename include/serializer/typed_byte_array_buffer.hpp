@@ -12,7 +12,7 @@ namespace serializers {
 class TypedByte_ArrayBuffer {
  public:
   typedef byte_array::ReferencedByteArray byte_array_type;
-  TypedByte_ArrayBuffer() {}
+  TypedByte_ArrayBuffer() { data_.Reserve( 128 ) ; }
   TypedByte_ArrayBuffer(byte_array_type s) { data_ = s; }
 
   void Allocate(std::size_t const &val) {

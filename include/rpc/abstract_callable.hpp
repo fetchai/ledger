@@ -1,12 +1,10 @@
 #ifndef RPC_ABSTRACT_CALLABLE_HPP
 #define RPC_ABSTRACT_CALLABLE_HPP
-#include "serializer/referenced_byte_array.hpp"
-#include "serializer/stl_types.hpp"
-#include "serializer/typed_byte_array_buffer.hpp"
+#include "rpc/types.hpp"
 
 namespace fetch {
 namespace rpc {
-typedef serializers::TypedByte_ArrayBuffer serializer_type;
+
 
 namespace details {
 
@@ -30,8 +28,8 @@ struct Packer {
 
 template <typename... arguments>
 void PackCall(serializer_type &serializer,
-              byte_array::ReferencedByteArray protocol,
-              byte_array::ReferencedByteArray function, arguments... args) {
+              protocol_handler_type const& protocol,
+              function_handler_type const& function, arguments... args) {
   serializer << protocol;
   serializer << function;
   details::Packer::SerializeArguments(serializer, args...);

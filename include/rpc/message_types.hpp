@@ -1,10 +1,10 @@
 #ifndef RPC_MESSAGE_TYPES_HPP
 #define RPC_MESSAGE_TYPES_HPP
+#include"rpc/types.hpp"
 
 namespace fetch {
 namespace rpc {
-typedef uint64_t rpc_classification_type;
-
+  
 rpc_classification_type const RPC_FUNCTION_CALL = 0ull;
 rpc_classification_type const RPC_RESULT = 10ull;
 rpc_classification_type const RPC_SUBSCRIBE = 20ull;

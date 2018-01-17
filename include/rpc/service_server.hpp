@@ -60,11 +60,12 @@ class ServiceServer : public network::NetworkServer {
     messages_.push_back(pm);
   }
 
-  void Add(byte_array_type const& name, Protocol* fnc) {
-    if (members_.find(name) != members_.end()) {
+  void Add(protocol_handler_type const& name, Protocol* fnc) {
+    if(members_[name] != nullptr) {
+    //    if (members_.find(name) != members_.end()) {
       throw serializers::SerializableException(
           error::PROTOCOL_EXISTS,
-          byte_array_type("Member already exists: ") + name);
+          byte_array_type("Member already exists: "));
     }
 
     members_[name] = fnc;
@@ -72,17 +73,20 @@ class ServiceServer : public network::NetworkServer {
 
  private:
   void Call(serializer_type& result, serializer_type params) {
-    byte_array_type protocol, function;
+    protocol_handler_type protocol;
+    function_handler_type function;
     params >> protocol >> function;
 
-    auto it = members_.find(protocol);
-    if (it == members_.end()) {
+
+    //    auto it = members_.find(protocol);
+    //    if (it == members_.end()) {
+    if(members_[protocol] == nullptr) {
       throw serializers::SerializableException(
           error::PROTOCOL_NOT_FOUND,
-          byte_array_type("Could not find protocol: ") + protocol);
+          byte_array_type("Could not find protocol: "));
     }
 
-    auto& mod = *it->second;
+    auto& mod = *members_[protocol] ; //*it->second;
     return mod[function](result, params);
   }
 
@@ -98,7 +102,6 @@ class ServiceServer : public network::NetworkServer {
 
 
         PendingMessage pm;
-        std::cout << "Messages left: " << messages_.size() << std::endl;
         has_messages = (!messages_.empty());
         if(has_messages) { // To ensure we can make a worker pool in the future
           pm = messages_.front();
@@ -107,12 +110,11 @@ class ServiceServer : public network::NetworkServer {
         message_mutex_.unlock();
         
         if(has_messages) {
-          std::cout << "Processing message" << std::endl;
           ProcessClientMessage( pm.client, pm.message );
         }
       }
 
-      std::this_thread::sleep_for( std::chrono::milliseconds( 20 ) );
+      std::this_thread::sleep_for( std::chrono::milliseconds( 5 ) );
     }
   }
 
@@ -136,7 +138,6 @@ class ServiceServer : public network::NetworkServer {
         result << RPC_ERROR << id << e;
       }
 
-      std::cerr << " --  responding to " << client << " / " <<  id << std::endl;
       Respond(client, result.data());
     } else {
       TODO_FAIL("call type not implemented yet");
@@ -147,8 +148,9 @@ class ServiceServer : public network::NetworkServer {
   fetch::mutex::Mutex message_mutex_;
   std::atomic< bool > running_;
   std::thread *worker_thread_ = nullptr;
-  
-  std::map<byte_array_type, Protocol*> members_;
+
+  Protocol* members_[256] = {nullptr};
+  //  std::map<protocol_handler_type, Protocol*> members_;
 };
 };
 };

@@ -38,14 +38,13 @@ class ServiceClient : public network::NetworkClient {
   }
 
   template <typename... arguments>
-  Promise Call(byte_array::ReferencedByteArray protocol,
-               byte_array::ReferencedByteArray function, arguments... args) {
+  Promise Call(protocol_handler_type const& protocol,
+               function_handler_type const& function, arguments... args) {
     Promise prom;
     serializer_type params;
     params << RPC_FUNCTION_CALL << prom.id();
 
     promises_mutex_.lock();
-    std::cout << "Creating promise " << prom.id() << std::endl;
     promises_[prom.id()] = prom.reference();
     promises_mutex_.unlock();
       
@@ -73,21 +72,19 @@ class ServiceClient : public network::NetworkClient {
         message_mutex_.lock();
 
         network::message_type msg;
-        std::cout << "Messages left: " << messages_.size() << std::endl;
         has_messages = (!messages_.empty());
-        if(has_messages) { // To ensure we can make a worker pool in the future
+        if(has_messages) {
           msg = messages_.front();
           messages_.pop_front();
         };
         message_mutex_.unlock();
         
         if(has_messages) {
-          std::cout << "Processing message" << std::endl;
           ProcessServerMessage( msg );
         }
       }
 
-      std::this_thread::sleep_for( std::chrono::milliseconds( 20 ) );
+      std::this_thread::sleep_for( std::chrono::milliseconds( 5 ) );
     }
   }
   
@@ -103,7 +100,6 @@ class ServiceClient : public network::NetworkClient {
 
 
       promises_mutex_.lock();
-      std::cout << "Message for promise " << id << std::endl;      
       auto it = promises_.find(id);
       if (it == promises_.end()) {
         promises_mutex_.unlock();
@@ -123,7 +119,6 @@ class ServiceClient : public network::NetworkClient {
     } else if (type == RPC_ERROR) {
       Promise::promise_counter_type id;
       params >> id;
-      std::cout << "Message for promise " << id << std::endl;
       
       serializers::SerializableException e;
       params >> e;

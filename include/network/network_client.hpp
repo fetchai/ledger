@@ -27,8 +27,7 @@ class NetworkClient {
 
   ~NetworkClient() {
     Stop();
-    std::cerr << "ERROR 4" << std::endl;
-    exit(-1);
+
     socket_.close();
   }
 
@@ -91,8 +90,6 @@ class NetworkClient {
         // TODO: Take care of endianness
         ReadBody();
       } else {
-        std::cerr << "ERROR" << std::endl;
-        exit(-1);
         socket_.close();
       }
     };
@@ -110,8 +107,7 @@ class NetworkClient {
         PushMessage(message);
         ReadHeader();
       } else {
-        std::cerr << "ERROR 2" << std::endl;
-        exit(-1);
+
         socket_.close();
       }
     };
@@ -122,24 +118,33 @@ class NetworkClient {
 
   void Write() {
     serializers::Byte_ArrayBuffer buffer;
-    buffer << write_queue_.front();
-
+    write_mutex_.lock();
+    bool should_write = !write_queue_.empty();
+    if(should_write) {
+      buffer << write_queue_.front();
+      write_queue_.pop_front();
+    }
+    write_mutex_.unlock();
+    
     auto cb = [this](std::error_code ec, std::size_t) {
       if (!ec) {
-        write_queue_.pop_front();
-        if (!write_queue_.empty()) {
+        write_mutex_.lock();
+        bool write_more = !write_queue_.empty();    
+        write_mutex_.unlock();          
+        if (!write_more) {
           Write();
         }
       } else {
-        std::cerr << "ERROR 3" << std::endl;
-        exit(-1);
+
         socket_.close();
       }
     };
 
-    asio::async_write(
-        socket_, asio::buffer(buffer.data().pointer(), buffer.data().size()),
-        cb);
+    if(should_write) {
+      asio::async_write(
+                        socket_, asio::buffer(buffer.data().pointer(), buffer.data().size()),
+                        cb);
+    }
   }
 
  private:
@@ -153,7 +158,8 @@ class NetworkClient {
   asio::ip::tcp::tcp::socket socket_;
 
   message_queue_type write_queue_;
-  message_type write_message_;
+  fetch::mutex::Mutex write_mutex_;
+
 };
 };
 };

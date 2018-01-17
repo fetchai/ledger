@@ -16,28 +16,29 @@ class Protocol {
   typedef AbstractCallable callable_type;
   typedef byte_array::ReferencedByteArray byte_array_type;
 
-  callable_type& operator[](byte_array_type const& str) {
-    auto it = members_.find(str);
-    if (it == members_.end()) {
+  callable_type& operator[](function_handler_type const& n) {
+    if(members_[n] == nullptr)
       throw serializers::SerializableException(
           error::MEMBER_NOT_FOUND,
-          byte_array_type("Could not find member ") + str);
-    }
-    return *it->second;
+          byte_array_type("Could not find member "));
+    return *members_[n];
   }
 
-  void Expose(byte_array_type const& name, callable_type* fnc) {
-    if (members_.find(name) != members_.end()) {
+  void Expose(function_handler_type const& n, callable_type* fnc) {
+    if(members_[n] != nullptr)
       throw serializers::SerializableException(
           error::MEMBER_EXISTS,
-          byte_array_type("Member already exists: ") + name);
-    }
+          byte_array_type("Member already exists: "));
 
-    members_[name] = fnc;
+    members_[n] = fnc;
   }
 
+  void Publish(uint16_t const &stream) {
+
+  }
+  
  private:
-  std::map<byte_array_type, callable_type*> members_;
+  callable_type* members_[256] = {nullptr};
 };
 };
 };

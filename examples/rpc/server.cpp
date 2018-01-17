@@ -1,3 +1,4 @@
+#include"rpc_consts.hpp"
 #include<iostream>
 #include"rpc/service_server.hpp"
 using namespace fetch::rpc;
@@ -24,15 +25,15 @@ public:
 };
 
 
-
-
 // Next we make a protocol for the implementation
 class RPCProto : public Implementation, public Protocol {
 public:
+  
   RPCProto() : Implementation(), Protocol() {
-    this->Expose("SlowFunction", new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::SlowFunction) );
-    this->Expose("Add", new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::Add) );
-    this->Expose("Greet", new CallableClassMember<Implementation, std::string(std::string)>(this, &Implementation::Greet) );
+    
+    this->Expose(SLOWFUNCTION, new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::SlowFunction) );
+    this->Expose(ADD, new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::Add) );
+    this->Expose(GREET, new CallableClassMember<Implementation, std::string(std::string)>(this, &Implementation::Greet) );
   }  
 };
 
@@ -41,7 +42,7 @@ public:
 class MyCoolService : public ServiceServer {
 public:
   MyCoolService(uint16_t port) : ServiceServer(port) {
-    this->Add("Mod", new RPCProto() );
+    this->Add(MYPROTO, new RPCProto() );
   }
 };
 

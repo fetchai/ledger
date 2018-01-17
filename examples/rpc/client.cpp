@@ -1,3 +1,4 @@
+#include"rpc_consts.hpp"
 #include<iostream>
 #include"serializer/referenced_byte_array.hpp"
 #include"rpc/service_client.hpp"
@@ -11,13 +12,13 @@ int main2() {
 
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );
   
-  std::cout << client.Call( "Mod","Greet", "Fetch" ).As<std::string>( ) << std::endl;  
+  std::cout << client.Call( MYPROTO,GREET, "Fetch" ).As<std::string>( ) << std::endl;  
 
-  auto px = client.Call( "Mod","SlowFunction","Greet"  );
+  auto px = client.Call( MYPROTO,SLOWFUNCTION,"Greet"  );
   
   // Promises
-  auto p1 = client.Call( "Mod","SlowFunction", 2, 7 );
-  auto p2 = client.Call( "Mod","SlowFunction", 4, 3 );
+  auto p1 = client.Call( MYPROTO,SLOWFUNCTION, 2, 7 );
+  auto p2 = client.Call( MYPROTO,SLOWFUNCTION, 4, 3 );
   if(!p1.is_fulfilled())
     std::cout << "p1 is not yet fulfilled" << std::endl;
 
@@ -40,9 +41,9 @@ int main2() {
   auto t_start = std::chrono::high_resolution_clock::now();
   fetch::rpc::Promise last_promise;
 
-  std::size_t N = 100000;
+  std::size_t N = 10000;
   for(std::size_t i=0; i < N; ++i) {
-    last_promise = client.Call( "Mod","Add", 4, 3 );
+    last_promise = client.Call( MYPROTO, ADD, 4, 3 );
   }
   
   std::cout << "Waiting for last promise: " << last_promise.id() << std::endl;

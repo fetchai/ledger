@@ -1,13 +1,16 @@
 #ifndef MEMORY_SHARED_ARRAY_HPP
 #define MEMORY_SHARED_ARRAY_HPP
+#include "iterator.hpp"
+#include "meta/log2.hpp"
+
+
 #include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <type_traits>
 #include <memory>
-#include "iterator.hpp"
-#include "meta/log2.hpp"
+#include <iostream>
 namespace fetch {
 namespace memory {
 
@@ -39,8 +42,13 @@ class SharedArray {
 
   SharedArray(std::size_t const &n) {   
     size_ = std::shared_ptr< std::size_t  >( new std::size_t (n) );
+    try {
+      if (n > 0) data_ = std::shared_ptr<T>( new type[padded_size()], std::default_delete<type[]>() );
+    } catch(std::bad_alloc const&e ) {
 
-    if (n > 0) data_ = std::shared_ptr<T>( new type[padded_size()], std::default_delete<type[]>() );
+      std::cout << "n is " << n << " " << padded_size() << std::endl;
+      throw e;
+    }
   }
   SharedArray() : SharedArray(0) {}
   SharedArray(SharedArray const &other)
