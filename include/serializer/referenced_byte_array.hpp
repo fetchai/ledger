@@ -22,9 +22,14 @@ template <typename T>
 void Deserialize(T &serializer, byte_array::ReferencedByteArray &s) {
   uint64_t size = 0;
 
+  assert( sizeof(uint64_t) <= serializer.bytes_left());  
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
+  assert( size <= serializer.bytes_left());  
+  
   s.Resize(size);
+  //  std::cout << "Deserializing: ";  
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(s.pointer()), s.size());
+  //  std::cout << s << std::endl;  
 }
 };
 };

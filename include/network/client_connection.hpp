@@ -44,10 +44,10 @@ class ClientConnection : public AbstractClientConnection,
 
  private:
   void ReadHeader() {
+
     auto self(shared_from_this());
     auto cb = [this, self](std::error_code ec, std::size_t) {
       if (!ec) {
-        // TODO: Take care of endianness
         ReadBody();
       } else {
         manager_.Leave(handle_);

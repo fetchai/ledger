@@ -12,12 +12,11 @@ namespace serializers {
 class TypedByte_ArrayBuffer {
  public:
   typedef byte_array::ReferencedByteArray byte_array_type;
-  TypedByte_ArrayBuffer() { data_.Reserve( 128 ) ; }
-  TypedByte_ArrayBuffer(byte_array_type s) { data_ = s; }
+  TypedByte_ArrayBuffer() { data_.Reserve( 128 ) ; assert( size() == 0 ); }
+  TypedByte_ArrayBuffer(byte_array_type s) { data_ = s;  }
 
   void Allocate(std::size_t const &val) {
-    size_ += val;
-    data_.Resize(size_);
+    data_.Resize(data_.size() + val);
   }
 
   void WriteBytes(uint8_t const *arr, std::size_t const &size) {
@@ -25,11 +24,16 @@ class TypedByte_ArrayBuffer {
   }
 
   void ReadBytes(uint8_t *arr, std::size_t const &size) {
+    if( size > bytes_left() ) {
+      std::cerr << "Failed to deserialize following string: " << data_ << std::endl;
+    }
+    assert(size <= bytes_left());
     for (std::size_t i = 0; i < size; ++i) arr[i] = data_[pos_++];
   }
 
   void SkipBytes(std::size_t const &size) { pos_ += size; }
 
+  
   template <typename T>
   TypedByte_ArrayBuffer &operator<<(T const &val) {
     Serialize(*this, TypeRegister<T>::name);
@@ -54,12 +58,12 @@ class TypedByte_ArrayBuffer {
   void Seek(std::size_t const &p) { pos_ = p; }
   std::size_t Tell() const { return pos_; }
 
-  std::size_t size() const { return size_; }
+  std::size_t size() const { return data_.size(); }
+  int64_t bytes_left() const { return data_.size() - pos_; }    
   byte_array_type const &data() const { return data_; }
 
  private:
   byte_array_type data_;
-  std::size_t size_ = 0;
   std::size_t pos_ = 0;
 };
 };

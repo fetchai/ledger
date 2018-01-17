@@ -4,10 +4,11 @@
 #include "network/message.hpp"
 #include "serializer/byte_array_buffer.hpp"
 #include "serializer/referenced_byte_array.hpp"
-
+#include "mutex.hpp"
 #include <asio.hpp>
 #include <memory>
 #include <mutex>
+#include <atomic>
 
 namespace fetch {
 namespace network {
@@ -17,11 +18,13 @@ class NetworkClient {
 
   NetworkClient(byte_array_type const& host, byte_array_type const& port)
       : socket_(io_service_) {
+    writing_ = false;
     Connect(host, port);
   }
 
   NetworkClient(byte_array_type const& host, uint16_t const& port)
       : socket_(io_service_) {
+    writing_ = false;    
     Connect(host, port);
   }
 
@@ -33,9 +36,13 @@ class NetworkClient {
 
   void Send(message_type const& msg) {
     auto cb = [this, msg]() {
-      bool write_in_progress = !write_queue_.empty();
+      write_mutex_.lock();
       write_queue_.push_back(msg);
-      if (!write_in_progress) {
+      if (writing_) {
+        write_mutex_.unlock();
+      } else {
+        writing_ = true;
+        write_mutex_.unlock();
         Write();
       }
     };
@@ -45,12 +52,14 @@ class NetworkClient {
 
   void Start() {
     if (thread_ == nullptr) {
+      writing_ = false;      
       thread_ = new std::thread([this]() { io_service_.run(); });
     }
   }
 
   void Stop() {
     if (thread_ != nullptr) {
+      writing_ = false;
       io_service_.stop();
       thread_->join();
       delete thread_;
@@ -116,35 +125,39 @@ class NetworkClient {
                      cb);
   }
 
-  void Write() {
+  void Write() {    
     serializers::Byte_ArrayBuffer buffer;
+    //    std::cout << "Writing" << std::endl;
     write_mutex_.lock();
-    bool should_write = !write_queue_.empty();
-    if(should_write) {
-      buffer << write_queue_.front();
-      write_queue_.pop_front();
+    if( write_queue_.empty() ) {
+      write_mutex_.unlock();
+      return;
     }
+    
+    buffer << write_queue_.front();
     write_mutex_.unlock();
     
     auto cb = [this](std::error_code ec, std::size_t) {
       if (!ec) {
+
         write_mutex_.lock();
-        bool write_more = !write_queue_.empty();    
-        write_mutex_.unlock();          
-        if (!write_more) {
+        write_queue_.pop_front();
+        bool should_write = writing_ = !write_queue_.empty();
+        write_mutex_.unlock();
+        
+        if (should_write) {
           Write();
-        }
+        } 
       } else {
 
         socket_.close();
       }
     };
 
-    if(should_write) {
-      asio::async_write(
-                        socket_, asio::buffer(buffer.data().pointer(), buffer.data().size()),
-                        cb);
-    }
+
+    asio::async_write(socket_, asio::buffer(buffer.data().pointer(), buffer.data().size()),
+                      cb);
+
   }
 
  private:
@@ -157,6 +170,8 @@ class NetworkClient {
   asio::io_service io_service_;
   asio::ip::tcp::tcp::socket socket_;
 
+
+  bool writing_ = false;
   message_queue_type write_queue_;
   fetch::mutex::Mutex write_mutex_;
 

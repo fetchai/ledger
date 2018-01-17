@@ -7,23 +7,22 @@
 
 namespace fetch {
 namespace mutex {
-class Mutex : public std::mutex {
+class ProductionMutex : public std::mutex {
 
 public:
-  Mutex(int , std::string ) { } 
-  Mutex() = default;
-  
+  ProductionMutex(int , std::string ) { } 
+  ProductionMutex() = default;  
 };
   
-class Mutex2 : public std::mutex {
+class DebugMutex : public std::mutex {
   struct LockInfo {
     bool locked = true;
   };
 public:
-  Mutex2(int line, std::string file) : line_(line), file_(file) { } 
-  Mutex2() = default;
+  DebugMutex(int line, std::string file) : line_(line), file_(file) { } 
+  DebugMutex() = default;
   
-  Mutex& operator=(Mutex const &other) = delete;
+  DebugMutex& operator=(DebugMutex const &other) = delete;
   
   void lock() {
     lock_mutex_.lock();
@@ -50,7 +49,9 @@ private:
   int line_ = 0;
   std::string file_ = "";
 };
-  
+
+
+typedef DebugMutex Mutex;
 };
 };
 

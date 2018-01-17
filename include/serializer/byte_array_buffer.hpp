@@ -13,8 +13,7 @@ class Byte_ArrayBuffer {
   Byte_ArrayBuffer(byte_array::ReferencedByteArray s) { data_ = s; }
 
   void Allocate(std::size_t const &val) {
-    size_ += val;
-    data_.Resize(size_);
+    data_.Resize(data_.size() + val);
   }
 
   void WriteBytes(uint8_t const *arr, std::size_t const &size) {
@@ -43,12 +42,13 @@ class Byte_ArrayBuffer {
   void Seek(std::size_t const &p) { pos_ = p; }
   std::size_t Tell() const { return pos_; }
 
-  std::size_t size() const { return size_; }
+  std::size_t size() const { return data_.size(); }
+  int64_t bytes_left() const { return data_.size() - pos_; }  
   byte_array::ReferencedByteArray const &data() const { return data_; }
 
  private:
   byte_array::ReferencedByteArray data_;
-  std::size_t size_ = 0;
+
   std::size_t pos_ = 0;
 };
 };
