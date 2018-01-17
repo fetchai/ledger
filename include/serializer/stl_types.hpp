@@ -1,6 +1,7 @@
 #ifndef SERIALIZER_STIL_TYPES_HPP
 #define SERIALIZER_STIL_TYPES_HPP
 #include "byte_array/referenced_byte_array.hpp"
+#include "assert.hpp"
 
 #include <string>
 #include <type_traits>
@@ -16,7 +17,7 @@ typename std::enable_if< std::is_integral< U >::value, void >::type Serialize(T 
 
 template <typename T, typename U>
 typename std::enable_if< std::is_integral< U >::value, void >::type  Deserialize(T &serializer, U &val) {
-  assert( sizeof(U) <= serializer.bytes_left());
+  detailed_assert( sizeof(U) <= serializer.bytes_left());
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&val), sizeof(U));
 }
 
@@ -35,9 +36,9 @@ template <typename T>
 void Deserialize(T &serializer, std::string &s) {
   uint64_t size = 0;
 
-  assert( sizeof(uint64_t) <= serializer.bytes_left());
+  detailed_assert( sizeof(uint64_t) <= serializer.bytes_left());
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
-  assert( size <= serializer.bytes_left());  
+  detailed_assert( size <= serializer.bytes_left());  
 
 
   s.resize(size);

@@ -31,4 +31,11 @@ struct Printer {
   std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; 
 
 
+#define detailed_assert(cond) \
+  if( !(cond) ) { \
+    std::cout << "Failed :" << #cond << " in " << __FILE__ << " line " << __LINE__ << std::endl; \
+    exit(-1); \
+  }
+
+
 #endif

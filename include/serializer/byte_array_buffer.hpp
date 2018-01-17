@@ -1,6 +1,7 @@
 #ifndef SERIALIZER_BYTE_ARRAY_BUFFER_HPP
 #define SERIALIZER_BYTE_ARRAY_BUFFER_HPP
 #include "byte_array/referenced_byte_array.hpp"
+#include "assert.hpp"
 
 #include <type_traits>
 

@@ -6,6 +6,7 @@
 #include "serializer/byte_array_buffer.hpp"
 #include "serializer/referenced_byte_array.hpp"
 #include "mutex.hpp"
+#include "assert.hpp"
 
 #include <asio.hpp>
 
@@ -33,7 +34,7 @@ class ClientConnection : public AbstractClientConnection,
 
   void Send(message_type const& msg) {
     write_mutex_.lock();
-    bool write_in_progress = !write_queue_.empty();  // TODO: add mutex    
+    bool write_in_progress = !write_queue_.empty();  
     write_queue_.push_back(msg);
     write_mutex_.unlock();
     
@@ -48,6 +49,19 @@ class ClientConnection : public AbstractClientConnection,
     auto self(shared_from_this());
     auto cb = [this, self](std::error_code ec, std::size_t) {
       if (!ec) {
+
+
+        if( header_.length >= 10000 ) {
+          std::cout << "Contents: ";
+          for(std::size_t i=0; i< sizeof(uint64_t); ++i)
+            std::cout << char(header_.bytes[i]);
+          std::cout << std::endl;
+          std::cout << "Contents: ";
+          for(std::size_t i=0; i< sizeof(uint64_t); ++i)
+            std::cout << uint64_t(header_.bytes[i]) << " ";
+          std::cout << std::endl;          
+        }
+        detailed_assert(header_.length < 10000);        
         ReadBody();
       } else {
         manager_.Leave(handle_);

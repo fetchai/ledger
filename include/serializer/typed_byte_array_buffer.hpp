@@ -1,10 +1,13 @@
 #ifndef SERIALIZER_TYPED_BYTE_ARRAY_BUFFER_HPP
 #define SERIALIZER_TYPED_BYTE_ARRAY_BUFFER_HPP
-#include <type_traits>
+
 #include "assert.hpp"
 #include "byte_array/referenced_byte_array.hpp"
 #include "serializer/exception.hpp"
 #include "serializer/type_register.hpp"
+#include "byte_array/encoders.hpp"
+
+#include <type_traits>
 
 namespace fetch {
 namespace serializers {
@@ -12,7 +15,7 @@ namespace serializers {
 class TypedByte_ArrayBuffer {
  public:
   typedef byte_array::ReferencedByteArray byte_array_type;
-  TypedByte_ArrayBuffer() { data_.Reserve( 128 ) ; assert( size() == 0 ); }
+  TypedByte_ArrayBuffer() {  detailed_assert( size() == 0 ); }
   TypedByte_ArrayBuffer(byte_array_type s) { data_ = s;  }
 
   void Allocate(std::size_t const &val) {
@@ -24,10 +27,12 @@ class TypedByte_ArrayBuffer {
   }
 
   void ReadBytes(uint8_t *arr, std::size_t const &size) {
+    //    assert(false);
     if( size > bytes_left() ) {
       std::cerr << "Failed to deserialize following string: " << data_ << std::endl;
+      std::cerr << byte_array::ToHex( data_ ) << std::endl;
     }
-    assert(size <= bytes_left());
+    detailed_assert(size <= bytes_left());
     for (std::size_t i = 0; i < size; ++i) arr[i] = data_[pos_++];
   }
 

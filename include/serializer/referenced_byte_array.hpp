@@ -1,6 +1,7 @@
 #ifndef SERIALIZER_REFERENCED_BYTE_ARRAY_HPP
 #define SERIALIZER_REFERENCED_BYTE_ARRAY_HPP
 #include "byte_array/referenced_byte_array.hpp"
+#include "assert.hpp"
 
 #include <type_traits>
 
@@ -22,9 +23,9 @@ template <typename T>
 void Deserialize(T &serializer, byte_array::ReferencedByteArray &s) {
   uint64_t size = 0;
 
-  assert( sizeof(uint64_t) <= serializer.bytes_left());  
+  detailed_assert( sizeof(uint64_t) <= serializer.bytes_left());  
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
-  assert( size <= serializer.bytes_left());  
+  detailed_assert( size <= serializer.bytes_left());  
   
   s.Resize(size);
   //  std::cout << "Deserializing: ";  
