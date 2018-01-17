@@ -35,9 +35,12 @@ REGISTER_SERIALIZE_TYPE('u8', uint8_t);
 REGISTER_SERIALIZE_TYPE('i8', int8_t);
 REGISTER_SERIALIZE_TYPE('i8', char);
 
+REGISTER_SERIALIZE_TYPE('b8', bool);  
+
 REGISTER_SERIALIZE_TYPE('str', byte_array::ReferencedByteArray);
 REGISTER_SERIALIZE_TYPE('str', std::string);
 REGISTER_SERIALIZE_TYPE('str', char const*);
+REGISTER_SERIALIZE_TYPE('str', char *);
 
 REGISTER_SERIALIZE_TYPE('excep', SerializableException);
 

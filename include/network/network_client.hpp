@@ -127,7 +127,7 @@ class NetworkClient {
 
   void Write() {    
     serializers::Byte_ArrayBuffer buffer;
-    //    std::cout << "Writing" << std::endl;
+
     write_mutex_.lock();
     if( write_queue_.empty() ) {
       write_mutex_.unlock();

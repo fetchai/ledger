@@ -1,3 +1,5 @@
+add_executable(tutorial_aea_to_node_server tutorials/01_aea-to-node/node.cpp)
+add_executable(tutorial_aea_to_node_client tutorials/01_aea-to-node/client.cpp)
 
 add_executable(network_client network/client.cpp)
 add_executable(network_server network/server.cpp)

@@ -103,7 +103,7 @@ class ServiceClient : public network::NetworkClient {
       auto it = promises_.find(id);
       if (it == promises_.end()) {
         promises_mutex_.unlock();
-        std::cerr << " --  could not find " << id << std::endl;
+
         throw serializers::SerializableException(
             error::PROMISE_NOT_FOUND,
             byte_array_type("Could not find promise"));

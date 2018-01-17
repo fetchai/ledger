@@ -49,19 +49,6 @@ class ClientConnection : public AbstractClientConnection,
     auto self(shared_from_this());
     auto cb = [this, self](std::error_code ec, std::size_t) {
       if (!ec) {
-
-
-        if( header_.length >= 10000 ) {
-          std::cout << "Contents: ";
-          for(std::size_t i=0; i< sizeof(uint64_t); ++i)
-            std::cout << char(header_.bytes[i]);
-          std::cout << std::endl;
-          std::cout << "Contents: ";
-          for(std::size_t i=0; i< sizeof(uint64_t); ++i)
-            std::cout << uint64_t(header_.bytes[i]) << " ";
-          std::cout << std::endl;          
-        }
-        detailed_assert(header_.length < 10000);        
         ReadBody();
       } else {
         manager_.Leave(handle_);
