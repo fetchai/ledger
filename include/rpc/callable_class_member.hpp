@@ -22,7 +22,7 @@ class CallableClassMember<C, R(Args...)> : public AbstractCallable {
    struct Invoke {
      static void MemberFunction(serializer_type &result, class_type &cls,
                                   member_function_pointer &m,
-                                  used_args... args) {
+                                  used_args&... args) {
        result << (cls.*m)(args...);
      };
        
@@ -32,7 +32,7 @@ class CallableClassMember<C, R(Args...)> : public AbstractCallable {
    struct Invoke<void, used_args...> {
      static void MemberFunction(serializer_type &result, class_type &cls,
                                   member_function_pointer &m,
-                                  used_args... args) {
+                                  used_args&... args) {
        result << 0;
        (cls.*m)(args...);
      };
@@ -68,6 +68,7 @@ class CallableClassMember<C, R(Args...)> : public AbstractCallable {
   };
 
  public:
+   
   CallableClassMember(class_type *cls, member_function_pointer value) {
     class_ = cls;
     function_ = value;
@@ -107,6 +108,30 @@ class CallableClassMember<C, R()> : public AbstractCallable {
   member_function_pointer function_;
 };
 
+  // No function args, void return
+template <typename C>
+class CallableClassMember<C, void()> : public AbstractCallable {
+ private:
+  typedef void return_type;
+  typedef C class_type;
+  typedef return_type (class_type::*member_function_pointer)();
+
+ public:
+  CallableClassMember(class_type *cls, member_function_pointer value) {
+    class_ = cls;
+    function_ = value;
+  }
+
+  void operator()(serializer_type &result, serializer_type &params) override {
+    result << 0;
+    ( (*class_).*function_)();
+  }
+
+ private:
+  class_type *class_;
+  member_function_pointer function_;
+};
+  
   
 };
 };

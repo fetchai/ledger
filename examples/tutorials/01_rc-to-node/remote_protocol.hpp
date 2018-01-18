@@ -12,10 +12,10 @@ public:
 
     using namespace fetch::rpc;
     auto get_info =  new CallableClassMember<RemoteFunctionality, std::string()>(this, &RemoteFunctionality::get_info);
-    //    auto connect =  new CallableClassMember<RemoteFunctionality, int(std::string, uint16_t)>(this, &RemoteFunctionality::Connect);    
+    auto connect =  new CallableClassMember<RemoteFunctionality, void(std::string, uint16_t)>(this, &RemoteFunctionality::Connect);    
       
     this->Expose(RemoteCommands::GET_INFO, get_info);
-    //    this->Expose(RemoteCommands::CONNECT, connect); 
+    this->Expose(RemoteCommands::CONNECT, connect); 
   }
 };
 

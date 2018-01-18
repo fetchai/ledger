@@ -8,23 +8,27 @@ namespace rpc {
 
 namespace details {
 
+template <typename T, typename... arguments>  
 struct Packer {
-  template <typename T, typename... arguments>
-  static serializer_type &SerializeArguments(serializer_type &serializer,
+  static void SerializeArguments(serializer_type &serializer,
                                              T &next, arguments... args) {
     serializer << next;
-    return SerializeArguments(serializer, args...);
+    Packer<arguments... >::SerializeArguments(serializer, args...);
   }
-
-  template <typename T>
-  static serializer_type &SerializeArguments(serializer_type &serializer,
-                                             T &next) {
+};
+  
+template < typename T >  
+struct Packer<T> { 
+  static void SerializeArguments(serializer_type &serializer,
+                                 T &next) {
     serializer << next;
     serializer.Seek(0);
-    return serializer;
   }
 };
+
+  
 };
+
 
 template <typename... arguments>
 void PackCall(serializer_type &serializer,
@@ -32,9 +36,18 @@ void PackCall(serializer_type &serializer,
               function_handler_type const& function, arguments... args) {
   serializer << protocol;
   serializer << function;
-  details::Packer::SerializeArguments(serializer, args...);
+  details::Packer<arguments... >::SerializeArguments(serializer, args...);
 }
 
+void PackCall(serializer_type &serializer,
+              protocol_handler_type const& protocol,
+              function_handler_type const& function) {
+  serializer << protocol;
+  serializer << function;
+  serializer.Seek(0);
+}
+
+  
 class AbstractCallable {
  public:
   virtual ~AbstractCallable(){};
