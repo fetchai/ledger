@@ -9,11 +9,11 @@ namespace serializers {
 
 template <typename T>
 struct TypeRegister {
-  //  static const byte_array::ReferencedByteArray name;
+  static const byte_array::ReferencedByteArray name;
 };
 
-  //template <typename T>
-  //const byte_array::ReferencedByteArray TypeRegister<T>::name = "variant";
+template <typename T>
+const byte_array::ReferencedByteArray TypeRegister<T>::name = "variant";
 
 #define REGISTER_SERIALIZE_TYPE(symbol, type)          \
   template <>                                          \
