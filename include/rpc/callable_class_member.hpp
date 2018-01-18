@@ -11,20 +11,36 @@ namespace rpc {
 template <typename C, typename F>
 class CallableClassMember;
 
-template <typename C, typename R, typename... Args>
+ template <typename C, typename R, typename... Args>
 class CallableClassMember<C, R(Args...)> : public AbstractCallable {
  private:
   typedef R return_type;
   typedef C class_type;
   typedef return_type (class_type::*member_function_pointer)(Args...);
 
-  template <typename... used_args>
-  static void InvokeMemberFunction(serializer_type &result, class_type &cls,
-                                   member_function_pointer &m,
-                                   used_args... args) {
-    result << (cls.*m)(args...);
-  };
+   template< typename U, typename... used_args >
+   struct Invoke {
+     static void MemberFunction(serializer_type &result, class_type &cls,
+                                  member_function_pointer &m,
+                                  used_args... args) {
+       result << (cls.*m)(args...);
+     };
+       
+   };
+     
+   template< typename... used_args >
+   struct Invoke<void, used_args...> {
+     static void MemberFunction(serializer_type &result, class_type &cls,
+                                  member_function_pointer &m,
+                                  used_args... args) {
+       result << 0;
+       (cls.*m)(args...);
+     };
+     
+   };
 
+  
+  
   template <typename... used_args>
   struct UnrollArguments {
     template <typename T, typename... remaining_args>
@@ -46,7 +62,7 @@ class CallableClassMember<C, R(Args...)> : public AbstractCallable {
                          used_args &... used) {
         T l;
         s >> l;
-        InvokeMemberFunction(result, cls, m, used..., l);
+        Invoke<return_type, used_args..., T>::MemberFunction(result, cls, m, used..., l);
       }
     };
   };
@@ -66,6 +82,32 @@ class CallableClassMember<C, R(Args...)> : public AbstractCallable {
   class_type *class_;
   member_function_pointer function_;
 };
+
+
+  // No function args
+template <typename C, typename R>
+class CallableClassMember<C, R()> : public AbstractCallable {
+ private:
+  typedef R return_type;
+  typedef C class_type;
+  typedef return_type (class_type::*member_function_pointer)();
+
+ public:
+  CallableClassMember(class_type *cls, member_function_pointer value) {
+    class_ = cls;
+    function_ = value;
+  }
+
+  void operator()(serializer_type &result, serializer_type &params) override {
+    result << ( (*class_).*function_)();
+  }
+
+ private:
+  class_type *class_;
+  member_function_pointer function_;
+};
+
+  
 };
 };
 

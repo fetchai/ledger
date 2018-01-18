@@ -2,7 +2,7 @@
 #include"node.hpp"
 
 int main() {
-  FetchService serv(8080);
+  FetchService serv(8080, "lat=0.47, long=9");
   serv.Start();
 
   std::string dummy;
