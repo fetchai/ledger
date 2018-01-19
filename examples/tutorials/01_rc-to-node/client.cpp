@@ -1,10 +1,13 @@
 #include"vector_serialize.hpp"
 #include"commands.hpp"
+#include"rpc/function.hpp"
 #include"rpc/service_client.hpp"
 #include"commandline/parameter_parser.hpp"
+#include"commandline/vt100.hpp"
 #include<iostream>
 using namespace fetch::rpc;
 using namespace fetch::commandline;
+
 
 int main(int argc, char const **argv) {
   ParamsParser params;
@@ -55,6 +58,24 @@ int main(int argc, char const **argv) {
   }
 
 
+  if(command == "listen" ) {
+    std::cout << "Listening to " << std::endl;
+    auto handle1 = client.Subscribe(FetchProtocols::PEER_TO_PEER, PeerToPeerFeed::NEW_MESSAGE, new Function< void(std::string) >([](std::string const&msg) {
+          std::cout << VT100::GetColor("blue", "default") << "Got message: " << msg << VT100::DefaultAttributes() <<  std::endl;
+        }) );
+    
+    client.Subscribe(FetchProtocols::PEER_TO_PEER, PeerToPeerFeed::NEW_MESSAGE, new Function< void(std::string) >([](std::string const&msg) {
+          std::cout << VT100::GetColor("red", "default") << "Got message 2: " << msg << VT100::DefaultAttributes() <<  std::endl;
+        }) );    
+    
+    std::this_thread::sleep_for( std::chrono::milliseconds( 5000 ) );
+    
+    client.Unsubscribe( handle1 );
+    std::this_thread::sleep_for( std::chrono::milliseconds( 5000 ) );
+    // Ungracefully leaving
+
+  }
+  
   // Testing the send message
   if(command == "sendmsg" ) {
     std::string msg = params.GetArg(2);    

@@ -11,8 +11,8 @@ namespace rpc {
 typedef serializers::TypedByte_ArrayBuffer serializer_type;
 typedef uint64_t protocol_handler_type;
 typedef uint64_t function_handler_type;
-typedef uint8_t stream_handler_type;  
-  
+typedef uint8_t feed_handler_type;  
+typedef uint8_t subscription_handler_type;
 typedef uint64_t rpc_classification_type;
 };
 };

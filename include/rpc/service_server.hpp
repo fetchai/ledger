@@ -60,15 +60,18 @@ class ServiceServer : public network::NetworkServer {
     messages_.push_back(pm);
   }
 
-  void Add(protocol_handler_type const& name, Protocol* fnc) {
+  void Add(protocol_handler_type const& name, Protocol* protocol) {
     if(members_[name] != nullptr) {
-    //    if (members_.find(name) != members_.end()) {
       throw serializers::SerializableException(
           error::PROTOCOL_EXISTS,
           byte_array_type("Member already exists: "));
     }
 
-    members_[name] = fnc;
+    members_[name] = protocol;
+
+    for(auto &feed: protocol->feeds()) {
+      feed->AttachToService( this );
+    }
   }
 
  private:
@@ -77,9 +80,6 @@ class ServiceServer : public network::NetworkServer {
     function_handler_type function;
     params >> protocol >> function;
 
-
-    //    auto it = members_.find(protocol);
-    //    if (it == members_.end()) {
     if(members_[protocol] == nullptr) {
       throw serializers::SerializableException(
           error::PROTOCOL_NOT_FOUND,
@@ -129,8 +129,9 @@ class ServiceServer : public network::NetworkServer {
     if (type == RPC_FUNCTION_CALL) {
       serializer_type result;
       Promise::promise_counter_type id;
-      params >> id;
+      
       try {
+        params >> id;
         result << RPC_RESULT << id;
         Call(result, params);
       } catch (serializers::SerializableException const& e) {
@@ -138,7 +139,52 @@ class ServiceServer : public network::NetworkServer {
         result << RPC_ERROR << id << e;
       }
 
-      Respond(client, result.data());
+      Send(client, result.data());
+    } else if  (type == RPC_SUBSCRIBE)  {
+      protocol_handler_type protocol;
+      feed_handler_type feed;
+      subscription_handler_type subid;
+      
+      try {
+        params >> protocol >> feed >> subid;
+        auto& mod = *members_[protocol] ;      
+
+        mod.Subscribe( client, feed, subid );
+        
+      } catch (serializers::SerializableException const& e) {
+        // FIX Serialization of errors such that this also works
+        /*
+        serializer_type result;
+        result = serializer_type();
+        result << RPC_ERROR << id << e;
+        Send(client, result.data());
+        */
+        throw e;
+      }
+      
+    } else if  (type == RPC_UNSUBSCRIBE)  {
+      protocol_handler_type protocol;
+      feed_handler_type feed;
+      subscription_handler_type subid;
+      
+      try {
+        params >> protocol >> feed >> subid;
+        auto& mod = *members_[protocol] ;      
+
+        mod.Unsubscribe( client, feed, subid );
+        
+      } catch (serializers::SerializableException const& e) {
+        // FIX Serialization of errors such that this also works
+        /*
+        serializer_type result;
+        result = serializer_type();
+        result << RPC_ERROR << id << e;
+        Send(client, result.data());
+        */
+        throw e;
+      }
+      
+
     } else {
       TODO_FAIL("call type not implemented yet");
     }
@@ -149,7 +195,7 @@ class ServiceServer : public network::NetworkServer {
   std::atomic< bool > running_;
   std::thread *worker_thread_ = nullptr;
 
-  Protocol* members_[256] = {nullptr};
+  Protocol* members_[256] = {nullptr}; // TODO: Not thread-safe
   //  std::map<protocol_handler_type, Protocol*> members_;
 };
 };

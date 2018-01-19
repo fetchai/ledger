@@ -18,6 +18,14 @@ public:
   ~FetchService() {
     delete remote_;
     delete node_;
+  }
+
+  void Tick() {
+    node_->Tick();
+  }
+
+  void Tock() {
+    node_->Tock();
   }  
 private:
   RemoteProtocol *remote_;

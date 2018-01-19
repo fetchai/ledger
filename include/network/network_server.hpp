@@ -53,8 +53,12 @@ class NetworkServer : public AbstractNetworkServer {
     requests_.push_back({client, msg});
   }
 
-  void Respond(handle_type client, message_type const& msg) {
-    manager_->Send(client, msg);
+  void Broadcast(message_type const& msg) {
+    manager_->Broadcast(msg);
+  }
+  
+  bool Send(handle_type client, message_type const& msg) {
+    return manager_->Send(client, msg);
   }
 
   bool has_requests() {
@@ -63,12 +67,18 @@ class NetworkServer : public AbstractNetworkServer {
     return ret;
   }
 
+  /**
+     @brief returns the top request.
+  **/
   Request Top() {
     std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
     Request top = requests_.front();
     return top;
   }
 
+  /**
+     @brief returns the pops the top request.
+  **/  
   void Pop() {
     std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
     requests_.pop_front();

@@ -47,6 +47,16 @@ void PackCall(serializer_type &serializer,
   serializer.Seek(0);
 }
 
+
+template <typename... arguments>
+void PackArgs(serializer_type &serializer, arguments... args) {
+  details::Packer<arguments... >::SerializeArguments(serializer, args...);
+}
+
+void PackArgs(serializer_type &serializer) {
+  serializer.Seek(0);
+}
+  
   
 class AbstractCallable {
  public:

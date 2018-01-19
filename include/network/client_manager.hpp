@@ -19,7 +19,6 @@ class ClientManager {
   ClientManager(AbstractNetworkServer& server) : server_(server), clients_mutex_(__LINE__, __FILE__) {}
 
   handle_type Join(connection_type client) {
-    std::cout << "New connection" << std::endl;
     handle_type handle = server_.next_handle();
 
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
@@ -35,7 +34,8 @@ class ClientManager {
     }
   }
 
-  void Send(handle_type client, message_type const& msg) {
+  bool Send(handle_type client, message_type const& msg) {
+    bool ret = true;
     clients_mutex_.lock();
     
     if( clients_.find( client ) != clients_.end() ) {
@@ -44,11 +44,24 @@ class ClientManager {
       c->Send(msg);
       clients_mutex_.lock();
     } else {
-      TODO("consider whether to throw an exception or how to report dropout");      
+      ret = false;      
+    }
+    clients_mutex_.unlock();
+    return ret;
+  }
+
+  void Broadcast(message_type const& msg) {
+    clients_mutex_.lock();
+    for(auto &client : clients_) {
+      auto c = client.second;
+      clients_mutex_.unlock();      
+      c->Send(msg);
+      clients_mutex_.lock();
     }
     clients_mutex_.unlock();    
   }
 
+  
   void PushRequest(handle_type client, message_type const& msg) {
     server_.PushRequest(client, msg);
   }

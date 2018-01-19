@@ -9,7 +9,8 @@ rpc_classification_type const RPC_FUNCTION_CALL = 0ull;
 rpc_classification_type const RPC_RESULT = 10ull;
 rpc_classification_type const RPC_SUBSCRIBE = 20ull;
 rpc_classification_type const RPC_UNSUBSCRIBE = 30ull;
-rpc_classification_type const RPC_EVENT = 40ull;
+rpc_classification_type const RPC_FEED = 40ull;
+  
 rpc_classification_type const RPC_ERROR = 999ull;
 };
 };

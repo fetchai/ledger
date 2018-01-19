@@ -11,6 +11,11 @@ enum PeerToPeerCommands {
   GET_MESSAGES = 2
 };
 
+enum PeerToPeerFeed {
+  NEW_MESSAGE = 1,
+  CONNECTING = 2
+};
+
 enum FetchProtocols {
   REMOTE_CONTROL = 1,
   PEER_TO_PEER = 2
