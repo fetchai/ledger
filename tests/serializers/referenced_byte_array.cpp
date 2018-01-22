@@ -8,7 +8,7 @@ using namespace fetch::byte_array;
 int main() {
   ReferencedByteArray str = "hello", str2 = "world";
   std::string nstr, nstr2;
-  Byte_ArrayBuffer buffer;
+  ByteArrayBuffer buffer;
   buffer << str << str2;
   buffer.Seek(0);
   buffer >> nstr >> nstr2;

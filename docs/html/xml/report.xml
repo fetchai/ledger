@@ -13,6 +13,9 @@ return values.
 </doc>
   <coverage>
     <type documented="2" name="function" undocumented="0" />
+    <type documented="5" name="category" undocumented="1">
+      <undocumented id="Developers Guide::Tutorial" name="Tutorial" />
+    </type>
     <type documented="1" name="typedef" undocumented="18">
       <undocumented id="fetch::rpc::Promise::promise_counter_type" name="promise_counter_type">
         <location column="3" file="include/rpc/promise.hpp" line="72" />
@@ -345,5 +348,10 @@ return values.
         <ref name="SerializableException" />
       </doctype>
     </method>
+    <category id="Developers Guide" name="Developers Guide">
+      <doctype name="doc">
+        <ref name="Developers Guide::Tutorial::Creating a peer-to-peer network" />
+      </doctype>
+    </category>
   </references>
 </report>

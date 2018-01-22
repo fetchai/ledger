@@ -1,5 +1,22 @@
 <?xml version='1.0' encoding='utf-8'?>
 <index xmlns="http://jessevdk.github.com/cldoc/1.0">
+  <category name="Developers Guide" ref="Developers Guide#Developers Guide">
+    <brief>Developers documentation.</brief>
+    <category name="Understanding the networking framework" ref="Developers Guide::Understanding the networking framework#Developers Guide::Understanding the networking framework">
+      <brief># Understanding the RPC framework</brief>
+    </category>
+    <category name="C++ Style Guide" ref="Developers Guide::C++ Style Guide#Developers Guide::C++ Style Guide">
+      <brief>A guide that describes the style of our code.</brief>
+    </category>
+    <category name="Getting Started" ref="Developers Guide::Getting Started#Developers Guide::Getting Started">
+      <brief>The initial steps to get started.</brief>
+    </category>
+    <category name="Tutorial" ref="Developers Guide::Tutorial#Developers Guide::Tutorial">
+      <category name="Creating a peer to peer network" ref="Developers Guide::Tutorial::Creating a peer to peer network#Developers Guide::Tutorial::Creating a peer to peer network">
+        <brief>In this tutorial we go through the concepts of RPC, data feed and serialization.</brief>
+      </category>
+    </category>
+  </category>
   <namespace name="fetch" ref="fetch#fetch">
     <namespace name="rpc" ref="fetch::rpc#fetch::rpc">
       <namespace name="details" ref="fetch::rpc::details#fetch::rpc::details">

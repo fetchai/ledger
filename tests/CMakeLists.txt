@@ -28,17 +28,23 @@ function(standard_test_defines name file defines)
 
 endfunction()
    
-
+## Crypto
 standard_test( crypto_sha256 crypto/sha256.cpp )
 
-standard_test( load_image_read_exceptions image/load_image_read_exceptions.cpp )
+## Storage
+standard_test(storage_file_object storage/file_object.cpp)
 
-
-standard_test(referenced_byte_array_thread_safety byte_array/referenced_byte_array_thread_safety.cpp)
-standard_test(referenced_byte_array serializers/referenced_byte_array.cpp)
 standard_test(versioned_random_access_stack storage/versioned_random_access_stack.cpp)
 standard_test(variant_stack storage/variant_stack.cpp)
 standard_test(random_access_stack storage/random_access_stack.cpp)
+
+
+
+
+### MISC
+standard_test( load_image_read_exceptions image/load_image_read_exceptions.cpp )
+standard_test(referenced_byte_array_thread_safety byte_array/referenced_byte_array_thread_safety.cpp)
+standard_test(referenced_byte_array serializers/referenced_byte_array.cpp)
 
 standard_test(script_ast script/ast.cpp)
 standard_test(script_ast2 script/ast2.cpp)

@@ -8,10 +8,10 @@
 namespace fetch {
 namespace serializers {
 
-class Byte_ArrayBuffer {
+class ByteArrayBuffer {
  public:
-  Byte_ArrayBuffer() {}
-  Byte_ArrayBuffer(byte_array::ReferencedByteArray s) { data_ = s; }
+  ByteArrayBuffer() {}
+  ByteArrayBuffer(byte_array::ReferencedByteArray s) { data_ = s; }
 
   void Allocate(std::size_t const &val) {
     data_.Resize(data_.size() + val);
@@ -28,13 +28,13 @@ class Byte_ArrayBuffer {
   void SkipBytes(std::size_t const &size) { pos_ += size; }
 
   template <typename T>
-  Byte_ArrayBuffer &operator<<(T const &val) {
+  ByteArrayBuffer &operator<<(T const &val) {
     Serialize(*this, val);
     return *this;
   }
 
   template <typename T>
-  Byte_ArrayBuffer &operator>>(T &val) {
+  ByteArrayBuffer &operator>>(T &val) {
     Deserialize(*this, val);
     return *this;
   }

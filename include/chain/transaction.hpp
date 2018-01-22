@@ -1,0 +1,5 @@
+#ifndef CHAIN_TRANSACTION_HPP
+#define CHAIN_TRANSACTION_HPP
+
+
+#endif
