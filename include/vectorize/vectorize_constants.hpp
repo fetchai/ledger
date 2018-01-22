@@ -1,6 +1,6 @@
 #ifndef VETORIZE_VECTORIZE_CONSTANTS_HPP
 #define VETORIZE_VECTORIZE_CONSTANTS_HPP
-
+#include<cstdint>
 namespace fetch {
 namespace vectorize {
 
@@ -12,8 +12,8 @@ enum InstructionSet {
   X86_AVX2 = 15,
   ARM_NEON = 16
 };
-
-template <InstructionSet I, typename T>
+  
+template <uint16_t I, typename T>
 struct RegisterInfo {
   enum { size = sizeof(T), alignment = 16 };
 };
@@ -38,7 +38,9 @@ template <typename T>
 struct RegisterInfo<ARM_NEON, T> {
   enum { size = 16, alignment = 16 };
 };
-}
-}
+  
+  
+};
+};
 
 #endif

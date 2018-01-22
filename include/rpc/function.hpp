@@ -10,15 +10,31 @@
 namespace fetch {
 namespace rpc {
 
+/* A function wrapper that takes a serialized input.
+ * @F is the function signature.
+ */    
 template <typename F>
 class Function;
 
+/* A function wrapper that takes a serialized input.
+ * @R is the type of the return value.
+ * @Args are the arguments.
+ */  
 template <typename R, typename... Args>
 class Function<R(Args...)> : public AbstractCallable {
  private:
   typedef R return_type;
   typedef std::function< R(Args...) > function_type;
 
+
+  /* A struct for invoking the function once we have unpacked all
+   * arguments. 
+   * @U is the return type.
+   * @used_args are the types of the function arguments.
+   *
+   * This implementation invokes the function with unpacked arguments
+   * and packs the result using the supplied serializer.
+   */  
    template< typename U, typename... used_args >
    struct Invoke {
      static void MemberFunction(serializer_type &result,
@@ -29,21 +45,33 @@ class Function<R(Args...)> : public AbstractCallable {
        
    };
      
-   template< typename... used_args >
+  /* Special case for invocation with return type void.
+   * @used_args are the types of the function arguments.
+   *
+   * In case of void as return type, the result is always 0 packed in a
+   * uint8_t.
+   */  
+  template< typename... used_args >
    struct Invoke<void, used_args...> {
      static void MemberFunction(serializer_type &result,
                                 function_type &m,
                                 used_args&... args) {
-       result << 0;
+       result << uint8_t(0);
        m( args... );
      };
      
    };
 
   
-  
+  /* Struct used for unrolling arguments in a function signature.
+   * @used_args are the unpacked arguments.
+   */    
   template <typename... used_args>
   struct UnrollArguments {
+    /* Struct for loop definition.
+     * @T is the type of the next argument to be unrolled.
+     * @remaining_args are the arugments which has not yet been unrolled.
+     */      
     template <typename T, typename... remaining_args>
     struct LoopOver {
       static void Unroll(serializer_type &result,
@@ -55,7 +83,10 @@ class Function<R(Args...)> : public AbstractCallable {
             remaining_args...>::Unroll(result,  m, s, used..., l);
       }
     };
-
+    
+    /* Struct for loop termination
+     * @T is the type of the last argument to be unrolled.
+     */  
     template <typename T>
     struct LoopOver<T> {
       static void Unroll(serializer_type &result,
@@ -69,11 +100,22 @@ class Function<R(Args...)> : public AbstractCallable {
   };
 
  public:
-   
+  /* Creates a function with serialized arguments.
+   * @function is the member function.
+   */   
   Function(function_type value) {
     function_ = value;
   }
 
+  /* Operator to invoke the function.
+   * @result is the serializer to which the result is written.
+   * @params is a seralizer containing the function parameters.
+   *
+   * Note that the parameter seralizer can container more information
+   * than just the function arguments. It is therefore a requirement
+   * that the serializer is positioned at the beginning of the argument
+   * list. 
+   */  
   void operator()(serializer_type &result, serializer_type &params) override {
     UnrollArguments<>::template LoopOver<Args...>::Unroll(
         result, this->function_, params);

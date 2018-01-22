@@ -3,6 +3,7 @@
 
 #include "assert.hpp"
 #include "byte_array/referenced_byte_array.hpp"
+#include "serializer/referenced_byte_array.hpp"
 #include "serializer/exception.hpp"
 #include "serializer/type_register.hpp"
 #include "byte_array/encoders.hpp"

@@ -1,5 +1,6 @@
 #ifndef CRYPTO_PROVER_HPP
 #define CRYPTO_PROVER_HPP
+#include"byte_array/referenced_byte_array.hpp"
 namespace fetch {
 namespace crypto {
 class Prover {

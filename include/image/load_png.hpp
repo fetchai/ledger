@@ -1,7 +1,7 @@
 #ifndef IMAGE_LOAD_PNG_HPP
 #define IMAGE_LOAD_PNG_HPP
 
-#include <image/image.hpp>
+#include "image/image.hpp"
 
 // After http://zarb.org/~gc/html/libpng.html
 #include <stdarg.h>
@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <string>
 // #define PNG_DEBUG 3
 #define PNG_SKIP_SETJMP_CHECK
 

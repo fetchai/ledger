@@ -4,6 +4,7 @@
 #include<thread>
 #include<mutex>
 #include<map>
+#include<iostream>
 
 namespace fetch {
 namespace mutex {

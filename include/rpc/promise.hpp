@@ -1,6 +1,8 @@
 #ifndef RPC_PROMISE_HPP
 #define RPC_PROMISE_HPP
 
+#include "byte_array/referenced_byte_array.hpp"
+#include "rpc/types.hpp"
 #include "serializer/exception.hpp"
 #include "mutex.hpp"
 

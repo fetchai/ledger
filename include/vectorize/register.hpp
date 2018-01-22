@@ -1,12 +1,13 @@
 #ifndef VECTORIZE_REGISTER_HPP
 #define VECTORIZE_REGISTER_HPP
-#include "vectorize_constants.hpp"
+#include "vectorize/vectorize_constants.hpp"
 
 #include <emmintrin.h>
 
 #include <smmintrin.h>
 #include <type_traits>
 #include <typeinfo>
+#include<iostream>
 namespace fetch {
 namespace vectorize {
 

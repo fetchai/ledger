@@ -22,24 +22,59 @@ enum VariantType {
 };
 
 // FIXME: replace asserts with throwing errors
-class Variant;
-class VariantAccessProxy {
- public:
-  VariantAccessProxy(Variant& v, std::size_t const& i);
-  operator Variant();
-  //  Variant Copy() const;
 
-  Variant const& operator=(Variant const& v);
-  char operator=(char const& v);
-  VariantType const& type() const;
-
- private:
-  Variant& variant_;
-  std::size_t index_;
-};
 
 class Variant {
- public:
+
+  class VariantAccessProxy {
+  public:
+    VariantAccessProxy(Variant& v, std::size_t const& i)
+      : variant_(v), index_(i) {}
+    
+    operator Variant() {
+      return (*variant_.data_.object_array)[index_];
+    }
+    //  Variant Copy() const;
+    
+    Variant const& operator=(Variant const& v) {
+      assert((variant_.type() == VariantType::ARRAY) ||
+             (variant_.type() == VariantType::DICTIONARY));
+      assert(index_ < variant_.size());
+      
+      return (*variant_.data_.object_array)[index_ + 1] = v;
+    }
+    
+    char operator=(char const& v) {
+      assert(index_ < variant_.size());
+      switch (variant_.type_) {
+      case VariantType::BYTE_ARRAY:
+        return (*variant_.data_.byte_array)[index_] = v;
+      case VariantType::DICTIONARY:
+      case VariantType::ARRAY:
+        (*variant_.data_.object_array)[index_ + 1] = v;
+        return v;
+      default:
+        assert(false);
+        // TODO: throw error
+        return 0;
+      }
+      return 0;
+    }
+    
+    VariantType const& type() const {
+      assert((variant_.type() == VariantType::ARRAY) ||
+             (variant_.type() == VariantType::DICTIONARY));
+      return (*variant_.data_.object_array)[index_ + 1].type();
+      return variant_.type();
+    }
+    
+  private:
+    Variant& variant_;
+    std::size_t index_;
+  };
+  
+
+public:
   typedef fetch::byte_array::ReferencedByteArray byte_array_type;
 
   Variant() : type_(UNDEFINED) {}
@@ -235,63 +270,8 @@ class Variant {
   } data_;
 
   VariantType type_ = UNDEFINED;
-
-  friend class VariantAccessProxy;
 };
 
-VariantAccessProxy::VariantAccessProxy(Variant& v, std::size_t const& i)
-    : variant_(v), index_(i) {}
-
-VariantAccessProxy::operator Variant() {
-  return (*variant_.data_.object_array)[index_];
-}
-
-Variant const& VariantAccessProxy::operator=(Variant const& v) {
-  assert((variant_.type() == VariantType::ARRAY) ||
-         (variant_.type() == VariantType::DICTIONARY));
-  assert(index_ < variant_.size());
-
-  return (*variant_.data_.object_array)[index_ + 1] = v;
-}
-
-char VariantAccessProxy::operator=(char const& v) {
-  assert(index_ < variant_.size());
-  switch (variant_.type_) {
-    case VariantType::BYTE_ARRAY:
-      return (*variant_.data_.byte_array)[index_] = v;
-    case VariantType::DICTIONARY:
-    case VariantType::ARRAY:
-      (*variant_.data_.object_array)[index_ + 1] = v;
-      return v;
-    default:
-      assert(false);
-      // TODO: throw error
-      return 0;
-  }
-  return 0;
-}
-
-VariantType const& VariantAccessProxy::type() const {
-  assert((variant_.type() == VariantType::ARRAY) ||
-         (variant_.type() == VariantType::DICTIONARY));
-  return (*variant_.data_.object_array)[index_ + 1].type();
-  return variant_.type();
-}
-
-/*
-class VariantAccessProxy {
-public:
-  VariantAccessProxy(Variant &v, std::size_t const &i)
-    : variant_(v), index_(i) {}
-  operator Variant() { return (*variant_.data_.object_array)[index_]; }
-  Variant const& operator=(Variant const &v) {
-    return (*variant_.data_.object_array)[index_] = v;
-  }
-private:
-  Variant variant_;
-  std::size_t index_;
-};
-*/
 
 std::ostream& operator<<(std::ostream& os, Variant const& v) {
   switch (v.type()) {

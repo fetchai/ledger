@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<namespace id="fetch::math" name="math" xmlns="http://jessevdk.github.com/cldoc/1.0">
+  <classtemplate name="Exp" ref="fetch::math::Exp#fetch::math::Exp">
+    <templatenontypeparameter id="fetch::math::Exp::N" name="N">
+      <type name="uint8_t" />
+    </templatenontypeparameter>
+    <templatenontypeparameter id="fetch::math::Exp::C" name="C">
+      <type name="uint64_t" />
+    </templatenontypeparameter>
+    <templatenontypeparameter id="fetch::math::Exp::O" name="O">
+      <type builtin="yes" name="bool" />
+    </templatenontypeparameter>
+  </classtemplate>
+</namespace>

@@ -1,5 +1,8 @@
 #ifndef STORAGE_FILE_OBJECT_HPP
 #define STORAGE_FILE_OBJECT_HPP
+#include"storage/versioned_random_access_stack.hpp"
+
+#include<cstdint>
 
 namespace fetch {
 namespace storage {
@@ -27,6 +30,7 @@ class FileObject {
       : file_position_(position), stack_(stack) {}
 
   void Seek(std::size_t const &n) {
+    /* TODO: write this function
     uint64_t current_block_index = file_position_;
     BlockType block;
 
@@ -35,7 +39,7 @@ class FileObject {
     // Searching forward for block
     stack_.Get(current_block_index, block);
     assert(block.previous == UNDEFINED);
-    while (rem >= BYTES) {
+    while (remain >= BYTES) {
       if (block.next == UNDEFINED) {
         block.next = stack_.size();
         stack_.Set(current_block_index, block);
@@ -52,6 +56,7 @@ class FileObject {
 
     block_index_ = current_block_index;
     byte_index_ = remain;
+    */
   }
 
   std::size_t Tell() const { return byte_index_ + block_index_ * BYTES; }
@@ -80,9 +85,9 @@ class FileObject {
     }
   }
 
-  uint64_t Size() const {}
+  uint64_t Size() const { return 0; } // TODO
 
-  uint64_t Shrink() {}
+  uint64_t Shrink() { return 0; } // TODO
 
   uint64_t const &file_position() const { return file_position_; }
 
@@ -93,7 +98,7 @@ class FileObject {
       block_index_ = block.next;
       if (block_index_ == UNDEFINED) {
         block.next = stack_.size();
-        stack.Set(block_index_, block);
+        stack_.Set(block_index_, block);
 
         block = BlockType();
         block.previous = block_index_;

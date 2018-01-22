@@ -1,8 +1,12 @@
 #ifndef VECTORIZE_SSE_HPPP
 #define VECTORIZE_SSE_HPPP
-#include <emmintrin.h>
+#include "vectorize/vectorize_constants.hpp"
+#include "vectorize/register.hpp"
 
+#include <emmintrin.h>
 #include <smmintrin.h>
+#include <cstdint>
+#include <cstddef>
 
 #define REQUIRED_SSE X86_SSE3
 namespace fetch {
@@ -33,6 +37,7 @@ class VectorRegister<T, L, InstructionSet::REQUIRED_SSE> {
   __m128i data_;
 };
 
+  /*
 #define AILIB_ADD_OPERATOR(op, L, type, set, fnc)                            \
   template <>                                                                \
   VectorRegister<type, L, InstructionSet::set>                               \
@@ -43,8 +48,9 @@ class VectorRegister<T, L, InstructionSet::REQUIRED_SSE> {
   }
 
 AILIB_ADD_OPERATOR(*, 16, uint32_t, REQUIRED_SSE, _mm_mullo_epi32);
-
+  
 #undef AILIB_ADD_OPERATOR
+  */
 #undef REQUIRED_SSE
 };
 };
