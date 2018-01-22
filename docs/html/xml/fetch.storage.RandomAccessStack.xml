@@ -13,7 +13,7 @@
     <type name="T" />
   </typedef>
   <typedef id="fetch::storage::RandomAccessStack::byte_array_type" name="byte_array_type">
-    <type name="byte_array::ReferencedByteArray" ref="fetch::byte_array::ReferencedByteArray#fetch::byte_array::ReferencedByteArray" />
+    <type name="byte_array::ReferencedByteArray" />
   </typedef>
   <method id="fetch::storage::RandomAccessStack::Load" name="Load">
     <return>

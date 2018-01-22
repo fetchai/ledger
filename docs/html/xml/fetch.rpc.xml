@@ -114,7 +114,7 @@ The serializer is is always left at position 0.
     <type name="std::__1::deque&lt;fetch::byte_array::ReferencedByteArray, std::__1::allocator&lt;fetch::byte_array::ReferencedByteArray&gt; &gt;" />
   </typedef>
   <typedef id="fetch::rpc::message_type" name="message_type">
-    <type name="byte_array::ReferencedByteArray" ref="fetch::byte_array::ReferencedByteArray#fetch::byte_array::ReferencedByteArray" />
+    <type name="byte_array::ReferencedByteArray" />
   </typedef>
   <typedef id="fetch::rpc::protocol_handler_type" name="protocol_handler_type">
     <type name="uint64_t" />
@@ -123,7 +123,7 @@ The serializer is is always left at position 0.
     <type name="uint64_t" />
   </typedef>
   <typedef id="fetch::rpc::serializer_type" name="serializer_type">
-    <type name="serializers::TypedByte_ArrayBuffer" ref="fetch::serializers::TypedByte_ArrayBuffer#fetch::serializers::TypedByte_ArrayBuffer" />
+    <type name="serializers::TypedByte_ArrayBuffer" />
   </typedef>
   <typedef id="fetch::rpc::subscription_handler_type" name="subscription_handler_type">
     <type name="uint8_t" />

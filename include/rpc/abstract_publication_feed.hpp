@@ -16,36 +16,31 @@ namespace rpc {
  */
 class AbstractPublicationFeed {
 public:
-  /**
-     The function signature used for 
-     The reason to use std::function here instead of function pointers
-     is to ensure support for lambda functions with capture and
-     subsequently member functions from classes with (to this
-     implementation) unknown base class.
-   **/
+  /* The function signature used for 
+   * The reason to use std::function here instead of function pointers
+   * is to ensure support for lambda functions with capture and
+   * subsequently member functions from classes with (to this
+   * implementation) unknown base class.
+   */
   typedef std::function< void(fetch::byte_array::ReferencedByteArray) > function_type;
 
   virtual ~AbstractPublicationFeed() {}
   
-  /**
-     @brief creates publication function.
-
-     This method can be invoked when defining the protocol using either
-     lambda or free functions. 
-
-     @param feed is the feed handler.
-     @param function a void function that takes a byte array argument.
+  /* Creates publication function.
+   * @feed is the feed handler.
+   * @function a void function that takes a byte array argument.
+   *
+   * This method can be invoked when defining the protocol using either
+   * lambda or free functions. 
    **/
   virtual void create_publisher(feed_handler_type feed, function_type function) = 0;
 
-  /**
-     @brief creates publication function.
-
-     This method can be invoked when defining the protocol to attach
-     member functions as publisher.
-     
-     @param feed is the feed handler.
-     @param function a void function that takes a byte array argument.
+  /* Creates publication function.
+   * @feed is the feed handler.
+   * @function a void function that takes a byte array argument.
+   *
+   * This method can be invoked when defining the protocol to attach
+   * member functions as publisher.    
    **/  
   template< typename C >
   void create_publisher(feed_handler_type feed, C* cls, void (C::*function)( fetch::byte_array::ReferencedByteArray const& )  ) {

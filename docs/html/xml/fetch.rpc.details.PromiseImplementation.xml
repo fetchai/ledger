@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <class id="fetch::rpc::details::PromiseImplementation" name="PromiseImplementation" xmlns="http://jessevdk.github.com/cldoc/1.0">
   <typedef id="fetch::rpc::details::PromiseImplementation::byte_array_type" name="byte_array_type">
-    <type name="byte_array::ReferencedByteArray" ref="fetch::byte_array::ReferencedByteArray#fetch::byte_array::ReferencedByteArray" />
+    <type name="byte_array::ReferencedByteArray" />
   </typedef>
   <typedef id="fetch::rpc::details::PromiseImplementation::promise_counter_type" name="promise_counter_type">
     <type name="uint64_t" />
@@ -9,7 +9,7 @@
   <constructor id="fetch::rpc::details::PromiseImplementation::PromiseImplementation" name="PromiseImplementation" />
   <method id="fetch::rpc::details::PromiseImplementation::exception" name="exception">
     <return>
-      <type name="serializers::SerializableException" ref="fetch::serializers::SerializableException#fetch::serializers::SerializableException" />
+      <type name="serializers::SerializableException" />
     </return>
   </method>
   <method id="fetch::rpc::details::PromiseImplementation::Fail" name="Fail">
@@ -17,7 +17,7 @@
       <type builtin="yes" name="void" />
     </return>
     <argument id="fetch::rpc::details::PromiseImplementation::Fail::excp" name="excp">
-      <type name="serializers::SerializableException" qualifier=" const &amp;" ref="fetch::serializers::SerializableException#fetch::serializers::SerializableException" />
+      <type name="serializers::SerializableException" qualifier=" const &amp;" />
     </argument>
   </method>
   <method id="fetch::rpc::details::PromiseImplementation::Fulfill" name="Fulfill">

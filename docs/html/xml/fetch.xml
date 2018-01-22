@@ -1,22 +1,4 @@
 <?xml version='1.0' encoding='utf-8'?>
 <namespace id="fetch" name="fetch" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <brief>TODO: Make variant stack as a circular buffer!</brief>
-  <namespace name="assert" ref="fetch::assert#fetch::assert" />
-  <namespace name="byte_array" ref="fetch::byte_array#fetch::byte_array" />
-  <namespace name="commandline" ref="fetch::commandline#fetch::commandline" />
-  <namespace name="crypto" ref="fetch::crypto#fetch::crypto" />
-  <namespace name="math" ref="fetch::math#fetch::math" />
-  <namespace name="memory" ref="fetch::memory#fetch::memory" />
-  <namespace name="mutex" ref="fetch::mutex#fetch::mutex" />
-  <namespace name="network" ref="fetch::network#fetch::network" />
-  <namespace name="optimisation" ref="fetch::optimisation#fetch::optimisation" />
-  <namespace name="platform" ref="fetch::platform#fetch::platform" />
-  <namespace name="random" ref="fetch::random#fetch::random" />
   <namespace name="rpc" ref="fetch::rpc#fetch::rpc" />
-  <namespace name="script" ref="fetch::script#fetch::script" />
-  <namespace name="serializers" ref="fetch::serializers#fetch::serializers" />
-  <namespace name="storage" ref="fetch::storage#fetch::storage" />
-  <namespace name="string" ref="fetch::string#fetch::string" />
-  <namespace name="unittest" ref="fetch::unittest#fetch::unittest" />
-  <namespace name="vectorize" ref="fetch::vectorize#fetch::vectorize" />
 </namespace>

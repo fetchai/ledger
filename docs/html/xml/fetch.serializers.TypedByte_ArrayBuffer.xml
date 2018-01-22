@@ -19,7 +19,7 @@
     <templatetypeparameter id="fetch::serializers::TypedByte_ArrayBuffer::operator&gt;&gt;::T" name="T" />
   </methodtemplate>
   <typedef id="fetch::serializers::TypedByte_ArrayBuffer::byte_array_type" name="byte_array_type">
-    <type name="byte_array::ReferencedByteArray" ref="fetch::byte_array::ReferencedByteArray#fetch::byte_array::ReferencedByteArray" />
+    <type name="byte_array::ReferencedByteArray" />
   </typedef>
   <constructor id="fetch::serializers::TypedByte_ArrayBuffer::TypedByte_ArrayBuffer" name="TypedByte_ArrayBuffer" />
   <constructor id="fetch::serializers::TypedByte_ArrayBuffer::TypedByte_ArrayBuffer" name="TypedByte_ArrayBuffer">

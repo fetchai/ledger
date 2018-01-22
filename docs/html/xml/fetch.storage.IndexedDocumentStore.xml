@@ -5,7 +5,7 @@
     <type name="B" />
   </typedef>
   <typedef id="fetch::storage::IndexedDocumentStore::byte_array_type" name="byte_array_type">
-    <type name="byte_array::ReferencedByteArray" ref="fetch::byte_array::ReferencedByteArray#fetch::byte_array::ReferencedByteArray" />
+    <type name="byte_array::ReferencedByteArray" />
   </typedef>
   <method id="fetch::storage::IndexedDocumentStore::Load" name="Load">
     <return>

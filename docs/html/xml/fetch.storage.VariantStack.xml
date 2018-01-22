@@ -27,7 +27,7 @@
     <enumvalue id="fetch::storage::VariantStack::UNDEFINED_POSITION" name="UNDEFINED_POSITION" value="18446744073709551615" />
   </enum>
   <typedef id="fetch::storage::VariantStack::byte_array_type" name="byte_array_type">
-    <type name="byte_array::ReferencedByteArray" ref="fetch::byte_array::ReferencedByteArray#fetch::byte_array::ReferencedByteArray" />
+    <type name="byte_array::ReferencedByteArray" />
   </typedef>
   <method id="fetch::storage::VariantStack::Clear" name="Clear">
     <return>

@@ -15,7 +15,7 @@ this should be changed to be variable and allocated at construction
 time (TODO).
 </doc>
   <typedef id="fetch::rpc::Protocol::byte_array_type" name="byte_array_type">
-    <type name="byte_array::ReferencedByteArray" ref="fetch::byte_array::ReferencedByteArray#fetch::byte_array::ReferencedByteArray" />
+    <type name="byte_array::ReferencedByteArray" />
   </typedef>
   <typedef id="fetch::rpc::Protocol::callable_type" name="callable_type">
     <type name="AbstractCallable" ref="fetch::rpc::AbstractCallable#fetch::rpc::AbstractCallable" />

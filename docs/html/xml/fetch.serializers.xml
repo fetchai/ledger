@@ -8,7 +8,7 @@
       <type name="T" qualifier=" &amp;" />
     </argument>
     <argument id="fetch::serializers::Deserialize::s" name="s">
-      <type name="byte_array::ReferencedByteArray" qualifier=" &amp;" ref="fetch::byte_array::ReferencedByteArray#fetch::byte_array::ReferencedByteArray" />
+      <type name="byte_array::ReferencedByteArray" qualifier=" &amp;" />
     </argument>
     <templatetypeparameter id="fetch::serializers::Deserialize::T" name="T" />
   </functiontemplate>
@@ -57,7 +57,7 @@
       <type name="T" qualifier=" &amp;" />
     </argument>
     <argument id="fetch::serializers::Serialize::s" name="s">
-      <type name="byte_array::ReferencedByteArray" qualifier=" const &amp;" ref="fetch::byte_array::ReferencedByteArray#fetch::byte_array::ReferencedByteArray" />
+      <type name="byte_array::ReferencedByteArray" qualifier=" const &amp;" />
     </argument>
     <templatetypeparameter id="fetch::serializers::Serialize::T" name="T" />
   </functiontemplate>

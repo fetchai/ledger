@@ -37,7 +37,7 @@ class VectorRegister<T, L, InstructionSet::REQUIRED_SSE> {
   __m128i data_;
 };
 
-  /*
+
 #define AILIB_ADD_OPERATOR(op, L, type, set, fnc)                            \
   template <>                                                                \
   VectorRegister<type, L, InstructionSet::set>                               \
@@ -50,7 +50,7 @@ class VectorRegister<T, L, InstructionSet::REQUIRED_SSE> {
 AILIB_ADD_OPERATOR(*, 16, uint32_t, REQUIRED_SSE, _mm_mullo_epi32);
   
 #undef AILIB_ADD_OPERATOR
-  */
+
 #undef REQUIRED_SSE
 };
 };

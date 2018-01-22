@@ -59,8 +59,9 @@ standard_test(matrix math/linalg/matrix.cpp)
 standard_test(brute_force optimisation/brute_force.cpp)
 standard_test(load_txt optimisation/instance/load_txt.cpp)
 standard_test(meta_log2 meta/test_log2.cpp)
-# standard_test(vectorize_native_register vectorize/native.cpp)
-# standard_test(vectorize_sse vectorize/sse.cpp)
+
+standard_test(vectorize_native_register vectorize/native.cpp)
+standard_test(vectorize_sse vectorize/sse.cpp)
 
 
 

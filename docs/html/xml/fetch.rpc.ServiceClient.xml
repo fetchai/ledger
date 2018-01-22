@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <class id="fetch::rpc::ServiceClient" name="ServiceClient" xmlns="http://jessevdk.github.com/cldoc/1.0">
   <base access="public">
-    <type name="network::NetworkClient" ref="fetch::network::NetworkClient#fetch::network::NetworkClient" />
+    <type name="network::NetworkClient" />
   </base>
   <methodtemplate id="fetch::rpc::ServiceClient::Call" name="Call">
     <return>
@@ -19,7 +19,7 @@
     <templatetypeparameter id="fetch::rpc::ServiceClient::Call::arguments" name="arguments" />
   </methodtemplate>
   <typedef id="fetch::rpc::ServiceClient::byte_array_type" name="byte_array_type">
-    <type name="byte_array::ReferencedByteArray" ref="fetch::byte_array::ReferencedByteArray#fetch::byte_array::ReferencedByteArray" />
+    <type name="byte_array::ReferencedByteArray" />
   </typedef>
   <constructor id="fetch::rpc::ServiceClient::ServiceClient" name="ServiceClient">
     <argument id="fetch::rpc::ServiceClient::ServiceClient::host" name="host">
@@ -30,14 +30,13 @@
     </argument>
   </constructor>
   <destructor id="fetch::rpc::ServiceClient::~ServiceClient" name="~ServiceClient" />
-  <method id="fetch::rpc::ServiceClient::PushMessage" name="PushMessage" override="yes" virtual="yes">
+  <method id="fetch::rpc::ServiceClient::PushMessage" name="PushMessage" virtual="yes">
     <return>
       <type builtin="yes" name="void" />
     </return>
     <argument id="fetch::rpc::ServiceClient::PushMessage::msg" name="msg">
-      <type name="network::message_type" qualifier=" const &amp;" ref="fetch::network#fetch::network::message_type" />
+      <type name="network::message_type" qualifier=" const &amp;" />
     </argument>
-    <override name="network::NetworkClient::PushMessage" ref="fetch::network::NetworkClient#fetch::network::NetworkClient::PushMessage" />
   </method>
   <method id="fetch::rpc::ServiceClient::Subscribe" name="Subscribe">
     <return>
