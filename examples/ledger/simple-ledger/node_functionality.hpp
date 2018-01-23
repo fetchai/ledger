@@ -51,6 +51,7 @@ public:
     return true;
   }
 
+  
 
   /*
   void PushBlock( block_type const &block) {
