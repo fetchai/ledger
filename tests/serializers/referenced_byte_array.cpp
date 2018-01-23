@@ -6,7 +6,7 @@ using namespace fetch::serializers;
 using namespace fetch::byte_array;
 
 int main() {
-  ReferencedByteArray str = "hello", str2 = "world";
+  ByteArray str = "hello", str2 = "world";
   std::string nstr, nstr2;
   ByteArrayBuffer buffer;
   buffer << str << str2;

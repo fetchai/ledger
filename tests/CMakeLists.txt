@@ -32,7 +32,7 @@ endfunction()
 standard_test( crypto_sha256 crypto/sha256.cpp )
 
 ## Storage
-standard_test(storage_file_object storage/file_object.cpp)
+# standard_test(storage_file_object storage/file_object.cpp)
 
 standard_test(versioned_random_access_stack storage/versioned_random_access_stack.cpp)
 standard_test(variant_stack storage/variant_stack.cpp)

@@ -47,7 +47,7 @@ public:
   template< typename T >
   void AttachToService(T *service) {
 
-    publisher_->create_publisher(feed_, [=](fetch::byte_array::ReferencedByteArray const&  msg) {
+    publisher_->create_publisher(feed_, [=](fetch::byte_array::ConstByteArray const&  msg) {
         serializer_type params;
         params << RPC_FEED << feed_;
         uint64_t p = params.Tell();

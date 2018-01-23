@@ -4,6 +4,7 @@
 #include "byte_array/consumers.hpp"
 #include "byte_array/json/exceptions.hpp"
 #include "byte_array/referenced_byte_array.hpp"
+#include "byte_array/const_byte_array.hpp"
 #include "byte_array/tokenizer/tokenizer.hpp"
 #include "script/ast.hpp"
 #include "script/variant.hpp"
@@ -16,7 +17,8 @@ namespace byte_array {
 
 class JSONDocument : private Tokenizer {
  public:
-  typedef ReferencedByteArray string_type;
+  typedef ByteArray string_type;
+  typedef ConstByteArray const_string_type;  
   typedef script::Variant variant_type;
 
   enum Type {
@@ -40,7 +42,7 @@ class JSONDocument : private Tokenizer {
     AddConsumer(Type::CATCH_ALL, consumers::AnyChar);
   }
 
-  void Parse(string_type filename, string_type document) {
+  void Parse(string_type filename, const_string_type const& document) {
     Tokenizer::Parse(filename, document);
 
     enum {

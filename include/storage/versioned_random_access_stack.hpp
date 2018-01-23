@@ -70,17 +70,16 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
   };
 
  public:
-  typedef typename RandomAccessStack<T>::byte_array_type byte_array_type;
   typedef typename RandomAccessStack<T>::type type;
   typedef B bookmark_type;
 
-  void Load(byte_array_type const &filename, byte_array_type const &history) {
+  void Load(std::string const &filename, std::string const &history) {
     super_type::Load(filename);
     history_.Load(history);
     bookmark_ = super_type::header_extra();
   }
 
-  void New(byte_array_type const &filename, byte_array_type const &history) {
+  void New(std::string const &filename, std::string const &history) {
     super_type::New(filename);
     history_.New(history);
     bookmark_ = super_type::header_extra();

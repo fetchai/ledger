@@ -8,7 +8,7 @@ using namespace fetch;
 
 class Language {
 public:
-  typedef byte_array::ReferencedByteArray byte_array_type;
+  typedef byte_array::ByteArray byte_array_type;
   typedef script::Variant variant_type;
   
   Language() {

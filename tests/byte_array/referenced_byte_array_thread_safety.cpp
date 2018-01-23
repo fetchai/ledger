@@ -6,7 +6,7 @@
 #include<vector>
 using namespace fetch::byte_array;
 
-typedef ReferencedByteArray array_type;
+typedef ByteArray array_type;
 
 std::vector< std::thread* > threads;
 

@@ -6,10 +6,10 @@ using namespace fetch::byte_array;
 #include"unittest.hpp"
 
 int main() {
-  SCENARIO("Class members of ReferencedByteArray") {    
+  SCENARIO("Class members of ByteArray") {    
     char const *base = "hello world";
     std::string basecpp = base;
-    ReferencedByteArray str(base);
+    ByteArray str(base);
 
     EXPECT( str == base );
     EXPECT( str == basecpp );
@@ -25,7 +25,7 @@ int main() {
     
       
     SECTION("testing that referencing persists after subbyte_arraying ") {
-      ReferencedByteArray copy = str.SubArray(6, str.size() - 6);
+      ByteArray copy = str.SubArray(6, str.size() - 6);
       copy[0] = 'k';
       copy[1] = 'i';
       copy[2] = 't';
@@ -41,7 +41,7 @@ int main() {
 
 
     SECTION("testing that referencing vanishes after copying ") {
-      ReferencedByteArray copy = str.Copy().SubArray(6, str.size() - 6);
+      ByteArray copy = str.Copy().SubArray(6, str.size() - 6);
       copy[0] = 'Z';
       copy[1] = 'i';
       copy[2] = 'p';
@@ -59,11 +59,11 @@ int main() {
     };
 
     SECTION("size of loaded C strings") {
-      EXPECT( ReferencedByteArray("any carnal pleas").size() == 16); 
-      EXPECT( ReferencedByteArray("any carnal pleasu").size() == 17);
-      EXPECT( ReferencedByteArray("any carnal pleasur").size() == 18); 
-      EXPECT( ReferencedByteArray("any carnal pleasure").size() == 19); 
-      EXPECT( ReferencedByteArray("any carnal pleasure.").size() == 20);
+      EXPECT( ByteArray("any carnal pleas").size() == 16); 
+      EXPECT( ByteArray("any carnal pleasu").size() == 17);
+      EXPECT( ByteArray("any carnal pleasur").size() == 18); 
+      EXPECT( ByteArray("any carnal pleasure").size() == 19); 
+      EXPECT( ByteArray("any carnal pleasure.").size() == 20);
     };
   };
 

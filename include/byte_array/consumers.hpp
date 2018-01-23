@@ -1,6 +1,6 @@
 #ifndef BYTE_ARRAY_CONSUMERS_HPP
 #define BYTE_ARRAY_CONSUMERS_HPP
-#include "byte_array/referenced_byte_array.hpp"
+#include "byte_array/const_byte_array.hpp"
 #include "byte_array/tokenizer/tokenizer.hpp"
 
 namespace fetch {
@@ -9,14 +9,14 @@ namespace consumers {
 typedef typename byte_array::Tokenizer::consumer_function_type
     consumer_function_type;
 
-bool Word(byte_array::ReferencedByteArray const &str, uint64_t &pos) {
+bool Word(byte_array::ConstByteArray const &str, uint64_t &pos) {
   while ((('a' <= str[pos]) && (str[pos] <= 'z')) ||
          (('A' <= str[pos]) && (str[pos] <= 'Z')) || (str[pos] == '\''))
     ++pos;
   return true;
 }
 
-bool AlphaNumeric(byte_array::ReferencedByteArray const &str, uint64_t &pos) {
+bool AlphaNumeric(byte_array::ConstByteArray const &str, uint64_t &pos) {
   while ((('a' <= str[pos]) && (str[pos] <= 'z')) ||
          (('A' <= str[pos]) && (str[pos] <= 'Z')) ||
          (('0' <= str[pos]) && (str[pos] <= '9')))
@@ -24,7 +24,7 @@ bool AlphaNumeric(byte_array::ReferencedByteArray const &str, uint64_t &pos) {
   return true;
 }
 
-bool AlphaNumericLetterFirst(byte_array::ReferencedByteArray const &str,
+bool AlphaNumericLetterFirst(byte_array::ConstByteArray const &str,
                              uint64_t &pos) {
   if (!((('a' <= str[pos]) && (str[pos] <= 'z')) ||
         (('A' <= str[pos]) && (str[pos] <= 'Z'))))
@@ -39,7 +39,7 @@ bool AlphaNumericLetterFirst(byte_array::ReferencedByteArray const &str,
 
 consumer_function_type StringEnclosedIn(char c) {
   return
-      [c](byte_array::ReferencedByteArray const &str, uint64_t &pos) -> bool {
+      [c](byte_array::ConstByteArray const &str, uint64_t &pos) -> bool {
         if (str[pos] != c) return false;
         ++pos;
         while ((str[pos] != c) && (str[pos] != '\0'))
@@ -54,7 +54,7 @@ consumer_function_type StringEnclosedIn(char c) {
 }
 
 consumer_function_type TokenFromList(std::vector<std::string> list) {
-  return [list](byte_array::ReferencedByteArray const &str,
+  return [list](byte_array::ConstByteArray const &str,
                 uint64_t &pos) -> bool {
     for (auto &op : list)
       if (str.Match(op.c_str(), pos)) {
@@ -66,7 +66,7 @@ consumer_function_type TokenFromList(std::vector<std::string> list) {
 }
 
 consumer_function_type Keyword(std::string keyword) {
-  return [keyword](byte_array::ReferencedByteArray const &str,
+  return [keyword](byte_array::ConstByteArray const &str,
                    uint64_t &pos) -> bool {
     if (str.Match(keyword.c_str(), pos)) {
       pos += keyword.size();
@@ -76,7 +76,7 @@ consumer_function_type Keyword(std::string keyword) {
   };
 }
 
-bool Integer(byte_array::ReferencedByteArray const &str, uint64_t &pos) {
+bool Integer(byte_array::ConstByteArray const &str, uint64_t &pos) {
   uint64_t oldpos = pos;
   uint64_t N = pos + 1;
   if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
@@ -87,7 +87,7 @@ bool Integer(byte_array::ReferencedByteArray const &str, uint64_t &pos) {
   return oldpos != pos;
 }
 
-bool Float(byte_array::ReferencedByteArray const &str, uint64_t &pos) {
+bool Float(byte_array::ConstByteArray const &str, uint64_t &pos) {
   uint64_t oldpos = pos;
   uint64_t N = pos + 1;
   if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
@@ -112,7 +112,7 @@ bool Float(byte_array::ReferencedByteArray const &str, uint64_t &pos) {
   return oldpos != pos;
 }
 
-bool Whitespace(byte_array::ReferencedByteArray const &str, uint64_t &pos) {
+bool Whitespace(byte_array::ConstByteArray const &str, uint64_t &pos) {
   bool ret = false;
   while ((pos < str.size()) && ((str[pos] == ' ') || (str[pos] == '\n') ||
                                 (str[pos] == '\r') || (str[pos] == '\t')))
@@ -120,7 +120,7 @@ bool Whitespace(byte_array::ReferencedByteArray const &str, uint64_t &pos) {
   return ret;
 }
 
-bool AnyChar(byte_array::ReferencedByteArray const &str, uint64_t &pos) {
+bool AnyChar(byte_array::ConstByteArray const &str, uint64_t &pos) {
   ++pos;
   return true;
 }

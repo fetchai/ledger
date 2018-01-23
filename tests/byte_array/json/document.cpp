@@ -6,7 +6,7 @@ using namespace fetch::byte_array;
 
 int main() {
   SCENARIO("") {
-    ReferencedByteArray doc_content = R"({
+    ByteArray doc_content = R"({
   "x": { 
     "y": [1,2,3],
     "z": null

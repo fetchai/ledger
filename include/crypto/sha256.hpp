@@ -11,7 +11,7 @@ namespace crypto {
 
 class SHA256 : public StreamHasher {
  public:
-  typedef byte_array::ReferencedByteArray byte_array_type;
+  typedef typename StreamHasher::byte_array_type  byte_array_type;
 
   void Reset() override {
     if (!SHA256_Init(&data_))

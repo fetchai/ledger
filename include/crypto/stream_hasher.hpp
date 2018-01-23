@@ -6,7 +6,7 @@ namespace fetch {
 namespace crypto {
 class StreamHasher {
  public:
-  typedef byte_array::ReferencedByteArray byte_array_type;
+  typedef byte_array::ByteArray byte_array_type;
 
   virtual void Reset() = 0;
   virtual bool Update(byte_array_type const& data) = 0;

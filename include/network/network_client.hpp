@@ -2,8 +2,10 @@
 #define NETWORK_NETWORK_CLIENT_HPP
 
 #include "network/message.hpp"
-#include "serializer/byte_array_buffer.hpp"
+#include "byte_array/referenced_byte_array.hpp"
 #include "serializer/referenced_byte_array.hpp"
+#include "serializer/byte_array_buffer.hpp"
+
 #include "mutex.hpp"
 #include <asio.hpp>
 #include <memory>
@@ -14,15 +16,14 @@ namespace fetch {
 namespace network {
 class NetworkClient {
  public:
-  typedef byte_array::ReferencedByteArray byte_array_type;
 
-  NetworkClient(byte_array_type const& host, byte_array_type const& port)
+  NetworkClient(std::string const& host, std::string const& port)
       : socket_(io_service_) {
     writing_ = false;
     Connect(host, port);
   }
 
-  NetworkClient(byte_array_type const& host, uint16_t const& port)
+  NetworkClient(std::string const& host, uint16_t const& port)
       : socket_(io_service_) {
     writing_ = false;    
     Connect(host, port);
@@ -108,7 +109,7 @@ class NetworkClient {
   }
 
   void ReadBody() {
-    message_type message;
+    byte_array::ByteArray message;
     message.Resize(header_.length);
 
     auto cb = [this, message](std::error_code ec, std::size_t) {
@@ -126,7 +127,7 @@ class NetworkClient {
   }
 
   void Write() {    
-    serializers::Byte_ArrayBuffer buffer;
+    serializers::ByteArrayBuffer buffer;
 
     write_mutex_.lock();
     if( write_queue_.empty() ) {

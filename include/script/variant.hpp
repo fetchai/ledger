@@ -75,7 +75,7 @@ class Variant {
   
 
 public:
-  typedef fetch::byte_array::ReferencedByteArray byte_array_type;
+  typedef fetch::byte_array::ByteArray byte_array_type;
 
   Variant() : type_(UNDEFINED) {}
   Variant(int64_t const& i) { *this = i; }

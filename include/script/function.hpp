@@ -173,7 +173,7 @@ class Function {
                                 std::size_t &i,
                                 std::size_t context_parans = 1) {
     while ((i < tokenizer.size()) && (context_parans != 0)) {
-      auto &t = tokenizer[i];
+      auto const &t = tokenizer[i];
 
       switch (t.type()) {
         case Function::F_CONTEXT_START:

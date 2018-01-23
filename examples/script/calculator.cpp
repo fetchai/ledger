@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
     exit(-1);
   }
   
-  ReferencedByteArray input;
+  ConstByteArray input;
   for(std::size_t i =1 ; i < argc; ++i)
     input = input + argv[i];
   

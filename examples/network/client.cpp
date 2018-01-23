@@ -5,8 +5,8 @@ using namespace fetch::network;
 
 class Client : public NetworkClient {
 public:
-  Client(fetch::byte_array::ReferencedByteArray const &host,
-         fetch::byte_array::ReferencedByteArray const &port)
+  Client(std::string const &host,
+         std::string const &port)
     : NetworkClient(host, port ) { }
   
   void PushMessage(message_type const &value) override {
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     Client client(argv[1], argv[2]);
     client.Start();
     
-    message_type msg;
+    fetch::byte_array::ByteArray msg;
     msg.Resize(512);
 
     while (std::cin.getline(msg.char_pointer(), 512)) {

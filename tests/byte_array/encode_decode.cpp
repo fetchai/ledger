@@ -5,7 +5,7 @@
 #include<iostream>
 #include"unittest.hpp"
 using namespace fetch::byte_array;
-void Test(ReferencedByteArray val) {
+void Test(ByteArray val) {
 
   if(FromHex(ToHex(val))  != val ) {
     std::cerr << FromHex(ToHex(val))  << "!=" <<  val << std::endl;
@@ -14,8 +14,8 @@ void Test(ReferencedByteArray val) {
 }
 
 int main() {
-  SCENARIO("Encoders/decoders for ReferencedByteArray") {
-    ReferencedByteArray str = "hello WoRld";
+  SCENARIO("Encoders/decoders for ByteArray") {
+    ByteArray str = "hello WoRld";
 
     SECTION("Hex encode / decode self-consistentcy") {
       EXPECT( FromHex(ToHex( str ) ) == str);

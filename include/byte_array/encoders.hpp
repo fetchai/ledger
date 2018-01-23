@@ -5,19 +5,22 @@
 namespace fetch {
 namespace byte_array {
 
-ReferencedByteArray ToBase64(ReferencedByteArray const &str) {
+
+BasicByteArray ToBase64(BasicByteArray const &str) {
   // After https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
-  ReferencedByteArray ret;
+
   std::size_t N = str.size();
   uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
   std::size_t idx = 0;
 
   int invPadCount = N % 3;
+  std::size_t size = ((N + (3 -invPadCount ) ) << 2) / 3;
   if(invPadCount == 0)
-    ret.Resize((N  << 2) / 3);
-  else
-    ret.Resize(((N + (3 -invPadCount ) ) << 2) / 3);
+    size = (N  << 2) / 3;
 
+  ByteArray ret;
+  ret.Resize(size);
+  
   uint8_t n0, n1, n2, n3;
   for (std::size_t x = 0; x < N; x += 3) {
     uint32_t temp = static_cast<uint32_t>(data[x]) << 16;
@@ -42,11 +45,12 @@ ReferencedByteArray ToBase64(ReferencedByteArray const &str) {
   return ret;
 }
 
-ReferencedByteArray ToHex(ReferencedByteArray const &str) {
-  uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
-  ReferencedByteArray ret;
 
+BasicByteArray ToHex(BasicByteArray const &str) {
+  uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
+  ByteArray ret;
   ret.Resize(str.size() << 1);
+  
   std::size_t j = 0;
   for (std::size_t i = 0; i < str.size(); ++i) {
     uint8_t c = data[i];

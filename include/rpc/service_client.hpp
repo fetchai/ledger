@@ -21,9 +21,9 @@ namespace rpc {
 
 class ServiceClient : public network::NetworkClient {
  public:
-  typedef byte_array::ReferencedByteArray byte_array_type;
 
-  ServiceClient(byte_array_type const& host, uint16_t const& port)
+
+  ServiceClient(std::string const& host, uint16_t const& port)
       : NetworkClient(host, port) {
     running_ = true;
     worker_thread_ = new std::thread([this]() {
@@ -155,7 +155,7 @@ class ServiceClient : public network::NetworkClient {
 
         throw serializers::SerializableException(
             error::PROMISE_NOT_FOUND,
-            byte_array_type("Could not find promise"));
+            "Could not find promise");
       }
       promises_mutex_.unlock();
         
@@ -178,7 +178,7 @@ class ServiceClient : public network::NetworkClient {
         promises_mutex_.unlock();        
         throw serializers::SerializableException(
             error::PROMISE_NOT_FOUND,
-            byte_array_type("Could not find promise"));
+            "Could not find promise");
       }
       promises_mutex_.unlock();
     
@@ -214,7 +214,7 @@ class ServiceClient : public network::NetworkClient {
       subde.mutex.unlock();
     } else {
       throw serializers::SerializableException(
-          error::UNKNOWN_MESSAGE, byte_array_type("Unknown message"));
+          error::UNKNOWN_MESSAGE, "Unknown message");
     }
   }
 

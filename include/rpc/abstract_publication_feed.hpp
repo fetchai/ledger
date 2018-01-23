@@ -22,7 +22,7 @@ public:
    * subsequently member functions from classes with (to this
    * implementation) unknown base class.
    */
-  typedef std::function< void(fetch::byte_array::ReferencedByteArray) > function_type;
+  typedef std::function< void(fetch::byte_array::ConstByteArray) > function_type;
 
   virtual ~AbstractPublicationFeed() {}
   
@@ -43,8 +43,8 @@ public:
    * member functions as publisher.    
    **/  
   template< typename C >
-  void create_publisher(feed_handler_type feed, C* cls, void (C::*function)( fetch::byte_array::ReferencedByteArray const& )  ) {
-    this->create_publisher(feed, [=](fetch::byte_array::ReferencedByteArray const& msg) ->void {
+  void create_publisher(feed_handler_type feed, C* cls, void (C::*function)( fetch::byte_array::ConstByteArray const& )  ) {
+    this->create_publisher(feed, [=](fetch::byte_array::ConstByteArray const& msg) ->void {
         (cls->*function)(msg);
       });
   }

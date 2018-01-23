@@ -11,7 +11,7 @@ namespace serializers {
 class ByteArrayBuffer {
  public:
   ByteArrayBuffer() {}
-  ByteArrayBuffer(byte_array::ReferencedByteArray s) { data_ = s; }
+  ByteArrayBuffer(byte_array::ByteArray s) { data_ = s; }
 
   void Allocate(std::size_t const &val) {
     data_.Resize(data_.size() + val);
@@ -45,10 +45,10 @@ class ByteArrayBuffer {
 
   std::size_t size() const { return data_.size(); }
   int64_t bytes_left() const { return data_.size() - pos_; }  
-  byte_array::ReferencedByteArray const &data() const { return data_; }
+  byte_array::ByteArray const &data() const { return data_; }
 
  private:
-  byte_array::ReferencedByteArray data_;
+  byte_array::ByteArray data_;
 
   std::size_t pos_ = 0;
 };

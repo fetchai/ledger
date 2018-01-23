@@ -32,7 +32,7 @@ namespace rpc {
 class Protocol {
  public:
   typedef AbstractCallable callable_type;
-  typedef byte_array::ReferencedByteArray byte_array_type;
+  typedef byte_array::ConstByteArray byte_array_type;
 
   /* Operator to access the different functions in the protocol.
    * @n is the idnex of callable in the protocol.

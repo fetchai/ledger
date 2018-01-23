@@ -18,7 +18,7 @@ namespace details {
 class PromiseImplementation {
  public:
   typedef uint64_t promise_counter_type;
-  typedef byte_array::ReferencedByteArray byte_array_type;
+  typedef byte_array::ConstByteArray byte_array_type;
 
   PromiseImplementation() {
     fulfilled_ = false;

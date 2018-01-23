@@ -60,7 +60,7 @@ class ClientConnection : public AbstractClientConnection,
   }
 
   void ReadBody() {
-    message_type message;
+    byte_array::ByteArray message;
     message.Resize(header_.length);
     auto self(shared_from_this());
     auto cb = [this, self, message](std::error_code ec, std::size_t) {
@@ -77,7 +77,7 @@ class ClientConnection : public AbstractClientConnection,
   }
 
   void Write() {
-    serializers::Byte_ArrayBuffer buffer;
+    serializers::ByteArrayBuffer buffer;
     write_mutex_.lock();    
     buffer << write_queue_.front();
     write_mutex_.unlock();

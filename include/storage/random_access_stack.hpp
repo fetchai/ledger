@@ -1,7 +1,8 @@
 #ifndef STORAGE_RANDOM_ACCESS_STACK_HPP
 #define STORAGE_RANDOM_ACCESS_STACK_HPP
+#include"assert.hpp"
 #include <fstream>
-#include "byte_array/referenced_byte_array.hpp"
+#include <string>
 
 namespace fetch {
 namespace platform {
@@ -43,9 +44,8 @@ class RandomAccessStack {
  public:
   typedef D header_extra_type;
   typedef T type;
-  typedef byte_array::ReferencedByteArray byte_array_type;
 
-  void Load(byte_array_type const &filename) {
+  void Load(std::string const &filename) {
     filename_ = filename;
     std::fstream fin(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
@@ -62,8 +62,7 @@ class RandomAccessStack {
     std::size_t capacity = (length - header_.size()) / sizeof(type);
 
     if (capacity < header_.objects) {
-      std::cerr << "Expected more stack objects." << std::endl;
-      exit(-1);
+      TODO_FAIL( "Expected more stack objects." );
     }
 
     // TODO: Check magic
@@ -71,13 +70,13 @@ class RandomAccessStack {
     fin.close();
   }
 
-  void New(byte_array_type const &filename) {
+  void New(std::string const &filename) {
     filename_ = filename;
     Clear();
   }
 
   void Get(std::size_t const &i, type &object) const {
-    assert(filename_ != "");
+    detailed_assert(filename_ != "");
     std::size_t n = i * sizeof(type) + header_.size();
     std::fstream fin(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
@@ -87,7 +86,7 @@ class RandomAccessStack {
   }
 
   void Set(std::size_t const &i, type const &object) const {
-    assert(filename_ != "");
+    detailed_assert(filename_ != "");
     std::size_t n = i * sizeof(type) + header_.size();
     std::fstream fin(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
@@ -97,7 +96,7 @@ class RandomAccessStack {
   }
 
   void SetExtraHeader(header_extra_type const &he) {
-    assert(filename_ != "");
+    detailed_assert(filename_ != "");
     std::fstream fin(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
     header_.extra = he;
@@ -131,7 +130,7 @@ class RandomAccessStack {
   }
 
   type Top() const {
-    assert(header_.objects > 0);
+    detailed_assert(header_.objects > 0);
 
     std::size_t n = (header_.objects - 1) * sizeof(type) + header_.size();
     std::fstream fin(filename_,
@@ -149,7 +148,7 @@ class RandomAccessStack {
   void Swap(std::size_t const &i, std::size_t const &j) {
     if (i == j) return;
     type a, b;
-    assert(filename_ != "");
+    detailed_assert(filename_ != "");
 
     std::size_t n1 = i * sizeof(type) + header_.size();
     std::size_t n2 = j * sizeof(type) + header_.size();
@@ -174,22 +173,20 @@ class RandomAccessStack {
   std::size_t empty() const { return header_.objects == 0; }
 
   void Clear() {
-    assert(filename_ != "");
+    detailed_assert(filename_ != "");
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
 
     header_ = Header();
 
     if (!header_.Write(fin)) {
-      std::cerr << "Error could not write header - todo throw error"
-                << std::endl;
-      exit(-1);
+      TODO_FAIL( "Error could not write header - todo throw error" );
     }
 
     fin.close();
   }
 
  private:
-  byte_array_type filename_ = "";
+  std::string filename_ = "";
   Header header_;
 };
 };

@@ -1,9 +1,10 @@
 #ifndef STORAGE_VARIANT_STACK_HPP
 #define STORAGE_VARIANT_STACK_HPP
-#include "byte_array/referenced_byte_array.hpp"
 
+#include"assert.hpp"
 #include <cassert>
 #include <fstream>
+#include <string>
 
 // TODO: Make variant stack as a circular buffer!
 
@@ -12,7 +13,6 @@ namespace storage {
 
 class VariantStack {
  public:
-  typedef byte_array::ReferencedByteArray byte_array_type;
   struct Separator {
     uint64_t type;
     uint64_t object_size;
@@ -78,14 +78,14 @@ class VariantStack {
     }
   };
 
-  void Load(byte_array_type const &filename) {
+  void Load(std::string const &filename) {
     filename_ = filename;
     std::fstream fin(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
     header_.Read(fin);
   }
 
-  void New(byte_array_type const &filename) {
+  void New(std::string const &filename) {
     filename_ = filename;
     Clear();
   }
@@ -142,9 +142,7 @@ class VariantStack {
 
     fin.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
     if (separator.object_size != sizeof(T)) {
-      std::cerr << "TODO: Throw error, size mismatch in variantstack"
-                << std::endl;
-      exit(-1);
+      TODO_FAIL( "TODO: Throw error, size mismatch in variantstack" );
     }
 
     fin.read(reinterpret_cast<char *>(&object), sizeof(T));
@@ -171,8 +169,7 @@ class VariantStack {
     header_ = Header();
 
     if (!header_.Write(fin)) {
-      std::cerr << "Error: could not write header" << std::endl;
-      exit(-1);
+      TODO_FAIL( "Error: could not write header" );
     }
 
     fin.close();
@@ -182,7 +179,7 @@ class VariantStack {
   std::size_t size() const { return header_.object_count; }
 
  private:
-  byte_array_type filename_ = "";
+  std::string filename_ = "";
   Header header_;
 };
 };

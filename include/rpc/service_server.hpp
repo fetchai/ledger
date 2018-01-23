@@ -28,7 +28,7 @@ class ServiceServer : public network::NetworkServer {
     handle_type client;
     network::message_type message;
   };
-  typedef byte_array::ReferencedByteArray byte_array_type;
+  typedef byte_array::ConstByteArray byte_array_type;
 
   ServiceServer(uint16_t port) : NetworkServer(port), message_mutex_(__LINE__, __FILE__) {
     running_ = false;

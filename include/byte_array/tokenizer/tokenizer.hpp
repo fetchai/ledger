@@ -13,7 +13,7 @@ namespace byte_array {
 
 class Tokenizer : public std::vector<Token> {
  public:
-  typedef ReferencedByteArray byte_array_type;
+  typedef ConstByteArray byte_array_type;
   typedef std::function<bool(byte_array_type const &, uint64_t &)>
       consumer_function_type;
 
@@ -85,7 +85,7 @@ class Tokenizer : public std::vector<Token> {
     consumers_[tokenspace].push_back(fnc);
   }
 
-  bool Parse(byte_array_type filename, byte_array_type contents) {
+  bool Parse(byte_array_type filename, byte_array_type const& contents) {
     uint64_t pos = 0;
     uint64_t line = 0;
     uint64_t char_index = 0;

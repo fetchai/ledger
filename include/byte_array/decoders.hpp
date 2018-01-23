@@ -1,18 +1,19 @@
 #ifndef BYTE_ARRAY_DECODERS_HPP
 #define BYTE_ARRAY_DECODERS_HPP
-#include "byte_array/referenced_byte_array.hpp"
+#include "byte_array/basic_byte_array.hpp"
 #include "byte_array/details/encode_decode.hpp"
 #include"assert.hpp"
 namespace fetch {
 namespace byte_array {
 
-ReferencedByteArray FromBase64(ReferencedByteArray const &str) {
+
+BasicByteArray FromBase64(BasicByteArray const &str) {
   // After https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
   assert((str.size() % 4) == 0);
   std::size_t pad = 0;
   while((pad < str.size()) && (str[ str.size() - pad - 1] == details::base64pad)) ++pad;
 
-  ReferencedByteArray ret;
+  ByteArray ret;
   ret.Resize( ((3*str.size()) >> 2) - pad );
 
   std::size_t j = 0;
@@ -53,11 +54,12 @@ ReferencedByteArray FromBase64(ReferencedByteArray const &str) {
   return ret;
 }
 
-ReferencedByteArray FromHex(ReferencedByteArray const &str) {
-  uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
-  ReferencedByteArray ret;
 
+BasicByteArray FromHex(BasicByteArray const &str) {
+  uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
+  ByteArray ret;
   ret.Resize(str.size() >> 1);
+  
   std::size_t n = str.size();
   std::size_t j = 0;
   for (std::size_t i = 0; i < n; i += 2) {
