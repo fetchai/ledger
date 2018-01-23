@@ -5,8 +5,8 @@ A short description of what we need to develop.
 # MVP Friday the 26th
 
 Would require:
-1. Transaction definition                                  
-2. STL vector for unapplied transactions
+
+
 3. Networking inteface to deliver transactions / recieve
 4. Block definition
 5. Block queue

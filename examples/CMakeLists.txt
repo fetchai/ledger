@@ -1,3 +1,5 @@
+add_executable(simple_ledger_node ledger/simple-ledger/node.cpp)
+
 add_executable(tutorial_rc_to_node_server tutorials/01_rc-to-node/node.cpp)
 add_executable(tutorial_rc_to_node_client tutorials/01_rc-to-node/client.cpp)
 

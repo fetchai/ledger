@@ -21,6 +21,9 @@ struct Printer {
 };
 };
 
+
+#ifndef FETCH_DISABLE_TODO_COUT
+// TODO: Rename to FETCH_...
 #define TODO_FAIL(...)                                                        \
   fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
   std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; \
@@ -30,6 +33,13 @@ struct Printer {
   fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
   std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; 
 
+#else
+
+#define TODO_FAIL(...)                                                        \
+  exit(-1)
+#define TODO(...)                                                        
+
+#endif
 
 #define detailed_assert(cond) \
   if( !(cond) ) { \

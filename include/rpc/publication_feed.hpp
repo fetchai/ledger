@@ -93,7 +93,7 @@ public:
     if(publisher_[feed])
       publisher_[feed](params.data());    
     else {
-      TODO_FAIL("could not find publisher - make a warning logger");
+      TODO("could not find publisher - make a warning logger");
     }
   }
 private:

@@ -225,14 +225,15 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
 
 #define SECTION_REF(EXPLANATION)                                        \
   self->NewContext<fetch::unittest::TestContext>(EXPLANATION);          \
+  (*self->last()) << fetch::unittest::UnitTestOutputFormat::FORMAT_SECTION; \
   (*self->last()) = [&](                                                \
       fetch::unittest::TestContext::self_shared_type self) mutable
 
 #define SECTION(EXPLANATION)                                                \
   self->NewContext<fetch::unittest::TestContext>(EXPLANATION);              \
   (*self->last()) << fetch::unittest::UnitTestOutputFormat::FORMAT_SECTION; \
-  (*self->last()) = [=                                                      \
-  ](fetch::unittest::TestContext::self_shared_type self) mutable
+  (*self->last()) = [=](fetch::unittest::TestContext::self_shared_type self) \
+                     mutable
 
 #define SCENARIO(NAME)                                          \
   fetch::unittest::details::NewTest(NAME);                      \
