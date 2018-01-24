@@ -40,7 +40,8 @@ public:
       : data_(other.data_),
         arr_pointer_(other.arr_pointer_),
         start_(other.start_),
-        length_(other.length_) {}
+        length_(other.length_) {
+  }
 
   BasicByteArray(self_type const &other,
                       std::size_t const &start, std::size_t const &length)
@@ -79,7 +80,11 @@ public:
     if (i < n) return arr_pointer_[i] < other.arr_pointer_[i];
     return length_ < other.length_;
   }
-
+  
+  bool operator>(self_type const &other) const {
+    return other < (*this);
+  }
+    
   bool operator==(self_type const &other) const {
     if (other.size() != size()) return false;
     bool ret = true;

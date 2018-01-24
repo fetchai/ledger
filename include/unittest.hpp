@@ -149,6 +149,8 @@ class Expression {
   ADD_OP(/)
   ADD_OP(==)
   ADD_OP(!=)
+  ADD_OP(<)
+  ADD_OP(>)    
 #undef ADD_OP
 
   std::string const& expression() const { return expression_; }
@@ -239,7 +241,7 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
   fetch::unittest::details::NewTest(NAME);                      \
   (*fetch::unittest::details::unit_tests.back())                \
       << fetch::unittest::UnitTestOutputFormat::FORMAT_HEADING; \
-  (*fetch::unittest::details::unit_tests.back()) = [](          \
+  (*fetch::unittest::details::unit_tests.back()) = [=](          \
       fetch::unittest::TestContext::self_shared_type self)
 
 //#define CURSOR_MOVE(c)                      \
@@ -297,7 +299,7 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
     exit(-1);                                                               \
  }
   
-#define DETAILED_EXPECT(EXPRESSION, CAPTURE...)                               \
+#define DETAILED_EXPECT(EXPRESSION)                                     \
   fetch::unittest::details::NewNestedProgram([=](                             \
       fetch::unittest::ProgramInserter::sub_function_type sub) {              \
     if (!(EXPRESSION)) {                                                      \
@@ -309,7 +311,7 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
       exit(-1);                                                               \
     }                                                                         \
   });                                                                         \
-  fetch::unittest::details::last_inserter() = [CAPTURE](                      \
+  fetch::unittest::details::last_inserter() = [=](                      \
       fetch::unittest::TestContext::self_shared_type self)
 };
 };

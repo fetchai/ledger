@@ -38,10 +38,18 @@ public:
   }
 
 
+  /*
+   *
+   * TODO: This breaks referencing - work out if this is the desired behaviour.
+   */
   void Resize(std::size_t const &n) {
     return super_type::Resize(n);
   }
 
+  /*
+   *
+   * TODO: This breaks referencing - work out if this is the desired behaviour.
+   */  
   virtual void Reserve(std::size_t const &n) {
     return super_type::Reserve(n);
   }

@@ -40,6 +40,8 @@ standard_test(random_access_stack storage/random_access_stack.cpp)
 
 
 
+standard_test(crypto_consensus_proof_of_work crypto/consensus/proof_of_work.cpp )
+standard_test(crypto_bignumber crypto/bignumber.cpp )
 
 ### MISC
 standard_test( load_image_read_exceptions image/load_image_read_exceptions.cpp )
