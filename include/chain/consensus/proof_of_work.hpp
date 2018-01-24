@@ -3,13 +3,6 @@
 #include"crypto/sha256.hpp"
 namespace fetch {
 namespace consensus {
-
-class BigNumber : private byte_array::ByteArray {
-public:
-
-private:
-  
-};
   
 class ProofOfWork {
 public:
