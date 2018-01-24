@@ -3,7 +3,8 @@
 
 enum PeerToPeerCommands {
   BROADCAST_TRANSACTION = 1,
-  GET_MESSAGES = 2
+  BROADCAST_BLOCK = 2,  
+  GET_MESSAGES = 3
 };
 
 #endif

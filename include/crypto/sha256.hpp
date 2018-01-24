@@ -14,6 +14,7 @@ class SHA256 : public StreamHasher {
   typedef typename StreamHasher::byte_array_type  byte_array_type;
 
   void Reset() override {
+    digest_.Resize(0);
     if (!SHA256_Init(&data_))
       throw std::runtime_error("could not intialialise SHA256.");
   }
@@ -23,17 +24,20 @@ class SHA256 : public StreamHasher {
     return true;
   }
 
-  byte_array_type digest() override {
-    byte_array_type ret;
-    ret.Resize(SHA256_DIGEST_LENGTH);
-    uint8_t* p = reinterpret_cast<uint8_t*>(ret.pointer());
+  void Final() override {
+    digest_.Resize(SHA256_DIGEST_LENGTH);
+    uint8_t* p = reinterpret_cast<uint8_t*>(digest_.pointer());
     if (!SHA256_Final(p, &data_))
       throw std::runtime_error("could not finalize SHA256.");
-
-    return ret;
+  }
+  
+  byte_array_type digest() override {
+    assert( digest_.size() == SHA256_DIGEST_LENGTH);
+    return digest_;
   }
 
  private:
+  byte_array_type digest_;  
   SHA256_CTX data_;
 };
 };

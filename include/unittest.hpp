@@ -241,7 +241,7 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
   fetch::unittest::details::NewTest(NAME);                      \
   (*fetch::unittest::details::unit_tests.back())                \
       << fetch::unittest::UnitTestOutputFormat::FORMAT_HEADING; \
-  (*fetch::unittest::details::unit_tests.back()) = [=](          \
+  (*fetch::unittest::details::unit_tests.back()) = [&](          \
       fetch::unittest::TestContext::self_shared_type self)
 
 //#define CURSOR_MOVE(c)                      \

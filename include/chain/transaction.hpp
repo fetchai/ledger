@@ -24,6 +24,7 @@ public:
     hasher_type hash;
     hash.Reset();
     hash.Update( buf.data());
+    hash.Final();
     digest_ = hash.digest();
     return body_;
   }
