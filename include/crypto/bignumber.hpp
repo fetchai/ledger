@@ -178,6 +178,14 @@ public:
   
 };
 
+double Log(BigUnsigned const& x ) {
+  //  std::size_t i = x.TrimmedSize();
+  // TODO: Implement
+  return 0;
+}
+
+    
+  
 };
 };
 

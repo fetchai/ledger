@@ -17,6 +17,16 @@
 
 #include<map>
 #include<vector>
+#include<limits>
+
+struct BlockMetaData {
+  enum {
+    UNDEFINED = uint64_t(-1)
+  };
+  
+  uint64_t block_number = UNDEFINED;
+  double total_work     = std::numeric_limits< double >::infinity();
+};
 
 struct BlockBody {
   fetch::byte_array::ByteArray previous_hash;  
@@ -47,7 +57,8 @@ public:
   typedef fetch::chain::consensus::ProofOfWork proof_type;
   typedef BlockBody block_body_type;
   typedef typename proof_type::header_type block_header_type;
-  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256 > block_type;  
+  typedef BlockMetaData block_meta_data;
+  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256, block_meta_data > block_type;  
 
   NodeChainManager() {
     block_body_type genesis_body;
@@ -56,7 +67,11 @@ public:
     genesis_body.previous_hash = "genesis";
     genesis_body.transaction_hash = "genesis";
     genesis_block.SetBody( genesis_body );
-    chain_.push_back( genesis_block );
+
+    genesis_block.meta().total_work = 0;
+    genesis_block.meta().block_number = 0;
+    
+    PushBlock( genesis_block );
   }
   
   /* Remote control and internal functionality to push new transactions
@@ -108,18 +123,58 @@ public:
     block_mutex_.lock();
 
     assert( known_blocks_.find( block.header() ) == known_blocks_.end() );
-    known_blocks_[block.header()] = block;
-        
-    // TODO: Compute accumulated work and find best chain.
-    
-    block_mutex_.unlock();
+    chains_[block.header()] = block;
 
+    block_header_type header = block.header();
+    std::stack< block_header_type > visited_blocks;
+
+    // Tracing the way back to a chain that leads to genesis
+    while(chains_.find(header) != chains_.end()) {      
+      auto b = chains_[header];
+      visited_blocks.push_back( header );
+      
+      if(block.meta_data().block_number != meta_data_type::UNDEFINED) {
+        break;
+      }
+      
+      header = b.body().previous_hash;
+    }
+
+    // Computing the total work that went into the chain.
+    if(chains_.find(header) != chains_.end()) {
+      // TODO: Remove all of visited blocks from loose_blocks_
+      // Add block.header to loose_blocks
+      TODO_FAIL("not implemented yet");
+    } else {
+      header = visited_blocks.back();
+      auto m1 = chains_[header].meta_data();
+      visited_blocks.pop_back();
+
+      while(!visited_blocks.empty()) {
+        header = visited_blocks.back();
+        auto b2 = chains_[header];
+
+        double work = 0; // TODO: Compute
+        
+        b2.meta_data() = b1.meta_data();
+        ++b2.meta_data().block_number;        
+        b2.meta_data().total_work += work;
+        chains_[header] = b2;
+
+        b1 = b2;
+        visited_blocks.pop_back();
+      }
+
+      block = chains_[header];
+    }
+
+    if(block.meta_data().total_work > head_.meta_data().total_work) {
+      head_ = block;
+    }
+    
+    block_mutex_.unlock();    
     // TODO: Trim blocks away that are more than
     //    this->Publish(PeerToPeerCommands::BROADCAST_BLOCK, block );    
-  }
-
-  void Commit() {
-    // Always do a delayed commit to avoid resyncing as much as possible.
   }
   
   /*
@@ -134,8 +189,10 @@ private:
 
 
   fetch::mutex::Mutex block_mutex_;
-  std::map< block_header_type, block_type > known_blocks_;
-  std::vector< block_type > chain_;
+  std::map< block_header_type, block_type > chains_;
+  std::vector< block_header_type > loose_blocks_;  
+  std::vector< block_header_type > heads_;  
+  block_type head_;
 };
 
 #endif 

@@ -48,14 +48,10 @@ public:
   crypto::BigUnsigned digest() const { return digest_; }
   crypto::BigUnsigned target() const { return target_; }
 
-  double set_accumulated_work(double const &w) { return  accumulated_work_ = w; }
-  double const& accumulated_work() const { return  accumulated_work_; }  
-  
 private:
   crypto::BigUnsigned digest_;
   crypto::BigUnsigned target_;
   header_type header_;
-  double accumulated_work_;  
 };
   
 };
