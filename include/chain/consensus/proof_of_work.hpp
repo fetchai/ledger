@@ -1,15 +1,15 @@
 #ifndef CHAIN_CONSENSUS_PROOF_OF_WORK_HPP
 #define CHAIN_CONSENSUS_PROOF_OF_WORK_HPP
 #include"crypto/sha256.hpp"
-#include"crypto/bignumber.hpp"
+#include"math/bignumber.hpp"
 #include"byte_array/const_byte_array.hpp"
 namespace fetch {
 namespace chain {
 namespace consensus {
   
-class ProofOfWork : public crypto::BigUnsigned {
+class ProofOfWork : public math::BigUnsigned {
 public:
-  typedef crypto::BigUnsigned super_type; 
+  typedef math::BigUnsigned super_type; 
   typedef byte_array::ConstByteArray header_type;
   
   ProofOfWork() = default;
@@ -45,12 +45,12 @@ public:
   }
   
   header_type const& header() const { return header_; }  
-  crypto::BigUnsigned digest() const { return digest_; }
-  crypto::BigUnsigned target() const { return target_; }
+  math::BigUnsigned digest() const { return digest_; }
+  math::BigUnsigned target() const { return target_; }
 
 private:
-  crypto::BigUnsigned digest_;
-  crypto::BigUnsigned target_;
+  math::BigUnsigned digest_;
+  math::BigUnsigned target_;
   header_type header_;
 };
   

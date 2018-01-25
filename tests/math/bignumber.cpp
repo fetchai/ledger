@@ -1,9 +1,9 @@
 #include<iomanip>
-#include"crypto/bignumber.hpp"
+#include"math/bignumber.hpp"
 #include"byte_array/encoders.hpp"
 
 #include"unittest.hpp"
-using namespace fetch::crypto;
+using namespace fetch::math;
 using namespace fetch::byte_array;
 
 int main() {

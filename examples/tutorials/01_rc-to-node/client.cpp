@@ -1,11 +1,12 @@
 #include"vector_serialize.hpp"
 #include"commands.hpp"
-#include"rpc/function.hpp"
-#include"rpc/service_client.hpp"
+#include"service/function.hpp"
+#include"service/client.hpp"
 #include"commandline/parameter_parser.hpp"
 #include"commandline/vt100.hpp"
 #include<iostream>
-using namespace fetch::rpc;
+
+using namespace fetch::service;
 using namespace fetch::commandline;
 
 
@@ -27,7 +28,7 @@ int main(int argc, char const **argv) {
   std::string host = params.GetParam("host", "localhost");
 
   std::cout << "Connecting to server " << host << " on " << port << std::endl;
-  ServiceClient client(host, port);
+  ServiceClient< fetch::network::TCPClient > client(host, port);
   client.Start();
   std::this_thread::sleep_for( std::chrono::milliseconds(300) );
 

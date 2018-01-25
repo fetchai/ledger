@@ -1,13 +1,13 @@
-#include"rpc_consts.hpp"
+#include"service_consts.hpp"
 #include<iostream>
 #include"serializer/referenced_byte_array.hpp"
-#include"rpc/service_client.hpp"
-using namespace fetch::rpc;
+#include"service/client.hpp"
+using namespace fetch::service;
 using namespace fetch::byte_array;
 
 int main2() {
   // Client setup
-  ServiceClient client("localhost", 8080);
+  ServiceClient< fetch::network::TCPClient > client("localhost", 8080);
   client.Start();
 
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );
@@ -39,7 +39,7 @@ int main2() {
 
   // Testing performance
   auto t_start = std::chrono::high_resolution_clock::now();
-  fetch::rpc::Promise last_promise;
+  fetch::service::Promise last_promise;
 
   std::size_t N = 10000;
   for(std::size_t i=0; i < N; ++i) {

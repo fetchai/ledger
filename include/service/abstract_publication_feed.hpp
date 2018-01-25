@@ -1,12 +1,12 @@
-#ifndef RPC_ABSTRACT_PUBLICATION_FEED_HPP
-#define RPC_ABSTRACT_PUBLICATION_FEED_HPP
-#include"rpc/abstract_callable.hpp"
+#ifndef SERVICE_ABSTRACT_PUBLICATION_FEED_HPP
+#define SERVICE_ABSTRACT_PUBLICATION_FEED_HPP
+#include"service/abstract_callable.hpp"
 #include"assert.hpp"
 
 #include<functional>
 
 namespace fetch {
-namespace rpc {
+namespace service {
 /* Super class for publishers.
  * This class is the super class abstraction for the publisher
  * classes. It defines the core functionality for integrating with the

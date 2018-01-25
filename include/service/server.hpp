@@ -1,18 +1,18 @@
-#ifndef RPC_SERVICE_SERVER_HPP
-#define RPC_SERVICE_SERVER_HPP
+#ifndef SERVICE_SERVER_HPP
+#define SERVICE_SERVER_HPP
 
-#include "rpc/callable_class_member.hpp"
-#include "rpc/message_types.hpp"
-#include "rpc/protocol.hpp"
+#include "service/callable_class_member.hpp"
+#include "service/message_types.hpp"
+#include "service/protocol.hpp"
 #include "serializer/referenced_byte_array.hpp"
 #include "serializer/serializable_exception.hpp"
 
-#include "rpc/error_codes.hpp"
-#include "rpc/promise.hpp"
+#include "service/error_codes.hpp"
+#include "service/promise.hpp"
 #include "mutex.hpp"
 
 #include "assert.hpp"
-#include "network/network_server.hpp"
+#include "network/tcp_server.hpp"
 
 #include <map>
 #include <atomic>
@@ -20,24 +20,28 @@
 #include <deque>
 
 namespace fetch {
-namespace rpc {
+namespace service {
 
-class ServiceServer : public network::NetworkServer {
+template< typename T >
+class ServiceServer : public T {
  public:
+  typedef T super_type;
+  typedef typename T::handle_type handle_type;
   struct PendingMessage {
     handle_type client;
     network::message_type message;
   };
   typedef byte_array::ConstByteArray byte_array_type;
 
-  ServiceServer(uint16_t port) : NetworkServer(port), message_mutex_(__LINE__, __FILE__) {
+  ServiceServer(uint16_t port)
+    : super_type(port), message_mutex_(__LINE__, __FILE__) {
     running_ = false;
   }
 
   void Start() override {
     if( worker_thread_ == nullptr) {
       running_ = true;      
-      NetworkServer::Start();      
+      super_type::Start();      
       worker_thread_ = new std::thread([this]() {
           this->ProcessMessages();
         });
@@ -46,7 +50,7 @@ class ServiceServer : public network::NetworkServer {
 
   void Stop() override {    
     if( worker_thread_ != nullptr) {
-      NetworkServer::Stop();
+      super_type::Stop();
       running_ = false;
       worker_thread_->join();
       delete worker_thread_;
@@ -123,24 +127,24 @@ class ServiceServer : public network::NetworkServer {
                    network::message_type const& msg) {
     serializer_type params(msg);
 
-    rpc_classification_type type;
+    service_classification_type type;
     params >> type;
 
-    if (type == RPC_FUNCTION_CALL) {
+    if (type == SERVICE_FUNCTION_CALL) {
       serializer_type result;
       Promise::promise_counter_type id;
       
       try {
         params >> id;
-        result << RPC_RESULT << id;
+        result << SERVICE_RESULT << id;
         Call(result, params);
       } catch (serializers::SerializableException const& e) {
         result = serializer_type();
-        result << RPC_ERROR << id << e;
+        result << SERVICE_ERROR << id << e;
       }
 
-      Send(client, result.data());
-    } else if  (type == RPC_SUBSCRIBE)  {
+      this->Send(client, result.data());
+    } else if  (type == SERVICE_SUBSCRIBE)  {
       protocol_handler_type protocol;
       feed_handler_type feed;
       subscription_handler_type subid;
@@ -156,13 +160,13 @@ class ServiceServer : public network::NetworkServer {
         /*
         serializer_type result;
         result = serializer_type();
-        result << RPC_ERROR << id << e;
+        result << SERVICE_ERROR << id << e;
         Send(client, result.data());
         */
         throw e;
       }
       
-    } else if  (type == RPC_UNSUBSCRIBE)  {
+    } else if  (type == SERVICE_UNSUBSCRIBE)  {
       protocol_handler_type protocol;
       feed_handler_type feed;
       subscription_handler_type subid;
@@ -178,7 +182,7 @@ class ServiceServer : public network::NetworkServer {
         /*
         serializer_type result;
         result = serializer_type();
-        result << RPC_ERROR << id << e;
+        result << SERVICE_ERROR << id << e;
         Send(client, result.data());
         */
         throw e;

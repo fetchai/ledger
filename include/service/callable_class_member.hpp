@@ -1,12 +1,12 @@
-#ifndef RPC_CALLABLE_CLASS_MEMBER_HPP
-#define RPC_CALLABLE_CLASS_MEMBER_HPP
-#include "rpc/abstract_callable.hpp"
+#ifndef SERVICE_CALLABLE_CLASS_MEMBER_HPP
+#define SERVICE_CALLABLE_CLASS_MEMBER_HPP
+#include "service/abstract_callable.hpp"
 #include "serializer/referenced_byte_array.hpp"
 #include "serializer/stl_types.hpp"
 #include "serializer/typed_byte_array_buffer.hpp"
 
 namespace fetch {
-namespace rpc {
+namespace service {
 
 /* A member function wrapper that takes a serialized input.
  * @C is the class type to which the member function belongs.

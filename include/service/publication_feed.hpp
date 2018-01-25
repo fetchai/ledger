@@ -1,13 +1,13 @@
-#ifndef RPC_PUBLICATION_FEED_HPP
-#define RPC_PUBLICATION_FEED_HPP
-#include"rpc/abstract_callable.hpp"
-#include"rpc/abstract_publication_feed.hpp"
+#ifndef SERVICE_PUBLICATION_FEED_HPP
+#define SERVICE_PUBLICATION_FEED_HPP
+#include"service/abstract_callable.hpp"
+#include"service/abstract_publication_feed.hpp"
 #include"assert.hpp"
 
 #include<functional>
 #include<vector>
 namespace fetch {
-namespace rpc {
+namespace service {
 
 /* Publication functionality for a single feed.
  *
@@ -38,12 +38,12 @@ namespace rpc {
  * implementation of a feed in the protocol is as follows:
  *
  * ```
- * class NodeProtocol : public NodeFunctionality, public fetch::rpc::Protocol { 
+ * class NodeProtocol : public NodeFunctionality, public fetch::service::Protocol { 
  * public:
- *   NodeProtocol() : NodeFunctionality(),  fetch::rpc::Protocol() {
- *     using namespace fetch::rpc;
+ *   NodeProtocol() : NodeFunctionality(),  fetch::service::Protocol() {
+ *     using namespace fetch::service;
  *     
- *     // ... RPC exposure ...
+ *     // ... SERVICE exposure ...
  *
  *     this->RegisterFeed( MessageFeed::NEW_MESSAGE, this  );
  *   }

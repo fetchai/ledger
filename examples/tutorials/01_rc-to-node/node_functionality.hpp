@@ -1,8 +1,8 @@
 #ifndef NODE_FUNCTIONALITY_HPP
 #define NODE_FUNCTIONALITY_HPP
 #include"commands.hpp"
-#include"rpc/service_client.hpp"
-#include"rpc/publication_feed.hpp"
+#include"service/client.hpp"
+#include"service/publication_feed.hpp"
 #include"assert.hpp"
 
 #include<vector>
@@ -10,8 +10,10 @@
 #include<iostream>
 #include<memory>
 
-class NodeFunctionality : public fetch::rpc::HasPublicationFeed {
+class NodeFunctionality : public fetch::service::HasPublicationFeed {
 public:
+  typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
+  
   NodeFunctionality() {  }
 
   void Tick() {
@@ -34,13 +36,15 @@ public:
   void Connect(std::string host, uint16_t port) {
     std::cout << "Node connecting to " << host << " on " << port << std::endl;
     this->Publish(PeerToPeerFeed::CONNECTING, host, port);
-    connections_.push_back( std::make_shared< fetch::rpc::ServiceClient >(host, port ) );
+    connections_.push_back( std::make_shared< client_type >(host, port ) );
+
+    connections_.back()->Start();
   }
 
 
 private:
   std::vector< std::string > messages_;
-  std::vector< std::shared_ptr< fetch::rpc::ServiceClient > > connections_;  
+  std::vector< std::shared_ptr< client_type> > connections_;  
 };
 
 #endif

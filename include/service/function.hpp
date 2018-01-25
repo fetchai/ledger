@@ -1,6 +1,6 @@
-#ifndef RPC_FUNCTION_HPP
-#define RPC_FUNCTION_HPP
-#include "rpc/abstract_callable.hpp"
+#ifndef SERVICE_FUNCTION_HPP
+#define SERVICE_FUNCTION_HPP
+#include "service/abstract_callable.hpp"
 #include "serializer/referenced_byte_array.hpp"
 #include "serializer/stl_types.hpp"
 #include "serializer/typed_byte_array_buffer.hpp"
@@ -8,7 +8,7 @@
 #include<functional>
 
 namespace fetch {
-namespace rpc {
+namespace service {
 
 /* A function wrapper that takes a serialized input.
  * @F is the function signature.

@@ -1,5 +1,5 @@
-#ifndef CRYPTO_BIGNUMBER_HPP
-#define CRYPTO_BIGNUMBER_HPP
+#ifndef MATH_BIGNUMBER_HPP
+#define MATH_BIGNUMBER_HPP
 #include"byte_array/basic_byte_array.hpp"
 #include"byte_array/referenced_byte_array.hpp"
 #include"byte_array/const_byte_array.hpp"
@@ -8,7 +8,7 @@
 #include<algorithm>
 #include<cmath>
 namespace fetch {
-namespace crypto {
+namespace math {
   /* Implements a subset of big number functionality.
    * 
    * The purpose of this library is to implement a subset of number
@@ -16,10 +16,7 @@ namespace crypto {
    * proof-of-work or other big uint manipulations.
    *
    * The implementation subclasses a <byte_array::BasicByteArray> such
-   * one easily use this in combination with hashes etc.
-   *
-   * One further thing TODO, is to move this out of crypto as this also
-   * have other applications such as effecient simulated annealing.
+   * one easily use this in combination with hashes etc.   
    */  
 class BigUnsigned : public byte_array::BasicByteArray {
 public:

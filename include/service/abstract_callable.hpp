@@ -1,9 +1,9 @@
-#ifndef RPC_ABSTRACT_CALLABLE_HPP
-#define RPC_ABSTRACT_CALLABLE_HPP
-#include "rpc/types.hpp"
+#ifndef SERVICE_ABSTRACT_CALLABLE_HPP
+#define SERVICE_ABSTRACT_CALLABLE_HPP
+#include "service/types.hpp"
 
 namespace fetch {
-namespace rpc {
+namespace service {
 
 namespace details {
 /* Argument packing routines for callables.

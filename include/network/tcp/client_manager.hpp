@@ -1,8 +1,8 @@
 #ifndef NETWORK_CLIENT_MANAGER_HPP
 #define NETWORK_CLIENT_MANAGER_HPP
 
-#include "network/abstract_connection.hpp"
-#include "network/abstract_server.hpp"
+#include "network/tcp/abstract_connection.hpp"
+#include "network/tcp/abstract_server.hpp"
 #include "assert.hpp"
 #include "mutex.hpp"
 

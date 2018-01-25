@@ -1,6 +1,6 @@
 #include <cstdlib>
 #include <iostream>
-#include"network/network_server.hpp"
+#include"network/tcp_server.hpp"
 using namespace fetch::network;
 
 int main(int argc, char* argv[]) {
@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
     }
 
     
-    NetworkServer s(std::atoi(argv[1]));
+    TCPServer s(std::atoi(argv[1]));
     s.Start();
     
     while(true) {

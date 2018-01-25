@@ -1,8 +1,8 @@
-#ifndef RPC_PROMISE_HPP
-#define RPC_PROMISE_HPP
+#ifndef SERVICE_PROMISE_HPP
+#define SERVICE_PROMISE_HPP
 
 #include "byte_array/referenced_byte_array.hpp"
-#include "rpc/types.hpp"
+#include "service/types.hpp"
 #include "serializer/exception.hpp"
 #include "mutex.hpp"
 
@@ -13,7 +13,7 @@
 #include <thread>
 
 namespace fetch {
-namespace rpc {
+namespace service {
 namespace details {
 class PromiseImplementation {
  public:

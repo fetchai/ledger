@@ -1,15 +1,15 @@
-#ifndef RPC_FEED_HPP
-#define RPC_FEED_HPP
-#include "rpc/types.hpp"
-#include"rpc/message_types.hpp"
-#include"rpc/abstract_publication_feed.hpp"
+#ifndef SERVICE_FEED_HPP
+#define SERVICE_FEED_HPP
+#include "service/types.hpp"
+#include"service/message_types.hpp"
+#include"service/abstract_publication_feed.hpp"
 #include"mutex.hpp"
 
 #include<vector>
 #include <iterator>
 
 namespace fetch {
-namespace rpc {
+namespace service {
 /* This is a subscription manager that is used on the server side.
  *
  * This class manages the client subscriptions. It is added to the
@@ -49,7 +49,7 @@ public:
 
     publisher_->create_publisher(feed_, [=](fetch::byte_array::ConstByteArray const&  msg) {
         serializer_type params;
-        params << RPC_FEED << feed_;
+        params << SERVICE_FEED << feed_;
         uint64_t p = params.Tell();
         params << subscription_handler_type(0); // placeholder
         
@@ -124,7 +124,7 @@ public:
    *
    * @return the publisher.
    */  
-  fetch::rpc::AbstractPublicationFeed* publisher() const { return publisher_; }
+  fetch::service::AbstractPublicationFeed* publisher() const { return publisher_; }
 private:
 
   struct ClientSubscription {
@@ -136,7 +136,7 @@ private:
   fetch::mutex::Mutex subscribe_mutex_;
   feed_handler_type feed_;
   
-  fetch::rpc::AbstractPublicationFeed* publisher_ = nullptr;
+  fetch::service::AbstractPublicationFeed* publisher_ = nullptr;
 
 };
 

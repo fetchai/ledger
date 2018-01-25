@@ -4,7 +4,7 @@
 #include"remote_protocol.hpp"
 #include"node_protocol.hpp"
 
-class FetchService : public fetch::rpc::ServiceServer {
+class FetchService : public fetch::service::ServiceServer< fetch::network::TCPServer > {
 public:
   FetchService(uint16_t port, std::string const&info) : ServiceServer(port) {
     remote_ =  new RemoteProtocol(info);

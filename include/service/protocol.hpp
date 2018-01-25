@@ -1,31 +1,31 @@
-#ifndef RPC_PROTOCOL_HPP
-#define RPC_PROTOCOL_HPP
+#ifndef SERVICE_PROTOCOL_HPP
+#define SERVICE_PROTOCOL_HPP
 
 #include "assert.hpp"
-#include "rpc/types.hpp"
-#include "rpc/callable_class_member.hpp"
-#include "rpc/feed_subscription_manager.hpp"
+#include "service/types.hpp"
+#include "service/callable_class_member.hpp"
+#include "service/feed_subscription_manager.hpp"
 #include "serializer/referenced_byte_array.hpp"
-#include "rpc/error_codes.hpp"
+#include "service/error_codes.hpp"
 #include "mutex.hpp"
 #include <map>
 #include <memory>
 #include<vector>
 
 namespace fetch {
-namespace rpc {
+namespace service {
 /* A class that defines a generic protocol.
  *
  * This class is used for defining a general protocol with
- * remote-function-calls (RPCs) and data feeds. The RPCs are defined
+ * remote-function-calls (SERVICEs) and data feeds. The SERVICEs are defined
  * from a C++ function signature using any sub class of
- * <rpc::AbstractCallable> including <rpc::Function> and
- * <rpc::CallableClassMember>. The feeds are available from any
+ * <service::AbstractCallable> including <service::Function> and
+ * <service::CallableClassMember>. The feeds are available from any
  * functionality implementation that sub-classes
- * <rpc::HasPublicationFeed>.
+ * <service::HasPublicationFeed>.
  *
  * A current limitation of the implementation is that there is only
- * support for 256 RPC functions. It the next version of this class,
+ * support for 256 SERVICE functions. It the next version of this class,
  * this should be changed to be variable and allocated at construction
  * time (TODO).
  */
@@ -39,7 +39,7 @@ class Protocol {
    *
    * The result of this operator is a <callable_type> that can be
    * invoked in accodance with the definition of an
-   * <rpc::AbstractCallable>.
+   * <service::AbstractCallable>.
    *
    * This operator throws a <SerializableException> if the index is 
    *

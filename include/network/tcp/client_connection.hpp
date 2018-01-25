@@ -1,7 +1,7 @@
 #ifndef NETWORK_CLIENT_CONNECTION_HPP
 #define NETWORK_CLIENT_CONNECTION_HPP
 
-#include "network/client_manager.hpp"
+#include "network/tcp/client_manager.hpp"
 #include "network/message.hpp"
 #include "serializer/byte_array_buffer.hpp"
 #include "serializer/referenced_byte_array.hpp"

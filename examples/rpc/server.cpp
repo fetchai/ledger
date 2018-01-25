@@ -1,7 +1,7 @@
-#include"rpc_consts.hpp"
+#include"service_consts.hpp"
 #include<iostream>
-#include"rpc/service_server.hpp"
-using namespace fetch::rpc;
+#include"service/server.hpp"
+using namespace fetch::service;
 using namespace fetch::byte_array;
 
 
@@ -26,10 +26,10 @@ public:
 
 
 // Next we make a protocol for the implementation
-class RPCProto : public Implementation, public Protocol {
+class ServiceProtocol : public Implementation, public Protocol {
 public:
   
-  RPCProto() : Implementation(), Protocol() {
+  ServiceProtocol() : Implementation(), Protocol() {
     
     this->Expose(SLOWFUNCTION, new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::SlowFunction) );
     this->Expose(ADD, new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::Add) );
@@ -39,10 +39,10 @@ public:
 
 
 // And finanly we build the service
-class MyCoolService : public ServiceServer {
+class MyCoolService : public ServiceServer< fetch::network::TCPServer > {
 public:
   MyCoolService(uint16_t port) : ServiceServer(port) {
-    this->Add(MYPROTO, new RPCProto() );
+    this->Add(MYPROTO, new ServiceProtocol() );
   }
 };
 

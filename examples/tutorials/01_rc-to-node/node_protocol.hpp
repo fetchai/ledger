@@ -4,18 +4,18 @@
 #include"node_functionality.hpp"
 #include"commands.hpp"
 
-#include"rpc/service_server.hpp"
+#include"service/server.hpp"
 
 //template <typename C, typename F>
 //class Feed;
 
 //template <typename C, typename R, typename... Args> <C, R(Args...)> :
 
-class NodeProtocol : public NodeFunctionality, public fetch::rpc::Protocol { 
+class NodeProtocol : public NodeFunctionality, public fetch::service::Protocol { 
 public:
-  NodeProtocol() : NodeFunctionality(),  fetch::rpc::Protocol() {
+  NodeProtocol() : NodeFunctionality(),  fetch::service::Protocol() {
 
-    using namespace fetch::rpc;
+    using namespace fetch::service;
     auto send_msg =  new CallableClassMember<NodeFunctionality, void(std::string)>(this, &NodeFunctionality::SendMessage);
     auto get_msgs =  new CallableClassMember<NodeFunctionality, std::vector< std::string >() >(this, &NodeFunctionality::messages);    
       

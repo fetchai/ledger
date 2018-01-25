@@ -1,7 +1,7 @@
-#ifndef NETWORK_NETWORK_SERVER_HPP
-#define NETWORK_NETWORK_SERVER_HPP
+#ifndef NETWORK_TCP_SERVER_HPP
+#define NETWORK_TCP_SERVER_HPP
 
-#include "network/client_connection.hpp"
+#include "network/tcp/client_connection.hpp"
 #include "mutex.hpp"
 
 #include <asio.hpp>
@@ -11,7 +11,7 @@
 
 namespace fetch {
 namespace network {
-class NetworkServer : public AbstractNetworkServer {
+class TCPServer : public AbstractNetworkServer {
  public:
   typedef uint64_t handle_type;
 
@@ -20,14 +20,14 @@ class NetworkServer : public AbstractNetworkServer {
     message_type meesage;
   };
 
-  NetworkServer(uint16_t port)
+  TCPServer(uint16_t port)
     : request_mutex_(__LINE__, __FILE__), acceptor_(io_service_,
                   asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
         socket_(io_service_) {
     manager_ = new ClientManager(*this);
   }
 
-  ~NetworkServer() {
+  ~TCPServer() {
     Stop();
     socket_.close();
   }

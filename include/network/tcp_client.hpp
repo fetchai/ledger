@@ -1,5 +1,5 @@
-#ifndef NETWORK_NETWORK_CLIENT_HPP
-#define NETWORK_NETWORK_CLIENT_HPP
+#ifndef NETWORK_TCP_CLIENT_HPP
+#define NETWORK_TCP_CLIENT_HPP
 
 #include "network/message.hpp"
 #include "byte_array/referenced_byte_array.hpp"
@@ -14,22 +14,22 @@
 
 namespace fetch {
 namespace network {
-class NetworkClient {
- public:
+class TCPClient {
+public:
 
-  NetworkClient(std::string const& host, std::string const& port)
+  TCPClient(std::string const& host, std::string const& port)
       : socket_(io_service_) {
     writing_ = false;
     Connect(host, port);
   }
 
-  NetworkClient(std::string const& host, uint16_t const& port)
+  TCPClient(std::string const& host, uint16_t const& port)
       : socket_(io_service_) {
     writing_ = false;    
     Connect(host, port);
   }
 
-  ~NetworkClient() {
+  ~TCPClient() {
     Stop();
 
     socket_.close();

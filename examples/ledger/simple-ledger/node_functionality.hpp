@@ -11,7 +11,7 @@
 #include"transaction_serializer.hpp"
 
 
-#include"rpc/publication_feed.hpp"
+#include"service/publication_feed.hpp"
 #include"mutex.hpp"
 #include"commands.hpp"
 
@@ -47,7 +47,7 @@ T& Deserialize( T & serializer, BlockBody const &body) {
 }
 
 
-class NodeChainManager : public fetch::rpc::HasPublicationFeed {  
+class NodeChainManager : public fetch::service::HasPublicationFeed {  
 public:
   // Transaction defs
   typedef fetch::byte_array::ConstByteArray transaction_body_type;
@@ -181,10 +181,11 @@ public:
 
         auto &p = b2.proof();
         p();
-        double work = fetch::crypto::Log( p.digest() );
+        double work = fetch::math::Log( p.digest() );
         
         b2.meta_data() = b1.meta_data();
         ++b2.meta_data().block_number;
+
         // TODO: Check the correct way to compute the strongest chain - looks wrong
         b2.meta_data().total_work += work;
         chains_[header] = b2;

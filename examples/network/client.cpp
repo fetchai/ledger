@@ -1,13 +1,13 @@
 #include <cstdlib>
 #include <iostream>
-#include"network/network_client.hpp"
+#include"network/tcp_client.hpp"
 using namespace fetch::network;
 
-class Client : public NetworkClient {
+class Client : public TCPClient {
 public:
   Client(std::string const &host,
          std::string const &port)
-    : NetworkClient(host, port ) { }
+    : TCPClient(host, port ) { }
   
   void PushMessage(message_type const &value) override {
     std::cout << value << std::endl;

@@ -1,30 +1,31 @@
-#ifndef RPC_SERVICE_CLIENT_HPP
-#define RPC_SERVICE_CLIENT_HPP
+#ifndef SERVICE_SERVICE_CLIENT_HPP
+#define SERVICE_SERVICE_CLIENT_HPP
 
-#include "rpc/callable_class_member.hpp"
-#include "rpc/message_types.hpp"
-#include "rpc/protocol.hpp"
+#include "service/callable_class_member.hpp"
+#include "service/message_types.hpp"
+#include "service/protocol.hpp"
 #include "serializer/referenced_byte_array.hpp"
 #include "serializer/serializable_exception.hpp"
 
-#include "rpc/error_codes.hpp"
-#include "rpc/promise.hpp"
+#include "service/error_codes.hpp"
+#include "service/promise.hpp"
 
 #include "assert.hpp"
-#include "network/network_client.hpp"
+#include "network/tcp_client.hpp"
 #include "mutex.hpp"
 
 #include <map>
 
 namespace fetch {
-namespace rpc {
+namespace service {
 
-class ServiceClient : public network::NetworkClient {
- public:
-
-
+template< typename T >  
+class ServiceClient : public T {
+public:
+  typedef T super_type;
+  
   ServiceClient(std::string const& host, uint16_t const& port)
-      : NetworkClient(host, port) {
+      : super_type(host, port) {
     running_ = true;
     worker_thread_ = new std::thread([this]() {
         this->ProcessMessages();
@@ -42,14 +43,14 @@ class ServiceClient : public network::NetworkClient {
                function_handler_type const& function, arguments... args) {
     Promise prom;
     serializer_type params;
-    params << RPC_FUNCTION_CALL << prom.id();
+    params << SERVICE_FUNCTION_CALL << prom.id();
 
     promises_mutex_.lock();
     promises_[prom.id()] = prom.reference();
     promises_mutex_.unlock();
       
     PackCall(params, protocol, function, args...);
-    Send(params.data());
+    super_type::Send(params.data());
 
     return prom;
   }
@@ -59,8 +60,8 @@ class ServiceClient : public network::NetworkClient {
                                       AbstractCallable *callback) {
     subscription_handler_type subid = CreateSubscription( protocol, feed, callback );
     serializer_type params;
-    params << RPC_SUBSCRIBE << protocol << feed << subid ;
-    Send(params.data());
+    params << SERVICE_SUBSCRIBE << protocol << feed << subid ;
+    super_type::Send(params.data());
     return subid;
   }
   
@@ -69,10 +70,10 @@ class ServiceClient : public network::NetworkClient {
     auto &sub = subscriptions_[id];
     
     serializer_type params;
-    params << RPC_UNSUBSCRIBE << sub.protocol << sub.feed << id;
+    params << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
     subscription_mutex_.unlock();
     
-    Send(params.data());
+    super_type::Send(params.data());
     
     subscription_mutex_.lock();
     delete sub.callback;
@@ -140,10 +141,10 @@ class ServiceClient : public network::NetworkClient {
   void ProcessServerMessage(network::message_type const& msg) {
     serializer_type params(msg);
 
-    rpc_classification_type type;
+    service_classification_type type;
     params >> type;
 
-    if (type == RPC_RESULT) {
+    if (type == SERVICE_RESULT) {
       Promise::promise_counter_type id;
       params >> id;
 
@@ -165,7 +166,7 @@ class ServiceClient : public network::NetworkClient {
       promises_mutex_.lock();
       promises_.erase(it);
       promises_mutex_.unlock();
-    } else if (type == RPC_ERROR) {
+    } else if (type == SERVICE_ERROR) {
       Promise::promise_counter_type id;
       params >> id;
       
@@ -188,7 +189,7 @@ class ServiceClient : public network::NetworkClient {
       promises_.erase(it);
       promises_mutex_.unlock();
       
-    } else if( type == RPC_FEED ) {
+    } else if( type == SERVICE_FEED ) {
       feed_handler_type feed;
       subscription_handler_type sub;
       params >> feed >> sub;

@@ -1,5 +1,5 @@
-#ifndef RPC_CONSTS
-#define RPC_CONSTS
+#ifndef SERVICE_CONSTS
+#define SERVICE_CONSTS
 enum {
   SLOWFUNCTION = 1,
   ADD,
