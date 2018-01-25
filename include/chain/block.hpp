@@ -28,7 +28,7 @@ public:
     return body_;
   }
   
-  meta_type meta_data() { return meta_data_; }  
+  meta_type& meta_data() { return meta_data_; }  
   meta_type const& meta_data() const { return meta_data_; }
   header_type const& header() const { return proof_.header(); }  
   proof_type const & proof() const { return proof_; }

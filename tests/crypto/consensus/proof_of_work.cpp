@@ -2,7 +2,7 @@
 #include"chain/consensus/proof_of_work.hpp"
 #include"unittest.hpp"
 #include"byte_array/encoders.hpp"
-using namespace fetch::consensus;
+using namespace fetch::chain::consensus;
 using namespace fetch::byte_array;
 int main(int argc, char const **argv) {
   if(argc != 2) {

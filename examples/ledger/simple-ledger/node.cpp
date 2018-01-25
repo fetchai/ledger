@@ -113,6 +113,7 @@ int main(int argc, char const **argv) {
         }
 
         manager.Commit();
+
       }
       
       std::cout << "TXs: "<< counterA << ", blocks: " << counterB << std::endl;

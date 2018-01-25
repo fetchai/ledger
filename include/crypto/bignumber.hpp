@@ -6,7 +6,7 @@
 #include"assert.hpp"
 #include<vector>
 #include<algorithm>
-
+#include<cmath>
 namespace fetch {
 namespace crypto {
   /* Implements a subset of big number functionality.
@@ -179,11 +179,66 @@ public:
 };
 
 double Log(BigUnsigned const& x ) {
-  //  std::size_t i = x.TrimmedSize();
-  // TODO: Implement
-  return 0;
+  uint64_t last_byte =x.TrimmedSize();
+  union {
+    uint8_t bytes[4];
+    uint32_t value;    
+  } fraction;
+
+  assert( last_byte >= 4);
+
+  std::size_t j = last_byte - 4;
+  
+  fraction.bytes[ 0 ] = x[ j ];
+  fraction.bytes[ 1 ] = x[ j + 1];
+  fraction.bytes[ 2 ] = x[ j + 2];
+  fraction.bytes[ 3 ] = x[ j + 3];      
+
+  assert(fraction.value != 0);
+  
+  uint64_t tz = __builtin_ctz( fraction.value );
+  uint64_t exponent = (last_byte << 3) - tz;
+  
+  return exponent + std::log( double(fraction.value << tz ) * (1. /double(uint32_t(-1)) ) )  ;
 }
 
+double ToDouble(BigUnsigned const& x)  {
+  uint64_t last_byte =x.TrimmedSize();
+
+  union {
+    uint8_t bytes[4];
+    uint32_t value;    
+  } fraction;
+
+  assert( last_byte >= 4);
+
+  std::size_t j = last_byte - 4;
+  
+  fraction.bytes[ 0 ] = x[ j ];
+  fraction.bytes[ 1 ] = x[ j + 1];
+  fraction.bytes[ 2 ] = x[ j + 2];
+  fraction.bytes[ 3 ] = x[ j + 3];      
+
+  assert(fraction.value != 0);
+  uint64_t tz = __builtin_ctz( fraction.value ); // TODO: Wrap in function for cross compiler portability
+  uint32_t exponent = (last_byte << 3) - tz;
+
+  assert( exponent < 1023 );
+
+  union {
+    double value;
+    struct {
+      uint8_t sign : 1;
+      uint16_t exponent: 11;      
+      uint64_t mantissa: 52;
+    };
+  } conv;
+
+  conv.sign = 0;
+  conv.exponent = exponent;
+  conv.mantissa = uint64_t(fraction.value) << (20 + tz);
+  return conv.value;  
+}
     
   
 };

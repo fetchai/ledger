@@ -18,6 +18,7 @@
 #include<map>
 #include<vector>
 #include<limits>
+#include<stack>
 
 struct BlockMetaData {
   enum {
@@ -57,8 +58,8 @@ public:
   typedef fetch::chain::consensus::ProofOfWork proof_type;
   typedef BlockBody block_body_type;
   typedef typename proof_type::header_type block_header_type;
-  typedef BlockMetaData block_meta_data;
-  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256, block_meta_data > block_type;  
+  typedef BlockMetaData block_meta_data_type;
+  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256, block_meta_data_type > block_type;  
 
   NodeChainManager() {
     block_body_type genesis_body;
@@ -68,8 +69,10 @@ public:
     genesis_body.transaction_hash = "genesis";
     genesis_block.SetBody( genesis_body );
 
-    genesis_block.meta().total_work = 0;
-    genesis_block.meta().block_number = 0;
+    genesis_block.meta_data().total_work = 0;
+    genesis_block.meta_data().block_number = 0;
+
+    ResetNextHead();
     
     PushBlock( genesis_block );
   }
@@ -108,7 +111,7 @@ public:
     block_type block;
 
     block_mutex_.lock();
-    body.previous_hash = chain_.front().header();
+    body.previous_hash = head_.header();
     block_mutex_.unlock();
     
     tx_mutex_.lock();    
@@ -119,21 +122,37 @@ public:
     return block;
   }
   
-  void PushBlock( block_type const &block) {
+  void PushBlock(block_type block) {
     block_mutex_.lock();
 
-    assert( known_blocks_.find( block.header() ) == known_blocks_.end() );
+    if( chains_.find( block.header() ) != chains_.end() ) {
+      /*
+      std::cout << "Already known block: " << fetch::byte_array::ToBase64(block.header() ) << std::endl;
+      auto b2 = chains_[block.header()];
+      std::cout << "Block 1: " << std::endl;
+      std::cout << " - " << fetch::byte_array::ToBase64( block.body().previous_hash )  << std::endl;
+      std::cout << " - " << fetch::byte_array::ToBase64( block.body().transaction_hash )  << std::endl;
+      std::cout << "Block 2: " << std::endl;
+      std::cout << " - " << fetch::byte_array::ToBase64( b2.body().previous_hash )  << std::endl;
+      std::cout << " - " << fetch::byte_array::ToBase64( b2.body().transaction_hash )  << std::endl;
+      std::cout << " - " << b2.meta_data().block_number  << std::endl;      
+      */
+      block_mutex_.unlock();      
+      return ;
+    }
+    assert( chains_.find( block.header() ) == chains_.end() );    
     chains_[block.header()] = block;
-
+    
     block_header_type header = block.header();
     std::stack< block_header_type > visited_blocks;
+
 
     // Tracing the way back to a chain that leads to genesis
     while(chains_.find(header) != chains_.end()) {      
       auto b = chains_[header];
-      visited_blocks.push_back( header );
+      visited_blocks.push( header );
       
-      if(block.meta_data().block_number != meta_data_type::UNDEFINED) {
+      if(block.meta_data().block_number != block_meta_data_type::UNDEFINED) {
         break;
       }
       
@@ -141,40 +160,64 @@ public:
     }
 
     // Computing the total work that went into the chain.
-    if(chains_.find(header) != chains_.end()) {
+    if(block.body().transaction_hash == "genesis") {
+      std::cout << "Adding genesis" << std::endl;
+      head_ = block;
+      block_mutex_.unlock();
+      return;
+    } else if(chains_.find(header) != chains_.end()) {
+
       // TODO: Remove all of visited blocks from loose_blocks_
       // Add block.header to loose_blocks
       TODO_FAIL("not implemented yet");
     } else {
-      header = visited_blocks.back();
-      auto m1 = chains_[header].meta_data();
-      visited_blocks.pop_back();
+      header = visited_blocks.top();
+      auto b1 = chains_[header];
+      visited_blocks.pop();
 
       while(!visited_blocks.empty()) {
-        header = visited_blocks.back();
+        header = visited_blocks.top();
         auto b2 = chains_[header];
 
-        double work = 0; // TODO: Compute
+        auto &p = b2.proof();
+        p();
+        double work = fetch::crypto::Log( p.digest() );
         
         b2.meta_data() = b1.meta_data();
-        ++b2.meta_data().block_number;        
+        ++b2.meta_data().block_number;
+        // TODO: Check the correct way to compute the strongest chain - looks wrong
         b2.meta_data().total_work += work;
         chains_[header] = b2;
 
         b1 = b2;
-        visited_blocks.pop_back();
+        visited_blocks.pop();
       }
 
       block = chains_[header];
     }
 
-    if(block.meta_data().total_work > head_.meta_data().total_work) {
-      head_ = block;
+    if(block.meta_data().total_work > next_head_.meta_data().total_work) {
+      next_head_ = block;
     }
     
     block_mutex_.unlock();    
     // TODO: Trim blocks away that are more than
     //    this->Publish(PeerToPeerCommands::BROADCAST_BLOCK, block );    
+  }
+
+  void Commit() {    
+    block_mutex_.lock();
+    // We only commit if there actually is a new block
+    if( next_head_.meta_data().block_number > 0 ) {
+      // TODO: Remove transactions from queue
+      head_ = next_head_;
+      std::cout << "Applying block: " << head_.meta_data().block_number << " " <<  head_.meta_data().total_work <<  std::endl;
+      std::cout << "  <- " << fetch::byte_array::ToBase64( head_.body().previous_hash ) << std::endl;
+      std::cout << "   = " << fetch::byte_array::ToBase64( head_.header() ) << std::endl;
+      std::cout << "    (" << fetch::byte_array::ToBase64( head_.body().transaction_hash ) << ")" << std::endl;
+      ResetNextHead();
+    }
+    block_mutex_.unlock();    
   }
   
   /*
@@ -183,6 +226,11 @@ public:
   }
   */  
 private:
+  void ResetNextHead() {
+    next_head_.meta_data().total_work = 0;
+    next_head_.meta_data().block_number = 0;    
+  }
+  
   fetch::mutex::Mutex tx_mutex_;
   std::vector< tx_digest_type > incoming_;
   std::map< tx_digest_type, transaction_type > known_transactions_;
@@ -192,7 +240,7 @@ private:
   std::map< block_header_type, block_type > chains_;
   std::vector< block_header_type > loose_blocks_;  
   std::vector< block_header_type > heads_;  
-  block_type head_;
+  block_type head_, next_head_;
 };
 
 #endif 
