@@ -2,9 +2,12 @@
 #include"service/server.hpp"
 #include"network/tcp_server.hpp"
 #include"protocols/node_discovery.hpp"
+#include"commandline/parameter_parser.hpp"
+#include"commandline/vt100.hpp"
 #include<vector>
 #include<memory>
 
+using namespace fetch::commandline;
 using namespace fetch::protocols;
 enum FetchProtocols {
   DISCOVERY = 1
@@ -12,8 +15,9 @@ enum FetchProtocols {
 
 class FetchService : public fetch::service::ServiceServer< fetch::network::TCPServer > {
 public:
-  FetchService(uint16_t port, std::string const&info) : ServiceServer(port) {
-    discovery_ =  new DiscoveryProtocol();
+  FetchService(uint16_t port, std::string const&pk) : ServiceServer(port) {
+    details_.public_key = pk;
+    discovery_ =  new DiscoveryProtocol(FetchProtocols::DISCOVERY, details_);
     
     this->Add(FetchProtocols::DISCOVERY, discovery_ );
   }
@@ -22,29 +26,45 @@ public:
     delete discovery_;
   }
 
-  void Bootstrap(std::string const &ip, uint16_t const &port) {
-    
+  void Bootstrap(std::string const &address, uint16_t const &port) {
+    discovery_->Bootstrap( address, port );
   }
 
-  void ConnectToPeer( ) {
-    auto handle1 = client.Subscribe(FetchProtocols::PEER_TO_PEER, PeerToPeerFeed::NEW_MESSAGE, new Function< void(std::string) >([](std::string const&msg) {
-          std::cout << VT100::GetColor("blue", "default") << "Got message: " << msg << VT100::DefaultAttributes() <<  std::endl;
-        }) );
-    
-    client.Subscribe(FetchProtocols::PEER_TO_PEER, PeerToPeerFeed::NEW_MESSAGE, new Function< void(std::string) >([](std::string const&msg) {
-          std::cout << VT100::GetColor("red", "default") << "Got message 2: " << msg << VT100::DefaultAttributes() <<  std::endl;
-        }) );    
-
-  }
 private:
   DiscoveryProtocol *discovery_ = nullptr;
-  //  SubscriptionManager subscriptions_;
-
+  NodeDetails details_;
 };
 
 
-int main() {
-  FetchService service(1337);
+int main(int argc, char const** argv) {
+
+  ParamsParser params;
+  params.Parse(argc, argv);
+ 
+  if(params.arg_size() < 3) {
+    std::cout << "usage: " << argv[0] << " [port] [info] [[bootstrap_host] [bootstrap_port]]" << std::endl;
+    exit(-1);
+  }
   
+  uint16_t  my_port = params.GetArg<uint16_t>(1);
+  std::string  info = params.GetArg(2);    
+  std::cout << "Listening on " << my_port << std::endl;
+  FetchService service(my_port, info);
+  service.Start();
+  
+  std::this_thread::sleep_for( std::chrono::milliseconds( 200 ) );  
+  
+  if(params.arg_size() >= 5) {
+    std::string host = params.GetArg(3);
+    uint16_t port = params.GetArg<uint16_t>(4);
+    std::cout << "Bootstrapping through " << host << " " << port << std::endl;
+    service.Bootstrap(host, port);
+  }
+  
+  
+  std::cout << "Ctrl-C to stop" << std::endl;
+  while(true) {
+    std::this_thread::sleep_for( std::chrono::milliseconds( 200 ) );
+  }
   return 0;
 }

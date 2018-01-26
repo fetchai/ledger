@@ -1,10 +1,6 @@
 #ifndef PROTOCOLS_NODE_DISCOVERY_HPP
 #define PROTOCOLS_NODE_DISCOVERY_HPP
 #include"byte_array/referenced_byte_array.hpp"
-#include"service/publication_feed.hpp"
-#include"service/protocol.hpp"
-
-#include<vector>
 
 namespace fetch {
 namespace protocols {
@@ -20,7 +16,7 @@ enum DiscoveryRPC {
 enum DiscoveryFeed {
   FEED_REQUEST_CONNECTIONS = 1,
   FEED_ENOUGH_CONNECTIONS = 2,  
-  ANNOUNCE_NEW_COMER = 3
+  FEED_ANNOUNCE_NEW_COMER = 3
 };
 
 struct EntryPoint  {
@@ -93,24 +89,40 @@ namespace serializers {
     uint64_t size;
     serializer >> size;
     data.resize(size);
-    for(auto const &e: data) {
+    for(auto &e: data) {
       serializer >> e;
     }
     return serializer;
   }
   
 };
-  
+};
+
+
+#include"service/publication_feed.hpp"
+#include"service/function.hpp"
+#include"service/protocol.hpp"
+#include"service/client.hpp"
+#include"network/tcp_client.hpp"
+
+#include<vector>
+
+namespace fetch  {  
 namespace protocols {
   // TODO: Entrypoint serializer
 class DiscoveryManager : public fetch::service::HasPublicationFeed {
 public:
+  DiscoveryManager(NodeDetails const &details)
+    : details_(details) { }
+  
   uint64_t Ping() {
+    std::cout << "PING" << std::endl;
+    
     return 1337;
   }
 
   NodeDetails Hello() {
-    return *details_;
+    return details_;
   }
 
   std::vector< NodeDetails > SuggestPeers() {
@@ -119,29 +131,48 @@ public:
 
   void RequestPeerConnections( NodeDetails details ) {
     peers_with_few_followers_.push_back(details);
+    if(details.public_key == details_.public_key) {
+      std::cout << "Discovered myself" << std::endl;
+    } else {
+      std::cout << "Discovered " << details.public_key << std::endl;
+    }
+    
     this->Publish(DiscoveryFeed::FEED_REQUEST_CONNECTIONS, details);
   }
   
   void EnoughPeerConnections( NodeDetails details ) {
+    bool found = false;
     auto it = peers_with_few_followers_.end();
     while( it != peers_with_few_followers_.begin() ) {
       --it;
       if( (*it) == details ) {
+        found = true;
         peers_with_few_followers_.erase( it );
       }
     }
-    this->Publish(DiscoveryFeed::FEED_ENOUGH_CONNECTIONS, details);    
+    
+    if(found) {
+      this->Publish(DiscoveryFeed::FEED_ENOUGH_CONNECTIONS, details);
+    }
   }
 
 private:
-  NodeDetails *details_;
+  NodeDetails const &details_;
   std::vector< NodeDetails > peers_with_few_followers_;
+
 };
 
 class DiscoveryProtocol : public DiscoveryManager,
                           public fetch::service::Protocol { 
 public:
-  DiscoveryProtocol() : DiscoveryManager(), fetch::service::Protocol() {
+  typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
+  typedef std::shared_ptr< client_type >  client_shared_ptr_type;
+  
+  DiscoveryProtocol(uint64_t const &protocol, NodeDetails &details) :
+    DiscoveryManager(details),
+    fetch::service::Protocol(),
+    details_(details),    
+    protocol_(protocol) {
     using namespace fetch::service;
 
     auto ping = new CallableClassMember<DiscoveryProtocol, uint64_t()>(this, &DiscoveryProtocol::Ping);
@@ -154,13 +185,74 @@ public:
     this->Expose(DiscoveryRPC::SUGGEST_PEERS, suggest_peers); 
     this->Expose(DiscoveryRPC::REQUEST_PEER_CONNECTIONS, req_conn);
 
-
     // Using the event feed that
     this->RegisterFeed(DiscoveryFeed::FEED_REQUEST_CONNECTIONS, this);
     this->RegisterFeed(DiscoveryFeed::FEED_ENOUGH_CONNECTIONS, this);
-    this->RegisterFeed(DiscoveryFeed::ANNOUNCE_NEW_COMER, this);    
-};
+    this->RegisterFeed(DiscoveryFeed::FEED_ANNOUNCE_NEW_COMER, this);    
+  }
+
   
+  client_shared_ptr_type Connect( std::string const &host, uint16_t const &port ) {
+    using namespace fetch::service;    
+    client_shared_ptr_type client = std::make_shared< client_type >(host, port );
+    
+    client->Subscribe(protocol_, DiscoveryFeed::FEED_REQUEST_CONNECTIONS,
+                      new service::Function< void(NodeDetails) >([this](NodeDetails const& details) {
+                          DiscoveryManager::RequestPeerConnections(details);
+                        }) );
+    
+    client->Subscribe(protocol_, DiscoveryFeed::FEED_ENOUGH_CONNECTIONS ,
+                      new Function< void(NodeDetails) >([this](NodeDetails const& details) {
+                          DiscoveryManager::EnoughPeerConnections(details);
+                        }) );    
+
+    client->Subscribe(protocol_, DiscoveryFeed::FEED_ANNOUNCE_NEW_COMER ,
+                      new Function< void(NodeDetails) >([this](NodeDetails const& details) {
+                          std::cout << "TODO: figure out what to do here" << std::endl;                          
+                        }) );    
+    
+
+    
+    client->Start();    
+    peers_.push_back( client );
+
+    uint64_t ping = uint64_t(client->Call(protocol_, DiscoveryRPC::PING));    
+
+    if(ping == 1337) 
+    {
+      std::cout << "Pong" << std::endl;
+
+
+      service::Promise details_promise = client->Call(protocol_, DiscoveryRPC::HELLO);  
+      client->Call(protocol_, DiscoveryRPC::REQUEST_PEER_CONNECTIONS, details_);
+      
+      // TODO: Get own IP
+      NodeDetails client_details = details_promise.As< NodeDetails >();
+    }
+        
+    return client;    
+  }
+
+  void Bootstrap(std::string const &host, uint16_t const &port ) {
+    // TODO: Check that this node qualifies for bootstrapping
+    std::cout << " - bootstrapping " << host << " " << port << std::endl;    
+    auto client = Connect( host , port );
+    auto peer_promise =  client->Call(protocol_, DiscoveryRPC::SUGGEST_PEERS);
+    
+    peer_promise.Wait();
+
+        
+    std::vector< NodeDetails > others = peer_promise.As< std::vector< NodeDetails > >();
+
+    for(auto &o : others )  {
+      std::cout << "Consider connecting to " << o.public_key << std::endl; 
+    }
+
+  }
+private:
+  NodeDetails &details_;  
+  std::vector< client_shared_ptr_type > peers_;
+  uint64_t protocol_;
 };
 
 };

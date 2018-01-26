@@ -52,18 +52,18 @@ class PromiseImplementation {
   byte_array_type value_;
 
   static uint64_t next_promise_id() {
-    std::lock_guard<mutex::Mutex> lock(counter_mutex_);
+    std::lock_guard<fetch::mutex::Mutex> lock(counter_mutex_);
     uint64_t promise = promise_counter_;
     ++promise_counter_;
     return promise;
   }
 
   static promise_counter_type promise_counter_; 
-  static mutex::Mutex counter_mutex_;
+  static fetch::mutex::Mutex counter_mutex_;
 };
 PromiseImplementation::promise_counter_type
     PromiseImplementation::promise_counter_ = 0;
-mutex::Mutex PromiseImplementation::counter_mutex_(__LINE__, __FILE__);
+fetch::mutex::Mutex PromiseImplementation::counter_mutex_(__LINE__, __FILE__);
 }
 
 class Promise {
