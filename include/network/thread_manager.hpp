@@ -30,7 +30,7 @@ public:
   
   virtual void Start()
   {
-    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );    
+//    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );    
     if (threads_.size() == 0)
     {
       fetch::logger.Info("Starting thread manager");
@@ -61,7 +61,7 @@ public:
   }
 
   virtual void Stop() {
-    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );    
+//    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );    
     if (threads_.size() != 0)
     {
       fetch::logger.Info("Stopping thread manager");
@@ -97,7 +97,7 @@ public:
 
   event_handle_type OnBeforeStart(event_function_type const &fnc) 
   {
-    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
+//    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
     fetch::logger.Debug("Adding BeforeStart event listener ",next_id_, " from thread manager ");            
     on_before_start_[next_id_] = fnc;
     return next_id_++;    
@@ -105,7 +105,7 @@ public:
   
   event_handle_type OnAfterStart(event_function_type const &fnc) 
   {
-    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
+//    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
     fetch::logger.Debug("Adding AfterStart event listener ",next_id_, " from thread manager ");            
     on_after_start_[next_id_] = fnc;
     return next_id_++;    
@@ -113,7 +113,7 @@ public:
 
   event_handle_type OnBeforeStop(event_function_type const &fnc) 
   {
-    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
+//    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
     fetch::logger.Debug("Adding BeforeStop event listener ",next_id_, " from thread manager ");            
     on_before_stop_[next_id_] = fnc;
     return next_id_++;    
@@ -121,7 +121,7 @@ public:
 
   event_handle_type OnAfterStop(event_function_type const &fnc) 
   {
-    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
+//    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
     fetch::logger.Debug("Adding AfterStop event listener ",next_id_, " from thread manager ");        
     on_after_stop_[next_id_] = fnc;
     return next_id_++;
@@ -129,7 +129,7 @@ public:
 
   void Off(event_handle_type handle) 
   {
-    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
+//    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
     fetch::logger.Debug("Removing event listener ",handle, " from thread manager ");
 
     

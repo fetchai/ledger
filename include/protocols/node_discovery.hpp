@@ -266,7 +266,7 @@ public:
 
   }
 private:
-  network::ThreadManager *thread_manager_;      
+  network::ThreadManager *thread_manager_ = nullptr;      
   NodeDetails &details_;  
   std::vector< client_shared_ptr_type > peers_;
   uint64_t protocol_;

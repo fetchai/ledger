@@ -33,7 +33,8 @@ public:
   }
 
   TCPClient(std::string const& host, uint16_t const& port,
-    thread_manager_ptr_type thread_manager) :     
+    thread_manager_ptr_type thread_manager) :
+    thread_manager_(thread_manager),
     io_service_(thread_manager->io_service()),
     socket_(thread_manager->io_service() )    
   {
