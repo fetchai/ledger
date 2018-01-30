@@ -20,7 +20,8 @@ public:
   ConstByteArray(char const *str) : super_type( str ) { }
   ConstByteArray(std::string const &s) : super_type(s) {}
   ConstByteArray(ConstByteArray const &other) : super_type( other ) { }
-
+  ConstByteArray(std::initializer_list<container_type> l) : super_type(l) { }
+  
   ConstByteArray(ConstByteArray const &other,
                  std::size_t const &start, std::size_t const &length)
     : super_type(other, start, length) {  }

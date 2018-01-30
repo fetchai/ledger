@@ -33,7 +33,14 @@ public:
     for (std::size_t i = 0; i < n; ++i) data_[i] = str[i];
     //    data_[n] = '\0';
   }
-
+  
+  BasicByteArray(std::initializer_list<container_type> l) {
+    Resize( l.size() );
+    std::size_t i = 0;
+    for(auto &a: l) {
+      data_[i++] = a;
+    }
+  }
   BasicByteArray(std::string const &s) : BasicByteArray(s.c_str()) {}
 
   BasicByteArray(self_type const &other)

@@ -17,9 +17,10 @@ public:
 
   ByteArray() {}
   ByteArray(char const *str) : super_type( str ) { }
-  ByteArray(std::string const &s) : super_type(s) {}
+  ByteArray(std::string const &s) : super_type(s) { }
   ByteArray(ByteArray const &other) : super_type( other ) { }
-
+  ByteArray(std::initializer_list<container_type> l) : super_type(l) { }
+  
   ByteArray(ByteArray const &other,
                       std::size_t const &start, std::size_t const &length)
     : super_type(other, start, length) {  }

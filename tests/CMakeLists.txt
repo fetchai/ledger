@@ -39,7 +39,7 @@ standard_test(variant_stack storage/variant_stack.cpp)
 standard_test(random_access_stack storage/random_access_stack.cpp)
 
 
-
+standard_test(crypto_ecdsa crypto/ecdsa.cpp )
 standard_test(crypto_consensus_proof_of_work crypto/consensus/proof_of_work.cpp )
 standard_test(math_bignumber math/bignumber.cpp )
 
