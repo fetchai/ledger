@@ -41,21 +41,22 @@ public:
 // And finanly we build the service
 class MyCoolService : public ServiceServer< fetch::network::TCPServer > {
 public:
-  MyCoolService(uint16_t port) : ServiceServer(port) {
+  MyCoolService(uint16_t port, fetch::network::ThreadManager *tm) : ServiceServer(port, tm) {
     this->Add(MYPROTO, new ServiceProtocol() );
   }
 };
 
 
 int main() {
-  MyCoolService serv(8080);
-  serv.Start();
+  fetch::network::ThreadManager tm(8);  
+  MyCoolService serv(8080, &tm);
+  tm.Start();
 
   std::string dummy;
   std::cout << "Press ENTER to quit" << std::endl;                                       
   std::cin >> dummy;
   
-  serv.Stop();
+  tm.Stop();
 
   return 0;
 

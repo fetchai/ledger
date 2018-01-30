@@ -7,98 +7,121 @@
 #include "serializer/referenced_byte_array.hpp"
 #include "mutex.hpp"
 #include "assert.hpp"
+#include "logger.hpp"
 
 #include <asio.hpp>
 
-namespace fetch {
-namespace network {
+namespace fetch 
+{
+namespace network 
+{
 
 class ClientConnection : public AbstractClientConnection,
-                         public std::enable_shared_from_this<ClientConnection> {
- public:
+                         public std::enable_shared_from_this<ClientConnection> 
+{
+public:
   typedef typename AbstractClientConnection::shared_type connection_type;
-
+  
   typedef ClientManager::handle_type handle_type;
 
   ClientConnection(asio::ip::tcp::tcp::socket socket, ClientManager& manager)
     : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__) {}
 
-  ~ClientConnection() {
+  ~ClientConnection() 
+  {
     manager_.Leave(handle_);
   }
   
-  void Start() {
+  void Start() 
+  {
     handle_ = manager_.Join(shared_from_this());
     ReadHeader();
   }
 
-  void Send(message_type const& msg) {
+  void Send(message_type const& msg) 
+  {
+    
     write_mutex_.lock();
     bool write_in_progress = !write_queue_.empty();  
     write_queue_.push_back(msg);
     write_mutex_.unlock();
     
-    if (!write_in_progress) {
+    if (!write_in_progress) 
+    {
       Write();
     }
   }
 
- private:
-  void ReadHeader() {
-
+private:
+  void ReadHeader() 
+  {
+    fetch::logger.Debug("Waiting for next header.");  
     auto self(shared_from_this());
-    auto cb = [this, self](std::error_code ec, std::size_t) {
-      if (!ec) {
-        ReadBody();
-      } else {
-        manager_.Leave(handle_);
-      }
-    };
+    auto cb = [this, self](std::error_code ec, std::size_t) 
+      {
+        if (!ec) 
+        {
+          fetch::logger.Debug("Reading body.");  
+          ReadBody();
+        } else 
+        {
+          manager_.Leave(handle_);
+        }
+      };
 
     asio::async_read(socket_, asio::buffer(header_.bytes, sizeof(uint64_t)),
-                     cb);
+      cb);
   }
 
-  void ReadBody() {
+  void ReadBody() 
+  {
     byte_array::ByteArray message;
     message.Resize(header_.length);
     auto self(shared_from_this());
-    auto cb = [this, self, message](std::error_code ec, std::size_t) {
-      if (!ec) {
-        manager_.PushRequest(handle_, message);
-        ReadHeader();
-      } else {
-        manager_.Leave(handle_);
-      }
-    };
+    auto cb = [this, self, message](std::error_code ec, std::size_t) 
+      {
+        if (!ec) 
+        {
+          manager_.PushRequest(handle_, message);
+          ReadHeader();
+        } else 
+        {
+          manager_.Leave(handle_);
+        }
+      };
 
     asio::async_read(socket_, asio::buffer(message.pointer(), message.size()),
-                     cb);
+      cb);
   }
 
-  void Write() {
+  void Write() 
+  {
     serializers::ByteArrayBuffer buffer;
     write_mutex_.lock();    
     buffer << write_queue_.front();
     write_mutex_.unlock();
 
-    auto cb = [this](std::error_code ec, std::size_t) {
-      if (!ec) {
-        write_mutex_.lock();
-        write_queue_.pop_front();
-        bool write_more = !write_queue_.empty();
-        write_mutex_.unlock();  
-        if (write_more) {
-          Write();
+    auto cb = [this](std::error_code ec, std::size_t) 
+      {
+        if (!ec) 
+        {
+          write_mutex_.lock();
+          write_queue_.pop_front();
+          bool write_more = !write_queue_.empty();
+          write_mutex_.unlock();  
+          if (write_more) 
+          {
+            Write();
+          }
+        } else 
+        {
+          manager_.Leave(handle_);
         }
-      } else {
-        manager_.Leave(handle_);
-      }
-    };
+      };
 
     asio::async_write(
-        socket_, asio::buffer(buffer.data().pointer(), buffer.data().size()),
-        cb);
+      socket_, asio::buffer(buffer.data().pointer(), buffer.data().size()),
+      cb);
   }
 
   asio::ip::tcp::tcp::socket socket_;
@@ -107,7 +130,8 @@ class ClientConnection : public AbstractClientConnection,
   fetch::mutex::Mutex write_mutex_;
   handle_type handle_;
 
-  union {
+  union 
+  {
     char bytes[sizeof(uint64_t)];
     uint64_t length;
   } header_;

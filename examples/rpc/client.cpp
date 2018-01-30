@@ -2,14 +2,18 @@
 #include<iostream>
 #include"serializer/referenced_byte_array.hpp"
 #include"service/client.hpp"
+#include"logger.hpp"
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
 int main2() {
+  
   // Client setup
-  ServiceClient< fetch::network::TCPClient > client("localhost", 8080);
-  client.Start();
+  fetch::network::ThreadManager tm;  
+  ServiceClient< fetch::network::TCPClient > client("localhost", 8080, &tm);
+  tm.Start();
 
+  
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );
   
   std::cout << client.Call( MYPROTO,GREET, "Fetch" ).As<std::string>( ) << std::endl;  
@@ -41,7 +45,7 @@ int main2() {
   auto t_start = std::chrono::high_resolution_clock::now();
   fetch::service::Promise last_promise;
 
-  std::size_t N = 10000;
+  std::size_t N = 30000;
   for(std::size_t i=0; i < N; ++i) {
     last_promise = client.Call( MYPROTO, ADD, 4, 3 );
   }
@@ -58,7 +62,7 @@ int main2() {
             << " us\n";  
   
   // Benchmarking  
-  client.Stop();
+  tm.Stop();
 
   return 0;
 

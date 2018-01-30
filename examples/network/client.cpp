@@ -6,12 +6,19 @@ using namespace fetch::network;
 class Client : public TCPClient {
 public:
   Client(std::string const &host,
-         std::string const &port)
-    : TCPClient(host, port ) { }
+    std::string const &port,
+      ThreadManager *tmanager) :
+    TCPClient(host, port, tmanager )
+  {
+  }  
   
-  void PushMessage(message_type const &value) override {
+  void PushMessage(message_type const &value) override
+  {
     std::cout << value << std::endl;
   }
+  
+private:
+
 };
 
 int main(int argc, char* argv[]) {
@@ -20,9 +27,10 @@ int main(int argc, char* argv[]) {
       std::cerr << "Usage: client <host> <port>\n";
       return 1;
     }
-
-    Client client(argv[1], argv[2]);
-    client.Start();
+    ThreadManager tmanager; 
+    Client client(argv[1], argv[2], &tmanager);
+    
+    tmanager.Start();
     
     fetch::byte_array::ByteArray msg;
     msg.Resize(512);
@@ -33,7 +41,7 @@ int main(int argc, char* argv[]) {
       msg.Resize(512);
     }
 
-    client.Stop();
+    tmanager.Stop();
 
   } catch (std::exception& e) {
     std::cerr << "Exception: " << e.what() << "\n";

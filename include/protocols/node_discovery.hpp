@@ -168,9 +168,10 @@ public:
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
   typedef std::shared_ptr< client_type >  client_shared_ptr_type;
   
-  DiscoveryProtocol(uint64_t const &protocol, NodeDetails &details) :
+  DiscoveryProtocol(network::ThreadManager *thread_manager, uint64_t const &protocol, NodeDetails &details) :
     DiscoveryManager(details),
     fetch::service::Protocol(),
+    thread_manager_(thread_manager),     
     details_(details),    
     protocol_(protocol) {
     using namespace fetch::service;
@@ -194,7 +195,7 @@ public:
   
   client_shared_ptr_type Connect( std::string const &host, uint16_t const &port ) {
     using namespace fetch::service;    
-    client_shared_ptr_type client = std::make_shared< client_type >(host, port );
+    client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_ );
     
     client->Subscribe(protocol_, DiscoveryFeed::FEED_REQUEST_CONNECTIONS,
                       new service::Function< void(NodeDetails) >([this](NodeDetails const& details) {
@@ -213,15 +214,20 @@ public:
     
 
     
-    client->Start();    
-    peers_.push_back( client );
+    auto ping_promise = client->Call(protocol_, DiscoveryRPC::PING);
+    if(!ping_promise.Wait( 2000 )) {
+      fetch::logger.Error("Client not repsonding - hanging up!");
+      return client_shared_ptr_type();      
+    } 
+    
 
-    uint64_t ping = uint64_t(client->Call(protocol_, DiscoveryRPC::PING));    
+
+    uint64_t ping = uint64_t(ping_promise);    
 
     if(ping == 1337) 
     {
-      std::cout << "Pong" << std::endl;
-
+      fetch::logger.Info("Successfully got PONG");      
+      peers_.push_back( client ); 
 
       service::Promise details_promise = client->Call(protocol_, DiscoveryRPC::HELLO);  
       client->Call(protocol_, DiscoveryRPC::REQUEST_PEER_CONNECTIONS, details_);
@@ -229,7 +235,12 @@ public:
       // TODO: Get own IP
       NodeDetails client_details = details_promise.As< NodeDetails >();
     }
-        
+    else
+    {
+      fetch::logger.Error("Client gave wrong response - hanging up!");
+      return client_shared_ptr_type();      
+    }
+    
     return client;    
   }
 
@@ -237,8 +248,14 @@ public:
     // TODO: Check that this node qualifies for bootstrapping
     std::cout << " - bootstrapping " << host << " " << port << std::endl;    
     auto client = Connect( host , port );
-    auto peer_promise =  client->Call(protocol_, DiscoveryRPC::SUGGEST_PEERS);
+    if(!client) {
+      fetch::logger.Error("Failed in bootstrapping!");
+      return;      
+    }
+
+    std::cout << "Was here?" << std::endl;
     
+    auto peer_promise =  client->Call(protocol_, DiscoveryRPC::SUGGEST_PEERS);
     peer_promise.Wait();
 
         
@@ -250,6 +267,7 @@ public:
 
   }
 private:
+  network::ThreadManager *thread_manager_;      
   NodeDetails &details_;  
   std::vector< client_shared_ptr_type > peers_;
   uint64_t protocol_;

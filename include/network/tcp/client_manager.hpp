@@ -5,6 +5,7 @@
 #include "network/tcp/abstract_server.hpp"
 #include "assert.hpp"
 #include "mutex.hpp"
+#include "logger.hpp"
 
 #include <map>
 
@@ -20,7 +21,8 @@ class ClientManager {
 
   handle_type Join(connection_type client) {
     handle_type handle = server_.next_handle();
-
+    fetch::logger.Info("Client joining with handle ", handle);
+    
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
     clients_[handle] = client;
     return handle;
@@ -28,8 +30,9 @@ class ClientManager {
 
   void Leave(handle_type handle) {    
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
-
+    
     if( clients_.find(handle) != clients_.end() ) {
+      fetch::logger.Info("Client ", handle, " is leaving");      
       clients_.erase(handle);
     }
   }
@@ -42,8 +45,10 @@ class ClientManager {
       auto c = clients_[client];
       clients_mutex_.unlock();      
       c->Send(msg);
+      fetch::logger.Debug("Client manager did send message to ", client);      
       clients_mutex_.lock();
     } else {
+      fetch::logger.Debug("Client not found.");  
       ret = false;      
     }
     clients_mutex_.unlock();

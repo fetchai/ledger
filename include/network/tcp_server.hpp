@@ -1,6 +1,7 @@
 #ifndef NETWORK_TCP_SERVER_HPP
 #define NETWORK_TCP_SERVER_HPP
 
+#include "network/thread_manager.hpp"
 #include "network/tcp/client_connection.hpp"
 #include "mutex.hpp"
 
@@ -15,37 +16,29 @@ class TCPServer : public AbstractNetworkServer {
  public:
   typedef uint64_t handle_type;
 
+  typedef ThreadManager thread_manager_type;  
+  typedef thread_manager_type* thread_manager_ptr_type;
+  typedef typename ThreadManager::event_handle_type event_handle_type;
+   
   struct Request {
     handle_type handle;
     message_type meesage;
   };
 
-  TCPServer(uint16_t port)
-    : request_mutex_(__LINE__, __FILE__), acceptor_(io_service_,
-                  asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
-        socket_(io_service_) {
-    manager_ = new ClientManager(*this);
+  TCPServer(uint16_t port, thread_manager_ptr_type thread_manager) :
+    thread_manager_(thread_manager),
+    request_mutex_(__LINE__, __FILE__),
+    acceptor_(thread_manager->io_service(), asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
+    socket_(thread_manager->io_service())
+  {
+
+    event_service_start_ = thread_manager->OnBeforeStart([this]() { this->Accept(); } ); 
+    manager_ = new ClientManager(*this);    
   }
 
   ~TCPServer() {
-    Stop();
+    thread_manager_->Off(event_service_start_);
     socket_.close();
-  }
-
-  virtual void Start() {
-    if (thread_ == nullptr) {
-      Accept();
-      thread_ = new std::thread([this]() { io_service_.run(); });
-    }
-  }
-
-  virtual void Stop() {
-    if (thread_ != nullptr) {
-      io_service_.stop();
-      thread_->join();
-      delete thread_;
-      thread_ = nullptr;
-    }
   }
 
   void PushRequest(handle_type client, message_type const& msg) override {
@@ -85,6 +78,8 @@ class TCPServer : public AbstractNetworkServer {
   }
 
  private:
+  thread_manager_ptr_type thread_manager_;
+  event_handle_type event_service_start_;  
   std::deque<Request> requests_;
   fetch::mutex::Mutex request_mutex_;
 
@@ -105,8 +100,7 @@ class TCPServer : public AbstractNetworkServer {
   static handle_type global_handle_counter_;
   static fetch::mutex::Mutex global_handle_mutex_;
 
-  std::thread* thread_ = nullptr;
-  asio::io_service io_service_;
+
   asio::ip::tcp::tcp::acceptor acceptor_;
   asio::ip::tcp::tcp::socket socket_;
   ClientManager* manager_;

@@ -1,6 +1,7 @@
 #ifndef NETWORK_TCP_CLIENT_HPP
 #define NETWORK_TCP_CLIENT_HPP
 
+#include "network/thread_manager.hpp"
 #include "network/message.hpp"
 #include "byte_array/referenced_byte_array.hpp"
 #include "serializer/referenced_byte_array.hpp"
@@ -16,32 +17,49 @@ namespace fetch {
 namespace network {
 class TCPClient {
 public:
-
-  TCPClient(std::string const& host, std::string const& port)
-      : socket_(io_service_) {
+  typedef ThreadManager thread_manager_type;  
+  typedef thread_manager_type* thread_manager_ptr_type;
+  typedef typename ThreadManager::event_handle_type event_handle_type;
+  
+  TCPClient(std::string const& host, std::string const& port,
+    thread_manager_ptr_type thread_manager) :
+    thread_manager_(thread_manager),    
+    io_service_(thread_manager->io_service()),
+    socket_(thread_manager->io_service() )
+  {
+    
     writing_ = false;
     Connect(host, port);
   }
 
-  TCPClient(std::string const& host, uint16_t const& port)
-      : socket_(io_service_) {
+  TCPClient(std::string const& host, uint16_t const& port,
+    thread_manager_ptr_type thread_manager) :     
+    io_service_(thread_manager->io_service()),
+    socket_(thread_manager->io_service() )    
+  {
+
+    event_start_service_ = thread_manager->OnBeforeStart([this]() { this->writing_ = false; });    
+    event_stop_service_ = thread_manager->OnBeforeStop([this]() { this->writing_ = false; });
+    
     writing_ = false;    
     Connect(host, port);
   }
 
-  ~TCPClient() {
-    Stop();
-
+  ~TCPClient() {    
+    thread_manager_->Off( event_start_service_ );
+    thread_manager_->Off( event_stop_service_ );        
     socket_.close();
   }
 
   void Send(message_type const& msg) {
+    fetch::logger.Debug("Sending message to server");    
     auto cb = [this, msg]() {
       write_mutex_.lock();
       write_queue_.push_back(msg);
       if (writing_) {
         write_mutex_.unlock();
       } else {
+        fetch::logger.Debug("Start writing message");    
         writing_ = true;
         write_mutex_.unlock();
         Write();
@@ -49,23 +67,6 @@ public:
     };
 
     io_service_.post(cb);
-  }
-
-  void Start() {
-    if (thread_ == nullptr) {
-      writing_ = false;      
-      thread_ = new std::thread([this]() { io_service_.run(); });
-    }
-  }
-
-  void Stop() {
-    if (thread_ != nullptr) {
-      writing_ = false;
-      io_service_.stop();
-      thread_->join();
-      delete thread_;
-      thread_ = nullptr;
-    }
   }
 
   virtual void PushMessage(message_type const& value) = 0;
@@ -131,6 +132,7 @@ public:
 
     write_mutex_.lock();
     if( write_queue_.empty() ) {
+      fetch::logger.Debug("Queue is empty stopping");    
       write_mutex_.unlock();
       return;
     }
@@ -140,17 +142,19 @@ public:
     
     auto cb = [this](std::error_code ec, std::size_t) {
       if (!ec) {
-
+        fetch::logger.Debug("Wrote message.");     
         write_mutex_.lock();
         write_queue_.pop_front();
         bool should_write = writing_ = !write_queue_.empty();
         write_mutex_.unlock();
         
         if (should_write) {
+          fetch::logger.Debug("Proceeding to next.");
+          
           Write();
         } 
       } else {
-
+        fetch::logger.Debug("Write failed, closing connection.");    
         socket_.close();
       }
     };
@@ -162,13 +166,16 @@ public:
   }
 
  private:
+  event_handle_type event_start_service_;
+  event_handle_type event_stop_service_;      
+  thread_manager_ptr_type thread_manager_;
+  
   union {
     char bytes[sizeof(uint64_t)];
     uint64_t length;
   } header_;
 
-  std::thread* thread_ = nullptr;
-  asio::io_service io_service_;
+  asio::io_service &io_service_;
   asio::ip::tcp::tcp::socket socket_;
 
 

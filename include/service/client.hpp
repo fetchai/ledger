@@ -23,16 +23,28 @@ template< typename T >
 class ServiceClient : public T {
 public:
   typedef T super_type;
-  
-  ServiceClient(std::string const& host, uint16_t const& port)
-      : super_type(host, port) {
+
+  typedef typename super_type::thread_manager_type thread_manager_type ;  
+  typedef typename super_type::thread_manager_ptr_type thread_manager_ptr_type ;
+  typedef typename thread_manager_type::event_handle_type event_handle_type;
+   
+  ServiceClient(std::string const& host,
+    uint16_t const& port,
+    thread_manager_ptr_type thread_manager) :
+    super_type(host, port, thread_manager),
+    thread_manager_(thread_manager)
+  {
     running_ = true;
+
+
+    // TODO: Replace with thread manager
     worker_thread_ = new std::thread([this]() {
         this->ProcessMessages();
       });
   }
 
   ~ServiceClient() {
+    // TODO: Move to OnStop
     running_ = false;
     worker_thread_->join();
     delete worker_thread_;    
@@ -225,8 +237,10 @@ public:
     AbstractCallable* callback = nullptr;
     fetch::mutex::Mutex mutex;
   };
-  
-  Subscription subscriptions_[256];
+
+  thread_manager_ptr_type thread_manager_;
+
+  Subscription subscriptions_[256]; // TODO: make centrally configurable;
   fetch::mutex::Mutex subscription_mutex_;
 
 
