@@ -38,17 +38,20 @@ public:
     socket_(thread_manager->io_service() )    
   {
 
-    event_start_service_ = thread_manager->OnBeforeStart([this]() { this->writing_ = false; });    
-    event_stop_service_ = thread_manager->OnBeforeStop([this]() { this->writing_ = false; });
+
+    event_start_service_ = thread_manager_->OnBeforeStart([this]() { this->writing_ = false; });    
+    event_stop_service_ = thread_manager_->OnBeforeStop([this]() { this->writing_ = false; });
     
     writing_ = false;    
     Connect(host, port);
   }
 
-  ~TCPClient() {    
+  ~TCPClient() {
+
     thread_manager_->Off( event_start_service_ );
     thread_manager_->Off( event_stop_service_ );        
     socket_.close();
+
   }
 
   void Send(message_type const& msg) {
@@ -70,7 +73,7 @@ public:
   }
 
   virtual void PushMessage(message_type const& value) = 0;
-
+  virtual void ConnectionFailed() = 0;      
  private:
   void Connect(std::string const& host, std::string const& port) {
     asio::ip::tcp::resolver resolver(io_service_);
@@ -101,6 +104,8 @@ public:
         // TODO: Take care of endianness
         ReadBody();
       } else {
+        fetch::logger.Error("Reading header failed, closing connection.");
+        ConnectionFailed();           
         socket_.close();
       }
     };
@@ -118,7 +123,8 @@ public:
         PushMessage(message);
         ReadHeader();
       } else {
-
+        fetch::logger.Error("Reading body failed, closing connection.");
+        ConnectionFailed();        
         socket_.close();
       }
     };
@@ -154,7 +160,8 @@ public:
           Write();
         } 
       } else {
-        fetch::logger.Debug("Write failed, closing connection.");    
+        fetch::logger.Error("Write failed, closing connection.");
+        ConnectionFailed();                
         socket_.close();
       }
     };

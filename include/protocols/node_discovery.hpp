@@ -196,6 +196,13 @@ public:
   client_shared_ptr_type Connect( std::string const &host, uint16_t const &port ) {
     using namespace fetch::service;    
     client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_ );
+
+
+    auto ping_promise = client->Call(protocol_, DiscoveryRPC::PING);
+    if(!ping_promise.Wait( 2000 )) {
+      fetch::logger.Error("Client not repsonding - hanging up!");
+      return nullptr;      
+    }         
     
     client->Subscribe(protocol_, DiscoveryFeed::FEED_REQUEST_CONNECTIONS,
                       new service::Function< void(NodeDetails) >([this](NodeDetails const& details) {
@@ -214,13 +221,6 @@ public:
     
 
     
-    auto ping_promise = client->Call(protocol_, DiscoveryRPC::PING);
-    if(!ping_promise.Wait( 2000 )) {
-      fetch::logger.Error("Client not repsonding - hanging up!");
-      return client_shared_ptr_type();      
-    } 
-    
-
 
     uint64_t ping = uint64_t(ping_promise);    
 
@@ -238,7 +238,7 @@ public:
     else
     {
       fetch::logger.Error("Client gave wrong response - hanging up!");
-      return client_shared_ptr_type();      
+      return nullptr;      
     }
     
     return client;    
@@ -256,8 +256,7 @@ public:
     std::cout << "Was here?" << std::endl;
     
     auto peer_promise =  client->Call(protocol_, DiscoveryRPC::SUGGEST_PEERS);
-    peer_promise.Wait();
-
+    
         
     std::vector< NodeDetails > others = peer_promise.As< std::vector< NodeDetails > >();
 

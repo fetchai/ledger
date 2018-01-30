@@ -28,6 +28,7 @@ public:
 
   PromiseImplementation() 
   {
+    connection_closed_ = false;    
     fulfilled_ = false;
     failed_ = false;
     id_ = next_promise_id();
@@ -41,20 +42,28 @@ public:
 
   void Fail(serializers::SerializableException const &excp) 
   {
-    exception_ = excp;
+    exception_ = excp;    
     failed_ = true;  // Note that order matters here due to threading!
     fulfilled_ = true;
   }
 
+  void ConnectionFailed() 
+  {
+    connection_closed_ = true;  
+    fulfilled_ = true;
+  }
+  
   serializers::SerializableException exception() const { return exception_; }
   bool is_fulfilled() const { return fulfilled_; }
   bool has_failed() const { return failed_; }
-
+  bool is_connection_closed() const { return connection_closed_; }
+  
   byte_array_type value() const { return value_; }
   uint64_t id() const { return id_; }
 
 private:
   serializers::SerializableException exception_;
+  std::atomic<bool> connection_closed_;  
   std::atomic<bool> fulfilled_;
   std::atomic<bool> failed_;
   std::atomic<uint64_t> id_;
@@ -99,8 +108,13 @@ public:
       double ms =  std::chrono::duration_cast<std::chrono::milliseconds>(end - created_).count();
       if( (ms > timeout) && (!is_fulfilled()) ) {
         fetch::logger.Error("Connection timed out! ", ms, " vs. ", timeout);
-        return false;        
+        return false;  
       }           
+    }
+
+    if (is_connection_closed()) 
+    {
+      return false;      
     }
     
     if (has_failed()) 
@@ -128,6 +142,7 @@ public:
 
   bool is_fulfilled() const { return reference_->is_fulfilled(); }
   bool has_failed() const { return reference_->has_failed(); }
+  bool is_connection_closed() const { return reference_->is_connection_closed(); }  
 
   shared_promise_type reference() { return reference_; }
   promise_counter_type id() const { return reference_->id(); }

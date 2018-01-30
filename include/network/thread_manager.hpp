@@ -16,7 +16,8 @@ public:
   typedef uint32_t event_handle_type;
   
   ThreadManager(std::size_t threads=1) :
-    number_of_threads_(threads)
+    number_of_threads_(threads),
+    on_mutex_(__LINE__,__FILE__)
   {
     fetch::logger.Debug("Creating thread manager");    
   }
@@ -29,16 +30,17 @@ public:
   
   virtual void Start()
   {
+    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );    
     if (threads_.size() == 0)
     {
       fetch::logger.Info("Starting thread manager");
       
-      on_mutex_.lock();      
+//      on_mutex_.lock();      
       for(auto &obj: on_before_start_)
       {
         obj.second();        
       }
-      on_mutex_.unlock();      
+//      on_mutex_.unlock();      
 
       for(std::size_t i =0 ; i < number_of_threads_; ++i) {
         threads_.push_back( new std::thread(
@@ -49,25 +51,26 @@ public:
           );
       }
       
-      on_mutex_.lock();
+//      on_mutex_.lock();
       for(auto &obj: on_after_start_)
       {
         obj.second();        
       }
-      on_mutex_.unlock();      
+//      on_mutex_.unlock();      
     }
   }
 
   virtual void Stop() {
+    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );    
     if (threads_.size() != 0)
     {
       fetch::logger.Info("Stopping thread manager");
-      on_mutex_.lock();      
+//      on_mutex_.lock();      
       for(auto &obj: on_before_stop_)
       {
         obj.second();        
       }
-      on_mutex_.unlock();      
+//      on_mutex_.unlock();      
       
       io_service_.stop();
       
@@ -78,12 +81,12 @@ public:
       
       threads_.clear();      
 
-      on_mutex_.lock();
+//      on_mutex_.lock();
       for(auto &obj: on_after_stop_)
       {
         obj.second();        
       }
-      on_mutex_.unlock();      
+//      on_mutex_.unlock();      
     }
   }  
   
@@ -118,38 +121,42 @@ public:
 
   event_handle_type OnAfterStop(event_function_type const &fnc) 
   {
-    fetch::logger.Debug("Adding AfterStop event listener ",next_id_, " from thread manager ");        
     std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
+    fetch::logger.Debug("Adding AfterStop event listener ",next_id_, " from thread manager ");        
     on_after_stop_[next_id_] = fnc;
     return next_id_++;
   }
 
   void Off(event_handle_type handle) 
   {
-
+    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
     fetch::logger.Debug("Removing event listener ",handle, " from thread manager ");
-//    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
+
     
     if(on_before_start_.find( handle ) != on_before_start_.end() )
     {
+      fetch::logger.Debug("Erasing BeforeStart.");      
       on_before_start_.erase( handle );
     }
 
     if(on_after_start_.find( handle ) != on_after_start_.end() )
     {
+      fetch::logger.Debug("Erasing AfterStart.");      
       on_after_start_.erase( handle );
     }
 
     if(on_before_stop_.find( handle ) != on_before_stop_.end() )
     {
+      fetch::logger.Debug("Erasing BeforeStop.");      
       on_before_stop_.erase( handle );
     }        
 
     if(on_after_stop_.find( handle ) != on_after_stop_.end() )
     {
+      fetch::logger.Debug("Erasing AfterStop.");            
       on_after_stop_.erase( handle );
     }        
-        
+    fetch::logger.Debug("Done removing event listener ",handle, " from thread manager ");
   }
   
 private:
