@@ -16,13 +16,13 @@ enum FetchProtocols {
 class FetchService  {
 public:
   FetchService(uint16_t port, std::string const&pk) :   
-    thread_manager_( new fetch::network::ThreadManager(8) ) //,
-//    service_(port, thread_manager_)
+    thread_manager_( new fetch::network::ThreadManager(8) ),
+    service_(port, thread_manager_)
   {
     details_.public_key = pk;
     discovery_ =  new DiscoveryProtocol(thread_manager_, FetchProtocols::DISCOVERY, details_);
     
-    // service_.Add(FetchProtocols::DISCOVERY, discovery_ );
+    service_.Add(FetchProtocols::DISCOVERY, discovery_ );
   }
 
   ~FetchService() {
@@ -46,7 +46,7 @@ public:
   
 private:
   fetch::network::ThreadManager *thread_manager_;    
-//  fetch::service::ServiceServer< fetch::network::TCPServer > service_;
+  fetch::service::ServiceServer< fetch::network::TCPServer > service_;
   
   DiscoveryProtocol *discovery_ = nullptr;
   NodeDetails details_;
