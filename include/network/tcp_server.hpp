@@ -25,7 +25,7 @@ class TCPServer : public AbstractNetworkServer {
     message_type meesage;
   };
 
-  TCPServer(uint16_t port, thread_manager_ptr_type thread_manager) :
+  TCPServer(uint16_t const& port, thread_manager_ptr_type const &thread_manager) :
     thread_manager_(thread_manager),
     request_mutex_(__LINE__, __FILE__),
     acceptor_(thread_manager->io_service(), asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
@@ -50,7 +50,7 @@ class TCPServer : public AbstractNetworkServer {
     manager_->Broadcast(msg);
   }
   
-  bool Send(handle_type client, message_type const& msg) {
+  bool Send(handle_type const &client, message_type const& msg) {
     return manager_->Send(client, msg);
   }
 
@@ -77,6 +77,13 @@ class TCPServer : public AbstractNetworkServer {
     requests_.pop_front();
   }
 
+  std::string GetAddress(handle_type const &client) const
+  {
+    return manager_->GetAddress(client);    
+  }
+  
+
+  
  private:
   thread_manager_ptr_type thread_manager_;
   event_handle_type event_service_start_;  

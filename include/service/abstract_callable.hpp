@@ -108,6 +108,10 @@ void PackArgs(serializer_type &serializer, arguments... args) {
 void PackArgs(serializer_type &serializer) {
   serializer.Seek(0);
 }
+
+enum Callable {
+  CLIENT_ID_ARG = 1
+};
   
 /* Abstract class for callables.
  *
@@ -115,6 +119,11 @@ void PackArgs(serializer_type &serializer) {
  */  
 class AbstractCallable {
  public:
+  AbstractCallable(uint64_t meta_data = 0) : meta_data_(meta_data) 
+  {
+
+  }
+  
   virtual ~AbstractCallable(){};
   
   /* Call operator that impolements deserialization and invocation of function.
@@ -122,6 +131,14 @@ class AbstractCallable {
    * @params is a serializer that is used to deserialize the arguments.
    */
   virtual void operator()(serializer_type &result, serializer_type &params) = 0;
+
+  uint64_t const & meta_data() const 
+  {
+    return meta_data_;
+  }
+  
+private:
+  uint64_t meta_data_ = 0;  
 };
 };
 };

@@ -95,7 +95,7 @@ public:
   }
 
 private:
-  void Call(serializer_type& result, serializer_type params) 
+  void Call(serializer_type& result, handle_type const &client, serializer_type params) 
   {
     protocol_handler_type protocol;
     function_handler_type function;
@@ -109,7 +109,24 @@ private:
     }
 
     auto& mod = *members_[protocol] ; //*it->second;
-    return mod[function](result, params);
+    auto& fnc = mod[function];
+
+
+    // If we need to add client id to function arguments
+    if(fnc.meta_data() & Callable::CLIENT_ID_ARG ) {
+      serializer_type newparams;
+      // TODO: A prettier solution can be made with template parameters
+      newparams << client;
+      newparams.Allocate(params.bytes_left());
+      auto const carr = params.data().SubArray( params.Tell(),params.bytes_left());      
+      newparams.WriteBytes( carr.pointer(), params.bytes_left() );
+      newparams.Seek(0);      
+      return fnc(result, newparams);
+    } 
+      
+    
+    
+    return fnc(result, params);
   }
 
   void ProcessMessages() 
@@ -150,12 +167,6 @@ private:
     network::message_type const& msg) 
   {
     serializer_type params(msg);
-
-    // Ensures that the client handle can be an option function parameter
-    params.Seek( params.size() );
-    params << client;
-    params.Seek(0);
-    
       
     service_classification_type type;
     params >> type;
@@ -169,7 +180,7 @@ private:
       {
         params >> id;
         result << SERVICE_RESULT << id;
-        Call(result, params);
+        Call(result, client, params);
       } catch (serializers::SerializableException const& e) 
       {
         result = serializer_type();

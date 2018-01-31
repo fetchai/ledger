@@ -9,7 +9,6 @@ namespace fetch
 {
 namespace service 
 {
-
 /* A member function wrapper that takes a serialized input.
  * @C is the class type to which the member function belongs.
  * @F is the function signature.
@@ -87,6 +86,7 @@ private:
   template <typename... used_args>
   struct UnrollArguments 
   {
+    
     /* Struct for loop definition.
      * @T is the type of the next argument to be unrolled.
      * @remaining_args are the arugments which has not yet been unrolled.
@@ -133,6 +133,14 @@ public:
     function_ = function;
   }
 
+
+  CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value) :
+    AbstractCallable(arguments)
+  {
+    class_ = cls;
+    function_ = value;
+  }
+  
   /* Operator to invoke the function.
    * @result is the serializer to which the result is written.
    * @params is a seralizer containing the function parameters.
@@ -171,10 +179,18 @@ public:
     function_ = value;
   }
 
+  CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value) :
+    AbstractCallable(arguments)
+  {
+    class_ = cls;
+    function_ = value;
+  }
+
   void operator()(serializer_type &result, serializer_type &params) override 
   {
     result << ( (*class_).*function_)();
   }
+
 
 private:
   class_type *class_;
@@ -190,19 +206,28 @@ private:
   typedef C class_type;
   typedef return_type (class_type::*member_function_pointer)();
 
-public:
+public:    
   CallableClassMember(class_type *cls, member_function_pointer value) 
   {
     class_ = cls;
     function_ = value;
   }
 
+  CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value) :
+    AbstractCallable(arguments)
+  {
+    class_ = cls;
+    function_ = value;
+  }
+  
+  
   void operator()(serializer_type &result, serializer_type &params) override 
   {
     result << 0;
     ( (*class_).*function_)();
   }
 
+  
 private:
   class_type *class_;
   member_function_pointer function_;

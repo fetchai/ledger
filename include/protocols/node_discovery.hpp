@@ -153,9 +153,8 @@ public:
     return peers_with_few_followers_;
   }
 
-  void RequestPeerConnections( NodeDetails details, uint64_t handle = uint64_t(-1)) 
+  void RequestPeerConnections( NodeDetails details ) 
   {
-    std::cout << "From " << handle << std::endl;
     
     peers_with_few_followers_.push_back(details);
     if(details.public_key == details_.public_key) 
@@ -189,15 +188,23 @@ public:
     }
   }
 
-  std::string GetAddress(std::string public_key) 
+  std::string GetAddress(uint64_t client) 
   {
-    
+    if(request_ip_) return request_ip_(client);    
+
+    return "unknown";    
+  }
+
+  void SetClientIPCallback( std::function< std::string(uint64_t) > request_ip ) 
+  {
+    request_ip_ = request_ip;    
   }
   
 private:
   NodeDetails const &details_;
   std::vector< NodeDetails > peers_with_few_followers_;
-
+  std::function< std::string(uint64_t) > request_ip_;
+  
 };
 
 class DiscoveryProtocol : public DiscoveryManager,
@@ -218,12 +225,14 @@ public:
     auto ping = new CallableClassMember<DiscoveryProtocol, uint64_t()>(this, &DiscoveryProtocol::Ping);
     auto hello = new CallableClassMember<DiscoveryProtocol, NodeDetails()>(this, &DiscoveryProtocol::Hello);
     auto suggest_peers = new CallableClassMember<DiscoveryProtocol, std::vector< NodeDetails >()>(this, &DiscoveryProtocol::SuggestPeers);
-    auto req_conn = new CallableClassMember<DiscoveryProtocol, void(NodeDetails, uint64_t)>(this, &DiscoveryProtocol::RequestPeerConnections);
+    auto req_conn = new CallableClassMember<DiscoveryProtocol, void(NodeDetails)>(this, &DiscoveryProtocol::RequestPeerConnections);
+    auto myip = new CallableClassMember<DiscoveryProtocol, std::string(uint64_t)>(Callable::CLIENT_ID_ARG, this, &DiscoveryProtocol::GetAddress);    
     
     this->Expose(DiscoveryRPC::PING, ping);
     this->Expose(DiscoveryRPC::HELLO, hello);
     this->Expose(DiscoveryRPC::SUGGEST_PEERS, suggest_peers); 
     this->Expose(DiscoveryRPC::REQUEST_PEER_CONNECTIONS, req_conn);
+    this->Expose(DiscoveryRPC::WHATS_MY_IP, myip);    
 
     // Using the event feed that
     this->RegisterFeed(DiscoveryFeed::FEED_REQUEST_CONNECTIONS, this);
@@ -269,21 +278,23 @@ public:
     uint64_t ping = uint64_t(ping_promise);    
 
     if(ping == 1337) 
-    
     {
       fetch::logger.Info("Successfully got PONG");      
       peers_.push_back( client ); 
 
       service::Promise details_promise = client->Call(protocol_, DiscoveryRPC::HELLO);  
       client->Call(protocol_, DiscoveryRPC::REQUEST_PEER_CONNECTIONS, details_);
+      service::Promise ip_promise = client->Call(protocol_, DiscoveryRPC::WHATS_MY_IP );
       
-      // TODO: Get own IP
-      NodeDetails client_details = details_promise.As< NodeDetails >();
+      NodeDetails server_details = details_promise.As< NodeDetails >();
+      std::string own_ip = ip_promise.As< std::string >();
+      std::cout << "My IP is "<< own_ip << std::endl;
+      
+      // TODO: Put the details for the server some where
     }
-    else
-    
+    else    
     {
-      fetch::logger.Error("Client gave wrong response - hanging up!");
+      fetch::logger.Error("Server gave wrong response - hanging up!");
       return nullptr;      
     }
     
@@ -299,12 +310,9 @@ public:
     {
       fetch::logger.Error("Failed in bootstrapping!");
       return;      
-    }
+    }    
 
-    std::cout << "Was here?" << std::endl;
-    
-    auto peer_promise =  client->Call(protocol_, DiscoveryRPC::SUGGEST_PEERS);
-    
+    auto peer_promise =  client->Call(protocol_, DiscoveryRPC::SUGGEST_PEERS);    
         
     std::vector< NodeDetails > others = peer_promise.As< std::vector< NodeDetails > >();
 

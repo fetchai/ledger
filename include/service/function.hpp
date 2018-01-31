@@ -7,8 +7,10 @@
 
 #include<functional>
 
-namespace fetch {
-namespace service {
+namespace fetch 
+{
+namespace service 
+{
 
 /* A function wrapper that takes a serialized input.
  * @F is the function signature.
@@ -21,8 +23,9 @@ class Function;
  * @Args are the arguments.
  */  
 template <typename R, typename... Args>
-class Function<R(Args...)> : public AbstractCallable {
- private:
+class Function<R(Args...)> : public AbstractCallable 
+{
+private:
   typedef R return_type;
   typedef std::function< R(Args...) > function_type;
 
@@ -35,15 +38,17 @@ class Function<R(Args...)> : public AbstractCallable {
    * This implementation invokes the function with unpacked arguments
    * and packs the result using the supplied serializer.
    */  
-   template< typename U, typename... used_args >
-   struct Invoke {
-     static void MemberFunction(serializer_type &result,
-                                  function_type &m,
-                                  used_args&... args) {
-       result << return_type( m(args...) );
-     };
+  template< typename U, typename... used_args >
+  struct Invoke 
+  {
+    static void MemberFunction(serializer_type &result,
+      function_type &m,
+      used_args&... args) 
+    {
+      result << return_type( m(args...) );
+    };
        
-   };
+  };
      
   /* Special case for invocation with return type void.
    * @used_args are the types of the function arguments.
@@ -52,35 +57,40 @@ class Function<R(Args...)> : public AbstractCallable {
    * uint8_t.
    */  
   template< typename... used_args >
-   struct Invoke<void, used_args...> {
-     static void MemberFunction(serializer_type &result,
-                                function_type &m,
-                                used_args&... args) {
-       result << uint8_t(0);
-       m( args... );
-     };
+  struct Invoke<void, used_args...> 
+  {
+    static void MemberFunction(serializer_type &result,
+      function_type &m,
+      used_args&... args) 
+    {
+      result << uint8_t(0);
+      m( args... );
+    };
      
-   };
+  };
 
   
   /* Struct used for unrolling arguments in a function signature.
    * @used_args are the unpacked arguments.
    */    
   template <typename... used_args>
-  struct UnrollArguments {
+  struct UnrollArguments 
+  {
     /* Struct for loop definition.
      * @T is the type of the next argument to be unrolled.
      * @remaining_args are the arugments which has not yet been unrolled.
      */      
     template <typename T, typename... remaining_args>
-    struct LoopOver {
+    struct LoopOver 
+    {
       static void Unroll(serializer_type &result,
-                         function_type &m, serializer_type &s,
-                         used_args &... used) {
+        function_type &m, serializer_type &s,
+        used_args &... used) 
+      {
         T l;
         s >> l;
         UnrollArguments<used_args..., T>::template LoopOver<
-            remaining_args...>::Unroll(result,  m, s, used..., l);
+          remaining_args...>::Unroll(result,  m, s, used..., l);
       }
     };
     
@@ -88,10 +98,12 @@ class Function<R(Args...)> : public AbstractCallable {
      * @T is the type of the last argument to be unrolled.
      */  
     template <typename T>
-    struct LoopOver<T> {
+    struct LoopOver<T> 
+    {
       static void Unroll(serializer_type &result,
-                         function_type &m, serializer_type &s,
-                         used_args &... used) {
+        function_type &m, serializer_type &s,
+        used_args &... used) 
+      {
         T l;
         s >> l;
         Invoke<return_type, used_args..., T>::MemberFunction(result, m, used..., l);
@@ -99,11 +111,12 @@ class Function<R(Args...)> : public AbstractCallable {
     };
   };
 
- public:
+public:
   /* Creates a function with serialized arguments.
    * @function is the member function.
    */   
-  Function(function_type value) {
+  Function(function_type value) 
+  {
     function_ = value;
   }
 
@@ -116,57 +129,66 @@ class Function<R(Args...)> : public AbstractCallable {
    * that the serializer is positioned at the beginning of the argument
    * list. 
    */  
-  void operator()(serializer_type &result, serializer_type &params) override {
+  void operator()(serializer_type &result, serializer_type &params) override 
+  {
     UnrollArguments<>::template LoopOver<Args...>::Unroll(
-        result, this->function_, params);
+      result, this->function_, params);
   }
 
- private:
+private:
 
   function_type function_;
 };
 
 
-  // No function args
+// No function args
 template <typename R>
-class Function< R()> : public AbstractCallable {
- private:
+class Function< R()> : public AbstractCallable 
+{
+private:
   typedef R return_type;
   typedef std::function< R() > function_type;
 
- public:
-  Function(function_type value) {
+public:
+  Function(function_type value) 
+  {
     function_ = value;
   }
 
-  void operator()(serializer_type &result, serializer_type &params) override {
+  void operator()(serializer_type &result, serializer_type &params) override 
+  {
     result << R( function_() );
   }
 
- private:
+
+private:
 
   function_type function_;
 };
 
-  // No function args, void return
+// No function args, void return
 template <>
-class Function<void()> : public AbstractCallable {
- private:
+class Function<void()> : public AbstractCallable 
+{
+private:
   typedef void return_type;
   typedef std::function< void() > function_type;
 
 
- public:
-  Function(function_type value) {
+public:
+  Function(function_type value) 
+  {
     function_ = value;
   }
 
-  void operator()(serializer_type &result, serializer_type &params) override {
+  void operator()(serializer_type &result, serializer_type &params) override 
+  {
     result << 0;
     function_();
   }
 
- private:
+
+private:
   function_type function_;
 };
   

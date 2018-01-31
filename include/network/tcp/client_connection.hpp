@@ -41,7 +41,7 @@ public:
     ReadHeader();
   }
 
-  void Send(message_type const& msg) 
+  void Send(message_type const& msg) override
   {
     write_mutex_.lock();
     bool write_in_progress = !write_queue_.empty();  
@@ -54,7 +54,7 @@ public:
     }
   }
 
-  std::string Address() 
+  std::string Address() override
   {
     return socket_.remote_endpoint().address().to_string();    
   }

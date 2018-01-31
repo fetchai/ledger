@@ -25,6 +25,12 @@ public:
     discovery_ =  new DiscoveryProtocol(thread_manager_, FetchProtocols::DISCOVERY, details_);
     
     service_.Add(FetchProtocols::DISCOVERY, discovery_ );
+
+    // Setting callback to resolve IP
+    discovery_->SetClientIPCallback([this](uint64_t const &n) -> std::string {
+        return service_.GetAddress(n);        
+      });
+    
   }
 
   ~FetchService() 
