@@ -27,12 +27,15 @@ public:
   DebugMutex& operator=(DebugMutex const &other) = delete;
   
   void lock() {
+    lock_mutex_.lock();
+    
     std::thread::id id =  std::this_thread::get_id();
     if(locker_.find( id ) != locker_.end() ) {
       std::cout << "MUTEX DEAD LOCK!: " << line_ << " " << file_ << std::endl << std::flush;
       exit(-1);
     }
     locker_[id] = LockInfo();
+    
     lock_mutex_.unlock();
 
 

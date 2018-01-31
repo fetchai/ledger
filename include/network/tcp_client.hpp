@@ -28,8 +28,8 @@ public:
     thread_manager_ptr_type thread_manager) :
     thread_manager_(thread_manager), 
     io_service_(thread_manager->io_service()),
-    socket_(thread_manager->io_service() )
-  
+    socket_(thread_manager->io_service() ),
+    write_mutex_(__LINE__, __FILE__)
   {
     
     writing_ = false;
