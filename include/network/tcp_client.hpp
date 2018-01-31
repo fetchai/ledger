@@ -13,9 +13,12 @@
 #include <mutex>
 #include <atomic>
 
-namespace fetch {
-namespace network {
-class TCPClient {
+namespace fetch 
+{
+namespace network 
+{
+class TCPClient 
+{
 public:
   typedef ThreadManager thread_manager_type;  
   typedef thread_manager_type* thread_manager_ptr_type;
@@ -23,9 +26,10 @@ public:
   
   TCPClient(std::string const& host, std::string const& port,
     thread_manager_ptr_type thread_manager) :
-    thread_manager_(thread_manager),    
+    thread_manager_(thread_manager), 
     io_service_(thread_manager->io_service()),
     socket_(thread_manager->io_service() )
+  
   {
     
     writing_ = false;
@@ -37,6 +41,7 @@ public:
     thread_manager_(thread_manager),
     io_service_(thread_manager->io_service()),
     socket_(thread_manager->io_service() )    
+  
   {
 
 
@@ -47,7 +52,8 @@ public:
     Connect(host, port);
   }
 
-  ~TCPClient() {
+  ~TCPClient() 
+  {
 
     thread_manager_->Off( event_start_service_ );
     thread_manager_->Off( event_stop_service_ );        
@@ -55,33 +61,39 @@ public:
 
   }
 
-  void Send(message_type const& msg) {
+  void Send(message_type const& msg) 
+  {
     fetch::logger.Debug("Sending message to server");    
-    auto cb = [this, msg]() {
-      write_mutex_.lock();
-      write_queue_.push_back(msg);
-      if (writing_) {
-        write_mutex_.unlock();
-      } else {
-        fetch::logger.Debug("Start writing message");    
-        writing_ = true;
-        write_mutex_.unlock();
-        Write();
-      }
-    };
+    auto cb = [this, msg]() 
+      {
+        write_mutex_.lock();
+        write_queue_.push_back(msg);
+        if (writing_) 
+        {
+          write_mutex_.unlock();
+        } else 
+        {
+          fetch::logger.Debug("Start writing message");    
+          writing_ = true;
+          write_mutex_.unlock();
+          Write();
+        }
+      };
 
     io_service_.post(cb);
   }
 
   virtual void PushMessage(message_type const& value) = 0;
   virtual void ConnectionFailed() = 0;      
- private:
-  void Connect(std::string const& host, std::string const& port) {
+private:
+  void Connect(std::string const& host, std::string const& port) 
+  {
     asio::ip::tcp::resolver resolver(io_service_);
     Connect(resolver.resolve({host, port}));
   }
 
-  void Connect(std::string const& host, uint16_t const& port) {
+  void Connect(std::string const& host, uint16_t const& port) 
+  {
     std::stringstream p;
     p << port;
 
@@ -89,56 +101,68 @@ public:
     Connect(resolver.resolve({host, p.str()}));
   }
 
-  void Connect(asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) {
+  void Connect(asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) 
+  {
     auto cb = [this](std::error_code ec,
-                     asio::ip::tcp::tcp::resolver::iterator) {
-      if (!ec) {
-        ReadHeader();
-      }
-    };
+      asio::ip::tcp::tcp::resolver::iterator) 
+      {
+        if (!ec) 
+        {
+          ReadHeader();
+        }
+      };
     asio::async_connect(socket_, endpoint_iterator, cb);
   }
 
-  void ReadHeader() {
-    auto cb = [this](std::error_code ec, std::size_t) {
-      if (!ec) {
-        // TODO: Take care of endianness
-        ReadBody();
-      } else {
-        fetch::logger.Error("Reading header failed, closing connection.");
-        ConnectionFailed();           
-        socket_.close();
-      }
-    };
+  void ReadHeader() 
+  {
+    auto cb = [this](std::error_code ec, std::size_t) 
+      {
+        if (!ec) 
+        {
+          // TODO: Take care of endianness
+          ReadBody();
+        } else 
+        {
+          fetch::logger.Error("Reading header failed, closing connection.");
+          ConnectionFailed();           
+          socket_.close();
+        }
+      };
 
     asio::async_read(socket_, asio::buffer(header_.bytes, sizeof(uint64_t)),
-                     cb);
+      cb);
   }
 
-  void ReadBody() {
+  void ReadBody() 
+  {
     byte_array::ByteArray message;
     message.Resize(header_.length);
 
-    auto cb = [this, message](std::error_code ec, std::size_t) {
-      if (!ec) {
-        PushMessage(message);
-        ReadHeader();
-      } else {
-        fetch::logger.Error("Reading body failed, closing connection.");
-        ConnectionFailed();        
-        socket_.close();
-      }
-    };
+    auto cb = [this, message](std::error_code ec, std::size_t) 
+      {
+        if (!ec) 
+        {
+          PushMessage(message);
+          ReadHeader();
+        } else 
+        {
+          fetch::logger.Error("Reading body failed, closing connection.");
+          ConnectionFailed();        
+          socket_.close();
+        }
+      };
 
     asio::async_read(socket_, asio::buffer(message.pointer(), message.size()),
-                     cb);
+      cb);
   }
 
   void Write() {    
     serializers::ByteArrayBuffer buffer;
 
     write_mutex_.lock();
-    if( write_queue_.empty() ) {
+    if( write_queue_.empty() ) 
+    {
       fetch::logger.Debug("Queue is empty stopping");    
       write_mutex_.unlock();
       return;
@@ -147,38 +171,43 @@ public:
     buffer << write_queue_.front();
     write_mutex_.unlock();
     
-    auto cb = [this](std::error_code ec, std::size_t) {
-      if (!ec) {
-        fetch::logger.Debug("Wrote message.");     
-        write_mutex_.lock();
-        write_queue_.pop_front();
-        bool should_write = writing_ = !write_queue_.empty();
-        write_mutex_.unlock();
+    auto cb = [this](std::error_code ec, std::size_t) 
+      {
+        if (!ec) 
+        {
+          fetch::logger.Debug("Wrote message.");     
+          write_mutex_.lock();
+          write_queue_.pop_front();
+          bool should_write = writing_ = !write_queue_.empty();
+          write_mutex_.unlock();
         
-        if (should_write) {
-          fetch::logger.Debug("Proceeding to next.");
+          if (should_write) 
+          {
+            fetch::logger.Debug("Proceeding to next.");
           
-          Write();
-        } 
-      } else {
-        fetch::logger.Error("Write failed, closing connection.");
-        ConnectionFailed();                
-        socket_.close();
-      }
-    };
+            Write();
+          } 
+        } else 
+        {
+          fetch::logger.Error("Write failed, closing connection.");
+          ConnectionFailed();                
+          socket_.close();
+        }
+      };
 
 
     asio::async_write(socket_, asio::buffer(buffer.data().pointer(), buffer.data().size()),
-                      cb);
+      cb);
 
   }
 
- private:
+private:
   event_handle_type event_start_service_;
   event_handle_type event_stop_service_;      
   thread_manager_ptr_type thread_manager_;
   
-  union {
+  union 
+  {
     char bytes[sizeof(uint64_t)];
     uint64_t length;
   } header_;

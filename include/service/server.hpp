@@ -47,7 +47,6 @@ public:
     super_type(port, thread_manager),
     thread_manager_( thread_manager),
     message_mutex_(__LINE__, __FILE__)
-  
   {
     running_ = false;
     event_service_start_ = thread_manager->OnBeforeStart([this]()      
@@ -64,11 +63,10 @@ public:
   }
 
   ~ServiceServer() 
-  
   {
     thread_manager_->Off( event_service_start_ );
     thread_manager_->Off( event_service_stop_ );    
-  }    
+  }
   
   void PushRequest(handle_type client,
     network::message_type const& msg) override 
@@ -153,6 +151,12 @@ private:
   {
     serializer_type params(msg);
 
+    // Ensures that the client handle can be an option function parameter
+    params.Seek( params.size() );
+    params << client;
+    params.Seek(0);
+    
+      
     service_classification_type type;
     params >> type;
 

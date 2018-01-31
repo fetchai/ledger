@@ -12,8 +12,10 @@
 #include <memory>
 #include<vector>
 
-namespace fetch {
-namespace service {
+namespace fetch 
+{
+namespace service 
+{
 /* A class that defines a generic protocol.
  *
  * This class is used for defining a general protocol with
@@ -29,8 +31,9 @@ namespace service {
  * this should be changed to be variable and allocated at construction
  * time (TODO).
  */
-class Protocol {
- public:
+class Protocol 
+{
+public:
   typedef AbstractCallable callable_type;
   typedef byte_array::ConstByteArray byte_array_type;
 
@@ -45,11 +48,12 @@ class Protocol {
    *
    * @return a reference to the call. 
    */
-  callable_type& operator[](function_handler_type const& n) {
+  callable_type& operator[](function_handler_type const& n) 
+  {
     if((n >= 256) ||(members_[n] == nullptr) )
       throw serializers::SerializableException(
-          error::MEMBER_NOT_FOUND,
-          byte_array_type("Could not find member "));
+        error::MEMBER_NOT_FOUND,
+        byte_array_type("Could not find member "));
     return *members_[n];
   }
 
@@ -65,14 +69,16 @@ class Protocol {
    * the code as it is always a reference return and not the raw pointer
    * (TODO). 
    */
-  void Expose(function_handler_type const& n, callable_type* fnc) {
+  void Expose(function_handler_type const& n, callable_type* fnc) 
+  {
     if(members_[n] != nullptr)
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS,
-          byte_array_type("Member already exists: "));
+        error::MEMBER_EXISTS,
+        byte_array_type("Member already exists: "));
 
     members_[n] = fnc;
   }
+
 
   /* Registers a feed from an implementation.
    * @feed is the unique feed identifier.
@@ -80,7 +86,8 @@ class Protocol {
    *
    *  
    */
-  void RegisterFeed(feed_handler_type const& feed, AbstractPublicationFeed* publisher) {
+  void RegisterFeed(feed_handler_type const& feed, AbstractPublicationFeed* publisher) 
+  {
     feeds_.push_back(std::make_shared<FeedSubscriptionManager>(feed, publisher));
   }
 
@@ -93,15 +100,18 @@ class Protocol {
    * its clients to the feed.
    */  
   void Subscribe(uint64_t const & client,   // TODO: Standardize client type over the code.
-                 feed_handler_type const & feed,
-                 subscription_handler_type const &id) {
+    feed_handler_type const & feed,
+    subscription_handler_type const &id) 
+  {
     std::cout << "Making subscription for " << client << " " << feed << " " << id << std::endl;
     feeds_mutex_.lock();
     std::size_t i =0;
-    for(;i < feeds_.size(); ++i) {
+    for(;i < feeds_.size(); ++i) 
+    {
       if(feeds_[i]->feed() == feed) break;
     }
-    if( i == feeds_.size() ) {
+    if( i == feeds_.size() ) 
+    {
       TODO_FAIL("make serializable error, feed not found");
     }
     auto &f = feeds_[i];
@@ -120,14 +130,17 @@ class Protocol {
    * its clients to the feed.
    */  
   void Unsubscribe(uint64_t const & client,   // TODO: Standardize client type over the code.
-                 feed_handler_type const & feed,
-                 subscription_handler_type const &id) {
+    feed_handler_type const & feed,
+    subscription_handler_type const &id) 
+  {
     feeds_mutex_.lock();
     std::size_t i =0;
-    for(;i < feeds_.size(); ++i) {
+    for(;i < feeds_.size(); ++i) 
+    {
       if(feeds_[i]->feed() == feed) break;
     }
-    if( i == feeds_.size() ) {
+    if( i == feeds_.size() ) 
+    {
       TODO_FAIL("make serializable error, feed not found");
     }
     auto &f = feeds_[i];
@@ -141,7 +154,7 @@ class Protocol {
    * @return a reference to the feeds.
    */
   std::vector< std::shared_ptr<FeedSubscriptionManager> >& feeds() { return feeds_; }
- private:
+private:
   callable_type* members_[256] = {nullptr};
   std::vector< std::shared_ptr<FeedSubscriptionManager> > feeds_;
   fetch::mutex::Mutex feeds_mutex_;

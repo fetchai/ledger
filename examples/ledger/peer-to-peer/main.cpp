@@ -5,15 +5,17 @@
 #include"commandline/parameter_parser.hpp"
 #include"commandline/vt100.hpp"
 #include<vector>
-#include<memory>
+#include<memory> 
 
 using namespace fetch::commandline;
 using namespace fetch::protocols;
-enum FetchProtocols {
+enum FetchProtocols 
+{
   DISCOVERY = 1
 };
 
-class FetchService  {
+class FetchService  
+{
 public:
   FetchService(uint16_t port, std::string const&pk) :   
     thread_manager_( new fetch::network::ThreadManager(8) ),
@@ -25,12 +27,14 @@ public:
     service_.Add(FetchProtocols::DISCOVERY, discovery_ );
   }
 
-  ~FetchService() {
+  ~FetchService() 
+  {
     std::cout << "Killing fetch service";    
     delete discovery_;
   }
 
-  void Bootstrap(std::string const &address, uint16_t const &port) {
+  void Bootstrap(std::string const &address, uint16_t const &port) 
+  {
     discovery_->Bootstrap( address, port );
   }
 
@@ -40,6 +44,7 @@ public:
   }
 
   void Stop() 
+  
   {
     thread_manager_->Stop();
   }
@@ -53,12 +58,14 @@ private:
 };
 
 
-int main(int argc, char const** argv) {
+int main(int argc, char const** argv) 
+{
 
   ParamsParser params;
   params.Parse(argc, argv);
  
-  if(params.arg_size() < 3) {
+  if(params.arg_size() < 3) 
+  {
     std::cout << "usage: " << argv[0] << " [port] [info] [[bootstrap_host] [bootstrap_port]]" << std::endl;
     exit(-1);
   }
@@ -71,7 +78,8 @@ int main(int argc, char const** argv) {
   
   std::this_thread::sleep_for( std::chrono::milliseconds( 200 ) );  
   
-  if(params.arg_size() >= 5) {
+  if(params.arg_size() >= 5) 
+  {
     std::string host = params.GetArg(3);
     uint16_t port = params.GetArg<uint16_t>(4);
     std::cout << "Bootstrapping through " << host << " " << port << std::endl;
@@ -80,7 +88,8 @@ int main(int argc, char const** argv) {
   
   
   std::cout << "Ctrl-C to stop" << std::endl;
-  while(true) {
+  while(true) 
+  {
     std::this_thread::sleep_for( std::chrono::milliseconds( 200 ) );
   }
   return 0;
