@@ -6,17 +6,22 @@
 #include<map>
 #include<iostream>
 
-namespace fetch {
-namespace mutex {
-class ProductionMutex : public std::mutex {
+namespace fetch 
+{
+namespace mutex 
+{
+class ProductionMutex : public std::mutex 
+{
 
 public:
   ProductionMutex(int , std::string ) { } 
   ProductionMutex() = default;  
 };
   
-class DebugMutex : public std::mutex {
-  struct LockInfo {
+class DebugMutex : public std::mutex 
+{
+  struct LockInfo 
+  {
     bool locked = true;
   };
 public:
@@ -26,11 +31,13 @@ public:
   
   DebugMutex& operator=(DebugMutex const &other) = delete;
   
-  void lock() {
+  void lock() 
+  {
     lock_mutex_.lock();
     
     std::thread::id id =  std::this_thread::get_id();
-    if(locker_.find( id ) != locker_.end() ) {
+    if(locker_.find( id ) != locker_.end() ) 
+    {
       std::cout << "MUTEX DEAD LOCK!: " << line_ << " " << file_ << std::endl << std::flush;
       exit(-1);
     }
@@ -42,7 +49,8 @@ public:
     std::mutex::lock();
   }
   
-  void unlock() {
+  void unlock() 
+  {
     lock_mutex_.lock();
     std::thread::id id =  std::this_thread::get_id();
     locker_.erase( id );

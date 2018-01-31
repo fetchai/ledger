@@ -27,8 +27,7 @@ public:
   ClientConnection(asio::ip::tcp::tcp::socket socket, ClientManager& manager)
     : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__)
   {
-    address_ = socket_.remote_endpoint().address().to_string();
-    fetch::logger.Debug("Connection from ", address_);
+    fetch::logger.Debug("Connection from ", socket_.remote_endpoint().address().to_string() );
   }
 
   ~ClientConnection() 
@@ -44,7 +43,6 @@ public:
 
   void Send(message_type const& msg) 
   {
-    
     write_mutex_.lock();
     bool write_in_progress = !write_queue_.empty();  
     write_queue_.push_back(msg);
@@ -56,6 +54,11 @@ public:
     }
   }
 
+  std::string Address() 
+  {
+    return socket_.remote_endpoint().address().to_string();    
+  }
+  
 private:
   void ReadHeader() 
   {

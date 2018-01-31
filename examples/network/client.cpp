@@ -16,6 +16,12 @@ public:
   {
     std::cout << value << std::endl;
   }
+
+  void ConnectionFailed() override 
+  {
+    std::cerr << "Connection failed" << std::endl;
+  }
+  
   
 private:
 
