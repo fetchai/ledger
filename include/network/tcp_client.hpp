@@ -52,9 +52,9 @@ public:
     Connect(host, port);
   }
 
-  ~TCPClient() 
-  {
 
+  ~TCPClient()
+  {
     thread_manager_->Off( event_start_service_ );
     thread_manager_->Off( event_stop_service_ );        
     socket_.close();
@@ -120,7 +120,6 @@ private:
       {
         if (!ec) 
         {
-          // TODO: Take care of endianness
           ReadBody();
         } else 
         {
@@ -129,14 +128,22 @@ private:
           socket_.close();
         }
       };
+    
 
-    asio::async_read(socket_, asio::buffer(header_.bytes, sizeof(uint64_t)),
-      cb);
+    asio::async_read(socket_, asio::buffer(header_.bytes, 2*sizeof(uint64_t)),
+                     cb);
   }
 
   void ReadBody() 
   {
     byte_array::ByteArray message;
+    if( header_.magic != 0xFE7C80A1FE7C80A1) {
+      fetch::logger.Debug("Magic incorrect - closing connection.");
+      ConnectionFailed();           
+      socket_.close();
+      return;
+    }
+    
     message.Resize(header_.length);
 
     auto cb = [this, message](std::error_code ec, std::size_t) 
@@ -167,7 +174,8 @@ private:
       write_mutex_.unlock();
       return;
     }
-    
+
+    buffer << 0xFE7C80A1FE7C80A1;
     buffer << write_queue_.front();
     write_mutex_.unlock();
     
@@ -206,10 +214,13 @@ private:
   event_handle_type event_stop_service_;      
   thread_manager_ptr_type thread_manager_;
   
-  union 
-  {
-    char bytes[sizeof(uint64_t)];
-    uint64_t length;
+  union {
+    char bytes[2*sizeof(uint64_t)];
+    struct {
+      uint64_t magic;
+      uint64_t length;
+    };
+
   } header_;
 
   asio::io_service &io_service_;
