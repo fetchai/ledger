@@ -53,6 +53,18 @@ consumer_function_type StringEnclosedIn(char c) {
       };
 }
 
+consumer_function_type SingleChar(char c) {
+  return
+    [c](byte_array::ConstByteArray const &str, uint64_t &pos) -> bool {
+    if (str[pos] == c) {
+      ++pos;
+      return true;     
+    }
+    return false;    
+  };
+  
+}
+
 consumer_function_type TokenFromList(std::vector<std::string> list) {
   return [list](byte_array::ConstByteArray const &str,
                 uint64_t &pos) -> bool {

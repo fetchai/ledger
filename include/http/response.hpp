@@ -3,43 +3,28 @@
 #include"http/header.hpp"
 #include"http/status.hpp"
 
+#include<ostream>
+
 namespace fetch {
 namespace http {
 
-class Response : public std::enable_shared_from_this<Response>, public std::ostream {  
+class HTTPResponse : public std::enable_shared_from_this<HTTPResponse> {
 public:
-  Response(std::shared_ptr<Session> session, long timeout_content) :
-    session_(std::move(session)),
-    timeout_(timeout_content)
+  HTTPResponse(byte_array::ByteArray body) :
+    body_(body)
   {
+    
+  }
+
+  byte_array::ByteArray ResponseData() const
+  {
+
   }
   
-
-  void Write(Status const &status = status_code::SUCCESS_OK, Header const &header) {
-
-  }
-
-  void Write(Status const &status, std::string const &content) {
-
-  }
-
-
-  void Write(Header const &header, std::string const &content = "") {
-
-  }
-
-
-  std::size_t size() {
-    return this->size();
-  }
-
 private:
-  void WriteHeader(Header const &header, std::size_t const & size) {
- 
-  }
+  byte_array::ByteArray header_;
+  byte_array::ByteArray body_;
   
-  std::shared_ptr<Session> session_;
-  uint64_t timeout_;
   bool keep_alive_ = false;  
 };
 

@@ -1,3 +1,4 @@
+add_executable(http_server http/server.cpp)
 add_executable(p2p_node ledger/peer-to-peer/main.cpp)
 add_executable(simple_ledger_node ledger/simple-ledger/node.cpp)
 

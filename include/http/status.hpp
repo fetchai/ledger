@@ -7,7 +7,7 @@ namespace http
 
 struct Status 
 {
-  uint8_t code;
+  uint16_t code;
   std::string explanation;  
 };
 
@@ -72,11 +72,11 @@ Status const SERVER_ERROR_VARIANT_ALSO_NEGOTIATES = {506, "506 Variant Also Nego
 Status const SERVER_ERROR_INSUFFICIENT_STORAGE = {507, "507 Insufficient Storage"};
 Status const SERVER_ERROR_LOOP_DETECTED = {508, "508 Loop Detected"};
 Status const SERVER_ERROR_NOT_EXTENDED = {510, "510 Not Extended"};
-Status const SERVER_ERROR_NETWORK_AUTHENTICATION_REQUIRED = {511, "511 Network Authentication Required"}
+Status const SERVER_ERROR_NETWORK_AUTHENTICATION_REQUIRED = {511, "511 Network Authentication Required"};
   
 };
  
 };
 };
 
-#ENDIF
+#endif
