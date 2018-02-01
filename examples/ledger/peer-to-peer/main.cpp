@@ -1,7 +1,6 @@
-
 #include"service/server.hpp"
 #include"network/tcp_server.hpp"
-#include"protocols/node_discovery.hpp"
+#include"protocols/discovery_protocol.hpp"
 #include"commandline/parameter_parser.hpp"
 #include"commandline/vt100.hpp"
 #include<vector>
