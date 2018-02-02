@@ -100,7 +100,7 @@ public:
     if( request->content_length() <= buffer_ptr->size() ) {
       HTTPRequest::SetBody( *request, *buffer_ptr);
 
-      Send( HTTPResponse( "hello world!" ) );
+      manager_.PushRequest(handle_,  *request ); 
       
       if(is_open_) ReadHeader(buffer_ptr); 
       return;      
@@ -141,7 +141,7 @@ public:
     
     HTTPResponse::WriteToBuffer(res, *buffer_ptr);    
     auto self = shared_from_this();        
-    auto cb = [this, self](std::error_code ec, std::size_t) 
+    auto cb = [this, self, buffer_ptr](std::error_code ec, std::size_t) 
       {
         if (!ec) 
         {
@@ -152,7 +152,8 @@ public:
           {
             Write();
           }
-        } else 
+        }
+        else 
         {
           manager_.Leave(handle_);
         }

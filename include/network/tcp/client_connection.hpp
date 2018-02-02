@@ -118,7 +118,8 @@ private:
     buffer << write_queue_.front();
     write_mutex_.unlock();
 
-    auto cb = [this](std::error_code ec, std::size_t) 
+    auto self = shared_from_this(); 
+    auto cb = [this, buffer, self](std::error_code ec, std::size_t) 
       {
         if (!ec) 
         {
@@ -130,7 +131,8 @@ private:
           {
             Write();
           }
-        } else 
+        }
+        else 
         {
           manager_.Leave(handle_);
         }

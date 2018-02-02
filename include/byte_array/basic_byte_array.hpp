@@ -53,7 +53,8 @@ public:
   BasicByteArray(self_type const &other,
                       std::size_t const &start, std::size_t const &length)
       : data_(other.data_), start_(start), length_(length) {
-    assert(start_ + length_ <= other.size());
+    
+    assert(start_ + length_ <= data_.size());
     arr_pointer_ = data_.pointer() + start_;
   }
 
@@ -125,8 +126,11 @@ public:
     return self_type(*this, start + start_, length);
   }
 
-  bool Match(self_type const &str, std::size_t const &p = 0) const {
-    return Match(str.pointer(), p);
+  bool Match(self_type const &str, std::size_t pos = 0) const {
+    std::size_t p = 0;
+    while ((pos < length_) && (p < str.size()) && (str[p] == arr_pointer_[pos]))
+      ++pos, ++p;
+    return (p == str.size());    
   }
 
   bool Match(container_type const *str, std::size_t pos = 0) const {

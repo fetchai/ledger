@@ -13,7 +13,7 @@ class AbstractHTTPServer
 public:
   typedef uint64_t handle_type;
 
-  virtual void PushRequest(handle_type client, HTTPRequest const& msg) = 0;
+  virtual void PushRequest(handle_type client, HTTPRequest req) = 0;
 
   static handle_type next_handle() 
   {

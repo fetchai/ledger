@@ -3,8 +3,13 @@
 #include"http/http_connection_manager.hpp"
 #include"http/connection.hpp"
 #include"network/thread_manager.hpp"
+#include"http/route.hpp"
 
 #include<deque>
+#include<functional>
+#include<vector>
+#include<map>
+#include<regex>
 
 namespace fetch
 {
@@ -20,6 +25,16 @@ public:
   typedef thread_manager_type* thread_manager_ptr_type;
   typedef typename thread_manager_type::event_handle_type event_handle_type;
 
+  typedef std::function< void(HTTPRequest& ) > request_middleware_type;
+  typedef std::function< HTTPResponse(ViewParameters, HTTPRequest) > view_type;
+  typedef std::function< void(HTTPResponse&, HTTPRequest const& ) > response_middleware_type;
+
+  struct MountedView 
+  {
+    Route route;
+    view_type view;    
+  };
+    
   
   HTTPServer(uint16_t const &port, thread_manager_ptr_type const &thread_manager) :
     thread_manager_(thread_manager),
@@ -39,9 +54,34 @@ public:
     socket_.close();
   }
 
-  void PushRequest(handle_type client, HTTPRequest const& req) override
+  void PushRequest(handle_type client, HTTPRequest req) override
   {
-    std::cout << "Received request" << std::endl;   
+    // TODO: improve such that it works for multiple threads.
+    eval_mutex_.lock();    
+    for(auto &m : pre_view_middleware_) {
+      m( req );      
+    }
+
+    HTTPResponse res( "page not found" ) ;   
+    ViewParameters params;
+    
+    for(auto &v: views_) {
+
+      if(v.route.Match( req.uri(), params ))
+      {
+        res = v.view( params, req);
+        break;        
+      }
+      
+    }
+        
+    for(auto &m : post_view_middleware_) {
+      m( res, req );      
+    }    
+    eval_mutex_.unlock();    
+
+    manager_->Send( client, res );
+    
   }
   
   void Accept()
@@ -58,6 +98,30 @@ public:
 
     acceptor_.async_accept(socket_, cb);   
   }
+
+  void AddMiddleware( request_middleware_type const &middleware )
+  {
+    pre_view_middleware_.push_back( middleware );    
+  }
+
+  void AddMiddleware( response_middleware_type const &middleware )
+  {
+    post_view_middleware_.push_back( middleware );
+  }
+
+  void AddView( byte_array::ByteArray const& reg,  view_type const &middleware )
+  {
+    
+    views_.push_back( { Route::FromString(reg), middleware } );    
+  }
+  
+private:
+  fetch::mutex::Mutex eval_mutex_;
+  
+  std::vector< request_middleware_type > pre_view_middleware_;
+  std::vector< MountedView > views_;  
+  std::vector< response_middleware_type > post_view_middleware_;  
+  
   
   thread_manager_ptr_type thread_manager_;
   event_handle_type event_service_start_;    

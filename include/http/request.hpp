@@ -70,10 +70,10 @@ public:
     {
       char c = *cit;
       ++cit;
+      
 
       req.header_data_[i] = c;
-      
-      
+            
       switch(c) {
       case ':':     
         if(split_at == 0)

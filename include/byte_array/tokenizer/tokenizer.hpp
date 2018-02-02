@@ -64,6 +64,7 @@ class Tokenizer : public std::vector<Token> {
   }
 
  public:
+
   void CreateSubspace(byte_array_type const &name, uint64_t const &type1,
                       byte_array_type const &token1, uint64_t const &type2,
                       byte_array_type const &token2,

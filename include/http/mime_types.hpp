@@ -1,14 +1,22 @@
-#ifndef HTTP_HEADER_HPP
-#define HTTP_HEADER_HPP
+#ifndef HTTP_MIME_TYPES_HPP
+#define HTTP_MIME_TYPES_HPP
 #include<vector>
+#include<algorithm>
 namespace fetch {
 namespace http {
 
 struct MimeType {
   std::string extension;
   std::string type;
+  bool operator<(MimeType const &other) const 
+  {
+    return extension < other.extension;
+  }
+  
 };
 
+namespace mime_types {
+  // Note this vector MUST be sorted!
   std::vector< MimeType > const types = {
     {".aac","audio/aac"},
     {".abw","application/x-abiword"},
@@ -60,6 +68,7 @@ struct MimeType {
     {".tiff", "image/tiff"},
     {".ts", "application/typescript"},
     {".ttf", "font/ttf"},
+    {".txt", "text/plain"},    
     {".vsd", "application/vnd.visio"},
     {".wav", "audio/x-wav"},
     {".weba", "audio/webm"},
@@ -77,6 +86,22 @@ struct MimeType {
     {".3g2", "video/3gpp2"},
     {".7z", "application/x-7z-compressed"}
  };
+
+MimeType GetMimeTypeFromExtension(std::string const& ext) 
+{
+  MimeType mime({ext, "application/octet-stream"});
+      
+  auto first = types.begin(); 
+  first = std::lower_bound(first, types.end(), mime);
+  if(first->extension == ext)
+  {
+    return *first;    
+  }
+  return mime;  
+}
+
+};
+
 };
 };
 
