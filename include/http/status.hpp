@@ -12,10 +12,10 @@ struct Status
 };
 
 namespace status_code {
-Status const UNKNOWN = {0, "100 Continue"};
-Status const INFORMATION_CONTINUE = {100,  "101 Switching Protocols"};
-Status const INFORMATION_SWITCHING_PROTOCOLS = {101, "102 Processing"};
-Status const INFORMATION_PROCESSING = {102, ""};
+Status const UNKNOWN = {0, "0 Unkown"};
+Status const INFORMATION_CONTINUE = {100,  "100 Continue"};
+Status const INFORMATION_SWITCHING_PROTOCOLS = {101, "101 Switching Protocols"};
+Status const INFORMATION_PROCESSING = {102, "102 Processing"};
 Status const SUCCESS_OK = {200, "200 OK"};
 Status const SUCCESS_CREATED = {201, "201 Created"};
 Status const SUCCESS_ACCEPTED = {202, "202 Accepted"};

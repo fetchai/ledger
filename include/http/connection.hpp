@@ -3,12 +3,14 @@
 #include"http/http_connection_manager.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/request.hpp"
+#include "http/response.hpp"
 #include "mutex.hpp"
 #include "assert.hpp"
 #include "logger.hpp"
 
 #include <asio.hpp>
-#include<memory>
+#include <memory>
+#include <deque>
 namespace fetch {
 namespace http {
 
@@ -16,6 +18,7 @@ class HTTPConnection : public AbstractHTTPConnection,
                        public std::enable_shared_from_this<HTTPConnection> 
 {
 public:
+  typedef std::deque< HTTPResponse > response_queue_type;
   typedef typename AbstractHTTPConnection::shared_type connection_type;  
   typedef HTTPConnectionManager::handle_type handle_type;
   typedef std::shared_ptr< HTTPRequest > shared_request_type;
@@ -41,9 +44,17 @@ public:
     ReadHeader();
   }
 
-  void Send(AbstractHTTPResponse const&) override 
+  void Send(HTTPResponse const&response) override 
   {
-    TODO("Not implemented");    
+    write_mutex_.lock();
+    bool write_in_progress = !write_queue_.empty();  
+    write_queue_.push_back(response);
+    write_mutex_.unlock();
+    
+    if (!write_in_progress) 
+    {
+      Write();
+    }    
   }
   
   
@@ -82,6 +93,8 @@ public:
     
     if( request->content_length() <= buffer_ptr->size() ) {
       HTTPRequest::SetBody( *request, *buffer_ptr);
+
+      Send( HTTPResponse( "hello world!" ) );
       
       ReadHeader(buffer_ptr); 
       return;      
@@ -119,7 +132,7 @@ public:
   
   asio::ip::tcp::tcp::socket socket_;
   HTTPConnectionManager &manager_;
-//  chunk_queue_type write_queue_;  
+  response_queue_type write_queue_;  
   fetch::mutex::Mutex write_mutex_;
 
   handle_type handle_;  

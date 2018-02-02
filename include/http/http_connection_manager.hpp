@@ -36,7 +36,7 @@ public:
     }
   }
 
-  bool Send(handle_type client, AbstractHTTPResponse const& msg) 
+  bool Send(handle_type client, HTTPResponse const& msg) 
   {
     /*
     bool ret = true;
