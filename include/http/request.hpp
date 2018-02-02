@@ -49,7 +49,6 @@ public:
 
   static bool SetHeader(HTTPRequest &req, asio::streambuf &buffer, std::size_t const &end) 
   {
-    using namespace byte_array;
 
     req.header_data_ = byte_array::ByteArray();    
     req.header_data_.Resize( end );
@@ -64,7 +63,7 @@ public:
 
     std::size_t last_pos = 0, split_at = 0;
     std::size_t line = 0;    
-    ByteArray key, value, start_line;    
+    byte_array::ByteArray key, value, start_line;    
 
     
     for(std::size_t i = 0; i < end; ++i )

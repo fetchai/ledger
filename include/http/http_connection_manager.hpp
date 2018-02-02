@@ -17,15 +17,18 @@ public:
 
   handle_type Join(connection_type client) 
   {
+    fetch::logger.Info("JOINING ", std::this_thread::get_id() );        
     handle_type handle = server_.next_handle();
     fetch::logger.Info("Client joining with handle ", handle);
     
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
     clients_[handle] = client;
+    fetch::logger.Info("< JOINING ", std::this_thread::get_id() );            
     return handle;
   }
 
-  void Leave(handle_type handle) {    
+  void Leave(handle_type handle) {
+    fetch::logger.Info("LEAVING ", std::this_thread::get_id() );    
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
     
     if( clients_.find(handle) != clients_.end() ) 
@@ -34,6 +37,8 @@ public:
       // TODO: Close socket!
       clients_.erase(handle);
     }
+    fetch::logger.Info("Client ", handle, " is leaving");
+    fetch::logger.Info("< LEAVING ", std::this_thread::get_id() );        
   }
 
   bool Send(handle_type client, HTTPResponse const& msg) 
@@ -69,11 +74,13 @@ public:
 
   std::string GetAddress(handle_type client) 
   {
+    fetch::logger.Info("ADDRESS ", std::this_thread::get_id() );        
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);    
     if( clients_.find(client) != clients_.end() ) 
     {
       return clients_[client]->Address();
     }
+    fetch::logger.Info("< ADDRESS ", std::this_thread::get_id() );            
     return "0.0.0.0";    
   }
   

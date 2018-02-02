@@ -40,8 +40,9 @@ public:
   
   void Start() 
   {
+    is_open_ = true;    
     handle_ = manager_.Join(shared_from_this());
-    ReadHeader();
+    if(is_open_) ReadHeader();
   }
 
   void Send(HTTPResponse const&response) override 
@@ -68,12 +69,17 @@ public:
 public:
   void ReadHeader(buffer_ptr_type buffer_ptr = nullptr) 
   {
+    fetch::logger.Debug("Ready to ready HTTP header");
+    
     shared_request_type request = std::make_shared< HTTPRequest >();
     if(!buffer_ptr ) buffer_ptr = std::make_shared< asio::streambuf  >(  std::numeric_limits<std::size_t>::max() );
-    
-    auto cb = [this, buffer_ptr, request](std::error_code const &ec, std::size_t const &len) {
 
-      if(ec) {
+    auto self = shared_from_this();
+    
+    auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
+      fetch::logger.Debug("Read HTTP header");
+      
+      if(ec) {        
         this->HandleError(ec, request);
         return;          
       }
@@ -81,7 +87,7 @@ public:
       {
         
         HTTPRequest::SetHeader( *request, *buffer_ptr,  len );        
-        ReadBody( buffer_ptr, request );          
+        if(is_open_) ReadBody( buffer_ptr, request );          
       }
     };
 
@@ -96,11 +102,12 @@ public:
 
       Send( HTTPResponse( "hello world!" ) );
       
-      ReadHeader(buffer_ptr); 
+      if(is_open_) ReadHeader(buffer_ptr); 
       return;      
     }
-        
-    auto cb = [this, buffer_ptr, request](std::error_code const &ec, std::size_t const &len) {
+
+    auto self = shared_from_this();    
+    auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
       if(ec) {
         this->HandleError(ec, request);
         return;
@@ -116,17 +123,47 @@ public:
 
   void HandleError(std::error_code const &ec, shared_request_type req) 
   {
-    std::cout << "TODO: Handle error" << std::endl;
+    std::stringstream ss;
+    ss << ec;    
+    fetch::logger.Debug("HTTP error: ", ss.str());
+
     Close();    
   }
   
   
   void Write() 
   {
-    // TODO
+    buffer_ptr_type buffer_ptr = std::make_shared< asio::streambuf  >(  std::numeric_limits<std::size_t>::max() );
+    write_mutex_.lock();
+    HTTPResponse res = write_queue_.front();
+    write_queue_.pop_front();
+    write_mutex_.unlock();
+    
+    HTTPResponse::WriteToBuffer(res, *buffer_ptr);    
+    auto self = shared_from_this();        
+    auto cb = [this, self](std::error_code ec, std::size_t) 
+      {
+        if (!ec) 
+        {
+          write_mutex_.lock();
+          bool write_more = !write_queue_.empty();
+          write_mutex_.unlock();  
+          if (is_open_ && write_more) 
+          {
+            Write();
+          }
+        } else 
+        {
+          manager_.Leave(handle_);
+        }
+      };
+
+
+    asio::async_write(socket_, *buffer_ptr, cb);    
   }
 
   void Close() {
+    is_open_ = false;    
     manager_.Leave( handle_ );
   }
   
@@ -135,7 +172,9 @@ public:
   response_queue_type write_queue_;  
   fetch::mutex::Mutex write_mutex_;
 
-  handle_type handle_;  
+  handle_type handle_;
+  bool is_open_ = false;
+  
 };
 
   

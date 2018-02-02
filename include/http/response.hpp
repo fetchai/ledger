@@ -15,7 +15,7 @@ public:
     body_(body),
     status_(status)
   {
-    
+    header_.Add( "content-length", body_.size() );
   }
 
   static void WriteToBuffer(HTTPResponse &res,   asio::streambuf &buffer) 

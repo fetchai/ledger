@@ -4,7 +4,7 @@ using namespace fetch::http;
 
 int main() 
 {
-  fetch::network::ThreadManager tm(8);  
+  fetch::network::ThreadManager tm(1);  
   HTTPServer server(8080, &tm);
 
   tm.Start();
