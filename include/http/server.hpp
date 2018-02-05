@@ -58,26 +58,28 @@ public:
   {
     // TODO: improve such that it works for multiple threads.
     eval_mutex_.lock();    
-    for(auto &m : pre_view_middleware_) {
+    for(auto &m : pre_view_middleware_)
+    {
       m( req );      
     }
 
-    HTTPResponse res( "page not found" ) ;   
+    HTTPResponse res( "page not found", fetch::http::mime_types::GetMimeTypeFromExtension(".html"), http::status_code::CLIENT_ERROR_NOT_FOUND ) ;   
     ViewParameters params;
     
-    for(auto &v: views_) {
-
+    for(auto &v: views_)
+    {
       if(v.route.Match( req.uri(), params ))
       {
         res = v.view( params, req);
         break;        
       }
-      
     }
         
-    for(auto &m : post_view_middleware_) {
+    for(auto &m : post_view_middleware_)
+    {
       m( res, req );      
-    }    
+    }
+    
     eval_mutex_.unlock();    
 
     manager_->Send( client, res );
@@ -109,10 +111,10 @@ public:
     post_view_middleware_.push_back( middleware );
   }
 
-  void AddView( byte_array::ByteArray const& reg,  view_type const &middleware )
+  void AddView( byte_array::ByteArray const& path,  view_type const &view )
   {
     
-    views_.push_back( { Route::FromString(reg), middleware } );    
+    views_.push_back( { Route::FromString(path), view } );    
   }
   
 private:

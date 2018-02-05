@@ -45,8 +45,26 @@ public:
   Status const &status() const  {
     return status_;
   }
+
+  Status  &status() {
+    return status_;
+  }
+  
+  MimeType const &mime_type() const  {
+    return mime_;
+  }
+
+  MimeType &mime_type() {
+    return mime_;
+  }
+  
   
   Header const &header() const 
+  {
+    return header_;
+  }
+
+  Header  &header() 
   {
     return header_;
   }

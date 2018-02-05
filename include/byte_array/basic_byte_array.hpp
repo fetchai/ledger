@@ -163,7 +163,7 @@ public:
                   << " " << arr_pointer_[i] << std::endl;
         exit(-1);
       }
-      n |= a;
+      n += a;
     }
     return n;
   }  

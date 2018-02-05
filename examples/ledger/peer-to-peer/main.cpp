@@ -3,6 +3,7 @@
 #include"protocols/discovery_protocol.hpp"
 #include"commandline/parameter_parser.hpp"
 #include"commandline/vt100.hpp"
+#include"http/server.hpp"
 #include<vector>
 #include<memory> 
 

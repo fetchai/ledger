@@ -49,6 +49,8 @@ public:
     using namespace fetch::service;    
     client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_ );
 
+    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) );
+    
 
     auto ping_promise = client->Call(protocol_, DiscoveryRPC::PING);
     if(!ping_promise.Wait( 2000 )) 
