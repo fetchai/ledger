@@ -6,7 +6,7 @@ namespace fetch
 namespace protocols 
 {
   
-enum DiscoveryRPC 
+enum SwarmRPC 
 {
   PING = 1,
   HELLO = 2,  
@@ -16,7 +16,7 @@ enum DiscoveryRPC
   WHATS_MY_IP = 7
 };
   
-enum DiscoveryFeed 
+enum SwarmFeed 
 {
   FEED_REQUEST_CONNECTIONS = 1,
   FEED_ENOUGH_CONNECTIONS = 2,  

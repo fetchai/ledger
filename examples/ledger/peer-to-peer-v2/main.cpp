@@ -1,6 +1,6 @@
 #include"service/server.hpp"
 #include"network/tcp_server.hpp"
-#include"protocols/discovery_protocol.hpp"
+#include"protocols/swarm.hpp"
 #include"commandline/parameter_parser.hpp"
 #include"commandline/vt100.hpp"
 #include"http/server.hpp"
@@ -11,7 +11,7 @@ using namespace fetch::commandline;
 using namespace fetch::protocols;
 enum FetchProtocols 
 {
-  DISCOVERY = 1
+  SWARM = 1
 };
 
 class FetchService  
@@ -24,13 +24,16 @@ public:
   {
     std::cout << "Listening for peers on " << (1337+port) << ", clients on " << (8080 + port ) << std::endl;
       
-    details_.public_key = pk;
-    discovery_ =  new DiscoveryProtocol(thread_manager_, FetchProtocols::DISCOVERY, details_);
+    details_.public_key() = pk;
+    details_.default_port() = 1337+port;
+    details_.default_http_port() = 8080 + port;
     
-    service_.Add(FetchProtocols::DISCOVERY, discovery_ );
+    swarm_ =  new SwarmProtocol(thread_manager_, FetchProtocols::SWARM, details_);
+    
+    service_.Add(FetchProtocols::SWARM, swarm_ );
 
     // Setting callback to resolve IP
-    discovery_->SetClientIPCallback([this](uint64_t const &n) -> std::string {
+    swarm_->SetClientIPCallback([this](uint64_t const &n) -> std::string {
         return service_.GetAddress(n);        
       });
 
@@ -73,7 +76,7 @@ public:
     auto http_bootstrap = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
         std::cout << "Connecting to " << params["ip"] << " on port " << params["port"] << std::endl;
         
-        discovery_->Bootstrap( params["ip"] , params["port"].AsInt() );
+        swarm_->Bootstrap( params["ip"] , params["port"].AsInt() );
         return fetch::http::HTTPResponse("{\"status\":\"ok\"}");
         
     };
@@ -82,26 +85,99 @@ public:
     http_server_.AddView("/connect-to/(ip=\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(port=\\d+)",  http_bootstrap);
 
 
-    auto list_incoming = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-      std::string response = "{\"peers\": [";
+    auto list_outgoing = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      std::string response = "{\"outgoing\": [";      
+      swarm_->with_peers_do([&response](std::vector< typename SwarmProtocol::client_shared_ptr_type > const &peers) {
+          bool first = true;          
+          for(auto &p: peers) {
+            if(!first) response += ", \n";            
+            response += "{ }";                         
+          }
+          
+        });
       
       response += "]}";      
       return fetch::http::HTTPResponse(response);
-    }
+    };        
+    http_server_.AddView("/list/outgoing",  list_outgoing);
+
+
+    auto list_incoming = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      std::string response = "{\"incoming\": [";      
+      swarm_->with_peers_do([&response](std::vector< typename SwarmProtocol::client_shared_ptr_type > const &peers) {
+          bool first = true;          
+          for(auto &p: peers) {
+            if(!first) response += ", \n";            
+            response += "{ }";                         
+          }
+          
+        });
+      
+      response += "]}";      
+      return fetch::http::HTTPResponse(response);
+    };        
+    http_server_.AddView("/list/incoming",  list_incoming);
     
-    http_server_.AddView("/list/incoming",  list_incoming);     
+    auto list_suggestions = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      std::stringstream response;
+      
+      response << "{\"suggestions\": [";  
+      
+      swarm_->with_suggestions_do([&response](std::vector< NodeDetails > const &peers) {
+          bool first = true;          
+          for(auto &p: peers)
+          {
+            if(!first) response << ", \n";            
+            response << "{\n";
+            response << "\"public_key\": \"" + p.public_key() + "\",";
+            response << "\"entry_points\": [";
+            bool sfirst = true;
+            
+            for(auto &e: p.entry_points)
+            {
+              if(!sfirst) response << ",\n";              
+              response << "{";              
+              response << "\"host\": \"" << e.host  <<"\",";
+              response << "\"port\": " << e.port  << ",";
+              response << "\"shard\": " << e.shard  << "}";
+              sfirst = false;              
+            }
+            
+            response << "]";
+            response << "}";
+            first = false;            
+          }
+          
+        });
+      
+      response << "]}";
+      std::cout << response.str() << std::endl;
+            
+      return fetch::http::HTTPResponse(response.str());
+    };        
+    http_server_.AddView("/list/suggestions",  list_suggestions);
+    
+
+    
+    auto node_details = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      std::string response = "{\"name\": \"hello world\"";
+      
+      response += "}";      
+      return fetch::http::HTTPResponse(response);
+    };    
+    http_server_.AddView("/node-details",  node_details);         
     
   }
 
   ~FetchService() 
   {
     std::cout << "Killing fetch service";    
-    delete discovery_;
+    delete swarm_;
   }
 
   void Bootstrap(std::string const &address, uint16_t const &port) 
   {
-    discovery_->Bootstrap( address, port );
+    swarm_->Bootstrap( address, port );
   }
 
   void Start() 
@@ -120,7 +196,7 @@ private:
   fetch::service::ServiceServer< fetch::network::TCPServer > service_;
   fetch::http::HTTPServer http_server_;  
   
-  DiscoveryProtocol *discovery_ = nullptr;
+  SwarmProtocol *swarm_ = nullptr;
   NodeDetails details_;
 };
 

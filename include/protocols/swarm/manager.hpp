@@ -1,18 +1,19 @@
-#ifndef DISCOVERY_MANAGER_HPP
-#define DISCOVERY_MANAGER_HPP
+#ifndef SWARM_MANAGER_HPP
+#define SWARM_MANAGER_HPP
 
 #include "service/publication_feed.hpp"
-#include "node_details.hpp"
+#include "protocols/swarm/node_details.hpp"
 
 namespace fetch
 {
 namespace protocols 
 {
+
 // TODO: Entrypoint serializer
-class DiscoveryManager : public fetch::service::HasPublicationFeed 
+class SwarmManager : public fetch::service::HasPublicationFeed 
 {
 public:
-  DiscoveryManager(NodeDetails const &details)
+  SwarmManager(NodeDetails const &details)
     : details_(details) { }
   
   uint64_t Ping() 
@@ -36,15 +37,15 @@ public:
   {
     
     peers_with_few_followers_.push_back(details);
-    if(details.public_key == details_.public_key) 
+    if(details.public_key() == details_.public_key()) 
     {
       std::cout << "Discovered myself" << std::endl;
     } else 
     {
-      std::cout << "Discovered " << details.public_key << std::endl;
+      std::cout << "Discovered " << details.public_key() << std::endl;
     }
     
-    this->Publish(DiscoveryFeed::FEED_REQUEST_CONNECTIONS, details);
+    this->Publish(SwarmFeed::FEED_REQUEST_CONNECTIONS, details);
   }
   
   void EnoughPeerConnections( NodeDetails details ) 
@@ -63,7 +64,7 @@ public:
     
     if(found) 
     {
-      this->Publish(DiscoveryFeed::FEED_ENOUGH_CONNECTIONS, details);
+      this->Publish(SwarmFeed::FEED_ENOUGH_CONNECTIONS, details);
     }
   }
 
@@ -78,6 +79,12 @@ public:
   {
     request_ip_ = request_ip;    
   }
+
+
+  void with_suggestions_do(std::function< void(std::vector< NodeDetails > const &) > fnc) 
+  {
+    fnc( peers_with_few_followers_ );    
+  }
   
 private:
   NodeDetails const &details_;
@@ -89,4 +96,4 @@ private:
 
 }; // namespace protocols
 }; // namespace fetch
-#endif // DISCOVERY_MANAGER_HPP
+#endif // SWARM_MANAGER_HPP
