@@ -18,7 +18,7 @@ class ClientManager
 {
 public:
   typedef typename AbstractClientConnection::shared_type connection_type;
-  typedef uint64_t handle_type;
+  typedef uint64_t handle_type; // TODO make global definition
 
   ClientManager(AbstractNetworkServer& server) : server_(server), clients_mutex_(__LINE__, __FILE__) {}
 

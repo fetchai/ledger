@@ -3,13 +3,15 @@
 
 #include "service/publication_feed.hpp"
 #include "protocols/swarm/node_details.hpp"
+#include "protocols/swarm/serializers.hpp"
+
+#include<unordered_set>
 
 namespace fetch
 {
 namespace protocols 
 {
 
-// TODO: Entrypoint serializer
 class SwarmManager : public fetch::service::HasPublicationFeed 
 {
 public:
@@ -23,8 +25,9 @@ public:
     return 1337;
   }
 
-  NodeDetails Hello() 
+  NodeDetails Hello(uint64_t client, NodeDetails details) 
   {
+    client_details_[client] = details;
     return details_;
   }
 
@@ -40,12 +43,25 @@ public:
     if(details.public_key() == details_.public_key()) 
     {
       std::cout << "Discovered myself" << std::endl;
-    } else 
+    }
+    else 
     {
-      std::cout << "Discovered " << details.public_key() << std::endl;
+
+      if(already_seen_.find( details.public_key() ) == already_seen_.end())
+      {
+        std::cout << "Discovered " << details.public_key() << std::endl;
+        already_seen_.insert( details.public_key() );        
+        this->Publish(SwarmFeed::FEED_REQUEST_CONNECTIONS, details);
+      }
+      else
+      {
+        std::cout << "Ignored " << details.public_key() << std::endl;
+      }
+      
+       
     }
     
-    this->Publish(SwarmFeed::FEED_REQUEST_CONNECTIONS, details);
+
   }
   
   void EnoughPeerConnections( NodeDetails details ) 
@@ -85,11 +101,18 @@ public:
   {
     fnc( peers_with_few_followers_ );    
   }
+
+  void with_client_details_do(std::function< void(std::map< uint64_t, NodeDetails > const &) > fnc) 
+  {
+    fnc( client_details_ );    
+  }
   
 private:
   NodeDetails const &details_;
   std::vector< NodeDetails > peers_with_few_followers_;
+  std::map< uint64_t,  NodeDetails > client_details_;  
   std::function< std::string(uint64_t) > request_ip_;
+  std::unordered_set< std::string > already_seen_;
   
 };
 

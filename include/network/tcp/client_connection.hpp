@@ -58,6 +58,10 @@ public:
   {
     return socket_.remote_endpoint().address().to_string();    
   }
+
+  handle_type const &handle() const {
+    return handle_;
+  }
   
 private:
   void ReadHeader() 

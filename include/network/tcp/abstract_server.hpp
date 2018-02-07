@@ -13,7 +13,7 @@ namespace network
 class AbstractNetworkServer 
 {
 public:
-  typedef uint64_t handle_type;
+  typedef uint64_t handle_type; // TODO: make global definition
 
   virtual void PushRequest(handle_type client, message_type const& msg) = 0;
 

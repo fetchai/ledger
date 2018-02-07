@@ -1,5 +1,5 @@
-#ifndef PROTOCOLS_HPP
-#define PROTOCOLS_HPP
+#ifndef PROTOCLS_SWARM_COMMANDS_HPP
+#define PROTOCLS_SWARM_COMMANDS_HPP
 
 namespace fetch 
 {
@@ -23,7 +23,7 @@ enum SwarmFeed
   FEED_ANNOUNCE_NEW_COMER = 3
 };
 
-}; // namespace fetch::protocols
-}; // namespace fetch
+}; 
+}; 
 
-#endif // PROTOCOLS_HPP
+#endif 

@@ -23,6 +23,8 @@ public:
   typedef ThreadManager thread_manager_type;  
   typedef thread_manager_type* thread_manager_ptr_type;
   typedef typename ThreadManager::event_handle_type event_handle_type;
+  typedef uint64_t handle_type;
+
   
   TCPClient(std::string const& host, std::string const& port,
     thread_manager_ptr_type thread_manager) :
@@ -31,6 +33,7 @@ public:
     socket_(thread_manager->io_service() ),
     write_mutex_(__LINE__, __FILE__)
   {
+    handle_ = next_handle();
     
     writing_ = false;
     Connect(host, port);
@@ -43,7 +46,7 @@ public:
     socket_(thread_manager->io_service() )    
   
   {
-
+    handle_ = next_handle();
 
     event_start_service_ = thread_manager_->OnBeforeStart([this]() { this->writing_ = false; });    
     event_stop_service_ = thread_manager_->OnBeforeStop([this]() { this->writing_ = false; });
@@ -84,7 +87,17 @@ public:
   }
 
   virtual void PushMessage(message_type const& value) = 0;
-  virtual void ConnectionFailed() = 0;      
+  virtual void ConnectionFailed() = 0;
+
+  handle_type const &handle() const {
+    return handle_;
+  }
+
+  std::string  Address() const 
+  {
+    return socket_.remote_endpoint().address().to_string();    ;    
+  }
+  
 private:
   void Connect(std::string const& host, std::string const& port) 
   {
@@ -209,11 +222,23 @@ private:
 
   }
 
+
 private:
   event_handle_type event_start_service_;
   event_handle_type event_stop_service_;      
   thread_manager_ptr_type thread_manager_;
-  
+
+  handle_type handle_;
+  static handle_type global_handle_counter_;
+  static fetch::mutex::Mutex global_handle_mutex_;
+  static handle_type next_handle() 
+  {
+    std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
+    handle_type ret = global_handle_counter_;
+    ++global_handle_counter_;
+    return ret;
+  }
+
   union {
     char bytes[2*sizeof(uint64_t)];
     struct {
@@ -232,6 +257,11 @@ private:
   fetch::mutex::Mutex write_mutex_;
 
 };
+
+TCPClient::handle_type
+TCPClient::global_handle_counter_ = 0;
+fetch::mutex::Mutex TCPClient::global_handle_mutex_(__LINE__, __FILE__);
+
 };
 };
 

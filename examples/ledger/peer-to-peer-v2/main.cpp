@@ -85,38 +85,94 @@ public:
     http_server_.AddView("/connect-to/(ip=\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(port=\\d+)",  http_bootstrap);
 
 
-    auto list_outgoing = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-      std::string response = "{\"outgoing\": [";      
-      swarm_->with_peers_do([&response](std::vector< typename SwarmProtocol::client_shared_ptr_type > const &peers) {
+    auto list_outgoing =  [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      std::stringstream response;
+      
+      response << "{\"outgoing\": [";  
+      
+      swarm_->with_server_details_do([&response](std::map< uint64_t, NodeDetails > const &peers) {
           bool first = true;          
-          for(auto &p: peers) {
-            if(!first) response += ", \n";            
-            response += "{ }";                         
+          for(auto &ppair: peers)
+          {
+            auto &p = ppair.second;            
+            if(!first) response << ", \n";            
+            response << "{\n";
+            response << "\"public_key\": \"" + p.public_key() + "\",";
+            response << "\"entry_points\": [";
+            bool sfirst = true;
+            
+            for(auto &e: p.entry_points())
+            {
+              if(!sfirst) response << ",\n";              
+              response << "{";
+              response << "\"shard\": " << e.shard  <<",";  
+              response << "\"host\": \"" << e.host  <<"\",";
+              response << "\"port\": " << e.port  << ",";
+              response << "\"http_port\": " << e.http_port  << ",";
+              response << "\"configuration\": " << e.configuration  << "}";              
+              sfirst = false;              
+            }
+            
+            response << "]";
+            response << "}";
+            first = false;            
           }
           
         });
       
-      response += "]}";      
-      return fetch::http::HTTPResponse(response);
-    };        
+      response << "]}";
+      std::cout << response.str() << std::endl;
+            
+      return fetch::http::HTTPResponse(response.str());
+    };            
+
     http_server_.AddView("/list/outgoing",  list_outgoing);
 
 
     auto list_incoming = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-      std::string response = "{\"incoming\": [";      
-      swarm_->with_peers_do([&response](std::vector< typename SwarmProtocol::client_shared_ptr_type > const &peers) {
+      std::stringstream response;
+      
+      response << "{\"incoming\": [";  
+      
+      swarm_->with_client_details_do([&response](std::map< uint64_t, NodeDetails > const &peers) {
           bool first = true;          
-          for(auto &p: peers) {
-            if(!first) response += ", \n";            
-            response += "{ }";                         
+          for(auto &ppair: peers)
+          {
+            auto &p = ppair.second;            
+            if(!first) response << ", \n";            
+            response << "{\n";
+            response << "\"public_key\": \"" + p.public_key() + "\",";
+            response << "\"entry_points\": [";
+            bool sfirst = true;
+            
+            for(auto &e: p.entry_points())
+            {
+              if(!sfirst) response << ",\n";              
+              response << "{";
+              response << "\"shard\": " << e.shard  <<",";  
+              response << "\"host\": \"" << e.host  <<"\",";
+              response << "\"port\": " << e.port  << ",";
+              response << "\"http_port\": " << e.http_port  << ",";
+              response << "\"configuration\": " << e.configuration  << "}";              
+              sfirst = false;              
+            }
+            
+            response << "]";
+            response << "}";
+            first = false;            
           }
           
         });
       
-      response += "]}";      
-      return fetch::http::HTTPResponse(response);
-    };        
+      response << "]}";
+      std::cout << response.str() << std::endl;
+            
+      return fetch::http::HTTPResponse(response.str());
+    };            
+
     http_server_.AddView("/list/incoming",  list_incoming);
+    
+
     
     auto list_suggestions = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       std::stringstream response;
@@ -133,13 +189,15 @@ public:
             response << "\"entry_points\": [";
             bool sfirst = true;
             
-            for(auto &e: p.entry_points)
+            for(auto &e: p.entry_points())
             {
               if(!sfirst) response << ",\n";              
-              response << "{";              
+              response << "{";
+              response << "\"shard\": " << e.shard  <<",";  
               response << "\"host\": \"" << e.host  <<"\",";
               response << "\"port\": " << e.port  << ",";
-              response << "\"shard\": " << e.shard  << "}";
+              response << "\"http_port\": " << e.http_port  << ",";
+              response << "\"configuration\": " << e.configuration  << "}";              
               sfirst = false;              
             }
             

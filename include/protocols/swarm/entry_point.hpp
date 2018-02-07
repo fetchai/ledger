@@ -10,38 +10,22 @@ namespace protocols
 
 struct EntryPoint  
 {
+  enum {
+    NODE_SWARM = 1ull << 16,
+    NODE_SHARD = 2ull << 16 
+  };
+
+  enum {
+    IP_UNKNOWN = 1ull << 15
+  };
+  
+  
   std::string host;
   uint32_t shard = 0;
   uint32_t port = 1337;
   uint32_t http_port = 8080;
-  uint16_t configuration = 0;  
+  uint64_t configuration = 0;  
 };
-};
-
-namespace serializers 
-{
-template< typename T >
-T& Serialize(T& serializer, protocols::EntryPoint const &data) 
-{
-  serializer << data.host;
-  serializer << data.shard;
-  serializer << data.port;
-  serializer << data.http_port;
-  serializer << data.configuration;
-  return serializer;
-}
-
-template< typename T >
-T& Deserialize(T& serializer, protocols::EntryPoint &data) 
-{
-  serializer >> data.host;
-  serializer >> data.shard;
-  serializer >> data.port;
-  serializer >> data.http_port;
-  serializer >> data.configuration;  
-  return serializer;
-}
-  
 
 };
 };
