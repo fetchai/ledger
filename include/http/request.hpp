@@ -1,5 +1,6 @@
 #ifndef HTTP_REQUEST_HPP
 #define HTTP_REQUEST_HPP
+#include"http/method.hpp"
 #include"http/header.hpp"
 #include"http/query.hpp"
 #include"http/status.hpp"
@@ -123,7 +124,7 @@ public:
     return true;
   }
     
-  byte_array_type const& method() const
+  Method const& method() const
   {
     return method_;    
   }
@@ -135,7 +136,7 @@ public:
 
   byte_array_type const& protocol() const
   {
-    return method_;    
+    return protocol_;    
   }  
     
   Header const &header() const
@@ -181,7 +182,29 @@ private:
       ++i;      
     }
 
-    method_ = line.SubArray(0, i);
+    byte_array_type method = line.SubArray(0, i);
+    if(method == "get")
+    {
+      method_ = Method::GET;
+    }
+    else if(method == "post")
+    {
+      method_ = Method::POST;
+    }
+    else if(method == "put")
+    {
+      method_ = Method::PUT;
+    }
+    else if(method == "patch")
+    {
+      method_ = Method::PATCH;
+    }
+    else if(method == "delete")
+    {
+      method_ = Method::DELETE;
+    }     
+    
+    
     ++i;
     
     std::size_t j=i;
@@ -196,7 +219,7 @@ private:
     }
 
     full_uri_ = line.SubArray(j, i - j);
-    if(method_ == "get") {
+    if(method == "get") {
       // Extracting GET variables
       std::size_t k = j;      
       while(k < i)
@@ -270,7 +293,7 @@ private:
   Header header_;
   QuerySet query_;  
   
-  byte_array_type method_;
+  Method method_;
   byte_array_type full_uri_;  
   byte_array_type uri_;
   byte_array_type protocol_;

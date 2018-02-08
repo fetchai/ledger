@@ -87,8 +87,8 @@ private:
   void ReadBody() 
   {
     byte_array::ByteArray message;
-    std::cout << std::hex << header_.magic << std::dec << std::endl;
-    std::cout << header_.length << std::endl;
+//    std::cout << std::hex << header_.magic << std::dec << std::endl;
+//    std::cout << header_.length << std::endl;
 
     if( header_.magic != 0xFE7C80A1FE7C80A1) {
       fetch::logger.Debug("Magic incorrect - closing connection.");

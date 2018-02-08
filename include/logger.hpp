@@ -92,6 +92,7 @@ public:
   template< typename ...Args >
   void Error(Args ... args) 
   {
+    
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::ERROR);    
     Unroll<Args...>::Append( this, args... );

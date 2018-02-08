@@ -45,7 +45,7 @@ int main2() {
   auto t_start = std::chrono::high_resolution_clock::now();
   fetch::service::Promise last_promise;
 
-  std::size_t N = 10000;
+  std::size_t N = 1000;
   for(std::size_t i=0; i < N; ++i) {
     last_promise = client.Call( MYPROTO, ADD, 4, 3 );
   }
@@ -69,6 +69,8 @@ int main2() {
 }
 
 int main() {
-  while(true) main2();
+//  while(true) main2();
+  main2();
+  
   return 0;
 }

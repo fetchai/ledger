@@ -4,6 +4,7 @@
 #include"http/connection.hpp"
 #include"network/thread_manager.hpp"
 #include"http/route.hpp"
+#include"http/module.hpp"
 
 #include<deque>
 #include<functional>
@@ -26,11 +27,12 @@ public:
   typedef typename thread_manager_type::event_handle_type event_handle_type;
 
   typedef std::function< void(HTTPRequest& ) > request_middleware_type;
-  typedef std::function< HTTPResponse(ViewParameters, HTTPRequest) > view_type;
+  typedef typename HTTPModule::view_type view_type;
   typedef std::function< void(HTTPResponse&, HTTPRequest const& ) > response_middleware_type;
 
   struct MountedView 
   {
+    Method method;    
     Route route;
     view_type view;    
   };
@@ -111,11 +113,18 @@ public:
     post_view_middleware_.push_back( middleware );
   }
 
-  void AddView( byte_array::ByteArray const& path,  view_type const &view )
-  {
-    
-    views_.push_back( { Route::FromString(path), view } );    
+  void AddView(Method method, byte_array::ByteArray const& path,  view_type const &view )
+  {    
+    views_.push_back( { method, Route::FromString(path), view } );    
   }
+
+  void AddModule(HTTPModule const &module)
+  {
+    for(auto const& view: module.views() )
+    {
+      this->AddView( view.method, view.route, view.view);      
+    }
+  }  
   
 private:
   fetch::mutex::Mutex eval_mutex_;
