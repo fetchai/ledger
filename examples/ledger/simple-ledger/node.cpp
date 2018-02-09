@@ -2,7 +2,7 @@
 #include<iostream>
 #include<functional>
 
-#include"node_functionality.hpp"
+#include"protocols/shard/manager.hpp"
 
 #include"commandline/parameter_parser.hpp"
 #include <iostream>
@@ -14,10 +14,11 @@
 #include"unittest.hpp"
 #include"byte_array/encoders.hpp"
 #include"random/lfg.hpp"
+using namespace fetch::protocols;
 using namespace fetch::commandline;
 using namespace fetch::byte_array;
 
-typedef typename NodeChainManager::transaction_type tx_type;
+typedef typename ShardManager::transaction_type tx_type;
 
 std::vector< std::string > words = {"squeak", "fork", "governor", "peace", "courageous", "support", "tight", "reject", "extra-small", "slimy", "form", "bushes", "telling", "outrageous", "cure", "occur", "plausible", "scent", "kick", "melted", "perform", "rhetorical", "good", "selfish", "dime", "tree", "prevent", "camera", "paltry", "allow", "follow", "balance", "wave", "curved", "woman", "rampant", "eatable", "faulty", "sordid", "tooth", "bitter", "library", "spiders", "mysterious", "stop", "talk", "watch", "muddle", "windy", "meal", "arm", "hammer", "purple", "company", "political", "territory", "open", "attract", "admire", "undress", "accidental", "happy", "lock", "delicious"}; 
 
@@ -35,7 +36,7 @@ tx_type RandomTX(std::size_t const &n) {
 
 int main(int argc, char const **argv) {
   SCENARIO("basic input and output of the nodes chain manager") {
-    NodeChainManager manager;
+    ShardManager manager;
 
 
     INFO("Creating transaction");

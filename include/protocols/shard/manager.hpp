@@ -12,9 +12,11 @@
 #include "service/client.hpp"
 #include"service/publication_feed.hpp"
 #include"mutex.hpp"
-#include"commands.hpp"
+#include"protocols/shard/commands.hpp"
 
-#include"transaction_serializer.hpp"
+#include"protocols/shard/transaction_serializer.hpp"
+#include"protocols/shard/block.hpp"
+#include"protocols/shard/block_serializer.hpp"
 
 #include<map>
 #include<vector>
@@ -26,32 +28,6 @@ namespace fetch
 {
 namespace protocols 
 {
-
-struct BlockMetaData {
-  enum {
-    UNDEFINED = uint64_t(-1)
-  };
-  
-  uint64_t block_number = UNDEFINED;
-  double total_work     = std::numeric_limits< double >::infinity();
-};
-
-struct BlockBody {
-  fetch::byte_array::ByteArray previous_hash;  
-  fetch::byte_array::ByteArray transaction_hash;
-};
-
-template< typename T >
-T& Serialize( T & serializer, BlockBody const &body) {
-  serializer << body.previous_hash << body.transaction_hash;
-  return serializer;
-}
-
-template< typename T >
-T& Deserialize( T & serializer, BlockBody const &body) {
-  serializer >> body.previous_hash >> body.transaction_hash;
-  return serializer;  
-}
 
 class ShardManager : public fetch::service::HasPublicationFeed 
 {
@@ -112,7 +88,7 @@ public:
     incoming_.push_back( tx.digest() );
     tx_mutex_.unlock();
 
-    this->Publish(PeerToPeerCommands::BROADCAST_TRANSACTION, tx );
+    this->Publish(ShardFeed::FEED_BROADCAST_TRANSACTION, tx );
     return true;
   }
 
