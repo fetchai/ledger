@@ -10,6 +10,14 @@
 #include <type_traits>
 namespace fetch {
 namespace byte_array {
+class BasicByteArray ;
+};
+
+namespace serializers {  // TODO: refactor
+template <typename T> void Deserialize(T &, byte_array::BasicByteArray &);  
+};
+
+namespace byte_array {
 
 
 class BasicByteArray {
@@ -213,6 +221,9 @@ protected:
 
   char *char_pointer() { return reinterpret_cast<char *>(data_.pointer()); }  
 
+
+  template <typename T>
+  friend void fetch::serializers::Deserialize(T &serializer, BasicByteArray &s);  
   
  private:
   shared_array_type data_;

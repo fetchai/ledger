@@ -40,7 +40,22 @@ private:
   body_type body_;
   proof_type proof_;    
 };
+
+
+
+template< typename T, typename B, typename P, typename H, typename M >
+void Serialize( T & serializer, BasicBlock< B, P, H, M > const &b) {
+  serializer <<  b.body() << b.proof();
+}
+
+template< typename T, typename B, typename P, typename H, typename M  >
+void Deserialize( T & serializer, BasicBlock< B, P, H, M > &b) {
+  B body;  
+  serializer >> body >> b.proof();
+  b.SetBody(body);
   
+}
+
 };
 };
 #endif

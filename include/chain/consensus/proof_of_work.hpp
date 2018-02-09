@@ -53,7 +53,8 @@ private:
   math::BigUnsigned target_;
   header_type header_;
 };
-  
+
+
 };
 };
 };

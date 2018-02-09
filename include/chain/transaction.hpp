@@ -17,7 +17,7 @@ public:
   // TODO: Add signature list
   // TODO: Add resource list
   
-  body_type const& set_body(body_type const &body) {
+  body_type const& set_body(body_type const &body) { // TODO: refactor
     body_ = body;
     serializers::ByteArrayBuffer buf;
     buf << body;
@@ -37,6 +37,21 @@ private:
 
 };
 
+
+template< typename T, typename B >
+void Serialize( T & serializer, BasicTransaction< B > const &b) {
+  serializer << b.body();
+}
+
+template< typename T, typename B >
+void Deserialize( T & serializer, BasicTransaction< B > &b) {
+  B body;
+  serializer >> body;
+  b.set_body( body );
+  
+}
+
 };
+
 };
 #endif

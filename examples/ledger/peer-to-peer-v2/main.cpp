@@ -1,6 +1,6 @@
 #include"service/server.hpp"
 #include"network/tcp_server.hpp"
-#include"protocols/swarm.hpp"
+#include"protocols.hpp"
 #include"commandline/parameter_parser.hpp"
 
 #include"http/server.hpp"
@@ -11,10 +11,6 @@
 
 using namespace fetch::commandline;
 using namespace fetch::protocols;
-enum FetchProtocols 
-{
-  SWARM = 1
-};
 
 class FetchService  
 {

@@ -20,7 +20,7 @@ struct EntryPoint
   };
   
   
-  std::string host;
+  std::string host = "";
   uint32_t shard = 0;
   uint32_t port = 1337;
   uint32_t http_port = 8080;

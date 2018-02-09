@@ -4,6 +4,7 @@
 #include "network/thread_manager.hpp"
 #include "network/tcp/client_connection.hpp"
 #include "mutex.hpp"
+#include "logger.hpp"
 
 #include <asio.hpp>
 #include <deque>
@@ -50,6 +51,8 @@ public:
 
   void PushRequest(handle_type client, message_type const& msg) override 
   {
+    fetch::logger.Debug( "Got request from ", client );
+    
     std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
     requests_.push_back({client, msg});
   }

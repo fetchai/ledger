@@ -3,10 +3,11 @@
 #include "service/client.hpp"
 #include "service/publication_feed.hpp"
 #include "protocols/swarm/node_details.hpp"
+#include "protocols/swarm/shard_details.hpp"
 #include "protocols/swarm/serializers.hpp"
 
 #include<unordered_set>
-
+#include<atomic>
 namespace fetch
 {
 namespace protocols 
@@ -16,8 +17,7 @@ class SwarmManager : public fetch::service::HasPublicationFeed
 {
 public:
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
-  typedef std::shared_ptr< client_type >  client_shared_ptr_type;
-  
+  typedef std::shared_ptr< client_type >  client_shared_ptr_type;  
   
   SwarmManager(uint64_t const&protocol,
     network::ThreadManager *thread_manager,
@@ -108,10 +108,36 @@ public:
   }
 
 
+  void SetShardingParameter(uint16_t n) 
+  {    
+    sharding_parameter_ = n;    
+  }
 
-
+  uint16_t GetShardingParameter()   
+  {
+    return sharding_parameter_;
+  }
+    
+  
   ////////////////////////
   // Not service protocol
+  void ConnectShard(std::string const &host, uint16_t const &port ) 
+  {
+    client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_);
+    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
+    shards_mutex_.lock();
+    ShardDetails d;
+    d.handle = client->handle();
+    d.entry_for_swarm.host = host;
+    d.entry_for_swarm.port = port;
+    d.entry_for_swarm.http_port = -1; // TODO: Request
+    d.entry_for_swarm.shard = 0; // TODO: set;
+    d.entry_for_swarm.configuration = 0;  
+    shards_.push_back(client);
+    shards_details_.push_back(d);    
+    shards_mutex_.unlock();
+  }  
+
   
   void SetClientIPCallback( std::function< std::string(uint64_t) > request_ip ) 
   {
@@ -123,7 +149,7 @@ public:
     using namespace fetch::service;    
     client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_ );
 
-    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) );
+    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
     
 
     auto ping_promise = client->Call(protocol_, SwarmRPC::PING);
@@ -230,6 +256,13 @@ public:
 
   }
 
+  void with_shard_details_do(std::function< void(std::vector< ShardDetails > const &) > fnc) 
+  {
+    shards_mutex_.lock();    
+    fnc( shards_details_ );
+   
+    shards_mutex_.unlock();    
+  }
 
   
   void with_suggestions_do(std::function< void(std::vector< NodeDetails > const &) > fnc) 
@@ -271,7 +304,13 @@ private:
   std::map< uint64_t, NodeDetails > server_details_;
   std::vector< client_shared_ptr_type > peers_;
   fetch::mutex::Mutex peers_mutex_;
+
+  std::vector< client_shared_ptr_type > shards_;
+  std::vector< ShardDetails > shards_details_;
   
+  fetch::mutex::Mutex shards_mutex_;  
+
+  std::atomic< uint16_t > sharding_parameter_ = 0;
 };
 
 

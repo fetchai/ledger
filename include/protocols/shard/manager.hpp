@@ -4,19 +4,19 @@
 #include"byte_array/const_byte_array.hpp"
 #include"serializer/referenced_byte_array.hpp"
 
+
 #include"chain/transaction.hpp"
 #include"chain/block.hpp"
 #include"chain/consensus/proof_of_work.hpp"
-
+#include"protocols/shard/block.hpp"
 
 #include "service/client.hpp"
 #include"service/publication_feed.hpp"
 #include"mutex.hpp"
 #include"protocols/shard/commands.hpp"
 
-#include"protocols/shard/transaction_serializer.hpp"
-#include"protocols/shard/block.hpp"
-#include"protocols/shard/block_serializer.hpp"
+
+
 
 #include<map>
 #include<vector>
@@ -66,13 +66,8 @@ public:
     
   }
 
-  uint64_t Ping() 
-  {
-    return 1337;
-  }
 
-
-  bool PushTransaction( transaction_type const &tx ) {    
+  bool PushTransaction( transaction_type tx ) {
     tx_mutex_.lock();
     if(known_transactions_.find( tx.digest()  ) != known_transactions_.end() ) {      
       tx_mutex_.unlock();

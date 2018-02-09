@@ -7,7 +7,7 @@
 #include "service/client.hpp"
 #include"service/server.hpp"
 #include"network/tcp_server.hpp"
-#include"protocols.hpp"
+#include"protocols/shard.hpp"
 
 
 #include"http/server.hpp"
@@ -30,6 +30,12 @@ using namespace fetch::commandline;
 using namespace fetch::byte_array;
 
 typedef typename ShardManager::transaction_type tx_type;
+
+
+enum FetchProtocols 
+{
+   SHARD = 2
+};
 
 
 std::vector< std::string > words = {"squeak", "fork", "governor", "peace", "courageous", "support", "tight", "reject", "extra-small", "slimy", "form", "bushes", "telling", "outrageous", "cure", "occur", "plausible", "scent", "kick", "melted", "perform", "rhetorical", "good", "selfish", "dime", "tree", "prevent", "camera", "paltry", "allow", "follow", "balance", "wave", "curved", "woman", "rampant", "eatable", "faulty", "sordid", "tooth", "bitter", "library", "spiders", "mysterious", "stop", "talk", "watch", "muddle", "windy", "meal", "arm", "hammer", "purple", "company", "political", "territory", "open", "attract", "admire", "undress", "accidental", "happy", "lock", "delicious"}; 

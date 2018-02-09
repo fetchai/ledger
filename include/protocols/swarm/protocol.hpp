@@ -50,6 +50,37 @@ public:
     HTTPModule::Get("/connect-to/(ip=\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(port=\\d+)",  http_bootstrap);
 
 
+    auto shard_connect = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+        this->ConnectShard( params["ip"] , params["port"].AsInt() );
+        return fetch::http::HTTPResponse("{\"status\":\"ok\"}");
+        
+    };    
+    HTTPModule::Get("/connect-shard/(ip=\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(port=\\d+)",  shard_connect);    
+
+    auto list_shards = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      std::stringstream response;
+      response << "{ \"shards\": [";
+      
+      this->with_shard_details_do([this, &response](std::vector< ShardDetails > const &detail_list) {
+          bool first = true;
+          
+          for(auto &d: detail_list)
+          {
+            if(!first) response << ",";
+            response << "{ \"host\": \""  << d.entry_for_swarm.host << "\",";
+            response << " \"port\": "  << d.entry_for_swarm.port << "}";              
+            first = false;            
+          }
+          
+        });
+      response << "] }";
+      
+      return fetch::http::HTTPResponse(response.str());
+        
+    };    
+    HTTPModule::Get("/list/shards",  list_shards);    
+    
+
     auto list_outgoing =  [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       std::stringstream response;
       
@@ -86,6 +117,7 @@ public:
         });
       
       response << "]}";
+      
       std::cout << response.str() << std::endl;
             
       return fetch::http::HTTPResponse(response.str());

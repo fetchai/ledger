@@ -5,8 +5,11 @@ namespace fetch
 {
 namespace protocols 
 {
-  
-enum SwarmRPC 
+
+struct SwarmRPC 
+{
+ 
+enum 
 {
   PING = 1,
   HELLO = 2,  
@@ -15,12 +18,19 @@ enum SwarmRPC
   DISCONNECT_FEED = 6,
   WHATS_MY_IP = 7
 };
-  
-enum SwarmFeed 
+
+};
+
+struct SwarmFeed 
+{
+ 
+enum 
 {
   FEED_REQUEST_CONNECTIONS = 1,
   FEED_ENOUGH_CONNECTIONS = 2,  
   FEED_ANNOUNCE_NEW_COMER = 3
+};
+
 };
 
 }; 
