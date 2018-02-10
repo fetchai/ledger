@@ -19,11 +19,11 @@ include_directories("${OPENSSL_INCLUDE_DIR}")
 add_definitions(-DASIO_STANDALONE -DASIO_HEADER_ONLY -DASIO_HAS_STD_SYSTEM_ERROR)
 
 enable_testing()
-exec_program(
-    "git"
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ARGS "describe"
-    OUTPUT_VARIABLE ${GIT_DESCRIBE})
+#exec_program(
+#    "git"
+#    ${CMAKE_CURRENT_SOURCE_DIR}
+#    ARGS "describe"
+#    OUTPUT_VARIABLE ${GIT_DESCRIBE})
 
 add_definitions( --std=c++11 )
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
