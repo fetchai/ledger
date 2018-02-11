@@ -162,13 +162,16 @@ public:
   }
 
   int AsInt() const {
+    // TODO: add support for sign
     int n = 0;
     for (std::size_t i = 0; i < length_; ++i) {
       n *= 10;
       int a = (arr_pointer_[i] - '0');
+
       if ((a < 0) || (a > 9)) {
         std::cerr << "TODO: throw error - NaN in referenced byte_array: " << a
-                  << " " << arr_pointer_[i] << std::endl;
+                  << " " << arr_pointer_[i] << ", char " << i << " '"
+                  << arr_pointer_[i] << "'" << " - code: " << int(arr_pointer_[i]) << std::endl;
         exit(-1);
       }
       n += a;

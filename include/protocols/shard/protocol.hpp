@@ -49,7 +49,20 @@ public:
       return fetch::http::HTTPResponse("hello world");
     };
     
-    HTTPModule::Get("/submit-transaction", submit_transaction); 
+    HTTPModule::Post("/shard/submit-transaction", submit_transaction);
+
+    auto next_block = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      
+      return fetch::http::HTTPResponse("hello world");
+    };    
+    HTTPModule::Get("/shard/next-block", next_block);
+
+    auto submit_block = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      
+      return fetch::http::HTTPResponse("hello world");
+    };    
+    HTTPModule::Post("/shard/submit-block", submit_block);
+    
   }
 
 

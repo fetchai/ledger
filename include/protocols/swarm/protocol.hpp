@@ -6,6 +6,8 @@
 #include "protocols/swarm/manager.hpp"
 #include "http/module.hpp"
 
+#include"protocols/fetch_protocols.hpp"
+#include"protocols/shard/commands.hpp"
 namespace fetch
 {
 namespace protocols
@@ -220,7 +222,28 @@ public:
       response += "}";      
       return fetch::http::HTTPResponse(response);
     };    
-    HTTPModule::Get("/node-details",  node_details);         
+    HTTPModule::Get("/node-details",  node_details);
+
+
+    ////// TODO: This part needs to be moved somewhere else in the future
+    auto send_transaction = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+
+      this->with_shards_do([this, req](std::vector< client_shared_ptr_type > shards,  std::vector< ShardDetails > const &detail_list) {
+          std::cout << "Sending tx to " << shards.size() << " shards" << std::endl;
+          typedef fetch::byte_array::ConstByteArray transaction_body_type;
+          typedef fetch::chain::BasicTransaction< transaction_body_type > transaction_type;
+          transaction_type tx;
+          tx.set_body( req.body() );
+          for(auto &s: shards) {
+            s->Call(FetchProtocols::SHARD , ShardRPC::PUSH_TRANSACTION, tx );
+          }
+        });
+
+                           
+      return fetch::http::HTTPResponse("Hello world");
+    };
+
+    HTTPModule::Get("/load-balancer/send-transaction",  send_transaction);
 
     
   }

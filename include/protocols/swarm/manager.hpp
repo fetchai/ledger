@@ -25,7 +25,8 @@ public:
     :
     protocol_(protocol),
     thread_manager_(thread_manager),
-    details_(details) {    
+    details_(details),
+    sharding_parameter_(0) {    
   }
   
   uint64_t Ping() 
@@ -264,6 +265,21 @@ public:
     shards_mutex_.unlock();    
   }
 
+  void with_shards_do(std::function< void(std::vector< client_shared_ptr_type > const &, std::vector< ShardDetails > const &) > fnc) 
+  {
+    shards_mutex_.lock();    
+    fnc( shards_, shards_details_ );
+    shards_mutex_.unlock();    
+  }
+
+  void with_shards_do(std::function< void(std::vector< client_shared_ptr_type > const &) > fnc) 
+  {
+    shards_mutex_.lock();    
+    fnc( shards_ );   
+    shards_mutex_.unlock();    
+  }
+  
+  
   
   void with_suggestions_do(std::function< void(std::vector< NodeDetails > const &) > fnc) 
   {
@@ -277,7 +293,7 @@ public:
 
 
 
-  void with_peers_do( std::function< void(std::vector< client_shared_ptr_type > ) > fnc ) 
+  void with_peers_do( std::function< void(std::vector< client_shared_ptr_type >  ) > fnc ) 
   {
     std::lock_guard< fetch::mutex::Mutex > lock(peers_mutex_);
     
@@ -310,7 +326,7 @@ private:
   
   fetch::mutex::Mutex shards_mutex_;  
 
-  std::atomic< uint16_t > sharding_parameter_ = 0;
+  std::atomic< uint16_t > sharding_parameter_ ;
 };
 
 

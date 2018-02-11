@@ -62,7 +62,7 @@ public:
     
     std::istreambuf_iterator<char> cit(is);
 
-    std::size_t last_pos = 0, split_at = 0;
+    std::size_t last_pos = 0, split_key_at = 0, split_val_at = 0;
     std::size_t line = 0;    
     byte_array::ByteArray key, value, start_line;    
 
@@ -77,21 +77,26 @@ public:
             
       switch(c) {
       case ':':     
-        if(split_at == 0)
+        if(split_key_at == 0)
         {
-          split_at = i;
-          if( (i+1 < end) && (*cit) ==' ') ++split_at;          
+          split_val_at = split_key_at = i;
+          ++split_val_at;
+          while ( (i+1 < end) && (*cit) ==' ' ) {
+            ++split_val_at;
+            ++i;
+            ++cit;
+          }
         }
         break;
       case '\n':
         last_pos = i+1;
-        split_at = 0;        
+        split_key_at = 0;        
         break;        
       case '\r':
         if(last_pos != i) {
           
           if(line > 0) {
-            key = req.header_data_.SubArray(last_pos, split_at - last_pos);
+            key = req.header_data_.SubArray(last_pos, split_key_at - last_pos);
             
             for(std::size_t t=0; t < key.size(); ++t) { 
               char &cc = reinterpret_cast< char& >(key[t]);
@@ -99,12 +104,12 @@ public:
             }
 
 
-            ++split_at;          
-            value = req.header_data_.SubArray(split_at, split_at - i -1);
+            ++split_key_at;          
+            value = req.header_data_.SubArray(split_val_at, i - split_val_at );
 
             if(key == "content-length")
             {
-              TODO("Set length");              
+              req.content_length_ = value.AsInt();
             }
             
             req.header_.Add(key, value);
@@ -164,7 +169,10 @@ public:
     return content_length_;    
   }
   
-  
+  byte_array::ConstByteArray body() const
+  {
+    return body_data_;
+  }
 private:
 
   void ParseStartLine(byte_array::ByteArray &line) 
@@ -219,54 +227,49 @@ private:
     }
 
     full_uri_ = line.SubArray(j, i - j);
-    if(method == "get") {
-      // Extracting GET variables
-      std::size_t k = j;      
-      while(k < i)
+
+    // Extracting URI parameters
+    std::size_t k = j;      
+    while(k < i)
       {
         if( line[k] == '?' )
-        {
-          break;
-        }      
+          {
+            break;
+          }      
         ++k;      
       }
 
-      uri_ = line.SubArray(j, k - j);
+    uri_ = line.SubArray(j, k - j);
 
-      std::size_t last = k + 1, equal = -1;
-      byte_array::ByteArray key, value;
+    std::size_t last = k + 1, equal = -1;
+    byte_array::ByteArray key, value;
       
-      while(k < i) {
-        switch(line[k]) {
-        case '=':
-          equal = k;
-          break;
-        case '&':
-          equal = std::min(k, equal);
-          key = line.SubArray(last, equal - last);
-          equal += (equal < k );
-          value = line.SubArray(equal, k - equal);
+    while(k < i) {
+      switch(line[k]) {
+      case '=':
+        equal = k;
+        break;
+      case '&':
+        equal = std::min(k, equal);
+        key = line.SubArray(last, equal - last);
+        equal += (equal < k );
+        value = line.SubArray(equal, k - equal);
 
-          query_.Add(key, value);
-          equal = -1;
-          last = k + 1;
-          break;          
-        }                      
-        ++k;        
-      }
-
-      equal = std::min(k, equal);
-      key = line.SubArray(last, equal - last);
-      equal += (equal < k );
-      value = line.SubArray(equal, k - equal);
-      query_.Add(key, value);
-
-      
-    } else {
-      uri_ = full_uri_;
-      
-      TODO("Extract post variables");
+        query_.Add(key, value);
+        equal = -1;
+        last = k + 1;
+        break;          
+      }                      
+      ++k;        
     }
+
+    equal = std::min(k, equal);
+    key = line.SubArray(last, equal - last);
+    equal += (equal < k );
+    value = line.SubArray(equal, k - equal);
+    query_.Add(key, value);
+
+      
     
     while(line[i] == ' ')
     {
