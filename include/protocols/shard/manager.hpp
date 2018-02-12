@@ -15,7 +15,7 @@
 #include"mutex.hpp"
 #include"protocols/shard/commands.hpp"
 
-
+#include"protocols/swarm/entry_point.hpp"
 
 
 #include<map>
@@ -32,6 +32,8 @@ namespace protocols
 class ShardManager : public fetch::service::HasPublicationFeed 
 {
 public:
+
+
   // Transaction defs
   typedef fetch::byte_array::ConstByteArray transaction_body_type;
   typedef fetch::chain::BasicTransaction< transaction_body_type > transaction_type;
@@ -44,11 +46,17 @@ public:
   typedef BlockMetaData block_meta_data_type;
   typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256, block_meta_data_type > block_type;  
 
-  
+  // Other shards  
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
   typedef std::shared_ptr< client_type >  client_shared_ptr_type;
 
-  ShardManager() {
+  ShardManager(uint64_t const& protocol,
+    network::ThreadManager *thread_manager,
+    EntryPoint& details) :
+    thread_manager_(thread_manager),
+    details_(details)    
+  {    
+    shard_parameter_ = 0;
 
     block_body_type genesis_body;
     block_type genesis_block;
@@ -62,10 +70,20 @@ public:
 
     ResetNextHead();
     
-    PushBlock( genesis_block );
-    
+    PushBlock( genesis_block );    
   }
 
+  // TODO: Change signature to std::vector< EntryPoint >
+  EntryPoint Hello(std::string host) 
+  {
+    
+    if(details_.host != host ) {      
+      details_.host = host;
+    }
+    
+    return details_;    
+  }
+  
 
   bool PushTransaction( transaction_type tx ) {
     tx_mutex_.lock();
@@ -96,8 +114,12 @@ public:
     body.previous_hash = head_.header();
     block_mutex_.unlock();
     
-    tx_mutex_.lock();    
-    body.transaction_hash =  incoming_.front();
+    tx_mutex_.lock();
+    if(incoming_.size() == 0) {
+      body.transaction_hash =  "";
+    } else {
+      body.transaction_hash =  incoming_.front();
+    }    
     tx_mutex_.unlock();
     
     block.SetBody( body );
@@ -180,6 +202,7 @@ public:
     }
 
     if(block.meta_data().total_work > next_head_.meta_data().total_work) {
+      // TODO: Change branch if not succeeding blocks
       next_head_ = block;
     }
     
@@ -198,6 +221,23 @@ public:
       std::cout << "  <- " << fetch::byte_array::ToBase64( head_.body().previous_hash ) << std::endl;
       std::cout << "   = " << fetch::byte_array::ToBase64( head_.header() ) << std::endl;
       std::cout << "    (" << fetch::byte_array::ToBase64( head_.body().transaction_hash ) << ")" << std::endl;
+
+      std::size_t deltx = -1;      
+      for(std::size_t i=0; i < incoming_.size(); ++i)
+      {
+        if(head_.body().transaction_hash == incoming_[i])
+        {
+          deltx = i;
+          break;          
+        }        
+      }
+
+      if(deltx != std::size_t( -1 ) )
+      {
+        incoming_.erase( incoming_.begin() + deltx);        
+      }
+      
+      
       ResetNextHead();
     }
     block_mutex_.unlock();    
@@ -207,12 +247,42 @@ public:
   std::vector< block_type > GetBlocks( std::size_t const &from) {
 
   }
-  */  
+  */
+
+  void ConnectTo(std::string const &host, uint16_t const &port ) 
+  {
+    client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_);
+    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
+    shard_friends_mutex_.lock();
+    EntryPoint d;
+    d.host = host;    
+    d.port = port;
+    d.http_port = -1; 
+    d.shard = 0; // TODO: get and check that it is right
+    d.configuration = 0;  
+    shard_friends_.push_back(client);
+    friends_details_.push_back(d);
+    
+    shard_friends_mutex_.unlock();
+  }
+
+  void with_peers_do( std::function< void( std::vector< client_shared_ptr_type > , std::vector< EntryPoint > const& ) > fnc ) 
+  {
+    shard_friends_mutex_.lock();
+    fnc( shard_friends_, friends_details_ );    
+    shard_friends_mutex_.unlock();
+  }
+  
+  
 private:
   void ResetNextHead() {
     next_head_.meta_data().total_work = 0;
     next_head_.meta_data().block_number = 0;    
   }
+
+
+  network::ThreadManager *thread_manager_;    
+  EntryPoint &details_;  
   
   fetch::mutex::Mutex tx_mutex_;
   std::vector< tx_digest_type > incoming_;
@@ -224,6 +294,13 @@ private:
   std::vector< block_header_type > loose_blocks_;  
   std::vector< block_header_type > heads_;  
   block_type head_, next_head_;
+
+
+  std::vector< client_shared_ptr_type > shard_friends_;
+  std::vector< EntryPoint > friends_details_;  
+  fetch::mutex::Mutex shard_friends_mutex_;  
+
+  std::atomic< uint16_t > shard_parameter_ ;  
 };
 
 

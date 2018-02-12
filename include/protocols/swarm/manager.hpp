@@ -2,6 +2,8 @@
 #define SWARM_MANAGER_HPP
 #include "service/client.hpp"
 #include "service/publication_feed.hpp"
+
+#include "protocols/fetch_protocols.hpp"
 #include "protocols/swarm/node_details.hpp"
 #include "protocols/swarm/shard_details.hpp"
 #include "protocols/swarm/serializers.hpp"
@@ -126,6 +128,9 @@ public:
   {
     client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_);
     std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
+
+    EntryPoint details = client->Call(fetch::protocols::FetchProtocols::SHARD, ShardRPC::HELLO, host).As< EntryPoint >();
+    
     shards_mutex_.lock();
     ShardDetails d;
     d.handle = client->handle();
@@ -133,7 +138,13 @@ public:
     d.entry_for_swarm.port = port;
     d.entry_for_swarm.http_port = -1; // TODO: Request
     d.entry_for_swarm.shard = 0; // TODO: set;
-    d.entry_for_swarm.configuration = 0;  
+    d.entry_for_swarm.configuration = 0;
+    
+    d.entry_for_peer = details;
+    details_.AddEntryPoint( details );
+    
+    std::cout << details.host << ":" << details.port << "/" << details.http_port << std::endl;
+      
     shards_.push_back(client);
     shards_details_.push_back(d);    
     shards_mutex_.unlock();
@@ -305,12 +316,15 @@ public:
     // TODO: Mutex
     fnc( server_details_ );    
   }
-  
+
+  void with_node_details(std::function< void(NodeDetails const &) > fnc ) {
+    details_.with_this( fnc );    
+  }
 private:
   uint64_t protocol_;
   network::ThreadManager *thread_manager_;  
-  NodeDetails &details_;
 
+  NodeDetails &details_;
   
   std::vector< NodeDetails > peers_with_few_followers_;
   std::map< uint64_t,  NodeDetails > client_details_;  
@@ -322,8 +336,7 @@ private:
   fetch::mutex::Mutex peers_mutex_;
 
   std::vector< client_shared_ptr_type > shards_;
-  std::vector< ShardDetails > shards_details_;
-  
+  std::vector< ShardDetails > shards_details_;  
   fetch::mutex::Mutex shards_mutex_;  
 
   std::atomic< uint16_t > sharding_parameter_ ;

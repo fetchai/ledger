@@ -45,15 +45,17 @@ public:
     // Web interface
     auto http_bootstrap = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
         this->Bootstrap( params["ip"] , params["port"].AsInt() );
-        return fetch::http::HTTPResponse("{\"status\":\"ok\"}");
-        
+        return fetch::http::HTTPResponse("{\"status\":\"ok\"}");        
     };
+    
     HTTPModule::Get("/bootstrap/(ip=\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(port=\\d+)",  http_bootstrap);
     HTTPModule::Get("/connect-to/(ip=\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(port=\\d+)",  http_bootstrap);
 
 
     auto shard_connect = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-        this->ConnectShard( params["ip"] , params["port"].AsInt() );
+      std::cout << "Connecting shard from HTTP" << std::endl;
+      
+      this->ConnectShard( params["ip"] , params["port"].AsInt() );
         return fetch::http::HTTPResponse("{\"status\":\"ok\"}");
         
     };    
@@ -70,7 +72,8 @@ public:
           {
             if(!first) response << ",";
             response << "{ \"host\": \""  << d.entry_for_swarm.host << "\",";
-            response << " \"port\": "  << d.entry_for_swarm.port << "}";              
+            response << " \"port\": "  << d.entry_for_peer.port << ",";              
+            response << " \"http_port\": "  << d.entry_for_peer.http_port << "}";              
             first = false;            
           }
           
@@ -217,19 +220,26 @@ public:
 
     
     auto node_details = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-      std::string response = "{\"name\": \"hello world\"";
+      std::stringstream response;
+      response << "{\"name\": \"hello world\"";
       
-      response += "}";      
-      return fetch::http::HTTPResponse(response);
+      this->with_node_details( [this, &response](NodeDetails const& details) {
+          
+        });
+      
+      response << "}";
+      return fetch::http::HTTPResponse( response.str() );
     };    
     HTTPModule::Get("/node-details",  node_details);
 
 
     ////// TODO: This part needs to be moved somewhere else in the future
     auto send_transaction = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-
+      std::cout << "Got : " << req.uri() << std::endl;
+      std::cout << "Body: " << req.body() << std::endl;
+      
       this->with_shards_do([this, req](std::vector< client_shared_ptr_type > shards,  std::vector< ShardDetails > const &detail_list) {
-          std::cout << "Sending tx to " << shards.size() << " shards" << std::endl;
+          std::cout << "Sending tx to " << shards.size() << " shards" << std::endl;          
           typedef fetch::byte_array::ConstByteArray transaction_body_type;
           typedef fetch::chain::BasicTransaction< transaction_body_type > transaction_type;
           transaction_type tx;
@@ -240,7 +250,7 @@ public:
         });
 
                            
-      return fetch::http::HTTPResponse("Hello world");
+      return fetch::http::HTTPResponse("{}");
     };
 
     HTTPModule::Get("/load-balancer/send-transaction",  send_transaction);

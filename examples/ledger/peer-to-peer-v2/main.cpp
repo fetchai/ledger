@@ -1,3 +1,5 @@
+#include"swarm_service.hpp"
+#include"shard_service.hpp"
 #include"service/server.hpp"
 #include"network/tcp_server.hpp"
 #include"protocols.hpp"
@@ -12,85 +14,97 @@
 using namespace fetch::commandline;
 using namespace fetch::protocols;
 
-class FetchService  
+class FetchLedger 
 {
 public:
-  FetchService(uint16_t port, std::string const&pk) :   
+  FetchLedger(uint16_t offset, std::string const &name, std::size_t const &shards ) :
     thread_manager_( new fetch::network::ThreadManager(8) ),
-    service_(1337+port, thread_manager_),
-    http_server_(8080+port, thread_manager_)
+    controller_( 1337 + offset, 8080 + offset, name, thread_manager_ )
   {
-    
-    std::cout << "Listening for peers on " << (1337+port) << ", clients on " << (8080 + port ) << std::endl;
-      
-    details_.public_key() = pk;
-    details_.default_port() = 1337+port;
-    details_.default_http_port() = 8080 + port;
+    for(std::size_t i=0; i < shards; ++i)
+    {
+      std::size_t j =  offset * shards + i;      
+      shards_.push_back( std::make_shared< FetchShardService > (4000 + j, 9090 + j, thread_manager_ ));
+    }
 
-    // Creating a service contiaing the swarm protocol
-    swarm_ =  new SwarmProtocol(thread_manager_, FetchProtocols::SWARM, details_);
-    service_.Add(FetchProtocols::SWARM, swarm_ );
-
-    // Setting callback to resolve IP
-    swarm_->SetClientIPCallback([this](uint64_t const &n) -> std::string {
-        return service_.GetAddress(n);        
+    start_event_ = thread_manager_->OnAfterStart([this, shards, offset]() {
+        
+        thread_manager_->io_service().post([this]() {
+            this->ConnectShards();
+          });
       });
-
-    // Creating a http server based on the swarm protocol
-    http_server_.AddMiddleware( fetch::http::middleware::AllowOrigin("*") );       
-    http_server_.AddMiddleware( fetch::http::middleware::ColorLog);
-    http_server_.AddModule(*swarm_);
     
+    stop_event_ = thread_manager_->OnBeforeStop([this]() {
+//        for(auto &s: shards_) {
+          // TODO disconnect
+//        }
+        
+        shards_.clear();        
+      });
   }
-
-  ~FetchService() 
+  
+  ~FetchLedger() 
   {
-    std::cout << "Killing fetch service";    
-    delete swarm_;
+    thread_manager_->Off( start_event_ );
+    thread_manager_->Off( stop_event_ );
   }
-
-  void Bootstrap(std::string const &address, uint16_t const &port) 
-  {
-    swarm_->Bootstrap( address, port );
-  }
-
+  
+  
   void Start() 
   {
     thread_manager_->Start();
   }
 
   void Stop() 
-  
   {
     thread_manager_->Stop();
   }
   
-private:
-  fetch::network::ThreadManager *thread_manager_;    
-  fetch::service::ServiceServer< fetch::network::TCPServer > service_;
-  fetch::http::HTTPServer http_server_;  
+  void Bootstrap(std::string const &address, uint16_t const &port) 
+  {
+    controller_.Bootstrap( address, port );
+  }
   
-  SwarmProtocol *swarm_ = nullptr;
-  NodeDetails details_;
+private:
+
+  void ConnectShards() 
+  {
+    std::cout << "Connecting shards" << std::endl;
+    for(auto &s: shards_) {
+      std::cout << " - localhost " <<  s->port() << std::endl;      
+      controller_.ConnectShard( "localhost", s->port() );
+      
+
+    }
+  }
+  
+  
+  fetch::network::ThreadManager *thread_manager_;      
+  FetchSwarmService controller_;
+  std::vector< std::shared_ptr< FetchShardService > > shards_;
+
+  typename fetch::network::ThreadManager::event_handle_type start_event_;
+  typename fetch::network::ThreadManager::event_handle_type stop_event_;      
 };
+
 
 
 int main(int argc, char const** argv) 
 {
-
   ParamsParser params;
   params.Parse(argc, argv);
  
-  if(params.arg_size() < 3) 
+  if(params.arg_size() < 4) 
   {
-    std::cout << "usage: " << argv[0] << " [port offset] [info] [[bootstrap_host] [bootstrap_port]]" << std::endl;
+    std::cout << "usage: " << argv[0] << " [port offset] [info] [shards] [[bootstrap_host] [bootstrap_port]]" << std::endl;
     exit(-1);
   }
   
   uint16_t  my_port = params.GetArg<uint16_t>(1);
-  std::string  info = params.GetArg(2);    
-  std::cout << "Listening on " << my_port << std::endl;
-  FetchService service(my_port, info);
+  std::string  info = params.GetArg(2);
+  uint16_t  shards = params.GetArg<uint16_t>(3);  
+
+  FetchLedger service(my_port, info, shards);
   service.Start();
   
   std::this_thread::sleep_for( std::chrono::milliseconds( 200 ) );  

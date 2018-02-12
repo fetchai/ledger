@@ -25,6 +25,7 @@ public:
   void AddEntryPoint(EntryPoint const& ep) 
   {
     // TODO: Add mutex
+//    mutex_.lock();    
     bool found_ep = false;
     for(auto &e:   entry_points_)
     {
@@ -35,7 +36,8 @@ public:
         break;          
       }
     }
-    if(!found_ep) entry_points_.push_back( ep );    
+    if(!found_ep) entry_points_.push_back( ep );
+//    mutex_.unlock();    
   }
   
   
@@ -50,14 +52,23 @@ public:
 
   uint32_t const & default_http_port() const { return default_http_port_;  }
   uint32_t &default_http_port() { return default_http_port_;  }  
+
+  void with_this(std::function< void(NodeDetails const &) > fnc ) 
+  {
+//    mutex_.lock();
+    fnc( *this );
+//    mutex_.unlock();    
+  }
   
 private:
   byte_array::ByteArray public_key_;
   std::vector< EntryPoint > entry_points_;
   
   uint32_t default_port_;
-  uint32_t default_http_port_;  
+  uint32_t default_http_port_;
 
+
+//  fetch::mutex::Mutex mutex_;
 }; 
 
   

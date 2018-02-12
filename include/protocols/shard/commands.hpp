@@ -12,11 +12,12 @@ struct ShardRPC
 enum 
 {
   PING = 1,
-  PUSH_TRANSACTION = 2,
-  PUSH_BLOCK = 3,
-  GET_NEXT_BLOCK = 4,
-  COMMIT = 5,
-  LISTEN_TO = 6
+  HELLO = 2,
+  PUSH_TRANSACTION = 3,
+  PUSH_BLOCK = 4,
+  GET_NEXT_BLOCK = 5,
+  COMMIT = 6,
+  LISTEN_TO = 7
 };
 
 };

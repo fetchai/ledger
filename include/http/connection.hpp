@@ -87,7 +87,7 @@ public:
       {
         
         HTTPRequest::SetHeader( *request, *buffer_ptr,  len );        
-        if(is_open_) ReadBody( buffer_ptr, request );          
+        if(is_open_) ReadBody( buffer_ptr, request );
       }
     };
 
@@ -96,7 +96,7 @@ public:
 
   void ReadBody(buffer_ptr_type buffer_ptr, shared_request_type request) 
   {
-    
+    // Check if we got all the body
     if( request->content_length() <= buffer_ptr->size() ) {
       HTTPRequest::SetBody( *request, *buffer_ptr);
 
@@ -106,17 +106,18 @@ public:
       return;      
     }
 
+    // Reading remaining bits if not all was read.
     auto self = shared_from_this();    
     auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
+      
       if(ec) {
         this->HandleError(ec, request);
         return;
+      } else {
+        if(is_open_) ReadBody( buffer_ptr, request );
       }
-      
     };
     
-    std::cout << "reading remaining" << std::endl;
-    std::cout << "TODO: check the internals of async read" << std::endl;    
     asio::async_read(socket_, *buffer_ptr, asio::transfer_exactly( request->content_length() - buffer_ptr->size()), cb);    
   }
   
