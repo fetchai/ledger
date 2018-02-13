@@ -4,14 +4,14 @@ import sys
 import glob
 
 root_path = os.path.abspath(os.path.dirname(__file__))
-libai_path = os.path.join(root_path, "build", "site-packages")
-if len(glob.glob(os.path.join(libai_path, "libai"))) == 0:
+libfetch_path = os.path.join(root_path, "build", "site-packages")
+if len(glob.glob(os.path.join(libfetch_path, "libfetch"))) == 0:
     print "Please build the project in the folder 'build'"
     exit(-1)
 
-sys.path.append(libai_path)
+sys.path.append(libfetch_path)
 if not 'PYTHONPATH' in os.environ: os.environ['PYTHONPATH'] = ""
-os.environ['PYTHONPATH'] = libai_path + ":" + os.environ['PYTHONPATH'] 
+os.environ['PYTHONPATH'] = libfetch_path + ":" + os.environ['PYTHONPATH'] 
 
 os.chdir(os.path.abspath( os.path.join(root_path, "python","notebooks") ))
 
