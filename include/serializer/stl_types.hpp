@@ -5,6 +5,7 @@
 
 #include <string>
 #include <type_traits>
+#include <vector>
 namespace fetch {
 namespace serializers {
 
@@ -17,6 +18,19 @@ typename std::enable_if< std::is_integral< U >::value, void >::type Serialize(T 
 
 template <typename T, typename U>
 typename std::enable_if< std::is_integral< U >::value, void >::type  Deserialize(T &serializer, U &val) {
+  detailed_assert( sizeof(U) <= serializer.bytes_left());
+  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&val), sizeof(U));
+}
+
+template <typename T, typename U>
+typename std::enable_if< std::is_floating_point< U >::value, void >::type Serialize(T &serializer, U const &val) {  
+  serializer.Allocate(sizeof(U));
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&val),
+                        sizeof(U));
+}
+
+template <typename T, typename U>
+typename std::enable_if< std::is_floating_point< U >::value, void >::type  Deserialize(T &serializer, U &val) {
   detailed_assert( sizeof(U) <= serializer.bytes_left());
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&val), sizeof(U));
 }
@@ -52,6 +66,39 @@ template <typename T>
 void Serialize(T &serializer, char const *s) {
   return Serialize<T>(serializer, std::string(s));
 }
+
+    
+template< typename T, typename U>
+void Serialize(T &serializer, std::vector< U> const &vec) {
+  // Allocating memory for the size
+  serializer.Allocate( sizeof(uint64_t) );
+  uint64_t size = vec.size();
+
+  // Writing the size to the byte array
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size),
+                        sizeof(uint64_t));
+
+
+  for( auto const &a : vec ) serializer << a;
+
+}
+
+template< typename T, typename U >
+void Deserialize(T &serializer, std::vector< U > &vec) {
+  uint64_t size;
+  // Writing the size to the byte array
+  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size),
+                        sizeof(uint64_t));
+
+  // Reading the data
+  vec.resize( size );
+    
+  for( auto &a : vec ) 
+    serializer >> a;
+
+
+}
+
 };
 };
 

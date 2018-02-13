@@ -4,7 +4,7 @@
 #include"byte_array/const_byte_array.hpp"
 #include"serializer/referenced_byte_array.hpp"
 
-
+#include"protocols/fetch_protocols.hpp"
 #include"chain/transaction.hpp"
 #include"chain/block.hpp"
 #include"chain/consensus/proof_of_work.hpp"
@@ -76,15 +76,45 @@ public:
   // TODO: Change signature to std::vector< EntryPoint >
   EntryPoint Hello(std::string host) 
   {
-    
+   
     if(details_.host != host ) {      
       details_.host = host;
     }
     
-    return details_;    
+    return details_;
+  }
+  
+  block_type ExchangeHeads(block_type head_candidate) 
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
+    
+    // TODO: Check which head is better
+    
+    return head_;    
+  }
+
+  std::vector< block_type > RequestBlocksFrom(block_header_type next_hash, uint16_t preferred_block_count) 
+  {
+    std::vector< block_type > ret;
+
+    if( preferred_block_count > 10 ) preferred_block_count = 10;    
+    ret.reserve( preferred_block_count );
+    
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
+    std::size_t i =0;    
+    while( (i< preferred_block_count) && (chains_.find( next_hash ) !=chains_.end() ) ) {
+      auto const &block = chains_[next_hash];
+      ret.push_back( block );
+
+      next_hash = block.body().previous_hash;
+      ++i;
+    }    
+
+    return ret;    
   }
   
 
+  
   bool PushTransaction( transaction_type tx ) {
     tx_mutex_.lock();
     if(known_transactions_.find( tx.digest()  ) != known_transactions_.end() ) {      
@@ -152,6 +182,7 @@ public:
 
 
     // Tracing the way back to a chain that leads to genesis
+    // TODO, FIXME: Suceptible to attack: Place a block that creates a loop.
     while(chains_.find(header) != chains_.end()) {      
       auto b = chains_[header];
       visited_blocks.push( header );
@@ -163,18 +194,34 @@ public:
       header = b.body().previous_hash;
     }
 
+    // By design visited blocks must contain the latest submitted block.
+    assert( visited_blocks.size() > 0 );
+    block_header_type earliest_header = visited_blocks.top();
+    block_type earliest_block = chains_[earliest_header];
+    
+    
     // Computing the total work that went into the chain.
     if(block.body().transaction_hash == "genesis") {
       std::cout << "Adding genesis" << std::endl;
       head_ = block;
       block_mutex_.unlock();
       return;
-    } else if(chains_.find(header) != chains_.end()) {
+    } else if( earliest_block.body().transaction_hash != "genesis" ) {
+      // Chains that need syncing
+      PartialChain pc;
+      pc.start = block.header();
 
-      // TODO: Remove all of visited blocks from loose_blocks_
-      // Add block.header to loose_blocks
-      TODO_FAIL("not implemented yet");
+      pc.end = earliest_block.header()
+      pc.next_missing = earliest_block.body().previous_hash;
+
+      if(loose_block_register_.find( ) ) 
+      
+      
+      std::cout << "TODO: NEED TO SYNC " << std::endl;
+      
     } else {
+      std::cout << "Found root: " << header << std::endl;
+      
       header = visited_blocks.top();
       auto b1 = chains_[header];
       visited_blocks.pop();
@@ -207,21 +254,27 @@ public:
     }
     
     block_mutex_.unlock();    
+
     // TODO: Trim blocks away that are more than
-    //    this->Publish(PeerToPeerCommands::BROADCAST_BLOCK, block );    
+//    this->Publish(PeerToPeerCommands::BROADCAST_BLOCK, block );    
   }
 
+
+  
   void Commit() {    
     block_mutex_.lock();
     // We only commit if there actually is a new block
     if( next_head_.meta_data().block_number > 0 ) {
-      // TODO: Remove transactions from queue
+     
       head_ = next_head_;
       std::cout << "Applying block: " << head_.meta_data().block_number << " " <<  head_.meta_data().total_work <<  std::endl;
       std::cout << "  <- " << fetch::byte_array::ToBase64( head_.body().previous_hash ) << std::endl;
       std::cout << "   = " << fetch::byte_array::ToBase64( head_.header() ) << std::endl;
       std::cout << "    (" << fetch::byte_array::ToBase64( head_.body().transaction_hash ) << ")" << std::endl;
 
+      // TODO: Update transaction order
+      
+      // Removing TX from queue
       std::size_t deltx = -1;      
       for(std::size_t i=0; i < incoming_.size(); ++i)
       {
@@ -243,11 +296,6 @@ public:
     block_mutex_.unlock();    
   }
   
-  /*
-  std::vector< block_type > GetBlocks( std::size_t const &from) {
-
-  }
-  */
 
   void ConnectTo(std::string const &host, uint16_t const &port ) 
   {
@@ -262,6 +310,16 @@ public:
     d.configuration = 0;  
     shard_friends_.push_back(client);
     friends_details_.push_back(d);
+
+
+    block_mutex_.lock();    
+    auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_);    
+    block_mutex_.unlock();
+
+    block_type comp_head = promise1.As< block_type >();
+    comp_head.meta_data() = block_meta_data_type();
+    PushBlock(comp_head);       
+
     
     shard_friends_mutex_.unlock();
   }
@@ -272,6 +330,20 @@ public:
     fnc( shard_friends_, friends_details_ );    
     shard_friends_mutex_.unlock();
   }
+
+  void with_blocks_do( std::function< void(block_type, std::map< block_header_type, block_type >)  > fnc ) 
+  {
+    block_mutex_.lock();
+    fnc( head_, chains_ );    
+    block_mutex_.unlock();
+  }
+
+  void with_transactions_do( std::function< void(std::vector< tx_digest_type >,  std::map< tx_digest_type, transaction_type >) > fnc )
+  {
+    tx_mutex_.lock();
+    fnc( incoming_, known_transactions_ );    
+    tx_mutex_.unlock();
+  }
   
   
 private:
@@ -280,18 +352,30 @@ private:
     next_head_.meta_data().block_number = 0;    
   }
 
-
   network::ThreadManager *thread_manager_;    
   EntryPoint &details_;  
   
   fetch::mutex::Mutex tx_mutex_;
   std::vector< tx_digest_type > incoming_;
   std::map< tx_digest_type, transaction_type > known_transactions_;
+  std::vector< transaction_type > tx_order_;
 
 
   fetch::mutex::Mutex block_mutex_;
   std::map< block_header_type, block_type > chains_;
-  std::vector< block_header_type > loose_blocks_;  
+
+  struct PartialChain 
+  {
+    block_header_type start;    
+    block_header_type end;
+    block_header_type next_missing;    
+  };
+  
+
+  std::vector< PartialChain > loose_chains_;  
+  std::map< block_header_type, uint64_t > loose_chain_bottoms_;
+  std::map< block_header_type, uint64_t > loose_chain_tops_;  
+  
   std::vector< block_header_type > heads_;  
   block_type head_, next_head_;
 

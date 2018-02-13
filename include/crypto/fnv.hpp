@@ -20,7 +20,7 @@ class FNV : public StreamHasher {
   }
 
   bool Update(byte_array_type const& s) override {
-    for (std::size_t i = 0; i < s.size() ++i)
+    for (std::size_t i = 0; i < s.size(); ++i)
     {
         context_ = (context_ * 16777619) ^ s[i];
     }

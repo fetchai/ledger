@@ -35,6 +35,17 @@ void Deserialize( T & serializer, BlockBody &body) {
 }
 
 
+template< typename T >
+void Serialize( T & serializer, BlockMetaData const &meta) {
+  serializer << meta.block_number << meta.total_work; 
+}
+
+template< typename T >
+void Deserialize( T & serializer, BlockMetaData &meta) {
+  serializer >> meta.block_number >> meta.total_work;
+}
+
+
 };
 };
 

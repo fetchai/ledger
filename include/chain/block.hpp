@@ -45,13 +45,13 @@ private:
 
 template< typename T, typename B, typename P, typename H, typename M >
 void Serialize( T & serializer, BasicBlock< B, P, H, M > const &b) {
-  serializer <<  b.body() << b.proof();
+  serializer <<  b.body() << b.proof() << b.meta_data();
 }
 
 template< typename T, typename B, typename P, typename H, typename M  >
 void Deserialize( T & serializer, BasicBlock< B, P, H, M > &b) {
   B body;  
-  serializer >> body >> b.proof();
+  serializer >> body >> b.proof() >> b.meta_data();
   b.SetBody(body);
   
 }

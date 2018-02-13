@@ -17,7 +17,10 @@ enum
   PUSH_BLOCK = 4,
   GET_NEXT_BLOCK = 5,
   COMMIT = 6,
-  LISTEN_TO = 7
+  LISTEN_TO = 7,
+
+  EXCHANGE_HEADS = 20,
+  REQUEST_BLOCKS_FROM = 21
 };
 
 };

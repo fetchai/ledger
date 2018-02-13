@@ -22,6 +22,10 @@ const byte_array::ConstByteArray TypeRegister<T>::name = "variant";
   };                                                   \
   byte_array::ConstByteArray const TypeRegister<type>::name = #symbol
 
+
+REGISTER_SERIALIZE_TYPE('double', double);
+REGISTER_SERIALIZE_TYPE('float', float);
+
 REGISTER_SERIALIZE_TYPE('u64', uint64_t);
 REGISTER_SERIALIZE_TYPE('i64', int64_t);
 

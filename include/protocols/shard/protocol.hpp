@@ -37,6 +37,11 @@ public:
     auto push_transaction = new CallableClassMember<ShardProtocol, bool(transaction_type) >(this, &ShardProtocol::PushTransaction );
     auto push_block = new CallableClassMember<ShardProtocol, void(block_type) >(this, &ShardProtocol::PushBlock );
     auto get_block = new CallableClassMember<ShardProtocol, block_type() >(this, &ShardProtocol::GetNextBlock );
+
+    auto exchange_heads = new CallableClassMember<ShardProtocol, block_type(block_type) >(this, &ShardProtocol::ExchangeHeads );
+    auto request_blocks_from = new CallableClassMember<ShardProtocol, std::vector< block_type >(block_header_type, uint16_t) >(this, &ShardProtocol::RequestBlocksFrom );
+
+    // TODO: Legacy - remove
     auto commit = new CallableClassMember<ShardProtocol, void() >(this, &ShardProtocol::Commit );    
     
     Protocol::Expose(ShardRPC::PING, ping);
@@ -44,7 +49,11 @@ public:
     Protocol::Expose(ShardRPC::PUSH_TRANSACTION, push_transaction);
     Protocol::Expose(ShardRPC::PUSH_BLOCK, push_block);
     Protocol::Expose(ShardRPC::GET_NEXT_BLOCK, get_block);
-    Protocol::Expose(ShardRPC::COMMIT, commit);    
+    Protocol::Expose(ShardRPC::COMMIT, commit);     // TODO: legacy
+
+    Protocol::Expose(ShardRPC::EXCHANGE_HEADS, exchange_heads);
+    Protocol::Expose(ShardRPC::REQUEST_BLOCKS_FROM, request_blocks_from);    
+    
     
     // Using the event feed that
     Protocol::RegisterFeed(ShardFeed::FEED_BROADCAST_TRANSACTION, this);
@@ -55,8 +64,7 @@ public:
       return fetch::http::HTTPResponse("{\"status\":\"ok\"}");
     };
     
-    HTTPModule::Get("/connect-to/(ip=\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(port=\\d+)", connect_to);
-
+    HTTPModule::Get("/shard-connect-to/(ip=\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(port=\\d+)", connect_to);
     
     auto list_outgoing = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       std::stringstream response;
@@ -88,26 +96,95 @@ public:
       return fetch::http::HTTPResponse(response.str());      
     };
     HTTPModule::Get("/list/outgoing",  list_outgoing);
+
+
     
+    auto list_blocks = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      std::stringstream response;
+      response << "{\"blocks\": [";  
+      this->with_blocks_do([&response](ShardManager::block_type const & head, std::map< ShardManager::block_header_type, ShardManager::block_type > chain) {
+          bool first = true;
+          response << "{";
+          response << "\"block_hash\": \"" << byte_array::ToBase64( head.header() ) << "\",";
+          response << "\"previous_hash\": \"" << byte_array::ToBase64( head.body().previous_hash ) << "\",";
+          response << "\"transaction_hash\": \"" << byte_array::ToBase64( head.body().transaction_hash ) << "\",";
+          response << "\"block_number\": " <<  head.meta_data().block_number  << ",";
+          response << "\"total_work\": " <<  head.meta_data().total_work;          
+          response << "}";
+
+          auto next_hash = head.body().previous_hash;
+          std::size_t i=0;
+          
+          while( (i< 10) && (chain.find( next_hash ) !=chain.end() ) ) {
+            auto const &block = chain[next_hash];
+            ++i;
+            response << ", {";
+            response << "\"block_hash\": \"" << byte_array::ToBase64( block.header() ) << "\",";
+            response << "\"previous_hash\": \"" << byte_array::ToBase64( block.body().previous_hash ) << "\",";
+            response << "\"transaction_hash\": \"" << byte_array::ToBase64( block.body().transaction_hash ) << "\",";
+            response << "\"block_number\": " <<  block.meta_data().block_number  << ",";
+            response << "\"total_work\": " <<  block.meta_data().total_work;          
+            response << "}";            
+            next_hash =  block.body().previous_hash;
+          }
+
+        });
+      
+      response << "]}";
+      
+      std::cout << response.str() << std::endl;
+            
+      return fetch::http::HTTPResponse(response.str());      
+    };
+    HTTPModule::Get("/list/blocks",  list_blocks);
+
+
+/*
+    auto list_transactions = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      std::stringstream response;
+      response << "{\"transactions\": [";  
+      this->with_transactions_do([&response](std::vecto< ShardManager::tx_digest_type > const & unmined,
+          std::map< ShardManager::tx_digest_type, ShardManager::transaction_type > txs) {
+          bool first = true;
+          while( (i< 10) && (chain.find( next_hash ) !=chain.end() ) ) {
+            auto const &block = chain[next_hash];
+            ++i;
+            response << ", {";
+            response << "\"block_hash\": \"" << byte_array::ToBase64( block.header() ) << "\",";
+            response << "\"previous_hash\": \"" << byte_array::ToBase64( block.body().previous_hash ) << "\",";
+            response << "\"transaction_hash\": \"" << byte_array::ToBase64( block.body().transaction_hash ) << "\",";
+            response << "\"block_number\": " <<  block.meta_data().block_number  << ",";
+            response << "\"total_work\": " <<  block.meta_data().total_work;          
+            response << "}";            
+            next_hash =  block.body().previous_hash;
+          }
+
+        });
+      
+      response << "]}";
+      
+      std::cout << response.str() << std::endl;
+            
+      return fetch::http::HTTPResponse(response.str());      
+    };
+    HTTPModule::Get("/list/transactions",  list_transactions);
+*/
     
     auto submit_transaction = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {      
-      return fetch::http::HTTPResponse("hello world");
+      std::cout << "Got : " << req.uri() << std::endl;
+      std::cout << "Body: " << req.body() << std::endl;
+
+      typedef fetch::byte_array::ConstByteArray transaction_body_type;
+      typedef fetch::chain::BasicTransaction< transaction_body_type > transaction_type;
+      transaction_type tx;
+      tx.set_body( req.body() );
+      this->PushTransaction( tx );
+
+      return fetch::http::HTTPResponse("{\"status\": \"ok\"}");
     };
     
     HTTPModule::Post("/shard/submit-transaction", submit_transaction);
 
-    auto next_block = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-      
-      return fetch::http::HTTPResponse("hello world");
-    };
-    
-    HTTPModule::Get("/shard/next-block", next_block);
-
-    auto submit_block = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-      
-      return fetch::http::HTTPResponse("hello world");
-    };    
-    HTTPModule::Post("/shard/submit-block", submit_block);
     
   }
 
