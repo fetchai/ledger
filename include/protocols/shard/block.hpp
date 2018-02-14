@@ -16,6 +16,7 @@ struct BlockMetaData {
   
   uint64_t block_number = UNDEFINED;
   double total_work     = std::numeric_limits< double >::infinity();
+  bool loose_chain = true;  
 };
 
 struct BlockBody {
@@ -37,12 +38,12 @@ void Deserialize( T & serializer, BlockBody &body) {
 
 template< typename T >
 void Serialize( T & serializer, BlockMetaData const &meta) {
-  serializer << meta.block_number << meta.total_work; 
+  serializer << meta.block_number << meta.total_work << meta.loose_chain; 
 }
 
 template< typename T >
 void Deserialize( T & serializer, BlockMetaData &meta) {
-  serializer >> meta.block_number >> meta.total_work;
+  serializer >> meta.block_number >> meta.total_work  << meta.loose_chain;
 }
 
 

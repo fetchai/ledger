@@ -29,6 +29,7 @@ namespace fetch
 namespace protocols 
 {
 
+
 class ShardManager : public fetch::service::HasPublicationFeed 
 {
 public:
@@ -50,6 +51,15 @@ public:
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
   typedef std::shared_ptr< client_type >  client_shared_ptr_type;
 
+  struct PartialChain 
+  {
+    block_header_type start;    
+    block_header_type end;
+    block_header_type next_missing;    
+  };  
+  
+
+  
   ShardManager(uint64_t const& protocol,
     network::ThreadManager *thread_manager,
     EntryPoint& details) :
@@ -159,110 +169,169 @@ public:
   void PushBlock(block_type block) {
     block_mutex_.lock();
 
+    // Only record blocks that are new
     if( chains_.find( block.header() ) != chains_.end() ) {
-      /*
-      std::cout << "Already known block: " << fetch::byte_array::ToBase64(block.header() ) << std::endl;
-      auto b2 = chains_[block.header()];
-      std::cout << "Block 1: " << std::endl;
-      std::cout << " - " << fetch::byte_array::ToBase64( block.body().previous_hash )  << std::endl;
-      std::cout << " - " << fetch::byte_array::ToBase64( block.body().transaction_hash )  << std::endl;
-      std::cout << "Block 2: " << std::endl;
-      std::cout << " - " << fetch::byte_array::ToBase64( b2.body().previous_hash )  << std::endl;
-      std::cout << " - " << fetch::byte_array::ToBase64( b2.body().transaction_hash )  << std::endl;
-      std::cout << " - " << b2.meta_data().block_number  << std::endl;      
-      */
-      block_mutex_.unlock();      
+      std::cout << "Nothing to do for block" << std::endl;
+      
+      block_mutex_.unlock(); 
       return ;
     }
-    assert( chains_.find( block.header() ) == chains_.end() );    
+    
+    assert( chains_.find( block.header() ) == chains_.end() );
+    block_header_type header = block.header();
+    block.meta_data().loose_chain = true;    
     chains_[block.header()] = block;
     
-    block_header_type header = block.header();
-    std::stack< block_header_type > visited_blocks;
 
-    // TODO: Check if block is adding to a loose chain.
-    
 
-    // Tracing the way back to a chain that leads to genesis
-    // TODO, FIXME: Suceptible to attack: Place a block that creates a loop.
-    while(chains_.find(header) != chains_.end()) {      
-      auto b = chains_[header];
-      visited_blocks.push( header );
+
+    // Check if block is adding to a loose chain.
+    bool was_loose = false;    
+    if(loose_chain_tops_.find( block.body().previous_hash ) != loose_chain_tops_.end() )
+    {
+      /*                                 
+       * Main chain
+       * with path to genesis             
+       * ┌──────┐                        
+       * │      │                        
+       * │      │   Missing block        
+       * └──────┘   ┌ ─ ─ ─              
+       *     │             │             
+       *     │      │                    
+       *     ▼       ─ ─ ─ ┘             
+       * ┌──────┐       │                
+       * │      │       │                
+       * │      │       ▼ Loose chains   
+       * └──────┘   ┌──────┐ with no path            
+       *     │      │      │ to genesis
+       *     │      │      │             
+       *     ▼      └──────┘             
+       * ┌──────┐       │                
+       * │      │       └──┐             
+       */
+      std::cout << "Block extends top" << std::endl;
+      was_loose = true;
       
-      if(block.meta_data().block_number != block_meta_data_type::UNDEFINED)
+      std::size_t i = loose_chain_tops_[block.body().previous_hash];
+      auto it = loose_chain_tops_.find( block.body().previous_hash ) ;
+      loose_chain_tops_.erase( it );
+
+      assert( i < loose_chains_.size() );      
+      auto &pc = loose_chains_[i];
+
+      pc.start = header;
+      loose_chain_tops_[header] = i;      
+    }
+
+
+    if(loose_chain_bottoms_.find( header ) != loose_chain_bottoms_.end() )
+    {
+      /*         
+       * Chains with
+       * path to         
+       * genesis         Loose chains        
+       * ┌──────┐       │       │      │      
+       * │      │       │       │      │      
+       * │      │       ▼       └──────┘      
+       * └──────┘   ┌──────┐        │         
+       *     │      │      │        ▼         
+       *     │      │      │    ┌──────┐      
+       *     ▼      └──────┘    │      │      
+       * ┌──────┐       │       │      │      
+       * │      │       └──┐    └──────┘      
+       * │      │          │        │         
+       * └──────┘          ▼        │         
+       *     │         ┌ ─ ─ ─      │         
+       *     │                │     │         
+       *     ▼         │       ◀────┘         
+       * ┌──────┐       ─ ─ ─ ┘               
+       * │      │                            
+       * │      │      Missing block  
+       * └──────┘                             
+       */
+      std::cout << "Block extends bottom" << std::endl;
+      was_loose = true;
+      std::vector< uint64_t > lchains = loose_chain_bottoms_[header];
+      auto it = loose_chain_bottoms_.find( header ) ;
+      loose_chain_bottoms_.erase( it );
+
+      for(auto &id: lchains) {
+        auto &pc = loose_chains_[id];
+        pc.end = header;
+        pc.next_missing = block.body().previous_hash;        
+      }
+
+      if( loose_chain_bottoms_.find( block.body().previous_hash ) == loose_chain_bottoms_.end() )
       {
-        break;
+        // Even though the chains merge, the remain many separate chains
+        loose_chain_bottoms_[block.body().previous_hash] = lchains;
       }
-      
-      header = b.body().previous_hash;
-    }
-
-    // By design visited blocks must contain the latest submitted block.
-    assert( visited_blocks.size() > 0 );
-    block_header_type earliest_header = visited_blocks.top();
-    block_type earliest_block = chains_[earliest_header];
-    
-    
-    // Computing the total work that went into the chain.
-    if(block.body().transaction_hash == "genesis") {
-      std::cout << "Adding genesis" << std::endl;
-      head_ = block;
-      block_mutex_.unlock();
-      return;
-    } else if( earliest_block.body().transaction_hash != "genesis" ) {
-      // Creating loose chain - we are sure that it does not add to existing
-      // loose chains beause we checked that earlier.
-
-      PartialChain pc;
-      pc.start = block.header();
-      pc.end = earliest_block.header();      
-      pc.next_missing = earliest_block.body().previous_hash;
-//      if(loose_block_register_.find( ) ) 
-      
-
-      // TODO: add 
-      std::cout << "TODO: NEED TO SYNC " << std::endl;
-      
-    } else {
-      std::cout << "Found root: " << header << std::endl;
-      
-      header = visited_blocks.top();
-      auto b1 = chains_[header];
-      visited_blocks.pop();
-
-      while(!visited_blocks.empty()) {
-        header = visited_blocks.top();
-        auto b2 = chains_[header];
-
-        auto &p = b2.proof();
-        p();
-        double work = fetch::math::Log( p.digest() );
+      else
+      {
         
-        b2.meta_data() = b1.meta_data();
-        ++b2.meta_data().block_number;
-
-        // TODO: Check the correct way to compute the strongest chain - looks wrong
-        b2.meta_data().total_work += work;
-        chains_[header] = b2;
-
-        b1 = b2;
-        visited_blocks.pop();
+        auto &l = loose_chain_bottoms_[block.body().previous_hash];
+        for(auto &id : lchains)
+        {
+          l.push_back(id);          
+        }        
       }
+            
 
-      block = chains_[header];
+      /* Chain with 
+       * path 
+       * to genesis    Loose chains
+       *
+       * ┌──────┐       │       │      │      
+       * │      │       └──┐    └──────┘      
+       * │      │          │        │         
+       * └──────┘          ▼        │         
+       *     │         ┌ ─ ─ ─      │         
+       *     │                │     │         
+       *     ▼         │       ◀────┘         
+       * ┌──────┐       ─ ─ ─ ┘               
+       * │      │          │                  
+       * │      │◀─────────┘   Missing block  
+       * └──────┘                             
+       *     │
+       *
+       * Checking if path to genesis block exists
+       */
+      if( chains_.find(block.body().previous_hash) != chains_.end() ) {
+        auto &next = chains_[block.body().previous_hash];
+        
+        if(next.meta_data().loose_chain == false) {
+          std::cout << " - Block is final" << std::endl;
+          auto &l = loose_chain_bottoms_[block.body().previous_hash];
+          for(auto &id: l)
+          {
+            auto &pc = loose_chains_[id];
+            block_header_type h = pc.start;    
+            block_type b = chains_[header];
+
+            AttachBlock(h,b);
+            loose_chains_.erase( loose_chains_.find( id ) );            
+          }
+          
+
+          auto it = loose_chain_bottoms_.find(block.body().previous_hash);
+          loose_chain_bottoms_.erase(it);          
+        }
+      }
     }
 
-    if(block.meta_data().total_work > next_head_.meta_data().total_work) {
-      // TODO: Change branch if not succeeding blocks
-      next_head_ = block;
+
+    if(was_loose)
+    {      
+      block_mutex_.unlock(); 
+      return; 
     }
     
-    block_mutex_.unlock();    
 
+    AttachBlock(header, block);
+    
     // TODO: Trim blocks away that are more than
 //    this->Publish(PeerToPeerCommands::BROADCAST_BLOCK, block );    
   }
-
 
   
   void Commit() {    
@@ -348,9 +417,124 @@ public:
     fnc( incoming_, known_transactions_ );    
     tx_mutex_.unlock();
   }
+
+  void with_loose_chains_do( std::function< void( std::map< uint64_t,  PartialChain > ) > fnc ) 
+  {
+    block_mutex_.lock();
+    fnc( loose_chains_ );    
+    block_mutex_.unlock();
+  }
   
   
 private:
+  void AttachBlock(block_header_type &header, block_type &block) 
+  {
+    std::cout << "Attaching block!" << std::endl;
+    
+    // Tracing the way back to a chain that leads to genesis
+    // TODO, FIXME: Suceptible to attack: Place a block that creates a loop.
+    std::stack< block_header_type > visited_blocks;    
+    while(chains_.find(header) != chains_.end()) {      
+      auto b = chains_[header];
+      visited_blocks.push( header );
+
+      /*
+        This is wrong as the code does not support half chains at the moment
+      if(block.meta_data().block_number != block_meta_data_type::UNDEFINED)
+      {        
+        break;
+      }
+      */
+      
+      header = b.body().previous_hash;
+    }
+
+    // By design visited blocks must contain the latest submitted block.
+    assert( visited_blocks.size() > 0 );
+    block_header_type earliest_header = visited_blocks.top();
+    block_type earliest_block = chains_[earliest_header];
+    
+    
+    // Computing the total work that went into the chain.
+    if(block.body().transaction_hash == "genesis") {
+      std::cout << "Adding genesis" << std::endl;
+      block.meta_data().loose_chain = false;      
+      chains_[block.header()] = block;
+      
+      head_ = block;
+      block_mutex_.unlock();
+      return;
+    } else if( earliest_block.body().transaction_hash != "genesis" ) {
+      // Creating loose chain - we are sure that it does not add to existing
+      // loose chains beause we checked that earlier.
+
+      PartialChain pc;
+      pc.start = block.header();
+      pc.end = earliest_block.header();      
+      pc.next_missing = earliest_block.body().previous_hash;
+
+      
+      std::size_t i = loose_chain_counter_;
+      loose_chains_[i] = pc;      
+      loose_chain_tops_[ pc.start] = i;
+      ++loose_chain_counter_;
+
+      
+      if(loose_chain_bottoms_.find(pc.next_missing) == loose_chain_bottoms_.end() ) {
+        loose_chain_bottoms_[ pc.next_missing ] = std::vector< uint64_t >();       
+      }
+      
+      loose_chain_bottoms_[ pc.next_missing ].push_back(i);      
+     
+      std::cout << "Need to sync : " << earliest_block.meta_data().block_number << std::endl;
+      std::cout <<  earliest_block.meta_data().total_work << " " << visited_blocks.size() << std::endl;      
+      
+    } else {
+      std::cout << "Found root: " << header << std::endl;
+      block.meta_data().loose_chain = false;      
+      chains_[block.header()] = block;
+      
+      header = visited_blocks.top();
+      auto b1 = chains_[header];
+      visited_blocks.pop();
+
+      while(!visited_blocks.empty()) {
+        header = visited_blocks.top();
+        auto b2 = chains_[header];
+
+        auto &p = b2.proof();
+        p();
+        double work = fetch::math::Log( p.digest() );
+        
+        b2.meta_data() = b1.meta_data();
+        ++b2.meta_data().block_number;
+
+        // TODO: Check the correct way to compute the strongest chain - looks wrong
+        b2.meta_data().total_work += work;
+        b2.meta_data().loose_chain = false;        
+        chains_[header] = b2;
+
+        b1 = b2;
+        visited_blocks.pop();
+        std::cout << "Added block with work: " << b2.meta_data().total_work << std::endl;
+          
+      }
+
+      block = chains_[header];
+    }
+
+    if(block.meta_data().total_work > next_head_.meta_data().total_work) {
+      // TODO: Change branch if not succeeding blocks
+      next_head_ = block;
+    }
+    
+    block_mutex_.unlock();    
+    
+  }
+  
+  
+
+  
   void ResetNextHead() {
     next_head_.meta_data().total_work = 0;
     next_head_.meta_data().block_number = 0;    
@@ -368,16 +552,9 @@ private:
   fetch::mutex::Mutex block_mutex_;
   std::map< block_header_type, block_type > chains_;
 
-  struct PartialChain 
-  {
-    block_header_type start;    
-    block_header_type end;
-    block_header_type next_missing;    
-  };
-  
-
-  std::vector< PartialChain > loose_chains_;  
-  std::map< block_header_type, uint64_t > loose_chain_bottoms_;
+  std::map< uint64_t, PartialChain > loose_chains_;
+  uint64_t loose_chain_counter_ = 0;  
+  std::map< block_header_type, std::vector< uint64_t > > loose_chain_bottoms_;
   std::map< block_header_type, uint64_t > loose_chain_tops_;  
   
   std::vector< block_header_type > heads_;  

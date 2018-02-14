@@ -24,6 +24,7 @@
 #include <memory>
 #include <thread>
 #include <chrono>
+#include <algorithm>
 
 class FetchShardService : public fetch::protocols::ShardProtocol {
 public:
@@ -41,17 +42,20 @@ public:
           
     // Creating a service contiaing the shard protocol
     service_.Add(FetchProtocols::SHARD, this);
-    mining_ = false;
+    running_ = false;
     
     start_event_ = thread_manager_->OnAfterStart([this]() {
-        mining_ = true;        
+        running_ = true;        
         thread_manager_->io_service().post([this]() {
             this->Mine();            
           });
+        thread_manager_->io_service().post([this]() {
+            this->SyncChain(); 
+          });        
       });
 
     stop_event_ = thread_manager_->OnBeforeStop([this]() {
-        mining_ = false;
+        running_ = false;
       });
 
     http_server_.AddMiddleware( fetch::http::middleware::AllowOrigin("*") );       
@@ -83,13 +87,68 @@ public:
       this->Commit();      
     }
     
-    if(mining_) {
+    if(running_) {
       thread_manager_->io_service().post([this]() {
           this->Mine();            
         });    
     }
-    
   }
+
+  void SyncChain() 
+  {
+    using namespace fetch::protocols;
+    
+    std::vector< block_header_type > headers;
+
+
+    this->with_loose_chains_do([&headers]( std::map< uint64_t, ShardManager::PartialChain > const &chains ) {
+        for(auto const &c: chains)
+        {
+          headers.push_back(c.second.next_missing);          
+        }        
+      });
+
+
+    if(headers.size() != 0) {
+      std::cout << "SYNCING!" << std::endl;      
+      std::vector< block_type > blocks;
+      
+      this->with_peers_do([&headers, &blocks](std::vector< client_shared_ptr_type > clients, std::vector< EntryPoint > const&) {
+          std::random_shuffle( clients.begin(), clients.end() );
+          for(auto &h: headers) {
+            for(auto &c: clients) {
+              std::cout << "Calling client" << std::endl;                  
+              std::vector< block_type > nb = c->Call(FetchProtocols::SHARD, ShardRPC::REQUEST_BLOCKS_FROM, h, uint16_t(10) ).As< std::vector< block_type > >();
+              if(nb.size() != 0)
+              {
+                for(auto &b: nb)
+                {
+                  blocks.push_back(b);                  
+                }
+                
+                break;                
+              }
+            }
+          }
+          
+        });
+      std::cout << "Adding blocks: " << blocks.size()<< std::endl;      
+      for(auto &b: blocks)
+      {
+        this->PushBlock(b);        
+      }
+      
+    }
+    
+
+    
+    if(running_) {
+      thread_manager_->io_service().post([this]() {
+          this->SyncChain();          
+        });    
+    }    
+  }
+  
   
   uint16_t port() const 
   {
@@ -107,7 +166,7 @@ private:
   
   typename fetch::network::ThreadManager::event_handle_type start_event_;
   typename fetch::network::ThreadManager::event_handle_type stop_event_;  
-  std::atomic< bool > mining_;
+  std::atomic< bool > running_;
   
 //  fetch::http::HTTPServer http_server_;   
 };
