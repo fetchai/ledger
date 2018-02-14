@@ -180,6 +180,8 @@ public:
     block_header_type header = block.header();
     std::stack< block_header_type > visited_blocks;
 
+    // TODO: Check if block is adding to a loose chain.
+    
 
     // Tracing the way back to a chain that leads to genesis
     // TODO, FIXME: Suceptible to attack: Place a block that creates a loop.
@@ -187,7 +189,8 @@ public:
       auto b = chains_[header];
       visited_blocks.push( header );
       
-      if(block.meta_data().block_number != block_meta_data_type::UNDEFINED) {
+      if(block.meta_data().block_number != block_meta_data_type::UNDEFINED)
+      {
         break;
       }
       
@@ -207,16 +210,17 @@ public:
       block_mutex_.unlock();
       return;
     } else if( earliest_block.body().transaction_hash != "genesis" ) {
-      // Chains that need syncing
+      // Creating loose chain - we are sure that it does not add to existing
+      // loose chains beause we checked that earlier.
+
       PartialChain pc;
       pc.start = block.header();
-
-      pc.end = earliest_block.header()
+      pc.end = earliest_block.header();      
       pc.next_missing = earliest_block.body().previous_hash;
+//      if(loose_block_register_.find( ) ) 
+      
 
-      if(loose_block_register_.find( ) ) 
-      
-      
+      // TODO: add 
       std::cout << "TODO: NEED TO SYNC " << std::endl;
       
     } else {
