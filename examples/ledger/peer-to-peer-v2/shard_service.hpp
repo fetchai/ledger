@@ -84,7 +84,6 @@ public:
       while(!p()) ++p;
 
       this->PushBlock( block );
-      this->Commit();      
     }
     
     if(running_) {
@@ -110,14 +109,15 @@ public:
 
 
     if(headers.size() != 0) {
-      std::cout << "SYNCING!" << std::endl;      
       std::vector< block_type > blocks;
       
-      this->with_peers_do([&headers, &blocks](std::vector< client_shared_ptr_type > clients, std::vector< EntryPoint > const&) {
+      this->with_peers_do([&headers, &blocks](std::vector< client_shared_ptr_type > clients, std::vector< EntryPoint > const&)
+        {
           std::random_shuffle( clients.begin(), clients.end() );
-          for(auto &h: headers) {
-            for(auto &c: clients) {
-              std::cout << "Calling client" << std::endl;                  
+          for(auto &h: headers)
+          {
+            for(auto &c: clients)
+            {
               std::vector< block_type > nb = c->Call(FetchProtocols::SHARD, ShardRPC::REQUEST_BLOCKS_FROM, h, uint16_t(10) ).As< std::vector< block_type > >();
               if(nb.size() != 0)
               {
@@ -132,7 +132,7 @@ public:
           }
           
         });
-      std::cout << "Adding blocks: " << blocks.size()<< std::endl;      
+
       for(auto &b: blocks)
       {
         this->PushBlock(b);        

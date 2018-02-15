@@ -64,7 +64,8 @@ public:
     network::ThreadManager *thread_manager,
     EntryPoint& details) :
     thread_manager_(thread_manager),
-    details_(details)    
+    details_(details),
+    block_mutex_( __LINE__, __FILE__)
   {    
     shard_parameter_ = 0;
 
@@ -308,7 +309,9 @@ public:
             block_header_type h = pc.start;    
             block_type b = chains_[header];
 
+            block_mutex_.unlock();
             AttachBlock(h,b);
+            block_mutex_.lock();             
             loose_chains_.erase( loose_chains_.find( id ) );            
           }
           
@@ -319,18 +322,23 @@ public:
       }
     }
 
+    block_mutex_.unlock();    
+    this->Publish(FetchProtocols::SHARD, ShardFeed::FEED_BROADCAST_BLOCK, block );
 
+    
+    shard_friends_mutex_.lock();
+    // TODO: Publish to clients
+
+    shard_friends_mutex_.unlock();
+
+    
     if(was_loose)
     {      
-      block_mutex_.unlock(); 
       return; 
     }
     
-
+    // FInally we attach the block if it does not belong to a loose chain
     AttachBlock(header, block);
-    
-    // TODO: Trim blocks away that are more than
-//    this->Publish(PeerToPeerCommands::BROADCAST_BLOCK, block );    
   }
 
   
@@ -384,17 +392,22 @@ public:
     shard_friends_.push_back(client);
     friends_details_.push_back(d);
 
-
-    block_mutex_.lock();    
-    auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_);    
+    block_mutex_.lock(); 
+    auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_);
     block_mutex_.unlock();
-
-    block_type comp_head = promise1.As< block_type >();
-    comp_head.meta_data() = block_meta_data_type();
-    PushBlock(comp_head);       
-
+        
+    client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_BLOCK,
+      new service::Function< void(block_type) >([this]( block_type const& block) 
+        {
+          this->PushBlock(block);          
+        })); 
+        
     
+    block_type comp_head = promise1.As< block_type >();
+    comp_head.meta_data() = block_meta_data_type();      
     shard_friends_mutex_.unlock();
+    
+    PushBlock(comp_head);     
   }
 
   void with_peers_do( std::function< void( std::vector< client_shared_ptr_type > , std::vector< EntryPoint > const& ) > fnc ) 
@@ -429,6 +442,7 @@ public:
 private:
   void AttachBlock(block_header_type &header, block_type &block) 
   {
+    block_mutex_.lock();
     std::cout << "Attaching block!" << std::endl;
     
     // Tracing the way back to a chain that leads to genesis
@@ -517,19 +531,19 @@ private:
         b1 = b2;
         visited_blocks.pop();
         std::cout << "Added block with work: " << b2.meta_data().total_work << std::endl;
-          
       }
 
       block = chains_[header];
     }
 
     if(block.meta_data().total_work > next_head_.meta_data().total_work) {
-      // TODO: Change branch if not succeeding blocks
       next_head_ = block;
+      block_mutex_.unlock();
+      this->Commit();       
+    } else {
+      block_mutex_.unlock();   
     }
-    
-    block_mutex_.unlock();    
-    
+      
   }
   
   

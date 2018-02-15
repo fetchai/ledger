@@ -56,6 +56,7 @@ public:
     
     
     // Using the event feed that
+    Protocol::RegisterFeed(ShardFeed::FEED_BROADCAST_BLOCK, this);    
     Protocol::RegisterFeed(ShardFeed::FEED_BROADCAST_TRANSACTION, this);
     
     // Web interface
