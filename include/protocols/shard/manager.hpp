@@ -67,8 +67,8 @@ public:
     details_(details),
     block_mutex_( __LINE__, __FILE__)
   {    
-    shard_parameter_ = 0;
-
+    details_.configuration = EntryPoint::NODE_SHARD;
+    
     block_body_type genesis_body;
     block_type genesis_block;
 
@@ -87,8 +87,8 @@ public:
   // TODO: Change signature to std::vector< EntryPoint >
   EntryPoint Hello(std::string host) 
   {
-   
-    if(details_.host != host ) {      
+    details_.configuration = EntryPoint::NODE_SHARD;
+    if(details_.host != host ) { 
       details_.host = host;
     }
     
@@ -299,9 +299,10 @@ public:
        */
       if( chains_.find(block.body().previous_hash) != chains_.end() ) {
         auto &next = chains_[block.body().previous_hash];
-        
+
+        // If so, the block is final and we are ready to move the loose chain to the
+        // main tree
         if(next.meta_data().loose_chain == false) {
-          std::cout << " - Block is final" << std::endl;
           auto &l = loose_chain_bottoms_[block.body().previous_hash];
           for(auto &id: l)
           {
@@ -311,7 +312,14 @@ public:
 
             block_mutex_.unlock();
             AttachBlock(h,b);
-            block_mutex_.lock();             
+            block_mutex_.lock();
+            
+            auto tit = loose_chain_tops_.find( h );            
+            if(tit != loose_chain_tops_.end())
+            {
+              loose_chain_tops_.erase( tit );              
+            }
+            
             loose_chains_.erase( loose_chains_.find( id ) );            
           }
           
@@ -322,13 +330,15 @@ public:
       }
     }
 
-    block_mutex_.unlock();    
-    this->Publish(FetchProtocols::SHARD, ShardFeed::FEED_BROADCAST_BLOCK, block );
-
+    block_mutex_.unlock();
     
-    shard_friends_mutex_.lock();
-    // TODO: Publish to clients
-
+    this->Publish(ShardFeed::FEED_BROADCAST_BLOCK, block );
+    
+    shard_friends_mutex_.lock();   
+    for(auto &c: shard_friends_)
+    {
+      c->Call(FetchProtocols::SHARD,  ShardRPC::PUSH_BLOCK, block );      
+    }
     shard_friends_mutex_.unlock();
 
     
@@ -395,7 +405,7 @@ public:
     block_mutex_.lock(); 
     auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_);
     block_mutex_.unlock();
-        
+    
     client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_BLOCK,
       new service::Function< void(block_type) >([this]( block_type const& block) 
         {
@@ -453,6 +463,7 @@ private:
       visited_blocks.push( header );
 
       /*
+        TODO: We can do performance optimisation here.
         This is wrong as the code does not support half chains at the moment
       if(block.meta_data().block_number != block_meta_data_type::UNDEFINED)
       {        
@@ -499,10 +510,7 @@ private:
       }
       
       loose_chain_bottoms_[ pc.next_missing ].push_back(i);      
-     
-      std::cout << "Need to sync : " << earliest_block.meta_data().block_number << std::endl;
-      std::cout <<  earliest_block.meta_data().total_work << " " << visited_blocks.size() << std::endl;      
-      
+           
     } else {
       std::cout << "Found root: " << header << std::endl;
       block.meta_data().loose_chain = false;      
@@ -530,7 +538,7 @@ private:
 
         b1 = b2;
         visited_blocks.pop();
-        std::cout << "Added block with work: " << b2.meta_data().total_work << std::endl;
+
       }
 
       block = chains_[header];
@@ -543,11 +551,7 @@ private:
     } else {
       block_mutex_.unlock();   
     }
-      
   }
-  
-  
-
   
   void ResetNextHead() {
     next_head_.meta_data().total_work = 0;
@@ -579,7 +583,7 @@ private:
   std::vector< EntryPoint > friends_details_;  
   fetch::mutex::Mutex shard_friends_mutex_;  
 
-  std::atomic< uint16_t > shard_parameter_ ;  
+
 };
 
 

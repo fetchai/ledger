@@ -3,6 +3,7 @@
 
 #include "byte_array/referenced_byte_array.hpp"
 #include "protocols/swarm/entry_point.hpp"
+#include "mutex.hpp"
 
 namespace fetch 
 {
@@ -10,24 +11,37 @@ namespace fetch
 namespace protocols 
 {
   
-class NodeDetails 
+struct NodeDetails 
 {
-public:
-  NodeDetails() 
-  {
-  }
-  
   bool operator==(NodeDetails const& other) 
   {
-    return public_key_ == other.public_key_;
+    return public_key == other.public_key;
+  }
+
+  byte_array::ByteArray public_key;
+  std::vector< EntryPoint > entry_points;
+  
+  uint32_t default_port;
+  uint32_t default_http_port;
+}; 
+
+class SharedNodeDetails
+{
+public:
+  SharedNodeDetails() { }
+  SharedNodeDetails(SharedNodeDetails const&) = delete;
+   
+  bool operator==(SharedNodeDetails const& other) 
+  {
+    return details_.public_key == other.details_.public_key;
   }
 
   void AddEntryPoint(EntryPoint const& ep) 
   {
-    // TODO: Add mutex
-//    mutex_.lock();    
+
+    mutex_.lock();    
     bool found_ep = false;
-    for(auto &e:   entry_points_)
+    for(auto &e:   details_.entry_points)
     {
       if( (e.host == ep.host) &&
           (e.port == ep.port))
@@ -36,40 +50,40 @@ public:
         break;          
       }
     }
-    if(!found_ep) entry_points_.push_back( ep );
-//    mutex_.unlock();    
+    if(!found_ep) details_.entry_points.push_back( ep );
+    mutex_.unlock();    
   }
-  
-  
-  byte_array::ByteArray const &public_key() const { return public_key_; }
-  std::vector< EntryPoint > const &entry_points() const { return entry_points_; }
-  
-  byte_array::ByteArray  &public_key() { return public_key_; }
-  std::vector< EntryPoint >  &entry_points() { return entry_points_; }
 
-  uint32_t const & default_port() const { return default_port_; }
-  uint32_t &default_port() { return default_port_; }  
-
-  uint32_t const & default_http_port() const { return default_http_port_;  }
-  uint32_t &default_http_port() { return default_http_port_;  }  
-
-  void with_this(std::function< void(NodeDetails const &) > fnc ) 
+  uint32_t default_port()
   {
-//    mutex_.lock();
-    fnc( *this );
-//    mutex_.unlock();    
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    return details_.default_port;    
   }
   
-private:
-  byte_array::ByteArray public_key_;
-  std::vector< EntryPoint > entry_points_;
+  uint32_t default_http_port() 
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    return details_.default_http_port;    
+  }
   
-  uint32_t default_port_;
-  uint32_t default_http_port_;
+  
+  void with_details(std::function< void(NodeDetails &) > fnc ) 
+  {
+    mutex_.lock();
+    fnc( details_ );
+    mutex_.unlock();    
+  }
 
+  
+  NodeDetails details() {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
-//  fetch::mutex::Mutex mutex_;
-}; 
+    return details_;    
+  }
+private:
+  NodeDetails details_ ; 
+  fetch::mutex::Mutex mutex_;
+};
 
   
   

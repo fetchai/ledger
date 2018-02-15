@@ -35,9 +35,9 @@ T& Deserialize(T& serializer, protocols::EntryPoint &data)
 template< typename T >
 T& Serialize(T& serializer, protocols::NodeDetails const &data) 
 {
-  serializer << data.public_key() << data.default_port()  << data.default_http_port();
-  serializer << uint64_t(data.entry_points().size());
-  for(auto const &e: data.entry_points()) 
+  serializer << data.public_key << data.default_port  << data.default_http_port;
+  serializer << uint64_t(data.entry_points.size());
+  for(auto const &e: data.entry_points) 
   {
     serializer << e;
   }
@@ -47,12 +47,12 @@ T& Serialize(T& serializer, protocols::NodeDetails const &data)
 template< typename T >
 T& Deserialize(T& serializer, protocols::NodeDetails &data) 
 {
-  serializer >> data.public_key() >>  data.default_port()  >> data.default_http_port();
+  serializer >> data.public_key >>  data.default_port  >> data.default_http_port;
   uint64_t size;
   serializer >> size;
-  data.entry_points().resize(size);
+  data.entry_points.resize(size);
   
-  for(auto &e: data.entry_points()) 
+  for(auto &e: data.entry_points) 
   {
     serializer >> e;
   }

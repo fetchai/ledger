@@ -16,7 +16,7 @@ class SwarmProtocol : public SwarmManager,
                       public fetch::service::Protocol,
                       public fetch::http::HTTPModule { 
 public:
-  SwarmProtocol(network::ThreadManager *thread_manager, uint64_t const &protocol, NodeDetails &details) :
+  SwarmProtocol(network::ThreadManager *thread_manager, uint64_t const &protocol, SharedNodeDetails &details) :
     SwarmManager(protocol, thread_manager, details),
     fetch::service::Protocol()
   {
@@ -34,13 +34,11 @@ public:
     Protocol::Expose(SwarmRPC::SUGGEST_PEERS, suggest_peers); 
     Protocol::Expose(SwarmRPC::REQUEST_PEER_CONNECTIONS, req_conn);
     Protocol::Expose(SwarmRPC::WHATS_MY_IP, myip);    
-
     
     // Using the event feed that
     Protocol::RegisterFeed(SwarmFeed::FEED_REQUEST_CONNECTIONS, this);
     Protocol::RegisterFeed(SwarmFeed::FEED_ENOUGH_CONNECTIONS, this);
     Protocol::RegisterFeed(SwarmFeed::FEED_ANNOUNCE_NEW_COMER, this);
-
     
     // Web interface
     auto http_bootstrap = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
@@ -65,15 +63,15 @@ public:
       std::stringstream response;
       response << "{ \"shards\": [";
       
-      this->with_shard_details_do([this, &response](std::vector< ShardDetails > const &detail_list) {
+      this->with_shard_details_do([this, &response](std::vector< EntryPoint > const &detail_list) {
           bool first = true;
           
           for(auto &d: detail_list)
           {
             if(!first) response << ",";
-            response << "{ \"host\": \""  << d.entry_for_swarm.host << "\",";
-            response << " \"port\": "  << d.entry_for_peer.port << ",";              
-            response << " \"http_port\": "  << d.entry_for_peer.http_port << "}";              
+            response << "{ \"host\": \""  << d.host << "\",";
+            response << " \"port\": "  << d.port << ",";              
+            response << " \"http_port\": "  << d.http_port << "}";              
             first = false;            
           }
           
@@ -98,11 +96,11 @@ public:
             auto &p = ppair.second;            
             if(!first) response << ", \n";            
             response << "{\n";
-            response << "\"public_key\": \"" + p.public_key() + "\",";
+            response << "\"public_key\": \"" + p.public_key + "\",";
             response << "\"entry_points\": [";
             bool sfirst = true;
-            
-            for(auto &e: p.entry_points())
+
+            for(auto &e: p.entry_points)
             {
               if(!sfirst) response << ",\n";              
               response << "{";
@@ -143,11 +141,11 @@ public:
             auto &p = ppair.second;            
             if(!first) response << ", \n";            
             response << "{\n";
-            response << "\"public_key\": \"" + p.public_key() + "\",";
+            response << "\"public_key\": \"" + p.public_key + "\",";
             response << "\"entry_points\": [";
             bool sfirst = true;
             
-            for(auto &e: p.entry_points())
+            for(auto &e: p.entry_points)
             {
               if(!sfirst) response << ",\n";              
               response << "{";
@@ -187,11 +185,11 @@ public:
           {
             if(!first) response << ", \n";            
             response << "{\n";
-            response << "\"public_key\": \"" + p.public_key() + "\",";
+            response << "\"public_key\": \"" + p.public_key + "\",";
             response << "\"entry_points\": [";
             bool sfirst = true;
             
-            for(auto &e: p.entry_points())
+            for(auto &e: p.entry_points)
             {
               if(!sfirst) response << ",\n";              
               response << "{";
@@ -221,9 +219,27 @@ public:
     
     auto node_details = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       std::stringstream response;
-      response << "{\"name\": \"hello world\"";
+      response << "{";
+      
       
       this->with_node_details( [this, &response](NodeDetails const& details) {
+          response << "\"name\": \"" <<  details.public_key << "\",";
+          response << "\"entry_points\": [" ;
+          bool first = true;
+          
+          for(auto &e: details.entry_points ) {
+            if(!first) response << ", ";            
+            response << "{";
+            response << "\"shard\": " << e.shard  <<",";  
+            response << "\"host\": \"" << e.host  <<"\",";
+            response << "\"port\": " << e.port  << ",";
+            response << "\"http_port\": " << e.http_port  << ",";
+            response << "\"configuration\": " << e.configuration  << "}";                          
+            
+            first = false;            
+          }
+          
+          response << "]";          
           
         });
       
@@ -238,7 +254,7 @@ public:
       std::cout << "Got : " << req.uri() << std::endl;
       std::cout << "Body: " << req.body() << std::endl;
       
-      this->with_shards_do([this, req](std::vector< client_shared_ptr_type > shards,  std::vector< ShardDetails > const &detail_list) {
+      this->with_shards_do([this, req](std::vector< client_shared_ptr_type > shards,  std::vector< EntryPoint > const &detail_list) {
           std::cout << "Sending tx to " << shards.size() << " shards" << std::endl;          
           typedef fetch::byte_array::ConstByteArray transaction_body_type;
           typedef fetch::chain::BasicTransaction< transaction_body_type > transaction_type;

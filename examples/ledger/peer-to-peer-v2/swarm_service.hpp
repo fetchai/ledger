@@ -24,10 +24,25 @@ public:
     using namespace fetch::protocols;
     
     std::cout << "Listening for peers on " << (port) << ", clients on " << (http_port ) << std::endl;
-      
-    details_.public_key() = pk;
-    details_.default_port() = port;
-    details_.default_http_port() = http_port;
+
+    details_.with_details([=]( NodeDetails &  details) {
+        details.public_key = pk;
+        details.default_port = port;
+        details.default_http_port = http_port;
+      });
+
+    EntryPoint e;
+    // At this point we don't know what the IP is, but localhost is one entry point    
+    e.host = "127.0.0.1"; 
+    e.shard = 0;
+
+    e.port = details_.default_port();
+    e.http_port = details_.default_http_port();
+    e.configuration = EntryPoint::NODE_SWARM;      
+
+    details_.AddEntryPoint(e); 
+    
+    
 
     service_.Add(fetch::protocols::FetchProtocols::SWARM, this);
 
@@ -54,7 +69,7 @@ private:
   fetch::http::HTTPServer http_server_;  
   
 //  fetch::protocols::SwarmProtocol *swarm_ = nullptr;
-  fetch::protocols::NodeDetails details_;
+  fetch::protocols::SharedNodeDetails details_;
 };
 
 #endif

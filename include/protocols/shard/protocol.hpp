@@ -104,7 +104,7 @@ public:
       std::stringstream response;
       response << "{\"blocks\": [";  
       this->with_blocks_do([&response](ShardManager::block_type const & head, std::map< ShardManager::block_header_type, ShardManager::block_type > chain) {
-          bool first = true;
+
           response << "{";
           response << "\"block_hash\": \"" << byte_array::ToBase64( head.header() ) << "\",";
           response << "\"previous_hash\": \"" << byte_array::ToBase64( head.body().previous_hash ) << "\",";
