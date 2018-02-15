@@ -63,9 +63,9 @@ class SquareArray {
         std::size_t v = ca * (i - ci) - sa * (j - cj) + ci;
         std::size_t u = sa * (i - ci) + ca * (j - cj) + cj;
         if ((v < height()) && (u < width()))
-          n(i, j) = At(v, u);
+          n[(i*width_+ j)] = At(v, u);
         else
-          n(i, j) = fill;
+          n[(i*width_+ j)] = fill;
       }
     }
     data_ = n;

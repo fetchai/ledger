@@ -206,6 +206,13 @@ class Matrix : public fetch::memory::SquareArray<T> {
 
   type Mean() const { return Sum() / type(this->size()); }
 
+  template< typename F >
+  void Apply(F & function) {
+    for(auto &a: *this)  {
+      a = function(a);
+    }
+  }
+
   /*
   type Variance(type const &mean) const { }
   type Variance() const { }
@@ -230,11 +237,11 @@ class Matrix : public fetch::memory::SquareArray<T> {
 
   void Dot(Matrix m, Matrix &ret) {
     m.Transpose();
-    DotTransposed(m, ret);
+    DotTransposedOf(m, ret);
     m.Transpose();
   }
 
-  void DotTransposed(Matrix const &m, Matrix &ret) {
+  void DotTransposedOf(Matrix const &m, Matrix &ret) {
     assert(this->width() == m.width());
     ret.Resize(this->height(), m.height());
 

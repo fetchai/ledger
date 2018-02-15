@@ -1,4 +1,4 @@
-from ..libaicore import *
+from ..libfetchcore import *
 
 class Image(object):
     image_ = None

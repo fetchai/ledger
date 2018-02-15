@@ -10,12 +10,46 @@ def define_interface(root, cls, selfname,  datatype):
     cls.add_method('AbsMax', datatype, [  ], is_const=True )
     cls.add_method('AbsMin', datatype, [  ], is_const=True )
     cls.add_method('Mean', datatype, [  ], is_const=True )
+    cls.add_method('Resize', 'void', [param('uint64_t', 'n')])
+    cls.add_method('Resize', 'void', [param('uint64_t', 'n'), param('uint64_t', 'm')])
+    
+    cls.add_method('Reshape', 'void', [param('uint64_t', 'n'), param('uint64_t', 'm')])
+    cls.add_method('Flatten', 'void', [  ] )
+
+    cls.add_method('At', datatype, [param('uint64_t', 'n')])
+    cls.add_method('At', datatype, [param('uint64_t', 'n'),
+                                    param('uint64_t', 'm')])
+    cls.add_method('Set', datatype, [param('uint64_t', 'n'),
+                                     param(datatype, 'v') ])
+    cls.add_method('Set', datatype, [param('uint64_t', 'n'),
+                                     param('uint64_t', 'm'),
+                                     param(datatype, 'v')])
+    
+    cls.add_method('Crop', 'void',[param('uint64_t', 'i'),
+                                     param('uint64_t', 'j'),
+                                     param('uint64_t', 'h'),
+                                     param('uint64_t', 'w')])
+
+    cls.add_method('Rotate', 'void',[param('double', 'r')])    
+    cls.add_method('Rotate', 'void',[param('double', 'r'),
+                                     param(datatype, 'fill')])
+    
+    cls.add_method('Rotate', 'void',[param('double', 'r'),
+                                     param('double', 'cx'),
+                                     param('double', 'cy'),
+                                     param(datatype , 'fill')])
+    
+    
+    cls.add_method('height', 'uint64_t', [], is_const=True)
+    cls.add_method('width', 'uint64_t', [],  is_const=True)
+    cls.add_method('size', 'uint64_t', [],  is_const=True)
+    
     cls.add_method('Dot', 
                    "void", 
                    [param(selfname +" const &", 'm'),
                     param(selfname +" &", 'ret')], 
                    is_const=True)
-    cls.add_method('DotTransposed', 
+    cls.add_method('DotTransposedOf', 
                    "void", 
                    [param(selfname +" const &", 'm'),
                     param(selfname +" &", 'ret')], 
