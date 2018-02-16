@@ -111,8 +111,8 @@ int main(int argc, char const** argv)
   
   if(params.arg_size() >= 5) 
   {
-    std::string host = params.GetArg(3);
-    uint16_t port = params.GetArg<uint16_t>(4);
+    std::string host = params.GetArg(4);
+    uint16_t port = params.GetArg<uint16_t>(5);
     std::cout << "Bootstrapping through " << host << " " << port << std::endl;
     service.Bootstrap(host, port);
   }

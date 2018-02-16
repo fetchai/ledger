@@ -17,31 +17,34 @@ int main()
       std::cout << res.status().code << " " << req.uri() << std::endl;      
     });
 
-  server.AddView( "/", [](ViewParameters const &params, HTTPRequest const &req) {
+
+  
+
+  server.AddView(Method::GET, "/", [](ViewParameters const &params, HTTPRequest const &req) {
       HTTPResponse res("Hello world -- this is a render of the view");
 
       return res;      
     });
 
-  server.AddView( "/pages/(id=\\d+)/", [](ViewParameters const &params, HTTPRequest const &req) {
+  server.AddView(Method::GET, "/pages/(id=\\d+)/", [](ViewParameters const &params, HTTPRequest const &req) {
       HTTPResponse res("Secret page 1");
 
       return res;      
     });
 
-  server.AddView( "/other/(name=\\w+)", [](ViewParameters const &params, HTTPRequest const &req) {
+  server.AddView(Method::GET, "/other/(name=\\w+)", [](ViewParameters const &params, HTTPRequest const &req) {
       HTTPResponse res("Secret page with name");
 
       return res;      
     });
 
-  server.AddView( "/other/(name=\\w+)/(number=\\d+)", [](ViewParameters const &params, HTTPRequest const &req) {
+  server.AddView(Method::GET, "/other/(name=\\w+)/(number=\\d+)", [](ViewParameters const &params, HTTPRequest const &req) {
       HTTPResponse res("Secret page with name and number: " + params["name"] + " and "+ params["number"]);
 
       return res;      
     });
 
-  server.AddView( "/static/(filename=.+)", [](ViewParameters const &params, HTTPRequest const &req) {
+  server.AddView(Method::GET, "/static/(filename=.+)", [](ViewParameters const &params, HTTPRequest const &req) {
 
       std::string filename = params["filename"];      
       std::size_t pos = filename.find_last_of('.');      

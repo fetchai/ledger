@@ -47,6 +47,13 @@ public:
 
   std::vector< NodeDetails > SuggestPeers() 
   {
+    if(need_more_connections() )
+    {
+      RequestPeerConnections( details_.details() );      
+    }
+
+    std::lock_guard< fetch::mutex::Mutex > lock( suggestion_mutex_ );
+    
     return peers_with_few_followers_;
   }
 
@@ -54,39 +61,31 @@ public:
   {
     NodeDetails me = details_.details();
     
-    if(details.public_key == me.public_key) 
+    suggestion_mutex_.lock();
+    if(already_seen_.find( details.public_key ) == already_seen_.end())
     {
-      std::cout << "Discovered myself" << std::endl;
-    }
-    else 
-    {
-
-      if(already_seen_.find( details.public_key ) == already_seen_.end())
+      std::cout << "Discovered " << details.public_key << std::endl;
+      peers_with_few_followers_.push_back(details);
+      already_seen_.insert( details.public_key );
+      this->Publish(SwarmFeed::FEED_REQUEST_CONNECTIONS, details);
+      
+      for(auto &client: peers_)
       {
-        std::cout << "Discovered " << details.public_key << std::endl;
-        peers_with_few_followers_.push_back(details);
-        already_seen_.insert( details.public_key );
-        this->Publish(SwarmFeed::FEED_REQUEST_CONNECTIONS, details);
-        
-        for(auto &client: peers_)
-        {
-          client->Call(protocol_, SwarmRPC::REQUEST_PEER_CONNECTIONS, details);
-        }
-        
-      }
-      else
-      {
-        std::cout << "Ignored " << details.public_key << std::endl;
+        client->Call(protocol_, SwarmRPC::REQUEST_PEER_CONNECTIONS, details);
       }
       
-       
     }
-    
+    else
+    {
+      std::cout << "Ignored " << details.public_key << std::endl;
+    }             
 
+    suggestion_mutex_.unlock();
   }
   
   void EnoughPeerConnections( NodeDetails details ) 
   {
+    suggestion_mutex_.lock();
     bool found = false;
     auto it = peers_with_few_followers_.end();
     while( it != peers_with_few_followers_.begin() ) 
@@ -103,6 +102,7 @@ public:
     {
       this->Publish(SwarmFeed::FEED_ENOUGH_CONNECTIONS, details);
     }
+    suggestion_mutex_.unlock();
   }
 
   std::string GetAddress(uint64_t client) 
@@ -206,14 +206,17 @@ public:
       details_.AddEntryPoint(e); 
       
 
+//      if(need_more_connections() ) {        
       auto mydetails = details_.details();      
       service::Promise details_promise = client->Call(protocol_, SwarmRPC::HELLO, mydetails);  
       client->Call(protocol_, SwarmRPC::REQUEST_PEER_CONNECTIONS, mydetails);
-
+      
+      
       // TODO: add mutex
       NodeDetails server_details = details_promise.As< NodeDetails >();
       std::cout << "Setting details for server with handle: " << client->handle() << std::endl;
 
+      
       if(server_details.entry_points.size() == 0) {
         protocols::EntryPoint e2;
         e2.host = client->Address();
@@ -234,6 +237,12 @@ public:
     
     return client;    
   }
+
+  bool need_more_connections() const
+  {
+    return true;    
+  }
+  
 
   void Bootstrap(std::string const &host, uint16_t const &port ) 
   {
@@ -307,8 +316,9 @@ public:
 
   void with_server_details_do(std::function< void(std::map< uint64_t, NodeDetails > const &) > fnc) 
   {
-    // TODO: Mutex
-    fnc( server_details_ );    
+    peers_mutex_.lock();    
+    fnc( server_details_ );
+    peers_mutex_.unlock();    
   }
 
   void with_node_details(std::function< void(NodeDetails const &) > fnc ) {
@@ -319,11 +329,15 @@ private:
   network::ThreadManager *thread_manager_;  
 
   SharedNodeDetails &details_;
-  
+
+
   std::vector< NodeDetails > peers_with_few_followers_;
   std::map< uint64_t,  NodeDetails > client_details_;  
-  std::function< std::string(uint64_t) > request_ip_;
   std::unordered_set< std::string > already_seen_;
+  fetch::mutex::Mutex suggestion_mutex_;
+  
+
+  std::function< std::string(uint64_t) > request_ip_;
 
   std::map< uint64_t, NodeDetails > server_details_;
   std::vector< client_shared_ptr_type > peers_;
