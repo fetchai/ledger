@@ -43,8 +43,10 @@ class JSONDocument : private Tokenizer {
   }
 
   void Parse(string_type filename, const_string_type const& document) {
+    // Parsing and tokenizing
     Tokenizer::Parse(filename, document);
 
+    // Building an abstract syntax tree
     enum {
       OP_OBJECT = 1,
       OP_ARRAY = 2,
@@ -124,6 +126,10 @@ class JSONDocument : private Tokenizer {
     }
 
     tree.Build();
+
+    // Creating variant;
+    root_ = std::make_shared< variant_type >();
+    // TODO:
   }
 
   variant_type &root() { return *root_; }

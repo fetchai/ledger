@@ -98,10 +98,8 @@ public:
         for(auto const &d: details)
         {
           public_keys.insert( d.second.public_key );          
-        }
-        
+        }        
       });
-    
     
     // Finding hosts we are not connected to
     std::vector< EntryPoint > swarm_entries;    

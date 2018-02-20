@@ -28,7 +28,7 @@ public:
     protocol_(protocol),
     thread_manager_(thread_manager),
     details_(details),
-    sharding_parameter_(0) {
+    sharding_parameter_(1) {
     // Do not modify details_ here as it is not yet initialized.
   }
   
@@ -42,6 +42,7 @@ public:
   NodeDetails Hello(uint64_t client, NodeDetails details) 
   {
     client_details_[client] = details;
+   //    SendConnectivityDetailsToShards(details);    --- TODO Figure out why this dead locks
     return details_.details();
   }
 
@@ -113,12 +114,73 @@ public:
   }
 
 
-  void SetShardingParameter(uint16_t n) 
+  void IncreaseShardingParameter() 
   {    
+    shards_mutex_.lock();
+    uint32_t n = sharding_parameter_ << 1;
+
+    fetch::logger.Debug("Increasing shard parameter to ", n);
+    
+    struct IDClientPair 
+    {
+      std::size_t index;      
+      client_shared_ptr_type client;      
+    } ;
+    
+    std::map< std::size_t, std::vector< IDClientPair > > shard_org;
+
+    // Computing new sharding assignment
+    for(std::size_t i=0; i < n; ++i)
+    {
+      shard_org[i] = std::vector< IDClientPair >();      
+    }
+        
+    for(std::size_t i=0; i < shards_.size(); ++i)
+    {
+      auto &details = shards_details_[i];
+      auto &client = shards_[i];
+      uint32_t s = details.shard;
+      shard_org[s].push_back( {i, client} );
+    }
+
+    for(std::size_t i=0; i < sharding_parameter_; ++i )
+    {
+      std::vector< IDClientPair > &vec = shard_org[i];
+      if( vec.size() < 2 ) {
+        TODO("Throw error - cannot perform sharding without more nodes");        
+        shards_mutex_.unlock();
+        return;        
+      }
+
+      std::size_t bucket2 = i + sharding_parameter_;
+      std::vector< IDClientPair > &nvec = shard_org[bucket2];
+
+      std::size_t q = vec.size() >> 1; // Diving shard into two groups
+      for(; q != 0; --q)
+      {
+        nvec.push_back( vec.back() );
+        vec.pop_back();        
+      }      
+    }
+
+    // Assigning shard values
+    for(std::size_t i=0; i < n; ++i)
+    {
+      fetch::logger.Debug("Updating shard nodes in shard ", i);
+      auto &vec = shard_org[i];      
+      for(auto &c: vec)
+      {
+        shards_details_[ c.index ].shard = i;        
+        c.client->Call(FetchProtocols::SHARD, ShardRPC::SET_SHARD_NUMBER, uint32_t(i), uint32_t(n));
+
+      }
+    }
+        
     sharding_parameter_ = n;    
+    shards_mutex_.unlock();
   }
 
-  uint16_t GetShardingParameter()   
+  uint32_t GetShardingParameter()   
   {
     return sharding_parameter_;
   }
@@ -128,18 +190,22 @@ public:
   // Not service protocol
   void ConnectShard(std::string const &host, uint16_t const &port ) 
   {
+    fetch::logger.Debug("Connecting to shard ", host, ":", port);
+
+    shards_mutex_.lock();
     client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_);
     std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
 
-    EntryPoint ep = client->Call(fetch::protocols::FetchProtocols::SHARD, ShardRPC::HELLO, host).As< EntryPoint >();
-    
-    shards_mutex_.lock();
+    EntryPoint ep = client->Call(fetch::protocols::FetchProtocols::SHARD, ShardRPC::HELLO, host).As< EntryPoint >();    
 
     details_.AddEntryPoint( ep );    
     shards_.push_back(client);
     shards_details_.push_back(ep);
-    
+    fetch::logger.Debug("Total shard count = ", shards_.size());
     shards_mutex_.unlock();
+
+    // TODO: Send connect to suggestions
+
   }  
 
   
@@ -226,7 +292,9 @@ public:
         e2.configuration = EntryPoint::NODE_SWARM;
         server_details.entry_points.push_back(e2);        
       }
-      
+
+      SendConnectivityDetailsToShards(server_details);
+            
       server_details_[ client->handle() ] = server_details;
     }
     else    
@@ -238,6 +306,7 @@ public:
     return client;    
   }
 
+  
   bool need_more_connections() const
   {
     return true;    
@@ -302,6 +371,7 @@ public:
 
   void with_client_details_do(std::function< void(std::map< uint64_t, NodeDetails > const &) > fnc) 
   {
+    // TODO: Add mutex
     fnc( client_details_ );    
   }
 
@@ -325,6 +395,37 @@ public:
     details_.with_details( fnc );    
   }
 private:
+
+  void SendConnectivityDetailsToShards(NodeDetails const &server_details) 
+  {
+    for(auto const &e2: server_details.entry_points )
+    {
+      fetch::logger.Debug("Testing ", e2.host, ":", e2.port);
+      
+      if( e2.configuration & EntryPoint::NODE_SHARD )
+      {
+        shards_mutex_.lock();
+        fetch::logger.Debug(" - Shard count = ", shards_.size() );
+        for(std::size_t k=0; k < shards_.size(); ++k)
+        {
+          auto sd = shards_details_[k];
+          fetch::logger.Debug(" - Connect ", e2.host, ":", e2.port,  " >> ", sd.host, ":", sd.port, "?");
+          
+          if(sd.shard == e2.shard )
+          {
+            std::cout << "       YES!"  <<std::endl;
+            auto sc = shards_[k];
+            sc->Call(FetchProtocols::SHARD, ShardRPC::LISTEN_TO, e2);
+          }           
+        }
+
+        shards_mutex_.unlock();
+      }        
+    }
+  }
+  
+
+  
   uint64_t protocol_;
   network::ThreadManager *thread_manager_;  
 
@@ -347,7 +448,7 @@ private:
   std::vector< EntryPoint > shards_details_;  
   fetch::mutex::Mutex shards_mutex_;  
 
-  std::atomic< uint16_t > sharding_parameter_ ;
+  std::atomic< uint32_t > sharding_parameter_ ;
 };
 
 

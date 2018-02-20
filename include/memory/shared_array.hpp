@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <memory>
 #include <iostream>
+#include <stdlib.h>
 namespace fetch {
 namespace memory {
 
@@ -31,24 +32,31 @@ class SharedArray {
   typedef SharedArray<T> self_type;
   typedef T type;
 
+  
   enum {
     E_SIMD_SIZE = 16,
-    E_SIMD_COUNT = E_SIMD_SIZE / sizeof(T),
+    E_SIMD_COUNT_IM = E_SIMD_SIZE / sizeof(T),
+    E_SIMD_COUNT = (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM : 1 ), // Note that if a type is too big to fit, we pretend it can
     E_LOG_SIMD_COUNT = details::meta::Log2<E_SIMD_COUNT>::value
   };
 
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT),
                 "type does not fit in SIMD");
-
+  
   SharedArray(std::size_t const &n) {   
     size_ = std::shared_ptr< std::size_t  >( new std::size_t (n) );
-    try {
-      if (n > 0) data_ = std::shared_ptr<T>( new type[padded_size()], std::default_delete<type[]>() );
-    } catch(std::bad_alloc const&e ) {
 
-      std::cout << "n is " << n << " " << padded_size() << std::endl;
-      throw e;
+    if (n > 0)
+    {
+      // TODO: C++17 version, upgrade when time is right
+      //      data_ = std::shared_ptr<T>( (type*)std::aligned_alloc(E_SIMD_SIZE, padded_size()*sizeof(type) ), free );
+
+      // TODO: Upgrade to aligned memory to ensure that we can parallelise over SIMD
+      data_ = std::shared_ptr<T>( (type*)malloc(padded_size()*sizeof(type) ), free );
+      memset( data_.get(), 0, padded_size()*sizeof(type) );
+      
     }
+    
   }
   SharedArray() : SharedArray(0) {}
   SharedArray(SharedArray const &other)

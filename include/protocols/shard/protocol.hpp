@@ -29,7 +29,6 @@ public:
     fetch::service::Protocol()
   {
     using namespace fetch::service;
-
     
     // RPC Protocol
     auto ping = new CallableClassMember<ShardProtocol, uint64_t()>(this, &ShardProtocol::Ping);
@@ -53,7 +52,13 @@ public:
 
     Protocol::Expose(ShardRPC::EXCHANGE_HEADS, exchange_heads);
     Protocol::Expose(ShardRPC::REQUEST_BLOCKS_FROM, request_blocks_from);    
+
+    // TODO: Move to separate protocol
+    auto listen_to = new CallableClassMember<ShardProtocol, void(EntryPoint) >(this, &ShardProtocol::ListenTo );
+    auto set_shard_number = new CallableClassMember<ShardProtocol, void(uint32_t, uint32_t) >(this, &ShardProtocol::SetShardNumber );
     
+    Protocol::Expose(ShardRPC::LISTEN_TO,listen_to);
+    Protocol::Expose(ShardRPC::SET_SHARD_NUMBER, set_shard_number);    
     
     // Using the event feed that
     Protocol::RegisterFeed(ShardFeed::FEED_BROADCAST_BLOCK, this);    

@@ -9,7 +9,9 @@ int main() {
     ByteArray doc_content = R"({
   "x": { 
     "y": [1,2,3],
-    "z": null
+    "z": null,
+    "q": [],
+    "hello world": {}
   }
 }
 )" ;

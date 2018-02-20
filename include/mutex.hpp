@@ -33,6 +33,7 @@ public:
   
   void lock() 
   {
+
     lock_mutex_.lock();
     
     std::thread::id id =  std::this_thread::get_id();
@@ -42,20 +43,19 @@ public:
       exit(-1);
     }
     locker_[id] = LockInfo();
-    
+
     lock_mutex_.unlock();
-
-
-    std::mutex::lock();
+    std::mutex::lock(); 
   }
   
   void unlock() 
   {
+
     lock_mutex_.lock();
     std::thread::id id =  std::this_thread::get_id();
     locker_.erase( id );
-    lock_mutex_.unlock();        
-    std::mutex::unlock();
+    lock_mutex_.unlock();
+    std::mutex::unlock();     
   }
 private:
   std::map< std::thread::id, LockInfo > locker_;

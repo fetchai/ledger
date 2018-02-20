@@ -99,6 +99,14 @@ public:
 
   Variant(std::initializer_list<Variant> const& arr) { *this = arr; }
 
+  static Variant Object(std::initializer_list<Variant> const& arr) {
+    Variant ret(arr);
+    ret.type_ = DICTIONARY;
+    // TODO: Check object validity
+    return ret;    
+  }
+
+  
   Variant Copy() const {
     Variant ret;
     switch (type_) {
@@ -138,6 +146,7 @@ public:
     return arr;
   }
 
+  // Array accessors
   VariantAccessProxy operator[](std::size_t const& i) {
     return VariantAccessProxy(*this, i);  //(*data_.object_array)[i+1];
   }
@@ -147,6 +156,14 @@ public:
     assert(i < (*data_.object_array)[0].as_int());
     return (*data_.object_array)[i + 1];
   }
+
+  // Dict accessors
+  /*
+  Variant const& operator[](byte_array::BasicByteArray const &key) 
+  {
+    assert(type_ == DICTIONARY);
+  }
+  */  
 
   std::size_t size() const {
     if ((type_ == ARRAY) || (type_ == DICTIONARY))

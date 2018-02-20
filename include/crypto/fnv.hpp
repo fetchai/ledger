@@ -39,8 +39,12 @@ class FNV : public StreamHasher {
     return digest_;
   }
 
+  uint32_t uint_digest() {
+    return context_;
+  }
+  
 private:
-  uint32_t context_  
+  uint32_t context_;
   byte_array_type digest_;  
 
 };

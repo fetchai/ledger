@@ -272,6 +272,13 @@ public:
     HTTPModule::Get("/load-balancer/send-transaction",  send_transaction);
 
     
+    auto increase_shard = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      this->IncreaseShardingParameter();
+      return fetch::http::HTTPResponse("{}");
+    };
+
+    HTTPModule::Get("/increase-sharding-parameter",  increase_shard);    
+    
   }
   
 

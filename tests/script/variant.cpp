@@ -11,6 +11,17 @@ int main() {
     Variant a(1.1234), b(49);
     Variant str("Hello world");
     Variant list({"Hello", 4.5, {2, "is the new black"} });
+
+    /*
+    Variant obj = Variant::Object( 
+      {
+        {"hello", 2},
+        {
+          "blah", {1,2,3}
+        }
+      });
+    */    
+      
     
     SECTION("Type compatibility") {
       EXPECT(a.type() == VariantType::FLOATING_POINT);

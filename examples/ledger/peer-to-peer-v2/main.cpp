@@ -72,9 +72,7 @@ private:
     std::cout << "Connecting shards" << std::endl;
     for(auto &s: shards_) {
       std::cout << " - localhost " <<  s->port() << std::endl;      
-      controller_.ConnectShard( "localhost", s->port() );
-      
-
+      controller_.ConnectShard( "localhost", s->port() );      
     }
   }
   

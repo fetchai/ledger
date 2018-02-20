@@ -36,7 +36,7 @@ public:
 
 
   // Transaction defs
-  typedef fetch::byte_array::ConstByteArray transaction_body_type;
+  typedef fetch::byte_array::ConstByteArray transaction_body_type; // TOODO: change
   typedef fetch::chain::BasicTransaction< transaction_body_type > transaction_type;
   typedef typename transaction_type::digest_type tx_digest_type;
 
@@ -65,7 +65,8 @@ public:
     EntryPoint& details) :
     thread_manager_(thread_manager),
     details_(details),
-    block_mutex_( __LINE__, __FILE__)
+    block_mutex_( __LINE__, __FILE__),
+    sharding_parameter_(1)
   {    
     details_.configuration = EntryPoint::NODE_SHARD;
     
@@ -134,8 +135,20 @@ public:
     }
     
     known_transactions_[ tx.digest() ] = tx;
+    bool belongs_to_shard = true;
+    uint32_t shard = details_.shard;
+
+    TODO("Implement shard checking");    
+    
     tx_mutex_.unlock();
 
+    if(!belongs_to_shard)
+    {
+      fetch::logger.Info("Transaction does not belong to this shard", shard);
+      
+    }
+    
+    
     TODO("Verify transaction");
     
     tx_mutex_.lock();
@@ -184,8 +197,6 @@ public:
     chains_[block.header()] = block;
     
 
-
-
     // Check if block is adding to a loose chain.
     bool was_loose = false;    
     if(loose_chain_tops_.find( block.body().previous_hash ) != loose_chain_tops_.end() )
@@ -210,7 +221,6 @@ public:
        * ┌──────┐       │                
        * │      │       └──┐             
        */
-      std::cout << "Block extends top" << std::endl;
       was_loose = true;
       
       std::size_t i = loose_chain_tops_[block.body().previous_hash];
@@ -250,7 +260,6 @@ public:
        * │      │      Missing block  
        * └──────┘                             
        */
-      std::cout << "Block extends bottom" << std::endl;
       was_loose = true;
       std::vector< uint64_t > lchains = loose_chain_bottoms_[header];
       auto it = loose_chain_bottoms_.find( header ) ;
@@ -402,6 +411,8 @@ public:
     shard_friends_.push_back(client);
     friends_details_.push_back(d);
 
+//
+    
     block_mutex_.lock(); 
     auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_);
     block_mutex_.unlock();
@@ -419,6 +430,37 @@ public:
     
     PushBlock(comp_head);     
   }
+
+  void ListenTo(EntryPoint e) 
+  {
+    fetch::logger.Debug( "Thinking of connecting to ", e.host,  ":", e.port );
+    
+    bool found = false;
+    shard_friends_mutex_.lock();    
+    for(auto &d: friends_details_)
+    {
+      if((d.host == e.host) &&
+        (d.port == e.port )  ) {
+        found = true;
+        break;
+      }
+    }
+
+    shard_friends_mutex_.unlock();
+    if(!found)
+    {
+      ConnectTo(e.host, e.port); 
+    }
+    
+  }
+
+  void SetShardNumber(uint32_t shard, uint32_t total_shards) 
+  {
+    fetch::logger.Debug("Setting shard numbers: ", shard, " ", total_shards);    
+    sharding_parameter_ = total_shards;
+    details_.shard = shard;    
+  }
+  
 
   void with_peers_do( std::function< void( std::vector< client_shared_ptr_type > , std::vector< EntryPoint > const& ) > fnc ) 
   {
@@ -583,7 +625,7 @@ private:
   std::vector< EntryPoint > friends_details_;  
   fetch::mutex::Mutex shard_friends_mutex_;  
 
-
+  std::atomic< uint32_t > sharding_parameter_ ;
 };
 
 
