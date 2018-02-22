@@ -54,10 +54,9 @@ class SharedArray {
       // TODO: Upgrade to aligned memory to ensure that we can parallelise over SIMD
       data_ = std::shared_ptr<T>( (type*)malloc(padded_size()*sizeof(type) ), free );
       memset( data_.get(), 0, padded_size()*sizeof(type) );
-      
     }
-    
   }
+  
   SharedArray() : SharedArray(0) {}
   SharedArray(SharedArray const &other)
     :size_(other.size_), data_(other.data_) { }
@@ -75,6 +74,18 @@ class SharedArray {
 
   ~SharedArray() { }
 
+  SharedArray< type > Copy() const
+  {
+    SharedArray< type > ret( *size_ );
+    for(std::size_t i = 0; i < (*size_); ++i )
+    {
+      ret[i] = At( i );
+    }
+    
+    return ret;
+  }
+  
+  
   iterator begin() { return iterator(data_.get(), data_.get() + size()); }
   iterator end() { return iterator(data_.get() + size(), data_.get() + size()); }
   reverse_iterator rbegin() {

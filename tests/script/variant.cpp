@@ -12,15 +12,22 @@ int main() {
     Variant str("Hello world");
     Variant list({"Hello", 4.5, {2, "is the new black"} });
 
-    /*
+    
     Variant obj = Variant::Object( 
       {
         {"hello", 2},
         {
           "blah", {1,2,3}
-        }
+        },
+        {
+          2
+            }
       });
-    */    
+
+    obj["hello"] =  5.5;
+    
+    std::cout << obj["hello"] << std::endl;
+    std::cout << obj["blah"] << std::endl;    
       
     
     SECTION("Type compatibility") {

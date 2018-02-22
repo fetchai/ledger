@@ -101,9 +101,19 @@ public:
   Variant(std::initializer_list<Variant> const& arr) { *this = arr; }
 
   static Variant Object(std::initializer_list<Variant> const& arr) {
-    Variant ret(arr);
+    Variant ret;    
     ret.type_ = DICTIONARY;
-    // TODO: Check object validity
+    ret.data_.object = new dictionary_reference_type();
+    for(auto const &kv: arr)
+    {
+      if(kv.size() != 2)
+      {
+        TODO_FAIL("Expected exactly two entries");        
+      }
+      
+      ret[kv[0].as_byte_array()] = kv[1];      
+    }
+    
     return ret;    
   }
 
@@ -125,10 +135,12 @@ public:
         break;
 
       case ARRAY:
+        ret.type_ = type_;
+        ret.data_.array = new variant_reference_type(  data_.array->Copy() );        
+        break;        
       case DICTIONARY:
-        // FIXME: implement
-        //      ret.data_.array = new variant_reference_type(
-        //      data_.array->Copy() );
+        ret.type_ = type_;
+        ret.data_.object= new dictionary_reference_type(     data_.object->Copy() );
         break;
       case FUNCTION:
         // FIXME: implement
@@ -159,13 +171,19 @@ public:
   }
 
   // Dict accessors
-  /*
-  Variant const& operator[](byte_array::BasicByteArray const &key) 
+  Variant & operator[](byte_array::BasicByteArray const &key) 
   {
     assert(type_ == DICTIONARY);
+    return (*data_.object)[key];
   }
-  */  
 
+  Variant const & operator[](byte_array::BasicByteArray const &key) const 
+  {
+    assert(type_ == DICTIONARY);
+    return (*data_.object)[key];
+  }
+
+  
   std::size_t size() const {
     if (type_ == ARRAY)
       return (*data_.array)[0].as_int();
@@ -276,8 +294,8 @@ public:
         break;        
       case DICTIONARY:
         type_ = UNDEFINED;
-        delete data_.dictionary;
-        data_.dictionary = nullptr;
+        delete data_.object;
+        data_.object = nullptr;
         break;
       case FUNCTION:
         break;
@@ -285,7 +303,7 @@ public:
   }
 
   typedef fetch::memory::SharedArray<Variant> variant_reference_type;
-  typedef fetch::script::Dictionary<Variant> dictionary_reference_type;  
+  typedef fetch::script::Dictionary<Variant> dictionary_reference_type;
   union {
     int64_t integer;
     double float_point;
