@@ -5,13 +5,15 @@ import glob
 
 root_path = os.path.abspath(os.path.dirname(__file__))
 libfetch_path = os.path.join(root_path, "build", "site-packages")
+other_libs_path = os.path.join(root_path, "python", "library")
 if len(glob.glob(os.path.join(libfetch_path, "libfetch"))) == 0:
     print "Please build the project in the folder 'build'"
     exit(-1)
 
 sys.path.append(libfetch_path)
+sys.path.append(other_libs_path)
 if not 'PYTHONPATH' in os.environ: os.environ['PYTHONPATH'] = ""
-os.environ['PYTHONPATH'] = libfetch_path + ":" + os.environ['PYTHONPATH'] 
+os.environ['PYTHONPATH'] = other_libs_path+":"+libfetch_path + ":" + os.environ['PYTHONPATH'] 
 
 os.chdir(os.path.abspath( os.path.join(root_path, "python","notebooks") ))
 

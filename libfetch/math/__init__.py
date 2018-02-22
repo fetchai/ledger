@@ -1,5 +1,6 @@
 from .. import libfetchcore
 from .. import types
+import numpy
 
 class Matrix(object):
     matrix_ = None
@@ -20,7 +21,21 @@ class Matrix(object):
            if "width" in kwargs: w = kwargs["width"]
 
         type = types.double
-        if "type" in kwargs: type = kwargs["type"]
+        if "type" in kwargs:
+            type = kwargs["type"]
+
+        data = None
+        if isinstance(h, list):
+            data = h
+            h = len(data)
+            w = 0
+            if h != 0:
+                w = len(data[0])
+                
+        elif isinstance(h, numpy.ndarray):
+            data = h
+            h,w = data.shape
+
         cls = None
         if type == types.double:
             cls = libfetchcore.fetch.math.linalg.MatrixDouble
@@ -31,8 +46,17 @@ class Matrix(object):
         else:
             raise BaseException("Unknown type %s" % str(type))
         
-        self.matrix_ = cls()
+        self.type_ = type
+        self.matrix_ = cls(h, w)
 
+        if isinstance(data, list):
+            for i in range(h):
+                for j in range(w):
+                    self.matrix_.Set(i,j, data[i][j])
+        elif isinstance(data, numpy.ndarray):
+            for i in range(h):
+                for j in range(w):
+                    self.matrix_.Set(i,j, data[i,j])
 
 
     def __getitem__(self, i):
@@ -47,6 +71,10 @@ class Matrix(object):
     def __setitem__(self, index, v):
         self.matrix_.Set( index[0], index[1], v )
 
+
+    def Sum(self):
+        return self.matrix_.Sum()
+        
     def Min(self):
         return self.matrix_.Min()
 
@@ -61,7 +89,23 @@ class Matrix(object):
 
     def Mean(self):
         return self.matrix_.Mean()
+
+    def Invert(self):
+        return self.matrix_.Invert()
+
+    def Apply(self, f):
+        pass
+
+    def Dot(self, other, ret = None):
+        if ret is None: ret = Matrix(type = self.type_)
+        self.matrix_.Dot(other.matrix_, ret.matrix_)
+        return ret
     
+    def DotTransposedOf(self, other, ret = None):
+        if ret is None: ret = Matrix(type = self.type_)
+        self.matrix_.DotTransposedOf(other.matrix_, ret.matrix_)
+        return ret
+        
 def AsNPArray(mat):
     ret = numpy.zeros((mat.height(), mat.width()))
     for i in range(mat.height()):
@@ -69,12 +113,3 @@ def AsNPArray(mat):
             ret[i,j] = mat.matrix_.At(i,j)
     return ret
 
-def FromNPArray(arr):
-    height, width = arr.shape
-    mat = Matrix(height, width)
- 
-    for i in range(height):
-        for j in range(width):
-            mat.matrix_.Set(i,j, ret[i,j])
-            
-    return mat

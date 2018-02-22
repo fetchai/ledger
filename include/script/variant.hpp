@@ -1,7 +1,8 @@
 #ifndef SCRIP_VARIANT_HPP
 #define SCRIP_VARIANT_HPP
-#include <byte_array/referenced_byte_array.hpp>
-#include <memory/shared_array.hpp>
+#include "byte_array/referenced_byte_array.hpp"
+#include "memory/shared_array.hpp"
+#include "script/dictionary.hpp"
 
 #include <initializer_list>
 #include <ostream>
@@ -32,7 +33,7 @@ class Variant {
       : variant_(v), index_(i) {}
     
     operator Variant() {
-      return (*variant_.data_.object_array)[index_];
+      return (*variant_.data_.array)[index_];
     }
     //  Variant Copy() const;
     
@@ -41,7 +42,7 @@ class Variant {
              (variant_.type() == VariantType::DICTIONARY));
       assert(index_ < variant_.size());
       
-      return (*variant_.data_.object_array)[index_ + 1] = v;
+      return (*variant_.data_.array)[index_ + 1] = v;
     }
     
     char operator=(char const& v) {
@@ -51,7 +52,7 @@ class Variant {
         return (*variant_.data_.byte_array)[index_] = v;
       case VariantType::DICTIONARY:
       case VariantType::ARRAY:
-        (*variant_.data_.object_array)[index_ + 1] = v;
+        (*variant_.data_.array)[index_ + 1] = v;
         return v;
       default:
         assert(false);
@@ -64,7 +65,7 @@ class Variant {
     VariantType const& type() const {
       assert((variant_.type() == VariantType::ARRAY) ||
              (variant_.type() == VariantType::DICTIONARY));
-      return (*variant_.data_.object_array)[index_ + 1].type();
+      return (*variant_.data_.array)[index_ + 1].type();
       return variant_.type();
     }
     
@@ -126,8 +127,8 @@ public:
       case ARRAY:
       case DICTIONARY:
         // FIXME: implement
-        //      ret.data_.object_array = new variant_reference_type(
-        //      data_.object_array->Copy() );
+        //      ret.data_.array = new variant_reference_type(
+        //      data_.array->Copy() );
         break;
       case FUNCTION:
         // FIXME: implement
@@ -139,22 +140,22 @@ public:
   std::initializer_list<Variant> const& operator=(
       std::initializer_list<Variant> const& arr) {
     type_ = ARRAY;
-    data_.object_array = new variant_reference_type(arr.size() + 1);
-    (*data_.object_array)[0] = arr.size();
+    data_.array = new variant_reference_type(arr.size() + 1);
+    (*data_.array)[0] = arr.size();
     std::size_t i = 1;
-    for (auto& a : arr) (*data_.object_array)[i++] = a;
+    for (auto& a : arr) (*data_.array)[i++] = a;
     return arr;
   }
 
   // Array accessors
   VariantAccessProxy operator[](std::size_t const& i) {
-    return VariantAccessProxy(*this, i);  //(*data_.object_array)[i+1];
+    return VariantAccessProxy(*this, i);  //(*data_.array)[i+1];
   }
 
   Variant const& operator[](std::size_t const& i) const {
     assert(type_ == ARRAY);
-    assert(i < (*data_.object_array)[0].as_int());
-    return (*data_.object_array)[i + 1];
+    assert(i < (*data_.array)[0].as_int());
+    return (*data_.array)[i + 1];
   }
 
   // Dict accessors
@@ -166,8 +167,10 @@ public:
   */  
 
   std::size_t size() const {
-    if ((type_ == ARRAY) || (type_ == DICTIONARY))
-      return (*data_.object_array)[0].as_int();
+    if (type_ == ARRAY)
+      return (*data_.array)[0].as_int();
+        if (type_ == ARRAY)
+      return (*data_.array)[0].as_int();
     if (type_ == BYTE_ARRAY) return data_.byte_array->size();
     return 0;
   }
@@ -267,10 +270,14 @@ public:
       case NULL_VALUE:
         break;
       case ARRAY:
+        type_ = UNDEFINED;
+        delete data_.array;
+        data_.array = nullptr;
+        break;        
       case DICTIONARY:
         type_ = UNDEFINED;
-        delete data_.object_array;
-        data_.object_array = nullptr;
+        delete data_.dictionary;
+        data_.dictionary = nullptr;
         break;
       case FUNCTION:
         break;
@@ -278,12 +285,14 @@ public:
   }
 
   typedef fetch::memory::SharedArray<Variant> variant_reference_type;
+  typedef fetch::script::Dictionary<Variant> dictionary_reference_type;  
   union {
     int64_t integer;
     double float_point;
     bool boolean;
     byte_array_type* byte_array;
-    variant_reference_type* object_array;
+    variant_reference_type* array;
+    dictionary_reference_type *object;
   } data_;
 
   VariantType type_ = UNDEFINED;

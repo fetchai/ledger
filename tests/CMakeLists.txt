@@ -27,7 +27,9 @@ function(standard_test_defines name file defines)
   add_test(${name} ${name} ${ARGV})
 
 endfunction()
-   
+
+standard_test(script_dictionary_test script/dictionary.cpp )
+
 ## Crypto
 standard_test( crypto_sha256 crypto/sha256.cpp )
 

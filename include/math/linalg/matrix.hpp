@@ -31,7 +31,13 @@ class Matrix : public fetch::memory::SquareArray<T> {
 
   Matrix(super_type const &other) : super_type(other) {}
   Matrix(super_type &&other) : super_type(other) {}
-  Matrix(std::size_t const &h, std::size_t const &w) : super_type(h, w) {}
+  Matrix(std::size_t const &h, std::size_t const &w) : super_type(h, w) {
+    for(std::size_t i=0; i < h; ++i) {
+    for(std::size_t j=0; j < w; ++j) {
+      this->Set(i,j, type(0));
+    }
+    }
+  }
 
 #define FETCH_ADD_OPERATOR(OP)                                           \
   Matrix &operator OP(Matrix const &other) {                             \
