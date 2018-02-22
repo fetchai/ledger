@@ -137,7 +137,6 @@ public:
       {
         this->PushBlock(b);        
       }
-      
     }
     
 
