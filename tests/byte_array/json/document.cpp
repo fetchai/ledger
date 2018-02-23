@@ -7,6 +7,7 @@ using namespace fetch::byte_array;
 int main() {
   SCENARIO("") {
     ByteArray doc_content = R"({
+  "a": 3,
   "x": { 
     "y": [1,2,3],
     "z": null,
@@ -18,6 +19,8 @@ int main() {
 
     JSONDocument doc;
     doc.Parse("test.file", doc_content);
+
+    std::cout << doc.root() << std::endl;
     
   };
   

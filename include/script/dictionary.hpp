@@ -32,7 +32,11 @@ public:
   typedef T type;
   typedef std::unordered_map< key_type, type, Hash > container_type;
   typedef std::shared_ptr< container_type > shared_container_type;  
+  typedef typename container_type::iterator iterator;
+  typedef typename container_type::const_iterator const_iterator;  
+  
 
+  
   Dictionary() {
     data_ = std::make_shared< container_type >( );
   }
@@ -66,12 +70,30 @@ public:
   {
     return (*data_)[key];
   }
+
+  iterator begin() 
+  {
+    return data_->begin();
+  }
+  
+  iterator end() 
+  {
+    return data_->begin();
+  }
+
+  const_iterator begin() const
+  {
+    return data_->begin();
+  }
+  
+  const_iterator end() const
+  {
+    return data_->begin();
+  }
   
 private:
   shared_container_type data_;
 };
-  
-
 
 
 };

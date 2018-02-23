@@ -13,22 +13,25 @@ int main() {
     Variant list({"Hello", 4.5, {2, "is the new black"} });
 
     
-    Variant obj = Variant::Object( 
+    Variant obj = Variant::Object();
+    /*
       {
         {"hello", 2},
         {
           "blah", {1,2,3}
-        },
-        {
-          2
-            }
+        }
       });
-
-    obj["hello"] =  5.5;
+    */
+    fetch::byte_array::ByteArray base = "\"hello\"";
+    fetch::byte_array::ByteArray name = base.SubArray(1, base.size() -2 );
     
-    std::cout << obj["hello"] << std::endl;
-    std::cout << obj["blah"] << std::endl;    
-      
+    
+    obj[name] =  5.5;
+    obj["xx"] = 9;
+    
+    std::cout << obj[name] << std::endl;
+//    std::cout << obj["blah"] << std::endl;    
+    std::cout << obj["xx"] << std::endl;       
     
     SECTION("Type compatibility") {
       EXPECT(a.type() == VariantType::FLOATING_POINT);

@@ -16,6 +16,20 @@ namespace fetch {
 namespace byte_array {
 
 class JSONDocument : private Tokenizer {
+    enum {
+      OP_OBJECT = 1,
+      OP_ARRAY = 2,
+      OP_PROPERTY = 4,
+      OP_APPEND = 8,
+      OP_STRING = 16,
+      OP_NUMBER = 32,
+      OP_TRUE = 64,
+      OP_FALSE = 128,
+      OP_NULL = 256
+    };
+
+
+  
  public:
   typedef ByteArray string_type;
   typedef ConstByteArray const_string_type;  
@@ -47,18 +61,6 @@ class JSONDocument : private Tokenizer {
     Tokenizer::Parse(filename, document);
 
     // Building an abstract syntax tree
-    enum {
-      OP_OBJECT = 1,
-      OP_ARRAY = 2,
-      OP_PROPERTY = 4,
-      OP_APPEND = 8,
-      OP_STRING = 16,
-      OP_NUMBER = 32,
-      OP_TRUE = 64,
-      OP_FALSE = 128,
-      OP_NULL = 256
-    };
-
     using namespace script;
     ASTGroupOperationType T_OBJECT = {OP_OBJECT, ASTProperty::GROUP, 0};
     ASTGroupOperationType T_ARRAY = {OP_ARRAY, ASTProperty::GROUP, 0};
@@ -136,13 +138,211 @@ class JSONDocument : private Tokenizer {
   variant_type const &root() const { return *root_; }
 
  private:
-  typedef std::shared_ptr<ASTNode> ast_node_ptr;  
-  void VisitASTNodes( ast_node_ptr node, variant_type &variant) {
-    for(ast_node_ptr c: node->children) {
-      VisitASTNodes(c);
+  typedef std::shared_ptr<script::ASTNode> ast_node_ptr;
+  std::size_t depth_ = 0;
+
+
+  
+  std::size_t VisitArrayElements(ast_node_ptr node, std::vector< ast_node_ptr > &array_contents)
+  {
+    if(node->token_class.type == OP_APPEND) {
+      std::size_t ret = 0;      
+      for(ast_node_ptr c: node->children)
+      {
+        ret += VisitArrayElements(c, array_contents);
+      }
+      return ret;      
     }
-    //    if( (node->token_class.properties & ASTProperty::GROUP) == 0)
-    //      program_.push_back( node );
+    array_contents.push_back(node);    
+    return 1;    
+  }
+
+
+  std::size_t VisitObjectElements(ast_node_ptr node, std::vector< ast_node_ptr > &keys, std::vector< ast_node_ptr > &values)
+  {
+    if(node->token_class.type == OP_APPEND)
+    {
+      std::size_t ret = 0;
+      
+      for(ast_node_ptr c: node->children)
+      {
+        ret += VisitObjectElements(c, keys, values);
+      }
+        
+      return ret;
+    }
+    
+
+    if(node->token_class.type != OP_PROPERTY)
+    {
+      TODO_FAIL("Expected property");      
+    }
+              
+    keys.push_back( node->children[0] );
+    values.push_back( node->children[1] );
+    return 1;
+  }
+  
+  
+  void VisitASTNodes( ast_node_ptr node, variant_type &variant) {
+    ++depth_;
+    
+    for(std::size_t i=0; i < depth_; ++i) {
+      for(std::size_t j=0; j < 4; ++j)
+      {
+        std::cout << " ";
+      }
+      std::cout << "|";
+      
+    }
+    std::cout << node->symbol << std::endl;    
+
+
+    switch(node->token_class.type) {
+    case OP_APPEND: {
+      // TODO: Make special function for append
+      for(ast_node_ptr c: node->children)
+      {
+        VisitASTNodes(c, variant);
+      }
+      --depth_;
+
+    } break;
+      
+    case OP_ARRAY: {
+      std::vector< ast_node_ptr > array_contents;
+        
+      std::size_t n = 0;
+      for(auto &c: node->children)
+      {
+        n += VisitArrayElements( c, array_contents );
+      }
+      
+      std::cout << "Creating array: " << n << std::endl;
+      
+      if(variant.type() != script::VariantType::UNDEFINED)
+      {
+        TODO_FAIL("Cannot alter type from", variant.type() ," to array");
+      }
+      
+      variant = variant_type::Array( n );
+      std::size_t i=0;      
+      for(ast_node_ptr c: array_contents)
+      {
+        VisitASTNodes(c, variant[i++]);
+      }
+      std::cout << "Created Array: " << variant << std::endl;
+      
+    } break;
+    case OP_OBJECT: {
+      std::vector< ast_node_ptr > keys, values;
+
+      std::size_t n = 0;
+      for(auto &c: node->children)
+      {
+        n += VisitObjectElements( c, keys, values);
+      }
+      
+      std::cout << "Creating object:" << std::endl;
+      
+      if(variant.type() != script::VariantType::UNDEFINED)
+      {
+        TODO_FAIL("Cannot alter type from", variant.type() ," to object");
+      }
+      
+      variant = variant_type::Object({{"hello", "world"}});
+      std::cout << "Initial doc: " << variant << std::endl;
+      
+      
+      for(std::size_t i=0; i < n; ++i )
+      {
+        ast_node_ptr key_tree = keys[i];
+        ast_node_ptr value_tree = values[i];
+
+        if(key_tree->children.size() != 0 )
+        {
+          TODO_FAIL("Key cannot have children");        
+        }
+        
+        byte_array::ByteArray key = key_tree->symbol;
+        if( (key.size() < 2) || (key[0] != '"') || (key[key.size()-1]!='"' ))
+        {
+          TODO_FAIL("Key must have quotes");        
+        }
+        
+        key = key.SubArray(1, key.size() - 2);
+        std::cout << "Setting Key = \"" << key << "\"" << std::endl;
+
+        variant_type var;
+        
+        VisitASTNodes(value_tree, var);
+        
+        variant[key] = 9.2;
+        
+      }
+      
+      std::cout << "Created object: " << variant << std::endl;
+      
+      
+    } break;
+    case OP_PROPERTY: {
+      if(variant.type() != script::VariantType::DICTIONARY)
+      {
+        TODO_FAIL("Can only set properties of an object");
+      }
+      
+      if(node->children.size() != 2)
+      {
+        TODO_FAIL("Expected a key and a value");
+      }
+      
+      ast_node_ptr key_tree = node->children[0];
+      ast_node_ptr value_tree = node->children[1];
+      if(key_tree->children.size() != 0 )
+      {
+        TODO_FAIL("Key cannot have children");        
+      }
+      
+      byte_array::ByteArray key = key_tree->symbol;
+      if( (key.size() < 2) || (key[0] != '"') || (key[key.size()-1]!='"' ))
+      {
+        TODO_FAIL("Key must have quotes");        
+      }
+      
+      key = key.SubArray(1, key.size() - 2);
+      std::cout << "Key = \"" << key << "\"" << std::endl;
+      
+      variant_type value;      
+      
+      VisitASTNodes(value_tree, value);
+      variant[key] = value;
+      
+    } break;
+    case OP_STRING:
+      variant = node->symbol; 
+      break;
+    case OP_NUMBER:
+      variant = node->symbol.AsFloat();      
+      break;      
+    case OP_TRUE:
+      variant = true; 
+      break;
+    case OP_FALSE:
+      variant = false;
+      break;
+    case OP_NULL:
+      variant = false;      
+      break;      
+    default:
+      std::cout << "Unknown type: " << node->symbol << std::endl;
+      break;
+      
+    }
+        
+
+    --depth_;
+//    if( (node->token_class.properties & ASTProperty::GROUP) == 0)
+//      program_.push_back( node );
   }
   
   std::shared_ptr<variant_type> root_;

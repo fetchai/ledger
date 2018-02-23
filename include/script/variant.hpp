@@ -26,58 +26,11 @@ enum VariantType {
 
 
 class Variant {
-
-  class VariantAccessProxy {
-  public:
-    VariantAccessProxy(Variant& v, std::size_t const& i)
-      : variant_(v), index_(i) {}
-    
-    operator Variant() {
-      return (*variant_.data_.array)[index_];
-    }
-    //  Variant Copy() const;
-    
-    Variant const& operator=(Variant const& v) {
-      assert((variant_.type() == VariantType::ARRAY) ||
-             (variant_.type() == VariantType::DICTIONARY));
-      assert(index_ < variant_.size());
-      
-      return (*variant_.data_.array)[index_ + 1] = v;
-    }
-    
-    char operator=(char const& v) {
-      assert(index_ < variant_.size());
-      switch (variant_.type_) {
-      case VariantType::BYTE_ARRAY:
-        return (*variant_.data_.byte_array)[index_] = v;
-      case VariantType::DICTIONARY:
-      case VariantType::ARRAY:
-        (*variant_.data_.array)[index_ + 1] = v;
-        return v;
-      default:
-        assert(false);
-        // TODO: throw error
-        return 0;
-      }
-      return 0;
-    }
-    
-    VariantType const& type() const {
-      assert((variant_.type() == VariantType::ARRAY) ||
-             (variant_.type() == VariantType::DICTIONARY));
-      return (*variant_.data_.array)[index_ + 1].type();
-      return variant_.type();
-    }
-    
-  private:
-    Variant& variant_;
-    std::size_t index_;
-  };
-  
-
 public:
   typedef fetch::byte_array::ByteArray byte_array_type;
-
+  typedef fetch::memory::SharedArray<Variant> variant_reference_type;
+  typedef fetch::script::Dictionary<Variant> dictionary_reference_type;
+  
   Variant() : type_(UNDEFINED) {}
   Variant(int64_t const& i) { *this = i; }
   Variant(int32_t const& i) { *this = i; }
@@ -100,7 +53,47 @@ public:
 
   Variant(std::initializer_list<Variant> const& arr) { *this = arr; }
 
+
+  Variant(Variant const &var)
+  {
+    this->operator=(var);    
+  }
+  
+  Variant const &operator=(Variant const &other)
+  {
+    type_ = other.type_;
+    switch (other.type_) {
+    case UNDEFINED:
+    case BOOLEAN:      
+    case INTEGER:
+    case FLOATING_POINT:
+    case NULL_VALUE:
+      this->data_ = other.data_;
+      
+      break;
+      
+    case BYTE_ARRAY:
+      this->data_.byte_array = new byte_array_type( *other.data_.byte_array );
+      break;
+      
+    case ARRAY:
+      this->data_.array = new variant_reference_type(  *other.data_.array );        
+      break;        
+    case DICTIONARY:
+      this->data_.object= new dictionary_reference_type(     *other.data_.object );
+      break;
+    case FUNCTION:
+      // FIXME: implement
+      break;
+    }
+    return other;    
+  }
+  
+
+  
   static Variant Object(std::initializer_list<Variant> const& arr) {
+    std::cout << "Was here?" << std::endl;
+    
     Variant ret;    
     ret.type_ = DICTIONARY;
     ret.data_.object = new dictionary_reference_type();
@@ -110,13 +103,45 @@ public:
       {
         TODO_FAIL("Expected exactly two entries");        
       }
-      
-      ret[kv[0].as_byte_array()] = kv[1];      
+      std::cout << "   > " <<  kv[0].as_byte_array() << " = ";
+//      Variant v = kv[1];      
+//      std::cout <<  v  << std::endl;    
+      ret[kv[0].as_byte_array()] = 1; //kv[1];      
     }
     
     return ret;    
   }
 
+  static Variant Object() {
+    Variant ret;    
+    ret.type_ = DICTIONARY;
+    ret.data_.object = new dictionary_reference_type();
+    
+    return ret;    
+  }
+  
+
+  static Variant Array(std::initializer_list<Variant> const& arr) {
+    Variant ret;    
+    ret.type_ = ARRAY;
+    ret.data_.array = new variant_reference_type(arr.size() + 1);
+    (*ret.data_.array)[0] = arr.size();
+    std::size_t i = 1;
+    for(auto const &kv: arr)
+    {      
+      ret[i++] = kv;    
+    }
+    
+    return ret;    
+  }
+
+  static Variant Array(std::size_t n = 0) {
+    Variant ret;    
+    ret.type_ = ARRAY;
+    ret.data_.array = new variant_reference_type(n + 1);    
+    (*ret.data_.array)[0] = n;
+    return ret;    
+  }  
   
   Variant Copy() const {
     Variant ret;
@@ -160,8 +185,11 @@ public:
   }
 
   // Array accessors
-  VariantAccessProxy operator[](std::size_t const& i) {
-    return VariantAccessProxy(*this, i);  //(*data_.array)[i+1];
+  Variant& operator[](std::size_t const& i) {
+    assert(type_ == ARRAY);
+    assert(i < (*data_.array)[0].as_int());
+    return (*data_.array)[i + 1];    
+//    return VariantAccessProxy(*this, i);  //(*data_.array)[i+1];
   }
 
   Variant const& operator[](std::size_t const& i) const {
@@ -193,7 +221,7 @@ public:
     return 0;
   }
 
-  void* operator=(void* ptr) {
+  std::nullptr_t* operator=(std::nullptr_t* ptr) {
     FreeMemory();
     if (ptr != nullptr) {
       // FIXME: Throw error
@@ -203,6 +231,9 @@ public:
     return ptr;
   }
 
+
+  
+  
   template <typename T>
   typename std::enable_if<std::is_integral<T>::value, T>::type operator=(
       T const& i) {
@@ -247,6 +278,8 @@ public:
   double& as_double() { return data_.float_point; }
   bool const& as_bool() const { return data_.boolean; }
   bool& as_bool() { return data_.boolean; }
+  dictionary_reference_type as_dictionary() { return *data_.object; }
+  dictionary_reference_type const &as_dictionary() const { return *data_.object; }    
 
   bool is_null() const { return type_ == NULL_VALUE; }
 
@@ -302,8 +335,7 @@ public:
     }
   }
 
-  typedef fetch::memory::SharedArray<Variant> variant_reference_type;
-  typedef fetch::script::Dictionary<Variant> dictionary_reference_type;
+
   union {
     int64_t integer;
     double float_point;
@@ -345,8 +377,20 @@ std::ostream& operator<<(std::ostream& os, Variant const& v) {
       }
       os << "]";
       break;
-    case VariantType::DICTIONARY:
-      os << "(object)";
+  case VariantType::DICTIONARY: {
+    bool first = true;
+    
+    os << "{";
+    
+    for(auto const &c: v.as_dictionary() )
+    {
+      if(!first) std::cout << ", ";      
+      os << "\"" << c.first << "\": " << c.second;
+      first = false;      
+    }
+    os << "}";
+    
+  }  
       break;
     case VariantType::FUNCTION:
       os << "(function)";

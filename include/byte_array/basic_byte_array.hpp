@@ -161,6 +161,17 @@ public:
     return reinterpret_cast<char const *>(data_.pointer());
   }
 
+  self_type operator+(self_type const &other) const {
+    self_type ret;
+
+    std::size_t n = 0, i = 0;
+    ret.Resize(size() + other.size());
+    for (; n < size(); ++n) ret[n] = this->operator[](n);
+    for (; n < ret.size(); ++n, ++i) ret[n] = other[i];
+
+    return ret;
+  }
+
   int AsInt() const {
     // TODO: add support for sign
     int n = 0;
@@ -179,18 +190,28 @@ public:
     return n;
   }  
 
-  self_type operator+(self_type const &other) const {
-    self_type ret;
+  
 
-    std::size_t n = 0, i = 0;
-    ret.Resize(size() + other.size());
-    for (; n < size(); ++n) ret[n] = this->operator[](n);
-    for (; n < ret.size(); ++n, ++i) ret[n] = other[i];
+  int AsFloat() const {
+    // TODO: Implement
+    // TODO: add support for sign
+    int n = 0;
+    for (std::size_t i = 0; i < length_; ++i) {
+      n *= 10;
+      int a = (arr_pointer_[i] - '0');
 
-    return ret;
-  }
+      if ((a < 0) || (a > 9)) {
+        std::cerr << "TODO: throw error - NaN in referenced byte_array: " << a
+                  << " " << arr_pointer_[i] << ", char " << i << " '"
+                  << arr_pointer_[i] << "'" << " - code: " << int(arr_pointer_[i]) << std::endl;
+        exit(-1);
+      }
+      n += a;
+    }
+    return n;
+  }  
 
-
+  
   
 protected:
   // Non-const functions go here
