@@ -129,13 +129,22 @@ class JSONDocument : private Tokenizer {
 
     // Creating variant;
     root_ = std::make_shared< variant_type >();
-    // TODO:
+    VisitASTNodes( tree.root_shared_pointer(), *root_ );
   }
 
   variant_type &root() { return *root_; }
   variant_type const &root() const { return *root_; }
 
  private:
+  typedef std::shared_ptr<ASTNode> ast_node_ptr;  
+  void VisitASTNodes( ast_node_ptr node, variant_type &variant) {
+    for(ast_node_ptr c: node->children) {
+      VisitASTNodes(c);
+    }
+    //    if( (node->token_class.properties & ASTProperty::GROUP) == 0)
+    //      program_.push_back( node );
+  }
+  
   std::shared_ptr<variant_type> root_;
   //  variant_type *root_ = nullptr;
 };
