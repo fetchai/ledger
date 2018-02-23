@@ -23,7 +23,8 @@ enum VariantType {
 };
 
 // FIXME: replace asserts with throwing errors
-
+  class Variant;
+  std::ostream& operator<<(std::ostream& os, Variant const& v);  
 
 class Variant {
 public:
@@ -92,7 +93,6 @@ public:
 
   
   static Variant Object(std::initializer_list<Variant> const& arr) {
-    std::cout << "Was here?" << std::endl;
     
     Variant ret;    
     ret.type_ = DICTIONARY;
@@ -103,12 +103,9 @@ public:
       {
         TODO_FAIL("Expected exactly two entries");        
       }
-      std::cout << "   > " <<  kv[0].as_byte_array() << " = ";
-//      Variant v = kv[1];      
-//      std::cout <<  v  << std::endl;    
-      ret[kv[0].as_byte_array()] = 1; //kv[1];      
+
+      ret[kv[0].as_byte_array()] =  kv[1]; 
     }
-    
     return ret;    
   }
 

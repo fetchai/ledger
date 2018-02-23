@@ -78,7 +78,7 @@ public:
   
   iterator end() 
   {
-    return data_->begin();
+    return data_->end();
   }
 
   const_iterator begin() const
@@ -88,7 +88,7 @@ public:
   
   const_iterator end() const
   {
-    return data_->begin();
+    return data_->end();
   }
   
 private:

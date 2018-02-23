@@ -250,8 +250,7 @@ class JSONDocument : private Tokenizer {
         TODO_FAIL("Cannot alter type from", variant.type() ," to object");
       }
       
-      variant = variant_type::Object({{"hello", "world"}});
-      std::cout << "Initial doc: " << variant << std::endl;
+      variant = variant_type::Object();
       
       
       for(std::size_t i=0; i < n; ++i )
@@ -277,7 +276,7 @@ class JSONDocument : private Tokenizer {
         
         VisitASTNodes(value_tree, var);
         
-        variant[key] = 9.2;
+        variant[key] = var;
         
       }
       

@@ -13,7 +13,9 @@ int main() {
     Variant list({"Hello", 4.5, {2, "is the new black"} });
 
     
-    Variant obj = Variant::Object();
+    Variant obj2 = Variant::Object();
+    Variant obj1 = obj2;
+    Variant obj(obj1);
     /*
       {
         {"hello", 2},
