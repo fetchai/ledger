@@ -7,6 +7,7 @@
 #include"byte_array/referenced_byte_array.hpp"
 #include"byte_array/tokenizer/tokenizer.hpp"
 #include"byte_array/consumers.hpp"
+#include"json/document.hpp"
 #include"assert.hpp"
 
 #include<asio.hpp>
@@ -172,6 +173,11 @@ public:
   byte_array::ConstByteArray body() const
   {
     return body_data_;
+  }
+  
+  json::JSONDocument JSON() const
+  {
+    return json::JSONDocument( full_uri_, body() );
   }
 private:
 

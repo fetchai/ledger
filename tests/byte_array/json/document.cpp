@@ -1,5 +1,6 @@
 #include<iostream>
-#include<byte_array/json/document.hpp>
+#include<json/document.hpp>
+using namespace fetch::json;
 using namespace fetch::byte_array;
 
 #include"unittest.hpp"

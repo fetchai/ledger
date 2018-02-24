@@ -2,20 +2,20 @@
 #define BYTE_ARRAY_JSON_DOCUMENT_HPP
 
 #include "byte_array/consumers.hpp"
-#include "byte_array/json/exceptions.hpp"
 #include "byte_array/referenced_byte_array.hpp"
 #include "byte_array/const_byte_array.hpp"
 #include "byte_array/tokenizer/tokenizer.hpp"
 #include "script/ast.hpp"
 #include "script/variant.hpp"
+#include "json/exceptions.hpp"
 
 #include <memory>
 #include <vector>
 
 namespace fetch {
-namespace byte_array {
+namespace json {
 
-class JSONDocument : private Tokenizer {
+class JSONDocument : private byte_array::Tokenizer {
     enum {
       OP_OBJECT = 1,
       OP_ARRAY = 2,
@@ -31,8 +31,8 @@ class JSONDocument : private Tokenizer {
 
   
  public:
-  typedef ByteArray string_type;
-  typedef ConstByteArray const_string_type;  
+  typedef byte_array::ByteArray string_type;
+  typedef byte_array::ConstByteArray const_string_type;  
   typedef script::Variant variant_type;
 
   enum Type {
@@ -47,18 +47,22 @@ class JSONDocument : private Tokenizer {
   JSONDocument() {
     root_ = std::make_shared<variant_type>();
 
-    AddConsumer(Type::TOKEN, consumers::AlphaNumericLetterFirst);
-    AddConsumer(Type::WHITESPACE, consumers::Whitespace);
-    AddConsumer(Type::STRING, consumers::StringEnclosedIn('"'));
-    AddConsumer(Type::NUMBER, consumers::Integer);
+    AddConsumer(Type::TOKEN, byte_array::consumers::AlphaNumericLetterFirst);
+    AddConsumer(Type::WHITESPACE, byte_array::consumers::Whitespace);
+    AddConsumer(Type::STRING, byte_array::consumers::StringEnclosedIn('"'));
+    AddConsumer(Type::NUMBER, byte_array::consumers::Integer);
     AddConsumer(Type::SYNTAX,
-                consumers::TokenFromList({"[", "]", "{", "}", ",", ":"}));
-    AddConsumer(Type::CATCH_ALL, consumers::AnyChar);
+                byte_array::consumers::TokenFromList({"[", "]", "{", "}", ",", ":"}));
+    AddConsumer(Type::CATCH_ALL, byte_array::consumers::AnyChar);
   }
 
+  JSONDocument(string_type filename, const_string_type const &document) {
+    Parse(filename, document);
+  }
+  
   void Parse(string_type filename, const_string_type const& document) {
     // Parsing and tokenizing
-    Tokenizer::Parse(filename, document);
+    byte_array::Tokenizer::Parse(filename, document);
 
     // Building an abstract syntax tree
     using namespace script;
@@ -139,8 +143,6 @@ class JSONDocument : private Tokenizer {
 
  private:
   typedef std::shared_ptr<script::ASTNode> ast_node_ptr;
-  std::size_t depth_ = 0;
-
 
   
   std::size_t VisitArrayElements(ast_node_ptr node, std::vector< ast_node_ptr > &array_contents)
@@ -185,28 +187,11 @@ class JSONDocument : private Tokenizer {
   
   
   void VisitASTNodes( ast_node_ptr node, variant_type &variant) {
-    ++depth_;
-    
-    for(std::size_t i=0; i < depth_; ++i) {
-      for(std::size_t j=0; j < 4; ++j)
-      {
-        std::cout << " ";
-      }
-      std::cout << "|";
-      
-    }
-    std::cout << node->symbol << std::endl;    
 
 
     switch(node->token_class.type) {
     case OP_APPEND: {
-      // TODO: Make special function for append
-      for(ast_node_ptr c: node->children)
-      {
-        VisitASTNodes(c, variant);
-      }
-      --depth_;
-
+      TODO_FAIL("unexpected append");
     } break;
       
     case OP_ARRAY: {
@@ -217,9 +202,7 @@ class JSONDocument : private Tokenizer {
       {
         n += VisitArrayElements( c, array_contents );
       }
-      
-      std::cout << "Creating array: " << n << std::endl;
-      
+            
       if(variant.type() != script::VariantType::UNDEFINED)
       {
         TODO_FAIL("Cannot alter type from", variant.type() ," to array");
@@ -231,7 +214,6 @@ class JSONDocument : private Tokenizer {
       {
         VisitASTNodes(c, variant[i++]);
       }
-      std::cout << "Created Array: " << variant << std::endl;
       
     } break;
     case OP_OBJECT: {
@@ -242,8 +224,6 @@ class JSONDocument : private Tokenizer {
       {
         n += VisitObjectElements( c, keys, values);
       }
-      
-      std::cout << "Creating object:" << std::endl;
       
       if(variant.type() != script::VariantType::UNDEFINED)
       {
@@ -270,18 +250,12 @@ class JSONDocument : private Tokenizer {
         }
         
         key = key.SubArray(1, key.size() - 2);
-        std::cout << "Setting Key = \"" << key << "\"" << std::endl;
-
         variant_type var;
-        
         VisitASTNodes(value_tree, var);
         
         variant[key] = var;
         
       }
-      
-      std::cout << "Created object: " << variant << std::endl;
-      
       
     } break;
     case OP_PROPERTY: {
@@ -309,8 +283,6 @@ class JSONDocument : private Tokenizer {
       }
       
       key = key.SubArray(1, key.size() - 2);
-      std::cout << "Key = \"" << key << "\"" << std::endl;
-      
       variant_type value;      
       
       VisitASTNodes(value_tree, value);
@@ -333,15 +305,14 @@ class JSONDocument : private Tokenizer {
       variant = false;      
       break;      
     default:
-      std::cout << "Unknown type: " << node->symbol << std::endl;
+ 
+      TODO_FAIL("Unknown type");
       break;
       
     }
         
 
-    --depth_;
-//    if( (node->token_class.properties & ASTProperty::GROUP) == 0)
-//      program_.push_back( node );
+
   }
   
   std::shared_ptr<variant_type> root_;

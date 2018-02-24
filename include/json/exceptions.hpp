@@ -7,13 +7,13 @@
 #include <exception>
 #include <sstream>
 namespace fetch {
-namespace byte_array {
+namespace json {
 
 class UnrecognisedJSONSymbolException : public std::exception {
   std::string str_;
 
  public:
-  UnrecognisedJSONSymbolException(Token const& token) {
+  UnrecognisedJSONSymbolException(byte_array::Token const& token) {
     std::stringstream msg;
     msg << "Unrecognised symbol '";
     msg << token << '\'' << " at line " << token.line() << ", character "
