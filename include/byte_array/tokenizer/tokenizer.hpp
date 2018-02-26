@@ -1,9 +1,9 @@
 #ifndef BYTE_ARRAY_TOKENIZER_TOKENIZER_HPP
 #define BYTE_ARRAY_TOKENIZER_TOKENIZER_HPP
 
-#include <byte_array/referenced_byte_array.hpp>
-#include <byte_array/tokenizer/token.hpp>
-
+#include "byte_array/referenced_byte_array.hpp"
+#include "byte_array/tokenizer/token.hpp"
+#include "assert.hpp"
 #include <functional>
 #include <map>
 #include <vector>
