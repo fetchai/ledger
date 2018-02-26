@@ -1,15 +1,13 @@
 #pragma once
 
-//#include "serialize.h"
-//#include "old_oef_codebase/lib/include/serialize.h"
-#include <unordered_map>
-#include <mutex>
-#include <vector>
-#include <limits>
-#include <iostream>
-#include <unordered_set>
-#include <experimental/optional>
-#include "mapbox/variant.hpp"
+#include<mutex>
+#include<unordered_set>
+#include<unordered_map>
+
+// TODO: (`HUT`) : probably remove with time
+#include<iostream>
+#include<experimental/optional>
+#include"mapbox/variant.hpp"
 
 namespace stde = std::experimental;
 namespace var = mapbox::util; // for the variant
@@ -21,7 +19,7 @@ Type string_to_type(const std::string &s);
 VariantType string_to_value(Type t, const std::string &s);
 
 class Attribute {
- private:
+private:
   std::string _name;
   Type _type;
   bool _required;
@@ -47,7 +45,7 @@ class Attribute {
     }
     return true;
   }
- public:
+public:
   explicit Attribute() {}
   explicit Attribute(const std::string &name, Type type, bool required, stde::optional<std::string> description = stde::nullopt)
     : _name{name}, _type{type}, _required{required}, _description{description} {}
@@ -88,11 +86,11 @@ std::string t_to_string(bool b);
 std::string t_to_string(const std::string &s);
 
 class Relation {
- public:
+public:
   Relation() {}
   using ValueType = var::variant<int,float,std::string,bool>;
   enum class Op { Eq, Lt, Gt, LtEq, GtEq, NotEq };
- private:
+private:
   Op _op;
   ValueType _value;
   std::string op_to_string(Op op) const {
@@ -115,7 +113,7 @@ class Relation {
     if(s == "<>") return Op::NotEq;
     throw std::invalid_argument(s + std::string{" is not a valid operator."});
   }
- public:
+public:
   explicit Relation(Op op, const ValueType &value) : _op{op}, _value{value} {}
   template <typename T>
     bool check_value(const T &v) const {
@@ -153,11 +151,11 @@ class Relation {
 };
 
 class Set {
- public:
+public:
   using ValueType = var::variant<std::unordered_set<int>,std::unordered_set<float>,
     std::unordered_set<std::string>,std::unordered_set<bool>>;
   enum class Op { In, NotIn };
- private:
+private:
   Op _op;
   ValueType _values;
   std::string op_to_string(Op op) const {
@@ -172,7 +170,7 @@ class Set {
     if(s == "not in") return Op::NotIn;
     throw std::invalid_argument(s + std::string{" is not a valid operator."});
   }
- public:
+public:
   explicit Set(Op op, const ValueType &values) : _op{op}, _values{values} {}
   bool check(const VariantType &v) const {
     bool res = false;
@@ -193,11 +191,11 @@ class Set {
   }
 };
 class Range {
- public:
+public:
   using ValueType = var::variant<std::pair<int,int>,std::pair<float,float>,std::pair<std::string,std::string>>;
- private:
+private:
   ValueType _pair;
- public:
+public:
   explicit Range(ValueType v) : _pair{v} {}
   // enable_if is necessary to prevent both constructor to conflict.
   //
@@ -220,13 +218,13 @@ class Range {
 };
 
 class DataModel {
- private:
+private:
   std::string                 _name;
   std::vector<Attribute>      _attributes;
   std::vector<std::string>    _keywords;
   //stde::optional<std::string> _description;
 
- public:
+public:
   explicit DataModel() {}
 
   explicit DataModel(const std::string &name, const std::vector<Attribute> &attributes) :
@@ -285,11 +283,11 @@ class DataModel {
 };
 
 class Instance {
- private:
+private:
   DataModel _model;
   std::unordered_map<std::string,std::string> _values;
 
- public:
+public:
   // getters/setters for serialization
 
   const std::unordered_map<std::string,std::string>& getValues() const { return _values; }
@@ -358,11 +356,11 @@ class Or;
 class And;
 
 class ConstraintType {
- public:
+public:
   using ValueType = var::variant<var::recursive_wrapper<Or>,var::recursive_wrapper<And>,Range,Relation,Set>;
- private:
+private:
   ConstraintType::ValueType _constraint;
- public:
+public:
   explicit ConstraintType() {}
 
   explicit ConstraintType(ValueType v) : _constraint{v} {}
@@ -375,10 +373,10 @@ class ConstraintType {
 };
 
 class Constraint {
- private:
+private:
   Attribute _attribute;
   ConstraintType _constraint;
- public:
+public:
   explicit Constraint() {}
 
   explicit Constraint(const Attribute &attribute, const ConstraintType &constraint)
@@ -414,7 +412,7 @@ class Constraint {
 
 class Or {
   std::vector<ConstraintType> _expr;
- public:
+public:
   explicit Or(const std::vector<ConstraintType> expr) : _expr{expr} {}
   explicit Or() {}; // to make happy variant.
 
@@ -428,9 +426,9 @@ class Or {
 };
 
 class And {
- private:
+private:
   std::vector<ConstraintType> _expr;
- public:
+public:
   explicit And(const std::vector<ConstraintType> expr) : _expr{expr} {}
 
   bool check(const VariantType &v) const {
@@ -448,21 +446,21 @@ class And {
 
 class KeywordLookup
 {
- public:
+public:
   explicit KeywordLookup(std::vector<std::string> keywords) :
     _keywords(keywords) {}
 
   std::vector<std::string> getKeywords() const { return _keywords; }
 
- private:
+private:
   std::vector<std::string> _keywords;
 };
 
 class QueryModel {
- private:
+private:
   std::vector<Constraint> _constraints;
   stde::optional<DataModel> _model; // TODO: (`HUT`) : this is not serialized yet
- public:
+public:
 
   explicit QueryModel() : _model{stde::nullopt} {}
 
@@ -496,10 +494,10 @@ class QueryModel {
 };
 
 class SchemaRef {
- private:
+private:
   std::string _name; // unique
   uint32_t _version;
- public:
+public:
   explicit SchemaRef(const std::string &name, uint32_t version) : _name{name}, _version{version} {}
 
   std::string name() const { return _name; }
@@ -507,20 +505,20 @@ class SchemaRef {
 };
 
 class Schema {
- private:
+private:
   uint32_t _version;
   DataModel _schema;
- public:
+public:
   explicit Schema(uint32_t version, const DataModel &schema) : _version{version}, _schema{schema} {}
   uint32_t version() const { return _version; }
   DataModel schema() const { return _schema; }
 };
 
 class Schemas {
- private:
+private:
   mutable std::mutex _lock;
   std::vector<Schema> _schemas;
- public:
+public:
   explicit Schemas() = default;
   uint32_t add(uint32_t version, const DataModel &schema) {
     std::lock_guard<std::mutex> lock(_lock);
@@ -544,9 +542,9 @@ class Schemas {
 };
 
 class SchemaDirectory {
- private:
+private:
   std::unordered_map<std::string, Schemas> _schemas;
- public:
+public:
   explicit SchemaDirectory() = default;
 
   stde::optional<Schema> get(const std::string &key, uint32_t version = std::numeric_limits<uint32_t>::max()) const {

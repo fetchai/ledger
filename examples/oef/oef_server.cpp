@@ -7,7 +7,6 @@
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
-
 // First we make a service implementation
 class Implementation {
 
