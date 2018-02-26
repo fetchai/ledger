@@ -1,9 +1,9 @@
 #include"oef_service_consts.hpp"
 #include<iostream>
 #include"service/server.hpp"
-
-//#include "old_oef_codebase/lib/include/serviceDirectory.h"
-#include "oef/ServiceDirectory.h"
+#include"oef/schema.h"
+#include"oef/schemaSerializers.h"
+#include"oef/ServiceDirectory.h"
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
