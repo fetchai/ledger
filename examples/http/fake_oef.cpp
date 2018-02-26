@@ -5,6 +5,7 @@
 #include"http/middleware/color_log.hpp"
 #include"commandline/parameter_parser.hpp"
 #include"random/lfg.hpp"
+#include"mutex.hpp"
 
 #include<map>
 #include<vector>
@@ -19,10 +20,10 @@ using namespace fetch::commandline;
 struct Transaction 
 {
   int64_t amount;
-  byte_array::ByteArray fromAddress; // = "830A0B9D-73EE-4001-A413-72CFCD8E91F3";
+  byte_array::ByteArray fromAddress; 
   byte_array::ByteArray notes;
-  uint64_t time; // = 1519650052994;
-  byte_array::ByteArray toAddress; // = "6164D5A6-A26E-43E4-BA96-A1A8787091A0";
+  uint64_t time; 
+  byte_array::ByteArray toAddress; 
   byte_array::ByteArray json;  
 };
 
@@ -35,7 +36,7 @@ struct Account
 
 class FakeOEF : public fetch::http::HTTPModule 
 {
-  fetch::random::LaggedFibonacciGenerator<> lfg_;
+  
 public:
   FakeOEF() 
   {
@@ -57,7 +58,9 @@ public:
       });
   }
 
-  HTTPResponse CheckUser(ViewParameters const &params, HTTPRequest const &req) {    
+  HTTPResponse CheckUser(ViewParameters const &params, HTTPRequest const &req) {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    
     json::JSONDocument doc;
     try {      
       doc = req.JSON();
@@ -73,6 +76,8 @@ public:
   }
 
   HTTPResponse RegisterUser(ViewParameters const &params, HTTPRequest const &req) {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    
     json::JSONDocument doc;
     try {      
       doc = req.JSON();
@@ -92,6 +97,8 @@ public:
   }
 
   HTTPResponse GetBalance(ViewParameters const &params, HTTPRequest const &req) {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    
     json::JSONDocument doc;
     try {      
       doc = req.JSON();
@@ -114,6 +121,8 @@ public:
   }
 
   HTTPResponse SendTransaction(ViewParameters const &params, HTTPRequest const &req) {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    
     json::JSONDocument doc;
     try {      
       doc = req.JSON();
@@ -164,6 +173,7 @@ public:
   }
 
   HTTPResponse GetHistory(ViewParameters const &params, HTTPRequest const &req) {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
     json::JSONDocument doc;
     try {      
       doc = req.JSON();
@@ -204,7 +214,9 @@ public:
   std::vector< Transaction > transactions_;
   std::map< fetch::byte_array::BasicByteArray, Account > accounts_;
   std::set< fetch::byte_array::BasicByteArray > users_;
-  
+  fetch::random::LaggedFibonacciGenerator<> lfg_;
+  fetch::mutex::Mutex mutex_;
+
 };
 
 
