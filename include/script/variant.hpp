@@ -181,6 +181,7 @@ public:
     return arr;
   }
 
+  
   // Array accessors
   Variant& operator[](std::size_t const& i) {
     assert(type_ == ARRAY);
@@ -381,7 +382,10 @@ std::ostream& operator<<(std::ostream& os, Variant const& v) {
     
     for(auto const &c: v.as_dictionary() )
     {
-      if(!first) std::cout << ", ";      
+      
+      if(!first)
+        os << ", ";
+      
       os << "\"" << c.first << "\": " << c.second;
       first = false;      
     }
