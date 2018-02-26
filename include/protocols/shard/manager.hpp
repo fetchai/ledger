@@ -36,8 +36,8 @@ public:
 
 
   // Transaction defs
-  typedef fetch::byte_array::ConstByteArray transaction_body_type; // TOODO: change
-  typedef fetch::chain::BasicTransaction< transaction_body_type > transaction_type;
+  typedef fetch::chain::Transaction transaction_type;
+  typedef typename transaction_type::arguments_type transaction_body_type;  
   typedef typename transaction_type::digest_type tx_digest_type;
 
   // Block defs  

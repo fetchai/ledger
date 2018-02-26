@@ -176,19 +176,14 @@ public:
     HTTPModule::Get("/list/transactions",  list_transactions);
 */
     
-    auto submit_transaction = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {      
-      std::cout << "Parsing JSON:" << std::endl;
-      std::cout << "body: " << req.body() << std::endl;
+    auto submit_transaction = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) { 
       json::JSONDocument doc = req.JSON();
       
-      std::cout << "Got : " << req.uri() << std::endl;
-      std::cout << "Doc root " << doc.root() << std::endl;      
       std::cout << "resources " << doc["resources"] << std::endl;
 
-      typedef fetch::byte_array::ConstByteArray transaction_body_type;
-      typedef fetch::chain::BasicTransaction< transaction_body_type > transaction_type;
+      typedef fetch::chain::Transaction transaction_type;
       transaction_type tx;
-      tx.set_body( req.body() );
+      tx.set_arguments( req.body() );
       this->PushTransaction( tx );
 
       return fetch::http::HTTPResponse("{\"status\": \"ok\"}");

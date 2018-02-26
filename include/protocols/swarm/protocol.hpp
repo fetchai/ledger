@@ -261,10 +261,9 @@ public:
       
       this->with_shards_do([this, req](std::vector< client_shared_ptr_type > shards,  std::vector< EntryPoint > const &detail_list) {
           std::cout << "Sending tx to " << shards.size() << " shards" << std::endl;          
-          typedef fetch::byte_array::ConstByteArray transaction_body_type;
-          typedef fetch::chain::BasicTransaction< transaction_body_type > transaction_type;
+          typedef fetch::chain::Transaction transaction_type;
           transaction_type tx;
-          tx.set_body( req.body() );
+          tx.set_arguments( req.body() );
           for(auto &s: shards) {
             s->Call(FetchProtocols::SHARD , ShardRPC::PUSH_TRANSACTION, tx );
           }
