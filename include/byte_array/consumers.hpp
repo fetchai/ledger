@@ -69,10 +69,13 @@ consumer_function_type TokenFromList(std::vector<std::string> list) {
   return [list](byte_array::ConstByteArray const &str,
                 uint64_t &pos) -> bool {
     for (auto &op : list)
-      if (str.Match(op.c_str(), pos)) {
+    {
+      if (str.Match(op.c_str(), pos)) {        
         pos += op.size();
         return true;
       }
+    }
+    
     return false;
   };
 }

@@ -56,12 +56,32 @@ class JSONDocument : private byte_array::Tokenizer {
     AddConsumer(Type::CATCH_ALL, byte_array::consumers::AnyChar);
   }
 
-  JSONDocument(string_type filename, const_string_type const &document) {
+  JSONDocument(string_type filename, const_string_type const &document) : JSONDocument() {
     Parse(filename, document);
   }
+
+  script::Variant& operator[](std::size_t const& i) {
+    return (*root_)[i];
+  }
+
+  script::Variant const& operator[](std::size_t const& i) const {
+    return (*root_)[i];    
+  }
+
+  script::Variant & operator[](byte_array::BasicByteArray const &key) 
+  {
+    return (*root_)[key];    
+  }
+
+  script::Variant const & operator[](byte_array::BasicByteArray const &key) const 
+  {
+    return (*root_)[key];
+  }
+
   
-  void Parse(string_type filename, const_string_type const& document) {
+  void Parse(string_type filename, const_string_type const& document) {    
     // Parsing and tokenizing
+    byte_array::Tokenizer::clear();    
     byte_array::Tokenizer::Parse(filename, document);
 
     // Building an abstract syntax tree
@@ -130,7 +150,7 @@ class JSONDocument : private byte_array::Tokenizer {
           break;
       }
     }
-
+    
     tree.Build();
 
     // Creating variant;
@@ -290,7 +310,7 @@ class JSONDocument : private byte_array::Tokenizer {
       
     } break;
     case OP_STRING:
-      variant = node->symbol; 
+      variant = node->symbol.SubArray(1, node->symbol.size() - 2); 
       break;
     case OP_NUMBER:
       variant = node->symbol.AsFloat();      

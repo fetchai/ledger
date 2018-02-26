@@ -107,9 +107,7 @@ class Tokenizer : public std::vector<Token> {
       }
 
       if (pos == oldpos) {
-        std::cerr << "Unable to parse char on " << pos << "  '";
-        std::cerr << str[pos] << "'" << std::endl;
-        exit(-1);
+        TODO_FAIL( "Unable to parse char on ", pos, "  '", str[pos], "'", ", '", contents[pos], "'" );
       }
 
       if (space.inner_open == token_type) {
@@ -123,8 +121,8 @@ class Tokenizer : public std::vector<Token> {
       if (space.can_close && (space.counter == 0)) {
         tokenspaces.pop_back();
         if (tokenspaces.size() == 0) {
-          std::cerr << "This is not suppose to happen" << std::endl;
-          exit(-1);
+          TODO_FAIL("This is not suppose to happen" );
+
         }
       } else {
         if (spaceselector_.find(space.name) != spaceselector_.end()) {

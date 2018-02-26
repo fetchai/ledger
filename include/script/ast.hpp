@@ -2,6 +2,7 @@
 #define SCRIPT_AST_HPP
 
 #include "byte_array/tokenizer/token.hpp"
+#include"assert.hpp"
 
 #include <algorithm>
 #include <iomanip>
@@ -157,8 +158,7 @@ class AbstractSyntaxTree {
 
   void Push(uint16_t op, byte_array_type const &t) {
     if (operations_.find(op) == operations_.end()) {
-      std::cerr << "error, could not find type I, ast.hpp" << std::endl;
-      exit(-1);
+      TODO_FAIL( "error, could not find type I, ast.hpp" );
     }
     node_type n = {operations_[op], t};
     tree_.push_back(std::make_shared<node_type>(n));
@@ -166,8 +166,7 @@ class AbstractSyntaxTree {
 
   void PushOpen(uint16_t op, byte_array_type const &t) {
     if (groups_.find(op) == groups_.end()) {
-      std::cerr << "error, could not find type II, ast.hpp" << std::endl;
-      exit(-1);
+      TODO_FAIL( "error, could not find type II, ast.hpp" );
     }
     node_type n = {groups_[op].open(), t};
     tree_.push_back(std::make_shared<node_type>(n));
@@ -175,8 +174,7 @@ class AbstractSyntaxTree {
 
   void PushClose(uint16_t op, byte_array_type const &t) {
     if (groups_.find(op) == groups_.end()) {
-      std::cerr << "error, could not find type III, ast.hpp" << std::endl;
-      exit(-1);
+      TODO_FAIL( "error, could not find type III, ast.hpp" );
     }
     node_type n = {groups_[op].close(), t};
     tree_.push_back(std::make_shared<node_type>(n));
@@ -195,12 +193,10 @@ class AbstractSyntaxTree {
     BuildSubset(0, tree_);
 
     if (tree_.size() != 1) {
-      std::cerr << "Tree does not have exactly one root: " << tree_.size()
-                << std::endl;
       for (auto &t : tree_) {
-        std::cout << t << " ";
+        std::cout << t->symbol << " " << t->symbol.line() << ", " << t->symbol.character() << std::endl;
       }
-      exit(-1);
+      TODO_FAIL( "Tree does not have exactly one root: ", tree_.size());
     }
 
     root_ = tree_[0];

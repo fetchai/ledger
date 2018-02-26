@@ -4,9 +4,23 @@ using namespace fetch::json;
 using namespace fetch::byte_array;
 
 #include"unittest.hpp"
+/*
+struct Blah 
+{
+  int i,j;
+  std::string foo;
+};
+
+void Serializer(T &t, Blah const&b) 
+{
+  t.WithProperty("i") << i;
+  t.WithProperty("j") << j;
+  t.WithProperty("foo") << foo;    
+}
+*/
 
 int main() {
-  SCENARIO("") {
+  SCENARIO("Testing basic parsing") {
     ByteArray doc_content = R"({
   "a": 3,
   "x": { 
@@ -18,10 +32,15 @@ int main() {
 }
 )" ;
 
+    std::cout << doc_content << std::endl;
+
     JSONDocument doc;
     doc.Parse("test.file", doc_content);
 
+    doc["a"] = 4;
     std::cout << doc.root() << std::endl;
+
+    doc.Parse("hello", "{\"resources\":[\"aasdasd\"],\"body\":\"asdasgagag\"}");
     
   };
   

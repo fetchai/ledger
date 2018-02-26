@@ -5,9 +5,10 @@
 #include "protocols/swarm/commands.hpp"
 #include "protocols/swarm/manager.hpp"
 #include "http/module.hpp"
-
+#include "json/document.hpp"
 #include"protocols/fetch_protocols.hpp"
 #include"protocols/shard/commands.hpp"
+
 namespace fetch
 {
 namespace protocols
@@ -251,8 +252,12 @@ public:
 
     ////// TODO: This part needs to be moved somewhere else in the future
     auto send_transaction = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      json::JSONDocument doc = req.JSON();
+      
       std::cout << "Got : " << req.uri() << std::endl;
-      std::cout << "Body: " << req.body() << std::endl;
+      std::cout << "Doc root " << doc.root() << std::endl;      
+      std::cout << "resources " << doc["resources"] << std::endl;
+      
       
       this->with_shards_do([this, req](std::vector< client_shared_ptr_type > shards,  std::vector< EntryPoint > const &detail_list) {
           std::cout << "Sending tx to " << shards.size() << " shards" << std::endl;          
