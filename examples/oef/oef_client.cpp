@@ -5,7 +5,8 @@
 #include"logger.hpp"
 
 // OEF
-#include "old_oef_codebase/lib/include/client.h"
+//#include "old_oef_codebase/lib/include/client.h"
+#include"oef/schema.h"
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
@@ -20,7 +21,6 @@ int main() {
 
   // start the real stuff
   std::cout << client.Call( MYPROTO,GREET, "Fetch" ).As<std::string>( ) << std::endl;
-
 
   Attribute wind        { "has_wind_speed",   Type::Bool, true};
   Attribute temperature { "has_temperature",  Type::Bool, true};
@@ -40,7 +40,6 @@ int main() {
   std::cout << client.Call( MYPROTO, REGISTERDATAMODEL, "test_agent", instance ).As<std::string>( ) << std::endl;
 
   // two queries, first one should succeed, one should fail since we are searching for wind and temperature with our agent has/does not have
-  //
 
   // Create constraints against our Attributes (whether the station CAN provide them)
   ConstraintType eqTrue{ConstraintType::ValueType{Relation{Relation::Op::Eq, true}}};

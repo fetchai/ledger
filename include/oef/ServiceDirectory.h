@@ -11,30 +11,15 @@
 #include <mutex>
 
 // Fetch.ai
-#include "serialize.h"
-#include "proxy.h"
+//#include "serialize.h"
+//#include "proxy.h"
+#include "oef/schema.h"
 
 class Agents {
 
  public:
   explicit Agents() {}
   explicit Agents(const std::string &agent) {insert(agent);}
-
-  template <typename Archive>
-  explicit Agents(const Archive &ar)
-  {
-    std::function<void(const Archive &)> f = [this](const Archive &iar)
-    {
-      _agents.emplace(iar.getString());
-    };
-    ar.parseObjects(f);
-  }
-
-  template <typename Archive>
-  void serialize(Archive &ar) const
-  {
-    ar.write(_agents.begin(), _agents.end());
-  }
 
   bool insert(const std::string &agent)
   {
@@ -135,4 +120,3 @@ class ServiceDirectory {
   mutable std::mutex _lock;
   std::unordered_map<Instance, Agents> _data;
 };
-

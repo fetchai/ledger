@@ -1,7 +1,7 @@
 #pragma once
 
 //#include "serialize.h"
-#include "old_oef_codebase/lib/include/serialize.h"
+//#include "old_oef_codebase/lib/include/serialize.h"
 #include <unordered_map>
 #include <mutex>
 #include <vector>
@@ -50,23 +50,6 @@ class Attribute {
   explicit Attribute() {}
   explicit Attribute(const std::string &name, Type type, bool required, stde::optional<std::string> description = stde::nullopt)
     : _name{name}, _type{type}, _required{required}, _description{description} {}
-
-   template <typename Archive>
-    explicit Attribute(const Archive &ar) : _name{ar.getString("name")},
-    _type{string_to_type(ar.getString("type"))}, _required{ar.getBool("required")}
-    {
-      if(ar.hasMember("description"))
-        _description = ar.getString("description");
-    }
-  template <typename Archive>
-  void serialize(Archive &ar) const {
-    ObjectWrapper<Archive> o{ar};
-    ar.write("name", _name);
-    ar.write("type", type_to_string(_type));
-    ar.write("required", _required);
-    if(_description)
-      ar.write("description", *_description);
-  }
 
   std::string name() const { return _name; }
   Type type() const { return _type; }
@@ -131,12 +114,6 @@ class Relation {
     if(s == "<>") return Op::NotEq;
     throw std::invalid_argument(s + std::string{" is not a valid operator."});
   }
-  template <typename Archive, typename T>
-    void serialize(Archive &ar, Type t, const T &val) const {
-    std::string v{type_to_string(t)};
-    ar.write("value_type", v);
-    ar.write("value", val);
-  }
  public:
   explicit Relation(Op op, const ValueType &value) : _op{op}, _value{value} {}
   template <typename T>
@@ -165,43 +142,6 @@ class Relation {
       });
     return res;
   }
-  template <typename Archive>
-    explicit Relation(const Archive &ar) : _op{string_to_op(ar.getString("op"))}
-    {
-      std::string vt{ar.getString("value_type")};
-      switch(string_to_type(vt)) {
-      case Type::Int:
-        _value = ar.getInt("value");
-        break;
-      case Type::Float:
-        _value = ar.getFloat("value");
-        break;
-      case Type::String:
-        _value = ar.getString("value");
-        break;
-      case Type::Bool:
-        _value = ar.getBool("value");
-        break;
-      default:
-        throw std::runtime_error(vt + std::string{" is not a valid type for Relation."});
-      }
-    }
-  template <typename Archive>
-  void serialize(Archive &ar) const {
-    ObjectWrapper<Archive> o{ar};
-    std::string t{"relation"};
-    ar.write("type", t);
-    ar.write("op", op_to_string(_op));
-    _value.match([&ar,this](int s) {
-        serialize<Archive,int>(ar, Type::Int, s);
-      },[&ar,this](float s) {
-        serialize<Archive,float>(ar, Type::Float, s);
-      },[&ar,this](const std::string &s) {
-        serialize<Archive,std::string>(ar, Type::String, s);
-      },[&ar,this](bool s) {
-        serialize<Archive,bool>(ar, Type::Bool, s);
-      });
-  }
 
   // Getters and setters for relation
 
@@ -219,12 +159,6 @@ class Set {
  private:
   Op _op;
   ValueType _values;
-  template <typename Archive, typename T>
-    void serialize(Archive &ar, Type t, const std::unordered_set<T> &vals) const {
-    std::string v{type_to_string(t)};
-    ar.write("value_type", v);
-    ar.write("values", vals.begin(), vals.end());
-  }
   std::string op_to_string(Op op) const {
     switch(op) {
     case Op::In: return "in";
@@ -237,35 +171,8 @@ class Set {
     if(s == "not in") return Op::NotIn;
     throw std::invalid_argument(s + std::string{" is not a valid operator."});
   }
-  template <typename Archive, typename T>
-    void init_values(const Archive &ar) {
-    std::unordered_set<T> res;
-    ar.template getObjects<T>("values", std::inserter(res, res.end()));
-    _values = res;
-  }
  public:
   explicit Set(Op op, const ValueType &values) : _op{op}, _values{values} {}
-  template <typename Archive>
-    explicit Set(const Archive &ar) : _op{string_to_op(ar.getString("op"))}
-    {
-      std::string vt{ar.getString("value_type")};
-      switch(string_to_type(vt)) {
-      case Type::Int:
-        init_values<Archive,int>(ar);
-        break;
-      case Type::Float:
-        init_values<Archive,float>(ar);
-        break;
-      case Type::String:
-        init_values<Archive,std::string>(ar);
-        break;
-      case Type::Bool:
-        init_values<Archive,bool>(ar);
-        break;
-      default:
-        throw std::runtime_error(vt + std::string{" is not a valid type for Set."});
-      }
-    }
   bool check(const VariantType &v) const {
     bool res = false;
     v.match([&res,this](int i) {
@@ -283,57 +190,16 @@ class Set {
       });
     return res;
   }
-  template <typename Archive>
-  void serialize(Archive &ar) const {
-    ObjectWrapper<Archive> o{ar};
-    std::string t{"set"};
-    ar.write("type", t);
-    ar.write("op", op_to_string(_op));
-    _values.match([&ar,this](const std::unordered_set<int> &s) {
-        serialize<Archive,int>(ar, Type::Int, s);
-      },[&ar,this](const std::unordered_set<float> &s) {
-        serialize<Archive,float>(ar, Type::Float, s);
-      },[&ar,this](const std::unordered_set<std::string> &s) {
-        serialize<Archive,std::string>(ar, Type::String, s);
-      },[&ar,this](const std::unordered_set<bool> &s) {
-        serialize<Archive,bool>(ar, Type::Bool, s);
-      });
-  }
-
 };
 class Range {
  public:
   using ValueType = var::variant<std::pair<int,int>,std::pair<float,float>,std::pair<std::string,std::string>>;
  private:
   ValueType _pair;
-  template <typename Archive, typename T>
-    void serialize(Archive &ar, const std::pair<T,T> &p) const {
-    std::string v{t_to_string(p.first)};
-    ar.write("value_type", v);
-    ar.write("start", p.first);
-    ar.write("end", p.second);
-  }
  public:
   explicit Range(ValueType v) : _pair{v} {}
   // enable_if is necessary to prevent both constructor to conflict.
-  template <typename Archive, typename std::enable_if<!std::is_same<Archive,Range::ValueType>::value>::type* = nullptr>
-    explicit Range(const Archive &ar)
-    {
-      std::string vt{ar.getString("value_type")};
-      switch(string_to_type(vt)) {
-      case Type::Int:
-        _pair = std::make_pair(ar.getInt("start"), ar.getInt("end"));
-        break;
-      case Type::Float:
-        _pair = std::make_pair(ar.getFloat("start"), ar.getFloat("end"));
-        break;
-      case Type::String:
-        _pair = std::make_pair(ar.getString("start"), ar.getString("end"));
-        break;
-      default:
-        throw std::runtime_error(vt + std::string{" is not a valid type for Range."});
-      }
-    }
+  //
   bool check(const VariantType &v) const {
     bool res = false;
     v.match([&res,this](int i) {
@@ -349,19 +215,6 @@ class Range {
         res = false; // doesn't make sense
       });
     return res;
-  }
-  template <typename Archive>
-  void serialize(Archive &ar) const {
-    ObjectWrapper<Archive> o{ar};
-    std::string t{"range"};
-    ar.write("type", t);
-    _pair.match([&ar,this](std::pair<int,int> p) {
-        serialize<Archive,int>(ar, p);
-      },[&ar,this](std::pair<float,float> p) {
-        serialize<Archive,float>(ar, p);
-      },[&ar,this](std::pair<std::string,std::string> p) {
-        serialize<Archive,std::string>(ar, p);
-      });
   }
 };
 
@@ -513,10 +366,6 @@ class ConstraintType {
 
   explicit ConstraintType(ValueType v) : _constraint{v} {}
 
-  template <typename Archive, typename std::enable_if<!std::is_same<Archive,ConstraintType::ValueType>::value>::type* = nullptr> // TODO: (`HUT`) : delete this
-    explicit ConstraintType(const Archive &ar);
-  template <typename Archive> void serialize(Archive &ar) const;
-  //
   bool check(const VariantType &v) const;
 
   // getters/setters
@@ -534,8 +383,6 @@ class Constraint {
   explicit Constraint(const Attribute &attribute, const ConstraintType &constraint)
     : _attribute{attribute}, _constraint{constraint} {}
 
-  template <typename Archive> explicit Constraint(const Archive &ar);
-  template <typename Archive> void serialize(Archive &ar) const;
   bool check(const VariantType &v) const {
     return _constraint.check(v);
   }
@@ -569,20 +416,7 @@ class Or {
  public:
   explicit Or(const std::vector<ConstraintType> expr) : _expr{expr} {}
   explicit Or() {}; // to make happy variant.
-  template <typename Archive>
-    explicit Or(const Archive &ar) {
-    std::function<void(const Archive &)> f = [this](const Archive &iar) {
-      _expr.emplace_back(ConstraintType{iar});
-    };
-    ar.parseObjects("constraints", f);
-  }
-  template <typename Archive>
-    void serialize(Archive &ar) const {
-    ObjectWrapper<Archive> o{ar};
-    std::string t{"or"};
-    ar.write("type", t);
-    ar.write("constraints", _expr.begin(), _expr.end());
-  }
+
   bool check(const VariantType &v) const {
     for(auto &c : _expr) {
       if(c.check(v))
@@ -597,20 +431,7 @@ class And {
   std::vector<ConstraintType> _expr;
  public:
   explicit And(const std::vector<ConstraintType> expr) : _expr{expr} {}
-  template <typename Archive>
-    explicit And(const Archive &ar) {
-    std::function<void(const Archive &)> f = [this](const Archive &iar) {
-      _expr.emplace_back(ConstraintType{iar});
-    };
-    ar.parseObjects("constraints", f);
-  }
-  template <typename Archive>
-  void serialize(Archive &ar) const {
-    ObjectWrapper<Archive> o{ar};
-    std::string t{"and"};
-    ar.write("type", t);
-    ar.write("constraints", _expr.begin(), _expr.end());
-  }
+
   bool check(const VariantType &v) const {
     for(auto &c : _expr) {
       if(!c.check(v))
@@ -624,105 +445,13 @@ class And {
   std::vector<ConstraintType>& setExpressions()             { return _expr; }
 };
 
-template <typename Archive, typename std::enable_if<!std::is_same<Archive,ConstraintType::ValueType>::value>::type*>
-  ConstraintType::ConstraintType(const Archive &ar) {
-  std::string t{ar.getString("type")};
-  if(t == "range") {
-    _constraint = Range{ar};
-  } else {
-    if(t == "set") {
-      _constraint = Set{ar};
-    } else {
-      if(t == "relation") {
-        _constraint = Relation{ar};
-      } else {
-        if(t == "or") {
-          _constraint = Or{ar};
-        } else {
-          if(t == "and") {
-            _constraint = And{ar};
-          } else {
-            throw std::invalid_argument(t + " is not a valid constraint type.");
-          }
-        }
-      }
-    }
-  }
-}
-
-template <typename Archive>
-void ConstraintType::serialize(Archive &ar) const {
-  _constraint.match([&ar,this](const Range &r) {
-      ar.write(r);
-    },[&ar,this](const Relation &r) {
-      ar.write(r);
-    },[&ar,this](const Set &r) {
-      ar.write(r);
-    },[&ar,this](const Or &r) {
-      ar.write(r);
-    },[&ar,this](const And &r) {
-      ar.write(r);
-    });
-}
-
-template <typename Archive>
-void Constraint::serialize(Archive &ar) const {
-  ObjectWrapper<Archive> o{ar};
-  ar.write("attribute", _attribute);
-  ar.write("constraint", _constraint);
-}
-
-template <typename Archive>
-Constraint::Constraint(const Archive &ar) : _attribute{ar.getObject("attribute")}, _constraint{ar.getObject("constraint")}  {}
-
 class KeywordLookup
 {
  public:
   explicit KeywordLookup(std::vector<std::string> keywords) :
     _keywords(keywords) {}
 
-  template <typename Archive>
-  explicit KeywordLookup(const Archive &ar) { _keywords.push_back(std::string{"asfdsf"}); std::cout << "happening" << std::endl; }
-
-  //template <typename Archive>
-  //explicit QueryModel(const Archive &ar)
-  //{
-  //  std::function<void(const Archive &)> f = [this](const Archive &iar) {
-  //    _constraints.emplace_back(Constraint{iar});
-  //  };
-  //  ar.parseObjects("constraints", f);
-  //  if(ar.hasMember("schema"))
-  //    _model = DataModel{ar.getObject("schema")};
-  //}
-
-  template <typename Archive>
-  void serialize(Archive &ar) const {
-    ObjectWrapper<Archive> o{ar};
-    ar.write("keywords", _keywords.begin(), _keywords.end());
-  }
-
   std::vector<std::string> getKeywords() const { return _keywords; }
-
-  //template <typename T>
-  //  bool check_value(const T &v) const {
-  //  for(auto &c : _constraints) {
-  //    if(!c.check(VariantType{v}))
-  //      return false;
-  //  }
-  //  return true;
-  //}
-  //bool check(const Instance &i) const {
-  //  if(_model) {
-  //    if(_model->name() != i.model().name())
-  //      return false;
-  //    // TODO: more to compare ?
-  //  }
-  //  for(auto &c : _constraints) {
-  //    if(!c.check(i))
-  //      return false;
-  //  }
-  //  return true;
-  //}
 
  private:
   std::vector<std::string> _keywords;
@@ -771,14 +500,7 @@ class SchemaRef {
   uint32_t _version;
  public:
   explicit SchemaRef(const std::string &name, uint32_t version) : _name{name}, _version{version} {}
-  template <typename Archive>
-    explicit SchemaRef(const Archive &ar) : _name{ar.getString("name")}, _version{ar.getUint("version")} {}
-  template <typename Archive>
-  void serialize(Archive &ar) const {
-    ObjectWrapper<Archive> o{ar};
-    ar.write("name", _name);
-    ar.write("version", _version);
-  }
+
   std::string name() const { return _name; }
   uint32_t version() const { return _version; }
 };
@@ -789,14 +511,6 @@ class Schema {
   DataModel _schema;
  public:
   explicit Schema(uint32_t version, const DataModel &schema) : _version{version}, _schema{schema} {}
-  template <typename Archive>
-    explicit Schema(const Archive &ar) : _version{ar.getUint("version")}, _schema{ar.getObject("schema")}  {}
-  template <typename Archive>
-  void serialize(Archive &ar) const {
-    ObjectWrapper<Archive> o{ar};
-    ar.write("version", _version);
-    ar.write("schema", _schema);
-  }
   uint32_t version() const { return _version; }
   DataModel schema() const { return _schema; }
 };
@@ -807,17 +521,6 @@ class Schemas {
   std::vector<Schema> _schemas;
  public:
   explicit Schemas() = default;
-  template <typename Archive>
-  void serialize(Archive &ar) const {
-    ar.write(_schemas.begin(), _schemas.end());
-  }
-  template <typename Archive>
-    explicit Schemas(const Archive &ar) {
-    std::function<void(const Archive &)> f = [this](const Archive &iar) {
-      _schemas.emplace_back(Schema{iar});
-    };
-    ar.parseObjects(f);
-  }
   uint32_t add(uint32_t version, const DataModel &schema) {
     std::lock_guard<std::mutex> lock(_lock);
     if(version == std::numeric_limits<uint32_t>::max())
@@ -844,19 +547,7 @@ class SchemaDirectory {
   std::unordered_map<std::string, Schemas> _schemas;
  public:
   explicit SchemaDirectory() = default;
-  template <typename Archive>
-    explicit SchemaDirectory(const Archive &ar) {
-    std::function<void(const Archive &)> f = [this](const Archive &iar) {
-      _schemas.emplace(std::make_pair(iar.getString("name"),
-                                      Schemas{iar.getObject("schemas")}));
-    };
-    ar.parseObjects("schemaDirectory", f);
-  }
-  template <typename Archive>
-  void serialize(Archive &ar) const {
-    ObjectWrapper<Archive> o{ar};
-    ar.write("schemaDirectory", _schemas, "name", "schemas");
-  }
+
   stde::optional<Schema> get(const std::string &key, uint32_t version = std::numeric_limits<uint32_t>::max()) const {
     const auto &iter = _schemas.find(key);
     if(iter != _schemas.end())
@@ -868,16 +559,48 @@ class SchemaDirectory {
   }
 };
 
-// all ser/deser methods
 
-// TODO: (`HUT`) : ask troels why this doesn't work - can't find 
-template< typename T, typename N, typename M>
-void Serialize( T & serializer, const std::unordered_map<std::string, std::string> &b) {
-  for(auto i : b){
-    serializer << i.first << i.second;
-  }
+//// TODO: (`HUT`) : maybe ask troels why this doesn't work - can't find template
+//template< typename T, typename N, typename M>
+//void Serialize( T & serializer, const std::unordered_map<std::string, std::string> &b) {
+//  for(auto i : b){
+//    serializer << i.first << i.second;
+//  }
+//}
+
+// Temporarily place convenience fns here
+bool ConstraintType::check(const VariantType &v) const {
+  bool res = false;
+  _constraint.match([&v,&res](const Range &r) {
+      res = r.check(v);
+    },[&v,&res](const Relation &r) {
+      res =  r.check(v);
+    },[&v,&res](const Set &r) {
+      res = r.check(v);
+    },[&v,&res](const Or &r) {
+      res = r.check(v);
+    },[&v,&res](const And &r) {
+      res = r.check(v);
+    });
+  return res;
 }
 
+VariantType string_to_value(Type t, const std::string &s) {
+  switch(t) {
+  case Type::Float:
+    return VariantType{float(std::stod(s))};
+  case Type::Int:
+    return VariantType{int(std::stol(s))};
+  case Type::String:
+    return VariantType{s};
+  case Type::Bool:
+    return VariantType{s == "1" || s == "true"};
+  }
+  // should not reach this line
+  return VariantType{std::string{""}};
+}
+
+// all ser/deser methods
 template< typename T>
 void Serialize( T & serializer, Instance const &b) {
 
@@ -1017,18 +740,18 @@ template< typename T, typename A, typename B, typename C, typename D, typename E
 void Serialize( T & serializer, var::variant<A, B, C, D, E> const &b) {
 
   b.match(
-          [&] (A a)    { std::cerr << "found " << "2" << std::endl; },
-          [&] (B a)    { std::cerr << "found " << "3" << std::endl; },
-          [&] (C a)    { std::cerr << "found " << "4" << std::endl; },
-          [&] (Relation a)    { serializer << a; }, // TODO: (`HUT`) : the rest of them
-          [&] (E a)    { std::cerr << "found " << "6" << std::endl; }
+          [&] (A a)        { /*serializer << a;*/ },
+          [&] (B a)        { /*serializer << a;*/ },
+          [&] (C a)        { /*serializer << a;*/ },
+          [&] (Relation a) { serializer << a; }, // TODO: (`HUT`) : the rest of them
+          [&] (E a)        { /*serializer << a;*/ }
           );
 }
 
 // TODO: (`HUT`) : think about this, removed const
 template< typename T, typename A, typename B, typename C, typename D, typename E>
 void Deserialize( T & serializer, var::variant<A, B, C, D, E> &b) {
-  Relation a; // TODO: (`HUT`) : this properly
+  Relation a; // TODO: (`HUT`) : this, properly
   serializer >> a;
   b = a;
 }
@@ -1050,7 +773,6 @@ template< typename T>
 void Deserialize( T & serializer, Relation &b) {
 
   serializer >> b.setOp();
-  //serializer >> b.setValueType();
 
   uint32_t index;
   serializer >> index;
@@ -1080,7 +802,6 @@ void Deserialize( T & serializer, Relation &b) {
       serializer >> res;
       b.setValueType() = res;}
   }
-  //serializer >> b.getConstraint();
 }
 
 template< typename T>
@@ -1138,8 +859,3 @@ void Deserialize( T & serializer, Relation::Op &b) {
       b = Relation::Op::NotEq;
   }
 }
-
-//// ValueType ser/deser - no work, why? 
-//template< typename T>
-//void Deserialize( T & serializer, var::variant<int,float,std::string,bool> &b) {
-//}

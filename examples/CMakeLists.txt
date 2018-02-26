@@ -16,8 +16,8 @@ add_executable(calculator script/calculator.cpp)
 
 add_executable(sha256 crypto/sha256.cpp)
 
-add_executable(rpc_client_oef oef/oef_client.cpp oef/schema.cpp)
-add_executable(rpc_server_oef oef/oef_server.cpp oef/schema.cpp)
+add_executable(rpc_client_oef oef/oef_client.cpp)
+add_executable(rpc_server_oef oef/oef_server.cpp)
 
 ## Legacy
 # add_executable(tutorial_rc_to_node_server tutorials/01_rc-to-node/node.cpp)
