@@ -64,12 +64,12 @@ public:
     } catch(...) {
       std::cout << req.body() << std::endl;
       
-      return HTTPResponse("{\"response\": \"no\", \"reason\": \"problems with parsing JSON\"}");     
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");     
     }
     
     if(users_.find( doc["address"].as_byte_array() ) == users_.end())
-      return HTTPResponse("{\"response\": \"no\"}");
-    return HTTPResponse("{\"response\": \"yes\"}");     
+      return HTTPResponse("{\"response\": \"false\"}");
+    return HTTPResponse("{\"response\": \"true\"}");     
   }
 
   HTTPResponse RegisterUser(ViewParameters const &params, HTTPRequest const &req) {
@@ -79,11 +79,11 @@ public:
     } catch(...) {
       std::cout << req.body() << std::endl;
       
-      return HTTPResponse("{\"response\": \"no\", \"reason\": \"problems with parsing JSON\"}");     
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");     
     }
 
     if(users_.find( doc["address"].as_byte_array() ) != users_.end())
-      return HTTPResponse("{\"response\": \"no\"}");
+      return HTTPResponse("{\"response\": \"false\"}");
     
     users_.insert( doc["address"].as_byte_array() );    
     accounts_[ doc["address"].as_byte_array()  ].balance = 300 + (lfg_() % 9700);
@@ -98,7 +98,7 @@ public:
     } catch(...) {
       std::cout << req.body() << std::endl;
       
-      return HTTPResponse("{\"response\": \"no\", \"reason\": \"problems with parsing JSON\"}");     
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");     
     }
 
     script::Variant result = script::Variant::Object();
@@ -106,7 +106,7 @@ public:
     if(users_.find( doc["address"].as_byte_array() ) == users_.end())
       return HTTPResponse("{\"balance\": 0}");    
 
-    result["balance"] = accounts_[ doc["address"].as_byte_array() ].balance;
+    result["response"] = accounts_[ doc["address"].as_byte_array() ].balance;
         
     std::stringstream ret;
     ret << result;    
@@ -120,7 +120,7 @@ public:
     } catch(...) {
       std::cout << req.body() << std::endl;
       
-      return HTTPResponse("{\"response\": \"no\", \"reason\": \"problems with parsing JSON\"}");     
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");     
     }
 
     Transaction tx;
@@ -133,10 +133,10 @@ public:
     tx.json = req.body();    
 
     if(users_.find( tx.fromAddress ) == users_.end())
-      return HTTPResponse("{\"response\": \"no\", \"reason\": \"fromAddress does not exist\"}");
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"fromAddress does not exist\"}");
 
     if(users_.find( tx.toAddress ) == users_.end())
-      return HTTPResponse("{\"response\": \"no\", \"reason\": \"toAddress does not exist\"}");    
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"toAddress does not exist\"}");    
 
     
     if(accounts_.find(tx.fromAddress) == accounts_.end())
@@ -146,7 +146,7 @@ public:
 
     if(accounts_[tx.fromAddress].balance < tx.amount)
     {
-      return HTTPResponse("{\"response\": \"no\", \"reason\": \"insufficient funds\"}");
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"insufficient funds\"}");
     }
 
     accounts_[tx.fromAddress].balance -= tx.amount;
@@ -154,8 +154,13 @@ public:
     
     accounts_[tx.fromAddress].history.push_back(tx);
     accounts_[tx.toAddress].history.push_back(tx);
+
+    script::Variant result = script::Variant::Object();
+    result["response"] = accounts_[tx.fromAddress].balance;
     
-    return HTTPResponse("{\"response\": \"yes\"}"); 
+    std::stringstream ret;
+    ret << result;    
+    return HTTPResponse(ret.str());    
   }
 
   HTTPResponse GetHistory(ViewParameters const &params, HTTPRequest const &req) {
@@ -165,12 +170,12 @@ public:
     } catch(...) {
       std::cout << req.body() << std::endl;
       
-      return HTTPResponse("{\"response\": \"no\", \"reason\": \"problems with parsing JSON\"}");     
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");     
     }
     
     auto address =  doc["address"].as_byte_array();
     if(users_.find( address ) == users_.end())
-      return HTTPResponse("{\"response\": \"no\", \"reason\": \"toAddress does not exist\"}");    
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"toAddress does not exist\"}");    
 
 
     auto &account = accounts_[address];
