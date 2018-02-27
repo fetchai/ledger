@@ -37,7 +37,6 @@ public:
 
   // Transaction defs
   typedef fetch::chain::Transaction transaction_type;
-  typedef typename transaction_type::arguments_type transaction_body_type;  
   typedef typename transaction_type::digest_type tx_digest_type;
 
   // Block defs  
@@ -120,6 +119,7 @@ public:
   block_type ExchangeHeads(block_type head_candidate) 
   {
     std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
+    fetch::logger.Debug("Sending head");
     
     // TODO: Check which head is better
     
@@ -429,24 +429,80 @@ public:
 
   void ConnectTo(std::string const &host, uint16_t const &port ) 
   {
+    /*
+      TODO: Make a connection directory
     connection_mutex_.lock();
-    ConnectionDetails d = {host, port};
+    ConnectionDetails cc = {host, port};
 
     bool should_connect = false;
     
-    if(last_connection_attempt_.find(d) == last_connection_attempt_.end()) {
+    if(last_connection_attempt_.find(cc) == last_connection_attempt_.end()) {
       should_connect = true;      
-      last_connection_attempt_[d] = 1; // TODO: Make time stamp.       
+      last_connection_attempt_[cc] = 1; // TODO: Make time stamp.       
     }
     
     connection_mutex_.unlock();
     if(!should_connect) return;
-
-
-       
+    */
 
     // Chained tasks
     client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_);
+
+    EntryPoint d;
+    d.host = host;    
+    d.port = port;
+    d.http_port = -1; 
+    d.shard = 0; // TODO: get and check that it is right
+    d.configuration = 0;  
+
+
+    block_mutex_.lock();    
+    block_type head_copy = head_;    
+    block_mutex_.unlock();
+    
+    auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_copy);
+   
+    client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_BLOCK,
+      new service::Function< void(block_type) >([this]( block_type const& block) 
+        {
+          this->PushBlock(block);          
+        }));             
+    
+    try {
+
+      fetch::logger.Debug("Deserializing head");
+      promise1.Wait();
+
+      if( promise1.has_failed() ) {
+        fetch::logger.Error("Request for head failed.");
+        return;        
+      }
+
+      if( promise1.is_connection_closed() ) {
+        fetch::logger.Error("Lost connection.");
+        return;           
+      }
+      
+      
+      block_type comp_head = promise1.As< block_type >();
+      fetch::logger.Debug("Done");
+      
+      comp_head.meta_data() = block_meta_data_type();      
+      
+      PushBlock(comp_head);
+
+      // Adding friend if everything goes well.
+      shard_friends_mutex_.lock();
+      shard_friends_.push_back(client);
+      friends_details_.push_back(d);
+      shard_friends_mutex_.unlock();
+    } catch( ... ) {
+
+      fetch::logger.Error("Failed to retrieve head - possibly protocol error.");
+    }
+    
+     
+    /*
 
     auto task4 = [&](service::Promise &promise1) {
       block_type comp_head = promise1.As< block_type >();
@@ -515,7 +571,7 @@ public:
           fetch::logger.Debug("Issueing task 1");
         task1();
       });
-    
+    */
   }
 
   void ListenTo(EntryPoint e) 
@@ -546,6 +602,19 @@ public:
     fetch::logger.Debug("Setting shard numbers: ", shard, " ", total_shards);    
     sharding_parameter_ = total_shards;
     details_.shard = shard;    
+  }
+  
+  uint32_t count_outgoing_connections() 
+  {
+    std::cout << "Was here??" << std::endl;    
+    std::lock_guard< fetch::mutex::Mutex > lock( shard_friends_mutex_ );
+    std::cout << "Was here???" << std::endl;    
+    return shard_friends_.size();    
+  }
+
+  uint32_t shard_number() 
+  {
+    return details_.shard;    
   }
   
 

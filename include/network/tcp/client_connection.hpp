@@ -27,7 +27,7 @@ public:
   ClientConnection(asio::ip::tcp::tcp::socket socket, ClientManager& manager)
     : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__)
   {
-    fetch::logger.Debug("Connection from ", socket_.remote_endpoint().address().to_string() );
+    fetch::logger.Debug("Server: Connection from ", socket_.remote_endpoint().address().to_string() );
   }
 
   ~ClientConnection() 
@@ -66,13 +66,13 @@ public:
 private:
   void ReadHeader() 
   {
-    fetch::logger.Debug("Waiting for next header.");  
+    fetch::logger.Debug("Server: Waiting for next header.");  
     auto self(shared_from_this());
     auto cb = [this, self](std::error_code ec, std::size_t) 
       {
         if (!ec) 
         {
-          fetch::logger.Debug("Read header.");
+          fetch::logger.Debug("Server: Read header.");
           ReadBody();
         } else 
         {
@@ -102,6 +102,7 @@ private:
       {
         if (!ec) 
         {
+          fetch::logger.Debug("Server: Read body.");
           manager_.PushRequest(handle_, message);
           ReadHeader();
         } else 
@@ -127,6 +128,7 @@ private:
       {
         if (!ec) 
         {
+          fetch::logger.Debug("Server: Wrote message.");
           write_mutex_.lock();
           write_queue_.pop_front();
           bool write_more = !write_queue_.empty();

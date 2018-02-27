@@ -293,8 +293,8 @@ public:
         server_details.entry_points.push_back(e2);        
       }
 
-      SendConnectivityDetailsToShards(server_details);
-            
+//      SendConnectivityDetailsToShards(server_details);
+      
       server_details_[ client->handle() ] = server_details;
     }
     else    
@@ -340,7 +340,7 @@ public:
 
   }
 
-  void with_shard_details_do(std::function< void(std::vector< EntryPoint > const &) > fnc) 
+  void with_shard_details_do(std::function< void(std::vector< EntryPoint > &) > fnc) 
   {
     shards_mutex_.lock();    
     fnc( shards_details_ );
@@ -348,7 +348,7 @@ public:
     shards_mutex_.unlock();    
   }
 
-  void with_shards_do(std::function< void(std::vector< client_shared_ptr_type > const &, std::vector< EntryPoint > const &) > fnc) 
+  void with_shards_do(std::function< void(std::vector< client_shared_ptr_type > const &, std::vector< EntryPoint > &) > fnc) 
   {
     shards_mutex_.lock();    
     fnc( shards_, shards_details_ );
@@ -398,6 +398,8 @@ private:
 
   void SendConnectivityDetailsToShards(NodeDetails const &server_details) 
   {
+    std::cout << "WAS HERE -WAS HERE -WAS HERE -WAS HERE -WAS HERE -WAS HERE -WAS HERE -WAS HERE -WAS HERE -" << std::endl;
+      
     for(auto const &e2: server_details.entry_points )
     {
       fetch::logger.Debug("Testing ", e2.host, ":", e2.port);

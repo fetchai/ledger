@@ -37,9 +37,11 @@ public:
     auto push_block = new CallableClassMember<ShardProtocol, void(block_type) >(this, &ShardProtocol::PushBlock );
     auto get_block = new CallableClassMember<ShardProtocol, block_type() >(this, &ShardProtocol::GetNextBlock );
 
+
     auto exchange_heads = new CallableClassMember<ShardProtocol, block_type(block_type) >(this, &ShardProtocol::ExchangeHeads );
     auto request_blocks_from = new CallableClassMember<ShardProtocol, std::vector< block_type >(block_header_type, uint16_t) >(this, &ShardProtocol::RequestBlocksFrom );
 
+    
     // TODO: Legacy - remove
     auto commit = new CallableClassMember<ShardProtocol, void() >(this, &ShardProtocol::Commit );    
     
@@ -56,9 +58,14 @@ public:
     // TODO: Move to separate protocol
     auto listen_to = new CallableClassMember<ShardProtocol, void(EntryPoint) >(this, &ShardProtocol::ListenTo );
     auto set_shard_number = new CallableClassMember<ShardProtocol, void(uint32_t, uint32_t) >(this, &ShardProtocol::SetShardNumber );
+    auto shard_number = new CallableClassMember<ShardProtocol, uint32_t() >(this, &ShardProtocol::shard_number );
+    auto count_outgoing = new CallableClassMember<ShardProtocol,  uint32_t() >(this, &ShardProtocol::count_outgoing_connections );        
     
     Protocol::Expose(ShardRPC::LISTEN_TO,listen_to);
-    Protocol::Expose(ShardRPC::SET_SHARD_NUMBER, set_shard_number);    
+    Protocol::Expose(ShardRPC::SET_SHARD_NUMBER, set_shard_number);
+    Protocol::Expose(ShardRPC::SHARD_NUMBER, shard_number);
+    Protocol::Expose(ShardRPC::COUNT_OUTGOING_CONNECTIONS, count_outgoing);
+    
     
     // Using the event feed that
     Protocol::RegisterFeed(ShardFeed::FEED_BROADCAST_BLOCK, this);    

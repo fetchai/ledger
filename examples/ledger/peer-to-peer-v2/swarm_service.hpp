@@ -137,6 +137,100 @@ public:
     
     if(running_) {
       thread_manager_->io_service().post([this]() {
+          this->UpdateShardConnectivity();          
+        });    
+    }    
+    
+  }
+
+  void UpdateShardConnectivity() 
+  {
+    using namespace fetch::protocols;
+    
+    std::vector< EntryPoint > shard_entries;    
+    this->with_suggestions_do([=, &shard_entries](std::vector< NodeDetails > const &details) {
+        for(auto const &d: details)
+        {
+          for(auto const &e: d.entry_points)
+          {
+            if(e.configuration & EntryPoint::NODE_SHARD)
+            {
+              shard_entries.push_back( e );
+            }
+          }
+        }
+      });
+
+    
+    std::random_shuffle(shard_entries.begin(), shard_entries.end());
+    std::vector< client_shared_ptr_type > shards;
+    std::vector< EntryPoint > details;
+    
+    
+    this->with_shards_do([this, &shards, &details](std::vector< client_shared_ptr_type > const &sh,
+          std::vector< EntryPoint > &det ) {
+        std::size_t i =0;
+        
+        for(auto &s: sh)
+        {
+          shards.push_back(s);
+          details.push_back(det[i]);          
+          ++i;          
+        }
+      });
+    
+    std::cout << "Updating shards: " << std::endl;          
+    for(std::size_t i=0; i < shards.size(); ++i)
+    {
+      auto client = shards[i];
+      auto p1 = client->Call(FetchProtocols::SHARD,  ShardRPC::COUNT_OUTGOING_CONNECTIONS);
+      auto p2 = client->Call(FetchProtocols::SHARD,  ShardRPC::SHARD_NUMBER);
+
+      if(! p1.Wait(300) )
+      {
+        continue;        
+      }
+      
+      if(! p2.Wait(300) )
+      {
+        continue;        
+      }
+      
+      
+      uint32_t conn_count = uint32_t( p1  );
+      uint32_t shard =  uint32_t( p2  );
+      std::cout << "  - "<<i << " : " << details[i].host << " " << details[i].port << " " << shard <<" " << conn_count <<  std::endl;      
+      // TODO: set shard detail
+      
+
+      if(conn_count < 5) // TODO: Desired connectivity;
+      {
+        for(auto &s: shard_entries)
+        {
+          std::cout << "Trying to connect " << s.host << ":" << s.port << std::endl;
+          
+          if( s.shard == shard )
+          {
+            fetch::logger.Warn("Before call");
+            
+            client->Call(FetchProtocols::SHARD, ShardRPC::LISTEN_TO, s);
+            fetch::logger.Warn("After call");
+            
+            ++conn_count;
+            if(conn_count == 5) // TODO: desired connectivity
+            {
+              break;                    
+            }
+            
+          }
+          
+        }
+      }
+
+    }
+    
+    if(running_) {
+      thread_manager_->io_service().post([this]() {
           this->TrackPeers();          
         });    
     }    

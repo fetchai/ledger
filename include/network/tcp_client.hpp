@@ -66,7 +66,7 @@ public:
 
   void Send(message_type const& msg) 
   {
-    fetch::logger.Debug("Sending message to server");    
+    fetch::logger.Debug("Client: Sending message to server");    
     auto cb = [this, msg]() 
       {
         write_mutex_.lock();
@@ -76,7 +76,7 @@ public:
           write_mutex_.unlock();
         } else 
         {
-          fetch::logger.Debug("Start writing message");    
+          fetch::logger.Debug("Client: Start writing message");    
           writing_ = true;
           write_mutex_.unlock();
           Write();
@@ -210,7 +210,7 @@ private:
           } 
         } else 
         {
-          fetch::logger.Error("Write failed, closing connection.");
+          fetch::logger.Error("Client: Write failed, closing connection:", ec);
           ConnectionFailed();                
           socket_.close();
         }

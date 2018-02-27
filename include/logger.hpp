@@ -6,12 +6,24 @@
 #include <ctime>
 #include<chrono>
 #include<mutex>
+#include<atomic>
+#include<thread>
 namespace fetch {
 namespace log {
 
 class DefaultLogger 
 {
 public:
+  DefaultLogger() 
+  {
+    thread_count_ = 0;    
+  }
+  virtual ~DefaultLogger() 
+  {
+
+  }
+  
+    
   enum {
     ERROR = 0,
     WARNING = 1,    
@@ -37,10 +49,18 @@ public:
       color = 7;
       break;          
     }
+
+    std::thread::id thread =  std::this_thread::get_id();    
+    
+    if(thread_number_.find(thread) == thread_number_.end() )
+    {
+      thread_number_[thread] = int(++thread_count_);      
+    }
+    int thread_number = thread_number_[thread];
     
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::cout << "[ " << GetColor(color,9) << std::put_time(std::localtime(&now_c), "%F %T") <<  DefaultAttributes() <<" ] ";    
+    std::cout << "[ " << GetColor(color,9) << std::put_time(std::localtime(&now_c), "%F %T") <<  DefaultAttributes() << ", #" << thread_number << " ] ";    
   }
 
   template< typename T >
@@ -59,7 +79,9 @@ public:
   {
     std::cout << std::endl;    
   }
-  
+private:
+  std::map< std::thread::id, int > thread_number_;
+  std::atomic< int > thread_count_;
 };
 
 namespace details {

@@ -6,11 +6,17 @@ namespace fetch
 namespace protocols
 {
 
-enum FetchProtocols 
+struct FetchProtocols 
+{
+  
+enum
 {
   SWARM = 1,
   SHARD = 2
 };
+
+} ;
+
 
 };
 };
