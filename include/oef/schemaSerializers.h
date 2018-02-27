@@ -1,14 +1,25 @@
 #ifndef SCHEMA_SERIALIZERS_BASIC_H
 #define SCHEMA_SERIALIZERS_BASIC_H
 
+#include"serializer/serializable_exception.hpp"
+#include"service/error_codes.hpp"
 #include"oef/schema.h"
 
-// all ser/deser methods
+// All of the serialization and deserialization functions for the classes in schema.h
+
+// TODO: (`HUT`) : The following classes are not, but should eventually be, serializable (time cosntraints)
+// Set, Range, Or, KeywordLookup, SchemaRef, Schema, Schemas
+
+/////////////////////////////////////////////////////////////////
+// Instance
 template< typename T>
 void Serialize( T & serializer, Instance const &b) {
 
-  // Put in the serializer the size of our data
-  serializer << (uint32_t)b.getValues().size();
+  auto size = b.getValues().size(); // TODO: (`HUT`) : ask troells, is this the correct/clean way to do this
+  if(size > UINT32_MAX) {
+    throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Attempt to serialize Instance failed - unsafe type narrowing");
+  }
+  serializer << (uint32_t)size;
 
   for(auto i : b.getValues()){
     const std::string key = i.first;
@@ -16,14 +27,13 @@ void Serialize( T & serializer, Instance const &b) {
     serializer << key << val;
   }
 
-  // let's whack on our datamodel
   serializer << b.getDataModel();
 }
 
 template< typename T>
 void Deserialize( T & serializer, Instance &b) {
 
-  uint32_t mapLen; // TODO: (`HUT`) : change sizing
+  uint32_t mapLen;
   serializer >> mapLen;
   auto &map = b.setValues();
   for (int i = 0;i < mapLen;i++){
@@ -33,10 +43,11 @@ void Deserialize( T & serializer, Instance &b) {
     map[first] = second;
   }
 
-  // let's whack on our datamodel
   serializer >> b.setDataModel();
 }
 
+/////////////////////////////////////////////////////////////////
+// Datamodel
 // TODO: (`HUT`) : keywords ser/deser not tested yet
 template< typename T>
 void Serialize( T & serializer, DataModel const &b) {
@@ -45,9 +56,11 @@ void Serialize( T & serializer, DataModel const &b) {
 
 template< typename T>
 void Deserialize( T & serializer, DataModel &b) {
-  serializer >> b.setName() >> b.setKeywords() >> b.setAttributes();  // TODO: (`HUT`) : check for incorrect >>
+  serializer >> b.setName() >> b.setKeywords() >> b.setAttributes();
 }
 
+/////////////////////////////////////////////////////////////////
+// Attribute
 template< typename T>
 void Serialize( T & serializer, Attribute const &b) {
   serializer << b.getName() << b.getRequired() << b.getType();
@@ -58,6 +71,8 @@ void Deserialize( T & serializer, Attribute &b) {
   serializer >> b.setName() >> b.setRequired() >> b.setType();
 }
 
+/////////////////////////////////////////////////////////////////
+// Type
 // TODO: (`HUT`) : ask troells, almost certainly a more efficient way to do this using serializer type inference
 template< typename T>
 void Serialize( T & serializer, Type const &b) {
@@ -104,6 +119,7 @@ void Deserialize( T & serializer, Type &b) {
   }
 }
 
+/////////////////////////////////////////////////////////////////
 // QueryModel
 template< typename T>
 void Serialize( T & serializer, QueryModel const &b) {
@@ -115,7 +131,8 @@ void Deserialize( T & serializer, QueryModel &b) {
   serializer >> b.setConstraints();
 }
 
-// QueryModel has constraints
+/////////////////////////////////////////////////////////////////
+// Constraints
 template< typename T>
 void Serialize( T & serializer, Constraint const &b) {
   serializer << b.getAttribute() << b.getConstraintType();
@@ -126,7 +143,8 @@ void Deserialize( T & serializer, Constraint &b) {
   serializer >> b.setAttribute() >> b.setConstraintType();
 }
 
-// Constraints have an attribute(done) and a constraint type
+/////////////////////////////////////////////////////////////////
+// ConstraintType
 template< typename T>
 void Serialize( T & serializer, ConstraintType const &b) {
   serializer << b.getConstraint();
@@ -137,28 +155,29 @@ void Deserialize( T & serializer, ConstraintType &b) {
   serializer >> b.setConstraint();
 }
 
-// ConstraintType
-// Do we really want to do this? TODO: (`HUT`) : Ask Troells how to compress
+/////////////////////////////////////////////////////////////////
+// Variant (var::variant<var::recursive_wrapper<Or>,var::recursive_wrapper<And>,Range,Relation,Set>)
 template< typename T, typename A, typename B, typename C, typename D, typename E>
-void Serialize( T & serializer, var::variant<A, B, C, D, E> const &b) {
+void Serialize( T & serializer, var::variant<A, B, C, D, E> const &b) { // TODO: (`HUT`) : ask troells if there is a more elegant way to serialize variants
 
   b.match(
-          [&] (A a)        { /*serializer << a;*/ },
-          [&] (B a)        { /*serializer << a;*/ },
-          [&] (C a)        { /*serializer << a;*/ },
-          [&] (Relation a) { serializer << a; }, // TODO: (`HUT`) : the rest of them
-          [&] (E a)        { /*serializer << a;*/ }
+          [&] (A a) { throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); }, // throw since not implemented
+          [&] (B a) { throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); },
+          [&] (C a) { throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); },
+          [&] (D a) { serializer << a; },                                                                                                                           // TODO: (`HUT`) : the rest of these
+          [&] (E a) { throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); }
           );
 }
 
-// TODO: (`HUT`) : think about this, removed const
 template< typename T, typename A, typename B, typename C, typename D, typename E>
 void Deserialize( T & serializer, var::variant<A, B, C, D, E> &b) {
-  Relation a; // TODO: (`HUT`) : this, properly
+  Relation a; // TODO: (`HUT`) : this, properly. It will throw if this is used incorrectly, though
   serializer >> a;
   b = a;
 }
 
+/////////////////////////////////////////////////////////////////
+// Relation
 template< typename T>
 void Serialize( T & serializer, Relation const &b) {
   serializer << b.getOp();
@@ -207,6 +226,8 @@ void Deserialize( T & serializer, Relation &b) {
   }
 }
 
+/////////////////////////////////////////////////////////////////
+// Relation::Op
 template< typename T>
 void Serialize( T & serializer, Relation::Op const &b) {
 

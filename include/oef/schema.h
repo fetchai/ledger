@@ -10,13 +10,13 @@
 #include<experimental/optional>
 #include"mapbox/variant.hpp"
 
+// Schema for the OEF: effectively defining the class structure that builds DataModels, Instances and Queries for those Instances
+
 namespace stde = std::experimental;
 namespace var = mapbox::util; // for the variant
 
 enum class Type { Float, Int, Bool, String };
 using VariantType = var::variant<int,float,std::string,bool>;
-std::string type_to_string(Type t);
-Type string_to_type(const std::string &s);
 VariantType string_to_value(Type t, const std::string &s);
 
 class Attribute {
@@ -69,22 +69,14 @@ public:
     throw std::invalid_argument(_name + std::string(" has a wrong type of value ") + iter->second);
   }
 
-  // getters/setters
-
-  const std::string& getName() const { return _name; } // TODO: (`HUT`) : make this auto?
+  // Getters and setters for serialization
+  const std::string& getName() const { return _name; }
   std::string& setName()             { return _name; }
-
-  const bool& getRequired() const { return _required; }
-  bool& setRequired()             { return _required; }
-
-  const Type& getType() const { return _type; } // TODO: (`HUT`) : probably not so great for troells serialization
-  Type& setType()             { return _type; }
+  const bool& getRequired() const    { return _required; }
+  bool& setRequired()                { return _required; }
+  const Type& getType() const        { return _type; }
+  Type& setType()                    { return _type; }
 };
-
-std::string t_to_string(int i);
-std::string t_to_string(float f);
-std::string t_to_string(bool b);
-std::string t_to_string(const std::string &s);
 
 class Relation {
 public:
@@ -143,8 +135,7 @@ public:
     return res;
   }
 
-  // Getters and setters for relation
-
+  // Getters and setters for serialization
   const Op& getOp() const               { return _op; }
   Op& setOp()                           { return _op; }
   const ValueType& getValueType() const { return _value; }
@@ -190,7 +181,14 @@ public:
       });
     return res;
   }
+
+  // Getters and setters for serialization
+  const Op& getOp() const                { return _op; }
+  Op& setOp()                            { return _op; }
+  const ValueType& getValueTypes() const { return _values; }
+  ValueType& setValueTypes()             { return _values; }
 };
+
 class Range {
 public:
   using ValueType = var::variant<std::pair<int,int>,std::pair<float,float>,std::pair<std::string,std::string>>;
@@ -269,7 +267,7 @@ public:
     return res;
   }
 
-  // getters/setters 
+  // Getters and setters for serialization
   std::string              name() const { return _name; } // TODO: (`HUT`) : old, delete when appropriate
   std::vector<std::string> keywords() const { return _keywords; }
 
@@ -289,14 +287,6 @@ private:
   std::unordered_map<std::string,std::string> _values;
 
 public:
-  // getters/setters for serialization
-
-  const std::unordered_map<std::string,std::string>& getValues() const { return _values; }
-  std::unordered_map<std::string,std::string>& setValues()             { return _values; }
-
-  const DataModel& getDataModel() const { return _model; }
-  DataModel& setDataModel()             { return _model; }
-
   Instance() {}
 
   Instance(const DataModel &model, const std::unordered_map<std::string,std::string> &values)
@@ -339,8 +329,16 @@ public:
       return stde::nullopt;
     return stde::optional<std::string>{iter->second};
   }
+
+  // Getters and setters for serialization
+  const std::unordered_map<std::string,std::string>& getValues() const { return _values; }
+  std::unordered_map<std::string,std::string>& setValues()             { return _values; }
+
+  const DataModel& getDataModel() const { return _model; }
+  DataModel& setDataModel()             { return _model; }
 };
 
+// Used for hashing classes for use in unordered_map etc.
 namespace std
 {
   template<> struct hash<Instance>  {
@@ -368,7 +366,7 @@ public:
 
   bool check(const VariantType &v) const;
 
-  // getters/setters
+  // Getters and setters for serialization
   const ConstraintType::ValueType& getConstraint() const { return _constraint; }
   ConstraintType::ValueType& setConstraint()             { return _constraint; }
 };
@@ -399,11 +397,11 @@ public:
         std::cerr << "Should not happen!\n"; // Exception ?
       return false;
     }
-    VariantType value{string_to_value(_attribute.type(), *v)};// this is a prblem
+    VariantType value{string_to_value(_attribute.type(), *v)};
     return check(value);
   }
 
-  // getters/setters
+  // Getters and setters for serialization
   const Attribute& getAttribute() const { return _attribute; }
   Attribute& setAttribute()             { return _attribute; }
 
@@ -440,7 +438,7 @@ public:
     return true;
   }
 
-  // Getters and setters
+  // Getters and setters for serialization
   const std::vector<ConstraintType>& getExpressions() const { return _expr; }
   std::vector<ConstraintType>& setExpressions()             { return _expr; }
 };
@@ -489,11 +487,47 @@ public:
     return true;
   }
 
-  // getters/setters for serialization
+  // Getters and setters for serialization
   const std::vector<Constraint>& getConstraints() const { return _constraints; }
   std::vector<Constraint>& setConstraints()             { return _constraints; }
 };
 
+// Temporarily place convenience fns here
+bool ConstraintType::check(const VariantType &v) const {
+  bool res = false;
+  _constraint.match([&v,&res](const Range &r) {
+      res = r.check(v);
+    },[&v,&res](const Relation &r) {
+      res =  r.check(v);
+    },[&v,&res](const Set &r) {
+      res = r.check(v);
+    },[&v,&res](const Or &r) {
+      res = r.check(v);
+    },[&v,&res](const And &r) {
+      res = r.check(v);
+    });
+  return res;
+}
+
+VariantType string_to_value(Type t, const std::string &s) {
+  switch(t) {
+  case Type::Float:
+    return VariantType{float(std::stod(s))};
+  case Type::Int:
+    return VariantType{int(std::stol(s))};
+  case Type::String:
+    return VariantType{s};
+  case Type::Bool:
+    return VariantType{s == "1" || s == "true"};
+  }
+  // should not reach this line
+  return VariantType{std::string{""}};
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+// Functionality unused in current code below
+
+/*
 class SchemaRef {
 private:
   std::string _name; // unique
@@ -558,46 +592,6 @@ public:
     return _schemas[key].add(version, schema);
   }
 };
-
-
-//// TODO: (`HUT`) : maybe ask troels why this doesn't work - can't find template
-//template< typename T, typename N, typename M>
-//void Serialize( T & serializer, const std::unordered_map<std::string, std::string> &b) {
-//  for(auto i : b){
-//    serializer << i.first << i.second;
-//  }
-//}
-
-// Temporarily place convenience fns here
-bool ConstraintType::check(const VariantType &v) const {
-  bool res = false;
-  _constraint.match([&v,&res](const Range &r) {
-      res = r.check(v);
-    },[&v,&res](const Relation &r) {
-      res =  r.check(v);
-    },[&v,&res](const Set &r) {
-      res = r.check(v);
-    },[&v,&res](const Or &r) {
-      res = r.check(v);
-    },[&v,&res](const And &r) {
-      res = r.check(v);
-    });
-  return res;
-}
-
-VariantType string_to_value(Type t, const std::string &s) {
-  switch(t) {
-  case Type::Float:
-    return VariantType{float(std::stod(s))};
-  case Type::Int:
-    return VariantType{int(std::stol(s))};
-  case Type::String:
-    return VariantType{s};
-  case Type::Bool:
-    return VariantType{s == "1" || s == "true"};
-  }
-  // should not reach this line
-  return VariantType{std::string{""}};
-}
+*/
 
 #endif
