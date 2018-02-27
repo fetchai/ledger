@@ -1,3 +1,6 @@
+#ifndef SCHEMA_SERIALIZERS_BASIC_H
+#define SCHEMA_SERIALIZERS_BASIC_H
+
 #include"oef/schema.h"
 
 // all ser/deser methods
@@ -42,7 +45,7 @@ void Serialize( T & serializer, DataModel const &b) {
 
 template< typename T>
 void Deserialize( T & serializer, DataModel &b) {
-  serializer >> b.setName() << b.setKeywords() << b.setAttributes();
+  serializer >> b.setName() >> b.setKeywords() >> b.setAttributes();  // TODO: (`HUT`) : check for incorrect >>
 }
 
 template< typename T>
@@ -259,3 +262,5 @@ void Deserialize( T & serializer, Relation::Op &b) {
       b = Relation::Op::NotEq;
   }
 }
+
+#endif

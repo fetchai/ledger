@@ -5,37 +5,19 @@
 #include"oef/schemaSerializers.h"
 #include"oef/ServiceDirectory.h"
 using namespace fetch::service;
-using namespace fetch::byte_array;
+using namespace fetch::byte_array; // TODO: (`HUT`) : using namespaces is forbidden (especially in .h files)
 
 // First we make a service implementation
 class Implementation {
 
 public:
-  // TODO: (`HUT`) : delete these
-  int SlowFunction(int a, int b) {
-    std::this_thread::sleep_for( std::chrono::milliseconds(20) );
-    return a + b;
-  }
-
-  // TODO: (`HUT`) : delete these
-  int Add(int a, int b) {
-    return a + b;
-  }
-
-  // TODO: (`HUT`) : delete these
-  std::string Greet(std::string name) {
-    return "Hello, " + name;
-  }
-
   std::string RegisterDataModel(std::string agentName, Instance instance) {
-
-    auto result = serviceDirectory_.registerAgent(instance, agentName);
+    auto result = serviceDirectory_.RegisterAgent(instance, agentName);
     return std::to_string(result);
   }
 
   std::vector<std::string> Query(std::string agentName, QueryModel query) {
-
-    return serviceDirectory_.query(query);
+    return serviceDirectory_.Query(query);
   }
 
 private:
@@ -47,11 +29,7 @@ class ServiceProtocol : public Implementation, public Protocol {
 public:
 
   ServiceProtocol() : Implementation(), Protocol() {
-
-    this->Expose(SLOWFUNCTION,          new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::SlowFunction) );                   // TODO: (`HUT`) : delete this
-    this->Expose(ADD,                   new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::Add) );                            // TODO: (`HUT`) : delete this
-    this->Expose(GREET,                 new CallableClassMember<Implementation, std::string(std::string)>(this, &Implementation::Greet) );               // TODO: (`HUT`) : delete this
-    this->Expose(REGISTERDATAMODEL,     new CallableClassMember<Implementation, std::string(std::string agentName, Instance)>(this, &Implementation::RegisterDataModel) );
+    this->Expose(REGISTERDATAMODEL,     new CallableClassMember<Implementation, std::string(std::string agentName, Instance)>                     (this, &Implementation::RegisterDataModel) );
     this->Expose(QUERY,                 new CallableClassMember<Implementation, std::vector<std::string>(std::string agentName, QueryModel query)>(this, &Implementation::Query) );
   }
 };

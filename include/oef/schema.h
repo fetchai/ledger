@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SCHEMA_DEFINES_H
+#define SCHEMA_DEFINES_H
 
 #include<mutex>
 #include<unordered_set>
@@ -599,3 +600,4 @@ VariantType string_to_value(Type t, const std::string &s) {
   return VariantType{std::string{""}};
 }
 
+#endif

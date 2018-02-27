@@ -5,7 +5,7 @@
 #include"logger.hpp"
 #include"oef/schema.h"
 #include"oef/schemaSerializers.h"
-using namespace fetch::service;
+using namespace fetch::service; // TODO: (`HUT`) : remove namespaces
 using namespace fetch::byte_array;
 
 int main() {
@@ -16,9 +16,6 @@ int main() {
   tm.Start();
 
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );
-
-  // start the real stuff
-  std::cout << client.Call( MYPROTO,GREET, "Fetch" ).As<std::string>( ) << std::endl;
 
   Attribute wind        { "has_wind_speed",   Type::Bool, true};
   Attribute temperature { "has_temperature",  Type::Bool, true};

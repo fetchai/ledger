@@ -1,7 +1,9 @@
 // This file holds the implementation for a serviceDirectory. It's responsibilities are to manage a list of agents, and their services (instance of datamodel).
 // It also responds to 'queries', returning the agents that meet these queries
 
-#pragma once
+#ifndef SERVICE_DIRECTORY_H
+#define SERVICE_DIRECTORY_H
+
 #include<unordered_map>
 #include<unordered_set>
 #include<mutex>
@@ -42,12 +44,12 @@ class ServiceDirectory {
 public:
   explicit ServiceDirectory() = default;
 
-  bool registerAgent(const Instance &instance, const std::string &agent) {
+  bool RegisterAgent(const Instance &instance, const std::string &agent) {
     std::lock_guard<std::mutex> lock(_lock);
     return _data[instance].Insert(agent);
   }
 
-  bool unregisterAgent(const Instance &instance, const std::string &agent) {
+  bool UnregisterAgent(const Instance &instance, const std::string &agent) {
     std::lock_guard<std::mutex> lock(_lock);
     auto iter = _data.find(instance);
     if(iter == _data.end())
@@ -59,7 +61,7 @@ public:
     return res;
   }
 
-  bool remove(const std::string &agent) {
+  bool Remove(const std::string &agent) {
     std::lock_guard<std::mutex> lock(_lock);
     bool res = false;
 
@@ -76,12 +78,7 @@ public:
     return res;
   }
 
-  size_t size() const {
-    std::lock_guard<std::mutex> lock(_lock);
-    return _data.size();
-  }
-
-  std::vector<std::string> query(const QueryModel &query) const {
+  std::vector<std::string> Query(const QueryModel &query) const {
     std::lock_guard<std::mutex> lock(_lock);
     std::unordered_set<std::string> res;
 
@@ -93,7 +90,14 @@ public:
     return std::vector<std::string>(res.begin(), res.end());
   }
 
+  size_t size() const {
+    std::lock_guard<std::mutex> lock(_lock);
+    return _data.size();
+  }
+
 private:
   mutable std::mutex _lock;
   std::unordered_map<Instance, Agents> _data;
 };
+
+#endif
