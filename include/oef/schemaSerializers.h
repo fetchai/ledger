@@ -8,7 +8,7 @@ template< typename T>
 void Serialize( T & serializer, Instance const &b) {
 
   // Put in the serializer the size of our data
-  serializer << b.getValues().size();
+  serializer << (uint32_t)b.getValues().size();
 
   for(auto i : b.getValues()){
     const std::string key = i.first;
@@ -23,7 +23,7 @@ void Serialize( T & serializer, Instance const &b) {
 template< typename T>
 void Deserialize( T & serializer, Instance &b) {
 
-  uint64_t mapLen; // TODO: (`HUT`) : change sizing
+  uint32_t mapLen; // TODO: (`HUT`) : change sizing
   serializer >> mapLen;
   auto &map = b.setValues();
   for (int i = 0;i < mapLen;i++){
