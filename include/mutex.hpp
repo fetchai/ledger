@@ -1,6 +1,8 @@
 #ifndef MUTEX_HPP
 #define MUTEX_HPP
 
+#include"logger.hpp"
+
 #include<thread>
 #include<mutex>
 #include<map>
@@ -24,28 +26,28 @@ class DebugMutex : public std::mutex
   {
     bool locked = true;
   };
+  
 public:
-  DebugMutex(int line, std::string file) : line_(line), file_(file) { } 
-  DebugMutex() = default;
+  DebugMutex(int line, std::string file) :  std::mutex(), line_(line), file_(file) { } 
+  DebugMutex() = default;  
+  
   
   
   DebugMutex& operator=(DebugMutex const &other) = delete;
   
   void lock() 
   {
-
+        
     lock_mutex_.lock();
-    
     std::thread::id id =  std::this_thread::get_id();
     if(locker_.find( id ) != locker_.end() ) 
     {
-      std::cout << "MUTEX DEAD LOCK!: " << line_ << " " << file_ << std::endl << std::flush;
+      fetch::logger.Debug( "Mutex deadlock: ", line_ , " " , file_ );            
       exit(-1);
     }
     locker_[id] = LockInfo();
-
     lock_mutex_.unlock();
-    std::mutex::lock(); 
+    std::mutex::lock();
   }
   
   void unlock() 
@@ -55,7 +57,7 @@ public:
     std::thread::id id =  std::this_thread::get_id();
     locker_.erase( id );
     lock_mutex_.unlock();
-    std::mutex::unlock();     
+    std::mutex::unlock();    
   }
 private:
   std::map< std::thread::id, LockInfo > locker_;

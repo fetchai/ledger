@@ -72,7 +72,7 @@ public:
   void Mine() 
   {
     int diff = 14;    
-
+    
     auto block = this->GetNextBlock();
     if(  block.body().transaction_hash == "") {
       std::this_thread::sleep_for( std::chrono::milliseconds( 100 ));           

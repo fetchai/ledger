@@ -16,7 +16,7 @@
 #include"protocols/shard/commands.hpp"
 
 #include"protocols/swarm/entry_point.hpp"
-
+#include"logger.hpp"
 
 #include<map>
 #include<vector>
@@ -57,7 +57,28 @@ public:
     block_header_type end;
     block_header_type next_missing;    
   };  
+
+  struct ConnectionDetails
+  {
+    std::string host;
+    uint16_t port;
+    
+    bool operator==(ConnectionDetails const &other) const 
+    {
+      return (host == other.host) && (port == other.port);      
+    }
+
+    bool operator<(ConnectionDetails const &other) const 
+    {
+      if(port == other.port)
+        return host < other.host;
+      return port < other.port;      
+    }    
+  };
+  std::map<ConnectionDetails, int > last_connection_attempt_;
+  fetch::mutex::Mutex connection_mutex_;
   
+    
 
   
   ShardManager(uint64_t const& protocol,
@@ -129,6 +150,9 @@ public:
   
   bool PushTransaction( transaction_type tx ) {
     tx_mutex_.lock();
+
+    tx.UpdateDigest();
+    
     if(known_transactions_.find( tx.digest()  ) != known_transactions_.end() ) {      
       tx_mutex_.unlock();
       return false;
@@ -182,12 +206,14 @@ public:
   
   void PushBlock(block_type block) {
     block_mutex_.lock();
-
+    std::cout << "Pushing block" << std::endl;
+    
     // Only record blocks that are new
     if( chains_.find( block.header() ) != chains_.end() ) {
       std::cout << "Nothing to do for block" << std::endl;
       
-      block_mutex_.unlock(); 
+      block_mutex_.unlock();
+      std::cout << "EXIT Pushing block 1" << std::endl;
       return ;
     }
     
@@ -340,10 +366,11 @@ public:
     }
 
     block_mutex_.unlock();
-    
+    std::cout << "Publishing block 1" << std::endl;    
     this->Publish(ShardFeed::FEED_BROADCAST_BLOCK, block );
-    
-    shard_friends_mutex_.lock();   
+
+    std::cout << "Publishing block 2" << std::endl;          
+    shard_friends_mutex_.lock();
     for(auto &c: shard_friends_)
     {
       c->Call(FetchProtocols::SHARD,  ShardRPC::PUSH_BLOCK, block );      
@@ -352,12 +379,15 @@ public:
 
     
     if(was_loose)
-    {      
+    {
+      std::cout << "EXITING block 2" << std::endl;  
       return; 
     }
-    
+
+    std::cout << "Attachign block" << std::endl;              
     // FInally we attach the block if it does not belong to a loose chain
     AttachBlock(header, block);
+      std::cout << "EXITING block 3" << std::endl;      
   }
 
   
@@ -399,36 +429,93 @@ public:
 
   void ConnectTo(std::string const &host, uint16_t const &port ) 
   {
-    client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_);
-    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
-    shard_friends_mutex_.lock();
-    EntryPoint d;
-    d.host = host;    
-    d.port = port;
-    d.http_port = -1; 
-    d.shard = 0; // TODO: get and check that it is right
-    d.configuration = 0;  
-    shard_friends_.push_back(client);
-    friends_details_.push_back(d);
+    connection_mutex_.lock();
+    ConnectionDetails d = {host, port};
 
-//
+    bool should_connect = false;
     
-    block_mutex_.lock(); 
-    auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_);
-    block_mutex_.unlock();
+    if(last_connection_attempt_.find(d) == last_connection_attempt_.end()) {
+      should_connect = true;      
+      last_connection_attempt_[d] = 1; // TODO: Make time stamp.       
+    }
     
-    client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_BLOCK,
-      new service::Function< void(block_type) >([this]( block_type const& block) 
-        {
-          this->PushBlock(block);          
-        })); 
-        
+    connection_mutex_.unlock();
+    if(!should_connect) return;
+
+
+       
+
+    // Chained tasks
+    client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_);
+
+    auto task4 = [&](service::Promise &promise1) {
+      block_type comp_head = promise1.As< block_type >();
+      comp_head.meta_data() = block_meta_data_type();      
+      
+      PushBlock(comp_head);
+      fetch::logger.Debug("Done");
+     
+    };
     
-    block_type comp_head = promise1.As< block_type >();
-    comp_head.meta_data() = block_meta_data_type();      
-    shard_friends_mutex_.unlock();
+    auto task3 = [&](service::Promise &promise1) {
+      shard_friends_mutex_.lock();
+      client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_BLOCK,
+        new service::Function< void(block_type) >([this]( block_type const& block) 
+          {
+            this->PushBlock(block);          
+          }));             
+      shard_friends_mutex_.unlock();
+
+      thread_manager_->io_service().post([&]() {
+          fetch::logger.Debug("Issueing task 4"); 
+          task4(promise1);
+      });      
+    };
     
-    PushBlock(comp_head);     
+    auto task2 = [&]() {
+      block_mutex_.lock(); 
+      auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_);
+      block_mutex_.unlock();
+
+      thread_manager_->io_service().post([&]() {
+          fetch::logger.Debug("Issueing task 3");
+          task3(promise1);
+      });
+    };
+    
+    auto task1 = [&]() {
+
+      
+
+      EntryPoint d;
+      d.host = host;    
+      d.port = port;
+      d.http_port = -1; 
+      d.shard = 0; // TODO: get and check that it is right
+      d.configuration = 0;  
+
+
+      fetch::logger.Debug("Just before crash");
+      shard_friends_mutex_.lock();
+      fetch::logger.Debug("Just after crash");      
+      shard_friends_.push_back(client);
+      friends_details_.push_back(d);
+      shard_friends_mutex_.unlock();
+      
+      thread_manager_->io_service().post([&]() {
+          fetch::logger.Debug("Issueing task 2");          
+          task2();
+      });
+      
+    } ;
+    
+    
+    thread_manager_->io_service().post([&]() {        
+        std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
+          fetch::logger.Debug("Issueing task 1");
+        task1();
+      });
+    
   }
 
   void ListenTo(EntryPoint e) 

@@ -5,6 +5,7 @@
 #include<iomanip>
 #include <ctime>
 #include<chrono>
+#include<mutex>
 namespace fetch {
 namespace log {
 
@@ -74,7 +75,7 @@ public:
   template< typename ...Args >
   void Info(Args ... args) 
   {
-    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::INFO);    
     Unroll<Args...>::Append( this, args... );
     this->log_->CloseEntry(DefaultLogger::INFO); 
@@ -83,7 +84,7 @@ public:
   template< typename ...Args >
   void Warn(Args ... args) 
   {
-    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::WARNING);    
     Unroll<Args...>::Append( this, args... );
     this->log_->CloseEntry(DefaultLogger::WARNING); 
@@ -93,7 +94,7 @@ public:
   void Error(Args ... args) 
   {
     
-    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::ERROR);    
     Unroll<Args...>::Append( this, args... );
     this->log_->CloseEntry(DefaultLogger::ERROR); 
@@ -103,7 +104,7 @@ public:
   void Debug(Args ... args) 
   {
 
-    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::DEBUG);    
     Unroll<Args...>::Append( this, args... );
     this->log_->CloseEntry(DefaultLogger::DEBUG); 
@@ -140,7 +141,7 @@ private:
   };
   */  
   DefaultLogger *log_;
-  fetch::mutex::Mutex mutex_;
+  std::mutex mutex_;
   
 };
 };

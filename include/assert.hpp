@@ -2,6 +2,7 @@
 #define ASSERT_HPP
 
 #include <iostream>
+#include<stdexcept>
 namespace fetch {
 namespace assert {
 namespace details {
@@ -27,7 +28,8 @@ struct Printer {
 #define TODO_FAIL(...)                                                        \
   fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
   std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; \
-  exit(-1)
+  throw std::runtime_error("Dependence on non-existing functionality!");                             
+  
 
 #define TODO(...)                                                        \
   fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
@@ -36,7 +38,7 @@ struct Printer {
 #else
 
 #define TODO_FAIL(...)                                                        \
-  exit(-1)
+  throw std::runtime_error("Dependence on non-existing functionality!");   
 #define TODO(...)                                                        
 
 #endif
@@ -44,7 +46,7 @@ struct Printer {
 #define detailed_assert(cond) \
   if( !(cond) ) { \
     std::cout << "Failed :" << #cond << " in " << __FILE__ << " line " << __LINE__ << std::endl; \
-    exit(-1); \
+    throw std::runtime_error("Assertion failed");   \
   }
 
 

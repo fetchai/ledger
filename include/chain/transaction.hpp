@@ -111,7 +111,6 @@ void Deserialize( T & serializer, Transaction &b) {
 
   b.set_contract_name(contract_name);
   b.set_arguments(arguments);
-  b.UpdateDigest();
 }
 
 };
