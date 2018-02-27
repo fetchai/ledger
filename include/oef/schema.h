@@ -8,7 +8,7 @@
 // TODO: (`HUT`) : probably remove with time
 #include<iostream>
 #include<experimental/optional>
-#include"mapbox/variant.hpp"
+#include<mapbox/variant.hpp>
 
 // Schema for the OEF: effectively defining the class structure that builds DataModels, Instances and Queries for those Instances
 
