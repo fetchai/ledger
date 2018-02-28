@@ -1,3 +1,6 @@
+#ifndef OEF_HTTP_INTERFACE_H
+#define OEF_HTTP_INTERFACE_H
+
 #include<iostream>
 #include<fstream>
 #include"http/server.hpp"
@@ -34,11 +37,11 @@ struct Account
 };
 
 
-class FakeOEF : public fetch::http::HTTPModule
+class HTTPOEF : public fetch::http::HTTPModule
 {
 
 public:
-  FakeOEF()
+  HTTPOEF()
   {
 
     HTTPModule::Post("/check", [this](ViewParameters const &params, HTTPRequest const &req) {
@@ -224,28 +227,30 @@ public:
 };
 
 
-int main(int argc, char const **argv)
-{
+//int main(int argc, char const **argv)
+//{
+//
+//  ParamsParser params;
+//  params.Parse(argc, argv);
+//
+//  fetch::network::ThreadManager tm(8);
+//  HTTPServer http_server(8080, &tm);
+//  HTTPOEF oef_http_interface;
+//
+//  http_server.AddMiddleware( fetch::http::middleware::AllowOrigin("*") );
+//  http_server.AddMiddleware( fetch::http::middleware::ColorLog);
+//  http_server.AddModule(oef_http_interface);
+//
+//  tm.Start();
+//
+//  std::cout << "Ctrl-C to stop" << std::endl;
+//  while(true) {
+//    std::this_thread::sleep_for( std::chrono::milliseconds( 200 ) );
+//  }
+//
+//  tm.Stop();
+//
+//  return 0;
+//}
 
-  ParamsParser params;
-  params.Parse(argc, argv);
-
-  fetch::network::ThreadManager tm(8);
-  HTTPServer http_server(8080, &tm);
-  FakeOEF oef_http_interface;
-
-  http_server.AddMiddleware( fetch::http::middleware::AllowOrigin("*") );
-  http_server.AddMiddleware( fetch::http::middleware::ColorLog);
-  http_server.AddModule(oef_http_interface);
-
-  tm.Start();
-
-  std::cout << "Ctrl-C to stop" << std::endl;
-  while(true) {
-    std::this_thread::sleep_for( std::chrono::milliseconds( 200 ) );
-  }
-
-  tm.Stop();
-
-  return 0;
-}
+#endif

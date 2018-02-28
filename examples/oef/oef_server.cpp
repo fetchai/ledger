@@ -1,50 +1,38 @@
-#include"oef_service_consts.hpp"
-#include<iostream>
-#include"service/server.hpp"
-#include"oef/schema.h"
-#include"oef/schemaSerializers.h"
-#include"oef/ServiceDirectory.h"
-using namespace fetch::service;
-using namespace fetch::byte_array; // TODO: (`HUT`) : using namespaces is forbidden (especially in .h files)
+#include"oef/http_interface.h"
+#include"oef/NodeOEF.h"
 
-// First we make a service implementation
-class Implementation {
+using namespace fetch::service; // TODO: (`HUT`) : using namespaces is discouraged (especially in .h files)
 
-public:
-  std::string RegisterDataModel(std::string agentName, Instance instance) {
-    auto result = serviceDirectory_.RegisterAgent(instance, agentName);
-    return std::to_string(result);
-  }
-
-  std::vector<std::string> Query(std::string agentName, QueryModel query) {
-    return serviceDirectory_.Query(query);
-  }
-
-private:
-  ServiceDirectory serviceDirectory_;
-};
-
-// Next we make a protocol for the implementation
-class ServiceProtocol : public Implementation, public Protocol {
+// Build our protocol for OEF(rpc) and http interface
+class ServiceProtocol : public NodeOEF, public HTTPOEF, public fetch::service::Protocol {
 public:
 
-  ServiceProtocol() : Implementation(), Protocol() {
-    this->Expose(REGISTERDATAMODEL,     new CallableClassMember<Implementation, std::string(std::string agentName, Instance)>                     (this, &Implementation::RegisterDataModel) );
-    this->Expose(QUERY,                 new CallableClassMember<Implementation, std::vector<std::string>(std::string agentName, QueryModel query)>(this, &Implementation::Query) );
+  ServiceProtocol() : NodeOEF(), Protocol(), HTTPOEF() {
+    this->Expose(REGISTERDATAMODEL,     new CallableClassMember<NodeOEF, std::string(std::string agentName, Instance)>                     (this, &NodeOEF::RegisterDataModel) );
+    this->Expose(QUERY,                 new CallableClassMember<NodeOEF, std::vector<std::string>(std::string agentName, QueryModel query)>(this, &NodeOEF::Query) );
   }
 };
 
-// And finanly we build the service
-class MyCoolService : public ServiceServer< fetch::network::TCPServer > {
+class MyCoolService : public ServiceServer< fetch::network::TCPServer >, public HTTPServer  {
 public:
-  MyCoolService(uint16_t port, fetch::network::ThreadManager *tm) : ServiceServer(port, tm) {
-    this->Add(MYPROTO, new ServiceProtocol() );
+  MyCoolService(uint16_t port, fetch::network::ThreadManager *tm) :
+    ServiceServer(port, tm),
+    HTTPServer(8080, tm) {
+
+    ServiceProtocol *prot = new ServiceProtocol();
+
+    this->Add(MYPROTO, prot );
+
+    this->AddMiddleware( fetch::http::middleware::AllowOrigin("*") );
+    this->AddMiddleware( fetch::http::middleware::ColorLog);
+    this->AddModule(*prot);
   }
 };
 
 int main() {
   fetch::network::ThreadManager tm(8);
-  MyCoolService serv(8080, &tm);
+  MyCoolService serv(8090, &tm);                                   // TODO: (`HUT`) : rename from MyCoolService
+
   tm.Start();
 
   std::string dummy;

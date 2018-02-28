@@ -1,8 +1,8 @@
-#include"oef_service_consts.hpp"
 #include<iostream>
 #include"serializer/referenced_byte_array.hpp"
 #include"service/client.hpp"
 #include"logger.hpp"
+#include"oef/service_consts.hpp"
 #include"oef/schema.h"
 #include"oef/schemaSerializers.h"
 using namespace fetch::service; // TODO: (`HUT`) : remove namespaces
@@ -14,7 +14,7 @@ int main() {
 
   // Client setup
   fetch::network::ThreadManager tm;
-  ServiceClient< fetch::network::TCPClient > client("localhost", 8080, &tm);
+  ServiceClient< fetch::network::TCPClient > client("localhost", 8090, &tm);
   tm.Start();
 
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );

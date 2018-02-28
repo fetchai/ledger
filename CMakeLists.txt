@@ -30,6 +30,7 @@ enable_testing()
 
 add_definitions( --std=c++11 )
 add_definitions( --std=c++1y ) # OEF code uses experimental code, so needs this to compile
+add_definitions( -w ) # OEF code uses experimental code, so needs this to compile
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function")
