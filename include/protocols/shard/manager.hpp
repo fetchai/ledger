@@ -495,10 +495,8 @@ public:
     block_type head_copy = head_;    
     block_mutex_.unlock();
 
-
-
     
-    /*
+    fetch::logger.Debug("Subscribing");    
     client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_BLOCK,
       new service::Function< void(block_type) >([this]( block_type const& block) 
         {
@@ -509,7 +507,7 @@ public:
     shard_friends_.push_back(client);
     friends_details_.push_back(d);
     shard_friends_mutex_.unlock();
-    */
+
     fetch::logger.Debug("Requesting head exchange");    
     auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_copy);    
     if(!promise1.Wait(1000) ) { //; // TODO: make configurable
