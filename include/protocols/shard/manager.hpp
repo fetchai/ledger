@@ -101,9 +101,12 @@ public:
     EntryPoint& details) :
     thread_manager_(thread_manager),
     details_(details),
-    block_mutex_( __LINE__, __FILE__),
+    tx_mutex_ ( __LINE__, __FILE__), 
+    block_mutex_( __LINE__, __FILE__),    
+    shard_friends_mutex_( __LINE__, __FILE__),
     sharding_parameter_(1)
-  {    
+  {
+    LOG_STACK_TRACE_POINT;
     details_.configuration = EntryPoint::NODE_SHARD;
     
     block_body_type genesis_body;
@@ -124,6 +127,9 @@ public:
   // TODO: Change signature to std::vector< EntryPoint >
   EntryPoint Hello(std::string host) 
   {
+    LOG_STACK_TRACE_POINT;
+    fetch::logger.Debug("Exchaning shard details (RPC reciever)");
+    
     details_.configuration = EntryPoint::NODE_SHARD;
     if(details_.host != host ) { 
       details_.host = host;
@@ -134,16 +140,19 @@ public:
   
   block_type ExchangeHeads(block_type head_candidate) 
   {
+    LOG_STACK_TRACE_POINT;
+    fetch::logger.Debug("Sending head as response to request");
     std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
-    fetch::logger.Debug("Sending head");
+
     
     // TODO: Check which head is better
-    
+    fetch::logger.Debug("Return!");    
     return head_;    
   }
 
   std::vector< block_type > RequestBlocksFrom(block_header_type next_hash, uint16_t preferred_block_count) 
   {
+    LOG_STACK_TRACE_POINT;
     std::vector< block_type > ret;
 
     if( preferred_block_count > 10 ) preferred_block_count = 10;    
@@ -165,6 +174,7 @@ public:
 
   
   bool PushTransaction( transaction_type tx ) {
+    LOG_STACK_TRACE_POINT;
     tx_mutex_.lock();
 
     tx.UpdateDigest();
@@ -201,6 +211,8 @@ public:
 
 
   block_type GetNextBlock() {
+    LOG_STACK_TRACE_POINT;
+    
     block_body_type body;
     block_type block;
 
@@ -221,6 +233,8 @@ public:
   }
   
   void PushBlock(block_type block) {
+    LOG_STACK_TRACE_POINT;
+    
     block_mutex_.lock();
     std::cout << "Pushing block" << std::endl;
     
@@ -407,7 +421,9 @@ public:
   }
 
   
-  void Commit() {    
+  void Commit() {
+    LOG_STACK_TRACE_POINT;
+    
     block_mutex_.lock();
     // We only commit if there actually is a new block
     if( next_head_.meta_data().block_number > 0 ) {
@@ -445,10 +461,27 @@ public:
 
   void ConnectTo(std::string const &host, uint16_t const &port ) 
   {
-
+    LOG_STACK_TRACE_POINT;
+    
     // Chained tasks
-    client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_);
-    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make connection feedback
+    client_shared_ptr_type client;
+    std::size_t i = 0;    
+    while( (!client) && (i < 3) ) { // TODO: make configurable
+      
+      client = std::make_shared< client_type >(host, port, thread_manager_);
+      auto ping_promise = client->Call(FetchProtocols::SHARD, ShardRPC::PING);
+      if(!ping_promise.Wait( 500 ) ) // TODO: Make configurable
+      {
+        fetch::logger.Debug("Server not repsonding - retrying !");
+      }
+      ++i;      
+    }
+    
+    if(!client)
+    {
+      fetch::logger.Error("Server not repsonding - hanging up!");
+      return;      
+    }
     
     EntryPoint d;
     d.host = host;    
@@ -462,14 +495,10 @@ public:
     block_type head_copy = head_;    
     block_mutex_.unlock();
 
-    auto ping_promise = client->Call(FetchProtocols::SHARD, ShardRPC::PING);
-    if(!ping_promise.Wait( 2000 ) ) {
-      fetch::logger.Error("Client not repsonding - hanging up!");
-      return;
-    }
+
+
     
-    auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_copy);
-   
+    /*
     client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_BLOCK,
       new service::Function< void(block_type) >([this]( block_type const& block) 
         {
@@ -480,11 +509,13 @@ public:
     shard_friends_.push_back(client);
     friends_details_.push_back(d);
     shard_friends_mutex_.unlock();
-
-    
-    
+    */
+    fetch::logger.Debug("Requesting head exchange");    
+    auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_copy);    
     if(!promise1.Wait(1000) ) { //; // TODO: make configurable
       fetch::logger.Error("Failed to get head.");
+      exit(-1);
+      
       return;        
     }
     if( promise1.has_failed() ) {
@@ -504,95 +535,12 @@ public:
     comp_head.meta_data() = block_meta_data_type();      
     
     PushBlock(comp_head);
-
-    /* 
-    try {
-
-      fetch::logger.Debug("Deserializing head");
-
-      // Adding friend if everything goes well.
-
-    } catch( ... ) {
-
-      fetch::logger.Error("Failed to retrieve head - possibly protocol error.");
-    }
-    fetch::logger.Debug("XXXXXXXXXXXXXXXXXXXXXXXXX");
-    */
-    
-    /*
-
-    auto task4 = [&](service::Promise &promise1) {
-      block_type comp_head = promise1.As< block_type >();
-      comp_head.meta_data() = block_meta_data_type();      
-      
-      PushBlock(comp_head);
-      fetch::logger.Debug("Done");
-     
-    };
-    
-    auto task3 = [&](service::Promise &promise1) {
-      shard_friends_mutex_.lock();
-      client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_BLOCK,
-        new service::Function< void(block_type) >([this]( block_type const& block) 
-          {
-            this->PushBlock(block);          
-          }));             
-      shard_friends_mutex_.unlock();
-
-      thread_manager_->io_service().post([&]() {
-          fetch::logger.Debug("Issueing task 4"); 
-          task4(promise1);
-      });      
-    };
-    
-    auto task2 = [&]() {
-      block_mutex_.lock(); 
-      auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_);
-      block_mutex_.unlock();
-
-      thread_manager_->io_service().post([&]() {
-          fetch::logger.Debug("Issueing task 3");
-          task3(promise1);
-      });
-    };
-    
-    auto task1 = [&]() {
-
-      
-
-      EntryPoint d;
-      d.host = host;    
-      d.port = port;
-      d.http_port = -1; 
-      d.shard = 0; // TODO: get and check that it is right
-      d.configuration = 0;  
-
-
-      fetch::logger.Debug("Just before crash");
-      shard_friends_mutex_.lock();
-      fetch::logger.Debug("Just after crash");      
-      shard_friends_.push_back(client);
-      friends_details_.push_back(d);
-      shard_friends_mutex_.unlock();
-      
-      thread_manager_->io_service().post([&]() {
-          fetch::logger.Debug("Issueing task 2");          
-          task2();
-      });
-      
-    } ;
-    
-    
-    thread_manager_->io_service().post([&]() {        
-        std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
-          fetch::logger.Debug("Issueing task 1");
-        task1();
-      });
-    */
   }
 
   void ListenTo(EntryPoint e) 
   {
+    LOG_STACK_TRACE_POINT;
+       
     bool found = false;
     shard_friends_mutex_.lock();    
     for(auto &d: friends_details_)
@@ -614,6 +562,8 @@ public:
 
   void SetShardNumber(uint32_t shard, uint32_t total_shards) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     fetch::logger.Debug("Setting shard numbers: ", shard, " ", total_shards);    
     sharding_parameter_ = total_shards;
     details_.shard = shard;    
@@ -621,6 +571,8 @@ public:
   
   uint32_t count_outgoing_connections() 
   {
+    LOG_STACK_TRACE_POINT;
+    
     std::cout << "Was here??" << std::endl;    
     std::lock_guard< fetch::mutex::Mutex > lock( shard_friends_mutex_ );
     std::cout << "Was here???" << std::endl;    
@@ -629,12 +581,16 @@ public:
 
   uint32_t shard_number() 
   {
+    LOG_STACK_TRACE_POINT;
+    
     return details_.shard;    
   }
   
 
   void with_peers_do( std::function< void( std::vector< client_shared_ptr_type > , std::vector< EntryPoint > const& ) > fnc ) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     shard_friends_mutex_.lock();
     fnc( shard_friends_, friends_details_ );    
     shard_friends_mutex_.unlock();
@@ -642,6 +598,8 @@ public:
 
   void with_blocks_do( std::function< void(block_type, std::map< block_header_type, block_type >)  > fnc ) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     block_mutex_.lock();
     fnc( head_, chains_ );    
     block_mutex_.unlock();
@@ -649,6 +607,8 @@ public:
 
   void with_transactions_do( std::function< void(std::vector< tx_digest_type >,  std::map< tx_digest_type, transaction_type >) > fnc )
   {
+    LOG_STACK_TRACE_POINT;
+    
     tx_mutex_.lock();
     fnc( incoming_, known_transactions_ );    
     tx_mutex_.unlock();
@@ -656,6 +616,8 @@ public:
 
   void with_loose_chains_do( std::function< void( std::map< uint64_t,  PartialChain > ) > fnc ) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     block_mutex_.lock();
     fnc( loose_chains_ );    
     block_mutex_.unlock();
@@ -665,6 +627,8 @@ public:
 private:
   void AttachBlock(block_header_type &header, block_type &block) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     block_mutex_.lock();
     
     // Tracing the way back to a chain that leads to genesis
@@ -766,6 +730,8 @@ private:
   }
   
   void ResetNextHead() {
+    LOG_STACK_TRACE_POINT;
+    
     next_head_.meta_data().total_work = 0;
     next_head_.meta_data().block_number = 0;    
   }

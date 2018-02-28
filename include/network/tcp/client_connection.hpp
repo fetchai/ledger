@@ -27,22 +27,26 @@ public:
   ClientConnection(asio::ip::tcp::tcp::socket socket, ClientManager& manager)
     : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__)
   {
+    LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Server: Connection from ", socket_.remote_endpoint().address().to_string() );
   }
 
   ~ClientConnection() 
   {
+    LOG_STACK_TRACE_POINT;
     manager_.Leave(handle_);
   }
   
   void Start() 
   {
+    LOG_STACK_TRACE_POINT;
     handle_ = manager_.Join(shared_from_this());
     ReadHeader();
   }
 
   void Send(message_type const& msg) override
   {
+    LOG_STACK_TRACE_POINT;
     write_mutex_.lock();
     bool write_in_progress = !write_queue_.empty();  
     write_queue_.push_back(msg);
@@ -56,16 +60,19 @@ public:
 
   std::string Address() override
   {
+    LOG_STACK_TRACE_POINT;
     return socket_.remote_endpoint().address().to_string();    
   }
 
   handle_type const &handle() const {
+    LOG_STACK_TRACE_POINT;
     return handle_;
   }
   
 private:
   void ReadHeader() 
   {
+    LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Server: Waiting for next header.");  
     auto self(shared_from_this());
     auto cb = [this, self](std::error_code ec, std::size_t) 
@@ -86,6 +93,7 @@ private:
 
   void ReadBody() 
   {
+    LOG_STACK_TRACE_POINT;
     byte_array::ByteArray message;
 //    std::cout << std::hex << header_.magic << std::dec << std::endl;
 //    std::cout << header_.length << std::endl;
@@ -117,6 +125,7 @@ private:
 
   void Write() 
   {
+    LOG_STACK_TRACE_POINT;
     serializers::ByteArrayBuffer buffer;
     write_mutex_.lock();
     buffer << 0xFE7C80A1FE7C80A1;

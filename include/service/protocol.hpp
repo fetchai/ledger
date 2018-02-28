@@ -50,6 +50,8 @@ public:
    */
   callable_type& operator[](function_handler_type const& n) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     if((n >= 256) ||(members_[n] == nullptr) )
       throw serializers::SerializableException(
         error::MEMBER_NOT_FOUND,
@@ -71,6 +73,8 @@ public:
    */
   void Expose(function_handler_type const& n, callable_type* fnc) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     if(members_[n] != nullptr)
       throw serializers::SerializableException(
         error::MEMBER_EXISTS,
@@ -88,6 +92,8 @@ public:
    */
   void RegisterFeed(feed_handler_type const& feed, AbstractPublicationFeed* publisher) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     feeds_.push_back(std::make_shared<FeedSubscriptionManager>(feed, publisher));
   }
 
@@ -103,7 +109,10 @@ public:
     feed_handler_type const & feed,
     subscription_handler_type const &id) 
   {
-    std::cout << "Making subscription for " << client << " " << feed << " " << id << std::endl;
+    LOG_STACK_TRACE_POINT;
+    
+    fetch::logger.Debug( "Making subscription for ", client,  " ", feed, " ", id);
+    
     feeds_mutex_.lock();
     std::size_t i =0;
     for(;i < feeds_.size(); ++i) 
@@ -133,6 +142,8 @@ public:
     feed_handler_type const & feed,
     subscription_handler_type const &id) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     feeds_mutex_.lock();
     std::size_t i =0;
     for(;i < feeds_.size(); ++i) 

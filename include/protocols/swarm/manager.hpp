@@ -28,12 +28,19 @@ public:
     protocol_(protocol),
     thread_manager_(thread_manager),
     details_(details),
+    suggestion_mutex_( __LINE__, __FILE__),
+    peers_mutex_( __LINE__, __FILE__),
+    shards_mutex_ ( __LINE__, __FILE__),     
     sharding_parameter_(1) {
+    LOG_STACK_TRACE_POINT;
+    
     // Do not modify details_ here as it is not yet initialized.
   }
   
   uint64_t Ping() 
   {
+    LOG_STACK_TRACE_POINT;
+    
     std::cout << "PING" << std::endl;
     
     return 1337;
@@ -41,6 +48,8 @@ public:
 
   NodeDetails Hello(uint64_t client, NodeDetails details) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     client_details_[client] = details;
    //    SendConnectivityDetailsToShards(details);    --- TODO Figure out why this dead locks
     return details_.details();
@@ -48,6 +57,8 @@ public:
 
   std::vector< NodeDetails > SuggestPeers() 
   {
+    LOG_STACK_TRACE_POINT;
+    
     if(need_more_connections() )
     {
       RequestPeerConnections( details_.details() );      
@@ -60,6 +71,8 @@ public:
 
   void RequestPeerConnections( NodeDetails details ) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     NodeDetails me = details_.details();
     
     suggestion_mutex_.lock();
@@ -86,6 +99,8 @@ public:
   
   void EnoughPeerConnections( NodeDetails details ) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     suggestion_mutex_.lock();
     bool found = false;
     auto it = peers_with_few_followers_.end();
@@ -115,7 +130,9 @@ public:
 
 
   void IncreaseShardingParameter() 
-  {    
+  {
+    LOG_STACK_TRACE_POINT;
+    
     shards_mutex_.lock();
     uint32_t n = sharding_parameter_ << 1;
 
@@ -190,15 +207,21 @@ public:
   // Not service protocol
   void ConnectShard(std::string const &host, uint16_t const &port ) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     fetch::logger.Debug("Connecting to shard ", host, ":", port);
 
     shards_mutex_.lock();
     client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_);
+    shards_mutex_.unlock();
+    
     std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
 
     EntryPoint ep = client->Call(fetch::protocols::FetchProtocols::SHARD, ShardRPC::HELLO, host).As< EntryPoint >();    
-
+   
     details_.AddEntryPoint( ep );    
+
+    shards_mutex_.lock();
     shards_.push_back(client);
     shards_details_.push_back(ep);
     fetch::logger.Debug("Total shard count = ", shards_.size());
@@ -216,6 +239,8 @@ public:
   
   client_shared_ptr_type Connect( std::string const &host, uint16_t const &port ) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     using namespace fetch::service;
     fetch::logger.Debug("Connecting to server on ", host, " ", port);
     client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_ );
@@ -257,14 +282,16 @@ public:
 
     uint64_t ping = uint64_t(ping_promise);
 
-    fetch::logger.Debug("Waiting for peers_mutex.");        
-    std::lock_guard< fetch::mutex::Mutex > lock(peers_mutex_);
+
     fetch::logger.Debug("Waiting for ping.");        
     if(ping == 1337)
     {
       fetch::logger.Info("Successfully got PONG");      
-      peers_.push_back( client ); 
 
+      peers_mutex_.lock(); 
+      peers_.push_back( client ); 
+      peers_mutex_.unlock();      
+      
       service::Promise ip_promise = client->Call(protocol_, SwarmRPC::WHATS_MY_IP );
       std::string own_ip = ip_promise.As< std::string >();
       fetch::logger.Info("Node host is ", own_ip);
@@ -301,8 +328,9 @@ public:
       }
 
 //      SendConnectivityDetailsToShards(server_details);
-      
+      peers_mutex_.lock();       
       server_details_[ client->handle() ] = server_details;
+      peers_mutex_.unlock();       
     }
     else    
     {
@@ -322,6 +350,8 @@ public:
 
   void Bootstrap(std::string const &host, uint16_t const &port ) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     // TODO: Check that this node qualifies for bootstrapping
     std::cout << " - bootstrapping " << host << " " << port << std::endl;    
     auto client = Connect( host , port );

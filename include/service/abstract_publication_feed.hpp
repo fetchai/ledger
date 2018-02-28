@@ -44,6 +44,8 @@ public:
    **/  
   template< typename C >
   void create_publisher(feed_handler_type feed, C* cls, void (C::*function)( fetch::byte_array::ConstByteArray const& )  ) {
+    LOG_STACK_TRACE_POINT;
+    
     this->create_publisher(feed, [=](fetch::byte_array::ConstByteArray const& msg) ->void {
         (cls->*function)(msg);
       });

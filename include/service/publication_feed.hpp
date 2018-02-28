@@ -59,6 +59,8 @@ public:
    * @n is the maximum number of support feeds.
    */
   HasPublicationFeed(std::size_t const &n = 256) {
+    LOG_STACK_TRACE_POINT;
+    
     publisher_.resize( n );
   }
   
@@ -68,6 +70,8 @@ public:
    * related to general purpose of this function.
    */
   void create_publisher(feed_handler_type feed, function_type function) override {
+    LOG_STACK_TRACE_POINT;
+    
     if(publisher_[feed]) {
       TODO_FAIL("FeedEvents does not have support for multiple publishers. Please use MultiFeedEvents");
     }
@@ -86,6 +90,8 @@ public:
    */
   template< typename ...Args >
   void Publish(feed_handler_type feed, Args &&...args ) {
+    LOG_STACK_TRACE_POINT;
+    
     serializer_type params;
 
     PackArgs(params, args...);

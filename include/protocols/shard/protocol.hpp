@@ -80,6 +80,7 @@ public:
     HTTPModule::Get("/shard-connect-to/(ip=\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(port=\\d+)", connect_to);
     
     auto list_outgoing = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      LOG_STACK_TRACE_POINT;
       std::stringstream response;
       response << "{\"outgoing\": [";  
       this->with_peers_do([&response](std::vector< client_shared_ptr_type > const &, std::vector< EntryPoint > const&details) {
@@ -113,6 +114,7 @@ public:
 
     
     auto list_blocks = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      LOG_STACK_TRACE_POINT;
       std::stringstream response;
       response << "{\"blocks\": [";  
       this->with_blocks_do([&response](ShardManager::block_type const & head, std::map< ShardManager::block_header_type, ShardManager::block_type > chain) {
@@ -183,7 +185,9 @@ public:
     HTTPModule::Get("/list/transactions",  list_transactions);
 */
     
-    auto submit_transaction = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) { 
+    auto submit_transaction = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      LOG_STACK_TRACE_POINT;
+      
       json::JSONDocument doc = req.JSON();
       
       std::cout << "resources " << doc["resources"] << std::endl;
@@ -204,6 +208,9 @@ public:
 
   uint64_t Ping() 
   {
+    LOG_STACK_TRACE_POINT;
+    
+    fetch::logger.Debug("Responding to Ping request");    
     return 1337;
   }
 

@@ -37,6 +37,7 @@ public:
     socket_(thread_manager->io_service())
   
   {
+    LOG_STACK_TRACE_POINT;
     event_service_start_ = thread_manager->OnBeforeStart([this]() { this->Accept(); } );
     // TODO: If manager running -> Accept();    
     manager_ = new ClientManager(*this);    
@@ -44,6 +45,7 @@ public:
 
   ~TCPServer() 
   {
+    LOG_STACK_TRACE_POINT;    
     thread_manager_->Off(event_service_start_);
     if(manager_ != nullptr) delete manager_;    
     socket_.close();
@@ -51,6 +53,7 @@ public:
 
   void PushRequest(handle_type client, message_type const& msg) override 
   {
+    LOG_STACK_TRACE_POINT;    
     fetch::logger.Debug( "Got request from ", client );
     
     std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
@@ -59,16 +62,19 @@ public:
 
   void Broadcast(message_type const& msg) 
   {
+    LOG_STACK_TRACE_POINT;    
     manager_->Broadcast(msg);
   }
   
   bool Send(handle_type const &client, message_type const& msg) 
   {
+    LOG_STACK_TRACE_POINT;
     return manager_->Send(client, msg);
   }
 
   bool has_requests() 
   {
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
     bool ret = (requests_.size() != 0);
     return ret;
@@ -79,6 +85,7 @@ public:
   **/
   Request Top() 
   {
+    LOG_STACK_TRACE_POINT;    
     std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
     Request top = requests_.front();
     return top;
@@ -89,13 +96,14 @@ public:
   **/  
   void Pop() 
   {
+    LOG_STACK_TRACE_POINT;    
     std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
     requests_.pop_front();
   }
 
-  std::string GetAddress(handle_type const &client) const
-  
+  std::string GetAddress(handle_type const &client) const  
   {
+    LOG_STACK_TRACE_POINT;    
     return manager_->GetAddress(client);    
   }
   
@@ -109,9 +117,10 @@ private:
 
   void Accept() 
   {
-    auto cb = [this](std::error_code ec) 
+    LOG_STACK_TRACE_POINT;    
+    auto cb = [=](std::error_code ec) 
       {
-
+        LOG_LAMBDA_STACK_TRACE_POINT;
         if (!ec) 
         {
           std::make_shared<ClientConnection>(std::move(socket_), *manager_)

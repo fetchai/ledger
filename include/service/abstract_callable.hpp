@@ -1,7 +1,7 @@
 #ifndef SERVICE_ABSTRACT_CALLABLE_HPP
 #define SERVICE_ABSTRACT_CALLABLE_HPP
 #include "service/types.hpp"
-
+#include"logger.hpp"
 namespace fetch {
 namespace service {
 
@@ -66,6 +66,8 @@ template <typename... arguments>
 void PackCall(serializer_type &serializer,
               protocol_handler_type const& protocol,
               function_handler_type const& function, arguments... args) {
+  LOG_STACK_TRACE_POINT;
+  
   serializer << protocol;
   serializer << function;
   details::Packer<arguments... >::SerializeArguments(serializer, args...);
@@ -83,6 +85,8 @@ void PackCall(serializer_type &serializer,
 void PackCall(serializer_type &serializer,
               protocol_handler_type const& protocol,
               function_handler_type const& function) {
+  LOG_STACK_TRACE_POINT;
+  
   serializer << protocol;
   serializer << function;
   serializer.Seek(0);
@@ -106,6 +110,8 @@ void PackArgs(serializer_type &serializer, arguments... args) {
  * serializer is is always left at position 0.
  */    
 void PackArgs(serializer_type &serializer) {
+  LOG_STACK_TRACE_POINT;
+  
   serializer.Seek(0);
 }
 

@@ -4,6 +4,7 @@
 #include "serializer/referenced_byte_array.hpp"
 #include "serializer/stl_types.hpp"
 #include "serializer/typed_byte_array_buffer.hpp"
+#include "logger.hpp"
 
 namespace fetch 
 {
@@ -129,6 +130,8 @@ public:
    */
   CallableClassMember(class_type *cls, member_function_pointer function) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     class_ = cls;
     function_ = function;
   }
@@ -137,6 +140,8 @@ public:
   CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value) :
     AbstractCallable(arguments)
   {
+    LOG_STACK_TRACE_POINT;
+    
     class_ = cls;
     function_ = value;
   }
@@ -152,6 +157,8 @@ public:
    */
   void operator()(serializer_type &result, serializer_type &params) override 
   {
+    LOG_STACK_TRACE_POINT;
+    
     UnrollArguments<>::template LoopOver<Args...>::Unroll(
       result, *class_, this->function_, params);
   }
@@ -175,6 +182,8 @@ private:
 public:
   CallableClassMember(class_type *cls, member_function_pointer value) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     class_ = cls;
     function_ = value;
   }
@@ -182,12 +191,16 @@ public:
   CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value) :
     AbstractCallable(arguments)
   {
+    LOG_STACK_TRACE_POINT;
+    
     class_ = cls;
     function_ = value;
   }
 
   void operator()(serializer_type &result, serializer_type &params) override 
   {
+    LOG_STACK_TRACE_POINT;
+    
     result << ( (*class_).*function_)();
   }
 
@@ -209,6 +222,8 @@ private:
 public:    
   CallableClassMember(class_type *cls, member_function_pointer value) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     class_ = cls;
     function_ = value;
   }
@@ -216,6 +231,8 @@ public:
   CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value) :
     AbstractCallable(arguments)
   {
+    LOG_STACK_TRACE_POINT;
+    
     class_ = cls;
     function_ = value;
   }
@@ -223,6 +240,8 @@ public:
   
   void operator()(serializer_type &result, serializer_type &params) override 
   {
+    LOG_STACK_TRACE_POINT;
+    
     result << 0;
     ( (*class_).*function_)();
   }

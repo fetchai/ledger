@@ -22,6 +22,8 @@ class Route
 public:
   bool Match(byte_array::ConstByteArray const &path, ViewParameters &params) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     std::size_t i = 0;
     params.Clear();
     
@@ -39,6 +41,8 @@ public:
     
   static Route FromString(byte_array::ByteArray path) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     // TODO: No support for continued paths  atm.
     
     Route ret;
@@ -86,6 +90,8 @@ private:
   
   void AddMatch(byte_array::ByteArray const &value) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     match_.push_back([value](std::size_t &i, byte_array::ByteArray const &path,  ViewParameters &) {
         bool ret = path.Match(value, i);
         if(ret) {
@@ -97,6 +103,8 @@ private:
 
   void AddParameter(byte_array::ByteArray const &value) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     std::size_t i=0;
     while( (i < value.size()) && (value[i] != '=') )
     {
@@ -113,7 +121,8 @@ private:
     std::string reg = "^"+value.SubArray(i, value.size() - i);
     
     std::regex rgx( reg );    
-    match_.push_back([var, rgx](std::size_t &i, byte_array::ByteArray const &path, ViewParameters &params) {
+    match_.push_back([rgx, var](std::size_t &i, byte_array::ByteArray const &path, ViewParameters &params) {
+        
         std::string s = path.SubArray(i);
         std::smatch matches;
         bool ret = std::regex_search(s, matches, rgx);

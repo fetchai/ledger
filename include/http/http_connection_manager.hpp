@@ -17,6 +17,8 @@ public:
 
   handle_type Join(connection_type client) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     handle_type handle = server_.next_handle();
     fetch::logger.Info("Client joining with handle ", handle);
     
@@ -26,6 +28,8 @@ public:
   }
 
   void Leave(handle_type handle) {
+    LOG_STACK_TRACE_POINT;
+    
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
     
     if( clients_.find(handle) != clients_.end() ) 
@@ -40,6 +44,8 @@ public:
 
   bool Send(handle_type client, HTTPResponse const& res) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     bool ret = true;
     clients_mutex_.lock();
     
@@ -62,11 +68,15 @@ public:
   
   void PushRequest(handle_type client, HTTPRequest const& req) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     server_.PushRequest(client, req);
   }
 
   std::string GetAddress(handle_type client) 
   {
+    LOG_STACK_TRACE_POINT;    
+      
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);    
     if( clients_.find(client) != clients_.end() ) 
     {

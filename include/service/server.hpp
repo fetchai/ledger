@@ -48,6 +48,8 @@ public:
     thread_manager_( thread_manager),
     message_mutex_(__LINE__, __FILE__)
   {
+    LOG_STACK_TRACE_POINT;
+    
     running_ = false;
     event_service_start_ = thread_manager->OnBeforeStart([this]()      
       {
@@ -64,6 +66,8 @@ public:
 
   ~ServiceServer() 
   {
+    LOG_STACK_TRACE_POINT;
+    
     thread_manager_->Off( event_service_start_ );
     thread_manager_->Off( event_service_stop_ );    
   }
@@ -71,6 +75,8 @@ public:
   void PushRequest(handle_type client,
     network::message_type const& msg) override 
   {
+    LOG_STACK_TRACE_POINT;
+    
     std::lock_guard< fetch::mutex::Mutex > lock(message_mutex_);
     fetch::logger.Info("RPC call from ", client);    
     PendingMessage pm = {client, msg};    
@@ -79,6 +85,8 @@ public:
 
   void Add(protocol_handler_type const& name, Protocol* protocol) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     if(members_[name] != nullptr) 
     {
       throw serializers::SerializableException(
@@ -97,10 +105,13 @@ public:
 private:
   void Call(serializer_type& result, handle_type const &client, serializer_type params) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     protocol_handler_type protocol;
     function_handler_type function;
     params >> protocol >> function;
-
+    fetch::logger.Debug("Service Server processing call ", protocol, ":", function, " from ", client);
+    
     if(members_[protocol] == nullptr) 
     {
       throw serializers::SerializableException(
@@ -131,7 +142,8 @@ private:
 
   void ProcessMessages() 
   {
-
+    LOG_STACK_TRACE_POINT;
+    
     message_mutex_.lock();
     bool has_messages = (!messages_.empty());
     message_mutex_.unlock();
@@ -141,16 +153,23 @@ private:
       message_mutex_.lock();      
       
       PendingMessage pm;
+      fetch::logger.Debug("Server side backlog: ", messages_.size());
       has_messages = (!messages_.empty());
       if(has_messages) { // To ensure we can make a worker pool in the future
         pm = messages_.front();
         messages_.pop_front();
       };
+      
+
+      
       message_mutex_.unlock();
       
       if(has_messages) 
       {
-        ProcessClientMessage( pm.client, pm.message );
+        thread_manager_->io_service().post([this, pm]() { 
+            fetch::logger.Debug("Processing message call");
+            ProcessClientMessage( pm.client, pm.message );
+          });
       }
     }
     
@@ -166,6 +185,8 @@ private:
   void ProcessClientMessage(handle_type client,
     network::message_type const& msg) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     serializer_type params(msg);
       
     service_classification_type type;
@@ -180,6 +201,7 @@ private:
       {
         params >> id;
         result << SERVICE_RESULT << id;
+
         Call(result, client, params);
       } catch (serializers::SerializableException const& e) 
       {
@@ -187,6 +209,7 @@ private:
         result << SERVICE_ERROR << id << e;
       }
 
+      fetch::logger.Debug("Service Server responding to call from ", client ) ;      
       this->Send(client, result.data());
     } else if  (type == SERVICE_SUBSCRIBE)  
     {

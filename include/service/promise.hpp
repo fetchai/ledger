@@ -28,6 +28,8 @@ public:
 
   PromiseImplementation() 
   {
+    LOG_STACK_TRACE_POINT;
+    
     connection_closed_ = false;    
     fulfilled_ = false;
     failed_ = false;
@@ -36,12 +38,16 @@ public:
 
   void Fulfill(byte_array_type const &value) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     value_ = value;
     fulfilled_ = true;
   }
 
   void Fail(serializers::SerializableException const &excp) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     exception_ = excp;    
     failed_ = true;  // Note that order matters here due to threading!
     fulfilled_ = true;
@@ -49,6 +55,8 @@ public:
 
   void ConnectionFailed() 
   {
+    LOG_STACK_TRACE_POINT;
+    
     connection_closed_ = true;  
     fulfilled_ = true;
   }
@@ -94,20 +102,23 @@ public:
 
   Promise()
   {
+    LOG_STACK_TRACE_POINT;
+    
     reference_ = std::make_shared<promise_type>();
     created_ =  std::chrono::system_clock::now();  
   }
 
   bool Wait(double const timeout = std::numeric_limits<double>::infinity()) 
   {
-
+    LOG_STACK_TRACE_POINT;
+    
     while (!is_fulfilled()) 
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
       double ms =  std::chrono::duration_cast<std::chrono::milliseconds>(end - created_).count();
       if( (ms > timeout) && (!is_fulfilled()) ) {
-        fetch::logger.Error("Connection timed out! ", ms, " vs. ", timeout);
+        fetch::logger.Warn("Connection timed out! ", ms, " vs. ", timeout);
         return false;  
       }           
     }
@@ -127,6 +138,7 @@ public:
   template <typename T>
   T As() 
   {
+    LOG_STACK_TRACE_POINT;    
     Wait();
     serializer_type ser(reference_->value());
     T ret;
@@ -137,6 +149,7 @@ public:
   template <typename T>
   operator T() 
   {
+    LOG_STACK_TRACE_POINT;    
     return As<T>();
   }
 

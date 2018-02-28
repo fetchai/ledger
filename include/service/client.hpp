@@ -13,6 +13,7 @@
 #include "assert.hpp"
 #include "network/tcp_client.hpp"
 #include "mutex.hpp"
+#include "logger.hpp"
 
 #include <map>
 
@@ -35,11 +36,13 @@ public:
     uint16_t const& port,
     thread_manager_ptr_type thread_manager) :
     super_type(host, port, thread_manager),
-    thread_manager_(thread_manager)
-  
+    thread_manager_(thread_manager),
+    subscription_mutex_(__LINE__, __FILE__),
+    promises_mutex_(__LINE__, __FILE__),
+    message_mutex_(__LINE__, __FILE__)
   {
+    LOG_STACK_TRACE_POINT;    
     running_ = true;
-
 
     // TODO: Replace with thread manager
     worker_thread_ = new std::thread([this]() 
@@ -50,7 +53,7 @@ public:
 
   ~ServiceClient() 
   {
-    
+    LOG_STACK_TRACE_POINT;    
     // TODO: Move to OnStop
     running_ = false;
     worker_thread_->join();
@@ -62,6 +65,10 @@ public:
   Promise Call(protocol_handler_type const& protocol,
     function_handler_type const& function, arguments... args) 
   {
+    LOG_STACK_TRACE_POINT;
+    fetch::logger.Debug("Service Client Calling ", protocol, ":", function); 
+
+    
     Promise prom;
     serializer_type params;
     params << SERVICE_FUNCTION_CALL << prom.id();
@@ -80,6 +87,8 @@ public:
     feed_handler_type const& feed,
     AbstractCallable *callback) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     subscription_handler_type subid = CreateSubscription( protocol, feed, callback );
     serializer_type params;
     params << SERVICE_SUBSCRIBE << protocol << feed << subid ;
@@ -89,6 +98,8 @@ public:
   
   void Unsubscribe(subscription_handler_type id) 
   {
+    LOG_STACK_TRACE_POINT;
+      
     subscription_mutex_.lock();    
     auto &sub = subscriptions_[id];
     
@@ -107,12 +118,16 @@ public:
   
   void PushMessage(network::message_type const& msg) override 
   {
+    LOG_STACK_TRACE_POINT;
+    
     std::lock_guard< fetch::mutex::Mutex > lock(message_mutex_);
     messages_.push_back(msg);
   }
   
   void ConnectionFailed() override
   {
+    LOG_STACK_TRACE_POINT;
+    
     promises_mutex_.lock();
     for(auto &p: promises_)
     {
@@ -128,6 +143,8 @@ private:
     feed_handler_type const& feed,
     AbstractCallable *cb) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     subscription_mutex_.lock();
     std::size_t i = 0;
     for(; i < 256; ++i) 
@@ -152,6 +169,8 @@ private:
 
   void ProcessMessages() 
   {
+    LOG_STACK_TRACE_POINT;
+    
     while(running_) 
     {
       
@@ -184,6 +203,8 @@ private:
   
   void ProcessServerMessage(network::message_type const& msg) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     serializer_type params(msg);
 
     service_classification_type type;
@@ -291,7 +312,7 @@ private:
   std::map<Promise::promise_counter_type, Promise::shared_promise_type>
   promises_;
   fetch::mutex::Mutex promises_mutex_;
-
+  
   std::atomic< bool > running_;
   std::deque< network::message_type > messages_;
   fetch::mutex::Mutex message_mutex_;  

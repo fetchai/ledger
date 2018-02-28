@@ -13,7 +13,7 @@ namespace fetch
 {
 namespace mutex 
 {
-class ProductionMutex : public std::mutex 
+class ProductionMutex : public AbstractMutex
 {
 
 public:
@@ -21,9 +21,9 @@ public:
   ProductionMutex() = default;  
 };
   
-class DebugMutex : public std::mutex 
+class DebugMutex : public AbstractMutex
 {
-  struct LockInfo 
+  struct LockInfo
   {
     bool locked = true;
   };
@@ -31,11 +31,16 @@ class DebugMutex : public std::mutex
   class MutexTimeout 
   {
   public:
-    MutexTimeout(double const timeout = 2000)       
+    MutexTimeout(std::string const &filename, std::size_t const &line, double const timeout = 50) :
+      filename_(filename), line_(line)
     {
+      LOG_STACK_TRACE_POINT;
+      
       running_ = true;
       created_ =  std::chrono::system_clock::now();        
-      thread_ = std::thread([this,timeout](){
+      thread_ = std::thread([=](){
+          LOG_LAMBDA_STACK_TRACE_POINT;
+          
           double ms = 0;
           
           while((running_)  && (ms < timeout)) {
@@ -60,11 +65,16 @@ class DebugMutex : public std::mutex
     
     void Eval() 
     {
-      std::cerr << "Mutex timed out" << std::endl;
+      LOG_STACK_TRACE_POINT;
+      fetch::logger.Error( "Mutex timed out: ", filename_ ," ", line_ );
+      
       exit(-1);      
     }
     
   private:
+    std::string filename_;
+    std::size_t line_;
+    
     std::thread thread_;
     std::chrono::system_clock::time_point created_;
     std::atomic< bool > running_;
@@ -73,46 +83,67 @@ class DebugMutex : public std::mutex
    
     
 public:
-  DebugMutex(int line, std::string file) : std::mutex(),  line_(line), file_(file) { } 
+  DebugMutex(int line, std::string file) : AbstractMutex(),  line_(line), file_(file) { } 
   DebugMutex() = default;
   
-  
-  
+    
   DebugMutex& operator=(DebugMutex const &other) = delete;
   
   void lock() 
   {
-        
-    lock_mutex_.lock();
-
-    std::thread::id id =  std::this_thread::get_id();
-    if(locker_.find( id ) != locker_.end() ) 
-    {
-      fetch::logger.Debug( "Mutex deadlock: ", line_ , " " , file_ );            
-      exit(-1);
-    }
-    locker_[id] = LockInfo();
-    timeout_ =  std::unique_ptr<MutexTimeout>( new MutexTimeout() );
-    lock_mutex_.unlock();
+    LOG_STACK_TRACE_POINT;
+    
     std::mutex::lock();
+
+    timeout_ =  std::unique_ptr<MutexTimeout>( new MutexTimeout(file_, line_) );
+    fetch::logger.RegisterLock( this );
+    thread_id_ = std::this_thread::get_id();     
   }
   
   void unlock() 
   {
-    lock_mutex_.lock();
+    LOG_STACK_TRACE_POINT;
+    
     timeout_.reset(nullptr);     
-    std::thread::id id =  std::this_thread::get_id();
-    locker_.erase( id );
-    lock_mutex_.unlock();
-    std::mutex::unlock();    
+    fetch::logger.RegisterUnlock( this );
+    
+    std::mutex::unlock();
+
   }
+  
+  int line() const 
+  {
+    return line_;
+  }
+  
+  std::string filename() const 
+  {
+    return file_;
+  }
+
+  std::string AsString() override
+  {
+    std::stringstream ss;    
+    ss << "Locked by thread #" << fetch::log::ReadableThread::GetThreadID( thread_id_ )  << " in " << filename() << " on " << line() ;    
+    return ss.str();
+  }
+
+  std::thread::id thread_id() const override
+  {
+    return thread_id_;
+  }
+  
 private:
   std::map< std::thread::id, LockInfo > locker_;
   std::mutex lock_mutex_;
   int line_ = 0;
   std::string file_ = "";
-  std::unique_ptr< MutexTimeout > timeout_;  
+  std::unique_ptr< MutexTimeout > timeout_;
+  std::thread::id thread_id_;
+  
 };
+
+
 
 
 typedef DebugMutex Mutex;

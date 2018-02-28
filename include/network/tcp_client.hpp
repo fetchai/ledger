@@ -6,6 +6,7 @@
 #include "byte_array/referenced_byte_array.hpp"
 #include "serializer/referenced_byte_array.hpp"
 #include "serializer/byte_array_buffer.hpp"
+#include"logger.hpp"
 
 #include "mutex.hpp"
 #include <asio.hpp>
@@ -33,6 +34,8 @@ public:
     socket_(thread_manager->io_service() ),
     write_mutex_(__LINE__, __FILE__)
   {
+    LOG_STACK_TRACE_POINT;
+    
     handle_ = next_handle();
     
     writing_ = false;
@@ -46,6 +49,8 @@ public:
     socket_(thread_manager->io_service() )    
   
   {
+    LOG_STACK_TRACE_POINT;
+    
     handle_ = next_handle();
 
     event_start_service_ = thread_manager_->OnBeforeStart([this]() { this->writing_ = false; });    
@@ -59,6 +64,8 @@ public:
 
   ~TCPClient()
   {
+    LOG_STACK_TRACE_POINT;
+    
     thread_manager_->Off( event_start_service_ );
     thread_manager_->Off( event_stop_service_ );        
     socket_.close();
@@ -67,9 +74,12 @@ public:
 
   void Send(message_type const& msg) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     fetch::logger.Debug("Client: Sending message to server");    
-    auto cb = [this, msg]() 
+    auto cb = [=]() 
       {
+        LOG_LAMBDA_STACK_TRACE_POINT;            
         write_mutex_.lock();
         write_queue_.push_back(msg);
         if (writing_) 
@@ -90,7 +100,7 @@ public:
   virtual void PushMessage(message_type const& value) = 0;
   virtual void ConnectionFailed() = 0;
 
-  handle_type const &handle() const {
+  handle_type const &handle() const {    
     return handle_;
   }
 
@@ -102,12 +112,14 @@ public:
 private:
   void Connect(std::string const& host, std::string const& port) 
   {
+    LOG_STACK_TRACE_POINT;    
     asio::ip::tcp::resolver resolver(io_service_);
     Connect(resolver.resolve({host, port}));
   }
 
   void Connect(std::string const& host, uint16_t const& port) 
   {
+    LOG_STACK_TRACE_POINT;    
     std::stringstream p;
     p << port;
 
@@ -117,9 +129,11 @@ private:
 
   void Connect(asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) 
   {
-    auto cb = [this](std::error_code ec,
+    LOG_STACK_TRACE_POINT;    
+    auto cb = [=](std::error_code ec,      
       asio::ip::tcp::tcp::resolver::iterator) 
       {
+        LOG_LAMBDA_STACK_TRACE_POINT;    
         if (!ec) 
         {
           ReadHeader();
@@ -130,14 +144,16 @@ private:
 
   void ReadHeader() 
   {
-    auto cb = [this](std::error_code ec, std::size_t) 
+    LOG_STACK_TRACE_POINT;    
+    auto cb = [=](std::error_code ec, std::size_t)      
       {
+        LOG_LAMBDA_STACK_TRACE_POINT;    
         if (!ec) 
         {
           ReadBody();
         } else 
         {
-          fetch::logger.Error("Reading header failed, closing connection.");
+          fetch::logger.Error("Reading header failed, closing connection: ", ec);
           ConnectionFailed();           
           socket_.close();
         }
@@ -150,6 +166,7 @@ private:
 
   void ReadBody() 
   {
+    LOG_STACK_TRACE_POINT;    
     byte_array::ByteArray message;
     if( header_.magic != 0xFE7C80A1FE7C80A1) {
       fetch::logger.Debug("Magic incorrect - closing connection.");
@@ -160,15 +177,16 @@ private:
     
     message.Resize(header_.length);
 
-    auto cb = [this, message](std::error_code ec, std::size_t) 
+    auto cb = [=](std::error_code ec, std::size_t) 
       {
+        LOG_LAMBDA_STACK_TRACE_POINT;
         if (!ec) 
         {
           PushMessage(message);
           ReadHeader();
         } else 
         {
-          fetch::logger.Error("Reading body failed, closing connection.");
+          fetch::logger.Error("Reading body failed, closing connection: ", ec);
           ConnectionFailed();        
           socket_.close();
         }
@@ -178,7 +196,8 @@ private:
       cb);
   }
 
-  void Write() {    
+  void Write() {
+    LOG_STACK_TRACE_POINT;    
     serializers::ByteArrayBuffer buffer;
 
     write_mutex_.lock();
@@ -193,8 +212,10 @@ private:
     buffer << write_queue_.front();
     write_mutex_.unlock();
     
-    auto cb = [this](std::error_code ec, std::size_t) 
+    auto cb = [=](std::error_code ec, std::size_t) 
       {
+        LOG_LAMBDA_STACK_TRACE_POINT;        
+
         if (!ec) 
         {
           fetch::logger.Debug("Wrote message.");     

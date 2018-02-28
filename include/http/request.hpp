@@ -29,6 +29,8 @@ public:
 
   static bool SetBody(HTTPRequest &req, asio::streambuf &buffer) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     // TODO: Handle encoding
     req.body_data_ = byte_array::ByteArray();    
     req.body_data_.Resize( req.content_length() );
@@ -51,7 +53,8 @@ public:
 
   static bool SetHeader(HTTPRequest &req, asio::streambuf &buffer, std::size_t const &end) 
   {
-
+    LOG_STACK_TRACE_POINT;
+    
     req.header_data_ = byte_array::ByteArray();    
     req.header_data_.Resize( end );
     
@@ -177,12 +180,16 @@ public:
   
   json::JSONDocument JSON() const
   {
+    LOG_STACK_TRACE_POINT;
+    
     return json::JSONDocument( full_uri_, body() );
   }
 private:
 
   void ParseStartLine(byte_array::ByteArray &line) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     std::size_t i = 0;    
     while(line[i] != ' ')
     {

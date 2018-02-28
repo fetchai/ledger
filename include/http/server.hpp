@@ -39,11 +39,14 @@ public:
     
   
   HTTPServer(uint16_t const &port, thread_manager_ptr_type const &thread_manager) :
+    eval_mutex_(__LINE__, __FILE__),    
     thread_manager_(thread_manager),
-    request_mutex_(__LINE__, __FILE__),
+    request_mutex_(__LINE__, __FILE__),    
     acceptor_(thread_manager->io_service(), asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
     socket_(thread_manager->io_service())    
   {
+    LOG_STACK_TRACE_POINT;
+        
     event_service_start_ = thread_manager->OnBeforeStart([this]() { this->Accept(); } );
     // TODO: If manager running -> Accept();
     manager_ = new HTTPConnectionManager(*this);        
@@ -51,6 +54,8 @@ public:
 
   ~HTTPServer() 
   {
+    LOG_STACK_TRACE_POINT;
+    
     thread_manager_->Off(event_service_start_);
     if(manager_ != nullptr) delete manager_;    
     socket_.close();
@@ -58,6 +63,8 @@ public:
 
   void PushRequest(handle_type client, HTTPRequest req) override
   {
+    LOG_STACK_TRACE_POINT;
+    
     // TODO: improve such that it works for multiple threads.
     eval_mutex_.lock();    
     for(auto &m : pre_view_middleware_)
@@ -90,8 +97,11 @@ public:
   
   void Accept()
   {
-    auto cb = [this](std::error_code ec) {
-
+    LOG_STACK_TRACE_POINT;
+    
+    auto cb = [=](std::error_code ec) {
+      LOG_LAMBDA_STACK_TRACE_POINT;
+      
       if (!ec) {
         std::make_shared<HTTPConnection>(std::move(socket_), *manager_)
             ->Start();
@@ -120,6 +130,7 @@ public:
 
   void AddModule(HTTPModule const &module)
   {
+    LOG_STACK_TRACE_POINT;    
     for(auto const& view: module.views() )
     {
       this->AddView( view.method, view.route, view.view);      

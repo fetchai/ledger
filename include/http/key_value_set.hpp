@@ -23,27 +23,37 @@ public:
   const_iterator cbegin() const noexcept { return map_type::cbegin(); }
   const_iterator cend() const noexcept { return map_type::cend(); }
 
-  void Add(byte_array_type const& name, byte_array_type const &value) {    
+  void Add(byte_array_type const& name, byte_array_type const &value) {
+    LOG_STACK_TRACE_POINT;
+    
     insert( {name, value} );
   }
 
   
   void Add(byte_array_type const& name, int const &n) {
+    LOG_STACK_TRACE_POINT;
+    
     byte_array_type value( std::to_string(n) );
     insert( {name, value} );
   }
   
   bool Has(byte_array_type const& key) const {
+    LOG_STACK_TRACE_POINT;
+    
     return this->find(key)  != this->end();
   }
 
   byte_array::ConstByteArray& operator[]( byte_array::ConstByteArray const &name) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     return super_type::operator[](name);    
   }
 
   byte_array::ConstByteArray const& operator[]( byte_array::ConstByteArray const &name)  const
   {
+    LOG_STACK_TRACE_POINT;
+    
     return this->find(name)->second;    
   }
   
@@ -51,6 +61,8 @@ public:
   
   void Clear() 
   {
+    LOG_STACK_TRACE_POINT;
+    
     this->clear();
   }
   

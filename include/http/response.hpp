@@ -16,12 +16,14 @@ public:
     body_(body),
     mime_(mime),
     status_(status)
-  {
+  {    
     header_.Add( "content-length", body_.size() );
   }
 
   static void WriteToBuffer(HTTPResponse &res,   asio::streambuf &buffer) 
   {
+    LOG_STACK_TRACE_POINT;
+    
     std::ostream out(&buffer);
 
     out <<  "HTTP/1.1 " << res.status_.code << "\r\n";

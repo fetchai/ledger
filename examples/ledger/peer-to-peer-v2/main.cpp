@@ -18,7 +18,7 @@ class FetchLedger
 {
 public:
   FetchLedger(uint16_t offset, std::string const &name, std::size_t const &shards ) :
-    thread_manager_( new fetch::network::ThreadManager(8) ),
+    thread_manager_( new fetch::network::ThreadManager(24) ),
     controller_( 1337 + offset, 8080 + offset, name, thread_manager_ )
   {
     for(std::size_t i=0; i < shards; ++i)

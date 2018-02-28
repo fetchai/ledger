@@ -34,7 +34,7 @@ public:
    * a service.
    */
   FeedSubscriptionManager(feed_handler_type const &feed, AbstractPublicationFeed* publisher) :
-    feed_(feed), publisher_(publisher) { }
+     subscribe_mutex_(__LINE__, __FILE__), feed_(feed), publisher_(publisher) { }
 
   /* Attaches a feed to a given service.
    * @T is the type of the service
@@ -46,7 +46,8 @@ public:
    */
   template< typename T >
   void AttachToService(T *service) {
-
+    LOG_STACK_TRACE_POINT;
+    
     publisher_->create_publisher(feed_, [=](fetch::byte_array::ConstByteArray const&  msg) {
         serializer_type params;
         params << SERVICE_FEED << feed_;
@@ -85,6 +86,8 @@ public:
    * which services can subscribe their clients to the feed.
    */
   void Subscribe(uint64_t const & client, subscription_handler_type const &id) {
+    LOG_STACK_TRACE_POINT;
+    
     // TODO: change uint64_t to global client id.
     subscribe_mutex_.lock();
     subscribers_.push_back({ client, id });
@@ -99,6 +102,8 @@ public:
    * which services can unsubscribe their clients to the feed.
    */
   void Unsubscribe(uint64_t const & client,  subscription_handler_type const &id) {
+    LOG_STACK_TRACE_POINT;
+    
     // TODO: change uint64_t to global client id.
     subscribe_mutex_.lock();    
     std::vector< std::size_t > ids;
