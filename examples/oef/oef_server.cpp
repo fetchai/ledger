@@ -1,15 +1,15 @@
-#include"oef/http_interface.h"
+#include"oef/HttpOEF.h"
 #include"oef/NodeOEF.h"
 
 using namespace fetch::service; // TODO: (`HUT`) : using namespaces is discouraged (especially in .h files)
 
 // Build our protocol for OEF(rpc) and http interface
-class ServiceProtocol : public NodeOEF, public HTTPOEF, public fetch::service::Protocol {
+class ServiceProtocol : public HttpOEF, public fetch::service::Protocol {
 public:
 
-  ServiceProtocol() : NodeOEF(), Protocol(), HTTPOEF() {
-    this->Expose(REGISTERDATAMODEL,     new CallableClassMember<NodeOEF, std::string(std::string agentName, Instance)>                     (this, &NodeOEF::RegisterDataModel) );
-    this->Expose(QUERY,                 new CallableClassMember<NodeOEF, std::vector<std::string>(std::string agentName, QueryModel query)>(this, &NodeOEF::Query) );
+  ServiceProtocol(NodeOEF *node) : Protocol(), HttpOEF(node) {
+    this->Expose(REGISTERDATAMODEL,     new CallableClassMember<NodeOEF, std::string(std::string agentName, Instance)>                     (node, &NodeOEF::RegisterDataModel) );
+    this->Expose(QUERY,                 new CallableClassMember<NodeOEF, std::vector<std::string>(std::string agentName, QueryModel query)>(node, &NodeOEF::Query) );
   }
 };
 
@@ -19,7 +19,8 @@ public:
     ServiceServer(port, tm),
     HTTPServer(8080, tm) {
 
-    ServiceProtocol *prot = new ServiceProtocol();
+    NodeOEF *node         = new NodeOEF();
+    ServiceProtocol *prot = new ServiceProtocol(node);
 
     this->Add(MYPROTO, prot );
 

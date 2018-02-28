@@ -21,6 +21,7 @@ public:
   }
 
   std::string test() {
+    std::cout << "hit the test condition" << std::endl;
     return std::string{"this is a test"};
   }
 
