@@ -216,20 +216,24 @@ public:
   
   client_shared_ptr_type Connect( std::string const &host, uint16_t const &port ) 
   {
-    using namespace fetch::service;    
+    using namespace fetch::service;
+    fetch::logger.Debug("Connecting to server on ", host, " ", port);
     client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_ );
 
-    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
+    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Connection feedback
     
 
+    fetch::logger.Debug("Pinging server to confirm connection.");
     auto ping_promise = client->Call(protocol_, SwarmRPC::PING);
 
+    
     if(!ping_promise.Wait( 2000 )) 
     {
       fetch::logger.Error("Client not repsonding - hanging up!");
       return nullptr;      
     }         
-    
+
+    fetch::logger.Debug("Subscribing to feeds.");    
     client->Subscribe(protocol_, SwarmFeed::FEED_REQUEST_CONNECTIONS,
       new service::Function< void(NodeDetails) >([this](NodeDetails const& details) 
         {
@@ -252,7 +256,10 @@ public:
     
 
     uint64_t ping = uint64_t(ping_promise);
+
+    fetch::logger.Debug("Waiting for peers_mutex.");        
     std::lock_guard< fetch::mutex::Mutex > lock(peers_mutex_);
+    fetch::logger.Debug("Waiting for ping.");        
     if(ping == 1337)
     {
       fetch::logger.Info("Successfully got PONG");      

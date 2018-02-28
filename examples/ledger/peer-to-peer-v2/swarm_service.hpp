@@ -186,12 +186,12 @@ public:
       auto p1 = client->Call(FetchProtocols::SHARD,  ShardRPC::COUNT_OUTGOING_CONNECTIONS);
       auto p2 = client->Call(FetchProtocols::SHARD,  ShardRPC::SHARD_NUMBER);
 
-      if(! p1.Wait(300) )
+      if(! p1.Wait(2300) )
       {
         continue;        
       }
       
-      if(! p2.Wait(300) )
+      if(! p2.Wait(2300) )
       {
         continue;        
       }
@@ -199,11 +199,11 @@ public:
       
       uint32_t conn_count = uint32_t( p1  );
       uint32_t shard =  uint32_t( p2  );
-      std::cout << "  - "<<i << " : " << details[i].host << " " << details[i].port << " " << shard <<" " << conn_count <<  std::endl;      
+      std::cout << "  - "<< i << " : " << details[i].host << " " << details[i].port << " " << shard <<" " << conn_count <<  std::endl;      
       // TODO: set shard detail
       
 
-      if(conn_count < 5) // TODO: Desired connectivity;
+      if(conn_count < 2) // TODO: Desired connectivity;
       {
         for(auto &s: shard_entries)
         {
@@ -217,7 +217,7 @@ public:
             fetch::logger.Warn("After call");
             
             ++conn_count;
-            if(conn_count == 5) // TODO: desired connectivity
+            if(conn_count == 2) // TODO: desired connectivity
             {
               break;                    
             }

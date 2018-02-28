@@ -53,6 +53,7 @@ public:
     
     writing_ = false;    
     Connect(host, port);
+    fetch::logger.Debug("Connection established!");
   }
 
 

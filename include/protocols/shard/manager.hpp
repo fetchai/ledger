@@ -57,6 +57,20 @@ public:
     block_header_type next_missing;    
   };  
 
+    /*
+      TODO: Make a connection directory
+    connection_mutex_.lock();
+    ConnectionDetails cc = {host, port};
+
+    bool should_connect = false;
+    
+    if(last_connection_attempt_.find(cc) == last_connection_attempt_.end()) {
+      should_connect = true;      
+      last_connection_attempt_[cc] = 1; // TODO: Make time stamp.       
+    }
+    
+    connection_mutex_.unlock();
+    if(!should_connect) return;
   struct ConnectionDetails
   {
     std::string host;
@@ -76,6 +90,8 @@ public:
   };
   std::map<ConnectionDetails, int > last_connection_attempt_;
   fetch::mutex::Mutex connection_mutex_;
+    */
+  
   
     
 
@@ -429,25 +445,11 @@ public:
 
   void ConnectTo(std::string const &host, uint16_t const &port ) 
   {
-    /*
-      TODO: Make a connection directory
-    connection_mutex_.lock();
-    ConnectionDetails cc = {host, port};
-
-    bool should_connect = false;
-    
-    if(last_connection_attempt_.find(cc) == last_connection_attempt_.end()) {
-      should_connect = true;      
-      last_connection_attempt_[cc] = 1; // TODO: Make time stamp.       
-    }
-    
-    connection_mutex_.unlock();
-    if(!should_connect) return;
-    */
 
     // Chained tasks
     client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_);
-
+    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make connection feedback
+    
     EntryPoint d;
     d.host = host;    
     d.port = port;
@@ -459,6 +461,12 @@ public:
     block_mutex_.lock();    
     block_type head_copy = head_;    
     block_mutex_.unlock();
+
+    auto ping_promise = client->Call(FetchProtocols::SHARD, ShardRPC::PING);
+    if(!ping_promise.Wait( 2000 ) ) {
+      fetch::logger.Error("Client not repsonding - hanging up!");
+      return;
+    }
     
     auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_copy);
    
@@ -466,42 +474,51 @@ public:
       new service::Function< void(block_type) >([this]( block_type const& block) 
         {
           this->PushBlock(block);          
-        }));             
+        }));
+
+    shard_friends_mutex_.lock();
+    shard_friends_.push_back(client);
+    friends_details_.push_back(d);
+    shard_friends_mutex_.unlock();
+
     
+    
+    if(!promise1.Wait(1000) ) { //; // TODO: make configurable
+      fetch::logger.Error("Failed to get head.");
+      return;        
+    }
+    if( promise1.has_failed() ) {
+      fetch::logger.Error("Request for head failed.");
+      return;        
+    }
+    
+    if( promise1.is_connection_closed() ) {
+      fetch::logger.Error("Lost connection.");
+      return;           
+    }
+    
+    
+    block_type comp_head = promise1.As< block_type >();
+    fetch::logger.Debug("Done");
+    
+    comp_head.meta_data() = block_meta_data_type();      
+    
+    PushBlock(comp_head);
+
+    /* 
     try {
 
       fetch::logger.Debug("Deserializing head");
-      promise1.Wait();
-
-      if( promise1.has_failed() ) {
-        fetch::logger.Error("Request for head failed.");
-        return;        
-      }
-
-      if( promise1.is_connection_closed() ) {
-        fetch::logger.Error("Lost connection.");
-        return;           
-      }
-      
-      
-      block_type comp_head = promise1.As< block_type >();
-      fetch::logger.Debug("Done");
-      
-      comp_head.meta_data() = block_meta_data_type();      
-      
-      PushBlock(comp_head);
 
       // Adding friend if everything goes well.
-      shard_friends_mutex_.lock();
-      shard_friends_.push_back(client);
-      friends_details_.push_back(d);
-      shard_friends_mutex_.unlock();
+
     } catch( ... ) {
 
       fetch::logger.Error("Failed to retrieve head - possibly protocol error.");
     }
+    fetch::logger.Debug("XXXXXXXXXXXXXXXXXXXXXXXXX");
+    */
     
-     
     /*
 
     auto task4 = [&](service::Promise &promise1) {
@@ -576,8 +593,6 @@ public:
 
   void ListenTo(EntryPoint e) 
   {
-    fetch::logger.Debug( "Thinking of connecting to ", e.host,  ":", e.port );
-    
     bool found = false;
     shard_friends_mutex_.lock();    
     for(auto &d: friends_details_)
@@ -594,7 +609,7 @@ public:
     {
       ConnectTo(e.host, e.port); 
     }
-    
+
   }
 
   void SetShardNumber(uint32_t shard, uint32_t total_shards) 
@@ -651,7 +666,6 @@ private:
   void AttachBlock(block_header_type &header, block_type &block) 
   {
     block_mutex_.lock();
-    std::cout << "Attaching block!" << std::endl;
     
     // Tracing the way back to a chain that leads to genesis
     // TODO, FIXME: Suceptible to attack: Place a block that creates a loop.
