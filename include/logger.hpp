@@ -255,7 +255,7 @@ public:
   template< typename ...Args >
   void Error(Args ... args) 
   {
-    return;
+
     std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::ERROR, TopContextImpl() );    
     Unroll<Args...>::Append( this, args... );
@@ -267,7 +267,7 @@ public:
   template< typename ...Args >
   void Debug(Args ... args) 
   {
-    return;
+
     std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl() );    
     Unroll<Args...>::Append( this, args... );
