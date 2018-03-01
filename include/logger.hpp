@@ -255,7 +255,7 @@ public:
   template< typename ...Args >
   void Error(Args ... args) 
   {
-    
+    return;
     std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::ERROR, TopContextImpl() );    
     Unroll<Args...>::Append( this, args... );
@@ -267,7 +267,7 @@ public:
   template< typename ...Args >
   void Debug(Args ... args) 
   {
-
+    return;
     std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl() );    
     Unroll<Args...>::Append( this, args... );
@@ -467,6 +467,11 @@ Context::~Context()
     #endif
 #endif
 
+
+#define FETCH_HAS_STACK_TRACE
+
+#ifdef FETCH_HAS_STACK_TRACE
+
 #define LOG_STACK_TRACE_POINT \
   fetch::log::Context log_context(__FUNCTION_NAME__, __FILE__, __LINE__); 
 
@@ -482,6 +487,16 @@ Context::~Context()
 #define LOG_PRINT_STACK_TRACE(name, custom_name)                    \
   fetch::logger.StackTrace( name, uint32_t(-1), false, custom_name )  
   
+#else
+
+#define LOG_STACK_TRACE_POINT 
+#define LOG_LAMBDA_STACK_TRACE_POINT
+#define LOG_CONTEXT_VARIABLE(name)
+#define LOG_SET_CONTEXT_VARIABLE(name)
+#define LOG_PRINT_STACK_TRACE(name, custom_name)
+
+
+#endif
 
 //#define LOG_STACK_TRACE_POINT
 //#define LOG_LAMBDA_STACK_TRACE_POINT

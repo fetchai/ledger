@@ -26,6 +26,6 @@ def submitParallel(numbers, threads=2):
     return results
 
 if __name__ == "__main__":
-    submitParallel(range(50), 4)
+    submitParallel(range(100), 4)
 
     

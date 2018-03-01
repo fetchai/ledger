@@ -215,12 +215,10 @@ public:
     }
     
     
-    TODO("Verify transaction");
+    fetch::logger.Warn("Verify transaction");
     
     block_mutex_.lock();
     incoming_.push_back( tx.digest() );
-    fetch::logger.Highlight(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");    
-    fetch::logger.Highlight("Known transactions ", known_transactions_.size(), " with backlog: ", incoming_.size());
     
     block_mutex_.unlock();
 
@@ -268,14 +266,12 @@ public:
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);    
     
     block_mutex_.lock();
-    std::cout << "Pushing block" << std::endl;
+
     
     // Only record blocks that are new
     if( chains_.find( block.header() ) != chains_.end() ) {
-      std::cout << "Nothing to do for block" << std::endl;
       
       block_mutex_.unlock();
-      std::cout << "EXIT Pushing block 1" << std::endl;
       return ;
     }
     
@@ -465,10 +461,15 @@ public:
       std::cout << "    (" << fetch::byte_array::ToBase64( head_.body().transaction_hash ) << ")" << std::endl;
 
 
-      if( (incoming_.size() + block.meta_data().block_number) != known_transactions_.size() )
+      if( (incoming_.size() + block.meta_data().block_number) > known_transactions_.size() )
       {
 
-        fetch::logger.Error("Mismatch in accounting: ", incoming_.size(), " + ",block.meta_data().block_number, " != ", known_transactions_.size() );
+        if( block.meta_data().block_number == block_meta_data_type::UNDEFINED)
+          {
+            fetch::logger.Error("Block number undefined!!");
+            exit(-1);
+          }
+        fetch::logger.Error("Mismatch in accounting: ", incoming_.size(), " + ",block.meta_data().block_number, " > ", known_transactions_.size() );
 
         fetch::logger.Highlight("Incoming: ", incoming_.size());        
         for(auto &a : incoming_) {
@@ -493,6 +494,8 @@ public:
         exit(-1);
         
       }
+
+      fetch::logger.Info("Synced to: ", fetch::byte_array::ToBase64( head_.header() ));
       block_mutex_.unlock();      
     }
 
