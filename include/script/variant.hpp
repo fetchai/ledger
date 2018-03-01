@@ -185,7 +185,6 @@ public:
     assert(type_ == ARRAY);
     assert(i < size());
     return (*data_.array)[i];    
-//    return VariantAccessProxy(*this, i);  //(*data_.array)[i+1];
   }
 
   Variant const& operator[](std::size_t const& i) const {

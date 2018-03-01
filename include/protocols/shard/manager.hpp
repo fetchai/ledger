@@ -22,6 +22,7 @@
 #include<vector>
 #include<limits>
 #include<stack>
+#include<set>
 
 
 namespace fetch
@@ -101,7 +102,6 @@ public:
     EntryPoint& details) :
     thread_manager_(thread_manager),
     details_(details),
-    tx_mutex_ ( __LINE__, __FILE__), 
     block_mutex_( __LINE__, __FILE__),    
     shard_friends_mutex_( __LINE__, __FILE__),
     sharding_parameter_(1)
@@ -191,12 +191,12 @@ public:
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
     
-    tx_mutex_.lock();
+    block_mutex_.lock();
 
     tx.UpdateDigest();
     
     if(known_transactions_.find( tx.digest()  ) != known_transactions_.end() ) {      
-      tx_mutex_.unlock();
+      block_mutex_.unlock();
       return false;
     }
     
@@ -206,7 +206,7 @@ public:
 
     TODO("Implement shard checking");    
     
-    tx_mutex_.unlock();
+    block_mutex_.unlock();
 
     if(!belongs_to_shard)
     {
@@ -217,12 +217,12 @@ public:
     
     TODO("Verify transaction");
     
-    tx_mutex_.lock();
+    block_mutex_.lock();
     incoming_.push_back( tx.digest() );
     fetch::logger.Highlight(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");    
     fetch::logger.Highlight("Known transactions ", known_transactions_.size(), " with backlog: ", incoming_.size());
     
-    tx_mutex_.unlock();
+    block_mutex_.unlock();
 
 
     this->Publish(ShardFeed::FEED_BROADCAST_TRANSACTION, tx );
@@ -250,14 +250,14 @@ public:
     body.previous_hash = head_.header();
     block_mutex_.unlock();
     
-    tx_mutex_.lock();
+    block_mutex_.lock();
     fetch::logger.Debug("Transaction queue has ", incoming_.size(), " elements");
     if(incoming_.size() == 0) {
       body.transaction_hash =  "";
     } else {
       body.transaction_hash =  incoming_.front();
     }    
-    tx_mutex_.unlock();
+    block_mutex_.unlock();
     
     block.SetBody( body );
     return block;
@@ -455,7 +455,8 @@ public:
     // We only commit if there actually is a new block
     if( block.meta_data().block_number > 0 ) {
 
-      block_mutex_.lock();
+
+      block_mutex_.lock();    
       SwitchBranch(block, head_);      
       
       std::cout << "Applying block: " << head_.meta_data().block_number << " " <<  head_.meta_data().total_work <<  std::endl;
@@ -463,53 +464,35 @@ public:
       std::cout << "   = " << fetch::byte_array::ToBase64( head_.header() ) << std::endl;
       std::cout << "    (" << fetch::byte_array::ToBase64( head_.body().transaction_hash ) << ")" << std::endl;
 
-      // TODO: Update transaction order
-      
-      // Removing TX from queue
 
-      std::size_t deltx = -1;      
-      for(std::size_t i=0; i < incoming_.size(); ++i)
-      {
-        if(head_.body().transaction_hash == incoming_[i])
-        {
-          deltx = i;
-          break;          
-        }        
-      }
-
-      if(deltx != std::size_t( -1 ) )
-      {
-        incoming_.erase( incoming_.begin() + deltx);        
-      }
-      
       if( (incoming_.size() + block.meta_data().block_number) != known_transactions_.size() )
       {
+
         fetch::logger.Error("Mismatch in accounting: ", incoming_.size(), " + ",block.meta_data().block_number, " != ", known_transactions_.size() );
 
-        fetch::logger.Debug("Incoming");        
+        fetch::logger.Highlight("Incoming: ", incoming_.size());        
         for(auto &a : incoming_) {
-          fetch::logger.Info( "  > ", byte_array::ToHex( a ) );
+          fetch::logger.Info( "  > ", byte_array::ToBase64( a ) );
         }
 
-        fetch::logger.Debug("In blocks");
+        fetch::logger.Highlight("In blocks ", block.meta_data().block_number);
         block_type b = block;
         
         while( b.meta_data().block_number != 0)
         {
-          fetch::logger.Info( "  > ", byte_array::ToHex( b.body().transaction_hash ) );
+          fetch::logger.Info( "  > ", byte_array::ToBase64( b.body().transaction_hash ) );
           b = chains_[b.body().previous_hash];          
         }
 
-        fetch::logger.Debug("Known transactions");        
+        fetch::logger.Highlight("Known transactions ", known_transactions_.size());        
         for(auto &a : known_transactions_) {
-          fetch::logger.Info( "  > ", byte_array::ToHex( a.first ) );          
+          fetch::logger.Info( "  > ", byte_array::ToBase64( a.first ) );          
         }
         
         
         exit(-1);
         
       }
-      
       block_mutex_.unlock();      
     }
 
@@ -669,9 +652,9 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     
-    tx_mutex_.lock();
+    block_mutex_.lock();
     fnc( incoming_, known_transactions_ );    
-    tx_mutex_.unlock();
+    block_mutex_.unlock();
   }
 
   void with_loose_chains_do( std::function< void( std::map< uint64_t,  PartialChain > ) > fnc ) 
@@ -793,8 +776,11 @@ private:
 
   void SwitchBranch(block_type new_head, block_type old_head) 
   {
-//TODO      head_ = block;    
+    // Rolling back
+
     LOG_STACK_TRACE_POINT;
+    head_ = new_head;
+    
 //    block_mutex_.lock();
     if( new_head.meta_data().block_number == BlockMetaData::UNDEFINED) {
       fetch::logger.Error("Block number is undefined!");
@@ -808,37 +794,53 @@ private:
       return;      
     }
 
+    std::set< tx_digest_type > used_transactions;
+    
     
     if(new_head.body().previous_hash == old_head.header())
     {
-      fetch::logger.Highlight("No need to roll back.");
-//      block_mutex_.unlock();      
-      return;      
+      used_transactions.insert(new_head.body().transaction_hash);
     }
-    
-    fetch::logger.Highlight("Rolling back");
-    while(new_head.meta_data().block_number > old_head.meta_data().block_number)
+    else
     {
-      new_head = chains_[new_head.body().previous_hash];
-      fetch::logger.Debug("Block nr comp 1: ", new_head.meta_data().block_number," ", old_head.meta_data().block_number, " ", BlockMetaData::UNDEFINED);
-    }
-
-    while(new_head.meta_data().block_number < old_head.meta_data().block_number)
-    {
-      incoming_.push_back( old_head.body().transaction_hash );
+      fetch::logger.Highlight("Rolling back");
+      while(new_head.meta_data().block_number > old_head.meta_data().block_number)
+      {
+        used_transactions.insert(new_head.body().transaction_hash);
+        new_head = chains_[new_head.body().previous_hash];
+        fetch::logger.Debug("Block nr comp 1: ", new_head.meta_data().block_number," ", old_head.meta_data().block_number, " ", BlockMetaData::UNDEFINED);
+      }
       
-      old_head = chains_[old_head.body().previous_hash];
-      fetch::logger.Debug("Block nr comp 2: ", new_head.meta_data().block_number," ",  old_head.meta_data().block_number);
-    } 
-    
-    while(new_head.header() != old_head.header() )
-    {
-      fetch::logger.Debug(byte_array::ToBase64( new_head.header() ), " vs ",  byte_array::ToBase64( old_head.header()) );
-      incoming_.push_back( old_head.body().transaction_hash );
-      new_head = chains_[new_head.body().previous_hash];
-      old_head = chains_[old_head.body().previous_hash];
+      while(new_head.meta_data().block_number < old_head.meta_data().block_number)
+      {
+        incoming_.push_back( old_head.body().transaction_hash );
+        old_head = chains_[old_head.body().previous_hash];
+        fetch::logger.Debug("Block nr comp 2: ", new_head.meta_data().block_number," ",  old_head.meta_data().block_number);
+      } 
+      
+      while(new_head.header() != old_head.header() )
+      {
+        fetch::logger.Debug(byte_array::ToBase64( new_head.header() ), " vs ",  byte_array::ToBase64( old_head.header()) );
+        used_transactions.insert(new_head.body().transaction_hash);
+        incoming_.push_back( old_head.body().transaction_hash );
+        new_head = chains_[new_head.body().previous_hash];
+        old_head = chains_[old_head.body().previous_hash];
+      }
+      
+    }
+       
+    // Rolling forth
+    std::vector< tx_digest_type > new_incoming;    
+    for(auto &tx: incoming_) {
+      if(used_transactions.find( tx ) == used_transactions.end() )
+      {
+        new_incoming.push_back(tx);        
+      }
+      
 
     }
+    incoming_ = new_incoming;
+
 //    block_mutex_.unlock();
   }
   
@@ -847,7 +849,7 @@ private:
   network::ThreadManager *thread_manager_;    
   EntryPoint &details_;  
   
-  fetch::mutex::Mutex tx_mutex_;
+
   std::vector< tx_digest_type > incoming_;
   std::map< tx_digest_type, transaction_type > known_transactions_;
   std::vector< transaction_type > tx_order_;
