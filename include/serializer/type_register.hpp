@@ -41,6 +41,8 @@ REGISTER_SERIALIZE_TYPE('i8', char);
 
 REGISTER_SERIALIZE_TYPE('b8', bool);  
 
+REGISTER_SERIALIZE_TYPE('str', byte_array::BasicByteArray);
+REGISTER_SERIALIZE_TYPE('str', byte_array::ByteArray);
 REGISTER_SERIALIZE_TYPE('str', byte_array::ConstByteArray);
 REGISTER_SERIALIZE_TYPE('str', std::string);
 REGISTER_SERIALIZE_TYPE('str', char const*);

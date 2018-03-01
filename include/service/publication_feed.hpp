@@ -96,10 +96,13 @@ public:
 
     PackArgs(params, args...);
 
+    fetch::logger.Debug("Publishing data for feed ", feed);    
+    
     if(publisher_[feed])
       publisher_[feed](params.data());    
     else {
-      TODO("could not find publisher - make a warning logger");
+      fetch::logger.Warn("Could not find publisher for ", feed);
+      fetch::logger.StackTrace(2, false);      
     }
   }
 private:

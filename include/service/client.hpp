@@ -251,6 +251,7 @@ private:
           error::PROMISE_NOT_FOUND,
           "Could not find promise");
       }
+      
       promises_mutex_.unlock();
     
       it->second->Fail(e);
@@ -267,6 +268,7 @@ private:
       subscription_mutex_.lock();
       if( subscriptions_[sub].feed != feed) 
       {
+        fetch::logger.Error("Feed id mismatch ", feed );
         TODO_FAIL("feed id mismatch");
       }
 
@@ -274,9 +276,9 @@ private:
       subscription_mutex_.unlock(); 
 
       subde.mutex.lock();
-      // TODO: Locking should be done on an per, callback basis rather than global
       auto cb = subde.callback;
-
+      subde.mutex.unlock();
+      
       if(cb!=nullptr) 
       {
         serializer_type result;
@@ -284,17 +286,20 @@ private:
           (*cb)(result, params);
         }
         catch (serializers::SerializableException const& e) 
-          {
-            fetch::logger.Error("Serialization error: ", e.what() ) ;
-            throw e;
-          }
+        {
+          e.StackTrace();
+          
+          fetch::logger.Error("Serialization error: ", e.what() ) ;          
+          throw e;
+        }
       }
       else 
       {
+        fetch::logger.Error("Callback is null for feed ", feed );        
         TODO_FAIL("callback is null");
       }
         
-      subde.mutex.unlock();
+
     } else 
     {
       throw serializers::SerializableException(

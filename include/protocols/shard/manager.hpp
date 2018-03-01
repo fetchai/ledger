@@ -494,9 +494,9 @@ public:
     block_mutex_.lock();    
     block_type head_copy = head_;    
     block_mutex_.unlock();
-
     
-    fetch::logger.Debug("Subscribing");    
+    fetch::logger.Debug("Subscribing");
+    
     client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_BLOCK,
       new service::Function< void(block_type) >([this]( block_type const& block) 
         {

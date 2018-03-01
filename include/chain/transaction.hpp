@@ -3,6 +3,7 @@
 #include "crypto/sha256.hpp"
 #include "byte_array/referenced_byte_array.hpp"
 #include "serializer/byte_array_buffer.hpp"
+#include "logger.hpp"
 
 namespace fetch {
 namespace chain {
@@ -15,6 +16,7 @@ public:
 
   
   void UpdateDigest() {
+    LOG_STACK_TRACE_POINT;    
     serializers::ByteArrayBuffer buf;
     buf << resources_ << signatures_ << contract_name_ << arguments_;
     hasher_type hash;
@@ -26,11 +28,13 @@ public:
 
   void PushResource(byte_array::ConstByteArray const &res)
   {
+    LOG_STACK_TRACE_POINT;
     resources_.push_back(res);
   }
   
   void PushSignature(byte_array::ConstByteArray const& sig)
   {
+    LOG_STACK_TRACE_POINT;
     signatures_.push_back(sig);
   }  
 
@@ -74,11 +78,14 @@ private:
 
 template< typename T >
 void Serialize( T & serializer, Transaction const &b) {
+  LOG_STACK_TRACE_POINT;
+  
   serializer <<  uint32_t(b.resources().size());
+  
   for(auto &res: b.resources()) {
     serializer << res;
   }
-  
+
   serializer <<  uint32_t(b.signatures().size());
   for(auto &sig: b.signatures()) {
     serializer << sig;
@@ -90,8 +97,11 @@ void Serialize( T & serializer, Transaction const &b) {
 
 template< typename T >
 void Deserialize( T & serializer, Transaction &b) {
+  LOG_STACK_TRACE_POINT;
+  
   uint32_t size;
   serializer >>  size;
+
   for(std::size_t i=0; i < size; ++i) {
     byte_array::ByteArray res;
     serializer >> res;

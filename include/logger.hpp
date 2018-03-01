@@ -11,6 +11,7 @@
 #include<thread>
 #include<unordered_map>
 #include<unordered_set>
+#include<vector>
 namespace fetch {
 
 namespace log {
@@ -183,7 +184,7 @@ public:
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
     std::cout << "[ " << GetColor(color,9) << std::put_time(std::localtime(&now_c), "%F %T") ;
     std::cout << "." << std::setw(3) <<millis <<  DefaultAttributes() << ", #" << thread_number;
-    std::cout << ": " << std::setw(20) << ctx->context() << " ] ";    
+    std::cout << ": " << std::setw(20) << ctx->context() <<  " ] ";    
   }
 
   template< typename T >
@@ -291,7 +292,47 @@ public:
     }
     
   }
+
+  void StackTrace(shared_context_type ctx,
+    uint32_t max = uint32_t(-1),
+    bool show_locks = true, std::string const &trace_name = "Stack trace" ) 
+  {
+    if(!ctx) {
+      std::cerr << "Stack trace context invalid" << std::endl;
+      return;      
+    }
+    
+    std::cout << trace_name << " for #" << ReadableThread::GetThreadID( ctx->thread_id() )  <<  std::endl;    
+    PrintTrace(ctx, max);    
+
+    if(show_locks) {
+      
+      std::vector< std::thread::id > locked_threads;
+      
+      std::cout << std::endl;    
+      std::cout << "Active locks: " << std::endl;
+      for(auto &l : active_locks_) {
+        std::cout << "  - " << l->AsString() << std::endl;
+        locked_threads.push_back( l->thread_id() );
+        
+      }
+      std::cout << std::endl;
+      for(auto &id: locked_threads) {
+        std::cout << "Additionally trace for #" << ReadableThread::GetThreadID( id )  <<  std::endl;    
+        ctx = context_[id];
+        PrintTrace(ctx);
+        std::cout << std::endl;      
+      }
+    }
+  }
   
+
+  void StackTrace(uint32_t max = uint32_t(-1), bool show_locks = true ) 
+  {
+    shared_context_type ctx = TopContextImpl();
+    StackTrace(ctx, max, show_locks);    
+  }
+
  
 private:
   std::unordered_set< fetch::mutex::AbstractMutex * > active_locks_;
@@ -326,38 +367,15 @@ private:
   };
 
 
-  void StackTrace() 
+  void PrintTrace(shared_context_type ctx, uint32_t max = uint32_t(-1)) 
   {
-    shared_context_type ctx = TopContextImpl();
-    std::cout << "Stack trace for #" << ReadableThread::GetThreadID( ctx->thread_id() )  <<  std::endl;    
-    PrintTrace(ctx);    
-
-    std::vector< std::thread::id > locked_threads;
-    
-    std::cout << std::endl;    
-    std::cout << "Active locks: " << std::endl;
-    for(auto &l : active_locks_) {
-      std::cout << "  - " << l->AsString() << std::endl;
-      locked_threads.push_back( l->thread_id() );
-      
-    }
-    std::cout << std::endl;
-    for(auto &id: locked_threads) {
-      std::cout << "Additionally trace for #" << ReadableThread::GetThreadID( id )  <<  std::endl;    
-      ctx = context_[id];
-      PrintTrace(ctx);
-      std::cout << std::endl;      
-    }
-    
-    
-  }
-
-  void PrintTrace(shared_context_type ctx) 
-  {
+    using namespace fetch::commandline::VT100;
+    std::size_t i = 0;    
     while( ctx )
     {
-      std::cout << "  - In thread #" << ReadableThread::GetThreadID( ctx->thread_id() ) << ": ";      
-      std::cout << ctx->context() << " " << ctx->filename() << ", " << ctx->line() << std::endl;
+      std::cout << std::setw(3) << i <<  ": In thread #" << ReadableThread::GetThreadID( ctx->thread_id() ) << ": ";      
+      std::cout << GetColor(5,9) << ctx->context() << DefaultAttributes() << " " << ctx->filename() << ", ";
+      std::cout << GetColor(3,9) << ctx->line() << DefaultAttributes() << std::endl;
 
       if( ctx->derived_from() ) {
         std::cout << "*";
@@ -365,7 +383,8 @@ private:
       } else {
         ctx = ctx->parent();
       }
-      
+      ++i;
+      if(i >= max) break;      
     }
   }
   
@@ -440,6 +459,15 @@ Context::~Context()
 #define LOG_LAMBDA_STACK_TRACE_POINT \
   fetch::log::Context log_lambda_context(log_context.details(), __FUNCTION_NAME__, __FILE__, __LINE__)  
 
+#define LOG_CONTEXT_VARIABLE(name) \
+  std::shared_ptr< fetch::log::ContextDetails > name
+
+#define LOG_SET_CONTEXT_VARIABLE(name) \
+  name = fetch::logger.TopContext()  
+
+#define LOG_PRINT_STACK_TRACE(name, custom_name)                    \
+  fetch::logger.StackTrace( name, uint32_t(-1), false, custom_name )  
+  
 
 //#define LOG_STACK_TRACE_POINT
 //#define LOG_LAMBDA_STACK_TRACE_POINT
