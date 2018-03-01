@@ -13,6 +13,8 @@ class NodeOEF {
 public:
   std::string RegisterDataModel(std::string agentName, Instance instance) {
     auto result = serviceDirectory_.RegisterAgent(instance, agentName);
+
+    std::cout << "registering instance!" << std::endl;
     return std::to_string(result);
   }
 

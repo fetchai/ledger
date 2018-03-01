@@ -70,12 +70,12 @@ public:
   }
 
   // Getters and setters for serialization
-  const std::string& getName() const { return _name; }
-  std::string& setName()             { return _name; }
-  const bool& getRequired() const    { return _required; }
-  bool& setRequired()                { return _required; }
-  const Type& getType() const        { return _type; }
-  Type& setType()                    { return _type; }
+  const std::string &getName() const     { return _name; }
+  std::string       &setName()           { return _name; }
+  const bool        &getRequired() const { return _required; }
+  bool              &setRequired()       { return _required; }
+  const Type        &getType() const     { return _type; }
+  Type              &setType()           { return _type; }
 };
 
 class Relation {
@@ -136,10 +136,10 @@ public:
   }
 
   // Getters and setters for serialization
-  const Op& getOp() const               { return _op; }
-  Op& setOp()                           { return _op; }
-  const ValueType& getValueType() const { return _value; }
-  ValueType& setValueType()             { return _value; }
+  const Op        &getOp() const        { return _op; }
+  Op              &setOp()              { return _op; }
+  const ValueType &getValueType() const { return _value; }
+  ValueType       &setValueType()       { return _value; }
 };
 
 class Set {
@@ -183,10 +183,10 @@ public:
   }
 
   // Getters and setters for serialization
-  const Op& getOp() const                { return _op; }
-  Op& setOp()                            { return _op; }
-  const ValueType& getValueTypes() const { return _values; }
-  ValueType& setValueTypes()             { return _values; }
+  const Op        &getOp() const         { return _op; }
+  Op              &setOp()               { return _op; }
+  const ValueType &getValueTypes() const { return _values; }
+  ValueType       &setValueTypes()       { return _values; }
 };
 
 class Range {
@@ -268,17 +268,14 @@ public:
   }
 
   // Getters and setters for serialization
-  std::string              name() const { return _name; } // TODO: (`HUT`) : old, delete when appropriate
-  std::vector<std::string> keywords() const { return _keywords; }
-
-  const std::string& getName() const { return _name; } // TODO: (`HUT`) : make this auto?
-  std::string& setName()             { return _name; }
-
-  const std::vector<std::string>& getKeywords() const { return _keywords; } // TODO: (`HUT`) : make this auto?
-  std::vector<std::string>& setKeywords()             { return _keywords; }
-
-  const std::vector<Attribute>& getAttributes() const { return _attributes; } // TODO: (`HUT`) : make this auto?
-  std::vector<Attribute>& setAttributes()             { return _attributes; }
+  //std::string              name() const { return _name; } // TODO: (`HUT`) : old, delete when appropriate
+  //std::vector<std::string> keywords() const { return _keywords; }
+  const std::string              &getName() const       { return _name; }
+  std::string                    &setName()             { return _name; }
+  const std::vector<std::string> &getKeywords() const   { return _keywords; }
+  std::vector<std::string>       &setKeywords()         { return _keywords; }
+  const std::vector<Attribute>   &getAttributes() const { return _attributes; }
+  std::vector<Attribute>         &setAttributes()       { return _attributes; }
 };
 
 class Instance {
@@ -306,7 +303,7 @@ public:
     return true;
   }
   std::size_t hash() const {
-    std::size_t h = std::hash<std::string>{}(_model.name());
+    std::size_t h = std::hash<std::string>{}(_model.getName());
     for(const auto &p : _values) {
       std::size_t hs = std::hash<std::string>{}(p.first);
       h = hs ^ (h << 1);
@@ -330,12 +327,33 @@ public:
     return stde::optional<std::string>{iter->second};
   }
 
-  // Getters and setters for serialization
-  const std::unordered_map<std::string,std::string>& getValues() const { return _values; }
-  std::unordered_map<std::string,std::string>& setValues()             { return _values; }
+  // Construct this class with a JSON doc
+  template <typename T>
+  Instance(const T &jsonDoc)
+  {
+    //std::cout << "Print byte array " << jsonDoc << std::endl; // TODO: (`HUT`) : delete
 
-  const DataModel& getDataModel() const { return _model; }
-  DataModel& setDataModel()             { return _model; }
+    // 
+    //tx.fromAddress = doc["fromAddress"].as_byte_array();
+    //tx.amount = doc["balance"].as_int();
+    //std::cout << "parse byte array"  << std::endl;
+
+    //auto values = jsonDoc["values"].as_byte_array();
+
+    //std::cout << "parsed byte array"  << std::endl;
+    //std::cout << "Print byte array " << values << std::endl;
+    //
+    std::cout << "parse byte array"  << std::endl;
+
+    auto values = jsonDoc["values"].as_byte_array();
+
+  }
+
+  // Getters and setters for serialization
+  const std::unordered_map<std::string,std::string> &getValues() const    { return _values; }
+  std::unordered_map<std::string,std::string>       &setValues()          { return _values; }
+  const DataModel                                   &getDataModel() const { return _model; }
+  DataModel                                         &setDataModel()       { return _model; }
 };
 
 // Used for hashing classes for use in unordered_map etc.
@@ -402,11 +420,10 @@ public:
   }
 
   // Getters and setters for serialization
-  const Attribute& getAttribute() const { return _attribute; }
-  Attribute& setAttribute()             { return _attribute; }
-
-  const ConstraintType& getConstraintType() const { return _constraint; }
-  ConstraintType& setConstraintType()             { return _constraint; }
+  const Attribute      &getAttribute() const      { return _attribute; }
+  Attribute            &setAttribute()            { return _attribute; }
+  const ConstraintType &getConstraintType() const { return _constraint; }
+  ConstraintType       &setConstraintType()       { return _constraint; }
 };
 
 class Or {
@@ -439,8 +456,8 @@ public:
   }
 
   // Getters and setters for serialization
-  const std::vector<ConstraintType>& getExpressions() const { return _expr; }
-  std::vector<ConstraintType>& setExpressions()             { return _expr; }
+  const std::vector<ConstraintType> &getExpressions() const { return _expr; }
+  std::vector<ConstraintType>       &setExpressions()       { return _expr; }
 };
 
 class KeywordLookup
@@ -476,7 +493,7 @@ public:
   }
   bool check(const Instance &i) const {
     if(_model) {
-      if(_model->name() != i.model().name())
+      if(_model->getName() != i.model().getName())
         return false;
       // TODO: more to compare ?
     }
@@ -488,8 +505,8 @@ public:
   }
 
   // Getters and setters for serialization
-  const std::vector<Constraint>& getConstraints() const { return _constraints; }
-  std::vector<Constraint>& setConstraints()             { return _constraints; }
+  const std::vector<Constraint> &getConstraints() const { return _constraints; }
+  std::vector<Constraint>       &setConstraints()       { return _constraints; }
 };
 
 // Temporarily place convenience fns here

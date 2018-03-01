@@ -10,6 +10,8 @@
 #include"random/lfg.hpp"
 #include"mutex.hpp"
 #include"oef/NodeOEF.h"
+#include"oef/schemaToJSON.h"
+#include"oef/JSONToSchema.h"
 
 #include<map>
 #include<vector>
@@ -59,6 +61,10 @@ public:
         });
     HTTPModule::Post("/get-transactions", [this](ViewParameters const &params, HTTPRequest const &req) {
         return this->GetHistory(params, req);
+      });
+
+    HTTPModule::Post("/register-instance", [this](ViewParameters const &params, HTTPRequest const &req) {
+        return this->RegisterInstance(params, req);
       });
 
     HTTPModule::Post("/test", [this](ViewParameters const &params, HTTPRequest const &req) {
@@ -222,12 +228,43 @@ public:
     return HTTPResponse(ret.str());
   }
 
+  HTTPResponse RegisterInstance(ViewParameters const &params, HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    std::cout << req.body() << std::endl;
+
+    try {
+      doc = req.JSON();
+
+      Instance inst(doc["schema"].as_byte_array());
+    } catch (...) {
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+    }
+
+
+//    json::JSONDocument doc;
+//    try {
+//      doc = req.JSON();
+//
+//      std::cout << "success" << std::endl;
+//      std::cout << req.body() << std::endl;
+//      Instance inst(doc);
+//    } catch(...) {
+//      std::cout << "fail" << std::endl;
+//      std::cout << req.body() << std::endl;
+//
+//      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+//    }
+
+    //node_->test();
+    return HTTPResponse("{\"response\": \"success\"}");
+  }
+
   HTTPResponse Test(ViewParameters const &params, HTTPRequest const &req) {
 
     node_->test();
     return HTTPResponse("{\"response\": \"success\"}");
   }
-
 
 public:
   std::vector< Transaction >                             transactions_;
