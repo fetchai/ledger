@@ -159,6 +159,21 @@ public:
     fetch::logger.Debug("Done removing event listener ",handle, " from thread manager ");
   }
   
+
+  template< typename F >
+  void Post(F &&f) 
+  {
+    io_service_.post( std::move(f) );    
+  }
+
+  template< typename F >
+  void Post(F &&f, int milliseconds) 
+  {
+    // TODO: make class for delayed post such that we don't block the thread
+    std::this_thread::sleep_for( std::chrono::milliseconds( milliseconds ));    
+    io_service_.post( std::move(f) );    
+  }
+  
 private:
   std::size_t number_of_threads_ = 1;
   std::vector< std::thread* > threads_;  

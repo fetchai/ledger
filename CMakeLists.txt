@@ -4,9 +4,11 @@ project (fetch)
 OPTION(BUILD_TESTS "Build tests" ON)
 OPTION(BUILD_EXAMPLES "Build examples" ON)
 OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" ON)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(PNG REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(Threads REQUIRED)
 
 message("OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
 message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")

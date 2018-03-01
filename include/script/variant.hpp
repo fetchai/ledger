@@ -29,8 +29,8 @@ enum VariantType {
 class Variant {
 public:
   typedef fetch::byte_array::ByteArray byte_array_type;
-  typedef fetch::memory::SharedArray<Variant> variant_reference_type;
-  typedef fetch::script::Dictionary<Variant> dictionary_reference_type;
+  typedef fetch::memory::SharedArray<Variant> variant_array_type;
+  typedef fetch::script::Dictionary<Variant> variant_dictionary_type;
   
   Variant() : type_(UNDEFINED) {}
   Variant(int64_t const& i) { *this = i; }
@@ -78,10 +78,10 @@ public:
       break;
       
     case ARRAY:
-      this->data_.array = new variant_reference_type(  *other.data_.array );        
+      this->data_.array = new variant_array_type(  *other.data_.array );        
       break;        
     case DICTIONARY:
-      this->data_.object= new dictionary_reference_type(     *other.data_.object );
+      this->data_.object= new variant_dictionary_type(     *other.data_.object );
       break;
     case FUNCTION:
       // FIXME: implement
@@ -96,7 +96,7 @@ public:
     
     Variant ret;    
     ret.type_ = DICTIONARY;
-    ret.data_.object = new dictionary_reference_type();
+    ret.data_.object = new variant_dictionary_type();
     for(auto const &kv: arr)
     {
       if(kv.size() != 2)
@@ -112,7 +112,7 @@ public:
   static Variant Object() {
     Variant ret;    
     ret.type_ = DICTIONARY;
-    ret.data_.object = new dictionary_reference_type();
+    ret.data_.object = new variant_dictionary_type();
     
     return ret;    
   }
@@ -121,9 +121,9 @@ public:
   static Variant Array(std::initializer_list<Variant> const& arr) {
     Variant ret;    
     ret.type_ = ARRAY;
-    ret.data_.array = new variant_reference_type(arr.size() + 1);
+    ret.data_.array = new variant_array_type(arr.size());
     (*ret.data_.array)[0] = arr.size();
-    std::size_t i = 1;
+    std::size_t i = 0;
     for(auto const &kv: arr)
     {      
       ret[i++] = kv;    
@@ -135,8 +135,7 @@ public:
   static Variant Array(std::size_t n = 0) {
     Variant ret;    
     ret.type_ = ARRAY;
-    ret.data_.array = new variant_reference_type(n + 1);    
-    (*ret.data_.array)[0] = n;
+    ret.data_.array = new variant_array_type(n);    
     return ret;    
   }  
   
@@ -158,11 +157,11 @@ public:
 
       case ARRAY:
         ret.type_ = type_;
-        ret.data_.array = new variant_reference_type(  data_.array->Copy() );        
+        ret.data_.array = new variant_array_type(  data_.array->Copy() );        
         break;        
       case DICTIONARY:
         ret.type_ = type_;
-        ret.data_.object= new dictionary_reference_type(     data_.object->Copy() );
+        ret.data_.object= new variant_dictionary_type(     data_.object->Copy() );
         break;
       case FUNCTION:
         // FIXME: implement
@@ -174,9 +173,8 @@ public:
   std::initializer_list<Variant> const& operator=(
       std::initializer_list<Variant> const& arr) {
     type_ = ARRAY;
-    data_.array = new variant_reference_type(arr.size() + 1);
-    (*data_.array)[0] = arr.size();
-    std::size_t i = 1;
+    data_.array = new variant_array_type(arr.size());
+    std::size_t i = 0;
     for (auto& a : arr) (*data_.array)[i++] = a;
     return arr;
   }
@@ -185,15 +183,15 @@ public:
   // Array accessors
   Variant& operator[](std::size_t const& i) {
     assert(type_ == ARRAY);
-    assert(i < (*data_.array)[0].as_int());
-    return (*data_.array)[i + 1];    
+    assert(i < size());
+    return (*data_.array)[i];    
 //    return VariantAccessProxy(*this, i);  //(*data_.array)[i+1];
   }
 
   Variant const& operator[](std::size_t const& i) const {
     assert(type_ == ARRAY);
-    assert(i < (*data_.array)[0].as_int());
-    return (*data_.array)[i + 1];
+    assert(i < size());
+    return (*data_.array)[i];
   }
 
   // Dict accessors
@@ -212,9 +210,7 @@ public:
   
   std::size_t size() const {
     if (type_ == ARRAY)
-      return (*data_.array)[0].as_int();
-        if (type_ == ARRAY)
-      return (*data_.array)[0].as_int();
+      return data_.array->size();
     if (type_ == BYTE_ARRAY) return data_.byte_array->size();
     return 0;
   }
@@ -276,8 +272,13 @@ public:
   double& as_double() { return data_.float_point; }
   bool const& as_bool() const { return data_.boolean; }
   bool& as_bool() { return data_.boolean; }
-  dictionary_reference_type as_dictionary() { return *data_.object; }
-  dictionary_reference_type const &as_dictionary() const { return *data_.object; }    
+
+
+  variant_dictionary_type as_dictionary() { return *data_.object; }
+  variant_dictionary_type const &as_dictionary() const { return *data_.object; }    
+  
+  variant_array_type as_array() { return *data_.array; }
+  variant_array_type const &as_array() const { return *data_.array; }    
 
   bool is_null() const { return type_ == NULL_VALUE; }
 
@@ -339,8 +340,8 @@ public:
     double float_point;
     bool boolean;
     byte_array_type* byte_array;
-    variant_reference_type* array;
-    dictionary_reference_type *object;
+    variant_array_type* array;
+    variant_dictionary_type *object;
   } data_;
 
   VariantType type_ = UNDEFINED;

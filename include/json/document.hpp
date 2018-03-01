@@ -150,10 +150,8 @@ class JSONDocument : private byte_array::Tokenizer {
           break;
       }
     }
-
-    
+   
     tree.Build();
-    std::cout << "After build" << std::endl;
     // Creating variant;
     root_ = std::make_shared< variant_type >();
     VisitASTNodes( tree.root_shared_pointer(), *root_ );

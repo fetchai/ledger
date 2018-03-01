@@ -468,7 +468,7 @@ Context::~Context()
 #endif
 
 #define LOG_STACK_TRACE_POINT \
-  fetch::log::Context log_context(__FUNCTION_NAME__, __FILE__, __LINE__)
+  fetch::log::Context log_context(__FUNCTION_NAME__, __FILE__, __LINE__); 
 
 #define LOG_LAMBDA_STACK_TRACE_POINT \
   fetch::log::Context log_lambda_context(log_context.details(), __FUNCTION_NAME__, __FILE__, __LINE__)  

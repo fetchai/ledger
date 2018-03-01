@@ -99,7 +99,9 @@ public:
     
     std::vector< block_header_type > headers;
 
-
+    fetch::logger.Highlight("Remove sleep");    
+    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); 
+     
     this->with_loose_chains_do([&headers]( std::map< uint64_t, ShardManager::PartialChain > const &chains ) {
         for(auto const &c: chains)
         {
@@ -142,9 +144,9 @@ public:
 
     
     if(running_) {
-      thread_manager_->io_service().post([this]() {
+      thread_manager_->Post([this]() {
           this->SyncChain();          
-        });    
+        }, 3000);     // TODO: Introduce timing policy
     }    
   }
   

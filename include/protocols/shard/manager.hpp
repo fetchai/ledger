@@ -107,6 +107,8 @@ public:
     sharding_parameter_(1)
   {
     LOG_STACK_TRACE_POINT;
+    fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
+    
     details_.configuration = EntryPoint::NODE_SHARD;
     
     block_body_type genesis_body;
@@ -140,6 +142,7 @@ public:
   block_type ExchangeHeads(block_type head_candidate) 
   {
     LOG_STACK_TRACE_POINT;
+    fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
     fetch::logger.Debug("Sending head as response to request");
     std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
 
@@ -152,6 +155,7 @@ public:
   std::vector< block_type > RequestBlocksFrom(block_header_type next_hash, uint16_t preferred_block_count) 
   {
     LOG_STACK_TRACE_POINT;
+    fetch::logger.Debug("Entering ", __FUNCTION_NAME__);    
     std::vector< block_type > ret;
 
     if( preferred_block_count > 10 ) preferred_block_count = 10;    
@@ -185,6 +189,8 @@ public:
 
   bool PushTransaction( transaction_type tx ) {
     LOG_STACK_TRACE_POINT;
+    fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
+    
     tx_mutex_.lock();
 
     tx.UpdateDigest();
@@ -245,6 +251,7 @@ public:
     block_mutex_.unlock();
     
     tx_mutex_.lock();
+    fetch::logger.Debug("Transaction queue has ", incoming_.size(), " elements");
     if(incoming_.size() == 0) {
       body.transaction_hash =  "";
     } else {
@@ -258,6 +265,7 @@ public:
   
   void PushBlock(block_type block) {
     LOG_STACK_TRACE_POINT;
+    fetch::logger.Debug("Entering ", __FUNCTION_NAME__);    
     
     block_mutex_.lock();
     std::cout << "Pushing block" << std::endl;
@@ -442,13 +450,13 @@ public:
   
   void Commit(block_type const &block) {
     LOG_STACK_TRACE_POINT;
-
+    fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
+    
     // We only commit if there actually is a new block
     if( block.meta_data().block_number > 0 ) {
 
       block_mutex_.lock();
-      RollBack(block, head_);      
-      head_ = block;
+      SwitchBranch(block, head_);      
       
       std::cout << "Applying block: " << head_.meta_data().block_number << " " <<  head_.meta_data().total_work <<  std::endl;
       std::cout << "  <- " << fetch::byte_array::ToBase64( head_.body().previous_hash ) << std::endl;
@@ -478,6 +486,28 @@ public:
       {
         fetch::logger.Error("Mismatch in accounting: ", incoming_.size(), " + ",block.meta_data().block_number, " != ", known_transactions_.size() );
 
+        fetch::logger.Debug("Incoming");        
+        for(auto &a : incoming_) {
+          fetch::logger.Info( "  > ", byte_array::ToHex( a ) );
+        }
+
+        fetch::logger.Debug("In blocks");
+        block_type b = block;
+        
+        while( b.meta_data().block_number != 0)
+        {
+          fetch::logger.Info( "  > ", byte_array::ToHex( b.body().transaction_hash ) );
+          b = chains_[b.body().previous_hash];          
+        }
+
+        fetch::logger.Debug("Known transactions");        
+        for(auto &a : known_transactions_) {
+          fetch::logger.Info( "  > ", byte_array::ToHex( a.first ) );          
+        }
+        
+        
+        exit(-1);
+        
       }
       
       block_mutex_.unlock();      
@@ -692,6 +722,7 @@ private:
       
       block.meta_data().loose_chain = false;      
       chains_[block.header()] = block;
+      head_ = block;
       
       block_mutex_.unlock();
       return;
@@ -751,8 +782,7 @@ private:
       block = chains_[header];
     }
 
-    if(block.meta_data().total_work > head_.meta_data().total_work) {     
-
+    if(block.meta_data().total_work > head_.meta_data().total_work) { 
       block_mutex_.unlock();
       
       this->Commit(block);       
@@ -761,9 +791,9 @@ private:
     }
   }
 
-  void RollBack(block_type new_head, block_type old_head) 
+  void SwitchBranch(block_type new_head, block_type old_head) 
   {
-    
+//TODO      head_ = block;    
     LOG_STACK_TRACE_POINT;
 //    block_mutex_.lock();
     if( new_head.meta_data().block_number == BlockMetaData::UNDEFINED) {
