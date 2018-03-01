@@ -280,8 +280,16 @@ private:
       if(cb!=nullptr) 
       {
         serializer_type result;
-        (*cb)(result, params);
-      } else 
+        try {
+          (*cb)(result, params);
+        }
+        catch (serializers::SerializableException const& e) 
+          {
+            fetch::logger.Error("Serialization error: ", e.what() ) ;
+            throw e;
+          }
+      }
+      else 
       {
         TODO_FAIL("callback is null");
       }

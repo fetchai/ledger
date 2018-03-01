@@ -502,7 +502,15 @@ public:
         {
           this->PushBlock(block);          
         }));
-
+    
+    client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_TRANSACTION,
+      new service::Function< void(transaction_type) >([this]( transaction_type const& tx) 
+        {
+          std::cout << "Was here? " << std::endl;
+          //          this->PushTransaction(tx);  
+        }));
+    
+    
     shard_friends_mutex_.lock();
     shard_friends_.push_back(client);
     friends_details_.push_back(d);
@@ -571,9 +579,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     
-    std::cout << "Was here??" << std::endl;    
     std::lock_guard< fetch::mutex::Mutex > lock( shard_friends_mutex_ );
-    std::cout << "Was here???" << std::endl;    
     return shard_friends_.size();    
   }
 

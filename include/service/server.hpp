@@ -205,6 +205,7 @@ private:
         Call(result, client, params);
       } catch (serializers::SerializableException const& e) 
       {
+        fetch::logger.Error("Serialization error: ", e.what() ) ;      
         result = serializer_type();
         result << SERVICE_ERROR << id << e;
       }
@@ -226,6 +227,7 @@ private:
         
       } catch (serializers::SerializableException const& e) 
       {
+        fetch::logger.Error("Serialization error: ", e.what() ) ;   
         // FIX Serialization of errors such that this also works
         /*
           serializer_type result;
@@ -251,6 +253,7 @@ private:
         
       } catch (serializers::SerializableException const& e) 
       {
+        fetch::logger.Error("Serialization error: ", e.what() ) ;      
         // FIX Serialization of errors such that this also works
         /*
           serializer_type result;

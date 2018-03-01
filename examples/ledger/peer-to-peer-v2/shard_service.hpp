@@ -71,7 +71,7 @@ public:
 
   void Mine() 
   {
-    int diff = 14;    
+    int diff = 2;    
     
     auto block = this->GetNextBlock();
     if(  block.body().transaction_hash == "") {
