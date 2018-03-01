@@ -153,13 +153,14 @@ public:
     ERROR = 0,
     WARNING = 1,    
     INFO = 2,
-    DEBUG = 3
+    DEBUG = 3,
+    HIGHLIGHT = 4
   };
   
   virtual void StartEntry( int type, shared_context_type ctx ) 
   {
     using namespace fetch::commandline::VT100;
-    int color = 9;
+    int color = 9, bg_color = 9;
     switch(type) {
     case INFO:
       color = 3;
@@ -172,7 +173,11 @@ public:
       break;
     case DEBUG:
       color = 7;
-      break;          
+      break;
+    case HIGHLIGHT:
+      bg_color = 4;      
+      color = 7;
+      break;                
     }
 
     int thread_number = ReadableThread::GetThreadID( std::this_thread::get_id() );    
@@ -182,7 +187,7 @@ public:
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() % 1000;
     
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::cout << "[ " << GetColor(color,9) << std::put_time(std::localtime(&now_c), "%F %T") ;
+    std::cout << "[ " << GetColor(color,bg_color) << std::put_time(std::localtime(&now_c), "%F %T") ;
     std::cout << "." << std::setw(3) <<millis <<  DefaultAttributes() << ", #" << thread_number;
     std::cout << ": " << std::setw(20) << ctx->context() <<  " ] ";    
   }
@@ -238,6 +243,15 @@ public:
     this->log_->CloseEntry(DefaultLogger::WARNING); 
   }
 
+  template< typename ...Args >
+  void Highlight(Args ... args) 
+  {
+    std::lock_guard< std::mutex > lock( mutex_ );
+    this->log_->StartEntry(DefaultLogger::HIGHLIGHT, TopContextImpl() );    
+    Unroll<Args...>::Append( this, args... );
+    this->log_->CloseEntry(DefaultLogger::HIGHLIGHT); 
+  }
+  
   template< typename ...Args >
   void Error(Args ... args) 
   {

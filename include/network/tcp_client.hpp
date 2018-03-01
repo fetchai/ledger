@@ -106,7 +106,7 @@ public:
 
   std::string  Address() const 
   {
-    return socket_.remote_endpoint().address().to_string();    ;    
+    return socket_.remote_endpoint().address().to_string();    
   }
   
 private:
@@ -144,10 +144,10 @@ private:
 
   void ReadHeader() 
   {
-    LOG_STACK_TRACE_POINT;    
+    LOG_STACK_TRACE_POINT; 
     auto cb = [=](std::error_code ec, std::size_t)      
       {
-        LOG_LAMBDA_STACK_TRACE_POINT;    
+        LOG_STACK_TRACE_POINT;    // Deliberately breaking the chain
         if (!ec) 
         {
           ReadBody();
@@ -214,7 +214,7 @@ private:
     
     auto cb = [=](std::error_code ec, std::size_t) 
       {
-        LOG_LAMBDA_STACK_TRACE_POINT;        
+        LOG_STACK_TRACE_POINT; // Deliberately breaking the chain
 
         if (!ec) 
         {

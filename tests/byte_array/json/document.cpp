@@ -32,16 +32,16 @@ int main() {
 }
 )" ;
 
-    std::cout << doc_content << std::endl;
+//    std::cout << doc_content << std::endl;
 
     JSONDocument doc;
-    doc.Parse("test.file", doc_content);
+//    doc.Parse("test.file", doc_content);
 
-    doc["a"] = 4;
+//    doc["a"] = 4;
+//    std::cout << doc.root() << std::endl;
+
+    doc.Parse("hello", R"( {"thing": "tester", "list": [{"one": "me"}, {"two": "asdf"}]})");
     std::cout << doc.root() << std::endl;
-
-    doc.Parse("hello", "{\"resources\":[\"aasdasd\"],\"body\":\"asdasgagag\"}");
-    
   };
   
   /*

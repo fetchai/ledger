@@ -42,15 +42,12 @@ public:
     auto request_blocks_from = new CallableClassMember<ShardProtocol, std::vector< block_type >(block_header_type, uint16_t) >(this, &ShardProtocol::RequestBlocksFrom );
 
     
-    // TODO: Legacy - remove
-    auto commit = new CallableClassMember<ShardProtocol, void() >(this, &ShardProtocol::Commit );    
-    
     Protocol::Expose(ShardRPC::PING, ping);
     Protocol::Expose(ShardRPC::HELLO, hello);    
     Protocol::Expose(ShardRPC::PUSH_TRANSACTION, push_transaction);
     Protocol::Expose(ShardRPC::PUSH_BLOCK, push_block);
     Protocol::Expose(ShardRPC::GET_NEXT_BLOCK, get_block);
-    Protocol::Expose(ShardRPC::COMMIT, commit);     // TODO: legacy
+
 
     Protocol::Expose(ShardRPC::EXCHANGE_HEADS, exchange_heads);
     Protocol::Expose(ShardRPC::REQUEST_BLOCKS_FROM, request_blocks_from);    

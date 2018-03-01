@@ -124,6 +124,5 @@ void Deserialize( T & serializer, Transaction &b) {
 }
 
 };
-
 };
 #endif

@@ -228,18 +228,21 @@ class AbstractSyntaxTree {
   }
 
   void BuildSubset(uint16_t n, std::vector<ast_node_ptr> &nodes) {
-    /*
-      TODO: Make it possible to inject modifiers here
-      std::cout << "Building " << n << ": ";
-      for(auto &n : nodes) {
-      std::cout << n->symbol <<  " (" << n->token_class.type << ") ";
-      }
-      std::cout << std::endl;
-    */
+    
+    //  TODO: Make it possible to inject modifiers here
+
+    
     std::size_t i = 0;
     auto &token_type = token_types_[n];
     uint16_t type = token_type.type;
 
+/*
+    std::cout << "Building " << n << ": " << token_type.type << " " << nodes.size() << std::endl;;
+    for(auto &n : nodes) {
+      std::cout << n->symbol <<  " (" << n->token_class.type << ") ";
+    }
+    std::cout << std::endl;    
+*/    
     for (; i < nodes.size(); ++i) {
       if (!nodes[i]) {
         std::cerr << "internal error - null pointer in nodes" << std::endl;
@@ -279,11 +282,11 @@ class AbstractSyntaxTree {
           }
 
           if (nbrac != 0) {
-            std::cerr << "Could not find group closing:" << std::endl;
+            std::cerr << "Could not find group closing: " << node.symbol << " " << node.symbol.line() << ", " << node.symbol.character() << std::endl;
             exit(-1);
           }
 
-          node.symbol = "{ ... }";  // TODO: Make reference over span
+//          node.symbol = "{ ... }";  // TODO: Make reference over span
           ++i;
           --j;
           while (i < j) {
@@ -294,10 +297,11 @@ class AbstractSyntaxTree {
           nodes.erase(nodes.begin() + i);  // Group closing
           --i;
 
-          // Building subset for next token type
-          BuildSubset(0, node.children);  // TODO: define first
+          // Building subset for next token type                    
+          BuildSubset(n, node.children);  
 
         } else {
+          
           if (op.properties & ASTProperty::OP_LEFT) {
             if (i == 0) {
               std::cerr << "Cannot consume left" << std::endl;
@@ -322,6 +326,7 @@ class AbstractSyntaxTree {
 
     if ((token_type.next < token_types_.size()) &&
         (token_type.next != uint16_t(-1))) {
+
       BuildSubset(token_type.next, nodes);
     }
 
