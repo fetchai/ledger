@@ -47,29 +47,32 @@ class ContextDetails
 {
 public:
   typedef std::shared_ptr< ContextDetails > shared_type;
-  ContextDetails() :
+  ContextDetails(void* instance = nullptr) :
     context_("(root)"),
     filename_(""),
-    line_(0)
+    line_(0),
+    instance_(instance)
   {
     id_ = std::this_thread::get_id();    
   }
   
-  ContextDetails(shared_type ctx, shared_type parent, std::string const & context, std::string const & filename = "", std::size_t const &line = 0) :
+  ContextDetails(shared_type ctx, shared_type parent, std::string const & context, std::string const & filename = "", std::size_t const &line = 0, void* instance=nullptr) :
     context_(context),
     filename_(filename),
     line_(line),
     parent_(parent),  
-    derived_from_(ctx)
+    derived_from_(ctx),
+    instance_(instance)    
   {
     id_ = std::this_thread::get_id();    
   }
   
-  ContextDetails(shared_type parent, std::string const & context, std::string const & filename = "", std::size_t const &line = 0) :
+  ContextDetails(shared_type parent, std::string const & context, std::string const & filename = "", std::size_t const &line = 0, void* instance=nullptr) :
     context_(context),
     filename_(filename),
     line_(line),
-    parent_(parent)
+    parent_(parent),
+    instance_(instance)    
   {
     id_ = std::this_thread::get_id();        
   }
@@ -88,11 +91,20 @@ public:
     return derived_from_;
   }
   
-  std::string context() const { return context_; }  
+  std::string context(std::size_t const &n = std::size_t(-1)) const {
+    if(context_.size() > n )
+      return context_.substr(0, n);
+    return context_;    
+  }  
   std::string filename() const { return filename_; }
   std::size_t line() const { return line_; }  
 
-  std::thread::id thread_id() const { return id_; }  
+  std::thread::id thread_id() const { return id_; }
+  void* instance() const 
+  {
+    return instance_;
+  }
+  
 private:
   std::string context_;  
   std::string filename_;
@@ -100,6 +112,7 @@ private:
   shared_type parent_;
   shared_type derived_from_;
   std::thread::id id_;
+  void *instance_ = nullptr;
   
 };
   
@@ -107,9 +120,9 @@ class Context
 {
 public:
   typedef std::shared_ptr< ContextDetails > shared_type;
-  Context();    
-  Context(shared_type ctx, std::string const & context, std::string const & filename = "", std::size_t const &line = 0);  
-  Context(std::string const & context, std::string const & filename = "", std::size_t const &line = 0) ;
+  Context( void* instance = nullptr );    
+  Context(shared_type ctx, std::string const & context, std::string const & filename = "", std::size_t const &line = 0,  void* instance = nullptr );  
+  Context(std::string const & context, std::string const & filename = "", std::size_t const &line = 0,  void* instance = nullptr ) ;
 
   Context(Context const &context) 
   {
@@ -189,9 +202,13 @@ public:
     
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
     std::cout << "[ " << GetColor(color,bg_color) << std::put_time(std::localtime(&now_c), "%F %T") ;
-    std::cout << "." << std::setw(3) <<millis <<  DefaultAttributes() << ", #" << thread_number;
-    std::cout << ": " << std::setw(20) << ctx->context() <<  " ] ";
+
+    std::cout << "." << std::setw(3) <<millis <<  DefaultAttributes() << ", #" << std::setw(2) << thread_number;
+    std::cout << ": " << std::setw(15) << ctx->instance() << std::setw(20) << ctx->context(18) <<  " ] ";
+    std::cout << GetColor(color,bg_color);    
+
 #endif
+
   }
 
   template< typename T >
@@ -212,8 +229,10 @@ public:
 
   virtual void CloseEntry( int type ) 
   {
+
 #ifndef FETCH_DISABLE_COUT_LOGGING    
-    std::cout << std::endl;
+    using namespace fetch::commandline::VT100;    
+    std::cout << DefaultAttributes() << std::endl;    
 #endif
   }
 private:
@@ -436,22 +455,22 @@ log::details::LogWrapper logger;
 
 
 namespace log {
-Context::Context() 
+Context::Context( void* instance) 
 {
-  details_ = std::make_shared< ContextDetails >();
+  details_ = std::make_shared< ContextDetails >(instance);
   fetch::logger.SetContext( details_ );
 }
 
  
-Context::Context(shared_type ctx,  std::string const & context, std::string const & filename, std::size_t const &line)
+Context::Context(shared_type ctx,  std::string const & context, std::string const & filename, std::size_t const &line, void* instance)
 {
-  details_ = std::make_shared< ContextDetails >(ctx, fetch::logger.TopContext(), context, filename, line);
+  details_ = std::make_shared< ContextDetails >(ctx, fetch::logger.TopContext(), context, filename, line, instance);
   fetch::logger.SetContext( details_ );  
 }
 
-Context::Context(std::string const & context , std::string const & filename, std::size_t const &line ) 
+Context::Context(std::string const & context , std::string const & filename, std::size_t const &line,  void* instance  ) 
 {
-  details_ = std::make_shared< ContextDetails >(fetch::logger.TopContext(), context, filename, line);    
+  details_ = std::make_shared< ContextDetails >(fetch::logger.TopContext(), context, filename, line, instance);    
   fetch::logger.SetContext( details_ );
 }
 
@@ -482,6 +501,10 @@ Context::~Context()
 #define FETCH_HAS_STACK_TRACE
 
 #ifdef FETCH_HAS_STACK_TRACE
+
+#define LOG_STACK_TRACE_POINT_WITH_INSTANCE                           \
+  fetch::log::Context log_context(__FUNCTION_NAME__, __FILE__, __LINE__, this); 
+
 
 #define LOG_STACK_TRACE_POINT \
   fetch::log::Context log_context(__FUNCTION_NAME__, __FILE__, __LINE__); 

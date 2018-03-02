@@ -26,7 +26,7 @@ public:
   
   void Apply(tx_digest_type const &tx)
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     // TODO
     // Particular important detail: We allow for not known transactions to be applied to the chain
     // This potentially constitutes an attack vector that could lay down the network.
@@ -40,7 +40,12 @@ public:
       auto it = unapplied_.find( tx ) ;      
       if(it == unapplied_.end() ) {
         fetch::logger.Error("Cannot apply applied transaction: ", byte_array::ToBase64(tx));
-        TODO_FAIL("Throw exception");
+        for(auto &a : applied_) {
+          
+          fetch::logger.Debug(" >> ", byte_array::ToBase64(a));
+        }
+        
+        TODO_FAIL("Throw exception: BlockInvalid");
       }
       unapplied_.erase(it);
       
@@ -51,7 +56,7 @@ public:
   
   bool AddTransaction(transaction_type const &tx)
   {
-    LOG_STACK_TRACE_POINT;    
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
     if(known_transactions_.find( tx.digest()  ) != known_transactions_.end())
     {
       return false;
@@ -123,7 +128,10 @@ private:
   std::unordered_set< tx_digest_type, hasher_type > known_transactions_;  
   std::vector< tx_digest_type > applied_;  
   
-  std::map< tx_digest_type, transaction_type > transactions_;  
+  std::map< tx_digest_type, transaction_type > transactions_;
+
+  mutable fetch::mutex::Mutex mutex_;
+  
 };
 
 

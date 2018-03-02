@@ -71,7 +71,7 @@ public:
 
   void Mine() 
   {
-    int diff = 2;    
+    int diff = 1;    
     
     auto block = this->GetNextBlock();
     if(  block.body().transaction_hash == "") {
@@ -140,6 +140,16 @@ public:
         this->PushBlock(b);        
       }
     }
+
+    for(std::size_t i=0; i < 100; ++i) std::cout << "=";
+    std::cout << std::endl;
+    
+    std::cout << "Chain stats:" << std::endl;
+    std::cout << "Transaction count: " << this->transaction_count() << std::endl;
+    std::cout << "Unapplied transaction count: " << this->unapplied_transaction_count() << std::endl;
+    std::cout << "Applied transaction count: " << this->applied_transaction_count() << std::endl;        
+    for(std::size_t i=0; i < 100; ++i) std::cout << "=";
+    std::cout << std::endl;
     
 
     

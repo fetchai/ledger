@@ -71,7 +71,7 @@ public:
     shard_friends_mutex_( __LINE__, __FILE__),
     sharding_parameter_(1)
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
     
     details_.configuration = EntryPoint::NODE_SHARD;
@@ -93,7 +93,7 @@ public:
   // TODO: Change signature to std::vector< EntryPoint >
   EntryPoint Hello(std::string host) 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Exchaning shard details (RPC reciever)");
     
     details_.configuration = EntryPoint::NODE_SHARD;
@@ -106,11 +106,11 @@ public:
   
   block_type ExchangeHeads(block_type head_candidate) 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
     fetch::logger.Debug("Sending head as response to request");
     std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
-
     
     // TODO: Check which head is better
     fetch::logger.Debug("Return!");    
@@ -119,7 +119,7 @@ public:
 
   std::vector< block_type > RequestBlocksFrom(block_header_type next_hash, uint16_t preferred_block_count) 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);    
     std::vector< block_type > ret;
 
@@ -153,7 +153,7 @@ public:
 */  
 
   bool PushTransaction( transaction_type tx ) {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
     
     block_mutex_.lock();
@@ -186,39 +186,37 @@ public:
 
 
   block_type GetNextBlock() {
-    LOG_STACK_TRACE_POINT;
-    
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+
     block_body_type body;
     block_type block;
 
-    block_mutex_.lock();
-    body.previous_hash = head_.header();
-    block_mutex_.unlock();
     
-    block_mutex_.lock();
+    block_mutex_.lock();    
+    body.previous_hash = head_.header();
+
     fetch::logger.Debug("Transaction queue has ", tx_manager_.unapplied_count(), " elements");
     
     if( !tx_manager_.has_unapplied() ) {
       body.transaction_hash =  "";
     } else {
       body.transaction_hash =  tx_manager_.NextDigest();      
-    }    
+    }
     block_mutex_.unlock();
     
     block.SetBody( body );
     return block;
+    
   }
   
   void PushBlock(block_type block) {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);    
     
-    block_mutex_.lock();
-
-    
+    block_mutex_.lock();    
     // Only record blocks that are new
     if( chains_.find( block.header() ) != chains_.end() ) {
-      
+      fetch::logger.Debug("Nothing todo");    
       block_mutex_.unlock();
       return ;
     }
@@ -393,7 +391,7 @@ public:
 
   
   void Commit(block_type const &block) {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
     
     // We only commit if there actually is a new block
@@ -452,7 +450,7 @@ public:
 
   void ConnectTo(std::string const &host, uint16_t const &port ) 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
     // Chained tasks
     client_shared_ptr_type client;
@@ -535,7 +533,7 @@ public:
 
   void ListenTo(EntryPoint e) 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
        
     bool found = false;
     shard_friends_mutex_.lock();    
@@ -558,7 +556,7 @@ public:
 
   void SetShardNumber(uint32_t shard, uint32_t total_shards) 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
     fetch::logger.Debug("Setting shard numbers: ", shard, " ", total_shards);    
     sharding_parameter_ = total_shards;
@@ -567,7 +565,7 @@ public:
   
   uint32_t count_outgoing_connections() 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
     std::lock_guard< fetch::mutex::Mutex > lock( shard_friends_mutex_ );
     return shard_friends_.size();    
@@ -575,7 +573,7 @@ public:
 
   uint32_t shard_number() 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
     return details_.shard;    
   }
@@ -583,7 +581,7 @@ public:
 
   void with_peers_do( std::function< void( std::vector< client_shared_ptr_type > , std::vector< EntryPoint > const& ) > fnc ) 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
     shard_friends_mutex_.lock();
     fnc( shard_friends_, friends_details_ );    
@@ -592,7 +590,7 @@ public:
 
   void with_blocks_do( std::function< void(block_type, std::map< block_header_type, block_type >)  > fnc ) 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
     block_mutex_.lock();
     fnc( head_, chains_ );    
@@ -602,7 +600,7 @@ public:
   /*
   void with_transactions_do( std::function< void(std::vector< tx_digest_type >,  std::map< tx_digest_type, transaction_type >) > fnc )
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
     block_mutex_.lock();
     fnc( incoming_, known_transactions_ );    
@@ -612,18 +610,38 @@ public:
   
   void with_loose_chains_do( std::function< void( std::map< uint64_t,  PartialChain > ) > fnc ) 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
     block_mutex_.lock();
     fnc( loose_chains_ );    
     block_mutex_.unlock();
   }
+
+
+  std::size_t unapplied_transaction_count() const 
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);    
+    return tx_manager_.unapplied_count();
+  }
+
+  std::size_t applied_transaction_count() const 
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);    
+    return tx_manager_.applied_count();    
+  }
+
+  std::size_t transaction_count() const 
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
+    return tx_manager_.size();        
+  }
+  
   
   
 private:
   void AttachBlock(block_header_type &header, block_type &block) 
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
     block_mutex_.lock();
     
@@ -731,7 +749,7 @@ private:
   {
     // Rolling back
 
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     head_ = new_head;
     
 //    block_mutex_.lock();
@@ -752,6 +770,7 @@ private:
 
     if(new_head.body().previous_hash == old_head.header())
     {
+        fetch::logger.Debug("Adding used tx 1: ", byte_array::ToBase64( new_head.body().transaction_hash )  );              
       used_transactions.push_back(new_head.body().transaction_hash);
     }
     else
@@ -760,6 +779,7 @@ private:
       std::size_t roll_back_count = 0;          
       while(new_head.meta_data().block_number > old_head.meta_data().block_number)
       {
+        fetch::logger.Debug("Adding used tx 2: ", byte_array::ToBase64( new_head.body().transaction_hash )  );          
         used_transactions.push_back(new_head.body().transaction_hash);
         new_head = chains_[new_head.body().previous_hash];
         fetch::logger.Debug("Block nr comp 1: ", new_head.meta_data().block_number," ", old_head.meta_data().block_number, " ", BlockMetaData::UNDEFINED);
@@ -775,6 +795,7 @@ private:
       while(new_head.header() != old_head.header() )
       {
         fetch::logger.Debug(byte_array::ToBase64( new_head.header() ), " vs ",  byte_array::ToBase64( old_head.header()) );
+        fetch::logger.Debug("Adding used tx 3: ", byte_array::ToBase64( new_head.body().transaction_hash )  );        
         used_transactions.push_back(new_head.body().transaction_hash);
         ++roll_back_count;        
         new_head = chains_[new_head.body().previous_hash];
@@ -785,9 +806,18 @@ private:
     }
 
     
-    // Rolling forth    
+    // Rolling forth
+    std::size_t i = 0;
+    
     while( !used_transactions.empty() )
     {
+      fetch::logger.Debug("Applying used tx ", i, ", remaining: ", used_transactions.size(), ": ",  byte_array::ToBase64( used_transactions.back() )  );
+      for(auto &tx: used_transactions) {
+        fetch::logger.Debug(" --  ", byte_array::ToBase64( tx )  );        
+      }
+      
+      ++i;
+      
       auto tx = used_transactions.back();
       used_transactions.pop_back();
       tx_manager_.Apply( tx );
@@ -800,7 +830,7 @@ private:
   network::ThreadManager *thread_manager_;    
   EntryPoint &details_;  
   
-  fetch::mutex::Mutex block_mutex_;
+  mutable fetch::mutex::Mutex block_mutex_;
   std::map< block_header_type, block_type > chains_;
 
   std::map< uint64_t, PartialChain > loose_chains_;
