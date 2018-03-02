@@ -2,6 +2,7 @@
 #define SCRIPT_DICTIONARY_HPP
 #include"memory/shared_hashtable.hpp"
 #include"byte_array/referenced_byte_array.hpp"
+#include"crypto/fnv.hpp"
 
 #include<unordered_map>
 #include<memory>
@@ -15,22 +16,12 @@ namespace script
 template< typename T >
 class Dictionary
 {
-  struct Hash {
-    std::size_t operator() (fetch::byte_array::BasicByteArray const  &key) const {
-      uint32_t hash = 2166136261;
-      for (std::size_t i = 0; i < key.size(); ++i)
-      {
-        hash = (hash * 16777619) ^ key[i];
-      }
-      
-      return hash ;    
-    }
-  };
 
 public:
+  typedef crypto::CallableFNV hasher_type;  
   typedef byte_array::BasicByteArray key_type;
   typedef T type;
-  typedef std::unordered_map< key_type, type, Hash > container_type;
+  typedef std::unordered_map< key_type, type, hasher_type > container_type;
   typedef std::shared_ptr< container_type > shared_container_type;  
   typedef typename container_type::iterator iterator;
   typedef typename container_type::const_iterator const_iterator;  
