@@ -150,6 +150,15 @@ public:
     std::cout << "Applied transaction count: " << this->applied_transaction_count() << std::endl;        
     for(std::size_t i=0; i < 100; ++i) std::cout << "=";
     std::cout << std::endl;
+    if( (this->unapplied_transaction_count() == 0) &&
+      (this->applied_transaction_count() > 0 ) ) {
+      
+      for(std::size_t i=0; i < 100; ++i)
+        std::cout << "ALL SYNCED " << this->applied_transaction_count() << " ";
+      
+      std::this_thread::sleep_for( std::chrono::milliseconds(5000) );
+      
+    }
     
 
     

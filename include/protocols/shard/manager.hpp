@@ -770,7 +770,7 @@ private:
 
     if(new_head.body().previous_hash == old_head.header())
     {
-        fetch::logger.Debug("Adding used tx 1: ", byte_array::ToBase64( new_head.body().transaction_hash )  );              
+
       used_transactions.push_back(new_head.body().transaction_hash);
     }
     else
@@ -779,7 +779,6 @@ private:
       std::size_t roll_back_count = 0;          
       while(new_head.meta_data().block_number > old_head.meta_data().block_number)
       {
-        fetch::logger.Debug("Adding used tx 2: ", byte_array::ToBase64( new_head.body().transaction_hash )  );          
         used_transactions.push_back(new_head.body().transaction_hash);
         new_head = chains_[new_head.body().previous_hash];
         fetch::logger.Debug("Block nr comp 1: ", new_head.meta_data().block_number," ", old_head.meta_data().block_number, " ", BlockMetaData::UNDEFINED);
@@ -795,7 +794,6 @@ private:
       while(new_head.header() != old_head.header() )
       {
         fetch::logger.Debug(byte_array::ToBase64( new_head.header() ), " vs ",  byte_array::ToBase64( old_head.header()) );
-        fetch::logger.Debug("Adding used tx 3: ", byte_array::ToBase64( new_head.body().transaction_hash )  );        
         used_transactions.push_back(new_head.body().transaction_hash);
         ++roll_back_count;        
         new_head = chains_[new_head.body().previous_hash];
@@ -807,17 +805,9 @@ private:
 
     
     // Rolling forth
-    std::size_t i = 0;
     
     while( !used_transactions.empty() )
-    {
-      fetch::logger.Debug("Applying used tx ", i, ", remaining: ", used_transactions.size(), ": ",  byte_array::ToBase64( used_transactions.back() )  );
-      for(auto &tx: used_transactions) {
-        fetch::logger.Debug(" --  ", byte_array::ToBase64( tx )  );        
-      }
-      
-      ++i;
-      
+    {      
       auto tx = used_transactions.back();
       used_transactions.pop_back();
       tx_manager_.Apply( tx );
