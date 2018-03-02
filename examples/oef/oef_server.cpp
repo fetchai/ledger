@@ -8,8 +8,8 @@ class ServiceProtocol : public HttpOEF, public fetch::service::Protocol {
 public:
 
   ServiceProtocol(NodeOEF *node) : Protocol(), HttpOEF(node) {
-    this->Expose(REGISTERDATAMODEL,     new CallableClassMember<NodeOEF, std::string(std::string agentName, Instance)>                     (node, &NodeOEF::RegisterDataModel) );
-    this->Expose(QUERY,                 new CallableClassMember<NodeOEF, std::vector<std::string>(std::string agentName, QueryModel query)>(node, &NodeOEF::Query) );
+    this->Expose(REGISTERINSTANCE,      new CallableClassMember<NodeOEF, std::string(std::string agentName, Instance)>(node, &NodeOEF::RegisterInstance) );
+    this->Expose(QUERY,                 new CallableClassMember<NodeOEF, std::vector<std::string>(QueryModel query)>  (node, &NodeOEF::Query) );
   }
 };
 

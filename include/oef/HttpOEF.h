@@ -67,6 +67,10 @@ public:
         return this->RegisterInstance(params, req);
       });
 
+    HTTPModule::Post("/query-instance", [this](ViewParameters const &params, HTTPRequest const &req) {
+        return this->QueryInstance(params, req);
+      });
+
     HTTPModule::Post("/test", [this](ViewParameters const &params, HTTPRequest const &req) {
         return this->Test(params, req);
       });
@@ -231,33 +235,61 @@ public:
   HTTPResponse RegisterInstance(ViewParameters const &params, HTTPRequest const &req) {
 
     json::JSONDocument doc;
-    std::cout << req.body() << std::endl;
+    try {
+      doc = req.JSON();
+
+      std::string id = doc["ID"].as_byte_array();
+      Instance instance(doc);
+      auto success = node_->RegisterInstance(id, instance);
+
+      return HTTPResponse("{\"response\": \""+success+"\"}");
+    } catch (...) {
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+    }
+  }
+
+  HTTPResponse QueryInstance(ViewParameters const &params, HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+
+    std::cout << "Hitting query" << std::endl;
 
     try {
       doc = req.JSON();
 
-      Instance inst(doc["schema"].as_byte_array());
+      std::cout << "const query" << std::endl;
+      QueryModel query(doc);
+
+      std::cout << "ar query" << std::endl;
+
+      auto agents = node_->Query(query);
+
+      std::cout << "thihg query" << std::endl;
+
+      // Build the response here, TODO: (`HUT`) : make this cleaner
+      
+      std::string response{"{ \"agents\": [ "};
+
+      for (auto i = agents.begin(); i != agents.end();) {
+        response += std::string("\"") + *i + std::string("\"");
+
+        if(++i != agents.end()){
+          response += ",";
+        }
+      }
+
+      if(agents.size() == 0) {
+          response += "\"none\"";
+      }
+
+      response += "] }";
+
+      std::cout << response << std::endl;
+
+      return HTTPResponse("{\"response\": "+response+"}");
     } catch (...) {
       return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
-
-
-//    json::JSONDocument doc;
-//    try {
-//      doc = req.JSON();
-//
-//      std::cout << "success" << std::endl;
-//      std::cout << req.body() << std::endl;
-//      Instance inst(doc);
-//    } catch(...) {
-//      std::cout << "fail" << std::endl;
-//      std::cout << req.body() << std::endl;
-//
-//      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
-//    }
-
-    //node_->test();
-    return HTTPResponse("{\"response\": \"success\"}");
   }
 
   HTTPResponse Test(ViewParameters const &params, HTTPRequest const &req) {

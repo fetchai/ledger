@@ -11,14 +11,14 @@
 class NodeOEF {
 
 public:
-  std::string RegisterDataModel(std::string agentName, Instance instance) {
+  std::string RegisterInstance(std::string agentName, Instance instance) {
     auto result = serviceDirectory_.RegisterAgent(instance, agentName);
 
     std::cout << "registering instance!" << std::endl;
     return std::to_string(result);
   }
 
-  std::vector<std::string> Query(std::string agentName, QueryModel query) {
+  std::vector<std::string> Query(QueryModel query) {
     return serviceDirectory_.Query(query);
   }
 

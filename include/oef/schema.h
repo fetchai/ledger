@@ -10,6 +10,8 @@
 #include<experimental/optional>
 #include<mapbox/variant.hpp>
 
+#include"json/document.hpp"
+
 // Schema for the OEF: effectively defining the class structure that builds DataModels, Instances and Queries for those Instances
 
 namespace stde = std::experimental;
@@ -19,9 +21,22 @@ enum class Type { Float, Int, Bool, String };
 using VariantType = var::variant<int,float,std::string,bool>;
 VariantType string_to_value(Type t, const std::string &s);
 
+// TODO: (`HUT`) : put this class conversion stuff into another file, perhaps
+Type string_to_type(const std::string &s) {
+  if(s == "float")
+    return Type::Float;
+  if(s == "int")
+    return Type::Int;
+  if(s == "bool")
+    return Type::Bool;
+  if(s == "string")
+    return Type::String;
+  throw std::invalid_argument(s + std::string(" is not a valid type"));
+}
+
 class Attribute {
 private:
-  std::string _name;
+  std::string _name; // TODO: (`HUT`) : rename all these to type_
   Type _type;
   bool _required;
   stde::optional<std::string> _description;
@@ -76,6 +91,12 @@ public:
   bool              &setRequired()       { return _required; }
   const Type        &getType() const     { return _type; }
   Type              &setType()           { return _type; }
+
+  Attribute(fetch::json::JSONDocument &jsonDoc) {
+    _name     = std::string(jsonDoc["name"].as_byte_array());
+    _type     = string_to_type(std::string(jsonDoc["type"].as_byte_array()));
+    _required = jsonDoc["required"].as_bool();
+  }
 };
 
 class Relation {
@@ -86,7 +107,8 @@ public:
 private:
   Op _op;
   ValueType _value;
-  std::string op_to_string(Op op) const {
+public:
+  static std::string op_to_string(Op op) {
     switch(op) {
     case Op::Eq: return "=";
     case Op::Lt: return "<";
@@ -97,7 +119,7 @@ private:
     }
     return "";
   }
-  Op string_to_op(const std::string &s) const {
+  static Op string_to_op(const std::string &s) {
     if(s == "=") return Op::Eq;
     if(s == "<") return Op::Lt;
     if(s == "<=") return Op::LtEq;
@@ -106,7 +128,6 @@ private:
     if(s == "<>") return Op::NotEq;
     throw std::invalid_argument(s + std::string{" is not a valid operator."});
   }
-public:
   explicit Relation(Op op, const ValueType &value) : _op{op}, _value{value} {}
   template <typename T>
     bool check_value(const T &v) const {
@@ -276,6 +297,24 @@ public:
   std::vector<std::string>       &setKeywords()         { return _keywords; }
   const std::vector<Attribute>   &getAttributes() const { return _attributes; }
   std::vector<Attribute>         &setAttributes()       { return _attributes; }
+
+  // JSON construction
+  template<typename T>
+  DataModel(T &jsonDoc)
+  {
+    LOG_STACK_TRACE_POINT;
+
+    _name = std::string(jsonDoc["name"].as_byte_array());
+
+    for(auto &a: jsonDoc["attributes"].as_array()) {
+
+      fetch::json::JSONDocument doc; // TODO: (`HUT`) : ask Troells if is correct use
+      doc.root() = a;
+
+      Attribute attribute(doc);
+      _attributes.push_back(attribute);
+    }
+  }
 };
 
 class Instance {
@@ -327,26 +366,19 @@ public:
     return stde::optional<std::string>{iter->second};
   }
 
-  // Construct this class with a JSON doc
-  template <typename T>
-  Instance(const T &jsonDoc)
+  //template <typename T>
+  Instance(fetch::json::JSONDocument &jsonDoc) // TODO: (`HUT`) : make generic, also not sure non-const is correct, ask troells
+    : _model{jsonDoc["schema"]}
   {
-    //std::cout << "Print byte array " << jsonDoc << std::endl; // TODO: (`HUT`) : delete
+    LOG_STACK_TRACE_POINT; // TODO: (`HUT`) : put this everywhere
 
-    // 
-    //tx.fromAddress = doc["fromAddress"].as_byte_array();
-    //tx.amount = doc["balance"].as_int();
-    //std::cout << "parse byte array"  << std::endl;
-
-    //auto values = jsonDoc["values"].as_byte_array();
-
-    //std::cout << "parsed byte array"  << std::endl;
-    //std::cout << "Print byte array " << values << std::endl;
-    //
-    std::cout << "parse byte array"  << std::endl;
-
-    auto values = jsonDoc["values"].as_byte_array();
-
+    for(auto &a: jsonDoc["values"].as_array()) {
+      for(auto &b: a.as_dictionary()) {
+        std::string first(b.first);
+        std::string second(b.second.as_byte_array());
+        _values[first] = second;
+      }
+    }
   }
 
   // Getters and setters for serialization
@@ -387,7 +419,23 @@ public:
   // Getters and setters for serialization
   const ConstraintType::ValueType& getConstraint() const { return _constraint; }
   ConstraintType::ValueType& setConstraint()             { return _constraint; }
+
+  ConstraintType(fetch::json::JSONDocument &jsonDoc)
+  {
+    LOG_STACK_TRACE_POINT;
+
+    // TODO: (`HUT`) : all possible types
+    std::string type = jsonDoc["type"].as_byte_array();
+
+    if(type.compare("relation") == 0) {
+      _constraint = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), jsonDoc["value"].as_bool());
+    }
+  }
 };
+                    //"type": "relation",
+                    //"op": "=",
+                    //"value_type": "bool",
+                    //"value": True
 
 class Constraint {
 private:
@@ -424,6 +472,21 @@ public:
   Attribute            &setAttribute()            { return _attribute; }
   const ConstraintType &getConstraintType() const { return _constraint; }
   ConstraintType       &setConstraintType()       { return _constraint; }
+
+  Constraint(fetch::json::JSONDocument &jsonDoc)
+  {
+    LOG_STACK_TRACE_POINT;
+
+    fetch::json::JSONDocument doc;
+    doc.root() = jsonDoc["attribute"];
+
+    Attribute attribute(doc);
+    _attribute = attribute;
+
+    doc.root() = jsonDoc["constraint"];
+    ConstraintType constraintType(doc);
+    _constraint = constraintType;
+  }
 };
 
 class Or {
@@ -475,7 +538,7 @@ private:
 class QueryModel {
 private:
   std::vector<Constraint> _constraints;
-  stde::optional<DataModel> _model; // TODO: (`HUT`) : this is not serialized yet
+  stde::optional<DataModel> _model; // TODO: (`HUT`) : this is not serialized yet, nor JSON-ed
 public:
 
   explicit QueryModel() : _model{stde::nullopt} {}
@@ -507,6 +570,19 @@ public:
   // Getters and setters for serialization
   const std::vector<Constraint> &getConstraints() const { return _constraints; }
   std::vector<Constraint>       &setConstraints()       { return _constraints; }
+
+  QueryModel(fetch::json::JSONDocument &jsonDoc) {
+    LOG_STACK_TRACE_POINT;
+
+    for(auto &a: jsonDoc["constraints"].as_array()) {
+
+      fetch::json::JSONDocument doc; // TODO: (`HUT`) : ask Troells if is correct use
+      doc.root() = a;
+
+      Constraint constraint(doc);
+      _constraints.push_back(constraint);
+    }
+  }
 };
 
 // Temporarily place convenience fns here
