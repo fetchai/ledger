@@ -1,4 +1,6 @@
 import requests
+import json
+import pdb
 
 
 # Test Instance
@@ -48,6 +50,19 @@ queryJSON = {
 
 r = requests.post('http://localhost:8080/query-instance', json=queryJSON)
 print "Query: ", r.json()
+
+r = requests.post('http://localhost:8080/echo-query', json=queryJSON)
+
+print "Query: ", r.json()
+print str(r.json())
+
+strJSON = str(r.json())
+
+#parsed = json.loads(str(r.json()))
+print "Queryt "
+print json.dumps(r.json(), indent=4, sort_keys=True)
+
+exit(1)
 
 r = requests.post('http://localhost:8080/check', json = {
     "address": "830A0B9D-73EE-4001-A413-72CFCD8E91F3"

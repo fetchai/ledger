@@ -1,5 +1,5 @@
-#ifndef HTTP_OEF_INTERFACE_H
-#define HTTP_OEF_INTERFACE_H
+#ifndef OEF_HTTP_INTERFACE_H
+#define OEF_HTTP_INTERFACE_H
 
 #include<iostream>
 #include<fstream>
@@ -9,10 +9,6 @@
 #include"commandline/parameter_parser.hpp"
 #include"random/lfg.hpp"
 #include"mutex.hpp"
-#include"script/variant.hpp"
-#include"oef/NodeOEF.h"
-#include"oef/schemaToJSON.h"
-#include"oef/JSONToSchema.h"
 
 #include<map>
 #include<vector>
@@ -41,11 +37,11 @@ struct Account
 };
 
 
-class HttpOEF : public fetch::http::HTTPModule
+class HTTPOEF : public fetch::http::HTTPModule
 {
 
 public:
-  HttpOEF(NodeOEF *node) : node_{node}
+  HTTPOEF()
   {
 
     HTTPModule::Post("/check", [this](ViewParameters const &params, HTTPRequest const &req) {
@@ -63,25 +59,7 @@ public:
     HTTPModule::Post("/get-transactions", [this](ViewParameters const &params, HTTPRequest const &req) {
         return this->GetHistory(params, req);
       });
-
-    HTTPModule::Post("/register-instance", [this](ViewParameters const &params, HTTPRequest const &req) {
-        return this->RegisterInstance(params, req);
-      });
-
-    HTTPModule::Post("/query-instance", [this](ViewParameters const &params, HTTPRequest const &req) {
-        return this->QueryInstance(params, req);
-      });
-
-    HTTPModule::Post("/echo-query", [this](ViewParameters const &params, HTTPRequest const &req) {
-        return this->EchoQuery(params, req);
-      });
-
-    HTTPModule::Post("/test", [this](ViewParameters const &params, HTTPRequest const &req) {
-        return this->Test(params, req);
-      });
   }
-
-  ~HttpOEF() { delete node_;}
 
   HTTPResponse CheckUser(ViewParameters const &params, HTTPRequest const &req) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
@@ -237,140 +215,42 @@ public:
     return HTTPResponse(ret.str());
   }
 
-  HTTPResponse RegisterInstance(ViewParameters const &params, HTTPRequest const &req) {
 
-    json::JSONDocument doc;
-    try {
-      doc = req.JSON();
-
-      std::string id = doc["ID"].as_byte_array();
-      Instance instance(doc);
-      auto success = node_->RegisterInstance(id, instance);
-
-      return HTTPResponse("{\"response\": \""+success+"\"}");
-    } catch (...) {
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
-    }
-  }
-
-  HTTPResponse QueryInstance(ViewParameters const &params, HTTPRequest const &req) {
-
-    json::JSONDocument doc;
-
-    std::cout << "Hitting query" << std::endl;
-
-    try {
-      doc = req.JSON();
-
-      std::cout << "const query" << std::endl;
-      QueryModel query(doc);
-
-      std::cout << "ar query" << std::endl;
-
-      auto agents = node_->Query(query);
-
-      json::JSONDocument docbuilder;
-      docbuilder.Parse("", R"({"response" : {"agents" : ["", ""]}})");
-
-      docbuilder["response"]["agents"][1] = script::Variant(agents[0]);
-
-      std::cout << "thi" << std::endl;
-      std::cout << docbuilder.root() << std::endl;
-      std::cout << "thh" << std::endl;
-      std::ostringstream thing;
-      thing << (docbuilder.root());
-
-      return HTTPResponse(thing.str());
-      //return HTTPResponse("{\"response\": \"win\"}");
-
-      //
-      // Build the response here, TODO: (`HUT`) : make this cleaner
-
-      /*
-      std::cout << "thihg query" << std::endl;
-
-      // Build the response here, TODO: (`HUT`) : make this cleaner
-      
-      std::string response{"{ \"agents\": [ "};
-
-      for (auto i = agents.begin(); i != agents.end();) {
-        response += std::string("\"") + *i + std::string("\"");
-
-        if(++i != agents.end()){
-          response += ",";
-        }
-      }
-
-      if(agents.size() == 0) {
-          response += "\"none\"";
-      }
-
-      response += "] }";
-
-      std::cout << "building doc" << std::endl;
-
-      json::JSONDocument docbuilder;
-
-      fetch::byte_array::ByteArray doc_content = R"({
-      "a": 3,
-      "x": {
-      "y": [1,2,3],
-      "z": null,
-      "q": [],
-      "hello world": {}
-      }
-      }
-      )";
-
-      docbuilder.Parse("test.file", doc_content);
-
-      docbuilder["b"] = 4;
-      std::cout << docbuilder.root() << std::endl;
-
-
-
-      //return HTTPResponse("{\"response\": "+docbuilder+"}");
-      //
-      std::cout << "building doc" << std::endl;
-      std::string thingie = std::string(docbuilder["x"].as_byte_array());
-      std::cout << "sending doc" << std::endl;
-      return HTTPResponse(thingie); */
-    } catch (...) {
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
-    }
-  }
-
-  HTTPResponse EchoQuery(ViewParameters const &params, HTTPRequest const &req) {
-
-
-    std::cout << "testing query" << std::endl;
-
-    json::JSONDocument doc;
-    doc = req.JSON();
-
-    QueryModel query(doc);
-
-    std::ostringstream thing;
-    thing << query.variant();
-
-    return HTTPResponse(thing.str());
-  }
-
-  HTTPResponse Test(ViewParameters const &params, HTTPRequest const &req) {
-
-    node_->test();
-    return HTTPResponse("{\"response\": \"success\"}");
-  }
 
 public:
-  std::vector< Transaction >                             transactions_;
+  std::vector< Transaction > transactions_;
   std::map< fetch::byte_array::BasicByteArray, Account > accounts_;
-  std::set< fetch::byte_array::BasicByteArray >          users_;
-  fetch::random::LaggedFibonacciGenerator<>              lfg_;
-  fetch::mutex::Mutex                                    mutex_;
+  std::set< fetch::byte_array::BasicByteArray > users_;
+  fetch::random::LaggedFibonacciGenerator<> lfg_;
+  fetch::mutex::Mutex mutex_;
 
-private:
-  NodeOEF *node_;
 };
+
+
+//int main(int argc, char const **argv)
+//{
+//
+//  ParamsParser params;
+//  params.Parse(argc, argv);
+//
+//  fetch::network::ThreadManager tm(8);
+//  HTTPServer http_server(8080, &tm);
+//  HTTPOEF oef_http_interface;
+//
+//  http_server.AddMiddleware( fetch::http::middleware::AllowOrigin("*") );
+//  http_server.AddMiddleware( fetch::http::middleware::ColorLog);
+//  http_server.AddModule(oef_http_interface);
+//
+//  tm.Start();
+//
+//  std::cout << "Ctrl-C to stop" << std::endl;
+//  while(true) {
+//    std::this_thread::sleep_for( std::chrono::milliseconds( 200 ) );
+//  }
+//
+//  tm.Stop();
+//
+//  return 0;
+//}
 
 #endif

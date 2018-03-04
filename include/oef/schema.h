@@ -34,6 +34,16 @@ Type string_to_type(const std::string &s) {
   throw std::invalid_argument(s + std::string(" is not a valid type"));
 }
 
+std::string type_to_string(Type t) {
+  switch(t) {
+    case Type::Float: return "float";
+    case Type::Int: return "int";
+    case Type::Bool: return "bool";
+    case Type::String: return "string";
+  }
+  return "";
+}
+
 class Attribute {
 private:
   std::string _name; // TODO: (`HUT`) : rename all these to type_
@@ -96,6 +106,14 @@ public:
     _name     = std::string(jsonDoc["name"].as_byte_array());
     _type     = string_to_type(std::string(jsonDoc["type"].as_byte_array()));
     _required = jsonDoc["required"].as_bool();
+  }
+
+  fetch::script::Variant variant() {
+    fetch::script::Variant result = fetch::script::Variant::Object();
+    result["name"]     = _name;
+    result["type"]     = type_to_string(_type);
+    result["required"] = _required;
+    return result;
   }
 };
 
@@ -487,6 +505,21 @@ public:
     ConstraintType constraintType(doc);
     _constraint = constraintType;
   }
+
+
+  fetch::json::JSONDocument JSON(fetch::json::JSONDocument docbuilder = fetch::json::JSONDocument("", "{}")) {
+    docbuilder["test"] = "feck";
+    return docbuilder;
+  }
+
+  fetch::script::Variant variant() {
+
+    fetch::script::Variant result = fetch::script::Variant::Object();
+
+    result["attribute"] = _attribute.variant();
+    result["constraint"] = _constraints.variant();
+    return result;
+  }
 };
 
 class Or {
@@ -582,6 +615,24 @@ public:
       Constraint constraint(doc);
       _constraints.push_back(constraint);
     }
+  }
+
+  fetch::json::JSONDocument JSON(fetch::json::JSONDocument docbuilder = fetch::json::JSONDocument("", "{}")) {
+
+    //docbuilder["constraints"] = _constraints[0].JSON().root();
+    docbuilder["constraints"] = fetch::script::Variant(_constraints[0].JSON().root());
+    return docbuilder;
+  }
+
+  fetch::script::Variant variant() {
+
+    fetch::script::Variant result = fetch::script::Variant::Array(_constraints.size());
+
+    for (int i = 0; i < _constraints.size(); ++i) {
+      result[i] = _constraints[i].variant();
+    }
+
+    return result;
   }
 };
 
