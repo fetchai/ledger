@@ -102,7 +102,7 @@ public:
     fetch::logger.Highlight("Remove sleep");    
     std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); 
      
-    this->with_loose_chains_do([&headers]( std::map< uint64_t, ShardManager::PartialChain > const &chains ) {
+    this->with_loose_chains_do([&headers]( std::map< uint64_t, ChainManager::PartialChain > const &chains ) {
         for(auto const &c: chains)
         {
           headers.push_back(c.second.next_missing);          

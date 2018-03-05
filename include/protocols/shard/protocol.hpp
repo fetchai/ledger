@@ -2,7 +2,7 @@
 #define PROTOCOLS_SHARD_PROTOCOL_HPP
 #include "service/function.hpp"
 #include "protocols/shard/commands.hpp"
-#include "protocols/shard/manager.hpp"
+#include "protocols/shard/controller.hpp"
 #include "http/module.hpp"
 
 
@@ -11,12 +11,12 @@ namespace fetch
 namespace protocols 
 {
 
-class ShardProtocol : public ShardManager,
+class ShardProtocol : public ShardController,
                       public fetch::service::Protocol,
                       public fetch::http::HTTPModule { 
 public:
-  typedef typename ShardManager::transaction_type transaction_type;
-  typedef typename ShardManager::block_type block_type;  
+  typedef typename ShardController::transaction_type transaction_type;
+  typedef typename ShardController::block_type block_type;  
 
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
   typedef std::shared_ptr< client_type >  client_shared_ptr_type;
@@ -25,7 +25,7 @@ public:
   ShardProtocol(network::ThreadManager *thread_manager,
     uint64_t const &protocol,
     EntryPoint& details) :
-    ShardManager(protocol, thread_manager, details),
+    ShardController(protocol, thread_manager, details),
     fetch::service::Protocol()
   {
     using namespace fetch::service;
@@ -114,7 +114,7 @@ public:
       LOG_STACK_TRACE_POINT;
       std::stringstream response;
       response << "{\"blocks\": [";  
-      this->with_blocks_do([&response](ShardManager::block_type const & head, std::map< ShardManager::block_header_type, ShardManager::block_type > chain) {
+      this->with_blocks_do([&response](ShardController::block_type const & head, std::map< ShardController::block_header_type, ShardController::block_type > chain) {
 
           response << "{";
           response << "\"block_hash\": \"" << byte_array::ToBase64( head.header() ) << "\",";
@@ -155,8 +155,8 @@ public:
     auto list_transactions = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       std::stringstream response;
       response << "{\"transactions\": [";  
-      this->with_transactions_do([&response](std::vecto< ShardManager::tx_digest_type > const & unmined,
-          std::map< ShardManager::tx_digest_type, ShardManager::transaction_type > txs) {
+      this->with_transactions_do([&response](std::vecto< ShardController::tx_digest_type > const & unmined,
+          std::map< ShardController::tx_digest_type, ShardController::transaction_type > txs) {
           bool first = true;
           while( (i< 10) && (chain.find( next_hash ) !=chain.end() ) ) {
             auto const &block = chain[next_hash];
