@@ -31,7 +31,7 @@ struct Transaction
   byte_array::ByteArray notes;
   uint64_t time;
   byte_array::ByteArray toAddress;
-  byte_array::ByteArray json;
+  fetch::script::Variant json;
 };
 
 struct Account
@@ -174,8 +174,8 @@ public:
     tx.notes = doc["notes"].as_byte_array();
     tx.time = doc["time"].as_int();
     tx.toAddress = doc["toAddress"].as_byte_array();
-    tx.json = req.body();
-
+    tx.json = doc.root();    
+    
     if(users_.find( tx.fromAddress ) == users_.end())
       return HTTPResponse("{\"response\": \"false\", \"reason\": \"fromAddress does not exist\"}");
 
