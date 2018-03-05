@@ -179,6 +179,7 @@ public:
   Op              &setOp()              { return _op; }
   const ValueType &getValueType() const { return _value; }
   ValueType       &setValueType()       { return _value; }
+  const bool      &getBool() const { return true; } // TODO: (`HUT`) : remove this
 };
 
 class Set {
@@ -389,7 +390,7 @@ public:
   }
 
   //template <typename T>
-  Instance(fetch::json::JSONDocument &jsonDoc) // TODO: (`HUT`) : make generic, also not sure non-const is correct, ask troells
+  Instance(fetch::json::JSONDocument jsonDoc) // TODO: (`HUT`) : make generic, also not sure non-const is correct, ask troells
     : _model{jsonDoc["schema"]}
   {
     LOG_STACK_TRACE_POINT; // TODO: (`HUT`) : put this everywhere
@@ -453,6 +454,21 @@ public:
       _constraint = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), jsonDoc["value"].as_bool());
     }
   }
+
+  fetch::script::Variant to_variant() {
+    fetch::script::Variant result = fetch::script::Variant::Object();
+
+    result["name"]       = "todo"; // TODO: (`HUT`) : fix this
+    result["op"]         = "todo"; // TODO: (`HUT`) : fix this
+    result["value_type"] = "todo"; // TODO: (`HUT`) : fix this
+    result["value"]      = "todo"; // TODO: (`HUT`) : fix this
+
+    //_constraint.match(
+    //        [&] (Relation a)         {/*result["value"] = a.getBool(); */}
+    //        );
+
+    return result;
+  }
 };
                     //"type": "relation",
                     //"op": "=",
@@ -511,17 +527,20 @@ public:
   }
 
 
-  fetch::json::JSONDocument JSON(fetch::json::JSONDocument docbuilder = fetch::json::JSONDocument("", "{}")) {
-    docbuilder["test"] = "feck";
-    return docbuilder;
-  }
+  //fetch::json::JSONDocument JSON(fetch::json::JSONDocument docbuilder = fetch::json::JSONDocument("", "{}")) {
+  //  docbuilder["test"] = "feck";
+  //  return docbuilder;
+  //}
 
   fetch::script::Variant variant() {
 
     fetch::script::Variant result = fetch::script::Variant::Object();
 
+    result["argh"]      = _constraint.to_variant();
     result["attribute"] = _attribute.variant();
-    //result["constraint"] = _constraint.variant();
+
+    std::cerr <<  ">" << result << std::endl;
+
     return result;
   }
 };
@@ -639,12 +658,11 @@ public:
     }
   }
 
-  fetch::json::JSONDocument JSON(fetch::json::JSONDocument docbuilder = fetch::json::JSONDocument("", "{}")) {
-
-    //docbuilder["constraints"] = _constraints[0].JSON().root();
-    docbuilder["constraints"] = fetch::script::Variant(_constraints[0].JSON().root());
-    return docbuilder;
-  }
+  //fetch::json::JSONDocument JSON(fetch::json::JSONDocument docbuilder = fetch::json::JSONDocument("", "{}")) {
+  //  //docbuilder["constraints"] = _constraints[0].JSON().root();
+  //  docbuilder["constraints"] = fetch::script::Variant(_constraints[0].JSON().root());
+  //  return docbuilder;
+  //}
 
   fetch::script::Variant variant() {
 

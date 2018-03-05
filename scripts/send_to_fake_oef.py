@@ -6,14 +6,15 @@ def jsonPrint(r):
     return json.dumps(r.json(), indent=4, sort_keys=True)+"\n"
 
 # Test Instance to register
-instanceJSON = { "schema":
-                   {
-                     "name": "weather_data",
-                     "attributes": [ { "name": "has_wind_speed", "type": "bool", "required": False }, { "name": "has_temperature", "type": "bool", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True } ],
-                     "keywords": ["one", "two", "three"],
-                     "description": "All possible weather data."
-                   },
-                 "values": [ { "has_wind_speed": "true" }, { "has_temperature": "true" }, { "latitude": "true" }, { "longitude": "true" } ],
+instanceJSON = { "instance" :
+                    {"schema":
+                       {
+                         "name": "weather_data",
+                         "attributes": [ { "name": "has_wind_speed", "type": "bool", "required": False }, { "name": "has_temperature", "type": "bool", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True } ],
+                         "keywords": ["one", "two", "three"],
+                         "description": "All possible weather data."
+                       },
+                     "values": [ { "has_wind_speed": "true" }, { "has_temperature": "true" }, { "latitude": "true" }, { "longitude": "true" } ]},
                  "ID": "Joshyboy" }
 
 # Register that instance
@@ -70,6 +71,9 @@ print "Query: ", jsonPrint(r)
 
 r = requests.post('http://localhost:8080/echo-query', json=queryJSON)
 print "Query echo: ", jsonPrint(r)
+
+r = requests.post('http://localhost:8080/echo-instance', json=instanceJSON)
+print "Instance echo: ", jsonPrint(r)
 
 exit(1)
 

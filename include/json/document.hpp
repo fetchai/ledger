@@ -44,8 +44,12 @@ class JSONDocument : private byte_array::Tokenizer {
     CATCH_ALL = 6
   };
 
+  JSONDocument(script::Variant var) : JSONDocument() {
+    *root_ = var;
+  }
+
   JSONDocument() {
-    root_ = std::make_shared<variant_type>();
+    root_ = std::make_shared<variant_type>(script::Variant::Object());
 
     AddConsumer(Type::TOKEN, byte_array::consumers::AlphaNumericLetterFirst);
     AddConsumer(Type::WHITESPACE, byte_array::consumers::Whitespace);

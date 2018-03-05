@@ -72,8 +72,13 @@ public:
         return this->QueryInstance(params, req);
       });
 
+    // Test functions
     HTTPModule::Post("/echo-query", [this](ViewParameters const &params, HTTPRequest const &req) {
         return this->EchoQuery(params, req);
+      });
+
+    HTTPModule::Post("/echo-instance", [this](ViewParameters const &params, HTTPRequest const &req) {
+        return this->EchoInstance(params, req);
       });
 
     HTTPModule::Post("/test", [this](ViewParameters const &params, HTTPRequest const &req) {
@@ -241,8 +246,10 @@ public:
     try {
       doc = req.JSON();
 
+      std::cout << req.body() << std::endl;
+
       std::string id = doc["ID"].as_byte_array();
-      Instance instance(doc);
+      Instance instance(doc["instance"]);
       auto success = node_->RegisterInstance(id, instance);
 
       return HTTPResponse("{\"response\": \""+success+"\"}");
@@ -270,10 +277,10 @@ public:
         response["response"]["agents"][i] = script::Variant(agents[i]);
       }
 
-      std::ostringstream thing;
-      thing << response;
+      std::ostringstream responseString;
+      responseString << response;
 
-      return HTTPResponse(thing.str());
+      return HTTPResponse(responseString.str());
     } catch (...) {
       return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
@@ -286,10 +293,24 @@ public:
 
     QueryModel query(doc);
 
-    std::ostringstream thing;
-    thing << query.variant();
+    std::ostringstream responseString;
+    responseString << query.variant();
 
-    return HTTPResponse(thing.str());
+    return HTTPResponse(responseString.str());
+  }
+
+  HTTPResponse EchoInstance(ViewParameters const &params, HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    doc = req.JSON();
+
+    //Instance instance(doc);
+
+    std::ostringstream responseString;
+    //responseString << instance.variant();
+
+    //return HTTPResponse(responseString.str());
+    return HTTPResponse("{\"response\": \"success\"}");
   }
 
   HTTPResponse Test(ViewParameters const &params, HTTPRequest const &req) {
