@@ -80,6 +80,9 @@ int main() {
     SECTION("char const *") {
       result["type"]   = "TYPE";
       EXPECT(result["type"].type() == VariantType::BYTE_ARRAY);
+
+      result["boolean"] = false;
+      EXPECT(result["boolean"].type() == VariantType::BOOLEAN);
     };
   };
   
