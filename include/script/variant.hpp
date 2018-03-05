@@ -291,6 +291,7 @@ public:
   variant_array_type const &as_array() const { return *data_.array; }    
 
   bool is_null() const { return type_ == NULL_VALUE; }
+  bool is_undefined() const { return type_ == UNDEFINED; }
 
   VariantType const& type() const { return type_; }
 

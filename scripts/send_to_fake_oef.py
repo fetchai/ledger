@@ -2,12 +2,15 @@ import requests
 import json
 import pdb
 
+def jsonPrint(r):
+    return json.dumps(r.json(), indent=4, sort_keys=True)+"\n"
 
-# Test Instance
+# Test Instance to register
 instanceJSON = { "schema":
                    {
                      "name": "weather_data",
                      "attributes": [ { "name": "has_wind_speed", "type": "bool", "required": False }, { "name": "has_temperature", "type": "bool", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True } ],
+                     "keywords": ["one", "two", "three"],
                      "description": "All possible weather data."
                    },
                  "values": [ { "has_wind_speed": "true" }, { "has_temperature": "true" }, { "latitude": "true" }, { "longitude": "true" } ],
@@ -15,9 +18,9 @@ instanceJSON = { "schema":
 
 # Register that instance
 r = requests.post('http://localhost:8080/register-instance', json=instanceJSON)
-print "Instance registration: ", r.json()
+print "Instance registration: ", jsonPrint(r)
 
-# Query that instance
+# Query that instance, note keywords are there
 queryJSON = {
         "constraints": [
             {
@@ -45,22 +48,28 @@ queryJSON = {
                     "value_type": "bool",
                     "value": True
                     }
-            }]
+            },
+            {
+                "attribute": {
+                    "name": "has_temperature",
+                    "type": "bool",
+                    "required": True
+                    },
+                "constraint": {
+                    "type": "relation",
+                    "op": "=",
+                    "value_type": "bool",
+                    "value": True
+                    }
+            }],
+        "keywords" : [ "two", "one"]
         }
 
 r = requests.post('http://localhost:8080/query-instance', json=queryJSON)
-print "Query: ", r.json()
+print "Query: ", jsonPrint(r)
 
 r = requests.post('http://localhost:8080/echo-query', json=queryJSON)
-
-print "Query: ", r.json()
-print str(r.json())
-
-strJSON = str(r.json())
-
-#parsed = json.loads(str(r.json()))
-print "Queryt "
-print json.dumps(r.json(), indent=4, sort_keys=True)
+print "Query echo: ", jsonPrint(r)
 
 exit(1)
 

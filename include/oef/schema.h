@@ -332,12 +332,16 @@ public:
       Attribute attribute(doc);
       _attributes.push_back(attribute);
     }
+
+    for(auto &a: jsonDoc["keywords"].as_array()) {
+      _keywords.push_back(a.as_byte_array());
+    }
   }
 };
 
 class Instance {
 private:
-  DataModel _model;
+  DataModel                                   _model;
   std::unordered_map<std::string,std::string> _values;
 
 public:
@@ -517,7 +521,7 @@ public:
     fetch::script::Variant result = fetch::script::Variant::Object();
 
     result["attribute"] = _attribute.variant();
-    result["constraint"] = _constraints.variant();
+    //result["constraint"] = _constraint.variant();
     return result;
   }
 };
@@ -570,7 +574,8 @@ private:
 
 class QueryModel {
 private:
-  std::vector<Constraint> _constraints;
+  std::vector<Constraint>   _constraints;
+  std::vector<std::string>  _keywords;
   stde::optional<DataModel> _model; // TODO: (`HUT`) : this is not serialized yet, nor JSON-ed
 public:
 
@@ -597,6 +602,17 @@ public:
       if(!c.check(i))
         return false;
     }
+
+
+    // Default for now, ALL keywords must be found within model keyw. TODO: (`HUT`) : make set
+    for(auto &j : _keywords) {
+      const std::vector<std::string> keywords = i.model().getKeywords();
+
+      if (!(std::find(keywords.begin(), keywords.end(), j) != keywords.end())) {
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -614,6 +630,12 @@ public:
 
       Constraint constraint(doc);
       _constraints.push_back(constraint);
+    }
+
+    if(!jsonDoc["keywords"].is_undefined()) {
+      for(auto &a: jsonDoc["keywords"].as_array()) {
+        _keywords.push_back(a.as_byte_array());
+      }
     }
   }
 

@@ -90,10 +90,8 @@ public:
     try {
       doc = req.JSON();
 
-      std::cout << "success" << std::endl;
       std::cout << req.body() << std::endl;
     } catch(...) {
-      std::cout << "fail" << std::endl;
       std::cout << req.body() << std::endl;
 
       return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
@@ -257,93 +255,31 @@ public:
 
     json::JSONDocument doc;
 
-    std::cout << "Hitting query" << std::endl;
-
     try {
       doc = req.JSON();
 
-      std::cout << "const query" << std::endl;
       QueryModel query(doc);
-
-      std::cout << "ar query" << std::endl;
 
       auto agents = node_->Query(query);
 
-      json::JSONDocument docbuilder;
-      docbuilder.Parse("", R"({"response" : {"agents" : ["", ""]}})");
+      script::Variant response       = script::Variant::Object();
+      response["response"]           = script::Variant::Object();
+      response["response"]["agents"] = script::Variant::Array(agents.size());
 
-      docbuilder["response"]["agents"][1] = script::Variant(agents[0]);
+      for (int i = 0; i < agents.size(); ++i) {
+        response["response"]["agents"][i] = script::Variant(agents[i]);
+      }
 
-      std::cout << "thi" << std::endl;
-      std::cout << docbuilder.root() << std::endl;
-      std::cout << "thh" << std::endl;
       std::ostringstream thing;
-      thing << (docbuilder.root());
+      thing << response;
 
       return HTTPResponse(thing.str());
-      //return HTTPResponse("{\"response\": \"win\"}");
-
-      //
-      // Build the response here, TODO: (`HUT`) : make this cleaner
-
-      /*
-      std::cout << "thihg query" << std::endl;
-
-      // Build the response here, TODO: (`HUT`) : make this cleaner
-      
-      std::string response{"{ \"agents\": [ "};
-
-      for (auto i = agents.begin(); i != agents.end();) {
-        response += std::string("\"") + *i + std::string("\"");
-
-        if(++i != agents.end()){
-          response += ",";
-        }
-      }
-
-      if(agents.size() == 0) {
-          response += "\"none\"";
-      }
-
-      response += "] }";
-
-      std::cout << "building doc" << std::endl;
-
-      json::JSONDocument docbuilder;
-
-      fetch::byte_array::ByteArray doc_content = R"({
-      "a": 3,
-      "x": {
-      "y": [1,2,3],
-      "z": null,
-      "q": [],
-      "hello world": {}
-      }
-      }
-      )";
-
-      docbuilder.Parse("test.file", doc_content);
-
-      docbuilder["b"] = 4;
-      std::cout << docbuilder.root() << std::endl;
-
-
-
-      //return HTTPResponse("{\"response\": "+docbuilder+"}");
-      //
-      std::cout << "building doc" << std::endl;
-      std::string thingie = std::string(docbuilder["x"].as_byte_array());
-      std::cout << "sending doc" << std::endl;
-      return HTTPResponse(thingie); */
     } catch (...) {
       return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
   }
 
   HTTPResponse EchoQuery(ViewParameters const &params, HTTPRequest const &req) {
-
-
-    std::cout << "testing query" << std::endl;
 
     json::JSONDocument doc;
     doc = req.JSON();
