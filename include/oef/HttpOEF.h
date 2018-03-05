@@ -95,7 +95,7 @@ public:
     try {
       doc = req.JSON();
 
-      std::cout << req.body() << std::endl;
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
     } catch(...) {
       std::cout << req.body() << std::endl;
 
@@ -113,6 +113,7 @@ public:
     json::JSONDocument doc;
     try {
       doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
     } catch(...) {
       std::cout << req.body() << std::endl;
 
@@ -134,6 +135,7 @@ public:
     json::JSONDocument doc;
     try {
       doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
     } catch(...) {
       std::cout << req.body() << std::endl;
 
@@ -158,6 +160,7 @@ public:
     json::JSONDocument doc;
     try {
       doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
     } catch(...) {
       std::cout << req.body() << std::endl;
 
@@ -209,6 +212,7 @@ public:
     json::JSONDocument doc;
     try {
       doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
     } catch(...) {
       std::cout << req.body() << std::endl;
 
@@ -246,7 +250,7 @@ public:
     try {
       doc = req.JSON();
 
-      std::cout << req.body() << std::endl;
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
       std::string id = doc["ID"].as_byte_array();
       Instance instance(doc["instance"]);
@@ -264,6 +268,7 @@ public:
 
     try {
       doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
       QueryModel query(doc);
 
@@ -290,6 +295,7 @@ public:
 
     json::JSONDocument doc;
     doc = req.JSON();
+    std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
     QueryModel query(doc);
 
@@ -303,14 +309,17 @@ public:
 
     json::JSONDocument doc;
     doc = req.JSON();
+    std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-    //Instance instance(doc);
+    Instance instance(doc["instance"]);
 
     std::ostringstream responseString;
-    //responseString << instance.variant();
+    responseString << instance.variant();
 
-    //return HTTPResponse(responseString.str());
-    return HTTPResponse("{\"response\": \"success\"}");
+    //std::this_thread::sleep_for(std::chrono::seconds{10});
+
+    return HTTPResponse(responseString.str());
+    //return HTTPResponse("{\"response\": \"success\"}");
   }
 
   HTTPResponse Test(ViewParameters const &params, HTTPRequest const &req) {

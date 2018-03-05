@@ -391,7 +391,7 @@ public:
 
   //template <typename T>
   Instance(fetch::json::JSONDocument jsonDoc) // TODO: (`HUT`) : make generic, also not sure non-const is correct, ask troells
-    : _model{jsonDoc["schema"]}
+    : _model{jsonDoc["dataModel"]}
   {
     LOG_STACK_TRACE_POINT; // TODO: (`HUT`) : put this everywhere
 
@@ -402,6 +402,24 @@ public:
         _values[first] = second;
       }
     }
+  }
+
+  fetch::script::Variant variant() {
+    fetch::script::Variant result = fetch::script::Variant::Object();
+
+    //result["dataModel"] = _model.variant();
+    result["values"]    = fetch::script::Variant::Array(_values.size());
+    //result["values"]    = fetch::script::Variant::Object();
+
+    int index = 0;
+    for(auto &val : _values) {
+      fetch::script::Variant value = fetch::script::Variant::Object();
+      value[val.first] = val.second;
+      result["values"][index]    = value;
+      index++;
+    }
+
+    return result;
   }
 
   // Getters and setters for serialization
@@ -463,17 +481,9 @@ public:
     result["value_type"] = "todo"; // TODO: (`HUT`) : fix this
     result["value"]      = "todo"; // TODO: (`HUT`) : fix this
 
-    //_constraint.match(
-    //        [&] (Relation a)         {/*result["value"] = a.getBool(); */}
-    //        );
-
     return result;
   }
 };
-                    //"type": "relation",
-                    //"op": "=",
-                    //"value_type": "bool",
-                    //"value": True
 
 class Constraint {
 private:
@@ -665,7 +675,6 @@ public:
   //}
 
   fetch::script::Variant variant() {
-
     fetch::script::Variant result = fetch::script::Variant::Array(_constraints.size());
 
     for (int i = 0; i < _constraints.size(); ++i) {

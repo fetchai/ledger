@@ -7,7 +7,7 @@ def jsonPrint(r):
 
 # Test Instance to register
 instanceJSON = { "instance" :
-                    {"schema":
+                    {"dataModel":
                        {
                          "name": "weather_data",
                          "attributes": [ { "name": "has_wind_speed", "type": "bool", "required": False }, { "name": "has_temperature", "type": "bool", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True } ],
