@@ -4,14 +4,14 @@
 using namespace fetch::service;
 
 // Build the protocol for OEF(rpc) and http interface
-class ServiceProtocol : public http_oef, public fetch::service::Protocol {
+class ServiceProtocol : public HttpOEF, public fetch::service::Protocol {
 public:
 
-  ServiceProtocol(std::shared_ptr<node_oef> node) : Protocol(), http_oef(node) {
+  ServiceProtocol(std::shared_ptr<NodeOEF> node) : Protocol(), HttpOEF(node) {
 
-    // Expose the RPC interface to the OEF, note the http_oef also has a pointer to the OEF
-    this->Expose(REGISTERINSTANCE,      new CallableClassMember<node_oef, std::string(std::string agentName, Instance)>(node.get(), &node_oef::RegisterInstance) );
-    this->Expose(QUERY,                 new CallableClassMember<node_oef, std::vector<std::string>(QueryModel query)>  (node.get(), &node_oef::Query) );
+    // Expose the RPC interface to the OEF, note the HttpOEF also has a pointer to the OEF
+    this->Expose(REGISTERINSTANCE,      new CallableClassMember<NodeOEF, std::string(std::string agentName, Instance)>(node.get(), &NodeOEF::RegisterInstance) );
+    this->Expose(QUERY,                 new CallableClassMember<NodeOEF, std::vector<std::string>(QueryModel query)>  (node.get(), &NodeOEF::Query) );
   }
 };
 
@@ -21,7 +21,7 @@ public:
     ServiceServer(port, tm),
     HTTPServer(8080, tm) {
 
-    std::shared_ptr<node_oef> node = std::make_shared<node_oef>();
+    std::shared_ptr<NodeOEF> node = std::make_shared<NodeOEF>();
     ServiceProtocol *prot         = new ServiceProtocol(node);
 
     this->Add(MYPROTO, prot );

@@ -9,7 +9,7 @@
 #include"oef/service_directory.hpp"
 
 // Core OEF implementation
-class node_oef {
+class NodeOEF {
 
 public:
   std::string RegisterInstance(std::string agentName, Instance instance) {

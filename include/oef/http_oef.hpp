@@ -42,11 +42,11 @@ struct Account
   std::vector< Transaction > history;
 };
 
-class http_oef : public fetch::http::HTTPModule
+class HttpOEF : public fetch::http::HTTPModule
 {
 public:
   // In constructor attach the callbacks for the http pages we want
-  http_oef(std::shared_ptr<node_oef> node) : node_{node} {
+  HttpOEF(std::shared_ptr<NodeOEF> node) : node_{node} {
     // Ledger functionality
     HTTPModule::Post("/check", [this](ViewParameters const &params, HTTPRequest const &req) {
           return this->CheckUser(params, req);
@@ -342,7 +342,7 @@ public:
   fetch::mutex::Mutex                                    mutex_;
 
 private:
-  std::shared_ptr<node_oef> node_;
+  std::shared_ptr<NodeOEF> node_;
 };
 
 #endif
