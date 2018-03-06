@@ -1,5 +1,5 @@
-#ifndef HTTP_OEF_INTERFACE_H
-#define HTTP_OEF_INTERFACE_H
+#ifndef HTTP_OEF_INTERFACE_HPP
+#define HTTP_OEF_INTERFACE_HPP
 
 // This file defines the HTTP interface that allows interaction with the (fake) ledger and the OEF. It will need to be split into two at some point to handle these
 // components seperately
@@ -13,7 +13,7 @@
 #include"random/lfg.hpp"
 #include"mutex.hpp"
 #include"script/variant.hpp"
-#include"oef/NodeOEF.h"
+#include"oef/NodeOEF.hpp"
 
 #include<map>
 #include<vector>

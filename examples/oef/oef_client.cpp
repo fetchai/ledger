@@ -3,8 +3,8 @@
 #include"service/client.hpp"
 #include"logger.hpp"
 #include"oef/service_consts.hpp"
-#include"oef/schema.h"
-#include"oef/schemaSerializers.h"
+#include"oef/schema.hpp"
+#include"oef/schemaSerializers.hpp"
 
 using namespace fetch::service; // TODO: (`HUT`) : remove namespaces
 using namespace fetch::byte_array;

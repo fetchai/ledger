@@ -7,7 +7,7 @@
 #include<unordered_map>
 #include<unordered_set>
 #include<mutex>
-#include"oef/schema.h"
+#include"oef/schema.hpp"
 
 // The Agents class is just a convenience for representing agents, this will be extended to hold agent-specific information later
 class Agents {

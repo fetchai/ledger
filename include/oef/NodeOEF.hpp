@@ -1,12 +1,12 @@
-#ifndef NODE_OEF_H
-#define NODE_OEF_H
+#ifndef NODE_OEF_HPP
+#define NODE_OEF_HPP
 
 #include<iostream>
 #include"service/server.hpp"
 #include"oef/service_consts.hpp"
-#include"oef/schema.h"
-#include"oef/schemaSerializers.h"
-#include"oef/ServiceDirectory.h"
+#include"oef/schema.hpp"
+#include"oef/schemaSerializers.hpp"
+#include"oef/ServiceDirectory.hpp"
 
 // Core OEF implementation
 class NodeOEF {
