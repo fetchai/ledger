@@ -1,6 +1,9 @@
 #ifndef HTTP_OEF_INTERFACE_H
 #define HTTP_OEF_INTERFACE_H
 
+// This file defines the HTTP interface that allows interaction with the (fake) ledger and the OEF. It will need to be split into two at some point to handle these
+// components seperately
+
 #include<iostream>
 #include<fstream>
 #include"http/server.hpp"
@@ -11,8 +14,6 @@
 #include"mutex.hpp"
 #include"script/variant.hpp"
 #include"oef/NodeOEF.h"
-#include"oef/schemaToJSON.h"
-#include"oef/JSONToSchema.h"
 
 #include<map>
 #include<vector>
@@ -34,20 +35,19 @@ struct Transaction
   byte_array::ByteArray json;
 };
 
+// TODO: (`HUT`) : make account history persistent
 struct Account
 {
   int64_t balance = 0;
   std::vector< Transaction > history;
 };
 
-
 class HttpOEF : public fetch::http::HTTPModule
 {
-
 public:
-  HttpOEF(NodeOEF *node) : node_{node}
-  {
-
+  // In constructor attach the callbacks for the http pages we want
+  HttpOEF(std::shared_ptr<NodeOEF> node) : node_{node} {
+    // Ledger functionality
     HTTPModule::Post("/check", [this](ViewParameters const &params, HTTPRequest const &req) {
           return this->CheckUser(params, req);
         });
@@ -64,6 +64,7 @@ public:
         return this->GetHistory(params, req);
       });
 
+    // OEF functionality
     HTTPModule::Post("/register-instance", [this](ViewParameters const &params, HTTPRequest const &req) {
         return this->RegisterInstance(params, req);
       });
@@ -72,7 +73,7 @@ public:
         return this->QueryInstance(params, req);
       });
 
-    // Test functions
+    // OEF debug functions
     HTTPModule::Post("/echo-query", [this](ViewParameters const &params, HTTPRequest const &req) {
         return this->EchoQuery(params, req);
       });
@@ -86,8 +87,7 @@ public:
       });
   }
 
-  ~HttpOEF() { delete node_;}
-
+  // Check that a user exists in our ledger
   HTTPResponse CheckUser(ViewParameters const &params, HTTPRequest const &req) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
@@ -107,6 +107,7 @@ public:
     return HTTPResponse("{\"response\": \"true\"}");
   }
 
+  // Create a new account on the system, initialise it with random balance
   HTTPResponse RegisterUser(ViewParameters const &params, HTTPRequest const &req) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
@@ -129,6 +130,7 @@ public:
     return HTTPResponse("{}");
   }
 
+  // Get balance of user, note if the user doesn't exist this returns 0
   HTTPResponse GetBalance(ViewParameters const &params, HTTPRequest const &req) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
@@ -170,11 +172,11 @@ public:
     Transaction tx;
 
     tx.fromAddress = doc["fromAddress"].as_byte_array();
-    tx.amount = doc["balance"].as_int();
-    tx.notes = doc["notes"].as_byte_array();
-    tx.time = doc["time"].as_int();
-    tx.toAddress = doc["toAddress"].as_byte_array();
-    tx.json = req.body();
+    tx.amount      = doc["balance"].as_int();
+    tx.notes       = doc["notes"].as_byte_array();
+    tx.time        = doc["time"].as_int();
+    tx.toAddress   = doc["toAddress"].as_byte_array();
+    tx.json        = req.body();
 
     if(users_.find( tx.fromAddress ) == users_.end())
       return HTTPResponse("{\"response\": \"false\", \"reason\": \"fromAddress does not exist\"}");
@@ -244,6 +246,7 @@ public:
     return HTTPResponse(ret.str());
   }
 
+  // OEF functions
   HTTPResponse RegisterInstance(ViewParameters const &params, HTTPRequest const &req) {
 
     json::JSONDocument doc;
@@ -265,7 +268,6 @@ public:
   HTTPResponse QueryInstance(ViewParameters const &params, HTTPRequest const &req) {
 
     json::JSONDocument doc;
-
     try {
       doc = req.JSON();
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
@@ -282,49 +284,53 @@ public:
         response["response"]["agents"][i] = script::Variant(agents[i]);
       }
 
-      std::ostringstream responseString;
-      responseString << response;
+      std::ostringstream ret;
+      ret << response;
 
-      return HTTPResponse(responseString.str());
+      return HTTPResponse(ret.str());
     } catch (...) {
       return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
   }
 
+  // Functions to test JSON serialisation/deserialisation
   HTTPResponse EchoQuery(ViewParameters const &params, HTTPRequest const &req) {
 
     json::JSONDocument doc;
-    doc = req.JSON();
-    std::cout << "correctly parsed JSON: " << req.body() << std::endl;
+    try {
+      doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-    QueryModel query(doc);
+      QueryModel query(doc);
 
-    std::ostringstream responseString;
-    responseString << query.variant();
+      std::ostringstream ret;
+      ret << query.variant();
 
-    return HTTPResponse(responseString.str());
+      return HTTPResponse(ret.str());
+    } catch (...) {
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+    }
   }
 
   HTTPResponse EchoInstance(ViewParameters const &params, HTTPRequest const &req) {
 
     json::JSONDocument doc;
-    doc = req.JSON();
-    std::cout << "correctly parsed JSON: " << req.body() << std::endl;
+    try {
+      doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-    Instance instance(doc["instance"]);
+      Instance instance(doc["instance"]);
 
-    std::ostringstream responseString;
-    responseString << instance.variant();
+      std::ostringstream ret;
+      ret << instance.variant();
 
-    //std::this_thread::sleep_for(std::chrono::seconds{10});
-
-    return HTTPResponse(responseString.str());
-    //return HTTPResponse("{\"response\": \"success\"}");
+    return HTTPResponse(ret.str());
+    } catch (...) {
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+    }
   }
 
   HTTPResponse Test(ViewParameters const &params, HTTPRequest const &req) {
-
-    node_->test();
     return HTTPResponse("{\"response\": \"success\"}");
   }
 
@@ -336,7 +342,7 @@ public:
   fetch::mutex::Mutex                                    mutex_;
 
 private:
-  NodeOEF *node_;
+  std::shared_ptr<NodeOEF> node_;
 };
 
 #endif

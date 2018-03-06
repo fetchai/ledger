@@ -8,13 +8,14 @@
 #include"oef/schemaSerializers.h"
 #include"oef/ServiceDirectory.h"
 
+// Core OEF implementation
 class NodeOEF {
 
 public:
   std::string RegisterInstance(std::string agentName, Instance instance) {
     auto result = serviceDirectory_.RegisterAgent(instance, agentName);
 
-    std::cout << "registering instance!" << std::endl;
+    fetch::logger.Info("Registering instance: ", instance.getDataModel().getName(), " by AEA: ", agentName);
     return std::to_string(result);
   }
 
@@ -23,7 +24,6 @@ public:
   }
 
   std::string test() {
-    std::cout << "hit the test condition" << std::endl;
     return std::string{"this is a test"};
   }
 

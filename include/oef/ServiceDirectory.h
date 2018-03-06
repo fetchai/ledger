@@ -1,8 +1,8 @@
 // This file holds the implementation for a serviceDirectory. It's responsibilities are to manage a list of agents, and their services (instance of datamodel).
 // It also responds to 'queries', returning the agents that meet these queries
 
-#ifndef SERVICE_DIRECTORY_H
-#define SERVICE_DIRECTORY_H
+#ifndef SERVICE_DIRECTORY_HPP
+#define SERVICE_DIRECTORY_HPP
 
 #include<unordered_map>
 #include<unordered_set>
@@ -96,7 +96,7 @@ public:
   }
 
 private:
-  mutable std::mutex _lock;
+  mutable std::mutex                   _lock;
   std::unordered_map<Instance, Agents> _data;
 };
 

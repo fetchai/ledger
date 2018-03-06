@@ -1,26 +1,28 @@
 #include"oef/HttpOEF.h"
 #include"oef/NodeOEF.h"
 
-using namespace fetch::service; // TODO: (`HUT`) : using namespaces is discouraged (especially in .h files)
+using namespace fetch::service;
 
-// Build our protocol for OEF(rpc) and http interface
+// Build the protocol for OEF(rpc) and http interface
 class ServiceProtocol : public HttpOEF, public fetch::service::Protocol {
 public:
 
-  ServiceProtocol(NodeOEF *node) : Protocol(), HttpOEF(node) {
-    this->Expose(REGISTERINSTANCE,      new CallableClassMember<NodeOEF, std::string(std::string agentName, Instance)>(node, &NodeOEF::RegisterInstance) );
-    this->Expose(QUERY,                 new CallableClassMember<NodeOEF, std::vector<std::string>(QueryModel query)>  (node, &NodeOEF::Query) );
+  ServiceProtocol(std::shared_ptr<NodeOEF> node) : Protocol(), HttpOEF(node) {
+
+    // Expose the RPC interface to the OEF, note the HttpOEF also has a pointer to the OEF
+    this->Expose(REGISTERINSTANCE,      new CallableClassMember<NodeOEF, std::string(std::string agentName, Instance)>(node.get(), &NodeOEF::RegisterInstance) );
+    this->Expose(QUERY,                 new CallableClassMember<NodeOEF, std::vector<std::string>(QueryModel query)>  (node.get(), &NodeOEF::Query) );
   }
 };
 
-class MyCoolService : public ServiceServer< fetch::network::TCPServer >, public HTTPServer  {
+class ServiceOEF : public ServiceServer< fetch::network::TCPServer >, public HTTPServer  {
 public:
-  MyCoolService(uint16_t port, fetch::network::ThreadManager *tm) :
+  ServiceOEF(uint16_t port, fetch::network::ThreadManager *tm) :
     ServiceServer(port, tm),
     HTTPServer(8080, tm) {
 
-    NodeOEF *node         = new NodeOEF();
-    ServiceProtocol *prot = new ServiceProtocol(node);
+    std::shared_ptr<NodeOEF> node = std::make_shared<NodeOEF>();
+    ServiceProtocol *prot         = new ServiceProtocol(node);
 
     this->Add(MYPROTO, prot );
 
@@ -32,7 +34,7 @@ public:
 
 int main() {
   fetch::network::ThreadManager tm(8);
-  MyCoolService serv(8090, &tm);                                   // TODO: (`HUT`) : rename from MyCoolService
+  ServiceOEF serv(8090, &tm); // Note, the rpc interface is on port 8090, the http interface is 8080
 
   tm.Start();
 

@@ -5,6 +5,7 @@
 #include"oef/service_consts.hpp"
 #include"oef/schema.h"
 #include"oef/schemaSerializers.h"
+
 using namespace fetch::service; // TODO: (`HUT`) : remove namespaces
 using namespace fetch::byte_array;
 

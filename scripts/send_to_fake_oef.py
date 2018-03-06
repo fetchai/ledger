@@ -2,6 +2,7 @@ import requests
 import json
 import pdb
 
+# print json in pretty way
 def jsonPrint(r):
     return json.dumps(r.json(), indent=4, sort_keys=True)+"\n"
 
@@ -21,7 +22,7 @@ instanceJSON = { "instance" :
 r = requests.post('http://localhost:8080/register-instance', json=instanceJSON)
 print "Instance registration: ", jsonPrint(r)
 
-# Query that instance, note keywords are there
+# Query that instance, note keywords are there (must match all)
 queryJSON = {
         "constraints": [
             {
@@ -75,39 +76,38 @@ print "Query echo: ", jsonPrint(r)
 r = requests.post('http://localhost:8080/echo-instance', json=instanceJSON)
 print "Instance echo: ", jsonPrint(r)
 
-exit(1)
-
+# Ledger transactions
 r = requests.post('http://localhost:8080/check', json = {
     "address": "830A0B9D-73EE-4001-A413-72CFCD8E91F3"
     })
-print "Check user: ", r.json()
+print "Check user: ", jsonPrint(r)
 
 r = requests.post('http://localhost:8080/register', json = {
     "address": "830A0B9D-73EE-4001-A413-72CFCD8E91F3"
     })
-print "Register user: ", r.json()
+print "Register user: ", jsonPrint(r)
 
 r = requests.post('http://localhost:8080/register', json = {
     "address": "6164D5A6-A26E-43E4-BA96-A1A8787091A0"
     })
-print "Register user: ", r.json()
+print "Register user: ", jsonPrint(r)
 
 r = requests.post('http://localhost:8080/check', json = {
     "address": "830A0B9D-73EE-4001-A413-72CFCD8E91F3"
     })
-print "Check user: ", r.json()
+print "Check user: ", jsonPrint(r)
 
 
 for i in range(10):
     r = requests.post('http://localhost:8080/balance', json = {
         "address": "830A0B9D-73EE-4001-A413-72CFCD8E91F3"
     })
-    print "Get balance 830A0B9D-73EE-4001-A413-72CFCD8E91F3: ", r.json()
+    print "Get balance 830A0B9D-73EE-4001-A413-72CFCD8E91F3: ", jsonPrint(r)
 
     r = requests.post('http://localhost:8080/balance', json = {
         "address": "6164D5A6-A26E-43E4-BA96-A1A8787091A0"
     })
-    print "Get balance 6164D5A6-A26E-43E4-BA96-A1A8787091A0: ", r.json()
+    print "Get balance 6164D5A6-A26E-43E4-BA96-A1A8787091A0: ", jsonPrint(r)
 
 
     r = requests.post('http://localhost:8080/send', json = {
@@ -117,21 +117,21 @@ for i in range(10):
         "time": "1519650052994",
         "toAddress": "6164D5A6-A26E-43E4-BA96-A1A8787091A0"
     })
-    print "Send: ", r.json()
+    print "Send: ", jsonPrint(r)
 
 
     r = requests.post('http://localhost:8080/balance', json = {
         "address": "830A0B9D-73EE-4001-A413-72CFCD8E91F3"
     })
-    print "Get balance 830A0B9D-73EE-4001-A413-72CFCD8E91F3: ", r.json()
+    print "Get balance 830A0B9D-73EE-4001-A413-72CFCD8E91F3: ", jsonPrint(r)
 
     r = requests.post('http://localhost:8080/balance', json = {
         "address": "6164D5A6-A26E-43E4-BA96-A1A8787091A0"
     })
-    print "Get balance 6164D5A6-A26E-43E4-BA96-A1A8787091A0: ", r.json()
+    print "Get balance 6164D5A6-A26E-43E4-BA96-A1A8787091A0: ", jsonPrint(r)
 
 r = requests.post('http://localhost:8080/get-transactions', json = {
     "address": "830A0B9D-73EE-4001-A413-72CFCD8E91F3"
     })
-print "History: ", r.text
+print "History: ", r.text # note, this appears to be incorrectly formatted; can't be parsed to json
 

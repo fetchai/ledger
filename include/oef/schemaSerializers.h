@@ -1,5 +1,5 @@
-#ifndef SCHEMA_SERIALIZERS_BASIC_H
-#define SCHEMA_SERIALIZERS_BASIC_H
+#ifndef SCHEMA_SERIALIZERS_BASIC_HPP
+#define SCHEMA_SERIALIZERS_BASIC_HPP
 
 #include"serializer/serializable_exception.hpp"
 #include"service/error_codes.hpp"
