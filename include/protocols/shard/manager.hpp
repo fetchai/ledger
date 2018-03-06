@@ -9,6 +9,7 @@
 #include"chain/block.hpp"
 #include"chain/consensus/proof_of_work.hpp"
 #include"protocols/shard/block.hpp"
+#include"protocols/shard/transaction_manager.hpp"
 
 #include "service/client.hpp"
 #include"service/publication_feed.hpp"
@@ -58,43 +59,7 @@ public:
     block_header_type next_missing;    
   };  
 
-    /*
-      TODO: Make a connection directory
-    connection_mutex_.lock();
-    ConnectionDetails cc = {host, port};
 
-    bool should_connect = false;
-    
-    if(last_connection_attempt_.find(cc) == last_connection_attempt_.end()) {
-      should_connect = true;      
-      last_connection_attempt_[cc] = 1; // TODO: Make time stamp.       
-    }
-    
-    connection_mutex_.unlock();
-    if(!should_connect) return;
-  struct ConnectionDetails
-  {
-    std::string host;
-    uint16_t port;
-    
-    bool operator==(ConnectionDetails const &other) const 
-    {
-      return (host == other.host) && (port == other.port);      
-    }
-
-    bool operator<(ConnectionDetails const &other) const 
-    {
-      if(port == other.port)
-        return host < other.host;
-      return port < other.port;      
-    }    
-  };
-  std::map<ConnectionDetails, int > last_connection_attempt_;
-  fetch::mutex::Mutex connection_mutex_;
-    */
-  
-  
-    
 
   
   ShardManager(uint64_t const& protocol,
@@ -194,35 +159,18 @@ public:
     block_mutex_.lock();
 
     tx.UpdateDigest();
-    
-    if(known_transactions_.find( tx.digest()  ) != known_transactions_.end() ) {      
+    if(! tx_manager_.AddTransaction( tx ) )
+    {      
       block_mutex_.unlock();
       return false;
     }
     
-    known_transactions_[ tx.digest() ] = tx;
-    bool belongs_to_shard = true;
-    uint32_t shard = details_.shard;
-
-    TODO("Implement shard checking");    
-    
     block_mutex_.unlock();
-
-    if(!belongs_to_shard)
-    {
-      fetch::logger.Info("Transaction does not belong to this shard", shard);
-      
-    }
-    
     
     fetch::logger.Warn("Verify transaction");
     
-    block_mutex_.lock();
-    incoming_.push_back( tx.digest() );
-    
-    block_mutex_.unlock();
 
-
+    // Forwarding
     this->Publish(ShardFeed::FEED_BROADCAST_TRANSACTION, tx );
     
     shard_friends_mutex_.lock();
@@ -232,8 +180,7 @@ public:
     }
     shard_friends_mutex_.unlock();
       
-    
-    
+        
     return true;
   }
 
@@ -249,11 +196,12 @@ public:
     block_mutex_.unlock();
     
     block_mutex_.lock();
-    fetch::logger.Debug("Transaction queue has ", incoming_.size(), " elements");
-    if(incoming_.size() == 0) {
+    fetch::logger.Debug("Transaction queue has ", tx_manager_.unapplied_count(), " elements");
+    
+    if( !tx_manager_.has_unapplied() ) {
       body.transaction_hash =  "";
     } else {
-      body.transaction_hash =  incoming_.front();
+      body.transaction_hash =  tx_manager_.NextDigest();      
     }    
     block_mutex_.unlock();
     
@@ -460,8 +408,8 @@ public:
       std::cout << "   = " << fetch::byte_array::ToBase64( head_.header() ) << std::endl;
       std::cout << "    (" << fetch::byte_array::ToBase64( head_.body().transaction_hash ) << ")" << std::endl;
 
-
-      if( (incoming_.size() + block.meta_data().block_number) > known_transactions_.size() )
+/*
+      if( (tx_manager_.size() + block.meta_data().block_number) > known_transactions_.size() )
       {
 
         if( block.meta_data().block_number == block_meta_data_type::UNDEFINED)
@@ -494,7 +442,7 @@ public:
         exit(-1);
         
       }
-
+*/
       fetch::logger.Info("Synced to: ", fetch::byte_array::ToBase64( head_.header() ));
       block_mutex_.unlock();      
     }
@@ -651,6 +599,7 @@ public:
     block_mutex_.unlock();
   }
 
+  /*
   void with_transactions_do( std::function< void(std::vector< tx_digest_type >,  std::map< tx_digest_type, transaction_type >) > fnc )
   {
     LOG_STACK_TRACE_POINT;
@@ -659,7 +608,8 @@ public:
     fnc( incoming_, known_transactions_ );    
     block_mutex_.unlock();
   }
-
+  */
+  
   void with_loose_chains_do( std::function< void( std::map< uint64_t,  PartialChain > ) > fnc ) 
   {
     LOG_STACK_TRACE_POINT;
@@ -797,26 +747,27 @@ private:
       return;      
     }
 
-    std::set< tx_digest_type > used_transactions;
+    std::vector< tx_digest_type > used_transactions;
     
-    
+
     if(new_head.body().previous_hash == old_head.header())
     {
-      used_transactions.insert(new_head.body().transaction_hash);
+      used_transactions.push_back(new_head.body().transaction_hash);
     }
     else
-    {
+    {      
       fetch::logger.Highlight("Rolling back");
+      std::size_t roll_back_count = 0;          
       while(new_head.meta_data().block_number > old_head.meta_data().block_number)
       {
-        used_transactions.insert(new_head.body().transaction_hash);
+        used_transactions.push_back(new_head.body().transaction_hash);
         new_head = chains_[new_head.body().previous_hash];
         fetch::logger.Debug("Block nr comp 1: ", new_head.meta_data().block_number," ", old_head.meta_data().block_number, " ", BlockMetaData::UNDEFINED);
       }
       
       while(new_head.meta_data().block_number < old_head.meta_data().block_number)
       {
-        incoming_.push_back( old_head.body().transaction_hash );
+        ++roll_back_count;
         old_head = chains_[old_head.body().previous_hash];
         fetch::logger.Debug("Block nr comp 2: ", new_head.meta_data().block_number," ",  old_head.meta_data().block_number);
       } 
@@ -824,40 +775,31 @@ private:
       while(new_head.header() != old_head.header() )
       {
         fetch::logger.Debug(byte_array::ToBase64( new_head.header() ), " vs ",  byte_array::ToBase64( old_head.header()) );
-        used_transactions.insert(new_head.body().transaction_hash);
-        incoming_.push_back( old_head.body().transaction_hash );
+        used_transactions.push_back(new_head.body().transaction_hash);
+        ++roll_back_count;        
         new_head = chains_[new_head.body().previous_hash];
         old_head = chains_[old_head.body().previous_hash];
       }
       
+      tx_manager_.RollBack( roll_back_count );      
     }
-       
-    // Rolling forth
-    std::vector< tx_digest_type > new_incoming;    
-    for(auto &tx: incoming_) {
-      if(used_transactions.find( tx ) == used_transactions.end() )
-      {
-        new_incoming.push_back(tx);        
-      }
-      
 
+    
+    // Rolling forth    
+    while( !used_transactions.empty() )
+    {
+      auto tx = used_transactions.back();
+      used_transactions.pop_back();
+      tx_manager_.Apply( tx );
     }
-    incoming_ = new_incoming;
-
-//    block_mutex_.unlock();
+    
+     
   }
   
-  
-
+ 
   network::ThreadManager *thread_manager_;    
   EntryPoint &details_;  
   
-
-  std::vector< tx_digest_type > incoming_;
-  std::map< tx_digest_type, transaction_type > known_transactions_;
-  std::vector< transaction_type > tx_order_;
-
-
   fetch::mutex::Mutex block_mutex_;
   std::map< block_header_type, block_type > chains_;
 
@@ -875,6 +817,9 @@ private:
   fetch::mutex::Mutex shard_friends_mutex_;  
 
   std::atomic< uint32_t > sharding_parameter_ ;
+
+  TransactionManager tx_manager_;
+  
 };
 
 

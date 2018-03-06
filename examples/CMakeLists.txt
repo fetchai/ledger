@@ -19,8 +19,8 @@ add_executable(rpc_client_oef oef/oef_client.cpp)
 add_executable(rpc_server_oef oef/oef_server.cpp)
 
 ## Legacy
-# add_executable(tutorial_rc_to_node_server tutorials/01_rc-to-node/node.cpp)
-# add_executable(tutorial_rc_to_node_client tutorials/01_rc-to-node/client.cpp)
+add_executable(arpc_node advanced_rpc/node.cpp)
+add_executable(arpc_aea advanced_rpc/aea.cpp)
 
 # add_executable(tutorial_rc_to_node_p2_server tutorials/02_rc-to-node-p2/node.cpp)
 # add_executable(tutorial_rc_to_node_p2_client tutorials/02_rc-to-node-p2/client.cpp)

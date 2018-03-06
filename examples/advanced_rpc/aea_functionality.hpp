@@ -1,14 +1,14 @@
-#ifndef REMOTE_FUNCTIONALITY_HPP
-#define REMOTE_FUNCTIONALITY_HPP
+#ifndef AEA_FUNCTIONALITY_HPP
+#define AEA_FUNCTIONALITY_HPP
 #include"node_functionality.hpp"
 
 #include<vector>
 #include<string>
 #include<iostream>
 
-class RemoteFunctionality {
+class AEAFunctionality {
 public:
-  RemoteFunctionality(std::string node_info): node_info_(node_info) {  }
+  AEAFunctionality(std::string node_info): node_info_(node_info) {  }
     
   void Connect(std::string address, uint16_t port) {
     if(node_ != nullptr) {
@@ -28,11 +28,11 @@ public:
     return peers_;
   }
 
-  void set_node(NodeFunctionality *node) {
+  void set_node(NodeToNodeFunctionality *node) {
     node_ = node;
   }
 private:
-  NodeFunctionality *node_ = nullptr;
+  NodeToNodeFunctionality *node_ = nullptr;
   std::string node_info_;
   std::vector< std::string > peers_;
 };
