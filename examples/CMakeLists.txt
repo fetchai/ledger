@@ -1,9 +1,9 @@
 add_executable(fake_oef http/fake_oef.cpp)
 add_executable(http_server http/server.cpp)
 add_executable(p2p_node2 ledger/peer-to-peer-v2/main.cpp)
-add_executable(shard_server ledger/peer-to-peer-v2/shard_server.cpp)
-add_executable(p2p_node ledger/peer-to-peer/main.cpp)
-add_executable(simple_ledger_node ledger/simple-ledger/node.cpp)
+# add_executable(shard_server ledger/peer-to-peer-v2/shard_server.cpp)
+# add_executable(p2p_node ledger/peer-to-peer/main.cpp)
+# add_executable(simple_ledger_node ledger/simple-ledger/node.cpp)
 
 
 add_executable(network_client network/client.cpp)
