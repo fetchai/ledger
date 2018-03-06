@@ -5,11 +5,11 @@
 #include"service/server.hpp"
 #include"oef/service_consts.hpp"
 #include"oef/schema.hpp"
-#include"oef/schemaSerializers.hpp"
-#include"oef/ServiceDirectory.hpp"
+#include"oef/schema_serializers.hpp"
+#include"oef/service_directory.hpp"
 
 // Core OEF implementation
-class NodeOEF {
+class node_oef {
 
 public:
   std::string RegisterInstance(std::string agentName, Instance instance) {
@@ -28,7 +28,7 @@ public:
   }
 
 private:
-  ServiceDirectory serviceDirectory_;
+  service_directory serviceDirectory_;
 };
 
 #endif
