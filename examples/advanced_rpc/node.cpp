@@ -1,6 +1,6 @@
 #include<iostream>
 #include<functional>
-#include"node.hpp"
+#include"service.hpp"
 
 #include"commandline/parameter_parser.hpp"
 #include <iostream>
@@ -8,7 +8,9 @@
 #include <thread>
 #include <chrono>
 using namespace fetch::commandline;
-
+/**
+ * Please see aea.cpp for documentation.
+ **/
 int main(int argc, char const **argv) {
 
   ParamsParser params;
@@ -20,6 +22,7 @@ int main(int argc, char const **argv) {
   }
 
   std::cout << "Starting service on " << params.GetArg<uint16_t>(1) << std::endl;
+
   FetchService serv( params.GetArg<uint16_t>(1), params.GetArg(2));
   serv.Start();
 
