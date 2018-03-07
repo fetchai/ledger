@@ -23,7 +23,7 @@ void Serialize( T & serializer, Instance const &b) {
   if(size > std::numeric_limits< uint32_t >::max()) {
     throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Attempt to serialize Instance failed - unsafe type narrowing");
   }
-  serializer << (uint32_t)size;
+  serializer << uint32_t(size);
 
   for(auto i : b.values()){
     std::string key = i.first;
@@ -83,19 +83,19 @@ void Serialize( T & serializer, Type const &b) {
 
   switch(b) {
   case Type::Float:
-    serializer << (uint32_t)1;
+    serializer << uint32_t(1);
     break;
   case Type::Int:
-    serializer << (uint32_t)2;
+    serializer << uint32_t(2);
     break;
   case Type::Bool:
-    serializer << (uint32_t)3;
+    serializer << uint32_t(3);
     break;
   case Type::String:
-    serializer << (uint32_t)4;
+    serializer << uint32_t(4);
     break;
   default:
-    serializer << (uint32_t)0;
+    serializer << uint32_t(0);
     break;
   }
 }
@@ -188,10 +188,10 @@ void Serialize( T & serializer, Relation const &b) {
 
   // Push on value/type
   b.valueType().match(
-          [&] (int a)         { serializer << (uint32_t) 0 << a; },
-          [&] (float a)       { serializer << (uint32_t) 1 << a; },
-          [&] (std::string a) { serializer << (uint32_t) 2 << a; },
-          [&] (bool a)        { serializer << (uint32_t) 3 << a; }
+          [&] (int a)         { serializer << uint32_t(0) << a; },
+          [&] (float a)       { serializer << uint32_t(1) << a; },
+          [&] (std::string a) { serializer << uint32_t(2) << a; },
+          [&] (bool a)        { serializer << uint32_t(3) << a; }
           );
 }
 
@@ -237,25 +237,25 @@ void Serialize( T & serializer, Relation::Op const &b) {
 
   switch(b) {
   case Relation::Op::Eq:
-    serializer << (uint32_t)1;
+    serializer << uint32_t(1);
     break;
   case Relation::Op::Lt:
-    serializer << (uint32_t)2;
+    serializer << uint32_t(2);
     break;
   case Relation::Op::Gt:
-    serializer << (uint32_t)3;
+    serializer << uint32_t(3);
     break;
   case Relation::Op::LtEq:
-    serializer << (uint32_t)4;
+    serializer << uint32_t(4);
     break;
   case Relation::Op::GtEq:
-    serializer << (uint32_t)5;
+    serializer << uint32_t(5);
     break;
   case Relation::Op::NotEq:
-    serializer << (uint32_t)6;
+    serializer << uint32_t(6);
     break;
   default:
-    serializer << (uint32_t)0;
+    serializer << uint32_t(0);
   }
 }
 
