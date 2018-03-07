@@ -7,11 +7,11 @@ using namespace fetch::node_oef;
 using namespace fetch::schema;
 using namespace fetch::http;
 
-// Build the protocol for OEF(rpc) and http interface
-class ServiceProtocol : public HttpOEF, public fetch::service::Protocol {
+// Build the protocol for OEF(rpc) interface
+class RpcProtocolAEA : public fetch::service::Protocol {
 public:
 
-  ServiceProtocol(std::shared_ptr<NodeOEF> node) : Protocol(), HttpOEF(node) {
+  RpcProtocolAEA(std::shared_ptr<NodeOEF> node) : Protocol() {
 
     // Expose the RPC interface to the OEF, note the HttpOEF also has a pointer to the OEF
     this->Expose(AEAProtocol::REGISTER_INSTANCE,      new CallableClassMember<NodeOEF, std::string(std::string agentName, Instance)>(node.get(), &NodeOEF::RegisterInstance) );
@@ -25,17 +25,21 @@ public:
     ServiceServer(port, tm),
     HTTPServer(8080, tm) {
 
-    std::shared_ptr<NodeOEF> node = std::make_shared<NodeOEF>();
-    protocol_                     = std::make_shared<ServiceProtocol>(node);
+    std::shared_ptr<NodeOEF> node = std::make_shared<NodeOEF>();               // Core node functionality
+    httpOEF_                      = std::make_shared<HttpOEF>(node);           // HTTP interface to node
+    rpcProtocol_                  = std::make_shared<RpcProtocolAEA>(node);    // RPC interface to node
 
-    this->Add(AEAProtocolEnum::DEFAULT, protocol_.get() );
+    // Add RPC interface
+    this->Add(AEAProtocolEnum::DEFAULT, rpcProtocol_.get() );
 
+    // HTTP requres this
     this->AddMiddleware( fetch::http::middleware::AllowOrigin("*") );
     this->AddMiddleware( fetch::http::middleware::ColorLog);
-    this->AddModule(*protocol_);
+    this->AddModule(*httpOEF_);
   }
 
-  std::shared_ptr<ServiceProtocol> protocol_;
+  std::shared_ptr<RpcProtocolAEA>  rpcProtocol_;
+  std::shared_ptr<HttpOEF>         httpOEF_;
 };
 
 int main() {
