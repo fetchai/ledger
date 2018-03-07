@@ -445,7 +445,19 @@ public:
     std::string type = jsonDoc["type"].as_byte_array();
 
     if(type.compare("relation") == 0) {
-      constraint_ = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), jsonDoc["value"].as_bool());
+
+      // TODO: (`HUT`) : make this cleaner
+      if(jsonDoc["value"].is_bool()) {
+        constraint_ = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), jsonDoc["value"].as_bool());
+      } else if(jsonDoc["value"].is_int()) {
+        constraint_ = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), int(jsonDoc["value"].as_int()));
+      } else if(jsonDoc["value"].is_float()) {
+        constraint_ = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), float(jsonDoc["value"].as_double()));
+      } else if(jsonDoc["value"].is_byte_array()) {
+        constraint_ = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), std::string(jsonDoc["value"].as_byte_array()));
+      } else {
+        throw std::invalid_argument(std::string("Incorrect attempt to parse ConstraintType due to missing functionality!"));
+      }
     }
   }
 
