@@ -26,14 +26,16 @@ public:
     HTTPServer(8080, tm) {
 
     std::shared_ptr<NodeOEF> node = std::make_shared<NodeOEF>();
-    ServiceProtocol *prot         = new ServiceProtocol(node);
+    protocol_                     = std::make_shared<ServiceProtocol>(node);
 
-    this->Add(AEAProtocolEnum::DEFAULT, prot );
+    this->Add(AEAProtocolEnum::DEFAULT, protocol_.get() );
 
     this->AddMiddleware( fetch::http::middleware::AllowOrigin("*") );
     this->AddMiddleware( fetch::http::middleware::ColorLog);
-    this->AddModule(*prot);
+    this->AddModule(*protocol_);
   }
+
+  std::shared_ptr<ServiceProtocol> protocol_;
 };
 
 int main() {
