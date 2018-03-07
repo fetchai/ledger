@@ -16,7 +16,7 @@ instanceJSON = { "instance" :
                          "description": "All possible weather data."
                        },
                      "values": [ { "has_wind_speed": "true" }, { "has_temperature": "true" }, { "latitude": "true" }, { "longitude": "true" } ]},
-                 "ID": "Joshyboy" }
+                 "ID": "test_user" }
 
 # Register that instance
 r = requests.post('http://localhost:8080/register-instance', json=instanceJSON)

@@ -9,6 +9,11 @@
 #include<mutex>
 #include"oef/schema.hpp"
 
+namespace fetch
+{
+namespace service_directory
+{
+
 // The Agents class is just a convenience for representing agents, this will be extended to hold agent-specific information later
 class Agents {
 public:
@@ -44,12 +49,12 @@ class service_directory {
 public:
   explicit service_directory() = default;
 
-  bool RegisterAgent(const Instance &instance, const std::string &agent) {
+  bool RegisterAgent(const schema::Instance &instance, const std::string &agent) {
     std::lock_guard<std::mutex> lock(_lock);
     return _data[instance].Insert(agent);
   }
 
-  bool UnregisterAgent(const Instance &instance, const std::string &agent) {
+  bool UnregisterAgent(const schema::Instance &instance, const std::string &agent) {
     std::lock_guard<std::mutex> lock(_lock);
     auto iter = _data.find(instance);
     if(iter == _data.end())
@@ -78,7 +83,7 @@ public:
     return res;
   }
 
-  std::vector<std::string> Query(const QueryModel &query) const {
+  std::vector<std::string> Query(const schema::QueryModel &query) const {
     std::lock_guard<std::mutex> lock(_lock);
     std::unordered_set<std::string> res;
 
@@ -96,8 +101,10 @@ public:
   }
 
 private:
-  mutable std::mutex                   _lock;
-  std::unordered_map<Instance, Agents> _data;
+  mutable std::mutex                           _lock;
+  std::unordered_map<schema::Instance, Agents> _data;
 };
 
+}
+}
 #endif

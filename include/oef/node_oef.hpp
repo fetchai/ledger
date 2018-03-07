@@ -8,18 +8,23 @@
 #include"oef/schema_serializers.hpp"
 #include"oef/service_directory.hpp"
 
+namespace fetch
+{
+namespace node_oef
+{
+
 // Core OEF implementation
 class NodeOEF {
 
 public:
-  std::string RegisterInstance(std::string agentName, Instance instance) {
+  std::string RegisterInstance(std::string agentName, schema::Instance instance) {
     auto result = serviceDirectory_.RegisterAgent(instance, agentName);
 
     fetch::logger.Info("Registering instance: ", instance.getDataModel().getName(), " by AEA: ", agentName);
     return std::to_string(result);
   }
 
-  std::vector<std::string> Query(QueryModel query) {
+  std::vector<std::string> Query(schema::QueryModel query) {
     return serviceDirectory_.Query(query);
   }
 
@@ -28,7 +33,10 @@ public:
   }
 
 private:
-  service_directory serviceDirectory_;
+  service_directory::service_directory serviceDirectory_;
 };
+
+}
+}
 
 #endif

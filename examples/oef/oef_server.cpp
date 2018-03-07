@@ -2,6 +2,10 @@
 #include"oef/node_oef.hpp"
 
 using namespace fetch::service;
+using namespace fetch::http_oef;
+using namespace fetch::node_oef;
+using namespace fetch::schema;
+using namespace fetch::http;
 
 // Build the protocol for OEF(rpc) and http interface
 class ServiceProtocol : public HttpOEF, public fetch::service::Protocol {

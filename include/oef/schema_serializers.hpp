@@ -8,7 +8,11 @@
 // All of the serialization and deserialization functions for the classes in schema.h
 
 // TODO: (`HUT`) : The following classes are not, but should eventually be, serializable (time cosntraints)
-// Set, Range, Or, KeywordLookup, SchemaRef, Schema, Schemas
+// Set, Range, Or, KeywordLookup, (SchemaRef, Schema, Schemas ?)
+namespace fetch
+{
+namespace schema
+{
 
 /////////////////////////////////////////////////////////////////
 // Instance
@@ -283,5 +287,6 @@ void Deserialize( T & serializer, Relation::Op &b) {
       b = Relation::Op::NotEq;
   }
 }
-
+}
+}
 #endif

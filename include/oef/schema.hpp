@@ -17,6 +17,11 @@
 namespace stde = std::experimental; // used for std::optional TODO: (`HUT`) : remove, experimental not guaranteed portable
 namespace var = mapbox::util;       // for the variant
 
+namespace fetch
+{
+namespace schema
+{
+
 // TODO: (`HUT`) : make Type its own class and manage these conversions
 enum class Type { Float, Int, Bool, String };
 using VariantType = var::variant<int,float,std::string,bool>;
@@ -356,45 +361,6 @@ public:
     }
   }
 
-
-  bool operator==(const Instance &other) const
-  {
-    if(!(model_ == other.model_))
-      return false;
-    for(const auto &p : values_) {
-      const auto &iter = other.values_.find(p.first);
-      if(iter == other.values_.end())
-        return false;
-      if(iter->second != p.second)
-        return false;
-    }
-    return true;
-  }
-  std::size_t hash() const {
-    std::size_t h = std::hash<std::string>{}(model_.getName());
-    for(const auto &p : values_) {
-      std::size_t hs = std::hash<std::string>{}(p.first);
-      h = hs ^ (h << 1);
-      hs = std::hash<std::string>{}(p.second);
-      h = hs ^ (h << 2);
-    }
-    return h;
-  }
-
-  std::vector<std::pair<std::string,std::string>>
-    instantiate() const {
-    return model_.instantiate(values_);
-  }
-  DataModel model() const {
-    return model_;
-  }
-  stde::optional<std::string> value(const std::string &name) const {
-    auto iter = values_.find(name);
-    if(iter == values_.end())
-      return stde::nullopt;
-    return stde::optional<std::string>{iter->second};
-  }
-
   fetch::script::Variant variant() {
     fetch::script::Variant result = fetch::script::Variant::Object();
 
@@ -412,6 +378,47 @@ public:
     return result;
   }
 
+  bool operator==(const Instance &other) const
+  {
+    if(!(model_ == other.model_))
+      return false;
+    for(const auto &p : values_) {
+      const auto &iter = other.values_.find(p.first);
+      if(iter == other.values_.end())
+        return false;
+      if(iter->second != p.second)
+        return false;
+    }
+    return true;
+  }
+
+  std::size_t hash() const {
+    std::size_t h = std::hash<std::string>{}(model_.getName());
+    for(const auto &p : values_) {
+      std::size_t hs = std::hash<std::string>{}(p.first);
+      h = hs ^ (h << 1);
+      hs = std::hash<std::string>{}(p.second);
+      h = hs ^ (h << 2);
+    }
+    return h;
+  }
+
+  std::vector<std::pair<std::string,std::string>>
+    instantiate() const {
+    return model_.instantiate(values_);
+  }
+
+  stde::optional<std::string> value(const std::string &name) const {
+    auto iter = values_.find(name);
+    if(iter == values_.end())
+      return stde::nullopt;
+    return stde::optional<std::string>{iter->second};
+  }
+
+  DataModel model() const { // TODO: (`HUT`) : delete
+    return model_;
+  }
+
   const std::unordered_map<std::string,std::string> &getValues() const    { return values_; }
   std::unordered_map<std::string,std::string>       &setValues()          { return values_; }
   const DataModel                                   &getDataModel() const { return model_; }
@@ -421,19 +428,6 @@ private:
   DataModel                                   model_;
   std::unordered_map<std::string,std::string> values_;
 };
-
-// Used for hashing classes for use in unordered_map etc.
-namespace std
-{
-  template<> struct hash<Instance>  {
-    typedef Instance argument_type;
-    typedef std::size_t result_type;
-    result_type operator()(argument_type const& s) const noexcept
-    {
-      return s.hash();
-    }
-  };
-}
 
 class Or;
 class And;
@@ -674,4 +668,19 @@ VariantType string_to_value(Type t, const std::string &s) {
   return VariantType{std::string{""}};
 }
 
+}
+}
+
+// Used for hashing classes for use in unordered_map etc. // TODO: (`HUT`) : think about how to manage this
+namespace std
+{
+  template<> struct hash<fetch::schema::Instance>  {
+    typedef fetch::schema::Instance argument_type;
+    typedef std::size_t result_type;
+    result_type operator()(argument_type const& s) const noexcept
+    {
+      return s.hash();
+    }
+  };
+}
 #endif

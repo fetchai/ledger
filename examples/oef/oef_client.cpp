@@ -6,7 +6,8 @@
 #include"oef/schema.hpp"
 #include"oef/schema_serializers.hpp"
 
-using namespace fetch::service; // TODO: (`HUT`) : remove namespaces
+using namespace fetch;
+using namespace fetch::service;
 using namespace fetch::byte_array;
 
 // Example of OEF code performing basic register-query functionality
@@ -21,20 +22,20 @@ int main() {
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );
 
   // Define attributes that can exist
-  Attribute wind        { "has_wind_speed",   Type::Bool, false};
-  Attribute temperature { "has_temperature",  Type::Bool, true};
-  Attribute latitude    { "latitude",         Type::Bool, true};
-  Attribute longitude   { "longitude",        Type::Bool, true};
+  schema::Attribute wind        { "has_wind_speed",   schema::Type::Bool, false};
+  schema::Attribute temperature { "has_temperature",  schema::Type::Bool, true};
+  schema::Attribute latitude    { "latitude",         schema::Type::Bool, true};
+  schema::Attribute longitude   { "longitude",        schema::Type::Bool, true};
 
   // We then create a DataModel for this, personalise it by creating an Instance,
   // and register it with the Node (connected during Client construction)
-  std::vector<Attribute> attributes{wind, temperature, latitude, longitude};
+  std::vector<schema::Attribute> attributes{wind, temperature, latitude, longitude};
 
   // Create a DataModel
-  DataModel weather{"weather_data", attributes};
+  schema::DataModel weather{"weather_data", attributes};
 
   // Create an Instance of this DataModel
-  Instance instance{weather, {{"has_wind_speed", "false"}, {"has_temperature", "true"}, {"latitude", "true"}, {"longitude", "true"}}};
+  schema::Instance instance{weather, {{"has_wind_speed", "false"}, {"has_temperature", "true"}, {"latitude", "true"}, {"longitude", "true"}}};
 
   // Register our datamodel
   std::cout << client.Call( MYPROTO, REGISTERINSTANCE, "test_agent", instance ).As<std::string>( ) << std::endl;
@@ -42,13 +43,13 @@ int main() {
   // two queries, first one should succeed, one should fail since we are searching for wind and temperature with our agent has/does not have
 
   // Create constraints against our Attributes (whether the station CAN provide them)
-  ConstraintType eqTrue{ConstraintType::ValueType{Relation{Relation::Op::Eq, true}}};
-  Constraint temperature_c { temperature, eqTrue};
-  Constraint wind_c        { wind    ,    eqTrue};
+  schema::ConstraintType eqTrue{schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Eq, true}}};
+  schema::Constraint temperature_c { temperature, eqTrue};
+  schema::Constraint wind_c        { wind    ,    eqTrue};
 
   // Query is build up from constraints
-  QueryModel query1{{temperature_c}};
-  QueryModel query2{{wind_c}};
+  schema::QueryModel query1{{temperature_c}};
+  schema::QueryModel query2{{wind_c}};
 
   // first query, should succeed (searching for has_temperature)
   auto agents = client.Call( MYPROTO, QUERY, query1 ).As<std::vector<std::string>>( );

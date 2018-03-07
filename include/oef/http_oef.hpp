@@ -20,10 +20,11 @@
 #include<set>
 #include<algorithm>
 #include<sstream>
-using namespace fetch;
-using namespace fetch::http;
-using namespace fetch::commandline;
 
+namespace fetch
+{
+namespace http_oef
+{
 
 struct Transaction
 {
@@ -46,49 +47,49 @@ class HttpOEF : public fetch::http::HTTPModule
 {
 public:
   // In constructor attach the callbacks for the http pages we want
-  HttpOEF(std::shared_ptr<NodeOEF> node) : node_{node} {
+  HttpOEF(std::shared_ptr<node_oef::NodeOEF> node) : node_{node} {
     // Ledger functionality
-    HTTPModule::Post("/check", [this](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPModule::Post("/check", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
           return this->CheckUser(params, req);
         });
-    HTTPModule::Post("/register", [this](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPModule::Post("/register", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
           return this->RegisterUser(params, req);
         });
-    HTTPModule::Post("/balance", [this](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPModule::Post("/balance", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
           return this->GetBalance(params, req);
         });
-    HTTPModule::Post("/send", [this](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPModule::Post("/send", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
           return this->SendTransaction(params, req);
         });
-    HTTPModule::Post("/get-transactions", [this](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPModule::Post("/get-transactions", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->GetHistory(params, req);
       });
 
     // OEF functionality
-    HTTPModule::Post("/register-instance", [this](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPModule::Post("/register-instance", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->RegisterInstance(params, req);
       });
 
-    HTTPModule::Post("/query-instance", [this](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPModule::Post("/query-instance", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->QueryInstance(params, req);
       });
 
     // OEF debug functions
-    HTTPModule::Post("/echo-query", [this](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPModule::Post("/echo-query", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->EchoQuery(params, req);
       });
 
-    HTTPModule::Post("/echo-instance", [this](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPModule::Post("/echo-instance", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->EchoInstance(params, req);
       });
 
-    HTTPModule::Post("/test", [this](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPModule::Post("/test", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->Test(params, req);
       });
   }
 
   // Check that a user exists in our ledger
-  HTTPResponse CheckUser(ViewParameters const &params, HTTPRequest const &req) {
+  http::HTTPResponse CheckUser(http::ViewParameters const &params, http::HTTPRequest const &req) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
     json::JSONDocument doc;
@@ -99,16 +100,16 @@ public:
     } catch(...) {
       std::cout << req.body() << std::endl;
 
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
 
     if(users_.find( doc["address"].as_byte_array() ) == users_.end())
-      return HTTPResponse("{\"response\": \"false\"}");
-    return HTTPResponse("{\"response\": \"true\"}");
+      return http::HTTPResponse("{\"response\": \"false\"}");
+    return http::HTTPResponse("{\"response\": \"true\"}");
   }
 
   // Create a new account on the system, initialise it with random balance
-  HTTPResponse RegisterUser(ViewParameters const &params, HTTPRequest const &req) {
+  http::HTTPResponse RegisterUser(http::ViewParameters const &params, http::HTTPRequest const &req) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
     json::JSONDocument doc;
@@ -118,20 +119,20 @@ public:
     } catch(...) {
       std::cout << req.body() << std::endl;
 
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
 
     if(users_.find( doc["address"].as_byte_array() ) != users_.end())
-      return HTTPResponse("{\"response\": \"false\"}");
+      return http::HTTPResponse("{\"response\": \"false\"}");
 
     users_.insert( doc["address"].as_byte_array() );
     accounts_[ doc["address"].as_byte_array()  ].balance = 300 + (lfg_() % 9700);
 
-    return HTTPResponse("{}");
+    return http::HTTPResponse("{}");
   }
 
   // Get balance of user, note if the user doesn't exist this returns 0
-  HTTPResponse GetBalance(ViewParameters const &params, HTTPRequest const &req) {
+  http::HTTPResponse GetBalance(http::ViewParameters const &params, http::HTTPRequest const &req) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
     json::JSONDocument doc;
@@ -141,22 +142,22 @@ public:
     } catch(...) {
       std::cout << req.body() << std::endl;
 
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
 
     script::Variant result = script::Variant::Object();
 
     if(users_.find( doc["address"].as_byte_array() ) == users_.end())
-      return HTTPResponse("{\"balance\": 0}");
+      return http::HTTPResponse("{\"balance\": 0}");
 
     result["response"] = accounts_[ doc["address"].as_byte_array() ].balance;
 
     std::stringstream ret;
     ret << result;
-    return HTTPResponse(ret.str());
+    return http::HTTPResponse(ret.str());
   }
 
-  HTTPResponse SendTransaction(ViewParameters const &params, HTTPRequest const &req) {
+  http::HTTPResponse SendTransaction(http::ViewParameters const &params, http::HTTPRequest const &req) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
     json::JSONDocument doc;
@@ -166,7 +167,7 @@ public:
     } catch(...) {
       std::cout << req.body() << std::endl;
 
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
 
     Transaction tx;
@@ -179,10 +180,10 @@ public:
     tx.json        = req.body();
 
     if(users_.find( tx.fromAddress ) == users_.end())
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"fromAddress does not exist\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"fromAddress does not exist\"}");
 
     if(users_.find( tx.toAddress ) == users_.end())
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"toAddress does not exist\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"toAddress does not exist\"}");
 
 
     if(accounts_.find(tx.fromAddress) == accounts_.end())
@@ -192,7 +193,7 @@ public:
 
     if(accounts_[tx.fromAddress].balance < tx.amount)
     {
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"insufficient funds\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"insufficient funds\"}");
     }
 
     accounts_[tx.fromAddress].balance -= tx.amount;
@@ -206,10 +207,10 @@ public:
 
     std::stringstream ret;
     ret << result;
-    return HTTPResponse(ret.str());
+    return http::HTTPResponse(ret.str());
   }
 
-  HTTPResponse GetHistory(ViewParameters const &params, HTTPRequest const &req) {
+  http::HTTPResponse GetHistory(http::ViewParameters const &params, http::HTTPRequest const &req) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
     json::JSONDocument doc;
     try {
@@ -218,12 +219,12 @@ public:
     } catch(...) {
       std::cout << req.body() << std::endl;
 
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
 
     auto address =  doc["address"].as_byte_array();
     if(users_.find( address ) == users_.end())
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"toAddress does not exist\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"toAddress does not exist\"}");
 
 
     auto &account = accounts_[address];
@@ -243,11 +244,11 @@ public:
 
     std::stringstream ret;
     ret << result;
-    return HTTPResponse(ret.str());
+    return http::HTTPResponse(ret.str());
   }
 
   // OEF functions
-  HTTPResponse RegisterInstance(ViewParameters const &params, HTTPRequest const &req) {
+  http::HTTPResponse RegisterInstance(http::ViewParameters const &params, http::HTTPRequest const &req) {
 
     json::JSONDocument doc;
     try {
@@ -256,23 +257,23 @@ public:
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
       std::string id = doc["ID"].as_byte_array();
-      Instance instance(doc["instance"]);
+      schema::Instance instance(doc["instance"]);
       auto success = node_->RegisterInstance(id, instance);
 
-      return HTTPResponse("{\"response\": \""+success+"\"}");
+      return http::HTTPResponse("{\"response\": \""+success+"\"}");
     } catch (...) {
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
   }
 
-  HTTPResponse QueryInstance(ViewParameters const &params, HTTPRequest const &req) {
+  http::HTTPResponse QueryInstance(http::ViewParameters const &params, http::HTTPRequest const &req) {
 
     json::JSONDocument doc;
     try {
       doc = req.JSON();
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-      QueryModel query(doc);
+      schema::QueryModel query(doc);
 
       auto agents = node_->Query(query);
 
@@ -287,51 +288,51 @@ public:
       std::ostringstream ret;
       ret << response;
 
-      return HTTPResponse(ret.str());
+      return http::HTTPResponse(ret.str());
     } catch (...) {
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
   }
 
   // Functions to test JSON serialisation/deserialisation
-  HTTPResponse EchoQuery(ViewParameters const &params, HTTPRequest const &req) {
+  http::HTTPResponse EchoQuery(http::ViewParameters const &params, http::HTTPRequest const &req) {
 
     json::JSONDocument doc;
     try {
       doc = req.JSON();
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-      QueryModel query(doc);
+      schema::QueryModel query(doc);
 
       std::ostringstream ret;
       ret << query.variant();
 
-      return HTTPResponse(ret.str());
+      return http::HTTPResponse(ret.str());
     } catch (...) {
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
   }
 
-  HTTPResponse EchoInstance(ViewParameters const &params, HTTPRequest const &req) {
+  http::HTTPResponse EchoInstance(http::ViewParameters const &params, http::HTTPRequest const &req) {
 
     json::JSONDocument doc;
     try {
       doc = req.JSON();
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-      Instance instance(doc["instance"]);
+      schema::Instance instance(doc["instance"]);
 
       std::ostringstream ret;
       ret << instance.variant();
 
-    return HTTPResponse(ret.str());
+    return http::HTTPResponse(ret.str());
     } catch (...) {
-      return HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
   }
 
-  HTTPResponse Test(ViewParameters const &params, HTTPRequest const &req) {
-    return HTTPResponse("{\"response\": \"success\"}");
+  http::HTTPResponse Test(http::ViewParameters const &params, http::HTTPRequest const &req) {
+    return http::HTTPResponse("{\"response\": \"success\"}");
   }
 
 public:
@@ -342,7 +343,9 @@ public:
   fetch::mutex::Mutex                                    mutex_;
 
 private:
-  std::shared_ptr<NodeOEF> node_;
+  std::shared_ptr<node_oef::NodeOEF> node_;
 };
 
+}
+}
 #endif
