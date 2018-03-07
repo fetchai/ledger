@@ -33,7 +33,7 @@ public:
   }
 
 private:
-  service_directory::service_directory serviceDirectory_;
+  service_directory::ServiceDirectory serviceDirectory_;
 };
 
 }

@@ -44,10 +44,10 @@ private:
   std::unordered_set<std::string> agents_;
 };
 
-// service_directory holds a list of *instances* and the agents associated with those instances. The assumption is therefore that the number of instances is equal to or less than agents
-class service_directory {
+// ServiceDirectory holds a list of *instances* and the agents associated with those instances. The assumption is therefore that the number of instances is equal to or less than agents
+class ServiceDirectory {
 public:
-  explicit service_directory() = default;
+  explicit ServiceDirectory() = default;
 
   bool RegisterAgent(const schema::Instance &instance, const std::string &agent) {
     std::lock_guard<std::mutex> lock(_lock);
