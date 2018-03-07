@@ -1,15 +1,24 @@
 Initiate
 ========
+git init submodule
 git submodule update --recursive --remote
 
+Mac:
+sudo port install cmake openssl
+
+On Ubuntu / Debian:
+sudo apt-get install cmake libssl-dev libpng-dev python-dev
 
 Build
 =====
 
 mkdir build
+cd build
 cmake ..
 make
 
+If you use Brew as your package manager on OS X, you will need to run
+cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl .
 
 Test
 ====

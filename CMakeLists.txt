@@ -13,9 +13,10 @@ find_package(Threads REQUIRED)
 message("OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
 message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")
 
-link_libraries(crypto)
+link_libraries(crypto pthread)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/asio/asio/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/mapbox/")
 include_directories("${OPENSSL_INCLUDE_DIR}")
 
 add_definitions(-DASIO_STANDALONE -DASIO_HEADER_ONLY -DASIO_HAS_STD_SYSTEM_ERROR)
@@ -28,6 +29,7 @@ enable_testing()
 #    OUTPUT_VARIABLE ${GIT_DESCRIBE})
 
 add_definitions( --std=c++11 )
+add_definitions( --std=c++1y ) # OEF code uses experimental code, so needs this to compile
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function")

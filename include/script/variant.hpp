@@ -226,15 +226,17 @@ public:
 
 
   
-  
+  // Integers
   template <typename T>
-  typename std::enable_if<std::is_integral<T>::value, T>::type operator=(
+  typename std::enable_if<std::is_integral<T>::value &&
+                          !std::is_same<T, bool>::value, T>::type operator=(
       T const& i) {
     FreeMemory();
     type_ = INTEGER;
     return data_.integer = i;
   }
 
+  // Floating points
   template <typename T>
   typename std::enable_if<std::is_floating_point<T>::value, T>::type operator=(
       T const& f) {
@@ -243,12 +245,21 @@ public:
     return data_.float_point = f;
   }
 
-  bool operator=(bool const& b) {
+  // Bool - avoid implicit conversion
+  template < typename T >
+  typename std::enable_if<std::is_same<T, bool>::value, T>::type operator=(T const& b) {
     FreeMemory();
     type_ = BOOLEAN;
     return data_.boolean = b;
   }
 
+  template < typename T >
+  typename std::enable_if<std::is_same<T, char const*>::value, T>::type operator=(T c) {
+    byte_array_type str(c);
+    *this = str;
+    return c;
+  }
+    
   char const& operator=(char const& c) {
     byte_array_type str;
     str.Resize(1);
@@ -280,6 +291,7 @@ public:
   variant_array_type const &as_array() const { return *data_.array; }    
 
   bool is_null() const { return type_ == NULL_VALUE; }
+  bool is_undefined() const { return type_ == UNDEFINED; }
 
   VariantType const& type() const { return type_; }
 

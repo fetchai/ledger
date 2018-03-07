@@ -6,12 +6,14 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstring>
 #include <cassert>
 #include <cstdint>
 #include <type_traits>
 #include <memory>
 #include <iostream>
 #include <stdlib.h>
+#include <string.h>
 namespace fetch {
 namespace memory {
 

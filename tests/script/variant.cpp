@@ -62,17 +62,31 @@ int main() {
       EXPECT( list2[0].type() == VariantType::BYTE_ARRAY );
       
       // FIXME: Does not work
+      /*
       str[1] = 'i';
       str[2] = ',';
       list2[1] = 'a';
       std::cout << list << std::endl;          
+      */
     };
   
 
 
   };
 
+  SCENARIO("Incorrect type conversion") {
+    Variant result = fetch::script::Variant::Object();
 
+    SECTION("char const *") {
+      result["type"]   = "TYPE";
+      EXPECT(result["type"].type() == VariantType::BYTE_ARRAY);
+
+      result["boolean"] = false;
+      EXPECT(result["boolean"].type() == VariantType::BOOLEAN);
+    };
+  };
+  
+  
   return 0;
 }
 
