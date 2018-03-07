@@ -6,6 +6,7 @@ import pdb
 def jsonPrint(r):
     return json.dumps(r.json(), indent=4, sort_keys=True)+"\n"
 
+
 # Test Instance to register
 instanceJSON = { "instance" :
                     {"dataModel":
@@ -67,14 +68,14 @@ queryJSON = {
         "keywords" : [ "two", "one"]
         }
 
-r = requests.post('http://localhost:8080/query-instance', json=queryJSON)
-print "Query: ", jsonPrint(r)
+#r = requests.post('http://localhost:8080/query-instance', json=queryJSON)
+#print "Query: ", jsonPrint(r)
 
-r = requests.post('http://localhost:8080/echo-query', json=queryJSON)
-print "Query echo: ", jsonPrint(r)
+#r = requests.post('http://localhost:8080/echo-query', json=queryJSON)
+#print "Query echo: ", jsonPrint(r)
 
-r = requests.post('http://localhost:8080/echo-instance', json=instanceJSON)
-print "Instance echo: ", jsonPrint(r)
+#r = requests.post('http://localhost:8080/echo-instance', json=instanceJSON)
+#print "Instance echo: ", jsonPrint(r)
 
 # Ledger transactions
 r = requests.post('http://localhost:8080/check', json = {
