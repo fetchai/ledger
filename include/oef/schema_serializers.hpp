@@ -26,8 +26,8 @@ void Serialize( T & serializer, Instance const &b) {
   serializer << (uint32_t)size;
 
   for(auto i : b.getValues()){
-    const std::string key = i.first;
-    const std::string val = i.second;
+    std::string key = i.first;
+    std::string val = i.second;
     serializer << key << val;
   }
 
@@ -39,7 +39,7 @@ void Deserialize( T & serializer, Instance &b) {
 
   uint32_t mapLen;
   serializer >> mapLen;
-  auto &map = b.setValues();
+  auto &map = b.values();
   for (int i = 0;i < mapLen;i++){
     std::string first;
     std::string second;
@@ -47,7 +47,7 @@ void Deserialize( T & serializer, Instance &b) {
     map[first] = second;
   }
 
-  serializer >> b.setDataModel();
+  serializer >> b.dataModel();
 }
 
 /////////////////////////////////////////////////////////////////
@@ -60,7 +60,7 @@ void Serialize( T & serializer, DataModel const &b) {
 
 template< typename T>
 void Deserialize( T & serializer, DataModel &b) {
-  serializer >> b.setName() >> b.setKeywords() >> b.setAttributes();
+  serializer >> b.name() >> b.keywords() >> b.attributes();
 }
 
 /////////////////////////////////////////////////////////////////
@@ -72,7 +72,7 @@ void Serialize( T & serializer, Attribute const &b) {
 
 template< typename T>
 void Deserialize( T & serializer, Attribute &b) {
-  serializer >> b.setName() >> b.setRequired() >> b.setType();
+  serializer >> b.name() >> b.required() >> b.type();
 }
 
 /////////////////////////////////////////////////////////////////
@@ -132,7 +132,7 @@ void Serialize( T & serializer, QueryModel const &b) {
 
 template< typename T>
 void Deserialize( T & serializer, QueryModel &b) {
-  serializer >> b.setConstraints();
+  serializer >> b.constraints();
 }
 
 /////////////////////////////////////////////////////////////////
@@ -144,7 +144,7 @@ void Serialize( T & serializer, Constraint const &b) {
 
 template< typename T>
 void Deserialize( T & serializer, Constraint &b) {
-  serializer >> b.setAttribute() >> b.setConstraintType();
+  serializer >> b.attribute() >> b.constraintType();
 }
 
 /////////////////////////////////////////////////////////////////
@@ -156,7 +156,7 @@ void Serialize( T & serializer, ConstraintType const &b) {
 
 template< typename T>
 void Deserialize( T & serializer, ConstraintType &b) {
-  serializer >> b.setConstraint();
+  serializer >> b.constraint();
 }
 
 /////////////////////////////////////////////////////////////////
@@ -198,7 +198,7 @@ void Serialize( T & serializer, Relation const &b) {
 template< typename T>
 void Deserialize( T & serializer, Relation &b) {
 
-  serializer >> b.setOp();
+  serializer >> b.op();
 
   uint32_t index;
   serializer >> index;
@@ -206,27 +206,27 @@ void Deserialize( T & serializer, Relation &b) {
     case 0:
       {int res;
       serializer >> res;
-      b.setValueType() = res;}
+      b.valueType() = res;}
       break;
     case 1:
       {float res;
       serializer >> res;
-      b.setValueType() = res;}
+      b.valueType() = res;}
       break;
     case 2:
       {std::string res;
       serializer >> res;
-      b.setValueType() = res;}
+      b.valueType() = res;}
       break;
     case 3:
       {bool res;
       serializer >> res;
-      b.setValueType() = res;}
+      b.valueType() = res;}
       break;
     default:
       {bool res;
       serializer >> res;
-      b.setValueType() = res;}
+      b.valueType() = res;}
   }
 }
 

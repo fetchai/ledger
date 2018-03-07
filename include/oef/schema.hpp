@@ -85,11 +85,11 @@ public:
   }
 
   const std::string &getName() const     { return name_; }
-  std::string       &setName()           { return name_; }
+  std::string       &name()           { return name_; }
   const bool        &getRequired() const { return required_; }
-  bool              &setRequired()       { return required_; }
+  bool              &required()       { return required_; }
   const Type        &getType() const     { return type_; }
-  Type              &setType()           { return type_; }
+  Type              &type()           { return type_; }
 
 private:
   std::string                 name_;
@@ -179,9 +179,9 @@ public:
   }
 
   const Op        &getOp() const        { return op_; }
-  Op              &setOp()              { return op_; }
+  Op              &op()              { return op_; }
   const ValueType &getValueType() const { return value_; }
-  ValueType       &setValueType()       { return value_; }
+  ValueType       &valueType()       { return value_; }
 
 private:
   Op        op_;
@@ -214,9 +214,9 @@ public:
   }
 
   const Op        &getOp() const         { return op_; }
-  Op              &setOp()               { return op_; }
+  Op              &op()               { return op_; }
   const ValueType &getValueTypes() const { return values_; }
-  ValueType       &setValueTypes()       { return values_; }
+  ValueType       &valueTypes()       { return values_; }
 
 private:
   Op        op_;
@@ -328,11 +328,11 @@ public:
   }
 
   const std::string              &getName() const       { return name_; }
-  std::string                    &setName()             { return name_; }
+  std::string                    &name()             { return name_; }
   const std::vector<std::string> &getKeywords() const   { return keywords_; }
-  std::vector<std::string>       &setKeywords()         { return keywords_; }
+  std::vector<std::string>       &keywords()         { return keywords_; }
   const std::vector<Attribute>   &getAttributes() const { return attributes_; }
-  std::vector<Attribute>         &setAttributes()       { return attributes_; }
+  std::vector<Attribute>         &attributes()       { return attributes_; }
 
 private:
   std::string                 name_;
@@ -420,9 +420,9 @@ public:
   }
 
   const std::unordered_map<std::string,std::string> &getValues() const    { return values_; }
-  std::unordered_map<std::string,std::string>       &setValues()          { return values_; }
+  std::unordered_map<std::string,std::string>       &values()          { return values_; }
   const DataModel                                   &getDataModel() const { return model_; }
-  DataModel                                         &setDataModel()       { return model_; }
+  DataModel                                         &dataModel()       { return model_; }
 
 private:
   DataModel                                   model_;
@@ -475,7 +475,7 @@ public:
   bool check(const VariantType &v) const;
 
   const ConstraintType::ValueType& getConstraint() const { return constraint_; }
-  ConstraintType::ValueType& setConstraint()             { return constraint_; }
+  ConstraintType::ValueType& constraint()             { return constraint_; }
 
 private:
   ConstraintType::ValueType constraint_;
@@ -530,9 +530,9 @@ public:
   }
 
   const Attribute      &getAttribute() const      { return attribute_; }
-  Attribute            &setAttribute()            { return attribute_; }
+  Attribute            &attribute()            { return attribute_; }
   const ConstraintType &getConstraintType() const { return constraint_; }
-  ConstraintType       &setConstraintType()       { return constraint_; }
+  ConstraintType       &constraintType()       { return constraint_; }
 
 private:
   Attribute      attribute_;
@@ -569,7 +569,7 @@ public:
   }
 
   const std::vector<ConstraintType> &getExpressions() const { return expr_; }
-  std::vector<ConstraintType>       &setExpressions()       { return expr_; }
+  std::vector<ConstraintType>       &expressions()       { return expr_; }
 };
 
 class QueryModel {
@@ -640,7 +640,7 @@ public:
   }
 
   const std::vector<Constraint> &getConstraints() const { return constraints_; }
-  std::vector<Constraint>       &setConstraints()       { return constraints_; }
+  std::vector<Constraint>       &constraints()       { return constraints_; }
 
 private:
   std::vector<Constraint>   constraints_;
