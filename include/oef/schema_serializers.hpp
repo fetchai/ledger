@@ -20,7 +20,7 @@ template< typename T>
 void Serialize( T & serializer, Instance const &b) {
 
   auto size = b.getValues().size(); // TODO: (`HUT`) : ask troells, is this the correct/clean way to do this
-  if(size > UINT32_MAX) {
+  if(size > std::numeric_limits< uint32_t >::max()) {
     throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Attempt to serialize Instance failed - unsafe type narrowing");
   }
   serializer << (uint32_t)size;
