@@ -14,8 +14,8 @@ public:
   ServiceProtocol(std::shared_ptr<NodeOEF> node) : Protocol(), HttpOEF(node) {
 
     // Expose the RPC interface to the OEF, note the HttpOEF also has a pointer to the OEF
-    this->Expose(REGISTERINSTANCE,      new CallableClassMember<NodeOEF, std::string(std::string agentName, Instance)>(node.get(), &NodeOEF::RegisterInstance) );
-    this->Expose(QUERY,                 new CallableClassMember<NodeOEF, std::vector<std::string>(QueryModel query)>  (node.get(), &NodeOEF::Query) );
+    this->Expose(AEAProtocol::REGISTER_INSTANCE,      new CallableClassMember<NodeOEF, std::string(std::string agentName, Instance)>(node.get(), &NodeOEF::RegisterInstance) );
+    this->Expose(AEAProtocol::QUERY,                  new CallableClassMember<NodeOEF, std::vector<std::string>(QueryModel query)>  (node.get(), &NodeOEF::Query) );
   }
 };
 
@@ -28,7 +28,7 @@ public:
     std::shared_ptr<NodeOEF> node = std::make_shared<NodeOEF>();
     ServiceProtocol *prot         = new ServiceProtocol(node);
 
-    this->Add(MYPROTO, prot );
+    this->Add(AEAProtocolEnum::DEFAULT, prot );
 
     this->AddMiddleware( fetch::http::middleware::AllowOrigin("*") );
     this->AddMiddleware( fetch::http::middleware::ColorLog);

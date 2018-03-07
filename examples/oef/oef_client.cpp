@@ -38,7 +38,7 @@ int main() {
   schema::Instance instance{weather, {{"has_wind_speed", "false"}, {"has_temperature", "true"}, {"latitude", "true"}, {"longitude", "true"}}};
 
   // Register our datamodel
-  std::cout << client.Call( MYPROTO, REGISTERINSTANCE, "test_agent", instance ).As<std::string>( ) << std::endl;
+  std::cout << client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::REGISTER_INSTANCE, "test_agent", instance ).As<std::string>( ) << std::endl;
 
   // two queries, first one should succeed, one should fail since we are searching for wind and temperature with our agent has/does not have
 
@@ -52,7 +52,7 @@ int main() {
   schema::QueryModel query2{{wind_c}};
 
   // first query, should succeed (searching for has_temperature)
-  auto agents = client.Call( MYPROTO, QUERY, query1 ).As<std::vector<std::string>>( );
+  auto agents = client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::QUERY, query1 ).As<std::vector<std::string>>( );
 
   std::cout << "first query result: " << std::endl;
   for(auto i : agents){
@@ -60,7 +60,7 @@ int main() {
   }
 
   // second query, should fail (searching for wind_speed)
-  agents = client.Call( MYPROTO, QUERY, query2 ).As<std::vector<std::string>>( );
+  agents = client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::QUERY, query2 ).As<std::vector<std::string>>( );
 
   std::cout << "second query result: " << std::endl;
   for(auto i : agents){

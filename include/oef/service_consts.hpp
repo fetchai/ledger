@@ -1,11 +1,11 @@
 #ifndef OEF_SERVICE_CONSTS_HPP
 #define OEF_SERVICE_CONSTS_HPP
-enum {
-  REGISTERINSTANCE = 1,
+enum AEAProtocol {
+  REGISTER_INSTANCE = 1,
   QUERY
 };
 
-enum {
-  MYPROTO = 1
+enum AEAProtocolEnum {
+  DEFAULT = 1
 };
 #endif
