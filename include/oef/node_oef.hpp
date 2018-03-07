@@ -20,7 +20,7 @@ public:
   std::string RegisterInstance(std::string agentName, schema::Instance instance) {
     auto result = serviceDirectory_.RegisterAgent(instance, agentName);
 
-    fetch::logger.Info("Registering instance: ", instance.getDataModel().getName(), " by AEA: ", agentName);
+    fetch::logger.Info("Registering instance: ", instance.dataModel().name(), " by AEA: ", agentName);
     return std::to_string(result);
   }
 

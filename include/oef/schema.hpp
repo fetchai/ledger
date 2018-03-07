@@ -84,11 +84,11 @@ public:
     throw std::invalid_argument(name_ + std::string(" has a wrong type of value ") + iter->second);
   }
 
-  const std::string &getName() const     { return name_; }
+  const std::string &name() const     { return name_; }
   std::string       &name()           { return name_; }
-  const bool        &getRequired() const { return required_; }
+  const bool        &required() const { return required_; }
   bool              &required()       { return required_; }
-  const Type        &getType() const     { return type_; }
+  const Type        &type() const     { return type_; }
   Type              &type()           { return type_; }
 
 private:
@@ -178,9 +178,9 @@ public:
     return res;
   }
 
-  const Op        &getOp() const        { return op_; }
+  const Op        &op() const        { return op_; }
   Op              &op()              { return op_; }
-  const ValueType &getValueType() const { return value_; }
+  const ValueType &valueType() const { return value_; }
   ValueType       &valueType()       { return value_; }
 
 private:
@@ -213,9 +213,9 @@ public:
     return res;
   }
 
-  const Op        &getOp() const         { return op_; }
+  const Op        &op() const         { return op_; }
   Op              &op()               { return op_; }
-  const ValueType &getValueTypes() const { return values_; }
+  const ValueType &valueTypes() const { return values_; }
   ValueType       &valueTypes()       { return values_; }
 
 private:
@@ -311,7 +311,7 @@ public:
   stde::optional<Attribute> attribute(const std::string &name) const
   {
     for(auto &a : attributes_) {
-      if(a.getName() == name)
+      if(a.name() == name)
         return stde::optional<Attribute>{a};
     }
     return stde::nullopt;
@@ -327,11 +327,11 @@ public:
     return res;
   }
 
-  const std::string              &getName() const       { return name_; }
+  const std::string              &name() const       { return name_; }
   std::string                    &name()             { return name_; }
-  const std::vector<std::string> &getKeywords() const   { return keywords_; }
+  const std::vector<std::string> &keywords() const   { return keywords_; }
   std::vector<std::string>       &keywords()         { return keywords_; }
-  const std::vector<Attribute>   &getAttributes() const { return attributes_; }
+  const std::vector<Attribute>   &attributes() const { return attributes_; }
   std::vector<Attribute>         &attributes()       { return attributes_; }
 
 private:
@@ -393,7 +393,7 @@ public:
   }
 
   std::size_t hash() const {
-    std::size_t h = std::hash<std::string>{}(model_.getName());
+    std::size_t h = std::hash<std::string>{}(model_.name());
     for(const auto &p : values_) {
       std::size_t hs = std::hash<std::string>{}(p.first);
       h = hs ^ (h << 1);
@@ -419,9 +419,9 @@ public:
     return model_;
   }
 
-  const std::unordered_map<std::string,std::string> &getValues() const    { return values_; }
+  const std::unordered_map<std::string,std::string> &values() const    { return values_; }
   std::unordered_map<std::string,std::string>       &values()          { return values_; }
-  const DataModel                                   &getDataModel() const { return model_; }
+  const DataModel                                   &dataModel() const { return model_; }
   DataModel                                         &dataModel()       { return model_; }
 
 private:
@@ -474,7 +474,7 @@ public:
 
   bool check(const VariantType &v) const;
 
-  const ConstraintType::ValueType& getConstraint() const { return constraint_; }
+  const ConstraintType::ValueType& constraint() const { return constraint_; }
   ConstraintType::ValueType& constraint()             { return constraint_; }
 
 private:
@@ -514,24 +514,24 @@ public:
   }
   bool check(const Instance &i) const {
     const auto &model = i.model();
-    auto attr = model.attribute(attribute_.getName());
+    auto attr = model.attribute(attribute_.name());
     if(attr) {
-      if(attr->getType() != attribute_.getType())
+      if(attr->type() != attribute_.type())
         return false;
     }
-    auto v = i.value(attribute_.getName());
+    auto v = i.value(attribute_.name());
     if(!v) {
-      if(attribute_.getRequired())
+      if(attribute_.required())
         std::cerr << "Should not happen!\n"; // Exception ?
       return false;
     }
-    VariantType value{string_to_value(attribute_.getType(), *v)};
+    VariantType value{string_to_value(attribute_.type(), *v)};
     return check(value);
   }
 
-  const Attribute      &getAttribute() const      { return attribute_; }
+  const Attribute      &attribute() const      { return attribute_; }
   Attribute            &attribute()            { return attribute_; }
-  const ConstraintType &getConstraintType() const { return constraint_; }
+  const ConstraintType &constraintType() const { return constraint_; }
   ConstraintType       &constraintType()       { return constraint_; }
 
 private:
@@ -568,7 +568,7 @@ public:
     return true;
   }
 
-  const std::vector<ConstraintType> &getExpressions() const { return expr_; }
+  const std::vector<ConstraintType> &expressions() const { return expr_; }
   std::vector<ConstraintType>       &expressions()       { return expr_; }
 };
 
@@ -619,7 +619,7 @@ public:
   }
   bool check(const Instance &i) const {
     if(model_) {
-      if(model_->getName() != i.model().getName())
+      if(model_->name() != i.model().name())
         return false;
       // TODO: more to compare ?
     }
@@ -630,7 +630,7 @@ public:
 
     // Default for now, ALL keywords must be found within model keyw. TODO: (`HUT`) : make set
     for(auto &j : keywords_) {
-      const std::vector<std::string> keywords = i.model().getKeywords();
+      const std::vector<std::string> keywords = i.model().keywords();
 
       if (!(std::find(keywords.begin(), keywords.end(), j) != keywords.end())) {
         return false;
@@ -639,7 +639,7 @@ public:
     return true;
   }
 
-  const std::vector<Constraint> &getConstraints() const { return constraints_; }
+  const std::vector<Constraint> &constraints() const { return constraints_; }
   std::vector<Constraint>       &constraints()       { return constraints_; }
 
 private:

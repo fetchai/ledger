@@ -19,19 +19,19 @@ namespace schema
 template< typename T>
 void Serialize( T & serializer, Instance const &b) {
 
-  auto size = b.getValues().size(); // TODO: (`HUT`) : ask troells, is this the correct/clean way to do this
+  auto size = b.values().size(); // TODO: (`HUT`) : ask troells, is this the correct/clean way to do this
   if(size > std::numeric_limits< uint32_t >::max()) {
     throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Attempt to serialize Instance failed - unsafe type narrowing");
   }
   serializer << (uint32_t)size;
 
-  for(auto i : b.getValues()){
+  for(auto i : b.values()){
     std::string key = i.first;
     std::string val = i.second;
     serializer << key << val;
   }
 
-  serializer << b.getDataModel();
+  serializer << b.dataModel();
 }
 
 template< typename T>
@@ -55,7 +55,7 @@ void Deserialize( T & serializer, Instance &b) {
 // TODO: (`HUT`) : keywords ser/deser not tested yet
 template< typename T>
 void Serialize( T & serializer, DataModel const &b) {
-  serializer << b.getName() << b.getKeywords() << b.getAttributes();
+  serializer << b.name() << b.keywords() << b.attributes();
 }
 
 template< typename T>
@@ -67,7 +67,7 @@ void Deserialize( T & serializer, DataModel &b) {
 // Attribute
 template< typename T>
 void Serialize( T & serializer, Attribute const &b) {
-  serializer << b.getName() << b.getRequired() << b.getType();
+  serializer << b.name() << b.required() << b.type();
 }
 
 template< typename T>
@@ -127,7 +127,7 @@ void Deserialize( T & serializer, Type &b) {
 // QueryModel
 template< typename T>
 void Serialize( T & serializer, QueryModel const &b) {
-  serializer << b.getConstraints();
+  serializer << b.constraints();
 }
 
 template< typename T>
@@ -139,7 +139,7 @@ void Deserialize( T & serializer, QueryModel &b) {
 // Constraints
 template< typename T>
 void Serialize( T & serializer, Constraint const &b) {
-  serializer << b.getAttribute() << b.getConstraintType();
+  serializer << b.attribute() << b.constraintType();
 }
 
 template< typename T>
@@ -151,7 +151,7 @@ void Deserialize( T & serializer, Constraint &b) {
 // ConstraintType
 template< typename T>
 void Serialize( T & serializer, ConstraintType const &b) {
-  serializer << b.getConstraint();
+  serializer << b.constraint();
 }
 
 template< typename T>
@@ -184,10 +184,10 @@ void Deserialize( T & serializer, var::variant<A, B, C, D, E> &b) {
 // Relation
 template< typename T>
 void Serialize( T & serializer, Relation const &b) {
-  serializer << b.getOp();
+  serializer << b.op();
 
   // Push on value/type
-  b.getValueType().match(
+  b.valueType().match(
           [&] (int a)         { serializer << (uint32_t) 0 << a; },
           [&] (float a)       { serializer << (uint32_t) 1 << a; },
           [&] (std::string a) { serializer << (uint32_t) 2 << a; },
