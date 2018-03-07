@@ -1,5 +1,6 @@
 #ifndef SERVICE_ABSTRACT_CALLABLE_HPP
 #define SERVICE_ABSTRACT_CALLABLE_HPP
+#include "byte_array/referenced_byte_array.hpp"
 #include "service/types.hpp"
 #include"logger.hpp"
 namespace fetch {
@@ -91,6 +92,33 @@ void PackCall(serializer_type &serializer,
   serializer << function;
   serializer.Seek(0);
 }
+
+
+/* This function packs a function call using packed arguments.
+ * @serializer is the serializer to which the arguments will be packed.
+ * @protocol is the protocol the call belongs to.
+ * @function is the function that is being called.
+ * @args is the packed arguments.
+ *
+ * This function can be used to pack aguments with out the need of
+ * vadariac arguments.
+ *
+ * The serializer is left at position 0.
+ */  
+void PackCallWithPackedArguments(serializer_type &serializer,
+  protocol_handler_type const& protocol,
+  function_handler_type const& function,
+  byte_array::ByteArray const& args) {
+  LOG_STACK_TRACE_POINT;
+  
+  serializer << protocol;
+  serializer << function;
+  
+  serializer.Allocate( args.size() );  
+  serializer.WriteBytes(args.pointer(), args.size());  
+  serializer.Seek(0);
+}
+
 
 /* Function that packs arguments to serializer. 
  * @serializer is the serializer to which the arguments will be packed.

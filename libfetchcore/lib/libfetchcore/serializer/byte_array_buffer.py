@@ -8,6 +8,7 @@ def define_interface(root, cls, selfname):
 
     cls.add_method('Seek', 'void', [param("uint64_t", "n")])    
     cls.add_method('Tell', 'uint64_t', [], is_const=True)
+    cls.add_method('data',  'fetch::byte_array::ByteArray', [], is_const=True )
     
 def build_class(name, root, mod, namespace):
     

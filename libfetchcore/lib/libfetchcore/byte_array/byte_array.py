@@ -20,7 +20,8 @@ def define_interface(root, cls, selfname):
     cls.add_method('Match', 'bool', [param(selfname +" const &", 'n'), param( 'uint64_t', 'pos', default_value="0")], is_const=True)
     cls.add_method('Find', 'bool', [param("char", 'c'), param( 'uint64_t', 'pos', default_value="0")], is_const=True)    
     cls.add_method('size', 'uint64_t', [], is_const=True)
-
+    cls.add_output_stream_operator()
+    
 def build_class(root, mod, namespace):
     name =  "ByteArray"
 
