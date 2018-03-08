@@ -42,7 +42,6 @@ private:
   fetch::mutex::Mutex mutex_;
 };
 
-
 class AEAProtocol : public AEA, public Protocol {
 public:
   AEAProtocol() : AEA(), Protocol() {
