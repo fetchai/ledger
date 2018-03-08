@@ -1,5 +1,5 @@
-#ifndef SERVICE_HAS_PROTOCOL
-#define SERVICE_HAS_PROTOCOL
+#ifndef SERVICE_SERVER_INTERFACE_HPP
+#define SERVICE_SERVER_INTERFACE_HPP
 #include "network/message.hpp"
 #include "service/types.hpp"
 #include "service/callable_class_member.hpp"
@@ -12,11 +12,14 @@ namespace fetch
 namespace service
 {
   
-class HasProtocol {
+class ServiceServerInterface {
 public:
   typedef uint64_t handle_type; // TODO: inconsistent way of defining handle
-  typedef byte_array::ConstByteArray byte_array_type;  
-  void Add(protocol_handler_type const& name, Protocol* protocol) 
+  typedef byte_array::ConstByteArray byte_array_type;
+  
+  virtual ~ServiceServerInterface() { }
+  
+  void Add(protocol_handler_type const& name, Protocol* protocol) // TODO: Rename to AddProtocol
   {
     LOG_STACK_TRACE_POINT;
     
@@ -36,9 +39,9 @@ public:
   }
 
 protected:
-  virtual bool DeliverMessage(handle_type, network::message_type const&) = 0;
+  virtual bool DeliverResponse(handle_type, network::message_type const&) = 0;
   
-  bool PushProtocolMessage(handle_type client,
+  bool PushProtocolRequest(handle_type client,
                       network::message_type const& msg) 
   {
     LOG_STACK_TRACE_POINT;
@@ -69,7 +72,7 @@ protected:
       }
 
       fetch::logger.Debug("Service Server responding to call from ", client ) ;      
-      DeliverMessage(client, result.data());
+      DeliverResponse(client, result.data());
     }
     else if  (type == SERVICE_SUBSCRIBE)  
     {
@@ -127,11 +130,7 @@ protected:
       }
       
 
-    } else 
-    {
-      fetch::logger.Error("call type not implemented yet: ", type);
-      TODO_FAIL( "call type not implemented yet");
-    }
+    } 
     return ret;
   }
   

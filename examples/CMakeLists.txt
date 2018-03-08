@@ -9,6 +9,11 @@ add_executable(simple_ledger_node ledger/simple-ledger/node.cpp)
 add_executable(network_client network/client.cpp)
 add_executable(network_server network/server.cpp)
 
+
+add_executable(reverse_rpc_client reverse_rpc/client.cpp)
+add_executable(reverse_rpc_server reverse_rpc/server.cpp)
+
+
 add_executable(rpc_client rpc/client.cpp)
 add_executable(rpc_server rpc/server.cpp)
 

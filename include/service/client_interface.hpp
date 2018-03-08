@@ -1,5 +1,5 @@
-#ifndef SERVICE_CAN_SUBSCRIBE_HPP
-#define SERVICE_CAN_SUBSCRIBE_HPP
+#ifndef SERVICE_CLIENT_INTERFACE_HPP
+#define SERVICE_CLIENT_INTERFACE_HPP
 #include "network/message.hpp"
 #include "service/types.hpp"
 #include "service/callable_class_member.hpp"
@@ -15,13 +15,17 @@ namespace fetch
 {
 namespace service
 {
-  // TODO: Poorly chosen name  
-class CanSubscribe {
+
+class ServiceClientInterface {
 public:
 
-  CanSubscribe() :
+  ServiceClientInterface() :
     subscription_mutex_(__LINE__, __FILE__),
-    promises_mutex_(__LINE__, __FILE__) {}
+    promises_mutex_(__LINE__, __FILE__) {
+    
+  }
+
+  virtual ~ServiceClientInterface() { }
   
   template <typename... arguments>
   Promise Call(protocol_handler_type const& protocol,
@@ -92,9 +96,10 @@ protected:
     promises_mutex_.unlock();    
   }
   
-  void ProcessServerMessage(network::message_type const& msg) 
+  bool ProcessServerMessage(network::message_type const& msg) 
   {
     LOG_STACK_TRACE_POINT;
+    bool ret = true;
     
     serializer_type params(msg);
 
@@ -186,16 +191,16 @@ protected:
       }
       else 
       {
-        fetch::logger.Error("Callback is null for feed ", feed );        
-        TODO_FAIL("callback is null");
+        fetch::logger.Error("Callback is null for feed ", feed );    
       }
         
 
     } else 
     {
-      throw serializers::SerializableException(
-        error::UNKNOWN_MESSAGE, "Unknown message");
+      ret = false;     
     }
+    
+    return ret;    
   }
   
 private:

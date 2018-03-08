@@ -9,7 +9,8 @@
 
 #include "service/error_codes.hpp"
 #include "service/promise.hpp"
-#include "service/can_subscribe.hpp"
+#include "service/client_interface.hpp"
+#include "service/server_interface.hpp"
 
 #include "assert.hpp"
 #include "network/tcp_client.hpp"
@@ -24,7 +25,7 @@ namespace service
 {
 
 template< typename T >  
-class ServiceClient : public T, public CanSubscribe
+class ServiceClient : public T, public ServiceClientInterface, public ServiceServerInterface
 {
 public:
   typedef T super_type;
@@ -75,10 +76,16 @@ public:
     this->ClearPromises();
   }
 protected:
-  virtual void DeliverRequest(network::message_type const&msg) override {
+  void DeliverRequest(network::message_type const&msg) override {
     super_type::Send(msg);
   }
 
+  bool DeliverResponse(handle_type, network::message_type const &msg) override 
+  {
+    super_type::Send(msg);
+    return true;    
+  }
+  
 private:
   
 
@@ -108,7 +115,17 @@ private:
         
         if(has_messages) 
         {
-          ProcessServerMessage( msg );
+          // TODO: Post
+          if(!ProcessServerMessage( msg )) {
+            fetch::logger.Debug("Looking for RPC functionality");
+            
+            if(!PushProtocolRequest( handle_type(-1), msg) ){
+              throw serializers::SerializableException(
+                error::UNKNOWN_MESSAGE, "Unknown message");
+            }            
+            
+          }
+          
         }
       }
 
