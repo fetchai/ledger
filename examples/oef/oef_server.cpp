@@ -1,10 +1,10 @@
-#include"oef/service_oef.hpp"
+#include"oef/fetch_node_service.hpp"
 
-using namespace fetch::service_oef;
+using namespace fetch::fetch_node_service;
 
 int main() {
   fetch::network::ThreadManager tm(8);
-  ServiceOEF serv(8090, &tm); // Note, the rpc interface is on port 8090, the http interface is 8080
+  FetchNodeService serv(8090, &tm); // Note, the rpc interface is on port 8090, the http interface is 8080
 
   tm.Start();
 

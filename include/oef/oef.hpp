@@ -31,7 +31,6 @@ struct Account
   std::vector< Transaction > history;
 };
 
-
 // Core OEF implementation
 class NodeOEF {
 
@@ -91,8 +90,7 @@ public:
     tx.notes       = jsonDoc["notes"].as_byte_array();
     tx.time        = jsonDoc["time"].as_int();
     tx.toAddress   = jsonDoc["toAddress"].as_byte_array();
-    //tx.json        = jsonDoc.root(); // TODO: (`HUT`) : this
-    tx.json        = jsonDoc.root(); // TODO: (`HUT`) : this
+    tx.json        = jsonDoc.root();
 
     if((users_.find(tx.fromAddress) == users_.end())){
       result["response"] = "fail";
@@ -166,7 +164,6 @@ private:
     return (users_.find(user) != users_.end());
   }
 };
-
 }
 }
 
