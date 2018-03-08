@@ -39,6 +39,16 @@ class ByteArrayBuffer {
     return *this;
   }
 
+  template <typename T>
+  ByteArrayBuffer &Pack(T const &val) {
+    return this->operator<<(val);
+  }
+
+  template <typename T>
+  ByteArrayBuffer &Unpack(T &val){
+    return this->operator>>(val);
+  }
+
   // FIXME: Incorrect naming
   void Seek(std::size_t const &p) { pos_ = p; }
   std::size_t Tell() const { return pos_; }

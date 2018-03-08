@@ -159,6 +159,7 @@ public:
   
   virtual void StartEntry( int type, shared_context_type ctx ) 
   {
+#ifndef FETCH_DISABLE_COUT_LOGGING
     using namespace fetch::commandline::VT100;
     int color = 9, bg_color = 9;
     switch(type) {
@@ -189,24 +190,31 @@ public:
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
     std::cout << "[ " << GetColor(color,bg_color) << std::put_time(std::localtime(&now_c), "%F %T") ;
     std::cout << "." << std::setw(3) <<millis <<  DefaultAttributes() << ", #" << thread_number;
-    std::cout << ": " << std::setw(20) << ctx->context() <<  " ] ";    
+    std::cout << ": " << std::setw(20) << ctx->context() <<  " ] ";
+#endif
   }
 
   template< typename T >
   void Append( T const &v ) 
   {
-    std::cout << v ;    
+#ifndef FETCH_DISABLE_COUT_LOGGING    
+    std::cout << v ;
+#endif
   }
     
     
   virtual void Append( std::string const &s ) 
   {
-    std::cout << s ;    
+#ifndef FETCH_DISABLE_COUT_LOGGING    
+    std::cout << s ;
+#endif
   }
 
   virtual void CloseEntry( int type ) 
   {
-    std::cout << std::endl;    
+#ifndef FETCH_DISABLE_COUT_LOGGING    
+    std::cout << std::endl;
+#endif
   }
 private:
 
@@ -231,25 +239,28 @@ public:
     std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::INFO, TopContextImpl() );    
     Unroll<Args...>::Append( this, args... );
-    this->log_->CloseEntry(DefaultLogger::INFO); 
+    this->log_->CloseEntry(DefaultLogger::INFO);
   }
 
   template< typename ...Args >
   void Warn(Args ... args) 
   {
+
     std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::WARNING, TopContextImpl() );    
     Unroll<Args...>::Append( this, args... );
-    this->log_->CloseEntry(DefaultLogger::WARNING); 
+    this->log_->CloseEntry(DefaultLogger::WARNING);
   }
 
   template< typename ...Args >
   void Highlight(Args ... args) 
   {
+
     std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::HIGHLIGHT, TopContextImpl() );    
     Unroll<Args...>::Append( this, args... );
-    this->log_->CloseEntry(DefaultLogger::HIGHLIGHT); 
+    this->log_->CloseEntry(DefaultLogger::HIGHLIGHT);
+
   }
   
   template< typename ...Args >

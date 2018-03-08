@@ -61,6 +61,17 @@ class TypedByte_ArrayBuffer {
     return *this;
   }
 
+
+  template <typename T>
+  TypedByte_ArrayBuffer &Pack(T const &val) {
+    return this->operator<<(val);
+  }
+
+  template <typename T>
+  TypedByte_ArrayBuffer &Unpack(T &val) {
+    return this->operator>>(val);
+  }
+ 
   void Seek(std::size_t const &p) { pos_ = p; }
   std::size_t Tell() const { return pos_; }
 
