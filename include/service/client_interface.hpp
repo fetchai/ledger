@@ -49,6 +49,28 @@ public:
     return prom;
   }
 
+  Promise CallWithPackedArguments(protocol_handler_type const& protocol,
+    function_handler_type const& function, byte_array::ByteArray const& args) 
+  {
+    LOG_STACK_TRACE_POINT;
+    fetch::logger.Debug("Service Client Calling (2) ", protocol, ":", function); 
+      
+    Promise prom;
+    serializer_type params;
+    params << SERVICE_FUNCTION_CALL << prom.id();
+
+    promises_mutex_.lock();
+    promises_[prom.id()] = prom.reference();
+    promises_mutex_.unlock();
+
+    PackCallWithPackedArguments(params, protocol, function, args);
+      
+    super_type::Send(params.data());
+
+    return prom;    
+  }
+ 
+  
   subscription_handler_type Subscribe(protocol_handler_type const& protocol,
     feed_handler_type const& feed,
     AbstractCallable *callback) 
