@@ -65,7 +65,7 @@ public:
           params << s.id;
           
           // Copy is important here as we reuse an existing buffer
-          if(!service->Send(s.client, params.data().Copy())) {
+          if(!service->DeliverResponse(s.client, params.data().Copy())) {
             remove.push_back(i);
           }
         }
