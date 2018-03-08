@@ -1,7 +1,7 @@
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
 
-enum RemoteCommands {
+enum AEACommands {
   GET_INFO = 1,
   CONNECT = 2
 };
@@ -17,7 +17,7 @@ enum PeerToPeerFeed {
 };
 
 enum FetchProtocols {
-  REMOTE_CONTROL = 1,
+  AEA_PROTOCOL = 1,
   PEER_TO_PEER = 2
 };
 
