@@ -9,6 +9,7 @@
 
 #include "service/error_codes.hpp"
 #include "service/promise.hpp"
+#include "service/has_protocol.hpp"
 #include "mutex.hpp"
 
 #include "assert.hpp"
@@ -26,7 +27,7 @@ namespace service
 {
 
 template< typename T >
-class ServiceServer : public T
+class ServiceServer : private T, public HasProtocol
 {
 public:
   typedef T super_type;
@@ -71,7 +72,15 @@ public:
     thread_manager_->Off( event_service_start_ );
     thread_manager_->Off( event_service_stop_ );    
   }
+
   
+protected:
+  bool DeliverMessage(handle_type client, network::message_type const& msg) override {
+    return super_type::Send( client, msg );
+  }
+  
+
+private:
   void PushRequest(handle_type client,
     network::message_type const& msg) override 
   {
@@ -81,63 +90,6 @@ public:
     fetch::logger.Info("RPC call from ", client);    
     PendingMessage pm = {client, msg};    
     messages_.push_back(pm);
-  }
-
-  void Add(protocol_handler_type const& name, Protocol* protocol) 
-  {
-    LOG_STACK_TRACE_POINT;
-    
-    if(members_[name] != nullptr) 
-    {
-      throw serializers::SerializableException(
-        error::PROTOCOL_EXISTS,
-        byte_array_type("Member already exists: "));
-    }
-
-    members_[name] = protocol;
-
-    for(auto &feed: protocol->feeds()) 
-    {
-      feed->AttachToService( this );
-    }
-  }
-
-private:
-  void Call(serializer_type& result, handle_type const &client, serializer_type params) 
-  {
-    LOG_STACK_TRACE_POINT;
-    
-    protocol_handler_type protocol;
-    function_handler_type function;
-    params >> protocol >> function;
-    fetch::logger.Debug("Service Server processing call ", protocol, ":", function, " from ", client);
-    
-    if(members_[protocol] == nullptr) 
-    {
-      throw serializers::SerializableException(
-        error::PROTOCOL_NOT_FOUND,
-        byte_array_type("Could not find protocol: "));
-    }
-
-    auto& mod = *members_[protocol] ; //*it->second;
-    auto& fnc = mod[function];
-
-
-    // If we need to add client id to function arguments
-    if(fnc.meta_data() & Callable::CLIENT_ID_ARG ) {
-      serializer_type newparams;
-      // TODO: A prettier solution can be made with template parameters
-      newparams << client;
-      newparams.Allocate(params.bytes_left());
-      auto const carr = params.data().SubArray( params.Tell(),params.bytes_left());      
-      newparams.WriteBytes( carr.pointer(), params.bytes_left() );
-      newparams.Seek(0);      
-      return fnc(result, newparams);
-    } 
-      
-    
-    
-    return fnc(result, params);
   }
 
   void ProcessMessages() 
@@ -160,7 +112,6 @@ private:
         messages_.pop_front();
       };
       
-
       
       message_mutex_.unlock();
       
@@ -168,13 +119,11 @@ private:
       {
         thread_manager_->io_service().post([this, pm]() { 
             fetch::logger.Debug("Processing message call");
-            ProcessClientMessage( pm.client, pm.message );
+            this->PushProtocolMessage( pm.client, pm.message );
           });
       }
     }
     
-
-
     if(running_) {
       thread_manager_->io_service().post([this]() { this->ProcessMessages(); } );  
     }
@@ -182,96 +131,6 @@ private:
   }
 
 
-  void ProcessClientMessage(handle_type client,
-    network::message_type const& msg) 
-  {
-    LOG_STACK_TRACE_POINT;
-    
-    serializer_type params(msg);
-      
-    service_classification_type type;
-    params >> type;
-
-    if (type == SERVICE_FUNCTION_CALL) 
-    {
-      serializer_type result;
-      Promise::promise_counter_type id;
-      
-      try 
-      {
-        params >> id;
-        result << SERVICE_RESULT << id;
-
-        Call(result, client, params);
-      } catch (serializers::SerializableException const& e) 
-      {
-        fetch::logger.Error("Serialization error: ", e.what() ) ;      
-        result = serializer_type();
-        result << SERVICE_ERROR << id << e;
-      }
-
-      fetch::logger.Debug("Service Server responding to call from ", client ) ;      
-      this->Send(client, result.data());
-    } else if  (type == SERVICE_SUBSCRIBE)  
-    {
-      protocol_handler_type protocol;
-      feed_handler_type feed;
-      subscription_handler_type subid;
-      
-      try 
-      {
-        params >> protocol >> feed >> subid;
-        auto& mod = *members_[protocol] ;      
-
-        mod.Subscribe( client, feed, subid );
-        
-      } catch (serializers::SerializableException const& e) 
-      {
-        fetch::logger.Error("Serialization error: ", e.what() ) ;   
-        // FIX Serialization of errors such that this also works
-        /*
-          serializer_type result;
-          result = serializer_type();
-          result << SERVICE_ERROR << id << e;
-          Send(client, result.data());
-        */
-        throw e;
-      }
-      
-    } else if  (type == SERVICE_UNSUBSCRIBE)  
-    {
-      protocol_handler_type protocol;
-      feed_handler_type feed;
-      subscription_handler_type subid;
-      
-      try 
-      {
-        params >> protocol >> feed >> subid;
-        auto& mod = *members_[protocol] ;      
-
-        mod.Unsubscribe( client, feed, subid );
-        
-      } catch (serializers::SerializableException const& e) 
-      {
-        fetch::logger.Error("Serialization error: ", e.what() ) ;      
-        // FIX Serialization of errors such that this also works
-        /*
-          serializer_type result;
-          result = serializer_type();
-          result << SERVICE_ERROR << id << e;
-          Send(client, result.data());
-        */
-        throw e;
-      }
-      
-
-    } else 
-    {
-      TODO_FAIL("call type not implemented yet");
-    }
-  }
-
-  
   thread_manager_ptr_type thread_manager_;
   event_handle_type event_service_start_;
   event_handle_type event_service_stop_;    
@@ -280,8 +139,7 @@ private:
   fetch::mutex::Mutex message_mutex_;
   std::atomic< bool > running_;
 
-  Protocol* members_[256] = {nullptr}; // TODO: Not thread-safe
-  //  std::map<protocol_handler_type, Protocol*> members_;
+
 };
 };
 };

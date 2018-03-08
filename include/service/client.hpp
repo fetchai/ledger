@@ -9,6 +9,7 @@
 
 #include "service/error_codes.hpp"
 #include "service/promise.hpp"
+#include "service/can_subscribe.hpp"
 
 #include "assert.hpp"
 #include "network/tcp_client.hpp"
@@ -23,7 +24,7 @@ namespace service
 {
 
 template< typename T >  
-class ServiceClient : public T 
+class ServiceClient : public T, public CanSubscribe
 {
 public:
   typedef T super_type;
@@ -37,8 +38,6 @@ public:
     thread_manager_ptr_type thread_manager) :
     super_type(host, port, thread_manager),
     thread_manager_(thread_manager),
-    subscription_mutex_(__LINE__, __FILE__),
-    promises_mutex_(__LINE__, __FILE__),
     message_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;    
@@ -61,61 +60,6 @@ public:
        
   }
 
-  template <typename... arguments>
-  Promise Call(protocol_handler_type const& protocol,
-    function_handler_type const& function, arguments... args) 
-  {
-    LOG_STACK_TRACE_POINT;
-    fetch::logger.Debug("Service Client Calling ", protocol, ":", function); 
-
-    
-    Promise prom;
-    serializer_type params;
-    params << SERVICE_FUNCTION_CALL << prom.id();
-
-    promises_mutex_.lock();
-    promises_[prom.id()] = prom.reference();
-    promises_mutex_.unlock();
-      
-    PackCall(params, protocol, function, args...);
-    super_type::Send(params.data());
-
-    return prom;
-  }
-
-  subscription_handler_type Subscribe(protocol_handler_type const& protocol,
-    feed_handler_type const& feed,
-    AbstractCallable *callback) 
-  {
-    LOG_STACK_TRACE_POINT;
-    
-    subscription_handler_type subid = CreateSubscription( protocol, feed, callback );
-    serializer_type params;
-    params << SERVICE_SUBSCRIBE << protocol << feed << subid ;
-    super_type::Send(params.data());
-    return subid;
-  }
-  
-  void Unsubscribe(subscription_handler_type id) 
-  {
-    LOG_STACK_TRACE_POINT;
-      
-    subscription_mutex_.lock();    
-    auto &sub = subscriptions_[id];
-    
-    serializer_type params;
-    params << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
-    subscription_mutex_.unlock();
-    
-    super_type::Send(params.data());
-    
-    subscription_mutex_.lock();
-    delete sub.callback;
-    sub.protocol = 0;
-    sub.feed = 0;
-    subscription_mutex_.unlock();
-  }  
-  
   void PushMessage(network::message_type const& msg) override 
   {
     LOG_STACK_TRACE_POINT;
@@ -127,44 +71,15 @@ public:
   void ConnectionFailed() override
   {
     LOG_STACK_TRACE_POINT;
-    
-    promises_mutex_.lock();
-    for(auto &p: promises_)
-    {
-      p.second->ConnectionFailed();      
-    }
-    promises_.clear();    
-    promises_mutex_.unlock();    
+
+    this->ClearPromises();
   }
-  
+protected:
+  virtual void DeliverRequest(network::message_type const&msg) override {
+    super_type::Send(msg);
+  }
 
 private:
-  subscription_handler_type CreateSubscription(protocol_handler_type const& protocol,
-    feed_handler_type const& feed,
-    AbstractCallable *cb) 
-  {
-    LOG_STACK_TRACE_POINT;
-    
-    subscription_mutex_.lock();
-    std::size_t i = 0;
-    for(; i < 256; ++i) 
-    {
-      if(subscriptions_[i].callback == nullptr) 
-        break;      
-    }
-    
-    if(i >= 256) 
-    {
-      TODO_FAIL("could not allocate a free space for subscription");
-    }
-    
-    auto &sub = subscriptions_[i];
-    sub.protocol = protocol;
-    sub.feed = feed;    
-    sub.callback = cb;
-    subscription_mutex_.unlock();
-    return i;
-  }
   
 
   void ProcessMessages() 
@@ -201,131 +116,12 @@ private:
     }
   }
   
-  void ProcessServerMessage(network::message_type const& msg) 
-  {
-    LOG_STACK_TRACE_POINT;
-    
-    serializer_type params(msg);
 
-    service_classification_type type;
-    params >> type;
-
-    if (type == SERVICE_RESULT) 
-    {
-      Promise::promise_counter_type id;
-      params >> id;
-
-
-      promises_mutex_.lock();
-      auto it = promises_.find(id);
-      if (it == promises_.end()) 
-      {
-        promises_mutex_.unlock();
-
-        throw serializers::SerializableException(
-          error::PROMISE_NOT_FOUND,
-          "Could not find promise");
-      }
-      promises_mutex_.unlock();
-        
-      auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
-      it->second->Fulfill(ret.Copy());
-
-      promises_mutex_.lock();
-      promises_.erase(it);
-      promises_mutex_.unlock();
-    } else if (type == SERVICE_ERROR) 
-    {
-      Promise::promise_counter_type id;
-      params >> id;
-      
-      serializers::SerializableException e;
-      params >> e;
-
-      promises_mutex_.lock();
-      auto it = promises_.find(id);
-      if (it == promises_.end()) 
-      {
-        promises_mutex_.unlock();        
-        throw serializers::SerializableException(
-          error::PROMISE_NOT_FOUND,
-          "Could not find promise");
-      }
-      
-      promises_mutex_.unlock();
-    
-      it->second->Fail(e);
-
-      promises_mutex_.lock();
-      promises_.erase(it);
-      promises_mutex_.unlock();
-      
-    } else if( type == SERVICE_FEED ) 
-    {
-      feed_handler_type feed;
-      subscription_handler_type sub;
-      params >> feed >> sub;
-      subscription_mutex_.lock();
-      if( subscriptions_[sub].feed != feed) 
-      {
-        fetch::logger.Error("Feed id mismatch ", feed );
-        TODO_FAIL("feed id mismatch");
-      }
-
-      auto &subde = subscriptions_[sub];
-      subscription_mutex_.unlock(); 
-
-      subde.mutex.lock();
-      auto cb = subde.callback;
-      subde.mutex.unlock();
-      
-      if(cb!=nullptr) 
-      {
-        serializer_type result;
-        try {
-          (*cb)(result, params);
-        }
-        catch (serializers::SerializableException const& e) 
-        {
-          e.StackTrace();
-          
-          fetch::logger.Error("Serialization error: ", e.what() ) ;          
-          throw e;
-        }
-      }
-      else 
-      {
-        fetch::logger.Error("Callback is null for feed ", feed );        
-        TODO_FAIL("callback is null");
-      }
-        
-
-    } else 
-    {
-      throw serializers::SerializableException(
-        error::UNKNOWN_MESSAGE, "Unknown message");
-    }
-  }
-
-  struct Subscription 
-  {
-    protocol_handler_type protocol = 0;
-    feed_handler_type feed = 0;
-    AbstractCallable* callback = nullptr;
-    fetch::mutex::Mutex mutex;
-  };
 
   thread_manager_ptr_type thread_manager_;
 
-  Subscription subscriptions_[256]; // TODO: make centrally configurable;
-  fetch::mutex::Mutex subscription_mutex_;
 
 
-
-  std::map<Promise::promise_counter_type, Promise::shared_promise_type>
-  promises_;
-  fetch::mutex::Mutex promises_mutex_;
-  
   std::atomic< bool > running_;
   std::deque< network::message_type > messages_;
   fetch::mutex::Mutex message_mutex_;  
