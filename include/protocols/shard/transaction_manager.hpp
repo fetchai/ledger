@@ -74,6 +74,7 @@ public:
 
   void RollBack(std::size_t n) 
   {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
     while( (n != 0) ) {
       --n;
       detailed_assert( applied_.size() != 0 );

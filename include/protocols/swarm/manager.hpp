@@ -205,7 +205,7 @@ public:
   
   ////////////////////////
   // Not service protocol
-  void ConnectShard(std::string const &host, uint16_t const &port ) 
+  client_shared_ptr_type ConnectShard(std::string const &host, uint16_t const &port ) 
   {
     LOG_STACK_TRACE_POINT;
     
@@ -227,7 +227,7 @@ public:
     fetch::logger.Debug("Total shard count = ", shards_.size());
     shards_mutex_.unlock();
 
-    // TODO: Send connect to suggestions
+    return client;    
 
   }  
 
