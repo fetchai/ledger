@@ -64,8 +64,9 @@ public:
     promises_mutex_.unlock();
 
     PackCallWithPackedArguments(params, protocol, function, args);
-      
-    super_type::Send(params.data());
+
+    DeliverRequest(params.data());    
+   
 
     return prom;    
   }

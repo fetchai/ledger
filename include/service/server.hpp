@@ -30,7 +30,7 @@ namespace service
 
 
 template< typename T >
-class ServiceServer : private T, public ServiceServerInterface
+class ServiceServer : public T, public ServiceServerInterface
 {
 public:
   typedef T super_type;
