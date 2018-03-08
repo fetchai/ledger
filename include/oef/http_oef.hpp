@@ -13,12 +13,11 @@
 #include"random/lfg.hpp"
 #include"mutex.hpp"
 #include"script/variant.hpp"
-#include"oef/node_oef.hpp"
+#include"oef/oef.hpp"
 
 #include<map>
 #include<vector>
-#include<set>
-#include<algorithm>
+#include<algorithm> // TODO: (`HUT`) : remove unnecc. includes
 #include<sstream>
 
 namespace fetch
@@ -26,28 +25,11 @@ namespace fetch
 namespace http_oef
 {
 
-struct Transaction
-{
-  int64_t amount;
-  byte_array::ByteArray fromAddress;
-  byte_array::ByteArray notes;
-  uint64_t time;
-  byte_array::ByteArray toAddress;
-  byte_array::ByteArray json;
-};
-
-// TODO: (`HUT`) : make account history persistent
-struct Account
-{
-  int64_t balance = 0;
-  std::vector< Transaction > history;
-};
-
 class HttpOEF : public fetch::http::HTTPModule
 {
 public:
   // In constructor attach the callbacks for the http pages we want
-  HttpOEF(std::shared_ptr<node_oef::NodeOEF> node) : node_{node} {
+  HttpOEF(std::shared_ptr<oef::NodeOEF> oef) : oef_{oef} {
     // Ledger functionality
     HTTPModule::Post("/check", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
           return this->CheckUser(params, req);
@@ -90,7 +72,6 @@ public:
 
   // Check that a user exists in our ledger
   http::HTTPResponse CheckUser(http::ViewParameters const &params, http::HTTPRequest const &req) {
-    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
     json::JSONDocument doc;
     try {
@@ -100,17 +81,18 @@ public:
     } catch(...) {
       std::cout << req.body() << std::endl;
 
-      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+      return http::HTTPResponse("{\"response\": \"fail\", \"reason\": \"problems with parsing JSON\"}");
     }
 
-    if(users_.find( doc["address"].as_byte_array() ) == users_.end())
-      return http::HTTPResponse("{\"response\": \"false\"}");
-    return http::HTTPResponse("{\"response\": \"true\"}");
+    if(!(oef_->IsLedgerUser(doc["address"].as_byte_array()))) {
+      return http::HTTPResponse("{\"response\": \"success\", \"value\": \"false\"}");
+    }
+
+    return http::HTTPResponse("{\"response\": \"success\", \"value\": \"true\"}");
   }
 
   // Create a new account on the system, initialise it with random balance
   http::HTTPResponse RegisterUser(http::ViewParameters const &params, http::HTTPRequest const &req) {
-    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
     json::JSONDocument doc;
     try {
@@ -122,18 +104,15 @@ public:
       return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
 
-    if(users_.find( doc["address"].as_byte_array() ) != users_.end())
-      return http::HTTPResponse("{\"response\": \"false\"}");
+    if(!(oef_->AddLedgerUser(doc["address"].as_byte_array()))) {
+      return http::HTTPResponse("{\"response\": \"fail\"}");
+    }
 
-    users_.insert( doc["address"].as_byte_array() );
-    accounts_[ doc["address"].as_byte_array()  ].balance = 300 + (lfg_() % 9700);
-
-    return http::HTTPResponse("{}");
+    return http::HTTPResponse("{\"response\": \"success\"}");
   }
 
   // Get balance of user, note if the user doesn't exist this returns 0
   http::HTTPResponse GetBalance(http::ViewParameters const &params, http::HTTPRequest const &req) {
-    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
     json::JSONDocument doc;
     try {
@@ -147,10 +126,12 @@ public:
 
     script::Variant result = script::Variant::Object();
 
-    if(users_.find( doc["address"].as_byte_array() ) == users_.end())
-      return http::HTTPResponse("{\"balance\": 0}");
+    if(!(oef_->IsLedgerUser(doc["address"].as_byte_array()))) {
+      return http::HTTPResponse("{\"response\": 0}");
+    }
 
-    result["response"] = accounts_[ doc["address"].as_byte_array() ].balance;
+    result["value"]    = oef_->GetUserBalance(doc["address"].as_byte_array());
+    result["response"] = "success";
 
     std::stringstream ret;
     ret << result;
@@ -158,52 +139,18 @@ public:
   }
 
   http::HTTPResponse SendTransaction(http::ViewParameters const &params, http::HTTPRequest const &req) {
-    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
     json::JSONDocument doc;
     try {
       doc = req.JSON();
-      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
+      std::cout << "correctly parsed JSON for tran: " << req.body() << std::endl;
     } catch(...) {
       std::cout << req.body() << std::endl;
 
       return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
 
-    Transaction tx;
-
-    tx.fromAddress = doc["fromAddress"].as_byte_array();
-    tx.amount      = doc["balance"].as_int();
-    tx.notes       = doc["notes"].as_byte_array();
-    tx.time        = doc["time"].as_int();
-    tx.toAddress   = doc["toAddress"].as_byte_array();
-    tx.json        = req.body();
-
-    if(users_.find( tx.fromAddress ) == users_.end())
-      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"fromAddress does not exist\"}");
-
-    if(users_.find( tx.toAddress ) == users_.end())
-      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"toAddress does not exist\"}");
-
-
-    if(accounts_.find(tx.fromAddress) == accounts_.end())
-    {
-      accounts_[tx.fromAddress].balance = 0;
-    }
-
-    if(accounts_[tx.fromAddress].balance < tx.amount)
-    {
-      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"insufficient funds\"}");
-    }
-
-    accounts_[tx.fromAddress].balance -= tx.amount;
-    accounts_[tx.toAddress].balance += tx.amount;
-
-    accounts_[tx.fromAddress].history.push_back(tx);
-    accounts_[tx.toAddress].history.push_back(tx);
-
-    script::Variant result = script::Variant::Object();
-    result["response"] = accounts_[tx.fromAddress].balance;
+    auto result = oef_->SendTransaction(doc);
 
     std::stringstream ret;
     ret << result;
@@ -211,7 +158,6 @@ public:
   }
 
   http::HTTPResponse GetHistory(http::ViewParameters const &params, http::HTTPRequest const &req) {
-    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
     json::JSONDocument doc;
     try {
       doc = req.JSON();
@@ -222,25 +168,7 @@ public:
       return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
 
-    auto address =  doc["address"].as_byte_array();
-    if(users_.find( address ) == users_.end())
-      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"toAddress does not exist\"}");
-
-
-    auto &account = accounts_[address];
-
-    std::size_t n = std::min(20, int(account.history.size()) );
-
-    script::Variant result = script::Variant::Object();
-    script::Variant history = script::Variant::Array(n);
-
-    for(std::size_t i=0; i < n; ++i)
-    {
-      history[i] = account.history[ account.history.size() - 1 - i].json;
-    }
-
-    result["data"] = history;
-    result["response"] = "yes";
+    auto result = oef_->GetHistory(doc["address"].as_byte_array());
 
     std::stringstream ret;
     ret << result;
@@ -258,11 +186,11 @@ public:
 
       std::string id = doc["ID"].as_byte_array();
       schema::Instance instance(doc["instance"]);
-      auto success = node_->RegisterInstance(id, instance);
+      auto ret = oef_->RegisterInstance(id, instance);
 
-      return http::HTTPResponse("{\"response\": \""+success+"\"}");
+      return http::HTTPResponse("{\"response\": \"success\", \"value\": \""+ret+"\"}");
     } catch (...) {
-      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+      return http::HTTPResponse("{\"response\": \"fail\", \"reason\": \"problems with parsing JSON\"}");
     }
   }
 
@@ -275,7 +203,7 @@ public:
 
       schema::QueryModel query(doc);
 
-      auto agents = node_->Query(query);
+      auto agents = oef_->Query(query);
 
       script::Variant response       = script::Variant::Object();
       response["response"]           = script::Variant::Object();
@@ -335,15 +263,8 @@ public:
     return http::HTTPResponse("{\"response\": \"success\"}");
   }
 
-public:
-  std::vector< Transaction >                             transactions_;
-  std::map< fetch::byte_array::BasicByteArray, Account > accounts_;
-  std::set< fetch::byte_array::BasicByteArray >          users_;
-  fetch::random::LaggedFibonacciGenerator<>              lfg_;
-  fetch::mutex::Mutex                                    mutex_;
-
 private:
-  std::shared_ptr<node_oef::NodeOEF> node_;
+  std::shared_ptr<oef::NodeOEF> oef_;
 };
 
 }

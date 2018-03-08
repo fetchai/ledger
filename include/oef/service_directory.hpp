@@ -50,12 +50,10 @@ public:
   explicit ServiceDirectory() = default;
 
   bool RegisterAgent(const schema::Instance &instance, const std::string &agent) {
-    std::lock_guard<std::mutex> lock(_lock);
     return _data[instance].Insert(agent);
   }
 
   bool UnregisterAgent(const schema::Instance &instance, const std::string &agent) {
-    std::lock_guard<std::mutex> lock(_lock);
     auto iter = _data.find(instance);
     if(iter == _data.end())
       return false;
@@ -67,7 +65,6 @@ public:
   }
 
   bool Remove(const std::string &agent) {
-    std::lock_guard<std::mutex> lock(_lock);
     bool res = false;
 
     for (auto iter = _data.begin(); iter != _data.end(); ++iter ) {
@@ -84,7 +81,6 @@ public:
   }
 
   std::vector<std::string> Query(const schema::QueryModel &query) const {
-    std::lock_guard<std::mutex> lock(_lock);
     std::unordered_set<std::string> res;
 
     for(auto &d : _data) {
@@ -96,12 +92,10 @@ public:
   }
 
   size_t size() const {
-    std::lock_guard<std::mutex> lock(_lock);
     return _data.size();
   }
 
 private:
-  mutable std::mutex                           _lock;
   std::unordered_map<schema::Instance, Agents> _data;
 };
 

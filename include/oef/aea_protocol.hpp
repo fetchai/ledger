@@ -1,7 +1,7 @@
-#ifndef NODE_OEF_HPP
-#define NODE_OEF_HPP
+#ifndef AEA_PROTOCOL_HPP
+#define AEA_PROTOCOL_HPP
 
-#include"oef/node_oef.hpp"
+#include"oef/oef.hpp"
 
 // Build the protocol for OEF(rpc) interface
 class RpcProtocolAEA : public fetch::service::Protocol {

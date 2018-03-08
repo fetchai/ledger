@@ -81,7 +81,7 @@ queryJSON = {
 r = requests.post('http://localhost:8080/check', json = {
     "address": "830A0B9D-73EE-4001-A413-72CFCD8E91F3"
     })
-print "Check user: ", jsonPrint(r)
+print "Check user (expect false): ", jsonPrint(r)
 
 r = requests.post('http://localhost:8080/register', json = {
     "address": "830A0B9D-73EE-4001-A413-72CFCD8E91F3"
@@ -96,7 +96,7 @@ print "Register user: ", jsonPrint(r)
 r = requests.post('http://localhost:8080/check', json = {
     "address": "830A0B9D-73EE-4001-A413-72CFCD8E91F3"
     })
-print "Check user: ", jsonPrint(r)
+print "Check user (expect true): ", jsonPrint(r)
 
 
 for i in range(10):

@@ -2,7 +2,7 @@
 #define SERVICE_OEF_HPP
 
 #include"oef/http_oef.hpp"
-#include"oef/node_oef.hpp"
+#include"oef/oef.hpp"
 #include"oef/rpc_protocol_aea.hpp"
 #include"service/server.hpp"
 
@@ -17,7 +17,7 @@ public:
     ServiceServer(port, tm),
     HTTPServer(8080, tm) {
 
-    std::shared_ptr<node_oef::NodeOEF> node = std::make_shared<node_oef::NodeOEF>();                    // Core node functionality
+    std::shared_ptr<oef::NodeOEF> node = std::make_shared<oef::NodeOEF>();                    // Core OEF functionality - all protocols can access this
     httpOEF_                                = std::make_shared<http_oef::HttpOEF>(node);                // HTTP interface to node
     rpcProtocol_                            = std::make_shared<rpc_protocol_aea::RpcProtocolAEA>(node); // RPC interface to node
 
