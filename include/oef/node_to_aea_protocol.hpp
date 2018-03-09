@@ -11,23 +11,18 @@ public:
 
   NodeToAEAProtocol() : Protocol() {
 
-    this->Expose(NodeToAEAProtocolFn::PING, new service::CallableClassMember<NodeToAEAProtocol, void(std::string pingMessage)>(this, &NodeToAEAProtocol::echoMessage) );
-    this->Expose(NodeToAEAProtocolFn::BUY,  new service::CallableClassMember<NodeToAEAProtocol, std::string(std::string fromPerson)>(this, &NodeToAEAProtocol::buy));
+    this->Expose(NodeToAEAProtocolFn::PING, new service::CallableClassMember<NodeToAEAProtocol, void(std::string pingMessage)>(this, &NodeToAEAProtocol::Ping) );
+    this->Expose(NodeToAEAProtocolFn::BUY,  new service::CallableClassMember<NodeToAEAProtocol, std::string(std::string fromPerson)>(this, &NodeToAEAProtocol::Buy));
   }
 
-  template <typename T>
-  void registerCallback(T call) {
-      callback_ = call;
-  }
-
-  // TODO: (`HUT`) : make these callback registering more elegant
-  void echoMessage(std::string mess) {
-    if(callback_ != nullptr) {
-      callback_(mess);
+  // TODO: (`HUT`) : make these callback registering more elegant (ask Troels) TODO: (`HUT`) : s/Troells/Troels in codebase
+  void Ping(std::string mess) {
+    if(onPing_ != nullptr) {
+      onPing_(mess);
     }
   }
 
-  std::string buy(std::string mess) {
+  std::string Buy(std::string mess) {
 
     if(onBuy_ != nullptr) {
       return onBuy_(mess);
@@ -36,11 +31,12 @@ public:
     return "nothing";
   }
 
+  std::function<void(std::string)>        &onPing(){ return onPing_; }
   std::function<std::string(std::string)> &onBuy() { return onBuy_; }
 
 private:
-  std::function<void(std::string)> callback_     = nullptr;
-  std::function<std::string(std::string)> onBuy_ = nullptr;
+  std::function<void(std::string)>        onPing_   = nullptr;
+  std::function<std::string(std::string)> onBuy_    = nullptr;
 };
 
 }

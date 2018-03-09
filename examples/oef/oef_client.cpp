@@ -44,7 +44,7 @@ int main() {
 
   // Register ourself for callbacks
   NodeToAEAProtocol protocol;
-  protocol.registerCallback([&](std::string message){ std::cerr << "We received a callback ping: " << message << std::endl;});
+  protocol.onPing() = [&](std::string message){ std::cerr << "We received a callback ping: " << message << std::endl;};
 
   // Sell bananas callback
   int bananas = 4;
