@@ -38,7 +38,7 @@ int main() {
   schema::Instance instance{weather, {{"has_wind_speed", "false"}, {"has_temperature", "true"}, {"latitude", "true"}, {"longitude", "true"}}};
 
   // Register our datamodel
-  std::cout << client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::REGISTER_INSTANCE, "requesting_agent", instance ).As<std::string>( ) << std::endl;
+  std::cout << client.Call( AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::REGISTER_INSTANCE, "requesting_agent", instance ).As<std::string>( ) << std::endl;
 
   // two queries, first one should succeed, one should fail since we are searching for wind and temperature with our agent has/does not have
 
@@ -52,7 +52,7 @@ int main() {
   schema::QueryModel query2{{wind_c}};
 
   // first query, should succeed (searching for has_temperature)
-  auto agents = client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::QUERY, query1 ).As<std::vector<std::string>>( );
+  auto agents = client.Call( AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::QUERY, query1 ).As<std::vector<std::string>>( );
 
   std::cout << "first query result: " << std::endl;
   for(auto i : agents){
@@ -60,7 +60,7 @@ int main() {
   }
 
   // second query, should fail (searching for wind_speed)
-  agents = client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::QUERY, query2 ).As<std::vector<std::string>>( );
+  agents = client.Call( AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::QUERY, query2 ).As<std::vector<std::string>>( );
 
   std::cout << "second query result: " << std::endl;
   for(auto i : agents){
@@ -70,7 +70,7 @@ int main() {
   // Try to buy from agent listening_agent
   for (int i = 0; i < 100; ++i) {
     std::cout << "Attempting to buy from listening_agent" << std::endl;
-    std::cout << "result is " << client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::BUY_AEA_TO_NODE, "listening_aea" ).As<std::string>() << std::endl;
+    std::cout << "result is " << client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::BUY_AEA_TO_NODE, "listening_aea" ).As<std::string>() << std::endl;
 
     std::this_thread::sleep_for( std::chrono::milliseconds(1000));
   }

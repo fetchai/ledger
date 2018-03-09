@@ -5,12 +5,12 @@
 #include"oef/service_consts.hpp"
 #include"oef/schema.hpp"
 #include"oef/schema_serializers.hpp"
-#include"oef/aea_to_node_protocol.hpp"
+#include"oef/node_to_aea_protocol.hpp"
 
 using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
-using namespace fetch::aea_to_node_protocol;
+using namespace fetch::node_to_aea_protocol;
 
 // Example of OEF code performing basic register-query functionality
 
@@ -40,40 +40,13 @@ int main() {
   schema::Instance instance{weather, {{"has_wind_speed", "false"}, {"has_temperature", "true"}, {"latitude", "true"}, {"longitude", "true"}}};
 
   // Register our datamodel
-  std::cout << client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::REGISTER_INSTANCE, "listening_agent", instance ).As<std::string>( ) << std::endl;
-
-  // two queries, first one should succeed, one should fail since we are searching for wind and temperature with our agent has/does not have
-
-  // Create constraints against our Attributes (whether the station CAN provide them)
-  schema::ConstraintType eqTrue{schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Eq, true}}};
-  schema::Constraint temperature_c { temperature, eqTrue};
-  schema::Constraint wind_c        { wind    ,    eqTrue};
-
-  // Query is build up from constraints
-  schema::QueryModel query1{{temperature_c}};
-  schema::QueryModel query2{{wind_c}};
-
-  // first query, should succeed (searching for has_temperature)
-  auto agents = client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::QUERY, query1 ).As<std::vector<std::string>>( );
-
-  std::cout << "first query result: " << std::endl;
-  for(auto i : agents){
-    std::cout << i << std::endl;
-  }
-
-  // second query, should fail (searching for wind_speed)
-  agents = client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::QUERY, query2 ).As<std::vector<std::string>>( );
-
-  std::cout << "second query result: " << std::endl;
-  for(auto i : agents){
-    std::cout << i << std::endl;
-  }
+  std::cout << client.Call( AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::REGISTER_INSTANCE, "listening_agent", instance ).As<std::string>( ) << std::endl;
 
   // Register ourself for callbacks
-  AEAToNodeProtocol protocol;
+  NodeToAEAProtocol protocol;
   protocol.registerCallback([&](std::string message){ std::cerr << "We received a callback ping: " << message << std::endl;});
 
-  // Sell bananas
+  // Sell bananas callback
   int bananas = 4;
   protocol.onBuy() = [&](std::string fromPerson){
 
@@ -86,16 +59,22 @@ int main() {
     return std::string{"we have bananas"};
   };
 
-  client.Add(FetchProtocols::NODE_TO_AEA, &protocol);
+  client.Add(NodeToAEAProtocolID::DEFAULT_ID, &protocol);
 
-  auto p =  client.Call(AEAProtocolEnum::DEFAULT, AEAProtocol::REGISTER_FOR_CALLBACKS, "listening_aea");
+  auto p =  client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::REGISTER_FOR_CALLBACKS, "listening_aea");
 
   if(p.Wait() ) {
     std::cout << "Successfully registered for callbacks" << std::endl;
   }
 
   // Now we can wait for people to poke us
-  while(1) {}
+  while(bananas > 0) {std::chrono::milliseconds(100);}
+
+  std::cout << "Sold all our bananas, exit" << std::endl;
+
+  auto p2 =  client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::DEREGISTER_FOR_CALLBACKS, "listening_aea");
+
+  p2.Wait();
 
   tm.Stop();
   return 0;

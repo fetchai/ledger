@@ -26,29 +26,12 @@ public:
     mutex_.unlock();    
   }
 
-	// TODO: (`HUT`) : deregister
+  void Deregister(uint64_t client, std::string id) {
+    std::cout << "\rDeregistering " << client << " with id " << id << std::endl << std::endl << "> " << std::flush;
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
-  /*std::vector< std::string > SearchFor(std::string const &val)
-  {
-    detailed_assert( service_ != nullptr);
-    
-    std::vector< std::string > ret;
-    mutex_.lock();
-    for(auto &id: registered_aeas_) {
-      auto &rpc = service_->ServiceInterfaceOf(id);
-      
-      //std::string s = rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val).As< std::string>();
-      if(s != "")
-      {
-        ret.push_back(s);
-      }
-      
-    }
-    
-    mutex_.unlock();
-    
-    return ret;       
-  } */
+    registered_aeas_[client] = ""; // TODO: (`HUT`) : proper management of this (check corresponding id"
+  }
 
 	void PingAllAEAs() {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
@@ -58,8 +41,7 @@ public:
     for(auto &id: registered_aeas_) {
       auto &rpc = service_->ServiceInterfaceOf(id.first);
 
-      //auto result = rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEAProtocol::PING, "ping_message");
-      rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEAProtocol::PING, "ping_message");
+      rpc.Call(NodeToAEAProtocolID::DEFAULT_ID, NodeToAEAProtocolFn::PING, "ping_message");
     }
   }
 
@@ -74,7 +56,7 @@ public:
         result["response"] = "success";
 
         auto &rpc = service_->ServiceInterfaceOf(it->first);
-        std::string answer   = rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEAProtocol::BUY, "http_interface").As<std::string>();
+        std::string answer   = rpc.Call(NodeToAEAProtocolID::DEFAULT_ID, NodeToAEAProtocolFn::BUY, "http_interface").As<std::string>();
         std::cerr << answer << std::endl;
         result["value"]   = answer;
         return result;
@@ -246,6 +228,10 @@ public:
    listeningAEAs_.Register(client, id);
  }
 
+ void DeregisterCallback(uint64_t client, std::string id) {
+   listeningAEAs_.Deregister(client, id);
+ }
+
  void PingAllAEAs() {
    std::cerr << "ping the thing" << std::endl;
    listeningAEAs_.PingAllAEAs();
@@ -274,7 +260,7 @@ private:
   std::vector< Transaction >                             transactions_;
   std::map< fetch::byte_array::BasicByteArray, Account > accounts_;
   std::set< fetch::byte_array::BasicByteArray >          users_;
-  fetch::random::LaggedFibonacciGenerator<>              lfg_;
+  /*fetch::random::LaggedFibonacciGenerator<>              lfg_;*/ int lfg_() { return 4; } // TODO: (`HUT`) : fix this
   fetch::mutex::Mutex                                    mutex_;
 
   bool IsLedgerUserPriv(const fetch::byte_array::BasicByteArray &user) const {

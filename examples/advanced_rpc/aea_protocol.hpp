@@ -12,10 +12,10 @@ public:
 
     using namespace fetch::service;
     auto get_info =  new CallableClassMember<AEAFunctionality, std::string()>(this, &AEAFunctionality::get_info);
-    auto connect =  new CallableClassMember<AEAFunctionality, void(std::string, uint16_t)>(this, &AEAFunctionality::Connect);    
-      
+    auto connect =  new CallableClassMember<AEAFunctionality, void(std::string, uint16_t)>(this, &AEAFunctionality::Connect);
+
     this->Expose(AEACommands::GET_INFO, get_info);
-    this->Expose(AEACommands::CONNECT, connect); 
+    this->Expose(AEACommands::CONNECT, connect);
   }
 };
 
