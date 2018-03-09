@@ -21,19 +21,19 @@ public:
   void Register(uint64_t client, std::string id) {
     std::cout << "\rRegistering " << client << " with id " << id << std::endl << std::endl << "> " << std::flush;
 
-    mutex_.lock();    
+    mutex_.lock();
     registered_aeas_[client] = id; // TODO: (`HUT`) : proper management of this
-    mutex_.unlock();    
+    mutex_.unlock();
   }
 
   void Deregister(uint64_t client, std::string id) {
     std::cout << "\rDeregistering " << client << " with id " << id << std::endl << std::endl << "> " << std::flush;
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
-    registered_aeas_[client] = ""; // TODO: (`HUT`) : proper management of this (check corresponding id"
+    registered_aeas_[client] = ""; // TODO: (`HUT`) : proper management of this (check corresponding id)
   }
 
-	void PingAllAEAs() {
+  void PingAllAEAs() {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
     detailed_assert( service_ != nullptr);
@@ -78,17 +78,17 @@ public:
   }
 
 private:
-	service::ServiceServer< fetch::network::TCPServer > *service_ = nullptr;
+  service::ServiceServer< fetch::network::TCPServer > *service_ = nullptr;
   std::map< uint32_t, std::string >                    registered_aeas_;
   fetch::mutex::Mutex                                  mutex_;
 };
 
 struct Transaction
 {
-  int64_t amount;
+  int64_t               amount;
   byte_array::ByteArray fromAddress;
   byte_array::ByteArray notes;
-  uint64_t time;
+  uint64_t              time;
   byte_array::ByteArray toAddress;
   script::Variant       json;
 };
@@ -105,8 +105,8 @@ class NodeOEF {
 
 public:
 
-	template <typename T>
-	NodeOEF(service::ServiceServer<T> *service) { register_service_instance(service); }
+  template <typename T>
+  NodeOEF(service::ServiceServer<T> *service) { register_service_instance(service); }
 
   std::string RegisterInstance(std::string agentName, schema::Instance instance) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
@@ -248,19 +248,19 @@ public:
     return listeningAEAs_.BuyFromAEA(id);
  }
 
-	void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr) {
-		listeningAEAs_.register_service_instance(ptr);
-	}
+  void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr) {
+    listeningAEAs_.register_service_instance(ptr);
+  }
 
 private:
   service_directory::ServiceDirectory serviceDirectory_;
-	ListeningAEAs                       listeningAEAs_;
+  ListeningAEAs                       listeningAEAs_;
 
   // Ledger
   std::vector< Transaction >                             transactions_;
   std::map< fetch::byte_array::BasicByteArray, Account > accounts_;
   std::set< fetch::byte_array::BasicByteArray >          users_;
-  /*fetch::random::LaggedFibonacciGenerator<>              lfg_;*/ int lfg_() { return 4; } // TODO: (`HUT`) : fix this
+  fetch::random::LaggedFibonacciGenerator<>              lfg_;
   fetch::mutex::Mutex                                    mutex_;
 
   bool IsLedgerUserPriv(const fetch::byte_array::BasicByteArray &user) const {

@@ -2,7 +2,6 @@
 #define AEA_TO_NODE_PROTOCOL_HPP
 
 #include"oef/oef.hpp"
-#include"service/server.hpp" // TODO: (`HUT`) : delete this
 
 namespace fetch
 {

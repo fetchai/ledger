@@ -267,10 +267,9 @@ public:
     }
   }
 
+  // TODO: (`HUT`) : remove test functionality
   http::HTTPResponse PingAEAs() {
-		std::cerr << "doing the thing" << std::endl;
-		oef_->PingAllAEAs();
-		std::cerr << "done the thing" << std::endl;
+    oef_->PingAllAEAs();
     return http::HTTPResponse("{\"response\": \"success\"}");
   }
 

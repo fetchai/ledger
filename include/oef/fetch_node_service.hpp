@@ -21,7 +21,7 @@ public:
     httpOEF_                                = std::make_shared<http_oef::HttpOEF>(node);                       // HTTP interface to node
     aeaToNodeProtocol_                      = std::make_shared<aea_to_node_protocol::AEAToNodeProtocol>(node); // RPC interface to node
 
-    // Add RPC interface AEA->Node
+    // Add RPC interface AEA->Node. Note this allows the Node to callback to AEAs too
     this->Add(AEAToNodeProtocolID::DEFAULT, aeaToNodeProtocol_.get());
 
     // HTTP requres this
