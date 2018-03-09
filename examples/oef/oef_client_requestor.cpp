@@ -21,58 +21,32 @@ int main() {
 
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );
 
-  // Define attributes that can exist
-  schema::Attribute wind        { "has_wind_speed",   schema::Type::Bool, false};
-  schema::Attribute temperature { "has_temperature",  schema::Type::Bool, true};
-  schema::Attribute latitude    { "latitude",         schema::Type::Bool, true};
+  // The attribute we want to search for
   schema::Attribute longitude   { "longitude",        schema::Type::Bool, true};
 
-  // We then create a DataModel for this, personalise it by creating an Instance,
-  // and register it with the Node (connected during Client construction)
-  std::vector<schema::Attribute> attributes{wind, temperature, latitude, longitude};
-
-  // Create a DataModel
-  schema::DataModel weather{"weather_data", attributes};
-
-  // Create an Instance of this DataModel
-  schema::Instance instance{weather, {{"has_wind_speed", "false"}, {"has_temperature", "true"}, {"latitude", "true"}, {"longitude", "true"}}};
-
-  // Register our datamodel
-  std::cout << client.Call( AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::REGISTER_INSTANCE, "requesting_agent", instance ).As<std::string>( ) << std::endl;
-
-  // two queries, first one should succeed, one should fail since we are searching for wind and temperature with our agent has/does not have
-
-  // Create constraints against our Attributes (whether the station CAN provide them)
+  // Create constraints against our Attribute(s) (whether the AEA CAN provide them in this case)
   schema::ConstraintType eqTrue{schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Eq, true}}};
-  schema::Constraint temperature_c { temperature, eqTrue};
-  schema::Constraint wind_c        { wind    ,    eqTrue};
+  schema::Constraint longitude_c   { longitude    ,    eqTrue};
 
   // Query is build up from constraints
-  schema::QueryModel query1{{temperature_c}};
-  schema::QueryModel query2{{wind_c}};
+  schema::QueryModel query1{{longitude_c}};
 
-  // first query, should succeed (searching for has_temperature)
+  // query the oef for a list of agents
   auto agents = client.Call( AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::QUERY, query1 ).As<std::vector<std::string>>( );
 
-  std::cout << "first query result: " << std::endl;
+  std::cout << "query result: " << std::endl;
   for(auto i : agents){
     std::cout << i << std::endl;
   }
 
-  // second query, should fail (searching for wind_speed)
-  agents = client.Call( AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::QUERY, query2 ).As<std::vector<std::string>>( );
-
-  std::cout << "second query result: " << std::endl;
-  for(auto i : agents){
-    std::cout << i << std::endl;
-  }
-
-  // Try to buy from agent listening_agent
+  // Try to buy from those agents
   for (int i = 0; i < 100; ++i) {
-    std::cout << "Attempting to buy from listening_agent" << std::endl;
-    std::cout << "result is " << client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::BUY_AEA_TO_NODE, "listening_aea" ).As<std::string>() << std::endl;
+    for(auto &agent : agents){
+      std::cout << "Attempting to buy from: " << agent << std::endl;
+      std::cout << "result is " << client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::BUY_AEA_TO_NODE, agent ).As<std::string>() << std::endl;
 
-    std::this_thread::sleep_for( std::chrono::milliseconds(1000));
+      std::this_thread::sleep_for( std::chrono::milliseconds(1000));
+    }
   }
 
   tm.Stop();

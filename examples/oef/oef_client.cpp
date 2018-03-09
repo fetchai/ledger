@@ -48,7 +48,10 @@ int main() {
 
   // Sell bananas callback
   int bananas = 4;
+  fetch::mutex::Mutex banana_mutex;
   protocol.onBuy() = [&](std::string fromPerson){
+
+    std::lock_guard< fetch::mutex::Mutex > lock( banana_mutex );
 
     if(bananas == 0) {
       return std::string{"we have no bananas"};
@@ -61,7 +64,7 @@ int main() {
 
   client.Add(NodeToAEAProtocolID::DEFAULT_ID, &protocol);
 
-  auto p =  client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::REGISTER_FOR_CALLBACKS, "listening_aea");
+  auto p =  client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::REGISTER_FOR_CALLBACKS, "listening_agent");
 
   if(p.Wait() ) {
     std::cout << "Successfully registered for callbacks" << std::endl;
@@ -72,7 +75,7 @@ int main() {
 
   std::cout << "Sold all our bananas, exit" << std::endl;
 
-  auto p2 =  client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::DEREGISTER_FOR_CALLBACKS, "listening_aea");
+  auto p2 =  client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::DEREGISTER_FOR_CALLBACKS, "listening_agent");
 
   p2.Wait();
 
