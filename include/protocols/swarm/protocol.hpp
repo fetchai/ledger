@@ -71,7 +71,8 @@ public:
           {
             if(!first) response << ",";
             response << "{ \"host\": \""  << d.host << "\",";
-            response << " \"port\": "  << d.port << ",";              
+            response << " \"port\": "  << d.port << ",";
+            response << " \"shard\": "  << d.shard << ",";                          
             response << " \"http_port\": "  << d.http_port << "}";              
             first = false;            
           }

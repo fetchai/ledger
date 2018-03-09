@@ -42,9 +42,7 @@ public:
 
   
   ChainManager( TransactionManager &txmanager) :
-    tx_manager_(txmanager) {
-    
-  }
+    tx_manager_(txmanager) {}
 
   
   enum {
@@ -243,21 +241,22 @@ public:
     }
     else
     {      
-      fetch::logger.Highlight("Rolling back");
-      std::size_t roll_back_count = 0;          
+      fetch::logger.Highlight("Rolling back ", old_head.meta_data().block_number);
+
       while(new_head.meta_data().block_number > old_head.meta_data().block_number)
       {
         used_transactions.push_back(new_head.body().transaction_hash);
         new_head = chains_[new_head.body().previous_hash];
-        fetch::logger.Debug("Block nr comp 1: ", new_head.meta_data().block_number," ", old_head.meta_data().block_number, " ", BlockMetaData::UNDEFINED);
+        fetch::logger.Debug("Block nr comp 1: ", new_head.meta_data().block_number, " ", old_head.meta_data().block_number, " ", BlockMetaData::UNDEFINED);
       }
-      
+
+      std::size_t roll_back_count = 0;        
       while(new_head.meta_data().block_number < old_head.meta_data().block_number)
       {
         ++roll_back_count;
         old_head = chains_[old_head.body().previous_hash];
-        fetch::logger.Debug("Block nr comp 2: ", new_head.meta_data().block_number," ",  old_head.meta_data().block_number);
-      } 
+        fetch::logger.Debug("Block nr comp 2: ", new_head.meta_data().block_number, " ",  old_head.meta_data().block_number);
+      }
       
       while(new_head.header() != old_head.header() )
       {
@@ -267,19 +266,42 @@ public:
         new_head = chains_[new_head.body().previous_hash];
         old_head = chains_[old_head.body().previous_hash];
       }
+
+      fetch::logger.Debug("Common block found: ", new_head.meta_data().block_number," ",  old_head.meta_data().block_number);
+      fetch::logger.Debug(byte_array::ToBase64( new_head.header() ), " vs ",  byte_array::ToBase64( old_head.header()) );      
+      fetch::logger.Debug("At block number ", new_head.meta_data().block_number, " << ", roll_back_count);
+      fetch::logger.Debug("Transactions ", tx_manager_.applied_count() );
       
-      tx_manager_.RollBack( roll_back_count );      
+      tx_manager_.RollBack( roll_back_count );
+      fetch::logger.Debug("After transactions ", tx_manager_.applied_count() );      
     }
 
     
     // Rolling forth
-    
-    while( !used_transactions.empty() )
-    {      
-      auto tx = used_transactions.back();
-      used_transactions.pop_back();
-      tx_manager_.Apply( tx );
+    try {
+      
+      while( !used_transactions.empty() )
+      {      
+        auto tx = used_transactions.back();
+        used_transactions.pop_back();
+        tx_manager_.Apply( tx );
+      }
+    } catch(std::runtime_error const &e) {
+      fetch::logger.Highlight("BLOCKCHAIN PRINTOUT");
+      
+      std::cout << "PRINT BLOCK CHAIN" << std::endl;
+      while(new_head.body().previous_hash != "genesis")
+      {
+        fetch::logger.Debug( new_head.meta_data().block_number, " ",byte_array::ToBase64( new_head.header() ), " > ", byte_array::ToBase64( new_head.body().previous_hash ) );
+        fetch::logger.Debug("  -- ", byte_array::ToBase64( new_head.body().transaction_hash ), " == ", byte_array::ToBase64( tx_manager_.top() ) );
+        new_head = chains_[new_head.body().previous_hash];
+        tx_manager_.RollBack(1);
+      }
+      
+
+      throw e;      
     }
+    
         
   }
 
@@ -287,6 +309,8 @@ public:
   void AttachBlock(block_header_type header, block_type &block) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+
+    fetch::logger.Debug("Attaching block ", byte_array::ToBase64( header), "==", byte_array::ToBase64( block.header()) );    
     
     // Tracing the way back to a chain that leads to genesis
     // TODO, FIXME: Suceptible to attack: Place a block that creates a loop.

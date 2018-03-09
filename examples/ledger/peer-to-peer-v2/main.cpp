@@ -79,7 +79,7 @@ private:
       ++i;
     }
   } 
-    
+  
   fetch::network::ThreadManager *thread_manager_;      
   FetchSwarmService controller_;
   std::vector< std::shared_ptr< FetchShardService > > shards_;

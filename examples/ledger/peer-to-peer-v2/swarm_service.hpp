@@ -199,6 +199,8 @@ public:
       
       uint32_t conn_count = uint32_t( p1  );
       uint32_t shard =  uint32_t( p2  );
+      details[i].shard = shard;
+      
       std::cout << "  - "<< i << " : " << details[i].host << " " << details[i].port << " " << shard <<" " << conn_count <<  std::endl;      
       // TODO: set shard detail
       
@@ -228,6 +230,17 @@ public:
       }
 
     }
+
+    // Updating shard details
+    this->with_shards_do([this, &shards, &details](std::vector< client_shared_ptr_type > const &sh,
+          std::vector< EntryPoint > &det ) {
+        for(std::size_t i =0; i < details.size(); ++i) {
+          if(i < det.size() )
+          {
+            det[i] = details[i];            
+          }          
+        }
+      });
     
     if(running_) {
       thread_manager_->io_service().post([this]() {

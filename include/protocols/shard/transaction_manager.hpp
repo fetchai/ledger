@@ -27,6 +27,8 @@ public:
   void Apply(tx_digest_type const &tx)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    
     // TODO
     // Particular important detail: We allow for not known transactions to be applied to the chain
     // This potentially constitutes an attack vector that could lay down the network.
@@ -39,29 +41,60 @@ public:
       
       auto it = unapplied_.find( tx ) ;      
       if(it == unapplied_.end() ) {
-        fetch::logger.Error("Cannot apply applied transaction: ", byte_array::ToBase64(tx));
+        fetch::logger.Warn("Cannot apply applied transaction: ", byte_array::ToBase64(tx));
+
+        bool was_applied = false;
+        
+
         for(auto &a : applied_) {
+          if(a == tx)
+          {
+            was_applied = true;
+            fetch::logger.Highlight(" >> ", byte_array::ToBase64(a));
+          }
+          else
+          {
+            fetch::logger.Debug(" >> ", byte_array::ToBase64(a));
+          }
           
-          fetch::logger.Debug(" >> ", byte_array::ToBase64(a));
+        }
+
+        if(was_applied) {
+          
+          TODO_FAIL("Transaction was already applied");
+        } else  {
+          
+          TODO_FAIL("Transaction was not applied");
         }
         
-        TODO_FAIL("Throw exception: BlockInvalid");
+
       }
-      unapplied_.erase(it);
+            unapplied_.erase(it);
       
     }
+
+    bool fail = false;
     
+    for(auto &a : applied_) {
+      if(a == tx) fail = true;
+    }
+    if(fail) {
+      fetch::logger.Error("TX Exists 1: ", byte_array::ToBase64(tx));
+    }
+    
+      
     applied_.push_back( tx );
   }
   
   bool AddTransaction(transaction_type const &tx)
   {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
     if(known_transactions_.find( tx.digest()  ) != known_transactions_.end())
     {
       return false;
     }
-
+    
     TODO("Check if transaction belongs to shard");    
     
     transactions_[ tx.digest() ] = tx;
@@ -74,6 +107,7 @@ public:
 
   void RollBack(std::size_t n) 
   {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
     while( (n != 0) ) {
       --n;
@@ -90,11 +124,13 @@ public:
 
   bool has_unapplied() const 
   {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );        
     return unapplied_.size() > 0;
   }
 
   tx_digest_type NextDigest() 
   {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
     detailed_assert( unapplied_.size() > 0 );
     auto it = unapplied_.begin();
     return *it;    
@@ -102,6 +138,7 @@ public:
   
   transaction_type Next() 
   {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
     detailed_assert( unapplied_.size() != 0 );
     auto it = unapplied_.begin();
     return  transactions_[ *it ];    
@@ -109,21 +146,30 @@ public:
 
   std::size_t unapplied_count() const 
   {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
     return unapplied_.size();
   }
 
   std::size_t applied_count() const 
-  {
+  {    
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
     return applied_.size();
   }
 
   std::size_t size() const 
   {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );        
     return known_transactions_.size();
   }
   
   
+  tx_digest_type top() const
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    return applied_.back();
+  }
   
+    
 private:
   std::unordered_set< tx_digest_type, hasher_type > unapplied_;  
   std::unordered_set< tx_digest_type, hasher_type > known_transactions_;  
