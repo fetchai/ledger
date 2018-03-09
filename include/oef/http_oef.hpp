@@ -65,6 +65,14 @@ public:
         return this->EchoInstance(params, req);
       });
 
+    HTTPModule::Post("/ping-aeas", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->PingAEAs();
+      });
+
+    HTTPModule::Post("/buy-from-aea", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->BuyFromAEA(params, req);
+      });
+
     HTTPModule::Post("/test", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->Test(params, req);
       });
@@ -259,8 +267,33 @@ public:
     }
   }
 
+  http::HTTPResponse PingAEAs() {
+		std::cerr << "doing the thing" << std::endl;
+		oef_->PingAllAEAs();
+		std::cerr << "done the thing" << std::endl;
+    return http::HTTPResponse("{\"response\": \"success\"}");
+  }
+
   http::HTTPResponse Test(http::ViewParameters const &params, http::HTTPRequest const &req) {
     return http::HTTPResponse("{\"response\": \"success\"}");
+  }
+
+  http::HTTPResponse BuyFromAEA(http::ViewParameters const &params, http::HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    try {
+      doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
+
+			auto result = oef_->BuyFromAEA(doc["ID"].as_byte_array());
+
+      std::ostringstream ret;
+      ret << result;
+
+    return http::HTTPResponse(ret.str());
+    } catch (...) {
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+    }
   }
 
 private:

@@ -6,6 +6,16 @@ import pdb
 def jsonPrint(r):
     return json.dumps(r.json(), indent=4, sort_keys=True)+"\n"
 
+#r = requests.post('http://localhost:8080/ping-aeas')
+#print "ping aeas result: ", jsonPrint(r)
+
+req = { "ID" : "listening_aea" }
+
+r = requests.post('http://localhost:8080/buy-from-aea', json=req)
+print "ping aeas result: ", jsonPrint(r)
+
+exit(1)
+
 
 # Test Instance to register
 instanceJSON = { "instance" :

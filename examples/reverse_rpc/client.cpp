@@ -70,7 +70,7 @@ int main(int argc, char const** argv)
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );
   client.Add(FetchProtocols::NODE_TO_AEA, &aea_prot);
   
-  auto p =  client.Call( FetchProtocols::AEA_TO_NODE , AEAToNode::REGISTER );
+  auto p =  client.Call( FetchProtocols::AEA_TO_NODE , AEAProtocol::REGISTER );
 
   if(p.Wait() ) {
     std::cout << "Node registered" << std::endl;

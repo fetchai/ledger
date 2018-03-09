@@ -5,12 +5,10 @@
 #include"oef/service_consts.hpp"
 #include"oef/schema.hpp"
 #include"oef/schema_serializers.hpp"
-#include"oef/aea_to_node_protocol.hpp"
 
 using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
-using namespace fetch::aea_to_node_protocol;
 
 // Example of OEF code performing basic register-query functionality
 
@@ -40,7 +38,7 @@ int main() {
   schema::Instance instance{weather, {{"has_wind_speed", "false"}, {"has_temperature", "true"}, {"latitude", "true"}, {"longitude", "true"}}};
 
   // Register our datamodel
-  std::cout << client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::REGISTER_INSTANCE, "listening_agent", instance ).As<std::string>( ) << std::endl;
+  std::cout << client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::REGISTER_INSTANCE, "requesting_agent", instance ).As<std::string>( ) << std::endl;
 
   // two queries, first one should succeed, one should fail since we are searching for wind and temperature with our agent has/does not have
 
@@ -68,34 +66,6 @@ int main() {
   for(auto i : agents){
     std::cout << i << std::endl;
   }
-
-	// Register ourself for callbacks
-	AEAToNodeProtocol protocol;
-	protocol.registerCallback([&](std::string message){ std::cerr << "We received a callback ping: " << message << std::endl;});
-
-	// Sell bananas
-	int bananas = 4;
-	protocol.onBuy() = [&](std::string fromPerson){
-
-		if(bananas == 0) {
-			return std::string{"we have no bananas"};
-		}
-
-		bananas--;
-
-		return std::string{"we have bananas"};
-		};
-
-  client.Add(FetchProtocols::NODE_TO_AEA, &protocol);
-
-  auto p =  client.Call(AEAProtocolEnum::DEFAULT, AEAProtocol::REGISTER_FOR_CALLBACKS, "listening_aea");
-
-  if(p.Wait() ) {
-    std::cout << "Successfully registered for callbacks" << std::endl;
-	}
-
-	// Now we can wait for people to poke us
-	while(1) {}
 
   tm.Stop();
   return 0;

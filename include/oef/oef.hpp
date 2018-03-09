@@ -3,6 +3,8 @@
 
 #include<iostream>
 #include<set>
+#include<map>
+#include<string>
 #include"service/server.hpp"
 #include"oef/service_consts.hpp"
 #include"oef/schema.hpp"
@@ -13,6 +15,87 @@ namespace fetch
 {
 namespace oef
 {
+
+class ListeningAEAs {
+public:
+  void Register(uint64_t client, std::string id) {
+    std::cout << "\rRegistering " << client << " with id " << id << std::endl << std::endl << "> " << std::flush;
+
+    mutex_.lock();    
+    registered_aeas_[client] = id; // TODO: (`HUT`) : proper management of this
+    mutex_.unlock();    
+  }
+
+	// TODO: (`HUT`) : deregister
+
+  /*std::vector< std::string > SearchFor(std::string const &val)
+  {
+    detailed_assert( service_ != nullptr);
+    
+    std::vector< std::string > ret;
+    mutex_.lock();
+    for(auto &id: registered_aeas_) {
+      auto &rpc = service_->ServiceInterfaceOf(id);
+      
+      //std::string s = rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val).As< std::string>();
+      if(s != "")
+      {
+        ret.push_back(s);
+      }
+      
+    }
+    
+    mutex_.unlock();
+    
+    return ret;       
+  } */
+
+	void PingAllAEAs() {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+
+    detailed_assert( service_ != nullptr);
+
+    for(auto &id: registered_aeas_) {
+      auto &rpc = service_->ServiceInterfaceOf(id.first);
+
+      //auto result = rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEAProtocol::PING, "ping_message");
+      rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEAProtocol::PING, "ping_message");
+    }
+	}
+
+ script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
+	script::Variant result = script::Variant::Object();
+	std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+
+	std::string aeaID{id};
+
+	for (std::map<uint32_t,std::string>::const_iterator it=registered_aeas_.begin(); it!=registered_aeas_.end(); ++it){
+		if(aeaID.compare(it->second) == 0){
+			result["response"] = "success";
+
+      auto &rpc = service_->ServiceInterfaceOf(it->first);
+			std::string answer   = rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEAProtocol::BUY, "http_interface").As<std::string>();
+			std::cerr << answer << std::endl;
+			result["value"]   = answer;
+			return result;
+		}
+	}
+
+	result["response"] = "fail";
+	result["reason"]   = "AEA id not found/not active";
+	return result;
+ }
+
+  void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr)
+  {
+    service_ = ptr;
+  }
+
+private:
+	service::ServiceServer< fetch::network::TCPServer > *service_ = nullptr;
+  std::map< uint32_t, std::string >                    registered_aeas_;
+  fetch::mutex::Mutex                                  mutex_;
+};
 
 struct Transaction
 {
@@ -35,6 +118,10 @@ struct Account
 class NodeOEF {
 
 public:
+
+	template <typename T>
+	NodeOEF(service::ServiceServer<T> *service) { register_service_instance(service); }
+
   std::string RegisterInstance(std::string agentName, schema::Instance instance) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
     auto result = serviceDirectory_.RegisterAgent(instance, agentName);
@@ -150,8 +237,27 @@ public:
     return result;
  }
 
+
+	void RegisterCallback(uint64_t client, std::string id) {
+		listeningAEAs_.Register(client, id);
+	}
+
+ void PingAllAEAs() {
+		std::cerr << "ping the thing" << std::endl;
+	listeningAEAs_.PingAllAEAs();
+ }
+
+ script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
+    return listeningAEAs_.BuyFromAEA(id);
+ }
+
+	void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr) {
+		listeningAEAs_.register_service_instance(ptr);
+	}
+
 private:
   service_directory::ServiceDirectory serviceDirectory_;
+	ListeningAEAs                       listeningAEAs_;
 
   // Ledger
   std::vector< Transaction >                             transactions_;

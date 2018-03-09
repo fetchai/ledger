@@ -17,14 +17,12 @@ public:
     ServiceServer(port, tm),
     HTTPServer(8080, tm) {
 
-    std::shared_ptr<oef::NodeOEF> node      = std::make_shared<oef::NodeOEF>();                                // Core OEF functionality - all protocols can access this
+    std::shared_ptr<oef::NodeOEF> node      = std::make_shared<oef::NodeOEF>(this);                            // Core OEF functionality - all protocols can access this
     httpOEF_                                = std::make_shared<http_oef::HttpOEF>(node);                       // HTTP interface to node
     nodeToAEAProtocol_                      = std::make_shared<node_to_aea_protocol::NodeToAEAProtocol>(node); // RPC interface to node
 
     // Add RPC interface AEA->Node
     this->Add(AEAProtocolEnum::DEFAULT, nodeToAEAProtocol_.get());
-
-    // Add reverse RPC interface Node->AEA
 
     // HTTP requres this
     this->AddMiddleware(fetch::http::middleware::AllowOrigin("*"));

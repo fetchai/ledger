@@ -20,6 +20,7 @@ add_executable(calculator script/calculator.cpp)
 
 add_executable(sha256 crypto/sha256.cpp)
 
+add_executable(rpc_client_oef_requestor oef/oef_client_requestor.cpp)
 add_executable(rpc_client_oef oef/oef_client.cpp)
 add_executable(rpc_server_oef oef/oef_server.cpp)
 
