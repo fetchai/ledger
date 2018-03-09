@@ -3,7 +3,7 @@ project (fetch)
 
 OPTION(BUILD_TESTS "Build tests" ON)
 OPTION(BUILD_EXAMPLES "Build examples" ON)
-OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" ON)
+OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" OFF)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(PNG REQUIRED)
@@ -45,6 +45,8 @@ set(CMAKE_BUILD_TYPE DEBUG)
 ## Dependencies
 
 include_directories(${PNG_INCLUDE_DIR})
+
+add_subdirectory( libfetchcore/ )
 
 # TESTS
 if(BUILD_TESTS)
