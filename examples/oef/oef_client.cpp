@@ -69,22 +69,22 @@ int main() {
     std::cout << i << std::endl;
   }
 
-	// Register ourself for callbacks
-	AEAToNodeProtocol protocol;
-	protocol.registerCallback([&](std::string message){ std::cerr << "We received a callback ping: " << message << std::endl;});
+  // Register ourself for callbacks
+  AEAToNodeProtocol protocol;
+  protocol.registerCallback([&](std::string message){ std::cerr << "We received a callback ping: " << message << std::endl;});
 
-	// Sell bananas
-	int bananas = 4;
-	protocol.onBuy() = [&](std::string fromPerson){
+  // Sell bananas
+  int bananas = 4;
+  protocol.onBuy() = [&](std::string fromPerson){
 
-		if(bananas == 0) {
-			return std::string{"we have no bananas"};
-		}
+    if(bananas == 0) {
+      return std::string{"we have no bananas"};
+    }
 
-		bananas--;
+    bananas--;
 
-		return std::string{"we have bananas"};
-		};
+    return std::string{"we have bananas"};
+  };
 
   client.Add(FetchProtocols::NODE_TO_AEA, &protocol);
 
@@ -92,10 +92,10 @@ int main() {
 
   if(p.Wait() ) {
     std::cout << "Successfully registered for callbacks" << std::endl;
-	}
+  }
 
-	// Now we can wait for people to poke us
-	while(1) {}
+  // Now we can wait for people to poke us
+  while(1) {}
 
   tm.Stop();
   return 0;

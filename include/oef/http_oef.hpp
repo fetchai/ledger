@@ -285,7 +285,7 @@ public:
       doc = req.JSON();
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-			auto result = oef_->BuyFromAEA(doc["ID"].as_byte_array());
+      auto result = oef_->BuyFromAEA(doc["ID"].as_byte_array());
 
       std::ostringstream ret;
       ret << result;

@@ -67,6 +67,14 @@ int main() {
     std::cout << i << std::endl;
   }
 
+  // Try to buy from agent listening_agent
+  for (int i = 0; i < 100; ++i) {
+    std::cout << "Attempting to buy from listening_agent" << std::endl;
+    std::cout << "result is " << client.Call( AEAProtocolEnum::DEFAULT, AEAProtocol::BUY_AEA_TO_NODE, "listening_aea" ).As<std::string>() << std::endl;
+
+    std::this_thread::sleep_for( std::chrono::milliseconds(1000));
+  }
+
   tm.Stop();
   return 0;
 }

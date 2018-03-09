@@ -61,30 +61,34 @@ public:
       //auto result = rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEAProtocol::PING, "ping_message");
       rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEAProtocol::PING, "ping_message");
     }
-	}
+  }
 
- script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
-	script::Variant result = script::Variant::Object();
-	std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+  script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
+    script::Variant result = script::Variant::Object();
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
 
-	std::string aeaID{id};
+    std::string aeaID{id};
 
-	for (std::map<uint32_t,std::string>::const_iterator it=registered_aeas_.begin(); it!=registered_aeas_.end(); ++it){
-		if(aeaID.compare(it->second) == 0){
-			result["response"] = "success";
+    for (std::map<uint32_t,std::string>::const_iterator it=registered_aeas_.begin(); it!=registered_aeas_.end(); ++it){
+      if(aeaID.compare(it->second) == 0){
+        result["response"] = "success";
 
-      auto &rpc = service_->ServiceInterfaceOf(it->first);
-			std::string answer   = rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEAProtocol::BUY, "http_interface").As<std::string>();
-			std::cerr << answer << std::endl;
-			result["value"]   = answer;
-			return result;
-		}
-	}
+        auto &rpc = service_->ServiceInterfaceOf(it->first);
+        std::string answer   = rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEAProtocol::BUY, "http_interface").As<std::string>();
+        std::cerr << answer << std::endl;
+        result["value"]   = answer;
+        return result;
+      }
+    }
 
-	result["response"] = "fail";
-	result["reason"]   = "AEA id not found/not active";
-	return result;
- }
+    result["response"] = "fail"; // TODO: (`HUT`) : ask troels about building variants like var = "thing " = vari + "more";
+    std::string build{"AEA id: \""};
+    build += id;
+    build += "\" not active";
+    result["reason"]   = build;
+
+    return result;
+  }
 
   void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr)
   {
@@ -238,13 +242,20 @@ public:
  }
 
 
-	void RegisterCallback(uint64_t client, std::string id) {
-		listeningAEAs_.Register(client, id);
-	}
+ void RegisterCallback(uint64_t client, std::string id) {
+   listeningAEAs_.Register(client, id);
+ }
 
  void PingAllAEAs() {
-		std::cerr << "ping the thing" << std::endl;
-	listeningAEAs_.PingAllAEAs();
+   std::cerr << "ping the thing" << std::endl;
+   listeningAEAs_.PingAllAEAs();
+ }
+
+ std::string BuyFromAEA(std::string id) {
+    auto res = listeningAEAs_.BuyFromAEA(id);
+    std::ostringstream result;
+    result << res;
+    return result.str();
  }
 
  script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
