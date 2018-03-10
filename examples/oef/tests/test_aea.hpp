@@ -17,7 +17,7 @@ using namespace fetch::node_to_aea_protocol;
 class TestAEA {
 
 public:
-  TestAEA(int randomSeed) {
+  TestAEA(int randomSeed) : randomSeed_{randomSeed} {
 
     AEA_name_ = std::string("aea_") + std::to_string(randomSeed);
     thread_   = std::make_unique<std::thread>([this]() { run(); });
@@ -37,20 +37,39 @@ private:
     std::this_thread::sleep_for( std::chrono::milliseconds(100) );
 
     // Define attributes that can exist
+    schema::Attribute name        { "has_name",         schema::Type::Bool, true}; // guarantee all DMs have this
     schema::Attribute wind        { "has_wind_speed",   schema::Type::Bool, false};
-    schema::Attribute temperature { "has_temperature",  schema::Type::Bool, true};
-    schema::Attribute latitude    { "latitude",         schema::Type::Bool, true};
-    schema::Attribute longitude   { "longitude",        schema::Type::Bool, true};
+    schema::Attribute temperature { "has_temperature",  schema::Type::Bool, false};
+    schema::Attribute latitude    { "latitude",         schema::Type::Bool, false};
+    schema::Attribute longitude   { "longitude",        schema::Type::Bool, false};
 
-    // We then create a DataModel for this, personalise it by creating an Instance,
-    // and register it with the Node (connected during Client construction)
-    std::vector<schema::Attribute> attributes{wind, temperature, latitude, longitude};
+    // Use our random number to create a random DataModel using these attributes
+    std::vector<schema::Attribute> possibleAttributes{wind, temperature, latitude, longitude};
+    std::vector<schema::Attribute> usedAttributes{name};
+    int random = randomSeed_;
 
+    for (int i = 0; i < possibleAttributes.size(); ++i) {
+      if(random & 0x1) {
+        usedAttributes.push_back(possibleAttributes[i]);
+      }
+      random >>= 1;
+    printf("rrr %x\n\n\n", random);
+    }
+
+    printf("test %x\n\n\n", ((2^possibleAttributes.size()) - 1));
+
+    // We then create a DataModel for this, use seed for name, note there should be no clashing DMs
+    std::string dmName = std::string("gen_dm_") + std::to_string(randomSeed_ & ((2^possibleAttributes.size()) - 1));
     // Create a DataModel
-    schema::DataModel weather{"weather_data", attributes};
+    schema::DataModel generatedDM{dmName, usedAttributes};
 
     // Create an Instance of this DataModel
-    schema::Instance instance{weather, {{"has_wind_speed", "false"}, {"has_temperature", "true"}, {"latitude", "true"}, {"longitude", "true"}}};
+    std::unordered_map<std::string,std::string> attributeValues;
+    for (int i = 0; i < usedAttributes.size(); ++i) {
+      attributeValues[usedAttributes[i].name()] =  (randomSeed_ & (0x80 >> i)) ? "true" : "false";
+    }
+
+    schema::Instance instance{generatedDM, attributeValues};
 
     // Register our datamodel
     std::cout << client.Call( AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::REGISTER_INSTANCE, AEA_name_, instance ).As<std::string>( ) << std::endl;

@@ -361,7 +361,7 @@ public:
     }
   }
 
-  fetch::script::Variant variant() {
+  fetch::script::Variant variant() const {
     fetch::script::Variant result = fetch::script::Variant::Object();
 
     //result["dataModel"] = model_.variant(); // TODO: (`HUT`) : fill in this functionality

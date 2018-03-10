@@ -60,6 +60,10 @@ public:
         return this->QueryForAgentsInstances(params, req);
       });
 
+    HTTPModule::Post("/service-directory", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->ServiceDirectory();
+      });
+
     // OEF debug functions
     HTTPModule::Post("/echo-query", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->EchoQuery(params, req);
@@ -232,6 +236,39 @@ public:
     } catch (...) {
       return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
+  }
+
+  http::HTTPResponse ServiceDirectory() {
+
+    auto serviceDirectory = oef_->ServiceDirectory();
+
+    std::ostringstream ret;
+
+ret << "<body>";
+ret << "<script>";
+ret << "var jsonString = '{\"some\":\"json\"}';";
+//ret << "var jsonPretty = JSON.stringify('{" << serviceDirectory << "}'),null,2);  ";
+ret << "var jsonPretty = JSON.stringify(JSON.parse('" << serviceDirectory << "'),null,2);  ";
+//ret << "let d = new Date();";
+      //ret << "document.body.innerHTML = \"<h1>Today's date is \" + d + \"</h1>\"";
+      //ret << "document.write(\"<h1>Today's date is \" + d + \"</h1>\")";
+      ret << "document.write(\"<pre>resp: \" + jsonPretty + \"</pre>\")";
+ret << "</script>";
+ret << "</body>";
+
+//ret << "<\\script>";
+//ret << "test me";
+
+    
+    //ret << "JSON.stringify(";
+    //ret << serviceDirectory;
+    //ret << ", null, 4)";
+
+    //jkjkjkreturn http::HTTPResponse(ret.str());
+    //
+    //
+    return http::HTTPResponse(ret.str(), http::MimeType{".js", "text/javascript"});
+  //HTTPResponse(byte_array::ByteArray body, MimeType const &mime = {".html", "text/html"}, Status const& status = status_code::SUCCESS_OK) :
   }
 
   http::HTTPResponse QueryForAgentsInstances(http::ViewParameters const &params, http::HTTPRequest const &req) {

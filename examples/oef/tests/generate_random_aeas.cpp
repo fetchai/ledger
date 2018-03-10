@@ -7,7 +7,7 @@
 #include"oef/schema_serializers.hpp"
 #include"oef/node_to_aea_protocol.hpp"
 #include"random/lfg.hpp"
-#include"./test_aea.h"
+#include"./test_aea.hpp"
 
 using namespace fetch;
 using namespace fetch::service;

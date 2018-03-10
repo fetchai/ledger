@@ -121,6 +121,21 @@ public:
     return res;
   }
 
+ script::Variant variant() {
+    fetch::script::Variant res = fetch::script::Variant::Array(data_.size());
+
+    int index = 0;
+    for(auto &i : data_){
+
+      fetch::script::Variant temp = fetch::script::Variant::Object();
+      temp["service"] = i.first.variant();
+      temp["agents"]  = i.second.variant();
+      res[index++] = temp;
+    }
+
+    return res;
+ }
+
 private:
   std::unordered_map<schema::Instance, Agents> data_;
 };
