@@ -6,7 +6,6 @@
 
 #include<unordered_map>
 #include<unordered_set>
-#include<mutex>
 #include"oef/schema.hpp"
 
 namespace fetch
@@ -36,6 +35,18 @@ public:
     return agents_.size();
   }
 
+  fetch::script::Variant variant() const {
+
+    fetch::script::Variant res = fetch::script::Variant::Array(agents_.size());
+
+    int index = 0;
+    for(auto &i : agents_) {
+      res[index++] = fetch::script::Variant(i);
+    }
+
+    return res;
+  }
+
   void Copy(std::unordered_set<std::string> &s) const {
     std::copy(agents_.begin(), agents_.end(), std::inserter(s, s.end()));
   }
@@ -50,16 +61,16 @@ public:
   explicit ServiceDirectory() = default;
 
   bool RegisterAgent(const schema::Instance &instance, const std::string &agent) {
-    return _data[instance].Insert(agent);
+    return data_[instance].Insert(agent);
   }
 
   bool UnregisterAgent(const schema::Instance &instance, const std::string &agent) {
-    auto iter = _data.find(instance);
-    if(iter == _data.end())
+    auto iter = data_.find(instance);
+    if(iter == data_.end())
       return false;
     bool res = iter->second.Erase(agent);
     if(iter->second.size() == 0) {
-      _data.erase(instance);
+      data_.erase(instance);
     }
     return res;
   }
@@ -67,12 +78,12 @@ public:
   bool Remove(const std::string &agent) {
     bool res = false;
 
-    for (auto iter = _data.begin(); iter != _data.end(); ++iter ) {
+    for (auto iter = data_.begin(); iter != data_.end(); ++iter ) {
       if (iter->second.Contains(agent)) {
         res = iter->second.Erase(agent);
 
         if(iter->second.size() == 0) {
-          _data.erase(iter->first);
+          data_.erase(iter->first);
         }
         break; // NOTE: We assume here that agents will only be registered with one service.
       }
@@ -83,7 +94,7 @@ public:
   std::vector<std::string> Query(const schema::QueryModel &query) const {
     std::unordered_set<std::string> res;
 
-    for(auto &d : _data) {
+    for(auto &d : data_) {
       if(query.check(d.first)) {
         d.second.Copy(res);
       }
@@ -92,11 +103,26 @@ public:
   }
 
   size_t size() const {
-    return _data.size();
+    return data_.size();
+  }
+
+ std::vector<std::pair<schema::Instance, fetch::script::Variant>> QueryAgentsInstances(const schema::QueryModel &query) const {
+
+    std::vector<std::pair<schema::Instance, fetch::script::Variant>> res;
+
+    for(auto &d : data_) {
+
+      if(query.check(d.first)) {
+        std::pair<schema::Instance, fetch::script::Variant> pushThis(d.first, d.second.variant());
+        res.push_back(pushThis);
+      }
+    }
+
+    return res;
   }
 
 private:
-  std::unordered_map<schema::Instance, Agents> _data;
+  std::unordered_map<schema::Instance, Agents> data_;
 };
 
 }

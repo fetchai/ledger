@@ -57,16 +57,15 @@ public:
 
         auto &rpc = service_->ServiceInterfaceOf(it->first);
         std::string answer   = rpc.Call(NodeToAEAProtocolID::DEFAULT_ID, NodeToAEAProtocolFn::BUY, "http_interface").As<std::string>();
-        std::cerr << answer << std::endl;
         result["value"]   = answer;
         return result;
       }
     }
 
     result["response"] = "fail"; // TODO: (`HUT`) : ask troels about building variants like var = "thing " = vari + "more";
-    std::string build{"AEA id: \""};
+    std::string build{"AEA id: '"};
     build += id;
-    build += "\" not active";
+    build += "' not active";
     result["reason"]   = build;
 
     return result;
@@ -119,6 +118,12 @@ public:
   std::vector<std::string> Query(schema::QueryModel query) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
     return serviceDirectory_.Query(query);
+  }
+
+
+  std::vector<std::pair<schema::Instance, fetch::script::Variant>> QueryAgentsInstances(schema::QueryModel query) {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    return serviceDirectory_.QueryAgentsInstances(query);
   }
 
   std::string test() {
@@ -233,7 +238,6 @@ public:
  }
 
  void PingAllAEAs() {
-   std::cerr << "ping the thing" << std::endl;
    listeningAEAs_.PingAllAEAs();
  }
 

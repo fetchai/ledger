@@ -24,6 +24,9 @@ add_executable(rpc_client_oef_requestor oef/oef_client_requestor.cpp)
 add_executable(rpc_client_oef oef/oef_client.cpp)
 add_executable(rpc_server_oef oef/oef_server.cpp)
 
+add_executable(generate_random_aeas oef/tests/generate_random_aeas.cpp)
+add_executable(query_random_aeas    oef/tests/query_random_aeas.cpp)
+
 ## Legacy
 add_executable(arpc_node advanced_rpc/node.cpp)
 add_executable(arpc_aea advanced_rpc/aea.cpp)

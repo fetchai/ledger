@@ -52,8 +52,12 @@ public:
         return this->RegisterInstance(params, req);
       });
 
-    HTTPModule::Post("/query-instance", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
-        return this->QueryInstance(params, req);
+    HTTPModule::Post("/query-for-agents", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->QueryForAgents(params, req);
+      });
+
+    HTTPModule::Post("/query-for-agents-instances", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->QueryForAgentsInstances(params, req);
       });
 
     // OEF debug functions
@@ -202,7 +206,7 @@ public:
     }
   }
 
-  http::HTTPResponse QueryInstance(http::ViewParameters const &params, http::HTTPRequest const &req) {
+  http::HTTPResponse QueryForAgents(http::ViewParameters const &params, http::HTTPRequest const &req) {
 
     json::JSONDocument doc;
     try {
@@ -229,6 +233,37 @@ public:
       return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
   }
+
+  http::HTTPResponse QueryForAgentsInstances(http::ViewParameters const &params, http::HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    try {
+      doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
+
+      schema::QueryModel query(doc);
+
+      auto agentsInstances = oef_->QueryAgentsInstances(query);
+
+      script::Variant response       = script::Variant::Object();
+      response["response"]           = script::Variant::Array(agentsInstances.size());
+
+      // Build a response
+      for(int i = 0;i < agentsInstances.size();i++) {
+        response["response"][i]    = script::Variant::Array(2);
+        response["response"][i][0] = agentsInstances[i].first.variant();
+        response["response"][i][1] = script::Variant(agentsInstances[i].second);
+      }
+
+      std::ostringstream ret;
+      ret << response;
+
+      return http::HTTPResponse(ret.str());
+    } catch (...) {
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+    }
+  }
+
 
   // Functions to test JSON serialisation/deserialisation
   http::HTTPResponse EchoQuery(http::ViewParameters const &params, http::HTTPRequest const &req) {

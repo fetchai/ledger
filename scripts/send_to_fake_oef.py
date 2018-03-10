@@ -6,17 +6,6 @@ import pdb
 def jsonPrint(r):
     return json.dumps(r.json(), indent=4, sort_keys=True)+"\n"
 
-#r = requests.post('http://localhost:8080/ping-aeas')
-#print "ping aeas result: ", jsonPrint(r)
-
-req = { "ID" : "listening_aea" }
-
-r = requests.post('http://localhost:8080/buy-from-aea', json=req)
-print "ping aeas result: ", jsonPrint(r)
-
-exit(1)
-
-
 # Test Instance to register
 instanceJSON = { "instance" :
                     {"dataModel":
@@ -78,14 +67,82 @@ queryJSON = {
         "keywords" : [ "two", "one"]
         }
 
-#r = requests.post('http://localhost:8080/query-instance', json=queryJSON)
-#print "Query: ", jsonPrint(r)
+# Try buying from an AEA (should be using an active one)
+req = { "ID" : "listening_aea" }
 
-#r = requests.post('http://localhost:8080/echo-query', json=queryJSON)
-#print "Query echo: ", jsonPrint(r)
+r = requests.post('http://localhost:8080/buy-from-aea', json=req)
+print "buy aea result: ", jsonPrint(r)
 
-#r = requests.post('http://localhost:8080/echo-instance', json=instanceJSON)
-#print "Instance echo: ", jsonPrint(r)
+# Test substring matching functionality
+instanceJSONkeyw = { "instance" :
+                    {"dataModel":
+                       {
+                         "name": "weather_data",
+                         "attributes": [ { "name": "has_wind_speed", "type": "bool", "required": False }, { "name": "unique", "type": "bool", "required": True } ],
+                         "keywords": ["one long string testyyy"],
+                         "description": "All possible weather data."
+                       },
+                     "values": [ { "has_wind_speed": "true" }, {"unique" : "true"}  ]},
+                 "ID": "substr_user_withyyy" }
+
+instanceJSONattr = { "instance" :
+                    {"dataModel":
+                       {
+                         "name": "weather_data",
+                         "attributes": [ { "name": "has_wind_speedxxx", "type": "bool", "required": False }, { "name": "unique", "type": "bool", "required": True }],
+                         "keywords": ["one long string test"],
+                         "description": "All possible weather data."
+                       },
+                       "values": [ { "has_wind_speedxxx": "true" }, {"unique" : "true"} ]},
+                 "ID": "substr_user_withxxx" }
+
+queryJSONkeyw = {
+        "constraints": [
+            {
+                "attribute": {
+                    "name": "unique",
+                    "type": "bool",
+                    "required": True
+                    },
+                "constraint": {
+                    "type": "relation",
+                    "op": "=",
+                    "value_type": "bool",
+                    "value": True
+                    }
+            }],
+        "keywords" : [ "yyy"]
+        }
+
+queryJSONattr = {
+        "constraints": [
+            {
+                "attribute": {
+                    "name": "unique",
+                    "type": "bool",
+                    "required": True
+                    },
+                "constraint": {
+                    "type": "relation",
+                    "op": "=",
+                    "value_type": "bool",
+                    "value": True
+                    }
+            }],
+        "keywords" : [ "xxx"]
+        }
+
+
+r = requests.post('http://localhost:8080/register-instance', json=instanceJSONkeyw)
+r = requests.post('http://localhost:8080/register-instance', json=instanceJSONattr)
+
+r = requests.post('http://localhost:8080/query-for-agents-instances', json=queryJSONkeyw)
+print "query intending to hit keyword: ", jsonPrint(r)
+
+r = requests.post('http://localhost:8080/query-for-agents-instances', json=queryJSONattr)
+print "query intending to hit attribute: ", jsonPrint(r)
+
+exit(1)
 
 # Ledger transactions
 r = requests.post('http://localhost:8080/check', json = {

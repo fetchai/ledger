@@ -617,24 +617,40 @@ public:
     }
     return true;
   }
-  bool check(const Instance &i) const {
+  bool check(const Instance &instance) const {
     if(model_) {
-      if(model_->name() != i.model().name())
+      if(model_->name() != instance.model().name())
         return false;
       // TODO: more to compare ?
     }
     for(auto &c : constraints_) {
-      if(!c.check(i))
+      if(!c.check(instance))
         return false;
     }
 
-    // Default for now, ALL keywords must be found within model keyw. TODO: (`HUT`) : make set
-    for(auto &j : keywords_) {
-      const std::vector<std::string> keywords = i.model().keywords();
+    // Default for now, OR keywords must be found within model keyw. Substring search, ALSO of the attribute names TODO: (`HUT`) : make set
+    for(auto &keyword : keywords_) {
+      const std::vector<std::string> keywords = instance.model().keywords();
 
-      if (!(std::find(keywords.begin(), keywords.end(), j) != keywords.end())) {
-        return false;
+      // check if our keyword is a substring of the instance keywords
+      for(auto &instance_keyw : keywords) {
+        if (instance_keyw.find(keyword) != std::string::npos) {
+          return true;
+        }
       }
+
+      // Check if our keyword is a substring of any attribute names
+      const std::vector<Attribute> attributes = instance.model().attributes();
+      for(auto &attr : attributes) {
+        if (attr.name().find(keyword) != std::string::npos) {
+          return true;
+        }
+      }
+    }
+
+    // Keyword not found, and there were keywords to find
+    if(keywords_.size() > 0) {
+      return false;
     }
     return true;
   }
