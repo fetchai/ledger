@@ -279,7 +279,7 @@ public:
     
     // Rolling forth
     try {
-      
+     
       while( !used_transactions.empty() )
       {      
         auto tx = used_transactions.back();
@@ -287,6 +287,7 @@ public:
         tx_manager_.Apply( tx );
       }
     } catch(std::runtime_error const &e) {
+      // TODO: Debug code
       fetch::logger.Highlight("BLOCKCHAIN PRINTOUT");
       
       std::cout << "PRINT BLOCK CHAIN" << std::endl;
@@ -448,6 +449,20 @@ public:
   {
     return loose_chains_;
   }
+
+  bool VerifyState() {
+    auto block = head_;
+    
+    std::vector< tx_digest_type > transactions;
+    while(block.body().previous_hash != "genesis") {
+      transactions.push_back( block.body().transaction_hash );
+      
+      block = chains_[block.body().previous_hash];
+    }
+
+    std::reverse(transactions.begin(), transactions.end());
+    return tx_manager_.VerifyAppliedList(transactions);
+  }   
 
   
 private:

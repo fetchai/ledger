@@ -226,6 +226,8 @@ public:
       }
     }
     block_mutex_.unlock();
+
+    VerifyState();
   }
 
   void ConnectTo(std::string const &host, uint16_t const &port ) 
@@ -416,7 +418,13 @@ public:
     return tx_manager_.size();        
   }
   
-  
+  void VerifyState() {
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
+    if(!chain_manager_.VerifyState()) {
+      fetch::logger.Error("Could not verify state");
+      exit(-1);
+    }
+  }
   
 private:
  

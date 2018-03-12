@@ -149,38 +149,6 @@ public:
       return fetch::http::HTTPResponse(response.str());      
     };
     HTTPModule::Get("/list/blocks",  list_blocks);
-
-
-/*
-    auto list_transactions = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-      std::stringstream response;
-      response << "{\"transactions\": [";  
-      this->with_transactions_do([&response](std::vecto< ShardController::tx_digest_type > const & unmined,
-          std::map< ShardController::tx_digest_type, ShardController::transaction_type > txs) {
-          bool first = true;
-          while( (i< 10) && (chain.find( next_hash ) !=chain.end() ) ) {
-            auto const &block = chain[next_hash];
-            ++i;
-            response << ", {";
-            response << "\"block_hash\": \"" << byte_array::ToBase64( block.header() ) << "\",";
-            response << "\"previous_hash\": \"" << byte_array::ToBase64( block.body().previous_hash ) << "\",";
-            response << "\"transaction_hash\": \"" << byte_array::ToBase64( block.body().transaction_hash ) << "\",";
-            response << "\"block_number\": " <<  block.meta_data().block_number  << ",";
-            response << "\"total_work\": " <<  block.meta_data().total_work;          
-            response << "}";            
-            next_hash =  block.body().previous_hash;
-          }
-
-        });
-      
-      response << "]}";
-      
-      std::cout << response.str() << std::endl;
-            
-      return fetch::http::HTTPResponse(response.str());      
-    };
-    HTTPModule::Get("/list/transactions",  list_transactions);
-*/
     
     auto submit_transaction = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       LOG_STACK_TRACE_POINT;

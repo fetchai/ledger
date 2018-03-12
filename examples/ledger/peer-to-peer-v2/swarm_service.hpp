@@ -47,7 +47,7 @@ public:
     start_event_ = thread_manager_->OnAfterStart([this]() {
         running_ = true;        
         thread_manager_->io_service().post([this]() {
-            this->TrackPeers();
+            this->UpdatePeerDetails();
           });
       });
 
@@ -76,6 +76,17 @@ public:
 
   }
 
+
+  void UpdatePeerDetails() 
+  {  
+
+    if(running_) {
+      thread_manager_->io_service().post([this]() {
+          this->TrackPeers();   
+        });    
+    }    
+  }
+  
   void TrackPeers() 
   {
     using namespace fetch::protocols;
@@ -100,6 +111,7 @@ public:
           public_keys.insert( d.second.public_key );          
         }        
       });
+
     
     // Finding hosts we are not connected to
     std::vector< EntryPoint > swarm_entries;    
@@ -244,7 +256,7 @@ public:
     
     if(running_) {
       thread_manager_->io_service().post([this]() {
-          this->TrackPeers();          
+          this->UpdatePeerDetails();          
         });    
     }    
     

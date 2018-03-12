@@ -168,7 +168,32 @@ public:
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
     return applied_.back();
   }
-  
+
+  bool VerifyAppliedList(std::vector< tx_digest_type > const &ref) {
+    using namespace fetch::byte_array;
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    bool ret = true;
+    
+    if(ref.size() != applied_.size()) {
+      fetch::logger.Warn("Sizes mismatch");
+      ret =  false;
+    }
+    
+    for(std::size_t i=0; i < ref.size(); ++i) {
+      if(ref[i] != applied_[i]) {
+        fetch::logger.Warn("Transaction mismatch at ", i, ": ");
+        fetch::logger.Warn( i," ", ToBase64( ref[i] ), " <> ", ToBase64( applied_[i] ));
+        ret =  false;
+      }
+    }
+    if(!ret) {
+      for(std::size_t i=0; i < ref.size(); ++i) {
+        fetch::logger.Debug( i,") ", ToBase64( ref[i] ), " == ", ToBase64( applied_[i] ));
+      }
+    }
+    
+    return ret;
+  }
     
 private:
   std::unordered_set< tx_digest_type, hasher_type > unapplied_;  
