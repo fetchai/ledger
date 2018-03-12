@@ -243,15 +243,9 @@ public:
     auto serviceDirectory = oef_->ServiceDirectory();
 
     std::ostringstream ret;
+    ret << serviceDirectory;
 
-    ret << "<body>";
-    ret << "<script>";
-    ret << "var jsonPretty = JSON.stringify(JSON.parse('" << serviceDirectory << "'),null,2);";
-    ret << "document.write(\"<pre>resp: \" + jsonPretty + \"</pre>\")";
-    ret << "</script>";
-    ret << "</body>";
-
-    return http::HTTPResponse(ret.str(), http::MimeType{".js", "text/javascript"});
+    return http::HTTPResponse(ret.str());
   }
 
   http::HTTPResponse QueryForAgentsInstances(http::ViewParameters const &params, http::HTTPRequest const &req) {
