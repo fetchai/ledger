@@ -61,6 +61,18 @@ public:
     http_server_.AddMiddleware( fetch::http::middleware::AllowOrigin("*") );       
     http_server_.AddMiddleware( fetch::http::middleware::ColorLog);
     http_server_.AddModule(*this);
+
+    using namespace fetch::http;
+    http_server_.AddView(Method::GET, "/mining-power/(power=\\d+)", [this](ViewParameters const &params, HTTPRequest const &req) {
+      HTTPResponse res("{}");
+      this->difficulty_mutex_.lock();      
+      this->difficulty_ = params["power"].AsInt();
+      fetch::logger.Highlight("Mine power set to: ", this->difficulty_ );
+      
+      this->difficulty_mutex_.unlock();            
+      return res;      
+      } );
+    
   }
   
   ~FetchShardService() 
@@ -71,20 +83,37 @@ public:
 
   void Mine() 
   {
-    int diff = 1;    
+
+    difficulty_mutex_.lock();
+    int diff = difficulty_;
+    difficulty_mutex_.unlock();
+    
     
     auto block = this->GetNextBlock();
     if(  block.body().transaction_hash == "") {
       std::this_thread::sleep_for( std::chrono::milliseconds( 100 ));           
     } else {
+      std::chrono::system_clock::time_point started =  std::chrono::system_clock::now();              
       std::cout << "Mining at difficulty " << diff << std::endl;    
       auto &p = block.proof();
       
       p.SetTarget( diff );
       while(!p()) ++p;
 
+      std::chrono::system_clock::time_point end =  std::chrono::system_clock::now();
+      double ms =  std::chrono::duration_cast<std::chrono::milliseconds>(end - started).count();
+      TODO("change mining mechanism: ", ms);
+      if( ms < 500 ) {
+
+        std::this_thread::sleep_for( std::chrono::milliseconds( int( (500. - ms)  ) ) ); 
+      }
+      
+      
       this->PushBlock( block );
     }
+
+
+    
     
     if(running_) {
       thread_manager_->io_service().post([this]() {
@@ -177,7 +206,8 @@ public:
 
   
 private:
-
+  int difficulty_ = 1;
+  mutable fetch::mutex::Mutex difficulty_mutex_;
   
   fetch::network::ThreadManager *thread_manager_;    
   fetch::service::ServiceServer< fetch::network::TCPServer > service_;

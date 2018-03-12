@@ -189,7 +189,7 @@ public:
     block_mutex_.lock();    
     body.previous_hash = chain_manager_.head().header();
 
-    fetch::logger.Debug("Transaction queue has ", tx_manager_.unapplied_count(), " elements");
+//    fetch::logger.Debug("Transaction queue has ", tx_manager_.unapplied_count(), " elements");
     
     if( !tx_manager_.has_unapplied() ) {
       body.transaction_hash =  "";

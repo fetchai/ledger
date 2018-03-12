@@ -49,7 +49,7 @@ public:
   NodeDetails Hello(uint64_t client, NodeDetails details) 
   {
     LOG_STACK_TRACE_POINT;
-    
+    std::lock_guard< fetch::mutex::Mutex > lock( client_details_mutex_ );
     client_details_[client] = details;
    //    SendConnectivityDetailsToShards(details);    --- TODO Figure out why this dead locks
     return details_.details();
@@ -107,7 +107,7 @@ public:
     while( it != peers_with_few_followers_.begin() ) 
     {
       --it;
-      if( (*it) == details ) 
+      if( (*it).public_key == details.public_key ) 
       {
         found = true;
         peers_with_few_followers_.erase( it );
@@ -218,9 +218,29 @@ public:
     std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
 
     EntryPoint ep = client->Call(fetch::protocols::FetchProtocols::SHARD, ShardRPC::HELLO, host).As< EntryPoint >();    
-   
+
+    fetch::logger.Highlight("Before Add");
+    
+    with_node_details([](NodeDetails const &det) {
+        for(auto &e: det.entry_points)
+        {
+          fetch::logger.Debug("  --- ", e.host, ":", e.port);
+
+        }
+        
+      });    
     details_.AddEntryPoint( ep );    
 
+    fetch::logger.Highlight("After Add");    
+    with_node_details([](NodeDetails const &det) {
+        for(auto &e: det.entry_points)
+        {
+          fetch::logger.Debug("  --- ", e.host, ":", e.port, " is shard ", (e.configuration & EntryPoint::NODE_SHARD));
+        }
+        
+      });
+    
+    
     shards_mutex_.lock();
     shards_.push_back(client);
     shards_details_.push_back(ep);
@@ -401,17 +421,18 @@ public:
   
   
   
-  void with_suggestions_do(std::function< void(std::vector< NodeDetails > const &) > fnc) 
+  void with_suggestions_do(std::function< void(std::vector< NodeDetails >  &) > fnc)  
   {
+    std::lock_guard< fetch::mutex::Mutex > lock( suggestion_mutex_ );    
     fnc( peers_with_few_followers_ );    
   }
 
   void with_client_details_do(std::function< void(std::map< uint64_t, NodeDetails > const &) > fnc) 
   {
-    // TODO: Add mutex
+    std::lock_guard< fetch::mutex::Mutex > lock( client_details_mutex_ );
+    
     fnc( client_details_ );    
   }
-
 
 
   void with_peers_do( std::function< void(std::vector< client_shared_ptr_type >  ) > fnc ) 
@@ -420,6 +441,13 @@ public:
     
     fnc(peers_);    
   }
+
+  void with_peers_do( std::function< void(std::vector< client_shared_ptr_type >, std::map< uint64_t, NodeDetails >&  ) > fnc ) 
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock(peers_mutex_);
+    
+    fnc(peers_, server_details_);    
+  }  
 
   void with_server_details_do(std::function< void(std::map< uint64_t, NodeDetails > const &) > fnc) 
   {
@@ -435,8 +463,6 @@ private:
 
   void SendConnectivityDetailsToShards(NodeDetails const &server_details) 
   {
-    std::cout << "WAS HERE -WAS HERE -WAS HERE -WAS HERE -WAS HERE -WAS HERE -WAS HERE -WAS HERE -WAS HERE -" << std::endl;
-      
     for(auto const &e2: server_details.entry_points )
     {
       fetch::logger.Debug("Testing ", e2.host, ":", e2.port);
@@ -470,22 +496,23 @@ private:
 
   SharedNodeDetails &details_;
 
-
-  std::vector< NodeDetails > peers_with_few_followers_;
   std::map< uint64_t,  NodeDetails > client_details_;  
+  mutable fetch::mutex::Mutex client_details_mutex_;
+  
+  std::vector< NodeDetails > peers_with_few_followers_;
   std::unordered_set< std::string > already_seen_;
-  fetch::mutex::Mutex suggestion_mutex_;
+  mutable fetch::mutex::Mutex suggestion_mutex_;
   
 
   std::function< std::string(uint64_t) > request_ip_;
 
   std::map< uint64_t, NodeDetails > server_details_;
   std::vector< client_shared_ptr_type > peers_;
-  fetch::mutex::Mutex peers_mutex_;
+  mutable fetch::mutex::Mutex peers_mutex_;
 
   std::vector< client_shared_ptr_type > shards_;
   std::vector< EntryPoint > shards_details_;  
-  fetch::mutex::Mutex shards_mutex_;  
+  mutable fetch::mutex::Mutex shards_mutex_;  
 
   std::atomic< uint32_t > sharding_parameter_ ;
 };

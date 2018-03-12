@@ -76,10 +76,110 @@ public:
 
   }
 
-
+/*                                                
+ *  Connectivity maintenance                      
+ *  ═══════════════════════════════════════════ 
+ *
+ *  The swarm node continuously updates the       
+ *  connectivity to other nodes and ensure that   
+ *  shards are connected to peers. This is done   
+ *  through following event loop:                 
+ *  ┌─────────────────────────────────────────┐   
+ *  │           Update Peer Details           │◀─┐
+ *  └────────────────────┬────────────────────┘  │
+ *                       │                       │
+ *  ┌────────────────────▼────────────────────┐  │
+ *  │               Track peers               │  │
+ *  └────────────────────┬────────────────────┘  │
+ *                       │                       │
+ *  ┌────────────────────▼────────────────────┐  │
+ *  │        Update shard connectivity        │──┘
+ *  └─────────────────────────────────────────┘   
+ */
+  
   void UpdatePeerDetails() 
-  {  
+  {
+    using namespace fetch::protocols;
 
+    fetch::logger.Highlight("Starting Update Connectivity Loop");
+    
+
+    NodeDetails details;    
+    this->with_node_details( [&details](NodeDetails const &d) {
+        details = d;
+      });    
+
+
+    // Updating outgoing details
+    bool did_update = false;
+    std::map< fetch::byte_array::ByteArray, NodeDetails > all_details;
+
+    
+    
+    this->with_peers_do( [&all_details, &did_update, details](std::vector< client_shared_ptr_type >  const &peers,
+        std::map< uint64_t, NodeDetails >& peer_details) {
+        for(auto &c: peers) {
+          auto p = c->Call(FetchProtocols::SWARM, SwarmRPC::HELLO, details);          
+          
+          if(!p.Wait(2000)) {
+            fetch::logger.Error("Peer connectivity failed! TODO: Trim connections and inform shards");
+            TODO_FAIL("Peer connectivity failed! TODO: Trim connections and inform shards");
+          }
+          
+          auto ref = p.As< NodeDetails >();
+          auto &d = peer_details[c->handle()];
+          all_details[ref.public_key] = ref;
+          
+          if( true || (d != ref) ) {
+            did_update = true;
+            d = ref;
+            
+            fetch::logger.Highlight("Got update for: ",  d.public_key);
+            for(auto &e: d.entry_points) {
+              fetch::logger.Debug(" - ", e.host, ":", e.port, ", shard ", e.shard);
+            }
+          }
+        }
+        
+      });
+    
+
+    // Fetching all incoming details
+    this->with_client_details_do( [&all_details](std::map< uint64_t, NodeDetails > const &node_details)  {
+        for(auto const&d: node_details)
+        {
+          all_details[d.second.public_key] = d.second;
+        }
+      });
+    
+    // Updating all suggestions
+    all_details[ details.public_key ] = details;    
+    this->with_suggestions_do([&all_details](std::vector< NodeDetails >  & list) {
+        fetch::logger.Highlight("Updating suggestions");            
+        for(std::size_t i=0; i < list.size(); ++i) {
+
+          auto &details = list[i];
+          fetch::logger.Debug(" - updating ", details.public_key);
+          for(auto &e: details.entry_points) {
+            fetch::logger.Debug("   > ", e.host,":", e.port);            
+          }
+
+          
+          if(all_details.find(details.public_key) != all_details.end())
+          {
+            if(details != all_details[ details.public_key ] )
+            {
+              fetch::logger.Highlight("Updating suggestions info");
+              list[i] = details;
+              TODO("Proapgate change");              
+              // TODO: Propagate change?
+            } 
+          }
+          
+        }
+      });
+    
+    // Next we track peers 
     if(running_) {
       thread_manager_->io_service().post([this]() {
           this->TrackPeers();   
@@ -173,6 +273,10 @@ public:
         }
       });
 
+    fetch::logger.Highlight("Updating shards!");
+    for(auto &s : shard_entries) {
+      fetch::logger.Debug(" - ", s.host, ":", s.port);
+    }
     
     std::random_shuffle(shard_entries.begin(), shard_entries.end());
     std::vector< client_shared_ptr_type > shards;
