@@ -88,10 +88,22 @@ public:
     int diff = difficulty_;
     difficulty_mutex_.unlock();
     
+    if(diff == 0) {
+      fetch::logger.Highlight("Exiting mining because diff = 0");            
+      if(running_) {
+        std::this_thread::sleep_for( std::chrono::milliseconds( 500 ));            
+        thread_manager_->io_service().post([this]() {
+            this->Mine();            
+          });    
+      }      
+      return;
+    }
+    
     
     auto block = this->GetNextBlock();
     if(  block.body().transaction_hash == "") {
-      std::this_thread::sleep_for( std::chrono::milliseconds( 100 ));           
+      fetch::logger.Highlight("--------======= NO TRRANSACTIONS TO MINE =========--------");
+      std::this_thread::sleep_for( std::chrono::milliseconds( 500 ));           
     } else {
       std::chrono::system_clock::time_point started =  std::chrono::system_clock::now();              
       std::cout << "Mining at difficulty " << diff << std::endl;    
@@ -103,11 +115,11 @@ public:
       std::chrono::system_clock::time_point end =  std::chrono::system_clock::now();
       double ms =  std::chrono::duration_cast<std::chrono::milliseconds>(end - started).count();
       TODO("change mining mechanism: ", ms);
+/*
       if( ms < 500 ) {
-
         std::this_thread::sleep_for( std::chrono::milliseconds( int( (500. - ms)  ) ) ); 
       }
-      
+*/    
       
       this->PushBlock( block );
     }
@@ -206,7 +218,7 @@ public:
 
   
 private:
-  int difficulty_ = 1;
+  int difficulty_ = 0;
   mutable fetch::mutex::Mutex difficulty_mutex_;
   
   fetch::network::ThreadManager *thread_manager_;    

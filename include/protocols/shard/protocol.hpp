@@ -53,7 +53,7 @@ public:
     Protocol::Expose(ShardRPC::REQUEST_BLOCKS_FROM, request_blocks_from);    
 
     // TODO: Move to separate protocol
-    auto listen_to = new CallableClassMember<ShardProtocol, void(EntryPoint) >(this, &ShardProtocol::ListenTo );
+    auto listen_to = new CallableClassMember<ShardProtocol, void(std::vector< EntryPoint >) >(this, &ShardProtocol::ListenTo );
     auto set_shard_number = new CallableClassMember<ShardProtocol, void(uint32_t, uint32_t) >(this, &ShardProtocol::SetShardNumber );
     auto shard_number = new CallableClassMember<ShardProtocol, uint32_t() >(this, &ShardProtocol::shard_number );
     auto count_outgoing = new CallableClassMember<ShardProtocol,  uint32_t() >(this, &ShardProtocol::count_outgoing_connections );        

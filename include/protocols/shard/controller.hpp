@@ -87,6 +87,8 @@ public:
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Exchaning shard details (RPC reciever)");
+
+    std::lock_guard< fetch::mutex::Mutex > lock( details_mutex_ );
     
     details_.configuration = EntryPoint::NODE_SHARD;
     if(details_.host != host ) { 
@@ -313,26 +315,40 @@ public:
     PushBlock(comp_head);
   }
 
-  void ListenTo(EntryPoint e) 
+  void ListenTo(std::vector< EntryPoint > list) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-       
-    bool found = false;
-    shard_friends_mutex_.lock();    
-    for(auto &d: friends_details_)
-    {
-      if((d.host == e.host) &&
-        (d.port == e.port )  ) {
-        found = true;
-        break;
+
+    for(auto &e: list) {
+      details_mutex_.lock();
+      bool self = (e == details_);
+      details_mutex_.unlock();
+      
+      if(self) {
+        fetch::logger.Debug("Skipping myself");        
+        continue;
+      }
+      
+      // TODO: implement max connectivity
+      // TODOD: Check shard
+      bool found = false;
+      shard_friends_mutex_.lock();    
+      for(auto &d: friends_details_)
+      {
+        if((d.host == e.host) &&
+          (d.port == e.port )  ) {
+          found = true;
+          break;
+        }
+      }
+
+      shard_friends_mutex_.unlock();
+      if(!found)
+      {
+        ConnectTo(e.host, e.port); 
       }
     }
-
-    shard_friends_mutex_.unlock();
-    if(!found)
-    {
-      ConnectTo(e.host, e.port); 
-    }
+    
 
   }
 
@@ -430,6 +446,7 @@ private:
  
   network::ThreadManager *thread_manager_;    
   EntryPoint &details_;  
+  mutable fetch::mutex::Mutex details_mutex_;
   
   mutable fetch::mutex::Mutex block_mutex_;
 

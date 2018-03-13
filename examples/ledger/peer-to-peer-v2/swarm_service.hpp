@@ -100,10 +100,8 @@ public:
   void UpdatePeerDetails() 
   {
     using namespace fetch::protocols;
-
     fetch::logger.Highlight("Starting Update Connectivity Loop");
     
-
     NodeDetails details;    
     this->with_node_details( [&details](NodeDetails const &d) {
         details = d;
@@ -114,8 +112,6 @@ public:
     bool did_update = false;
     std::map< fetch::byte_array::ByteArray, NodeDetails > all_details;
 
-    
-    
     this->with_peers_do( [&all_details, &did_update, details](std::vector< client_shared_ptr_type >  const &peers,
         std::map< uint64_t, NodeDetails >& peer_details) {
         for(auto &c: peers) {
@@ -133,11 +129,6 @@ public:
           if( true || (d != ref) ) {
             did_update = true;
             d = ref;
-            
-            fetch::logger.Highlight("Got update for: ",  d.public_key);
-            for(auto &e: d.entry_points) {
-              fetch::logger.Debug(" - ", e.host, ":", e.port, ", shard ", e.shard);
-            }
           }
         }
         
@@ -148,29 +139,29 @@ public:
     this->with_client_details_do( [&all_details](std::map< uint64_t, NodeDetails > const &node_details)  {
         for(auto const&d: node_details)
         {
+          fetch::logger.Debug(" - Entries for ", d.second.public_key);
+          for(auto &e: d.second.entry_points) {
+            
+            fetch::logger.Debug("   > ",e.host,":",e.port);
+          }
+          
           all_details[d.second.public_key] = d.second;
         }
       });
-    
-    // Updating all suggestions
+
+        
     all_details[ details.public_key ] = details;    
     this->with_suggestions_do([&all_details](std::vector< NodeDetails >  & list) {
-        fetch::logger.Highlight("Updating suggestions");            
         for(std::size_t i=0; i < list.size(); ++i) {
 
           auto &details = list[i];
-          fetch::logger.Debug(" - updating ", details.public_key);
-          for(auto &e: details.entry_points) {
-            fetch::logger.Debug("   > ", e.host,":", e.port);            
-          }
-
           
           if(all_details.find(details.public_key) != all_details.end())
           {
             if(details != all_details[ details.public_key ] )
             {
               fetch::logger.Highlight("Updating suggestions info");
-              list[i] = details;
+              list[i] = all_details[ details.public_key ];
               TODO("Proapgate change");              
               // TODO: Propagate change?
             } 
@@ -258,7 +249,8 @@ public:
   void UpdateShardConnectivity() 
   {
     using namespace fetch::protocols;
-    
+
+    // Getting the list of shards
     std::vector< EntryPoint > shard_entries;    
     this->with_suggestions_do([=, &shard_entries](std::vector< NodeDetails > const &details) {
         for(auto const &d: details)
@@ -279,12 +271,13 @@ public:
     }
     
     std::random_shuffle(shard_entries.begin(), shard_entries.end());
+
+    // Getting the shard client instances
     std::vector< client_shared_ptr_type > shards;
-    std::vector< EntryPoint > details;
-    
+    std::vector< EntryPoint > details;  
     
     this->with_shards_do([this, &shards, &details](std::vector< client_shared_ptr_type > const &sh,
-          std::vector< EntryPoint > &det ) {
+        std::vector< EntryPoint > &det ) {
         std::size_t i =0;
         
         for(auto &s: sh)
@@ -319,9 +312,10 @@ public:
       
       std::cout << "  - "<< i << " : " << details[i].host << " " << details[i].port << " " << shard <<" " << conn_count <<  std::endl;      
       // TODO: set shard detail
-      
 
-      if(conn_count < 2) // TODO: Desired connectivity;
+      client->Call(FetchProtocols::SHARD, ShardRPC::LISTEN_TO, shard_entries);
+/*
+      if(conn_count < 4) // TODO: Send the fully list to shard instance.
       {
         for(auto &s: shard_entries)
         {
@@ -335,7 +329,7 @@ public:
             fetch::logger.Warn("After call");
             
             ++conn_count;
-            if(conn_count == 2) // TODO: desired connectivity
+            if(conn_count == 3) // TODO: desired connectivity
             {
               break;                    
             }
@@ -344,7 +338,8 @@ public:
           
         }
       }
-
+*/
+        
     }
 
     // Updating shard details
