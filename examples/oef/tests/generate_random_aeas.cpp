@@ -1,19 +1,15 @@
 #include<iostream>
 #include"serializer/referenced_byte_array.hpp"
 #include"service/client.hpp"
-#include"logger.hpp"
-#include"oef/service_consts.hpp"
 #include"oef/schema.hpp"
 #include"oef/schema_serializers.hpp"
-#include"oef/node_to_aea_protocol.hpp"
 #include"random/lfg.hpp"
-#include"./test_aea.hpp"
+#include"./test_aea.hpp" // TODO: (`HUT`) : delete unnecc.
 
 using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
 using namespace fetch::random;
-using namespace fetch::node_to_aea_protocol;
 
 // Example of OEF code performing basic register-query functionality
 

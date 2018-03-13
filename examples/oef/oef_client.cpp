@@ -2,15 +2,16 @@
 #include"serializer/referenced_byte_array.hpp"
 #include"service/client.hpp"
 #include"logger.hpp"
-#include"oef/service_consts.hpp"
 #include"oef/schema.hpp"
 #include"oef/schema_serializers.hpp"
-#include"oef/node_to_aea_protocol.hpp"
+#include"protocols/fetch_protocols.hpp"
+#include"protocols/aea_to_node/commands.hpp"
+#include"protocols/node_to_aea.hpp"
 
 using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
-using namespace fetch::node_to_aea_protocol;
+using namespace fetch::protocols;
 
 // Example of OEF code performing basic register-query functionality
 
@@ -40,7 +41,7 @@ int main() {
   schema::Instance instance{weather, {{"has_wind_speed", "false"}, {"has_temperature", "true"}, {"latitude", "true"}, {"longitude", "true"}}};
 
   // Register our datamodel
-  std::cout << client.Call( AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::REGISTER_INSTANCE, "listening_agent", instance ).As<std::string>( ) << std::endl;
+  std::cout << client.Call( FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::REGISTER_INSTANCE, "listening_agent", instance ).As<std::string>( ) << std::endl;
 
   // Register ourself for callbacks
   NodeToAEAProtocol protocol;
@@ -62,9 +63,9 @@ int main() {
     return std::string{"we have bananas"};
   };
 
-  client.Add(NodeToAEAProtocolID::DEFAULT_ID, &protocol);
+  client.Add(FetchProtocols::NODE_TO_AEA, &protocol);
 
-  auto p =  client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::REGISTER_FOR_CALLBACKS, "listening_agent");
+  auto p =  client.Call(FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::REGISTER_FOR_CALLBACKS, "listening_agent");
 
   if(p.Wait() ) {
     std::cout << "Successfully registered for callbacks" << std::endl;
@@ -75,7 +76,7 @@ int main() {
 
   std::cout << "Sold all our bananas, exit" << std::endl;
 
-  auto p2 =  client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::DEREGISTER_FOR_CALLBACKS, "listening_agent");
+  auto p2 =  client.Call(FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::DEREGISTER_FOR_CALLBACKS, "listening_agent");
 
   p2.Wait();
 

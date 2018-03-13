@@ -6,10 +6,11 @@
 #include<map>
 #include<string>
 #include"service/server.hpp"
-#include"oef/service_consts.hpp"
 #include"oef/schema.hpp"
 #include"oef/schema_serializers.hpp"
 #include"oef/service_directory.hpp"
+#include"protocols/fetch_protocols.hpp"
+#include"protocols/node_to_aea/commands.hpp"
 
 namespace fetch
 {
@@ -41,7 +42,7 @@ public:
     for(auto &id: registered_aeas_) {
       auto &rpc = service_->ServiceInterfaceOf(id.first);
 
-      rpc.Call(NodeToAEAProtocolID::DEFAULT_ID, NodeToAEAProtocolFn::PING, "ping_message");
+      rpc.Call(protocols::FetchProtocols::NODE_TO_AEA, protocols::NodeToAEAReverseRPC::PING, "ping_message"); // TODO: (`HUT`) : think about decoupling
     }
   }
 
@@ -56,7 +57,7 @@ public:
         result["response"] = "success";
 
         auto &rpc = service_->ServiceInterfaceOf(it->first);
-        std::string answer   = rpc.Call(NodeToAEAProtocolID::DEFAULT_ID, NodeToAEAProtocolFn::BUY, "http_interface").As<std::string>();
+        std::string answer   = rpc.Call(protocols::FetchProtocols::NODE_TO_AEA, protocols::NodeToAEAReverseRPC::BUY, "http_interface").As<std::string>();
         result["value"]   = answer;
         return result;
       }

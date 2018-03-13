@@ -1,9 +1,11 @@
 #ifndef NODE_TO_AEA_PROTOCOL_HPP
 #define NODE_TO_AEA_PROTOCOL_HPP
 
+#include"protocols/node_to_aea/commands.hpp"
+
 namespace fetch
 {
-namespace node_to_aea_protocol
+namespace protocols
 {
 
 class NodeToAEAProtocol : public fetch::service::Protocol {
@@ -11,8 +13,8 @@ public:
 
   NodeToAEAProtocol() : Protocol() {
 
-    this->Expose(NodeToAEAProtocolFn::PING, new service::CallableClassMember<NodeToAEAProtocol, void(std::string pingMessage)>(this, &NodeToAEAProtocol::Ping) );
-    this->Expose(NodeToAEAProtocolFn::BUY,  new service::CallableClassMember<NodeToAEAProtocol, std::string(std::string fromPerson)>(this, &NodeToAEAProtocol::Buy));
+    this->Expose(NodeToAEAReverseRPC::PING, new service::CallableClassMember<NodeToAEAProtocol, void(std::string pingMessage)>(this, &NodeToAEAProtocol::Ping) );
+    this->Expose(NodeToAEAReverseRPC::BUY,  new service::CallableClassMember<NodeToAEAProtocol, std::string(std::string fromPerson)>(this, &NodeToAEAProtocol::Buy));
   }
 
   // TODO: (`HUT`) : make these callback registering more elegant (ask Troels) TODO: (`HUT`) : s/Troells/Troels in codebase

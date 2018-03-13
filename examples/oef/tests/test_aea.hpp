@@ -2,17 +2,18 @@
 #include"serializer/referenced_byte_array.hpp"
 #include"service/client.hpp"
 #include"logger.hpp"
-#include"oef/service_consts.hpp"
 #include"oef/schema.hpp"
 #include"oef/schema_serializers.hpp"
-#include"oef/node_to_aea_protocol.hpp"
 #include"random/lfg.hpp"
+#include"protocols/fetch_protocols.hpp"
+#include"protocols/aea_to_node/commands.hpp"
+#include"protocols/node_to_aea/protocol.hpp"
 
 using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
 using namespace fetch::random;
-using namespace fetch::node_to_aea_protocol;
+using namespace fetch::protocols;
 
 class TestAEA {
 
@@ -53,10 +54,7 @@ private:
         usedAttributes.push_back(possibleAttributes[i]);
       }
       random >>= 1;
-    printf("rrr %x\n\n\n", random);
     }
-
-    printf("test %x\n\n\n", ((2^possibleAttributes.size()) - 1));
 
     // We then create a DataModel for this, use seed for name, note there should be no clashing DMs
     std::string dmName = std::string("gen_dm_") + std::to_string(randomSeed_ & ((2^possibleAttributes.size()) - 1));
@@ -72,7 +70,7 @@ private:
     schema::Instance instance{generatedDM, attributeValues};
 
     // Register our datamodel
-    std::cout << client.Call( AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::REGISTER_INSTANCE, AEA_name_, instance ).As<std::string>( ) << std::endl;
+    std::cout << client.Call( FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::REGISTER_INSTANCE, AEA_name_, instance ).As<std::string>( ) << std::endl;
 
     // Register ourself for callbacks
     NodeToAEAProtocol protocol;
@@ -94,9 +92,9 @@ private:
       return std::string{"we have bananas"};
     };
 
-    client.Add(NodeToAEAProtocolID::DEFAULT_ID, &protocol);
+    client.Add(FetchProtocols::NODE_TO_AEA, &protocol);
 
-    auto p =  client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::REGISTER_FOR_CALLBACKS, AEA_name_);
+    auto p =  client.Call(FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::REGISTER_FOR_CALLBACKS, AEA_name_);
 
     if(p.Wait() ) {
       std::cout << "Successfully registered for callbacks" << std::endl;
@@ -107,7 +105,7 @@ private:
 
     std::cout << "Sold all our bananas, exit" << std::endl;
 
-    auto p2 =  client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::DEREGISTER_FOR_CALLBACKS, AEA_name_);
+    auto p2 =  client.Call(FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::DEREGISTER_FOR_CALLBACKS, AEA_name_);
 
     p2.Wait();
 

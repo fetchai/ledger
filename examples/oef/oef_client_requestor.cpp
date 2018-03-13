@@ -2,13 +2,15 @@
 #include"serializer/referenced_byte_array.hpp"
 #include"service/client.hpp"
 #include"logger.hpp"
-#include"oef/service_consts.hpp"
 #include"oef/schema.hpp"
 #include"oef/schema_serializers.hpp"
+#include"protocols/fetch_protocols.hpp"
+#include"protocols/aea_to_node/commands.hpp"
 
 using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
+using namespace fetch::protocols;
 
 // Example of OEF code performing basic register-query functionality
 
@@ -32,7 +34,7 @@ int main() {
   schema::QueryModel query1{{longitude_c}};
 
   // query the oef for a list of agents
-  auto agents = client.Call( AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::QUERY, query1 ).As<std::vector<std::string>>( );
+  auto agents = client.Call( FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::QUERY, query1 ).As<std::vector<std::string>>( );
 
   std::cout << "query result: " << std::endl;
   for(auto i : agents){
@@ -43,7 +45,7 @@ int main() {
   for (int i = 0; i < 100; ++i) {
     for(auto &agent : agents){
       std::cout << "Attempting to buy from: " << agent << std::endl;
-      std::cout << "result is " << client.Call(AEAToNodeProtocolID::DEFAULT, AEAToNodeProtocolFn::BUY_AEA_TO_NODE, agent ).As<std::string>() << std::endl;
+      std::cout << "result is " << client.Call(FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::BUY, agent ).As<std::string>() << std::endl;
 
       std::this_thread::sleep_for( std::chrono::milliseconds(1000));
     }
