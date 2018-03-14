@@ -34,9 +34,11 @@ public:
     auto ping = new CallableClassMember<ShardProtocol, uint64_t()>(this, &ShardProtocol::Ping);
     auto hello = new CallableClassMember<ShardProtocol, EntryPoint(std::string)>(this, &ShardProtocol::Hello);        
     auto push_transaction = new CallableClassMember<ShardProtocol, bool(transaction_type) >(this, &ShardProtocol::PushTransaction );
+    auto get_transactions = new CallableClassMember<ShardProtocol, std::vector< transaction_type >() >(this, &ShardProtocol::GetTransactions );
+    
     auto push_block = new CallableClassMember<ShardProtocol, void(block_type) >(this, &ShardProtocol::PushBlock );
     auto get_block = new CallableClassMember<ShardProtocol, block_type() >(this, &ShardProtocol::GetNextBlock );
-
+    auto get_blocks = new CallableClassMember<ShardProtocol, std::vector< block_type >() >(this, &ShardProtocol::GetLatestBlocks );
 
     auto exchange_heads = new CallableClassMember<ShardProtocol, block_type(block_type) >(this, &ShardProtocol::ExchangeHeads );
     auto request_blocks_from = new CallableClassMember<ShardProtocol, std::vector< block_type >(block_header_type, uint16_t) >(this, &ShardProtocol::RequestBlocksFrom );
@@ -45,7 +47,9 @@ public:
     Protocol::Expose(ShardRPC::PING, ping);
     Protocol::Expose(ShardRPC::HELLO, hello);    
     Protocol::Expose(ShardRPC::PUSH_TRANSACTION, push_transaction);
+    Protocol::Expose(ShardRPC::GET_TRANSACTIONS, get_transactions);    
     Protocol::Expose(ShardRPC::PUSH_BLOCK, push_block);
+    Protocol::Expose(ShardRPC::GET_BLOCKS, get_blocks);        
     Protocol::Expose(ShardRPC::GET_NEXT_BLOCK, get_block);
 
 
@@ -64,9 +68,6 @@ public:
     Protocol::Expose(ShardRPC::COUNT_OUTGOING_CONNECTIONS, count_outgoing);
     
     
-    // Using the event feed that
-    Protocol::RegisterFeed(ShardFeed::FEED_BROADCAST_BLOCK, this);    
-    Protocol::RegisterFeed(ShardFeed::FEED_BROADCAST_TRANSACTION, this);
     
     // Web interface
     auto connect_to = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {      
@@ -150,21 +151,23 @@ public:
     };
     HTTPModule::Get("/list/blocks",  list_blocks);
     
-    auto submit_transaction = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+    auto submit_transaction = [this, thread_manager](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       LOG_STACK_TRACE_POINT;
+      thread_manager->Post([this, req]() {      
+          json::JSONDocument doc = req.JSON();
+          
+          std::cout << "resources " << doc["resources"] << std::endl;
+          
+          typedef fetch::chain::Transaction transaction_type;
+          transaction_type tx;
+          tx.set_arguments( req.body() );
+          this->PushTransaction( tx );
+        });
       
-      json::JSONDocument doc = req.JSON();
-      
-      std::cout << "resources " << doc["resources"] << std::endl;
-
-      typedef fetch::chain::Transaction transaction_type;
-      transaction_type tx;
-      tx.set_arguments( req.body() );
-      this->PushTransaction( tx );
-
+            
       return fetch::http::HTTPResponse("{\"status\": \"ok\"}");
     };
-    
+        
     HTTPModule::Post("/shard/submit-transaction", submit_transaction);
 
     

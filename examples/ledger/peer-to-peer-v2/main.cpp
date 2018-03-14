@@ -75,7 +75,7 @@ private:
       std::cout << " - localhost " <<  s->port() << std::endl;
       auto client = controller_.ConnectShard( "localhost", s->port() );
 
-      // TODO: Set shard      client->Call(fetch::protocols::FetchProtocols::SHARD, ShardRPC::SET_SHARD_NUMBER, i, uint32_t(shards_.size()) );
+//      client->Call(fetch::protocols::FetchProtocols::SHARD, ShardRPC::SET_SHARD_NUMBER, i, uint32_t(shards_.size()) );
       ++i;
     }
   } 

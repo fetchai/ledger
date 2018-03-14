@@ -69,7 +69,7 @@ public:
         
 
       }
-            unapplied_.erase(it);
+      unapplied_.erase(it);
       
     }
 
@@ -86,29 +86,43 @@ public:
     applied_.push_back( tx );
   }
   
+  bool AddBulkTransactions(std::unordered_map< tx_digest_type, transaction_type, hasher_type > const &new_txs ) 
+  {
+    bool ret = false;    
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
+    for(auto const& t: new_txs) {
+      if(known_transactions_.find( t.first  ) == known_transactions_.end())
+      {
+        auto const &tx = t.second;        
+        ret = true;
+        RegisterTransaction(tx);        
+      }
+    
+    }
+    
+    
+    return ret;
+  }
+  
   bool AddTransaction(transaction_type const &tx)
   {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;        
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
+   
     if(known_transactions_.find( tx.digest()  ) != known_transactions_.end())
     {
       return false;
     }
-    
-    TODO("Check if transaction belongs to shard");    
-    
-    transactions_[ tx.digest() ] = tx;
-    known_transactions_.insert( tx.digest() );    
-    unapplied_.insert( tx.digest() );
-    
+    RegisterTransaction( tx );        
     return true;    
   }
 
 
   void RollBack(std::size_t n) 
   {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;        
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
+
     while( (n != 0) ) {
       --n;
       detailed_assert( applied_.size() != 0 );
@@ -170,6 +184,7 @@ public:
   }
 
   bool VerifyAppliedList(std::vector< tx_digest_type > const &ref) {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
     using namespace fetch::byte_array;
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
     bool ret = true;
@@ -194,13 +209,37 @@ public:
     
     return ret;
   }
-    
+
+  std::vector< transaction_type > LastTransactions() const
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
+    return last_transactions_;    
+  }
+  
 private:
+
+  void RegisterTransaction(transaction_type const& tx ) 
+  {
+    
+    TODO("Check if transaction belongs to shard");    
+    
+    last_transactions_.push_back(tx);
+    transactions_[ tx.digest() ] = tx;
+    known_transactions_.insert( tx.digest() );    
+    unapplied_.insert( tx.digest() );
+    fetch::logger.Highlight("========================================= >>>>>>>>>>>>>>>>>>> ", known_transactions_.size());
+
+    TODO("Trim last transactions");
+
+  }
+  
+  std::vector< transaction_type > last_transactions_;
+  
   std::unordered_set< tx_digest_type, hasher_type > unapplied_;  
   std::unordered_set< tx_digest_type, hasher_type > known_transactions_;  
   std::vector< tx_digest_type > applied_;  
   
-  std::map< tx_digest_type, transaction_type > transactions_;
+  std::unordered_map< tx_digest_type, transaction_type, hasher_type > transactions_;
 
   mutable fetch::mutex::Mutex mutex_;
   

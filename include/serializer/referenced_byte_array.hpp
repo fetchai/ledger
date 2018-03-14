@@ -29,9 +29,7 @@ void Deserialize(T &serializer, byte_array::BasicByteArray &s) {
   detailed_assert( size <= serializer.bytes_left());  
   
   s.Resize(size);
-  //  std::cout << "Deserializing: ";  
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(s.pointer()), s.size());
-  //  std::cout << s << std::endl;  
 }
 
 

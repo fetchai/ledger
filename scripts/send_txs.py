@@ -26,7 +26,7 @@ def submitParallel(numbers, threads=2):
     return results
 
 if __name__ == "__main__":
-    r = requests.post('http://localhost:9090/mining-power/3', json = { })
-    submitParallel(range(100), 20)
+    r = requests.post('http://localhost:9090/mining-power/1', json = { })
+#    r = requests.post('http://localhost:9091/mining-power/3', json = { })    
+    submitParallel(range(1000), 20)
 
-    

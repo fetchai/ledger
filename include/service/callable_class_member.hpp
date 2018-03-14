@@ -1,6 +1,7 @@
 #ifndef SERVICE_CALLABLE_CLASS_MEMBER_HPP
 #define SERVICE_CALLABLE_CLASS_MEMBER_HPP
 #include "service/abstract_callable.hpp"
+#include "serializer/counter.hpp"
 #include "serializer/referenced_byte_array.hpp"
 #include "serializer/stl_types.hpp"
 #include "serializer/typed_byte_array_buffer.hpp"
@@ -58,7 +59,12 @@ private:
       member_function_pointer &m,
       used_args&... args) 
     {
-      result << (cls.*m)(args...);
+      auto ret = (cls.*m)(args...);
+      serializers::SizeCounter< serializer_type > counter;
+      counter << ret;
+
+      result.Reserve( counter.size() );
+      result << ret;
     };
   };
 
@@ -200,8 +206,15 @@ public:
   void operator()(serializer_type &result, serializer_type &params) override 
   {
     LOG_STACK_TRACE_POINT;
-    
-    result << ( (*class_).*function_)();
+
+
+    auto ret =  ( (*class_).*function_)();
+    serializers::SizeCounter< serializer_type > counter;
+    counter << ret;
+    result.Reserve( counter.size() );
+    result << ret;
+
+        
   }
 
 

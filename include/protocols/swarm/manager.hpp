@@ -456,7 +456,7 @@ public:
     peers_mutex_.unlock();    
   }
 
-  void with_node_details(std::function< void(NodeDetails const &) > fnc ) {
+  void with_node_details(std::function< void(NodeDetails &) > fnc ) {
     details_.with_details( fnc );    
   }
 private:

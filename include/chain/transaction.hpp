@@ -1,7 +1,7 @@
 #ifndef CHAIN_TRANSACTION_HPP
 #define CHAIN_TRANSACTION_HPP
 #include "crypto/sha256.hpp"
-#include "byte_array/referenced_byte_array.hpp"
+#include "byte_array/const_byte_array.hpp"
 #include "serializer/byte_array_buffer.hpp"
 #include "logger.hpp"
 
@@ -62,9 +62,25 @@ public:
   }
 
   arguments_type const &arguments() const { return arguments_; }
-
   digest_type const & digest() const { return digest_; }
+
+  uint32_t resources_count() const
+  {
+    return resources_count_;
+  }
+  
+  uint32_t signature_count() const
+  {
+    return  signature_count_;
+  }
+  
+  byte_array::ConstByteArray data() const { return data_; };
+  
 private:
+  uint32_t resources_count_, signature_count_;
+  byte_array::ConstByteArray data_;
+  
+
   std::vector< byte_array::ConstByteArray > resources_;
   std::vector< byte_array::ConstByteArray > signatures_;
   byte_array::ConstByteArray contract_name_;
@@ -78,10 +94,8 @@ private:
 
 template< typename T >
 void Serialize( T & serializer, Transaction const &b) {
-  LOG_STACK_TRACE_POINT;
-  
   serializer <<  uint32_t(b.resources().size());
-  
+
   for(auto &res: b.resources()) {
     serializer << res;
   }
@@ -90,15 +104,13 @@ void Serialize( T & serializer, Transaction const &b) {
   for(auto &sig: b.signatures()) {
     serializer << sig;
   }
-  
-  serializer << b.contract_name();
+
+  serializer << b.contract_name();  
   serializer << b.arguments();  
 }
 
 template< typename T >
 void Deserialize( T & serializer, Transaction &b) {
-  LOG_STACK_TRACE_POINT;
-  
   uint32_t size;
   serializer >>  size;
 

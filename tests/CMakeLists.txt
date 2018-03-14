@@ -29,7 +29,8 @@ function(standard_test_defines name file defines)
 endfunction()
 
 standard_test(script_dictionary_test script/dictionary.cpp )
-
+## chain
+standard_test(chain_tx_serialization chain/transaction_serialization.cpp)
 ## Crypto
 standard_test( crypto_sha256 crypto/sha256.cpp )
 

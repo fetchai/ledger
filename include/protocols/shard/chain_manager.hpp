@@ -51,6 +51,20 @@ public:
     ADD_CHAIN_END = 2    
   };
 
+  
+  bool AddBulkBlocks(std::vector< block_type > const &new_blocks ) 
+  {
+    bool ret = false;
+//    block_type best_block = head_;
+    
+    for(auto block: new_blocks) {
+      ret |=  (AddBlock( block ) != ADD_NOTHING_TODO );
+    }
+    // TODO: Attach block
+    return ret;    
+  }
+  
+
   uint32_t AddBlock(block_type &block ) {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);    
@@ -60,6 +74,9 @@ public:
       fetch::logger.Debug("Nothing todo");    
       return ADD_NOTHING_TODO;
     }
+
+    TODO("Trim latest blocks");
+    latest_blocks_.push_back(block);
     
     assert( chains_.find( block.header() ) == chains_.end() );
     block_header_type header = block.header();
@@ -213,8 +230,6 @@ public:
   
   void SwitchBranch(block_type new_head, block_type old_head)
   {
-    // Rolling back
-
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     head_ = new_head;
     
@@ -301,9 +316,7 @@ public:
       
 
       throw e;      
-    }
-    
-        
+    }           
   }
 
   
@@ -451,6 +464,7 @@ public:
   }
 
   bool VerifyState() {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
     auto block = head_;
     
     std::vector< tx_digest_type > transactions;
@@ -464,6 +478,14 @@ public:
     return tx_manager_.VerifyAppliedList(transactions);
   }   
 
+  std::vector< block_type > const &latest_blocks() const {
+    return latest_blocks_; 
+  }
+
+  std::size_t size() const 
+  {
+    return chains_.size();
+  }
   
 private:
   TransactionManager &tx_manager_;
@@ -476,6 +498,9 @@ private:
   
   std::vector< block_header_type > heads_;  
   block_type head_;
+
+
+  std::vector< block_type > latest_blocks_;
   
 };
 

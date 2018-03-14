@@ -3,7 +3,7 @@
 
 #include "assert.hpp"
 #include "byte_array/referenced_byte_array.hpp"
-#include "serializer/referenced_byte_array.hpp"
+#include "serializer/stl_types.hpp"
 #include "serializer/exception.hpp"
 #include "serializer/type_register.hpp"
 #include "byte_array/encoders.hpp"
@@ -23,17 +23,16 @@ class TypedByte_ArrayBuffer {
     data_.Resize(data_.size() + val);
   }
 
+  void Reserve(std::size_t const &val) {
+    data_.Reserve(data_.size() + val);
+  }
+
+  
   void WriteBytes(uint8_t const *arr, std::size_t const &size) {
     for (std::size_t i = 0; i < size; ++i) data_[pos_++] = arr[i];
   }
 
   void ReadBytes(uint8_t *arr, std::size_t const &size) {
-    //    assert(false);
-    if( size > bytes_left() ) {
-      std::cerr << "Failed to deserialize following string: " << data_ << std::endl;
-      std::cerr << byte_array::ToHex( data_ ) << std::endl;
-    }
-    detailed_assert(size <= bytes_left());
     for (std::size_t i = 0; i < size; ++i) arr[i] = data_[pos_++];
   }
 

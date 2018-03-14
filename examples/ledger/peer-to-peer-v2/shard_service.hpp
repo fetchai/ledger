@@ -47,10 +47,7 @@ public:
     start_event_ = thread_manager_->OnAfterStart([this]() {
         running_ = true;        
         thread_manager_->io_service().post([this]() {
-            this->Mine();            
-          });
-        thread_manager_->io_service().post([this]() {
-            this->SyncChain(); 
+            this->SyncTransactions(); 
           });        
       });
 
@@ -81,68 +78,84 @@ public:
     thread_manager_->Off( stop_event_ );
   }
 
-  void Mine() 
+
+/*                                               
+ * State maintenance                             
+ * ═══════════════════════════════════════════   
+ * The shard nodes continuously pull data from   
+ * its peers. Each node is responsible for       
+ * requesting the data they want themselves.     
+ *                                               
+ * ┌─────────────────────────────────────────┐   
+ * │            Sync Transactions            │◀─┐
+ * └────────────────────┬────────────────────┘  │
+ *                      │                       │
+ * ┌────────────────────▼────────────────────┐  │
+ * │               Sync Blocks               │  │
+ * └────────────────────┬────────────────────┘  │
+ *                      │                       │
+ * ┌────────────────────▼────────────────────┐  │
+ * │                  Mine                   │──┘
+ * └─────────────────────────────────────────┘   
+ */                                              
+
+  std::vector< transaction_type > txs_;
+  void SyncTransactions() 
   {
 
-    difficulty_mutex_.lock();
-    int diff = difficulty_;
-    difficulty_mutex_.unlock();
-    
-    if(diff == 0) {
-      fetch::logger.Highlight("Exiting mining because diff = 0");            
-      if(running_) {
-        std::this_thread::sleep_for( std::chrono::milliseconds( 500 ));            
-        thread_manager_->io_service().post([this]() {
-            this->Mine();            
-          });    
-      }      
-      return;
-    }
-    
-    
-    auto block = this->GetNextBlock();
-    if(  block.body().transaction_hash == "") {
-      fetch::logger.Highlight("--------======= NO TRRANSACTIONS TO MINE =========--------");
-      std::this_thread::sleep_for( std::chrono::milliseconds( 500 ));           
-    } else {
-      std::chrono::system_clock::time_point started =  std::chrono::system_clock::now();              
-      std::cout << "Mining at difficulty " << diff << std::endl;    
-      auto &p = block.proof();
-      
-      p.SetTarget( diff );
-      while(!p()) ++p;
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    using namespace fetch::protocols;
 
-      std::chrono::system_clock::time_point end =  std::chrono::system_clock::now();
-      double ms =  std::chrono::duration_cast<std::chrono::milliseconds>(end - started).count();
-      TODO("change mining mechanism: ", ms);
-/*
-      if( ms < 500 ) {
-        std::this_thread::sleep_for( std::chrono::milliseconds( int( (500. - ms)  ) ) ); 
+    std::unordered_map< tx_digest_type, transaction_type, fetch::crypto::CallableFNV > incoming_transactions;
+    // Get missing transactions
+    
+    // Get applied transactions (after N)
+
+    // Get latest transactions
+    std::vector< fetch::service::Promise > promises;
+    
+    this->with_peers_do([this, &promises](  std::vector< client_shared_ptr_type > const &clients ) {
+        for(auto const &c: clients) {
+          promises.push_back( c->Call(FetchProtocols::SHARD , ShardRPC::GET_TRANSACTIONS) );
+        }
+      });
+
+
+    txs_.reserve(1000);
+
+    
+    for(auto &p: promises) {
+      txs_.clear();
+      p.As< std::vector< transaction_type > >( txs_ );      
+
+      for(auto &tx: txs_) {
+        tx.UpdateDigest();
+        incoming_transactions[ tx.digest() ] = tx;        
       }
-*/    
-      
-      this->PushBlock( block );
     }
-
-
     
     
+    this->AddBulkTransactions( incoming_transactions );
+    
+    // Get unapplied transactions
     if(running_) {
-      thread_manager_->io_service().post([this]() {
-          this->Mine();            
+      thread_manager_->Post([this]() {
+          this->SyncChain();          
         });    
     }
   }
+  
 
   void SyncChain() 
   {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     using namespace fetch::protocols;
-    
-    std::vector< block_header_type > headers;
 
-    fetch::logger.Highlight("Remove sleep");    
-    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); 
-     
+    //////////
+    // Missing blocks
+    
+    // Working out which blocks are missing
+    std::vector< block_header_type > headers;
     this->with_loose_chains_do([&headers]( std::map< uint64_t, ChainManager::PartialChain > const &chains ) {
         for(auto const &c: chains)
         {
@@ -151,6 +164,7 @@ public:
       });
 
 
+    // Fetching them
     if(headers.size() != 0) {
       std::vector< block_type > blocks;
       
@@ -182,10 +196,33 @@ public:
       }
     }
 
+    ///////////
+    // All blocks
+    /*
+    std::vector< block_type > blocks;
+    std::vector< fetch::service::Promise > promises;    
+    this->with_peers_do([&promises](std::vector< client_shared_ptr_type > clients, std::vector< EntryPoint > const&) {
+        for(auto &c: clients) {
+          promises.push_back( c->Call(FetchProtocols::SHARD, ShardRPC::GET_BLOCKS ) );
+        }
+      });
+
+    std::vector< block_type > newblocks;
+    newblocks.reserve(1000);
+    
+    for(auto &p: promises) {
+      p.As( newblocks );
+      fetch::logger
+      this->AddBulkBlocks( newblocks );
+    }
+    
+    */    
+    
     for(std::size_t i=0; i < 100; ++i) std::cout << "=";
     std::cout << std::endl;
     
     std::cout << "Chain stats:" << std::endl;
+    std::cout << "Block count: " << this->block_count() << std::endl;    
     std::cout << "Transaction count: " << this->transaction_count() << std::endl;
     std::cout << "Unapplied transaction count: " << this->unapplied_transaction_count() << std::endl;
     std::cout << "Applied transaction count: " << this->applied_transaction_count() << std::endl;        
@@ -205,11 +242,68 @@ public:
     
     if(running_) {
       thread_manager_->Post([this]() {
-          this->SyncChain();          
-        }, 3000);     // TODO: Introduce timing policy
+          this->Mine();
+        });
     }    
   }
-  
+
+  void Mine() 
+  {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    for(std::size_t i = 0; i < 1000; ++i) {
+      
+      difficulty_mutex_.lock();
+      int diff = difficulty_;
+      difficulty_mutex_.unlock();
+    
+      if(diff == 0) {
+        fetch::logger.Debug("Exiting mining because diff = 0");            
+        if(running_) {
+          thread_manager_->Post([this]() {
+              this->SyncTransactions(); 
+            }); 
+        } 
+        return;
+      }
+    
+    
+      auto block = this->GetNextBlock();
+      if(  block.body().transaction_hash == "") {
+        fetch::logger.Highlight("--------======= NO TRRANSACTIONS TO MINE =========--------");
+        std::this_thread::sleep_for( std::chrono::milliseconds( 500 ));
+        break;        
+      } else {
+//        std::chrono::system_clock::time_point started =  std::chrono::system_clock::now();              
+        std::cout << "Mining at difficulty " << diff << std::endl;    
+        auto &p = block.proof();
+      
+        p.SetTarget( diff );
+        ++p;
+        
+//        while(!p()) ++p;
+
+//        std::chrono::system_clock::time_point end =  std::chrono::system_clock::now();
+//        double ms =  std::chrono::duration_cast<std::chrono::milliseconds>(end - started).count();
+//        TODO("change mining mechanism: ", ms);
+/*
+  if( ms < 500 ) {
+  std::this_thread::sleep_for( std::chrono::milliseconds( int( (500. - ms)  ) ) ); 
+  }
+*/    
+      
+        this->PushBlock( block );
+      }
+
+    }
+    
+    
+    if(running_) {
+      thread_manager_->Post([this]() {
+          this->SyncTransactions(); 
+        }); 
+    }    
+  }
+
   
   uint16_t port() const 
   {

@@ -4,7 +4,7 @@
 
 #include<mutex>
 #include <thread>
-
+#include<string>
 namespace fetch 
 {
 namespace mutex 

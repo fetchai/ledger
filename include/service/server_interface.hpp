@@ -137,7 +137,7 @@ protected:
 private:
   void ExecuteCall(serializer_type& result, handle_type const &client, serializer_type params) 
   {
-    LOG_STACK_TRACE_POINT;
+//    LOG_STACK_TRACE_POINT;
     
     protocol_handler_type protocol;
     function_handler_type function;

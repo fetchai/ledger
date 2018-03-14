@@ -33,7 +33,7 @@ namespace protocols
 {
 
 
-class ShardController : public fetch::service::HasPublicationFeed 
+class ShardController 
 {
 public:
 
@@ -146,11 +146,22 @@ public:
     
     
   }
-*/  
+*/
+  std::vector< transaction_type > GetTransactions(  ) 
+  {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    return tx_manager_.LastTransactions();    
+  }
+
+  std::vector< block_type > GetLatestBlocks(  ) 
+  {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    return chain_manager_.latest_blocks();    
+  }
+  
 
   bool PushTransaction( transaction_type tx ) {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-    fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
     
     block_mutex_.lock();
 
@@ -164,24 +175,12 @@ public:
     block_mutex_.unlock();
     
     fetch::logger.Warn("Verify transaction");
-    
 
-    // Forwarding
-    this->Publish(ShardFeed::FEED_BROADCAST_TRANSACTION, tx );
-    
-    shard_friends_mutex_.lock();
-    for(auto &c: shard_friends_)
-    {
-      c->Call(FetchProtocols::SHARD,  ShardRPC::PUSH_TRANSACTION, tx );      
-    }
-    shard_friends_mutex_.unlock();
-      
-        
     return true;
   }
 
 
-  block_type GetNextBlock() {
+  block_type GetNextBlock() { // TODO: Move out.
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
     block_body_type body;
@@ -212,18 +211,22 @@ public:
     uint32_t ret = chain_manager_.AddBlock( block );
 
     if( ret != ChainManager::ADD_NOTHING_TODO ) {
-    
-      this->Publish(ShardFeed::FEED_BROADCAST_BLOCK, block );
-      
-      shard_friends_mutex_.lock();
-      for(auto &c: shard_friends_)
-        {
-          c->Call(FetchProtocols::SHARD,  ShardRPC::PUSH_BLOCK, block );      
-        }
-      shard_friends_mutex_.unlock();
+
+      // Promoting block
+      thread_manager_->Post([this, block]() {
+          shard_friends_mutex_.lock();
+          for(auto &c: shard_friends_)
+          {
+            c->Call(FetchProtocols::SHARD,  ShardRPC::PUSH_BLOCK, block );      
+          }
           
-      if(ret == ChainManager::ADD_CHAIN_END) {
-        // FInally we attach the block if it does not belong to a loose chain
+          shard_friends_mutex_.unlock();
+        });
+      
+
+      // FInally we attach the block if it does not belong to a loose chain      
+      if(ret == ChainManager::ADD_CHAIN_END)
+      {
         chain_manager_.AttachBlock(block.header(), block);
       }
     }
@@ -267,22 +270,7 @@ public:
     block_mutex_.lock();    
     block_type head_copy = chain_manager_.head();
     block_mutex_.unlock();
-    
-    fetch::logger.Debug("Subscribing");
-    
-    client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_BLOCK,
-      new service::Function< void(block_type) >([this]( block_type const& block) 
-        {
-          this->PushBlock(block);          
-        }));
-    
-    client->Subscribe(FetchProtocols::SHARD,  ShardFeed::FEED_BROADCAST_TRANSACTION,
-      new service::Function< void(transaction_type) >([this]( transaction_type const& tx) 
-        {
-          this->PushTransaction(tx);  
-        }));
-    
-    
+   
     shard_friends_mutex_.lock();
     shard_friends_.push_back(client);
     friends_details_.push_back(d);
@@ -315,22 +303,33 @@ public:
     PushBlock(comp_head);
   }
 
-  void ListenTo(std::vector< EntryPoint > list) 
+  void ListenTo(std::vector< EntryPoint > list) // TODO: Rename
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
+    fetch::logger.Highlight("Updating connectivity for ", details_.host, ":", details_.port);
+    
     for(auto &e: list) {
+      fetch::logger.Highlight("  - ", e.host, ":", e.port,", shard ", e.shard);      
       details_mutex_.lock();
-      bool self = (e == details_);
+      bool self = (e.host == details_.host) && (e.port == details_.port);
+      bool same_shard = (e.shard == details_.shard);
       details_mutex_.unlock();
       
       if(self) {
         fetch::logger.Debug("Skipping myself");        
         continue;
       }
+
+      if(!same_shard) {
+        fetch::logger.Debug("Connectiong not belonging to same shard");
+        
+        continue;
+      }
+      
       
       // TODO: implement max connectivity
-      // TODOD: Check shard
+
       bool found = false;
       shard_friends_mutex_.lock();    
       for(auto &d: friends_details_)
@@ -386,6 +385,15 @@ public:
     shard_friends_mutex_.unlock();
   }
 
+  void with_peers_do( std::function< void( std::vector< client_shared_ptr_type >  ) > fnc ) 
+  {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    
+    shard_friends_mutex_.lock();
+    fnc( shard_friends_); 
+    shard_friends_mutex_.unlock();
+  }
+  
   void with_blocks_do( std::function< void(block_type, std::map< block_header_type, block_type >)  > fnc ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
@@ -433,6 +441,12 @@ public:
     std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
     return tx_manager_.size();        
   }
+
+  std::size_t block_count() const 
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
+    return chain_manager_.size();        
+  }
   
   void VerifyState() {
     std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
@@ -440,6 +454,20 @@ public:
       fetch::logger.Error("Could not verify state");
       exit(-1);
     }
+  }
+
+  bool AddBulkTransactions(std::unordered_map< tx_digest_type, transaction_type, typename TransactionManager::hasher_type > const &new_txs ) 
+  {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
+    return tx_manager_.AddBulkTransactions(new_txs ) ;    
+  }
+
+  bool AddBulkBlocks(std::vector< block_type > const &new_blocks ) 
+  {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
+    return chain_manager_.AddBulkBlocks(new_blocks ) ;    
   }
   
 private:
