@@ -13,11 +13,48 @@ namespace protocols
   
 struct NodeDetails 
 {
+  
   bool operator==(NodeDetails const& other) 
   {
-    return public_key == other.public_key;
+    if(public_key != other.public_key)
+    {
+      return false;      
+    }
+    
+    if( default_port != other.default_port )
+    {
+      return false;      
+    }
+    
+    if( default_http_port != other.default_http_port )
+    {
+      return false;      
+    }
+
+    if( entry_points.size() != other.entry_points.size() )
+    {
+      return false;      
+    }
+
+    for(std::size_t i = 0; i < entry_points.size(); ++i)
+    {
+      if(entry_points[i] != entry_points[i])
+      {
+        return false;        
+      }
+      
+    }
+    
+    
+    return true;
   }
 
+  bool operator!=(NodeDetails const& other)
+  {
+    return !(this->operator==(other));    
+  }
+    
+  
   byte_array::ByteArray public_key;
   std::vector< EntryPoint > entry_points;
   

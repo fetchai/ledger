@@ -1,6 +1,6 @@
 #ifndef BYTE_ARRAY_BASIC_BYTE_ARRAY_HPP
 #define BYTE_ARRAY_BASIC_BYTE_ARRAY_HPP
-
+#include "logger.hpp" 
 #include "memory/shared_array.hpp"
 
 #include <algorithm>
@@ -211,8 +211,6 @@ public:
     return n;
   }  
 
-  
-  
 protected:
   // Non-const functions go here
   
@@ -226,9 +224,10 @@ protected:
     length_ = n;
   }
 
+
   void Reserve(std::size_t const &n) {
     shared_array_type newdata(n);
-
+    
     std::size_t M = std::min(n, data_.size());
     std::size_t i = 0;
     for (; i < M; ++i) newdata[i] = data_[i];

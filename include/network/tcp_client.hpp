@@ -144,7 +144,7 @@ private:
 
   void ReadHeader() 
   {
-    LOG_STACK_TRACE_POINT; 
+    LOG_STACK_TRACE_POINT;
     auto cb = [=](std::error_code ec, std::size_t)      
       {
         LOG_STACK_TRACE_POINT;    // Deliberately breaking the chain

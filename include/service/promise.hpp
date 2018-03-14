@@ -146,6 +146,17 @@ public:
     return ret;
   }
 
+
+  template <typename T>
+  void As(T &ret) 
+  {
+    LOG_STACK_TRACE_POINT;    
+    Wait();
+    serializer_type ser(reference_->value());
+    ser >> ret;
+  }
+  
+  
   template <typename T>
   operator T() 
   {

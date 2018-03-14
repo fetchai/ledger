@@ -33,7 +33,6 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -g -Wall  -Werror -Wno-unused-function ")
 
-add_definitions( -msse4.2 )
 #set(CMAKE_BUILD_TYPE RELEASE)
 set(CMAKE_BUILD_TYPE DEBUG)
 

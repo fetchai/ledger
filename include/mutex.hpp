@@ -35,7 +35,7 @@ class DebugMutex : public AbstractMutex
       filename_(filename), line_(line)
     {
       LOG_STACK_TRACE_POINT;
-      
+
       running_ = true;
       created_ =  std::chrono::system_clock::now();        
       thread_ = std::thread([=](){
@@ -78,7 +78,7 @@ class DebugMutex : public AbstractMutex
     std::thread thread_;
     std::chrono::system_clock::time_point created_;
     std::atomic< bool > running_;
-    
+
   };
    
     
@@ -92,6 +92,9 @@ public:
   void lock() 
   {
     LOG_STACK_TRACE_POINT;
+    lock_mutex_.lock();    
+    locked_ =   std::chrono::high_resolution_clock::now();
+    lock_mutex_.unlock();
     
     std::mutex::lock();
 
@@ -103,9 +106,16 @@ public:
   void unlock() 
   {
     LOG_STACK_TRACE_POINT;
+
+    lock_mutex_.lock();
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    double total_time =  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - locked_).count();    
+    lock_mutex_.unlock();    
     
     timeout_.reset(nullptr);     
-    fetch::logger.RegisterUnlock( this );
+    fetch::logger.RegisterUnlock( this, total_time, file_, line_ );
+
+    
     
     std::mutex::unlock();
 
@@ -134,8 +144,9 @@ public:
   }
   
 private:
-  std::map< std::thread::id, LockInfo > locker_;
   std::mutex lock_mutex_;
+  std::chrono::high_resolution_clock::time_point locked_;
+  
   int line_ = 0;
   std::string file_ = "";
   std::unique_ptr< MutexTimeout > timeout_;
@@ -145,8 +156,11 @@ private:
 
 
 
-
+#ifndef NDEBUG
 typedef DebugMutex Mutex;
+#else
+typedef ProductionMutex Mutex;
+#endif
 };
 };
 

@@ -47,29 +47,32 @@ class ContextDetails
 {
 public:
   typedef std::shared_ptr< ContextDetails > shared_type;
-  ContextDetails() :
+  ContextDetails(void* instance = nullptr) :
     context_("(root)"),
     filename_(""),
-    line_(0)
+    line_(0),
+    instance_(instance)
   {
     id_ = std::this_thread::get_id();    
   }
   
-  ContextDetails(shared_type ctx, shared_type parent, std::string const & context, std::string const & filename = "", std::size_t const &line = 0) :
+  ContextDetails(shared_type ctx, shared_type parent, std::string const & context, std::string const & filename = "", std::size_t const &line = 0, void* instance=nullptr) :
     context_(context),
     filename_(filename),
     line_(line),
     parent_(parent),  
-    derived_from_(ctx)
+    derived_from_(ctx),
+    instance_(instance)    
   {
     id_ = std::this_thread::get_id();    
   }
   
-  ContextDetails(shared_type parent, std::string const & context, std::string const & filename = "", std::size_t const &line = 0) :
+  ContextDetails(shared_type parent, std::string const & context, std::string const & filename = "", std::size_t const &line = 0, void* instance=nullptr) :
     context_(context),
     filename_(filename),
     line_(line),
-    parent_(parent)
+    parent_(parent),
+    instance_(instance)    
   {
     id_ = std::this_thread::get_id();        
   }
@@ -88,11 +91,20 @@ public:
     return derived_from_;
   }
   
-  std::string context() const { return context_; }  
+  std::string context(std::size_t const &n = std::size_t(-1)) const {
+    if(context_.size() > n )
+      return context_.substr(0, n);
+    return context_;    
+  }  
   std::string filename() const { return filename_; }
   std::size_t line() const { return line_; }  
 
-  std::thread::id thread_id() const { return id_; }  
+  std::thread::id thread_id() const { return id_; }
+  void* instance() const 
+  {
+    return instance_;
+  }
+  
 private:
   std::string context_;  
   std::string filename_;
@@ -100,6 +112,7 @@ private:
   shared_type parent_;
   shared_type derived_from_;
   std::thread::id id_;
+  void *instance_ = nullptr;
   
 };
   
@@ -107,9 +120,9 @@ class Context
 {
 public:
   typedef std::shared_ptr< ContextDetails > shared_type;
-  Context();    
-  Context(shared_type ctx, std::string const & context, std::string const & filename = "", std::size_t const &line = 0);  
-  Context(std::string const & context, std::string const & filename = "", std::size_t const &line = 0) ;
+  Context( void* instance = nullptr );    
+  Context(shared_type ctx, std::string const & context, std::string const & filename = "", std::size_t const &line = 0,  void* instance = nullptr );  
+  Context(std::string const & context, std::string const & filename = "", std::size_t const &line = 0,  void* instance = nullptr ) ;
 
   Context(Context const &context) 
   {
@@ -120,7 +133,8 @@ public:
   
   Context const& operator=(Context const &context) = delete;
   
-  ~Context();
+  ~Context();  
+  
   
   shared_type details() const 
   {
@@ -130,7 +144,7 @@ public:
 private:
   shared_type details_;
   bool primary_ = true;
-  
+  std::chrono::high_resolution_clock::time_point created_;
 };
 
 
@@ -189,9 +203,13 @@ public:
     
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
     std::cout << "[ " << GetColor(color,bg_color) << std::put_time(std::localtime(&now_c), "%F %T") ;
-    std::cout << "." << std::setw(3) <<millis <<  DefaultAttributes() << ", #" << thread_number;
-    std::cout << ": " << std::setw(20) << ctx->context() <<  " ] ";
+
+    std::cout << "." << std::setw(3) <<millis <<  DefaultAttributes() << ", #" << std::setw(2) << thread_number;
+    std::cout << ": " << std::setw(15) << ctx->instance() << std::setw(20) << ctx->context(18) <<  " ] ";
+    std::cout << GetColor(color,bg_color);    
+
 #endif
+
   }
 
   template< typename T >
@@ -212,8 +230,10 @@ public:
 
   virtual void CloseEntry( int type ) 
   {
+
 #ifndef FETCH_DISABLE_COUT_LOGGING    
-    std::cout << std::endl;
+    using namespace fetch::commandline::VT100;    
+    std::cout << DefaultAttributes() << std::endl;    
 #endif
   }
 private:
@@ -236,6 +256,7 @@ public:
   template< typename ...Args >
   void Info(Args ... args) 
   {
+
     std::lock_guard< std::mutex > lock( mutex_ );
     this->log_->StartEntry(DefaultLogger::INFO, TopContextImpl() );    
     Unroll<Args...>::Append( this, args... );
@@ -304,16 +325,37 @@ public:
   {
     std::lock_guard< std::mutex > lock(mutex_);
     active_locks_.insert( ptr );
-    
+
+
   }
 
-  void RegisterUnlock(fetch::mutex::AbstractMutex *ptr )
+  void RegisterUnlock(fetch::mutex::AbstractMutex *ptr, double spent_time, std::string filename, int line )
   {
     std::lock_guard< std::mutex > lock(mutex_);
+
+    std::stringstream ss;
+    ss << filename <<  line;
+    std::string s = ss.str();
+    if(mutex_timings_.find(s) == mutex_timings_.end() )
+    {
+      TimingDetails t;
+      t.line = line;
+      t.context = "Mutex";
+      t.filename = filename;
+        
+      mutex_timings_[s] = t;        
+    }
+
+    auto &t = mutex_timings_[s];
+    t.total += spent_time;
+    if(t.peak < spent_time) t.peak = spent_time;
+    
+    ++t.calls;          
+    
     auto it = active_locks_.find( ptr );
     if( it != active_locks_.end() )
     {
-      active_locks_.erase( it );      
+      active_locks_.erase( it );
     }
     
   }
@@ -358,9 +400,99 @@ public:
     StackTrace(ctx, max, show_locks);    
   }
 
- 
+  void UpdateContextTime( shared_context_type ctx, double spent_time ) 
+  {
+    std::lock_guard< std::mutex > lock( timing_mutex_ );    
+    std::stringstream ss;
+    ss << ctx->context() << ", " << ctx->filename() << " " << ctx->line();
+    std::string s = ss.str();
+    if(timings_.find(s) == timings_.end() )
+    {
+      TimingDetails t;
+      t.line = ctx->line();
+      t.context = ctx->context();
+      t.filename = ctx->filename();
+        
+      timings_[s] = t;        
+    }
+
+    auto &t = timings_[s];
+    t.total += spent_time;
+    if(t.peak < spent_time) t.peak = spent_time;
+      
+    ++t.calls;      
+  }
+    
+    void PrintTimings(std::size_t max = 50) 
+  {
+    std::lock_guard< std::mutex > lock( timing_mutex_ );
+    std::lock_guard< std::mutex > lock2( mutex_ );    
+    std::vector< TimingDetails > all_timings;
+    for(auto &t : timings_) {
+      all_timings.push_back(t.second);     
+    }
+// [](TimingDetails const &a, TimingDetails const &b) { return (a.total / a.calls) > (b.total / b.calls); }
+    std::sort(all_timings.begin(), all_timings.end(), [](TimingDetails const &a, TimingDetails const &b) { return (a.peak) > (b.peak); });
+    std::size_t N = std::min(max, all_timings.size());
+
+    std::cout << "Profile for monitored function calls: " << std::endl;    
+    for(std::size_t i = 0; i < N; ++i) {
+      std::cout << std::setw(3) << i << std::setw(20) << all_timings[i].total / all_timings[i].calls << " ";
+      std::cout << std::setw(20) << all_timings[i].peak << " ";      
+      std::cout << std::setw(20) <<  all_timings[i].calls << " ";      
+      std::cout << std::setw(20) << all_timings[i].total << " ";
+      std::cout << all_timings[i].context << " " << all_timings[i].filename << " " <<  all_timings[i].line;
+      std::cout << std::endl;      
+    }
+    std::cout << std::endl;
+    
+  }
+
+
+  void PrintMutexTimings(std::size_t max = 50) 
+  {
+    std::lock_guard< std::mutex > lock2( mutex_ );
+    std::lock_guard< std::mutex > lock( timing_mutex_ );
+
+    std::vector< TimingDetails > all_timings;
+    for(auto &t : mutex_timings_) {
+      all_timings.push_back(t.second);     
+    }
+
+    std::sort(all_timings.begin(), all_timings.end(), [](TimingDetails const &a, TimingDetails const &b) { return (a.total / a.calls) > (b.total / b.calls); });
+    std::size_t N = std::min(max, all_timings.size());
+
+    std::cout << "Mutex timings: " << std::endl;    
+    for(std::size_t i = 0; i < N; ++i) {
+      std::cout << std::setw(3) << i << std::setw(20) << all_timings[i].total / all_timings[i].calls << " ";
+      std::cout << std::setw(20) << all_timings[i].peak << " ";            
+      std::cout << std::setw(20) <<  all_timings[i].calls << " ";      
+      std::cout << std::setw(20) << all_timings[i].total << " ";
+      std::cout << all_timings[i].context << " " << all_timings[i].filename << " " <<  all_timings[i].line;
+      std::cout << std::endl;      
+    }
+    std::cout << std::endl;
+    
+  }
+  
 private:
+  struct TimingDetails 
+  {
+    double total = 0;
+    double peak = 0;    
+    uint64_t calls = 0;
+    int line = 0;    
+    std::string context;
+    std::string filename;
+  };
+  
+
   std::unordered_set< fetch::mutex::AbstractMutex * > active_locks_;
+  std::unordered_map< std::string, TimingDetails > mutex_timings_;
+    
+  std::unordered_map< std::string, TimingDetails > timings_;
+
+  mutable std::mutex timing_mutex_;
   
   shared_context_type TopContextImpl()
   {    
@@ -436,27 +568,34 @@ log::details::LogWrapper logger;
 
 
 namespace log {
-Context::Context() 
+Context::Context( void* instance) 
 {
-  details_ = std::make_shared< ContextDetails >();
+  created_ =   std::chrono::high_resolution_clock::now();
+  details_ = std::make_shared< ContextDetails >(instance);
   fetch::logger.SetContext( details_ );
 }
 
  
-Context::Context(shared_type ctx,  std::string const & context, std::string const & filename, std::size_t const &line)
+Context::Context(shared_type ctx,  std::string const & context, std::string const & filename, std::size_t const &line, void* instance)
 {
-  details_ = std::make_shared< ContextDetails >(ctx, fetch::logger.TopContext(), context, filename, line);
+  created_ =   std::chrono::high_resolution_clock::now();  
+  details_ = std::make_shared< ContextDetails >(ctx, fetch::logger.TopContext(), context, filename, line, instance);
   fetch::logger.SetContext( details_ );  
 }
 
-Context::Context(std::string const & context , std::string const & filename, std::size_t const &line ) 
+Context::Context(std::string const & context , std::string const & filename, std::size_t const &line,  void* instance  ) 
 {
-  details_ = std::make_shared< ContextDetails >(fetch::logger.TopContext(), context, filename, line);    
+  created_ = std::chrono::high_resolution_clock::now();
+  details_ = std::make_shared< ContextDetails >(fetch::logger.TopContext(), context, filename, line, instance);    
   fetch::logger.SetContext( details_ );
 }
 
 Context::~Context() 
 {
+  std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+  double total_time =  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - created_).count();
+  fetch::logger.UpdateContextTime( details_, total_time );
+  
   if(primary_ && details_->parent() )
   {    
     fetch::logger.SetContext( details_->parent() );
@@ -478,10 +617,15 @@ Context::~Context()
     #endif
 #endif
 
-
+#ifndef NDEBUG
 #define FETCH_HAS_STACK_TRACE
+#endif
 
 #ifdef FETCH_HAS_STACK_TRACE
+
+#define LOG_STACK_TRACE_POINT_WITH_INSTANCE                           \
+  fetch::log::Context log_context(__FUNCTION_NAME__, __FILE__, __LINE__, this); 
+
 
 #define LOG_STACK_TRACE_POINT \
   fetch::log::Context log_context(__FUNCTION_NAME__, __FILE__, __LINE__); 

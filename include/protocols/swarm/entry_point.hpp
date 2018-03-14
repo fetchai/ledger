@@ -24,7 +24,21 @@ struct EntryPoint
   uint32_t shard = 0;
   uint32_t port = 1337;
   uint32_t http_port = 8080;
-  uint64_t configuration = 0;  
+  uint64_t configuration = 0;
+
+  bool operator==(EntryPoint const& other) 
+  {
+    return (shard == other.shard) && (port == other.port) && (http_port == other.http_port) &&      
+      (configuration == other.configuration) && (host == other.host);    
+  }
+  
+  bool operator!=(EntryPoint const& other)
+  {
+    return !(this->operator==(other));    
+  }
+
+
+  
 };
 
 };
