@@ -88,6 +88,7 @@ public:
   
   bool AddBulkTransactions(std::unordered_map< tx_digest_type, transaction_type, hasher_type > const &new_txs ) 
   {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     bool ret = false;    
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
     for(auto const& t: new_txs) {

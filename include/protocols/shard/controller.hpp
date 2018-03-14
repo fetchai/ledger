@@ -209,7 +209,8 @@ public:
 
     block_mutex_.lock();
     uint32_t ret = chain_manager_.AddBlock( block );
-
+    block_mutex_.unlock();
+                            
     if( ret != ChainManager::ADD_NOTHING_TODO ) {
 
       // Promoting block
@@ -230,9 +231,9 @@ public:
         chain_manager_.AttachBlock(block.header(), block);
       }
     }
-    block_mutex_.unlock();
+  
 
-    VerifyState();
+//    VerifyState();
   }
 
   void ConnectTo(std::string const &host, uint16_t const &port ) 
