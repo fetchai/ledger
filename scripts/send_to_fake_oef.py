@@ -6,6 +6,93 @@ import pdb
 def jsonPrint(r):
     return json.dumps(r.json(), indent=4, sort_keys=True)+"\n"
 
+# Price query demo for Josh
+
+# Test Instances to register (all price 99)
+instanceJSON = { "instance" :
+                    {"dataModel":
+                       {
+                         "name": "weather_data",
+                         "attributes": [ {"name" : "price", "type" : "int", "required" : True }, { "name": "has_wind_speed", "type": "bool", "required": False }, { "name": "has_temperature", "type": "bool", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True } ],
+                         "keywords": ["one", "two", "three"],
+                         "description": "All possible weather data."
+                       },
+                       "values": [ {"price" : "99"}, { "has_wind_speed": "true" }, { "has_temperature": "true" }, { "latitude": "true" }, { "longitude": "true" } ]},
+                 "ID": "Josh" }
+
+secondInstanceJSON = { "instance" :
+                    {"dataModel":
+                       {
+                         "name": "weather_data",
+                         "attributes": [ {"name" : "price", "type" : "int", "required" : True }, { "name": "has_wind_speed", "type": "bool", "required": False }, { "name": "has_temperature", "type": "bool", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True } ],
+                         "keywords": ["one", "two", "three"],
+                         "description": "All possible weather data."
+                       },
+                       "values": [ {"price" : "99"}, { "has_wind_speed": "true" }, { "has_temperature": "true" }, { "latitude": "true" }, { "longitude": "true" } ]},
+                 "ID": "Nathan" }
+
+thirdInstJSON = { "instance" :
+                    {"dataModel":
+                       {
+                         "name": "weather_data",
+                         "attributes": [ {"name" : "price", "type" : "int", "required" : True }, { "name": "has_wind_speed", "type": "bool", "required": False }, { "name": "has_temperature", "type": "bool", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True } ],
+                         "keywords": ["one", "two", "three"],
+                         "description": "All possible weather data."
+                       },
+                       "values": [ {"price" : "99"}, { "has_wind_speed": "true" }, { "has_temperature": "true" }, { "latitude": "false" }, { "longitude": "false" } ]},
+                 "ID": "Jon" }
+
+
+# register these
+r = requests.post('http://localhost:8080/register-instance', json=thirdInstJSON)
+r = requests.post('http://localhost:8080/register-instance', json=secondInstanceJSON)
+r = requests.post('http://localhost:8080/register-instance', json=instanceJSON)
+
+# Now Query against the price
+queryJSON_success = {
+        "constraints": [
+            {
+                "attribute": {
+                    "name": "price",
+                    "type": "int",
+                    "required": True
+                    },
+                "constraint": {
+                    "type": "relation",
+                    "op": "<=",
+                    "value_type": "int",
+                    "value": 99
+                    }
+            }],
+        "keywords" : [ "one"]
+        }
+
+queryJSON_fail = {
+        "constraints": [
+            {
+                "attribute": {
+                    "name": "price",
+                    "type": "int",
+                    "required": True
+                    },
+                "constraint": {
+                    "type": "relation",
+                    "op": ">",
+                    "value_type": "int",
+                    "value": 101
+                    }
+            }],
+        "keywords" : [ "one"]
+        }
+
+r = requests.post('http://localhost:8080/query-for-agents-instances', json=queryJSON_success)
+print "price query1", jsonPrint(r)
+
+r = requests.post('http://localhost:8080/query-for-agents-instances', json=queryJSON_fail)
+print "price query2", jsonPrint(r)
+
+exit(1)
+
 # Test Instance to register
 instanceJSON = { "instance" :
                     {"dataModel":
