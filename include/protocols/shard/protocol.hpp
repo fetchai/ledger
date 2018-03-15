@@ -114,9 +114,10 @@ public:
     auto list_blocks = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       LOG_STACK_TRACE_POINT;
       std::stringstream response;
+      fetch::logger.Highlight(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> LIST BLOCK");
+      
       response << "{\"blocks\": [";  
       this->with_blocks_do([&response](ShardController::block_type const & head, std::map< ShardController::block_header_type, ShardController::block_type > chain) {
-
           response << "{";
           response << "\"block_hash\": \"" << byte_array::ToBase64( head.header() ) << "\",";
           response << "\"previous_hash\": \"" << byte_array::ToBase64( head.body().previous_hash ) << "\",";
@@ -144,6 +145,8 @@ public:
         });
       
       response << "]}";
+
+      fetch::logger.Highlight( response.str() );
       
       std::cout << response.str() << std::endl;
             

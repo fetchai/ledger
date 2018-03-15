@@ -155,6 +155,7 @@ public:
     // Missing blocks
     
     // Working out which blocks are missing
+    /*
     std::vector< block_header_type > headers;
     this->with_loose_chains_do([&headers]( std::map< uint64_t, ChainManager::PartialChain > const &chains ) {
         for(auto const &c: chains)
@@ -162,9 +163,10 @@ public:
           headers.push_back(c.second.next_missing);          
         }        
       });
-
+    */
 
     // Fetching them
+    /*
     if(headers.size() != 0) {
       std::vector< block_type > blocks;
       
@@ -195,10 +197,10 @@ public:
         this->PushBlock(b);        
       }
     }
-
+    */
     ///////////
     // All blocks
-    /*
+
     std::vector< block_type > blocks;
     std::vector< fetch::service::Promise > promises;    
     this->with_peers_do([&promises](std::vector< client_shared_ptr_type > clients, std::vector< EntryPoint > const&) {
@@ -212,11 +214,10 @@ public:
     
     for(auto &p: promises) {
       p.As( newblocks );
-      fetch::logger
       this->AddBulkBlocks( newblocks );
     }
     
-    */    
+
     
     for(std::size_t i=0; i < 100; ++i) std::cout << "=";
     std::cout << std::endl;
@@ -228,6 +229,8 @@ public:
     std::cout << "Applied transaction count: " << this->applied_transaction_count() << std::endl;        
     for(std::size_t i=0; i < 100; ++i) std::cout << "=";
     std::cout << std::endl;
+//    std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) );
+    
     if( (this->unapplied_transaction_count() == 0) &&
       (this->applied_transaction_count() > 0 ) ) {
       
@@ -250,7 +253,8 @@ public:
   void Mine() 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-    for(std::size_t i = 0; i < 1000; ++i) {
+    for(std::size_t i = 0; i < 100; ++i) {
+      fetch::logger.Highlight("Mining cycle ", i);
       
       difficulty_mutex_.lock();
       int diff = difficulty_;
@@ -270,7 +274,7 @@ public:
       auto block = this->GetNextBlock();
       if(  block.body().transaction_hash == "") {
         fetch::logger.Highlight("--------======= NO TRRANSACTIONS TO MINE =========--------");
-        std::this_thread::sleep_for( std::chrono::milliseconds( 500 ));
+//        std::this_thread::sleep_for( std::chrono::milliseconds( 500 ));
         break;        
       } else {
 //        std::chrono::system_clock::time_point started =  std::chrono::system_clock::now();              
@@ -279,9 +283,14 @@ public:
       
         p.SetTarget( diff );
         ++p;
-        
+        p();        
+        double work = fetch::math::Log( p.digest() ); // TODO: Check formula
+        block.meta_data().work = work;        
+        block.meta_data().total_work += work;
 //        while(!p()) ++p;
 
+
+        
 //        std::chrono::system_clock::time_point end =  std::chrono::system_clock::now();
 //        double ms =  std::chrono::duration_cast<std::chrono::milliseconds>(end - started).count();
 //        TODO("change mining mechanism: ", ms);
@@ -312,7 +321,7 @@ public:
 
   
 private:
-  int difficulty_ = 0;
+  int difficulty_ = 1;
   mutable fetch::mutex::Mutex difficulty_mutex_;
   
   fetch::network::ThreadManager *thread_manager_;    

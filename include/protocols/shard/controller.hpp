@@ -70,14 +70,13 @@ public:
     
     block_body_type genesis_body;
     block_type genesis_block;
-
+    
     genesis_body.previous_hash = "genesis";
     genesis_body.transaction_hash = "genesis";
+
     genesis_block.SetBody( genesis_body );
 
-    genesis_block.meta_data().total_work = 0;
-    genesis_block.meta_data().block_number = 0;
-
+    genesis_block.meta_data().block_number = 0;    
     
     PushBlock( genesis_block );    
   }
@@ -185,21 +184,21 @@ public:
 
     block_body_type body;
     block_type block;
-
     
     block_mutex_.lock();    
     body.previous_hash = chain_manager_.head().header();
 
-//    fetch::logger.Debug("Transaction queue has ", tx_manager_.unapplied_count(), " elements");
-    
     if( !tx_manager_.has_unapplied() ) {
       body.transaction_hash =  "";
     } else {
-      body.transaction_hash =  tx_manager_.NextDigest();      
+      body.transaction_hash =  tx_manager_.NextDigest();
     }
     block_mutex_.unlock();
     
-    block.SetBody( body );
+    block.SetBody( body );   
+    block.meta_data().total_work = chain_manager_.head().meta_data().total_work;
+    block.meta_data().block_number = chain_manager_.head().meta_data().block_number + 1;    
+    
     return block;
     
   }
@@ -210,28 +209,6 @@ public:
     block_mutex_.lock();
     uint32_t ret = chain_manager_.AddBlock( block );
     block_mutex_.unlock();
-                            
-    if( ret != ChainManager::ADD_NOTHING_TODO ) {
-
-      // Promoting block
-      thread_manager_->Post([this, block]() {
-          shard_friends_mutex_.lock();
-          for(auto &c: shard_friends_)
-          {
-            c->Call(FetchProtocols::SHARD,  ShardRPC::PUSH_BLOCK, block );      
-          }
-          
-          shard_friends_mutex_.unlock();
-        });
-      
-
-      // FInally we attach the block if it does not belong to a loose chain      
-      if(ret == ChainManager::ADD_CHAIN_END)
-      {
-        chain_manager_.AttachBlock(block.header(), block);
-      }
-    }
-  
 
 //    VerifyState();
   }
