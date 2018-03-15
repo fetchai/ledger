@@ -17,6 +17,10 @@ class ByteArrayBuffer {
     data_.Resize(data_.size() + val);
   }
 
+  void Reserve(std::size_t const &val) {
+    data_.Reserve(data_.size() + val);
+  }  
+
   void WriteBytes(uint8_t const *arr, std::size_t const &size) {
     for (std::size_t i = 0; i < size; ++i) data_[pos_++] = arr[i];
   }

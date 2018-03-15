@@ -6,6 +6,7 @@
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
+
 int main2() {
   
   // Client setup
@@ -69,8 +70,21 @@ int main2() {
 }
 
 int main() {
-//  while(true) main2();
-  main2();
+
+
+  fetch::network::ThreadManager tm(1);
+  tm.Start();                                                                // Started thread manager before client construction!    
+  ServiceClient< fetch::network::TCPClient > client("localhost", 8080, &tm);
+  
+  auto promise = client.Call( MYPROTO,SLOWFUNCTION, 2, 7 );
+  
+  if(!promise.Wait(500)){ // wait 500 ms for a response
+    std::cout << "no response from node!" << std::endl;
+  } else {
+    std::cout << "response from node!" << std::endl << std::endl;
+  }
+  
+  tm.Stop();
   
   return 0;
 }

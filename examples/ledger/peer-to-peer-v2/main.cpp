@@ -70,12 +70,15 @@ private:
   void ConnectShards() 
   {
     std::cout << "Connecting shards" << std::endl;
+    uint32_t i = 0;    
     for(auto &s: shards_) {
-      std::cout << " - localhost " <<  s->port() << std::endl;      
-      controller_.ConnectShard( "localhost", s->port() );      
+      std::cout << " - localhost " <<  s->port() << std::endl;
+      auto client = controller_.ConnectShard( "localhost", s->port() );
+
+//      client->Call(fetch::protocols::FetchProtocols::SHARD, ShardRPC::SET_SHARD_NUMBER, i, uint32_t(shards_.size()) );
+      ++i;
     }
-  }
-  
+  } 
   
   fetch::network::ThreadManager *thread_manager_;      
   FetchSwarmService controller_;

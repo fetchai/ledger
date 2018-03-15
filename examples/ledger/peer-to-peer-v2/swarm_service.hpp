@@ -47,7 +47,7 @@ public:
     start_event_ = thread_manager_->OnAfterStart([this]() {
         running_ = true;        
         thread_manager_->io_service().post([this]() {
-            this->TrackPeers();
+            this->UpdateNodeShardDetails();
           });
       });
 
@@ -75,12 +75,172 @@ public:
   {
 
   }
+/*                                               
+ *  Connectivity maintenance                     
+ *  ═══════════════════════════════════════════  
+ *  The swarm node continuously updates the      
+ *  connectivity to other nodes and ensure that  
+ *  shards are connected to peers. This is done  
+ *  through following event loop:                
+ * ┌─────────────────────────────────────────┐   
+ * │        Update Node Shard Details        │◀─┐
+ * └────────────────────┬────────────────────┘  │
+ *                      │                       │
+ * ┌────────────────────▼────────────────────┐  │
+ * │           Update Peer Details           │  │
+ * └────────────────────┬────────────────────┘  │
+ *                      │                       │
+ * ┌────────────────────▼────────────────────┐  │
+ * │               Track peers               │  │
+ * └────────────────────┬────────────────────┘  │
+ *                      │                       │
+ * ┌────────────────────▼────────────────────┐  │
+ * │        Update shard connectivity        │──┘
+ * └─────────────────────────────────────────┘   
+ */
+  void UpdateNodeShardDetails() 
+  {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    fetch::logger.PrintTimings();
+    fetch::logger.PrintMutexTimings();
+    
+    using namespace fetch::protocols;
+    std::vector< EntryPoint > entries;
 
+    // Updating shard list
+    this->with_shards_do([this, &entries](std::vector< client_shared_ptr_type > const &sh,
+        std::vector< EntryPoint > &det ) {
+        std::size_t i =0;
+        
+        for(auto &s: sh)
+        {
+          auto p = s->Call(FetchProtocols::SHARD,  ShardRPC::SHARD_NUMBER);
+          if(! p.Wait(2300) )
+          {
+            fetch::logger.Error("Shard timed out!");
+            continue;        
+          }
+
+          det[i].shard = p.As<uint32_t>();          
+          entries.push_back(det[i]);          
+          ++i;          
+        }
+      });
+    
+    // Updating node list
+    this->with_node_details([this, &entries](NodeDetails &details ) {
+        for(auto &e: details.entry_points) {
+          for(auto &ref: entries) {
+            if( (ref.host == e.host) && (e.port == ref.port) ) {
+              e.shard = ref.shard;
+              break;              
+            }            
+          }
+        }
+    });
+  
+    if(running_) {
+      thread_manager_->io_service().post([this]() {
+          this->UpdatePeerDetails();          
+        });    
+    }    
+  }
+  
+  
+  void UpdatePeerDetails() 
+  {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    using namespace fetch::protocols;
+    fetch::logger.Highlight("Starting Update Connectivity Loop");
+    
+    NodeDetails details;    
+    this->with_node_details( [&details](NodeDetails const &d) {
+        details = d;
+      });    
+
+
+    // Updating outgoing details
+
+    fetch::logger.Highlight("Updating outgoing");    
+    std::map< fetch::byte_array::ByteArray, NodeDetails > all_details;
+
+    this->with_peers_do( [&all_details, details](std::vector< client_shared_ptr_type >  const &peers,
+        std::map< uint64_t, NodeDetails >& peer_details) {
+        for(auto &c: peers) {
+          auto p = c->Call(FetchProtocols::SWARM, SwarmRPC::HELLO, details);          
+          
+          if(!p.Wait(2000)) {
+            fetch::logger.Error("Peer connectivity failed! TODO: Trim connections and inform shards");
+            TODO_FAIL("Peer connectivity failed! TODO: Trim connections and inform shards");
+          }
+          
+          auto ref = p.As< NodeDetails >();
+          auto &d = peer_details[c->handle()];
+          all_details[ref.public_key] = ref;
+
+          for(auto &e: ref.entry_points) {
+            fetch::logger.Debug("  - ", e.host, ":", e.port,", shard ", e.shard);      
+          }
+          
+          // TODO: Remove true
+          if( true || (d != ref) ) {
+            d = ref;
+          }
+        }
+        
+      });
+    
+
+    // Fetching all incoming details
+    fetch::logger.Highlight("Updating incoming");    
+    this->with_client_details_do( [&all_details](std::map< uint64_t, NodeDetails > const &node_details)  {
+        for(auto const&d: node_details)
+        {
+          fetch::logger.Debug(" - Entries for ", d.second.public_key);
+          for(auto &e: d.second.entry_points) {
+            
+            fetch::logger.Debug("   > ",e.host,":",e.port, ", shard ", e.shard);
+          }
+          
+          all_details[d.second.public_key] = d.second;
+        }
+      });
+
+
+
+    all_details[ details.public_key ] = details;    
+    this->with_suggestions_do([&all_details](std::vector< NodeDetails >  & list) {
+        for(std::size_t i=0; i < list.size(); ++i) {
+
+          auto &details = list[i];
+          
+          if(all_details.find(details.public_key) != all_details.end())
+          {
+            if(details != all_details[ details.public_key ] )
+            {
+              fetch::logger.Highlight("Updating suggestions info");
+              list[i] = all_details[ details.public_key ];
+              TODO("Proapgate change");              
+              // TODO: Propagate change?
+            } 
+          }
+          
+        }
+      });
+    
+    // Next we track peers 
+    if(running_) {
+      thread_manager_->io_service().post([this]() {
+          this->TrackPeers();   
+        });    
+    }    
+  }
+  
   void TrackPeers() 
   {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     using namespace fetch::protocols;
     
-    std::this_thread::sleep_for(std::chrono::milliseconds( 2000 ) );
     std::set< fetch::byte_array::ByteArray > public_keys;    
     public_keys.insert(this->details_.details().public_key);
     
@@ -100,6 +260,7 @@ public:
           public_keys.insert( d.second.public_key );          
         }        
       });
+
     
     // Finding hosts we are not connected to
     std::vector< EntryPoint > swarm_entries;    
@@ -145,8 +306,10 @@ public:
 
   void UpdateShardConnectivity() 
   {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     using namespace fetch::protocols;
-    
+
+    // Getting the list of shards
     std::vector< EntryPoint > shard_entries;    
     this->with_suggestions_do([=, &shard_entries](std::vector< NodeDetails > const &details) {
         for(auto const &d: details)
@@ -161,14 +324,19 @@ public:
         }
       });
 
+    fetch::logger.Highlight("Updating shards!");
+    for(auto &s : shard_entries) {
+      fetch::logger.Debug(" - ", s.host, ":", s.port, ", shard ", s.shard);
+    }
     
     std::random_shuffle(shard_entries.begin(), shard_entries.end());
+
+    // Getting the shard client instances
     std::vector< client_shared_ptr_type > shards;
-    std::vector< EntryPoint > details;
-    
+    std::vector< EntryPoint > details;  
     
     this->with_shards_do([this, &shards, &details](std::vector< client_shared_ptr_type > const &sh,
-          std::vector< EntryPoint > &det ) {
+        std::vector< EntryPoint > &det ) {
         std::size_t i =0;
         
         for(auto &s: sh)
@@ -183,56 +351,39 @@ public:
     for(std::size_t i=0; i < shards.size(); ++i)
     {
       auto client = shards[i];
-      auto p1 = client->Call(FetchProtocols::SHARD,  ShardRPC::COUNT_OUTGOING_CONNECTIONS);
+      /*
       auto p2 = client->Call(FetchProtocols::SHARD,  ShardRPC::SHARD_NUMBER);
-
-      if(! p1.Wait(2300) )
-      {
-        continue;        
-      }
       
       if(! p2.Wait(2300) )
       {
         continue;        
       }
-      
-      
-      uint32_t conn_count = uint32_t( p1  );
+            
       uint32_t shard =  uint32_t( p2  );
-      std::cout << "  - "<< i << " : " << details[i].host << " " << details[i].port << " " << shard <<" " << conn_count <<  std::endl;      
+      details[i].shard = shard;
+      */
+      std::cout << "  - "<< i << " : " << details[i].host << " " << details[i].port << " " << details[i].shard <<  std::endl;      
       // TODO: set shard detail
-      
 
-      if(conn_count < 2) // TODO: Desired connectivity;
-      {
-        for(auto &s: shard_entries)
-        {
-          std::cout << "Trying to connect " << s.host << ":" << s.port << std::endl;
-          
-          if( s.shard == shard )
-          {
-            fetch::logger.Warn("Before call");
-            
-            client->Call(FetchProtocols::SHARD, ShardRPC::LISTEN_TO, s);
-            fetch::logger.Warn("After call");
-            
-            ++conn_count;
-            if(conn_count == 2) // TODO: desired connectivity
-            {
-              break;                    
-            }
-            
-          }
-          
-        }
-      }
-
+      client->Call(FetchProtocols::SHARD, ShardRPC::LISTEN_TO, shard_entries);
+        
     }
+
+    // Updating shard details
+    this->with_shards_do([this, &shards, &details](std::vector< client_shared_ptr_type > const &sh,
+          std::vector< EntryPoint > &det ) {
+        for(std::size_t i =0; i < details.size(); ++i) {
+          if(i < det.size() )
+          {
+            det[i] = details[i];            
+          }          
+        }
+      });
     
     if(running_) {
-      thread_manager_->io_service().post([this]() {
-          this->TrackPeers();          
-        });    
+      thread_manager_->Post([this]() {
+          this->UpdateNodeShardDetails();          
+        }, 2000);
     }    
     
   }

@@ -58,7 +58,7 @@ public:
     
     writing_ = false;    
     Connect(host, port);
-    fetch::logger.Debug("Connection established!");
+
   }
 
 
@@ -136,15 +136,21 @@ private:
         LOG_LAMBDA_STACK_TRACE_POINT;    
         if (!ec) 
         {
+          fetch::logger.Debug("Connection established!");
           ReadHeader();
+        } else {
+          this->ConnectionFailed();
+          
         }
+        
       };
-    asio::async_connect(socket_, endpoint_iterator, cb);
+
+    asio::async_connect(socket_, endpoint_iterator, cb);    
   }
 
   void ReadHeader() 
   {
-    LOG_STACK_TRACE_POINT; 
+    LOG_STACK_TRACE_POINT;
     auto cb = [=](std::error_code ec, std::size_t)      
       {
         LOG_STACK_TRACE_POINT;    // Deliberately breaking the chain

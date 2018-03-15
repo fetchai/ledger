@@ -2,7 +2,7 @@
 #define OPTIMISATION_BRUTE_FORCE_HPP
 
 #include <memory/shared_array.hpp>
-#include <memory/square_array.hpp>
+#include <memory/rectangular_array.hpp>
 
 #include <limits>
 
@@ -126,7 +126,7 @@ class BruteForceOptimiser {
     return (1 - 2 * ((int(i) >> k) & 1));
   }
 
-  memory::SquareArray<cost_type> couplings_;
+  memory::RectangularArray<cost_type> couplings_;
   memory::SharedArray<cost_type> cache_;
   uint64_t variables_ = 0;
   uint64_t total_state_count_ = 0;

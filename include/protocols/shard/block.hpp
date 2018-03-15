@@ -22,17 +22,18 @@ struct BlockMetaData {
 struct BlockBody {
   fetch::byte_array::ByteArray previous_hash;  
   fetch::byte_array::ByteArray transaction_hash;
+  std::vector< uint32_t > shards;  
 };
 
 
 template< typename T >
 void Serialize( T & serializer, BlockBody const &body) {
-  serializer << body.previous_hash << body.transaction_hash;
+  serializer << body.previous_hash << body.transaction_hash << body.shards;
 }
 
 template< typename T >
 void Deserialize( T & serializer, BlockBody &body) {
-  serializer >> body.previous_hash >> body.transaction_hash;
+  serializer >> body.previous_hash >> body.transaction_hash >> body.shards;
 }
 
 

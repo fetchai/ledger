@@ -29,7 +29,8 @@ function(standard_test_defines name file defines)
 endfunction()
 
 standard_test(script_dictionary_test script/dictionary.cpp )
-
+## chain
+standard_test(chain_tx_serialization chain/transaction_serialization.cpp)
 ## Crypto
 standard_test( crypto_sha256 crypto/sha256.cpp )
 
@@ -59,12 +60,12 @@ standard_test(variant_test script/variant.cpp)
 standard_test(tokenizer_test byte_array/tokenizer/tokenizer.cpp)
 standard_test(referenced_byte_array_test byte_array/referenced_byte_array.cpp)
 
-
+standard_test(rectangular_load_save_test memory/rectangular_load_save_test.cpp)
 standard_test(shared_dictionary memory/shared_dictionary.cpp)
 
 standard_test(shared_array_thread_safety memory/shared_array_thread_safety.cpp)
 standard_test(shared_array memory/shared_array_test.cpp)
-standard_test(shared_square_array memory/shared_square_array_test.cpp)
+standard_test(shared_rectangular_array memory/shared_rectangular_array_test.cpp)
 standard_test(exp math/test_exp.cpp)
 standard_test(spline math/test_spline.cpp)
 standard_test(lfg random/test_lfg.cpp)
