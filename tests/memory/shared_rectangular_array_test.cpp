@@ -1,5 +1,5 @@
 #include<iostream>
-#include<memory/square_array.hpp>
+#include<memory/rectangular_array.hpp>
 #include<vector>
 #include<random/lcg.hpp>
 
@@ -8,7 +8,7 @@
 using namespace fetch::memory;
 
 typedef double data_type;
-typedef SquareArray< data_type > array_type; 
+typedef RectangularArray< data_type > array_type; 
 
 void test1() {
   std::vector< double > dataset;
