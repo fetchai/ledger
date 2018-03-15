@@ -19,7 +19,9 @@ public:
     number_of_threads_(threads),
     on_mutex_(__LINE__,__FILE__)
   {
-    fetch::logger.Debug("Creating thread manager");    
+    fetch::logger.Debug("Creating thread manager");
+    running_ = false;
+    
   }
 
   ~ThreadManager() 
@@ -27,13 +29,18 @@ public:
     fetch::logger.Debug("Destroying thread manager");
     Stop();    
   }
+
+
   
   virtual void Start()
   {
 //    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );    
     if (threads_.size() == 0)
-    {
+    {      
       fetch::logger.Info("Starting thread manager");
+      running_ = true;
+
+      shared_work_ = std::make_shared<asio::io_service::work>( io_service_ );
       
 //      on_mutex_.lock();      
       for(auto &obj: on_before_start_)
@@ -46,7 +53,7 @@ public:
         threads_.push_back( new std::thread(
             [this]()
             {
-              io_service_.run();
+              io_service_.run();              
             })
           );
       }
@@ -64,6 +71,8 @@ public:
 //    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );    
     if (threads_.size() != 0)
     {
+      shared_work_.reset();      
+
       fetch::logger.Info("Stopping thread manager");
 //      on_mutex_.lock();      
       for(auto &obj: on_before_stop_)
@@ -179,6 +188,9 @@ private:
   std::size_t number_of_threads_ = 1;
   std::vector< std::thread* > threads_;  
   asio::io_service io_service_;
+  std::atomic< bool > running_;
+  std::shared_ptr< asio::io_service::work > shared_work_;
+  
   std::map< event_handle_type, event_function_type > on_before_start_;
   std::map< event_handle_type, event_function_type > on_after_start_;  
   
