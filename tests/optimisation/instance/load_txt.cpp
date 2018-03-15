@@ -1,5 +1,5 @@
 #include<iostream>
-#include<memory/square_array.hpp>
+#include<memory/rectangular_array.hpp>
 #include<optimisation/instance/load_txt.hpp>
 #include<random/lcg.hpp>
 using namespace fetch::optimisers;
@@ -8,7 +8,7 @@ using namespace fetch::random;
 
 
 void TestLoad(int argc, char **argv) {
-  typedef SquareArray<double> array_type;
+  typedef RectangularArray<double> array_type;
   static LinearCongruentialGenerator rng;
   array_type input, output;
 

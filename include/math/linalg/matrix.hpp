@@ -1,7 +1,7 @@
 #ifndef MATH_LINALG_MATRIX_HPP
 #define MATH_LINALG_MATRIX_HPP
 
-#include <memory/square_array.hpp>
+#include "memory/rectangular_array.hpp"
 
 #include <iostream>
 #include <limits>
@@ -12,9 +12,9 @@ namespace math {
 namespace linalg {
 
 template <typename T>
-class Matrix : public fetch::memory::SquareArray<T> {
+class Matrix : public fetch::memory::RectangularArray<T> {
  public:
-  typedef fetch::memory::SquareArray<T> super_type;
+  typedef fetch::memory::RectangularArray<T> super_type;
   typedef typename super_type::type type;
 
   enum {
