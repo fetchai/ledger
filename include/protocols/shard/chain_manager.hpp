@@ -19,6 +19,8 @@ namespace protocols
 class ChainManager 
 {
 public:
+  typedef crypto::CallableFNV hasher_type;
+  
   // Transaction defs
   typedef fetch::chain::Transaction transaction_type;
   typedef typename transaction_type::digest_type tx_digest_type;
@@ -30,24 +32,13 @@ public:
   typedef BlockMetaData block_meta_data_type;
   typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256, block_meta_data_type > block_type;  
   
-  typedef crypto::CallableFNV hasher_type;
-
-  struct PartialChain 
-  {
-    block_header_type start;    
-    block_header_type end;
-    block_header_type next_missing;    
-  };  
-
-
+  typedef std::unordered_map< block_header_type, block_type, hasher_type > chain_map_type;
   
-  ChainManager( TransactionManager &txmanager) :
-    tx_manager_(txmanager) {}
-
+  
+  ChainManager( )  {}
   
   enum {
     ADD_NOTHING_TODO = 0,
-    ADD_LOOSE_BLOCK = 1,
     ADD_CHAIN_END = 2    
   };
 
@@ -55,12 +46,9 @@ public:
   bool AddBulkBlocks(std::vector< block_type > const &new_blocks ) 
   {
     bool ret = false;
-//    block_type best_block = head_;
-    
     for(auto block: new_blocks) {
       ret |=  (AddBlock( block ) != ADD_NOTHING_TODO );
     }
-    // TODO: Attach block
     return ret;    
   }
   
@@ -71,7 +59,7 @@ public:
     
     // Only record blocks that are new
     if( chains_.find( block.header() ) != chains_.end() ) {
-      fetch::logger.Debug("Nothing todo");    
+      fetch::logger.Debug("Nothing todo");
       return ADD_NOTHING_TODO;
     }
 
@@ -79,55 +67,56 @@ public:
     latest_blocks_.push_back(block);
     
     block_header_type header = block.header();
-    block.meta_data().loose_chain = true;    
+//    block.meta_data().loose_chain = true;    
     chains_[block.header()] = block;
-//    tx_manager_.Apply( block );
 
     // TODO: Set next
     
-    if((block.meta_data().total_work >= head_.meta_data().total_work)) {      
+    if((block.meta_data().total_work >= head_.meta_data().total_work)) {
       head_ = block;
     }
     
-    return  ADD_CHAIN_END ;
+    return ADD_CHAIN_END;
   }
+
+  void UpdateAppliedList() 
+  {
+    std::vector< byte_array::ByteArray > applied_list_;
+    auto block = head_;
+    bool broken = false;    
+    
+    while(block.body().previous_hash != "genesis") {
+      applied_list_.push_back( block.body().transaction_hash );
+      if(chains_.find( block.body().previous_hash ) == chains_.end() ) {
+        broken = true;
+        break;        
+      }
+      
+      block = chains_[block.body().previous_hash];
+    }
+
+    if(broken) {
+      TODO("Figure out what to do with a broken chain");
+    }       
+  }
+  
 
   block_type const &head() const 
   {
     return head_;    
   }
 
-  std::map< block_header_type, block_type > const &chains() const
+  chain_map_type const &chains() const
   {
     return chains_;
   }
 
-  std::map< block_header_type, block_type > &chains() 
+  chain_map_type &chains() 
   {
     return chains_;
   }
   
   
-  std::map< uint64_t, PartialChain > const &loose_chains() const
-  {
-    return loose_chains_;
-  }
-
-  bool VerifyState() {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
-    auto block = head_;
-    
-    std::vector< tx_digest_type > transactions;
-    while(block.body().previous_hash != "genesis") {
-      transactions.push_back( block.body().transaction_hash );
-      
-      block = chains_[block.body().previous_hash];
-    }
-
-    std::reverse(transactions.begin(), transactions.end());
-    return tx_manager_.VerifyAppliedList(transactions);
-  }   
-
   std::vector< block_type > const &latest_blocks() const {
     return latest_blocks_; 
   }
@@ -138,20 +127,11 @@ public:
   }
   
 private:
-  TransactionManager &tx_manager_;
+  chain_map_type chains_;
 
-  std::map< block_header_type, block_type > chains_;
-  std::map< uint64_t, PartialChain > loose_chains_;
-  uint64_t loose_chain_counter_ = 0;  
-  std::map< block_header_type, std::vector< uint64_t > > loose_chain_bottoms_;
-  std::map< block_header_type, uint64_t > loose_chain_tops_;  
-  
-  std::vector< block_header_type > heads_;  
   block_type head_;
 
-
-  std::vector< block_type > latest_blocks_;
-  
+  std::vector< block_type > latest_blocks_;  
 };
 
 

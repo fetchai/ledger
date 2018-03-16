@@ -60,8 +60,7 @@ public:
     details_(details),
     block_mutex_( __LINE__, __FILE__),    
     shard_friends_mutex_( __LINE__, __FILE__),
-    sharding_parameter_(1),
-    chain_manager_(tx_manager_)
+    sharding_parameter_(1)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
@@ -121,7 +120,7 @@ public:
     
     std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
     std::size_t i =0;
-    std::map< block_header_type, block_type > &chains = chain_manager_.chains();
+    ChainManager::chain_map_type &chains = chain_manager_.chains();
     
     while( (i< preferred_block_count) && (chains.find( next_hash ) !=chains.end() ) ) {
       auto const &block = chains[next_hash];
@@ -207,7 +206,7 @@ public:
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
     block_mutex_.lock();
-    uint32_t ret = chain_manager_.AddBlock( block );
+    chain_manager_.AddBlock( block );
     block_mutex_.unlock();
 
 //    VerifyState();
@@ -372,7 +371,14 @@ public:
     shard_friends_mutex_.unlock();
   }
   
-  void with_blocks_do( std::function< void(block_type, std::map< block_header_type, block_type >)  > fnc ) 
+  void with_blocks_do( std::function< void(block_type, ChainManager::chain_map_type const& )  > fnc ) const
+  {
+    block_mutex_.lock();
+    fnc( chain_manager_.head(), chain_manager_.chains() );    
+    block_mutex_.unlock();
+  }
+
+  void with_blocks_do( std::function< void(block_type, ChainManager::chain_map_type & )  > fnc ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
@@ -380,7 +386,7 @@ public:
     fnc( chain_manager_.head(), chain_manager_.chains() );    
     block_mutex_.unlock();
   }
-
+  
   /*
   void with_transactions_do( std::function< void(std::vector< tx_digest_type >,  std::map< tx_digest_type, transaction_type >) > fnc )
   {
@@ -391,7 +397,7 @@ public:
     block_mutex_.unlock();
   }
   */
-  
+  /*
   void with_loose_chains_do( std::function< void( std::map< uint64_t,  ChainManager::PartialChain > ) > fnc ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
@@ -400,7 +406,7 @@ public:
     fnc( chain_manager_.loose_chains() );
     block_mutex_.unlock();
   }
-
+  */
 
   std::size_t unapplied_transaction_count() const 
   {
@@ -426,14 +432,6 @@ public:
     return chain_manager_.size();        
   }
   
-  void VerifyState() {
-    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
-    if(!chain_manager_.VerifyState()) {
-      fetch::logger.Error("Could not verify state");
-      exit(-1);
-    }
-  }
-
   bool AddBulkTransactions(std::unordered_map< tx_digest_type, transaction_type, typename TransactionManager::hasher_type > const &new_txs ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;    

@@ -117,7 +117,7 @@ public:
       fetch::logger.Highlight(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> LIST BLOCK");
       
       response << "{\"blocks\": [";  
-      this->with_blocks_do([&response](ShardController::block_type const & head, std::map< ShardController::block_header_type, ShardController::block_type > chain) {
+      this->with_blocks_do([&response](ShardController::block_type const & head, ChainManager::chain_map_type & chain) {
           response << "{";
           response << "\"block_hash\": \"" << byte_array::ToBase64( head.header() ) << "\",";
           response << "\"previous_hash\": \"" << byte_array::ToBase64( head.body().previous_hash ) << "\",";
