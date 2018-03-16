@@ -5,10 +5,12 @@
 #include<set>
 #include<map>
 #include<string>
+#include<fstream>
 #include"service/server.hpp"
 #include"oef/schema.hpp"
 #include"oef/schema_serializers.hpp"
 #include"oef/service_directory.hpp"
+#include"oef/node_directory.hpp"
 #include"protocols/fetch_protocols.hpp"
 #include"protocols/node_to_aea/commands.hpp"
 
@@ -17,7 +19,7 @@ namespace fetch
 namespace oef
 {
 
-class ListeningAEAs {
+class AEADirectory {
 public:
   void Register(uint64_t client, std::string id) {
     std::cout << "\rRegistering " << client << " with id " << id << std::endl << std::endl << "> " << std::flush;
@@ -106,7 +108,36 @@ class NodeOEF {
 public:
 
   template <typename T>
-  NodeOEF(service::ServiceServer<T> *service) { register_service_instance(service); }
+  NodeOEF(service::ServiceServer<T> *service, std::string configFile=std::string()) : configFile_{configFile} {
+    AEADirectory_.register_service_instance(service);
+  }
+
+  void Start() {
+
+    if(configFile_.empty()) {
+      return;
+    }
+
+    std::ifstream myfile (configFile_);
+
+    try {
+      // Extract our config from config file
+      if (myfile.is_open()) {
+        std::stringstream buffer;
+        buffer << myfile.rdbuf();
+        json::JSONDocument doc("", buffer.str());
+
+        schema::Instance instance(doc["instance"]);
+        schema::Endpoints endpoints(doc["endpoints"]);
+        nodeDirectory_ = NodeDirectory(instance, endpoints);
+      }
+    }
+    catch (...) {
+      fetch::logger.Error("Failed to parse config file in node constructor");
+    }
+
+    nodeDirectory_.Start();
+  }
 
   std::string RegisterInstance(std::string agentName, schema::Instance instance) {
     std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
@@ -121,6 +152,24 @@ public:
     return serviceDirectory_.Query(query);
   }
 
+  std::vector<std::string> QueryMulti(schema::QueryModelMulti queryMulti) { // TODO: (`HUT`) : make all const ref.
+    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+
+    std::cout << "hit query multi" << std::endl;
+
+    std::ostringstream message; // TODO: (`HUT`) : remove this
+    message << queryMulti.aeaQuery().variant() << std::endl << std::endl;
+    message << queryMulti.forwardingQuery().variant();
+    std::cout << message.str() << std::endl;
+
+    // First get the results from other nodes
+    auto nonLocalAgents = nodeDirectory_.Query(queryMulti);
+    auto agents         = serviceDirectory_.Query(queryMulti.aeaQuery());
+
+    agents.insert(agents.end(), nonLocalAgents.begin(), nonLocalAgents.end());
+
+    return agents;
+  }
 
   std::vector<std::pair<schema::Instance, fetch::script::Variant>> QueryAgentsInstances(schema::QueryModel query) {
     std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
@@ -135,6 +184,10 @@ public:
   std::string test() {
     std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
     return std::string{"this is a test"};
+  }
+
+  schema::Instance getInstance() {
+    return nodeDirectory_.getInstance();
   }
 
   // Ledger functionality
@@ -236,35 +289,43 @@ public:
 
 
  void RegisterCallback(uint64_t client, std::string id) {
-   listeningAEAs_.Register(client, id);
+   AEADirectory_.Register(client, id);
  }
 
  void DeregisterCallback(uint64_t client, std::string id) {
-   listeningAEAs_.Deregister(client, id);
+   AEADirectory_.Deregister(client, id);
+ }
+
+ // TODO: (`HUT`) : make const
+ std::string ping() {
+   std::cout << "pinged this node!!" << std::endl;
+   return "Pinged this Node!";
  }
 
  void PingAllAEAs() {
-   listeningAEAs_.PingAllAEAs();
+   AEADirectory_.PingAllAEAs();
  }
 
  std::string BuyFromAEA(std::string id) {
-    auto res = listeningAEAs_.BuyFromAEA(id);
+    auto res = AEADirectory_.BuyFromAEA(id);
     std::ostringstream result;
     result << res;
     return result.str();
  }
 
  script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
-    return listeningAEAs_.BuyFromAEA(id);
+    return AEADirectory_.BuyFromAEA(id);
  }
 
-  void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr) {
-    listeningAEAs_.register_service_instance(ptr);
-  }
+  //void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr) { // TODO: (`HUT`) : delete
+  //  AEADirectory_.register_service_instance(ptr);
+  //}
 
 private:
-  service_directory::ServiceDirectory serviceDirectory_;
-  ListeningAEAs                       listeningAEAs_;
+  const std::string     configFile_;
+  oef::ServiceDirectory serviceDirectory_;
+  NodeDirectory         nodeDirectory_;
+  AEADirectory          AEADirectory_;
 
   // Ledger
   std::vector< Transaction >                             transactions_;

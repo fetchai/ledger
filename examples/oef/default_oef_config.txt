@@ -1,0 +1,19 @@
+{
+  "instance" :
+        { "dataModel":
+           {
+             "name": "node",
+             "attributes": [  { "name": "longitude", "type": "int", "required": 1 } ],
+             "keywords": ["node"],
+             "description": "This node's datamodel"
+           },
+         "values": [
+             { "longitude": "11" } ]},
+
+     "endpoints": [
+         {"IP" : "127.0.0.1", "TCPPort" : 9081 },
+         {"IP" : "127.0.0.1", "TCPPort" : 9082 }
+     ]
+
+}
+

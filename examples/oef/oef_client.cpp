@@ -19,7 +19,7 @@ int main() {
 
   // Client setup
   fetch::network::ThreadManager tm;
-  ServiceClient< fetch::network::TCPClient > client("localhost", 8090, &tm);
+  ServiceClient< fetch::network::TCPClient > client("localhost", 9080, &tm);
   tm.Start();
 
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );

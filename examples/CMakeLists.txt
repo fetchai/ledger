@@ -20,9 +20,10 @@ add_executable(calculator script/calculator.cpp)
 
 add_executable(sha256 crypto/sha256.cpp)
 
-add_executable(rpc_client_oef_requestor oef/oef_client_requestor.cpp)
-add_executable(rpc_client_oef oef/oef_client.cpp)
-add_executable(rpc_server_oef oef/oef_server.cpp)
+add_executable(oef_client_requestor_multi oef/oef_client_requestor_multi.cpp)
+add_executable(oef_client_requestor oef/oef_client_requestor.cpp)
+add_executable(oef_client oef/oef_client.cpp)
+add_executable(oef_server oef/oef_server.cpp)
 
 add_executable(generate_random_aeas oef/tests/generate_random_aeas.cpp)
 add_executable(query_random_aeas    oef/tests/query_random_aeas.cpp)

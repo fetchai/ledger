@@ -159,7 +159,7 @@ public:
     json::JSONDocument doc;
     try {
       doc = req.JSON();
-      std::cout << "correctly parsed JSON for tran: " << req.body() << std::endl;
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
     } catch(...) {
       std::cout << req.body() << std::endl;
 

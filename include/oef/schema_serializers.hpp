@@ -124,6 +124,18 @@ void Deserialize( T & serializer, Type &b) {
 }
 
 /////////////////////////////////////////////////////////////////
+// QueryModelMulti
+template< typename T>
+void Serialize( T & serializer, QueryModelMulti const &b) {
+  serializer << b.aeaQuery() << b.forwardingQuery() << b.jumps();
+}
+
+template< typename T>
+void Deserialize( T & serializer, QueryModelMulti &b) {
+  serializer >> b.aeaQuery() >> b.forwardingQuery() >> b.jumps();
+}
+
+/////////////////////////////////////////////////////////////////
 // QueryModel
 template< typename T>
 void Serialize( T & serializer, QueryModel const &b) {

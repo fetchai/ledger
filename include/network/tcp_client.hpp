@@ -129,6 +129,7 @@ private:
 
   void Connect(asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) 
   {
+
     LOG_STACK_TRACE_POINT;    
     auto cb = [=](std::error_code ec,      
       asio::ip::tcp::tcp::resolver::iterator) 
@@ -238,7 +239,7 @@ private:
           } 
         } else 
         {
-          fetch::logger.Error("Client: Write failed, closing connection:", ec);
+          fetch::logger.Debug("Client: Write failed, closing connection:", ec); // TODO: (`HUT`) : changed this from Error - discuss with Troels'
           ConnectionFailed();                
           socket_.close();
         }

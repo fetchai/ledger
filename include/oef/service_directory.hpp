@@ -10,7 +10,7 @@
 
 namespace fetch
 {
-namespace service_directory
+namespace oef
 {
 
 // The Agents class is just a convenience for representing agents, this will be extended to hold agent-specific information later
@@ -111,6 +111,11 @@ public:
     std::vector<std::pair<schema::Instance, fetch::script::Variant>> res;
 
     for(auto &d : data_) {
+
+      std::ostringstream find; // TODO: (`HUT`) : remove this
+      find << d.first.variant();
+      std::cerr << "THEIR instance is " << find.str() << std::endl;
+      std::cerr << "OUR constraint is " << query.variant() << std::endl;
 
       if(query.check(d.first)) {
         std::pair<schema::Instance, fetch::script::Variant> pushThis(d.first, d.second.variant());

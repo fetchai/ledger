@@ -2,6 +2,7 @@
 #define SCHEMA_DEFINES_HPP
 
 #include<mutex>
+#include<set>
 #include<unordered_set>
 #include<unordered_map>
 
@@ -62,7 +63,7 @@ public:
     required_ = jsonDoc["required"].as_bool();
   }
 
-  fetch::script::Variant variant() {
+  fetch::script::Variant variant() const {
     fetch::script::Variant result = fetch::script::Variant::Object();
     result["name"]                = name_;
     result["type"]                = type_to_string(type_);
@@ -120,6 +121,34 @@ private:
   }
 };
 
+std::string type_to_string(var::variant<int,float,std::string,bool> value) {
+
+  std::string type = "FAIL";
+
+  value.match(
+          [&] (int &a)         { type = "int"; },
+          [&] (float &a)       { type = "float"; },
+          [&] (std::string &a) { type = "string"; },
+          [&] (bool &a)        { type = "bool"; }
+          );
+
+  return type;
+}
+
+std::string to_string(var::variant<int,float,std::string,bool> value) {
+
+  std::string type = "FAILED";
+
+  value.match(
+          [&] (int &a)         { type = std::to_string(a); },
+          [&] (float &a)       { type = std::to_string(a); },
+          [&] (std::string &a) { type = a; },
+          [&] (bool &a)        { type = std::to_string(a); }
+          );
+
+  return type;
+}
+
 class Relation {
 public:
   using ValueType = var::variant<int,float,std::string,bool>;
@@ -176,6 +205,23 @@ public:
         res = check_value(b);
       });
     return res;
+  }
+
+  //"type": "relation",
+  //"op": "<=",
+  //"value_type": "int",
+  //"value": 99
+
+  fetch::script::Variant variant() const {
+
+    fetch::script::Variant result = fetch::script::Variant::Object();
+
+    result["type"]       = "relation";        // TODO: (`HUT`) : fix this
+    result["op"]         = op_to_string(op_);
+    result["value_type"] = type_to_string(value_);
+    result["value"]      = to_string(value_);
+
+    return result;
   }
 
   const Op        &op() const        { return op_; }
@@ -434,7 +480,7 @@ class And;
 
 class ConstraintType {
 public:
-  using ValueType = var::variant<var::recursive_wrapper<Or>,var::recursive_wrapper<And>,Range,Relation,Set>;
+  using ValueType = var::variant<var::recursive_wrapper<Or>,var::recursive_wrapper<And>,Range,Relation,Set>; // TODO: (`HUT`) : return set
   explicit ConstraintType() {}
   explicit ConstraintType(ValueType v) : constraint_{v} {}
 
@@ -458,18 +504,41 @@ public:
       } else {
         throw std::invalid_argument(std::string("Incorrect attempt to parse ConstraintType due to missing functionality!"));
       }
+    } else {
+      throw std::invalid_argument(std::string("Incorrect attempt to parse ConstraintType due to missing functionality - not a relation!"));
     }
   }
 
-  fetch::script::Variant to_variant() {
-    fetch::script::Variant result = fetch::script::Variant::Object();
+  //"constraint": {
+  //    "type": "relation",
+  //    "op": "<=",
+  //    "value_type": "int",
+  //    "value": 99
+  //    }
 
-    result["name"]       = "todo"; // TODO: (`HUT`) : fix this
-    result["op"]         = "todo"; // TODO: (`HUT`) : fix this
-    result["value_type"] = "todo"; // TODO: (`HUT`) : fix this
-    result["value"]      = "todo"; // TODO: (`HUT`) : fix this
+  fetch::script::Variant to_variant() const {
 
-    return result;
+    //fetch::script::Variant result = fetch::script::Variant::Object();
+
+    //result["type"]       = "todo"; // TODO: (`HUT`) : fix this
+    //result["op"]         = "todo"; // TODO: (`HUT`) : fix this
+    //result["value_type"] = "todo"; // TODO: (`HUT`) : fix this
+    //result["value"]      = "todo"; // TODO: (`HUT`) : fix this
+
+    Relation rel = mapbox::util::get<Relation>(constraint_);
+    return rel.variant();
+
+    //constraint_.match(
+    //        [&] (int a)    {
+    //                              result["type"]       = "todoa"; // TODO: (`HUT`) : fix this
+    //                              result["op"]         = "todob"; // TODO: (`HUT`) : fix this
+    //                              result["value_type"] = "todoc"; // TODO: (`HUT`) : fix this
+    //                              result["value"]      = "todod"; // TODO: (`HUT`) : fix this
+    //                            }
+    //        );
+
+    //return result;
+    //return valueTypeToVariant(constraint_); // TODO: (`HUT`) : this elegantly
   }
 
   bool check(const VariantType &v) const;
@@ -502,7 +571,7 @@ public:
     constraint_ = constraintType;
   }
 
-  fetch::script::Variant variant() {
+  fetch::script::Variant variant() const {
     fetch::script::Variant result = fetch::script::Variant::Object();
     result["constraint"]          = constraint_.to_variant();
     result["attribute"]           = attribute_.variant();
@@ -512,17 +581,22 @@ public:
   bool check(const VariantType &v) const {
     return constraint_.check(v);
   }
-  bool check(const Instance &i) const {
-    const auto &model = i.model();
+
+  bool check(const Instance &instance) const {
+    const auto &model = instance.model();
     auto attr = model.attribute(attribute_.name());
     if(attr) {
-      if(attr->type() != attribute_.type())
+      if(attr->type() != attribute_.type()) { // TODO: (`HUT`) : fix this by removin std::opt
+        std::cout << "HERE" << std::endl;
         return false;
+      }
     }
-    auto v = i.value(attribute_.name());
+    auto v = instance.value(attribute_.name());
     if(!v) {
-      if(attribute_.required())
+      if(attribute_.required()) {
         std::cerr << "Should not happen!\n"; // Exception ?
+      }
+      std::cout << "HERE2" << std::endl;
       return false;
     }
     VariantType value{string_to_value(attribute_.type(), *v)};
@@ -599,7 +673,7 @@ public:
     }
   }
 
-  fetch::script::Variant variant() {
+  fetch::script::Variant variant() const {
     fetch::script::Variant result = fetch::script::Variant::Array(constraints_.size());
 
     for (int i = 0; i < constraints_.size(); ++i) {
@@ -617,6 +691,41 @@ public:
     }
     return true;
   }
+
+  bool check(const Instance &i) const {
+
+    std::cerr << "comparing these two " << std::endl;
+
+
+    std::ostringstream find; // TODO: (`HUT`) : remove this
+    find << (*this).variant();
+    std::cerr << "XXXX" << find.str() << std::endl;
+
+    std::ostringstream argh; // TODO: (`HUT`) : remove this
+    argh << i.variant();
+    std::cerr << "XXXX" << argh.str() << std::endl;
+
+    if(model_) {
+      if(model_->name() != i.model().name()) {
+        return false;
+      }
+      // TODO: more to compare ?
+    }
+
+    for(auto &c : constraints_) {
+      if(!c.check(i)) {
+
+        std::ostringstream eee; // TODO: (`HUT`) : remove this
+        eee << c.variant();
+        std::cerr << "failed on:" << argh.str() << std::endl;
+
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /*
   bool check(const Instance &instance) const {
     if(model_) {
       if(model_->name() != instance.model().name())
@@ -653,7 +762,7 @@ public:
       return false;
     }
     return true;
-  }
+  } */ // legacy query for josh
 
   const std::vector<Constraint> &constraints() const { return constraints_; }
   std::vector<Constraint>       &constraints()       { return constraints_; }
@@ -662,6 +771,41 @@ private:
   std::vector<Constraint>   constraints_;
   std::vector<std::string>  keywords_;
   stde::optional<DataModel> model_; // TODO: (`HUT`) : this is not serialized yet, nor JSON-ed
+};
+
+class QueryModelMulti {
+
+public:
+  explicit QueryModelMulti() {}
+
+  explicit QueryModelMulti(const QueryModel &aeaQuery, const QueryModel &forwardingQuery, uint32_t jumps=3)
+    : aeaQuery_{aeaQuery}, forwardingQuery_{forwardingQuery}, jumps_{jumps} {}
+
+  const QueryModel &aeaQuery() const        { return aeaQuery_; }
+  QueryModel       &aeaQuery()              { return aeaQuery_; }
+  const QueryModel &forwardingQuery() const { return forwardingQuery_; }
+  QueryModel       &forwardingQuery()       { return forwardingQuery_; }
+  const uint32_t   &jumps() const           { return jumps_; }
+  uint32_t         &jumps()                 { return jumps_; }
+
+  /*
+  // Only allow deserializers to set jumps
+  template< typename T>
+  friend void Deserialize( T & serializer, QueryModelMulti &b);
+  */
+
+  QueryModelMulti& operator--(int) {
+    if(jumps_ > 0) {
+      jumps_--;
+    }
+    return *this;
+  }
+
+private:
+  //uint32_t   &jumps()                       { return jumps_; }
+  QueryModel aeaQuery_;
+  QueryModel forwardingQuery_;
+  uint32_t   jumps_;
 };
 
 // Temporarily place convenience fns here
@@ -695,6 +839,53 @@ VariantType string_to_value(Type t, const std::string &s) {
   // should not reach this line
   return VariantType{std::string{""}};
 }
+
+
+// Used for managing node to node communications
+class Endpoint {
+public:
+  Endpoint() {}
+
+  Endpoint(fetch::json::JSONDocument jsonDoc) {
+    LOG_STACK_TRACE_POINT;
+
+    IP_      = std::string(jsonDoc["IP"].as_byte_array());
+    TCPPort_ = uint16_t(jsonDoc["TCPPort"].as_int());
+  }
+
+  bool operator< (const Endpoint &rhs) const {
+      return (TCPPort_ < rhs.TCPPort()) || (IP_ < rhs.IP());
+  }
+
+  const std::string &IP() const      { return IP_; }
+  std::string       &IP()            { return IP_; }
+  const uint16_t    &TCPPort() const { return TCPPort_; }
+  uint16_t          &TCPPort()       { return TCPPort_; }
+
+private:
+  std::string IP_;
+  uint16_t    TCPPort_;
+};
+
+class Endpoints {
+public:
+  Endpoints() {}
+
+  Endpoints(fetch::json::JSONDocument jsonDoc) {
+    LOG_STACK_TRACE_POINT;
+
+    for(auto &b: jsonDoc.root().as_array()) {
+      endpoints_.insert(Endpoint(b));
+    }
+  }
+
+
+  const std::set<Endpoint> &endpoints() const { return endpoints_; }
+  std::set<Endpoint>       &endpoints()       { return endpoints_; }
+
+private:
+  std::set<Endpoint> endpoints_;
+};
 
 }
 }

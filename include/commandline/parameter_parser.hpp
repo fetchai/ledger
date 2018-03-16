@@ -61,19 +61,23 @@ class ParamsParser {
     return ret;
   }
 
-  
   std::string GetArg(std::size_t const &i) const {
     if (i >= args_.size()) throw std::runtime_error("parameter does not exist");
 
     return args_[i];
   }
 
-
   std::string GetArg(std::size_t const &i,
                      std::string const &default_value) const {
     if (i >= args_.size()) return default_value;
 
     return args_[i];
+  }
+
+  bool IsParam(std::string const &key) const {
+    if (params_.find(key) == params_.end()) return false;
+
+    return true;
   }
 
   std::string GetParam(std::string const &key,
@@ -92,7 +96,7 @@ class ParamsParser {
     s >> ret;
     return ret;
   }
-  
+
   std::size_t arg_size() const { return args_.size(); } 
 };
 };
