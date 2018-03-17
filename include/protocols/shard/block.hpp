@@ -3,33 +3,32 @@
 #include"byte_array/referenced_byte_array.hpp"
 
 #include<limits>
+#include<memory>
 
 namespace fetch
 {
 namespace protocols 
 {
 
-struct BlockMetaData {
+struct BlockBody {     
+  fetch::byte_array::ByteArray previous_hash;  
+  fetch::byte_array::ByteArray transaction_hash;
+  std::vector< uint32_t > shards;  
+};
 
+
+struct BlockMetaData {
   enum {
     UNDEFINED = uint64_t(-1)
   };
 
   uint64_t block_number = UNDEFINED;  
   double work       = 0;  
-  double total_work = 0;  
-
+  double total_work = 0;
   
   bool loose_chain = true;
-  bool verified = true;    
-};
-
-struct BlockBody {
-  
-  
-  fetch::byte_array::ByteArray previous_hash;  
-  fetch::byte_array::ByteArray transaction_hash;
-  std::vector< uint32_t > shards;  
+  bool verified = true;
+  BlockBody *previous = nullptr;
 };
 
 
