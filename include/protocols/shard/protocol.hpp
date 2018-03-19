@@ -133,13 +133,13 @@ public:
             auto const &block = chain[next_hash];
             ++i;
             response << ", {";
-            response << "\"block_hash\": \"" << byte_array::ToBase64( block.header() ) << "\",";
-            response << "\"previous_hash\": \"" << byte_array::ToBase64( block.body().previous_hash ) << "\",";
-            response << "\"transaction_hash\": \"" << byte_array::ToBase64( block.body().transaction_hash ) << "\",";
-            response << "\"block_number\": " <<  block.meta_data().block_number  << ",";
-            response << "\"total_work\": " <<  block.meta_data().total_work;          
+            response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
+            response << "\"previous_hash\": \"" << byte_array::ToBase64( block->body().previous_hash ) << "\",";
+            response << "\"transaction_hash\": \"" << byte_array::ToBase64( block->body().transaction_hash ) << "\",";
+            response << "\"block_number\": " <<  block->meta_data().block_number  << ",";
+            response << "\"total_work\": " <<  block->meta_data().total_work;          
             response << "}";            
-            next_hash =  block.body().previous_hash;
+            next_hash =  block->body().previous_hash;
           }
 
         });

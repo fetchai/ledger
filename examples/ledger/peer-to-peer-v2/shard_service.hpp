@@ -151,53 +151,6 @@ public:
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     using namespace fetch::protocols;
 
-    //////////
-    // Missing blocks
-    
-    // Working out which blocks are missing
-    /*
-    std::vector< block_header_type > headers;
-    this->with_loose_chains_do([&headers]( std::map< uint64_t, ChainManager::PartialChain > const &chains ) {
-        for(auto const &c: chains)
-        {
-          headers.push_back(c.second.next_missing);          
-        }        
-      });
-    */
-
-    // Fetching them
-    /*
-    if(headers.size() != 0) {
-      std::vector< block_type > blocks;
-      
-      this->with_peers_do([&headers, &blocks](std::vector< client_shared_ptr_type > clients, std::vector< EntryPoint > const&)
-        {
-          std::random_shuffle( clients.begin(), clients.end() );
-          for(auto &h: headers)
-          {
-            for(auto &c: clients)
-            {
-              std::vector< block_type > nb = c->Call(FetchProtocols::SHARD, ShardRPC::REQUEST_BLOCKS_FROM, h, uint16_t(10) ).As< std::vector< block_type > >();
-              if(nb.size() != 0)
-              {
-                for(auto &b: nb)
-                {
-                  blocks.push_back(b);                  
-                }
-                
-                break;                
-              }
-            }
-          }
-          
-        });
-
-      for(auto &b: blocks)
-      {
-        this->PushBlock(b);        
-      }
-    }
-    */
     ///////////
     // All blocks
 
@@ -237,7 +190,7 @@ public:
       for(std::size_t i=0; i < 100; ++i)
         std::cout << "ALL SYNCED " << this->applied_transaction_count() << " ";
       
-      std::this_thread::sleep_for( std::chrono::milliseconds(5000) );
+      //      std::this_thread::sleep_for( std::chrono::milliseconds(5000) );
       
     }
     
@@ -253,23 +206,24 @@ public:
   void Mine() 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+      
+    difficulty_mutex_.lock();
+    int diff = difficulty_;
+    difficulty_mutex_.unlock();
+    if(diff == 0) {
+      fetch::logger.Debug("Exiting mining because diff = 0");            
+      if(running_) {
+        thread_manager_->Post([this]() {
+            this->SyncTransactions(); 
+          }); 
+      } 
+      return;
+    }
+    
+    
+
     for(std::size_t i = 0; i < 100; ++i) {
       fetch::logger.Highlight("Mining cycle ", i);
-      
-      difficulty_mutex_.lock();
-      int diff = difficulty_;
-      difficulty_mutex_.unlock();
-    
-      if(diff == 0) {
-        fetch::logger.Debug("Exiting mining because diff = 0");            
-        if(running_) {
-          thread_manager_->Post([this]() {
-              this->SyncTransactions(); 
-            }); 
-        } 
-        return;
-      }
-    
     
       auto block = this->GetNextBlock();
       if(  block.body().transaction_hash == "") {
@@ -321,7 +275,7 @@ public:
 
   
 private:
-  int difficulty_ = 1;
+  int difficulty_ = 0;
   mutable fetch::mutex::Mutex difficulty_mutex_;
   
   fetch::network::ThreadManager *thread_manager_;    

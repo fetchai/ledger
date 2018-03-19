@@ -60,7 +60,8 @@ public:
     details_(details),
     block_mutex_( __LINE__, __FILE__),    
     shard_friends_mutex_( __LINE__, __FILE__),
-    sharding_parameter_(1)
+    sharding_parameter_(1),
+    chain_manager_(tx_manager_)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
@@ -76,6 +77,7 @@ public:
     genesis_block.SetBody( genesis_body );
 
     genesis_block.meta_data().block_number = 0;    
+
     
     PushBlock( genesis_block );    
   }
@@ -124,9 +126,9 @@ public:
     
     while( (i< preferred_block_count) && (chains.find( next_hash ) !=chains.end() ) ) {
       auto const &block = chains[next_hash];
-      ret.push_back( block );
+      ret.push_back( *block );
 
-      next_hash = block.body().previous_hash;
+      next_hash = block->body().previous_hash;
       ++i;
     }    
 

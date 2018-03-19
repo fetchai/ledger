@@ -22,69 +22,13 @@ public:
   // Transaction defs
   typedef fetch::chain::Transaction transaction_type;
   typedef typename transaction_type::digest_type tx_digest_type;
-  
-  
-  void Apply(tx_digest_type const &tx)
-  {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
-    
-    // TODO
-    // Particular important detail: We allow for not known transactions to be applied to the chain
-    // This potentially constitutes an attack vector that could lay down the network.
-    // I.e. what happens to the chain when a non-existing transaction is included into the chain?
-    if(known_transactions_.find( tx  ) == known_transactions_.end())
-    {
-      fetch::logger.Error("Trying to apply transaction that is not known: ", byte_array::ToBase64(tx));
-      TODO("mark as missing");
-    } else {
-      
-      auto it = unapplied_.find( tx ) ;      
-      if(it == unapplied_.end() ) {
-        fetch::logger.Warn("Cannot apply applied transaction: ", byte_array::ToBase64(tx));
 
-        bool was_applied = false;
-        
-
-        for(auto &a : applied_) {
-          if(a == tx)
-          {
-            was_applied = true;
-            fetch::logger.Highlight(" >> ", byte_array::ToBase64(a));
-          }
-          else
-          {
-            fetch::logger.Debug(" >> ", byte_array::ToBase64(a));
-          }
-          
-        }
-
-        if(was_applied) {
-          
-          TODO_FAIL("Transaction was already applied");
-        } else  {
-          
-          TODO_FAIL("Transaction was not applied");
-        }
-        
-
-      }
-      unapplied_.erase(it);
-      
-    }
-
-    bool fail = false;
-    
-    for(auto &a : applied_) {
-      if(a == tx) fail = true;
-    }
-    if(fail) {
-      fetch::logger.Error("TX Exists 1: ", byte_array::ToBase64(tx));
-    }
-    
-      
-    applied_.push_back( tx );
-  }
+  typedef fetch::chain::consensus::ProofOfWork proof_type;
+  typedef BlockBody block_body_type;
+  typedef typename proof_type::header_type block_header_type;
+  typedef BlockMetaData block_meta_data_type;
+  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256, block_meta_data_type > block_type;  
+  typedef std::shared_ptr< block_type > shared_block_type;
   
   bool AddBulkTransactions(std::unordered_map< tx_digest_type, transaction_type, hasher_type > const &new_txs ) 
   {
@@ -118,25 +62,36 @@ public:
     return true;    
   }
 
+  void UpdateApplied(shared_block_type shared_block) {
+    std::vector< tx_digest_type > new_applied;
+    fetch::logger.Highlight("Applying block");
+    std::cout << "Was here?" << std::endl;
+    do {
+      new_applied.push_back( shared_block->body().transaction_hash );
 
-  void RollBack(std::size_t n) 
-  {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;        
-    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
+      shared_block = shared_block->previous();
+    } while( shared_block );
 
-    while( (n != 0) ) {
-      --n;
-      detailed_assert( applied_.size() != 0 );
-      
-      auto tx = applied_.back();
-      applied_.pop_back();
-      
-      unapplied_.insert( tx );
-      
+    for(auto &a : applied_) {
+      unapplied_.insert( a );
     }
-    
-  }
 
+    fetch::logger.Highlight("ADDING ", new_applied.size(), " Transactoins");
+    applied_.clear();
+    while( !new_applied.empty() ) {
+      auto &a = new_applied.back();
+      new_applied.pop_back();
+      applied_.push_back(a);
+      auto it = unapplied_.find(a);
+      if(it == unapplied_.end() ) {
+        fetch::logger.Debug("Transaction not known!!!!!!");
+        continue;
+      }
+      unapplied_.erase(a);
+    }
+
+  }
+  
   bool has_unapplied() const 
   {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );        

@@ -28,7 +28,6 @@ struct BlockMetaData {
   
   bool loose_chain = true;
   bool verified = true;
-  BlockBody *previous = nullptr;
 };
 
 
