@@ -3,7 +3,7 @@
 
 #include "service/function.hpp"
 #include "protocols/swarm/commands.hpp"
-#include "protocols/swarm/manager.hpp"
+#include "protocols/swarm/controller.hpp"
 #include "http/module.hpp"
 #include "json/document.hpp"
 #include"protocols/fetch_protocols.hpp"
@@ -13,12 +13,12 @@ namespace fetch
 {
 namespace protocols
 {
-class SwarmProtocol : public SwarmManager,
+class SwarmProtocol : public SwarmController,
                       public fetch::service::Protocol,
                       public fetch::http::HTTPModule { 
 public:
   SwarmProtocol(network::ThreadManager *thread_manager, uint64_t const &protocol, SharedNodeDetails &details) :
-    SwarmManager(protocol, thread_manager, details),
+    SwarmController(protocol, thread_manager, details),
     fetch::service::Protocol()
   {
     using namespace fetch::service;

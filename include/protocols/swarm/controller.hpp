@@ -1,5 +1,5 @@
-#ifndef SWARM_MANAGER_HPP
-#define SWARM_MANAGER_HPP
+#ifndef SWARM_CONTROLLER_HPP
+#define SWARM_CONTROLLER_HPP
 #include "service/client.hpp"
 #include "service/publication_feed.hpp"
 
@@ -15,13 +15,13 @@ namespace fetch
 namespace protocols 
 {
 
-class SwarmManager : public fetch::service::HasPublicationFeed 
+class SwarmController : public fetch::service::HasPublicationFeed 
 {
 public:
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
   typedef std::shared_ptr< client_type >  client_shared_ptr_type;  
   
-  SwarmManager(uint64_t const&protocol,
+  SwarmController(uint64_t const&protocol,
     network::ThreadManager *thread_manager,
     SharedNodeDetails  &details)
     :
@@ -282,13 +282,13 @@ public:
     client->Subscribe(protocol_, SwarmFeed::FEED_REQUEST_CONNECTIONS,
       new service::Function< void(NodeDetails) >([this](NodeDetails const& details) 
         {
-          SwarmManager::RequestPeerConnections(details);
+          SwarmController::RequestPeerConnections(details);
         }) );
     
     client->Subscribe(protocol_, SwarmFeed::FEED_ENOUGH_CONNECTIONS ,
       new Function< void(NodeDetails) >([this](NodeDetails const& details) 
         {
-          SwarmManager::EnoughPeerConnections(details);
+          SwarmController::EnoughPeerConnections(details);
         }) );    
 
     client->Subscribe(protocol_, SwarmFeed::FEED_ANNOUNCE_NEW_COMER ,

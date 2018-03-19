@@ -14,6 +14,10 @@ public:
   typedef byte_array::ConstByteArray digest_type;  
   typedef byte_array::ConstByteArray arguments_type; // TODO: json doc with native serialization
 
+  enum {
+    VERSION = 1
+  } ;
+  
   
   void UpdateDigest() {
     LOG_STACK_TRACE_POINT;    
@@ -81,7 +85,7 @@ private:
   byte_array::ConstByteArray data_;
   
 
-  std::vector< byte_array::ConstByteArray > resources_;
+  std::vector< uint16_t > resources_;
   std::vector< byte_array::ConstByteArray > signatures_;
   byte_array::ConstByteArray contract_name_;
 
@@ -94,6 +98,8 @@ private:
 
 template< typename T >
 void Serialize( T & serializer, Transaction const &b) {
+  serializer << uint16_t(b.VERSION);
+  
   serializer <<  uint32_t(b.resources().size());
 
   for(auto &res: b.resources()) {
@@ -111,6 +117,9 @@ void Serialize( T & serializer, Transaction const &b) {
 
 template< typename T >
 void Deserialize( T & serializer, Transaction &b) {
+  uint16_t version;  
+  serializer >> version;
+  
   uint32_t size;
   serializer >>  size;
 

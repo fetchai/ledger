@@ -75,7 +75,7 @@ private:
       std::cout << " - localhost " <<  s->port() << std::endl;
       auto client = controller_.ConnectChainKeeper( "localhost", s->port() );
 
-//      client->Call(fetch::protocols::FetchProtocols::SHARD, ChainKeeperRPC::SET_SHARD_NUMBER, i, uint32_t(shards_.size()) );
+      client->Call(fetch::protocols::FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::SET_GROUP_NUMBER, i, uint32_t(shards_.size()) );
       ++i;
     }
   } 
