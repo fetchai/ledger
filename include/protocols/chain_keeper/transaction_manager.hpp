@@ -1,5 +1,5 @@
-#ifndef PROTOCOLS_SHARD_TRANSACTION_MANAGER_HPP
-#define PROTOCOLS_SHARD_TRANSACTION_MANAGER_HPP
+#ifndef PROTOCOLS_CHAIN_KEEPER_TRANSACTION_MANAGER_HPP
+#define PROTOCOLS_CHAIN_KEEPER_TRANSACTION_MANAGER_HPP
 
 #include"crypto/fnv.hpp"
 #include"chain/transaction.hpp"
@@ -177,7 +177,7 @@ private:
   void RegisterTransaction(transaction_type const& tx ) 
   {
     
-    TODO("Check if transaction belongs to shard");    
+    TODO("Check if transaction belongs to group");    
     
     last_transactions_.push_back(tx);
     transactions_[ tx.digest() ] = tx;

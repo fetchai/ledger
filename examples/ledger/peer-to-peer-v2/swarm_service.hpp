@@ -35,7 +35,7 @@ public:
     EntryPoint e;
     // At this point we don't know what the IP is, but localhost is one entry point    
     e.host = "127.0.0.1"; 
-    e.shard = 0;
+    e.group = 0;
 
     e.port = details_.default_port();
     e.http_port = details_.default_http_port();
@@ -47,7 +47,7 @@ public:
     start_event_ = thread_manager_->OnAfterStart([this]() {
         running_ = true;        
         thread_manager_->io_service().post([this]() {
-            this->UpdateNodeShardDetails();
+            this->UpdateNodeChainKeeperDetails();
           });
       });
 
@@ -83,7 +83,7 @@ public:
  *  shards are connected to peers. This is done  
  *  through following event loop:                
  * ┌─────────────────────────────────────────┐   
- * │        Update Node Shard Details        │◀─┐
+ * │        Update Node ChainKeeper Details        │◀─┐
  * └────────────────────┬────────────────────┘  │
  *                      │                       │
  * ┌────────────────────▼────────────────────┐  │
@@ -98,7 +98,7 @@ public:
  * │        Update shard connectivity        │──┘
  * └─────────────────────────────────────────┘   
  */
-  void UpdateNodeShardDetails() 
+  void UpdateNodeChainKeeperDetails() 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.PrintTimings();
@@ -114,14 +114,14 @@ public:
         
         for(auto &s: sh)
         {
-          auto p = s->Call(FetchProtocols::SHARD,  ShardRPC::SHARD_NUMBER);
+          auto p = s->Call(FetchProtocols::CHAIN_KEEPER,  ChainKeeperRPC::GROUP_NUMBER);
           if(! p.Wait(2300) )
           {
-            fetch::logger.Error("Shard timed out!");
+            fetch::logger.Error("ChainKeeper timed out!");
             continue;        
           }
 
-          det[i].shard = p.As<uint32_t>();          
+          det[i].group = p.As<uint32_t>();          
           entries.push_back(det[i]);          
           ++i;          
         }
@@ -132,7 +132,7 @@ public:
         for(auto &e: details.entry_points) {
           for(auto &ref: entries) {
             if( (ref.host == e.host) && (e.port == ref.port) ) {
-              e.shard = ref.shard;
+              e.group = ref.group;
               break;              
             }            
           }
@@ -179,7 +179,7 @@ public:
           all_details[ref.public_key] = ref;
 
           for(auto &e: ref.entry_points) {
-            fetch::logger.Debug("  - ", e.host, ":", e.port,", shard ", e.shard);      
+            fetch::logger.Debug("  - ", e.host, ":", e.port,", shard ", e.group);      
           }
           
           // TODO: Remove true
@@ -199,7 +199,7 @@ public:
           fetch::logger.Debug(" - Entries for ", d.second.public_key);
           for(auto &e: d.second.entry_points) {
             
-            fetch::logger.Debug("   > ",e.host,":",e.port, ", shard ", e.shard);
+            fetch::logger.Debug("   > ",e.host,":",e.port, ", shard ", e.group);
           }
           
           all_details[d.second.public_key] = d.second;
@@ -298,13 +298,13 @@ public:
     
     if(running_) {
       thread_manager_->io_service().post([this]() {
-          this->UpdateShardConnectivity();          
+          this->UpdateChainKeeperConnectivity();          
         });    
     }    
     
   }
 
-  void UpdateShardConnectivity() 
+  void UpdateChainKeeperConnectivity() 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     using namespace fetch::protocols;
@@ -316,7 +316,7 @@ public:
         {
           for(auto const &e: d.entry_points)
           {
-            if(e.configuration & EntryPoint::NODE_SHARD)
+            if(e.configuration & EntryPoint::NODE_CHAIN_KEEPER)
             {
               shard_entries.push_back( e );
             }
@@ -326,7 +326,7 @@ public:
 
     fetch::logger.Highlight("Updating shards!");
     for(auto &s : shard_entries) {
-      fetch::logger.Debug(" - ", s.host, ":", s.port, ", shard ", s.shard);
+      fetch::logger.Debug(" - ", s.host, ":", s.port, ", shard ", s.group);
     }
     
     std::random_shuffle(shard_entries.begin(), shard_entries.end());
@@ -352,7 +352,7 @@ public:
     {
       auto client = shards[i];
       /*
-      auto p2 = client->Call(FetchProtocols::SHARD,  ShardRPC::SHARD_NUMBER);
+      auto p2 = client->Call(FetchProtocols::CHAIN_KEEPER,  ChainKeeperRPC::CHAIN_KEEPER_NUMBER);
       
       if(! p2.Wait(2300) )
       {
@@ -360,12 +360,12 @@ public:
       }
             
       uint32_t shard =  uint32_t( p2  );
-      details[i].shard = shard;
+      details[i].group = shard;
       */
-      std::cout << "  - "<< i << " : " << details[i].host << " " << details[i].port << " " << details[i].shard <<  std::endl;      
+      std::cout << "  - "<< i << " : " << details[i].host << " " << details[i].port << " " << details[i].group <<  std::endl;      
       // TODO: set shard detail
 
-      client->Call(FetchProtocols::SHARD, ShardRPC::LISTEN_TO, shard_entries);
+      client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::LISTEN_TO, shard_entries);
         
     }
 
@@ -382,7 +382,7 @@ public:
     
     if(running_) {
       thread_manager_->Post([this]() {
-          this->UpdateNodeShardDetails();          
+          this->UpdateNodeChainKeeperDetails();          
         }, 2000);
     }    
     

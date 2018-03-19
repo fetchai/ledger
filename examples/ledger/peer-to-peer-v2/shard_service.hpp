@@ -1,5 +1,5 @@
-#ifndef SHARD_SERVICE_HPP
-#define SHARD_SERVICE_HPP
+#ifndef CHAIN_KEEPER_SERVICE_HPP
+#define CHAIN_KEEPER_SERVICE_HPP
 
 #include "service/client.hpp"
 #include"service/server.hpp"
@@ -26,22 +26,22 @@
 #include <chrono>
 #include <algorithm>
 
-class FetchShardService : public fetch::protocols::ShardProtocol {
+class FetchChainKeeperService : public fetch::protocols::ChainKeeperProtocol {
 public:
-  FetchShardService(uint16_t const &port, uint16_t const& http_port, fetch::network::ThreadManager *tm ) :    
-    fetch::protocols::ShardProtocol(tm, fetch::protocols::FetchProtocols::SHARD,  details_),
+  FetchChainKeeperService(uint16_t const &port, uint16_t const& http_port, fetch::network::ThreadManager *tm ) :    
+    fetch::protocols::ChainKeeperProtocol(tm, fetch::protocols::FetchProtocols::CHAIN_KEEPER,  details_),
     thread_manager_( tm),
     service_(port, thread_manager_),
     http_server_(http_port, thread_manager_)    
   {
     using namespace fetch::protocols;    
-    std::cout << "Shard listening for peers on " << (port) << ", clients on " << ( http_port ) << std::endl;
+    std::cout << "ChainKeeper listening for peers on " << (port) << ", clients on " << ( http_port ) << std::endl;
 
     details_.port = port;
     details_.http_port = http_port;    
           
-    // Creating a service contiaing the shard protocol
-    service_.Add(FetchProtocols::SHARD, this);
+    // Creating a service contiaing the group protocol
+    service_.Add(FetchProtocols::CHAIN_KEEPER, this);
     running_ = false;
     
     start_event_ = thread_manager_->OnAfterStart([this]() {
@@ -72,7 +72,7 @@ public:
     
   }
   
-  ~FetchShardService() 
+  ~FetchChainKeeperService() 
   {
     thread_manager_->Off( start_event_ );
     thread_manager_->Off( stop_event_ );
@@ -82,7 +82,7 @@ public:
 /*                                               
  * State maintenance                             
  * ═══════════════════════════════════════════   
- * The shard nodes continuously pull data from   
+ * The group nodes continuously pull data from   
  * its peers. Each node is responsible for       
  * requesting the data they want themselves.     
  *                                               
@@ -116,7 +116,7 @@ public:
     
     this->with_peers_do([this, &promises](  std::vector< client_shared_ptr_type > const &clients ) {
         for(auto const &c: clients) {
-          promises.push_back( c->Call(FetchProtocols::SHARD , ShardRPC::GET_TRANSACTIONS) );
+          promises.push_back( c->Call(FetchProtocols::CHAIN_KEEPER , ChainKeeperRPC::GET_TRANSACTIONS) );
         }
       });
 
@@ -158,7 +158,7 @@ public:
     std::vector< fetch::service::Promise > promises;    
     this->with_peers_do([&promises](std::vector< client_shared_ptr_type > clients, std::vector< EntryPoint > const&) {
         for(auto &c: clients) {
-          promises.push_back( c->Call(FetchProtocols::SHARD, ShardRPC::GET_BLOCKS ) );
+          promises.push_back( c->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::GET_BLOCKS ) );
         }
       });
 

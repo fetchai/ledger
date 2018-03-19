@@ -13,7 +13,7 @@ template< typename T >
 T& Serialize(T& serializer, protocols::EntryPoint const &data) 
 {
   serializer << data.host;
-  serializer << data.shard;
+  serializer << data.group;
   serializer << data.port;
   serializer << data.http_port;
   serializer << data.configuration;
@@ -24,7 +24,7 @@ template< typename T >
 T& Deserialize(T& serializer, protocols::EntryPoint &data) 
 {
   serializer >> data.host;
-  serializer >> data.shard;
+  serializer >> data.group;
   serializer >> data.port;
   serializer >> data.http_port;
   serializer >> data.configuration;  

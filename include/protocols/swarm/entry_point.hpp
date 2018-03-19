@@ -12,7 +12,7 @@ struct EntryPoint
 {
   enum {
     NODE_SWARM = 1ull << 16,
-    NODE_SHARD = 2ull << 16 
+    NODE_CHAIN_KEEPER = 2ull << 16 
   };
 
   enum {
@@ -21,14 +21,14 @@ struct EntryPoint
   
   
   std::string host = "";
-  uint32_t shard = 0;
+  uint32_t group = 0;
   uint32_t port = 1337;
   uint32_t http_port = 8080;
   uint64_t configuration = 0;
 
   bool operator==(EntryPoint const& other) 
   {
-    return (shard == other.shard) && (port == other.port) && (http_port == other.http_port) &&      
+    return (group == other.group) && (port == other.port) && (http_port == other.http_port) &&      
       (configuration == other.configuration) && (host == other.host);    
   }
   

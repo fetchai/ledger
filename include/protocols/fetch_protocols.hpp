@@ -12,7 +12,7 @@ struct FetchProtocols
 enum
 {
   SWARM = 1,
-  SHARD = 2
+  CHAIN_KEEPER = 2
 };
 
 } ;

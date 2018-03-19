@@ -1,5 +1,5 @@
-#ifndef PROTOCOLS_SHARD_MANAGER_HPP
-#define PROTOCOLS_SHARD_MANAGER_HPP
+#ifndef PROTOCOLS_CHAIN_KEEPER_MANAGER_HPP
+#define PROTOCOLS_CHAIN_KEEPER_MANAGER_HPP
 #include"byte_array/referenced_byte_array.hpp"
 #include"byte_array/const_byte_array.hpp"
 #include"serializer/referenced_byte_array.hpp"
@@ -8,14 +8,14 @@
 #include"chain/transaction.hpp"
 #include"chain/block.hpp"
 #include"chain/consensus/proof_of_work.hpp"
-#include"protocols/shard/block.hpp"
-#include"protocols/shard/transaction_manager.hpp"
-#include"protocols/shard/chain_manager.hpp"
+#include"protocols/chain_keeper/block.hpp"
+#include"protocols/chain_keeper/transaction_manager.hpp"
+#include"protocols/chain_keeper/chain_manager.hpp"
 
 #include "service/client.hpp"
 #include"service/publication_feed.hpp"
 #include"mutex.hpp"
-#include"protocols/shard/commands.hpp"
+#include"protocols/chain_keeper/commands.hpp"
 
 #include"protocols/swarm/entry_point.hpp"
 #include"logger.hpp"
@@ -33,7 +33,7 @@ namespace protocols
 {
 
 
-class ShardController 
+class ChainKeeperController 
 {
 public:
 
@@ -49,24 +49,24 @@ public:
   typedef BlockMetaData block_meta_data_type;
   typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256, block_meta_data_type > block_type;  
 
-  // Other shards  
+  // Other groups  
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
   typedef std::shared_ptr< client_type >  client_shared_ptr_type;
   
-  ShardController(uint64_t const& protocol,
+  ChainKeeperController(uint64_t const& protocol,
     network::ThreadManager *thread_manager,
     EntryPoint& details) :
     thread_manager_(thread_manager),
     details_(details),
     block_mutex_( __LINE__, __FILE__),    
-    shard_friends_mutex_( __LINE__, __FILE__),
-    sharding_parameter_(1),
+    chain_keeper_friends_mutex_( __LINE__, __FILE__),
+    grouping_parameter_(1),
     chain_manager_(tx_manager_)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
     
-    details_.configuration = EntryPoint::NODE_SHARD;
+    details_.configuration = EntryPoint::NODE_CHAIN_KEEPER;
     
     block_body_type genesis_body;
     block_type genesis_block;
@@ -86,11 +86,11 @@ public:
   EntryPoint Hello(std::string host) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-    fetch::logger.Debug("Exchaning shard details (RPC reciever)");
+    fetch::logger.Debug("Exchaning group details (RPC reciever)");
 
     std::lock_guard< fetch::mutex::Mutex > lock( details_mutex_ );
     
-    details_.configuration = EntryPoint::NODE_SHARD;
+    details_.configuration = EntryPoint::NODE_CHAIN_KEEPER;
     if(details_.host != host ) { 
       details_.host = host;
     }
@@ -224,7 +224,7 @@ public:
     while( (!client) && (i < 3) ) { // TODO: make configurable
       
       client = std::make_shared< client_type >(host, port, thread_manager_);
-      auto ping_promise = client->Call(FetchProtocols::SHARD, ShardRPC::PING);
+      auto ping_promise = client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::PING);
       if(!ping_promise.Wait( 500 ) ) // TODO: Make configurable
       {
         fetch::logger.Debug("Server not repsonding - retrying !");
@@ -242,7 +242,7 @@ public:
     d.host = host;    
     d.port = port;
     d.http_port = -1; 
-    d.shard = 0; // TODO: get and check that it is right
+    d.group = 0; // TODO: get and check that it is right
     d.configuration = 0;  
 
 
@@ -250,13 +250,13 @@ public:
     block_type head_copy = chain_manager_.head();
     block_mutex_.unlock();
    
-    shard_friends_mutex_.lock();
-    shard_friends_.push_back(client);
+    chain_keeper_friends_mutex_.lock();
+    chain_keeper_friends_.push_back(client);
     friends_details_.push_back(d);
-    shard_friends_mutex_.unlock();
+    chain_keeper_friends_mutex_.unlock();
 
     fetch::logger.Debug("Requesting head exchange");    
-    auto promise1 = client->Call(FetchProtocols::SHARD, ShardRPC::EXCHANGE_HEADS, head_copy);    
+    auto promise1 = client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::EXCHANGE_HEADS, head_copy);    
     if(!promise1.Wait(1000) ) { //; // TODO: make configurable
       fetch::logger.Error("Failed to get head.");
       exit(-1);
@@ -289,10 +289,10 @@ public:
     fetch::logger.Highlight("Updating connectivity for ", details_.host, ":", details_.port);
     
     for(auto &e: list) {
-      fetch::logger.Highlight("  - ", e.host, ":", e.port,", shard ", e.shard);      
+      fetch::logger.Highlight("  - ", e.host, ":", e.port,", group ", e.group);      
       details_mutex_.lock();
       bool self = (e.host == details_.host) && (e.port == details_.port);
-      bool same_shard = (e.shard == details_.shard);
+      bool same_group = (e.group == details_.group);
       details_mutex_.unlock();
       
       if(self) {
@@ -300,8 +300,8 @@ public:
         continue;
       }
 
-      if(!same_shard) {
-        fetch::logger.Debug("Connectiong not belonging to same shard");
+      if(!same_group) {
+        fetch::logger.Debug("Connectiong not belonging to same group");
         
         continue;
       }
@@ -310,7 +310,7 @@ public:
       // TODO: implement max connectivity
 
       bool found = false;
-      shard_friends_mutex_.lock();    
+      chain_keeper_friends_mutex_.lock();    
       for(auto &d: friends_details_)
       {
         if((d.host == e.host) &&
@@ -320,7 +320,7 @@ public:
         }
       }
 
-      shard_friends_mutex_.unlock();
+      chain_keeper_friends_mutex_.unlock();
       if(!found)
       {
         ConnectTo(e.host, e.port); 
@@ -330,28 +330,28 @@ public:
 
   }
 
-  void SetShardNumber(uint32_t shard, uint32_t total_shards) 
+  void SetGroupNumber(uint32_t group, uint32_t total_groups) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
-    fetch::logger.Debug("Setting shard numbers: ", shard, " ", total_shards);    
-    sharding_parameter_ = total_shards;
-    details_.shard = shard;    
+    fetch::logger.Debug("Setting group numbers: ", group, " ", total_groups);    
+    grouping_parameter_ = total_groups;
+    details_.group = group;    
   }
   
   uint32_t count_outgoing_connections() 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
-    std::lock_guard< fetch::mutex::Mutex > lock( shard_friends_mutex_ );
-    return shard_friends_.size();    
+    std::lock_guard< fetch::mutex::Mutex > lock( chain_keeper_friends_mutex_ );
+    return chain_keeper_friends_.size();    
   }
 
-  uint32_t shard_number() 
+  uint32_t group_number() 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
-    return details_.shard;    
+    return details_.group;    
   }
   
 
@@ -359,18 +359,18 @@ public:
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
-    shard_friends_mutex_.lock();
-    fnc( shard_friends_, friends_details_ );    
-    shard_friends_mutex_.unlock();
+    chain_keeper_friends_mutex_.lock();
+    fnc( chain_keeper_friends_, friends_details_ );    
+    chain_keeper_friends_mutex_.unlock();
   }
 
   void with_peers_do( std::function< void( std::vector< client_shared_ptr_type >  ) > fnc ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
-    shard_friends_mutex_.lock();
-    fnc( shard_friends_); 
-    shard_friends_mutex_.unlock();
+    chain_keeper_friends_mutex_.lock();
+    fnc( chain_keeper_friends_); 
+    chain_keeper_friends_mutex_.unlock();
   }
   
   void with_blocks_do( std::function< void(block_type, ChainManager::chain_map_type const& )  > fnc ) const
@@ -459,11 +459,11 @@ private:
 
 
 
-  std::vector< client_shared_ptr_type > shard_friends_;
+  std::vector< client_shared_ptr_type > chain_keeper_friends_;
   std::vector< EntryPoint > friends_details_;  
-  fetch::mutex::Mutex shard_friends_mutex_;  
+  fetch::mutex::Mutex chain_keeper_friends_mutex_;  
 
-  std::atomic< uint32_t > sharding_parameter_ ;
+  std::atomic< uint32_t > grouping_parameter_ ;
 
   TransactionManager tx_manager_;
   ChainManager chain_manager_;

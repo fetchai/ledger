@@ -24,13 +24,13 @@ public:
     for(std::size_t i=0; i < shards; ++i)
     {
       std::size_t j =  offset * shards + i;      
-      shards_.push_back( std::make_shared< FetchShardService > (4000 + j, 9090 + j, thread_manager_ ));
+      shards_.push_back( std::make_shared< FetchChainKeeperService > (4000 + j, 9090 + j, thread_manager_ ));
     }
 
     start_event_ = thread_manager_->OnAfterStart([this, shards, offset]() {
         
         thread_manager_->io_service().post([this]() {
-            this->ConnectShards();
+            this->ConnectChainKeepers();
           });
       });
     
@@ -67,22 +67,22 @@ public:
   
 private:
 
-  void ConnectShards() 
+  void ConnectChainKeepers() 
   {
     std::cout << "Connecting shards" << std::endl;
     uint32_t i = 0;    
     for(auto &s: shards_) {
       std::cout << " - localhost " <<  s->port() << std::endl;
-      auto client = controller_.ConnectShard( "localhost", s->port() );
+      auto client = controller_.ConnectChainKeeper( "localhost", s->port() );
 
-//      client->Call(fetch::protocols::FetchProtocols::SHARD, ShardRPC::SET_SHARD_NUMBER, i, uint32_t(shards_.size()) );
+//      client->Call(fetch::protocols::FetchProtocols::SHARD, ChainKeeperRPC::SET_SHARD_NUMBER, i, uint32_t(shards_.size()) );
       ++i;
     }
   } 
   
   fetch::network::ThreadManager *thread_manager_;      
   FetchSwarmService controller_;
-  std::vector< std::shared_ptr< FetchShardService > > shards_;
+  std::vector< std::shared_ptr< FetchChainKeeperService > > shards_;
 
   typename fetch::network::ThreadManager::event_handle_type start_event_;
   typename fetch::network::ThreadManager::event_handle_type stop_event_;      

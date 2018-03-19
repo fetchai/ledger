@@ -1,10 +1,10 @@
-#ifndef PROTOCOLS_SHARD_CHAIN_MANAGER_HPP
-#define PROTOCOLS_SHARD_CHAIN_MANAGER_HPP
+#ifndef PROTOCOLS_CHAIN_KEEPER_CHAIN_MANAGER_HPP
+#define PROTOCOLS_CHAIN_KEEPER_CHAIN_MANAGER_HPP
 
 #include"crypto/fnv.hpp"
 #include"chain/transaction.hpp"
 #include"assert.hpp"
-#include"protocols/shard/transaction_manager.hpp"
+#include"protocols/chain_keeper/transaction_manager.hpp"
 
 #include<unordered_set>
 #include<stack>

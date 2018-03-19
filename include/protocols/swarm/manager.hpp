@@ -30,8 +30,8 @@ public:
     details_(details),
     suggestion_mutex_( __LINE__, __FILE__),
     peers_mutex_( __LINE__, __FILE__),
-    shards_mutex_ ( __LINE__, __FILE__),     
-    sharding_parameter_(1) {
+    chain_keeper_mutex_ ( __LINE__, __FILE__),     
+    grouping_parameter_(1) {
     LOG_STACK_TRACE_POINT;
     
     // Do not modify details_ here as it is not yet initialized.
@@ -51,7 +51,7 @@ public:
     LOG_STACK_TRACE_POINT;
     std::lock_guard< fetch::mutex::Mutex > lock( client_details_mutex_ );
     client_details_[client] = details;
-   //    SendConnectivityDetailsToShards(details);    --- TODO Figure out why this dead locks
+   //    SendConnectivityDetailsToGroups(details);    --- TODO Figure out why this dead locks
     return details_.details();
   }
 
@@ -129,14 +129,14 @@ public:
   }
 
 
-  void IncreaseShardingParameter() 
+  void IncreaseGroupingParameter() 
   {
     LOG_STACK_TRACE_POINT;
     
-    shards_mutex_.lock();
-    uint32_t n = sharding_parameter_ << 1;
+    chain_keeper_mutex_.lock();
+    uint32_t n = grouping_parameter_ << 1;
 
-    fetch::logger.Debug("Increasing shard parameter to ", n);
+    fetch::logger.Debug("Increasing group parameter to ", n);
     
     struct IDClientPair 
     {
@@ -144,35 +144,35 @@ public:
       client_shared_ptr_type client;      
     } ;
     
-    std::map< std::size_t, std::vector< IDClientPair > > shard_org;
+    std::map< std::size_t, std::vector< IDClientPair > > group_org;
 
-    // Computing new sharding assignment
+    // Computing new grouping assignment
     for(std::size_t i=0; i < n; ++i)
     {
-      shard_org[i] = std::vector< IDClientPair >();      
+      group_org[i] = std::vector< IDClientPair >();      
     }
         
-    for(std::size_t i=0; i < shards_.size(); ++i)
+    for(std::size_t i=0; i < chain_keepers_.size(); ++i)
     {
-      auto &details = shards_details_[i];
-      auto &client = shards_[i];
-      uint32_t s = details.shard;
-      shard_org[s].push_back( {i, client} );
+      auto &details = chain_keepers_details_[i];
+      auto &client = chain_keepers_[i];
+      uint32_t s = details.group;
+      group_org[s].push_back( {i, client} );
     }
 
-    for(std::size_t i=0; i < sharding_parameter_; ++i )
+    for(std::size_t i=0; i < grouping_parameter_; ++i )
     {
-      std::vector< IDClientPair > &vec = shard_org[i];
+      std::vector< IDClientPair > &vec = group_org[i];
       if( vec.size() < 2 ) {
-        TODO("Throw error - cannot perform sharding without more nodes");        
-        shards_mutex_.unlock();
+        TODO("Throw error - cannot perform grouping without more nodes");        
+        chain_keeper_mutex_.unlock();
         return;        
       }
 
-      std::size_t bucket2 = i + sharding_parameter_;
-      std::vector< IDClientPair > &nvec = shard_org[bucket2];
+      std::size_t bucket2 = i + grouping_parameter_;
+      std::vector< IDClientPair > &nvec = group_org[bucket2];
 
-      std::size_t q = vec.size() >> 1; // Diving shard into two groups
+      std::size_t q = vec.size() >> 1; // Diving group into two groups
       for(; q != 0; --q)
       {
         nvec.push_back( vec.back() );
@@ -180,44 +180,44 @@ public:
       }      
     }
 
-    // Assigning shard values
+    // Assigning group values
     for(std::size_t i=0; i < n; ++i)
     {
-      fetch::logger.Debug("Updating shard nodes in shard ", i);
-      auto &vec = shard_org[i];      
+      fetch::logger.Debug("Updating group nodes in group ", i);
+      auto &vec = group_org[i];      
       for(auto &c: vec)
       {
-        shards_details_[ c.index ].shard = i;        
-        c.client->Call(FetchProtocols::SHARD, ShardRPC::SET_SHARD_NUMBER, uint32_t(i), uint32_t(n));
+        chain_keepers_details_[ c.index ].group = i;        
+        c.client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::SET_GROUP_NUMBER, uint32_t(i), uint32_t(n));
 
       }
     }
         
-    sharding_parameter_ = n;    
-    shards_mutex_.unlock();
+    grouping_parameter_ = n;    
+    chain_keeper_mutex_.unlock();
   }
 
-  uint32_t GetShardingParameter()   
+  uint32_t GetGroupingParameter()   
   {
-    return sharding_parameter_;
+    return grouping_parameter_;
   }
     
   
   ////////////////////////
   // Not service protocol
-  client_shared_ptr_type ConnectShard(std::string const &host, uint16_t const &port ) 
+  client_shared_ptr_type ConnectChainKeeper(std::string const &host, uint16_t const &port ) 
   {
     LOG_STACK_TRACE_POINT;
     
-    fetch::logger.Debug("Connecting to shard ", host, ":", port);
+    fetch::logger.Debug("Connecting to group ", host, ":", port);
 
-    shards_mutex_.lock();
+    chain_keeper_mutex_.lock();
     client_shared_ptr_type client = std::make_shared< client_type >(host, port, thread_manager_);
-    shards_mutex_.unlock();
+    chain_keeper_mutex_.unlock();
     
     std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) ); // TODO: Make variable
 
-    EntryPoint ep = client->Call(fetch::protocols::FetchProtocols::SHARD, ShardRPC::HELLO, host).As< EntryPoint >();    
+    EntryPoint ep = client->Call(fetch::protocols::FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::HELLO, host).As< EntryPoint >();    
 
     fetch::logger.Highlight("Before Add");
     
@@ -235,17 +235,17 @@ public:
     with_node_details([](NodeDetails const &det) {
         for(auto &e: det.entry_points)
         {
-          fetch::logger.Debug("  --- ", e.host, ":", e.port, " is shard ", (e.configuration & EntryPoint::NODE_SHARD));
+          fetch::logger.Debug("  --- ", e.host, ":", e.port, " is group ", (e.configuration & EntryPoint::NODE_CHAIN_KEEPER));
         }
         
       });
     
     
-    shards_mutex_.lock();
-    shards_.push_back(client);
-    shards_details_.push_back(ep);
-    fetch::logger.Debug("Total shard count = ", shards_.size());
-    shards_mutex_.unlock();
+    chain_keeper_mutex_.lock();
+    chain_keepers_.push_back(client);
+    chain_keepers_details_.push_back(ep);
+    fetch::logger.Debug("Total group count = ", chain_keepers_.size());
+    chain_keeper_mutex_.unlock();
 
     return client;    
 
@@ -319,7 +319,7 @@ public:
       // Creating 
       protocols::EntryPoint e;
       e.host = own_ip;
-      e.shard = 0;      
+      e.group = 0;      
       e.port = details_.default_port();
       e.http_port = details_.default_http_port();
       e.configuration = EntryPoint::NODE_SWARM;      
@@ -340,14 +340,14 @@ public:
       if(server_details.entry_points.size() == 0) {
         protocols::EntryPoint e2;
         e2.host = client->Address();
-        e2.shard = 0;
+        e2.group = 0;
         e2.port = server_details.default_port;
         e2.http_port = server_details.default_http_port;
         e2.configuration = EntryPoint::NODE_SWARM;
         server_details.entry_points.push_back(e2);        
       }
 
-//      SendConnectivityDetailsToShards(server_details);
+//      SendConnectivityDetailsToGroups(server_details);
       peers_mutex_.lock();       
       server_details_[ client->handle() ] = server_details;
       peers_mutex_.unlock();       
@@ -399,24 +399,24 @@ public:
 
   void with_shard_details_do(std::function< void(std::vector< EntryPoint > &) > fnc) 
   {
-    shards_mutex_.lock();    
-    fnc( shards_details_ );
+    chain_keeper_mutex_.lock();    
+    fnc( chain_keepers_details_ );
    
-    shards_mutex_.unlock();    
+    chain_keeper_mutex_.unlock();    
   }
 
   void with_shards_do(std::function< void(std::vector< client_shared_ptr_type > const &, std::vector< EntryPoint > &) > fnc) 
   {
-    shards_mutex_.lock();    
-    fnc( shards_, shards_details_ );
-    shards_mutex_.unlock();    
+    chain_keeper_mutex_.lock();    
+    fnc( chain_keepers_, chain_keepers_details_ );
+    chain_keeper_mutex_.unlock();    
   }
 
   void with_shards_do(std::function< void(std::vector< client_shared_ptr_type > const &) > fnc) 
   {
-    shards_mutex_.lock();    
-    fnc( shards_ );   
-    shards_mutex_.unlock();    
+    chain_keeper_mutex_.lock();    
+    fnc( chain_keepers_ );   
+    chain_keeper_mutex_.unlock();    
   }
   
   
@@ -461,30 +461,30 @@ public:
   }
 private:
 
-  void SendConnectivityDetailsToShards(NodeDetails const &server_details) 
+  void SendConnectivityDetailsToChainKeepers(NodeDetails const &server_details) 
   {
     for(auto const &e2: server_details.entry_points )
     {
       fetch::logger.Debug("Testing ", e2.host, ":", e2.port);
       
-      if( e2.configuration & EntryPoint::NODE_SHARD )
+      if( e2.configuration & EntryPoint::NODE_CHAIN_KEEPER )
       {
-        shards_mutex_.lock();
-        fetch::logger.Debug(" - Shard count = ", shards_.size() );
-        for(std::size_t k=0; k < shards_.size(); ++k)
+        chain_keeper_mutex_.lock();
+        fetch::logger.Debug(" - Group count = ", chain_keepers_.size() );
+        for(std::size_t k=0; k < chain_keepers_.size(); ++k)
         {
-          auto sd = shards_details_[k];
+          auto sd = chain_keepers_details_[k];
           fetch::logger.Debug(" - Connect ", e2.host, ":", e2.port,  " >> ", sd.host, ":", sd.port, "?");
           
-          if(sd.shard == e2.shard )
+          if(sd.group == e2.group )
           {
             std::cout << "       YES!"  <<std::endl;
-            auto sc = shards_[k];
-            sc->Call(FetchProtocols::SHARD, ShardRPC::LISTEN_TO, e2);
+            auto sc = chain_keepers_[k];
+            sc->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::LISTEN_TO, e2);
           }           
         }
 
-        shards_mutex_.unlock();
+        chain_keeper_mutex_.unlock();
       }        
     }
   }
@@ -510,11 +510,11 @@ private:
   std::vector< client_shared_ptr_type > peers_;
   mutable fetch::mutex::Mutex peers_mutex_;
 
-  std::vector< client_shared_ptr_type > shards_;
-  std::vector< EntryPoint > shards_details_;  
-  mutable fetch::mutex::Mutex shards_mutex_;  
+  std::vector< client_shared_ptr_type > chain_keepers_;
+  std::vector< EntryPoint > chain_keepers_details_;  
+  mutable fetch::mutex::Mutex chain_keeper_mutex_;  
 
-  std::atomic< uint32_t > sharding_parameter_ ;
+  std::atomic< uint32_t > grouping_parameter_ ;
 };
 
 

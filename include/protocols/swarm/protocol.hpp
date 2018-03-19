@@ -7,7 +7,7 @@
 #include "http/module.hpp"
 #include "json/document.hpp"
 #include"protocols/fetch_protocols.hpp"
-#include"protocols/shard/commands.hpp"
+#include"protocols/chain_keeper/commands.hpp"
 
 namespace fetch
 {
@@ -54,7 +54,7 @@ public:
     auto shard_connect = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       std::cout << "Connecting shard from HTTP" << std::endl;
       
-      this->ConnectShard( params["ip"] , params["port"].AsInt() );
+      this->ConnectChainKeeper( params["ip"] , params["port"].AsInt() );
         return fetch::http::HTTPResponse("{\"status\":\"ok\"}");
         
     };    
@@ -72,7 +72,7 @@ public:
             if(!first) response << ",";
             response << "{ \"host\": \""  << d.host << "\",";
             response << " \"port\": "  << d.port << ",";
-            response << " \"shard\": "  << d.shard << ",";                          
+            response << " \"shard\": "  << d.group << ",";                          
             response << " \"http_port\": "  << d.http_port << "}";              
             first = false;            
           }
@@ -106,7 +106,7 @@ public:
             {
               if(!sfirst) response << ",\n";              
               response << "{";
-              response << "\"shard\": " << e.shard  <<",";  
+              response << "\"shard\": " << e.group  <<",";  
               response << "\"host\": \"" << e.host  <<"\",";
               response << "\"port\": " << e.port  << ",";
               response << "\"http_port\": " << e.http_port  << ",";
@@ -151,7 +151,7 @@ public:
             {
               if(!sfirst) response << ",\n";              
               response << "{";
-              response << "\"shard\": " << e.shard  <<",";  
+              response << "\"shard\": " << e.group  <<",";  
               response << "\"host\": \"" << e.host  <<"\",";
               response << "\"port\": " << e.port  << ",";
               response << "\"http_port\": " << e.http_port  << ",";
@@ -195,7 +195,7 @@ public:
             {
               if(!sfirst) response << ",\n";              
               response << "{";
-              response << "\"shard\": " << e.shard  <<",";  
+              response << "\"shard\": " << e.group  <<",";  
               response << "\"host\": \"" << e.host  <<"\",";
               response << "\"port\": " << e.port  << ",";
               response << "\"http_port\": " << e.http_port  << ",";
@@ -232,7 +232,7 @@ public:
           for(auto &e: details.entry_points ) {
             if(!first) response << ", ";            
             response << "{";
-            response << "\"shard\": " << e.shard  <<",";  
+            response << "\"shard\": " << e.group  <<",";  
             response << "\"host\": \"" << e.host  <<"\",";
             response << "\"port\": " << e.port  << ",";
             response << "\"http_port\": " << e.http_port  << ",";
@@ -266,7 +266,7 @@ public:
           transaction_type tx;
           tx.set_arguments( req.body() );
           for(auto &s: shards) {
-            s->Call(FetchProtocols::SHARD , ShardRPC::PUSH_TRANSACTION, tx );
+            s->Call(FetchProtocols::CHAIN_KEEPER , ChainKeeperRPC::PUSH_TRANSACTION, tx );
           }
         });
 
@@ -278,11 +278,11 @@ public:
 
     
     auto increase_shard = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-      this->IncreaseShardingParameter();
+      this->IncreaseGroupingParameter();
       return fetch::http::HTTPResponse("{}");
     };
 
-    HTTPModule::Get("/increase-sharding-parameter",  increase_shard);    
+    HTTPModule::Get("/increase-grouping-parameter",  increase_shard);    
     
   }
   
