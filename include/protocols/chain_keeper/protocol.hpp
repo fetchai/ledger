@@ -4,7 +4,7 @@
 #include "protocols/chain_keeper/commands.hpp"
 #include "protocols/chain_keeper/controller.hpp"
 #include "http/module.hpp"
-
+#include "byte_array/decoders.hpp"
 
 namespace fetch
 {
@@ -159,10 +159,18 @@ public:
       thread_manager->Post([this, req]() {      
           json::JSONDocument doc = req.JSON();
           
-          std::cout << "resources " << doc["resources"] << std::endl;
+//          std::cout << "resources " << doc["resources"] << std::endl;
+
           
           typedef fetch::chain::Transaction transaction_type;
           transaction_type tx;
+          auto &res =  doc["resources"];
+          for(std::size_t i=0; i < res.size(); ++i) {
+            fetch::logger.Info("RESOURCE ", i, ": ", res[i].as_byte_array());
+            auto s = res[i].as_byte_array();            
+            tx.PushGroup( byte_array::FromHex( s.SubArray(2, s.size() -1 ) ) );
+            
+          }          
           tx.set_arguments( req.body() );
           this->PushTransaction( tx );
         });

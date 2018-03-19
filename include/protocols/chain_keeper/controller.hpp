@@ -134,19 +134,7 @@ public:
 
     return ret;    
   }
-/*
-  void PushIncomingTXList( std::vector< transaction_type > list )
-  {
-    bool comms = false;
 
-    for(auto &tx : list)
-    {
-      comms |= PushTransaction( tx, false);
-    }
-    
-    
-  }
-*/
   std::vector< transaction_type > GetTransactions(  ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
@@ -162,6 +150,11 @@ public:
 
   bool PushTransaction( transaction_type tx ) {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    
+    if(! tx.UsesGroup( details_.group, grouping_parameter_) ) {
+      fetch::logger.Debug("Transaction not belonging to group");
+      return false;
+    }
     
     block_mutex_.lock();
 

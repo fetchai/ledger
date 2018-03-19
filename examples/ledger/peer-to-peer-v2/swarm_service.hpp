@@ -83,7 +83,7 @@ public:
  *  shards are connected to peers. This is done  
  *  through following event loop:                
  * ┌─────────────────────────────────────────┐   
- * │        Update Node ChainKeeper Details        │◀─┐
+ * │        Update Node ChainKeeper Details  │◀─┐
  * └────────────────────┬────────────────────┘  │
  *                      │                       │
  * ┌────────────────────▼────────────────────┐  │
