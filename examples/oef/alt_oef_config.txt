@@ -3,11 +3,13 @@
         { "dataModel":
            {
              "name": "node",
-             "attributes": [  { "name": "longitude", "type": "int", "required": 1 } ],
+             "attributes": [  { "name": "ID", "type": "string", "required": 1 }, { "name": "longitude", "type": "int", "required": 1 } ],
              "keywords": ["node"],
              "description": "This node's datamodel"
            },
          "values": [
+             { "ID": "alt_node" },
+             { "latitude": "90.2" },
              { "longitude": "222" } ]},
 
      "endpoints": [

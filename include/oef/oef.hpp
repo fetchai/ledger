@@ -11,6 +11,7 @@
 #include"oef/schema_serializers.hpp"
 #include"oef/service_directory.hpp"
 #include"oef/node_directory.hpp"
+#include"oef/message_history.hpp"
 #include"protocols/fetch_protocols.hpp"
 #include"protocols/node_to_aea/commands.hpp"
 
@@ -20,69 +21,69 @@ namespace oef
 {
 
 class AEADirectory {
-public:
-  void Register(uint64_t client, std::string id) {
-    std::cout << "\rRegistering " << client << " with id " << id << std::endl << std::endl << "> " << std::flush;
+  public:
+    void Register(uint64_t client, std::string id) {
+      std::cout << "\rRegistering " << client << " with id " << id << std::endl << std::endl << "> " << std::flush;
 
-    mutex_.lock();
-    registered_aeas_[client] = id; // TODO: (`HUT`) : proper management of this
-    mutex_.unlock();
-  }
-
-  void Deregister(uint64_t client, std::string id) {
-    std::cout << "\rDeregistering " << client << " with id " << id << std::endl << std::endl << "> " << std::flush;
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-
-    registered_aeas_[client] = ""; // TODO: (`HUT`) : proper management of this (check corresponding id)
-  }
-
-  void PingAllAEAs() {
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-
-    detailed_assert( service_ != nullptr);
-
-    for(auto &id: registered_aeas_) {
-      auto &rpc = service_->ServiceInterfaceOf(id.first);
-
-      rpc.Call(protocols::FetchProtocols::NODE_TO_AEA, protocols::NodeToAEAReverseRPC::PING, "ping_message"); // TODO: (`HUT`) : think about decoupling
+      mutex_.lock();
+      registered_aeas_[client] = id; // TODO: (`HUT`) : proper management of this
+      mutex_.unlock();
     }
-  }
 
-  script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
-    script::Variant result = script::Variant::Object();
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+    void Deregister(uint64_t client, std::string id) {
+      std::cout << "\rDeregistering " << client << " with id " << id << std::endl << std::endl << "> " << std::flush;
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
-    std::string aeaID{id};
+      registered_aeas_[client] = ""; // TODO: (`HUT`) : proper management of this (check corresponding id)
+    }
 
-    for (std::map<uint32_t,std::string>::const_iterator it=registered_aeas_.begin(); it!=registered_aeas_.end(); ++it){
-      if(aeaID.compare(it->second) == 0){
-        result["response"] = "success";
+    void PingAllAEAs() {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
-        auto &rpc = service_->ServiceInterfaceOf(it->first);
-        std::string answer   = rpc.Call(protocols::FetchProtocols::NODE_TO_AEA, protocols::NodeToAEAReverseRPC::BUY, "http_interface").As<std::string>();
-        result["value"]   = answer;
-        return result;
+      detailed_assert( service_ != nullptr);
+
+      for(auto &id: registered_aeas_) {
+        auto &rpc = service_->ServiceInterfaceOf(id.first);
+
+        rpc.Call(protocols::FetchProtocols::NODE_TO_AEA, protocols::NodeToAEAReverseRPC::PING, "ping_message"); // TODO: (`HUT`) : think about decoupling
       }
     }
 
-    result["response"] = "fail"; // TODO: (`HUT`) : ask troels about building variants like var = "thing " = vari + "more";
-    std::string build{"AEA id: '"};
-    build += id;
-    build += "' not active";
-    result["reason"]   = build;
+    script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
+      script::Variant result = script::Variant::Object();
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
-    return result;
-  }
+      std::string aeaID{id};
 
-  void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr)
-  {
-    service_ = ptr;
-  }
+      for (std::map<uint32_t,std::string>::const_iterator it=registered_aeas_.begin(); it!=registered_aeas_.end(); ++it){
+        if(aeaID.compare(it->second) == 0){
+          result["response"] = "success";
 
-private:
-  service::ServiceServer< fetch::network::TCPServer > *service_ = nullptr;
-  std::map< uint32_t, std::string >                    registered_aeas_;
-  fetch::mutex::Mutex                                  mutex_;
+          auto &rpc = service_->ServiceInterfaceOf(it->first);
+          std::string answer   = rpc.Call(protocols::FetchProtocols::NODE_TO_AEA, protocols::NodeToAEAReverseRPC::BUY, "http_interface").As<std::string>();
+          result["value"]   = answer;
+          return result;
+        }
+      }
+
+      result["response"] = "fail"; // TODO: (`HUT`) : ask troels about building variants like var = "thing " = vari + "more";
+      std::string build{"AEA id: '"};
+      build += id;
+      build += "' not active";
+      result["reason"]   = build;
+
+      return result;
+    }
+
+    void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr)
+    {
+      service_ = ptr;
+    }
+
+  private:
+    service::ServiceServer< fetch::network::TCPServer > *service_ = nullptr;
+    std::map< uint32_t, std::string >                    registered_aeas_;
+    fetch::mutex::Mutex                                  mutex_;
 };
 
 struct Transaction
@@ -105,238 +106,279 @@ struct Account
 // Core OEF implementation
 class NodeOEF {
 
-public:
+  public:
 
-  template <typename T>
-  NodeOEF(service::ServiceServer<T> *service, std::string configFile=std::string()) : configFile_{configFile} {
-    AEADirectory_.register_service_instance(service);
-  }
-
-  void Start() {
-
-    if(configFile_.empty()) {
-      return;
+    template <typename T>
+      NodeOEF(service::ServiceServer<T> *service, network::ThreadManager *tm, const schema::Instance &instance, const schema::Endpoint &nodeEndpoint, const schema::Endpoints &endpoints) : 
+        nodeDirectory_{tm, instance, nodeEndpoint, endpoints} {
+          AEADirectory_.register_service_instance(service);
     }
 
-    std::ifstream myfile (configFile_);
+    void Start() {
+      nodeDirectory_.Start();
+    }
 
-    try {
-      // Extract our config from config file
-      if (myfile.is_open()) {
-        std::stringstream buffer;
-        buffer << myfile.rdbuf();
-        json::JSONDocument doc("", buffer.str());
+    std::string RegisterInstance(std::string agentName, schema::Instance instance) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      auto result = serviceDirectory_.RegisterAgent(instance, agentName);
 
-        schema::Instance instance(doc["instance"]);
-        schema::Endpoints endpoints(doc["endpoints"]);
-        nodeDirectory_ = NodeDirectory(instance, endpoints);
+      fetch::logger.Info("Registering instance: ", instance.dataModel().name(), " by AEA: ", agentName);
+      return std::to_string(result);
+    }
+
+    std::vector<std::string> Query(std::string agentName, schema::QueryModel query) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+
+      // Log this
+      nodeDirectory_.LogEvent(agentName, query);
+
+      return serviceDirectory_.Query(query);
+    }
+
+    std::vector<std::string> AEAQueryMulti(schema::QueryModelMulti queryMulti) { // TODO: (`HUT`) : make all const ref.
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+
+      // First get the results from other nodes
+      auto nonLocalAgents = nodeDirectory_.Query(queryMulti);
+      auto agents         = serviceDirectory_.Query(queryMulti.aeaQuery());
+
+      agents.insert(agents.end(), nonLocalAgents.begin(), nonLocalAgents.end());
+
+      return agents;
+    }
+
+    std::vector<std::string> QueryMulti(schema::QueryModelMulti queryMulti) { // TODO: (`HUT`) : make all const ref.
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+
+      // First get the results from other nodes
+      auto nonLocalAgents = nodeDirectory_.Query(queryMulti);
+      auto agents         = serviceDirectory_.Query(queryMulti.aeaQuery());
+
+      agents.insert(agents.end(), nonLocalAgents.begin(), nonLocalAgents.end());
+
+      return agents;
+    }
+
+    std::vector<std::pair<schema::Instance, fetch::script::Variant>> QueryAgentsInstances(schema::QueryModel query) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      return serviceDirectory_.QueryAgentsInstances(query);
+    }
+
+    script::Variant ServiceDirectory() {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      return serviceDirectory_.variant();
+    }
+
+    std::string test() {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      return std::string{"this is a test"};
+    }
+
+    schema::Instance getInstance() {
+      return nodeDirectory_.getInstance();
+    }
+
+    // Ledger functionality
+    bool IsLedgerUser(const fetch::byte_array::BasicByteArray &user) { // TODO: (`HUT`) : consider whether to distinguish between ledger and AEA users
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      return IsLedgerUserPriv(user);
+    }
+
+    bool AddLedgerUser(const fetch::byte_array::BasicByteArray &user) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+
+      if(IsLedgerUserPriv(user)) {
+        return false;
       }
-    }
-    catch (...) {
-      fetch::logger.Error("Failed to parse config file in node constructor");
-    }
 
-    nodeDirectory_.Start();
-  }
+      users_.insert(user);
+      accounts_[user].balance = 300 + (lfg_() % 9700);
 
-  std::string RegisterInstance(std::string agentName, schema::Instance instance) {
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-    auto result = serviceDirectory_.RegisterAgent(instance, agentName);
-
-    fetch::logger.Info("Registering instance: ", instance.dataModel().name(), " by AEA: ", agentName);
-    return std::to_string(result);
-  }
-
-  std::vector<std::string> Query(schema::QueryModel query) {
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-    return serviceDirectory_.Query(query);
-  }
-
-  std::vector<std::string> QueryMulti(schema::QueryModelMulti queryMulti) { // TODO: (`HUT`) : make all const ref.
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-
-    std::cout << "hit query multi" << std::endl;
-
-    std::ostringstream message; // TODO: (`HUT`) : remove this
-    message << queryMulti.aeaQuery().variant() << std::endl << std::endl;
-    message << queryMulti.forwardingQuery().variant();
-    std::cout << message.str() << std::endl;
-
-    // First get the results from other nodes
-    auto nonLocalAgents = nodeDirectory_.Query(queryMulti);
-    auto agents         = serviceDirectory_.Query(queryMulti.aeaQuery());
-
-    agents.insert(agents.end(), nonLocalAgents.begin(), nonLocalAgents.end());
-
-    return agents;
-  }
-
-  std::vector<std::pair<schema::Instance, fetch::script::Variant>> QueryAgentsInstances(schema::QueryModel query) {
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-    return serviceDirectory_.QueryAgentsInstances(query);
-  }
-
-  script::Variant ServiceDirectory() {
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-    return serviceDirectory_.variant();
-  }
-
-  std::string test() {
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-    return std::string{"this is a test"};
-  }
-
-  schema::Instance getInstance() {
-    return nodeDirectory_.getInstance();
-  }
-
-  // Ledger functionality
-  bool IsLedgerUser(const fetch::byte_array::BasicByteArray &user) { // TODO: (`HUT`) : consider whether to distinguish between ledger and AEA users
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-    return IsLedgerUserPriv(user);
-  }
-
-  bool AddLedgerUser(const fetch::byte_array::BasicByteArray &user) {
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-
-    if(IsLedgerUserPriv(user)) {
-      return false;
+      return true;
     }
 
-    users_.insert(user);
-    accounts_[user].balance = 300 + (lfg_() % 9700);
+    int64_t GetUserBalance(const fetch::byte_array::BasicByteArray &user) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      return accounts_[user].balance;
+    }
 
-    return true;
-  }
+    // TODO: (`HUT`) : make this json doc a set of variants instead
+    script::Variant SendTransaction(const fetch::json::JSONDocument &jsonDoc) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
- int64_t GetUserBalance(const fetch::byte_array::BasicByteArray &user) {
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-   return accounts_[user].balance;
- }
+      Transaction tx;
+      script::Variant result = script::Variant::Object();
 
- // TODO: (`HUT`) : make this json doc a set of variants instead
- script::Variant SendTransaction(const fetch::json::JSONDocument &jsonDoc) {
-    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      // TODO: (`HUT`) : some sort of error checking for this
+      tx.fromAddress = jsonDoc["fromAddress"].as_byte_array();
+      tx.amount      = jsonDoc["balance"].as_int();
+      tx.notes       = jsonDoc["notes"].as_byte_array();
+      tx.time        = jsonDoc["time"].as_int();
+      tx.toAddress   = jsonDoc["toAddress"].as_byte_array();
+      tx.json        = jsonDoc.root();
 
-    Transaction tx;
-    script::Variant result = script::Variant::Object();
+      if((users_.find(tx.fromAddress) == users_.end())){
+        result["response"] = "fail";
+        result["reason"]   = "fromAddress does not exist";
+        return result;
+      }
 
-    // TODO: (`HUT`) : some sort of error checking for this
-    tx.fromAddress = jsonDoc["fromAddress"].as_byte_array();
-    tx.amount      = jsonDoc["balance"].as_int();
-    tx.notes       = jsonDoc["notes"].as_byte_array();
-    tx.time        = jsonDoc["time"].as_int();
-    tx.toAddress   = jsonDoc["toAddress"].as_byte_array();
-    tx.json        = jsonDoc.root();
+      if((users_.find(tx.toAddress) == users_.end())) {
+        result["response"] = "fail";
+        result["reason"]   = "toAddress does not exist";
+        return result;
+      }
 
-    if((users_.find(tx.fromAddress) == users_.end())){
-      result["response"] = "fail";
-      result["reason"]   = "fromAddress does not exist";
+      if(accounts_.find(tx.fromAddress) == accounts_.end()) {
+        accounts_[tx.fromAddress].balance = 0;
+      }
+
+      if(accounts_[tx.fromAddress].balance < tx.amount) {
+        result["response"] = "fail";
+        result["reason"]   = "Insufficient funds";
+        return result;
+      }
+
+      accounts_[tx.fromAddress].balance -= tx.amount;
+      accounts_[tx.toAddress].balance   += tx.amount;
+
+      accounts_[tx.fromAddress].history.push_back(tx);
+      accounts_[tx.toAddress].history.push_back(tx);
+
+      result["response"] = "success";
+      result["reason"]   = accounts_[tx.fromAddress].balance;
       return result;
     }
 
-    if((users_.find(tx.toAddress) == users_.end())) {
-      result["response"] = "fail";
-      result["reason"]   = "toAddress does not exist";
+    script::Variant GetHistory(const fetch::byte_array::BasicByteArray &address) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+
+      auto &account = accounts_[address];
+      std::size_t n = std::min(20, int(account.history.size()) );
+
+      script::Variant result = script::Variant::Object();
+      script::Variant history = script::Variant::Array(n);
+
+      if(users_.find( address ) == users_.end()) {
+        result["response"] = "fail";
+        result["reason"]   = "toAddress does not exist";
+        return result;
+      }
+
+      for(std::size_t i=0; i < n; ++i)
+      {
+        history[i] = account.history[ account.history.size() - 1 - i].json;
+      }
+
+      result["value"] = history;
+      result["response"] = "success";
+
       return result;
     }
 
-    if(accounts_.find(tx.fromAddress) == accounts_.end()) {
-      accounts_[tx.fromAddress].balance = 0;
+    void RegisterCallback(uint64_t client, std::string id) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      AEADirectory_.Register(client, id);
+      nodeDirectory_.RegisterAgent(id);
     }
 
-    if(accounts_[tx.fromAddress].balance < tx.amount) {
-      result["response"] = "fail";
-      result["reason"]   = "Insufficient funds";
-      return result;
+    void DeregisterCallback(uint64_t client, std::string id) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      AEADirectory_.Deregister(client, id);
+      nodeDirectory_.DeregisterAgent(id);
     }
 
-    accounts_[tx.fromAddress].balance -= tx.amount;
-    accounts_[tx.toAddress].balance   += tx.amount;
-
-    accounts_[tx.fromAddress].history.push_back(tx);
-    accounts_[tx.toAddress].history.push_back(tx);
-
-    result["response"] = "success";
-    result["reason"]   = accounts_[tx.fromAddress].balance;
-    return result;
- }
-
- script::Variant GetHistory(const fetch::byte_array::BasicByteArray &address) {
-
-    auto &account = accounts_[address];
-    std::size_t n = std::min(20, int(account.history.size()) );
-
-    script::Variant result = script::Variant::Object();
-    script::Variant history = script::Variant::Array(n);
-
-    if(users_.find( address ) == users_.end()) {
-      result["response"] = "fail";
-      result["reason"]   = "toAddress does not exist";
-      return result;
+    std::string BuyFromAEA(std::string id) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      auto res = AEADirectory_.BuyFromAEA(id);
+      std::ostringstream result;
+      result << res;
+      return result.str();
     }
 
-    for(std::size_t i=0; i < n; ++i)
-    {
-      history[i] = account.history[ account.history.size() - 1 - i].json;
+    script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      return AEADirectory_.BuyFromAEA(id);
     }
 
-    result["value"] = history;
-    result["response"] = "success";
+    // Debug functionality
+    void AddEndpoint(schema::Endpoint endpoint, schema::Instance instance, schema::Endpoints endpoints) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      fetch::logger.Info("Received add endpoint call");
+      nodeDirectory_.AddEndpoint(endpoint, instance, endpoints);
+      fetch::logger.Info("Finished add endpoint call");
+    }
 
-    return result;
- }
+    //schema::Endpoints GetEndpoints() {
+    //  nodeDirectory_.GetEndpoints();
+    //}
 
+    void PingAllAEAs() {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      AEADirectory_.PingAllAEAs();
+    }
 
- void RegisterCallback(uint64_t client, std::string id) {
-   AEADirectory_.Register(client, id);
- }
+    std::string ping() {
+      std::cout << "pinged this node!!" << std::endl;
+      return "Pinged this Node!";
+    }
 
- void DeregisterCallback(uint64_t client, std::string id) {
-   AEADirectory_.Deregister(client, id);
- }
+    // Debug pass results to HTTP interface
+    script::Variant DebugAllNodes() {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      return nodeDirectory_.DebugAllNodes();
+    }
 
- // TODO: (`HUT`) : make const
- std::string ping() {
-   std::cout << "pinged this node!!" << std::endl;
-   return "Pinged this Node!";
- }
+    script::Variant DebugAllEndpoints() {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      return nodeDirectory_.DebugAllEndpoints();
+    }
 
- void PingAllAEAs() {
-   AEADirectory_.PingAllAEAs();
- }
+    script::Variant DebugConnections() {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      return nodeDirectory_.DebugConnections();
+    }
 
- std::string BuyFromAEA(std::string id) {
-    auto res = AEADirectory_.BuyFromAEA(id);
-    std::ostringstream result;
-    result << res;
-    return result.str();
- }
+    script::Variant DebugEndpoint() {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      return nodeDirectory_.DebugEndpoint();
+    }
 
- script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
-    return AEADirectory_.BuyFromAEA(id);
- }
+    void GetAgents() {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      AEADirectory_.PingAllAEAs();
+    }
 
-  //void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr) { // TODO: (`HUT`) : delete
-  //  AEADirectory_.register_service_instance(ptr);
-  //}
+    // Pass through functions for node dir (have their own mutexes) debugging TODO: (`HUT`) : make varargs
+    void addAgent(schema::Endpoint endpoint, std::string agent) { nodeDirectory_.addAgent(endpoint, agent); }
+    void removeAgent(schema::Endpoint endpoint, std::string agent) { nodeDirectory_.removeAgent(endpoint, agent); }
 
-private:
-  const std::string     configFile_;
-  oef::ServiceDirectory serviceDirectory_;
-  NodeDirectory         nodeDirectory_;
-  AEADirectory          AEADirectory_;
+    //void addHistoryEvent(schema::Endpoint endpoint, std::string agent) { nodeDirectory_.addAgent(endpoint, agent); } // TODO: (`HUT`) : delete
+    void logEvent(schema::Endpoint endpoint, Event event) { std::cout << "hit this add2!!!" << std::endl; nodeDirectory_.logEvent(endpoint, event); }
 
-  // Ledger
-  std::vector< Transaction >                             transactions_;
-  std::map< fetch::byte_array::BasicByteArray, Account > accounts_;
-  std::set< fetch::byte_array::BasicByteArray >          users_;
-  fetch::random::LaggedFibonacciGenerator<>              lfg_;
-  fetch::mutex::Mutex                                    mutex_;
+    // HTTP returns
+    script::Variant DebugAllAgents()              { return nodeDirectory_.DebugAllAgents(); }
+    script::Variant DebugAllEvents(int maxNumber) { return nodeDirectory_.DebugAllEvents(maxNumber); }
 
-  bool IsLedgerUserPriv(const fetch::byte_array::BasicByteArray &user) const {
-    return (users_.find(user) != users_.end());
-  }
+    // TODO: (`HUT`) : consider whether this should be private, protected or public (public for debug version)
+    NodeDirectory         nodeDirectory_;
+
+  private:
+    const std::string     configFile_;
+    oef::ServiceDirectory serviceDirectory_;
+    AEADirectory          AEADirectory_;
+    MessageHistory        messageHistory_;
+
+    // Ledger
+    std::vector< Transaction >                             transactions_;
+    std::map< fetch::byte_array::BasicByteArray, Account > accounts_;
+    std::set< fetch::byte_array::BasicByteArray >          users_;
+    fetch::random::LaggedFibonacciGenerator<>              lfg_;
+    fetch::mutex::Mutex                                    mutex_;
+
+    bool IsLedgerUserPriv(const fetch::byte_array::BasicByteArray &user) const {
+      return (users_.find(user) != users_.end());
+    }
 };
 }
 }

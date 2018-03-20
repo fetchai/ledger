@@ -23,6 +23,13 @@ namespace fetch
 namespace schema
 {
 
+//helper, variant to string // TODO: (`HUT`) : make this part of variant
+std::string vtos(script::Variant var) {
+  std::ostringstream ret;
+  ret << var;
+  return ret.str();
+}
+
 // TODO: (`HUT`) : make Type its own class and manage these conversions
 enum class Type { Float, Int, Bool, String };
 using VariantType = var::variant<int,float,std::string,bool>;
@@ -673,6 +680,7 @@ public:
     }
   }
 
+  // TODO: (`HUT`) : add keywords to variant
   fetch::script::Variant variant() const {
     fetch::script::Variant result = fetch::script::Variant::Array(constraints_.size());
 
@@ -764,8 +772,17 @@ public:
     return true;
   } */ // legacy query for josh
 
-  const std::vector<Constraint> &constraints() const { return constraints_; }
-  std::vector<Constraint>       &constraints()       { return constraints_; }
+  // TODO: (`HUT`) : think about model comparison
+  bool operator==(const QueryModel &rhs) const {
+    return (vtos(this->variant())).compare(vtos(rhs.variant())) == 0 && // TODO: (`HUT`) : variant to string comparison is dangerous, change this
+           //std::sort(keywords_) == std::sort(rhs.keywords());
+           1 == 1; // TODO: (`HUT`) : keyword sort and compare
+  }
+
+  const std::vector<Constraint>  &constraints() const { return constraints_; }
+  std::vector<Constraint>        &constraints()       { return constraints_; }
+  const std::vector<std::string> &keywords() const    { return keywords_; }
+  std::vector<std::string>       &keywords()          { return keywords_; }
 
 private:
   std::vector<Constraint>   constraints_;
@@ -778,21 +795,8 @@ class QueryModelMulti {
 public:
   explicit QueryModelMulti() {}
 
-  explicit QueryModelMulti(const QueryModel &aeaQuery, const QueryModel &forwardingQuery, uint32_t jumps=3)
+  explicit QueryModelMulti(const QueryModel &aeaQuery, const QueryModel &forwardingQuery, uint16_t jumps=3)
     : aeaQuery_{aeaQuery}, forwardingQuery_{forwardingQuery}, jumps_{jumps} {}
-
-  const QueryModel &aeaQuery() const        { return aeaQuery_; }
-  QueryModel       &aeaQuery()              { return aeaQuery_; }
-  const QueryModel &forwardingQuery() const { return forwardingQuery_; }
-  QueryModel       &forwardingQuery()       { return forwardingQuery_; }
-  const uint32_t   &jumps() const           { return jumps_; }
-  uint32_t         &jumps()                 { return jumps_; }
-
-  /*
-  // Only allow deserializers to set jumps
-  template< typename T>
-  friend void Deserialize( T & serializer, QueryModelMulti &b);
-  */
 
   QueryModelMulti& operator--(int) {
     if(jumps_ > 0) {
@@ -801,11 +805,28 @@ public:
     return *this;
   }
 
+  // Note: do not compare jumps
+  bool operator==(const QueryModelMulti &rhs) const {
+    return aeaQuery_ == rhs.aeaQuery() &&
+           forwardingQuery_ == rhs.forwardingQuery() &&
+           hash_ == rhs.hash();
+  }
+
+  const QueryModel &aeaQuery() const        { return aeaQuery_; }
+  QueryModel       &aeaQuery()              { return aeaQuery_; }
+  const QueryModel &forwardingQuery() const { return forwardingQuery_; }
+  QueryModel       &forwardingQuery()       { return forwardingQuery_; }
+  const uint32_t   &jumps() const           { return jumps_; }
+  uint32_t         &jumps()                 { return jumps_; }
+  const uint64_t   &hash() const            { return hash_; }
+  uint64_t         &hash()                  { return hash_; }
+
 private:
   //uint32_t   &jumps()                       { return jumps_; }
   QueryModel aeaQuery_;
   QueryModel forwardingQuery_;
   uint32_t   jumps_;
+  uint64_t   hash_ = static_cast<uint64_t>(time(NULL));
 };
 
 // Temporarily place convenience fns here
@@ -840,11 +861,12 @@ VariantType string_to_value(Type t, const std::string &s) {
   return VariantType{std::string{""}};
 }
 
-
 // Used for managing node to node communications
 class Endpoint {
 public:
   Endpoint() {}
+
+  Endpoint(const std::string &IP, const uint16_t TCPPort) : IP_{IP}, TCPPort_{TCPPort} {}
 
   Endpoint(fetch::json::JSONDocument jsonDoc) {
     LOG_STACK_TRACE_POINT;
@@ -855,6 +877,17 @@ public:
 
   bool operator< (const Endpoint &rhs) const {
       return (TCPPort_ < rhs.TCPPort()) || (IP_ < rhs.IP());
+  }
+
+  bool equals(const Endpoint &rhs) const {
+    return (TCPPort_ == rhs.TCPPort()) && (IP_ == rhs.IP());
+  }
+
+  fetch::script::Variant variant() const {
+    fetch::script::Variant result = fetch::script::Variant::Object();
+    result["IP"]      = IP_;
+    result["TCPPort"] = TCPPort_;
+    return result;
   }
 
   const std::string &IP() const      { return IP_; }
@@ -871,6 +904,9 @@ class Endpoints {
 public:
   Endpoints() {}
 
+  Endpoints(Endpoint endpoint) {endpoints_.insert(endpoint);}
+  explicit Endpoints(const std::set<Endpoint> &endpoints) : endpoints_{endpoints} {}
+
   Endpoints(fetch::json::JSONDocument jsonDoc) {
     LOG_STACK_TRACE_POINT;
 
@@ -879,12 +915,63 @@ public:
     }
   }
 
+  fetch::script::Variant variant() const {
+    fetch::script::Variant result = fetch::script::Variant::Array(endpoints_.size());
+
+    int index = 0;
+    for(auto &i : endpoints_) {
+      result[index++] = i.variant();
+    }
+    return result;
+  }
 
   const std::set<Endpoint> &endpoints() const { return endpoints_; }
   std::set<Endpoint>       &endpoints()       { return endpoints_; }
 
 private:
   std::set<Endpoint> endpoints_;
+};
+
+// The Agents class is just a convenience for representing agents, this will be extended to hold agent-specific information later
+class Agents {
+public:
+  explicit Agents() {}
+  explicit Agents(const std::string &agent) {Insert(agent);}
+
+  bool Insert(const std::string &agent) {
+    return agents_.insert(agent).second;
+  }
+
+  bool Erase(const std::string &agent) {
+    return agents_.erase(agent) == 1;
+  }
+
+  bool Contains(const std::string &agent) {
+    return agents_.find(agent) != agents_.end();
+  }
+
+  size_t size() const {
+    return agents_.size();
+  }
+
+  fetch::script::Variant variant() const {
+
+    fetch::script::Variant res = fetch::script::Variant::Array(agents_.size());
+
+    int index = 0;
+    for(auto &i : agents_) {
+      res[index++] = fetch::script::Variant(i);
+    }
+
+    return res;
+  }
+
+  void Copy(std::unordered_set<std::string> &s) const {
+    std::copy(agents_.begin(), agents_.end(), std::inserter(s, s.end()));
+  }
+
+private:
+  std::unordered_set<std::string> agents_;
 };
 
 }

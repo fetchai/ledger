@@ -87,11 +87,14 @@ queryJSON_fail = {
         }
 
 r = requests.post('http://localhost:8080/query-for-agents-instances', json=queryJSON_success)
+print "price query1", r
 print "price query1", jsonPrint(r)
 
 r = requests.post('http://localhost:8080/query-for-agents-instances', json=queryJSON_fail)
 print "price query2", jsonPrint(r)
 
+r = requests.post('http://localhost:8080/debug-all-nodes')
+print "test this", jsonPrint(r)
 exit(1)
 
 # Test Instance to register

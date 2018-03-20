@@ -84,6 +84,35 @@ public:
     HTTPModule::Post("/test", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->Test(params, req);
       });
+
+    // Debug functionality
+    HTTPModule::Post("/debug-all-nodes", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->DebugAllNodes();
+      });
+
+    HTTPModule::Post("/debug-all-endpoints", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->DebugAllEndpoints();
+      });
+
+    HTTPModule::Post("/debug-connections", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->DebugConnections();
+      });
+
+    HTTPModule::Post("/debug-endpoint", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->DebugEndpoint();
+      });
+
+    HTTPModule::Post("/debug-all-agents", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->DebugAllAgents();
+      });
+
+    HTTPModule::Post("/debug-all-events", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->DebugAllEvents(params, req);
+      });
+
+    HTTPModule::Post("/debug-all-history", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->DebugEndpoint();
+      });
   }
 
   // Check that a user exists in our ledger
@@ -219,7 +248,7 @@ public:
 
       schema::QueryModel query(doc);
 
-      auto agents = oef_->Query(query);
+      auto agents = oef_->Query("HTTP_interface", query);
 
       script::Variant response       = script::Variant::Object();
       response["response"]           = script::Variant::Object();
@@ -341,6 +370,71 @@ public:
     return http::HTTPResponse(ret.str());
     } catch (...) {
       return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+    }
+  }
+
+  // Debug functionality
+  http::HTTPResponse DebugAllNodes() {
+
+    auto result = oef_->DebugAllNodes();
+    std::ostringstream ret;
+    ret << result;
+    return http::HTTPResponse(ret.str());
+  }
+
+  http::HTTPResponse DebugAllEndpoints() {
+
+    auto result = oef_->DebugAllEndpoints();
+    std::ostringstream ret;
+    ret << result;
+    return http::HTTPResponse(ret.str());
+  }
+
+  http::HTTPResponse DebugConnections() {
+
+    auto result = oef_->DebugConnections();
+    std::ostringstream ret;
+    ret << result;
+    return http::HTTPResponse(ret.str());
+  }
+
+  http::HTTPResponse DebugEndpoint() {
+
+    auto result = oef_->DebugEndpoint();
+    std::ostringstream ret;
+    ret << result;
+    return http::HTTPResponse(ret.str());
+  }
+
+  http::HTTPResponse DebugAllAgents() {
+
+    auto result = oef_->DebugAllAgents();
+    std::ostringstream ret;
+    ret << result;
+    return http::HTTPResponse(ret.str());
+  }
+
+  http::HTTPResponse DebugAllEvents(http::ViewParameters const &params, http::HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    try {
+      doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
+
+      int maxNumber = doc["max_number"].is_undefined() ? 10 : doc["number"].as_int(); // default 10 events
+
+      auto result = oef_->DebugAllEvents(maxNumber);
+
+      std::ostringstream ret;
+      ret << result;
+
+    return http::HTTPResponse(ret.str());
+    } catch (...) {
+
+      auto result = oef_->DebugAllEvents(10);
+      std::ostringstream ret;
+      ret << result;
+      return http::HTTPResponse(ret.str());
     }
   }
 

@@ -18,21 +18,38 @@ using namespace fetch::protocols;
 class TestAEA {
 
 public:
-  TestAEA(int randomSeed) : randomSeed_{randomSeed} {
+  TestAEA()  = delete;
+  TestAEA(TestAEA const &rhs)  = delete;
+  TestAEA(TestAEA const &&rhs)  = delete;
 
-    AEA_name_ = std::string("aea_") + std::to_string(randomSeed);
-    thread_   = std::make_unique<std::thread>([this]() { run(); });
+  TestAEA(uint32_t randomSeed, uint16_t portNumber=9080) : randomSeed_{randomSeed}, portNumber_{portNumber} {
+
+    std::ostringstream name;
+    name << std::string("aea_") << std::to_string(portNumber_) << std::string("_") << std::to_string(randomSeed & 0xFFFF);
+    AEA_name_ = name.str();
+
+    std::cout << "Connecting AEA: " << AEA_name_ << std::endl;
+
+    thread_   = std::make_unique<std::thread>([&]() { run(); });
   }
 
+  bool isSetup() { return isSetup_; }
+
 private:
-  int                                  randomSeed_;
+
+  uint32_t                             randomSeed_;
+  uint16_t                             portNumber_;
   std::unique_ptr<std::thread>         thread_;
   std::string                          AEA_name_;
+  bool                                 isSetup_ = false;
 
   void run(){
+
+    std::cout << "AEA name is " << AEA_name_ << std::endl;
+
     // Client setup
     fetch::network::ThreadManager tm;
-    ServiceClient< fetch::network::TCPClient > client("localhost", 9080, &tm);
+    ServiceClient< fetch::network::TCPClient > client("localhost", portNumber_, &tm);
     tm.Start();
 
     std::this_thread::sleep_for( std::chrono::milliseconds(100) );
@@ -41,11 +58,11 @@ private:
     schema::Attribute name        { "has_name",         schema::Type::Bool, true}; // guarantee all DMs have this
     schema::Attribute wind        { "has_wind_speed",   schema::Type::Bool, false};
     schema::Attribute temperature { "has_temperature",  schema::Type::Bool, false};
-    schema::Attribute latitude    { "latitude",         schema::Type::Bool, false};
-    schema::Attribute longitude   { "longitude",        schema::Type::Bool, false};
+    schema::Attribute humidity    { "has_humidity",     schema::Type::Bool, false};
+    schema::Attribute pressure    { "has_pressure",     schema::Type::Bool, false};
 
     // Use our random number to create a random DataModel using these attributes
-    std::vector<schema::Attribute> possibleAttributes{wind, temperature, latitude, longitude};
+    std::vector<schema::Attribute> possibleAttributes{wind, temperature, humidity, pressure};
     std::vector<schema::Attribute> usedAttributes{name};
     int random = randomSeed_;
 
@@ -78,9 +95,12 @@ private:
 
     // Sell bananas callback
     int bananas = (randomSeed_ % 20) + 1;
+    std::cout << "AEA " << AEA_name_ << " starting with " << bananas << " bananas!" << std::endl;
+
     fetch::mutex::Mutex banana_mutex;
     protocol.onBuy() = [&](std::string fromPerson){
 
+      std::cout << "AEA " << AEA_name_ << "has been called back by " << fromPerson << std::endl;
       std::lock_guard< fetch::mutex::Mutex > lock( banana_mutex );
 
       if(bananas == 0) {
@@ -99,6 +119,8 @@ private:
     if(p.Wait() ) {
       std::cout << "Successfully registered for callbacks" << std::endl;
     }
+
+    isSetup_ = true;
 
     // Now we can wait for people to poke us
     while(bananas > 0) {std::chrono::milliseconds(100);}

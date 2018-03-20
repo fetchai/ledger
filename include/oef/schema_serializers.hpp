@@ -139,12 +139,12 @@ void Deserialize( T & serializer, QueryModelMulti &b) {
 // QueryModel
 template< typename T>
 void Serialize( T & serializer, QueryModel const &b) {
-  serializer << b.constraints();
+  serializer << b.constraints() << b.keywords();
 }
 
 template< typename T>
 void Deserialize( T & serializer, QueryModel &b) {
-  serializer >> b.constraints();
+  serializer >> b.constraints() >> b.keywords();
 }
 
 /////////////////////////////////////////////////////////////////
@@ -191,7 +191,6 @@ void Deserialize( T & serializer, var::variant<A, B, C, D, E> &b) {
   serializer >> a;
   b = a;
 }
-
 /////////////////////////////////////////////////////////////////
 // Relation
 template< typename T>
@@ -299,6 +298,64 @@ void Deserialize( T & serializer, Relation::Op &b) {
       b = Relation::Op::NotEq;
   }
 }
+
+/////////////////////////////////////////////////////////////////
+// Endpoint
+template< typename T>
+void Serialize( T & serializer, Endpoint const &b) {
+
+  serializer << b.IP() << b.TCPPort();
+}
+
+template< typename T>
+void Deserialize( T & serializer, Endpoint &b) {
+  serializer >> b.IP() >> b.TCPPort();
+}
+
+/////////////////////////////////////////////////////////////////
+// Endpoints
+template< typename T>
+void Serialize( T & serializer, Endpoints const &b) {
+  serializer << b.endpoints();
+}
+
+template< typename T>
+void Deserialize( T & serializer, Endpoints &b) {
+  serializer >> b.endpoints();
+}
+
+/////////////////////////////////////////////////////////////////
+// Set
+template< typename T, typename S>
+void Serialize( T & serializer, std::set<S> const &b) {
+
+  auto size = b.size();
+
+  if(size > std::numeric_limits< uint32_t >::max()) {
+    throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Attempt to serialize Instance failed - unsafe type narrowing");
+  }
+
+  serializer << uint32_t(size);
+
+  for(auto &i : b) {
+    serializer << i;
+  }
+}
+
+template< typename T, typename Y>
+void Deserialize( T & serializer, std::set<Y> &b) {
+
+  uint32_t mapLen;
+  serializer >> mapLen;
+
+  for (int i = 0;i < mapLen;i++){
+    Y element;
+    serializer >> element;
+    b.insert(element);
+  }
+
+}
+
 }
 }
 #endif

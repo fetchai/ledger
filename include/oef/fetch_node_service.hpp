@@ -14,17 +14,16 @@ namespace fetch_node_service
 
 class FetchNodeService : public service::ServiceServer< fetch::network::TCPServer >, public http::HTTPServer {
 public:
-  FetchNodeService(fetch::network::ThreadManager *tm, uint16_t tcpPort, uint16_t httpPort, std::string configFile) :
+  //FetchNodeService(fetch::network::ThreadManager *tm, uint16_t tcpPort, uint16_t httpPort, std::string configFile) :
+  FetchNodeService(fetch::network::ThreadManager *tm, uint16_t tcpPort, uint16_t httpPort, const schema::Instance &instance, const schema::Endpoint &nodeEndpoint, const schema::Endpoints &endpoints) :
     ServiceServer(tcpPort, tm),
     HTTPServer(httpPort, tm) {
     fetch::logger.Debug("Constructing fetch node service with TCP port: ", tcpPort, " and HTTP port: ", httpPort);
 
-    std::shared_ptr<oef::NodeOEF> node      = std::make_shared<oef::NodeOEF>(this, configFile);           // Core OEF functionality - all protocols can access this
-    httpOEF_                                = std::make_shared<http_oef::HttpOEF>(node);                  // HTTP interface to node
-    aeaToNodeProtocol_                      = std::make_shared<protocols::AEAToNodeProtocol>(node);       // RPC AEA interface to node
-    nodeToNodeProtocol_                     = std::make_shared<protocols::NodeToNodeProtocol>(node);      // RPC Node interface to node
-
-    node->Start();
+    node_               = std::make_shared<oef::NodeOEF>(this, tm, instance, nodeEndpoint, endpoints);  // Core OEF functionality - all protocols can access this
+    httpOEF_            = std::make_shared<http_oef::HttpOEF>(node_);                  // HTTP interface to node
+    aeaToNodeProtocol_  = std::make_shared<protocols::AEAToNodeProtocol>(node_);       // RPC AEA interface to node
+    nodeToNodeProtocol_ = std::make_shared<protocols::NodeToNodeProtocol>(node_);      // RPC Node interface to node
 
     // Add RPC interface AEA->Node. Note this allows the Node to callback to AEAs too
     this->Add(protocols::FetchProtocols::AEA_TO_NODE, aeaToNodeProtocol_.get());
@@ -36,7 +35,12 @@ public:
     this->AddModule(*httpOEF_);
   }
 
+  void Start() {
+    node_->Start();
+  }
+
 private:
+  std::shared_ptr<oef::NodeOEF>                  node_;
   std::shared_ptr<protocols::AEAToNodeProtocol>  aeaToNodeProtocol_;
   std::shared_ptr<protocols::NodeToNodeProtocol> nodeToNodeProtocol_;
   std::shared_ptr<http_oef::HttpOEF>             httpOEF_;

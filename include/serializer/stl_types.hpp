@@ -14,6 +14,7 @@ namespace serializers {
 
 template <typename T, typename U>
 typename std::enable_if< std::is_integral< U >::value, void >::type Serialize(T &serializer, U const &val) {
+
   serializer.Allocate(sizeof(U));
   serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&val),
                         sizeof(U));
@@ -27,6 +28,7 @@ typename std::enable_if< std::is_integral< U >::value, void >::type  Deserialize
 
 template <typename T, typename U>
 typename std::enable_if< std::is_floating_point< U >::value, void >::type Serialize(T &serializer, U const &val) {
+
   serializer.Allocate(sizeof(U));
   serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&val),
                         sizeof(U));

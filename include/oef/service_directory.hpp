@@ -13,48 +13,6 @@ namespace fetch
 namespace oef
 {
 
-// The Agents class is just a convenience for representing agents, this will be extended to hold agent-specific information later
-class Agents {
-public:
-  explicit Agents() {}
-  explicit Agents(const std::string &agent) {Insert(agent);}
-
-  bool Insert(const std::string &agent) {
-    return agents_.insert(agent).second;
-  }
-
-  bool Erase(const std::string &agent) {
-    return agents_.erase(agent) == 1;
-  }
-
-  bool Contains(const std::string &agent) {
-    return agents_.find(agent) != agents_.end();
-  }
-
-  size_t size() const {
-    return agents_.size();
-  }
-
-  fetch::script::Variant variant() const {
-
-    fetch::script::Variant res = fetch::script::Variant::Array(agents_.size());
-
-    int index = 0;
-    for(auto &i : agents_) {
-      res[index++] = fetch::script::Variant(i);
-    }
-
-    return res;
-  }
-
-  void Copy(std::unordered_set<std::string> &s) const {
-    std::copy(agents_.begin(), agents_.end(), std::inserter(s, s.end()));
-  }
-
-private:
-  std::unordered_set<std::string> agents_;
-};
-
 // ServiceDirectory holds a list of *instances* and the agents associated with those instances. The assumption is therefore that the number of instances is equal to or less than agents
 class ServiceDirectory {
 public:
@@ -142,7 +100,7 @@ public:
  }
 
 private:
-  std::unordered_map<schema::Instance, Agents> data_;
+  std::unordered_map<schema::Instance, schema::Agents> data_;
 };
 
 }
