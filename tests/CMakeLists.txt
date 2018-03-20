@@ -27,6 +27,7 @@ function(standard_test_defines name file defines)
   add_test(${name} ${name} ${ARGV})
 
 endfunction()
+standard_test(coordination_graph_test optimisation/coordination_optimiser/graph_test.cpp)
 
 standard_test(script_dictionary_test script/dictionary.cpp )
 ## chain
