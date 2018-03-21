@@ -26,10 +26,11 @@ class Event {
 public:
   Event() {}
 
-  explicit Event(const std::string &source, const std::string &destination, const std::string &details) :
+  explicit Event(const std::string &source, const std::string &destination, const std::string &details, const std::string &id) :
     source_{source},
     destination_{destination},
-    details_{details} {
+    details_{details},
+    id_{id} {
 
       const std::string find{"\""};
       const std::string repl{"'"};
@@ -46,12 +47,15 @@ public:
   std::string       &destination()       { return destination_; }
   const std::string &details() const     { return details_; }
   std::string       &details()           { return details_; }
+  const std::string &id() const          { return id_; }
+  std::string       &id()                { return id_; }
 
   fetch::script::Variant variant() const {
     fetch::script::Variant result = fetch::script::Variant::Object();
     result["source"]              = source_;
     result["destination"]         = destination_;
     result["details"]             = details_;
+    result["id"]                  = id_;
     return result;
   }
 
@@ -59,6 +63,7 @@ private:
   std::string source_;
   std::string destination_;
   std::string details_;
+  std::string id_;
 };
 
 class Events {
@@ -66,6 +71,12 @@ class Events {
 public:
 
   void Insert(const Event &event) {
+
+    // Enforce size limit // TODO: (`HUT`) : template this
+    if(300 == events_.size()) {
+      events_.pop_front();
+    }
+
     events_.push_back(event);
   }
 
@@ -86,15 +97,15 @@ public:
   }
 
 private:
-  std::vector<Event> events_;
+  std::list<Event> events_;
 };
 
-// TODO: (`HUT`) : template this class
+template <typename T>
 class MessageHistory {
 public:
   explicit MessageHistory() = default;
 
-  bool add(const schema::QueryModelMulti &queryModel) {
+  bool add(const T &queryModel) {
 
     // Check whether we have seen this before
     for(auto &i : history_) {
@@ -105,7 +116,7 @@ public:
 
     // Enforce size limit on history
     if(100 == history_.size()) {
-      history_.pop_back();
+      history_.pop_front();
     }
 
     history_.push_back(queryModel);
@@ -114,7 +125,7 @@ public:
   }
 
 private:
-  std::list<schema::QueryModelMulti> history_;
+  std::list<T> history_;
 };
 
 template< typename T>

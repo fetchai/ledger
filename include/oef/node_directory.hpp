@@ -182,7 +182,8 @@ public:
 
   void logEvent(const schema::Endpoint &endpoint, const Event &event) {
     std::lock_guard< fetch::mutex::Mutex > lock(debugEventsMutex_);
-    debugEvents_[endpoint].Insert(event);
+    //debugEvents_[endpoint].Insert(event); // TODO: (`HUT`) : delete this
+    debugEventsNoEndpoint_.Insert(event);
   }
 
   // By AEA
@@ -253,7 +254,7 @@ public:
   // Query has hit our node
   template <typename T>
   void LogEvent(const std::string source, const T &eventParam) {
-    Event event{source, nodeName_, schema::vtos(eventParam.variant())};
+    Event event{source, nodeName_, schema::vtos(eventParam.variant()), std::to_string(eventParam.hash())};
     logEvent(nodeEndpoint_, event);
 
     std::cout << "adding more!" << std::endl << std::endl;
@@ -264,6 +265,7 @@ public:
 
   script::Variant DebugAllEvents(int maxNumber) {
     std::lock_guard< fetch::mutex::Mutex > lock(debugEventsMutex_);
+    /*
     script::Variant result = script::Variant::Object();
 
     result["response"] = "success";
@@ -279,7 +281,15 @@ public:
       res[index++]                = temp;
     }
 
-    result["value"]   = res;
+    result["value"]   = res;*/
+
+    // Alternate format for Troels
+
+
+    script::Variant result = script::Variant::Object();
+
+    result["response"] = "success";
+    result["value"]    = debugEventsNoEndpoint_.variant(maxNumber);
 
     return result;
   }
@@ -418,6 +428,7 @@ private:
   std::map<schema::Endpoint, schema::Agents>                                 debugAgents_;
   fetch::mutex::Mutex                                                        debugAgentsMutex_;
 
+  Events                                                                     debugEventsNoEndpoint_;
   std::map<schema::Endpoint, Events>                                         debugEvents_;
   fetch::mutex::Mutex                                                        debugEventsMutex_;
 

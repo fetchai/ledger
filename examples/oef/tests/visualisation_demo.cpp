@@ -21,27 +21,20 @@ using namespace fetch::service;
 using namespace fetch::random;
 using namespace fetch;
 
-std::vector<std::string> getLocation(int location) {
-  //  std::vector< std::string > list = {"aas;lakdas" }
-  /*
+std::vector<std::string> getLocation(int select, int random) {
+
+  // Possible location names
+  std::vector<std::string> list = {"destination_A", "destination_B", "destination_C", "destination_D", "destination_E", "destination_F", "destination_G"};
+  std::cout << "Random is " << random << "for select" << select << std::endl;
+
+  // Center
   float base_lat = 51.5090446;
   float base_lng = -0.0993713;
-  auto randomLL = [](float base) -> float {
-    return base + (0.5 - rand() / float( uint32_t(-1) ))* 0.01;
-  };
-  auto lat = [base_lat]() -> std::string { return std::to_string( randomLL( base_lat ) ); }
-  auto lng = [base_lng]() -> std::string { return std::to_string( randomLL( base_lng ) ); }  
-return {list[location % list.size()], lat(), lng()}
-  */
-  
-  if(location-- == 0) { return {"Milngavie" , std::to_string(55.9425559), std::to_string(-4.3617068 )}; }
-  if(location-- == 0) { return {"Edinburgh" , std::to_string(55.9411884), std::to_string(-3.2755497 )}; }
-  if(location-- == 0) { return {"Cambridge" , std::to_string(52.1988369), std::to_string(0.084882   )}; }
-  if(location-- == 0) { return {"Hull"      , std::to_string(53.7663502), std::to_string(-0.4021968 )}; }
-  if(location-- == 0) { return {"Bath"      , std::to_string(51.3801212), std::to_string(-2.3996352 )}; }
-  if(location-- == 0) { return {"Penzance"  , std::to_string(50.1195696), std::to_string(-5.5606844 )}; }
-  if(location-- == 0) { return {"Skye"      , std::to_string(57.3617192), std::to_string(-6.7797837 )}; }
-  if(0          == 0) { return {"Norwich"   , std::to_string(52.6401222), std::to_string(1.2166384  )}; }
+
+  float lat = base_lat + (0.5 - rand() / float( uint32_t(-1) ))* 0.01;
+  float lng = base_lat + (0.5 - rand() / float( uint32_t(-1) ))* 0.015;
+
+  return {list[select % list.size()], std::to_string(lat), std::to_string(lng)};
 }
 
 void runNode(int seed, network::ThreadManager *tm) {
@@ -59,7 +52,8 @@ void runNode(int seed, network::ThreadManager *tm) {
     schema::DataModel node{"node", attributes};
 
     // Create an Instance of this DataModel
-    schema::Instance instance{node, {{"name", getLocation(seed)[0]}, {"latitude", getLocation(seed)[1]}, {"longitude", getLocation(seed)[2]}}};
+    int random = rand() * (seed+1);
+    schema::Instance instance{node, {{"name", getLocation(seed, random)[0]}, {"latitude", getLocation(seed, random)[1]}, {"longitude", getLocation(seed, random)[2]}}};
 
     // this node's endpoint
     schema::Endpoint nodeEndpoint("localhost", 9080+seed);

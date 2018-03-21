@@ -686,6 +686,7 @@ public:
   // TODO: (`HUT`) : think about model comparison
   bool operator==(const QueryModel &rhs) const {
     return (vtos(this->variant())).compare(vtos(rhs.variant())) == 0 && // TODO: (`HUT`) : variant to string comparison is dangerous, change this
+           hash_ == rhs.hash() &&
            //std::sort(keywords_) == std::sort(rhs.keywords());
            1 == 1; // TODO: (`HUT`) : keyword sort and compare
   }
@@ -694,11 +695,14 @@ public:
   std::vector<Constraint>        &constraints()       { return constraints_; }
   const std::vector<std::string> &keywords() const    { return keywords_; }
   std::vector<std::string>       &keywords()          { return keywords_; }
+  const uint64_t                 &hash() const        { return hash_; }
+  uint64_t                       &hash()              { return hash_; }
 
 private:
   std::vector<Constraint>   constraints_;
   std::vector<std::string>  keywords_;
   stde::optional<DataModel> model_; // TODO: (`HUT`) : this is not serialized yet, nor JSON-ed
+  uint64_t                  hash_ = static_cast<uint64_t>(time(NULL));
 };
 
 class QueryModelMulti {
@@ -789,6 +793,7 @@ class Endpoint {
 public:
   Endpoint() {}
 
+  Endpoint(const std::string &IP, const int TCPPort)      : IP_{IP}, TCPPort_{uint16_t(TCPPort)} {}
   Endpoint(const std::string &IP, const uint16_t TCPPort) : IP_{IP}, TCPPort_{TCPPort} {}
 
   Endpoint(fetch::json::JSONDocument jsonDoc) {

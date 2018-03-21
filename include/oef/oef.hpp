@@ -129,9 +129,12 @@ class NodeOEF {
     std::vector<std::string> Query(std::string agentName, schema::QueryModel query) {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
-      nodeDirectory_.LogEvent(agentName, query);
+      if(messageHistorySingle_.add(query)) {
+        nodeDirectory_.LogEvent(agentName, query);
+        return serviceDirectory_.Query(query);
+      }
 
-      return serviceDirectory_.Query(query);
+      return std::vector<std::string>();
     }
 
     std::vector<std::string> AEAQueryMulti(std::string agentName, schema::QueryModelMulti queryMulti) { // TODO: (`HUT`) : make all const ref.
@@ -392,10 +395,11 @@ class NodeOEF {
     NodeDirectory         nodeDirectory_;
 
   private:
-    const std::string     configFile_;
-    oef::ServiceDirectory serviceDirectory_;
-    AEADirectory          AEADirectory_;
-    MessageHistory        messageHistory_;
+    const std::string                       configFile_;
+    oef::ServiceDirectory                   serviceDirectory_;
+    AEADirectory                            AEADirectory_;
+    MessageHistory<schema::QueryModelMulti> messageHistory_;
+    MessageHistory<schema::QueryModel>      messageHistorySingle_;
 
     // Ledger
     std::vector< Transaction >                             transactions_;
