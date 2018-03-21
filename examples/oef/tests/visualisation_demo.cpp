@@ -22,7 +22,18 @@ using namespace fetch::random;
 using namespace fetch;
 
 std::vector<std::string> getLocation(int location) {
-
+  //  std::vector< std::string > list = {"aas;lakdas" }
+  /*
+  float base_lat = 51.5090446;
+  float base_lng = -0.0993713;
+  auto randomLL = [](float base) -> float {
+    return base + (0.5 - rand() / float( uint32_t(-1) ))* 0.01;
+  };
+  auto lat = [base_lat]() -> std::string { return std::to_string( randomLL( base_lat ) ); }
+  auto lng = [base_lng]() -> std::string { return std::to_string( randomLL( base_lng ) ); }  
+return {list[location % list.size()], lat(), lng()}
+  */
+  
   if(location-- == 0) { return {"Milngavie" , std::to_string(55.9425559), std::to_string(-4.3617068 )}; }
   if(location-- == 0) { return {"Edinburgh" , std::to_string(55.9411884), std::to_string(-3.2755497 )}; }
   if(location-- == 0) { return {"Cambridge" , std::to_string(52.1988369), std::to_string(0.084882   )}; }
@@ -51,16 +62,17 @@ void runNode(int seed, network::ThreadManager *tm) {
     schema::Instance instance{node, {{"name", getLocation(seed)[0]}, {"latitude", getLocation(seed)[1]}, {"longitude", getLocation(seed)[2]}}};
 
     // this node's endpoint
-    schema::Endpoint nodeEndpoint{"localhost", 9080+seed};
+    schema::Endpoint nodeEndpoint("localhost", 9080+seed);
 
     // bootstrap endpoints
     std::set<schema::Endpoint> endp;
 
     // All endpoints get default (9080) plus one other (9081 -> current)
-    endp.insert({"localhost", 9080});
+    endp.insert({"localhost", uint16_t(9080)});
     if(seed != 0) {
       for (int i = 0; i < seed; ++i) { rand(); } // weakly ensure rand is different for each seed
-      endp.insert({"localhost", 9080 + (uint16_t(rand()) % seed)});
+      uint16_t port = 9080 + (uint16_t(rand()) % seed);
+      endp.insert({"localhost", port});
     }
 
     //schema::Endpoint bootstrap;
