@@ -141,8 +141,8 @@ class NodeOEF {
       std::cout << "hot here3" << std::endl;
 
       if(messageHistorySingle_.add(query)) {
-      std::cout << "hot here4" << std::endl;
-        nodeDirectory_.LogEvent(agentName, query);
+      std::cout << "hot here111" << std::endl;
+      nodeDirectory_.LogEvent(agentName, query);
       std::cout << "hot here5" << std::endl;
         return serviceDirectory_.Query(query);
       }

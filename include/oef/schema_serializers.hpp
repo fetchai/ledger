@@ -127,24 +127,24 @@ void Deserialize( T & serializer, Type &b) {
 // QueryModelMulti
 template< typename T>
 void Serialize( T & serializer, QueryModelMulti const &b) {
-  serializer << b.aeaQuery() << b.forwardingQuery() << b.jumps() << b.hash();
+  serializer << b.aeaQuery() << b.forwardingQuery() << b.jumps() << b.timestamp();
 }
 
 template< typename T>
 void Deserialize( T & serializer, QueryModelMulti &b) {
-  serializer >> b.aeaQuery() >> b.forwardingQuery() >> b.jumps() >> b.hash();
+  serializer >> b.aeaQuery() >> b.forwardingQuery() >> b.jumps() >> b.timestamp();
 }
 
 /////////////////////////////////////////////////////////////////
 // QueryModel
 template< typename T>
 void Serialize( T & serializer, QueryModel const &b) {
-  serializer << b.constraints() << b.keywords() << b.hash();
+  serializer << b.constraints() << b.keywords() << b.timestamp();
 }
 
 template< typename T>
 void Deserialize( T & serializer, QueryModel &b) {
-  serializer >> b.constraints() >> b.keywords() >> b.hash();
+  serializer >> b.constraints() >> b.keywords() >> b.timestamp();
 }
 
 /////////////////////////////////////////////////////////////////

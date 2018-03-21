@@ -6,6 +6,11 @@
 #include<unordered_set>
 #include<unordered_map>
 
+// For hashing
+#include"crypto/sha256.hpp"
+#include"crypto/hash.hpp"
+#include"byte_array/encoders.hpp"
+
 // TODO: (`HUT`) : probably remove these includes with time
 #include<iostream>
 #include<experimental/optional>
@@ -627,7 +632,12 @@ public:
   explicit QueryModel() : model_{stde::nullopt} {}
 
   explicit QueryModel(const std::vector<Constraint> &constraints, stde::optional<DataModel> model = stde::nullopt)
-    : constraints_{constraints}, model_{model} {}
+    : constraints_{constraints}, model_{model},
+    timestamp_{static_cast<uint64_t>(time(NULL))}
+  {
+      std::cout << "HASH2" << std::endl;
+    //hash_{byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()))} // important we only hash after constructed
+  }
 
   QueryModel(fetch::json::JSONDocument &jsonDoc) {
     LOG_STACK_TRACE_POINT;
@@ -649,6 +659,9 @@ public:
         keywords_.push_back(a.as_byte_array());
       }
     }
+
+    std::cout << "querymodel constraints argh" << std::endl;
+    //hash_ = byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array())); // important we only hash after constructed
   }
 
   // TODO: (`HUT`) : add keywords to variant
@@ -691,7 +704,7 @@ public:
   // TODO: (`HUT`) : think about model comparison
   bool operator==(const QueryModel &rhs) const {
     return (vtos(this->variant())).compare(vtos(rhs.variant())) == 0 && // TODO: (`HUT`) : variant to string comparison is dangerous, change this
-           hash_ == rhs.hash() &&
+           this->getHash().compare(rhs.getHash()) == 0 &&
            //std::sort(keywords_) == std::sort(rhs.keywords());
            1 == 1; // TODO: (`HUT`) : keyword sort and compare
   }
@@ -700,14 +713,26 @@ public:
   std::vector<Constraint>        &constraints()       { return constraints_; }
   const std::vector<std::string> &keywords() const    { return keywords_; }
   std::vector<std::string>       &keywords()          { return keywords_; }
-  const uint64_t                 &hash() const        { return hash_; }
-  uint64_t                       &hash()              { return hash_; }
+  //const std::string              &hash() const        { return hash_; }
+  //std::string                    &hash()              { return hash_; }
+  const uint64_t                 &timestamp() const   { return timestamp_; }
+  uint64_t                       &timestamp()         { return timestamp_; }
+
+  //std::string getHash() const                         { return std::string( byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) )); }
+  std::string getHash() const {
+    std::ostringstream ret;
+    ret << this->variant();
+    return byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(ret.str()) );
+    //return ret.str();
+  }
 
 private:
   std::vector<Constraint>   constraints_;
   std::vector<std::string>  keywords_;
   stde::optional<DataModel> model_; // TODO: (`HUT`) : this is not serialized yet, nor JSON-ed
-  uint64_t                  hash_ = static_cast<uint64_t>(time(NULL));
+  uint64_t                  timestamp_ = static_cast<uint64_t>(time(NULL));// * byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) );
+  std::string               hash_; //= static_cast<uint64_t>(time(NULL)) * byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) );
+
 };
 
 class QueryModelMulti {
@@ -716,7 +741,12 @@ public:
   explicit QueryModelMulti() {}
 
   explicit QueryModelMulti(const QueryModel &aeaQuery, const QueryModel &forwardingQuery, uint16_t jumps=3)
-    : aeaQuery_{aeaQuery}, forwardingQuery_{forwardingQuery}, jumps_{jumps} {}
+    : aeaQuery_{aeaQuery}, forwardingQuery_{forwardingQuery}, jumps_{jumps},
+    timestamp_{static_cast<uint64_t>(time(NULL))}
+    {
+      std::cout << "HASH1" << std::endl;
+      //hash_{byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()))} // important we only hash after constructed
+    }
 
   QueryModelMulti& operator--(int) {
     if(jumps_ > 0) {
@@ -727,14 +757,14 @@ public:
 
   // TODO: (`HUT`) : more robust comparison than this
   bool operator< (const QueryModelMulti &rhs) const {
-      return (hash_ < rhs.hash());
+      return (this->getHash().compare(rhs.getHash()));
   }
 
   // Note: do not compare jumps
   bool operator==(const QueryModelMulti &rhs) const {
     return aeaQuery_ == rhs.aeaQuery() &&
            forwardingQuery_ == rhs.forwardingQuery() &&
-           hash_ == rhs.hash();
+           this->getHash().compare(rhs.getHash()) == 0;
   }
 
   fetch::script::Variant variant() const {
@@ -744,21 +774,31 @@ public:
     return result;
   }
 
-  const QueryModel &aeaQuery() const        { return aeaQuery_; }
-  QueryModel       &aeaQuery()              { return aeaQuery_; }
-  const QueryModel &forwardingQuery() const { return forwardingQuery_; }
-  QueryModel       &forwardingQuery()       { return forwardingQuery_; }
-  const uint32_t   &jumps() const           { return jumps_; }
-  uint32_t         &jumps()                 { return jumps_; }
-  const uint64_t   &hash() const            { return hash_; }
-  uint64_t         &hash()                  { return hash_; }
+  const QueryModel  &aeaQuery() const        { return aeaQuery_; }
+  QueryModel        &aeaQuery()              { return aeaQuery_; }
+  const QueryModel  &forwardingQuery() const { return forwardingQuery_; }
+  QueryModel        &forwardingQuery()       { return forwardingQuery_; }
+  const uint32_t    &jumps() const           { return jumps_; }
+  uint32_t          &jumps()                 { return jumps_; }
+  //const std::string &hash() const            { return hash_; }
+  //std::string       &hash()                  { return hash_; }
+  const uint64_t    &timestamp() const       { return timestamp_; }
+  uint64_t          &timestamp()             { return timestamp_; }
+
+  //std::string getHash() const                { return std::string( byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) )); }
+  std::string getHash() const {
+    std::ostringstream ret;
+    ret << this->variant();
+    return byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(ret.str()) );
+  }
 
 private:
   //uint32_t   &jumps()                       { return jumps_; }
-  QueryModel aeaQuery_;
-  QueryModel forwardingQuery_;
-  uint32_t   jumps_;
-  uint64_t   hash_ = static_cast<uint64_t>(time(NULL));
+  uint32_t    jumps_;
+  QueryModel  aeaQuery_;
+  QueryModel  forwardingQuery_;
+  uint64_t    timestamp_ = static_cast<uint64_t>(time(NULL));// * byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) );
+  std::string hash_;                                         //= static_cast<uint64_t>(time(NULL)) * byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) );
 };
 
 // Temporarily place convenience fns here

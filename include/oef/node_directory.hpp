@@ -269,7 +269,11 @@ public:
   // Query has hit our node
   template <typename T>
   void LogEvent(const std::string source, const T &eventParam) {
-    Event event{source, nodeName_, schema::vtos(eventParam.variant()), std::to_string(eventParam.hash())};
+
+    std::cout << "hot adfasdf" << std::endl;
+    std::string hash = eventParam.getHash();
+    std::cout << "argh adfasdf" << std::endl;
+    Event event{source, nodeName_, schema::vtos(eventParam.variant()), hash};
     logEvent(nodeEndpoint_, event);
 
     std::cout << "adding more!" << std::endl << std::endl;

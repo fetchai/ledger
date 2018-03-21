@@ -130,12 +130,12 @@ private:
 
 template< typename T>
 void Serialize( T & serializer, Event const &b) {
-  serializer << b.source() << b.destination() << b.details();
+  serializer << b.source() << b.destination() << b.details() << b.id();
 }
 
 template< typename T>
 void Deserialize( T & serializer, Event &b) {
-  serializer >> b.source() >> b.destination() >> b.details();
+  serializer >> b.source() >> b.destination() >> b.details() >> b.id();
 }
 
 }

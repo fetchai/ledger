@@ -287,7 +287,7 @@ public:
       response["response"]           = script::Variant::Object();
       response["response"]["agents"] = script::Variant::Array(agents.size());
 
-      std::cout << "hot here4" << std::endl;
+      std::cout << "hot hereaaa" << std::endl;
 
       for (int i = 0; i < agents.size(); ++i) {
         response["response"]["agents"][i] = script::Variant(agents[i]);
