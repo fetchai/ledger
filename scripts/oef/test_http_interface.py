@@ -17,19 +17,18 @@ def ordered(obj):
 
 #pdb.set_trace()
 
-#r = requests.post('http://localhost:8080/debug-all-nodes')
-
-r = requests.post('http://localhost:8080/debug-all-nodes', json='{}')
-#print jsonPrint(r)
-
+# TODO: (`HUT`) : this in a nice way
+page="debug-all-nodes"
+print "testing page ", page
+r = requests.post('http://localhost:8080/'+page, json='{}')
 
 for i in range(10):
     #r2 = requests.post('http://localhost:'+str(8080+i)+'/debug-all-nodes')
     try:
-        r2 = requests.post('http://localhost:'+str(8080+i)+'/debug-all-nodes', json='{}')
+        r2 = requests.post('http://localhost:'+str(8080+i)+'/'+page, json='{}')
     except:
         print "Failed to access http page", str(8080+i)
-        exit(1)
+        break
 
     if(ordered(r.json()) != ordered(r2.json())):
         print "FAIL TO MATCH: ", i
@@ -39,3 +38,22 @@ for i in range(10):
 
     print "Matched page: ", str(8080+i)
 
+page="debug-all-nodes"
+print "testing page ", page
+r = requests.post('http://localhost:8080/'+page, json='{}')
+
+for i in range(10):
+    #r2 = requests.post('http://localhost:'+str(8080+i)+'/debug-all-nodes')
+    try:
+        r2 = requests.post('http://localhost:'+str(8080+i)+'/'+page, json='{}')
+    except:
+        print "Failed to access http page", str(8080+i)
+        break
+
+    if(ordered(r.json()) != ordered(r2.json())):
+        print "FAIL TO MATCH: ", i
+        print jsonPrint(r)
+        print jsonPrint(r2)
+        exit(1)
+
+    print "Matched page: ", str(8080+i)

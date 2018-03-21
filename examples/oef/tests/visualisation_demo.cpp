@@ -38,7 +38,7 @@ void runNode(int seed, network::ThreadManager *tm) {
     fetch::logger.Debug("Constructing node: ", seed);
     LaggedFibonacciGenerator<> lfg{seed};
 
-    schema::Attribute id          { "ID",   schema::Type::String, true};
+    schema::Attribute id          { "name",   schema::Type::String, true};
     schema::Attribute latitude    { "latitude",         schema::Type::Float, true};
     schema::Attribute longitude   { "longitude",        schema::Type::Float, true};
 
@@ -48,7 +48,7 @@ void runNode(int seed, network::ThreadManager *tm) {
     schema::DataModel node{"node", attributes};
 
     // Create an Instance of this DataModel
-    schema::Instance instance{node, {{"ID", getLocation(seed)[0]}, {"latitude", getLocation(seed)[1]}, {"longitude", getLocation(seed)[2]}}};
+    schema::Instance instance{node, {{"name", getLocation(seed)[0]}, {"latitude", getLocation(seed)[1]}, {"longitude", getLocation(seed)[2]}}};
 
     // this node's endpoint
     schema::Endpoint nodeEndpoint{"localhost", 9080+seed};

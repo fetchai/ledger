@@ -129,22 +129,32 @@ class NodeOEF {
     std::vector<std::string> Query(std::string agentName, schema::QueryModel query) {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
-      // Log this
       nodeDirectory_.LogEvent(agentName, query);
 
       return serviceDirectory_.Query(query);
     }
 
-    std::vector<std::string> AEAQueryMulti(schema::QueryModelMulti queryMulti) { // TODO: (`HUT`) : make all const ref.
+    std::vector<std::string> AEAQueryMulti(std::string agentName, schema::QueryModelMulti queryMulti) { // TODO: (`HUT`) : make all const ref.
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      std::vector<std::string> result;
 
+      if(messageHistory_.add(queryMulti) && nodeDirectory_.shouldForward(queryMulti)) {
+        auto agents = serviceDirectory_.Query(queryMulti.aeaQuery());
+        result.insert(result.end(), agents.begin(), agents.end());
+
+        nodeDirectory_.LogEvent(agentName, queryMulti);
+      }
+
+      // 
+
+      /*
       // First get the results from other nodes
-      auto nonLocalAgents = nodeDirectory_.Query(queryMulti);
-      auto agents         = serviceDirectory_.Query(queryMulti.aeaQuery());
+      auto nonLocalAgents = nodeDirectory_.Query(queryMulti); */ // TODO: (`HUT`) : delete old way
+      //auto agents         = serviceDirectory_.Query(queryMulti.aeaQuery());
 
-      agents.insert(agents.end(), nonLocalAgents.begin(), nonLocalAgents.end());
+      //agents.insert(agents.end(), nonLocalAgents.begin(), nonLocalAgents.end());
 
-      return agents;
+      return result;
     }
 
     std::vector<std::string> QueryMulti(schema::QueryModelMulti queryMulti) { // TODO: (`HUT`) : make all const ref.
@@ -353,8 +363,7 @@ class NodeOEF {
     void addAgent(schema::Endpoint endpoint, std::string agent) { nodeDirectory_.addAgent(endpoint, agent); }
     void removeAgent(schema::Endpoint endpoint, std::string agent) { nodeDirectory_.removeAgent(endpoint, agent); }
 
-    //void addHistoryEvent(schema::Endpoint endpoint, std::string agent) { nodeDirectory_.addAgent(endpoint, agent); } // TODO: (`HUT`) : delete
-    void logEvent(schema::Endpoint endpoint, Event event) { std::cout << "hit this add2!!!" << std::endl; nodeDirectory_.logEvent(endpoint, event); }
+    void logEvent(schema::Endpoint endpoint, Event event) { nodeDirectory_.logEvent(endpoint, event); }
 
     // HTTP returns
     script::Variant DebugAllAgents()              { return nodeDirectory_.DebugAllAgents(); }

@@ -91,27 +91,42 @@ private:
   std::vector<Event> events_;
 };
 
+// TODO: (`HUT`) : template this class
 class MessageHistory {
 public:
   explicit MessageHistory() = default;
 
+  bool add(const schema::QueryModelMulti &queryModel) {
+
+    // Check whether we have seen this before
+    for(auto &i : history_) {
+      if(i == queryModel) {
+        return false;
+      }
+    }
+
+    // Enforce size limit on history
+    if(100 == history_.size()) {
+      history_.pop_back();
+    }
+
+    history_.push_back(queryModel);
+
+    return true;
+  }
 
 private:
-  std::list<Event> history_;
+  std::list<schema::QueryModelMulti> history_;
 };
 
 template< typename T>
 void Serialize( T & serializer, Event const &b) {
-  std::cout << "serializing event!" << std::endl;
   serializer << b.source() << b.destination() << b.details();
-  std::cout << "finished serializing event!" << std::endl;
 }
 
 template< typename T>
 void Deserialize( T & serializer, Event &b) {
-  std::cout << "deserializing event!" << std::endl;
   serializer >> b.source() >> b.destination() >> b.details();
-  std::cout << "finished deserializing event!" << std::endl;
 }
 
 }

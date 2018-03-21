@@ -55,7 +55,9 @@ private:
     std::this_thread::sleep_for( std::chrono::milliseconds(100) );
 
     // Define attributes that can exist
-    schema::Attribute name        { "has_name",         schema::Type::Bool, true}; // guarantee all DMs have this
+    schema::Attribute name        { "name",             schema::Type::String, true}; // guarantee all DMs have this
+    schema::Attribute latitude    { "latitude",         schema::Type::Float, true}; // guarantee all DMs have this
+    schema::Attribute longitude   { "longitude",        schema::Type::Float, true}; // guarantee all DMs have this
     schema::Attribute wind        { "has_wind_speed",   schema::Type::Bool, false};
     schema::Attribute temperature { "has_temperature",  schema::Type::Bool, false};
     schema::Attribute humidity    { "has_humidity",     schema::Type::Bool, false};
@@ -63,7 +65,7 @@ private:
 
     // Use our random number to create a random DataModel using these attributes
     std::vector<schema::Attribute> possibleAttributes{wind, temperature, humidity, pressure};
-    std::vector<schema::Attribute> usedAttributes{name};
+    std::vector<schema::Attribute> usedAttributes{name, latitude, longitude};
     int random = randomSeed_;
 
     for (int i = 0; i < possibleAttributes.size(); ++i) {
@@ -80,7 +82,13 @@ private:
 
     // Create an Instance of this DataModel
     std::unordered_map<std::string,std::string> attributeValues;
-    for (int i = 0; i < usedAttributes.size(); ++i) {
+
+    // Set the hard-coded values
+    attributeValues[usedAttributes[0].name()] = AEA_name_;
+    attributeValues[usedAttributes[1].name()] = std::to_string(((randomSeed_) % 10000)/5000.2 + 50); // TODO: (`HUT`) : this could throw float exec
+    attributeValues[usedAttributes[2].name()] = std::to_string(((randomSeed_) % 10000)/5000.1 + 1);
+
+    for (int i = 3; i < usedAttributes.size(); ++i) {
       attributeValues[usedAttributes[i].name()] =  (randomSeed_ & (0x80 >> i)) ? "true" : "false";
     }
 

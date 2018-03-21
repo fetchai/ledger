@@ -33,14 +33,6 @@ public:
 
   NodeDirectory& operator=(NodeDirectory& rhs) = delete;
   NodeDirectory& operator=(NodeDirectory&& rhs) = delete;
-  //NodeDirectory& operator=(NodeDirectory&& rhs)
-  //{
-  //     /*instance_       = std::move(rhs.instance());
-  //     endpoints_      = std::move(rhs.endpoints());
-  //     debugEndpoints_ = std::move(rhs.debugEndpoints_());*/
-  //  std::swap(*this, rhs);
-  //  return *this;
-  //}
 
   void Start() {
 
@@ -75,6 +67,10 @@ public:
 
   schema::Instance getInstance() {
     return instance_;
+  }
+
+  bool shouldForward(schema::QueryModelMulti queryMulti) {
+    return queryMulti.jumps() > 0 && queryMulti.forwardingQuery().check(instance_);
   }
 
   std::vector<std::string> Query(const schema::QueryModelMulti &query) {
@@ -114,40 +110,6 @@ public:
       }
 
       schema::Instance instance = resp.As<schema::Instance>();
-      /*
-      schema::QueryModel aaa = query.forwardingQuery();
-      std::ostringstream find; // TODO: (`HUT`) : remove this
-      find << instance.variant();
-      std::cerr << "their instance is " << find.str() << std::endl;
-      std::cerr << "our constraint is " << aaa.variant() << std::endl;
-
-      std::cerr << "datamodel name is" << instance.model().name() << std::endl;
-
-      schema::ConstraintType  lessThan300 {schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Gt, 2}}};
-      schema::Attribute       longitude   { "longitude",        schema::Type::Int, true};
-      schema::Constraint      longitude_c   { longitude    ,    lessThan300};
-      schema::QueryModel      bbb{{longitude_c}};
-
-      std::vector<schema::Attribute> attributes{longitude};
-      schema::DataModel weather{"testthis", attributes};
-      schema::Instance arghee{weather, {{"longitude", "100"}}};
-      schema::Instance arghbb{weather, {{"longitude", "100"}}};
-
-      std::cout << "begin the comparing" << std::endl;
-
-      if(aaa.check(arghee)) { std::cout << "match 1" << std::endl; }
-
-      arghee.dataModel() = instance.dataModel();
-
-      if(aaa.check(arghee)) { std::cout << "match 2" << std::endl; }
-
-      if(aaa.check(arghbb)) { std::cout << "match 3" << std::endl; }
-
-      arghbb.values() = instance.values();
-
-      if(aaa.check(arghbb)) { std::cout << "match 4" << std::endl; }
-
-      if(aaa.check(instance)) { std::cout << "match 5" << std::endl; } */
 
       if(query.forwardingQuery().check(instance)) {
         std::cerr << "Forwarding match!" << std::endl;
@@ -310,7 +272,7 @@ public:
   // Query has hit our node
   template <typename T>
   void LogEvent(const std::string source, const T &eventParam) {
-    Event event{source, schema::vtos(nodeEndpoint_.variant()), schema::vtos(eventParam.variant())};
+    Event event{source, instance_.values()["name"], schema::vtos(eventParam.variant())};
     logEvent(nodeEndpoint_, event);
 
     std::cout << "adding more!" << std::endl << std::endl;

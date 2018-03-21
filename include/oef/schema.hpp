@@ -812,6 +812,13 @@ public:
            hash_ == rhs.hash();
   }
 
+  fetch::script::Variant variant() const {
+    fetch::script::Variant result = fetch::script::Variant::Object();
+    result["aeaQuery"]        = aeaQuery_.variant();
+    result["forwardingQuery"] = forwardingQuery_.variant();
+    return result;
+  }
+
   const QueryModel &aeaQuery() const        { return aeaQuery_; }
   QueryModel       &aeaQuery()              { return aeaQuery_; }
   const QueryModel &forwardingQuery() const { return forwardingQuery_; }
