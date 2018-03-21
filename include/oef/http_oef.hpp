@@ -307,7 +307,6 @@ public:
     }
   }
 
-
   // Functions to test JSON serialisation/deserialisation
   http::HTTPResponse EchoQuery(http::ViewParameters const &params, http::HTTPRequest const &req) {
 

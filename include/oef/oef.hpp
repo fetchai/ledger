@@ -168,19 +168,6 @@ class NodeOEF {
       return result;
     }
 
-    /*
-    std::vector<std::string> QueryMulti(schema::QueryModelMulti queryMulti) { // TODO: (`HUT`) : make all const ref.
-      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-
-      // First get the results from other nodes
-      auto nonLocalAgents = nodeDirectory_.Query(queryMulti);
-      auto agents         = serviceDirectory_.Query(queryMulti.aeaQuery());
-
-      agents.insert(agents.end(), nonLocalAgents.begin(), nonLocalAgents.end());
-
-      return agents;
-    } */
-
     std::vector<std::pair<schema::Instance, fetch::script::Variant>> QueryAgentsInstances(schema::QueryModel query) {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
       return serviceDirectory_.QueryAgentsInstances(query);
@@ -330,10 +317,6 @@ class NodeOEF {
       nodeDirectory_.AddEndpoint(endpoint, instance, endpoints);
       fetch::logger.Info("Finished add endpoint call");
     }
-
-    //schema::Endpoints GetEndpoints() {
-    //  nodeDirectory_.GetEndpoints();
-    //}
 
     void PingAllAEAs() {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);

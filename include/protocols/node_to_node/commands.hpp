@@ -18,8 +18,9 @@ enum
   DBG_ADD_ENDPOINT,
   DBG_GET_HISTORY, // not implemented
   DBG_ADD_HISTORY, // not implemented
-  DBG_GET_AGENTS, // not implemented
+  DBG_GET_AGENTS,  // not implemented
   DBG_ADD_AGENT,
+  DBG_REMOVE_AGENT,
   DBG_LOG_EVENT
 };
 

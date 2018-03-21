@@ -164,6 +164,20 @@ int main() {
     }
   }
 
+  // Query for all agents by not specifying constraints
+  {
+    schema::QueryModel      query{};
+    schema::QueryModel      forwardingQuery{};
+    schema::QueryModelMulti queryMulti{query, forwardingQuery};
+
+    // Note different client this point
+    auto agents = client1.Call( FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::QUERY_MULTI, "querying_agent", queryMulti ).As<std::vector<std::string>>( );
+
+    std::cout << "third query result (expect all): " << std::endl;
+    for(auto i : agents){
+      std::cout << i << std::endl;
+    }
+  }
   std::cout << "Finished" << std::endl;
 
   while(1) {}

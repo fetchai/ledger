@@ -214,11 +214,6 @@ public:
     return res;
   }
 
-  //"type": "relation",
-  //"op": "<=",
-  //"value_type": "int",
-  //"value": 99
-
   fetch::script::Variant variant() const {
 
     fetch::script::Variant result = fetch::script::Variant::Object();
@@ -343,8 +338,6 @@ public:
       keywords_.push_back(a.as_byte_array());
     }
   }
-
-  //fetch::script::Variant variant() {} // TODO: (`HUT`) : put this in
 
   // nhutton: Temporary keyword testing TODO: (`HUT`) : put in constructor
   void addKeywords(std::vector<std::string> keywords) {
@@ -516,36 +509,9 @@ public:
     }
   }
 
-  //"constraint": {
-  //    "type": "relation",
-  //    "op": "<=",
-  //    "value_type": "int",
-  //    "value": 99
-  //    }
-
   fetch::script::Variant to_variant() const {
-
-    //fetch::script::Variant result = fetch::script::Variant::Object();
-
-    //result["type"]       = "todo"; // TODO: (`HUT`) : fix this
-    //result["op"]         = "todo"; // TODO: (`HUT`) : fix this
-    //result["value_type"] = "todo"; // TODO: (`HUT`) : fix this
-    //result["value"]      = "todo"; // TODO: (`HUT`) : fix this
-
     Relation rel = mapbox::util::get<Relation>(constraint_);
     return rel.variant();
-
-    //constraint_.match(
-    //        [&] (int a)    {
-    //                              result["type"]       = "todoa"; // TODO: (`HUT`) : fix this
-    //                              result["op"]         = "todob"; // TODO: (`HUT`) : fix this
-    //                              result["value_type"] = "todoc"; // TODO: (`HUT`) : fix this
-    //                              result["value"]      = "todod"; // TODO: (`HUT`) : fix this
-    //                            }
-    //        );
-
-    //return result;
-    //return valueTypeToVariant(constraint_); // TODO: (`HUT`) : this elegantly
   }
 
   bool check(const VariantType &v) const;

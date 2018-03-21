@@ -51,75 +51,6 @@ public:
     return queryMulti.jumps() > 0 && queryMulti.forwardingQuery().check(instance_);
   }
 
-  // TODO: (`HUT`) : delete this function and associated code
-  /*
-  std::vector<std::string> Query(const schema::QueryModelMulti &query) {
-
-    std::vector<std::string> response;
-    if(query.jumps() == 0) { return response; }
-
-    std::ostringstream test; // TODO: (`HUT`) : remove this
-    test << instance_.variant();
-    std::cout << "our instance is " << test.str() << std::endl;
-
-    for(auto &i : endpoints_.endpoints()) {
-      std::cerr << "checking against " << i.IP() << ":" << i.TCPPort() << std::endl;
-
-        fetch::network::ThreadManager tm; // TODO: (`HUT`) : use local thread manager when bug is resolved
-        service::ServiceClient< fetch::network::TCPClient > client(i.IP(), i.TCPPort(), &tm);
-        tm.Start();
-
-
-      // Ping them first to check they are there
-      auto resp = client.Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::PING);
-
-      if(!resp.Wait(pingTimeoutMs_)){
-        std::cerr << "no response from node!" << std::endl;
-        tm.Stop();
-        continue;
-      } else {
-        std::cerr << "response from node!" << std::endl << std::endl;
-      }
-
-      resp  = client.Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::GET_INSTANCE);
-
-      if(!resp.Wait(timeoutMs_)){
-        std::cerr << "no response from node when getting instance!" << std::endl;
-        tm.Stop();
-        continue;
-      }
-
-      schema::Instance instance = resp.As<schema::Instance>();
-
-      if(query.forwardingQuery().check(instance)) {
-        std::cerr << "Forwarding match!" << std::endl;
-      } else {
-        std::cerr << "Forwarding fail!" << std::endl;
-        tm.Stop();
-        continue;
-      }
-
-      auto nextQuery = query;
-      nextQuery--;
-
-      resp  = client.Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::QUERY, nextQuery);
-
-      if(!resp.Wait(timeoutMs_)){
-        std::cerr << "no response from node when getting forwarded query!" << std::endl;
-        tm.Stop();
-        continue;
-      }
-
-      auto multiResult = resp.As<std::vector<std::string>>();
-
-      response.insert(response.end(), multiResult.begin(), multiResult.end());
-
-      tm.Stop();
-    }
-
-    return response;
-  } */
-
   // Policy: debugEndpoints will start out empty. Other nodes will add themselves to all connections. Nodes hearing this for the first time will forward to their connections
   void AddEndpoint(const schema::Endpoint &endpoint, const schema::Instance &instance, const schema::Endpoints &endpoints) {
 
@@ -224,6 +155,7 @@ public:
     removeAgent(nodeEndpoint_, agent);
 
     // Notify all other endpoints
+    CallAllEndpoints(protocols::NodeToNodeRPC::DBG_REMOVE_AGENT, nodeEndpoint_, agent);
   }
 
   script::Variant DebugAllAgents() {
@@ -301,24 +233,21 @@ public:
       std::cout << i << std::endl;
     }
 
-    //auto result = messageBox_[queryModel];
-    messageBox_[queryModel] = agents; // TODO: (`HUT`) : this does not collate results
+    std::vector<std::string> &result = messageBox_[queryModel];
 
-    //result.insert(result.end(), agents.begin(), agents.end());
+    result.insert(result.end(), agents.begin(), agents.end());
     messageBoxesMutex_.unlock();
   }
 
   // Get results (TODO: (`HUT`) : and clean message box)
   std::vector<std::string> &ForwardQueryResult(const schema::QueryModelMulti &queryModel) {
     std::lock_guard< fetch::mutex::Mutex > lock(messageBoxesMutex_);
-
-    std::cout << "checking return query! " << schema::vtos(queryModel.variant()) << std::endl;
-
-    for(auto &i : messageBox_[queryModel]) {
-      std::cout << "WHOPPEE" << i << std::endl;
-    }
-
     return messageBox_[queryModel];
+  }
+
+  void ForwardQueryClean(const schema::QueryModelMulti &queryModel) {
+    std::lock_guard< fetch::mutex::Mutex > lock(messageBoxesMutex_);
+    messageBox_.erase(queryModel);
   }
 
   // Query has hit our node
@@ -433,18 +362,14 @@ public:
   template<typename T, typename... Args>
   void CallAllEndpoints(T CallEnum, Args... args) {
 
-    fetch::logger.Info("****************** we got here1!!", endpoints_.endpoints().size());
-
     for(auto &i : debugEndpoints_){
 
       schema::Endpoint forwardTo = i.first;
 
       // Check we are not connecting to ourself (we have a lock on this directory)
       if(forwardTo.equals(nodeEndpoint_)) {
-        fetch::logger.Info("****************** do not forward to ourself");
         continue;
       }
-      fetch::logger.Info("****************** we got here3!!");
 
       // Ping them first to check they are there
       if(!CanConnect(forwardTo)) {
@@ -471,13 +396,8 @@ public:
     //return std::make_shared<service::ServiceClient<T>>(service::ServiceClient<T> {endpoint.IP(), endpoint.TCPPort(), tm_});
   }
 
-  //////////////////////////////////////////////////////////////////////////////////////////
-  // Debug functions
-
-
   schema::Instance  &instance()                                                                { return instance_; }
   schema::Endpoints &endpoints()                                                               { return endpoints_; }
-  //std::map<schema::Endpoint, std::pair<schema::Instance, schema::Endpoints>> &debugEndpoints() { return debugEndpoints_; }
 
 private:
   fetch::network::ThreadManager *tm_;

@@ -15,11 +15,11 @@ namespace oef
 // TODO: (`HUT`) : delete this
 void find_and_replace(std::string& source, std::string const& find, std::string const& replace)
 {
-    for(std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
-    {
-        source.replace(i, find.length(), replace);
-        i += replace.length();
-    }
+  for(std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
+  {
+    source.replace(i, find.length(), replace);
+    i += replace.length();
+  }
 }
 
 class Event {
@@ -40,12 +40,12 @@ public:
       find_and_replace(details_,     find, repl);
     }
 
-  const std::string             &source() const      { return source_; }
-  std::string                   &source()            { return source_; }
-  const std::string             &destination() const { return destination_; }
-  std::string                   &destination()       { return destination_; }
-  const std::string &details() const                 { return details_; }
-  std::string       &details()                       { return details_; }
+  const std::string &source() const      { return source_; }
+  std::string       &source()            { return source_; }
+  const std::string &destination() const { return destination_; }
+  std::string       &destination()       { return destination_; }
+  const std::string &details() const     { return details_; }
+  std::string       &details()           { return details_; }
 
   fetch::script::Variant variant() const {
     fetch::script::Variant result = fetch::script::Variant::Object();
@@ -56,9 +56,9 @@ public:
   }
 
 private:
-  std::string             source_;
-  std::string             destination_;
-  std::string             details_;
+  std::string source_;
+  std::string destination_;
+  std::string details_;
 };
 
 class Events {
@@ -78,10 +78,6 @@ public:
     int index = 0;
     for(auto &i : events_) {
       res[index++] = i.variant();
-
-      //if(index == maxNumber) { // TODO: (`HUT`) : this, limits number
-      //  break;
-      //}
     }
 
     return res;

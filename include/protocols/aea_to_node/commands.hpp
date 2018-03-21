@@ -11,7 +11,7 @@ struct AEAToNodeRPC
 enum
 {
   REGISTER_INSTANCE = 32,
-  QUERY, // legacy
+  QUERY, // legacy TODO: (`HUT`) : remove once have full dependence on multi-queries
   QUERY_MULTI,
   REGISTER_FOR_CALLBACKS,
   DEREGISTER_FOR_CALLBACKS,

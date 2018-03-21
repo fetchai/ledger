@@ -38,14 +38,15 @@ for i in range(10):
 
     print "Matched page: ", str(8080+i)
 
+instanceJSON = { "max_number" : 10 }
 page="debug-all-events"
 print "testing page ", page
-r = requests.post('http://localhost:8080/'+page)
+r = requests.post('http://localhost:8080/'+page, json=instanceJSON)
 
 for i in range(10):
     #r2 = requests.post('http://localhost:'+str(8080+i)+'/debug-all-nodes')
     try:
-        r2 = requests.post('http://localhost:'+str(8080+i)+'/'+page, json='{}')
+        r2 = requests.post('http://localhost:'+str(8080+i)+'/'+page, json=instanceJSON)
     except:
         print "Failed to access http page", str(8080+i)
         break
