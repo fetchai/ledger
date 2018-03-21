@@ -7,11 +7,14 @@
 #include"commandline/vt100.hpp"
 #include<unordered_map>
 #include<map>
+#include<memory>
 namespace fetch {
 namespace optimisers {
 
-struct PuzzleBrick {
-  std::vector< uint32_t > previous;  
+struct Block {
+  std::vector< std::shared_ptr< Block > > previous;
+  std::vector< std::shared_ptr< Block > > next;
+  
   std::unordered_set< uint32_t > groups;
   uint64_t block = uint64_t(-1);
   double work = 0;
@@ -32,31 +35,64 @@ public:
     memory::RectangularArray< uint64_t >(blocks, groups )
   {
     for(auto &a: *this) a = EMPTY;    
-    bricks_.resize(blocks);
+//    bricks_.resize(blocks);
+    bricks_at_block_.resize(blocks);
+    block_number_.resize(groups);
+    chains_.resize(groups);
+    
+    for(auto &b: block_number_) b = 0;    
   }
     
-  uint64_t AddBlock(uint64_t const &block_time,
-    byte_array_type const &hash, double work, std::unordered_set< uint32_t > groups) {
+  uint64_t AddBlock(double work, byte_array_type const &hash,
+    std::vector< byte_array_type > const &previous_blocks,
+    std::unordered_set< uint32_t > groups) {
+
+    std::cout << "Adding : "<< hash << " ";
+    for(auto &g: groups) std::cout << g << ", ";
     
-    if(block_time < block_offset_) {
-      TODO_FAIL("Block time is too small");    
+    std::cout << previous_blocks.size() <<" ;; ";
+      for(auto &p: previous_blocks) {
+        std::cout << p << ", ";          
+      }
+      
+      std::cout << std::endl;
+        
+    if(name_to_id_.find(hash) != name_to_id_.end() ) {
+      TODO_FAIL("Hash already exist: ", hash);      
     }
 
-    if(name_to_id_.find(hash) != name_to_id_.end() ) {
-      TODO_FAIL("Hash already exist");      
+    for(auto &h: previous_blocks) {
+      if(name_to_id_.find( h ) == name_to_id_.end() ) {
+        TODO_FAIL("previous not found");
+      }      
     }
+
     
     name_to_id_[hash] = counter_;
     id_to_name_[counter_] = hash;
     uint64_t id = counter_;
     ++counter_;
 
-    PuzzleBrick brick;
-    brick.groups = groups;
-    brick.block = id;    
+    
+    std::shared_ptr< Block > brick = std::make_shared< Block >( );
+    brick->groups = groups;
+    brick->block = id;    
 
-    bricks_[block_time].push_back( brick );    
-
+    for(auto &h: previous_blocks) {
+      auto id = name_to_id_[h];
+      auto ptr = bricks_[id];
+      
+      brick->previous.push_back( ptr );
+      ptr->next.push_back( brick ); 
+    }
+    
+    
+    bricks_.push_back( brick );    
+    if(previous_blocks.size() == 0 ) {
+      next_blocks_.insert( id );
+      next_refs_[ id ] = 1; 
+    }
+    
     return id;
   }
 
@@ -67,14 +103,14 @@ public:
   }
 
 
-  std::vector< PuzzleBrick > & bricks(std::size_t const&i) 
+  std::vector< std::shared_ptr< Block > > & bricks(std::size_t const&i) 
   {
-    return bricks_[i];
+    return bricks_at_block_[i];
   }
 
-  std::vector< PuzzleBrick > const & bricks(std::size_t const&i) const
+  std::vector< std::shared_ptr< Block > > const & bricks(std::size_t const&i) const
   {
-    return bricks_[i];
+    return bricks_at_block_[i];
   }
   
   
@@ -88,53 +124,113 @@ public:
     return name_to_id_.find(name)->second;
   }
 
-  bool Activate(uint64_t const &block, uint64_t const &brick) 
+  bool Activate(uint64_t block) 
   {
-    auto &bricks = bricks_[block];
-    auto &b =     bricks[brick];
+    if(used_blocks_.find(block) != used_blocks_.end()) {
+      std::cout << "Block used" << std::endl;        
+      return false;      
+    }
+    uint64_t block_n = 0;
+    auto &b = bricks_[block];
 
-    bool ret = true;
-    for(auto &g: b.groups) {
-      ret &= (this->At(block, g)==EMPTY);      
-    }    
+
+    std::cout << "Activating : "<< block << " / " << b->block << " " << name_from_id(block) << ": ";
+    for(auto &g: b->groups) std::cout << g << ", ";
+    
+    std::cout << b->previous.size() <<" ;; ";
+      for(auto &p: b->previous) {
+        std::cout << name_from_id(p->block) << ", ";          
+      }
+      
+      std::cout << std::endl;
+    
+    
+    for(auto &g: b->groups) {
+      block_n = std::max( block_n,  block_number_[g] );
+    }
+
+    std::unordered_map< uint64_t, int > prev_blocks;    
+
+    for(auto &g: b->groups) {
+      std::cout << "From group " << g << std::endl;
+        
+      auto &chain = chains_[g];
+      if(chain.size() != 0) {
+        if( prev_blocks.find( chain.back()->block ) == prev_blocks.end() ) {
+          std::cout << "Setting " << chain.back()->block << " " << name_from_id(chain.back()->block) << std::endl;  
+          prev_blocks[ chain.back()->block ] = 1;
+        } else {
+          std::cout << "Increasing" << std::endl;  
+          ++prev_blocks[ chain.back()->block ];
+        }
+        
+      }
+    }
+
+    bool ret = true;    
+    for(auto &p: b->previous) {
+      if(prev_blocks.find(p->block) == prev_blocks.end()) {
+        std::cout << "Block not in previous: " << name_from_id(p->block) << " " << p->block << std::endl;
+        for(auto &p: prev_blocks) {
+          std::cout << p.first << ": " << p.second << std::endl;
+            
+        }
+        
+        ret = false;
+        break;        
+      }      
+      else
+      {
+        if(prev_blocks[ p->block ] == 0) {
+          std::cout << "Something went wrong!! " << name_from_id(p->block) << std::endl;             
+          ret = false;
+          break;            
+        }
+        std::cout << "Decreasing" << std::endl;
+          
+        --prev_blocks[ p->block ];
+      }
+    }      
+
+    
+    for(auto &pb: prev_blocks) {
+      if(pb.second !=0) {
+        std::cout << "?? " << pb.second << std::endl;             
+        ret = false;
+        break;        
+      }     
+    }
 
     if(ret) {
+      for(auto&g: b->groups) {
+        chains_[g].push_back(b);
+        block_number_[g] = block_n + 1;
 
-      for(auto &g: b.groups) {
-        this->Set(block, g, b.block);        
       }
-      b.in_use = true;
-      total_work_ += b.work;      
+      std::cout << "Block number: " << block_n << std::endl;
+      bricks_at_block_[block_n].push_back(b);
     }
     
-    return ret;    
-  }
-
-  bool Deactivate(uint64_t const &block, uint64_t const &brick) 
-  {
-    auto &bricks = bricks_[block];
-    auto &b =     bricks[brick];
-
-    bool ret = true;
-    for(auto &g: b.groups) {
-      ret &= (this->At(block, g)==b.block);      
-    }    
-
-    if(ret) {
-
-      for(auto &g: b.groups) {
-        this->Set(block, g, EMPTY);        
-      }
-      b.in_use = false;
-      total_work_ -= b.work;
-      
-    }
 
     return ret;    
   }
+
   
+  std::unordered_set< uint64_t > const &next_blocks() const {
+    return next_blocks_;
+  }
 private:
-  std::vector< std::vector< PuzzleBrick > > bricks_;
+  std::vector< std::vector< std::shared_ptr< Block > > > chains_;
+  std::vector< uint64_t > block_number_;
+  
+  std::unordered_set< uint64_t > used_blocks_;
+  
+
+  
+  std::unordered_set< uint64_t > next_blocks_;
+  std::unordered_map< uint64_t, int > next_refs_;  
+  std::vector< std::shared_ptr< Block > > bricks_;
+  std::vector< std::vector< std::shared_ptr< Block > > > bricks_at_block_;  
   std::unordered_map<byte_array_type, uint64_t, hasher_type>  name_to_id_;
   std::unordered_map<uint64_t, byte_array_type>  id_to_name_;
   uint64_t counter_ = 0;
@@ -151,23 +247,22 @@ std::ostream& operator<< (std::ostream& stream, GroupGraph const &graph )
   std::size_t ww = graph.width() ;    
   std::size_t w = ww>> 1;
   std::size_t lane_size = lane_width * ww;
-  auto DrawLane = [lane_width, ww, w, lane_size, lane_width_half, graph](std::vector< PuzzleBrick > const &bricks, std::size_t &n) { 
+  auto DrawLane = [lane_width, ww, w, lane_size, lane_width_half, graph](std::vector< std::shared_ptr< Block > > const &bricks, std::size_t &n) {
+
     std::size_t start = ww;
     std::size_t end = 0;
-
+    
     uint64_t block = uint64_t(-1);
         
-    PuzzleBrick brick;
-
-    while( (n < bricks.size()) && (!bricks[n].in_use) ) ++n;    
+    std::shared_ptr< Block > brick;
       
-    if( (n < bricks.size()) && (bricks[n].in_use) ) {
+    if( (n < bricks.size()) )  {
       brick = bricks[n];     
-      for(auto const &g: brick.groups) {
+      for(auto const &g: brick->groups) {
         if(g < start) start = g;
         if(g > end) end = g;          
       }
-      block = brick.block;
+      block = brick->block;
     }
     
     bool has_block = start <= end;
@@ -182,7 +277,7 @@ std::ostream& operator<< (std::ostream& stream, GroupGraph const &graph )
         std::cout << ( (left) ? "-" : " " );
 
       if(embedded) {        
-        std::cout << (( (brick.groups.find( i ) != brick.groups.end())  ) ? "*" :"-");
+        std::cout << (( (brick->groups.find( i ) != brick->groups.end())  ) ? "*" :"-");
       } else {
         std::cout << "|";        
       }
@@ -194,10 +289,14 @@ std::ostream& operator<< (std::ostream& stream, GroupGraph const &graph )
     }
 
     if(block != uint64_t(-1)) {
-      std::cout << ": " << graph.name_from_id(block);
+      std::cout << ": " << graph.name_from_id(block) << " >> ";
+      for(auto &p : brick->previous) {
+        std::cout << graph.name_from_id( p->block) << ", ";        
+      }
+      
     }
     ++n;
-    
+
   };
 
 
