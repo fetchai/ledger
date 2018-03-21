@@ -415,12 +415,13 @@ public:
 
   http::HTTPResponse DebugAllEvents(http::ViewParameters const &params, http::HTTPRequest const &req) {
 
+    int defaultNumber = 10;
     json::JSONDocument doc;
     try {
       doc = req.JSON();
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-      int maxNumber = doc["max_number"].is_undefined() ? 10 : doc["number"].as_int(); // default 10 events
+      int maxNumber = doc["max_number"].is_undefined() ? defaultNumber : doc["number"].as_int(); // default 10 events
 
       auto result = oef_->DebugAllEvents(maxNumber);
 
@@ -430,7 +431,7 @@ public:
     return http::HTTPResponse(ret.str());
     } catch (...) {
 
-      auto result = oef_->DebugAllEvents(10);
+      auto result = oef_->DebugAllEvents(defaultNumber);
       std::ostringstream ret;
       ret << result;
       return http::HTTPResponse(ret.str());

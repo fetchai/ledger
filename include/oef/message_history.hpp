@@ -72,14 +72,16 @@ public:
   // TODO: (`HUT`) : create vector-to-variant free functions
   fetch::script::Variant variant(int maxNumber) const {
 
-    //fetch::script::Variant res = fetch::script::Variant::Array(std::max(int(events_.size()), maxNumber));
-    fetch::script::Variant res = fetch::script::Variant::Array(events_.size());
+    int numberToReturn = maxNumber > events_.size() ? events_.size() : maxNumber;
+    fetch::script::Variant res = fetch::script::Variant::Array(numberToReturn);
 
     int index = 0;
     for(auto &i : events_) {
       res[index++] = i.variant();
+      if(index == numberToReturn) {
+        break;
+      }
     }
-
     return res;
   }
 
