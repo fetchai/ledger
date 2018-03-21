@@ -22,7 +22,10 @@ public:
     tm_{tm},
     instance_{instance},
     endpoints_{endpoints},
-    nodeEndpoint_{nodeEndpoint} {}
+    nodeEndpoint_{nodeEndpoint} {
+      nodeName_ = instance_.values()["name"]; // TODO: (`HUT`) : this relies on this existing
+      fetch::logger.Info("Constructed NodeDirectory");
+    }
 
   ~NodeDirectory() {
     fetch::logger.Info("Destroying NodeDirectory");
@@ -35,34 +38,9 @@ public:
   NodeDirectory& operator=(NodeDirectory&& rhs) = delete;
 
   void Start() {
-
+    fetch::logger.Info("Starting NodeDirectory");
     AddEndpoint(nodeEndpoint_, instance_, endpoints_);
-    CallEndpoints(protocols::NodeToNodeRPC::DBG_ADD_ENDPOINT, nodeEndpoint_, instance_, endpoints_);
-
-    // TODO: (`HUT`) : delete this
-    /* 
-    // On construction, let all of our endpoints know we have arrived
-    for(auto &i : endpoints_.endpoints()) {
-
-      // Check we are not connecting to ourself
-      if(i.equals(nodeEndpoint_)) {
-        continue;
-      }
-
-      auto client = GetClient<network::TCPClient>(i);
-
-      fetch::logger.Info(nodeEndpoint_.IP(), ":" ,nodeEndpoint_.TCPPort() ," connecting to:: " ,i.IP() ,":" ,i.TCPPort());
-
-      // Ping them first to check they are there
-      if(!CanConnect(client)) {
-        fetch::logger.Info("Failed to ping: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",i.IP(),":",i.TCPPort());
-      } else {
-        fetch::logger.Info("Successfully pinged: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",i.IP(),":",i.TCPPort());
-      }
-
-      // Let them know they can add us as an endpoint
-      client->Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::DBG_ADD_ENDPOINT, nodeEndpoint_, instance_, endpoints_);
-    } */
+    CallEndpoints(protocols::NodeToNodeRPC::DBG_ADD_ENDPOINT, true, nodeEndpoint_, instance_, endpoints_);
   }
 
   schema::Instance getInstance() {
@@ -73,6 +51,8 @@ public:
     return queryMulti.jumps() > 0 && queryMulti.forwardingQuery().check(instance_);
   }
 
+  // TODO: (`HUT`) : delete this function and associated code
+  /*
   std::vector<std::string> Query(const schema::QueryModelMulti &query) {
 
     std::vector<std::string> response;
@@ -138,7 +118,7 @@ public:
     }
 
     return response;
-  }
+  } */
 
   // Policy: debugEndpoints will start out empty. Other nodes will add themselves to all connections. Nodes hearing this for the first time will forward to their connections
   void AddEndpoint(const schema::Endpoint &endpoint, const schema::Instance &instance, const schema::Endpoints &endpoints) {
@@ -148,22 +128,27 @@ public:
       return;
     }
 
-    // Let the Node know our details // TODO: (`HUT`) : use common call for this
-    std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
+    // TODO: (`HUT`) : ****** CHANGE ******
+    // TODO: (`HUT`) : not like this
+    // Let the ORIGINAL Node know our details // TODO: (`HUT`) : use common call for this
+    serviceClientsMutex_.lock();
     auto client = GetClient<network::TCPClient>(endpoint);
     client->Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::DBG_ADD_ENDPOINT, nodeEndpoint_, instance_, endpoints_);
+    serviceClientsMutex_.unlock();
 
     // otherwise forward to all known endpoints
     for(auto &i : debugEndpoints_){
 
       schema::Endpoint forwardTo = i.first;
-      client = GetClient<network::TCPClient>(forwardTo);
 
-      if(!CanConnect(client)) {
+      if(!CanConnect(forwardTo)) {
         fetch::logger.Info("Failed to ping: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
       } else {
         fetch::logger.Info("Successfully pinged: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
       }
+
+      std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
+      client = GetClient<network::TCPClient>(forwardTo);
 
       fetch::logger.Info("Forwarding from:",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort(), " endpoint ", endpoint.IP(), ":", endpoint.TCPPort());
       client->Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::DBG_ADD_ENDPOINT, endpoint, instance, endpoints);
@@ -265,14 +250,81 @@ public:
 
   void logEvent(const schema::Endpoint &endpoint, const Event &event) {
     std::lock_guard< fetch::mutex::Mutex > lock(debugEventsMutex_);
-    std::cout << "hit this add1" << std::endl;
     debugEvents_[endpoint].Insert(event);
+  }
+
+  // By AEA
+  void ForwardQuery(const schema::QueryModelMulti &queryModel) {
+
+    if(queryModel.jumps() == 0) {
+      return;
+    }
+
+    auto query = queryModel;
+    query--; // reduce jumps by 1
+
+    fetch::logger.Info("Forwarding query to endpoints");
+    CallEndpoints(protocols::NodeToNodeRPC::FORWARD_QUERY, false, nodeName_, nodeEndpoint_, query);
+    fetch::logger.Info("Finished forwarding query to endpoints");
+  }
+
+  // By Node
+  void ForwardQuery(const schema::Endpoint &endpoint, const schema::QueryModelMulti &queryModel) {
+
+    if(queryModel.jumps() == 0 || !shouldForward(queryModel)) {
+      return;
+    }
+
+    auto query = queryModel;
+    query--; // reduce jumps by 1
+
+    // Set up a return path for query answers
+    messageBoxesMutex_.lock();
+    messageBoxCallback_[queryModel] = endpoint;
+    messageBoxesMutex_.unlock();
+
+    CallEndpoints(protocols::NodeToNodeRPC::FORWARD_QUERY, false, nodeName_, nodeEndpoint_, query);
+  }
+
+  void ReturnQuery(const schema::QueryModelMulti &queryModel, const std::vector<std::string> &agents) {
+    // If we have a return path set up, use that, otherwise dump it in the message box
+    messageBoxesMutex_.lock();
+    if(messageBoxCallback_.find(queryModel) != messageBoxCallback_.end()){
+      std::cout << "Forwarding return query!" << std::endl;
+      CallEndpoint(protocols::NodeToNodeRPC::RETURN_QUERY, messageBoxCallback_[queryModel], queryModel, agents);
+      messageBoxesMutex_.unlock();
+      return;
+    }
+
+    std::cout << "Received return query! Adding to " << schema::vtos(queryModel.variant()) << std::endl;
+    for(auto &i : agents) {
+      std::cout << i << std::endl;
+    }
+
+    //auto result = messageBox_[queryModel];
+    messageBox_[queryModel] = agents; // TODO: (`HUT`) : this does not collate results
+
+    //result.insert(result.end(), agents.begin(), agents.end());
+    messageBoxesMutex_.unlock();
+  }
+
+  // Get results (TODO: (`HUT`) : and clean message box)
+  std::vector<std::string> &ForwardQueryResult(const schema::QueryModelMulti &queryModel) {
+    std::lock_guard< fetch::mutex::Mutex > lock(messageBoxesMutex_);
+
+    std::cout << "checking return query! " << schema::vtos(queryModel.variant()) << std::endl;
+
+    for(auto &i : messageBox_[queryModel]) {
+      std::cout << "WHOPPEE" << i << std::endl;
+    }
+
+    return messageBox_[queryModel];
   }
 
   // Query has hit our node
   template <typename T>
   void LogEvent(const std::string source, const T &eventParam) {
-    Event event{source, instance_.values()["name"], schema::vtos(eventParam.variant())};
+    Event event{source, nodeName_, schema::vtos(eventParam.variant())};
     logEvent(nodeEndpoint_, event);
 
     std::cout << "adding more!" << std::endl << std::endl;
@@ -323,43 +375,56 @@ public:
 
   // Helper functions
   template <typename T>
-  bool CanConnect(T &client) {
+  bool CanConnect(T &endpoint) {
 
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 20; ++i) {
+
+      serviceClientsMutex_.lock();
+      auto client = GetClient<network::TCPClient>(endpoint);
+
       auto resp = client->Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::PING);
+      serviceClientsMutex_.unlock();
 
       if(resp.Wait(pingTimeoutMs_)){
         return true;
       }
+
+      uint64_t waitTime = 5 + (static_cast<uint64_t>(time(NULL)) % 10);
+      std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
     }
     return false;
   }
 
+  // non blocking call endpoint
+  template<typename T, typename... Args>
+  void CallEndpoint(T CallEnum, schema::Endpoint endpoint, Args... args) {
+    std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
+    auto client = GetClient<network::TCPClient>(endpoint);
+    client->Call( protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
+  }
+
   // Call the endpoints that we know of
   template<typename T, typename... Args>
-  void CallEndpoints(T CallEnum, Args... args) {
+  void CallEndpoints(T CallEnum, bool pingFirst, Args... args) {
 
     for(auto &forwardTo : endpoints_.endpoints()){
 
       // Check we are not connecting to ourself (we have a lock on this directory)
       if(forwardTo.equals(nodeEndpoint_)) {
-        fetch::logger.Info("=== do not forward to ourself");
         continue;
       }
-      fetch::logger.Info("=== we got here3!!");
+
+      // Ping them first to check they are there
+      if(pingFirst) {
+        if(!CanConnect(forwardTo)) {
+          fetch::logger.Info("Failed to ping: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
+        } else {
+          fetch::logger.Info("Successfully pinged: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
+        }
+      }
 
       std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
       auto client = GetClient<network::TCPClient>(forwardTo);
-
-      fetch::logger.Info("===Sending to endpoint",  forwardTo.IP(),":",forwardTo.TCPPort());
-
-      // Ping them first to check they are there
-      if(!CanConnect(client)) {
-        fetch::logger.Info("Failed to ping: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
-      } else {
-        fetch::logger.Info("Successfully pinged: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
-      }
-
       client->Call( protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
     }
   }
@@ -381,22 +446,20 @@ public:
       }
       fetch::logger.Info("****************** we got here3!!");
 
-      std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
-      auto client = GetClient<network::TCPClient>(forwardTo);
-
-      fetch::logger.Info("******************Sending to endpoint",  forwardTo.IP(),":",forwardTo.TCPPort());
-
       // Ping them first to check they are there
-      if(!CanConnect(client)) {
+      if(!CanConnect(forwardTo)) {
         fetch::logger.Info("Failed to ping: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
       } else {
         fetch::logger.Info("Successfully pinged: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
       }
 
+      std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
+      auto client = GetClient<network::TCPClient>(forwardTo);
       client->Call( protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
     }
   }
 
+  // TODO: (`HUT`) : this is not elegant
   template <typename T>
   service::ServiceClient<T> *GetClient(schema::Endpoint endpoint) {
 
@@ -405,6 +468,7 @@ public:
     }
 
     return serviceClients_[endpoint];
+    //return std::make_shared<service::ServiceClient<T>>(service::ServiceClient<T> {endpoint.IP(), endpoint.TCPPort(), tm_});
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -417,10 +481,16 @@ public:
 
 private:
   fetch::network::ThreadManager *tm_;
+  std::string                   nodeName_;
   schema::Instance              instance_;
   schema::Endpoints             endpoints_;
   const double                  timeoutMs_     = 9000;
-  const double                  pingTimeoutMs_ = 1000; // Important that this is << than timeoutMs
+  const double                  pingTimeoutMs_ = 500; // Important that this is << than timeoutMs
+
+  // Message box functionality, TODO: (`HUT`) : make this its own class
+  std::map<schema::QueryModelMulti, std::vector<std::string>> messageBox_;
+  std::map<schema::QueryModelMulti, schema::Endpoint>         messageBoxCallback_;
+  fetch::mutex::Mutex                                         messageBoxesMutex_;
 
   // debug functionality
   schema::Endpoint                                                           nodeEndpoint_;

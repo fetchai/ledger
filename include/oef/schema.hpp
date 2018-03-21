@@ -702,17 +702,6 @@ public:
 
   bool check(const Instance &i) const {
 
-    std::cerr << "comparing these two " << std::endl;
-
-
-    std::ostringstream find; // TODO: (`HUT`) : remove this
-    find << (*this).variant();
-    std::cerr << "XXXX" << find.str() << std::endl;
-
-    std::ostringstream argh; // TODO: (`HUT`) : remove this
-    argh << i.variant();
-    std::cerr << "XXXX" << argh.str() << std::endl;
-
     if(model_) {
       if(model_->name() != i.model().name()) {
         return false;
@@ -722,55 +711,11 @@ public:
 
     for(auto &c : constraints_) {
       if(!c.check(i)) {
-
-        std::ostringstream eee; // TODO: (`HUT`) : remove this
-        eee << c.variant();
-        std::cerr << "failed on:" << argh.str() << std::endl;
-
         return false;
       }
     }
     return true;
   }
-
-  /*
-  bool check(const Instance &instance) const {
-    if(model_) {
-      if(model_->name() != instance.model().name())
-        return false;
-      // TODO: more to compare ?
-    }
-    for(auto &c : constraints_) {
-      if(!c.check(instance))
-        return false;
-    }
-
-    // Default for now, OR keywords must be found within model keyw. Substring search, ALSO of the attribute names TODO: (`HUT`) : make set
-    for(auto &keyword : keywords_) {
-      const std::vector<std::string> keywords = instance.model().keywords();
-
-      // check if our keyword is a substring of the instance keywords
-      for(auto &instance_keyw : keywords) {
-        if (instance_keyw.find(keyword) != std::string::npos) {
-          return true;
-        }
-      }
-
-      // Check if our keyword is a substring of any attribute names
-      const std::vector<Attribute> attributes = instance.model().attributes();
-      for(auto &attr : attributes) {
-        if (attr.name().find(keyword) != std::string::npos) {
-          return true;
-        }
-      }
-    }
-
-    // Keyword not found, and there were keywords to find
-    if(keywords_.size() > 0) {
-      return false;
-    }
-    return true;
-  } */ // legacy query for josh
 
   // TODO: (`HUT`) : think about model comparison
   bool operator==(const QueryModel &rhs) const {
@@ -803,6 +748,11 @@ public:
       jumps_--;
     }
     return *this;
+  }
+
+  // TODO: (`HUT`) : more robust comparison than this
+  bool operator< (const QueryModelMulti &rhs) const {
+      return (hash_ < rhs.hash());
   }
 
   // Note: do not compare jumps

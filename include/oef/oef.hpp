@@ -135,28 +135,40 @@ class NodeOEF {
     }
 
     std::vector<std::string> AEAQueryMulti(std::string agentName, schema::QueryModelMulti queryMulti) { // TODO: (`HUT`) : make all const ref.
-      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
       std::vector<std::string> result;
 
+      fetch::logger.Info("AEA multi query");
+
+      if(!nodeDirectory_.shouldForward(queryMulti)) {
+        fetch::logger.Info("AEA multi query not suitable for forwarding");
+      }
+
+      mutex_.lock();
+
       if(messageHistory_.add(queryMulti) && nodeDirectory_.shouldForward(queryMulti)) {
+        fetch::logger.Info("AEA multi query is suitable");
         auto agents = serviceDirectory_.Query(queryMulti.aeaQuery());
         result.insert(result.end(), agents.begin(), agents.end());
 
         nodeDirectory_.LogEvent(agentName, queryMulti);
+
+        nodeDirectory_.ForwardQuery(queryMulti);
+        mutex_.unlock();
+
+        // Wait here for possible query results
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+        mutex_.lock();
+        agents = nodeDirectory_.ForwardQueryResult(queryMulti);
+        result.insert(result.end(), agents.begin(), agents.end());
       }
 
-      // 
-
-      /*
-      // First get the results from other nodes
-      auto nonLocalAgents = nodeDirectory_.Query(queryMulti); */ // TODO: (`HUT`) : delete old way
-      //auto agents         = serviceDirectory_.Query(queryMulti.aeaQuery());
-
-      //agents.insert(agents.end(), nonLocalAgents.begin(), nonLocalAgents.end());
-
+      mutex_.unlock();
+      fetch::logger.Info("AEA multi query is returning");
       return result;
     }
 
+    /*
     std::vector<std::string> QueryMulti(schema::QueryModelMulti queryMulti) { // TODO: (`HUT`) : make all const ref.
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
@@ -167,7 +179,7 @@ class NodeOEF {
       agents.insert(agents.end(), nonLocalAgents.begin(), nonLocalAgents.end());
 
       return agents;
-    }
+    } */
 
     std::vector<std::pair<schema::Instance, fetch::script::Variant>> QueryAgentsInstances(schema::QueryModel query) {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
@@ -357,6 +369,30 @@ class NodeOEF {
     void GetAgents() {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
       AEADirectory_.PingAllAEAs();
+    }
+
+    void ForwardQuery(std::string name, schema::Endpoint endpoint, schema::QueryModelMulti queryMulti) {
+
+      fetch::logger.Info("Received node2node forward query: ", name);
+
+      std::vector<std::string> result;
+      mutex_.lock();
+      if(messageHistory_.add(queryMulti) && nodeDirectory_.shouldForward(queryMulti)) {
+
+        nodeDirectory_.LogEvent(name, queryMulti);
+
+        auto agents = serviceDirectory_.Query(queryMulti.aeaQuery());
+        mutex_.unlock();
+
+        nodeDirectory_.ForwardQuery(endpoint, queryMulti);
+        nodeDirectory_.ReturnQuery(queryMulti, agents);
+      }
+
+      mutex_.unlock();
+    }
+
+    void ReturnQuery(schema::QueryModelMulti queryMulti, std::vector<std::string> agents) {
+        nodeDirectory_.ReturnQuery(queryMulti, agents);
     }
 
     // Pass through functions for node dir (have their own mutexes) debugging TODO: (`HUT`) : make varargs

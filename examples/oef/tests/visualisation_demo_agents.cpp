@@ -19,7 +19,7 @@ int main() {
   LaggedFibonacciGenerator<> lfg(1);
   std::vector<TestAEA *> testAEAs;
 
-  // Register nine agents on three nodes (randomly chosen attributes)
+  // Register agents on three nodes (randomly chosen attributes)
   testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9080)});
   testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9081)});
   testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9082)});
@@ -31,6 +31,11 @@ int main() {
   testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9080)});
   testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9081)});
   testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9082)});
+
+  testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9081)});
+  testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9081)});
+  testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9081)});
+  testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9081)});
 
   // Make sure they all connected properly
   for(auto &i : testAEAs) {
@@ -111,7 +116,7 @@ int main() {
     // Create a forwarding query (want this to fail)
     agents = client.Call( FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::QUERY_MULTI, "querying_agent", passQueryMulti ).As<std::vector<std::string>>( );
 
-    std::cout << "second query result (expect pass aea_9080_37962): " << std::endl;
+    std::cout << "third query result (expect pass aea_9080_37962): " << std::endl;
     for(auto i : agents){
       std::cout << i << std::endl;
     }
@@ -119,13 +124,14 @@ int main() {
     // try this again (should fail due to duplicated packet)
     agents = client.Call( FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::QUERY_MULTI, "querying_agent", passQueryMulti ).As<std::vector<std::string>>( );
 
-    std::cout << "second query result (expect fail): " << std::endl;
+    std::cout << "fourth query result (expect fail): " << std::endl;
     for(auto i : agents){
       std::cout << i << std::endl;
     }
   }
 
   std::cout << "Press ENTER to query distributed " << std::endl;
+  std::cin >> dummy;
 
   // reminder
   //{"Milngavie" , lat(55.9425559), long(-4.3617068 )} // 8080
@@ -134,17 +140,20 @@ int main() {
   // Now for a truly distributed query: from node 9082 we want to hit node 9080 only
   {
     // Same constraint as before
-    schema::ConstraintType longConst{schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Gt, float(-2.0)}}};
-    schema::ConstraintType latConst{schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Gt, float(55)}}};
-    schema::ConstraintType AEALatConst{schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Gt, float(53)}}};
+    schema::ConstraintType longConst   { schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Gt, float(-4.0)}}};
+    schema::ConstraintType latConst    { schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Lt, float(55.942)}}}; // should only hit Edinburgh and Cambridge
+
+    // see if any of them have humidity
+    schema::Attribute humidity         { "has_humidity",     schema::Type::Bool, false};
+    schema::ConstraintType AEAHumConst { schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Eq, true}}};
 
     schema::Constraint longitude_c      { longitude, longConst};
     schema::Constraint latitude_c       { latitude, latConst};
-    schema::Constraint ATALatConst_c    { latitude, AEALatConst};
+    schema::Constraint ATALatConst_c    { humidity, AEAHumConst};
 
     schema::QueryModel      query{{ATALatConst_c}};
     schema::QueryModel      forwardingQuery{{longitude_c, latitude_c}};
-    schema::QueryModelMulti queryMulti{query, forwardingQuery}; // note only ONE jump allowed
+    schema::QueryModelMulti queryMulti{query, forwardingQuery};
 
     // Note different client this point
     auto agents = client1.Call( FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::QUERY_MULTI, "querying_agent", queryMulti ).As<std::vector<std::string>>( );
@@ -154,6 +163,8 @@ int main() {
       std::cout << i << std::endl;
     }
   }
+
+  std::cout << "Finished" << std::endl;
 
   while(1) {}
 }

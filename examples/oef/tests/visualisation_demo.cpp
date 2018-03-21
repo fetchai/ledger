@@ -59,7 +59,8 @@ void runNode(int seed, network::ThreadManager *tm) {
     // All endpoints get default (9080) plus one other (9081 -> current)
     endp.insert({"localhost", 9080});
     if(seed != 0) {
-      endp.insert({"localhost", 9080 + (uint16_t(lfg()) % seed)});
+      for (int i = 0; i < seed; ++i) { rand(); } // weakly ensure rand is different for each seed
+      endp.insert({"localhost", 9080 + (uint16_t(rand()) % seed)});
     }
 
     //schema::Endpoint bootstrap;
@@ -75,7 +76,7 @@ void runNode(int seed, network::ThreadManager *tm) {
 
 int main(int argc, char const** argv) {
 
-  fetch::network::ThreadManager tm(5);
+  fetch::network::ThreadManager tm(10);
 
   if(argc > 1) {
     int seed;
@@ -86,13 +87,6 @@ int main(int argc, char const** argv) {
 
     while(1) {};
   }
-
-  /*
-  std::vector<std::thread> testNodes;
-  for (int i = 0; i < 10; ++i) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    testNodes.push_back(std::thread{&runNode, i, &tm});
-  }*/
 
   while(1) {}
 }
