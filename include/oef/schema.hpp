@@ -502,6 +502,8 @@ public:
       } else if(jsonDoc["value"].is_byte_array()) {
         constraint_ = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), std::string(jsonDoc["value"].as_byte_array()));
       } else {
+
+        fetch::logger.Info("Failed to parse constraint!");
         throw std::invalid_argument(std::string("Incorrect attempt to parse ConstraintType due to missing functionality!"));
       }
     } else {
@@ -630,13 +632,16 @@ public:
   QueryModel(fetch::json::JSONDocument &jsonDoc) {
     LOG_STACK_TRACE_POINT;
 
+    std::cout << "querymodel constraints get" << std::endl;
     for(auto &a: jsonDoc["constraints"].as_array()) {
+      std::cout << "querymodel constraints get" << std::endl;
 
       fetch::json::JSONDocument doc; // TODO: (`HUT`) : create a fix for this
       doc.root() = a;
 
       Constraint constraint(doc);
       constraints_.push_back(constraint);
+      std::cout << "querymodel constraints got" << std::endl;
     }
 
     if(!jsonDoc["keywords"].is_undefined()) {

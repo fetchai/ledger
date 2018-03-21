@@ -48,8 +48,20 @@ public:
       });
 
     // OEF functionality
+    HTTPModule::Post("/query", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->Query(params, req);
+      });
+
+    HTTPModule::Post("/multi-query", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->MultiQuery(params, req);
+      });
+
     HTTPModule::Post("/register-instance", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->RegisterInstance(params, req);
+      });
+
+    HTTPModule::Post("/deregister-instance", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->DeregisterInstance(params, req);
       });
 
     HTTPModule::Post("/query-for-agents", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
@@ -236,6 +248,101 @@ public:
       return http::HTTPResponse("{\"response\": \"success\", \"value\": \""+ret+"\"}");
     } catch (...) {
       return http::HTTPResponse("{\"response\": \"fail\", \"reason\": \"problems with parsing JSON\"}");
+    }
+  }
+
+  http::HTTPResponse DeregisterInstance(http::ViewParameters const &params, http::HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    try {
+      doc = req.JSON();
+
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
+
+      std::string id = doc["ID"].as_byte_array();
+      schema::Instance instance(doc["instance"]);
+      oef_->DeregisterInstance(id, instance);
+
+      return http::HTTPResponse("{\"response\": \"success\"}");
+    } catch (...) {
+      return http::HTTPResponse("{\"response\": \"fail\", \"reason\": \"problems with parsing JSON\"}");
+    }
+  }
+
+  http::HTTPResponse Query(http::ViewParameters const &params, http::HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    try {
+      doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
+
+      std::cout << "hot here1" << std::endl;
+      schema::QueryModel query(doc);
+      std::cout << "hot here2" << std::endl;
+
+      auto agents = oef_->Query("HTTP_interface", query);
+      std::cout << "hot here3" << std::endl;
+
+      script::Variant response       = script::Variant::Object();
+      response["response"]           = script::Variant::Object();
+      response["response"]["agents"] = script::Variant::Array(agents.size());
+
+      std::cout << "hot here4" << std::endl;
+
+      for (int i = 0; i < agents.size(); ++i) {
+        response["response"]["agents"][i] = script::Variant(agents[i]);
+      }
+
+      std::ostringstream ret;
+      ret << response;
+
+      return http::HTTPResponse(ret.str());
+    } catch (...) {
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON!\"}"); // TODO: (`HUT`) : standardise response
+    }
+  }
+
+  http::HTTPResponse MultiQuery(http::ViewParameters const &params, http::HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    try {
+      doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
+
+      // split here
+      std::cout << "hot hereZ" << std::endl;
+      json::JSONDocument doc1 = doc["aeaQuery"];
+      std::cout << "aaa hereZ" << std::endl;
+      json::JSONDocument doc2 = doc["forwardingQuery"]; // TODO: (`HUT`) : don't copy this
+
+      std::cout << "hot hereA" << std::endl;
+      schema::QueryModel aeaQuery(doc1);
+      std::cout << "hot hereA1" << std::endl;
+      schema::QueryModel forwardingQuery(doc2);
+      std::cout << "hot hereB" << std::endl;
+
+      schema::QueryModelMulti multiQ(aeaQuery, forwardingQuery);
+      std::cout << "hot hereC" << std::endl;
+
+      auto agents = oef_->AEAQueryMulti("HTTP_interface", multiQ);
+      std::cout << "hot hereC" << std::endl;
+
+      script::Variant response       = script::Variant::Object();
+      response["response"]           = script::Variant::Object();
+      response["response"]["agents"] = script::Variant::Array(agents.size());
+
+      std::cout << "hot here4" << std::endl;
+
+      for (int i = 0; i < agents.size(); ++i) {
+        response["response"]["agents"][i] = script::Variant(agents[i]);
+      }
+
+      std::ostringstream ret;
+      ret << response;
+
+      return http::HTTPResponse(ret.str());
+    } catch (...) {
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON!\"}"); // TODO: (`HUT`) : standardise response
     }
   }
 

@@ -122,7 +122,7 @@ private:
 
     client.Add(FetchProtocols::NODE_TO_AEA, &protocol);
 
-    auto p =  client.Call(FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::REGISTER_FOR_CALLBACKS, AEA_name_);
+    auto p =  client.Call(FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::REGISTER_FOR_CALLBACKS, AEA_name_, instance);
 
     if(p.Wait() ) {
       std::cout << "Successfully registered for callbacks" << std::endl;

@@ -118,22 +118,36 @@ class NodeOEF {
       nodeDirectory_.Start();
     }
 
+    // HTTP debug, def delete this
     std::string RegisterInstance(std::string agentName, schema::Instance instance) {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
       auto result = serviceDirectory_.RegisterAgent(instance, agentName);
 
+      nodeDirectory_.RegisterAgent(agentName, instance);
       fetch::logger.Info("Registering instance: ", instance.dataModel().name(), " by AEA: ", agentName);
       return std::to_string(result);
     }
 
+    // http so no need to remove callback ref
+    void DeregisterInstance(std::string agentName, schema::Instance instance) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      nodeDirectory_.DeregisterAgent(agentName);
+    }
+
     std::vector<std::string> Query(std::string agentName, schema::QueryModel query) {
+      std::cout << "hot here1.1" << std::endl;
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
+      std::cout << "hot here3" << std::endl;
+
       if(messageHistorySingle_.add(query)) {
+      std::cout << "hot here4" << std::endl;
         nodeDirectory_.LogEvent(agentName, query);
+      std::cout << "hot here5" << std::endl;
         return serviceDirectory_.Query(query);
       }
 
+      std::cout << "hot here6" << std::endl;
       return std::vector<std::string>();
     }
 
@@ -288,16 +302,16 @@ class NodeOEF {
       return result;
     }
 
-    void RegisterCallback(uint64_t client, std::string id) {
+    void RegisterCallback(uint64_t client, std::string id, schema::Instance instance) {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
       AEADirectory_.Register(client, id);
-      nodeDirectory_.RegisterAgent(id);
+      nodeDirectory_.RegisterAgent(id, instance);
     }
 
     void DeregisterCallback(uint64_t client, std::string id) {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
       AEADirectory_.Deregister(client, id);
-      nodeDirectory_.DeregisterAgent(id);
+      nodeDirectory_.DeregisterAgent(id); // TODO: (`HUT`) : I think we want this
     }
 
     std::string BuyFromAEA(std::string id) {
@@ -382,7 +396,7 @@ class NodeOEF {
     }
 
     // Pass through functions for node dir (have their own mutexes) debugging TODO: (`HUT`) : make varargs
-    void addAgent(schema::Endpoint endpoint, std::string agent) { nodeDirectory_.addAgent(endpoint, agent); }
+    void addAgent(schema::Endpoint endpoint, std::string agent, schema::Instance instance) { nodeDirectory_.addAgent(endpoint, agent, instance); }
     void removeAgent(schema::Endpoint endpoint, std::string agent) { nodeDirectory_.removeAgent(endpoint, agent); }
 
     void logEvent(schema::Endpoint endpoint, Event event) { nodeDirectory_.logEvent(endpoint, event); }

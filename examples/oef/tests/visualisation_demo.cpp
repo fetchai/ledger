@@ -21,7 +21,7 @@ using namespace fetch::service;
 using namespace fetch::random;
 using namespace fetch;
 
-std::vector<std::string> getLocation(int select, int random) {
+std::vector<std::string> getLocation(int select, uint32_t random) {
 
   // Possible location names
   std::vector<std::string> list = {"destination_A", "destination_B", "destination_C", "destination_D", "destination_E", "destination_F", "destination_G"};
@@ -31,8 +31,8 @@ std::vector<std::string> getLocation(int select, int random) {
   float base_lat = 51.5090446;
   float base_lng = -0.0993713;
 
-  float lat = base_lat + (0.5 - rand() / float( uint32_t(-1) ))* 0.01;
-  float lng = base_lat + (0.5 - rand() / float( uint32_t(-1) ))* 0.015;
+  float lat = base_lat + (float(random % 100) - 50)*0.001;
+  float lng = base_lng + (float(random % 111) - 50)*0.001;
 
   return {list[select % list.size()], std::to_string(lat), std::to_string(lng)};
 }
@@ -52,7 +52,7 @@ void runNode(int seed, network::ThreadManager *tm) {
     schema::DataModel node{"node", attributes};
 
     // Create an Instance of this DataModel
-    int random = rand() * (seed+1);
+    uint32_t random = uint32_t(rand() * (seed+1));
     schema::Instance instance{node, {{"name", getLocation(seed, random)[0]}, {"latitude", getLocation(seed, random)[1]}, {"longitude", getLocation(seed, random)[2]}}};
 
     // this node's endpoint

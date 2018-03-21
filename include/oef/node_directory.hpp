@@ -103,6 +103,10 @@ public:
       temp["endpoint"] = i.first.variant();
       temp["instance"]  = i.second.first.variant();
       temp["connections"] = i.second.second.variant();
+
+      // A hack but get the agent list here
+      temp["agents"] = debugAgents_[i.first].variant();
+
       res[index++] = temp;
     }
 
@@ -132,23 +136,25 @@ public:
   }
 
   // this can be called async. by other nodes
-  void addAgent(const schema::Endpoint &endpoint, const std::string &agent) {
+  void addAgent(const schema::Endpoint &endpoint, const std::string &agent, const schema::Instance instance) {
     std::lock_guard< fetch::mutex::Mutex > lock(debugAgentsMutex_);
     debugAgents_[endpoint].Insert(agent);
+    debugAgentsWithInstances_[agent] = instance;
   }
 
   // this can be called async. by other nodes
   void removeAgent(const schema::Endpoint endpoint, const std::string &agent) {
     std::lock_guard< fetch::mutex::Mutex > lock(debugAgentsMutex_);
     debugAgents_[endpoint].Erase(agent);
+    debugAgentsWithInstances_.erase(agent);
   }
 
   // Registering and deregistering agents
-  void RegisterAgent(const std::string &agent) {
-    addAgent(nodeEndpoint_, agent);
+  void RegisterAgent(const std::string &agent, const schema::Instance instance) {
+    addAgent(nodeEndpoint_, agent, instance);
 
     // Notify all other endpoints
-    CallAllEndpoints(protocols::NodeToNodeRPC::DBG_ADD_AGENT, nodeEndpoint_, agent);
+    CallAllEndpoints(protocols::NodeToNodeRPC::DBG_ADD_AGENT, nodeEndpoint_, agent, instance);
   }
 
   void DeregisterAgent(const std::string &agent) {
@@ -164,6 +170,7 @@ public:
 
     result["response"] = "success";
 
+    /*
     fetch::script::Variant res = fetch::script::Variant::Array(debugAgents_.size());
 
     int index = 0;
@@ -173,6 +180,14 @@ public:
       temp["endpoint"]            = i.first.variant();
       temp["agents"]              = i.second.variant();
       res[index++]                = temp;
+    }*/
+
+
+    fetch::script::Variant res = fetch::script::Variant::Array(debugAgentsWithInstances_.size());
+
+    int index = 0;
+    for(auto &i : debugAgentsWithInstances_) {
+      res[index++] = i.second.variant();
     }
 
     result["value"]   = res;
@@ -426,6 +441,7 @@ private:
   schema::Endpoint                                                           nodeEndpoint_;
   std::map<schema::Endpoint, std::pair<schema::Instance, schema::Endpoints>> debugEndpoints_;
   std::map<schema::Endpoint, schema::Agents>                                 debugAgents_;
+  std::map<std::string, schema::Instance>                                    debugAgentsWithInstances_;
   fetch::mutex::Mutex                                                        debugAgentsMutex_;
 
   Events                                                                     debugEventsNoEndpoint_;
