@@ -19,7 +19,7 @@ firstInstance = { "instance" :
                          "keywords": ["ignore"],
                          "description": "ignore"
                        },
-                       "values": [ {"name" : "AEA_1"}, { "latitude": str(base_lat + 0.1) }, { "longitude": str(base_lng + 0.21) }, {"price" : "100"}]},
+                       "values": [ {"name" : "AEA_1"}, { "latitude": str(base_lat + 0.001) }, { "longitude": str(base_lng + 0.0021) }, {"price" : "100"}]},
                  "ID": "AEA_1" }
 
 secondInstance = { "instance" :
@@ -30,7 +30,7 @@ secondInstance = { "instance" :
                          "keywords": ["ignore"],
                          "description": "ignore"
                        },
-                       "values": [ {"name" : "AEA_2"}, { "latitude": str(base_lat - 0.1) }, { "longitude": str(base_lng - 0.34) }, {"price" : "50"}]},
+                       "values": [ {"name" : "AEA_2"}, { "latitude": str(base_lat - 0.007) }, { "longitude": str(base_lng - 0.0034) }, {"price" : "50"}]},
                  "ID": "AEA_2" }
 
 thirdInstance = { "instance" :
@@ -41,7 +41,7 @@ thirdInstance = { "instance" :
                          "keywords": ["ignore"],
                          "description": "ignore"
                        },
-                       "values": [ {"name" : "AEA_3"}, { "latitude": str(base_lat + 0.2) }, { "longitude": str(base_lng + 0.11) }, {"price" : "20"}]},
+                       "values": [ {"name" : "AEA_3"}, { "latitude": str(base_lat + 0.002) }, { "longitude": str(base_lng + 0.0011) }, {"price" : "20"}]},
                  "ID": "AEA_3" }
 
 
