@@ -1,16 +1,20 @@
 #ifndef CHAIN_BLOCK_HPP
 #define CHAIN_BLOCK_HPP
+#include<memory>
+
 namespace fetch {
 namespace chain {
   
 template< typename B, typename P, typename H, typename M >
-class BasicBlock {
+class BasicBlock : public std::enable_shared_from_this< BasicBlock< B, P, H, M> > {
 public:
   typedef B body_type;
   typedef P proof_type;
   typedef H hasher_type;
   typedef M meta_type;
   typedef typename proof_type::header_type header_type;
+  typedef BasicBlock< B, P, H, M> self_type;
+  typedef std::shared_ptr< self_type > shared_block_type;
   
   body_type const& SetBody(body_type const &body) {
     body_ = body;
@@ -34,11 +38,26 @@ public:
   proof_type const & proof() const { return proof_; }
   proof_type & proof() { return proof_; }  
   body_type const & body() const { return body_; }
+
+
+  void set_previous(shared_block_type const &p) {
+    previous_ = p;
+  }
+  
+  shared_block_type previous() const {
+    return previous_;
+  }
+
+  shared_block_type shared_block() {
+    return this->shared_from_this();
+  }
   
 private:
   meta_type meta_data_;
   body_type body_;
-  proof_type proof_;    
+  proof_type proof_;
+
+  shared_block_type previous_;
 };
 
 

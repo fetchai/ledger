@@ -1,12 +1,12 @@
-#ifndef PROTOCLS_SHARD_COMMANDS_HPP
-#define PROTOCLS_SHARD_COMMANDS_HPP
+#ifndef PROTOCLS_CHAIN_KEEPER_COMMANDS_HPP
+#define PROTOCLS_CHAIN_KEEPER_COMMANDS_HPP
 
 namespace fetch 
 {
 namespace protocols 
 {
 
-struct ShardRPC 
+struct ChainKeeperRPC 
 {
   
 enum 
@@ -24,22 +24,22 @@ enum
   REQUEST_BLOCKS_FROM = 21,
 
   LISTEN_TO = 101,
-  SET_SHARD_NUMBER = 102,
-  SHARD_NUMBER = 103,
+  SET_GROUP_NUMBER = 102,
+  GROUP_NUMBER = 103,
   COUNT_OUTGOING_CONNECTIONS = 104  
   
 };
 
 };
 
-struct ShardFeed 
+struct ChainKeeperFeed 
 {
   
 enum 
 {
   FEED_BROADCAST_TRANSACTION = 1,
   FEED_BROADCAST_BLOCK = 2,
-  FEED_BROADCAST_SHARD_CONNECTION = 3
+  FEED_BROADCAST_CHAIN_KEEPER_CONNECTION = 3
 };
 
 };

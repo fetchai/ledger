@@ -14,11 +14,15 @@ public:
   typedef byte_array::ConstByteArray digest_type;  
   typedef byte_array::ConstByteArray arguments_type; // TODO: json doc with native serialization
 
+  enum {
+    VERSION = 1
+  } ;
+  
   
   void UpdateDigest() {
     LOG_STACK_TRACE_POINT;    
     serializers::ByteArrayBuffer buf;
-    buf << resources_ << signatures_ << contract_name_ << arguments_;
+    buf << groups_ << signatures_ << contract_name_ << arguments_;
     hasher_type hash;
     hash.Reset();
     hash.Update( buf.data());
@@ -26,10 +30,46 @@ public:
     digest_ = hash.digest();
   }
 
-  void PushResource(byte_array::ConstByteArray const &res)
+  void PushGroup(byte_array::ConstByteArray const &res)
   {
     LOG_STACK_TRACE_POINT;
-    resources_.push_back(res);
+    union 
+    {
+      uint8_t bytes[2];
+      uint16_t value;      
+    } d;
+    d.value = 0;
+    
+    switch(res.size()) {
+    case 0:
+      break;
+    default:
+    case 2:
+      d.bytes[1] = res[1];
+    case 1:         
+      d.bytes[0] = res[0];
+    };
+    
+    groups_.push_back(d.value);
+  }
+
+  void PushGroup(uint16_t const &res)
+  {
+    LOG_STACK_TRACE_POINT;
+    groups_.push_back(res);
+  }
+
+  bool UsesGroup(uint16_t g, uint16_t m) const
+  {
+    --m;    
+    g &= m;
+    
+    bool ret = false;
+    for(auto const &gg: groups_) {
+      ret |= ( g == (gg&m) );      
+    }
+    
+    return ret;
   }
   
   void PushSignature(byte_array::ConstByteArray const& sig)
@@ -47,10 +87,9 @@ public:
   {
     arguments_ = args;
   }  
-
   
-  std::vector< byte_array::ConstByteArray > const &resources() const {
-    return resources_;
+  std::vector< uint16_t > const &groups() const {
+    return groups_;
   }
   
   std::vector< byte_array::ConstByteArray > const& signatures() const {
@@ -64,9 +103,9 @@ public:
   arguments_type const &arguments() const { return arguments_; }
   digest_type const & digest() const { return digest_; }
 
-  uint32_t resources_count() const
+  uint32_t groups_count() const
   {
-    return resources_count_;
+    return groups_count_;
   }
   
   uint32_t signature_count() const
@@ -77,11 +116,11 @@ public:
   byte_array::ConstByteArray data() const { return data_; };
   
 private:
-  uint32_t resources_count_, signature_count_;
+  uint32_t groups_count_, signature_count_;
   byte_array::ConstByteArray data_;
   
 
-  std::vector< byte_array::ConstByteArray > resources_;
+  std::vector< uint16_t > groups_;
   std::vector< byte_array::ConstByteArray > signatures_;
   byte_array::ConstByteArray contract_name_;
 
@@ -94,9 +133,11 @@ private:
 
 template< typename T >
 void Serialize( T & serializer, Transaction const &b) {
-  serializer <<  uint32_t(b.resources().size());
+  serializer << uint16_t(b.VERSION);
+  
+  serializer <<  uint32_t(b.groups().size());
 
-  for(auto &res: b.resources()) {
+  for(auto &res: b.groups()) {
     serializer << res;
   }
 
@@ -111,20 +152,23 @@ void Serialize( T & serializer, Transaction const &b) {
 
 template< typename T >
 void Deserialize( T & serializer, Transaction &b) {
+  uint16_t version;  
+  serializer >> version;
+  
   uint32_t size;
   serializer >>  size;
 
   for(std::size_t i=0; i < size; ++i) {
-    byte_array::ByteArray res;
+    uint16_t res;
     serializer >> res;
-    b.PushResource(res);
+    b.PushGroup(res);
   }
 
   serializer >>  size;
   for(std::size_t i=0; i < size; ++i) {
     byte_array::ByteArray sig;
     serializer >> sig;
-    b.PushResource(sig);
+    b.PushGroup(sig);
   }
   
   byte_array::ByteArray contract_name;

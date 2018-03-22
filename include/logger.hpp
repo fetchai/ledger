@@ -644,6 +644,7 @@ Context::~Context()
   
 #else
 
+#define LOG_STACK_TRACE_POINT_WITH_INSTANCE  
 #define LOG_STACK_TRACE_POINT 
 #define LOG_LAMBDA_STACK_TRACE_POINT
 #define LOG_CONTEXT_VARIABLE(name)

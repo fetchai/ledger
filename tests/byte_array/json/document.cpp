@@ -28,7 +28,8 @@ int main() {
     "z": null,
     "q": [],
     "hello world": {}
-  }
+  },
+  "y": -3.3
 }
 )" ;
 
@@ -36,10 +37,13 @@ int main() {
 
     JSONDocument doc;
     doc.Parse("test.file", doc_content);
-
-    doc["a"] = 4;
+    
+    doc["a"] = 4;    
     std::cout << doc.root() << std::endl;
 
+    std::cout << doc["y"].as_double() << std::endl;
+
+    
     doc.Parse("hello", R"( {"thing": "tester", "list": [{"one": "me"}, {"two": "asdf"}]})");
     std::cout << doc.root() << std::endl << std::endl;
     std::cout << "doc[\"list\"] = ";    

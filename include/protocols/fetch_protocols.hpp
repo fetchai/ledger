@@ -12,7 +12,8 @@ struct FetchProtocols
 enum
 {
   SWARM        = 1,
-  SHARD        = 2,
+  CHAIN_KEEPER = 2,
+  STATE_KEEPER = 3,
   AEA_TO_NODE  = 64,
   NODE_TO_AEA  = 65,
   NODE_TO_NODE = 66
