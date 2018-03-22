@@ -713,17 +713,13 @@ public:
   std::vector<Constraint>        &constraints()       { return constraints_; }
   const std::vector<std::string> &keywords() const    { return keywords_; }
   std::vector<std::string>       &keywords()          { return keywords_; }
-  //const std::string              &hash() const        { return hash_; }
-  //std::string                    &hash()              { return hash_; }
   const uint64_t                 &timestamp() const   { return timestamp_; }
   uint64_t                       &timestamp()         { return timestamp_; }
 
-  //std::string getHash() const                         { return std::string( byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) )); }
   std::string getHash() const {
     std::ostringstream ret;
     ret << this->variant();
     return byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(ret.str()) );
-    //return ret.str();
   }
 
 private:
@@ -785,7 +781,6 @@ public:
   const uint64_t    &timestamp() const       { return timestamp_; }
   uint64_t          &timestamp()             { return timestamp_; }
 
-  //std::string getHash() const                { return std::string( byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) )); }
   std::string getHash() const {
     std::ostringstream ret;
     ret << this->variant();

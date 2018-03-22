@@ -120,6 +120,9 @@ class NodeOEF {
 
     // HTTP debug, def delete this
     std::string RegisterInstance(std::string agentName, schema::Instance instance) {
+
+      //fetch::logger.PrintTimings();
+
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
       auto result = serviceDirectory_.RegisterAgent(instance, agentName);
 

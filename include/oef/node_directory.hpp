@@ -29,6 +29,8 @@ public:
 
   ~NodeDirectory() {
     fetch::logger.Info("Destroying NodeDirectory");
+
+    std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
     for(auto &i : serviceClients_) {
       delete i.second;
     }
@@ -62,10 +64,8 @@ public:
     // TODO: (`HUT`) : ****** CHANGE ******
     // TODO: (`HUT`) : not like this
     // Let the ORIGINAL Node know our details // TODO: (`HUT`) : use common call for this
-    serviceClientsMutex_.lock();
     auto client = GetClient<network::TCPClient>(endpoint);
     client->Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::DBG_ADD_ENDPOINT, nodeEndpoint_, instance_, endpoints_);
-    serviceClientsMutex_.unlock();
 
     // otherwise forward to all known endpoints
     for(auto &i : debugEndpoints_){
@@ -78,7 +78,6 @@ public:
         fetch::logger.Info("Successfully pinged: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
       }
 
-      std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
       client = GetClient<network::TCPClient>(forwardTo);
 
       fetch::logger.Info("Forwarding from:",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort(), " endpoint ", endpoint.IP(), ":", endpoint.TCPPort());
@@ -337,11 +336,9 @@ public:
 
     for (int i = 0; i < 20; ++i) {
 
-      serviceClientsMutex_.lock();
       auto client = GetClient<network::TCPClient>(endpoint);
 
       auto resp = client->Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::PING);
-      serviceClientsMutex_.unlock();
 
       if(resp.Wait(pingTimeoutMs_)){
         return true;
@@ -356,7 +353,6 @@ public:
   // non blocking call endpoint
   template<typename T, typename... Args>
   void CallEndpoint(T CallEnum, schema::Endpoint endpoint, Args... args) {
-    std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
     auto client = GetClient<network::TCPClient>(endpoint);
     client->Call( protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
   }
@@ -381,7 +377,6 @@ public:
         }
       }
 
-      std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
       auto client = GetClient<network::TCPClient>(forwardTo);
       client->Call( protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
     }
@@ -407,13 +402,12 @@ public:
         fetch::logger.Info("Successfully pinged: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
       }
 
-      std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
       auto client = GetClient<network::TCPClient>(forwardTo);
       client->Call( protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
     }
   }
 
-  // TODO: (`HUT`) : this is not elegant
+  // TODO: (`HUT`) : use shared ptrs for service clients
   template <typename T>
   service::ServiceClient<T> *GetClient(schema::Endpoint endpoint) {
 
@@ -422,7 +416,6 @@ public:
     }
 
     return serviceClients_[endpoint];
-    //return std::make_shared<service::ServiceClient<T>>(service::ServiceClient<T> {endpoint.IP(), endpoint.TCPPort(), tm_});
   }
 
   schema::Instance  &instance()                                                                { return instance_; }

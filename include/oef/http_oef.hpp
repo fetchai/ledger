@@ -310,22 +310,15 @@ public:
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
       // split here
-      std::cout << "hot hereZ" << std::endl;
       json::JSONDocument doc1 = doc["aeaQuery"];
-      std::cout << "aaa hereZ" << std::endl;
       json::JSONDocument doc2 = doc["forwardingQuery"]; // TODO: (`HUT`) : don't copy this
 
-      std::cout << "hot hereA" << std::endl;
       schema::QueryModel aeaQuery(doc1);
-      std::cout << "hot hereA1" << std::endl;
       schema::QueryModel forwardingQuery(doc2);
-      std::cout << "hot hereB" << std::endl;
 
       schema::QueryModelMulti multiQ(aeaQuery, forwardingQuery);
-      std::cout << "hot hereC" << std::endl;
 
       auto agents = oef_->AEAQueryMulti("HTTP_interface", multiQ);
-      std::cout << "hot hereC" << std::endl;
 
       script::Variant response       = script::Variant::Object();
       response["response"]           = script::Variant::Object();

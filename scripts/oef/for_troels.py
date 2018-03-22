@@ -2,6 +2,16 @@ import requests
 import json
 import pdb
 
+import random as rand
+import sys, os
+
+#rand.seed(42)
+#
+#home = os.path.expanduser('~')
+#sys.path.insert(0, home + '/repos/bayeux/')
+#from p2psims import *
+
+
 # print json in pretty way
 def jsonPrint(r):
     return json.dumps(r.json(), indent=4, sort_keys=True)+"\n"
@@ -43,6 +53,8 @@ thirdInstance = { "instance" :
                        },
                        "values": [ {"name" : "AEA_3"}, { "latitude": str(base_lat + 0.002) }, { "longitude": str(base_lng + 0.0011) }, {"price" : "20"}]},
                  "ID": "AEA_3" }
+
+#fourthInstance = getInstance
 
 
 # register these
@@ -86,7 +98,7 @@ query = {
                     "value": 200
                     }
             }],
-        "keywords" : [ "one"]
+        "keywords" : [ "ignore"]
         }
 
 r = requests.post('http://localhost:8082/echo-query', json=query)
@@ -112,13 +124,29 @@ multiQuery = {
                         "value": 200
                         }
                 }],
-            "keywords" : [ "one"]
+            "keywords" : [ "ignore"]
             },
 
         "forwardingQuery" : {
-            "constraints": []
+            "constraints": [
+                {
+                    "attribute": {
+                        "name": "longitude",
+                        "type": "float",
+                        "required": True
+                        },
+                    "constraint": {
+                        "type": "relation",
+                        "op": "<=",
+                        "value_type": "float",
+                        "value": float(1.2)
+                        }
+                }],
+            "keywords" : [ "ignore"]
         }
     }
+
+variable = raw_input('press key to submit mult query')
 
 r = requests.post('http://localhost:8082/multi-query', json=multiQuery)
 print "Query2 response", jsonPrint(r)
