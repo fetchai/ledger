@@ -503,7 +503,18 @@ public:
       } else if(jsonDoc["value"].is_int()) {
         constraint_ = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), int(jsonDoc["value"].as_int()));
       } else if(jsonDoc["value"].is_float()) {
-        constraint_ = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), float(jsonDoc["value"].as_double()));
+
+        // hack - check if we accidentally parsed into a float when it is an int
+        float value = float(jsonDoc["value"].as_double());
+
+        if(floor(value) == value) {
+          // Exception
+          constraint_ = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), int(value));
+        } else {
+          // Normal path
+          constraint_ = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), float(jsonDoc["value"].as_double()));
+        }
+
       } else if(jsonDoc["value"].is_byte_array()) {
         constraint_ = Relation(Relation::string_to_op(jsonDoc["op"].as_byte_array()), std::string(jsonDoc["value"].as_byte_array()));
       } else {

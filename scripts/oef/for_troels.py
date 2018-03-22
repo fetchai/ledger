@@ -146,6 +146,14 @@ multiQuery = {
         }
     }
 
+r = requests.post('http://localhost:8082/echo-multi-query', json=multiQuery)
+print "Multi query echo", jsonPrint(r)
+
+number = { "max_number" : 8 }
+
+r = requests.post('http://localhost:8082/debug-all-events', json=number)
+print "debug all events", jsonPrint(r)
+
 variable = raw_input('press key to submit mult query')
 
 r = requests.post('http://localhost:8082/multi-query', json=multiQuery)

@@ -81,6 +81,10 @@ public:
         return this->EchoQuery(params, req);
       });
 
+    HTTPModule::Post("/echo-multi-query", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->EchoMultiQuery(params, req);
+      });
+
     HTTPModule::Post("/echo-instance", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->EchoInstance(params, req);
       });
@@ -426,6 +430,30 @@ public:
     }
   }
 
+  http::HTTPResponse EchoMultiQuery(http::ViewParameters const &params, http::HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    try {
+      doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
+
+      json::JSONDocument doc1 = doc["aeaQuery"];
+      json::JSONDocument doc2 = doc["forwardingQuery"]; // TODO: (`HUT`) : don't copy this
+
+      schema::QueryModel aeaQuery(doc1);
+      schema::QueryModel forwardingQuery(doc2);
+
+      schema::QueryModelMulti multiQ(aeaQuery, forwardingQuery);
+
+      std::ostringstream ret;
+      ret << multiQ.variant();
+
+      return http::HTTPResponse(ret.str());
+    } catch (...) {
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+    }
+  }
+
   http::HTTPResponse EchoInstance(http::ViewParameters const &params, http::HTTPRequest const &req) {
 
     json::JSONDocument doc;
@@ -521,7 +549,10 @@ public:
       doc = req.JSON();
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-      int maxNumber = doc["max_number"].is_undefined() ? defaultNumber : doc["number"].as_int(); // default 10 events
+      // TODO: (`HUT`) : revert this hack once json doc parser fixed
+      float maxNumber = doc["max_number"].is_undefined() ? defaultNumber : doc["max_number"].as_double(); // default 10 events
+
+      int maxNumberInt = int(maxNumber);
 
       auto result = oef_->DebugAllEvents(maxNumber);
 
