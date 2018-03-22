@@ -82,7 +82,7 @@ void runNode(int seed, network::ThreadManager *tm) {
 
 int main(int argc, char const** argv) {
 
-  fetch::network::ThreadManager tm(10);
+  fetch::network::ThreadManager tm(50);
 
   if(argc > 1) {
     int seed;
