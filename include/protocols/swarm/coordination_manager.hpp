@@ -1,5 +1,5 @@
-#ifndef OPTIMISATION_CHAIN_GROUP_OPTIMISER_HPP
-#define OPTIMISATION_CHAIN_GROUP_OPTIMISER_HPP
+#ifndef PROTOCOLS_SWARM_COORDINATION_MANAGER_HPP
+#define PROTOCOLS_SWARM_COORDINATION_MANAGER_HPP
 #include"assert.hpp"
 #include"protocols/chain_keeper/block.hpp"
 
@@ -35,22 +35,18 @@ struct Block {
 
 typedef fetch::chain::BasicBlock< BlockBody, fetch::chain::consensus::ProofOfWork, fetch::crypto::SHA256 > Block;
 
-class GroupGraph : public memory::RectangularArray< uint64_t > {
+class CoordinationManager {
 public:
 
   typedef std::shared_ptr< Block > shared_block_type;  
   typedef crypto::CallableFNV hasher_type;
   typedef byte_array::ConstByteArray byte_array_type;
 
-  enum {
-    EMPTY = uint64_t(-1)    
-  };
   
-  GroupGraph(std::size_t const &blocks, std::size_t const &groups):
-    memory::RectangularArray< uint64_t >(blocks, groups )
+  CoordinationManager(std::size_t const &blocks, std::size_t const &groups) :
+    blocks_(blocks), groups_(groups)
   {
-    for(auto &a: *this) a = EMPTY;    
-//    bricks_.resize(blocks);
+
     bricks_at_block_.resize(blocks);
     block_number_.resize(groups);
     chains_.resize(groups);
@@ -184,7 +180,7 @@ public:
     for(auto &g: b->groups() ) {
       block_n = std::max( block_n,  block_number_[g] );
     }
-    if(block_n >= height() ) return false;
+    if(block_n >= blocks() ) return false;
     
     std::unordered_map< uint64_t, int > prev_blocks;    
 
@@ -248,7 +244,20 @@ public:
   std::unordered_set< uint64_t > const &next_blocks() const {
     return next_blocks_;
   }
+
+  std::size_t blocks() const
+  {
+    return blocks_;    
+  }
+
+  std::size_t groups() const
+  {
+    return groups_;    
+  }
+  
 private:
+  std::size_t blocks_, groups_;
+  
   std::vector< std::vector< shared_block_type > > chains_;
   std::vector< uint64_t > block_number_;
   
@@ -269,13 +278,13 @@ private:
 };
 
 
-std::ostream& operator<< (std::ostream& stream, GroupGraph const &graph )
+std::ostream& operator<< (std::ostream& stream, CoordinationManager const &graph )
 {
-  typedef typename GroupGraph::shared_block_type shared_block_type;
+  typedef typename CoordinationManager::shared_block_type shared_block_type;
   
   std::size_t lane_width = 3;
   std::size_t lane_width_half = lane_width >> 1;  
-  std::size_t ww = graph.width() ;    
+  std::size_t ww = graph.groups() ;    
   std::size_t w = ww>> 1;
   std::size_t lane_size = lane_width * ww;
   auto DrawLane = [lane_width, ww, w, lane_size, lane_width_half, graph](std::vector< shared_block_type > const &bricks, std::size_t &n) {
@@ -333,7 +342,7 @@ std::ostream& operator<< (std::ostream& stream, GroupGraph const &graph )
   };
 
   std::size_t total_transactions = 0;
-  for(std::size_t i=0; i < graph.height() ; ++i)
+  for(std::size_t i=0; i < graph.blocks() ; ++i)
   {
     auto const &bricks = graph.bricks(i);
     if(bricks.size() == 0) break;

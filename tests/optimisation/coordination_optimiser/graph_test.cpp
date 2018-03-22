@@ -1,4 +1,4 @@
-#include"protocols/chain_coordinator/graph.hpp"
+#include"protocols/swarm/coordination_manager.hpp"
 #include"byte_array/encoders.hpp"
 #include"random/lfg.hpp"
 #include"crypto/sha256.hpp"
@@ -24,8 +24,8 @@ fetch::byte_array::ByteArray RandomTX(std::size_t const &n = 161) {
   return ret2;
 }
 
-uint32_t CreateBlock(GroupGraph &graph, std::size_t const &n, bool has_dep = false, std::size_t const &m = 10) {
-  if( (n >= graph.width()) ) {
+uint32_t CreateBlock(CoordinationManager &graph, std::size_t const &n, bool has_dep = false, std::size_t const &m = 10) {
+  if( (n >= graph.groups()) ) {
     std::cerr << "error: " <<  n << " is too big"  << std::endl;
     exit(-1);    
   }
@@ -39,7 +39,7 @@ uint32_t CreateBlock(GroupGraph &graph, std::size_t const &n, bool has_dep = fal
   
   std::unordered_set< uint32_t > groups;
   while(groups.size() < n) {
-    std::size_t i = (lfg()>>19) % graph.width();
+    std::size_t i = (lfg()>>19) % graph.groups();
     if(groups.find( i ) == groups.end()) groups.insert(i);
   }
   
@@ -86,8 +86,8 @@ uint32_t CreateBlock(GroupGraph &graph, std::size_t const &n, bool has_dep = fal
   return ret;
 }
 
-uint32_t CreateGenesis(GroupGraph &graph, std::size_t const &n) {
-  if( (n >= graph.width()) ) {
+uint32_t CreateGenesis(CoordinationManager &graph, std::size_t const &n) {
+  if( (n >= graph.groups()) ) {
     std::cerr << "error: " <<  n << " is too big"  << std::endl;
     exit(-1);    
   }
@@ -106,7 +106,7 @@ uint32_t CreateGenesis(GroupGraph &graph, std::size_t const &n) {
 
 int main() 
 {
-  GroupGraph graph(800, GROUPS);
+  CoordinationManager graph(800, GROUPS);
   group_blocks.resize(GROUPS);
 
   // Boundary condition
