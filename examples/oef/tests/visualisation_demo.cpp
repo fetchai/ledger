@@ -31,8 +31,8 @@ std::vector<std::string> getLocation(int select, uint32_t random) {
   float base_lat = 51.5090446;
   float base_lng = -0.0993713;
 
-  float lat = base_lat + ((float(random % 100) - 50)*0.001) * 0.01;
-  float lng = base_lng + ((float(random % 111) - 50)*0.001) * 0.01;
+  float lat = base_lat + ((float(random % 100) - 50)*0.001) * 0.1;
+  float lng = base_lng + ((float(random % 111) - 50)*0.001) * 0.1;
 
   return {list[select % list.size()], std::to_string(lat), std::to_string(lng)};
 }
