@@ -69,7 +69,20 @@ public:
     
     block_header_type header = block.header();
 
-    auto pit = chains_.find( block.body().previous_hash );
+    chain_map_type::iterator pit;
+    bool found = false;
+    
+    for(auto &hash: block.body().previous_hashes ) {
+      pit = chains_.find( hash );
+      if( pit != chains_.end() ) {
+        found = true;        
+        break;
+      }
+      
+      
+    }
+    
+
     if( pit != chains_.end() ) {
       block.add_previous( group_, pit->second );
       block.set_is_loose( pit->second->is_loose() );
@@ -95,9 +108,9 @@ public:
     return ADD_CHAIN_END;
   }
 
-  block_type const &head() const 
+  shared_block_type const &head() const 
   {
-    return *head_;    
+    return head_;    
   }
 
   chain_map_type const &chains() const

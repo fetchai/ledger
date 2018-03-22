@@ -11,7 +11,7 @@ namespace protocols
 {
 
 struct BlockBody {     
-  fetch::byte_array::ByteArray previous_hash;  
+  std::vector< fetch::byte_array::ByteArray > previous_hashes;  
   fetch::byte_array::ByteArray transaction_hash;
 };
 
@@ -19,12 +19,12 @@ struct BlockBody {
 
 template< typename T >
 void Serialize( T & serializer, BlockBody const &body) {
-  serializer << body.previous_hash << body.transaction_hash;
+  serializer << body.previous_hashes << body.transaction_hash;
 }
 
 template< typename T >
 void Deserialize( T & serializer, BlockBody &body) {
-  serializer >> body.previous_hash >> body.transaction_hash;
+  serializer >> body.previous_hashes >> body.transaction_hash;
 }
 
 

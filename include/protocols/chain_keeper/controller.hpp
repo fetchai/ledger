@@ -70,7 +70,7 @@ public:
     block_body_type genesis_body;
     block_type genesis_block;
     
-    genesis_body.previous_hash = "genesis";
+    genesis_body.previous_hashes.push_back( "genesis" );
     genesis_body.transaction_hash = "genesis";
 
     genesis_block.SetBody( genesis_body );
@@ -107,15 +107,18 @@ public:
     
     // TODO: Check which head is better
     fetch::logger.Debug("Return!");    
-    return chain_manager_.head();
+    return *chain_manager_.head();
   }
 
   std::vector< block_type > RequestBlocksFrom(block_header_type next_hash, uint16_t preferred_block_count) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+   
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);    
     std::vector< block_type > ret;
-
+    TODO_FAIL("Legacy functionality");
+    
+ /*
     if( preferred_block_count > 10 ) preferred_block_count = 10;    
     ret.reserve( preferred_block_count );
     
@@ -130,7 +133,7 @@ public:
       next_hash = block->body().previous_hash;
       ++i;
     }    
-
+ */
     return ret;    
   }
 
@@ -179,7 +182,7 @@ public:
     block_type block;
     
     block_mutex_.lock();    
-    body.previous_hash = chain_manager_.head().header();
+    body.previous_hashes.push_back( chain_manager_.head()->header() );
 
     if( !tx_manager_.has_unapplied() ) {
       body.transaction_hash =  "";
@@ -189,8 +192,8 @@ public:
     block_mutex_.unlock();
     
     block.SetBody( body );   
-    block.set_total_weight( chain_manager_.head().total_weight() );
-    block.set_block_number( chain_manager_.head().block_number() + 1 );
+    block.set_total_weight( chain_manager_.head()->total_weight() );
+    block.set_block_number( chain_manager_.head()->block_number() + 1 );
     
     
     return block;
@@ -240,7 +243,7 @@ public:
 
 
     block_mutex_.lock();    
-    block_type head_copy = chain_manager_.head();
+    block_type head_copy = *chain_manager_.head();
     block_mutex_.unlock();
    
     chain_keeper_friends_mutex_.lock();
@@ -345,7 +348,7 @@ public:
     return chain_keeper_friends_.size();    
   }
 
-  uint32_t group_number() 
+  uint32_t group_number() // TODO: Change to atomic
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
@@ -371,14 +374,14 @@ public:
     chain_keeper_friends_mutex_.unlock();
   }
   
-  void with_blocks_do( std::function< void(block_type, ChainManager::chain_map_type const& )  > fnc ) const
+  void with_blocks_do( std::function< void(ChainManager::shared_block_type, ChainManager::chain_map_type const& )  > fnc ) const
   {
     block_mutex_.lock();
     fnc( chain_manager_.head(), chain_manager_.chains() );    
     block_mutex_.unlock();
   }
 
-  void with_blocks_do( std::function< void(block_type, ChainManager::chain_map_type & )  > fnc ) 
+  void with_blocks_do( std::function< void(ChainManager::shared_block_type, ChainManager::chain_map_type & )  > fnc ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     

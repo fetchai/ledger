@@ -18,27 +18,12 @@
 
 namespace fetch {
 namespace protocols {
-/*
-struct Block {
-  typedef std::shared_ptr< Block > shared_block_type;
-  
-  std::vector< shared_block_type > previous;
-  std::vector< shared_block_type > next;
-  std::unordered_set< uint32_t > groups; 
 
-  uint64_t block = uint64_t(-1);
-  double work = 0;
-  double total_work = 0;  
-  bool in_use = false;
-};
-*/  
-
-typedef fetch::chain::BasicBlock< BlockBody, fetch::chain::consensus::ProofOfWork, fetch::crypto::SHA256 > Block;
 
 class CoordinationManager {
 public:
-
-  typedef std::shared_ptr< Block > shared_block_type;  
+  typedef fetch::chain::BasicBlock< BlockBody, fetch::chain::consensus::ProofOfWork, fetch::crypto::SHA256 > block_type;
+  typedef std::shared_ptr< block_type > shared_block_type;  
   typedef crypto::CallableFNV hasher_type;
   typedef byte_array::ConstByteArray byte_array_type;
 
@@ -94,7 +79,7 @@ public:
      
     uint16_t id = AddHash( hash );
     
-    shared_block_type brick = std::make_shared< Block >( );
+    shared_block_type brick = std::make_shared< block_type >( );
     brick->set_id( id );
     brick->set_weight( work );
     
@@ -119,7 +104,7 @@ public:
 
     uint64_t id = AddHash( hash );
     
-    shared_block_type brick = std::make_shared< Block >( );
+    shared_block_type brick = std::make_shared< block_type >( );
 //    brick->groups = groups;
     brick->set_id( id );
     //TODO
@@ -263,7 +248,6 @@ private:
   
   std::unordered_set< uint64_t > used_blocks_;
   
-
   
   std::unordered_set< uint64_t > next_blocks_;
   std::unordered_map< uint64_t, int > next_refs_;  
