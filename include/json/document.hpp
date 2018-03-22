@@ -50,7 +50,8 @@ class JSONDocument : private byte_array::Tokenizer {
     AddConsumer(Type::TOKEN, byte_array::consumers::AlphaNumericLetterFirst);
     AddConsumer(Type::WHITESPACE, byte_array::consumers::Whitespace);
     AddConsumer(Type::STRING, byte_array::consumers::StringEnclosedIn('"'));
-    AddConsumer(Type::NUMBER, byte_array::consumers::Integer);
+    AddConsumer(Type::NUMBER, byte_array::consumers::Float);    
+//    AddConsumer(Type::NUMBER, byte_array::consumers::Integer);
     AddConsumer(Type::SYNTAX,
                 byte_array::consumers::TokenFromList({"[", "]", "{", "}", ",", ":"}));
     AddConsumer(Type::CATCH_ALL, byte_array::consumers::AnyChar);
@@ -196,7 +197,7 @@ class JSONDocument : private byte_array::Tokenizer {
 
     if(node->token_class.type != OP_PROPERTY)
     {
-      TODO_FAIL("Expected property");      
+      TODO_FAIL("Expected property", node->token_class.type);      
     }
               
     keys.push_back( node->children[0] );
@@ -313,7 +314,7 @@ class JSONDocument : private byte_array::Tokenizer {
       break;
     case OP_NUMBER:
       variant = node->symbol.AsFloat();      
-      break;      
+      break;    
     case OP_TRUE:
       variant = true; 
       break;

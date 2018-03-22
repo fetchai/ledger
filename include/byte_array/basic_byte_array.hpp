@@ -2,7 +2,7 @@
 #define BYTE_ARRAY_BASIC_BYTE_ARRAY_HPP
 #include "logger.hpp" 
 #include "memory/shared_array.hpp"
-
+#include"assert.hpp"
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -173,9 +173,16 @@ public:
   }
 
   int AsInt() const {
-    // TODO: add support for sign
-    int n = 0;
-    for (std::size_t i = 0; i < length_; ++i) {
+    if( length_ == 0 )  return 0; 
+    bool neg = false;
+    int n =  0;
+    std::size_t i = 0;
+    if( arr_pointer_[i] == '-' ) {
+      neg = true;
+      ++i;      
+    }
+      
+    for (; i < length_; ++i) {
       n *= 10;
       int a = (arr_pointer_[i] - '0');
 
@@ -187,28 +194,99 @@ public:
       }
       n += a;
     }
-    return n;
+    return (neg? -n : n);
   }  
 
   
 
-  int AsFloat() const {
-    // TODO: Implement
-    // TODO: add support for sign
-    int n = 0;
-    for (std::size_t i = 0; i < length_; ++i) {
-      n *= 10;
-      int a = (arr_pointer_[i] - '0');
-
-      if ((a < 0) || (a > 9)) {
-        std::cerr << "TODO: throw error - NaN in referenced byte_array: " << a
-                  << " " << arr_pointer_[i] << ", char " << i << " '"
-                  << arr_pointer_[i] << "'" << " - code: " << int(arr_pointer_[i]) << std::endl;
-        exit(-1);
-      }
-      n += a;
+  double AsFloat() const {
+    // TODO: Improve implementation
+    // TODO: Make support for e
+    if( length_ == 0 )  return 0; 
+    bool neg = false, eneg = false;
+    double n =  0, d = 0, en = 0, ed = 0;
+    
+    std::size_t i = 0;
+    if( arr_pointer_[i] == '-' ) {
+      neg = true;
+      ++i;      
     }
-    return n;
+
+    std::size_t mode = 0;
+    double multiplier = 1;    
+    for (; i < length_ ; ++i) {
+      int a = 0;
+
+      switch(arr_pointer_[i]) {
+
+      case '.':
+        switch(mode) {
+        case 0:
+          multiplier = 1;           
+          mode = 1;
+          continue;
+        case 2:
+          multiplier = 1; 
+          mode = 3;
+          continue;
+        default:
+          TODO_FAIL("illegal symbol");          
+          break;          
+        }
+
+        continue;
+      case 'e':
+        TODO_FAIL("No support for e notation atm");        
+        if(((i+1) < length_) && (arr_pointer_[i+1] == '-') ) {
+          ++i;          
+          eneg = true;          
+        }
+        
+        mode = 2;
+        continue;
+      default:
+        a = (arr_pointer_[i] - '0');      
+        if ((a < 0) || (a > 9)) {
+          TODO_FAIL("Illegal symbol");          
+        }
+      }
+      
+      switch(mode) {
+      case 0:
+        n *= 10;        
+        n += a;
+        break;
+      case 1:
+        multiplier *= 0.1;        
+        d += a * multiplier;
+        break;
+      case 2:
+        en *= 10;        
+        en += a;
+        break;
+      case 3:
+        multiplier *= 0.1;        
+        ed += a * multiplier;      
+        break;        
+        
+      };      
+    }
+
+    union 
+    {
+      double d;
+      struct 
+      {
+        uint64_t mantissa : 52;        
+        uint16_t exponent : 11;        
+        bool sign : 1;        
+      } parts;
+    } value;
+    value.d = n+d;
+    value.parts.sign = neg;
+              
+    return value.d;
+    
   }  
 
 protected:
