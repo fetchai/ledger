@@ -18,6 +18,7 @@ struct Block {
   std::unordered_set< uint32_t > groups;
   uint64_t block = uint64_t(-1);
   double work = 0;
+  double total_work = 0;  
   bool in_use = false;
 };
   
@@ -98,10 +99,17 @@ public:
   }
 
 
-  static Block BlockFromGroups(std::unordered_set< uint64_t > const &groups) {
+  Block BlockFromGroups(std::unordered_set< uint64_t > const &groups) {
     Block ret;
 
-    rerturn ret;
+    for(auto &g: groups) {
+      auto &chain = chains_[g];
+      if(chain.size() > 0) {
+        ret.previous.push_back( chain.back() );        
+      }
+    }
+    
+    return ret;
   }
   
   void Shift() 
@@ -312,33 +320,33 @@ std::ostream& operator<< (std::ostream& stream, GroupGraph const &graph )
   for(std::size_t i=0; i < graph.height() ; ++i)
   {
     auto const &bricks = graph.bricks(i);
+    if(bricks.size() == 0) break;
+
+    std::cout << " ";    
+    for(std::size_t i=0; i < ww; ++i)
+    {      
+      for(std::size_t j=0; j < lane_width_half ; ++j)
+        std::cout <<  "=";
+
+      std::cout << "=";
+      
+      for(std::size_t j=0; j < lane_width_half ; ++j)
+        std::cout << "=" ;    
+    }
     
-    std::cout << bricks.size() << " transactions" << std::endl;
+    
+    std::cout << " ### Block " << i << ", " << bricks.size() << " transactions" << std::endl;
     total_transactions += bricks.size();
     assert(bricks.size() <= ww);
     std::size_t n = 0;
     
-    for(std::size_t j=0; j < w ; ++j)
+    for(std::size_t j=0; j < bricks.size() ; ++j)
     {
-      std::cout << std::setw(2) << " " << " ";
+      std::cout << " ";
       DrawLane(bricks, n);        
       std::cout << std::endl;
     }
-    std::cout << std::setw(2) << i << " ";
-    DrawLane(bricks, n);     
-    std::cout << std::endl;
-    for(std::size_t j=0; j < w ; ++j)
-    {
-      std::cout << std::setw(2) << " " << " ";
 
-      DrawLane(bricks, n);      
-      
-      std::cout << std::endl;
-      
-    }
-    for(std::size_t j=0; j < lane_size +3 ; ++j)
-      std::cout << "-";
-    std::cout << std::endl;
     
   }
   std::cout << "Total transactions = " << total_transactions << std::endl;

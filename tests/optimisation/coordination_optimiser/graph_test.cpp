@@ -148,6 +148,6 @@ int main()
   
   std::cout << "Applying took " << time_span*1000 << " ms" << std::endl;
   
-  //  std::cout << graph << std::endl;  
+  std::cout << graph << std::endl;  
   return 0;  
 }
