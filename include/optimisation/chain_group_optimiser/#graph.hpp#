@@ -100,7 +100,12 @@ public:
 
   static Block BlockFromGroups(std::unordered_set< uint64_t > const &groups) {
     Block ret;
-
+    for(auto &g: groups) {
+      auto & chain = chains_[g];
+      if(chain.size() > 0 ) {
+        auto &b = chain.back()->block;
+      }
+    }
     rerturn ret;
   }
   
@@ -140,17 +145,6 @@ public:
     uint64_t block_n = 0;
     auto &b = bricks_[block];
 
-    /*
-    std::cout << "Activating : "<< block << " / " << b->block << " " << name_from_id(block) << ": ";
-    for(auto &g: b->groups) std::cout << g << ", ";
-    
-    std::cout << b->previous.size() <<" ;; ";
-      for(auto &p: b->previous) {
-        std::cout << name_from_id(p->block) << ", ";          
-      }
-      
-      std::cout << std::endl;
-    */    
     
     for(auto &g: b->groups) {
       block_n = std::max( block_n,  block_number_[g] );
@@ -160,15 +154,11 @@ public:
     std::unordered_map< uint64_t, int > prev_blocks;    
 
     for(auto &g: b->groups) {
-      //      std::cout << "  - From group " << g << std::endl;
-        
       auto &chain = chains_[g];
       if(chain.size() != 0) {
         if( prev_blocks.find( chain.back()->block ) == prev_blocks.end() ) {
-          //          std::cout << "    > Setting " << chain.back()->block << " " << name_from_id(chain.back()->block) << std::endl;  
           prev_blocks[ chain.back()->block ] = 1;
         } else {
-          //          std::cout << "    > Increasing" << std::endl;  
           ++prev_blocks[ chain.back()->block ];
         }
         
@@ -178,24 +168,15 @@ public:
     bool ret = true;    
     for(auto &p: b->previous) {
       if(prev_blocks.find(p->block) == prev_blocks.end()) {
-        /*
-          std::cout << "  - Block not in previous: " << name_from_id(p->block) << " " << p->block << std::endl;
-        for(auto &p: prev_blocks) {
-          std::cout << p.first << ": " << p.second << std::endl;
-            
-        }
-        */
         ret = false;
         break;        
       }      
       else
       {
         if(prev_blocks[ p->block ] == 0) {
-          //          std::cout << "  - Something went wrong!! " << name_from_id(p->block) << std::endl;             
           ret = false;
           break;            
         }
-        //        std::cout << "  - Decreasing" << std::endl;
           
         --prev_blocks[ p->block ];
       }
@@ -204,10 +185,9 @@ public:
     
     for(auto &pb: prev_blocks) {
       if(pb.second !=0) {
-        //        std::cout << "  - ?? " << pb.second << std::endl;             
         ret = false;
         break;        
-      }     
+      }
     }
 
     if(ret) {

@@ -9,21 +9,18 @@ using namespace fetch::optimisers;
 
 std::vector< std::string > words = {"squeak", "fork", "governor", "peace", "courageous", "support", "tight", "reject", "extra-small", "slimy", "form", "bushes", "telling", "outrageous", "cure", "occur", "plausible", "scent", "kick", "melted", "perform", "rhetorical", "good", "selfish", "dime", "tree", "prevent", "camera", "paltry", "allow", "follow", "balance", "wave", "curved", "woman", "rampant", "eatable", "faulty", "sordid", "tooth", "bitter", "library", "spiders", "mysterious", "stop", "talk", "watch", "muddle", "windy", "meal", "arm", "hammer", "purple", "company", "political", "territory", "open", "attract", "admire", "undress", "accidental", "happy", "lock", "delicious"}; 
 
-#define GROUPS 4
+#define GROUPS 16
 
 std::vector< std::vector< fetch::byte_array::ByteArray > > group_blocks;
 
 fetch::random::LaggedFibonacciGenerator<> lfg;
 fetch::byte_array::ByteArray RandomTX(std::size_t const &n = 161) {
-  std::string ret = words[ lfg() & 63 ];
+  std::string ret = words[ (lfg()>>19) & 63 ];
   for(std::size_t i=1; i < n;++i) {
-    ret += "_" + words[lfg() & 63];
+    ret += "_" + words[(lfg() >> 20) & 63];
   }
-  auto ret2  = fetch::byte_array::ToBase64( fetch::crypto::Hash< fetch::crypto::SHA256 >(ret) ).SubArray(0, 16);
-  
+  auto ret2  = fetch::byte_array::ToBase64( fetch::crypto::Hash< fetch::crypto::SHA256 >(ret) ).SubArray(0, 8);
 
-
-  
   return ret2;
 }
 
@@ -42,7 +39,7 @@ uint32_t CreateBlock(GroupGraph &graph, std::size_t const &n, bool has_dep = fal
   
   std::unordered_set< uint32_t > groups;
   while(groups.size() < n) {
-    std::size_t i = lfg() % graph.width();
+    std::size_t i = (lfg()>>19) % graph.width();
     if(groups.find( i ) == groups.end()) groups.insert(i);
   }
   
@@ -57,14 +54,10 @@ uint32_t CreateBlock(GroupGraph &graph, std::size_t const &n, bool has_dep = fal
     min_size = std::min( min_size, group_blocks[g].size() );        
   }
 
-
-
   std::size_t Q =  std::min(min_size, m);
-  std::cout << "MIN = " << Q << std::endl;
-  
   if( has_dep && (Q!= 0) ) {
 
-    std::size_t q = lfg() % Q;
+    std::size_t q = (lfg() >> 19) % Q;
     
     for(auto &g: groups) {
       
@@ -82,53 +75,56 @@ uint32_t CreateBlock(GroupGraph &graph, std::size_t const &n, bool has_dep = fal
         group_blocks[g].push_back( group_blocks[g].back() );        
       }
     } else {
-      std::cout << " --- Adding hash: " << hash << std::endl;
-      
-      while(group_blocks[g].size() < block_number +1) {
+      while(group_blocks[g].size() < block_number + 1) {
         group_blocks[g].push_back( hash );
       }
       
     }
   }
-  
-  for(std::size_t i=0; i < block_number + 1; ++i) {
-    std::cout<< std::setw(3) << i << " ";
     
-    for(std::size_t j = 0; j < GROUPS; ++j) {
-      if(i < group_blocks[j].size())
-        std::cout << std::setw(3) << group_blocks[j][i] << " ";
-      else
-        std::cout << std::setw(3) << '-' << " ";              
-    }
-        std::cout << std::endl;
-      
-  }
-  
-  
   auto ret = graph.AddBlock(12., hash, previous, groups);  
+  return ret;
+}
+
+uint32_t CreateGenesis(GroupGraph &graph, std::size_t const &n) {
+  if( (n >= graph.width()) ) {
+    std::cerr << "error: " <<  n << " is too big"  << std::endl;
+    exit(-1);    
+  }
+
+  auto hash = RandomTX();
+  
+  std::unordered_set< uint32_t > groups;
+  groups.insert( n );
+  
+  std::vector< fetch::byte_array::ConstByteArray > previous;
+
+
+  
+  group_blocks[n].push_back( hash );
+  
+  
+  auto ret = graph.AddBlock(0, hash, previous, groups);
+  graph.Activate(ret);
   return ret;
 }
 
 int main() 
 {
-  GroupGraph graph(16, 4);
-  group_blocks.resize(4);
-  
-    
+  GroupGraph graph(800, GROUPS);
+  group_blocks.resize(GROUPS);
+
   // Boundary condition
-  /*
-  auto a = CreateBlock(graph, 2, false);
-  auto b = CreateBlock(graph, 1, false);
-  auto c = CreateBlock(graph, 1, false);
-  auto d = CreateBlock(graph, 1, false);
-  */
+  for(std::size_t i=0; i < GROUPS; ++i)
+    CreateGenesis(graph, i);
+  
   // Following blocks
   std::vector< uint64_t > blocks;
 
 
   std::cout << "Creating extra blocks" << std::endl;  
-  for(std::size_t i=0; i < 16; ++i) {
-    blocks.push_back(CreateBlock(graph, 1, true, 1));
+  for(std::size_t i=0; i < 1500; ++i) {
+    blocks.push_back(CreateBlock(graph, 1 + ( (lfg() >>19) % 3), true, 1));
   }
   std::cout << "Total blocks generated: " << blocks.size() << std::endl;
   
@@ -140,20 +136,18 @@ int main()
     std::cout << "NOT OK ADDING D" << std::endl;   
   }
   */
-  
+
+  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
   for(auto &e: blocks) 
   {    
-    if(!graph.Activate(e)) {
-      std::cout << "FAILED!!!!" << std::endl;
-      
-    }
-    
+    graph.Activate(e);    
   }
-  
+  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+  double time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
   // */
   
-  std::cout << "Next blocks " << graph.next_blocks().size() << std::endl;
+  std::cout << "Applying took " << time_span*1000 << " ms" << std::endl;
   
-  std::cout << graph << std::endl;  
+  //  std::cout << graph << std::endl;  
   return 0;  
 }
