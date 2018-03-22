@@ -129,7 +129,7 @@ public:
             response << "\"total_work\": " <<  block->total_weight();            
             response << "}";            
             block = block->previous_from_group( group_number );
-            ++i;            
+            ++i; 
           }
 
         });
