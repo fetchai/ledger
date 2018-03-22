@@ -26,9 +26,14 @@ public:
   typedef fetch::chain::consensus::ProofOfWork proof_type;
   typedef BlockBody block_body_type;
   typedef typename proof_type::header_type block_header_type;
-  typedef BlockMetaData block_meta_data_type;
-  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256, block_meta_data_type > block_type;  
+  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256 > block_type;  
   typedef std::shared_ptr< block_type > shared_block_type;
+
+  TransactionManager() 
+  {
+    group_ = 0;    
+  }
+  
   
   bool AddBulkTransactions(std::unordered_map< tx_digest_type, transaction_type, hasher_type > const &new_txs ) 
   {
@@ -63,13 +68,14 @@ public:
   }
 
   void UpdateApplied(shared_block_type shared_block) {
+    
     std::vector< tx_digest_type > new_applied;
     fetch::logger.Highlight("Applying block");
     std::cout << "Was here?" << std::endl;
     do {
       new_applied.push_back( shared_block->body().transaction_hash );
 
-      shared_block = shared_block->previous();
+      shared_block = shared_block->previous_from_group(group_);
     } while( shared_block );
 
     for(auto &a : applied_) {
@@ -171,6 +177,13 @@ public:
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
     return last_transactions_;    
   }
+
+  void set_group(uint32_t g) 
+  {
+    group_ = g;
+  }
+  
+
   
 private:
 
@@ -188,7 +201,8 @@ private:
     TODO("Trim last transactions");
 
   }
-  
+
+  std::atomic< uint32_t > group_ ;  
   std::vector< transaction_type > last_transactions_;
   
   std::unordered_set< tx_digest_type, hasher_type > unapplied_;  

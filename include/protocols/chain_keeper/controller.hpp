@@ -46,8 +46,7 @@ public:
   typedef fetch::chain::consensus::ProofOfWork proof_type;
   typedef BlockBody block_body_type;
   typedef typename proof_type::header_type block_header_type;
-  typedef BlockMetaData block_meta_data_type;
-  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256, block_meta_data_type > block_type;  
+  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256 > block_type;  
 
   // Other groups  
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
@@ -76,7 +75,7 @@ public:
 
     genesis_block.SetBody( genesis_body );
 
-    genesis_block.meta_data().block_number = 0;    
+    genesis_block.set_block_number(0);
 
     
     PushBlock( genesis_block );    
@@ -190,8 +189,9 @@ public:
     block_mutex_.unlock();
     
     block.SetBody( body );   
-    block.meta_data().total_work = chain_manager_.head().meta_data().total_work;
-    block.meta_data().block_number = chain_manager_.head().meta_data().block_number + 1;    
+    block.set_total_weight( chain_manager_.head().total_weight() );
+    block.set_block_number( chain_manager_.head().block_number() + 1 );
+    
     
     return block;
     
@@ -270,7 +270,7 @@ public:
     block_type comp_head = promise1.As< block_type >();
     fetch::logger.Debug("Done");
     
-    comp_head.meta_data() = block_meta_data_type();      
+//    comp_head.meta_data() = block_meta_data_type();      
     
     PushBlock(comp_head);
   }
@@ -326,10 +326,15 @@ public:
   void SetGroupNumber(uint32_t group, uint32_t total_groups) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-    
+
     fetch::logger.Debug("Setting group numbers: ", group, " ", total_groups);    
     grouping_parameter_ = total_groups;
-    details_.group = group;    
+    details_.group = group;
+
+    block_mutex_.lock();
+    tx_manager_.set_group( group );
+    chain_manager_.set_group( group );    
+    block_mutex_.unlock();
   }
   
   uint32_t count_outgoing_connections() 

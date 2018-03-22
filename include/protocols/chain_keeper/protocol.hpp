@@ -122,8 +122,8 @@ public:
           response << "\"block_hash\": \"" << byte_array::ToBase64( head.header() ) << "\",";
           response << "\"previous_hash\": \"" << byte_array::ToBase64( head.body().previous_hash ) << "\",";
           response << "\"transaction_hash\": \"" << byte_array::ToBase64( head.body().transaction_hash ) << "\",";
-          response << "\"block_number\": " <<  head.meta_data().block_number  << ",";
-          response << "\"total_work\": " <<  head.meta_data().total_work;          
+          response << "\"block_number\": " <<  head.block_number()  << ",";
+          response << "\"total_work\": " <<  head.total_weight();          
           response << "}";
 
           auto next_hash = head.body().previous_hash;
@@ -136,8 +136,8 @@ public:
             response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
             response << "\"previous_hash\": \"" << byte_array::ToBase64( block->body().previous_hash ) << "\",";
             response << "\"transaction_hash\": \"" << byte_array::ToBase64( block->body().transaction_hash ) << "\",";
-            response << "\"block_number\": " <<  block->meta_data().block_number  << ",";
-            response << "\"total_work\": " <<  block->meta_data().total_work;          
+            response << "\"block_number\": " <<  block->block_number()  << ",";
+            response << "\"total_work\": " <<  block->total_weight();            
             response << "}";            
             next_hash =  block->body().previous_hash;
           }

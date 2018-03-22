@@ -239,8 +239,8 @@ public:
         ++p;
         p();        
         double work = fetch::math::Log( p.digest() ); // TODO: Check formula
-        block.meta_data().work = work;        
-        block.meta_data().total_work += work;
+        block.set_weight(work);        
+        block.set_total_weight(block.total_weight() +work);
 //        while(!p()) ++p;
 
 

@@ -29,15 +29,14 @@ public:
   typedef fetch::chain::consensus::ProofOfWork proof_type;
   typedef BlockBody block_body_type;
   typedef typename proof_type::header_type block_header_type;
-  typedef BlockMetaData block_meta_data_type;
-  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256, block_meta_data_type > block_type;  
+  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256 > block_type;  
   typedef std::shared_ptr< block_type > shared_block_type;
   
   typedef std::unordered_map< block_header_type, shared_block_type, hasher_type > chain_map_type;
   
   
   ChainManager(TransactionManager &tx_manager) :
-    tx_manager_(tx_manager) { }
+    tx_manager_(tx_manager) { group_ = 0; }
   
   enum {
     ADD_NOTHING_TODO = 0,
@@ -72,24 +71,23 @@ public:
 
     auto pit = chains_.find( block.body().previous_hash );
     if( pit != chains_.end() ) {
-      block.set_previous( pit->second );
-      block.meta_data().loose_chain = pit->second->meta_data().loose_chain;
+      block.add_previous( group_, pit->second );
+      block.set_is_loose( pit->second->is_loose() );
     } else {
-
       // First block added is always genesis and by definition not loose
-      block.meta_data().loose_chain = (chains_.size() != 0 );
+      block.set_is_loose( chains_.size() != 0 );
     }
 
     auto shared_block = std::make_shared< block_type>( block );
     chains_[block.header()] = shared_block;
 
     // TODO: Set next
-    if(block.meta_data().loose_chain) {
+    if(block.is_loose()) {
       fetch::logger.Debug("Found loose block");
     } else if(! head_ ) {
       head_ = shared_block;
       tx_manager_.UpdateApplied( head_ );      
-    } else if((block.meta_data().total_work >= head_->meta_data().total_work)) {
+    } else if((block.total_weight() >= head_->total_weight())) {
       head_ = shared_block;
       tx_manager_.UpdateApplied( head_ );
     }
@@ -122,8 +120,15 @@ public:
     return chains_.size();
   }
   
+  void set_group(uint32_t g) 
+  {
+    group_ = g;
+  }
+  
+  
 private:
   TransactionManager &tx_manager_;
+  std::atomic< uint32_t > group_ ;    
   chain_map_type chains_;
 
   shared_block_type head_;

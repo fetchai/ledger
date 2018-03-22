@@ -1,11 +1,11 @@
-#include"optimisation/chain_group_optimiser/graph.hpp"
+#include"protocols/chain_coordinator/graph.hpp"
 #include"byte_array/encoders.hpp"
 #include"random/lfg.hpp"
 #include"crypto/sha256.hpp"
 #include"crypto/hash.hpp"
 #include"byte_array/encoders.hpp"
 #include<iostream>
-using namespace fetch::optimisers;
+using namespace fetch::protocols;
 
 std::vector< std::string > words = {"squeak", "fork", "governor", "peace", "courageous", "support", "tight", "reject", "extra-small", "slimy", "form", "bushes", "telling", "outrageous", "cure", "occur", "plausible", "scent", "kick", "melted", "perform", "rhetorical", "good", "selfish", "dime", "tree", "prevent", "camera", "paltry", "allow", "follow", "balance", "wave", "curved", "woman", "rampant", "eatable", "faulty", "sordid", "tooth", "bitter", "library", "spiders", "mysterious", "stop", "talk", "watch", "muddle", "windy", "meal", "arm", "hammer", "purple", "company", "political", "territory", "open", "attract", "admire", "undress", "accidental", "happy", "lock", "delicious"}; 
 
@@ -43,7 +43,7 @@ uint32_t CreateBlock(GroupGraph &graph, std::size_t const &n, bool has_dep = fal
     if(groups.find( i ) == groups.end()) groups.insert(i);
   }
   
-  std::vector< fetch::byte_array::ConstByteArray > previous;
+  std::unordered_map< uint32_t, fetch::byte_array::ConstByteArray > previous;
 
   std::size_t block_number = 0, min_size = 10000000000000;  
   for(uint64_t g=0; g < GROUPS; ++g) {
@@ -64,7 +64,7 @@ uint32_t CreateBlock(GroupGraph &graph, std::size_t const &n, bool has_dep = fal
       auto &gb = group_blocks[g];
       std::size_t j = gb.size() - 1 - q;      
       if(gb.size() > 0 ) {
-        previous.push_back( gb[j] );
+        previous[g] = gb[j];        
       }
     }
   }
@@ -82,7 +82,7 @@ uint32_t CreateBlock(GroupGraph &graph, std::size_t const &n, bool has_dep = fal
     }
   }
     
-  auto ret = graph.AddBlock(12., hash, previous, groups);  
+  auto ret = graph.AddBlock(12., hash, previous);  
   return ret;
 }
 
@@ -92,19 +92,14 @@ uint32_t CreateGenesis(GroupGraph &graph, std::size_t const &n) {
     exit(-1);    
   }
 
-  auto hash = RandomTX();
-  
-  std::unordered_set< uint32_t > groups;
-  groups.insert( n );
-  
-  std::vector< fetch::byte_array::ConstByteArray > previous;
-
-
-  
-  group_blocks[n].push_back( hash );
+  auto hash = RandomTX();    
+  std::unordered_map< uint32_t, fetch::byte_array::ConstByteArray > previous;
+  previous[n] = "genesis";
   
   
-  auto ret = graph.AddBlock(0, hash, previous, groups);
+  group_blocks[n].push_back( hash );  
+  
+  auto ret = graph.AddBlock(0, hash, previous);
   graph.Activate(ret);
   return ret;
 }
