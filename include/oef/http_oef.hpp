@@ -322,7 +322,7 @@ public:
 
       schema::QueryModelMulti multiQ(aeaQuery, forwardingQuery);
 
-      auto agents = oef_->AEAQueryMulti("HTTP_interface", multiQ);
+      auto agents = oef_->AEAQueryMulti(doc["ID"].as_byte_array(), multiQ);
 
       script::Variant response       = script::Variant::Object();
       response["response"]           = script::Variant::Object();
@@ -543,7 +543,7 @@ public:
 
   http::HTTPResponse DebugAllEvents(http::ViewParameters const &params, http::HTTPRequest const &req) {
 
-    int defaultNumber = 10;
+    int defaultNumber = 100;
     json::JSONDocument doc;
     try {
       doc = req.JSON();

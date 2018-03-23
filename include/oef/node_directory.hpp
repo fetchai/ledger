@@ -265,14 +265,26 @@ public:
     messageBox_.erase(queryModel);
   }
 
+  // Special for demo TODO: (`HUT`) : refactor
+  template <typename T>
+  void LogEventReverse(const std::string source, const T &eventParam, bool wasOrigin=false) {
+
+    std::string hash = eventParam.getHash();
+    Event event{nodeName_, source, schema::vtos(eventParam.variant()), hash, wasOrigin};
+    logEvent(nodeEndpoint_, event);
+
+    std::cout << "adding more!" << std::endl << std::endl;
+
+    // Notify all other endpoints
+    CallAllEndpoints(protocols::NodeToNodeRPC::DBG_LOG_EVENT, nodeEndpoint_, event);
+  }
+
   // Query has hit our node
   template <typename T>
-  void LogEvent(const std::string source, const T &eventParam) {
+  void LogEvent(const std::string source, const T &eventParam, bool wasOrigin=false) {
 
-    std::cout << "hot adfasdf" << std::endl;
     std::string hash = eventParam.getHash();
-    std::cout << "argh adfasdf" << std::endl;
-    Event event{source, nodeName_, schema::vtos(eventParam.variant()), hash};
+    Event event{source, nodeName_, schema::vtos(eventParam.variant()), hash, wasOrigin};
     logEvent(nodeEndpoint_, event);
 
     std::cout << "adding more!" << std::endl << std::endl;

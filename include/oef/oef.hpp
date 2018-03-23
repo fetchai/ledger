@@ -168,15 +168,21 @@ class NodeOEF {
       if(messageHistory_.add(queryMulti) && nodeDirectory_.shouldForward(queryMulti)) {
         fetch::logger.Info("AEA multi query is suitable");
         auto agents = serviceDirectory_.Query(queryMulti.aeaQuery());
+
+        // log each of these results as an event
+        for(auto &i : agents) {
+          nodeDirectory_.LogEvent(i, queryMulti);
+        }
+
         result.insert(result.end(), agents.begin(), agents.end());
 
-        nodeDirectory_.LogEvent(agentName, queryMulti);
+        nodeDirectory_.LogEvent(agentName, queryMulti, true);
 
         nodeDirectory_.ForwardQuery(queryMulti);
         mutex_.unlock();
 
         // Wait here for possible query results
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
         mutex_.lock();
         agents = nodeDirectory_.ForwardQueryResult(queryMulti);
@@ -385,6 +391,12 @@ class NodeOEF {
         nodeDirectory_.LogEvent(name, queryMulti);
 
         auto agents = serviceDirectory_.Query(queryMulti.aeaQuery());
+
+        for(auto &i : agents) {
+          //nodeDirectory_.LogEvent(i, queryMulti);
+          //nodeDirectory_.LogEventReverse(i, queryMulti);
+        }
+
         mutex_.unlock();
 
         nodeDirectory_.ForwardQuery(endpoint, queryMulti);

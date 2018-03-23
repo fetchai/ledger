@@ -26,10 +26,11 @@ class Event {
 public:
   Event() {}
 
-  explicit Event(const std::string &source, const std::string &destination, const std::string &details, const std::string &id) :
+  explicit Event(const std::string &source, const std::string &destination, const std::string &details, const std::string &id, bool wasOrigin) :
     source_{source},
     destination_{destination},
     details_{details},
+    wasOrigin_{wasOrigin},
     id_{id} {
 
       const std::string find{"\""};
@@ -49,6 +50,8 @@ public:
   std::string       &details()           { return details_; }
   const std::string &id() const          { return id_; }
   std::string       &id()                { return id_; }
+  const bool &wasOrigin() const          { return wasOrigin_; }
+  bool       &wasOrigin()                { return wasOrigin_; }
 
   fetch::script::Variant variant() const {
     fetch::script::Variant result = fetch::script::Variant::Object();
@@ -56,6 +59,7 @@ public:
     result["destination"]         = destination_;
     result["details"]             = details_;
     result["id"]                  = id_;
+    result["wasOrigin"]                  = wasOrigin_;
     return result;
   }
 
@@ -64,6 +68,7 @@ private:
   std::string destination_;
   std::string details_;
   std::string id_;
+  bool  wasOrigin_;
 };
 
 class Events {
@@ -130,12 +135,12 @@ private:
 
 template< typename T>
 void Serialize( T & serializer, Event const &b) {
-  serializer << b.source() << b.destination() << b.details() << b.id();
+  serializer << b.source() << b.destination() << b.details() << b.id() << b.wasOrigin();
 }
 
 template< typename T>
 void Deserialize( T & serializer, Event &b) {
-  serializer >> b.source() >> b.destination() >> b.details() >> b.id();
+  serializer >> b.source() >> b.destination() >> b.details() >> b.id() >> b.wasOrigin();
 }
 
 }
