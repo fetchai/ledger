@@ -1,5 +1,5 @@
-#ifndef OPTIMISATION_SIMULATED_ANNEALING_HPP
-#define OPTIMISATION_SIMULATED_ANNEALING_HPP
+#ifndef OPTIMISATION_SIMULATED_ANNEALING_SPARSE_ANNEALER_HPP
+#define OPTIMISATION_SIMULATED_ANNEALING_SPARSE_ANNEALER_HPP
 #include <math/exp.hpp>
 #include <memory/rectangular_array.hpp>
 #include <random/lcg.hpp>
@@ -9,7 +9,7 @@
 namespace fetch {
 namespace optimisers {
 
-class ReferenceAnnealer {
+class SparseAnnealer {
  public:
   typedef math::Exp<0> exp_type;
   typedef double cost_type;
@@ -17,11 +17,13 @@ class ReferenceAnnealer {
   typedef random::LinearCongruentialGenerator random_generator_type;
   typedef random::LinearCongruentialGenerator::random_type random_type;
 
-  ReferenceAnnealer() : beta0_(0.1), beta1_(3), sweeps_(1000), size_(0) {}
-  ReferenceAnnealer(std::size_t const &n)
+  SparseAnnealer() : beta0_(0.1), beta1_(3), sweeps_(1000), size_(0) {}
+  SparseAnnealer(std::size_t const &n)
       : couplings_(n, n), beta0_(0.1), beta1_(3), sweeps_(1000), size_(0) {}
 
-  void Resize(std::size_t const &n, std::size_t const &max_connectivity = std::size_t(-1)) {
+  void Resize(std::size_t const &n, std::size_t const &max_connectivity = std::size_t(-1) ) {
+    std::cout << "Connectivity: "<< max_connectivity << std::endl;
+    
     couplings_.Resize(n, n);
     for (std::size_t i = 0; i < couplings_.size(); ++i) couplings_[i] = 0;
     size_ = n;
@@ -155,7 +157,18 @@ class ReferenceAnnealer {
 
   exp_type fexp_;
 
-  memory::RectangularArray<cost_type> couplings_;
+
+  struct Spin 
+  {
+    std::vector< cost_type > couplings_;
+    std::vector< std::size_t > indices_;
+    cost_type local_field;    
+  };
+  
+
+  
+  std::vector< Spin > spins_;
+  
   double beta_, beta0_, beta1_;
   std::size_t sweeps_;
   std::size_t size_ = 0;

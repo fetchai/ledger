@@ -33,7 +33,7 @@ namespace protocols
 {
 
 
-class ChainKeeperController 
+class ChainKeeperController : public fetch::service::HasPublicationFeed 
 {
 public:
 

@@ -9,7 +9,7 @@ using namespace fetch::protocols;
 
 std::vector< std::string > words = {"squeak", "fork", "governor", "peace", "courageous", "support", "tight", "reject", "extra-small", "slimy", "form", "bushes", "telling", "outrageous", "cure", "occur", "plausible", "scent", "kick", "melted", "perform", "rhetorical", "good", "selfish", "dime", "tree", "prevent", "camera", "paltry", "allow", "follow", "balance", "wave", "curved", "woman", "rampant", "eatable", "faulty", "sordid", "tooth", "bitter", "library", "spiders", "mysterious", "stop", "talk", "watch", "muddle", "windy", "meal", "arm", "hammer", "purple", "company", "political", "territory", "open", "attract", "admire", "undress", "accidental", "happy", "lock", "delicious"}; 
 
-#define GROUPS 16
+#define GROUPS 1024
 
 std::vector< std::vector< fetch::byte_array::ByteArray > > group_blocks;
 
@@ -62,7 +62,7 @@ uint32_t CreateBlock(CoordinationManager &graph, std::size_t const &n, bool has_
     for(auto &g: groups) {
       
       auto &gb = group_blocks[g];
-      std::size_t j = gb.size() - 1 - q;      
+      std::size_t j = gb.size() - 1 - q; 
       if(gb.size() > 0 ) {
         previous[g] = gb[j];        
       }
@@ -106,7 +106,7 @@ uint32_t CreateGenesis(CoordinationManager &graph, std::size_t const &n) {
 
 int main() 
 {
-  CoordinationManager graph(800, GROUPS);
+  CoordinationManager graph(1200, GROUPS);
   group_blocks.resize(GROUPS);
 
   // Boundary condition
@@ -118,7 +118,7 @@ int main()
 
 
   std::cout << "Creating extra blocks" << std::endl;  
-  for(std::size_t i=0; i < 1500; ++i) {
+  for(std::size_t i=0; i < 150000; ++i) {
     blocks.push_back(CreateBlock(graph, 1 + ( (lfg() >>19) % 3), true, 1));
   }
   std::cout << "Total blocks generated: " << blocks.size() << std::endl;
@@ -133,16 +133,21 @@ int main()
   */
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+  std::size_t count = 0;
+  
   for(auto &e: blocks) 
   {    
-    graph.Activate(e);    
+    if(graph.Activate(e)) {
+      ++count;      
+    }
+    
   }
   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
   double time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
   // */
   
-  std::cout << "Applying took " << time_span*1000 << " ms" << std::endl;
+  std::cout << "Applying took " << time_span*1000 << " ms" << " with " << count << " successful" << std::endl;
   
-  std::cout << graph << std::endl;  
+//  std::cout << graph << std::endl;  
   return 0;  
 }

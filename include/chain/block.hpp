@@ -42,14 +42,15 @@ public:
 
   void add_previous(uint32_t const &group, shared_block_type const &p) {
     group_to_previous_[group] = p;
-    groups_.insert( group );
     previous_.push_back( p );
-    
+    this->body_.groups.push_back(group); // TODO: Ugly hack    
   }
 
   void add_group(uint32_t const &group ) {
     auto p = shared_block_type();
     add_previous( group, p );
+
+    
   }
 
   
@@ -125,10 +126,11 @@ public:
   {
     id_ = id;    
   }
-
+  /*
   std::unordered_set< uint32_t > groups() {
     return groups_;
   }   
+  */
 private:
 
   body_type body_;
@@ -140,7 +142,7 @@ private:
   double total_weight_ = 0;
 
   // Non-serialized meta-data
-  std::unordered_set< uint32_t > groups_;   
+//  std::unordered_set< uint32_t > groups_;   
   std::unordered_map< uint32_t, shared_block_type > group_to_previous_; 
   std::vector< shared_block_type > previous_;
 

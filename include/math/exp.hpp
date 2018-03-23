@@ -1,3 +1,6 @@
+#ifndef MATH_EXP_HPP
+#define MATH_EXP_HPP
+
 #include "assert.hpp"
 
 #include <cassert>
@@ -138,3 +141,5 @@ template <uint8_t N, uint64_t C, bool OF>
 double Exp<N, C, OF>::corrections_[E_ENTRIES] = {0};
 };
 };
+
+#endif

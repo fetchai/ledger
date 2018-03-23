@@ -4,7 +4,7 @@
 #include <string/trim.hpp>
 
 #include <fstream>
-#include <map>
+#include <unordered_map>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -25,7 +25,9 @@ bool Load(T &optimiser, std::string const &filename) {
   };
 
   std::vector<Coupling> couplings;
-  std::map<int, std::size_t> indices;
+  std::unordered_map<int, std::size_t> indices;
+  std::unordered_map< int, std::size_t > connectivity;
+  
   int k = 0;
 
   while (fin) {
@@ -42,16 +44,34 @@ bool Load(T &optimiser, std::string const &filename) {
     ss >> i >> j >> c.c;
     if ((i == -1) || (j == -1)) break;
 
-    if (indices.find(i) == indices.end()) indices[i] = k++;
+    if (indices.find(i) == indices.end()) {
+      indices[i] = k++;
+      connectivity[i] = 0;
+    }
+    
 
-    if (indices.find(j) == indices.end()) indices[j] = k++;
+    if (indices.find(j) == indices.end()) {
+      indices[j] = k++;
+      connectivity[j] = 0;
+     
+    }
+    
 
     c.i = indices[i];
     c.j = indices[j];
+    
+    ++connectivity[i];
+    ++connectivity[j];
+    
     couplings.push_back(c);
   }
-
-  optimiser.Resize(k);
+  
+  std::size_t connect_count = 0;
+  for(auto &p: connectivity) {
+    if(connect_count < p.second) connect_count = p.second;
+  }
+  
+  optimiser.Resize(k, connect_count);
 
   for (auto &c : couplings) optimiser(c.i, c.j) = c.c;
   return true;

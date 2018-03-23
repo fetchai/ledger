@@ -516,7 +516,6 @@ private:
 
   std::atomic< uint32_t > grouping_parameter_ ;
 
-
 };
 
 

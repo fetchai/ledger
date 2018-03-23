@@ -162,14 +162,14 @@ public:
     auto &b = bricks_[block];
 
     
-    for(auto &g: b->groups() ) {
+    for(auto &g: b->body().groups ) {
       block_n = std::max( block_n,  block_number_[g] );
     }
     if(block_n >= blocks() ) return false;
     
     std::unordered_map< uint64_t, int > prev_blocks;    
 
-    for(auto &g: b->groups() ) {
+    for(auto &g: b->body().groups ) {
       //      std::cout << "  - From group " << g << std::endl;
         
       auto &chain = chains_[g];
@@ -212,7 +212,7 @@ public:
     }
 
     if(ret) {
-      for(auto&g: b->groups()) {
+      for(auto&g: b->body().groups) {
         chains_[g].push_back(b);
         block_number_[g] = block_n + 1;
 
@@ -279,10 +279,14 @@ std::ostream& operator<< (std::ostream& stream, CoordinationManager const &graph
     uint64_t block = uint64_t(-1);
         
     shared_block_type brick;
-      
+    std::unordered_set< uint32_t > groups;
+
+    
+    
     if( (n < bricks.size()) )  {
-      brick = bricks[n];     
-      for(auto const &g: brick->groups()) {
+      brick = bricks[n];
+      for(auto &g: brick->body().groups) groups.insert(g);      
+      for(auto const &g: brick->body().groups ) {
         if(g < start) start = g;
         if(g > end) end = g;          
       }
@@ -301,7 +305,7 @@ std::ostream& operator<< (std::ostream& stream, CoordinationManager const &graph
         std::cout << ( (left) ? "-" : " " );
 
       if(embedded) {        
-        std::cout << (( (brick->groups().find( i ) != brick->groups().end())  ) ? "*" :"-");
+        std::cout << (( (groups.find( i ) != groups.end())  ) ? "*" :"-");
       } else {
         std::cout << "|";        
       }

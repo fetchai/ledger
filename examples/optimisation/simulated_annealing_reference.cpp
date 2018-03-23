@@ -1,12 +1,13 @@
 #include<optimisation/simulated_annealing/reference_annealer.hpp>
+#include<optimisation/simulated_annealing/sparse_annealer.hpp>
 #include<optimisation/instance/load_txt.hpp>
 
 #include<iostream>
 
-using namespace ailib::optimisers;
+using namespace fetch::optimisers;
 
 int main(int argc, char **argv) {
-  ReferenceAnnealer anneal;
+  SparseAnnealer anneal;
   if(argc !=2) {
     exit(-1);
   }

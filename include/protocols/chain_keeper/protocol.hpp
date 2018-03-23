@@ -56,6 +56,9 @@ public:
     Protocol::Expose(ChainKeeperRPC::EXCHANGE_HEADS, exchange_heads);
 //    Protocol::Expose(ChainKeeperRPC::REQUEST_BLOCKS_FROM, request_blocks_from);    
 
+
+    Protocol::RegisterFeed(ChainKeeperFeed::FEED_NEW_BLOCKS, this);    
+    
     // TODO: Move to separate protocol
     auto listen_to = new CallableClassMember<ChainKeeperProtocol, void(std::vector< EntryPoint >) >(this, &ChainKeeperProtocol::ListenTo );
     auto set_group_number = new CallableClassMember<ChainKeeperProtocol, void(uint32_t, uint32_t) >(this, &ChainKeeperProtocol::SetGroupNumber );
@@ -76,6 +79,69 @@ public:
     };
     
     HTTPModule::Get("/group-connect-to/(ip=\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(port=\\d+)", connect_to);
+
+
+    auto all_details = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      LOG_STACK_TRACE_POINT;
+      std::stringstream response;
+      response << "{\"outgoing\": [";  
+      this->with_peers_do([&response](std::vector< client_shared_ptr_type > const &, std::vector< EntryPoint > const&details) {
+          bool first = true;          
+          for(auto &d: details)
+          {
+
+            if(!first) response << ", \n";            
+            response << "{\n";
+
+            response << "\"group\": " << d.group  <<",";  
+            response << "\"host\": \"" << d.host  <<"\",";
+            response << "\"port\": " << d.port  << ",";
+            response << "\"http_port\": " << d.http_port  << ",";
+            response << "\"configuration\": " << d.configuration ;            
+
+            response << "}";
+            first = false;            
+          }
+          
+        });
+      
+      response << "],";
+
+      auto group_number = this->group_number();
+      
+      response << "\"blocks\": [";  
+      this->with_blocks_do([group_number, &response](ChainManager::shared_block_type block, ChainManager::chain_map_type & chain) {
+          std::size_t i=0;
+          while( (i< 10) && ( block  ) ) {
+
+            if(i!=0) response << ", ";            
+            response << "{";
+            response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
+            auto prev = block->previous_from_group( group_number );
+            if(prev)
+              response << "\"previous_hash\": \"" << byte_array::ToBase64( prev->header()  ) << "\",";
+            else
+              response << "\"previous_hash\": \"" << byte_array::ToBase64( "genesis"  ) << "\",";              
+            response << "\"transaction_hash\": \"" << byte_array::ToBase64( block->body().transaction_hash ) << "\",";
+            response << "\"block_number\": " <<  block->block_number()  << ",";
+            response << "\"total_work\": " <<  block->total_weight();            
+            response << "}";            
+            block = block->previous_from_group( group_number );
+            ++i; 
+          }
+
+        });
+      
+      response << "]";
+
+      
+      response << "}";      
+      std::cout << response.str() << std::endl;
+            
+      return fetch::http::HTTPResponse(response.str());      
+    };
+    HTTPModule::Get("/all-details",  all_details);
+
     
     auto list_outgoing = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       LOG_STACK_TRACE_POINT;
@@ -121,9 +187,14 @@ public:
       this->with_blocks_do([group_number, &response](ChainManager::shared_block_type block, ChainManager::chain_map_type & chain) {
           std::size_t i=0;
           while( (i< 10) && ( block  ) ) {
-            response << ", {";
+            if(i!=0) response << ", ";                   
+            response << "{";
             response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
-            response << "\"previous_hash\": \"" << byte_array::ToBase64( block->previous_from_group( group_number )->header() ) << "\",";
+            auto prev = block->previous_from_group( group_number );
+            if(prev)
+              response << "\"previous_hash\": \"" << byte_array::ToBase64( prev->header()  ) << "\",";
+            else
+              response << "\"previous_hash\": \"" << byte_array::ToBase64( "genesis"  ) << "\",";              
             response << "\"transaction_hash\": \"" << byte_array::ToBase64( block->body().transaction_hash ) << "\",";
             response << "\"block_number\": " <<  block->block_number()  << ",";
             response << "\"total_work\": " <<  block->total_weight();            
