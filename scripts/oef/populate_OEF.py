@@ -228,8 +228,8 @@ multiQuery = {
         }
     }
 
-r = requests.post('http://localhost:8082/multi-query', json=multiQuery)
-print "second mult query response", jsonPrint(r)
+#r = requests.post('http://localhost:8082/multi-query', json=multiQuery)
+#print "second mult query response", jsonPrint(r)
 
 exit(1)
 
