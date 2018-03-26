@@ -33,6 +33,7 @@ class ReferenceAnnealer {
 
     double db = (beta1_ - beta0_) / double(sweeps_ - 1);
     for (std::size_t k = 0; k < sweeps_; ++k) {
+      attempts_ += size_;
       for (std::size_t i = 0; i < size_; ++i) {
         if (rng_.AsDouble() <= fexp_(local_energies_[i])) {
           cost_type diff = -2 * state[i];
@@ -45,6 +46,7 @@ class ReferenceAnnealer {
 
           local_energies_[i] = -local_energies_[i];
           state[i] = -state[i];
+          ++accepted_;
         }
       }
 
@@ -86,7 +88,7 @@ class ReferenceAnnealer {
     return ret;
   }
 
-  cost_type CostOf(state_type c, bool binary = true) {
+  cost_type CostOf(state_type &c, bool binary = true) {
     cost_type ret = 0;
 
     if (binary) BinaryToSpin(c);
@@ -100,6 +102,8 @@ class ReferenceAnnealer {
       }
     }
 
+    if (binary) SpinToBinary(c);
+    
     return ret;
   }
 
@@ -111,7 +115,8 @@ class ReferenceAnnealer {
   }
 
   double beta() const { return beta_; }
-
+  std::size_t sweeps() const { return sweeps_; }
+  
   void SetSweeps(std::size_t sweeps) { sweeps_ = sweeps; }
   void SetBetaStart(cost_type const &b0) { beta0_ = b0; }
   void SetBetaEnd(cost_type const &b1) { beta1_ = b1; }
@@ -123,8 +128,33 @@ class ReferenceAnnealer {
   static void BinaryToSpin(state_type &state) {
     for (auto &s : state) s = 1 - 2 * s;
   }
+  
+  void Insert(std::size_t const &i, std::size_t const &j, cost_type const &c) {
+    couplings_.Set(std::min(i, j), std::max(i, j),c);
+  }
 
- private:
+  void Update(std::size_t const &i, std::size_t const &j, cost_type const &c) {
+    std::size_t A =std::min(i, j);
+    std::size_t B = std::max(i, j);
+    couplings_(A,B) += c;
+  }
+  void PrintGraph() {
+    for(std::size_t i=0; i < size_; ++i) {
+      for(std::size_t j=0; j < size_; ++j) {
+        if(couplings_(i,j) != 0 ) {
+          std::cout << i << " " << j << " " << couplings_(i,j) << std::endl;
+        }
+      }
+    }
+  }
+
+  double attempts() { return attempts_; }
+  double accepted() { return accepted_; }
+  
+private:
+  double attempts_ = 0;
+  double accepted_ = 0;
+  
   cost_type energy(state_type &state) const {
     cost_type en = 0;
     for (std::size_t i = 0; i < size_; ++i)
@@ -133,6 +163,8 @@ class ReferenceAnnealer {
   }
 
   void Initialize(state_type &state) {
+    attempts_ = 0;
+    accepted_ = 0;
     state.resize(size_);
     for (auto &s : state) s = 1 - 2 * ((rng_() >> 27) & 1);
 
@@ -144,7 +176,8 @@ class ReferenceAnnealer {
     for (std::size_t i = 0; i < size_; ++i) {
       cost_type de = couplings_(i, i);
 
-      for (std::size_t j = 0; j < i; ++j) de += state[j] * couplings_(j, i);
+      for (std::size_t j = 0; j < i; ++j)
+        de += state[j] * couplings_(j, i);
 
       for (std::size_t j = i + 1; j < size_; ++j)
         de += state[j] * couplings_(i, j);

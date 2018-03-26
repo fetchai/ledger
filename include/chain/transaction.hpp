@@ -8,10 +8,27 @@
 namespace fetch {
 namespace chain {
 
+struct TransactionSummary {
+  typedef byte_array::ConstByteArray digest_type;    
+  std::vector< uint16_t > groups;  
+  digest_type transaction_hash;
+};
+
+template< typename T >
+void Serialize( T & serializer, TransactionSummary const &b) {
+  serializer <<  b.groups << b.transaction_hash;  
+}
+
+template< typename T >
+void Deserialize( T & serializer, TransactionSummary &b) {
+  serializer >>  b.groups >> b.transaction_hash;  
+}
+
+  
 class Transaction {
 public:
   typedef crypto::SHA256 hasher_type;
-  typedef byte_array::ConstByteArray digest_type;  
+  typedef TransactionSummary::digest_type digest_type; 
   typedef byte_array::ConstByteArray arguments_type; // TODO: json doc with native serialization
 
   enum {
@@ -22,12 +39,12 @@ public:
   void UpdateDigest() {
     LOG_STACK_TRACE_POINT;    
     serializers::ByteArrayBuffer buf;
-    buf << groups_ << signatures_ << contract_name_ << arguments_;
+    buf << summary_.groups << signatures_ << contract_name_ << arguments_;
     hasher_type hash;
     hash.Reset();
     hash.Update( buf.data());
     hash.Final();
-    digest_ = hash.digest();
+    summary_.transaction_hash = hash.digest();
   }
 
   void PushGroup(byte_array::ConstByteArray const &res)
@@ -50,13 +67,13 @@ public:
       d.bytes[0] = res[0];
     };
     
-    groups_.push_back(d.value);
+    summary_.groups.push_back(d.value);
   }
 
   void PushGroup(uint16_t const &res)
   {
     LOG_STACK_TRACE_POINT;
-    groups_.push_back(res);
+    summary_.groups.push_back(res);
   }
 
   bool UsesGroup(uint16_t g, uint16_t m) const
@@ -65,7 +82,7 @@ public:
     g &= m;
     
     bool ret = false;
-    for(auto const &gg: groups_) {
+    for(auto const &gg: summary_.groups) {
       ret |= ( g == (gg&m) );      
     }
     
@@ -89,7 +106,7 @@ public:
   }  
   
   std::vector< uint16_t > const &groups() const {
-    return groups_;
+    return summary_.groups;
   }
   
   std::vector< byte_array::ConstByteArray > const& signatures() const {
@@ -101,33 +118,31 @@ public:
   }
 
   arguments_type const &arguments() const { return arguments_; }
-  digest_type const & digest() const { return digest_; }
+  digest_type const & digest() const { return summary_.transaction_hash; }
 
-  uint32_t groups_count() const
-  {
-    return groups_count_;
-  }
-  
   uint32_t signature_count() const
   {
     return  signature_count_;
   }
   
   byte_array::ConstByteArray data() const { return data_; };
-  
+
+  TransactionSummary const & summary() const { return summary_; }
 private:
-  uint32_t groups_count_, signature_count_;
+  TransactionSummary summary_;
+  
+  uint32_t  signature_count_;
   byte_array::ConstByteArray data_;
   
-
-  std::vector< uint16_t > groups_;
   std::vector< byte_array::ConstByteArray > signatures_;
   byte_array::ConstByteArray contract_name_;
 
   arguments_type arguments_;
-  digest_type digest_;
 
-  
+  template< typename T >
+  friend void Serialize(T&, Transaction const&);
+  template< typename T >
+  friend void Deserialize(T&, Transaction &);  
 };
 
 
@@ -135,11 +150,7 @@ template< typename T >
 void Serialize( T & serializer, Transaction const &b) {
   serializer << uint16_t(b.VERSION);
   
-  serializer <<  uint32_t(b.groups().size());
-
-  for(auto &res: b.groups()) {
-    serializer << res;
-  }
+  serializer << b.summary_;
 
   serializer <<  uint32_t(b.signatures().size());
   for(auto &sig: b.signatures()) {
@@ -154,17 +165,11 @@ template< typename T >
 void Deserialize( T & serializer, Transaction &b) {
   uint16_t version;  
   serializer >> version;
-  
+
+  serializer >> b.summary_;
+
   uint32_t size;
-  serializer >>  size;
-
-  for(std::size_t i=0; i < size; ++i) {
-    uint16_t res;
-    serializer >> res;
-    b.PushGroup(res);
-  }
-
-  serializer >>  size;
+  serializer >> size;
   for(std::size_t i=0; i < size; ++i) {
     byte_array::ByteArray sig;
     serializer >> sig;

@@ -27,9 +27,9 @@ public:
 
   // Block defs  
   typedef fetch::chain::consensus::ProofOfWork proof_type;
-  typedef BlockBody block_body_type;
+  typedef fetch::chain::BlockBody block_body_type;
   typedef typename proof_type::header_type block_header_type;
-  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256 > block_type;  
+  typedef fetch::chain::BasicBlock< proof_type, fetch::crypto::SHA256 > block_type;  
   typedef std::shared_ptr< block_type > shared_block_type;
   
   typedef std::unordered_map< block_header_type, shared_block_type, hasher_type > chain_map_type;
@@ -70,19 +70,9 @@ public:
     block_header_type header = block.header();
 
     chain_map_type::iterator pit;
-    bool found = false;
-    
-    for(auto &hash: block.body().previous_hashes ) {
-      pit = chains_.find( hash );
-      if( pit != chains_.end() ) {
-        found = true;        
-        break;
-      }
-      
-      
-    }
-    
 
+    pit = chains_.find( block.body().previous_hash  );
+    
     if( pit != chains_.end() ) {
       block.add_previous( group_, pit->second );
       block.set_is_loose( pit->second->is_loose() );
@@ -97,6 +87,7 @@ public:
     // TODO: Set next
     if(block.is_loose()) {
       fetch::logger.Debug("Found loose block");
+
     } else if(! head_ ) {
       head_ = shared_block;
       tx_manager_.UpdateApplied( head_ );      

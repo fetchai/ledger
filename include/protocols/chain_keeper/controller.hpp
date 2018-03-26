@@ -8,7 +8,7 @@
 #include"chain/transaction.hpp"
 #include"chain/block.hpp"
 #include"chain/consensus/proof_of_work.hpp"
-#include"protocols/chain_keeper/block.hpp"
+
 #include"protocols/chain_keeper/transaction_manager.hpp"
 #include"protocols/chain_keeper/chain_manager.hpp"
 
@@ -44,9 +44,9 @@ public:
 
   // Block defs  
   typedef fetch::chain::consensus::ProofOfWork proof_type;
-  typedef BlockBody block_body_type;
+  typedef fetch::chain::BlockBody block_body_type;
   typedef typename proof_type::header_type block_header_type;
-  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256 > block_type;  
+  typedef fetch::chain::BasicBlock<  proof_type, fetch::crypto::SHA256 > block_type;  
 
   // Other groups  
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
@@ -70,13 +70,14 @@ public:
     block_body_type genesis_body;
     block_type genesis_block;
     
-    genesis_body.previous_hashes.push_back( "genesis" );
-    genesis_body.transaction_hash = "genesis";
-
+    genesis_body.previous_hash = "genesis" ;
+    genesis_body.transaction_hashes.push_back("genesis");
+    genesis_body.group_parameter = 1;
+    genesis_body.groups.push_back(0);
+    
     genesis_block.SetBody( genesis_body );
 
     genesis_block.set_block_number(0);
-
     
     PushBlock( genesis_block );    
   }
@@ -146,6 +147,7 @@ public:
   std::vector< block_type > GetLatestBlocks(  ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+
     return chain_manager_.latest_blocks();    
   }
   
@@ -159,14 +161,16 @@ public:
     }
     
     block_mutex_.lock();
-
+    
     tx.UpdateDigest();
     if(! tx_manager_.AddTransaction( tx ) )
     {      
       block_mutex_.unlock();
       return false;
     }
-    
+    auto const& groups = tx_manager_.Next().groups();
+    // TODO: Migrate to shared_ptr< Transaction >
+    fetch::logger.Highlight("Total group size: ", tx_manager_.Next().groups().size(), " ", groups.size());
     block_mutex_.unlock();
     
     fetch::logger.Warn("Verify transaction");
@@ -182,12 +186,19 @@ public:
     block_type block;
     
     block_mutex_.lock();    
-    body.previous_hashes.push_back( chain_manager_.head()->header() );
-
+    body.previous_hash =  chain_manager_.head()->header();
+    body.group_parameter = grouping_parameter_;
+      
     if( !tx_manager_.has_unapplied() ) {
-      body.transaction_hash =  "";
+      body.transaction_hashes.clear();
     } else {
-      body.transaction_hash =  tx_manager_.NextDigest();
+      auto digest = tx_manager_.NextDigest() ;
+      auto const& groups = tx_manager_.Next().groups();
+      
+      for(auto const &g: groups) {
+        body.transaction_hashes.push_back(digest);
+        body.groups.push_back(g);
+      }
     }
     block_mutex_.unlock();
     

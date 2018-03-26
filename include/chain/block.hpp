@@ -1,21 +1,48 @@
 #ifndef CHAIN_BLOCK_HPP
 #define CHAIN_BLOCK_HPP
-
+#include"byte_array/referenced_byte_array.hpp"
 #include"serializer/byte_array_buffer.hpp"
 
 #include<memory>
 
 namespace fetch {
 namespace chain {
+
+  /*
+struct BlockBody {     
+  std::vector< fetch::byte_array::ByteArray > previous_hashes;  
+  fetch::byte_array::ByteArray transaction_hash;
+  std::vector< uint32_t > groups;  
+};
+  */
+
+struct BlockBody {     
+  fetch::byte_array::ByteArray previous_hash;
+  std::vector< fetch::byte_array::ByteArray > transaction_hashes;
+  std::vector< uint16_t > groups;
+  uint32_t group_parameter;
+};
   
-template< typename B, typename P, typename H >
-class BasicBlock : public std::enable_shared_from_this< BasicBlock< B, P, H > > {
+
+template< typename T >
+void Serialize( T & serializer, BlockBody const &body) {
+  serializer << body.previous_hash << body.transaction_hashes << body.groups;
+}
+
+template< typename T >
+void Deserialize( T & serializer, BlockBody &body) {
+  serializer >> body.previous_hash >> body.transaction_hashes >> body.groups;
+}
+
+  
+template< typename P, typename H >
+class BasicBlock : public std::enable_shared_from_this< BasicBlock< P, H > > {
 public:
-  typedef B body_type;
+  typedef BlockBody body_type;
   typedef P proof_type;
   typedef H hasher_type;
   typedef typename proof_type::header_type header_type;
-  typedef BasicBlock< B, P, H > self_type;
+  typedef BasicBlock<  P, H > self_type;
   typedef std::shared_ptr< self_type > shared_block_type;
   
   body_type const& SetBody(body_type const &body) {
@@ -40,28 +67,35 @@ public:
   body_type const & body() const { return body_; }
 
 
+  bool TransactionHash(uint32_t group, byte_array::ByteArray &hash) {
+    bool ret = false;
+
+    // Masking to ensure that we include blocks from lower group separation
+    uint32_t mask =  (body_.group_parameter - 1);
+    group &= mask; 
+    for(std::size_t i=0; i < body_.groups.size(); ++i) {
+      if( (body_.groups[i] & mask) == group ) {
+        ret = true;
+        hash = body_.transaction_hashes[i];
+        break;
+      }
+    }
+
+    return ret;
+  }
+
+  // TODO: Refactor
   void add_previous(uint32_t const &group, shared_block_type const &p) {
-    group_to_previous_[group] = p;
-    previous_.push_back( p );
-    this->body_.groups.push_back(group); // TODO: Ugly hack    
+    previous_ = p;
   }
 
   void add_group(uint32_t const &group ) {
     auto p = shared_block_type();
-    add_previous( group, p );
-
-    
+    add_previous( group, p );    
   }
 
   
-  shared_block_type previous_from_group(uint32_t const &group) const {
-    auto it = group_to_previous_.find(group);
-    if(it == group_to_previous_.end()) return shared_block_type();    
-    return it->second;
-  }
-
-  
-  std::vector< shared_block_type > previous() const {
+  shared_block_type previous() const {
     return previous_;
   }  
   
@@ -142,9 +176,8 @@ private:
   double total_weight_ = 0;
 
   // Non-serialized meta-data
-//  std::unordered_set< uint32_t > groups_;   
-  std::unordered_map< uint32_t, shared_block_type > group_to_previous_; 
-  std::vector< shared_block_type > previous_;
+  //  std::unordered_map< uint32_t, shared_block_type > group_to_previous_; 
+  shared_block_type  previous_;
 
   bool is_loose_ = true;
   bool is_verified_ = false;
@@ -153,26 +186,26 @@ private:
   
   
   
-  template< typename AT, typename AB, typename AP, typename AH >
-  friend void Serialize( AT & serializer, BasicBlock< AB, AP, AH > const &);
+  template< typename AT,  typename AP, typename AH >
+  friend void Serialize( AT & serializer, BasicBlock< AP, AH > const &);
   
 
-  template< typename AT, typename AB, typename AP, typename AH>
-  friend void Deserialize( AT & serializer, BasicBlock< AB, AP, AH > &b);  
+  template< typename AT, typename AP, typename AH>
+  friend void Deserialize( AT & serializer, BasicBlock< AP, AH > &b);  
 };
 
 
-template< typename T, typename B, typename P, typename H >
-void Serialize(T& serializer, BasicBlock< B, P, H > const &b) 
+template< typename T,  typename P, typename H >
+void Serialize(T& serializer, BasicBlock< P, H > const &b) 
 {
   serializer <<  b.body() << b.proof() ;  
 }
 
-template< typename T, typename B, typename P, typename H >
-void Deserialize(T& serializer, BasicBlock< B, P, H > &b) 
+template< typename T,  typename P, typename H >
+void Deserialize(T& serializer, BasicBlock< P, H > &b) 
 {
  
-  B body;  
+  BlockBody body;  
   serializer >> body >> b.proof() ;  
   b.SetBody(body);
   

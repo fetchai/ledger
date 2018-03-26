@@ -174,8 +174,9 @@ public:
     
     for(std::size_t i=0; i < 100; ++i) std::cout << "=";
     std::cout << std::endl;
-    
+
     std::cout << "Chain stats:" << std::endl;
+    std::cout << "Synced blocks: " << newblocks.size() << std::endl;        
     std::cout << "Block count: " << this->block_count() << std::endl;    
     std::cout << "Transaction count: " << this->transaction_count() << std::endl;
     std::cout << "Unapplied transaction count: " << this->unapplied_transaction_count() << std::endl;
@@ -226,7 +227,7 @@ public:
       fetch::logger.Highlight("Mining cycle ", i);
     
       auto block = this->GetNextBlock();
-      if(  block.body().transaction_hash == "") {
+      if(  block.body().transaction_hashes.size() == 0) {
         fetch::logger.Highlight("--------======= NO TRRANSACTIONS TO MINE =========--------");
 //        std::this_thread::sleep_for( std::chrono::milliseconds( 500 ));
         break;        
@@ -275,7 +276,7 @@ public:
 
   
 private:
-  int difficulty_ = 0;
+  int difficulty_ = 1;
   mutable fetch::mutex::Mutex difficulty_mutex_;
   
   fetch::network::ThreadManager *thread_manager_;    

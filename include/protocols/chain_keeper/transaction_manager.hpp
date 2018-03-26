@@ -6,7 +6,7 @@
 #include"assert.hpp"
 
 #include<unordered_set>
-
+#include<memory>
 namespace fetch
 {
 namespace protocols
@@ -20,13 +20,14 @@ public:
   typedef crypto::CallableFNV hasher_type;
   
   // Transaction defs
-  typedef fetch::chain::Transaction transaction_type;
+  typedef chain::Transaction transaction_type;
+  typedef std::shared_ptr< transaction_type > shared_transaction_type;
   typedef typename transaction_type::digest_type tx_digest_type;
 
   typedef fetch::chain::consensus::ProofOfWork proof_type;
-  typedef BlockBody block_body_type;
+  typedef fetch::chain::BlockBody block_body_type;
   typedef typename proof_type::header_type block_header_type;
-  typedef fetch::chain::BasicBlock< block_body_type, proof_type, fetch::crypto::SHA256 > block_type;  
+  typedef fetch::chain::BasicBlock< proof_type, fetch::crypto::SHA256 > block_type;  
   typedef std::shared_ptr< block_type > shared_block_type;
 
   TransactionManager() 
@@ -38,6 +39,7 @@ public:
   bool AddBulkTransactions(std::unordered_map< tx_digest_type, transaction_type, hasher_type > const &new_txs ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+
     bool ret = false;    
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );
     for(auto const& t: new_txs) {
@@ -49,21 +51,24 @@ public:
       }
     
     }
-    
+
     
     return ret;
   }
   
   bool AddTransaction(transaction_type const &tx)
   {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;        
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
-   
+
     if(known_transactions_.find( tx.digest()  ) != known_transactions_.end())
     {
       return false;
     }
     RegisterTransaction( tx );        
+    fetch::logger.Highlight("--------------- >>>>>>>>> ", tx.groups().size() );
+
     return true;    
   }
 
@@ -73,9 +78,20 @@ public:
     fetch::logger.Highlight("Applying block");
     std::cout << "Was here?" << std::endl;
     do {
-      new_applied.push_back( shared_block->body().transaction_hash );
+      byte_array::ByteArray hash;
+      if(shared_block->TransactionHash(group_, hash )) {
+        // Only apply hashes that belong to the group
+        new_applied.push_back( hash  );
+      } else {
+        std::size_t i = 0;
+        for(auto &tx: shared_block->body().transaction_hashes) {
+          fetch::logger.Highlight("TX not applicable: ", byte_array::ToBase64(tx), " : ", shared_block->body().groups.size(), " ", int(group_), " ",  shared_block->body().groups[i], " ", shared_block->body().group_parameter  );
+          exit(-1);
+          ++i;
+        }
+      }
 
-      shared_block = shared_block->previous_from_group(group_);
+      shared_block = shared_block->previous();
     } while( shared_block );
 
     for(auto &a : applied_) {
@@ -112,12 +128,13 @@ public:
     return *it;    
   }
   
-  transaction_type Next() 
+  transaction_type const& Next() 
   {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
     detailed_assert( unapplied_.size() != 0 );
     auto it = unapplied_.begin();
-    return  transactions_[ *it ];    
+    auto ptr = transactions_[ *it ];
+    return  *ptr;    
   }
 
   std::size_t unapplied_count() const 
@@ -193,7 +210,7 @@ private:
     TODO("Check if transaction belongs to group");    
     
     last_transactions_.push_back(tx);
-    transactions_[ tx.digest() ] = tx;
+    transactions_[ tx.digest() ] = std::make_shared< transaction_type >(tx);
     known_transactions_.insert( tx.digest() );    
     unapplied_.insert( tx.digest() );
     fetch::logger.Highlight("========================================= >>>>>>>>>>>>>>>>>>> ", known_transactions_.size());
@@ -209,7 +226,7 @@ private:
   std::unordered_set< tx_digest_type, hasher_type > known_transactions_;  
   std::vector< tx_digest_type > applied_;  
   
-  std::unordered_map< tx_digest_type, transaction_type, hasher_type > transactions_;
+  std::unordered_map< tx_digest_type, shared_transaction_type, hasher_type > transactions_;
 
   mutable fetch::mutex::Mutex mutex_;
   

@@ -1,0 +1,19 @@
+#ifndef PROTOCOLS_CHAIN_KEEPER_BLOCK_HPP
+#define PROTOCOLS_CHAIN_KEEPER_BLOCK_HPP
+#include"byte_array/referenced_byte_array.hpp"
+
+#include<limits>
+#include<memory>
+
+namespace fetch
+{
+namespace protocols 
+{
+
+
+
+
+};
+};
+
+#endif

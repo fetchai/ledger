@@ -73,7 +73,7 @@ bool Load(T &optimiser, std::string const &filename) {
   
   optimiser.Resize(k, connect_count);
 
-  for (auto &c : couplings) optimiser(c.i, c.j) = c.c;
+  for (auto &c : couplings) optimiser.Insert(c.i, c.j, c.c);
   return true;
 }
 };

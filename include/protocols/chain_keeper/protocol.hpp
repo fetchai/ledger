@@ -41,8 +41,6 @@ public:
     auto get_blocks = new CallableClassMember<ChainKeeperProtocol, std::vector< block_type >() >(this, &ChainKeeperProtocol::GetLatestBlocks );
 
     auto exchange_heads = new CallableClassMember<ChainKeeperProtocol, block_type(block_type) >(this, &ChainKeeperProtocol::ExchangeHeads );
-    auto request_blocks_from = new CallableClassMember<ChainKeeperProtocol, std::vector< block_type >(block_header_type, uint16_t) >(this, &ChainKeeperProtocol::RequestBlocksFrom );
-
     
     Protocol::Expose(ChainKeeperRPC::PING, ping);
     Protocol::Expose(ChainKeeperRPC::HELLO, hello);    
@@ -54,8 +52,6 @@ public:
 
 
     Protocol::Expose(ChainKeeperRPC::EXCHANGE_HEADS, exchange_heads);
-//    Protocol::Expose(ChainKeeperRPC::REQUEST_BLOCKS_FROM, request_blocks_from);    
-
 
     Protocol::RegisterFeed(ChainKeeperFeed::FEED_NEW_BLOCKS, this);    
     
@@ -117,16 +113,15 @@ public:
             if(i!=0) response << ", ";            
             response << "{";
             response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
-            auto prev = block->previous_from_group( group_number );
-            if(prev)
-              response << "\"previous_hash\": \"" << byte_array::ToBase64( prev->header()  ) << "\",";
-            else
-              response << "\"previous_hash\": \"" << byte_array::ToBase64( "genesis"  ) << "\",";              
-            response << "\"transaction_hash\": \"" << byte_array::ToBase64( block->body().transaction_hash ) << "\",";
+            auto prev = block->body().previous_hash;
+
+            response << "\"previous_hash\": \"" << byte_array::ToBase64( prev  ) << "\",";
+            // byte_array::ToBase64( block->body().transaction_hash )
+            response << "\"transaction_hash\": \"" << "TODO list" << "\",";
             response << "\"block_number\": " <<  block->block_number()  << ",";
             response << "\"total_work\": " <<  block->total_weight();            
             response << "}";            
-            block = block->previous_from_group( group_number );
+            block = block->previous(  );
             ++i; 
           }
 
@@ -190,16 +185,17 @@ public:
             if(i!=0) response << ", ";                   
             response << "{";
             response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
-            auto prev = block->previous_from_group( group_number );
-            if(prev)
-              response << "\"previous_hash\": \"" << byte_array::ToBase64( prev->header()  ) << "\",";
-            else
-              response << "\"previous_hash\": \"" << byte_array::ToBase64( "genesis"  ) << "\",";              
-            response << "\"transaction_hash\": \"" << byte_array::ToBase64( block->body().transaction_hash ) << "\",";
+            response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
+            auto prev = block->body().previous_hash;
+
+            response << "\"previous_hash\": \"" << byte_array::ToBase64( prev  ) << "\",";
+
+            // byte_array::ToBase64( block->body().transaction_hash )
+            response << "\"transaction_hash\": \"" << "TODO list" << "\",";            
             response << "\"block_number\": " <<  block->block_number()  << ",";
             response << "\"total_work\": " <<  block->total_weight();            
             response << "}";            
-            block = block->previous_from_group( group_number );
+            block = block->previous( );
             ++i; 
           }
 

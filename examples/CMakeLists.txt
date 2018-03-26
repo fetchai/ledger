@@ -11,6 +11,7 @@ add_executable(network_server network/server.cpp)
 add_executable(reverse_rpc_client reverse_rpc/client.cpp)
 add_executable(reverse_rpc_server reverse_rpc/server.cpp)
 
+add_executable(block_miner optimisation/chain_optimiser.cpp)
 add_executable(simulated_annealing_reference optimisation/simulated_annealing_reference.cpp)
 
 add_executable(rpc_client rpc/client.cpp)

@@ -7,7 +7,6 @@
 #include "protocols/swarm/node_details.hpp"
 
 #include "protocols/swarm/serializers.hpp"
-#include "protocols/swarm/coordination_manager.hpp"
 
 #include<unordered_set>
 #include<atomic>

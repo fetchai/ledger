@@ -7,7 +7,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 def submit(n):
     N = 20
-    j = 2*random.randint(0,1)
+    j = random.randint(0,1)
     print "Sending to ", 'http://localhost:%d/group/submit-transaction' % (9090 + j)
 
     a = "0x0000"
@@ -31,10 +31,10 @@ def submit(n):
 #    res2 = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(N))
 #    bod = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(N))
     
-    r = requests.post('http://localhost:%d/group/submit-transaction' % (9090 + j + 1), json = {
-        "resources": [res1,res2],
-        "body":  bod
-    })    
+#    r = requests.post('http://localhost:%d/group/submit-transaction' % (9090 + j + 1), json = {
+#        "resources": [res1,res2],
+#        "body":  bod
+#    })    
 
 
 def submitParallel(numbers, threads=2):
@@ -47,5 +47,5 @@ def submitParallel(numbers, threads=2):
 if __name__ == "__main__":
     r = requests.post('http://localhost:9090/mining-power/1', json = { })
     r = requests.post('http://localhost:9091/mining-power/1', json = { })    
-    submitParallel(range(1000), 20)
+    submitParallel(range(10), 2)
 
