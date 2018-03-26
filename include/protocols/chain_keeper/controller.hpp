@@ -10,7 +10,7 @@
 #include"chain/consensus/proof_of_work.hpp"
 
 #include"protocols/chain_keeper/transaction_manager.hpp"
-#include"protocols/chain_keeper/chain_manager.hpp"
+
 
 #include "service/client.hpp"
 #include"service/publication_feed.hpp"
@@ -42,12 +42,6 @@ public:
   typedef fetch::chain::Transaction transaction_type;
   typedef typename transaction_type::digest_type tx_digest_type;
 
-  // Block defs  
-  typedef fetch::chain::consensus::ProofOfWork proof_type;
-  typedef fetch::chain::BlockBody block_body_type;
-  typedef typename proof_type::header_type block_header_type;
-  typedef fetch::chain::BasicBlock<  proof_type, fetch::crypto::SHA256 > block_type;  
-
   // Other groups  
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
   typedef std::shared_ptr< client_type >  client_shared_ptr_type;
@@ -59,27 +53,12 @@ public:
     details_(details),
     block_mutex_( __LINE__, __FILE__),    
     chain_keeper_friends_mutex_( __LINE__, __FILE__),
-    grouping_parameter_(1),
-    chain_manager_(tx_manager_)
+    grouping_parameter_(1)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
     
     details_.configuration = EntryPoint::NODE_CHAIN_KEEPER;
-    
-    block_body_type genesis_body;
-    block_type genesis_block;
-    
-    genesis_body.previous_hash = "genesis" ;
-    genesis_body.transaction_hashes.push_back("genesis");
-    genesis_body.group_parameter = 1;
-    genesis_body.groups.push_back(0);
-    
-    genesis_block.SetBody( genesis_body );
-
-    genesis_block.set_block_number(0);
-    
-    PushBlock( genesis_block );    
   }
 
   // TODO: Change signature to std::vector< EntryPoint >
@@ -98,45 +77,6 @@ public:
     return details_;
   }
   
-  block_type ExchangeHeads(block_type head_candidate) 
-  {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-
-    fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
-    fetch::logger.Debug("Sending head as response to request");
-    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
-    
-    // TODO: Check which head is better
-    fetch::logger.Debug("Return!");    
-    return *chain_manager_.head();
-  }
-
-  std::vector< block_type > RequestBlocksFrom(block_header_type next_hash, uint16_t preferred_block_count) 
-  {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-   
-    fetch::logger.Debug("Entering ", __FUNCTION_NAME__);    
-    std::vector< block_type > ret;
-    TODO_FAIL("Legacy functionality");
-    
- /*
-    if( preferred_block_count > 10 ) preferred_block_count = 10;    
-    ret.reserve( preferred_block_count );
-    
-    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
-    std::size_t i =0;
-    ChainManager::chain_map_type &chains = chain_manager_.chains();
-    
-    while( (i< preferred_block_count) && (chains.find( next_hash ) !=chains.end() ) ) {
-      auto const &block = chains[next_hash];
-      ret.push_back( *block );
-
-      next_hash = block->body().previous_hash;
-      ++i;
-    }    
- */
-    return ret;    
-  }
 
   std::vector< transaction_type > GetTransactions(  ) 
   {
@@ -144,13 +84,6 @@ public:
     return tx_manager_.LastTransactions();    
   }
 
-  std::vector< block_type > GetLatestBlocks(  ) 
-  {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-
-    return chain_manager_.latest_blocks();    
-  }
-  
 
   bool PushTransaction( transaction_type tx ) {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
@@ -179,47 +112,6 @@ public:
   }
 
 
-  block_type GetNextBlock() { // TODO: Move out.
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-
-    block_body_type body;
-    block_type block;
-    
-    block_mutex_.lock();    
-    body.previous_hash =  chain_manager_.head()->header();
-    body.group_parameter = grouping_parameter_;
-      
-    if( !tx_manager_.has_unapplied() ) {
-      body.transaction_hashes.clear();
-    } else {
-      auto digest = tx_manager_.NextDigest() ;
-      auto const& groups = tx_manager_.Next().groups();
-      
-      for(auto const &g: groups) {
-        body.transaction_hashes.push_back(digest);
-        body.groups.push_back(g);
-      }
-    }
-    block_mutex_.unlock();
-    
-    block.SetBody( body );   
-    block.set_total_weight( chain_manager_.head()->total_weight() );
-    block.set_block_number( chain_manager_.head()->block_number() + 1 );
-    
-    
-    return block;
-    
-  }
-  
-  void PushBlock(block_type block) {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-
-    block_mutex_.lock();
-    chain_manager_.AddBlock( block );
-    block_mutex_.unlock();
-
-//    VerifyState();
-  }
 
   void ConnectTo(std::string const &host, uint16_t const &port ) 
   {
@@ -252,41 +144,13 @@ public:
     d.group = 0; // TODO: get and check that it is right
     d.configuration = 0;  
 
-
-    block_mutex_.lock();    
-    block_type head_copy = *chain_manager_.head();
-    block_mutex_.unlock();
    
     chain_keeper_friends_mutex_.lock();
     chain_keeper_friends_.push_back(client);
     friends_details_.push_back(d);
     chain_keeper_friends_mutex_.unlock();
 
-    fetch::logger.Debug("Requesting head exchange");    
-    auto promise1 = client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::EXCHANGE_HEADS, head_copy);    
-    if(!promise1.Wait(1000) ) { //; // TODO: make configurable
-      fetch::logger.Error("Failed to get head.");
-      exit(-1);
-      
-      return;        
-    }
-    if( promise1.has_failed() ) {
-      fetch::logger.Error("Request for head failed.");
-      return;        
-    }
-    
-    if( promise1.is_connection_closed() ) {
-      fetch::logger.Error("Lost connection.");
-      return;           
-    }
-    
-    
-    block_type comp_head = promise1.As< block_type >();
-    fetch::logger.Debug("Done");
-    
-//    comp_head.meta_data() = block_meta_data_type();      
-    
-    PushBlock(comp_head);
+
   }
 
   void ListenTo(std::vector< EntryPoint > list) // TODO: Rename
@@ -347,7 +211,6 @@ public:
 
     block_mutex_.lock();
     tx_manager_.set_group( group );
-    chain_manager_.set_group( group );    
     block_mutex_.unlock();
   }
   
@@ -385,42 +248,6 @@ public:
     chain_keeper_friends_mutex_.unlock();
   }
   
-  void with_blocks_do( std::function< void(ChainManager::shared_block_type, ChainManager::chain_map_type const& )  > fnc ) const
-  {
-    block_mutex_.lock();
-    fnc( chain_manager_.head(), chain_manager_.chains() );    
-    block_mutex_.unlock();
-  }
-
-  void with_blocks_do( std::function< void(ChainManager::shared_block_type, ChainManager::chain_map_type & )  > fnc ) 
-  {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-    
-    block_mutex_.lock();
-    fnc( chain_manager_.head(), chain_manager_.chains() );    
-    block_mutex_.unlock();
-  }
-  
-  /*
-  void with_transactions_do( std::function< void(std::vector< tx_digest_type >,  std::map< tx_digest_type, transaction_type >) > fnc )
-  {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-    
-    block_mutex_.lock();
-    fnc( incoming_, known_transactions_ );    
-    block_mutex_.unlock();
-  }
-  */
-  /*
-  void with_loose_chains_do( std::function< void( std::map< uint64_t,  ChainManager::PartialChain > ) > fnc ) 
-  {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-    
-    block_mutex_.lock();
-    fnc( chain_manager_.loose_chains() );
-    block_mutex_.unlock();
-  }
-  */
 
   std::size_t unapplied_transaction_count() const 
   {
@@ -440,11 +267,6 @@ public:
     return tx_manager_.size();        
   }
 
-  std::size_t block_count() const 
-  {
-    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
-    return chain_manager_.size();        
-  }
   
   bool AddBulkTransactions(std::unordered_map< tx_digest_type, transaction_type, typename TransactionManager::hasher_type > const &new_txs ) 
   {
@@ -453,13 +275,13 @@ public:
     return tx_manager_.AddBulkTransactions(new_txs ) ;    
   }
 
-  bool AddBulkBlocks(std::vector< block_type > const &new_blocks ) 
+  void with_transactions_do(std::function< void(  std::vector< transaction_type > & ) > fnc) 
   {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
     std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
-    return chain_manager_.AddBulkBlocks(new_blocks ) ;    
+    tx_manager_.with_transactions_do( fnc );
   }
-  
+
+
 private:
  
   network::ThreadManager *thread_manager_;    
@@ -468,9 +290,6 @@ private:
   
   mutable fetch::mutex::Mutex block_mutex_;
 
-
-
-
   std::vector< client_shared_ptr_type > chain_keeper_friends_;
   std::vector< EntryPoint > friends_details_;  
   fetch::mutex::Mutex chain_keeper_friends_mutex_;  
@@ -478,7 +297,6 @@ private:
   std::atomic< uint32_t > grouping_parameter_ ;
 
   TransactionManager tx_manager_;
-  ChainManager chain_manager_;
 };
 
 

@@ -81,7 +81,7 @@ public:
     }
 
     std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-    ReferenceAnnealer annealer; // TODO: change with sparse annealer
+    optimisers::ReferenceAnnealer annealer; // TODO: change with sparse annealer
     problem.ProgramSpinGlassSolver(annealer);
     annealer.SetSweeps( 10 );
     std::chrono::high_resolution_clock::time_point t3 = std::chrono::high_resolution_clock::now();

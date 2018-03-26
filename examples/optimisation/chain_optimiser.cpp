@@ -4,6 +4,7 @@
 
 #include"byte_array/encoders.hpp"
 #include<iostream>
+using namespace fetch;
 
 using namespace fetch::optimisers;
 
@@ -27,14 +28,14 @@ fetch::byte_array::ByteArray RandomTX(std::size_t const &n = 32) {
 void test() {
   chain::BlockGenerator coordinator;
 
-  std::size_t group_count = 256;
+  std::size_t group_count = 64;
   std::size_t max_groups = 3;
   std::size_t transaction_count = 10000;
-  std::size_t transactions_per_block = 256;
+  std::size_t transactions_pool_size = 512;
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
   for(std::size_t i=0; i < transaction_count; ++i) {
-    Transaction tx;
+    chain::TransactionSummary tx;
     std::size_t groups = 2 + ( (lfg() >> 19) % max_groups );
 
     std::unordered_set< std::size_t > used;
@@ -50,18 +51,22 @@ void test() {
     //    for(auto &g: tx.groups)
     //      std::cout << " " << g;
     //    std::cout << std::endl;
-    coordinator.PushTransaction( tx );
+    coordinator.PushTransactionSummary( tx );
   }
+  
   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+
   double time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
   std::cout << "Generating " << transaction_count <<  " took " << time_span*1000 << " ms" << std::endl;
 
+
   coordinator.set_group_count(group_count);
-  coordinator.MineBlock(transactions_per_block);
+
+  coordinator.MineBlock(transactions_pool_size);
   std::chrono::high_resolution_clock::time_point t3 = std::chrono::high_resolution_clock::now();
   time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t3 - t2).count();
   std::cout << "Finding groupds " << transaction_count <<  " took " << time_span*1000 << " ms" << std::endl;
-  //  coordinator.MineBlock(transactions_per_block);
+  //  coordinator.MineBlock(transactions_pool_size);
   
   std::cout << "======================" << std::endl;
   

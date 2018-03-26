@@ -200,7 +200,11 @@ public:
     group_ = g;
   }
   
-
+  void with_transactions_do(std::function< void(  std::vector< transaction_type > & ) > fnc) 
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ ); 
+    fnc(last_transactions_);
+  }
   
 private:
 

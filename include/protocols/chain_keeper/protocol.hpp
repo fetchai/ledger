@@ -16,7 +16,6 @@ class ChainKeeperProtocol : public ChainKeeperController,
                       public fetch::http::HTTPModule { 
 public:
   typedef typename ChainKeeperController::transaction_type transaction_type;
-  typedef typename ChainKeeperController::block_type block_type;  
 
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
   typedef std::shared_ptr< client_type >  client_shared_ptr_type;
@@ -36,25 +35,11 @@ public:
     auto push_transaction = new CallableClassMember<ChainKeeperProtocol, bool(transaction_type) >(this, &ChainKeeperProtocol::PushTransaction );
     auto get_transactions = new CallableClassMember<ChainKeeperProtocol, std::vector< transaction_type >() >(this, &ChainKeeperProtocol::GetTransactions );
     
-    auto push_block = new CallableClassMember<ChainKeeperProtocol, void(block_type) >(this, &ChainKeeperProtocol::PushBlock );
-    auto get_block = new CallableClassMember<ChainKeeperProtocol, block_type() >(this, &ChainKeeperProtocol::GetNextBlock );
-    auto get_blocks = new CallableClassMember<ChainKeeperProtocol, std::vector< block_type >() >(this, &ChainKeeperProtocol::GetLatestBlocks );
-
-    auto exchange_heads = new CallableClassMember<ChainKeeperProtocol, block_type(block_type) >(this, &ChainKeeperProtocol::ExchangeHeads );
-    
     Protocol::Expose(ChainKeeperRPC::PING, ping);
     Protocol::Expose(ChainKeeperRPC::HELLO, hello);    
     Protocol::Expose(ChainKeeperRPC::PUSH_TRANSACTION, push_transaction);
     Protocol::Expose(ChainKeeperRPC::GET_TRANSACTIONS, get_transactions);    
-    Protocol::Expose(ChainKeeperRPC::PUSH_BLOCK, push_block);
-    Protocol::Expose(ChainKeeperRPC::GET_BLOCKS, get_blocks);        
-    Protocol::Expose(ChainKeeperRPC::GET_NEXT_BLOCK, get_block);
 
-
-    Protocol::Expose(ChainKeeperRPC::EXCHANGE_HEADS, exchange_heads);
-
-    Protocol::RegisterFeed(ChainKeeperFeed::FEED_NEW_BLOCKS, this);    
-    
     // TODO: Move to separate protocol
     auto listen_to = new CallableClassMember<ChainKeeperProtocol, void(std::vector< EntryPoint >) >(this, &ChainKeeperProtocol::ListenTo );
     auto set_group_number = new CallableClassMember<ChainKeeperProtocol, void(uint32_t, uint32_t) >(this, &ChainKeeperProtocol::SetGroupNumber );
@@ -65,7 +50,6 @@ public:
     Protocol::Expose(ChainKeeperRPC::SET_GROUP_NUMBER, set_group_number);
     Protocol::Expose(ChainKeeperRPC::GROUP_NUMBER, group_number);
     Protocol::Expose(ChainKeeperRPC::COUNT_OUTGOING_CONNECTIONS, count_outgoing);
-    
     
     
     // Web interface
@@ -99,32 +83,6 @@ public:
             first = false;            
           }
           
-        });
-      
-      response << "],";
-
-      auto group_number = this->group_number();
-      
-      response << "\"blocks\": [";  
-      this->with_blocks_do([group_number, &response](ChainManager::shared_block_type block, ChainManager::chain_map_type & chain) {
-          std::size_t i=0;
-          while( (i< 10) && ( block  ) ) {
-
-            if(i!=0) response << ", ";            
-            response << "{";
-            response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
-            auto prev = block->body().previous_hash;
-
-            response << "\"previous_hash\": \"" << byte_array::ToBase64( prev  ) << "\",";
-            // byte_array::ToBase64( block->body().transaction_hash )
-            response << "\"transaction_hash\": \"" << "TODO list" << "\",";
-            response << "\"block_number\": " <<  block->block_number()  << ",";
-            response << "\"total_work\": " <<  block->total_weight();            
-            response << "}";            
-            block = block->previous(  );
-            ++i; 
-          }
-
         });
       
       response << "]";
@@ -171,53 +129,54 @@ public:
     HTTPModule::Get("/list/outgoing",  list_outgoing);
 
 
-    
-    auto list_blocks = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+
+    auto list_transactions = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       LOG_STACK_TRACE_POINT;
       std::stringstream response;
+      response << "{\"transactions\": [";  
+      this->with_transactions_do([&response](std::vector< transaction_type > const &alltxs) {
+          bool first = true;
+          std::size_t i = 0;
+          
+          for(auto const &t: alltxs)
+          {
+            auto sum = t.summary();            
 
-      auto group_number = this->group_number();
-      
-      response << "{\"blocks\": [";  
-      this->with_blocks_do([group_number, &response](ChainManager::shared_block_type block, ChainManager::chain_map_type & chain) {
-          std::size_t i=0;
-          while( (i< 10) && ( block  ) ) {
-            if(i!=0) response << ", ";                   
-            response << "{";
-            response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
-            response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
-            auto prev = block->body().previous_hash;
+            if(!first) response << ", \n";            
+            response << "{\n";
 
-            response << "\"previous_hash\": \"" << byte_array::ToBase64( prev  ) << "\",";
-
-            // byte_array::ToBase64( block->body().transaction_hash )
-            response << "\"transaction_hash\": \"" << "TODO list" << "\",";            
-            response << "\"block_number\": " <<  block->block_number()  << ",";
-            response << "\"total_work\": " <<  block->total_weight();            
-            response << "}";            
-            block = block->previous( );
-            ++i; 
+            bool bfi = true;            
+            response << "\"groups\": [";
+            for(auto &g : sum.groups)  {
+              if(!bfi) response << ", ";
+              response << g;              
+              bfi = false;
+            }
+            response << "],";
+            response << "\"transaction_number\": " << i << ",";            
+            response << "\"transaction_hash\": \"" << byte_array::ToBase64(sum.transaction_hash)  << "\"";
+            response << "}";
+            first = false;
+            ++i;
+            
           }
-
         });
       
       response << "]}";
-
-      fetch::logger.Highlight( response.str() );
       
       std::cout << response.str() << std::endl;
             
       return fetch::http::HTTPResponse(response.str());      
     };
-    HTTPModule::Get("/list/blocks",  list_blocks);
+    HTTPModule::Get("/list/transactions",  list_transactions);
+
+
+    
     
     auto submit_transaction = [this, thread_manager](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       LOG_STACK_TRACE_POINT;
       thread_manager->Post([this, req]() {      
           json::JSONDocument doc = req.JSON();
-          
-//          std::cout << "resources " << doc["resources"] << std::endl;
-
           
           typedef fetch::chain::Transaction transaction_type;
           transaction_type tx;

@@ -153,7 +153,7 @@ public:
 
     ///////////
     // All blocks
-
+    /*
     std::vector< block_type > blocks;
     std::vector< fetch::service::Promise > promises;    
     this->with_peers_do([&promises](std::vector< client_shared_ptr_type > clients, std::vector< EntryPoint > const&) {
@@ -195,7 +195,7 @@ public:
       
     }
     
-
+    */
     
     if(running_) {
       thread_manager_->Post([this]() {
@@ -207,7 +207,7 @@ public:
   void Mine() 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-      
+    /*
     difficulty_mutex_.lock();
     int diff = difficulty_;
     difficulty_mutex_.unlock();
@@ -249,17 +249,17 @@ public:
 //        std::chrono::system_clock::time_point end =  std::chrono::system_clock::now();
 //        double ms =  std::chrono::duration_cast<std::chrono::milliseconds>(end - started).count();
 //        TODO("change mining mechanism: ", ms);
-/*
-  if( ms < 500 ) {
-  std::this_thread::sleep_for( std::chrono::milliseconds( int( (500. - ms)  ) ) ); 
-  }
-*/    
+
+//  if( ms < 500 ) {
+//  std::this_thread::sleep_for( std::chrono::milliseconds( int( (500. - ms)  ) ) ); 
+//  }
+    
       
         this->PushBlock( block );
       }
-
+      
     }
-    
+    */
     
     if(running_) {
       thread_manager_->Post([this]() {
