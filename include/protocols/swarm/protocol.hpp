@@ -40,6 +40,274 @@ public:
     Protocol::RegisterFeed(SwarmFeed::FEED_REQUEST_CONNECTIONS, this);
     Protocol::RegisterFeed(SwarmFeed::FEED_ENOUGH_CONNECTIONS, this);
     Protocol::RegisterFeed(SwarmFeed::FEED_ANNOUNCE_NEW_COMER, this);
+
+
+    // TODO: move to separate service
+    auto push_block = new CallableClassMember<ChainController, void(block_type) >(this, &ChainController::PushBlock );
+    auto get_block = new CallableClassMember<ChainController, block_type() >(this, &ChainController::GetNextBlock );
+    auto get_blocks = new CallableClassMember<ChainController, std::vector< block_type >() >(this, &ChainController::GetLatestBlocks );
+    
+    Protocol::Expose(ChainCommands::PUSH_BLOCK, push_block);
+    Protocol::Expose(ChainCommands::GET_BLOCKS, get_blocks);        
+    Protocol::Expose(ChainCommands::GET_NEXT_BLOCK, get_block);
+
+    auto all_details = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      LOG_STACK_TRACE_POINT;
+      std::stringstream response;
+
+
+      
+      response << "{\"blocks\": [";  
+      this->with_blocks_do([ &response](ChainManager::shared_block_type block, ChainManager::chain_map_type & chain) {
+          std::size_t i=0;
+          while( (i< 10) && ( block  ) ) {
+            if(i!=0) response << ", ";                   
+            response << "{";
+            response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
+            auto prev = block->body().previous_hash;
+
+            response << "\"previous_hash\": \"" << byte_array::ToBase64( prev  ) << "\",";
+
+            // byte_array::ToBase64( block->body().transaction_hash )
+            response << "\"count\": " << block->body().transactions.size() << ", ";
+            response << "\"transactions\": [";
+            bool bfit = true;            
+            for(auto tx: block->body().transactions) {
+              if(!bfit) {
+                response << ", ";                
+              }
+              response << "{\"hash\":\"" << byte_array::ToBase64( tx.transaction_hash ) << "\",";
+              bool cit = true;
+              
+              response << "\"groups\": [";
+              for(auto &g: tx.groups) {
+                if(!cit) response << ", ";
+                response << g;
+                cit = false;
+              }
+              
+              response  << "]";
+              response << "}";
+              
+              bfit = false;
+            }
+            
+            response << "]" << ",";
+            response << "\"block_number\": " <<  block->block_number()  << ",";
+            response << "\"total_work\": " <<  block->total_weight();            
+            response << "}";            
+            block = block->previous( );
+            ++i; 
+          }
+
+        });
+      
+      response << "], ";
+      std::size_t shard_count = 0;
+      
+      response << "\"shards\": [";
+      
+      this->with_shard_details_do([this, &shard_count, &response](std::vector< EntryPoint > const &detail_list) {
+          bool first = true;
+          
+          for(auto &d: detail_list)
+          {
+            if(!first) response << ",";
+            response << "{ \"host\": \""  << d.host << "\",";
+            response << " \"port\": "  << d.port << ",";
+            response << " \"shard\": "  << d.group << ",";                          
+            response << " \"http_port\": "  << d.http_port << "}";              
+            first = false;
+            ++shard_count;            
+          }
+          
+        });
+      response << "], ";
+      
+      response << "\"outgoing\": [";  
+      
+      this->with_server_details_do([&response](std::map< uint64_t, NodeDetails > const &peers) {
+          bool first = true;          
+          for(auto &ppair: peers)
+          {
+            auto &p = ppair.second;            
+            if(!first) response << ", \n";            
+            response << "{\n";
+            response << "\"public_key\": \"" + p.public_key + "\",";
+            response << "\"entry_points\": [";
+            bool sfirst = true;
+
+            for(auto &e: p.entry_points)
+            {
+              if(!sfirst) response << ",\n";              
+              response << "{";
+              response << "\"shard\": " << e.group  <<",";  
+              response << "\"host\": \"" << e.host  <<"\",";
+              response << "\"port\": " << e.port  << ",";
+              response << "\"http_port\": " << e.http_port  << ",";
+              response << "\"configuration\": " << e.configuration  << "}";              
+              sfirst = false;              
+            }
+            
+            response << "]";
+            response << "}";
+            first = false;            
+          }
+          
+        });
+      
+      response << "], ";      
+      response << "\"incoming\": [";  
+      
+      this->with_client_details_do([&response](std::map< uint64_t, NodeDetails > const &peers) {
+          bool first = true;          
+          for(auto &ppair: peers)
+          {
+            auto &p = ppair.second;            
+            if(!first) response << ", \n";            
+            response << "{\n";
+            response << "\"public_key\": \"" + p.public_key + "\",";
+            response << "\"entry_points\": [";
+            bool sfirst = true;
+            
+            for(auto &e: p.entry_points)
+            {
+              if(!sfirst) response << ",\n";              
+              response << "{";
+              response << "\"shard\": " << e.group  <<",";  
+              response << "\"host\": \"" << e.host  <<"\",";
+              response << "\"port\": " << e.port  << ",";
+              response << "\"http_port\": " << e.http_port  << ",";
+              response << "\"configuration\": " << e.configuration  << "}";              
+              sfirst = false;              
+            }
+            
+            response << "]";
+            response << "}";
+            first = false;            
+          }
+          
+        });
+      
+      response << "], ";
+      response << "\"suggestions\": [";  
+      
+      this->with_suggestions_do([&response](std::vector< NodeDetails > const &peers) {
+          bool first = true;          
+          for(auto &p: peers)
+          {
+            if(!first) response << ", \n";            
+            response << "{\n";
+            response << "\"public_key\": \"" + p.public_key + "\",";
+            response << "\"entry_points\": [";
+            bool sfirst = true;
+            
+            for(auto &e: p.entry_points)
+            {
+              if(!sfirst) response << ",\n";              
+              response << "{";
+              response << "\"shard\": " << e.group  <<",";  
+              response << "\"host\": \"" << e.host  <<"\",";
+              response << "\"port\": " << e.port  << ",";
+              response << "\"http_port\": " << e.http_port  << ",";
+              response << "\"configuration\": " << e.configuration  << "}";              
+              sfirst = false;              
+            }
+            
+            response << "]";
+            response << "}";
+            first = false;            
+          }
+          
+        });
+      
+      response << "], ";
+      uint16_t port = 0, http_port = 0;
+      byte_array::ByteArray host;
+      
+      
+      this->with_node_details( [this, &response, &port, & http_port, &host](NodeDetails const& details) {
+          response << "\"name\": \"" <<  details.public_key << "\",";
+          response << "\"entry_points\": [" ;
+          bool first = true;
+          
+          for(auto &e: details.entry_points ) {
+            if(!first) response << ", ";            
+            response << "{";
+            response << "\"shard\": " << e.group  <<",";  
+            response << "\"host\": \"" << e.host  <<"\",";
+            response << "\"port\": " << e.port  << ",";
+            response << "\"http_port\": " << e.http_port  << ",";
+            response << "\"configuration\": " << e.configuration  << "}";                          
+            if(e.configuration & EntryPoint::NODE_SWARM) {
+              port = e.port;
+              http_port = e.http_port;
+              host = e.host;              
+            }
+            
+            first = false;            
+          }
+          
+          response << "]";          
+          
+        });
+      if( (host.size() > 0) )        
+        response << ",\"host\": \"" <<  host << "\"";
+      
+      if(port != 0)
+        response << ",\"port\": " <<  port ;
+      if(http_port != 0)
+        response << ",\"http_port\": " <<  http_port ;      
+      response << "}";      
+      return fetch::http::HTTPResponse(response.str());      
+    };
+    HTTPModule::Get("/all-details",  all_details);
+
+    
+    auto list_blocks = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
+      LOG_STACK_TRACE_POINT;
+      std::stringstream response;
+
+
+      
+      response << "{\"blocks\": [";  
+      this->with_blocks_do([ &response](ChainManager::shared_block_type block, ChainManager::chain_map_type & chain) {
+          std::size_t i=0;
+          while( (i< 10) && ( block  ) ) {
+            if(i!=0) response << ", ";                   
+            response << "{";
+            response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
+            auto prev = block->body().previous_hash;
+
+            response << "\"previous_hash\": \"" << byte_array::ToBase64( prev  ) << "\",";
+
+            // byte_array::ToBase64( block->body().transaction_hash )
+            response << "\"count\": " << block->body().transactions.size() << ", ";
+            response << "\"transactions\": [";
+            bool bfit = true;            
+            for(auto tx: block->body().transactions) {
+              if(!bfit) {
+                response << ", ";                
+              }
+              response << "\"" << byte_array::ToBase64( tx.transaction_hash ) << "\"";
+              bfit = false;
+            }
+            
+            response << "]" << ",";
+            response << "\"block_number\": " <<  block->block_number()  << ",";
+            response << "\"total_work\": " <<  block->total_weight();            
+            response << "}";            
+            block = block->previous( );
+            ++i; 
+          }
+
+        });
+      
+      response << "]}";
+      return fetch::http::HTTPResponse(response.str());      
+    };
+    HTTPModule::Get("/list/blocks",  list_blocks);
+
     
     // Web interface
     auto http_bootstrap = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
@@ -60,6 +328,7 @@ public:
     };    
     HTTPModule::Get("/connect-shard/(ip=\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(port=\\d+)",  shard_connect);    
 
+    
     auto list_shards = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       std::stringstream response;
       response << "{ \"shards\": [";
@@ -84,7 +353,7 @@ public:
         
     };    
     HTTPModule::Get("/list/shards",  list_shards);    
-    
+        
 
     auto list_outgoing =  [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       std::stringstream response;
@@ -173,7 +442,7 @@ public:
     };            
 
     HTTPModule::Get("/list/incoming",  list_incoming);
-    
+
 
     
     auto list_suggestions = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
@@ -249,7 +518,7 @@ public:
       return fetch::http::HTTPResponse( response.str() );
     };    
     HTTPModule::Get("/node-details",  node_details);
-
+    
 
     ////// TODO: This part needs to be moved somewhere else in the future
     auto send_transaction = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {

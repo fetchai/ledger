@@ -2,6 +2,7 @@
 #define CHAIN_BLOCK_HPP
 #include"byte_array/referenced_byte_array.hpp"
 #include"serializer/byte_array_buffer.hpp"
+#include"chain/transaction.hpp"
 
 #include<memory>
 
@@ -18,20 +19,19 @@ struct BlockBody {
 
 struct BlockBody {     
   fetch::byte_array::ByteArray previous_hash;
-  std::vector< fetch::byte_array::ByteArray > transaction_hashes;
-  std::vector< uint16_t > groups;
+  std::vector< TransactionSummary > transactions;
   uint32_t group_parameter;
 };
   
 
 template< typename T >
 void Serialize( T & serializer, BlockBody const &body) {
-  serializer << body.previous_hash << body.transaction_hashes << body.groups;
+  serializer << body.previous_hash << body.transactions << body.group_parameter;
 }
 
 template< typename T >
 void Deserialize( T & serializer, BlockBody &body) {
-  serializer >> body.previous_hash >> body.transaction_hashes >> body.groups;
+  serializer >> body.previous_hash >> body.transactions >> body.group_parameter;
 }
 
   
@@ -67,33 +67,10 @@ public:
   body_type const & body() const { return body_; }
 
 
-  bool TransactionHash(uint32_t group, byte_array::ByteArray &hash) {
-    bool ret = false;
 
-    // Masking to ensure that we include blocks from lower group separation
-    uint32_t mask =  (body_.group_parameter - 1);
-    group &= mask; 
-    for(std::size_t i=0; i < body_.groups.size(); ++i) {
-      if( (body_.groups[i] & mask) == group ) {
-        ret = true;
-        hash = body_.transaction_hashes[i];
-        break;
-      }
-    }
-
-    return ret;
-  }
-
-  // TODO: Refactor
-  void add_previous(uint32_t const &group, shared_block_type const &p) {
+  void set_previous(shared_block_type const &p) {
     previous_ = p;
   }
-
-  void add_group(uint32_t const &group ) {
-    auto p = shared_block_type();
-    add_previous( group, p );    
-  }
-
   
   shared_block_type previous() const {
     return previous_;
@@ -103,7 +80,8 @@ public:
     return this->shared_from_this();
   }
 
-  double const& weight() const { return weight_; } 
+  double const& weight() const { return weight_; }
+  
   double const& total_weight() const 
   {
     return total_weight_;
@@ -198,7 +176,7 @@ private:
 template< typename T,  typename P, typename H >
 void Serialize(T& serializer, BasicBlock< P, H > const &b) 
 {
-  serializer <<  b.body() << b.proof() ;  
+  serializer <<  b.body() << b.proof() << b.weight_ << b.total_weight_;   // TODO: Fix should be computed
 }
 
 template< typename T,  typename P, typename H >
@@ -206,7 +184,7 @@ void Deserialize(T& serializer, BasicBlock< P, H > &b)
 {
  
   BlockBody body;  
-  serializer >> body >> b.proof() ;  
+  serializer >> body >> b.proof() >> b.weight_ >> b.total_weight_;   // TODO: FIX should be computed
   b.SetBody(body);
   
 }

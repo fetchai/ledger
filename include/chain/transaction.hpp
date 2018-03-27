@@ -10,7 +10,7 @@ namespace chain {
 
 struct TransactionSummary {
   typedef byte_array::ConstByteArray digest_type;    
-  std::vector< uint16_t > groups;  
+  std::vector< uint32_t > groups;  
   digest_type transaction_hash;
 };
 
@@ -61,19 +61,42 @@ public:
     case 0:
       break;
     default:
+      /*
+TODO: Make 32 bit compat     
+    case 4:
+      d.bytes[3] = res[3];      
+    case 3:
+      d.bytes[2] = res[2];      
+*/      
     case 2:
       d.bytes[1] = res[1];
     case 1:         
       d.bytes[0] = res[0];
     };
+//    std::cout << byte_array::ToHex( res) << " >> " << d.value << std::endl;
     
-    summary_.groups.push_back(d.value);
+//    assert(d.value < 10);
+    
+    PushGroup(d.value);    
   }
 
-  void PushGroup(uint16_t const &res)
+  void PushGroup(uint32_t const &res)
   {
     LOG_STACK_TRACE_POINT;
-    summary_.groups.push_back(res);
+    bool add = true;
+    for(auto &g: summary_.groups) {
+      if(g == res) {
+        add = false;
+        break;
+      }
+      
+    }
+    
+    if(add)
+    {
+      summary_.groups.push_back(res);
+    }
+    
   }
 
   bool UsesGroup(uint16_t g, uint16_t m) const
@@ -105,7 +128,7 @@ public:
     arguments_ = args;
   }  
   
-  std::vector< uint16_t > const &groups() const {
+  std::vector< uint32_t > const &groups() const {
     return summary_.groups;
   }
   
@@ -133,7 +156,7 @@ private:
   
   uint32_t  signature_count_;
   byte_array::ConstByteArray data_;
-  
+  // TODO: Add resources
   std::vector< byte_array::ConstByteArray > signatures_;
   byte_array::ConstByteArray contract_name_;
 

@@ -33,6 +33,18 @@ enum
 
 };
 
+
+struct ChainCommands 
+{
+enum {
+  PUSH_BLOCK = 101,
+  GET_BLOCKS = 102,
+  GET_NEXT_BLOCK = 103
+ 
+};
+};
+
+  
 }; 
 }; 
 

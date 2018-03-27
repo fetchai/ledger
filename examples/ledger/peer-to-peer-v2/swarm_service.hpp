@@ -95,14 +95,24 @@ public:
  * └────────────────────┬────────────────────┘  │
  *                      │                       │
  * ┌────────────────────▼────────────────────┐  │
- * │        Update shard connectivity        │──┘
+ * │        Update shard connectivity        │  │
+ * └────────────────────┬────────────────────┘  │
+ *                      │                       │
+ * ┌────────────────────▼────────────────────┐  │
+ * │           Sync Chain & TX headers       │  │
+ * └────────────────────┬────────────────────┘  │
+ *                      │                       │
+ * ┌────────────────────▼────────────────────┐  │
+ * │                   Mine                  │──┘
  * └─────────────────────────────────────────┘   
+ *     
+
  */
   void UpdateNodeChainKeeperDetails() 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-    fetch::logger.PrintTimings();
-    fetch::logger.PrintMutexTimings();
+//    fetch::logger.PrintTimings();
+//    fetch::logger.PrintMutexTimings();
     
     using namespace fetch::protocols;
     std::vector< EntryPoint > entries;
@@ -192,6 +202,7 @@ public:
     
 
     // Fetching all incoming details
+    
     fetch::logger.Highlight("Updating incoming");    
     this->with_client_details_do( [&all_details](std::map< uint64_t, NodeDetails > const &node_details)  {
         for(auto const&d: node_details)
@@ -205,7 +216,7 @@ public:
           all_details[d.second.public_key] = d.second;
         }
       });
-
+    
 
 
     all_details[ details.public_key ] = details;    
@@ -254,13 +265,14 @@ public:
         
       });
 
+    /*
     this->with_client_details_do([&](std::map< uint64_t, NodeDetails > const & details) {
         for(auto const &d: details)
         {
           public_keys.insert( d.second.public_key );          
         }        
       });
-
+    */
     
     // Finding hosts we are not connected to
     std::vector< EntryPoint > swarm_entries;    
@@ -382,11 +394,85 @@ public:
     
     if(running_) {
       thread_manager_->Post([this]() {
-          this->UpdateNodeChainKeeperDetails();          
-        }, 2000);
+          this->SyncChain();          
+        });
     }    
     
   }
+
+
+  void SyncChain() 
+  {
+    // Getting transactions
+    using namespace fetch::protocols;    
+    typedef typename ChainController::block_type block_type;
+    
+    std::vector< block_type > blocks;
+    std::vector< fetch::service::Promise > promises;    
+    this->with_peers_do([&promises](std::vector< client_shared_ptr_type > clients) {
+        for(auto &c: clients) {
+          promises.push_back( c->Call(FetchProtocols::SWARM, ChainCommands::GET_BLOCKS ) );
+        }
+      });
+
+    std::vector< block_type > newblocks;
+    newblocks.reserve(1000);
+    
+    for(auto &p: promises) {
+      p.As( newblocks );
+      this->AddBulkBlocks( newblocks );
+    }
+    fetch::logger.Highlight(" >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", newblocks.size());
+    
+    // Getting transaction summaries
+    promises.clear();    
+    this->with_shards_do([&promises](std::vector< client_shared_ptr_type > const &clients) {
+        for(auto const&c : clients) {
+          promises.push_back( c->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::GET_SUMMARIES ) );
+        }
+      });
+    std::vector< fetch::chain::TransactionSummary > summaries;
+    
+    for(auto &p: promises) {
+      p.As( summaries );
+      this->AddBulkSummaries( summaries );      
+    }
+    
+    
+    if(running_) {
+      thread_manager_->Post([this]() {
+          this->Mine();          
+        });
+      
+    }
+  }
+  
+
+  void Mine() 
+  {
+    bool adding = true;
+    std::size_t i = 0;
+    
+    while(adding) {
+      adding = false;
+      auto block = this->GetNextBlock();
+      if(block.body().transactions.size() > 0 ) {
+        this->PushBlock( block );
+        adding = true;
+        
+      }
+      adding &= (i < 200);  
+      ++i;      
+    }
+    
+    
+    if(running_) {
+      thread_manager_->Post([this]() {
+          this->UpdateNodeChainKeeperDetails();          
+        });
+    }    
+  }
+  
   
 
 private:

@@ -19,12 +19,12 @@ class FetchLedger
 public:
   FetchLedger(uint16_t offset, std::string const &name, std::size_t const &shards ) :
     thread_manager_( new fetch::network::ThreadManager(24) ),
-    controller_( 1337 + offset, 8080 + offset, name, thread_manager_ )
+    controller_( 1337 + offset, 7070 + offset, name, thread_manager_ )
   {
     for(std::size_t i=0; i < shards; ++i)
     {
       std::size_t j =  offset * shards + i;      
-      shards_.push_back( std::make_shared< FetchChainKeeperService > (4000 + j, 9090 + j, thread_manager_ ));
+      shards_.push_back( std::make_shared< FetchChainKeeperService > (4000 + j, 9590 + j, thread_manager_ ));
     }
 
     start_event_ = thread_manager_->OnAfterStart([this, shards, offset]() {
@@ -70,7 +70,9 @@ private:
   void ConnectChainKeepers() 
   {
     std::cout << "Connecting shards" << std::endl;
-    uint32_t i = 0;    
+    uint32_t i = 0;
+    controller_.SetGroupParameter( uint32_t(shards_.size()) );
+    
     for(auto &s: shards_) {
       std::cout << " - localhost " <<  s->port() << std::endl;
       auto client = controller_.ConnectChainKeeper( "localhost", s->port() );

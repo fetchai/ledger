@@ -7,7 +7,8 @@
 #include "protocols/swarm/node_details.hpp"
 
 #include "protocols/swarm/serializers.hpp"
-#include"protocols/chain_keeper/chain_manager.hpp"
+#include "protocols/chain_keeper/chain_manager.hpp"
+#include "chain/block_generator.hpp"
 
 #include<unordered_set>
 #include<atomic>
@@ -16,26 +17,29 @@ namespace fetch
 {
 namespace protocols 
 {
-/*
-// TODO: To be moved out
+
 class ChainController 
 {
 public:
+  typedef crypto::CallableFNV hasher_type;  
   // Block defs  
   typedef fetch::chain::consensus::ProofOfWork proof_type;
   typedef fetch::chain::BlockBody block_body_type;
   typedef typename proof_type::header_type block_header_type;
   typedef fetch::chain::BasicBlock<  proof_type, fetch::crypto::SHA256 > block_type;
-
+  typedef std::shared_ptr< block_type > shared_block_type;
+  
+  typedef std::unordered_map< block_header_type, shared_block_type, hasher_type > chain_map_type;
+  
   ChainController() 
   {
+    grouping_parameter_ = 1;
+
     block_body_type genesis_body;
     block_type genesis_block;
     
     genesis_body.previous_hash = "genesis" ;
-    genesis_body.transaction_hashes.push_back("genesis");
     genesis_body.group_parameter = 1;
-    genesis_body.groups.push_back(0);
     
     genesis_block.SetBody( genesis_body );
 
@@ -44,126 +48,146 @@ public:
     PushBlock( genesis_block );    
   }
   
-  block_type ExchangeHeads(block_type head_candidate) 
-  {
-    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-
-    fetch::logger.Debug("Entering ", __FUNCTION_NAME__);
-    fetch::logger.Debug("Sending head as response to request");
-    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
-    
-    // TODO: Check which head is better
-    fetch::logger.Debug("Return!");    
-    return *chain_manager_.head();
-  }
 
   std::vector< block_type > GetLatestBlocks(  ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
+    
+    if(latest_blocks_.size() > 25) {
+      std::vector< block_type > ret;
+      std::size_t n = latest_blocks_.size() - std::min( std::size_t(25), latest_blocks_.size());
+      for(; n < latest_blocks_.size(); ++n) {
+        ret.push_back(latest_blocks_[n]);        
+      }
 
-    return chain_manager_.latest_blocks();    
+      std::swap(ret, latest_blocks_);
+
+      return ret;      
+    }
+    
+    
+
+    return latest_blocks_;
   }
   
   block_type GetNextBlock() { 
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
     block_body_type body;
-    block_type block;
+    block_type block;    
     
-    block_mutex_.lock();    
-    body.previous_hash =  chain_manager_.head()->header();
+    block_mutex_.lock();
+    
+    body.previous_hash =  head_->header();
     body.group_parameter = grouping_parameter_;
-      
-    if( !tx_manager_.has_unapplied() ) {
-      body.transaction_hashes.clear();
-    } else {
-      auto digest = tx_manager_.NextDigest() ;
-      auto const& groups = tx_manager_.Next().groups();
-      
-      for(auto const &g: groups) {
-        body.transaction_hashes.push_back(digest);
-        body.groups.push_back(g);
-      }
-    }
+
+    block_generator_.set_group_count( grouping_parameter_);
+    block_generator_.GenerateBlock(body, 1.5*grouping_parameter_);    
+    double tw = head_->total_weight();
+    
     block_mutex_.unlock();
-    
-    block.SetBody( body );   
-    block.set_total_weight( chain_manager_.head()->total_weight() );
-    block.set_block_number( chain_manager_.head()->block_number() + 1 );
-    
-    
+    block.SetBody(body);
+
+    auto &p = block.proof();
+    p.SetTarget( 1 );
+    ++p;
+    p();
+    double work = fetch::math::Log( p.digest() ); // TODO: Check formula
+    block.set_total_weight( tw + work);
+    block.set_weight(  work );    
+       
     return block;
-    
   }
   
   void PushBlock(block_type block) {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    // Only record blocks that are new
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);    
+    
+    if( chains_.find( block.header() ) != chains_.end() ) {
+      fetch::logger.Debug("Block already exists");
+      
+      return ;      
+    }
 
-    block_mutex_.lock();
-    chain_manager_.AddBlock( block );
-    block_mutex_.unlock();
+    TODO("Trim latest blocks");
+    latest_blocks_.push_back(block);
 
-//    VerifyState();
+
+    for(auto &tx: block.body().transactions) {
+      block_generator_.PushTransactionSummary(tx);
+    }
+
+    block_header_type header = block.header();
+
+    chain_map_type::iterator pit;
+
+    pit = chains_.find( block.body().previous_hash  );
+    
+    if( pit != chains_.end() ) {
+      block.set_block_number( pit->second->block_number() + 1);      
+      block.set_previous( pit->second );
+      block.set_is_loose( pit->second->is_loose() );
+    } else {
+      // First block added is always genesis and by definition not loose
+      block.set_is_loose( chains_.size() != 0 );
+    }
+
+    auto shared_block = std::make_shared< block_type>( block );
+    chains_[block.header()] = shared_block;
+
+    // TODO: Set next
+    if(block.is_loose()) {
+      fetch::logger.Debug("Found loose block");
+      TODO("Handle loose blocks!");
+      
+    } else if(! head_ ) {
+      head_ = shared_block;
+      block_generator_.SwitchBranch( head_ );      
+    } else if((block.total_weight() >= head_->total_weight())) {
+      head_ = shared_block;
+      block_generator_.SwitchBranch( head_ );            
+    }
+    
+
   }
 
   std::size_t block_count() const 
   {
     std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
-    return chain_manager_.size();        
+    return chains_.size();        
   }
 
-  bool AddBulkBlocks(std::vector< block_type > const &new_blocks ) 
+  void AddBulkBlocks(std::vector< block_type > const &new_blocks ) 
+  {
+    for(auto block: new_blocks) {
+      PushBlock( block );
+    }
+  }
+
+  void AddBulkSummaries(std::vector< chain::TransactionSummary > const &summaries ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;    
     std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);
-    return chain_manager_.AddBulkBlocks(new_blocks ) ;    
+    for(auto &s: summaries) {
+      block_generator_.PushTransactionSummary( s );
+    }
   }
+  
 
-
-  void ExchangeHeads() 
-  {
-        fetch::logger.Debug("Requesting head exchange");    
-    auto promise1 = client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::EXCHANGE_HEADS, head_copy);    
-    if(!promise1.Wait(1000) ) { //; // TODO: make configurable
-      fetch::logger.Error("Failed to get head.");
-      exit(-1);
-      
-      return;        
-    }
-    if( promise1.has_failed() ) {
-      fetch::logger.Error("Request for head failed.");
-      return;        
-    }
-    
-    if( promise1.is_connection_closed() ) {
-      fetch::logger.Error("Lost connection.");
-      return;           
-    }
-    
-    
-    block_type comp_head = promise1.As< block_type >();
-    fetch::logger.Debug("Done");
-    
-//    comp_head.meta_data() = block_meta_data_type();      
-    
-    PushBlock(comp_head);
-  }
-
-
-  void SetGroupNumber(uint32_t group, uint32_t total_groups) 
+  void SetGroupParameter(uint32_t total_groups) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
-    block_mutex_.lock();
-    chain_manager_.set_group( group );    
-    block_mutex_.unlock();
-  }
+    grouping_parameter_ = total_groups;
 
+  }
 
   void with_blocks_do( std::function< void(ChainManager::shared_block_type, ChainManager::chain_map_type const& )  > fnc ) const
   {
     block_mutex_.lock();
-    fnc( chain_manager_.head(), chain_manager_.chains() );    
+    fnc( head_, chains_ );    
     block_mutex_.unlock();
   }
 
@@ -172,74 +196,30 @@ public:
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
     block_mutex_.lock();
-    fnc( chain_manager_.head(), chain_manager_.chains() );    
+    fnc( head_, chains_ );    
     block_mutex_.unlock();
   }
 
   /*
-    Protocol::Expose(ChainKeeperRPC::PUSH_BLOCK, push_block);
-    Protocol::Expose(ChainKeeperRPC::GET_BLOCKS, get_blocks);        
-    Protocol::Expose(ChainKeeperRPC::GET_NEXT_BLOCK, get_block);
-    auto push_block = new CallableClassMember<ChainKeeperProtocol, void(block_type) >(this, &ChainKeeperProtocol::PushBlock );
-    auto get_block = new CallableClassMember<ChainKeeperProtocol, block_type() >(this, &ChainKeeperProtocol::GetNextBlock );
-    auto get_blocks = new CallableClassMember<ChainKeeperProtocol, std::vector< block_type >() >(this, &ChainKeeperProtocol::GetLatestBlocks );
 
-    auto exchange_heads = new CallableClassMember<ChainKeeperProtocol, block_type(block_type) >(this, &ChainKeeperProtocol::ExchangeHeads );
-    
-    Protocol::Expose(ChainKeeperRPC::EXCHANGE_HEADS, exchange_heads);
-
-
-    Protocol::RegisterFeed(ChainKeeperFeed::FEED_NEW_BLOCKS, this);    
-    
-    auto list_blocks = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-      LOG_STACK_TRACE_POINT;
-      std::stringstream response;
-
-      auto group_number = this->group_number();
-      
-      response << "{\"blocks\": [";  
-      this->with_blocks_do([group_number, &response](ChainManager::shared_block_type block, ChainManager::chain_map_type & chain) {
-          std::size_t i=0;
-          while( (i< 10) && ( block  ) ) {
-            if(i!=0) response << ", ";                   
-            response << "{";
-            response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
-            response << "\"block_hash\": \"" << byte_array::ToBase64( block->header() ) << "\",";
-            auto prev = block->body().previous_hash;
-
-            response << "\"previous_hash\": \"" << byte_array::ToBase64( prev  ) << "\",";
-
-            // byte_array::ToBase64( block->body().transaction_hash )
-            response << "\"transaction_hash\": \"" << "TODO list" << "\",";            
-            response << "\"block_number\": " <<  block->block_number()  << ",";
-            response << "\"total_work\": " <<  block->total_weight();            
-            response << "}";            
-            block = block->previous( );
-            ++i; 
-          }
-
-        });
-      
-      response << "]}";
-
-      fetch::logger.Highlight( response.str() );
-      
-      std::cout << response.str() << std::endl;
-            
-      return fetch::http::HTTPResponse(response.str());      
-    };
-    HTTPModule::Get("/list/blocks",  list_blocks);
-
+*/
 
   
 private:
   mutable fetch::mutex::Mutex block_mutex_;
-  ChainManager chain_manager_;
-  
-} ;
-*/
+  chain::BlockGenerator block_generator_;
 
-class SwarmController : public fetch::service::HasPublicationFeed 
+  chain_map_type chains_;
+  shared_block_type head_;
+  std::vector< block_type > latest_blocks_;  
+
+  
+
+  std::atomic< uint32_t > grouping_parameter_ ;
+} ;
+
+
+class SwarmController : public ChainController, public fetch::service::HasPublicationFeed 
 {
 public:
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
@@ -421,6 +401,19 @@ public:
     chain_keeper_mutex_.unlock();
   }
 
+
+  void SetGroupParameter(uint32_t total_groups) 
+  {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+
+    grouping_parameter_ = total_groups;
+    
+    ChainController::SetGroupParameter(total_groups) ;
+    
+  }
+
+  
+  
   uint32_t GetGroupingParameter()   
   {
     return grouping_parameter_;
@@ -642,8 +635,6 @@ public:
     fnc( chain_keepers_ );   
     chain_keeper_mutex_.unlock();    
   }
-  
-  
   
   void with_suggestions_do(std::function< void(std::vector< NodeDetails >  &) > fnc)  
   {

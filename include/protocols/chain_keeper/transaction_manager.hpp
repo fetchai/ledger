@@ -20,6 +20,7 @@ public:
   typedef crypto::CallableFNV hasher_type;
   
   // Transaction defs
+  typedef chain::TransactionSummary transaction_summary_type;  
   typedef chain::Transaction transaction_type;
   typedef std::shared_ptr< transaction_type > shared_transaction_type;
   typedef typename transaction_type::digest_type tx_digest_type;
@@ -48,10 +49,8 @@ public:
         auto const &tx = t.second;        
         ret = true;
         RegisterTransaction(tx);        
-      }
-    
+      }    
     }
-
     
     return ret;
   }
@@ -70,48 +69,6 @@ public:
     fetch::logger.Highlight("--------------- >>>>>>>>> ", tx.groups().size() );
 
     return true;    
-  }
-
-  void UpdateApplied(shared_block_type shared_block) {
-    
-    std::vector< tx_digest_type > new_applied;
-    fetch::logger.Highlight("Applying block");
-    std::cout << "Was here?" << std::endl;
-    do {
-      byte_array::ByteArray hash;
-      if(shared_block->TransactionHash(group_, hash )) {
-        // Only apply hashes that belong to the group
-        new_applied.push_back( hash  );
-      } else {
-        std::size_t i = 0;
-        for(auto &tx: shared_block->body().transaction_hashes) {
-          fetch::logger.Highlight("TX not applicable: ", byte_array::ToBase64(tx), " : ", shared_block->body().groups.size(), " ", int(group_), " ",  shared_block->body().groups[i], " ", shared_block->body().group_parameter  );
-          exit(-1);
-          ++i;
-        }
-      }
-
-      shared_block = shared_block->previous();
-    } while( shared_block );
-
-    for(auto &a : applied_) {
-      unapplied_.insert( a );
-    }
-
-    fetch::logger.Highlight("ADDING ", new_applied.size(), " Transactoins");
-    applied_.clear();
-    while( !new_applied.empty() ) {
-      auto &a = new_applied.back();
-      new_applied.pop_back();
-      applied_.push_back(a);
-      auto it = unapplied_.find(a);
-      if(it == unapplied_.end() ) {
-        fetch::logger.Debug("Transaction not known!!!!!!");
-        continue;
-      }
-      unapplied_.erase(a);
-    }
-
   }
   
   bool has_unapplied() const 
@@ -189,12 +146,18 @@ public:
     return ret;
   }
 
-  std::vector< transaction_type > LastTransactions() const
+  std::vector< transaction_type > const & LastTransactions() const
   {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
     return last_transactions_;    
   }
 
+  std::vector< transaction_summary_type > const & LatestSummaries() const
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_ );    
+    return summaries_;    
+  }
+  
   void set_group(uint32_t g) 
   {
     group_ = g;
@@ -212,6 +175,7 @@ private:
   {
     
     TODO("Check if transaction belongs to group");    
+    summaries_.push_back( tx.summary() );
     
     last_transactions_.push_back(tx);
     transactions_[ tx.digest() ] = std::make_shared< transaction_type >(tx);
@@ -225,6 +189,7 @@ private:
 
   std::atomic< uint32_t > group_ ;  
   std::vector< transaction_type > last_transactions_;
+  std::vector< transaction_summary_type > summaries_;  
   
   std::unordered_set< tx_digest_type, hasher_type > unapplied_;  
   std::unordered_set< tx_digest_type, hasher_type > known_transactions_;  

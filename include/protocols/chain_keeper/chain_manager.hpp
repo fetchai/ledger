@@ -1,3 +1,5 @@
+// TODO: This file is legacy
+
 #ifndef PROTOCOLS_CHAIN_KEEPER_CHAIN_MANAGER_HPP
 #define PROTOCOLS_CHAIN_KEEPER_CHAIN_MANAGER_HPP
 
@@ -33,10 +35,8 @@ public:
   typedef std::shared_ptr< block_type > shared_block_type;
   
   typedef std::unordered_map< block_header_type, shared_block_type, hasher_type > chain_map_type;
-  
-  
-  ChainManager(TransactionManager &tx_manager) :
-    tx_manager_(tx_manager) { group_ = 0; }
+    
+  ChainManager() { group_ = 0; }
   
   enum {
     ADD_NOTHING_TODO = 0,
@@ -74,7 +74,7 @@ public:
     pit = chains_.find( block.body().previous_hash  );
     
     if( pit != chains_.end() ) {
-      block.add_previous( group_, pit->second );
+      block.set_previous( pit->second );
       block.set_is_loose( pit->second->is_loose() );
     } else {
       // First block added is always genesis and by definition not loose
@@ -90,10 +90,8 @@ public:
 
     } else if(! head_ ) {
       head_ = shared_block;
-      tx_manager_.UpdateApplied( head_ );      
     } else if((block.total_weight() >= head_->total_weight())) {
       head_ = shared_block;
-      tx_manager_.UpdateApplied( head_ );
     }
 
     return ADD_CHAIN_END;
@@ -131,7 +129,7 @@ public:
   
   
 private:
-  TransactionManager &tx_manager_;
+
   std::atomic< uint32_t > group_ ;    
   chain_map_type chains_;
 

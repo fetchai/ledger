@@ -39,6 +39,7 @@ public:
 
   // TODO: Get from chain manager
   // Transaction defs
+  typedef fetch::chain::TransactionSummary transaction_summary_type;  
   typedef fetch::chain::Transaction transaction_type;
   typedef typename transaction_type::digest_type tx_digest_type;
 
@@ -84,7 +85,15 @@ public:
     return tx_manager_.LastTransactions();    
   }
 
+  std::vector< transaction_summary_type > GetSummaries(  ) 
+  {
+    LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    return tx_manager_.LatestSummaries();    
+  }
 
+
+
+  
   bool PushTransaction( transaction_type tx ) {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
@@ -188,7 +197,7 @@ public:
           (d.port == e.port )  ) {
           found = true;
           break;
-        }
+         }
       }
 
       chain_keeper_friends_mutex_.unlock();

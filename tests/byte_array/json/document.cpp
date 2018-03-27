@@ -31,7 +31,8 @@ int main() {
   }
 }
 )" ;
-
+    doc_content = R"({"angle1":022,"angle2":1,"name":"AEA_8080_0","searchText":"100"})";
+    
     std::cout << doc_content << std::endl;
 
     JSONDocument doc;
