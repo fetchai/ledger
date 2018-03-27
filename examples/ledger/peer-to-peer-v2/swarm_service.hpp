@@ -181,7 +181,8 @@ public:
           
           if(!p.Wait(2000)) {
             fetch::logger.Error("Peer connectivity failed! TODO: Trim connections and inform shards");
-            TODO_FAIL("Peer connectivity failed! TODO: Trim connections and inform shards");
+            TODO("Peer connectivity failed! TODO: Trim connections and inform shards");
+	    continue;
           }
           
           auto ref = p.As< NodeDetails >();
