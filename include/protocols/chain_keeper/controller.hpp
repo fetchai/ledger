@@ -82,12 +82,14 @@ public:
   std::vector< transaction_type > GetTransactions(  ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);        
     return tx_manager_.LastTransactions();    
   }
 
   std::vector< transaction_summary_type > GetSummaries(  ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+    std::lock_guard< fetch::mutex::Mutex > lock(block_mutex_);        
     return tx_manager_.LatestSummaries();    
   }
 

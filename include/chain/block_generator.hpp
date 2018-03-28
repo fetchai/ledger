@@ -53,13 +53,6 @@ public:
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     size = std::min( size, unspent_.size() );
     if(size == 0) {
-      if(all_.size() >= 999) {
-        std::cout << "ALL: " << all_.size() << std::endl;
-          
-        exit(-1);
-        
-      }
-      
        fetch::logger.Highlight("NOTHING TO MINE - NOTHING TO MINE - NOTHING TO MINE - NOTHING TO MINE - NOTHING TO MINE - NOTHING TO MINE ");
       return -1;
     }

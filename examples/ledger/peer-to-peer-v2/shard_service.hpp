@@ -46,7 +46,7 @@ public:
     
     start_event_ = thread_manager_->OnAfterStart([this]() {
         running_ = true;        
-        thread_manager_->io_service().post([this]() {
+        thread_manager_->Post([this]() {
             this->SyncTransactions(); 
           });        
       });
