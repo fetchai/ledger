@@ -3,6 +3,10 @@ Initiate
 git init submodule
 git submodule update --recursive --remote
 
+This might not install asio in ./vendor/asio/asio . If it has not, install asio:
+cd ./vendor
+git clone https://github.com/chriskohlhoff/asio
+
 Mac:
 sudo port install cmake openssl
 

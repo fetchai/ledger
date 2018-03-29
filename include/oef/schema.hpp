@@ -6,6 +6,7 @@
 #include<set>
 #include<unordered_set>
 #include<unordered_map>
+#include<iostream>
 
 // For hashing
 #include"crypto/sha256.hpp"
@@ -13,7 +14,6 @@
 #include"byte_array/encoders.hpp"
 
 // TODO: (`HUT`) : probably remove these includes with time
-#include<iostream>
 #include<experimental/optional>
 #include<mapbox/variant.hpp>
 
@@ -30,7 +30,7 @@ namespace schema
 {
 
 //helper, variant to string // TODO: (`HUT`) : make this part of variant
-std::string vtos(script::Variant var) {
+std::string vtos(const script::Variant &var) {
   std::ostringstream ret;
   ret << var;
   return ret.str();
@@ -63,6 +63,36 @@ std::string type_to_string(Type t) {
   return "";
 }
 
+// get value type
+std::string value_type_to_string(var::variant<int,float,std::string,bool> value) {
+
+  std::string type = "FAIL";
+
+  value.match(
+          [&] (int &a)         { type = "int"; },
+          [&] (float &a)       { type = "float"; },
+          [&] (std::string &a) { type = "string"; },
+          [&] (bool &a)        { type = "bool"; }
+          );
+
+  return type;
+}
+
+// get value
+std::string to_string(var::variant<int,float,std::string,bool> value) {
+
+  std::string type = "FAIL";
+
+  value.match(
+          [&] (int &a)         { type = std::to_string(a); },
+          [&] (float &a)       { type = std::to_string(a); },
+          [&] (std::string &a) { type = a; },
+          [&] (bool &a)        { type = std::to_string(a); }
+          );
+
+  return type;
+}
+
 class Attribute {
 public:
   explicit Attribute() {}
@@ -72,8 +102,8 @@ public:
   Attribute(fetch::json::JSONDocument &jsonDoc) {
     LOG_STACK_TRACE_POINT;
     name_     = std::string(jsonDoc["name"].as_byte_array());
-    type_     = string_to_type(std::string(jsonDoc["type"].as_byte_array()));
     required_ = jsonDoc["required"].as_bool();
+    type_     = string_to_type(std::string(jsonDoc["type"].as_byte_array()));
   }
 
   fetch::script::Variant variant() const {
@@ -133,34 +163,6 @@ private:
     return true;
   }
 };
-
-std::string type_to_string(var::variant<int,float,std::string,bool> value) {
-
-  std::string type = "FAIL";
-
-  value.match(
-          [&] (int &a)         { type = "int"; },
-          [&] (float &a)       { type = "float"; },
-          [&] (std::string &a) { type = "string"; },
-          [&] (bool &a)        { type = "bool"; }
-          );
-
-  return type;
-}
-
-std::string to_string(var::variant<int,float,std::string,bool> value) {
-
-  std::string type = "FAILED";
-
-  value.match(
-          [&] (int &a)         { type = std::to_string(a); },
-          [&] (float &a)       { type = std::to_string(a); },
-          [&] (std::string &a) { type = a; },
-          [&] (bool &a)        { type = std::to_string(a); }
-          );
-
-  return type;
-}
 
 class Relation {
 public:
@@ -226,7 +228,7 @@ public:
 
     result["type"]       = "relation";        // TODO: (`HUT`) : fix this
     result["op"]         = op_to_string(op_);
-    result["value_type"] = type_to_string(value_);
+    result["value_type"] = value_type_to_string(value_);
     result["value"]      = to_string(value_);
 
     return result;
@@ -247,7 +249,7 @@ public:
   using ValueType = var::variant<std::unordered_set<int>,std::unordered_set<float>, std::unordered_set<std::string>,std::unordered_set<bool>>;
   enum class Op { In, NotIn };
 
-  explicit Set(Op op, const ValueType &values) : op_{op}, values_{values} {}
+  explicit Set(Op op, const ValueType &values) : op_{op}, values_{values} { throw std::runtime_error("Attemped to use on non-existing schema functionality! (Set)"); }
 
   bool check(const VariantType &v) const {
     bool res = false;
@@ -294,7 +296,7 @@ private:
 class Range {
 public:
   using ValueType = var::variant<std::pair<int,int>,std::pair<float,float>,std::pair<std::string,std::string>>;
-  explicit Range(ValueType v) : pair_{v} {}
+  explicit Range(ValueType v) : pair_{v} { throw std::runtime_error("Attemped to use on non-existing schema functionality! (Range)"); }
   // enable_if is necessary to prevent both constructor to conflict.
   //
   bool check(const VariantType &v) const {
@@ -372,8 +374,7 @@ public:
   std::vector<std::pair<std::string,std::string>> instantiate(const std::unordered_map<std::string,std::string> &values) const
   {
     std::vector<std::pair<std::string,std::string>> res;
-    for(auto &a : attributes_)
-    {
+    for(auto &a : attributes_) {
       res.emplace_back(a.instantiate(values));
     }
     return res;
@@ -579,7 +580,6 @@ public:
     auto attr = model.attribute(attribute_.name());
     if(attr) {
       if(attr->type() != attribute_.type()) { // TODO: (`HUT`) : fix this by removin std::opt
-        std::cout << "HERE" << std::endl;
         return false;
       }
     }
@@ -588,7 +588,6 @@ public:
       if(attribute_.required()) {
         std::cerr << "Should not happen!\n"; // Exception ?
       }
-      std::cout << "HERE2" << std::endl;
       return false;
     }
     VariantType value{string_to_value(attribute_.type(), *v)};
@@ -608,7 +607,7 @@ private:
 class Or {
   std::vector<ConstraintType> expr_;
 public:
-  explicit Or(const std::vector<ConstraintType> expr) : expr_{expr} {}
+  explicit Or(const std::vector<ConstraintType> expr) : expr_{expr} {throw std::runtime_error("Attemped to use on non-existing schema functionality! (Or)");}
   explicit Or() {}; // to make happy variant.
 
   bool check(const VariantType &v) const {
@@ -624,7 +623,7 @@ class And {
 private:
   std::vector<ConstraintType> expr_;
 public:
-  explicit And(const std::vector<ConstraintType> expr) : expr_{expr} {}
+  explicit And(const std::vector<ConstraintType> expr) : expr_{expr} {throw std::runtime_error("Attemped to use on non-existing schema functionality! (And)");}
 
   bool check(const VariantType &v) const {
     for(auto &c : expr_) {
@@ -643,27 +642,21 @@ public:
 
   explicit QueryModel() : model_{stde::nullopt} {}
 
-  explicit QueryModel(const std::vector<Constraint> &constraints, stde::optional<DataModel> model = stde::nullopt)
-    : constraints_{constraints}, model_{model},
+  explicit QueryModel(const std::vector<Constraint> &constraints, stde::optional<DataModel> model = stde::nullopt) :
+    constraints_{constraints}, model_{model},
     timestamp_{static_cast<uint64_t>(time(NULL))}
-  {
-      std::cout << "HASH2" << std::endl;
-    //hash_{byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()))} // important we only hash after constructed
-  }
+  { }
 
   QueryModel(fetch::json::JSONDocument &jsonDoc) {
     LOG_STACK_TRACE_POINT;
 
-    std::cout << "querymodel constraints get" << std::endl;
     for(auto &a: jsonDoc["constraints"].as_array()) {
-      std::cout << "querymodel constraints get" << std::endl;
 
       fetch::json::JSONDocument doc; // TODO: (`HUT`) : create a fix for this
       doc.root() = a;
 
       Constraint constraint(doc);
       constraints_.push_back(constraint);
-      std::cout << "querymodel constraints got" << std::endl;
     }
 
     if(!jsonDoc["keywords"].is_undefined()) {
@@ -671,9 +664,6 @@ public:
         keywords_.push_back(a.as_byte_array());
       }
     }
-
-    std::cout << "querymodel constraints argh" << std::endl;
-    //hash_ = byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array())); // important we only hash after constructed
   }
 
   // TODO: (`HUT`) : add keywords to variant
@@ -717,7 +707,6 @@ public:
   bool operator==(const QueryModel &rhs) const {
     return (vtos(this->variant())).compare(vtos(rhs.variant())) == 0 && // TODO: (`HUT`) : variant to string comparison is dangerous, change this
            this->getHash().compare(rhs.getHash()) == 0 &&
-           //std::sort(keywords_) == std::sort(rhs.keywords());
            1 == 1; // TODO: (`HUT`) : keyword sort and compare
   }
 
@@ -728,17 +717,15 @@ public:
   const uint64_t                 &timestamp() const   { return timestamp_; }
   uint64_t                       &timestamp()         { return timestamp_; }
 
-  const std::string                 &lat() const   { return lat_; }
-  std::string                       &lat()         { return lat_; }
-
-  const std::string                 &lng() const   { return lng_; }
-  std::string                       &lng()         { return lng_; }
-
-  const float                 &angle1() const   { return angle1_; }
-  float                       &angle1()         { return angle1_; }
-
-  const float                 &angle2() const   { return angle2_; }
-  float                       &angle2()         { return angle2_; }
+  // Directional search demo - remove
+  const std::string &lat() const    { return lat_; }
+  std::string       &lat()          { return lat_; }
+  const std::string &lng() const    { return lng_; }
+  std::string       &lng()          { return lng_; }
+  const float       &angle1() const { return angle1_; }
+  float             &angle1()       { return angle1_; }
+  const float       &angle2() const { return angle2_; }
+  float             &angle2()       { return angle2_; }
 
   std::string getHash() const {
     std::ostringstream ret;
@@ -749,16 +736,14 @@ public:
 private:
   std::vector<Constraint>   constraints_;
   std::vector<std::string>  keywords_;
-  stde::optional<DataModel> model_; // TODO: (`HUT`) : this is not serialized yet, nor JSON-ed
-  uint64_t                  timestamp_ = static_cast<uint64_t>(time(NULL));// * byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) );
-  std::string               hash_; //= static_cast<uint64_t>(time(NULL)) * byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) );
+  stde::optional<DataModel> model_;
+  uint64_t                  timestamp_ = static_cast<uint64_t>(time(NULL));
+  std::string               hash_;
 
-  //Instance                  instance_; // TODO: (`HUT`) : think about this
-  std::string                 lat_;
-  std::string                 lng_;
-
-  float angle1_ = 0;
-  float angle2_ = 0;
+  std::string lat_;
+  std::string lng_;
+  float       angle1_ = 0;
+  float       angle2_ = 0;
 
 };
 
@@ -767,13 +752,10 @@ class QueryModelMulti {
 public:
   explicit QueryModelMulti() {}
 
-  explicit QueryModelMulti(const QueryModel &aeaQuery, const QueryModel &forwardingQuery, uint16_t jumps=20)
-    : aeaQuery_{aeaQuery}, forwardingQuery_{forwardingQuery}, jumps_{jumps},
+  explicit QueryModelMulti(const QueryModel &aeaQuery, const QueryModel &forwardingQuery, uint16_t jumps=20) :
+    aeaQuery_{aeaQuery}, forwardingQuery_{forwardingQuery}, jumps_{jumps},
     timestamp_{static_cast<uint64_t>(time(NULL))}
-    {
-      std::cout << "HASH1" << std::endl;
-      //hash_{byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()))} // important we only hash after constructed
-    }
+    {}
 
   QueryModelMulti& operator--(int) {
     if(jumps_ > 0) {
@@ -808,8 +790,6 @@ public:
   QueryModel        &forwardingQuery()       { return forwardingQuery_; }
   const uint32_t    &jumps() const           { return jumps_; }
   uint32_t          &jumps()                 { return jumps_; }
-  //const std::string &hash() const            { return hash_; }
-  //std::string       &hash()                  { return hash_; }
   const uint64_t    &timestamp() const       { return timestamp_; }
   uint64_t          &timestamp()             { return timestamp_; }
 
@@ -820,12 +800,11 @@ public:
   }
 
 private:
-  //uint32_t   &jumps()                       { return jumps_; }
   uint32_t    jumps_;
   QueryModel  aeaQuery_;
   QueryModel  forwardingQuery_;
-  uint64_t    timestamp_ = static_cast<uint64_t>(time(NULL));// * byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) );
-  std::string hash_;                                         //= static_cast<uint64_t>(time(NULL)) * byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) );
+  uint64_t    timestamp_ = static_cast<uint64_t>(time(NULL));
+  std::string hash_;
 };
 
 // Temporarily place convenience fns here
@@ -882,9 +861,6 @@ public:
     } else {
       TCPPort_ = 0;
     }
-
-    std::cout << "port is " << jsonDoc["TCPPort"].as_int() << std::endl;
-    std::cout << "port is " << TCPPort_ << std::endl;
   }
 
   bool operator< (const Endpoint &rhs) const {

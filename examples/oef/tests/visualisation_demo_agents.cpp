@@ -12,7 +12,8 @@ using namespace fetch::service;
 using namespace fetch::byte_array;
 using namespace fetch::random;
 
-// Example of OEF code performing basic register-query functionality
+// Example of OEF code performing basic register-query functionality (needs updating - lat longs are out of date)
+// Note: Three OEF nodes must be running on localhost, ports 9080, 9081, 9082
 
 int main() {
 
