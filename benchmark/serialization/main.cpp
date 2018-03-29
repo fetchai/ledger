@@ -41,13 +41,40 @@ void MakeStringVector(std::vector< T >  &vec, std::size_t size) {
 }
 
 
+std::size_t PopulateData(std::vector< uint32_t > &s ) {
+  s.resize( 16 * 100000 );
+  
+  for(std::size_t i=0; i < s.size(); ++i) {
+    s[i] = lfg();
+  }
+  
+  return sizeof( uint32_t ) * s.size();
+}
+
+
+std::size_t PopulateData(std::vector< uint64_t > &s ) {
+  s.resize( 16 * 100000 );
+  
+  for(std::size_t i=0; i < s.size(); ++i) {
+    s[i] = lfg();
+  }
+  
+  return sizeof( uint64_t ) * s.size();
+}
+
+std::size_t PopulateData(std::vector< ConstByteArray > &s ) {
+  MakeStringVector(s, 100000);
+  return s[0].size() * s.size();
+}
+
+
 std::size_t PopulateData(std::vector< ByteArray > &s ) {
-  MakeStringVector(s, 1000000);
+  MakeStringVector(s, 100000);
   return s[0].size() * s.size();
 }
 
 std::size_t PopulateData(std::vector< std::string > &s ) {
-  MakeStringVector(s, 1000000);
+  MakeStringVector(s, 100000);
   return s[0].size() * s.size();
 }
 
@@ -59,16 +86,16 @@ struct Result {
   double size;
 };
 
-template< typename T, typename ... Args >
+template< typename S,  typename T, typename ... Args >
 Result BenchmarkSingle( Args ... args  ) {
   Result ret;
   T data;
   std::size_t size = PopulateData( data, args... );
 
-  ByteArrayBuffer buffer;
+  S buffer;
   
   high_resolution_clock::time_point t1 = high_resolution_clock::now();    
-  SizeCounter< ByteArrayBuffer > counter;
+  SizeCounter< S > counter;
   counter << data;  
   buffer.Reserve( counter.size() );    
   buffer << data;
@@ -91,8 +118,8 @@ Result BenchmarkSingle( Args ... args  ) {
 }
 
 
-#define SINGLE_BENCHMARK(type) \
-  result = BenchmarkSingle< std::vector< ByteArray > >(); \
+#define SINGLE_BENCHMARK(serializer, type)       \
+  result = BenchmarkSingle< serializer, type >();       \
   std::cout << std::setw(type_width) << #type;\
   std::cout << std::setw(width) << result.size ;  \
   std::cout << std::setw(width) << result.serialization_time ;\
@@ -113,17 +140,30 @@ int main()
   std::cout << std::setw(width) << "Des. MBs" << std::endl;
 
   Result result;
-  SINGLE_BENCHMARK( std::vector< ByteArray > );  
-  SINGLE_BENCHMARK( std::vector< ConstByteArray > );    
+
+  SINGLE_BENCHMARK( ByteArrayBuffer, std::vector< uint32_t > );      
+  SINGLE_BENCHMARK( ByteArrayBuffer, std::vector< uint64_t > );    
+  SINGLE_BENCHMARK( ByteArrayBuffer, std::vector< ByteArray > );  
+  SINGLE_BENCHMARK( ByteArrayBuffer, std::vector< ConstByteArray > );
+  SINGLE_BENCHMARK( ByteArrayBuffer, std::vector< std::string > );      
 
 
-  auto bs2 = BenchmarkSingle< std::vector< std::string > >();
-  std::cout << std::setw(type_width) << "std::vector< string >";
-  std::cout << std::setw(width) << bs2.size ;    
-  std::cout << std::setw(width) << bs2.serialization_time ;
-  std::cout << std::setw(width) << bs2.deserialization_time ;
-  std::cout << std::setw(width) << bs2.serialization ;
-  std::cout << std::setw(width) << bs2.deserialization << std::endl;  
+  std::cout << std::endl;
+  
+  std::cout << std::setw(type_width) << "Type";
+  std::cout << std::setw(width) << "MBs";  
+  std::cout << std::setw(width) << "Ser. time";
+  std::cout << std::setw(width) << "Des. time" ;
+  std::cout << std::setw(width) << "Ser. MBs" ;
+  std::cout << std::setw(width) << "Des. MBs" << std::endl;
+
+  SINGLE_BENCHMARK( TypedByte_ArrayBuffer, std::vector< uint32_t > );   
+  SINGLE_BENCHMARK( TypedByte_ArrayBuffer, std::vector< uint64_t > );    
+  SINGLE_BENCHMARK( TypedByte_ArrayBuffer, std::vector< ByteArray > );  
+  SINGLE_BENCHMARK( TypedByte_ArrayBuffer, std::vector< ConstByteArray > );
+  SINGLE_BENCHMARK( TypedByte_ArrayBuffer, std::vector< std::string > );      
+  
+
   /*
   std::vector< ByteArray > a,b,c;
   MakeStringVector(a, 100000);

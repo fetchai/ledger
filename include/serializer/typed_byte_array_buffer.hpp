@@ -47,18 +47,18 @@ class TypedByte_ArrayBuffer {
   
   template <typename T>
   TypedByte_ArrayBuffer &operator<<(T const &val) {
-    Serialize(*this, TypeRegister<T>::name);
+    Serialize(*this, TypeRegister<void>::value_type( TypeRegister<T>::value ) );
     Serialize(*this, val);
     return *this;
   }
 
   template <typename T>
   TypedByte_ArrayBuffer &operator>>(T &val) {
-    byte_array_type type;
+    TypeRegister<void>::value_type type;
     Deserialize(*this, type);
-    if (TypeRegister<T>::name != type) {
+    if (TypeRegister<T>::value != type) {
       throw SerializableException(error::TYPE_ERROR,
-                                  byte_array_type("Type ") + type +
+                                  byte_array_type("Type ") + TypeRegister<T>::name +
                                       byte_array_type(" differs from ") +
                                       TypeRegister<T>::name);
     }
