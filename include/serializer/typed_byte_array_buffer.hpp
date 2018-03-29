@@ -7,7 +7,7 @@
 #include "serializer/exception.hpp"
 #include "serializer/type_register.hpp"
 #include "byte_array/encoders.hpp"
-
+#include "logger.hpp"
 #include <type_traits>
 
 namespace fetch {
@@ -36,6 +36,12 @@ class TypedByte_ArrayBuffer {
     for (std::size_t i = 0; i < size; ++i) arr[i] = data_[pos_++];
   }
 
+  void ReadByteArray(byte_array::BasicByteArray &b, std::size_t const &size) {
+    b = data_.SubArray(pos_, size);
+    pos_ += size;
+  }
+
+  
   void SkipBytes(std::size_t const &size) { pos_ += size; }
 
   

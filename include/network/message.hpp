@@ -5,7 +5,7 @@
 #include "byte_array/const_byte_array.hpp"
 namespace fetch {
 namespace network {
-typedef byte_array::ConstByteArray message_type;
+typedef byte_array::ByteArray message_type;
 typedef std::deque<message_type> message_queue_type;
 };
 };

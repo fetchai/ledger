@@ -19,7 +19,6 @@ add_executable(rpc_server rpc/server.cpp)
 
 add_executable(calculator script/calculator.cpp)
 
-add_executable(serialize_benchmark serialization/serialize_benchmark.cpp)
 
 add_executable(sha256 crypto/sha256.cpp)
 

@@ -23,13 +23,16 @@ void Serialize(T &serializer, byte_array::BasicByteArray const &s) {
 template <typename T>
 void Deserialize(T &serializer, byte_array::BasicByteArray &s) {
   uint64_t size = 0;
-  
+  if(!(sizeof(uint64_t) <= serializer.bytes_left())){
+    std::cout << serializer.bytes_left() << " " << serializer.data().size() << std::endl;
+  }
   detailed_assert( sizeof(uint64_t) <= serializer.bytes_left());  
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
   detailed_assert( size <= serializer.bytes_left());  
-  
-  s.Resize(size);
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(s.pointer()), s.size());
+
+  serializer.ReadByteArray(s, size);
+  //  s.Resize(size);
+  //  serializer.ReadBytes(reinterpret_cast<uint8_t *>(s.pointer()), s.size());
 }
 
 

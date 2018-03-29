@@ -73,10 +73,12 @@ private:
   void ReadHeader() 
   {
     LOG_STACK_TRACE_POINT;
+
     fetch::logger.Debug("Server: Waiting for next header.");  
     auto self(shared_from_this());
-    auto cb = [this, self](std::error_code ec, std::size_t) 
+    auto cb = [this, self](std::error_code ec, std::size_t len) 
       {
+
         if (!ec) 
         {
           fetch::logger.Debug("Server: Read header.");
@@ -94,20 +96,23 @@ private:
   void ReadBody() 
   {
     LOG_STACK_TRACE_POINT;
+
     byte_array::ByteArray message;
 //    std::cout << std::hex << header_.magic << std::dec << std::endl;
 //    std::cout << header_.length << std::endl;
 
     if( header_.magic != 0xFE7C80A1FE7C80A1) {
       fetch::logger.Debug("Magic incorrect - closing connection.");
+
       manager_.Leave(handle_);
       return;
     }
     
     message.Resize(header_.length);
     auto self(shared_from_this());
-    auto cb = [this, self, message](std::error_code ec, std::size_t) 
+    auto cb = [this, self, message](std::error_code ec, std::size_t len) 
       {
+
         if (!ec) 
         {
           fetch::logger.Debug("Server: Read body.");
@@ -126,10 +131,13 @@ private:
   void Write() 
   {
     LOG_STACK_TRACE_POINT;
-    serializers::ByteArrayBuffer buffer;
+
     write_mutex_.lock();
-    buffer << 0xFE7C80A1FE7C80A1;
-    buffer << write_queue_.front();
+    auto buffer = write_queue_.front();
+    write_queue_.pop_front();    
+    header_write_.magic = 0xFE7C80A1FE7C80A1;
+    header_write_.length = buffer.size();
+
     write_mutex_.unlock();
 
     auto self = shared_from_this(); 
@@ -139,7 +147,6 @@ private:
         {
           fetch::logger.Debug("Server: Wrote message.");
           write_mutex_.lock();
-          write_queue_.pop_front();
           bool write_more = !write_queue_.empty();
           write_mutex_.unlock();  
           if (write_more) 
@@ -153,9 +160,15 @@ private:
         }
       };
 
-    asio::async_write(
-      socket_, asio::buffer(buffer.data().pointer(), buffer.data().size()),
-      cb);
+
+    std::vector< asio::const_buffer > buffers;
+    buffers.push_back(asio::buffer(header_write_.bytes, 2*sizeof(uint64_t)) );
+    buffers.push_back(asio::buffer(buffer.pointer(), buffer.size()) );
+
+    asio::async_write(socket_, buffers, cb);
+
+
+
   }
 
 
@@ -173,7 +186,7 @@ private:
       uint64_t magic;      
       uint64_t length;
     };
-  } header_;
+  } header_write_, header_;
 };
 };
 };

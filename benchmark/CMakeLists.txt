@@ -1,0 +1,1 @@
+add_executable(benchmark_serialization serialization/main.cpp)

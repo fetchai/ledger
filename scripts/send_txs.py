@@ -8,7 +8,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 def submit(n):
     N = 20
     j = random.randint(0,1)
-    lanes = 2
+    lanes = 1
     print "Sending to ", 'http://localhost:%d/group/submit-transaction' % (9590 + j)
 
     a = "0x0000"

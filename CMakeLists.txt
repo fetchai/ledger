@@ -3,6 +3,7 @@ project (fetch)
 
 OPTION(BUILD_TESTS "Build tests" ON)
 OPTION(BUILD_EXAMPLES "Build examples" ON)
+OPTION(BUILD_BENCHMARK "Build benchmark" ON)
 OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
@@ -33,8 +34,8 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -g -Wall  -Werror -Wno-unused-function ")
 
-#set(CMAKE_BUILD_TYPE RELEASE)
-set(CMAKE_BUILD_TYPE DEBUG)
+set(CMAKE_BUILD_TYPE RELEASE)
+#set(CMAKE_BUILD_TYPE DEBUG)
 
 
 ## #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -DNDEBUG -g -Wall  -Werror -Wno-unused-function")
@@ -49,6 +50,12 @@ include_directories(${PNG_INCLUDE_DIR})
 if(BUILD_TESTS)
   add_subdirectory( tests )
 endif()
+
+# BENCHMARK
+if(BUILD_EXAMPLES)
+  add_subdirectory( benchmark )
+endif()
+
 
 # EXAMPLES
 if(BUILD_EXAMPLES)

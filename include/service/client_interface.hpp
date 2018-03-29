@@ -148,7 +148,7 @@ protected:
       promises_mutex_.unlock();
         
       auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
-      it->second->Fulfill(ret.Copy());
+      it->second->Fulfill(ret);
 
       promises_mutex_.lock();
       promises_.erase(it);

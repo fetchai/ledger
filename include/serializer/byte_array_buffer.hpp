@@ -2,7 +2,7 @@
 #define SERIALIZER_BYTE_ARRAY_BUFFER_HPP
 #include "byte_array/referenced_byte_array.hpp"
 #include "assert.hpp"
-
+#include "logger.hpp"
 #include <type_traits>
 
 namespace fetch {
@@ -29,6 +29,11 @@ class ByteArrayBuffer {
     for (std::size_t i = 0; i < size; ++i) arr[i] = data_[pos_++];
   }
 
+  void ReadByteArray(byte_array::BasicByteArray &b, std::size_t const &size) {
+    b = data_.SubArray(pos_, size);
+    pos_ += size;
+  }
+  
   void SkipBytes(std::size_t const &size) { pos_ += size; }
 
   template <typename T>

@@ -172,7 +172,6 @@ private:
 
   void ReadBody() 
   {
-    LOG_STACK_TRACE_POINT;    
     byte_array::ByteArray message;
     if( header_.magic != 0xFE7C80A1FE7C80A1) {
       fetch::logger.Debug("Magic incorrect - closing connection.");
@@ -183,9 +182,9 @@ private:
     
     message.Resize(header_.length);
 
-    auto cb = [=](std::error_code ec, std::size_t) 
+    auto cb = [=](std::error_code ec, std::size_t len) 
       {
-        LOG_LAMBDA_STACK_TRACE_POINT;
+
         if (!ec) 
         {
           PushMessage(message);

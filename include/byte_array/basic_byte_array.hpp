@@ -2,7 +2,7 @@
 #define BYTE_ARRAY_BASIC_BYTE_ARRAY_HPP
 #include "logger.hpp" 
 #include "memory/shared_array.hpp"
-
+#include "logger.hpp"
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -226,6 +226,7 @@ protected:
 
 
   void Reserve(std::size_t const &n) {
+
     shared_array_type newdata(n);
     
     std::size_t M = std::min(n, data_.size());

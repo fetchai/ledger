@@ -118,6 +118,7 @@ public:
       std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
       double ms =  std::chrono::duration_cast<std::chrono::milliseconds>(end - created_).count();
       if( (ms > timeout) && (!is_fulfilled()) ) {
+
         fetch::logger.Warn("Connection timed out! ", ms, " vs. ", timeout);
         return false;  
       }           
@@ -125,6 +126,7 @@ public:
 
     if (is_connection_closed()) 
     {
+
       return false;      
     }
     
@@ -139,7 +141,10 @@ public:
   T As() 
   {
     LOG_STACK_TRACE_POINT;    
-    Wait();
+    if(!Wait()) {
+      TODO_FAIL("Timeout or connection lost");
+    }
+
     serializer_type ser(reference_->value());
     T ret;
     ser >> ret;
@@ -151,9 +156,13 @@ public:
   void As(T &ret) 
   {
     LOG_STACK_TRACE_POINT;    
-    Wait();
+    if(!Wait()) {
+      TODO_FAIL("Timeout or connection lost");
+    }
+
     serializer_type ser(reference_->value());
     ser >> ret;
+
   }
   
   
