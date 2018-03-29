@@ -19,10 +19,10 @@ public:
     this->Expose(AEAToNodeRPC::REGISTER_INSTANCE,        new service::CallableClassMember<oef::NodeOEF, std::string(std::string agentName, schema::Instance)>(node.get(), &oef::NodeOEF::RegisterInstance) );
     this->Expose(AEAToNodeRPC::QUERY,                    new service::CallableClassMember<oef::NodeOEF, std::vector<std::string>(std::string agentName, schema::QueryModel query)>  (node.get(), &oef::NodeOEF::Query) );
     this->Expose(AEAToNodeRPC::QUERY_MULTI,              new service::CallableClassMember<oef::NodeOEF, std::vector<std::string>(std::string agentName, schema::QueryModelMulti queryMulti)>  (node.get(), &oef::NodeOEF::AEAQueryMulti) );
-    this->Expose(AEAToNodeRPC::BUY,                      new service::CallableClassMember<oef::NodeOEF, std::string(std::string id)>  (node.get(), &oef::NodeOEF::BuyFromAEA) );
+    this->Expose(AEAToNodeRPC::BUY,                      new service::CallableClassMember<oef::NodeOEF, std::string(std::string buyer, std::string buyee)> (node.get(), &oef::NodeOEF::BuyFromAEA));
 
     this->Expose(AEAToNodeRPC::REGISTER_FOR_CALLBACKS,   new service::CallableClassMember<oef::NodeOEF, void(uint64_t, std::string id, schema::Instance instance)>(service::Callable::CLIENT_ID_ARG, node.get(), &oef::NodeOEF::RegisterCallback) );
-    this->Expose(AEAToNodeRPC::DEREGISTER_FOR_CALLBACKS, new service::CallableClassMember<oef::NodeOEF, void(uint64_t, std::string id)>(service::Callable::CLIENT_ID_ARG, node.get(), &oef::NodeOEF::DeregisterCallback) ); // TODO: (`HUT`) : ask troels if this is going to get the same id number
+    this->Expose(AEAToNodeRPC::DEREGISTER_FOR_CALLBACKS, new service::CallableClassMember<oef::NodeOEF, void(uint64_t, std::string id)>(service::Callable::CLIENT_ID_ARG, node.get(), &oef::NodeOEF::DeregisterCallback) );
   }
 };
 

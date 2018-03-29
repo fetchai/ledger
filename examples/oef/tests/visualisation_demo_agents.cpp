@@ -20,7 +20,7 @@ int main() {
   LaggedFibonacciGenerator<> lfg(1);
   std::vector<TestAEA *> testAEAs;
 
-  // Register agents on three nodes (randomly chosen attributes)
+  // Register agents on X nodes (randomly chosen attributes)
   testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9080)});
   testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9081)});
   testAEAs.push_back(new TestAEA{uint32_t(rand()), uint16_t(9082)});
@@ -179,7 +179,10 @@ int main() {
       std::cout << i << std::endl;
     }
   }
-  std::cout << "Finished" << std::endl;
 
-  while(1) {}
+  std::cout << "Finished, exit" << std::endl;
+
+  for(auto i : testAEAs) {
+    delete i;
+  }
 }

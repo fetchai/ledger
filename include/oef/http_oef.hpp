@@ -142,7 +142,6 @@ public:
     HTTPModule::Post("/set-node-latlong", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->SetNodeLatLong(params, req);
       });
-
   }
 
   // Check that a user exists in our ledger
@@ -259,7 +258,6 @@ public:
 
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-      //std::string id = doc["instance"][.as_byte_array();
       schema::Instance instance(doc["instance"]);
       std::string id = instance.values()["name"];
 
@@ -296,18 +294,13 @@ public:
       doc = req.JSON();
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-      std::cout << "hot here1" << std::endl;
       schema::QueryModel query(doc);
-      std::cout << "hot here2" << std::endl;
 
       auto agents = oef_->Query("HTTP_interface", query);
-      std::cout << "hot here3" << std::endl;
 
       script::Variant response       = script::Variant::Object();
       response["response"]           = script::Variant::Object();
       response["response"]["agents"] = script::Variant::Array(agents.size());
-
-      std::cout << "hot hereaaa" << std::endl;
 
       for (int i = 0; i < agents.size(); ++i) {
         response["response"]["agents"][i] = script::Variant(agents[i]);
@@ -343,8 +336,6 @@ public:
       script::Variant response       = script::Variant::Object();
       response["response"]           = script::Variant::Object();
       response["response"]["agents"] = script::Variant::Array(agents.size());
-
-      std::cout << "hot here4" << std::endl;
 
       for (int i = 0; i < agents.size(); ++i) {
         response["response"]["agents"][i] = script::Variant(agents[i]);
@@ -433,40 +424,18 @@ public:
     json::JSONDocument doc;
     try {
       doc = req.JSON();
-      std::cout << "correctly parsed ui query JSON: " << req.body() << std::endl;
-      // {"angle1":0,"angle2":0,"name":"AEA_8080_0","searchText":"100"}
-
-      /*
-      //////////
-      // debug
-      std::ostringstream ret;
-      ret << req.body();
-      std::string debug(ret.str());
-      std::cout << "debug: " << debug << std::endl;
-      ////////// 
-      */
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
       float angle1 = doc["angle1"].as_double();
-      std::cout << "angle1 is " << angle1 << std::endl;
-
       float angle2 = doc["angle2"].as_double();
-      std::cout << "angle2 is " << angle2 << std::endl;
 
       std::string name = doc["name"].as_byte_array();
-      std::cout << "name is " << name << std::endl;
 
       std::string searchText = doc["searchtext"].as_byte_array();
-      std::cout << "search text is " << searchText << std::endl;
 
       std::istringstream buffer(searchText);
       int priceSearch;
       buffer >> priceSearch;
-
-      std::cout << "search text as price is " << priceSearch << std::endl;
-
-      //schema::QueryModel query(doc);
-      //std::ostringstream ret;
-      //ret << query.variant();
 
       schema::Attribute price   { "price",        schema::Type::Int, true}; // guarantee all DMs have this
       schema::ConstraintType customConstraint{schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Lt, priceSearch}}};
@@ -511,7 +480,6 @@ public:
       ret << endpoint.variant();
       std::cout << ret.str() << std::endl;
 
-      //return http::HTTPResponse(ret.str());
       return http::HTTPResponse("{\"response\": \"success\" }");
     } catch (...) {
       return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
@@ -597,7 +565,7 @@ public:
       doc = req.JSON();
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-      auto result = oef_->BuyFromAEA(doc["ID"].as_byte_array());
+      auto result = oef_->BuyFromAEA("http_interface", doc["ID"].as_byte_array());
 
       std::ostringstream ret;
       ret << result;
@@ -660,9 +628,6 @@ public:
       // TODO: (`HUT`) : revert this hack once json doc parser fixed
       float maxNumber = doc["max_number"].is_undefined() ? defaultNumber : doc["max_number"].as_double(); // default 10 events
 
-      //int maxNumberInt = int(maxNumber);
-      //int maxNumberInt = int(defaultNumber); // TODO: (`HUT`) : fix
-      //
       std::cout << "debugging " << maxNumber << " events" << std::endl;
       auto result = oef_->DebugAllEvents(maxNumber);
 
@@ -690,7 +655,6 @@ public:
       std::ostringstream ret;
       ret << req.body();
       std::string debug(ret.str());
-      std::cout << "debug: " << debug << std::endl;
 
       // TODO: (`HUT`) : this doesn't actually save you when submitting '{}'
       if(doc["latitude"].is_undefined() || doc["longitude"].is_undefined()) {
@@ -700,9 +664,6 @@ public:
       float latitude  =  doc["latitude"].as_double();
       float longitude =  doc["longitude"].as_double();
 
-      std::cout << "found latlong " << latitude << std::endl;
-      std::cout << "found latlong " << longitude << std::endl;
-
       // reconfigure this node to have this latlong
       schema::Instance instance = oef_->getInstance();
 
@@ -711,10 +672,6 @@ public:
 
       // TODO: (`HUT`) : refactor this.
       for(auto &i : values) {
-        std::cout << "print latlongs" << std::endl;
-        std::cout << i.first << std::endl;
-        std::cout << i.second << std::endl;
-
         if(i.first.compare("latitude") == 0) {
 
           replicatedValues["latitude"] = std::to_string(latitude);
@@ -727,23 +684,9 @@ public:
         replicatedValues[i.first] = i.second;
       }
 
-      for(auto &i : replicatedValues) {
-        std::cout << "print latlongs" << std::endl;
-        std::cout << i.first << std::endl;
-        std::cout << i.second << std::endl;
-      }
-
       schema::Instance instNew{instance.model(), replicatedValues};
 
       oef_->setInstance(instNew);
-
-
-      ////int maxNumberInt = int(maxNumber);
-      //int maxNumberInt = int(defaultNumber); // TODO: (`HUT`) : fix
-      //auto result = oef_->DebugAllEvents(maxNumber);
-
-      //std::ostringstream ret;
-      //ret << result;
 
       return http::HTTPResponse("{\"response\": \"success\"}");
     } catch (...) {

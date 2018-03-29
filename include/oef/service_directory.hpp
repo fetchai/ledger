@@ -8,12 +8,14 @@
 #include<unordered_set>
 #include"oef/schema.hpp"
 
+// ServiceDirectory holds a list of *instances* and the agents associated with those instances.
+// The assumption is therefore that the number of instances is equal to or less than agents
+
 namespace fetch
 {
 namespace oef
 {
 
-// ServiceDirectory holds a list of *instances* and the agents associated with those instances. The assumption is therefore that the number of instances is equal to or less than agents
 class ServiceDirectory {
 public:
   explicit ServiceDirectory() = default;

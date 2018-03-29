@@ -1,5 +1,3 @@
-// This file holds and manages connections to other nodes
-
 #ifndef NODE_MESSAGE_HISTORY_HPP
 #define NODE_MESSAGE_HISTORY_HPP
 
@@ -7,12 +5,14 @@
 #include<list>
 #include<algorithm>
 
+// Keep track of unique events we have seen
+
 namespace fetch
 {
 namespace oef
 {
 
-// TODO: (`HUT`) : delete this
+// TODO: (`HUT`) : delete this - this is because we want to include a stringified variant in our message
 void find_and_replace(std::string& source, std::string const& find, std::string const& replace)
 {
   for(std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
@@ -42,6 +42,16 @@ public:
       find_and_replace(details_,     find, repl);
     }
 
+  fetch::script::Variant variant() const {
+    fetch::script::Variant result = fetch::script::Variant::Object();
+    result["source"]              = source_;
+    result["destination"]         = destination_;
+    result["details"]             = details_;
+    result["id"]                  = id_;
+    result["wasOrigin"]           = wasOrigin_;
+    return result;
+  }
+
   const std::string &source() const      { return source_; }
   std::string       &source()            { return source_; }
   const std::string &destination() const { return destination_; }
@@ -50,25 +60,15 @@ public:
   std::string       &details()           { return details_; }
   const std::string &id() const          { return id_; }
   std::string       &id()                { return id_; }
-  const bool &wasOrigin() const          { return wasOrigin_; }
-  bool       &wasOrigin()                { return wasOrigin_; }
-
-  fetch::script::Variant variant() const {
-    fetch::script::Variant result = fetch::script::Variant::Object();
-    result["source"]              = source_;
-    result["destination"]         = destination_;
-    result["details"]             = details_;
-    result["id"]                  = id_;
-    result["wasOrigin"]                  = wasOrigin_;
-    return result;
-  }
+  const bool        &wasOrigin() const   { return wasOrigin_; }
+  bool              &wasOrigin()         { return wasOrigin_; }
 
 private:
   std::string source_;
   std::string destination_;
   std::string details_;
   std::string id_;
-  bool  wasOrigin_;
+  bool        wasOrigin_;
 };
 
 class Events {
@@ -120,7 +120,7 @@ public:
     }
 
     // Enforce size limit on history
-    if(100 == history_.size()) {
+    if(1000 <= history_.size()) {
       history_.pop_front();
     }
 

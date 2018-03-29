@@ -105,18 +105,24 @@ private:
     int bananas = (randomSeed_ % 20) + 1;
     std::cout << "AEA " << AEA_name_ << " starting with " << bananas << " bananas!" << std::endl;
 
-    fetch::mutex::Mutex banana_mutex;
+    fetch::mutex::Mutex     bananaMutex;
+    std::condition_variable conditionVariable;
+
+    // Attach our callback for when people buy from us
     protocol.onBuy() = [&](std::string fromPerson){
 
-      std::cout << "AEA " << AEA_name_ << "has been called back by " << fromPerson << std::endl;
-      std::lock_guard< fetch::mutex::Mutex > lock( banana_mutex );
+      std::cout << "AEA " << AEA_name_ << " has been called back by " << fromPerson << std::endl;
 
+      bananaMutex.lock();
       if(bananas == 0) {
+        bananaMutex.unlock();
+        conditionVariable.notify_all();
         return std::string{"we have no bananas"};
       }
 
       bananas--;
 
+      bananaMutex.unlock();
       return std::string{"we have bananas"};
     };
 
@@ -130,8 +136,9 @@ private:
 
     isSetup_ = true;
 
-    // Now we can wait for people to poke us
-    while(bananas > 0) {std::chrono::milliseconds(100);}
+    // Wait until we have sold all our bananas
+    std::unique_lock<std::mutex> lockBanana(bananaMutex);
+    conditionVariable.wait(lockBanana, [&]{return bananas <= 0;});
 
     std::cout << "Sold all our bananas, exit" << std::endl;
 
@@ -140,6 +147,5 @@ private:
     p2.Wait();
 
     tm.Stop();
-
   }
 };

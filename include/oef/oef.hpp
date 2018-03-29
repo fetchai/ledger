@@ -11,80 +11,17 @@
 #include"oef/schema_serializers.hpp"
 #include"oef/service_directory.hpp"
 #include"oef/node_directory.hpp"
+#include"oef/aea_directory.hpp"
 #include"oef/message_history.hpp"
 #include"protocols/fetch_protocols.hpp"
 #include"protocols/node_to_aea/commands.hpp"
+
+// This represents the API to the OEF: all HTTP and RPC OEF commands go through here
 
 namespace fetch
 {
 namespace oef
 {
-
-class AEADirectory {
-  public:
-    void Register(uint64_t client, std::string id) {
-      std::cout << "\rRegistering " << client << " with id " << id << std::endl << std::endl << "> " << std::flush;
-
-      mutex_.lock();
-      registered_aeas_[client] = id; // TODO: (`HUT`) : proper management of this
-      mutex_.unlock();
-    }
-
-    void Deregister(uint64_t client, std::string id) {
-      std::cout << "\rDeregistering " << client << " with id " << id << std::endl << std::endl << "> " << std::flush;
-      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-
-      registered_aeas_[client] = ""; // TODO: (`HUT`) : proper management of this (check corresponding id)
-    }
-
-    void PingAllAEAs() {
-      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-
-      detailed_assert( service_ != nullptr);
-
-      for(auto &id: registered_aeas_) {
-        auto &rpc = service_->ServiceInterfaceOf(id.first);
-
-        rpc.Call(protocols::FetchProtocols::NODE_TO_AEA, protocols::NodeToAEAReverseRPC::PING, "ping_message"); // TODO: (`HUT`) : think about decoupling
-      }
-    }
-
-    script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
-      script::Variant result = script::Variant::Object();
-      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-
-      std::string aeaID{id};
-
-      for (std::map<uint32_t,std::string>::const_iterator it=registered_aeas_.begin(); it!=registered_aeas_.end(); ++it){
-        if(aeaID.compare(it->second) == 0){
-          result["response"] = "success";
-
-          auto &rpc = service_->ServiceInterfaceOf(it->first);
-          std::string answer   = rpc.Call(protocols::FetchProtocols::NODE_TO_AEA, protocols::NodeToAEAReverseRPC::BUY, "http_interface").As<std::string>();
-          result["value"]   = answer;
-          return result;
-        }
-      }
-
-      result["response"] = "fail"; // TODO: (`HUT`) : ask troels about building variants like var = "thing " = vari + "more";
-      std::string build{"AEA id: '"};
-      build += id;
-      build += "' not active";
-      result["reason"]   = build;
-
-      return result;
-    }
-
-    void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr)
-    {
-      service_ = ptr;
-    }
-
-  private:
-    service::ServiceServer< fetch::network::TCPServer > *service_ = nullptr;
-    std::map< uint32_t, std::string >                    registered_aeas_;
-    fetch::mutex::Mutex                                  mutex_;
-};
 
 struct Transaction
 {
@@ -96,7 +33,7 @@ struct Transaction
   script::Variant       json;
 };
 
-// TODO: (`HUT`) : make account history persistent
+// TODO: (`HUT`) : make account history persistent, also connect it to AEA IDs, also put it in its own class
 struct Account
 {
   int64_t balance = 0;
@@ -105,14 +42,14 @@ struct Account
 
 // Core OEF implementation
 class NodeOEF {
-
-  public:
-
-    template <typename T>
-      NodeOEF(service::ServiceServer<T> *service, network::ThreadManager *tm, const schema::Instance &instance, const schema::Endpoint &nodeEndpoint, const schema::Endpoints &endpoints) : 
-        nodeDirectory_{tm, instance, nodeEndpoint, endpoints} {
-          AEADirectory_.register_service_instance(service);
-    }
+public:
+  template <typename T>
+  NodeOEF(service::ServiceServer<T> *service, network::ThreadManager *tm,
+    const schema::Instance &instance, const schema::Endpoint &nodeEndpoint,
+    const schema::Endpoints &endpoints) :
+    nodeDirectory_{tm, instance, nodeEndpoint, endpoints} {
+    AEADirectory_.register_service_instance(service);
+  }
 
     void Start() {
       nodeDirectory_.Start();
@@ -138,19 +75,13 @@ class NodeOEF {
     }
 
     std::vector<std::string> Query(std::string agentName, schema::QueryModel query) {
-      std::cout << "hot here1.1" << std::endl;
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
-      std::cout << "hot here3" << std::endl;
-
       if(messageHistorySingle_.add(query)) {
-      std::cout << "hot here111" << std::endl;
       nodeDirectory_.LogEvent(agentName, query);
-      std::cout << "hot here5" << std::endl;
         return serviceDirectory_.Query(query);
       }
 
-      std::cout << "hot here6" << std::endl;
       return std::vector<std::string>();
     }
 
@@ -327,17 +258,17 @@ class NodeOEF {
       nodeDirectory_.DeregisterAgent(id); // TODO: (`HUT`) : I think we want this
     }
 
-    std::string BuyFromAEA(std::string id) {
+    std::string BuyFromAEA(std::string buyer, std::string buyee) {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-      auto res = AEADirectory_.BuyFromAEA(id);
+      auto res = AEADirectory_.BuyFromAEA(buyer, buyee);
       std::ostringstream result;
       result << res;
       return result.str();
     }
 
-    script::Variant BuyFromAEA(const fetch::byte_array::BasicByteArray &id) {
+    script::Variant BuyFromAEA(std::string buyer, const fetch::byte_array::BasicByteArray &id) {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
-      return AEADirectory_.BuyFromAEA(id);
+      return AEADirectory_.BuyFromAEA(buyer, id);
     }
 
     // Debug functionality
@@ -371,7 +302,6 @@ class NodeOEF {
     }
 
     std::string ping() {
-      std::cout << "pinged this node!!" << std::endl;
       return "Pinged this Node!";
     }
 
@@ -403,8 +333,6 @@ class NodeOEF {
 
     void ForwardQuery(std::string name, schema::Endpoint endpoint, schema::QueryModelMulti queryMulti) {
 
-      fetch::logger.Info("Received node2node forward query: ", name);
-
       std::vector<std::string> result;
       mutex_.lock();
       if(messageHistory_.add(queryMulti) && nodeDirectory_.shouldForward(queryMulti)) {
@@ -414,7 +342,6 @@ class NodeOEF {
         auto agents = serviceDirectory_.Query(queryMulti.aeaQuery());
 
         for(auto &i : agents) {
-          //nodeDirectory_.LogEventReturnAEA(i, queryMulti); // this will log AEA-> Node_return (return path)
           nodeDirectory_.LogEventReverse(i, queryMulti);   // this will log Node -> AEA
         }
 

@@ -7,6 +7,8 @@
 #include"protocols/aea_to_node.hpp"
 #include"protocols/node_to_node.hpp"
 
+// Fetch node service connects the desired protocols to the OEF API
+
 namespace fetch
 {
 namespace fetch_node_service

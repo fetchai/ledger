@@ -22,5 +22,7 @@ int main() {
     testAEAs.push_back(std::make_shared<TestAEA>(lfg()));
   }
 
-  while(1) {}
+  std::string dummy;
+  std::cout << "Press any key to quit" << std::endl;
+  std::cin >> dummy;
 }

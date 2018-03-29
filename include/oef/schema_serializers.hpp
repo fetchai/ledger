@@ -353,7 +353,6 @@ void Deserialize( T & serializer, std::set<Y> &b) {
     serializer >> element;
     b.insert(element);
   }
-
 }
 
 }
