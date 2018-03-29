@@ -89,9 +89,6 @@ public:
     event_service_start_ = thread_manager->OnBeforeStart([this]()      
       {
         this->running_ = true;        
-        this->thread_manager_->io_service().post([this]() {
-            this->ProcessMessages();
-          });        
       } );
     event_service_stop_ = thread_manager->OnBeforeStop([this]()      
       {
@@ -130,14 +127,11 @@ public:
 
     return *client_rpcs_[i];
   }
-  
-  
 
 protected:
   bool DeliverResponse(handle_type client, network::message_type const& msg) override {
     return super_type::Send( client, msg );
   }
-  
 
 private:
   void PushRequest(handle_type client,
@@ -208,8 +202,9 @@ private:
             
           });
       }
+      
     }
-
+    
   }
 
 
