@@ -2,8 +2,9 @@ import requests
 import time
 import json
 import pdb
+import random
 
-import random as rand
+#import random as rand
 import sys, os
 
 #rand.seed(42)
@@ -22,11 +23,76 @@ def jsonPrint(r):
 base_lat = 51.5090446 + 0.01
 base_lng = -0.0993713 + 0.01
 
-# Test Instances (lazily constructed)
-firstInstance = { "instance" :
+51.5090446 -0.0993713
+
+# list of preset node locations (not sorted)
+sortedNodeLocations = [
+		       [51.4944201,-0.1023585],  # eleph and castle
+		       [51.515133, -0.0999188],  # old bailey
+                       [51.5045303, -0.0994679], # ewer st
+                       [51.5145303, -0.0924679], # gresham st
+                       [51.506993,-0.1142297],   # royal national theatre
+                       [51.5009331,-0.1064792],  # webber street
+                       [51.5091228,-0.0851453],  # lower thames street
+                       [51.5138971,-0.1272004],  # shelto st
+                       [51.4769225,-0.1290553],  # lambeth place
+                       [51.5017079,-0.1314588],  # bermondsay
+                       [51.5194996,-0.0633604],  # whitechapel station
+                       [51.4843681,-0.0868746],  # albany road
+                       [51.4837512,-0.1170999],  # kia oval
+                       [51.4841678,-0.1087366],  # eleph, and castle
+                       [51.4920728,-0.1295575],  # page st
+                       [51.5004525,-0.0787364],  # druid street
+                       [51.4967159,-0.0922306],  # grange road
+                       [51.4875868,-0.0948443],  # data st
+                       [51.5164725,-0.1183714]]  # corams fields
+
+## Just in case, sort
+#sortedNodeLocations = sorted(nodeLocations, key=lambda nodeLocation: nodeLocation[1])
+#print sortedNodeLocations  # sort by longitude, which means nodes will be assigned left to right
+
+workingNodes = 0
+
+# Setup the nodes in these locations
+page="set-node-latlong"
+for i in range(len(sortedNodeLocations)-1):
+    try:
+        #variable = raw_input('press key to registe node: '+str(8080+i))
+        print "latitude", sortedNodeLocations[i][0], "longitude", sortedNodeLocations[i][1]
+	#variable = raw_input('press key to set node')
+        r2 = requests.post('http://localhost:'+str(8080+i)+'/'+page, json={ "latitude" : sortedNodeLocations[i][0], "longitude" : sortedNodeLocations[i][1] })
+    except:
+        print "Failed to set node at http page", str(8080+i)
+        break
+
+for i in range(10000):
+    try:
+        requests.post('http://localhost:'+str(8080+i)+'/debug-all-nodes', json='{}')
+        workingNodes = workingNodes + 1
+    except:
+        print "Failed to access http page", str(8080+i)
+        print "Going on the assumption there are ", workingNodes, " workingNodes"
+        break
+
+AEAs_per_node              = 10;
+AEAs_latlong_distance_from = 0.001;
+
+# Add endpoints to Nodes that have poor connectivity
+connection = {"TCPPort": 9082, "IP": "localhost"}
+requests.post('http://localhost:8081/add-connection', json=connection)
+
+# generate an/some events by selecting a random aea
+for i in range(1, workingNodes-1):
+    connection = {"TCPPort": 9080+i, "IP": "localhost"}
+    requests.post('http://localhost:8080/add-connection', json=connection)
+
+variable = raw_input('press key to registe AEAs')
+
+# Template AEA
+templateInstance = { "instance" :
                     {"dataModel":
                        {
-                         "name": "weather_data",
+                         "name": "template_datamodel",
                          "attributes": [ {"name" : "name", "type" : "string", "required" : True }, { "name": "latitude", "type": "float", "required": False }, { "name": "longitude", "type": "float", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True }, { "name": "price", "type": "int", "required": True } ],
                          "keywords": ["ignore"],
                          "description": "ignore"
@@ -34,252 +100,85 @@ firstInstance = { "instance" :
                        "values": [ {"name" : "AEA_1"}, { "latitude": str(base_lat + 0.001) }, { "longitude": str(base_lng + 0.0021) }, {"price" : "100"}]},
                  "ID": "AEA_1" }
 
-secondInstance = { "instance" :
-                    {"dataModel":
-                       {
-                         "name": "weather_data",
-                         "attributes": [ {"name" : "name", "type" : "string", "required" : True }, { "name": "latitude", "type": "float", "required": False }, { "name": "longitude", "type": "float", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True }, { "name": "price", "type": "int", "required": True } ],
-                         "keywords": ["ignore"],
-                         "description": "ignore"
-                       },
-                       "values": [ {"name" : "AEA_2"}, { "latitude": str(base_lat - 0.007) }, { "longitude": str(base_lng - 0.0034) }, {"price" : "50"}]},
-                 "ID": "AEA_2" }
+aeaNames = []
 
-thirdInstance = { "instance" :
-                    {"dataModel":
-                       {
-                         "name": "weather_data",
-                         "attributes": [ {"name" : "name", "type" : "string", "required" : True }, { "name": "latitude", "type": "float", "required": False }, { "name": "longitude", "type": "float", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True }, { "name": "price", "type": "int", "required": True } ],
-                         "keywords": ["ignore"],
-                         "description": "ignore"
-                       },
-                       "values": [ {"name" : "AEA_3"}, { "latitude": str(base_lat + 0.002) }, { "longitude": str(base_lng + 0.0011) }, {"price" : "20"}]},
-                 "ID": "AEA_3" }
+for node in range(workingNodes):
+    for i in range(AEAs_per_node-1):
+        aea = templateInstance
+        shiftLat  = random.uniform(0.001, 0.003) * (1 - (random.randint(0,1)*2))
+        shiftLong = random.uniform(0.001, 0.003) * (1 - (random.randint(0,1)*2))
+        price     = random.randint(0, 100)
 
-four = { "instance" :
-                    {"dataModel":
-                       {
-                         "name": "weather_data",
-                         "attributes": [ {"name" : "name", "type" : "string", "required" : True }, { "name": "latitude", "type": "float", "required": False }, { "name": "longitude", "type": "float", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True }, { "name": "price", "type": "int", "required": True } ],
-                         "keywords": ["ignore"],
-                         "description": "ignore"
-                       },
-                       "values": [ {"name" : "AEA_4"}, { "latitude": str(base_lat - 0.005) }, { "longitude": str(base_lng + 0.0071) }, {"price" : "20"}]},
-                 "ID": "AEA_4" }
+        name = "AEA_"+str(8080+node)+"_"+str(i)
+        host = str(8080+node)
+        aeaNames.append([name, host])
 
-five = { "instance" :
-                    {"dataModel":
-                       {
-                         "name": "weather_data",
-                         "attributes": [ {"name" : "name", "type" : "string", "required" : True }, { "name": "latitude", "type": "float", "required": False }, { "name": "longitude", "type": "float", "required": True }, { "name": "latitude", "type": "bool", "required": True }, { "name": "longitude", "type": "bool", "required": True }, { "name": "price", "type": "int", "required": True } ],
-                         "keywords": ["ignore"],
-                         "description": "ignore"
-                       },
-                       "values": [ {"name" : "AEA_5"}, { "latitude": str(base_lat + 0.003) }, { "longitude": str(base_lng - 0.0011) }, {"price" : "20"}]},
-                 "ID": "AEA_5" }
+        setLat = str(sortedNodeLocations[node][0] + shiftLat);
+        setLng = str(sortedNodeLocations[node][1] + shiftLong);
 
-#fourthInstance = getInstance
+        aea["instance"]["values"] = [ {"name" : name}, { "latitude": setLat }, { "longitude": setLng }, {"price" : str(price)}]
+        requests.post('http://localhost:'+host+'/register-instance', json=aea)
 
+        time.sleep(0.01)
 
-# register these
-r = requests.post('http://localhost:8080/register-instance', json=firstInstance)
-r = requests.post('http://localhost:8081/register-instance', json=secondInstance)
-r = requests.post('http://localhost:8082/register-instance', json=thirdInstance)
-r = requests.post('http://localhost:8080/register-instance', json=four)
-r = requests.post('http://localhost:8080/register-instance', json=five)
+#pdb.set_trace()
 
-## Now Query (not multi-query)
-#query = {
-#        "constraints": [
-#            {
-#                "attribute": {
-#                    "name": "latitude",
-#                    "type": "float",
-#                    "required": True
-#                    },
-#                "constraint": {
-#                    "type": "relation",
-#                    "op": ">=",
-#                    "value_type": "float",
-#                    "value": 101.1
-#                    }
-#            }],
-#        "keywords" : [ "ignore"]
-#        }
+for i in range(10):
 
+    variable = raw_input('press key to submit a mult query')
 
-## this should work
-#query = {
-#        "constraints": [
-#            {
-#                "attribute": {
-#                    "name": "price",
-#                    "type": "int",
-#                    "required": True
-#                    },
-#                "constraint": {
-#                    "type": "relation",
-#                    "op": "<=",
-#                    "value_type": "int",
-#                    "value": 200
-#                    }
-#            }],
-#        "keywords" : [ "ignore"]
-#        }
-#
-#r = requests.post('http://localhost:8082/echo-query', json=query)
-#print "Query1 echo", jsonPrint(r)
-#
-#r = requests.post('http://localhost:8082/query', json=query)
-#print "Query1 response", jsonPrint(r)
+    # Now do a multi-query, as if it came from one of the AEAs (do three of these)
+    randomSelect = random.randint(0,len(aeaNames)-1)
+    #randomAEA = aeaNames[randomSelect][0]
+    #randomHost = aeaNames[randomSelect][1]
 
-# Now do a multi-query, as if it came from one of the AEAs (do three of these)
-multiQuery = {
-        "ID": "AEA_3",
-        "aeaQuery" : {
-            "constraints": [
-                {
-                    "attribute": {
-                        "name": "price",
-                        "type": "int",
-                        "required": True
-                        },
-                    "constraint": {
-                        "type": "relation",
-                        "op": "<=",
-                        "value_type": "int",
-                        "value": 200
-                        }
-                }],
-            "keywords" : [ "ignore"]
-            },
+    randomAEA = "AEA_"+str(8080+workingNodes-1)+"_1"
+    randomHost = str(8080+workingNodes-1)
 
-        "forwardingQuery" : {
-            "constraints": [
-                {
-                    "attribute": {
-                        "name": "longitude",
-                        "type": "float",
-                        "required": True
-                        },
-                    "constraint": {
-                        "type": "relation",
-                        "op": "<=",
-                        "value_type": "float",
-                        "value": float(100.2)
-                        }
-                }],
-            "keywords" : [ "ignore"]
+    print "Random AEA: ", randomAEA
+    print "Random host: ", randomHost
+
+    multiQuery = {
+            "ID": randomAEA,
+            "aeaQuery" : {
+                "constraints": [
+                    {
+                        "attribute": {
+                            "name": "price",
+                            "type": "int",
+                            "required": True
+                            },
+                        "constraint": {
+                            "type": "relation",
+                            "op": "<=",
+                            "value_type": "int",
+                            "value": 10
+                            }
+                    }],
+                "keywords" : [ "ignore"]
+                },
+
+            "forwardingQuery" : {
+                "constraints": [
+                    {
+                        "attribute": {
+                            "name": "latitude",
+                            "type": "float",
+                            "required": True
+                            },
+                        "constraint": {
+                            "type": "relation",
+                            "op": "<=",
+                            "value_type": "float",
+                            "value": float(510.51035)  # want south of the river:  51.5103576,-0.109238
+                            }
+                    }],
+                "keywords" : [ "ignore"]
+            }
         }
-    }
 
-#r = requests.post('http://localhost:8082/echo-multi-query', json=multiQuery)
-#print "Multi query echo", jsonPrint(r)
-#
-#number = { "max_number" : 8 }
-#
-#r = requests.post('http://localhost:8082/debug-all-events', json=number)
-#print "debug all events", jsonPrint(r)
-#
-#variable = raw_input('press key to submit mult query')
-
-r = requests.post('http://localhost:8082/multi-query', json=multiQuery)
-print "Mult query response", jsonPrint(r)
-
-time.sleep(1)
-
-# second multi query
-multiQuery = {
-        "ID": "AEA_1",
-        "aeaQuery" : {
-            "constraints": [
-                {
-                    "attribute": {
-                        "name": "price",
-                        "type": "int",
-                        "required": True
-                        },
-                    "constraint": {
-                        "type": "relation",
-                        "op": "<=",
-                        "value_type": "int",
-                        "value": 200
-                        }
-                }],
-            "keywords" : [ "ignore"]
-            },
-
-        "forwardingQuery" : {
-            "constraints": [
-                {
-                    "attribute": {
-                        "name": "longitude",
-                        "type": "float",
-                        "required": True
-                        },
-                    "constraint": {
-                        "type": "relation",
-                        "op": "<=",
-                        "value_type": "float",
-                        "value": float(101.2)
-                        }
-                }],
-            "keywords" : [ "ignore"]
-        }
-    }
-
-#r = requests.post('http://localhost:8082/multi-query', json=multiQuery)
-#print "second mult query response", jsonPrint(r)
-
-exit(1)
-
-# more events
-multiQuery = {
-        "ID": "AEA_2",
-        "aeaQuery" : {
-            "constraints": [
-                {
-                    "attribute": {
-                        "name": "price",
-                        "type": "int",
-                        "required": True
-                        },
-                    "constraint": {
-                        "type": "relation",
-                        "op": "<=",
-                        "value_type": "int",
-                        "value": 200
-                        }
-                }],
-            "keywords" : [ "ignore"]
-            },
-
-        "forwardingQuery" : {
-            "constraints": [
-                {
-                    "attribute": {
-                        "name": "longitude",
-                        "type": "float",
-                        "required": True
-                        },
-                    "constraint": {
-                        "type": "relation",
-                        "op": "<=",
-                        "value_type": "float",
-                        "value": float(1.2)
-                        }
-                }],
-            "keywords" : [ "ignore"]
-        }
-    }
-
-r = requests.post('http://localhost:8082/echo-multi-query', json=multiQuery)
-print "Multi query echo", jsonPrint(r)
-
-
-variable = raw_input('press key to deregister instances')
-
-# deregister the instance
-r = requests.post('http://localhost:8080/deregister-instance', json=firstInstance)
-r = requests.post('http://localhost:8081/deregister-instance', json=secondInstance)
-r = requests.post('http://localhost:8082/deregister-instance', json=thirdInstance)
+    try:
+        r = requests.post('http://localhost:'+randomHost+'/multi-query', json=multiQuery)
+        print "Mult query response", jsonPrint(r)
+    except:
+        print "Tried and failed to query: ", randomHost

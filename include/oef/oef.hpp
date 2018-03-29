@@ -159,11 +159,11 @@ class NodeOEF {
 
       fetch::logger.Info("AEA multi query");
 
+      mutex_.lock();
       if(!nodeDirectory_.shouldForward(queryMulti)) {
         fetch::logger.Info("AEA multi query not suitable for forwarding");
       }
 
-      mutex_.lock();
 
       if(messageHistory_.add(queryMulti) && nodeDirectory_.shouldForward(queryMulti)) {
         fetch::logger.Info("AEA multi query is suitable");
@@ -182,7 +182,7 @@ class NodeOEF {
         mutex_.unlock();
 
         // Wait here for possible query results
-        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
         mutex_.lock();
         agents = nodeDirectory_.ForwardQueryResult(queryMulti);
@@ -211,6 +211,10 @@ class NodeOEF {
 
     schema::Instance getInstance() {
       return nodeDirectory_.getInstance();
+    }
+
+    void setInstance(schema::Instance instance) {
+      return nodeDirectory_.setInstance(instance);
     }
 
     // Ledger functionality
@@ -344,6 +348,23 @@ class NodeOEF {
       fetch::logger.Info("Finished add endpoint call");
     }
 
+    // debug adding connection
+    void DebugAddConnection(schema::Endpoint endpoint, schema::Endpoint connection) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      nodeDirectory_.DebugAddConnection(endpoint, connection);
+    }
+
+    void addConnection(schema::Endpoint endpoint) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      nodeDirectory_.addConnection(endpoint);
+    }
+
+    void UpdateEndpoint(schema::Endpoint endpoint, schema::Instance instance) {
+      std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+      nodeDirectory_.UpdateEndpoint(endpoint, instance);
+    }
+
+
     void PingAllAEAs() {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
       AEADirectory_.PingAllAEAs();
@@ -393,14 +414,17 @@ class NodeOEF {
         auto agents = serviceDirectory_.Query(queryMulti.aeaQuery());
 
         for(auto &i : agents) {
-          //nodeDirectory_.LogEvent(i, queryMulti);
-          //nodeDirectory_.LogEventReverse(i, queryMulti);
+          //nodeDirectory_.LogEventReturnAEA(i, queryMulti); // this will log AEA-> Node_return (return path)
+          nodeDirectory_.LogEventReverse(i, queryMulti);   // this will log Node -> AEA
         }
 
         mutex_.unlock();
 
         nodeDirectory_.ForwardQuery(endpoint, queryMulti);
         nodeDirectory_.ReturnQuery(queryMulti, agents);
+      } else {
+        fetch::logger.Info("Not forwarding query: ", name);
+        fetch::logger.Info("Match to our instance: ", nodeDirectory_.shouldForward(queryMulti));
       }
 
       mutex_.unlock();

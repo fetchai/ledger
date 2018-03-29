@@ -139,12 +139,12 @@ void Deserialize( T & serializer, QueryModelMulti &b) {
 // QueryModel
 template< typename T>
 void Serialize( T & serializer, QueryModel const &b) {
-  serializer << b.constraints() << b.keywords() << b.timestamp();
+  serializer << b.constraints() << b.keywords() << b.timestamp() << b.lat() << b.lng() << b.angle1() << b.angle2();
 }
 
 template< typename T>
 void Deserialize( T & serializer, QueryModel &b) {
-  serializer >> b.constraints() >> b.keywords() >> b.timestamp();
+  serializer >> b.constraints() >> b.keywords() >> b.timestamp() >> b.lat() >> b.lng() >> b.angle1() >> b.angle2();
 }
 
 /////////////////////////////////////////////////////////////////

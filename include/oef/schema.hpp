@@ -1,6 +1,7 @@
 #ifndef SCHEMA_DEFINES_HPP
 #define SCHEMA_DEFINES_HPP
 
+#include<cmath>
 #include<mutex>
 #include<set>
 #include<unordered_set>
@@ -727,6 +728,18 @@ public:
   const uint64_t                 &timestamp() const   { return timestamp_; }
   uint64_t                       &timestamp()         { return timestamp_; }
 
+  const std::string                 &lat() const   { return lat_; }
+  std::string                       &lat()         { return lat_; }
+
+  const std::string                 &lng() const   { return lng_; }
+  std::string                       &lng()         { return lng_; }
+
+  const float                 &angle1() const   { return angle1_; }
+  float                       &angle1()         { return angle1_; }
+
+  const float                 &angle2() const   { return angle2_; }
+  float                       &angle2()         { return angle2_; }
+
   std::string getHash() const {
     std::ostringstream ret;
     ret << this->variant();
@@ -740,6 +753,13 @@ private:
   uint64_t                  timestamp_ = static_cast<uint64_t>(time(NULL));// * byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) );
   std::string               hash_; //= static_cast<uint64_t>(time(NULL)) * byte_array::ToBase64( crypto::Hash< crypto::SHA256 >(this->variant().as_byte_array()) );
 
+  //Instance                  instance_; // TODO: (`HUT`) : think about this
+  std::string                 lat_;
+  std::string                 lng_;
+
+  float angle1_ = 0;
+  float angle2_ = 0;
+
 };
 
 class QueryModelMulti {
@@ -747,7 +767,7 @@ class QueryModelMulti {
 public:
   explicit QueryModelMulti() {}
 
-  explicit QueryModelMulti(const QueryModel &aeaQuery, const QueryModel &forwardingQuery, uint16_t jumps=3)
+  explicit QueryModelMulti(const QueryModel &aeaQuery, const QueryModel &forwardingQuery, uint16_t jumps=20)
     : aeaQuery_{aeaQuery}, forwardingQuery_{forwardingQuery}, jumps_{jumps},
     timestamp_{static_cast<uint64_t>(time(NULL))}
     {
@@ -778,6 +798,7 @@ public:
     fetch::script::Variant result = fetch::script::Variant::Object();
     result["aeaQuery"]        = aeaQuery_.variant();
     result["forwardingQuery"] = forwardingQuery_.variant();
+    result["timestamp"]       = timestamp_;
     return result;
   }
 
@@ -851,7 +872,19 @@ public:
     LOG_STACK_TRACE_POINT;
 
     IP_      = std::string(jsonDoc["IP"].as_byte_array());
-    TCPPort_ = uint16_t(jsonDoc["TCPPort"].as_int());
+
+    // TODO: (`HUT`) : fix after this parsing works
+    if(jsonDoc["TCPPort"].is_int()) {
+      TCPPort_ = uint16_t(jsonDoc["TCPPort"].as_int());
+    } else if(jsonDoc["TCPPort"].is_float()) {
+      float value = float(jsonDoc["TCPPort"].as_double());
+      TCPPort_ = uint16_t( floor(value) );
+    } else {
+      TCPPort_ = 0;
+    }
+
+    std::cout << "port is " << jsonDoc["TCPPort"].as_int() << std::endl;
+    std::cout << "port is " << TCPPort_ << std::endl;
   }
 
   bool operator< (const Endpoint &rhs) const {

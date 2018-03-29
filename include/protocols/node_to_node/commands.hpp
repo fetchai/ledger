@@ -16,6 +16,8 @@ enum
   FORWARD_QUERY,
   RETURN_QUERY,
   DBG_ADD_ENDPOINT,
+  DBG_ADD_CONNECTION,
+  DBG_UPDATE_ENDPOINT,
   DBG_GET_HISTORY, // not implemented
   DBG_ADD_HISTORY, // not implemented
   DBG_GET_AGENTS,  // not implemented

@@ -24,6 +24,8 @@ public:
 
     // debug functionality
     this->Expose(NodeToNodeRPC::DBG_ADD_ENDPOINT, new service::CallableClassMember<oef::NodeOEF, void(schema::Endpoint endpoint, schema::Instance instance, schema::Endpoints endpoints)>(node.get(), &oef::NodeOEF::AddEndpoint) );
+    this->Expose(NodeToNodeRPC::DBG_UPDATE_ENDPOINT, new service::CallableClassMember<oef::NodeOEF, void(schema::Endpoint endpoint, schema::Instance instance)>(node.get(), &oef::NodeOEF::UpdateEndpoint) );
+    this->Expose(NodeToNodeRPC::DBG_ADD_CONNECTION, new service::CallableClassMember<oef::NodeOEF, void(schema::Endpoint endpoint, schema::Endpoint connection)>(node.get(), &oef::NodeOEF::DebugAddConnection) );
 
     this->Expose(NodeToNodeRPC::DBG_ADD_AGENT,    new service::CallableClassMember<oef::NodeOEF, void(schema::Endpoint endpoint, std::string agent, schema::Instance instance)>(node.get(), &oef::NodeOEF::addAgent) );
     this->Expose(NodeToNodeRPC::DBG_REMOVE_AGENT, new service::CallableClassMember<oef::NodeOEF, void(schema::Endpoint endpoint, std::string agent)>(node.get(), &oef::NodeOEF::removeAgent) );

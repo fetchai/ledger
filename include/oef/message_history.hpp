@@ -78,7 +78,7 @@ public:
   void Insert(const Event &event) {
 
     // Enforce size limit // TODO: (`HUT`) : template this
-    if(300 == events_.size()) {
+    if(3000 == events_.size()) {
       events_.pop_front();
     }
 

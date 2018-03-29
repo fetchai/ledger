@@ -14,7 +14,7 @@ class LaggedFibonacciGenerator {
   LaggedFibonacciGenerator(const T &t) { Seed(t); }
   LaggedFibonacciGenerator() { Seed(42); }
 
-  random_type Seed() const { return lcg_().Seed(); }
+  //random_type Seed() const { return lcg_().Seed(); } // TODO: (`HUT`) : undo this hack for seb
   random_type Seed(random_type const &s) {
     random_type ret = lcg_.Seed(s);
 

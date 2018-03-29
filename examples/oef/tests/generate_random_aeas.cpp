@@ -18,7 +18,7 @@ int main() {
   LaggedFibonacciGenerator<> lfg;
   std::vector<std::shared_ptr<TestAEA>> testAEAs;
 
-  for (int i = 0; i < 100; ++i) {
+  for (int i = 0; i < 10; ++i) {
     testAEAs.push_back(std::make_shared<TestAEA>(lfg()));
   }
 

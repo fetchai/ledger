@@ -9,6 +9,8 @@
 #include"protocols/fetch_protocols.hpp"
 #include"protocols/node_to_node/commands.hpp"
 
+#include<math.h>
+
 namespace fetch
 {
 namespace oef
@@ -41,6 +43,7 @@ public:
 
   void Start() {
     fetch::logger.Info("Starting NodeDirectory");
+
     AddEndpoint(nodeEndpoint_, instance_, endpoints_);
     CallEndpoints(protocols::NodeToNodeRPC::DBG_ADD_ENDPOINT, true, nodeEndpoint_, instance_, endpoints_);
   }
@@ -49,8 +52,148 @@ public:
     return instance_;
   }
 
+  void setInstance(schema::Instance instance) {
+      nodeName_ = instance.values()["name"]; // TODO: (`HUT`) : this relies on this existing
+      instance_ = instance;
+
+      // Update all nodes with this new info
+      debugEndpoints_[nodeEndpoint_].first = instance;
+      CallAllEndpoints(protocols::NodeToNodeRPC::DBG_UPDATE_ENDPOINT, nodeEndpoint_, instance_);
+  }
+
   bool shouldForward(schema::QueryModelMulti queryMulti) {
+
+   if(!(queryMulti.jumps() > 0)) {
+     return false;
+   }
+
+   const schema::QueryModel &fwd = queryMulti.forwardingQuery();
+
+   // catch special directional search
+   if(fwd.angle1() != 0 || fwd.angle2() != 0) {
+     std::cout << "found direc. search!" << std::endl << std::endl;
+     std::cout << fwd.angle1() << std::endl;
+     std::cout << fwd.angle2() << std::endl;
+     std::cout << fwd.lat() << std::endl;
+     std::cout << fwd.lng() << std::endl;
+     std::cout << instance_.values()["latitude"] << std::endl;
+     std::cout << instance_.values()["longitude"] << std::endl;
+
+     if(fwd.lat().compare(instance_.values()["latitude"]) == 0 && fwd.lng().compare(instance_.values()["longitude"]) == 0 ) {
+        std::cout << "This is us" << std::endl << std::endl;
+     } else {
+
+      float ourLat;
+      float ourLng;
+      float originLat;
+      float originLng;
+      float angle1 = fwd.angle1();
+      float angle2 = fwd.angle2();
+
+      std::istringstream buffer(instance_.values()["latitude"]);
+      buffer >> ourLat;
+
+      buffer = std::istringstream(instance_.values()["longitude"]);
+      buffer >> ourLng;
+
+      buffer = std::istringstream(fwd.lat());
+      buffer >> originLat;
+
+      buffer = std::istringstream(fwd.lng());
+      buffer >> originLng;
+
+        std::cout << "angle1: " << angle1 << std::endl;
+        std::cout << "angle2: " << angle2 << std::endl;
+
+      std::cout << "our latlng " << ourLat << " " << ourLng << std::endl;
+      std::cout << "origin latlng " << originLat << " " << originLng << std::endl;
+
+      std::cout << "our latlng dist " << (ourLng - originLng) << " " << ourLng << std::endl;
+      std::cout << "origin latlng dist" << (ourLat - originLat) << " " << originLng << std::endl;
+
+      float ourAngleToOrigin = atan2((ourLng - originLng), ((ourLat - originLat)));
+
+      std::cout << "before: " << ourAngleToOrigin << " after ";
+      ourAngleToOrigin += M_PI;
+      std::cout << ourAngleToOrigin << std::endl;
+
+      ourAngleToOrigin += M_PI;
+        while(ourAngleToOrigin > (M_PI*2)) {
+	  ourAngleToOrigin -= M_PI*2;
+	}
+      std::cout << "zzz: " << ourAngleToOrigin << std::endl;
+
+      // Avoid modular edge case - shift angle1 to 0
+      if(angle2 < angle1) {
+	std::cout << "shifting less" <<  std::endl;
+
+        if(ourAngleToOrigin > angle1) {
+	  std::cout << "more than angle1" << std::endl;
+	  return true;
+	}
+
+        if(ourAngleToOrigin < angle2) {
+	  std::cout << "less than angle2" << std::endl;
+	  return true;
+	}
+
+        float shiftBy = (M_PI*2) - angle1;
+        std::cout << "shift by" << shiftBy << std::endl;
+
+        while(ourAngleToOrigin > (M_PI*2)) {
+	  ourAngleToOrigin -= M_PI*2;
+	}
+        angle2 += shiftBy;
+        angle1 = 0;
+
+        std::cout << "new angle to origin " << ourAngleToOrigin << std::endl;
+        std::cout << "new angle1" << angle1 << std::endl;
+        std::cout << "new angle2" << angle2 << std::endl;
+      }
+
+      if(ourAngleToOrigin >= angle1 ) {
+        std::cout << "hit bound 1" << std::endl;
+      }
+
+      if(ourAngleToOrigin <= (angle2)) {
+        std::cout << "hit bound 2" << std::endl;
+      }
+
+      if(ourAngleToOrigin >= angle1 && ourAngleToOrigin <= (angle2)) {
+        return true;
+      } else {
+        return false;
+      }
+
+     }
+
+   }
+
+    // original comparison
     return queryMulti.jumps() > 0 && queryMulti.forwardingQuery().check(instance_);
+  }
+
+    // get and set the original info
+  void UpdateEndpoint(const schema::Endpoint &endpoint, const schema::Instance &instance) {
+    debugEndpoints_[endpoint].first = instance;
+  }
+
+  void addConnection(const schema::Endpoint &endpoint) {
+    mutex_.lock();
+    std::set<schema::Endpoint> &ref = endpoints_.endpoints();
+    ref.insert(endpoint);
+    mutex_.unlock();
+
+    // Update all nodes with this new info TODO: (`HUT`) : not elegant
+    std::set<schema::Endpoint> &debugRef  = debugEndpoints_[nodeEndpoint_].second.endpoints();
+    debugRef.insert(endpoint);
+
+    CallAllEndpoints(protocols::NodeToNodeRPC::DBG_ADD_CONNECTION, nodeEndpoint_, endpoint );
+  }
+
+  void DebugAddConnection(const schema::Endpoint &endpoint, const schema::Endpoint &connection) {
+    std::set<schema::Endpoint> &debugRef  = debugEndpoints_[endpoint].second.endpoints();
+    debugRef.insert(connection);
   }
 
   // Policy: debugEndpoints will start out empty. Other nodes will add themselves to all connections. Nodes hearing this for the first time will forward to their connections
@@ -60,6 +203,8 @@ public:
     if(debugEndpoints_.find(endpoint) != debugEndpoints_.end()){
       return;
     }
+
+    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
     // TODO: (`HUT`) : ****** CHANGE ******
     // TODO: (`HUT`) : not like this
@@ -230,6 +375,19 @@ public:
     messageBoxCallback_[queryModel] = endpoint;
     messageBoxesMutex_.unlock();
 
+
+    // we ARE going to forward this query - log the return event prematurely
+    //for(auto &i : endpoints_.endpoints()) {
+
+    //  // We are logging the RETURN event from them to us
+    //  std::string theirReturnName{debugEndpoints_[i].first.values()["name"] + std::string("_return")};
+    //  Event event{theirReturnName, nodeName_ + std::string("_return"), std::string(schema::vtos(queryModel.variant())), queryModel.getHash(), false};
+    //  logEvent(nodeEndpoint_, event);
+
+    //  // Notify all other endpoints
+    //  CallAllEndpoints(protocols::NodeToNodeRPC::DBG_LOG_EVENT, nodeEndpoint_, event);
+    //}
+
     CallEndpoints(protocols::NodeToNodeRPC::FORWARD_QUERY, false, nodeName_, nodeEndpoint_, query);
   }
 
@@ -240,6 +398,18 @@ public:
       std::cout << "Forwarding return query!" << std::endl;
       CallEndpoint(protocols::NodeToNodeRPC::RETURN_QUERY, messageBoxCallback_[queryModel], queryModel, agents);
       messageBoxesMutex_.unlock();
+
+      /*
+      // Push this special event into events
+      //
+      Event event{source, nodeName_ + std::string("_return"), std::string(schema::vtos(eventParam.variant())), hash, wasOrigin};
+      //Event event{nodeName_, source, schema::vtos(eventParam.variant()), hash, wasOrigin};
+      logEvent(nodeEndpoint_, event);
+
+      // Notify all other endpoints
+      CallAllEndpoints(protocols::NodeToNodeRPC::DBG_LOG_EVENT, nodeEndpoint_, event);
+      // */ // TODO: (`HUT`) : when I have time/energy
+
       return;
     }
 
@@ -271,6 +441,19 @@ public:
 
     std::string hash = eventParam.getHash();
     Event event{nodeName_, source, schema::vtos(eventParam.variant()), hash, wasOrigin};
+    logEvent(nodeEndpoint_, event);
+
+    std::cout << "adding more!" << std::endl << std::endl;
+
+    // Notify all other endpoints
+    CallAllEndpoints(protocols::NodeToNodeRPC::DBG_LOG_EVENT, nodeEndpoint_, event);
+  }
+
+  template <typename T>
+  void LogEventReturnAEA(const std::string source, const T &eventParam, bool wasOrigin=false) {
+
+    std::string hash = eventParam.getHash();
+    Event event{source, nodeName_ + std::string("_return"), std::string(schema::vtos(eventParam.variant())), hash, wasOrigin};
     logEvent(nodeEndpoint_, event);
 
     std::cout << "adding more!" << std::endl << std::endl;
@@ -327,6 +510,7 @@ public:
   script::Variant DebugConnections() {
     script::Variant result = script::Variant::Object();
 
+    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
     result["response"] = "success";
     result["value"]    = endpoints_.variant();
 
@@ -373,6 +557,8 @@ public:
   template<typename T, typename... Args>
   void CallEndpoints(T CallEnum, bool pingFirst, Args... args) {
 
+    std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
+
     for(auto &forwardTo : endpoints_.endpoints()){
 
       // Check we are not connecting to ourself (we have a lock on this directory)
@@ -402,17 +588,23 @@ public:
 
       schema::Endpoint forwardTo = i.first;
 
+      // temporarily only use 8080 for logging - didn't work...
+      //if(forwardTo.TCPPort() != 8080 && CallEnum == protocols::NodeToNodeRPC::DBG_LOG_EVENT){
+          //continue;
+      //}
+
       // Check we are not connecting to ourself (we have a lock on this directory)
       if(forwardTo.equals(nodeEndpoint_)) {
         continue;
       }
 
+      /*
       // Ping them first to check they are there
       if(!CanConnect(forwardTo)) {
         fetch::logger.Info("Failed to ping: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
       } else {
         fetch::logger.Info("Successfully pinged: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
-      }
+      } */ // too much traffic - this should be safe though
 
       auto client = GetClient<network::TCPClient>(forwardTo);
       client->Call( protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
@@ -431,7 +623,7 @@ public:
   }
 
   schema::Instance  &instance()                                                                { return instance_; }
-  schema::Endpoints &endpoints()                                                               { return endpoints_; }
+  schema::Endpoints &endpoints()                                                               { std::lock_guard< fetch::mutex::Mutex > lock(mutex_); return endpoints_; }
 
 private:
   fetch::network::ThreadManager *tm_;
@@ -440,6 +632,7 @@ private:
   schema::Endpoints             endpoints_;
   const double                  timeoutMs_     = 9000;
   const double                  pingTimeoutMs_ = 500; // Important that this is << than timeoutMs
+  fetch::mutex::Mutex           mutex_;
 
   // Message box functionality, TODO: (`HUT`) : make this its own class
   std::map<schema::QueryModelMulti, std::vector<std::string>> messageBox_;

@@ -24,7 +24,7 @@ using namespace fetch;
 std::vector<std::string> getLocation(int select, uint32_t random) {
 
   // Possible location names
-  std::vector<std::string> list = {"destination_A", "destination_B", "destination_C", "destination_D", "destination_E", "destination_F", "destination_G"};
+  //std::vector<std::string> list = {"destination_A", "destination_B", "destination_C", "destination_D", "destination_E", "destination_F", "destination_G"};
   std::cout << "Random is " << random << "for select" << select << std::endl;
 
   // Center
@@ -37,7 +37,7 @@ std::vector<std::string> getLocation(int select, uint32_t random) {
   std::cout << "lat: " << lat << std::endl;
   std::cout << "long: " << lng << std::endl;
 
-  return {list[select % list.size()], std::to_string(lat), std::to_string(lng)};
+  return {std::string("destination_")+std::to_string(select), std::to_string(lat), std::to_string(lng)};
 }
 
 void runNode(int seed, network::ThreadManager *tm) {

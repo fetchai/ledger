@@ -1,6 +1,8 @@
 #include"oef/fetch_node_service.hpp"
 #include"commandline/parameter_parser.hpp"
+#include"oef/schema.hpp"
 
+using namespace fetch::schema;
 using namespace fetch::fetch_node_service;
 using namespace fetch::commandline;
 
@@ -21,10 +23,28 @@ int main(int argc, char const** argv) {
 
   const uint16_t httpPort      = params.GetParam<uint16_t>("http_port", 8080);
   const uint16_t tcpPort       = params.GetParam<uint16_t>("tcp_port", 9080);
-  const std::string configFile = params.GetParam<std::string>("config_file", "./default_oef_config.txt");
+  //const std::string configFile = params.GetParam<std::string>("config_file", "./default_oef_config.txt");
 
   fetch::network::ThreadManager tm(8);
-  FetchNodeService serv(&tm, tcpPort, httpPort, configFile);
+
+  // Need an Instance for the Node too
+  Attribute name        { "name",             Type::String, true}; // guarantee all DMs have this
+
+  // We then create a DataModel for this, use seed for name, note there should be no clashing DMs
+  std::string dmName = "nodeDM";
+  // Create a DataModel
+  DataModel generatedDM{dmName, {name}};
+
+  // Create an Instance of this DataModel
+  //std::unordered_map<std::string,std::string> attributeValues;
+
+  Instance instance{generatedDM, {{"name", "node"}}};
+
+  // no need for endpoins for non-distributed example
+  const Endpoint dummy1{};
+  const Endpoints dummy2{};
+
+  FetchNodeService serv(&tm, tcpPort, httpPort, instance, dummy1, dummy2);
 
   tm.Start();
 

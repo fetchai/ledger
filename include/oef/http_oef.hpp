@@ -76,6 +76,15 @@ public:
         return this->ServiceDirectory();
       });
 
+    // UI functionality
+    HTTPModule::Post("/ui-query", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->UiQuery(params, req);
+      });
+
+    HTTPModule::Post("/add-connection", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->AddConnection(params, req);
+      });
+
     // OEF debug functions
     HTTPModule::Post("/echo-query", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->EchoQuery(params, req);
@@ -129,6 +138,11 @@ public:
     HTTPModule::Post("/debug-all-history", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
         return this->DebugEndpoint();
       });
+
+    HTTPModule::Post("/set-node-latlong", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+        return this->SetNodeLatLong(params, req);
+      });
+
   }
 
   // Check that a user exists in our ledger
@@ -245,8 +259,10 @@ public:
 
       std::cout << "correctly parsed JSON: " << req.body() << std::endl;
 
-      std::string id = doc["ID"].as_byte_array();
+      //std::string id = doc["instance"][.as_byte_array();
       schema::Instance instance(doc["instance"]);
+      std::string id = instance.values()["name"];
+
       auto ret = oef_->RegisterInstance(id, instance);
 
       return http::HTTPResponse("{\"response\": \"success\", \"value\": \""+ret+"\"}");
@@ -411,6 +427,98 @@ public:
     }
   }
 
+  // UI query
+  http::HTTPResponse UiQuery(http::ViewParameters const &params, http::HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    try {
+      doc = req.JSON();
+      std::cout << "correctly parsed ui query JSON: " << req.body() << std::endl;
+      // {"angle1":0,"angle2":0,"name":"AEA_8080_0","searchText":"100"}
+
+      /*
+      //////////
+      // debug
+      std::ostringstream ret;
+      ret << req.body();
+      std::string debug(ret.str());
+      std::cout << "debug: " << debug << std::endl;
+      ////////// 
+      */
+
+      float angle1 = doc["angle1"].as_double();
+      std::cout << "angle1 is " << angle1 << std::endl;
+
+      float angle2 = doc["angle2"].as_double();
+      std::cout << "angle2 is " << angle2 << std::endl;
+
+      std::string name = doc["name"].as_byte_array();
+      std::cout << "name is " << name << std::endl;
+
+      std::string searchText = doc["searchtext"].as_byte_array();
+      std::cout << "search text is " << searchText << std::endl;
+
+      std::istringstream buffer(searchText);
+      int priceSearch;
+      buffer >> priceSearch;
+
+      std::cout << "search text as price is " << priceSearch << std::endl;
+
+      //schema::QueryModel query(doc);
+      //std::ostringstream ret;
+      //ret << query.variant();
+
+      schema::Attribute price   { "price",        schema::Type::Int, true}; // guarantee all DMs have this
+      schema::ConstraintType customConstraint{schema::ConstraintType::ValueType{schema::Relation{schema::Relation::Op::Lt, priceSearch}}};
+      schema::Constraint price_c   { price    ,    customConstraint};
+
+      // Query is build up from constraints
+      schema::QueryModel query1{{price_c}};
+
+      // create a special forwarding query 
+      schema::Instance instance = oef_->getInstance();
+
+      schema::QueryModel forwardingQuery{};
+
+      forwardingQuery.lat()    = instance.values()["latitude"];
+      forwardingQuery.lng()    = instance.values()["longitude"];
+      forwardingQuery.angle1() = angle1;
+      forwardingQuery.angle2() = angle2;
+
+      schema::QueryModelMulti multiQ{query1, forwardingQuery};
+
+      auto agents = oef_->AEAQueryMulti(name, multiQ);
+
+      //return http::HTTPResponse(ret.str());
+    } catch (...) {
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+    }
+
+    return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+  }
+
+  http::HTTPResponse AddConnection(http::ViewParameters const &params, http::HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    try {
+      doc = req.JSON();
+      std::cout << "correctly parsed JSON: " << req.body() << std::endl;
+
+      schema::Endpoint endpoint{doc};
+      oef_->addConnection(endpoint);
+
+      std::ostringstream ret;
+      ret << endpoint.variant();
+      std::cout << ret.str() << std::endl;
+
+      //return http::HTTPResponse(ret.str());
+      return http::HTTPResponse("{\"response\": \"success\" }");
+    } catch (...) {
+      return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
+    }
+
+  }
+
   // Functions to test JSON serialisation/deserialisation
   http::HTTPResponse EchoQuery(http::ViewParameters const &params, http::HTTPRequest const &req) {
 
@@ -543,7 +651,7 @@ public:
 
   http::HTTPResponse DebugAllEvents(http::ViewParameters const &params, http::HTTPRequest const &req) {
 
-    int defaultNumber = 100;
+    int defaultNumber = 3000;
     json::JSONDocument doc;
     try {
       doc = req.JSON();
@@ -552,8 +660,10 @@ public:
       // TODO: (`HUT`) : revert this hack once json doc parser fixed
       float maxNumber = doc["max_number"].is_undefined() ? defaultNumber : doc["max_number"].as_double(); // default 10 events
 
-      int maxNumberInt = int(maxNumber);
-
+      //int maxNumberInt = int(maxNumber);
+      //int maxNumberInt = int(defaultNumber); // TODO: (`HUT`) : fix
+      //
+      std::cout << "debugging " << maxNumber << " events" << std::endl;
       auto result = oef_->DebugAllEvents(maxNumber);
 
       std::ostringstream ret;
@@ -566,6 +676,78 @@ public:
       std::ostringstream ret;
       ret << result;
       return http::HTTPResponse(ret.str());
+    }
+  }
+
+  http::HTTPResponse SetNodeLatLong(http::ViewParameters const &params, http::HTTPRequest const &req) {
+
+    json::JSONDocument doc;
+    try {
+      doc = req.JSON();
+      std::cout << "correctly parsed JSON:: " << req.body() << std::endl;
+
+      // debug
+      std::ostringstream ret;
+      ret << req.body();
+      std::string debug(ret.str());
+      std::cout << "debug: " << debug << std::endl;
+
+      // TODO: (`HUT`) : this doesn't actually save you when submitting '{}'
+      if(doc["latitude"].is_undefined() || doc["longitude"].is_undefined()) {
+        throw 1;
+      }
+
+      float latitude  =  doc["latitude"].as_double();
+      float longitude =  doc["longitude"].as_double();
+
+      std::cout << "found latlong " << latitude << std::endl;
+      std::cout << "found latlong " << longitude << std::endl;
+
+      // reconfigure this node to have this latlong
+      schema::Instance instance = oef_->getInstance();
+
+      const std::unordered_map<std::string,std::string> &values = instance.values();
+      std::unordered_map<std::string,std::string> replicatedValues;
+
+      // TODO: (`HUT`) : refactor this.
+      for(auto &i : values) {
+        std::cout << "print latlongs" << std::endl;
+        std::cout << i.first << std::endl;
+        std::cout << i.second << std::endl;
+
+        if(i.first.compare("latitude") == 0) {
+
+          replicatedValues["latitude"] = std::to_string(latitude);
+          continue;
+        } else if(i.first.compare("longitude") == 0) {
+          replicatedValues["longitude"] = std::to_string(longitude);
+          continue;
+        }
+
+        replicatedValues[i.first] = i.second;
+      }
+
+      for(auto &i : replicatedValues) {
+        std::cout << "print latlongs" << std::endl;
+        std::cout << i.first << std::endl;
+        std::cout << i.second << std::endl;
+      }
+
+      schema::Instance instNew{instance.model(), replicatedValues};
+
+      oef_->setInstance(instNew);
+
+
+      ////int maxNumberInt = int(maxNumber);
+      //int maxNumberInt = int(defaultNumber); // TODO: (`HUT`) : fix
+      //auto result = oef_->DebugAllEvents(maxNumber);
+
+      //std::ostringstream ret;
+      //ret << result;
+
+      return http::HTTPResponse("{\"response\": \"success\"}");
+    } catch (...) {
+      return http::HTTPResponse("{\"response\": \"fail\", \"reason\": \"problems with parsing JSON\"}");
     }
   }
 
