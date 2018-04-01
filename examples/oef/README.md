@@ -30,6 +30,27 @@ http://localhost:8080/debug-all-agents
 http://localhost:8080/debug-all-events
 http://localhost:8080/debug-all-nodes
 
+OEF Demo
+========
+
+You should check out the corresponding tags for this repo and also the fetch-ledger-ui repo.
+
+build and run any number of nodes by running, in seperate terminals:
+
+./build/examples/visualisation_demo 0
+./build/examples/visualisation_demo 1
+./build/examples/visualisation_demo 2
+
+and so on. The index to the demo must be sequential, and will set up nodes with incrementing TCP and HTTP ports starting from TCP:9080 HTTP:8080 .
+
+After this, the nodes will have pseudo random locations in London. They should be set with predetermined locations by running
+
+./scripts/oef/populate_OEF.py
+
+Hit a key to make sure the populate script adds agents.
+
+Everything should now be set up for the javascript app to connect.
+
 Notes
 ========
 
