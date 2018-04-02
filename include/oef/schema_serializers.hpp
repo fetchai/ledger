@@ -1,6 +1,9 @@
 #ifndef SCHEMA_SERIALIZERS_BASIC_HPP
 #define SCHEMA_SERIALIZERS_BASIC_HPP
 
+#include<limits>
+#include<string>
+#include<set>
 #include"serializer/serializable_exception.hpp"
 #include"service/error_codes.hpp"
 #include"oef/schema.hpp"
@@ -17,15 +20,15 @@ namespace schema
 /////////////////////////////////////////////////////////////////
 // Instance
 template< typename T>
-void Serialize( T & serializer, Instance const &b) {
+void Serialize(T & serializer, Instance const &b) {
 
-  auto size = b.values().size(); // TODO: (`HUT`) : ask troells, is this the correct/clean way to do this
-  if(size > std::numeric_limits< uint32_t >::max()) {
-    throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Attempt to serialize Instance failed - unsafe type narrowing");
+  auto size = b.values().size(); // TODO: (`HUT`) : ask troels, is this the correct/clean way to do this
+  if (size > std::numeric_limits< uint32_t >::max()) {
+    throw fetch::serializers::SerializableException(fetch::service::error::ERROR_SERVICE_PROTOCOL, "Attempt to serialize Instance failed - unsafe type narrowing");
   }
   serializer << uint32_t(size);
 
-  for(auto i : b.values()){
+  for (auto i : b.values()) {
     std::string key = i.first;
     std::string val = i.second;
     serializer << key << val;
@@ -35,12 +38,12 @@ void Serialize( T & serializer, Instance const &b) {
 }
 
 template< typename T>
-void Deserialize( T & serializer, Instance &b) {
+void Deserialize(T & serializer, Instance &b) {
 
   uint32_t mapLen;
   serializer >> mapLen;
   auto &map = b.values();
-  for (int i = 0;i < mapLen;i++){
+  for (int i = 0; i < mapLen; i++) {
     std::string first;
     std::string second;
     serializer >> first >> second;
@@ -54,34 +57,34 @@ void Deserialize( T & serializer, Instance &b) {
 // Datamodel
 // TODO: (`HUT`) : keywords ser/deser not tested yet
 template< typename T>
-void Serialize( T & serializer, DataModel const &b) {
+void Serialize(T & serializer, DataModel const &b) {
   serializer << b.name() << b.keywords() << b.attributes();
 }
 
 template< typename T>
-void Deserialize( T & serializer, DataModel &b) {
+void Deserialize(T & serializer, DataModel &b) {
   serializer >> b.name() >> b.keywords() >> b.attributes();
 }
 
 /////////////////////////////////////////////////////////////////
 // Attribute
 template< typename T>
-void Serialize( T & serializer, Attribute const &b) {
+void Serialize(T & serializer, Attribute const &b) {
   serializer << b.name() << b.required() << b.type();
 }
 
 template< typename T>
-void Deserialize( T & serializer, Attribute &b) {
+void Deserialize(T & serializer, Attribute &b) {
   serializer >> b.name() >> b.required() >> b.type();
 }
 
 /////////////////////////////////////////////////////////////////
 // Type
-// TODO: (`HUT`) : ask troells, almost certainly a more efficient way to do this using serializer type inference
+// TODO: (`HUT`) : ask troels, almost certainly a more efficient way to do this using serializer type inference
 template< typename T>
-void Serialize( T & serializer, Type const &b) {
+void Serialize(T & serializer, Type const &b) {
 
-  switch(b) {
+  switch (b) {
   case Type::Float:
     serializer << uint32_t(1);
     break;
@@ -101,24 +104,24 @@ void Serialize( T & serializer, Type const &b) {
 }
 
 template< typename T>
-void Deserialize( T & serializer, Type &b) {
+void Deserialize(T & serializer, Type &b) {
   uint32_t res;
   serializer >> res;
-  switch(res) {
+  switch (res) {
   case 1:
-    b= Type::Float;
+    b = Type::Float;
     break;
   case 2:
-    b= Type::Int;
+    b = Type::Int;
     break;
   case 3:
-    b= Type::Bool;
+    b = Type::Bool;
     break;
   case 4:
-    b= Type::String;
+    b = Type::String;
     break;
   default:
-    b= Type::Int;
+    b = Type::Int;
     break;
   }
 }
@@ -126,67 +129,66 @@ void Deserialize( T & serializer, Type &b) {
 /////////////////////////////////////////////////////////////////
 // QueryModelMulti
 template< typename T>
-void Serialize( T & serializer, QueryModelMulti const &b) {
+void Serialize(T & serializer, QueryModelMulti const &b) {
   serializer << b.aeaQuery() << b.forwardingQuery() << b.jumps() << b.timestamp();
 }
 
 template< typename T>
-void Deserialize( T & serializer, QueryModelMulti &b) {
+void Deserialize(T & serializer, QueryModelMulti &b) {
   serializer >> b.aeaQuery() >> b.forwardingQuery() >> b.jumps() >> b.timestamp();
 }
 
 /////////////////////////////////////////////////////////////////
 // QueryModel
 template< typename T>
-void Serialize( T & serializer, QueryModel const &b) {
+void Serialize(T & serializer, QueryModel const &b) {
   serializer << b.constraints() << b.keywords() << b.timestamp() << b.lat() << b.lng() << b.angle1() << b.angle2();
 }
 
 template< typename T>
-void Deserialize( T & serializer, QueryModel &b) {
+void Deserialize(T & serializer, QueryModel &b) {
   serializer >> b.constraints() >> b.keywords() >> b.timestamp() >> b.lat() >> b.lng() >> b.angle1() >> b.angle2();
 }
 
 /////////////////////////////////////////////////////////////////
 // Constraints
 template< typename T>
-void Serialize( T & serializer, Constraint const &b) {
+void Serialize(T & serializer, Constraint const &b) {
   serializer << b.attribute() << b.constraintType();
 }
 
 template< typename T>
-void Deserialize( T & serializer, Constraint &b) {
+void Deserialize(T & serializer, Constraint &b) {
   serializer >> b.attribute() >> b.constraintType();
 }
 
 /////////////////////////////////////////////////////////////////
 // ConstraintType
 template< typename T>
-void Serialize( T & serializer, ConstraintType const &b) {
+void Serialize(T & serializer, ConstraintType const &b) {
   serializer << b.constraint();
 }
 
 template< typename T>
-void Deserialize( T & serializer, ConstraintType &b) {
+void Deserialize(T & serializer, ConstraintType &b) {
   serializer >> b.constraint();
 }
 
 /////////////////////////////////////////////////////////////////
 // Variant (var::variant<var::recursive_wrapper<Or>,var::recursive_wrapper<And>,Range,Relation,Set>)
 template< typename T, typename A, typename B, typename C, typename D, typename E>
-void Serialize( T & serializer, var::variant<A, B, C, D, E> const &b) { // TODO: (`HUT`) : ask troells if there is a more elegant way to serialize variants
+void Serialize(T & serializer, var::variant<A, B, C, D, E> const &b) { // TODO: (`HUT`) : ask troels if there is a more elegant way to serialize variants
 
   b.match(
-          [&] (A a) { throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); }, // throw since not implemented
-          [&] (B a) { throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); },
-          [&] (C a) { throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); },
-          [&] (D a) { serializer << a; },                                                                                                                           // TODO: (`HUT`) : the rest of these
-          [&] (E a) { throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); }
-          );
+          [&] (A a) { throw fetch::serializers::SerializableException(fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); }, // throw since not implemented
+          [&] (B a) { throw fetch::serializers::SerializableException(fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); },
+          [&] (C a) { throw fetch::serializers::SerializableException(fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); },
+          [&] (D a) { serializer << a; },                                                                                                                          // TODO: (`HUT`) : the rest of these
+          [&] (E a) { throw fetch::serializers::SerializableException(fetch::service::error::ERROR_SERVICE_PROTOCOL, "Missing functionality in serialization"); });
 }
 
 template< typename T, typename A, typename B, typename C, typename D, typename E>
-void Deserialize( T & serializer, var::variant<A, B, C, D, E> &b) {
+void Deserialize(T & serializer, var::variant<A, B, C, D, E> &b) {
   Relation a; // TODO: (`HUT`) : this, properly. It will throw if this is used incorrectly, though
   serializer >> a;
   b = a;
@@ -194,7 +196,7 @@ void Deserialize( T & serializer, var::variant<A, B, C, D, E> &b) {
 /////////////////////////////////////////////////////////////////
 // Relation
 template< typename T>
-void Serialize( T & serializer, Relation const &b) {
+void Serialize(T & serializer, Relation const &b) {
   serializer << b.op();
 
   // Push on value/type
@@ -202,18 +204,17 @@ void Serialize( T & serializer, Relation const &b) {
           [&] (int a)         { serializer << uint32_t(0) << a; },
           [&] (float a)       { serializer << uint32_t(1) << a; },
           [&] (std::string a) { serializer << uint32_t(2) << a; },
-          [&] (bool a)        { serializer << uint32_t(3) << a; }
-          );
+          [&] (bool a)        { serializer << uint32_t(3) << a; });
 }
 
 template< typename T>
-void Deserialize( T & serializer, Relation &b) {
+void Deserialize(T & serializer, Relation &b) {
 
   serializer >> b.op();
 
   uint32_t index;
   serializer >> index;
-  switch(index) {
+  switch (index) {
     case 0:
       {int res;
       serializer >> res;
@@ -244,9 +245,9 @@ void Deserialize( T & serializer, Relation &b) {
 /////////////////////////////////////////////////////////////////
 // Relation::Op
 template< typename T>
-void Serialize( T & serializer, Relation::Op const &b) {
+void Serialize(T & serializer, Relation::Op const &b) {
 
-  switch(b) {
+  switch (b) {
   case Relation::Op::Eq:
     serializer << uint32_t(1);
     break;
@@ -271,11 +272,11 @@ void Serialize( T & serializer, Relation::Op const &b) {
 }
 
 template< typename T>
-void Deserialize( T & serializer, Relation::Op &b) {
+void Deserialize(T & serializer, Relation::Op &b) {
   uint32_t index;
   serializer >> index;
 
-  switch(index) {
+  switch (index) {
     case 1:
       b = Relation::Op::Eq;
       break;
@@ -302,53 +303,53 @@ void Deserialize( T & serializer, Relation::Op &b) {
 /////////////////////////////////////////////////////////////////
 // Endpoint
 template< typename T>
-void Serialize( T & serializer, Endpoint const &b) {
+void Serialize(T & serializer, Endpoint const &b) {
 
   serializer << b.IP() << b.TCPPort();
 }
 
 template< typename T>
-void Deserialize( T & serializer, Endpoint &b) {
+void Deserialize(T & serializer, Endpoint &b) {
   serializer >> b.IP() >> b.TCPPort();
 }
 
 /////////////////////////////////////////////////////////////////
 // Endpoints
 template< typename T>
-void Serialize( T & serializer, Endpoints const &b) {
+void Serialize(T & serializer, Endpoints const &b) {
   serializer << b.endpoints();
 }
 
 template< typename T>
-void Deserialize( T & serializer, Endpoints &b) {
+void Deserialize(T & serializer, Endpoints &b) {
   serializer >> b.endpoints();
 }
 
 /////////////////////////////////////////////////////////////////
 // Set
 template< typename T, typename S>
-void Serialize( T & serializer, std::set<S> const &b) {
+void Serialize(T & serializer, std::set<S> const &b) {
 
   auto size = b.size();
 
-  if(size > std::numeric_limits< uint32_t >::max()) {
-    throw fetch::serializers::SerializableException( fetch::service::error::ERROR_SERVICE_PROTOCOL, "Attempt to serialize Instance failed - unsafe type narrowing");
+  if (size > std::numeric_limits< uint32_t >::max()) {
+    throw fetch::serializers::SerializableException(fetch::service::error::ERROR_SERVICE_PROTOCOL, "Attempt to serialize Instance failed - unsafe type narrowing");
   }
 
   serializer << uint32_t(size);
 
-  for(auto &i : b) {
+  for (auto &i : b) {
     serializer << i;
   }
 }
 
 template< typename T, typename Y>
-void Deserialize( T & serializer, std::set<Y> &b) {
+void Deserialize(T & serializer, std::set<Y> &b) {
 
   uint32_t mapLen;
   serializer >> mapLen;
 
-  for (int i = 0;i < mapLen;i++){
+  for (int i = 0; i < mapLen; i++) {
     Y element;
     serializer >> element;
     b.insert(element);

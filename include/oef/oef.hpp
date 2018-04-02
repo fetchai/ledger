@@ -6,6 +6,9 @@
 #include<map>
 #include<string>
 #include<fstream>
+#include<algorithm>
+#include<utility>
+#include<vector>
 #include"service/server.hpp"
 #include"oef/schema.hpp"
 #include"oef/schema_serializers.hpp"
@@ -23,8 +26,7 @@ namespace fetch
 namespace oef
 {
 
-struct Transaction
-{
+struct Transaction {
   int64_t               amount;
   byte_array::ByteArray fromAddress;
   byte_array::ByteArray notes;
@@ -34,8 +36,7 @@ struct Transaction
 };
 
 // TODO: (`HUT`) : make account history persistent, also connect it to AEA IDs, also put it in its own class
-struct Account
-{
+struct Account {
   int64_t balance = 0;
   std::vector< Transaction > history;
 };
@@ -77,7 +78,7 @@ public:
     std::vector<std::string> Query(std::string agentName, schema::QueryModel query) {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
-      if(messageHistorySingle_.add(query)) {
+      if (messageHistorySingle_.add(query)) {
       nodeDirectory_.LogEvent(agentName, query);
         return serviceDirectory_.Query(query);
       }
@@ -91,17 +92,17 @@ public:
       fetch::logger.Info("AEA multi query");
 
       mutex_.lock();
-      if(!nodeDirectory_.shouldForward(queryMulti)) {
+      if (!nodeDirectory_.shouldForward(queryMulti)) {
         fetch::logger.Info("AEA multi query not suitable for forwarding");
       }
 
 
-      if(messageHistory_.add(queryMulti) && nodeDirectory_.shouldForward(queryMulti)) {
+      if (messageHistory_.add(queryMulti) && nodeDirectory_.shouldForward(queryMulti)) {
         fetch::logger.Info("AEA multi query is suitable");
         auto agents = serviceDirectory_.Query(queryMulti.aeaQuery());
 
         // log each of these results as an event
-        for(auto &i : agents) {
+        for (auto &i : agents) {
           nodeDirectory_.LogEvent(i, queryMulti);
         }
 
@@ -157,7 +158,7 @@ public:
     bool AddLedgerUser(const fetch::byte_array::BasicByteArray &user) {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
-      if(IsLedgerUserPriv(user)) {
+      if (IsLedgerUserPriv(user)) {
         return false;
       }
 
@@ -187,23 +188,23 @@ public:
       tx.toAddress   = jsonDoc["toAddress"].as_byte_array();
       tx.json        = jsonDoc.root();
 
-      if((users_.find(tx.fromAddress) == users_.end())){
+      if ((users_.find(tx.fromAddress) == users_.end())) {
         result["response"] = "fail";
         result["reason"]   = "fromAddress does not exist";
         return result;
       }
 
-      if((users_.find(tx.toAddress) == users_.end())) {
+      if ((users_.find(tx.toAddress) == users_.end())) {
         result["response"] = "fail";
         result["reason"]   = "toAddress does not exist";
         return result;
       }
 
-      if(accounts_.find(tx.fromAddress) == accounts_.end()) {
+      if (accounts_.find(tx.fromAddress) == accounts_.end()) {
         accounts_[tx.fromAddress].balance = 0;
       }
 
-      if(accounts_[tx.fromAddress].balance < tx.amount) {
+      if (accounts_[tx.fromAddress].balance < tx.amount) {
         result["response"] = "fail";
         result["reason"]   = "Insufficient funds";
         return result;
@@ -224,19 +225,18 @@ public:
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
       auto &account = accounts_[address];
-      std::size_t n = std::min(20, int(account.history.size()) );
+      std::size_t n = std::min(20, static_cast<int>(account.history.size()) );
 
       script::Variant result = script::Variant::Object();
       script::Variant history = script::Variant::Array(n);
 
-      if(users_.find( address ) == users_.end()) {
+      if (users_.find(address) == users_.end()) {
         result["response"] = "fail";
         result["reason"]   = "toAddress does not exist";
         return result;
       }
 
-      for(std::size_t i=0; i < n; ++i)
-      {
+      for (std::size_t i=0; i < n; ++i) {
         history[i] = account.history[ account.history.size() - 1 - i].json;
       }
 
@@ -335,13 +335,13 @@ public:
 
       std::vector<std::string> result;
       mutex_.lock();
-      if(messageHistory_.add(queryMulti) && nodeDirectory_.shouldForward(queryMulti)) {
+      if (messageHistory_.add(queryMulti) && nodeDirectory_.shouldForward(queryMulti)) {
 
         nodeDirectory_.LogEvent(name, queryMulti);
 
         auto agents = serviceDirectory_.Query(queryMulti.aeaQuery());
 
-        for(auto &i : agents) {
+        for (auto &i : agents) {
           nodeDirectory_.LogEventReverse(i, queryMulti);   // this will log Node -> AEA
         }
 
@@ -375,7 +375,6 @@ public:
     NodeDirectory         nodeDirectory_;
 
   private:
-    const std::string                       configFile_;
     oef::ServiceDirectory                   serviceDirectory_;
     AEADirectory                            AEADirectory_;
     MessageHistory<schema::QueryModelMulti> messageHistory_;

@@ -17,7 +17,7 @@ public:
     this->Expose(NodeToAEAReverseRPC::BUY,  new service::CallableClassMember<NodeToAEAProtocol, std::string(std::string fromPerson)>(this, &NodeToAEAProtocol::Buy));
   }
 
-  // TODO: (`HUT`) : make these callback registering more elegant (ask Troels) TODO: (`HUT`) : s/Troells/Troels in codebase
+  // TODO: (`HUT`) : make these callback registering more elegant (ask Troels)
   void Ping(std::string mess) {
     if(onPing_ != nullptr) {
       onPing_(mess);

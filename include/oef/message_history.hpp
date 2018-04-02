@@ -1,9 +1,10 @@
 #ifndef NODE_MESSAGE_HISTORY_HPP
 #define NODE_MESSAGE_HISTORY_HPP
 
-#include"oef/schema.hpp"
 #include<list>
+#include<string>
 #include<algorithm>
+#include"oef/schema.hpp"
 
 // Keep track of unique events we have seen
 
@@ -13,10 +14,8 @@ namespace oef
 {
 
 // TODO: (`HUT`) : delete this - this is because we want to include a stringified variant in our message
-void find_and_replace(std::string& source, std::string const& find, std::string const& replace)
-{
-  for(std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
-  {
+void find_and_replace(std::string& source, std::string const& find, std::string const& replace) {
+  for (std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;) {
     source.replace(i, find.length(), replace);
     i += replace.length();
   }
@@ -74,11 +73,10 @@ private:
 class Events {
 
 public:
-
   void Insert(const Event &event) {
 
     // Enforce size limit // TODO: (`HUT`) : template this
-    if(3000 == events_.size()) {
+    if (3000 == events_.size()) {
       events_.pop_front();
     }
 
@@ -92,9 +90,9 @@ public:
     fetch::script::Variant res = fetch::script::Variant::Array(numberToReturn);
 
     int index = 0;
-    for(auto &i : events_) {
+    for (auto &i : events_) {
       res[index++] = i.variant();
-      if(index == numberToReturn) {
+      if (index == numberToReturn) {
         break;
       }
     }
@@ -108,19 +106,19 @@ private:
 template <typename T>
 class MessageHistory {
 public:
-  explicit MessageHistory() = default;
+  MessageHistory() = default;
 
   bool add(const T &queryModel) {
 
     // Check whether we have seen this before
-    for(auto &i : history_) {
-      if(i == queryModel) {
+    for (auto &i : history_) {
+      if (i == queryModel) {
         return false;
       }
     }
 
     // Enforce size limit on history
-    if(1000 <= history_.size()) {
+    if (1000 <= history_.size()) {
       history_.pop_front();
     }
 
@@ -134,12 +132,12 @@ private:
 };
 
 template< typename T>
-void Serialize( T & serializer, Event const &b) {
+void Serialize(T & serializer, Event const &b) {
   serializer << b.source() << b.destination() << b.details() << b.id() << b.wasOrigin();
 }
 
 template< typename T>
-void Deserialize( T & serializer, Event &b) {
+void Deserialize(T & serializer, Event &b) {
   serializer >> b.source() >> b.destination() >> b.details() >> b.id() >> b.wasOrigin();
 }
 

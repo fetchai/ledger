@@ -1,6 +1,7 @@
 #ifndef FETCH_NODE_SERVICE_OEF_HPP
 #define FETCH_NODE_SERVICE_OEF_HPP
 
+#include<memory>
 #include"oef/http_oef.hpp"
 #include"oef/oef.hpp"
 #include"service/server.hpp"
@@ -23,9 +24,9 @@ public:
     fetch::logger.Debug("Constructing fetch node service with TCP port: ", tcpPort, " and HTTP port: ", httpPort);
 
     node_               = std::make_shared<oef::NodeOEF>(this, tm, instance, nodeEndpoint, endpoints);  // Core OEF functionality - all protocols can access this
-    httpOEF_            = std::make_shared<http_oef::HttpOEF>(node_);                  // HTTP interface to node
-    aeaToNodeProtocol_  = std::make_shared<protocols::AEAToNodeProtocol>(node_);       // RPC AEA interface to node
-    nodeToNodeProtocol_ = std::make_shared<protocols::NodeToNodeProtocol>(node_);      // RPC Node interface to node
+    httpOEF_            = std::make_unique<http_oef::HttpOEF>(node_);                  // HTTP interface to node
+    aeaToNodeProtocol_  = std::make_unique<protocols::AEAToNodeProtocol>(node_);       // RPC AEA interface to node
+    nodeToNodeProtocol_ = std::make_unique<protocols::NodeToNodeProtocol>(node_);      // RPC Node interface to node
 
     // Add RPC interface AEA->Node. Note this allows the Node to callback to AEAs too
     this->Add(protocols::FetchProtocols::AEA_TO_NODE, aeaToNodeProtocol_.get());
@@ -43,9 +44,9 @@ public:
 
 private:
   std::shared_ptr<oef::NodeOEF>                  node_;
-  std::shared_ptr<protocols::AEAToNodeProtocol>  aeaToNodeProtocol_;
-  std::shared_ptr<protocols::NodeToNodeProtocol> nodeToNodeProtocol_;
-  std::shared_ptr<http_oef::HttpOEF>             httpOEF_;
+  std::unique_ptr<protocols::AEAToNodeProtocol>  aeaToNodeProtocol_;
+  std::unique_ptr<protocols::NodeToNodeProtocol> nodeToNodeProtocol_;
+  std::unique_ptr<http_oef::HttpOEF>             httpOEF_;
 };
 }
 }

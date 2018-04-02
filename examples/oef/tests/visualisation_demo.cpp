@@ -1,3 +1,8 @@
+#include<iostream>
+#include<tuple>
+#include<string>
+#include<vector>
+#include<set>
 #include"commandline/parameter_parser.hpp"
 #include"logger.hpp"
 #include"oef/fetch_node_service.hpp"
@@ -8,9 +13,6 @@
 #include"serializer/referenced_byte_array.hpp"
 #include"service/client.hpp"
 #include"random/lfg.hpp"
-#include<iostream>
-#include<tuple>
-
 #include"protocols/node_to_node/commands.hpp" // TODO: (`HUT`) : remove this
 
 using namespace fetch::byte_array;
@@ -30,8 +32,8 @@ std::vector<std::string> getLocation(int select, uint32_t random) {
   float base_lat = 51.5090446;
   float base_lng = -0.0993713;
 
-  float lat = base_lat + (((float(random % 100) - 50)*0.001) * 0.6);
-  float lng = base_lng + (((float(random % 111) - 50)*0.001) * 0.2);
+  float lat = base_lat + (((static_cast<float>(random % 100) - 50)*0.001) * 0.6);
+  float lng = base_lng + (((static_cast<float>(random % 111) - 50)*0.001) * 0.2);
 
   std::cout << "lat: " << lat << std::endl;
   std::cout << "long: " << lng << std::endl;
@@ -71,8 +73,8 @@ int main(int argc, char const** argv) {
 
   // All endpoints get default (9080) plus one other (9081 -> current)
   endp.insert({"localhost", uint16_t(9080)});
-  if(seed != 0) {
-    for (int i = 0; i < seed; ++i) { rand(); } // weakly ensure rand is different for each seed
+  if (seed != 0) {
+    for (std::size_t i = 0; i < seed; ++i) { rand(); } // weakly ensure rand is different for each seed
     uint16_t port = 9080 + (uint16_t(rand()) % seed);
     endp.insert({"localhost", port});
   }

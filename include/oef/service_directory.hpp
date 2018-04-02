@@ -4,6 +4,9 @@
 #ifndef SERVICE_DIRECTORY_HPP
 #define SERVICE_DIRECTORY_HPP
 
+#include<utility>
+#include<string>
+#include<vector>
 #include<unordered_map>
 #include<unordered_set>
 #include"oef/schema.hpp"
@@ -18,7 +21,7 @@ namespace oef
 
 class ServiceDirectory {
 public:
-  explicit ServiceDirectory() = default;
+  ServiceDirectory() = default;
 
   bool RegisterAgent(const schema::Instance &instance, const std::string &agent) {
     return data_[instance].Insert(agent);
@@ -26,10 +29,10 @@ public:
 
   bool UnregisterAgent(const schema::Instance &instance, const std::string &agent) {
     auto iter = data_.find(instance);
-    if(iter == data_.end())
+    if (iter == data_.end())
       return false;
     bool res = iter->second.Erase(agent);
-    if(iter->second.size() == 0) {
+    if (iter->second.size() == 0) {
       data_.erase(instance);
     }
     return res;
@@ -38,11 +41,11 @@ public:
   bool Remove(const std::string &agent) {
     bool res = false;
 
-    for (auto iter = data_.begin(); iter != data_.end(); ++iter ) {
+    for (auto iter = data_.begin(); iter != data_.end(); ++iter) {
       if (iter->second.Contains(agent)) {
         res = iter->second.Erase(agent);
 
-        if(iter->second.size() == 0) {
+        if (iter->second.size() == 0) {
           data_.erase(iter->first);
         }
         break; // NOTE: We assume here that agents will only be registered with one service.
@@ -54,8 +57,8 @@ public:
   std::vector<std::string> Query(const schema::QueryModel &query) const {
     std::unordered_set<std::string> res;
 
-    for(auto &d : data_) {
-      if(query.check(d.first)) {
+    for (auto &d : data_) {
+      if (query.check(d.first)) {
         d.second.Copy(res);
       }
     }
@@ -66,13 +69,13 @@ public:
     return data_.size();
   }
 
- std::vector<std::pair<schema::Instance, fetch::script::Variant>> QueryAgentsInstances(const schema::QueryModel &query) const {
+  std::vector<std::pair<schema::Instance, script::Variant>> QueryAgentsInstances(const schema::QueryModel &query) const {
 
-    std::vector<std::pair<schema::Instance, fetch::script::Variant>> res;
+    std::vector<std::pair<schema::Instance, script::Variant>> res;
 
-    for(auto &d : data_) {
-      if(query.check(d.first)) {
-        std::pair<schema::Instance, fetch::script::Variant> pushThis(d.first, d.second.variant());
+    for (auto &d : data_) {
+      if (query.check(d.first)) {
+        std::pair<schema::Instance, script::Variant> pushThis(d.first, d.second.variant());
         res.push_back(pushThis);
       }
     }
@@ -80,20 +83,19 @@ public:
     return res;
   }
 
- script::Variant variant() {
-    fetch::script::Variant res = fetch::script::Variant::Array(data_.size());
+  script::Variant variant() {
+    script::Variant res = script::Variant::Array(data_.size());
 
     int index = 0;
-    for(auto &i : data_){
+    for (auto &i : data_) {
 
-      fetch::script::Variant temp = fetch::script::Variant::Object();
+      script::Variant temp = script::Variant::Object();
       temp["service"] = i.first.variant();
       temp["agents"]  = i.second.variant();
       res[index++] = temp;
     }
-
     return res;
- }
+  }
 
 private:
   std::unordered_map<schema::Instance, schema::Agents> data_;

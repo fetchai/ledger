@@ -1,6 +1,8 @@
 #ifndef AEA_DIRECTORY_HPP
 #define AEA_DIRECTORY_HPP
 
+#include<map>
+#include<string>
 #include"protocols/node_to_aea/commands.hpp"
 
 // This file manages connections to AEAs that have registered for callbacks
@@ -30,9 +32,9 @@ class AEADirectory {
     void PingAllAEAs() {
       std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
-      detailed_assert( service_ != nullptr);
+      detailed_assert(service_ != nullptr);
 
-      for(auto &id: registered_aeas_) {
+      for (auto &id : registered_aeas_) {
         auto &rpc = service_->ServiceInterfaceOf(id.first);
 
         rpc.Call(protocols::FetchProtocols::NODE_TO_AEA, protocols::NodeToAEAReverseRPC::PING, "ping_message"); // TODO: (`HUT`) : think about decoupling
@@ -45,8 +47,8 @@ class AEADirectory {
 
       std::string aeaID{id};
 
-      for (std::map<uint32_t,std::string>::const_iterator it=registered_aeas_.begin(); it!=registered_aeas_.end(); ++it){
-        if(aeaID.compare(it->second) == 0){
+      for (std::map<uint32_t, std::string>::const_iterator it = registered_aeas_.begin(); it != registered_aeas_.end(); ++it) {
+        if (aeaID.compare(it->second) == 0) {
           result["response"] = "success";
 
           auto &rpc = service_->ServiceInterfaceOf(it->first);
@@ -65,8 +67,7 @@ class AEADirectory {
       return result;
     }
 
-    void register_service_instance( service::ServiceServer< fetch::network::TCPServer > *ptr)
-    {
+    void register_service_instance(service::ServiceServer< fetch::network::TCPServer > *ptr) {
       service_ = ptr;
     }
 

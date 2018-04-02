@@ -1,4 +1,11 @@
+#ifndef EXAMPLES_OEF_TESTS_TEST_AEA_H_
+#define EXAMPLES_OEF_TESTS_TEST_AEA_H_
+
 #include<iostream>
+#include<unordered_map>
+#include<memory>
+#include<string>
+#include<vector>
 #include"serializer/referenced_byte_array.hpp"
 #include"service/client.hpp"
 #include"logger.hpp"
@@ -22,7 +29,7 @@ public:
   TestAEA(TestAEA const &rhs)  = delete;
   TestAEA(TestAEA const &&rhs)  = delete;
 
-  TestAEA(uint32_t randomSeed, uint16_t portNumber=9080) : randomSeed_{randomSeed}, portNumber_{portNumber} {
+  explicit TestAEA(uint32_t randomSeed, uint16_t portNumber = 9080) : randomSeed_{randomSeed}, portNumber_{portNumber} {
 
     std::ostringstream name;
     name << std::string("aea_") << std::to_string(portNumber_) << std::string("_") << std::to_string(randomSeed & 0xFFFF);
@@ -36,7 +43,6 @@ public:
   bool isSetup() { return isSetup_; }
 
 private:
-
   uint32_t                             randomSeed_;
   uint16_t                             portNumber_;
   std::unique_ptr<std::thread>         thread_;
@@ -52,7 +58,7 @@ private:
     ServiceClient< fetch::network::TCPClient > client("localhost", portNumber_, &tm);
     tm.Start();
 
-    std::this_thread::sleep_for( std::chrono::milliseconds(100) );
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // Define attributes that can exist
     schema::Attribute name        { "name",             schema::Type::String, true}; // guarantee all DMs have this
@@ -69,7 +75,7 @@ private:
     int random = randomSeed_;
 
     for (int i = 0; i < possibleAttributes.size(); ++i) {
-      if(random & 0x1) {
+      if (random & 0x1) {
         usedAttributes.push_back(possibleAttributes[i]);
       }
       random >>= 1;
@@ -81,7 +87,7 @@ private:
     schema::DataModel generatedDM{dmName, usedAttributes};
 
     // Create an Instance of this DataModel
-    std::unordered_map<std::string,std::string> attributeValues;
+    std::unordered_map<std::string, std::string> attributeValues;
 
     // Set the hard-coded values
     attributeValues[usedAttributes[0].name()] = AEA_name_;
@@ -95,7 +101,7 @@ private:
     schema::Instance instance{generatedDM, attributeValues};
 
     // Register our datamodel
-    std::cout << client.Call( FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::REGISTER_INSTANCE, AEA_name_, instance ).As<std::string>( ) << std::endl;
+    std::cout << client.Call(FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::REGISTER_INSTANCE, AEA_name_, instance).As<std::string>() << std::endl;
 
     // Register ourself for callbacks
     NodeToAEAProtocol protocol;
@@ -114,7 +120,7 @@ private:
       std::cout << "AEA " << AEA_name_ << " has been called back by " << fromPerson << std::endl;
 
       bananaMutex.lock();
-      if(bananas == 0) {
+      if (bananas == 0) {
         bananaMutex.unlock();
         conditionVariable.notify_all();
         return std::string{"we have no bananas"};
@@ -130,7 +136,7 @@ private:
 
     auto p =  client.Call(FetchProtocols::AEA_TO_NODE, AEAToNodeRPC::REGISTER_FOR_CALLBACKS, AEA_name_, instance);
 
-    if(p.Wait() ) {
+    if (p.Wait()) {
       std::cout << "Successfully registered for callbacks" << std::endl;
     }
 
@@ -149,3 +155,5 @@ private:
     tm.Stop();
   }
 };
+
+#endif

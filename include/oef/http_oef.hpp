@@ -4,8 +4,15 @@
 // This file defines the HTTP interface that allows interaction with the (fake) ledger and the OEF. It will need to be split into two at some point to handle these
 // components seperately
 
+#include<map>
+#include<vector>
+#include<algorithm> // TODO: (`HUT`) : remove unnecc. includes
+#include<sstream>
 #include<iostream>
 #include<fstream>
+#include<unordered_map>
+#include<memory>
+#include<string>
 #include"http/server.hpp"
 #include"http/middleware/allow_origin.hpp"
 #include"http/middleware/color_log.hpp"
@@ -15,21 +22,15 @@
 #include"script/variant.hpp"
 #include"oef/oef.hpp"
 
-#include<map>
-#include<vector>
-#include<algorithm> // TODO: (`HUT`) : remove unnecc. includes
-#include<sstream>
-
 namespace fetch
 {
 namespace http_oef
 {
 
-class HttpOEF : public fetch::http::HTTPModule
-{
+class HttpOEF : public fetch::http::HTTPModule {
 public:
   // In constructor attach the callbacks for the http pages we want
-  HttpOEF(std::shared_ptr<oef::NodeOEF> oef) : oef_{oef} {
+  explicit HttpOEF(std::shared_ptr<oef::NodeOEF> oef) : oef_{oef} {
     // Ledger functionality
     HTTPModule::Post("/check", [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
           return this->CheckUser(params, req);
@@ -158,7 +159,7 @@ public:
       return http::HTTPResponse("{\"response\": \"fail\", \"reason\": \"problems with parsing JSON\"}");
     }
 
-    if(!(oef_->IsLedgerUser(doc["address"].as_byte_array()))) {
+    if (!(oef_->IsLedgerUser(doc["address"].as_byte_array()))) {
       return http::HTTPResponse("{\"response\": \"success\", \"value\": \"false\"}");
     }
 
@@ -178,7 +179,7 @@ public:
       return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
 
-    if(!(oef_->AddLedgerUser(doc["address"].as_byte_array()))) {
+    if (!(oef_->AddLedgerUser(doc["address"].as_byte_array()))) {
       return http::HTTPResponse("{\"response\": \"fail\"}");
     }
 
@@ -200,7 +201,7 @@ public:
 
     script::Variant result = script::Variant::Object();
 
-    if(!(oef_->IsLedgerUser(doc["address"].as_byte_array()))) {
+    if (!(oef_->IsLedgerUser(doc["address"].as_byte_array()))) {
       return http::HTTPResponse("{\"response\": 0}");
     }
 
@@ -403,7 +404,7 @@ public:
       response["response"]           = script::Variant::Array(agentsInstances.size());
 
       // Build a response
-      for(int i = 0;i < agentsInstances.size();i++) {
+      for (int i = 0; i < agentsInstances.size(); i++) {
         response["response"][i]    = script::Variant::Array(2);
         response["response"][i][0] = agentsInstances[i].first.variant();
         response["response"][i][1] = script::Variant(agentsInstances[i].second);
@@ -444,7 +445,7 @@ public:
       // Query is build up from constraints
       schema::QueryModel query1{{price_c}};
 
-      // create a special forwarding query 
+      // create a special forwarding query
       schema::Instance instance = oef_->getInstance();
 
       schema::QueryModel forwardingQuery{};
@@ -484,7 +485,6 @@ public:
     } catch (...) {
       return http::HTTPResponse("{\"response\": \"false\", \"reason\": \"problems with parsing JSON\"}");
     }
-
   }
 
   // Functions to test JSON serialisation/deserialisation
@@ -657,7 +657,7 @@ public:
       std::string debug(ret.str());
 
       // TODO: (`HUT`) : this doesn't actually save you when submitting '{}'
-      if(doc["latitude"].is_undefined() || doc["longitude"].is_undefined()) {
+      if (doc["latitude"].is_undefined() || doc["longitude"].is_undefined()) {
         throw 1;
       }
 
@@ -667,12 +667,12 @@ public:
       // reconfigure this node to have this latlong
       schema::Instance instance = oef_->getInstance();
 
-      const std::unordered_map<std::string,std::string> &values = instance.values();
-      std::unordered_map<std::string,std::string> replicatedValues;
+      const std::unordered_map<std::string, std::string> &values = instance.values();
+      std::unordered_map<std::string, std::string> replicatedValues;
 
       // TODO: (`HUT`) : refactor this.
-      for(auto &i : values) {
-        if(i.first.compare("latitude") == 0) {
+      for (auto &i : values) {
+        if (i.first.compare("latitude") == 0) {
 
           replicatedValues["latitude"] = std::to_string(latitude);
           continue;

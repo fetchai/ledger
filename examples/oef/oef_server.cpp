@@ -1,3 +1,4 @@
+#include<string>
 #include"oef/fetch_node_service.hpp"
 #include"commandline/parameter_parser.hpp"
 #include"oef/schema.hpp"
@@ -11,7 +12,7 @@ int main(int argc, char const** argv) {
   ParamsParser params;
   params.Parse(argc, argv);
 
-  if(params.IsParam("h") || params.IsParam("help")) {
+  if (params.IsParam("h") || params.IsParam("help")) {
     std::cout << "usage: ./" << argv[0] << " [params ...]" << std::endl;
     std::cout << "Params are:" << std::endl;
     std::cout << " -http_port=[8080]" << std::endl;

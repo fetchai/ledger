@@ -1,4 +1,7 @@
 #include<iostream>
+#include<memory>
+#include<string>
+#include<vector>
 #include"serializer/referenced_byte_array.hpp"
 #include"service/client.hpp"
 #include"oef/schema.hpp"
@@ -14,11 +17,10 @@ using namespace fetch::random;
 // Example of OEF code performing basic register-query functionality
 
 int main() {
-
   LaggedFibonacciGenerator<> lfg;
   std::vector<std::shared_ptr<TestAEA>> testAEAs;
 
-  for (int i = 0; i < 10; ++i) {
+  for (std::size_t i = 0; i < 10; ++i) {
     testAEAs.push_back(std::make_shared<TestAEA>(lfg()));
   }
 

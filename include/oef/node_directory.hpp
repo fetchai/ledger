@@ -1,13 +1,17 @@
 #ifndef NODE_DIRECTORY_HPP
 #define NODE_DIRECTORY_HPP
 
+#include<math.h>
+#include<map>
+#include<utility>
+#include<string>
+#include<vector>
+#include<set>
 #include"oef/schema.hpp"
 #include"oef/message_history.hpp"
 #include"service/client.hpp"
 #include"protocols/fetch_protocols.hpp"
 #include"protocols/node_to_node/commands.hpp"
-
-#include<math.h>
 
 // This file holds and manages connections to other nodes
 
@@ -18,7 +22,7 @@ namespace oef
 
 class NodeDirectory {
 public:
-  explicit NodeDirectory() = default;
+  NodeDirectory() = default;
 
   NodeDirectory(network::ThreadManager *tm, const schema::Instance &instance, const schema::Endpoint &nodeEndpoint, const schema::Endpoints &endpoints) :
     tm_{tm},
@@ -33,7 +37,7 @@ public:
     fetch::logger.Info("Destroying NodeDirectory");
 
     std::lock_guard< fetch::mutex::Mutex > lock(serviceClientsMutex_);
-    for(auto &i : serviceClients_) {
+    for (auto &i : serviceClients_) {
       delete i.second;
     }
   }
@@ -64,16 +68,16 @@ public:
   // Check if any packets we see should be forwarded
   bool shouldForward(schema::QueryModelMulti queryMulti) {
 
-    if(!(queryMulti.jumps() > 0)) {
+    if (!(queryMulti.jumps() > 0)) {
       return false;
     }
 
     const schema::QueryModel &fwd = queryMulti.forwardingQuery();
 
     // catch special directional search
-    if(fwd.angle1() != 0 || fwd.angle2() != 0) {
+    if (fwd.angle1() != 0 || fwd.angle2() != 0) {
 
-      if(fwd.lat().compare(instance_.values()["latitude"]) == 0 && fwd.lng().compare(instance_.values()["longitude"]) == 0 ) {
+      if (fwd.lat().compare(instance_.values()["latitude"]) == 0 && fwd.lng().compare(instance_.values()["longitude"]) == 0) {
         fetch::logger.Info("Forwarding parameter matches our lat/long");
       } else {
 
@@ -100,19 +104,19 @@ public:
 
         ourAngleToOrigin += (M_PI*2);
 
-        while(ourAngleToOrigin > (M_PI*2)) {
+        while (ourAngleToOrigin > (M_PI*2)) {
           ourAngleToOrigin -= M_PI*2;
         }
 
         // Avoid modular edge case
-        if(angle2 < angle1) {
+        if (angle2 < angle1) {
 
-          if(ourAngleToOrigin >= angle1 || ourAngleToOrigin <= angle2) {
+          if (ourAngleToOrigin >= angle1 || ourAngleToOrigin <= angle2) {
             return true;
           }
         }
 
-        if(ourAngleToOrigin >= angle1 && ourAngleToOrigin <= (angle2)) {
+        if (ourAngleToOrigin >= angle1 && ourAngleToOrigin <= (angle2)) {
           return true;
         } else {
           return false;
@@ -139,7 +143,7 @@ public:
     std::set<schema::Endpoint> &debugRef  = debugEndpoints_[nodeEndpoint_].second.endpoints();
     debugRef.insert(endpoint);
 
-    CallAllEndpoints(protocols::NodeToNodeRPC::DBG_ADD_CONNECTION, nodeEndpoint_, endpoint );
+    CallAllEndpoints(protocols::NodeToNodeRPC::DBG_ADD_CONNECTION, nodeEndpoint_, endpoint);
   }
 
   void DebugAddConnection(const schema::Endpoint &endpoint, const schema::Endpoint &connection) {
@@ -151,7 +155,7 @@ public:
   void AddEndpoint(const schema::Endpoint &endpoint, const schema::Instance &instance, const schema::Endpoints &endpoints) {
 
     // If we already know of this, do nothing
-    if(debugEndpoints_.find(endpoint) != debugEndpoints_.end()){
+    if (debugEndpoints_.find(endpoint) != debugEndpoints_.end()) {
       return;
     }
 
@@ -160,23 +164,23 @@ public:
     // TODO: (`HUT`) : not like this
     // Let the ORIGINAL Node know our details // TODO: (`HUT`) : use common call for this
     auto client = GetClient<network::TCPClient>(endpoint);
-    client->Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::DBG_ADD_ENDPOINT, nodeEndpoint_, instance_, endpoints_);
+    client->Call(protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::DBG_ADD_ENDPOINT, nodeEndpoint_, instance_, endpoints_);
 
     // otherwise forward to all known endpoints
-    for(auto &i : debugEndpoints_){
+    for (auto &i : debugEndpoints_) {
 
       schema::Endpoint forwardTo = i.first;
 
-      if(!CanConnect(forwardTo)) {
-        fetch::logger.Info("Failed to ping: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
+      if (!CanConnect(forwardTo)) {
+        fetch::logger.Info("Failed to ping: ",  nodeEndpoint_.IP(), ":", nodeEndpoint_.TCPPort(), " to ", forwardTo.IP(), ":", forwardTo.TCPPort());
       } else {
-        fetch::logger.Info("Successfully pinged: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
+        fetch::logger.Info("Successfully pinged: ", nodeEndpoint_.IP(), ":", nodeEndpoint_.TCPPort(), " to ", forwardTo.IP(), ":", forwardTo.TCPPort());
       }
 
       client = GetClient<network::TCPClient>(forwardTo);
 
-      fetch::logger.Info("Forwarding from:",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort(), " endpoint ", endpoint.IP(), ":", endpoint.TCPPort());
-      client->Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::DBG_ADD_ENDPOINT, endpoint, instance, endpoints);
+      fetch::logger.Info("Forwarding from:", nodeEndpoint_.IP(), ":", nodeEndpoint_.TCPPort(), " to ", forwardTo.IP(), ":", forwardTo.TCPPort(), " endpoint ", endpoint.IP(), ":", endpoint.TCPPort());
+      client->Call(protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::DBG_ADD_ENDPOINT, endpoint, instance, endpoints);
     }
 
     debugEndpoints_[endpoint] = std::make_pair(instance, endpoints);
@@ -191,7 +195,7 @@ public:
     fetch::script::Variant res = fetch::script::Variant::Array(debugEndpoints_.size());
 
     int index = 0;
-    for(auto &i : debugEndpoints_){
+    for (auto &i : debugEndpoints_) {
 
       fetch::script::Variant temp = fetch::script::Variant::Object();
       temp["endpoint"] = i.first.variant();
@@ -218,7 +222,7 @@ public:
     fetch::script::Variant res = fetch::script::Variant::Array(debugEndpoints_.size());
 
     int index = 0;
-    for(auto &i : debugEndpoints_){
+    for (auto &i : debugEndpoints_) {
 
       fetch::script::Variant temp = fetch::script::Variant::Object();
       temp["endpoint"] = i.first.variant();
@@ -267,7 +271,7 @@ public:
     fetch::script::Variant res = fetch::script::Variant::Array(debugAgentsWithInstances_.size());
 
     int index = 0;
-    for(auto &i : debugAgentsWithInstances_) {
+    for (auto &i : debugAgentsWithInstances_) {
       res[index++] = i.second.variant();
     }
 
@@ -284,7 +288,7 @@ public:
   // By AEA
   void ForwardQuery(const schema::QueryModelMulti &queryModel) {
 
-    if(queryModel.jumps() == 0) {
+    if (queryModel.jumps() == 0) {
       return;
     }
 
@@ -299,7 +303,7 @@ public:
   // By Node
   void ForwardQuery(const schema::Endpoint &endpoint, const schema::QueryModelMulti &queryModel) {
 
-    if(queryModel.jumps() == 0 || !shouldForward(queryModel)) {
+    if (queryModel.jumps() == 0 || !shouldForward(queryModel)) {
       return;
     }
 
@@ -317,7 +321,7 @@ public:
   void ReturnQuery(const schema::QueryModelMulti &queryModel, const std::vector<std::string> &agents) {
     // If we have a return path set up, use that, otherwise dump it in the message box
     messageBoxesMutex_.lock();
-    if(messageBoxCallback_.find(queryModel) != messageBoxCallback_.end()){
+    if (messageBoxCallback_.find(queryModel) != messageBoxCallback_.end()) {
       std::cout << "Forwarding return query!" << std::endl;
       CallEndpoint(protocols::NodeToNodeRPC::RETURN_QUERY, messageBoxCallback_[queryModel], queryModel, agents);
       messageBoxesMutex_.unlock();
@@ -326,7 +330,7 @@ public:
     }
 
     std::cout << "Received return query! Adding to " << schema::vtos(queryModel.variant()) << std::endl;
-    for(auto &i : agents) {
+    for (auto &i : agents) {
       std::cout << i << std::endl;
     }
 
@@ -349,7 +353,7 @@ public:
 
   // Special for demo TODO: (`HUT`) : refactor
   template <typename T>
-  void LogEventReverse(const std::string source, const T &eventParam, bool wasOrigin=false) {
+  void LogEventReverse(const std::string source, const T &eventParam, bool wasOrigin = false) {
 
     std::string hash = eventParam.getHash();
     Event event{nodeName_, source, schema::vtos(eventParam.variant()), hash, wasOrigin};
@@ -363,7 +367,7 @@ public:
 
   // Query has hit our node
   template <typename T>
-  void LogEvent(const std::string source, const T &eventParam, bool wasOrigin=false) {
+  void LogEvent(const std::string source, const T &eventParam, bool wasOrigin = false) {
 
     std::string hash = eventParam.getHash();
     Event event{source, nodeName_, schema::vtos(eventParam.variant()), hash, wasOrigin};
@@ -413,9 +417,9 @@ public:
 
       auto client = GetClient<network::TCPClient>(endpoint);
 
-      auto resp = client->Call( protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::PING);
+      auto resp = client->Call(protocols::FetchProtocols::NODE_TO_NODE, protocols::NodeToNodeRPC::PING);
 
-      if(resp.Wait(pingTimeoutMs_)){
+      if (resp.Wait(pingTimeoutMs_)) {
         return true;
       }
 
@@ -429,7 +433,7 @@ public:
   template<typename T, typename... Args>
   void CallEndpoint(T CallEnum, schema::Endpoint endpoint, Args... args) {
     auto client = GetClient<network::TCPClient>(endpoint);
-    client->Call( protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
+    client->Call(protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
   }
 
   // Call the endpoints that we know of
@@ -438,24 +442,24 @@ public:
 
     std::lock_guard< fetch::mutex::Mutex > lock(mutex_);
 
-    for(auto &forwardTo : endpoints_.endpoints()){
+    for (auto &forwardTo : endpoints_.endpoints()) {
 
       // Check we are not connecting to ourself (we have a lock on this directory)
-      if(forwardTo.equals(nodeEndpoint_)) {
+      if (forwardTo.equals(nodeEndpoint_)) {
         continue;
       }
 
       // Ping them first to check they are there
-      if(pingFirst) {
-        if(!CanConnect(forwardTo)) {
-          fetch::logger.Info("Failed to ping: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
+      if (pingFirst) {
+        if (!CanConnect(forwardTo)) {
+          fetch::logger.Info("Failed to ping: ",  nodeEndpoint_.IP(), ":", nodeEndpoint_.TCPPort(), " to ", forwardTo.IP(), ":", forwardTo.TCPPort());
         } else {
-          fetch::logger.Info("Successfully pinged: ",  nodeEndpoint_.IP(),":",nodeEndpoint_.TCPPort()," to ",forwardTo.IP(),":",forwardTo.TCPPort());
+          fetch::logger.Info("Successfully pinged: ",  nodeEndpoint_.IP(), ":", nodeEndpoint_.TCPPort(), " to ", forwardTo.IP(), ":", forwardTo.TCPPort());
         }
       }
 
       auto client = GetClient<network::TCPClient>(forwardTo);
-      client->Call( protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
+      client->Call(protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
     }
   }
 
@@ -463,17 +467,17 @@ public:
   template<typename T, typename... Args>
   void CallAllEndpoints(T CallEnum, Args... args) {
 
-    for(auto &i : debugEndpoints_){
+    for (auto &i : debugEndpoints_) {
 
       schema::Endpoint forwardTo = i.first;
 
       // Check we are not connecting to ourself (we have a lock on this directory)
-      if(forwardTo.equals(nodeEndpoint_)) {
+      if (forwardTo.equals(nodeEndpoint_)) {
         continue;
       }
 
       auto client = GetClient<network::TCPClient>(forwardTo);
-      client->Call( protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
+      client->Call(protocols::FetchProtocols::NODE_TO_NODE, CallEnum, args...);
     }
   }
 
@@ -481,7 +485,7 @@ public:
   template <typename T>
   service::ServiceClient<T> *GetClient(schema::Endpoint endpoint) {
 
-    if(serviceClients_.find(endpoint) == serviceClients_.end()){
+    if (serviceClients_.find(endpoint) == serviceClients_.end()) {
       serviceClients_[endpoint] = new service::ServiceClient<T> {endpoint.IP(), endpoint.TCPPort(), tm_};
     }
 
@@ -519,7 +523,6 @@ private:
   // constantly active service clients
   std::map<schema::Endpoint, service::ServiceClient<fetch::network::TCPClient> *> serviceClients_;
   fetch::mutex::Mutex                                                             serviceClientsMutex_;
-
 };
 
 }
