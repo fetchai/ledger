@@ -41,7 +41,7 @@ public:
   typedef typename thread_manager_type::event_handle_type event_handle_type;  
   typedef typename T::handle_type handle_type;
 
-  // TODO Rename
+  // TODO Rename and move
   class ClientRPCInterface : public ServiceClientInterface 
   {
   public:
@@ -69,6 +69,7 @@ public:
     self_type *server_; // TODO: Change to shared ptr and add enable_shared_from_this on service
     handle_type client_;    
   };
+  // EN of ClientRPC
   
   struct PendingMessage 
   {
@@ -88,9 +89,6 @@ public:
     event_service_start_ = thread_manager->OnBeforeStart([this]()      
       {
         this->running_ = true;        
-        this->thread_manager_->io_service().post([this]() {
-            this->ProcessMessages();
-          });        
       } );
     event_service_stop_ = thread_manager->OnBeforeStop([this]()      
       {
@@ -129,14 +127,11 @@ public:
 
     return *client_rpcs_[i];
   }
-  
-  
 
 protected:
   bool DeliverResponse(handle_type client, network::message_type const& msg) override {
     return super_type::Send( client, msg );
   }
-  
 
 private:
   void PushRequest(handle_type client,
@@ -148,6 +143,10 @@ private:
     fetch::logger.Info("RPC call from ", client);    
     PendingMessage pm = {client, msg};    
     messages_.push_back(pm);
+
+    if(running_) {
+      thread_manager_->Post([this]() { this->ProcessMessages(); } );  
+    }
   }
 
   void ProcessMessages() 
@@ -203,10 +202,7 @@ private:
             
           });
       }
-    }
-    
-    if(running_) {
-      thread_manager_->io_service().post([this]() { this->ProcessMessages(); } );  
+      
     }
     
   }

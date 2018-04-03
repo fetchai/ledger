@@ -8,6 +8,7 @@ namespace serializers {
 
 template <typename T>
 struct TypeRegister {
+  typedef uint8_t value_type;  
   static const byte_array::ConstByteArray name;
   enum { value = 0 };
 };
