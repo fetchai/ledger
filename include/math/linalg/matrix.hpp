@@ -11,7 +11,7 @@ namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename T, typename C = SharedArray<T>, typename A = fetch::memory::RectangularArray<T, C> >
+template <typename T, typename C = fetch::memory::SharedArray<T>, typename A = fetch::memory::RectangularArray<T, C> >
 class Matrix : public A {
  public:
   typedef A super_type;
@@ -300,7 +300,7 @@ class Matrix : public A {
   }
 
  private:
-  template <std::size_t C>
+  template <std::size_t N>
   void DotImplementation(Matrix const &m, Matrix &ret) {
     // FIXME: yet to be implemented
     std::cerr << "DotImplementation in matrix not made yet!!" << std::endl;

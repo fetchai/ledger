@@ -1,5 +1,6 @@
 #ifndef MEMORY_RECTANGULAR_ARRAY_HPP
 #define MEMORY_RECTANGULAR_ARRAY_HPP
+#include "memory/array.hpp"
 #include "memory/shared_array.hpp"
 #include "assert.hpp"
 #include <cmath>
