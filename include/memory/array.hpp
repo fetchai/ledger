@@ -10,16 +10,12 @@
 namespace fetch {
 namespace memory {
 
-#ifdef FETCH_TESTING_ENABLED
-namespace testing {
-std::size_t total_shared_objects = 0;
-};
-#endif
-
 template <typename T>
 class Array {
  public:
-  typedef std::atomic<uint64_t> counter_type;
+  typedef std::size_t size_type;
+  typedef T* data_type;
+  
   typedef ForwardIterator<T> iterator;
   typedef BackwardIterator<T> reverse_iterator;
   typedef Array<T> self_type;
@@ -37,17 +33,14 @@ class Array {
   Array(std::size_t const &n) {
     size_ = n;
     if (n > 0) data_ = new type[padded_size()];
-
-#ifdef FETCH_TESTING_ENABLED
-    ++testing::total_shared_objects;
-#endif
   }
 
   Array() : Array(0) {}
 
-  Array(Array const &other) {
+  Array(Array const &other)
+  {
     this->operator=(other);
-}
+  }
 
   Array(Array &&other) {
     std::swap(size_, other.size_);
@@ -65,6 +58,19 @@ class Array {
     if(data_ != nullptr) delete[] data_;
   }
 
+  Array< type > Copy() const
+  {
+    Array< type > ret( size_ );
+    for(std::size_t i = 0; i < size_; ++i )
+    {
+      ret[i] = At( i );
+    }
+    
+    return ret;
+  }
+  
+
+  
   iterator begin() { return iterator(data_, data_ + size()); }
   iterator end() { return iterator(data_ + size(), data_ + size()); }
   reverse_iterator rbegin() {
@@ -135,7 +141,7 @@ class Array {
 
  private:
 
-  std::size_t size_ = 0;
+  size_type size_ = 0;
   T *data_ = nullptr;
 };
 };
