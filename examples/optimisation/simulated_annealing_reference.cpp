@@ -7,15 +7,15 @@
 
 using namespace fetch::optimisers;
 void Test1(int argc, char **argv) {
-  //SparseAnnealer anneal;
-  ReferenceAnnealer anneal;  
+  ReferenceAnnealer anneal;
+  //SparseAnnealer anneal;  
   if(argc !=2) {
     exit(-1);
   }
   
   Load(anneal, argv[1]);
 
-  int counter = 0;
+  //  int counter = 0;
   for(std::size_t i=0; i < 3; ++i) {
     std::vector< int8_t > state;
     auto E = anneal.FindMinimum(state, false) ;
@@ -37,7 +37,7 @@ void Test1(int argc, char **argv) {
 }
 
 void Test2() {
-  ReferenceAnnealer anneal;
+  SparseAnnealer anneal;
   DenseBinaryProblem problem;
   problem.Resize(4);
   problem.Insert(0, 2, 2.5);
@@ -79,6 +79,7 @@ void Test2() {
 
 int main(int argc, char **argv) {
   Test1(argc, argv);
+  //Test2();
   
   return 0;
 }

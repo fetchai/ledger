@@ -22,16 +22,18 @@ class SparseAnnealer {
   SparseAnnealer(std::size_t const &n)
       :  beta0_(0.1), beta1_(3), sweeps_(1000), size_(0) {}
 
-  void Resize(std::size_t const &n, std::size_t const &max_connectivity = std::size_t(-1) ) {
-    std::cout << "Connectivity: "<< max_connectivity << std::endl;
-
+  void Resize(std::size_t const &n, std::size_t max_connectivity = std::size_t(-1) ) {
+    if(max_connectivity == std::size_t(-1)) {
+      max_connectivity = n;
+    }
+    
     sites_.resize(n);
     for(auto &s: sites_) {
       s.couplings.reserve(max_connectivity);
       s.indices.reserve(max_connectivity);
     }
     size_ = n;
-
+    
   }
   
   // mads
@@ -98,6 +100,10 @@ class SparseAnnealer {
   }
   */
 
+  void PrintGraph() {
+    
+  }
+  
   std::size_t const &size() const { return size_; }
 
   void SetBeta(double beta) {

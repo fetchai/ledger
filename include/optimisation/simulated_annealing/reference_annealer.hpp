@@ -11,7 +11,7 @@ namespace optimisers {
 
 class ReferenceAnnealer {
  public:
-  typedef math::Exp<0> exp_type;
+  typedef math::Exp< 0 > exp_type;
   typedef double cost_type;
   typedef std::vector<int8_t> state_type;
   typedef random::LinearCongruentialGenerator random_generator_type;
@@ -33,6 +33,7 @@ class ReferenceAnnealer {
 
     double db = (beta1_ - beta0_) / double(sweeps_ - 1);
     for (std::size_t k = 0; k < sweeps_; ++k) {
+      std::cout << ".";
       attempts_ += size_;
       for (std::size_t i = 0; i < size_; ++i) {
         if (rng_.AsDouble() <= fexp_(local_energies_[i])) {
@@ -52,6 +53,7 @@ class ReferenceAnnealer {
 
       SetBeta(beta() + db);
     }
+    std::cout << std::endl;
   }
 
   cost_type const &operator()(std::size_t const &i,
