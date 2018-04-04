@@ -9,7 +9,6 @@ using namespace fetch::math::linalg;
 typedef fetch::memory::Array< double > container_type;
 
 
-
 Matrix<double, container_type> RandomMatrix(int n, int m) {
   static fetch::random::LinearCongruentialGenerator gen;
   Matrix<double,container_type> m1(n, m);
