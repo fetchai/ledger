@@ -62,7 +62,9 @@ void test() {
 
   coordinator.set_group_count(group_count);
 
-  coordinator.MineBlock(transactions_pool_size);
+  fetch::chain::BlockBody body;
+  
+  coordinator.GenerateBlock(body, transactions_pool_size);
   std::chrono::high_resolution_clock::time_point t3 = std::chrono::high_resolution_clock::now();
   time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t3 - t2).count();
   std::cout << "Finding groupds " << transaction_count <<  " took " << time_span*1000 << " ms" << std::endl;

@@ -90,7 +90,7 @@ public:
 
     std::cout << " --------============== B =================--------------" << std::endl;
     
-    fetch::optimisers::DenseBinaryProblem problem;  // TODO: Change with sparse
+    fetch::optimisers::BinaryProblem problem; 
 
     problem.Resize(size);
     double field = -1 ;

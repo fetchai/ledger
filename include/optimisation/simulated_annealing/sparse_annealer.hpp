@@ -111,8 +111,6 @@ class SparseAnnealer {
     fexp_.SetCoefficient(2 * beta_);
   }
 
-  double beta() const { return beta_; }
-
   void SetSweeps(std::size_t sweeps) { sweeps_ = sweeps; }
   void SetBetaStart(cost_type const &b0) { beta0_ = b0; }
   void SetBetaEnd(cost_type const &b1) { beta1_ = b1; }
@@ -147,8 +145,6 @@ class SparseAnnealer {
     
     return 0.5* ret;
   }
-
-
   
   void Insert(std::size_t const &i, std::size_t const &j, cost_type const &c) {
     if( i == j ) {
@@ -163,6 +159,10 @@ class SparseAnnealer {
       s2.couplings.push_back(c);
     }
   }
+
+  double beta() const { return beta_; }
+  std::size_t sweeps() const { return sweeps_; }
+  
  private:
   cost_type energy() const {
     cost_type en = 0;
