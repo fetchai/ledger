@@ -46,6 +46,7 @@ void test() {
         used.insert(g);
       }
     }
+    
     tx.transaction_hash = RandomTX();
     //    std::cout << i << "  - " << groups << ": ";
     //    for(auto &g: tx.groups)
