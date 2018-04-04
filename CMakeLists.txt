@@ -3,12 +3,8 @@ project (fetch)
 
 OPTION(BUILD_TESTS "Build tests" ON)
 OPTION(BUILD_EXAMPLES "Build examples" ON)
-<<<<<<< HEAD
 OPTION(BUILD_BENCHMARK "Build benchmark" ON)
 OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" ON)
-=======
-OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" OFF)
->>>>>>> feature/pybind11
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(PNG REQUIRED)
