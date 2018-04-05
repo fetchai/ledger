@@ -1,30 +1,24 @@
-#ifndef SERVICE_PY_CLIENT_HPP
-#define SERVICE_PY_CLIENT_HPP
-#include"serializer/referenced_byte_array.hpp"
-#include"service/client.hpp"
+#ifndef LIBFETCHCORE_OPTIMISATION_INSTANCE_BINARY_PROBLEM_HPP
+#define LIBFETCHCORE_OPTIMISATION_INSTANCE_BINARY_PROBLEM_HPP
+#include "optimisation/instance/binary_problem.hpp"
 
-#include<memory>
-
+#include <pybind11/pybind11.h>
+#include <pybind11/operators.h>
 namespace fetch
 {
 namespace optimisers
 {
 
-void BuildClient(pybind11::module &m)
-{
+void BuildBinaryProblem(pybind11::module &module) {
   namespace py = pybind11;
-  
-  py::class_<BinaryProblem>(m, "BinaryProblem")
-    .def(py::init<>())    
-    .def("Resize", &BinaryProblem::Resize)
+  py::class_<BinaryProblem>(module, "BinaryProblem" )
+    .def(py::init<>()) /* No constructors found */
     .def("Insert", &BinaryProblem::Insert)
-    .def("ProgramSpinGlassSolver", &BinaryProblem::ProgramSpinGlassSolver);
-
+    .def("Resize", &BinaryProblem::Resize)
+    .def("energy_offset", &BinaryProblem::energy_offset);
 
 }
-  
 };
 };
-
 
 #endif

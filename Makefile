@@ -11,6 +11,7 @@ clean:
 count:
 	find include/ -type f | grep "\.hpp" | xargs cat | wc -l
 	find tests/ -type f | grep "\.cpp" | xargs cat | wc -l
+	find libfetchcore/ -type f | grep "\.hpp" | xargs cat | wc -l
 	find examples/ -type f | grep "\.hpp" | xargs cat | wc -l
 	find examples/ -type f | grep "\.cpp" | xargs cat | wc -l
 

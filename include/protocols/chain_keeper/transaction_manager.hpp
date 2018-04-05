@@ -4,6 +4,7 @@
 #include"crypto/fnv.hpp"
 #include"chain/transaction.hpp"
 #include"assert.hpp"
+#include"mutex.hpp"
 
 #include<unordered_set>
 #include<memory>
