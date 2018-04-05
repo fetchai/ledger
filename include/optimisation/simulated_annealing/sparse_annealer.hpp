@@ -1,15 +1,16 @@
 #ifndef OPTIMISATION_SIMULATED_ANNEALING_SPARSE_ANNEALER_HPP
 #define OPTIMISATION_SIMULATED_ANNEALING_SPARSE_ANNEALER_HPP
-#include <math/exp.hpp>
-#include <memory/rectangular_array.hpp>
-#include <random/lcg.hpp>
+#include "math/exp.hpp"
+#include "memory/rectangular_array.hpp"
+#include "random/lcg.hpp"
+#include "optimisation/abstract_spinglass_solver.hpp"
 
 #include <vector>
 
 namespace fetch {
 namespace optimisers {
 
-class SparseAnnealer {
+  class SparseAnnealer : public AbstractSpinGlassSolver {
  public:
   typedef math::Exp<0> exp_type;
   typedef double cost_type;
@@ -22,7 +23,7 @@ class SparseAnnealer {
   SparseAnnealer(std::size_t const &n)
       :  beta0_(0.1), beta1_(3), sweeps_(1000), size_(0) {}
 
-  void Resize(std::size_t const &n, std::size_t max_connectivity = std::size_t(-1) ) {
+  void Resize(std::size_t const &n, std::size_t max_connectivity = std::size_t(-1) ) override {
     if(max_connectivity == std::size_t(-1)) {
       max_connectivity = n;
     }
@@ -146,7 +147,7 @@ class SparseAnnealer {
     return 0.5* ret;
   }
   
-  void Insert(std::size_t const &i, std::size_t const &j, cost_type const &c) {
+  void Insert(std::size_t const &i, std::size_t const &j, cost_type const &c) override {
     if( i == j ) {
       Site &s1 = sites_[i];
       s1.local_field = c;
@@ -160,6 +161,10 @@ class SparseAnnealer {
     }
   }
 
+  void Update(std::size_t const &i, std::size_t const &j, cost_type const &c) override {
+    TODO_FAIL("Node implemented yet");
+  }
+    
   double beta() const { return beta_; }
   std::size_t sweeps() const { return sweeps_; }
   

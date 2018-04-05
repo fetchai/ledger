@@ -12,7 +12,7 @@ using namespace fetch;
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(example, m) {
+PYBIND11_MODULE(libfetchcore, m) {
 
 
   py::module byte_array_ns = m.def_submodule("byte_array");

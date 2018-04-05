@@ -1,15 +1,16 @@
 #ifndef OPTIMISATION_SIMULATED_ANNEALING_HPP
 #define OPTIMISATION_SIMULATED_ANNEALING_HPP
-#include <math/exp.hpp>
-#include <memory/rectangular_array.hpp>
-#include <random/lcg.hpp>
+#include "math/exp.hpp"
+#include "memory/rectangular_array.hpp"
+#include "random/lcg.hpp"
+#include "optimisation/abstract_spinglass_solver.hpp"
 
 #include <vector>
 
 namespace fetch {
 namespace optimisers {
 
-class ReferenceAnnealer {
+  class ReferenceAnnealer : public AbstractSpinGlassSolver {
  public:
   typedef math::Exp< 0 > exp_type;
   typedef double cost_type;
@@ -21,7 +22,7 @@ class ReferenceAnnealer {
   ReferenceAnnealer(std::size_t const &n)
       : couplings_(n, n), beta0_(0.1), beta1_(3), sweeps_(1000), size_(0) {}
 
-  void Resize(std::size_t const &n, std::size_t const &max_connectivity = std::size_t(-1)) {
+  void Resize(std::size_t const &n, std::size_t const &max_connectivity = std::size_t(-1)) override {
     couplings_.Resize(n, n);
     for (std::size_t i = 0; i < couplings_.size(); ++i) couplings_[i] = 0;
     size_ = n;
@@ -129,15 +130,16 @@ class ReferenceAnnealer {
     for (auto &s : state) s = 1 - 2 * s;
   }
   
-  void Insert(std::size_t const &i, std::size_t const &j, cost_type const &c) {
+  void Insert(std::size_t const &i, std::size_t const &j, cost_type const &c) override {
     couplings_.Set(std::min(i, j), std::max(i, j),c);
   }
 
-  void Update(std::size_t const &i, std::size_t const &j, cost_type const &c) {
+  void Update(std::size_t const &i, std::size_t const &j, cost_type const &c) override {
     std::size_t A =std::min(i, j);
     std::size_t B = std::max(i, j);
     couplings_(A,B) += c;
   }
+    
   void PrintGraph() {
     for(std::size_t i=0; i < size_; ++i) {
       for(std::size_t j=0; j < size_; ++j) {

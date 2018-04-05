@@ -3,4 +3,4 @@ project(libfetch)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 add_subdirectory(vendor/pybind11)
-pybind11_add_module(example src/example.cpp)
+pybind11_add_module(libfetchcore src/main.cpp)
