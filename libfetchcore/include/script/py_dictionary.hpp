@@ -17,13 +17,13 @@ void BuildDictionary(std::string const &custom_name, pybind11::module &module) {
     .def(py::init<  >())
     .def(py::init< const Dictionary<T> & >())
     .def(py::init< Dictionary<T> && >())
-    .def("begin", ( typename container_type::iterator (Dictionary< T >::*)() ) &Dictionary< T >::begin)
-    .def("begin", ( typename container_type::const_iterator (Dictionary< T >::*)() const ) &Dictionary< T >::begin)
+    .def("begin", ( typename Dictionary<T>::container_type::iterator (Dictionary< T >::*)() ) &Dictionary< T >::begin)
+    .def("begin", ( typename Dictionary<T>::container_type::const_iterator (Dictionary< T >::*)() const ) &Dictionary< T >::begin)
     .def("Copy", &Dictionary< T >::Copy)
-    .def("end", ( typename container_type::iterator (Dictionary< T >::*)() ) &Dictionary< T >::end)
-    .def("end", ( typename container_type::const_iterator (Dictionary< T >::*)() const ) &Dictionary< T >::end)
-    .def("operator[]", ( fetch::script::Dictionary::type & (Dictionary< T >::*)(const byte_array::BasicByteArray &) ) &Dictionary< T >::operator[])
-    .def("operator[]", ( const fetch::script::Dictionary::type & (Dictionary< T >::*)(const byte_array::BasicByteArray &) const ) &Dictionary< T >::operator[]);
+    .def("end", ( typename Dictionary<T>::container_type::iterator (Dictionary< T >::*)() ) &Dictionary< T >::end)
+    .def("end", ( typename Dictionary<T>::container_type::const_iterator (Dictionary< T >::*)() const ) &Dictionary< T >::end)
+    .def("operator[]", ( typename fetch::script::Dictionary<T>::type & (Dictionary< T >::*)(const byte_array::BasicByteArray &) ) &Dictionary< T >::operator[])
+    .def("operator[]", ( const typename fetch::script::Dictionary<T>::type & (Dictionary< T >::*)(const byte_array::BasicByteArray &) const ) &Dictionary< T >::operator[]);
 
 }
 };

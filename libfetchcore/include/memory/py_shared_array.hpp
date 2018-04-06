@@ -29,7 +29,7 @@ void BuildSharedArray(std::string const &custom_name, pybind11::module &module) 
     .def("At", ( const T & (SharedArray< T >::*)(const std::size_t &) const ) &SharedArray< T >::At)
     .def("operator[]", ( T & (SharedArray< T >::*)(const std::size_t &) ) &SharedArray< T >::operator[])
     .def("operator[]", ( const T & (SharedArray< T >::*)(const std::size_t &) const ) &SharedArray< T >::operator[])
-    .def(py::self = py::self )
+    //    .def(py::self = py::self )
     .def("Copy", &SharedArray< T >::Copy)
     .def("pointer", &SharedArray< T >::pointer)
     .def("size", &SharedArray< T >::size);

@@ -16,7 +16,7 @@ void BuildByteArray(pybind11::module &module) {
     .def(py::init< const char * >())
     .def(py::init< const std::string & >())
     .def(py::init< const fetch::byte_array::ByteArray & >())
-    .def(py::init< std::initializer_list<container_type> >())
+    .def(py::init< std::initializer_list<ByteArray::container_type> >())
     .def(py::init< const fetch::byte_array::ByteArray &, const std::size_t &, const std::size_t & >())
     .def(py::init< const fetch::byte_array::ByteArray::super_type & >())
     .def(py::init< const fetch::byte_array::ByteArray::super_type &, const std::size_t &, const std::size_t & >())

@@ -18,7 +18,7 @@ void BuildVersionedRandomAccessStack(std::string const &custom_name, pybind11::m
     .def("Load", &VersionedRandomAccessStack< T, B >::Load)
     .def("Set", &VersionedRandomAccessStack< T, B >::Set)
     .def("Get", ( typename RandomAccessStack<T>::type (VersionedRandomAccessStack< T, B >::*)(const std::size_t &) const ) &VersionedRandomAccessStack< T, B >::Get)
-    .def("Get", ( void (VersionedRandomAccessStack< T, B >::*)(const std::size_t &, fetch::storage::VersionedRandomAccessStack::type &) const ) &VersionedRandomAccessStack< T, B >::Get)
+    .def("Get", ( void (VersionedRandomAccessStack< T, B >::*)(const std::size_t &, typename fetch::storage::VersionedRandomAccessStack<T, B>::type &) const ) &VersionedRandomAccessStack< T, B >::Get)
     .def("ResetBookmark", &VersionedRandomAccessStack< T, B >::ResetBookmark)
     .def("Clear", &VersionedRandomAccessStack< T, B >::Clear)
     .def("Revert", &VersionedRandomAccessStack< T, B >::Revert)

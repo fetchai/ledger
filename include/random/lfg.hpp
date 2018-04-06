@@ -12,7 +12,7 @@ class LaggedFibonacciGenerator {
   typedef uint64_t random_type;
   LaggedFibonacciGenerator() { Seed(42); }
 
-  random_type Seed() const { return lcg_().Seed(); }
+  random_type Seed() const { return lcg_.Seed(); }
   random_type Seed(random_type const &s) {
     random_type ret = lcg_.Seed(s);
 

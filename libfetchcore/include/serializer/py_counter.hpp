@@ -9,13 +9,6 @@ namespace fetch
 namespace serializers
 {
 
-void BuildTypedByte_ArrayBuffer(pybind11::module &module) {
-  namespace py = pybind11;
-  py::class_<TypedByte_ArrayBuffer>(module, "TypedByte_ArrayBuffer" )
-    .def(py::init<>()) /* No constructors found */;
-
-}
-
 template< typename S >
 void BuildSizeCounter(std::string const &custom_name, pybind11::module &module) {
 
@@ -34,21 +27,7 @@ void BuildSizeCounter(std::string const &custom_name, pybind11::module &module) 
 
 }
 
-void BuildSizeCounter(pybind11::module &module) {
-  namespace py = pybind11;
-  py::class_<SizeCounter>(module, "SizeCounter" )
-    .def(py::init<>()) /* No constructors found */
-    .def("WriteBytes", &SizeCounter::WriteBytes)
-    .def("bytes_left", &SizeCounter::bytes_left)
-    .def("SkipBytes", &SizeCounter::SkipBytes)
-    .def("ReadBytes", &SizeCounter::ReadBytes)
-    .def("Allocate", &SizeCounter::Allocate)
-    .def("size", &SizeCounter::size)
-    .def("Seek", &SizeCounter::Seek)
-    .def("Tell", &SizeCounter::Tell)
-    .def("Reserve", &SizeCounter::Reserve);
 
-}
 };
 };
 

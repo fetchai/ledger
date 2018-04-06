@@ -2,7 +2,7 @@
 #define META_LOG2_HPP
 
 #include <cstdint>
-namespace details {
+namespace fetch {
 namespace meta {
 
 template <uint64_t N>

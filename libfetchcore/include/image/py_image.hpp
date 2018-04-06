@@ -16,7 +16,7 @@ void BuildAbstractColor(std::string const &custom_name, pybind11::module &module
 
   namespace py = pybind11;
   py::class_<AbstractColor< V, B, C >>(module, custom_name )
-    .def(py::init< const fetch::image::colors::AbstractColor::container_type & >())
+    .def(py::init< const typename fetch::image::colors::AbstractColor<V, B, C>::container_type & >())
     .def("operator[]", &AbstractColor< V, B, C >::operator[]);
 
 }
@@ -36,11 +36,11 @@ void BuildImageType(std::string const &custom_name, pybind11::module &module) {
     .def(py::init<  >())
     .def(py::init< ImageType<T> && >())
     .def(py::init< const ImageType<T> & >())
-    .def(py::init< const fetch::image::ImageType::super_type & >())
-    .def(py::init< fetch::image::ImageType::super_type && >())
+    .def(py::init< const typename fetch::image::ImageType< T >::super_type & >())
+    .def(py::init< typename fetch::image::ImageType< T >::super_type && >())
     .def(py::init< const std::size_t &, const std::size_t & >())
-    .def("Load", &ImageType< T >::Load)
-    .def(py::self = py::self );
+    .def("Load", &ImageType< T >::Load);
+    //    .def(py::self = py::self );
 
 }
 };

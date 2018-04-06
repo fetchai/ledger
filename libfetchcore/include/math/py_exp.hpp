@@ -16,7 +16,7 @@ void BuildExp(std::string const &custom_name, pybind11::module &module) {
   py::class_<Exp< N, C, O >>(module, custom_name )
     .def(py::init< const Exp<N, C, O> & >())
     .def(py::init<  >())
-    .def(py::self = py::self )
+    //    .def(py::self = py::self )
     .def("SetCoefficient", &Exp< N, C, O >::SetCoefficient);
 
 }

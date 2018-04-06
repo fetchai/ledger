@@ -1,6 +1,6 @@
 #ifndef RANDOM_BITGENERATOR_HPP
 #define RANDOM_BITGENERATOR_HPP
-#include"random/mask.hpp"
+#include"random/bitmask.hpp"
 #include"random/lfg.hpp"
 namespace fetch
 {
@@ -11,8 +11,8 @@ template< typename R = LaggedFibonacciGenerator<>, uint8_t B = 12, bool MSBF = t
 class BitGenerator {
 public:
   typedef R random_generator_type;
-  typedef typename random_generator_type::word_type word_type;
-  typedef RadomBitMask< word_type, B, MSBF > mask_type;
+  typedef typename random_generator_type::randomd_type word_type;
+  typedef BitMask< word_type, B, MSBF > mask_type;
 
   word_type operator()(mask_type const &m) {
     word_type s = word_type(-1), r = m[0];

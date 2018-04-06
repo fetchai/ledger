@@ -18,23 +18,7 @@ void BuildCallableClassMember(std::string const &custom_name, pybind11::module &
 
 }
 
-template< typename U, typename used_args >
-void BuildInvoke(std::string const &custom_name, pybind11::module &module) {
 
-  namespace py = pybind11;
-  py::class_<Invoke< U, used_args >>(module, custom_name )
-    .def(py::init<>()) /* No constructors found */;
-
-}
-
-template< typename used_args >
-void BuildUnrollArguments(std::string const &custom_name, pybind11::module &module) {
-
-  namespace py = pybind11;
-  py::class_<UnrollArguments< used_args >>(module, custom_name )
-    .def(py::init<>()) /* No constructors found */;
-
-}
 };
 };
 

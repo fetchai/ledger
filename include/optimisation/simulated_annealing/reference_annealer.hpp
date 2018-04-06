@@ -10,10 +10,10 @@
 namespace fetch {
 namespace optimisers {
 
-  class ReferenceAnnealer : public AbstractSpinGlassSolver {
+class ReferenceAnnealer : public AbstractSpinGlassSolver {
  public:
   typedef math::Exp< 0 > exp_type;
-  typedef double cost_type;
+
   typedef std::vector<int8_t> state_type;
   typedef random::LinearCongruentialGenerator random_generator_type;
   typedef random::LinearCongruentialGenerator::random_type random_type;
@@ -22,7 +22,7 @@ namespace optimisers {
   ReferenceAnnealer(std::size_t const &n)
       : couplings_(n, n), beta0_(0.1), beta1_(3), sweeps_(1000), size_(0) {}
 
-  void Resize(std::size_t const &n, std::size_t const &max_connectivity = std::size_t(-1)) override {
+  void Resize(std::size_t const &n, std::size_t max_connectivity = std::size_t(-1)) override {
     couplings_.Resize(n, n);
     for (std::size_t i = 0; i < couplings_.size(); ++i) couplings_[i] = 0;
     size_ = n;

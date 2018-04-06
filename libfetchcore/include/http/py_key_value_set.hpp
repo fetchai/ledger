@@ -13,10 +13,10 @@ void BuildKeyValueSet(pybind11::module &module) {
   namespace py = pybind11;
   py::class_<KeyValueSet, std::map<byte_array::ConstByteArray, byte_array::ConstByteArray>>(module, "KeyValueSet" )
     .def(py::init<>()) /* No constructors found */
-    .def("begin", ( map_type::iterator (KeyValueSet::*)() ) &KeyValueSet::begin)
-    .def("begin", ( map_type::const_iterator (KeyValueSet::*)() const ) &KeyValueSet::begin)
-    .def("end", ( map_type::iterator (KeyValueSet::*)() ) &KeyValueSet::end)
-    .def("end", ( map_type::const_iterator (KeyValueSet::*)() const ) &KeyValueSet::end)
+    .def("begin", ( typename KeyValueSet::map_type::iterator (KeyValueSet::*)() ) &KeyValueSet::begin)
+    .def("begin", ( typename KeyValueSet::map_type::const_iterator (KeyValueSet::*)() const ) &KeyValueSet::begin)
+    .def("end", ( typename KeyValueSet::map_type::iterator (KeyValueSet::*)() ) &KeyValueSet::end)
+    .def("end", ( typename KeyValueSet::map_type::const_iterator (KeyValueSet::*)() const ) &KeyValueSet::end)
     .def("Clear", &KeyValueSet::Clear)
     .def("cbegin", &KeyValueSet::cbegin)
     .def("Add", ( void (KeyValueSet::*)(const fetch::http::KeyValueSet::byte_array_type &, const fetch::http::KeyValueSet::byte_array_type &) ) &KeyValueSet::Add)

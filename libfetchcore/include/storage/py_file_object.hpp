@@ -1,6 +1,6 @@
 #ifndef LIBFETCHCORE_STORAGE_FILE_OBJECT_HPP
 #define LIBFETCHCORE_STORAGE_FILE_OBJECT_HPP
-#include "storage/file_object.hpp"
+//#include "storage/file_object.hpp"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/operators.h>
@@ -11,7 +11,7 @@ namespace storage
 
 template< typename S >
 void BuildFileObjectImplementation(std::string const &custom_name, pybind11::module &module) {
-
+  /*
   namespace py = pybind11;
   py::class_<FileObjectImplementation< S >>(module, custom_name )
     .def(py::init< const uint64_t &, fetch::storage::FileObjectImplementation::stack_type & >())
@@ -22,7 +22,7 @@ void BuildFileObjectImplementation(std::string const &custom_name, pybind11::mod
     .def("Seek", &FileObjectImplementation< S >::Seek)
     .def("Shrink", &FileObjectImplementation< S >::Shrink)
     .def("Size", &FileObjectImplementation< S >::Size);
-
+  */
 }
 };
 };

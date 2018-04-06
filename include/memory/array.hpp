@@ -28,7 +28,7 @@ class Array {
   enum {
     E_SIMD_SIZE = 16,
     E_SIMD_COUNT = E_SIMD_SIZE / sizeof(T),
-    E_LOG_SIMD_COUNT = details::meta::Log2<E_SIMD_COUNT>::value
+    E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value
   };
 
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT),

@@ -11,7 +11,7 @@ namespace optimisation
 
 template< typename T >
 void BuildBruteForceOptimiser(std::string const &custom_name, pybind11::module &module) {
-
+  /*
   namespace py = pybind11;
   py::class_<BruteForceOptimiser< T >>(module, custom_name )
     .def(py::init< const std::size_t & >())
@@ -22,7 +22,7 @@ void BuildBruteForceOptimiser(std::string const &custom_name, pybind11::module &
     .def("FindMinimum", ( T (BruteForceOptimiser< T >::*)(fetch::optimisation::BruteForceOptimiser::state_type &) ) &BruteForceOptimiser< T >::FindMinimum)
     .def("CostOf", &BruteForceOptimiser< T >::CostOf)
     .def("size", &BruteForceOptimiser< T >::size);
-
+  */
 }
 };
 };

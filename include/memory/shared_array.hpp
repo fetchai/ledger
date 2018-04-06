@@ -38,7 +38,7 @@ class SharedArray {
     E_SIMD_SIZE = 16,
     E_SIMD_COUNT_IM = E_SIMD_SIZE / sizeof(T),
     E_SIMD_COUNT = (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM : 1 ), // Note that if a type is too big to fit, we pretend it can
-    E_LOG_SIMD_COUNT = details::meta::Log2<E_SIMD_COUNT>::value
+    E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value
   };
 
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT),

@@ -11,7 +11,7 @@ namespace json
 
 void BuildJSONDocument(pybind11::module &module) {
   namespace py = pybind11;
-  py::class_<JSONDocument, byte_array::Tokenizer>(module, "JSONDocument" )
+  py::class_<JSONDocument>(module, "JSONDocument" )
     .def(py::init<  >())
     .def(py::init< fetch::json::JSONDocument::string_type, const fetch::json::JSONDocument::const_string_type & >())
     .def("Parse", &JSONDocument::Parse)

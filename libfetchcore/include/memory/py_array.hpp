@@ -29,7 +29,7 @@ void BuildArray(std::string const &custom_name, pybind11::module &module) {
     .def("At", ( const T & (Array< T >::*)(const std::size_t &) const ) &Array< T >::At)
     .def("operator[]", ( T & (Array< T >::*)(const std::size_t &) ) &Array< T >::operator[])
     .def("operator[]", ( const T & (Array< T >::*)(const std::size_t &) const ) &Array< T >::operator[])
-    .def(py::self = py::self )
+    //    .def(py::self = py::self )
     .def("pointer", &Array< T >::pointer)
     .def("size", &Array< T >::size);
 

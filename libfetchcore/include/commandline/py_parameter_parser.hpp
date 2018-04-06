@@ -16,8 +16,8 @@ void BuildParamsParser(pybind11::module &module) {
     .def("Parse", &ParamsParser::Parse)
     .def("arg_size", &ParamsParser::arg_size)
     .def("GetArg", ( std::string (ParamsParser::*)(const std::size_t &) const ) &ParamsParser::GetArg)
-    .def("GetArg", ( std::string (ParamsParser::*)(const std::size_t &, const std::string &) const ) &ParamsParser::GetArg)
-    .def("GetParam", &ParamsParser::GetParam);
+    .def("GetArg", ( std::string (ParamsParser::*)(const std::size_t &, const std::string &) const ) &ParamsParser::GetArg);
+    //    .def("GetParam", &ParamsParser::GetParam);
 
 }
 };

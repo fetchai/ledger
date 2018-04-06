@@ -22,7 +22,7 @@ void BuildChainController(pybind11::module &module) {
     .def("GetNextBlock", &ChainController::GetNextBlock)
     .def("AddBulkSummaries", &ChainController::AddBulkSummaries)
     .def("SetGroupParameter", &ChainController::SetGroupParameter);
-
+  
 }
 
 void BuildSwarmController(pybind11::module &module) {
@@ -34,16 +34,16 @@ void BuildSwarmController(pybind11::module &module) {
     .def("Connect", &SwarmController::Connect)
     .def("Bootstrap", &SwarmController::Bootstrap)
     .def("SuggestPeers", &SwarmController::SuggestPeers)
-    .def("with_peers_do", ( void (SwarmController::*)(std::function<void (int)>) ) &SwarmController::with_peers_do)
-    .def("with_peers_do", ( void (SwarmController::*)(std::function<void (int, int &)>) ) &SwarmController::with_peers_do)
+    //    .def("with_peers_do", ( void (SwarmController::*)(std::function<void (int)>) ) &SwarmController::with_peers_do)
+    //    .def("with_peers_do", ( void (SwarmController::*)(std::function<void (int, int &)>) ) &SwarmController::with_peers_do)
     .def("with_node_details", &SwarmController::with_node_details)
     .def("need_more_connections", &SwarmController::need_more_connections)
     .def("Ping", &SwarmController::Ping)
     .def("GetAddress", &SwarmController::GetAddress)
     .def("with_suggestions_do", &SwarmController::with_suggestions_do)
     .def("GetGroupingParameter", &SwarmController::GetGroupingParameter)
-    .def("with_shards_do", ( void (SwarmController::*)(std::function<void (const int &, int &)>) ) &SwarmController::with_shards_do)
-    .def("with_shards_do", ( void (SwarmController::*)(std::function<void (const int &)>) ) &SwarmController::with_shards_do)
+    //    .def("with_shards_do", ( void (SwarmController::*)(std::function<void (const int &, int &)>) ) &SwarmController::with_shards_do)
+    //    .def("with_shards_do", ( void (SwarmController::*)(std::function<void (const int &)>) ) &SwarmController::with_shards_do)
     .def("EnoughPeerConnections", &SwarmController::EnoughPeerConnections)
     .def("ConnectChainKeeper", &SwarmController::ConnectChainKeeper)
     .def("with_server_details_do", &SwarmController::with_server_details_do)

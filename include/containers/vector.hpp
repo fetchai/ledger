@@ -35,7 +35,7 @@ public:
     return super_type::front();
   }
   type const& Front() const {
-    return super_type::front());
+    return super_type::front();
 }
 
   type& Back() {
@@ -64,7 +64,7 @@ public:
   }
   
   void Resize(std::size_t const &n) {
-    super_type::resize(n);a
+    super_type::resize(n);
   }
   
   void Reserve(std::size_t const n) {

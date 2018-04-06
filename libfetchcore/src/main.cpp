@@ -1,3 +1,4 @@
+
 #include "py_logger.hpp"
 #include "py_unittest.hpp"
 #include "py_assert.hpp"
@@ -5,13 +6,13 @@
 #include "py_abstract_mutex.hpp"
 #include "py_mutex.hpp"
 #include "crypto/py_hash.hpp"
-#include "crypto/py_prover.hpp"
+//#include "crypto/py_prover.hpp"
 #include "crypto/py_fnv.hpp"
-#include "crypto/py_merkle_set.hpp"
+//#include "crypto/py_merkle_set.hpp"
 #include "crypto/py_ecdsa.hpp"
 #include "crypto/py_verifier.hpp"
 #include "crypto/py_sha256.hpp"
-#include "crypto/py_stream_hasher.hpp"
+//#include "crypto/py_stream_hasher.hpp"
 #include "serializer/py_referenced_byte_array.hpp"
 #include "serializer/py_serializable_exception.hpp"
 #include "serializer/py_counter.hpp"
@@ -26,19 +27,19 @@
 #include "memory/py_rectangular_array.hpp"
 #include "network/py_tcp_server.hpp"
 #include "network/py_thread_manager.hpp"
-#include "network/py_tcp_client.hpp"
+//#include "network/py_tcp_client.hpp"
 #include "network/py_message.hpp"
 #include "network/tcp/py_client_manager.hpp"
-#include "network/tcp/py_abstract_server.hpp"
-#include "network/tcp/py_client_connection.hpp"
-#include "network/tcp/py_abstract_connection.hpp"
-#include "meta/py_log2.hpp"
+//#include "network/tcp/py_abstract_server.hpp"
+//#include "network/tcp/py_client_connection.hpp"
+//#include "network/tcp/py_abstract_connection.hpp"
+//#include "meta/py_log2.hpp"
 #include "chain/py_transaction.hpp"
 #include "chain/py_block_generator.hpp"
 #include "chain/py_block.hpp"
 #include "chain/consensus/py_proof_of_work.hpp"
 #include "commandline/py_vt100.hpp"
-#include "commandline/py_parameter_parser.hpp"
+//#include "commandline/py_parameter_parser.hpp"
 #include "math/py_exp.hpp"
 #include "math/py_bignumber.hpp"
 #include "math/py_log.hpp"
@@ -66,6 +67,7 @@
 #include "byte_array/details/py_encode_decode.hpp"
 #include "json/py_document.hpp"
 #include "json/py_exceptions.hpp"
+/*
 #include "http/py_key_value_set.hpp"
 #include "http/py_connection.hpp"
 #include "http/py_server.hpp"
@@ -86,8 +88,10 @@
 #include "http/py_mime_types.hpp"
 #include "http/middleware/py_allow_origin.hpp"
 #include "http/middleware/py_color_log.hpp"
+*/
 #include "string/py_trim.hpp"
 #include "containers/py_vector.hpp"
+/*
 #include "service/py_abstract_callable.hpp"
 #include "service/py_protocol.hpp"
 #include "service/py_promise.hpp"
@@ -103,11 +107,12 @@
 #include "service/py_message_types.hpp"
 #include "service/py_types.hpp"
 #include "service/py_client.hpp"
-#include "service/py_message.hpp"
+*/
 #include "random/py_bitmask.hpp"
 #include "random/py_lfg.hpp"
 #include "random/py_bitgenerator.hpp"
 #include "random/py_lcg.hpp"
+/*
 #include "protocols/py_swarm.hpp"
 #include "protocols/py_fetch_protocols.hpp"
 #include "protocols/py_chain_keeper.hpp"
@@ -122,53 +127,55 @@
 #include "protocols/chain_keeper/py_protocol.hpp"
 #include "protocols/chain_keeper/py_commands.hpp"
 #include "protocols/chain_keeper/py_transaction_manager.hpp"
+*/
 #include "vectorize/py_sse.hpp"
 #include "vectorize/py_vectorize_constants.hpp"
 #include "optimisation/py_brute_force.hpp"
-#include "optimisation/py_abstract_spinglass_solver.hpp"
+// #include "optimisation/py_abstract_spinglass_solver.hpp"
 #include "optimisation/instance/py_load_txt.hpp"
 #include "optimisation/instance/py_binary_problem.hpp"
 #include "optimisation/simulated_annealing/py_reference_annealer.hpp"
 #include "optimisation/simulated_annealing/py_sparse_annealer.hpp"
+
 #include <pybind11/pybind11.h>
 
-PYBIND11_MODULE(libfetchcore, m) {
+PYBIND11_MODULE(libfetchcore, module) {
   namespace py = pybind11;
 
 // Namespaces
-   py::module ns_fetch = module.def_submodule("fetch")
-   py::module ns_fetch_serializers = ns_fetch.def_submodule("serializers")
-   py::module ns_fetch_chain = ns_fetch.def_submodule("chain")
-   py::module ns_fetch_chain_consensus = ns_fetch_chain.def_submodule("consensus")
-   py::module ns_fetch_unittest = ns_fetch.def_submodule("unittest")
-   py::module ns_fetch_protocols = ns_fetch.def_submodule("protocols")
-   py::module ns_fetch_random = ns_fetch.def_submodule("random")
-   py::module ns_fetch_log = ns_fetch.def_submodule("log")
-   py::module ns_fetch_log_details = ns_fetch_log.def_submodule("details")
-   py::module ns_fetch_service = ns_fetch.def_submodule("service")
-   py::module ns_fetch_service_details = ns_fetch_service.def_submodule("details")
-   py::module ns_fetch_vectorize = ns_fetch.def_submodule("vectorize")
-   py::module ns_fetch_json = ns_fetch.def_submodule("json")
-   py::module ns_fetch_crypto = ns_fetch.def_submodule("crypto")
-   py::module ns_fetch_image = ns_fetch.def_submodule("image")
-   py::module ns_fetch_image_colors = ns_fetch_image.def_submodule("colors")
-   py::module ns_fetch_math = ns_fetch.def_submodule("math")
-   py::module ns_fetch_math_spline = ns_fetch_math.def_submodule("spline")
-   py::module ns_fetch_network = ns_fetch.def_submodule("network")
-   py::module ns_fetch_memory = ns_fetch.def_submodule("memory")
-   py::module ns_fetch_memory_details = ns_fetch_memory.def_submodule("details")
-   py::module ns_fetch_storage = ns_fetch.def_submodule("storage")
-   py::module ns_fetch_optimisers = ns_fetch.def_submodule("optimisers")
-   py::module ns_fetch_commandline = ns_fetch.def_submodule("commandline")
-   py::module ns_fetch_script = ns_fetch.def_submodule("script")
-   py::module ns_fetch_byte_array = ns_fetch.def_submodule("byte_array")
-   py::module ns_details = module.def_submodule("details")
-   py::module ns_details_meta = ns_details.def_submodule("meta")
-   py::module ns_fetch_mutex = ns_fetch.def_submodule("mutex")
-   py::module ns_fetch_containers = ns_fetch.def_submodule("containers")
-   py::module ns_fetch_math_linalg = ns_fetch_math.def_submodule("linalg")
-   py::module ns_fetch_http = ns_fetch.def_submodule("http")
-   py::module ns_fetch_optimisation = ns_fetch.def_submodule("optimisation")
+  py::module ns_fetch = module.def_submodule("fetch");
+  py::module ns_fetch_serializers = ns_fetch.def_submodule("serializers");
+  py::module ns_fetch_chain = ns_fetch.def_submodule("chain");
+  py::module ns_fetch_chain_consensus = ns_fetch_chain.def_submodule("consensus");
+  py::module ns_fetch_unittest = ns_fetch.def_submodule("unittest");
+  py::module ns_fetch_protocols = ns_fetch.def_submodule("protocols");
+  py::module ns_fetch_random = ns_fetch.def_submodule("random");
+  py::module ns_fetch_log = ns_fetch.def_submodule("log");
+  py::module ns_fetch_log_details = ns_fetch_log.def_submodule("details");
+  py::module ns_fetch_service = ns_fetch.def_submodule("service");
+  py::module ns_fetch_service_details = ns_fetch_service.def_submodule("details");
+  py::module ns_fetch_vectorize = ns_fetch.def_submodule("vectorize");
+  py::module ns_fetch_json = ns_fetch.def_submodule("json");
+  py::module ns_fetch_crypto = ns_fetch.def_submodule("crypto");
+  py::module ns_fetch_image = ns_fetch.def_submodule("image");
+  py::module ns_fetch_image_colors = ns_fetch_image.def_submodule("colors");
+  py::module ns_fetch_math = ns_fetch.def_submodule("math");
+  py::module ns_fetch_math_spline = ns_fetch_math.def_submodule("spline");
+  py::module ns_fetch_network = ns_fetch.def_submodule("network");
+  py::module ns_fetch_memory = ns_fetch.def_submodule("memory");
+  py::module ns_fetch_memory_details = ns_fetch_memory.def_submodule("details");
+  py::module ns_fetch_storage = ns_fetch.def_submodule("storage");
+  py::module ns_fetch_optimisers = ns_fetch.def_submodule("optimisers");
+  py::module ns_fetch_commandline = ns_fetch.def_submodule("commandline");
+  py::module ns_fetch_script = ns_fetch.def_submodule("script");
+  py::module ns_fetch_byte_array = ns_fetch.def_submodule("byte_array");
+  py::module ns_details = module.def_submodule("details");
+  py::module ns_details_meta = ns_details.def_submodule("meta");
+  py::module ns_fetch_mutex = ns_fetch.def_submodule("mutex");
+  py::module ns_fetch_containers = ns_fetch.def_submodule("containers");
+  py::module ns_fetch_math_linalg = ns_fetch_math.def_submodule("linalg");
+  py::module ns_fetch_http = ns_fetch.def_submodule("http");
+  py::module ns_fetch_optimisation = ns_fetch.def_submodule("optimisation");
 
 // Objects
 /*     
@@ -253,6 +260,8 @@ PYBIND11_MODULE(libfetchcore, m) {
    BuildAbstractHTTPConnection(ns_fetch_http)
    BuildRoute(ns_fetch_http)
    BuildVector(ns_fetch_containers)
+
+// Service
    BuildPacker(ns_fetch_service_details)
    BuildAbstractCallable(ns_fetch_service)
    BuildProtocol(ns_fetch_service)
@@ -272,10 +281,16 @@ PYBIND11_MODULE(libfetchcore, m) {
    BuildUnrollArguments(ns_fetch_service)
    BuildServiceServerInterface(ns_fetch_service)
    BuildServiceClient(ns_fetch_service)
-   BuildBitMask(ns_fetch_random)
-   BuildLaggedFibonacciGenerator(ns_fetch_random)
-   BuildBitGenerator(ns_fetch_random)
-   BuildLinearCongruentialGenerator(ns_fetch_random)
+*/
+  fetch::random::BuildLaggedFibonacciGenerator<418, 1279 > ( "LaggedFibonacciGenerator",ns_fetch_random);
+  fetch::random::BuildLinearCongruentialGenerator(ns_fetch_random);
+  //fetch::random::BuildBitMask(ns_fetch_random);
+
+  fetch::random::BuildBitGenerator< fetch::random::LaggedFibonacciGenerator<>, 12, true >("BitGenerator",ns_fetch_random);
+  
+
+   /*
+     // PROTOCOLS
    BuildChainController(ns_fetch_protocols)
    BuildSwarmController(ns_fetch_protocols)
    BuildSwarmProtocol(ns_fetch_protocols)
@@ -284,11 +299,13 @@ PYBIND11_MODULE(libfetchcore, m) {
    BuildChainKeeperController(ns_fetch_protocols)
    BuildChainKeeperProtocol(ns_fetch_protocols)
    BuildTransactionManager(ns_fetch_protocols)
-   BuildRegisterInfo(ns_fetch_vectorize)
-   BuildBruteForceOptimiser(ns_fetch_optimisation)
-   BuildAbstractSpinGlassSolver(ns_fetch_optimisers)
-   BuildBinaryProblem(ns_fetch_optimisers)
-   BuildReferenceAnnealer(ns_fetch_optimisers)
-   BuildSparseAnnealer(ns_fetch_optimisers)
 */
+//   BuildRegisterInfo(ns_fetch_vectorize)
+//   BuildBruteForceOptimiser(ns_fetch_optimisation)
+//   BuildAbstractSpinGlassSolver(ns_fetch_optimisers)
+
+  fetch::optimisers::BuildBinaryProblem(ns_fetch_optimisers);
+  fetch::optimisers::BuildReferenceAnnealer(ns_fetch_optimisers);
+  fetch::optimisers::BuildSparseAnnealer(ns_fetch_optimisers);
+
 }
