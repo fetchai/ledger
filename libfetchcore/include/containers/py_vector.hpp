@@ -13,7 +13,7 @@ template< typename T >
 void BuildVector(std::string const &custom_name, pybind11::module &module) {
 
   namespace py = pybind11;
-  py::class_<Vector< T >, std::vector<T>>(module, custom_name )
+  py::class_<Vector< T > >(module, custom_name.c_str() )
     .def(py::init<>()) /* No constructors found */
     .def("Insert", &Vector< T >::Insert)
     .def("empty", &Vector< T >::empty)

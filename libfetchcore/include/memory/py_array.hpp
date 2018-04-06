@@ -13,11 +13,11 @@ template< typename T >
 void BuildArray(std::string const &custom_name, pybind11::module &module) {
 
   namespace py = pybind11;
-  py::class_<Array< T >>(module, custom_name )
+  py::class_<Array< T >>(module, custom_name.c_str() )
     .def(py::init< const std::size_t & >())
     .def(py::init<  >())
     .def(py::init< const Array<T> & >())
-    .def(py::init< Array<T> && >())
+//    .def(py::init< Array<T> && >())
     .def("simd_size", &Array< T >::simd_size)
     .def("begin", &Array< T >::begin)
     .def("Set", &Array< T >::Set)

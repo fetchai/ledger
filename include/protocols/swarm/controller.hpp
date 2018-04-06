@@ -509,7 +509,7 @@ public:
         }) );    
 
     client->Subscribe(protocol_, SwarmFeed::FEED_ANNOUNCE_NEW_COMER ,
-      new Function< void(NodeDetails) >([this](NodeDetails const& details) 
+      new Function< void(NodeDetails) >([](NodeDetails const& details) 
         {
           std::cout << "TODO: figure out what to do here" << std::endl;                          
         }) );    

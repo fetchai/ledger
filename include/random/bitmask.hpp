@@ -7,6 +7,7 @@ namespace random
 
 template< typename W, uint8_t B = 12, bool MSBF = true >
 class BitMask {
+public:
   typedef double float_type;
   typedef W word_type;
   enum { BITS_OF_PRECISION = B };

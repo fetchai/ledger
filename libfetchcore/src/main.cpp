@@ -177,38 +177,62 @@ PYBIND11_MODULE(libfetchcore, module) {
   py::module ns_fetch_http = ns_fetch.def_submodule("http");
   py::module ns_fetch_optimisation = ns_fetch.def_submodule("optimisation");
 
+  // TODO: delete    BuildMerkleSet(ns_fetch_crypto)
+  // TODO: delete    BuildSharedHashTable(ns_fetch_memory)
+  // TODO: delete    BuildRecord(ns_fetch_memory_details)
 // Objects
 /*     
-   BuildReadableThread(ns_fetch_log)
-   BuildContextDetails(ns_fetch_log)
-   BuildContext(ns_fetch_log)
-   BuildDefaultLogger(ns_fetch_log)
-   BuildLogWrapper(ns_fetch_log_details)
-   BuildTestContext(ns_fetch_unittest)
-   BuildExpression(ns_fetch_unittest)
-   BuildExpressionStart(ns_fetch_unittest)
-   BuildProgramInserter(ns_fetch_unittest)
-   BuildAbstractMutex(ns_fetch_mutex)
-   BuildProductionMutex(ns_fetch_mutex)
-   BuildDebugMutex(ns_fetch_mutex)
+   // Crypto stuff
    BuildProver(ns_fetch_crypto)
-   BuildFNV(ns_fetch_crypto)
-   BuildMerkleSet(ns_fetch_crypto)
+   BuildFNV(ns_fetch_crypto)   
    BuildECDSASigner(ns_fetch_crypto)
    BuildSHA256(ns_fetch_crypto)
    BuildStreamHasher(ns_fetch_crypto)
-   BuildTypedByte_ArrayBuffer(ns_fetch_serializers)
-   BuildSizeCounter(ns_fetch_serializers)
-   BuildSizeCounter(ns_fetch_serializers)
-   BuildTypedByte_ArrayBuffer(ns_fetch_serializers)
-   BuildByteArrayBuffer(ns_fetch_serializers)
-   BuildTypeRegister(ns_fetch_serializers)
-   BuildSerializableException(ns_fetch_serializers)
-   BuildArray(ns_fetch_memory)
-   BuildSharedArray(ns_fetch_memory)
-   BuildSharedHashTable(ns_fetch_memory)
-   BuildRecord(ns_fetch_memory_details)
-   BuildRectangularArray(ns_fetch_memory)
+*/
+
+  fetch::memory::BuildArray<int8_t>("ArrayInt8", ns_fetch_memory);      
+  fetch::memory::BuildArray<int16_t>("ArrayInt16", ns_fetch_memory);    
+  fetch::memory::BuildArray<int32_t>("ArrayInt32", ns_fetch_memory);
+  fetch::memory::BuildArray<int64_t>("ArrayInt64", ns_fetch_memory);
+
+  fetch::memory::BuildArray<uint8_t>("ArrayUInt8", ns_fetch_memory);      
+  fetch::memory::BuildArray<uint16_t>("ArrayUInt16", ns_fetch_memory);    
+  fetch::memory::BuildArray<uint32_t>("ArrayUInt32", ns_fetch_memory);
+  fetch::memory::BuildArray<uint64_t>("ArrayUInt64", ns_fetch_memory);
+  
+  fetch::memory::BuildArray<float>("ArrayFloat", ns_fetch_memory);
+  fetch::memory::BuildArray<double>("ArrayDouble", ns_fetch_memory);  
+
+
+  fetch::memory::BuildSharedArray<int8_t>("SharedArrayInt8", ns_fetch_memory);      
+  fetch::memory::BuildSharedArray<int16_t>("SharedArrayInt16", ns_fetch_memory);    
+  fetch::memory::BuildSharedArray<int32_t>("SharedArrayInt32", ns_fetch_memory);
+  fetch::memory::BuildSharedArray<int64_t>("SharedArrayInt64", ns_fetch_memory);
+
+  fetch::memory::BuildSharedArray<uint8_t>("SharedArrayUInt8", ns_fetch_memory);      
+  fetch::memory::BuildSharedArray<uint16_t>("SharedArrayUInt16", ns_fetch_memory);    
+  fetch::memory::BuildSharedArray<uint32_t>("SharedArrayUInt32", ns_fetch_memory);
+  fetch::memory::BuildSharedArray<uint64_t>("SharedArrayUInt64", ns_fetch_memory);
+  
+  fetch::memory::BuildSharedArray<float>("SharedArrayFloat", ns_fetch_memory);
+  fetch::memory::BuildSharedArray<double>("SharedArrayDouble", ns_fetch_memory);  
+  
+  fetch::memory::BuildRectangularArray<int8_t>("RectangularArrayInt8", ns_fetch_memory);      
+  fetch::memory::BuildRectangularArray<int16_t>("RectangularArrayInt16", ns_fetch_memory);    
+  fetch::memory::BuildRectangularArray<int32_t>("RectangularArrayInt32", ns_fetch_memory);
+  fetch::memory::BuildRectangularArray<int64_t>("RectangularArrayInt64", ns_fetch_memory);
+
+  fetch::memory::BuildRectangularArray<uint8_t>("RectangularArrayUInt8", ns_fetch_memory);      
+  fetch::memory::BuildRectangularArray<uint16_t>("RectangularArrayUInt16", ns_fetch_memory);    
+  fetch::memory::BuildRectangularArray<uint32_t>("RectangularArrayUInt32", ns_fetch_memory);
+  fetch::memory::BuildRectangularArray<uint64_t>("RectangularArrayUInt64", ns_fetch_memory);
+  
+  fetch::memory::BuildRectangularArray<float>("RectangularArrayFloat", ns_fetch_memory);
+  fetch::memory::BuildRectangularArray<double>("RectangularArrayDouble", ns_fetch_memory);  
+
+  
+/*
+// Network stuff
    BuildTCPServer(ns_fetch_network)
    BuildThreadManager(ns_fetch_network)
    BuildTCPClient(ns_fetch_network)
@@ -222,32 +246,76 @@ PYBIND11_MODULE(libfetchcore, module) {
    BuildBasicBlock(ns_fetch_chain)
    BuildProofOfWork(ns_fetch_chain_consensus)
    BuildParamsParser(ns_fetch_commandline)
-   BuildExp(ns_fetch_math)
-   BuildBigUnsigned(ns_fetch_math)
-   BuildLog(ns_fetch_math)
-   BuildMatrix(ns_fetch_math_linalg)
-   BuildSpline(ns_fetch_math_spline)
+*/
+//  fetch::math::BuildExp< 0, 60801, false>("Exp0", ns_fetch_math);  
+//  fetch::math::BuildBigUnsigned(ns_fetch_math);
+//  fetch::math::BuildLog(ns_fetch_math);
+
+  fetch::math::linalg::BuildMatrix<int8_t>("MatrixInt8", ns_fetch_math_linalg);      
+  fetch::math::linalg::BuildMatrix<int16_t>("MatrixInt16", ns_fetch_math_linalg);    
+  fetch::math::linalg::BuildMatrix<int32_t>("MatrixInt32", ns_fetch_math_linalg);
+  fetch::math::linalg::BuildMatrix<int64_t>("MatrixInt64", ns_fetch_math_linalg);
+
+  fetch::math::linalg::BuildMatrix<uint8_t>("MatrixUInt8", ns_fetch_math_linalg);      
+  fetch::math::linalg::BuildMatrix<uint16_t>("MatrixUInt16", ns_fetch_math_linalg);    
+  fetch::math::linalg::BuildMatrix<uint32_t>("MatrixUInt32", ns_fetch_math_linalg);
+  fetch::math::linalg::BuildMatrix<uint64_t>("MatrixUInt64", ns_fetch_math_linalg);
+  
+  fetch::math::linalg::BuildMatrix<float>("MatrixFloat", ns_fetch_math_linalg);
+  fetch::math::linalg::BuildMatrix<double>("MatrixDouble", ns_fetch_math_linalg);  
+
+//  fetch::math::BuildSpline(ns_fetch_math_spline);
+  
+
+/*
    BuildDictionary(ns_fetch_script)
    BuildFunction(ns_fetch_script)
    BuildVariant(ns_fetch_script)
    BuildVariant(ns_fetch_script)
    BuildAbstractSyntaxTree(ns_fetch_script)
-   BuildFileReadErrorException(ns_fetch_image)
-   BuildAbstractColor(ns_fetch_image_colors)
-   BuildImageType(ns_fetch_image)
+*/
+  
+//  fetch::image::BuildFileReadErrorException(ns_fetch_image);
+
+  fetch::image::colors::BuildAbstractColor<uint32_t, 8, 3>("ColorRGB8",ns_fetch_image_colors);
+  fetch::image::colors::BuildAbstractColor<uint32_t, 8, 4>("ColorRGBA8",ns_fetch_image_colors);  
+
+//  fetch::image::BuildImageType< fetch::image::colors::RGB8 >("ImageRGB8", ns_fetch_image);
+//  fetch::image::BuildImageType< fetch::image::colors::RGBA8 >("ImageRGBA8", ns_fetch_image);  
+  
+
+/*
    BuildVersionedRandomAccessStack(ns_fetch_storage)
    BuildFileObjectImplementation(ns_fetch_storage)
    BuildVariantStack(ns_fetch_storage)
    BuildRandomAccessStack(ns_fetch_storage)
    BuildIndexedDocumentStore(ns_fetch_storage)
-   BuildByteArray(ns_fetch_byte_array)
-   BuildConstByteArray(ns_fetch_byte_array)
-   BuildBasicByteArray(ns_fetch_byte_array)
-   BuildBasicByteArray(ns_fetch_byte_array)
-   BuildToken(ns_fetch_byte_array)
-   BuildTokenizer(ns_fetch_byte_array)
-   BuildJSONDocument(ns_fetch_json)
-   BuildUnrecognisedJSONSymbolException(ns_fetch_json)
+*/
+  
+  fetch::byte_array::BuildBasicByteArray(ns_fetch_byte_array);
+  fetch::byte_array::BuildByteArray(ns_fetch_byte_array);
+  fetch::byte_array::BuildConstByteArray(ns_fetch_byte_array);
+
+  /*
+// Serializers
+   BuildTypedByte_ArrayBuffer(ns_fetch_serializers)
+   BuildSizeCounter(ns_fetch_serializers)
+   BuildSizeCounter(ns_fetch_serializers)
+   BuildTypedByte_ArrayBuffer(ns_fetch_serializers)
+   BuildByteArrayBuffer(ns_fetch_serializers)
+   BuildTypeRegister(ns_fetch_serializers)
+   BuildSerializableException(ns_fetch_serializers)
+  */
+  
+//TODO: Dep problems
+//  fetch::byte_array::BuildTokenizer(ns_fetch_byte_array);  
+//  fetch::byte_array::BuildToken(ns_fetch_byte_array);
+
+
+//  fetch::json::BuildJSONDocument(ns_fetch_json);
+//  fetch::json::BuildUnrecognisedJSONSymbolException(ns_fetch_json);
+  
+/*
    BuildKeyValueSet(ns_fetch_http)
    BuildHTTPConnection(ns_fetch_http)
    BuildHTTPServer(ns_fetch_http)
@@ -259,8 +327,12 @@ PYBIND11_MODULE(libfetchcore, module) {
    BuildHTTPRequest(ns_fetch_http)
    BuildAbstractHTTPConnection(ns_fetch_http)
    BuildRoute(ns_fetch_http)
-   BuildVector(ns_fetch_containers)
+*/
+  
+  fetch::containers::BuildVector<int>("VectorInt",ns_fetch_containers);
+  // TODO: Add more types
 
+/*
 // Service
    BuildPacker(ns_fetch_service_details)
    BuildAbstractCallable(ns_fetch_service)
@@ -284,7 +356,7 @@ PYBIND11_MODULE(libfetchcore, module) {
 */
   fetch::random::BuildLaggedFibonacciGenerator<418, 1279 > ( "LaggedFibonacciGenerator",ns_fetch_random);
   fetch::random::BuildLinearCongruentialGenerator(ns_fetch_random);
-  //fetch::random::BuildBitMask(ns_fetch_random);
+  fetch::random::BuildBitMask<uint64_t, 12, true >("BitMask", ns_fetch_random);
 
   fetch::random::BuildBitGenerator< fetch::random::LaggedFibonacciGenerator<>, 12, true >("BitGenerator",ns_fetch_random);
   

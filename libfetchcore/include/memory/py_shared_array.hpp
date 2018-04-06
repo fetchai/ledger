@@ -13,11 +13,11 @@ template< typename T >
 void BuildSharedArray(std::string const &custom_name, pybind11::module &module) {
 
   namespace py = pybind11;
-  py::class_<SharedArray< T >>(module, custom_name )
+  py::class_<SharedArray< T >>(module, custom_name.c_str() )
     .def(py::init< const std::size_t & >())
     .def(py::init<  >())
     .def(py::init< const SharedArray<T> & >())
-    .def(py::init< SharedArray<T> && >())
+//    .def(py::init< SharedArray<T> && >())
     .def("simd_size", &SharedArray< T >::simd_size)
     .def("begin", &SharedArray< T >::begin)
     .def("Set", &SharedArray< T >::Set)

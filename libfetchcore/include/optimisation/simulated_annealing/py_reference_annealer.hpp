@@ -11,7 +11,7 @@ namespace optimisers
 
 void BuildReferenceAnnealer(pybind11::module &module) {
   namespace py = pybind11;
-  py::class_<ReferenceAnnealer, fetch::optimisers::AbstractSpinGlassSolver>(module, "ReferenceAnnealer" )
+  py::class_<ReferenceAnnealer>(module, "ReferenceAnnealer" )
     .def(py::init<  >())
     .def(py::init< const std::size_t & >())
     .def("SetBetaStart", &ReferenceAnnealer::SetBetaStart)

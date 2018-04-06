@@ -107,7 +107,7 @@ public:
       
       response << "\"shards\": [";
       
-      this->with_shard_details_do([this, &shard_count, &response](std::vector< EntryPoint > const &detail_list) {
+      this->with_shard_details_do([&shard_count, &response](std::vector< EntryPoint > const &detail_list) {
           bool first = true;
           
           for(auto &d: detail_list)
@@ -226,7 +226,7 @@ public:
       byte_array::ByteArray host;
       
       
-      this->with_node_details( [this, &response, &port, & http_port, &host](NodeDetails const& details) {
+      this->with_node_details( [ &response, &port, & http_port, &host](NodeDetails const& details) {
           response << "\"name\": \"" <<  details.public_key << "\",";
           response << "\"entry_points\": [" ;
           bool first = true;
@@ -333,7 +333,7 @@ public:
       std::stringstream response;
       response << "{ \"shards\": [";
       
-      this->with_shard_details_do([this, &response](std::vector< EntryPoint > const &detail_list) {
+      this->with_shard_details_do([ &response](std::vector< EntryPoint > const &detail_list) {
           bool first = true;
           
           for(auto &d: detail_list)
@@ -493,7 +493,7 @@ public:
       response << "{";
       
       
-      this->with_node_details( [this, &response](NodeDetails const& details) {
+      this->with_node_details( [&response](NodeDetails const& details) {
           response << "\"name\": \"" <<  details.public_key << "\",";
           response << "\"entry_points\": [" ;
           bool first = true;
@@ -529,7 +529,7 @@ public:
       std::cout << "resources " << doc["resources"] << std::endl;
       
       
-      this->with_shards_do([this, req](std::vector< client_shared_ptr_type > shards,  std::vector< EntryPoint > const &detail_list) {
+      this->with_shards_do([req](std::vector< client_shared_ptr_type > shards,  std::vector< EntryPoint > const &detail_list) {
           std::cout << "Sending tx to " << shards.size() << " shards" << std::endl;          
           typedef fetch::chain::Transaction transaction_type;
           transaction_type tx;

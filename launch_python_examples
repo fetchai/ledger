@@ -4,11 +4,11 @@ import sys
 import glob
 
 root_path = os.path.abspath(os.path.dirname(__file__))
-libfetch_path = os.path.join(root_path, "build", "site-packages")
+libfetch_path = os.path.join(root_path, "build", "libfetchcore")
 other_libs_path = os.path.join(root_path, "python", "library")
-if len(glob.glob(os.path.join(libfetch_path, "libfetch"))) == 0:
-    print "Please build the project in the folder 'build'"
-    exit(-1)
+#if len(glob.glob(os.path.join(libfetch_path, "libfetch"))) == 0:
+#    print "Please build the project in the folder 'build'"
+#    exit(-1)
 
 sys.path.append(libfetch_path)
 sys.path.append(other_libs_path)

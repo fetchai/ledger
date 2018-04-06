@@ -4,6 +4,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/operators.h>
+#include <pybind11/numpy.h>
 namespace fetch
 {
 namespace memory
@@ -13,11 +14,11 @@ template< typename T >
 void BuildRectangularArray(std::string const &custom_name, pybind11::module &module) {
 
   namespace py = pybind11;
-  py::class_<RectangularArray< T >>(module, custom_name )
+  py::class_<RectangularArray< T >>(module, custom_name.c_str() )
     .def(py::init<  >())
     .def(py::init< const std::size_t & >())
     .def(py::init< const std::size_t &, const std::size_t & >())
-    .def(py::init< RectangularArray<T> && >())
+//    .def(py::init< RectangularArray<T> && >())
     .def(py::init< const RectangularArray<T> & >())
     //    .def(py::self = py::self )
     .def("rend", &RectangularArray< T >::rend)
@@ -34,8 +35,8 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
     .def("begin", &RectangularArray< T >::begin)
     .def("Rotate", ( void (RectangularArray< T >::*)(const double &, const typename fetch::memory::RectangularArray< T >::type) ) &RectangularArray< T >::Rotate)
     .def("Rotate", ( void (RectangularArray< T >::*)(const double &, const double &, const double &, const typename fetch::memory::RectangularArray< T >::type) ) &RectangularArray< T >::Rotate)
-    .def(py::self != py::self )
-    .def(py::self == py::self )
+//    .def(py::self != py::self )
+//    .def(py::self == py::self )
     .def("operator[]", ( const typename fetch::memory::RectangularArray< T >::type & (RectangularArray< T >::*)(const typename fetch::memory::RectangularArray< T >::size_type &) const ) &RectangularArray< T >::operator[])
     .def("operator[]", ( typename fetch::memory::RectangularArray< T >::type & (RectangularArray< T >::*)(const typename fetch::memory::RectangularArray< T >::size_type &) ) &RectangularArray< T >::operator[])
     .def("rbegin", &RectangularArray< T >::rbegin)
@@ -50,7 +51,63 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
     .def("At", ( const typename fetch::memory::RectangularArray< T >::type & (RectangularArray< T >::*)(const typename fetch::memory::RectangularArray< T >::size_type &) const ) &RectangularArray< T >::At)
     .def("At", ( const typename fetch::memory::RectangularArray< T >::type & (RectangularArray< T >::*)(const typename fetch::memory::RectangularArray< T >::size_type &, const typename fetch::memory::RectangularArray< T >::size_type &) const ) &RectangularArray< T >::At)
     .def("At", ( T & (RectangularArray< T >::*)(const typename fetch::memory::RectangularArray< T >::size_type &, const typename fetch::memory::RectangularArray< T >::size_type &) ) &RectangularArray< T >::At)
-    .def("At", ( T & (RectangularArray< T >::*)(const typename fetch::memory::RectangularArray< T >::size_type &) ) &RectangularArray< T >::At);
+    .def("At", ( T & (RectangularArray< T >::*)(const typename fetch::memory::RectangularArray< T >::size_type &) ) &RectangularArray< T >::At)
+
+    .def("__getitem__", [](const RectangularArray< T > &s, std::size_t i) {
+        if (i >= s.size()) throw py::index_error();
+        return s[i];
+      })
+    .def("__setitem__", [](RectangularArray< T > &s, std::size_t i, T const& v) {
+        if (i >= s.size()) throw py::index_error();
+        s[i] = v;
+      })
+    .def("__getitem__", [](const RectangularArray< T > &s, py::tuple index) {
+        if (py::len( index ) != 2) throw py::index_error();
+        std::size_t i = index[0].cast< std::size_t >();        
+        std::size_t j = index[1].cast< std::size_t >();
+        if(std::size_t(i) >= s.height())  throw py::index_error();
+        if(std::size_t(j) >= s.width())  throw py::index_error();                
+
+        return s(i, j);
+      })
+    .def("__setitem__", [](RectangularArray< T > &s,  py::tuple index, T const& v) {
+        if (py::len( index ) != 2) throw py::index_error();
+        std::size_t i = index[0].cast< std::size_t >();        
+        std::size_t j = index[1].cast< std::size_t >();
+        if(std::size_t(i) >= s.height())  throw py::index_error();
+        if(std::size_t(j) >= s.width())  throw py::index_error();                
+
+        s(i,j) = v;
+      })
+    .def("__eq__", [](RectangularArray< T > &s, py::array_t<double> const &arr) {
+        std::cout << "WAS HERE" << std::endl;
+        
+      })
+    .def("FromNumpy", [](RectangularArray< T > &s, py::array_t<double> const &arr) {
+        std::cout << "WAS HERE" << std::endl;
+        
+      })
+    .def("ToNumpy", [](RectangularArray< T > &s) {
+
+        T data = new T[ s.size() ];
+        for (size_t i = 0; i < s.size(); ++i) {
+            data[i] = s[i];
+        }
+        
+        py::capsule do_free(foo, [](void *d) {
+            T *data = reinterpret_cast<T *>(d);
+            delete[] data;
+        });
+        
+        return py::array_t< T >(
+          {s.height(), s.width()}, 
+          {s.height() * sizeof(T), sizeof(T)}, 
+          data, 
+          do_free);
+      });
+  
+  
+  
 
 }
 };

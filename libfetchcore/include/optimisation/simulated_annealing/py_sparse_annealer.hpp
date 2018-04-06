@@ -11,7 +11,7 @@ namespace optimisers
 
 void BuildSparseAnnealer(pybind11::module &module) {
   namespace py = pybind11;
-  py::class_<SparseAnnealer, fetch::optimisers::AbstractSpinGlassSolver>(module, "SparseAnnealer" )
+  py::class_<SparseAnnealer>(module, "SparseAnnealer" )
     .def(py::init<  >())
     .def(py::init< const std::size_t & >())
     .def("beta", &SparseAnnealer::beta)
