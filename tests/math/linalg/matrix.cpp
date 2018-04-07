@@ -6,9 +6,12 @@
 #include<iomanip>
 using namespace fetch::math::linalg;
 
-Matrix<double> RandomMatrix(int n, int m) {
+typedef fetch::memory::Array< double > container_type;
+
+
+Matrix<double, container_type> RandomMatrix(int n, int m) {
   static fetch::random::LinearCongruentialGenerator gen;
-  Matrix<double> m1(n, m);
+  Matrix<double,container_type> m1(n, m);
   for(std::size_t i=0; i < n; ++i)
     for(std::size_t j=0; j < n; ++j)
       m1(i,j) = gen.AsDouble();
@@ -18,18 +21,18 @@ Matrix<double> RandomMatrix(int n, int m) {
 
 void test_invert(std::size_t const &n) {
   static fetch::random::LinearCongruentialGenerator gen;
-  Matrix<double> m1 = RandomMatrix(n, n);
+  Matrix<double, container_type> m1 = RandomMatrix(n, n);
 
-  Matrix<double> m2 = m1.Copy();
+  Matrix<double,container_type> m2 = m1.Copy();
   int errcode = m2.Invert();
 
-  if( errcode != Matrix<double>::INVERSION_OK ) { 
+  if( errcode != Matrix<double,container_type>::INVERSION_OK ) { 
     std::cerr << "inversion singular" << std::endl;
     exit(-1);
   }
 //  m2.Transpose();
   
-  Matrix<double> ret;
+  Matrix<double,container_type> ret;
   m1.DotReference( m2, ret );
   for(std::size_t i=0; i < n; ++i) {
   for(std::size_t j=0; j < n; ++j) {
@@ -49,8 +52,8 @@ void test_invert(std::size_t const &n) {
 
 
 void test_add(std::size_t const &n, std::size_t const &m) {
-  Matrix<double> m1 = Matrix<double>(n,m); //RandomMatrix(n,m);
-  Matrix<double> m2 = Matrix<double>(n,m);
+  Matrix<double,container_type> m1 = Matrix<double,container_type>(n,m); //RandomMatrix(n,m);
+  Matrix<double,container_type> m2 = Matrix<double,container_type>(n,m);
   std::cout << m1.size() << " " << m2.size() << " " << (n*m) << std::endl;
   m2 = m1 * m1;
   //  for(std::size_t i=0; i < 100; ++i)

@@ -11,10 +11,10 @@ namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename T>
-class Matrix : public fetch::memory::RectangularArray<T> {
+template <typename T, typename C = fetch::memory::SharedArray<T>, typename A = fetch::memory::RectangularArray<T, C> >
+class Matrix : public A {
  public:
-  typedef fetch::memory::RectangularArray<T> super_type;
+  typedef A super_type;
   typedef typename super_type::type type;
 
   enum {
@@ -78,6 +78,44 @@ class Matrix : public fetch::memory::RectangularArray<T> {
 
 #undef FETCH_ADD_OPERATOR
 
+
+#define FETCH_ADD_OPERATOR(OP)                                          \
+  template< typename S >                                                \
+  Matrix &operator OP(S const &other) {                                 \
+    for (std::size_t i = 0; i < this->data().size(); i += E_SIMD_BLOCKS) \
+      for (std::size_t j = 0; j < E_SIMD_BLOCKS; ++j)                    \
+        this->At(i + j) OP other;                                       \
+    return *this;                                                        \
+  }
+
+  FETCH_ADD_OPERATOR(+=)
+  FETCH_ADD_OPERATOR(-=)
+  FETCH_ADD_OPERATOR(*=)
+  FETCH_ADD_OPERATOR(/=)
+  FETCH_ADD_OPERATOR(|=)
+  FETCH_ADD_OPERATOR(&=)
+
+#undef FETCH_ADD_OPERATOR
+
+#define FETCH_ADD_OPERATOR(OP1, OP2)         \
+  template< typename S >                     \
+  Matrix operator OP1(S const &other) {      \
+    Matrix ret = this->Copy();               \
+    ret OP2 other;                           \
+    return ret;                              \
+  }
+
+  FETCH_ADD_OPERATOR(+, +=)
+  FETCH_ADD_OPERATOR(-, -=)
+  FETCH_ADD_OPERATOR(*, *=)
+  FETCH_ADD_OPERATOR(/, /=)
+  FETCH_ADD_OPERATOR(|, |=)
+  FETCH_ADD_OPERATOR(&, &=)
+
+#undef FETCH_ADD_OPERATOR
+  
+  
+  
   void Transpose() {
     Matrix newm(this->width(), this->height());
     for (std::size_t i = 0; i < this->height(); ++i)
@@ -267,7 +305,7 @@ class Matrix : public fetch::memory::RectangularArray<T> {
   }
 
  private:
-  template <std::size_t C>
+  template <std::size_t N>
   void DotImplementation(Matrix const &m, Matrix &ret) {
     // FIXME: yet to be implemented
     std::cerr << "DotImplementation in matrix not made yet!!" << std::endl;

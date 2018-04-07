@@ -1,5 +1,6 @@
 #ifndef MEMORY_RECTANGULAR_ARRAY_HPP
 #define MEMORY_RECTANGULAR_ARRAY_HPP
+#include "memory/array.hpp"
 #include "memory/shared_array.hpp"
 #include "assert.hpp"
 #include <cmath>
@@ -11,11 +12,11 @@
 namespace fetch {
 namespace memory {
 
-template <typename T>
+template< typename T, typename C = SharedArray<T> >
 class RectangularArray {
- public:
+public:
   typedef T type;
-  typedef SharedArray<T> container_type;
+  typedef C container_type;
   typedef typename container_type::iterator iterator;
   typedef typename container_type::reverse_iterator reverse_iterator;
   typedef uint64_t size_type;
