@@ -29,9 +29,13 @@ class Matrix : public fetch::memory::RectangularArray<T> {
   Matrix &operator=(Matrix const &other) = default;
   Matrix &operator=(Matrix &&other) = default;
 
-  Matrix(super_type const &other) : super_type(other) {}
-  Matrix(super_type &&other) : super_type(other) {}
+  Matrix(super_type const &other) : super_type(other) {
+    std::cout << "Was here?? " << other.size() << " " << this->size() << std::endl;
+  }
+  Matrix(super_type &&other) : super_type(std::move(other)) {  }
+  
   Matrix(std::size_t const &h, std::size_t const &w) : super_type(h, w) {
+    std::cout << "Was here??? " << std::endl;
     for(std::size_t i=0; i < h; ++i) {
     for(std::size_t j=0; j < w; ++j) {
       this->Set(i,j, type(0));
@@ -39,6 +43,7 @@ class Matrix : public fetch::memory::RectangularArray<T> {
     }
   }
 
+  Matrix Copy() const { return Matrix( super_type::Copy() ); }
 #define FETCH_ADD_OPERATOR(OP)                                           \
   Matrix &operator OP(Matrix const &other) {                             \
     assert(this->size() == other.size());                                \
@@ -58,8 +63,8 @@ class Matrix : public fetch::memory::RectangularArray<T> {
 #undef FETCH_ADD_OPERATOR
 
 #define FETCH_ADD_OPERATOR(OP1, OP2)         \
-  Matrix operator OP1(Matrix const &other) { \
-    Matrix ret = this->Copy();               \
+  Matrix operator OP1(Matrix const &other) const { \
+    Matrix ret = this->Copy();                                          \
     ret OP2 other;                           \
     return ret;                              \
   }

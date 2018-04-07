@@ -83,29 +83,34 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
         std::cout << "WAS HERE" << std::endl;
         
       })
-    .def("FromNumpy", [](RectangularArray< T > &s, py::array_t<double> const &arr) {
-        std::cout << "WAS HERE" << std::endl;
-        
+    .def("FromNumpy", [](RectangularArray< T > &s, py::array_t<T> arr) {
+        auto buf = arr.request();
+
+        if (buf.ndim != 2)
+          throw std::runtime_error("Dimension must be exactly two.");
+
+        T *ptr = (T*)buf.ptr;
+        std::size_t idx = 0;
+        s.Resize( buf.shape[0], buf.shape[1] );
+        for(std::size_t i = 0; i < buf.shape[0]; ++i) {
+        for(std::size_t j = 0; j < buf.shape[1]; ++j) {
+          s[idx] = ptr[idx];
+          ++idx;
+        }
+        }
       })
     .def("ToNumpy", [](RectangularArray< T > &s) {
 
-        T data = new T[ s.size() ];
+        auto result = py::array_t<T>( {s.height(), s.width()} );
+        auto buf = result.request();
+
+        T *ptr = (T*)buf.ptr;
         for (size_t i = 0; i < s.size(); ++i) {
-            data[i] = s[i];
+            ptr[i] = s[i];
         }
-        
-        py::capsule do_free(foo, [](void *d) {
-            T *data = reinterpret_cast<T *>(d);
-            delete[] data;
-        });
-        
-        return py::array_t< T >(
-          {s.height(), s.width()}, 
-          {s.height() * sizeof(T), sizeof(T)}, 
-          data, 
-          do_free);
+        return result;
       });
-  
+
   
   
 

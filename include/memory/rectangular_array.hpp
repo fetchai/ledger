@@ -34,6 +34,7 @@ class RectangularArray {
 
   RectangularArray Copy() const {
     RectangularArray ret(height_, width_);
+    std::cout << "Copying: " << this->size() << " " << ret.size() << std::endl;
     for (size_type i = 0; i < size(); i += container_type::E_SIMD_COUNT) {
       for (size_type j = 0; j < container_type::E_SIMD_COUNT; ++j)
         ret.At(i + j) = this->At(i + j);

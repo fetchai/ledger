@@ -25,7 +25,7 @@ std::size_t total_shared_objects = 0;
 template <typename T>
 class SharedArray {
  public:
-  typedef std::shared_ptr< std::size_t > size_type;
+  typedef std::size_t size_type;
   typedef std::shared_ptr<T> data_type;
 
   typedef ForwardIterator<T> iterator;
@@ -45,7 +45,7 @@ class SharedArray {
                 "type does not fit in SIMD");
   
   SharedArray(std::size_t const &n) {   
-    size_ = std::shared_ptr< std::size_t  >( new std::size_t (n) );
+    size_ = n;
 
     if (n > 0)
     {
@@ -60,7 +60,8 @@ class SharedArray {
   
   SharedArray() : SharedArray(0) {}
   SharedArray(SharedArray const &other)
-    :size_(other.size_), data_(other.data_) { }
+    :size_(other.size_), data_(other.data_) {
+  }
 
   SharedArray(SharedArray &&other) {
     std::swap(size_, other.size_);
@@ -77,8 +78,8 @@ class SharedArray {
 
   SharedArray< type > Copy() const
   {
-    SharedArray< type > ret( *size_ );
-    for(std::size_t i = 0; i < (*size_); ++i )
+    SharedArray< type > ret( size_ );
+    for(std::size_t i = 0; i < size_; ++i )
     {
       ret[i] = At( i );
     }
@@ -132,27 +133,27 @@ class SharedArray {
 
   std::size_t simd_size() const {
     assert(size_ != nullptr);
-    return (*size_) >> E_LOG_SIMD_COUNT;
+    return (size_) >> E_LOG_SIMD_COUNT;
   }
 
   std::size_t size() const {
     assert(size_ != nullptr);
-    return *size_;
+    return size_;
   }
 
   std::size_t padded_size() const {
     assert(size_ != nullptr);
-    std::size_t padded = std::size_t((*size_) >> E_LOG_SIMD_COUNT)
+    std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT)
                          << E_LOG_SIMD_COUNT;
-    if (padded < *size_) padded += E_SIMD_COUNT;
+    if (padded < size_) padded += E_SIMD_COUNT;
     return padded;
   }
 
   type *pointer() const { return data_.get(); }
 
  private:
-  size_type size_;
-  data_type data_;
+  size_type size_ = 0;
+  data_type data_ = nullptr;
 };
 };
 };

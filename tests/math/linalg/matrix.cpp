@@ -52,7 +52,7 @@ void test_add(std::size_t const &n, std::size_t const &m) {
   Matrix<double> m1 = Matrix<double>(n,m); //RandomMatrix(n,m);
   Matrix<double> m2 = Matrix<double>(n,m);
   std::cout << m1.size() << " " << m2.size() << " " << (n*m) << std::endl;
-  m2 = m1 + m2;
+  m2 = m1 * m1;
   //  for(std::size_t i=0; i < 100; ++i)
   std::cout << "After assignment" << std::endl;
   
