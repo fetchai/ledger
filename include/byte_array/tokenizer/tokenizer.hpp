@@ -17,10 +17,21 @@ class Tokenizer : public std::vector<Token> {
   typedef std::function<int(byte_array_type const &, uint64_t &)>
       consumer_function_type;
 
-  void AddConsumer(consumer_function_type function,
-                   byte_array_type const &tokenspace = "") {
+  typedef std::function<int(byte_array_type const &, uint64_t const &, int const &)>
+      indexer_function_type;  
 
+  void SetConsumerIndexer(indexer_function_type function) 
+  {
+    indexer_ = function;
+    
+  }
+      
+  std::size_t AddConsumer(consumer_function_type function) {
+
+    std::size_t ret = consumers_.size();
     consumers_.push_back(function);
+    return ret;
+    
   }
 
   bool Parse(byte_array_type const& contents) {
@@ -36,18 +47,37 @@ class Tokenizer : public std::vector<Token> {
       while (pos < contents.size()) {
         uint64_t oldpos = pos;
         int token_type = 0;
-      
-        for (auto &c : consumers_) {
-          pos = oldpos;
-          token_type = c(contents, pos);
-          if (token_type > -1) break;
-        }
 
+        if(indexer_) {
+          int index = 0, prev_index = -1 ;
+          bool check = true;        
+          while(check) {
+            index = indexer_(contents, pos, prev_index);
+            
+            auto &c = consumers_[index];
+            
+            pos = oldpos;
+            token_type = c(contents, pos);
+            if (token_type > -1) break;
+            
+            check = (index != prev_index );
+            prev_index = index;
+          }
+        }
+        else
+        {
+          for (auto &c : consumers_) {
+            pos = oldpos;
+            token_type = c(contents, pos);
+            if (token_type > -1) break;
+          }          
+        }
         if (pos == oldpos) {
           TODO_FAIL( "Unable to parse char on ", pos, "  '", str[pos], "'", ", '", contents[pos], "'" );
-        }
-        ++n;      
+        }        
+        ++n;          
       }
+      
 
       this->reserve(n);
     }
@@ -58,12 +88,31 @@ class Tokenizer : public std::vector<Token> {
       uint64_t oldpos = pos;
       int64_t token_type = 0;
 
-      for (auto &c : consumers_) {
-        pos = oldpos;
-        token_type = c(contents, pos);
-        if (token_type > -1) break;
-      }
+      if(indexer_) {
+        int index = 0, prev_index = -1 ;
+        bool check = true;        
+        while(check) {
+          index = indexer_(contents, pos, prev_index);
+          
+          auto &c = consumers_[index];
+          
+          pos = oldpos;
+          token_type = c(contents, pos);
+          if (token_type > -1) break;
 
+          check = (index != prev_index );
+          prev_index = index;
+        }
+      }
+      else
+      {
+        for (auto &c : consumers_) {
+          pos = oldpos;
+          token_type = c(contents, pos);
+          if (token_type > -1) break;
+        }
+      }
+      
       if (pos == oldpos) {
         TODO_FAIL( "Unable to parse char on ", pos, "  '", str[pos], "'", ", '", contents[pos], "'" );
       }
@@ -89,6 +138,8 @@ class Tokenizer : public std::vector<Token> {
 
  private:
   std::vector<consumer_function_type> consumers_;
+  indexer_function_type indexer_;
+  
 };
 };
 };

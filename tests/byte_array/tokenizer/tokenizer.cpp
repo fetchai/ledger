@@ -21,8 +21,8 @@ int main(int argc, char **argv)
     E_CATCH_ALL = 7
   };
 
-/*
-[](ConstByteArray const &str, uint64_t &pos) {
+     
+  int con1 = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) {
       uint64_t oldpos = pos;
       uint64_t N = pos + 1;
       if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
       while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
       if(pos != oldpos) {
         int ret = int(E_INTEGER); 
-
+        
         if((pos < str.size()) && (str[pos] == '.')) {
           ++pos;
           ret = int(E_FLOATING_POINT);
@@ -42,12 +42,12 @@ int main(int argc, char **argv)
         if((pos < str.size()) && ((str[pos] == 'e') || (str[pos] == 'f') || (str[pos] == 'E') || (str[pos] == 'F') ) ) {
           uint64_t rev = 1;          
           ++pos;
-
+          
           if((pos < str.size()) && ((str[pos] == '-') || (str[pos] == '+' ) ) ) {
             ++pos;
             ++rev;
           }
-
+          
           oldpos = pos;
           while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
           if( oldpos == pos ) {
@@ -58,31 +58,12 @@ int main(int argc, char **argv)
         
         return ret;
       }
-            
+      
       return -1; 
-      }*/  
+    });
 
-   /*
-   test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int {
-       uint64_t oldpos = pos;
-       
-       while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
-       
-       if(pos != oldpos) {
-         int ret =E_INTEGER; 
-         
-         if((pos < str.size()) && (str[pos] == '.')) {
-          ++pos;
-          ret = int(E_FLOATING_POINT);
-          while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;          
-         }        
-         return ret;
-       }
-       
-       return -1; 
-     });
-   */
-   test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int {
+  
+   int con2 = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int {
        switch( str[pos] ) {
        case '*':
        case '/':         
@@ -97,12 +78,8 @@ int main(int argc, char **argv)
                     
        return -1; 
      });
-   
-   
 
-   
-
-   test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int{
+   int con3 = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int{
        static std::vector< ConstByteArray > keywords = {
          "if", "then", "begin", "end", "procedure", "function", "program", 
        };
@@ -115,10 +92,9 @@ int main(int argc, char **argv)
        }
        
        return -1; 
-     });   
+     });      
 
-
-   test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int{
+   int con4 = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int{
        uint64_t oldpos = pos;       
        while ((('a' <= str[pos]) && (str[pos] <= 'z')) ||
          (('A' <= str[pos]) && (str[pos] <= 'Z')) || (str[pos] == '\''))
@@ -127,7 +103,7 @@ int main(int argc, char **argv)
        return E_TOKEN;
      });
 
-  test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) {
+  int con5 = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) {
       uint64_t oldpos = pos;
       while ((pos < str.size()) && ((str[pos] == ' ') || (str[pos] == '\n') ||
           (str[pos] == '\r') || (str[pos] == '\t')))
@@ -137,6 +113,50 @@ int main(int argc, char **argv)
       return int(E_WHITESPACE);      
     });
 
+
+  test.SetConsumerIndexer([con1, con2, con3, con4, con5](ConstByteArray const&str, uint64_t const&pos, int const& index) {
+      char c = str[pos];
+      switch(c) {
+      case ' ':
+      case '\t':
+      case '\n':
+      case '\r':
+        return con5;
+      case 'i':
+      case 't':
+      case 'b':
+      case 'e':
+      case 'p':
+      case 'f':        
+        return (index == con3 ? con4 : con3);
+        
+      }
+            
+      if( ('0' <= c) && (c<='9') ) {
+        return con1;        
+      }
+
+      if( c == '-' ) {
+        if(index < con1) {
+          return con1;
+        } else {
+          return con2;
+        }
+      }      
+
+      if( (('a' <= c) && (c<='z')) ||
+        (('A' <= c) && (c<='Z')) ) {
+        return con4;
+      }
+      
+      if(index < con5) {
+        return index + 1;
+      }
+      
+      return index;
+
+    });
+  
   /*
   test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) {
       ++pos;      
@@ -150,7 +170,7 @@ int main(int argc, char **argv)
   long lSize;
   size_t result;
 
-  for(std::size_t i = 0; i <  1; ++i) {
+  for(std::size_t i = 0; i <  300000; ++i) {
     test.clear();
 
     ByteArray data;
