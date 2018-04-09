@@ -26,6 +26,13 @@ class JSONDocument : private byte_array::Tokenizer {
     WHITESPACE = 5
   };
 
+  enum {
+    PROPERTY = 2,
+    ENTRY_ALLOCATOR = 3,
+    OBJECT = 10,
+    ARRAY = 11
+  };  
+
   static int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
       uint64_t oldpos = pos;
       uint64_t N = pos + 1;
@@ -186,12 +193,7 @@ class JSONDocument : private byte_array::Tokenizer {
     return root_[key];
   }
 
-  enum {
-    PROPERTY = 2,
-    ENTRY_ALLOCATOR = 3,
-    OBJECT = 10,
-    ARRAY = 11
-  };
+
   void Parse(const_string_type const& document) {    
     // Parsing and tokenizing
     byte_array::Tokenizer::clear();    
