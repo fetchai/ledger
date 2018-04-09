@@ -81,10 +81,10 @@ class Matrix : public A {
 
 #define FETCH_ADD_OPERATOR(OP)                                          \
   template< typename S >                                                \
-  Matrix &operator OP(S const &other) {                                 \
+  Matrix &operator OP(S const &other) {                             \
     for (std::size_t i = 0; i < this->data().size(); i += E_SIMD_BLOCKS) \
       for (std::size_t j = 0; j < E_SIMD_BLOCKS; ++j)                    \
-        this->At(i + j) OP other;                                       \
+        this->At(i + j) OP other;                                    \
     return *this;                                                        \
   }
 
@@ -99,7 +99,7 @@ class Matrix : public A {
 
 #define FETCH_ADD_OPERATOR(OP1, OP2)         \
   template< typename S >                     \
-  Matrix operator OP1(S const &other) {      \
+  Matrix operator OP1(S const &other) const {      \
     Matrix ret = this->Copy();               \
     ret OP2 other;                           \
     return ret;                              \
@@ -262,6 +262,14 @@ class Matrix : public A {
     }
   }
 
+  template< typename F >
+  void SetAll(F & val) {
+    for(auto &a: *this)  {
+      a = val;
+    }
+  }
+  
+  
   /*
   type Variance(type const &mean) const { }
   type Variance() const { }
