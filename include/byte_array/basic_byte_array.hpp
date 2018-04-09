@@ -173,7 +173,8 @@ public:
   }
 
   int AsInt() const {
-    // TODO: add support for sign
+    return atoi(reinterpret_cast< char const * >(arr_pointer_) );
+    /*
     int n = 0;
     for (std::size_t i = 0; i < length_; ++i) {
       n *= 10;
@@ -188,13 +189,16 @@ public:
       n += a;
     }
     return n;
+    */
   }  
 
   
 
-  int AsFloat() const {
+  double AsFloat() const {
+    return atof(reinterpret_cast< char const * >(arr_pointer_));
     // TODO: Implement
     // TODO: add support for sign
+    /*
     int n = 0;
     for (std::size_t i = 0; i < length_; ++i) {
       n *= 10;
@@ -209,6 +213,7 @@ public:
       n += a;
     }
     return n;
+    */
   }  
 
 protected:

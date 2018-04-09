@@ -11,7 +11,7 @@
 
 #include <memory>
 #include <vector>
-
+#include<stack>
 namespace fetch {
 namespace json {
 
@@ -129,7 +129,6 @@ class JSONDocument : private byte_array::Tokenizer {
   typedef script::Variant variant_type;
 
   JSONDocument() {
-    root_ = std::make_shared<variant_type>();
 
     int number_consumer = AddConsumer(NumberConsumer);
     int string_consumer = AddConsumer(StringConsumer);
@@ -170,117 +169,207 @@ class JSONDocument : private byte_array::Tokenizer {
   }
 
   script::Variant& operator[](std::size_t const& i) {
-    return (*root_)[i];
+    return root_[i];
   }
 
   script::Variant const& operator[](std::size_t const& i) const {
-    return (*root_)[i];    
+    return root_[i];    
   }
 
   script::Variant & operator[](byte_array::BasicByteArray const &key) 
   {
-    return (*root_)[key];    
+    return root_[key];    
   }
 
   script::Variant const & operator[](byte_array::BasicByteArray const &key) const 
   {
-    return (*root_)[key];
+    return root_[key];
   }
 
-  
+  enum {
+    PROPERTY = 2,
+    ENTRY_ALLOCATOR = 3,
+    OBJECT = 10,
+    ARRAY = 11
+  };
   void Parse(const_string_type const& document) {    
     // Parsing and tokenizing
     byte_array::Tokenizer::clear();    
     byte_array::Tokenizer::Parse(document);
 
     compilation_stack_.clear();
-    operator_stack_ = std::stack< uint64_t >();
+    operator_stack1_ = std::stack< uint64_t >();
+    operator_stack2_ = std::stack< uint64_t >();    
     
-    for(auto &t: *this) {
-      std::shared_ptr<variant_type> obj;
+    for(std::size_t i=0; i < this->size(); ++i) {
+      auto const &t = this->at(i);
       
       switch(t.type()) {
       case KEYWORD:
         switch(t[0]) {
         case 't': // true;
-          obj = std::make_shared< Variant >( true );
+          compilation_stack_.emplace_back( true );
           break;                    
         case 'f': // false;
-          obj = std::make_shared< Variant >( false );
+          compilation_stack_.emplace_back( false );
           break;          
         case 'n': // null
-          obj = std::make_shared< Variant >( nullptr );
+          compilation_stack_.emplace_back( nullptr );
           break;
           
         }
         
       case STRING:
-        obj = std::make_shared< Variant >( t.SubArray(1,t.size() -2 ) );        
+        compilation_stack_.emplace_back( t.SubArray(1,t.size() -2 ) );        
       case SYNTAX:
         switch(t[0]) {
         case '{':
-          OpenGroup(OP_OBJECT);
+          PushToStack(OBJECT);
+          if ((i+1) < this->size()) {
+            auto const &t2 = this->at(i+1);
+            if(t2[0] != '}')  {
+              PushToStack(ENTRY_ALLOCATOR);
+            }
+          }
           break;
         case '}':
-          CloseGroup(OP_OBJECT);
+          CloseGroup(OBJECT);
           break;
         case '[':
-          OpenGroup(OP_ARRAY);
+          PushToStack(ARRAY);
+          if ((i+1) < this->size()) {
+            auto const &t2 = this->at(i+1);
+            if(t2[0] != ']')  {
+              PushToStack(ENTRY_ALLOCATOR);
+            }
+          }          
+
           break;
         case ']':
-          CloseGroup(OP_ARRAY);
-          break;          
+          CloseGroup(ARRAY);
+          break; 
         case ':':
-          SetProperty();
+          PushToStack(PROPERTY);
           break;
         case ',':
-          SeparateEntries();
+          PushToStack(ENTRY_ALLOCATOR);
           break;
-        }                      
+        }
+        break;
       case NUMBER_INT:
-        obj = std::make_shared< Variant >( t.AsInt() );
+        compilation_stack_.emplace_back( t.AsInt() );
         break;
         
       case NUMBER_FLOAT:
-        obj = std::make_shared< Variant >( t.AsFloat() );
+        compilation_stack_.emplace_back( t.AsFloat() );
         break;
 
       case WHITESPACE:
         continue;
       }
-    }        
-    
+    } 
+
+    if(compilation_stack_.size()!= 1) {
+      std::cerr << "Something went wrong" << std::endl;
+    } else {
+      root_ = compilation_stack_[0];
+      compilation_stack_.pop_back();
+    }
   }
 
-  variant_type &root() { return *root_; }
-  variant_type const &root() const { return *root_; }
+  variant_type &root() { return root_; }
+  variant_type const &root() const { return root_; }
 
  private:
-  void OpenGroup(std::size_t const &id) 
+  void PushToStack(std::size_t const &id)    
   {
-    operators_.push_back(id);
+    if( (id != ARRAY) && (id != OBJECT)) {
+    while((!operator_stack2_.empty()) && (operator_stack2_.top() < id)) {
+      operator_stack1_.push(operator_stack2_.top());
+      operator_stack2_.pop();
+    }
+    }
+    operator_stack2_.push(id);
   }
 
   void CloseGroup(std::size_t const &id) 
   {
-
+    std::size_t n = 0;
+    while((!operator_stack2_.empty()) && (id != operator_stack2_.top())) {
+      auto const &t = operator_stack2_.top();
+      switch(t) {
+      case  PROPERTY:
+        operator_stack1_.push(t);
+        break;
+      case OBJECT:
+      case ARRAY:
+        std::cerr << "unmatched group" << std::endl;
+        return;
+        break;
+      default:
+        ++n;
+      }
+      operator_stack2_.pop();
+    }
+    
+    if(operator_stack2_.empty()) {
+      std::cerr << "Could not find group: " << id << std::endl;
+    }
+    
+    if(id == OBJECT) {
+      CreateObject(n);
+    } else {
+      CreateArray(n);
+    }
+    operator_stack2_.pop();
   }
 
-  void SetProperty() 
+  
+  void CreateObject(std::size_t const &n) 
   {
+    variant_type obj = variant_type::Object();
 
+    if( (2*n) > compilation_stack_.size() ) {
+      std::cerr << " expected value" << std::endl;
+      return;
+    }
+    
+    for(std::size_t i = 0; i < n; ++i) {
+      if(operator_stack1_.empty()) {
+        std::cerr << " error, expected colon" << std::endl;
+        return;
+      }
+      
+      operator_stack1_.pop();
+      variant_type const &value = compilation_stack_.back();
+      compilation_stack_.pop_back();
+
+      variant_type const &key = compilation_stack_.back();
+      compilation_stack_.pop_back();
+      obj[key.as_byte_array()] = value;
+    }
+
+    compilation_stack_.push_back(obj);
   }
 
-  void SeparateEntries() 
+  
+  void CreateArray(std::size_t const &n) 
   {
+    variant_type arr = variant_type::Array(n);
+    for(std::size_t i=n; i !=0; ) {
+      --i;
 
+      arr[i] = compilation_stack_.back();
+      compilation_stack_.pop_back();
+    }
+
+    compilation_stack_.push_back(arr);
   }
   
-  
-  std::vector< std::shared_ptr<variant_type> > compilation_stack_;
-  std::stack< uint64_t > operator_stack_;  
-  std::shared_ptr<variant_type> root_;
-  //  variant_type *root_ = nullptr;
+  std::vector< variant_type > compilation_stack_;
+  std::stack< uint64_t > operator_stack2_;    
+  std::stack< uint64_t > operator_stack1_;  
+  variant_type root_;
 };
 };
 };

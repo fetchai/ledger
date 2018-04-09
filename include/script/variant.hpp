@@ -122,7 +122,6 @@ public:
     Variant ret;    
     ret.type_ = ARRAY;
     ret.data_.array = new variant_array_type(arr.size());
-    (*ret.data_.array)[0] = arr.size();
     std::size_t i = 0;
     for(auto const &kv: arr)
     {      

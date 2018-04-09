@@ -31,7 +31,7 @@ int main() {
   }
 }
 )" ;
-    doc_content = R"({"angle1":022,"angle2":1,"name":"AEA_8080_0","searchText":"100"})";
+    doc_content = R"({"angle1":0.22,"angle2":1,"name":"AEA_8080_0","searchText":"100"})";
     
     std::cout << doc_content << std::endl;
 
@@ -41,7 +41,9 @@ int main() {
     doc["a"] = 4;
     std::cout << doc.root() << std::endl;
 
-    doc.Parse(R"( {"thing": "tester", "list": [{"one": "me"}, {"two": "asdf"}]})");
+    std::cout << " -----======------- " << std::endl;
+    doc.Parse(R"( {"thing": "tester", "list": [{"one": "me"}, {"two": "asdf"}] } )");
+
     std::cout << doc.root() << std::endl << std::endl;
     std::cout << "doc[\"list\"] = ";    
     std::cout << doc["list"] << std::endl;
