@@ -11,18 +11,16 @@ int main(int argc, char **argv)
 {
   Tokenizer test;
   enum {
-    E_TOKEN = 0,    
-    E_BYTE_ARRAY = 1,
-    E_OPERATOR = 2,
-    E_WHITESPACE = 3,
-    E_INTEGER = 4,
-    E_FLOATING_POINT = 5,
-    E_KEYWORD = 6,        
-    E_CATCH_ALL = 7
+    E_INTEGER = 0,
+    E_FLOATING_POINT = 1,
+    E_STRING = 2,
+    E_KEYWORD = 3,     
+    E_TOKEN = 4,
+    E_WHITESPACE = 5
   };
 
-     
-  int con1 = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) {
+
+  int number_consumer = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) {
       uint64_t oldpos = pos;
       uint64_t N = pos + 1;
       if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
@@ -39,7 +37,7 @@ int main(int argc, char **argv)
           while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;          
         }
         
-        if((pos < str.size()) && ((str[pos] == 'e') || (str[pos] == 'f') || (str[pos] == 'E') || (str[pos] == 'F') ) ) {
+        if((pos < str.size()) && ((str[pos] == 'e') || (str[pos] == 'E')  ) ) {
           uint64_t rev = 1;          
           ++pos;
           
@@ -63,25 +61,24 @@ int main(int argc, char **argv)
     });
 
   
-   int con2 = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int {
-       switch( str[pos] ) {
-       case '*':
-       case '/':         
-       case '-':
-       case '+':
-       case ':':
-       case '=':         
-         ++pos;
-         return E_OPERATOR;
+   int string_consumer = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int {
+       if(str[pos] != '"') return -1;
+       ++pos;
+       if(pos >= str.size()) return -1;
+
+       while( (pos < str.size()) && (str[pos] != '"') ) {
+         pos += 1 + (str[pos] == '\\');         
        }
-       
-                    
-       return -1; 
+
+       if( pos >= str.size() )
+         return -1;
+       ++pos;
+       return E_STRING;
      });
 
-   int con3 = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int{
+   int keyword_consumer = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int{
        static std::vector< ConstByteArray > keywords = {
-         "if", "then", "begin", "end", "procedure", "function", "program", 
+         "null", "true", "false"
        };
 
        for(auto const &k: keywords) {
@@ -94,16 +91,23 @@ int main(int argc, char **argv)
        return -1; 
      });      
 
-   int con4 = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int{
-       uint64_t oldpos = pos;       
-       while ((('a' <= str[pos]) && (str[pos] <= 'z')) ||
-         (('A' <= str[pos]) && (str[pos] <= 'Z')) || (str[pos] == '\''))
-         ++pos;
-       if(oldpos == pos) return -1;
-       return E_TOKEN;
-     });
+  int token_consumer = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int {      
+      switch(str[pos]) {
+      case '{':
+      case '}':
+      case '[':
+      case ']':
+      case ':':
+      case ',':        
+        ++pos;
+        return E_TOKEN;      
+      };
 
-  int con5 = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) {
+      
+      return -1; 
+    });
+  
+   int white_space_consumer = test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) -> int {
       uint64_t oldpos = pos;
       while ((pos < str.size()) && ((str[pos] == ' ') || (str[pos] == '\n') ||
           (str[pos] == '\r') || (str[pos] == '\t')))
@@ -114,93 +118,53 @@ int main(int argc, char **argv)
     });
 
 
-  test.SetConsumerIndexer([con1, con2, con3, con4, con5](ConstByteArray const&str, uint64_t const&pos, int const& index) {
+   test.SetConsumerIndexer([number_consumer, string_consumer, white_space_consumer, keyword_consumer, token_consumer](ConstByteArray const&str, uint64_t const&pos, int const& index) {
       char c = str[pos];
       switch(c) {
       case ' ':
       case '\t':
       case '\n':
       case '\r':
-        return con5;
-      case 'i':
+        return white_space_consumer;
       case 't':
-      case 'b':
-      case 'e':
-      case 'p':
-      case 'f':        
-        return (index == con3 ? con4 : con3);
-        
-      }
-            
-      if( ('0' <= c) && (c<='9') ) {
-        return con1;        
+      case 'f':
+      case 'n':
+        return keyword_consumer;
+      case '{':
+      case '}':
+      case '[':
+      case ']':
+      case ':':
+      case ',':
+        return  token_consumer;
+      case '"':
+        return string_consumer;        
       }
 
-      if( c == '-' ) {
-        if(index < con1) {
-          return con1;
-        } else {
-          return con2;
-        }
-      }      
-
-      if( (('a' <= c) && (c<='z')) ||
-        (('A' <= c) && (c<='Z')) ) {
-        return con4;
-      }
-      
-      if(index < con5) {
-        return index + 1;
-      }
-      
-      return index;
+      return number_consumer;
 
     });
-  
-  /*
-  test.AddConsumer([](ConstByteArray const &str, uint64_t &pos) {
-      ++pos;      
-      return int(E_CATCH_ALL);      
-    });
-  */
 
-  
-//  test.Parse("test.file", R"(232    332e- 32.15e 32.3e-2.)" );
-  FILE * pFile;
-  long lSize;
-  size_t result;
 
-  for(std::size_t i = 0; i <  300000; ++i) {
-    test.clear();
 
-    ByteArray data;
-    pFile = fopen ( argv[1] , "r" );    
-    if (pFile==NULL) {fputs ("File error",stderr); exit (1);}
-    
-    // obtain file size:
-    fseek (pFile , 0 , SEEK_END);
-    lSize = ftell (pFile);
-    rewind (pFile);    
-    data.Resize(lSize);
-    result = fread (data.pointer(),1,lSize,pFile);
-    fclose(pFile);
-    
-    
-    
-    test.Parse(data);
+   ByteArray doc_content = R"({
+  "a": 3,
+  "x": { 
+    "y": [1,2,3],
+    "z": null,
+    "q": [],
+    "hello world": {}
   }
-  
-  std::cout << argv[1] << std::endl;
-  
-  std::cout << test.size() << std::endl;
-  
-  /*
-  for(auto &t : test) {
-    std::cout << t.filename() << " line " << t.line() << ", char " << t.character() << std::endl;
-    std::cout << t.type() << " " << t.size() << " " << t << std::endl;
-  } 
-  */ 
-  return 0;
+}
+)" ;
+   
+   test.Parse(doc_content);
+   
+   for(auto &t : test) {
+     std::cout <<  "Line " << t.line() << ", char " << t.character() << std::endl;
+     std::cout << t.type() << " " << t.size() << " " << t << std::endl;
+   } 
+   return 0;
   
 }
 

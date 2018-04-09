@@ -16,48 +16,157 @@ namespace fetch {
 namespace json {
 
 class JSONDocument : private byte_array::Tokenizer {
-    enum {
-      OP_OBJECT = 1,
-      OP_ARRAY = 2,
-      OP_PROPERTY = 4,
-      OP_APPEND = 8,
-      OP_STRING = 16,
-      OP_NUMBER = 32,
-      OP_TRUE = 64,
-      OP_FALSE = 128,
-      OP_NULL = 256
-    };
 
+  enum Type {
+    KEYWORD = 0,
+    STRING = 1,
+    SYNTAX = 2,
+    NUMBER_INT = 3,
+    NUMBER_FLOAT = 4,    
+    WHITESPACE = 5
+  };
 
+  static int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
+      uint64_t oldpos = pos;
+      uint64_t N = pos + 1;
+      if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
+        (str[N] <= '9'))
+        pos += 2;
+      
+      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
+      if(pos != oldpos) {
+        int ret = int(NUMBER_INT); 
+        
+        if((pos < str.size()) && (str[pos] == '.')) {
+          ++pos;
+          ret = int(NUMBER_FLOAT);
+          while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;          
+        }
+        
+        if((pos < str.size()) && ((str[pos] == 'e') || (str[pos] == 'E')  ) ) {
+          uint64_t rev = 1;          
+          ++pos;
+          
+          if((pos < str.size()) && ((str[pos] == '-') || (str[pos] == '+' ) ) ) {
+            ++pos;
+            ++rev;
+          }
+          
+          oldpos = pos;
+          while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
+          if( oldpos == pos ) {
+            pos -= rev;
+          }       
+          ret = int(NUMBER_FLOAT);
+        }
+        
+        return ret;
+      }
+      
+      return -1; 
+  }
+
+  static int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)  {
+       if(str[pos] != '"') return -1;
+       ++pos;
+       if(pos >= str.size()) return -1;
+
+       while( (pos < str.size()) && (str[pos] != '"') ) {
+         pos += 1 + (str[pos] == '\\');         
+       }
+
+       if( pos >= str.size() )
+         return -1;
+       ++pos;
+       return STRING;
+     }
+
+  static int TokenConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)  {      
+      switch(str[pos]) {
+      case '{':
+      case '}':
+      case '[':
+      case ']':
+      case ':':
+      case ',':        
+        ++pos;
+        return SYNTAX;
+      };
+
+      
+      return -1; 
+  }
+  
+  static int KeywordConsumer(byte_array::ConstByteArray const &str, uint64_t &pos){
+       static std::vector< byte_array::ConstByteArray > keywords = {
+         "null", "true", "false"
+       };
+
+       for(auto const &k: keywords) {
+         if(str.Match(k, pos)) {
+           pos += k.size();           
+           return int(KEYWORD);
+         }
+       }
+       
+       return -1; 
+  }
+
+  
+  static int WhiteSpaceConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)  {
+      uint64_t oldpos = pos;
+      while ((pos < str.size()) && ((str[pos] == ' ') || (str[pos] == '\n') ||
+          (str[pos] == '\r') || (str[pos] == '\t')))
+        ++pos;
+      
+      if(pos == oldpos) return -1;           
+      return int(WHITESPACE);      
+    }
   
  public:
   typedef byte_array::ByteArray string_type;
   typedef byte_array::ConstByteArray const_string_type;  
   typedef script::Variant variant_type;
 
-  enum Type {
-    TOKEN = 0,
-    STRING = 1,
-    SYNTAX = 2,
-    NUMBER = 3,
-    WHITESPACE = 5,
-    CATCH_ALL = 6
-  };
-
   JSONDocument() {
     root_ = std::make_shared<variant_type>();
 
-    AddConsumer(Type::TOKEN, byte_array::consumers::AlphaNumericLetterFirst);
-    AddConsumer(Type::WHITESPACE, byte_array::consumers::Whitespace);
-    AddConsumer(Type::STRING, byte_array::consumers::StringEnclosedIn('"'));
-    AddConsumer(Type::NUMBER, byte_array::consumers::Integer);
-    AddConsumer(Type::SYNTAX,
-                byte_array::consumers::TokenFromList({"[", "]", "{", "}", ",", ":"}));
-    AddConsumer(Type::CATCH_ALL, byte_array::consumers::AnyChar);
+    int number_consumer = AddConsumer(NumberConsumer);
+    int string_consumer = AddConsumer(StringConsumer);
+    int token_consumer = AddConsumer(TokenConsumer);
+    int keyword_consumer =  AddConsumer(KeywordConsumer);
+    int white_space_consumer = AddConsumer(WhiteSpaceConsumer);
+    
+    SetConsumerIndexer([number_consumer, string_consumer, white_space_consumer, keyword_consumer, token_consumer](byte_array::ConstByteArray const&str, uint64_t const&pos, int const& index) {
+        char c = str[pos];
+        switch(c) {
+        case ' ':
+        case '\t':
+        case '\n':
+        case '\r':
+          return white_space_consumer;
+        case 't':
+        case 'f':
+        case 'n':
+          return keyword_consumer;
+        case '{':
+        case '}':
+        case '[':
+        case ']':
+        case ':':
+        case ',':
+          return  token_consumer;
+        case '"':
+          return string_consumer;        
+        }
+
+        return number_consumer;
+
+    });
   }
 
-  JSONDocument(string_type filename, const_string_type const &document) : JSONDocument() {
-    Parse(filename, document);
+  JSONDocument(const_string_type const &document) : JSONDocument() {
+    Parse(document);
   }
 
   script::Variant& operator[](std::size_t const& i) {
@@ -79,261 +188,97 @@ class JSONDocument : private byte_array::Tokenizer {
   }
 
   
-  void Parse(string_type filename, const_string_type const& document) {    
+  void Parse(const_string_type const& document) {    
     // Parsing and tokenizing
     byte_array::Tokenizer::clear();    
-    byte_array::Tokenizer::Parse(filename, document);
+    byte_array::Tokenizer::Parse(document);
 
-    // Building an abstract syntax tree
-    using namespace script;
-    ASTGroupOperationType T_OBJECT = {OP_OBJECT, ASTProperty::GROUP, 0};
-    ASTGroupOperationType T_ARRAY = {OP_ARRAY, ASTProperty::GROUP, 0};
-    ASTOperationType T_PROPERTY = {
-        OP_PROPERTY, ASTProperty::OP_LEFT | ASTProperty::OP_RIGHT, 1};
-
-    ASTOperationType T_APPEND = {
-        OP_APPEND, ASTProperty::OP_LEFT | ASTProperty::OP_RIGHT, 2};
-    ASTOperationType T_STRING = {OP_STRING, ASTProperty::TOKEN, 3};
-    ASTOperationType T_NUMBER = {OP_NUMBER, ASTProperty::TOKEN, 3};
-    ASTOperationType T_TRUE = {OP_TRUE, ASTProperty::TOKEN, 3};
-    ASTOperationType T_FALSE = {OP_FALSE, ASTProperty::TOKEN, 3};
-    ASTOperationType T_NULL = {OP_NULL, ASTProperty::TOKEN, 3};
-
-    AbstractSyntaxTree tree;
-
-    tree.PushTokenType(T_OBJECT);
-    tree.PushTokenType(T_ARRAY);
-    tree.PushTokenType(T_PROPERTY);
-
-    tree.PushTokenType(T_APPEND);
-    tree.PushTokenType(T_STRING);
-    tree.PushTokenType(T_NUMBER);
-    tree.PushTokenType(T_TRUE);
-    tree.PushTokenType(T_FALSE);
-    tree.PushTokenType(T_NULL);
-
-    for (auto &t : *this) {
-      switch (t.type()) {
-        case Type::SYNTAX:
-          if (t == "[")
-            tree.PushToken({T_ARRAY.open(), t});
-          else if (t == "]")
-            tree.PushToken({T_ARRAY.close(), t});
-          else if (t == "{")
-            tree.PushToken({T_OBJECT.open(), t});
-          else if (t == "}")
-            tree.PushToken({T_OBJECT.close(), t});
-          else if (t == ":")
-            tree.PushToken({T_PROPERTY, t});
-          else if (t == ",")
-            tree.PushToken({T_APPEND, t});
+    compilation_stack_.clear();
+    operator_stack_ = std::stack< uint64_t >();
+    
+    for(auto &t: *this) {
+      std::shared_ptr<variant_type> obj;
+      
+      switch(t.type()) {
+      case KEYWORD:
+        switch(t[0]) {
+        case 't': // true;
+          obj = std::make_shared< Variant >( true );
+          break;                    
+        case 'f': // false;
+          obj = std::make_shared< Variant >( false );
+          break;          
+        case 'n': // null
+          obj = std::make_shared< Variant >( nullptr );
           break;
+          
+        }
+        
+      case STRING:
+        obj = std::make_shared< Variant >( t.SubArray(1,t.size() -2 ) );        
+      case SYNTAX:
+        switch(t[0]) {
+        case '{':
+          OpenGroup(OP_OBJECT);
+          break;
+        case '}':
+          CloseGroup(OP_OBJECT);
+          break;
+        case '[':
+          OpenGroup(OP_ARRAY);
+          break;
+        case ']':
+          CloseGroup(OP_ARRAY);
+          break;          
+        case ':':
+          SetProperty();
+          break;
+        case ',':
+          SeparateEntries();
+          break;
+        }                      
+      case NUMBER_INT:
+        obj = std::make_shared< Variant >( t.AsInt() );
+        break;
+        
+      case NUMBER_FLOAT:
+        obj = std::make_shared< Variant >( t.AsFloat() );
+        break;
 
-        case Type::STRING:
-          tree.PushToken({T_STRING, t});
-          break;
-
-        case Type::NUMBER:
-          tree.PushToken({T_NUMBER, t});
-          break;
-
-        case Type::TOKEN:
-          if (t == "true")
-            tree.PushToken({T_TRUE, t});
-          else if (t == "false")
-            tree.PushToken({T_FALSE, t});
-          else if (t == "null")
-            tree.PushToken({T_NULL, t});
-          break;
-        case Type::CATCH_ALL:
-          throw UnrecognisedJSONSymbolException(t);
-          break;
+      case WHITESPACE:
+        continue;
       }
-    }
-   
-    tree.Build();
-    // Creating variant;
-    root_ = std::make_shared< variant_type >();
-    VisitASTNodes( tree.root_shared_pointer(), *root_ );
+    }        
+    
   }
 
   variant_type &root() { return *root_; }
   variant_type const &root() const { return *root_; }
 
  private:
-  typedef std::shared_ptr<script::ASTNode> ast_node_ptr;
-
-  
-  std::size_t VisitArrayElements(ast_node_ptr node, std::vector< ast_node_ptr > &array_contents)
+  void OpenGroup(std::size_t const &id) 
   {
-    if(node->token_class.type == OP_APPEND) {
-      std::size_t ret = 0;      
-      for(ast_node_ptr c: node->children)
-      {
-        ret += VisitArrayElements(c, array_contents);
-      }
-      return ret;      
-    }
-    array_contents.push_back(node);    
-    return 1;    
+    operators_.push_back(id);
   }
 
-
-  std::size_t VisitObjectElements(ast_node_ptr node, std::vector< ast_node_ptr > &keys, std::vector< ast_node_ptr > &values)
+  void CloseGroup(std::size_t const &id) 
   {
-    if(node->token_class.type == OP_APPEND)
-    {
-      std::size_t ret = 0;
-      
-      for(ast_node_ptr c: node->children)
-      {
-        ret += VisitObjectElements(c, keys, values);
-      }
-        
-      return ret;
-    }
-    
 
-    if(node->token_class.type != OP_PROPERTY)
-    {
-      TODO_FAIL("Expected property");      
-    }
-              
-    keys.push_back( node->children[0] );
-    values.push_back( node->children[1] );
-    return 1;
+  }
+
+  void SetProperty() 
+  {
+
+  }
+
+  void SeparateEntries() 
+  {
+
   }
   
   
-  void VisitASTNodes( ast_node_ptr node, variant_type &variant) {
-
-
-    switch(node->token_class.type) {
-    case OP_APPEND: {
-      TODO_FAIL("unexpected append");
-    } break;
-      
-    case OP_ARRAY: {
-      std::vector< ast_node_ptr > array_contents;
-        
-      std::size_t n = 0;
-      for(auto &c: node->children)
-      {
-        n += VisitArrayElements( c, array_contents );
-      }
-            
-      if(variant.type() != script::VariantType::UNDEFINED)
-      {
-        TODO_FAIL("Cannot alter type from", variant.type() ," to array");
-      }
-      
-      variant = variant_type::Array( n );
-      std::size_t i=0;      
-      for(ast_node_ptr c: array_contents)
-      {
-        VisitASTNodes(c, variant[i++]);
-      }
-      
-    } break;
-    case OP_OBJECT: {
-      std::vector< ast_node_ptr > keys, values;
-
-      std::size_t n = 0;
-      for(auto &c: node->children)
-      {
-        n += VisitObjectElements( c, keys, values);
-      }
-      
-      if(variant.type() != script::VariantType::UNDEFINED)
-      {
-        TODO_FAIL("Cannot alter type from", variant.type() ," to object");
-      }
-      
-      variant = variant_type::Object();
-      
-      
-      for(std::size_t i=0; i < n; ++i )
-      {
-        ast_node_ptr key_tree = keys[i];
-        ast_node_ptr value_tree = values[i];
-
-        if(key_tree->children.size() != 0 )
-        {
-          TODO_FAIL("Key cannot have children");        
-        }
-        
-        byte_array::ByteArray key = key_tree->symbol;
-        if( (key.size() < 2) || (key[0] != '"') || (key[key.size()-1]!='"' ))
-        {
-          TODO_FAIL("Key must have quotes");        
-        }
-        
-        key = key.SubArray(1, key.size() - 2);
-        variant_type var;
-        VisitASTNodes(value_tree, var);
-        
-        variant[key] = var;
-        
-      }
-      
-    } break;
-    case OP_PROPERTY: {
-      if(variant.type() != script::VariantType::DICTIONARY)
-      {
-        TODO_FAIL("Can only set properties of an object");
-      }
-      
-      if(node->children.size() != 2)
-      {
-        TODO_FAIL("Expected a key and a value");
-      }
-      
-      ast_node_ptr key_tree = node->children[0];
-      ast_node_ptr value_tree = node->children[1];
-      if(key_tree->children.size() != 0 )
-      {
-        TODO_FAIL("Key cannot have children");        
-      }
-      
-      byte_array::ByteArray key = key_tree->symbol;
-      if( (key.size() < 2) || (key[0] != '"') || (key[key.size()-1]!='"' ))
-      {
-        TODO_FAIL("Key must have quotes");        
-      }
-      
-      key = key.SubArray(1, key.size() - 2);
-      variant_type value;      
-      
-      VisitASTNodes(value_tree, value);
-      variant[key] = value;
-      
-    } break;
-    case OP_STRING:
-      variant = node->symbol.SubArray(1, node->symbol.size() - 2); 
-      break;
-    case OP_NUMBER:
-      variant = node->symbol.AsFloat();      
-      break;      
-    case OP_TRUE:
-      variant = true; 
-      break;
-    case OP_FALSE:
-      variant = false;
-      break;
-    case OP_NULL:
-      variant = false;      
-      break;      
-    default:
- 
-      TODO_FAIL("Unknown type");
-      break;
-      
-    }
-        
-
-
-  }
-  
+  std::vector< std::shared_ptr<variant_type> > compilation_stack_;
+  std::stack< uint64_t > operator_stack_;  
   std::shared_ptr<variant_type> root_;
   //  variant_type *root_ = nullptr;
 };
