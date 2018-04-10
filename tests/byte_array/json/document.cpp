@@ -33,12 +33,12 @@ int main() {
 )" ;
     doc_content = R"({"angle1":0.22,"angle2":{ },"name":"AEA_8080_0","searchText":"100"})";
     //std::cout << doc_content << std::endl;
-    JSONDocument doc;        
-    for(std::size_t i=0; i < 1; ++i) {
+    JSONDocument doc;      
+    for(std::size_t i=0; i < 1000000; ++i) {
 
       doc.Parse(doc_content);
     }
-    std::cout << doc.root() << std::endl;
+//    std::cout << doc.root() << std::endl;
     
     /*
     doc["a"] = 4;

@@ -14,15 +14,231 @@ enum VariantType {
   UNDEFINED = 0,
   INTEGER = 1,
   FLOATING_POINT = 2,
-  BYTE_ARRAY = 3,
-  BOOLEAN = 4,
+  BOOLEAN = 3,
+  STRING = 4,
   NULL_VALUE = 5,
-  ARRAY = 6,
-  DICTIONARY = 7,
-  FUNCTION = 8
+  ARRAY = 6
 };
 
+class VariantList;
+
+
+class VariantAtomic
+{
+public:
+  typedef byte_array::ByteArray byte_array_type;
+  typedef std::shared_ptr< VariantList > variant_array_type;
+  
+  VariantAtomic() : type_(UNDEFINED) {}
+  /*
+  VariantAtomic(int64_t const& i) { *this = i; }
+  VariantAtomic(int32_t const& i) { *this = i; }
+  VariantAtomic(int16_t const& i) { *this = i; }
+  VariantAtomic(uint64_t const& i) { *this = i; }
+  VariantAtomic(uint32_t const& i) { *this = i; }
+  VariantAtomic(uint16_t const& i) { *this = i; }
+
+  VariantAtomic(float const& f) { *this = f; }
+  VariantAtomic(double const& f) { *this = f; }
+  */
+  ~VariantAtomic() 
+  {
+    
+  }
+
+  std::nullptr_t* operator=(std::nullptr_t* ptr) {
+    if (ptr != nullptr) {
+      // FIXME: Throw error
+      assert(ptr == nullptr);
+    }
+    type_ = NULL_VALUE;
+    return ptr;
+  }
+
+  byte_array_type const& operator=(byte_array_type const &b) {
+    type_ = STRING;
+    string_ = b;
+    return b;
+  }
+  
+  
+  template <typename T>
+  typename std::enable_if<std::is_integral<T>::value, T>::type operator=(
+      T const& i) {
+    type_ = INTEGER;
+    return data_.integer = i;
+  }
+
+  template <typename T>
+  typename std::enable_if<std::is_floating_point<T>::value, T>::type operator=(
+      T const& f) {
+    type_ = FLOATING_POINT;
+    return data_.float_point = f;
+  }
+
+  bool operator=(bool const& b) {
+    type_ = BOOLEAN;
+    return data_.boolean = b;
+  }
+
+  char const& operator=(char const& c) {
+    byte_array_type str;
+    str.Resize(1);
+    str[0] = c;
+    *this = str;
+    return c;
+  }
+
+  char const* operator=(char const* c) {
+    type_ = STRING;
+    byte_array_type str(c);
+    string_ = str;
+    return c;
+  }
+
+  variant_array_type const& operator=(variant_array_type const& array) {
+    type_ = ARRAY;
+    array_ = array;    
+    return array_;
+  }
+  
+  
+  int64_t const& as_int() const { return data_.integer; }
+  int64_t& as_int() { return data_.integer; }
+  double const& as_double() const { return data_.float_point; }
+  double& as_double() { return data_.float_point; }
+  bool const& as_bool() const { return data_.boolean; }
+  bool& as_bool() { return data_.boolean; }
+
+  byte_array_type const& as_byte_array() const { return string_; }
+  byte_array_type& as_byte_array() { return string_; }
+
+  variant_array_type const& as_shared_array() const { return array_; }
+  variant_array_type & as_shared_array() { return array_; }  
+  
+
+  VariantType type() const 
+  {
+    return type_;
+  }
+  
+private:
+  union {
+    int64_t integer;
+    double float_point;
+    bool boolean;
+  } data_;
+  
+  byte_array::ByteArray string_;
+  std::shared_ptr< VariantList > array_;
+  
+  VariantType type_ = UNDEFINED;  
+};
+
+
+std::ostream& operator<<(std::ostream& os, VariantAtomic const& v) {
+  switch (v.type()) {
+    case VariantType::UNDEFINED:
+      os << "(undefined)";
+      break;
+    case VariantType::INTEGER:
+      os << v.as_int();
+      break;
+    case VariantType::FLOATING_POINT:
+      os << v.as_double();
+      break;
+    case VariantType::STRING:
+      os << '"' << v.as_byte_array() << '"';
+      break;
+    case VariantType::BOOLEAN:
+      os << v.as_bool();
+      break;
+    case VariantType::NULL_VALUE:
+      os << "(null)";
+      break;
+    case VariantType::ARRAY:
+      os << "[ ... TODO ";
+      os << "]";
+      
+      break;      
+  }
+  return os;  
+}
+
+
+  
+class VariantList : public std::enable_shared_from_this< VariantList >
+{
+public:
+  VariantList() : size_(0) 
+  {
+    pointer_ = data_.pointer();    
+  }
+
+  VariantList(std::size_t const& size ) 
+  {
+    Resize(size);
+  }  
+
+  VariantList(VariantList const& other, std::size_t offset, std::size_t size) :
+    size_(size), offset_(offset), data_(other.data_)
+  {
+    pointer_ = data_.pointer() + offset_;
+  }  
+  
+  operator VariantAtomic&() 
+  {
+    return *pointer_;
+  }
+  
+  VariantAtomic const& operator[](std::size_t const &i)  const
+  {
+    return pointer_[i];
+  }
+  
+  VariantAtomic & operator[](std::size_t const &i) 
+  {
+    return pointer_[i];
+  }
+
+  void Resize(std::size_t const &n) 
+  {
+    Reserve(n);
+    size_ = n;
+  }
+
+  void Reserve(std::size_t const &n) 
+  {
+    if(offset_ + n < data_.size() ) return;
+    memory::SharedArray< VariantAtomic > new_data(n);
+    
+    for(std::size_t i = 0; i < data_.size(); ++i)
+    {
+      new_data[i] = pointer_[i];
+    }
+    
+    data_ = new_data;
+    offset_ = 0;    
+    pointer_ = data_.pointer();
+  }
+  
+  std::size_t size() const 
+  {
+    return size_;
+  }
+
+  
+private:
+  std::size_t size_ = 0;
+  std::size_t offset_ = 0;
+  memory::SharedArray< VariantAtomic > data_;
+  VariantAtomic *pointer_ = nullptr;
+};
+
+    
+
 // FIXME: replace asserts with throwing errors
+/*
   class Variant;
   std::ostream& operator<<(std::ostream& os, Variant const& v);  
 
@@ -32,16 +248,6 @@ public:
   typedef fetch::memory::SharedArray<Variant> variant_array_type;
   typedef fetch::script::Dictionary<Variant> variant_dictionary_type;
   
-  Variant() : type_(UNDEFINED) {}
-  Variant(int64_t const& i) { *this = i; }
-  Variant(int32_t const& i) { *this = i; }
-  Variant(int16_t const& i) { *this = i; }
-  Variant(uint64_t const& i) { *this = i; }
-  Variant(uint32_t const& i) { *this = i; }
-  Variant(uint16_t const& i) { *this = i; }
-
-  Variant(float const& f) { *this = f; }
-  Variant(double const& f) { *this = f; }
 
   Variant(char const* str) {
     if (str == nullptr)
@@ -225,15 +431,6 @@ public:
     return 0;
   }
 
-  std::nullptr_t* operator=(std::nullptr_t* ptr) {
-    FreeMemory();
-    if (ptr != nullptr) {
-      // FIXME: Throw error
-      assert(ptr == nullptr);
-    }
-    type_ = NULL_VALUE;
-    return ptr;
-  }
 
   void SetArrayPointer(Variant *ptr)
   {
@@ -250,53 +447,9 @@ public:
 
   
   
-  template <typename T>
-  typename std::enable_if<std::is_integral<T>::value, T>::type operator=(
-      T const& i) {
-    FreeMemory();
-    type_ = INTEGER;
-    return data_.integer = i;
-  }
-
-  template <typename T>
-  typename std::enable_if<std::is_floating_point<T>::value, T>::type operator=(
-      T const& f) {
-    FreeMemory();
-    type_ = FLOATING_POINT;
-    return data_.float_point = f;
-  }
-
-  bool operator=(bool const& b) {
-    FreeMemory();
-    type_ = BOOLEAN;
-    return data_.boolean = b;
-  }
-
-  char const& operator=(char const& c) {
-    byte_array_type str;
-    str.Resize(1);
-    str[0] = c;
-    *this = str;
-    return c;
-  }
-
-  byte_array_type const & operator=(byte_array_type const& s) {
-    FreeMemory();
-    type_ = BYTE_ARRAY;
-//    std::cout << "Was here???" << std::endl;
-    byte_array_ = s;
-    return byte_array_;
-   
-  }
 
   byte_array_type const& as_byte_array() const { return byte_array_; }
   byte_array_type& as_byte_array() { return byte_array_; }
-  int64_t const& as_int() const { return data_.integer; }
-  int64_t& as_int() { return data_.integer; }
-  double const& as_double() const { return data_.float_point; }
-  double& as_double() { return data_.float_point; }
-  bool const& as_bool() const { return data_.boolean; }
-  bool& as_bool() { return data_.boolean; }
 
 
   variant_dictionary_type as_dictionary() { return *data_.object; }
@@ -355,16 +508,9 @@ public:
   }
 
 
-  union {
-    int64_t integer;
-    double float_point;
-    bool boolean;
-    variant_array_type* array;
-    variant_dictionary_type *object;
-  } data_;
   
   byte_array_type byte_array_;
-  VariantType type_ = UNDEFINED;
+
 };
 
 
@@ -420,6 +566,7 @@ std::ostream& operator<<(std::ostream& os, Variant const& v) {
   }
   return os;
 }
+*/
 };
 };
 #endif

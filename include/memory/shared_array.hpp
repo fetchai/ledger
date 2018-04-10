@@ -58,7 +58,7 @@ class SharedArray {
     }
   }
   
-  SharedArray() : SharedArray(0) {}
+  SharedArray() {}
   SharedArray(SharedArray const &other)
     :size_(other.size_), data_(other.data_) {
   }

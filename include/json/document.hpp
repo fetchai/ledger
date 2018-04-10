@@ -178,7 +178,7 @@ class JSONDocument {
  public:
   typedef byte_array::ByteArray string_type;
   typedef byte_array::ConstByteArray const_string_type;  
-  typedef script::Variant variant_type;
+//  typedef script::Variant variant_type;
 
   JSONDocument() {
   }
@@ -186,7 +186,7 @@ class JSONDocument {
   JSONDocument(const_string_type const &document) : JSONDocument() {
     Parse(document);
   }
-
+/*
   script::Variant& operator[](std::size_t const& i) {
     return root_[i];
   }
@@ -204,7 +204,7 @@ class JSONDocument {
   {
     return root_[key];
   }
-
+*/
   std::vector< uint32_t > counters_;
   std::vector< std::size_t > allocators_;      
   std::vector< byte_array::Token > tokens_;
@@ -259,7 +259,7 @@ class JSONDocument {
       case '}':
         if(current_depth > max_depth) max_depth = current_depth;        
         --current_depth;
-        ++objects;        
+        ++objects;
         ++total_allocators;        
         ++pos;
         break;
@@ -297,10 +297,13 @@ class JSONDocument {
     }
     
     counters_.reserve(max_depth);
-    allocators_.reserve(total_allocators);
+    
 
-    std::vector< variant_type > variants;
-    variants.reserve(objects);
+    script::VariantList variants;
+    
+    variants.Resize(objects);
+    std::size_t current_index = 0;
+    
     
     pos = 0;    
     while( pos < document.size() ) {
@@ -323,19 +326,22 @@ class JSONDocument {
         
         switch(type) {
         case KEYWORD_TRUE:
-          variants.emplace_back( true );
+          variants[ current_index++ ] = true;
+          
           break;
         case KEYWORD_FALSE:
-          variants.emplace_back( false );
+          variants[ current_index++ ] = false;
+          
           break;          
         case KEYWORD_NULL:
-          variants.emplace_back( nullptr );
+// TODO          variants[ current_index++ ] = nullptr;
+          
           break;
         }
         
       case '"':
         StringConsumer(document, pos);
-        variants.emplace_back( document.SubArray(oldpos+ 1,pos - oldpos -2 ) );
+        variants[ current_index++ ] =  document.SubArray(oldpos+ 1,pos - oldpos -2 ) ;
         break;        
       case '{':
         counters_.emplace_back(0);
@@ -345,24 +351,8 @@ class JSONDocument {
       case '}': 
       {
         
-        int N = 2*counters_.back();
-        auto object = script::Variant::Object();
-        auto it = variants.end() - N;
-        for(std::size_t i =0; i < N; ++i) {
-          auto key = *it;
-          ++it;          
-          object[key.as_byte_array()] = *it;          
-          ++it;          
-        }
-        
-        while(N != 0) {          
-          variants.pop_back();
-          --N;          
-        }
-        
-        allocators_.emplace_back( counters_.back() );
-        variants.emplace_back( object );
-        std::cout << object << std::endl;
+//        allocators_.emplace_back( counters_.back() );
+//        variants.emplace_back( object );
         
         counters_.pop_back();
         ++pos;
@@ -377,6 +367,7 @@ class JSONDocument {
         
       case ']': 
       {
+/*        
         int N = counters_.back();
         auto array = script::Variant::Array(N);
         auto it = variants.end() - N;
@@ -389,9 +380,9 @@ class JSONDocument {
           variants.pop_back();
           --N;          
         }
-
-        allocators_.emplace_back( counters_.back() );
-        variants.emplace_back( array );        
+*/
+//        allocators_.emplace_back( counters_.back() );
+//        variants.emplace_back( array );        
         counters_.pop_back();
         ++pos;
       }
@@ -411,35 +402,32 @@ class JSONDocument {
         type = NumberConsumer(document,pos);
         switch(type) {
         case NUMBER_INT:
-          variants.emplace_back( atoi( reinterpret_cast< char const * >( document.pointer() ) + oldpos) );
+          variants[ current_index++ ] = atoi( reinterpret_cast< char const * >( document.pointer() ) + oldpos) ;
           break;
         case NUMBER_FLOAT:
-          variants.emplace_back( atof( reinterpret_cast< char const * >( document.pointer() ) + oldpos) );
+          variants[ current_index++ ] = atof( reinterpret_cast< char const * >( document.pointer() ) + oldpos) ;
           break;                    
         }
         break;
       }      
     }
     
-    std::cout << variants.size() << " " << counters_.size() << std::endl;
+//    std::cout << variants.size() << " " << counters_.size() << std::endl;
     
     if(variants.size()!= 1) {
-      throw JSONParseException("JSON compiled into more than one top level object");
+//      throw JSONParseException("JSON compiled into more than one top level object");
     } else {
-      root_ = variants[0];
-      variants.pop_back();
+//      root_ = variants[0];
+
     }
   }
 
-  variant_type &root() { return root_; }
-  variant_type const &root() const { return root_; }
+//  variant_type &root() { return root_; }
+//  variant_type const &root() const { return root_; }
 
  private:
    
-  std::vector< variant_type > compilation_stack_;
-  std::stack< uint64_t > operator_stack2_;    
-  std::stack< uint64_t > operator_stack1_;  
-  variant_type root_ = nullptr;
+//  variant_type root_ = nullptr;
 };
 };
 };

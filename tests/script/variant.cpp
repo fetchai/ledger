@@ -7,6 +7,24 @@ using namespace fetch::script;
 #include"unittest.hpp"
 
 int main() {
+  VariantList x(5);
+
+  std::cout << x.size() << std::endl;
+  x[0] = 1.2;
+  x[1] = "Hello world";
+  x[2] = 2;
+  x[3] = "Blah blah";
+  x[4] = 9;    
+  std::cout << x[0].as_double() << std::endl;
+  std::cout << x[1].as_byte_array() << std::endl;
+  std::cout << x[2].as_int() << std::endl;
+
+  VariantList y(x, 2, 3);
+  std::cout << y.size() << std::endl;
+  std::cout << y <<  std::endl;
+  std::cout << y[1] <<  std::endl;
+  std::cout << y[2] <<  std::endl;    
+  /*
   SCENARIO("Basic operations") {
     Variant a(1.1234), b(49);
     Variant str("Hello world");
@@ -72,7 +90,7 @@ int main() {
 
   };
 
-
+  */
   return 0;
 }
 
