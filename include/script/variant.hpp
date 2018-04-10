@@ -59,9 +59,17 @@ public:
   {
     this->operator=(var);    
   }
+
+  Variant(Variant &&var)
+  {
+    std::swap(data_, var.data_);
+    std::swap(type_, var.type_);    
+  }
   
+
   Variant const &operator=(Variant const &other)
   {
+    
     type_ = other.type_;
     switch (other.type_) {
     case UNDEFINED:
@@ -74,7 +82,7 @@ public:
       break;
       
     case BYTE_ARRAY:
-      this->data_.byte_array = new byte_array_type( *other.data_.byte_array );
+      this->byte_array_ = byte_array_ ;
       break;
       
     case ARRAY:
@@ -137,9 +145,12 @@ public:
     ret.data_.array = new variant_array_type(n);    
     return ret;    
   }  
+
   
   Variant Copy() const {
     Variant ret;
+    std::cout << "Was here?" << std::endl;
+    
     switch (type_) {
       case UNDEFINED:
       case INTEGER:
@@ -151,7 +162,7 @@ public:
 
       case BYTE_ARRAY:
         ret.type_ = type_;
-        ret.data_.byte_array = new byte_array_type(data_.byte_array->Copy());
+        ret.byte_array_ = byte_array_.Copy();
         break;
 
       case ARRAY:
@@ -172,6 +183,7 @@ public:
   std::initializer_list<Variant> const& operator=(
       std::initializer_list<Variant> const& arr) {
     type_ = ARRAY;
+    std::cout << "Was here??" << std::endl;    
     data_.array = new variant_array_type(arr.size());
     std::size_t i = 0;
     for (auto& a : arr) (*data_.array)[i++] = a;
@@ -209,7 +221,7 @@ public:
   std::size_t size() const {
     if (type_ == ARRAY)
       return data_.array->size();
-    if (type_ == BYTE_ARRAY) return data_.byte_array->size();
+    if (type_ == BYTE_ARRAY) return byte_array_.size();
     return 0;
   }
 
@@ -223,6 +235,18 @@ public:
     return ptr;
   }
 
+  void SetArrayPointer(Variant *ptr)
+  {
+    FreeMemory();
+    
+  }
+
+  void SetObjectPointer(Variant *ptr)
+  {
+    FreeMemory();
+    
+  }
+  
 
   
   
@@ -256,14 +280,17 @@ public:
     return c;
   }
 
-  byte_array_type operator=(byte_array_type const& s) {
+  byte_array_type const & operator=(byte_array_type const& s) {
     FreeMemory();
     type_ = BYTE_ARRAY;
-    return *(data_.byte_array = new byte_array_type(s));
+//    std::cout << "Was here???" << std::endl;
+    byte_array_ = s;
+    return byte_array_;
+   
   }
 
-  byte_array_type const& as_byte_array() const { return *data_.byte_array; }
-  byte_array_type& as_byte_array() { return *data_.byte_array; }
+  byte_array_type const& as_byte_array() const { return byte_array_; }
+  byte_array_type& as_byte_array() { return byte_array_; }
   int64_t const& as_int() const { return data_.integer; }
   int64_t& as_int() { return data_.integer; }
   double const& as_double() const { return data_.float_point; }
@@ -303,15 +330,10 @@ public:
   void FreeMemory() {
     switch (type_) {
       case UNDEFINED:
-        break;
       case INTEGER:
-        break;
       case FLOATING_POINT:
-        break;
       case BYTE_ARRAY:
         type_ = UNDEFINED;
-        delete data_.byte_array;
-        data_.byte_array = nullptr;
         break;
       case BOOLEAN:
         break;
@@ -337,11 +359,11 @@ public:
     int64_t integer;
     double float_point;
     bool boolean;
-    byte_array_type* byte_array;
     variant_array_type* array;
     variant_dictionary_type *object;
   } data_;
-
+  
+  byte_array_type byte_array_;
   VariantType type_ = UNDEFINED;
 };
 

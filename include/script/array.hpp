@@ -1,11 +1,10 @@
-#ifndef SCRIPT_DICTIONARY_HPP
-#define SCRIPT_DICTIONARY_HPP
+#ifndef SCRIPT_ARRAY_HPP
+#define SCRIPT_ARRAY_HPP
 #include"memory/shared_hashtable.hpp"
 #include"byte_array/referenced_byte_array.hpp"
 #include"crypto/fnv.hpp"
 
-#include<unordered_map>
-#include<memory>
+#include<vector>
 
 namespace fetch
 {
@@ -14,60 +13,73 @@ namespace script
 
 
 template< typename T >
-class Dictionary
+class Array
 {
 
 public:
-  typedef crypto::CallableFNV hasher_type;  
-  typedef byte_array::BasicByteArray key_type;
   typedef T type;
-  typedef std::unordered_map< key_type, type, hasher_type > container_type;
+  typedef std::vector< type > container_type;
   typedef std::shared_ptr< container_type > shared_container_type;  
   typedef typename container_type::iterator iterator;
   typedef typename container_type::const_iterator const_iterator;  
   
 
   
-  Dictionary() {
+  Array() {
     data_ = std::make_shared< container_type >( );
   }
 
-  Dictionary(Dictionary const& dict) {
+  Array(Array const& dict) {
     data_ = dict.data_;    
   }
   
-  Dictionary(Dictionary &&dict) {
+  Array(Array &&dict) {
     std::swap(data_, dict.data_);
   }  
 
-  Dictionary const& operator=(Dictionary const &dict) {
+  Array const& operator=(Array const &dict) {
     data_ =  dict.data_;
     return *this;    
   }  
   
-  Dictionary const& operator=(Dictionary &&dict) {
+  Array const& operator=(Array &&dict) {
     std::swap(data_, dict.data_);
     return *this;    
   }  
-  
-  Dictionary<T> Copy() const
+
+  void Reserve(std::size_t const &n) 
   {
-    Dictionary<T> ret;
+    data_->reserve(n);    
+  }
 
-    for(auto it=data_->begin(); it!=data_->end(); ++it)
-    {
-      ret[it->first] = it->second;      
+  void Resize(std::size_t const &n) 
+  {
+    data_->resize(n);    
+  }
+
+  
+  Array<T> Copy() const
+  {
+    std::cout << "Was here?" << std::endl;
+    
+    Array<T> ret;
+
+    ret.Resize( size() );
+    std::size_t i =0;
+    
+    for(auto const&a: *data_) {
+      ret[i++] = a;      
     }
-
+    
     return ret;
   }
   
-  type& operator[](byte_array::BasicByteArray const& key)
+  type& operator[](std::size_t const& key)
   {
     return (*data_)[key];
   }
 
-  type const& operator[](byte_array::BasicByteArray const& key) const
+  type const& operator[](std::size_t const& key) const
   {
     return (*data_)[key];
   }
@@ -91,6 +103,12 @@ public:
   {
     return data_->end();
   }
+
+  std::size_t size() const 
+  {
+    return data_->size();
+  }
+  
   
 private:
   shared_container_type data_;

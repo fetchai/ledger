@@ -30,7 +30,7 @@ class Token : public ConstByteArray {
 
 
  private:
-  std::size_t type_ = -1;
+  int type_ = -1;
   std::size_t line_ = 0;
   std::size_t char_ = 0;
 };

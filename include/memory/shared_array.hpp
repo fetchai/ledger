@@ -22,7 +22,7 @@ std::size_t total_shared_objects = 0;
 };
 #endif
 
-template <typename T>
+template <typename T, bool align = true>
 class SharedArray {
  public:
   typedef std::size_t size_type;

@@ -16,15 +16,17 @@ namespace fetch {
 namespace json {
 
   
-class JSONDocument : private byte_array::Tokenizer {
+class JSONDocument {
 
   enum Type {
-    KEYWORD = 0,
-    STRING = 1,
-    SYNTAX = 2,
-    NUMBER_INT = 3,
-    NUMBER_FLOAT = 4,    
-    WHITESPACE = 5
+    KEYWORD_TRUE = 0,
+    KEYWORD_FALSE = 1,
+    KEYWORD_NULL = 2,        
+    STRING = 3,
+    SYNTAX = 4,
+    NUMBER_INT = 5,
+    NUMBER_FLOAT = 6,    
+    WHITESPACE = 7
   };
 
   enum {
@@ -105,6 +107,15 @@ class JSONDocument : private byte_array::Tokenizer {
       return -1; 
   }
 
+
+  /* Consumes string starting and ending with ".
+   * @param str is a constant byte array.
+   * @param pos is a position in the byte array.
+   *
+   * The implementation follows the details given on JSON.org.
+   * Currently, there is no checking if unicodes are correctly
+   * formatted.
+   */
   static int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)  {
        if(str[pos] != '"') return -1;
        ++pos;
@@ -120,38 +131,40 @@ class JSONDocument : private byte_array::Tokenizer {
        return STRING;
      }
 
-  static int TokenConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)  {      
-      switch(str[pos]) {
-      case '{':
-      case '}':
-      case '[':
-      case ']':
-      case ':':
-      case ',':        
-        ++pos;
-        return SYNTAX;
-      };
-
-      
-      return -1; 
-  }
-  
+  /* Consumes either of the three keywords: true, false and null.
+   * @param str is a constant byte array.
+   * @param pos is a position in the byte array.
+   *
+   * The implementation follows the details given on JSON.org.
+   */  
   static int KeywordConsumer(byte_array::ConstByteArray const &str, uint64_t &pos){
-       static std::vector< byte_array::ConstByteArray > keywords = {
-         "null", "true", "false"
-       };
+    if(str.Match("null",pos)) {
+      pos+=4;
+      
+      return KEYWORD_NULL;      
+    }
 
-       for(auto const &k: keywords) {
-         if(str.Match(k, pos)) {
-           pos += k.size();           
-           return int(KEYWORD);
-         }
-       }
-       
-       return -1; 
+    if(str.Match("true",pos)) {
+      pos+=4;
+      
+      return KEYWORD_TRUE;      
+    }
+
+    if(str.Match("false",pos)) {
+      pos+=5;      
+      return KEYWORD_FALSE;
+    }
+    
+    return -1; 
   }
 
-  
+
+  /* Consumes whitespaces.
+   * @param str is a constant byte array.
+   * @param pos is a position in the byte array.
+   *
+   * Accepted whitespaces are unspecified on JSON.org.
+   */    
   static int WhiteSpaceConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)  {
       uint64_t oldpos = pos;
       while ((pos < str.size()) && ((str[pos] == ' ') || (str[pos] == '\n') ||
@@ -168,39 +181,6 @@ class JSONDocument : private byte_array::Tokenizer {
   typedef script::Variant variant_type;
 
   JSONDocument() {
-
-    int number_consumer = AddConsumer(NumberConsumer);
-    int string_consumer = AddConsumer(StringConsumer);
-    int token_consumer = AddConsumer(TokenConsumer);
-    int keyword_consumer =  AddConsumer(KeywordConsumer);
-    int white_space_consumer = AddConsumer(WhiteSpaceConsumer);
-    
-    SetConsumerIndexer([number_consumer, string_consumer, white_space_consumer, keyword_consumer, token_consumer](byte_array::ConstByteArray const&str, uint64_t const&pos, int const& index) {
-        char c = str[pos];
-        switch(c) {
-        case ' ':
-        case '\t':
-        case '\n':
-        case '\r':
-          return white_space_consumer;
-        case 't':
-        case 'f':
-        case 'n':
-          return keyword_consumer;
-        case '{':
-        case '}':
-        case '[':
-        case ']':
-        case ':':
-        case ',':
-          return  token_consumer;
-        case '"':
-          return string_consumer;        
-        }
-
-        return number_consumer;
-
-    });
   }
 
   JSONDocument(const_string_type const &document) : JSONDocument() {
@@ -225,89 +205,229 @@ class JSONDocument : private byte_array::Tokenizer {
     return root_[key];
   }
 
-
+  std::vector< uint32_t > counters_;
+  std::vector< std::size_t > allocators_;      
+  std::vector< byte_array::Token > tokens_;
+  
   void Parse(const_string_type const& document) {    
-    // Parsing and tokenizing
-    byte_array::Tokenizer::clear();    
-    byte_array::Tokenizer::Parse(document);
+    uint64_t line = 0, character = 0;
+    uint64_t pos = 0;
 
-    compilation_stack_.clear();
-    operator_stack1_ = std::stack< uint64_t >();
-    operator_stack2_ = std::stack< uint64_t >();    
+    int max_depth = 0, current_depth = 0, objects = 0, total_allocators = 0;
     
-    for(std::size_t i=0; i < this->size(); ++i) {
-      auto const &t = this->at(i);
+    while( pos < document.size() ) {
+      char c = document[pos];
+      ++character;
+      int type;
       
-      switch(t.type()) {
-      case KEYWORD:
-        switch(t[0]) {
-        case 't': // true;
-          compilation_stack_.emplace_back( true );
-          break;                    
-        case 'f': // false;
-          compilation_stack_.emplace_back( false );
-          break;          
-        case 'n': // null
-          compilation_stack_.emplace_back( nullptr );
-          break;
-          
+      switch(c) {
+      case '\n':
+        character = 0;        
+        ++line;
+      case '\t':
+      case ' ':
+      case '\r':
+        if(WhiteSpaceConsumer(document, pos) != WHITESPACE) {
+          std::cerr << "Could not consume token at pos." << std::endl;
+          exit(-1);
         }
-        
-      case STRING:
-        compilation_stack_.emplace_back( t.SubArray(1,t.size() -2 ) );        
-      case SYNTAX:
-        switch(t[0]) {
-        case '{':
-          PushToStack(OBJECT);
-          if ((i+1) < this->size()) {
-            auto const &t2 = this->at(i+1);
-            if(t2[0] != '}')  {
-              PushToStack(ENTRY_ALLOCATOR);
-            }
-          }
-          break;
-        case '}':
-          CloseGroup(OBJECT, t);
-          break;
-        case '[':
-          PushToStack(ARRAY);
-          if ((i+1) < this->size()) {
-            auto const &t2 = this->at(i+1);
-            if(t2[0] != ']')  {
-              PushToStack(ENTRY_ALLOCATOR);
-            }
-          }          
-
-          break;
-        case ']':
-          CloseGroup(ARRAY, t);
-          break; 
-        case ':':
-          PushToStack(PROPERTY);
-          break;
-        case ',':
-          PushToStack(ENTRY_ALLOCATOR);
-          break;
-        }
-        break;
-      case NUMBER_INT:
-        compilation_stack_.emplace_back( t.AsInt() );
-        break;
-        
-      case NUMBER_FLOAT:
-        compilation_stack_.emplace_back( t.AsFloat() );
-        break;
-
-      case WHITESPACE:
         continue;
-      }
-    } 
+      case 't':
+      case 'f':
+      case 'n':
+        type = KeywordConsumer(document, pos);
 
-    if(compilation_stack_.size()!= 1) {
+        if(type == -1) {
+          std::cerr << "Could not consume token at pos." << std::endl;
+          exit(-1);
+        }
+        
+        ++objects;
+      case '"':
+        if(StringConsumer(document, pos) != STRING) {
+          std::cerr << "Could not consume token at pos." << std::endl;
+          exit(-1);
+        }
+
+        ++objects;        
+        break;        
+      case '{':
+        ++current_depth;        
+        ++pos;
+        break;
+        
+      case '}':
+        if(current_depth > max_depth) max_depth = current_depth;        
+        --current_depth;
+        ++objects;        
+        ++total_allocators;        
+        ++pos;
+        break;
+        
+      case '[':
+        ++current_depth;
+        ++pos;
+        break;
+        
+      case ']':
+        if(current_depth > max_depth) max_depth = current_depth;        
+        --current_depth;
+        ++objects;        
+        ++total_allocators;
+        ++pos;
+        break;
+        
+      case ':':
+        ++pos;
+        break;
+        
+      case ',':
+        ++pos;
+        break;
+        
+      default: // If none of the above it must be number:
+        type = NumberConsumer(document,pos);
+        if(type == -1) {          
+          std::cerr << "Could not consume token at pos 3." << std::endl;
+          exit(-1);          
+        }         
+        ++objects;        
+        break;
+      }      
+    }
+    
+    counters_.reserve(max_depth);
+    allocators_.reserve(total_allocators);
+
+    std::vector< variant_type > variants;
+    variants.reserve(objects);
+    
+    pos = 0;    
+    while( pos < document.size() ) {
+      std::size_t oldpos = pos;
+
+      char c = document[pos];
+      int type;
+      
+      switch(c) {
+      case '\n':
+      case '\t':
+      case ' ':
+      case '\r':
+        WhiteSpaceConsumer(document, pos);
+        continue;
+      case 't':
+      case 'f':
+      case 'n':
+        type = KeywordConsumer(document, pos);
+        
+        switch(type) {
+        case KEYWORD_TRUE:
+          variants.emplace_back( true );
+          break;
+        case KEYWORD_FALSE:
+          variants.emplace_back( false );
+          break;          
+        case KEYWORD_NULL:
+          variants.emplace_back( nullptr );
+          break;
+        }
+        
+      case '"':
+        StringConsumer(document, pos);
+        variants.emplace_back( document.SubArray(oldpos+ 1,pos - oldpos -2 ) );
+        break;        
+      case '{':
+        counters_.emplace_back(0);
+        ++pos;
+        break;
+        
+      case '}': 
+      {
+        
+        int N = 2*counters_.back();
+        auto object = script::Variant::Object();
+        auto it = variants.end() - N;
+        for(std::size_t i =0; i < N; ++i) {
+          auto key = *it;
+          ++it;          
+          object[key.as_byte_array()] = *it;          
+          ++it;          
+        }
+        
+        while(N != 0) {          
+          variants.pop_back();
+          --N;          
+        }
+        
+        allocators_.emplace_back( counters_.back() );
+        variants.emplace_back( object );
+        std::cout << object << std::endl;
+        
+        counters_.pop_back();
+        ++pos;
+
+      }      
+        break;
+        
+      case '[':
+        counters_.emplace_back(0);
+        ++pos;
+        break;
+        
+      case ']': 
+      {
+        int N = counters_.back();
+        auto array = script::Variant::Array(N);
+        auto it = variants.end() - N;
+        for(std::size_t i =0; i < N; ++i) {
+          array[i] = *it;
+          ++it;          
+        }
+        
+        while(N != 0) {
+          variants.pop_back();
+          --N;          
+        }
+
+        allocators_.emplace_back( counters_.back() );
+        variants.emplace_back( array );        
+        counters_.pop_back();
+        ++pos;
+      }
+      
+      break;
+        
+      case ':':
+        ++pos;
+        break;
+        
+      case ',':
+        ++pos;
+        ++counters_.back();
+        break;
+        
+      default: // If none of the above it must be number:
+        type = NumberConsumer(document,pos);
+        switch(type) {
+        case NUMBER_INT:
+          variants.emplace_back( atoi( reinterpret_cast< char const * >( document.pointer() ) + oldpos) );
+          break;
+        case NUMBER_FLOAT:
+          variants.emplace_back( atof( reinterpret_cast< char const * >( document.pointer() ) + oldpos) );
+          break;                    
+        }
+        break;
+      }      
+    }
+    
+    std::cout << variants.size() << " " << counters_.size() << std::endl;
+    
+    if(variants.size()!= 1) {
       throw JSONParseException("JSON compiled into more than one top level object");
     } else {
-      root_ = compilation_stack_[0];
-      compilation_stack_.pop_back();
+      root_ = variants[0];
+      variants.pop_back();
     }
   }
 
@@ -315,96 +435,11 @@ class JSONDocument : private byte_array::Tokenizer {
   variant_type const &root() const { return root_; }
 
  private:
-  void PushToStack(std::size_t const &id)    
-  {
-    if( (id != ARRAY) && (id != OBJECT)) {
-    while((!operator_stack2_.empty()) && (operator_stack2_.top() < id)) {
-      operator_stack1_.push(operator_stack2_.top());
-      operator_stack2_.pop();
-    }
-    }
-    operator_stack2_.push(id);
-  }
-
-  void CloseGroup(std::size_t const &id, byte_array::Token const &token) 
-  {
-    std::size_t n = 0;
-    while((!operator_stack2_.empty()) && (id != operator_stack2_.top())) {
-      auto const &t = operator_stack2_.top();
-      switch(t) {
-      case  PROPERTY:
-        operator_stack1_.push(t);
-        break;
-      case OBJECT:
-        throw JSONParseException("Object opening unmatched", token);
-        break;        
-      case ARRAY:
-        throw JSONParseException("Array opening mismatch", token);
-        break;
-      default:
-        ++n;
-      }
-      operator_stack2_.pop();
-    }
-    
-    if(operator_stack2_.empty()) {
-      throw JSONParseException("Array or object opening character not found", token);
-    }
-    
-    if(id == OBJECT) {
-      CreateObject(n, token);
-    } else {
-      CreateArray(n, token);
-    }
-    operator_stack2_.pop();
-  }
-
-  
-  void CreateObject(std::size_t const &n, byte_array::Token const &token) 
-  {
-    variant_type obj = variant_type::Object();
-
-    if( (2*n) > compilation_stack_.size() ) {
-      throw JSONParseException("Missing or or more key-value pairs", token);
-      return;
-    }
-    
-    for(std::size_t i = 0; i < n; ++i) {
-      if(operator_stack1_.empty()) {
-        std::cerr << " error, expected colon" << std::endl;
-        return;
-      }
-      
-      operator_stack1_.pop();
-      variant_type const &value = compilation_stack_.back();
-      compilation_stack_.pop_back();
-
-      variant_type const &key = compilation_stack_.back();
-      compilation_stack_.pop_back();
-      obj[key.as_byte_array()] = value;
-    }
-
-    compilation_stack_.push_back(obj);
-  }
-
-  
-  void CreateArray(std::size_t const &n) 
-  {
-    variant_type arr = variant_type::Array(n);
-    for(std::size_t i=n; i !=0; ) {
-      --i;
-
-      arr[i] = compilation_stack_.back();
-      compilation_stack_.pop_back();
-    }
-
-    compilation_stack_.push_back(arr);
-  }
-  
+   
   std::vector< variant_type > compilation_stack_;
   std::stack< uint64_t > operator_stack2_;    
   std::stack< uint64_t > operator_stack1_;  
-  variant_type root_;
+  variant_type root_ = nullptr;
 };
 };
 };
