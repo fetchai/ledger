@@ -15,6 +15,7 @@
 namespace fetch {
 namespace json {
 
+  
 class JSONDocument : private byte_array::Tokenizer {
 
   enum Type {
@@ -33,8 +34,39 @@ class JSONDocument : private byte_array::Tokenizer {
     ARRAY = 11
   };  
 
+
+  /* Consumes an integer from a byte array if found.
+   * @param str is a constant byte array.
+   * @param pos is a position in the byte array.
+   *
+   * The implementation follows the details given on JSON.org. The
+   * function has support for numbers such as 23, 32.15, -2e0 and
+   * -3.2e+3. Numbers are classified either as integers or floating
+   * points. 
+   */
   static int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
-      uint64_t oldpos = pos;
+    /* ┌┐                                                                        ┌┐
+    ** ││                   ┌──────────────────────┐                             ││
+    ** ││                   │                      │                             ││
+    ** ││                   │                      │                             ││
+    ** ││             .─.   │   .─.    .─────.     │                             ││
+    ** │├─┬────────┬▶( 0 )──┼─▶( - )─▶( digit )──┬─┴─┬─────┬────────────┬───────▶││
+    ** ││ │        │  `─' ┌─┘   `─'    `─────'   │   │     │            │        ││
+    ** ││ │        │      │               ▲      │   ▼     ▼         .─────.     ││
+    ** ││ │   .─.  │   .─────.            │      │  .─.   .─.  ┌───▶( digit )──┐ ││
+    ** └┘ └─▶( - )─┴─▶( digit )──┐        └──────┘ ( e ) ( E ) │     `─────'   │ └┘
+    **        `─'      `─────'   │                  `─'   `─'  │        ▲      │   
+    **                    ▲      │                   │     │   │        │      │   
+    **                    │      │                   ├──┬──┤   │        └──────┘   
+    **                    └──────┘                   ▼  │  ▼   │                   
+    **                                              .─. │ .─.  │                   
+    **                                             ( + )│( - ) │                   
+    **                                              `─' │ `─'  │                   
+    **                                               │  │  │   │                   
+    **                                               └──┼──┘   │                   
+    **                                                  └──────┘                   
+    */                                         
+    uint64_t oldpos = pos;
       uint64_t N = pos + 1;
       if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
         (str[N] <= '9'))
@@ -235,7 +267,7 @@ class JSONDocument : private byte_array::Tokenizer {
           }
           break;
         case '}':
-          CloseGroup(OBJECT);
+          CloseGroup(OBJECT, t);
           break;
         case '[':
           PushToStack(ARRAY);
@@ -248,7 +280,7 @@ class JSONDocument : private byte_array::Tokenizer {
 
           break;
         case ']':
-          CloseGroup(ARRAY);
+          CloseGroup(ARRAY, t);
           break; 
         case ':':
           PushToStack(PROPERTY);
@@ -272,7 +304,7 @@ class JSONDocument : private byte_array::Tokenizer {
     } 
 
     if(compilation_stack_.size()!= 1) {
-      std::cerr << "Something went wrong" << std::endl;
+      throw JSONParseException("JSON compiled into more than one top level object");
     } else {
       root_ = compilation_stack_[0];
       compilation_stack_.pop_back();
@@ -294,7 +326,7 @@ class JSONDocument : private byte_array::Tokenizer {
     operator_stack2_.push(id);
   }
 
-  void CloseGroup(std::size_t const &id) 
+  void CloseGroup(std::size_t const &id, byte_array::Token const &token) 
   {
     std::size_t n = 0;
     while((!operator_stack2_.empty()) && (id != operator_stack2_.top())) {
@@ -304,9 +336,10 @@ class JSONDocument : private byte_array::Tokenizer {
         operator_stack1_.push(t);
         break;
       case OBJECT:
+        throw JSONParseException("Object opening unmatched", token);
+        break;        
       case ARRAY:
-        std::cerr << "unmatched group" << std::endl;
-        return;
+        throw JSONParseException("Array opening mismatch", token);
         break;
       default:
         ++n;
@@ -315,24 +348,24 @@ class JSONDocument : private byte_array::Tokenizer {
     }
     
     if(operator_stack2_.empty()) {
-      std::cerr << "Could not find group: " << id << std::endl;
+      throw JSONParseException("Array or object opening character not found", token);
     }
     
     if(id == OBJECT) {
-      CreateObject(n);
+      CreateObject(n, token);
     } else {
-      CreateArray(n);
+      CreateArray(n, token);
     }
     operator_stack2_.pop();
   }
 
   
-  void CreateObject(std::size_t const &n) 
+  void CreateObject(std::size_t const &n, byte_array::Token const &token) 
   {
     variant_type obj = variant_type::Object();
 
     if( (2*n) > compilation_stack_.size() ) {
-      std::cerr << " expected value" << std::endl;
+      throw JSONParseException("Missing or or more key-value pairs", token);
       return;
     }
     
