@@ -19,7 +19,7 @@ stability errors occur due to piss-poor error checking than many other
 things. Do **not** rely on exceptions to avoid having to take any
 responsibility.
 
-2. Do not assume, do `assert`. Adding `asset` whenever you can while
+2. Do not assume, do `assert`. Adding `assert` whenever you can while
 make your debugging code a bit slower, but will have no impact on your
 release code.
 
@@ -59,41 +59,32 @@ this for you.
 
 11. Use spaces, not tabs.
 
-12. Use meaningful names.
+12. Curly brackets `{}` should be on their own line.
 
-13. Use C++11 features, but not C++14 or C++17.
+13. There should be a space after conditionals: `if (test)`
 
-14. Structs are for passive data structures, classes for active.
+14. Use meaningful names.
 
-15. Explicitily declare default constructors and operators.
+15. Use C++11 features, but not C++14 or C++17.
 
-16. Initialize class members with highest preference for inline
+16. Structs are for passive data structures, classes for active.
+
+17. Explicitly declare default constructors and operators.
+
+18. Initialize class members with highest preference for inline
 initialization, second highest in the constructor initializer list and
 lowest in the contstructor body. Uninitialized memory can cause serious
 bugs and one should actively try to avoid creating it.
 
-17. Use `nullptr`, not 0 or `NULL`.
+19. Use `nullptr`, not 0 or `NULL`.
 
-
+20. Try to include headers for your definitions in the same file rather than relying
+on it being defined in another include - this prevents code breaking when that header
+is changed.
 
 # Detailed guide
 
 Below we give some more detailed examples and explanations for the above rules.
-
-
-## Copyright header of files
-Each file should contain an initial comment
-
-```
- /* Copyright (c) [year created]-[year last modified], fetch.AI
-  *
-  * Please see license file for details.
-  *
-  * Arthur(s): [lead author]
-  *            [second author]
-  *            ...
-  */
-```
 
 ## Formatting
 Use spaces, not tabs. Make indenting
@@ -347,7 +338,7 @@ constructor does not produce uninitialized memory. In the second
 constructor, we manually need to initialize the `pointer_` but `size_`
 can be set using the initialization list.
 
-## Usage of `nullprt`
+## Usage of `nullptr`
 The new C++11 `nullptr` keyword designates an rvalue constant that
 serves as a universal null pointer literal replacing the buggy and
 weakly-typed literal 0 and the infamous `NULL` macro. `nullptr` thus

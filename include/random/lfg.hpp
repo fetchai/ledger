@@ -10,7 +10,7 @@ template <std::size_t P = 418, std::size_t Q = 1279>
 class LaggedFibonacciGenerator {
  public:
   typedef uint64_t random_type;
-  LaggedFibonacciGenerator() { Seed(42); }
+  LaggedFibonacciGenerator(random_type seed = 42) { Seed(seed); }
 
   random_type Seed() const { return lcg_.Seed(); }
   random_type Seed(random_type const &s) {

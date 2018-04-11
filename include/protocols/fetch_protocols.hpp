@@ -13,7 +13,8 @@ enum
 {
   SWARM = 1,
   CHAIN_KEEPER = 2,
-  STATE_KEEPER = 3
+  STATE_KEEPER = 3,
+  NETWORK_TEST = 4
 
   
 };

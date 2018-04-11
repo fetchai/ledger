@@ -11,7 +11,7 @@ namespace chain {
 struct TransactionSummary {
   typedef byte_array::ConstByteArray digest_type;    
   std::vector< uint32_t > groups;  
-  digest_type transaction_hash;
+  mutable digest_type transaction_hash;
 };
 
 template< typename T >
@@ -36,15 +36,36 @@ public:
   } ;
   
   
-  void UpdateDigest() {
+  void UpdateDigest() const {
     LOG_STACK_TRACE_POINT;    
-    serializers::ByteArrayBuffer buf;
-    buf << summary_.groups << signatures_ << contract_name_ << arguments_;
-    hasher_type hash;
-    hash.Reset();
-    hash.Update( buf.data());
-    hash.Final();
-    summary_.transaction_hash = hash.digest();
+
+    if(modified == true)
+    {
+      serializers::ByteArrayBuffer buf;
+      buf << summary_.groups << signatures_ << contract_name_ << arguments_;
+      hasher_type hash;
+      hash.Reset();
+      hash.Update( buf.data());
+      hash.Final();
+      summary_.transaction_hash = hash.digest();
+      modified = false;
+    }
+  }
+
+  template<typename T>
+  bool operator==(T&& rhs) const
+  {
+    UpdateDigest();
+    rhs.UpdateDigest();
+    return digest() == rhs.digest();
+  }
+
+  template<typename T>
+  bool operator< (T&& rhs) const
+  {
+    UpdateDigest();
+    rhs.UpdateDigest();
+    return digest() < rhs.digest();
   }
 
   void PushGroup(byte_array::ConstByteArray const &res)
@@ -78,6 +99,7 @@ TODO: Make 32 bit compat
 //    assert(d.value < 10);
     
     PushGroup(d.value);    
+    modified = true;
   }
 
   void PushGroup(uint32_t const &res)
@@ -95,6 +117,7 @@ TODO: Make 32 bit compat
     if(add)
     {
       summary_.groups.push_back(res);
+      modified = true;
     }
     
   }
@@ -116,16 +139,19 @@ TODO: Make 32 bit compat
   {
     LOG_STACK_TRACE_POINT;
     signatures_.push_back(sig);
+    modified = true;
   }  
 
   void set_contract_name(byte_array::ConstByteArray const& name)
   {
     contract_name_ = name;
+    modified = true;
   }  
   
   void set_arguments(byte_array::ConstByteArray const& args)
   {
     arguments_ = args;
+    modified = true;
   }  
   
   std::vector< uint32_t > const &groups() const {
@@ -141,7 +167,7 @@ TODO: Make 32 bit compat
   }
 
   arguments_type const &arguments() const { return arguments_; }
-  digest_type const & digest() const { return summary_.transaction_hash; }
+  digest_type const & digest() const { UpdateDigest(); return summary_.transaction_hash; }
 
   uint32_t signature_count() const
   {
@@ -150,9 +176,10 @@ TODO: Make 32 bit compat
   
   byte_array::ConstByteArray data() const { return data_; };
 
-  TransactionSummary const & summary() const { return summary_; }
+  TransactionSummary const & summary() const { UpdateDigest(); return summary_; }
 private:
   TransactionSummary summary_;
+  mutable bool               modified = true;
   
   uint32_t  signature_count_;
   byte_array::ConstByteArray data_;

@@ -15,6 +15,13 @@ namespace http
 class HTTPModule 
 {
 public:
+
+  HTTPModule()                                 = default;
+  HTTPModule(HTTPModule const &rhs)            = delete;
+  HTTPModule(HTTPModule &&rhs)                 = delete;
+  HTTPModule &operator=(HTTPModule const &rhs) = delete;
+  HTTPModule &operator=(HTTPModule&& rhs)      = delete;
+
   typedef std::function< HTTPResponse(ViewParameters, HTTPRequest) > view_type;
   
   struct UnmountedView 
