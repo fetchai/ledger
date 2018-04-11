@@ -13,6 +13,7 @@
 #include <memory>
 #include <iostream>
 #include <stdlib.h>
+#include <mm_malloc.h>
 namespace fetch {
 namespace memory {
 
@@ -22,7 +23,7 @@ std::size_t total_shared_objects = 0;
 };
 #endif
 
-template <typename T, bool align = true>
+template <typename T, std::size_t type_size = sizeof(T)>
 class SharedArray {
  public:
   typedef std::size_t size_type;
@@ -30,13 +31,13 @@ class SharedArray {
 
   typedef ForwardIterator<T> iterator;
   typedef BackwardIterator<T> reverse_iterator;
-  typedef SharedArray<T> self_type;
+  typedef SharedArray<T, type_size> self_type;
   typedef T type;
 
   
   enum {
     E_SIMD_SIZE = 16,
-    E_SIMD_COUNT_IM = E_SIMD_SIZE / sizeof(T),
+    E_SIMD_COUNT_IM = E_SIMD_SIZE / type_size,
     E_SIMD_COUNT = (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM : 1 ), // Note that if a type is too big to fit, we pretend it can
     E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value
   };
@@ -53,7 +54,7 @@ class SharedArray {
       //      data_ = std::shared_ptr<T>( (type*)std::aligned_alloc(E_SIMD_SIZE, padded_size()*sizeof(type) ), free );
 
       // TODO: Upgrade to aligned memory to ensure that we can parallelise over SIMD
-      data_ = std::shared_ptr<T>( (type*)malloc(padded_size()*sizeof(type) ), free );
+      data_ = std::shared_ptr<T>( (type*)_mm_malloc(padded_size()*sizeof(type), 16 ), _mm_free );
       memset( data_.get(), 0, padded_size()*sizeof(type) );
     }
   }
@@ -76,9 +77,9 @@ class SharedArray {
 
   ~SharedArray() { }
 
-  SharedArray< type > Copy() const
+  self_type Copy() const
   {
-    SharedArray< type > ret( size_ );
+    self_type ret( size_ );
     for(std::size_t i = 0; i < size_; ++i )
     {
       ret[i] = At( i );
@@ -90,6 +91,10 @@ class SharedArray {
   
   iterator begin() { return iterator(data_.get(), data_.get() + size()); }
   iterator end() { return iterator(data_.get() + size(), data_.get() + size()); }
+
+  iterator begin() const { return iterator(data_.get(), data_.get() + size()); } // TODO: Implemnent const iterators
+  iterator end() const { return iterator(data_.get() + size(), data_.get() + size()); }
+  
   reverse_iterator rbegin() {
     return reverse_iterator(data_.get() + size() - 1, data_.get() - 1);
   }

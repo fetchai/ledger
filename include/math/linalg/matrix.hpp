@@ -30,12 +30,12 @@ class Matrix : public A {
   Matrix &operator=(Matrix &&other) = default;
 
   Matrix(super_type const &other) : super_type(other) {
-    std::cout << "Was here?? " << other.size() << " " << this->size() << std::endl;
+
   }
+  
   Matrix(super_type &&other) : super_type(std::move(other)) {  }
   
   Matrix(std::size_t const &h, std::size_t const &w) : super_type(h, w) {
-    std::cout << "Was here??? " << std::endl;
     for(std::size_t i=0; i < h; ++i) {
     for(std::size_t j=0; j < w; ++j) {
       this->Set(i,j, type(0));

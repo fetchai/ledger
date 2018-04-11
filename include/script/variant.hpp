@@ -17,18 +17,21 @@ enum VariantType {
   BOOLEAN = 3,
   STRING = 4,
   NULL_VALUE = 5,
-  ARRAY = 6
+  ARRAY = 6,
+  OBJECT = 7
 };
+
+
 
 class VariantList;
 
-
 class VariantAtomic
-{
+{  
 public:
   typedef byte_array::ByteArray byte_array_type;
   typedef VariantList  variant_array_type;  
   typedef std::shared_ptr< VariantList > shared_variant_array_type;
+  typedef Dictionary< VariantAtomic > dictionary_type;
   
   
   VariantAtomic() : type_(UNDEFINED) {}
@@ -91,12 +94,6 @@ public:
     return c;
   }
 
-  char const* operator=(char const* c) {
-    type_ = STRING;
-    byte_array_type str(c);
-    string_ = str;
-    return c;
-  }
 
   variant_array_type const& operator=(variant_array_type const& array) {
     type_ = ARRAY;
@@ -104,6 +101,30 @@ public:
     return array;
   }
 
+
+  // Dict accessors
+  VariantAtomic & operator[](byte_array::BasicByteArray const &key) 
+  {
+    assert(type_ == OBJECT);
+    return object_[key];
+  }
+
+  VariantAtomic const & operator[](byte_array::BasicByteArray const &key) const 
+  {
+    assert(type_ == OBJECT);
+    return object_[key];
+  }
+
+
+  // Array accessors
+  VariantAtomic& operator[](std::size_t const& i);  
+  VariantAtomic const& operator[](std::size_t const& i) const;   
+  std::size_t size() const;
+  
+
+
+
+  
   template< typename ...A >
   void EmplaceSetArray(A ...args ) {
     type_ = ARRAY;
@@ -114,6 +135,12 @@ public:
   void EmplaceSetString(A ...args ) {
     type_ = STRING;
     string_.FromByteArray( args... );
+  }
+
+  void MakeEmptyObject() 
+  {
+    type_ = OBJECT;
+    object_.Clear();
   }
   
   
@@ -127,8 +154,11 @@ public:
   byte_array_type const& as_byte_array() const { return string_; }
   byte_array_type& as_byte_array() { return string_; }
 
-  variant_array_type const& as_shared_array() const { return *array_; }
-  variant_array_type & as_shared_array() { return *array_; }  
+  variant_array_type const& as_array() const { return *array_; }
+  variant_array_type & as_array() { return *array_; }  
+
+  dictionary_type const& as_dictionary() const { return object_; }
+  dictionary_type & as_dictionary() { return object_; }  
   
 
   VariantType type() const 
@@ -145,42 +175,12 @@ private:
   
   byte_array::ByteArray string_;
   shared_variant_array_type array_;
+  dictionary_type object_;
   
   VariantType type_ = UNDEFINED;  
 };
 
 
-std::ostream& operator<<(std::ostream& os, VariantAtomic const& v) {
-  switch (v.type()) {
-    case VariantType::UNDEFINED:
-      os << "(undefined)";
-      break;
-    case VariantType::INTEGER:
-      os << v.as_int();
-      break;
-    case VariantType::FLOATING_POINT:
-      os << v.as_double();
-      break;
-    case VariantType::STRING:
-      os << '"' << v.as_byte_array() << '"';
-      break;
-    case VariantType::BOOLEAN:
-      os << v.as_bool();
-      break;
-    case VariantType::NULL_VALUE:
-      os << "(null)";
-      break;
-    case VariantType::ARRAY:
-      os << "[ ... TODO ";
-      os << "]";
-      
-      break;      
-  }
-  return os;  
-}
-
-
-  
 class VariantList 
 {
 public:
@@ -226,7 +226,7 @@ public:
   {
     if(offset_ + n < data_.size() ) return;
 
-    memory::SharedArray< VariantAtomic > new_data(n);
+    memory::SharedArray< VariantAtomic, 16 > new_data(n);
 
     /*
     for(std::size_t i = 0; i < data_.size(); ++i)
@@ -244,15 +244,103 @@ public:
     return size_;
   }
 
-  memory::SharedArray< VariantAtomic > &data() { return data_; }
 private:
   std::size_t size_ = 0;
   std::size_t offset_ = 0;
-  memory::SharedArray< VariantAtomic > data_;
+  memory::SharedArray< VariantAtomic, 16 > data_;
   VariantAtomic *pointer_ = nullptr;
 };
 
     
+
+
+
+// Array accessors
+VariantAtomic& VariantAtomic::operator[](std::size_t const& i) {
+  assert(type_ == ARRAY);
+  assert(i < size());
+  return (*array_)[i];    
+}
+
+VariantAtomic const& VariantAtomic::operator[](std::size_t const& i) const {
+  return (*array_)[i];
+}
+  
+  
+std::size_t VariantAtomic::size() const {
+  if (type_ == ARRAY)
+    return array_->size();
+  if (type_ == STRING) return string_.size();
+  return 0;
+}
+
+
+std::ostream& operator<<(std::ostream& os, VariantAtomic const& v) {
+
+  bool not_first = false;
+  
+  switch (v.type()) {
+    case VariantType::UNDEFINED:
+      os << "(undefined)";
+      break;
+    case VariantType::INTEGER:
+      os << v.as_int();
+      break;
+    case VariantType::FLOATING_POINT:
+      os << v.as_double();
+      break;
+    case VariantType::STRING:
+      os << '"' << v.as_byte_array() << '"';
+      break;
+    case VariantType::BOOLEAN:
+      os << v.as_bool();
+      break;
+    case VariantType::NULL_VALUE:
+      os << "(null)";
+      break;
+    case VariantType::ARRAY:
+      os << "[";
+      
+      for(std::size_t i=0; i < v.as_array().size(); ++i) {
+        if(i != 0) {
+          os << ", ";
+        }
+        os << v.as_array()[i];
+
+      }
+      
+      os << "]";
+      
+      break;
+    case VariantType::OBJECT:
+      os << "{";
+      for(auto &kv: v.as_dictionary() ) {
+        if(not_first) {
+          os << ", ";          
+        }
+        os << "\"" << kv.first << "\" : " <<  kv.second;
+        not_first = true;
+      }
+      
+/*      
+      for(std::size_t i=0; i < v.as_array().size(); ++i) {
+        if(i != 0) {
+          os << ", ";
+        }
+        os << v.as_array()[i];
+
+      }
+*/      
+      os << "}";
+      
+      break;            
+  }
+  return os;  
+}
+
+
+  
+
 
 // FIXME: replace asserts with throwing errors
 /*

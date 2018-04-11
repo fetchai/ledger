@@ -25,9 +25,7 @@ public:
   typedef std::shared_ptr< container_type > shared_container_type;  
   typedef typename container_type::iterator iterator;
   typedef typename container_type::const_iterator const_iterator;  
-  
-
-  
+    
   Dictionary() {
     data_ = std::make_shared< container_type >( );
   }
@@ -90,6 +88,12 @@ public:
   const_iterator end() const
   {
     return data_->end();
+  }
+
+  void Clear() 
+  {
+    if(!data_)  data_ = std::make_shared< container_type >( );
+    data_->clear();    
   }
   
 private:

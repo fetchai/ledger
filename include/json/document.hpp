@@ -12,6 +12,7 @@
 #include <memory>
 #include <vector>
 #include<stack>
+#include<emmintrin.h>
 namespace fetch {
 namespace json {
 
@@ -23,11 +24,18 @@ class JSONDocument {
     KEYWORD_FALSE = 1,
     KEYWORD_NULL = 2,        
     STRING = 3,
-    SYNTAX = 4,
+
     NUMBER_INT = 5,
-    NUMBER_FLOAT = 6,    
-    WHITESPACE = 7
+    NUMBER_FLOAT = 6,
+
+    OPEN_OBJECT = 11,
+    CLOSE_OBJECT = 12,
+    OPEN_ARRAY = 13,
+    CLOSE_ARRAY = 14,
+
+    KEY = 16
   };
+    
 
   enum {
     PROPERTY = 2,
@@ -116,95 +124,48 @@ class JSONDocument {
    * Currently, there is no checking if unicodes are correctly
    * formatted.
    */
-  static int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)  {
+
+  static int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
        if(str[pos] != '"') return -1;
        ++pos;
        if(pos >= str.size()) return -1;
 
        uint8_t const *ptr = str.pointer() + pos;
-       uint8_t compare[16] = {'"','"','"','"','"','"','"','"','"','"','"','"','"','"','"','"'};
-       uint8_t ret[16] = {0}; 
-       ret[0] = (compare[0] == ptr[0]);
-       ret[1] = (compare[1] == ptr[1]);
-       ret[2] = (compare[2] == ptr[2]);
-       ret[3] = (compare[3] == ptr[3]);
-       ret[4] = (compare[4] == ptr[4]);
-       ret[5] = (compare[5] == ptr[5]);
-       ret[6] = (compare[6] == ptr[6]);
-       ret[7] = (compare[7] == ptr[7]);
-       ret[8] = (compare[8] == ptr[8]);
-       ret[9] = (compare[9] == ptr[9]);
-       ret[10] = (compare[10] == ptr[10]);
-       ret[11] = (compare[11] == ptr[11]);
-       ret[12] = (compare[12] == ptr[12]);
-       ret[13] = (compare[13] == ptr[13]);
-       ret[14] = (compare[14] == ptr[14]);
-       ret[15] = (compare[15] == ptr[15]);
-       uint16_t found = (ret[0] & 1) | (uint16_t(ret[1]&1) << 1 )
-         | (uint16_t(ret[2]&1) << 2 ) | (uint16_t(ret[3]&1) << 3 )
-         | (uint16_t(ret[4]&1) << 4 ) | (uint16_t(ret[5]&1) << 5 )
-         | (uint16_t(ret[6]&1) << 6 ) | (uint16_t(ret[7]&1) << 7 )
-         | (uint16_t(ret[8]&1) << 8 ) | (uint16_t(ret[9]&1) << 9 )
-         | (uint16_t(ret[10]&1) << 10 ) | (uint16_t(ret[11]&1) << 11 )
-         | (uint16_t(ret[12]&1) << 12 ) | (uint16_t(ret[13]&1) << 13 )
-         | (uint16_t(ret[14]&1) << 14 ) | (uint16_t(ret[15]&1) << 15 );
+       alignas(16)  uint8_t compare[16] = {'"','"','"','"','"','"','"','"','"','"','"','"','"','"','"','"'};
 
-       /*       
-       bool not_found = (str[pos] != '"')  && (str[pos+1] != '"')  &&
-         (str[pos+2] != '"')  && (str[pos+3] != '"') &&
-         (str[pos +4] != '"')  && (str[pos+5] != '"')  &&
-         (str[pos+6] != '"')  && (str[pos+7] != '"') ;
-       */
-       //
-       // https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=mm_move&expand=3609
+       __m128i comp = _mm_load_si128(( __m128i*)compare);
+       __m128i mptr = _mm_loadu_si128(( __m128i*)ptr); // TODO: Optimise to follow alignment
+       __m128i mret = _mm_cmpeq_epi8(comp, mptr);
+       uint16_t found = _mm_movemask_epi8 (mret);
+       
+
        while( (pos < str.size()) && ( !found ) ) {
          pos += 16;
          ptr += 16;
-         ret[0] = (compare[0] == ptr[0]);
-         ret[1] = (compare[1] == ptr[1]);
-         ret[2] = (compare[2] == ptr[2]);
-         ret[3] = (compare[3] == ptr[3]);
-         ret[4] = (compare[4] == ptr[4]);
-         ret[5] = (compare[5] == ptr[5]);
-         ret[6] = (compare[6] == ptr[6]);
-         ret[7] = (compare[7] == ptr[7]);
-         ret[8] = (compare[8] == ptr[8]);
-         ret[9] = (compare[9] == ptr[9]);
-         ret[10] = (compare[10] == ptr[10]);
-         ret[11] = (compare[11] == ptr[11]);
-         ret[12] = (compare[12] == ptr[12]);
-         ret[13] = (compare[13] == ptr[13]);
-         ret[14] = (compare[14] == ptr[14]);
-         ret[15] = (compare[15] == ptr[15]);
-         found = (ret[0] & 1) | (uint16_t(ret[1]&1) << 1 )
-           | (uint16_t(ret[2]&1) << 2 ) | (uint16_t(ret[3]&1) << 3 )
-           | (uint16_t(ret[4]&1) << 4 ) | (uint16_t(ret[5]&1) << 5 )
-           | (uint16_t(ret[6]&1) << 6 ) | (uint16_t(ret[7]&1) << 7 )
-           | (uint16_t(ret[8]&1) << 8 ) | (uint16_t(ret[9]&1) << 9 )
-           | (uint16_t(ret[10]&1) << 10 ) | (uint16_t(ret[11]&1) << 11 )
-           | (uint16_t(ret[12]&1) << 12 ) | (uint16_t(ret[13]&1) << 13 )
-           | (uint16_t(ret[14]&1) << 14 ) | (uint16_t(ret[15]&1) << 15 );
-         
+         // TODO: Handle \"
+         __m128i mptr = _mm_loadu_si128(( __m128i*)ptr);
+         __m128i mret = _mm_cmpeq_epi8(comp, mptr);
+         found = _mm_movemask_epi8 (mret); 
        }
 
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
-       pos += ( (pos < str.size()) && (str[pos] != '"') );
+       pos += __builtin_ctz(found);
        
-       
+       if( pos >= str.size() )
+         return -1;
+       ++pos;
+       return STRING;
+     }
+
+
+  static int StringConsumerFallback(byte_array::ConstByteArray const &str, uint64_t &pos)  {
+       if(str[pos] != '"') return -1;
+       ++pos;
+       if(pos >= str.size()) return -1;
+
+       while( (pos < str.size()) && (str[pos] != '"') ) {
+         pos += 1 + (str[pos] == '\\');         
+       }
+
        if( pos >= str.size() )
          return -1;
        ++pos;
@@ -244,32 +205,123 @@ class JSONDocument {
     return root_[key];
   }
 */
-  std::vector< uint32_t > counters_;
-  script::VariantList variants_;  
-  std::size_t current_index_ ;
+  std::vector< uint16_t > counters_;
 
-
-  
   
   void Parse(const_string_type const& document) {    
-    uint64_t line = 0, character = 0;
+    Tokenise(document);
+
+    variants_.Resize( objects_ + 1);
+    counters_.clear();
+    
+    std::size_t allocation_counter = 1;
+    JSONObject current_object;
+    
+    char const *ptr = reinterpret_cast< char const * >( document.pointer() );
+
+    keys_.clear();    
+    keys_.reserve(total_keys_);
+    
+    for(auto const &t: tokens_ ) {
+      switch(t.type) {
+      case KEYWORD_TRUE:
+        variants_[current_object.i++] = true;        
+        break;        
+      case KEYWORD_FALSE:
+        variants_[current_object.i++] = false;
+        break;
+      case KEYWORD_NULL:
+        variants_[current_object.i++] = nullptr;
+        break;        
+      case STRING:
+        variants_[ current_object.i++ ].EmplaceSetString( document, t.first, t.second - t.first ) ;
+        break;
+      case KEY:
+        keys_.push_back( document.SubArray( t.first, t.second - t.first )  );        
+        break;                
+      case NUMBER_INT:
+        variants_[ current_object.i++ ] = atoi( ptr + t.first) ;
+        break;        
+      case NUMBER_FLOAT:
+        variants_[ current_object.i++ ] = atof( ptr + t.first) ;        
+        break;        
+      case OPEN_OBJECT:
+        object_assembly_.emplace_back(current_object);
+
+        current_object.start = allocation_counter;
+        current_object.i = allocation_counter;
+        current_object.size= t.second;
+        current_object.type = t.type;
+        
+        allocation_counter += t.second;        
+        break;        
+      case CLOSE_OBJECT:
+
+        variants_[ object_assembly_.back().i ].MakeEmptyObject();
+        for(std::size_t i=current_object.i; i > current_object.start; ) {
+          --i;
+          variants_[ object_assembly_.back().i ][keys_.back()] = variants_[i];          
+          keys_.pop_back();
+        }
+                
+        current_object = object_assembly_.back();
+        object_assembly_.pop_back();
+        
+        ++current_object.i;
+
+        break;        
+      case OPEN_ARRAY:
+        object_assembly_.emplace_back(current_object);        
+
+        current_object.start = allocation_counter;
+        current_object.i = allocation_counter;
+        current_object.size =  t.second;
+        current_object.type = t.type;
+
+        allocation_counter += t.second;                
+
+        break;        
+      case CLOSE_ARRAY:
+        variants_[ object_assembly_.back().i ].EmplaceSetArray(variants_, current_object.start, current_object.size);
+        
+        current_object = object_assembly_.back();        
+        object_assembly_.pop_back();
+
+        ++current_object.i;
+        break;        
+      }
+    }  
+  }
+
+  script::VariantAtomic &root() { return variants_[0]; }
+  script::VariantAtomic const &root() const { return variants_[0]; }
+
+ private:
+  void Tokenise(const_string_type const& document) 
+  {
+    uint64_t line = 0;
     uint64_t pos = 0;
 
-    std::chrono::high_resolution_clock::time_point t1, t2, t3, t4;
-
-    counters_.clear();
-    variants_.Resize(1024);
+    objects_ = 0;
     
-
-    current_index_ = 0;       
-    pos = 0;
+    object_stack_.reserve(32);
+    object_stack_.clear();    
+    counters_.reserve(32);
+    counters_.clear();
+    tokens_.reserve(1024);
+    tokens_.clear();
+    total_keys_ = 0;
+    
+    uint16_t element_counter = 0;
+    
     char const *ptr = reinterpret_cast< char const *> (document.pointer());
-
-    bool inside_string = false;
     while( pos < document.size() ) {
       uint16_t const *words16 = reinterpret_cast< uint16_t const *> (ptr + pos);
+      uint32_t const *words = reinterpret_cast< uint32_t const *> (ptr + pos);      
+      char const &c = *(ptr+pos);
 
-      switch(words16[0]) { // Handling white spaces
+     // Handling white spaces      
+      switch(words16[0]) { 
       case 0x2020:  //a
       case 0x200A:  //
       case 0x200D:  //
@@ -288,135 +340,143 @@ class JSONDocument {
       case 0x0909:  //
         pos += 2;
         continue;
-        
-      }
-
-      uint32_t const *words = reinterpret_cast< uint32_t const *> (ptr + pos);
-      
-      switch(words[0]) {
-      case 0x65757274:  // true
-        variants_[ current_index_++ ] = true;        
-        pos+=4;
-        continue;
-      case 0x736C6166:  // fals
-        pos+=4;
-        ++pos;
-        variants_[ current_index_++ ] = false;
-        continue;
-      case 0x6C6C756E:  // null
-        pos+=4;
-        continue;   
       }
       
-      std::size_t oldpos = pos;
-      char const &c = *(ptr+pos);
-
-      int type;
-      //`      std::cout << "Char: " << c << std::endl;
       switch(c) {
       case '\n':
         ++line;
       case '\t':
       case ' ':
       case '\r':
+        ++pos;        
+        continue;
+      }
+            
+      // Handling keywords
+      switch(words[0]) {
+      case 0x65757274:  // true
+        ++objects_;
+        tokens_.push_back({pos, pos+4, KEYWORD_TRUE});
+        pos+=4;
+        ++element_counter;        
+        continue;
+      case 0x736C6166:  // fals
+        ++objects_;
+        tokens_.push_back({pos, pos+5,  KEYWORD_FALSE});
+        pos+=4;
         ++pos;
-        continue;        
-      case '"':
-
-        StringConsumer(document, pos);
-        variants_[ current_index_++ ].EmplaceSetString( document, oldpos+ 1,pos - oldpos -2 ) ;
-        //        std::cout <<document.SubArray( oldpos+ 1,pos - oldpos -2 ) << std::endl;
-        break;        
-      case '{':
-        CreateObject();
-        ++pos;
-        break;
-        
-      case '}': 
-      {
-        CloseObject();
-        ++pos;
-      }      
-        break;
-        
-      case '[':
-        CreateArray();
-        ++pos;
-        break;
-        
-      case ']': 
-      {
-        CloseArray();
-
-        ++pos;
+        ++element_counter;
+        continue;
+      case 0x6C6C756E:  // null
+        ++objects_; // TODO: Move
+        tokens_.push_back({pos, pos+4, KEYWORD_NULL});
+        pos+=4;
+        ++element_counter;        
+        continue;   
       }
       
+      std::size_t oldpos = pos;
+      uint8_t type;
+
+      switch(c) {
+      case '"':
+        ++objects_;
+        ++element_counter;        
+        StringConsumer(document, pos);
+        tokens_.push_back({oldpos+1, pos -1, STRING});        
+        break;        
+      case '{':
+        counters_.emplace_back(element_counter);
+        element_counter = 0;
+        tokens_.push_back({pos, 0, OPEN_OBJECT});
+        object_stack_.emplace_back( &tokens_.back() );
+        
+        ++pos;
+        break;
+      case '}':
+        tokens_.push_back({pos, uint64_t(element_counter >> 1), CLOSE_OBJECT});
+        object_stack_.back()->second  = (element_counter >> 1);
+        
+          
+        object_stack_.pop_back();        
+        element_counter = counters_.back();
+        counters_.pop_back();
+        ++element_counter;
+        ++pos;
+        ++objects_;        
+        break;
+      case '[':
+        counters_.emplace_back(element_counter);
+        
+        element_counter = 0;
+        tokens_.push_back({pos, 0, OPEN_ARRAY});
+        object_stack_.emplace_back( &tokens_.back() );
+        
+        ++pos;
+        break;
+      case ']':
+        tokens_.push_back({pos, element_counter, CLOSE_ARRAY});
+        object_stack_.back()->second  = element_counter;
+        
+        object_stack_.pop_back();        
+        element_counter = counters_.back();
+        ++element_counter;        
+        counters_.pop_back();
+
+        ++pos;
+        ++objects_;
+        
       break;
         
       case ':':
+        tokens_.back().type = KEY;
+        ++total_keys_;
+        
+//        tokens_.push_back({pos, 0, SET_PROPERTY});        
         ++pos;
-        CreateProperty();
         break;
         
       case ',':
+//        tokens_.push_back({pos, 0, NEW_ENTRY});                
         ++pos;
-        CreateEntry();
         break;
         
       default: // If none of the above it must be number:
-        type = NumberConsumer(document,pos);
-        switch(type) {
-        case NUMBER_INT:
-          variants_[ current_index_++ ] = atoi( reinterpret_cast< char const * >( document.pointer() ) + oldpos) ;
-          break;
-        case NUMBER_FLOAT:
-          variants_[ current_index_++ ] = atof( reinterpret_cast< char const * >( document.pointer() ) + oldpos) ;
-          break;                    
-        }
 
+        ++element_counter;        
+        type = NumberConsumer(document,pos);
+        tokens_.push_back({oldpos, pos - oldpos, type});        
         break;
       }
-
     }
-
-    
-
-  }
-
-//  variant_type &root() { return root_; }
-//  variant_type const &root() const { return root_; }
-
- private:
-  void CreateArray() {
-    counters_.emplace_back(0);
   }
   
-  void CreateObject() {
-    counters_.emplace_back(0);
-  }
-
-  void CreateEntry() {
-    ++counters_.back();
-  }
+  struct JSONObject 
+  {
+    uint32_t start = 0;
+    uint32_t size = 1;    
+    uint32_t i = 0;
+    uint8_t type = 0;
+  };
   
-  void CreateProperty() {
-  }
 
-  void CloseArray() {
-    int N = counters_.back();
-    variants_[current_index_] = script::VariantList(variants_, current_index_-N, N);
-    ++current_index_;
-    counters_.pop_back();    
-  }
+  std::vector< JSONObject > object_assembly_;
+  
+  struct JSONToken
+  {
+    uint64_t first;
+    uint64_t second;
+    uint8_t type;      
+  };
 
-  void CloseObject() {
-    int N = counters_.back();
-    variants_[current_index_].EmplaceSetArray( variants_, current_index_-N, N );
-    ++current_index_; 
-    
-    counters_.pop_back();
-  }  
-   
+  std::vector< JSONToken* > object_stack_; 
+  std::vector< JSONToken > tokens_;
+  script::VariantList variants_;   
+  std::size_t objects_;
+  std::size_t total_keys_;
+  std::vector< const_string_type > keys_;  
+
+  
 //  variant_type root_ = nullptr;
 };
 };
