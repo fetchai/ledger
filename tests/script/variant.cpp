@@ -21,6 +21,7 @@ int main() {
 
   VariantList y(x, 2, 3);
   std::cout << y.size() << std::endl;
+  x[4]= 7;
   std::cout << y <<  std::endl;
   std::cout << y[1] <<  std::endl;
   std::cout << y[2] <<  std::endl;    

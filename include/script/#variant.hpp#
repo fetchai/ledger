@@ -77,7 +77,7 @@ public:
     type_ = FLOATING_POINT;
     return data_.float_point = f;
   }
-
+  
   bool operator=(bool const& b) {
     type_ = BOOLEAN;
     return data_.boolean = b;

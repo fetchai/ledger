@@ -132,17 +132,14 @@ class SharedArray {
 
 
   std::size_t simd_size() const {
-    assert(size_ != nullptr);
     return (size_) >> E_LOG_SIMD_COUNT;
   }
 
   std::size_t size() const {
-    assert(size_ != nullptr);
     return size_;
   }
 
   std::size_t padded_size() const {
-    assert(size_ != nullptr);
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT)
                          << E_LOG_SIMD_COUNT;
     if (padded < size_) padded += E_SIMD_COUNT;

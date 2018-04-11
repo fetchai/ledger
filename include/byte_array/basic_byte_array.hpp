@@ -154,6 +154,15 @@ public:
     return pos;
   }
 
+  void FromByteArray(self_type const &other,std::size_t const &start,
+                               std::size_t length) {
+    data_ = other.data_;
+    start_ = other.start_ + start;
+    length_ = length;
+    arr_pointer_ = data_.pointer() + start_;
+  } // TODO: Move to protected
+  
+
   std::size_t const &size() const { return length_; }
   container_type const *pointer() const { return arr_pointer_; }
 

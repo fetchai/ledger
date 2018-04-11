@@ -31,7 +31,7 @@ enable_testing()
 add_definitions( --std=c++11 )
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function -O3")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -g -Wall -Wno-unused-function ")
 
 set(CMAKE_BUILD_TYPE RELEASE)

@@ -19,26 +19,29 @@ void Serializer(T &t, Blah const&b)
 }
 */
 
-int main() {
+int main(int argc, char **argv) {
   SCENARIO("Testing basic parsing") {
-    ByteArray doc_content = R"({
-  "a": 3,
-  "x": { 
-    "y": [1,2,3],
-    "z": null,
-    "q": [],
-    "hello world": {}
-  }
-}
-)" ;
-    doc_content = R"({"angle1":0.22,"angle2":{ },"name":"AEA_8080_0","searchText":"100"})";
+    ByteArray doc_content;
+    
+    int fsize = 0;
+    FILE *fp;
+    fp = fopen(argv[1], "r");
+    fseek(fp, 0, SEEK_END);
+    fsize = ftell(fp);
+    rewind(fp);
+
+    doc_content.Resize( fsize);
+    fread(reinterpret_cast< char *>(doc_content.pointer()), 1, fsize, fp);
+    fclose(fp);
+    
     //std::cout << doc_content << std::endl;
-    JSONDocument doc;      
-    for(std::size_t i=0; i < 1000000; ++i) {
+    JSONDocument doc;
+    for(std::size_t i=0; i < 10000; ++i) {
 
       doc.Parse(doc_content);
     }
-//    std::cout << doc.root() << std::endl;
+
+    //    std::cout << doc.root() << std::endl;
     
     /*
     doc["a"] = 4;
