@@ -125,7 +125,7 @@ class JSONDocument {
    * formatted.
    */
 
-  static int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
+  static int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos) {
        if(str[pos] != '"') return -1;
        ++pos;
        if(pos >= str.size()) return -1;
@@ -156,8 +156,7 @@ class JSONDocument {
        return STRING;
      }
 
-
-  static int StringConsumerFallback(byte_array::ConstByteArray const &str, uint64_t &pos)  {
+  static int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)  {
        if(str[pos] != '"') return -1;
        ++pos;
        if(pos >= str.size()) return -1;
@@ -186,25 +185,25 @@ class JSONDocument {
   JSONDocument(const_string_type const &document) : JSONDocument() {
     Parse(document);
   }
-/*
+
   script::Variant& operator[](std::size_t const& i) {
-    return root_[i];
+    return root()[i];
   }
 
   script::Variant const& operator[](std::size_t const& i) const {
-    return root_[i];    
+    return root()[i]; 
   }
 
   script::Variant & operator[](byte_array::BasicByteArray const &key) 
   {
-    return root_[key];    
+    return root()[key];    
   }
 
   script::Variant const & operator[](byte_array::BasicByteArray const &key) const 
   {
-    return root_[key];
+    return root()[key];
   }
-*/
+
   std::vector< uint16_t > counters_;
 
   
@@ -219,8 +218,6 @@ class JSONDocument {
     
     char const *ptr = reinterpret_cast< char const * >( document.pointer() );
 
-    keys_.clear();    
-    keys_.reserve(total_keys_);
     
     for(auto const &t: tokens_ ) {
       switch(t.type) {
@@ -231,14 +228,12 @@ class JSONDocument {
         variants_[current_object.i++] = false;
         break;
       case KEYWORD_NULL:
-        variants_[current_object.i++] = nullptr;
+        variants_[current_object.i++].MakeNull(); // = nullptr;
         break;        
       case STRING:
         variants_[ current_object.i++ ].EmplaceSetString( document, t.first, t.second - t.first ) ;
         break;
-      case KEY:
-        keys_.push_back( document.SubArray( t.first, t.second - t.first )  );        
-        break;                
+
       case NUMBER_INT:
         variants_[ current_object.i++ ] = atoi( ptr + t.first) ;
         break;        
@@ -246,6 +241,7 @@ class JSONDocument {
         variants_[ current_object.i++ ] = atof( ptr + t.first) ;        
         break;        
       case OPEN_OBJECT:
+        
         object_assembly_.emplace_back(current_object);
 
         current_object.start = allocation_counter;
@@ -256,14 +252,8 @@ class JSONDocument {
         allocation_counter += t.second;        
         break;        
       case CLOSE_OBJECT:
+        variants_[ object_assembly_.back().i ].SetObject(variants_, current_object.start, current_object.size);        
 
-        variants_[ object_assembly_.back().i ].MakeEmptyObject();
-        for(std::size_t i=current_object.i; i > current_object.start; ) {
-          --i;
-          variants_[ object_assembly_.back().i ][keys_.back()] = variants_[i];          
-          keys_.pop_back();
-        }
-                
         current_object = object_assembly_.back();
         object_assembly_.pop_back();
         
@@ -282,7 +272,7 @@ class JSONDocument {
 
         break;        
       case CLOSE_ARRAY:
-        variants_[ object_assembly_.back().i ].EmplaceSetArray(variants_, current_object.start, current_object.size);
+        variants_[ object_assembly_.back().i ].SetArray(variants_, current_object.start, current_object.size);
         
         current_object = object_assembly_.back();        
         object_assembly_.pop_back();
@@ -293,8 +283,8 @@ class JSONDocument {
     }  
   }
 
-  script::VariantAtomic &root() { return variants_[0]; }
-  script::VariantAtomic const &root() const { return variants_[0]; }
+  script::Variant &root() { return variants_[0]; }
+  script::Variant const &root() const { return variants_[0]; }
 
  private:
   void Tokenise(const_string_type const& document) 
@@ -303,6 +293,10 @@ class JSONDocument {
     uint64_t pos = 0;
 
     objects_ = 0;
+
+
+    brace_stack_.reserve(32);
+    brace_stack_.clear();
     
     object_stack_.reserve(32);
     object_stack_.clear();    
@@ -310,7 +304,6 @@ class JSONDocument {
     counters_.clear();
     tokens_.reserve(1024);
     tokens_.clear();
-    total_keys_ = 0;
     
     uint16_t element_counter = 0;
     
@@ -319,29 +312,31 @@ class JSONDocument {
       uint16_t const *words16 = reinterpret_cast< uint16_t const *> (ptr + pos);
       uint32_t const *words = reinterpret_cast< uint32_t const *> (ptr + pos);      
       char const &c = *(ptr+pos);
-
-     // Handling white spaces      
-      switch(words16[0]) { 
-      case 0x2020:  //a
-      case 0x200A:  //
-      case 0x200D:  //
-      case 0x2009:  //
-      case 0x0A20:  //
-      case 0x0A0A:  //
-      case 0x0A0D:  //
-      case 0x0A09:  //
-      case 0x0D20:  //
-      case 0x0D0A:  //
-      case 0x0D0D:  //
-      case 0x0D09:  //
-      case 0x0920:  //
-      case 0x090A:  //
-      case 0x090D:  //
-      case 0x0909:  //
-        pos += 2;
-        continue;
+      if((document.size() - pos) > 2) {
+        // Handling white spaces      
+        switch(words16[0]) { 
+        case 0x2020:  //a
+        case 0x200A:  //
+        case 0x200D:  //
+        case 0x2009:  //
+        case 0x0A20:  //
+        case 0x0A0A:  //
+        case 0x0A0D:  //
+        case 0x0A09:  //
+        case 0x0D20:  //
+        case 0x0D0A:  //
+        case 0x0D0D:  //
+        case 0x0D09:  //
+        case 0x0920:  //
+        case 0x090A:  //
+        case 0x090D:  //
+        case 0x0909:  //
+          pos += 2;
+          continue;
+        }
+        
       }
-      
+
       switch(c) {
       case '\n':
         ++line;
@@ -350,31 +345,31 @@ class JSONDocument {
       case '\r':
         ++pos;        
         continue;
-      }
-            
+      }       
       // Handling keywords
-      switch(words[0]) {
-      case 0x65757274:  // true
-        ++objects_;
-        tokens_.push_back({pos, pos+4, KEYWORD_TRUE});
-        pos+=4;
-        ++element_counter;        
-        continue;
-      case 0x736C6166:  // fals
-        ++objects_;
-        tokens_.push_back({pos, pos+5,  KEYWORD_FALSE});
-        pos+=4;
-        ++pos;
-        ++element_counter;
-        continue;
-      case 0x6C6C756E:  // null
-        ++objects_; // TODO: Move
-        tokens_.push_back({pos, pos+4, KEYWORD_NULL});
-        pos+=4;
-        ++element_counter;        
-        continue;   
+      if((document.size() - pos) > 4) {
+        switch(words[0]) {
+        case 0x65757274:  // true
+          ++objects_;
+          tokens_.push_back({pos, pos+4, KEYWORD_TRUE});
+          pos+=4;
+          ++element_counter;        
+          continue;
+        case 0x736C6166:  // fals
+          ++objects_;
+          tokens_.push_back({pos, pos+5,  KEYWORD_FALSE});
+          pos+=4;
+          ++pos;
+          ++element_counter;
+          continue;
+        case 0x6C6C756E:  // null
+          ++objects_; // TODO: Move
+          tokens_.push_back({pos, pos+4, KEYWORD_NULL});
+          pos+=4;
+          ++element_counter;        
+          continue;   
+        }
       }
-      
       std::size_t oldpos = pos;
       uint8_t type;
 
@@ -386,6 +381,7 @@ class JSONDocument {
         tokens_.push_back({oldpos+1, pos -1, STRING});        
         break;        
       case '{':
+        brace_stack_.push_back('}');
         counters_.emplace_back(element_counter);
         element_counter = 0;
         tokens_.push_back({pos, 0, OPEN_OBJECT});
@@ -394,8 +390,12 @@ class JSONDocument {
         ++pos;
         break;
       case '}':
-        tokens_.push_back({pos, uint64_t(element_counter >> 1), CLOSE_OBJECT});
-        object_stack_.back()->second  = (element_counter >> 1);
+        if(brace_stack_.back() != '}') {
+          throw JSONParseException("Expected '}', but found ']'");
+        }
+        brace_stack_.pop_back();
+        tokens_.push_back({pos, uint64_t(element_counter ), CLOSE_OBJECT});
+        object_stack_.back()->second  = (element_counter );
         
           
         object_stack_.pop_back();        
@@ -406,6 +406,7 @@ class JSONDocument {
         ++objects_;        
         break;
       case '[':
+        brace_stack_.push_back(']');
         counters_.emplace_back(element_counter);
         
         element_counter = 0;
@@ -415,6 +416,10 @@ class JSONDocument {
         ++pos;
         break;
       case ']':
+        if(brace_stack_.back() != ']') {
+          throw JSONParseException("Expected ']', but found '}'.");
+        }
+        brace_stack_.pop_back();        
         tokens_.push_back({pos, element_counter, CLOSE_ARRAY});
         object_stack_.back()->second  = element_counter;
         
@@ -429,10 +434,10 @@ class JSONDocument {
       break;
         
       case ':':
-        tokens_.back().type = KEY;
-        ++total_keys_;
-        
-//        tokens_.push_back({pos, 0, SET_PROPERTY});        
+        if(brace_stack_.back() != '}') {
+          throw JSONParseException("Cannot set property outside of object context");
+        }        
+        //        tokens_.back().type = KEY;
         ++pos;
         break;
         
@@ -445,9 +450,16 @@ class JSONDocument {
 
         ++element_counter;        
         type = NumberConsumer(document,pos);
+        if(type == -1) {
+          throw JSONParseException("Unable to parse integer.");
+        }
         tokens_.push_back({oldpos, pos - oldpos, type});        
         break;
       }
+    }
+
+    if(!brace_stack_.empty()) {
+      throw JSONParseException("Object or array indicators are unbalanced.");
     }
   }
   
@@ -473,9 +485,9 @@ class JSONDocument {
   std::vector< JSONToken > tokens_;
   script::VariantList variants_;   
   std::size_t objects_;
-  std::size_t total_keys_;
-  std::vector< const_string_type > keys_;  
 
+
+  std::vector< char > brace_stack_;
   
 //  variant_type root_ = nullptr;
 };

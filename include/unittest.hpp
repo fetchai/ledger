@@ -280,6 +280,38 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
   (*self) << "     - " << #EXPRESSION;                                      \
   EXPECT_FAIL_SUCCESS(EXPRESSION)
 
+#define EXPECT_EXCEPTION(EXPRESSION, EXC)                               \
+  (*self) << "     - " << #EXPRESSION << " => throw " << #EXC;                  \
+  {                                                                     \
+  bool test_success = false;                                            \
+  try {                                                                 \
+    EXPRESSION;                                                         \
+  } catch(EXC const &e) {                                               \
+    test_success = true;                                                \
+  }                                                                     \
+  if (test_success) {                                                         \
+    (*self) << fetch::commandline::VT100::Return                            \
+            << fetch::commandline::VT100::Right(70);                        \
+    (*self) << " [  " << fetch::commandline::VT100::Bold;                   \
+    (*self) << fetch::commandline::VT100::GetColor("yellow", "default");    \
+    (*self) << "OK" << fetch::commandline::VT100::DefaultAttributes()       \
+            << "  ]\n";                                                     \
+  } else {                                                                  \
+    (*self) << fetch::commandline::VT100::Return                            \
+            << fetch::commandline::VT100::Right(70);                        \
+    (*self) << " [ " << fetch::commandline::VT100::Bold;                    \
+    (*self) << fetch::commandline::VT100::GetColor("red", "default");       \
+    (*self) << "FAIL" << fetch::commandline::VT100::DefaultAttributes()     \
+            << " ]\n\n\n";                                                  \
+    (*self) << "Expect failed " << __FILE__ << " on line " << __LINE__      \
+            << ": \n\n";                                                    \
+    (*self) << "    " << #EXC << "was never thrown    " << "\n\n"; \
+    exit(-1);                                                               \
+  }                                                                     \
+  }
+  
+
+  
 #define CHECK(TEXT, EXPRESSION)                                             \
   (*self) << "     - " << TEXT;                                             \
   EXPECT_FAIL_SUCCESS(EXPRESSION)

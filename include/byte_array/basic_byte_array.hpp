@@ -183,46 +183,10 @@ public:
 
   int AsInt() const {
     return atoi(reinterpret_cast< char const * >(arr_pointer_) );
-    /*
-    int n = 0;
-    for (std::size_t i = 0; i < length_; ++i) {
-      n *= 10;
-      int a = (arr_pointer_[i] - '0');
-
-      if ((a < 0) || (a > 9)) {
-        std::cerr << "TODO: throw error - NaN in referenced byte_array: " << a
-                  << " " << arr_pointer_[i] << ", char " << i << " '"
-                  << arr_pointer_[i] << "'" << " - code: " << int(arr_pointer_[i]) << std::endl;
-        exit(-1);
-      }
-      n += a;
-    }
-    return n;
-    */
   }  
-
-  
 
   double AsFloat() const {
     return atof(reinterpret_cast< char const * >(arr_pointer_));
-    // TODO: Implement
-    // TODO: add support for sign
-    /*
-    int n = 0;
-    for (std::size_t i = 0; i < length_; ++i) {
-      n *= 10;
-      int a = (arr_pointer_[i] - '0');
-
-      if ((a < 0) || (a > 9)) {
-        std::cerr << "TODO: throw error - NaN in referenced byte_array: " << a
-                  << " " << arr_pointer_[i] << ", char " << i << " '"
-                  << arr_pointer_[i] << "'" << " - code: " << int(arr_pointer_[i]) << std::endl;
-        exit(-1);
-      }
-      n += a;
-    }
-    return n;
-    */
   }  
 
 protected:
@@ -240,16 +204,14 @@ protected:
 
 
   void Reserve(std::size_t const &n) {
-
     shared_array_type newdata(n);
+    newdata.SetAllZero();
     
     std::size_t M = std::min(n, data_.size());
     std::size_t i = 0;
     for (; i < M; ++i) newdata[i] = data_[i];
-
-    //    for (; i < n + 1; ++i) newdata[i] = '\0';
-    for (; i < n; ++i) newdata[i] = '\0';
-
+    std::memcpy(newdata.pointer(), data_.pointer(), M);
+    
     data_ = newdata;
     arr_pointer_ = data_.pointer() + start_;
   }

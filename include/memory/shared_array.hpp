@@ -45,17 +45,12 @@ class SharedArray {
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT),
                 "type does not fit in SIMD");
   
-  SharedArray(std::size_t const &n) {   
+  SharedArray(std::size_t const &n) {
     size_ = n;
 
     if (n > 0)
     {
-      // TODO: C++17 version, upgrade when time is right
-      //      data_ = std::shared_ptr<T>( (type*)std::aligned_alloc(E_SIMD_SIZE, padded_size()*sizeof(type) ), free );
-
-      // TODO: Upgrade to aligned memory to ensure that we can parallelise over SIMD
       data_ = std::shared_ptr<T>( (type*)_mm_malloc(padded_size()*sizeof(type), 16 ), _mm_free );
-      memset( data_.get(), 0, padded_size()*sizeof(type) );
     }
   }
   
@@ -88,6 +83,9 @@ class SharedArray {
     return ret;
   }
   
+  void SetAllZero() {
+    memset( data_.get(), 0, padded_size()*sizeof(type) );
+  }
   
   iterator begin() { return iterator(data_.get(), data_.get() + size()); }
   iterator end() { return iterator(data_.get() + size(), data_.get() + size()); }
@@ -127,6 +125,7 @@ class SharedArray {
   }
 
   self_type &operator=(SharedArray const &other) {
+
     if (&other == this) return *this;
 
     size_ = other.size_;
