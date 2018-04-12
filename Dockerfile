@@ -1,5 +1,8 @@
 FROM centos/devtoolset-4-toolchain-centos7:latest
 
+ENV CC=/usr/bin/clang
+ENV CXX=/usr/bin/clang++
+
 USER root
 
 RUN groupadd sudo && \
