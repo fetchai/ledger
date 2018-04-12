@@ -12,7 +12,8 @@ RUN yum install -y sudo && \
     yum install -y libpng-devel && \
     yum install -y zlib-devel && \
     yum install -y openssl-devel && \
-    yum install -y python-devel
+    yum install -y python-devel && \
+    yum install -y clang
 
 USER default
 
