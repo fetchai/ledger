@@ -6,5 +6,6 @@
 #echo "$BASEDIR"
 echo "$LABEL"
 
-docker run -u 0:0 -it --rm -v "$(pwd):/build" $LABEL $@
+#docker run -u root:root -it --rm -v "$(pwd):/build" $LABEL $@
+docker run -it --rm -v "$(pwd):/build" $LABEL $@
 
