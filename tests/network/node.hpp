@@ -78,8 +78,9 @@ public:
 
   void Start()
   {
-
     std::cerr << "starting..." << std::endl;
+
+    keepCount = 0;
 
     // Set up the transaction generator
     transactionGenerator_.eventPeriodUs(rate_);
@@ -92,7 +93,8 @@ public:
       if(packetFilter_.Add(trans.summary().transaction_hash))
       {
         static int sent = 0;
-        if(sent++ % 1000) {std::cerr << ".";}
+        if(sent++ % 1000 == 0) {std::cerr << ".";}
+        keepCount++;
 
         transactionList_.Add(trans);
         nodeDirectory_.BroadcastTransaction(std::move(trans));
@@ -110,6 +112,8 @@ public:
   void Stop()
   {
     transactionGenerator_.stop();
+    std::cerr << "Stopping, we sent: " << keepCount << std::endl;
+    std::cerr << "We recorded: " << transactionList_.size() << std::endl;
   }
 
   // HTTP calls
@@ -137,9 +141,10 @@ private:
   NodeDirectory                                  nodeDirectory_;                 // Manage connections to other nodes
   PacketFilter<byte_array::BasicByteArray, 1000> packetFilter_;                  // Filter 'already seen' packets
   EventGenerator                                 transactionGenerator_;          // Generate transactions at a certain rate
-  TransactionList<chain::Transaction, 5000000>   transactionList_;               // List of all transactions, sent and received
+  TransactionList<chain::Transaction, 500000>    transactionList_;               // List of all transactions, sent and received
   int                                            seed_;
   int                                            rate_ = 100;
+  int                                            keepCount = 0;
 };
 
 }

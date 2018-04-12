@@ -32,7 +32,7 @@ requests.post('http://localhost:8080/add-endpoint', json=endpoint)
 #    requests.post('http://localhost:8080/add-connection', json=connection)
 #
 
-setRate = 100
+setRate = 500
 rate = { "rate": setRate }
 r = requests.post('http://localhost:8080/set-rate', json=rate)
 jsonPrint(r)
@@ -42,7 +42,7 @@ jsonPrint(r)
 
 requests.post('http://localhost:8080/start')
 
-sleepTime = 10000
+sleepTime = 4
 time.sleep(sleepTime)
 
 requests.post('http://localhost:8080/stop')
@@ -76,20 +76,25 @@ if((page1.json()) != (page2.json())):
 else:
     print "Successfully matched"
 
+transPerSecondMax = 0
+
 # Loop the test
 for i in range(1000):
+    print "Starting"
     requests.post('http://localhost:8080/reset')
     requests.post('http://localhost:8081/reset')
 
     #requests.post('http://localhost:8081/start')
     requests.post('http://localhost:8080/start')
 
-    sleepTime = 2
+    print "Sleeping"
+    sleepTime = 4
     time.sleep(sleepTime)
+    print "Stopping"
 
     requests.post('http://localhost:8080/stop')
 
-    setRate = setRate - 100
+    setRate = int(setRate/2) -1
     if(setRate < 0):
         setRate = 0
     rate = { "rate": setRate }
@@ -101,12 +106,19 @@ for i in range(1000):
 
     if((ordered(page1.json())) != (ordered(page2.json()))):
         print "FAILED TO MATCH: "
-        print jsonPrint(page1)
-        print jsonPrint(page2)
+        print "node 0", jsonPrint(page1)
+        print "node 1", jsonPrint(page2)
     else:
         print "Successfully matched"
 
 
     #print jsonPrint(page1)
     print ">Number of transactions: ", page2.json()["numberOfTransactions"]
-    print ">Transactions per second: ", page2.json()["numberOfTransactions"]/sleepTime
+    transPerSecond = page2.json()["numberOfTransactions"]/sleepTime
+    print ">Transactions per second: ", transPerSecond
+
+    if(transPerSecond > transPerSecondMax):
+        transPerSecondMax = transPerSecond
+
+    print ">Transactions per second max: ", transPerSecondMax
+    print

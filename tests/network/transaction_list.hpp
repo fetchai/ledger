@@ -6,7 +6,7 @@ namespace fetch
 namespace network_test
 {
 
-template <typename T, std::size_t size>
+template <typename T, std::size_t fixedSize>
 class TransactionList
 {
 
@@ -81,10 +81,16 @@ public:
     return std::pair<uint64_t, uint64_t>(count, hash);
   }
 
+  std::size_t size() const
+  {
+    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+    return index_;
+  }
+
 private:
-  std::array<T, size> list_;
-  std::size_t         index_ = 0;
-  fetch::mutex::Mutex mutex_;
+  std::array<T, fixedSize>     list_;
+  std::size_t                  index_ = 0;
+  mutable fetch::mutex::Mutex  mutex_;
 };
 
 }
