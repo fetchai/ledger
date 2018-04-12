@@ -113,8 +113,7 @@ class Matrix : public A {
   FETCH_ADD_OPERATOR(&, &=)
 
 #undef FETCH_ADD_OPERATOR
-  
-  
+
   
   void Transpose() {
     Matrix newm(this->width(), this->height());
@@ -123,6 +122,17 @@ class Matrix : public A {
         newm.At(j, i) = this->At(i, j);
     this->operator=(newm);
   }
+
+  template< typename ...params >  
+  void ElementWise(Matrix const &other, Matrix &ret) {
+
+  }
+
+  template< typename ...params >
+  void ElementWiseInline(Matrix const &other) {
+
+  }  
+
 
   int Invert() {
     // after numerical recipes

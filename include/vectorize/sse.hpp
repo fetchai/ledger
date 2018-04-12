@@ -5,49 +5,163 @@
 
 #include <emmintrin.h>
 #include <smmintrin.h>
+#include <immintrin.h>
 #include <cstdint>
 #include <cstddef>
 
-#define REQUIRED_SSE X86_SSE3
+
 namespace fetch {
 namespace vectorize {
-template <typename T, std::size_t L>
-class VectorRegister<T, L, InstructionSet::REQUIRED_SSE> {
+
+  namespace details {
+    template< typename T, std::size_t N >
+    struct UnrollSet {
+      static void Set(T *ptr, T const &c) {
+        (*ptr)  = c;
+        UnrollSet<T, N - 1>::Set(ptr+1, c);
+      }
+    };
+    
+    template<typename T >
+    struct UnrollSet<T,0> {
+      static void Set(T *ptr, T const &c) {
+      }
+    };
+  };
+  
+// SSE integers
+template <typename T>
+class VectorRegister<T, __m128i> {
  public:
   typedef T type;
-  enum { E_REGISTER_SIZE = L, E_BLOCK_COUNT = L / sizeof(type) };
-  static_assert((E_BLOCK_COUNT * sizeof(type)) == L,
+  typedef __m128i mm_register_type;
+  
+  enum {
+    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_BLOCK_COUNT = E_REGISTER_SIZE / sizeof(type)
+  };
+  
+  static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
                 "type cannot be contained in the given register size.");
 
   VectorRegister() {}
-  VectorRegister(type const *d) { data_ = _mm_load_si128((__m128i *)d); }
-  VectorRegister(__m128i const &d) : data_(d) {}
-  VectorRegister(__m128i &&d) : data_(d) {}
+  VectorRegister(type const *d) { data_ = _mm_load_si128((mm_register_type *)d); }
+  VectorRegister(type const &c)  {
+    alignas(16) type constant[E_BLOCK_COUNT];
+    details::UnrollSet< type, E_BLOCK_COUNT >::Set(constant, c);
+    data_ = _mm_load_si128((mm_register_type *)constant);
+    
+  }
+  VectorRegister(mm_register_type const &d) : data_(d) {}
+  VectorRegister(mm_register_type &&d) : data_(d) {}
 
-  explicit operator __m128i() { return data_; }
+  explicit operator mm_register_type() { return data_; }
 
-#define AILIB_ADD_OPERATOR(OP) \
-  VectorRegister operator OP(VectorRegister const &other) const;
-  APPLY_OPERATOR_LIST(AILIB_ADD_OPERATOR)
-#undef AILIB_ADD_OPERATOR
+  void Store(type *ptr) const { _mm_store_si128((mm_register_type *)ptr, data_); }
 
-  void Store(type *ptr) const { _mm_store_si128((__m128i *)ptr, data_); }
-
+  mm_register_type const &data() const { return data_; }
+  mm_register_type &data()  { return data_; }  
  private:
-  __m128i data_;
+  mm_register_type data_;
+
 };
 
 
-#define AILIB_ADD_OPERATOR(op, L, type, set, fnc)                            \
-  template <>                                                                \
-  VectorRegister<type, L, InstructionSet::set>                               \
-      VectorRegister<type, L, InstructionSet::set>::operator op(             \
-          VectorRegister<type, L, InstructionSet::set> const &other) const { \
-    __m128i ret = fnc(this->data_, other.data_);                             \
-    return VectorRegister<type, L, InstructionSet::set>(ret);                \
+template <>
+class VectorRegister<float, __m128> {
+ public:
+  typedef float type;
+  typedef __m128 mm_register_type;
+  
+  enum {
+    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_BLOCK_COUNT = E_REGISTER_SIZE / sizeof(type)
+  };
+  
+  static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
+                "type cannot be contained in the given register size.");
+
+  VectorRegister() {}
+  VectorRegister(type const *d) { data_ = _mm_load_ps(d); }
+  VectorRegister(mm_register_type const &d) : data_(d) {}
+  VectorRegister(mm_register_type &&d) : data_(d) {}
+  VectorRegister(type const &c)  {
+    alignas(16) type constant[E_BLOCK_COUNT];
+    details::UnrollSet< type, E_BLOCK_COUNT >::Set(constant, c);
+    data_ = _mm_load_ps(constant);
+    
+  }
+  
+  explicit operator mm_register_type() { return data_; }
+
+  void Store(type *ptr) const { _mm_store_ps(ptr, data_); }
+
+  mm_register_type const &data() const { return data_; }
+  mm_register_type &data()  { return data_; }  
+ private:
+  mm_register_type data_;
+};
+  
+template <>
+class VectorRegister<double, __m128> {
+ public:
+  typedef double type;
+  typedef __m128 mm_register_type;
+  
+  enum {
+    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_BLOCK_COUNT = E_REGISTER_SIZE / sizeof(type)
+  };
+  
+  static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
+                "type cannot be contained in the given register size.");
+
+  VectorRegister() {}
+  VectorRegister(type const *d) { data_ = _mm_load_pd(d); }
+  VectorRegister(mm_register_type const &d) : data_(d) {}
+  VectorRegister(mm_register_type &&d) : data_(d) {}
+  VectorRegister(type const &c)  {
+    alignas(16) type constant[E_BLOCK_COUNT];
+    details::UnrollSet< type, E_BLOCK_COUNT >::Set(constant, c);
+    data_ = _mm_load_pd(constant);
+    
+  }
+  
+  explicit operator mm_register_type() { return data_; }
+
+  void Store(type *ptr) const { _mm_store_pd(ptr, data_); }
+
+  mm_register_type const &data() const { return data_; }
+  mm_register_type &data()  { return data_; }  
+ private:
+  mm_register_type data_;
+};
+  
+
+  
+#define AILIB_ADD_OPERATOR(op, type, L, fnc)                            \
+  VectorRegister<type, L>                                               \
+  operator op( VectorRegister<type, L> const &a,                        \
+               VectorRegister<type, L> const &b) {                      \
+    L ret = fnc(a.data(), b.data());                                    \
+    return VectorRegister<type, L>(ret);                                \
   }
 
-AILIB_ADD_OPERATOR(*, 16, uint32_t, REQUIRED_SSE, _mm_mullo_epi32);
+AILIB_ADD_OPERATOR(*, uint32_t, __m128i, _mm_mullo_epi32);
+AILIB_ADD_OPERATOR(-, uint32_t, __m128i, _mm_sub_epi32);
+AILIB_ADD_OPERATOR(/, uint32_t, __m128i, _mm_div_epi32);
+AILIB_ADD_OPERATOR(+, uint32_t, __m128i, _mm_add_epi32);  
+
+AILIB_ADD_OPERATOR(*, float, __m128, _mm_mul_ps);
+AILIB_ADD_OPERATOR(-, float, __m128, _mm_sub_ps);  
+AILIB_ADD_OPERATOR(/, float, __m128, _mm_div_ps);
+AILIB_ADD_OPERATOR(+, float, __m128, _mm_add_ps);  
+
+AILIB_ADD_OPERATOR(*, double, __m128, _mm_mul_pd);
+AILIB_ADD_OPERATOR(-, double, __m128, _mm_sub_pd);  
+AILIB_ADD_OPERATOR(/, double, __m128, _mm_div_pd);
+AILIB_ADD_OPERATOR(+, double, __m128, _mm_add_pd);  
+  
   
 #undef AILIB_ADD_OPERATOR
 
