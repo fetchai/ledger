@@ -1,3 +1,7 @@
+Configure git
+=============
+Depending on transport (`ssh` or `https`) you prefere to access github, configure your local git settings based on [this guide](https_ssh_git_config.md).
+
 Initiate
 ========
 git submodule update --recursive --remote
