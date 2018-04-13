@@ -20,97 +20,73 @@ def ordered(obj):
     else:
         return obj
 
-endpoint = {"TCPPort": 9081, "IP": "localhost"}
-requests.post('http://localhost:8080/add-endpoint', json=endpoint)
+def HTTPpost(endpoint, page, jsonArg="{}"):
+    return requests.post('http://'+str(endpoint["IP"])+':'+str(endpoint["HTTPPort"])+'/'+page, json=jsonArg)
 
-#endpoint = {"TCPPort": 9080, "IP": "localhost"}
-#requests.post('http://localhost:8081/add-endpoint', json=endpoint)
-
-## generate an/some events by selecting a random aea
-#for i in range(1, workingNodes-1):
-#    connection = {"TCPPort": 9080+i, "IP": "localhost"}
-#    requests.post('http://localhost:8080/add-connection', json=connection)
-#
-
-setRate = 500
-rate = { "rate": setRate }
-r = requests.post('http://localhost:8080/set-rate', json=rate)
-jsonPrint(r)
-
-r = requests.post('http://localhost:8081/set-rate', json=rate)
-jsonPrint(r)
-
-requests.post('http://localhost:8080/start')
-
+setRate = 1000
+minRate = 0
 sleepTime = 4
-time.sleep(sleepTime)
 
-requests.post('http://localhost:8080/stop')
-#requests.post('http://localhost:8081/stop')
+endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
+endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.213"}
 
-hash1 = requests.post('http://localhost:8080/transactions-hash')
-hash2 = requests.post('http://localhost:8081/transactions-hash')
+HTTPpost(endpoint1, 'add-endpoint', endpoint2)
+HTTPpost(endpoint2, 'add-endpoint', endpoint1)
 
-print "hash1: ", hash1.json()["hash"]
-print "hash2: ", hash2.json()["hash"]
+#requests.post('http://'+str(endpoint1["IP"])+':'+str(endpoint1["HTTPPort"])+'/add-endpoint', json=endpoint2)
 
-page1 = requests.post('http://localhost:8080/transactions')
-page2 = requests.post('http://localhost:8081/transactions')
-
-print "Number of transactions: ", len(page1.json())
-print "Transactions per second: ", len(page1.json())/sleepTime
-
-#print jsonPrint(page1)
-#print ""
-#print ""
-#print jsonPrint(page2)
-
-requests.post('http://localhost:8080/stop')
-#requests.post('http://localhost:8081/stop')
-
-#if(ordered(page1.json()) != ordered(page2.json())):
-if((page1.json()) != (page2.json())):
-    print "FAILED TO MATCH: "
-    print jsonPrint(page1)
-    print jsonPrint(page2)
-else:
-    print "Successfully matched"
+#requests.post('http://'+str(endpoint1["IP"])+':'+str(endpoint1["HTTPPort"])+'/start')
 
 transPerSecondMax = 0
 
 # Loop the test
 for i in range(1000):
     print "Starting"
-    requests.post('http://localhost:8080/reset')
-    requests.post('http://localhost:8081/reset')
+    HTTPpost(endpoint1, 'stop')
+    HTTPpost(endpoint2, 'stop')
+
+    HTTPpost(endpoint1, 'reset')
+    HTTPpost(endpoint2, 'reset')
 
     #requests.post('http://localhost:8081/start')
-    requests.post('http://localhost:8080/start')
+    #requests.post('http://localhost:8080/start')
 
-    print "Sleeping"
-    sleepTime = 4
-    time.sleep(sleepTime)
-    print "Stopping"
-
-    requests.post('http://localhost:8080/stop')
-
-    setRate = int(setRate/2) -1
-    if(setRate < 0):
-        setRate = 0
     rate = { "rate": setRate }
-    r = requests.post('http://localhost:8080/set-rate', json=rate)
+    HTTPpost(endpoint1, 'set-rate', rate)
     print "Set rate to: ", setRate
 
-    page1 = requests.post('http://localhost:8080/transactions-hash')
-    page2 = requests.post('http://localhost:8081/transactions-hash')
+    #HTTPpost(endpoint1, 'start')
+    HTTPpost(endpoint2, 'start')
+
+    print "Sleeping"
+    time.sleep(sleepTime)
+
+    print "Stopping"
+
+    HTTPpost(endpoint1, 'stop')
+    HTTPpost(endpoint2, 'stop')
+
+    print "Stopped"
+    time.sleep(1)
+
+    setRate = int(setRate/2) -1
+    if(setRate < minRate):
+        setRate = minRate
+
+    rate = { "rate": setRate }
+    HTTPpost(endpoint1, 'set-rate', rate)
+    print "Set rate to: ", setRate
+
+    page1 = HTTPpost(endpoint1, 'transactions-hash')
+    page2 = HTTPpost(endpoint2, 'transactions-hash')
 
     if((ordered(page1.json())) != (ordered(page2.json()))):
         print "FAILED TO MATCH: "
         print "node 0", jsonPrint(page1)
         print "node 1", jsonPrint(page2)
+        exit(1)
     else:
         print "Successfully matched"
-
 
     #print jsonPrint(page1)
     print ">Number of transactions: ", page2.json()["numberOfTransactions"]

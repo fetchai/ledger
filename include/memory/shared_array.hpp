@@ -137,12 +137,12 @@ class SharedArray {
   }
 
   std::size_t size() const {
-    assert(size_ != nullptr);
+    //assert(size_ != nullptr); // this causes mac osx to fail: "Invalid operands to binary expression ('fetch::memory::SharedArray::size_type' (aka 'unsigned long') and 'nullptr_t')"
     return size_;
   }
 
   std::size_t padded_size() const {
-    assert(size_ != nullptr);
+    //assert(size_ != nullptr); // this causes mac osx to fail: "Invalid operands to binary expression ('fetch::memory::SharedArray::size_type' (aka 'unsigned long') and 'nullptr_t')" 
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT)
                          << E_LOG_SIMD_COUNT;
     if (padded < size_) padded += E_SIMD_COUNT;

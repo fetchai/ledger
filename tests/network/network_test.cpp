@@ -39,6 +39,6 @@ int main(int argc, char **argv)
 
   // TODO: (`HUT`) : investigate: tcp or http server doens't like destructing before tm stopped
   tm->Stop();
-  delete tm;
+  //delete tm;
   return 0;
 }

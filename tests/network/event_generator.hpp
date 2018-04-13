@@ -44,7 +44,7 @@ public:
   void stop()
   {
     finished_ = true;
-    cond_.notify_all();
+    //cond_.notify_all();
   }
 
   void event(const std::function<void(void)>& arg)
@@ -104,6 +104,8 @@ private:
         event_();
       }
     }
+
+    std::cerr << "Thread finished" << std::endl;
     running_ = false;
   }
 

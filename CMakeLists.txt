@@ -10,11 +10,17 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(PNG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
+#find_package(Crypto REQUIRED)
+
+if(APPLE)
+  link_libraries(-Wl,/usr/local/opt/openssl/lib/libcrypto.a pthread)
+else()
+  link_libraries(crypto pthread)
+endif()
 
 message("OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
 message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")
 
-link_libraries(crypto pthread)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/asio/asio/include")
 include_directories("${OPENSSL_INCLUDE_DIR}")
@@ -32,7 +38,7 @@ add_definitions( --std=c++11 )
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -g -Wall  -Werror -Wno-unused-function ")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -g -w -Wno-unused-function ")
 
 set(CMAKE_BUILD_TYPE RELEASE)
 #set(CMAKE_BUILD_TYPE DEBUG)

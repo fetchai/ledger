@@ -21,7 +21,7 @@ typename std::enable_if< std::is_integral< U >::value, void >::type Serialize(T 
 
 template <typename T, typename U>
 typename std::enable_if< std::is_integral< U >::value, void >::type  Deserialize(T &serializer, U &val) {
-  detailed_assert( sizeof(U) <= serializer.bytes_left());
+  //detailed_assert( sizeof(U) <= serializer.bytes_left()); // TODO: (`HUT`) : discuss w/Troels, this breaks build "comparison between signed and unsigned integer expressions"
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&val), sizeof(U));
 }
 

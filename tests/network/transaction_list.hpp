@@ -42,13 +42,14 @@ public:
     {
       auto &item = list_[i];
 
-      for (std::size_t j = i+1;j < index_; ++j)
-      {
-        if(item == list_[j])
-        {
-          fetch::logger.Info("Found duplicate transaction at index: ", i, " and ", i);
-        }
-      }
+
+//      for (std::size_t j = i+1;j < index_; ++j)
+//      {
+//        if(item == list_[j])
+//        {
+//          fetch::logger.Info("Found duplicate transaction at index: ", i, " and ", i);
+//        }
+//      }
 
       ret.insert(item);
     }

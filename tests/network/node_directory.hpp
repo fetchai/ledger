@@ -20,7 +20,6 @@ class NodeDirectory
 public:
 
   NodeDirectory(network::ThreadManager *tm) :
-  tm_{tm},
   connectionManger_{tm}
   {}
 
@@ -40,7 +39,7 @@ public:
     endpoints_.insert(endpoint);
 
     // Request a connection to this new endpoint to avoid flooding
-    auto client = connectionManger_.GetClient(endpoint);
+    connectionManger_.GetClient(endpoint);
 
     for(auto &i : endpoints_)
     {
@@ -59,7 +58,6 @@ public:
   }
 
 private:
-  fetch::network::ThreadManager         *tm_;
   std::set<Endpoint>                    endpoints_;
   ConnectionManager<network::TCPClient> connectionManger_;
 };

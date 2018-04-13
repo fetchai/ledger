@@ -38,6 +38,8 @@ public:
     {
       TCPPort_ = 0;
     }
+
+    std::cout << "jsondoc: " << IP_ << ":" << TCPPort_ << std::endl;
   }
 
   bool operator< (const Endpoint &rhs) const
@@ -55,6 +57,7 @@ public:
     script::Variant result = script::Variant::Object();
     result["IP"]      = IP_;
     result["TCPPort"] = TCPPort_;
+    std::cout << "variant: " << IP_ << ":" << TCPPort_ << std::endl;
     return result;
   }
 
