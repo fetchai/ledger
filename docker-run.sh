@@ -1,7 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
+cd ${0%/*}
 . ./docker-env.sh
-
-#docker run -u root:root -p 8080:8080 -it --rm -v "$(pwd):/build" $LABEL $@
-docker run -p 8080:8080 -it --rm -v "$(pwd):/build" $LABEL $@
+docker run -it --rm -v $(pwd):$WORKDIR $DOCKER_IMAGE_TAG $@
 
