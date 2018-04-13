@@ -201,6 +201,22 @@ class Matrix : public A {
 
   }
 
+  void Add(Matrix const &obj1, type const &scalar) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a, b(scalar), c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+
+      c = a + b;
+      c.Stream( this->data().pointer() + i);
+    }    
+
+  }
+  
   
   void Multiply(Matrix const &obj1,   Matrix const &obj2) {
     assert(obj1.data().size() == obj2.data().size());
@@ -215,7 +231,7 @@ class Matrix : public A {
       ia.Next(a);
       ib.Next(b);
 
-      c = a + b;
+      c = a * b;
       c.Stream( this->data().pointer() + i);
     }    
 
@@ -231,7 +247,7 @@ class Matrix : public A {
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
 
-      c = a + b;
+      c = a * b;
       c.Stream( this->data().pointer() + i);
     }    
 
@@ -251,12 +267,30 @@ class Matrix : public A {
       ia.Next(a);
       ib.Next(b);
 
-      c = a + b;
+      c = a - b;
       c.Stream( this->data().pointer() + i);
     }    
 
   }
 
+  void Subtract(Matrix const &obj1, type const &scalar) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a, b(scalar), c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+
+      c = a - b;
+      c.Stream( this->data().pointer() + i);
+    }    
+
+  }
+
+
+  
   void Divide(Matrix const &obj1,   Matrix const &obj2) {
     assert(obj1.data().size() == obj2.data().size());
     assert(obj1.data().size() == this->data().size());
@@ -276,6 +310,22 @@ class Matrix : public A {
 
   }
  
+  void Divide(Matrix const &obj1, type const &scalar) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a, b(scalar), c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+
+      c = a / b;
+      c.Stream( this->data().pointer() + i);
+    }    
+
+  }
+
 
   int Invert() {
     // after numerical recipes
