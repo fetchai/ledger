@@ -115,16 +115,18 @@ int main() {
   //    test(gen() % 250);
 
   
-  Matrix<data_type,fetch::memory::Array< data_type > >  a(1,3), b(1,3);
+  Matrix<data_type,fetch::memory::Array< data_type > >  a(1,3), b(1,3), ret(1,3);
   for(std::size_t i=0; i < a.size(); ++i) {
     b[i] = 1.1;
     a[i] = 1.2;
   }
   
   std::cout << a.size() << " " << b.size() << std::endl;
-  
-  a += b;  
-  b = a.Copy();
-  
+
+  ret.Add(a,b);
+  ret.Multiply(a,2.0);  
+  ret.Multiply(a,b);
+  ret.Divide(a,b);
+  ret.Subtract(a,b); 
   return 0;
 }

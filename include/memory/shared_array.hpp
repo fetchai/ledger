@@ -86,6 +86,11 @@ class SharedArray {
   void SetAllZero() {
     memset( data_.get(), 0, padded_size()*sizeof(type) );
   }
+
+  void SetPaddedZero() {
+    memset( data_.get()+size(), 0, (padded_size()-size())*sizeof(type) );
+  }
+  
   
   iterator begin() { return iterator(data_.get(), data_.get() + size()); }
   iterator end() { return iterator(data_.get() + size(), data_.get() + size()); }

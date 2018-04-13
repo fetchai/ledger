@@ -22,6 +22,8 @@ public:
   typedef RectangularArray< T, C > self_type;
   typedef typename container_type::iterator iterator;
   typedef typename container_type::reverse_iterator reverse_iterator;
+  typedef vectorize::VectorRegisterIterator<type,128> vector_register_iterator_type;
+  
   typedef uint64_t size_type;
 
   typedef typename vectorize::VectorRegister< type, 128> vector_register_type;
@@ -52,6 +54,14 @@ public:
     return ret;
   }
 
+  void SetAllZero() {
+    data_.SetAllZero();    
+  }
+
+  void SetPaddedZero() {
+    data_.SetPaddedZero();    
+  }
+  
   void Crop(size_type const &i, size_type const &j, size_type const &h,
             size_type const &w) {
     container_type newdata(h * w);
@@ -153,8 +163,8 @@ public:
 
     vector_register_type a,b,c; 
 
-    vectorize::VectorRegisterIterator<type,128> ia( obj1.data().pointer() );
-    vectorize::VectorRegisterIterator<type,128> ib( obj2.data().pointer() );    
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ib( obj2.data().pointer() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
@@ -174,7 +184,7 @@ public:
 
     vector_register_type a,b;
 
-    vectorize::VectorRegisterIterator<type,128> ia( obj1.data().pointer() );
+    vector_register_iterator_type ia( obj1.data().pointer() );
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
 

@@ -1,12 +1,15 @@
 #ifndef MEMORY_ARRAY_HPP
 #define MEMORY_ARRAY_HPP
+
+#include "iterator.hpp"
+#include "meta/log2.hpp"
+
 #include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <type_traits>
-#include "iterator.hpp"
-#include "meta/log2.hpp"
+#include <mm_malloc.h>
 namespace fetch {
 namespace memory {
 
@@ -32,7 +35,8 @@ class Array {
 
   Array(std::size_t const &n) {
     size_ = n;
-    if (n > 0) data_ = new type[padded_size()];
+    if (n > 0) data_ = (type*)_mm_malloc(padded_size()*sizeof(type), 16 );
+    
   }
 
   Array() : Array(0) {}
@@ -47,6 +51,18 @@ class Array {
     std::swap(data_, other.data_);
   }
 
+  void SetAllZero() {
+    assert( data_ != nullptr );
+    
+    memset( data_, 0, padded_size()*sizeof(type) );
+  }
+
+  void SetPaddedZero() {
+    assert( data_ != nullptr );
+    
+    memset( data_+size(), 0, (padded_size()-size())*sizeof(type) );
+  }
+  
   
   Array &operator=(Array &&other) {
     std::swap(size_, other.size_);
@@ -55,7 +71,7 @@ class Array {
   }
 
   ~Array() {
-    if(data_ != nullptr) delete[] data_;
+    if(data_ != nullptr) _mm_free(data_);
   }
 
   Array< type > Copy() const

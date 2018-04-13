@@ -19,8 +19,7 @@ class Matrix : public A {
   typedef A super_type;
   typedef typename super_type::type type;
   typedef typename super_type::vector_register_type vector_register_type;
-  
-
+  typedef typename super_type::vector_register_iterator_type vector_register_iterator_type;   
   
   enum {
     INVERSION_OK = 0,
@@ -119,6 +118,61 @@ class Matrix : public A {
 
 #undef FETCH_ADD_OPERATOR
 
+
+  void InlineAdd(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ib( this->data().pointer() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a + b;
+      c.Stream( this->data().pointer() + i);
+    }    
+
+  }
+
+  void InlineMultiply(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ib( this->data().pointer() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a * b;
+      c.Stream( this->data().pointer() + i);
+    }    
+
+  }
+  
+  void InlineSubtract(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ib( this->data().pointer() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a * b;
+      c.Stream( this->data().pointer() + i);
+    }    
+
+  }
+
   
   void Transpose() {
     Matrix newm(this->width(), this->height());
@@ -135,31 +189,93 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a,b,c; 
 
-    vectorize::VectorRegisterIterator<type,128> ia( obj1.data().pointer() );
-    vectorize::VectorRegisterIterator<type,128> ib( obj2.data().pointer() );    
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ib( obj2.data().pointer() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
 
-      apply(a,b,c);
+      c = a + b;
       c.Stream( this->data().pointer() + i);
     }    
 
   }
 
   
-  template<typename F,  typename V = vectorize::VectorRegister< type, 128> >  
-  void ElementWiseInline(F apply, Matrix const &other) {
-    std::size_t N = this->data().size();
-    
-    for(std::size_t i = 0; i < N; i += V::E_BLOCK_COUNT) {
-      V a(this->data().pointer() + i), b(other.data().pointer() + i), c;
-      c = a + b;
-      c.Store( this->data().pointer() + i);
-    }
-    
-  }  
+  void Multiply(Matrix const &obj1,   Matrix const &obj2) {
+    assert(obj1.data().size() == obj2.data().size());
+    assert(obj1.data().size() == this->data().size());
 
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ib( obj2.data().pointer() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a + b;
+      c.Stream( this->data().pointer() + i);
+    }    
+
+  }
+
+  void Multiply(Matrix const &obj1, type const &scalar) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a, b(scalar), c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+
+      c = a + b;
+      c.Stream( this->data().pointer() + i);
+    }    
+
+  }
+
+  
+  void Subtract(Matrix const &obj1,   Matrix const &obj2) {
+    assert(obj1.data().size() == obj2.data().size());
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ib( obj2.data().pointer() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a + b;
+      c.Stream( this->data().pointer() + i);
+    }    
+
+  }
+
+  void Divide(Matrix const &obj1,   Matrix const &obj2) {
+    assert(obj1.data().size() == obj2.data().size());
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ib( obj2.data().pointer() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a / b;
+      c.Stream( this->data().pointer() + i);
+    }    
+
+  }
+ 
 
   int Invert() {
     // after numerical recipes
