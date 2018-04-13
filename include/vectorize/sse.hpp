@@ -103,10 +103,10 @@ class VectorRegister<float, 128, __m128> {
 };
   
 template <>
-class VectorRegister<double, 128, __m128> {
+class VectorRegister<double, 128, __m128d> {
  public:
   typedef double type;
-  typedef __m128 mm_register_type;
+  typedef __m128d mm_register_type;
   
   enum {
     E_REGISTER_SIZE = sizeof(mm_register_type),
@@ -174,10 +174,10 @@ AILIB_ADD_OPERATOR(-, float, __m128, _mm_sub_ps);
 AILIB_ADD_OPERATOR(/, float, __m128, _mm_div_ps);
 AILIB_ADD_OPERATOR(+, float, __m128, _mm_add_ps);  
 
-AILIB_ADD_OPERATOR(*, double, __m128, _mm_mul_pd);
-AILIB_ADD_OPERATOR(-, double, __m128, _mm_sub_pd);  
-AILIB_ADD_OPERATOR(/, double, __m128, _mm_div_pd);
-AILIB_ADD_OPERATOR(+, double, __m128, _mm_add_pd);  
+AILIB_ADD_OPERATOR(*, double, __m128d, _mm_mul_pd);
+AILIB_ADD_OPERATOR(-, double, __m128d, _mm_sub_pd);  
+AILIB_ADD_OPERATOR(/, double, __m128d, _mm_div_pd);
+AILIB_ADD_OPERATOR(+, double, __m128d, _mm_add_pd);  
   
   
 #undef AILIB_ADD_OPERATOR

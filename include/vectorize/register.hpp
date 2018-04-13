@@ -50,7 +50,7 @@ namespace vectorize {
   template<>
   struct VectorInfo< double, 128 > {
     typedef double naitve_type;
-    typedef __m128 register_type;
+    typedef __m128d register_type;
   };
 
   

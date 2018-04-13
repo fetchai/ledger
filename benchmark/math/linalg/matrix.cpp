@@ -7,7 +7,7 @@
 #include<chrono>
 using namespace fetch::math::linalg;
 
-typedef float data_type;
+typedef double data_type;
 typedef fetch::memory::Array< data_type > container_type;
 typedef Matrix<data_type,container_type>  matrix_type;
 typedef typename matrix_type::vector_register_type vector_register_type;
