@@ -158,10 +158,28 @@ public:
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
-      //c = a +b;xs
+
       apply(a,b,c);
       c.Stream( this->data().pointer() + i);
 
+    }
+  }
+
+
+  void ApplyKernelElementWise(vector_kernel_type apply,
+                              self_type const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+
+    vector_register_type a,b;
+
+    vectorize::VectorRegisterIterator<type,128> ia( obj1.data().pointer() );
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+
+      apply(a,b);
+      b.Stream( this->data().pointer() + i);
     }
   }
 
@@ -177,21 +195,19 @@ public:
     }
   }
 
-  /*
-  template< typename ...Args >
   void ApplyKernelElementWise(standard_kernel_type apply,
-                               Args ...args)  {
-    assert(obj1.data().size() == obj2.data().size());
+                              self_type const &obj1)  {
     assert(obj1.data().size() == this->data().size());
 
     std::size_t N = obj1.data().size();
     
     for(std::size_t i = 0; i < N; ++i) {
-      apply(obj1[i],obj2[i],data_[i]);
+      apply(obj1[i],data_[i]);
     }
   }
-  */
+  
 
+ 
 
   
   void Resize(size_type const &hw) { Resize(hw, hw); }

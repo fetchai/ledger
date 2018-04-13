@@ -74,10 +74,11 @@ void test_add(std::size_t const &n, std::size_t const &m) {
   
   std::cout << m1.size() << " " << m2.size() << " " << (n*m) << std::endl;
 
+  ret.ApplyKernelElementWise(add_kernel2, m1, m2);  
   ret = m1 + m2;
   
   for(std::size_t i=0; i < 1000; ++i)
-    ret2.ApplyKernelElementWise(add_kernel, m1, m2);
+    ret2.ApplyKernelElementWise(add_kernel2, m1, m2);
   
   for(std::size_t i=0; i < ret2.size(); ++i) {
     if(ret[i] != ret2[i]) {
@@ -108,12 +109,22 @@ void test_elementwise(std::size_t const &n, std::size_t const &m) {
 int main() {
   static fetch::random::LinearCongruentialGenerator gen;
 
-  test_add( 2000, 2000) ; //egen() % 250, gen() % 250);
-  std::cout << "Testing invert" << std::endl;
+  //test_add( 2000, 2000) ; //egen() % 250, gen() % 250);
+//  std::cout << "Testing invert" << std::endl;
   //  for(std::size_t i=0; i < 100; ++i)
   //    test(gen() % 250);
 
   
-
+  Matrix<data_type,fetch::memory::Array< data_type > >  a(1,3), b(1,3);
+  for(std::size_t i=0; i < a.size(); ++i) {
+    b[i] = 1.1;
+    a[i] = 1.2;
+  }
+  
+  std::cout << a.size() << " " << b.size() << std::endl;
+  
+  a += b;  
+  b = a.Copy();
+  
   return 0;
 }

@@ -18,7 +18,8 @@ class Matrix : public A {
  public:
   typedef A super_type;
   typedef typename super_type::type type;
-
+  typedef typename super_type::vector_register_type vector_register_type;
+  
 
   
   enum {
@@ -126,27 +127,26 @@ class Matrix : public A {
         newm.At(j, i) = this->At(i, j);
     this->operator=(newm);
   }
-  /*
-  void Add(Matrix const &other,   Matrix &ret) {                                
-    assert(this->size() == other.size());
-    type const *ptr1 = this->data().pointer();
-    type const *ptr2 = other.data().pointer();
-    type *ptr3 = ret.data().pointer();
-    //a    __m128 *a = (__m128*)ptr1;
-    //    __m128 *b = (__m128*)ptr2;    
-    for (std::size_t i = 0; i < this->data().size(); i += E_SIMD_BLOCKS ) {
-      __m128 a = _mm_load_ps( ptr1 + i );
-      __m128 b = _mm_load_ps( ptr2 + i );      
-      __m128 c = _mm_add_ps( a, b );
-      _mm_store_ps(ptr3,c);
-      //      for (std::size_t j = 0; j < E_SIMD_BLOCKS; ++j)                   
-                //                ptr3[i+0] = ptr1[i + 0] + ptr2[i + 0];
+  
+  void Add(Matrix const &obj1,   Matrix const &obj2) {
+    assert(obj1.data().size() == obj2.data().size());
+    assert(obj1.data().size() == this->data().size());
 
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
 
-    }
+    vectorize::VectorRegisterIterator<type,128> ia( obj1.data().pointer() );
+    vectorize::VectorRegisterIterator<type,128> ib( obj2.data().pointer() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      apply(a,b,c);
+      c.Stream( this->data().pointer() + i);
+    }    
 
   }
-  */
+
   
   template<typename F,  typename V = vectorize::VectorRegister< type, 128> >  
   void ElementWiseInline(F apply, Matrix const &other) {

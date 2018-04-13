@@ -80,31 +80,32 @@ class Array {
 
   T &operator[](std::size_t const &n) {
     assert(data_ != nullptr);
-    assert(n < size());
+    assert(n < padded_size());
     return data_[n];
   }
 
   T const &operator[](std::size_t const &n) const {
     assert(data_ != nullptr);
-    assert(n < size());
+    
+    assert(n < padded_size());
     return data_[n];
   }
 
   T &At(std::size_t const &n) {
     assert(data_ != nullptr);
-    assert(n < size());
+    assert(n < padded_size());
     return data_[n];
   }
 
   T const &At(std::size_t const &n) const {
     assert(data_ != nullptr);
-    assert(n < size());
+    assert(n < padded_size());
     return data_[n];
   }
 
   T const &Set(std::size_t const &n, T const &v) {
     assert(data_ != nullptr);
-    assert(n < size());
+    assert(n < padded_size());
     data_[n] = v;
     return v;
   }
