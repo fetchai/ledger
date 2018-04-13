@@ -28,7 +28,7 @@ enable_testing()
 #    ARGS "describe"
 #    OUTPUT_VARIABLE ${GIT_DESCRIBE})
 
-add_definitions( --std=c++11 )
+add_definitions( --std=c++11 -msse4.2 )
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function -O3")
