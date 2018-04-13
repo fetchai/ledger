@@ -12,7 +12,7 @@
 
 namespace fetch {
 namespace vectorize {
-
+  
   namespace details {
     template< typename T, std::size_t N >
     struct UnrollSet {
@@ -24,14 +24,13 @@ namespace vectorize {
     
     template<typename T >
     struct UnrollSet<T,0> {
-      static void Set(T *ptr, T const &c) {
-      }
+      static void Set(T *ptr, T const &c) { }
     };
   };
   
 // SSE integers
 template <typename T>
-class VectorRegister<T, __m128i> {
+class VectorRegister<T, 128, __m128i> {
  public:
   typedef T type;
   typedef __m128i mm_register_type;
@@ -68,7 +67,7 @@ class VectorRegister<T, __m128i> {
 
 
 template <>
-class VectorRegister<float, __m128> {
+class VectorRegister<float, 128, __m128> {
  public:
   typedef float type;
   typedef __m128 mm_register_type;
@@ -95,6 +94,7 @@ class VectorRegister<float, __m128> {
   explicit operator mm_register_type() { return data_; }
 
   void Store(type *ptr) const { _mm_store_ps(ptr, data_); }
+  void Stream(type *ptr) const { _mm_stream_ps(ptr, data_); }
 
   mm_register_type const &data() const { return data_; }
   mm_register_type &data()  { return data_; }  
@@ -103,7 +103,7 @@ class VectorRegister<float, __m128> {
 };
   
 template <>
-class VectorRegister<double, __m128> {
+class VectorRegister<double, 128, __m128> {
  public:
   typedef double type;
   typedef __m128 mm_register_type;
@@ -129,27 +129,44 @@ class VectorRegister<double, __m128> {
   
   explicit operator mm_register_type() { return data_; }
 
-  void Store(type *ptr) const { _mm_store_pd(ptr, data_); }
-
+  void Store(type *ptr) const { _mm_stream_pd(ptr, data_); }
+  void Stream(type *ptr) const { _mm_stream_pd(ptr, data_); }
+  
   mm_register_type const &data() const { return data_; }
   mm_register_type &data()  { return data_; }  
  private:
   mm_register_type data_;
 };
-  
 
+
+  template <typename T, std::size_t N, typename S = typename VectorInfo<T,N>::register_type  >
+  class VectorRegisterIterator {
+  public:
+    typedef T type;
+    typedef VectorRegister< T, N, S > vector_register_type;
+    typedef typename vector_register_type::mm_register_type mm_register_type;
+
+    VectorRegisterIterator(type const *d) { ptr_ = (mm_register_type*)d; }
+    
+    void Next(vector_register_type &m) {
+      m.data() = *ptr_;
+      ++ptr_;
+    }
+  private:
+    mm_register_type *ptr_;
+  };
   
 #define AILIB_ADD_OPERATOR(op, type, L, fnc)                            \
-  VectorRegister<type, L>                                               \
-  operator op( VectorRegister<type, L> const &a,                        \
-               VectorRegister<type, L> const &b) {                      \
+  VectorRegister<type, 128, L>                                           \
+  operator op( VectorRegister<type,128, L> const &a,                    \
+               VectorRegister<type,128, L> const &b) {                  \
     L ret = fnc(a.data(), b.data());                                    \
-    return VectorRegister<type, L>(ret);                                \
+    return VectorRegister<type, 128, L>(ret);                            \
   }
 
 AILIB_ADD_OPERATOR(*, uint32_t, __m128i, _mm_mullo_epi32);
 AILIB_ADD_OPERATOR(-, uint32_t, __m128i, _mm_sub_epi32);
-AILIB_ADD_OPERATOR(/, uint32_t, __m128i, _mm_div_epi32);
+  //AILIB_ADD_OPERATOR(/, uint32_t, __m128i, _mm_div_epi32);
 AILIB_ADD_OPERATOR(+, uint32_t, __m128i, _mm_add_epi32);  
 
 AILIB_ADD_OPERATOR(*, float, __m128, _mm_mul_ps);

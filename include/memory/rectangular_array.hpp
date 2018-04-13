@@ -2,6 +2,8 @@
 #define MEMORY_RECTANGULAR_ARRAY_HPP
 #include "memory/array.hpp"
 #include "memory/shared_array.hpp"
+#include "vectorize/sse.hpp"
+
 #include "assert.hpp"
 #include <cmath>
 #include <cstddef>
@@ -17,9 +19,16 @@ class RectangularArray {
 public:
   typedef T type;
   typedef C container_type;
+  typedef RectangularArray< T, C > self_type;
   typedef typename container_type::iterator iterator;
   typedef typename container_type::reverse_iterator reverse_iterator;
   typedef uint64_t size_type;
+
+  typedef typename vectorize::VectorRegister< type, 128> vector_register_type;
+  typedef void (*vector_kernel_type)(vector_register_type const &, vector_register_type const &, vector_register_type &);
+  typedef void (*standard_kernel_type)(type const &,type const &,type &);
+
+
   
   RectangularArray() : data_() {}
   RectangularArray(std::size_t const &n) : height_(1), width_(n), data_(n) {}
@@ -35,7 +44,7 @@ public:
 
   RectangularArray Copy() const {
     RectangularArray ret(height_, width_);
-    std::cout << "Copying: " << this->size() << " " << ret.size() << std::endl;
+
     for (size_type i = 0; i < size(); i += container_type::E_SIMD_COUNT) {
       for (size_type j = 0; j < container_type::E_SIMD_COUNT; ++j)
         ret.At(i + j) = this->At(i + j);
@@ -135,6 +144,56 @@ public:
     return v;
   }
 
+  void ApplyKernelElementWise(vector_kernel_type apply,
+                              self_type const &obj1, self_type const &obj2) {
+    assert(obj1.data().size() == obj2.data().size());
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+
+    vector_register_type a,b,c; 
+
+    vectorize::VectorRegisterIterator<type,128> ia( obj1.data().pointer() );
+    vectorize::VectorRegisterIterator<type,128> ib( obj2.data().pointer() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+      //c = a +b;xs
+      apply(a,b,c);
+      c.Stream( this->data().pointer() + i);
+
+    }
+  }
+
+  void ApplyKernelElementWise(standard_kernel_type apply,
+                              self_type const &obj1, self_type const &obj2)  {
+    assert(obj1.data().size() == obj2.data().size());
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    
+    for(std::size_t i = 0; i < N; ++i) {
+      apply(obj1[i],obj2[i],data_[i]);
+    }
+  }
+
+  /*
+  template< typename ...Args >
+  void ApplyKernelElementWise(standard_kernel_type apply,
+                               Args ...args)  {
+    assert(obj1.data().size() == obj2.data().size());
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    
+    for(std::size_t i = 0; i < N; ++i) {
+      apply(obj1[i],obj2[i],data_[i]);
+    }
+  }
+  */
+
+
+  
   void Resize(size_type const &hw) { Resize(hw, hw); }
 
   void Resize(size_type const &h, size_type const &w) {
@@ -160,8 +219,8 @@ public:
 
   void Reshape(size_type const &h, size_type const &w) {
     if (h * w != size()) {
-      //      std::cerr << "TODO: throw error" <<  std::endl;
-      exit(-1);
+      throw std::runtime_error("New size does not match memory - TODO, make custom exception");
+
     }
     height_ = h;
     width_ = w;

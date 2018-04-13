@@ -13,7 +13,7 @@ void Test1() {
   alignas(16) uint32_t b[4] = {2,4,8,16};
   alignas(16) uint32_t c[4] = {0};
 
-  VectorRegister< uint32_t, __m128i > r1(a), r2(b), r3;
+  VectorRegister< uint32_t, 128 > r1(a), r2(b), r3;
 
   r3 = r1 * r2;
   r3 = r3 - r1;
@@ -30,10 +30,10 @@ void Test2() {
   alignas(16) float b[4] = {2,4,8,16};
   alignas(16) float c[4] = {0};
 
-  VectorRegister< float, __m128 > r1(a), r2(b), r3, cst(3);
+  VectorRegister< float, 128 > r1(a), r2(b), r3, cst(3);
 
   r3 = r1 * r2;
-  r3 = cst*r3 - r1;
+  r3 = cst * r3 - r1;
   r3.Store(c);
   
   for(std::size_t i=0; i<4; ++i)
@@ -49,7 +49,7 @@ int main() {
   alignas(16) double b[2] = {2,4};
   alignas(16) double c[2] = {0};
 
-  VectorRegister< double, __m128 > r1(a), r2(b), r3, cst(3.2);
+  VectorRegister< double, 128> r1(a), r2(b), r3, cst(3.2);
 
   r3 = r1 * r2;
   r3 = cst*r3 - r1;

@@ -3,6 +3,7 @@
 
 #include "memory/rectangular_array.hpp"
 
+
 #include <iostream>
 #include <limits>
 #include <vector>
@@ -11,12 +12,15 @@ namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename T, typename C = fetch::memory::SharedArray<T>, typename A = fetch::memory::RectangularArray<T, C> >
+template <typename T, typename C = fetch::memory::SharedArray<T>,
+          typename A = fetch::memory::RectangularArray<T, C> >
 class Matrix : public A {
  public:
   typedef A super_type;
   typedef typename super_type::type type;
 
+
+  
   enum {
     INVERSION_OK = 0,
     INVERSION_SINGULAR = 1,
@@ -62,11 +66,11 @@ class Matrix : public A {
 
 #undef FETCH_ADD_OPERATOR
 
-#define FETCH_ADD_OPERATOR(OP1, OP2)         \
+#define FETCH_ADD_OPERATOR(OP1, OP2)               \
   Matrix operator OP1(Matrix const &other) const { \
-    Matrix ret = this->Copy();                                          \
-    ret OP2 other;                           \
-    return ret;                              \
+    Matrix ret = this->Copy();                     \
+    ret OP2 other;                                 \
+    return ret;                                    \
   }
 
   FETCH_ADD_OPERATOR(+, +=)
@@ -78,14 +82,14 @@ class Matrix : public A {
 
 #undef FETCH_ADD_OPERATOR
 
-
+  
 #define FETCH_ADD_OPERATOR(OP)                                          \
   template< typename S >                                                \
-  Matrix &operator OP(S const &other) {                             \
+  Matrix &operator OP(S const &other) {                                 \
     for (std::size_t i = 0; i < this->data().size(); i += E_SIMD_BLOCKS) \
-      for (std::size_t j = 0; j < E_SIMD_BLOCKS; ++j)                    \
-        this->At(i + j) OP other;                                    \
-    return *this;                                                        \
+      for (std::size_t j = 0; j < E_SIMD_BLOCKS; ++j)                   \
+        this->At(i + j) OP other;                                       \
+    return *this;                                                       \
   }
 
   FETCH_ADD_OPERATOR(+=)
@@ -97,12 +101,12 @@ class Matrix : public A {
 
 #undef FETCH_ADD_OPERATOR
 
-#define FETCH_ADD_OPERATOR(OP1, OP2)         \
-  template< typename S >                     \
+#define FETCH_ADD_OPERATOR(OP1, OP2)               \
+  template< typename S >                           \
   Matrix operator OP1(S const &other) const {      \
-    Matrix ret = this->Copy();               \
-    ret OP2 other;                           \
-    return ret;                              \
+    Matrix ret = this->Copy();                     \
+    ret OP2 other;                                 \
+    return ret;                                    \
   }
 
   FETCH_ADD_OPERATOR(+, +=)
@@ -122,15 +126,38 @@ class Matrix : public A {
         newm.At(j, i) = this->At(i, j);
     this->operator=(newm);
   }
+  /*
+  void Add(Matrix const &other,   Matrix &ret) {                                
+    assert(this->size() == other.size());
+    type const *ptr1 = this->data().pointer();
+    type const *ptr2 = other.data().pointer();
+    type *ptr3 = ret.data().pointer();
+    //a    __m128 *a = (__m128*)ptr1;
+    //    __m128 *b = (__m128*)ptr2;    
+    for (std::size_t i = 0; i < this->data().size(); i += E_SIMD_BLOCKS ) {
+      __m128 a = _mm_load_ps( ptr1 + i );
+      __m128 b = _mm_load_ps( ptr2 + i );      
+      __m128 c = _mm_add_ps( a, b );
+      _mm_store_ps(ptr3,c);
+      //      for (std::size_t j = 0; j < E_SIMD_BLOCKS; ++j)                   
+                //                ptr3[i+0] = ptr1[i + 0] + ptr2[i + 0];
 
-  template< typename ...params >  
-  void ElementWise(Matrix const &other, Matrix &ret) {
+
+    }
 
   }
-
-  template< typename ...params >
-  void ElementWiseInline(Matrix const &other) {
-
+  */
+  
+  template<typename F,  typename V = vectorize::VectorRegister< type, 128> >  
+  void ElementWiseInline(F apply, Matrix const &other) {
+    std::size_t N = this->data().size();
+    
+    for(std::size_t i = 0; i < N; i += V::E_BLOCK_COUNT) {
+      V a(this->data().pointer() + i), b(other.data().pointer() + i), c;
+      c = a + b;
+      c.Store( this->data().pointer() + i);
+    }
+    
   }  
 
 

@@ -99,27 +99,27 @@ class SharedArray {
   reverse_iterator rend() { return reverse_iterator(data_.get() - 1, data_.get() - 1); }
 
   T &operator[](std::size_t const &n) {
-    assert(n < size());
+    assert(n < padded_size());
     return data_.get()[n];
   }
 
   T const &operator[](std::size_t const &n) const {
-    assert(n < size());
+    assert(n < padded_size());
     return data_.get()[n];
   }
 
   T &At(std::size_t const &n) {
-    assert(n < size());
+    assert(n < padded_size());
     return data_.get()[n];
   }
 
   T const &At(std::size_t const &n) const {
-    assert(n < size());
+    assert(n < padded_size());
     return data_.get()[n];
   }
 
   T const &Set(std::size_t const &n, T const &v) {
-    assert(n < size());
+    assert(n < padded_size());
     data_.get()[n] = v;
     return v;
   }
