@@ -157,7 +157,7 @@ class VectorRegister<double, 128, __m128d> {
   };
   
 #define AILIB_ADD_OPERATOR(op, type, L, fnc)                            \
-  VectorRegister<type, 128, L>                                           \
+  inline VectorRegister<type, 128, L>                                           \
   operator op( VectorRegister<type,128, L> const &a,                    \
                VectorRegister<type,128, L> const &b) {                  \
     L ret = fnc(a.data(), b.data());                                    \
