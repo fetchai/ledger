@@ -127,10 +127,35 @@ class Matrix : public A {
 
 #undef FETCH_ADD_OPERATOR
 
-  void Arange(type const &from, type const& to, type const&delta) {
-
+  static Matrix Arange(type from, type const& to, double const&delta) {
+    // TODO: vectorise
+    assert(from < to);
+    Matrix ret;    
+    std::size_t N = (to - from ) / delta;
+    ret.Resize(1, N);
+    
+    double d = from;
+    for(std::size_t i = 0 ; i < N; ++i) {
+      ret[i] = d;
+      d += delta;
+    }
+    return ret;
   }
 
+  static Matrix Zeros(std::size_t const &n) {
+    Matrix ret;
+    ret.Resize(n,n);
+    ret.SetAllZeros();
+    return ret;
+  }
+  
+  static Matrix Zeros(std::size_t const &n, std::size_t const &m) {
+    Matrix ret;
+    ret.Resize(n,m);
+    ret.SetAllZeros();
+    return ret;
+  }
+  
   void InlineAdd(Matrix const &obj1) {
     assert(obj1.data().size() == this->data().size());
 
