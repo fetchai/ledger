@@ -48,21 +48,30 @@ class Matrix : public A {
   }
 
   Matrix Copy() const { return Matrix( super_type::Copy() ); }
-#define FETCH_ADD_OPERATOR(OP)                                           \
-  Matrix &operator OP(Matrix const &other) {                             \
-    assert(this->size() == other.size());                                \
-    for (std::size_t i = 0; i < this->data().size(); i += E_SIMD_BLOCKS) \
-      for (std::size_t j = 0; j < E_SIMD_BLOCKS; ++j)                    \
-        this->At(i + j) OP other.At(i + j);                              \
-    return *this;                                                        \
-  }
+  
+#define FETCH_ADD_OPERATOR(OP,VOP)                                      \
+  Matrix &operator OP(Matrix const &other) {                            \
+  assert(other.size() == this->size());                                 \
+                                                                        \
+  std::size_t N = other.size();                                         \
+  vector_register_type a,b;                                             \
+  vector_register_iterator_type ia( other.data().pointer() );           \
+  vector_register_iterator_type ib( this->data().pointer() );           \
+  for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) { \
+    ia.Next(a);                                                         \
+    ib.Next(b);                                                         \
+    b = b VOP a;                                                        \
+    b.Stream( this->data().pointer() + i);                              \
+  }                                                                     \
+  return *this;                                                         \
+  }                                                                     
 
-  FETCH_ADD_OPERATOR(+=)
-  FETCH_ADD_OPERATOR(-=)
-  FETCH_ADD_OPERATOR(*=)
-  FETCH_ADD_OPERATOR(/=)
-  FETCH_ADD_OPERATOR(|=)
-  FETCH_ADD_OPERATOR(&=)
+  FETCH_ADD_OPERATOR(+=, +)
+  FETCH_ADD_OPERATOR(-=, -)
+  FETCH_ADD_OPERATOR(*=, *)
+  FETCH_ADD_OPERATOR(/=, /)
+  //  FETCH_ADD_OPERATOR(|=, |)
+  //  FETCH_ADD_OPERATOR(&=, &)
 
 #undef FETCH_ADD_OPERATOR
 
@@ -118,6 +127,9 @@ class Matrix : public A {
 
 #undef FETCH_ADD_OPERATOR
 
+  void Arange(type const &from, type const& to, type const&delta) {
+
+  }
 
   void InlineAdd(Matrix const &obj1) {
     assert(obj1.data().size() == this->data().size());
