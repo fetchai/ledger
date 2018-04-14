@@ -23,44 +23,15 @@ Matrix<data_type, container_type> RandomMatrix(int n, int m) {
 
 
 
-
-void add_kernel2(data_type const &a,
-                 data_type const &b,
-                 data_type &c ){
-  c =  a + b;
-}
-
-
+using namespace std::chrono;
+/**********************
+ * BENCHMARK ADD
+ */
 void test_add( std::size_t const &N, data_type const *ptr1, data_type const *ptr2, data_type  *ptr3) {
   for(std::size_t i=0; i < N; ++i) {
     ptr3[i] = ptr1[i] + ptr2[i];
   }
 }
-
-void test_multiply( std::size_t const &N, data_type const *ptr1, data_type const *ptr2, data_type  *ptr3) {
-  for(std::size_t i=0; i < N; ++i) {
-    ptr3[i] = ptr1[i] * ptr2[i];
-  }
-}
-
-
-void test_custom( std::size_t const &N, data_type const *ptr1, data_type const *ptr2, data_type  *ptr3) {
-  for(std::size_t i=0; i < N; ++i) {
-    ptr3[i] = ( ptr1[i] -  3 * ptr2[i] ) / (ptr1[i] +  ptr2[i] + 1);
-  }
-}
-
-void custom_kernel(vector_register_type const &a,
-                vector_register_type const &b,
-                vector_register_type &c ){
-  vector_register_type cst1(3), cst2(1);
-  
-  c =   (a - cst1 * b) / (a + b + cst2);
-}
-
-
-
-using namespace std::chrono;
 
 void benchmark_add(Matrix<data_type,container_type> &m1,  Matrix<data_type,container_type> &m2,  Matrix<data_type, container_type>  &ret) 
 {
@@ -80,7 +51,18 @@ void benchmark_add(Matrix<data_type,container_type> &m1,  Matrix<data_type,conta
   duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
   duration<double> time_span2 = duration_cast<duration<double>>(t3 - t2);  
   std::cout << "Builtin method: " << time_span1.count() << " seconds." << std::endl;
-  std::cout << "Manual: " << time_span2.count() << " seconds." << std::endl;  
+  std::cout << "Ordinary: " << time_span2.count() << " seconds." << std::endl;
+  std::cout << std::endl;
+}
+
+
+/**********************
+ * BENCHMARK MULTIPLY
+ */
+void test_multiply( std::size_t const &N, data_type const *ptr1, data_type const *ptr2, data_type  *ptr3) {
+  for(std::size_t i=0; i < N; ++i) {
+    ptr3[i] = ptr1[i] * ptr2[i];
+  }
 }
 
 void benchmark_multiply(Matrix<data_type,container_type> &m1,  Matrix<data_type,container_type> &m2,  Matrix<data_type, container_type>  &ret) 
@@ -101,8 +83,28 @@ void benchmark_multiply(Matrix<data_type,container_type> &m1,  Matrix<data_type,
   duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
   duration<double> time_span2 = duration_cast<duration<double>>(t3 - t2);  
   std::cout << "Builtin method: " << time_span1.count() << " seconds." << std::endl;
-  std::cout << "Manual: " << time_span2.count() << " seconds." << std::endl;  
+  std::cout << "Ordinary: " << time_span2.count() << " seconds." << std::endl;
+  std::cout << std::endl;
 }
+
+
+/**********************
+ * BENCHMARK CUSTOM
+ */
+void test_custom( std::size_t const &N, data_type const *ptr1, data_type const *ptr2, data_type  *ptr3) {
+  for(std::size_t i=0; i < N; ++i) {
+    ptr3[i] = ( ptr1[i] -  3 * ptr2[i] ) / (ptr1[i] +  ptr2[i] + 1);
+  }
+}
+
+void custom_kernel(vector_register_type const &a,
+                vector_register_type const &b,
+                vector_register_type &c ){
+  vector_register_type cst1(3), cst2(1);
+  
+  c =   (a - cst1 * b) / (a + b + cst2);
+}
+
 
 void benchmark_custom(Matrix<data_type,container_type> &m1,  Matrix<data_type,container_type> &m2,  Matrix<data_type, container_type>  &ret) 
 {
@@ -122,7 +124,8 @@ void benchmark_custom(Matrix<data_type,container_type> &m1,  Matrix<data_type,co
   duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
   duration<double> time_span2 = duration_cast<duration<double>>(t3 - t2);  
   std::cout << "Builtin method: " << time_span1.count() << " seconds." << std::endl;
-  std::cout << "Manual: " << time_span2.count() << " seconds." << std::endl;  
+  std::cout << "Ordinary: " << time_span2.count() << " seconds." << std::endl;
+  std::cout << std::endl;
 }
 
 
@@ -134,8 +137,8 @@ int main() {
   Matrix<data_type,container_type> m2 = RandomMatrix(n,m);
   Matrix<data_type, container_type> ret(n,m);  
 
-//  benchmark_add(m1,m2,ret);
-//  benchmark_multiply(m1,m2,ret);
+  benchmark_add(m1,m2,ret);
+  benchmark_multiply(m1,m2,ret);
   benchmark_custom(m1,m2,ret);    
   
 

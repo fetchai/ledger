@@ -1,8 +1,14 @@
 #ifndef PLATFORM_HPP
 #define PLATFORM_HPP
+#include "vectorize/sse.hpp"
+
 namespace fetch {
 namespace platform {
-
+  enum {
+    vector_size = 128
+  };
+  
+  
 constexpr bool has_avx() {
 #ifdef __AVX__
   return true;
