@@ -20,17 +20,21 @@ class RectangularArray {
 public:
   typedef T type;
   typedef C container_type;
+  typedef uint64_t size_type;
   typedef RectangularArray< T, C > self_type;
+
+
+  /* Iterators for accessing and modifying the array */
   typedef typename container_type::iterator iterator;
   typedef typename container_type::reverse_iterator reverse_iterator;
+
+  /* Vector register is used parallel instruction execution using SIMD */
+  typedef typename vectorize::VectorRegister< type, platform::vector_size > vector_register_type;
   typedef vectorize::VectorRegisterIterator<type, platform::vector_size> vector_register_iterator_type;
   
-  typedef uint64_t size_type;
-
-  typedef typename vectorize::VectorRegister< type, platform::vector_size > vector_register_type;
+  /* Kernels for performing execution */
   typedef void (*vector_kernel_type)(vector_register_type const &, vector_register_type const &, vector_register_type &);
   typedef void (*standard_kernel_type)(type const &,type const &,type &);
-
 
   /* Contructs an empty rectangular array. */  
   RectangularArray() : data_() {}
@@ -381,7 +385,7 @@ public:
     height_ = h;
     width_ = w;
   }
-
+  
 
   /* Allocates memory for the array without resizing.
    * @param h is new the height of the array.
@@ -407,6 +411,47 @@ public:
     
     if(h < height_) height_ = h;  
     if(w < width_) width_ = w;  
+  }
+
+
+  /* Resizes the array into a square array in a lazy manner.
+   * @param hw is the new height and the width of the array.
+   *
+   * This function expects that the user will take care of memory
+   * initialization. 
+   */
+  void LazyResize(size_type const &hw) { Resize(hw, hw); }
+
+  /* Resizes the array in a lazy manner.
+   * @param h is new the height of the array.
+   * @param w is new the width of the array.
+   *
+   * This function expects that the user will take care of memory
+   * initialization. 
+   */  
+  void LazyResize(size_type const &h, size_type const &w) {
+    if ((h == height_) && (w == width_)) return;
+
+    LazyReserve(h, w);
+    
+    height_ = h;
+    width_ = w;
+
+    // TODO: Take care of padded bytes
+  }
+
+  /* Allocates memory for the array in a lazy manner.
+   * @param h is new the height of the array.
+   * @param w is new the width of the array.
+   *
+   * This function expects that the user will take care of memory
+   * initialization. 
+   */    
+  void LazyReserve(size_type const &h, size_type const &w) {
+    if( (h * w) < capacity()) return;
+
+    container_type new_arr(h * w);
+    data_ = new_arr; 
   }
 
   /* Reshapes the array to a new height and width.
@@ -487,6 +532,9 @@ public:
   /* Returns the size of the array. */    
   size_type size() const { return height_ * width_; }
 
+  /* Returns the capacity of the array. */    
+  size_type capacity() const { return data_.padded_size(); }
+  
   /* Returns a reference to the underlying array. */      
   container_type &data() { return data_; }
 
