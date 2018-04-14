@@ -331,7 +331,33 @@ public:
       b.Stream( this->data().pointer() + i);
     }
   }
+  /*
+  template< typename Args... >
+  void ApplyKernel( Args... args) {
+    enum {
+      MATRIX_COUNT = 3
+    };
+    vector_register_iterator_type matrix_vri[ MATRIX_COUNT ];
+    // TODO: Setup
+    vector_register_type matrix_register[ MATRIX_COUNT ];
+    vector_register_type ret;
 
+    std::size_t N = this->size();
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      
+      for(std::size_t j=0; j < MATRIX_COUNT; ++j) {
+        // TODO: Unroll
+        matrix_vri[j].Next( matrix_register[j] );
+      }
+
+      ret = apply( ... );
+
+      ret.Stream( ... );
+    }
+  }
+  */
+
+  
   /* Applies a standard kernel to each array element.
    * @param apply is the kernel which will be applied
    * @param obj1 is an array containing the first kernel arguments.
@@ -371,6 +397,7 @@ public:
   }
   
 
+  
   /* Resizes the array into a square array.
    * @param hw is the new height and the width of the array.
    */
