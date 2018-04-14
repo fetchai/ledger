@@ -158,13 +158,16 @@ public:
    *
    * This method is sensitive to height and width. 
    */
-  bool operator==(RectangularArray const &other) {
-    if ((height() != other.height()) || (width() != other.width()))
+  bool operator==(RectangularArray const &other) const {
+    if ((height() != other.height()) || (width() != other.width())) {
+      std::cout << "Failed here!" << std::endl;
       return false;
+    }
     bool ret = true;
 
-    for (size_type i = 0; i < data_.size(); ++i)
+    for (size_type i = 0; i < data_.size(); ++i) {
       ret &= (data_[i] == other.data_[i]);
+    }
     return ret;
   }
 
@@ -173,7 +176,7 @@ public:
    *
    * This method is sensitive to height and width. 
    */  
-  bool operator!=(RectangularArray const &other) {
+  bool operator!=(RectangularArray const &other) const {
     return !(this->operator==(other));
   }
 

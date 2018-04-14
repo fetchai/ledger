@@ -2,7 +2,8 @@
 #define MATH_LINALG_MATRIX_HPP
 
 #include "memory/rectangular_array.hpp"
-
+#include "byte_array/const_byte_array.hpp"
+#include "byte_array/consumers.hpp"
 
 #include <iostream>
 #include <limits>
@@ -27,17 +28,58 @@ class Matrix : public A {
     E_SIMD_BLOCKS = super_type::container_type::E_SIMD_COUNT
   };
 
+
+
   Matrix() = default;
   Matrix(Matrix &&other) = default;
   Matrix(Matrix const &other) = default;
   Matrix &operator=(Matrix const &other) = default;
   Matrix &operator=(Matrix &&other) = default;
 
-  Matrix(super_type const &other) : super_type(other) {
-
-  }
-  
+  Matrix(super_type const &other) : super_type(other) { }
   Matrix(super_type &&other) : super_type(std::move(other)) {  }
+  Matrix(byte_array::ConstByteArray const &c) {
+    std::size_t n = 1;
+    std::vector< type > elems;
+    elems.reserve(1024);
+    bool failed = false;
+    
+    for(uint64_t i=0; i < c.size(); ) {
+      uint64_t last = i;
+      switch(c[i]) {
+      case ';':
+        ++n;
+        ++i;
+        break;
+      case ',':
+      case ' ':
+      case '\n':
+      case '\t':
+      case '\r':
+        ++i;
+        break;
+      default:
+        if(byte_array::consumers::NumberConsumer<1,2>(c, i) == -1) {
+          failed = true;
+        } else {
+          elems.push_back( atof( c.char_pointer() + last ));
+        }
+        break;
+      }
+    }
+    std::size_t m = elems.size() / n;
+    
+    if( (m * n) != elems.size() ) {
+      failed = true;
+    }
+    
+    if(!failed) {
+      this->Resize(n,m);
+      for(std::size_t i = 0; i < elems.size(); ++i) {
+        this->At(i) = elems[i];
+      }
+    }
+  }
   
   Matrix(std::size_t const &h, std::size_t const &w) : super_type(h, w) {
     for(std::size_t i=0; i < h; ++i) {
@@ -127,6 +169,22 @@ class Matrix : public A {
 
 #undef FETCH_ADD_OPERATOR
 
+  bool AllClose(Matrix const &other, double const &rtol = 1e-5, double const &atol = 1e-8) const {
+    std::size_t N = this->size();
+    bool ret = true;
+    for (std::size_t i = 0; i < N; ++i) {
+      double va = this->At(i);
+      double vb = other[i];
+      double vA = (va-vb);
+      if(vA < 0) vA = -vA;
+      if(va < 0) va = -va;
+      if(vb < 0) vb = -vb;
+      double M = std::max(va,vb);
+      ret &= (vA < (atol + M * rtol));
+    }
+    return ret;
+  }
+  
   static Matrix Arange(type from, type const& to, double const&delta) {
     // TODO: vectorise
     assert(from < to);
@@ -156,7 +214,7 @@ class Matrix : public A {
     return ret;
   }
   
-  void InlineAdd(Matrix const &obj1) {
+  Matrix & InlineAdd(Matrix const &obj1) {
     assert(obj1.data().size() == this->data().size());
 
     std::size_t N = obj1.data().size();
@@ -172,9 +230,10 @@ class Matrix : public A {
       c.Stream( this->data().pointer() + i);
     }    
 
+    return *this;
   }
 
-  void InlineMultiply(Matrix const &obj1) {
+  Matrix& InlineMultiply(Matrix const &obj1) {
     assert(obj1.data().size() == this->data().size());
 
     std::size_t N = obj1.data().size();
@@ -189,45 +248,64 @@ class Matrix : public A {
       c = a * b;
       c.Stream( this->data().pointer() + i);
     }    
-
+    return *this;
   }
   
-  void InlineSubtract(Matrix const &obj1) {
+   Matrix& InlineSubtract(Matrix const &obj1) {
     assert(obj1.data().size() == this->data().size());
 
     std::size_t N = obj1.data().size();
     vector_register_type a,b,c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
-    vector_register_iterator_type ib( this->data().pointer() );    
+    vector_register_iterator_type ib( obj1.data().pointer() );
+    vector_register_iterator_type ia( this->data().pointer() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
 
-      c = a * b;
+      c = a - b;
       c.Stream( this->data().pointer() + i);
     }    
-
+    return *this;
   }
 
+   Matrix& InlineDivide(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ib( obj1.data().pointer() );
+    vector_register_iterator_type ia( this->data().pointer() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a / b;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
   
-  void Transpose() {
+  
+  Matrix& Transpose() {
     Matrix newm(this->width(), this->height());
     for (std::size_t i = 0; i < this->height(); ++i)
       for (std::size_t j = 0; j < this->width(); ++j)
         newm.At(j, i) = this->At(i, j);
     this->operator=(newm);
+    return *this;
   }
   
-  void Add(Matrix const &obj1,   Matrix const &obj2) {
+  Matrix const& Add(Matrix const &obj1,   Matrix const &obj2) {
     assert(obj1.data().size() == obj2.data().size());
     assert(obj1.data().size() == this->data().size());
 
     std::size_t N = obj1.data().size();
     vector_register_type a,b,c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
-    vector_register_iterator_type ib( obj2.data().pointer() );    
+    vector_register_iterator_type ib( obj1.data().pointer() );
+    vector_register_iterator_type ia( obj2.data().pointer() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
@@ -235,10 +313,10 @@ class Matrix : public A {
       c = a + b;
       c.Stream( this->data().pointer() + i);
     }    
-
+    return *this;
   }
 
-  void Add(Matrix const &obj1, type const &scalar) {
+  Matrix const& Add(Matrix const &obj1, type const &scalar) {
     assert(obj1.data().size() == this->data().size());
 
     std::size_t N = obj1.data().size();
@@ -251,11 +329,11 @@ class Matrix : public A {
       c = a + b;
       c.Stream( this->data().pointer() + i);
     }    
-
+    return *this;
   }
   
   
-  void Multiply(Matrix const &obj1,   Matrix const &obj2) {
+  Matrix const& Multiply(Matrix const &obj1,   Matrix const &obj2) {
     assert(obj1.data().size() == obj2.data().size());
     assert(obj1.data().size() == this->data().size());
 
@@ -271,10 +349,10 @@ class Matrix : public A {
       c = a * b;
       c.Stream( this->data().pointer() + i);
     }    
-
+    return *this;
   }
 
-  void Multiply(Matrix const &obj1, type const &scalar) {
+  Matrix const& Multiply(Matrix const &obj1, type const &scalar) {
     assert(obj1.data().size() == this->data().size());
 
     std::size_t N = obj1.data().size();
@@ -287,11 +365,11 @@ class Matrix : public A {
       c = a * b;
       c.Stream( this->data().pointer() + i);
     }    
-
+    return *this;
   }
 
   
-  void Subtract(Matrix const &obj1,   Matrix const &obj2) {
+  Matrix const& Subtract(Matrix const &obj1,   Matrix const &obj2) {
     assert(obj1.data().size() == obj2.data().size());
     assert(obj1.data().size() == this->data().size());
 
@@ -307,10 +385,10 @@ class Matrix : public A {
       c = a - b;
       c.Stream( this->data().pointer() + i);
     }    
-
+    return *this;
   }
 
-  void Subtract(Matrix const &obj1, type const &scalar) {
+  Matrix const& Subtract(Matrix const &obj1, type const &scalar) {
     assert(obj1.data().size() == this->data().size());
 
     std::size_t N = obj1.data().size();
@@ -323,12 +401,12 @@ class Matrix : public A {
       c = a - b;
       c.Stream( this->data().pointer() + i);
     }    
-
+    return *this;
   }
 
 
   
-  void Divide(Matrix const &obj1,   Matrix const &obj2) {
+  Matrix const& Divide(Matrix const &obj1,   Matrix const &obj2) {
     assert(obj1.data().size() == obj2.data().size());
     assert(obj1.data().size() == this->data().size());
 
@@ -344,10 +422,10 @@ class Matrix : public A {
       c = a / b;
       c.Stream( this->data().pointer() + i);
     }    
-
+    return *this;
   }
  
-  void Divide(Matrix const &obj1, type const &scalar) {
+  Matrix const& Divide(Matrix const &obj1, type const &scalar) {
     assert(obj1.data().size() == this->data().size());
 
     std::size_t N = obj1.data().size();
@@ -359,8 +437,9 @@ class Matrix : public A {
 
       c = a / b;
       c.Stream( this->data().pointer() + i);
-    }    
-
+    }
+    
+    return *this;
   }
 
 

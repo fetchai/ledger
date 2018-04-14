@@ -42,6 +42,13 @@ namespace vectorize {
   };
 
   template<>
+  struct VectorInfo< int, 128 > {
+    typedef int naitve_type;
+    typedef __m128i register_type;
+  };
+
+  
+  template<>
   struct VectorInfo< float, 128 > {
     typedef float naitve_type;
     typedef __m128 register_type;

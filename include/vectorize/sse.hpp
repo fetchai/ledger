@@ -57,7 +57,8 @@ class VectorRegister<T, 128, __m128i> {
   explicit operator mm_register_type() { return data_; }
 
   void Store(type *ptr) const { _mm_store_si128((mm_register_type *)ptr, data_); }
-
+  void Stream(type *ptr) const { _mm_stream_si128((mm_register_type *)ptr, data_); }
+  
   mm_register_type const &data() const { return data_; }
   mm_register_type &data()  { return data_; }  
  private:
@@ -157,17 +158,17 @@ class VectorRegister<double, 128, __m128d> {
   };
   
 #define AILIB_ADD_OPERATOR(op, type, L, fnc)                            \
-  inline VectorRegister<type, 128, L>                                           \
+  inline VectorRegister<type, 128, L>                                   \
   operator op( VectorRegister<type,128, L> const &a,                    \
                VectorRegister<type,128, L> const &b) {                  \
     L ret = fnc(a.data(), b.data());                                    \
-    return VectorRegister<type, 128, L>(ret);                            \
+    return VectorRegister<type, 128, L>(ret);                           \
   }
 
-AILIB_ADD_OPERATOR(*, uint32_t, __m128i, _mm_mullo_epi32);
-AILIB_ADD_OPERATOR(-, uint32_t, __m128i, _mm_sub_epi32);
-  //AILIB_ADD_OPERATOR(/, uint32_t, __m128i, _mm_div_epi32);
-AILIB_ADD_OPERATOR(+, uint32_t, __m128i, _mm_add_epi32);  
+AILIB_ADD_OPERATOR(*, int, __m128i, _mm_mullo_epi32);
+AILIB_ADD_OPERATOR(-, int, __m128i, _mm_sub_epi32);
+//AILIB_ADD_OPERATOR(/, int, __m128i, _mm_div_epi32);
+AILIB_ADD_OPERATOR(+, int, __m128i, _mm_add_epi32);  
 
 AILIB_ADD_OPERATOR(*, float, __m128, _mm_mul_ps);
 AILIB_ADD_OPERATOR(-, float, __m128, _mm_sub_ps);  
