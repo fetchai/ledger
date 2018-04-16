@@ -15,7 +15,7 @@
 namespace fetch {
 namespace memory {
 
-template< typename T, typename C = SharedArray<T> >
+template< typename T, typename C = SharedArray<T>, bool PAD_HEIGHT = false, bool PAD_WIDTH = true >
 class RectangularArray {
 public:
   typedef T type;
@@ -46,7 +46,9 @@ public:
    * vector size found on the system. Space is allocated, but the
    * contructor of the underlying data structure is not invoked.
    */
-  RectangularArray(std::size_t const &n) : height_(1), width_(n), data_(n) {}
+  RectangularArray(std::size_t const &n) {
+    Resize(1, n);
+  }
 
   /* Contructs a rectangular array.
    * @param n is the height of the array.
@@ -56,8 +58,9 @@ public:
    * vector size found on the system. Space is allocated, but the
    * contructor of the underlying data structure is not invoked.
    */  
-  RectangularArray(std::size_t const &n, std::size_t const &m)
-      : height_(n), width_(m), data_(n * m) {}
+  RectangularArray(std::size_t const &n, std::size_t const &m) {
+    Resize(n,m);
+  }
 
   RectangularArray(RectangularArray &&other) = default;
   RectangularArray(RectangularArray const &other) = default;
@@ -73,10 +76,9 @@ public:
    */    
   RectangularArray Copy() const {
     RectangularArray ret(height_, width_);
-
-    for (size_type i = 0; i < size(); i += container_type::E_SIMD_COUNT) {
-      for (size_type j = 0; j < container_type::E_SIMD_COUNT; ++j)
-        ret.At(i + j) = this->At(i + j);
+    // TODO: Move to SIMD
+    for (size_type i = 0; i < padded_size(); ++i) {
+        ret.At(i) = this->At(i);
     }
     return ret;
   }
@@ -111,6 +113,7 @@ public:
    */
   void Crop(size_type const &i, size_type const &j, size_type const &h,
             size_type const &w) {
+    // FIXME: implementation is wrong
     container_type newdata(h * w);
     size_type m = 0;
     for (size_type k = i; k < i + h; ++k)
@@ -145,9 +148,9 @@ public:
         size_type v = ca * (i - ci) - sa * (j - cj) + ci;
         size_type u = sa * (i - ci) + ca * (j - cj) + cj;
         if ((v < height()) && (u < width()))
-          n[(i*width_+ j)] = At(v, u);
+          n[(i * padded_width_+ j)] = At(v, u);
         else
-          n[(i*width_+ j)] = fill;
+          n[(i * padded_width_+ j)] = fill;
       }
     }
     data_ = n;
@@ -160,7 +163,6 @@ public:
    */
   bool operator==(RectangularArray const &other) const {
     if ((height() != other.height()) || (width() != other.width())) {
-      std::cout << "Failed here!" << std::endl;
       return false;
     }
     bool ret = true;
@@ -204,10 +206,10 @@ public:
    * used for constant object instances.
    */  
   type const &operator()(size_type const &i, size_type const &j) const {
-    assert(i < height_);
-    assert(j < width_);
+    assert(i < padded_height_);
+    assert(j < padded_width_);
 
-    return data_[(i * width_ + j)];
+    return data_[(i * padded_width_ + j)];
   }
 
   /* Two-dimensional reference index operator.
@@ -218,9 +220,9 @@ public:
    * meant for non-constant object instances.
    */    
   type &operator()(size_type const &i, size_type const &j) {
-    assert(i < height_);
-    assert(j < width_);
-    return data_[(i * width_ + j)];
+    assert(i < padded_height_);
+    assert(j < padded_width_);
+    return data_[(i * padded_width_ + j)];
   }
 
   /* One-dimensional constant reference access function.
@@ -233,10 +235,10 @@ public:
    * @param j is the index along the width direction.
    */    
   type const &At(size_type const &i, size_type const &j) const {
-    assert(i < height_);
-    assert(j < width_);
+    assert(i < padded_height_);
+    assert(j < padded_width_);
 
-    return data_[(i * width_ + j)];
+    return data_[(i * padded_width_ + j)];
   }
 
   /* Two-dimensional reference access function.
@@ -244,9 +246,9 @@ public:
    * @param j is the index along the width direction.
    */    
   type &At(size_type const &i, size_type const &j) {
-    assert(i < height_);
-    assert(j < width_);
-    return data_[(i * width_ + j)];
+    assert(i < padded_height_);
+    assert(j < padded_width_);
+    return data_[(i * padded_width_ + j)];
   }
 
   /* One-dimensional reference access function.
@@ -260,7 +262,7 @@ public:
    * @param v is the new value.
    */  
   type const &Set(size_type const &n, type const &v) {
-    assert(n < size());
+    assert(n < data_.size());
     data_[n] = v;
     return v;
   }
@@ -271,8 +273,8 @@ public:
    * @param v is the new value.
    */
   type const &Set(size_type const &i, size_type const &j, type const &v) {
-    assert((i * width_ + j) < size());
-    data_[(i * width_ + j)] = v;
+    assert((i * padded_width_ + j) < data_.size());
+    data_[(i * padded_width_ + j)] = v;
     return v;
   }
 
@@ -424,8 +426,11 @@ public:
    * If the new height or the width is smaller than the old, the array
    * is resized accordingly.
    */    
-  void Reserve(size_type const &h, size_type const &w) {
-    container_type new_arr(h * w);
+  void Reserve(size_type const &h, size_type const &w) { 
+    SetPaddedSizes( h, w );   
+    container_type new_arr(padded_height_ * padded_width_);
+    new_arr.SetAllZero();
+    
     size_type mH = std::min(h, height_);
     size_type mW = std::min(w, width_);
 
@@ -478,12 +483,16 @@ public:
    * initialization. 
    */    
   void LazyReserve(size_type const &h, size_type const &w) {
-    if( (h * w) < capacity()) return;
+    SetPaddedSizes( h, w );
+    
+    if( (padded_height_ * padded_width_) < capacity()) return;
 
-    container_type new_arr(h * w);
+    container_type new_arr(padded_height_ * padded_width_);
+    new_arr.SetAllZero();
     data_ = new_arr; 
   }
 
+  
   /* Reshapes the array to a new height and width.
    * @param h is new the height of the array.
    * @param w is new the width of the array.
@@ -491,6 +500,8 @@ public:
    * Padded bytes are set to zero.
    */      
   void Reshape(size_type const &h, size_type const &w) {
+    assert( !PAD_HEIGHT );
+    assert( !PAD_WIDTH );
     if (h * w >= size()) {
       throw std::runtime_error("New size does not match memory - TODO, make custom exception");
     }
@@ -559,8 +570,19 @@ public:
   /* Returns the width of the array. */  
   size_type width() const { return width_; }
 
+
+  /* Returns the padded height of the array. */
+  size_type padded_height() const { return padded_height_; }
+
+  /* Returns the padded width of the array. */  
+  size_type padded_width() const { return padded_width_; }
+  
+  
   /* Returns the size of the array. */    
   size_type size() const { return height_ * width_; }
+
+  /* Returns the size of the array. */    
+  size_type padded_size() const { return padded_height_ * padded_width_; }
 
   /* Returns the capacity of the array. */    
   size_type capacity() const { return data_.padded_size(); }
@@ -573,7 +595,24 @@ public:
 
  private:
   size_type height_ = 0, width_ = 0;
+  size_type padded_height_ = 0, padded_width_ = 0;  
   container_type data_;
+
+  void SetPaddedSizes(size_type const &h, size_type const &w) {
+    padded_height_ = h;
+    padded_width_ = w;
+    
+    if( PAD_HEIGHT ) {
+      padded_height_ = size_type(h / vector_register_type::E_BLOCK_COUNT ) * vector_register_type::E_BLOCK_COUNT;
+      if(padded_height_ < h) padded_height_ += vector_register_type::E_BLOCK_COUNT;
+    }
+
+    if( PAD_WIDTH ) {
+      padded_width_ = size_type(w / vector_register_type::E_BLOCK_COUNT ) * vector_register_type::E_BLOCK_COUNT;
+      if(padded_width_ < w) padded_width_ += vector_register_type::E_BLOCK_COUNT;
+    }
+  }
+  
 };
 };
 };

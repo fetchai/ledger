@@ -75,8 +75,12 @@ class Matrix : public A {
     
     if(!failed) {
       this->Resize(n,m);
-      for(std::size_t i = 0; i < elems.size(); ++i) {
-        this->At(i) = elems[i];
+
+      std::size_t k = 0;
+      for(std::size_t i = 0; i < n; ++i) {
+        for(std::size_t j = 0; j < n; ++j) {        
+          this->Set(i,j, elems[k++]);
+        }
       }
     }
   }
@@ -95,7 +99,7 @@ class Matrix : public A {
   Matrix &operator OP(Matrix const &other) {                            \
   assert(other.size() == this->size());                                 \
                                                                         \
-  std::size_t N = other.size();                                         \
+  std::size_t N = other.padded_size();                                         \
   vector_register_type a,b;                                             \
   vector_register_iterator_type ia( other.data().pointer() );           \
   vector_register_iterator_type ib( this->data().pointer() );           \
@@ -169,18 +173,26 @@ class Matrix : public A {
 
 #undef FETCH_ADD_OPERATOR
 
-  bool AllClose(Matrix const &other, double const &rtol = 1e-5, double const &atol = 1e-8) const {
-    std::size_t N = this->size();
+  bool AllClose(Matrix const &other, double const &rtol = 1e-5, double const &atol = 1e-8, bool ignoreNaN =  true) const {
+    std::size_t N = this->padded_size();
     bool ret = true;
     for (std::size_t i = 0; i < N; ++i) {
       double va = this->At(i);
+      if(ignoreNaN && std::isnan(va)) continue;
       double vb = other[i];
+      if(ignoreNaN && std::isnan(vb)) continue;      
       double vA = (va-vb);
       if(vA < 0) vA = -vA;
       if(va < 0) va = -va;
       if(vb < 0) vb = -vb;
       double M = std::max(va,vb);
       ret &= (vA < (atol + M * rtol));
+    }
+
+    if(!ret) {
+      for (std::size_t i = 0; i < N; ++i) {
+        std::cout << this->At(i) << " " << other[i] << std::endl;
+      }      
     }
     return ret;
   }
@@ -288,12 +300,13 @@ class Matrix : public A {
   }
   
   
-  Matrix& Transpose() {
-    Matrix newm(this->width(), this->height());
-    for (std::size_t i = 0; i < this->height(); ++i)
-      for (std::size_t j = 0; j < this->width(); ++j)
-        newm.At(j, i) = this->At(i, j);
-    this->operator=(newm);
+  Matrix& Transpose(Matrix const &other) {
+    this->Resize(other.width(), other.height());
+    
+    for (std::size_t i = 0; i < other.height(); ++i)
+      for (std::size_t j = 0; j < other.width(); ++j)
+        this->At(j, i) = other.At(i, j);
+
     return *this;
   }
   
@@ -596,48 +609,73 @@ class Matrix : public A {
   }
   */
 
-  void DotReference(Matrix const &m, Matrix &ret) {
-    assert(this->width() == m.height());
-    ret.Resize(this->height(), m.width());
+  Matrix& DotReference(Matrix const &mA, Matrix const &mB) {
+    assert(mA.width() == mB.height());
+    this->Resize(mA.height(), mB.width());
 
-    for (std::size_t i = 0; i < ret.height(); ++i) {
-      for (std::size_t j = 0; j < ret.width(); ++j) {
+    for (std::size_t i = 0; i < this->height(); ++i) {
+      for (std::size_t j = 0; j < this->width(); ++j) {
         type ele = 0;
-        for (std::size_t k = 0; k < this->width(); ++k)
-          ele += this->At(i, k) * m.At(k, j);
+        for (std::size_t k = 0; k < mA.width(); ++k)
+          ele += mA.At(i, k) * mB.At(k, j);
 
-        ret(i, j) = ele;
+        this->Set(i, j, ele);
       }
     }
+    return *this;
   }
 
-  void Dot(Matrix m, Matrix &ret) {
-    m.Transpose();
-    DotTransposedOf(m, ret);
-    m.Transpose();
+  Matrix& Dot(Matrix const &mA, Matrix const &mB) {
+    Matrix tmp;
+    tmp.Transpose( mB );
+    DotTransposedOf(mA, tmp);
+    return *this;
   }
 
-  void DotTransposedOf(Matrix const &m, Matrix &ret) {
-    assert(this->width() == m.width());
-    ret.Resize(this->height(), m.height());
+  
+  Matrix& DotTransposedOf(Matrix const &mA, Matrix const &mB) {
+    assert(mA.width() == mB.width());
+    this->Resize(mA.height(), mB.height());
+    this->SetAllZero(); // UGLY. TODO.
+    
+    std::size_t O = this->width() % vector_register_type::E_BLOCK_COUNT;
+    std::size_t aligned_width = this->width() - O;
+    if(aligned_width < this->width()) aligned_width += vector_register_type::E_BLOCK_COUNT;
 
-    for (std::size_t i = 0; i < ret.height(); ++i) {
-      for (std::size_t j = 0; j < ret.width(); ++j) {
+    vector_register_type a,b;
+
+    alignas(16) type reduction[vector_register_type::E_BLOCK_COUNT] = {0};
+    
+    for (std::size_t i = 0; i < mA.height(); ++i) {
+      vector_register_iterator_type ib( mB.data().pointer() );
+      
+      for (std::size_t j = 0; j < mB.height(); ++j) {
+        std::size_t k = 0;
         type ele = 0;
-        for (std::size_t k = 0; k < this->width(); ++k)
-          ele += this->At(i, k) * m.At(j, k);
-        ret(i, j) = ele;
+          
+        vector_register_iterator_type ia(  mA.data().pointer() + i * mA.padded_width());
+        vector_register_type c(reduction);
+        
+        for ( ; k < aligned_width; k+= vector_register_type::E_BLOCK_COUNT) {
+          ia.Next(a);
+          ib.Next(b);
+          c = c + a*b;  
+        }
+        c.Store(reduction);
+
+        for(std::size_t l=0; l < vector_register_type::E_BLOCK_COUNT; ++l) {
+          ele += reduction[l];
+          reduction[l] = 0;
+        }
+
+        this->Set(i, j, ele);
       }
     }
+    return *this;
   }
 
  private:
-  template <std::size_t N>
-  void DotImplementation(Matrix const &m, Matrix &ret) {
-    // FIXME: yet to be implemented
-    std::cerr << "DotImplementation in matrix not made yet!!" << std::endl;
-    exit(-1);
-  }
+
 };
 };
 };

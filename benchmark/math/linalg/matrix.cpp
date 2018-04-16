@@ -7,7 +7,7 @@
 #include<chrono>
 using namespace fetch::math::linalg;
 
-typedef float data_type;
+typedef double data_type;
 typedef fetch::memory::Array< data_type > container_type;
 typedef Matrix<data_type,container_type>  matrix_type;
 typedef typename matrix_type::vector_register_type vector_register_type;
@@ -131,7 +131,7 @@ void benchmark_custom(Matrix<data_type,container_type> &m1,  Matrix<data_type,co
 
 int main() {
   static fetch::random::LinearCongruentialGenerator gen;
-  std::size_t n = 2000, m = 2000;
+  std::size_t n = 2048, m = 2048;
   
   Matrix<data_type,container_type> m1 = RandomMatrix(n,m);
   Matrix<data_type,container_type> m2 = RandomMatrix(n,m);

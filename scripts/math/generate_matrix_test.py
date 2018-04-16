@@ -1,7 +1,7 @@
 import numpy as np
 types = ["int", "float", "double"]
 def randi(*args):
-    return np.random.randint(-100, 100, size=args)
+    return np.random.randint(-10, 10, size=args)
 rngs = { "int": randi , "float": np.random.randn, "double": np.random.randn}
 
 embodiments = {
@@ -12,17 +12,18 @@ embodiments = {
 }
 
 tests = {
-    '+':  ("Addition", "Add", []),
-    '*':  ("Multiplication", "Multiply", []),
-    '-':  ("Subtraction", "Subtract", []),
-    '/':  ("Division", "Divide", ["int"])
+    '+':  ("Addition", "Add", [],[]),
+    '*':  ("Multiplication", "Multiply", [],[]),
+    '-':  ("Subtraction", "Subtract", [],[]),
+    '/':  ("Division", "Divide", ["int"],[]),
+    'dp': ("Dot product", "Dot", [],["op", "inline_op"])
 }
 
 
 for type in types:
     rng = rngs[type]
     for op, details in tests.iteritems():
-        test_title, function, exclude = details
+        test_title, function, exclude, ignore = details
 
         if type in exclude: break
         
@@ -36,8 +37,8 @@ for type in types:
             "inline_function": ifunction
         }
     
-        n = 4
-        m = 4
+        n = 7
+        m = 7
         A = rng(n,m)
         B = rng(n,m)
         if op == "+":
@@ -47,7 +48,9 @@ for type in types:
         elif op == "-":
             C = A - B        
         elif op == "*":
-            C = A * B        
+            C = A * B  
+        elif op == "dp":
+            C = np.dot(A, B)
 
         
         m1 = " ;\n".join( [" ".join([str(y) for y in x]) for x in A ] )
@@ -67,6 +70,7 @@ for type in types:
     
     
         for method, emb in embodiments.iteritems():
+            if method in ignore: continue
             name = names[method]
             tt = emb % name
             print "EXPECT( %s );" % tt
