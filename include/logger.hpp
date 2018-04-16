@@ -293,7 +293,9 @@ public:
     Unroll<Args...>::Append( this, args... );
     this->log_->CloseEntry(DefaultLogger::ERROR);
 
-    StackTrace();    
+    StackTrace();
+//    exit(-1);
+    
   }
   
   template< typename ...Args >

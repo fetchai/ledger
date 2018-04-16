@@ -57,10 +57,10 @@ class TypedByte_ArrayBuffer {
     TypeRegister<void>::value_type type;
     Deserialize(*this, type);
     if (TypeRegister<T>::value != type) {
+      
       throw SerializableException(error::TYPE_ERROR,
-                                  byte_array_type("Type ") + TypeRegister<T>::name +
-                                      byte_array_type(" differs from ") +
-                                      TypeRegister<T>::name);
+                                  byte_array_type("Type '") + TypeRegister<T>::name +
+        byte_array_type("' differs from type '") + ErrorCodeToMessage(type) +"'");
     }
     Deserialize(*this, val);
     return *this;

@@ -108,7 +108,18 @@ public:
     created_ =  std::chrono::system_clock::now();  
   }
 
-  bool Wait(double const timeout = std::numeric_limits<double>::infinity()) 
+  bool Wait(bool const &throw_exception)  
+  {
+    return Wait( std::numeric_limits<double>::infinity(), throw_exception);    
+  }
+
+  bool Wait(int const &time)  
+  {
+    return Wait( double(time) );
+  }
+  
+  
+  bool Wait(double const timeout = std::numeric_limits<double>::infinity(), bool const &throw_exception = true)
   {
     LOG_STACK_TRACE_POINT;
     
@@ -132,7 +143,11 @@ public:
     
     if (has_failed()) 
     {
-      throw reference_->exception();
+      if(throw_exception)
+        throw reference_->exception();
+      else
+        return false;
+      
     }
     return true;    
   }
