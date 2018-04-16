@@ -23,20 +23,22 @@ def ordered(obj):
 def HTTPpost(endpoint, page, jsonArg="{}"):
     return requests.post('http://'+str(endpoint["IP"])+':'+str(endpoint["HTTPPort"])+'/'+page, json=jsonArg)
 
-setRate = 10000
+setRate = 900
 minRate = 0
-sleepTime = 30
+sleepTime = 5
 
+# localhost test
 endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-#endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.213"}
 endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
+#endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
+
+# pi test
+#endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "192.168.1.150"}
+#endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.151"}
+
 
 HTTPpost(endpoint1, 'add-endpoint', endpoint2)
 HTTPpost(endpoint2, 'add-endpoint', endpoint1)
-
-#requests.post('http://'+str(endpoint1["IP"])+':'+str(endpoint1["HTTPPort"])+'/add-endpoint', json=endpoint2)
-
-#requests.post('http://'+str(endpoint1["IP"])+':'+str(endpoint1["HTTPPort"])+'/start')
 
 transPerSecondMax = 0
 
@@ -54,10 +56,11 @@ for i in range(1000):
 
     rate = { "rate": setRate }
     HTTPpost(endpoint1, 'set-rate', rate)
+    HTTPpost(endpoint2, 'set-rate', rate)
     print "Set rate to: ", setRate
 
-    #HTTPpost(endpoint1, 'start')
-    HTTPpost(endpoint2, 'start')
+    HTTPpost(endpoint1, 'start')
+    #HTTPpost(endpoint2, 'start')
 
     print "Sleeping..."
     time.sleep(sleepTime)
@@ -68,15 +71,7 @@ for i in range(1000):
     HTTPpost(endpoint2, 'stop')
 
     print "Stopped"
-    time.sleep(1)
-
-    setRate = int(setRate/2) -1
-    if(setRate < minRate):
-        setRate = minRate
-
-    rate = { "rate": setRate }
-    HTTPpost(endpoint1, 'set-rate', rate)
-    print "Set rate to: ", setRate
+    time.sleep(2)
 
     page1 = HTTPpost(endpoint1, 'transactions-hash')
     page2 = HTTPpost(endpoint2, 'transactions-hash')
@@ -85,7 +80,7 @@ for i in range(1000):
         print "FAILED TO MATCH: "
         print "node 0", jsonPrint(page1)
         print "node 1", jsonPrint(page2)
-        #exit(1)
+        exit(1)
     else:
         print "Successfully matched"
 
@@ -99,3 +94,8 @@ for i in range(1000):
 
     print ">Transactions per second max: ", transPerSecondMax
     print
+
+    # Set new transaction rate
+    setRate = int(setRate/2) -1
+    if(setRate < minRate):
+        setRate = minRate

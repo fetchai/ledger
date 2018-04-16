@@ -32,7 +32,7 @@ public:
     fetch::logger.Debug("Constructing test node service with TCP port: ", tcpPort, " and HTTP port: ", httpPort);
     node_                = std::make_shared<network_test::Node>(tm, seed);
 
-    httpInterface_       =      std::make_shared<network_test::HttpInterface>(HttpInterface{node_}); // breaks
+    httpInterface_       =      std::make_shared<network_test::HttpInterface>(node_);
     networkTestProtocol_ =      make_unique<protocols::NetworkTestProtocol<network_test::Node>>(node_);
 
     this->Add(protocols::FetchProtocols::NETWORK_TEST, networkTestProtocol_.get());
@@ -50,7 +50,6 @@ public:
 
 private:
   std::shared_ptr<network_test::Node>                                 node_;
-  //std::unique_ptr<network_test::HttpInterface>                        httpInterface_;
   std::shared_ptr<network_test::HttpInterface>                        httpInterface_;
   std::unique_ptr<protocols::NetworkTestProtocol<network_test::Node>> networkTestProtocol_;
 };

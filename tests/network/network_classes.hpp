@@ -32,7 +32,7 @@ public:
     else if (jsonDoc["TCPPort"].is_float())
     {
       float value = static_cast<float>(jsonDoc["TCPPort"].as_double());
-      TCPPort_ = uint16_t(floor(value));
+      TCPPort_ = uint16_t(value);
     }
     else
     {

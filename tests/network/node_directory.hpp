@@ -7,7 +7,7 @@
 #include"protocols/fetch_protocols.hpp"
 #include"protocols/network_test/commands.hpp"
 #include"./network_classes.hpp"
-#include"./connection_manager.hpp"
+#include"service/client.hpp"
 #include<set>
 
 namespace fetch
@@ -20,7 +20,7 @@ class NodeDirectory
 public:
 
   NodeDirectory(network::ThreadManager *tm) :
-  connectionManger_{tm}
+  tm_{tm}
   {}
 
   NodeDirectory(NodeDirectory &rhs)            = delete;
@@ -28,38 +28,43 @@ public:
   NodeDirectory operator=(NodeDirectory& rhs)  = delete;
   NodeDirectory operator=(NodeDirectory&& rhs) = delete;
 
+  ~NodeDirectory()
+  {
+    for(auto &i : serviceClients_)
+    {
+      delete i.second;
+    }
+  }
+
+  // Only call this during node setup
+  void addEndpoint(const Endpoint &endpoint)
+  {
+    if (serviceClients_.find(endpoint) == serviceClients_.end())
+    {
+      auto client = new service::ServiceClient<network::TCPClient> {endpoint.IP(), endpoint.TCPPort(), tm_};
+      serviceClients_[endpoint] = client;
+    }
+  }
+
   template <typename T>
   void BroadcastTransaction(T&& trans)
   {
     CallAllEndpoints(protocols::NetworkTest::SEND_TRANSACTION, std::forward<T>(trans));
   }
 
-  void addEndpoint(const Endpoint &endpoint)
-  {
-    endpoints_.insert(endpoint);
-
-    // Request a connection to this new endpoint to avoid flooding
-    connectionManger_.GetClient(endpoint);
-
-    for(auto &i : endpoints_)
-    {
-      std::cout << i.variant() << std::endl;
-    }
-  }
-
   template<typename T, typename... Args>
   void CallAllEndpoints(T CallEnum, Args... args)
   {
-    for(auto &i : endpoints_)
+    for(auto &i : serviceClients_)
     {
-      auto client = connectionManger_.GetClientFast(i);
+      auto client = i.second;
       client->Call(protocols::FetchProtocols::NETWORK_TEST, CallEnum, args...);
     }
   }
 
 private:
-  std::set<Endpoint>                    endpoints_;
-  ConnectionManager<network::TCPClient> connectionManger_;
+  fetch::network::ThreadManager                                    *tm_;
+  std::map<Endpoint, service::ServiceClient<network::TCPClient> *> serviceClients_;
 };
 
 }
