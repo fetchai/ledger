@@ -37,25 +37,25 @@ public:
 
   void setRate(int rate)
   {
-    std::cerr << "Setting rate to: " << rate << std::endl;
+    std::cerr << "Setting rate to: " << rate << std::endl; // TODO: Use logger
     rate_ = rate;
   }
 
   void Reset()
   {
-    std::cerr << "stopping..." << std::endl;
+    std::cerr << "stopping..." << std::endl; // TODO: Use logger
 
     transactionGenerator_.stop();
     packetFilter_.reset();
     transactionList_.reset();
 
-    std::cerr << "stopped..." << std::endl;
+    std::cerr << "stopped..." << std::endl; // TODO: Use logger
 
   }
 
   void Start()
   {
-    std::cerr << "starting..." << std::endl;
+    std::cerr << "starting..." << std::endl; // TODO: Use logger
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
     //fetch::log::Context log_context(__FUNCTION_NAME__, __FILE__, __LINE__, this); 

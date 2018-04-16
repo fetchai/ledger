@@ -14,10 +14,7 @@ class NetworkTestProtocol : public fetch::service::Protocol {
 public:
 
   NetworkTestProtocol(std::shared_ptr<T> node) : Protocol() {
-
-    this->Expose(NetworkTest::SEND_TRANSACTION,
-        new service::CallableClassMember<T, void(chain::Transaction trans)>
-        (node.get(), &T::ReceiveTransaction));
+    this->Expose(NetworkTest::SEND_TRANSACTION,  node.get(),  &T::ReceiveTransaction);
   }
 };
 
