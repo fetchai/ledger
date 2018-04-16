@@ -23,12 +23,13 @@ def ordered(obj):
 def HTTPpost(endpoint, page, jsonArg="{}"):
     return requests.post('http://'+str(endpoint["IP"])+':'+str(endpoint["HTTPPort"])+'/'+page, json=jsonArg)
 
-setRate = 1000
+setRate = 10000
 minRate = 0
-sleepTime = 4
+sleepTime = 30
 
 endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.213"}
+#endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.213"}
+endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
 
 HTTPpost(endpoint1, 'add-endpoint', endpoint2)
 HTTPpost(endpoint2, 'add-endpoint', endpoint1)
@@ -58,10 +59,10 @@ for i in range(1000):
     #HTTPpost(endpoint1, 'start')
     HTTPpost(endpoint2, 'start')
 
-    print "Sleeping"
+    print "Sleeping..."
     time.sleep(sleepTime)
 
-    print "Stopping"
+    print "Finished sleeping. Stopping."
 
     HTTPpost(endpoint1, 'stop')
     HTTPpost(endpoint2, 'stop')
@@ -84,7 +85,7 @@ for i in range(1000):
         print "FAILED TO MATCH: "
         print "node 0", jsonPrint(page1)
         print "node 1", jsonPrint(page2)
-        exit(1)
+        #exit(1)
     else:
         print "Successfully matched"
 

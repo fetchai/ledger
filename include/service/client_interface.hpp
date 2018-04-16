@@ -127,7 +127,7 @@ protected:
     serializer_type params(msg);
 
     service_classification_type type;
-    params >> type;
+    params >> type; // note: gdb flags this
 
     if (type == SERVICE_RESULT) 
     {

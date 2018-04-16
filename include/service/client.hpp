@@ -43,6 +43,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;    
     running_ = true;
+    std::cerr << "Creating service client" << std::endl;
 
     // TODO: Replace with thread manager
     worker_thread_ = new std::thread([this]() 
