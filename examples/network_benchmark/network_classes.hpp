@@ -3,7 +3,7 @@
 
 namespace fetch
 {
-namespace network_test
+namespace network_benchmark
 {
 
 class Endpoint {

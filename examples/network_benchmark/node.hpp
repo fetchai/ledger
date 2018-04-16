@@ -1,5 +1,5 @@
-#ifndef NETWORK_TEST_NODE_HPP
-#define NETWORK_TEST_NODE_HPP
+#ifndef NETWORK_BENCHMARK_NODE_HPP
+#define NETWORK_BENCHMARK_NODE_HPP
 
 // This represents the API to the network test
 #include"chain/transaction.hpp"
@@ -12,7 +12,7 @@
 
 namespace fetch
 {
-namespace network_test
+namespace network_benchmark
 {
 
 class Node

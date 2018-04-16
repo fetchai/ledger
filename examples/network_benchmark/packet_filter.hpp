@@ -5,7 +5,7 @@
 
 namespace fetch
 {
-namespace network_test
+namespace network_benchmark
 {
 
 template <typename T, std::size_t size>

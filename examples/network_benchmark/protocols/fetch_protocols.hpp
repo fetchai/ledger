@@ -11,11 +11,7 @@ struct FetchProtocols
   
 enum
 {
-  SWARM = 1,
-  CHAIN_KEEPER = 2,
-  STATE_KEEPER = 3
-
-  
+  NETWORK_BENCHMARK = 1
 };
 
 } ;

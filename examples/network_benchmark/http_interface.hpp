@@ -1,5 +1,5 @@
-#ifndef NETWORK_TEST_HTTP_INTERFACE_HPP
-#define NETWORK_TEST_HTTP_INTERFACE_HPP
+#ifndef NETWORK_BENCHMARK_HTTP_INTERFACE_HPP
+#define NETWORK_BENCHMARK_HTTP_INTERFACE_HPP
 
 #include"http/server.hpp"
 #include"http/middleware/allow_origin.hpp"
@@ -10,13 +10,13 @@
 
 namespace fetch
 {
-namespace network_test
+namespace network_benchmark
 {
 
 class HttpInterface : public fetch::http::HTTPModule {
 public:
 
-  explicit HttpInterface(std::shared_ptr<network_test::Node> node) : node_{node}
+  explicit HttpInterface(std::shared_ptr<network_benchmark::Node> node) : node_{node}
   {
     attachPages();
   }
@@ -68,7 +68,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      network_test::Endpoint endpoint(doc);
+      network_benchmark::Endpoint endpoint(doc);
 
       node_->addEndpoint(endpoint);
 
@@ -150,10 +150,10 @@ public:
     return http::HTTPResponse(ret.str());
   }
 
-  const std::shared_ptr<network_test::Node> &node() const { return node_; };
+  const std::shared_ptr<network_benchmark::Node> &node() const { return node_; };
 
 private:
-  std::shared_ptr<network_test::Node> node_;
+  std::shared_ptr<network_benchmark::Node> node_;
 };
 
 }

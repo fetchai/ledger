@@ -4,15 +4,15 @@
 // This file holds and manages connections to other nodes
 
 #include"chain/transaction.hpp"
-#include"protocols/fetch_protocols.hpp"
-#include"protocols/network_test/commands.hpp"
+#include"./protocols/fetch_protocols.hpp"
+#include"./protocols/network_benchmark/commands.hpp"
 #include"./network_classes.hpp"
 #include"service/client.hpp"
 #include<set>
 
 namespace fetch
 {
-namespace network_test
+namespace network_benchmark
 {
 
 class NodeDirectory
@@ -49,7 +49,7 @@ public:
   template <typename T>
   void BroadcastTransaction(T&& trans)
   {
-    CallAllEndpoints(protocols::NetworkTest::SEND_TRANSACTION, std::forward<T>(trans));
+    CallAllEndpoints(protocols::NetworkBenchmark::SEND_TRANSACTION, std::forward<T>(trans));
   }
 
   template<typename T, typename... Args>
@@ -58,7 +58,7 @@ public:
     for(auto &i : serviceClients_)
     {
       auto client = i.second;
-      client->Call(protocols::FetchProtocols::NETWORK_TEST, CallEnum, args...);
+      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, CallEnum, args...);
     }
   }
 

@@ -77,6 +77,3 @@ standard_test(meta_log2 meta/test_log2.cpp)
 
 standard_test(vectorize_native_register vectorize/native.cpp)
 standard_test(vectorize_sse vectorize/sse.cpp)
-
-standard_test(network_test network/network_test.cpp)
-

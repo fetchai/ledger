@@ -3,7 +3,7 @@
 
 namespace fetch
 {
-namespace network_test
+namespace network_benchmark
 {
 
 template <typename T, std::size_t fixedSize>
@@ -11,18 +11,6 @@ class TransactionList
 {
 
 typedef crypto::CallableFNV hasher_type;
-
-//typedef crypto::CallableFNV hasher_type;
-//typedef chain::Transaction transaction_type;
-//typedef typename transaction_type::digest_type tx_digest_type;
-//
-//std::unordered_set< tx_digest_type, hasher_type > unapplied_;
-//
-//
-//unapplied_.insert( tx.digests() );
-//if(unapplied_.find( tx.digests() ) != unapplied_.end()) {
-//
-//}
 
 public:
   TransactionList() {}

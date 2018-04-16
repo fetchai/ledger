@@ -23,7 +23,7 @@ def ordered(obj):
 def HTTPpost(endpoint, page, jsonArg="{}"):
     return requests.post('http://'+str(endpoint["IP"])+':'+str(endpoint["HTTPPort"])+'/'+page, json=jsonArg)
 
-setRate = 900
+setRate = 0
 minRate = 0
 sleepTime = 5
 
@@ -72,6 +72,11 @@ for i in range(1000):
 
     print "Stopped"
     time.sleep(2)
+
+    ## inspect the hashes (not generally recommended)
+    #page1 = HTTPpost(endpoint1, 'transactions')
+    #print "Result", jsonPrint(page1)
+    #exit(1)
 
     page1 = HTTPpost(endpoint1, 'transactions-hash')
     page2 = HTTPpost(endpoint2, 'transactions-hash')

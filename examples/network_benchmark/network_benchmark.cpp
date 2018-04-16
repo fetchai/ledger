@@ -1,5 +1,5 @@
 #include"network/thread_manager.hpp"
-#include"./network_test_service.hpp"
+#include"./network_benchmark_service.hpp"
 
 int main(int argc, char **argv)
 {
@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     uint16_t tcpPort  = 9080+seed;
     uint16_t httpPort = 8080+seed;
 
-    fetch::network_test::NetworkTestService serv(tm, tcpPort, httpPort, seed);
+    fetch::network_benchmark::NetworkBenchmarkService serv(tm, tcpPort, httpPort, seed);
     tm->Start();
     //serv.Start(); // the python/http will do this
 
