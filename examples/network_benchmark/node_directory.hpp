@@ -46,19 +46,52 @@ public:
     }
   }
 
-  template <typename T>
-  void BroadcastTransaction(T&& trans)
+  void BroadcastTransaction(chain::Transaction trans)
   {
-    CallAllEndpoints(protocols::NetworkBenchmark::SEND_TRANSACTION, std::forward<T>(trans));
+    chain::Transaction trans_temp;
+    CallAllEndpoints(trans_temp);
   }
 
-  template<typename T, typename... Args>
-  void CallAllEndpoints(T CallEnum, Args... args)
+//  template<typename T, typename... Args>
+//  void CallAllEndpoints(T CallEnum, Args... args)
+//  {
+//    for(auto &i : serviceClients_)
+//    {
+//      auto client = i.second;
+//      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, CallEnum, args...);
+//    }
+//  }
+
+  void CallAllEndpoints(chain::Transaction trans)
   {
     for(auto &i : serviceClients_)
     {
       auto client = i.second;
-      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, CallEnum, args...);
+      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, protocols::NetworkBenchmark::SEND_TRANSACTION, trans);
+    }
+  }
+
+
+  void BroadcastTransaction()
+  {
+    for(auto &i : serviceClients_)
+    {
+      auto client = i.second;
+      chain::Transaction trans;
+
+      {
+        std::stringstream stream;
+        stream << "sending a trans" << std::endl;
+        std::cerr << stream.str();
+      }
+
+      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, protocols::NetworkBenchmark::SEND_TRANSACTION, trans);
+
+      {
+        std::stringstream stream;
+        stream << "sent, a trans" << std::endl;
+        std::cerr << stream.str();
+      }
     }
   }
 

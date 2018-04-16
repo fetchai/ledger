@@ -23,9 +23,9 @@ def ordered(obj):
 def HTTPpost(endpoint, page, jsonArg="{}"):
     return requests.post('http://'+str(endpoint["IP"])+':'+str(endpoint["HTTPPort"])+'/'+page, json=jsonArg)
 
-setRate = 0
-minRate = 0
-sleepTime = 5
+setRate = 10
+minRate = 1
+sleepTime = 50
 
 # localhost test
 endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
@@ -85,7 +85,7 @@ for i in range(1000):
         print "FAILED TO MATCH: "
         print "node 0", jsonPrint(page1)
         print "node 1", jsonPrint(page2)
-        exit(1)
+        #exit(1)
     else:
         print "Successfully matched"
 
@@ -101,6 +101,7 @@ for i in range(1000):
     print
 
     # Set new transaction rate
-    setRate = int(setRate/2) -1
+    #setRate = int(setRate/2) -1
+    setRate = setRate -1
     if(setRate < minRate):
         setRate = minRate

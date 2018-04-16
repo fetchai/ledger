@@ -59,8 +59,33 @@ class SharedArray {
   }
   
   SharedArray() : SharedArray(0) {}
+
+  int temp_ = 0;
+
+  int printThing(SharedArray const &other)
+  {
+
+    std::cerr << "begin" << std::endl;
+
+    {
+      std::stringstream stream;
+
+      if(other.data_)
+        stream << "Copying from: " << other.size_ << "+" << other.data_.use_count()  << std::endl;
+      else
+        stream << "Copying from: " << other.size_ << "+" << "null" << std::endl;
+
+      std::cerr << stream.str();
+    }
+
+    return 1;
+  }
+
   SharedArray(SharedArray const &other)
-    :size_(other.size_), data_(other.data_) {
+    :
+      temp_{printThing(other)},
+      size_(other.size_),
+    data_(other.data_) {
   }
 
   SharedArray(SharedArray &&other) {

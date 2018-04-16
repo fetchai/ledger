@@ -23,11 +23,31 @@ public:
   template<typename A>
   void Add(A&& rhs)
   {
+    {
+      std::stringstream stream;
+      stream << "locking" << std::endl;
+      std::cerr << stream.str();
+    }
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+    {
+      std::stringstream stream;
+      stream << "checking size" << std::endl;
+      std::cerr << stream.str();
+    }
 
     if(index_ < list_.size())
     {
+      {
+        std::stringstream stream;
+        stream << "index is " << index_ << std::endl;
+        std::cerr << stream.str();
+      }
       list_[index_++] = std::forward<A>(rhs);
+      {
+        std::stringstream stream;
+        stream << "finishing" << std::endl;
+        std::cerr << stream.str();
+      }
     }
   }
 
@@ -38,7 +58,11 @@ public:
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
     fetch::logger.Info("Returning transactions set, index is ", index_, " for a max of ", list_.size());
-    std::cerr << "Returning transactions set, index is "<< index_<< " for a max of "<< list_.size() << std::endl;
+    {
+      std::stringstream stream;
+      stream << "Returning transactions set, index is "<< index_<< " for a max of "<< list_.size() << std::endl;
+      std::cerr << stream.str();
+    }
 
     for (std::size_t i = 0; i < index_; ++i)
     {
@@ -72,7 +96,11 @@ public:
     uint64_t count = 0;
     uint64_t hash  = 0;
 
-    std::cerr << "Getting hash" << std::endl;
+    {
+      std::stringstream stream;
+      stream << "Getting hash" << std::endl;
+      std::cerr << stream.str();
+    }
     hasher_type hashStruct;
 
     for(auto &i : trans)

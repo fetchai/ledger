@@ -44,26 +44,40 @@ public:
 
   void setRate(int rate)
   {
-    std::cerr << "Setting rate to: " << rate << std::endl;
+    std::stringstream stream;
+    stream << "Setting rate to: " << rate << std::endl;
+    std::cerr << stream.str();
+
     threadSleepTimeUs_ = rate;
   }
 
   void Reset()
   {
-    std::cerr << "stopping..." << std::endl;
+    {
+      std::stringstream stream;
+      stream << "stopping..." << std::endl;
+      std::cerr << stream.str();
+    }
+
 
     std::unique_lock<std::mutex> mlock(mutex_);
     sendingTransactions_ = false;
     packetFilter_.reset();
     transactionList_.reset();
 
-    std::cerr << "stopped..." << std::endl;
+    std::stringstream stream;
+    stream << "stopped..." << std::endl;
+    std::cerr << stream.str();
+
 
   }
 
   void Start()
   {
-    std::cerr << "starting..." << std::endl;
+    std::stringstream stream;
+    stream << "starting..." << std::endl;
+    std::cerr << stream.str();
+
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
     std::unique_lock<std::mutex> mlock(mutex_);
@@ -89,8 +103,11 @@ public:
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    std::cerr << "Stopping, we sent: " << keepCount << std::endl;
-    std::cerr << "We recorded: " << transactionList_.size() << std::endl;
+    std::stringstream stream;
+    stream << "Stopping, we sent: " << keepCount << std::endl;
+    stream << "We recorded: " << transactionList_.size() << std::endl;
+    std::cerr << stream.str();
+
     fetch::logger.PrintTimings();
   }
 
@@ -109,7 +126,12 @@ public:
   // RPC calls
   void ReceiveTransaction(chain::Transaction trans)
   {
+    std::stringstream stream;
+    stream << "Received new transaction" << std::endl;
+    std::cerr << stream.str();
+
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
+
     transactionList_.Add(std::move(trans));
   }
 
@@ -143,28 +165,66 @@ private:
 
   void sendTransactions()
   {
-    std::chrono::microseconds sleepTime(threadSleepTimeUs_);
-    keepCount = 0;
+    //std::chrono::microseconds sleepTime(threadSleepTimeUs_);
+    //keepCount = 0;
 
-    while(sendingTransactions_)
+//    while(sendingTransactions_)
+//    {
+//      LOG_STACK_TRACE_POINT;
+//
+//      std::stringstream stream;
+//      stream << "sending trans" << std::endl;
+//      std::cerr << stream.str();
+//
+//      auto trans = nextTransaction();
+//      auto &hash = trans.summary().transaction_hash;
+//
+//      if(true || packetFilter_.Add(hash))
+//      {
+//        if(keepCount++ % 1000 == 0) {std::cerr << ".";}
+//
+//        //transactionList_.Add(trans);
+//        //nodeDirectory_.BroadcastTransaction(std::move(trans));
+//        {
+//          std::stringstream stream;
+//          stream << "push to nodedir" << std::endl;
+//          std::cerr << stream.str();
+//        }
+//
+//        nodeDirectory_.BroadcastTransaction(trans);
+//
+//        {
+//          std::stringstream stream;
+//          stream << "trans sent" << std::endl;
+//          std::cerr << stream.str();
+//        }
+//
+//      }
+//      else
+//      {
+//        std::cout << "Trans blocked" << std::endl;
+//      }
+//
+//
+    while(true)
     {
-      LOG_STACK_TRACE_POINT;
-      auto trans = nextTransaction();
-      auto &hash = trans.summary().transaction_hash;
-
-      if(true || packetFilter_.Add(hash))
-      {
-        if(keepCount++ % 1000 == 0) {std::cerr << ".";}
-
-        transactionList_.Add(trans);
-        nodeDirectory_.BroadcastTransaction(std::move(trans));
-      }
-      else
-      {
-        std::cout << "Trans blocked" << std::endl;
-      }
-
+      std::chrono::microseconds sleepTime(threadSleepTimeUs_);
+      keepCount = 0;
       std::this_thread::sleep_for(sleepTime);
+
+      {
+        std::stringstream stream;
+        stream << "sending a trans" << std::endl;
+        std::cerr << stream.str();
+      }
+
+      nodeDirectory_.BroadcastTransaction();
+
+      {
+        std::stringstream stream;
+        stream << "sent a trans" << std::endl;
+        std::cerr << stream.str();
+      }
     }
   }
 

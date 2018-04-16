@@ -34,6 +34,40 @@ public:
   enum {
     VERSION = 1
   } ;
+
+  bool wasDestroyed = false;
+
+  Transaction()
+  {
+    {
+      std::stringstream stream;
+      stream << "Create transaction" << std::endl;
+      std::cerr << stream.str();
+    }
+  }
+
+  //Transaction(Transaction const &rhs)            = delete;
+  //Transaction(Transaction &&rhs)                 = default;
+  //Transaction &operator=(Transaction const &rhs) = delete;
+  //Transaction &operator=(Transaction&& rhs)      = default;
+
+  ~Transaction()
+  {
+    {
+      std::stringstream stream;
+      stream << "Destroy transaction " << byte_array::ToHex(summary().transaction_hash) << std::endl;
+      std::cerr << stream.str();
+    }
+    if(wasDestroyed)
+    {
+      {
+        std::stringstream stream;
+        stream << "trying to double destroy transaction!" << std::endl;
+        std::cerr << stream.str();
+      }
+    }
+    wasDestroyed = true;
+  }
   
   
   void UpdateDigest() const {
@@ -198,17 +232,55 @@ private:
 
 template< typename T >
 void Serialize( T & serializer, Transaction const &b) {
+
+  {
+    std::stringstream stream;
+    stream << "serializing tranaction " << b.wasDestroyed << std::endl;
+    std::cerr << stream.str();
+  }
+
   serializer << uint16_t(b.VERSION);
+
+  {
+    std::stringstream stream;
+    stream << "serializing tranaction1 " << b.wasDestroyed << std::endl;
+    std::cerr << stream.str();
+  }
   
   serializer << b.summary_;
+  {
+    std::stringstream stream;
+    stream << "serializing tranaction2 " << b.wasDestroyed << std::endl;
+    std::cerr << stream.str();
+  }
 
   serializer <<  uint32_t(b.signatures().size());
+  {
+    std::stringstream stream;
+    stream << "serializing tranaction3 " << b.wasDestroyed << std::endl;
+    std::cerr << stream.str();
+  }
   for(auto &sig: b.signatures()) {
     serializer << sig;
   }
+  {
+    std::stringstream stream;
+    stream << "serializing tranaction4 " << b.wasDestroyed << std::endl;
+    std::cerr << stream.str();
+  }
 
   serializer << b.contract_name();  
+  {
+    std::stringstream stream;
+    stream << "serializing tranaction5 " << b.wasDestroyed << std::endl;
+    std::cerr << stream.str();
+  }
   serializer << b.arguments();  
+  {
+    std::stringstream stream;
+    stream << "serializing tranaction6 " << b.wasDestroyed << std::endl;
+    std::cerr << stream.str();
+  }
 }
 
 template< typename T >
