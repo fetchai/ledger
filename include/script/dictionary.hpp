@@ -1,6 +1,5 @@
 #ifndef SCRIPT_DICTIONARY_HPP
 #define SCRIPT_DICTIONARY_HPP
-#include"memory/shared_hashtable.hpp"
 #include"byte_array/referenced_byte_array.hpp"
 #include"crypto/fnv.hpp"
 

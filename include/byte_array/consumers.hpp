@@ -3,6 +3,7 @@
 #include "byte_array/const_byte_array.hpp"
 #include "byte_array/tokenizer/tokenizer.hpp"
 
+#include<emmintrin.h>
 namespace fetch {
 namespace byte_array {
 namespace consumers {

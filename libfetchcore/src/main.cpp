@@ -23,7 +23,7 @@
 #include "serializer/py_exception.hpp"
 #include "memory/py_array.hpp"
 #include "memory/py_shared_array.hpp"
-#include "memory/py_shared_hashtable.hpp"
+
 #include "memory/py_rectangular_array.hpp"
 #include "network/py_tcp_server.hpp"
 #include "network/py_thread_manager.hpp"
@@ -46,7 +46,6 @@
 #include "math/linalg/py_matrix.hpp"
 #include "math/spline/py_linear.hpp"
 #include "script/py_dictionary.hpp"
-#include "script/py_function.hpp"
 #include "script/py_variant.hpp"
 #include "script/py_ast.hpp"
 #include "image/py_load_png.hpp"
@@ -251,15 +250,15 @@ PYBIND11_MODULE(libfetchcore, module) {
 //  fetch::math::BuildBigUnsigned(ns_fetch_math);
 //  fetch::math::BuildLog(ns_fetch_math);
 
-  fetch::math::linalg::BuildMatrix<int8_t>("MatrixInt8", ns_fetch_math_linalg);      
-  fetch::math::linalg::BuildMatrix<int16_t>("MatrixInt16", ns_fetch_math_linalg);    
-  fetch::math::linalg::BuildMatrix<int32_t>("MatrixInt32", ns_fetch_math_linalg);
-  fetch::math::linalg::BuildMatrix<int64_t>("MatrixInt64", ns_fetch_math_linalg);
+//  fetch::math::linalg::BuildMatrix<int8_t>("MatrixInt8", ns_fetch_math_linalg);      
+//  fetch::math::linalg::BuildMatrix<int16_t>("MatrixInt16", ns_fetch_math_linalg);    
+//  fetch::math::linalg::BuildMatrix<int32_t>("MatrixInt32", ns_fetch_math_linalg);
+  //  fetch::math::linalg::BuildMatrix<int64_t>("MatrixInt64", ns_fetch_math_linalg);
 
-  fetch::math::linalg::BuildMatrix<uint8_t>("MatrixUInt8", ns_fetch_math_linalg);      
-  fetch::math::linalg::BuildMatrix<uint16_t>("MatrixUInt16", ns_fetch_math_linalg);    
-  fetch::math::linalg::BuildMatrix<uint32_t>("MatrixUInt32", ns_fetch_math_linalg);
-  fetch::math::linalg::BuildMatrix<uint64_t>("MatrixUInt64", ns_fetch_math_linalg);
+  //  fetch::math::linalg::BuildMatrix<uint8_t>("MatrixUInt8", ns_fetch_math_linalg);      
+  //  fetch::math::linalg::BuildMatrix<uint16_t>("MatrixUInt16", ns_fetch_math_linalg);    
+  //  fetch::math::linalg::BuildMatrix<uint32_t>("MatrixUInt32", ns_fetch_math_linalg);
+  //  fetch::math::linalg::BuildMatrix<uint64_t>("MatrixUInt64", ns_fetch_math_linalg);
   
   fetch::math::linalg::BuildMatrix<float>("MatrixFloat", ns_fetch_math_linalg);
   fetch::math::linalg::BuildMatrix<double>("MatrixDouble", ns_fetch_math_linalg);  

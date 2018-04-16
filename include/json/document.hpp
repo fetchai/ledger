@@ -11,7 +11,7 @@
 #include <memory>
 #include <vector>
 #include<stack>
-#include<emmintrin.h>
+
 namespace fetch {
 namespace json {
 
@@ -325,7 +325,7 @@ class JSONDocument {
 
         ++element_counter;        
         type = byte_array::consumers::NumberConsumer< NUMBER_INT, NUMBER_FLOAT >(document,pos);
-        if(type == -1) {
+        if(type == uint8_t(-1)) {
           throw JSONParseException("Unable to parse integer.");
         }
         tokens_.push_back({oldpos, pos - oldpos, type});        

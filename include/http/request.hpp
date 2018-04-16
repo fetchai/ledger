@@ -182,7 +182,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     
-    return json::JSONDocument( full_uri_, body() );
+    return json::JSONDocument(  body() );
   }
 private:
 
