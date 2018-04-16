@@ -84,33 +84,6 @@ public:
     return ret;
   }
 
-  // TODO: (`HUT`) : delete debug
-  std::string asHexString() const {
-
-    std::ostringstream oss;
-    for (std::size_t i = 0; i < length_; ++i)
-    {
-      oss << std::setfill('0') << std::setw(2) << std::hex << int(arr_pointer_[i]);
-
-      if(i != length_-1)
-      {
-        oss << ":";
-      }
-    }
-    return oss.str();
-  }
-
-  uint64_t hash() {
-    uint64_t hash = 0;
-    for (std::size_t i = 0; i < length_; ++i)
-    {
-      hash = hash ^ arr_pointer_[i];
-      //std::cerr << "hash is " << std::hex << hash << std::endl;
-      hash = (hash << 1) | (hash >> 63);
-    }
-    return hash;
-  }
-
   container_type const &operator[](std::size_t const &n) const {
     assert(n < length_);
     return arr_pointer_[n];

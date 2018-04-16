@@ -10,6 +10,20 @@ template <typename T, std::size_t fixedSize>
 class TransactionList
 {
 
+typedef crypto::CallableFNV hasher_type;
+
+//typedef crypto::CallableFNV hasher_type;
+//typedef chain::Transaction transaction_type;
+//typedef typename transaction_type::digest_type tx_digest_type;
+//
+//std::unordered_set< tx_digest_type, hasher_type > unapplied_;
+//
+//
+//unapplied_.insert( tx.digests() );
+//if(unapplied_.find( tx.digests() ) != unapplied_.end()) {
+//
+//}
+
 public:
   TransactionList() {}
 
@@ -71,14 +85,14 @@ public:
     uint64_t hash  = 0;
 
     std::cerr << "Getting hash" << std::endl;
+    hasher_type hashStruct;
 
     for(auto &i : trans)
     {
       count++;
-      hash = hash ^ i.summary().transaction_hash.hash();
+      hash = hash ^ static_cast<uint64_t>(hashStruct(i.summary().transaction_hash));
     }
 
-    std::cerr << "Returning hash" << std::endl;
     return std::pair<uint64_t, uint64_t>(count, hash);
   }
 

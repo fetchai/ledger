@@ -99,7 +99,7 @@ public:
 
     int index = 0;
     for (auto &i : transactions) {
-      result[index++] = i.summary().transaction_hash.asHexString();
+      result[index++] = byte_array::ToHex(i.summary().transaction_hash);
     }
 
     std::ostringstream ret;

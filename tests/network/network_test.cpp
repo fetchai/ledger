@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
     fetch::network_test::NetworkTestService serv(tm, tcpPort, httpPort, seed);
     tm->Start();
-    //serv.Start(); // the python will do this
+    //serv.Start(); // the python/http will do this
 
     std::cout << "press any key to quit" << std::endl;
     std::cin >> seed;
