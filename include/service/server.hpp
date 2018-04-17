@@ -63,7 +63,8 @@ public:
   protected:
     bool DeliverRequest(network::message_type const&msg) override
     {
-      server_->Send(client_, msg);      
+      // TODO: Check if we have shut down
+      server_->Send(client_, msg);
       return true;
     }
   private:
