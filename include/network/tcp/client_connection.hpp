@@ -133,6 +133,13 @@ private:
     LOG_STACK_TRACE_POINT;
 
     write_mutex_.lock();
+
+    if(write_queue_.empty())
+    {
+      write_mutex_.unlock();
+      return;
+    }
+
     auto buffer = write_queue_.front();
     write_queue_.pop_front();    
     header_write_.magic = 0xFE7C80A1FE7C80A1;
@@ -146,13 +153,7 @@ private:
         if (!ec) 
         {
           fetch::logger.Debug("Server: Wrote message.");
-          write_mutex_.lock();
-          bool write_more = !write_queue_.empty();
-          write_mutex_.unlock();  
-          if (write_more) 
-          {
-            Write();
-          }
+          Write();
         }
         else 
         {
