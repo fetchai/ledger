@@ -39,11 +39,11 @@ public:
 
   Transaction()
   {
-    {
-      std::stringstream stream;
-      stream << "Create transaction" << std::endl;
-      std::cerr << stream.str();
-    }
+    //{
+    //  std::stringstream stream;
+    //  stream << "Create transaction" << std::endl;
+    //  std::cerr << stream.str();
+    //}
   }
 
   //Transaction(Transaction const &rhs)            = delete;
@@ -211,6 +211,13 @@ TODO: Make 32 bit compat
   byte_array::ConstByteArray data() const { return data_; };
 
   TransactionSummary const & summary() const { UpdateDigest(); return summary_; }
+
+
+  // TODO: (`HUT`) : delete this
+  //
+  const std::vector<char>    &bulkUp() const { return bulkUp_; }
+  std::vector<char>          &bulkUp()       { return bulkUp_; }
+
 private:
   TransactionSummary summary_;
   mutable bool               modified = true;
@@ -222,6 +229,68 @@ private:
   byte_array::ConstByteArray contract_name_;
 
   arguments_type arguments_;
+
+  std::vector<char> bulkUp_ = {
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    'f',
+    'i',
+    'n',
+    'i',
+    's',
+    'h',
+    'f',
+    'f',
+    'f'
+  };
+
 
   template< typename T >
   friend void Serialize(T&, Transaction const&);
@@ -238,6 +307,9 @@ void Serialize( T & serializer, Transaction const &b) {
     stream << "serializing tranaction " << b.wasDestroyed << std::endl;
     std::cerr << stream.str();
   }
+
+  // TODO: (`HUT`) : delete this
+  serializer << b.bulkUp();
 
   serializer << uint16_t(b.VERSION);
 
@@ -286,6 +358,9 @@ void Serialize( T & serializer, Transaction const &b) {
 template< typename T >
 void Deserialize( T & serializer, Transaction &b) {
   uint16_t version;  
+
+  serializer >> b.bulkUp();
+
   serializer >> version;
 
   serializer >> b.summary_;
