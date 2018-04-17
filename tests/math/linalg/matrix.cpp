@@ -59,6 +59,11 @@ template< typename D >
 using _M = Matrix<D,fetch::memory::Array< D > >;
 
 void Test1() {
+       SCENARIO("AllClose for ints") {
+         _M<int> A,B;
+ 
+       };
+       
        SCENARIO("Addition for int") {
 
         _M<int> A,B,C,R;

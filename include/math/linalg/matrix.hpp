@@ -75,10 +75,11 @@ class Matrix : public A {
     
     if(!failed) {
       this->Resize(n,m);
-
+      this->SetAllZero();      
+      
       std::size_t k = 0;
       for(std::size_t i = 0; i < n; ++i) {
-        for(std::size_t j = 0; j < n; ++j) {        
+        for(std::size_t j = 0; j < m; ++j) {        
           this->Set(i,j, elems[k++]);
         }
       }
@@ -174,7 +175,8 @@ class Matrix : public A {
 #undef FETCH_ADD_OPERATOR
 
   bool AllClose(Matrix const &other, double const &rtol = 1e-5, double const &atol = 1e-8, bool ignoreNaN =  true) const {
-    std::size_t N = this->padded_size();
+    std::size_t N = this->size();
+    if(other.size() != N) return false;
     bool ret = true;
     for (std::size_t i = 0; i < N; ++i) {
       double va = this->At(i);

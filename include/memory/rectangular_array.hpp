@@ -83,9 +83,9 @@ public:
    */    
   RectangularArray Copy() const {
     RectangularArray ret(height_, width_);
-    // TODO: Move to SIMD
+
     for (size_type i = 0; i < padded_size(); ++i) {
-        ret.At(i) = this->At(i);
+        ret.data_[i] = this->data_[i];
     }
     return ret;
   }
@@ -203,27 +203,20 @@ public:
    */
   type const &operator[](size_type const &n) const
   {
-    std::size_t p = n / width_;    
-    std::size_t q = n % width_;
-    
-    return At(p,q);
+    return At(n);
   }
 
   /* One-dimensional reference index operator.
    * @param n is the index which is being accessed.
    *
    * This operator acts as a one-dimensional array accessor that is
-   * meant for non-constant object instances.Note this accessor is "slow" as
+   * meant for non-constant object instances. Note this accessor is "slow" as
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */  
   type &operator[](size_type const &n)
   {
-    std::size_t p = n / width_;    
-    std::size_t q = n % width_;
-    
-    return At(p,q);    
-
+    return At(n);    
   }
 
   /* Two-dimensional constant reference index operator.
@@ -255,9 +248,28 @@ public:
 
   /* One-dimensional constant reference access function.
    * @param i is the index which is being accessed.
+   *
+   * Note this accessor is "slow" as it takes care that the developer
+   * does not accidently enter the padded area of the memory. 
    */
-  type const &At(size_type const &i) const { return data_[i]; }
+  type const &At(size_type const &i) const {
+    std::size_t p = i / width_;    
+    std::size_t q = i % width_;
+    
+    return At(p,q);
+  }
 
+  /* One-dimensional reference access function.
+   * @param i is the index which is being accessed.
+   */  
+  type &At(size_type const &i) {
+          std::size_t p = i / width_;    
+    std::size_t q = i % width_;
+    
+    return At(p,q);
+  }
+
+  
   /* Two-dimensional constant reference access function.
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
@@ -279,10 +291,6 @@ public:
     return data_[(i * padded_width_ + j)];
   }
 
-  /* One-dimensional reference access function.
-   * @param i is the index which is being accessed.
-   */  
-  type &At(size_type const &i) { return data_[i]; }
 
   /* Sets an element using one coordinatea.
    * @param i is the position along the height.
@@ -574,7 +582,7 @@ public:
     fwrite(&magic, sizeof(magic), 1, fp); 
     fwrite(&height_, sizeof(height_), 1, fp);
     fwrite(&width_, sizeof(width_), 1, fp);
-    fwrite(data_.pointer(), sizeof(type), this->size(), fp);    
+    fwrite(data_.pointer(), sizeof(type), this->padded_size(), fp);    
     fclose(fp);    
   }
 
@@ -602,7 +610,7 @@ public:
     
     Resize(height, width);
 
-    fread(data_.pointer(), sizeof(type), this->size(), fp);    
+    fread(data_.pointer(), sizeof(type), this->padded_size(), fp);    
     fclose(fp);    
   }
   
