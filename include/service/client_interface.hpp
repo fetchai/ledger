@@ -44,8 +44,17 @@ public:
     promises_mutex_.unlock();
       
     PackCall(params, protocol, function, args...);
-    DeliverRequest(params.data());
-
+    if(!DeliverRequest(params.data())) {
+      fetch::logger.Debug("Call failed!");
+      prom.reference()->Fail(serializers::SerializableException(
+          error::COULD_NOT_DELIVER,
+          "Could not deliver request"));
+      promises_mutex_.lock();
+      promises_.erase(prom.id());
+      promises_mutex_.unlock();
+      
+    }
+    
     return prom;
   }
 
@@ -65,8 +74,12 @@ public:
 
     PackCallWithPackedArguments(params, protocol, function, args);
 
-    DeliverRequest(params.data());    
-   
+    if(!DeliverRequest(params.data())) {
+      fetch::logger.Debug("Call failed!");
+      prom.reference()->Fail(serializers::SerializableException(
+          error::COULD_NOT_DELIVER,
+          "Could not deliver request"));            
+    }
 
     return prom;    
   }
@@ -106,7 +119,7 @@ public:
   }  
 
 protected:
-  virtual void DeliverRequest(network::message_type const&) = 0;
+  virtual bool DeliverRequest(network::message_type const&) = 0;
 
   void ClearPromises() {
     

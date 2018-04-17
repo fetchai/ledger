@@ -1,3 +1,4 @@
+#define FETCH_DISABLE_COUT_LOGGING
 #include"service_consts.hpp"
 #include<iostream>
 #include"serializer/referenced_byte_array.hpp"
@@ -7,11 +8,19 @@ using namespace fetch::service;
 using namespace fetch::byte_array;
 
 
-int main2() {
+int main() {
   
   // Client setup
-  fetch::network::ThreadManager tm;  
+  fetch::network::ThreadManager tm(2);  
   ServiceClient< fetch::network::TCPClient > client("localhost", 8080, &tm);
+
+  client.OnLeave( []() {
+      std::cout << "Goood bye!!" << std::endl;
+      
+    });
+
+  
+ 
   tm.Start();
 
   
@@ -38,21 +47,38 @@ int main2() {
     std::cout << "Second result: " << int(px) << std::endl;
     
   } catch(fetch::serializers::SerializableException const &e) {
+    
     std::cout << "Exception caught: " << e.what() << std::endl;
     
   }
 
   // Testing performance
   auto t_start = std::chrono::high_resolution_clock::now();
-  fetch::service::Promise last_promise;
+  std::vector< fetch::service::Promise > promises;
 
-  std::size_t N = 1000;
+  std::size_t N = 10000;
   for(std::size_t i=0; i < N; ++i) {
-    last_promise = client.Call( MYPROTO, ADD, 4, 3 );
+    promises.push_back( client.Call( MYPROTO, ADD, 4, 3 ) );
   }
+  fetch::logger.Highlight("DONE!");
   
-  std::cout << "Waiting for last promise: " << last_promise.id() << std::endl;
-  last_promise.Wait();
+  std::cout << "Waiting for last promise: " << promises.back().id() << std::endl;
+  promises.back().Wait(false);
+  
+  std::size_t failed = 0, not_fulfilled = 0;  
+  for(auto &p: promises) {
+    if((p.has_failed()) || (p.is_connection_closed())) {
+      ++failed;      
+    }
+    if(!p.is_fulfilled()) {
+      ++not_fulfilled ;
+    }    
+  }
+  std::cout << failed << " requests failed!" << std::endl;
+  std::cout << not_fulfilled << " requests was not fulfilled!" << std::endl;  
+  
+  
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));  
   auto t_end = std::chrono::high_resolution_clock::now();
   
   std::cout << "Wall clock time passed: "
@@ -61,6 +87,7 @@ int main2() {
   std::cout << "Time per call:: "
             << std::chrono::duration<double, std::milli>(t_end-t_start).count() / N * 1000
             << " us\n";  
+
   
   // Benchmarking  
   tm.Stop();
@@ -69,17 +96,21 @@ int main2() {
 
 }
 
-int main() {
+int xmain() {
 
 
   fetch::network::ThreadManager tm(1);
-  tm.Start();                                                                // Started thread manager before client construction!    
+  tm.Start(); // Started thread manager before client construction!    
   ServiceClient< fetch::network::TCPClient > client("localhost", 8080, &tm);
-  
+  client.OnLeave( []() {
+      std::cout << "Goood bye!!" << std::endl;
+    });
+
   auto promise = client.Call( MYPROTO,SLOWFUNCTION, 2, 7 );
   
   if(!promise.Wait(500)){ // wait 500 ms for a response
-    std::cout << "no response from node!" << std::endl;
+    std::cout << "no response from node: " << client.is_alive() <<  std::endl;
+    promise = client.Call( MYPROTO,SLOWFUNCTION, 2, 7 );
   } else {
     std::cout << "response from node!" << std::endl << std::endl;
   }
