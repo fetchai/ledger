@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cassert>
+#include<cstring>
 #include <cstdint>
 #include <type_traits>
 #include <mm_malloc.h>

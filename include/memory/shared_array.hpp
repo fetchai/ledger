@@ -11,7 +11,6 @@
 #include<cstring>
 #include <type_traits>
 #include <memory>
-#include <iostream>
 #include <stdlib.h>
 #include <mm_malloc.h>
 namespace fetch {
