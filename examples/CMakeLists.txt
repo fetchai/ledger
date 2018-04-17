@@ -17,8 +17,6 @@ add_executable(simulated_annealing_reference optimisation/simulated_annealing_re
 add_executable(rpc_client rpc/client.cpp)
 add_executable(rpc_server rpc/server.cpp)
 
-add_executable(calculator script/calculator.cpp)
-
 
 add_executable(sha256 crypto/sha256.cpp)
 

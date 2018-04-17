@@ -99,7 +99,7 @@ class Matrix : public A {
   Matrix &operator OP(Matrix const &other) {                            \
   assert(other.size() == this->size());                                 \
                                                                         \
-  std::size_t N = other.padded_size();                                         \
+  std::size_t N = other.padded_size();                                  \
   vector_register_type a,b;                                             \
   vector_register_iterator_type ia( other.data().pointer() );           \
   vector_register_iterator_type ib( this->data().pointer() );           \

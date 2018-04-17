@@ -41,7 +41,7 @@ static fetch::random::LinearCongruentialGenerator gen;
       ++k;
     }
 
-  for(std::size_t i=0; i < N*M; ++i)      
+  for(std::size_t i=0; i < N*M; ++i)
     if(mem[i] != dataset[i]) {
       std::cout << "Data differs II!" << std::endl;
       exit(-1);

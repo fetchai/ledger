@@ -2,7 +2,7 @@
 #define MEMORY_RECTANGULAR_ARRAY_HPP
 #include "memory/array.hpp"
 #include "memory/shared_array.hpp"
-#include "vectorize/sse.hpp"
+#include "vectorize.hpp"
 #include "platform.hpp"
 
 #include "assert.hpp"
@@ -15,6 +15,14 @@
 namespace fetch {
 namespace memory {
 
+/* A class that contains an array that is suitable for vectorisation.
+ *
+ * The RectangularArray class offers optional height and width padding
+ * to ensure that the corresponding array is suitable for
+ * vectorization. The allocated memory is garantueed to be aligned
+ * according to the platform standard by using either
+ * <fetch::memory::SharedArray> or <fetch::memory::Array>.
+ */
 template< typename T, typename C = SharedArray<T>, bool PAD_HEIGHT = false, bool PAD_WIDTH = true >
 class RectangularArray {
 public:
@@ -22,7 +30,6 @@ public:
   typedef C container_type;
   typedef uint64_t size_type;
   typedef RectangularArray< T, C > self_type;
-
 
   /* Iterators for accessing and modifying the array */
   typedef typename container_type::iterator iterator;
@@ -161,13 +168,16 @@ public:
    *
    * This method is sensitive to height and width. 
    */
-  bool operator==(RectangularArray const &other) const {
-    if ((height() != other.height()) || (width() != other.width())) {
+  bool operator==(RectangularArray const &other) const
+  {
+    if ((height() != other.height()) || (width() != other.width()))
+    {
       return false;
     }
     bool ret = true;
 
-    for (size_type i = 0; i < data_.size(); ++i) {
+    for (size_type i = 0; i < data_.size(); ++i)
+    {
       ret &= (data_[i] == other.data_[i]);
     }
     return ret;
@@ -178,7 +188,8 @@ public:
    *
    * This method is sensitive to height and width. 
    */  
-  bool operator!=(RectangularArray const &other) const {
+  bool operator!=(RectangularArray const &other) const
+  {
     return !(this->operator==(other));
   }
 
@@ -186,17 +197,34 @@ public:
    * @param n is the index which is being accessed.
    *
    * This operator acts as a one-dimensional array accessor that can be
-   * used for constant object instances.
+   * used for constant object instances. Note this accessor is "slow" as
+   * it takes care that the developer does not accidently enter the
+   * padded area of the memory.
    */
-  type const &operator[](size_type const &n) const { return data_[n]; }
+  type const &operator[](size_type const &n) const
+  {
+    std::size_t p = n / width_;    
+    std::size_t q = n % width_;
+    
+    return At(p,q);
+  }
 
   /* One-dimensional reference index operator.
    * @param n is the index which is being accessed.
    *
    * This operator acts as a one-dimensional array accessor that is
-   * meant for non-constant object instances.
+   * meant for non-constant object instances.Note this accessor is "slow" as
+   * it takes care that the developer does not accidently enter the
+   * padded area of the memory.
    */  
-  type &operator[](size_type const &n) { return data_[n]; }
+  type &operator[](size_type const &n)
+  {
+    std::size_t p = n / width_;    
+    std::size_t q = n % width_;
+    
+    return At(p,q);    
+
+  }
 
   /* Two-dimensional constant reference index operator.
    * @param i is the index along the height direction.
@@ -278,6 +306,20 @@ public:
     return v;
   }
 
+
+  /* Sets an element using two coordinates.
+   * @param i is the position along the height.
+   * @param j is the position along the width.
+   * @param v is the new value.
+   *
+   * This function is here to satisfy the requirement for an
+   * optimisation problem container. 
+   */  
+  type const &Insert(size_type const &i, size_type const &j, type const &v) {
+    return Set(i, j, v);
+  }
+
+  
   /* Applies a vector kernel to each array element.
    * @param apply is the kernel which will be applied
    * @param obj1 is an array containing the first kernel arguments.

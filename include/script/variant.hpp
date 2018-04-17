@@ -2,7 +2,7 @@
 #define SCRIP_VARIANT_HPP
 #include "byte_array/referenced_byte_array.hpp"
 #include "memory/shared_array.hpp"
-#include "script/dictionary.hpp"
+//#include "script/dictionary.hpp"
 
 #include <initializer_list>
 #include <ostream>
@@ -69,7 +69,7 @@ public:
   Variant(float const& f) { *this = f; }
   Variant(double const& f) { *this = f; }
   
-  Variant(std::initializer_list< Variant > const & lst) {
+  Variant(std::initializer_list< Variant > const & lst) {    
     type_ = ARRAY;
     VariantList data(lst.size());
     std::size_t i = 0;
@@ -88,27 +88,57 @@ public:
     type_ = NULL_VALUE;
   }
 
-  /*
-  template <typename T>
-  typename std::enable_if<std::is_same<T, decltype(nullptr) >::value, T>::type
-   operator=(T ptr) {
-    if (ptr != nullptr) {
-      // FIXME: Throw error
-      assert(ptr == nullptr);
-    }
-    type_ = NULL_VALUE;
-    return ptr;
+  void MakeUndefined() {
+    type_ = UNDEFINED;
   }
-  */
+
+  void MakeArray(std::size_t n) 
+  {
+    type_ = ARRAY;
+    array_ = VariantList(n);
+  }
+
+  void MakeObject() 
+  {
+    type_ = OBJECT;
+    array_ = VariantList();
+  }
+  
+  static Variant Array(std::size_t n) 
+  {
+    Variant ret;
+    ret.MakeArray(n);    
+    return ret;    
+  }
+
+  static Variant Object() 
+  {
+    Variant ret;
+    ret.MakeObject();
+    return ret;    
+  }  
+  
+  
   byte_array_type const& operator=(byte_array_type const &b) {
     type_ = STRING;
     string_ = b;
     return b;
   }
+
+  char const* operator=(char* const data) {
+    if(data == nullptr)
+      type_ = NULL_VALUE;
+    else {
+      type_ = STRING;
+      string_ = data;
+    }
+    
+    return data;
+  }  
   
   
   template <typename T>
-  typename std::enable_if<std::is_integral<T>::value, T>::type operator=(
+  typename std::enable_if< (!std::is_same<T,bool>::value) && std::is_integral<T>::value, T>::type operator=(
       T const& i) {
     type_ = INTEGER;
     return data_.integer = i;
@@ -121,17 +151,11 @@ public:
     return data_.float_point = f;
   }
 
-  bool operator=(bool const& b) {
+  template <typename T>
+  typename std::enable_if<std::is_same<T, bool>::value, T>::type   
+  operator=(T const& b) {
     type_ = BOOLEAN;
     return data_.boolean = b;
-  }
-
-  char const& operator=(char const& c) {
-    byte_array_type str;
-    str.Resize(1);
-    str[0] = c;
-    *this = str;
-    return c;
   }
 
 
@@ -376,6 +400,22 @@ std::ostream& operator<<(std::ostream& os, Variant const& v) {
       
       break;            
   }
+  return os;  
+}
+
+
+
+std::ostream& operator<<(std::ostream& os, VariantList const& v) {
+
+  os << "[";
+  for(std::size_t i=0; i < v.size(); ++i) {
+    if(i != 0) {
+      os << ", ";
+    }
+    os << v[i];    
+  }
+  os << "]";
+  
   return os;  
 }
 

@@ -9,11 +9,11 @@ fetch::random::LinearCongruentialGenerator lcg;
 using namespace fetch::vectorize;
 
 void Test1() {
-  alignas(16) uint32_t a[4] = {1,2,3,4};
-  alignas(16) uint32_t b[4] = {2,4,8,16};
-  alignas(16) uint32_t c[4] = {0};
+  alignas(16) int a[4] = {1,2,3,4};
+  alignas(16) int b[4] = {2,4,8,16};
+  alignas(16) int c[4] = {0};
 
-  VectorRegister< uint32_t, 128 > r1(a), r2(b), r3;
+  VectorRegister< int, 128 > r1(a), r2(b), r3;
 
   r3 = r1 * r2;
   r3 = r3 - r1;

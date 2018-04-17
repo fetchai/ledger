@@ -132,7 +132,15 @@ namespace consumers {
          return -1;
        ++pos;
        return STRING;
-     }
+  }
+
+
+template< int CATCH_ALL >
+int AnyChar(byte_array::ConstByteArray const &str, uint64_t &pos)  {
+  ++pos;
+  return CATCH_ALL;
+}
+
   
 };
 };

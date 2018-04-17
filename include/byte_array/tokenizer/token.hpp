@@ -20,6 +20,16 @@ class Token : public ConstByteArray {
         std::size_t const &length)
       : ConstByteArray(other, start, length) {}
 
+
+  bool operator==(ConstByteArray const &other) const {
+    return ConstByteArray::operator==(other);
+  }
+
+  bool operator!=(ConstByteArray const &other) const {
+    return !(*this == other);
+  }
+
+  
   void SetType(std::size_t const &t) { type_ = t; }
   void SetLine(std::size_t const &l) { line_ = l; }
   void SetChar(std::size_t const &c) { char_ = c; }

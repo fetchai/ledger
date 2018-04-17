@@ -1,7 +1,8 @@
-#ifndef VECTORIZE_SSE_HPPP
-#define VECTORIZE_SSE_HPPP
-#include "vectorize/vectorize_constants.hpp"
+#ifndef VECTORIZE_SSE_HPP
+#define VECTORIZE_SSE_HPP
+#include "vectorize/info.hpp"
 #include "vectorize/register.hpp"
+#include "vectorize/info_sse.hpp"
 
 #include <emmintrin.h>
 #include <smmintrin.h>
@@ -140,24 +141,7 @@ class VectorRegister<double, 128, __m128d> {
 };
 
 
-  template <typename T, std::size_t N, typename S = typename VectorInfo<T,N>::register_type  >
-  class VectorRegisterIterator {
-  public:
-    typedef T type;
-    typedef VectorRegister< T, N, S > vector_register_type;
-    typedef typename vector_register_type::mm_register_type mm_register_type;
-
-    VectorRegisterIterator(type const *d) { ptr_ = (mm_register_type*)d; }
-    
-    void Next(vector_register_type &m) {
-      m.data() = *ptr_;
-      ++ptr_;
-    }
-  private:
-    mm_register_type *ptr_;
-  };
-  
-#define AILIB_ADD_OPERATOR(op, type, L, fnc)                            \
+#define FETCH_ADD_OPERATOR(op, type, L, fnc)                            \
   inline VectorRegister<type, 128, L>                                   \
   operator op( VectorRegister<type,128, L> const &a,                    \
                VectorRegister<type,128, L> const &b) {                  \
@@ -165,25 +149,24 @@ class VectorRegister<double, 128, __m128d> {
     return VectorRegister<type, 128, L>(ret);                           \
   }
 
-AILIB_ADD_OPERATOR(*, int, __m128i, _mm_mullo_epi32);
-AILIB_ADD_OPERATOR(-, int, __m128i, _mm_sub_epi32);
-//AILIB_ADD_OPERATOR(/, int, __m128i, _mm_div_epi32);
-AILIB_ADD_OPERATOR(+, int, __m128i, _mm_add_epi32);  
+FETCH_ADD_OPERATOR(*, int, __m128i, _mm_mullo_epi32);
+FETCH_ADD_OPERATOR(-, int, __m128i, _mm_sub_epi32);
+//FETCH_ADD_OPERATOR(/, int, __m128i, _mm_div_epi32);
+FETCH_ADD_OPERATOR(+, int, __m128i, _mm_add_epi32);  
 
-AILIB_ADD_OPERATOR(*, float, __m128, _mm_mul_ps);
-AILIB_ADD_OPERATOR(-, float, __m128, _mm_sub_ps);  
-AILIB_ADD_OPERATOR(/, float, __m128, _mm_div_ps);
-AILIB_ADD_OPERATOR(+, float, __m128, _mm_add_ps);  
+FETCH_ADD_OPERATOR(*, float, __m128, _mm_mul_ps);
+FETCH_ADD_OPERATOR(-, float, __m128, _mm_sub_ps);  
+FETCH_ADD_OPERATOR(/, float, __m128, _mm_div_ps);
+FETCH_ADD_OPERATOR(+, float, __m128, _mm_add_ps);  
 
-AILIB_ADD_OPERATOR(*, double, __m128d, _mm_mul_pd);
-AILIB_ADD_OPERATOR(-, double, __m128d, _mm_sub_pd);  
-AILIB_ADD_OPERATOR(/, double, __m128d, _mm_div_pd);
-AILIB_ADD_OPERATOR(+, double, __m128d, _mm_add_pd);  
+FETCH_ADD_OPERATOR(*, double, __m128d, _mm_mul_pd);
+FETCH_ADD_OPERATOR(-, double, __m128d, _mm_sub_pd);  
+FETCH_ADD_OPERATOR(/, double, __m128d, _mm_div_pd);
+FETCH_ADD_OPERATOR(+, double, __m128d, _mm_add_pd);  
   
   
-#undef AILIB_ADD_OPERATOR
+#undef FETCH_ADD_OPERATOR
 
-#undef REQUIRED_SSE
 };
 };
 #endif

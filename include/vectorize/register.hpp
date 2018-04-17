@@ -1,67 +1,23 @@
 #ifndef VECTORIZE_REGISTER_HPP
 #define VECTORIZE_REGISTER_HPP
-#include "vectorize/vectorize_constants.hpp"
+#include "vectorize/info.hpp"
 
-#include <emmintrin.h>
-
-#include <smmintrin.h>
 #include <type_traits>
 #include <typeinfo>
-#include<iostream>
+#include <iostream>
+#define APPLY_OPERATOR_LIST(FUNCTION) \
+  FUNCTION(*)                         \
+  FUNCTION(/)                         \
+  FUNCTION(+)                         \
+  FUNCTION(-)                         \
+  FUNCTION(&)                         \
+  FUNCTION(|)                         \
+  FUNCTION (^)
+
 namespace fetch {
 namespace vectorize {
 
-  template< typename T, std::size_t >
-  struct VectorInfo {
-    typedef T naitve_type;
-    typedef T register_type;
-  };
-
-  template<>
-  struct VectorInfo< uint8_t, 128 > {
-    typedef uint8_t naitve_type;
-    typedef __m128i register_type;
-  };
-  
-  template<>
-  struct VectorInfo< uint16_t, 128 > {
-    typedef uint16_t naitve_type;
-    typedef __m128i register_type;
-  };
-
-  template<>
-  struct VectorInfo< uint32_t, 128 > {
-    typedef uint32_t naitve_type;
-    typedef __m128i register_type;
-  };
-
-  template<>
-  struct VectorInfo< uint64_t, 128 > {
-    typedef uint64_t naitve_type;
-    typedef __m128i register_type;
-  };
-
-  template<>
-  struct VectorInfo< int, 128 > {
-    typedef int naitve_type;
-    typedef __m128i register_type;
-  };
-
-  
-  template<>
-  struct VectorInfo< float, 128 > {
-    typedef float naitve_type;
-    typedef __m128 register_type;
-  };
-
-  template<>
-  struct VectorInfo< double, 128 > {
-    typedef double naitve_type;
-    typedef __m128d register_type;
-  };
-
-  
-  template <typename T, std::size_t N, typename S = typename VectorInfo<T,N>::register_type  >
+template <typename T, std::size_t N = sizeof(T), typename S = typename VectorInfo<T,N>::register_type  >
 class VectorRegister {
  public:
   typedef T type;
@@ -82,19 +38,22 @@ class VectorRegister {
 
   explicit operator T() { return data_; }
 
-#define AILIB_ADD_OPERATOR(OP)                              \
+#define FETCH_ADD_OPERATOR(OP)                              \
   VectorRegister operator OP(VectorRegister const &other) { \
     return VectorRegister(data_ OP other.data_);            \
   }
-  // APPLY_OPERATOR_LIST(AILIB_ADD_OPERATOR);
-#undef AILIB_ADD_OPERATOR
+  APPLY_OPERATOR_LIST( FETCH_ADD_OPERATOR );
+#undef FETCH_ADD_OPERATOR
 
   void Store(type *ptr) const { *ptr = data_; }
 
+  
  private:
   type data_;
 };
 
+
+#undef APPLY_OPERATOR_LIST
 };
 };
 #endif

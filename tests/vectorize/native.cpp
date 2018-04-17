@@ -4,13 +4,7 @@
 using namespace fetch::vectorize;
 
 template< typename T >
-using NativeRegister = VectorRegister< T, InstructionSet::NO_VECTOR > ;
-
-template< typename T >
-using NativeMemoryProxy = VectorMemoryProxy< T, InstructionSet::NO_VECTOR > ;
-
-template< typename T >
-using NativeMemory = VectorMemory< T, InstructionSet::NO_VECTOR > ;
+using NativeRegister = VectorRegister< T > ;
 
 fetch::random::LinearCongruentialGenerator lcg;
 
@@ -164,54 +158,8 @@ ADD_TEST(^,xor);
 
 #undef ADD_TEST
 
-template<typename T = uint32_t>
-void test_memory_proxy_read() {
-  T array[4];
-  for(std::size_t i=0; i < 4;++i)
-    array[i] = lcg();
-
-  NativeMemoryProxy<T> x(array);
-
-  if(T(x) != T(array[0])) {
-    std::cout << "proxy test failed" << std::endl;
-    exit(-1);
-  }
-
-  NativeRegister<T> y = NativeRegister<T>(x);
-
-  if(T(y) != array[0]) {
-    std::cout << "proxy cast failed" << std::endl;
-    exit(-1);
-  }  
-}
-
-template<typename T = uint32_t>
-void test_memory_proxy_write() {
-  T array[4] = {0};
-  
-  T val = lcg();
-  NativeMemoryProxy<T> x(array);
-  x = val;
-  if(array[0] != val) {
-    std::cout << "failed writing" << std::endl;
-    exit(-1);
-  }
-}
-
-/*
-void interface() {
-  T array1[8];
-  T array2[8];
-  T ret[8];
-
-  Vecotorize v1( array1 ), v2( array2 ), vr( ret );
-  for(std::size_t i=0; i < v1.size(); ++i)
-    vr[i] = v1[i] * v2[i];
-}
-*/
 int main() {
-  //  test_registers() ;
-  test_memory_proxy_read();
-  test_memory_proxy_write();
+  test_registers() ;
+
   return 0;
 }

@@ -4,24 +4,66 @@
 #include"byte_array/encoders.hpp"
 using namespace fetch::chain::consensus;
 using namespace fetch::byte_array;
-int main(int argc, char const **argv) {
-  if(argc != 2) {
-    std::cerr << "Usage " << argv[0] << " diffifulty" << std::endl;
-    exit(-1);
+
+ProofOfWork Test(ByteArray tx,  int diff) 
+{
+  ProofOfWork proof(tx);
+  proof.SetTarget( diff );
+  while( !proof() ) {
+    ++proof;
   }
-  int diff = atoi( argv[1]) ;
+  return proof;
+  
+}
+
+
+bool TestCompare(ByteArray tx, int diff1, int diff2) 
+{
+  ProofOfWork proof1(tx), proof2(tx);
+  proof1.SetTarget( diff1 );
+  proof2.SetTarget( diff2 );  
+  while( !proof1() ) {
+    ++proof1;
+  }
+  while( !proof2() ) {
+    ++proof2;
+  }  
+
+  return ( proof1.digest() > proof2.digest() ); 
+}
+
+
+int main(int argc, char const **argv) {
   
   SCENARIO("testing proof of work / double SHA") {
-    ProofOfWork proof("Hello world");
-    proof.SetTarget( diff );
-    while( !proof() ) {
-      ++proof;
-    }
-    std::cout << "Found proof " << std::endl;
-    std::cout << ToHex(proof.digest()) << " vs " << ToHex(proof.target()) << std::endl;
-    EXPECT( proof.digest() < proof.target() );
 
-    EXPECT( false );
+    SECTION("Easy difficulty") {
+      auto proof = Test("Hello world", 1);
+      EXPECT( proof.digest() < proof.target() );
+      
+      proof = Test("FETCH", 1);
+      EXPECT( proof.digest() < proof.target() );
+      
+      proof = Test("Blah blah", 1);
+      EXPECT( proof.digest() < proof.target() );       
+    };
+
+    SECTION("Slightly hard difficulty") {
+      auto proof = Test("Hello world", 10);
+      EXPECT( proof.digest() < proof.target() );             
+      proof = Test("FETCH", 12);
+      EXPECT( proof.digest() < proof.target() );             
+      proof = Test("Blah blah", 15);
+      EXPECT( proof.digest() < proof.target() );             
+    };
+
+    SECTION("Comparing") {
+      EXPECT(TestCompare("Hello world", 1,2));      
+      EXPECT(TestCompare("Hello world", 9, 10));
+      EXPECT(TestCompare("FETCH", 10, 12));
+      EXPECT(TestCompare("Blah blah", 3,15)); 
+    };
+    
   };
 
   return 0;

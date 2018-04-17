@@ -45,9 +45,7 @@
 #include "math/py_log.hpp"
 #include "math/linalg/py_matrix.hpp"
 #include "math/spline/py_linear.hpp"
-#include "script/py_dictionary.hpp"
 #include "script/py_variant.hpp"
-#include "script/py_ast.hpp"
 #include "image/py_load_png.hpp"
 #include "image/py_image.hpp"
 #include "storage/py_versioned_random_access_stack.hpp"
@@ -127,8 +125,6 @@
 #include "protocols/chain_keeper/py_commands.hpp"
 #include "protocols/chain_keeper/py_transaction_manager.hpp"
 */
-#include "vectorize/py_sse.hpp"
-#include "vectorize/py_vectorize_constants.hpp"
 #include "optimisation/py_brute_force.hpp"
 // #include "optimisation/py_abstract_spinglass_solver.hpp"
 #include "optimisation/instance/py_load_txt.hpp"

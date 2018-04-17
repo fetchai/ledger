@@ -34,12 +34,13 @@ class Tokenizer : public std::vector<Token> {
     
   }
 
-  bool Parse(byte_array_type const& contents) {
+  bool Parse(byte_array_type const& contents, bool clear = true) {
     uint64_t pos = 0;
     uint64_t line = 0;
     uint64_t char_index = 0;
     byte_array_type::container_type const *str = contents.pointer();
-
+    if(clear) this->clear();
+    
     // Counting tokens
     if(contents.size() > 100000) { // TODO: Optimise this parameter
       
