@@ -28,11 +28,11 @@ enable_testing()
 #    ARGS "describe"
 #    OUTPUT_VARIABLE ${GIT_DESCRIBE})
 
-add_definitions( --std=c++11 -msse4.2 )
+add_definitions( --std=c++11 -mavx -mfma)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function -O3")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -g -Wall -Wno-unused-function ")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -g -Wall -Wno-unused-function -DNDEBUG")
 
 set(CMAKE_BUILD_TYPE RELEASE)
 #set(CMAKE_BUILD_TYPE DEBUG)

@@ -5,7 +5,13 @@
 namespace fetch {
 namespace platform {
   enum {
+#ifdef __AVX__    
+    vector_size = 256
+#elif defined __SSE__
     vector_size = 128
+#else
+    vector_size = 32
+#endif
   };
   
   
