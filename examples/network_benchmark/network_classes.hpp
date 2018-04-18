@@ -13,11 +13,6 @@ public:
   Endpoint(const std::string &IP, const int TCPPort)      : IP_{IP}, TCPPort_{uint16_t(TCPPort)} {}
   Endpoint(const std::string &IP, const uint16_t TCPPort) : IP_{IP}, TCPPort_{TCPPort} {}
 
-  //Endpoint(Endpoint const &rhs)            = default;
-  //Endpoint(Endpoint &&rhs)                 = default;
-  //Endpoint &operator=(Endpoint const &rhs) = default;
-  //Endpoint &operator=(Endpoint&& rhs)      = default;
-
   Endpoint(const json::JSONDocument &jsonDoc)
   {
     LOG_STACK_TRACE_POINT;
@@ -67,7 +62,7 @@ public:
   uint16_t          &TCPPort()       { return TCPPort_; }
 
 private:
-  std::string IP_{"debug"}; // TODO: (`HUT`) : delete this
+  std::string IP_;
   uint16_t    TCPPort_ = 0;
 };
 

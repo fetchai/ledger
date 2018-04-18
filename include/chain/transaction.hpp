@@ -9,26 +9,26 @@ namespace fetch {
 namespace chain {
 
 struct TransactionSummary {
-  typedef byte_array::ConstByteArray digest_type;    
-  std::vector< uint32_t > groups;  
+  typedef byte_array::ConstByteArray digest_type;
+  std::vector< uint32_t > groups;
   mutable digest_type transaction_hash;
 };
 
 template< typename T >
 void Serialize( T & serializer, TransactionSummary const &b) {
-  serializer <<  b.groups << b.transaction_hash;  
+  serializer <<  b.groups << b.transaction_hash;
 }
 
 template< typename T >
 void Deserialize( T & serializer, TransactionSummary &b) {
-  serializer >>  b.groups >> b.transaction_hash;  
+  serializer >>  b.groups >> b.transaction_hash;
 }
 
-  
+
 class Transaction {
 public:
   typedef crypto::SHA256 hasher_type;
-  typedef TransactionSummary::digest_type digest_type; 
+  typedef TransactionSummary::digest_type digest_type;
   typedef byte_array::ConstByteArray arguments_type; // TODO: json doc with native serialization
 
   enum {
@@ -36,7 +36,7 @@ public:
   } ;
 
   void UpdateDigest() const {
-    LOG_STACK_TRACE_POINT;    
+    LOG_STACK_TRACE_POINT;
 
     if(modified == true)
     {
@@ -68,34 +68,34 @@ public:
   void PushGroup(byte_array::ConstByteArray const &res)
   {
     LOG_STACK_TRACE_POINT;
-    union 
+    union
     {
       uint8_t bytes[2];
-      uint16_t value;      
+      uint16_t value;
     } d;
     d.value = 0;
-    
+
     switch(res.size()) {
     case 0:
       break;
     default:
       /*
-TODO: Make 32 bit compat     
+TODO: Make 32 bit compat
     case 4:
-      d.bytes[3] = res[3];      
+      d.bytes[3] = res[3];
     case 3:
-      d.bytes[2] = res[2];      
-*/      
+      d.bytes[2] = res[2];
+*/
     case 2:
       d.bytes[1] = res[1];
-    case 1:         
+    case 1:
       d.bytes[0] = res[0];
     };
 //    std::cout << byte_array::ToHex( res) << " >> " << d.value << std::endl;
-    
+
 //    assert(d.value < 10);
-    
-    PushGroup(d.value);    
+
+    PushGroup(d.value);
     modified = true;
   }
 
@@ -108,53 +108,53 @@ TODO: Make 32 bit compat
         add = false;
         break;
       }
-      
+
     }
-    
+
     if(add)
     {
       summary_.groups.push_back(res);
       modified = true;
     }
-    
+
   }
 
   bool UsesGroup(uint16_t g, uint16_t m) const
   {
-    --m;    
+    --m;
     g &= m;
-    
+
     bool ret = false;
     for(auto const &gg: summary_.groups) {
-      ret |= ( g == (gg&m) );      
+      ret |= ( g == (gg&m) );
     }
-    
+
     return ret;
   }
-  
+
   void PushSignature(byte_array::ConstByteArray const& sig)
   {
     LOG_STACK_TRACE_POINT;
     signatures_.push_back(sig);
     modified = true;
-  }  
+  }
 
   void set_contract_name(byte_array::ConstByteArray const& name)
   {
     contract_name_ = name;
     modified = true;
-  }  
-  
+  }
+
   void set_arguments(byte_array::ConstByteArray const& args)
   {
     arguments_ = args;
     modified = true;
-  }  
-  
+  }
+
   std::vector< uint32_t > const &groups() const {
     return summary_.groups;
   }
-  
+
   std::vector< byte_array::ConstByteArray > const& signatures() const {
     return signatures_;
   }
@@ -170,7 +170,7 @@ TODO: Make 32 bit compat
   {
     return  signature_count_;
   }
-  
+
   byte_array::ConstByteArray data() const { return data_; };
 
   TransactionSummary const & summary() const { UpdateDigest(); return summary_; }
@@ -180,7 +180,7 @@ TODO: Make 32 bit compat
 private:
   TransactionSummary summary_;
   mutable bool               modified = true;
-  
+
   uint32_t  signature_count_;
   byte_array::ConstByteArray data_;
   // TODO: Add resources
@@ -192,7 +192,7 @@ private:
   template< typename T >
   friend void Serialize(T&, Transaction const&);
   template< typename T >
-  friend void Deserialize(T&, Transaction &);  
+  friend void Deserialize(T&, Transaction &);
 };
 
 
@@ -202,7 +202,7 @@ void Serialize( T & serializer, Transaction const &b) {
 
   serializer << uint16_t(b.VERSION);
 
-  
+
   serializer << b.summary_;
 
   serializer <<  uint32_t(b.signatures().size());
@@ -210,13 +210,13 @@ void Serialize( T & serializer, Transaction const &b) {
     serializer << sig;
   }
 
-  serializer << b.contract_name();  
-  serializer << b.arguments();  
+  serializer << b.contract_name();
+  serializer << b.arguments();
 }
 
 template< typename T >
 void Deserialize( T & serializer, Transaction &b) {
-  uint16_t version;  
+  uint16_t version;
 
   serializer >> version;
 
@@ -229,7 +229,7 @@ void Deserialize( T & serializer, Transaction &b) {
     serializer >> sig;
     b.PushGroup(sig);
   }
-  
+
   byte_array::ByteArray contract_name;
   typename Transaction::arguments_type arguments;
   serializer >> contract_name >> arguments;
