@@ -251,7 +251,7 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
   (*self) << #EXPRESSION << " := " << EXPRESSION << "\n";
 
 #define INFO(EXPRESSION)                                                    \
-  (*self) << "     - " << #EXPRESSION << "\n";                                      
+  (*self) << "     - " << EXPRESSION << "\n";                                      
 
 
 #define EXPECT_FAIL_SUCCESS(EXPRESSION)\

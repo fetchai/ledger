@@ -4,17 +4,57 @@
 
 namespace fetch {
 namespace platform {
+
+template< typename T >
+struct VectorRegisterSize {
   enum {
 #ifdef __AVX__    
-    vector_size = 256
+    value = 256
 #elif defined __SSE__
-    vector_size = 128
+    value = 128
 #else
-    vector_size = 32
+    value = 32
 #endif
   };
-  
-  
+};
+
+#define ADD_REGISTER_SIZE( type, size ) \
+template< >                             \
+struct VectorRegisterSize<type> { \
+enum {                                          \
+  value = size                                  \
+};                                              \
+}                                               
+
+#ifdef __AVX2__
+
+ADD_REGISTER_SIZE(int, 256);
+
+#elif defined __AVX__
+
+ADD_REGISTER_SIZE(int, 128);
+ADD_REGISTER_SIZE(double, 256);
+ADD_REGISTER_SIZE(float, 256);
+
+#elif defined __SSE42__
+
+ADD_REGISTER_SIZE(int, 128);
+ADD_REGISTER_SIZE(double, 128);
+ADD_REGISTER_SIZE(float, 128);
+
+#elif defined __SSE3__
+
+ADD_REGISTER_SIZE(int, 128);
+ADD_REGISTER_SIZE(double, 128);
+ADD_REGISTER_SIZE(float, 128);
+
+#else
+
+ADD_REGISTER_SIZE(int, sizeof(int));
+
+#endif
+#undef ADD_REGISTER_SIZE
+
 constexpr bool has_avx() {
 #ifdef __AVX__
   return true;

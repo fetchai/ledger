@@ -37,6 +37,7 @@ class VectorRegister<T, 256, __m256i> {
   typedef __m256i mm_register_type;
   
   enum {
+    E_VECTOR_SIZE = 256,    
     E_REGISTER_SIZE = sizeof(mm_register_type),
     E_BLOCK_COUNT = E_REGISTER_SIZE / sizeof(type)
   };
@@ -75,6 +76,7 @@ class VectorRegister<float, 256, __m256> {
   typedef __m256 mm_register_type;
   
   enum {
+    E_VECTOR_SIZE = 256,
     E_REGISTER_SIZE = sizeof(mm_register_type),
     E_BLOCK_COUNT = E_REGISTER_SIZE / sizeof(type)
   };
@@ -111,6 +113,7 @@ class VectorRegister<double, 256, __m256d> {
   typedef __m256d mm_register_type;
   
   enum {
+    E_VECTOR_SIZE = 256,
     E_REGISTER_SIZE = sizeof(mm_register_type),
     E_BLOCK_COUNT = E_REGISTER_SIZE / sizeof(type)
   };
@@ -149,10 +152,12 @@ class VectorRegister<double, 256, __m256d> {
     return VectorRegister<type, 256, L>(ret);                           \
   }
 
+#ifdef __AVX2__
 FETCH_ADD_OPERATOR(*, int, __m256i, _mm256_mullo_epi32);
 FETCH_ADD_OPERATOR(-, int, __m256i, _mm256_sub_epi32);
 //FETCH_ADD_OPERATOR(/, int, __m256i, _mm256_div_epi32);
 FETCH_ADD_OPERATOR(+, int, __m256i, _mm256_add_epi32);  
+#endif
 
 FETCH_ADD_OPERATOR(*, float, __m256, _mm256_mul_ps);
 FETCH_ADD_OPERATOR(-, float, __m256, _mm256_sub_ps);  

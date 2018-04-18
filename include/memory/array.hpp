@@ -3,7 +3,7 @@
 
 #include "iterator.hpp"
 #include "meta/log2.hpp"
-
+#include"platform.hpp"
 #include <algorithm>
 #include <atomic>
 #include <cassert>
@@ -25,8 +25,8 @@ class Array {
   typedef Array<T> self_type;
   typedef T type;
 
-  enum {
-    E_SIMD_SIZE = 16,
+  enum { 
+    E_SIMD_SIZE = (platform::VectorRegisterSize< type >::value >> 3),    
     E_SIMD_COUNT = E_SIMD_SIZE / sizeof(T),
     E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value
   };

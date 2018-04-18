@@ -36,8 +36,9 @@ public:
   typedef typename container_type::reverse_iterator reverse_iterator;
 
   /* Vector register is used parallel instruction execution using SIMD */
-  typedef typename vectorize::VectorRegister< type, platform::vector_size > vector_register_type;
-  typedef vectorize::VectorRegisterIterator<type, platform::vector_size> vector_register_iterator_type;
+  enum { vector_size = platform::VectorRegisterSize< type >::value  };
+  typedef typename vectorize::VectorRegister< type, vector_size > vector_register_type;
+  typedef vectorize::VectorRegisterIterator<type, vector_size> vector_register_iterator_type;
   
   /* Kernels for performing execution */
   typedef void (*vector_kernel_type)(vector_register_type const &, vector_register_type const &, vector_register_type &);
@@ -346,8 +347,8 @@ public:
 
     vector_register_type a,b,c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
-    vector_register_iterator_type ib( obj2.data().pointer() );    
+    vector_register_iterator_type ia( obj1.data().pointer(),  obj1.data().size() );
+    vector_register_iterator_type ib( obj2.data().pointer(),  obj2.data().size() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
@@ -375,7 +376,7 @@ public:
 
     vector_register_type a,b;
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
 

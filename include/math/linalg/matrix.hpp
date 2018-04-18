@@ -112,12 +112,13 @@ class Matrix : public A {
                                                                         \
   std::size_t N = other.padded_size();                                  \
   vector_register_type a,b;                                             \
-  vector_register_iterator_type ia( other.data().pointer() );           \
-  vector_register_iterator_type ib( this->data().pointer() );           \
+  vector_register_iterator_type ia( other.data().pointer(), other.data().size() ); \
+  vector_register_iterator_type ib( this->data().pointer(), this->data().size() ); \
   for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) { \
     ia.Next(a);                                                         \
     ib.Next(b);                                                         \
     b = b VOP a;                                                        \
+    assert(i < N);                                                      \
     b.Stream( this->data().pointer() + i);                              \
   }                                                                     \
   return *this;                                                         \
@@ -245,8 +246,8 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a,b,c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
-    vector_register_iterator_type ib( this->data().pointer() );    
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ib( this->data().pointer(), this->data().size()  );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
@@ -264,8 +265,8 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a,b,c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
-    vector_register_iterator_type ib( this->data().pointer() );    
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ib( this->data().pointer(), this->data().size() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
@@ -282,8 +283,8 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a,b,c; 
 
-    vector_register_iterator_type ib( obj1.data().pointer() );
-    vector_register_iterator_type ia( this->data().pointer() );    
+    vector_register_iterator_type ib( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ia( this->data().pointer(), this->data().size() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
@@ -300,8 +301,8 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a,b,c; 
 
-    vector_register_iterator_type ib( obj1.data().pointer() );
-    vector_register_iterator_type ia( this->data().pointer() );    
+    vector_register_iterator_type ib( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ia( this->data().pointer(), this->data().size() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
@@ -330,8 +331,8 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a,b,c; 
 
-    vector_register_iterator_type ib( obj1.data().pointer() );
-    vector_register_iterator_type ia( obj2.data().pointer() );    
+    vector_register_iterator_type ib( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ia( obj2.data().pointer(), obj2.data().size() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
@@ -348,7 +349,7 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a, b(scalar), c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
 
@@ -366,8 +367,8 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a,b,c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
-    vector_register_iterator_type ib( obj2.data().pointer() );    
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ib( obj2.data().pointer(), obj2.data().size() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
@@ -384,7 +385,7 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a, b(scalar), c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
 
@@ -402,8 +403,8 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a,b,c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
-    vector_register_iterator_type ib( obj2.data().pointer() );    
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ib( obj2.data().pointer(), obj2.data().size() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
@@ -420,7 +421,7 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a, b(scalar), c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
 
@@ -439,8 +440,8 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a,b,c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
-    vector_register_iterator_type ib( obj2.data().pointer() );    
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ib( obj2.data().pointer(), obj2.data().size() );    
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
       ib.Next(b);
@@ -457,7 +458,7 @@ class Matrix : public A {
     std::size_t N = obj1.data().size();
     vector_register_type a, b(scalar), c; 
 
-    vector_register_iterator_type ia( obj1.data().pointer() );
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
     for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
       ia.Next(a);
 
@@ -660,13 +661,13 @@ class Matrix : public A {
     alignas(16) type reduction[vector_register_type::E_BLOCK_COUNT] = {0};
     
     for (std::size_t i = 0; i < mA.height(); ++i) {
-      vector_register_iterator_type ib( mB.data().pointer() );
+      vector_register_iterator_type ib( mB.data().pointer(), mB.data().size() );
       
       for (std::size_t j = 0; j < mB.height(); ++j) {
         std::size_t k = 0;
         type ele = 0;
           
-        vector_register_iterator_type ia(  mA.data().pointer() + i * mA.padded_width());
+        vector_register_iterator_type ia(  mA.data().pointer() + i * mA.padded_width(), mA.padded_height());
         vector_register_type c(reduction);
         
         for ( ; k < aligned_width; k+= vector_register_type::E_BLOCK_COUNT) {

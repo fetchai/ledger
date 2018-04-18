@@ -24,6 +24,7 @@ class VectorRegister {
   typedef S mm_register_type;
   
   enum {
+    E_VECTOR_SIZE = sizeof(mm_register_type),        
     E_REGISTER_SIZE = sizeof(mm_register_type),
     E_BLOCK_COUNT = E_REGISTER_SIZE / sizeof(type)
   };

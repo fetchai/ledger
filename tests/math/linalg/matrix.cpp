@@ -56,17 +56,33 @@ void test_invert(std::size_t const &n) {
  
 
 template< typename D >
-using _M = Matrix<D,fetch::memory::Array< D > >;
+using _S = fetch::memory::Array< D >;
+
+template< typename D >
+using _M = Matrix<D, _S< D > >;
 
 void Test1() {
-       SCENARIO("AllClose for ints") {
-         _M<int> A,B;
- 
+       SCENARIO("Basic info") {
+         INFO("Vector register size for int: " << _M<int>::vector_size);
+         INFO("Vector register size for float: " << _M<float>::vector_size);
+         INFO("Vector register size for double: " << _M<double>::vector_size);
+         INFO("Vector SIMD count for int: " << _S<int>::E_SIMD_SIZE);
+         INFO("Vector SIMD count for float: " << _S<float>::E_SIMD_SIZE);
+         INFO("Vector SIMD count for double: " << _S<double>::E_SIMD_SIZE);
+
+         INFO("Vector SIMD count for int: " << _M<int>::vector_register_type::E_BLOCK_COUNT);
+         INFO("Vector SIMD count for float: " << _M<float>::vector_register_type::E_BLOCK_COUNT);
+         INFO("Vector SIMD count for double: " << _M<double>::vector_register_type::E_BLOCK_COUNT);
+
+         INFO("Vector SIMD count for int: " << _M<int>::vector_register_type::E_VECTOR_SIZE);
+         INFO("Vector SIMD count for float: " << _M<float>::vector_register_type::E_VECTOR_SIZE);
+         INFO("Vector SIMD count for double: " << _M<double>::vector_register_type::E_VECTOR_SIZE);         
        };
        
        SCENARIO("Addition for int") {
 
         _M<int> A,B,C,R;
+
         
         R.Resize( 7, 7 );
         A = _M<int>(R"(
@@ -225,7 +241,7 @@ EXPECT( R.Dot(A,B).AllClose(C) );
         SCENARIO("Addition for float") {
 
         _M<float> A,B,C,R;
-        
+
         R.Resize( 7, 7 );
         A = _M<float>(R"(
 -0.26227950736 -1.36910925273 0.980054371644 1.32713840772 2.31283768424 2.53244524973 -1.88827862008 ;

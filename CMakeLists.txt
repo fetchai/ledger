@@ -5,6 +5,17 @@ OPTION(BUILD_TESTS "Build tests" ON)
 OPTION(BUILD_EXAMPLES "Build examples" ON)
 OPTION(BUILD_BENCHMARK "Build benchmark" ON)
 OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" ON)
+
+
+## Check feature set on Apple with
+# sysctl -a | grep machdep.cpu.features
+
+OPTION(BUILD_MACH_SSE3 "Enable SSE3" ON)
+OPTION(BUILD_MACH_SSE42 "Enable SSE4.2" ON)
+OPTION(BUILD_MACH_AVX "Enable AVX" OFF)
+OPTION(BUILD_MACH_FMA "Enable FMA" OFF)
+OPTION(BUILD_MACH_AVX2 "Enable AVX2" OFF)
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(PNG REQUIRED)
@@ -29,9 +40,29 @@ enable_testing()
 #    OUTPUT_VARIABLE ${GIT_DESCRIBE})
 
 
-## Check feature set on Apple with
-# sysctl -a | grep machdep.cpu.features
-add_definitions( --std=c++11 -msse4.2 )
+add_definitions( --std=c++11 )
+
+if(BUILD_MACH_SSE3)
+add_definitions( -msse3 ) 
+endif()
+
+if(BUILD_MACH_SSE42)
+add_definitions( -msse4.2 ) 
+endif()
+
+if(BUILD_MACH_AVX)
+add_definitions( -mavx ) 
+endif()
+
+if(BUILD_MACH_AVX2)
+add_definitions( -mavx2 ) 
+endif()
+
+if(BUILD_MACH_FMA)
+add_definitions( -mfma ) 
+endif()
+
+
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function -O3")

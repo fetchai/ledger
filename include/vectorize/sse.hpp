@@ -37,6 +37,7 @@ class VectorRegister<T, 128, __m128i> {
   typedef __m128i mm_register_type;
   
   enum {
+    E_VECTOR_SIZE = 128,    
     E_REGISTER_SIZE = sizeof(mm_register_type),
     E_BLOCK_COUNT = E_REGISTER_SIZE / sizeof(type)
   };
@@ -75,6 +76,7 @@ class VectorRegister<float, 128, __m128> {
   typedef __m128 mm_register_type;
   
   enum {
+    E_VECTOR_SIZE = 128,    
     E_REGISTER_SIZE = sizeof(mm_register_type),
     E_BLOCK_COUNT = E_REGISTER_SIZE / sizeof(type)
   };
@@ -111,6 +113,7 @@ class VectorRegister<double, 128, __m128d> {
   typedef __m128d mm_register_type;
   
   enum {
+    E_VECTOR_SIZE = 128,    
     E_REGISTER_SIZE = sizeof(mm_register_type),
     E_BLOCK_COUNT = E_REGISTER_SIZE / sizeof(type)
   };
