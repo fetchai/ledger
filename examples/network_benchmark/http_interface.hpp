@@ -43,6 +43,10 @@ public:
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
     { return this->SetRate(params, req); });
 
+    HTTPModule::Post("/set-transactions-per-call",\
+    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
+    { return this->SetTPC(params, req); });
+
     HTTPModule::Post("/reset",\
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
     { return this->Reset(params, req); });
@@ -52,9 +56,8 @@ public:
     { return this->TransactionsHash(params, req); });
   }
 
-  HttpInterface(HttpInterface &&rhs)
+  HttpInterface(HttpInterface&& rhs)
   {
-    std::cout << "calling move!" << std::endl;
     node_ = std::move(rhs.node());
     attachPages();
   }
@@ -110,7 +113,6 @@ public:
 
   http::HTTPResponse SetRate(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
-    std::cerr << "hit this" << std::endl;
     json::JSONDocument doc;
     try
     {
@@ -124,7 +126,25 @@ public:
       return http::HTTPResponse("{\"response\": \"success\" }");
     } catch (...)
     {
-      std::cerr << "failt this" << std::endl;
+      return http::HTTPResponse("{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}");
+    }
+  }
+
+  http::HTTPResponse SetTPC(http::ViewParameters const &params, http::HTTPRequest const &req)
+  {
+    json::JSONDocument doc;
+    try
+    {
+      doc = req.JSON();
+      std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
+
+      int tpc = doc["transactions"].as_int();
+
+      node_->setTransactionsPerCall(tpc);
+
+      return http::HTTPResponse("{\"response\": \"success\" }");
+    } catch (...)
+    {
       return http::HTTPResponse("{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}");
     }
   }

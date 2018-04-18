@@ -59,33 +59,8 @@ class SharedArray {
   }
   
   SharedArray() : SharedArray(0) {}
-
-  int temp_ = 0;
-
-  int printThing(SharedArray const &other)
-  {
-
-    std::cerr << "begin" << std::endl;
-
-    {
-      std::stringstream stream;
-
-      if(other.data_)
-        stream << "Copying from: " << other.size_ << "+" << other.data_.use_count()  << std::endl;
-      else
-        stream << "Copying from: " << other.size_ << "+" << "null" << std::endl;
-
-      std::cerr << stream.str();
-    }
-
-    return 1;
-  }
-
   SharedArray(SharedArray const &other)
-    :
-      temp_{printThing(other)},
-      size_(other.size_),
-    data_(other.data_) {
+    :size_(other.size_), data_(other.data_) {
   }
 
   SharedArray(SharedArray &&other) {
@@ -162,12 +137,12 @@ class SharedArray {
   }
 
   std::size_t size() const {
-    //assert(size_ != nullptr); // this causes mac osx to fail: "Invalid operands to binary expression ('fetch::memory::SharedArray::size_type' (aka 'unsigned long') and 'nullptr_t')"
+    //assert(size_ != nullptr); // TODO: (`HUT`) : do not commit, this is commened out as broke macosx build
     return size_;
   }
 
   std::size_t padded_size() const {
-    //assert(size_ != nullptr); // this causes mac osx to fail: "Invalid operands to binary expression ('fetch::memory::SharedArray::size_type' (aka 'unsigned long') and 'nullptr_t')" 
+    //assert(size_ != nullptr); // TODO: (`HUT`) : do not commit, this is commened out as broke macosx build
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT)
                          << E_LOG_SIMD_COUNT;
     if (padded < size_) padded += E_SIMD_COUNT;

@@ -23,19 +23,26 @@ def ordered(obj):
 def HTTPpost(endpoint, page, jsonArg="{}"):
     return requests.post('http://'+str(endpoint["IP"])+':'+str(endpoint["HTTPPort"])+'/'+page, json=jsonArg)
 
-setRate = 10
-minRate = 1
-sleepTime = 50
+setRate             = 100000
+minRate             = 0
+sleepTime           = 10
+transactionsPerCall = { "transactions": 2000 }
 
 # localhost test
-endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
+#endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
 #endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
 
 # pi test
 #endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "192.168.1.150"}
 #endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.151"}
 
+# google cloud test
+endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "192.168.1.213"}
+endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "35.204.31.221"}
+
+HTTPpost(endpoint1, 'set-transactions-per-call', transactionsPerCall)
+HTTPpost(endpoint2, 'set-transactions-per-call', transactionsPerCall)
+print "Set trans/call to ", transactionsPerCall["transactions"]
 
 HTTPpost(endpoint1, 'add-endpoint', endpoint2)
 HTTPpost(endpoint2, 'add-endpoint', endpoint1)
@@ -50,9 +57,6 @@ for i in range(1000):
 
     HTTPpost(endpoint1, 'reset')
     HTTPpost(endpoint2, 'reset')
-
-    #requests.post('http://localhost:8081/start')
-    #requests.post('http://localhost:8080/start')
 
     rate = { "rate": setRate }
     HTTPpost(endpoint1, 'set-rate', rate)
@@ -71,7 +75,7 @@ for i in range(1000):
     HTTPpost(endpoint2, 'stop')
 
     print "Stopped"
-    time.sleep(2)
+    time.sleep(4)
 
     ## inspect the hashes (not generally recommended)
     #page1 = HTTPpost(endpoint1, 'transactions')
@@ -85,6 +89,7 @@ for i in range(1000):
         print "FAILED TO MATCH: "
         print "node 0", jsonPrint(page1)
         print "node 1", jsonPrint(page2)
+        continue
         #exit(1)
     else:
         print "Successfully matched"
@@ -101,7 +106,7 @@ for i in range(1000):
     print
 
     # Set new transaction rate
-    #setRate = int(setRate/2) -1
-    setRate = setRate -1
+    setRate = int(setRate/2) -1
+    #setRate = setRate -1
     if(setRate < minRate):
         setRate = minRate

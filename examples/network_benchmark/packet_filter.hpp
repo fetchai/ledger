@@ -12,14 +12,8 @@ template <typename T, std::size_t size>
 class PacketFilter
 {
 public:
-  PacketFilter()
-  {
-    for (std::size_t i = 0; i < size; ++i)
-    {
-      history_[i] = T();
-    }
-  }
 
+  PacketFilter()                             = default;
   PacketFilter(PacketFilter &rhs)            = delete;
   PacketFilter(PacketFilter &&rhs)           = delete;
   PacketFilter operator=(PacketFilter& rhs)  = delete;

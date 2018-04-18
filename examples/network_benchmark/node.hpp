@@ -10,6 +10,12 @@
 #include"./packet_filter.hpp"
 #include"./transaction_list.hpp"
 
+#include<random>
+#include<memory>
+#include<utility>
+#include<limits>
+#include<set>
+
 namespace fetch
 {
 namespace network_benchmark
@@ -18,6 +24,9 @@ namespace network_benchmark
 class Node
 {
 public:
+
+  using transaction = chain::Transaction;
+
   Node(network::ThreadManager *tm, int seed) :
     seed_{seed},
     nodeDirectory_{tm}
@@ -51,12 +60,23 @@ public:
     threadSleepTimeUs_ = rate;
   }
 
+  void setTransactionsPerCall(int tpc)
+  {
+    std::stringstream stream;
+    stream << "Setting transactions per call to: " << tpc << std::endl;
+    std::cerr << stream.str();
+
+    transactionsPerCall_ = tpc;
+  }
+
   void Reset()
   {
     {
       std::stringstream stream;
       stream << "stopping..." << std::endl;
       std::cerr << stream.str();
+
+      receivedCount_ = 0;
     }
 
 
@@ -68,8 +88,6 @@ public:
     std::stringstream stream;
     stream << "stopped..." << std::endl;
     std::cerr << stream.str();
-
-
   }
 
   void Start()
@@ -104,14 +122,15 @@ public:
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     std::stringstream stream;
-    stream << "Stopping, we sent: " << keepCount << std::endl;
-    stream << "We recorded: " << transactionList_.size() << std::endl;
+    stream << "Stopping, we sent: " << sentCount_ << std::endl;
+    stream << "We recorded: " << receivedCount_ << std::endl;
+    stream << "We logged: " << transactionList_.size() << std::endl;
     std::cerr << stream.str();
 
     fetch::logger.PrintTimings();
   }
 
-  std::set<chain::Transaction> GetTransactions()
+  std::set<transaction> GetTransactions()
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     return transactionList_.GetTransactions();
@@ -124,106 +143,80 @@ public:
   }
 
   // RPC calls
-  void ReceiveTransaction(chain::Transaction trans)
+  void ReceiveTransactions(std::vector<transaction> trans)
   {
-    std::stringstream stream;
-    stream << "Received new transaction" << std::endl;
-    std::cerr << stream.str();
-
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
-
-    transactionList_.Add(std::move(trans));
+    receivedCount_ += trans.size();
+    transactionList_.Add(trans);
   }
 
   void ping() { std::cout << "pinged" << std::endl;}
 
 private:
-  int                                            seed_;
-  NodeDirectory                                  nodeDirectory_;                 // Manage connections to other nodes
-  PacketFilter<byte_array::BasicByteArray, 1000> packetFilter_;                  // Filter 'already seen' packets
-  TransactionList<chain::Transaction, 500000>    transactionList_;               // List of all transactions, sent and received
-  std::mutex                                     mutex_;
+  int                                                seed_;
+  NodeDirectory                                      nodeDirectory_;   // Manage connections to other nodes
+  PacketFilter<byte_array::BasicByteArray, 1000>     packetFilter_;    // Filter 'already seen' packets
+  TransactionList<transaction, 500000>               transactionList_; // List of all transactions, sent and received
+  std::mutex                                         mutex_;
 
   // Transmitting thread
-  std::unique_ptr<std::thread>                   thread_;
-  uint32_t                                       threadSleepTimeUs_ = 1000;
-  bool                                           sendingTransactions_ = false;
-  int                                            keepCount = 0;
+  std::unique_ptr<std::thread>                       thread_;
+  uint32_t                                           threadSleepTimeUs_   = 1000;
+  uint32_t                                           transactionsPerCall_ = 1000;
+  bool                                               sendingTransactions_ = false;
+  std::size_t                                        sentCount_           = 0;
+  std::atomic<std::size_t>                           receivedCount_{0};
 
-  chain::Transaction nextTransaction()
+  transaction nextTransaction()
   {
-    static fetch::random::LaggedFibonacciGenerator<> lfg(seed_);
-    chain::Transaction trans;
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
+
+    transaction trans;
 
     // Push on two 32-bit numbers so as to avoid multiple nodes creating duplicates
-    trans.PushGroup(lfg());
-    trans.PushGroup(lfg());
+    trans.PushGroup(dis(gen));
+    trans.PushGroup(dis(gen));
     trans.UpdateDigest();
 
     return trans;
   }
 
+  std::vector<transaction> getTrans(std::size_t numberToSend)
+  {
+    std::vector<transaction> allTrans;
+
+    for (std::size_t i = 0; i < numberToSend; ++i)
+    {
+      auto trans = nextTransaction();
+      allTrans.push_back(trans);
+    }
+
+    return allTrans;
+  }
+
   void sendTransactions()
   {
-    //std::chrono::microseconds sleepTime(threadSleepTimeUs_);
-    //keepCount = 0;
+    std::chrono::microseconds sleepTime(threadSleepTimeUs_);
+    sentCount_ = 0;
 
-//    while(sendingTransactions_)
-//    {
-//      LOG_STACK_TRACE_POINT;
-//
-//      std::stringstream stream;
-//      stream << "sending trans" << std::endl;
-//      std::cerr << stream.str();
-//
-//      auto trans = nextTransaction();
-//      auto &hash = trans.summary().transaction_hash;
-//
-//      if(true || packetFilter_.Add(hash))
-//      {
-//        if(keepCount++ % 1000 == 0) {std::cerr << ".";}
-//
-//        //transactionList_.Add(trans);
-//        //nodeDirectory_.BroadcastTransaction(std::move(trans));
-//        {
-//          std::stringstream stream;
-//          stream << "push to nodedir" << std::endl;
-//          std::cerr << stream.str();
-//        }
-//
-//        nodeDirectory_.BroadcastTransaction(trans);
-//
-//        {
-//          std::stringstream stream;
-//          stream << "trans sent" << std::endl;
-//          std::cerr << stream.str();
-//        }
-//
-//      }
-//      else
-//      {
-//        std::cout << "Trans blocked" << std::endl;
-//      }
-//
-//
-    while(true)
+    while(sendingTransactions_)
     {
-      std::chrono::microseconds sleepTime(threadSleepTimeUs_);
-      keepCount = 0;
-      std::this_thread::sleep_for(sleepTime);
+      LOG_STACK_TRACE_POINT;
+      std::size_t numberToSend = transactionsPerCall_;
 
+      const std::vector<transaction> &allTrans = getTrans(numberToSend);
+
+      sentCount_ += numberToSend;
+      if(sentCount_ % 1000 == 0) {std::cerr << ".";}
+
+      transactionList_.Add(allTrans);
+      nodeDirectory_.BroadcastTransactions(allTrans);
+
+      if(threadSleepTimeUs_ > 0)
       {
-        std::stringstream stream;
-        stream << "sending a trans" << std::endl;
-        std::cerr << stream.str();
-      }
-
-      nodeDirectory_.BroadcastTransaction();
-
-      {
-        std::stringstream stream;
-        stream << "sent a trans" << std::endl;
-        std::cerr << stream.str();
+        std::this_thread::sleep_for(sleepTime);
       }
     }
   }

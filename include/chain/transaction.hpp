@@ -35,41 +35,6 @@ public:
     VERSION = 1
   } ;
 
-  bool wasDestroyed = false;
-
-  Transaction()
-  {
-    //{
-    //  std::stringstream stream;
-    //  stream << "Create transaction" << std::endl;
-    //  std::cerr << stream.str();
-    //}
-  }
-
-  //Transaction(Transaction const &rhs)            = delete;
-  //Transaction(Transaction &&rhs)                 = default;
-  //Transaction &operator=(Transaction const &rhs) = delete;
-  //Transaction &operator=(Transaction&& rhs)      = default;
-
-  ~Transaction()
-  {
-    {
-      std::stringstream stream;
-      stream << "Destroy transaction " << byte_array::ToHex(summary().transaction_hash) << std::endl;
-      std::cerr << stream.str();
-    }
-    if(wasDestroyed)
-    {
-      {
-        std::stringstream stream;
-        stream << "trying to double destroy transaction!" << std::endl;
-        std::cerr << stream.str();
-      }
-    }
-    wasDestroyed = true;
-  }
-  
-  
   void UpdateDigest() const {
     LOG_STACK_TRACE_POINT;    
 
@@ -213,10 +178,6 @@ TODO: Make 32 bit compat
   TransactionSummary const & summary() const { UpdateDigest(); return summary_; }
 
 
-  // TODO: (`HUT`) : delete this
-  //
-  const std::vector<char>    &bulkUp() const { return bulkUp_; }
-  std::vector<char>          &bulkUp()       { return bulkUp_; }
 
 private:
   TransactionSummary summary_;
@@ -230,68 +191,6 @@ private:
 
   arguments_type arguments_;
 
-  std::vector<char> bulkUp_ = {
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-    21,
-    22,
-    23,
-    24,
-    25,
-    26,
-    27,
-    28,
-    29,
-    30,
-    31,
-    32,
-    33,
-    34,
-    35,
-    36,
-    37,
-    38,
-    39,
-    40,
-    41,
-    42,
-    43,
-    44,
-    45,
-    46,
-    47,
-    48,
-    'f',
-    'i',
-    'n',
-    'i',
-    's',
-    'h',
-    'f',
-    'f',
-    'f'
-  };
-
-
   template< typename T >
   friend void Serialize(T&, Transaction const&);
   template< typename T >
@@ -302,64 +201,24 @@ private:
 template< typename T >
 void Serialize( T & serializer, Transaction const &b) {
 
-  {
-    std::stringstream stream;
-    stream << "serializing tranaction " << b.wasDestroyed << std::endl;
-    std::cerr << stream.str();
-  }
-
-  // TODO: (`HUT`) : delete this
-  serializer << b.bulkUp();
 
   serializer << uint16_t(b.VERSION);
 
-  {
-    std::stringstream stream;
-    stream << "serializing tranaction1 " << b.wasDestroyed << std::endl;
-    std::cerr << stream.str();
-  }
   
   serializer << b.summary_;
-  {
-    std::stringstream stream;
-    stream << "serializing tranaction2 " << b.wasDestroyed << std::endl;
-    std::cerr << stream.str();
-  }
 
   serializer <<  uint32_t(b.signatures().size());
-  {
-    std::stringstream stream;
-    stream << "serializing tranaction3 " << b.wasDestroyed << std::endl;
-    std::cerr << stream.str();
-  }
   for(auto &sig: b.signatures()) {
     serializer << sig;
   }
-  {
-    std::stringstream stream;
-    stream << "serializing tranaction4 " << b.wasDestroyed << std::endl;
-    std::cerr << stream.str();
-  }
 
   serializer << b.contract_name();  
-  {
-    std::stringstream stream;
-    stream << "serializing tranaction5 " << b.wasDestroyed << std::endl;
-    std::cerr << stream.str();
-  }
   serializer << b.arguments();  
-  {
-    std::stringstream stream;
-    stream << "serializing tranaction6 " << b.wasDestroyed << std::endl;
-    std::cerr << stream.str();
-  }
 }
 
 template< typename T >
 void Deserialize( T & serializer, Transaction &b) {
   uint16_t version;  
-
-  serializer >> b.bulkUp();
 
   serializer >> version;
 

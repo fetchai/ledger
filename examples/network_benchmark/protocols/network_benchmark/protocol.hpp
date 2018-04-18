@@ -13,7 +13,7 @@ class NetworkBenchmarkProtocol : public fetch::service::Protocol {
 public:
 
   NetworkBenchmarkProtocol(std::shared_ptr<T> node) : Protocol() {
-    this->Expose(NetworkBenchmark::SEND_TRANSACTION,  node.get(),  &T::ReceiveTransaction);
+    this->Expose(NetworkBenchmark::SEND_TRANSACTIONS,  node.get(),  &T::ReceiveTransactions);
   }
 };
 

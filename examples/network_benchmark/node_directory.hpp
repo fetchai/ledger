@@ -19,6 +19,8 @@ class NodeDirectory
 {
 public:
 
+  using clientType = service::ServiceClient<network::TCPClient>;
+
   NodeDirectory(network::ThreadManager *tm) :
   tm_{tm}
   {}
@@ -41,63 +43,30 @@ public:
   {
     if (serviceClients_.find(endpoint) == serviceClients_.end())
     {
-      auto client = new service::ServiceClient<network::TCPClient> {endpoint.IP(), endpoint.TCPPort(), tm_};
+      auto client = new clientType {endpoint.IP(), endpoint.TCPPort(), tm_};
       serviceClients_[endpoint] = client;
     }
   }
 
-  void BroadcastTransaction(chain::Transaction trans)
+  template <typename T>
+  void BroadcastTransactions(T&& trans)
   {
-    chain::Transaction trans_temp;
-    CallAllEndpoints(trans_temp);
+    CallAllEndpoints(protocols::NetworkBenchmark::SEND_TRANSACTIONS, std::forward<T>(trans));
   }
 
-//  template<typename T, typename... Args>
-//  void CallAllEndpoints(T CallEnum, Args... args)
-//  {
-//    for(auto &i : serviceClients_)
-//    {
-//      auto client = i.second;
-//      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, CallEnum, args...);
-//    }
-//  }
-
-  void CallAllEndpoints(chain::Transaction trans)
+  template<typename T, typename... Args>
+  void CallAllEndpoints(T CallEnum, Args... args)
   {
     for(auto &i : serviceClients_)
     {
       auto client = i.second;
-      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, protocols::NetworkBenchmark::SEND_TRANSACTION, trans);
-    }
-  }
-
-
-  void BroadcastTransaction()
-  {
-    for(auto &i : serviceClients_)
-    {
-      auto client = i.second;
-      chain::Transaction trans;
-
-      {
-        std::stringstream stream;
-        stream << "sending a trans" << std::endl;
-        std::cerr << stream.str();
-      }
-
-      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, protocols::NetworkBenchmark::SEND_TRANSACTION, trans);
-
-      {
-        std::stringstream stream;
-        stream << "sent, a trans" << std::endl;
-        std::cerr << stream.str();
-      }
+      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, CallEnum, args...);
     }
   }
 
 private:
-  fetch::network::ThreadManager                                    *tm_;
-  std::map<Endpoint, service::ServiceClient<network::TCPClient> *> serviceClients_;
+  fetch::network::ThreadManager    *tm_;
+  std::map<Endpoint, clientType *> serviceClients_;
 };
 
 }
