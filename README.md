@@ -21,6 +21,10 @@ Test
 ctest
 
 
+Docker - build, develop & run stuff in docker container
+=======================================================
+This project has full support for Docker - it can be used to build whole project, execute resulting binaries and do whole development using docker, please see details in [this guide](README-docker.md)
+
 Notes
 =====
 If network gives random read/write errors, it can be an indication that
