@@ -24,7 +24,7 @@ uint16_t ColorFromString(std::string name) {
   return details::color_map.find(name)->second;
 }
 
-std::string GetColor(uint16_t const &fg, uint16_t const &bg) {
+std::string GetColor(int const &fg, int const &bg) {
   std::stringstream ret("");
   ret << "\33[3" << fg << ";4" << bg << "m";
   return ret.str();

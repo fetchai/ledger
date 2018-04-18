@@ -1,5 +1,8 @@
 #ifndef VECTORIZE_INFO_HPP
 #define VECTORIZE_INFO_HPP
+#include <cstdint>
+#include <cstddef>
+
 
 namespace fetch {
 namespace vectorize {

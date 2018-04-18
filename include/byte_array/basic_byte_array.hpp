@@ -14,7 +14,7 @@ class BasicByteArray ;
 };
 
 namespace serializers {  // TODO: refactor
-template <typename T> void Deserialize(T &, byte_array::BasicByteArray &);  
+template <typename T> inline void Deserialize(T &, byte_array::BasicByteArray &);  
 };
 
 namespace byte_array {
@@ -38,7 +38,8 @@ public:
     while (str[n] != '\0') ++n;
     Reserve(n);
     Resize(n);
-    for (std::size_t i = 0; i < n; ++i) data_[i] = str[i];
+    uint8_t const* up = reinterpret_cast< uint8_t const *>( str );
+    for (std::size_t i = 0; i < n; ++i) data_[i] = up[i];
     //    data_[n] = '\0';
   }
   
@@ -78,7 +79,8 @@ public:
   operator std::string() const {
     std::string ret;
     ret.resize(length_);
-    for (std::size_t i = 0; i < length_; ++i) ret[i] = arr_pointer_[i];
+    char const* cstr = char_pointer();
+    for (std::size_t i = 0; i < length_; ++i) ret[i] = cstr[i];
     return ret;
   }
 

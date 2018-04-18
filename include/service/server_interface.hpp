@@ -5,6 +5,7 @@
 #include "service/callable_class_member.hpp"
 #include "service/message_types.hpp"
 #include "service/protocol.hpp"
+#include "service/promise.hpp"
 #include "byte_array/referenced_byte_array.hpp"
 
 namespace fetch
@@ -37,17 +38,18 @@ public:
       feed->AttachToService( this );
     }
   }
-
+  
 protected:
   virtual bool DeliverResponse(handle_type, network::message_type const&) = 0;
   
   bool PushProtocolRequest(handle_type client,
-                      network::message_type const& msg) 
+    network::message_type const& msg) 
   {
+
     LOG_STACK_TRACE_POINT;
     bool ret = false;
     serializer_type params(msg);
-      
+
     service_classification_type type;
     params >> type;
 
@@ -92,12 +94,12 @@ protected:
       {
         fetch::logger.Error("Serialization error: ", e.what() ) ;   
         // FIX Serialization of errors such that this also works
-        /*
-          serializer_type result;
-          result = serializer_type();
-          result << SERVICE_ERROR << id << e;
-          Send(client, result.data());
-        */
+        
+//          serializer_type result;
+//          result = serializer_type();
+//          result << SERVICE_ERROR << id << e;
+//          Send(client, result.data());
+        
         throw e;
       }
       
@@ -120,17 +122,18 @@ protected:
       {
         fetch::logger.Error("Serialization error: ", e.what() ) ;      
         // FIX Serialization of errors such that this also works
-        /*
-          serializer_type result;
-          result = serializer_type();
-          result << SERVICE_ERROR << id << e;
-          Send(client, result.data());
-        */
+        
+//          serializer_type result;
+//          result = serializer_type();
+//          result << SERVICE_ERROR << id << e;
+//          Send(client, result.data());
+        
         throw e;
       }
       
 
     } 
+
     return ret;
   }
   
@@ -138,7 +141,7 @@ private:
   void ExecuteCall(serializer_type& result, handle_type const &client, serializer_type params) 
   {
 //    LOG_STACK_TRACE_POINT;
-    
+
     protocol_handler_type protocol;
     function_handler_type function;
     params >> protocol >> function;
@@ -159,10 +162,11 @@ private:
     if(fnc.meta_data() & Callable::CLIENT_ID_ARG ) {
       serializer_type newparams;
       // TODO: A prettier solution can be made with template parameters
+      // TODO: This is potentially very expensive. FIXME!!
       newparams << client;
-      newparams.Allocate(params.bytes_left());
-      auto const carr = params.data().SubArray( params.Tell(),params.bytes_left());      
-      newparams.WriteBytes( carr.pointer(), params.bytes_left() );
+      newparams.Allocate( uint64_t(params.bytes_left()) );
+      auto const carr = params.data().SubArray( params.Tell(), uint64_t(params.bytes_left()) );
+      newparams.WriteBytes( carr.pointer(), uint64_t(params.bytes_left()) );
       newparams.Seek(0);      
       return fnc(result, newparams);
     } 
@@ -170,11 +174,14 @@ private:
     
     
     return fnc(result, params);
+
   }
   
   Protocol* members_[256] = {nullptr}; // TODO: Not thread-safe
 
+
   friend class FeedSubscriptionManager;
+
 };
 
 };

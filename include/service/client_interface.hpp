@@ -252,7 +252,7 @@ private:
     sub.feed = feed;    
     sub.callback = cb;
     subscription_mutex_.unlock();
-    return i;
+    return subscription_handler_type(i);
   }
   
   struct Subscription 

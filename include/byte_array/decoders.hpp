@@ -7,7 +7,7 @@ namespace fetch {
 namespace byte_array {
 
 
-BasicByteArray FromBase64(BasicByteArray const &str) {
+inline BasicByteArray FromBase64(BasicByteArray const &str) noexcept {
   // After https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
   assert((str.size() % 4) == 0);
   std::size_t pad = 0;
@@ -27,8 +27,7 @@ BasicByteArray FromBase64(BasicByteArray const &str) {
       --i;
       break;
     } else if(c ==  details::INVALID) {
-      TODO_FAIL( "TODO: Throw error" );
-      exit(-1);
+      return BasicByteArray();      
     }
 
     buf = buf << 6 | c;
@@ -55,21 +54,27 @@ BasicByteArray FromBase64(BasicByteArray const &str) {
 }
 
 
-BasicByteArray FromHex(BasicByteArray const &str) {
+inline BasicByteArray FromHex(BasicByteArray const &str) noexcept {
   uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
   ByteArray ret;
   ret.Resize(str.size() >> 1);
   
   std::size_t n = str.size();
   std::size_t j = 0;
-  for (std::size_t i = 0; i < n; i += 2) {
-    uint8_t next = details::DecodeHexChar(data[i]);
-    if (i + 1 < n) {
-      next <<= 4;
-      next |= details::DecodeHexChar(data[i + 1]);
+  try {
+    
+    for (std::size_t i = 0; i < n; i += 2) {
+      uint8_t next = details::DecodeHexChar(data[i]);
+      if (i + 1 < n) {
+        next <<= 4;
+        next |= details::DecodeHexChar(data[i + 1]);
+      }
+      ret[j++] = next;
     }
-    ret[j++] = next;
+  } catch( std::runtime_error const &) {
+    return BasicByteArray();
   }
+  
 
   return ret;
 }

@@ -33,7 +33,7 @@ const unsigned char base64decode[] = {
   };
 
 uint8_t DecodeHexChar(char const &c) {
-  uint8_t ret = 0;
+  char ret = 0;
   if (('0' <= c) && (c <= '9'))
     ret = (c - '0');
   else if (('A' <= c) && (c <= 'F'))
@@ -43,7 +43,7 @@ uint8_t DecodeHexChar(char const &c) {
   else
     throw std::runtime_error("Could not decode from hex");
 
-  return ret;
+  return uint8_t(ret);
 }
 
 enum { B64_WHITESPACE = 64, B64_EQUALS = 65, B64_INVALID = 66 };  

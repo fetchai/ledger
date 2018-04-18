@@ -133,7 +133,7 @@ public:
     for(std::size_t i=0; i < size(); ++i) {
       uint8_t val = super_type::operator[](i);
 
-      super_type::operator[](i) =  (val << bits) | carry;
+      super_type::operator[](i) =  uint8_t(val << bits) | carry;
       carry = val >> nbits;
     }
 
@@ -193,7 +193,7 @@ double Log(BigUnsigned const& x ) {
 
   assert(fraction.value != 0);
   
-  uint64_t tz = __builtin_ctz( fraction.value );
+  uint64_t tz = uint64_t(__builtin_ctz( fraction.value ));
   uint64_t exponent = (last_byte << 3) - tz;
   
   return exponent + std::log( double(fraction.value << tz ) * (1. /double(uint32_t(-1)) ) )  ;
@@ -217,8 +217,8 @@ double ToDouble(BigUnsigned const& x)  {
   fraction.bytes[ 3 ] = x[ j + 3];      
 
   assert(fraction.value != 0);
-  uint64_t tz = __builtin_ctz( fraction.value ); // TODO: Wrap in function for cross compiler portability
-  uint32_t exponent = (last_byte << 3) - tz;
+  uint16_t tz = uint16_t(__builtin_ctz( fraction.value )); // TODO: Wrap in function for cross compiler portability
+  uint16_t exponent = uint16_t(last_byte << 3) - tz;
 
   assert( exponent < 1023 );
 

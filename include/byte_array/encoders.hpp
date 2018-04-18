@@ -6,14 +6,14 @@ namespace fetch {
 namespace byte_array {
 
 
-BasicByteArray ToBase64(BasicByteArray const &str) {
+inline BasicByteArray ToBase64(BasicByteArray const &str) {
   // After https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
 
   std::size_t N = str.size();
   uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
   std::size_t idx = 0;
 
-  int invPadCount = N % 3;
+  std::size_t invPadCount = N % 3;
   std::size_t size = ((N + (3 -invPadCount ) ) << 2) / 3;
   if(invPadCount == 0)
     size = (N  << 2) / 3;
@@ -32,11 +32,11 @@ BasicByteArray ToBase64(BasicByteArray const &str) {
     n2 = (temp >> 6) & 63;
     n3 = temp & 63;
 
-    ret[idx++] = details::base64chars[n0];
-    ret[idx++] = details::base64chars[n1];
+    ret[idx++] = uint8_t(details::base64chars[n0]);
+    ret[idx++] = uint8_t(details::base64chars[n1]);
 
-    if ((x + 1) < N) ret[idx++] = details::base64chars[n2];
-    if ((x + 2) < N) ret[idx++] = details::base64chars[n3];
+    if ((x + 1) < N) ret[idx++] = uint8_t(details::base64chars[n2]);
+    if ((x + 2) < N) ret[idx++] = uint8_t(details::base64chars[n3]);
   }
 
   if (invPadCount > 0) 
@@ -46,7 +46,7 @@ BasicByteArray ToBase64(BasicByteArray const &str) {
 }
 
 
-BasicByteArray ToHex(BasicByteArray const &str) {
+inline BasicByteArray ToHex(BasicByteArray const &str) {
   uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
   ByteArray ret;
   ret.Resize(str.size() << 1);
@@ -54,8 +54,8 @@ BasicByteArray ToHex(BasicByteArray const &str) {
   std::size_t j = 0;
   for (std::size_t i = 0; i < str.size(); ++i) {
     uint8_t c = data[i];
-    ret[j++] = details::hexChars[(c >> 4) & 0xF];
-    ret[j++] = details::hexChars[c & 0xF];
+    ret[j++] = uint8_t(details::hexChars[(c >> 4) & 0xF]);
+    ret[j++] = uint8_t(details::hexChars[c & 0xF]);
   }
   return ret;
 }

@@ -72,7 +72,7 @@ public:
         
         std::reverse(remove.begin(), remove.end());
         for(auto &i: remove)
-          subscribers_.erase(std::next(subscribers_.begin(), i)); 
+          subscribers_.erase(std::next(subscribers_.begin(), int64_t(i) )); 
         subscribe_mutex_.unlock();
       });
     
@@ -113,7 +113,7 @@ public:
 
     std::reverse(ids.begin(), ids.end());
     for(auto &i: ids)
-      subscribers_.erase(std::next(subscribers_.begin(), i));
+      subscribers_.erase(std::next(subscribers_.begin(), int64_t(i) ));
     subscribe_mutex_.unlock();
     
   }
