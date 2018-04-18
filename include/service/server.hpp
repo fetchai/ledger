@@ -61,11 +61,9 @@ public:
     }
     
   protected:
-    bool DeliverRequest(network::message_type const&msg) override
+    void DeliverRequest(network::message_type const&msg) override
     {
-      // TODO: Check if we have shut down
-      server_->Send(client_, msg);
-      return true;
+      server_->Send(client_, msg);      
     }
   private:
     self_type *server_; // TODO: Change to shared ptr and add enable_shared_from_this on service

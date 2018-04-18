@@ -140,7 +140,7 @@ protected:
     serializer_type params(msg);
 
     service_classification_type type;
-    params >> type; // note: gdb flags this
+    params >> type;
 
     if (type == SERVICE_RESULT) 
     {

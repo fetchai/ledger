@@ -8,7 +8,6 @@
 #include <iostream>
 #include <ostream>
 #include <type_traits>
-#include <cstdlib> // TODO: (`HUT`) : delete this
 namespace fetch {
 namespace byte_array {
 class BasicByteArray ;
@@ -77,12 +76,12 @@ public:
   ~BasicByteArray() = default;
 
   operator std::string() const {
-    std::cerr << "stringify" << std::endl;
     std::string ret;
     ret.resize(length_);
     for (std::size_t i = 0; i < length_; ++i) ret[i] = arr_pointer_[i];
     return ret;
   }
+
 
   container_type const &operator[](std::size_t const &n) const {
     assert(n < length_);

@@ -51,16 +51,14 @@ public:
     }
   }
 
-  template<typename T>
-  bool operator==(T&& rhs) const
+  bool operator==(const Transaction &rhs) const
   {
     UpdateDigest();
     rhs.UpdateDigest();
     return digest() == rhs.digest();
   }
 
-  template<typename T>
-  bool operator< (T&& rhs) const
+  bool operator<(const Transaction &rhs) const
   {
     UpdateDigest();
     rhs.UpdateDigest();
