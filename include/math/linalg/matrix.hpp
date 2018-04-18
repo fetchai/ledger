@@ -198,7 +198,8 @@ class Matrix : public A {
       if(va < 0) va = -va;
       if(vb < 0) vb = -vb;
       double M = std::max(va,vb);
-      ret &= (vA < (atol + M * rtol));
+
+      ret &= (vA < std::max(atol, M * rtol));
     }
 
     if(!ret) {
