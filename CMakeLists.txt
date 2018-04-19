@@ -99,7 +99,10 @@ link_libraries(crypto pthread libfetch)
 
 ## Dependencies
 include_directories(${PNG_INCLUDE_DIR})
+
+if(BUILD_PYTHON_BINDINGS)
 add_subdirectory( libfetchcore/ )
+endif()
 
 # TESTS
 if(BUILD_TESTS)

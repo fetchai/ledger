@@ -31,34 +31,10 @@ namespace VT100 {
     return ret.str();
   }
 
-  static const std::string Goto(uint16_t x, uint16_t y) {
-    std::stringstream ret("");
-    ret << "\33[" << y << ";" << x << "H";
-    return ret.str();
-  }
+
   char const *Bold = "\33[1m";
   char const *Return = "\r";
 
-  static const std::string Down(uint16_t y) {
-    std::stringstream ret("");
-    ret << "\33[" << y << "B";
-    return ret.str();
-  }
-  static const std::string Up(uint16_t y) {
-    std::stringstream ret("");
-    ret << "\33[" << y << "A";
-    return ret.str();
-  }
-  static const std::string Right(uint16_t y) {
-    std::stringstream ret("");
-    ret << "\33[" << y << "C";
-    return ret.str();
-  }
-  static const std::string Left(uint16_t y) {
-    std::stringstream ret("");
-    ret << "\33[" << y << "D";
-    return ret.str();
-  }
   
 };
 };
