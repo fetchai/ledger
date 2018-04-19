@@ -171,7 +171,7 @@ public:
     HIGHLIGHT = 4
   };
   
-  virtual void StartEntry( int type, shared_context_type ctx ) 
+  virtual void StartEntry( int type, shared_context_type ctx, std::ostream& stream ) 
   {
 #ifndef FETCH_DISABLE_COUT_LOGGING
     using namespace fetch::commandline::VT100;
@@ -202,38 +202,38 @@ public:
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() % 1000;
     
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::cout << "[ " << GetColor(color,bg_color) << std::put_time(std::localtime(&now_c), "%F %T") ;
+    stream << "[ " << GetColor(color,bg_color) << std::put_time(std::localtime(&now_c), "%F %T") ;
 
-    std::cout << "." << std::setw(3) <<millis <<  DefaultAttributes() << ", #" << std::setw(2) << thread_number;
-    std::cout << ": " << std::setw(15) << ctx->instance() << std::setw(20) << ctx->context(18) <<  " ] ";
-    std::cout << GetColor(color,bg_color);    
+    stream << "." << std::setw(3) <<millis <<  DefaultAttributes() << ", #" << std::setw(2) << thread_number;
+    stream << ": " << std::setw(15) << ctx->instance() << std::setw(20) << ctx->context(18) <<  " ] ";
+    stream << GetColor(color,bg_color);    
 
 #endif
 
   }
 
   template< typename T >
-  void Append( T const &v ) 
+  void Append( T const &v, std::ostream& stream )
   {
 #ifndef FETCH_DISABLE_COUT_LOGGING    
-    std::cout << v ;
+    stream << v ;
 #endif
   }
     
     
-  virtual void Append( std::string const &s ) 
+  virtual void Append( std::string const &s, std::ostream& stream )
   {
 #ifndef FETCH_DISABLE_COUT_LOGGING    
-    std::cout << s ;
+    stream << s ;
 #endif
   }
 
-  virtual void CloseEntry( int type ) 
+  virtual void CloseEntry( int type, std::ostream& stream )
   {
 
 #ifndef FETCH_DISABLE_COUT_LOGGING    
     using namespace fetch::commandline::VT100;    
-    std::cout << DefaultAttributes() << std::endl;    
+    stream << DefaultAttributes() << std::endl;    
 #endif
   }
 private:
@@ -252,60 +252,84 @@ public:
     log_ = new DefaultLogger();    
   }
 
-
   template< typename ...Args >
-  void Info(Args ... args) 
+  void Info(Args ... args)
   {
-
-    std::lock_guard< std::mutex > lock( mutex_ );
-    this->log_->StartEntry(DefaultLogger::INFO, TopContextImpl() );    
-    Unroll<Args...>::Append( this, args... );
-    this->log_->CloseEntry(DefaultLogger::INFO);
+    Info(std::cout, std::forward<Args>(args)...);
   }
 
   template< typename ...Args >
-  void Warn(Args ... args) 
+  void Info(std::ostream& stream, Args ... args)
   {
-
     std::lock_guard< std::mutex > lock( mutex_ );
-    this->log_->StartEntry(DefaultLogger::WARNING, TopContextImpl() );    
-    Unroll<Args...>::Append( this, args... );
-    this->log_->CloseEntry(DefaultLogger::WARNING);
+    this->log_->StartEntry(DefaultLogger::INFO, TopContextImpl(), stream);
+    Unroll<Args...>::Append( this, args..., stream);
+    this->log_->CloseEntry(DefaultLogger::INFO, stream);
   }
 
   template< typename ...Args >
-  void Highlight(Args ... args) 
+  void Warn(Args ... args)
+  {
+    Warn(std::cout, std::forward<Args>(args)...);
+  }
+
+  template< typename ...Args >
+  void Warn(std::ostream& stream, Args ... args) 
   {
 
     std::lock_guard< std::mutex > lock( mutex_ );
-    this->log_->StartEntry(DefaultLogger::HIGHLIGHT, TopContextImpl() );    
-    Unroll<Args...>::Append( this, args... );
-    this->log_->CloseEntry(DefaultLogger::HIGHLIGHT);
+    this->log_->StartEntry(DefaultLogger::WARNING, TopContextImpl(), stream );
+    Unroll<Args...>::Append( this, args..., stream);
+    this->log_->CloseEntry(DefaultLogger::WARNING, stream);
+  }
+
+  template< typename ...Args >
+  void Highlight(Args ... args)
+  {
+    Highlight(std::cout, std::forward<Args>(args)...);
+  }
+
+  template< typename ...Args >
+  void Highlight(std::ostream& stream, Args ... args)
+  {
+    std::lock_guard< std::mutex > lock( mutex_ );
+    this->log_->StartEntry(DefaultLogger::HIGHLIGHT, TopContextImpl(), stream );
+    Unroll<Args...>::Append( this, args..., stream );
+    this->log_->CloseEntry(DefaultLogger::HIGHLIGHT, stream);
 
   }
-  
+
   template< typename ...Args >
-  void Error(Args ... args) 
+  void Error(Args ... args)
   {
-
-    std::lock_guard< std::mutex > lock( mutex_ );
-    this->log_->StartEntry(DefaultLogger::ERROR, TopContextImpl() );    
-    Unroll<Args...>::Append( this, args... );
-    this->log_->CloseEntry(DefaultLogger::ERROR);
-
-    StackTrace();
-//    exit(-1);
-    
+    Error(std::cout, std::forward<Args>(args)...);
   }
-  
+
   template< typename ...Args >
-  void Debug(Args ... args) 
+  void Error(std::ostream& stream, Args ... args)
   {
 
     std::lock_guard< std::mutex > lock( mutex_ );
-    this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl() );    
-    Unroll<Args...>::Append( this, args... );
-    this->log_->CloseEntry(DefaultLogger::DEBUG); 
+    this->log_->StartEntry(DefaultLogger::ERROR, TopContextImpl(), stream );
+    Unroll<Args...>::Append( this, args..., stream );
+    this->log_->CloseEntry(DefaultLogger::ERROR, stream);
+
+    StackTrace(uint32_t(-1), true, stream);
+  }
+
+  template< typename ...Args >
+  void Debug(Args ... args)
+  {
+    Debug(std::cout, std::forward<Args>(args)...);
+  }
+
+  template< typename ...Args >
+  void Debug(std::ostream& stream, Args ... args) 
+  {
+    std::lock_guard< std::mutex > lock( mutex_ );
+    this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl(), stream );
+    Unroll<Args...>::Append( this, args..., stream );
+    this->log_->CloseEntry(DefaultLogger::DEBUG, stream); 
   }
 
   void SetContext(shared_context_type ctx) 
@@ -315,8 +339,6 @@ public:
     context_[id] = ctx;        
   }
 
-
-  
   shared_context_type TopContext()
   {
     std::lock_guard< std::mutex > lock(mutex_);  
@@ -364,42 +386,43 @@ public:
 
   void StackTrace(shared_context_type ctx,
     uint32_t max = uint32_t(-1),
-    bool show_locks = true, std::string const &trace_name = "Stack trace" ) 
+    bool show_locks = true,
+    std::string const &trace_name = "Stack trace",
+    std::ostream& stream = std::cout )
   {
     if(!ctx) {
       std::cerr << "Stack trace context invalid" << std::endl;
       return;      
     }
     
-    std::cout << trace_name << " for #" << ReadableThread::GetThreadID( ctx->thread_id() )  <<  std::endl;    
+    stream << trace_name << " for #" << ReadableThread::GetThreadID( ctx->thread_id() )  <<  std::endl;    
     PrintTrace(ctx, max);    
 
     if(show_locks) {
       
       std::vector< std::thread::id > locked_threads;
       
-      std::cout << std::endl;    
-      std::cout << "Active locks: " << std::endl;
+      stream << std::endl;    
+      stream << "Active locks: " << std::endl;
       for(auto &l : active_locks_) {
-        std::cout << "  - " << l->AsString() << std::endl;
+        stream << "  - " << l->AsString() << std::endl;
         locked_threads.push_back( l->thread_id() );
         
       }
-      std::cout << std::endl;
+      stream << std::endl;
       for(auto &id: locked_threads) {
-        std::cout << "Additionally trace for #" << ReadableThread::GetThreadID( id )  <<  std::endl;    
+        stream << "Additionally trace for #" << ReadableThread::GetThreadID( id )  <<  std::endl;    
         ctx = context_[id];
         PrintTrace(ctx);
-        std::cout << std::endl;      
+        stream << std::endl;      
       }
     }
   }
   
-
-  void StackTrace(uint32_t max = uint32_t(-1), bool show_locks = true ) 
+  void StackTrace(uint32_t max = uint32_t(-1), bool show_locks = true, std::ostream& stream = std::cout )
   {
     shared_context_type ctx = TopContextImpl();
-    StackTrace(ctx, max, show_locks);    
+    StackTrace(ctx, max, show_locks, "Stack trace", stream);
   }
 
   void UpdateContextTime( shared_context_type ctx, double spent_time ) 
@@ -425,7 +448,7 @@ public:
     ++t.calls;      
   }
     
-    void PrintTimings(std::size_t max = 50) 
+    void PrintTimings( std::size_t max = 50, std::ostream& stream = std::cout )
   {
     std::lock_guard< std::mutex > lock( timing_mutex_ );
     std::lock_guard< std::mutex > lock2( mutex_ );    
@@ -437,21 +460,21 @@ public:
     std::sort(all_timings.begin(), all_timings.end(), [](TimingDetails const &a, TimingDetails const &b) { return (a.peak) > (b.peak); });
     std::size_t N = std::min(max, all_timings.size());
 
-    std::cout << "Profile for monitored function calls: " << std::endl;    
+    stream << "Profile for monitored function calls: " << std::endl;    
     for(std::size_t i = 0; i < N; ++i) {
-      std::cout << std::setw(3) << i << std::setw(20) << all_timings[i].total / all_timings[i].calls << " ";
-      std::cout << std::setw(20) << all_timings[i].peak << " ";      
-      std::cout << std::setw(20) <<  all_timings[i].calls << " ";      
-      std::cout << std::setw(20) << all_timings[i].total << " ";
-      std::cout << all_timings[i].context << " " << all_timings[i].filename << " " <<  all_timings[i].line;
-      std::cout << std::endl;      
+      stream << std::setw(3) << i << std::setw(20) << all_timings[i].total / all_timings[i].calls << " ";
+      stream << std::setw(20) << all_timings[i].peak << " ";      
+      stream << std::setw(20) <<  all_timings[i].calls << " ";      
+      stream << std::setw(20) << all_timings[i].total << " ";
+      stream << all_timings[i].context << " " << all_timings[i].filename << " " <<  all_timings[i].line;
+      stream << std::endl;      
     }
-    std::cout << std::endl;
+    stream << std::endl;
     
   }
 
 
-  void PrintMutexTimings(std::size_t max = 50) 
+  void PrintMutexTimings(std::size_t max = 50, std::ostream& stream = std::cout)
   {
     std::lock_guard< std::mutex > lock2( mutex_ );
     std::lock_guard< std::mutex > lock( timing_mutex_ );
@@ -464,16 +487,16 @@ public:
     std::sort(all_timings.begin(), all_timings.end(), [](TimingDetails const &a, TimingDetails const &b) { return (a.total / a.calls) > (b.total / b.calls); });
     std::size_t N = std::min(max, all_timings.size());
 
-    std::cout << "Mutex timings: " << std::endl;    
+    stream << "Mutex timings: " << std::endl;    
     for(std::size_t i = 0; i < N; ++i) {
-      std::cout << std::setw(3) << i << std::setw(20) << all_timings[i].total / all_timings[i].calls << " ";
-      std::cout << std::setw(20) << all_timings[i].peak << " ";            
-      std::cout << std::setw(20) <<  all_timings[i].calls << " ";      
-      std::cout << std::setw(20) << all_timings[i].total << " ";
-      std::cout << all_timings[i].context << " " << all_timings[i].filename << " " <<  all_timings[i].line;
-      std::cout << std::endl;      
+      stream << std::setw(3) << i << std::setw(20) << all_timings[i].total / all_timings[i].calls << " ";
+      stream << std::setw(20) << all_timings[i].peak << " ";            
+      stream << std::setw(20) <<  all_timings[i].calls << " ";      
+      stream << std::setw(20) << all_timings[i].total << " ";
+      stream << all_timings[i].context << " " << all_timings[i].filename << " " <<  all_timings[i].line;
+      stream << std::endl;      
     }
-    std::cout << std::endl;
+    stream << std::endl;
     
   }
   
@@ -509,35 +532,35 @@ private:
   template< typename T, typename ... Args >
   struct Unroll 
   {
-    static void Append(LogWrapper *cls, T const &v, Args ... args ) 
+    static void Append(LogWrapper *cls, T const &v, Args ... args, std::ostream& stream )
     {
-      cls->log_->Append(v);
-      Unroll< Args... >::Append(cls, args ...);
+      cls->log_->Append(v, stream);
+      Unroll< Args... >::Append(cls, args ..., stream);
     }    
   };
 
   template< typename T >
   struct Unroll< T >
   {
-    static void Append(LogWrapper *cls, T const &v ) 
+    static void Append(LogWrapper *cls, T const &v, std::ostream& stream )
     {
-      cls->log_->Append(v);
+      cls->log_->Append(v, stream);
     }    
   };
 
 
-  void PrintTrace(shared_context_type ctx, uint32_t max = uint32_t(-1)) 
+  void PrintTrace(shared_context_type ctx, uint32_t max = uint32_t(-1), std::ostream& stream = std::cout)
   {
     using namespace fetch::commandline::VT100;
     std::size_t i = 0;    
     while( ctx )
     {
-      std::cout << std::setw(3) << i <<  ": In thread #" << ReadableThread::GetThreadID( ctx->thread_id() ) << ": ";      
-      std::cout << GetColor(5,9) << ctx->context() << DefaultAttributes() << " " << ctx->filename() << ", ";
-      std::cout << GetColor(3,9) << ctx->line() << DefaultAttributes() << std::endl;
+      stream << std::setw(3) << i <<  ": In thread #" << ReadableThread::GetThreadID( ctx->thread_id() ) << ": ";      
+      stream << GetColor(5,9) << ctx->context() << DefaultAttributes() << " " << ctx->filename() << ", ";
+      stream << GetColor(3,9) << ctx->line() << DefaultAttributes() << std::endl;
 
       if( ctx->derived_from() ) {
-        std::cout << "*";
+        stream << "*";
         ctx = ctx->derived_from();        
       } else {
         ctx = ctx->parent();
