@@ -12,6 +12,7 @@
 #include <memory>
 #include<vector>
 
+
 namespace fetch 
 {
 namespace service 
@@ -37,6 +38,24 @@ public:
   typedef AbstractCallable callable_type;
   typedef byte_array::ConstByteArray byte_array_type;
 
+  Protocol() 
+  {
+    for(std::size_t i = 0; i < 256; ++i) {
+      members_[i] = nullptr;
+    }
+  }
+
+  ~Protocol() 
+  {
+    for(std::size_t i = 0; i < 256; ++i) {
+      if(members_[i] != nullptr) {
+        delete members_[i];
+      }
+      
+    }
+  }
+  
+  
   /* Operator to access the different functions in the protocol.
    * @n is the idnex of callable in the protocol.
    *
@@ -61,6 +80,7 @@ public:
 
   /* Exposes a function or class member function.
    * @n is a unique identifier for the callable being exposed
+   * @instance is instance of an implementation.
    * @fnc is a pointer to the callable function.
    * 
    * The pointer provided is used to invoke the callable when a call
@@ -71,9 +91,11 @@ public:
    * the code as it is always a reference return and not the raw pointer
    * (TODO). 
    */
-  void Expose(function_handler_type const& n, callable_type* fnc) 
+  template<typename C, typename R, typename ...Args>
+  void Expose(function_handler_type const &n, C *instance, R (C::*function)(Args...)) 
   {
-    LOG_STACK_TRACE_POINT;
+    
+    callable_type *fnc = new service::CallableClassMember<C, R(Args...)>(n, instance, function );
     
     if(members_[n] != nullptr)
       throw serializers::SerializableException(
@@ -83,12 +105,10 @@ public:
     members_[n] = fnc;
   }
 
-
   /* Registers a feed from an implementation.
    * @feed is the unique feed identifier.
    * @publisher is a class that subclasses <AbstractPublicationFeed>.
    *
-   *  
    */
   void RegisterFeed(feed_handler_type const& feed, AbstractPublicationFeed* publisher) 
   {

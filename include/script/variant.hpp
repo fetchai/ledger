@@ -54,7 +54,6 @@ public:
 
   Variant(std::initializer_list<Variant> const& arr) { *this = arr; }
 
-
   Variant(Variant const &var)
   {
     this->operator=(var);    
@@ -279,7 +278,16 @@ public:
   variant_array_type as_array() { return *data_.array; }
   variant_array_type const &as_array() const { return *data_.array; }    
 
-  bool is_null() const { return type_ == NULL_VALUE; }
+  bool is_undefined() const  { return type_ == UNDEFINED; }
+  bool is_int() const        { return type_ == INTEGER; }
+  bool is_float() const      { return type_ == FLOATING_POINT; }
+  bool is_byte_array() const { return type_ == BYTE_ARRAY; }
+  bool is_bool() const       { return type_ == BOOLEAN; }
+  bool is_null() const       { return type_ == NULL_VALUE; }
+  bool is_array() const      { return type_ == ARRAY; }
+  bool is_dictionary() const { return type_ == DICTIONARY; }
+  bool is_function() const   { return type_ == FUNCTION; }
+
 
   VariantType const& type() const { return type_; }
 
