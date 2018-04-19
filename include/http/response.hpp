@@ -5,7 +5,11 @@
 #include"http/status.hpp"
 
 #include<ostream>
-#include<asio.hpp>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#include <asio.hpp>
+#pragma clang diagnostic pop
 
 namespace fetch {
 namespace http {

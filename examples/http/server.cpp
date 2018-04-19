@@ -54,11 +54,11 @@ int main()
       std::cout << mtype.type << std::endl;
       std::fstream fin(filename, std::ios::in | std::ios::binary);
       fin.seekg (0, fin.end);
-      int length = fin.tellg();
+      int64_t length = fin.tellg();
       fin.seekg (0, fin.beg);
 
       fetch::byte_array::ByteArray data;
-      data.Resize( length );
+      data.Resize( std::size_t( length ) );
       fin.read (reinterpret_cast< char*>( data.pointer() ), length);
       
       fin.close();      

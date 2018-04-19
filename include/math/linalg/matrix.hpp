@@ -502,7 +502,6 @@ class Matrix : public A {
     return *this;
   }
 
-
   int Invert() {
     // after numerical recipes
     std::size_t mheight = this->height();
@@ -513,6 +512,7 @@ class Matrix : public A {
 
     type *ptr = this->data().pointer();
 
+    // TODO: Let workspace be a parameter - workout what the constraints are
     std::vector<std::size_t> piv;
     std::vector<std::size_t> arr_col;
     std::vector<std::size_t> arr_row;

@@ -10,9 +10,14 @@
 #include"json/document.hpp"
 #include"assert.hpp"
 
-#include<asio.hpp>
 #include<limits>
 #include<algorithm>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#include <asio.hpp>
+#pragma clang diagnostic pop
+
 namespace fetch
 {
 namespace http
