@@ -4,8 +4,8 @@
   <doc># MVP Friday the 26th
 
 Would require:
-1. Transaction definition                                  (write tonight)
-2. STL vector for unapplied transactions
+
+
 3. Networking inteface to deliver transactions / recieve
 4. Block definition
 5. Block queue

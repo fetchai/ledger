@@ -84,11 +84,10 @@ Below we give some more detailed examples and explanations for the above rules.
 Each file should contain an initial comment
 
 ```
- /* Copyright (c) [year created]-[year last modified], uVue Ltd.
+ /* Copyright (c) [year created]-[year last modified], fetch.AI
   *
   * Please see license file for details.
   *
-  * Creation date: [date]  
   * Arthur(s): [lead author]
   *            [second author]
   *            ...

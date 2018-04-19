@@ -9,10 +9,15 @@
 #include"logger.hpp"
 
 #include "mutex.hpp"
-#include <asio.hpp>
+
 #include <memory>
 #include <mutex>
 #include <atomic>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#include <asio.hpp>
+#pragma clang diagnostic pop
 
 namespace fetch 
 {

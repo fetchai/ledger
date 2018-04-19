@@ -20,21 +20,21 @@ bool Load(T &optimiser, std::string const &filename) {
   std::string line;
 
   struct Coupling {
-    std::size_t i = -1, j = -1;
+    uint64_t i = uint64_t(-1), j = uint64_t(-1);
     double c = 0;
   };
 
   std::vector<Coupling> couplings;
-  std::unordered_map<int, std::size_t> indices;
-  std::unordered_map< int, std::size_t > connectivity;
+  std::unordered_map<int, uint64_t> indices;
+  std::unordered_map< int, uint64_t> connectivity;
   
-  int k = 0;
+  uint64_t k = 0;
 
   while (fin) {
     std::getline(fin, line);
 
-    int p = line.find('#');
-    if (p != std::string::npos) line = line.substr(0, p);
+    uint64_t p = uint64_t(line.find('#'));
+    if (p != std::string::npos) line = line.substr(0, std::size_t(p) );
     string::Trim(line);
     if (line == "") continue;
     std::stringstream ss(line);

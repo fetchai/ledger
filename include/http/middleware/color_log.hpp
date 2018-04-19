@@ -9,7 +9,7 @@ namespace http
 namespace middleware
 {
 
-void ColorLog(fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
+inline void ColorLog(fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
   using namespace fetch::commandline::VT100;
   std::string color = "";
   

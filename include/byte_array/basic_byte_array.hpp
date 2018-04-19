@@ -14,7 +14,7 @@ class BasicByteArray ;
 };
 
 namespace serializers {  // TODO: refactor
-template <typename T> void Deserialize(T &, byte_array::BasicByteArray &);  
+template <typename T> inline void Deserialize(T &, byte_array::BasicByteArray &);  
 };
 
 namespace byte_array {
@@ -38,7 +38,8 @@ public:
     while (str[n] != '\0') ++n;
     Reserve(n);
     Resize(n);
-    for (std::size_t i = 0; i < n; ++i) data_[i] = str[i];
+    uint8_t const* up = reinterpret_cast< uint8_t const *>( str );
+    for (std::size_t i = 0; i < n; ++i) data_[i] = up[i];
     //    data_[n] = '\0';
   }
   
@@ -78,7 +79,8 @@ public:
   operator std::string() const {
     std::string ret;
     ret.resize(length_);
-    for (std::size_t i = 0; i < length_; ++i) ret[i] = arr_pointer_[i];
+    char const* cstr = char_pointer();
+    for (std::size_t i = 0; i < length_; ++i) ret[i] = cstr[i];
     return ret;
   }
 
@@ -154,6 +156,15 @@ public:
     return pos;
   }
 
+  void FromByteArray(self_type const &other,std::size_t const &start,
+                               std::size_t length) {
+    data_ = other.data_;
+    start_ = other.start_ + start;
+    length_ = length;
+    arr_pointer_ = data_.pointer() + start_;
+  } // TODO: Move to protected
+  
+
   std::size_t const &size() const { return length_; }
   container_type const *pointer() const { return arr_pointer_; }
 
@@ -173,42 +184,11 @@ public:
   }
 
   int AsInt() const {
-    // TODO: add support for sign
-    int n = 0;
-    for (std::size_t i = 0; i < length_; ++i) {
-      n *= 10;
-      int a = (arr_pointer_[i] - '0');
-
-      if ((a < 0) || (a > 9)) {
-        std::cerr << "TODO: throw error - NaN in referenced byte_array: " << a
-                  << " " << arr_pointer_[i] << ", char " << i << " '"
-                  << arr_pointer_[i] << "'" << " - code: " << int(arr_pointer_[i]) << std::endl;
-        exit(-1);
-      }
-      n += a;
-    }
-    return n;
+    return atoi(reinterpret_cast< char const * >(arr_pointer_) );
   }  
 
-  
-
-  int AsFloat() const {
-    // TODO: Implement
-    // TODO: add support for sign
-    int n = 0;
-    for (std::size_t i = 0; i < length_; ++i) {
-      n *= 10;
-      int a = (arr_pointer_[i] - '0');
-
-      if ((a < 0) || (a > 9)) {
-        std::cerr << "TODO: throw error - NaN in referenced byte_array: " << a
-                  << " " << arr_pointer_[i] << ", char " << i << " '"
-                  << arr_pointer_[i] << "'" << " - code: " << int(arr_pointer_[i]) << std::endl;
-        exit(-1);
-      }
-      n += a;
-    }
-    return n;
+  double AsFloat() const {
+    return atof(reinterpret_cast< char const * >(arr_pointer_));
   }  
 
 protected:
@@ -226,16 +206,14 @@ protected:
 
 
   void Reserve(std::size_t const &n) {
-
     shared_array_type newdata(n);
+    newdata.SetAllZero();
     
     std::size_t M = std::min(n, data_.size());
     std::size_t i = 0;
     for (; i < M; ++i) newdata[i] = data_[i];
-
-    //    for (; i < n + 1; ++i) newdata[i] = '\0';
-    for (; i < n; ++i) newdata[i] = '\0';
-
+    std::memcpy(newdata.pointer(), data_.pointer(), M);
+    
     data_ = newdata;
     arr_pointer_ = data_.pointer() + start_;
   }
@@ -256,13 +234,13 @@ protected:
 };
 
 
-std::ostream &operator<<(std::ostream &os, BasicByteArray const &str) {
+inline std::ostream &operator<<(std::ostream &os, BasicByteArray const &str) {
   char const *arr = reinterpret_cast<char const *>(str.pointer());
   for (std::size_t i = 0; i < str.size(); ++i) os << arr[i];
   return os;
 }
 
-BasicByteArray operator+(char const *a, BasicByteArray const &b) {
+inline BasicByteArray operator+(char const *a, BasicByteArray const &b) {
   BasicByteArray s(a);
   s = s + b;
   return s;

@@ -18,8 +18,6 @@ void BuildToken(pybind11::module &module) {
     .def(py::init< const fetch::byte_array::ConstByteArray & >())
     .def(py::init< const fetch::byte_array::ConstByteArray &, const std::size_t &, const std::size_t & >())
     .def("character", &Token::character)
-    .def("SetFilename", &Token::SetFilename)
-    .def("filename", &Token::filename)
     .def("SetChar", &Token::SetChar)
     .def("SetLine", &Token::SetLine)
     .def("line", &Token::line)

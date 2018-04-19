@@ -1,3 +1,4 @@
+
 #ifndef HTTP_ABSTRACT_CONNECTION_HPP
 #define HTTP_ABSTRACT_CONNECTION_HPP
 
@@ -5,7 +6,11 @@
 
 #include<string>
 #include<memory>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
 #include <asio.hpp>
+#pragma clang diagnostic pop
 
 namespace fetch
 {

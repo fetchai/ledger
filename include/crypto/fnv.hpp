@@ -28,10 +28,10 @@ class FNV : public StreamHasher {
   }
 
   void Final() override {
-     digest_[0] = context_;
-     digest_[1] = context_ >> 8;
-     digest_[2] = context_ >> 16;
-     digest_[3] = context_ >> 24;      
+    digest_[0] = uint8_t(context_);
+    digest_[1] = uint8_t(context_ >> 8);
+    digest_[2] = uint8_t(context_ >> 16);
+    digest_[3] = uint8_t(context_ >> 24);
   }
   
   byte_array_type digest() override {

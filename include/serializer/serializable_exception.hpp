@@ -8,7 +8,7 @@ namespace fetch {
 namespace serializers {
 
 template <typename T>
-void Serialize(T &serializer, SerializableException const &s) {
+inline void Serialize(T &serializer, SerializableException const &s) {
   uint64_t size = s.explanation().size();
   error::error_type code = s.error_code();
 
@@ -24,7 +24,7 @@ void Serialize(T &serializer, SerializableException const &s) {
 }
 
 template <typename T>
-void Deserialize(T &serializer, SerializableException &s) {
+inline void Deserialize(T &serializer, SerializableException &s) {
   error::error_type code;
   uint64_t size = 0;
 

@@ -13,7 +13,7 @@ class ParamsParser {
  private:
   std::map<std::string, std::string> params_;
   std::vector<std::string> args_;
-  std::size_t arg_count_;
+  int arg_count_;
 
  public:
   void Parse(int argc, char const **argv) {

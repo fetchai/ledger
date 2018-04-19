@@ -1,4 +1,11 @@
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wc++11-compat-pedantic"
+#include <pybind11/pybind11.h>
+#pragma clang diagnostic pop
+
+
 #include "py_logger.hpp"
 #include "py_unittest.hpp"
 #include "py_assert.hpp"
@@ -23,7 +30,7 @@
 #include "serializer/py_exception.hpp"
 #include "memory/py_array.hpp"
 #include "memory/py_shared_array.hpp"
-#include "memory/py_shared_hashtable.hpp"
+
 #include "memory/py_rectangular_array.hpp"
 #include "network/py_tcp_server.hpp"
 #include "network/py_thread_manager.hpp"
@@ -45,10 +52,7 @@
 #include "math/py_log.hpp"
 #include "math/linalg/py_matrix.hpp"
 #include "math/spline/py_linear.hpp"
-#include "script/py_dictionary.hpp"
-#include "script/py_function.hpp"
 #include "script/py_variant.hpp"
-#include "script/py_ast.hpp"
 #include "image/py_load_png.hpp"
 #include "image/py_image.hpp"
 #include "storage/py_versioned_random_access_stack.hpp"
@@ -128,8 +132,6 @@
 #include "protocols/chain_keeper/py_commands.hpp"
 #include "protocols/chain_keeper/py_transaction_manager.hpp"
 */
-#include "vectorize/py_sse.hpp"
-#include "vectorize/py_vectorize_constants.hpp"
 #include "optimisation/py_brute_force.hpp"
 // #include "optimisation/py_abstract_spinglass_solver.hpp"
 #include "optimisation/instance/py_load_txt.hpp"
@@ -137,7 +139,6 @@
 #include "optimisation/simulated_annealing/py_reference_annealer.hpp"
 #include "optimisation/simulated_annealing/py_sparse_annealer.hpp"
 
-#include <pybind11/pybind11.h>
 
 PYBIND11_MODULE(libfetchcore, module) {
   namespace py = pybind11;
@@ -251,15 +252,15 @@ PYBIND11_MODULE(libfetchcore, module) {
 //  fetch::math::BuildBigUnsigned(ns_fetch_math);
 //  fetch::math::BuildLog(ns_fetch_math);
 
-  fetch::math::linalg::BuildMatrix<int8_t>("MatrixInt8", ns_fetch_math_linalg);      
-  fetch::math::linalg::BuildMatrix<int16_t>("MatrixInt16", ns_fetch_math_linalg);    
-  fetch::math::linalg::BuildMatrix<int32_t>("MatrixInt32", ns_fetch_math_linalg);
-  fetch::math::linalg::BuildMatrix<int64_t>("MatrixInt64", ns_fetch_math_linalg);
+//  fetch::math::linalg::BuildMatrix<int8_t>("MatrixInt8", ns_fetch_math_linalg);      
+//  fetch::math::linalg::BuildMatrix<int16_t>("MatrixInt16", ns_fetch_math_linalg);    
+//  fetch::math::linalg::BuildMatrix<int32_t>("MatrixInt32", ns_fetch_math_linalg);
+  //  fetch::math::linalg::BuildMatrix<int64_t>("MatrixInt64", ns_fetch_math_linalg);
 
-  fetch::math::linalg::BuildMatrix<uint8_t>("MatrixUInt8", ns_fetch_math_linalg);      
-  fetch::math::linalg::BuildMatrix<uint16_t>("MatrixUInt16", ns_fetch_math_linalg);    
-  fetch::math::linalg::BuildMatrix<uint32_t>("MatrixUInt32", ns_fetch_math_linalg);
-  fetch::math::linalg::BuildMatrix<uint64_t>("MatrixUInt64", ns_fetch_math_linalg);
+  //  fetch::math::linalg::BuildMatrix<uint8_t>("MatrixUInt8", ns_fetch_math_linalg);      
+  //  fetch::math::linalg::BuildMatrix<uint16_t>("MatrixUInt16", ns_fetch_math_linalg);    
+  //  fetch::math::linalg::BuildMatrix<uint32_t>("MatrixUInt32", ns_fetch_math_linalg);
+  //  fetch::math::linalg::BuildMatrix<uint64_t>("MatrixUInt64", ns_fetch_math_linalg);
   
   fetch::math::linalg::BuildMatrix<float>("MatrixFloat", ns_fetch_math_linalg);
   fetch::math::linalg::BuildMatrix<double>("MatrixDouble", ns_fetch_math_linalg);  

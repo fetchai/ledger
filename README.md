@@ -11,9 +11,15 @@ Build
 =====
 
 mkdir build
+cd build
 cmake ..
 make
 
+
+On Ubuntu
+=========
+
+sudo apt-get install libssl-dev cmake
 
 Test
 ====

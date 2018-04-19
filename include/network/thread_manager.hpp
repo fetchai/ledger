@@ -4,9 +4,14 @@
 #include "mutex.hpp"
 #include "logger.hpp"
 
-#include <asio.hpp>
 #include <functional>
 #include <map>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#include <asio.hpp>
+#pragma clang diagnostic pop
+
 namespace fetch {
 namespace network {
 

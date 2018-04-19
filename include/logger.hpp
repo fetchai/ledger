@@ -38,10 +38,7 @@ private:
   static std::mutex mutex_;
   
 };
-
-std::map< std::thread::id, int > ReadableThread::thread_number_ = std::map< std::thread::id, int > ();
-int ReadableThread::thread_count_ = 0;
-std::mutex ReadableThread::mutex_ ;
+  
 
 class ContextDetails 
 {
@@ -56,7 +53,7 @@ public:
     id_ = std::this_thread::get_id();    
   }
   
-  ContextDetails(shared_type ctx, shared_type parent, std::string const & context, std::string const & filename = "", std::size_t const &line = 0, void* instance=nullptr) :
+  ContextDetails(shared_type ctx, shared_type parent, std::string const & context, std::string const & filename = "", int const &line = 0, void* instance=nullptr) :
     context_(context),
     filename_(filename),
     line_(line),
@@ -67,7 +64,7 @@ public:
     id_ = std::this_thread::get_id();    
   }
   
-  ContextDetails(shared_type parent, std::string const & context, std::string const & filename = "", std::size_t const &line = 0, void* instance=nullptr) :
+  ContextDetails(shared_type parent, std::string const & context, std::string const & filename = "", int const &line = 0, void* instance=nullptr) :
     context_(context),
     filename_(filename),
     line_(line),
@@ -97,7 +94,7 @@ public:
     return context_;    
   }  
   std::string filename() const { return filename_; }
-  std::size_t line() const { return line_; }  
+  int line() const { return line_; }  
 
   std::thread::id thread_id() const { return id_; }
   void* instance() const 
@@ -108,7 +105,7 @@ public:
 private:
   std::string context_;  
   std::string filename_;
-  std::size_t line_;
+  int line_;
   shared_type parent_;
   shared_type derived_from_;
   std::thread::id id_;
@@ -121,8 +118,8 @@ class Context
 public:
   typedef std::shared_ptr< ContextDetails > shared_type;
   Context( void* instance = nullptr );    
-  Context(shared_type ctx, std::string const & context, std::string const & filename = "", std::size_t const &line = 0,  void* instance = nullptr );  
-  Context(std::string const & context, std::string const & filename = "", std::size_t const &line = 0,  void* instance = nullptr ) ;
+  Context(shared_type ctx, std::string const & context, std::string const & filename = "", int const &line = 0,  void* instance = nullptr );  
+  Context(std::string const & context, std::string const & filename = "", int const &line = 0,  void* instance = nullptr ) ;
 
   Context(Context const &context) 
   {
@@ -566,47 +563,8 @@ private:
 
 };
 
-log::details::LogWrapper logger;  
+extern log::details::LogWrapper logger;  
 
-
-namespace log {
-Context::Context( void* instance) 
-{
-  created_ =   std::chrono::high_resolution_clock::now();
-  details_ = std::make_shared< ContextDetails >(instance);
-  fetch::logger.SetContext( details_ );
-}
-
- 
-Context::Context(shared_type ctx,  std::string const & context, std::string const & filename, std::size_t const &line, void* instance)
-{
-  created_ =   std::chrono::high_resolution_clock::now();  
-  details_ = std::make_shared< ContextDetails >(ctx, fetch::logger.TopContext(), context, filename, line, instance);
-  fetch::logger.SetContext( details_ );  
-}
-
-Context::Context(std::string const & context , std::string const & filename, std::size_t const &line,  void* instance  ) 
-{
-  created_ = std::chrono::high_resolution_clock::now();
-  details_ = std::make_shared< ContextDetails >(fetch::logger.TopContext(), context, filename, line, instance);    
-  fetch::logger.SetContext( details_ );
-}
-
-Context::~Context() 
-{
-  std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-  double total_time =  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - created_).count();
-  fetch::logger.UpdateContextTime( details_, total_time );
-  
-  if(primary_ && details_->parent() )
-  {    
-    fetch::logger.SetContext( details_->parent() );
-  }
-  
-}
-
-
-};
 };
 
 // TODO: Move somewhere else

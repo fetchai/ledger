@@ -11,6 +11,7 @@
 #include"chain/consensus/proof_of_work.hpp"
 
 #include"optimisation/simulated_annealing/reference_annealer.hpp"
+#include"optimisation/simulated_annealing/sparse_annealer.hpp"
 #include"optimisation/instance/binary_problem.hpp"
 
 #include"commandline/vt100.hpp"
@@ -94,25 +95,25 @@ public:
 
     problem.Resize(size);
     double field = -1 ;
-    double penalty = 4. ;
+    double penalty = 5. ;
     for(std::size_t i=0; i < size; ++i) {
       problem.Insert(i,i, field);
     }    
     std::cout << " --------============== C =================--------------" << std::endl;    
     for(std::size_t i=0; i < group_count_; ++i) {
       auto &group = groups_collision[i];
-      std::cout << "Group " << i << ": ";
+      //      std::cout << "Group " << i << ": ";
       
       for(std::size_t j=0; j < group.size(); ++j) {
 
         std::size_t A = group[j];
-        std::cout << A << " ";        
+        //        std::cout << A << " ";        
         for(std::size_t k=j+1; k < group.size(); ++k) {
           std::size_t B = group[k];
-          problem.Insert( A, B, penalty / group.size() );
+          problem.Insert( A, B, penalty);
         }
       }
-      std::cout << std::endl;
+      //      std::cout << std::endl;
       
     }
     std::cout << " --------============== D =================--------------" << std::endl;    
@@ -135,7 +136,7 @@ public:
     }
 
     std::cout << "Used " << size << " transactions on " <<  group_count_ << " groups. Energy was " << e << " " << problem.energy_offset()  <<  std::endl;
-    annealer.PrintGraph();
+    //    annealer.PrintGraph();
     std::cout << "State: " ;
     
     for(auto &s: state) {
@@ -163,7 +164,7 @@ public:
     std::cout << "Program " << ts2*1000 << " ms" << std::endl;
     double ts3 =  std::chrono::duration_cast<std::chrono::duration<double>>(t4 - t3).count();
     std::cout << "Solve " << ts3*1000 << " ms with " <<  annealer.sweeps() << " sweeps" << std::endl;
-    std::cout << "Flip rate: " << annealer.accepted() / annealer.attempts() << std::endl;
+    //    std::cout << "Flip rate: " << annealer.accepted() / annealer.attempts() << std::endl;
     
     std::cout << std::endl << "Total: " << ncount << std::endl;
     std::cout << std::endl << "Groups: ";
@@ -171,13 +172,16 @@ public:
     bool valid = true;
     int last_group = -1;
 
-    std::unordered_map< uint32_t, int > groups_with_conflicts;
+    std::unordered_map< uint64_t, int > groups_with_conflicts;
+    std::size_t group_occupation = 0;
     
     for( auto &g: used_groups) {
+      ++group_occupation;
       std::cout << g << " ";
       // TODO: Take into account malformed transactions
       valid &= (last_group < int(g) );
       if(last_group >= int(g) ) {
+        --group_occupation;
         std::cout << "***"; // TODO: Correct to make valid
         if(groups_with_conflicts.find(g) == groups_with_conflicts.end()) {
           groups_with_conflicts[g] = 0;
@@ -185,8 +189,10 @@ public:
 
         ++groups_with_conflicts[g];                
       }
-      last_group = g;
+      last_group = int(g);
     }
+    std::cout << std::endl;
+    std::cout << "Group occupation: " << group_occupation << std::endl;
     
     if(!valid) {
       std::cout << "FIXING it" << std::endl;
@@ -228,7 +234,7 @@ public:
           
           ++groups_with_conflicts[g];                
         }
-        last_group = g;
+        last_group = int(g);
       }    
     }
     
@@ -388,7 +394,7 @@ private:
 };
 
 
-std::ostream& operator<< (std::ostream& stream, BlockGenerator const &graph )
+inline std::ostream& operator<< (std::ostream& stream, BlockGenerator const &graph )
 {
   return stream;
   

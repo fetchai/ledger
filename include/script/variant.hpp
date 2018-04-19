@@ -2,7 +2,7 @@
 #define SCRIP_VARIANT_HPP
 #include "byte_array/referenced_byte_array.hpp"
 #include "memory/shared_array.hpp"
-#include "script/dictionary.hpp"
+//#include "script/dictionary.hpp"
 
 #include <initializer_list>
 #include <ostream>
@@ -14,25 +14,51 @@ enum VariantType {
   UNDEFINED = 0,
   INTEGER = 1,
   FLOATING_POINT = 2,
-  BYTE_ARRAY = 3,
-  BOOLEAN = 4,
+  BOOLEAN = 3,
+  STRING = 4,
   NULL_VALUE = 5,
   ARRAY = 6,
-  DICTIONARY = 7,
-  FUNCTION = 8
+  OBJECT = 7
 };
 
-// FIXME: replace asserts with throwing errors
-  class Variant;
-  std::ostream& operator<<(std::ostream& os, Variant const& v);  
 
-class Variant {
+  class Variant;
+  
+class VariantList 
+{
 public:
-  typedef fetch::byte_array::ByteArray byte_array_type;
-  typedef fetch::memory::SharedArray<Variant> variant_array_type;
-  typedef fetch::script::Dictionary<Variant> variant_dictionary_type;
+  VariantList() ;
+  VariantList(std::size_t const& size ) ;
+  VariantList(VariantList const& other, std::size_t offset, std::size_t size)  ;
+  VariantList(VariantList const& other);
+  VariantList(VariantList && other) ;
+
+  VariantList const &operator=(VariantList const& other);
+  VariantList const &operator=(VariantList && other) ;
+
+  Variant const& operator[](std::size_t const &i)  const;  
+  Variant & operator[](std::size_t const &i);
+  void Resize(std::size_t const &n) ;
+  void Reserve(std::size_t const &n);
+  std::size_t size() const { return size_; }
+
+  void SetData(VariantList const& other, std::size_t offset, std::size_t size) ;
+private:
+  std::size_t size_ = 0;
+  std::size_t offset_ = 0;
+  memory::SharedArray< Variant, 16 > data_;
+  Variant *pointer_ = nullptr;
+}; 
+
+class Variant
+{  
+public:
+  typedef byte_array::ByteArray byte_array_type;
+  typedef VariantList  variant_array_type;  
+  
   
   Variant() : type_(UNDEFINED) {}
+  
   Variant(int64_t const& i) { *this = i; }
   Variant(int32_t const& i) { *this = i; }
   Variant(int16_t const& i) { *this = i; }
@@ -42,228 +68,156 @@ public:
 
   Variant(float const& f) { *this = f; }
   Variant(double const& f) { *this = f; }
-
-  Variant(char const* str) {
-    if (str == nullptr)
-      *this = nullptr;
-    else
-      *this = byte_array_type(str);
-  }
-  Variant(byte_array_type const& str) { *this = str; }
-  Variant(char const& c) { *this = c; }
-
-  Variant(std::initializer_list<Variant> const& arr) { *this = arr; }
-
-  Variant(Variant const &var)
-  {
-    this->operator=(var);    
-  }
   
-  Variant const &operator=(Variant const &other)
-  {
-    type_ = other.type_;
-    switch (other.type_) {
-    case UNDEFINED:
-    case BOOLEAN:      
-    case INTEGER:
-    case FLOATING_POINT:
-    case NULL_VALUE:
-      this->data_ = other.data_;
-      
-      break;
-      
-    case BYTE_ARRAY:
-      this->data_.byte_array = new byte_array_type( *other.data_.byte_array );
-      break;
-      
-    case ARRAY:
-      this->data_.array = new variant_array_type(  *other.data_.array );        
-      break;        
-    case DICTIONARY:
-      this->data_.object= new variant_dictionary_type(     *other.data_.object );
-      break;
-    case FUNCTION:
-      // FIXME: implement
-      break;
-    }
-    return other;    
-  }
-  
-
-  
-  static Variant Object(std::initializer_list<Variant> const& arr) {
-    
-    Variant ret;    
-    ret.type_ = DICTIONARY;
-    ret.data_.object = new variant_dictionary_type();
-    for(auto const &kv: arr)
-    {
-      if(kv.size() != 2)
-      {
-        TODO_FAIL("Expected exactly two entries");        
-      }
-
-      ret[kv[0].as_byte_array()] =  kv[1]; 
-    }
-    return ret;    
-  }
-
-  static Variant Object() {
-    Variant ret;    
-    ret.type_ = DICTIONARY;
-    ret.data_.object = new variant_dictionary_type();
-    
-    return ret;    
-  }
-  
-
-  static Variant Array(std::initializer_list<Variant> const& arr) {
-    Variant ret;    
-    ret.type_ = ARRAY;
-    ret.data_.array = new variant_array_type(arr.size());
-    (*ret.data_.array)[0] = arr.size();
+  Variant(std::initializer_list< Variant > const & lst) {    
+    type_ = ARRAY;
+    VariantList data(lst.size());
     std::size_t i = 0;
-    for(auto const &kv: arr)
-    {      
-      ret[i++] = kv;    
-    }
+    for(auto const &a: lst)
+      data[i++] = a;
+
+    array_ = data;
+  }
+  
+  ~Variant() 
+  {
     
+  }
+
+  void MakeNull() {
+    type_ = NULL_VALUE;
+  }
+
+  void MakeUndefined() {
+    type_ = UNDEFINED;
+  }
+
+  void MakeArray(std::size_t n) 
+  {
+    type_ = ARRAY;
+    array_ = VariantList(n);
+  }
+
+  void MakeObject() 
+  {
+    type_ = OBJECT;
+    array_ = VariantList();
+  }
+  
+  static Variant Array(std::size_t n) 
+  {
+    Variant ret;
+    ret.MakeArray(n);    
     return ret;    
   }
 
-  static Variant Array(std::size_t n = 0) {
-    Variant ret;    
-    ret.type_ = ARRAY;
-    ret.data_.array = new variant_array_type(n);    
+  static Variant Object() 
+  {
+    Variant ret;
+    ret.MakeObject();
     return ret;    
   }  
   
-  Variant Copy() const {
-    Variant ret;
-    switch (type_) {
-      case UNDEFINED:
-      case INTEGER:
-      case FLOATING_POINT:
-      case BOOLEAN:
-      case NULL_VALUE:
-        ret = *this;
-        break;
-
-      case BYTE_ARRAY:
-        ret.type_ = type_;
-        ret.data_.byte_array = new byte_array_type(data_.byte_array->Copy());
-        break;
-
-      case ARRAY:
-        ret.type_ = type_;
-        ret.data_.array = new variant_array_type(  data_.array->Copy() );        
-        break;        
-      case DICTIONARY:
-        ret.type_ = type_;
-        ret.data_.object= new variant_dictionary_type(     data_.object->Copy() );
-        break;
-      case FUNCTION:
-        // FIXME: implement
-        break;
-    }
-    return ret;
-  }
-
-  std::initializer_list<Variant> const& operator=(
-      std::initializer_list<Variant> const& arr) {
-    type_ = ARRAY;
-    data_.array = new variant_array_type(arr.size());
-    std::size_t i = 0;
-    for (auto& a : arr) (*data_.array)[i++] = a;
-    return arr;
-  }
-
   
-  // Array accessors
-  Variant& operator[](std::size_t const& i) {
-    assert(type_ == ARRAY);
-    assert(i < size());
-    return (*data_.array)[i];    
+  byte_array_type const& operator=(byte_array_type const &b) {
+    type_ = STRING;
+    string_ = b;
+    return b;
   }
 
-  Variant const& operator[](std::size_t const& i) const {
-    assert(type_ == ARRAY);
-    assert(i < size());
-    return (*data_.array)[i];
-  }
-
-  // Dict accessors
-  Variant & operator[](byte_array::BasicByteArray const &key) 
-  {
-    assert(type_ == DICTIONARY);
-    return (*data_.object)[key];
-  }
-
-  Variant const & operator[](byte_array::BasicByteArray const &key) const 
-  {
-    assert(type_ == DICTIONARY);
-    return (*data_.object)[key];
-  }
-
-  
-  std::size_t size() const {
-    if (type_ == ARRAY)
-      return data_.array->size();
-    if (type_ == BYTE_ARRAY) return data_.byte_array->size();
-    return 0;
-  }
-
-  std::nullptr_t* operator=(std::nullptr_t* ptr) {
-    FreeMemory();
-    if (ptr != nullptr) {
-      // FIXME: Throw error
-      assert(ptr == nullptr);
+  char const* operator=(char* const data) {
+    if(data == nullptr)
+      type_ = NULL_VALUE;
+    else {
+      type_ = STRING;
+      string_ = data;
     }
-    type_ = NULL_VALUE;
-    return ptr;
-  }
-
-
+    
+    return data;
+  }  
   
   
   template <typename T>
-  typename std::enable_if<std::is_integral<T>::value, T>::type operator=(
+  typename std::enable_if< (!std::is_same<T,bool>::value) && std::is_integral<T>::value, T>::type operator=(
       T const& i) {
-    FreeMemory();
     type_ = INTEGER;
-    return data_.integer = i;
+    data_.integer = int64_t(i);
+    return T(data_.integer);
   }
 
   template <typename T>
   typename std::enable_if<std::is_floating_point<T>::value, T>::type operator=(
       T const& f) {
-    FreeMemory();
     type_ = FLOATING_POINT;
-    return data_.float_point = f;
+    data_.float_point = double(f);
+    return T(data_.float_point);
   }
 
-  bool operator=(bool const& b) {
-    FreeMemory();
+  template <typename T>
+  typename std::enable_if<std::is_same<T, bool>::value, T>::type   
+  operator=(T const& b) {
     type_ = BOOLEAN;
     return data_.boolean = b;
   }
 
-  char const& operator=(char const& c) {
-    byte_array_type str;
-    str.Resize(1);
-    str[0] = c;
-    *this = str;
-    return c;
+
+  variant_array_type const& operator=(variant_array_type const& array) {
+    type_ = ARRAY;
+    array_ = array;
+    return array;
   }
 
-  byte_array_type operator=(byte_array_type const& s) {
-    FreeMemory();
-    type_ = BYTE_ARRAY;
-    return *(data_.byte_array = new byte_array_type(s));
+
+  // Dict accessors
+  Variant & operator[](byte_array::BasicByteArray const &key) 
+  {
+    assert(type_ == OBJECT);
+    std::size_t i = 0;
+    for(; i < array_.size(); i += 2) {
+      if(key == array_[i].as_byte_array()) break;
+    }
+    if(i == array_.size()) {
+      // TODO: Add add functionality
+    }
+    return array_[i+1];
   }
 
-  byte_array_type const& as_byte_array() const { return *data_.byte_array; }
-  byte_array_type& as_byte_array() { return *data_.byte_array; }
+  Variant const & operator[](byte_array::BasicByteArray const &key) const 
+  {
+    assert(type_ == OBJECT);
+    std::size_t i = 0;
+    for(; i < array_.size(); i += 2) {
+      if(key == array_[i].as_byte_array()) break;
+    }
+    if(i == array_.size()) {
+      // TODO: Throw error
+    }
+    return array_[i+1];    
+  }
+
+  // Array accessors
+  Variant& operator[](std::size_t const& i);  
+  Variant const& operator[](std::size_t const& i) const;   
+  std::size_t size() const;
+  
+  
+  void SetArray(VariantList const& data, std::size_t offset, std::size_t size)  {
+    type_ = ARRAY;
+    array_.SetData(data, offset, size) ;
+  }
+
+  void SetObject(VariantList const& data, std::size_t offset, std::size_t size)  {
+    type_ = OBJECT;
+    array_.SetData(data, offset, size) ;
+  }
+  
+  template< typename ...A >
+  void EmplaceSetString(A ...args ) {
+    type_ = STRING;
+    string_.FromByteArray( args... );
+  }
+
+  
   int64_t const& as_int() const { return data_.integer; }
   int64_t& as_int() { return data_.integer; }
   double const& as_double() const { return data_.float_point; }
@@ -271,91 +225,36 @@ public:
   bool const& as_bool() const { return data_.boolean; }
   bool& as_bool() { return data_.boolean; }
 
+  byte_array_type const& as_byte_array() const { return string_; }
+  byte_array_type& as_byte_array() { return string_; }
 
-  variant_dictionary_type as_dictionary() { return *data_.object; }
-  variant_dictionary_type const &as_dictionary() const { return *data_.object; }    
+  variant_array_type const& as_array() const { return array_; }
+  variant_array_type & as_array() { return array_; }  
+
+
+  VariantType type() const 
+  {
+    return type_;
+  }
   
-  variant_array_type as_array() { return *data_.array; }
-  variant_array_type const &as_array() const { return *data_.array; }    
-
-  bool is_undefined() const  { return type_ == UNDEFINED; }
-  bool is_int() const        { return type_ == INTEGER; }
-  bool is_float() const      { return type_ == FLOATING_POINT; }
-  bool is_byte_array() const { return type_ == BYTE_ARRAY; }
-  bool is_bool() const       { return type_ == BOOLEAN; }
-  bool is_null() const       { return type_ == NULL_VALUE; }
-  bool is_array() const      { return type_ == ARRAY; }
-  bool is_dictionary() const { return type_ == DICTIONARY; }
-  bool is_function() const   { return type_ == FUNCTION; }
-
-
-  VariantType const& type() const { return type_; }
-
-  bool operator==(char const* str) const {
-    return (type_ == BYTE_ARRAY) && (as_byte_array() == str);
-  }
-
-  bool operator==(int const& v) const {
-    return (type_ == INTEGER) && (as_int() == v);
-  }
-
-  bool operator==(double const& v) const {
-    return (type_ == FLOATING_POINT) && (as_double() == v);
-  }
-
-  template <typename T>
-  bool operator!=(T const& v) const {
-    return !(*this == v);
-  }
-
- private:
-  void FreeMemory() {
-    switch (type_) {
-      case UNDEFINED:
-        break;
-      case INTEGER:
-        break;
-      case FLOATING_POINT:
-        break;
-      case BYTE_ARRAY:
-        type_ = UNDEFINED;
-        delete data_.byte_array;
-        data_.byte_array = nullptr;
-        break;
-      case BOOLEAN:
-        break;
-      case NULL_VALUE:
-        break;
-      case ARRAY:
-        type_ = UNDEFINED;
-        delete data_.array;
-        data_.array = nullptr;
-        break;        
-      case DICTIONARY:
-        type_ = UNDEFINED;
-        delete data_.object;
-        data_.object = nullptr;
-        break;
-      case FUNCTION:
-        break;
-    }
-  }
-
-
+private:
   union {
     int64_t integer;
     double float_point;
     bool boolean;
-    byte_array_type* byte_array;
-    variant_array_type* array;
-    variant_dictionary_type *object;
   } data_;
-
-  VariantType type_ = UNDEFINED;
+  
+  byte_array::ByteArray string_;
+  variant_array_type array_;
+  
+  VariantType type_ = UNDEFINED;  
 };
 
 
-std::ostream& operator<<(std::ostream& os, Variant const& v) {
+
+
+inline std::ostream& operator<<(std::ostream& os, Variant const& v) {
+
   switch (v.type()) {
     case VariantType::UNDEFINED:
       os << "(undefined)";
@@ -366,47 +265,62 @@ std::ostream& operator<<(std::ostream& os, Variant const& v) {
     case VariantType::FLOATING_POINT:
       os << v.as_double();
       break;
-    case VariantType::BYTE_ARRAY:
+    case VariantType::STRING:
       os << '"' << v.as_byte_array() << '"';
       break;
     case VariantType::BOOLEAN:
-      os << v.as_bool();
+      os << (v.as_bool() ? "true" : "false");
       break;
     case VariantType::NULL_VALUE:
-      os << "(null)";
+      os << "null";
       break;
     case VariantType::ARRAY:
       os << "[";
-      if (v.size() > 0) os << v[0];
-      for (std::size_t i = 1; i < v.size(); ++i) {
-        os << ", " << v[i];
+      
+      for(std::size_t i=0; i < v.as_array().size(); ++i) {
+        if(i != 0) {
+          os << ", ";
+        }
+        os << v.as_array()[i];
+
       }
+      
       os << "]";
-      break;
-  case VariantType::DICTIONARY: {
-    bool first = true;
-    
-    os << "{";
-    
-    for(auto const &c: v.as_dictionary() )
-    {
       
-      if(!first)
-        os << ", ";
+      break;
+    case VariantType::OBJECT:
+      os << "{";
+      for(std::size_t i=0; i < v.as_array().size(); ++i) {
+        if(i != 0) {
+          os << ", ";
+        }
+        os <<  v.as_array()[i++] << ": " << v.as_array()[i];
+      }      
+
+      os << "}";
       
-      os << "\"" << c.first << "\": " << c.second;
-      first = false;      
-    }
-    os << "}";
-    
-  }  
-      break;
-    case VariantType::FUNCTION:
-      os << "(function)";
-      break;
+      break;            
   }
-  return os;
+  return os;  
 }
+
+
+
+inline std::ostream& operator<<(std::ostream& os, VariantList const& v) {
+
+  os << "[";
+  for(std::size_t i=0; i < v.size(); ++i) {
+    if(i != 0) {
+      os << ", ";
+    }
+    os << v[i];    
+  }
+  os << "]";
+  
+  return os;  
+}
+
+
 };
 };
 #endif

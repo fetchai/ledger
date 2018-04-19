@@ -19,9 +19,11 @@ void Serializer(T &t, Blah const&b)
 }
 */
 
-int main() {
+int main(int argc, char **argv) {
   SCENARIO("Testing basic parsing") {
-    ByteArray doc_content = R"({
+
+    SECTION("Parsing and modification of document") {
+      ByteArray doc_content = R"({
   "a": 3,
   "x": { 
     "y": [1,2,3],
@@ -31,34 +33,77 @@ int main() {
   }
 }
 )" ;
-    doc_content = R"({"angle1":022,"angle2":1,"name":"AEA_8080_0","searchText":"100"})";
-    
-    std::cout << doc_content << std::endl;
-
-    JSONDocument doc;
-    doc.Parse("test.file", doc_content);
-
-    doc["a"] = 4;
-    std::cout << doc.root() << std::endl;
-
-    doc.Parse("hello", R"( {"thing": "tester", "list": [{"one": "me"}, {"two": "asdf"}]})");
-    std::cout << doc.root() << std::endl << std::endl;
-    std::cout << "doc[\"list\"] = ";    
-    std::cout << doc["list"] << std::endl;
-    std::cout << "List: "<<std::endl;
-    
-    for(auto &a: doc["list"].as_array()) {
-      std::cout << a << std::endl;
       
-    }
+      JSONDocument doc;
+      doc.Parse(doc_content);
+      
+      std::stringstream ss;
+      ss << doc.root();    
+      EXPECT( ss.str() == R"({"a": 3, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})" );
+      
+      doc["a"] = 4;
+      ss.str("");    
+      ss << doc.root();
+      EXPECT( ss.str() == R"({"a": 4, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})" );
+      
+      doc["x"]["y"][1] = 5;
+      ss.str("");
+      ss << doc.root();
+      EXPECT( ss.str() == R"({"a": 4, "x": {"y": [1, 5, 3], "z": null, "q": [], "hello world": {}}})");
+      
+      doc["x"]["z"] = fetch::script::Variant({1,2,3,4,5});
+      ss.str("");
+      ss << doc.root();
+      EXPECT( ss.str() == R"({"a": 4, "x": {"y": [1, 5, 3], "z": [1, 2, 3, 4, 5], "q": [], "hello world": {}}})");
+
+      ss.str("");
+      ss <<  doc["x"]["y"] ;
+      EXPECT( ss.str() == "[1, 5, 3]")
+    };
+
+
+    SECTION("Type parsing") {
+    ByteArray doc_content = R"({
+  "a": 3,
+  "b": 2.3e-2,
+  "c": 2e+9,
+  "d": "hello",
+  "e": null,
+  "f": true,
+  "g": false
+}
+)" ;
+      
+      JSONDocument doc;
+      doc.Parse(doc_content);
+      EXPECT(doc["a"].type() == fetch::script::VariantType::INTEGER);
+      EXPECT(doc["b"].type() == fetch::script::VariantType::FLOATING_POINT);
+      EXPECT(doc["c"].type() == fetch::script::VariantType::FLOATING_POINT);
+      EXPECT(doc["d"].type() == fetch::script::VariantType::STRING);
+      EXPECT(doc["e"].type() == fetch::script::VariantType::NULL_VALUE);
+      
+      EXPECT(doc["f"].type() == fetch::script::VariantType::BOOLEAN); 
+      EXPECT(doc["g"].type() == fetch::script::VariantType::BOOLEAN);     
+    };
+
+
+    SECTION("Parsing exeptions") {
+      
+      JSONDocument doc;
+      EXPECT_EXCEPTION(doc.Parse("{"), fetch::json::JSONParseException);
+      EXPECT_EXCEPTION(doc.Parse("{]"), fetch::json::JSONParseException);
+
+      EXPECT_EXCEPTION(doc.Parse(R"(["a":"b"])"), fetch::json::JSONParseException);      
+      EXPECT_EXCEPTION(doc.Parse(R"({"a": 2.fs})"), fetch::json::JSONParseException);
+      EXPECT_EXCEPTION(doc.Parse(R"({"a":})"), fetch::json::JSONParseException);
+
+
+    };
+
     
+
+  return 0;
   };
   
-  /*
-  for(auto &t : test) {
-    std::cout << t.filename() << " line " << t.line() << ", char " << t.character() << std::endl;
-    std::cout << t.type() << " " << t.size() << " " << t << std::endl;
-  }
-  */
-  return 0;
+
 }

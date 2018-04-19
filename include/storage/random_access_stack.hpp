@@ -56,7 +56,7 @@ class RandomAccessStack {
     }
 
     fin.seekg(0, fin.end);
-    std::size_t length = fin.tellg();
+    int64_t length = fin.tellg();
     fin.seekg(0, fin.beg);
     header_.Read(fin);
     std::size_t capacity = (length - header_.size()) / sizeof(type);
@@ -77,7 +77,7 @@ class RandomAccessStack {
 
   void Get(std::size_t const &i, type &object) const {
     detailed_assert(filename_ != "");
-    std::size_t n = i * sizeof(type) + header_.size();
+    int64_t n = int64_t(i * sizeof(type) + header_.size());
     std::fstream fin(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
     fin.seekg(n);
@@ -87,7 +87,7 @@ class RandomAccessStack {
 
   void Set(std::size_t const &i, type const &object) const {
     detailed_assert(filename_ != "");
-    std::size_t n = i * sizeof(type) + header_.size();
+    int64_t n = int64_t(i * sizeof(type) + header_.size());
     std::fstream fin(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
     fin.seekg(n, fin.beg);
@@ -107,7 +107,7 @@ class RandomAccessStack {
   header_extra_type header_extra() const { return header_.extra; }
 
   void Push(type const &object) {
-    std::size_t n = header_.objects * sizeof(type) + header_.size();
+    int64_t n = int64_t(header_.objects * sizeof(type) + header_.size());
     std::fstream fin(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
     fin.seekg(n, fin.beg);
@@ -132,7 +132,7 @@ class RandomAccessStack {
   type Top() const {
     detailed_assert(header_.objects > 0);
 
-    std::size_t n = (header_.objects - 1) * sizeof(type) + header_.size();
+    int64_t n = int64_t( (header_.objects - 1) * sizeof(type) + header_.size() );
     std::fstream fin(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
     fin.seekg(n, fin.beg);
@@ -150,8 +150,8 @@ class RandomAccessStack {
     type a, b;
     detailed_assert(filename_ != "");
 
-    std::size_t n1 = i * sizeof(type) + header_.size();
-    std::size_t n2 = j * sizeof(type) + header_.size();
+    int64_t n1 = int64_t(i * sizeof(type) + header_.size());
+    int64_t n2 = int64_t(j * sizeof(type) + header_.size());
     std::fstream fin(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
 

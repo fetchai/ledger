@@ -151,7 +151,7 @@ public:
     EntryPoint d;
     d.host = host;    
     d.port = port;
-    d.http_port = -1; 
+    d.http_port = uint16_t(-1); 
     d.group = 0; // TODO: get and check that it is right
     d.configuration = 0;  
 
@@ -212,7 +212,7 @@ public:
 
   }
 
-  void SetGroupNumber(uint32_t group, uint32_t total_groups) 
+  void SetGroupNumber(group_type group, group_type total_groups) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
@@ -225,15 +225,15 @@ public:
     block_mutex_.unlock();
   }
   
-  uint32_t count_outgoing_connections() 
+  uint16_t count_outgoing_connections() 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
     std::lock_guard< fetch::mutex::Mutex > lock( chain_keeper_friends_mutex_ );
-    return chain_keeper_friends_.size();    
+    return uint16_t( chain_keeper_friends_.size() );
   }
 
-  uint32_t group_number() // TODO: Change to atomic
+  group_type group_number() // TODO: Change to atomic
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
@@ -305,7 +305,7 @@ private:
   std::vector< EntryPoint > friends_details_;  
   fetch::mutex::Mutex chain_keeper_friends_mutex_;  
 
-  std::atomic< uint32_t > grouping_parameter_ ;
+  std::atomic< group_type > grouping_parameter_ ;
 
   TransactionManager tx_manager_;
 };

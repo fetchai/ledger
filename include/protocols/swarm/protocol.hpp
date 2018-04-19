@@ -311,7 +311,7 @@ public:
     
     // Web interface
     auto http_bootstrap = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
-        this->Bootstrap( params["ip"] , params["port"].AsInt() );
+      this->Bootstrap( params["ip"] , uint16_t(params["port"].AsInt()) );
         return fetch::http::HTTPResponse("{\"status\":\"ok\"}");        
     };
     
@@ -322,7 +322,7 @@ public:
     auto shard_connect = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       std::cout << "Connecting shard from HTTP" << std::endl;
       
-      this->ConnectChainKeeper( params["ip"] , params["port"].AsInt() );
+      this->ConnectChainKeeper( params["ip"] , uint16_t(params["port"].AsInt()) );
         return fetch::http::HTTPResponse("{\"status\":\"ok\"}");
         
     };    

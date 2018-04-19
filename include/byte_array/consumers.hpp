@@ -3,142 +3,145 @@
 #include "byte_array/const_byte_array.hpp"
 #include "byte_array/tokenizer/tokenizer.hpp"
 
+#include<emmintrin.h>
 namespace fetch {
 namespace byte_array {
 namespace consumers {
-typedef typename byte_array::Tokenizer::consumer_function_type
-    consumer_function_type;
-
-bool Word(byte_array::ConstByteArray const &str, uint64_t &pos) {
-  while ((('a' <= str[pos]) && (str[pos] <= 'z')) ||
-         (('A' <= str[pos]) && (str[pos] <= 'Z')) || (str[pos] == '\''))
-    ++pos;
-  return true;
-}
-
-bool AlphaNumeric(byte_array::ConstByteArray const &str, uint64_t &pos) {
-  while ((('a' <= str[pos]) && (str[pos] <= 'z')) ||
-         (('A' <= str[pos]) && (str[pos] <= 'Z')) ||
-         (('0' <= str[pos]) && (str[pos] <= '9')))
-    ++pos;
-  return true;
-}
-
-bool AlphaNumericLetterFirst(byte_array::ConstByteArray const &str,
-                             uint64_t &pos) {
-  if (!((('a' <= str[pos]) && (str[pos] <= 'z')) ||
-        (('A' <= str[pos]) && (str[pos] <= 'Z'))))
-    return false;
-
-  while ((('a' <= str[pos]) && (str[pos] <= 'z')) ||
-         (('A' <= str[pos]) && (str[pos] <= 'Z')) ||
-         (('0' <= str[pos]) && (str[pos] <= '9')))
-    ++pos;
-  return true;
-}
-
-consumer_function_type StringEnclosedIn(char c) {
-  return
-      [c](byte_array::ConstByteArray const &str, uint64_t &pos) -> bool {
-        if (str[pos] != c) return false;
-        ++pos;
-        while ((str[pos] != c) && (str[pos] != '\0'))
-          pos += (str[pos] == '\\') + 1;
-
-        if (str[pos] == c) {
-          ++pos;
-          return true;
-        }
-        return false;
-      };
-}
-
-consumer_function_type SingleChar(char c) {
-  return
-    [c](byte_array::ConstByteArray const &str, uint64_t &pos) -> bool {
-    if (str[pos] == c) {
-      ++pos;
-      return true;     
-    }
-    return false;    
-  };
-  
-}
-
-consumer_function_type TokenFromList(std::vector<std::string> list) {
-  return [list](byte_array::ConstByteArray const &str,
-                uint64_t &pos) -> bool {
-    for (auto &op : list)
-    {
-      if (str.Match(op.c_str(), pos)) {        
-        pos += op.size();
-        return true;
-      }
-    }
-    
-    return false;
-  };
-}
-
-consumer_function_type Keyword(std::string keyword) {
-  return [keyword](byte_array::ConstByteArray const &str,
-                   uint64_t &pos) -> bool {
-    if (str.Match(keyword.c_str(), pos)) {
-      pos += keyword.size();
-      return true;
-    }
-    return false;
-  };
-}
-
-bool Integer(byte_array::ConstByteArray const &str, uint64_t &pos) {
-  uint64_t oldpos = pos;
-  uint64_t N = pos + 1;
-  if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
-      (str[N] <= '9'))
-    pos += 2;
-
-  while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
-  return oldpos != pos;
-}
-
-bool Float(byte_array::ConstByteArray const &str, uint64_t &pos) {
-  uint64_t oldpos = pos;
-  uint64_t N = pos + 1;
-  if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
-      (str[N] <= '9'))
-    pos += 2;
-
-  while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
-
-  if ((pos < str.size()) && ('.' == str[pos])) ++pos;
-
-  while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
-
-  if ((pos < str.size()) && (str[pos] == 'e')) {
-    N = pos + 1;
-    if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
+  /* Consumes an integer from a byte array if found.
+   * @param str is a constant byte array.
+   * @param pos is a position in the byte array.
+   *
+   * The implementation follows the details given on JSON.org. The
+   * function has support for numbers such as 23, 32.15, -2e0 and
+   * -3.2e+3. Numbers are classified either as integers or floating
+   * points. 
+   */
+  template< int NUMBER_INT, int NUMBER_FLOAT = NUMBER_INT >
+  int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
+    /* ┌┐                                                                        ┌┐
+    ** ││                   ┌──────────────────────┐                             ││
+    ** ││                   │                      │                             ││
+    ** ││                   │                      │                             ││
+    ** ││             .─.   │   .─.    .─────.     │                             ││
+    ** │├─┬────────┬▶( 0 )──┼─▶( - )─▶( digit )──┬─┴─┬─────┬────────────┬───────▶││
+    ** ││ │        │  `─' ┌─┘   `─'    `─────'   │   │     │            │        ││
+    ** ││ │        │      │               ▲      │   ▼     ▼         .─────.     ││
+    ** ││ │   .─.  │   .─────.            │      │  .─.   .─.  ┌───▶( digit )──┐ ││
+    ** └┘ └─▶( - )─┴─▶( digit )──┐        └──────┘ ( e ) ( E ) │     `─────'   │ └┘
+    **        `─'      `─────'   │                  `─'   `─'  │        ▲      │   
+    **                    ▲      │                   │     │   │        │      │   
+    **                    │      │                   ├──┬──┤   │        └──────┘   
+    **                    └──────┘                   ▼  │  ▼   │                   
+    **                                              .─. │ .─.  │                   
+    **                                             ( + )│( - ) │                   
+    **                                              `─' │ `─'  │                   
+    **                                               │  │  │   │                   
+    **                                               └──┼──┘   │                   
+    **                                                  └──────┘                   
+    */                                         
+    uint64_t oldpos = pos;
+      uint64_t N = pos + 1;
+      if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
         (str[N] <= '9'))
-      pos += 2;
-
-    while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
+        pos += 2;
+      
+      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
+      if(pos != oldpos) {
+        int ret = int(NUMBER_INT); 
+        
+        if((pos < str.size()) && (str[pos] == '.')) {
+          ++pos;
+          ret = int(NUMBER_FLOAT);
+          while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;          
+        }
+        
+        if((pos < str.size()) && ((str[pos] == 'e') || (str[pos] == 'E')  ) ) {
+          uint64_t rev = 1;          
+          ++pos;
+          
+          if((pos < str.size()) && ((str[pos] == '-') || (str[pos] == '+' ) ) ) {
+            ++pos;
+            ++rev;
+          }
+          
+          oldpos = pos;
+          while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
+          if( oldpos == pos ) {
+            pos -= rev;
+          }       
+          ret = int(NUMBER_FLOAT);
+        }
+        
+        return ret;
+      }
+      
+      return -1; 
   }
 
-  return oldpos != pos;
-}
+  /* Consumes string starting and ending with ".
+   * @param str is a constant byte array.
+   * @param pos is a position in the byte array.
+   *
+   * The implementation follows the details given on JSON.org.
+   * Currently, there is no checking if unicodes are correctly
+   * formatted.
+   */
+  template< int STRING >
+  int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos) {
+       if(str[pos] != '"') return -1;
+       ++pos;
+       if(pos >= str.size()) return -1;
 
-bool Whitespace(byte_array::ConstByteArray const &str, uint64_t &pos) {
-  bool ret = false;
-  while ((pos < str.size()) && ((str[pos] == ' ') || (str[pos] == '\n') ||
-                                (str[pos] == '\r') || (str[pos] == '\t')))
-    ret = true, ++pos;
-  return ret;
-}
+       uint8_t const *ptr = str.pointer() + pos;
+       alignas(16)  uint8_t compare[16] = {'"','"','"','"','"','"','"','"','"','"','"','"','"','"','"','"'};
 
-bool AnyChar(byte_array::ConstByteArray const &str, uint64_t &pos) {
+       __m128i comp = _mm_load_si128(( __m128i*)compare);
+       __m128i mptr = _mm_loadu_si128(( __m128i*)ptr); // TODO: Optimise to follow alignment
+       __m128i mret = _mm_cmpeq_epi8(comp, mptr);
+       uint16_t found = uint16_t(_mm_movemask_epi8 (mret));
+       
+
+       while( (pos < str.size()) && ( !found ) ) {
+         pos += 16;
+         ptr += 16;
+         // TODO: Handle \"x
+         __m128i mptr = _mm_loadu_si128(( __m128i*)ptr);
+         __m128i mret = _mm_cmpeq_epi8(comp, mptr);
+         found = uint16_t(_mm_movemask_epi8 (mret) ); 
+       }
+
+       pos += uint64_t(__builtin_ctz(found));
+       
+       if( pos >= str.size() )
+         return -1;
+       ++pos;
+       return STRING;
+     }
+
+  template< int STRING >  
+  int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)  {
+       if(str[pos] != '"') return -1;
+       ++pos;
+       if(pos >= str.size()) return -1;
+
+       while( (pos < str.size()) && (str[pos] != '"') ) {
+         pos += 1 + (str[pos] == '\\');         
+       }
+
+       if( pos >= str.size() )
+         return -1;
+       ++pos;
+       return STRING;
+  }
+
+
+template< int CATCH_ALL >
+int AnyChar(byte_array::ConstByteArray const &str, uint64_t &pos)  {
   ++pos;
-  return true;
+  return CATCH_ALL;
 }
+
+  
 };
 };
 };

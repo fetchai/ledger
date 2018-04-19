@@ -6,10 +6,14 @@
 #include "mutex.hpp"
 #include "logger.hpp"
 
-#include <asio.hpp>
 #include <deque>
 #include <mutex>
 #include <thread>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#include <asio.hpp>
+#pragma clang diagnostic pop
 
 namespace fetch 
 {

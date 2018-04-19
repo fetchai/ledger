@@ -1,12 +1,16 @@
 #ifndef MEMORY_ARRAY_HPP
 #define MEMORY_ARRAY_HPP
+
+#include "iterator.hpp"
+#include "meta/log2.hpp"
+#include"platform.hpp"
 #include <algorithm>
 #include <atomic>
 #include <cassert>
+#include<cstring>
 #include <cstdint>
 #include <type_traits>
-#include "iterator.hpp"
-#include "meta/log2.hpp"
+#include <mm_malloc.h>
 namespace fetch {
 namespace memory {
 
@@ -21,8 +25,8 @@ class Array {
   typedef Array<T> self_type;
   typedef T type;
 
-  enum {
-    E_SIMD_SIZE = 16,
+  enum { 
+    E_SIMD_SIZE = (platform::VectorRegisterSize< type >::value >> 3),    
     E_SIMD_COUNT = E_SIMD_SIZE / sizeof(T),
     E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value
   };
@@ -32,7 +36,8 @@ class Array {
 
   Array(std::size_t const &n) {
     size_ = n;
-    if (n > 0) data_ = new type[padded_size()];
+    if (n > 0) data_ = (type*)_mm_malloc(padded_size()*sizeof(type), 16 );
+    
   }
 
   Array() : Array(0) {}
@@ -47,6 +52,18 @@ class Array {
     std::swap(data_, other.data_);
   }
 
+  void SetAllZero() {
+    assert( data_ != nullptr );
+    
+    memset( data_, 0, padded_size()*sizeof(type) );
+  }
+
+  void SetPaddedZero() {
+    assert( data_ != nullptr );
+    
+    memset( data_+size(), 0, (padded_size()-size())*sizeof(type) );
+  }
+  
   
   Array &operator=(Array &&other) {
     std::swap(size_, other.size_);
@@ -55,7 +72,7 @@ class Array {
   }
 
   ~Array() {
-    if(data_ != nullptr) delete[] data_;
+    if(data_ != nullptr) _mm_free(data_);
   }
 
   Array< type > Copy() const
@@ -80,31 +97,32 @@ class Array {
 
   T &operator[](std::size_t const &n) {
     assert(data_ != nullptr);
-    assert(n < size());
+    assert(n < padded_size());
     return data_[n];
   }
 
   T const &operator[](std::size_t const &n) const {
     assert(data_ != nullptr);
-    assert(n < size());
+    
+    assert(n < padded_size());
     return data_[n];
   }
 
   T &At(std::size_t const &n) {
     assert(data_ != nullptr);
-    assert(n < size());
+    assert(n < padded_size());
     return data_[n];
   }
 
   T const &At(std::size_t const &n) const {
     assert(data_ != nullptr);
-    assert(n < size());
+    assert(n < padded_size());
     return data_[n];
   }
 
   T const &Set(std::size_t const &n, T const &v) {
     assert(data_ != nullptr);
-    assert(n < size());
+    assert(n < padded_size());
     data_[n] = v;
     return v;
   }

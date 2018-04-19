@@ -5,7 +5,11 @@
 #include"http/status.hpp"
 
 #include<ostream>
-#include<asio.hpp>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#include <asio.hpp>
+#pragma clang diagnostic pop
 
 namespace fetch {
 namespace http {
@@ -17,7 +21,7 @@ public:
     mime_(mime),
     status_(status)
   {    
-    header_.Add( "content-length", body_.size() );
+    header_.Add( "content-length", int64_t(body_.size()) );
   }
 
   static void WriteToBuffer(HTTPResponse &res,   asio::streambuf &buffer) 
@@ -37,7 +41,7 @@ public:
       out << field.first << ": " << field.second << "\r\n";
     }
     out << "\r\n";
-    out.write( reinterpret_cast< char const *>(res.body_.pointer()), res.body_.size());
+    out.write( reinterpret_cast< char const *>(res.body_.pointer()),  int( res.body_.size() ) );
   }
 
   byte_array::ByteArray  const& body() const {

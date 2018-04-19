@@ -1,4 +1,4 @@
 <?xml version='1.0' encoding='utf-8'?>
 <namespace id="fetch" name="fetch" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <namespace name="rpc" ref="fetch::rpc#fetch::rpc" />
+  <namespace name="service" ref="fetch::service#fetch::service" />
 </namespace>

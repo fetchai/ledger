@@ -33,8 +33,10 @@ int main() {
   // Promises
   auto p1 = client.Call( MYPROTO,SLOWFUNCTION, 2, 7 );
   auto p2 = client.Call( MYPROTO,SLOWFUNCTION, 4, 3 );
+
   if(!p1.is_fulfilled())
     std::cout << "p1 is not yet fulfilled" << std::endl;
+
 
   p1.Wait();
   

@@ -1,7 +1,8 @@
 #ifndef SERIALIZER_COUNTER_HPP
 #define SERIALIZER_COUNTER_HPP
-#include "byte_array/referenced_byte_array.hpp"
+#include "serializer/stl_types.hpp"
 
+#include "byte_array/referenced_byte_array.hpp"
 #include "serializer/type_register.hpp"
 #include <type_traits>
 
@@ -61,7 +62,7 @@ class SizeCounter< TypedByte_ArrayBuffer > {
 
   template <typename T>
   SizeCounter &operator<<(T const &val) {
-    Serialize(*this, TypeRegister<T>::name);    
+    Serialize(*this, TypeRegister<void>::value_type( TypeRegister<T>::value ) );    
     Serialize(*this, val);
     return *this;
   }

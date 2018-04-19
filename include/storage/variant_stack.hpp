@@ -16,8 +16,8 @@ class VariantStack {
   struct Separator {
     uint64_t type;
     uint64_t object_size;
-    uint64_t next;
-    uint64_t previous;
+    int64_t next;
+    int64_t previous;
 
     bool Write(std::fstream &stream) const {
       if ((!stream) || (!stream.is_open())) return false;
@@ -46,10 +46,10 @@ class VariantStack {
   };
 
   struct Header {
-    uint64_t start = Header::size();
-    uint64_t end = Header::size();
-    uint64_t last = uint64_t(-1);
-    uint64_t object_count = 0;
+    int64_t start = int64_t(Header::size());
+    int64_t end = int64_t(Header::size());
+    int64_t last = -1;
+    int64_t object_count = 0;
 
     bool Write(std::fstream &stream) const {
       if ((!stream) || (!stream.is_open())) return false;
@@ -90,7 +90,7 @@ class VariantStack {
     Clear();
   }
 
-  enum { UNDEFINED_POSITION = uint64_t(-1) };
+  enum { UNDEFINED_POSITION = -1 };
 
   template <typename T>
   void Push(T const &object, uint64_t const &type = 0) {
@@ -176,7 +176,7 @@ class VariantStack {
   }
 
   bool empty() const { return header_.start == header_.end; }
-  std::size_t size() const { return header_.object_count; }
+  int64_t size() const { return header_.object_count; }
 
  private:
   std::string filename_ = "";

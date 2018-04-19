@@ -2,6 +2,7 @@
 #define MEMORY_SHARED_ARRAY_HPP
 #include "iterator.hpp"
 #include "meta/log2.hpp"
+#include "platform.hpp"
 
 
 #include <algorithm>
@@ -11,8 +12,8 @@
 #include<cstring>
 #include <type_traits>
 #include <memory>
-#include <iostream>
 #include <stdlib.h>
+#include <mm_malloc.h>
 namespace fetch {
 namespace memory {
 
@@ -22,7 +23,7 @@ std::size_t total_shared_objects = 0;
 };
 #endif
 
-template <typename T>
+template <typename T, std::size_t type_size = sizeof(T)>
 class SharedArray {
  public:
   typedef std::size_t size_type;
@@ -30,13 +31,13 @@ class SharedArray {
 
   typedef ForwardIterator<T> iterator;
   typedef BackwardIterator<T> reverse_iterator;
-  typedef SharedArray<T> self_type;
+  typedef SharedArray<T, type_size> self_type;
   typedef T type;
 
   
   enum {
-    E_SIMD_SIZE = 16,
-    E_SIMD_COUNT_IM = E_SIMD_SIZE / sizeof(T),
+    E_SIMD_SIZE = (platform::VectorRegisterSize< type >::value >> 3),
+    E_SIMD_COUNT_IM = E_SIMD_SIZE / type_size,
     E_SIMD_COUNT = (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM : 1 ), // Note that if a type is too big to fit, we pretend it can
     E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value
   };
@@ -44,21 +45,16 @@ class SharedArray {
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT),
                 "type does not fit in SIMD");
   
-  SharedArray(std::size_t const &n) {   
+  SharedArray(std::size_t const &n) {
     size_ = n;
 
     if (n > 0)
     {
-      // TODO: C++17 version, upgrade when time is right
-      //      data_ = std::shared_ptr<T>( (type*)std::aligned_alloc(E_SIMD_SIZE, padded_size()*sizeof(type) ), free );
-
-      // TODO: Upgrade to aligned memory to ensure that we can parallelise over SIMD
-      data_ = std::shared_ptr<T>( (type*)malloc(padded_size()*sizeof(type) ), free );
-      memset( data_.get(), 0, padded_size()*sizeof(type) );
+      data_ = std::shared_ptr<T>( (type*)_mm_malloc(padded_size()*sizeof(type), 16 ), _mm_free );
     }
   }
   
-  SharedArray() : SharedArray(0) {}
+  SharedArray() {}
   SharedArray(SharedArray const &other)
     :size_(other.size_), data_(other.data_) {
   }
@@ -76,9 +72,9 @@ class SharedArray {
 
   ~SharedArray() { }
 
-  SharedArray< type > Copy() const
+  self_type Copy() const
   {
-    SharedArray< type > ret( size_ );
+    self_type ret( size_ );
     for(std::size_t i = 0; i < size_; ++i )
     {
       ret[i] = At( i );
@@ -87,41 +83,54 @@ class SharedArray {
     return ret;
   }
   
+  void SetAllZero() {
+    memset( data_.get(), 0, padded_size()*sizeof(type) );
+  }
+
+  void SetPaddedZero() {
+    memset( data_.get()+size(), 0, (padded_size()-size())*sizeof(type) );
+  }
+  
   
   iterator begin() { return iterator(data_.get(), data_.get() + size()); }
   iterator end() { return iterator(data_.get() + size(), data_.get() + size()); }
+
+  iterator begin() const { return iterator(data_.get(), data_.get() + size()); } // TODO: Implemnent const iterators
+  iterator end() const { return iterator(data_.get() + size(), data_.get() + size()); }
+  
   reverse_iterator rbegin() {
     return reverse_iterator(data_.get() + size() - 1, data_.get() - 1);
   }
   reverse_iterator rend() { return reverse_iterator(data_.get() - 1, data_.get() - 1); }
 
   T &operator[](std::size_t const &n) {
-    assert(n < size());
+    assert(n < padded_size());
     return data_.get()[n];
   }
 
   T const &operator[](std::size_t const &n) const {
-    assert(n < size());
+    assert(n < padded_size());
     return data_.get()[n];
   }
 
   T &At(std::size_t const &n) {
-    assert(n < size());
+    assert(n < padded_size());
     return data_.get()[n];
   }
 
   T const &At(std::size_t const &n) const {
-    assert(n < size());
+    assert(n < padded_size());
     return data_.get()[n];
   }
 
   T const &Set(std::size_t const &n, T const &v) {
-    assert(n < size());
+    assert(n < padded_size());
     data_.get()[n] = v;
     return v;
   }
 
   self_type &operator=(SharedArray const &other) {
+
     if (&other == this) return *this;
 
     size_ = other.size_;
@@ -132,17 +141,14 @@ class SharedArray {
 
 
   std::size_t simd_size() const {
-    assert(size_ != nullptr);
     return (size_) >> E_LOG_SIMD_COUNT;
   }
 
   std::size_t size() const {
-    assert(size_ != nullptr);
     return size_;
   }
 
   std::size_t padded_size() const {
-    assert(size_ != nullptr);
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT)
                          << E_LOG_SIMD_COUNT;
     if (padded < size_) padded += E_SIMD_COUNT;

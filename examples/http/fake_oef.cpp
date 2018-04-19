@@ -135,9 +135,9 @@ public:
     Transaction tx;
 
     tx.fromAddress = doc["fromAddress"].as_byte_array();
-    tx.amount = doc["balance"].as_int();
+    tx.amount = doc["balance"].as_int() ;
     tx.notes = doc["notes"].as_byte_array();
-    tx.time = doc["time"].as_int();    
+    tx.time = uint64_t(doc["time"].as_int()); 
     tx.toAddress = doc["toAddress"].as_byte_array();    
     tx.json = req.body();    
 
@@ -190,7 +190,7 @@ public:
 
     auto &account = accounts_[address];
     
-    std::size_t n = std::min(20, int(account.history.size()) );
+    std::size_t n = std::size_t( std::min(20, int(account.history.size()) ) );
     
     script::Variant result = script::Variant::Object();
     script::Variant history = script::Variant::Array(n);

@@ -2,26 +2,43 @@
 #define MATH_LINALG_MATRIX_HPP
 
 #include "memory/rectangular_array.hpp"
+#include "byte_array/const_byte_array.hpp"
+#include "byte_array/consumers.hpp"
 
 #include <iostream>
 #include <limits>
 #include <vector>
 
+#include<mmintrin.h>  //MMX
+#include<xmmintrin.h> //SSE
+#include<emmintrin.h> //SSE2
+#include<pmmintrin.h> //SSE3
+#include<tmmintrin.h> //SSSE3
+#include<smmintrin.h> //SSE4.1
+#include<nmmintrin.h> //SSE4.2
+#include<ammintrin.h> //SSE4A
+#include<wmmintrin.h> //AES
+#include<immintrin.h> //AVX
 namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename T, typename C = fetch::memory::SharedArray<T>, typename A = fetch::memory::RectangularArray<T, C> >
+template <typename T, typename C = fetch::memory::SharedArray<T>,
+          typename A = fetch::memory::RectangularArray<T, C> >
 class Matrix : public A {
  public:
   typedef A super_type;
   typedef typename super_type::type type;
-
+  typedef typename super_type::vector_register_type vector_register_type;
+  typedef typename super_type::vector_register_iterator_type vector_register_iterator_type;   
+  
   enum {
     INVERSION_OK = 0,
     INVERSION_SINGULAR = 1,
     E_SIMD_BLOCKS = super_type::container_type::E_SIMD_COUNT
   };
+
+
 
   Matrix() = default;
   Matrix(Matrix &&other) = default;
@@ -29,44 +46,93 @@ class Matrix : public A {
   Matrix &operator=(Matrix const &other) = default;
   Matrix &operator=(Matrix &&other) = default;
 
-  Matrix(super_type const &other) : super_type(other) {
-    std::cout << "Was here?? " << other.size() << " " << this->size() << std::endl;
-  }
+  Matrix(super_type const &other) : super_type(other) { }
   Matrix(super_type &&other) : super_type(std::move(other)) {  }
+  Matrix(byte_array::ConstByteArray const &c) {
+    std::size_t n = 1;
+    std::vector< type > elems;
+    elems.reserve(1024);
+    bool failed = false;
+    
+    for(uint64_t i=0; i < c.size(); ) {
+      uint64_t last = i;
+      switch(c[i]) {
+      case ';':
+        ++n;
+        ++i;
+        break;
+      case ',':
+      case ' ':
+      case '\n':
+      case '\t':
+      case '\r':
+        ++i;
+        break;
+      default:
+        if(byte_array::consumers::NumberConsumer<1,2>(c, i) == -1) {
+          failed = true;
+        } else {
+          elems.push_back( type( atof( c.char_pointer() + last ) ));
+        }
+        break;
+      }
+    }
+    std::size_t m = elems.size() / n;
+    
+    if( (m * n) != elems.size() ) {
+      failed = true;
+    }
+    
+    if(!failed) {
+      this->Resize(n,m);
+      this->SetAllZero();      
+      
+      std::size_t k = 0;
+      for(std::size_t i = 0; i < n; ++i) {
+        for(std::size_t j = 0; j < m; ++j) {        
+          this->Set(i,j, elems[k++]);
+        }
+      }
+    }
+  }
   
   Matrix(std::size_t const &h, std::size_t const &w) : super_type(h, w) {
-    std::cout << "Was here??? " << std::endl;
-    for(std::size_t i=0; i < h; ++i) {
-    for(std::size_t j=0; j < w; ++j) {
-      this->Set(i,j, type(0));
-    }
-    }
   }
 
   Matrix Copy() const { return Matrix( super_type::Copy() ); }
-#define FETCH_ADD_OPERATOR(OP)                                           \
-  Matrix &operator OP(Matrix const &other) {                             \
-    assert(this->size() == other.size());                                \
-    for (std::size_t i = 0; i < this->data().size(); i += E_SIMD_BLOCKS) \
-      for (std::size_t j = 0; j < E_SIMD_BLOCKS; ++j)                    \
-        this->At(i + j) OP other.At(i + j);                              \
-    return *this;                                                        \
-  }
+  
+#define FETCH_ADD_OPERATOR(OP,VOP)                                      \
+  Matrix &operator OP(Matrix const &other) {                            \
+  assert(other.size() == this->size());                                 \
+                                                                        \
+  std::size_t N = other.padded_size();                                  \
+  vector_register_type a,b;                                             \
+  vector_register_iterator_type ia( other.data().pointer(), other.data().size() ); \
+  vector_register_iterator_type ib( this->data().pointer(), this->data().size() ); \
+  for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) { \
+    ia.Next(a);                                                         \
+    ib.Next(b);                                                         \
+    b = b VOP a;                                                        \
+    assert(i < N);                                                      \
+    b.Stream( this->data().pointer() + i);                              \
+  }                                                                     \
+  return *this;                                                         \
+  }                                                                     
 
-  FETCH_ADD_OPERATOR(+=)
-  FETCH_ADD_OPERATOR(-=)
-  FETCH_ADD_OPERATOR(*=)
-  FETCH_ADD_OPERATOR(/=)
-  FETCH_ADD_OPERATOR(|=)
-  FETCH_ADD_OPERATOR(&=)
+  FETCH_ADD_OPERATOR(+=, +)
+  FETCH_ADD_OPERATOR(-=, -)
+  FETCH_ADD_OPERATOR(*=, *)
+  FETCH_ADD_OPERATOR(/=, /)
+  //  FETCH_ADD_OPERATOR(|=, |)
+  //  FETCH_ADD_OPERATOR(&=, &)
 
 #undef FETCH_ADD_OPERATOR
 
-#define FETCH_ADD_OPERATOR(OP1, OP2)         \
+#define FETCH_ADD_OPERATOR(OP1, OP2)               \
   Matrix operator OP1(Matrix const &other) const { \
-    Matrix ret = this->Copy();                                          \
-    ret OP2 other;                           \
-    return ret;                              \
+    Matrix ret = this->Copy();                     \
+    ret OP2 other;                                 \
+    return ret;                                    \
   }
 
   FETCH_ADD_OPERATOR(+, +=)
@@ -78,14 +144,14 @@ class Matrix : public A {
 
 #undef FETCH_ADD_OPERATOR
 
-
+  
 #define FETCH_ADD_OPERATOR(OP)                                          \
   template< typename S >                                                \
-  Matrix &operator OP(S const &other) {                             \
+  Matrix &operator OP(S const &other) {                                 \
     for (std::size_t i = 0; i < this->data().size(); i += E_SIMD_BLOCKS) \
-      for (std::size_t j = 0; j < E_SIMD_BLOCKS; ++j)                    \
-        this->At(i + j) OP other;                                    \
-    return *this;                                                        \
+      for (std::size_t j = 0; j < E_SIMD_BLOCKS; ++j)                   \
+        this->At(i + j) OP other;                                       \
+    return *this;                                                       \
   }
 
   FETCH_ADD_OPERATOR(+=)
@@ -97,12 +163,12 @@ class Matrix : public A {
 
 #undef FETCH_ADD_OPERATOR
 
-#define FETCH_ADD_OPERATOR(OP1, OP2)         \
-  template< typename S >                     \
+#define FETCH_ADD_OPERATOR(OP1, OP2)               \
+  template< typename S >                           \
   Matrix operator OP1(S const &other) const {      \
-    Matrix ret = this->Copy();               \
-    ret OP2 other;                           \
-    return ret;                              \
+    Matrix ret = this->Copy();                     \
+    ret OP2 other;                                 \
+    return ret;                                    \
   }
 
   FETCH_ADD_OPERATOR(+, +=)
@@ -113,15 +179,327 @@ class Matrix : public A {
   FETCH_ADD_OPERATOR(&, &=)
 
 #undef FETCH_ADD_OPERATOR
+
+  bool AllClose(Matrix const &other, double const &rtol = 1e-5, double const &atol = 1e-8, bool ignoreNaN =  true) const {
+    std::size_t N = this->size();
+    if(other.size() != N) return false;
+    bool ret = true;
+    for (std::size_t i = 0; i < N; ++i) {
+      double va = this->At(i);
+      if(ignoreNaN && std::isnan(va)) continue;
+      double vb = other[i];
+      if(ignoreNaN && std::isnan(vb)) continue;      
+      double vA = (va-vb);
+      if(vA < 0) vA = -vA;
+      if(va < 0) va = -va;
+      if(vb < 0) vb = -vb;
+      double M = std::max(va,vb);
+
+      ret &= (vA < std::max(atol, M * rtol));
+    }
+
+    if(!ret) {
+      for (std::size_t i = 0; i < N; ++i) {
+        std::cout << this->At(i) << " " << other[i] << std::endl;
+      }      
+    }
+    return ret;
+  }
+  
+  static Matrix Arange(type from, type const& to, double const&delta) {
+    // TODO: vectorise
+    assert(from < to);
+    Matrix ret;    
+    std::size_t N = (to - from ) / delta;
+    ret.Resize(1, N);
+    
+    double d = from;
+    for(std::size_t i = 0 ; i < N; ++i) {
+      ret[i] = d;
+      d += delta;
+    }
+    return ret;
+  }
+
+  static Matrix Zeros(std::size_t const &n) {
+    Matrix ret;
+    ret.Resize(n,n);
+    ret.SetAllZeros();
+    return ret;
+  }
+  
+  static Matrix Zeros(std::size_t const &n, std::size_t const &m) {
+    Matrix ret;
+    ret.Resize(n,m);
+    ret.SetAllZeros();
+    return ret;
+  }
+  
+  Matrix & InlineAdd(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ib( this->data().pointer(), this->data().size()  );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a + b;
+      c.Stream( this->data().pointer() + i);
+    }    
+
+    return *this;
+  }
+
+  Matrix& InlineMultiply(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ib( this->data().pointer(), this->data().size() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a * b;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+  
+   Matrix& InlineSubtract(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ib( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ia( this->data().pointer(), this->data().size() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a - b;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+
+   Matrix& InlineDivide(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ib( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ia( this->data().pointer(), this->data().size() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a / b;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+  
+
+   Matrix& InlineReverseSubtract(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ib( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ia( this->data().pointer(), this->data().size() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = b - a ;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+
+   Matrix& InlineReverseDivide(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ib( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ia( this->data().pointer(), this->data().size() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = b / a;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+
+
+  
+  Matrix& Transpose(Matrix const &other) {
+    this->Resize(other.width(), other.height());
+    
+    for (std::size_t i = 0; i < other.height(); ++i)
+      for (std::size_t j = 0; j < other.width(); ++j)
+        this->At(j, i) = other.At(i, j);
+
+    return *this;
+  }
+  
+  Matrix const& Add(Matrix const &obj1,   Matrix const &obj2) {
+    assert(obj1.data().size() == obj2.data().size());
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ib( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ia( obj2.data().pointer(), obj2.data().size() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a + b;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+
+  Matrix const& Add(Matrix const &obj1, type const &scalar) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a, b(scalar), c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+
+      c = a + b;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
   
   
+  Matrix const& Multiply(Matrix const &obj1,   Matrix const &obj2) {
+    assert(obj1.data().size() == obj2.data().size());
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ib( obj2.data().pointer(), obj2.data().size() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a * b;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+
+  Matrix const& Multiply(Matrix const &obj1, type const &scalar) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a, b(scalar), c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+
+      c = a * b;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+
   
-  void Transpose() {
-    Matrix newm(this->width(), this->height());
-    for (std::size_t i = 0; i < this->height(); ++i)
-      for (std::size_t j = 0; j < this->width(); ++j)
-        newm.At(j, i) = this->At(i, j);
-    this->operator=(newm);
+  Matrix const& Subtract(Matrix const &obj1,   Matrix const &obj2) {
+    assert(obj1.data().size() == obj2.data().size());
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ib( obj2.data().pointer(), obj2.data().size() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a - b;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+
+  Matrix const& Subtract(Matrix const &obj1, type const &scalar) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a, b(scalar), c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+
+      c = a - b;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+
+
+  
+  Matrix const& Divide(Matrix const &obj1,   Matrix const &obj2) {
+    assert(obj1.data().size() == obj2.data().size());
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ib( obj2.data().pointer(), obj2.data().size() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = a / b;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+ 
+  Matrix const& Divide(Matrix const &obj1, type const &scalar) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a, b(scalar), c; 
+
+    vector_register_iterator_type ia( obj1.data().pointer(), obj1.data().size() );
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+
+      c = a / b;
+      c.Stream( this->data().pointer() + i);
+    }
+    
+    return *this;
   }
 
   int Invert() {
@@ -134,6 +512,7 @@ class Matrix : public A {
 
     type *ptr = this->data().pointer();
 
+    // TODO: Let workspace be a parameter - workout what the constraints are
     std::vector<std::size_t> piv;
     std::vector<std::size_t> arr_col;
     std::vector<std::size_t> arr_row;
@@ -186,7 +565,7 @@ class Matrix : public A {
         // TODO: Throw error
         return INVERSION_SINGULAR;
 
-      inv_piv = 1. / ptr[q];
+      inv_piv = type(1.) / ptr[q];
       ptr[q] = 1.0;
       for (std::size_t j = 0; j < mheight; ++j, ++p) ptr[p] *= inv_piv;
 
@@ -277,48 +656,74 @@ class Matrix : public A {
   }
   */
 
-  void DotReference(Matrix const &m, Matrix &ret) {
-    assert(this->width() == m.height());
-    ret.Resize(this->height(), m.width());
+  Matrix& DotReference(Matrix const &mA, Matrix const &mB) {
+    assert(mA.width() == mB.height());
+    this->Resize(mA.height(), mB.width());
 
-    for (std::size_t i = 0; i < ret.height(); ++i) {
-      for (std::size_t j = 0; j < ret.width(); ++j) {
+    for (std::size_t i = 0; i < this->height(); ++i) {
+      for (std::size_t j = 0; j < this->width(); ++j) {
         type ele = 0;
-        for (std::size_t k = 0; k < this->width(); ++k)
-          ele += this->At(i, k) * m.At(k, j);
+        for (std::size_t k = 0; k < mA.width(); ++k)
+          ele += mA.At(i, k) * mB.At(k, j);
 
-        ret(i, j) = ele;
+        this->Set(i, j, ele);
       }
     }
+    return *this;
   }
 
-  void Dot(Matrix m, Matrix &ret) {
-    m.Transpose();
-    DotTransposedOf(m, ret);
-    m.Transpose();
+  Matrix& Dot(Matrix const &mA, Matrix const &mB) {
+    Matrix tmp;
+    tmp.Transpose( mB );
+    DotTransposedOf(mA, tmp);
+    return *this;
   }
 
-  void DotTransposedOf(Matrix const &m, Matrix &ret) {
-    assert(this->width() == m.width());
-    ret.Resize(this->height(), m.height());
+  
+  Matrix& DotTransposedOf(Matrix const &mA, Matrix const &mB) {
+    assert(mA.width() == mB.width());
+    this->Resize(mA.height(), mB.height());
+    this->SetAllZero(); // UGLY. TODO.
+    
+    std::size_t O = this->width() % vector_register_type::E_BLOCK_COUNT;
+    std::size_t aligned_width = this->width() - O;
+    if(aligned_width < this->width()) aligned_width += vector_register_type::E_BLOCK_COUNT;
 
-    for (std::size_t i = 0; i < ret.height(); ++i) {
-      for (std::size_t j = 0; j < ret.width(); ++j) {
+    vector_register_type a,b;
+
+    alignas(16) type reduction[vector_register_type::E_BLOCK_COUNT] = {0};
+    
+    for (std::size_t i = 0; i < mA.height(); ++i) {
+      vector_register_iterator_type ib( mB.data().pointer(), mB.data().size() );
+      
+      for (std::size_t j = 0; j < mB.height(); ++j) {
+        std::size_t k = 0;
         type ele = 0;
-        for (std::size_t k = 0; k < this->width(); ++k)
-          ele += this->At(i, k) * m.At(j, k);
-        ret(i, j) = ele;
+          
+        vector_register_iterator_type ia(  mA.data().pointer() + i * mA.padded_width(), mA.padded_height());
+        vector_register_type c(reduction);
+        
+        for ( ; k < aligned_width; k+= vector_register_type::E_BLOCK_COUNT) {
+          ia.Next(a);
+          ib.Next(b);
+          c = c + a*b;  
+        }
+        c.Store(reduction);
+
+        for(std::size_t l=0; l < vector_register_type::E_BLOCK_COUNT; ++l) {
+          ele += reduction[l];
+          reduction[l] = 0;
+        }
+
+        this->Set(i, j, ele);
       }
     }
+    return *this;
   }
 
+  
  private:
-  template <std::size_t N>
-  void DotImplementation(Matrix const &m, Matrix &ret) {
-    // FIXME: yet to be implemented
-    std::cerr << "DotImplementation in matrix not made yet!!" << std::endl;
-    exit(-1);
-  }
+
 };
 };
 };

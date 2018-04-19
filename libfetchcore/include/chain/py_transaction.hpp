@@ -16,7 +16,7 @@ void BuildTransaction(pybind11::module &module) {
     .def("contract_name", &Transaction::contract_name)
     .def("signatures", &Transaction::signatures)
     .def("PushGroup", ( void (Transaction::*)(const byte_array::ConstByteArray &) ) &Transaction::PushGroup)
-    .def("PushGroup", ( void (Transaction::*)(const uint32_t &) ) &Transaction::PushGroup)
+    .def("PushGroup", ( void (Transaction::*)(const group_type &) ) &Transaction::PushGroup)
     .def("PushSignature", &Transaction::PushSignature)
     .def("data", &Transaction::data)
     .def("signature_count", &Transaction::signature_count)
