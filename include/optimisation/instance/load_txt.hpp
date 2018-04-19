@@ -20,7 +20,7 @@ bool Load(T &optimiser, std::string const &filename) {
   std::string line;
 
   struct Coupling {
-    int64_t i = -1, j = -1;
+    uint64_t i = uint64_t(-1), j = uint64_t(-1);
     double c = 0;
   };
 

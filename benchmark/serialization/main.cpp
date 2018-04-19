@@ -24,7 +24,7 @@ void MakeString(T &str) {
   entry.Resize(256);
   
   for(std::size_t j=0; j < 256; ++j) {
-    entry[j] = (lfg()  >> 19);      
+    entry[j] = uint8_t(lfg()  >> 19);      
   }
   
   str = entry;
@@ -45,7 +45,7 @@ std::size_t PopulateData(std::vector< uint32_t > &s ) {
   s.resize( 16 * 100000 );
   
   for(std::size_t i=0; i < s.size(); ++i) {
-    s[i] = lfg();
+    s[i] = uint32_t( lfg() );
   }
   
   return sizeof( uint32_t ) * s.size();
@@ -129,8 +129,8 @@ Result BenchmarkSingle( Args ... args  ) {
 
 int main()
 {
-  std::size_t type_width = 35;
-  std::size_t width = 12;
+  int type_width = 35;
+  int width = 12;
 
   std::cout << std::setw(type_width) << "Type";
   std::cout << std::setw(width) << "MBs";  

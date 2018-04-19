@@ -97,11 +97,6 @@ class Matrix : public A {
   }
   
   Matrix(std::size_t const &h, std::size_t const &w) : super_type(h, w) {
-    for(std::size_t i=0; i < h; ++i) {
-    for(std::size_t j=0; j < w; ++j) {
-      this->Set(i,j, type(0));
-    }
-    }
   }
 
   Matrix Copy() const { return Matrix( super_type::Copy() ); }

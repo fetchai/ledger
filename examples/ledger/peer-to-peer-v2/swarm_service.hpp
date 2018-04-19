@@ -118,7 +118,7 @@ public:
     std::vector< EntryPoint > entries;
 
     // Updating shard list
-    this->with_shards_do([this, &entries](std::vector< client_shared_ptr_type > const &sh,
+    this->with_shards_do([&entries](std::vector< client_shared_ptr_type > const &sh,
         std::vector< EntryPoint > &det ) {
         std::size_t i =0;
         
@@ -131,14 +131,14 @@ public:
             continue;        
           }
 
-          det[i].group = p.As<uint32_t>();          
+          det[i].group = p.As<fetch::group_type>();          
           entries.push_back(det[i]);          
           ++i;          
         }
       });
     
     // Updating node list
-    this->with_node_details([this, &entries](NodeDetails &details ) {
+    this->with_node_details([&entries](NodeDetails &details ) {
         for(auto &e: details.entry_points) {
           for(auto &ref: entries) {
             if( (ref.host == e.host) && (e.port == ref.port) ) {
@@ -348,7 +348,7 @@ public:
     std::vector< client_shared_ptr_type > shards;
     std::vector< EntryPoint > details;  
     
-    this->with_shards_do([this, &shards, &details](std::vector< client_shared_ptr_type > const &sh,
+    this->with_shards_do([&shards, &details](std::vector< client_shared_ptr_type > const &sh,
         std::vector< EntryPoint > &det ) {
         std::size_t i =0;
         
@@ -383,7 +383,7 @@ public:
     }
 
     // Updating shard details
-    this->with_shards_do([this, &shards, &details](std::vector< client_shared_ptr_type > const &sh,
+    this->with_shards_do([&details](std::vector< client_shared_ptr_type > const &sh,
           std::vector< EntryPoint > &det ) {
         for(std::size_t i =0; i < details.size(); ++i) {
           if(i < det.size() )

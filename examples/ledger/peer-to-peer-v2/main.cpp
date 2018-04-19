@@ -27,7 +27,7 @@ public:
       shards_.push_back( std::make_shared< FetchChainKeeperService > (4000 + j, 9590 + j, thread_manager_ ));
     }
 
-    start_event_ = thread_manager_->OnAfterStart([this, shards, offset]() {
+    start_event_ = thread_manager_->OnAfterStart([this]() {
         
         thread_manager_->io_service().post([this]() {
             this->ConnectChainKeepers();

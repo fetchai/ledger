@@ -8,26 +8,65 @@
 #include"service/server.hpp"
 #include"serializer/referenced_byte_array.hpp"
 #include"service/client.hpp"
+#include"chain/transaction.hpp"
 
 #include<chrono>
 #include<vector>
+#include<random>
 using namespace fetch::serializers;
 using namespace fetch::byte_array;
 using namespace fetch::service;
 using namespace std::chrono;
+using namespace fetch;
+
+
+typedef fetch::chain::Transaction transaction_type;
 
 fetch::random::LaggedFibonacciGenerator<> lfg;
-template< typename T, std::size_t N = 256 >
-void MakeString(T &str) {
+template< typename T>
+void MakeString(T &str, std::size_t N = 256) {
   ByteArray entry;
-  entry.Resize(256);
+  entry.Resize(N);
   
-  for(std::size_t j=0; j < 256; ++j) {
-    entry[j] = (lfg()  >> 19);      
+  for(std::size_t j=0; j < N; ++j) {
+    entry[j] = uint8_t( lfg()  >> 19 );      
   }
   
   str = entry;
 }
+
+
+transaction_type NextTransaction()
+ {
+   static std::random_device rd;
+   static std::mt19937 gen(rd());
+   static std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
+
+   transaction_type trans;
+
+   // Push on two 32-bit numbers so as to avoid multiple nodes creating duplicates
+   trans.PushGroup( group_type( dis(gen) ) );
+   trans.PushGroup( group_type( dis(gen) ) );
+   trans.PushGroup( group_type( dis(gen) ) );
+   trans.PushGroup( group_type( dis(gen) ) );
+   trans.PushGroup( group_type( dis(gen) ) );
+
+
+   ByteArray sig1, sig2, contract_name, arg1;
+   MakeString(sig1);
+   MakeString(sig2);
+   MakeString(contract_name);
+   MakeString(arg1, 4 * 256);
+
+   trans.PushSignature(sig1);
+   trans.PushSignature(sig2);   
+   trans.set_contract_name(contract_name);
+   trans.set_arguments(arg1);
+   trans.UpdateDigest();   
+   
+   return trans;
+ }
+
 
 template< typename T, std::size_t N = 256 >
 void MakeStringVector(std::vector< T >  &vec, std::size_t size) {
@@ -39,6 +78,15 @@ void MakeStringVector(std::vector< T >  &vec, std::size_t size) {
   }
 }
 
+template< typename T, std::size_t N = 256 >
+void MakeTransactionVector(std::vector< T >  &vec, std::size_t size) {
+
+  for(std::size_t i=0; i < size; ++i ){
+
+    vec.push_back( NextTransaction() );
+  }
+}
+
 
 ByteArray TestString;
 
@@ -47,10 +95,10 @@ enum {
   GET2 =2,
   SERVICE = 3
 };
-std::vector< ByteArray > TestData;
+std::vector< transaction_type > TestData;
 class Implementation {
 public:
-  std::vector< ByteArray > GetData() {
+  std::vector< transaction_type > GetData() {
     return TestData;
   }
   
@@ -66,7 +114,7 @@ public:
   
   ServiceProtocol() : Implementation(), Protocol() {
     
-    this->Expose(GET, new CallableClassMember<Implementation, std::vector< ByteArray >() > (this, &Implementation::GetData) );
+    this->Expose(GET, new CallableClassMember<Implementation, std::vector< transaction_type >() > (this, &Implementation::GetData) );
     this->Expose(GET2, new CallableClassMember<Implementation, ByteArray() > (this, &Implementation::GetData2) );    
 
   }  
@@ -89,31 +137,28 @@ void StartClient()
   tm.Start();
 
   while(true) {
-    std::this_thread::sleep_for( std::chrono::milliseconds( 2000 ) );
+    std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
     std::cout << "Calling ..." << std::flush;
 
     auto p1 = client.Call( SERVICE, GET );
     high_resolution_clock::time_point t0 = high_resolution_clock::now();        
     p1.Wait();
-    std::vector< ByteArray > data;
+    std::vector< transaction_type > data;
     p1.As(data);
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     duration<double> ts1 = duration_cast<duration<double>>(t1 - t0);    
     std::cout << " DONE: " << (data.size() ) << std::endl;
     if(data.size() > 0 ) {
-      std::cout <<  (data.size() * data[0].size() * 1e-6 / ts1.count() )  << " MB/s, "  << ts1.count() << " s" << std::endl;
+      std::cout <<  ( double( data.size() ) / double( ts1.count() ) )  << " TX/s, "  << ts1.count() << " s" << std::endl;
     }
-    
-    
   }
 
   tm.Stop();
 }
 
-
-int main() 
+void RunTest(std::size_t tx_count) 
 {
-  MakeStringVector(TestData, 100000);
+  MakeTransactionVector(TestData, tx_count);
   
   fetch::network::ThreadManager tm(8);  
   MyCoolService serv(8080, &tm);
@@ -121,7 +166,14 @@ int main()
   
   StartClient();
   
-  tm.Stop();
+  tm.Stop();  
+
+}
+
+
+int main() 
+{
+  RunTest(100000);
   
   return 0;
 }

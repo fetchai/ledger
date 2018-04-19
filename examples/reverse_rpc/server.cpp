@@ -47,7 +47,7 @@ public:
 
 private:
   ServiceServer< fetch::network::TCPServer > * service_ = nullptr;
-  std::set< uint32_t > registered_aeas_;
+  std::set< uint64_t > registered_aeas_;
   fetch::mutex::Mutex mutex_;
   
 };

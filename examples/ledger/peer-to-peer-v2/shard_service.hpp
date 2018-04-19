@@ -114,7 +114,7 @@ public:
     // Get latest transactions
     std::vector< fetch::service::Promise > promises;
     
-    this->with_peers_do([this, &promises](  std::vector< client_shared_ptr_type > const &clients ) {
+    this->with_peers_do([&promises](  std::vector< client_shared_ptr_type > const &clients ) {
         for(auto const &c: clients) {
           promises.push_back( c->Call(FetchProtocols::CHAIN_KEEPER , ChainKeeperRPC::GET_TRANSACTIONS) );
         }

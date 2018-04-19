@@ -110,10 +110,10 @@ int main() {
     
     auto newElement = [&stack, &reference, &lfg] () -> Element {
       Element e;
-      e.a = lfg();
-      e.b = lfg();
-      e.c = lfg();
-      e.d = lfg();
+      e.a = int(lfg());
+      e.b = uint8_t(lfg());
+      e.c = uint64_t(lfg());
+      e.d = uint16_t(lfg());
       stack.Push(e);
       reference.push_back(e);
       return e;

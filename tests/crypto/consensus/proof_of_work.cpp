@@ -5,7 +5,7 @@
 using namespace fetch::chain::consensus;
 using namespace fetch::byte_array;
 
-ProofOfWork Test(ByteArray tx,  int diff) 
+ProofOfWork Test(ByteArray tx,  uint64_t diff) 
 {
   ProofOfWork proof(tx);
   proof.SetTarget( diff );
@@ -17,7 +17,7 @@ ProofOfWork Test(ByteArray tx,  int diff)
 }
 
 
-bool TestCompare(ByteArray tx, int diff1, int diff2) 
+bool TestCompare(ByteArray tx, uint64_t diff1, uint64_t diff2) 
 {
   ProofOfWork proof1(tx), proof2(tx);
   proof1.SetTarget( diff1 );

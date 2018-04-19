@@ -41,7 +41,7 @@ void test() {
 
     std::unordered_set< std::size_t > used;
     while(tx.groups.size() < groups) {
-      auto g = (lfg() >> 19 ) % group_count ;
+      group_type g = group_type( (lfg() >> 19 ) % group_count );
       if(used.find(g) == used.end()) {
         tx.groups.push_back( g );
         used.insert(g);
