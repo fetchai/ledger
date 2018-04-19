@@ -34,7 +34,7 @@ class FileReadErrorException : public std::exception {
 template <typename T>
 void LoadPNG(std::string const &filename, T &image) {
   typedef T image_type;
-  int width, height;
+  uint32_t width, height;
   png_byte color_type;
   png_byte bit_depth;
 

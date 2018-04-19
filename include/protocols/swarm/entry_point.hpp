@@ -1,6 +1,7 @@
 #ifndef ENTRY_POINT_HPP
 #define ENTRY_POINT_HPP
 
+#include "chain/transaction.hpp"
 #include "byte_array/referenced_byte_array.hpp"
 
 namespace fetch 
@@ -21,9 +22,9 @@ struct EntryPoint
   
   
   std::string host = "";
-  uint32_t group = 0;
-  uint32_t port = 1337;
-  uint32_t http_port = 8080;
+  group_type group = 0;
+  uint16_t port = 1337;
+  uint16_t http_port = 8080;
   uint64_t configuration = 0;
 
   bool operator==(EntryPoint const& other) 

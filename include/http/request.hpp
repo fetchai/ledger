@@ -44,7 +44,7 @@ public:
     
     for(std::size_t i = 0; i < req.body_data_.size(); ++i )
     {
-      req.body_data_[i] = *cit;
+      req.body_data_[i] = uint8_t(*cit);
       ++cit;
     }
     return true;    
@@ -77,7 +77,7 @@ public:
       ++cit;
       
 
-      req.header_data_[i] = c;
+      req.header_data_[i] = uint8_t(c);
             
       switch(c) {
       case ':':     
@@ -113,7 +113,7 @@ public:
 
             if(key == "content-length")
             {
-              req.content_length_ = value.AsInt();
+              req.content_length_ = uint64_t(value.AsInt());
             }
             
             req.header_.Add(key, value);
@@ -254,7 +254,7 @@ private:
 
     uri_ = line.SubArray(j, k - j);
 
-    std::size_t last = k + 1, equal = -1;
+    std::size_t last = k + 1, equal = std::size_t(-1);
     byte_array::ByteArray key, value;
       
     while(k < i) {
@@ -269,7 +269,7 @@ private:
         value = line.SubArray(equal, k - equal);
 
         query_.Add(key, value);
-        equal = -1;
+        equal = std::size_t(-1);
         last = k + 1;
         break;          
       }                      

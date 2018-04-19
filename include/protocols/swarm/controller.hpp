@@ -83,7 +83,7 @@ public:
     body.group_parameter = grouping_parameter_;
 
     block_generator_.set_group_count( grouping_parameter_);
-    block_generator_.GenerateBlock(body, 1.5*grouping_parameter_);    
+    block_generator_.GenerateBlock(body, std::size_t( 1.5*grouping_parameter_ ));    
     double tw = head_->total_weight();
     
     block_mutex_.unlock();
@@ -391,7 +391,7 @@ public:
       auto &vec = group_org[i];      
       for(auto &c: vec)
       {
-        chain_keepers_details_[ c.index ].group = i;        
+        chain_keepers_details_[ c.index ].group = group_type(i);        
         c.client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::SET_GROUP_NUMBER, uint32_t(i), uint32_t(n));
 
       }

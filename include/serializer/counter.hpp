@@ -61,7 +61,7 @@ class SizeCounter< TypedByte_ArrayBuffer > {
 
   template <typename T>
   SizeCounter &operator<<(T const &val) {
-    Serialize(*this, TypeRegister<T>::name);    
+    Serialize(*this, TypeRegister<void>::value_type( TypeRegister<T>::value ) );    
     Serialize(*this, val);
     return *this;
   }

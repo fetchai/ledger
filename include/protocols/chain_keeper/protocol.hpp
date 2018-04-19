@@ -49,9 +49,9 @@ public:
 
     // TODO: Move to separate protocol
     auto listen_to = new CallableClassMember<ChainKeeperProtocol, void(std::vector< EntryPoint >) >(this, &ChainKeeperProtocol::ListenTo );
-    auto set_group_number = new CallableClassMember<ChainKeeperProtocol, void(uint32_t, uint32_t) >(this, &ChainKeeperProtocol::SetGroupNumber );
-    auto group_number = new CallableClassMember<ChainKeeperProtocol, uint32_t() >(this, &ChainKeeperProtocol::group_number );
-    auto count_outgoing = new CallableClassMember<ChainKeeperProtocol,  uint32_t() >(this, &ChainKeeperProtocol::count_outgoing_connections );        
+    auto set_group_number = new CallableClassMember<ChainKeeperProtocol, void(group_type, group_type) >(this, &ChainKeeperProtocol::SetGroupNumber );
+    auto group_number = new CallableClassMember<ChainKeeperProtocol, group_type() >(this, &ChainKeeperProtocol::group_number );
+    auto count_outgoing = new CallableClassMember<ChainKeeperProtocol,  uint16_t() >(this, &ChainKeeperProtocol::count_outgoing_connections );        
     
     Protocol::Expose(ChainKeeperRPC::LISTEN_TO,listen_to);
     Protocol::Expose(ChainKeeperRPC::SET_GROUP_NUMBER, set_group_number);
@@ -61,7 +61,7 @@ public:
     
     // Web interface
     auto connect_to = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {      
-      this->ConnectTo( params["ip"] , params["port"].AsInt() );
+      this->ConnectTo( params["ip"] , uint16_t(params["port"].AsInt()) );
       return fetch::http::HTTPResponse("{\"status\":\"ok\"}");
     };
     

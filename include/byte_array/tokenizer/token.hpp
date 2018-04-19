@@ -30,18 +30,18 @@ class Token : public ConstByteArray {
   }
 
   
-  void SetType(std::size_t const &t) { type_ = t; }
-  void SetLine(std::size_t const &l) { line_ = l; }
+  void SetType(int const &t) { type_ = t; }
+  void SetLine(int const &l) { line_ = l; }
   void SetChar(std::size_t const &c) { char_ = c; }
 
-  std::size_t type() const { return type_; }
-  std::size_t line() const { return line_; }
+  int type() const { return type_; }
+  int line() const { return line_; }
   std::size_t character() const { return char_; }
 
 
  private:
   int type_ = -1;
-  std::size_t line_ = 0;
+  int line_ = 0;
   std::size_t char_ = 0;
 };
 };

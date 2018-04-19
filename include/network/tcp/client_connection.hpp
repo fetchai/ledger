@@ -9,7 +9,10 @@
 #include "assert.hpp"
 #include "logger.hpp"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
 #include <asio.hpp>
+#pragma clang diagnostic pop
 
 namespace fetch 
 {

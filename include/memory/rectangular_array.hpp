@@ -153,8 +153,8 @@ public:
 
     for (int i = 0; i < int(height()); ++i) {
       for (int j = 0; j < int(width()); ++j) {
-        size_type v = ca * (i - ci) - sa * (j - cj) + ci;
-        size_type u = sa * (i - ci) + ca * (j - cj) + cj;
+        size_type v = size_type(ca * (i - ci) - sa * (j - cj) + ci);
+        size_type u = size_type(sa * (i - ci) + ca * (j - cj) + cj);
         if ((v < height()) && (u < width()))
           n[(i * padded_width_+ j)] = At(v, u);
         else

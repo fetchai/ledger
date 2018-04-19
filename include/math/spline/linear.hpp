@@ -31,8 +31,8 @@ class Spline {
 
   type operator()(type x) {
     double z = (x - range_from_) * range_to_index_;
-    uint32_t i = z;
-    z -= i;
+    uint32_t i = uint32_t(z);
+    z -= double(i);
     return (data_[i + 1] - data_[i]) * z + data_[i];
   }
 

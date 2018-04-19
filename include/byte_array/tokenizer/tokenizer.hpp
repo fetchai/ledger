@@ -36,7 +36,7 @@ class Tokenizer : public std::vector<Token> {
 
   bool Parse(byte_array_type const& contents, bool clear = true) {
     uint64_t pos = 0;
-    uint64_t line = 0;
+    int line = 0;
     uint64_t char_index = 0;
     byte_array_type::container_type const *str = contents.pointer();
     if(clear) this->clear();
@@ -50,12 +50,12 @@ class Tokenizer : public std::vector<Token> {
         int token_type = 0;
 
         if(indexer_) {
-          int index = 0, prev_index = -1 ;
+          int index = 0, prev_index = 0 ;
           bool check = true;        
           while(check) {
             index = indexer_(contents, pos, prev_index);
             
-            auto &c = consumers_[index];
+            auto &c = consumers_[std::size_t(index)];
             
             pos = oldpos;
             token_type = c(contents, pos);
@@ -87,7 +87,7 @@ class Tokenizer : public std::vector<Token> {
     pos = 0;    
     while (pos < contents.size()) {
       uint64_t oldpos = pos;
-      int64_t token_type = 0;
+      int token_type = 0;
 
       if(indexer_) {
         int index = 0, prev_index = -1 ;
@@ -95,7 +95,7 @@ class Tokenizer : public std::vector<Token> {
         while(check) {
           index = indexer_(contents, pos, prev_index);
           
-          auto &c = consumers_[index];
+          auto &c = consumers_[std::size_t(index)];
           
           pos = oldpos;
           token_type = c(contents, pos);

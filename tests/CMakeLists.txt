@@ -73,3 +73,7 @@ standard_test(vectorize_sse vectorize/sse.cpp)
 
 
 
+#add_library(linking_file1 STATIC linking/file1.cpp)
+#add_executable(linking_main linking/file2.cpp)
+#target_link_libraries(linking_main linking_file1)
+

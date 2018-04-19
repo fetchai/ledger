@@ -66,13 +66,13 @@ public:
   char *char_pointer() { return super_type::char_pointer(); }
 };
 
-std::ostream &operator<<(std::ostream &os, ByteArray const &str) {
+inline std::ostream &operator<<(std::ostream &os, ByteArray const &str) {
   char const *arr = reinterpret_cast<char const *>(str.pointer());
   for (std::size_t i = 0; i < str.size(); ++i) os << arr[i];
   return os;
 }
 
-ByteArray operator+(char const *a, ByteArray const &b) {
+inline ByteArray operator+(char const *a, ByteArray const &b) {
   ByteArray s(a);
   s = s + b;
   return s;

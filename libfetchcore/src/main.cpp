@@ -1,4 +1,11 @@
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wc++11-compat-pedantic"
+#include <pybind11/pybind11.h>
+#pragma clang diagnostic pop
+
+
 #include "py_logger.hpp"
 #include "py_unittest.hpp"
 #include "py_assert.hpp"
@@ -132,7 +139,6 @@
 #include "optimisation/simulated_annealing/py_reference_annealer.hpp"
 #include "optimisation/simulated_annealing/py_sparse_annealer.hpp"
 
-#include <pybind11/pybind11.h>
 
 PYBIND11_MODULE(libfetchcore, module) {
   namespace py = pybind11;

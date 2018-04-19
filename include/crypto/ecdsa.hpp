@@ -41,14 +41,13 @@ public:
     BIGNUM *private_as_bn = BN_new();
     assert( private_key.size() == 32 );
     
-    BN_bin2bn(private_key.pointer(), private_key.size(), private_as_bn);
+    BN_bin2bn(private_key.pointer(), int(private_key.size()), private_as_bn);
     EC_KEY_set_private_key(key_, private_as_bn);
 
     // Deriving the public key
     BN_CTX  *ctx = BN_CTX_new();
     BN_CTX_start(ctx);
 
-    // TODO: figure out how this pointers memory is managed.
     // Should be freed
     EC_GROUP const *group = EC_KEY_get0_group(key_); 
     EC_POINT *public_key = EC_POINT_new(group);
@@ -57,7 +56,7 @@ public:
 
     // Getting public key
     //   EC_KEY_set_conv_form(key_, POINT_CONVERSION_COMPRESSED);    
-    public_key_.Resize( i2o_ECPublicKey(key_, NULL) );
+    public_key_.Resize( std::size_t( i2o_ECPublicKey(key_, NULL) ) );
     
     //    assert( public_key_.size() == 64 );
     uint8_t *pub_copy = public_key_.pointer();
@@ -105,9 +104,9 @@ public:
 
   bool Sign(byte_array_type const &text) final override {
     hash_ = Hash< SHA256 >( text );
-    signature_.Resize( ECDSA_size(key_) );
-    uint32_t len = signature_.size();
-    int ret = ECDSA_sign(0, hash_.pointer(), hash_.size(), signature_.pointer(), &len, key_);
+    signature_.Resize( std::size_t( ECDSA_size(key_) ) );
+    uint32_t len = uint32_t( signature_.size() );
+    int ret = ECDSA_sign(0, hash_.pointer(), int(hash_.size()), signature_.pointer(), &len, key_);
     return (ret != 1);
   }
 
@@ -183,7 +182,7 @@ EC_KEY *bbp_ec_new_keypair(const uint8_t *priv_bytes) {
     return key;
 }
 
-EC_KEY *bbp_ec_new_pubkey(const uint8_t *pub_bytes, size_t pub_len) {
+EC_KEY *bbp_ec_new_pubkey(const uint8_t *pub_bytes, int pub_len) {
     EC_KEY *key;
     const uint8_t *pub_bytes_copy;
 

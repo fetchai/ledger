@@ -10,7 +10,7 @@ namespace fetch {
 namespace serializers {
 
 template <typename T>
-void Serialize(T &serializer, byte_array::BasicByteArray const &s) {
+inline void Serialize(T &serializer, byte_array::BasicByteArray const &s) {
   serializer.Allocate(sizeof(uint64_t) + s.size());
   uint64_t size = s.size();
 
@@ -21,7 +21,7 @@ void Serialize(T &serializer, byte_array::BasicByteArray const &s) {
 }
 
 template <typename T>
-void Deserialize(T &serializer, byte_array::BasicByteArray &s) {
+inline void Deserialize(T &serializer, byte_array::BasicByteArray &s) {
   uint64_t size = 0;
   if(!(sizeof(uint64_t) <= serializer.bytes_left())){
     std::cout << serializer.bytes_left() << " " << serializer.data().size() << std::endl;

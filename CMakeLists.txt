@@ -25,7 +25,7 @@ find_package(Threads REQUIRED)
 message("OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
 message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")
 
-link_libraries(crypto pthread)
+
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/asio/asio/include")
 include_directories("${OPENSSL_INCLUDE_DIR}")
@@ -64,10 +64,12 @@ endif()
 
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wconversion -Wc++11-compat-pedantic -g -Wno-unused-function -O3 -Werror ")
+# -Wconversion -Wc++11-compat-pedantic -Werror 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function -O3")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -g -Wall -Wno-unused-function -DNDEBUG")
 
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl")
+ 
 #set(CMAKE_BUILD_TYPE RELEASE)
 set(CMAKE_BUILD_TYPE DEBUG)
 
@@ -75,11 +77,28 @@ set(CMAKE_BUILD_TYPE DEBUG)
 ## #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -DNDEBUG -g -Wall  -Werror -Wno-unused-function")
 
 
+link_libraries(crypto pthread)
+
+#### LIB FETCH
+add_library(libfetch_logger STATIC src/logger.cpp)
+add_library(libfetch_vt100 STATIC src/commandline/vt100.cpp)
+add_library(libfetch_variant STATIC src/script/variant.cpp)
+
+add_library(libfetch_bytearray_encoders STATIC src/byte_array/encoders.cpp)
+add_library(libfetch_bytearray_decoders STATIC src/byte_array/decoders.cpp)
+add_library(libfetch_bytearray_detail_encode_decode STATIC src/byte_array/details/encode_decode.cpp)
+add_library(libfetch_http_mime_types STATIC src/http/mime_types.cpp)
+
+
+add_library(libfetch STATIC src/libfetch.cpp)
+target_link_libraries(libfetch libfetch_logger libfetch_vt100 libfetch_variant libfetch_bytearray_encoders libfetch_bytearray_decoders libfetch_bytearray_detail_encode_decode libfetch_http_mime_types )
+
+
+
+link_libraries(crypto pthread libfetch)
 
 ## Dependencies
-
 include_directories(${PNG_INCLUDE_DIR})
-
 add_subdirectory( libfetchcore/ )
 
 # TESTS

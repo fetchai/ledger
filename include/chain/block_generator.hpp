@@ -172,7 +172,7 @@ public:
     bool valid = true;
     int last_group = -1;
 
-    std::unordered_map< uint32_t, int > groups_with_conflicts;
+    std::unordered_map< uint64_t, int > groups_with_conflicts;
     std::size_t group_occupation = 0;
     
     for( auto &g: used_groups) {
@@ -189,7 +189,7 @@ public:
 
         ++groups_with_conflicts[g];                
       }
-      last_group = g;
+      last_group = int(g);
     }
     std::cout << std::endl;
     std::cout << "Group occupation: " << group_occupation << std::endl;
@@ -234,7 +234,7 @@ public:
           
           ++groups_with_conflicts[g];                
         }
-        last_group = g;
+        last_group = int(g);
       }    
     }
     
@@ -394,7 +394,7 @@ private:
 };
 
 
-std::ostream& operator<< (std::ostream& stream, BlockGenerator const &graph )
+inline std::ostream& operator<< (std::ostream& stream, BlockGenerator const &graph )
 {
   return stream;
   

@@ -6,11 +6,14 @@
 #include "logger.hpp"
 
 namespace fetch {
+typedef uint16_t group_type;
+  
 namespace chain {
 
+  
 struct TransactionSummary {
   typedef byte_array::ConstByteArray digest_type;    
-  std::vector< uint32_t > groups;  
+  std::vector< group_type > groups;  
   digest_type transaction_hash;
 };
 
@@ -80,7 +83,7 @@ TODO: Make 32 bit compat
     PushGroup(d.value);    
   }
 
-  void PushGroup(uint32_t const &res)
+  void PushGroup(group_type const &res)
   {
     LOG_STACK_TRACE_POINT;
     bool add = true;
@@ -99,7 +102,7 @@ TODO: Make 32 bit compat
     
   }
 
-  bool UsesGroup(uint16_t g, uint16_t m) const
+  bool UsesGroup(group_type g, group_type m) const
   {
     --m;    
     g &= m;
@@ -128,7 +131,7 @@ TODO: Make 32 bit compat
     arguments_ = args;
   }  
   
-  std::vector< uint32_t > const &groups() const {
+  std::vector< group_type > const &groups() const {
     return summary_.groups;
   }
   
@@ -163,14 +166,14 @@ private:
   arguments_type arguments_;
 
   template< typename T >
-  friend void Serialize(T&, Transaction const&);
+  friend inline void Serialize(T&, Transaction const&);
   template< typename T >
-  friend void Deserialize(T&, Transaction &);  
+  friend inline void Deserialize(T&, Transaction &);  
 };
 
 
 template< typename T >
-void Serialize( T & serializer, Transaction const &b) {
+inline void Serialize( T & serializer, Transaction const &b) {
   serializer << uint16_t(b.VERSION);
   
   serializer << b.summary_;
@@ -185,7 +188,7 @@ void Serialize( T & serializer, Transaction const &b) {
 }
 
 template< typename T >
-void Deserialize( T & serializer, Transaction &b) {
+inline void Deserialize( T & serializer, Transaction &b) {
   uint16_t version;  
   serializer >> version;
 

@@ -23,19 +23,24 @@ public:
   const_iterator cbegin() const noexcept { return map_type::cbegin(); }
   const_iterator cend() const noexcept { return map_type::cend(); }
 
+  
   void Add(byte_array_type const& name, byte_array_type const &value) {
     LOG_STACK_TRACE_POINT;
     
     insert( {name, value} );
   }
-
   
-  void Add(byte_array_type const& name, int const &n) {
+
+  template< typename T >
+  typename std::enable_if< std::is_integral< T >::value, void >::type
+  Add(byte_array_type const& name, T const &n) {
     LOG_STACK_TRACE_POINT;
-    
+    // TODO: Can be improved.
     byte_array_type value( std::to_string(n) );
     insert( {name, value} );
   }
+
+
   
   bool Has(byte_array_type const& key) const {
     LOG_STACK_TRACE_POINT;

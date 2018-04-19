@@ -165,22 +165,22 @@ private:
   
   
   template< typename AT,  typename AP, typename AH >
-  friend void Serialize( AT & serializer, BasicBlock< AP, AH > const &);
+  friend inline void Serialize( AT & serializer, BasicBlock< AP, AH > const &);
   
 
   template< typename AT, typename AP, typename AH>
-  friend void Deserialize( AT & serializer, BasicBlock< AP, AH > &b);  
+  friend inline void Deserialize( AT & serializer, BasicBlock< AP, AH > &b);  
 };
 
 
 template< typename T,  typename P, typename H >
-void Serialize(T& serializer, BasicBlock< P, H > const &b) 
+inline void Serialize(T& serializer, BasicBlock< P, H > const &b) 
 {
   serializer <<  b.body() << b.proof() << b.weight_ << b.total_weight_;   // TODO: Fix should be computed
 }
 
 template< typename T,  typename P, typename H >
-void Deserialize(T& serializer, BasicBlock< P, H > &b) 
+inline void Deserialize(T& serializer, BasicBlock< P, H > &b) 
 {
  
   BlockBody body;  

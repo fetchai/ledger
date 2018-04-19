@@ -88,7 +88,7 @@ class JSONDocument {
     variants_.Resize( objects_ + 1);
     counters_.clear();
     
-    std::size_t allocation_counter = 1;
+    uint32_t allocation_counter = 1;
     JSONObject current_object;
     
     char const *ptr = reinterpret_cast< char const * >( document.pointer() );
@@ -164,7 +164,7 @@ class JSONDocument {
  private:
   void Tokenise(const_string_type const& document) 
   {
-    uint64_t line = 0;
+    int line = 0;
     uint64_t pos = 0;
 
     objects_ = 0;
@@ -226,7 +226,7 @@ class JSONDocument {
         switch(words[0]) {
         case 0x65757274:  // true
           ++objects_;
-          tokens_.push_back({pos, pos+4, KEYWORD_TRUE});
+          tokens_.push_back({uint32_t(pos), pos+4, KEYWORD_TRUE});
           pos+=4;
           ++element_counter;        
           continue;
@@ -245,7 +245,7 @@ class JSONDocument {
           continue;   
         }
       }
-      std::size_t oldpos = pos;
+      uint64_t oldpos = pos;
       uint8_t type;
 
       switch(c) {
@@ -324,7 +324,7 @@ class JSONDocument {
       default: // If none of the above it must be number:
 
         ++element_counter;        
-        type = byte_array::consumers::NumberConsumer< NUMBER_INT, NUMBER_FLOAT >(document,pos);
+        type = uint8_t(byte_array::consumers::NumberConsumer< NUMBER_INT, NUMBER_FLOAT >(document,pos));
         if(type == uint8_t(-1)) {
           throw JSONParseException("Unable to parse integer.");
         }
@@ -340,9 +340,9 @@ class JSONDocument {
   
   struct JSONObject 
   {
-    uint32_t start = 0;
-    uint32_t size = 1;    
-    uint32_t i = 0;
+    uint64_t start = 0;
+    uint64_t size = 1;    
+    uint64_t i = 0;
     uint8_t type = 0;
   };
   

@@ -234,13 +234,13 @@ protected:
 };
 
 
-std::ostream &operator<<(std::ostream &os, BasicByteArray const &str) {
+inline std::ostream &operator<<(std::ostream &os, BasicByteArray const &str) {
   char const *arr = reinterpret_cast<char const *>(str.pointer());
   for (std::size_t i = 0; i < str.size(); ++i) os << arr[i];
   return os;
 }
 
-BasicByteArray operator+(char const *a, BasicByteArray const &b) {
+inline BasicByteArray operator+(char const *a, BasicByteArray const &b) {
   BasicByteArray s(a);
   s = s + b;
   return s;
