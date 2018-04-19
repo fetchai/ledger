@@ -313,6 +313,44 @@ class Matrix : public A {
     return *this;
   }
   
+
+   Matrix& InlineReverseSubtract(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ib( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ia( this->data().pointer(), this->data().size() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = b - a ;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+
+   Matrix& InlineReverseDivide(Matrix const &obj1) {
+    assert(obj1.data().size() == this->data().size());
+
+    std::size_t N = obj1.data().size();
+    vector_register_type a,b,c; 
+
+    vector_register_iterator_type ib( obj1.data().pointer(), obj1.data().size() );
+    vector_register_iterator_type ia( this->data().pointer(), this->data().size() );    
+    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
+      ia.Next(a);
+      ib.Next(b);
+
+      c = b / a;
+      c.Stream( this->data().pointer() + i);
+    }    
+    return *this;
+  }
+
+
   
   Matrix& Transpose(Matrix const &other) {
     this->Resize(other.width(), other.height());

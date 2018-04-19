@@ -1,7 +1,5 @@
 #ifndef SERIALIZER_STIL_TYPES_HPP
 #define SERIALIZER_STIL_TYPES_HPP
-#include"serializer/counter.hpp"
-
 #include "byte_array/referenced_byte_array.hpp"
 #include "assert.hpp"
 #include "logger.hpp"
@@ -77,19 +75,10 @@ inline void Serialize(T &serializer, char const *s) {
     
 template< typename T, typename U>
 inline void Serialize(T &serializer, std::vector< U> const &vec) {
-  // Computing the size of the content of vector
-  SizeCounter<T> counter;  
-  for(auto &v: vec)
-  {
-    counter << v;
-  }
-
   // Allocating memory for the size
   serializer.Allocate( sizeof(uint64_t) );  
-//  serializer.Reserve( counter.size() ); // Avoiding allocating mem all the time
   
   uint64_t size = vec.size();
-
   // Writing the size to the byte array
   serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size),
                         sizeof(uint64_t));

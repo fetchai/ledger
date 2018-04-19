@@ -195,6 +195,7 @@ EXPECT( (A * B).AllClose(C) );
         
 EXPECT( R.Subtract(A,B).AllClose(C) );
 EXPECT( ( R = A, R.InlineSubtract(B) ).AllClose(C) );
+EXPECT( ( R = B, R.InlineReverseSubtract(A) ).AllClose(C) );
 EXPECT( (R = A, R -= B).AllClose(C) );
 EXPECT( (A - B).AllClose(C) );
 };
@@ -353,6 +354,7 @@ EXPECT( (A * B).AllClose(C) );
         
 EXPECT( R.Subtract(A,B).AllClose(C) );
 EXPECT( ( R = A, R.InlineSubtract(B) ).AllClose(C) );
+EXPECT( ( R = B, R.InlineReverseSubtract(A) ).AllClose(C) ); 
 EXPECT( (R = A, R -= B).AllClose(C) );
 EXPECT( (A - B).AllClose(C) );
 };
@@ -431,6 +433,7 @@ EXPECT( R.Dot(A,B).AllClose(C) );
         
 EXPECT( R.Divide(A,B).AllClose(C) );
 EXPECT( ( R = A, R.InlineDivide(B) ).AllClose(C) );
+EXPECT( ( R = B, R.InlineReverseDivide(A) ).AllClose(C) ); 
 EXPECT( (R = A, R /= B).AllClose(C) );
 EXPECT( (A / B).AllClose(C) );
 };
@@ -551,6 +554,7 @@ EXPECT( (A * B).AllClose(C) );
         
 EXPECT( R.Subtract(A,B).AllClose(C) );
 EXPECT( ( R = A, R.InlineSubtract(B) ).AllClose(C) );
+EXPECT( ( R = B, R.InlineReverseSubtract(A) ).AllClose(C) ); 
 EXPECT( (R = A, R -= B).AllClose(C) );
 EXPECT( (A - B).AllClose(C) );
 };
@@ -629,6 +633,7 @@ EXPECT( R.Dot(A,B).AllClose(C) );
         
 EXPECT( R.Divide(A,B).AllClose(C) );
 EXPECT( ( R = A, R.InlineDivide(B) ).AllClose(C) );
+EXPECT( ( R = B, R.InlineReverseDivide(A) ).AllClose(C) );  
 EXPECT( (R = A, R /= B).AllClose(C) );
 EXPECT( (A / B).AllClose(C) );
 };
