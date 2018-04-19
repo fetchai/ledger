@@ -38,7 +38,7 @@ BasicByteArray ToBase64(BasicByteArray const &str) {
   }
 
   if (invPadCount > 0) 
-    for (; invPadCount < 3; invPadCount++) ret[idx++] = details::base64pad;
+    for (; invPadCount < 3; invPadCount++) ret[idx++] = uint8_t(details::base64pad);
 
   return ret;
 }

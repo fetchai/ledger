@@ -64,8 +64,8 @@ endif()
 
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-# -Wconversion -Wc++11-compat-pedantic -Werror 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function -O3")
+# 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function -O3 -Wconversion -Wc++11-compat-pedantic -Werror ")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -g -Wall -Wno-unused-function -DNDEBUG")
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl")

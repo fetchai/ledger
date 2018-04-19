@@ -141,14 +141,16 @@ public:
   typename std::enable_if< (!std::is_same<T,bool>::value) && std::is_integral<T>::value, T>::type operator=(
       T const& i) {
     type_ = INTEGER;
-    return data_.integer = i;
+    data_.integer = int64_t(i);
+    return T(data_.integer);
   }
 
   template <typename T>
   typename std::enable_if<std::is_floating_point<T>::value, T>::type operator=(
       T const& f) {
     type_ = FLOATING_POINT;
-    return data_.float_point = f;
+    data_.float_point = double(f);
+    return T(data_.float_point);
   }
 
   template <typename T>

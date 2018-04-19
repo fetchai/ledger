@@ -72,7 +72,7 @@ class Matrix : public A {
         if(byte_array::consumers::NumberConsumer<1,2>(c, i) == -1) {
           failed = true;
         } else {
-          elems.push_back( atof( c.char_pointer() + last ));
+          elems.push_back( type( atof( c.char_pointer() + last ) ));
         }
         break;
       }
@@ -570,7 +570,7 @@ class Matrix : public A {
         // TODO: Throw error
         return INVERSION_SINGULAR;
 
-      inv_piv = 1. / ptr[q];
+      inv_piv = type(1.) / ptr[q];
       ptr[q] = 1.0;
       for (std::size_t j = 0; j < mheight; ++j, ++p) ptr[p] *= inv_piv;
 

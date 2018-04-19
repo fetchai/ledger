@@ -12,12 +12,12 @@ typedef Matrix<data_type,container_type>  matrix_type;
 typedef typename matrix_type::vector_register_type vector_register_type;
 
 
-Matrix<data_type, container_type> RandomMatrix(int n, int m) {
+Matrix<data_type, container_type> RandomMatrix(std::size_t n, std::size_t m) {
   static fetch::random::LinearCongruentialGenerator gen;
   Matrix<data_type,container_type> m1(n, m);
   for(std::size_t i=0; i < n; ++i)
     for(std::size_t j=0; j < m; ++j)
-      m1(i,j) = gen.AsDouble();
+      m1(i,j) = data_type( gen.AsDouble() );
   return m1;
 }
 

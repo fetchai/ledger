@@ -75,7 +75,7 @@ public:
       uint64_t value;
       uint8_t bytes[ sizeof(T) ];
     } data;
-    data.value = v;
+    data.value = uint64_t(v);
 
     if( sizeof(T) > super_type::size()) {
       TODO_FAIL( "BIg number too small" );
@@ -175,7 +175,7 @@ public:
   
 };
 
-double Log(BigUnsigned const& x ) {
+inline double Log(BigUnsigned const& x ) {
   uint64_t last_byte =x.TrimmedSize();
   union {
     uint8_t bytes[4];
@@ -199,7 +199,7 @@ double Log(BigUnsigned const& x ) {
   return exponent + std::log( double(fraction.value << tz ) * (1. /double(uint32_t(-1)) ) )  ;
 }
 
-double ToDouble(BigUnsigned const& x)  {
+inline double ToDouble(BigUnsigned const& x)  {
   uint64_t last_byte =x.TrimmedSize();
 
   union {
