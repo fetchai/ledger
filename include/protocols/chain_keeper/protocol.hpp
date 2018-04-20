@@ -205,7 +205,7 @@ public:
           
           typedef fetch::chain::Transaction transaction_type;
           transaction_type tx;
-          auto &res =  doc["resources"];
+          auto res =  doc["resources"];
 
           
           for(std::size_t i=0; i < res.size(); ++i) {

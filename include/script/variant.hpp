@@ -81,7 +81,8 @@ class Variant
     template<typename S>
     S operator=(S val) 
     {
-      return T::operator=(val);
+      T::operator=(val);
+      return val;
     }
 
     template<typename S>
