@@ -328,6 +328,7 @@ private:
   {
     assert(type_ == OBJECT);
     array_.Resize( array_.size() + 2 );
+
     array_[ array_.size() - 2] = key;
     array_[ array_.size() - 1] = val;    
   }
@@ -391,7 +392,8 @@ inline std::ostream& operator<<(std::ostream& os, Variant const& v) {
         if(i != 0) {
           os << ", ";
         }
-        os <<  v.as_array()[i++] << ": " << v.as_array()[i];
+        os <<  v.as_array()[i] << ": " << v.as_array()[i+1];
+	i++;
       }      
 
       os << "}";
