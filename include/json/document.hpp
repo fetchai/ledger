@@ -85,7 +85,7 @@ class JSONDocument {
   void Parse(const_string_type const& document) {    
     Tokenise(document);
 
-    variants_.Resize( objects_ + 1);
+    variants_.LazyResize( objects_ + 1);
     counters_.clear();
     
     uint32_t allocation_counter = 1;

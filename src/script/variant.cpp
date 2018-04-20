@@ -65,18 +65,43 @@ void VariantList::Resize(std::size_t const &n)
   size_ = n;
   }
 
-  void VariantList::Reserve(std::size_t const &n) 
-  {
-    if(offset_ + n < data_.size() ) return;
+void VariantList::LazyResize(std::size_t const &n) 
+{
+  if(size_ == n) return;
+  LazyReserve(n);
+  size_ = n;
+}
 
-    memory::SharedArray< Variant, 16 > new_data(n);
-    new_data.SetAllZero(); // TODO: Ugly hack to prevent conditional jump
-
-    data_ = new_data;
-    offset_ = 0;    
-    pointer_ = data_.pointer();
+void VariantList::Reserve(std::size_t const &n) 
+{
+  if(offset_ + n < data_.size() ) return;
+  
+  memory::SharedArray< Variant, 16 > new_data(n);
+  new_data.SetAllZero();
+  
+  for(std::size_t i = 0; i < size_; ++i) {
+    new_data[i] = data_[i];
   }
-    
+  
+  data_ = new_data;
+  offset_ = 0;    
+  pointer_ = data_.pointer();
+}
+
+
+void VariantList::LazyReserve(std::size_t const &n) 
+{
+  if(offset_ + n < data_.size() ) return;
+  
+  memory::SharedArray< Variant, 16 > new_data(n);
+  new_data.SetAllZero(); 
+  
+  data_ = new_data;
+  offset_ = 0;    
+  pointer_ = data_.pointer();
+}
+
+
 
 void VariantList::SetData(VariantList const& other, std::size_t offset, std::size_t size)  {
   data_ = other.data_;

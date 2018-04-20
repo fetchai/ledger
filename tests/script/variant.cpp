@@ -55,6 +55,26 @@ int main() {
       EXPECT( obj["numberOfTransactions"].type() == fetch::script::VariantType::INTEGER );
       EXPECT( obj["numberOfTransactions"].as_int() == 9 );
       
+      obj["numberOfTransactions"] = "Hello world";
+      std::cout << obj["numberOfTransactions"].type() << std::endl;      
+      obj["blah"] = 9;
+      obj["Hello"] = false;
+      obj["XX"] = nullptr ;
+      
+      std::cout << obj["numberOfTransactions"].type() << std::endl;
+      
+      EXPECT( obj["numberOfTransactions"].type() == fetch::script::VariantType::STRING );
+      EXPECT( obj["numberOfTransactions"].as_byte_array() == "Hello world" );
+      
+      EXPECT( obj["blah"].type() == fetch::script::VariantType::INTEGER );
+      EXPECT( obj["blah"].as_int() == 9 );
+      
+      EXPECT( obj["Hello"].type() == fetch::script::VariantType::BOOLEAN );
+      EXPECT( obj["Hello"].as_bool() == false );
+
+      EXPECT( obj["XX"].type() == fetch::script::VariantType::NULL_VALUE );
+
+
     };
     
     

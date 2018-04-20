@@ -40,7 +40,9 @@ public:
   Variant const& operator[](std::size_t const &i)  const;  
   Variant & operator[](std::size_t const &i);
   void Resize(std::size_t const &n) ;
+  void LazyResize(std::size_t const &n) ;  
   void Reserve(std::size_t const &n);
+  void LazyReserve(std::size_t const &n) ;    
   std::size_t size() const { return size_; }
 
   void SetData(VariantList const& other, std::size_t offset, std::size_t size) ;
@@ -68,19 +70,23 @@ class Variant
 
     ~VariantObjectEntryProxy()
     {
-      if(child_!=nullptr)
-      {
-        child_->operator=(*this);        
+      if(modified_) { 
+        if(child_!=nullptr)
+        {
+          child_->operator=(*this);
+        }
+        else
+        {
+          parent_->LazyAppend( key_, *this );
+        }
       }
-      else
-      {
-        parent_->LazyAppend( key_, *this );
-      }      
+      
     }
     
     template<typename S>
     S operator=(S val) 
     {
+      modified_ = true;      
       T::operator=(val);
       return val;
     }
@@ -93,7 +99,9 @@ class Variant
     
   private:
     byte_array::BasicByteArray key_;
-    T *parent_, *child_;    
+    T *parent_, *child_;
+    bool modified_ = false;
+    
   };
   
     
@@ -319,10 +327,9 @@ private:
   void LazyAppend(byte_array::BasicByteArray const &key, Variant const &val) 
   {
     assert(type_ == OBJECT);
-    
     array_.Resize( array_.size() + 2 );
     array_[ array_.size() - 2] = key;
-    array_[ array_.size() - 1] = val;
+    array_[ array_.size() - 1] = val;    
   }
   
 
