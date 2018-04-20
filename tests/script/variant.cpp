@@ -80,7 +80,7 @@ int main() {
       // Failing test
       Variant result = Variant::Object();
       result["numberOfTransactions"] = uint32_t(2);
-      result["hash"]                 = "some hash";
+      result["hash"]                 = "some_hash";
 
       std::ostringstream stream;
       stream << result; // failing operation
@@ -92,7 +92,7 @@ int main() {
 
       std::cerr << asString << std::endl;
 
-      EXPECT(asString.compare("{\"numberOfTransactions\":2,\"hash\":\"some hash\"}") == 0);
+      EXPECT(asString.compare("{\"numberOfTransactions\":2,\"hash\":\"some_hash\"}") == 0);
     };
     
     
