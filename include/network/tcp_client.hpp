@@ -269,8 +269,9 @@ private:
           } 
         } else 
         {
-          fetch::logger.Error("Client: Write failed, closing connection:", ec);
-          Close(true);
+          fetch::logger.Error("Client: Write failed!", ec);
+          //fetch::logger.Error("Client: Write failed, closing connection:", ec);
+          //Close(true);
         }
       };
 

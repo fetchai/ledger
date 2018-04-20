@@ -96,7 +96,6 @@ TODO: Make 32 bit compat
 //    assert(d.value < 10);
 
     PushGroup(d.value);
-    modified = true;
   }
 
   void PushGroup(uint32_t const &res)
@@ -116,7 +115,6 @@ TODO: Make 32 bit compat
       summary_.groups.push_back(res);
       modified = true;
     }
-
   }
 
   bool UsesGroup(uint16_t g, uint16_t m) const

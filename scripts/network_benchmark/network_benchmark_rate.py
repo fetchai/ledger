@@ -25,32 +25,19 @@ def HTTPpost(endpoint, page, jsonArg="{}"):
     return requests.post('http://'+str(endpoint["IP"])+':'+str(endpoint["HTTPPort"])+'/'+page, json=jsonArg)
 
 #setRate             = 100000
-setRate             = 3
-minRate             = 3
+#transactionsPerCall = 1
+setRate             = 1000
+minRate             = 1000
 sleepTime           = 10
-transactionsPerCall = { "transactions": 2000 }
-
-parser = optparse.OptionParser()
-
-parser.add_option('-i', '--input',
-    action="store", dest="input",
-    help="query string", default="spam")
-
-options, args = parser.parse_args()
-
-if (options.input == "1"):
-  print "Option 1"
-  endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-  endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
-  HTTPpost(endpoint1, 'add-endpoint', endpoint2)
+transactionsPerCall = { "transactions": 1 }
 
 # localhost test
-endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
+#endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
+#endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
 
 # LAN test
-#endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-#endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.213"}
+endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
+endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.213"}
 
 # pi test
 #endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "192.168.1.150"}
@@ -82,6 +69,10 @@ for i in range(1000):
     HTTPpost(endpoint1, 'set-rate', rate)
     HTTPpost(endpoint2, 'set-rate', rate)
     print "Set rate to: ", setRate
+
+    HTTPpost(endpoint1, 'set-transactions-per-call', transactionsPerCall)
+    HTTPpost(endpoint2, 'set-transactions-per-call', transactionsPerCall)
+    print "Set trans/call to ", transactionsPerCall["transactions"]
 
     HTTPpost(endpoint1, 'start')
     #HTTPpost(endpoint2, 'start')
@@ -119,6 +110,8 @@ for i in range(1000):
     transPerSecond = page2.json()["numberOfTransactions"]/sleepTime
     print ">Transactions per second: ", transPerSecond
 
+    print "=>", transactionsPerCall, ":", transPerSecond
+
     if(transPerSecond > transPerSecondMax):
         transPerSecondMax = transPerSecond
 
@@ -130,3 +123,8 @@ for i in range(1000):
     #setRate = setRate -1
     if(setRate < minRate):
         setRate = minRate
+
+
+    #
+    number = transactionsPerCall["transactions"]
+    transactionsPerCall["transactions"] = number*2

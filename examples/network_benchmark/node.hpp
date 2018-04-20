@@ -10,11 +10,14 @@
 #include"./packet_filter.hpp"
 #include"./transaction_list.hpp"
 
-#include<random>
+//#include<random>
 #include<memory>
 #include<utility>
 #include<limits>
 #include<set>
+
+#include <iostream>
+#include <fstream>
 
 namespace fetch
 {
@@ -67,6 +70,7 @@ public:
     std::cerr << stream.str();
 
     transactionsPerCall_ = tpc;
+    precreateTrans();
   }
 
   void Reset()
@@ -127,7 +131,9 @@ public:
     stream << "We logged: " << transactionList_.size() << std::endl;
     std::cerr << stream.str();
 
-    fetch::logger.PrintTimings();
+    fetch::logger.Info("This is info");
+
+    fetch::logger.PrintTimings(50, std::cerr);
   }
 
   std::set<transaction> GetTransactions()
@@ -166,6 +172,7 @@ private:
   bool                                               sendingTransactions_ = false;
   std::size_t                                        sentCount_           = 0;
   std::atomic<std::size_t>                           receivedCount_{0};
+  std::vector<std::vector<transaction>>              premadeTrans;
 
   transaction nextTransaction()
   {
@@ -183,14 +190,47 @@ private:
     return trans;
   }
 
+  void precreateTrans()
+  {
+    std::size_t numberToSend = transactionsPerCall_;
+    premadeTrans.clear();
+    std::size_t transInVector = 0;
+
+    while (transInVector < 100000)
+    {
+      std::vector<transaction> transBlock;
+
+      for (std::size_t i = 0; i < numberToSend; ++i)
+      {
+        auto trans = nextTransaction();
+        transBlock.push_back(trans);
+      }
+
+      premadeTrans.push_back(transBlock);
+      transInVector += numberToSend;
+    }
+  }
+
   std::vector<transaction> getTrans(std::size_t numberToSend)
   {
     std::vector<transaction> allTrans;
 
-    for (std::size_t i = 0; i < numberToSend; ++i)
+    bool make_transaction = false;
+
+    if(!make_transaction && premadeTrans.size() > 0)
     {
-      auto trans = nextTransaction();
-      allTrans.push_back(trans);
+      allTrans = premadeTrans[premadeTrans.size()-1];
+      premadeTrans.pop_back();
+    }
+    else
+    {
+      fetch::logger.Info(std::cerr, "Ran out of transactions");
+
+      for (std::size_t i = 0; i < numberToSend; ++i)
+      {
+        auto trans = nextTransaction();
+        allTrans.push_back(trans);
+      }
     }
 
     return allTrans;
@@ -200,11 +240,11 @@ private:
   {
     std::chrono::microseconds sleepTime(threadSleepTimeUs_);
     sentCount_ = 0;
+    std::size_t numberToSend = transactionsPerCall_;
 
     while(sendingTransactions_)
     {
       LOG_STACK_TRACE_POINT;
-      std::size_t numberToSend = transactionsPerCall_;
 
       const std::vector<transaction> &allTrans = getTrans(numberToSend);
 
@@ -219,6 +259,8 @@ private:
         std::this_thread::sleep_for(sleepTime);
       }
     }
+
+    precreateTrans();
   }
 
 };

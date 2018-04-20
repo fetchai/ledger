@@ -60,6 +60,14 @@ public:
     for(auto &i : serviceClients_)
     {
       auto client = i.second;
+      if(!client->is_alive())
+      {
+        delete client;
+        client = new clientType {i.first.IP(), i.first.TCPPort(), tm_};
+        //serviceClients_[i] = client;
+        fetch::logger.Info(std::cerr, "Forced to recreate client for: ", i.first.IP());
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      }
       client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, CallEnum, args...);
     }
   }

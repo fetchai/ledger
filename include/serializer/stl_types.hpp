@@ -98,6 +98,7 @@ void Serialize(T &serializer, std::vector< U> const &vec) {
 template< typename T, typename U >
 void Deserialize(T &serializer, std::vector< U > &vec) {
   uint64_t size;
+
   // Writing the size to the byte array
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size),
                         sizeof(uint64_t));
@@ -108,6 +109,9 @@ void Deserialize(T &serializer, std::vector< U > &vec) {
  
   for( auto &a : vec ) 
     serializer >> a;
+
+  fetch::logger.Info("Ser size is ", serializer.size());
+  
 
 
 }
