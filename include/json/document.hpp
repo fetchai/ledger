@@ -92,7 +92,6 @@ class JSONDocument {
     JSONObject current_object;
     
     char const *ptr = reinterpret_cast< char const * >( document.pointer() );
-
     
     for(auto const &t: tokens_ ) {
       switch(t.type) {

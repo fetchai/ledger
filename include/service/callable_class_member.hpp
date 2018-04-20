@@ -4,6 +4,7 @@
 #include "serializer/counter.hpp"
 #include "serializer/referenced_byte_array.hpp"
 #include "serializer/stl_types.hpp"
+#include "serializer/byte_array_buffer.hpp"
 #include "serializer/typed_byte_array_buffer.hpp"
 #include "logger.hpp"
 
@@ -20,7 +21,7 @@ namespace service
  * implementation should be dropped to keep the code base small and
  * simple (TODO).
  */
-template <typename C, typename F>
+template <typename C, typename F, std::size_t N = 0>
 class CallableClassMember;
 
 
@@ -29,8 +30,8 @@ class CallableClassMember;
  * @R is the type of the return value.
  * @Args are the arguments.
  */
-template <typename C, typename R, typename... Args>
-class CallableClassMember<C, R(Args...)> : public AbstractCallable 
+template <typename C, typename R, typename... Args, std::size_t N>
+class CallableClassMember<C, R(Args...), N> : public AbstractCallable 
 {
 private:
   typedef R return_type;
@@ -130,6 +131,72 @@ private:
     };
   };
 
+
+  /* Struct used for unrolling arguments in a function signature.
+   * @used_args are the unpacked arguments.
+   */  
+  template< std::size_t COUNTER>
+  struct UnrollPointers
+  {
+
+    template <typename... used_args>
+    struct WithUsed 
+    {
+      
+    /* Struct for loop definition.
+     * @T is the type of the next argument to be unrolled.
+     * @remaining_args are the arugments which has not yet been unrolled.
+     */  
+    template <typename T, typename... remaining_args>
+    struct LoopOver 
+    {
+      static void Unroll(serializer_type &result, class_type &cls,
+        member_function_pointer &m, serializer_type &s,
+        std::vector< void* > const &additional_args,
+        used_args &... used) 
+      {
+        typename std::decay<T>::type* ptr = (typename std::decay<T>::type*)additional_args[COUNTER - 1]; 
+        std::cout << "Unrolling element " << COUNTER - 1 << std::endl;
+        
+        UnrollPointers<used_args..., T>::template LoopOver<COUNTER - 1,
+          remaining_args...>::Unroll(result, cls, m, s, additional_args, used..., *ptr);
+      }
+    };
+    
+    /* Struct for loop termination
+     * @T is the type of the last argument to be unrolled.
+     */  
+    template <typename... remaining_args>
+    struct LoopOver<remaining_args...> 
+    {
+      static void Unroll(serializer_type &result, class_type &cls,
+        member_function_pointer &m, serializer_type &s,
+        std::vector< void* > const &additional_args,
+        used_args &... used) 
+      {
+
+      }
+    };
+      
+    };    
+  };
+
+  template<>
+  struct UnrollPointers<0> 
+  {
+    template <typename... used_args>
+    struct WithUsed 
+    {
+      template <typename... remaining_args>
+      struct LoopOver 
+      {
+        std::cout << "TODO: unroll serialization args" << std::endl;        
+      };
+    };
+  };
+  
+    
+  
 public:
   /* Creates a callable class member.
    * @cls is the class instance.
@@ -170,6 +237,15 @@ public:
       result, *class_, this->function_, params);
   }
 
+
+  void operator()(serializer_type &result, std::vector< void* > const &additional_args, serializer_type &params) 
+  {
+    LOG_STACK_TRACE_POINT;
+    assert(N == additional_args.size());
+    
+    UnrollPointers<>::template LoopOver<N, Args...>::Unroll(
+      result, *class_, this->function_, params);
+  }
   
 private:
   class_type *class_;
@@ -208,16 +284,12 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-
     auto ret =  ( (*class_).*function_)();
     serializers::SizeCounter< serializer_type > counter;
     counter << ret;
     result.Reserve( counter.size() );
     result << ret;
-
-        
   }
-
 
 private:
   class_type *class_;
