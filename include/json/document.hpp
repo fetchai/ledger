@@ -69,7 +69,7 @@ class JSONDocument {
     return root()[i]; 
   }
 
-  script::Variant & operator[](byte_array::BasicByteArray const &key) 
+  typename script::Variant::variant_proxy_type operator[](byte_array::BasicByteArray const &key) 
   {
     return root()[key];    
   }

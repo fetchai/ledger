@@ -101,7 +101,7 @@ class Variant
 public:
   typedef byte_array::ByteArray byte_array_type;
   typedef VariantList  variant_array_type;  
-  
+  typedef VariantObjectEntryProxy<Variant> variant_proxy_type;  
   
   Variant() : type_(UNDEFINED) {}
   
@@ -228,13 +228,14 @@ public:
     return VariantObjectEntryProxy<Variant>(key, this, &array_[i+1]);
   }
 
-  Variant operator[](byte_array::BasicByteArray const &key) const 
+  Variant const& operator[](byte_array::BasicByteArray const &key) const 
   {
+    static Variant undefined_variant;    
     assert(type_ == OBJECT);
     std::size_t i = FindKeyIndex(key);
     
     if(i == array_.size()) {
-      return Variant();      
+      return undefined_variant;      
     }
     return array_[i+1];    
   }
