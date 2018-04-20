@@ -3,6 +3,8 @@
 
 #include<cassert>
 #include<sstream>
+#include<algorithm>
+#include<cctype>
 using namespace fetch::script;
 
 #include"unittest.hpp"
@@ -75,14 +77,22 @@ int main() {
 
       EXPECT( obj["XX"].type() == fetch::script::VariantType::NULL_VALUE );
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      // Failing test
       Variant result = Variant::Object();
       result["numberOfTransactions"] = uint32_t(2);
       result["hash"]                 = "some hash";
-      std::cerr << result["numberOfTransactions"] << std::endl;
-      std::cerr << result << std::endl;
 
-      EXPECT(!"this test to have worked");
+      std::ostringstream stream;
+      stream << result; // failing operation
+
+      // Remove all spaces for string compare
+      std::string asString{stream.str()};
+      std::string::iterator end_pos = std::remove(asString.begin(), asString.end(), ' ');
+      asString.erase(end_pos, asString.end());
+
+      std::cerr << asString << std::endl;
+
+      EXPECT(asString.compare("{\"numberOfTransactions\":2,\"hash\":\"some hash\"}") == 0);
     };
     
     
