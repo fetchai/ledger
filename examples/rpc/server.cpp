@@ -26,15 +26,17 @@ public:
 
 
 // Next we make a protocol for the implementation
-class ServiceProtocol : public Implementation, public Protocol {
+class ServiceProtocol :  public Protocol {
 public:
   
-  ServiceProtocol() : Implementation(), Protocol() {
+  ServiceProtocol() : Protocol() {
     
-    this->Expose(SLOWFUNCTION, new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::SlowFunction) );
-    this->Expose(ADD, new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::Add) );
-    this->Expose(GREET, new CallableClassMember<Implementation, std::string(std::string)>(this, &Implementation::Greet) );
-  }  
+    this->Expose(SLOWFUNCTION, &impl_, &Implementation::SlowFunction );
+    this->Expose(ADD, &impl_, &Implementation::Add);
+    this->Expose(GREET, &impl_, &Implementation::Greet);
+  }
+private:
+  Implementation impl_;  
 };
 
 

@@ -1,5 +1,6 @@
 #ifndef TRANSACTION_LIST_HPP
 #define TRANSACTION_LIST_HPP
+#include"crypto/fnv.hpp"
 
 namespace fetch
 {

@@ -100,7 +100,7 @@ public:
 
     script::Variant result = script::Variant::Array(transactions.size());
 
-    int index = 0;
+    std::size_t index = 0;
     for (auto &i : transactions) {
       result[index++] = byte_array::ToHex(i.summary().transaction_hash);
     }
@@ -119,9 +119,9 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      int rate = doc["rate"].as_int();
+      uint32_t rate = uint32_t( doc["rate"].as_int() );
 
-      node_->setRate(rate);
+      node_->setRate( rate );
 
       return http::HTTPResponse("{\"response\": \"success\" }");
     } catch (...)
@@ -138,7 +138,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      int tpc = doc["transactions"].as_int();
+      uint32_t tpc = uint32_t( doc["transactions"].as_int() );
 
       node_->setTransactionsPerCall(tpc);
 

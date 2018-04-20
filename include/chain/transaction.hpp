@@ -14,7 +14,7 @@ namespace chain {
 struct TransactionSummary {
   typedef byte_array::ConstByteArray digest_type;    
   std::vector< group_type > groups;  
-  digest_type transaction_hash;
+  mutable digest_type transaction_hash;
 };
 
 template< typename T >
@@ -154,7 +154,7 @@ TODO: Make 32 bit compat
     modified = true;
   }
 
-  std::vector< uint32_t > const &groups() const {
+  std::vector< group_type > const &groups() const {
     return summary_.groups;
   }
 

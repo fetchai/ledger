@@ -225,6 +225,14 @@ public:
   bool const& as_bool() const { return data_.boolean; }
   bool& as_bool() { return data_.boolean; }
 
+  bool is_int() const { return type_ == INTEGER; }
+  bool is_float() const { return type_ == FLOATING_POINT; }
+  bool is_bool() const { return type_ == BOOLEAN; }
+  bool is_array() const { return type_ == ARRAY; }
+  bool is_object() const { return type_ == OBJECT; }
+  bool is_byte_array() const { return type_ == STRING; }  
+
+  
   byte_array_type const& as_byte_array() const { return string_; }
   byte_array_type& as_byte_array() { return string_; }
 

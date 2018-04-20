@@ -108,16 +108,15 @@ public:
 };
 
 
-
-class ServiceProtocol : public Implementation, public Protocol {
+class ServiceProtocol : public Protocol {
 public:
   
-  ServiceProtocol() : Implementation(), Protocol() {
-    
-    this->Expose(GET, new CallableClassMember<Implementation, std::vector< transaction_type >() > (this, &Implementation::GetData) );
-    this->Expose(GET2, new CallableClassMember<Implementation, ByteArray() > (this, &Implementation::GetData2) );    
-
-  }  
+  ServiceProtocol() : Protocol() {
+    this->Expose(GET, &impl_, &Implementation::GetData);
+    this->Expose(GET2, &impl_, &Implementation::GetData2);    
+  }
+private:
+  Implementation impl_;
 };
 
 

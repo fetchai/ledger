@@ -28,7 +28,6 @@ public:
   using transaction = chain::Transaction;
 
   Node(network::ThreadManager *tm, int seed) :
-    seed_{seed},
     nodeDirectory_{tm}
   {}
 
@@ -51,7 +50,7 @@ public:
     nodeDirectory_.addEndpoint(endpoint);
   }
 
-  void setRate(int rate)
+  void setRate(uint32_t rate)
   {
     std::stringstream stream;
     stream << "Setting rate to: " << rate << std::endl;
@@ -60,7 +59,7 @@ public:
     threadSleepTimeUs_ = rate;
   }
 
-  void setTransactionsPerCall(int tpc)
+  void setTransactionsPerCall(uint32_t tpc)
   {
     std::stringstream stream;
     stream << "Setting transactions per call to: " << tpc << std::endl;
@@ -153,7 +152,6 @@ public:
   void ping() { std::cout << "pinged" << std::endl;}
 
 private:
-  int                                                seed_;
   NodeDirectory                                      nodeDirectory_;   // Manage connections to other nodes
   PacketFilter<byte_array::BasicByteArray, 1000>     packetFilter_;    // Filter 'already seen' packets
   TransactionList<transaction, 500000>               transactionList_; // List of all transactions, sent and received
@@ -176,8 +174,8 @@ private:
     transaction trans;
 
     // Push on two 32-bit numbers so as to avoid multiple nodes creating duplicates
-    trans.PushGroup(dis(gen));
-    trans.PushGroup(dis(gen));
+    trans.PushGroup(group_type( dis(gen) ));
+    trans.PushGroup(group_type( dis(gen) ));
     trans.UpdateDigest();
 
     return trans;

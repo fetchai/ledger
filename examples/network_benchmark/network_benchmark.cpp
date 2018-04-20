@@ -14,8 +14,8 @@ int main(int argc, char **argv)
       s >> seed;
     }
 
-    uint16_t tcpPort  = 9080+seed;
-    uint16_t httpPort = 8080+seed;
+    uint16_t tcpPort  = uint16_t(9080+seed);
+    uint16_t httpPort = uint16_t(8080+seed);
 
     fetch::network_benchmark::NetworkBenchmarkService serv(tm, tcpPort, httpPort, seed);
     tm->Start();

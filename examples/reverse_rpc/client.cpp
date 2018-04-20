@@ -42,11 +42,13 @@ private:
   fetch::mutex::Mutex mutex_;
 };
 
-class AEAProtocol : public AEA, public Protocol {
+class AEAProtocol :  public Protocol {
 public:
   AEAProtocol() : AEA(), Protocol() {
-    this->Expose(NodeToAEA::SEARCH, new CallableClassMember<AEA, std::string(std::string)>( this, &AEA::SearchFor) );
+    this->Expose(NodeToAEA::SEARCH, &controller_, &AEA::SearchFor);
   }
+private:
+  AEA controller_;
 };
 
 
