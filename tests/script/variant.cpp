@@ -47,6 +47,17 @@ int main() {
       EXPECT( y[2].type() == fetch::script::VariantType::UNDEFINED );
       
     };
+
+
+    SECTION("Variant object") {
+      Variant obj  = Variant::Object();
+      obj["numberOfTransactions"] = uint32_t(9);
+      EXPECT( obj["numberOfTransactions"].type() == fetch::script::VariantType::INTEGER );
+      EXPECT( obj["numberOfTransactions"].as_int() == 9 );
+      
+    };
+    
+    
     
     SECTION("Nested variants") {
       Variant x;

@@ -1,4 +1,4 @@
- #ifndef BYTE_ARRAY_JSON_DOCUMENT_HPP
+#ifndef BYTE_ARRAY_JSON_DOCUMENT_HPP
 #define BYTE_ARRAY_JSON_DOCUMENT_HPP
 
 #include "byte_array/consumers.hpp"

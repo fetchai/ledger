@@ -3,6 +3,7 @@
 #include "byte_array/referenced_byte_array.hpp"
 #include "memory/shared_array.hpp"
 //#include "script/dictionary.hpp"
+#include"assert.hpp"
 
 #include <initializer_list>
 #include <ostream>
@@ -51,7 +52,52 @@ private:
 }; 
 
 class Variant
-{  
+{
+
+  template< typename T >
+  class VariantObjectEntryProxy : public T
+  {
+  public:
+    VariantObjectEntryProxy(byte_array::BasicByteArray const &key,  Variant* parent)
+      : key_(key), parent_(parent), child_(nullptr)
+    { }
+    
+    VariantObjectEntryProxy(byte_array::BasicByteArray const &key,  Variant* parent, Variant *child)
+      : T(*child), key_(key), parent_(parent), child_(child)
+    { }    
+
+    ~VariantObjectEntryProxy()
+    {
+      if(child_!=nullptr)
+      {
+        child_->operator=(*this);        
+      }
+      else
+      {
+        parent_->LazyAppend( key_, *this );
+      }      
+    }
+    
+    template<typename S>
+    S operator=(S val) 
+    {
+      return T::operator=(val);
+    }
+
+    template<typename S>
+    bool operator==(S const &val) 
+    {
+      return T::operator==(val);
+    }
+    
+  private:
+    byte_array::BasicByteArray key_;
+    T *parent_, *child_;    
+  };
+  
+    
+
+  
 public:
   typedef byte_array::ByteArray byte_array_type;
   typedef VariantList  variant_array_type;  
@@ -169,7 +215,7 @@ public:
 
 
   // Dict accessors
-  Variant & operator[](byte_array::BasicByteArray const &key) 
+  VariantObjectEntryProxy<Variant> operator[](byte_array::BasicByteArray const &key) 
   {
     assert(type_ == OBJECT);
     std::size_t i = 0;
@@ -177,29 +223,41 @@ public:
       if(key == array_[i].as_byte_array()) break;
     }
     if(i == array_.size()) {
-      // TODO: Add add functionality
+      return VariantObjectEntryProxy<Variant>(key, this);
     }
-    return array_[i+1];
+    return VariantObjectEntryProxy<Variant>(key, this, &array_[i+1]);
   }
 
-  Variant const & operator[](byte_array::BasicByteArray const &key) const 
+  Variant operator[](byte_array::BasicByteArray const &key) const 
   {
     assert(type_ == OBJECT);
-    std::size_t i = 0;
-    for(; i < array_.size(); i += 2) {
-      if(key == array_[i].as_byte_array()) break;
-    }
+    std::size_t i = FindKeyIndex(key);
+    
     if(i == array_.size()) {
-      // TODO: Throw error
+      return Variant();      
     }
     return array_[i+1];    
   }
+
 
   // Array accessors
   Variant& operator[](std::size_t const& i);  
   Variant const& operator[](std::size_t const& i) const;   
   std::size_t size() const;
   
+  bool Append(byte_array::BasicByteArray const &key, Variant const &val) 
+  {
+    std::size_t i = FindKeyIndex(key);
+    
+    if(i == array_.size()) {
+      LazyAppend(key, val);
+      
+      return true;
+    }
+
+    return false;
+  }
+
   
   void SetArray(VariantList const& data, std::size_t offset, std::size_t size)  {
     type_ = ARRAY;
@@ -246,6 +304,28 @@ public:
   }
   
 private:
+
+  std::size_t FindKeyIndex(byte_array::BasicByteArray const &key) const 
+  {
+    std::size_t i = 0;
+    for(; i < array_.size(); i += 2) {
+      if(key == array_[i].as_byte_array()) break;
+    }
+    return i;    
+  }
+    
+  void LazyAppend(byte_array::BasicByteArray const &key, Variant const &val) 
+  {
+    assert(type_ == OBJECT);
+    
+    array_.Resize( array_.size() + 2 );
+    array_[ array_.size() - 2] = key;
+    array_[ array_.size() - 1] = val;
+  }
+  
+
+
+  
   union {
     int64_t integer;
     double float_point;
