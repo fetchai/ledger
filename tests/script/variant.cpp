@@ -54,6 +54,7 @@ int main() {
       obj["numberOfTransactions"] = uint32_t(9);
       EXPECT( obj["numberOfTransactions"].type() == fetch::script::VariantType::INTEGER );
       EXPECT( obj["numberOfTransactions"].as_int() == 9 );
+
       
       obj["numberOfTransactions"] = "Hello world";
       std::cout << obj["numberOfTransactions"].type() << std::endl;      
@@ -74,7 +75,10 @@ int main() {
 
       EXPECT( obj["XX"].type() == fetch::script::VariantType::NULL_VALUE );
 
-
+      Variant obj2  = Variant::Object();
+      obj["numberOfTransactions"] = uint32_t(9);
+      EXPECT( obj2["numberOfTransactions"].type() == fetch::script::VariantType::INTEGER );
+      EXPECT( obj2["numberOfTransactions"].as_int() == 9 );
     };
     
     
