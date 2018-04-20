@@ -105,7 +105,7 @@ private:
         member_function_pointer &m, serializer_type &s,
         used_args &... used) 
       {
-        T l;
+        typename std::decay<T>::type l; 
         s >> l;
         UnrollArguments<used_args..., T>::template LoopOver<
           remaining_args...>::Unroll(result, cls, m, s, used..., l);
@@ -122,7 +122,8 @@ private:
         member_function_pointer &m, serializer_type &s,
         used_args &... used) 
       {
-        T l;
+        typename std::decay<T>::type l;
+        
         s >> l;
         Invoke<return_type, used_args..., T>::MemberFunction(result, cls, m, used..., l);
       }

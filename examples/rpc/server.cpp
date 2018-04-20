@@ -10,7 +10,7 @@ using namespace fetch::byte_array;
 // First we make a service implementation
 class Implementation {
 public:
-  int SlowFunction(int a, int b) {
+  int SlowFunction(int const &a, int const &b) {
     std::this_thread::sleep_for( std::chrono::milliseconds(20) );
     return a + b;
   }
@@ -23,10 +23,20 @@ public:
     return "Hello, " + name;
   }      
 };
-
+/*
 class AESEncryption 
 {
-public:  
+public:
+  void Apply( serializer_type &serializer, byte_array_type const &data) 
+  {
+    
+  }
+
+  void Unapply( serializer_type &serializer, byte_array_type const &data)  override
+  {
+    
+  }  
+  
 };
 
 
@@ -35,7 +45,7 @@ void Decorate( C *instance, R (C::*function)(Args...), DecArgs ... decorators)
 {
 
 }
-
+*/
 
 // Next we make a protocol for the implementation
 class ServiceProtocol :  public Protocol {
@@ -47,8 +57,8 @@ public:
     this->Expose(ADD, &impl_, &Implementation::Add);
     this->Expose(GREET, &impl_, &Implementation::Greet);
 
-    AESEncryption aes;    
-    Decorate(&impl_, &Implementation::SlowFunction, aes);
+//    AESEncryption aes;    
+//    Decorate(&impl_, &Implementation::SlowFunction, aes);
     
 
 //      this->Using(aes).Expose( ... );
