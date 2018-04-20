@@ -41,22 +41,22 @@ public:
     //    auto get_summaries = new CallableClassMember<ChainKeeperProtocol, std::vector< transaction_summary_type >() >(this, &ChainKeeperProtocol::GetSummaries );
     
     ChainKeeperController *controller = (ChainKeeperController*)this;
-    //    Protocol::Expose(ChainKeeperRPC::PING, controller, &ChainKeeperProtocol::Ping);
-    //    Protocol::Expose(ChainKeeperRPC::HELLO, controller, &ChainKeeperProtocol::Hello);    
-    Protocol::Expose(ChainKeeperRPC::PUSH_TRANSACTION, controller, &ChainKeeperProtocol::PushTransaction);
-    Protocol::Expose(ChainKeeperRPC::GET_TRANSACTIONS, controller, &ChainKeeperProtocol::GetTransactions );
-    Protocol::Expose(ChainKeeperRPC::GET_SUMMARIES, controller, &ChainKeeperProtocol::GetSummaries );        
+    Protocol::Expose(ChainKeeperRPC::PING, this, &ChainKeeperProtocol::Ping);
+    Protocol::Expose(ChainKeeperRPC::HELLO, controller, &ChainKeeperController::Hello);    
+    Protocol::Expose(ChainKeeperRPC::PUSH_TRANSACTION, controller, &ChainKeeperController::PushTransaction);
+    Protocol::Expose(ChainKeeperRPC::GET_TRANSACTIONS, controller, &ChainKeeperController::GetTransactions );
+    Protocol::Expose(ChainKeeperRPC::GET_SUMMARIES, controller, &ChainKeeperController::GetSummaries );        
 
     // TODO: Move to separate protocol
-    //    auto listen_to = new CallableClassMember<ChainKeeperProtocol, void(std::vector< EntryPoint >) >(this, &ChainKeeperProtocol::ListenTo );
-    //    auto set_group_number = new CallableClassMember<ChainKeeperProtocol, void(group_type, group_type) >(this, &ChainKeeperProtocol::SetGroupNumber );
-    //    auto group_number = new CallableClassMember<ChainKeeperProtocol, group_type() >(this, &ChainKeeperProtocol::group_number );
-    auto count_outgoing = new CallableClassMember<ChainKeeperProtocol,  uint16_t() >(this, &ChainKeeperProtocol::count_outgoing_connections );        
+    //    auto listen_to = new CallableClassMember<ChainKeeperController, void(std::vector< EntryPoint >) >(this, &ChainKeeperController::ListenTo );
+    //    auto set_group_number = new CallableClassMember<ChainKeeperController, void(group_type, group_type) >(this, &ChainKeeperController::SetGroupNumber );
+    //    auto group_number = new CallableClassMember<ChainKeeperController, group_type() >(this, &ChainKeeperController::group_number );
+//    auto count_outgoing = new CallableClassMember<ChainKeeperController,  uint16_t() >(this, &ChainKeeperController::count_outgoing_connections );        
     
-    Protocol::Expose(ChainKeeperRPC::LISTEN_TO, controller, &ChainKeeperProtocol::ListenTo);
-    Protocol::Expose(ChainKeeperRPC::SET_GROUP_NUMBER, controller, &ChainKeeperProtocol::SetGroupNumber );
-    Protocol::Expose(ChainKeeperRPC::GROUP_NUMBER,  controller, &ChainKeeperProtocol::group_number );
-    Protocol::Expose(ChainKeeperRPC::COUNT_OUTGOING_CONNECTIONS, controller, &ChainKeeperProtocol::count_outgoing_connections  );
+    Protocol::Expose(ChainKeeperRPC::LISTEN_TO, controller, &ChainKeeperController::ListenTo);
+    Protocol::Expose(ChainKeeperRPC::SET_GROUP_NUMBER, controller, &ChainKeeperController::SetGroupNumber );
+    Protocol::Expose(ChainKeeperRPC::GROUP_NUMBER,  controller, &ChainKeeperController::group_number );
+    Protocol::Expose(ChainKeeperRPC::COUNT_OUTGOING_CONNECTIONS, controller, &ChainKeeperController::count_outgoing_connections  );
     
     
     // Web interface

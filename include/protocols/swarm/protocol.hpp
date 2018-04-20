@@ -24,32 +24,24 @@ public:
     using namespace fetch::service;
 
     // RPC Protocol
-    auto ping = new CallableClassMember<SwarmProtocol, uint64_t()>(this, &SwarmProtocol::Ping);
-    auto hello = new CallableClassMember<SwarmProtocol, NodeDetails(uint64_t, NodeDetails)>(Callable::CLIENT_ID_ARG, this, &SwarmProtocol::Hello);
-    auto suggest_peers = new CallableClassMember<SwarmProtocol, std::vector< NodeDetails >()>(this, &SwarmProtocol::SuggestPeers);
-    auto req_conn = new CallableClassMember<SwarmProtocol, void(NodeDetails)>(this, &SwarmProtocol::RequestPeerConnections);
-    auto myip = new CallableClassMember<SwarmProtocol, std::string(uint64_t)>(Callable::CLIENT_ID_ARG, this, &SwarmProtocol::GetAddress);    
+    SwarmController *controller = (SwarmController*)this;
     
-    Protocol::Expose(SwarmRPC::PING, ping);
-    Protocol::Expose(SwarmRPC::HELLO, hello);
-    Protocol::Expose(SwarmRPC::SUGGEST_PEERS, suggest_peers); 
-    Protocol::Expose(SwarmRPC::REQUEST_PEER_CONNECTIONS, req_conn);
-    Protocol::Expose(SwarmRPC::WHATS_MY_IP, myip);    
+    Protocol::Expose(SwarmRPC::PING, controller, &SwarmController::Ping);
+    Protocol::Expose(SwarmRPC::HELLO, controller, &SwarmController::Hello);
+    Protocol::Expose(SwarmRPC::SUGGEST_PEERS, controller, &SwarmController::SuggestPeers); 
+    Protocol::Expose(SwarmRPC::REQUEST_PEER_CONNECTIONS, controller, &SwarmController::RequestPeerConnections);
+    Protocol::Expose(SwarmRPC::WHATS_MY_IP, controller, &SwarmController::GetAddress);    
     
     // Using the event feed that
     Protocol::RegisterFeed(SwarmFeed::FEED_REQUEST_CONNECTIONS, this);
     Protocol::RegisterFeed(SwarmFeed::FEED_ENOUGH_CONNECTIONS, this);
     Protocol::RegisterFeed(SwarmFeed::FEED_ANNOUNCE_NEW_COMER, this);
 
-
-    // TODO: move to separate service
-    auto push_block = new CallableClassMember<ChainController, void(block_type) >(this, &ChainController::PushBlock );
-    auto get_block = new CallableClassMember<ChainController, block_type() >(this, &ChainController::GetNextBlock );
-    auto get_blocks = new CallableClassMember<ChainController, std::vector< block_type >() >(this, &ChainController::GetLatestBlocks );
     
-    Protocol::Expose(ChainCommands::PUSH_BLOCK, push_block);
-    Protocol::Expose(ChainCommands::GET_BLOCKS, get_blocks);        
-    Protocol::Expose(ChainCommands::GET_NEXT_BLOCK, get_block);
+    ChainController *ccontroller = (ChainController*)this;
+    Protocol::Expose(ChainCommands::PUSH_BLOCK, ccontroller, &ChainController::PushBlock );
+    Protocol::Expose(ChainCommands::GET_BLOCKS, ccontroller, &ChainController::GetNextBlock );        
+    Protocol::Expose(ChainCommands::GET_NEXT_BLOCK, ccontroller, &ChainController::GetLatestBlocks );
 
     auto all_details = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       LOG_STACK_TRACE_POINT;

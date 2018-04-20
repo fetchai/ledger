@@ -105,6 +105,23 @@ public:
     members_[n] = fnc;
   }
 
+/*
+  template<typename C, typename R >
+  void Expose(function_handler_type const &n, C *instance, R (C::*function)()) 
+  {
+    
+    callable_type *fnc = new service::CallableClassMember<C, R()>(n, instance, function );
+    
+    if(members_[n] != nullptr)
+      throw serializers::SerializableException(
+        error::MEMBER_EXISTS,
+        byte_array_type("Member already exists: "));
+
+    members_[n] = fnc;
+  }
+*/
+
+  
   /* Registers a feed from an implementation.
    * @feed is the unique feed identifier.
    * @publisher is a class that subclasses <AbstractPublicationFeed>.
