@@ -26,7 +26,17 @@ public:
 
 class AESEncryption 
 {
-public:  
+public:
+  void Apply( serializer_type &serializer, byte_array_type const &data) 
+  {
+    
+  }
+
+  void Unapply( serializer_type &serializer, byte_array_type const &data)  override
+  {
+    
+  }  
+  
 };
 
 

@@ -34,12 +34,6 @@ public:
     using namespace fetch::service;
     
     // RPC Protocol
-    //    auto ping = new CallableClassMember<ChainKeeperProtocol, uint64_t()>(this, &ChainKeeperProtocol::Ping);
-    //    auto hello = new CallableClassMember<ChainKeeperProtocol, EntryPoint(std::string)>(this, &ChainKeeperProtocol::Hello);        
-    //    auto push_transaction = new CallableClassMember<ChainKeeperProtocol, bool(transaction_type) >(this, &ChainKeeperProtocol::PushTransaction );
-    //    auto get_transactions = new CallableClassMember<ChainKeeperProtocol, std::vector< transaction_type >() >(this, &ChainKeeperProtocol::GetTransactions );
-    //    auto get_summaries = new CallableClassMember<ChainKeeperProtocol, std::vector< transaction_summary_type >() >(this, &ChainKeeperProtocol::GetSummaries );
-    
     ChainKeeperController *controller = (ChainKeeperController*)this;
     Protocol::Expose(ChainKeeperRPC::PING, this, &ChainKeeperProtocol::Ping);
     Protocol::Expose(ChainKeeperRPC::HELLO, controller, &ChainKeeperController::Hello);    
@@ -48,11 +42,6 @@ public:
     Protocol::Expose(ChainKeeperRPC::GET_SUMMARIES, controller, &ChainKeeperController::GetSummaries );        
 
     // TODO: Move to separate protocol
-    //    auto listen_to = new CallableClassMember<ChainKeeperController, void(std::vector< EntryPoint >) >(this, &ChainKeeperController::ListenTo );
-    //    auto set_group_number = new CallableClassMember<ChainKeeperController, void(group_type, group_type) >(this, &ChainKeeperController::SetGroupNumber );
-    //    auto group_number = new CallableClassMember<ChainKeeperController, group_type() >(this, &ChainKeeperController::group_number );
-//    auto count_outgoing = new CallableClassMember<ChainKeeperController,  uint16_t() >(this, &ChainKeeperController::count_outgoing_connections );        
-    
     Protocol::Expose(ChainKeeperRPC::LISTEN_TO, controller, &ChainKeeperController::ListenTo);
     Protocol::Expose(ChainKeeperRPC::SET_GROUP_NUMBER, controller, &ChainKeeperController::SetGroupNumber );
     Protocol::Expose(ChainKeeperRPC::GROUP_NUMBER,  controller, &ChainKeeperController::group_number );

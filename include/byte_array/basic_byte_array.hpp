@@ -169,7 +169,7 @@ public:
   container_type const *pointer() const { return arr_pointer_; }
 
   char const *char_pointer() const {
-    return reinterpret_cast<char const *>(data_.pointer());
+    return reinterpret_cast<char const *>(arr_pointer_);
   }
 
   self_type operator+(self_type const &other) const {

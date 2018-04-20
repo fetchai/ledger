@@ -18,14 +18,32 @@ int main()
     });
 
 
-  
-
   server.AddView(Method::GET, "/", [](ViewParameters const &params, HTTPRequest const &req) {
       HTTPResponse res("Hello world -- this is a render of the view");
 
       return res;      
     });
+  
+  server.AddView(Method::GET, "/pages", [](ViewParameters const &params, HTTPRequest const &req) {
+      HTTPResponse res("pages index");
 
+      return res;      
+    });
+
+
+  server.AddView(Method::GET, "/pages/sub", [](ViewParameters const &params, HTTPRequest const &req) {
+      HTTPResponse res("pages sub index");
+
+      return res;      
+    });
+
+  server.AddView(Method::GET, "/pages/sub/", [](ViewParameters const &params, HTTPRequest const &req) {
+      HTTPResponse res("pages sub index with slash");
+
+      return res;      
+    });
+  
+  
   server.AddView(Method::GET, "/pages/(id=\\d+)/", [](ViewParameters const &params, HTTPRequest const &req) {
       HTTPResponse res("Secret page 1");
 

@@ -22,6 +22,23 @@ void Serializer(T &t, Blah const&b)
 int main(int argc, char **argv) {
   SCENARIO("Testing basic parsing") {
 
+    SECTION("Nathan test") {
+      ByteArray data = "{\"HTTPPort\": 8081, \"IP\": \"localhost\", \"TCPPort\": 9081}";
+      JSONDocument test(data);
+      std::cout << data << std::endl;
+      std::cout << "---" << std::endl;      
+      std::cout << test.root() << std::endl;
+      
+      std::string IP_      = std::string(test["IP"].as_byte_array());
+      uint32_t port_ = uint16_t(test["TCPPort"].as_int());
+      
+      
+      std::cerr << "port is is " << port_ << std::endl;
+      std::cerr << "IP is " << IP_ << " >>> " << test["IP"] << std::endl;
+      
+    };
+    
+    
     SECTION("Parsing and modification of document") {
       ByteArray doc_content = R"({
   "a": 3,
