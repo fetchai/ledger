@@ -58,6 +58,8 @@ standard_test(referenced_byte_array_test byte_array/referenced_byte_array.cpp)
 standard_test(rectangular_load_save_test memory/rectangular_load_save_test.cpp)
 
 
+standard_test(callable_test service/callable.cpp)
+
 standard_test(shared_array memory/shared_array_test.cpp)
 standard_test(shared_rectangular_array memory/shared_rectangular_array_test.cpp)
 standard_test(exp math/test_exp.cpp)

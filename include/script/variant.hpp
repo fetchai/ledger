@@ -332,9 +332,6 @@ private:
     array_[ array_.size() - 1] = val;    
   }
   
-
-
-  
   union {
     int64_t integer;
     double float_point;
