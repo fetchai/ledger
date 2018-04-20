@@ -75,10 +75,14 @@ int main() {
 
       EXPECT( obj["XX"].type() == fetch::script::VariantType::NULL_VALUE );
 
-      Variant obj2  = Variant::Object();
-      obj["numberOfTransactions"] = uint32_t(9);
-      EXPECT( obj2["numberOfTransactions"].type() == fetch::script::VariantType::INTEGER );
-      EXPECT( obj2["numberOfTransactions"].as_int() == 9 );
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      Variant result = Variant::Object();
+      result["numberOfTransactions"] = uint32_t(2);
+      result["hash"]                 = "some hash";
+      std::cerr << result["numberOfTransactions"] << std::endl;
+      std::cerr << result << std::endl;
+
+      EXPECT(!"this test to have worked");
     };
     
     
