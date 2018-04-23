@@ -58,6 +58,7 @@ class ByteArrayBuffer {
     return this->operator>>(val);
   }
 
+  
   // FIXME: Incorrect naming
   void Seek(std::size_t const &p) { pos_ = p; }
   std::size_t Tell() const { return pos_; }

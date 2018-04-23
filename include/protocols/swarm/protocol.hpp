@@ -27,10 +27,10 @@ public:
     SwarmController *controller = (SwarmController*)this;
     
     Protocol::Expose(SwarmRPC::PING, controller, &SwarmController::Ping);
-    Protocol::Expose(SwarmRPC::HELLO, controller, &SwarmController::Hello);
+    Protocol::ExposeWithClientArg(SwarmRPC::HELLO, controller, &SwarmController::Hello);
     Protocol::Expose(SwarmRPC::SUGGEST_PEERS, controller, &SwarmController::SuggestPeers); 
     Protocol::Expose(SwarmRPC::REQUEST_PEER_CONNECTIONS, controller, &SwarmController::RequestPeerConnections);
-    Protocol::Expose(SwarmRPC::WHATS_MY_IP, controller, &SwarmController::GetAddress);    
+    Protocol::ExposeWithClientArg(SwarmRPC::WHATS_MY_IP, controller, &SwarmController::GetAddress);    
     
     // Using the event feed that
     Protocol::RegisterFeed(SwarmFeed::FEED_REQUEST_CONNECTIONS, this);

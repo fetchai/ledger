@@ -26,7 +26,6 @@ message("OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
 message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")
 
 
-
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/asio/asio/include")
 include_directories("${OPENSSL_INCLUDE_DIR}")
 

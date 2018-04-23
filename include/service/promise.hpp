@@ -143,6 +143,7 @@ public:
     
     if (has_failed()) 
     {
+      fetch::logger.Warn("Connection failed!");
       if(throw_exception)
         throw reference_->exception();
       else
@@ -157,6 +158,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;    
     if(!Wait()) {
+      
       TODO_FAIL("Timeout or connection lost");
     }
 
