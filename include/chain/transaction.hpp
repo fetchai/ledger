@@ -212,7 +212,7 @@ inline void Serialize( T & serializer, Transaction const &b) {
 
 
   serializer << b.summary_;
-
+  
   serializer <<  uint32_t(b.signatures().size());
   for(auto &sig: b.signatures()) {
     serializer << sig;
@@ -230,11 +230,12 @@ inline void Deserialize( T & serializer, Transaction &b) {
   serializer >> b.summary_;
 
   uint32_t size;
+  
   serializer >> size;
   for(std::size_t i=0; i < size; ++i) {
     byte_array::ByteArray sig;
     serializer >> sig;
-    b.signatures().push_back(sig);
+    b.PushSignature(sig);
   }
 
   byte_array::ByteArray contract_name;

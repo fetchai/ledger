@@ -172,11 +172,11 @@ void RunTest(std::size_t tx_count)
 
 int main() 
 {
-  /*
+
   serializer_type ser;    
   ser <<   NextTransaction();  
   std::cout << "TX Size: " << ser.data().size() << std::endl;  
-  */
+
   
   RunTest(100000);
   
