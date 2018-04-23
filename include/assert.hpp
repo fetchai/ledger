@@ -43,7 +43,7 @@ struct Printer {
 
 #endif
 
-#define detailed_assert(cond) \
+#define detailed_assert(cond)                  \
   if( !(cond) ) { \
     std::cout << "Failed :" << #cond << " in " << __FILE__ << " line " << __LINE__ << std::endl; \
     throw std::runtime_error("Assertion failed");   \

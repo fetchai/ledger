@@ -144,8 +144,36 @@ void PackArgs(serializer_type &serializer) {
 }
 
 enum Callable {
-  CLIENT_ID_ARG = 1
+  CLIENT_ID_ARG = 1ull
 };
+
+
+  struct CallableArgumentType {    
+    std::reference_wrapper<std::type_info const>  type;
+    void* pointer;
+  };
+
+class CallableArgumentList : public std::vector< CallableArgumentType >  
+{
+public:
+  template< typename T >
+  void PushArgument( T * value ) 
+  {
+    std::vector< CallableArgumentType >::push_back(CallableArgumentType{typeid(T), (void*)value});
+  }
+
+  CallableArgumentType const& operator[](std::size_t const &n) const 
+  {
+    return std::vector< CallableArgumentType >::operator[](n);
+  }
+  CallableArgumentType & operator[](std::size_t const &n) 
+  {
+    return std::vector< CallableArgumentType >::operator[](n);
+  }
+  
+};
+
+
   
 /* Abstract class for callables.
  *
@@ -165,6 +193,8 @@ class AbstractCallable {
    * @params is a serializer that is used to deserialize the arguments.
    */
   virtual void operator()(serializer_type &result, serializer_type &params) = 0;
+  virtual void operator()(serializer_type &result, CallableArgumentList const &additional_args, serializer_type &params)  = 0;  
+
 
   uint64_t const & meta_data() const 
   {

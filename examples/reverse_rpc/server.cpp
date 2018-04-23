@@ -58,7 +58,7 @@ class AEAToNodeProtocol : public ClientRegister, public Protocol {
 public:
   
   AEAToNodeProtocol() :   ClientRegister(), Protocol() {
-    this->Expose(AEAToNode::REGISTER, (ClientRegister*)this, &ClientRegister::Register);
+    this->ExposeWithClientArg(AEAToNode::REGISTER, (ClientRegister*)this, &ClientRegister::Register);
   }
 
 

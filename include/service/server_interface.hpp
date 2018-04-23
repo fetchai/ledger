@@ -157,31 +157,19 @@ private:
     auto& mod = *members_[protocol] ; //*it->second;
     auto& fnc = mod[function];
 
-
     // If we need to add client id to function arguments
     if(fnc.meta_data() & Callable::CLIENT_ID_ARG ) {
-      serializer_type newparams;
-      // TODO: A prettier solution can be made with template parameters
-      // TODO: This is potentially very expensive. FIXME!!
-      newparams << client;
-      newparams.Allocate( uint64_t(params.bytes_left()) );
-      auto const carr = params.data().SubArray( params.Tell(), uint64_t(params.bytes_left()) );
-      newparams.WriteBytes( carr.pointer(), uint64_t(params.bytes_left()) );
-      newparams.Seek(0);      
-      return fnc(result, newparams);
+      CallableArgumentList extra_args;
+      extra_args.PushArgument( &client );
+      return fnc(result, extra_args, params);
     } 
-      
-    
     
     return fnc(result, params);
 
   }
   
   Protocol* members_[256] = {nullptr}; // TODO: Not thread-safe
-
-
   friend class FeedSubscriptionManager;
-
 };
 
 };

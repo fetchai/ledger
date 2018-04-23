@@ -95,7 +95,7 @@ public:
   void Expose(function_handler_type const &n, C *instance, R (C::*function)(Args...)) 
   {
     
-    callable_type *fnc = new service::CallableClassMember<C, R(Args...)>(n, instance, function );
+    callable_type *fnc = new service::CallableClassMember<C, R(Args...)>(instance, function );
     
     if(members_[n] != nullptr)
       throw serializers::SerializableException(
@@ -105,12 +105,10 @@ public:
     members_[n] = fnc;
   }
 
-/*
-  template<typename C, typename R >
-  void Expose(function_handler_type const &n, C *instance, R (C::*function)()) 
+  template<typename C, typename R, typename ...Args>
+  void ExposeWithClientArg(function_handler_type const &n, C *instance, R (C::*function)(Args...)) 
   {
-    
-    callable_type *fnc = new service::CallableClassMember<C, R()>(n, instance, function );
+    callable_type *fnc = new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_ID_ARG, instance, function );
     
     if(members_[n] != nullptr)
       throw serializers::SerializableException(
@@ -119,8 +117,7 @@ public:
 
     members_[n] = fnc;
   }
-*/
-
+  
   
   /* Registers a feed from an implementation.
    * @feed is the unique feed identifier.
