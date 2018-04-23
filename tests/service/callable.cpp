@@ -1,3 +1,5 @@
+#include<iostream>
+
 #include"service/callable_class_member.hpp"
 #include "serializer/byte_array_buffer.hpp"
 using namespace fetch::service;
@@ -26,9 +28,10 @@ int main()
   args << int(2) << int(4) << int(3);
   args.Seek(0);
 
-  int q = 9;  
-  std::vector< void * > extra;
-  extra.push_back( (void*) &q );  
+  int q = 9;
+  std::cout <<  << std::endl;
+  std::vector< fetch::service::CallableVoidType > extra;
+  extra.push_back( {typeid(int).hash_code(), (void*) &q} );  
 
   
   f(ret, extra, args);

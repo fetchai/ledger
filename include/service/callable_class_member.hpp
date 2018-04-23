@@ -24,6 +24,58 @@ namespace service
 template <typename C, typename F, std::size_t N = 0>
 class CallableClassMember;
 
+  struct CallableVoidType {
+    uint8_t type;
+    void* pointer;
+  };
+
+  namespace details {
+
+    template< std::size_t COUNTER , typename class_type, typename member_function_pointer, typename... used_args>
+  struct UnrollPointers
+  {
+ 
+
+    template <typename T, typename... remaining_args>
+    struct LoopOver 
+    {
+      static void Unroll(serializer_type &result, class_type &cls,
+                         member_function_pointer &m,
+                         std::vector< CallableVoidType > const &additional_args,
+                         serializer_type &s,
+                         used_args &... used) 
+      {
+        typename std::decay<T>::type *ptr = (typename std::decay<T>::type*)additional_args[COUNTER - 1].pointer; 
+        std::cout << "Unrolling element " << COUNTER - 1 << " " << (*ptr) << std::endl;
+        
+        UnrollPointers<COUNTER-1, class_type, member_function_pointer, used_args..., T>::template LoopOver< remaining_args... >::Unroll(result, cls, m, additional_args, s, used..., *ptr);
+      }
+    };
+    
+    };
+
+    template< typename class_type, typename member_function_pointer, typename... used_args>
+    struct UnrollPointers<0,class_type, member_function_pointer,  used_args...> 
+    {
+      
+      template <typename... remaining_args>
+      struct LoopOver 
+      {
+        static void Unroll(serializer_type &result, class_type &cls,
+                         member_function_pointer &m,
+                           std::vector< CallableVoidType > const &additional_args,
+                           serializer_type &s,
+                           used_args &... used) 
+      {
+        std::cout << "Was here!" << std::endl;
+      }
+      };
+    };
+  
+    
+
+  }
+  
 
 /* A member function wrapper that takes a serialized input.
  * @C is the class type.
@@ -132,70 +184,6 @@ private:
   };
 
 
-  /* Struct used for unrolling arguments in a function signature.
-   * @used_args are the unpacked arguments.
-   */  
-  template< std::size_t COUNTER>
-  struct UnrollPointers
-  {
-
-    template <typename... used_args>
-    struct WithUsed 
-    {
-      
-    /* Struct for loop definition.
-     * @T is the type of the next argument to be unrolled.
-     * @remaining_args are the arugments which has not yet been unrolled.
-     */  
-    template <typename T, typename... remaining_args>
-    struct LoopOver 
-    {
-      static void Unroll(serializer_type &result, class_type &cls,
-        member_function_pointer &m, serializer_type &s,
-        std::vector< void* > const &additional_args,
-        used_args &... used) 
-      {
-        typename std::decay<T>::type* ptr = (typename std::decay<T>::type*)additional_args[COUNTER - 1]; 
-        std::cout << "Unrolling element " << COUNTER - 1 << std::endl;
-        
-        UnrollPointers<used_args..., T>::template LoopOver<COUNTER - 1,
-          remaining_args...>::Unroll(result, cls, m, s, additional_args, used..., *ptr);
-      }
-    };
-    
-    /* Struct for loop termination
-     * @T is the type of the last argument to be unrolled.
-     */  
-    template <typename... remaining_args>
-    struct LoopOver<remaining_args...> 
-    {
-      static void Unroll(serializer_type &result, class_type &cls,
-        member_function_pointer &m, serializer_type &s,
-        std::vector< void* > const &additional_args,
-        used_args &... used) 
-      {
-
-      }
-    };
-      
-    };    
-  };
-
-  template<>
-  struct UnrollPointers<0> 
-  {
-    template <typename... used_args>
-    struct WithUsed 
-    {
-      template <typename... remaining_args>
-      struct LoopOver 
-      {
-        std::cout << "TODO: unroll serialization args" << std::endl;        
-      };
-    };
-  };
-  
-    
   
 public:
   /* Creates a callable class member.
@@ -238,13 +226,12 @@ public:
   }
 
 
-  void operator()(serializer_type &result, std::vector< void* > const &additional_args, serializer_type &params) 
+  void operator()(serializer_type &result, std::vector< CallableVoidType > const &additional_args, serializer_type &params) 
   {
     LOG_STACK_TRACE_POINT;
     assert(N == additional_args.size());
     
-    UnrollPointers<>::template LoopOver<N, Args...>::Unroll(
-      result, *class_, this->function_, params);
+    details::UnrollPointers<N, class_type, member_function_pointer>::template LoopOver< Args...>::Unroll(result, *class_, this->function_, additional_args, params);
   }
   
 private:

@@ -385,12 +385,11 @@ inline std::ostream& operator<<(std::ostream& os, Variant const& v) {
       break;
     case VariantType::OBJECT:
       os << "{";
-      for(std::size_t i=0; i < v.as_array().size(); ++i) {
+      for(std::size_t i=0; i < v.as_array().size(); i += 2) {
         if(i != 0) {
           os << ", ";
         }
         os <<  v.as_array()[i] << ": " << v.as_array()[i+1];
-	i++;
       }      
 
       os << "}";
