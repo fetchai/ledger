@@ -91,20 +91,24 @@ void MakeTransactionVector(std::vector< T >  &vec, std::size_t size) {
 ByteArray TestString;
 
 enum {
-  GET = 1,
+  SEND = 1,
   GET2 =2,
   SERVICE = 3
 };
 std::vector< transaction_type > TestData;
+
 class Implementation {
 public:
-  std::vector< transaction_type > GetData() {
-    return TestData;
+  void SendData(std::vector< transaction_type > const &data) {
+    std::lock_guard< fetch::mutex::Mutex > lock( mutex_);
+    
+//    copy = data;
   }
   
-  ByteArray GetData2() {
-    return TestString;
-  }  
+private:
+  mutable fetch::mutex::Mutex mutex_;
+  
+  std::vector< transaction_type > copy;
 };
 
 
@@ -112,8 +116,7 @@ class ServiceProtocol : public Protocol {
 public:
   
   ServiceProtocol() : Protocol() {
-    this->Expose(GET, &impl_, &Implementation::GetData);
-    this->Expose(GET2, &impl_, &Implementation::GetData2);    
+    this->Expose(SEND, &impl_, &Implementation::SendData);
   }
 private:
   Implementation impl_;
@@ -139,16 +142,16 @@ void StartClient()
     std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
     std::cout << "Calling ..." << std::flush;
 
-    auto p1 = client.Call( SERVICE, GET );
+    auto p1 = client.Call( SERVICE, SEND, TestData );
     high_resolution_clock::time_point t0 = high_resolution_clock::now();        
     p1.Wait();
-    std::vector< transaction_type > data;
-    p1.As(data);
+//    std::vector< transaction_type > data;
+//    p1.As(data);
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     duration<double> ts1 = duration_cast<duration<double>>(t1 - t0);    
-    std::cout << " DONE: " << (data.size() ) << std::endl;
-    if(data.size() > 0 ) {
-      std::cout <<  ( double( data.size() ) / double( ts1.count() ) )  << " TX/s, "  << ts1.count() << " s" << std::endl;
+    std::cout << " DONE: " << (TestData.size() ) << std::endl;
+    if(TestData.size() > 0 ) {
+      std::cout <<  ( double( TestData.size() ) / double( ts1.count() ) )  << " TX/s, "  << ts1.count() << " s" << std::endl;
     }
   }
 
@@ -178,7 +181,7 @@ int main()
   std::cout << "TX Size: " << ser.data().size() << std::endl;  
   */
   
-  RunTest(100000);
+  RunTest(100);
   
   return 0;
 }

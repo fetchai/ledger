@@ -42,7 +42,6 @@ public:
     shared_transaction_type stx = std::make_shared< TransactionSummary >( tx );
 
     if(all_.find( stx->transaction_hash ) != all_.end()) return;
-   
     
     all_[ stx->transaction_hash ] =  stx ;
     
