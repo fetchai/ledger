@@ -40,8 +40,8 @@ public:
     
     ChainController *ccontroller = (ChainController*)this;
     Protocol::Expose(ChainCommands::PUSH_BLOCK, ccontroller, &ChainController::PushBlock );
-    Protocol::Expose(ChainCommands::GET_BLOCKS, ccontroller, &ChainController::GetNextBlock );        
-    Protocol::Expose(ChainCommands::GET_NEXT_BLOCK, ccontroller, &ChainController::GetLatestBlocks );
+    Protocol::Expose(ChainCommands::GET_BLOCKS, ccontroller, &ChainController::GetLatestBlocks  );        
+    Protocol::Expose(ChainCommands::GET_NEXT_BLOCK, ccontroller,  &ChainController::GetNextBlock);
 
     auto all_details = [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) {
       LOG_STACK_TRACE_POINT;

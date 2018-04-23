@@ -33,10 +33,18 @@ class TypedByte_ArrayBuffer {
   }
 
   void ReadBytes(uint8_t *arr, std::size_t const &size) {
+    if( size > bytes_left() ) {
+      throw std::runtime_error("Not enough bytes");      
+    }
+    
     for (std::size_t i = 0; i < size; ++i) arr[i] = data_[pos_++];
   }
 
   void ReadByteArray(byte_array::BasicByteArray &b, std::size_t const &size) {
+    if( size > bytes_left() ) {
+      throw std::runtime_error("Not enough bytes II");
+    }
+    
     b = data_.SubArray(pos_, size);
     pos_ += size;
   }
@@ -57,10 +65,13 @@ class TypedByte_ArrayBuffer {
     TypeRegister<void>::value_type type;
     Deserialize(*this, type);
     if (TypeRegister<T>::value != type) {
+      fetch::logger.Error(byte_array_type("Type '") + TypeRegister<T>::name() +
+        byte_array_type("' differs from type '") + ErrorCodeToMessage(type) +"'");
+    
       throw SerializableException(error::TYPE_ERROR,
-                                  byte_array_type("Type ") + TypeRegister<T>::name() +
-                                      byte_array_type(" differs from ") +
-                                  TypeRegister<T>::name() );
+        byte_array_type("Type '") + TypeRegister<T>::name() +
+        byte_array_type("' differs from type '") + ErrorCodeToMessage(type) +"'");      
+ 
     }
     Deserialize(*this, val);
     return *this;

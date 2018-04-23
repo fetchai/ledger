@@ -176,6 +176,7 @@ public:
 
     this->with_peers_do( [&all_details, details](std::vector< client_shared_ptr_type >  const &peers,
         std::map< uint64_t, NodeDetails >& peer_details) {
+        LOG_STACK_TRACE_POINT;
         for(auto &c: peers) {
           auto p = c->Call(FetchProtocols::SWARM, SwarmRPC::HELLO, details);          
           
@@ -206,6 +207,7 @@ public:
     
     fetch::logger.Highlight("Updating incoming");    
     this->with_client_details_do( [&all_details](std::map< uint64_t, NodeDetails > const &node_details)  {
+        LOG_STACK_TRACE_POINT;
         for(auto const&d: node_details)
         {
           fetch::logger.Debug(" - Entries for ", d.second.public_key);
@@ -222,6 +224,7 @@ public:
 
     all_details[ details.public_key ] = details;    
     this->with_suggestions_do([&all_details](std::vector< NodeDetails >  & list) {
+        LOG_STACK_TRACE_POINT;
         for(std::size_t i=0; i < list.size(); ++i) {
 
           auto &details = list[i];
@@ -259,6 +262,7 @@ public:
 
     // Finding keys to those we are connected to
     this->with_server_details_do([&](std::map< uint64_t, NodeDetails > const & details) {
+        LOG_STACK_TRACE_POINT;
         for(auto const &d: details)
         {
           public_keys.insert( d.second.public_key );          
@@ -278,6 +282,7 @@ public:
     // Finding hosts we are not connected to
     std::vector< EntryPoint > swarm_entries;    
     this->with_suggestions_do([=, &swarm_entries](std::vector< NodeDetails > const &details) {
+        LOG_STACK_TRACE_POINT;
         for(auto const &d: details)
         {
           if( public_keys.find( d.public_key ) == public_keys.end() )
@@ -325,6 +330,7 @@ public:
     // Getting the list of shards
     std::vector< EntryPoint > shard_entries;    
     this->with_suggestions_do([=, &shard_entries](std::vector< NodeDetails > const &details) {
+        LOG_STACK_TRACE_POINT;
         for(auto const &d: details)
         {
           for(auto const &e: d.entry_points)
@@ -350,6 +356,7 @@ public:
     
     this->with_shards_do([&shards, &details](std::vector< client_shared_ptr_type > const &sh,
         std::vector< EntryPoint > &det ) {
+        LOG_STACK_TRACE_POINT;
         std::size_t i =0;
         
         for(auto &s: sh)
@@ -385,7 +392,8 @@ public:
     // Updating shard details
     this->with_shards_do([&details](std::vector< client_shared_ptr_type > const &sh,
           std::vector< EntryPoint > &det ) {
-        for(std::size_t i =0; i < details.size(); ++i) {
+        LOG_STACK_TRACE_POINT;        
+        for(std::size_t i =0; i < details.size(); ++i) {          
           if(i < det.size() )
           {
             det[i] = details[i];            
@@ -404,6 +412,7 @@ public:
 
   void SyncChain() 
   {
+    LOG_STACK_TRACE_POINT;
     // Getting transactions
     using namespace fetch::protocols;    
     typedef typename ChainController::block_type block_type;
@@ -428,6 +437,7 @@ public:
     // Getting transaction summaries
     promises.clear();    
     this->with_shards_do([&promises](std::vector< client_shared_ptr_type > const &clients) {
+        LOG_STACK_TRACE_POINT;
         for(auto const&c : clients) {
           promises.push_back( c->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::GET_SUMMARIES ) );
         }
@@ -451,6 +461,7 @@ public:
 
   void Mine() 
   {
+    LOG_STACK_TRACE_POINT;
     bool adding = true;
     std::size_t i = 0;
     

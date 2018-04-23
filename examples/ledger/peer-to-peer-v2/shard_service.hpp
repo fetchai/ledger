@@ -34,6 +34,7 @@ public:
     service_(port, thread_manager_),
     http_server_(http_port, thread_manager_)    
   {
+    LOG_STACK_TRACE_POINT;
     using namespace fetch::protocols;    
     std::cout << "ChainKeeper listening for peers on " << (port) << ", clients on " << ( http_port ) << std::endl;
 

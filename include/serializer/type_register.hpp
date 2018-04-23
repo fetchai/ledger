@@ -1,8 +1,10 @@
 #ifndef SERIALIZER_TYPE_REGISTER_HPP
 #define SERIALIZER_TYPE_REGISTER_HPP
-#include <string>
+
 #include "serializer/serializable_exception.hpp"
 #include "byte_array/const_byte_array.hpp"
+#include <string>
+#include<typeinfo>
 namespace fetch {
 namespace serializers {
 
@@ -10,7 +12,7 @@ template <typename T>
 struct TypeRegister {
   typedef uint8_t value_type;  
   static constexpr char const* name() {
-    return "variant";
+    return typeid(T).name();
   };
   enum { value = 0 };
 };
@@ -18,7 +20,7 @@ struct TypeRegister {
 template <std::size_t E>
 struct TypeErrorRegister {
   static constexpr char const* name() {
-    return "variant";
+    return "unknown";
   };  
   enum { value = 0 };
 };
