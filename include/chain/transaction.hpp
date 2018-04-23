@@ -158,9 +158,16 @@ TODO: Make 32 bit compat
     return summary_.groups;
   }
 
-  std::vector< byte_array::ConstByteArray > const& signatures() const {
+  std::vector< byte_array::ConstByteArray > const& signatures() const
+  {
     return signatures_;
   }
+
+  std::vector< byte_array::ConstByteArray > &signatures()
+  {
+    return signatures_;
+  }
+
 
   byte_array::ConstByteArray const& contract_name() const {
     return contract_name_;
@@ -227,7 +234,7 @@ inline void Deserialize( T & serializer, Transaction &b) {
   for(std::size_t i=0; i < size; ++i) {
     byte_array::ByteArray sig;
     serializer >> sig;
-    b.PushGroup(sig);
+    b.signatures().push_back(sig);
   }
 
   byte_array::ByteArray contract_name;
