@@ -7,7 +7,7 @@
 #include"./protocols/network_benchmark.hpp"
 #include"./node_basic.hpp"
 #include"./http_interface.hpp"
-
+#include"logger.hpp"
 // Fetch node service connects the desired protocols to the OEF API
 
 namespace fetch
@@ -29,7 +29,7 @@ public:
     ServiceServer(tcpPort, tm),
     HTTPServer(httpPort, tm)
   {
-
+    LOG_STACK_TRACE_POINT ;
     fetch::logger.Debug("Constructing test node service with TCP port: ", tcpPort, " and HTTP port: ", httpPort);
     node_                     = std::make_shared<T>(tm);
 

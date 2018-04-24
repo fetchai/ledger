@@ -1,6 +1,6 @@
 #ifndef NETWORK_CLASSES_HPP
 #define NETWORK_CLASSES_HPP
-
+#include"logger.hpp"
 namespace fetch
 {
 namespace network_benchmark
@@ -49,6 +49,7 @@ public:
 
   script::Variant variant() const
   {
+    LOG_STACK_TRACE_POINT ;
     script::Variant result = script::Variant::Object();
     result["IP"]      = IP_;
     result["TCPPort"] = TCPPort_;

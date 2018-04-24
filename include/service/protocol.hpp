@@ -95,7 +95,7 @@ public:
   void Expose(function_handler_type const &n, C *instance, R (C::*function)(Args...)) 
   {
     
-    callable_type *fnc = new service::CallableClassMember<C, R(Args...)>(n, instance, function );
+    callable_type *fnc = new service::CallableClassMember<C, R(Args...)>(instance, function );
     
     if(members_[n] != nullptr)
       throw serializers::SerializableException(

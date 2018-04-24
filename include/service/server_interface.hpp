@@ -157,6 +157,7 @@ private:
 
     // If we need to add client id to function arguments
     if(fnc.meta_data() & Callable::CLIENT_ID_ARG ) {
+
       serializer_type newparams;
       // TODO: A prettier solution can be made with template parameters
       newparams << client;

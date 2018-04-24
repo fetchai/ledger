@@ -16,11 +16,11 @@ message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")
 
 #find_package(Crypto REQUIRED)
 
-if(APPLE)
-  link_libraries(-Wl,/usr/local/opt/openssl/lib/libcrypto.a pthread)
-else()
+#if(APPLE)
+#  link_libraries(-Wl,/usr/local/opt/openssl/lib/libcrypto.a pthread)
+#else()
   link_libraries(crypto pthread)
-endif()
+#endif()
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/asio/asio/include")
 include_directories("${OPENSSL_INCLUDE_DIR}")
@@ -40,8 +40,8 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -g -Wno-unused-function ")
 
-set(CMAKE_BUILD_TYPE RELEASE)
-#set(CMAKE_BUILD_TYPE DEBUG)
+#set(CMAKE_BUILD_TYPE RELEASE)
+set(CMAKE_BUILD_TYPE DEBUG)
 
 
 ## #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -DNDEBUG -g -Wall  -Werror -Wno-unused-function")

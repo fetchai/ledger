@@ -44,7 +44,7 @@ stopCondition       = { "stopCondition": 600000 }
 
 # google cloud test
 endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "35.204.5.118"}
+endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
 
 HTTPpost(endpoint1, 'reset')
 HTTPpost(endpoint2, 'reset')

@@ -8,6 +8,7 @@
 #include"./protocols/network_benchmark/commands.hpp"
 #include"./network_classes.hpp"
 #include"service/client.hpp"
+#include"logger.hpp"
 #include<set>
 
 namespace fetch
@@ -42,6 +43,7 @@ public:
   // Only call this during node setup
   void AddEndpoint(const Endpoint &endpoint)
   {
+    LOG_STACK_TRACE_POINT ;
     if (serviceClients_.find(endpoint) == serviceClients_.end())
     {
       auto client = new clientType {endpoint.IP(), endpoint.TCPPort(), tm_};
@@ -52,12 +54,14 @@ public:
   template <typename T>
   void BroadcastTransactions(T&& trans)
   {
+    LOG_STACK_TRACE_POINT ;
     CallAllEndpoints(protocols::NetworkBenchmark::SEND_TRANSACTIONS, std::forward<T>(trans));
   }
 
   template<typename T, typename... Args>
   void CallAllEndpoints(T CallEnum, Args... args) // one
   {
+    LOG_STACK_TRACE_POINT ;
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     for(auto &i : serviceClients_)
     {
@@ -76,11 +80,13 @@ public:
 
   std::vector<std::vector<chain::Transaction>> RequestTransactions(uint32_t index)
   {
+    LOG_STACK_TRACE_POINT ;
     std::vector<std::vector<chain::Transaction>> result;
 
     for(auto &i : serviceClients_) {
       auto client = i.second;
       std::vector<chain::Transaction> res;
+
       client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
           protocols::NetworkBenchmark::PULL_TRANSACTIONS, index).As(res);
       result.emplace_back(std::move(res));
@@ -91,6 +97,7 @@ public:
 
   std::vector<std::vector<chain::Transaction>> RequestNextBlock(uint32_t threadSleepTimeUs_)
   {
+    LOG_STACK_TRACE_POINT ;
     std::vector<std::vector<chain::Transaction>> result;
     //std::chrono::microseconds sleepTime(threadSleepTimeUs_);
 
@@ -103,8 +110,10 @@ public:
       {
         std::vector<chain::Transaction> res;
         fetch::logger.Info("calling");
-        client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-            protocols::NetworkBenchmark::PULL_TRANSACTIONS, index).As(res);
+        assert(client->is_alive());
+        auto p = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+                     protocols::NetworkBenchmark::PULL_TRANSACTIONS, index); //
+        p.As(res);
 
         fetch::logger.Info("called, index is ", index);
         if(res.size() == 0)

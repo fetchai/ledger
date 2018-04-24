@@ -143,9 +143,10 @@ public:
     
     if (has_failed()) 
     {
-      if(throw_exception)
+      if(throw_exception) {
+        fetch::logger.Error("Call failed.");
         throw reference_->exception();
-      else
+      } else
         return false;
       
     }
@@ -177,7 +178,6 @@ public:
 
     serializer_type ser(reference_->value());
     ser >> ret;
-
   }
   
   

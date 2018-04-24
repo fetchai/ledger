@@ -7,6 +7,7 @@
 
 #include"script/variant.hpp"
 #include"./network_classes.hpp"
+#include"logger.hpp"
 
 namespace fetch
 {
@@ -24,6 +25,7 @@ public:
 
   void AttachPages()
   {
+    LOG_STACK_TRACE_POINT ;
     HTTPModule::Post("/add-endpoint",\
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
     { return this->AddEndpoint(params, req); });
@@ -83,13 +85,14 @@ public:
 
   HttpInterface(HttpInterface&& rhs)
   {
+    LOG_STACK_TRACE_POINT ;
     node_ = std::move(rhs.node());
     AttachPages();
   }
 
   http::HTTPResponse AddEndpoint(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
-
+    LOG_STACK_TRACE_POINT ;
     json::JSONDocument doc;
     try
     {
@@ -231,6 +234,7 @@ public:
 
   http::HTTPResponse StartTime(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    LOG_STACK_TRACE_POINT ;
     json::JSONDocument doc;
     try
     {
@@ -248,6 +252,7 @@ public:
 
   http::HTTPResponse TimeToComplete(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    LOG_STACK_TRACE_POINT ;
     script::Variant result = script::Variant::Object();
 
     result["timeToComplete"] = node_->timeToComplete();
@@ -260,6 +265,7 @@ public:
 
   http::HTTPResponse Finished(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    LOG_STACK_TRACE_POINT ;
     script::Variant result = script::Variant::Object();
 
     result["finished"] = node_->finished();
@@ -272,6 +278,7 @@ public:
 
   http::HTTPResponse TransactionSize(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    LOG_STACK_TRACE_POINT ;
     script::Variant result = script::Variant::Object();
 
     result["transactionSize"] = node_->TransactionSize();

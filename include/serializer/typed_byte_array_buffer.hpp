@@ -55,10 +55,11 @@ class TypedByte_ArrayBuffer {
   template <typename T>
   TypedByte_ArrayBuffer &operator>>(T &val) {
     TypeRegister<void>::value_type type;
-    Deserialize(*this, type);
+    Deserialize(*this, type);    
     if (TypeRegister<T>::value != type) {
-      
-      throw SerializableException(error::TYPE_ERROR,
+      fetch::logger.Error(byte_array_type("Type '") + TypeRegister<T>::name +
+        byte_array_type("' differs from type '") + ErrorCodeToMessage(type) +"'");
+            throw SerializableException(error::TYPE_ERROR,
                                   byte_array_type("Type '") + TypeRegister<T>::name +
         byte_array_type("' differs from type '") + ErrorCodeToMessage(type) +"'");
     }

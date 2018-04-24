@@ -1,7 +1,7 @@
 #ifndef NETWORK_FUNCTIONS_H
 #define NETWORK_FUNCTIONS_H
-
-
+#include<random>
+#include "logger.hpp"
 namespace fetch
 {
 namespace network_benchmark
@@ -13,6 +13,7 @@ fetch::random::LaggedFibonacciGenerator<> lfg;
 
 template< typename T>
 void MakeString(T &str, std::size_t N = 256) {
+  LOG_STACK_TRACE_POINT ;
   byte_array::ByteArray entry;
   entry.Resize(N);
 
@@ -25,6 +26,7 @@ void MakeString(T &str, std::size_t N = 256) {
 
 transaction NextTransaction()
 {
+  LOG_STACK_TRACE_POINT ;
   static std::random_device rd;
   static std::mt19937 gen(rd());
   static std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());

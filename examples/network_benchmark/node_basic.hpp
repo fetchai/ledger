@@ -9,6 +9,7 @@
 #include"./network_functions.hpp"
 #include"./node_directory.hpp"
 #include"./transaction_list.hpp"
+#include"logger.hpp"
 
 #include<random>
 #include<memory>
@@ -52,25 +53,28 @@ public:
   // HTTP calls for setup
   void AddEndpoint(const Endpoint &endpoint)
   {
+    LOG_STACK_TRACE_POINT ;
     fetch::logger.Info(std::cerr, "Adding endpoint");
     nodeDirectory_.AddEndpoint(endpoint);
   }
 
   void setRate(int rate)
   {
-
+    LOG_STACK_TRACE_POINT ;
     fetch::logger.Info(std::cerr, "Setting rate to: ", rate);
     threadSleepTimeUs_ = rate;
   }
 
   void SetTransactionsPerCall(int tpc)
   {
+    LOG_STACK_TRACE_POINT ;
     transactionsPerCall_ = tpc;
     fetch::logger.Info(std::cerr, "set transactions per call to ", tpc);
   }
 
   void SetTransactionsToSync(uint32_t transactionsToSync)
   {
+    LOG_STACK_TRACE_POINT ;
     fetch::logger.Info(std::cerr, "set transactions per call to ", transactionsToSync);
     fetch::logger.Info(std::cerr, "Building...");
     PrecreateTrans(transactionsToSync);
@@ -79,11 +83,13 @@ public:
 
   void setStopCondition(uint32_t stopCondition)
   {
+    LOG_STACK_TRACE_POINT ;
     stopCondition_ = stopCondition;
   }
 
   void setStartTime(uint64_t startTime)
   {
+    LOG_STACK_TRACE_POINT ;
     fetch::logger.Info(std::cerr, "setting start time to ", startTime);
     startTime_ = startTime;
 
@@ -97,12 +103,14 @@ public:
 
   double timeToComplete()
   {
+    LOG_STACK_TRACE_POINT ;
     return std::chrono::duration_cast<std::chrono::duration<double>>
       (finishTimePoint_ - startTimePoint_).count();
   }
 
   void Reset()
   {
+    LOG_STACK_TRACE_POINT ;
     transactionList_.reset();
     provideIndex = 0;
   }
@@ -116,12 +124,13 @@ public:
   }
 
   bool finished() const
-  {
+  {    
     return finished_;
   }
 
   uint32_t TransactionSize() const
   {
+    LOG_STACK_TRACE_POINT ;
     auto trans = NextTransaction();
     serializers::TypedByte_ArrayBuffer serializer;
     serializer << trans;
@@ -132,6 +141,7 @@ public:
   // Thread attempting syncronisation
   void pullTransactions()
   {
+    LOG_STACK_TRACE_POINT ;
     // get time as epoch, wait until that time to start
     std::time_t t = startTime_;
     std::tm* timeout_tm = std::localtime(&t);
@@ -176,8 +186,9 @@ public:
 
   std::atomic<std::size_t> provideIndex{0};
 
-  std::vector<transaction> const &ProvideTransactions(uint32_t thing)
+  std::vector<transaction> ProvideTransactions(uint32_t thing)
   {
+    LOG_STACK_TRACE_POINT ;
     std::size_t thisIndex = provideIndex++;
 
     fetch::logger.Info("Called with thisIndex: ", thisIndex);
@@ -195,11 +206,13 @@ public:
   // Functions to check that syncronisation was successful
   std::set<transaction> GetTransactions()
   {
+    LOG_STACK_TRACE_POINT ;
     return transactionList_.GetTransactions();
   }
 
   std::pair<uint64_t, uint64_t> TransactionsHash()
   {
+    LOG_STACK_TRACE_POINT ;
     return transactionList_.TransactionsHash();
   }
 
