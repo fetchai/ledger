@@ -65,8 +65,10 @@ class TypedByte_ArrayBuffer {
     TypeRegister<void>::value_type type;
     Deserialize(*this, type);
     if (TypeRegister<T>::value != type) {
+      fetch::logger.Debug("Serializer at position ", pos_, " out of ", data_.size());  
       fetch::logger.Error(byte_array_type("Type '") + TypeRegister<T>::name() +
         byte_array_type("' differs from type '") + ErrorCodeToMessage(type) +"'");
+
     
       throw SerializableException(error::TYPE_ERROR,
         byte_array_type("Type '") + TypeRegister<T>::name() +

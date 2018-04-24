@@ -1,4 +1,4 @@
-#define FETCH_DISABLE_COUT_LOGGING
+//#define FETCH_DISABLE_COUT_LOGGING
 #include"serializer/referenced_byte_array.hpp"
 #include"serializer/stl_types.hpp"
 #include"serializer/byte_array_buffer.hpp"
@@ -82,7 +82,7 @@ template< typename T, std::size_t N = 256 >
 void MakeTransactionVector(std::vector< T >  &vec, std::size_t size) {
 
   for(std::size_t i=0; i < size; ++i ){
-
+ 
     vec.push_back( NextTransaction() );
   }
 }
@@ -101,6 +101,9 @@ class Implementation {
 public:
   void SendData(std::vector< transaction_type > const &data) {
     std::lock_guard< fetch::mutex::Mutex > lock( mutex_);
+    if( data.size() != TestString.size() ){
+      std::cout << "Something went wrong!" << std::endl;      
+    }
     
 //    copy = data;
   }
@@ -180,8 +183,12 @@ int main()
   ser <<   NextTransaction();  
   std::cout << "TX Size: " << ser.data().size() << std::endl;  
   */
-  
-  RunTest(100);
+  try {
+    
+    RunTest((1<<16) / (1903) + 400);
+  }catch(std::exception const&e) {
+    fetch::logger.PrintTimings();
+  }
   
   return 0;
 }
