@@ -14,6 +14,7 @@ public:
 
   NetworkBenchmarkProtocol(std::shared_ptr<T> node) : Protocol() {
     this->Expose(NetworkBenchmark::SEND_TRANSACTIONS,  node.get(),  &T::ReceiveTransactions);
+    this->Expose(NetworkBenchmark::PULL_TRANSACTIONS,  node.get(),  &T::ProvideTransactions);
   }
 };
 

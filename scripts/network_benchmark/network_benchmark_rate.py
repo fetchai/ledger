@@ -26,30 +26,31 @@ def HTTPpost(endpoint, page, jsonArg="{}"):
 
 #setRate             = 100000
 #transactionsPerCall = 1
-setRate             = 1000
-minRate             = 1000
-sleepTime           = 10
-transactionsPerCall = { "transactions": 1 }
+setRate             = 10
+minRate             = 10
+sleepTime           = 20
+transactionsPerCall = { "transactions": 10 }
 
-# localhost test
+### localhost test
 #endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
 #endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
 
-# LAN test
-endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.213"}
+## LAN test
+#endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
+#endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.213"}
 
 # pi test
 #endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "192.168.1.150"}
 #endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.151"}
 
 # google cloud test
-#endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "192.168.1.213"}
-#endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "35.204.31.221"}
+endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
+endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "35.204.5.118"}
 
 HTTPpost(endpoint1, 'set-transactions-per-call', transactionsPerCall)
 HTTPpost(endpoint2, 'set-transactions-per-call', transactionsPerCall)
 print "Set trans/call to ", transactionsPerCall["transactions"]
+#sleep(80)
 
 HTTPpost(endpoint1, 'add-endpoint', endpoint2)
 HTTPpost(endpoint2, 'add-endpoint', endpoint1)
@@ -77,7 +78,7 @@ for i in range(1000):
     HTTPpost(endpoint1, 'start')
     #HTTPpost(endpoint2, 'start')
 
-    print "Sleeping..."
+    print "Sleeping for: ", sleepTime
     time.sleep(sleepTime)
 
     print "Finished sleeping. Stopping."
@@ -93,24 +94,32 @@ for i in range(1000):
     #print "Result", jsonPrint(page1)
     #exit(1)
 
+    print "Inspecting hash"
     page1 = HTTPpost(endpoint1, 'transactions-hash')
     page2 = HTTPpost(endpoint2, 'transactions-hash')
 
+    wantHashMatch = False
     if((ordered(page1.json())) != (ordered(page2.json()))):
         print "FAILED TO MATCH: "
         print "node 0", jsonPrint(page1)
         print "node 1", jsonPrint(page2)
-        continue
-        #exit(1)
+        if(wantHashMatch):
+          setRate = setRate*2
+          continue
+          #exit(1)
     else:
         print "Successfully matched"
 
+    print "RX: ", page1.json()["numberOfTransactions"]
+    print "TX: ", page2.json()["numberOfTransactions"]
+    numberOfTransactions = min(page1.json()["numberOfTransactions"], page2.json()["numberOfTransactions"])
+
     #print jsonPrint(page1)
-    print ">Number of transactions: ", page2.json()["numberOfTransactions"]
-    transPerSecond = page2.json()["numberOfTransactions"]/sleepTime
+    print ">Number of transactions: ", numberOfTransactions
+    transPerSecond = numberOfTransactions/sleepTime
     print ">Transactions per second: ", transPerSecond
 
-    print "=>", transactionsPerCall, ":", transPerSecond
+    print "=>", transactionsPerCall["transactions"], "\t", transPerSecond
 
     if(transPerSecond > transPerSecondMax):
         transPerSecondMax = transPerSecond
@@ -118,13 +127,5 @@ for i in range(1000):
     print ">Transactions per second max: ", transPerSecondMax
     print
 
-    # Set new transaction rate
-    setRate = int(setRate/2) -1
-    #setRate = setRate -1
-    if(setRate < minRate):
-        setRate = minRate
-
-
-    #
     number = transactionsPerCall["transactions"]
     transactionsPerCall["transactions"] = number*2

@@ -5,7 +5,12 @@
 #include "serializer/byte_array_buffer.hpp"
 #include "logger.hpp"
 
+bool initialized = false;
+
 namespace fetch {
+
+typedef uint16_t group_type;
+
 namespace chain {
 
 struct TransactionSummary {
@@ -17,11 +22,13 @@ struct TransactionSummary {
 template< typename T >
 void Serialize( T & serializer, TransactionSummary const &b) {
   serializer <<  b.groups << b.transaction_hash;
+  //fetch::logger.Info("groups size ser: ", b.groups.size());
 }
 
 template< typename T >
 void Deserialize( T & serializer, TransactionSummary &b) {
   serializer >>  b.groups >> b.transaction_hash;
+  //fetch::logger.Info("groups size deser: ", b.groups.size());
 }
 
 
@@ -38,7 +45,7 @@ public:
   void UpdateDigest() const {
     LOG_STACK_TRACE_POINT;
 
-    if(modified == true)
+    if(modified_ == true)
     {
       serializers::ByteArrayBuffer buf;
       buf << summary_.groups << signatures_ << contract_name_ << arguments_;
@@ -47,7 +54,7 @@ public:
       hash.Update( buf.data());
       hash.Final();
       summary_.transaction_hash = hash.digest();
-      modified = false;
+      modified_ = false;
     }
   }
 
@@ -113,7 +120,7 @@ TODO: Make 32 bit compat
     if(add)
     {
       summary_.groups.push_back(res);
-      modified = true;
+      modified_ = true;
     }
   }
 
@@ -134,26 +141,32 @@ TODO: Make 32 bit compat
   {
     LOG_STACK_TRACE_POINT;
     signatures_.push_back(sig);
-    modified = true;
+    modified_ = true;
   }
 
   void set_contract_name(byte_array::ConstByteArray const& name)
   {
     contract_name_ = name;
-    modified = true;
+    modified_ = true;
   }
 
   void set_arguments(byte_array::ConstByteArray const& args)
   {
     arguments_ = args;
-    modified = true;
+    modified_ = true;
   }
 
   std::vector< uint32_t > const &groups() const {
     return summary_.groups;
   }
 
-  std::vector< byte_array::ConstByteArray > const& signatures() const {
+  std::vector< byte_array::ConstByteArray > const& signatures() const
+  {
+    return signatures_;
+  }
+
+  std::vector< byte_array::ConstByteArray > &signatures() 
+  {
     return signatures_;
   }
 
@@ -174,10 +187,45 @@ TODO: Make 32 bit compat
   TransactionSummary const & summary() const { UpdateDigest(); return summary_; }
 
 
+  Transaction(){}
+
+  Transaction(Transaction const &rhs) = default;
+//  Transaction(Transaction const &rhs)
+//  {
+//    if(initialized == true)
+//      fetch::logger.Info("copy 1");
+//
+//    summary_         = rhs.summary();
+//    modified_        = true;
+//    signature_count_ = rhs.signature_count();
+//    signatures_      = signatures();
+//    arguments_       = rhs.arguments();
+//    contract_name_   = rhs.contract_name();
+//    data_            = rhs.data();
+//  }
+
+  Transaction(Transaction &&rhs)                 = default;
+
+
+  Transaction &operator=(Transaction const &rhs) = default;
+//  Transaction &operator=(Transaction const &rhs)
+//  {
+//    fetch::logger.Info("copy 2");
+//
+//    summary_         = rhs.summary();
+//    modified_        = true;
+//    signature_count_ = rhs.signature_count();
+//    signatures_      = signatures();
+//    arguments_       = rhs.arguments();
+//    contract_name_   = rhs.contract_name();
+//    data_            = rhs.data();
+//    return *this;
+//  }
+  Transaction &operator=(Transaction&& rhs)      = default;
 
 private:
   TransactionSummary summary_;
-  mutable bool               modified = true;
+  mutable bool               modified_ = true;
 
   uint32_t  signature_count_;
   byte_array::ConstByteArray data_;
@@ -197,19 +245,43 @@ private:
 template< typename T >
 void Serialize( T & serializer, Transaction const &b) {
 
-
   serializer << uint16_t(b.VERSION);
-
 
   serializer << b.summary_;
 
   serializer <<  uint32_t(b.signatures().size());
+
   for(auto &sig: b.signatures()) {
     serializer << sig;
   }
 
   serializer << b.contract_name();
   serializer << b.arguments();
+
+  if(b.summary_.groups.size() != 5)
+  {
+    //fetch::logger.Info("Groups not 5 for serialize!");
+    //fetch::logger.Info("is: ", b.summary_.groups.size());
+  }
+  else
+  {
+    //fetch::logger.Info("serializing groups: ", b.summary_.groups.size());
+  }
+
+//  // TODO: (`HUT`) : remove 
+//  if(b.signatures().size() == 0)
+//  {
+//    fetch::logger.Info("serialize sig size is 0!");
+//    exit(1);
+//  }
+//
+//  // TODO: (`HUT`) : remove 
+//  if(b.summary_.groups.size() == 0)
+//  {
+//    fetch::logger.Info("serialize groups size is 0!");
+//    exit(1);
+//  }
+
 }
 
 template< typename T >
@@ -222,10 +294,11 @@ void Deserialize( T & serializer, Transaction &b) {
 
   uint32_t size;
   serializer >> size;
+
   for(std::size_t i=0; i < size; ++i) {
     byte_array::ByteArray sig;
     serializer >> sig;
-    b.PushGroup(sig);
+    b.signatures().push_back(sig);
   }
 
   byte_array::ByteArray contract_name;
@@ -234,6 +307,31 @@ void Deserialize( T & serializer, Transaction &b) {
 
   b.set_contract_name(contract_name);
   b.set_arguments(arguments);
+
+  if(b.summary_.groups.size() != 5)
+  {
+    //fetch::logger.Info("Groups not 5 for deserialize!");
+    //fetch::logger.Info("is: ", b.summary_.groups.size());
+  }
+  else
+  {
+    //fetch::logger.Info("deserializing groups: ", b.summary_.groups.size());
+  }
+
+//  // TODO: (`HUT`) : remove 
+//  if(b.signatures().size() == 0)
+//  {
+//    fetch::logger.Info("serialize sig size is 0!");
+//    exit(1);
+//  }
+//
+//  // TODO: (`HUT`) : remove 
+//  if(b.summary_.groups.size() == 0)
+//  {
+//    fetch::logger.Info("serialize groups size is 0!");
+//    exit(1);
+//  }
+
 }
 
 };

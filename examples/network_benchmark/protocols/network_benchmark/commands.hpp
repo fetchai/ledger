@@ -11,7 +11,8 @@ struct NetworkBenchmark
 enum
 {
   PING = 127,
-  SEND_TRANSACTIONS
+  SEND_TRANSACTIONS,
+  PULL_TRANSACTIONS
 };
 
 };

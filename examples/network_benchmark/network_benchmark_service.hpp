@@ -21,19 +21,20 @@ std::unique_ptr<T> make_unique(Args&&... args)
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
+template <typename T>
 class NetworkBenchmarkService : public service::ServiceServer< fetch::network::TCPServer >, public http::HTTPServer
 {
 public:
-  NetworkBenchmarkService(fetch::network::ThreadManager *tm, uint16_t tcpPort, uint16_t httpPort, int seed) :
+  NetworkBenchmarkService(fetch::network::ThreadManager *tm, uint16_t tcpPort, uint16_t httpPort) :
     ServiceServer(tcpPort, tm),
     HTTPServer(httpPort, tm)
   {
 
     fetch::logger.Debug("Constructing test node service with TCP port: ", tcpPort, " and HTTP port: ", httpPort);
-    node_                     = std::make_shared<network_benchmark::Node>(tm, seed);
+    node_                     = std::make_shared<T>(tm);
 
-    httpInterface_            = std::make_shared<network_benchmark::HttpInterface>(node_);
-    networkBenchmarkProtocol_ = make_unique<protocols::NetworkBenchmarkProtocol<network_benchmark::Node>>(node_);
+    httpInterface_            = std::make_shared<network_benchmark::HttpInterface<T>>(node_);
+    networkBenchmarkProtocol_ = make_unique<protocols::NetworkBenchmarkProtocol<T>>(node_);
 
     this->Add(protocols::FetchProtocols::NETWORK_BENCHMARK, networkBenchmarkProtocol_.get());
 
@@ -49,9 +50,9 @@ public:
   }
 
 private:
-  std::shared_ptr<network_benchmark::Node>                                      node_;
-  std::shared_ptr<network_benchmark::HttpInterface>                             httpInterface_;
-  std::unique_ptr<protocols::NetworkBenchmarkProtocol<network_benchmark::Node>> networkBenchmarkProtocol_;
+  std::shared_ptr<T>                                         node_;
+  std::shared_ptr<network_benchmark::HttpInterface<T>>       httpInterface_;
+  std::unique_ptr<protocols::NetworkBenchmarkProtocol<T>>    networkBenchmarkProtocol_;
 };
 }
 }

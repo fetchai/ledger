@@ -13,15 +13,16 @@ namespace fetch
 namespace network_benchmark
 {
 
+template <typename T>
 class HttpInterface : public fetch::http::HTTPModule {
 public:
 
   explicit HttpInterface(std::shared_ptr<network_benchmark::Node> node) : node_{node}
   {
-    attachPages();
+    AttachPages();
   }
 
-  void attachPages()
+  void AttachPages()
   {
     HTTPModule::Post("/add-endpoint",\
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
@@ -59,7 +60,7 @@ public:
   HttpInterface(HttpInterface&& rhs)
   {
     node_ = std::move(rhs.node());
-    attachPages();
+    AttachPages();
   }
 
   http::HTTPResponse AddEndpoint(http::ViewParameters const &params, http::HTTPRequest const &req)
@@ -173,7 +174,7 @@ public:
   const std::shared_ptr<network_benchmark::Node> &node() const { return node_; };
 
 private:
-  std::shared_ptr<network_benchmark::Node> node_;
+  std::shared_ptr<T> node_;
 };
 
 }

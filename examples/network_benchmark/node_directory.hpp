@@ -15,6 +15,7 @@ namespace fetch
 namespace network_benchmark
 {
 
+
 class NodeDirectory
 {
 public:
@@ -55,8 +56,9 @@ public:
   }
 
   template<typename T, typename... Args>
-  void CallAllEndpoints(T CallEnum, Args... args)
+  void CallAllEndpoints(T CallEnum, Args... args) // one
   {
+    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     for(auto &i : serviceClients_)
     {
       auto client = i.second;
@@ -72,9 +74,25 @@ public:
     }
   }
 
+  std::vector<std::vector<chain::Transaction>> RequestTransactions()
+  {
+    std::vector<std::vector<chain::Transaction>> result;
+    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+
+    for(auto &i : serviceClients_) {
+      auto client = i.second;
+      std::vector<chain::Transaction> res;
+      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, protocols::NetworkBenchmark::PULL_TRANSACTIONS).As(res);
+      result.emplace_back(std::move(res));
+    }
+
+    return result;
+  }
+
 private:
   fetch::network::ThreadManager    *tm_;
   std::map<Endpoint, clientType *> serviceClients_;
+  fetch::mutex::Mutex              mutex_;
 };
 
 }
