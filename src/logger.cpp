@@ -34,7 +34,7 @@ namespace fetch {
     Context::~Context() 
     {
       std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-      double total_time =  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - created_).count();
+      double total_time =  double( std::chrono::duration_cast<std::chrono::milliseconds>(end_time - created_).count() );
       fetch::logger.UpdateContextTime( details_, total_time );
       
       if(primary_ && details_->parent() )
@@ -42,6 +42,6 @@ namespace fetch {
           fetch::logger.SetContext( details_->parent() );
         }
     }
-  };
+  }
  
-};
+}

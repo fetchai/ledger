@@ -21,8 +21,8 @@ namespace details {
   uint8_t DecodeHexChar(char const &c);
 
 enum { B64_WHITESPACE = 64, B64_EQUALS = 65, B64_INVALID = 66 };  
-};
-};
-};
+}
+}
+}
 
 #endif

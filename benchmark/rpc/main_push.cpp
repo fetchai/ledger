@@ -144,15 +144,16 @@ void StartClient()
   while(true) {
     std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
     std::cout << "Calling ..." << std::flush;
-
-    auto p1 = client.Call( SERVICE, SEND, TestData );
     high_resolution_clock::time_point t0 = high_resolution_clock::now();        
+    auto p1 = client.Call( SERVICE, SEND, TestData );
+
     p1.Wait();
 //    std::vector< transaction_type > data;
 //    p1.As(data);
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     duration<double> ts1 = duration_cast<duration<double>>(t1 - t0);    
     std::cout << " DONE: " << (TestData.size() ) << std::endl;
+    fetch::logger.PrintTimings();
     if(TestData.size() > 0 ) {
       std::cout <<  ( double( TestData.size() ) / double( ts1.count() ) )  << " TX/s, "  << ts1.count() << " s" << std::endl;
     }
@@ -185,7 +186,7 @@ int main()
   */
   try {
     
-    RunTest((1<<16) / (1903) + 400);
+    RunTest(100);
   }catch(std::exception const&e) {
     fetch::logger.PrintTimings();
   }

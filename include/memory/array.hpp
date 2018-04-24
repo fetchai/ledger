@@ -162,6 +162,6 @@ class Array {
   size_type size_ = 0;
   T *data_ = nullptr;
 };
-};
-};
+}
+}
 #endif

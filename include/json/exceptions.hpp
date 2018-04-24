@@ -36,6 +36,6 @@ class UnrecognisedJSONSymbolException : public std::exception {
   };
 
   
-};
-};
+}
+}
 #endif

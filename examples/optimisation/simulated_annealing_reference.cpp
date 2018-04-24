@@ -25,7 +25,7 @@ void Test1(int argc, char **argv) {
     auto E = anneal.FindMinimum(state, false) ;
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     duration<double> ts1 = duration_cast<duration<double>>(t1 - t0);    
-    std::cout << "Flip rate: " << anneal.size() * anneal.sweeps() / ts1.count() / 1e9 << std::endl;
+    std::cout << "Flip rate: " << double(anneal.size() * anneal.sweeps()) / double(ts1.count()) / 1e9 << std::endl;
     
     
     std::cout << E  << " " << anneal.CostOf( state, false ) <<  std::endl;

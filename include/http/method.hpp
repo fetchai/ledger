@@ -15,7 +15,7 @@ enum class Method {
 };
 
 
-};
-};
+}
+}
 
 #endif

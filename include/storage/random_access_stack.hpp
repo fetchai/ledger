@@ -7,7 +7,7 @@
 namespace fetch {
 namespace platform {
 enum { LITTLE_ENDIAN_MAGIC = 1337 };
-};
+}
 namespace storage {
 
 template <typename T, typename D = uint64_t>
@@ -189,7 +189,7 @@ class RandomAccessStack {
   std::string filename_ = "";
   Header header_;
 };
-};
-};
+}
+}
 
 #endif

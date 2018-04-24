@@ -105,7 +105,7 @@ inline void Deserialize(T &serializer, std::vector< U > &vec) {
 
 }
 
-};
-};
+}
+}
 
 #endif

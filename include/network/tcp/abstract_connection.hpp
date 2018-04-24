@@ -17,7 +17,7 @@ class AbstractClientConnection {
 
   virtual std::string Address() = 0;  
 };
-};
-};
+}
+}
 
 #endif

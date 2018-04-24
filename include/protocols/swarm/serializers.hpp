@@ -84,7 +84,7 @@ T& Deserialize(T& serializer, std::vector< protocols::NodeDetails >  &data)
 }
 
 
-};
-};
+}
+}
 
 #endif

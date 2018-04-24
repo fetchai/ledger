@@ -14,11 +14,11 @@ enum
   NETWORK_BENCHMARK = 1
 };
 
-} ;
+};
 
 
-};
-};
+}
+}
 
 
 #endif

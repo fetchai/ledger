@@ -11,14 +11,11 @@
 
 #include "mutex.hpp"
 
+#include"fetch_asio.hpp"
+
 #include <memory>
 #include <mutex>
 #include <atomic>
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#include <asio.hpp>
-#pragma clang diagnostic pop
 
 namespace fetch 
 {
@@ -195,14 +192,14 @@ private:
   void ReadBody() noexcept
   {
     byte_array::ByteArray message;
-    if( header_.magic != 0xFE7C80A1FE7C80A1) {
+    if( header_.content.magic != 0xFE7C80A1FE7C80A1) {
       fetch::logger.Debug("Magic incorrect - closing connection.");
       Close(true);
       
       return;
     }
     
-    message.Resize(header_.length);
+    message.Resize(header_.content.length);
 
     auto cb = [=](std::error_code ec, std::size_t len) 
       {
@@ -314,7 +311,7 @@ private:
     struct {
       uint64_t magic;
       uint64_t length;
-    };
+    } content;
 
   } header_;
 
@@ -332,7 +329,7 @@ TCPClient::handle_type
 TCPClient::global_handle_counter_ = 0;
 fetch::mutex::Mutex TCPClient::global_handle_mutex_(__LINE__, __FILE__);
 
-};
-};
+}
+}
 
 #endif

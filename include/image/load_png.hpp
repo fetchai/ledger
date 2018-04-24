@@ -77,8 +77,8 @@ void LoadPNG(std::string const &filename, T &image) {
 
   png_read_info(png_ptr, info_ptr);
 
-  width = png_get_image_width(png_ptr, info_ptr);
-  height = png_get_image_height(png_ptr, info_ptr);
+  width = uint32_t(png_get_image_width(png_ptr, info_ptr));
+  height = uint32_t(png_get_image_height(png_ptr, info_ptr));
   color_type = png_get_color_type(png_ptr, info_ptr);
   //  bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
@@ -125,7 +125,7 @@ void LoadPNG(std::string const &filename, T &image) {
     }
   }
 }
-};
-};
+}
+}
 
 #endif

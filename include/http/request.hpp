@@ -9,14 +9,10 @@
 #include"byte_array/consumers.hpp"
 #include"json/document.hpp"
 #include"assert.hpp"
+#include"fetch_asio.hpp"
 
 #include<limits>
 #include<algorithm>
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#include <asio.hpp>
-#pragma clang diagnostic pop
 
 namespace fetch
 {
@@ -109,7 +105,7 @@ public:
             
             for(std::size_t t=0; t < key.size(); ++t) { 
               char &cc = reinterpret_cast< char& >(key[t]);
-              if( ('A'<= cc) && (cc<='Z')) cc = cc + 'a' -'A';      
+              if( ('A'<= cc) && (cc<='Z')) cc = char(cc + 'a' -'A');      
             }
 
 
@@ -204,7 +200,7 @@ private:
       }
       
       char &cc = reinterpret_cast< char& >(line[i]);
-      if( ('A'<= cc) && (cc<='Z')) cc = cc + 'a' -'A'; 
+      if( ('A'<= cc) && (cc<='Z')) cc = char(cc + 'a' -'A'); 
       ++i;      
     }
 
@@ -301,7 +297,7 @@ private:
     for(std::size_t t=i; t < line.size(); ++t)
     {
       char &cc = reinterpret_cast< char& >( line[t] );      
-      if( ('A'<= cc) && (cc<='Z')) cc = cc + 'a' -'A'; 
+      if( ('A'<= cc) && (cc<='Z')) cc = char(cc + 'a' -'A'); 
     }
     
       
@@ -326,7 +322,7 @@ private:
   
 };
 
-};
-};
+}
+}
 
 #endif

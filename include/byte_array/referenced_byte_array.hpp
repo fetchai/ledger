@@ -77,6 +77,7 @@ inline ByteArray operator+(char const *a, ByteArray const &b) {
   s = s + b;
   return s;
 }
-};
-};
+  
+}
+}
 #endif

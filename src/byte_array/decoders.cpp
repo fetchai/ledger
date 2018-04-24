@@ -65,8 +65,8 @@ BasicByteArray FromHex(BasicByteArray const &str) noexcept {
     for (std::size_t i = 0; i < n; i += 2) {
       uint8_t next = uint8_t(details::DecodeHexChar(data[i]));
       if (i + 1 < n) {
-        next <<= 4;
-        next |= uint8_t(details::DecodeHexChar(data[i + 1]));
+        next = uint8_t(next <<4);
+        next = uint8_t(next | details::DecodeHexChar(data[i + 1]));
       }
       ret[j++] = next;
     }
@@ -78,5 +78,5 @@ BasicByteArray FromHex(BasicByteArray const &str) noexcept {
   return ret;
 }
 
-};
-};
+}
+}

@@ -57,5 +57,5 @@ BasicByteArray ToHex(BasicByteArray const &str) {
   return ret;
 }
 
-};
-};
+}
+}

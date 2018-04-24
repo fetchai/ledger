@@ -8,7 +8,7 @@ namespace byte_array {
   BasicByteArray ToBase64(BasicByteArray const &str) ;
   BasicByteArray ToHex(BasicByteArray const &str) ;
   
-};
-};
+}
+}
 
 #endif

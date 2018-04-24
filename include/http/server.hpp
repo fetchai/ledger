@@ -154,8 +154,8 @@ private:
   HTTPConnectionManager* manager_;
 };
 
-};
-};
+}
+}
 
 
 #endif

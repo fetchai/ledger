@@ -11,11 +11,11 @@
 namespace fetch {
 namespace byte_array {
 class BasicByteArray ;
-};
+}
 
 namespace serializers {  // TODO: refactor
 template <typename T> inline void Deserialize(T &, byte_array::BasicByteArray &);  
-};
+}
 
 namespace byte_array {
 
@@ -247,6 +247,6 @@ inline BasicByteArray operator+(char const *a, BasicByteArray const &b) {
   return s;
 }
   
-};
-};
+}
+}
 #endif

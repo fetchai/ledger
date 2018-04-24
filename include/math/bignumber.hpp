@@ -133,8 +133,8 @@ public:
     for(std::size_t i=0; i < size(); ++i) {
       uint8_t val = super_type::operator[](i);
 
-      super_type::operator[](i) =  uint8_t(val << bits) | carry;
-      carry = val >> nbits;
+      super_type::operator[](i) =  uint8_t( uint8_t(val << bits) | carry );
+      carry = uint8_t(val >> nbits);
     }
 
     return *this;
@@ -196,7 +196,7 @@ inline double Log(BigUnsigned const& x ) {
   uint64_t tz = uint64_t(__builtin_ctz( fraction.value ));
   uint64_t exponent = (last_byte << 3) - tz;
   
-  return exponent + std::log( double(fraction.value << tz ) * (1. /double(uint32_t(-1)) ) )  ;
+  return double(exponent) + std::log( double(fraction.value << tz ) * (1. /double(uint32_t(-1)) ) )  ;
 }
 
 inline double ToDouble(BigUnsigned const& x)  {
@@ -218,27 +218,23 @@ inline double ToDouble(BigUnsigned const& x)  {
 
   assert(fraction.value != 0);
   uint16_t tz = uint16_t(__builtin_ctz( fraction.value )); // TODO: Wrap in function for cross compiler portability
-  uint16_t exponent = uint16_t(last_byte << 3) - tz;
+  uint16_t exponent = uint16_t( (last_byte << 3) - tz );
 
   assert( exponent < 1023 );
 
   union {
     double value;
-    struct {
-      uint8_t sign : 1;
-      uint16_t exponent: 11;      
-      uint64_t mantissa: 52;
-    };
+    uint64_t bits;
   } conv;
 
-  conv.sign = 0;
-  conv.exponent = exponent;
-  conv.mantissa = uint64_t(fraction.value) << (20 + tz);
+  conv.bits = 0;
+  conv.bits |= uint64_t( uint64_t(exponent &( (1<<12) -1 )) << 52  );
+  conv.bits |= uint64_t( (fraction.value << (20 + tz)) & ((1ull << 53) -1) );
   return conv.value;  
 }
     
   
-};
-};
+}
+}
 
 #endif

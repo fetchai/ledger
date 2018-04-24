@@ -56,7 +56,7 @@ struct VectorInfo< double, 128 > {
 
   
 
-};
-};
+}
+}
 
 #endif

@@ -38,9 +38,9 @@ inline void ColorLog(fetch::http::HTTPResponse &res, fetch::http::HTTPRequest co
   std::cout << ", " << GetColor(5,9) << res.mime_type().type <<   DefaultAttributes() << std::endl;      
 }
 
-};
-};
-};
+}
+}
+}
 
 
 #endif

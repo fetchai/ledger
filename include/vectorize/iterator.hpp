@@ -33,7 +33,7 @@ private:
   mm_register_type *end_;
 };
 
-};
-};
+}
+}
 
 #endif

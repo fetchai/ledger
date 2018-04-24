@@ -3,13 +3,8 @@
 #include"http/header.hpp"
 #include"http/mime_types.hpp"
 #include"http/status.hpp"
-
+#include"fetch_asio.hpp"
 #include<ostream>
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#include <asio.hpp>
-#pragma clang diagnostic pop
 
 namespace fetch {
 namespace http {
@@ -86,8 +81,8 @@ private:
   bool keep_alive_ = false;  
 };
 
-};
-};
+}
+}
 
 
 

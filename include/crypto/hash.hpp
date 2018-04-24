@@ -14,8 +14,8 @@ byte_array::ByteArray Hash(
   hasher.Final();
   
   return hasher.digest();
-};
-};
-};
+}
+}
+}
 
 #endif

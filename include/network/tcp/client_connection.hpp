@@ -9,11 +9,7 @@
 #include "assert.hpp"
 #include "logger.hpp"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#include <asio.hpp>
-#pragma clang diagnostic pop
-
+#include "fetch_asio.hpp"
 namespace fetch 
 {
 namespace network 
@@ -104,14 +100,14 @@ private:
 //    std::cout << std::hex << header_.magic << std::dec << std::endl;
 //    std::cout << header_.length << std::endl;
 
-    if( header_.magic != 0xFE7C80A1FE7C80A1) {
+    if( header_.content.magic != 0xFE7C80A1FE7C80A1) {
       fetch::logger.Debug("Magic incorrect - closing connection.");
 
       manager_.Leave(handle_);
       return;
     }
     
-    message.Resize(header_.length);
+    message.Resize(header_.content.length);
     auto self(shared_from_this());
     auto cb = [this, self, message](std::error_code ec, std::size_t len) 
       {
@@ -145,8 +141,8 @@ private:
 
     auto buffer = write_queue_.front();
     write_queue_.pop_front();    
-    header_write_.magic = 0xFE7C80A1FE7C80A1;
-    header_write_.length = buffer.size();
+    header_write_.content.magic = 0xFE7C80A1FE7C80A1;
+    header_write_.content.length = buffer.size();
 
     write_mutex_.unlock();
 
@@ -189,10 +185,10 @@ private:
     struct {
       uint64_t magic;      
       uint64_t length;
-    };
+    } content;
   } header_write_, header_;
 };
-};
-};
+}
+}
 
 #endif

@@ -105,7 +105,7 @@ private:
   std::map<handle_type, connection_type> clients_;
   fetch::mutex::Mutex clients_mutex_;
 };
-};
-};
+}
+}
 
 #endif

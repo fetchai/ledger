@@ -33,6 +33,6 @@ void Deserialize(T &serializer, std::vector< std::string > &vec) {
 
 }
 
-};
-};
+}
+}
 #endif

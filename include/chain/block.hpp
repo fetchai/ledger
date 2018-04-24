@@ -189,6 +189,6 @@ inline void Deserialize(T& serializer, BasicBlock< P, H > &b)
   
 }
 
-};
-};
+}
+}
 #endif

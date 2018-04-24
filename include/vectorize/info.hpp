@@ -15,7 +15,7 @@ struct VectorInfo {
 };
 
 
-};
-};
+}
+}
 
 #endif

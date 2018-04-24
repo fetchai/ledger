@@ -222,7 +222,7 @@ private:
   std::map< handle_type, ClientRPCInterface*  > client_rpcs_;    
 
 };
-};
-};
+}
+}
 
 #endif

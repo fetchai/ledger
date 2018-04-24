@@ -172,6 +172,6 @@ private:
   friend class FeedSubscriptionManager;
 };
 
-};
-};
+}
+}
 #endif

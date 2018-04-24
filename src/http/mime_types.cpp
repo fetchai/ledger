@@ -89,7 +89,7 @@ MimeType GetMimeTypeFromExtension(std::string const& ext)
   return mime;  
 }
 
-};
+}
 
-};
-};
+}
+}

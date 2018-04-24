@@ -61,7 +61,7 @@ struct CallableFNV {
   }
 };
 
-};
-};
+}
+}
 
 #endif

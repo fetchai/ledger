@@ -76,7 +76,7 @@ bool Load(T &optimiser, std::string const &filename) {
   for (auto &c : couplings) optimiser.Insert(c.i, c.j, c.c);
   return true;
 }
-};
-};
+}
+}
 
 #endif

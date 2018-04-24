@@ -142,7 +142,7 @@ int AnyChar(byte_array::ConstByteArray const &str, uint64_t &pos)  {
 }
 
   
-};
-};
-};
+}
+}
+}
 #endif

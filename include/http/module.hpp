@@ -83,8 +83,8 @@ private:
   std::vector< UnmountedView > views_;
 };
 
-};
-};
+}
+}
 
 
 #endif

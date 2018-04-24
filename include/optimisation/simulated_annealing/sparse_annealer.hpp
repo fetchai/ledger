@@ -56,7 +56,7 @@ namespace optimisers {
           }
 
           site.local_energy = -site.local_energy;
-          site.spin_value = -site.spin_value;
+          site.spin_value = spin_type(-site.spin_value);
         }
       }
 
@@ -117,11 +117,11 @@ namespace optimisers {
   void SetBetaEnd(cost_type const &b1) { beta1_ = b1; }
 
   static void SpinToBinary(state_type &state) {
-    for (auto &s : state) s = ((1 - s) >> 1);
+    for (auto &s : state) s = spin_type((1 - s) >> 1);
   }
 
   static void BinaryToSpin(state_type &state) {
-    for (auto &s : state) s = 1 - 2 * s;
+    for (auto &s : state) s = spin_type(1 - 2 * s);
   }
 
   cost_type CostOf(state_type &c, bool binary = true) {
@@ -178,7 +178,7 @@ namespace optimisers {
   }
 
   void Initialize() {
-    for (auto &s : sites_) s.spin_value = 1 - 2 * ((rng_() >> 27) & 1);
+    for (auto &s : sites_) s.spin_value = spin_type( 1 - 2 * ((rng_() >> 27) & 1) );
 
     ComputeLocalEnergies();
   }
@@ -219,6 +219,6 @@ namespace optimisers {
   random_generator_type rng_;
   std::vector<cost_type> local_energies_;
 };
-};
-};
+}
+}
 #endif

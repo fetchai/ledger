@@ -248,6 +248,6 @@ inline void Deserialize( T & serializer, Transaction &b) {
   b.set_arguments(arguments);
 }
 
-};
-};
+}
+}
 #endif

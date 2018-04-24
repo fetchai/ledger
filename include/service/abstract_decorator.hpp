@@ -11,6 +11,6 @@ public:
   virtual void Unapply(serializer_type &serializer, byte_array::ConstByteArray const &data) = 0; 
 };
   
-};
-};
+}
+}
 #endif

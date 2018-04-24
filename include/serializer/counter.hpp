@@ -88,7 +88,7 @@ class SizeCounter< TypedByte_ArrayBuffer > {
 
 
 
-};
-};
+}
+}
 
 #endif

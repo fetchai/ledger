@@ -549,7 +549,7 @@ public:
   
 
 };
-}; // namespace protocols
-}; // namespace fetch
+}
+}
 
 #endif // SWARM_PROTOCOL_HPP

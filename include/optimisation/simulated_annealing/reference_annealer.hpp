@@ -14,7 +14,8 @@ class ReferenceAnnealer : public AbstractSpinGlassSolver {
  public:
   typedef math::Exp< 0 > exp_type;
 
-  typedef std::vector<int8_t> state_type;
+  typedef int8_t state_primitive_type;
+  typedef std::vector< state_primitive_type > state_type;
   typedef random::LinearCongruentialGenerator random_generator_type;
   typedef random::LinearCongruentialGenerator::random_type random_type;
 
@@ -34,7 +35,7 @@ class ReferenceAnnealer : public AbstractSpinGlassSolver {
 
     double db = (beta1_ - beta0_) / double(sweeps_ - 1);
     for (std::size_t k = 0; k < sweeps_; ++k) {
-      attempts_ += size_;
+      attempts_ += double(size_);
       for (std::size_t i = 0; i < size_; ++i) {
         if (rng_.AsDouble() <= fexp_(local_energies_[i])) {
           cost_type diff = -2 * state[i];
@@ -46,7 +47,7 @@ class ReferenceAnnealer : public AbstractSpinGlassSolver {
             local_energies_[j] += diff * state[j] * couplings_(i, j);
 
           local_energies_[i] = -local_energies_[i];
-          state[i] = -state[i];
+          state[i] = state_primitive_type (-state[i]);
           ++accepted_;
         }
       }
@@ -123,11 +124,11 @@ class ReferenceAnnealer : public AbstractSpinGlassSolver {
   void SetBetaEnd(cost_type const &b1) { beta1_ = b1; }
 
   static void SpinToBinary(state_type &state) {
-    for (auto &s : state) s = ((1 - s) >> 1);
+    for (auto &s : state) s = state_primitive_type((1 - s) >> 1);
   }
 
   static void BinaryToSpin(state_type &state) {
-    for (auto &s : state) s = 1 - 2 * s;
+    for (auto &s : state) s = state_primitive_type(1 - 2 * s);
   }
   
   void Insert(std::size_t const &i, std::size_t const &j, cost_type const &c) override {
@@ -168,7 +169,7 @@ private:
     attempts_ = 0;
     accepted_ = 0;
     state.resize(size_);
-    for (auto &s : state) s = 1 - 2 * ((rng_() >> 27) & 1);
+    for (auto &s : state) s = state_primitive_type(1 - 2 * ((rng_() >> 27) & 1) );
 
     local_energies_.resize(size_);
     ComputeLocalEnergies(state);
@@ -198,6 +199,6 @@ private:
   random_generator_type rng_;
   std::vector<cost_type> local_energies_;
 };
-};
-};
+}
+}
 #endif

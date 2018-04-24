@@ -15,9 +15,9 @@ inline typename HTTPServer::response_middleware_type AllowOrigin(std::string con
 }
 
 
-};
-};
-};
+}
+}
+}
 
 
 #endif

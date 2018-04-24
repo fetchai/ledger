@@ -142,7 +142,7 @@ private:
   mutable fetch::mutex::Mutex message_mutex_;  
 //  std::thread *worker_thread_ = nullptr;  // TODO: use thread pool
 };
-};
-};
+}
+}
 
 #endif

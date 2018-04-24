@@ -17,7 +17,7 @@ fetch::random::LinearCongruentialGenerator lcg;
     else { a = T(lcg.AsDouble()); b = T(lcg.AsDouble()); }      \
     NativeRegister< T > A(a), B(b);                             \
     NativeRegister< T > C = A OP B;                             \
-    T c = a OP b;                                               \
+    T c = T(a OP b);						\
     if( T(C) != c ) {                                           \
       std::cout << T(C) << " != " << c << std::endl;            \
       std::cout << "for "#NAME << " using "#OP << std::endl;    \
@@ -25,13 +25,13 @@ fetch::random::LinearCongruentialGenerator lcg;
     }                                                           \
 }
 
-ADD_TEST(*,multiply);
-ADD_TEST(+,add);
-ADD_TEST(-,subtract);
-ADD_TEST(/,divide);
-ADD_TEST(&,and);
-ADD_TEST(|,or);
-ADD_TEST(^,xor);
+ADD_TEST(*,multiply)
+ADD_TEST(+,add)
+ADD_TEST(-,subtract)
+ADD_TEST(/,divide)
+ADD_TEST(&,and)
+ADD_TEST(|,or)
+ADD_TEST(^,xor)
 #undef ADD_TEST
 
 void test_registers() {
@@ -140,7 +140,7 @@ void mtest_##NAME() {\
   else { a = lcg.AsDouble(); b = lcg.AsDouble(); }      \
   NativeRegister< T > A(a), B(b);                       \
   NativeRegister< T > C = A OP B;                       \
-  T c = a OP b;                                         \
+  T c = T(a OP b);					\
   if( T(C) != c ) {                                     \
     std::cout << T(C) << " != " << c << std::endl;              \
     std::cout << "for "#NAME << " using "#OP << std::endl;      \
@@ -148,13 +148,13 @@ void mtest_##NAME() {\
   }                                                             \
   }
 
-ADD_TEST(*,multiply);
-ADD_TEST(+,add);
-ADD_TEST(-,subtract);
-ADD_TEST(/,divide);
-ADD_TEST(&,and);
-ADD_TEST(|,or);
-ADD_TEST(^,xor);
+ADD_TEST(*,multiply)
+ADD_TEST(+,add)
+ADD_TEST(-,subtract)
+ADD_TEST(/,divide)
+ADD_TEST(&,and)
+ADD_TEST(|,or)
+ADD_TEST(^,xor)
 
 #undef ADD_TEST
 

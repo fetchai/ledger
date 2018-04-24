@@ -19,7 +19,7 @@ error_type const PROMISE_NOT_FOUND = 21 | ERROR_SERVICE_PROTOCOL;
 error_type const COULD_NOT_DELIVER = 31 | ERROR_SERVICE_PROTOCOL;
 
 error_type const UNKNOWN_MESSAGE = 1001 | ERROR_SERVICE_PROTOCOL;
-};
-};
-};
+}
+}
+}
 #endif

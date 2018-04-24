@@ -223,7 +223,7 @@ shared_inserter_type NewNestedProgram(A... Args) {
   return ret;
 }
 ProgramInserter& last_inserter() { return *inserted_programs.back(); }
-};
+}
 
 #define SECTION_REF(EXPLANATION)                                        \
   self->NewContext<fetch::unittest::TestContext>(EXPLANATION);          \
@@ -343,6 +343,6 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
   });                                                                         \
   fetch::unittest::details::last_inserter() = [=](                      \
       fetch::unittest::TestContext::self_shared_type self)
-};
-};
+}
+}
 #endif

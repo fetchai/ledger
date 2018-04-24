@@ -60,7 +60,7 @@ public:
     
     //    assert( public_key_.size() == 64 );
     uint8_t *pub_copy = public_key_.pointer();
-    if ( i2o_ECPublicKey(key_, &pub_copy) != public_key_.size() ) {
+    if ( std::size_t(i2o_ECPublicKey(key_, &pub_copy)) != public_key_.size() ) {
       TODO_FAIL("Unable to decode public key");
     }
    
@@ -194,6 +194,6 @@ EC_KEY *bbp_ec_new_pubkey(const uint8_t *pub_bytes, int pub_len) {
 }  
 };
   
-};
-};
+}
+}
 #endif

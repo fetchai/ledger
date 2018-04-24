@@ -9,16 +9,6 @@
 #include <limits>
 #include <vector>
 
-#include<mmintrin.h>  //MMX
-#include<xmmintrin.h> //SSE
-#include<emmintrin.h> //SSE2
-#include<pmmintrin.h> //SSE3
-#include<tmmintrin.h> //SSSE3
-#include<smmintrin.h> //SSE4.1
-#include<nmmintrin.h> //SSE4.2
-#include<ammintrin.h> //SSE4A
-#include<wmmintrin.h> //AES
-#include<immintrin.h> //AVX
 namespace fetch {
 namespace math {
 namespace linalg {
@@ -532,7 +522,8 @@ class Matrix : public A {
         else {
           for (std::size_t k = 0; k < mheight; ++k, ++index) {
             if (piv[k] == 0) {
-              type d = fabs(ptr[index]);
+              type d = ptr[index];
+	      if(d < 0) d = -d;
 
               if (largest <= d) {
                 row = j;
@@ -725,7 +716,7 @@ class Matrix : public A {
  private:
 
 };
-};
-};
-};
+}
+}
+}
 #endif

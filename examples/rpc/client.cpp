@@ -90,7 +90,7 @@ int main() {
             << std::chrono::duration<double, std::milli>(t_end-t_start).count()
               << " ms\n";
   std::cout << "Time per call:: "
-            << std::chrono::duration<double, std::milli>(t_end-t_start).count() / N * 1000
+            << double(std::chrono::duration<double, std::milli>(t_end-t_start).count()) / double(N) * 1000.
             << " us\n";  
 
   

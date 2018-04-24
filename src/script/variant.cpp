@@ -131,5 +131,5 @@ std::size_t Variant::size() const {
 
 
   
-};
-};
+}
+}

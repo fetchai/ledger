@@ -182,7 +182,7 @@ class VariantStack {
   std::string filename_ = "";
   Header header_;
 };
-};
-};
+}
+}
 
 #endif

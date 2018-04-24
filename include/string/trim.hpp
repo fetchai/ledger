@@ -26,6 +26,6 @@ inline void Trim(std::string &s) {
   TrimFromRight(s);
   TrimFromLeft(s);
 }
-};
-};
+}
+}
 #endif

@@ -73,7 +73,7 @@ class ByteArrayBuffer {
 
   std::size_t pos_ = 0;
 };
-};
-};
+}
+}
 
 #endif

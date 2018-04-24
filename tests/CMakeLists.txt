@@ -45,7 +45,7 @@ standard_test(crypto_consensus_proof_of_work crypto/consensus/proof_of_work.cpp 
 standard_test(math_bignumber math/bignumber.cpp )
 
 ### MISC
-standard_test( load_image_read_exceptions image/load_image_read_exceptions.cpp )
+#standard_test( load_image_read_exceptions image/load_image_read_exceptions.cpp )
 
 standard_test(referenced_byte_array serializers/referenced_byte_array.cpp)
 
@@ -67,7 +67,7 @@ standard_test(spline math/test_spline.cpp)
 standard_test(lfg random/test_lfg.cpp)
 standard_test(matrix math/linalg/matrix.cpp)
 
-standard_test(load_txt optimisation/instance/load_txt.cpp)
+#standard_test(load_txt optimisation/instance/load_txt.cpp)
 standard_test(meta_log2 meta/test_log2.cpp)
 
 standard_test(vectorize_native_register vectorize/native.cpp)

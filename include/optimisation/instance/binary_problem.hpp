@@ -81,8 +81,8 @@ namespace optimisers {
     memory::RectangularArray<cost_type> couplings_;
     memory::SharedArray< cost_type > coupling_sum_;
   };
-};
-};
+}
+}
   
 
 #endif

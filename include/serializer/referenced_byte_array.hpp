@@ -34,7 +34,7 @@ inline void Deserialize(T &serializer, byte_array::BasicByteArray &s) {
 }
 
 
-};
-};
+}
+}
 
 #endif

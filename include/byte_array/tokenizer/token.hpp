@@ -44,7 +44,7 @@ class Token : public ConstByteArray {
   int line_ = 0;
   std::size_t char_ = 0;
 };
-};
-};
+}
+}
 
 #endif

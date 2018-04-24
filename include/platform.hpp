@@ -78,7 +78,7 @@ constexpr bool has_sse() {
 #else
   return false;
 #endif
-};
+}
 
 
 constexpr bool has_sse2() {
@@ -87,7 +87,7 @@ constexpr bool has_sse2() {
 #else
   return false;
 #endif
-};
+}
 
 constexpr bool has_sse3() {
 #ifdef __SSE3__
@@ -95,7 +95,7 @@ constexpr bool has_sse3() {
 #else
   return false;
 #endif
-};
+}
 
 constexpr bool has_sse41() {
 #ifdef __SSE4_1__
@@ -103,7 +103,7 @@ constexpr bool has_sse41() {
 #else
   return false;
 #endif
-};
+}
   
 constexpr bool has_sse42() {
 #ifdef __SSE4_2__
@@ -111,9 +111,9 @@ constexpr bool has_sse42() {
 #else
   return false;
 #endif
-};
+}
   
-};
-};
+}
+}
 
 #endif

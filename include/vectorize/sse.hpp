@@ -27,7 +27,7 @@ namespace vectorize {
     struct UnrollSet<T,0> {
       static void Set(T *ptr, T const &c) { }
     };
-  };
+  }
   
 // SSE integers
 template <typename T>
@@ -152,24 +152,24 @@ class VectorRegister<double, 128, __m128d> {
     return VectorRegister<type, 128, L>(ret);                           \
   }
 
-FETCH_ADD_OPERATOR(*, int, __m128i, _mm_mullo_epi32);
-FETCH_ADD_OPERATOR(-, int, __m128i, _mm_sub_epi32);
-//FETCH_ADD_OPERATOR(/, int, __m128i, _mm_div_epi32);
-FETCH_ADD_OPERATOR(+, int, __m128i, _mm_add_epi32);  
-
-FETCH_ADD_OPERATOR(*, float, __m128, _mm_mul_ps);
-FETCH_ADD_OPERATOR(-, float, __m128, _mm_sub_ps);  
-FETCH_ADD_OPERATOR(/, float, __m128, _mm_div_ps);
-FETCH_ADD_OPERATOR(+, float, __m128, _mm_add_ps);  
-
-FETCH_ADD_OPERATOR(*, double, __m128d, _mm_mul_pd);
-FETCH_ADD_OPERATOR(-, double, __m128d, _mm_sub_pd);  
-FETCH_ADD_OPERATOR(/, double, __m128d, _mm_div_pd);
-FETCH_ADD_OPERATOR(+, double, __m128d, _mm_add_pd);  
+  FETCH_ADD_OPERATOR(*, int, __m128i, _mm_mullo_epi32)
+  FETCH_ADD_OPERATOR(-, int, __m128i, _mm_sub_epi32)
+  //FETCH_ADD_OPERATOR(/, int, __m128i, _mm_div_epi32);
+  FETCH_ADD_OPERATOR(+, int, __m128i, _mm_add_epi32)
+  
+  FETCH_ADD_OPERATOR(*, float, __m128, _mm_mul_ps)
+  FETCH_ADD_OPERATOR(-, float, __m128, _mm_sub_ps)  
+  FETCH_ADD_OPERATOR(/, float, __m128, _mm_div_ps)
+  FETCH_ADD_OPERATOR(+, float, __m128, _mm_add_ps)  
+  
+  FETCH_ADD_OPERATOR(*, double, __m128d, _mm_mul_pd)
+  FETCH_ADD_OPERATOR(-, double, __m128d, _mm_sub_pd)  
+  FETCH_ADD_OPERATOR(/, double, __m128d, _mm_div_pd)
+  FETCH_ADD_OPERATOR(+, double, __m128d, _mm_add_pd)  
   
   
 #undef FETCH_ADD_OPERATOR
 
-};
-};
+}
+}
 #endif

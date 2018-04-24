@@ -53,6 +53,6 @@ class LaggedFibonacciGenerator {
   static constexpr double inv_double_max_ =
       1. / std::numeric_limits<random_type>::max();
 };
-};
-};
+}
+}
 #endif

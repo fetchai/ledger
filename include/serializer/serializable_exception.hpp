@@ -32,11 +32,12 @@ inline void Deserialize(T &serializer, SerializableException &s) {
                        sizeof(error::error_type));
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
 
-  char buffer[size];
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(buffer), size);
-  s = SerializableException(code, std::string(buffer));
+  byte_array::ByteArray buffer;
+  buffer.Resize(size);
+  serializer.ReadBytes(buffer.pointer(), size);
+  s = SerializableException(code, buffer);
 }
-};
-};
+}
+}
 
 #endif

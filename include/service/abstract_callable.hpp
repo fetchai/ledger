@@ -47,7 +47,7 @@ struct Packer<T> {
     serializer.Seek(0);
   }
 };  
-};
+}
 
 
 /* This function packs a function call into byte array.
@@ -204,7 +204,7 @@ class AbstractCallable {
 private:
   uint64_t meta_data_ = 0;  
 };
-};
-};
+}
+}
 
 #endif

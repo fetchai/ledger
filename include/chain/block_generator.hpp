@@ -257,7 +257,7 @@ public:
     }
     
     
-    return used_groups.size();
+    return double( used_groups.size() );
   }
   
   void PrintTransactionSummary(TransactionSummary const &tx) {
@@ -399,7 +399,7 @@ inline std::ostream& operator<< (std::ostream& stream, BlockGenerator const &gra
   
 }  
 
-};
-};
+}
+}
 
 #endif

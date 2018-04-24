@@ -17,9 +17,9 @@ struct MimeType {
 
 namespace mime_types {
   MimeType GetMimeTypeFromExtension(std::string const& ext);
-};
+}
 
-};
-};
+}
+}
 
 #endif 

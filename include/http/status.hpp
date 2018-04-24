@@ -74,11 +74,11 @@ Status const SERVER_ERROR_LOOP_DETECTED = {508, "508 Loop Detected"};
 Status const SERVER_ERROR_NOT_EXTENDED = {510, "510 Not Extended"};
 Status const SERVER_ERROR_NETWORK_AUTHENTICATION_REQUIRED = {511, "511 Network Authentication Required"};  
 
-};
+}
 
 
 
-};
-};
+}
+}
 
 #endif

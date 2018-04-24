@@ -183,7 +183,7 @@ struct UnrollPointers<0, class_type, member_function_pointer, return_type, used_
   };
 };
 
-};
+}
 
 
 
@@ -382,7 +382,7 @@ private:
 };
   
   
-};
-};
+}
+}
 
 #endif

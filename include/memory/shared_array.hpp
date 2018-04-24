@@ -17,12 +17,6 @@
 namespace fetch {
 namespace memory {
 
-#ifdef FETCH_TESTING_ENABLED
-namespace testing {
-std::size_t total_shared_objects = 0;
-};
-#endif
-
 template <typename T, std::size_t type_size = sizeof(T)>
 class SharedArray {
  public:
@@ -161,6 +155,6 @@ class SharedArray {
   size_type size_ = 0;
   data_type data_ = nullptr;
 };
-};
-};
+}
+}
 #endif

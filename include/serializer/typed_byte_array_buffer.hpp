@@ -101,7 +101,7 @@ class TypedByte_ArrayBuffer {
   byte_array_type data_;
   std::size_t pos_ = 0;
 };
-};
-};
+}
+}
 
 #endif

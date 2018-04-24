@@ -125,7 +125,7 @@ class FileObjectImplementation {
   uint64_t block_index_;
   uint64_t byte_index_;
 };
-};
-};
+}
+}
 
 #endif

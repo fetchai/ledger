@@ -9,6 +9,6 @@ namespace http
 
 typedef KeyValueSet ViewParameters;
 
-};
-};
+}
+}
 #endif

@@ -42,7 +42,7 @@ struct EntryPoint
   
 };
 
-};
-};
+}
+}
 
 #endif  // ENTRY_POINT_HPP

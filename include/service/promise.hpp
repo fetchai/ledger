@@ -127,7 +127,7 @@ public:
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-      double ms =  std::chrono::duration_cast<std::chrono::milliseconds>(end - created_).count();
+      double ms =  double(std::chrono::duration_cast<std::chrono::milliseconds>(end - created_).count());
       if( (ms > timeout) && (!is_fulfilled()) ) {
 
         fetch::logger.Warn("Connection timed out! ", ms, " vs. ", timeout);
@@ -201,7 +201,7 @@ private:
   shared_promise_type reference_;
   std::chrono::system_clock::time_point created_;
 };
-};
-};
+}
+}
 
 #endif

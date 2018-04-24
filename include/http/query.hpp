@@ -7,8 +7,8 @@ namespace http {
 
 typedef KeyValueSet QuerySet;
 
-};
-};
+}
+}
 
 
 #endif 

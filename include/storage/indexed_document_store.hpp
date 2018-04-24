@@ -27,7 +27,7 @@ class IndexedDocumentStore {
  private:
   byte_array_type filename_ = "";
 };
-};
-};
+}
+}
 
 #endif

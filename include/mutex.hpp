@@ -47,7 +47,7 @@ class DebugMutex : public AbstractMutex
             
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-            ms =  std::chrono::duration_cast<std::chrono::milliseconds>(end - created_).count();
+            ms =  double( std::chrono::duration_cast<std::chrono::milliseconds>(end - created_).count() );
 
           }
           if(running_)
@@ -109,7 +109,7 @@ public:
 
     lock_mutex_.lock();
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-    double total_time =  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - locked_).count();    
+    double total_time =  double( std::chrono::duration_cast<std::chrono::milliseconds>(end_time - locked_).count() );    
     lock_mutex_.unlock();    
     
     timeout_.reset(nullptr);     
@@ -162,7 +162,7 @@ typedef ProductionMutex Mutex;
 #else
 typedef ProductionMutex Mutex;
 #endif
-};
-};
+}
+}
 
 #endif

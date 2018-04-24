@@ -416,6 +416,6 @@ inline std::ostream& operator<<(std::ostream& os, VariantList const& v) {
 }
 
 
-};
-};
+}
+}
 #endif

@@ -18,9 +18,9 @@ struct Printer {
     std::cerr << next;
   }
 };
-};
-};
-};
+}
+}
+}
 
 
 #ifndef FETCH_DISABLE_TODO_COUT

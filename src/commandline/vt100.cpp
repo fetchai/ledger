@@ -36,6 +36,6 @@ namespace VT100 {
   char const *Return = "\r";
 
   
-};
-};
-};
+}
+}
+}

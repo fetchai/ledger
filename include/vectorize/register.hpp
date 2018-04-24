@@ -41,7 +41,7 @@ class VectorRegister {
 
 #define FETCH_ADD_OPERATOR(OP)                              \
   VectorRegister operator OP(VectorRegister const &other) { \
-    return VectorRegister(data_ OP other.data_);            \
+    return VectorRegister( type(data_ OP other.data_) );	    \
   }
   APPLY_OPERATOR_LIST( FETCH_ADD_OPERATOR );
 #undef FETCH_ADD_OPERATOR
@@ -55,6 +55,6 @@ class VectorRegister {
 
 
 #undef APPLY_OPERATOR_LIST
-};
-};
+}
+}
 #endif

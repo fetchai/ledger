@@ -204,7 +204,7 @@ private:
   std::vector< std::shared_ptr<FeedSubscriptionManager> > feeds_;
   fetch::mutex::Mutex feeds_mutex_;
 };
-};
-};
+}
+}
 
 #endif

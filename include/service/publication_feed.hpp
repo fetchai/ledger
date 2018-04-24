@@ -109,6 +109,6 @@ private:
   std::vector< function_type > publisher_;
 };
 
-};
-};
+}
+}
 #endif

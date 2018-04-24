@@ -123,7 +123,7 @@ class JSONDocument {
         current_object.size= t.second;
         current_object.type = t.type;
         
-        allocation_counter += t.second;        
+        allocation_counter += uint32_t(t.second);
         break;        
       case CLOSE_OBJECT:
         variants_[ object_assembly_.back().i ].SetObject(variants_, current_object.start, current_object.size);        
@@ -142,7 +142,7 @@ class JSONDocument {
         current_object.size =  t.second;
         current_object.type = t.type;
 
-        allocation_counter += t.second;                
+        allocation_counter += uint32_t(t.second); 
 
         break;        
       case CLOSE_ARRAY:
@@ -365,7 +365,7 @@ class JSONDocument {
   
 //  variant_type root_ = nullptr;
 };
-};
-};
+}
+}
 
 #endif

@@ -13,7 +13,7 @@ class StreamHasher {
   virtual void Final() = 0;  
   virtual byte_array_type digest() = 0;
 };
-};
-};
+}
+}
 
 #endif

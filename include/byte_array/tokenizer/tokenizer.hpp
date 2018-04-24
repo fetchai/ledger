@@ -142,7 +142,7 @@ class Tokenizer : public std::vector<Token> {
   indexer_function_type indexer_;
   
 };
-};
-};
+}
+}
 
 #endif

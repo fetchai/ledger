@@ -4,13 +4,10 @@
 #include "mutex.hpp"
 #include "logger.hpp"
 
+#include"fetch_asio.hpp"
 #include <functional>
 #include <map>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#include <asio.hpp>
-#pragma clang diagnostic pop
 
 namespace fetch {
 namespace network {
@@ -205,8 +202,8 @@ private:
   fetch::mutex::Mutex on_mutex_;  
 };
 
-};
-};
+}
+}
 
 #endif
 

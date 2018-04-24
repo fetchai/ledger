@@ -3,14 +3,10 @@
 #define HTTP_ABSTRACT_CONNECTION_HPP
 
 #include"http/response.hpp"
+#include"fetch_asio.hpp"
 
 #include<string>
 #include<memory>
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#include <asio.hpp>
-#pragma clang diagnostic pop
 
 namespace fetch
 {
@@ -30,8 +26,8 @@ public:
 
 
 
-};
-};
+}
+}
 
 
 #endif

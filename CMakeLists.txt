@@ -4,7 +4,7 @@ project (fetch)
 OPTION(BUILD_TESTS "Build tests" ON)
 OPTION(BUILD_EXAMPLES "Build examples" ON)
 OPTION(BUILD_BENCHMARK "Build benchmark" ON)
-OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" ON)
+OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" OFF)
 
 
 ## Check feature set on Apple with
@@ -64,9 +64,9 @@ endif()
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 #
-set(STRICT_FLAGS "-Wconversion -Wc++11-compat-pedantic -Werror")
+set(STRICT_FLAGS "-Wconversion -Wpedantic -Werror -Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function -Wno-unknown-pragmas -O3 ${STRICT_FLAGS}")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -Wno-unknown-pragmas -O3 -g -Wall -Wno-unused-function -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -Wno-unknown-pragmas -O3 -g ${STRICT_FLAGS} -DNDEBUG")
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
  

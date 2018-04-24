@@ -34,7 +34,7 @@ AbstractNetworkServer::handle_type
 AbstractNetworkServer::global_handle_counter_ = 0;
 fetch::mutex::Mutex AbstractNetworkServer::global_handle_mutex_(__LINE__, __FILE__);
 
-};
-};
+}
+}
 
 #endif

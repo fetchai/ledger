@@ -211,7 +211,7 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
     super_type::Set(set.i, set.data);
   }
 };
-};
-};
+}
+}
 
 #endif

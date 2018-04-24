@@ -173,7 +173,7 @@ FETCH_ADD_OPERATOR(+, double, __m256d, _mm256_add_pd);
   
 #undef FETCH_ADD_OPERATOR
 
-};
-};
+}
+}
 #endif
 #endif

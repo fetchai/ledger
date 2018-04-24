@@ -7,14 +7,11 @@
 #include "mutex.hpp"
 #include "assert.hpp"
 #include "logger.hpp"
+#include"fetch_asio.hpp"
 
 #include <memory>
 #include <deque>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#include <asio.hpp>
-#pragma clang diagnostic pop
 
 namespace fetch {
 namespace http {
@@ -203,8 +200,8 @@ public:
 };
 
   
-};
-};
+}
+}
 
 
 #endif

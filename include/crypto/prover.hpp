@@ -12,7 +12,7 @@ class Prover {
   virtual byte_array_type document_hash() = 0;
   virtual byte_array_type signature() = 0;
 };
-};
-};
+}
+}
 
 #endif

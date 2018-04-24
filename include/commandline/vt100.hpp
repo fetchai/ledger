@@ -47,7 +47,7 @@ namespace VT100 {
   }
   
 
-};
-};
-};
+}
+}
+}
 #endif

@@ -126,7 +126,7 @@ byte_array::ConstByteArray ErrorCodeToMessage(std::size_t n)
 
 
   
-};
-};
+}
+}
 
 #endif

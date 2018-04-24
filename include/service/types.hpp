@@ -19,6 +19,6 @@ typedef uint64_t function_handler_type;
 typedef uint8_t feed_handler_type;  
 typedef uint8_t subscription_handler_type;
 typedef uint64_t service_classification_type;
-};
-};
+}
+}
 #endif

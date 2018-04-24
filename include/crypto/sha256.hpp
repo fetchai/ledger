@@ -40,7 +40,7 @@ class SHA256 : public StreamHasher {
   byte_array_type digest_;  
   SHA256_CTX data_;
 };
-};
-};
+}
+}
 
 #endif

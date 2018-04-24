@@ -64,11 +64,7 @@ int main() {
   for(std::size_t i=0; i < 100; ++i) {
     test_set_get();
 
-    if(testing::total_shared_objects != 0) {
-      std::cout << "memory leak detected: " << testing::total_shared_objects;
-      std::cout << " objects still available, but not reachable" << std::endl;
-      return -1;
-    }
+
   }
   return 0;
 }

@@ -436,7 +436,7 @@ public:
 
     std::cout << "Profile for monitored function calls: " << std::endl;    
     for(std::size_t i = 0; i < N; ++i) {
-      std::cout << std::setw(3) << i << std::setw(20) << all_timings[i].total / all_timings[i].calls << " ";
+      std::cout << std::setw(3) << i << std::setw(20) << double(all_timings[i].total) / double(all_timings[i].calls) << " ";
       std::cout << std::setw(20) << all_timings[i].peak << " ";      
       std::cout << std::setw(20) <<  all_timings[i].calls << " ";      
       std::cout << std::setw(20) << all_timings[i].total << " ";
@@ -458,12 +458,12 @@ public:
       all_timings.push_back(t.second);     
     }
 
-    std::sort(all_timings.begin(), all_timings.end(), [](TimingDetails const &a, TimingDetails const &b) { return (a.total / a.calls) > (b.total / b.calls); });
+    std::sort(all_timings.begin(), all_timings.end(), [](TimingDetails const &a, TimingDetails const &b) { return (double(a.total) / double(a.calls)) > (double(b.total) / double(b.calls)); });
     std::size_t N = std::min(max, all_timings.size());
 
     std::cout << "Mutex timings: " << std::endl;    
     for(std::size_t i = 0; i < N; ++i) {
-      std::cout << std::setw(3) << i << std::setw(20) << all_timings[i].total / all_timings[i].calls << " ";
+      std::cout << std::setw(3) << i << std::setw(20) << double(all_timings[i].total) / double(all_timings[i].calls) << " ";
       std::cout << std::setw(20) << all_timings[i].peak << " ";            
       std::cout << std::setw(20) <<  all_timings[i].calls << " ";      
       std::cout << std::setw(20) << all_timings[i].total << " ";
@@ -559,13 +559,13 @@ private:
   std::unordered_map< std::thread::id, shared_context_type > context_;
   
 };
-};
-
-};
+  
+}
+}
 
 extern log::details::LogWrapper logger;  
 
-};
+}
 
 // TODO: Move somewhere else
 

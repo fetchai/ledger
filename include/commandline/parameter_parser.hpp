@@ -96,6 +96,6 @@ class ParamsParser {
   
   std::size_t arg_size() const { return args_.size(); } 
 };
-};
-};
+}
+}
 #endif
