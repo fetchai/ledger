@@ -2,8 +2,8 @@
 #define OPTIMISATION_SIMULATED_ANNEALING_HPP
 #include "math/exp.hpp"
 #include "memory/rectangular_array.hpp"
-#include "random/lcg.hpp"
 #include "optimisation/abstract_spinglass_solver.hpp"
+#include "random/lcg.hpp"
 
 #include <vector>
 
@@ -12,10 +12,10 @@ namespace optimisers {
 
 class ReferenceAnnealer : public AbstractSpinGlassSolver {
  public:
-  typedef math::Exp< 0 > exp_type;
+  typedef math::Exp<0> exp_type;
 
   typedef int8_t state_primitive_type;
-  typedef std::vector< state_primitive_type > state_type;
+  typedef std::vector<state_primitive_type> state_type;
   typedef random::LinearCongruentialGenerator random_generator_type;
   typedef random::LinearCongruentialGenerator::random_type random_type;
 
@@ -23,7 +23,8 @@ class ReferenceAnnealer : public AbstractSpinGlassSolver {
   ReferenceAnnealer(std::size_t const &n)
       : couplings_(n, n), beta0_(0.1), beta1_(3), sweeps_(1000), size_(0) {}
 
-  void Resize(std::size_t const &n, std::size_t max_connectivity = std::size_t(-1)) override {
+  void Resize(std::size_t const &n,
+              std::size_t max_connectivity = std::size_t(-1)) override {
     couplings_.Resize(n, n);
     for (std::size_t i = 0; i < couplings_.size(); ++i) couplings_[i] = 0;
     size_ = n;
@@ -47,7 +48,7 @@ class ReferenceAnnealer : public AbstractSpinGlassSolver {
             local_energies_[j] += diff * state[j] * couplings_(i, j);
 
           local_energies_[i] = -local_energies_[i];
-          state[i] = state_primitive_type (-state[i]);
+          state[i] = state_primitive_type(-state[i]);
           ++accepted_;
         }
       }
@@ -105,7 +106,7 @@ class ReferenceAnnealer : public AbstractSpinGlassSolver {
     }
 
     if (binary) SpinToBinary(c);
-    
+
     return ret;
   }
 
@@ -118,7 +119,7 @@ class ReferenceAnnealer : public AbstractSpinGlassSolver {
 
   double beta() const { return beta_; }
   std::size_t sweeps() const { return sweeps_; }
-  
+
   void SetSweeps(std::size_t sweeps) { sweeps_ = sweeps; }
   void SetBetaStart(cost_type const &b0) { beta0_ = b0; }
   void SetBetaEnd(cost_type const &b1) { beta1_ = b1; }
@@ -130,22 +131,24 @@ class ReferenceAnnealer : public AbstractSpinGlassSolver {
   static void BinaryToSpin(state_type &state) {
     for (auto &s : state) s = state_primitive_type(1 - 2 * s);
   }
-  
-  void Insert(std::size_t const &i, std::size_t const &j, cost_type const &c) override {
-    couplings_.Set(std::min(i, j), std::max(i, j),c);
+
+  void Insert(std::size_t const &i, std::size_t const &j,
+              cost_type const &c) override {
+    couplings_.Set(std::min(i, j), std::max(i, j), c);
   }
 
-  void Update(std::size_t const &i, std::size_t const &j, cost_type const &c) override {
-    std::size_t A =std::min(i, j);
+  void Update(std::size_t const &i, std::size_t const &j,
+              cost_type const &c) override {
+    std::size_t A = std::min(i, j);
     std::size_t B = std::max(i, j);
-    couplings_(A,B) += c;
+    couplings_(A, B) += c;
   }
-    
+
   void PrintGraph() {
-    for(std::size_t i=0; i < size_; ++i) {
-      for(std::size_t j=0; j < size_; ++j) {
-        if(couplings_(i,j) != 0 ) {
-          std::cout << i << " " << j << " " << couplings_(i,j) << std::endl;
+    for (std::size_t i = 0; i < size_; ++i) {
+      for (std::size_t j = 0; j < size_; ++j) {
+        if (couplings_(i, j) != 0) {
+          std::cout << i << " " << j << " " << couplings_(i, j) << std::endl;
         }
       }
     }
@@ -153,11 +156,11 @@ class ReferenceAnnealer : public AbstractSpinGlassSolver {
 
   double attempts() { return attempts_; }
   double accepted() { return accepted_; }
-  
-private:
+
+ private:
   double attempts_ = 0;
   double accepted_ = 0;
-  
+
   cost_type energy(state_type &state) const {
     cost_type en = 0;
     for (std::size_t i = 0; i < size_; ++i)
@@ -169,7 +172,8 @@ private:
     attempts_ = 0;
     accepted_ = 0;
     state.resize(size_);
-    for (auto &s : state) s = state_primitive_type(1 - 2 * ((rng_() >> 27) & 1) );
+    for (auto &s : state)
+      s = state_primitive_type(1 - 2 * ((rng_() >> 27) & 1));
 
     local_energies_.resize(size_);
     ComputeLocalEnergies(state);
@@ -179,8 +183,7 @@ private:
     for (std::size_t i = 0; i < size_; ++i) {
       cost_type de = couplings_(i, i);
 
-      for (std::size_t j = 0; j < i; ++j)
-        de += state[j] * couplings_(j, i);
+      for (std::size_t j = 0; j < i; ++j) de += state[j] * couplings_(j, i);
 
       for (std::size_t j = i + 1; j < size_; ++j)
         de += state[j] * couplings_(i, j);

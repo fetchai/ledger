@@ -49,12 +49,11 @@ void LoadPNG(std::string const &filename, T &image) {
   FILE *fp = fopen(filename.c_str(), "rb");
 
   if (!fp) throw FileReadErrorException(filename, "file could not be opened");
-  
-  if( fread(header, 1, 8, fp) != 8 * sizeof(png_byte)) {
-    throw FileReadErrorException(filename,
-                                 "could not read header");    
+
+  if (fread(header, 1, 8, fp) != 8 * sizeof(png_byte)) {
+    throw FileReadErrorException(filename, "could not read header");
   }
-  
+
   if (png_sig_cmp(header, (png_size_t)0, 8)) {
     throw FileReadErrorException(filename,
                                  "file was not recognized as a png file");

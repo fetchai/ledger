@@ -5,10 +5,10 @@
 namespace fetch {
 namespace platform {
 
-template< typename T >
+template <typename T>
 struct VectorRegisterSize {
   enum {
-#ifdef __AVX__    
+#ifdef __AVX__
     value = 256
 #elif defined __SSE__
     value = 128
@@ -18,13 +18,11 @@ struct VectorRegisterSize {
   };
 };
 
-#define ADD_REGISTER_SIZE( type, size ) \
-template< >                             \
-struct VectorRegisterSize<type> { \
-enum {                                          \
-  value = size                                  \
-};                                              \
-}                                               
+#define ADD_REGISTER_SIZE(type, size) \
+  template <>                         \
+  struct VectorRegisterSize<type> {   \
+    enum { value = size };            \
+  }
 
 #ifdef __AVX2__
 
@@ -69,7 +67,6 @@ constexpr bool has_avx2() {
 #else
   return false;
 #endif
-
 }
 
 constexpr bool has_sse() {
@@ -79,7 +76,6 @@ constexpr bool has_sse() {
   return false;
 #endif
 }
-
 
 constexpr bool has_sse2() {
 #ifdef __SSE2__
@@ -104,7 +100,7 @@ constexpr bool has_sse41() {
   return false;
 #endif
 }
-  
+
 constexpr bool has_sse42() {
 #ifdef __SSE4_2__
   return true;
@@ -112,7 +108,6 @@ constexpr bool has_sse42() {
   return false;
 #endif
 }
-  
 }
 }
 

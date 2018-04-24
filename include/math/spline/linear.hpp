@@ -11,7 +11,7 @@ class Spline {
  public:
   typedef T type;
   typedef double float_type;
- 
+
   template <typename F>
   void SetFunction(F &f, type from, type to, std::size_t n) {
     assert(n < 8 * sizeof(uint64_t));

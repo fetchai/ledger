@@ -1,5 +1,5 @@
+#include "vectorize/avx.hpp"
 #include "vectorize/info.hpp"
+#include "vectorize/iterator.hpp"
 #include "vectorize/register.hpp"
 #include "vectorize/sse.hpp"
-#include "vectorize/avx.hpp"
-#include "vectorize/iterator.hpp"

@@ -2,10 +2,10 @@
 #define COMMANDLINE_PARAMETER_PARSER_HPP
 
 #include <algorithm>
+#include <exception>
 #include <map>
 #include <sstream>
 #include <vector>
-#include<exception>
 namespace fetch {
 namespace commandline {
 
@@ -54,7 +54,7 @@ class ParamsParser {
 
   template <typename T>
   T GetArg(std::size_t const &i) const {
-    if (i >= args_.size()) throw std::runtime_error("parameter does not exist");    
+    if (i >= args_.size()) throw std::runtime_error("parameter does not exist");
 
     std::stringstream s(args_[i]);
     T ret;
@@ -62,13 +62,11 @@ class ParamsParser {
     return ret;
   }
 
-  
   std::string GetArg(std::size_t const &i) const {
     if (i >= args_.size()) throw std::runtime_error("parameter does not exist");
 
     return args_[i];
   }
-
 
   std::string GetArg(std::size_t const &i,
                      std::string const &default_value) const {
@@ -93,8 +91,8 @@ class ParamsParser {
     s >> ret;
     return ret;
   }
-  
-  std::size_t arg_size() const { return args_.size(); } 
+
+  std::size_t arg_size() const { return args_.size(); }
 };
 }
 }

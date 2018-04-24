@@ -4,9 +4,9 @@
 #include <string/trim.hpp>
 
 #include <fstream>
-#include <unordered_map>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace fetch {
@@ -26,15 +26,15 @@ bool Load(T &optimiser, std::string const &filename) {
 
   std::vector<Coupling> couplings;
   std::unordered_map<int, uint64_t> indices;
-  std::unordered_map< int, uint64_t> connectivity;
-  
+  std::unordered_map<int, uint64_t> connectivity;
+
   uint64_t k = 0;
 
   while (fin) {
     std::getline(fin, line);
 
     uint64_t p = uint64_t(line.find('#'));
-    if (p != std::string::npos) line = line.substr(0, std::size_t(p) );
+    if (p != std::string::npos) line = line.substr(0, std::size_t(p));
     string::Trim(line);
     if (line == "") continue;
     std::stringstream ss(line);
@@ -48,29 +48,26 @@ bool Load(T &optimiser, std::string const &filename) {
       indices[i] = k++;
       connectivity[i] = 0;
     }
-    
 
     if (indices.find(j) == indices.end()) {
       indices[j] = k++;
       connectivity[j] = 0;
-     
     }
-    
 
     c.i = indices[i];
     c.j = indices[j];
-    
+
     ++connectivity[i];
     ++connectivity[j];
-    
+
     couplings.push_back(c);
   }
-  
+
   std::size_t connect_count = 0;
-  for(auto &p: connectivity) {
-    if(connect_count < p.second) connect_count = p.second;
+  for (auto &p : connectivity) {
+    if (connect_count < p.second) connect_count = p.second;
   }
-  
+
   optimiser.Resize(k, connect_count);
 
   for (auto &c : couplings) optimiser.Insert(c.i, c.j, c.c);

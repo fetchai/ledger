@@ -1,142 +1,128 @@
 #ifndef NETWORK_TCP_CLIENT_HPP
 #define NETWORK_TCP_CLIENT_HPP
 
-#include "network/thread_manager.hpp"
-#include "network/message.hpp"
 #include "byte_array/const_byte_array.hpp"
 #include "byte_array/referenced_byte_array.hpp"
-#include "serializer/referenced_byte_array.hpp"
+#include "logger.hpp"
+#include "network/message.hpp"
+#include "network/thread_manager.hpp"
 #include "serializer/byte_array_buffer.hpp"
-#include"logger.hpp"
+#include "serializer/referenced_byte_array.hpp"
 
 #include "mutex.hpp"
 
-#include"fetch_asio.hpp"
+#include "fetch_asio.hpp"
 
+#include <atomic>
 #include <memory>
 #include <mutex>
-#include <atomic>
 
-namespace fetch 
-{
-namespace network 
-{
-class TCPClient 
-{
-public:
-  typedef ThreadManager thread_manager_type;  
+namespace fetch {
+namespace network {
+class TCPClient {
+ public:
+  typedef ThreadManager thread_manager_type;
   typedef thread_manager_type* thread_manager_ptr_type;
   typedef typename ThreadManager::event_handle_type event_handle_type;
   typedef uint64_t handle_type;
 
-  
-  TCPClient(byte_array::ConstByteArray const& host, byte_array::ConstByteArray const& port,
-    thread_manager_ptr_type thread_manager) noexcept :
-    thread_manager_(thread_manager), 
-    io_service_(thread_manager->io_service()),
-    socket_(thread_manager->io_service() ),
-    write_mutex_(__LINE__, __FILE__) 
-  {
+  TCPClient(byte_array::ConstByteArray const& host,
+            byte_array::ConstByteArray const& port,
+            thread_manager_ptr_type thread_manager) noexcept
+      : thread_manager_(thread_manager),
+        io_service_(thread_manager->io_service()),
+        socket_(thread_manager->io_service()),
+        write_mutex_(__LINE__, __FILE__) {
     LOG_STACK_TRACE_POINT;
-    
+
     handle_ = next_handle();
-    
+
     writing_ = false;
     Connect(host, port);
   }
 
   TCPClient(byte_array::ConstByteArray const& host, uint16_t const& port,
-    thread_manager_ptr_type thread_manager) noexcept :
-    thread_manager_(thread_manager),
-    io_service_(thread_manager->io_service()),
-    socket_(thread_manager->io_service() ) 
-  
+            thread_manager_ptr_type thread_manager) noexcept
+      : thread_manager_(thread_manager),
+        io_service_(thread_manager->io_service()),
+        socket_(thread_manager->io_service())
+
   {
     LOG_STACK_TRACE_POINT;
-    
+
     handle_ = next_handle();
 
-    event_start_service_ = thread_manager_->OnBeforeStart([this]() { this->writing_ = false; });
-    event_stop_service_ = thread_manager_->OnBeforeStop([this]() { this->writing_ = false; });
-    
-    writing_ = false;    
-    Connect(host, port);
+    event_start_service_ =
+        thread_manager_->OnBeforeStart([this]() { this->writing_ = false; });
+    event_stop_service_ =
+        thread_manager_->OnBeforeStop([this]() { this->writing_ = false; });
 
+    writing_ = false;
+    Connect(host, port);
   }
 
+  ~TCPClient() noexcept {
+    LOG_STACK_TRACE_POINT;
 
-  ~TCPClient() noexcept
-  {
-    LOG_STACK_TRACE_POINT;    
-    
-    thread_manager_->Off( event_start_service_ );
-    thread_manager_->Off( event_stop_service_ );        
+    thread_manager_->Off(event_start_service_);
+    thread_manager_->Off(event_stop_service_);
     Close();
   }
 
-  void Send(message_type const& msg) noexcept
-  {
+  void Send(message_type const& msg) noexcept {
     LOG_STACK_TRACE_POINT;
-    
-    fetch::logger.Debug("Client: Sending message to server");    
-    auto cb = [=]() 
-      {
-        LOG_LAMBDA_STACK_TRACE_POINT;            
-        write_mutex_.lock();
-        write_queue_.push_back(msg);
-        if (writing_) 
-        {
-          write_mutex_.unlock();
-        } else 
-        {
-          fetch::logger.Debug("Client: Start writing message");
-          bool write;
-          if(is_alive_)
-            write = writing_ = true;
-          else
-            write = writing_ = false;
-          
-          write_mutex_.unlock();
-          if(write) Write();
-        }
-      };
-    
-    if(is_alive_)
-      io_service_.post(cb);
+
+    fetch::logger.Debug("Client: Sending message to server");
+    auto cb = [=]() {
+      LOG_LAMBDA_STACK_TRACE_POINT;
+      write_mutex_.lock();
+      write_queue_.push_back(msg);
+      if (writing_) {
+        write_mutex_.unlock();
+      } else {
+        fetch::logger.Debug("Client: Start writing message");
+        bool write;
+        if (is_alive_)
+          write = writing_ = true;
+        else
+          write = writing_ = false;
+
+        write_mutex_.unlock();
+        if (write) Write();
+      }
+    };
+
+    if (is_alive_) io_service_.post(cb);
   }
 
   virtual void PushMessage(message_type const& value) = 0;
   virtual void ConnectionFailed() = 0;
 
-  handle_type const &handle() const noexcept {    
-    return handle_;
+  handle_type const& handle() const noexcept { return handle_; }
+
+  std::string Address() const noexcept {
+    return socket_.remote_endpoint().address().to_string();
   }
 
-  std::string  Address() const noexcept
-  {
-    return socket_.remote_endpoint().address().to_string();    
+  void OnLeave(std::function<void()> fnc) {
+    std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_);
+
+    on_leave_ = fnc;
   }
 
+  bool is_alive() const noexcept { return is_alive_; }
 
-  void OnLeave( std::function< void() > fnc ) 
-  {
-    std::lock_guard< fetch::mutex::Mutex > lock(leave_mutex_);
-    
-    on_leave_ = fnc;    
-  }
-  
-  bool is_alive() const noexcept { return is_alive_; }  
-private:
-  void Connect(byte_array::ConstByteArray const& host, byte_array::ConstByteArray const& port) noexcept
-  {
-    LOG_STACK_TRACE_POINT;    
+ private:
+  void Connect(byte_array::ConstByteArray const& host,
+               byte_array::ConstByteArray const& port) noexcept {
+    LOG_STACK_TRACE_POINT;
     asio::ip::tcp::resolver resolver(io_service_);
     Connect(resolver.resolve({std::string(host), std::string(port)}));
   }
 
-  void Connect(byte_array::ConstByteArray const& host, uint16_t const& port) noexcept
-  {
-    LOG_STACK_TRACE_POINT;    
+  void Connect(byte_array::ConstByteArray const& host,
+               uint16_t const& port) noexcept {
+    LOG_STACK_TRACE_POINT;
     std::stringstream p;
     p << port;
 
@@ -144,106 +130,89 @@ private:
     Connect(resolver.resolve({std::string(host), p.str()}));
   }
 
-  void Connect(asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) noexcept
-  {
-    LOG_STACK_TRACE_POINT;    
-    auto cb = [=](std::error_code ec,      
-      asio::ip::tcp::tcp::resolver::iterator) 
-      {        
-        is_alive_ = true;
-        LOG_LAMBDA_STACK_TRACE_POINT;    
-        if (!ec) 
-        {
+  void Connect(
+      asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) noexcept {
+    LOG_STACK_TRACE_POINT;
+    auto cb = [=](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {
+      is_alive_ = true;
+      LOG_LAMBDA_STACK_TRACE_POINT;
+      if (!ec) {
+        fetch::logger.Debug("Connection established!");
+        ReadHeader();
+      } else {
+        if (is_alive_) ConnectionFailed();
+        is_alive_ = false;
+      }
 
-          fetch::logger.Debug("Connection established!");
-          ReadHeader();
-        } else {
-          if(is_alive_) ConnectionFailed();
-          is_alive_ = false;          
-        }
-        
-      };
+    };
 
-    asio::async_connect(socket_, endpoint_iterator, cb);    
+    asio::async_connect(socket_, endpoint_iterator, cb);
   }
 
-  void ReadHeader() noexcept
-  {
+  void ReadHeader() noexcept {
     LOG_STACK_TRACE_POINT;
-    auto cb = [=](std::error_code ec, std::size_t)      
-      {
-        LOG_STACK_TRACE_POINT;    // Deliberately breaking the chain
-        if (!ec) 
-        {
-          ReadBody();
-        }
-        else 
-        {
-          Close(true);
-          fetch::logger.Error("Reading header failed, closing connection: ", ec);
-        }
-      };
-    
+    auto cb = [=](std::error_code ec, std::size_t) {
+      LOG_STACK_TRACE_POINT;  // Deliberately breaking the chain
+      if (!ec) {
+        ReadBody();
+      } else {
+        Close(true);
+        fetch::logger.Error("Reading header failed, closing connection: ", ec);
+      }
+    };
 
-    asio::async_read(socket_, asio::buffer(header_.bytes, 2*sizeof(uint64_t)),
+    asio::async_read(socket_, asio::buffer(header_.bytes, 2 * sizeof(uint64_t)),
                      cb);
   }
 
-  void ReadBody() noexcept
-  {
+  void ReadBody() noexcept {
     byte_array::ByteArray message;
-    if( header_.content.magic != 0xFE7C80A1FE7C80A1) {
+    if (header_.content.magic != 0xFE7C80A1FE7C80A1) {
       fetch::logger.Debug("Magic incorrect - closing connection.");
       Close(true);
-      
+
       return;
     }
-    
+
     message.Resize(header_.content.length);
 
-    auto cb = [=](std::error_code ec, std::size_t len) 
-      {
+    auto cb = [=](std::error_code ec, std::size_t len) {
 
-        if (!ec) 
-        {
-          PushMessage(message);
-          ReadHeader();
-        } else 
-        {
-          fetch::logger.Error("Reading body failed, closing connection: ", ec);
-          Close(true);          
-        }
-      };
+      if (!ec) {
+        PushMessage(message);
+        ReadHeader();
+      } else {
+        fetch::logger.Error("Reading body failed, closing connection: ", ec);
+        Close(true);
+      }
+    };
 
     asio::async_read(socket_, asio::buffer(message.pointer(), message.size()),
-      cb);
+                     cb);
   }
 
-  void Close(bool failed = false) 
-  {
-    if(is_alive_) {
-      is_alive_ = false; 
-      std::lock_guard< fetch::mutex::Mutex > lock(leave_mutex_);
-      
-      if(on_leave_) {
+  void Close(bool failed = false) {
+    if (is_alive_) {
+      is_alive_ = false;
+      std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_);
+
+      if (on_leave_) {
         on_leave_();
       }
 
-      if(failed) ConnectionFailed();
+      if (failed) ConnectionFailed();
 
-      socket_.close();      
+      socket_.close();
     }
   }
-  
-  
+
   void Write() noexcept {
-    LOG_STACK_TRACE_POINT;    
+    LOG_STACK_TRACE_POINT;
     serializers::ByteArrayBuffer buffer;
 
     write_mutex_.lock();
-    if( write_queue_.empty() ) 
-    {
-      fetch::logger.Debug("Queue is empty stopping");    
+    if (write_queue_.empty()) {
+      fetch::logger.Debug("Queue is empty stopping");
       write_mutex_.unlock();
       return;
     }
@@ -251,55 +220,48 @@ private:
     buffer << 0xFE7C80A1FE7C80A1;
     buffer << write_queue_.front();
     write_mutex_.unlock();
-    
-    auto cb = [=](std::error_code ec, std::size_t) 
-      {
-        LOG_STACK_TRACE_POINT; // Deliberately breaking the chain
-        
-        if (!ec) 
-        {
-          fetch::logger.Debug("Wrote message.");     
-          write_mutex_.lock();
-          write_queue_.pop_front();
-          bool should_write = writing_ = !write_queue_.empty();
-          write_mutex_.unlock();
-        
-          if (should_write && is_alive_) 
-          {
-            fetch::logger.Debug("Proceeding to next.");
-          
-            Write();
-          } 
-        } else 
-        {
-          fetch::logger.Error("Client: Write failed, closing connection:", ec);
-          Close(true);
+
+    auto cb = [=](std::error_code ec, std::size_t) {
+      LOG_STACK_TRACE_POINT;  // Deliberately breaking the chain
+
+      if (!ec) {
+        fetch::logger.Debug("Wrote message.");
+        write_mutex_.lock();
+        write_queue_.pop_front();
+        bool should_write = writing_ = !write_queue_.empty();
+        write_mutex_.unlock();
+
+        if (should_write && is_alive_) {
+          fetch::logger.Debug("Proceeding to next.");
+
+          Write();
         }
-      };
+      } else {
+        fetch::logger.Error("Client: Write failed, closing connection:", ec);
+        Close(true);
+      }
+    };
 
-
-    if(is_alive_) {
-      asio::async_write(socket_, asio::buffer(buffer.data().pointer(), buffer.data().size()),
-        cb);
+    if (is_alive_) {
+      asio::async_write(
+          socket_, asio::buffer(buffer.data().pointer(), buffer.data().size()),
+          cb);
     }
-    
   }
 
-  
-private:
-  std::atomic< bool > is_alive_;
-  mutable fetch::mutex::Mutex leave_mutex_;  
-  std::function< void() > on_leave_;
-  
+ private:
+  std::atomic<bool> is_alive_;
+  mutable fetch::mutex::Mutex leave_mutex_;
+  std::function<void()> on_leave_;
+
   event_handle_type event_start_service_;
-  event_handle_type event_stop_service_;      
+  event_handle_type event_stop_service_;
   thread_manager_ptr_type thread_manager_;
 
   handle_type handle_;
   static handle_type global_handle_counter_;
   static fetch::mutex::Mutex global_handle_mutex_;
-  static handle_type next_handle() 
-  {
+  static handle_type next_handle() {
     std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
     handle_type ret = global_handle_counter_;
     ++global_handle_counter_;
@@ -307,7 +269,7 @@ private:
   }
 
   union {
-    char bytes[2*sizeof(uint64_t)];
+    char bytes[2 * sizeof(uint64_t)];
     struct {
       uint64_t magic;
       uint64_t length;
@@ -315,20 +277,16 @@ private:
 
   } header_;
 
-  asio::io_service &io_service_;
+  asio::io_service& io_service_;
   asio::ip::tcp::tcp::socket socket_;
-
 
   bool writing_ = false;
   message_queue_type write_queue_;
   fetch::mutex::Mutex write_mutex_;
-
 };
 
-TCPClient::handle_type
-TCPClient::global_handle_counter_ = 0;
+TCPClient::handle_type TCPClient::global_handle_counter_ = 0;
 fetch::mutex::Mutex TCPClient::global_handle_mutex_(__LINE__, __FILE__);
-
 }
 }
 

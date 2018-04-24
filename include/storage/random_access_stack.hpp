@@ -1,8 +1,8 @@
 #ifndef STORAGE_RANDOM_ACCESS_STACK_HPP
 #define STORAGE_RANDOM_ACCESS_STACK_HPP
-#include"assert.hpp"
 #include <fstream>
 #include <string>
+#include "assert.hpp"
 
 namespace fetch {
 namespace platform {
@@ -62,7 +62,7 @@ class RandomAccessStack {
     std::size_t capacity = (length - header_.size()) / sizeof(type);
 
     if (capacity < header_.objects) {
-      TODO_FAIL( "Expected more stack objects." );
+      TODO_FAIL("Expected more stack objects.");
     }
 
     // TODO: Check magic
@@ -132,7 +132,7 @@ class RandomAccessStack {
   type Top() const {
     detailed_assert(header_.objects > 0);
 
-    int64_t n = int64_t( (header_.objects - 1) * sizeof(type) + header_.size() );
+    int64_t n = int64_t((header_.objects - 1) * sizeof(type) + header_.size());
     std::fstream fin(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
     fin.seekg(n, fin.beg);
@@ -179,7 +179,7 @@ class RandomAccessStack {
     header_ = Header();
 
     if (!header_.Write(fin)) {
-      TODO_FAIL( "Error could not write header - todo throw error" );
+      TODO_FAIL("Error could not write header - todo throw error");
     }
 
     fin.close();

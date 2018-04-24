@@ -1,38 +1,33 @@
 #ifndef STORAGE_FILE_OBJECT_HPP
 #define STORAGE_FILE_OBJECT_HPP
-#include"storage/versioned_random_access_stack.hpp"
+#include "storage/versioned_random_access_stack.hpp"
 
-#include<cstdint>
+#include <cstdint>
 
 namespace fetch {
 namespace storage {
 namespace details {
-  struct StorageBlockType {
-    enum {
-      BYTES = 8,      
-      UNDEFINED = uint64_t(-1)
-    };
-    
-    StorageBlockType() {
-      // Ensures that paddded bytes are not uninitialized.
-      memset(this, 0, sizeof(decltype(*this)));
-      previous = UNDEFINED;
-      next = UNDEFINED;
-    }
+struct StorageBlockType {
+  enum { BYTES = 8, UNDEFINED = uint64_t(-1) };
 
-    uint64_t previous = UNDEFINED;
-    uint64_t next = UNDEFINED;
-    uint8_t data[BYTES];
-  };
+  StorageBlockType() {
+    // Ensures that paddded bytes are not uninitialized.
+    memset(this, 0, sizeof(decltype(*this)));
+    previous = UNDEFINED;
+    next = UNDEFINED;
+  }
+
+  uint64_t previous = UNDEFINED;
+  uint64_t next = UNDEFINED;
+  uint8_t data[BYTES];
+};
 };
 
-
-template< typename S = VersionedRandomAccessStack<details::StorageBlockType> >
+template <typename S = VersionedRandomAccessStack<details::StorageBlockType> >
 class FileObjectImplementation {
  public:
   typedef S stack_type;
   typedef typename stack_type::type block_type;
-
 
   FileObjectImplementation(uint64_t const &block_position, stack_type &stack)
       : file_position_(block_position), stack_(stack) {}
@@ -65,7 +60,9 @@ class FileObjectImplementation {
     byte_index_ = remain;
   }
 
-  std::size_t Tell() const { return byte_index_ + block_index_ * block_type::BYTES; }
+  std::size_t Tell() const {
+    return byte_index_ + block_index_ * block_type::BYTES;
+  }
 
   void Write(uint8_t const *bytes, std::size_t const &n) {
     std::size_t i = 0;
@@ -91,9 +88,9 @@ class FileObjectImplementation {
     }
   }
 
-  uint64_t Size() const { return 0; } // TODO
+  uint64_t Size() const { return 0; }  // TODO
 
-  uint64_t Shrink() { return 0; } // TODO
+  uint64_t Shrink() { return 0; }  // TODO
 
   uint64_t const &file_position() const { return file_position_; }
 
@@ -102,7 +99,7 @@ class FileObjectImplementation {
     if (byte_index_ == block_type::BYTES) {
       stack_.Set(block_index_, block);
       block_index_ = block.next;
-      
+
       if (block_index_ == block_type::UNDEFINED) {
         block.next = stack_.size();
         stack_.Set(block_index_, block);

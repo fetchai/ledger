@@ -132,7 +132,7 @@
 #include "protocols/chain_keeper/py_commands.hpp"
 #include "protocols/chain_keeper/py_transaction_manager.hpp"
 */
-#include "optimisation/py_brute_force.hpp"
+
 // #include "optimisation/py_abstract_spinglass_solver.hpp"
 #include "optimisation/instance/py_load_txt.hpp"
 #include "optimisation/instance/py_binary_problem.hpp"

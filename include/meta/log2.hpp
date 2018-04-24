@@ -13,8 +13,6 @@ template <>
 struct Log2<1> {
   enum { value = 0 };
 };
-
-
 }
 }
 #endif

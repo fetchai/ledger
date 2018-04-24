@@ -1,10 +1,10 @@
 #ifndef STORAGE_VARIANT_STACK_HPP
 #define STORAGE_VARIANT_STACK_HPP
 
-#include"assert.hpp"
 #include <cassert>
 #include <fstream>
 #include <string>
+#include "assert.hpp"
 
 // TODO: Make variant stack as a circular buffer!
 
@@ -142,7 +142,7 @@ class VariantStack {
 
     fin.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
     if (separator.object_size != sizeof(T)) {
-      TODO_FAIL( "TODO: Throw error, size mismatch in variantstack" );
+      TODO_FAIL("TODO: Throw error, size mismatch in variantstack");
     }
 
     fin.read(reinterpret_cast<char *>(&object), sizeof(T));
@@ -169,7 +169,7 @@ class VariantStack {
     header_ = Header();
 
     if (!header_.Write(fin)) {
-      TODO_FAIL( "Error: could not write header" );
+      TODO_FAIL("Error: could not write header");
     }
 
     fin.close();

@@ -9,20 +9,14 @@ namespace crypto {
 class FNV : public StreamHasher {
  public:
   typedef typename StreamHasher::byte_array_type byte_array_type;
-  
-  FNV()
-  {
-     digest_.Resize( 4 );
-  }
 
-  void Reset() override {
-    context_ = 2166136261;  
-  }
+  FNV() { digest_.Resize(4); }
+
+  void Reset() override { context_ = 2166136261; }
 
   bool Update(byte_array_type const& s) override {
-    for (std::size_t i = 0; i < s.size(); ++i)
-    {
-        context_ = (context_ * 16777619) ^ s[i];
+    for (std::size_t i = 0; i < s.size(); ++i) {
+      context_ = (context_ * 16777619) ^ s[i];
     }
     return true;
   }
@@ -33,34 +27,29 @@ class FNV : public StreamHasher {
     digest_[2] = uint8_t(context_ >> 16);
     digest_[3] = uint8_t(context_ >> 24);
   }
-  
+
   byte_array_type digest() override {
-    assert( digest_.size() == 4);
+    assert(digest_.size() == 4);
     return digest_;
   }
 
-  uint32_t uint_digest() {
-    return context_;
-  }
-  
-private:
-  uint32_t context_;
-  byte_array_type digest_;  
+  uint32_t uint_digest() { return context_; }
 
+ private:
+  uint32_t context_;
+  byte_array_type digest_;
 };
 
 struct CallableFNV {
-  std::size_t operator() (fetch::byte_array::BasicByteArray const  &key) const {
+  std::size_t operator()(fetch::byte_array::BasicByteArray const& key) const {
     uint32_t hash = 2166136261;
-    for (std::size_t i = 0; i < key.size(); ++i)
-    {
+    for (std::size_t i = 0; i < key.size(); ++i) {
       hash = (hash * 16777619) ^ key[i];
     }
-    
-    return hash ;    
+
+    return hash;
   }
 };
-
 }
 }
 

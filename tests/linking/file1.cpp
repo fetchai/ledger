@@ -1,3 +1,3 @@
-#include"allfiles.hpp"
+#include "allfiles.hpp"
 
 int foo() { return 0; }

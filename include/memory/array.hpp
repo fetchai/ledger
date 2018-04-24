@@ -1,16 +1,16 @@
 #ifndef MEMORY_ARRAY_HPP
 #define MEMORY_ARRAY_HPP
 
-#include "iterator.hpp"
-#include "meta/log2.hpp"
-#include"platform.hpp"
+#include <mm_malloc.h>
 #include <algorithm>
 #include <atomic>
 #include <cassert>
-#include<cstring>
 #include <cstdint>
+#include <cstring>
 #include <type_traits>
-#include <mm_malloc.h>
+#include "iterator.hpp"
+#include "meta/log2.hpp"
+#include "platform.hpp"
 namespace fetch {
 namespace memory {
 
@@ -18,15 +18,15 @@ template <typename T>
 class Array {
  public:
   typedef std::size_t size_type;
-  typedef T* data_type;
-  
+  typedef T *data_type;
+
   typedef ForwardIterator<T> iterator;
   typedef BackwardIterator<T> reverse_iterator;
   typedef Array<T> self_type;
   typedef T type;
 
-  enum { 
-    E_SIMD_SIZE = (platform::VectorRegisterSize< type >::value >> 3),    
+  enum {
+    E_SIMD_SIZE = (platform::VectorRegisterSize<type>::value >> 3),
     E_SIMD_COUNT = E_SIMD_SIZE / sizeof(T),
     E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value
   };
@@ -36,16 +36,12 @@ class Array {
 
   Array(std::size_t const &n) {
     size_ = n;
-    if (n > 0) data_ = (type*)_mm_malloc(padded_size()*sizeof(type), 16 );
-    
+    if (n > 0) data_ = (type *)_mm_malloc(padded_size() * sizeof(type), 16);
   }
 
   Array() : Array(0) {}
 
-  Array(Array const &other)
-  {
-    this->operator=(other);
-  }
+  Array(Array const &other) { this->operator=(other); }
 
   Array(Array &&other) {
     std::swap(size_, other.size_);
@@ -53,18 +49,17 @@ class Array {
   }
 
   void SetAllZero() {
-    assert( data_ != nullptr );
-    
-    memset( data_, 0, padded_size()*sizeof(type) );
+    assert(data_ != nullptr);
+
+    memset(data_, 0, padded_size() * sizeof(type));
   }
 
   void SetPaddedZero() {
-    assert( data_ != nullptr );
-    
-    memset( data_+size(), 0, (padded_size()-size())*sizeof(type) );
+    assert(data_ != nullptr);
+
+    memset(data_ + size(), 0, (padded_size() - size()) * sizeof(type));
   }
-  
-  
+
   Array &operator=(Array &&other) {
     std::swap(size_, other.size_);
     std::swap(data_, other.data_);
@@ -72,22 +67,18 @@ class Array {
   }
 
   ~Array() {
-    if(data_ != nullptr) _mm_free(data_);
+    if (data_ != nullptr) _mm_free(data_);
   }
 
-  Array< type > Copy() const
-  {
-    Array< type > ret( size_ );
-    for(std::size_t i = 0; i < size_; ++i )
-    {
-      ret[i] = At( i );
+  Array<type> Copy() const {
+    Array<type> ret(size_);
+    for (std::size_t i = 0; i < size_; ++i) {
+      ret[i] = At(i);
     }
-    
+
     return ret;
   }
-  
 
-  
   iterator begin() { return iterator(data_, data_ + size()); }
   iterator end() { return iterator(data_ + size(), data_ + size()); }
   reverse_iterator rbegin() {
@@ -103,7 +94,7 @@ class Array {
 
   T const &operator[](std::size_t const &n) const {
     assert(data_ != nullptr);
-    
+
     assert(n < padded_size());
     return data_[n];
   }
@@ -130,23 +121,18 @@ class Array {
   self_type &operator=(Array const &other) {
     if (&other == this) return *this;
 
-    if(data_ != nullptr) delete[] data_;
+    if (data_ != nullptr) delete[] data_;
     data_ = new T[other.padded_size()];
     size_ = other.size();
-    
-    for(std::size_t i=0; i < size_; ++i)
-      data_[i] = other[i];
-    
+
+    for (std::size_t i = 0; i < size_; ++i) data_[i] = other[i];
+
     return *this;
   }
 
-  std::size_t simd_size() const {
-    return (size_) >> E_LOG_SIMD_COUNT;
-  }
+  std::size_t simd_size() const { return (size_) >> E_LOG_SIMD_COUNT; }
 
-  std::size_t size() const {
-    return size_;
-  }
+  std::size_t size() const { return size_; }
 
   std::size_t padded_size() const {
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT)
@@ -158,7 +144,6 @@ class Array {
   type *pointer() const { return data_; }
 
  private:
-
   size_type size_ = 0;
   T *data_ = nullptr;
 };

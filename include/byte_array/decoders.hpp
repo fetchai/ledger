@@ -4,10 +4,9 @@
 
 namespace fetch {
 namespace byte_array {
-  
+
 BasicByteArray FromBase64(BasicByteArray const &str) noexcept;
 BasicByteArray FromHex(BasicByteArray const &str) noexcept;
-  
 }
 }
 

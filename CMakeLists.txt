@@ -4,7 +4,7 @@ project (fetch)
 OPTION(BUILD_TESTS "Build tests" ON)
 OPTION(BUILD_EXAMPLES "Build examples" ON)
 OPTION(BUILD_BENCHMARK "Build benchmark" ON)
-OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" OFF)
+OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" ON)
 
 
 ## Check feature set on Apple with

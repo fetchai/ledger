@@ -30,7 +30,7 @@ class LinearCongruentialGenerator {
   random_type c_ = 1442695040888963407ull;
 
   static constexpr double inv_double_max_ =
-    1. / double(std::numeric_limits<random_type>::max());
+      1. / double(std::numeric_limits<random_type>::max());
 };
 }
 }
