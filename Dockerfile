@@ -27,20 +27,23 @@ RUN yum update -y && \
 USER default
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-# ==== GOURCE ====
+# ==== BOOST(1.67.0) & GOURCE ====
 # This setup is here to build the `Gource`, and SHOULD be relocated to dedicated
 # dockerfile & container.
 USER root
+
 RUN yum install -y SDL2-devel && \
     yum install -y SDL2_image-devel && \
     yum install -y pcre-devel && \
     yum install -y freetype-devel && \
     yum install -y glew-devel && \
     yum install -y glm-devel && \
-    yum install -y boost-devel && \
     yum install -y tinyxml-devel && \
     yum install -y autoconf && \
-    yum install -y automake
+    yum install -y automake && \
+    yum install -y wget && \
+    yum install -y which
+#    yum install -y boost-devel
 
 RUN mkdir /src && \
     chown default /src && \
@@ -48,15 +51,29 @@ RUN mkdir /src && \
 
 USER default
 
-# Starting C++ build in new login shell in order to read & set correct enviroment (env. variables) for C++ bils. It is necessary since the shell from `RUN` command does not have all env. variables set for C++ build (e.g. ./configure and make would fail with obscure error)
-RUN bash --login -c "cd /src && \
+# Starting C++ build in new *login* shell in order to get correct enviroment setup (env. variables) for C++ build. This is necessary since the straight shell from `RUN` instruction is not login shell, and so its environment does not match the full blown propper environment setup with all the stuff for C++ build user normally gets after normal login (e.g. ./configure and make would fail with obscure errors).
+RUN bash --login -c "\
+    cd /src && \
+    wget http://sourceforge.net/projects/boost/files/boost/1.67.0/boost_1_67_0.tar.gz && \
+    tar -xzvf boost_1_67_0.tar.gz && \
+    cd boost_1_67_0 && \
+    ./bootstrap.sh --with-toolset=clang --prefix=/usr/local && \
+    NUMBER_OF_CPU_CORES=`getconf _NPROCESSORS_ONLN` && \
+    echo NUMBER_OF_CPU_CORES: \$NUMBER_OF_CPU_CORES && \
+    sudo ./b2 -j\$NUMBER_OF_CPU_CORES install --with=all"
+
+RUN bash --login -c "\
+    cd /src && \
     git clone https://github.com/acaudwell/Gource.git && \
     cd Gource && \
+    git pull && \
+    git submodule sync --recursive && \
+    git submodule update --init --recursive && \
     ./autogen.sh && \
     ./configure && \
     make -j && \
     sudo make -j install"
-# ==== GOURCE ====
+# ==== BOOST(1.67.0) & GOURCE ====
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 WORKDIR /build
