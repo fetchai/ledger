@@ -180,7 +180,7 @@ public:
     return b;
   }
 
-  char const* operator=(char* const data) {
+  char const* operator=(char const * data) {
     if(data == nullptr)
       type_ = NULL_VALUE;
     else {

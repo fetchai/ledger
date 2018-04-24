@@ -580,10 +580,21 @@ public:
     }
 
     uint16_t magic = 0xFE7C;    
-    fwrite(&magic, sizeof(magic), 1, fp); 
-    fwrite(&height_, sizeof(height_), 1, fp);
-    fwrite(&width_, sizeof(width_), 1, fp);
-    fwrite(data_.pointer(), sizeof(type), this->padded_size(), fp);    
+    if(fwrite(&magic, sizeof(magic), 1, fp) != 1) {
+      TODO_FAIL("Could not write magic - todo: make custom exception");
+    }
+    
+    if(fwrite(&height_, sizeof(height_), 1, fp) != 1 ) {
+      TODO_FAIL("Could not write height - todo: make custom exception");
+    }
+    
+    if(fwrite(&width_, sizeof(width_), 1, fp) != 1) {
+      TODO_FAIL("Could not write width - todo: make custom exc");
+    }
+								   
+    if(fwrite(data_.pointer(), sizeof(type), this->padded_size(), fp) != this->padded_size()) {
+      TODO_FAIL("Could not write matrix body - todo: make custom exc");
+    }
     fclose(fp);    
   }
 
@@ -599,19 +610,30 @@ public:
     }
     
     uint16_t magic;        
-    fread(&magic, sizeof(magic), 1, fp);
+    if(fread(&magic, sizeof(magic), 1, fp) != 1) {
+      TODO_FAIL("Could not read magic - throw custom exception"); 
+    }
+    
     if(magic != 0xFE7C) {
       TODO_FAIL("Endianess failure"); 
     }
     
     
     size_type height = 0, width = 0;
-    fread(&height, sizeof(height), 1, fp);
-    fread(&width, sizeof(width), 1, fp);
+    if(fread(&height, sizeof(height), 1, fp) != 1) {
+      TODO_FAIL("failed to read height of matrix - TODO, make custom exception for this");
+    }
+    
+    if(fread(&width, sizeof(width), 1, fp)!= 1 ) {
+      TODO_FAIL("failed to read width of matrix - TODO, make custom exception for this");
+    }
     
     Resize(height, width);
 
-    fread(data_.pointer(), sizeof(type), this->padded_size(), fp);    
+    if(fread(data_.pointer(), sizeof(type), this->padded_size(), fp) != (this->padded_size())) {
+      TODO_FAIL("failed to read body of matrix - TODO, ,make custom exception");
+    }
+    
     fclose(fp);    
   }
   

@@ -280,11 +280,11 @@ public:
     NodeDetails me = details_.details();
     
     suggestion_mutex_.lock();
-    if(already_seen_.find( details.public_key ) == already_seen_.end())
+    if(already_seen_.find( std::string( details.public_key ) ) == already_seen_.end())
     {
       std::cout << "Discovered " << details.public_key << std::endl;
       peers_with_few_followers_.push_back(details);
-      already_seen_.insert( details.public_key );
+      already_seen_.insert( std::string( details.public_key ) );
       this->Publish(SwarmFeed::FEED_REQUEST_CONNECTIONS, details);
       
       for(auto &client: peers_)
@@ -422,7 +422,7 @@ public:
   
   ////////////////////////
   // Not service protocol
-  client_shared_ptr_type ConnectChainKeeper(std::string const &host, uint16_t const &port ) 
+  client_shared_ptr_type ConnectChainKeeper(byte_array::ConstByteArray const &host, uint16_t const &port ) 
   {
     LOG_STACK_TRACE_POINT;
     
@@ -474,7 +474,7 @@ public:
     request_ip_ = request_ip;    
   }
   
-  client_shared_ptr_type Connect( std::string const &host, uint16_t const &port ) 
+  client_shared_ptr_type Connect( byte_array::ConstByteArray const &host, uint16_t const &port ) 
   {
     LOG_STACK_TRACE_POINT;
     
@@ -585,7 +585,7 @@ public:
   }
   
 
-  void Bootstrap(std::string const &host, uint16_t const &port ) 
+  void Bootstrap(byte_array::ConstByteArray const &host, uint16_t const &port ) 
   {
     LOG_STACK_TRACE_POINT;
     
@@ -605,8 +605,8 @@ public:
     for(auto &o : others )  
     {      
       std::cout << "Consider connecting to " << o.public_key << std::endl;
-      if(already_seen_.find( o.public_key ) == already_seen_.end()) {
-        already_seen_.insert( o.public_key );        
+      if(already_seen_.find( std::string( o.public_key)  ) == already_seen_.end()) {
+        already_seen_.insert( std::string( o.public_key ) );        
         peers_with_few_followers_.push_back( o );
       }
       

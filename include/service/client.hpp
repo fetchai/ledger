@@ -34,7 +34,7 @@ public:
   typedef typename super_type::thread_manager_ptr_type thread_manager_ptr_type ;
   typedef typename thread_manager_type::event_handle_type event_handle_type;
    
-  ServiceClient(std::string const& host,
+  ServiceClient(byte_array::ConstByteArray const& host,
     uint16_t const& port,
     thread_manager_ptr_type thread_manager)  :
     super_type(host, port, thread_manager),
@@ -124,7 +124,7 @@ private:
             
           if(!PushProtocolRequest( handle_type(-1), msg) ){
             throw serializers::SerializableException(
-              error::UNKNOWN_MESSAGE, "Unknown message");
+						     error::UNKNOWN_MESSAGE, byte_array::ConstByteArray("Unknown message") );
           }            
             
         }

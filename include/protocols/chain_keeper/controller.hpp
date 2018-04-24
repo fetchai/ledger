@@ -124,7 +124,7 @@ public:
 
 
 
-  void ConnectTo(std::string const &host, uint16_t const &port ) 
+  void ConnectTo(byte_array::ByteArray const &host, uint16_t const &port ) 
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     
@@ -149,7 +149,7 @@ public:
     }
     
     EntryPoint d;
-    d.host = host;    
+    d.host = std::string(host); 
     d.port = port;
     d.http_port = uint16_t(-1); 
     d.group = 0; // TODO: get and check that it is right

@@ -1,7 +1,9 @@
 #ifndef CHAIN_TRANSACTION_HPP
 #define CHAIN_TRANSACTION_HPP
 #include "crypto/sha256.hpp"
+
 #include "byte_array/const_byte_array.hpp"
+#include "serializer/referenced_byte_array.hpp"
 #include "serializer/byte_array_buffer.hpp"
 #include "logger.hpp"
 

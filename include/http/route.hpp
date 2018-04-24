@@ -118,12 +118,12 @@ private:
     ++i;
     
     
-    std::string reg = "^"+value.SubArray(i, value.size() - i);
+    std::string reg = "^"+std::string(value.SubArray(i, value.size() - i));
     
     std::regex rgx( reg );    
     match_.push_back([rgx, var](std::size_t &i, byte_array::ByteArray const &path, ViewParameters &params) {
         
-        std::string s = path.SubArray(i);
+        std::string s = std::string(path.SubArray(i));
         std::smatch matches;
         bool ret = std::regex_search(s, matches, rgx);
 

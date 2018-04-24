@@ -34,7 +34,7 @@ inline void Deserialize(T &serializer, SerializableException &s) {
 
   char buffer[size];
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(buffer), size);
-  s = SerializableException(code, buffer);
+  s = SerializableException(code, std::string(buffer));
 }
 };
 };

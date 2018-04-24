@@ -1,5 +1,6 @@
 #ifndef VECTORIZE_AVX_HPP
 #define VECTORIZE_AVX_HPP
+#ifdef __AVX__
 #include "vectorize/info.hpp"
 #include "vectorize/register.hpp"
 #include "vectorize/info_avx.hpp"
@@ -174,4 +175,5 @@ FETCH_ADD_OPERATOR(+, double, __m256d, _mm256_add_pd);
 
 };
 };
+#endif
 #endif

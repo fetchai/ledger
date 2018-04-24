@@ -3,6 +3,7 @@
 
 #include "network/thread_manager.hpp"
 #include "network/message.hpp"
+#include "byte_array/const_byte_array.hpp"
 #include "byte_array/referenced_byte_array.hpp"
 #include "serializer/referenced_byte_array.hpp"
 #include "serializer/byte_array_buffer.hpp"
@@ -32,7 +33,7 @@ public:
   typedef uint64_t handle_type;
 
   
-  TCPClient(std::string const& host, std::string const& port,
+  TCPClient(byte_array::ConstByteArray const& host, byte_array::ConstByteArray const& port,
     thread_manager_ptr_type thread_manager) noexcept :
     thread_manager_(thread_manager), 
     io_service_(thread_manager->io_service()),
@@ -47,7 +48,7 @@ public:
     Connect(host, port);
   }
 
-  TCPClient(std::string const& host, uint16_t const& port,
+  TCPClient(byte_array::ConstByteArray const& host, uint16_t const& port,
     thread_manager_ptr_type thread_manager) noexcept :
     thread_manager_(thread_manager),
     io_service_(thread_manager->io_service()),
@@ -129,21 +130,21 @@ public:
   
   bool is_alive() const noexcept { return is_alive_; }  
 private:
-  void Connect(std::string const& host, std::string const& port) noexcept
+  void Connect(byte_array::ConstByteArray const& host, byte_array::ConstByteArray const& port) noexcept
   {
     LOG_STACK_TRACE_POINT;    
     asio::ip::tcp::resolver resolver(io_service_);
-    Connect(resolver.resolve({host, port}));
+    Connect(resolver.resolve({std::string(host), std::string(port)}));
   }
 
-  void Connect(std::string const& host, uint16_t const& port) noexcept
+  void Connect(byte_array::ConstByteArray const& host, uint16_t const& port) noexcept
   {
     LOG_STACK_TRACE_POINT;    
     std::stringstream p;
     p << port;
 
     asio::ip::tcp::resolver resolver(io_service_);
-    Connect(resolver.resolve({host, p.str()}));
+    Connect(resolver.resolve({std::string(host), p.str()}));
   }
 
   void Connect(asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) noexcept

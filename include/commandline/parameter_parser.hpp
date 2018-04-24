@@ -18,12 +18,13 @@ class ParamsParser {
  public:
   void Parse(int argc, char const **argv) {
     arg_count_ = argc;
-    for (std::size_t i = 0; i < argc; ++i) {
+    std::size_t sargs = std::size_t(argc);
+    for (std::size_t i = 0; i < sargs; ++i) {
       std::string name(argv[i]);
       if (name.find("-") == 0) {
         name = name.substr(1);
         ++i;
-        if (i == argc) {
+        if (i == sargs) {
           params_[name] = "1";
           continue;
         }

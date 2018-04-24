@@ -48,7 +48,7 @@ public:
       fetch::logger.Debug("Call failed!");
       prom.reference()->Fail(serializers::SerializableException(
           error::COULD_NOT_DELIVER,
-          "Could not deliver request"));
+          byte_array::ConstByteArray("Could not deliver request")));
       promises_mutex_.lock();
       promises_.erase(prom.id());
       promises_mutex_.unlock();
@@ -78,7 +78,7 @@ public:
       fetch::logger.Debug("Call failed!");
       prom.reference()->Fail(serializers::SerializableException(
           error::COULD_NOT_DELIVER,
-          "Could not deliver request"));            
+          byte_array::ConstByteArray("Could not deliver request")));
     }
 
     return prom;    
@@ -156,7 +156,7 @@ protected:
 
         throw serializers::SerializableException(
           error::PROMISE_NOT_FOUND,
-          "Could not find promise");
+          byte_array::ConstByteArray("Could not find promise"));
       }
       promises_mutex_.unlock();
         
@@ -181,7 +181,7 @@ protected:
         promises_mutex_.unlock();        
         throw serializers::SerializableException(
           error::PROMISE_NOT_FOUND,
-          "Could not find promise");
+          byte_array::ConstByteArray("Could not find promise"));
       }
       
       promises_mutex_.unlock();

@@ -195,7 +195,7 @@ private:
                 fetch::logger.Error("Possibly a response to a client?");
                 
                 throw serializers::SerializableException(
-                  error::UNKNOWN_MESSAGE, "Unknown message");
+							 error::UNKNOWN_MESSAGE, byte_array::ConstByteArray("Unknown message"));
                 TODO_FAIL( "call type not implemented yet");
               }
               

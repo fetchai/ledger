@@ -33,7 +33,7 @@ class TypedByte_ArrayBuffer {
   }
 
   void ReadBytes(uint8_t *arr, std::size_t const &size) {
-    if( size > bytes_left() ) {
+    if( int64_t(size) > bytes_left() ) {
       throw std::runtime_error("Not enough bytes");      
     }
     
@@ -41,7 +41,7 @@ class TypedByte_ArrayBuffer {
   }
 
   void ReadByteArray(byte_array::BasicByteArray &b, std::size_t const &size) {
-    if( size > bytes_left() ) {
+    if( int64_t(size) > bytes_left() ) {
       throw std::runtime_error("Not enough bytes II");
     }
     
@@ -67,12 +67,12 @@ class TypedByte_ArrayBuffer {
     if (TypeRegister<T>::value != type) {
       fetch::logger.Debug("Serializer at position ", pos_, " out of ", data_.size());  
       fetch::logger.Error(byte_array_type("Type '") + TypeRegister<T>::name() +
-        byte_array_type("' differs from type '") + ErrorCodeToMessage(type) +"'");
+			  byte_array_type("' differs from type '") + ErrorCodeToMessage(type) + byte_array_type("'"));
 
     
       throw SerializableException(error::TYPE_ERROR,
         byte_array_type("Type '") + TypeRegister<T>::name() +
-        byte_array_type("' differs from type '") + ErrorCodeToMessage(type) +"'");      
+				  byte_array_type("' differs from type '") + ErrorCodeToMessage(type) + byte_array_type("'"));      
  
     }
     Deserialize(*this, val);

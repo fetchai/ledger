@@ -64,7 +64,7 @@ int main()
 
   server.AddView(Method::GET, "/static/(filename=.+)", [](ViewParameters const &params, HTTPRequest const &req) {
 
-      std::string filename = params["filename"];      
+      std::string filename = std::string(params["filename"]);      
       std::size_t pos = filename.find_last_of('.');      
       std::string ext = filename.substr(pos, filename.size() - pos);
       auto mtype = fetch::http::mime_types::GetMimeTypeFromExtension(ext);

@@ -76,7 +76,7 @@ public:
 
   ~BasicByteArray() = default;
 
-  operator std::string() const {
+  explicit operator std::string() const {
     std::string ret;
     ret.resize(length_);
     char const* cstr = char_pointer();

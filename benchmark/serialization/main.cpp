@@ -27,7 +27,7 @@ void MakeString(T &str) {
     entry[j] = uint8_t(lfg()  >> 19);      
   }
   
-  str = entry;
+  str = T(entry);
 }
 
 template< typename T, std::size_t N = 256 >
