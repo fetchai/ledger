@@ -40,7 +40,7 @@ public:
   }
 
   // Only call this during node setup
-  void addEndpoint(const Endpoint &endpoint)
+  void AddEndpoint(const Endpoint &endpoint)
   {
     if (serviceClients_.find(endpoint) == serviceClients_.end())
     {
@@ -74,16 +74,48 @@ public:
     }
   }
 
-  std::vector<std::vector<chain::Transaction>> RequestTransactions()
+  std::vector<std::vector<chain::Transaction>> RequestTransactions(uint32_t index)
   {
     std::vector<std::vector<chain::Transaction>> result;
-    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
     for(auto &i : serviceClients_) {
       auto client = i.second;
       std::vector<chain::Transaction> res;
-      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, protocols::NetworkBenchmark::PULL_TRANSACTIONS).As(res);
+      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+          protocols::NetworkBenchmark::PULL_TRANSACTIONS, index).As(res);
       result.emplace_back(std::move(res));
+    }
+
+    return result;
+  }
+
+  std::vector<std::vector<chain::Transaction>> RequestNextBlock(uint32_t threadSleepTimeUs_)
+  {
+    std::vector<std::vector<chain::Transaction>> result;
+    //std::chrono::microseconds sleepTime(threadSleepTimeUs_);
+
+    fetch::logger.Info("doing");
+    for(auto &i : serviceClients_) {
+      auto client = i.second;
+      uint32_t index = 0;
+
+      while(1)
+      {
+        std::vector<chain::Transaction> res;
+        fetch::logger.Info("calling");
+        client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+            protocols::NetworkBenchmark::PULL_TRANSACTIONS, index).As(res);
+
+        fetch::logger.Info("called, index is ", index);
+        if(res.size() == 0)
+        {
+          break;
+        }
+        result.emplace_back(std::move(res));
+
+        //fetch::logger.Info(std::cerr, "Sleeping after call");
+        //std::this_thread::sleep_for(sleepTime);
+      }
     }
 
     return result;

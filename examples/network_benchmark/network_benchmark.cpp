@@ -1,6 +1,5 @@
 #include"network/thread_manager.hpp"
 #include"./network_benchmark_service.hpp"
-#include"./node.hpp"
 #include"./node_basic.hpp"
 #include"chain/transaction.hpp"
 
@@ -11,16 +10,12 @@ using namespace fetch::serializers;
 int main(int argc, char **argv)
 {
 
-  auto trans = Node::NextTransaction();
-
+  auto trans = NextTransaction();
   TypedByte_ArrayBuffer serializer;
-
   serializer << trans;
-
   fetch::logger.Info("Transaction size is: ", serializer.size());
 
-  // Default to 10 threads, this can/will be changed by HTTP interface
-  fetch::network::ThreadManager *tm = new fetch::network::ThreadManager(10);
+  fetch::network::ThreadManager *tm = new fetch::network::ThreadManager(20);
 
   {
     int seed = 0;
@@ -33,7 +28,7 @@ int main(int argc, char **argv)
     uint16_t tcpPort  = 9080+seed;
     uint16_t httpPort = 8080+seed;
 
-    fetch::network_benchmark::NetworkBenchmarkService<Node> serv(tm, tcpPort, httpPort);
+    fetch::network_benchmark::NetworkBenchmarkService<NodeBasic> serv(tm, tcpPort, httpPort);
     tm->Start();
     //serv.Start(); // the python/http will do this
 

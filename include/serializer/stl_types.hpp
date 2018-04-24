@@ -110,8 +110,6 @@ void Deserialize(T &serializer, std::vector< U > &vec) {
   for( auto &a : vec ) 
     serializer >> a;
 
-  fetch::logger.Info("Ser size is ", serializer.size());
-  
 
 
 }

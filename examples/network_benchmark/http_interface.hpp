@@ -17,7 +17,7 @@ template <typename T>
 class HttpInterface : public fetch::http::HTTPModule {
 public:
 
-  explicit HttpInterface(std::shared_ptr<network_benchmark::Node> node) : node_{node}
+  explicit HttpInterface(std::shared_ptr<T> node) : node_{node}
   {
     AttachPages();
   }
@@ -55,6 +55,30 @@ public:
     HTTPModule::Post("/transactions-hash",\
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
     { return this->TransactionsHash(params, req); });
+
+    HTTPModule::Post("/transactions-to-sync",\
+    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
+    { return this->TransactionsToSync(params, req); });
+
+    HTTPModule::Post("/stop-condition",\
+    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
+    { return this->StopCondition(params, req); });
+
+    HTTPModule::Post("/start-time",\
+    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
+    { return this->StartTime(params, req); });
+
+    HTTPModule::Post("/time-to-complete",\
+    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
+    { return this->TimeToComplete(params, req); });
+
+    HTTPModule::Post("/finished",\
+    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
+    { return this->Finished(params, req); });
+
+    HTTPModule::Post("/transaction-size",\
+    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
+    { return this->TransactionSize(params, req); });
   }
 
   HttpInterface(HttpInterface&& rhs)
@@ -74,7 +98,7 @@ public:
 
       network_benchmark::Endpoint endpoint(doc);
 
-      node_->addEndpoint(endpoint);
+      node_->AddEndpoint(endpoint);
 
       return http::HTTPResponse("{\"response\": \"success\" }");
     } catch (...)
@@ -141,7 +165,7 @@ public:
 
       int tpc = doc["transactions"].as_int();
 
-      node_->setTransactionsPerCall(tpc);
+      node_->SetTransactionsPerCall(tpc);
 
       return http::HTTPResponse("{\"response\": \"success\" }");
     } catch (...)
@@ -171,7 +195,95 @@ public:
     return http::HTTPResponse(ret.str());
   }
 
-  const std::shared_ptr<network_benchmark::Node> &node() const { return node_; };
+  http::HTTPResponse TransactionsToSync(http::ViewParameters const &params, http::HTTPRequest const &req)
+  {
+    json::JSONDocument doc;
+    try
+    {
+      doc = req.JSON();
+      std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
+
+      node_->SetTransactionsToSync(doc["transactionsToSync"].as_int());
+
+      return http::HTTPResponse("{\"response\": \"success\" }");
+    } catch (...)
+    {
+      return http::HTTPResponse("{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}");
+    }
+  }
+
+  http::HTTPResponse StopCondition(http::ViewParameters const &params, http::HTTPRequest const &req)
+  {
+    json::JSONDocument doc;
+    try
+    {
+      doc = req.JSON();
+      std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
+
+      node_->setStopCondition(doc["stopCondition"].as_int());
+
+      return http::HTTPResponse("{\"response\": \"success\" }");
+    } catch (...)
+    {
+      return http::HTTPResponse("{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}");
+    }
+  }
+
+  http::HTTPResponse StartTime(http::ViewParameters const &params, http::HTTPRequest const &req)
+  {
+    json::JSONDocument doc;
+    try
+    {
+      doc = req.JSON();
+      std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
+
+      node_->setStartTime(doc["startTime"].as_int());
+
+      return http::HTTPResponse("{\"response\": \"success\" }");
+    } catch (...)
+    {
+      return http::HTTPResponse("{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}");
+    }
+  }
+
+  http::HTTPResponse TimeToComplete(http::ViewParameters const &params, http::HTTPRequest const &req)
+  {
+    script::Variant result = script::Variant::Object();
+
+    result["timeToComplete"] = node_->timeToComplete();
+
+    std::ostringstream ret;
+    ret << result;
+
+    return http::HTTPResponse(ret.str());
+  }
+
+  http::HTTPResponse Finished(http::ViewParameters const &params, http::HTTPRequest const &req)
+  {
+    script::Variant result = script::Variant::Object();
+
+    result["finished"] = node_->finished();
+
+    std::ostringstream ret;
+    ret << result;
+
+    return http::HTTPResponse(ret.str());
+  }
+
+  http::HTTPResponse TransactionSize(http::ViewParameters const &params, http::HTTPRequest const &req)
+  {
+    script::Variant result = script::Variant::Object();
+
+    result["transactionSize"] = node_->TransactionSize();
+
+    std::ostringstream ret;
+    ret << result;
+
+    return http::HTTPResponse(ret.str());
+  }
+
+
+  const std::shared_ptr<T> &node() const { return node_; };
 
 private:
   std::shared_ptr<T> node_;

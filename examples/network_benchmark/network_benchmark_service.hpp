@@ -5,7 +5,7 @@
 #include"service/server.hpp"
 #include"http/server.hpp"
 #include"./protocols/network_benchmark.hpp"
-#include"./node.hpp"
+#include"./node_basic.hpp"
 #include"./http_interface.hpp"
 
 // Fetch node service connects the desired protocols to the OEF API
