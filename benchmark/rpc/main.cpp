@@ -116,7 +116,7 @@ void StartClient(std::string const &host) {
   fetch::network::ThreadManager tm;
   ServiceClient<fetch::network::TCPClient> client(host, 8080, &tm);
   tm.Start();
-
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
   while (true) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::cout << "Calling ..." << std::flush;
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
       
       tm.Stop();      
     } else {
-
+      std::cout << "Connecting to " << argv[2] << std::endl;
       StartClient(argv[2]);
     }
     
