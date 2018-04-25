@@ -114,7 +114,7 @@ class MyCoolService : public ServiceServer<fetch::network::TCPServer> {
 
 void StartClient(std::string const &host) {
   fetch::network::ThreadManager tm;
-  ServiceClient<fetch::network::TCPClient> client(host, 8080, &tm);
+  ServiceClient<fetch::network::TCPClient> client(host, 1337, &tm);
   tm.Start();
   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
   while (true) {
@@ -142,7 +142,7 @@ void RunTest(std::size_t tx_count, int argc, char **argv) {
   MakeTransactionVector(TestData, tx_count);
 
   fetch::network::ThreadManager tm(8);
-  MyCoolService serv(8080, &tm);
+  MyCoolService serv(1337, &tm);
   tm.Start();
 
   StartClient("localhost");
@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
       MakeTransactionVector(TestData, 10000);
       std::cout << "Staring server" << std::endl;      
       fetch::network::ThreadManager tm(8);
-      MyCoolService serv(8080, &tm);
+      MyCoolService serv(1337, &tm);
       tm.Start();
       std::cout << "Press enter to quit" << std::endl;
       std::string dummy;      
