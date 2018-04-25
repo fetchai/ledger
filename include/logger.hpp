@@ -519,12 +519,12 @@ extern log::details::LogWrapper logger;
       log_context.details(), __FUNCTION_NAME__, __FILE__, __LINE__)
 
 #define LOG_CONTEXT_VARIABLE(name) \
-  std::shared_ptr<fetch::log::ContextDetails> name
+  std::shared_ptr<fetch::log::ContextDetails> name;
 
-#define LOG_SET_CONTEXT_VARIABLE(name) name = fetch::logger.TopContext()
+#define LOG_SET_CONTEXT_VARIABLE(name) name = fetch::logger.TopContext();
 
 #define LOG_PRINT_STACK_TRACE(name, custom_name) \
-  fetch::logger.StackTrace(name, uint32_t(-1), false, custom_name)
+  fetch::logger.StackTrace(name, uint32_t(-1), false, custom_name);
 
 #else
 
