@@ -1,6 +1,7 @@
 #ifndef MATH_RANDOM_LFG_HPP
 #define MATH_RANDOM_LFG_HPP
 #include <limits>
+#include <cstdint>
 #include "lcg.hpp"
 
 namespace fetch {
