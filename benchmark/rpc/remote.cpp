@@ -30,18 +30,20 @@ void MakeString(T &str, std::size_t N = 256) {
   for (std::size_t j = 0; j < N; ++j) {
     entry[j] = uint8_t(lfg() >> 19);
   }
-
   str = entry;
 }
 
-std::size_t txSize(const transaction_type &transaction)
+template <typename T>
+std::size_t Size(const T &item)
 {
   serializer_type ser;
-  ser << transaction;
+  ser << item;
   return ser.size();
 }
 
-transaction_type NextTransaction(std::size_t groupsInTx = 5) {
+std::size_t sizeOfTxMin   = 0; // base size of Tx
+
+transaction_type NextTransaction(std::size_t bytesToAdd) {
   static std::random_device rd;
   static std::mt19937 gen(rd());
   static std::uniform_int_distribution<uint32_t> dis(
@@ -49,16 +51,13 @@ transaction_type NextTransaction(std::size_t groupsInTx = 5) {
 
   transaction_type trans;
 
-  for (std::size_t i = 0; i < groupsInTx; ++i)
-  {
-    trans.PushGroup(group_type(dis(gen)));
-  }
+  trans.PushGroup(group_type(dis(gen)));
 
   ByteArray sig1, sig2, contract_name, arg1;
   MakeString(sig1);
   MakeString(sig2);
   MakeString(contract_name);
-  MakeString(arg1, 4 * 256);
+  MakeString(arg1, 1 + bytesToAdd);
 
   trans.PushSignature(sig1);
   trans.PushSignature(sig2);
@@ -69,7 +68,7 @@ transaction_type NextTransaction(std::size_t groupsInTx = 5) {
   return trans;
 }
 
-template <typename T, std::size_t N = 256>
+template <typename T>
 void MakeStringVector(std::vector<T> &vec, std::size_t size) {
   for (std::size_t i = 0; i < size; ++i) {
     T s;
@@ -78,135 +77,202 @@ void MakeStringVector(std::vector<T> &vec, std::size_t size) {
   }
 }
 
+ByteArray                           TestString;
+std::vector<transaction_type>       TestData;
+const std::vector<transaction_type> RefVec;
+
 template <typename T, std::size_t N = 256>
-void MakeTransactionVector(std::vector<T> &vec, std::size_t groupsInTx, std::size_t txPerCall) {
+std::size_t MakeTransactionVector(std::vector<T> &vec, std::size_t payload, std::size_t txPerCall) {
   vec.clear();
-  for (std::size_t i = 0; i < txPerCall; ++i) {
-    vec.push_back(NextTransaction(groupsInTx));
+  for (std::size_t i = 0; i < txPerCall-1; ++i) {
+    vec.push_back(NextTransaction(payload/txPerCall - sizeOfTxMin));
   }
+  vec.push_back(NextTransaction(payload - Size(RefVec)
+        - (txPerCall-1)*Size(vec[0]) - sizeOfTxMin));
+
+  return payload;
 }
 
-// Globals
-ByteArray                     TestString;
-std::vector<transaction_type> TestData;
-enum { GET = 1, GET2 = 2, SERVICE = 3, SETUP = 4 };
+enum { PULL = 1, PUSH = 2, SERVICE = 2, SETUP = 3 };
 
 class Implementation {
  public:
-  std::vector<transaction_type> GetData()
+  const std::vector<transaction_type> &PullData()
   {
-    std::cout << "Returning data" << std::endl;
     return TestData;
   }
 
-  void Setup(std::size_t groupsInTx, std::size_t txPerCall)
+  void PushData(std::vector<transaction_type> &data)
   {
-    std::cout << "Configuring: " << groupsInTx << ":" << txPerCall << std::endl;
-    MakeTransactionVector(TestData, groupsInTx, txPerCall);
-    std::cout << "Configured" << std::endl;
+    //std::cout << "Received push" << std::endl;
+    volatile std::vector<transaction_type> hold = std::move(data);
+    //std::cout << "Bye" << std::endl;
+  }
+
+  std::size_t Setup(std::size_t payload, std::size_t txPerCall, bool isMaster)
+  {
+    return MakeTransactionVector(TestData, payload, txPerCall);
   }
 };
 
-class ServiceProtocol : public Protocol {
+class ServiceProtocol : public Implementation, public Protocol {
  public:
   ServiceProtocol() : Protocol() {
-    this->Expose(GET, &impl_, &Implementation::GetData);
-    this->Expose(SETUP, &impl_, &Implementation::Setup);
+    this->Expose(PULL, (Implementation*)this, &Implementation::PullData);
+    this->Expose(PUSH, (Implementation*)this, &Implementation::PushData);
+    this->Expose(SETUP, (Implementation*)this, &Implementation::Setup);
   }
-
- private:
-  Implementation impl_;
 };
 
-// And finally we build the service
 class BenchmarkService : public ServiceServer<fetch::network::TCPServer> {
  public:
   BenchmarkService(uint16_t port, fetch::network::ThreadManager *tm)
       : ServiceServer(port, tm) {
-    this->Add(SERVICE, new ServiceProtocol());
+    this->Add(SERVICE, &serviceProtocol);
   }
+
+private:
+  ServiceProtocol serviceProtocol;
 };
 
-void RunTest(std::size_t groupsInTx, std::size_t txPerCall,
-    const std::string &IP, uint16_t port) {
+void RunTest(std::size_t payload, std::size_t txPerCall,
+    const std::string &IP, uint16_t port, bool isMaster, bool pullTest)
+{
 
+  if(payload/txPerCall < sizeOfTxMin) { return; }
+
+  std::size_t txData       = 0;
+  std::size_t rpcCalls     = 0;
+  std::size_t setupPayload = 0;
   fetch::network::ThreadManager tm;
   ServiceClient<fetch::network::TCPClient> client(IP, port, &tm);
   tm.Start();
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-  uint64_t receivedTx = 0;
-  auto p = client.Call(SERVICE, SETUP, groupsInTx, txPerCall);
-  p.Wait();
-
-  using time_p = high_resolution_clock::time_point;
-  time_p t0 = high_resolution_clock::now();
-  std::vector<transaction_type> data;
-
-  while(receivedTx < 10000)
+  while(!client.is_alive())
   {
-    //std::cout << "Calling ..." << std::endl;
-
-    auto p1 = client.Call(SERVICE, GET);
-    p1.Wait();
-    p1.As(data);
-    receivedTx += txPerCall;
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
-  time_p t1 = high_resolution_clock::now();
+  if(!pullTest)
+  {
+    setupPayload = MakeTransactionVector(TestData, payload, txPerCall);
+  }
+  else
+  {
+    auto p = client.Call(SERVICE, SETUP, payload, txPerCall, isMaster);
+    p.Wait();
+    p.As(setupPayload);
+  }
+
+  if(0 == setupPayload)
+  {
+    std::cerr << "Failed to setup for payload: " <<
+      payload << " TX/call: " << txPerCall << std::endl;
+    tm.Stop();
+    return;
+  }
+
+  std::vector<transaction_type> data;
+  std::size_t stopCondition = 1 * pow(10, 6);
+  high_resolution_clock::time_point t0, t1;
+
+  if(pullTest)
+  {
+    t0 = high_resolution_clock::now();
+
+    while(payload*rpcCalls < stopCondition)
+    {
+      auto p1 = client.Call(SERVICE, PULL);
+      p1.Wait();
+      p1.As(data);
+      txData += txPerCall;
+      rpcCalls++;
+    }
+
+    t1 = high_resolution_clock::now();
+  }
+  else
+  {
+    t0 = high_resolution_clock::now();
+
+    while(payload*rpcCalls < stopCondition)
+    {
+      auto p1 = client.Call(SERVICE, PUSH, TestData);
+      p1.Wait();
+      txData += txPerCall;
+      rpcCalls++;
+    }
+
+    t1 = high_resolution_clock::now();
+  }
+
   tm.Stop();
-
   double seconds = duration_cast<duration<double>>(t1 - t0).count();
+  double mbps = (double(rpcCalls*setupPayload*8)/seconds)/1000000;
 
-  std::cout << ">Groups:\t" << groupsInTx << "\tTX/rpc:\t" << txPerCall;
+  std::cout << std::left << std::setw(10)
+            << double(setupPayload)/1000 << std::left << std::setw(10)
+            << txPerCall                 << std::left << std::setw(10)
+            << double(txData)/seconds    << std::left << std::setw(10)
+            << mbps                      << std::left << std::setw(10)
+            << seconds << std::endl;
 
-  std::cout << "\ttime:\t" << seconds << "\tTx/sec:\t" <<
-    double(receivedTx)/seconds << "\tTx (bytes):\t" << txSize(data[0]) << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
+  sizeOfTxMin = Size(NextTransaction(0));
+  std::cout << "Base tx size: " << sizeOfTxMin << std::endl;
 
   std::string IP;
   uint16_t    port = 8080; // Default for all benchmark tests
+  bool        pullTest = true;
+  fetch::network::ThreadManager tm(8);
 
   if(argc > 1)
   {
     std::stringstream s(argv[1]);
     s >> IP;
   }
-  else
-  {
-    fetch::network::ThreadManager tm(8);
-    BenchmarkService serv(port, &tm);
-    tm.Start();
-
-    std::cout << "Master node, enter key to quit" << std::endl;
-    std::cin >> port;
-    tm.Stop();
-    exit(0);
-  }
 
   if(argc > 2)
   {
+    std::string result;
     std::stringstream s(argv[2]);
-    s >> port;
+    s >> result;
+    pullTest = result.compare("--push") == 0 ? false : true;
   }
 
-  std::cout << "IP:port " << IP << ":" << port << std::endl;
+  std::cout << "test IP:port " << pullTest << " " << IP << ":" << port << std::endl;
 
-  for (std::size_t i = 0; i < 10; ++i)
+  if(IP.size() == 0)
   {
-    for (std::size_t j = 0; j < 10; ++j)
-    {
-      std::size_t groupsInTx = i+1;
-      std::size_t txPerCall = 1000 * (j+1);
-      RunTest(groupsInTx, txPerCall, IP, port);
-    }
+    BenchmarkService serv(port, &tm);
+    tm.Start();
+    std::cin >> port;
+    tm.Stop();
+    return 0;
+  }
 
+  std::cout << std::left << std::setw(10)
+            << "Pay_kB" << std::left << std::setw(10)
+            << "TX/rpc" << std::left << std::setw(10)
+            << "Tx/sec" << std::left << std::setw(10)
+            << "Mbps" << std::left << std::setw(10)
+            << "time" << std::endl;
+
+  for (std::size_t i = 0; i <= 10; ++i)
+  {
+    for (std::size_t j = 0; j <= 16; ++j)
+    {
+      std::size_t payload   = 200000  * (1<<i);
+      std::size_t txPerCall = 100     * (1<<j);
+
+      RunTest(payload, txPerCall, IP, port, true, pullTest);
+    }
     std::cout << std::endl;
   }
 
+  tm.Stop();
   return 0;
 }
