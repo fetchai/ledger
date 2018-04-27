@@ -23,7 +23,7 @@ typedef fetch::chain::Transaction transaction_type;
 
 fetch::random::LaggedFibonacciGenerator<> lfg;
 template <typename T>
-void MakeString(T &str, std::size_t N = 8)
+void MakeString(T &str, std::size_t N = 4)
 {
   ByteArray entry;
   entry.Resize(N);
@@ -97,8 +97,6 @@ std::size_t MakeTransactionVector(std::vector<T> &vec, std::size_t payload, std:
   vec.push_back(NextTransaction(payload - Size(RefVec)
         - (txPerCall-1)*Size(vec[0]) - sizeOfTxMin));
 
-  //std::cout << "Size: " << Size(vec) << std::endl;
-  //std::cout << "Desired: " << payload << std::endl;
   return payload;
 }
 
