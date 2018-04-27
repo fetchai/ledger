@@ -23,12 +23,14 @@ typedef fetch::chain::Transaction transaction_type;
 
 fetch::random::LaggedFibonacciGenerator<> lfg;
 template <typename T>
-void MakeString(T &str, std::size_t N = 256) {
+void MakeString(T &str, std::size_t N = 8)
+{
   ByteArray entry;
   entry.Resize(N);
 
-  for (std::size_t j = 0; j < N; ++j) {
-    entry[j] = uint8_t(lfg() >> 19);
+  for (std::size_t j = 0; j < N; ++j)
+  {
+    entry[j] = uint8_t(lfg() & 0xFF);
   }
   str = entry;
 }
@@ -43,7 +45,8 @@ std::size_t Size(const T &item)
 
 std::size_t sizeOfTxMin   = 0; // base size of Tx
 
-transaction_type NextTransaction(std::size_t bytesToAdd) {
+transaction_type NextTransaction(std::size_t bytesToAdd)
+{
   static std::random_device rd;
   static std::mt19937 gen(rd());
   static std::uniform_int_distribution<uint32_t> dis(
@@ -69,8 +72,10 @@ transaction_type NextTransaction(std::size_t bytesToAdd) {
 }
 
 template <typename T>
-void MakeStringVector(std::vector<T> &vec, std::size_t size) {
-  for (std::size_t i = 0; i < size; ++i) {
+void MakeStringVector(std::vector<T> &vec, std::size_t size)
+{
+  for (std::size_t i = 0; i < size; ++i)
+  {
     T s;
     MakeString(s);
     vec.push_back(s);
@@ -82,20 +87,25 @@ std::vector<transaction_type>       TestData;
 const std::vector<transaction_type> RefVec;
 
 template <typename T, std::size_t N = 256>
-std::size_t MakeTransactionVector(std::vector<T> &vec, std::size_t payload, std::size_t txPerCall) {
+std::size_t MakeTransactionVector(std::vector<T> &vec, std::size_t payload, std::size_t txPerCall)
+{
   vec.clear();
-  for (std::size_t i = 0; i < txPerCall-1; ++i) {
-    vec.push_back(NextTransaction(payload/txPerCall - sizeOfTxMin));
+  for (std::size_t i = 0; i < txPerCall-1; ++i)
+  {
+    vec.push_back(NextTransaction((payload-Size(RefVec))/txPerCall - sizeOfTxMin));
   }
   vec.push_back(NextTransaction(payload - Size(RefVec)
         - (txPerCall-1)*Size(vec[0]) - sizeOfTxMin));
 
+  //std::cout << "Size: " << Size(vec) << std::endl;
+  //std::cout << "Desired: " << payload << std::endl;
   return payload;
 }
 
 enum { PULL = 1, PUSH = 2, SERVICE = 2, SETUP = 3 };
 
-class Implementation {
+class Implementation
+{
  public:
   const std::vector<transaction_type> &PullData()
   {
@@ -115,19 +125,23 @@ class Implementation {
   }
 };
 
-class ServiceProtocol : public Implementation, public Protocol {
+class ServiceProtocol : public Implementation, public Protocol
+{
  public:
-  ServiceProtocol() : Protocol() {
+  ServiceProtocol() : Protocol()
+  {
     this->Expose(PULL, (Implementation*)this, &Implementation::PullData);
     this->Expose(PUSH, (Implementation*)this, &Implementation::PushData);
     this->Expose(SETUP, (Implementation*)this, &Implementation::Setup);
   }
 };
 
-class BenchmarkService : public ServiceServer<fetch::network::TCPServer> {
+class BenchmarkService : public ServiceServer<fetch::network::TCPServer>
+{
  public:
   BenchmarkService(uint16_t port, fetch::network::ThreadManager *tm)
-      : ServiceServer(port, tm) {
+      : ServiceServer(port, tm)
+  {
     this->Add(SERVICE, &serviceProtocol);
   }
 
@@ -156,9 +170,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   if(!pullTest)
   {
     setupPayload = MakeTransactionVector(TestData, payload, txPerCall);
-  }
-  else
-  {
+  } else {
     auto p = client.Call(SERVICE, SETUP, payload, txPerCall, isMaster);
     p.Wait();
     p.As(setupPayload);
@@ -173,7 +185,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   }
 
   std::vector<transaction_type> data;
-  std::size_t stopCondition = 1 * pow(10, 6);
+  std::size_t stopCondition = 10 * pow(10, 6);
   high_resolution_clock::time_point t0, t1;
 
   if(pullTest)
@@ -190,9 +202,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
     }
 
     t1 = high_resolution_clock::now();
-  }
-  else
-  {
+  } else {
     t0 = high_resolution_clock::now();
 
     while(payload*rpcCalls < stopCondition)
@@ -258,14 +268,14 @@ int main(int argc, char *argv[])
             << "Pay_kB" << std::left << std::setw(10)
             << "TX/rpc" << std::left << std::setw(10)
             << "Tx/sec" << std::left << std::setw(10)
-            << "Mbps" << std::left << std::setw(10)
+            << "Mbps"   << std::left << std::setw(10)
             << "time" << std::endl;
 
   for (std::size_t i = 0; i <= 10; ++i)
   {
     for (std::size_t j = 0; j <= 16; ++j)
     {
-      std::size_t payload   = 200000  * (1<<i);
+      std::size_t payload   = 100000  * (1<<i);
       std::size_t txPerCall = 100     * (1<<j);
 
       RunTest(payload, txPerCall, IP, port, true, pullTest);
