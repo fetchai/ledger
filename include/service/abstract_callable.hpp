@@ -48,7 +48,7 @@ struct Packer<T> {
 };
 }
 
-/* This function packs a function call into byte array.
+/* This function packs a function call into a byte array.
  * @arguments are the argument types of args.
  * @serializer is the serializer to which the arguments will be packed.
  * @protocol is the protocol the call belongs to.
@@ -64,12 +64,13 @@ struct Packer<T> {
 template <typename... arguments>
 void PackCall(serializer_type &serializer,
               protocol_handler_type const &protocol,
-              function_handler_type const &function, arguments... args) {
+              function_handler_type const &function, arguments && ...args) {
   LOG_STACK_TRACE_POINT;
 
   serializer << protocol;
   serializer << function;
-  details::Packer<arguments...>::SerializeArguments(serializer, args...);
+
+  details::Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
 }
 
 /* This function is the no-argument packer.

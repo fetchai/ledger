@@ -24,7 +24,7 @@ class ServiceClientInterface {
 
   template <typename... arguments>
   Promise Call(protocol_handler_type const& protocol,
-               function_handler_type const& function, arguments... args) {
+               function_handler_type const& function, arguments && ...args) {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Service Client Calling ", protocol, ":", function);
 
@@ -36,7 +36,36 @@ class ServiceClientInterface {
     promises_[prom.id()] = prom.reference();
     promises_mutex_.unlock();
 
-    PackCall(params, protocol, function, args...);
+    PackCall(params, protocol, function, std::forward<arguments>(args)...);
+    if (!DeliverRequest(params.data())) {
+      fetch::logger.Debug("Call failed!");
+      prom.reference()->Fail(serializers::SerializableException(
+          error::COULD_NOT_DELIVER,
+          byte_array::ConstByteArray("Could not deliver request")));
+      promises_mutex_.lock();
+      promises_.erase(prom.id());
+      promises_mutex_.unlock();
+    }
+
+    return prom;
+  }
+
+  template <typename... arguments>
+  Promise CallExperimental(std::size_t reserve, protocol_handler_type const& protocol,
+               function_handler_type const& function, arguments && ...args) {
+    LOG_STACK_TRACE_POINT;
+    fetch::logger.Debug("Service Client Calling ", protocol, ":", function);
+
+    Promise prom;
+    serializer_type params;
+    params.Reserve(reserve);
+    params << SERVICE_FUNCTION_CALL << prom.id();
+
+    promises_mutex_.lock();
+    promises_[prom.id()] = prom.reference();
+    promises_mutex_.unlock();
+
+    PackCall(params, protocol, function, std::forward<arguments>(args)...);
     if (!DeliverRequest(params.data())) {
       fetch::logger.Debug("Call failed!");
       prom.reference()->Fail(serializers::SerializableException(

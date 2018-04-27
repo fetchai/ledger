@@ -205,7 +205,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
 
     while(payload*rpcCalls < stopCondition)
     {
-      auto p1 = client.Call(SERVICE, PUSH, TestData);
+      auto p1 = client.CallExperimental(payload, SERVICE, PUSH, TestData);
       p1.Wait();
       txData += txPerCall;
       rpcCalls++;
