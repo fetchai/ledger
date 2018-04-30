@@ -7,6 +7,7 @@
 #include "service/message_types.hpp"
 #include "service/protocol.hpp"
 #include "service/types.hpp"
+#include "serializer/counter.hpp"
 
 #include "service/error_codes.hpp"
 #include "service/promise.hpp"
@@ -24,19 +25,30 @@ class ServiceClientInterface {
 
   template <typename... arguments>
   Promise Call(protocol_handler_type const& protocol,
-               function_handler_type const& function, arguments... args) {
+               function_handler_type const& function, arguments && ...args) {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Service Client Calling ", protocol, ":", function);
 
     Promise prom;
     serializer_type params;
+
+    // Calculate memory required for serializer
+    serializers::SizeCounter<serializer_type> counter;
+    counter << SERVICE_FUNCTION_CALL <<  prom.id() << protocol << function;
+    counter.Pack(std::forward<arguments>(args)...);
+
+    // For some reason it breaks when allocating over this size - TODO: (`HUT`) : look at this
+    params.Reserve(counter.size() > 100000 ? 100000 : counter.size());
+    //params.Reserve(counter.size());
+
     params << SERVICE_FUNCTION_CALL << prom.id();
 
     promises_mutex_.lock();
     promises_[prom.id()] = prom.reference();
     promises_mutex_.unlock();
 
-    PackCall(params, protocol, function, args...);
+    PackCall(params, protocol, function, std::forward<arguments>(args)...);
+
     if (!DeliverRequest(params.data())) {
       fetch::logger.Debug("Call failed!");
       prom.reference()->Fail(serializers::SerializableException(
