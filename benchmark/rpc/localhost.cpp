@@ -103,7 +103,7 @@ class ServiceProtocol : public Protocol {
   Implementation impl_;
 };
 
-// And finanly we build the service
+// And finally we build the service
 class MyCoolService : public ServiceServer<fetch::network::TCPServer> {
  public:
   MyCoolService(uint16_t port, fetch::network::ThreadManager *tm)
