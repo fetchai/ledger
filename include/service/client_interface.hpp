@@ -10,6 +10,7 @@
 
 #include "service/error_codes.hpp"
 #include "service/promise.hpp"
+#include "serializer/counter.hpp"
 
 namespace fetch {
 namespace service {
@@ -23,7 +24,7 @@ class ServiceClientInterface {
   virtual ~ServiceClientInterface() {}
 
   template <typename... arguments>
-  Promise Call(std::size_t reserve, protocol_handler_type const& protocol,
+  Promise Call(protocol_handler_type const& protocol,
                function_handler_type const& function, arguments && ...args) {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Service Client Calling ", protocol, ":", function);
@@ -38,6 +39,7 @@ class ServiceClientInterface {
 
     // For some reason it breaks when allocating over this size - TODO: (`HUT`) : look at this
     params.Reserve(counter.size() > 100000 ? 100000 : counter.size());
+    //params.Reserve(counter.size());
 
     params << SERVICE_FUNCTION_CALL << prom.id();
 

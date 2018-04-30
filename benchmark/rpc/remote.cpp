@@ -183,7 +183,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   }
 
   std::vector<transaction_type> data;
-  std::size_t stopCondition = 10 * pow(10, 6);
+  std::size_t stopCondition = 1 * pow(10, 6);
   high_resolution_clock::time_point t0, t1;
 
   if(pullTest)
