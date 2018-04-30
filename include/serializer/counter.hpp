@@ -29,6 +29,12 @@ class SizeCounter {
     return *this;
   }
 
+  template <typename T, typename... arguments>
+  SizeCounter &Pack(T const &val, arguments && ...args) {
+    this->Pack(val);
+    return this->Pack(std::forward<arguments>(args)...);
+  }
+
   template <typename T>
   SizeCounter &Pack(T const &val) {
     return this->operator<<(val);

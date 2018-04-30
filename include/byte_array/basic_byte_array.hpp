@@ -194,7 +194,10 @@ class BasicByteArray {
 
   void Reserve(std::size_t const &n) {
     shared_array_type newdata(n);
-    std::memcpy(newdata.pointer(), data_.pointer(), data_.size());
+    newdata.SetAllZero();
+
+    std::size_t M = std::min(n, data_.size());
+    std::memcpy(newdata.pointer(), data_.pointer(), M);
 
     data_ = newdata;
     arr_pointer_ = data_.pointer() + start_;
