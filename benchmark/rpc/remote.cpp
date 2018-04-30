@@ -252,35 +252,50 @@ int main(int argc, char *argv[])
   }
 
   std::cout << "test IP:port " << pullTest << " " << IP << ":" << port << std::endl;
+  std::thread benchmarkThread;
 
-  if(IP.size() == 0)
+  if(IP.size() == 0 || IP.compare("localhost") == 0)
   {
-    BenchmarkService serv(port, &tm);
-    tm.Start();
-    std::cin >> port;
-    tm.Stop();
-    return 0;
+    std::cout << "Starting server" << std::endl;
+
+    benchmarkThread = std::thread([=]() {
+      fetch::network::ThreadManager threadManager(8);
+      BenchmarkService serv(port, &threadManager);
+      threadManager.Start();
+      std::string dummy;
+      std::cin >> dummy;
+      threadManager.Stop();
+    });
   }
 
-  std::cout << std::left << std::setw(10)
-            << "Pay_kB" << std::left << std::setw(10)
-            << "TX/rpc" << std::left << std::setw(10)
-            << "Tx/sec" << std::left << std::setw(10)
-            << "Mbps"   << std::left << std::setw(10)
-            << "time" << std::endl;
-
-  for (std::size_t i = 0; i <= 10; ++i)
+  if(IP.size() != 0)
   {
-    for (std::size_t j = 0; j <= 16; ++j)
-    {
-      std::size_t payload   = 100000  * (1<<i);
-      std::size_t txPerCall = 100     * (1<<j);
+    std::cout << std::left << std::setw(10)
+              << "Pay_kB" << std::left << std::setw(10)
+              << "TX/rpc" << std::left << std::setw(10)
+              << "Tx/sec" << std::left << std::setw(10)
+              << "Mbps"   << std::left << std::setw(10)
+              << "time" << std::endl;
 
-      RunTest(payload, txPerCall, IP, port, true, pullTest);
+    for (std::size_t i = 0; i <= 10; ++i)
+    {
+      for (std::size_t j = 0; j <= 1; ++j)
+      {
+        std::size_t payload   = 100000  * (1<<i);
+        std::size_t txPerCall = 100     * (1<<j);
+
+        RunTest(payload, txPerCall, IP, port, true, pullTest);
+      }
+      std::cout << std::endl;
     }
-    std::cout << std::endl;
   }
 
   tm.Stop();
+  if(benchmarkThread.joinable())
+  {
+    std::cout << "Press key to exit" << std::endl;
+    benchmarkThread.join();
+  }
+
   return 0;
 }
