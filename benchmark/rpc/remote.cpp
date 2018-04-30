@@ -183,7 +183,8 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   }
 
   std::vector<transaction_type> data;
-  std::size_t stopCondition = 1 * pow(10, 6);
+  //std::size_t stopCondition = 1 * pow(10, 6);
+  std::size_t stopCondition = std::size_t(pow(10, 6));
   high_resolution_clock::time_point t0, t1;
 
   if(pullTest)
@@ -253,6 +254,8 @@ int main(int argc, char *argv[])
 
   std::cout << "test IP:port " << pullTest << " " << IP << ":" << port << std::endl;
   std::thread benchmarkThread;
+
+  std::cout << "Troels debug: " << IP.compare("localhost") << std::endl;
 
   if(IP.size() == 0 || IP.compare("localhost") == 0)
   {
