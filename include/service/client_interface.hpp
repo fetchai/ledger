@@ -102,7 +102,7 @@ class ServiceClientInterface {
     serializer_type params;
 
     serializers::SizeCounter<serializer_type> counter;
-    counter SERVICE_SUBSCRIBE << protocol << feed << subid;
+    counter << SERVICE_SUBSCRIBE << protocol << feed << subid;
     params.Reserve(counter.size());
 
     params << SERVICE_SUBSCRIBE << protocol << feed << subid;
@@ -119,7 +119,7 @@ class ServiceClientInterface {
     serializer_type params;
 
     serializers::SizeCounter<serializer_type> counter;
-    counter SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
+    counter << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
     params.Reserve(counter.size());
 
     params << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
