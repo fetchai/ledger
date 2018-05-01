@@ -48,6 +48,7 @@ standard_test(math_bignumber math/bignumber.cpp )
 #standard_test( load_image_read_exceptions image/load_image_read_exceptions.cpp )
 
 standard_test(referenced_byte_array serializers/referenced_byte_array.cpp)
+standard_test(typed_byte_array_test serializers/typed_byte_array_test.cpp)
 
 standard_test(encode_decode_test byte_array/encode_decode.cpp)
 standard_test(json_document_test byte_array/json/document.cpp)
