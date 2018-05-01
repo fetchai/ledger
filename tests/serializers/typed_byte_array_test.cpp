@@ -1,8 +1,4 @@
-#include <iostream>
-
-#include "byte_array/referenced_byte_array.hpp"
 #include "serializer/typed_byte_array_buffer.hpp"
-using namespace fetch::byte_array;
 using namespace fetch::serializers;
 
 #include "unittest.hpp"
