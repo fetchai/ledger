@@ -1,4 +1,4 @@
-#define FETCH_DISABLE_COUT_LOGGING
+//#define FETCH_DISABLE_COUT_LOGGING // This has to be defined in the cmakelists
 #include "random/lfg.hpp"
 #include "serializer/byte_array_buffer.hpp"
 #include "serializer/counter.hpp"
@@ -112,9 +112,7 @@ class Implementation
 
   void PushData(std::vector<transaction_type> &data)
   {
-    //std::cout << "Received push" << std::endl;
     volatile std::vector<transaction_type> hold = std::move(data);
-    //std::cout << "Bye" << std::endl;
   }
 
   std::size_t Setup(std::size_t payload, std::size_t txPerCall, bool isMaster)
@@ -183,7 +181,6 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   }
 
   std::vector<transaction_type> data;
-  //std::size_t stopCondition = 1 * pow(10, 6);
   std::size_t stopCondition = std::size_t(pow(10, 6));
   high_resolution_clock::time_point t0, t1;
 
@@ -237,6 +234,7 @@ int main(int argc, char *argv[])
   uint16_t    port = 8080; // Default for all benchmark tests
   bool        pullTest = true;
   fetch::network::ThreadManager tm(8);
+  std::thread benchmarkThread;
 
   if(argc > 1)
   {
@@ -253,9 +251,6 @@ int main(int argc, char *argv[])
   }
 
   std::cout << "test IP:port " << pullTest << " " << IP << ":" << port << std::endl;
-  std::thread benchmarkThread;
-
-  std::cout << "Troels debug: " << IP.compare("localhost") << std::endl;
 
   if(IP.size() == 0 || IP.compare("localhost") == 0)
   {

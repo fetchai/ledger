@@ -37,9 +37,7 @@ class ServiceClientInterface {
     counter << SERVICE_FUNCTION_CALL <<  prom.id() << protocol << function;
     counter.Pack(std::forward<arguments>(args)...);
 
-    // For some reason it breaks when allocating over this size - TODO: (`HUT`) : look at this
-    params.Reserve(counter.size() > 100000 ? 100000 : counter.size());
-    //params.Reserve(counter.size());
+    params.Reserve(counter.size());
 
     params << SERVICE_FUNCTION_CALL << prom.id();
 
