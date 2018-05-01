@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <iostream>
+#include "serializer/stl_types.hpp"
 #include"network/tcp_client.hpp"
 using namespace fetch::network;
 
@@ -43,7 +44,7 @@ int main(int argc, char* argv[]) {
 
     while (std::cin.getline(msg.char_pointer(), 512)) {
       msg.Resize( std::strlen(msg.char_pointer()) );
-      client.Send(msg);
+      client.Send(msg.Copy());
       msg.Resize(512);
     }
 
