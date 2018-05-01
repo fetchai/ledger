@@ -32,10 +32,9 @@ class ServiceClientInterface {
     Promise prom;
     serializer_type params;
 
-    // Calculate memory required for serializer
     serializers::SizeCounter<serializer_type> counter;
-    counter << SERVICE_FUNCTION_CALL <<  prom.id() << protocol << function;
-    counter.Pack(std::forward<arguments>(args)...);
+    counter << SERVICE_FUNCTION_CALL << prom.id();
+    PackCall(counter, protocol, function, std::forward<arguments>(args)...);
 
     params.Reserve(counter.size());
 
@@ -68,6 +67,13 @@ class ServiceClientInterface {
 
     Promise prom;
     serializer_type params;
+
+    serializers::SizeCounter<serializer_type> counter;
+    counter << SERVICE_FUNCTION_CALL << prom.id();
+    PackCallWithPackedArguments(counter, protocol, function, args);
+
+    params.Reserve(counter.size());
+
     params << SERVICE_FUNCTION_CALL << prom.id();
 
     promises_mutex_.lock();
