@@ -38,6 +38,11 @@ int main(int argc, char* argv[]) {
     Client client(argv[1], argv[2], &tmanager);
     
     tmanager.Start();
+
+    while(!client.is_alive()) { std::cout << "waiting" << std::endl;}
+
+    fetch::byte_array::ByteArray msg0("first test");
+    client.Send(msg0.Copy());
     
     fetch::byte_array::ByteArray msg;
     msg.Resize(512);
