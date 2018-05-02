@@ -41,8 +41,6 @@ Deserialize(T &serializer, U &val) {
 // Byte_Array
 template <typename T>
 inline void Serialize(T &serializer, std::string const &s) {
-  //std::cout << "**serializing a string now **" << std::endl;
-  fetch::logger.Info("**serializing -a- string now **");
   serializer.Allocate(sizeof(uint64_t) + s.size());
   uint64_t size = s.size();
 
@@ -68,10 +66,7 @@ inline void Deserialize(T &serializer, std::string &s) {
 
 template <typename T>
 inline void Serialize(T &serializer, char const *s) {
-  std::cout << "hitting here" << std::endl;
-  std::string temp{s};
-  std::cout << "result is: " << temp << std::endl;
-  return Serialize<T>(serializer, temp);
+  return Serialize<T>(serializer, std::string(s));
 }
 
 template <typename T, typename U>
