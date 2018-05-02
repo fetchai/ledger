@@ -62,6 +62,7 @@ class TCPClient {
   }
 
   ~TCPClient() noexcept {
+    std::cout << "calling parent dest" << std::endl;
     LOG_STACK_TRACE_POINT;
 
     thread_manager_->Off(event_start_service_);
@@ -111,6 +112,12 @@ class TCPClient {
   }
 
   bool is_alive() const noexcept { return is_alive_; }
+
+  bool HasOutgoingMessages() const
+  {
+    std::lock_guard<fetch::mutex::Mutex> lock(write_mutex_);
+    return !write_queue_.empty();
+  }
 
  private:
   void Connect(byte_array::ConstByteArray const& host,
@@ -200,8 +207,6 @@ class TCPClient {
         on_leave_();
       }
 
-      if (failed) ConnectionFailed();
-
       socket_.close();
     }
   }
@@ -282,7 +287,7 @@ class TCPClient {
 
   bool writing_ = false;
   message_queue_type write_queue_;
-  fetch::mutex::Mutex write_mutex_;
+  mutable fetch::mutex::Mutex write_mutex_;
 };
 
 TCPClient::handle_type TCPClient::global_handle_counter_ = 0;
