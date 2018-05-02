@@ -24,13 +24,13 @@ class SizeCounter {
   void SkipBytes(std::size_t const &size) {}
 
   template <typename T>
-  SizeCounter &operator<<(T val) {
+  SizeCounter &operator<<(T const &val) {
     Serialize(*this, val);
     return *this;
   }
 
   template <typename T>
-  SizeCounter &Pack(T val) {
+  SizeCounter &Pack(T const &val) {
     return this->operator<<(val);
   }
 
