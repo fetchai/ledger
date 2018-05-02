@@ -47,7 +47,7 @@ class TypedByte_ArrayBuffer {
   void SkipBytes(std::size_t const &size) { pos_ += size; }
 
   template <typename T>
-  TypedByte_ArrayBuffer &operator<<(T const &val) {
+  TypedByte_ArrayBuffer &operator<<(T val) {
     Serialize(*this, TypeRegister<void>::value_type(TypeRegister<T>::value));
     Serialize(*this, val);
     return *this;
@@ -60,14 +60,14 @@ class TypedByte_ArrayBuffer {
     if (TypeRegister<T>::value != type) {
       fetch::logger.Debug("Serializer at position ", pos_, " out of ",
                           data_.size());
-      fetch::logger.Error(byte_array_type("Type '") + TypeRegister<T>::name() +
-                          byte_array_type("' differs from type '") +
+      fetch::logger.Error(byte_array_type("Expected type '") + TypeRegister<T>::name() +
+                          byte_array_type("' differs from deserialized type '") +
                           ErrorCodeToMessage(type) + byte_array_type("'"));
 
       throw SerializableException(
           error::TYPE_ERROR,
-          byte_array_type("Type '") + TypeRegister<T>::name() +
-              byte_array_type("' differs from type '") +
+          byte_array_type("Expected type '") + TypeRegister<T>::name() +
+              byte_array_type("' differs from deserialized type '") +
               ErrorCodeToMessage(type) + byte_array_type("'"));
     }
     Deserialize(*this, val);
@@ -75,7 +75,7 @@ class TypedByte_ArrayBuffer {
   }
 
   template <typename T>
-  TypedByte_ArrayBuffer &Pack(T const &val) {
+  TypedByte_ArrayBuffer &Pack(T val) {
     return this->operator<<(val);
   }
 

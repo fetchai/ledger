@@ -48,7 +48,7 @@ class BasicByteArray {
       data_[i++] = a;
     }
   }
-  BasicByteArray(std::string const &s) : BasicByteArray(s.c_str()) {}
+  explicit BasicByteArray(std::string const &s) : BasicByteArray(s.c_str()) {}
 
   BasicByteArray(self_type const &other)
       : data_(other.data_),
@@ -117,6 +117,11 @@ class BasicByteArray {
     return (str[i] == '\0') && (i == length_);
   }
 
+  bool operator==(std::string const &s) const {
+    return (*this) == s.c_str();
+  }
+
+  
   bool operator!=(char const *str) const { return !(*this == str); }
 
   self_type SubArray(std::size_t const &start,

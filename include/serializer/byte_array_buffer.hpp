@@ -14,9 +14,13 @@ class ByteArrayBuffer {
   ByteArrayBuffer() {}
   ByteArrayBuffer(byte_array::ByteArray s) { data_ = s; }
 
-  void Allocate(std::size_t const &val) { data_.Resize(data_.size() + val); }
+  void Allocate(std::size_t const &val) {
+    data_.Resize(data_.size() + val);
+  }
 
-  void Reserve(std::size_t const &val) { data_.Reserve(data_.size() + val); }
+  void Reserve(std::size_t const &val) {
+    data_.Reserve(data_.size() + val);
+  }
 
   void WriteBytes(uint8_t const *arr, std::size_t const &size) {
     for (std::size_t i = 0; i < size; ++i) data_[pos_++] = arr[i];
@@ -34,7 +38,7 @@ class ByteArrayBuffer {
   void SkipBytes(std::size_t const &size) { pos_ += size; }
 
   template <typename T>
-  ByteArrayBuffer &operator<<(T const &val) {
+  ByteArrayBuffer &operator<<(T val) {
     Serialize(*this, val);
     return *this;
   }
@@ -46,7 +50,7 @@ class ByteArrayBuffer {
   }
 
   template <typename T>
-  ByteArrayBuffer &Pack(T const &val) {
+  ByteArrayBuffer &Pack(T val) {
     return this->operator<<(val);
   }
 

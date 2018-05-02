@@ -157,7 +157,7 @@ class Variant {
       type_ = NULL_VALUE;
     else {
       type_ = STRING;
-      string_ = data;
+      string_ = byte_array_type(data);
     }
 
     return data;
