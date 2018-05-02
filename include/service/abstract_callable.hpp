@@ -16,17 +16,19 @@ namespace details {
  * struct belongs to the implementational details and are hence not
  * exposed directly to the developer.
  */
-template <typename S, typename T, typename... arguments>
+template <typename T, typename... arguments>
 struct Packer {
   /* Implementation of the serialization.
    *
    * @serializer is a reference to the serializer.
    *  @next is the next argument that will be fed into the serializer.
    */
-  static void SerializeArguments(S &serializer, T &next,
-                                 arguments... args) {
+  template <typename S>
+  static void SerializeArguments(S &serializer, T&& next,
+                                 arguments&&... args) {
+
     serializer << next;
-    Packer<S, arguments...>::SerializeArguments(serializer, args...);
+    Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
   }
 };
 
@@ -34,14 +36,15 @@ struct Packer {
  *
  * This specialisation is invoked when only one argument is left.
  */
-template <typename S, typename T>
-struct Packer<S, T> {
+template <typename T>
+struct Packer<T> {
   /* Implementation of the serialization.
    *
    * @serializer is a reference to the serializer.
    * @last is the last argument that will be fed into the serializer.
    */
-  static void SerializeArguments(S &serializer, T &last) {
+  template <typename S>
+  static void SerializeArguments(S &serializer, T&& last) {
     serializer << last;
     serializer.Seek(0);
   }
@@ -64,13 +67,13 @@ struct Packer<S, T> {
 template <typename S, typename... arguments>
 void PackCall(S &serializer,
               protocol_handler_type const &protocol,
-              function_handler_type const &function, arguments && ...args) {
+              function_handler_type const &function, arguments&& ...args) {
   LOG_STACK_TRACE_POINT;
 
   serializer << protocol;
   serializer << function;
 
-  details::Packer<S, arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
+  details::Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
 }
 
 /* This function is the no-argument packer.

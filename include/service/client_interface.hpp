@@ -25,7 +25,7 @@ class ServiceClientInterface {
 
   template <typename... arguments>
   Promise Call(protocol_handler_type const& protocol,
-               function_handler_type const& function, arguments && ...args) {
+               function_handler_type const& function, arguments&& ...args) {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Service Client Calling ", protocol, ":", function);
 
@@ -34,7 +34,8 @@ class ServiceClientInterface {
 
     serializers::SizeCounter<serializer_type> counter;
     counter << SERVICE_FUNCTION_CALL << prom.id();
-    PackCall(counter, protocol, function, std::forward<arguments>(args)...);
+
+    PackCall(counter, protocol, function, args...);
 
     params.Reserve(counter.size());
 
