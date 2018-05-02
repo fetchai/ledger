@@ -12,7 +12,7 @@ public:
     TCPClient(host, port, tmanager )
   {
   }  
-  
+
   void PushMessage(message_type const &value) override
   {
     std::cout << value << std::endl;
@@ -37,17 +37,26 @@ int main(int argc, char* argv[]) {
     ThreadManager tmanager; 
     tmanager.Start();
 
+    // Test the robustness of the client by spamming it
     {
       Client client(argv[1], argv[2], &tmanager);
       while(!client.is_alive()) {}
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-      // Attempt to break the connection
+      std::string test("Testing rapid string pushing ");
+      for (std::size_t i = 0; i < 1000000; ++i)
+      {
+        test += "more size ";
+        test += std::to_string(i);
+      }
+
       for (std::size_t i = 0; i < 100; ++i)
       {
-        fetch::byte_array::ByteArray msg0("Testing rapid string pushing");
+        fetch::byte_array::ByteArray msg0(test);
         client.Send(msg0.Copy());
       }
+
+      while(client.HasOutgoingMessages()) { std::this_thread::sleep_for(std::chrono::milliseconds(1000));}
     }
 
     Client client(argv[1], argv[2], &tmanager);

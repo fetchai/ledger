@@ -62,7 +62,6 @@ class TCPClient {
   }
 
   ~TCPClient() noexcept {
-    std::cout << "calling parent dest" << std::endl;
     LOG_STACK_TRACE_POINT;
 
     thread_manager_->Off(event_start_service_);
