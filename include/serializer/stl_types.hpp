@@ -66,6 +66,7 @@ inline void Deserialize(T &serializer, std::string &s) {
 
 template <typename T>
 inline void Serialize(T &serializer, char const *s) {
+  
   return Serialize<T>(serializer, std::string(s));
 }
 
