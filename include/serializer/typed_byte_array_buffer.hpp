@@ -47,7 +47,14 @@ class TypedByte_ArrayBuffer {
   void SkipBytes(std::size_t const &size) { pos_ += size; }
 
   template <typename T>
-  TypedByte_ArrayBuffer &operator<<(T val) {
+  TypedByte_ArrayBuffer &operator<<(T const *val) {
+    Serialize(*this, TypeRegister<void>::value_type(TypeRegister<T const *>::value));
+    Serialize(*this, val);
+    return *this;
+  }
+  
+  template <typename T>
+  TypedByte_ArrayBuffer &operator<<(T const &val) {
     Serialize(*this, TypeRegister<void>::value_type(TypeRegister<T>::value));
     Serialize(*this, val);
     return *this;
@@ -75,7 +82,12 @@ class TypedByte_ArrayBuffer {
   }
 
   template <typename T>
-  TypedByte_ArrayBuffer &Pack(T val) {
+  TypedByte_ArrayBuffer &Pack(T const *val) {
+    return this->operator<<(val);
+  }
+  
+  template <typename T>
+  TypedByte_ArrayBuffer &Pack(T const &val) {
     return this->operator<<(val);
   }
 
