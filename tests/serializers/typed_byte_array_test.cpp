@@ -3,11 +3,41 @@ using namespace fetch::serializers;
 
 #include "unittest.hpp"
 
+class NoCopyClass
+{
+public:
+
+  NoCopyClass(){}
+
+  NoCopyClass(int val) :
+    classValue_{val} { }
+
+  NoCopyClass(NoCopyClass &rhs)             = delete;
+  NoCopyClass &operator=(NoCopyClass& rhs)  = delete;
+  NoCopyClass(NoCopyClass &&rhs)            = delete;
+  NoCopyClass &operator=(NoCopyClass&& rhs) = delete;
+
+  int classValue_ = 0;
+};
+
+template <typename T>
+inline void Serialize(T &serializer, NoCopyClass const &b)
+{
+  serializer << b.classValue_;
+}
+
+template <typename T>
+inline void Deserialize(T &serializer, NoCopyClass &b)
+{
+  serializer >> b.classValue_;
+}
+
 int main() {
 
   SCENARIO("Typed byte array serialization/deserialization") {
 
-    SECTION("ensuring that subbyte_arrays come out correctly") {
+    SECTION("ensuring that ser/deser is correct") {
+
 
       {
         TypedByte_ArrayBuffer buffer;
@@ -31,6 +61,18 @@ int main() {
 
       {
         TypedByte_ArrayBuffer buffer;
+
+        NoCopyClass test(99);
+        buffer << test;
+        buffer.Seek(0);
+        NoCopyClass result{};
+        buffer >> result;
+
+        EXPECT(result.classValue_ == 99);
+      }
+
+      {
+        TypedByte_ArrayBuffer buffer;
         buffer << "Second hello";
         buffer.Seek(0);
         std::string answer;
@@ -39,6 +81,48 @@ int main() {
         EXPECT(answer.compare("Second hello") == 0);
       }
 
+      {
+        TypedByte_ArrayBuffer buffer;
+        buffer << "Second hello";
+        buffer.Seek(0);
+        std::string answer;
+        buffer >> answer;
+
+        EXPECT(answer.compare("Second hello") == 0);
+      }
+
+      {
+        TypedByte_ArrayBuffer buffer;
+        bool testBool = true;
+        buffer << testBool;
+        buffer.Seek(0);
+        bool answer;
+        buffer >> answer;
+
+        EXPECT(testBool == answer);
+      }
+
+      {
+        TypedByte_ArrayBuffer buffer;
+        bool testBool = false;
+        buffer << testBool;
+        buffer.Seek(0);
+        bool answer;
+        buffer >> answer;
+
+        EXPECT(testBool == answer);
+      }
+
+      {
+        TypedByte_ArrayBuffer buffer;
+        std::vector<int> testVector{1,2,3,4};
+        buffer << testVector;
+        buffer.Seek(0);
+        std::vector<int> answer;
+        buffer >> answer;
+
+        EXPECT(testVector == answer);
+      }
     };
   };
 
