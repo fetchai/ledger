@@ -37,15 +37,17 @@ int main(int argc, char* argv[]) {
     ThreadManager tmanager; 
     tmanager.Start();
 
-    // Attempt to break the connection
-    for (std::size_t i = 0; i < 100; ++i)
     {
       Client client(argv[1], argv[2], &tmanager);
-
       while(!client.is_alive()) {}
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-      fetch::byte_array::ByteArray msg0("Testing rapid string pushing");
-      client.Send(msg0.Copy());
+      // Attempt to break the connection
+      for (std::size_t i = 0; i < 100; ++i)
+      {
+        fetch::byte_array::ByteArray msg0("Testing rapid string pushing");
+        client.Send(msg0.Copy());
+      }
     }
 
     Client client(argv[1], argv[2], &tmanager);

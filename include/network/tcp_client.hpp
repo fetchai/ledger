@@ -19,8 +19,7 @@
 
 namespace fetch {
 namespace network {
-
-class TCPClient : public std::enable_shared_from_this< TCPClient > {
+class TCPClient {
  public:
   typedef ThreadManager thread_manager_type;
   typedef thread_manager_type* thread_manager_ptr_type;
@@ -74,7 +73,6 @@ class TCPClient : public std::enable_shared_from_this< TCPClient > {
     LOG_STACK_TRACE_POINT;
 
     fetch::logger.Debug("Client: Sending message to server");
-    auto self = shared_from_this();   
     auto cb = [=]() {
       LOG_LAMBDA_STACK_TRACE_POINT;
       write_mutex_.lock();
@@ -135,7 +133,6 @@ class TCPClient : public std::enable_shared_from_this< TCPClient > {
   void Connect(
       asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) noexcept {
     LOG_STACK_TRACE_POINT;
-    auto self = shared_from_this();   
     auto cb = [=](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {
       is_alive_ = true;
       LOG_LAMBDA_STACK_TRACE_POINT;
@@ -154,7 +151,6 @@ class TCPClient : public std::enable_shared_from_this< TCPClient > {
 
   void ReadHeader() noexcept {
     LOG_STACK_TRACE_POINT;
-    auto self = shared_from_this();   
     auto cb = [=](std::error_code ec, std::size_t) {
       LOG_STACK_TRACE_POINT;  // Deliberately breaking the chain
       if (!ec) {
@@ -180,7 +176,6 @@ class TCPClient : public std::enable_shared_from_this< TCPClient > {
 
     message.Resize(header_.content.length);
 
-    auto self = shared_from_this();   
     auto cb = [=](std::error_code ec, std::size_t len) {
 
       if (!ec) {
@@ -226,15 +221,12 @@ class TCPClient : public std::enable_shared_from_this< TCPClient > {
     buffer << write_queue_.front();
     write_mutex_.unlock();
 
-    auto self = shared_from_this();   
     auto cb = [=](std::error_code ec, std::size_t) {
       LOG_STACK_TRACE_POINT;  // Deliberately breaking the chain
 
       if (!ec) {
         fetch::logger.Debug("Wrote message.");
         write_mutex_.lock();
-        std::cout << "SIZE IS " << write_queue_.size() << std::endl;
-        
         write_queue_.pop_front();
         bool should_write = writing_ = !write_queue_.empty();
         write_mutex_.unlock();
