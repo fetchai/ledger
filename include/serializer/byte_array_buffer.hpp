@@ -38,7 +38,7 @@ class ByteArrayBuffer {
   void SkipBytes(std::size_t const &size) { pos_ += size; }
 
   template <typename T>
-  ByteArrayBuffer &operator<<(T val) {
+  ByteArrayBuffer &operator<<(T const &val) {
     Serialize(*this, val);
     return *this;
   }
@@ -50,7 +50,7 @@ class ByteArrayBuffer {
   }
 
   template <typename T>
-  ByteArrayBuffer &Pack(T val) {
+  ByteArrayBuffer &Pack(T const &val) {
     return this->operator<<(val);
   }
 
