@@ -1,10 +1,4 @@
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#pragma clang diagnostic ignored "-Wc++11-compat-pedantic"
-#include <pybind11/pybind11.h>
-#pragma clang diagnostic pop
-
+#include"fetch_pybind.hpp"
 
 #include "py_logger.hpp"
 #include "py_unittest.hpp"
