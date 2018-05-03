@@ -159,7 +159,6 @@ int main() {
   std::vector< ByteArray > a,b,c;
   MakeStringVector(a, 100000);
 
-
   ByteArrayBuffer buffer;
 
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
