@@ -48,7 +48,8 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
   ~TCPClientImplementation() noexcept {
     LOG_STACK_TRACE_POINT;
-
+    std::cout << "Destructing" << std::endl;
+    
     thread_manager_->Off(event_start_service_);
     thread_manager_->Off(event_stop_service_);
     Close();
@@ -59,8 +60,9 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
     fetch::logger.Debug("Client: Sending message to server");
     auto self = shared_from_this();   
-    auto cb = [=]() {
-      LOG_LAMBDA_STACK_TRACE_POINT;
+    auto cb = [this,self, msg]() {
+
+      LOG_STACK_TRACE_POINT;
       write_mutex_.lock();
       write_queue_.push_back(msg);
       if (writing_) {
@@ -148,6 +150,25 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     Connect(resolver.resolve({std::string(host), p.str()}));
   }
   
+
+  void Close(bool failed = false) {
+    if (is_alive_) {
+      is_alive_ = false;
+      std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_);
+
+      if (on_leave_) {
+        on_leave_();
+      }
+
+      if (failed) {
+        std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);                      
+        if(on_connection_failed_) on_connection_failed_();
+      }
+      
+
+      socket_.close();
+    }
+  }
   
  private:
   mutable fetch::mutex::Mutex callback_mutex_;
@@ -161,9 +182,9 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
       asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) noexcept {
     LOG_STACK_TRACE_POINT;
     auto self = shared_from_this();   
-    auto cb = [=](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {
+    auto cb = [this,self](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {
       is_alive_ = true;
-      LOG_LAMBDA_STACK_TRACE_POINT;
+      LOG_STACK_TRACE_POINT;
       if (!ec) {
         fetch::logger.Debug("Connection established!");
         ReadHeader();
@@ -185,13 +206,15 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void ReadHeader() noexcept {
     LOG_STACK_TRACE_POINT;
     auto self = shared_from_this();   
-    auto cb = [=](std::error_code ec, std::size_t) {
-      LOG_STACK_TRACE_POINT;  // Deliberately breaking the chain
+    auto cb = [this,self](std::error_code ec, std::size_t) {
       if (!ec) {
         ReadBody();
       } else {
-        Close(true);
-        fetch::logger.Error("Reading header failed, closing connection: ", ec);
+        if(is_alive_) { 
+          Close(true);
+          fetch::logger.Error("Reading header failed, closing connection: ", ec);
+        }
+        
       }
     };
 
@@ -202,8 +225,10 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void ReadBody() noexcept {
     byte_array::ByteArray message;
     if (header_.content.magic != 0xFE7C80A1FE7C80A1) {
-      fetch::logger.Debug("Magic incorrect - closing connection.");
-      Close(true);
+      if(is_alive_) { 
+        fetch::logger.Debug("Magic incorrect - closing connection.");
+        Close(true);
+      }      
 
       return;
     }
@@ -211,7 +236,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     message.Resize(header_.content.length);
 
     auto self = shared_from_this();   
-    auto cb = [=](std::error_code ec, std::size_t len) {
+    auto cb = [this,self, message](std::error_code ec, std::size_t len) {
 
       if (!ec) {
         {
@@ -220,32 +245,16 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
         }
         ReadHeader();
       } else {
-        fetch::logger.Error("Reading body failed, closing connection: ", ec);
-        Close(true);
+        if(is_alive_) { 
+          fetch::logger.Error("Reading body failed, closing connection: ", ec);
+          Close(true);
+        }
+        
       }
     };
 
     asio::async_read(socket_, asio::buffer(message.pointer(), message.size()),
                      cb);
-  }
-
-  void Close(bool failed = false) {
-    if (is_alive_) {
-      is_alive_ = false;
-      std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_);
-
-      if (on_leave_) {
-        on_leave_();
-      }
-
-      if (failed) {
-        std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);                      
-        if(on_connection_failed_) on_connection_failed_();
-      }
-      
-
-      socket_.close();
-    }
   }
 
   void Write() noexcept {
@@ -264,9 +273,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     write_mutex_.unlock();
 
     auto self = shared_from_this();   
-    auto cb = [=](std::error_code ec, std::size_t) {
-      LOG_STACK_TRACE_POINT;  // Deliberately breaking the chain
-
+    auto cb = [this,self](std::error_code ec, std::size_t) {
       if (!ec) {
         fetch::logger.Debug("Wrote message.");
         write_mutex_.lock();
@@ -281,8 +288,10 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
           Write();
         }
       } else {
-        fetch::logger.Error("Client: Write failed, closing connection:", ec);
-        Close(true);
+        if(is_alive_) { 
+          fetch::logger.Error("Client: Write failed, closing connection:", ec);
+          Close(true);
+        }        
       }
     };
 

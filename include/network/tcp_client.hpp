@@ -37,9 +37,8 @@ class TCPClient {
     pointer_ = std::make_shared< implementation_type >(thread_manager);
     pointer_->OnConnectionFailed([this]() { this->ConnectionFailed(); });
     pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });    
-
-    pointer_->Connect(host, port);
     
+    pointer_->Connect(host, port);
   }
 
   TCPClient(byte_array::ConstByteArray const& host, uint16_t const& port,
@@ -52,11 +51,16 @@ class TCPClient {
     pointer_->Connect(host, port);    
   }
 
-  virtual ~TCPClient() noexcept {
+  virtual ~TCPClient() noexcept {    
     LOG_STACK_TRACE_POINT;
+    std::cout << "Destruct 1" << std::endl;
+    
     pointer_->ClearConnectionFailed();
     pointer_->ClearPushMessage();
-    pointer_->ClearLeave();        
+    pointer_->ClearLeave();
+    pointer_->Close();
+    
+    pointer_.reset();    
   }
 
   void Send(message_type const& msg) noexcept {
