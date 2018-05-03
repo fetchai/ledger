@@ -136,7 +136,7 @@ int main() {
         buffer.Seek(0);
         std::vector<int> answer;
         buffer >> answer;
-	//if(testVector == answer) std::cout << "OK";
+
         EXPECT(testVector == answer);
       }
     };
