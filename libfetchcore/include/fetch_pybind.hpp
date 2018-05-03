@@ -16,6 +16,7 @@
 #pragma clang diagnostic ignored "-Wmany-braces-around-scalar-init"
 #pragma clang diagnostic ignored "-Wc++11-compat-pedantic"
 #pragma clang diagnostic ignored "-Wbraced-scalar-init"
+#pragma clang diagnostic ignored "-Weverything"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/operators.h>
