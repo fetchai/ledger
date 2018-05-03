@@ -53,7 +53,6 @@ class TCPClient {
 
   virtual ~TCPClient() noexcept {    
     LOG_STACK_TRACE_POINT;
-    std::cout << "Destruct 1" << std::endl;
     
     pointer_->ClearConnectionFailed();
     pointer_->ClearPushMessage();

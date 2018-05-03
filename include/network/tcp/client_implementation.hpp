@@ -27,9 +27,8 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   typedef typename ThreadManager::event_handle_type event_handle_type;
   typedef uint64_t handle_type;
 
-
   TCPClientImplementation(thread_manager_ptr_type thread_manager) noexcept
-      : thread_manager_(thread_manager),
+      : thread_manager_(*thread_manager),
         io_service_(thread_manager->io_service()),
         socket_(thread_manager->io_service())
 
@@ -39,19 +38,18 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     handle_ = next_handle();
 
     event_start_service_ =
-        thread_manager_->OnBeforeStart([this]() { this->writing_ = false; });
+        thread_manager_.OnBeforeStart([this]() { this->writing_ = false; });
     event_stop_service_ =
-        thread_manager_->OnBeforeStop([this]() { this->writing_ = false; });
+        thread_manager_.OnBeforeStop([this]() { this->writing_ = false; });
 
     writing_ = false;
   }
 
   ~TCPClientImplementation() noexcept {
     LOG_STACK_TRACE_POINT;
-    std::cout << "Destructing" << std::endl;
-    
-    thread_manager_->Off(event_start_service_);
-    thread_manager_->Off(event_stop_service_);
+
+    thread_manager_.Off(event_start_service_);
+    thread_manager_.Off(event_stop_service_);
     Close();
   }
 
@@ -269,11 +267,12 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     }
 
     buffer << 0xFE7C80A1FE7C80A1;
+    // TODO: Bottle neck - fix me
     buffer << write_queue_.front();
     write_mutex_.unlock();
 
     auto self = shared_from_this();   
-    auto cb = [this,self](std::error_code ec, std::size_t) {
+    auto cb = [this,self, buffer](std::error_code ec, std::size_t) {
       if (!ec) {
         fetch::logger.Debug("Wrote message.");
         write_mutex_.lock();
@@ -309,7 +308,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
   event_handle_type event_start_service_;
   event_handle_type event_stop_service_;
-  thread_manager_ptr_type thread_manager_;
+  thread_manager_type thread_manager_;
 
   handle_type handle_;
   static handle_type global_handle_counter_;

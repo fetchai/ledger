@@ -11,23 +11,23 @@
 namespace fetch {
 namespace network {
 
-class ThreadManager {
+class ThreadManagerImplementation {
  public:
   typedef std::function<void()> event_function_type;
   typedef uint32_t event_handle_type;
 
-  ThreadManager(std::size_t threads = 1)
+  ThreadManagerImplementation(std::size_t threads = 1)
       : number_of_threads_(threads), on_mutex_(__LINE__, __FILE__) {
     fetch::logger.Debug("Creating thread manager");
     running_ = false;
   }
 
-  ~ThreadManager() {
+  ~ThreadManagerImplementation() {
     fetch::logger.Debug("Destroying thread manager");
     Stop();
   }
 
-  virtual void Start() {
+  void Start() {
     std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
     if (threads_.size() == 0) {
       fetch::logger.Info("Starting thread manager");
@@ -35,35 +35,29 @@ class ThreadManager {
 
       shared_work_ = std::make_shared<asio::io_service::work>(io_service_);
 
-      //      on_mutex_.lock();
       for (auto &obj : on_before_start_) {
         obj.second();
       }
-      //      on_mutex_.unlock();
 
       for (std::size_t i = 0; i < number_of_threads_; ++i) {
         threads_.push_back(new std::thread([this]() { io_service_.run(); }));
       }
 
-      //      on_mutex_.lock();
       for (auto &obj : on_after_start_) {
         obj.second();
       }
-      //      on_mutex_.unlock();
     }
   }
 
-  virtual void Stop() {
+  void Stop() {
     std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
     if (threads_.size() != 0) {
       shared_work_.reset();
 
       fetch::logger.Info("Stopping thread manager");
-      //      on_mutex_.lock();
       for (auto &obj : on_before_stop_) {
         obj.second();
       }
-      //      on_mutex_.unlock();
 
       io_service_.stop();
 
@@ -74,11 +68,9 @@ class ThreadManager {
 
       threads_.clear();
 
-      //      on_mutex_.lock();
       for (auto &obj : on_after_stop_) {
         obj.second();
       }
-      //      on_mutex_.unlock();
     }
   }
 
@@ -171,6 +163,67 @@ class ThreadManager {
   std::map<event_handle_type, event_function_type> on_after_stop_;
   event_handle_type next_id_ = 0;
   mutable fetch::mutex::Mutex on_mutex_;
+};
+  
+class ThreadManager {
+ public:
+  typedef std::function<void()> event_function_type;
+  typedef uint32_t event_handle_type;
+  typedef ThreadManagerImplementation implementation_type;
+  typedef std::shared_ptr< implementation_type > pointer_type;
+
+
+  
+  ThreadManager(std::size_t threads = 1) {
+    pointer_ = std::make_shared< implementation_type >( threads );
+  }
+
+  ~ThreadManager() {
+
+  }
+
+  void Start() {
+    pointer_->Start();
+  }
+
+  void Stop() {
+    pointer_->Stop();
+  }
+  
+  asio::io_service &io_service() { return pointer_->io_service(); }
+  
+  event_handle_type OnBeforeStart(event_function_type const &fnc) {
+    return pointer_->OnBeforeStart(fnc);
+  }
+
+  event_handle_type OnAfterStart(event_function_type const &fnc) {
+    return pointer_->OnAfterStart(fnc);
+  }
+
+  event_handle_type OnBeforeStop(event_function_type const &fnc) {
+    return pointer_->OnBeforeStop(fnc);
+  }
+
+  event_handle_type OnAfterStop(event_function_type const &fnc) {
+    return pointer_->OnAfterStop(fnc);
+  }
+
+  void Off(event_handle_type handle) {
+    pointer_->Off(handle);
+  }
+
+  template <typename F>
+  void Post(F &&f) {
+    pointer_->Post(std::move(f));
+  }
+
+  template <typename F>
+  void Post(F &&f, int milliseconds) {
+    pointer_->Post(std::move(f), milliseconds);
+  }
+
+ private:
+  pointer_type pointer_;
 };
 }
 }
