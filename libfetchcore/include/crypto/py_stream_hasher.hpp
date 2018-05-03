@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_CRYPTO_STREAM_HASHER_HPP
 #include "crypto/stream_hasher.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace crypto

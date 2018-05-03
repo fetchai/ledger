@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_STORAGE_FILE_OBJECT_HPP
 //#include "storage/file_object.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace storage

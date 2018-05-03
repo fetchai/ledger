@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_IMAGE_LOAD_PNG_HPP
 #include "image/load_png.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace image

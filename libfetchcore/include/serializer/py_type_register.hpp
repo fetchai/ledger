@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_SERIALIZER_TYPE_REGISTER_HPP
 #include "serializer/type_register.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace serializers

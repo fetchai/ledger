@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_JSON_EXCEPTIONS_HPP
 #include "json/exceptions.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace json
