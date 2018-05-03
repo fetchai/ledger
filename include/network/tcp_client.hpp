@@ -20,14 +20,14 @@
 namespace fetch {
 namespace network {
 
-class TCPClient : public std::enable_shared_from_this< TCPClient > {
+class TCPClientImplementation : public std::enable_shared_from_this< TCPClientImplementation > {
  public:
   typedef ThreadManager thread_manager_type;
   typedef thread_manager_type* thread_manager_ptr_type;
   typedef typename ThreadManager::event_handle_type event_handle_type;
   typedef uint64_t handle_type;
 
-  TCPClient(byte_array::ConstByteArray const& host,
+  TCPClientImplementation(byte_array::ConstByteArray const& host,
             byte_array::ConstByteArray const& port,
             thread_manager_ptr_type thread_manager) noexcept
       : thread_manager_(thread_manager),
@@ -42,7 +42,7 @@ class TCPClient : public std::enable_shared_from_this< TCPClient > {
     Connect(host, port);
   }
 
-  TCPClient(byte_array::ConstByteArray const& host, uint16_t const& port,
+  TCPClientImplementation(byte_array::ConstByteArray const& host, uint16_t const& port,
             thread_manager_ptr_type thread_manager) noexcept
       : thread_manager_(thread_manager),
         io_service_(thread_manager->io_service()),
@@ -62,7 +62,7 @@ class TCPClient : public std::enable_shared_from_this< TCPClient > {
     Connect(host, port);
   }
 
-  ~TCPClient() noexcept {
+  ~TCPClientImplementation() noexcept {
     LOG_STACK_TRACE_POINT;
 
     thread_manager_->Off(event_start_service_);
@@ -293,8 +293,58 @@ class TCPClient : public std::enable_shared_from_this< TCPClient > {
   fetch::mutex::Mutex write_mutex_;
 };
 
-TCPClient::handle_type TCPClient::global_handle_counter_ = 0;
-fetch::mutex::Mutex TCPClient::global_handle_mutex_(__LINE__, __FILE__);
+TCPClientImplementation::handle_type TCPClientImplementation::global_handle_counter_ = 0;
+fetch::mutex::Mutex TCPClientImplementation::global_handle_mutex_(__LINE__, __FILE__);
+
+
+
+class TCPClient {
+ public:
+  typedef ThreadManager thread_manager_type;
+  typedef thread_manager_type* thread_manager_ptr_type;
+  typedef typename ThreadManager::event_handle_type event_handle_type;
+  typedef uint64_t handle_type;
+  typedef std::shared_ptr< TCPClientImplementation > pointer_type;
+  
+  TCPClient(byte_array::ConstByteArray const& host,
+            byte_array::ConstByteArray const& port,
+            thread_manager_ptr_type thread_manager) noexcept
+  {
+    
+  }
+
+  TCPClient(byte_array::ConstByteArray const& host, uint16_t const& port,
+            thread_manager_ptr_type thread_manager) noexcept
+  {
+  }
+
+  virtual ~TCPClient() noexcept {
+    LOG_STACK_TRACE_POINT;
+  }
+
+  void Send(message_type const& msg) noexcept {
+    pointer_->Send(msg);
+  }
+
+  virtual void PushMessage(message_type const& value) = 0;
+  virtual void ConnectionFailed() = 0;
+
+  handle_type const& handle() const noexcept { return pointer_->handle(); }
+
+  std::string Address() const noexcept {
+    return pointer_->Address();
+  }
+
+  void OnLeave(std::function<void()> fnc) {
+    pointer_->OnLeave(fnc);
+  }
+
+  bool is_alive() const noexcept { return pointer_->is_alive(); }
+
+ private:
+
+};
+  
 }
 }
 
