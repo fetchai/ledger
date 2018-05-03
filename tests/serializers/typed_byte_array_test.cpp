@@ -7,7 +7,7 @@ std::ostream& operator<<(std::ostream& os, std::vector< int > const &v);
 
 std::ostream& operator<<(std::ostream& os, std::vector< int > const &v)  
 {  
-  bool first = false;
+  bool first = true;
   os << "[";
   for(auto const &e : v) {
     if(!first) os << ", ";
