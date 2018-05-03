@@ -23,10 +23,12 @@ struct Packer {
    * @serializer is a reference to the serializer.
    *  @next is the next argument that will be fed into the serializer.
    */
-  static void SerializeArguments(serializer_type &serializer, T &next,
-                                 arguments... args) {
+  template <typename S>
+  static void SerializeArguments(S &serializer, T&& next,
+                                 arguments&&... args) {
+
     serializer << next;
-    Packer<arguments...>::SerializeArguments(serializer, args...);
+    Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
   }
 };
 
@@ -41,7 +43,8 @@ struct Packer<T> {
    * @serializer is a reference to the serializer.
    * @last is the last argument that will be fed into the serializer.
    */
-  static void SerializeArguments(serializer_type &serializer, T &last) {
+  template <typename S>
+  static void SerializeArguments(S &serializer, T&& last) {
     serializer << last;
     serializer.Seek(0);
   }
@@ -61,8 +64,8 @@ struct Packer<T> {
  *
  * The serializer is is always left at position 0.
  */
-template <typename... arguments>
-void PackCall(serializer_type &serializer,
+template <typename S, typename... arguments>
+void PackCall(S &serializer,
               protocol_handler_type const &protocol,
               function_handler_type const &function, arguments && ...args) {
   LOG_STACK_TRACE_POINT;
@@ -81,7 +84,8 @@ void PackCall(serializer_type &serializer,
  * This function covers the case where no arguments are given. The
  * serializer is is always left at position 0.
  */
-void PackCall(serializer_type &serializer,
+template <typename S>
+void PackCall(S &serializer,
               protocol_handler_type const &protocol,
               function_handler_type const &function) {
   LOG_STACK_TRACE_POINT;
@@ -102,7 +106,8 @@ void PackCall(serializer_type &serializer,
  *
  * The serializer is left at position 0.
  */
-void PackCallWithPackedArguments(serializer_type &serializer,
+template <typename S>
+void PackCallWithPackedArguments(S &serializer,
                                  protocol_handler_type const &protocol,
                                  function_handler_type const &function,
                                  byte_array::ByteArray const &args) {
@@ -122,8 +127,8 @@ void PackCallWithPackedArguments(serializer_type &serializer,
  *
  * Serializers for all arguments in the argument list are requried.
  */
-template <typename... arguments>
-void PackArgs(serializer_type &serializer, arguments... args) {
+template <typename S, typename... arguments>
+void PackArgs(S &serializer, arguments... args) {
   details::Packer<arguments...>::SerializeArguments(serializer, args...);
 }
 
@@ -133,7 +138,8 @@ void PackArgs(serializer_type &serializer, arguments... args) {
  * This function covers the case where no arguments are given. The
  * serializer is is always left at position 0.
  */
-void PackArgs(serializer_type &serializer) {
+template <typename S>
+void PackArgs(S &serializer) {
   LOG_STACK_TRACE_POINT;
 
   serializer.Seek(0);

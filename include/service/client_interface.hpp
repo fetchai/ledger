@@ -7,6 +7,7 @@
 #include "service/message_types.hpp"
 #include "service/protocol.hpp"
 #include "service/types.hpp"
+#include "serializer/counter.hpp"
 
 #include "service/error_codes.hpp"
 #include "service/promise.hpp"
@@ -25,17 +26,17 @@ class ServiceClientInterface {
 
   template <typename... arguments>
   Promise Call(protocol_handler_type const& protocol,
-               function_handler_type const& function, arguments && ...args) {
+               function_handler_type const& function, arguments&& ...args) {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Service Client Calling ", protocol, ":", function);
 
     Promise prom;
     serializer_type params;
 
-    // Calculate memory required for serializer
     serializers::SizeCounter<serializer_type> counter;
-    counter << SERVICE_FUNCTION_CALL <<  prom.id() << protocol << function;
-    counter.Pack(std::forward<arguments>(args)...);
+    counter << SERVICE_FUNCTION_CALL << prom.id();
+
+    PackCall(counter, protocol, function, args...);
 
     params.Reserve(counter.size());
 
@@ -68,6 +69,13 @@ class ServiceClientInterface {
 
     Promise prom;
     serializer_type params;
+
+    serializers::SizeCounter<serializer_type> counter;
+    counter << SERVICE_FUNCTION_CALL << prom.id();
+    PackCallWithPackedArguments(counter, protocol, function, args);
+
+    params.Reserve(counter.size());
+
     params << SERVICE_FUNCTION_CALL << prom.id();
 
     promises_mutex_.lock();
@@ -94,6 +102,11 @@ class ServiceClientInterface {
     subscription_handler_type subid =
         CreateSubscription(protocol, feed, callback);
     serializer_type params;
+
+    serializers::SizeCounter<serializer_type> counter;
+    counter << SERVICE_SUBSCRIBE << protocol << feed << subid;
+    params.Reserve(counter.size());
+
     params << SERVICE_SUBSCRIBE << protocol << feed << subid;
     DeliverRequest(params.data());
     return subid;
@@ -106,6 +119,11 @@ class ServiceClientInterface {
     auto& sub = subscriptions_[id];
 
     serializer_type params;
+
+    serializers::SizeCounter<serializer_type> counter;
+    counter << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
+    params.Reserve(counter.size());
+
     params << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
     subscription_mutex_.unlock();
 
