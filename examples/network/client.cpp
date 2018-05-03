@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
     tmanager.Start();
 
     // Attempt to break the connection
-    for (std::size_t i = 0; i < 100; ++i)
+    for (std::size_t i = 0; i < 10000; ++i)
     {
       Client client(argv[1], argv[2], &tmanager);
 
