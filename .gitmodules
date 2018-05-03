@@ -5,5 +5,5 @@
 	path = libfetchcore/vendor/pybind11
 	url = github:pybind/pybind11.git
 [submodule "docker-images"]
-	   path = docker-images
-	   url = github:uvue-git/docker-images.git
+	path = docker-images
+	url = github:uvue-git/docker-images.git
