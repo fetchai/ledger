@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_SERVICE_CALLABLE_CLASS_MEMBER_HPP
 #include "service/callable_class_member.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace service

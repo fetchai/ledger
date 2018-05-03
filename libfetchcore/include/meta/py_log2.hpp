@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_META_LOG2_HPP
 #include "meta/log2.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace details
 {
 namespace meta

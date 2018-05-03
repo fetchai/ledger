@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_CHAIN_CONSENSUS_PROOF_OF_WORK_HPP
 #include "chain/consensus/proof_of_work.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace chain

@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_MEMORY_SHARED_ARRAY_HPP
 #include "memory/shared_array.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace memory

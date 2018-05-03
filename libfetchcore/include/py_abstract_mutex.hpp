@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_ABSTRACT_MUTEX_HPP
 #include "abstract_mutex.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace mutex

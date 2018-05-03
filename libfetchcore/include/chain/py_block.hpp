@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_CHAIN_BLOCK_HPP
 #include "chain/block.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace chain
