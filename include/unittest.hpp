@@ -120,6 +120,27 @@ class Expression {
   Expression(std::string const& expr) : expression_(expr) {}
 
   template <typename T>
+  Expression(std::vector<T> const& v) {
+
+    std::stringstream s;
+    s << "[";
+    for (std::size_t i = 0; i < v.size(); ++i)
+    {
+      s << v[i];
+
+      if(i < v.size()-1)
+      {
+        s << ", ";
+      }
+      else
+      {
+        s << "]";
+      }
+    }
+    expression_ = s.str();
+  }
+
+  template <typename T>
   Expression(T const& v) {
     std::stringstream s;
     s << v;
