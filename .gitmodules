@@ -4,3 +4,6 @@
 [submodule "libfetchcore/vendor/pybind11"]
 	path = libfetchcore/vendor/pybind11
 	url = github:pybind/pybind11.git
+[submodule "docker-images"]
+	path = docker-images
+	url = github:pbukva/docker-images.git
