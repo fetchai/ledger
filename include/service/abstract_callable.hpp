@@ -129,8 +129,8 @@ void PackCallWithPackedArguments(S &serializer,
  * Serializers for all arguments in the argument list are requried.
  */
 template <typename S, typename... arguments>
-void PackArgs(S &serializer, arguments... args) {
-  details::Packer<arguments...>::SerializeArguments(serializer, args...);
+void PackArgs(S &serializer, arguments&&... args) {
+  details::Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
 }
 
 /* This is the no-argument packer.

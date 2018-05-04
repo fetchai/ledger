@@ -93,12 +93,12 @@ class HasPublicationFeed : public AbstractPublicationFeed {
    * while having another protocol that would publish messages over TCP.
    */
   template <typename... Args>
-  void Publish(feed_handler_type feed, Args &&... args) {
+  void Publish(feed_handler_type feed, Args&&... args) {
     LOG_STACK_TRACE_POINT;
 
     serializer_type params;
 
-    PackArgs(params, args...);
+    PackArgs(params, std::forward<Args>(args)...);
 
     fetch::logger.Debug("Publishing data for feed ", feed);
 
