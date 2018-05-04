@@ -6,16 +6,13 @@
 #include "byte_array/referenced_byte_array.hpp"
 #include "serializer/type_register.hpp"
 
-namespace fetch
-{
-namespace serializers
-{
+namespace fetch {
+namespace serializers {
 
 class TypedByte_ArrayBuffer;
 
 template <typename S>
-class SizeCounter
-{
+class SizeCounter {
  public:
   void Allocate(std::size_t const &val) { size_ += val; }
 
@@ -27,28 +24,14 @@ class SizeCounter
   void SkipBytes(std::size_t const &size) {}
 
   template <typename T>
-  SizeCounter &operator<<(T const &val)
-  {
+  SizeCounter &operator<<(T const &val) {
     Serialize(*this, val);
     return *this;
   }
 
-  template <typename T, typename... arguments>
-  SizeCounter &Pack(T const &val, arguments && ...args)
-  {
-    this->Pack(val);
-    return this->Pack(std::forward<arguments>(args)...);
-  }
-
   template <typename T>
-  SizeCounter &Pack(T const &val)
-  {
+  SizeCounter &Pack(T const &val) {
     return this->operator<<(val);
-  }
-
-  SizeCounter &Pack()
-  {
-    return *this;
   }
 
   void Seek(std::size_t const &p) {}
@@ -61,8 +44,7 @@ class SizeCounter
 };
 
 template <>
-class SizeCounter<TypedByte_ArrayBuffer>
-{
+class SizeCounter<TypedByte_ArrayBuffer> {
  public:
   void Allocate(std::size_t const &val) { size_ += val; }
 
@@ -74,29 +56,15 @@ class SizeCounter<TypedByte_ArrayBuffer>
   void SkipBytes(std::size_t const &size) {}
 
   template <typename T>
-  SizeCounter &operator<<(T const &val)
-  {
+  SizeCounter &operator<<(T const &val) {
     Serialize(*this, TypeRegister<void>::value_type(TypeRegister<T>::value));
     Serialize(*this, val);
     return *this;
   }
 
-  template <typename T, typename... arguments>
-  SizeCounter &Pack(T const &val, arguments && ...args)
-  {
-    this->Pack(val);
-    return this->Pack(std::forward<arguments>(args)...);
-  }
-
   template <typename T>
-  SizeCounter &Pack(T const &val)
-  {
+  SizeCounter &Pack(T const &val) {
     return this->operator<<(val);
-  }
-
-  SizeCounter &Pack()
-  {
-    return *this;
   }
 
   void Seek(std::size_t const &p) {}
