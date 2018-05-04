@@ -4,7 +4,7 @@
 #include "byte_array/referenced_byte_array.hpp"
 #include "logger.hpp"
 #include "mutex.hpp"
-#include "serializer/exception.hpp"
+#include "serializers/exception.hpp"
 #include "service/types.hpp"
 
 #include <atomic>

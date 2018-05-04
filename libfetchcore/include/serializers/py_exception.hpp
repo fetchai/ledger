@@ -1,6 +1,6 @@
 #ifndef LIBFETCHCORE_SERIALIZER_EXCEPTION_HPP
 #define LIBFETCHCORE_SERIALIZER_EXCEPTION_HPP
-#include "serializer/exception.hpp"
+#include "serializers/exception.hpp"
 
 #include"fetch_pybind.hpp"
 

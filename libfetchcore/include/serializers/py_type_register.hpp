@@ -1,6 +1,6 @@
 #ifndef LIBFETCHCORE_SERIALIZER_TYPE_REGISTER_HPP
 #define LIBFETCHCORE_SERIALIZER_TYPE_REGISTER_HPP
-#include "serializer/type_register.hpp"
+#include "serializers/type_register.hpp"
 
 #include"fetch_pybind.hpp"
 

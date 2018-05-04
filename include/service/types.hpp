@@ -1,9 +1,9 @@
 #ifndef SERVICE_TYPES_HPP
 #define SERVICE_TYPES_HPP
-#include "serializer/byte_array_buffer.hpp"
-#include "serializer/referenced_byte_array.hpp"
-#include "serializer/stl_types.hpp"
-#include "serializer/typed_byte_array_buffer.hpp"
+#include "serializers/byte_array_buffer.hpp"
+#include "serializers/referenced_byte_array.hpp"
+#include "serializers/stl_types.hpp"
+#include "serializers/typed_byte_array_buffer.hpp"
 
 namespace fetch {
 namespace service {

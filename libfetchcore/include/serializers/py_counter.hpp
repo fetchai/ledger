@@ -1,6 +1,6 @@
 #ifndef LIBFETCHCORE_SERIALIZER_COUNTER_HPP
 #define LIBFETCHCORE_SERIALIZER_COUNTER_HPP
-#include "serializer/counter.hpp"
+#include "serializers/counter.hpp"
 
 #include"fetch_pybind.hpp"
 

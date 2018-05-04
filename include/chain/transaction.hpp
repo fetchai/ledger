@@ -4,8 +4,8 @@
 
 #include "byte_array/const_byte_array.hpp"
 #include "logger.hpp"
-#include "serializer/byte_array_buffer.hpp"
-#include "serializer/referenced_byte_array.hpp"
+#include "serializers/byte_array_buffer.hpp"
+#include "serializers/referenced_byte_array.hpp"
 
 namespace fetch {
 typedef uint16_t group_type;

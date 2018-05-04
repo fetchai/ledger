@@ -1,10 +1,10 @@
 #ifndef SERIALIZER_COUNTER_HPP
 #define SERIALIZER_COUNTER_HPP
-#include "serializer/stl_types.hpp"
+#include "serializers/stl_types.hpp"
 
 #include <type_traits>
 #include "byte_array/referenced_byte_array.hpp"
-#include "serializer/type_register.hpp"
+#include "serializers/type_register.hpp"
 
 namespace fetch {
 namespace serializers {

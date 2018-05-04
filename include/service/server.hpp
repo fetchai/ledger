@@ -1,8 +1,8 @@
 #ifndef SERVICE_SERVER_HPP
 #define SERVICE_SERVER_HPP
 
-#include "serializer/referenced_byte_array.hpp"
-#include "serializer/serializable_exception.hpp"
+#include "serializers/referenced_byte_array.hpp"
+#include "serializers/serializable_exception.hpp"
 #include "service/callable_class_member.hpp"
 #include "service/message_types.hpp"
 #include "service/protocol.hpp"

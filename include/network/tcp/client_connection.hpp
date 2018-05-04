@@ -6,8 +6,8 @@
 #include "mutex.hpp"
 #include "network/message.hpp"
 #include "network/tcp/client_manager.hpp"
-#include "serializer/byte_array_buffer.hpp"
-#include "serializer/referenced_byte_array.hpp"
+#include "serializers/byte_array_buffer.hpp"
+#include "serializers/referenced_byte_array.hpp"
 
 #include "fetch_asio.hpp"
 namespace fetch {

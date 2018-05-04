@@ -1,6 +1,6 @@
 #ifndef LIBFETCHCORE_SERIALIZER_BYTE_ARRAY_BUFFER_HPP
 #define LIBFETCHCORE_SERIALIZER_BYTE_ARRAY_BUFFER_HPP
-#include "serializer/byte_array_buffer.hpp"
+#include "serializers/byte_array_buffer.hpp"
 
 #include"fetch_pybind.hpp"
 
