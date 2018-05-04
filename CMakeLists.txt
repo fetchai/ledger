@@ -64,14 +64,14 @@ endif()
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 #
-set(STRICT_FLAGS "-Wconversion -Wpedantic -Wall")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function -Wno-unknown-pragmas -O3 ${STRICT_FLAGS}")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -Wno-unknown-pragmas -O3 -g ${STRICT_FLAGS} -DNDEBUG")
+set(STRICT_FLAGS "-Wconversion -Wpedantic  -Werror -Wall ")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIC -Wall -g -Wno-unused-function -Wno-unknown-pragmas -O3 ${STRICT_FLAGS}")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -Wno-inline -Wno-enum-compare -Wno-unknown-pragmas -O3 -g ${STRICT_FLAGS} -DNDEBUG")
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
  
-set(CMAKE_BUILD_TYPE RELEASE)
-#set(CMAKE_BUILD_TYPE DEBUG)
+#set(CMAKE_BUILD_TYPE RELEASE)
+set(CMAKE_BUILD_TYPE DEBUG)
 
 
 ## #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -DNDEBUG -g -Wall  -Werror -Wno-unused-function")
