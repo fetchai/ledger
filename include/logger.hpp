@@ -524,7 +524,7 @@ extern log::details::LogWrapper logger;
 #define LOG_SET_CONTEXT_VARIABLE(name) name = fetch::logger.TopContext();
 
 #define LOG_PRINT_STACK_TRACE(name, custom_name) \
-  fetch::logger.StackTrace(name, uint32_t(-1), false, custom_name)
+  fetch::logger.StackTrace(name, uint32_t(-1), false, custom_name);
 
 #else
 

@@ -35,6 +35,12 @@ class Transaction {
   typedef byte_array::ConstByteArray
       arguments_type;  // TODO: json doc with native serialization
 
+  Transaction()                                  = default;
+  Transaction(Transaction const &rhs)            = default;
+  Transaction &operator=(Transaction const &rhs) = default;
+  Transaction(Transaction &&rhs)                 = default;
+  Transaction &operator=(Transaction&& rhs)      = default;
+
   enum { VERSION = 1 };
 
   void UpdateDigest() const {

@@ -11,6 +11,7 @@
 
 #include "service/error_codes.hpp"
 #include "service/promise.hpp"
+#include "serializer/counter.hpp"
 
 namespace fetch {
 namespace service {

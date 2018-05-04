@@ -57,7 +57,7 @@ class SerializableException : public std::exception {
   std::string explanation() const { return explanation_; }
 
   void StackTrace() const {
-    LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception");
+    LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception")
   }
 
  private:
