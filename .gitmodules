@@ -6,4 +6,4 @@
 	url = github:pybind/pybind11.git
 [submodule "docker-images"]
 	path = docker-images
-	url = github:uvue-git/docker-images.git
+	url = github:pbukva/docker-images.git
