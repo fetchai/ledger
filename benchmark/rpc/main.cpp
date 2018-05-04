@@ -112,11 +112,11 @@ class MyCoolService : public ServiceServer<fetch::network::TCPServer> {
   }
 };
 
-void StartClient() {
+void StartClient(std::string const &host) {
   fetch::network::ThreadManager tm;
-  ServiceClient<fetch::network::TCPClient> client("localhost", 8080, &tm);
+  ServiceClient<fetch::network::TCPClient> client(host, 8080, &tm);
   tm.Start();
-
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
   while (true) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::cout << "Calling ..." << std::flush;
@@ -138,24 +138,46 @@ void StartClient() {
   tm.Stop();
 }
 
-void RunTest(std::size_t tx_count) {
+void RunTest(std::size_t tx_count, int argc, char **argv) {
   MakeTransactionVector(TestData, tx_count);
 
   fetch::network::ThreadManager tm(8);
   MyCoolService serv(8080, &tm);
   tm.Start();
 
-  StartClient();
+  StartClient("localhost");
 
   tm.Stop();
 }
 
-int main() {
+int main(int argc, char **argv) {
   serializer_type ser;
   ser << NextTransaction();
   std::cout << "TX Size: " << ser.data().size() << std::endl;
 
-  RunTest(100000);
-
+  if(argc == 1) {
+    RunTest(100000, argc, argv);
+  } else {
+    if(std::string(argv[1]) == "server") {
+      std::cout << "Creating transaction set" << std::endl;      
+      MakeTransactionVector(TestData, 10000);
+      std::cout << "Staring server" << std::endl;      
+      fetch::network::ThreadManager tm(8);
+      MyCoolService serv(8080, &tm);
+      tm.Start();
+      std::cout << "Press enter to quit" << std::endl;
+      std::string dummy;      
+      std::getline(std::cin, dummy);
+      
+      tm.Stop();      
+    } else {
+      std::cout << "Connecting to " << argv[2] << std::endl;
+      StartClient(argv[2]);
+    }
+    
+     
+  }
+  
+  
   return 0;
 }
