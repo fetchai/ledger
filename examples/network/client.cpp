@@ -35,10 +35,20 @@ int main(int argc, char* argv[]) {
       return 1;
     }
     ThreadManager tmanager; 
-    Client client(argv[1], argv[2], &tmanager);
-    
     tmanager.Start();
-    
+
+    // Attempt to break the connection
+    for (std::size_t i = 0; i < 10000; ++i)
+    {
+      Client client(argv[1], argv[2], &tmanager);
+
+      while(!client.is_alive()) {}
+
+      fetch::byte_array::ByteArray msg0("Testing rapid string pushing");
+      client.Send(msg0.Copy());
+    }
+
+    Client client(argv[1], argv[2], &tmanager);
     fetch::byte_array::ByteArray msg;
     msg.Resize(512);
 

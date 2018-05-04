@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_PROTOCOLS_SWARM_NODE_DETAILS_HPP
 #include "protocols/swarm/node_details.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace protocols

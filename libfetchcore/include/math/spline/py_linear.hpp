@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_MATH_SPLINE_LINEAR_HPP
 #include "math/spline/linear.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace math

@@ -1,7 +1,7 @@
 #ifndef LIBFETCHCORE_CRYPTO_MERKLE_SET_HPP
 #define LIBFETCHCORE_CRYPTO_MERKLE_SET_HPP
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+
+#include"fetch_pybind.hpp"
 namespace fetch
 {
 namespace crypto

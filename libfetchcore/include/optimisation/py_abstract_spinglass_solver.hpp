@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_OPTIMISATION_ABSTRACT_SPINGLASS_SOLVER_HPP
 #include "optimisation/abstract_spinglass_solver.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace optimisers

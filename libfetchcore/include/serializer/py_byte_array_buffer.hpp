@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_SERIALIZER_BYTE_ARRAY_BUFFER_HPP
 #include "serializer/byte_array_buffer.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace serializers

@@ -52,16 +52,14 @@ int main() {
     std::cout << "Second result: " << int(px) << std::endl;
     
   } catch(fetch::serializers::SerializableException const &e) {
-    
     std::cout << "Exception caught: " << e.what() << std::endl;
-    
   }
 
   // Testing performance
   auto t_start = std::chrono::high_resolution_clock::now();
   std::vector< fetch::service::Promise > promises;
 
-  std::size_t N = 10000;
+  std::size_t N = 100000;
   for(std::size_t i=0; i < N; ++i) {
     promises.push_back( client.Call( MYPROTO, ADD, 4, 3 ) );
   }

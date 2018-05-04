@@ -2,9 +2,7 @@
 #define LIBFETCHCORE_MEMORY_RECTANGULAR_ARRAY_HPP
 #include "memory/rectangular_array.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
-#include <pybind11/numpy.h>
+#include"fetch_pybind.hpp"
 namespace fetch
 {
 namespace memory

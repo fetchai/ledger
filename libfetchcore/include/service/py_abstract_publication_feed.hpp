@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_SERVICE_ABSTRACT_PUBLICATION_FEED_HPP
 #include "service/abstract_publication_feed.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace service

@@ -2,7 +2,6 @@
 #define LIBFETCHCORE_CRYPTO_HASH_HPP
 #include "crypto/hash.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
 
 #endif

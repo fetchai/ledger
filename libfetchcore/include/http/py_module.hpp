@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_HTTP_MODULE_HPP
 #include "http/module.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace http

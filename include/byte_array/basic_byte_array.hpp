@@ -29,7 +29,7 @@ class BasicByteArray {
   enum { NPOS = uint64_t(-1) };
 
   BasicByteArray() {}
-  BasicByteArray(std::size_t const &n) { Resize(n); }
+  explicit BasicByteArray(std::size_t const &n) { Resize(n); }
 
   BasicByteArray(char const *str) {
     std::size_t n = 0;

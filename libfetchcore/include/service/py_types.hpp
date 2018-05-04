@@ -2,7 +2,6 @@
 #define LIBFETCHCORE_SERVICE_TYPES_HPP
 #include "service/types.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
 
 #endif
