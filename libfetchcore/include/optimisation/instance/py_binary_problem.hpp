@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_OPTIMISATION_INSTANCE_BINARY_PROBLEM_HPP
 #include "optimisation/instance/binary_problem.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace optimisers

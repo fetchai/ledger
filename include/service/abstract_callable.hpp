@@ -67,7 +67,8 @@ struct Packer<T> {
 template <typename S, typename... arguments>
 void PackCall(S &serializer,
               protocol_handler_type const &protocol,
-              function_handler_type const &function, arguments && ...args) {
+              function_handler_type const &function, arguments&& ...args) {
+
   LOG_STACK_TRACE_POINT;
 
   serializer << protocol;

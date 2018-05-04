@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_CRYPTO_SHA256_HPP
 #include "crypto/sha256.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace crypto

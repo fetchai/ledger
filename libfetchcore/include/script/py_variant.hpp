@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_SCRIPT_VARIANT_HPP
 #include "script/variant.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace script

@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_SERVICE_PROTOCOL_HPP
 #include "service/protocol.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace service

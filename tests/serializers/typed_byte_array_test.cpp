@@ -1,7 +1,23 @@
 #include "serializer/typed_byte_array_buffer.hpp"
 using namespace fetch::serializers;
-
+std::ostream& operator<<(std::ostream& os, std::vector< int > const &v);
 #include "unittest.hpp"
+
+
+
+std::ostream& operator<<(std::ostream& os, std::vector< int > const &v)  
+{  
+  bool first = true;
+  os << "[";
+  for(auto const &e : v) {
+    if(!first) os << ", ";
+    os << e;
+    first = false;
+  }
+  os << "]";
+
+  return os;  
+}  
 
 class NoCopyClass
 {
@@ -32,12 +48,12 @@ inline void Deserialize(T &serializer, NoCopyClass &b)
   serializer >> b.classValue_;
 }
 
-
 int main() {
 
   SCENARIO("Typed byte array serialization/deserialization") {
 
     SECTION("ensuring that ser/deser is correct") {
+
 
       {
         TypedByte_ArrayBuffer buffer;
@@ -61,6 +77,7 @@ int main() {
 
       {
         TypedByte_ArrayBuffer buffer;
+
         NoCopyClass test(99);
         buffer << test;
         buffer.Seek(0);

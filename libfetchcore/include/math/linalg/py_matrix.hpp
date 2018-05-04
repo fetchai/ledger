@@ -2,8 +2,7 @@
 #define LIBFETCHCORE_MATH_LINALG_MATRIX_HPP
 #include "math/linalg/matrix.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
 namespace fetch
 {
 namespace math
