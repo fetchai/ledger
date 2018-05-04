@@ -344,3 +344,36 @@ serves as a universal null pointer literal replacing the buggy and
 weakly-typed literal 0 and the infamous `NULL` macro. `nullptr` thus
 puts an end to more than 30 years of embarrassment, ambiguity, and bugs.  
 Furhter, the new nullptr is type safe.
+
+
+## Resource handling
+This section describes how to manage resources which lifecycle needs to be strictly controlled, such as thread synchronisation constructs (e.g. mutex), memory, filesystem objects, network connections, database sessions, etc. ...
+This is especially critical in environment where **exceptions** can occure.
+Handling of these kind of resources in general, but specially in exception enabled environment, requires respect and obey a few rules (see bellow).
+It is suggested to use scope based smart pointer concept to manage lifecycle for resources. The `Smart pointer` concept in C++ exploits unbreakable constructor-destructor bond of the class instance created on the stack, where its lifecycle is strictly controlled by encapsulating scope, inside of which the instance has been created.
+The most important aspect of this strong bond is that the destructor is *ALWAYS* automatically called when the code flow is exiting the encapsulating scope, what **includes** exit caused by exception beying thrown. 
+Bellow are few examples of resure types with suggested concepts how they should be managed in the code:
+
+### Dynamically alocated MEMORY resources
+Please use smart pointers from `std::` namespace dedicated to memory management. The most frequently used smart pointers are `std::shared_ptr<...>`, `std::unique_ptr<...>`, etc. ...
+
+Here we can also mention here container classes, for example the `std::vector<...>`, which also manage memory for us.
+
+It is **discouraged** to store or pass around **raw** pointers in the code, unless there is really strong reason to do so (e.g. cooperating with C code, or third party library, which API requires to pass raw pointers, etc. ...).
+
+NOTE: Please be aware of one twist in C++ language affecting lifecycle management of dynamic memory allocation: **single** object vs. **array** object allocation & deallocation. There are 2 versions of `new` & `delete` operators:
+  * one for **single** object (`ptr = new T (...)` & `delete ptr`), and 
+  * another one for **array** object (`ptr = new [size] (...)` & `delete [] ptr`)
+, where new & delete operator version are tangled together for each case if something was constructed with single object new operator version, then it **must** be destructed with single object version of delete operator 
+  If the memory has been allocated as **single** object using single instance `new (...)` operator , which also propagates to , that smart pointers dedicated to manage lifecycle of dynamic memory allocation are  
+
+```cpp
+#include <memory>
+
+{
+  std::unique_ptr<>
+}
+```
+
+### THREAD synchronisation resources
+Please use locking guards provided in C++ `std` namespace (such as `std::lock_guard<...>` to controll fifecycle of thread synchronisation objects (please see the code example bellow
