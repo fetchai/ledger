@@ -48,13 +48,12 @@ inline void Deserialize(T &serializer, NoCopyClass &b)
   serializer >> b.classValue_;
 }
 
-
-
 int main() {
 
   SCENARIO("Typed byte array serialization/deserialization") {
 
     SECTION("ensuring that ser/deser is correct") {
+
 
       {
         TypedByte_ArrayBuffer buffer;
@@ -78,6 +77,7 @@ int main() {
 
       {
         TypedByte_ArrayBuffer buffer;
+
         NoCopyClass test(99);
         buffer << test;
         buffer.Seek(0);
