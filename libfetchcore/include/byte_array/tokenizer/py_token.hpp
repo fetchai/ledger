@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_BYTE_ARRAY_TOKENIZER_TOKEN_HPP
 #include "byte_array/tokenizer/token.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace byte_array

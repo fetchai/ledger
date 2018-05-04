@@ -2,7 +2,6 @@
 #define LIBFETCHCORE_SERIALIZER_STL_TYPES_HPP
 #include "serializer/stl_types.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
 
 #endif

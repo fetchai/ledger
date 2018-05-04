@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_UNITTEST_HPP
 #include "unittest.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace unittest

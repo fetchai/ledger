@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_PROTOCOLS_CHAIN_KEEPER_TRANSACTION_MANAGER_HPP
 #include "protocols/chain_keeper/transaction_manager.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace protocols

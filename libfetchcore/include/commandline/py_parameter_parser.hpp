@@ -2,8 +2,9 @@
 #define LIBFETCHCORE_COMMANDLINE_PARAMETER_PARSER_HPP
 #include "commandline/parameter_parser.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace commandline

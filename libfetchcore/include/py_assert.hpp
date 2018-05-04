@@ -2,7 +2,6 @@
 #define LIBFETCHCORE_ASSERT_HPP
 #include "assert.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
 
 #endif
