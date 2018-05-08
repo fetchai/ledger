@@ -9,6 +9,7 @@
 #include "serializer/referenced_byte_array.hpp"
 #include "service/client.hpp"
 #include "service/server.hpp"
+#include "common/helper_functions.hpp"
 
 #include <chrono>
 #include <random>
@@ -16,72 +17,13 @@
 using namespace fetch::serializers;
 using namespace fetch::byte_array;
 using namespace fetch::service;
+using namespace fetch::common;
 using namespace std::chrono;
 using namespace fetch;
 
 typedef fetch::chain::Transaction transaction_type;
 
-fetch::random::LaggedFibonacciGenerator<> lfg;
-template <typename T>
-void MakeString(T &str, std::size_t N = 4)
-{
-  ByteArray entry;
-  entry.Resize(N);
-
-  for (std::size_t j = 0; j < N; ++j)
-  {
-    entry[j] = uint8_t(lfg() & 0xFF);
-  }
-  str = entry;
-}
-
-template <typename T>
-std::size_t Size(const T &item)
-{
-  serializer_type ser;
-  ser << item;
-  return ser.size();
-}
-
 std::size_t sizeOfTxMin   = 0; // base size of Tx
-
-transaction_type NextTransaction(std::size_t bytesToAdd)
-{
-  static std::random_device rd;
-  static std::mt19937 gen(rd());
-  static std::uniform_int_distribution<uint32_t> dis(
-      0, std::numeric_limits<uint32_t>::max());
-
-  transaction_type trans;
-
-  trans.PushGroup(group_type(dis(gen)));
-
-  ByteArray sig1, sig2, contract_name, arg1;
-  MakeString(sig1);
-  MakeString(sig2);
-  MakeString(contract_name);
-  MakeString(arg1, 1 + bytesToAdd);
-
-  trans.PushSignature(sig1);
-  trans.PushSignature(sig2);
-  trans.set_contract_name(contract_name);
-  trans.set_arguments(arg1);
-  trans.UpdateDigest();
-
-  return trans;
-}
-
-template <typename T>
-void MakeStringVector(std::vector<T> &vec, std::size_t size)
-{
-  for (std::size_t i = 0; i < size; ++i)
-  {
-    T s;
-    MakeString(s);
-    vec.push_back(s);
-  }
-}
-
 ByteArray                           TestString;
 std::vector<transaction_type>       TestData;
 const std::vector<transaction_type> RefVec;
@@ -92,9 +34,9 @@ std::size_t MakeTransactionVector(std::vector<T> &vec, std::size_t payload, std:
   vec.clear();
   for (std::size_t i = 0; i < txPerCall-1; ++i)
   {
-    vec.push_back(NextTransaction((payload-Size(RefVec))/txPerCall - sizeOfTxMin));
+    vec.push_back(NextTransaction<transaction_type>((payload-Size(RefVec))/txPerCall - sizeOfTxMin));
   }
-  vec.push_back(NextTransaction(payload - Size(RefVec)
+  vec.push_back(NextTransaction<transaction_type>(payload - Size(RefVec)
         - (txPerCall-1)*Size(vec[0]) - sizeOfTxMin));
 
   return payload;
@@ -227,7 +169,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
 
 int main(int argc, char *argv[])
 {
-  sizeOfTxMin = Size(NextTransaction(0));
+  sizeOfTxMin = Size(NextTransaction<transaction_type>(0));
   std::cout << "Base tx size: " << sizeOfTxMin << std::endl;
 
   std::string IP;
