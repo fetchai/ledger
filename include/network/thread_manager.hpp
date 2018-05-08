@@ -20,14 +20,17 @@ class ThreadManager {
   typedef std::shared_ptr< implementation_type > pointer_type;
 
 
-  
   ThreadManager(std::size_t threads = 1) {
     pointer_ = std::make_shared< implementation_type >( threads );
   }
 
   ~ThreadManager() {
-
   }
+
+  ThreadManager(ThreadManager const &rhs)            = default;
+  ThreadManager(ThreadManager &&rhs)                 = delete;
+  ThreadManager &operator=(ThreadManager const &rhs) = delete;
+  ThreadManager &operator=(ThreadManager&& rhs)      = delete;
 
   void Start() {
     pointer_->Start();
@@ -36,9 +39,9 @@ class ThreadManager {
   void Stop() {
     pointer_->Stop();
   }
-  
+
   asio::io_service &io_service() { return pointer_->io_service(); }
-  
+
   event_handle_type OnBeforeStart(event_function_type const &fnc) {
     return pointer_->OnBeforeStart(fnc);
   }
