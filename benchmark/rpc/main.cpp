@@ -145,6 +145,8 @@ private:
   ServiceProtocol serviceProtocol;
 };
 
+std::ostringstream finalResult;
+
 void RunTest(std::size_t payload, std::size_t txPerCall,
     const std::string &IP, uint16_t port, bool isMaster, bool pullTest)
 {
@@ -181,7 +183,8 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   }
 
   std::vector<transaction_type> data;
-  std::size_t stopCondition = std::size_t(pow(10, 6));
+  std::size_t stopCondition = std::size_t(1000 * pow(10, 6));
+  //std::size_t stopCondition = std::size_t(1 * pow(10, 6));
   high_resolution_clock::time_point t0, t1;
 
   if(pullTest)
@@ -216,13 +219,16 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   double seconds = duration_cast<duration<double>>(t1 - t0).count();
   double mbps = (double(rpcCalls*setupPayload*8)/seconds)/1000000;
 
-  std::cout << std::left << std::setw(10)
+  std::ostringstream result;
+  result    << std::left << std::setw(10)
             << double(setupPayload)/1000 << std::left << std::setw(10)
             << txPerCall                 << std::left << std::setw(10)
             << double(txData)/seconds    << std::left << std::setw(10)
             << mbps                      << std::left << std::setw(10)
             << seconds << std::endl;
 
+  std::cout << result.str();
+  finalResult << result.str();
 }
 
 int main(int argc, char *argv[])
@@ -285,8 +291,11 @@ int main(int argc, char *argv[])
         RunTest(payload, txPerCall, IP, port, true, pullTest);
       }
       std::cout << std::endl;
+      finalResult << std::endl;
     }
   }
+
+  std::cout << finalResult.str();
 
   tm.Stop();
   if(benchmarkThread.joinable())
