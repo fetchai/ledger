@@ -222,7 +222,9 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
   void ReadBody() noexcept {
     byte_array::ByteArray message;
-    if (header_.content.magic != 0xFE7C80A1FE7C80A1) {
+    if (header_.content.magic != networkMagic) {
+      fetch::logger.Debug("Magic incorrect during network read");
+
       if(is_alive_) {
         fetch::logger.Debug("Magic incorrect - closing connection.");
         Close(true);
@@ -255,6 +257,22 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
                      cb);
   }
 
+  void SetHeader(byte_array::ByteArray &header, uint64_t bufSize)
+  {
+    header.Resize(16);
+
+    for (std::size_t i = 0; i < 8; ++i)
+    {
+      header[i] = uint8_t((networkMagic >> i*8) & 0xff);
+    }
+
+    for (std::size_t i = 0; i < 8; ++i)
+    {
+      header[i+8] = uint8_t((bufSize >> i*8) & 0xff);
+    }
+
+  }
+
   void Write() noexcept {
     LOG_STACK_TRACE_POINT;
 
@@ -265,15 +283,15 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
       return;
     }
 
-    auto buffer = write_queue_.front();
-    header_write_.content.magic = 0xFE7C80A1FE7C80A1;
-    header_write_.content.length = buffer.size();
+    auto buffer          = write_queue_.front();
+    write_queue_.pop_front();
+    byte_array::ByteArray header;
+    SetHeader(header, buffer.size());
     write_mutex_.unlock();
 
     auto self = shared_from_this();
-    auto cb = [this,self, buffer](std::error_code ec, std::size_t) {
+    auto cb = [this,self, buffer, header](std::error_code ec, std::size_t) {
 
-      write_queue_.pop_front();
       if (!ec) {
         fetch::logger.Debug("Wrote message.");
         write_mutex_.lock();
@@ -296,7 +314,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
     if (is_alive_) {
       std::vector<asio::const_buffer> buffers{
-        asio::buffer(header_write_.bytes, 2 * sizeof(uint64_t)),
+        asio::buffer(header.pointer(), header.size()),
         asio::buffer(buffer.pointer(), buffer.size())};
 
       asio::async_write( socket_, buffers, cb);
@@ -307,6 +325,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   std::atomic<bool> is_alive_;
   mutable fetch::mutex::Mutex leave_mutex_;
   std::function<void()> on_leave_;
+  const uint64_t networkMagic = 0xFE7C80A1FE7C80A1;
 
   event_handle_type event_start_service_;
   event_handle_type event_stop_service_;
@@ -329,7 +348,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
       uint64_t length;
     } content;
 
-  } header_write_, header_;
+  } header_;
 
   asio::io_service& io_service_;
   asio::ip::tcp::tcp::socket socket_;
