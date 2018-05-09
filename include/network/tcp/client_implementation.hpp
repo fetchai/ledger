@@ -42,7 +42,6 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     event_stop_service_ =
         thread_manager_.OnBeforeStop([this]() { this->writing_ = false; });
 
-    headerBuffer << 0xFE7C80A1FE7C80A1;
     writing_ = false;
   }
 
@@ -308,7 +307,6 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   std::atomic<bool> is_alive_;
   mutable fetch::mutex::Mutex leave_mutex_;
   std::function<void()> on_leave_;
-  serializers::ByteArrayBuffer headerBuffer;
 
   event_handle_type event_start_service_;
   event_handle_type event_stop_service_;
