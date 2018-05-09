@@ -3,9 +3,9 @@
 #include "byte_array/py_byte_array.hpp"
 #include "byte_array/py_referenced_byte_array.hpp"
 
-#include "serializer/stl_types.hpp"
-#include "serializer/byte_array_buffer.hpp"
-#include "serializer/typed_byte_array_buffer.hpp"
+#include "serializers/stl_types.hpp"
+#include "serializers/byte_array_buffer.hpp"
+#include "serializers/typed_byte_array_buffer.hpp"
 
 #include "service/py_promise.hpp"
 #include "service/py_client.hpp"

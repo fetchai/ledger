@@ -2,7 +2,7 @@
 #define CHAIN_BLOCK_HPP
 #include "byte_array/referenced_byte_array.hpp"
 #include "chain/transaction.hpp"
-#include "serializer/byte_array_buffer.hpp"
+#include "serializers/byte_array_buffer.hpp"
 
 #include <memory>
 

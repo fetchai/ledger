@@ -1,7 +1,7 @@
 #define FETCH_DISABLE_COUT_LOGGING
 #include"service_consts.hpp"
 #include<iostream>
-#include"serializer/referenced_byte_array.hpp"
+#include"serializers/referenced_byte_array.hpp"
 #include"service/client.hpp"
 #include"logger.hpp"
 using namespace fetch::service;

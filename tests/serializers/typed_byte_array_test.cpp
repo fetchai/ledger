@@ -1,4 +1,4 @@
-#include "serializer/typed_byte_array_buffer.hpp"
+#include "serializers/typed_byte_array_buffer.hpp"
 using namespace fetch::serializers;
 std::ostream& operator<<(std::ostream& os, std::vector< int > const &v);
 #include "unittest.hpp"

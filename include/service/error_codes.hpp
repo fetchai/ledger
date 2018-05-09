@@ -1,6 +1,6 @@
 #ifndef SERVICE_ERROR_CODES_HPP
 #define SERVICE_ERROR_CODES_HPP
-#include "serializer/exception.hpp"
+#include "serializers/exception.hpp"
 namespace fetch {
 namespace service {
 namespace error {
