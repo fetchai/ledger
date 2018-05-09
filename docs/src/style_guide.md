@@ -377,7 +377,7 @@ Please use locking guards provided in C++ `std` namespace, such as:
   * `std::unique_lock<...>`, or
   * `std::lock_guard<...>`.
 
->On side note, our codebase offers a few implementations of mutex in `featch::mutex` namespace which conform to `std` locking API contract and so can be used with above-mentioned locking quard constructs from `std` namespace. Please prefer to use them in favour of plain `std::mutex`:
+>On side note, our codebase offers a few implementations of mutex in `featch::mutex` namespace which conforms to `std` locking API contract, and so can be used with above-mentioned locking quard constructs from `std` namespace. Please prefer to use them in favour of plain `std::mutex`:
 >  * `fetch::mutex::DebugMutex`
 >  * `fetch::mutex::ProductionMutex`
 
