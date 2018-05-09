@@ -148,6 +148,8 @@ private:
 std::ostringstream finalResult;
 double mbps_running       = 0;
 double mbps_running_count = 0;
+double mbps_peak          = 0;
+double mbps_min           = 0;
 
 
 void RunTest(std::size_t payload, std::size_t txPerCall,
@@ -186,7 +188,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   }
 
   std::vector<transaction_type> data;
-  std::size_t stopCondition = std::size_t(100 * pow(10, 6));
+  std::size_t stopCondition = std::size_t(1 * pow(10, 6));
   high_resolution_clock::time_point t0, t1;
 
   if(pullTest)
@@ -223,6 +225,8 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
 
   mbps_running       += mbps;
   mbps_running_count += 1;
+  if(mbps > mbps_peak) { mbps_peak = mbps; }
+  if(mbps < mbps_min || mbps_min == 0) { mbps_min = mbps; }
 
   std::ostringstream result;
   result    << std::left << std::setw(10)
@@ -301,6 +305,8 @@ int main(int argc, char *argv[])
 
     //std::cout << finalResult.str();
     std::cout << "Average Mb/s: " << mbps_running/mbps_running_count << std::endl;
+    std::cout << "Peak Mb/s: " << mbps_peak << std::endl;
+    std::cout << "Min Mb/s: " << mbps_min << std::endl;
   }
 
   tm.Stop();
