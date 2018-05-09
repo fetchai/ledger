@@ -175,7 +175,7 @@ class ClientConnection : public AbstractClientConnection,
       uint64_t magic;
       uint64_t length;
     } content;
-  } header_write_, header_;
+  } header_;
 };
 }
 }
