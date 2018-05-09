@@ -1,4 +1,3 @@
-#define FETCH_DISABLE_COUT_LOGGING
 #include<iostream>
 #include"serializers/referenced_byte_array.hpp"
 #include"serializers/stl_types.hpp"

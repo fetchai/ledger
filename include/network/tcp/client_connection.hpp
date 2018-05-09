@@ -86,10 +86,8 @@ class ClientConnection : public AbstractClientConnection,
     LOG_STACK_TRACE_POINT;
 
     byte_array::ByteArray message;
-    //    std::cout << std::hex << header_.magic << std::dec << std::endl;
-    //    std::cout << header_.length << std::endl;
 
-    if (header_.content.magic != 0xFE7C80A1FE7C80A1) {
+    if (header_.content.magic != networkMagic) {
       fetch::logger.Debug("Magic incorrect - closing connection.");
 
       manager_.Leave(handle_);
@@ -113,6 +111,22 @@ class ClientConnection : public AbstractClientConnection,
                      cb);
   }
 
+  void SetHeader(byte_array::ByteArray &header, uint64_t bufSize)
+  {
+    header.Resize(16);
+
+    for (std::size_t i = 0; i < 8; ++i)
+    {
+      header[i] = uint8_t((networkMagic >> i*8) & 0xff);
+    }
+
+    for (std::size_t i = 0; i < 8; ++i)
+    {
+      header[i+8] = uint8_t((bufSize >> i*8) & 0xff);
+    }
+
+  }
+
   void Write() {
     LOG_STACK_TRACE_POINT;
 
@@ -124,14 +138,14 @@ class ClientConnection : public AbstractClientConnection,
     }
 
     auto buffer = write_queue_.front();
+    byte_array::ByteArray header;
+    SetHeader(header, buffer.size());
     write_queue_.pop_front();
-    header_write_.content.magic = 0xFE7C80A1FE7C80A1;
-    header_write_.content.length = buffer.size();
-
     write_mutex_.unlock();
 
     auto self = shared_from_this();
-    auto cb = [this, buffer, self](std::error_code ec, std::size_t) {
+    auto cb = [this, buffer, header, self](std::error_code ec, std::size_t) {
+
       if (!ec) {
         fetch::logger.Debug("Server: Wrote message.");
         Write();
@@ -140,9 +154,9 @@ class ClientConnection : public AbstractClientConnection,
       }
     };
 
-    std::vector<asio::const_buffer> buffers;
-    buffers.push_back(asio::buffer(header_write_.bytes, 2 * sizeof(uint64_t)));
-    buffers.push_back(asio::buffer(buffer.pointer(), buffer.size()));
+    std::vector<asio::const_buffer> buffers{
+      asio::buffer(header.pointer(), header.size()),
+      asio::buffer(buffer.pointer(), buffer.size())};
 
     asio::async_write(socket_, buffers, cb);
   }
@@ -153,6 +167,7 @@ class ClientConnection : public AbstractClientConnection,
   fetch::mutex::Mutex write_mutex_;
   handle_type handle_;
   std::string address_;
+  const uint64_t networkMagic = 0xFE7C80A1FE7C80A1;
 
   union {
     char bytes[2 * sizeof(uint64_t)];
@@ -160,7 +175,7 @@ class ClientConnection : public AbstractClientConnection,
       uint64_t magic;
       uint64_t length;
     } content;
-  } header_write_, header_;
+  } header_;
 };
 }
 }
