@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
 
     for (std::size_t i = 0; i <= 10; ++i)
     {
-      for (std::size_t j = 0; j <= 1; ++j)
+      for (std::size_t j = 0; j <= 20; ++j)
       {
         std::size_t payload   = 100000  * (1<<i);
         std::size_t txPerCall = 100     * (1<<j);

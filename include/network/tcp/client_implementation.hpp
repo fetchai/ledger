@@ -261,7 +261,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
     write_mutex_.lock();
     if (write_queue_.empty()) {
-      fetch::logger.Debug("Queue is empty, stopping");
+      fetch::logger.Debug("Network write queue is empty, stopping");
       write_mutex_.unlock();
       return;
     }
