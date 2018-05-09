@@ -28,9 +28,9 @@ class ThreadManager {
   }
 
   ThreadManager(ThreadManager const &rhs)            = default;
-  ThreadManager(ThreadManager &&rhs)                 = delete;
-  ThreadManager &operator=(ThreadManager const &rhs) = delete;
-  ThreadManager &operator=(ThreadManager&& rhs)      = delete;
+  ThreadManager(ThreadManager &&rhs)                 = default;
+  ThreadManager &operator=(ThreadManager const &rhs) = default;
+  ThreadManager &operator=(ThreadManager&& rhs)      = default;
 
   void Start() {
     pointer_->Start();
