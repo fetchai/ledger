@@ -1,4 +1,3 @@
-//#define FETCH_DISABLE_COUT_LOGGING // This has to be defined in the cmakelists
 #include "random/lfg.hpp"
 #include "serializers/byte_array_buffer.hpp"
 #include "serializers/counter.hpp"
