@@ -261,26 +261,20 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
     write_mutex_.lock();
     if (write_queue_.empty()) {
-      fetch::logger.Debug("Queue is empty stopping");
+      fetch::logger.Debug("Queue is empty, stopping");
       write_mutex_.unlock();
       return;
     }
 
-    //serializers::ByteArrayBuffer buffer(write_queue_.front()); // TODO: (`HUT`) : this
-    //does not work
-
-    // Alternate option
-    serializers::ByteArrayBuffer buffer;
-    auto bufferFront = write_queue_.front();
-    buffer.Reserve(bufferFront.size());
-    buffer << bufferFront;
-
-    write_queue_.pop_front();
+    auto buffer = write_queue_.front();
+    header_write_.content.magic = 0xFE7C80A1FE7C80A1;
+    header_write_.content.length = buffer.size();
     write_mutex_.unlock();
 
     auto self = shared_from_this();
     auto cb = [this,self, buffer](std::error_code ec, std::size_t) {
 
+      write_queue_.pop_front();
       if (!ec) {
         fetch::logger.Debug("Wrote message.");
         write_mutex_.lock();
@@ -303,8 +297,8 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
     if (is_alive_) {
       std::vector<asio::const_buffer> buffers{
-        asio::buffer(headerBuffer.data().pointer(), headerBuffer.data().size()),
-        asio::buffer(buffer.data().pointer(), buffer.data().size()) };
+        asio::buffer(header_write_.bytes, 2 * sizeof(uint64_t)),
+        asio::buffer(buffer.pointer(), buffer.size())};
 
       asio::async_write( socket_, buffers, cb);
     }
@@ -337,7 +331,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
       uint64_t length;
     } content;
 
-  } header_;
+  } header_write_, header_;
 
   asio::io_service& io_service_;
   asio::ip::tcp::tcp::socket socket_;

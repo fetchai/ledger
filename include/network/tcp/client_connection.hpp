@@ -124,7 +124,6 @@ class ClientConnection : public AbstractClientConnection,
     }
 
     auto buffer = write_queue_.front();
-    write_queue_.pop_front();
     header_write_.content.magic = 0xFE7C80A1FE7C80A1;
     header_write_.content.length = buffer.size();
 
@@ -132,6 +131,9 @@ class ClientConnection : public AbstractClientConnection,
 
     auto self = shared_from_this();
     auto cb = [this, buffer, self](std::error_code ec, std::size_t) {
+
+      write_queue_.pop_front();
+
       if (!ec) {
         fetch::logger.Debug("Server: Wrote message.");
         Write();

@@ -146,6 +146,9 @@ private:
 };
 
 std::ostringstream finalResult;
+double mbps_running       = 0;
+double mbps_running_count = 0;
+
 
 void RunTest(std::size_t payload, std::size_t txPerCall,
     const std::string &IP, uint16_t port, bool isMaster, bool pullTest)
@@ -183,8 +186,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   }
 
   std::vector<transaction_type> data;
-  std::size_t stopCondition = std::size_t(1000 * pow(10, 6));
-  //std::size_t stopCondition = std::size_t(1 * pow(10, 6));
+  std::size_t stopCondition = std::size_t(100 * pow(10, 6));
   high_resolution_clock::time_point t0, t1;
 
   if(pullTest)
@@ -218,6 +220,9 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   tm.Stop();
   double seconds = duration_cast<duration<double>>(t1 - t0).count();
   double mbps = (double(rpcCalls*setupPayload*8)/seconds)/1000000;
+
+  mbps_running       += mbps;
+  mbps_running_count += 1;
 
   std::ostringstream result;
   result    << std::left << std::setw(10)
@@ -293,9 +298,10 @@ int main(int argc, char *argv[])
       std::cout << std::endl;
       finalResult << std::endl;
     }
-  }
 
-  std::cout << finalResult.str();
+    //std::cout << finalResult.str();
+    std::cout << "Average Mb/s: " << mbps_running/mbps_running_count << std::endl;
+  }
 
   tm.Stop();
   if(benchmarkThread.joinable())
