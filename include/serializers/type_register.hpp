@@ -4,7 +4,7 @@
 #include <string>
 #include <typeinfo>
 #include "byte_array/const_byte_array.hpp"
-#include "serializer/serializable_exception.hpp"
+#include "serializers/serializable_exception.hpp"
 namespace fetch {
 namespace serializers {
 

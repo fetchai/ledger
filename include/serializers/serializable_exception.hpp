@@ -1,6 +1,6 @@
 #ifndef SERIALIZER_SERIALIZER_EXCEPTION_HPP
 #define SERIALIZER_SERIALIZER_EXCEPTION_HPP
-#include "serializer/exception.hpp"
+#include "serializers/exception.hpp"
 
 #include <type_traits>
 

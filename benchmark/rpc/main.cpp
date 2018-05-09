@@ -1,12 +1,12 @@
 //#define FETCH_DISABLE_COUT_LOGGING // This has to be defined in the cmakelists
 #include "random/lfg.hpp"
-#include "serializer/byte_array_buffer.hpp"
-#include "serializer/counter.hpp"
-#include "serializer/referenced_byte_array.hpp"
-#include "serializer/stl_types.hpp"
+#include "serializers/byte_array_buffer.hpp"
+#include "serializers/counter.hpp"
+#include "serializers/referenced_byte_array.hpp"
+#include "serializers/stl_types.hpp"
 
 #include "chain/transaction.hpp"
-#include "serializer/referenced_byte_array.hpp"
+#include "serializers/referenced_byte_array.hpp"
 #include "service/client.hpp"
 #include "service/server.hpp"
 

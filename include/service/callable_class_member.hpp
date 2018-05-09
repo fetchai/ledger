@@ -2,11 +2,11 @@
 #define SERVICE_CALLABLE_CLASS_MEMBER_HPP
 #include <typeinfo>
 #include "logger.hpp"
-#include "serializer/byte_array_buffer.hpp"
-#include "serializer/counter.hpp"
-#include "serializer/referenced_byte_array.hpp"
-#include "serializer/stl_types.hpp"
-#include "serializer/typed_byte_array_buffer.hpp"
+#include "serializers/byte_array_buffer.hpp"
+#include "serializers/counter.hpp"
+#include "serializers/referenced_byte_array.hpp"
+#include "serializers/stl_types.hpp"
+#include "serializers/typed_byte_array_buffer.hpp"
 #include "service/abstract_callable.hpp"
 namespace fetch {
 namespace service {
