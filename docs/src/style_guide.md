@@ -366,21 +366,28 @@ Bellow are a few examples of how resources should be managed in the code:
 ### Exception enabled environment and it's impact on the resource handling
 
 The most important rule is that destructor **shall NOT** throw an exception at any circumstance.
-   * The reason being that a destructor for a *directly* initialised object (lifecycle of which is controlled by a scope) will be called **automatically** when any exception is thrown in that scope.
-   * Where implication is that **IF** such destructor would throw yet another exception, it would force C++ runtime to call **std::terminate** of the process(by definition of C++ standard), since the C++ runtime is already in [stack unwinding](http://en.cppreference.com/w/cpp/language/throw) process caused by the first exception.
+  * The reason being that a destructor for a *directly* initialised object (lifecycle of which is controlled by a scope) will be called **automatically** when any exception is thrown in that scope.
+  * Where implication is that **IF** such destructor would throw yet another exception, it would force C++ runtime to call **std::terminate** of the process(by definition of C++ standard), since the C++ runtime is already in [stack unwinding](http://en.cppreference.com/w/cpp/language/throw) process caused by the first exception.
 
 Please see more about this scenario at [cppreference.com](http://en.cppreference.com/w/cpp/language/destructor#Exceptions) and at [codingstandard.com](http://www.codingstandard.com/rule/15-2-1-do-not-throw-an-exception-from-a-destructor/).
+
+
 ### Handling THREAD synchronisation resources
 Please use locking guards provided in C++ `std` namespace, such as:
-   * `std::unique_lock<...>`, or
-   * `std::lock_guard<...>`.
+  * `std::unique_lock<...>`, or
+  * `std::lock_guard<...>`.
 
+>On side note, our codebase offers a few implementations of mutex in `featch::mutex` namespace which conform to `std` locking API contract and so can be used with above-mentioned locking quard constructs from `std` namespace. Please prefer to use them in favour of plain `std::mutex`:
+>  * `fetch::mutex::DebugMutex`
+>  * `fetch::mutex::ProductionMutex`
+
+#### The `std::unique_lock<...>`
 The `std::unique_lock` is **superset** of the `std::lock_guard` in terms of API and capabilities.
 It offers more flexibility, which allows to do following things:
-   * constructor of this class is able take on board lockable object (e.g. mutex) in any state (locked or unlocked), so `adopting` its pre-existing lock state,
-   * it is able to lock & unlock lockable object when desired (as many times as necessary),
-   * release control of the lockable object it controls,
-   * it's destructor unlocks the lockable object **if** it is in locked state.
+  * constructor of this class is able take on board lockable object (e.g. mutex) in any state (locked or unlocked), so `adopting` its pre-existing lock state,
+  * it is able to lock & unlock lockable object when desired (as many times as necessary),
+  * release control of the lockable object it controls,
+  * it's destructor unlocks the lockable object **if** it is in locked state.
 
 > See the example bellow:
 
@@ -401,24 +408,22 @@ std::mutex(mtx);
 
 auto increment_fnc() -> void
 {
-  //* this constructor locks mutex automatically
-  std::unique_lock<mutex> lock(mtx);
-  
-  //* Updating value of state keeping variable (in thread safe way - see comment bellow)
-  ++a_state;
+  {
+    //* this constructor locks mutex automatically
+    std::unique_lock<mutex> lock(mtx);
 
-  //* Signal on condition to notify *ALL* listeners waiting for the signal.
-  //* Mind to note here that this is independent from specific
-  //* synchronisation object (like mutex), reason being it can be signalled
-  //* from anywhere.
-  //* However, in general, it is good to call it from scope where
-  //* underlying thread synchronisation object is locked since it is usually
-  //* the case that this signalling is done when state keeping variable
-  //* changes value, what must be done in thread safe way.
-  condition.notify_all();
+    //* Updating value of state keeping variable (in thread safe way - see comment bellow)
+    ++a_state;
+
+    //* It is *not* necessary to explicitly call `lock.unlock()` since
+    //* it will be called implicitly by destructor of the `lock` object. 
+  }
   
-  //* It is *not* necessary to explicitly call `lock.unlock()` since
-  //* it will be called implicitly by destructor of the `lock` object. 
+  //* Signal on condition to notify *ALL* listeners waiting for the signal.
+  //* Mind to note here that this is **independent** from specific
+  //* synchronisation object (like mutex), reason being it can be signalled
+  //* from anywhere (e.g. outside of mutex locked scope).
+  condition.notify_all();
 }
 
 auto decrement_fnc() -> void
@@ -462,7 +467,7 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-
+#### The `std::lock_guard<...>`
 The `std::lock_guard<T>` offers the most trivial API possible - constructor and destructor.
 It locks the synchronisation object of `T` type **immediately** during construction time, and releases the lock in destructor.
 Constructor of this class is able take on board lockable object (e.g. mutex) in any state (locked or unlocked), so `adopting` its pre-existing lock state.
@@ -483,28 +488,29 @@ std::mutex(mtx);
 }
 ```
 
+
 ### Handling dynamically allocated MEMORY resources
-Please use smart pointers from `std::` namespace dedicated to memory management. The most frequently used smart pointers are `std::shared_ptr<...>`, `std::unique_ptr<...>`, etc. ...
+Please use smart pointers from `std::` namespace dedicated to memory management. The most frequently used smart pointers are:
+  * `std::shared_ptr<...>`,
+  * `std::unique_ptr<...>`.
 
-Here we can also mention container classes, most notably the `std::vector<...>`, which also manage memory for us.
+Please note, that *default* delete policy for these types is using **default** C++ delete operator for **single** object. However, API of these types offers possibility to provide custom deleter and allocator functors in order to manage non-default allocation/deallocation policy such as for managing **array** object type.
+> Speaking of which, please see bellow a fe suggested types which guarante to manage **array** object types (continuous block of memory) by default.
 
-* It is **discouraged** to store or pass around **raw** pointers in the code, unless there is really strong reason to do so (e.g. cooperating with C code, or third party library, which API requires to pass raw pointers, etc. ...), what should be judged during the review process.
+Here we can also mention other types which do memory management as side effect of their primary business logic:
+  * `std::vector<...>` - guarantees to manage continuous block of memory (array) by definition
+  * `std::string<...>` - guarantees to manage continuous block of memory (array) by definition
+  * `SharedArray<...>` & `Array<...>` classes (from `fetch::memory` namespace)  - guarantees to manage continuous block of memory (array) by definition 
+  * classes from `fetch::byte_array` namespace like `BasicByteArray` 
 
-* Please be aware of one twist in C++ language affecting lifecycle management of dynamic memory allocation: **single** object vs. **array** object allocation & deallocation. There are 2 versions of `new` & `delete` operators:
-   * one for **single** object (`ptr = new T (...)` & `delete ptr`), and 
-   * another one for **array** object (`ptr = new [size] (...)` & `delete [] ptr`)
-   , where new & delete operator version are tangled together for each case:
-      - If something has been constructed using **single** object new operator version, then it **must** be destructed using single object version of delete operator,
-      - and vice versa, if something has been constructed using **array** object new operator, the it **must** be destructed using delete operator for array object.
-
-* Transfer between ownership models.
-   1. It is safe to transfer ownership from `std::unique_ptr` to `std::shared_ptr`.
-   1. Do **NOT** transfer ownership other way around, from `std::shared_ptr` to `std::unique_ptr`.<br/>
-      First of all - it is really highly questionable to justify reason for transfer between ownership models in this direction!<br/>
-      Second of all - if you mind look up at `First of all - ...` again, and then, and only then, if you still think it is really really necessary to do this for some obscure reason, then keep in mind that:
-      * this is **non**-trivial operation,
-      * that `shared_ptr` type has **NOT** been designed with mind to allow this,
-      * if you are still convinced to proceed, then [here](https://stackoverflow.com/questions/15337461/move-ownership-from-stdshared-ptr-to-stdunique-ptr) is some guide to do such a thing.
+#### Transfer between ownership models.
+1. It is safe to transfer ownership from `std::unique_ptr` to `std::shared_ptr`.
+1. Do **NOT** transfer ownership other way around, from `std::shared_ptr` to `std::unique_ptr`.<br/>
+    First of all - it is really highly questionable to justify reason for transfer between ownership models in this direction!<br/>
+    Second of all - if you mind look up at `First of all - ...` again, and then, and only then, if you still think it is really really necessary to do this for some obscure reason, then keep in mind that:
+   * this is **non**-trivial operation,
+   * that `shared_ptr` type has **NOT** been designed with mind to allow this,
+   * if you are still convinced to proceed, then [here](https://stackoverflow.com/questions/15337461/move-ownership-from-stdshared-ptr-to-stdunique-ptr) is some guide to do such a thing.
 
 > Example of how to use smart pointer with **shared** ownership:
 
