@@ -6,10 +6,10 @@
 #include"byte_array/basic_byte_array.hpp"
 #include"random/lfg.hpp"
 #include"./network_classes.hpp"
-#include"./network_functions.hpp"
 #include"./node_directory.hpp"
 #include"./transaction_list.hpp"
 #include"logger.hpp"
+#include"../tests/include/helper_functions.hpp"
 
 #include<random>
 #include<memory>
@@ -138,7 +138,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////
-  // Thread attempting syncronisation
+  // Thread attempting synchronisation
   void pullTransactions()
   {
     LOG_STACK_TRACE_POINT ;
@@ -203,7 +203,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////
-  // Functions to check that syncronisation was successful
+  // Functions to check that synchronisation was successful
   std::set<transaction> GetTransactions()
   {
     LOG_STACK_TRACE_POINT ;

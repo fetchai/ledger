@@ -30,14 +30,12 @@ int main(int argc, char **argv)
 
     fetch::network_benchmark::NetworkBenchmarkService<NodeBasic> serv(tm, tcpPort, httpPort);
     tm->Start();
-    //serv.Start(); // the python/http will do this
 
     std::cout << "press any key to quit" << std::endl;
     std::cin >> seed;
   }
 
-  // TODO: (`HUT`) : investigate: tcp or http server doesn't like destructing before tm stopped
   tm->Stop();
-  //delete tm;
+  delete tm;
   return 0;
 }

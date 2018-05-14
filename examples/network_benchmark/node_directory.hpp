@@ -70,7 +70,6 @@ public:
       {
         delete client;
         client = new clientType {i.first.IP(), i.first.TCPPort(), tm_};
-        //serviceClients_[i] = client;
         fetch::logger.Info(std::cerr, "Forced to recreate client for: ", i.first.IP());
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
       }
@@ -99,7 +98,6 @@ public:
   {
     LOG_STACK_TRACE_POINT ;
     std::vector<std::vector<chain::Transaction>> result;
-    //std::chrono::microseconds sleepTime(threadSleepTimeUs_);
 
     fetch::logger.Info("doing");
     for(auto &i : serviceClients_) {
@@ -121,9 +119,6 @@ public:
           break;
         }
         result.emplace_back(std::move(res));
-
-        //fetch::logger.Info(std::cerr, "Sleeping after call");
-        //std::this_thread::sleep_for(sleepTime);
       }
     }
 
