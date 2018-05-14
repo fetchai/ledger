@@ -9,6 +9,7 @@
 #include"./node_directory.hpp"
 #include"./packet_filter.hpp"
 #include"./transaction_list.hpp"
+#include"../tests/include/helper_functions.hpp"
 
 #include<random>
 #include<memory>
@@ -165,29 +166,13 @@ private:
   std::size_t                                        sentCount_           = 0;
   std::atomic<std::size_t>                           receivedCount_{0};
 
-  transaction nextTransaction()
-  {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    static std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
-
-    transaction trans;
-
-    // Push on two 32-bit numbers so as to avoid multiple nodes creating duplicates
-    trans.PushGroup(group_type( dis(gen) ));
-    trans.PushGroup(group_type( dis(gen) ));
-    trans.UpdateDigest();
-
-    return trans;
-  }
-
   std::vector<transaction> getTrans(std::size_t numberToSend)
   {
     std::vector<transaction> allTrans;
 
     for (std::size_t i = 0; i < numberToSend; ++i)
     {
-      auto trans = nextTransaction();
+      auto trans = common::NextTransaction<transaction>();
       allTrans.push_back(trans);
     }
 
