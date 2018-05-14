@@ -206,6 +206,8 @@ class LogWrapper {
 
   LogWrapper() { log_ = new DefaultLogger(); }
 
+  ~LogWrapper() { delete log_; }
+
   template <typename... Args>
   void Info(Args... args) {
     std::lock_guard<std::mutex> lock(mutex_);
