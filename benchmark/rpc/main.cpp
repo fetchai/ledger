@@ -1,12 +1,11 @@
-//#define FETCH_DISABLE_COUT_LOGGING // This has to be defined in the cmakelists
 #include "random/lfg.hpp"
-#include "serializer/byte_array_buffer.hpp"
-#include "serializer/counter.hpp"
-#include "serializer/referenced_byte_array.hpp"
-#include "serializer/stl_types.hpp"
+#include "serializers/byte_array_buffer.hpp"
+#include "serializers/counter.hpp"
+#include "serializers/referenced_byte_array.hpp"
+#include "serializers/stl_types.hpp"
 
 #include "chain/transaction.hpp"
-#include "serializer/referenced_byte_array.hpp"
+#include "serializers/referenced_byte_array.hpp"
 #include "service/client.hpp"
 #include "service/server.hpp"
 #include "../tests/include/helper_functions.hpp"
@@ -87,6 +86,13 @@ private:
   ServiceProtocol serviceProtocol;
 };
 
+std::ostringstream finalResult;
+double mbps_running       = 0;
+double mbps_running_count = 0;
+double mbps_peak          = 0;
+double mbps_min           = 0;
+
+
 void RunTest(std::size_t payload, std::size_t txPerCall,
     const std::string &IP, uint16_t port, bool isMaster, bool pullTest)
 {
@@ -123,7 +129,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   }
 
   std::vector<transaction_type> data;
-  std::size_t stopCondition = std::size_t(pow(10, 6));
+  std::size_t stopCondition = std::size_t(1 * pow(10, 6));
   high_resolution_clock::time_point t0, t1;
 
   if(pullTest)
@@ -158,13 +164,21 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   double seconds = duration_cast<duration<double>>(t1 - t0).count();
   double mbps = (double(rpcCalls*setupPayload*8)/seconds)/1000000;
 
-  std::cout << std::left << std::setw(10)
+  mbps_running       += mbps;
+  mbps_running_count += 1;
+  if(mbps > mbps_peak) { mbps_peak = mbps; }
+  if(mbps < mbps_min || mbps_min == 0) { mbps_min = mbps; }
+
+  std::ostringstream result;
+  result    << std::left << std::setw(10)
             << double(setupPayload)/1000 << std::left << std::setw(10)
             << txPerCall                 << std::left << std::setw(10)
             << double(txData)/seconds    << std::left << std::setw(10)
             << mbps                      << std::left << std::setw(10)
             << seconds << std::endl;
 
+  std::cout << result.str();
+  finalResult << result.str();
 }
 
 int main(int argc, char *argv[])
@@ -219,7 +233,7 @@ int main(int argc, char *argv[])
 
     for (std::size_t i = 0; i <= 10; ++i)
     {
-      for (std::size_t j = 0; j <= 1; ++j)
+      for (std::size_t j = 0; j <= 20; ++j)
       {
         std::size_t payload   = 100000  * (1<<i);
         std::size_t txPerCall = 100     * (1<<j);
@@ -227,7 +241,13 @@ int main(int argc, char *argv[])
         RunTest(payload, txPerCall, IP, port, true, pullTest);
       }
       std::cout << std::endl;
+      finalResult << std::endl;
     }
+
+    //std::cout << finalResult.str();
+    std::cout << "Average Mb/s: " << mbps_running/mbps_running_count << std::endl;
+    std::cout << "Peak Mb/s: " << mbps_peak << std::endl;
+    std::cout << "Min Mb/s: " << mbps_min << std::endl;
   }
 
   tm.Stop();

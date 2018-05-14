@@ -1,17 +1,17 @@
 #ifndef SERVICE_CLIENT_INTERFACE_HPP
 #define SERVICE_CLIENT_INTERFACE_HPP
 #include "network/message.hpp"
-#include "serializer/referenced_byte_array.hpp"
-#include "serializer/serializable_exception.hpp"
+#include "serializers/referenced_byte_array.hpp"
+#include "serializers/serializable_exception.hpp"
 #include "service/callable_class_member.hpp"
 #include "service/message_types.hpp"
 #include "service/protocol.hpp"
 #include "service/types.hpp"
-#include "serializer/counter.hpp"
+#include "serializers/counter.hpp"
 
 #include "service/error_codes.hpp"
 #include "service/promise.hpp"
-#include "serializer/counter.hpp"
+#include "serializers/counter.hpp"
 
 namespace fetch {
 namespace service {

@@ -6,7 +6,7 @@
 #include <vector>
 #include "assert.hpp"
 #include "mutex.hpp"
-#include "serializer/referenced_byte_array.hpp"
+#include "serializers/referenced_byte_array.hpp"
 #include "service/callable_class_member.hpp"
 #include "service/error_codes.hpp"
 #include "service/feed_subscription_manager.hpp"

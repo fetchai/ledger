@@ -1,4 +1,4 @@
-#include "serializer/referenced_byte_array.hpp"
+#include "serializers/referenced_byte_array.hpp"
 #include <iostream>
 #include <random>
 #include "chain/transaction.hpp"
@@ -6,6 +6,7 @@
 #include "serializer/byte_array_buffer.hpp"
 #include "serializer/stl_types.hpp"
 #include "../tests/include/helper_functions.hpp"
+
 using namespace fetch;
 using namespace fetch::serializers;
 using namespace fetch::byte_array;

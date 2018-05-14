@@ -6,9 +6,9 @@
 #include "byte_array/encoders.hpp"
 #include "byte_array/referenced_byte_array.hpp"
 #include "logger.hpp"
-#include "serializer/exception.hpp"
-#include "serializer/stl_types.hpp"
-#include "serializer/type_register.hpp"
+#include "serializers/exception.hpp"
+#include "serializers/stl_types.hpp"
+#include "serializers/type_register.hpp"
 
 namespace fetch {
 namespace serializers {
