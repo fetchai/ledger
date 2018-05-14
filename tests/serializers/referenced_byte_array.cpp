@@ -5,7 +5,7 @@
 #include "random/lfg.hpp"
 #include "serializer/byte_array_buffer.hpp"
 #include "serializer/stl_types.hpp"
-#include "common/helper_functions.hpp"
+#include "../tests/include/helper_functions.hpp"
 using namespace fetch;
 using namespace fetch::serializers;
 using namespace fetch::byte_array;

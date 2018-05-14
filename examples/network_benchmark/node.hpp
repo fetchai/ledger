@@ -9,7 +9,7 @@
 #include"./node_directory.hpp"
 #include"./packet_filter.hpp"
 #include"./transaction_list.hpp"
-#include"common/helper_functions.hpp"
+#include"../tests/include/helper_functions.hpp"
 
 #include<random>
 #include<memory>

@@ -9,7 +9,7 @@
 #include "serializer/referenced_byte_array.hpp"
 #include "service/client.hpp"
 #include "service/server.hpp"
-#include "common/helper_functions.hpp"
+#include "../tests/include/helper_functions.hpp"
 
 #include <chrono>
 #include <random>

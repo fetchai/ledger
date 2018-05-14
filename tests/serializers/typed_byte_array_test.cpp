@@ -2,7 +2,7 @@
 using namespace fetch::serializers;
 std::ostream& operator<<(std::ostream& os, std::vector< int > const &v);
 #include "unittest.hpp"
-#include "common/helper_functions.hpp"
+#include "../tests/include/helper_functions.hpp"
 
 std::ostream& operator<<(std::ostream& os, std::vector< int > const &v)
 {
