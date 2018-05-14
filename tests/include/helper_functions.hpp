@@ -3,7 +3,7 @@
 
 #include"random/lfg.hpp"
 #include"byte_array/referenced_byte_array.hpp"
-#include"serializer/counter.hpp"
+#include"serializers/counter.hpp"
 #include"service/types.hpp"
 #include"chain/transaction.hpp"
 
