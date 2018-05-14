@@ -8,7 +8,7 @@ which data flows freely from AEAs to the nodes as well as in between the
 nodes. Other AEAs can now buy the data from the nodes and the nodes
 themselves can apply &lt;Developers
 Guide::Technology::Proof-of-useful-work&gt; to derive new insightful data
-that, in turn, can be resold. 
+gthat, in turn, can be resold. 
 
 # Building the RC to node protocol - Part 1 
 In the first part of the tutorial, we will build a protocol for the

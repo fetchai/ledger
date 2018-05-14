@@ -1,9 +1,7 @@
 #ifndef LIBFETCHCORE_STORAGE_INDEXED_DOCUMENT_STORE_HPP
 #define LIBFETCHCORE_STORAGE_INDEXED_DOCUMENT_STORE_HPP
 //#include "storage/indexed_document_store.hpp"
-
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
 namespace fetch
 {
 namespace storage

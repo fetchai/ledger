@@ -18,14 +18,32 @@ int main()
     });
 
 
-  
-
   server.AddView(Method::GET, "/", [](ViewParameters const &params, HTTPRequest const &req) {
       HTTPResponse res("Hello world -- this is a render of the view");
 
       return res;      
     });
+  
+  server.AddView(Method::GET, "/pages", [](ViewParameters const &params, HTTPRequest const &req) {
+      HTTPResponse res("pages index");
 
+      return res;      
+    });
+
+
+  server.AddView(Method::GET, "/pages/sub", [](ViewParameters const &params, HTTPRequest const &req) {
+      HTTPResponse res("pages sub index");
+
+      return res;      
+    });
+
+  server.AddView(Method::GET, "/pages/sub/", [](ViewParameters const &params, HTTPRequest const &req) {
+      HTTPResponse res("pages sub index with slash");
+
+      return res;      
+    });
+  
+  
   server.AddView(Method::GET, "/pages/(id=\\d+)/", [](ViewParameters const &params, HTTPRequest const &req) {
       HTTPResponse res("Secret page 1");
 
@@ -46,7 +64,7 @@ int main()
 
   server.AddView(Method::GET, "/static/(filename=.+)", [](ViewParameters const &params, HTTPRequest const &req) {
 
-      std::string filename = params["filename"];      
+      std::string filename = std::string(params["filename"]);      
       std::size_t pos = filename.find_last_of('.');      
       std::string ext = filename.substr(pos, filename.size() - pos);
       auto mtype = fetch::http::mime_types::GetMimeTypeFromExtension(ext);
@@ -54,11 +72,11 @@ int main()
       std::cout << mtype.type << std::endl;
       std::fstream fin(filename, std::ios::in | std::ios::binary);
       fin.seekg (0, fin.end);
-      int length = fin.tellg();
+      int64_t length = fin.tellg();
       fin.seekg (0, fin.beg);
 
       fetch::byte_array::ByteArray data;
-      data.Resize( length );
+      data.Resize( std::size_t( length ) );
       fin.read (reinterpret_cast< char*>( data.pointer() ), length);
       
       fin.close();      

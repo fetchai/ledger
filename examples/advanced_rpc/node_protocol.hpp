@@ -13,11 +13,9 @@ public:
     fetch::service::Protocol() {
 
     using namespace fetch::service;
-    auto send_msg =  new CallableClassMember<NodeToNodeFunctionality, void(std::string)>(this, &NodeToNodeFunctionality::SendMessage);
-    auto get_msgs =  new CallableClassMember<NodeToNodeFunctionality, std::vector< std::string >() >(this, &NodeToNodeFunctionality::messages);    
-      
-    this->Expose(PeerToPeerCommands::SEND_MESSAGE, send_msg);
-    this->Expose(PeerToPeerCommands::GET_MESSAGES, get_msgs);
+    NodeToNodeFunctionality* controller = (NodeToNodeFunctionality*) this;        
+    this->Expose(PeerToPeerCommands::SEND_MESSAGE, controller,  &NodeToNodeFunctionality::SendMessage);
+    this->Expose(PeerToPeerCommands::GET_MESSAGES, controller, &NodeToNodeFunctionality::messages);
 
     // Using the event feed that
     this->RegisterFeed( PeerToPeerFeed::NEW_MESSAGE, this  );

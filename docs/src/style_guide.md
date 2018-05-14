@@ -344,3 +344,238 @@ serves as a universal null pointer literal replacing the buggy and
 weakly-typed literal 0 and the infamous `NULL` macro. `nullptr` thus
 puts an end to more than 30 years of embarrassment, ambiguity, and bugs.  
 Furhter, the new nullptr is type safe.
+
+
+## Resource handling
+This section describes how to manage resources which lifecycle needs to be strictly controlled, such as:
+  * thread synchronisation constructs (e.g. mutex),
+  * memory,
+  * filesystem objects,
+  * network connections,
+  * database sessions,
+  * etc. ...
+
+This is especially critical in environment where **exceptions** can occur (see dedicated section bellow). 
+
+It is suggested to use scope based smart pointer concept to manage lifecycle for resources. The `Smart Pointer` concept exploits C++ native constructor-destructor (unbreakable) bond for the class/struct instance created on the stack (using [direct initialisation](http://en.cppreference.com/w/cpp/language/direct_initialization)), where its lifecycle is strictly controlled by encapsulating scope inside of which the instance has been created.
+
+The most important aspect of this strong bond is that the destructor is *automatically* called when the code flow is exiting the encapsulating scope, what **includes** exit caused by exception being thrown. 
+Bellow are a few examples of how resources should be managed in the code:
+
+
+### Exception enabled environment and it's impact on the resource handling
+
+The most important rule is that destructor **shall NOT** throw an exception at any circumstance.
+  * The reason being that a destructor for a *directly* initialised object (lifecycle of which is controlled by a scope) will be called **automatically** when any exception is thrown in that scope.
+  * Where implication is that **IF** such destructor would throw yet another exception, it would force C++ runtime to call **std::terminate** of the process(by definition of C++ standard), since the C++ runtime is already in [stack unwinding](http://en.cppreference.com/w/cpp/language/throw) process caused by the first exception.
+
+Please see more about this scenario at [cppreference.com](http://en.cppreference.com/w/cpp/language/destructor#Exceptions) and at [codingstandard.com](http://www.codingstandard.com/rule/15-2-1-do-not-throw-an-exception-from-a-destructor/).
+
+
+### Handling THREAD synchronisation resources
+Please use locking guards provided in C++ `std` namespace, such as:
+  * `std::unique_lock<...>`, or
+  * `std::lock_guard<...>`.
+
+>On side note, our codebase offers a few implementations of mutex in `featch::mutex` namespace which conforms to `std` locking API contract, and so can be used with above-mentioned locking quard constructs from `std` namespace. Please prefer to use them in favour of plain `std::mutex`:
+>  * `fetch::mutex::DebugMutex`
+>  * `fetch::mutex::ProductionMutex`
+
+#### The `std::unique_lock<...>`
+The `std::unique_lock` is **superset** of the `std::lock_guard` in terms of API and capabilities.
+It offers more flexibility, which allows to do following things:
+  * constructor of this class is able take on board lockable object (e.g. mutex) in any state (locked or unlocked), so `adopting` its pre-existing lock state,
+  * it is able to lock & unlock lockable object when desired (as many times as necessary),
+  * release control of the lockable object it controls,
+  * it's destructor unlocks the lockable object **if** it is in locked state.
+
+> See the example bellow:
+
+```cpp
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+
+//* A condition used in cooperation with `unique_lock<...>`
+//* to retain state across lock and signal change of the state
+std::condition_variable condition;
+
+//* Variable keeping the state  
+bool a_state = 0;
+
+//* Global mutex variable
+std::mutex(mtx);
+
+auto increment_fnc() -> void
+{
+  {
+    //* this constructor locks mutex automatically
+    std::unique_lock<mutex> lock(mtx);
+
+    //* Updating value of state keeping variable (in thread safe way - see comment bellow)
+    ++a_state;
+
+    //* It is *not* necessary to explicitly call `lock.unlock()` since
+    //* it will be called implicitly by destructor of the `lock` object. 
+  }
+  
+  //* Signal on condition to notify *ALL* listeners waiting for the signal.
+  //* Mind to note here that this is **independent** from specific
+  //* synchronisation object (like mutex), reason being it can be signalled
+  //* from anywhere (e.g. outside of mutex locked scope).
+  condition.notify_all();
+}
+
+auto decrement_fnc() -> void
+{
+  std::unique_lock<mutex> lock(mtx);
+
+  //* Waiting for condition to signal.
+  //* An std::function (e.g. lambda) can be passed to prevent spurious
+  //* wake ups, for example condition.wait(lock, [](){/* ... */ return A_CONDITION;})
+  
+  //* The `wait(lock)` implicitly UNlock the mutex **BEFORE** falling
+  //* to wait state (essentially relocating thread to wait queue on OS level).
+  condition.wait(lock, [orig_state = a_state, &state = a_state](){
+      //* Here we are trying to figure whether the state has changed since we started
+      //* to monitor/listen to the signalling.
+      if (orig_state < state) {
+        --state; //* Modifying state
+        return true;
+      }
+      return false;
+    });
+  //* The `wait(lock)` implicitly reacquire back (locks) the mutex after it handled
+  //* signalled condition.
+
+  //* It is *not* necessary to explicitly call `lock.unlock()` since
+  //* it will be called implicitly by destructor of the `lock` object. 
+}
+
+int main(int argc, char* argv[]) {
+
+    std::thread t1([]() {
+        increment_fnc();
+      });
+
+    std::thread t2([]() {
+        decrement_fnc();
+      });
+
+    t1.join();
+    t2.join();
+}
+```
+
+#### The `std::lock_guard<...>`
+The `std::lock_guard<T>` offers the most trivial API possible - constructor and destructor.
+It locks the synchronisation object of `T` type **immediately** during construction time, and releases the lock in destructor.
+Constructor of this class is able take on board lockable object (e.g. mutex) in any state (locked or unlocked), so `adopting` its pre-existing lock state.
+
+> See the simplified example bellow:
+
+```cpp
+#include<mutex>
+std::mutex(mtx);
+
+{
+  std::unique_lock<mutex> guard(mtx);
+
+  //* Some code desired to be executed thread safe manner.
+
+  //* Automatically called destructor of the `guard` instance
+  //* will implicitly unlock the mutex.
+}
+```
+
+
+### Handling dynamically allocated MEMORY resources
+Please use smart pointers from `std::` namespace dedicated to memory management. The most frequently used smart pointers are:
+  * `std::shared_ptr<...>`,
+  * `std::unique_ptr<...>`.
+
+Please note, that *default* delete policy for these types is using **default** C++ delete operator for **single** object. However, API of these types offers possibility to provide custom deleter and allocator functors in order to manage non-default allocation/deallocation policy such as for managing **array** object type.
+> Speaking of which, please see bellow a fe suggested types which guarante to manage **array** object types (continuous block of memory) by default.
+
+Here we can also mention other types which do memory management as side effect of their primary business logic:
+  * `std::vector<...>` - guarantees to manage continuous block of memory (array) by definition
+  * `std::string<...>` - guarantees to manage continuous block of memory (array) by definition
+  * `SharedArray<...>` & `Array<...>` classes (from `fetch::memory` namespace)  - guarantees to manage continuous block of memory (array) by definition 
+  * classes from `fetch::byte_array` namespace like `BasicByteArray` 
+
+#### Transfer between ownership models.
+1. It is safe to transfer ownership from `std::unique_ptr` to `std::shared_ptr`.
+1. Do **NOT** transfer ownership other way around, from `std::shared_ptr` to `std::unique_ptr`.<br/>
+    First of all - it is really highly questionable to justify reason for transfer between ownership models in this direction!<br/>
+    Second of all - if you mind look up at `First of all - ...` again, and then, and only then, if you still think it is really really necessary to do this for some obscure reason, then keep in mind that:
+   * this is **non**-trivial operation,
+   * that `shared_ptr` type has **NOT** been designed with mind to allow this,
+   * if you are still convinced to proceed, then [here](https://stackoverflow.com/questions/15337461/move-ownership-from-stdshared-ptr-to-stdunique-ptr) is some guide to do such a thing.
+
+> Example of how to use smart pointer with **shared** ownership:
+
+```cpp
+#include <memory>
+#include <iostream>
+
+//* Parent Scope block
+{
+  std::shared_ptr<int> a0;
+  
+  //* Nested scope block
+  {
+    std::shared_ptr<int> a1 = std::make_shared<int>(5); //* refcount=1
+    a0 = a1; //* The `a1` instance become shared at this point (refcount=2)
+    
+    //* BOTH instances are valid, controlling the same `int` instance:
+    std::cout << "a0 = " << *a0 << ", a1 = " << *a1 << std::endl;
+    
+    throw std::exception();
+    
+    //* The exception will cause stack unwinding, during which 
+    //* is the destructor of `a1` instance called automatically, 
+    //* what decrements refcount of shared object (to 1).
+    //* At this point, the `a0` shared object is controlling lifecycle
+    //* of the `int` instance created above in this scope.
+  }
+  
+  //* We are still in stack unwinding process here (due to earlier exception),
+  //* during which automatically called destructor of `a0` instance  decrements
+  //* refcount of shared object (to 0), what finally results to destruction of
+  //* the `int` instance allocated & initialised in the nested scope above.
+}
+```
+
+> Example of how to use smart pointer with **exclusive** ownership:\
+
+```cpp
+#include <memory>
+
+//* Parent Scope block
+{
+  std::unique_ptr<int> a0;
+  
+  //* Nested scope block
+  {
+    std::unique_ptr<int> a1 = std::make_unique<int>(5);
+
+    a0 = a1; //* Transfer of OWNERSHIP from `a1` to `a0`
+    //* The `a1` does NOT control lifecycle of the `int` instance anymore.
+    
+    //* This WILL result to throwing an exception since `a1` instance
+    //* is initialised to `nullptr`:
+    std::cout << "a1=" << *a1 <<std::endl;
+    
+    //* Automatically called destructor of `a1` instance,
+    //* which does NOTHING since `a1` does NOT possess
+    //* control over any object.
+  }
+  //* At this point, The `a0` variable is still controlling lifecycle of the
+  //* `int` instance created in nested scope above.
+  
+  //* Automatically called destructor of `a0` instance will
+  //* result to destruction of the `int` instance allocated & initialised
+  //* in the nested scope above.
+}
+```
+

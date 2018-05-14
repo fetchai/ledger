@@ -2,9 +2,7 @@
 #define LIBFETCHCORE_MEMORY_RECTANGULAR_ARRAY_HPP
 #include "memory/rectangular_array.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
-#include <pybind11/numpy.h>
+#include"fetch_pybind.hpp"
 namespace fetch
 {
 namespace memory
@@ -85,15 +83,15 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
       })
     .def("FromNumpy", [](RectangularArray< T > &s, py::array_t<T> arr) {
         auto buf = arr.request();
-
+	typedef typename fetch::memory::RectangularArray<T>::size_type size_type;
         if (buf.ndim != 2)
           throw std::runtime_error("Dimension must be exactly two.");
 
         T *ptr = (T*)buf.ptr;
         std::size_t idx = 0;
-        s.Resize( buf.shape[0], buf.shape[1] );
-        for(std::size_t i = 0; i < buf.shape[0]; ++i) {
-        for(std::size_t j = 0; j < buf.shape[1]; ++j) {
+        s.Resize( size_type(buf.shape[0]), size_type(buf.shape[1]) );
+        for(std::size_t i = 0; i < std::size_t(buf.shape[0]); ++i) {
+	  for(std::size_t j = 0; j < std::size_t(buf.shape[1]); ++j) {
           s[idx] = ptr[idx];
           ++idx;
         }

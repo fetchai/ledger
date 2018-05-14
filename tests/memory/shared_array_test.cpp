@@ -1,11 +1,11 @@
 #define FETCH_TESTING_ENABLED
-#include<iostream>
-#include<random/lcg.hpp>
-#include<memory/shared_array.hpp>
+#include <iostream>
+#include <memory/shared_array.hpp>
+#include <random/lcg.hpp>
 using namespace fetch::memory;
 
 typedef uint64_t data_type;
-typedef SharedArray< data_type > array_type;
+typedef SharedArray<data_type> array_type;
 
 void test_set_get() {
   static fetch::random::LinearCongruentialGenerator lcg1, lcg2;
@@ -15,31 +15,36 @@ void test_set_get() {
   lcg2();
 
   array_type array(N), other;
-  for(std::size_t i=0; i < N; ++i) {
+  for (std::size_t i = 0; i < N; ++i) {
     array[i] = lcg1();
   }
 
-  for(std::size_t i=0; i < N; ++i) {
-    if(array[i] != lcg2()){ 
-      std::cout << "1: memory doesn't store what it is supposed to" << std::endl;
+  for (std::size_t i = 0; i < N; ++i) {
+    if (array[i] != lcg2()) {
+      std::cout << "1: memory doesn't store what it is supposed to"
+                << std::endl;
       exit(-1);
     }
   }
 
   other = array;
-  lcg2.Reset(); lcg2();
-  for(std::size_t i=0; i < N; ++i) {
-    if(other[i] != lcg2()){ 
-      std::cout << "2: memory doesn't store what it is supposed to" << std::endl;
+  lcg2.Reset();
+  lcg2();
+  for (std::size_t i = 0; i < N; ++i) {
+    if (other[i] != lcg2()) {
+      std::cout << "2: memory doesn't store what it is supposed to"
+                << std::endl;
       exit(-1);
     }
   }
 
   array_type yao(other);
-  lcg2.Reset(); lcg2();
-  for(std::size_t i=0; i < N; ++i) {
-    if(yao[i] != lcg2()){ 
-      std::cout << "3: memory doesn't store what it is supposed to" << std::endl;
+  lcg2.Reset();
+  lcg2();
+  for (std::size_t i = 0; i < N; ++i) {
+    if (yao[i] != lcg2()) {
+      std::cout << "3: memory doesn't store what it is supposed to"
+                << std::endl;
       exit(-1);
     }
   }
@@ -52,7 +57,8 @@ void test_set_get() {
   }
 
   if(testing::total_shared_objects != 1) {
-    std::cout << "expected exactly 1 object but " << testing::total_shared_objects;
+    std::cout << "expected exactly 1 object but " <<
+  testing::total_shared_objects;
     std::cout << "found" << std::endl;
   }
   */
@@ -61,14 +67,8 @@ void test_set_get() {
 }
 
 int main() {
-  for(std::size_t i=0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     test_set_get();
-
-    if(testing::total_shared_objects != 0) {
-      std::cout << "memory leak detected: " << testing::total_shared_objects;
-      std::cout << " objects still available, but not reachable" << std::endl;
-      return -1;
-    }
   }
   return 0;
 }

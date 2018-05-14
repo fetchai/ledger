@@ -1,3 +1,4 @@
+#include"serializers/stl_types.hpp"
 #include<optimisation/simulated_annealing/reference_annealer.hpp>
 #include<chain/block_generator.hpp>
 #include"random/lfg.hpp"
@@ -28,10 +29,10 @@ fetch::byte_array::ByteArray RandomTX(std::size_t const &n = 32) {
 void test() {
   chain::BlockGenerator coordinator;
 
-  std::size_t group_count = 64;
-  std::size_t max_groups = 3;
+  std::size_t group_count = 1024;
+  std::size_t max_groups = 2;
   std::size_t transaction_count = 10000;
-  std::size_t transactions_pool_size = 512;
+  std::size_t transactions_pool_size = 3*1024;
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
   for(std::size_t i=0; i < transaction_count; ++i) {
@@ -40,7 +41,7 @@ void test() {
 
     std::unordered_set< std::size_t > used;
     while(tx.groups.size() < groups) {
-      auto g = (lfg() >> 19 ) % group_count ;
+      group_type g = group_type( (lfg() >> 19 ) % group_count );
       if(used.find(g) == used.end()) {
         tx.groups.push_back( g );
         used.insert(g);

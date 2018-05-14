@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_NETWORK_THREAD_MANAGER_HPP
 #include "network/thread_manager.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace network

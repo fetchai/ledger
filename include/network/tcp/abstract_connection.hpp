@@ -15,9 +15,9 @@ class AbstractClientConnection {
   virtual ~AbstractClientConnection() {}
   virtual void Send(message_type const&) = 0;
 
-  virtual std::string Address() = 0;  
+  virtual std::string Address() = 0;
 };
-};
-};
+}
+}
 
 #endif

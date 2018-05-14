@@ -1,7 +1,6 @@
-#define FETCH_DISABLE_COUT_LOGGING
 #include"service_consts.hpp"
 #include<iostream>
-#include"serializer/referenced_byte_array.hpp"
+#include"serializers/referenced_byte_array.hpp"
 #include"service/client.hpp"
 #include"logger.hpp"
 using namespace fetch::service;
@@ -33,8 +32,13 @@ int main() {
   // Promises
   auto p1 = client.Call( MYPROTO,SLOWFUNCTION, 2, 7 );
   auto p2 = client.Call( MYPROTO,SLOWFUNCTION, 4, 3 );
+
+//  client.WithDecorators(aes, ... ).Call( MYPROTO,SLOWFUNCTION, 4, 3 );
+  
+  
   if(!p1.is_fulfilled())
     std::cout << "p1 is not yet fulfilled" << std::endl;
+
 
   p1.Wait();
   
@@ -47,16 +51,14 @@ int main() {
     std::cout << "Second result: " << int(px) << std::endl;
     
   } catch(fetch::serializers::SerializableException const &e) {
-    
     std::cout << "Exception caught: " << e.what() << std::endl;
-    
   }
 
   // Testing performance
   auto t_start = std::chrono::high_resolution_clock::now();
   std::vector< fetch::service::Promise > promises;
 
-  std::size_t N = 10000;
+  std::size_t N = 100000;
   for(std::size_t i=0; i < N; ++i) {
     promises.push_back( client.Call( MYPROTO, ADD, 4, 3 ) );
   }
@@ -85,7 +87,7 @@ int main() {
             << std::chrono::duration<double, std::milli>(t_end-t_start).count()
               << " ms\n";
   std::cout << "Time per call:: "
-            << std::chrono::duration<double, std::milli>(t_end-t_start).count() / N * 1000
+            << double(std::chrono::duration<double, std::milli>(t_end-t_start).count()) / double(N) * 1000.
             << " us\n";  
 
   

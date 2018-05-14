@@ -2,7 +2,7 @@
 #define ASSERT_HPP
 
 #include <iostream>
-#include<stdexcept>
+#include <stdexcept>
 namespace fetch {
 namespace assert {
 namespace details {
@@ -18,36 +18,34 @@ struct Printer {
     std::cerr << next;
   }
 };
-};
-};
-};
-
+}
+}
+}
 
 #ifndef FETCH_DISABLE_TODO_COUT
 // TODO: Rename to FETCH_...
 #define TODO_FAIL(...)                                                        \
   fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
   std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; \
-  throw std::runtime_error("Dependence on non-existing functionality!");                             
-  
+  throw std::runtime_error("Dependence on non-existing functionality!");
 
-#define TODO(...)                                                        \
-  fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
-  std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; 
+#define TODO(...)                                      \
+  fetch::assert::details::Printer::Print(__VA_ARGS__); \
+  std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl;
 
 #else
 
-#define TODO_FAIL(...)                                                        \
-  throw std::runtime_error("Dependence on non-existing functionality!");   
-#define TODO(...)                                                        
+#define TODO_FAIL(...) \
+  throw std::runtime_error("Dependence on non-existing functionality!");
+#define TODO(...)
 
 #endif
 
-#define detailed_assert(cond) \
-  if( !(cond) ) { \
-    std::cout << "Failed :" << #cond << " in " << __FILE__ << " line " << __LINE__ << std::endl; \
-    throw std::runtime_error("Assertion failed");   \
+#define detailed_assert(cond)                                          \
+  if (!(cond)) {                                                       \
+    std::cout << "Failed :" << #cond << " in " << __FILE__ << " line " \
+              << __LINE__ << std::endl;                                \
+    throw std::runtime_error("Assertion failed");                      \
   }
-
 
 #endif

@@ -1,343 +1,353 @@
 #ifndef BYTE_ARRAY_JSON_DOCUMENT_HPP
 #define BYTE_ARRAY_JSON_DOCUMENT_HPP
 
+#include "byte_array/const_byte_array.hpp"
 #include "byte_array/consumers.hpp"
 #include "byte_array/referenced_byte_array.hpp"
-#include "byte_array/const_byte_array.hpp"
-#include "byte_array/tokenizer/tokenizer.hpp"
-#include "script/ast.hpp"
-#include "script/variant.hpp"
 #include "json/exceptions.hpp"
+#include "script/variant.hpp"
 
 #include <memory>
+#include <stack>
 #include <vector>
 
 namespace fetch {
 namespace json {
 
-class JSONDocument : private byte_array::Tokenizer {
-    enum {
-      OP_OBJECT = 1,
-      OP_ARRAY = 2,
-      OP_PROPERTY = 4,
-      OP_APPEND = 8,
-      OP_STRING = 16,
-      OP_NUMBER = 32,
-      OP_TRUE = 64,
-      OP_FALSE = 128,
-      OP_NULL = 256
-    };
-
-
-  
- public:
-  typedef byte_array::ByteArray string_type;
-  typedef byte_array::ConstByteArray const_string_type;  
-  typedef script::Variant variant_type;
-
+class JSONDocument {
   enum Type {
-    TOKEN = 0,
-    STRING = 1,
-    SYNTAX = 2,
-    NUMBER = 3,
-    WHITESPACE = 5,
-    CATCH_ALL = 6
+    KEYWORD_TRUE = 0,
+    KEYWORD_FALSE = 1,
+    KEYWORD_NULL = 2,
+    STRING = 3,
+
+    NUMBER_INT = 5,
+    NUMBER_FLOAT = 6,
+
+    OPEN_OBJECT = 11,
+    CLOSE_OBJECT = 12,
+    OPEN_ARRAY = 13,
+    CLOSE_ARRAY = 14,
+
+    KEY = 16
   };
 
+  enum { PROPERTY = 2, ENTRY_ALLOCATOR = 3, OBJECT = 10, ARRAY = 11 };
+
+ public:
+  typedef byte_array::ByteArray string_type;
+  typedef byte_array::ConstByteArray const_string_type;
+  //  typedef script::Variant variant_type;
+
   JSONDocument() {
-    root_ = std::make_shared<variant_type>();
-
-    AddConsumer(Type::TOKEN, byte_array::consumers::AlphaNumericLetterFirst);
-    AddConsumer(Type::WHITESPACE, byte_array::consumers::Whitespace);
-    AddConsumer(Type::STRING, byte_array::consumers::StringEnclosedIn('"'));
-    AddConsumer(Type::NUMBER, byte_array::consumers::Integer);
-    AddConsumer(Type::SYNTAX,
-                byte_array::consumers::TokenFromList({"[", "]", "{", "}", ",", ":"}));
-    AddConsumer(Type::CATCH_ALL, byte_array::consumers::AnyChar);
+    counters_.reserve(32);
+    variants_.Reserve(1024);
   }
 
-  JSONDocument(string_type filename, const_string_type const &document) : JSONDocument() {
-    Parse(filename, document);
+  JSONDocument(const_string_type const &document) : JSONDocument() {
+    Parse(document);
   }
 
-  script::Variant& operator[](std::size_t const& i) {
-    return (*root_)[i];
+  script::Variant &operator[](std::size_t const &i) { return root()[i]; }
+
+  script::Variant const &operator[](std::size_t const &i) const {
+    return root()[i];
   }
 
-  script::Variant const& operator[](std::size_t const& i) const {
-    return (*root_)[i];    
+  typename script::Variant::variant_proxy_type operator[](
+      byte_array::BasicByteArray const &key) {
+    return root()[key];
   }
 
-  script::Variant & operator[](byte_array::BasicByteArray const &key) 
-  {
-    return (*root_)[key];    
+  script::Variant const &operator[](
+      byte_array::BasicByteArray const &key) const {
+    return root()[key];
   }
 
-  script::Variant const & operator[](byte_array::BasicByteArray const &key) const 
-  {
-    return (*root_)[key];
-  }
+  std::vector<uint16_t> counters_;
 
-  
-  void Parse(string_type filename, const_string_type const& document) {    
-    // Parsing and tokenizing
-    byte_array::Tokenizer::clear();    
-    byte_array::Tokenizer::Parse(filename, document);
+  void Parse(const_string_type const &document) {
+    Tokenise(document);
 
-    // Building an abstract syntax tree
-    using namespace script;
-    ASTGroupOperationType T_OBJECT = {OP_OBJECT, ASTProperty::GROUP, 0};
-    ASTGroupOperationType T_ARRAY = {OP_ARRAY, ASTProperty::GROUP, 0};
-    ASTOperationType T_PROPERTY = {
-        OP_PROPERTY, ASTProperty::OP_LEFT | ASTProperty::OP_RIGHT, 1};
+    variants_.LazyResize(objects_ + 1);
+    counters_.clear();
 
-    ASTOperationType T_APPEND = {
-        OP_APPEND, ASTProperty::OP_LEFT | ASTProperty::OP_RIGHT, 2};
-    ASTOperationType T_STRING = {OP_STRING, ASTProperty::TOKEN, 3};
-    ASTOperationType T_NUMBER = {OP_NUMBER, ASTProperty::TOKEN, 3};
-    ASTOperationType T_TRUE = {OP_TRUE, ASTProperty::TOKEN, 3};
-    ASTOperationType T_FALSE = {OP_FALSE, ASTProperty::TOKEN, 3};
-    ASTOperationType T_NULL = {OP_NULL, ASTProperty::TOKEN, 3};
+    uint32_t allocation_counter = 1;
+    JSONObject current_object;
 
-    AbstractSyntaxTree tree;
+    char const *ptr = reinterpret_cast<char const *>(document.pointer());
 
-    tree.PushTokenType(T_OBJECT);
-    tree.PushTokenType(T_ARRAY);
-    tree.PushTokenType(T_PROPERTY);
-
-    tree.PushTokenType(T_APPEND);
-    tree.PushTokenType(T_STRING);
-    tree.PushTokenType(T_NUMBER);
-    tree.PushTokenType(T_TRUE);
-    tree.PushTokenType(T_FALSE);
-    tree.PushTokenType(T_NULL);
-
-    for (auto &t : *this) {
-      switch (t.type()) {
-        case Type::SYNTAX:
-          if (t == "[")
-            tree.PushToken({T_ARRAY.open(), t});
-          else if (t == "]")
-            tree.PushToken({T_ARRAY.close(), t});
-          else if (t == "{")
-            tree.PushToken({T_OBJECT.open(), t});
-          else if (t == "}")
-            tree.PushToken({T_OBJECT.close(), t});
-          else if (t == ":")
-            tree.PushToken({T_PROPERTY, t});
-          else if (t == ",")
-            tree.PushToken({T_APPEND, t});
+    for (auto const &t : tokens_) {
+      switch (t.type) {
+        case KEYWORD_TRUE:
+          variants_[current_object.i++] = true;
+          break;
+        case KEYWORD_FALSE:
+          variants_[current_object.i++] = false;
+          break;
+        case KEYWORD_NULL:
+          variants_[current_object.i++].MakeNull();  // = nullptr;
+          break;
+        case STRING:
+          variants_[current_object.i++].EmplaceSetString(document, t.first,
+                                                         t.second - t.first);
           break;
 
-        case Type::STRING:
-          tree.PushToken({T_STRING, t});
+        case NUMBER_INT:
+          variants_[current_object.i++] = atoi(ptr + t.first);
           break;
+        case NUMBER_FLOAT:
+          variants_[current_object.i++] = atof(ptr + t.first);
+          break;
+        case OPEN_OBJECT:
 
-        case Type::NUMBER:
-          tree.PushToken({T_NUMBER, t});
-          break;
+          object_assembly_.emplace_back(current_object);
 
-        case Type::TOKEN:
-          if (t == "true")
-            tree.PushToken({T_TRUE, t});
-          else if (t == "false")
-            tree.PushToken({T_FALSE, t});
-          else if (t == "null")
-            tree.PushToken({T_NULL, t});
+          current_object.start = allocation_counter;
+          current_object.i = allocation_counter;
+          current_object.size = t.second;
+          current_object.type = t.type;
+
+          allocation_counter += uint32_t(t.second);
           break;
-        case Type::CATCH_ALL:
-          throw UnrecognisedJSONSymbolException(t);
+        case CLOSE_OBJECT:
+          variants_[object_assembly_.back().i].SetObject(
+              variants_, current_object.start, current_object.size);
+
+          current_object = object_assembly_.back();
+          object_assembly_.pop_back();
+
+          ++current_object.i;
+
+          break;
+        case OPEN_ARRAY:
+          object_assembly_.emplace_back(current_object);
+
+          current_object.start = allocation_counter;
+          current_object.i = allocation_counter;
+          current_object.size = t.second;
+          current_object.type = t.type;
+
+          allocation_counter += uint32_t(t.second);
+
+          break;
+        case CLOSE_ARRAY:
+          variants_[object_assembly_.back().i].SetArray(
+              variants_, current_object.start, current_object.size);
+
+          current_object = object_assembly_.back();
+          object_assembly_.pop_back();
+
+          ++current_object.i;
           break;
       }
     }
-   
-    tree.Build();
-    // Creating variant;
-    root_ = std::make_shared< variant_type >();
-    VisitASTNodes( tree.root_shared_pointer(), *root_ );
   }
 
-  variant_type &root() { return *root_; }
-  variant_type const &root() const { return *root_; }
+  script::Variant &root() { return variants_[0]; }
+  script::Variant const &root() const { return variants_[0]; }
 
  private:
-  typedef std::shared_ptr<script::ASTNode> ast_node_ptr;
+  void Tokenise(const_string_type const &document) {
+    int line = 0;
+    uint64_t pos = 0;
 
-  
-  std::size_t VisitArrayElements(ast_node_ptr node, std::vector< ast_node_ptr > &array_contents)
-  {
-    if(node->token_class.type == OP_APPEND) {
-      std::size_t ret = 0;      
-      for(ast_node_ptr c: node->children)
-      {
-        ret += VisitArrayElements(c, array_contents);
-      }
-      return ret;      
-    }
-    array_contents.push_back(node);    
-    return 1;    
-  }
+    objects_ = 0;
 
+    brace_stack_.reserve(32);
+    brace_stack_.clear();
 
-  std::size_t VisitObjectElements(ast_node_ptr node, std::vector< ast_node_ptr > &keys, std::vector< ast_node_ptr > &values)
-  {
-    if(node->token_class.type == OP_APPEND)
-    {
-      std::size_t ret = 0;
-      
-      for(ast_node_ptr c: node->children)
-      {
-        ret += VisitObjectElements(c, keys, values);
-      }
-        
-      return ret;
-    }
-    
+    object_stack_.reserve(32);
+    object_stack_.clear();
+    counters_.reserve(32);
+    counters_.clear();
+    tokens_.reserve(1024);
+    tokens_.clear();
 
-    if(node->token_class.type != OP_PROPERTY)
-    {
-      TODO_FAIL("Expected property");      
-    }
-              
-    keys.push_back( node->children[0] );
-    values.push_back( node->children[1] );
-    return 1;
-  }
-  
-  
-  void VisitASTNodes( ast_node_ptr node, variant_type &variant) {
+    uint16_t element_counter = 0;
 
-
-    switch(node->token_class.type) {
-    case OP_APPEND: {
-      TODO_FAIL("unexpected append");
-    } break;
-      
-    case OP_ARRAY: {
-      std::vector< ast_node_ptr > array_contents;
-        
-      std::size_t n = 0;
-      for(auto &c: node->children)
-      {
-        n += VisitArrayElements( c, array_contents );
-      }
-            
-      if(variant.type() != script::VariantType::UNDEFINED)
-      {
-        TODO_FAIL("Cannot alter type from", variant.type() ," to array");
-      }
-      
-      variant = variant_type::Array( n );
-      std::size_t i=0;      
-      for(ast_node_ptr c: array_contents)
-      {
-        VisitASTNodes(c, variant[i++]);
-      }
-      
-    } break;
-    case OP_OBJECT: {
-      std::vector< ast_node_ptr > keys, values;
-
-      std::size_t n = 0;
-      for(auto &c: node->children)
-      {
-        n += VisitObjectElements( c, keys, values);
-      }
-      
-      if(variant.type() != script::VariantType::UNDEFINED)
-      {
-        TODO_FAIL("Cannot alter type from", variant.type() ," to object");
-      }
-      
-      variant = variant_type::Object();
-      
-      
-      for(std::size_t i=0; i < n; ++i )
-      {
-        ast_node_ptr key_tree = keys[i];
-        ast_node_ptr value_tree = values[i];
-
-        if(key_tree->children.size() != 0 )
-        {
-          TODO_FAIL("Key cannot have children");        
+    char const *ptr = reinterpret_cast<char const *>(document.pointer());
+    while (pos < document.size()) {
+      uint16_t const *words16 = reinterpret_cast<uint16_t const *>(ptr + pos);
+      uint32_t const *words = reinterpret_cast<uint32_t const *>(ptr + pos);
+      char const &c = *(ptr + pos);
+      if ((document.size() - pos) > 2) {
+        // Handling white spaces
+        switch (words16[0]) {
+          case 0x2020:  // a
+          case 0x200A:  //
+          case 0x200D:  //
+          case 0x2009:  //
+          case 0x0A20:  //
+          case 0x0A0A:  //
+          case 0x0A0D:  //
+          case 0x0A09:  //
+          case 0x0D20:  //
+          case 0x0D0A:  //
+          case 0x0D0D:  //
+          case 0x0D09:  //
+          case 0x0920:  //
+          case 0x090A:  //
+          case 0x090D:  //
+          case 0x0909:  //
+            pos += 2;
+            continue;
         }
-        
-        byte_array::ByteArray key = key_tree->symbol;
-        if( (key.size() < 2) || (key[0] != '"') || (key[key.size()-1]!='"' ))
-        {
-          TODO_FAIL("Key must have quotes");        
+      }
+
+      switch (c) {
+        case '\n':
+          ++line;
+        case '\t':
+        case ' ':
+        case '\r':
+          ++pos;
+          continue;
+      }
+      // Handling keywords
+      if ((document.size() - pos) > 4) {
+        switch (words[0]) {
+          case 0x65757274:  // true
+            ++objects_;
+            tokens_.push_back({uint32_t(pos), pos + 4, KEYWORD_TRUE});
+            pos += 4;
+            ++element_counter;
+            continue;
+          case 0x736C6166:  // fals
+            ++objects_;
+            tokens_.push_back({pos, pos + 5, KEYWORD_FALSE});
+            pos += 4;
+            ++pos;
+            ++element_counter;
+            continue;
+          case 0x6C6C756E:  // null
+            ++objects_;     // TODO: Move
+            tokens_.push_back({pos, pos + 4, KEYWORD_NULL});
+            pos += 4;
+            ++element_counter;
+            continue;
         }
-        
-        key = key.SubArray(1, key.size() - 2);
-        variant_type var;
-        VisitASTNodes(value_tree, var);
-        
-        variant[key] = var;
-        
       }
-      
-    } break;
-    case OP_PROPERTY: {
-      if(variant.type() != script::VariantType::DICTIONARY)
-      {
-        TODO_FAIL("Can only set properties of an object");
+      uint64_t oldpos = pos;
+      uint8_t type;
+
+      switch (c) {
+        case '"':
+          ++objects_;
+          ++element_counter;
+          byte_array::consumers::StringConsumer<STRING>(document, pos);
+          tokens_.push_back({oldpos + 1, pos - 1, STRING});
+          break;
+        case '{':
+          brace_stack_.push_back('}');
+          counters_.emplace_back(element_counter);
+          element_counter = 0;
+          tokens_.push_back({pos, 0, OPEN_OBJECT});
+          object_stack_.emplace_back(&tokens_.back());
+
+          ++pos;
+          break;
+        case '}':
+          if (brace_stack_.back() != '}') {
+            throw JSONParseException("Expected '}', but found ']'");
+          }
+          brace_stack_.pop_back();
+          tokens_.push_back({pos, uint64_t(element_counter), CLOSE_OBJECT});
+          object_stack_.back()->second = (element_counter);
+
+          object_stack_.pop_back();
+          element_counter = counters_.back();
+          counters_.pop_back();
+          ++element_counter;
+          ++pos;
+          ++objects_;
+          break;
+        case '[':
+          brace_stack_.push_back(']');
+          counters_.emplace_back(element_counter);
+
+          element_counter = 0;
+          tokens_.push_back({pos, 0, OPEN_ARRAY});
+          object_stack_.emplace_back(&tokens_.back());
+
+          ++pos;
+          break;
+        case ']':
+          if (brace_stack_.back() != ']') {
+            throw JSONParseException("Expected ']', but found '}'.");
+          }
+          brace_stack_.pop_back();
+          tokens_.push_back({pos, element_counter, CLOSE_ARRAY});
+          object_stack_.back()->second = element_counter;
+
+          object_stack_.pop_back();
+          element_counter = counters_.back();
+          ++element_counter;
+          counters_.pop_back();
+
+          ++pos;
+          ++objects_;
+
+          break;
+
+        case ':':
+          if (brace_stack_.back() != '}') {
+            throw JSONParseException(
+                "Cannot set property outside of object context");
+          }
+          //        tokens_.back().type = KEY;
+          ++pos;
+          break;
+
+        case ',':
+          //        tokens_.push_back({pos, 0, NEW_ENTRY});
+          ++pos;
+          break;
+
+        default:  // If none of the above it must be number:
+
+          ++element_counter;
+          type = uint8_t(
+              byte_array::consumers::NumberConsumer<NUMBER_INT, NUMBER_FLOAT>(
+                  document, pos));
+          if (type == uint8_t(-1)) {
+            throw JSONParseException("Unable to parse integer.");
+          }
+          tokens_.push_back({oldpos, pos - oldpos, type});
+          break;
       }
-      
-      if(node->children.size() != 2)
-      {
-        TODO_FAIL("Expected a key and a value");
-      }
-      
-      ast_node_ptr key_tree = node->children[0];
-      ast_node_ptr value_tree = node->children[1];
-      if(key_tree->children.size() != 0 )
-      {
-        TODO_FAIL("Key cannot have children");        
-      }
-      
-      byte_array::ByteArray key = key_tree->symbol;
-      if( (key.size() < 2) || (key[0] != '"') || (key[key.size()-1]!='"' ))
-      {
-        TODO_FAIL("Key must have quotes");        
-      }
-      
-      key = key.SubArray(1, key.size() - 2);
-      variant_type value;      
-      
-      VisitASTNodes(value_tree, value);
-      variant[key] = value;
-      
-    } break;
-    case OP_STRING:
-      variant = node->symbol.SubArray(1, node->symbol.size() - 2); 
-      break;
-    case OP_NUMBER:
-      variant = node->symbol.AsFloat();      
-      break;      
-    case OP_TRUE:
-      variant = true; 
-      break;
-    case OP_FALSE:
-      variant = false;
-      break;
-    case OP_NULL:
-      variant = false;      
-      break;      
-    default:
- 
-      TODO_FAIL("Unknown type");
-      break;
-      
     }
-        
 
-
+    if (!brace_stack_.empty()) {
+      throw JSONParseException("Object or array indicators are unbalanced.");
+    }
   }
-  
-  std::shared_ptr<variant_type> root_;
-  //  variant_type *root_ = nullptr;
+
+  struct JSONObject {
+    uint64_t start = 0;
+    uint64_t size = 1;
+    uint64_t i = 0;
+    uint8_t type = 0;
+  };
+
+  std::vector<JSONObject> object_assembly_;
+
+  struct JSONToken {
+    uint64_t first;
+    uint64_t second;
+    uint8_t type;
+  };
+
+  std::vector<JSONToken *> object_stack_;
+  std::vector<JSONToken> tokens_;
+  script::VariantList variants_;
+  std::size_t objects_;
+
+  std::vector<char> brace_stack_;
+
+  //  variant_type root_ = nullptr;
 };
-};
-};
+}
+}
 
 #endif

@@ -1,7 +1,7 @@
 #define FETCH_DISABLE_LOGGING
 #include"service_consts.hpp"
 #include<iostream>
-#include"serializer/referenced_byte_array.hpp"
+#include"serializers/referenced_byte_array.hpp"
 #include"service/client.hpp"
 #include"logger.hpp"
 #include"commandline/parameter_parser.hpp"
@@ -42,11 +42,15 @@ private:
   fetch::mutex::Mutex mutex_;
 };
 
-class AEAProtocol : public AEA, public Protocol {
+class AEAProtocol :  public AEA, public Protocol {
 public:
   AEAProtocol() : AEA(), Protocol() {
-    this->Expose(NodeToAEA::SEARCH, new CallableClassMember<AEA, std::string(std::string)>( this, &AEA::SearchFor) );
+    AEA *controller = (AEA*)this;
+    
+    this->Expose(NodeToAEA::SEARCH, controller, &AEA::SearchFor);
   }
+private:
+  
 };
 
 

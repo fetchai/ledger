@@ -1,4 +1,3 @@
-#define FETCH_DISABLE_COUT_LOGGING
 #include"service_consts.hpp"
 #include<iostream>
 #include"service/server.hpp"
@@ -47,7 +46,7 @@ public:
 
 private:
   ServiceServer< fetch::network::TCPServer > * service_ = nullptr;
-  std::set< uint32_t > registered_aeas_;
+  std::set< uint64_t > registered_aeas_;
   fetch::mutex::Mutex mutex_;
   
 };
@@ -57,10 +56,12 @@ private:
 class AEAToNodeProtocol : public ClientRegister, public Protocol {
 public:
   
-  AEAToNodeProtocol() : ClientRegister(), Protocol() {
-    this->Expose(AEAToNode::REGISTER, new CallableClassMember<ClientRegister, void(uint64_t)>(Callable::CLIENT_ID_ARG, this, &ClientRegister::Register) );
+  AEAToNodeProtocol() :   ClientRegister(), Protocol() {
+    this->ExposeWithClientArg(AEAToNode::REGISTER, (ClientRegister*)this, &ClientRegister::Register);
+  }
 
-  }  
+
+private:
 };
 
 

@@ -1,12 +1,11 @@
 #ifndef STORAGE_INDEXED_DOCUMENT_STORE_HPP
 #define STORAGE_INDEXED_DOCUMENT_STORE_HPP
-#include "byte_array/referenced_byte_array.hpp"
-#include"storage/file_object.hpp"
 #include <cassert>
 #include <fstream>
+#include "byte_array/referenced_byte_array.hpp"
+#include "storage/file_object.hpp"
 namespace fetch {
 namespace storage {
-
 
 template <typename B>
 class IndexedDocumentStore {
@@ -27,7 +26,7 @@ class IndexedDocumentStore {
  private:
   byte_array_type filename_ = "";
 };
-};
-};
+}
+}
 
 #endif

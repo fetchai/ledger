@@ -11,11 +11,14 @@ public:
   AEAProtocol(std::string const&info) : AEAFunctionality(info),  fetch::service::Protocol() {
 
     using namespace fetch::service;
+    /*
     auto get_info =  new CallableClassMember<AEAFunctionality, std::string()>(this, &AEAFunctionality::get_info);
     auto connect =  new CallableClassMember<AEAFunctionality, void(std::string, uint16_t)>(this, &AEAFunctionality::Connect);    
-      
-    this->Expose(AEACommands::GET_INFO, get_info);
-    this->Expose(AEACommands::CONNECT, connect); 
+
+    */
+    AEAFunctionality* controller = (AEAFunctionality*) this;    
+    this->Expose(AEACommands::GET_INFO, controller, &AEAFunctionality::get_info);
+    this->Expose(AEACommands::CONNECT, controller, &AEAFunctionality::Connect); 
   }
 };
 

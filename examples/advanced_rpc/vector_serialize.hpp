@@ -1,6 +1,6 @@
 #ifndef VECTOR_SERIALIZE_HPP
 #define VECTOR_SERIALIZE_HPP
-#include"serializer/stl_types.hpp"
+#include"serializers/stl_types.hpp"
 #include<vector>
 namespace fetch {
 namespace serializers {
@@ -33,6 +33,6 @@ void Deserialize(T &serializer, std::vector< std::string > &vec) {
 
 }
 
-};
-};
+}
+}
 #endif

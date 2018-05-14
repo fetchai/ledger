@@ -19,14 +19,17 @@ class ForwardIterator {
   ForwardIterator(T *pos) : pos_(pos) {}
   ForwardIterator(T *pos, T *end) : pos_(pos), end_(end) {}
 
-  ForwardIterator &operator++() { ++pos_; return *this; }
+  ForwardIterator &operator++() {
+    ++pos_;
+    return *this;
+  }
 
   T &operator*() {
     assert(pos_ != nullptr);
     assert((end_ != nullptr) && (pos_ < end_));
     return *pos_;
   }
-  
+
   bool operator==(ForwardIterator const &other) { return other.pos_ == pos_; }
   bool operator!=(ForwardIterator const &other) { return other.pos_ != pos_; }
 
@@ -48,7 +51,10 @@ class BackwardIterator {
   BackwardIterator(T *pos) : pos_(pos) {}
   BackwardIterator(T *pos, T *begin) : pos_(pos), begin_(begin) {}
 
-  BackwardIterator &operator++() { --pos_; return *this; }
+  BackwardIterator &operator++() {
+    --pos_;
+    return *this;
+  }
 
   T &operator*() {
     assert(pos_ != nullptr);
@@ -63,6 +69,6 @@ class BackwardIterator {
   T *pos_ = nullptr;
   T *begin_ = nullptr;
 };
-};
-};
+}
+}
 #endif

@@ -34,6 +34,7 @@ public:
     service_(port, thread_manager_),
     http_server_(http_port, thread_manager_)    
   {
+    LOG_STACK_TRACE_POINT;
     using namespace fetch::protocols;    
     std::cout << "ChainKeeper listening for peers on " << (port) << ", clients on " << ( http_port ) << std::endl;
 
@@ -114,7 +115,7 @@ public:
     // Get latest transactions
     std::vector< fetch::service::Promise > promises;
     
-    this->with_peers_do([this, &promises](  std::vector< client_shared_ptr_type > const &clients ) {
+    this->with_peers_do([&promises](  std::vector< client_shared_ptr_type > const &clients ) {
         for(auto const &c: clients) {
           promises.push_back( c->Call(FetchProtocols::CHAIN_KEEPER , ChainKeeperRPC::GET_TRANSACTIONS) );
         }

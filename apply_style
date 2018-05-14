@@ -2,8 +2,8 @@
 
 CMD=
 
-if command -v clang-format-mp-3.9 >/dev/null 2>&1 ; then
-    CMD=clang-format-mp-3.9
+if command -v clang-format-mp-4.0 >/dev/null 2>&1 ; then
+    CMD=clang-format-mp-4.0
 else 
     if command -v clang-format-3.6 >/dev/null 2>&1 ; then
         CMD=clang-format-3.6

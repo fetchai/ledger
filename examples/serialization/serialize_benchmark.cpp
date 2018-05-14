@@ -1,13 +1,12 @@
-#define FETCH_DISABLE_COUT_LOGGING
 #include<iostream>
-#include"serializer/referenced_byte_array.hpp"
-#include"serializer/stl_types.hpp"
-#include"serializer/byte_array_buffer.hpp"
-#include "serializer/counter.hpp"
+#include"serializers/referenced_byte_array.hpp"
+#include"serializers/stl_types.hpp"
+#include"serializers/byte_array_buffer.hpp"
+#include "serializers/counter.hpp"
 #include "random/lfg.hpp"
 
 #include"service/server.hpp"
-#include"serializer/referenced_byte_array.hpp"
+#include"serializers/referenced_byte_array.hpp"
 #include"service/client.hpp"
 #include<chrono>
 #include<vector>

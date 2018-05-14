@@ -1,35 +1,21 @@
 #ifndef ABSTRACT_MUTEX_HPP
 #define ABSTRACT_MUTEX_HPP
 
-
-#include<mutex>
+#include <mutex>
+#include <string>
 #include <thread>
-#include<string>
-namespace fetch 
-{
-namespace mutex 
-{
+namespace fetch {
+namespace mutex {
 
-class AbstractMutex : public std::mutex  
-{
-public:
-  AbstractMutex() : std::mutex() 
-  {  }
+class AbstractMutex : public std::mutex {
+ public:
+  AbstractMutex() : std::mutex() {}
 
-  virtual std::string AsString() 
-  {
-    return "(mutex)";
-  }
+  virtual std::string AsString() { return "(mutex)"; }
 
-  virtual std::thread::id thread_id() const 
-  {
-    return std::thread::id();    
-  }
-  
+  virtual std::thread::id thread_id() const { return std::thread::id(); }
 };
-
-
-};
-};
+}
+}
 
 #endif

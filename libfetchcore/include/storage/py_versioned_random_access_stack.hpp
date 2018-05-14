@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_STORAGE_VERSIONED_RANDOM_ACCESS_STACK_HPP
 #include "storage/versioned_random_access_stack.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace storage

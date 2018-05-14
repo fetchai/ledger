@@ -32,7 +32,7 @@ class AbstractColor {
 
 typedef AbstractColor<uint32_t, 8, 3> RGB8;
 typedef AbstractColor<uint32_t, 8, 4> RGBA8;
-};
+}
 
 template <typename T = colors::RGBA8>
 class ImageType
@@ -63,7 +63,7 @@ class ImageType
 
 typedef ImageType<colors::RGB8> ImageRGB;
 typedef ImageType<colors::RGBA8> ImageRGBA;
-};
-};
+}
+}
 
 #endif

@@ -1,5 +1,5 @@
-#include<iostream>
-#include<image/load_png.hpp>
+#include <image/load_png.hpp>
+#include <iostream>
 using namespace fetch::image;
 
 int main(int argc, char **argv) {

@@ -13,34 +13,30 @@ namespace fetch {
 namespace byte_array {
 
 class ConstByteArray : public BasicByteArray {
-public:
+ public:
   typedef BasicByteArray super_type;
 
   ConstByteArray() {}
-  ConstByteArray(char const *str) : super_type( str ) { }
+  ConstByteArray(char const *str) : super_type(str) {}
   ConstByteArray(std::string const &s) : super_type(s) {}
-  ConstByteArray(ConstByteArray const &other) : super_type( other ) { }
-  ConstByteArray(std::initializer_list<container_type> l) : super_type(l) { }
-  
-  ConstByteArray(ConstByteArray const &other,
-                 std::size_t const &start, std::size_t const &length)
-    : super_type(other, start, length) {  }
+  ConstByteArray(ConstByteArray const &other) : super_type(other) {}
+  ConstByteArray(std::initializer_list<container_type> l) : super_type(l) {}
 
-  ConstByteArray(ByteArray const &other) : super_type( other ) { }
+  ConstByteArray(ConstByteArray const &other, std::size_t const &start,
+                 std::size_t const &length)
+      : super_type(other, start, length) {}
 
-  ConstByteArray(ByteArray const &other,
-                      std::size_t const &start, std::size_t const &length)
-    : super_type(other, start, length) {  }
+  ConstByteArray(ByteArray const &other) : super_type(other) {}
 
-  
-  ConstByteArray(super_type const &other) : super_type( other ) { }
-  ConstByteArray(super_type const &other,
-                 std::size_t const &start, std::size_t const &length)
-    : super_type(other, start, length) {  }
+  ConstByteArray(ByteArray const &other, std::size_t const &start,
+                 std::size_t const &length)
+      : super_type(other, start, length) {}
 
-
+  ConstByteArray(super_type const &other) : super_type(other) {}
+  ConstByteArray(super_type const &other, std::size_t const &start,
+                 std::size_t const &length)
+      : super_type(other, start, length) {}
 };
-
-};
-};
+}
+}
 #endif

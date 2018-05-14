@@ -1,6 +1,7 @@
 #ifndef MATH_RANDOM_LFG_HPP
 #define MATH_RANDOM_LFG_HPP
 #include <limits>
+#include <cstdint>
 #include "lcg.hpp"
 
 namespace fetch {
@@ -53,6 +54,6 @@ class LaggedFibonacciGenerator {
   static constexpr double inv_double_max_ =
       1. / std::numeric_limits<random_type>::max();
 };
-};
-};
+}
+}
 #endif

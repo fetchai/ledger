@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 
     ThreadManager tmanager ;
     
-    Server s(std::atoi(argv[1]), &tmanager);
+    Server s(uint16_t(std::atoi(argv[1])), &tmanager);
     tmanager.Start();
 
     std::cout << "Press Ctrl+C to quit" << std::endl;

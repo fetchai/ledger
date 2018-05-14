@@ -1,47 +1,46 @@
-#include<iostream>
-#include"vectorize/register.hpp"
-#include<random/lfg.hpp>
+#include <iostream>
+#include <random/lfg.hpp>
+#include "vectorize/register.hpp"
 using namespace fetch::vectorize;
 
-template< typename T >
-using NativeRegister = VectorRegister< T, InstructionSet::NO_VECTOR > ;
-
-template< typename T >
-using NativeMemoryProxy = VectorMemoryProxy< T, InstructionSet::NO_VECTOR > ;
-
-template< typename T >
-using NativeMemory = VectorMemory< T, InstructionSet::NO_VECTOR > ;
+template <typename T>
+using NativeRegister = VectorRegister<T>;
 
 fetch::random::LinearCongruentialGenerator lcg;
 
-#define ADD_TEST(OP, NAME) \
-  template< typename T, bool integral = true >  \
-void test_##NAME() {\
-  T a;                                          \
- T b ;                                          \
- if(integral) { a = lcg(); b = lcg(); } \
- else { a = lcg.AsDouble(); b = lcg.AsDouble(); } \
-  NativeRegister< T > A(a), B(b);\
-  NativeRegister< T > C = A OP B;\
-  T c = a OP b; \
-  if( T(C) != c ) {\
-    std::cout << T(C) << " != " << c << std::endl; \
-    std::cout << "for "#NAME << " using "#OP << std::endl;      \
-    exit(-1);\
-  }\
-}
+#define ADD_TEST(OP, NAME)                                     \
+  template <typename T, bool integral = true>                  \
+  void test_##NAME() {                                         \
+    T a;                                                       \
+    T b;                                                       \
+    if (integral) {                                            \
+      a = T(lcg());                                            \
+      b = T(lcg());                                            \
+    } else {                                                   \
+      a = T(lcg.AsDouble());                                   \
+      b = T(lcg.AsDouble());                                   \
+    }                                                          \
+    NativeRegister<T> A(a), B(b);                              \
+    NativeRegister<T> C = A OP B;                              \
+    T c = T(a OP b);                                           \
+    if (T(C) != c) {                                           \
+      std::cout << T(C) << " != " << c << std::endl;           \
+      std::cout << "for " #NAME << " using " #OP << std::endl; \
+      exit(-1);                                                \
+    }                                                          \
+  }
 
-ADD_TEST(*,multiply);
-ADD_TEST(+,add);
-ADD_TEST(-,subtract);
-ADD_TEST(/,divide);
-ADD_TEST(&,and);
-ADD_TEST(|,or);
-ADD_TEST(^,xor);
+ADD_TEST(*, multiply)
+ADD_TEST(+, add)
+ADD_TEST(-, subtract)
+ADD_TEST(/, divide)
+ADD_TEST(&, and)
+ADD_TEST(|, or)
+ADD_TEST (^, xor)
 #undef ADD_TEST
 
 void test_registers() {
-  for(std::size_t i=0; i < 10000000; ++i) {
+  for (std::size_t i = 0; i < 10000000; ++i) {
     test_multiply<int8_t>();
     test_multiply<int16_t>();
     test_multiply<int32_t>();
@@ -87,7 +86,6 @@ void test_registers() {
     test_subtract<double>();
     test_subtract<float>();
 
-
     test_divide<int8_t>();
     test_divide<int16_t>();
     test_divide<int32_t>();
@@ -132,86 +130,43 @@ void test_registers() {
     test_xor<uint16_t>();
     test_xor<uint32_t>();
     test_xor<uint64_t>();
-
   }
 }
 
-
-#define ADD_TEST(OP, NAME)                      \
-  template< typename T, bool integral = true >  \
-void mtest_##NAME() {\
-  T a;                                          \
-  T b ;                                         \
-  if(integral) { a = lcg(); b = lcg(); }          \
-  else { a = lcg.AsDouble(); b = lcg.AsDouble(); }      \
-  NativeRegister< T > A(a), B(b);                       \
-  NativeRegister< T > C = A OP B;                       \
-  T c = a OP b;                                         \
-  if( T(C) != c ) {                                     \
-    std::cout << T(C) << " != " << c << std::endl;              \
-    std::cout << "for "#NAME << " using "#OP << std::endl;      \
-      exit(-1);                                                 \
-  }                                                             \
+#define ADD_TEST(OP, NAME)                                     \
+  template <typename T, bool integral = true>                  \
+  void mtest_##NAME() {                                        \
+    T a;                                                       \
+    T b;                                                       \
+    if (integral) {                                            \
+      a = lcg();                                               \
+      b = lcg();                                               \
+    } else {                                                   \
+      a = lcg.AsDouble();                                      \
+      b = lcg.AsDouble();                                      \
+    }                                                          \
+    NativeRegister<T> A(a), B(b);                              \
+    NativeRegister<T> C = A OP B;                              \
+    T c = T(a OP b);                                           \
+    if (T(C) != c) {                                           \
+      std::cout << T(C) << " != " << c << std::endl;           \
+      std::cout << "for " #NAME << " using " #OP << std::endl; \
+      exit(-1);                                                \
+    }                                                          \
   }
 
-ADD_TEST(*,multiply);
-ADD_TEST(+,add);
-ADD_TEST(-,subtract);
-ADD_TEST(/,divide);
-ADD_TEST(&,and);
-ADD_TEST(|,or);
-ADD_TEST(^,xor);
+ADD_TEST(*, multiply)
+ADD_TEST(+, add)
+ADD_TEST(-, subtract)
+ADD_TEST(/, divide)
+ADD_TEST(&, and)
+ADD_TEST(|, or)
+ADD_TEST (^, xor)
 
 #undef ADD_TEST
 
-template<typename T = uint32_t>
-void test_memory_proxy_read() {
-  T array[4];
-  for(std::size_t i=0; i < 4;++i)
-    array[i] = lcg();
-
-  NativeMemoryProxy<T> x(array);
-
-  if(T(x) != T(array[0])) {
-    std::cout << "proxy test failed" << std::endl;
-    exit(-1);
-  }
-
-  NativeRegister<T> y = NativeRegister<T>(x);
-
-  if(T(y) != array[0]) {
-    std::cout << "proxy cast failed" << std::endl;
-    exit(-1);
-  }  
-}
-
-template<typename T = uint32_t>
-void test_memory_proxy_write() {
-  T array[4] = {0};
-  
-  T val = lcg();
-  NativeMemoryProxy<T> x(array);
-  x = val;
-  if(array[0] != val) {
-    std::cout << "failed writing" << std::endl;
-    exit(-1);
-  }
-}
-
-/*
-void interface() {
-  T array1[8];
-  T array2[8];
-  T ret[8];
-
-  Vecotorize v1( array1 ), v2( array2 ), vr( ret );
-  for(std::size_t i=0; i < v1.size(); ++i)
-    vr[i] = v1[i] * v2[i];
-}
-*/
 int main() {
-  //  test_registers() ;
-  test_memory_proxy_read();
-  test_memory_proxy_write();
+  test_registers();
+
   return 0;
 }

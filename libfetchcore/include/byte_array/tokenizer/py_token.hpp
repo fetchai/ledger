@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_BYTE_ARRAY_TOKENIZER_TOKEN_HPP
 #include "byte_array/tokenizer/token.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace byte_array
@@ -18,8 +18,6 @@ void BuildToken(pybind11::module &module) {
     .def(py::init< const fetch::byte_array::ConstByteArray & >())
     .def(py::init< const fetch::byte_array::ConstByteArray &, const std::size_t &, const std::size_t & >())
     .def("character", &Token::character)
-    .def("SetFilename", &Token::SetFilename)
-    .def("filename", &Token::filename)
     .def("SetChar", &Token::SetChar)
     .def("SetLine", &Token::SetLine)
     .def("line", &Token::line)

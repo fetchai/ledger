@@ -12,24 +12,23 @@ namespace fetch {
 namespace byte_array {
 
 class ByteArray : public BasicByteArray {
-public:
+ public:
   typedef BasicByteArray super_type;
 
   ByteArray() {}
-  ByteArray(char const *str) : super_type( str ) { }
-  ByteArray(std::string const &s) : super_type(s) { }
-  ByteArray(ByteArray const &other) : super_type( other ) { }
-  ByteArray(std::initializer_list<container_type> l) : super_type(l) { }
-  
-  ByteArray(ByteArray const &other,
-                      std::size_t const &start, std::size_t const &length)
-    : super_type(other, start, length) {  }
+  ByteArray(char const *str) : super_type(str) {}
+  ByteArray(std::string const &s) : super_type(s) {}
+  ByteArray(ByteArray const &other) : super_type(other) {}
+  ByteArray(std::initializer_list<container_type> l) : super_type(l) {}
 
-  ByteArray(super_type const &other) : super_type( other ) { }
-  ByteArray(super_type const &other,
-                      std::size_t const &start, std::size_t const &length)
-    : super_type(other, start, length) {  }
-  
+  ByteArray(ByteArray const &other, std::size_t const &start,
+            std::size_t const &length)
+      : super_type(other, start, length) {}
+
+  ByteArray(super_type const &other) : super_type(other) {}
+  ByteArray(super_type const &other, std::size_t const &start,
+            std::size_t const &length)
+      : super_type(other, start, length) {}
 
   container_type &operator[](std::size_t const &n) {
     return super_type::operator[](n);
@@ -38,23 +37,17 @@ public:
     return super_type::operator[](n);
   }
 
+  /*
+   *
+   * TODO: This breaks referencing - work out if this is the desired behaviour.
+   */
+  void Resize(std::size_t const &n) { return super_type::Resize(n); }
 
   /*
    *
    * TODO: This breaks referencing - work out if this is the desired behaviour.
    */
-  void Resize(std::size_t const &n) {
-    return super_type::Resize(n);
-  }
-
-  /*
-   *
-   * TODO: This breaks referencing - work out if this is the desired behaviour.
-   */  
-  void Reserve(std::size_t const &n) {
-    return super_type::Reserve(n);
-  }
-
+  void Reserve(std::size_t const &n) { return super_type::Reserve(n); }
 
   ByteArray operator+(ByteArray const &other) const {
     return super_type::operator+(other);
@@ -66,17 +59,17 @@ public:
   char *char_pointer() { return super_type::char_pointer(); }
 };
 
-std::ostream &operator<<(std::ostream &os, ByteArray const &str) {
+inline std::ostream &operator<<(std::ostream &os, ByteArray const &str) {
   char const *arr = reinterpret_cast<char const *>(str.pointer());
   for (std::size_t i = 0; i < str.size(); ++i) os << arr[i];
   return os;
 }
 
-ByteArray operator+(char const *a, ByteArray const &b) {
+inline ByteArray operator+(char const *a, ByteArray const &b) {
   ByteArray s(a);
   s = s + b;
   return s;
 }
-};
-};
+}
+}
 #endif

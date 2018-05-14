@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_NETWORK_TCP_CLIENT_CONNECTION_HPP
 #include "network/tcp/client_connection.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace network

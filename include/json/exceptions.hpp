@@ -23,6 +23,16 @@ class UnrecognisedJSONSymbolException : public std::exception {
 
   virtual const char* what() const throw() { return str_.c_str(); }
 };
+
+class JSONParseException : public std::exception {
+ public:
+  JSONParseException(std::string const& err) : error_(err) {}
+  virtual ~JSONParseException() {}
+  virtual char const* what() const throw() { return error_.c_str(); }
+
+ private:
+  std::string error_;
 };
-};
+}
+}
 #endif

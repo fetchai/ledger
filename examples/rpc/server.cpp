@@ -10,7 +10,7 @@ using namespace fetch::byte_array;
 // First we make a service implementation
 class Implementation {
 public:
-  int SlowFunction(int a, int b) {
+  int SlowFunction(int const &a, int const &b) {
     std::this_thread::sleep_for( std::chrono::milliseconds(20) );
     return a + b;
   }
@@ -23,18 +23,53 @@ public:
     return "Hello, " + name;
   }      
 };
+/*
+class AESEncryption 
+{
+public:
+  void Apply( serializer_type &serializer, byte_array_type const &data) 
+  {
+    
+  }
 
+  void Unapply( serializer_type &serializer, byte_array_type const &data)  override
+  {
+    
+  }  
+  
+};
+
+
+template<typename C, typename R, typename ...Args, typename ...DecArgs>
+void Decorate( C *instance, R (C::*function)(Args...), DecArgs ... decorators)  
+{
+
+}
+*/
 
 // Next we make a protocol for the implementation
-class ServiceProtocol : public Implementation, public Protocol {
+class ServiceProtocol :  public Protocol {
 public:
   
-  ServiceProtocol() : Implementation(), Protocol() {
+  ServiceProtocol() : Protocol() {
     
-    this->Expose(SLOWFUNCTION, new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::SlowFunction) );
-    this->Expose(ADD, new CallableClassMember<Implementation, int(int, int)>(this, &Implementation::Add) );
-    this->Expose(GREET, new CallableClassMember<Implementation, std::string(std::string)>(this, &Implementation::Greet) );
-  }  
+    this->Expose(SLOWFUNCTION, &impl_, &Implementation::SlowFunction );
+    this->Expose(ADD, &impl_, &Implementation::Add);
+    this->Expose(GREET, &impl_, &Implementation::Greet);
+
+//    AESEncryption aes;    
+//    Decorate(&impl_, &Implementation::SlowFunction, aes);
+    
+
+//      this->Using(aes).Expose( ... );
+    
+      /*
+        AESEncryption aes;    
+        this->Expose(SLOWFUNCTION, );    
+      */
+  }
+private:
+  Implementation impl_;  
 };
 
 

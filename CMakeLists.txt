@@ -5,6 +5,17 @@ OPTION(BUILD_TESTS "Build tests" ON)
 OPTION(BUILD_EXAMPLES "Build examples" ON)
 OPTION(BUILD_BENCHMARK "Build benchmark" ON)
 OPTION(BUILD_PYTHON_BINDINGS "Build Python examples" ON)
+
+
+## Check feature set on Apple with
+# sysctl -a | grep machdep.cpu.features
+
+OPTION(BUILD_MACH_SSE3 "Enable SSE3" ON)
+OPTION(BUILD_MACH_SSE42 "Enable SSE4.2" ON)
+OPTION(BUILD_MACH_AVX "Enable AVX" OFF)
+OPTION(BUILD_MACH_FMA "Enable FMA" OFF)
+OPTION(BUILD_MACH_AVX2 "Enable AVX2" OFF)
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(PNG REQUIRED)
@@ -14,13 +25,6 @@ find_package(Threads REQUIRED)
 message("OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
 message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")
 
-#find_package(Crypto REQUIRED)
-
-#if(APPLE)
-#  link_libraries(-Wl,/usr/local/opt/openssl/lib/libcrypto.a pthread)
-#else()
-  link_libraries(crypto pthread)
-#endif()
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/asio/asio/include")
 include_directories("${OPENSSL_INCLUDE_DIR}")
@@ -34,25 +38,45 @@ enable_testing()
 #    ARGS "describe"
 #    OUTPUT_VARIABLE ${GIT_DESCRIBE})
 
+
 add_definitions( --std=c++11 )
+
+if(BUILD_MACH_SSE3)
+add_definitions( -msse3 ) 
+endif()
+
+if(BUILD_MACH_SSE42)
+add_definitions( -msse4.2 ) 
+endif()
+
+if(BUILD_MACH_AVX)
+add_definitions( -mavx ) 
+endif()
+
+if(BUILD_MACH_AVX2)
+add_definitions( -mavx2 ) 
+endif()
+
+if(BUILD_MACH_FMA)
+add_definitions( -mfma ) 
+endif()
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/RemoveFlag.cmake")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -g -Wno-unused-function ")
-
-#set(CMAKE_BUILD_TYPE RELEASE)
-set(CMAKE_BUILD_TYPE DEBUG)
-
-
-## #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -O3 -DNDEBUG -g -Wall  -Werror -Wno-unused-function")
-
-
-
-## Dependencies
 
 include_directories(${PNG_INCLUDE_DIR})
 
+if(BUILD_PYTHON_BINDINGS)
 add_subdirectory( libfetchcore/ )
+endif()
+
+## Making compile flags strict for the rest of the library
+set(STRICT_FLAGS "-Wconversion -Wpedantic -Wall -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wno-unused-function -Wno-unknown-pragmas -O3 ${STRICT_FLAGS}")
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function -Wno-unknown-pragmas -O3 ${STRICT_FLAGS}")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-inline -Wno-enum-compare -Wno-unknown-pragmas -O3 ${STRICT_FLAGS} -DNDEBUG -DFETCH_DISABLE_COUT_LOGGING")
+
 
 # TESTS
 if(BUILD_TESTS)

@@ -2,8 +2,8 @@
 #define LIBFETCHCORE_CHAIN_TRANSACTION_HPP
 #include "chain/transaction.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
+#include"fetch_pybind.hpp"
+
 namespace fetch
 {
 namespace chain
@@ -14,9 +14,9 @@ void BuildTransaction(pybind11::module &module) {
   py::class_<Transaction>(module, "Transaction" )
     .def(py::init<>()) /* No constructors found */
     .def("contract_name", &Transaction::contract_name)
-    .def("signatures", &Transaction::signatures)
+    //    .def("signatures", &Transaction::signatures)
     .def("PushGroup", ( void (Transaction::*)(const byte_array::ConstByteArray &) ) &Transaction::PushGroup)
-    .def("PushGroup", ( void (Transaction::*)(const uint32_t &) ) &Transaction::PushGroup)
+    .def("PushGroup", ( void (Transaction::*)(const group_type &) ) &Transaction::PushGroup)
     .def("PushSignature", &Transaction::PushSignature)
     .def("data", &Transaction::data)
     .def("signature_count", &Transaction::signature_count)

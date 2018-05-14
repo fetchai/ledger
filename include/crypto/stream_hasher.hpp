@@ -10,10 +10,10 @@ class StreamHasher {
 
   virtual void Reset() = 0;
   virtual bool Update(byte_array_type const& data) = 0;
-  virtual void Final() = 0;  
+  virtual void Final() = 0;
   virtual byte_array_type digest() = 0;
 };
-};
-};
+}
+}
 
 #endif
