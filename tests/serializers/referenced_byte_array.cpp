@@ -3,8 +3,8 @@
 #include <random>
 #include "chain/transaction.hpp"
 #include "random/lfg.hpp"
-#include "serializer/byte_array_buffer.hpp"
-#include "serializer/stl_types.hpp"
+#include "serializers/byte_array_buffer.hpp"
+#include "serializers/stl_types.hpp"
 #include "../tests/include/helper_functions.hpp"
 
 using namespace fetch;
