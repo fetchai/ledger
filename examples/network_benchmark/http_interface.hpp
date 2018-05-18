@@ -42,11 +42,7 @@ public:
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
     { return this->Transactions(params, req); });
 
-    HTTPModule::Post("/set-rate",\
-    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
-    { return this->SetRate(params, req); });
-
-    HTTPModule::Post("/set-transactions-per-call",\
+    HTTPModule::Post("/transactions-per-call",\
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
     { return this->SetTPC(params, req); });
 
@@ -90,7 +86,8 @@ public:
     AttachPages();
   }
 
-  http::HTTPResponse AddEndpoint(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse AddEndpoint(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT ;
     json::JSONDocument doc;
@@ -103,26 +100,29 @@ public:
 
       node_->AddEndpoint(endpoint);
 
-      return http::HTTPResponse("{\"response\": \"success\" }");
+      return http::HTTPResponse(successString);
     } catch (...)
     {
-      return http::HTTPResponse("{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}");
+      return http::HTTPResponse(failureString);
     }
   }
 
-  http::HTTPResponse Start(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse Start(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     node_->Start();
-    return http::HTTPResponse("{\"response\": \"success\" }");
+    return http::HTTPResponse(successString);
   }
 
-  http::HTTPResponse Stop(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse Stop(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     node_->Stop();
-    return http::HTTPResponse("{\"response\": \"success\" }");
+    return http::HTTPResponse(successString);
   }
 
-  http::HTTPResponse Transactions(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse Transactions(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     auto transactions = node_->GetTransactions();
 
@@ -139,26 +139,8 @@ public:
     return http::HTTPResponse(ret.str());
   }
 
-  http::HTTPResponse SetRate(http::ViewParameters const &params, http::HTTPRequest const &req)
-  {
-    json::JSONDocument doc;
-    try
-    {
-      doc = req.JSON();
-      std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
-
-      uint32_t rate = uint32_t( doc["rate"].as_int() );
-
-      node_->setRate( rate );
-
-      return http::HTTPResponse("{\"response\": \"success\" }");
-    } catch (...)
-    {
-      return http::HTTPResponse("{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}");
-    }
-  }
-
-  http::HTTPResponse SetTPC(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse SetTPC(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     json::JSONDocument doc;
     try
@@ -168,22 +150,24 @@ public:
 
       uint32_t tpc = uint32_t( doc["transactions"].as_int() );
 
-      node_->SetTransactionsPerCall(tpc);
+      node_->setTransactionsPerCall(tpc);
 
-      return http::HTTPResponse("{\"response\": \"success\" }");
+      return http::HTTPResponse(successString);
     } catch (...)
     {
-      return http::HTTPResponse("{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}");
+      return http::HTTPResponse(failureString);
     }
   }
 
-  http::HTTPResponse Reset(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse Reset(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     node_->Reset();
-    return http::HTTPResponse("{\"response\": \"success\" }");
+    return http::HTTPResponse(successString);
   }
 
-  http::HTTPResponse TransactionsHash(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse TransactionsHash(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     auto res = node_->TransactionsHash();
 
@@ -198,7 +182,8 @@ public:
     return http::HTTPResponse(ret.str());
   }
 
-  http::HTTPResponse TransactionsToSync(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse TransactionsToSync(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     json::JSONDocument doc;
     try
@@ -208,14 +193,15 @@ public:
 
       node_->SetTransactionsToSync(doc["transactionsToSync"].as_int());
 
-      return http::HTTPResponse("{\"response\": \"success\" }");
+      return http::HTTPResponse(successString);
     } catch (...)
     {
-      return http::HTTPResponse("{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}");
+      return http::HTTPResponse(failureString);
     }
   }
 
-  http::HTTPResponse StopCondition(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse StopCondition(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     json::JSONDocument doc;
     try
@@ -225,14 +211,15 @@ public:
 
       node_->setStopCondition(doc["stopCondition"].as_int());
 
-      return http::HTTPResponse("{\"response\": \"success\" }");
+      return http::HTTPResponse(successString);
     } catch (...)
     {
-      return http::HTTPResponse("{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}");
+      return http::HTTPResponse(failureString);
     }
   }
 
-  http::HTTPResponse StartTime(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse StartTime(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT ;
     json::JSONDocument doc;
@@ -243,14 +230,15 @@ public:
 
       node_->setStartTime(doc["startTime"].as_int());
 
-      return http::HTTPResponse("{\"response\": \"success\" }");
+      return http::HTTPResponse(successString);
     } catch (...)
     {
-      return http::HTTPResponse("{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}");
+      return http::HTTPResponse(failureString);
     }
   }
 
-  http::HTTPResponse TimeToComplete(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse TimeToComplete(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT ;
     script::Variant result = script::Variant::Object();
@@ -263,7 +251,8 @@ public:
     return http::HTTPResponse(ret.str());
   }
 
-  http::HTTPResponse Finished(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse Finished(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT ;
     script::Variant result = script::Variant::Object();
@@ -276,24 +265,31 @@ public:
     return http::HTTPResponse(ret.str());
   }
 
-  http::HTTPResponse TransactionSize(http::ViewParameters const &params, http::HTTPRequest const &req)
+  http::HTTPResponse TransactionSize(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
   {
-    LOG_STACK_TRACE_POINT ;
-    script::Variant result = script::Variant::Object();
+    json::JSONDocument doc;
+    try
+    {
+      doc = req.JSON();
+      std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-    result["transactionSize"] = node_->TransactionSize();
+      node_->setTransactionSize(uint32_t(doc["transactionSize"].as_int()));
 
-    std::ostringstream ret;
-    ret << result;
-
-    return http::HTTPResponse(ret.str());
+      return http::HTTPResponse(successString);
+    } catch (...)
+    {
+      return http::HTTPResponse(failureString);
+    }
   }
-
 
   const std::shared_ptr<T> &node() const { return node_; };
 
 private:
   std::shared_ptr<T> node_;
+  const std::string successString{"{\"response\": \"success\" }"};
+  const std::string
+    failureString{"{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}"};
 };
 
 }

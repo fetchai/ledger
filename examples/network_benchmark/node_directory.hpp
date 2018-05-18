@@ -7,7 +7,9 @@
 #include"./protocols/fetch_protocols.hpp"
 #include"./protocols/network_benchmark/commands.hpp"
 #include"./network_classes.hpp"
+#include"../tests/include/helper_functions.hpp"
 #include"service/client.hpp"
+#include"service/server.hpp"
 #include"logger.hpp"
 #include<set>
 
@@ -15,7 +17,6 @@ namespace fetch
 {
 namespace network_benchmark
 {
-
 
 class NodeDirectory
 {
@@ -43,7 +44,7 @@ public:
   // Only call this during node setup
   void AddEndpoint(const Endpoint &endpoint)
   {
-    LOG_STACK_TRACE_POINT ;
+    LOG_STACK_TRACE_POINT;
     if (serviceClients_.find(endpoint) == serviceClients_.end())
     {
       auto client = new clientType {endpoint.IP(), endpoint.TCPPort(), tm_};
@@ -51,84 +52,90 @@ public:
     }
   }
 
-  template <typename T>
-  void BroadcastTransactions(T&& trans)
+  template<typename T>
+  void InviteAllForw(T&& transactions)
   {
-    LOG_STACK_TRACE_POINT ;
-    CallAllEndpoints(protocols::NetworkBenchmark::SEND_TRANSACTIONS, std::forward<T>(trans));
-  }
+    LOG_STACK_TRACE_POINT;
 
-  template<typename T, typename... Args>
-  void CallAllEndpoints(T CallEnum, Args... args) // one
-  {
-    LOG_STACK_TRACE_POINT ;
-    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+    //std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     for(auto &i : serviceClients_)
     {
       auto client = i.second;
+
       if(!client->is_alive())
       {
-        delete client;
-        client = new clientType {i.first.IP(), i.first.TCPPort(), tm_};
-        fetch::logger.Info(std::cerr, "Forced to recreate client for: ", i.first.IP());
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::cerr << "Client has died (forw)!\n\n" << std::endl;
       }
-      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK, CallEnum, args...);
-    }
-  }
 
-  std::vector<std::vector<chain::Transaction>> RequestTransactions(uint32_t index)
-  {
-    LOG_STACK_TRACE_POINT ;
-    std::vector<std::vector<chain::Transaction>> result;
+      bool clientWants = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+          protocols::NetworkBenchmark::INVITE_PUSH, transactions.first);
 
-    for(auto &i : serviceClients_) {
-      auto client = i.second;
-      std::vector<chain::Transaction> res;
-
-      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-          protocols::NetworkBenchmark::PULL_TRANSACTIONS, index).As(res);
-      result.emplace_back(std::move(res));
-    }
-
-    return result;
-  }
-
-  std::vector<std::vector<chain::Transaction>> RequestNextBlock(uint32_t threadSleepTimeUs_)
-  {
-    LOG_STACK_TRACE_POINT ;
-    std::vector<std::vector<chain::Transaction>> result;
-
-    fetch::logger.Info("doing");
-    for(auto &i : serviceClients_) {
-      auto client = i.second;
-      uint32_t index = 0;
-
-      while(1)
+      if(clientWants)
       {
-        std::vector<chain::Transaction> res;
-        fetch::logger.Info("calling");
-        assert(client->is_alive());
-        auto p = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-                     protocols::NetworkBenchmark::PULL_TRANSACTIONS, index); //
-        p.As(res);
-
-        fetch::logger.Info("called, index is ", index);
-        if(res.size() == 0)
-        {
-          break;
-        }
-        result.emplace_back(std::move(res));
+        fetch::logger.Info("Client wants forwarded push");
+        client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+          protocols::NetworkBenchmark::PUSH, transactions);
+      } else
+      {
+        fetch::logger.Info("Client does not want forwarded push");
       }
     }
+  }
 
-    return result;
+  template<typename T>
+  void InviteAllDirect(T&& transactions)
+  {
+    LOG_STACK_TRACE_POINT;
+
+    //std::lock_guard<fetch::mutex::Mutex> lock(mutex_); // TODO: (`HUT`) : remove
+    for(auto &i : serviceClients_)
+    {
+      auto client = i.second;
+
+      if(!client->is_alive())
+      {
+        std::cerr << "Client has died!\n\n" << std::endl;
+        exit(1);
+      }
+
+      bool clientWants = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+          protocols::NetworkBenchmark::INVITE_PUSH, transactions.first);
+
+      if(clientWants)
+      {
+        fetch::logger.Info("Client wants push");
+        try
+        {
+          client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+            protocols::NetworkBenchmark::PUSH, transactions);
+        }
+        catch (std::exception& e)
+        {
+          std::cerr << "failed to write" << std::endl;
+          std::cerr << e.what() << std::endl;
+          exit(1);
+        }
+
+      } else
+      {
+        fetch::logger.Info("Client does not want push\n\n\n");
+      }
+    }
+  }
+
+  void Reset()
+  {
+    for(auto &i : serviceClients_)
+    {
+      delete i.second;
+    }
+    serviceClients_.clear();
   }
 
 private:
-  fetch::network::ThreadManager    *tm_;
-  std::map<Endpoint, clientType *> serviceClients_;
-  fetch::mutex::Mutex              mutex_;
+  fetch::network::ThreadManager            *tm_;
+  std::map<Endpoint, clientType *>         serviceClients_;
+  fetch::mutex::Mutex                      mutex_;
 };
 
 }

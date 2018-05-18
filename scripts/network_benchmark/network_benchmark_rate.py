@@ -44,8 +44,8 @@ transactionsPerCall = { "transactions": 10 }
 #endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.151"}
 
 # google cloud test
-endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "35.204.5.118"}
+endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.38.91"}
+endpoint2 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.60.187"}
 
 HTTPpost(endpoint1, 'set-transactions-per-call', transactionsPerCall)
 HTTPpost(endpoint2, 'set-transactions-per-call', transactionsPerCall)

@@ -13,7 +13,9 @@ class NetworkBenchmarkProtocol : public fetch::service::Protocol {
 public:
 
   NetworkBenchmarkProtocol(std::shared_ptr<T> node) : Protocol() {
-    this->Expose(NetworkBenchmark::PULL_TRANSACTIONS,  node.get(),  &T::ProvideTransactions);
+    this->Expose(NetworkBenchmark::INVITE_PUSH, node.get(),  &T::InvitePush);
+    this->Expose(NetworkBenchmark::PUSH, node.get(),  &T::Push);
+    this->Expose(NetworkBenchmark::PING, node.get(),  &T::ping);
   }
 };
 

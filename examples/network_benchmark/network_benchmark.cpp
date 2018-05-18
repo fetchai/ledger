@@ -2,6 +2,7 @@
 #include"./network_benchmark_service.hpp"
 #include"./node_basic.hpp"
 #include"chain/transaction.hpp"
+#include"../tests/include/helper_functions.hpp"
 
 using namespace fetch;
 using namespace fetch::network_benchmark;
@@ -10,12 +11,12 @@ using namespace fetch::serializers;
 int main(int argc, char **argv)
 {
 
-  auto trans = NextTransaction();
+  auto trans = common::NextTransaction<transaction_type>();
   TypedByte_ArrayBuffer serializer;
   serializer << trans;
   fetch::logger.Info("Transaction size is: ", serializer.size());
 
-  fetch::network::ThreadManager *tm = new fetch::network::ThreadManager(20);
+  fetch::network::ThreadManager *tm  = new fetch::network::ThreadManager(50);
 
   {
     int seed = 0;

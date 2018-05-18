@@ -1,6 +1,11 @@
 #ifndef HELPER_FUNCTIONS_HPP
 #define HELPER_FUNCTIONS_HPP
 
+#include<memory>
+#include<limits>
+#include<utility>
+#include<vector>
+
 #include"random/lfg.hpp"
 #include"byte_array/referenced_byte_array.hpp"
 #include"serializers/counter.hpp"
@@ -13,10 +18,9 @@ namespace common {
 class NoCopyClass
 {
 public:
+  NoCopyClass() {}
 
-  NoCopyClass(){}
-
-  NoCopyClass(int val) :
+  explicit NoCopyClass(int val) :
     classValue_{val} { }
 
   NoCopyClass(NoCopyClass &rhs)             = delete;
@@ -88,7 +92,35 @@ T NextTransaction(std::size_t bytesToAdd = 0)
   return trans;
 }
 
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
+
+std::size_t Hash(fetch::byte_array::ConstByteArray const &arr)
+{
+    std::size_t hash = 2166136261;
+    for (std::size_t i = 0; i < arr.size(); ++i)
+    {
+      hash = (hash * 16777619) ^ arr[i];
+    }
+    return hash;
+}
+
+} // namespace common
+
+
+namespace network_benchmark
+{
+
+typedef fetch::chain::Transaction         transaction_type;
+typedef std::size_t                       block_hash;
+typedef std::vector<transaction_type>     block;
+typedef std::pair<block_hash, block>      network_block;
+
+}
+
 }
 
 #endif

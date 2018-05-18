@@ -4,6 +4,7 @@ import json
 import pdb
 import random
 import optparse
+import threading
 
 #import random as rand
 import sys, os
@@ -24,84 +25,109 @@ def ordered(obj):
 def HTTPpost(endpoint, page, jsonArg="{}"):
     return requests.post('http://'+str(endpoint["IP"])+':'+str(endpoint["HTTPPort"])+'/'+page, json=jsonArg)
 
-# Config
-setRate             = { "rate" : 0 }
-transactionsToSync  = { "transactionsToSync": 60000 }
-transactionsPerCall = { "transactions": 5000 }
-stopCondition       = { "stopCondition": 600000 }
+threads = []
+def HTTPpostAsync(endpoint, page, jsonArg="{}"):
+        thread = threading.Thread(target=HTTPpost, args=(endpoint, page, jsonArg))
+        thread.start()
+        threads.append(thread)
 
-## localhost test
-#endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-#endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
+### localhost test
+#endpoint1    = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
+#endpoint2    = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
+#endpoint3    = {"HTTPPort": 8082, "TCPPort": 9082, "IP": "localhost"}
+#allEndpoints = [ endpoint1, endpoint2, endpoint3]
 
-## LAN test
-#endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-#endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.213"}
+### cloud test basic
+#endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.38.91"}
+#endpoint2 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.60.187"}
+#allEndpoints = [ endpoint1, endpoint2]
 
-## pi test
-#endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "192.168.1.150"}
-#endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "192.168.1.151"}
+## google cloud test
+endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.38.91"}
+endpoint2 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.60.187"}
+endpoint3 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.234.64.165"}
+#endpoint3 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.227.63.152"} # America
+allEndpoints = [ endpoint1, endpoint2, endpoint3]
 
-# google cloud test
-endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-endpoint2 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
+# Global config
+numberOfNodes = len(allEndpoints)
+txSize        = 300 # bytes
+txPerCall     = 900
+txToSync      = txPerCall * 100
 
-HTTPpost(endpoint1, 'reset')
-HTTPpost(endpoint2, 'reset')
+transactionSize     = { "transactionSize": txSize }
+transactionsPerCall = { "transactions": txPerCall }
+transactionsToSync  = { "transactionsToSync": txToSync }
+stopCondition       = { "stopCondition": int(txToSync/txPerCall)*numberOfNodes }
 
-# Set up connections to each other
+for endpoint in allEndpoints:
+    HTTPpost(endpoint, 'reset')
+
+# Set up connections to each other (circular topology)
 HTTPpost(endpoint1, 'add-endpoint', endpoint2)
-HTTPpost(endpoint2, 'add-endpoint', endpoint1)
+HTTPpost(endpoint2, 'add-endpoint', endpoint3)
+HTTPpost(endpoint3, 'add-endpoint', endpoint1)
 
 # Other setup parameters
-HTTPpost(endpoint1, 'set-rate', setRate)
-HTTPpost(endpoint2, 'set-rate', setRate)
-HTTPpost(endpoint1, 'set-transactions-per-call', transactionsPerCall)
-HTTPpost(endpoint2, 'set-transactions-per-call', transactionsPerCall)
+for endpoint in allEndpoints:
+    HTTPpost(endpoint, 'transaction-size', transactionSize)
+    HTTPpost(endpoint, 'transactions-per-call', transactionsPerCall)
+    HTTPpost(endpoint, 'stop-condition', stopCondition)
+    HTTPpostAsync(endpoint, 'transactions-to-sync', transactionsToSync)
 
-# Set up the transactions we want to sync with each other
-#HTTPpost(endpoint1, 'transactions-to-sync', transactionsToSync)
-HTTPpost(endpoint2, 'transactions-to-sync', transactionsToSync)
-
-# Set up the stop condition
-HTTPpost(endpoint1, 'stop-condition', stopCondition)
-HTTPpost(endpoint2, 'stop-condition', stopCondition)
+# Need to make sure everyone is ready before starting
+for t in threads:
+    t.join()
 
 epoch_time       = int(time.time())
 timeWait = 5
 threeSecondsTime = { "startTime": epoch_time+timeWait }
+
 # Set up the start time
-HTTPpost(endpoint1, 'start-time', threeSecondsTime)
-#HTTPpost(endpoint2, 'start-time', threeSecondsTime)
+for endpoint in allEndpoints:
+    HTTPpostAsync(endpoint, 'start-time', threeSecondsTime)
 
 # wait until they're probably done
-while(HTTPpost(endpoint1, 'finished').json()["finished"] == 0 or HTTPpost(endpoint1, 'finished').json()["finished"] == 0):
-    time.sleep(10)
+while(True):
+    time.sleep(7)
+    hashPages = [HTTPpost(i, 'finished').json()["finished"] == True for i in allEndpoints]
+    print "Finished : ", hashPages
+    if(sum(hashPages) == len(hashPages)):
+        break
 
 # Check that they have syncronised correctly
-print "inspecting the hash"
-page1 = HTTPpost(endpoint1, 'transactions-hash')
-page2 = HTTPpost(endpoint2, 'transactions-hash')
+print "inspecting the hashes"
+hashPages = []
 
-if((ordered(page1.json())) != (ordered(page2.json()))):
+hashes     = [ordered(HTTPpost(i, 'transactions-hash').json()) for i in allEndpoints]
+#hashes = [1, 1]
+comparison = [x == hashes[0] for x in hashes]
+
+if(all(comparison) == False):
     print "FAILED TO MATCH: "
-    print "node 0", jsonPrint(page1)
-    print "node 1", jsonPrint(page2)
+    print hashes
+    res = [HTTPpost(i, 'transactions').json() for i in allEndpoints]
+    for r in res:
+        for i in r:
+            print i
+        print ""
     #exit(1)
 else:
     print "Hashes matched!"
+    print hashes[0]
 
-# Get the time each node took to syncronise
-page1 = HTTPpost(endpoint1, 'time-to-complete')
-page2 = HTTPpost(endpoint2, 'time-to-complete')
-
-print jsonPrint(page1)
-print jsonPrint(page2)
-
-maxTime = page1.json()["timeToComplete"]
-if(page2.json()["timeToComplete"] > maxTime):
-    maxTime = page2.json()["timeToComplete"]
+# Get the time each node took to synchronise
+pages   = []
+maxTime = 0
+for endpoint in allEndpoints:
+    pageTemp = HTTPpost(endpoint, 'time-to-complete')
+    print jsonPrint(pageTemp)
+    if(pageTemp.json()["timeToComplete"] > maxTime):
+        maxTime = pageTemp.json()["timeToComplete"]
+    pages += pageTemp
 
 print "Max time: ", maxTime
-print "Transactions per second: ", (stopCondition["stopCondition"]/2)/maxTime
+TPS = (txToSync)/maxTime
+print "Transactions per second: ", TPS
+print "Mbits/s", (TPS * txSize * 8)/1000000
 
