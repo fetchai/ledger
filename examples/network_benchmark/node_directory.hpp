@@ -41,7 +41,7 @@ public:
     }
   }
 
-  // Only call this during node setup
+  // Only call this during node setup (not thread safe)
   void AddEndpoint(const Endpoint &endpoint)
   {
     LOG_STACK_TRACE_POINT;
@@ -52,12 +52,12 @@ public:
     }
   }
 
+  // temporarily replicate functionality for easier debugging
   template<typename T>
-  void InviteAllForw(T&& transactions)
+  void InviteAllForw(T const &transactions)
   {
     LOG_STACK_TRACE_POINT;
 
-    //std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     for(auto &i : serviceClients_)
     {
       auto client = i.second;
@@ -83,11 +83,10 @@ public:
   }
 
   template<typename T>
-  void InviteAllDirect(T&& transactions)
+  void InviteAllDirect(T const &transactions)
   {
     LOG_STACK_TRACE_POINT;
 
-    //std::lock_guard<fetch::mutex::Mutex> lock(mutex_); // TODO: (`HUT`) : remove
     for(auto &i : serviceClients_)
     {
       auto client = i.second;
@@ -104,21 +103,12 @@ public:
       if(clientWants)
       {
         fetch::logger.Info("Client wants push");
-        try
-        {
-          client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-            protocols::NetworkBenchmark::PUSH, transactions);
-        }
-        catch (std::exception& e)
-        {
-          std::cerr << "failed to write" << std::endl;
-          std::cerr << e.what() << std::endl;
-          exit(1);
-        }
+        client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+          protocols::NetworkBenchmark::PUSH, transactions);
 
       } else
       {
-        fetch::logger.Info("Client does not want push\n\n\n");
+        fetch::logger.Info("Client does not want push\n");
       }
     }
   }
@@ -135,7 +125,6 @@ public:
 private:
   fetch::network::ThreadManager            *tm_;
   std::map<Endpoint, clientType *>         serviceClients_;
-  fetch::mutex::Mutex                      mutex_;
 };
 
 }

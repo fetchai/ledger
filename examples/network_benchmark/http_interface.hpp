@@ -30,14 +30,6 @@ public:
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
     { return this->AddEndpoint(params, req); });
 
-    HTTPModule::Post("/start",\
-    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
-    { return this->Start(params, req); });
-
-    HTTPModule::Post("/stop",\
-    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
-    { return this->Stop(params, req); });
-
     HTTPModule::Post("/transactions",\
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
     { return this->Transactions(params, req); });
@@ -105,20 +97,6 @@ public:
     {
       return http::HTTPResponse(failureString);
     }
-  }
-
-  http::HTTPResponse Start(http::ViewParameters const &params,
-      http::HTTPRequest const &req)
-  {
-    node_->Start();
-    return http::HTTPResponse(successString);
-  }
-
-  http::HTTPResponse Stop(http::ViewParameters const &params,
-      http::HTTPRequest const &req)
-  {
-    node_->Stop();
-    return http::HTTPResponse(successString);
   }
 
   http::HTTPResponse Transactions(http::ViewParameters const &params,
@@ -228,7 +206,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->setStartTime(doc["startTime"].as_int());
+      node_->SetStartTime(doc["startTime"].as_int());
 
       return http::HTTPResponse(successString);
     } catch (...)
@@ -243,7 +221,7 @@ public:
     LOG_STACK_TRACE_POINT ;
     script::Variant result = script::Variant::Object();
 
-    result["timeToComplete"] = node_->timeToComplete();
+    result["timeToComplete"] = node_->TimeToComplete();
 
     std::ostringstream ret;
     ret << result;
@@ -274,7 +252,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->setTransactionSize(uint32_t(doc["transactionSize"].as_int()));
+      node_->SetTransactionSize(uint32_t(doc["transactionSize"].as_int()));
 
       return http::HTTPResponse(successString);
     } catch (...)

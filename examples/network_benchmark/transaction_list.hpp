@@ -132,7 +132,6 @@ public:
     }
 
     fetch::logger.Info("Hash is now::", hash);
-
     fetch::logger.Info("returning count of size: ", runningCount_);
     return std::pair<uint64_t, uint64_t>(runningCount_, hash);
   }

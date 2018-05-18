@@ -28,6 +28,8 @@ namespace fetch
 namespace network_benchmark
 {
 
+typedef std::chrono::high_resolution_clock::time_point time_point;
+
 class NodeBasic
 {
 public:
@@ -89,7 +91,7 @@ public:
     stopCondition_ = stopCondition;
   }
 
-  void setStartTime(uint64_t startTime)
+  void SetStartTime(uint64_t startTime)
   {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Info("setting start time to ", startTime);
@@ -103,7 +105,7 @@ public:
     thread_   = std::thread([this]() { SendTransactions();});
   }
 
-  double timeToComplete()
+  double TimeToComplete()
   {
     LOG_STACK_TRACE_POINT;
     return std::chrono::duration_cast<std::chrono::duration<double>>
@@ -118,14 +120,6 @@ public:
     finished_ = false;
   }
 
-  void Start()
-  {
-  }
-
-  void Stop()
-  {
-  }
-
   bool finished() const
   {
     std::cerr << "Trans list: " << transactionList_.size()
@@ -133,7 +127,7 @@ public:
     return finished_;
   }
 
-  void setTransactionSize(uint32_t transactionSize)
+  void SetTransactionSize(uint32_t transactionSize)
   {
     std::size_t baseTxSize = common::Size(common::NextTransaction<transaction_type>(0));
     int32_t     pad        = (int32_t(transactionSize) - int32_t(baseTxSize));
@@ -176,7 +170,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////
-  // Functions to check that synchronisation was successful
+  // HTTP functions to check that synchronisation was successful
   std::set<transaction_type> GetTransactions()
   {
     LOG_STACK_TRACE_POINT;
@@ -191,29 +185,26 @@ public:
   }
 
 private:
-  NodeDirectory                              nodeDirectory_;   // Manage connections to other nodes
-  TransactionList<block_hash, block> transactionList_; // List of all transactions, sent and received
-  fetch::mutex::Mutex                        mutex_;
+  NodeDirectory                      nodeDirectory_;   // Manage connections to other nodes
+  TransactionList<block_hash, block> transactionList_; // List of all transactions
+  fetch::mutex::Mutex                mutex_;
 
   // Transmitting thread
-  std::thread                                    thread_;
-  uint64_t                                       transactionsPerCall_ = 1000;
-  uint32_t                                       txPad_               = 0;
-  std::vector<network_block>                     premadeTrans_;
-  std::size_t                                    premadeTransSize_;
-  uint64_t                                       stopCondition_{0};
-  uint64_t                                       startTime_{0};
-  float                                          timeToComplete_{0.0};
-  std::chrono::high_resolution_clock::time_point startTimePoint_      = std::chrono::high_resolution_clock::now();
-  std::chrono::high_resolution_clock::time_point finishTimePoint_     = std::chrono::high_resolution_clock::now();
-  bool                                           finished_            = false;
-  bool                                           destructing_         = false;
+  std::thread                thread_;
+  uint64_t                   transactionsPerCall_ = 1000;
+  uint32_t                   txPad_               = 0;
+  std::vector<network_block> premadeTrans_;
+  uint64_t                   stopCondition_{0};
+  uint64_t                   startTime_{0};
+  time_point                 startTimePoint_      = std::chrono::high_resolution_clock::now();
+  time_point                 finishTimePoint_     = std::chrono::high_resolution_clock::now();
+  bool                       finished_            = false;
+  bool                       destructing_         = false;
 
-  std::mutex                                 forwardQueueMutex_;
-  mutable std::condition_variable            forwardQueueCond_;
-  std::thread                                forwardQueueThread_{[this]() { ForwardThread();}};
-  std::vector<network_block>                 forwardQueue_;
-
+  std::mutex                      forwardQueueMutex_;
+  mutable std::condition_variable forwardQueueCond_;
+  std::thread                     forwardQueueThread_{[this]() { ForwardThread();}};
+  std::vector<network_block>      forwardQueue_;
 
   void PrecreateTrans(uint64_t total)
   {
@@ -227,7 +218,6 @@ private:
     std::size_t blocks = total / transactionsPerCall_;
 
     premadeTrans_.resize(blocks);
-    premadeTransSize_ = blocks; // TODO: (`HUT`) : delete
 
     for (uint64_t i = 0; i < blocks; ++i)
     {
@@ -276,7 +266,7 @@ private:
 
     for (auto &i : premadeTrans_)
     {
-      //transactionList_.Add(i);
+      //transactionList_.Add(i); // No need since this has been done pre-test
       fetch::logger.Info("Inviting... ");
       nodeDirectory_.InviteAllDirect(i);
       fetch::logger.Info("Invited. ");
@@ -286,7 +276,7 @@ private:
 
     transactionList_.WaitFor(stopCondition_);
 
-    fetch::logger.Info("finished test!\n\n\n");
+    fetch::logger.Info("finished test!\n");
 
     finishTimePoint_ = std::chrono::high_resolution_clock::now();
     finished_ = true;
