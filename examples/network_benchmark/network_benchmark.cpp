@@ -11,11 +11,6 @@ using namespace fetch::serializers;
 int main(int argc, char **argv)
 {
 
-  auto trans = common::NextTransaction<transaction_type>();
-  TypedByte_ArrayBuffer serializer;
-  serializer << trans;
-  fetch::logger.Info("Transaction size is: ", serializer.size());
-
   fetch::network::ThreadManager *tm  = new fetch::network::ThreadManager(50);
 
   {
