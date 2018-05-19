@@ -107,6 +107,7 @@ link_libraries(crypto pthread libfetch)
 
 # TESTS
 if(BUILD_TESTS)
+  add_subdirectory( vendor/googletest )
   add_subdirectory( tests )
 endif()
 

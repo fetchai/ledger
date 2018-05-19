@@ -9,4 +9,5 @@
 	url = github:uvue-git/docker-images.git
 [submodule "vendor/googletest"]
 	path = vendor/googletest
-	url = github:google/googletest.git
+    url = github:pbukva/googletest.git
+#   url = github:google/googletest.git
