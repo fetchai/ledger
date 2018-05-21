@@ -5,14 +5,13 @@ import pdb
 import random
 import optparse
 import threading
-
-#import random as rand
 import sys, os
 
 # print json in pretty way
 def jsonPrint(r):
     return json.dumps(r.json(), indent=4, sort_keys=True)+"\n"
 
+# Order map for comparison
 #https://stackoverflow.com/questions/25851183/
 def ordered(obj):
     if isinstance(obj, dict):
@@ -22,6 +21,7 @@ def ordered(obj):
     else:
         return obj
 
+# Make HTTP post
 def HTTPpost(endpoint, page, jsonArg="{}"):
     return requests.post('http://'+str(endpoint["IP"])+':'+str(endpoint["HTTPPort"])+'/'+page, json=jsonArg)
 
@@ -33,7 +33,7 @@ def HTTPpostAsync(endpoint, page, jsonArg="{}"):
 
 # Will act as controlling node if used
 masterEndpoint  = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-usingMasterNode    = True
+usingMasterNode    = False
 
 ### localhost test
 #endpoint1       = {"HTTPPort": 8083, "TCPPort": 9083, "IP": "localhost"}
@@ -54,7 +54,7 @@ endpoint3 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.234.64.165"}
 endpoint4 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.234.132.50"}
 #endpoint5 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.227.63.152"} # America
 allEndpoints = [ endpoint1, endpoint2, endpoint3, endpoint4]
-activeEndpoints = [ endpoint1, endpoint2, endpoint3, endpoint4]
+activeEndpoints = [ endpoint1, endpoint2, endpoint3, endpoint4] # Endpoints that are transmitting
 
 # Global config
 numberOfNodes = len(allEndpoints)
@@ -68,30 +68,22 @@ transactionSize     = { "transactionSize": txSize }
 transactionsPerCall = { "transactions": txPerCall }
 transactionsToSync  = { "transactionsToSync": txToSync }
 stopCondition       = { "stopCondition": int(txToSync/txPerCall)*len(activeEndpoints) }
-#stopCondition       = { "stopCondition": int(txToSync/txPerCall)*numberOfNodes }
 
 for endpoint in allEndpoints:
     HTTPpost(endpoint, 'reset')
 
-# Set up connections to each other (circular topology)
-HTTPpost(endpoint1, 'add-endpoint', endpoint2)
-HTTPpost(endpoint2, 'add-endpoint', endpoint3)
-HTTPpost(endpoint3, 'add-endpoint', endpoint4)
-HTTPpost(endpoint4, 'add-endpoint', endpoint1)
+## Set up connections to each other (circular topology)
+#for i in range(len(allEndpoints)):
+#    if (i == len(allEndpoints)-1):
+#        HTTPpost(allEndpoints[i], 'add-endpoint', allEndpoints[0])
+#    else:
+#        HTTPpost(allEndpoints[i], 'add-endpoint', allEndpoints[i+1])
 
-## Increase connectivity
-#HTTPpost(endpoint2, 'add-endpoint', endpoint1)
-#HTTPpost(endpoint4, 'add-endpoint', endpoint3)
-
-## Fully connected topology
-#for endpoint in allEndpoints:
-#    for otherEndpoint in allEndpoints:
-#        if(endpoint != otherEndpoint):
-#            HTTPpost(endpoint, 'add-endpoint', otherEndpoint)
-
-
-# Boost rate
-#HTTPpost(endpoint1, 'add-endpoint', endpoint3)
+# Fully connected topology
+for endpoint in allEndpoints:
+    for otherEndpoint in allEndpoints:
+        if(endpoint != otherEndpoint):
+            HTTPpost(endpoint, 'add-endpoint', otherEndpoint)
 
 # Other setup parameters
 for endpoint in allEndpoints:
@@ -160,7 +152,7 @@ print "Mbits/s per node", (TPS * txSize * 8)/1000000/numberOfNodes
 
 exit(1)
 
-# Check that they have syncronised correctly
+# Check that they have synchronised correctly
 print "inspecting the hashes (may take a long time)"
 hashPages = []
 
@@ -176,8 +168,6 @@ if(all(comparison) == False):
         for i in r:
             print i
         print ""
-    #exit(1)
 else:
     print "Hashes matched!"
     print hashes[0]
-
