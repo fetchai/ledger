@@ -7,3 +7,7 @@
 [submodule "docker-images"]
 	path = docker-images
 	url = github:uvue-git/docker-images.git
+[submodule "tests/vendor/googletest"]
+	path = tests/vendor/googletest
+    url = github:pbukva/googletest.git
+#   url = github:google/googletest.git
