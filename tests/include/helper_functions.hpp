@@ -5,6 +5,7 @@
 #include<limits>
 #include<utility>
 #include<vector>
+#include<chrono>
 
 #include"random/lfg.hpp"
 #include"byte_array/referenced_byte_array.hpp"
@@ -106,6 +107,19 @@ std::size_t Hash(fetch::byte_array::ConstByteArray const &arr)
       hash = (hash * 16777619) ^ arr[i];
     }
     return hash;
+}
+
+void BlockUntilTime(uint64_t startTime)
+{
+  // get time as epoch, wait until that time to start
+  std::time_t t = static_cast<std::time_t>(startTime);
+  std::tm* timeout_tm = std::localtime(&t);
+
+  time_t timeout_time_t = mktime(timeout_tm);
+  std::chrono::system_clock::time_point timeout_tp =
+    std::chrono::system_clock::from_time_t(timeout_time_t);
+
+  std::this_thread::sleep_until(timeout_tp);
 }
 
 } // namespace common

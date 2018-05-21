@@ -31,6 +31,10 @@ def HTTPpostAsync(endpoint, page, jsonArg="{}"):
         thread.start()
         threads.append(thread)
 
+# Will act as controlling node if used
+masterEndpoint  = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
+usingMasterNode    = True
+
 ### localhost test
 #endpoint1       = {"HTTPPort": 8083, "TCPPort": 9083, "IP": "localhost"}
 #endpoint2       = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
@@ -102,13 +106,22 @@ for endpoint in activeEndpoints:
 for t in threads:
     t.join()
 
+# master has all endpoints, set it up
+if (usingMasterNode):
+    for endpoint in allEndpoints:
+        HTTPpost(endpoint, 'is-slave', "{}")
+        HTTPpost(masterEndpoint, 'add-endpoint', endpoint)
+
 epoch_time       = int(time.time())
-timeWait = 5
+timeWait = 3
 threeSecondsTime = { "startTime": epoch_time+timeWait }
 
 # Set up the start time
 for endpoint in allEndpoints:
     HTTPpostAsync(endpoint, 'start-time', threeSecondsTime)
+
+if (usingMasterNode):
+    HTTPpostAsync(masterEndpoint, 'start-test-as-master', threeSecondsTime)
 
 time.sleep(3)
 
@@ -123,8 +136,16 @@ while(True):
 # Get the time each node took to synchronise
 pages   = []
 maxTime = 0
+
 for endpoint in allEndpoints:
     pageTemp = HTTPpost(endpoint, 'time-to-complete')
+    print jsonPrint(pageTemp)
+    if(pageTemp.json()["timeToComplete"] > maxTime):
+        maxTime = pageTemp.json()["timeToComplete"]
+    pages += pageTemp
+
+if (usingMasterNode):
+    pageTemp = HTTPpost(masterEndpoint, 'time-to-complete')
     print jsonPrint(pageTemp)
     if(pageTemp.json()["timeToComplete"] > maxTime):
         maxTime = pageTemp.json()["timeToComplete"]

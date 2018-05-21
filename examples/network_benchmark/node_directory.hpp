@@ -97,6 +97,45 @@ public:
     }
   }
 
+  void InviteAllBlocking(block_hash const &blockHash, block_type const &block)
+  {
+    LOG_STACK_TRACE_POINT;
+
+    for(auto &i : serviceClients_)
+    {
+      auto client = i.second;
+
+      if(!client->is_alive())
+      {
+        std::cerr << "Client has died!\n\n" << std::endl;
+        exit(1);
+      }
+
+      auto p1 = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+        protocols::NetworkBenchmark::PUSH_CONFIDENT, blockHash, block);
+      p1.Wait();
+    }
+  }
+
+  void ControlSlaves()
+  {
+    LOG_STACK_TRACE_POINT;
+
+    for(auto &i : serviceClients_)
+    {
+      auto client = i.second;
+
+      if(!client->is_alive())
+      {
+        std::cerr << "Client to slave has died!\n\n" << std::endl;
+        exit(1);
+      }
+
+      while(client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+        protocols::NetworkBenchmark::SEND_NEXT).As<bool>()) {}
+    }
+  }
+
   void Reset()
   {
     for(auto &i : serviceClients_)

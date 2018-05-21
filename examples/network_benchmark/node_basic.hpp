@@ -67,7 +67,7 @@ public:
     nodeDirectory_.AddEndpoint(endpoint);
   }
 
-  void setTransactionsPerCall(uint64_t tpc)
+  void transactionsPerCall(uint64_t tpc)
   {
     LOG_STACK_TRACE_POINT;
     std::lock_guard<std::mutex> mlock(mutex_);
@@ -75,7 +75,7 @@ public:
     fetch::logger.Info("set transactions per call to ", tpc);
   }
 
-  void SetTransactionsToSync(uint64_t transactionsToSync)
+  void TransactionsToSync(uint64_t transactionsToSync)
   {
     LOG_STACK_TRACE_POINT;
     std::lock_guard<std::mutex> mlock(mutex_);
@@ -85,13 +85,18 @@ public:
     AddTransToList();
   }
 
-  void setStopCondition(uint64_t stopCondition)
+  void stopCondition(uint64_t stopCondition)
   {
     LOG_STACK_TRACE_POINT;
     stopCondition_ = stopCondition;
   }
 
-  void SetStartTime(uint64_t startTime)
+  void isSlave()
+  {
+    slave_ = true;
+  }
+
+  void StartTime(uint64_t startTime)
   {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Info("setting start time to ", startTime);
@@ -103,6 +108,17 @@ public:
     }
 
     thread_   = std::thread([this]() { SendTransactions();});
+  }
+
+  // TODO: (`HUT`) : get rid of start in fn names
+  void StartTestAsMaster(uint64_t startTime)
+  {
+    if (thread_.joinable())
+    {
+      thread_.join();
+    }
+
+    thread_   = std::thread([this]() { TestAsMaster();});
   }
 
   double TimeToComplete()
@@ -118,6 +134,8 @@ public:
     transactionList_.reset();
     nodeDirectory_.Reset();
     finished_ = false;
+    slave_ = false;
+    sendIndex_ = 0;
   }
 
   bool finished() const
@@ -127,7 +145,7 @@ public:
     return finished_;
   }
 
-  void SetTransactionSize(uint32_t transactionSize)
+  void TransactionSize(uint32_t transactionSize)
   {
     std::size_t baseTxSize = common::Size(common::NextTransaction<transaction_type>(0));
     int32_t     pad        = (int32_t(transactionSize) - int32_t(baseTxSize));
@@ -182,6 +200,20 @@ public:
     IndexIsSafe(thisIndex);
   }
 
+  bool SendNext()
+  {
+    std::size_t sendIndex = sendIndex_++;
+    std::cerr << "Sending: " << sendIndex << std::endl;
+    if(sendIndex >= premadeTrans_.size())
+    {
+      return false;
+    }
+
+    network_block &transBlock = premadeTrans_[sendIndex];
+    nodeDirectory_.InviteAllBlocking(transBlock.first, transBlock.second);
+    return true;
+  }
+
   int ping()
   {
     return 4;
@@ -216,7 +248,9 @@ private:
   time_point                 startTimePoint_      = std::chrono::high_resolution_clock::now();
   time_point                 finishTimePoint_     = std::chrono::high_resolution_clock::now();
   bool                       finished_            = false;
+  bool                       slave_               = false;
   bool                       destructing_         = false;
+  std::atomic<std::size_t>   sendIndex_{0};
 
   mutable std::condition_variable forwardQueueCond_;
   std::mutex                      forwardQueueMutex_;
@@ -268,26 +302,17 @@ private:
   void SendTransactions()
   {
     LOG_STACK_TRACE_POINT;
-    // get time as epoch, wait until that time to start
-    std::time_t t = static_cast<std::time_t>(startTime_);
-    std::tm* timeout_tm = std::localtime(&t);
-
-    time_t timeout_time_t = mktime(timeout_tm);
-    std::chrono::system_clock::time_point timeout_tp =
-      std::chrono::system_clock::from_time_t(timeout_time_t);
-
-    // Start all nodes simultaneously
-    std::this_thread::sleep_until(timeout_tp);
+    finished_ = false;
+    common::BlockUntilTime(startTime_);
     startTimePoint_ = std::chrono::high_resolution_clock::now();
 
-    finished_ = false;
-
-    for (auto &i : premadeTrans_)
+    if(!slave_)
     {
-      //transactionList_.Add(i); // No need since this has been done pre-test
-      fetch::logger.Info("Inviting... ");
-      nodeDirectory_.InviteAllDirect(i.first, i.second);
-      fetch::logger.Info("Invited. ");
+      for (auto &i : premadeTrans_)
+      {
+        //transactionList_.Add(i); // No need since this has been done pre-test
+        nodeDirectory_.InviteAllDirect(i.first, i.second);
+      }
     }
 
     transactionList_.WaitFor(stopCondition_);
@@ -324,6 +349,24 @@ private:
       }
     }
   }
+
+  // Control all the other nodes to select the order they transmit blocks
+  void TestAsMaster()
+  {
+    LOG_STACK_TRACE_POINT;
+    finished_ = false;
+    common::BlockUntilTime(startTime_);
+    startTimePoint_ = std::chrono::high_resolution_clock::now();
+
+    nodeDirectory_.ControlSlaves();
+
+    finishTimePoint_ = std::chrono::high_resolution_clock::now();
+    finished_ = true;
+
+    std::cerr << "Time: " <<  std::chrono::duration_cast<std::chrono::duration<double>>
+      (finishTimePoint_ - startTimePoint_).count() << std::endl;
+  }
+
 };
 } // namespace network_benchmark
 } // namespace fetch

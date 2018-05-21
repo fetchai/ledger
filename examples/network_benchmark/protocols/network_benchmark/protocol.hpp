@@ -16,6 +16,7 @@ public:
     this->Expose(NetworkBenchmark::INVITE_PUSH,    node.get(),  &T::InvitePush);
     this->Expose(NetworkBenchmark::PUSH,           node.get(),  &T::Push);
     this->Expose(NetworkBenchmark::PUSH_CONFIDENT, node.get(),  &T::PushConfident);
+    this->Expose(NetworkBenchmark::SEND_NEXT,      node.get(),  &T::SendNext);
     this->Expose(NetworkBenchmark::PING,           node.get(),  &T::ping);
   }
 };

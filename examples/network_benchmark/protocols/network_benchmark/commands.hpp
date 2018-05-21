@@ -13,7 +13,8 @@ enum
   PING = 127,
   INVITE_PUSH,
   PUSH,
-  PUSH_CONFIDENT
+  PUSH_CONFIDENT,
+  SEND_NEXT
 };
 };
 }

@@ -54,9 +54,17 @@ public:
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
     { return this->StopCondition(params, req); });
 
+    HTTPModule::Post("/is-slave",\
+    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
+    { return this->IsSlave(params, req); });
+
     HTTPModule::Post("/start-time",\
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
     { return this->StartTime(params, req); });
+
+    HTTPModule::Post("/start-test-as-master",\
+    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
+    { return this->StartTestAsMaster(params, req); });
 
     HTTPModule::Post("/time-to-complete",\
     [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
@@ -128,7 +136,7 @@ public:
 
       uint32_t tpc = uint32_t( doc["transactions"].as_int() );
 
-      node_->setTransactionsPerCall(tpc);
+      node_->transactionsPerCall(tpc);
 
       return http::HTTPResponse(successString);
     } catch (...)
@@ -169,7 +177,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->SetTransactionsToSync(uint64_t(doc["transactionsToSync"].as_int()));
+      node_->TransactionsToSync(uint64_t(doc["transactionsToSync"].as_int()));
 
       return http::HTTPResponse(successString);
     } catch (...)
@@ -187,13 +195,20 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->setStopCondition(uint64_t(doc["stopCondition"].as_int()));
+      node_->stopCondition(uint64_t(doc["stopCondition"].as_int()));
 
       return http::HTTPResponse(successString);
     } catch (...)
     {
       return http::HTTPResponse(failureString);
     }
+  }
+
+  http::HTTPResponse IsSlave(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
+  {
+    node_->isSlave();
+    return http::HTTPResponse(successString);
   }
 
   http::HTTPResponse StartTime(http::ViewParameters const &params,
@@ -206,7 +221,26 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->SetStartTime(uint64_t(doc["startTime"].as_int()));
+      node_->StartTime(uint64_t(doc["startTime"].as_int()));
+
+      return http::HTTPResponse(successString);
+    } catch (...)
+    {
+      return http::HTTPResponse(failureString);
+    }
+  }
+
+  http::HTTPResponse StartTestAsMaster(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
+  {
+    LOG_STACK_TRACE_POINT ;
+    json::JSONDocument doc;
+    try
+    {
+      doc = req.JSON();
+      std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
+
+      node_->StartTestAsMaster(uint64_t(doc["startTime"].as_int()));
 
       return http::HTTPResponse(successString);
     } catch (...)
@@ -252,7 +286,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->SetTransactionSize(uint32_t(doc["transactionSize"].as_int()));
+      node_->TransactionSize(uint32_t(doc["transactionSize"].as_int()));
 
       return http::HTTPResponse(successString);
     } catch (...)
