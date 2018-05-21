@@ -32,10 +32,11 @@ def HTTPpostAsync(endpoint, page, jsonArg="{}"):
         threads.append(thread)
 
 ### localhost test
-#endpoint1    = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-#endpoint2    = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
-#endpoint3    = {"HTTPPort": 8082, "TCPPort": 9082, "IP": "localhost"}
-#allEndpoints = [ endpoint1, endpoint2, endpoint3]
+#endpoint1       = {"HTTPPort": 8083, "TCPPort": 9083, "IP": "localhost"}
+#endpoint2       = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
+#endpoint3       = {"HTTPPort": 8082, "TCPPort": 9082, "IP": "localhost"}
+#allEndpoints    = [ endpoint1, endpoint2, endpoint3]
+#activeEndpoints = [ endpoint1, endpoint2, endpoint3]
 
 ### cloud test basic
 #endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.38.91"}
@@ -46,19 +47,24 @@ def HTTPpostAsync(endpoint, page, jsonArg="{}"):
 endpoint1 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.38.91"}
 endpoint2 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.204.60.187"}
 endpoint3 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.234.64.165"}
-#endpoint3 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.227.63.152"} # America
-allEndpoints = [ endpoint1, endpoint2, endpoint3]
+endpoint4 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.234.132.50"}
+#endpoint5 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "35.227.63.152"} # America
+allEndpoints = [ endpoint1, endpoint2, endpoint3, endpoint4]
+activeEndpoints = [ endpoint1, endpoint2, endpoint3, endpoint4]
 
 # Global config
 numberOfNodes = len(allEndpoints)
-txSize        = 300 # bytes
-txPerCall     = 900
-txToSync      = txPerCall * 100
+txSize        = 2000 # bytes
+txPerCall     = 10000
+txToSync      = txPerCall * 15
+totalSize = txToSync*numberOfNodes*txSize
+print "Total size on each node after sync: ", totalSize/1000000, " MB"
 
 transactionSize     = { "transactionSize": txSize }
 transactionsPerCall = { "transactions": txPerCall }
 transactionsToSync  = { "transactionsToSync": txToSync }
-stopCondition       = { "stopCondition": int(txToSync/txPerCall)*numberOfNodes }
+stopCondition       = { "stopCondition": int(txToSync/txPerCall)*len(activeEndpoints) }
+#stopCondition       = { "stopCondition": int(txToSync/txPerCall)*numberOfNodes }
 
 for endpoint in allEndpoints:
     HTTPpost(endpoint, 'reset')
@@ -66,13 +72,30 @@ for endpoint in allEndpoints:
 # Set up connections to each other (circular topology)
 HTTPpost(endpoint1, 'add-endpoint', endpoint2)
 HTTPpost(endpoint2, 'add-endpoint', endpoint3)
-HTTPpost(endpoint3, 'add-endpoint', endpoint1)
+HTTPpost(endpoint3, 'add-endpoint', endpoint4)
+HTTPpost(endpoint4, 'add-endpoint', endpoint1)
+
+## Increase connectivity
+#HTTPpost(endpoint2, 'add-endpoint', endpoint1)
+#HTTPpost(endpoint4, 'add-endpoint', endpoint3)
+
+## Fully connected topology
+#for endpoint in allEndpoints:
+#    for otherEndpoint in allEndpoints:
+#        if(endpoint != otherEndpoint):
+#            HTTPpost(endpoint, 'add-endpoint', otherEndpoint)
+
+
+# Boost rate
+#HTTPpost(endpoint1, 'add-endpoint', endpoint3)
 
 # Other setup parameters
 for endpoint in allEndpoints:
     HTTPpost(endpoint, 'transaction-size', transactionSize)
     HTTPpost(endpoint, 'transactions-per-call', transactionsPerCall)
     HTTPpost(endpoint, 'stop-condition', stopCondition)
+
+for endpoint in activeEndpoints:
     HTTPpostAsync(endpoint, 'transactions-to-sync', transactionsToSync)
 
 # Need to make sure everyone is ready before starting
@@ -87,6 +110,8 @@ threeSecondsTime = { "startTime": epoch_time+timeWait }
 for endpoint in allEndpoints:
     HTTPpostAsync(endpoint, 'start-time', threeSecondsTime)
 
+time.sleep(3)
+
 # wait until they're probably done
 while(True):
     time.sleep(7)
@@ -95,8 +120,27 @@ while(True):
     if(sum(hashPages) == len(hashPages)):
         break
 
+# Get the time each node took to synchronise
+pages   = []
+maxTime = 0
+for endpoint in allEndpoints:
+    pageTemp = HTTPpost(endpoint, 'time-to-complete')
+    print jsonPrint(pageTemp)
+    if(pageTemp.json()["timeToComplete"] > maxTime):
+        maxTime = pageTemp.json()["timeToComplete"]
+    pages += pageTemp
+
+print "Max time: ", maxTime
+TPS = (txToSync*numberOfNodes)/maxTime
+print "Transactions per second: ", TPS
+print "Transactions per second per node: ", TPS/numberOfNodes
+print "Mbits/s", (TPS * txSize * 8)/1000000
+print "Mbits/s per node", (TPS * txSize * 8)/1000000/numberOfNodes
+
+exit(1)
+
 # Check that they have syncronised correctly
-print "inspecting the hashes"
+print "inspecting the hashes (may take a long time)"
 hashPages = []
 
 hashes     = [ordered(HTTPpost(i, 'transactions-hash').json()) for i in allEndpoints]
@@ -115,19 +159,4 @@ if(all(comparison) == False):
 else:
     print "Hashes matched!"
     print hashes[0]
-
-# Get the time each node took to synchronise
-pages   = []
-maxTime = 0
-for endpoint in allEndpoints:
-    pageTemp = HTTPpost(endpoint, 'time-to-complete')
-    print jsonPrint(pageTemp)
-    if(pageTemp.json()["timeToComplete"] > maxTime):
-        maxTime = pageTemp.json()["timeToComplete"]
-    pages += pageTemp
-
-print "Max time: ", maxTime
-TPS = (txToSync)/maxTime
-print "Transactions per second: ", TPS
-print "Mbits/s", (TPS * txSize * 8)/1000000
 

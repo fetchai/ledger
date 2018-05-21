@@ -1,11 +1,13 @@
-#ifndef TRANSACTION_LIST_HPP
-#define TRANSACTION_LIST_HPP
+#ifndef TRANSACTION_LIST_BASIC_HPP
+#define TRANSACTION_LIST_BASIC_HPP
 #include<type_traits>
 #include<unordered_map>
 #include<utility>
 #include<set>
 #include"crypto/fnv.hpp"
 #include"../tests/include/helper_functions.hpp"
+
+// Thread safe non blocking structure used to store and verify transaction blocks
 
 namespace fetch
 {
@@ -19,100 +21,135 @@ class TransactionList
 typedef crypto::CallableFNV hasher_type;
 
 public:
-  TransactionList() {}
+  TransactionList()
+  {
+    validArray_.fill(0);
+  }
+
   TransactionList(TransactionList &rhs)            = delete;
   TransactionList(TransactionList &&rhs)           = delete;
   TransactionList operator=(TransactionList& rhs)  = delete;
   TransactionList operator=(TransactionList&& rhs) = delete;
 
-  template <typename T>
-  bool Add(T &&rhs)
+  inline bool GetWriteIndex(std::size_t &index, FirstT const &hash)
   {
-    std::unique_lock<fetch::mutex::Mutex> lock(mutex_);
-    if (blocksMap_.find(rhs.first) != blocksMap_.end())
+    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+    if(Contains(hash))
     {
       return false;
     }
 
-    runningCount_++;
-    if (!std::is_lvalue_reference<T>{})
-    {
-      blocksMap_[rhs.first] = std::move(rhs.second);
-    } else {
-      blocksMap_[rhs.first] = rhs.second;
-    }
-
-    lock.unlock();
-
-    // Note: this should be fairly infrequent and so not a large performance hit
-    if (runningCount_ >= stopCondition_)
-    {
-      fetch::logger.Info("Notifying!");
-      stopConditional.notify_one();
-    }
-
-    fetch::logger.Info("Running count: ", runningCount_, " AKA ",
-        blocksMap_.size(), " stop cond: ", stopCondition_);
-
+    index = getIndex_++;
     return true;
   }
 
-  std::pair<FirstT, SecondT> Get(FirstT const &hash)
+  template <typename T>
+  bool Add(FirstT const &hash, T &&block)
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-    auto iter = blocksMap_.find(hash);
-    if (iter == blocksMap_.end())
+    std::size_t index{0};
+
+    if(!GetWriteIndex(index, hash))
     {
-      std::cerr << "Warning: request for invalid block" << std::endl;
-      return make_pair(FirstT(), SecondT());
+      fetch::logger.Info("Failed to add hash", hash);
+      return false;
     }
-    return *iter;
+
+    std::cerr << "Writing new index: " << index << std::endl;
+
+    hashArray_[index]   = hash;
+    blockArray_[index] = std::forward<T>(block);
+    validArray_[index] = 1;
+    return true;
+  }
+
+  SecondT & Get(FirstT const &hash)
+  {
+    for (std::size_t i = 0; i < arrayMax_; ++i)
+    {
+      if (validArray_[i] == 1 && hashArray_[i] == hash)
+      {
+        auto &ref = blockArray_[i];
+        return ref;
+      }
+    }
+    fetch::logger.Error("Warning: block not found for hash: ", hash);
+    exit(1);
+    auto &ref = blockArray_[0];
+    return ref;
   }
 
   bool Contains(FirstT const &hash) const
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-    return !(blocksMap_.find(hash) == blocksMap_.end());
+    for (std::size_t i = 0; i < arrayMax_; ++i)
+    {
+      if (validArray_[i] == 1 && hashArray_[i] == hash)
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool Seen(FirstT const &hash) const
+  {
+    std::lock_guard<fetch::mutex::Mutex> lock(seenMutex_);
+    if(seen_.find(hash) == seen_.end())
+    {
+      seen_.insert(hash);
+      return false;
+    }
+    return true;
   }
 
   std::size_t size() const
   {
-    return runningCount_;
+    std::size_t count = 0;
+    for (std::size_t i = 0; i < arrayMax_; ++i)
+    {
+      if(validArray_[i])
+      {
+        count++;
+      }
+    }
+    return count;
   }
 
   void WaitFor(std::size_t stopCondition)
   {
-    std::unique_lock<std::mutex> lock(mutex_);
-    stopCondition_ = stopCondition;
-    if (runningCount_ >= stopCondition_) { return; }
-    stopConditional.wait(lock, [this] { return runningCount_ >= stopCondition_; });
+    auto waitTime = std::chrono::milliseconds(1);
+    while(!(size() >= stopCondition))
+    {
+      std::this_thread::sleep_for(waitTime);
+    }
   }
 
   //////////////////////////////////////////////
   // Below not performance-critical
   void reset()
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-    runningCount_ = 0;
-    blocksMap_.erase(blocksMap_.begin(), blocksMap_.end());
+    getIndex_ = 0;
+    validArray_.fill(0);
   }
 
   std::set<transaction_type> GetTransactions()
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     std::set<transaction_type> ret;
 
     int tempCounter = 0;
 
-    for (auto &blocks : blocksMap_)
+    for (std::size_t i = 0; i < arrayMax_; ++i)
     {
-      for (auto &transaction : blocks.second)
+      if(validArray_[i])
       {
-        transaction.UpdateDigest();
-        ret.insert(transaction);
-        tempCounter++;
+        for(auto &j : blockArray_[i])
+        {
+          j.UpdateDigest();
+          ret.insert(j);
+          tempCounter++;
+        }
       }
     }
+
     return ret;
   }
 
@@ -120,8 +157,6 @@ public:
   {
     auto trans    = GetTransactions();
     uint32_t hash = 5;
-
-    fetch::logger.Info("\nRunning count: ", runningCount_);
 
     hasher_type hashStruct;
 
@@ -132,16 +167,19 @@ public:
     }
 
     fetch::logger.Info("Hash is now::", hash);
-    fetch::logger.Info("returning count of size: ", runningCount_);
-    return std::pair<uint64_t, uint64_t>(runningCount_, hash);
+    return std::pair<uint64_t, uint64_t>(size(), hash);
   }
 
 private:
-  std::unordered_map<FirstT, SecondT>  blocksMap_;
-  std::size_t                          runningCount_{0};
-  std::size_t                          stopCondition_{1000};
-  mutable fetch::mutex::Mutex          mutex_;
-  mutable std::condition_variable      stopConditional;
+  const std::size_t               arrayMax_{200};
+  std::array<FirstT, 200>         hashArray_;
+  std::array<SecondT, 200>        blockArray_;
+  std::array<int, 200>            validArray_;
+  std::size_t                     getIndex_{0};
+  fetch::mutex::Mutex             mutex_;
+
+  fetch::mutex::Mutex             seenMutex_;
+  std::set<FirstT>                seen_;
 };
 
 }

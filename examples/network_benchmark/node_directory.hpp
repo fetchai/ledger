@@ -52,9 +52,8 @@ public:
     }
   }
 
-  // temporarily replicate functionality for easier debugging
-  template<typename T>
-  void InviteAllForw(T const &transactions)
+  // temporarily replicate invite functionality for easier debugging
+  void InviteAllForw(block_hash const &blockHash, block_type &block)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -68,22 +67,18 @@ public:
       }
 
       bool clientWants = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-          protocols::NetworkBenchmark::INVITE_PUSH, transactions.first);
+          protocols::NetworkBenchmark::INVITE_PUSH, blockHash);
 
       if(clientWants)
       {
         fetch::logger.Info("Client wants forwarded push");
         client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-          protocols::NetworkBenchmark::PUSH, transactions);
-      } else
-      {
-        fetch::logger.Info("Client does not want forwarded push");
+          protocols::NetworkBenchmark::PUSH, blockHash, block);
       }
     }
   }
 
-  template<typename T>
-  void InviteAllDirect(T const &transactions)
+  void InviteAllDirect(block_hash const &blockHash, block_type const &block)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -97,19 +92,8 @@ public:
         exit(1);
       }
 
-      bool clientWants = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-          protocols::NetworkBenchmark::INVITE_PUSH, transactions.first);
-
-      if(clientWants)
-      {
-        fetch::logger.Info("Client wants push");
-        client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-          protocols::NetworkBenchmark::PUSH, transactions);
-
-      } else
-      {
-        fetch::logger.Info("Client does not want push\n");
-      }
+      client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+        protocols::NetworkBenchmark::PUSH_CONFIDENT, blockHash, block);
     }
   }
 

@@ -11,7 +11,7 @@ using namespace fetch::serializers;
 int main(int argc, char **argv)
 {
 
-  fetch::network::ThreadManager *tm  = new fetch::network::ThreadManager(50);
+  fetch::network::ThreadManager *tm  = new fetch::network::ThreadManager(30);
 
   {
     int seed = 0;

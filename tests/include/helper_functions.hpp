@@ -114,10 +114,11 @@ std::size_t Hash(fetch::byte_array::ConstByteArray const &arr)
 namespace network_benchmark
 {
 
+// Transactions are packaged up into blocks and referred to using a hash
 typedef fetch::chain::Transaction         transaction_type;
 typedef std::size_t                       block_hash;
-typedef std::vector<transaction_type>     block;
-typedef std::pair<block_hash, block>      network_block;
+typedef std::vector<transaction_type>     block_type;
+typedef std::pair<block_hash, block_type> network_block;
 
 }
 

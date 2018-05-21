@@ -150,18 +150,36 @@ public:
     return !transactionList_.Contains(hash);
   }
 
-  void Push(network_block const &netBlock)
+  void PushConfident(block_hash const & blockHash, block_type &block)
   {
-    static std::atomic<int> pushcount{0};
-    int pushClocal = pushcount++;
-    fetch::logger.Info("Received push ", pushClocal);
+    transactionList_.Add(blockHash, std::move(block));
+    auto cb = [&]{ nodeDirectory_.InviteAllForw(blockHash, transactionList_.Get(blockHash));};
+    std::async(std::launch::async, cb);
+  }
 
+  inline std::size_t GetNextIndex()
+  {
     std::unique_lock<std::mutex> lock(forwardQueueMutex_);
-    forwardQueue_.push_back(std::move(netBlock));
-    //forwardQueue_.push_back(netBlock);
-    forwardQueueCond_.notify_one();
+    static int index= 0;
+    return index++;
+  }
 
-    fetch::logger.Info("Processed push ", pushClocal);
+  inline void IndexIsSafe(std::size_t index)
+  {
+    forwardQueueSafe_[index] = 5;
+    std::unique_lock<std::mutex> lock(forwardQueueMutex_);
+    wakeMe = true;
+    forwardQueueCond_.notify_one();
+  }
+
+  void Push(block_hash const & blockHash, block_type &block)
+  {
+    std::size_t thisIndex = GetNextIndex();
+
+    forwardQueueHash_[thisIndex] = blockHash;
+    forwardQueue_[thisIndex] = std::move(block);
+
+    IndexIsSafe(thisIndex);
   }
 
   int ping()
@@ -180,14 +198,13 @@ public:
   std::pair<uint64_t, uint64_t> TransactionsHash()
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Info("Get hash");
     return transactionList_.TransactionsHash();
   }
 
 private:
-  NodeDirectory                      nodeDirectory_;   // Manage connections to other nodes
-  TransactionList<block_hash, block> transactionList_; // List of all transactions
-  fetch::mutex::Mutex                mutex_;
+  NodeDirectory                           nodeDirectory_;   // Manage connections to other nodes
+  TransactionList<block_hash, block_type> transactionList_; // List of all transactions
+  fetch::mutex::Mutex                     mutex_;
 
   // Transmitting thread
   std::thread                thread_;
@@ -201,10 +218,14 @@ private:
   bool                       finished_            = false;
   bool                       destructing_         = false;
 
-  std::mutex                      forwardQueueMutex_;
   mutable std::condition_variable forwardQueueCond_;
+  std::mutex                      forwardQueueMutex_;
+  bool                            wakeMe{false};
+  std::size_t                     atomicIndex{0};
   std::thread                     forwardQueueThread_{[this]() { ForwardThread();}};
-  std::vector<network_block>      forwardQueue_;
+  std::array<block_type, 10000>   forwardQueue_;
+  std::array<block_hash, 10000>   forwardQueueHash_;
+  std::array<int, 10000>          forwardQueueSafe_;
 
   void PrecreateTrans(uint64_t total)
   {
@@ -224,7 +245,6 @@ private:
       network_block &transBlock = premadeTrans_[i];
       transBlock.second.resize(transactionsPerCall_);
 
-      fetch::logger.Info("Building block ", i);
       for (std::size_t j = 0; j < transactionsPerCall_; j++)
       {
         transBlock.second[j] = common::NextTransaction<transaction_type>(txPad_);
@@ -240,7 +260,7 @@ private:
   {
     for (auto &netBlock : premadeTrans_)
     {
-      transactionList_.Add(netBlock);
+      transactionList_.Add(netBlock.first, netBlock.second);
     }
   }
 
@@ -261,22 +281,17 @@ private:
     std::this_thread::sleep_until(timeout_tp);
     startTimePoint_ = std::chrono::high_resolution_clock::now();
 
-    fetch::logger.Info("Starting sync.");
     finished_ = false;
 
     for (auto &i : premadeTrans_)
     {
       //transactionList_.Add(i); // No need since this has been done pre-test
       fetch::logger.Info("Inviting... ");
-      nodeDirectory_.InviteAllDirect(i);
+      nodeDirectory_.InviteAllDirect(i.first, i.second);
       fetch::logger.Info("Invited. ");
     }
 
-    fetch::logger.Info("finished inviting. Wait for ", stopCondition_);
-
     transactionList_.WaitFor(stopCondition_);
-
-    fetch::logger.Info("finished test!\n");
 
     finishTimePoint_ = std::chrono::high_resolution_clock::now();
     finished_ = true;
@@ -285,38 +300,28 @@ private:
       (finishTimePoint_ - startTimePoint_).count() << std::endl;
   }
 
+  // Thread for forwarding incoming transaction blocks
   void ForwardThread()
   {
-    std::unique_lock<std::mutex> lock(forwardQueueMutex_);
-    lock.unlock();
+    forwardQueueSafe_.fill(0);
 
+    static std::size_t queueIndex = 0;
     while (!destructing_)
     {
-      lock.lock();
-      forwardQueueCond_.wait(lock);
+      std::unique_lock<std::mutex> lock(forwardQueueMutex_);
+      forwardQueueCond_.wait(lock, [this] {return wakeMe;});
+      wakeMe = false;
+      lock.unlock();
 
-      while (1)
+      while (forwardQueueSafe_[queueIndex] == 5)
       {
-        fetch::logger.Info("forwarding thread");
+        auto hash             = forwardQueueHash_[queueIndex];
+        auto &netBlock        = forwardQueue_[queueIndex++];
 
-        if (forwardQueue_.size() == 0)
+        if (transactionList_.Add(hash, std::move(netBlock)))
         {
-          lock.unlock();
-          break;
+          nodeDirectory_.InviteAllForw(hash, transactionList_.Get(hash));
         }
-
-        auto netBlock = forwardQueue_.back();
-        forwardQueue_.pop_back();
-        lock.unlock();
-
-        auto hash = netBlock.first;
-
-        if (transactionList_.Add(std::move(netBlock)))
-        {
-          nodeDirectory_.InviteAllForw(transactionList_.Get(hash));
-        }
-
-        lock.lock();
       }
     }
   }
