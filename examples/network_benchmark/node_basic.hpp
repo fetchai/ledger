@@ -160,7 +160,7 @@ public:
   inline std::size_t GetNextIndex()
   {
     std::unique_lock<std::mutex> lock(forwardQueueMutex_);
-    static int index= 0;
+    static std::size_t index= 0;
     return index++;
   }
 
@@ -221,7 +221,6 @@ private:
   mutable std::condition_variable forwardQueueCond_;
   std::mutex                      forwardQueueMutex_;
   bool                            wakeMe{false};
-  std::size_t                     atomicIndex{0};
   std::thread                     forwardQueueThread_{[this]() { ForwardThread();}};
   std::array<block_type, 10000>   forwardQueue_;
   std::array<block_hash, 10000>   forwardQueueHash_;
@@ -270,7 +269,7 @@ private:
   {
     LOG_STACK_TRACE_POINT;
     // get time as epoch, wait until that time to start
-    std::time_t t = startTime_;
+    std::time_t t = static_cast<std::time_t>(startTime_);
     std::tm* timeout_tm = std::localtime(&t);
 
     time_t timeout_time_t = mktime(timeout_tm);

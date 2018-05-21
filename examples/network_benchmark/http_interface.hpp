@@ -169,7 +169,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->SetTransactionsToSync(doc["transactionsToSync"].as_int());
+      node_->SetTransactionsToSync(uint64_t(doc["transactionsToSync"].as_int()));
 
       return http::HTTPResponse(successString);
     } catch (...)
@@ -187,7 +187,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->setStopCondition(doc["stopCondition"].as_int());
+      node_->setStopCondition(uint64_t(doc["stopCondition"].as_int()));
 
       return http::HTTPResponse(successString);
     } catch (...)
@@ -206,7 +206,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->SetStartTime(doc["startTime"].as_int());
+      node_->SetStartTime(uint64_t(doc["startTime"].as_int()));
 
       return http::HTTPResponse(successString);
     } catch (...)
