@@ -1,3 +1,7 @@
+add_subdirectory(vendor/googletest)
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  target_compile_options(gtest PRIVATE "-Wno-error=sign-conversion")
+endif()
 
 include( CTest )
 function(standard_test name file)
