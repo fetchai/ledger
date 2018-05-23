@@ -48,6 +48,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   ~TCPClientImplementation() noexcept {
     LOG_STACK_TRACE_POINT;
 
+    std::cerr << "Setting off. " << std::endl;
     thread_manager_.Off(event_start_service_);
     thread_manager_.Off(event_stop_service_);
     Close();

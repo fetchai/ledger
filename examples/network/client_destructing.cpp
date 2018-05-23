@@ -34,13 +34,13 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    for (std::size_t i = 0; i < 1; ++i)
+    for (std::size_t i = 0; i < 60; ++i)
     {
       std::cerr << "Create tm" << std::endl;
       ThreadManager tmanager;
       tmanager.Start();
 
-      for (std::size_t j = 0; j < 1; ++j)
+      for (std::size_t j = 0; j < 4; ++j)
       {
         std::cerr << "Create client" << std::endl;
         Client client(argv[1], argv[2], &tmanager);
@@ -48,30 +48,17 @@ int main(int argc, char* argv[]) {
         std::this_thread::sleep_for(std::chrono::milliseconds(j*i));
       }
 
-      std::cerr << "Finished loop\n\n\n\n" << std::endl;
+      std::cerr << "Finished loop\n\n" << std::endl;
+      //tmanager.Stop();
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    /*
-    for (std::size_t i = 0; i < 5; ++i)
-    {
-      std::cerr << "Create tm" << std::endl;
-      ThreadManager tmanager;
-      tmanager.Start();
-
-      for (std::size_t j = 0; j < 5; ++j)
-      {
-        std::cerr << "Create client" << std::endl;
-        Client client(argv[1], argv[2], &tmanager);
-        std::cerr << "Created client: " << i << ":" << j << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-      }
-    }*/
-
+    // Allow some time for destructors of tm and client to run/throw
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
   } catch (std::exception& e) {
     std::cerr << "Exception: " << e.what() << "\n";
   }
+
+  std::cerr << "Completed test" << std::endl;
 
   return 0;
 }

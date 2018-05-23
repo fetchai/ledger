@@ -62,7 +62,16 @@ class ThreadManagerImplementation {
 
       io_service_.stop();
 
+
       for (auto &thread : threads_) {
+        std::cerr << "Joining thread" << std::endl;
+
+        if ( std::this_thread::get_id() == thread->get_id() )
+        {
+          std::cerr << "Attempted to join self. Skipping (memory leak)" << std::endl;
+          continue;
+        }
+
         thread->join();
         delete thread;
       }
@@ -110,7 +119,11 @@ class ThreadManagerImplementation {
   }
 
   void Off(event_handle_type handle) {
+
+    std::cerr << "Going off." << std::endl; // TODO: (`HUT`) : remove this
     std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
+    std::cerr << "Going off. lock" << std::endl;
+
     fetch::logger.Debug("Removing event listener ", handle,
                         " from thread manager ");
 
