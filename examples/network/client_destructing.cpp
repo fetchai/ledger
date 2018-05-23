@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
       }
 
       std::cerr << "Finished loop\n\n" << std::endl;
-      //tmanager.Stop();
+      tmanager.Stop();
     }
 
     // Allow some time for destructors of tm and client to run/throw
