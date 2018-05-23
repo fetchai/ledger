@@ -51,7 +51,7 @@ class ThreadManagerImplementation {
   }
 
   void Stop() {
-    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
+    std::unique_lock< fetch::mutex::Mutex > lock( on_mutex_ );
     if (threads_.size() != 0) {
       shared_work_.reset();
 
@@ -62,12 +62,24 @@ class ThreadManagerImplementation {
 
       io_service_.stop();
 
-      for (auto &thread : threads_) {
+      auto threadCopy = threads_;
+      threads_.clear();
+
+      // Need to avoid recursive mutex lock when trying to join thread
+      lock.unlock();
+      for (auto &thread : threadCopy)
+      {
+        if ( std::this_thread::get_id() == thread->get_id() )
+        {
+          std::cerr << "Attempted to join self. Skipping (memory leak)" << std::endl;
+          fetch::logger.Error("Attempted to join self. Skipping (memory leak)");
+          continue;
+        }
+
         thread->join();
         delete thread;
       }
-
-      threads_.clear();
+      lock.lock();
 
       for (auto &obj : on_after_stop_) {
         obj.second();
@@ -110,6 +122,7 @@ class ThreadManagerImplementation {
   }
 
   void Off(event_handle_type handle) {
+
     std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
     fetch::logger.Debug("Removing event listener ", handle,
                         " from thread manager ");
