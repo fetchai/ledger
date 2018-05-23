@@ -5,6 +5,8 @@ add_executable(p2p_node2 ledger/peer-to-peer-v2/main.cpp)
 # add_executable(p2p_node ledger/peer-to-peer/main.cpp)
 # add_executable(simple_ledger_node ledger/simple-ledger/node.cpp)
 
+add_executable(network_client_destructing network/client_destructing.cpp)
+
 add_executable(network_client network/client.cpp)
 add_executable(network_server network/server.cpp)
 
