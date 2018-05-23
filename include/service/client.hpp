@@ -44,6 +44,7 @@ class ServiceClient : public T,
 
   ~ServiceClient() {
     LOG_STACK_TRACE_POINT;
+    this->Close();
     running_ = false;
   }
 

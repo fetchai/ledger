@@ -101,7 +101,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void OnLeave(std::function<void()> fnc) {
     std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_);
 
-    //    on_leave_ = fnc;
+    on_leave_ = fnc;
   }
 
   void ClearLeave() {
@@ -116,7 +116,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void OnConnectionFailed(std::function< void() > const &fnc)
   {
     std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-    //    on_connection_failed_ = fnc;
+    on_connection_failed_ = fnc;
   }
 
   void ClearConnectionFailed()
@@ -128,7 +128,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void OnPushMessage(std::function< void(message_type const&) > const &fnc)
   {
     std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-    //    on_push_message_ = fnc;
+    on_push_message_ = fnc;
   }
 
   void ClearPushMessage()
@@ -157,23 +157,39 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   }
 
 
-  void Close(bool failed = false) {
-    std::cout << "Closing" << std::endl;
-    std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_); 
+  void Close(bool failed = false) {    
+    std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_);
+    
     if (is_alive_) {
       is_alive_ = false;
-
-      if (on_leave_) {
-        on_leave_();
+      weak_ptr_type self;
+      try {
+       self = shared_from_this();
+      } catch (std::bad_weak_ptr const& e) {
+        return;
       }
+      auto cb = [this,self, failed]() {
+        shared_ptr_type shared_self = self.lock();
+        if(!shared_self) {
+          return;
+        }  
+        
+        if (on_leave_) {
+          on_leave_();
+        }
+        
+        if (failed) {
+          std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
+          if(on_connection_failed_) {
+            on_connection_failed_();
+          }
+        }
 
-      if (failed) {
-        std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-        if(on_connection_failed_) on_connection_failed_();
-      }
 
-
-      socket_.close();
+        socket_.close();
+      };
+      
+      io_service_.post(cb);
     }
   }
 
@@ -188,7 +204,13 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void Connect(
       asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) noexcept {
     LOG_STACK_TRACE_POINT;
-    weak_ptr_type self = shared_from_this();
+    weak_ptr_type self;
+    try {
+      self = shared_from_this();
+    } catch (std::bad_weak_ptr const& e) {
+      return;
+    }
+    
     auto cb = [this,self](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {
       shared_ptr_type shared_self = self.lock();
       if(!shared_self) {
@@ -203,7 +225,9 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
       } else {
         if (is_alive_) {
           std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-          if(on_connection_failed_) on_connection_failed_();
+          if(on_connection_failed_) {
+            on_connection_failed_();
+          }
 
         }
 

@@ -29,41 +29,33 @@ class ThreadManagerImplementation {
   }
 
   void Start() {
-    std::lock_guard< fetch::mutex::Mutex > lock( thread_mutex_ );
+    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
     if (threads_.size() == 0) {
       fetch::logger.Info("Starting thread manager");
       running_ = true;
 
       shared_work_ = std::make_shared<asio::io_service::work>(io_service_);
 
-      {
-        std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
-        for (auto &obj : on_before_start_) {
-          obj.second();
-        }
+      for (auto &obj : on_before_start_) {
+        obj.second();
       }
-
 
       for (std::size_t i = 0; i < number_of_threads_; ++i) {
         threads_.push_back(new std::thread([this]() { io_service_.run(); }));
       }
 
-      {
-        std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );      
-        for (auto &obj : on_after_start_) {
-          obj.second();
-        }
+      for (auto &obj : on_after_start_) {
+        obj.second();
       }
     }
   }
 
   void Stop() {
-    std::lock_guard< fetch::mutex::Mutex > lock( thread_mutex_ );
+    std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
     if (threads_.size() != 0) {
       shared_work_.reset();
 
       fetch::logger.Info("Stopping thread manager");
-
       for (auto &obj : on_before_stop_) {
         obj.second();
       }

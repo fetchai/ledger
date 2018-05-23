@@ -13,6 +13,10 @@ public:
   {
   }
 
+  ~Client() {
+    this->Close();
+  }
+
   void PushMessage(message_type const &value) override
   {
     std::cout << value << std::endl;
@@ -46,10 +50,11 @@ int main(int argc, char* argv[]) {
         std::cerr << "Create client" << std::endl;
         Client client(argv[1], argv[2], &tmanager);
         std::cerr << "Created client: " << i << ":" << j << std::endl << std::endl;
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
+        std::this_thread::sleep_for(std::chrono::microseconds( (i* 4 + j ) *10 ));
       }
       std::cerr << "Stopping" << std::endl;
       if(i % 2) tmanager.Stop(); // Calling stop and/or letting tm's destructor call stop
+      tmanager.Stop(); 
       std::cerr << "Finished loop\n\n" << std::endl;
     }
 

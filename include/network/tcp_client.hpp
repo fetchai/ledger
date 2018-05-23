@@ -53,12 +53,15 @@ class TCPClient {
 
   virtual ~TCPClient() noexcept {    
     LOG_STACK_TRACE_POINT;
+    pointer_.reset();    
+  }
+
+  void Close() {
+    pointer_->Close();
     
     pointer_->ClearConnectionFailed();
     pointer_->ClearPushMessage();
     pointer_->ClearLeave();
-    
-    pointer_.reset();    
   }
 
   void Send(message_type const& msg) noexcept {
