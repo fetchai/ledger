@@ -31,7 +31,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
       : thread_manager_(*thread_manager),
         io_service_(thread_manager->io_service()),
         resolver_(io_service_),
-        socket_(thread_manager->io_service())
+        socket_(io_service_)
 
   {
     LOG_STACK_TRACE_POINT;
@@ -49,7 +49,6 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   ~TCPClientImplementation() noexcept {
     LOG_STACK_TRACE_POINT;
 
-    std::cerr << "Setting off. " << std::endl;
     thread_manager_.Off(event_start_service_);
     thread_manager_.Off(event_stop_service_);
     Close();
@@ -192,7 +191,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   std::function< void(message_type const&) >  on_push_message_;
   std::function< void() > on_connection_failed_;
 
-  void Connect( ) noexcept {
+  void Connect() noexcept {
     LOG_STACK_TRACE_POINT;
     auto self = shared_from_this();
     auto cb = [this,self](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {

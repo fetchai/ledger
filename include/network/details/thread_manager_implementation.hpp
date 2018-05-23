@@ -72,6 +72,7 @@ class ThreadManagerImplementation {
         if ( std::this_thread::get_id() == thread->get_id() )
         {
           std::cerr << "Attempted to join self. Skipping (memory leak)" << std::endl;
+          fetch::logger.Error("Attempted to join self. Skipping (memory leak)");
           continue;
         }
 
@@ -122,10 +123,7 @@ class ThreadManagerImplementation {
 
   void Off(event_handle_type handle) {
 
-    std::cerr << "Going off." << std::endl; // TODO: (`HUT`) : remove this
     std::lock_guard< fetch::mutex::Mutex > lock( on_mutex_ );
-    std::cerr << "Going off. lock" << std::endl;
-
     fetch::logger.Debug("Removing event listener ", handle,
                         " from thread manager ");
 

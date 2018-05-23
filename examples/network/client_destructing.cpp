@@ -48,8 +48,8 @@ int main(int argc, char* argv[]) {
         std::this_thread::sleep_for(std::chrono::milliseconds(j*i));
       }
 
+      if(i % 2) tmanager.Stop(); // Calling stop and/or letting tm's destructor call stop
       std::cerr << "Finished loop\n\n" << std::endl;
-      tmanager.Stop();
     }
 
     // Allow some time for destructors of tm and client to run/throw
