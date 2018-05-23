@@ -30,6 +30,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   TCPClientImplementation(thread_manager_ptr_type thread_manager) noexcept
       : thread_manager_(*thread_manager),
         io_service_(thread_manager->io_service()),
+        resolver_(io_service_),
         socket_(thread_manager->io_service())
 
   {
@@ -133,8 +134,8 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void Connect(byte_array::ConstByteArray const& host,
                byte_array::ConstByteArray const& port) noexcept {
     LOG_STACK_TRACE_POINT;
-    asio::ip::tcp::resolver resolver(io_service_);
-    Connect(resolver.resolve({std::string(host), std::string(port)}));
+    endpoint_iterator_ = resolver_.resolve({std::string(host), std::string(port)});
+    Connect();
   }
 
   void Connect(byte_array::ConstByteArray const& host,
@@ -143,12 +144,9 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     std::stringstream p;
     p << port;
 
-    asio::ip::tcp::resolver resolver(io_service_);
-
-
-    Connect(resolver.resolve({std::string(host), p.str()}));
+    endpoint_iterator_ = resolver_.resolve({std::string(host), p.str()});
+    Connect();
   }
-
 
   void Close(bool failed = false) {
     if (is_alive_) {
@@ -161,11 +159,30 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
       if (failed) {
         std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-        if(on_connection_failed_) on_connection_failed_();
+      }
+    }
+
+    while(1)
+    {
+      std::unique_lock<fetch::mutex::Mutex> lock(connection_state_mutex_);
+      if(classState == State::closed)
+      {
+        break;
       }
 
+      if(classState == State::connecting)
+      {
+        lock.unlock();
+        fetch::logger.Info("Client close waiting for socket to finish connecting");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        continue;
+      }
 
-      socket_.close();
+      // ignoring ec will disable exceptions
+      std::error_code ignore_ec;
+      socket_.shutdown(asio::ip::tcp::tcp::socket::shutdown_both, ignore_ec);
+      socket_.close(ignore_ec);
+      classState = State::closed;
     }
   }
 
@@ -175,14 +192,17 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   std::function< void(message_type const&) >  on_push_message_;
   std::function< void() > on_connection_failed_;
 
-
-
-  void Connect(
-      asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) noexcept {
+  void Connect( ) noexcept {
     LOG_STACK_TRACE_POINT;
     auto self = shared_from_this();
     auto cb = [this,self](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {
+
+      {
+        std::unique_lock<fetch::mutex::Mutex> lock(connection_state_mutex_);
+        classState = State::connected;
+      }
       is_alive_ = true;
+
       LOG_STACK_TRACE_POINT;
       if (!ec) {
         fetch::logger.Debug("Connection established!");
@@ -199,7 +219,12 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
     };
 
-    asio::async_connect(socket_, endpoint_iterator, cb);
+    std::unique_lock<fetch::mutex::Mutex> lock(connection_state_mutex_);
+    if(classState == State::unconnected)
+    {
+      classState = State::connecting;
+      asio::async_connect(socket_, endpoint_iterator_, cb);
+    }
   }
 
   void ReadHeader() noexcept {
@@ -323,14 +348,24 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   }
 
  private:
+  event_handle_type event_start_service_;
+  event_handle_type event_stop_service_;
+  thread_manager_type thread_manager_;
+
+  asio::io_service&                      io_service_;
+  asio::ip::tcp::resolver                resolver_;
+  asio::ip::tcp::tcp::socket             socket_;
+  asio::ip::tcp::tcp::resolver::iterator endpoint_iterator_;
+
   std::atomic<bool> is_alive_;
   mutable fetch::mutex::Mutex leave_mutex_;
   std::function<void()> on_leave_;
   const uint64_t networkMagic = 0xFE7C80A1FE7C80A1;
 
-  event_handle_type event_start_service_;
-  event_handle_type event_stop_service_;
-  thread_manager_type thread_manager_;
+  // Class state can only move -> in enum
+  mutable fetch::mutex::Mutex connection_state_mutex_;
+  enum class State { unconnected, connecting, connected, closed };
+  State classState = State::unconnected;
 
   handle_type handle_;
   static handle_type global_handle_counter_;
@@ -350,9 +385,6 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     } content;
 
   } header_;
-
-  asio::io_service& io_service_;
-  asio::ip::tcp::tcp::socket socket_;
 
   bool writing_ = false;
   message_queue_type write_queue_;
