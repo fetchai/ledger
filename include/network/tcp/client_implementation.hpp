@@ -30,8 +30,8 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   TCPClientImplementation(thread_manager_ptr_type thread_manager) noexcept
       : thread_manager_(*thread_manager),
         io_service_(thread_manager->io_service()),
-        resolver_(io_service_),
-        socket_(io_service_)
+        socket_(io_service_),
+        resolver_(io_service_)
 
   {
     LOG_STACK_TRACE_POINT;
@@ -352,8 +352,8 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   thread_manager_type thread_manager_;
 
   asio::io_service&                      io_service_;
-  asio::ip::tcp::resolver                resolver_;
   asio::ip::tcp::tcp::socket             socket_;
+  asio::ip::tcp::resolver                resolver_;
   asio::ip::tcp::tcp::resolver::iterator endpoint_iterator_;
 
   std::atomic<bool> is_alive_;
