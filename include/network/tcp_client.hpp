@@ -57,7 +57,6 @@ class TCPClient {
     pointer_->ClearConnectionFailed();
     pointer_->ClearPushMessage();
     pointer_->ClearLeave();
-    pointer_->Close();
     
     pointer_.reset();    
   }

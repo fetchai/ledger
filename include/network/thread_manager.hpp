@@ -15,8 +15,9 @@ namespace network {
 class ThreadManager {
  public:
   typedef std::function<void()> event_function_type;
-  typedef uint32_t event_handle_type;
+
   typedef details::ThreadManagerImplementation implementation_type;
+  typedef typename implementation_type::event_handle_type event_handle_type;
   typedef std::shared_ptr< implementation_type > pointer_type;
 
 

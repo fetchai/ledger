@@ -1,3 +1,5 @@
+add_executable(network_client_destructing network/client_destructing.cpp)
+
 add_executable(fake_oef http/fake_oef.cpp)
 add_executable(http_server http/server.cpp)
 add_executable(p2p_node2 ledger/peer-to-peer-v2/main.cpp)

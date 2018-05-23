@@ -26,7 +26,9 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   typedef thread_manager_type* thread_manager_ptr_type;
   typedef typename ThreadManager::event_handle_type event_handle_type;
   typedef uint64_t handle_type;
-
+  typedef std::weak_ptr< TCPClientImplementation > weak_ptr_type;
+  typedef std::shared_ptr< TCPClientImplementation > shared_ptr_type;
+  
   TCPClientImplementation(thread_manager_ptr_type thread_manager) noexcept
       : thread_manager_(*thread_manager),
         io_service_(thread_manager->io_service()),
@@ -57,9 +59,15 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     LOG_STACK_TRACE_POINT;
 
     fetch::logger.Debug("Client: Sending message to server");
-    auto self = shared_from_this();
+    weak_ptr_type self = shared_from_this();
     auto cb = [this,self, msg]() {
+      shared_ptr_type shared_self = self.lock();
+      if(!shared_self) {
+        return;
+      }
 
+
+      
       LOG_STACK_TRACE_POINT;
       write_mutex_.lock();
       write_queue_.push_back(msg);
@@ -93,7 +101,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void OnLeave(std::function<void()> fnc) {
     std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_);
 
-    on_leave_ = fnc;
+    //    on_leave_ = fnc;
   }
 
   void ClearLeave() {
@@ -108,7 +116,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void OnConnectionFailed(std::function< void() > const &fnc)
   {
     std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-    on_connection_failed_ = fnc;
+    //    on_connection_failed_ = fnc;
   }
 
   void ClearConnectionFailed()
@@ -120,7 +128,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void OnPushMessage(std::function< void(message_type const&) > const &fnc)
   {
     std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-    on_push_message_ = fnc;
+    //    on_push_message_ = fnc;
   }
 
   void ClearPushMessage()
@@ -150,9 +158,10 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
 
   void Close(bool failed = false) {
+    std::cout << "Closing" << std::endl;
+    std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_); 
     if (is_alive_) {
       is_alive_ = false;
-      std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_);
 
       if (on_leave_) {
         on_leave_();
@@ -179,8 +188,13 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void Connect(
       asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) noexcept {
     LOG_STACK_TRACE_POINT;
-    auto self = shared_from_this();
+    weak_ptr_type self = shared_from_this();
     auto cb = [this,self](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {
+      shared_ptr_type shared_self = self.lock();
+      if(!shared_self) {
+        return;
+      }
+      
       is_alive_ = true;
       LOG_STACK_TRACE_POINT;
       if (!ec) {
@@ -203,8 +217,13 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
   void ReadHeader() noexcept {
     LOG_STACK_TRACE_POINT;
-    auto self = shared_from_this();
+    weak_ptr_type self = shared_from_this();
     auto cb = [this,self](std::error_code ec, std::size_t) {
+      shared_ptr_type shared_self = self.lock();
+      if(!shared_self) {
+        return;
+      }
+
       if (!ec) {
         ReadBody();
       } else {
@@ -235,8 +254,12 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
     message.Resize(header_.content.length);
 
-    auto self = shared_from_this();
+    weak_ptr_type self = shared_from_this();
     auto cb = [this,self, message](std::error_code ec, std::size_t len) {
+      shared_ptr_type shared_self = self.lock();
+      if(!shared_self) {
+        return;
+      }
 
       if (!ec) {
         {
@@ -289,9 +312,13 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     SetHeader(header, buffer.size());
     write_mutex_.unlock();
 
-    auto self = shared_from_this();
+    weak_ptr_type self = shared_from_this();
     auto cb = [this,self, buffer, header](std::error_code ec, std::size_t) {
-
+      shared_ptr_type shared_self = self.lock();
+      if(!shared_self) {
+        return;
+      }
+      
       if (!ec) {
         fetch::logger.Debug("Wrote message.");
         write_mutex_.lock();
