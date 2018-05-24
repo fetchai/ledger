@@ -134,8 +134,7 @@ class DebugMutex : public AbstractMutex {
 };
 
 #ifndef NDEBUG
-// typedef DebugMutex Mutex;
-typedef ProductionMutex Mutex;
+typedef DebugMutex Mutex;
 #else
 typedef ProductionMutex Mutex;
 #endif
