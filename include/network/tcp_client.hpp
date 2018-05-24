@@ -24,7 +24,7 @@ namespace network {
 class TCPClient {
  public:
   typedef ThreadManager thread_manager_type;
-  typedef thread_manager_type* thread_manager_ptr_type;
+
   typedef typename ThreadManager::event_handle_type event_handle_type;
   typedef uint64_t handle_type;
   typedef TCPClientImplementation implementation_type;  
@@ -32,23 +32,32 @@ class TCPClient {
   
   TCPClient(byte_array::ConstByteArray const& host,
             byte_array::ConstByteArray const& port,
-            thread_manager_ptr_type thread_manager) noexcept
+            thread_manager_type &thread_manager) noexcept
   {
-    pointer_ = std::make_shared< implementation_type >(thread_manager);
-    pointer_->OnConnectionFailed([this]() { this->ConnectionFailed(); });
-    pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });    
-    
-    pointer_->Connect(host, port);
+    try {
+      pointer_ = std::make_shared< implementation_type >(thread_manager);
+      pointer_->OnConnectionFailed([this]() { this->ConnectionFailed(); });
+      pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });
+      pointer_->Connect(host, port);
+      
+    } catch( ... ) { // std::__1::system_error: kqueue: Too many open files
+      pointer_.reset();
+    }
   }
 
   TCPClient(byte_array::ConstByteArray const& host, uint16_t const& port,
-            thread_manager_ptr_type thread_manager) noexcept
+            thread_manager_type &thread_manager) noexcept
   {
-    pointer_ = std::make_shared< implementation_type >(thread_manager);
-    pointer_->OnConnectionFailed([this]() { this->ConnectionFailed(); });
-    pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });    
+    try {
+      pointer_ = std::make_shared< implementation_type >(thread_manager);
+      pointer_->OnConnectionFailed([this]() { this->ConnectionFailed(); });
+      pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });    
+      
+      pointer_->Connect(host, port);
+    } catch( ... ) { // // std::__1::system_error: kqueue: Too many open files
+      pointer_.reset();
+    }
 
-    pointer_->Connect(host, port);    
   }
 
   virtual ~TCPClient() noexcept {    
@@ -57,15 +66,40 @@ class TCPClient {
   }
 
   void Close() {
-    pointer_->Close();
-    
-    pointer_->ClearConnectionFailed();
-    pointer_->ClearPushMessage();
-    pointer_->ClearLeave();
+    if(pointer_) {
+      pointer_->ClearConnectionFailed();
+      pointer_->ClearPushMessage();
+      pointer_->ClearLeave();
+    }
   }
 
+  void OnConnectionFailed(std::function< void() > const &fnc)
+  {
+    if(pointer_) {
+      pointer_->OnConnectionFailed( std::move(fnc) );
+    }
+  }
+
+  void OnPushMessage(std::function< void(message_type const&) > const &fnc)
+  {
+    if(pointer_) {
+      pointer_->OnPushMessage( std::move(fnc) );
+    }
+  }
+
+  void OnLeave(std::function<void()> &&fnc) {
+    if(pointer_) {
+      pointer_->OnLeave( std::move(fnc) );
+    }
+  }
+  
+  
+
   void Send(message_type const& msg) noexcept {
-    pointer_->Send(msg);
+    if(pointer_) {
+      pointer_->Send(msg);     
+    }
+    // TODO: Throw exception if it does not have a pointer?
   }
 
   virtual void PushMessage(message_type const& value) = 0;
@@ -74,14 +108,24 @@ class TCPClient {
   handle_type const& handle() const noexcept { return pointer_->handle(); }
 
   std::string Address() const noexcept {
-    return pointer_->Address();
+    if(pointer_) {
+      return pointer_->Address();
+    }
+    return "";
   }
 
   void OnLeave(std::function<void()> fnc) {
-    pointer_->OnLeave(fnc);
+    if(pointer_) {
+      pointer_->OnLeave(fnc);
+    }
   }
 
-  bool is_alive() const noexcept { return pointer_->is_alive(); }
+  bool is_alive() const noexcept {
+    if(pointer_) {
+      return pointer_->is_alive();
+    }
+    return false;
+  }
 
 private:
   pointer_type pointer_;

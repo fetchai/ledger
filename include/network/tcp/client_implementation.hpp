@@ -23,43 +23,71 @@ namespace network {
 class TCPClientImplementation : public std::enable_shared_from_this< TCPClientImplementation > {
  public:
   typedef ThreadManager thread_manager_type;
-  typedef thread_manager_type* thread_manager_ptr_type;
+
   typedef typename ThreadManager::event_handle_type event_handle_type;
   typedef uint64_t handle_type;
   typedef std::weak_ptr< TCPClientImplementation > weak_ptr_type;
   typedef std::shared_ptr< TCPClientImplementation > shared_ptr_type;
   
-  TCPClientImplementation(thread_manager_ptr_type thread_manager) noexcept
-      : thread_manager_(*thread_manager),
-        io_service_(thread_manager->io_service()),
-        socket_(thread_manager->io_service())
-
+  TCPClientImplementation(thread_manager_type & thread_manager)
+      : thread_manager_(thread_manager),
+        io_service_(thread_manager.io_service()),
+        resolver_(thread_manager.io_service())
   {
     LOG_STACK_TRACE_POINT;
-
+    
     handle_ = next_handle();
 
-    event_start_service_ =
+    {
+      auto tmlock = thread_manager_.lock();
+      if(!tmlock) return;
+      event_start_service_ =
         thread_manager_.OnBeforeStart([this]() { this->writing_ = false; });
-    event_stop_service_ =
-        thread_manager_.OnBeforeStop([this]() { this->writing_ = false; });
-
+      event_stop_service_ =
+        thread_manager_.OnBeforeStop([this]() {
+            this->writing_ = false;
+            //            Close();
+          });
+    }
     writing_ = false;
+
+    socket_ = std::make_shared<asio::ip::tcp::tcp::socket> (thread_manager.io_service()) ;
   }
 
   ~TCPClientImplementation() noexcept {
     LOG_STACK_TRACE_POINT;
+    auto tmlock = thread_manager_.lock();
+    if(!tmlock) return;
 
     thread_manager_.Off(event_start_service_);
     thread_manager_.Off(event_stop_service_);
-    Close();
+
+    
+    std::lock_guard<fetch::mutex::Mutex> lock(close_mutex_);
+
+
+      auto soc = socket_;
+      thread_manager_.io_service().post([soc]() {
+          if(soc->is_open()) {
+            try {
+              std::error_code ec;
+              soc->shutdown(asio::ip::tcp::tcp::socket::shutdown_both, ec);  
+              soc->close();
+
+            } catch(...) { }
+          }
+        });
+
   }
 
   void Send(message_type const& msg) noexcept {
+    auto tmlock = thread_manager_.lock();
+    if(!tmlock) return;
+    
     LOG_STACK_TRACE_POINT;
-
     fetch::logger.Debug("Client: Sending message to server");
     weak_ptr_type self = shared_from_this();
+
     auto cb = [this,self, msg]() {
       shared_ptr_type shared_self = self.lock();
       if(!shared_self) {
@@ -95,7 +123,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   handle_type const& handle() const noexcept { return handle_; }
 
   std::string Address() const noexcept {
-    return socket_.remote_endpoint().address().to_string();
+    return socket_->remote_endpoint().address().to_string();
   }
 
   void OnLeave(std::function<void()> fnc) {
@@ -140,8 +168,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   void Connect(byte_array::ConstByteArray const& host,
                byte_array::ConstByteArray const& port) noexcept {
     LOG_STACK_TRACE_POINT;
-    asio::ip::tcp::resolver resolver(io_service_);
-    Connect(resolver.resolve({std::string(host), std::string(port)}));
+    Connect(std::string(host), std::string(port));      
   }
 
   void Connect(byte_array::ConstByteArray const& host,
@@ -150,16 +177,17 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     std::stringstream p;
     p << port;
 
-    asio::ip::tcp::resolver resolver(io_service_);
-
-
-    Connect(resolver.resolve({std::string(host), p.str()}));
+    Connect(host, p.str());
   }
+                   
 
-
-  void Close(bool failed = false) {    
-    std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_);
+  void Close(bool failed = false) {
+    auto tmlock = thread_manager_.lock();
+    if(!tmlock) return;
     
+    std::lock_guard<fetch::mutex::Mutex> lock(close_mutex_);
+
+
     if (is_alive_) {
       is_alive_ = false;
       weak_ptr_type self;
@@ -168,13 +196,18 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
       } catch (std::bad_weak_ptr const& e) {
         return;
       }
-      auto cb = [this,self, failed]() {
+
+      auto soc = socket_;
+      auto cb = [this,self, failed, soc]() {
         shared_ptr_type shared_self = self.lock();
         if(!shared_self) {
           return;
         }  
+
+        std::lock_guard<fetch::mutex::Mutex> lock(close_mutex_);
         
         if (on_leave_) {
+          std::lock_guard<fetch::mutex::Mutex> lock(leave_mutex_);
           on_leave_();
         }
         
@@ -185,12 +218,16 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
           }
         }
 
-
-        socket_.close();
+        if(soc->is_open()) {
+          std::error_code ec;
+          soc->shutdown(asio::ip::tcp::tcp::socket::shutdown_both, ec);
+          soc->close();
+        }
       };
       
       io_service_.post(cb);
     }
+
   }
 
  private:
@@ -201,55 +238,72 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
 
 
-  void Connect(
-      asio::ip::tcp::tcp::resolver::iterator endpoint_iterator) noexcept {
+  void Connect(std::string const&host, std::string const &port) noexcept {
+    auto tmlock = thread_manager_.lock();
+    if(!tmlock) return;
+    
     LOG_STACK_TRACE_POINT;
+
     weak_ptr_type self;
     try {
       self = shared_from_this();
     } catch (std::bad_weak_ptr const& e) {
       return;
     }
-    
-    auto cb = [this,self](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {
+
+    auto soc = socket_;
+    auto cb = [this,self, host, port, soc](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {
       shared_ptr_type shared_self = self.lock();
       if(!shared_self) {
         return;
       }
-      
-      is_alive_ = true;
+     
       LOG_STACK_TRACE_POINT;
       if (!ec) {
+        is_alive_ = true;
         fetch::logger.Debug("Connection established!");
         ReadHeader();
       } else {
-        if (is_alive_) {
-          std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-          if(on_connection_failed_) {
-            on_connection_failed_();
-          }
-
-        }
-
         is_alive_ = false;
+        // No callbacks since we are in the object construction process
+        return; 
       }
 
     };
 
-    asio::async_connect(socket_, endpoint_iterator, cb);
+    asio::ip::tcp::tcp::resolver::iterator endpoint_iterator;
+    try {
+      endpoint_iterator = resolver_.resolve({host, port});
+    } catch(...) {
+      //      std::__1::system_error: resolve: Host not found (authoritative)      
+      return;
+    }
+        
+    try {
+      asio::async_connect(*socket_, endpoint_iterator, cb);
+    } catch(...) {
+      is_alive_ = false;
+      return;
+    }
+
   }
 
   void ReadHeader() noexcept {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT;    
     weak_ptr_type self = shared_from_this();
-    auto cb = [this,self](std::error_code ec, std::size_t) {
+    
+    byte_array::ByteArray header;
+    header.Resize(2 * sizeof(uint64_t) );
+
+    auto soc = socket_;    
+    auto cb = [this, self, header, soc](std::error_code ec, std::size_t) {
       shared_ptr_type shared_self = self.lock();
       if(!shared_self) {
         return;
       }
 
       if (!ec) {
-        ReadBody();
+        ReadBody(header);
       } else {
         if(is_alive_) {
           Close(true);
@@ -259,13 +313,19 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
       }
     };
 
-    asio::async_read(socket_, asio::buffer(header_.bytes, 2 * sizeof(uint64_t)),
+    asio::async_read(*socket_, asio::buffer(header.pointer(), header.size()),
                      cb);
   }
 
-  void ReadBody() noexcept {
+  void ReadBody(byte_array::ByteArray const &h) noexcept {
     byte_array::ByteArray message;
-    if (header_.content.magic != networkMagic) {
+
+    HeaderUnion header;
+    for(std::size_t i = 0; h.size(); ++i) {
+      header.bytes[i] = h[i];
+    }
+    
+    if (header.content.magic != networkMagic) {
       fetch::logger.Debug("Magic incorrect during network read");
 
       if(is_alive_) {
@@ -276,10 +336,11 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
       return;
     }
 
-    message.Resize(header_.content.length);
+    message.Resize(header.content.length);
 
     weak_ptr_type self = shared_from_this();
-    auto cb = [this,self, message](std::error_code ec, std::size_t len) {
+    auto soc = socket_;
+    auto cb = [this,self, message, soc](std::error_code ec, std::size_t len) {
       shared_ptr_type shared_self = self.lock();
       if(!shared_self) {
         return;
@@ -300,7 +361,8 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
       }
     };
 
-    asio::async_read(socket_, asio::buffer(message.pointer(), message.size()),
+    
+    asio::async_read(*socket_, asio::buffer(message.pointer(), message.size()),
                      cb);
   }
 
@@ -337,7 +399,8 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     write_mutex_.unlock();
 
     weak_ptr_type self = shared_from_this();
-    auto cb = [this,self, buffer, header](std::error_code ec, std::size_t) {
+    auto soc = socket_;
+    auto cb = [this,self, buffer, header, soc](std::error_code ec, std::size_t) {
       shared_ptr_type shared_self = self.lock();
       if(!shared_self) {
         return;
@@ -368,13 +431,14 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
         asio::buffer(header.pointer(), header.size()),
         asio::buffer(buffer.pointer(), buffer.size())};
 
-      asio::async_write( socket_, buffers, cb);
+
+      asio::async_write( *socket_, buffers, cb);
     }
   }
 
  private:
   std::atomic<bool> is_alive_;
-  mutable fetch::mutex::Mutex leave_mutex_;
+  mutable fetch::mutex::Mutex leave_mutex_, close_mutex_;
   std::function<void()> on_leave_;
   const uint64_t networkMagic = 0xFE7C80A1FE7C80A1;
 
@@ -392,18 +456,19 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     return ret;
   }
 
-  union {
-    char bytes[2 * sizeof(uint64_t)];
+  union HeaderUnion {
+    uint8_t bytes[2 * sizeof(uint64_t)];
     struct {
       uint64_t magic;
       uint64_t length;
     } content;
 
-  } header_;
+  };
 
   asio::io_service& io_service_;
-  asio::ip::tcp::tcp::socket socket_;
-
+  std::shared_ptr<asio::ip::tcp::tcp::socket> socket_;
+  asio::ip::tcp::resolver resolver_;
+  
   bool writing_ = false;
   message_queue_type write_queue_;
   fetch::mutex::Mutex write_mutex_;
