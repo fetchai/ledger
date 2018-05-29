@@ -20,7 +20,6 @@ add_executable(rpc_server rpc/server.cpp)
 
 add_executable(sha256 crypto/sha256.cpp)
 
-add_executable(network_benchmark network_benchmark/network_benchmark.cpp network_benchmark/node_basic.hpp)
 
 ## Legacy
 add_executable(arpc_node advanced_rpc/node.cpp)
