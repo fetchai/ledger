@@ -1,6 +1,12 @@
 #ifndef HELPER_FUNCTIONS_HPP
 #define HELPER_FUNCTIONS_HPP
 
+#include<memory>
+#include<limits>
+#include<utility>
+#include<vector>
+#include<chrono>
+
 #include"random/lfg.hpp"
 #include"byte_array/referenced_byte_array.hpp"
 #include"serializers/counter.hpp"
@@ -13,10 +19,9 @@ namespace common {
 class NoCopyClass
 {
 public:
+  NoCopyClass() {}
 
-  NoCopyClass(){}
-
-  NoCopyClass(int val) :
+  explicit NoCopyClass(int val) :
     classValue_{val} { }
 
   NoCopyClass(NoCopyClass &rhs)             = delete;
@@ -88,7 +93,49 @@ T NextTransaction(std::size_t bytesToAdd = 0)
   return trans;
 }
 
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
+
+std::size_t Hash(fetch::byte_array::ConstByteArray const &arr)
+{
+    std::size_t hash = 2166136261;
+    for (std::size_t i = 0; i < arr.size(); ++i)
+    {
+      hash = (hash * 16777619) ^ arr[i];
+    }
+    return hash;
+}
+
+void BlockUntilTime(uint64_t startTime)
+{
+  // get time as epoch, wait until that time to start
+  std::time_t t = static_cast<std::time_t>(startTime);
+  std::tm* timeout_tm = std::localtime(&t);
+
+  time_t timeout_time_t = mktime(timeout_tm);
+  std::chrono::system_clock::time_point timeout_tp =
+    std::chrono::system_clock::from_time_t(timeout_time_t);
+
+  std::this_thread::sleep_until(timeout_tp);
+}
+
+} // namespace common
+
+
+namespace network_benchmark
+{
+
+// Transactions are packaged up into blocks and referred to using a hash
+typedef fetch::chain::Transaction         transaction_type;
+typedef std::size_t                       block_hash;
+typedef std::vector<transaction_type>     block_type;
+typedef std::pair<block_hash, block_type> network_block;
+
+}
+
 }
 
 #endif
