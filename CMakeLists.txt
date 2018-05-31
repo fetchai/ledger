@@ -71,7 +71,7 @@ add_subdirectory( libfetchcore/ )
 endif()
 
 ## Making compile flags strict for the rest of the library
-set(STRICT_FLAGS "-Wconversion -Wpedantic -Wall -Werror")
+set(STRICT_FLAGS "")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wno-unused-function -Wno-unknown-pragmas -O3 ${STRICT_FLAGS}")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -Wno-unused-function -Wno-unknown-pragmas -O3 ${STRICT_FLAGS}")
