@@ -6,6 +6,7 @@
 #include<utility>
 #include<vector>
 #include<chrono>
+#include<random>
 
 #include"random/lfg.hpp"
 #include"byte_array/referenced_byte_array.hpp"
