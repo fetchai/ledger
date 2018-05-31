@@ -1,5 +1,6 @@
 #ifndef CHAIN_TRANSACTION_HPP
 #define CHAIN_TRANSACTION_HPP
+#include<vector>
 #include "crypto/sha256.hpp"
 
 #include "byte_array/const_byte_array.hpp"
@@ -59,14 +60,10 @@ class Transaction {
   }
 
   bool operator==(const Transaction &rhs) const {
-    UpdateDigest();
-    rhs.UpdateDigest();
     return digest() == rhs.digest();
   }
 
   bool operator<(const Transaction &rhs) const {
-    UpdateDigest();
-    rhs.UpdateDigest();
     return digest() < rhs.digest();
   }
 
@@ -93,7 +90,7 @@ TODO: Make 32 bit compat
         d.bytes[1] = res[1];
       case 1:
         d.bytes[0] = res[0];
-    };
+    }
     //    std::cout << byte_array::ToHex( res) << " >> " << d.value <<
     //    std::endl;
 
@@ -167,7 +164,7 @@ TODO: Make 32 bit compat
 
   uint32_t signature_count() const { return signature_count_; }
 
-  byte_array::ConstByteArray data() const { return data_; };
+  byte_array::ConstByteArray data() const { return data_; }
 
   TransactionSummary const &summary() const {
     UpdateDigest();

@@ -1,12 +1,14 @@
 #ifndef SERIALIZER_STIL_TYPES_HPP
 #define SERIALIZER_STIL_TYPES_HPP
+
+#include <string>
+#include <utility>
+#include <type_traits>
+#include <vector>
+
 #include "assert.hpp"
 #include "byte_array/referenced_byte_array.hpp"
 #include "logger.hpp"
-
-#include <string>
-#include <type_traits>
-#include <vector>
 namespace fetch {
 namespace serializers {
 
@@ -93,6 +95,21 @@ inline void Deserialize(T &serializer, std::vector<U> &vec) {
   vec.resize(size);
 
   for (auto &a : vec) serializer >> a;
+}
+
+template <typename T, typename fir, typename sec>
+inline void Serialize(T &serializer, std::pair<fir, sec> const &pair) {
+  serializer << pair.first;
+  serializer << pair.second;
+}
+
+template <typename T, typename fir, typename sec>
+inline void Deserialize(T &serializer, std::pair<fir, sec> &pair) {
+  fir first;
+  sec second;
+  serializer >> first;
+  serializer >> second;
+  pair = make_pair(std::move(first), std::move(second));
 }
 }
 }
