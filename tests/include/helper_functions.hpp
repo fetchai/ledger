@@ -1,12 +1,6 @@
 #ifndef HELPER_FUNCTIONS_HPP
 #define HELPER_FUNCTIONS_HPP
 
-#include<memory>
-#include<limits>
-#include<utility>
-#include<vector>
-#include<chrono>
-
 #include"random/lfg.hpp"
 #include"byte_array/referenced_byte_array.hpp"
 #include"serializers/counter.hpp"
@@ -19,9 +13,10 @@ namespace common {
 class NoCopyClass
 {
 public:
-  NoCopyClass() {}
 
-  explicit NoCopyClass(int val) :
+  NoCopyClass(){}
+
+  NoCopyClass(int val) :
     classValue_{val} { }
 
   NoCopyClass(NoCopyClass &rhs)             = delete;
@@ -93,6 +88,24 @@ T NextTransaction(std::size_t bytesToAdd = 0)
   return trans;
 }
 
+// Time related functionality
+typedef std::chrono::high_resolution_clock::time_point time_point;
+
+time_point TimePoint()
+{
+  return std::chrono::high_resolution_clock::now();
+}
+
+double TimeDifference(time_point t1, time_point t2)
+{
+  // If t1 before t2
+  if(t1 < t2)
+  {
+    return std::chrono::duration_cast<std::chrono::duration<double>> (t2 - t1).count();
+  }
+  return std::chrono::duration_cast<std::chrono::duration<double>> (t1 - t2).count();
+}
+
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args)
 {
@@ -122,8 +135,7 @@ void BlockUntilTime(uint64_t startTime)
   std::this_thread::sleep_until(timeout_tp);
 }
 
-} // namespace common
-
+} // namespace commmon
 
 namespace network_benchmark
 {

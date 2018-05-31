@@ -5,7 +5,7 @@ add_executable(p2p_node2 ledger/peer-to-peer-v2/main.cpp)
 # add_executable(p2p_node ledger/peer-to-peer/main.cpp)
 # add_executable(simple_ledger_node ledger/simple-ledger/node.cpp)
 
-add_executable(network_client_destructing network/client_destructing.cpp)
+add_executable(tcp_server_echo network/tcp_server_echo.cpp)
 
 add_executable(network_client network/client.cpp)
 add_executable(network_server network/server.cpp)
@@ -21,7 +21,6 @@ add_executable(rpc_server rpc/server.cpp)
 
 
 add_executable(sha256 crypto/sha256.cpp)
-
 
 ## Legacy
 add_executable(arpc_node advanced_rpc/node.cpp)
