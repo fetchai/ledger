@@ -88,6 +88,24 @@ T NextTransaction(std::size_t bytesToAdd = 0)
   return trans;
 }
 
+// Time related functionality
+typedef std::chrono::high_resolution_clock::time_point time_point;
+
+time_point TimePoint()
+{
+  return std::chrono::high_resolution_clock::now();
+}
+
+double TimeDifference(time_point t1, time_point t2)
+{
+  // If t1 before t2
+  if(t1 < t2)
+  {
+    return std::chrono::duration_cast<std::chrono::duration<double>> (t2 - t1).count();
+  }
+  return std::chrono::duration_cast<std::chrono::duration<double>> (t1 - t2).count();
+}
+
 }
 }
 

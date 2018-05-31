@@ -182,6 +182,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
                    
 
   void Close(bool failed = false) {
+    //std::cerr << "Closing client" << std::endl;
     auto tmlock = thread_manager_.lock();
     if(!tmlock) return;
     
@@ -235,8 +236,6 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
   std::function< void(message_type const&) >  on_push_message_;
   std::function< void() > on_connection_failed_;
-
-
 
   void Connect(std::string const&host, std::string const &port) noexcept {
     auto tmlock = thread_manager_.lock();
@@ -321,7 +320,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     byte_array::ByteArray message;
 
     HeaderUnion header;
-    for(std::size_t i = 0; h.size(); ++i) {
+    for(std::size_t i = 0; i < h.size(); ++i) {
       header.bytes[i] = h[i];
     }
     
