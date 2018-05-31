@@ -31,8 +31,7 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
   
   TCPClientImplementation(thread_manager_type & thread_manager)
       : thread_manager_(thread_manager),
-        io_service_(thread_manager.io_service()),
-        resolver_(thread_manager.io_service())
+        io_service_(thread_manager.io_service())
   {
     LOG_STACK_TRACE_POINT;
     
@@ -251,7 +250,8 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     }
 
     auto soc = socket_;
-    auto cb = [this,self, host, port, soc](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {
+    asio::ip::tcp::resolver resolver(thread_manager_.io_service());
+    auto cb = [this, self, tmlock, &resolver, host, port, soc](std::error_code ec, asio::ip::tcp::tcp::resolver::iterator) {
       shared_ptr_type shared_self = self.lock();
       if(!shared_self) {
         return;
@@ -271,8 +271,9 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
     };
 
     asio::ip::tcp::tcp::resolver::iterator endpoint_iterator;
+
     try {
-      endpoint_iterator = resolver_.resolve({host, port});
+      endpoint_iterator = resolver.resolve({host, port});
     } catch(...) {
       //      std::__1::system_error: resolve: Host not found (authoritative)      
       return;
@@ -466,7 +467,6 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
 
   asio::io_service& io_service_;
   std::shared_ptr<asio::ip::tcp::tcp::socket> socket_;
-  asio::ip::tcp::resolver resolver_;
   
   bool writing_ = false;
   message_queue_type write_queue_;
