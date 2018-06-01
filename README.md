@@ -23,7 +23,7 @@ sudo apt-get install libssl-dev cmake
 sudo apt-get install libpng-dev
 sudo apt-get install python-dev
 
-NOTE: the whole necessary setup is defined by the [Dockerfile](docker-images/fetch-ledger-ci-build/Dockerfile), also checkout the [Docker](#docker) section bellow for more details about our docker setup.
+NOTE: the whole necessary setup is defined by the [Dockerfile](https://github.com/uvue-git/docker-images/blob/master/fetch-ledger-develop-image/Dockerfile), also checkout the [Docker](#docker) section bellow for more details about our docker setup.
 
 
 Test
