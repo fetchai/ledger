@@ -9,7 +9,7 @@ public:
   Client(std::string const &host,
     std::string const &port,
       ThreadManager *tmanager) :
-    TCPClient(host, port, tmanager )
+    TCPClient(host, port, *tmanager )
   {
   }  
   

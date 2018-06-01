@@ -15,7 +15,6 @@ int main() {
 
   client.OnLeave( []() {
       std::cout << "Goood bye!!" << std::endl;
-      
     });
 
   

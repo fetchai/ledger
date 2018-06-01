@@ -35,7 +35,7 @@ class ServiceClient : public T,
 
   ServiceClient(byte_array::ConstByteArray const& host, uint16_t const& port,
                 thread_manager_ptr_type thread_manager)
-      : super_type(host, port, thread_manager),
+      : super_type(host, port, *thread_manager),
         thread_manager_(thread_manager),
         message_mutex_(__LINE__, __FILE__) {
     LOG_STACK_TRACE_POINT;

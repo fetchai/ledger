@@ -24,6 +24,7 @@ namespace network {
 class TCPClient {
  public:
   typedef ThreadManager thread_manager_type;
+  typedef ThreadManager* thread_manager_ptr_type;
 
   typedef typename ThreadManager::event_handle_type event_handle_type;
   typedef uint64_t handle_type;
@@ -87,13 +88,6 @@ class TCPClient {
     }
   }
 
-  void OnLeave(std::function<void()> &&fnc) {
-    if(pointer_) {
-      pointer_->OnLeave( std::move(fnc) );
-    }
-  }
-  
-  
 
   void Send(message_type const& msg) noexcept {
     if(pointer_) {
