@@ -20,7 +20,6 @@ Matrix<data_type, container_type> RandomMatrix(std::size_t n, std::size_t m) {
 }
 
 void test_invert(std::size_t const &n) {
-  static fetch::random::LinearCongruentialGenerator gen;
   Matrix<data_type, container_type> m1 = RandomMatrix(n, n);
 
   Matrix<data_type, container_type> m2 = m1.Copy();
@@ -613,7 +612,6 @@ void Test1() {
 }
 
 int main() {
-  static fetch::random::LinearCongruentialGenerator gen;
   Test1();
 
   return 0;

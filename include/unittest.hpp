@@ -31,6 +31,8 @@ class TestContext : public std::enable_shared_from_this<TestContext> {
     TestContext::sections.push_back(this);
   }
 
+  virtual ~TestContext() {}
+
   function_type operator=(function_type fnc) {
     function_ = fnc;
     this->operator()();
