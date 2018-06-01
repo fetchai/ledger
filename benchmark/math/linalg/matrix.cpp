@@ -134,7 +134,6 @@ void benchmark_custom(Matrix<data_type, container_type> &m1,
 }
 
 int main() {
-  static fetch::random::LinearCongruentialGenerator gen;
   std::size_t n = 2048, m = 2048;
 
   Matrix<data_type, container_type> m1 = RandomMatrix(n, m);

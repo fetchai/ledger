@@ -1,6 +1,13 @@
 #ifndef HELPER_FUNCTIONS_HPP
 #define HELPER_FUNCTIONS_HPP
 
+#include<memory>
+#include<limits>
+#include<utility>
+#include<vector>
+#include<chrono>
+#include<random>
+
 #include"random/lfg.hpp"
 #include"byte_array/referenced_byte_array.hpp"
 #include"serializers/counter.hpp"
