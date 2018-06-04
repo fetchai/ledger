@@ -1,5 +1,5 @@
-#ifndef HELPER_FUNCTIONS_HPP
-#define HELPER_FUNCTIONS_HPP
+#ifndef __HELPER_FUNCTIONS_HPP
+#define __HELPER_FUNCTIONS_HPP
 
 #include<memory>
 #include<limits>
