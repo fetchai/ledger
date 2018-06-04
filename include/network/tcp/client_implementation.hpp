@@ -162,10 +162,9 @@ class TCPClientImplementation : public std::enable_shared_from_this< TCPClientIm
         std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
         if(on_connection_failed_) on_connection_failed_();
       }
-
-
-      socket_.close();
     }
+    std::error_code ignore_ec;
+    socket_.close(ignore_ec);
   }
 
  private:

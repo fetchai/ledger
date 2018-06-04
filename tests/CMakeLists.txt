@@ -32,6 +32,9 @@ function(standard_test_defines name file defines)
 
 endfunction()
 
+## network
+standard_test( thread_manager_stress network/thread_manager_stress.cpp )
+standard_test( tcp_client_stress network/tcp_client_stress.cpp )
 
 ## Crypto
 standard_test( crypto_sha256 crypto/sha256.cpp )
