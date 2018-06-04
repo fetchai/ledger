@@ -773,7 +773,7 @@ int main(int argc, char* argv[]) {
   if(externalTestServer)
   {
     std::cout << "Found external test server" << std::endl;
-  } 
+  }
 
   //SegfaultTest<1>(host, port); // fails clientFix, develop
   TestCase1<1>(host, port);
