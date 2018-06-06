@@ -1,6 +1,12 @@
-Configure git
-=============
-Depending on transport (`ssh` or `https`) you prefere to access github, configure your local git settings based on [this guide](https://github.com/uvue-git/docker-images/blob/master/README_git_setup.md).
+Configure git<a name="git_configuration"/>
+==========================================
+It is necessary to configure your local git setup based on [this guide](https://github.com/uvue-git/docker-images/blob/master/README_git_setup.md), otherwise pulling the submodules might not work.
+
+
+Docker - build, develop & run stuff in docker container<a name="docker"/>
+=========================================================================
+This project has full support for Docker - it is dedicated to be used for building whole project, execute resulting binaries and do whole development using docker, please see details in [this guide](https://github.com/uvue-git/docker-images/blob/master/README.md#guick_usage_guide).
+
 
 Initiate
 ========
@@ -31,9 +37,6 @@ Test
 
 ctest
 
-Docker - build, develop & run stuff in docker container<a name="docker"></a>
-=======================================================
-This project has full support for Docker - it is dedicated to be used for building whole project, execute resulting binaries and do whole development using docker, please see details in [this guide](uvue-git/docker-images/README.md#guick_usage_guide).
 
 Notes
 =====
