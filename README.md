@@ -1,6 +1,6 @@
 Configure git
 =============
-Depending on transport (`ssh` or `https`) you prefere to access github, configure your local git settings based on [this guide](https_ssh_git_config.md).
+Depending on transport (`ssh` or `https`) you prefere to access github, configure your local git settings based on [this guide](https://github.com/uvue-git/docker-images/blob/master/README_git_setup.md).
 
 Initiate
 ========
