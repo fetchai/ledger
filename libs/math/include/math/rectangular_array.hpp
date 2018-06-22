@@ -1,19 +1,20 @@
-#ifndef MEMORY_RECTANGULAR_ARRAY_HPP
-#define MEMORY_RECTANGULAR_ARRAY_HPP
-#include "memory/array.hpp"
-#include "memory/shared_array.hpp"
-#include "platform.hpp"
-#include "vectorize.hpp"
+#ifndef MATH_RECTANGULAR_ARRAY_HPP
+#define MATH_RECTANGULAR_ARRAY_HPP
+#include "vectorise/memory/array.hpp"
+#include "vectorise/memory/shared_array.hpp"
+#include "vectorise/vectorise.hpp"
+#include "vectorise/platform.hpp"
+#include "math/shape_less_array.hpp"
+#include "core/assert.hpp"
 
 #include <stdio.h>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
-#include "assert.hpp"
 
 namespace fetch {
-namespace memory {
+namespace math {
 
 /* A class that contains an array that is suitable for vectorisation.
  *
@@ -23,34 +24,22 @@ namespace memory {
  * according to the platform standard by using either
  * <fetch::memory::SharedArray> or <fetch::memory::Array>.
  */
-template <typename T, typename C = SharedArray<T>, bool PAD_HEIGHT = false,
+template <typename T, typename C = memory::SharedArray<T>, bool PAD_HEIGHT = false,
           bool PAD_WIDTH = true>
-class RectangularArray {
+class RectangularArray : public math::ShapeLessArray< T, C > {
  public:
-  typedef T type;
-  typedef C container_type;
-  typedef uint64_t size_type;
+  typedef math::ShapeLessArray< T, C > super_type;
+  typedef typename super_type::type type;
+  typedef typename super_type::container_type container_type;
+  typedef typename super_type::size_type size_type;
+  
   typedef RectangularArray<T, C> self_type;
-
-  /* Iterators for accessing and modifying the array */
-  typedef typename container_type::iterator iterator;
-  typedef typename container_type::reverse_iterator reverse_iterator;
-
-  /* Vector register is used parallel instruction execution using SIMD */
-  enum { vector_size = platform::VectorRegisterSize<type>::value };
-  typedef typename vectorize::VectorRegister<type, vector_size>
-      vector_register_type;
-  typedef vectorize::VectorRegisterIterator<type, vector_size>
-      vector_register_iterator_type;
-
-  /* Kernels for performing execution */
-  typedef void (*vector_kernel_type)(vector_register_type const &,
-                                     vector_register_type const &,
-                                     vector_register_type &);
-  typedef void (*standard_kernel_type)(type const &, type const &, type &);
-
+  typedef typename super_type::vector_register_type vector_register_type;
+  typedef typename super_type::vector_register_iterator_type vector_register_iterator_type;
+  
+  
   /* Contructs an empty rectangular array. */
-  RectangularArray() : data_() {}
+  RectangularArray() : super_type() {}
 
   /* Contructs a rectangular array with height one.
    * @param n is the width of the array.
@@ -78,53 +67,103 @@ class RectangularArray {
 
   ~RectangularArray() {}
 
-  /* Makes a copy of the array.
-   *
-   * The copy is shallow in the sense that it does not make copies of
-   * underying data structures even if the contain a copy function.
-   */
-  RectangularArray Copy() const {
-    RectangularArray ret(height_, width_);
+  void Sort() 
+  {
+    std::size_t offset = 0;
+    // TODO: parallelise over cores
+    for(std::size_t i=0; i < height_; ++i) {
+      super_type::Sort(memory::TrivialRange(offset,offset + width_));
+      offset += padded_width_;
+    }    
+  }
 
-    for (size_type i = 0; i < padded_size(); ++i) {
-      ret.data_[i] = this->data_[i];
-    }
+
+  static RectangularArray Zeros(std::size_t const &n, std::size_t const &m) {
+    RectangularArray ret;
+    ret.LazyResize(n, m);
+    ret.data().SetAllZero();
     return ret;
   }
 
-  /* Set all elements to zero.
-   *
-   * This method will initialise all memory with zero.
-   */
-  void SetAllZero() { data_.SetAllZero(); }
 
-  /* Set all padded bytes to zero.
-   *
-   * This method sets the padded bytes to zero. Padded bytes are those
-   * which are added to ensure that the arrays true size is a multiple
-   * of the vector unit.
-   */
-  void SetPaddedZero() { data_.SetPaddedZero(); }
 
+  static RectangularArray  UniformRandom(std::size_t const &n, std::size_t const &m) {
+    RectangularArray ret;
+
+    ret.LazyResize(n, m);
+    ret.FillUniformRandom();
+    
+    ret.SetPaddedZero();
+
+    return ret;
+  }
+
+
+  
   /* Crops the current array.
+   * @param A is the original array.
    * @param i is the starting coordinate along the height direction.
-   * @param j is the starting coordinate along the width direction.
    * @param h is the crop height.
+   * @param j is the starting coordinate along the width direction.
    * @param w is the crop width.
    *
    * This method allocates new array to make the crop. (TODO: Reuse
    * memory for effiency, if array and not sharedarray is used)
    */
-  void Crop(size_type const &i, size_type const &j, size_type const &h,
-            size_type const &w) {
-    // FIXME: implementation is wrong
-    container_type newdata(h * w);
-    size_type m = 0;
-    for (size_type k = i; k < i + h; ++k)
-      for (size_type l = j; l < j + w; ++l) newdata[m++] = this->At(k, l);
-    data_ = newdata;
-    height_ = h;
-    width_ = w;
+  void Crop(self_type const &A, size_type const &i, size_type const &h, size_type const &j, size_type const &w) {
+    assert( this->height() == h );
+    assert( this->width() == w );
+    
+
+    std::size_t s = 0;
+    for (size_type k = i; k < i + h; ++k) {
+      std::size_t t = 0;
+      for (size_type l = j; l < j + w; ++l) {
+        this->At(s,t) = A.At(k, l);
+        ++t;
+      }
+      ++s;      
+    }
+  }
+
+
+  void Column(RectangularArray const &obj1, std::size_t const &i) {
+    this->Crop(obj1, 0, height(), i, 1);    
+  }
+    
+  void Column(RectangularArray const &obj1, memory::TrivialRange const &range) {
+    assert(range.step() == 1);
+    assert( range.to() < width() );
+    
+    this->Crop(obj1, 0, height(), range.from(), range.to() - range.from());    
+  }
+
+    
+  void Row(RectangularArray const &obj1, std::size_t const &i) {
+    this->Crop(obj1,  i, 1, 0, width());
+  }
+
+  void Row(RectangularArray const &obj1, memory::TrivialRange const&range) {
+    assert(range.step() == 1);
+    assert( range.to() < height() );
+
+    this->Crop(obj1, range.from(), range.to() - range.from(), 0, width());
+  }
+
+  
+  
+  template<typename G>
+  //  typename std::enable_if< std::is_same< type, typename G::type >::value, void >::type
+  void Copy(G const& orig) {
+    assert( orig.height() == height_);
+    assert( orig.width() == width_);    
+
+    for(std::size_t i=0; i < orig.height(); ++i) {
+    for(std::size_t j=0; j < orig.width(); ++j) {    
+      this->At(i,j) = orig.At(i,j);
+    }
+    }
+
   }
 
   /* Rotates the array around the center.
@@ -143,8 +182,10 @@ class RectangularArray {
    */
   void Rotate(double const &radians, double const &ci, double const &cj,
               type const fill = type()) {
+    assert(false);    
+    // TODO: FIXME, make new implementation
     double ca = cos(radians), sa = -sin(radians);
-    container_type n(data_.size());
+    container_type n(super_type::data().size());
 
     for (int i = 0; i < int(height()); ++i) {
       for (int j = 0; j < int(width()); ++j) {
@@ -156,7 +197,7 @@ class RectangularArray {
           n[std::size_t(i) * padded_width_ + std::size_t(j)] = fill;
       }
     }
-    data_ = n;
+//    data_ = n;
   }
 
   /* Equality operator.
@@ -170,8 +211,9 @@ class RectangularArray {
     }
     bool ret = true;
 
-    for (size_type i = 0; i < data_.size(); ++i) {
-      ret &= (data_[i] == other.data_[i]);
+    // FIXME: Implementation wrong due to padding
+    for (size_type i = 0; i < super_type::data().size(); ++i) {
+      ret &= ( super_type::data()[i] == other.data()[i]);
     }
     return ret;
   }
@@ -185,6 +227,16 @@ class RectangularArray {
     return !(this->operator==(other));
   }
 
+  /* One-dimensional reference index operator.
+   * @param n is the index which is being accessed.
+   *
+   * This operator acts as a one-dimensional array accessor that is
+   * meant for non-constant object instances. Note this accessor is "slow" as
+   * it takes care that the developer does not accidently enter the
+   * padded area of the memory.
+   */      
+  type &operator[](std::size_t const &i) { return At(i); }
+
   /* One-dimensional constant reference index operator.
    * @param n is the index which is being accessed.
    *
@@ -193,18 +245,8 @@ class RectangularArray {
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  type const &operator[](size_type const &n) const { return At(n); }
-
-  /* One-dimensional reference index operator.
-   * @param n is the index which is being accessed.
-   *
-   * This operator acts as a one-dimensional array accessor that is
-   * meant for non-constant object instances. Note this accessor is "slow" as
-   * it takes care that the developer does not accidently enter the
-   * padded area of the memory.
-   */
-  type &operator[](size_type const &n) { return At(n); }
-
+  type const &operator[](std::size_t const &i) const { return At(i); }
+  
   /* Two-dimensional constant reference index operator.
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
@@ -216,7 +258,7 @@ class RectangularArray {
     assert(i < padded_height_);
     assert(j < padded_width_);
 
-    return data_[(i * padded_width_ + j)];
+    return  super_type::data()[(i * padded_width_ + j)];
   }
 
   /* Two-dimensional reference index operator.
@@ -229,7 +271,7 @@ class RectangularArray {
   type &operator()(size_type const &i, size_type const &j) {
     assert(i < padded_height_);
     assert(j < padded_width_);
-    return data_[(i * padded_width_ + j)];
+    return  super_type::data()[(i * padded_width_ + j)];
   }
 
   /* One-dimensional constant reference access function.
@@ -263,7 +305,7 @@ class RectangularArray {
     assert(i < padded_height_);
     assert(j < padded_width_);
 
-    return data_[(i * padded_width_ + j)];
+    return  super_type::data()[(i * padded_width_ + j)];
   }
 
   /* Two-dimensional reference access function.
@@ -273,7 +315,7 @@ class RectangularArray {
   type &At(size_type const &i, size_type const &j) {
     assert(i < padded_height_);
     assert(j < padded_width_);
-    return data_[(i * padded_width_ + j)];
+    return super_type::data()[(i * padded_width_ + j)];
   }
 
   /* Sets an element using one coordinatea.
@@ -282,8 +324,8 @@ class RectangularArray {
    * @param v is the new value.
    */
   type const &Set(size_type const &n, type const &v) {
-    assert(n < data_.size());
-    data_[n] = v;
+    assert(n < super_type::data().size());
+    super_type::data()[n] = v;
     return v;
   }
 
@@ -293,11 +335,11 @@ class RectangularArray {
    * @param v is the new value.
    */
   type const &Set(size_type const &i, size_type const &j, type const &v) {
-    assert((i * padded_width_ + j) < data_.size());
-    data_[(i * padded_width_ + j)] = v;
+    assert((i * padded_width_ + j) <  super_type::data().size());
+    super_type::data()[(i * padded_width_ + j)] = v;
     return v;
   }
-
+  
   /* Sets an element using two coordinates.
    * @param i is the position along the height.
    * @param j is the position along the width.
@@ -310,121 +352,6 @@ class RectangularArray {
     return Set(i, j, v);
   }
 
-  /* Applies a vector kernel to each array element.
-   * @param apply is the kernel which will be applied
-   * @param obj1 is an array containing the first kernel arguments.
-   * @param obj2 is an array containing the second kernel arguments.
-   *
-   * This method updates each element of the array using two other
-   * arrays elements at the same positions. The method is vectorised and
-   * uses the platforms vector registers if available.
-   */
-  void ApplyKernelElementWise(vector_kernel_type apply, self_type const &obj1,
-                              self_type const &obj2) {
-    assert(obj1.size() == obj2.size());
-    assert(obj1.size() == this->size());
-
-    std::size_t N = obj1.size();
-
-    vector_register_type a, b, c;
-
-    vector_register_iterator_type ia(obj1.data().pointer(), obj1.data().size());
-    vector_register_iterator_type ib(obj2.data().pointer(), obj2.data().size());
-    for (std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
-      ia.Next(a);
-      ib.Next(b);
-
-      apply(a, b, c);
-      c.Stream(this->data().pointer() + i);
-    }
-  }
-
-  /* Applies a vector kernel to each array element.
-   * @param apply is the kernel which will be applied
-   * @param obj1 is an array containing the first kernel arguments.
-   *
-   * This method updates each element of the array using the elements of
-   * one other at the same positions. The method is vectorised and
-   * uses the platforms vector registers if available.
-   */
-  void ApplyKernelElementWise(vector_kernel_type apply, self_type const &obj1) {
-    assert(obj1.size() == this->size());
-
-    std::size_t N = obj1.size();
-
-    vector_register_type a, b;
-
-    vector_register_iterator_type ia(obj1.data().pointer(), obj1.data().size());
-    for (std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
-      ia.Next(a);
-
-      apply(a, b);
-      b.Stream(this->data().pointer() + i);
-    }
-  }
-  /*
-  template< typename Args... >
-  void ApplyKernel( Args... args) {
-    enum {
-      MATRIX_COUNT = 3
-    };
-    vector_register_iterator_type matrix_vri[ MATRIX_COUNT ];
-    // TODO: Setup
-    vector_register_type matrix_register[ MATRIX_COUNT ];
-    vector_register_type ret;
-
-    std::size_t N = this->size();
-    for(std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT) {
-
-      for(std::size_t j=0; j < MATRIX_COUNT; ++j) {
-        // TODO: Unroll
-        matrix_vri[j].Next( matrix_register[j] );
-      }
-
-      ret = apply( ... );
-
-      ret.Stream( ... );
-    }
-  }
-  */
-
-  /* Applies a standard kernel to each array element.
-   * @param apply is the kernel which will be applied
-   * @param obj1 is an array containing the first kernel arguments.
-   * @param obj2 is an array containing the first kernel arguments.
-   *
-   * This method updates each element of the array using the elements of
-   * two other arrays at the same positions. The method is not vectorised.
-   */
-  void ApplyKernelElementWise(standard_kernel_type apply, self_type const &obj1,
-                              self_type const &obj2) {
-    assert(obj1.size() == obj2.size());
-    assert(obj1.size() == this->size());
-
-    std::size_t N = obj1.size();
-
-    for (std::size_t i = 0; i < N; ++i) {
-      apply(obj1[i], obj2[i], data_[i]);
-    }
-  }
-
-  /* Applies a standard kernel to each array element.
-   * @param apply is the kernel which will be applied
-   * @param obj1 is an array containing the first kernel arguments.
-   *
-   * This method updates each element of the array using the elements of
-   * one other array at the same positions. The method is not vectorised.
-   */
-  void ApplyKernelElementWise(standard_kernel_type apply,
-                              self_type const &obj1) {
-    assert(obj1.size() == this->size());
-
-    std::size_t N = obj1.size();
-
-    for (std::size_t i = 0; i < N; ++i) {
-      apply(obj1[i], data_[i]);
-    }
-  }
 
   /* Resizes the array into a square array.
    * @param hw is the new height and the width of the array.
@@ -444,6 +371,22 @@ class RectangularArray {
     width_ = w;
   }
 
+  void Resize(std::vector< std::size_t > const &shape, std::size_t const &offset = 0) {
+
+    switch((shape.size() - offset)) {
+    case 2:
+      Resize( shape[offset], shape[offset+1]);
+      break;
+    case 1:
+      Resize( 1, shape[offset] );
+      break;
+    default:
+      assert(false);
+      break;
+    }
+    
+  }  
+
   /* Allocates memory for the array without resizing.
    * @param h is new the height of the array.
    * @param w is new the width of the array.
@@ -452,34 +395,72 @@ class RectangularArray {
    * is resized accordingly.
    */
   void Reserve(size_type const &h, size_type const &w) {
+    std::size_t opw = padded_width_, ow = width_;
+    std::size_t oh = height_;
+    
     SetPaddedSizes(h, w);
+    
     container_type new_arr(padded_height_ * padded_width_);
     new_arr.SetAllZero();
 
-    size_type mH = std::min(h, height_);
-    size_type mW = std::min(w, width_);
-
-    for (size_type i = 0; i < mH; ++i) {
-      for (size_type j = 0; j < mW; ++j) new_arr[(i * w + j)] = At(i, j);
-
-      for (size_type j = mW; j < w; ++j) new_arr[(i * w + j)] = 0;
+    std::size_t I = 0, J = 0;
+    for(std::size_t i=0; (i < h) && (I < oh); ++i) {
+      for(std::size_t j=0; j < w; ++j) {
+        new_arr[i * padded_width_ + j] = this->data()[I * opw + J];
+        
+        ++J;
+        if( J == ow ) {
+          ++I;
+          J = 0;
+          if(I == oh) {
+            break;
+          }
+        }        
+      }
     }
 
-    for (size_type i = mH; i < h; ++i)
-      for (size_type j = 0; j < w; ++j) new_arr[(i * w + j)] = 0;
-    data_ = new_arr;
-
+    super_type::ReplaceData(padded_height_ * padded_width_, new_arr);
+    
     if (h < height_) height_ = h;
     if (w < width_) width_ = w;
   }
 
+  void Reshape(size_type const &h, size_type const &w) {
+    assert( (height_ * width_) == (h * w) );
+    Reserve(h, w);
+    
+    height_ = h;
+    width_ = w;
+  }
+
+  void Flatten() {
+    Reshape(1, width_ * height_);
+
+  }
+
+  void Fill(type const& value, memory::Range const &rows, memory::Range const &cols) {
+    std::size_t height = (rows.to() - rows.from()) / rows.step();
+    std::size_t width = (cols.to() - cols.from()) / cols.step();
+    LazyResize(height, width);
+    // TODO: Implement
+  }
+
+
+  void Fill(type const& value, memory::TrivialRange const &rows, memory::TrivialRange const &cols) {
+    std::size_t height = (rows.to() - rows.from()) ;
+    std::size_t width = (cols.to() - cols.from()) ;
+    LazyResize(height, width);
+    // TODO: Implement
+  }
+    
+    
   /* Resizes the array into a square array in a lazy manner.
    * @param hw is the new height and the width of the array.
    *
    * This function expects that the user will take care of memory
    * initialization.
    */
-  void LazyResize(size_type const &hw) { Resize(hw, hw); }
+  void LazyResize(size_type const &hw) { LazyResize(hw, hw); }
 
   /* Resizes the array in a lazy manner.
    * @param h is new the height of the array.
@@ -491,56 +472,17 @@ class RectangularArray {
   void LazyResize(size_type const &h, size_type const &w) {
     if ((h == height_) && (w == width_)) return;
 
-    LazyReserve(h, w);
+    SetPaddedSizes(h, w);
+
+    if ((padded_height_ * padded_width_) <  super_type::capacity()) return;
+
+    super_type::LazyResize(padded_height_ * padded_width_);    
 
     height_ = h;
     width_ = w;
 
     // TODO: Take care of padded bytes
   }
-
-  /* Allocates memory for the array in a lazy manner.
-   * @param h is new the height of the array.
-   * @param w is new the width of the array.
-   *
-   * This function expects that the user will take care of memory
-   * initialization.
-   */
-  void LazyReserve(size_type const &h, size_type const &w) {
-    SetPaddedSizes(h, w);
-
-    if ((padded_height_ * padded_width_) < capacity()) return;
-
-    container_type new_arr(padded_height_ * padded_width_);
-    new_arr.SetAllZero();
-    data_ = new_arr;
-  }
-
-  /* Reshapes the array to a new height and width.
-   * @param h is new the height of the array.
-   * @param w is new the width of the array.
-   *
-   * Padded bytes are set to zero.
-   */
-  void Reshape(size_type const &h, size_type const &w) {
-    assert(!PAD_HEIGHT);
-    assert(!PAD_WIDTH);
-    if (h * w >= size()) {
-      throw std::runtime_error(
-          "New size does not match memory - TODO, make custom exception");
-    }
-    height_ = h;
-    width_ = w;
-
-    // TODO: Set padded bytes to zero
-  }
-
-  void Flatten() { Reshape(1, size()); }
-
-  iterator begin() { return data_.begin(); }
-  iterator end() { return data_.end(); }
-  reverse_iterator rbegin() { return data_.rbegin(); }
-  reverse_iterator rend() { return data_.rend(); }
 
   /* Saves the array into a file.
    * @param filename is the filename.
@@ -564,7 +506,7 @@ class RectangularArray {
       TODO_FAIL("Could not write width - todo: make custom exc");
     }
 
-    if (fwrite(data_.pointer(), sizeof(type), this->padded_size(), fp) !=
+    if (fwrite(super_type::data().pointer(), sizeof(type), this->padded_size(), fp) !=
         this->padded_size()) {
       TODO_FAIL("Could not write matrix body - todo: make custom exc");
     }
@@ -606,7 +548,7 @@ class RectangularArray {
 
     Resize(height, width);
 
-    if (fread(data_.pointer(), sizeof(type), this->padded_size(), fp) !=
+    if (fread( super_type::data().pointer(), sizeof(type), this->padded_size(), fp) !=
         (this->padded_size())) {
       TODO_FAIL("failed to read body of matrix - TODO, ,make custom exception");
     }
@@ -632,19 +574,9 @@ class RectangularArray {
   /* Returns the size of the array. */
   size_type padded_size() const { return padded_height_ * padded_width_; }
 
-  /* Returns the capacity of the array. */
-  size_type capacity() const { return data_.padded_size(); }
-
-  /* Returns a reference to the underlying array. */
-  container_type &data() { return data_; }
-
-  /* Returns a constant reference to the underlying array. */
-  container_type const &data() const { return data_; }
-
  private:
   size_type height_ = 0, width_ = 0;
   size_type padded_height_ = 0, padded_width_ = 0;
-  container_type data_;
 
   void SetPaddedSizes(size_type const &h, size_type const &w) {
     padded_height_ = h;
@@ -668,3 +600,4 @@ class RectangularArray {
 }
 }
 #endif
+

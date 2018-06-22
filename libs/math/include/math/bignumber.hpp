@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <vector>
-#include "assert.hpp"
-#include "byte_array/basic_byte_array.hpp"
-#include "byte_array/const_byte_array.hpp"
-#include "byte_array/referenced_byte_array.hpp"
+#include "core/assert.hpp"
+#include "core/byte_array/basic_byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
 namespace fetch {
 namespace math {
 /* Implements a subset of big number functionality.

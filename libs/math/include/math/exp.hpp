@@ -1,7 +1,7 @@
 #ifndef MATH_EXP_HPP
 #define MATH_EXP_HPP
 
-#include "assert.hpp"
+#include "core/assert.hpp"
 
 #include <cassert>
 #include <cmath>
