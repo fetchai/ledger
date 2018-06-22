@@ -2,13 +2,13 @@
 #define SERIALIZER_TYPED_BYTE_ARRAY_BUFFER_HPP
 
 #include <type_traits>
-#include "assert.hpp"
-#include "byte_array/encoders.hpp"
-#include "byte_array/referenced_byte_array.hpp"
-#include "logger.hpp"
-#include "serializers/exception.hpp"
-#include "serializers/stl_types.hpp"
-#include "serializers/type_register.hpp"
+#include "core/assert.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/logger.hpp"
+#include "core/serializers/exception.hpp"
+#include "core/serializers/stl_types.hpp"
+#include "core/serializers/type_register.hpp"
 
 namespace fetch {
 namespace serializers {

@@ -1,7 +1,7 @@
 #ifndef BYTE_ARRAY_CONSUMERS_HPP
 #define BYTE_ARRAY_CONSUMERS_HPP
-#include "byte_array/const_byte_array.hpp"
-#include "byte_array/tokenizer/tokenizer.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/tokenizer/tokenizer.hpp"
 
 #include <emmintrin.h>
 namespace fetch {

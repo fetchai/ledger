@@ -1,7 +1,7 @@
 #ifndef MUTEX_HPP
 #define MUTEX_HPP
 
-#include "logger.hpp"
+#include "core/logger.hpp"
 
 #include <iostream>
 #include <map>
@@ -134,7 +134,8 @@ class DebugMutex : public AbstractMutex {
 };
 
 #ifndef NDEBUG
-typedef DebugMutex Mutex;
+// typedef DebugMutex Mutex;
+typedef ProductionMutex Mutex;
 #else
 typedef ProductionMutex Mutex;
 #endif

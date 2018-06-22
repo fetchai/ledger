@@ -1,8 +1,8 @@
 #ifndef BYTE_ARRAY_CONST_BYTE_ARRAY_HPP
 #define BYTE_ARRAY_CONST_BYTE_ARRAY_HPP
 
-#include "byte_array/basic_byte_array.hpp"
-#include "byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/basic_byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
 
 #include <algorithm>
 #include <cassert>

@@ -1,5 +1,5 @@
-#include"byte_array/encoders.hpp"
-#include "byte_array/details/encode_decode.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "core/byte_array/details/encode_decode.hpp"
 
 namespace fetch {
 namespace byte_array {

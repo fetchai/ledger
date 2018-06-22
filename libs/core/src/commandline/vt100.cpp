@@ -1,4 +1,4 @@
-#include"commandline/vt100.hpp"
+#include"core/commandline/vt100.hpp"
 
 namespace fetch {
 namespace commandline {

@@ -1,4 +1,4 @@
-#include"byte_array/details/encode_decode.hpp"
+#include"core/byte_array/details/encode_decode.hpp"
 #include<stdexcept>
 namespace fetch {
 namespace byte_array {

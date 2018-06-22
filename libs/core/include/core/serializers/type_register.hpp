@@ -3,8 +3,8 @@
 
 #include <string>
 #include <typeinfo>
-#include "byte_array/const_byte_array.hpp"
-#include "serializers/serializable_exception.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/serializable_exception.hpp"
 namespace fetch {
 namespace serializers {
 

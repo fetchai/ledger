@@ -1,10 +1,10 @@
 #ifndef SERIALIZER_BYTE_ARRAY_BUFFER_HPP
 #define SERIALIZER_BYTE_ARRAY_BUFFER_HPP
 #include <type_traits>
-#include "assert.hpp"
-#include "byte_array/const_byte_array.hpp"
-#include "byte_array/referenced_byte_array.hpp"
-#include "logger.hpp"
+#include "core/assert.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/logger.hpp"
 
 namespace fetch {
 namespace serializers {

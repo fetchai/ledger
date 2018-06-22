@@ -6,9 +6,9 @@
 #include <type_traits>
 #include <vector>
 
-#include "assert.hpp"
-#include "byte_array/referenced_byte_array.hpp"
-#include "logger.hpp"
+#include "core/assert.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/logger.hpp"
 namespace fetch {
 namespace serializers {
 

@@ -1,6 +1,6 @@
 #ifndef BYTE_ARRAY_TOKENIZER_TOKEN_HPP
 #define BYTE_ARRAY_TOKENIZER_TOKEN_HPP
-#include <byte_array/const_byte_array.hpp>
+#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
 namespace byte_array {

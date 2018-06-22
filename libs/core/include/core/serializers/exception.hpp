@@ -2,8 +2,8 @@
 #define SERIALIZER_EXCEPTION_HPP
 #include <exception>
 #include <string>
-#include "byte_array/basic_byte_array.hpp"
-#include "logger.hpp"
+#include "core/byte_array/basic_byte_array.hpp"
+#include "core/logger.hpp"
 namespace fetch {
 namespace serializers {
 

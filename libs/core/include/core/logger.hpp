@@ -10,8 +10,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "abstract_mutex.hpp"
-#include "commandline/vt100.hpp"
+#include "core/abstract_mutex.hpp"
+#include "core/commandline/vt100.hpp"
 namespace fetch {
 
 namespace log {

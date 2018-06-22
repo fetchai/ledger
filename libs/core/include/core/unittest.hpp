@@ -1,7 +1,7 @@
 #ifndef UNITTEST_HPP
 #define UNITTEST_HPP
 
-#include "commandline/vt100.hpp"
+#include "core/commandline/vt100.hpp"
 
 #include <functional>
 #include <iostream>

@@ -5,9 +5,8 @@
 #include <iostream>
 #include <ostream>
 #include <type_traits>
-#include "logger.hpp"
-#include "logger.hpp"
-#include "memory/shared_array.hpp"
+#include "core/logger.hpp"
+#include "vectorise/memory/shared_array.hpp"
 namespace fetch {
 namespace byte_array {
 class BasicByteArray;

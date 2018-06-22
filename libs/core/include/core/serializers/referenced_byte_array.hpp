@@ -1,8 +1,8 @@
 #ifndef SERIALIZER_REFERENCED_BYTE_ARRAY_HPP
 #define SERIALIZER_REFERENCED_BYTE_ARRAY_HPP
-#include "assert.hpp"
-#include "byte_array/const_byte_array.hpp"
-#include "byte_array/referenced_byte_array.hpp"
+#include "core/assert.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
 
 #include <type_traits>
 

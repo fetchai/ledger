@@ -4,9 +4,9 @@
 #include <functional>
 #include <map>
 #include <vector>
-#include "assert.hpp"
-#include "byte_array/referenced_byte_array.hpp"
-#include "byte_array/tokenizer/token.hpp"
+#include "core/assert.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/tokenizer/token.hpp"
 
 namespace fetch {
 namespace byte_array {
