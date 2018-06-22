@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.1)
 project(fetch-core)
 
 
-file(GLOB_RECURSE SRCS include/*.hpp src/*.cpp)
+include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 
-add_library(fetch-core ${SRCS})
+setup_compiler()
+
+setup_library(fetch-core)
+target_link_libraries(fetch-core PUBLIC fetch-vectorise)
