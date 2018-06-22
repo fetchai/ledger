@@ -70,7 +70,7 @@ REGISTER_SERIALIZE_TYPE("excep", SerializableException, 13);
 
 #undef REGISTER_SERIALIZE_TYPE
 #undef REGISTER_SERIALIZE_SYMBOL_TYPE
-byte_array::ConstByteArray ErrorCodeToMessage(std::size_t n) {
+inline byte_array::ConstByteArray ErrorCodeToMessage(std::size_t n) {
   switch (n) {
     case 0:
       return TypeErrorRegister<0>::name();

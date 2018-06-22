@@ -166,6 +166,18 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTargets.cmake)
 #  install(CODE "execute_process(COMMAND ${PYTHON} ${SETUP_PY} install)")
 #endif()
 
+#find_package(PNG REQUIRED)
+find_package(OpenSSL REQUIRED)
+#find_package(Threads REQUIRED)
+#
+message("OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
+message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")
+#
+
+add_library(vendor-openssl INTERFACE)
+target_link_libraries(vendor-openssl INTERFACE ${OPENSSL_LIBRARIES})
+target_include_directories(vendor-openssl INTERFACE ${OPENSSL_INCLUDE_DIR})
+
 configure_vendor_targets()
 
 configure_library_targets()

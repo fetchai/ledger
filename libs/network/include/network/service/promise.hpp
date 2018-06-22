@@ -79,9 +79,7 @@ class PromiseImplementation {
   static promise_counter_type promise_counter_;
   static fetch::mutex::Mutex counter_mutex_;
 };
-PromiseImplementation::promise_counter_type
-    PromiseImplementation::promise_counter_ = 0;
-fetch::mutex::Mutex PromiseImplementation::counter_mutex_(__LINE__, __FILE__);
+
 }
 
 class Promise {

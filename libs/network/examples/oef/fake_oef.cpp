@@ -1,8 +1,8 @@
 #include<iostream>
 #include<fstream>
-#include"network/http/server.hpp"
-#include"network/http/middleware/allow_origin.hpp"
-#include"network/http/middleware/color_log.hpp"
+#include"http/server.hpp"
+#include"http/middleware/allow_origin.hpp"
+#include"http/middleware/color_log.hpp"
 #include"core/commandline/parameter_parser.hpp"
 #include"core/random/lfg.hpp"
 #include"core/mutex.hpp"
