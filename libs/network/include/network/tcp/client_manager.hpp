@@ -1,9 +1,9 @@
 #ifndef NETWORK_CLIENT_MANAGER_HPP
 #define NETWORK_CLIENT_MANAGER_HPP
 
-#include "assert.hpp"
-#include "logger.hpp"
-#include "mutex.hpp"
+#include "core/assert.hpp"
+#include "core/logger.hpp"
+#include "core/mutex.hpp"
 #include "network/tcp/abstract_connection.hpp"
 #include "network/tcp/abstract_server.hpp"
 
@@ -11,6 +11,12 @@
 
 namespace fetch {
 namespace network {
+
+/*
+ * ClientManager holds a collection of client objects, almost certainly representing a network
+ * connection. Clients are assigned a handle by the server, which uses this to coordinate 
+ * messages to specific clients
+ */
 
 class ClientManager {
  public:
@@ -32,6 +38,7 @@ class ClientManager {
     return handle;
   }
 
+  // TODO: (`HUT`) : may be risky if handle type is made small
   void Leave(handle_type handle) {
     LOG_STACK_TRACE_POINT;
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);

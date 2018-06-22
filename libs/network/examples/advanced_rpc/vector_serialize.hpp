@@ -1,6 +1,6 @@
 #ifndef VECTOR_SERIALIZE_HPP
 #define VECTOR_SERIALIZE_HPP
-#include"serializers/stl_types.hpp"
+#include"core/serializers/stl_types.hpp"
 #include<vector>
 namespace fetch {
 namespace serializers {

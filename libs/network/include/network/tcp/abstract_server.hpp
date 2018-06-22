@@ -2,7 +2,7 @@
 #define NETWORK_ABSTRACT_SERVER_HPP
 
 #include <mutex>
-#include "mutex.hpp"
+#include "core/mutex.hpp"
 #include "network/message.hpp"
 
 namespace fetch {

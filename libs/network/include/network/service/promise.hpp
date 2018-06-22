@@ -1,11 +1,11 @@
 #ifndef SERVICE_PROMISE_HPP
 #define SERVICE_PROMISE_HPP
 
-#include "byte_array/referenced_byte_array.hpp"
-#include "logger.hpp"
-#include "mutex.hpp"
-#include "serializers/exception.hpp"
-#include "service/types.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/logger.hpp"
+#include "core/mutex.hpp"
+#include "core/serializers/exception.hpp"
+#include "network/service/types.hpp"
 
 #include <atomic>
 #include <chrono>

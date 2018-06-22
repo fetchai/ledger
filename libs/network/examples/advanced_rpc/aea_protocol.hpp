@@ -4,7 +4,7 @@
 #include"aea_functionality.hpp"
 #include"commands.hpp"
 
-#include"service/server.hpp"
+#include"network/service/server.hpp"
 
 class AEAProtocol : public AEAFunctionality, public fetch::service::Protocol { 
 public:

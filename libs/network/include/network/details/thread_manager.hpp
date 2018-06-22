@@ -1,79 +1,139 @@
 #ifndef NETWORK_THREAD_MANAGER_HPP
 #define NETWORK_THREAD_MANAGER_HPP
-#include "assert.hpp"
-#include "logger.hpp"
-#include "mutex.hpp"
+#include "core/assert.hpp"
+#include "core/logger.hpp"
+#include "core/mutex.hpp"
 #include "network/details/thread_manager_implementation.hpp"
 
 #include <functional>
 #include <map>
-#include "fetch_asio.hpp"
+#include "network/fetch_asio.hpp"
 
-namespace fetch {
-namespace network {
+namespace fetch
+{
+namespace network
+{
 
-class ThreadManager {
+class ThreadManager
+{
  public:
   typedef std::function<void()> event_function_type;
-  typedef uint32_t event_handle_type;
-  typedef details::ThreadManagerImplementation implementation_type;
-  typedef std::shared_ptr< implementation_type > pointer_type;
 
+  typedef details::ThreadManagerImplementation            implementation_type;
+  typedef typename implementation_type::event_handle_type event_handle_type;
+  typedef std::shared_ptr<implementation_type>            pointer_type;
+  typedef std::weak_ptr<implementation_type>              weak_ref_type;
+  typedef implementation_type::shared_socket_type         shared_socket_type;
+  typedef implementation_type::socket_type                socket_type;
 
-  ThreadManager(std::size_t threads = 1) {
-    pointer_ = std::make_shared< implementation_type >( threads );
+  explicit ThreadManager(std::size_t threads = 1)
+  {
+    pointer_      = std::make_shared< implementation_type >( threads );
   }
 
-  ~ThreadManager() {
+  ThreadManager(ThreadManager const &other) :
+    is_copy_(true)
+  {
+    if(other.is_copy_)
+    {
+      weak_pointer_ = other.weak_pointer_;
+    } else {
+      weak_pointer_ = other.pointer_;
+    }
   }
 
-  ThreadManager(ThreadManager const &rhs)            = default;
+  ~ThreadManager()
+  {
+    if(!is_copy_)
+    {
+      Stop();
+    }
+  }
+
   ThreadManager(ThreadManager &&rhs)                 = default;
-  ThreadManager &operator=(ThreadManager const &rhs) = default;
-  ThreadManager &operator=(ThreadManager&& rhs)      = default;
+  ThreadManager &operator=(ThreadManager const &rhs) = delete;
+  ThreadManager &operator=(ThreadManager&& rhs)      = delete;
 
-  void Start() {
-    pointer_->Start();
+  void Start()
+  {
+    if(is_copy_) return;
+    auto ptr = lock();
+    if(ptr)
+    {
+      ptr->Start();
+    }
   }
 
-  void Stop() {
-    pointer_->Stop();
-  }
-
-  asio::io_service &io_service() { return pointer_->io_service(); }
-
-  event_handle_type OnBeforeStart(event_function_type const &fnc) {
-    return pointer_->OnBeforeStart(fnc);
-  }
-
-  event_handle_type OnAfterStart(event_function_type const &fnc) {
-    return pointer_->OnAfterStart(fnc);
-  }
-
-  event_handle_type OnBeforeStop(event_function_type const &fnc) {
-    return pointer_->OnBeforeStop(fnc);
-  }
-
-  event_handle_type OnAfterStop(event_function_type const &fnc) {
-    return pointer_->OnAfterStop(fnc);
-  }
-
-  void Off(event_handle_type handle) {
-    pointer_->Off(handle);
+  void Stop()
+  {
+    if(is_copy_)
+    {
+      return;
+    }
+    auto ptr = lock();
+    if(ptr)
+    {
+      ptr->Stop();
+    }
   }
 
   template <typename F>
-  void Post(F &&f) {
-    pointer_->Post(std::move(f));
+  void Post(F &&f)
+  {
+    auto ptr = lock();
+    if(ptr)
+    {
+      return ptr->Post(f);
+    } else {
+      fetch::logger.Info("Failed to post: thread man dead.");
+    }
   }
 
   template <typename F>
-  void Post(F &&f, int milliseconds) {
-    pointer_->Post(std::move(f), milliseconds);
+  void Post(F &&f, int milliseconds)
+  {
+    auto ptr = lock();
+    if(ptr)
+    {
+      return ptr->Post(f, milliseconds);
+    }
+  }
+
+  bool is_valid()
+  {
+    return (!is_copy_) || bool(weak_pointer_.lock());
+  }
+
+  bool is_primary()
+  {
+    return (!is_copy_);
+  }
+
+  pointer_type lock()
+  {
+    if(is_copy_)
+    {
+      return weak_pointer_.lock();
+    }
+    return pointer_;
+  }
+
+  template <typename IO, typename... arguments>
+  std::shared_ptr<IO> CreateIO(arguments&&... args)
+  {
+    auto ptr = lock();
+    if(ptr)
+    {
+      return ptr->CreateIO<IO>(std::forward<arguments>(args)...);
+    }
+    std::cout << "Attempted to get IO from dead TM" << std::endl;
+    return std::shared_ptr<IO>(nullptr);
   }
 
  private:
   pointer_type pointer_;
+  weak_ref_type weak_pointer_;
+  bool is_copy_ = false;
 };
 }
 }

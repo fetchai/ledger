@@ -1,6 +1,6 @@
 #ifndef SERVICE_MESSAGE_TYPES_HPP
 #define SERVICE_MESSAGE_TYPES_HPP
-#include "service/types.hpp"
+#include "network/service/types.hpp"
 
 namespace fetch {
 namespace service {

@@ -1,11 +1,11 @@
 #include<iostream>
 #include<fstream>
-#include"http/server.hpp"
-#include"http/middleware/allow_origin.hpp"
-#include"http/middleware/color_log.hpp"
-#include"commandline/parameter_parser.hpp"
-#include"random/lfg.hpp"
-#include"mutex.hpp"
+#include"network/http/server.hpp"
+#include"network/http/middleware/allow_origin.hpp"
+#include"network/http/middleware/color_log.hpp"
+#include"core/commandline/parameter_parser.hpp"
+#include"core/random/lfg.hpp"
+#include"core/mutex.hpp"
 
 #include<map>
 #include<vector>
@@ -227,7 +227,7 @@ int main(int argc, char const **argv)
   params.Parse(argc, argv);
 
   fetch::network::ThreadManager tm(8);  
-  HTTPServer http_server(8080, &tm);
+  HTTPServer http_server(8080, tm);
   FakeOEF oef_http_interface;  
   
   http_server.AddMiddleware( fetch::http::middleware::AllowOrigin("*") );       

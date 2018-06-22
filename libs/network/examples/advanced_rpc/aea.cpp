@@ -34,10 +34,10 @@
 
 #include"vector_serialize.hpp"
 #include"commands.hpp"
-#include"service/function.hpp"
-#include"service/client.hpp"
-#include"commandline/parameter_parser.hpp"
-#include"commandline/vt100.hpp"
+#include"network/service/function.hpp"
+#include"network/service/client.hpp"
+#include"core/commandline/parameter_parser.hpp"
+#include"core/commandline/vt100.hpp"
 #include<iostream>
 
 
@@ -76,7 +76,7 @@ int main(int argc, char const **argv) {
   std::cout << "Connecting to server " << host << " on " << port << std::endl;
 
   fetch::network::ThreadManager tm;  
-  ServiceClient< fetch::network::TCPClient > client(host, port, &tm);  
+  ServiceClient< fetch::network::TCPClient > client(host, port, tm);  
 
   tm.Start();
   

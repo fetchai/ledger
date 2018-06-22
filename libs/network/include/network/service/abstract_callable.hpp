@@ -1,8 +1,8 @@
 #ifndef SERVICE_ABSTRACT_CALLABLE_HPP
 #define SERVICE_ABSTRACT_CALLABLE_HPP
-#include "byte_array/referenced_byte_array.hpp"
-#include "logger.hpp"
-#include "service/types.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/logger.hpp"
+#include "network/service/types.hpp"
 namespace fetch {
 namespace service {
 
@@ -179,7 +179,7 @@ class AbstractCallable {
 
   virtual ~AbstractCallable(){};
 
-  /* Call operator that impolements deserialization and invocation of function.
+  /* Call operator that implements deserialization and invocation of function.
    * @result is a serializer used to serialize the result.
    * @params is a serializer that is used to deserialize the arguments.
    */

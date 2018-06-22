@@ -4,11 +4,11 @@
 #include"node_functionality.hpp"
 #include"commands.hpp"
 
-#include"service/server.hpp"
+#include"network/service/server.hpp"
 
 class NodeToNodeProtocol : public NodeToNodeFunctionality, public fetch::service::Protocol { 
 public:
-  NodeToNodeProtocol(fetch::network::ThreadManager *thread_manager) :
+  NodeToNodeProtocol(fetch::network::ThreadManager thread_manager) :
     NodeToNodeFunctionality(thread_manager),
     fetch::service::Protocol() {
 

@@ -1,13 +1,13 @@
-#include "random/lfg.hpp"
-#include "serializers/byte_array_buffer.hpp"
-#include "serializers/counter.hpp"
-#include "serializers/referenced_byte_array.hpp"
-#include "serializers/stl_types.hpp"
+#include "core/random/lfg.hpp"
+#include "network/serializers/byte_array_buffer.hpp"
+#include "network/serializers/counter.hpp"
+#include "network/serializers/referenced_byte_array.hpp"
+#include "network/serializers/stl_types.hpp"
 
 #include "chain/transaction.hpp"
-#include "serializers/referenced_byte_array.hpp"
-#include "service/client.hpp"
-#include "service/server.hpp"
+#include "network/serializers/referenced_byte_array.hpp"
+#include "network/service/client.hpp"
+#include "network/service/server.hpp"
 #include "../tests/include/helper_functions.hpp"
 
 #include <chrono>
@@ -76,7 +76,7 @@ class ServiceProtocol : public Implementation, public Protocol
 class BenchmarkService : public ServiceServer<fetch::network::TCPServer>
 {
  public:
-  BenchmarkService(uint16_t port, fetch::network::ThreadManager *tm)
+  BenchmarkService(uint16_t port, fetch::network::ThreadManager tm)
       : ServiceServer(port, tm)
   {
     this->Add(SERVICE, &serviceProtocol);
@@ -103,7 +103,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   std::size_t rpcCalls     = 0;
   std::size_t setupPayload = 0;
   fetch::network::ThreadManager tm;
-  ServiceClient<fetch::network::TCPClient> client(IP, port, &tm);
+  ServiceClient<fetch::network::TCPClient> client(IP, port, tm);
   tm.Start();
 
   while(!client.is_alive())
@@ -212,9 +212,10 @@ int main(int argc, char *argv[])
   {
     std::cout << "Starting server" << std::endl;
 
+    // TODO: (`HUT`) : refactor closures to use explicit copy
     benchmarkThread = std::thread([=]() {
       fetch::network::ThreadManager threadManager(8);
-      BenchmarkService serv(port, &threadManager);
+      BenchmarkService serv(port, threadManager);
       threadManager.Start();
       std::string dummy;
       std::cin >> dummy;

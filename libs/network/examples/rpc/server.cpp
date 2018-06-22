@@ -1,6 +1,6 @@
 #include"service_consts.hpp"
 #include<iostream>
-#include"service/server.hpp"
+#include"network/service/server.hpp"
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
@@ -76,7 +76,7 @@ private:
 // And finanly we build the service
 class MyCoolService : public ServiceServer< fetch::network::TCPServer > {
 public:
-  MyCoolService(uint16_t port, fetch::network::ThreadManager *tm) : ServiceServer(port, tm) {
+  MyCoolService(uint16_t port, fetch::network::ThreadManager tm) : ServiceServer(port, tm) {
     this->Add(MYPROTO, new ServiceProtocol() );
   }
 };
@@ -84,7 +84,7 @@ public:
 
 int main() {
   fetch::network::ThreadManager tm(8);  
-  MyCoolService serv(8080, &tm);
+  MyCoolService serv(8080, tm);
   tm.Start();
 
   std::string dummy;

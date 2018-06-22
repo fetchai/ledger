@@ -8,10 +8,10 @@ class FetchService {
 public:
   FetchService(uint16_t port, std::string const&info) :
     thread_manager_(8),
-    service_(port, &thread_manager_) {
+    service_(port, thread_manager_) {
     
     aea_ =  new AEAProtocol(info);
-    node_ = new NodeToNodeProtocol( &thread_manager_ );
+    node_ = new NodeToNodeProtocol( thread_manager_ );
     
     aea_->set_node(node_);
     

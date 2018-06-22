@@ -1,21 +1,21 @@
 #ifndef SERVICE_SERVICE_CLIENT_HPP
 #define SERVICE_SERVICE_CLIENT_HPP
 
-#include "serializers/referenced_byte_array.hpp"
-#include "serializers/serializable_exception.hpp"
-#include "service/callable_class_member.hpp"
-#include "service/message_types.hpp"
-#include "service/protocol.hpp"
+#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/serializable_exception.hpp"
+#include "network/service/callable_class_member.hpp"
+#include "network/service/message_types.hpp"
+#include "network/service/protocol.hpp"
 
-#include "service/client_interface.hpp"
-#include "service/error_codes.hpp"
-#include "service/promise.hpp"
-#include "service/server_interface.hpp"
+#include "network/service/client_interface.hpp"
+#include "network/service/error_codes.hpp"
+#include "network/service/promise.hpp"
+#include "network/service/server_interface.hpp"
 
-#include "assert.hpp"
-#include "logger.hpp"
-#include "mutex.hpp"
-#include "network/tcp_client.hpp"
+#include "core/assert.hpp"
+#include "core/logger.hpp"
+#include "core/mutex.hpp"
+#include "network/tcp/tcp_client.hpp"
 
 #include <map>
 
@@ -30,37 +30,40 @@ class ServiceClient : public T,
   typedef T super_type;
 
   typedef typename super_type::thread_manager_type thread_manager_type;
-  typedef typename super_type::thread_manager_ptr_type thread_manager_ptr_type;
   typedef typename thread_manager_type::event_handle_type event_handle_type;
 
   ServiceClient(byte_array::ConstByteArray const& host, uint16_t const& port,
-                thread_manager_ptr_type thread_manager)
+                thread_manager_type thread_manager)
       : super_type(host, port, thread_manager),
         thread_manager_(thread_manager),
         message_mutex_(__LINE__, __FILE__) {
     LOG_STACK_TRACE_POINT;
-    running_ = true;  // TODO: Move to on start thread manager
   }
 
   ~ServiceClient() {
     LOG_STACK_TRACE_POINT;
-    running_ = false;
+
+    super_type::Cleanup();
   }
 
   void PushMessage(network::message_type const& msg) override {
     LOG_STACK_TRACE_POINT;
 
-    std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
-    messages_.push_back(msg);
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
+      messages_.push_back(msg);
+    }
 
-    thread_manager_->Post([this]() {
-      if (running_) this->ProcessMessages();
-    });
+    //thread_manager_.Post([this]() {
+    //  if (running_) this->ProcessMessages();
+    //});
+
+    // TODO: (`HUT`) : fix this
+    ProcessMessages();
   }
 
   void ConnectionFailed() override {
     LOG_STACK_TRACE_POINT;
-    running_ = false;
 
     this->ClearPromises();
   }
@@ -112,9 +115,7 @@ class ServiceClient : public T,
     }
   }
 
-  thread_manager_ptr_type thread_manager_;
-
-  std::atomic<bool> running_;
+  thread_manager_type thread_manager_;
   std::deque<network::message_type> messages_;
   mutable fetch::mutex::Mutex message_mutex_;
   //  std::thread *worker_thread_ = nullptr;  // TODO: use thread pool

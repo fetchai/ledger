@@ -1,12 +1,12 @@
 #ifndef SERVICE_SERVER_INTERFACE_HPP
 #define SERVICE_SERVER_INTERFACE_HPP
-#include "byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
 #include "network/message.hpp"
-#include "service/callable_class_member.hpp"
-#include "service/message_types.hpp"
-#include "service/promise.hpp"
-#include "service/protocol.hpp"
-#include "service/types.hpp"
+#include "network/service/callable_class_member.hpp"
+#include "network/service/message_types.hpp"
+#include "network/service/promise.hpp"
+#include "network/service/protocol.hpp"
+#include "network/service/types.hpp"
 
 namespace fetch {
 namespace service {
@@ -23,9 +23,10 @@ class ServiceServerInterface {
   {
     LOG_STACK_TRACE_POINT;
 
+    // TODO: (`HUT`) : better reporting of errors
     if (members_[name] != nullptr) {
       throw serializers::SerializableException(
-          error::PROTOCOL_EXISTS, byte_array_type("Member already exists: "));
+          error::PROTOCOL_EXISTS, byte_array_type("Protocol already exists. "));
     }
 
     members_[name] = protocol;

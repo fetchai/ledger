@@ -1,68 +1,119 @@
 #ifndef NETWORK_TCP_CLIENT_HPP
 #define NETWORK_TCP_CLIENT_HPP
 
-#include "byte_array/const_byte_array.hpp"
-#include "byte_array/referenced_byte_array.hpp"
-#include "logger.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/logger.hpp"
 #include "network/message.hpp"
 #include "network/tcp/client_implementation.hpp"
-#include "network/thread_manager.hpp"
-#include "serializers/byte_array_buffer.hpp"
-#include "serializers/referenced_byte_array.hpp"
+#include "network/details/thread_manager.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/referenced_byte_array.hpp"
 
-#include "mutex.hpp"
+#include "core/mutex.hpp"
 
-#include "fetch_asio.hpp"
+#include "network/fetch_asio.hpp"
 
 #include <atomic>
 #include <memory>
 #include <mutex>
 
-namespace fetch {
-namespace network {
+namespace fetch
+{
+namespace network
+{
 
-class TCPClient {
+class TCPClient
+{
  public:
-  typedef ThreadManager thread_manager_type;
-  typedef thread_manager_type* thread_manager_ptr_type;
+  typedef ThreadManager                             thread_manager_type;
   typedef typename ThreadManager::event_handle_type event_handle_type;
-  typedef uint64_t handle_type;
-  typedef TCPClientImplementation implementation_type;  
-  typedef std::shared_ptr< implementation_type > pointer_type;
-  
+  typedef uint64_t                                  handle_type;
+  typedef TCPClientImplementation                   implementation_type;
+  typedef std::shared_ptr<implementation_type>      pointer_type;
+
   TCPClient(byte_array::ConstByteArray const& host,
             byte_array::ConstByteArray const& port,
-            thread_manager_ptr_type thread_manager) noexcept
+            thread_manager_type &thread_manager) noexcept
   {
     pointer_ = std::make_shared< implementation_type >(thread_manager);
     pointer_->OnConnectionFailed([this]() { this->ConnectionFailed(); });
-    pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });    
-    
+    pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });
     pointer_->Connect(host, port);
   }
 
   TCPClient(byte_array::ConstByteArray const& host, uint16_t const& port,
-            thread_manager_ptr_type thread_manager) noexcept
+            thread_manager_type &thread_manager) noexcept
   {
-    pointer_ = std::make_shared< implementation_type >(thread_manager);
+    pointer_ = std::make_shared<implementation_type>
+      (thread_manager);
     pointer_->OnConnectionFailed([this]() { this->ConnectionFailed(); });
-    pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });    
-
-    pointer_->Connect(host, port);    
+    pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });
+    pointer_->Connect(host, port);
   }
 
-  virtual ~TCPClient() noexcept {    
+  // Policy: copy and move constructors, the last client will be the one connected
+  TCPClient(TCPClient const &rhs)
+  {
+    pointer_ = rhs.pointer_;
+    rhs.pointer_ = nullptr; // avoid having other client clearing our closures
+    Cleanup();
+    pointer_->OnConnectionFailed([this]() { this->ConnectionFailed(); });
+    pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });
+  }
+
+  TCPClient(TCPClient &&rhs)
+  {
+    pointer_ = rhs.pointer_;
+    rhs.pointer_ = nullptr; // avoid having other client clearing our closures
+    Cleanup();
+    pointer_->OnConnectionFailed([this]() { this->ConnectionFailed(); });
+    pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });
+  }
+
+  TCPClient &operator=(TCPClient const &rhs)
+  {
+    pointer_ = rhs.pointer_;
+    rhs.pointer_ = nullptr; // avoid having other client clearing our closures
+    Cleanup();
+    pointer_->OnConnectionFailed([this]() { this->ConnectionFailed(); });
+    pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });
+    return *this;
+  }
+
+  TCPClient &operator=(TCPClient&& rhs)
+  {
+    pointer_ = rhs.pointer_;
+    rhs.pointer_ = nullptr; // avoid having other client clearing our closures
+    Cleanup();
+    pointer_->OnConnectionFailed([this]() { this->ConnectionFailed(); });
+    pointer_->OnPushMessage([this](message_type const& m) { this->PushMessage(m); });
+    return *this;
+  }
+
+  virtual ~TCPClient() noexcept {
     LOG_STACK_TRACE_POINT;
-    
-    pointer_->ClearConnectionFailed();
-    pointer_->ClearPushMessage();
-    pointer_->ClearLeave();
-    pointer_->Close();
-    
-    pointer_.reset();    
+
+    if(pointer_)
+    {
+      Cleanup();
+      pointer_->Close();
+      pointer_.reset();
+    }
   }
 
-  void Send(message_type const& msg) noexcept {
+  // For safety, this MUST be called by the base class in its destructor
+  // As closures to that class exist in the client implementation
+  void Cleanup()
+  {
+    if(pointer_)
+    {
+      pointer_->ClearClosures();
+    }
+  }
+
+  void Send(message_type const& msg) noexcept
+  {
     pointer_->Send(msg);
   }
 
@@ -71,21 +122,17 @@ class TCPClient {
 
   handle_type const& handle() const noexcept { return pointer_->handle(); }
 
-  std::string Address() const noexcept {
+  std::string Address() const noexcept
+  {
     return pointer_->Address();
-  }
-
-  void OnLeave(std::function<void()> fnc) {
-    pointer_->OnLeave(fnc);
   }
 
   bool is_alive() const noexcept { return pointer_->is_alive(); }
 
-private:
-  pointer_type pointer_;
-  
+protected:
+  mutable pointer_type        pointer_;
 };
-  
+
 }
 }
 

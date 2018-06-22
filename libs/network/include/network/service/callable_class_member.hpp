@@ -1,13 +1,13 @@
 #ifndef SERVICE_CALLABLE_CLASS_MEMBER_HPP
 #define SERVICE_CALLABLE_CLASS_MEMBER_HPP
 #include <typeinfo>
-#include "logger.hpp"
-#include "serializers/byte_array_buffer.hpp"
-#include "serializers/counter.hpp"
-#include "serializers/referenced_byte_array.hpp"
-#include "serializers/stl_types.hpp"
-#include "serializers/typed_byte_array_buffer.hpp"
-#include "service/abstract_callable.hpp"
+#include "core/logger.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/counter.hpp"
+#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/stl_types.hpp"
+#include "core/serializers/typed_byte_array_buffer.hpp"
+#include "network/service/abstract_callable.hpp"
 namespace fetch {
 namespace service {
 

@@ -1,17 +1,23 @@
 #ifndef NETWORK_CLIENT_CONNECTION_HPP
 #define NETWORK_CLIENT_CONNECTION_HPP
 
-#include "assert.hpp"
-#include "logger.hpp"
-#include "mutex.hpp"
+#include "core/assert.hpp"
+#include "core/logger.hpp"
+#include "core/mutex.hpp"
 #include "network/message.hpp"
 #include "network/tcp/client_manager.hpp"
-#include "serializers/byte_array_buffer.hpp"
-#include "serializers/referenced_byte_array.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/referenced_byte_array.hpp"
 
-#include "fetch_asio.hpp"
+#include "network/fetch_asio.hpp"
 namespace fetch {
 namespace network {
+
+/*
+ * ClientConnections are spawned by the server when external clients connect. The 
+ * class will generically push data to its manager, and also allow pushing data to the 
+ * connected client.
+ */
 
 class ClientConnection : public AbstractClientConnection,
                          public std::enable_shared_from_this<ClientConnection> {
@@ -167,8 +173,9 @@ class ClientConnection : public AbstractClientConnection,
   fetch::mutex::Mutex write_mutex_;
   handle_type handle_;
   std::string address_;
-  const uint64_t networkMagic = 0xFE7C80A1FE7C80A1;
+  const uint64_t networkMagic = 0xFE7C80A1FE7C80A1; // TODO: (`HUT`) : put this in shared class
 
+  // TODO: (`HUT`) : fix this to be self-contained
   union {
     char bytes[2 * sizeof(uint64_t)];
     struct {

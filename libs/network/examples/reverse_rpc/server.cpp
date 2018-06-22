@@ -1,6 +1,6 @@
 #include"service_consts.hpp"
 #include<iostream>
-#include"service/server.hpp"
+#include"network/service/server.hpp"
 
 #include<set>
 using namespace fetch::service;
@@ -68,7 +68,7 @@ private:
 // And finanly we build the service
 class OEFService : public ServiceServer< fetch::network::TCPServer > {
 public:
-  OEFService(uint16_t port, fetch::network::ThreadManager *tm) : ServiceServer(port, tm) {
+  OEFService(uint16_t port, fetch::network::ThreadManager tm) : ServiceServer(port, tm) {
     this->Add(FetchProtocols::AEA_TO_NODE, &aea_to_node_ );
     aea_to_node_.register_service_instance( this );
     
@@ -86,7 +86,7 @@ private:
 
 int main() {
   fetch::network::ThreadManager tm(8);  
-  OEFService serv(8080, &tm);
+  OEFService serv(8080, tm);
   tm.Start();
 
   std::string search_for;

@@ -1,9 +1,9 @@
 #ifndef SERVICE_FEED_HPP
 #define SERVICE_FEED_HPP
-#include "mutex.hpp"
-#include "service/abstract_publication_feed.hpp"
-#include "service/message_types.hpp"
-#include "service/types.hpp"
+#include "core/mutex.hpp"
+#include "network/service/abstract_publication_feed.hpp"
+#include "network/service/message_types.hpp"
+#include "network/service/types.hpp"
 
 #include <iterator>
 #include <vector>

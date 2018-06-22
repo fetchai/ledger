@@ -4,13 +4,13 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include "assert.hpp"
-#include "mutex.hpp"
-#include "serializers/referenced_byte_array.hpp"
-#include "service/callable_class_member.hpp"
-#include "service/error_codes.hpp"
-#include "service/feed_subscription_manager.hpp"
-#include "service/types.hpp"
+#include "core/assert.hpp"
+#include "core/mutex.hpp"
+#include "core/serializers/referenced_byte_array.hpp"
+#include "network/service/callable_class_member.hpp"
+#include "network/service/error_codes.hpp"
+#include "network/service/feed_subscription_manager.hpp"
+#include "network/service/types.hpp"
 
 namespace fetch {
 namespace service {
@@ -55,7 +55,8 @@ class Protocol {
    * invoked in accodance with the definition of an
    * <service::AbstractCallable>.
    *
-   * This operator throws a <SerializableException> if the index is
+   * This operator throws a <SerializableException> if the index does
+   * not map to a callable
    *
    * @return a reference to the call.
    */

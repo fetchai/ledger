@@ -1,8 +1,8 @@
 #ifndef SERVICE_PUBLICATION_FEED_HPP
 #define SERVICE_PUBLICATION_FEED_HPP
-#include "assert.hpp"
-#include "service/abstract_callable.hpp"
-#include "service/abstract_publication_feed.hpp"
+#include "core/assert.hpp"
+#include "network/service/abstract_callable.hpp"
+#include "network/service/abstract_publication_feed.hpp"
 
 #include <functional>
 #include <vector>
@@ -98,6 +98,7 @@ class HasPublicationFeed : public AbstractPublicationFeed {
 
     serializer_type params;
 
+    // TODO: (`HUT`) : we should benchmark subscription too
     PackArgs(params, std::forward<Args>(args)...);
 
     fetch::logger.Debug("Publishing data for feed ", feed);

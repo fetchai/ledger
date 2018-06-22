@@ -1,10 +1,10 @@
 #define FETCH_DISABLE_LOGGING
 #include"service_consts.hpp"
 #include<iostream>
-#include"serializers/referenced_byte_array.hpp"
-#include"service/client.hpp"
-#include"logger.hpp"
-#include"commandline/parameter_parser.hpp"
+#include"core/serializers/referenced_byte_array.hpp"
+#include"network/service/client.hpp"
+#include"core/logger.hpp"
+#include"core/commandline/parameter_parser.hpp"
 using namespace fetch::commandline;
 using namespace fetch::service;
 using namespace fetch::byte_array;
@@ -61,7 +61,7 @@ int main(int argc, char const** argv)
 
   // Client setup
   fetch::network::ThreadManager tm;  
-  ServiceClient< fetch::network::TCPClient > client("localhost", 8080, &tm);
+  ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
   AEAProtocol aea_prot;
 
   for(std::size_t i = 0; i < params.arg_size(); ++i) {

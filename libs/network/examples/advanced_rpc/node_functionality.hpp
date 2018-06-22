@@ -1,9 +1,9 @@
 #ifndef NODE_FUNCTIONALITY_HPP
 #define NODE_FUNCTIONALITY_HPP
 #include"commands.hpp"
-#include"service/client.hpp"
-#include"service/publication_feed.hpp"
-#include"assert.hpp"
+#include"network/service/client.hpp"
+#include"network/service/publication_feed.hpp"
+#include"core/assert.hpp"
 
 #include<vector>
 #include<string>
@@ -14,7 +14,7 @@ class NodeToNodeFunctionality : public fetch::service::HasPublicationFeed {
 public:
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
   
-  NodeToNodeFunctionality(fetch::network::ThreadManager *thread_manager) :
+  NodeToNodeFunctionality(fetch::network::ThreadManager thread_manager) :
     thread_manager_(thread_manager)
   {  }
 
@@ -45,7 +45,7 @@ public:
 
 
 private:
-  fetch::network::ThreadManager *thread_manager_;  
+  fetch::network::ThreadManager thread_manager_;  
   std::vector< std::string > messages_;
   std::vector< std::shared_ptr< client_type> > connections_;  
 };

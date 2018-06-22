@@ -1,7 +1,7 @@
 #ifndef SERVICE_ABSTRACT_PUBLICATION_FEED_HPP
 #define SERVICE_ABSTRACT_PUBLICATION_FEED_HPP
-#include "assert.hpp"
-#include "service/abstract_callable.hpp"
+#include "core/assert.hpp"
+#include "network/service/abstract_callable.hpp"
 
 #include <functional>
 

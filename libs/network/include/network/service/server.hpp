@@ -1,21 +1,21 @@
 #ifndef SERVICE_SERVER_HPP
 #define SERVICE_SERVER_HPP
 
-#include "serializers/referenced_byte_array.hpp"
-#include "serializers/serializable_exception.hpp"
-#include "service/callable_class_member.hpp"
-#include "service/message_types.hpp"
-#include "service/protocol.hpp"
+#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/serializable_exception.hpp"
+#include "network/service/callable_class_member.hpp"
+#include "network/service/message_types.hpp"
+#include "network/service/protocol.hpp"
 
-#include "mutex.hpp"
-#include "service/client_interface.hpp"
-#include "service/error_codes.hpp"
-#include "service/promise.hpp"
-#include "service/server_interface.hpp"
+#include "core/mutex.hpp"
+#include "network/service/client_interface.hpp"
+#include "network/service/error_codes.hpp"
+#include "network/service/promise.hpp"
+#include "network/service/server_interface.hpp"
 
-#include "assert.hpp"
-#include "logger.hpp"
-#include "network/tcp_server.hpp"
+#include "core/assert.hpp"
+#include "core/logger.hpp"
+#include "network/tcp/tcp_server.hpp"
 
 #include <atomic>
 #include <deque>
@@ -32,7 +32,6 @@ class ServiceServer : public T, public ServiceServerInterface {
   typedef ServiceServer<T> self_type;
 
   typedef typename super_type::thread_manager_type thread_manager_type;
-  typedef typename super_type::thread_manager_ptr_type thread_manager_ptr_type;
   typedef typename thread_manager_type::event_handle_type event_handle_type;
   typedef typename T::handle_type handle_type;
 
@@ -70,24 +69,15 @@ class ServiceServer : public T, public ServiceServerInterface {
   };
   typedef byte_array::ConstByteArray byte_array_type;
 
-  ServiceServer(uint16_t port, thread_manager_ptr_type thread_manager)
+  ServiceServer(uint16_t port, thread_manager_type thread_manager)
       : super_type(port, thread_manager),
         thread_manager_(thread_manager),
         message_mutex_(__LINE__, __FILE__) {
     LOG_STACK_TRACE_POINT;
-
-    running_ = false;
-    event_service_start_ =
-        thread_manager->OnBeforeStart([this]() { this->running_ = true; });
-    event_service_stop_ =
-        thread_manager->OnBeforeStop([this]() { this->running_ = false; });
   }
 
   ~ServiceServer() {
     LOG_STACK_TRACE_POINT;
-
-    thread_manager_->Off(event_service_start_);
-    thread_manager_->Off(event_service_stop_);
 
     client_rpcs_mutex_.lock();
 
@@ -126,9 +116,8 @@ class ServiceServer : public T, public ServiceServerInterface {
     PendingMessage pm = {client, msg};
     messages_.push_back(pm);
 
-    if (running_) {
-      thread_manager_->Post([this]() { this->ProcessMessages(); });
-    }
+    // TODO: (`HUT`) : look at this
+    thread_manager_.Post([this]() { this->ProcessMessages(); });
   }
 
   void ProcessMessages() {
@@ -152,7 +141,7 @@ class ServiceServer : public T, public ServiceServerInterface {
       message_mutex_.unlock();
 
       if (has_messages) {
-        thread_manager_->io_service().post([this, pm]() {
+        thread_manager_.Post([this, pm]() {
           fetch::logger.Debug("Processing message call");
           if (!this->PushProtocolRequest(pm.client, pm.message)) {
             bool processed = false;
@@ -180,13 +169,10 @@ class ServiceServer : public T, public ServiceServerInterface {
     }
   }
 
-  thread_manager_ptr_type thread_manager_;
-  event_handle_type event_service_start_;
-  event_handle_type event_service_stop_;
+  thread_manager_type thread_manager_;
 
   std::deque<PendingMessage> messages_;
   mutable fetch::mutex::Mutex message_mutex_;
-  std::atomic<bool> running_;
 
   mutable fetch::mutex::Mutex client_rpcs_mutex_;
   std::map<handle_type, ClientRPCInterface*> client_rpcs_;
