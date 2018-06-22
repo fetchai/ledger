@@ -28,6 +28,7 @@ OPTION(FETCH_BUILD_TESTS "Build tests" ON)
 
 set (FETCH_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set (FETCH_ROOT_CMAKE_DIR ${FETCH_ROOT_DIR}/cmake)
+set (FETCH_ROOT_VENDOR_DIR ${FETCH_ROOT_DIR}/vendor)
 
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTargets.cmake)
@@ -163,5 +164,7 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTargets.cmake)
 #
 #  install(CODE "execute_process(COMMAND ${PYTHON} ${SETUP_PY} install)")
 #endif()
+
+configure_vendor_targets()
 
 configure_library_targets()

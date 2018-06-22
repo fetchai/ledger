@@ -9,9 +9,8 @@ function(setup_library name)
   #message(STATUS "Headers: ${headers} ${headers_length}")
   #message(STATUS "Srcs: ${srcs}")
 
-  if (srcs_length EQUAL 0)
+  if(srcs_length EQUAL 0)
 
-    message(STATUS "Header Only")
     add_library(${name} INTERFACE)
 
     target_sources(${name} INTERFACE ${headers})
@@ -20,7 +19,6 @@ function(setup_library name)
 
   else()
 
-    message(STATUS "Normal library")
     add_library(${name} ${headers} ${srcs})
 
     target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -30,19 +28,37 @@ function(setup_library name)
 endfunction()
 
 function(add_fetch_test name library file)
-  if (FETCH_BUILD_TESTS)
+  if(FETCH_BUILD_TESTS)
 
-    include( CTest )
-
+    # remove all the arguments
     list(REMOVE_AT ARGV 0)
     list(REMOVE_AT ARGV 0)
+    list(REMOVE_AT ARGV 0)
 
-    add_executable(${name} ${file})
-    target_link_libraries(${name} PRIVATE ${library})
+    # detect if the "DISABLED" flag has been passed to this test
+    set(is_disabled FALSE)
+    foreach(arg ${ARGV})
+      if(arg STREQUAL "DISABLED")
+        set(is_disabled TRUE)
+      endif()
+    endforeach()
 
-    add_test(${name} ${name} ${ARGV})
+    if(is_disabled)
 
-  endif (FETCH_BUILD_TESTS)
+      message(STATUS "WARNING: Disabled Test: ${name} - ${file}")
+
+    else()
+
+      include(CTest)
+
+      add_executable(${name} ${file})
+      target_link_libraries(${name} PRIVATE ${library})
+
+      add_test(${name} ${name} ${ARGV})
+
+    endif()
+
+  endif(FETCH_BUILD_TESTS)
 endfunction()
 
 

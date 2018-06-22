@@ -7,6 +7,11 @@ endmacro(setup_compiler)
 
 function (configure_vendor_targets)
 
+  # asio vendor library
+  add_library(vendor-asio INTERFACE)
+  target_include_directories(vendor-asio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/asio/asio/include)
+  target_compile_definitions(vendor-asio INTERFACE ASIO_STANDALONE ASIO_HEADER_ONLY ASIO_HAS_STD_SYSTEM_ERROR)
+
 endfunction (configure_vendor_targets)
 
 function (configure_library_targets)
