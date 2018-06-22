@@ -29,6 +29,22 @@ function(setup_library name)
 
 endfunction()
 
+function(add_fetch_test name library file)
+  if (FETCH_BUILD_TESTS)
+
+    include( CTest )
+
+    list(REMOVE_AT ARGV 0)
+    list(REMOVE_AT ARGV 0)
+
+    add_executable(${name} ${file})
+    target_link_libraries(${name} PRIVATE ${library})
+
+    add_test(${name} ${name} ${ARGV})
+
+  endif (FETCH_BUILD_TESTS)
+endfunction()
+
 
 #function(add_fetch_dependency name dependency)
 #

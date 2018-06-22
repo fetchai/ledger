@@ -3,31 +3,12 @@ project(fetch-vectorise)
 
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 
-
 setup_compiler()
 
 setup_library(fetch-vectorise)
 
-#add_library(fetch-vectorise INTERFACE)
-#target_sources(fetch-vectorise INTERFACE
-#  include/vectorise/info_sse.hpp
-#  include/vectorise/info.hpp
-#  include/vectorise/memory/array.hpp
-#  include/vectorise/memory/shared_array.hpp
-#  include/vectorise/memory/iterator.hpp
-#  include/vectorise/sse.hpp
-#  include/vectorise/register.hpp
-#  include/vectorise/meta/log2.hpp
-#  include/vectorise/platform.hpp
-#  include/vectorise/avx.hpp
-#  include/vectorise/iterator.hpp
-#  include/vectorise/info_avx.hpp
-#)
-#
-#add_executable(vectorise-tests
-#  tests/memory/shared_array_test.cpp
-#)
-#
-#target_link_libraries(vectorise-tests INTERFACE fetch-vectorise)
+add_fetch_test(vec_exp fetch-vectorise tests/vectorize/exp.cpp)
+add_fetch_test(parallel_dispatcher_test fetch-vectorise tests/memory/parallel_dispatcher.cpp)
+#add_fetch_test(shared_array_tests fetch-vectorise tests/memory/shared_array_test.cpp)
 
 
