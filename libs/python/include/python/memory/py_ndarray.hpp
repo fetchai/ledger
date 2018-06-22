@@ -20,30 +20,11 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
 //    .def(py::init< RectangularArray<T> && >())
     .def(py::init< const RectangularArray<T> & >())
     //    .def(py::self = py::self )
-
+    .def("height", &RectangularArray< T >::height)
     .def("Save", &RectangularArray< T >::Save)
     .def("size", &RectangularArray< T >::size)
-    .def("height", &RectangularArray< T >::height)    
     .def("width", &RectangularArray< T >::width)
-    .def("padded_height", &RectangularArray< T >::padded_height)    
-    .def("padded_width", &RectangularArray< T >::padded_width)
-
-    .def_static("Zeros", &RectangularArray< T >::Zeros)
-    .def_static("UniformRandom", &RectangularArray< T >::UniformRandom)
-    
-    .def("Copy", [](RectangularArray< T > const &other ) {
-        RectangularArray< T > ret;
-        ret.Copy( other );
-        
-        return ret;
-      })
-    
-    .def("Sort", &RectangularArray< T >::Sort)
-    .def("Flatten", &RectangularArray< T >::Flatten)    
-    .def("Reshape",[](RectangularArray< T > &ret, std::size_t const &h, std::size_t const &w) {
-        if( (h*w) != (ret.height() * ret.width()) ) throw std::length_error("size does not match new size");
-        ret.Reshape(h,w);
-      })    
+    .def("Copy", &RectangularArray< T >::Copy)
     .def("Resize", ( void (RectangularArray< T >::*)(const typename RectangularArray< T >::size_type &) ) &RectangularArray< T >::Resize)
     .def("Resize", ( void (RectangularArray< T >::*)(const typename RectangularArray< T >::size_type &, const typename RectangularArray< T >::size_type &) ) &RectangularArray< T >::Resize)
     .def("Rotate", ( void (RectangularArray< T >::*)(const double &, const typename RectangularArray< T >::type) ) &RectangularArray< T >::Rotate)
@@ -55,85 +36,33 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
     .def("Load", &RectangularArray< T >::Load)
     .def("Set", ( const T & (RectangularArray< T >::*)(const typename RectangularArray< T >::size_type &, const T &) ) &RectangularArray< T >::Set)
     .def("Set", ( const T & (RectangularArray< T >::*)(const typename RectangularArray< T >::size_type &, const typename RectangularArray< T >::size_type &, const T &) ) &RectangularArray< T >::Set)
-    .def("Crop", [](RectangularArray< T > &ret, RectangularArray< T > const &A, std::size_t const &i, std::size_t const &h, std::size_t const &j, std::size_t const &w) {
-        if ((i+h) >  A.height()) throw py::index_error("height of matrix exceeded");
-        if ((j+w) >  A.width()) throw py::index_error("width of matrix exceeded");
-        
-        ret.Resize( h, w );
-        ret.Crop(A, i, h, j, w);
-      })
-
-    .def("Column", [](RectangularArray< T > &ret, RectangularArray< T > const &A, std::size_t const &i) {
-        if (i >=  A.width()) throw py::index_error("height of matrix exceeded");
-        ret.Resize( A.height(), 1 );
-        ret.Column(A,i);        
-      })
-
-    .def("Row", [](RectangularArray< T > &ret, RectangularArray< T > const &A, std::size_t const &i) {        
-        if (i >=  A.height()) throw py::index_error("width of matrix exceeded");
-        ret.Resize( 1, A.width() );
-        ret.Row(A,i);
-      })
-
-
-    .def("Column", [](RectangularArray< T > &ret, RectangularArray< T > const &A, memory::Range const &range) {
-        if (range.from() >=  range.to()) throw py::index_error("i must be smaller than j");
-        if (range.to() >=  A.width()) throw py::index_error("width of matrix exceeded");        
-        ret.Resize( A.height(), range.to()-range.from() );
-        ret.Column(A, range.ToTrivialRange(A.width()) );
-      })
-
-    .def("Row", [](RectangularArray< T > &ret, RectangularArray< T > const &A, memory::Range const &range) {
-        if (range.from() >=  range.to()) throw py::index_error("i must be smaller than j");
-        if (range.to() >=  A.height()) throw py::index_error("width of matrix exceeded");        
-
-        ret.Resize(  range.to()-range.from() , A.width() );
-        ret.Row(A, range.ToTrivialRange(A.height()) );
-      })
-    
+    .def("Crop", &RectangularArray< T >::Crop)
     .def("At", ( const typename RectangularArray< T >::type & (RectangularArray< T >::*)(const typename RectangularArray< T >::size_type &) const ) &RectangularArray< T >::At)
     .def("At", ( const typename RectangularArray< T >::type & (RectangularArray< T >::*)(const typename RectangularArray< T >::size_type &, const typename RectangularArray< T >::size_type &) const ) &RectangularArray< T >::At)
     .def("At", ( T & (RectangularArray< T >::*)(const typename RectangularArray< T >::size_type &, const typename RectangularArray< T >::size_type &) ) &RectangularArray< T >::At)
     .def("At", ( T & (RectangularArray< T >::*)(const typename RectangularArray< T >::size_type &) ) &RectangularArray< T >::At)
 
-    .def("__getitem__", [](const RectangularArray< T > &s, int a) {
-
-        if(a < 0)  a += int(s.size()) ;
-        std::size_t i = std::size_t(a);
+    .def("__getitem__", [](const RectangularArray< T > &s, std::size_t i) {
         if (i >= s.size()) throw py::index_error();
-        
         return s[i];
       })
-    .def("__setitem__", [](RectangularArray< T > &s, int a, T const& v) {
-        if(a < 0)  a += int(s.size()) ;
-        std::size_t i = std::size_t(a);
+    .def("__setitem__", [](RectangularArray< T > &s, std::size_t i, T const& v) {
         if (i >= s.size()) throw py::index_error();
-
         s[i] = v;
       })
     .def("__getitem__", [](const RectangularArray< T > &s, py::tuple index) {
         if (py::len( index ) != 2) throw py::index_error();
-        int a = index[0].cast< int >();        
-        int b = index[1].cast< int >();
-        if(a < 0)  a += int(s.height()) ;
-        if(b < 0)  b += int(s.width()) ;
-        std::size_t i = std::size_t(a);
-        std::size_t j = std::size_t(b);
-        
-        if(i >= s.height())  throw py::index_error();
-        if(j >= s.width())  throw py::index_error();                
-        
+        std::size_t i = index[0].cast< std::size_t >();        
+        std::size_t j = index[1].cast< std::size_t >();
+        if(std::size_t(i) >= s.height())  throw py::index_error();
+        if(std::size_t(j) >= s.width())  throw py::index_error();                
+
         return s(i, j);
       })
     .def("__setitem__", [](RectangularArray< T > &s,  py::tuple index, T const& v) {
         if (py::len( index ) != 2) throw py::index_error();
-        int a = index[0].cast< int >();        
-        int b = index[1].cast< int >();
-        if(a < 0)  a += int(s.height()) ;
-        if(b < 0)  b += int(s.width()) ;
-        std::size_t i = std::size_t(a);
-        std::size_t j = std::size_t(b);
-
+        std::size_t i = index[0].cast< std::size_t >();        
+        std::size_t j = index[1].cast< std::size_t >();
         if(std::size_t(i) >= s.height())  throw py::index_error();
         if(std::size_t(j) >= s.width())  throw py::index_error();                
 

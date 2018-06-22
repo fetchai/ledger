@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_RANDOM_BITGENERATOR_HPP
 #define LIBFETCHCORE_RANDOM_BITGENERATOR_HPP
-#include "random/bitgenerator.hpp"
 
-#include"fetch_pybind.hpp"
+#include"core/random/bitgenerator.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {

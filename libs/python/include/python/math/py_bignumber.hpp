@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_MATH_BIGNUMBER_HPP
 #define LIBFETCHCORE_MATH_BIGNUMBER_HPP
-#include "math/bignumber.hpp"
 
-#include"fetch_pybind.hpp"
+#include"math/bignumber.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {

@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_RANDOM_LCG_HPP
 #define LIBFETCHCORE_RANDOM_LCG_HPP
-#include "random/lcg.hpp"
 
-#include"fetch_pybind.hpp"
+#include"core/random/lcg.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {

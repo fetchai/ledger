@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_MEMORY_ARRAY_HPP
 #define LIBFETCHCORE_MEMORY_ARRAY_HPP
-#include "memory/array.hpp"
 
-#include"fetch_pybind.hpp"
+#include"vectorise/memory/array.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {

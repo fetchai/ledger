@@ -3,6 +3,9 @@
 #pragma GCC diagnostic ignored "-Wpedantic"
 #pragma GCC diagnostic ignored "-Wall"
 #pragma GCC diagnostic ignored "-Wextra"
+#pragma GCC diagnostic ignored "-Wmany-braces-around-scalar-init"
+#pragma GCC diagnostic ignored "-Wbraced-scalar-init"
+#pragma GCC diagnostic ignored "-Wc++11-compat-pedantic"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"

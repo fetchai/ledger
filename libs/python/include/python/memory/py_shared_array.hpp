@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_MEMORY_SHARED_ARRAY_HPP
 #define LIBFETCHCORE_MEMORY_SHARED_ARRAY_HPP
-#include "memory/shared_array.hpp"
 
-#include"fetch_pybind.hpp"
+#include"vectorise/memory/shared_array.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {
@@ -31,8 +31,9 @@ void BuildSharedArray(std::string const &custom_name, pybind11::module &module) 
     .def("operator[]", ( const T & (SharedArray< T >::*)(const std::size_t &) const ) &SharedArray< T >::operator[])
     //    .def(py::self = py::self )
     .def("Copy", &SharedArray< T >::Copy)
-    .def("pointer", &SharedArray< T >::pointer)
-    .def("size", &SharedArray< T >::size);
+    .def("size", [](SharedArray< T > const &o) {
+        return o.size();
+      });
 
 }
 };

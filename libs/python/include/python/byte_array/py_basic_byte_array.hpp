@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_BYTE_ARRAY_BASIC_BYTE_ARRAY_HPP
 #define LIBFETCHCORE_BYTE_ARRAY_BASIC_BYTE_ARRAY_HPP
-#include "byte_array/basic_byte_array.hpp"
 
-#include"fetch_pybind.hpp"
+#include"core/byte_array/basic_byte_array.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {

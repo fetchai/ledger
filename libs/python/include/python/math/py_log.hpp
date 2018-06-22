@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_MATH_LOG_HPP
 #define LIBFETCHCORE_MATH_LOG_HPP
-#include "math/log.hpp"
 
-#include"fetch_pybind.hpp"
+#include"math/log.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {

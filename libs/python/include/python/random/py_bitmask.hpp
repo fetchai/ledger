@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_RANDOM_BITMASK_HPP
 #define LIBFETCHCORE_RANDOM_BITMASK_HPP
-#include "random/bitmask.hpp"
 
-#include"fetch_pybind.hpp"
+#include"core/random/bitmask.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {

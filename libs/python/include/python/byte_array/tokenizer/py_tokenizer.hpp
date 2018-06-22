@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_BYTE_ARRAY_TOKENIZER_TOKENIZER_HPP
 #define LIBFETCHCORE_BYTE_ARRAY_TOKENIZER_TOKENIZER_HPP
-#include "byte_array/tokenizer/tokenizer.hpp"
 
-#include"fetch_pybind.hpp"
+#include"core/byte_array/tokenizer/tokenizer.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {

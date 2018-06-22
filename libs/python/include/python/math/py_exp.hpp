@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_MATH_EXP_HPP
 #define LIBFETCHCORE_MATH_EXP_HPP
-#include "math/exp.hpp"
 
-#include"fetch_pybind.hpp"
+#include"math/exp.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {

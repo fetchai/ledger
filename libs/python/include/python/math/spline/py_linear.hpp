@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_MATH_SPLINE_LINEAR_HPP
 #define LIBFETCHCORE_MATH_SPLINE_LINEAR_HPP
-#include "math/spline/linear.hpp"
 
-#include"fetch_pybind.hpp"
+#include"math/spline/linear.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {

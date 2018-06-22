@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_IMAGE_IMAGE_HPP
 #define LIBFETCHCORE_IMAGE_IMAGE_HPP
-#include "image/image.hpp"
 
-#include"fetch_pybind.hpp"
+#include"python/image/image.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {

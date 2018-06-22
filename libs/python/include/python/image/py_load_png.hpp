@@ -1,8 +1,8 @@
 #ifndef LIBFETCHCORE_IMAGE_LOAD_PNG_HPP
 #define LIBFETCHCORE_IMAGE_LOAD_PNG_HPP
-#include "image/load_png.hpp"
 
-#include"fetch_pybind.hpp"
+#include"pythin/image/load_png.hpp"
+#include"python/fetch_pybind.hpp"
 
 namespace fetch
 {
