@@ -1,23 +1,32 @@
 #ifndef VECTORIZE_ITERATOR_HPP
 #define VECTORIZE_ITERATOR_HPP
+//#include"vectorise/memory/shared_array.hpp"
+//#include"vectorise/memory/array.hpp"
 #include <cassert>
 
 namespace fetch {
 namespace vectorize {
 
-template <typename T, std::size_t N = sizeof(T),
-          typename S = typename VectorInfo<T, N>::register_type>
+template <typename T, std::size_t N = sizeof(T)>
 class VectorRegisterIterator {
  public:
   typedef T type;
-  typedef VectorRegister<T, N, S> vector_register_type;
+  typedef VectorRegister<T, N> vector_register_type;
   typedef typename vector_register_type::mm_register_type mm_register_type;
 
+  
+  VectorRegisterIterator()
+    : ptr_(nullptr),
+      end_(nullptr) { }  
   /*
-  VectorRegisterIterator(type const *d)
-    : ptr_( (mm_register_type*)d ),
-      end_(nullptr) { }
-  */
+  VectorRegisterIterator(memory::Array< type > const &arr)
+    : ptr_((mm_register_type *)arr.pointer()),
+      end_((mm_register_type *)(arr.pointer() + arr.size())) {}
+  
+  VectorRegisterIterator(memory::SharedArray< type > const &arr)
+    : ptr_((mm_register_type *)arr.pointer()),
+      end_((mm_register_type *)(arr.pointer() + arr.size())) {}
+  */  
   VectorRegisterIterator(type const *d, std::size_t size)
       : ptr_((mm_register_type *)d), end_((mm_register_type *)(d + size)) {}
 

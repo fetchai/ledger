@@ -1,6 +1,6 @@
 #ifndef VECTORIZE_REGISTER_HPP
 #define VECTORIZE_REGISTER_HPP
-#include "vectorize/info.hpp"
+#include "vectorise/info.hpp"
 
 #include <iostream>
 #include <type_traits>
@@ -17,12 +17,11 @@
 namespace fetch {
 namespace vectorize {
 
-template <typename T, std::size_t N = sizeof(T),
-          typename S = typename VectorInfo<T, N>::register_type>
+template <typename T, std::size_t N = sizeof(T) >
 class VectorRegister {
  public:
   typedef T type;
-  typedef S mm_register_type;
+  typedef T mm_register_type;
 
   enum {
     E_VECTOR_SIZE = sizeof(mm_register_type),
@@ -40,6 +39,27 @@ class VectorRegister {
 
   explicit operator T() { return data_; }
 
+  template<typename G>
+  static G dsp_sum(G const *a, std::size_t const &n) 
+  {
+    G ret(0);
+    for(std::size_t i=0; i < n; ++i) {
+      ret += a[i];
+    }
+    return ret;    
+  }
+
+  template<typename G>  
+  static G dsp_sum_of_product(G const *a, G const *b, std::size_t const &n) 
+  {
+    T ret(0);
+    for(std::size_t i=0; i < n; ++i) {
+      ret += a[i] * b[i];
+    }
+    return ret;
+  }
+  
+  
 #define FETCH_ADD_OPERATOR(OP)                              \
   VectorRegister operator OP(VectorRegister const &other) { \
     return VectorRegister(type(data_ OP other.data_));      \

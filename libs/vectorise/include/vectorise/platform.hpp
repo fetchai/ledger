@@ -1,6 +1,6 @@
 #ifndef PLATFORM_HPP
 #define PLATFORM_HPP
-#include "vectorize/sse.hpp"
+#include "vectorise/vectorise.hpp"
 
 namespace fetch {
 namespace platform {

@@ -1,6 +1,11 @@
 #ifndef MEMORY_ARRAY_HPP
 #define MEMORY_ARRAY_HPP
 
+#include "vectorise/memory/iterator.hpp"
+#include "vectorise/meta/log2.hpp"
+#include "vectorise/platform.hpp"
+#include "vectorise/memory/parallel_dispatcher.hpp"
+
 #include <mm_malloc.h>
 #include <algorithm>
 #include <atomic>
@@ -8,13 +13,11 @@
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
-#include "iterator.hpp"
-#include "meta/log2.hpp"
-#include "platform.hpp"
+
 namespace fetch {
 namespace memory {
 
-template <typename T>
+template <typename T, std::size_t type_size = sizeof(T)>
 class Array {
  public:
   typedef std::size_t size_type;
@@ -25,10 +28,19 @@ class Array {
   typedef Array<T> self_type;
   typedef T type;
 
+  typedef ConstParallelDispatcher<type> const_parallel_dispatcher_type;    
+  typedef ParallelDispatcher<type> parallel_dispatcher_type;
+  typedef typename parallel_dispatcher_type::vector_register_type vector_register_type;
+  typedef typename parallel_dispatcher_type::vector_register_iterator_type vector_register_iterator_type;  
+  
   enum {
     E_SIMD_SIZE = (platform::VectorRegisterSize<type>::value >> 3),
-    E_SIMD_COUNT = E_SIMD_SIZE / sizeof(T),
-    E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value
+    E_SIMD_COUNT_IM = E_SIMD_SIZE / type_size,    
+    E_SIMD_COUNT = (E_SIMD_COUNT_IM > 0
+             ? E_SIMD_COUNT_IM
+             : 1),  // Note that if a type is too big to fit, we pretend it can
+    E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value,
+    IS_SHARED = 0
   };
 
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT),
@@ -48,6 +60,9 @@ class Array {
     std::swap(data_, other.data_);
   }
 
+  ConstParallelDispatcher<type> in_parallel() const { return ConstParallelDispatcher<type>(pointer(), size()); }    
+  ParallelDispatcher<type> in_parallel() { return ParallelDispatcher<type>(pointer(), size()); }  
+  
   void SetAllZero() {
     assert(data_ != nullptr);
 
@@ -60,6 +75,12 @@ class Array {
     memset(data_ + size(), 0, (padded_size() - size()) * sizeof(type));
   }
 
+  void SetZeroAfter(std::size_t const &n) {
+    memset(data_ + n, 0, (padded_size() - n) * sizeof(type));
+  }
+  
+
+  
   Array &operator=(Array &&other) {
     std::swap(size_, other.size_);
     std::swap(data_, other.data_);
@@ -121,8 +142,8 @@ class Array {
   self_type &operator=(Array const &other) {
     if (&other == this) return *this;
 
-    if (data_ != nullptr) delete[] data_;
-    data_ = new T[other.padded_size()];
+    if (data_ != nullptr) free( data_ );
+    data_ = (type *)_mm_malloc(other.padded_size() * sizeof(type), 16);
     size_ = other.size();
 
     for (std::size_t i = 0; i < size_; ++i) data_[i] = other[i];
