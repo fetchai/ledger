@@ -4,18 +4,25 @@
 cmake_minimum_required(VERSION 3.1)
 project(fetch-http)
 
+# CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 
+# Compiler Configuration
 setup_compiler()
+
+#-------------------------------------------------------------------------------
+# Main Library Target
+#-------------------------------------------------------------------------------
 
 setup_library(fetch-http)
 target_link_libraries(fetch-http PUBLIC fetch-network)
 
-setup_library_examples(fetch-http)
-
 #-------------------------------------------------------------------------------
 # Example Targets
 #-------------------------------------------------------------------------------
+
+setup_library_examples(fetch-http)
+
 
 # http-server
 #add_executable(example-http-server examples/http/server.cpp)
