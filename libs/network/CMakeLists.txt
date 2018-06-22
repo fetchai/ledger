@@ -33,3 +33,13 @@ add_fetch_test(promise_counter_test fetch-network tests/rpc/promise_counter.cpp 
 #add_fetch_test(referenced_byte_array_test fetch-network tests/serializers/referenced_byte_array.cpp)
 #standard_test(typed_byte_array_test serializers/typed_byte_array_test.cpp)
 #standard_test(variant_test script/variant.cpp)
+
+#-------------------------------------------------------------------------------
+# Example Targets
+#-------------------------------------------------------------------------------
+
+setup_library_examples(fetch-network)
+
+if(FETCH_BUILD_EXAMPLES)
+  target_link_libraries(example_swarm PRIVATE fetch-http)
+endif(FETCH_BUILD_EXAMPLES)

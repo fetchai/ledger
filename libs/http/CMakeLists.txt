@@ -9,6 +9,17 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 setup_library(fetch-http)
+target_link_libraries(fetch-http PUBLIC fetch-network)
+
+setup_library_examples(fetch-http)
+
+#-------------------------------------------------------------------------------
+# Example Targets
+#-------------------------------------------------------------------------------
+
+# http-server
+#add_executable(example-http-server examples/http/server.cpp)
+#target_link_libraries(example-http-server PRIVATE fetch-http)
 
 #cmake_minimum_required (VERSION 2.8.0)
 #project (fetch)

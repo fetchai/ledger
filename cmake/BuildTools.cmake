@@ -9,6 +9,7 @@ function(setup_library name)
   #message(STATUS "Headers: ${headers} ${headers_length}")
   #message(STATUS "Srcs: ${srcs}")
 
+  # main library configuration
   if(srcs_length EQUAL 0)
 
     add_library(${name} INTERFACE)
@@ -24,7 +25,37 @@ function(setup_library name)
     target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
   endif()
+endfunction()
 
+
+function(setup_library_examples library)
+
+  if(FETCH_BUILD_EXAMPLES)
+
+    # examples
+    set(examples_root ${CMAKE_CURRENT_SOURCE_DIR}/examples)
+    if(IS_DIRECTORY ${examples_root})
+
+      file(GLOB children RELATIVE ${examples_root} ${examples_root}/*)
+      set(dirlist "")
+      foreach(child ${children})
+        set(example_path ${examples_root}/${child})
+        if(IS_DIRECTORY ${example_path})
+          set(example_name "example_${child}")
+
+          file(GLOB_RECURSE example_headers ${example_path}/*.hpp)
+          file(GLOB_RECURSE example_srcs ${example_path}/*.cpp)
+
+          add_executable(${example_name} ${example_headers} ${example_srcs})
+          target_link_libraries(${example_name} PRIVATE ${library})
+
+          message(STATUS "Creating ${example_name} target linking to ${library}")
+
+        endif()
+      endforeach()
+    endif()
+
+  endif(FETCH_BUILD_EXAMPLES)
 endfunction()
 
 function(add_fetch_test name library file)

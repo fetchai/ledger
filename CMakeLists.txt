@@ -1,7 +1,8 @@
 cmake_minimum_required (VERSION 2.8.0)
 project (fetch)
 
-OPTION(FETCH_BUILD_TESTS "Build tests" ON)
+option(FETCH_BUILD_TESTS "Build tests" ON)
+option(FETCH_BUILD_EXAMPLES "Build tests" ON)
 #OPTION(FETCH_BUILD_EXAMPLES "Build examples" ON)
 #OPTION(FETCH_BUILD_BENCHMARK "Build benchmark" ON)
 #OPTION(FETCH_BUILD_PYTHON_BINDINGS "Build Python examples" ON)
