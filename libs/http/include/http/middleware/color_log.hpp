@@ -1,7 +1,7 @@
 #ifndef HTTP_MIDDLEWARE_COLOR_LOG_HPP
 #define HTTP_MIDDLEWARE_COLOR_LOG_HPP
 #include <iostream>
-#include "commandline/vt100.hpp"
+#include "core/commandline/vt100.hpp"
 namespace fetch {
 namespace http {
 namespace middleware {

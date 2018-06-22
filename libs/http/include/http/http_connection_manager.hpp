@@ -2,7 +2,7 @@
 #define HTTP_CONNECTION_MANAGER_HPP
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
-#include "logger.hpp"
+#include "core/logger.hpp"
 
 namespace fetch {
 namespace http {

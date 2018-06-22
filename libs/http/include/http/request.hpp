@@ -1,10 +1,10 @@
 #ifndef HTTP_REQUEST_HPP
 #define HTTP_REQUEST_HPP
-#include "assert.hpp"
-#include "byte_array/consumers.hpp"
-#include "byte_array/referenced_byte_array.hpp"
-#include "byte_array/tokenizer/tokenizer.hpp"
-#include "fetch_asio.hpp"
+#include "core/assert.hpp"
+#include "core/byte_array/consumers.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/tokenizer/tokenizer.hpp"
+#include "network/fetch_asio.hpp"
 #include "http/header.hpp"
 #include "http/method.hpp"
 #include "http/query.hpp"

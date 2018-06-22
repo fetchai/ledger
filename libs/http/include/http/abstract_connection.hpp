@@ -2,7 +2,7 @@
 #ifndef HTTP_ABSTRACT_CONNECTION_HPP
 #define HTTP_ABSTRACT_CONNECTION_HPP
 
-#include "fetch_asio.hpp"
+#include "network/fetch_asio.hpp"
 #include "http/response.hpp"
 
 #include <memory>

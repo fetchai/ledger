@@ -1,7 +1,7 @@
 #ifndef HTTP_RESPONSE_HPP
 #define HTTP_RESPONSE_HPP
 #include <ostream>
-#include "fetch_asio.hpp"
+#include "network/fetch_asio.hpp"
 #include "http/header.hpp"
 #include "http/mime_types.hpp"
 #include "http/status.hpp"

@@ -5,9 +5,9 @@
 #include <functional>
 #include <regex>
 #include <vector>
-#include "byte_array/const_byte_array.hpp"
-#include "byte_array/referenced_byte_array.hpp"
-#include "logger.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/logger.hpp"
 
 namespace fetch {
 namespace http {

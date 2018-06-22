@@ -1,13 +1,13 @@
 #ifndef HTTP_CONNECTION_HPP
 #define HTTP_CONNECTION_HPP
-#include "assert.hpp"
-#include "fetch_asio.hpp"
+#include "core/assert.hpp"
+#include "network/fetch_asio.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/http_connection_manager.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
-#include "logger.hpp"
-#include "mutex.hpp"
+#include "core/logger.hpp"
+#include "core/mutex.hpp"
 
 #include <deque>
 #include <memory>

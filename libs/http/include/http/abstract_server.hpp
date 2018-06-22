@@ -1,7 +1,7 @@
 #ifndef HTTP_ABSTRACT_SERVER_HPP
 #define HTTP_ABSTRACT_SERVER_HPP
 #include "http/request.hpp"
-#include "mutex.hpp"
+#include "core/mutex.hpp"
 
 namespace fetch {
 namespace http {

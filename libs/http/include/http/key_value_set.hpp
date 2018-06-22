@@ -1,6 +1,6 @@
 #ifndef HTTP_KEYVALUE_SET
 #define HTTP_KEYVALUE_SET
-#include "byte_array/const_byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 #include <map>
 namespace fetch {
