@@ -11,3 +11,6 @@
 	path = tests/vendor/googletest
 	url = github:google/googletest.git
 
+[submodule "vendor/googletest"]
+	path = vendor/googletest
+	url = github:google/googletest.git
