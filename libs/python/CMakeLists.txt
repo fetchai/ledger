@@ -1,3 +1,14 @@
+################################################################################
+# F E T C H   P Y T H O N   B I N D I N G S   L I B R A R Y
+################################################################################
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+project(fetch-python)
+
+pybind11_add_module(pyfetch src/main.cpp)
+target_include_directories(pyfetch PRIVATE include)
+target_link_libraries(pyfetch PRIVATE fetch-math)
+#target_link_libraries(fetch PRIVATE libfetchcore)
+
 #cmake_minimum_required(VERSION 2.8.12)
 #project(fetch-python)
 #
