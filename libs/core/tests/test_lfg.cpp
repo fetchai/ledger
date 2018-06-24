@@ -1,7 +1,7 @@
 #include <cmath>
 #include <iostream>
-#include <random/lfg.hpp>
 #include <vector>
+#include "core/random/lfg.hpp"
 #include "bit_statistics.hpp"
 
 int main() {
