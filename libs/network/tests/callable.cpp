@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "serializers/byte_array_buffer.hpp"
-#include "service/callable_class_member.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "network/service/callable_class_member.hpp"
 using namespace fetch::service;
 
 class Foo {

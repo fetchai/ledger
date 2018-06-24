@@ -1,5 +1,5 @@
 #include <iostream>
-#include <script/variant.hpp>
+#include "http/script/variant.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -7,7 +7,7 @@
 #include <sstream>
 using namespace fetch::script;
 
-#include "unittest.hpp"
+#include "testing/unittest.hpp"
 
 int main() {
   SCENARIO("Basic manipulation") {

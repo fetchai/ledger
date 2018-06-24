@@ -25,6 +25,7 @@ add_fetch_test(tcp_client_stress_test fetch-network tests/network/tcp_client_str
 add_fetch_test(thread_manager_stress_test fetch-network tests/network/thread_manager_stress.cpp)
 add_fetch_test(dummy_test fetch-network tests/network/dummy_test.cpp)
 add_fetch_test(thread_pool_stress_test fetch-network tests/network/thread_pool_stress.cpp)
+add_fetch_test(callable_test fetch-network tests/callable.cpp)
 
 # not working
 add_fetch_test(promise_counter_test fetch-network tests/rpc/promise_counter.cpp DISABLED)

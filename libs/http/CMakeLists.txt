@@ -32,6 +32,9 @@ setup_library_examples(fetch-http)
 add_executable(benchmark_json_document benchmark/json/document.cpp)
 target_link_libraries(benchmark_json_document PRIVATE fetch-http fetch-testing)
 
+add_fetch_test(json_document_test fetch-http tests/json/document.cpp)
+add_fetch_test(variant_test fetch-http tests/script/variant.cpp)
+
 # http-server
 #add_executable(example-http-server examples/http/server.cpp)
 #target_link_libraries(example-http-server PRIVATE fetch-http)
