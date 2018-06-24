@@ -22,7 +22,6 @@ option(FETCH_ARCH_AVX   "Architecture maximally supports AVX"     OFF)
 option(FETCH_ARCH_FMA   "Architecture maximally supports FMA"     OFF)
 option(FETCH_ARCH_AVX2  "Architecture maximally supports AVX2"    OFF)
 
-#
 #-------------------------------------------------------------------------------
 # Top Level Setup
 #-------------------------------------------------------------------------------
@@ -47,25 +46,8 @@ if (FETCH_ENABLE_TESTS)
 endif (FETCH_ENABLE_TESTS)
 
 #-------------------------------------------------------------------------------
-# System Dependencies
+# System / Vendor Targets
 #-------------------------------------------------------------------------------
-
-find_package(OpenSSL REQUIRED)
-
-#find_package(PNG REQUIRED)
-#set(THREADS_PREFER_PTHREAD_FLAG ON)
-#find_package(Threads REQUIRED)
-
-message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
-message(STATUS "OpenSSL libraries: ${OPENSSL_LIBRARIES}")
-
-#-------------------------------------------------------------------------------
-# Vendor Targets
-#-------------------------------------------------------------------------------
-
-add_library(vendor-openssl INTERFACE)
-target_link_libraries(vendor-openssl INTERFACE ${OPENSSL_LIBRARIES})
-target_include_directories(vendor-openssl INTERFACE ${OPENSSL_INCLUDE_DIR})
 
 configure_vendor_targets()
 

@@ -67,6 +67,20 @@ endmacro(setup_compiler)
 
 function(configure_vendor_targets)
 
+  #find_package(PNG REQUIRED)
+  #set(THREADS_PREFER_PTHREAD_FLAG ON)
+  #find_package(Threads REQUIRED)
+
+  find_package(OpenSSL REQUIRED)
+
+  message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
+  message(STATUS "OpenSSL libraries: ${OPENSSL_LIBRARIES}")
+
+  # OpenSSL
+  add_library(vendor-openssl INTERFACE)
+  target_link_libraries(vendor-openssl INTERFACE ${OPENSSL_LIBRARIES})
+  target_include_directories(vendor-openssl INTERFACE ${OPENSSL_INCLUDE_DIR})
+
   # setup the testing
   if(FETCH_ENABLE_TESTS)
     include(ctest)
