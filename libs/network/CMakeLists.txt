@@ -40,9 +40,8 @@ add_fetch_test(promise_counter_test fetch-network tests/rpc/promise_counter.cpp 
 
 setup_library_examples(fetch-network)
 
-if(FETCH_BUILD_EXAMPLES)
+if(FETCH_ENABLE_EXAMPLES)
 
-  target_link_libraries(example_swarm PRIVATE fetch-http vendor-openssl)
   target_link_libraries(example_oef PRIVATE fetch-http)
   target_link_libraries(example_http_server PRIVATE fetch-http)
 
@@ -72,4 +71,4 @@ if(FETCH_BUILD_EXAMPLES)
   add_executable(example_rrpc_server examples/reverse_rpc/server.cpp)
   target_link_libraries(example_rrpc_server PRIVATE fetch-network)
 
-endif(FETCH_BUILD_EXAMPLES)
+endif(FETCH_ENABLE_EXAMPLES)

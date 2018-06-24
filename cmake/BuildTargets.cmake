@@ -7,6 +7,12 @@ endmacro(setup_compiler)
 
 function (configure_vendor_targets)
 
+  # setup the testing
+  if (FETCH_ENABLE_TESTS)
+    include(ctest)
+    enable_testing()
+  endif (FETCH_ENABLE_TESTS)
+
   # asio vendor library
   add_library(vendor-asio INTERFACE)
   target_include_directories(vendor-asio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/asio/asio/include)

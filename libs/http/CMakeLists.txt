@@ -10,6 +10,8 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
+
+
 #-------------------------------------------------------------------------------
 # Main Library Target
 #-------------------------------------------------------------------------------
@@ -23,6 +25,12 @@ target_link_libraries(fetch-http PUBLIC fetch-network)
 
 setup_library_examples(fetch-http)
 
+#-------------------------------------------------------------------------------
+# Benchmark Targets
+#-------------------------------------------------------------------------------
+
+add_executable(benchmark_json_document benchmark/json/document.cpp)
+target_link_libraries(benchmark_json_document PRIVATE fetch-http fetch-testing)
 
 # http-server
 #add_executable(example-http-server examples/http/server.cpp)

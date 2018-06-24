@@ -4,7 +4,7 @@
 #include "math/linalg/matrix.hpp"
 #include "math/distance/pearson.hpp"
 #include "core/random/lcg.hpp"
-#include "core/unittest.hpp"
+#include "testing/unittest.hpp"
 
 using namespace fetch::math::distance;
 using namespace fetch::math::linalg;

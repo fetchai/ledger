@@ -1,8 +1,12 @@
+# Function defines the main library component
+#
+# By looking at the folder structure it is possible to determine what type of
+# librray it is i.e. header only or static library.
 function(setup_library name)
 
+  # lookup the files for the library
   file(GLOB_RECURSE headers include/*.hpp)
   file(GLOB_RECURSE srcs src/*.cpp)
-
   list(LENGTH headers headers_length)
   list(LENGTH srcs srcs_length)
 
@@ -12,25 +16,24 @@ function(setup_library name)
   # main library configuration
   if(srcs_length EQUAL 0)
 
+    # define header only library
     add_library(${name} INTERFACE)
-
     target_sources(${name} INTERFACE ${headers})
-
     target_include_directories(${name} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
   else()
 
+    # define the normal library
     add_library(${name} ${headers} ${srcs})
-
     target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
   endif()
 endfunction()
 
-
+# Function defines additional example target
 function(setup_library_examples library)
 
-  if(FETCH_BUILD_EXAMPLES)
+  if(FETCH_ENABLE_EXAMPLES)
 
     list(REMOVE_AT ARGV 0)
 
@@ -69,11 +72,11 @@ function(setup_library_examples library)
       endforeach()
     endif()
 
-  endif(FETCH_BUILD_EXAMPLES)
+  endif(FETCH_ENABLE_EXAMPLES)
 endfunction()
 
 function(add_fetch_test name library file)
-  if(FETCH_BUILD_TESTS)
+  if(FETCH_ENABLE_TESTS)
 
     # remove all the arguments
     list(REMOVE_AT ARGV 0)
@@ -97,13 +100,13 @@ function(add_fetch_test name library file)
       include(CTest)
 
       add_executable(${name} ${file})
-      target_link_libraries(${name} PRIVATE ${library})
+      target_link_libraries(${name} PRIVATE ${library} fetch-testing)
 
       add_test(${name} ${name} ${ARGV})
 
     endif()
 
-  endif(FETCH_BUILD_TESTS)
+  endif(FETCH_ENABLE_TESTS)
 endfunction()
 
 

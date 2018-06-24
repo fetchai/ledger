@@ -7,7 +7,7 @@ using std::cout;
 using std::cerr;
 using std::string;
 
-#include "../../include/network/service/protocol.hpp"
+#include "network/service/protocol.hpp"
 #include "swarm_parcel_node.hpp"
 
 namespace fetch

@@ -4,8 +4,8 @@
 #include <math/linalg/matrix.hpp>
 #include <math/distance/hamming.hpp>
 #include "core/random/lcg.hpp"
-#include "core/unittest.hpp"
-#include"math/distance/distance_matrix.hpp"
+#include "testing/unittest.hpp"
+#include "math/distance/distance_matrix.hpp"
 
 using namespace fetch::math::distance;
 using namespace fetch::math::linalg;

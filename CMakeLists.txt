@@ -1,8 +1,16 @@
-cmake_minimum_required (VERSION 2.8.0)
+################################################################################
+# F E T C H   L E D G E R   P R O J  E C T
+################################################################################
+cmake_minimum_required (VERSION 3.1)
 project (fetch)
 
-option(FETCH_BUILD_TESTS "Build tests" ON)
-option(FETCH_BUILD_EXAMPLES "Build tests" ON)
+#-------------------------------------------------------------------------------
+# Configuration Options
+#-------------------------------------------------------------------------------
+
+option(FETCH_ENABLE_TESTS       "Enable test targets"       ON)
+option(FETCH_ENABLE_EXAMPLES    "Enable example targets"    ON)
+option(FETCH_ENABLE_BENCHMARKS  "Enable benchmark targets"  ON)
 #OPTION(FETCH_BUILD_EXAMPLES "Build examples" ON)
 #OPTION(FETCH_BUILD_BENCHMARK "Build benchmark" ON)
 #OPTION(FETCH_BUILD_PYTHON_BINDINGS "Build Python examples" ON)
@@ -27,12 +35,28 @@ option(FETCH_BUILD_EXAMPLES "Build tests" ON)
 #message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")
 #
 
+#-------------------------------------------------------------------------------
+# Top Level Setup
+#-------------------------------------------------------------------------------
+
 set (FETCH_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set (FETCH_ROOT_CMAKE_DIR ${FETCH_ROOT_DIR}/cmake)
 set (FETCH_ROOT_VENDOR_DIR ${FETCH_ROOT_DIR}/vendor)
 
+# Default to a release build
+if (NOT CMAKE_BUILD_TYPE)
+  message(STATUS "Defaulting to Release build")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "The build configuration")
+endif (NOT CMAKE_BUILD_TYPE)
+
+# Global CMake Configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTargets.cmake)
+
+if (FETCH_ENABLE_TESTS)
+  enable_testing()
+endif (FETCH_ENABLE_TESTS)
+
 
 #
 #include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/asio/asio/include")
@@ -166,13 +190,24 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTargets.cmake)
 #  install(CODE "execute_process(COMMAND ${PYTHON} ${SETUP_PY} install)")
 #endif()
 
+#-------------------------------------------------------------------------------
+# System Dependencies
+#-------------------------------------------------------------------------------
+
 #find_package(PNG REQUIRED)
 find_package(OpenSSL REQUIRED)
 #find_package(Threads REQUIRED)
 #
 message("OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
 message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")
-#
+
+
+
+
+
+#-------------------------------------------------------------------------------
+# Vendor Targets
+#-------------------------------------------------------------------------------
 
 add_library(vendor-openssl INTERFACE)
 target_link_libraries(vendor-openssl INTERFACE ${OPENSSL_LIBRARIES})
@@ -180,4 +215,10 @@ target_include_directories(vendor-openssl INTERFACE ${OPENSSL_INCLUDE_DIR})
 
 configure_vendor_targets()
 
+#-------------------------------------------------------------------------------
+# Project Targets
+#-------------------------------------------------------------------------------
+
 configure_library_targets()
+
+add_subdirectory(apps)

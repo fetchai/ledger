@@ -3,7 +3,7 @@
 
 #include <math/linalg/matrix.hpp>
 #include "core/random/lcg.hpp"
-#include "core/unittest.hpp"
+#include "testing/unittest.hpp"
 
 using namespace fetch::math::linalg;
 
