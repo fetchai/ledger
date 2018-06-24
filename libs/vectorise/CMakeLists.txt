@@ -17,7 +17,7 @@ setup_compiler()
 setup_library(fetch-vectorise)
 
 #-------------------------------------------------------------------------------
-# Unit Test Targets
+# Test Targets
 #-------------------------------------------------------------------------------
 
 add_fetch_test(vec_exp fetch-vectorise tests/vectorize/exp.cpp)

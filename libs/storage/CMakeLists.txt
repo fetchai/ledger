@@ -17,10 +17,8 @@ setup_compiler()
 setup_library(fetch-storage)
 #target_link_libraries(fetch-storage INTERFACE fetch-core vendor-openssl)
 
-#setup_library_examples(fetch-crypto)
-
 #-------------------------------------------------------------------------------
-# Unit Test Targets
+# Test Targets
 #-------------------------------------------------------------------------------
 
 add_fetch_test(file_object_test fetch-storage tests/file_object.cpp DISABLED)

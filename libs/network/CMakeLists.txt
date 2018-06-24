@@ -18,7 +18,7 @@ setup_library(fetch-network)
 target_link_libraries(fetch-network PUBLIC fetch-core vendor-asio)
 
 #-------------------------------------------------------------------------------
-# Unit Test Targets
+# Test Targets
 #-------------------------------------------------------------------------------
 
 add_fetch_test(tcp_client_stress_test fetch-network tests/network/tcp_client_stress.cpp)
@@ -29,11 +29,6 @@ add_fetch_test(callable_test fetch-network tests/callable.cpp)
 
 # not working
 add_fetch_test(promise_counter_test fetch-network tests/rpc/promise_counter.cpp DISABLED)
-
-# missing tests
-#add_fetch_test(referenced_byte_array_test fetch-network tests/serializers/referenced_byte_array.cpp)
-#standard_test(typed_byte_array_test serializers/typed_byte_array_test.cpp)
-#standard_test(variant_test script/variant.cpp)
 
 #-------------------------------------------------------------------------------
 # Example Targets
