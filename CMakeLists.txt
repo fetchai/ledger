@@ -11,6 +11,50 @@ project (fetch)
 option(FETCH_ENABLE_TESTS       "Enable test targets"       ON)
 option(FETCH_ENABLE_EXAMPLES    "Enable example targets"    ON)
 option(FETCH_ENABLE_BENCHMARKS  "Enable benchmark targets"  ON)
+option(FETCH_WARNINGS_AS_ERRORS "Enable warnings as errors" ON)
+
+# target architecture (to be replaced with automatic detection)
+option(FETCH_ARCH_SSE3  "Architecture maximally supports SSE3"    OFF)
+option(FETCH_ARCH_SSE42 "Architecture maximally supports SSE4.2"  ON)
+option(FETCH_ARCH_AVX   "Architecture maximally supports AVX"     OFF)
+option(FETCH_ARCH_FMA   "Architecture maximally supports FMA"     OFF)
+option(FETCH_ARCH_AVX2  "Architecture maximally supports AVX2"    OFF)
+
+#
+#OPTION(BUILD_MACH_SSE3 "Enable SSE3" ON)
+#OPTION(BUILD_MACH_SSE42 "Enable SSE4.2" ON)
+#OPTION(BUILD_MACH_AVX "Enable AVX" OFF)
+#OPTION(BUILD_MACH_FMA "Enable FMA" OFF)
+#OPTION(BUILD_MACH_AVX2 "Enable AVX2" OFF)
+#
+#OPTION(BUILD_STICT_COMPILE_FLAGS "Use strict compile flags" ON)
+#
+#
+#enable_testing()
+#add_definitions( --std=c++11 )
+#
+#if(BUILD_MACH_SSE3)
+#add_definitions( -msse3 )
+#endif()
+#
+#if(BUILD_MACH_SSE42)
+#add_definitions( -msse4.2 )
+#endif()
+#
+#if(BUILD_MACH_AVX)
+#add_definitions( -mavx )
+#endif()
+#
+#if(BUILD_MACH_AVX2)
+#add_definitions( -mavx2 )
+#endif()
+#
+#if(BUILD_MACH_FMA)
+#add_definitions( -mfma )
+#endif()
+#
+
+
 #OPTION(FETCH_BUILD_EXAMPLES "Build examples" ON)
 #OPTION(FETCH_BUILD_BENCHMARK "Build benchmark" ON)
 #OPTION(FETCH_BUILD_PYTHON_BINDINGS "Build Python examples" ON)
@@ -198,12 +242,8 @@ endif (FETCH_ENABLE_TESTS)
 find_package(OpenSSL REQUIRED)
 #find_package(Threads REQUIRED)
 #
-message("OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
-message("OpenSSL libraries: ${OPENSSL_LIBRARIES}")
-
-
-
-
+message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
+message(STATUS "OpenSSL libraries: ${OPENSSL_LIBRARIES}")
 
 #-------------------------------------------------------------------------------
 # Vendor Targets
