@@ -35,6 +35,14 @@ add_fetch_test(distance_matrix_test fetch-math tests/math/distance/distance_matr
 add_fetch_test(ndarray_test fetch-math tests/math/ndarray.cpp DISABLED)
 add_fetch_test(load_image_read_exceptions_test fetch-math tests/image/load_image_read_exceptions.cpp DISABLED)
 
+#-------------------------------------------------------------------------------
+# Benchmark Targets
+#-------------------------------------------------------------------------------
+message(STATUS "Warning: Benchmark: benchmark_linalg_matrix does not compile")
+#add_executable(benchmark_linalg_matrix benchmark/linalg/matrix.cpp)
+#target_link_libraries(benchmark_linalg_matrix PRIVATE fetch-math)
+
+
 ### OLD
 
 #

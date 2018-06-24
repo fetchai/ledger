@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include <math/linalg/matrix.hpp>
-#include <random/lcg.hpp>
+#include "math/linalg/matrix.hpp"
+#include "core/random/lcg.hpp"
 
 #include <chrono>
 #include <iomanip>

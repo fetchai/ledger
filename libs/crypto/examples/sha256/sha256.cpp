@@ -1,7 +1,7 @@
 #include<iostream>
 #include"crypto/sha256.hpp"
 #include"crypto/hash.hpp"
-#include"byte_array/encoders.hpp"
+#include"core/byte_array/encoders.hpp"
 using namespace fetch;
 using namespace fetch::crypto;
 
