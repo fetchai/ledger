@@ -76,3 +76,33 @@
 #pybind11_add_module(fetch src/main.cpp)
 #target_link_libraries(fetch PRIVATE libfetchcore)
 #
+#if(BUILD_PYTHON_BINDINGS)
+#  find_program(PYTHON "python")
+#  FIND_PACKAGE(PythonLibs)
+#  set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
+#  set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
+#  set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/pybingen_timestamp")
+#
+#  configure_file(${SETUP_PY_IN} ${SETUP_PY})
+#
+#  file( MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/site-packages")
+#  file( COPY "${CMAKE_CURRENT_SOURCE_DIR}/libfetch" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/site-packages"
+#  FILES_MATCHING PATTERN "*.py" )
+#
+#  set(BINDINGS_DIR "${CMAKE_CURRENT_BINARY_DIR}/site-packages/libfetch")
+#  set(TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/tempfetchcore")
+#
+#  file(MAKE_DIRECTORY "${TEMP_DIR}")
+#  add_custom_command(
+#    OUTPUT ${OUTPUT}
+#    COMMAND ${PYTHON} ${SETUP_PY} build_ext -b ${BINDINGS_DIR} -t ${TEMP_DIR}
+#    COMMAND ${CMAKE_COMMAND} -E touch ${OUTPUT}
+#    DEPENDS ${DEPS})
+#
+#  INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
+#  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+#
+#  add_custom_target(python_bindings ALL DEPENDS ${OUTPUT})
+#
+#  install(CODE "execute_process(COMMAND ${PYTHON} ${SETUP_PY} install)")
+#endif()

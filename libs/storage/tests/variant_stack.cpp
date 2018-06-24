@@ -11,7 +11,7 @@ using namespace fetch::storage;
 
 int main() {
   SCENARIO("usage of variant stack with basic type") {
-    uint64_t N = 100;
+    static constexpr int64_t N = 100;
     VariantStack stack;
     std::stack<TYPE> reference;
     fetch::random::LaggedFibonacciGenerator<> lfg;
@@ -21,7 +21,7 @@ int main() {
       EXPECT(stack.empty());
 
       bool all_pass = true;
-      for (std::size_t i = 0; i < N; ++i) {
+      for (int64_t i = 0; i < N; ++i) {
         SILENT_EXPECT((stack.size() == i));
         all_pass &= (stack.size() == i);
 
