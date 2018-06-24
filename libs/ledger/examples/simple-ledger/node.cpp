@@ -2,12 +2,12 @@
 #include<iostream>
 #include<functional>
 
-#include"commandline/parameter_parser.hpp"
+#include"core/commandline/parameter_parser.hpp"
 
-#include "service/client.hpp"
-#include"service/server.hpp"
-#include"network/tcp_server.hpp"
-#include"protocols.hpp"
+#include "network/service/client.hpp"
+#include"network/service/server.hpp"
+#include"network/tcp/tcp_server.hpp"
+#include"network/protocols.hpp"
 
 
 #include"http/server.hpp"
@@ -15,9 +15,9 @@
 #include"http/middleware/color_log.hpp"
 
 #include"crypto/hash.hpp"
-#include"unittest.hpp"
-#include"byte_array/encoders.hpp"
-#include"random/lfg.hpp"
+#include"testing/unittest.hpp"
+#include"core/byte_array/encoders.hpp"
+#include"core/random/lfg.hpp"
 
 #include <iostream>
 #include <memory>

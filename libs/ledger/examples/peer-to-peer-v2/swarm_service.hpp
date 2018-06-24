@@ -1,8 +1,8 @@
 #ifndef SWARM_SERVICE_HPP
 #define SWARM_SERVICE_HPP
 
-#include"service/server.hpp"
-#include"network/tcp_server.hpp"
+#include"network/service/server.hpp"
+#include"network/tcp/tcp_server.hpp"
 #include"protocols.hpp"
 #include"commandline/parameter_parser.hpp"
 

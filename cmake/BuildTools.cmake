@@ -34,16 +34,7 @@ endfunction()
 function(setup_library_examples library)
 
   if(FETCH_ENABLE_EXAMPLES)
-
     list(REMOVE_AT ARGV 0)
-
-    # detect if the "DISABLED" flag has been passed to this test
-    set(is_disabled FALSE)
-    foreach(arg ${ARGV})
-      if(arg STREQUAL "DISABLED")
-        set(is_disabled TRUE)
-      endif()
-    endforeach()
 
     # examples
     set(examples_root ${CMAKE_CURRENT_SOURCE_DIR}/examples)
@@ -54,11 +45,18 @@ function(setup_library_examples library)
       foreach(child ${children})
         set(example_path ${examples_root}/${child})
         if(IS_DIRECTORY ${example_path})
+          set(disabled_path ${example_path}/.disabled)
           set(exclusion_path ${example_path}/.manual-config)
-          if(NOT EXISTS ${exclusion_path})
+          set(example_name "example_${child}")
 
-            set(example_name "example_${child}")
+          #message(STATUS "Procssing ${example_name} - ${example_path}")
 
+          if(EXISTS ${exclusion_path})
+            # do nothing the target will be manually configured
+          elseif(EXISTS ${disabled_path})
+            string(ASCII 27 ESC)
+            message(STATUS "${ESC}[31mWARNING${ESC}[0m: Disabled ${ESC}[34mExample${ESC}[0m: ${example_name} - ${example_path}")
+          else()
             file(GLOB_RECURSE example_headers ${example_path}/*.hpp)
             file(GLOB_RECURSE example_srcs ${example_path}/*.cpp)
 
@@ -93,7 +91,8 @@ function(add_fetch_test name library file)
 
     if(is_disabled)
 
-      message(STATUS "WARNING: Disabled Test: ${name} - ${file}")
+      string(ASCII 27 ESC)
+      message(STATUS "${ESC}[31mWARNING${ESC}[0m: Disabled Test: ${name} - ${file}")
 
     else()
 

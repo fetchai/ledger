@@ -1,10 +1,10 @@
 #ifndef CHAIN_KEEPER_SERVICE_HPP
 #define CHAIN_KEEPER_SERVICE_HPP
 
-#include "service/client.hpp"
-#include"service/server.hpp"
-#include"network/tcp_server.hpp"
-#include"protocols.hpp"
+#include "network/service/client.hpp"
+#include"network/service/server.hpp"
+#include"network/tcp/tcp_server.hpp"
+#include"network/protocols.hpp"
 
 
 #include"http/server.hpp"
@@ -12,8 +12,8 @@
 #include"http/middleware/color_log.hpp"
 
 #include"crypto/hash.hpp"
-#include"unittest.hpp"
-#include"byte_array/encoders.hpp"
+#include"testing/unittest.hpp"
+#include"core/byte_array/encoders.hpp"
 
 #include"http/server.hpp"
 #include"http/middleware/allow_origin.hpp"
