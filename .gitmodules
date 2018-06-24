@@ -7,10 +7,6 @@
 [submodule "docker-images"]
 	path = docker-images
 	url = github:uvue-git/docker-images.git
-[submodule "tests/vendor/googletest"]
-	path = tests/vendor/googletest
-	url = github:google/googletest.git
-
 [submodule "vendor/googletest"]
 	path = vendor/googletest
 	url = github:google/googletest.git
