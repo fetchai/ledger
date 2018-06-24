@@ -4,10 +4,14 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(fetch-python)
 
-# define the python module
-pybind11_add_module(fetch-python src/main.cpp)
-target_include_directories(fetch-python PRIVATE include)
-target_link_libraries(fetch-python PRIVATE fetch-math)
+if(FETCH_ENABLE_PYTHON_BINDINGS)
 
-# make the name match the bindings
-set_target_properties(fetch-python PROPERTIES OUTPUT_NAME "fetch")
+  # define the python module
+  pybind11_add_module(fetch-python src/main.cpp)
+  target_include_directories(fetch-python PRIVATE include)
+  target_link_libraries(fetch-python PRIVATE fetch-math)
+
+  # make the name match the bindings
+  set_target_properties(fetch-python PROPERTIES OUTPUT_NAME "fetch")
+
+endif(FETCH_ENABLE_PYTHON_BINDINGS)

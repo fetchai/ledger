@@ -11,7 +11,7 @@ project (fetch)
 option(FETCH_ENABLE_TESTS           "Enable test targets"       ON)
 option(FETCH_ENABLE_EXAMPLES        "Enable example targets"    ON)
 option(FETCH_ENABLE_BENCHMARKS      "Enable benchmark targets"  ON)
-option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"     OFF)
+option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"     ON)
 option(FETCH_WARNINGS_AS_ERRORS     "Enable warnings as errors" ON)
 
 # target architecture (to be replaced with automatic detection)
