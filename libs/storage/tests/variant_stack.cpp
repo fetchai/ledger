@@ -1,7 +1,7 @@
 #include "storage/variant_stack.hpp"
-#include "random/lfg.hpp"
+#include "core/random/lfg.hpp"
 
-#include "unittest.hpp"
+#include "testing/unittest.hpp"
 
 #include <iostream>
 #include <stack>

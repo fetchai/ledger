@@ -22,11 +22,11 @@ void Deserialize(T &serializer, std::vector<uint64_t> &vec) {
 }
 };
 };
-#include "random/lfg.hpp"
-#include "serializers/byte_array_buffer.hpp"
+#include "core/random/lfg.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "storage/file_object.hpp"
 
-#include "unittest.hpp"
+#include "testing/unittest.hpp"
 
 #include <iostream>
 #include <stack>

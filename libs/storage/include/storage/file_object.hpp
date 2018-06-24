@@ -49,7 +49,8 @@ class FileObjectImplementation {
         block.previous = current_block_index;
         stack_.Push(block);
       } else {
-        b = block.next;
+        auto b = block.next;
+        (void) b;
       }
 
       stack_.Get(current_block_index, block);

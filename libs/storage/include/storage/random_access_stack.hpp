@@ -2,7 +2,8 @@
 #define STORAGE_RANDOM_ACCESS_STACK_HPP
 #include <fstream>
 #include <string>
-#include "assert.hpp"
+#include<cassert>
+#include "core/assert.hpp"
 
 namespace fetch {
 namespace platform {
@@ -14,7 +15,7 @@ template <typename T, typename D = uint64_t>
 class RandomAccessStack {
  private:
   struct Header {
-    uint64_t magic = platform::LITTLE_ENDIAN_MAGIC;
+    uint16_t magic = platform::LITTLE_ENDIAN_MAGIC;
     uint64_t objects = 0;
     D extra;
 
@@ -45,20 +46,29 @@ class RandomAccessStack {
   typedef D header_extra_type;
   typedef T type;
 
+  virtual void OnFileLoaded() {
+
+  }
+
+  std::fstream file_handle_;
+  ~RandomAccessStack () {
+    file_handle_.close();
+  }
+  
   void Load(std::string const &filename) {
     filename_ = filename;
-    std::fstream fin(filename_,
+    file_handle_ = std::fstream(filename_,
                      std::ios::in | std::ios::out | std::ios::binary);
-    if (!fin) {
+    if (!file_handle_) {
       Clear();
-      fin = std::fstream(filename_,
-                         std::ios::in | std::ios::out | std::ios::binary);
+      file_handle_ = std::fstream(filename_,
+                                  std::ios::in | std::ios::out | std::ios::binary);
     }
 
-    fin.seekg(0, fin.end);
-    int64_t length = fin.tellg();
-    fin.seekg(0, fin.beg);
-    header_.Read(fin);
+    file_handle_.seekg(0, file_handle_.end);
+    int64_t length = file_handle_.tellg();
+    file_handle_.seekg(0, file_handle_.beg);
+    header_.Read(file_handle_);
     std::size_t capacity = (length - header_.size()) / sizeof(type);
 
     if (capacity < header_.objects) {
@@ -66,81 +76,71 @@ class RandomAccessStack {
     }
 
     // TODO: Check magic
-
-    fin.close();
+    OnFileLoaded();
   }
 
   void New(std::string const &filename) {
     filename_ = filename;
     Clear();
+    file_handle_ = std::fstream(filename_,
+                                std::ios::in | std::ios::out | std::ios::binary);
+    OnFileLoaded();
   }
 
-  void Get(std::size_t const &i, type &object) const {
-    detailed_assert(filename_ != "");
+  // TODO: Protectected functions
+  void Get(std::size_t const &i, type &object) {
+    assert(filename_ != "");
     int64_t n = int64_t(i * sizeof(type) + header_.size());
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
-    fin.seekg(n);
-    fin.read(reinterpret_cast<char *>(&object), sizeof(type));
-    fin.close();
+
+    file_handle_.seekg(n);
+    file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
+
   }
 
-  void Set(std::size_t const &i, type const &object) const {
-    detailed_assert(filename_ != "");
+  void Set(std::size_t const &i, type const &object) {
+    assert(filename_ != "");
     int64_t n = int64_t(i * sizeof(type) + header_.size());
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
-    fin.seekg(n, fin.beg);
-    fin.write(reinterpret_cast<char const *>(&object), sizeof(type));
-    fin.close();
+
+    file_handle_.seekg(n, file_handle_.beg);
+    file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
   }
 
   void SetExtraHeader(header_extra_type const &he) {
-    detailed_assert(filename_ != "");
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
+    assert(filename_ != "");
+
     header_.extra = he;
-    header_.Write(fin);
-    fin.close();
+    header_.Write(file_handle_);
+
   }
 
   header_extra_type header_extra() const { return header_.extra; }
 
-  void Push(type const &object) {
-    int64_t n = int64_t(header_.objects * sizeof(type) + header_.size());
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
-    fin.seekg(n, fin.beg);
-    fin.write(reinterpret_cast<char const *>(&object), sizeof(type));
+  uint64_t Push(type const &object) {
+    uint64_t ret = header_.objects;
+    int64_t n = int64_t(ret * sizeof(type) + header_.size());
+
+    file_handle_.seekg(n, file_handle_.beg);
+    file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
 
     ++header_.objects;
-    header_.Write(fin);
+    header_.Write(file_handle_);
 
-    fin.close();
+    return ret;
   }
 
   void Pop() {
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
-
     --header_.objects;
-    header_.Write(fin);
-
-    fin.close();
+    header_.Write(file_handle_);
   }
 
-  type Top() const {
-    detailed_assert(header_.objects > 0);
+  type Top() {
+    assert(header_.objects > 0);
 
     int64_t n = int64_t((header_.objects - 1) * sizeof(type) + header_.size());
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
-    fin.seekg(n, fin.beg);
 
+    file_handle_.seekg(n, file_handle_.beg);
     type object;
-
-    fin.read(reinterpret_cast<char *>(&object), sizeof(type));
-    fin.close();
+    file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
 
     return object;
   }
@@ -148,24 +148,21 @@ class RandomAccessStack {
   void Swap(std::size_t const &i, std::size_t const &j) {
     if (i == j) return;
     type a, b;
-    detailed_assert(filename_ != "");
+    assert(filename_ != "");
 
     int64_t n1 = int64_t(i * sizeof(type) + header_.size());
     int64_t n2 = int64_t(j * sizeof(type) + header_.size());
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
 
-    fin.seekg(n1);
-    fin.read(reinterpret_cast<char *>(&a), sizeof(type));
-    fin.seekg(n2);
-    fin.read(reinterpret_cast<char *>(&b), sizeof(type));
+    file_handle_.seekg(n1);
+    file_handle_.read(reinterpret_cast<char *>(&a), sizeof(type));
+    file_handle_.seekg(n2);
+    file_handle_.read(reinterpret_cast<char *>(&b), sizeof(type));
 
-    fin.seekg(n1);
-    fin.write(reinterpret_cast<char const *>(&b), sizeof(type));
-    fin.seekg(n2);
-    fin.write(reinterpret_cast<char const *>(&a), sizeof(type));
+    file_handle_.seekg(n1);
+    file_handle_.write(reinterpret_cast<char const *>(&b), sizeof(type));
+    file_handle_.seekg(n2);
+    file_handle_.write(reinterpret_cast<char const *>(&a), sizeof(type));
 
-    fin.close();
   }
 
   std::size_t size() const { return header_.objects; }
@@ -173,9 +170,9 @@ class RandomAccessStack {
   std::size_t empty() const { return header_.objects == 0; }
 
   void Clear() {
-    detailed_assert(filename_ != "");
+    assert(filename_ != "");
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
-
+    //    std::cout << " -------- CLEARING ----------- " << std::endl;
     header_ = Header();
 
     if (!header_.Write(fin)) {
@@ -183,8 +180,32 @@ class RandomAccessStack {
     }
 
     fin.close();
+
+  }
+  
+  void Flush() {
+    file_handle_.flush();
   }
 
+protected:
+  
+  void StoreHeader() {
+    assert(filename_ != "");
+    header_.Write(file_handle_);
+  }  
+
+  uint64_t LazyPush(type const &object) {
+    uint64_t ret = header_.objects;
+    int64_t n = int64_t(ret * sizeof(type) + header_.size());
+
+    file_handle_.seekg(n, file_handle_.beg);
+    file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
+    ++header_.objects;
+    return ret;
+  }
+
+  
+  
  private:
   std::string filename_ = "";
   Header header_;

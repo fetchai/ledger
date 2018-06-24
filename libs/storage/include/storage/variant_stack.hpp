@@ -4,7 +4,7 @@
 #include <cassert>
 #include <fstream>
 #include <string>
-#include "assert.hpp"
+#include "core/assert.hpp"
 
 // TODO: Make variant stack as a circular buffer!
 

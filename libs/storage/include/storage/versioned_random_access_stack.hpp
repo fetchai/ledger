@@ -92,13 +92,13 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
     bookmark_ = super_type::header_extra();
   }
 
-  type Get(std::size_t const &i) const {
+  type Get(std::size_t const &i) {
     type object;
     super_type::Get(i, object);
     return object;
   }
 
-  void Get(std::size_t const &i, type &object) const {
+  void Get(std::size_t const &i, type &object) {
     super_type::Get(i, object);
   }
 
@@ -120,7 +120,7 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
     super_type::Pop();
   }
 
-  type Top() const { return super_type::Top(); }
+  type Top() { return super_type::Top(); }
 
   void Swap(std::size_t const &i, std::size_t const &j) {
     history_.Push(HistorySwap(i, j), HistorySwap::value);
@@ -147,8 +147,8 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
           RevertSet();
           break;
         default:
-          std::cerr << "Problem: undefined type" << std::endl;
-          exit(-1);
+          TODO_FAIL("Problem: undefined type");
+
       }
     }
     super_type::SetExtraHeader(bookmark_);

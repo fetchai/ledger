@@ -1,5 +1,5 @@
 #include "storage/random_access_stack.hpp"
-#include "random/lfg.hpp"
+#include "core/random/lfg.hpp"
 
 #include <iostream>
 #include <stack>
