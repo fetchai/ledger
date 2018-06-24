@@ -1,6 +1,8 @@
-#include "crypto/ecdsa.hpp"
 #include <iostream>
-#include "byte_array/encoders.hpp"
+
+#include "crypto/ecdsa.hpp"
+#include "core/byte_array/encoders.hpp"
+
 using namespace fetch::crypto;
 
 int main() {

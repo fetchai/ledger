@@ -9,7 +9,7 @@
 #include <openssl/ecdsa.h>
 #include <openssl/obj_mac.h>
 
-#include "assert.hpp"
+#include "core/assert.hpp"
 
 namespace fetch {
 namespace crypto {

@@ -1,6 +1,6 @@
 #ifndef CRYPTO_FNV_HPP
 #define CRYPTO_FNV_HPP
-#include "byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
 #include "crypto/stream_hasher.hpp"
 
 namespace fetch {

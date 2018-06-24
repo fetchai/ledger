@@ -18,3 +18,6 @@ setup_library(fetch-crypto)
 target_link_libraries(fetch-crypto INTERFACE fetch-core vendor-openssl)
 
 setup_library_examples(fetch-crypto)
+
+add_fetch_test(ecdsa_test fetch-crypto tests/ecdsa.cpp)
+add_fetch_test(sha256_test fetch-crypto tests/sha256.cpp)

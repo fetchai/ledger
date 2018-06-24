@@ -1,11 +1,12 @@
 #include "crypto/sha256.hpp"
 #include <iostream>
-#include "byte_array/encoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
+
 using namespace fetch;
 using namespace fetch::crypto;
 
-#include "unittest.hpp"
+#include "testing/unittest.hpp"
 
 typedef byte_array::ByteArray byte_array_type;
 int main() {
