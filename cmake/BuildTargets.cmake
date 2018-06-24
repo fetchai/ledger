@@ -1,3 +1,8 @@
+macro(fetch_warning message)
+  string(ASCII 27 ESC)
+  message(STATUS "${ESC}[31mWARNING${ESC}[0m: ${message}")
+endmacro(fetch_warning message)
+
 macro(setup_compiler)
 
   set(CMAKE_CXX_STANDARD 11)
@@ -74,8 +79,10 @@ function(configure_vendor_targets)
 
   find_package(OpenSSL REQUIRED)
 
-  message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
-  message(STATUS "OpenSSL libraries: ${OPENSSL_LIBRARIES}")
+  if(FETCH_VERBOSE_CMAKE)
+    message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
+    message(STATUS "OpenSSL libraries: ${OPENSSL_LIBRARIES}")
+  endif(FETCH_VERBOSE_CMAKE)
 
   # OpenSSL
   add_library(vendor-openssl INTERFACE)
@@ -102,9 +109,6 @@ function(configure_library_targets)
 
   set(library_root ${FETCH_ROOT_DIR}/libs)
 
-  #  add_subdirectory(${library_root}/vectorise)
-  #  add_subdirectory(${library_root}/core)
-
   file(GLOB children RELATIVE ${library_root} ${library_root}/*)
   set(dirlist "")
   foreach(child ${children})
@@ -113,7 +117,9 @@ function(configure_library_targets)
     if(IS_DIRECTORY ${element_path})
       set(cmake_path ${element_path}/CMakeLists.txt)
       if(EXISTS ${cmake_path})
-        message(STATUS "Configuring Component: ${child}")
+        if(FETCH_VERBOSE_CMAKE)
+          message(STATUS "Configuring Component: ${child}")
+        endif(FETCH_VERBOSE_CMAKE)
         add_subdirectory(${element_path})
       endif()
     endif()

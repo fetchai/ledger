@@ -38,6 +38,9 @@ add_fetch_test(load_image_read_exceptions_test fetch-math tests/image/load_image
 #-------------------------------------------------------------------------------
 # Benchmark Targets
 #-------------------------------------------------------------------------------
-message(STATUS "Warning: Benchmark: benchmark_linalg_matrix does not compile")
-#add_executable(benchmark_linalg_matrix benchmark/linalg/matrix.cpp)
-#target_link_libraries(benchmark_linalg_matrix PRIVATE fetch-math)
+if(TRUE)
+  fetch_warning("Disabled Bencmark: benchmark_linalg_matrix (does not compile)")
+else()
+  add_executable(benchmark_linalg_matrix benchmark/linalg/matrix.cpp)
+  target_link_libraries(benchmark_linalg_matrix PRIVATE fetch-math)
+endif()

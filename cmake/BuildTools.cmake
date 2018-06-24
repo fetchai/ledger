@@ -49,13 +49,10 @@ function(setup_library_examples library)
           set(exclusion_path ${example_path}/.manual-config)
           set(example_name "example_${child}")
 
-          #message(STATUS "Procssing ${example_name} - ${example_path}")
-
           if(EXISTS ${exclusion_path})
             # do nothing the target will be manually configured
           elseif(EXISTS ${disabled_path})
-            string(ASCII 27 ESC)
-            message(STATUS "${ESC}[31mWARNING${ESC}[0m: Disabled ${ESC}[34mExample${ESC}[0m: ${example_name} - ${example_path}")
+            fetch_warning("Disabled Example: ${example_name} - ${example_path}")
           else()
             file(GLOB_RECURSE example_headers ${example_path}/*.hpp)
             file(GLOB_RECURSE example_srcs ${example_path}/*.cpp)
@@ -64,7 +61,9 @@ function(setup_library_examples library)
             target_link_libraries(${example_name} PRIVATE ${library})
             target_include_directories(${example_name} PRIVATE ${example_path})
 
-            message(STATUS "Creating ${example_name} target linking to ${library}")
+            if(FETCH_VERBOSE_CMAKE)
+              message(STATUS "Creating ${example_name} target linking to ${library}")
+            endif(FETCH_VERBOSE_CMAKE)
           endif()
         endif()
       endforeach()
@@ -90,10 +89,7 @@ function(add_fetch_test name library file)
     endforeach()
 
     if(is_disabled)
-
-      string(ASCII 27 ESC)
-      message(STATUS "${ESC}[31mWARNING${ESC}[0m: Disabled Test: ${name} - ${file}")
-
+      fetch_warning("Disabled Test: ${name} - ${file}")
     else()
 
       include(CTest)

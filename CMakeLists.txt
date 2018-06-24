@@ -8,11 +8,12 @@ project (fetch)
 # Configuration Options
 #-------------------------------------------------------------------------------
 
-option(FETCH_ENABLE_TESTS           "Enable test targets"       ON)
-option(FETCH_ENABLE_EXAMPLES        "Enable example targets"    ON)
-option(FETCH_ENABLE_BENCHMARKS      "Enable benchmark targets"  ON)
-option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"     ON)
-option(FETCH_WARNINGS_AS_ERRORS     "Enable warnings as errors" ON)
+option(FETCH_ENABLE_TESTS           "Enable test targets"         ON)
+option(FETCH_ENABLE_EXAMPLES        "Enable example targets"      ON)
+option(FETCH_ENABLE_BENCHMARKS      "Enable benchmark targets"    ON)
+option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"       ON)
+option(FETCH_WARNINGS_AS_ERRORS     "Enable warnings as errors"   ON)
+option(FETCH_VERBOSE_CMAKE          "Enable verbose cmake output" OFF)
 
 # target architecture (to be replaced with automatic detection)
 ## sysctl -a | grep machdep.cpu.features
