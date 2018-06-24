@@ -1,6 +1,6 @@
 #include <iostream>
-#include <random/lfg.hpp>
-#include "vectorize/register.hpp"
+#include "core/random/lfg.hpp"
+#include "vectorise/register.hpp"
 using namespace fetch::vectorize;
 
 template <typename T>

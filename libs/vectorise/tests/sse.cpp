@@ -1,9 +1,9 @@
 
-#include "vectorize/sse.hpp"
+#include "vectorise/sse.hpp"
 #include <iostream>
-#include "vectorize/register.hpp"
+#include "vectorise/register.hpp"
 
-#include <random/lfg.hpp>
+#include "core/random/lfg.hpp"
 
 fetch::random::LinearCongruentialGenerator lcg;
 using namespace fetch::vectorize;

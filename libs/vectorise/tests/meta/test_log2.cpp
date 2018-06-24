@@ -1,7 +1,7 @@
 
 #include <iostream>
-#include "meta/log2.hpp"
-#include "unittest.hpp"
+#include "vectorise/meta/log2.hpp"
+#include "testing/unittest.hpp"
 
 #define TEST_LOG_EX__EQ__X(X) fetch::meta::Log2<(1ull << X)>::value == X
 
