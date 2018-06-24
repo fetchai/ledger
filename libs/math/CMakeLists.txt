@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   M A T H   L I B R A R Y
 ################################################################################
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(fetch-math)
 
 # CMake Configuration

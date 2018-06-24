@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   C R Y P T O   L I B R A R Y
 ################################################################################
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(fetch-crypto)
 
 # CMake Configuration

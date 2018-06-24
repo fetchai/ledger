@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   H T T P   L I B R A R Y
 ################################################################################
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(fetch-http)
 
 # CMake configuration

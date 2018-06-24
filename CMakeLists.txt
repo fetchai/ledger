@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   L E D G E R   P R O J  E C T
 ################################################################################
-cmake_minimum_required (VERSION 3.1)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project (fetch)
 
 #-------------------------------------------------------------------------------
@@ -41,59 +41,10 @@ endif (NOT CMAKE_BUILD_TYPE)
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTargets.cmake)
 
+# Enable CTest support
 if (FETCH_ENABLE_TESTS)
   enable_testing()
 endif (FETCH_ENABLE_TESTS)
-
-
-#
-#include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/asio/asio/include")
-#include_directories("${OPENSSL_INCLUDE_DIR}")
-#
-#add_definitions(-DASIO_STANDALONE -DASIO_HEADER_ONLY -DASIO_HAS_STD_SYSTEM_ERROR)
-#
-#enable_testing()
-##exec_program(
-##    "git"
-##    ${CMAKE_CURRENT_SOURCE_DIR}
-##    ARGS "describe"
-##    OUTPUT_VARIABLE ${GIT_DESCRIBE})
-#
-#
-#add_definitions( --std=c++11 )
-#
-#if(BUILD_MACH_SSE3)
-#add_definitions( -msse3 )
-#endif()
-#
-#if(BUILD_MACH_SSE42)
-#add_definitions( -msse4.2 )
-#endif()
-#
-#if(BUILD_MACH_AVX)
-#add_definitions( -mavx )
-#endif()
-#
-#if(BUILD_MACH_AVX2)
-#add_definitions( -mavx2 )
-#endif()
-#
-#if(BUILD_MACH_FMA)
-#add_definitions( -mfma )
-#endif()
-#
-#include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/RemoveFlag.cmake")
-#include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-#
-#include_directories(${PNG_INCLUDE_DIR})
-#
-#if(BUILD_PYTHON_BINDINGS)
-#add_subdirectory( libfetchcore/ )
-#endif()
-#
-
-
-
 
 #-------------------------------------------------------------------------------
 # System Dependencies
