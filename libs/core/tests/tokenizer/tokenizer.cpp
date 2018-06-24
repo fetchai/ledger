@@ -1,10 +1,10 @@
-#include "byte_array/tokenizer/tokenizer.hpp"
+#include "core/byte_array/tokenizer/tokenizer.hpp"
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
-#include "byte_array/consumers.hpp"
-#include "unittest.hpp"
+#include "core/byte_array/consumers.hpp"
+#include "testing/unittest.hpp"
 
 using namespace fetch::byte_array;
 

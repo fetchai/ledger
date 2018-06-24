@@ -1,9 +1,9 @@
-#include "byte_array/decoders.hpp"
-#include "byte_array/encoders.hpp"
-#include "byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
 
 #include <iostream>
-#include "unittest.hpp"
+#include "testing/unittest.hpp"
 using namespace fetch::byte_array;
 void Test(ByteArray val) {
   if (FromHex(ToHex(val)) != val) {

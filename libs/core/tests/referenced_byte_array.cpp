@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include "byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
 using namespace fetch::byte_array;
 
-#include "unittest.hpp"
+#include "testing/unittest.hpp"
 
 int main() {
   SCENARIO("Class members of ByteArray") {

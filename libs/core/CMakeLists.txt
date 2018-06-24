@@ -16,3 +16,7 @@ setup_compiler()
 
 setup_library(fetch-core)
 target_link_libraries(fetch-core PUBLIC fetch-vectorise)
+
+add_fetch_test(tokenizer_test fetch-core tests/tokenizer/tokenizer.cpp)
+add_fetch_test(encode_decode_test fetch-core tests/encode_decode.cpp)
+add_fetch_test(referenced_byte_array_test fetch-core tests/referenced_byte_array.cpp)
