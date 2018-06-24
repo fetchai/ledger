@@ -1,7 +1,7 @@
-#include "chain/consensus/proof_of_work.hpp"
+#include "ledger/chain/consensus/proof_of_work.hpp"
 #include <iostream>
-#include "byte_array/encoders.hpp"
-#include "unittest.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "testing/unittest.hpp"
 using namespace fetch::chain::consensus;
 using namespace fetch::byte_array;
 
