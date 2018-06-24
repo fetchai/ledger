@@ -166,7 +166,7 @@ public:
     return karma_;
   }
 
-  const bool operator<(const SwarmKarmaPeer &other) const
+  bool operator<(const SwarmKarmaPeer &other) const
   {
     auto now = GetCurrentTime();
     return ComputeKarmaForTime(karma_, karmaTime_, now) > ComputeKarmaForTime(other.karma_, other.karmaTime_, now);
