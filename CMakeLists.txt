@@ -34,7 +34,7 @@ set (FETCH_ROOT_VENDOR_DIR ${FETCH_ROOT_DIR}/vendor)
 # Default to a release build
 if (NOT CMAKE_BUILD_TYPE)
   message(STATUS "Defaulting to Release build")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "The build configuration")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "The build configuration" FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
 
 # Global CMake Configuration

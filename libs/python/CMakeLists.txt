@@ -4,6 +4,12 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(fetch-python)
 
+# CMake Configuration
+include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
+
+# Compiler Configuration
+setup_compiler()
+
 if(FETCH_ENABLE_PYTHON_BINDINGS)
 
   # define the python module
