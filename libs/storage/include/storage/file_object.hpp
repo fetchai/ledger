@@ -32,7 +32,7 @@ class FileObjectImplementation {
   FileObjectImplementation(uint64_t const &block_position, stack_type &stack)
       : file_position_(block_position), stack_(stack) {}
 
-  void Seek(std::size_t const &n) {
+  void Seek(int64_t const &n) {
     uint64_t current_block_index = file_position_;
     block_type block;
 

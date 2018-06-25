@@ -1,0 +1,4 @@
+#ifndef CRYPTO_VERIFIER_HPP
+#define CRYPTO_VERIFIER_HPP
+
+#endif
