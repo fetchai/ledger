@@ -91,7 +91,7 @@ function(configure_vendor_targets)
 
   # setup the testing
   if(FETCH_ENABLE_TESTS)
-    include(ctest)
+      include(CTest)
     enable_testing()
   endif(FETCH_ENABLE_TESTS)
 
