@@ -46,8 +46,12 @@
 #include "python/random/py_bitgenerator.hpp"
 #include "python/random/py_lcg.hpp"
 
+// !!!!
+namespace py = pybind11;
+
+#include "python/network/swarm/py_swarm_agent_api.hpp"
+
 PYBIND11_MODULE(fetch, module) {
-  namespace py = pybind11;
 
 // Namespaces
 
@@ -177,8 +181,7 @@ PYBIND11_MODULE(fetch, module) {
 
 
   ////////////
-  // Statistics
-  fetch::math::statistics::BuildMeanStatistics("Mean", ns_fetch_math_statistics);     
+  // Statisticsfetch_math_statistics);     
   fetch::math::statistics::BuildGeometricMeanStatistics("GeometricMean", ns_fetch_math_statistics);
   fetch::math::statistics::BuildVarianceStatistics("Variance", ns_fetch_math_statistics);
   fetch::math::statistics::BuildStandardDeviationStatistics("StandardDeviation", ns_fetch_math_statistics);  
@@ -194,5 +197,9 @@ PYBIND11_MODULE(fetch, module) {
 
   fetch::random::BuildBitGenerator< fetch::random::LaggedFibonacciGenerator<>, 12, true >("BitGenerator",ns_fetch_random);
 
+
+  
+  py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
+  fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
 }
 

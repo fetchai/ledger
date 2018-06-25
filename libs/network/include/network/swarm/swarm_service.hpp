@@ -5,10 +5,10 @@
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/color_log.hpp"
 
-#include "swarm_http_interface.hpp"
 #include "network/protocols/swarm/swarm_protocol.hpp"
 #include "network/protocols/fetch_protocols.hpp"
 #include "swarm_agent_api.hpp"
+#include "swarm_http_interface.hpp"
 
 #include <iostream>
 

@@ -14,10 +14,33 @@ if(FETCH_ENABLE_PYTHON_BINDINGS)
 
   # define the python module
   pybind11_add_module(fetch-python src/main.cpp)
-  target_include_directories(fetch-python PRIVATE include)
-  target_link_libraries(fetch-python PRIVATE fetch-math)
+  target_include_directories(fetch-python PRIVATE
+    include
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${FETCH_ROOT_DIR}/apps/swarm
+  )
+  target_link_libraries(fetch-python PRIVATE
+    fetch-math
+    fetch-network
+    fetch-http
+    vendor-openssl
+  )
 
   # make the name match the bindings
   set_target_properties(fetch-python PROPERTIES OUTPUT_NAME "fetch")
+
+  add_executable(pyfetch src/pyfetch.cpp)
+  target_include_directories(pyfetch PRIVATE
+    include
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${FETCH_ROOT_DIR}/apps/swarm
+    )
+  target_link_libraries(pyfetch PRIVATE
+    fetch-math
+    fetch-network
+    fetch-http
+    pybind11::embed
+    vendor-openssl
+  )
 
 endif(FETCH_ENABLE_PYTHON_BINDINGS)

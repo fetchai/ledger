@@ -8,9 +8,11 @@
 #include "network/swarm/swarm_random.hpp"
 #include "network/service/protocol.hpp"
 
+#include "swarm_http_interface.hpp"
 #include "swarm_agent_naive.hpp"
 #include "swarm_agent_api_impl.hpp"
-#include "swarm_http_interface.hpp"
+#include "swarm_parcel_node.hpp"
+#include "swarm_parcel_protocol.hpp"
 
 using namespace std;
 #include <unistd.h>
@@ -22,8 +24,6 @@ using std::cout;
 using std::cerr;
 using std::string;
 
-#include "swarm_parcel_node.hpp"
-#include "swarm_parcel_protocol.hpp"
 
 typedef unsigned int uint;
 
