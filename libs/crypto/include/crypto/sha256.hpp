@@ -1,6 +1,6 @@
 #ifndef CRYPTO_SHA256_HPP
 #define CRYPTO_SHA256_HPP
-#include "byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
 #include "crypto/stream_hasher.hpp"
 
 #include <openssl/sha.h>

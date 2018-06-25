@@ -5,7 +5,7 @@
 #include<crypto/hash.hpp>
 #include<core/random/lfg.hpp>
 
-#include<core/unittest.hpp>
+#include<testing/unittest.hpp>
 #include<vector>
 
 using namespace fetch;
