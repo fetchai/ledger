@@ -158,7 +158,7 @@ class RandomAccessStack {
     
   }
 
-  type Top() {
+  type Top() const {
     assert(header_.objects > 0);
 
     int64_t n = int64_t((header_.objects - 1) * sizeof(type) + header_.size());

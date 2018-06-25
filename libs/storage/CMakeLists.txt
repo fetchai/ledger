@@ -15,7 +15,7 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-storage)
-target_link_libraries(fetch-storage INTERFACE fetch-core fetch-crypto vendor-openssl)
+target_link_libraries(fetch-storage INTERFACE fetch-core fetch-crypto fetch-testing vendor-openssl)
 
 #-------------------------------------------------------------------------------
 # Test Targets
@@ -25,3 +25,4 @@ add_fetch_test(file_object_test fetch-storage tests/file_object.cpp)
 add_fetch_test(random_access_stack_test fetch-storage tests/random_access_stack.cpp)
 add_fetch_test(variant_stack_test fetch-storage tests/variant_stack.cpp DISABLED)
 add_fetch_test(versioned_random_access_stack_test fetch-storage tests/versioned_random_access_stack.cpp)
+
