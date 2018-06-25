@@ -1,13 +1,12 @@
 [submodule "vendor/asio"]
 	path = vendor/asio
 	url = github:chriskohlhoff/asio.git
-[submodule "libfetchcore/vendor/pybind11"]
-	path = libfetchcore/vendor/pybind11
+[submodule "vendor/pybind11"]
+	path = vendor/pybind11
 	url = github:pybind/pybind11.git
 [submodule "docker-images"]
 	path = docker-images
 	url = github:uvue-git/docker-images.git
-[submodule "tests/vendor/googletest"]
-	path = tests/vendor/googletest
+[submodule "vendor/googletest"]
+	path = vendor/googletest
 	url = github:google/googletest.git
-
