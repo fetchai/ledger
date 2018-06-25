@@ -9,7 +9,7 @@
 #include "http/method.hpp"
 #include "http/query.hpp"
 #include "http/status.hpp"
-#include "json/document.hpp"
+#include "core/json/document.hpp"
 
 #include <algorithm>
 #include <limits>

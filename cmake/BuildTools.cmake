@@ -110,3 +110,11 @@ endfunction()
 #  target_link_libraries(${name} PUBLIC ${dependency})
 #
 #endfunction(add_fetch_dependencies)
+
+macro(add_test_target)
+  if (FETCH_ENABLE_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+  endif (FETCH_ENABLE_TESTS)
+endMacro()
+

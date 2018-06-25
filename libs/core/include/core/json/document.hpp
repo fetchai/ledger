@@ -4,8 +4,8 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/referenced_byte_array.hpp"
-#include "http/json/exceptions.hpp"
-#include "http/script/variant.hpp"
+#include "core/json/exceptions.hpp"
+#include "core/script/variant.hpp"
 
 #include <memory>
 #include <stack>
