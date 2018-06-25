@@ -73,9 +73,9 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
   typedef typename RandomAccessStack<T>::type type;
   typedef B bookmark_type;
 
-  void Load(std::string const &filename, std::string const &history) {
-    super_type::Load(filename);
-    history_.Load(history);
+  void Load(std::string const &filename, std::string const &history, bool const &create_if_not_exist = false) {
+    super_type::Load(filename, create_if_not_exist);
+    history_.Load(history); // TODO: create_if_not_exist
     bookmark_ = super_type::header_extra();
   }
 
@@ -92,13 +92,13 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
     bookmark_ = super_type::header_extra();
   }
 
-  type Get(std::size_t const &i) {
+  type Get(std::size_t const &i) const {
     type object;
     super_type::Get(i, object);
     return object;
   }
 
-  void Get(std::size_t const &i, type &object) {
+  void Get(std::size_t const &i, type &object) const {
     super_type::Get(i, object);
   }
 
@@ -109,9 +109,9 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
     super_type::Set(i, object);
   }
 
-  void Push(type const &object) {
+  uint64_t Push(type const &object) {
     history_.Push(HistoryPush(), HistoryPush::value);
-    super_type::Push(object);
+    return super_type::Push(object);
   }
 
   void Pop() {
@@ -120,7 +120,7 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
     super_type::Pop();
   }
 
-  type Top() { return super_type::Top(); }
+  type Top() const { return super_type::Top(); }
 
   void Swap(std::size_t const &i, std::size_t const &j) {
     history_.Push(HistorySwap(i, j), HistorySwap::value);

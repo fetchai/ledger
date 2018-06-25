@@ -15,7 +15,7 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-storage)
-#target_link_libraries(fetch-storage INTERFACE fetch-core vendor-openssl)
+target_link_libraries(fetch-storage INTERFACE fetch-core fetch-crypto vendor-openssl)
 
 #-------------------------------------------------------------------------------
 # Test Targets

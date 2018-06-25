@@ -1,6 +1,6 @@
 #ifndef CRYPTO_SHA256_HPP
 #define CRYPTO_SHA256_HPP
-#include "byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
 #include "crypto/stream_hasher.hpp"
 
 #include <openssl/sha.h>
@@ -20,17 +20,25 @@ class SHA256 : public StreamHasher {
   }
 
   bool Update(byte_array_type const& s) override {
-    if (!SHA256_Update(&data_, s.pointer(), s.size())) return false;
-    return true;
+    return Update(s.pointer(), s.size());
   }
 
   void Final() override {
     digest_.Resize(SHA256_DIGEST_LENGTH);
-    uint8_t* p = reinterpret_cast<uint8_t*>(digest_.pointer());
+    Final(reinterpret_cast<uint8_t*>(digest_.pointer()));
+  }
+
+  bool Update(uint8_t const *p, std::size_t const &size) override {
+    if (!SHA256_Update(&data_, p, size)) return false;
+    return true;
+  }
+
+  void Final(uint8_t* p) override {
     if (!SHA256_Final(p, &data_))
       throw std::runtime_error("could not finalize SHA256.");
   }
 
+  
   byte_array_type digest() override {
     assert(digest_.size() == SHA256_DIGEST_LENGTH);
     return digest_;

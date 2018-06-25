@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include<unordered_map>
+#include<map>
 
 #include "core/assert.hpp"
 
@@ -11,46 +12,56 @@ namespace fetch {
 namespace storage {
 
 template <typename T, typename D = uint64_t>
-class CachedRandomAccessStack : private RandomAccessStack<T,D> {
+class CachedRandomAccessStack : public RandomAccessStack<T,D> {
  public:
   typedef RandomAccessStack<T,D> super_type;
   typedef D header_extra_type;
   typedef T type;
 
   ~CachedRandomAccessStack() {
-    Flush();
-  }
-
-  virtual void OnFileLoaded() {
 
   }
+
+  void OnFileLoaded() override  {
+    objects_ = super_type::size();
+  }
+  
+  static constexpr bool DirectWrite() { return false; }
   
   void Load(std::string const &filename) {
     super_type::Load(filename);
     total_access_ = 0;
-    OnFileLoaded();
+    this->OnFileLoaded();
   }
 
   void New(std::string const &filename) {
     super_type::New(filename);
     Clear();
     total_access_ = 0;
-    OnFileLoaded();
+    this->OnFileLoaded();
   }
 
   void Get(uint64_t const &i, type &object)  {
+    assert( i < objects_ );
     ++total_access_;
+
     auto iter = data_.find(i);
     if(iter !=data_.end() ) {
       ++iter->second.reads;
       object = iter->second.data;
     } else {
-      assert(false);
+      super_type::Get(i, object);
+      CachedDataItem itm;
+      itm.data = object;
+      data_.insert(std::pair<uint64_t, CachedDataItem > (i, itm));      
+
     }
+    
   }
 
   void Set(uint64_t const &i, type const &object) {
     ++total_access_;
+
     auto iter = data_.find(i);
     if(iter !=data_.end() ) {
       ++iter->second.writes;
@@ -65,13 +76,17 @@ class CachedRandomAccessStack : private RandomAccessStack<T,D> {
     }
   }
 
-  /*
-  void SetExtraHeader(header_extra_type const &he) {
-    detailed_assert(filename_ != "");
-    header_.extra = he;
+  void Close() {
+    Flush();
+    
+    super_type::Close(true);    
   }
-  */
-  //  header_extra_type header_extra() const { return extra_; }
+  
+  void SetExtraHeader(header_extra_type const &he) {
+    super_type::SetExtraHeader(he);
+  }
+
+  header_extra_type header_extra() const { return super_type::header_extra(); }
 
   uint64_t Push(type const &object) {
     ++total_access_;
@@ -112,6 +127,8 @@ class CachedRandomAccessStack : private RandomAccessStack<T,D> {
   }
 
   void Flush() {
+    this->OnBeforeFlush();
+
     for(auto &item: data_) {
       if(item.second.updated) {
         if(item.first >= super_type::size()) {
@@ -124,16 +141,16 @@ class CachedRandomAccessStack : private RandomAccessStack<T,D> {
       }
 
     }
-    super_type::StoreHeader();
-    super_type::Flush();
-    
-    for(auto &item: data_ ) {
 
+    super_type::Flush(true);
+    
+    for(auto &item: data_ ) {      
       item.second.reads = 0;
       item.second.writes = 0;
       item.second.updated = false;            
     }
     total_access_ = 0;
+    // TODO: Clear thos not needed
   }
 
 protected:
