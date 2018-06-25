@@ -15,3 +15,5 @@ target_link_libraries(fetch-core PUBLIC fetch-vectorise)
 
 add_test_target()
 
+add_subdirectory(benchmark)
+

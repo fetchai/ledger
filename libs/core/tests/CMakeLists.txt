@@ -17,9 +17,3 @@ add_fetch_test(lfg_test fetch-core test_lfg.cpp)
 add_fetch_test(json_document_test fetch-core json/document.cpp)
 add_fetch_test(variant_test fetch-core script/variant.cpp)
 
-#-------------------------------------------------------------------------------
-# Benchmark Targets
-#-------------------------------------------------------------------------------
-
-add_fetch_test(benchmark_json_document fetch-core benchmark/json/document.cpp)
-
