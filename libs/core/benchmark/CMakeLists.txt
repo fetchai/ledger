@@ -1,5 +1,5 @@
 ################################################################################
-# F E T C H   H T T P   L I B R A R Y
+# F E T C H   C O R E   E X A M P L E S
 ################################################################################
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(fetch-core)
