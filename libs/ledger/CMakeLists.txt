@@ -23,8 +23,5 @@ target_link_libraries(fetch-ledger INTERFACE fetch-network fetch-http fetch-cryp
 
 add_fetch_test(proof_of_work_test fetch-ledger tests/consensus/proof_of_work.cpp)
 
-#-------------------------------------------------------------------------------
-# Example Targets
-#-------------------------------------------------------------------------------
+add_subdirectory(examples)
 
-setup_library_examples(fetch-ledger)

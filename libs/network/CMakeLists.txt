@@ -34,37 +34,37 @@ add_fetch_test(promise_counter_test fetch-network tests/rpc/promise_counter.cpp 
 # Example Targets
 #-------------------------------------------------------------------------------
 
-setup_library_examples(fetch-network)
-
-if(FETCH_ENABLE_EXAMPLES)
-
-  target_link_libraries(example_oef PRIVATE fetch-http)
-  target_link_libraries(example_http_server PRIVATE fetch-http)
-
-  add_executable(example_subscribe examples/subscribe/subscribe.cpp)
-  target_link_libraries(example_subscribe PRIVATE fetch-network)
-  target_include_directories(example_subscribe PRIVATE examples/subscribe)
-
-  add_executable(example_listener examples/subscribe/listener.cpp)
-  target_link_libraries(example_listener PRIVATE fetch-network)
-  target_include_directories(example_listener PRIVATE examples/subscribe)
-
-  add_executable(example_rpc_server examples/rpc/server.cpp)
-  target_link_libraries(example_rpc_server PRIVATE fetch-network)
-
-  add_executable(example_rpc_client examples/rpc/client.cpp)
-  target_link_libraries(example_rpc_client PRIVATE fetch-network)
-
-  add_executable(example_adv_rpc_aea examples/advanced_rpc/aea.cpp)
-  target_link_libraries(example_adv_rpc_aea PRIVATE fetch-network)
-
-  add_executable(example_adv_rpc_node examples/advanced_rpc/node.cpp)
-  target_link_libraries(example_adv_rpc_node PRIVATE fetch-network)
-
-  add_executable(example_rrpc_client examples/reverse_rpc/client.cpp)
-  target_link_libraries(example_rrpc_client PRIVATE fetch-network)
-
-  add_executable(example_rrpc_server examples/reverse_rpc/server.cpp)
-  target_link_libraries(example_rrpc_server PRIVATE fetch-network)
-
-endif(FETCH_ENABLE_EXAMPLES)
+#setup_library_examples(fetch-network)
+#
+#if(FETCH_ENABLE_EXAMPLES)
+#
+#  target_link_libraries(example_oef PRIVATE fetch-http)
+#  target_link_libraries(example_http_server PRIVATE fetch-http)
+#
+#  add_executable(example_subscribe examples/subscribe/subscribe.cpp)
+#  target_link_libraries(example_subscribe PRIVATE fetch-network)
+#  target_include_directories(example_subscribe PRIVATE examples/subscribe)
+#
+#  add_executable(example_listener examples/subscribe/listener.cpp)
+#  target_link_libraries(example_listener PRIVATE fetch-network)
+#  target_include_directories(example_listener PRIVATE examples/subscribe)
+#
+#  add_executable(example_rpc_server examples/rpc/server.cpp)
+#  target_link_libraries(example_rpc_server PRIVATE fetch-network)
+#
+#  add_executable(example_rpc_client examples/rpc/client.cpp)
+#  target_link_libraries(example_rpc_client PRIVATE fetch-network)
+#
+#  add_executable(example_adv_rpc_aea examples/advanced_rpc/aea.cpp)
+#  target_link_libraries(example_adv_rpc_aea PRIVATE fetch-network)
+#
+#  add_executable(example_adv_rpc_node examples/advanced_rpc/node.cpp)
+#  target_link_libraries(example_adv_rpc_node PRIVATE fetch-network)
+#
+#  add_executable(example_rrpc_client examples/reverse_rpc/client.cpp)
+#  target_link_libraries(example_rrpc_client PRIVATE fetch-network)
+#
+#  add_executable(example_rrpc_server examples/reverse_rpc/server.cpp)
+#  target_link_libraries(example_rrpc_server PRIVATE fetch-network)
+#
+#endif(FETCH_ENABLE_EXAMPLES)
