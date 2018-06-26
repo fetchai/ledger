@@ -1,21 +1,20 @@
 #ifndef CHAIN_BLOCK_HPP
 #define CHAIN_BLOCK_HPP
-#include "byte_array/referenced_byte_array.hpp"
-#include "chain/transaction.hpp"
-#include "serializers/byte_array_buffer.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 
 #include <memory>
 
 namespace fetch {
 namespace chain {
 
-/*
-struct BlockBody {
-std::vector< fetch::byte_array::ByteArray > previous_hashes;
-fetch::byte_array::ByteArray transaction_hash;
-std::vector< uint32_t > groups;
+
+struct BlockSlice {
+  std::vector<TransactionSummary> transactions;
 };
-*/
+
+
 
 struct BlockBody {
   fetch::byte_array::ByteArray previous_hash;
