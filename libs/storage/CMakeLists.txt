@@ -23,6 +23,8 @@ target_link_libraries(fetch-storage INTERFACE fetch-core fetch-crypto fetch-test
 
 add_fetch_test(file_object_test fetch-storage tests/file_object.cpp)
 add_fetch_test(random_access_stack_test fetch-storage tests/random_access_stack.cpp)
-add_fetch_test(variant_stack_test fetch-storage tests/variant_stack.cpp DISABLED)
 add_fetch_test(versioned_random_access_stack_test fetch-storage tests/versioned_random_access_stack.cpp)
+
+add_fetch_test(key_value_index_test fetch-storage tests/key_value_index.cpp)
+add_fetch_test(variant_stack_test fetch-storage tests/variant_stack.cpp DISABLED)
 

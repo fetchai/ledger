@@ -52,7 +52,7 @@ struct Key {
     }
 
     pos = bit + (i << 8);
-    if(pos >= this->size()) {
+    if(pos >= int(this->size())) {
       return 0;
     }
 

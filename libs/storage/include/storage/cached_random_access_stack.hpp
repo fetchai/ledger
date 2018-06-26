@@ -12,33 +12,65 @@ namespace fetch {
 namespace storage {
 
 template <typename T, typename D = uint64_t>
-class CachedRandomAccessStack : public RandomAccessStack<T,D> {
+class CachedRandomAccessStack {
  public:
-  typedef RandomAccessStack<T,D> super_type;
+  typedef RandomAccessStack<T,D> stack_type;
   typedef D header_extra_type;
   typedef T type;
 
+  CachedRandomAccessStack()  
+  {
+    stack_.OnFileLoaded([this]() {
+        this-> objects_ = stack_.size();
+        SignalFileLoaded() ;
+      });
+  }
+  
   ~CachedRandomAccessStack() {
-
+    stack_.ClearEventHandlers();
   }
 
-  void OnFileLoaded() override  {
-    objects_ = super_type::size();
+  typedef std::function< void() > event_handler_type;
+
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
+
+  void ClearEventHandlers() 
+  {
+    on_file_loaded_ = nullptr;
+    on_before_flush_ = nullptr;
+  }
+
+  void OnFileLoaded(event_handler_type const &f) {
+    on_file_loaded_ = f;    
+  }
+  
+  void OnBeforeFlush(event_handler_type const &f) {
+    on_before_flush_ = f;
+  }
+
+  void SignalFileLoaded() {
+    if(on_file_loaded_) on_file_loaded_();
+  }
+  
+  void SignalBeforeFlush() 
+  {
+    if(on_before_flush_) on_before_flush_();    
   }
   
   static constexpr bool DirectWrite() { return false; }
   
   void Load(std::string const &filename) {
-    super_type::Load(filename);
+    stack_.Load(filename);
     total_access_ = 0;
-    this->OnFileLoaded();
+    this->SignalFileLoaded();
   }
 
   void New(std::string const &filename) {
-    super_type::New(filename);
+    stack_.New(filename);
     Clear();
     total_access_ = 0;
-    this->OnFileLoaded();
+    this->SignalFileLoaded();
   }
 
   void Get(uint64_t const &i, type &object)  {
@@ -50,7 +82,7 @@ class CachedRandomAccessStack : public RandomAccessStack<T,D> {
       ++iter->second.reads;
       object = iter->second.data;
     } else {
-      super_type::Get(i, object);
+      stack_.Get(i, object);
       CachedDataItem itm;
       itm.data = object;
       data_.insert(std::pair<uint64_t, CachedDataItem > (i, itm));      
@@ -79,14 +111,14 @@ class CachedRandomAccessStack : public RandomAccessStack<T,D> {
   void Close() {
     Flush();
     
-    super_type::Close(true);    
+    stack_.Close(true);    
   }
   
   void SetExtraHeader(header_extra_type const &he) {
-    super_type::SetExtraHeader(he);
+    stack_.SetExtraHeader(he);
   }
 
-  header_extra_type header_extra() const { return super_type::header_extra(); }
+  header_extra_type header_extra() const { return stack_.header_extra(); }
 
   uint64_t Push(type const &object) {
     ++total_access_;
@@ -121,28 +153,27 @@ class CachedRandomAccessStack : public RandomAccessStack<T,D> {
   std::size_t empty() const { return objects_ == 0; }
 
   void Clear() {
-    super_type::Clear();
+    stack_.Clear();
     objects_ = 0;
     data_.clear();
   }
 
   void Flush() {
-    this->OnBeforeFlush();
+    this->SignalBeforeFlush();
 
     for(auto &item: data_) {
       if(item.second.updated) {
-        if(item.first >= super_type::size()) {
-          assert( item.first == super_type::size());
-          super_type::LazyPush( item.second.data );
+        if(item.first >= stack_.size()) {
+          assert( item.first == stack_.size());
+          stack_.LazyPush( item.second.data );
         } else {
-          assert( item.first < super_type::size());
-          super_type::Set( item.first, item.second.data );
+          assert( item.first < stack_.size());
+          stack_.Set( item.first, item.second.data );
         }
       }
-
     }
 
-    super_type::Flush(true);
+    stack_.Flush(true);
     
     for(auto &item: data_ ) {      
       item.second.reads = 0;
@@ -153,10 +184,13 @@ class CachedRandomAccessStack : public RandomAccessStack<T,D> {
     // TODO: Clear thos not needed
   }
 
-protected:
+  bool is_open() const 
+  {
+    return stack_.is_open();
+  }
   
-
  private:
+  stack_type stack_;    
   uint64_t total_access_;
   struct CachedDataItem {
     uint64_t reads = 0;

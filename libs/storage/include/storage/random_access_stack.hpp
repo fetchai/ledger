@@ -3,6 +3,8 @@
 #include <fstream>
 #include <string>
 #include<cassert>
+#include<functional>
+
 #include "core/assert.hpp"
 
 namespace fetch {
@@ -45,16 +47,39 @@ class RandomAccessStack {
  public:
   typedef D header_extra_type;
   typedef T type;
+  typedef std::function< void() > event_handler_type;
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
 
-  virtual void OnFileLoaded() {  }
-  virtual void OnBeforeFlush() { }
-  static constexpr bool DirectWrite() { return true; }
+  void ClearEventHandlers() 
+  {
+    on_file_loaded_ = nullptr;
+    on_before_flush_ = nullptr;
+  }
+
+  void OnFileLoaded(event_handler_type const &f) {
+    on_file_loaded_ = f;    
+  }
+  
+  void OnBeforeFlush(event_handler_type const &f) {
+    on_before_flush_ = f;
+  }
+
+  void SignalFileLoaded() {
+    if(on_file_loaded_) on_file_loaded_();
+  }
+  
+  void SignalBeforeFlush() 
+  {
+    if(on_before_flush_) on_before_flush_();    
+  }
+  
 
   
+  static constexpr bool DirectWrite() { return true; }
 
   ~RandomAccessStack () {
     if(file_handle_.is_open()) {
-      // Don't use Close as it calls virtual functions
       file_handle_.close();
     }
   }
@@ -92,7 +117,9 @@ class RandomAccessStack {
     }
 
     // TODO: Check magic
-    OnFileLoaded();
+
+    SignalFileLoaded();    
+    
   }
 
   void New(std::string const &filename) {
@@ -101,7 +128,7 @@ class RandomAccessStack {
     file_handle_ = std::fstream(filename_,
                                 std::ios::in | std::ios::out | std::ios::binary);
 
-    OnFileLoaded();
+    SignalFileLoaded();    
   }
 
   // TODO: Protectected functions
@@ -111,7 +138,6 @@ class RandomAccessStack {
     
     int64_t n = int64_t(i * sizeof(type) + header_.size());
 
-    assert( LessThanEnd( n ) );
         
     file_handle_.seekg(n);
     file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
@@ -122,7 +148,6 @@ class RandomAccessStack {
     assert(filename_ != "");
     assert( i < size() );    
     int64_t n = int64_t(i * sizeof(type) + header_.size());
-    assert( LessThanEnd( n ) );
     
     file_handle_.seekg(n, file_handle_.beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
@@ -207,7 +232,7 @@ class RandomAccessStack {
   }
   
   void Flush(bool const &lazy=false) {
-    if(!lazy) OnBeforeFlush();
+    if(!lazy) SignalBeforeFlush();
     StoreHeader();
     file_handle_.flush();
   }
@@ -216,17 +241,6 @@ class RandomAccessStack {
   bool is_open() const 
   {
     return bool(file_handle_) && (file_handle_.is_open());
-  }
-  
-protected:
-
-  bool LessThanEnd( int64_t const &n)  const
-  {
-    file_handle_.seekg(0, file_handle_.end);
-    int64_t length = file_handle_.tellg();
-    file_handle_.seekg(0, file_handle_.beg);
-    
-    return n < length;    
   }
   
    
@@ -249,9 +263,7 @@ protected:
    
 
     return ret;
-  }
-
-  
+  }  
   
  private:
   mutable std::fstream file_handle_;

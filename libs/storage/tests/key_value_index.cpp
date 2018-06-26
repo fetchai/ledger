@@ -6,7 +6,7 @@
 #include "storage/key_value_index.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lfg.hpp"
-#include "core/unittest.hpp"
+#include "testing/unittest.hpp"
 using namespace fetch;
 using namespace fetch::storage;
 typedef KeyValueIndex<> cached_kvi_type;
