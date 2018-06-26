@@ -17,8 +17,6 @@
 #include <pybind11/embed.h>
 
 PYBIND11_EMBEDDED_MODULE(fetchnetwork, module) {
-  namespace py = pybind11;
-
   pybind11::module ns_fetch_network_swarm = module.def_submodule("swarm");
   fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
 }
