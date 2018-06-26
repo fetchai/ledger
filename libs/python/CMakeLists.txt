@@ -14,13 +14,8 @@ if(FETCH_ENABLE_PYTHON_BINDINGS)
 
   # define the python module
   pybind11_add_module(fetch-python src/main.cpp)
-  target_include_directories(fetch-python PRIVATE fetch-math)
-  target_link_libraries(fetch-python PRIVATE
-    fetch-math
-    fetch-network
-    fetch-http
-    vendor-openssl
-  )
+  target_include_directories(fetch-python PRIVATE include)
+  target_link_libraries(fetch-python PRIVATE fetch-math)
 
   # make the name match the bindings
   set_target_properties(fetch-python PROPERTIES OUTPUT_NAME "fetch")
