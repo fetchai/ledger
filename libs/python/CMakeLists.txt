@@ -14,10 +14,7 @@ if(FETCH_ENABLE_PYTHON_BINDINGS)
 
   # define the python module
   pybind11_add_module(fetch-python src/main.cpp)
-  target_include_directories(fetch-python PRIVATE
-    include
-    ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+  target_include_directories(fetch-python PRIVATE fetch-math)
   target_link_libraries(fetch-python PRIVATE
     fetch-math
     fetch-network
