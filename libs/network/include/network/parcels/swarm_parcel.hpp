@@ -2,13 +2,10 @@
 #define __SWARM_PARCEL__
 
 #include <iostream>
-#include <string>
-
 #include <openssl/md5.h>
+#include <sstream>
 #include <stdio.h>
-
-using std::endl;
-using std::string;
+#include <string>
 
 namespace fetch
 {
@@ -21,7 +18,7 @@ public:
 
   std::string name_, data_, type_;
 
-  SwarmParcel(const string &type, const string &data)
+  SwarmParcel(const std::string &type, const std::string &data)
   {
     type_ = type;
     data_ = data;
@@ -74,19 +71,19 @@ public:
   {
   }
 
-  const string &GetType() const { return type_; }
-  const string &GetData() const { return data_; }
-  const string &GetName() const { return name_; }
+  const std::string &GetType() const { return type_; }
+  const std::string &GetData() const { return data_; }
+  const std::string &GetName() const { return name_; }
 
   std::string asJSON() const
   {
     std::ostringstream ret;
 
-    ret << "{" << endl;
-    ret << "  \"name\": \"" << name_ << "\"," << endl;
-    ret << "  \"type\": \"" << type_ << "\"," << endl;
-    ret << "  \"data\": " << data_ << endl;
-    ret << "}" << endl;
+    ret << "{" << std::endl;
+    ret << "  \"name\": \"" << name_ << "\"," << std::endl;
+    ret << "  \"type\": \"" << type_ << "\"," << std::endl;
+    ret << "  \"data\": " << data_ << std::endl;
+    ret << "}" << std::endl;
 
     return ret.str();
   }

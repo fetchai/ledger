@@ -1,29 +1,20 @@
 #include <iostream>
-#include "network/details/thread_manager.hpp"
-#include "core/commandline/parameter_parser.hpp"
-
-#include "network/swarm/swarm_node.hpp"
-#include "network/swarm/swarm_service.hpp"
-#include "network/swarm/swarm_peer_location.hpp"
-#include "network/swarm/swarm_random.hpp"
-#include "network/service/protocol.hpp"
-
-#include "network/swarm/swarm_http_interface.hpp"
-#include "swarm_agent_naive.hpp"
-#include "swarm_agent_api_impl.hpp"
-#include "swarm_parcel_node.hpp"
-#include "swarm_parcel_protocol.hpp"
-
-using namespace std;
-#include <unistd.h>
 #include <string>
 #include <time.h>
-#include <iostream>
-#include <string>
-using std::cout;
-using std::cerr;
-using std::string;
+#include <unistd.h>
 
+#include "core/commandline/parameter_parser.hpp"
+#include "network/details/thread_manager.hpp"
+#include "network/service/protocol.hpp"
+#include "network/parcels/swarm_agent_api_impl.hpp"
+#include "network/parcels/swarm_agent_naive.hpp"
+#include "network/parcels/swarm_parcel_node.hpp"
+#include "network/parcels/swarm_parcel_protocol.hpp"
+#include "network/swarm/swarm_http_interface.hpp"
+#include "network/swarm/swarm_node.hpp"
+#include "network/swarm/swarm_peer_location.hpp"
+#include "network/swarm/swarm_random.hpp"
+#include "network/swarm/swarm_service.hpp"
 
 typedef unsigned int uint;
 
@@ -36,7 +27,7 @@ int main(int argc, const char *argv[])
   unsigned int maxpeers = params.GetParam<unsigned int>("maxpeers", 0);
   unsigned int idlespeed = params.GetParam<unsigned int>("idlespeed", 1000);
   unsigned int solvespeed = params.GetParam<unsigned int>("solvespeed", 1000);
-  list<fetch::swarm::SwarmPeerLocation> peers =
+  std::list<fetch::swarm::SwarmPeerLocation> peers =
     fetch::swarm::SwarmPeerLocation::ParsePeerListString(params.GetParam<std::string>("peers", ""));
 
   fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });

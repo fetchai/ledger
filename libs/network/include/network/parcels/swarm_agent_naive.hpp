@@ -2,11 +2,13 @@
 #define SWARM_AGENT_NAIVE__
 
 #include <deque>
+#include <iostream>
 #include <list>
 #include <set>
 #include <string>
-#include <iostream>
 
+#include "network/swarm/swarm_agent_api.hpp"
+#include "network/swarm/swarm_random.hpp"
 #include "swarm_parcel.hpp"
 
 namespace fetch
@@ -61,7 +63,7 @@ public:
     id_(id)
   {
     api -> OnIdle([this, api, id, identifier, solvespeed]{
-        cout << "AGENT NAIVE: OnIdle"<<endl;
+        cout << "AGENT NAIVE: OnIdle"<<std::endl;
 
         if (this -> rnd_ -> r(solvespeed) <= static_cast<unsigned int>(id)) 
           {
@@ -73,7 +75,7 @@ public:
 
             SwarmParcel newParcel("block", ret.str());
 
-            cout << identifier << " solved " << newParcel.GetName() << endl;
+            std::cout << identifier << " solved " << newParcel.GetName() << std::endl;
             api -> DoBlockSolved(ret.str());
           }
 
@@ -118,7 +120,7 @@ public:
           if (std::find(this -> onceAndFuturePeers_.begin(), this -> onceAndFuturePeers_.end(), host)
               == this -> onceAndFuturePeers_.end())
             {
-              cout << identifier << " discovered " << host << endl;
+              std::cout << identifier << " discovered " << host << std::endl;
 
               this -> onceAndFuturePeers_.insert(host);
               api -> DoPing(host);
@@ -126,7 +128,7 @@ public:
       });
 
     api -> OnPingSucceeded([this, identifier, api](const std::string &host) {
-        cout << identifier << " confirmed " << host << endl;
+        std::cout << identifier << " confirmed " << host << std::endl;
         if (api -> queryOwnLocation() != host)
           {
             this -> onceAndFuturePeers_.insert(host);
@@ -135,12 +137,12 @@ public:
       });
 
     api -> OnPingFailed([identifier, api](const std::string &host) {
-        cout << identifier << " lost " << host << endl;
+        std::cout << identifier << " lost " << host << std::endl;
         api -> AddKarma(host, -5.0);
       });
 
     api -> OnNewBlockIdFound([api, identifier](const std::string &host, const std::string &blockid) {
-        cout << identifier << " determined " << host << " has " << blockid << endl;
+        std::cout << identifier << " determined " << host << " has " << blockid << std::endl;
         api -> AddKarmaMax(host, 1.0, 6.0);
         api -> DoGetBlock(host, blockid);
       });
@@ -149,7 +151,7 @@ public:
       });
 
     api -> OnNewBlockAvailable([api, identifier](const std::string &host, const std::string &blockid) {
-        cout << identifier << " obtained " << blockid << " from " << host << endl;
+        std::cout << identifier << " obtained " << blockid << " from " << host << std::endl;
         api-> VerifyBlock(blockid, true);
         api -> AddKarmaMax(host, 2.0, 10.0);
       });
