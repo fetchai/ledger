@@ -1,5 +1,5 @@
 ################################################################################
-# F E T C H   C O R E   E X A M P L E S
+# F E T C H   C O R E   B E N C H M A R K S
 ################################################################################
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(fetch-core)
