@@ -54,6 +54,10 @@ if (FETCH_DEBUG_SANITIZER)
   fetch_info("Running with sanitizer: ${FETCH_DEBUG_SANITIZER}")
 endif (FETCH_DEBUG_SANITIZER)
 
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+  fetch_info("Using GCC based compiler - not currently a fully supported compiler")
+endif()
+
 #-------------------------------------------------------------------------------
 # System / Vendor Targets
 #-------------------------------------------------------------------------------
