@@ -37,6 +37,12 @@ public:
     startIdle();
   }
 
+  void Stop()
+  {
+    tm_ -> Stop();
+    tm_.reset();
+  }
+
   virtual ~SwarmAgentApiImpl()
   {
     tm_ -> Stop();

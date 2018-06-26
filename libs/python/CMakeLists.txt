@@ -17,7 +17,6 @@ if(FETCH_ENABLE_PYTHON_BINDINGS)
   target_include_directories(fetch-python PRIVATE
     include
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${FETCH_ROOT_DIR}/apps/swarm
   )
   target_link_libraries(fetch-python PRIVATE
     fetch-math
@@ -29,18 +28,7 @@ if(FETCH_ENABLE_PYTHON_BINDINGS)
   # make the name match the bindings
   set_target_properties(fetch-python PROPERTIES OUTPUT_NAME "fetch")
 
-  add_executable(pyfetch src/pyfetch.cpp)
-  target_include_directories(pyfetch PRIVATE
-    include
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${FETCH_ROOT_DIR}/apps/swarm
-    )
-  target_link_libraries(pyfetch PRIVATE
-    fetch-math
-    fetch-network
-    fetch-http
-    pybind11::embed
-    vendor-openssl
-  )
+add_library(fetch-python-lib INTERFACE)
+target_include_directories(fetch-python-lib INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 endif(FETCH_ENABLE_PYTHON_BINDINGS)

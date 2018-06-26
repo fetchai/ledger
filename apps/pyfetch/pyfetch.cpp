@@ -6,7 +6,7 @@ namespace py = pybind11;
 #include "network/swarm/swarm_agent_api.hpp"
 
 #include "network/swarm/swarm_node.hpp"
-#include "swarm_http_interface.hpp"
+#include "network/swarm/swarm_http_interface.hpp"
 #include "network/swarm/swarm_service.hpp"
 #include "network/swarm/swarm_peer_location.hpp"
 #include "network/swarm/swarm_random.hpp"

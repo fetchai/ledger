@@ -20,7 +20,7 @@ using std::string;
 #include "network/swarm/swarm_peer_location.hpp"
 #include "network/swarm/swarm_random.hpp"
 #include "swarm_agent_api_impl.hpp"
-#include "swarm_http_interface.hpp"
+#include "network/swarm/swarm_http_interface.hpp"
 
 #include <unistd.h>
 #include <string>

@@ -49,7 +49,7 @@
 // !!!!
 namespace py = pybind11;
 
-#include "python/network/swarm/py_swarm_agent_api.hpp"
+//#include "python/network/swarm/py_swarm_agent_api.hpp"
 
 PYBIND11_MODULE(fetch, module) {
 
@@ -199,7 +199,7 @@ PYBIND11_MODULE(fetch, module) {
 
 
   
-  py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
-  fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
+  //py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
+  //fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
 }
 
