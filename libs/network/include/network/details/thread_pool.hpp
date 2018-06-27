@@ -47,7 +47,7 @@ public:
     shutdown_ = false;
   }
 
-  ~ThreadPoolImplementation() {
+  virtual ~ThreadPoolImplemention() {
     Stop();
     fetch::logger.Debug("Destroying thread manager");
   }
