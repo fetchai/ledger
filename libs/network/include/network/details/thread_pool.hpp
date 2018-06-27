@@ -40,14 +40,15 @@ public:
     return std::make_shared<ThreadPoolImplementation>(threads);
   }
 
-  ThreadPoolImplementation(std::size_t threads = 1)
-      : number_of_threads_(threads) {
+  ThreadPoolImplementation(std::size_t threads = 1) : number_of_threads_(threads)
+  {
 
     fetch::logger.Debug("Creating thread manager");
     shutdown_ = false;
   }
 
-  virtual ~ThreadPoolImplemention() {
+  virtual ~ThreadPoolImplemention()
+  {
     Stop();
     fetch::logger.Debug("Destroying thread manager");
   }
