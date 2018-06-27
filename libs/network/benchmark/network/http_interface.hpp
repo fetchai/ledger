@@ -1,13 +1,12 @@
 #ifndef NETWORK_BENCHMARK_HTTP_INTERFACE_HPP
 #define NETWORK_BENCHMARK_HTTP_INTERFACE_HPP
 
-#include"network/http/server.hpp"
-#include"network/http/middleware/allow_origin.hpp"
-#include"network/http/middleware/color_log.hpp"
-
-#include"network/script/variant.hpp"
-#include"./network_classes.hpp"
+#include"core/script/variant.hpp"
 #include"core/logger.hpp"
+#include"http/server.hpp"
+#include"http/middleware/allow_origin.hpp"
+#include"http/middleware/color_log.hpp"
+#include"./network_classes.hpp"
 
 namespace fetch
 {

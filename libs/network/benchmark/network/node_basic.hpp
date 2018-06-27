@@ -14,13 +14,13 @@
 #include<fstream>
 #include<vector>
 
-#include"chain/transaction.hpp"
 #include"core/byte_array/basic_byte_array.hpp"
 #include"core/random/lfg.hpp"
+#include"core/logger.hpp"
+#include"ledger/chain/transaction.hpp"
 #include"./network_classes.hpp"
 #include"./node_directory.hpp"
 #include"./transaction_list.hpp"
-#include"core/logger.hpp"
 #include"../tests/include/helper_functions.hpp"
 
 namespace fetch

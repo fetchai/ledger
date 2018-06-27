@@ -1,12 +1,11 @@
 #ifndef CHAIN_TRANSACTION_HPP
 #define CHAIN_TRANSACTION_HPP
-#include<vector>
+#include <vector>
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/logger.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/referenced_byte_array.hpp"
 #include "crypto/sha256.hpp"
-
-#include "byte_array/const_byte_array.hpp"
-#include "logger.hpp"
-#include "serializers/byte_array_buffer.hpp"
-#include "serializers/referenced_byte_array.hpp"
 
 namespace fetch {
 typedef uint16_t group_type;

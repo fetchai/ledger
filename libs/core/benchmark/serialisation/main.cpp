@@ -1,15 +1,15 @@
-#include <iostream>
 #include "core/random/lfg.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/referenced_byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/typed_byte_array_buffer.hpp"
 
+#include <iostream>
 #include <chrono>
 #include <iomanip>
 #include <vector>
-#include "core/serializers/referenced_byte_array.hpp"
-#include "network/service/client.hpp"
 
 using namespace fetch::serializers;
 using namespace fetch::byte_array;
