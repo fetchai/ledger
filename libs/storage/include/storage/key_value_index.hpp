@@ -210,7 +210,7 @@ public:
     int left_right = 0;
     index_type depth = 0;    
     FindNearest(key, kv, split, pos, left_right, depth);
-    std::cout << "Split: " << split << " " << pos << std::endl;
+
     
     if(!split) {
       value = kv.value;
@@ -343,9 +343,12 @@ public:
 
   byte_array::ByteArray Hash() {
     stack_.Flush();
-    
     key_value_pair kv;
-    stack_.Get(root_, kv);
+    
+    if(stack_.size() > 0) {
+      stack_.Get(root_, kv);
+    }
+    
     return kv.Hash();
   }
 

@@ -306,7 +306,7 @@ public:
     return length_ - HEADER_SIZE;
   }
 
-  byte_array::ByteArray Hash() {
+  byte_array::ConstByteArray Hash() {
     hasher_type hasher;
     hasher.Reset();
     UpdateHash(hasher);

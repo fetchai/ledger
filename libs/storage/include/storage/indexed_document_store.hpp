@@ -23,31 +23,69 @@ class IndexedDocumentStore {
   typedef FileObject<file_store_type> file_object_type;
 
   typedef typename key_value_index_type::index_type index_type;
-  
-  class Document : public file_object_type 
+
+  class DocumentImplementation : public file_object_type
   {
   public:
-    Document(IndexedDocumentStore *s, file_store_type &store)
-      : file_object_type(store), store_(s)
+    DocumentImplementation(IndexedDocumentStore *s, byte_array::ConstByteArray const &address, file_store_type &store)
+      : file_object_type(store), address_(address), store_(s)
     {  }
     
-    Document(IndexedDocumentStore *s, file_store_type &store, std::size_t const&pos )
-      : file_object_type(store, pos), store_(s)
+    DocumentImplementation(IndexedDocumentStore *s, byte_array::ConstByteArray const &address, file_store_type &store, std::size_t const&pos )
+      : file_object_type(store, pos), address_(address), store_(s)
     {  }
-
-    Document(Document const& other) = delete;  
-    Document operator=(Document const& other) = delete;  
     
-    Document(Document && other) = default;  
-    Document &operator=(Document && other) = default;  
-    
-    ~Document( ) 
+    ~DocumentImplementation() 
     {
       store_->UpdateDocument( *this );
     }
+    DocumentImplementation(DocumentImplementation const& other) = delete;  
+    DocumentImplementation operator=(DocumentImplementation const& other) = delete;  
+
+    
+    DocumentImplementation(DocumentImplementation && other) = default;  
+    DocumentImplementation &operator=(DocumentImplementation && other) = default;  
+
+    byte_array::ConstByteArray const &address() const
+    {
+      return address_;
+    }
     
   private:
-    IndexedDocumentStore *store_;
+    byte_array::ConstByteArray address_;
+    IndexedDocumentStore *store_;    
+  };
+  
+    
+  
+  class Document
+  {
+  public:
+    Document(IndexedDocumentStore *s, byte_array::ConstByteArray const &address,
+      file_store_type &store)
+    {
+      pointer_ = std::make_shared< DocumentImplementation >(s, address, store);      
+    }
+    
+    Document(IndexedDocumentStore *s, byte_array::ConstByteArray const &address,
+      file_store_type &store, std::size_t const&pos )
+    {
+      pointer_ = std::make_shared< DocumentImplementation >(s, address, store, pos);      
+    }
+
+    std::size_t id() const 
+    {
+      return pointer_->id();
+    }
+    
+    byte_array::ConstByteArray const &address() const
+    {
+      return pointer_->address();
+    }
+
+
+  private:
+    std::shared_ptr< DocumentImplementation > pointer_;
     
   };
   
@@ -68,27 +106,36 @@ class IndexedDocumentStore {
 
   Document GetDocument(byte_array::ConstByteArray const &address, bool const &create = true)
   {
-    index_type index = index_type(-1);
+    index_type index = 0 ;
+    
     
     if(key_index_.GetIfExists(address, index)) {
       std::cout << "Get 1: " << index << std::endl;
       
-      return Document(this, file_store_, index);
+      return Document(this, address, file_store_, index);
     } else if(!create) {
       TODO_FAIL("TODO: Throw error");
     }
     std::cout << "Get 2" << std::endl;
-    return Document(this, file_store_);
-//    return doc;    
+    Document doc = Document(this, address, file_store_);
 
+    return doc;
   }
 
+  byte_array::ConstByteArray Hash() 
+  {
+    return key_index_.Hash();
+  }
+  
 private:  
-  void UpdateDocument(Document &doc)
+  void UpdateDocument(DocumentImplementation &doc)
   {
     std::cout << "Flushing and closing" << std::endl;
+    doc.Flush();
+    key_index_.Set(doc.address(), doc.id(), doc.Hash());
     
-    
+//TODO:    file_store_.Flush();
+    key_index_.Flush();    
   }
   
 
