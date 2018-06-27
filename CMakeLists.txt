@@ -30,6 +30,7 @@ option(FETCH_ARCH_AVX2  "Architecture maximally supports AVX2"    OFF)
 # Top Level Setup
 #-------------------------------------------------------------------------------
 
+
 set (FETCH_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set (FETCH_ROOT_CMAKE_DIR ${FETCH_ROOT_DIR}/cmake)
 set (FETCH_ROOT_VENDOR_DIR ${FETCH_ROOT_DIR}/vendor)
