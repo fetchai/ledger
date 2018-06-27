@@ -55,7 +55,7 @@ public:
   ThreadPoolImplementation(ThreadPoolImplementation const& ) = delete;
   ThreadPoolImplementation(ThreadPoolImplementation && ) = default ;
 
-  void Post(event_function_type item)
+  virtual void Post(event_function_type item)
   {
     if (!shutdown_)
       {
@@ -65,18 +65,18 @@ public:
       }
   }
 
-  void Sleep()
+  virtual void Sleep()
   {
     lock_type lock(mutex_);
   }
 
-  void SetIdleWork(event_function_type idle_work)
+  virtual void SetIdleWork(event_function_type idle_work)
   {
     lock_type lock(mutex_);
-    
+    idleWork_.push_back(idle_work);
   }
 
-  void ProcessLoop()
+  virtual void ProcessLoop()
   {
     while(!shutdown_)
       {
@@ -100,7 +100,7 @@ public:
       }
   }
 
-  thread_state_type Poll()
+  virtual thread_state_type Poll()
   {
     {
       lock_type lock(mutex_);
@@ -155,7 +155,7 @@ public:
     return r;
   }
 
-  void Start()
+  virtual void Start()
   {
     std::lock_guard< fetch::mutex::Mutex > lock( thread_mutex_ );
     if (threads_.size() == 0) {
@@ -169,7 +169,7 @@ public:
     }
   }
 
-  thread_state_type TryIdleWork()
+  virtual thread_state_type TryIdleWork()
   {
     thread_state_type r = THREAD_IDLE;
     std::unique_lock<std::mutex> lock(futureWorkProtector_, std::try_to_lock);
@@ -188,7 +188,7 @@ public:
     return r;
   }
 
-  thread_state_type TryFutureWork()
+  virtual thread_state_type TryFutureWork()
   {
     thread_state_type r = THREAD_IDLE;
     std::unique_lock<std::mutex> lock(futureWorkProtector_, std::try_to_lock);
