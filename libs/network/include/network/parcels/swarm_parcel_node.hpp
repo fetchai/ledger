@@ -3,9 +3,8 @@
 
 #include <iostream>
 #include <string>
-using std::cout;
-using std::cerr;
-using std::string;
+
+#include "network/swarm/swarm_node.hpp"
 
 namespace fetch
 {
@@ -38,22 +37,22 @@ public:
   virtual std::string ClientNeedParcelList(const string &type, unsigned int count)
   {
     std::ostringstream ret;
-    ret << "{" << endl;
-    ret << "\"parcels\": [" << endl;
+    ret << "{" << std::endl;
+    ret << "\"parcels\": [" << std::endl;
 
     int i = 0;
     for (auto &parcelName : ListParcelNames(type, count))
       {
         if (i)
-          ret << "," << endl;
+          ret << "," << std::endl;
         i++;
         ret << "    \"" << parcelName << "\"";
       }
     if (i) {
-      ret << endl;
+      ret << std::endl;
     }
-    ret << "  ]" << endl;
-    ret << "}" << endl;
+    ret << "  ]" << std::endl;
+    ret << "}" << std::endl;
     return ret.str();
   }
 
@@ -64,11 +63,11 @@ public:
     if (HasParcel(type, parcelname))
       {
         auto data = GetParcel(type, parcelname) -> asJSON();
-        ret << data << endl;
+        ret << data << std::endl;
       }
      else
        {
-         ret << "{}" << endl;
+         ret << "{}" << std::endl;
        }
     return ret.str();
   }

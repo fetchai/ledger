@@ -20,4 +20,7 @@ if(FETCH_ENABLE_PYTHON_BINDINGS)
   # make the name match the bindings
   set_target_properties(fetch-python PROPERTIES OUTPUT_NAME "fetch")
 
+add_library(fetch-python-lib INTERFACE)
+target_include_directories(fetch-python-lib INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
 endif(FETCH_ENABLE_PYTHON_BINDINGS)
