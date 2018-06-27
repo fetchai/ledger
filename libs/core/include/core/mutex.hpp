@@ -133,11 +133,10 @@ class DebugMutex : public AbstractMutex {
   std::thread::id thread_id_;
 };
 
-#ifndef NDEBUG
-// typedef DebugMutex Mutex;
-typedef ProductionMutex Mutex;
+#ifdef NDEBUG
+  typedef ProductionMutex Mutex;
 #else
-typedef ProductionMutex Mutex;
+  typedef DebugMutex Mutex;
 #endif
 }
 }
