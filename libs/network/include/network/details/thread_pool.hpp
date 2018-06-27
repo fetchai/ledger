@@ -24,16 +24,15 @@ protected:
   typedef std::function<void()>                        event_function_type; // TODO: (`HUT`) : curate
   typedef uint64_t                                     event_handle_type;
   typedef std::shared_ptr<ThreadPoolImplementation>    shared_ptr_type;
-  typedef size_t                                       ThreadNum;
-  typedef std::mutex                                   MUTEX_T;
-  typedef std::unique_lock<MUTEX_T>                    LOCK_T;
-  typedef std::queue<event_function_type>              WORK_QUEUE;
+  typedef std::mutex                                   mutex_type;
+  typedef std::unique_lock<mutex_type>                 lock_type;
+  typedef std::queue<event_function_type>              work_queue_type;
   typedef enum {
     THREAD_IDLE = 0x00,
     THREAD_WORKED = 0x01,
     THREAD_SHOULD_QUIT = 0x02,
-  } ThreadState;
-  typedef std::list<event_function_type>              IDLE_WORK;
+  } thread_state_type;
+  typedef std::list<event_function_type>              idle_work_type;
 
 public:
   static std::shared_ptr<ThreadPoolImplementation> Create(std::size_t threads = 1)
@@ -60,7 +59,7 @@ public:
   {
     if (!shutdown_)
       {
-        LOCK_T lock(mutex_);
+        lock_type lock(mutex_);
         queue_.push(item);
         cv_.notify_one();
       }
@@ -68,20 +67,20 @@ public:
 
   void Sleep()
   {
-    LOCK_T lock(mutex_);
+    lock_type lock(mutex_);
   }
 
   void SetIdleWork(event_function_type idle_work)
   {
-    LOCK_T lock(mutex_);
+    lock_type lock(mutex_);
     
   }
 
-  void ProcessLoop(ThreadNum threadNumber)
+  void ProcessLoop()
   {
     while(!shutdown_)
       {
-        ThreadState state = Poll(threadNumber);
+        thread_state_type state = Poll();
         if (state & THREAD_SHOULD_QUIT)
           {
             return; // we're done -- return & become joinable.
@@ -94,26 +93,26 @@ public:
         // THREAD_IDLE:
         {
           // snooze for a while or until more work arrives
-          LOCK_T lock(mutex_);
+          lock_type lock(mutex_);
           cv_.wait_for(lock, std::chrono::milliseconds(100)); // so the future work will get serviced eventually.
           // go round again.
         }
       }
   }
 
-  ThreadState Poll(size_t threadNumber)
+  thread_state_type Poll()
   {
     {
-      LOCK_T lock(mutex_);
+      lock_type lock(mutex_);
       if (shutdown_)
         {
           return THREAD_SHOULD_QUIT;
         }
     }
 
-    ThreadState r = THREAD_IDLE;
+    thread_state_type r = THREAD_IDLE;
     {
-      LOCK_T lock(mutex_);
+      lock_type lock(mutex_);
       if (!queue_.empty())
         {
           auto workload = queue_.front();
@@ -163,16 +162,16 @@ public:
       fetch::logger.Info("Starting thread manager");
       shared_ptr_type self = shared_from_this();
       for (std::size_t i = 0; i < number_of_threads_; ++i) {
-        threads_.push_back(new std::thread([self, i]() {
-              self -> ProcessLoop(i);
+        threads_.push_back(new std::thread([self]() {
+              self -> ProcessLoop();
             }));
       }
     }
   }
 
-  ThreadState TryIdleWork()
+  thread_state_type TryIdleWork()
   {
-    ThreadState r = THREAD_IDLE;
+    thread_state_type r = THREAD_IDLE;
     std::unique_lock<std::mutex> lock(futureWorkProtector_, std::try_to_lock);
     if (lock)
       {
@@ -189,15 +188,15 @@ public:
     return r;
   }
 
-  ThreadState TryFutureWork()
+  thread_state_type TryFutureWork()
   {
-    ThreadState r = THREAD_IDLE;
+    thread_state_type r = THREAD_IDLE;
     std::unique_lock<std::mutex> lock(futureWorkProtector_, std::try_to_lock);
     if (lock)
       {
-        while(futureWork_.isDue())
+        while(futureWork_.IsDue())
           {
-            auto moreWork = futureWork_.getNext(); // removes work from the pool and returns it.
+            auto moreWork = futureWork_.GetNext(); // removes work from the pool and returns it.
             Post(moreWork); // We give that work to the other threads.
             r = THREAD_WORKED; // We did something.
           }
@@ -229,7 +228,7 @@ public:
         fetch::logger.Info("Stopping thread pool");
 
         {
-          LOCK_T lock(mutex_);
+          lock_type lock(mutex_);
           while(!queue_.empty())
             {
               queue_.pop();
@@ -237,7 +236,7 @@ public:
         }
 
         {
-          LOCK_T lock(mutex_);
+          lock_type lock(mutex_);
           cv_.notify_all();
         }
 
@@ -265,7 +264,7 @@ public:
     if (!shutdown_)
       {
         futureWork_.Post(f, milliseconds);
-        LOCK_T lock(mutex_);
+        lock_type lock(mutex_);
         cv_.notify_one();
       }
   }
@@ -275,13 +274,13 @@ private:
   std::vector<std::thread *> threads_;
 
   FutureWorkStore futureWork_;
-  WORK_QUEUE queue_;
-  IDLE_WORK idleWork_;
+  work_queue_type queue_;
+  idle_work_type idleWork_;
 
   mutable fetch::mutex::Mutex futureWorkProtector_;
   mutable fetch::mutex::Mutex thread_mutex_{__LINE__, __FILE__};
   mutable std::condition_variable cv_;
-  mutable MUTEX_T mutex_;
+  mutable mutex_type mutex_;
   volatile bool shutdown_;
 };
 

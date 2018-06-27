@@ -16,12 +16,12 @@ namespace details {
 class FutureWorkStore
 {
 protected:
-  typedef std::function<void ()> WORK_FUNCTION;
-  typedef std::chrono::time_point<std::chrono::system_clock> DUE_DATE;
-  typedef std::pair<DUE_DATE, WORK_FUNCTION> WORK_ITEM;
-  typedef std::vector<WORK_ITEM> HEAP_STORAGE;
-  typedef std::recursive_mutex MUTEX_T;
-  typedef std::lock_guard<MUTEX_T> LOCK_T;
+  typedef std::function<void ()> work_func_type;
+  typedef std::chrono::time_point<std::chrono::system_clock> due_date_type;
+  typedef std::pair<due_date_type, work_func_type> work_item_type;
+  typedef std::vector<work_item_type> heap_storage_type;
+  typedef std::recursive_mutex mutex_type;
+  typedef std::lock_guard<mutex_type> lock_type;
 public:
   FutureWorkStore(const FutureWorkStore &rhs)            = delete;
   FutureWorkStore(FutureWorkStore &&rhs)                 = delete;
@@ -36,7 +36,7 @@ public:
     WorkItemSorting() {}
     virtual ~WorkItemSorting() {}
 
-    bool operator()(const WORK_ITEM &a, const WORK_ITEM &b) const
+    bool operator()(const work_item_type &a, const work_item_type &b) const
     {
       return a.first > b.first;
     }
@@ -51,9 +51,9 @@ public:
   {
   }
 
-  bool isDue()
+  virtual bool IsDue()
   {
-    LOCK_T mlock(mutex_);
+    lock_type mlock(mutex_);
     if (workStore_.empty())
       {
         return false;
@@ -74,9 +74,9 @@ public:
       }
   }
 
-  WORK_FUNCTION getNext()
+  virtual work_func_type GetNext()
   {
-    LOCK_T mlock(mutex_);
+    lock_type mlock(mutex_);
     std::pop_heap(workStore_.begin(), workStore_.end(), sorter_);
     auto nextDue = workStore_.back();
     workStore_.pop_back();
@@ -86,16 +86,16 @@ public:
   template <typename F>
   void Post(F &&f, int milliseconds)
   {
-    LOCK_T mlock(mutex_);
+    lock_type mlock(mutex_);
     auto dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(5);
-    workStore_.push_back(WORK_ITEM(dueTime, f));
+    workStore_.push_back(work_item_type(dueTime, f));
     std::push_heap(workStore_.begin(), workStore_.end(), sorter_);
   }
 
 private:
   WorkItemSorting sorter_;
-  HEAP_STORAGE workStore_;
-  mutable MUTEX_T mutex_;
+  heap_storage_type workStore_;
+  mutable mutex_type mutex_;
 };
 
 }
