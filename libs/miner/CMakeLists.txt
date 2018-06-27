@@ -1,8 +1,8 @@
 ################################################################################
-# F E T C H   S T O R A G E   L I B R A R Y
+# F E T C H   M I N E R   L I B R A R Y
 ################################################################################
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project(fetch-storage)
+project(fetch-miner)
 
 # CMake Configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -14,17 +14,9 @@ setup_compiler()
 # Main Library Target
 #-------------------------------------------------------------------------------
 
-setup_library(fetch-storage)
-target_link_libraries(fetch-storage INTERFACE fetch-core fetch-crypto fetch-testing vendor-openssl)
+setup_library(fetch-miner)
+target_link_libraries(fetch-miner INTERFACE fetch-core fetch-miner)
 
 #-------------------------------------------------------------------------------
 # Test Targets
 #-------------------------------------------------------------------------------
-
-add_fetch_test(file_object_test fetch-storage tests/file_object.cpp)
-add_fetch_test(random_access_stack_test fetch-storage tests/random_access_stack.cpp)
-add_fetch_test(versioned_random_access_stack_test fetch-storage tests/versioned_random_access_stack.cpp)
-
-add_fetch_test(key_value_index_test fetch-storage tests/key_value_index.cpp)
-add_fetch_test(variant_stack_test fetch-storage tests/variant_stack.cpp DISABLED)
-

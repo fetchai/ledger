@@ -8,9 +8,9 @@ namespace fetch {
 namespace storage {
 
 template <typename T, typename B = uint64_t>
-class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
+class VersionedRandomAccessStack {
  private:
-  typedef RandomAccessStack<T, B> super_type;
+  typedef RandomAccessStack<T, B> stack_type;
 
   struct HistoryBookmark {
     HistoryBookmark() { memset(this, 0, sizeof(decltype(*this))); }
@@ -73,58 +73,58 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
   typedef typename RandomAccessStack<T>::type type;
   typedef B bookmark_type;
 
-  void Load(std::string const &filename, std::string const &history) {
-    super_type::Load(filename);
-    history_.Load(history);
-    bookmark_ = super_type::header_extra();
+  void Load(std::string const &filename, std::string const &history, bool const &create_if_not_exist = false) {
+    stack_.Load(filename, create_if_not_exist);
+    history_.Load(history); // TODO: create_if_not_exist
+    bookmark_ = stack_.header_extra();
   }
 
   void New(std::string const &filename, std::string const &history) {
-    super_type::New(filename);
+    stack_.New(filename);
     history_.New(history);
-    bookmark_ = super_type::header_extra();
+    bookmark_ = stack_.header_extra();
   }
 
   void Clear() {
-    super_type::Clear();
+    stack_.Clear();
     history_.Clear();
     ResetBookmark();
-    bookmark_ = super_type::header_extra();
+    bookmark_ = stack_.header_extra();
   }
 
-  type Get(std::size_t const &i) {
+  type Get(std::size_t const &i) const {
     type object;
-    super_type::Get(i, object);
+    stack_.Get(i, object);
     return object;
   }
 
-  void Get(std::size_t const &i, type &object) {
-    super_type::Get(i, object);
+  void Get(std::size_t const &i, type &object) const {
+    stack_.Get(i, object);
   }
 
   void Set(std::size_t const &i, type const &object) {
     type old_data;
-    super_type::Get(i, old_data);
+    stack_.Get(i, old_data);
     history_.Push(HistorySet(i, old_data), HistorySet::value);
-    super_type::Set(i, object);
+    stack_.Set(i, object);
   }
 
-  void Push(type const &object) {
+  uint64_t Push(type const &object) {
     history_.Push(HistoryPush(), HistoryPush::value);
-    super_type::Push(object);
+    return stack_.Push(object);
   }
 
   void Pop() {
-    type old_data = super_type::Top();
+    type old_data = stack_.Top();
     history_.Push(HistoryPop(old_data), HistoryPop::value);
-    super_type::Pop();
+    stack_.Pop();
   }
 
-  type Top() { return super_type::Top(); }
+  type Top() const { return stack_.Top(); }
 
   void Swap(std::size_t const &i, std::size_t const &j) {
     history_.Push(HistorySwap(i, j), HistorySwap::value);
-    super_type::Swap(i, j);
+    stack_.Swap(i, j);
   }
 
   void Revert(bookmark_type const &b) {
@@ -151,31 +151,33 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
 
       }
     }
-    super_type::SetExtraHeader(bookmark_);
+    stack_.SetExtraHeader(bookmark_);
   }
 
   bookmark_type Commit() {
     bookmark_type b = bookmark_;
     NextBookmark();
     history_.Push(HistoryBookmark(b), HistoryBookmark::value);
-    super_type::SetExtraHeader(bookmark_);
+    stack_.SetExtraHeader(bookmark_);
     return b;
   }
 
-  virtual void ResetBookmark() { bookmark_ = 0; }
+  void ResetBookmark() { bookmark_ = 0; }
 
-  virtual void NextBookmark() { ++bookmark_; }
+  void NextBookmark() { ++bookmark_; }
 
-  virtual void PreviousBookmark() { ++bookmark_; }
+  void PreviousBookmark() { ++bookmark_; }
 
-  std::size_t size() const { return super_type::size(); }
+  std::size_t size() const { return stack_.size(); }
 
-  std::size_t empty() const { return super_type::empty(); }
+  std::size_t empty() const { return stack_.empty(); }
 
  private:
   VariantStack history_;
   bookmark_type bookmark_;
 
+  stack_type stack_;
+   
   void RevertBookmark() {
     HistoryBookmark book;
     history_.Top(book);
@@ -187,28 +189,28 @@ class VersionedRandomAccessStack : private RandomAccessStack<T, B> {
     HistorySwap swap;
     history_.Top(swap);
     history_.Pop();
-    super_type::Swap(swap.i, swap.j);
+    stack_.Swap(swap.i, swap.j);
   }
 
   void RevertPop() {
     HistoryPop pop;
     history_.Top(pop);
     history_.Pop();
-    super_type::Push(pop.data);
+    stack_.Push(pop.data);
   }
 
   void RevertPush() {
     HistoryPush push;
     history_.Top(push);
     history_.Pop();
-    super_type::Pop();
+    stack_.Pop();
   }
 
   void RevertSet() {
     HistorySet set;
     history_.Top(set);
     history_.Pop();
-    super_type::Set(set.i, set.data);
+    stack_.Set(set.i, set.data);
   }
 };
 }

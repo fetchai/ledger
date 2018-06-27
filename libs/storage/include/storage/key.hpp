@@ -41,19 +41,18 @@ struct Key {
     
     while((i < last_block) && (other.key_[i] == key_[i]))  ++i;
     
-    int bit = last_bit;
-    //    std::cout << "Comparing " <<std::hex << other.key_[i] << " " << std::hex << key_[i] << std::dec << std::endl;    
-
-    if(i < last_block) {
-      uint64_t diff = other.key_[i] ^ key_[i];
-      bit =  __builtin_ctzl(diff);
+    uint64_t diff = other.key_[i] ^ key_[i];
+    int bit =  __builtin_ctzl(diff);    
+    if(diff == 0 ) bit = 8 *sizeof(uint64_t);
+    
+    if(i > last_block) {
+      bit = last_bit;
     } else if(i == last_block) {
-      uint64_t diff = other.key_[i] ^ key_[i];
-      bit =  std::min(__builtin_ctzl(diff), last_bit);
-    } 
+      bit =  std::min(bit, last_bit);
+    }
 
     pos = bit + (i << 8);
-    if(pos >= this->size()) {
+    if(pos >= int(this->size())) {
       return 0;
     }
 
