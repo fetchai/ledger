@@ -218,7 +218,7 @@ public:
 
     if (suicidal)
       {
-        fetch::logger.Warn("Thread pools must not be killed by a thread they own.");
+        fetch::logger.Error("Thread pools must not be killed by a thread they own.");
       }
 
     std::lock_guard< fetch::mutex::Mutex > lock( thread_mutex_ );
@@ -249,7 +249,7 @@ public:
               }
             else
               {
-                fetch::logger.Warn("Thread pools must not be killed by a thread they own so I'm not going to try joining myself.");
+                fetch::logger.Error("Thread pools must not be killed by a thread they own so I'm not going to try joining myself.");
                 thread->detach();
                 delete thread;
               }
