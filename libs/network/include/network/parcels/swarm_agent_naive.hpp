@@ -6,6 +6,7 @@
 #include <list>
 #include <set>
 #include <string>
+#include <memory>
 
 #include "network/swarm/swarm_agent_api.hpp"
 #include "network/swarm/swarm_random.hpp"
