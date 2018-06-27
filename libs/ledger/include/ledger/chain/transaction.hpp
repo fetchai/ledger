@@ -1,12 +1,11 @@
 #ifndef CHAIN_TRANSACTION_HPP
 #define CHAIN_TRANSACTION_HPP
-#include<vector>
-#include "crypto/sha256.hpp"
+#include <crypto/sha256.hpp>
 
-#include "byte_array/const_byte_array.hpp"
-#include "logger.hpp"
-#include "serializers/byte_array_buffer.hpp"
-#include "serializers/referenced_byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/logger.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/referenced_byte_array.hpp"
 
 namespace fetch {
 typedef uint16_t group_type;
@@ -16,17 +15,20 @@ namespace chain {
 struct TransactionSummary {
   typedef byte_array::ConstByteArray digest_type;
   std::vector<group_type> groups;
-  mutable digest_type transaction_hash;
+  double fee = 0.0;  
+
+  digest_type transaction_hash;
+  uint64_t short_id;
 };
 
 template <typename T>
 void Serialize(T &serializer, TransactionSummary const &b) {
-  serializer << b.groups << b.transaction_hash;
+  serializer << b.groups << b.fee << b.transaction_hash;
 }
 
 template <typename T>
 void Deserialize(T &serializer, TransactionSummary &b) {
-  serializer >> b.groups >> b.transaction_hash;
+  serializer >> b.groups >> b.fee >> b.transaction_hash;
 }
 
 class Transaction {
@@ -36,15 +38,9 @@ class Transaction {
   typedef byte_array::ConstByteArray
       arguments_type;  // TODO: json doc with native serialization
 
-  Transaction()                                  = default;
-  Transaction(Transaction const &rhs)            = default;
-  Transaction &operator=(Transaction const &rhs) = default;
-  Transaction(Transaction &&rhs)                 = default;
-  Transaction &operator=(Transaction&& rhs)      = default;
-
   enum { VERSION = 1 };
 
-  void UpdateDigest() const {
+  void UpdateDigest() {
     LOG_STACK_TRACE_POINT;
 
     if (modified == true) {
@@ -90,7 +86,7 @@ TODO: Make 32 bit compat
         d.bytes[1] = res[1];
       case 1:
         d.bytes[0] = res[0];
-    }
+    };
     //    std::cout << byte_array::ToHex( res) << " >> " << d.value <<
     //    std::endl;
 
@@ -158,16 +154,15 @@ TODO: Make 32 bit compat
 
   arguments_type const &arguments() const { return arguments_; }
   digest_type const &digest() const {
-    UpdateDigest();
+
     return summary_.transaction_hash;
   }
 
   uint32_t signature_count() const { return signature_count_; }
 
-  byte_array::ConstByteArray data() const { return data_; }
+  byte_array::ConstByteArray data() const { return data_; };
 
   TransactionSummary const &summary() const {
-    UpdateDigest();
     return summary_;
   }
 

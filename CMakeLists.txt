@@ -15,6 +15,9 @@ option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"       ON)
 option(FETCH_WARNINGS_AS_ERRORS     "Enable warnings as errors"   ON)
 option(FETCH_VERBOSE_CMAKE          "Enable verbose cmake output" OFF)
 
+# custom string options
+set(FETCH_DEBUG_SANITIZER "" CACHE STRING "The clang based sanitizer to be enabled")
+
 # target architecture (to be replaced with automatic detection)
 ## sysctl -a | grep machdep.cpu.features
 option(FETCH_ARCH_SSE3  "Architecture maximally supports SSE3"    OFF)
@@ -46,6 +49,10 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTargets.cmake)
 if (FETCH_ENABLE_TESTS)
   enable_testing()
 endif (FETCH_ENABLE_TESTS)
+
+if (FETCH_DEBUG_SANITIZER)
+  fetch_info("Running with sanitizer: ${FETCH_DEBUG_SANITIZER}")
+endif (FETCH_DEBUG_SANITIZER)
 
 #-------------------------------------------------------------------------------
 # System / Vendor Targets
