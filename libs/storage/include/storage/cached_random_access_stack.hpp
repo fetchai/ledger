@@ -60,8 +60,8 @@ class CachedRandomAccessStack {
   
   static constexpr bool DirectWrite() { return false; }
   
-  void Load(std::string const &filename) {
-    stack_.Load(filename);
+  void Load(std::string const &filename, bool const &create_if_not_exists = true) {
+    stack_.Load(filename, create_if_not_exists);
     total_access_ = 0;
     this->SignalFileLoaded();
   }
@@ -73,7 +73,7 @@ class CachedRandomAccessStack {
     this->SignalFileLoaded();
   }
 
-  void Get(uint64_t const &i, type &object)  {
+  void Get(uint64_t const &i, type &object) const  {
     assert( i < objects_ );
     ++total_access_;
 
@@ -191,7 +191,7 @@ class CachedRandomAccessStack {
   
  private:
   stack_type stack_;    
-  uint64_t total_access_;
+  mutable uint64_t total_access_;
   struct CachedDataItem {
     uint64_t reads = 0;
     uint64_t writes = 0;
@@ -199,7 +199,7 @@ class CachedRandomAccessStack {
     type data;
   };
   
-  std::map< uint64_t, CachedDataItem > data_;
+  mutable std::map< uint64_t, CachedDataItem > data_;
   uint64_t objects_ = 0;
 };
 }

@@ -3,6 +3,7 @@
 #include "storage/versioned_random_access_stack.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "crypto/sha256.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 #include <cstdint>
 
@@ -45,7 +46,13 @@ public:
   enum {
     HEADER_SIZE = 2 * sizeof(uint64_t)
   };
-  
+
+  FileObject(FileObject const& other) = delete;
+  FileObject operator=(FileObject const& other) = delete;
+
+  FileObject(FileObject && other) = default;  
+  FileObject &operator=(FileObject && other) = default;  
+   
   FileObject(stack_type &stack)
     : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE), length_(HEADER_SIZE)
   {
@@ -128,6 +135,12 @@ public:
     if((block_index_ == 0) && (byte_index_ < HEADER_SIZE)) return 0;
     return block_index_ * block_type::BYTES + byte_index_ - HEADER_SIZE;
   }
+
+  void Write(byte_array::ConstByteArray const &arr) 
+  {
+    Write(arr.pointer(), arr.size());
+  }
+ 
   
   void Write(uint8_t const * bytes, uint64_t const &m) 
   {
@@ -214,6 +227,13 @@ public:
 
   }
 
+
+  void Read(byte_array::ConstByteArray const &arr) 
+  {
+    Read(arr.pointer(), arr.size());
+  }
+  
+  
   void Read(uint8_t *bytes, uint64_t const &m) {
     uint64_t n = m + byte_index_ + block_number_  * block_type::BYTES;
     

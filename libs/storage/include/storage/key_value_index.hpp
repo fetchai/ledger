@@ -68,7 +68,7 @@ struct KeyValuePair {
     
 };
   
-  template <typename KV = KeyValuePair< >, typename D = CachedRandomAccessStack< KV, uint64_t > >
+template <typename KV = KeyValuePair< >, typename D = CachedRandomAccessStack< KV, uint64_t > >
 class KeyValueIndex {
   struct UpdateTask {
     uint64_t priority;
@@ -192,6 +192,7 @@ public:
 
   
   void Delete(byte_array::ConstByteArray const &key) {
+    TODO_FAIL("Not implemented");
   }
 
   void GetElement(uint64_t const &i, index_type &v) {
@@ -199,7 +200,25 @@ public:
     stack_.Get(i, p);
     v = p.value;
   }
-  
+
+  bool GetIfExists(byte_array::ConstByteArray const &key_str, index_type &value) 
+  {
+    key_type key(key_str);   
+    bool split = true;
+    int pos = 0;
+    key_value_pair kv;
+    int left_right = 0;
+    index_type depth = 0;    
+    FindNearest(key, kv, split, pos, left_right, depth);
+    std::cout << "Split: " << split << " " << pos << std::endl;
+    
+    if(!split) {
+      value = kv.value;
+    }
+    
+    return ! split ;
+  }   
+    
   index_type Get(byte_array::ConstByteArray const &key_str) {
     key_type key(key_str);   
     bool split;

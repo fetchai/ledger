@@ -1,16 +1,17 @@
 #ifndef STORAGE_VERSIONED_RANDOM_ACCESS_STACK_HPP
 #define STORAGE_VERSIONED_RANDOM_ACCESS_STACK_HPP
 #include "storage/random_access_stack.hpp"
+#include "storage/cached_random_access_stack.hpp"
 #include "storage/variant_stack.hpp"
 
 #include <cstring>
 namespace fetch {
 namespace storage {
 
-template <typename T, typename B = uint64_t>
+template <typename T,  typename B = uint64_t, typename S = RandomAccessStack<T, B> >
 class VersionedRandomAccessStack {
  private:
-  typedef RandomAccessStack<T, B> stack_type;
+  typedef S stack_type;
 
   struct HistoryBookmark {
     HistoryBookmark() { memset(this, 0, sizeof(decltype(*this))); }
@@ -73,6 +74,9 @@ class VersionedRandomAccessStack {
   typedef typename RandomAccessStack<T>::type type;
   typedef B bookmark_type;
 
+
+  static constexpr bool DirectWrite() { return stack_type::DirectWrite(); }
+  
   void Load(std::string const &filename, std::string const &history, bool const &create_if_not_exist = false) {
     stack_.Load(filename, create_if_not_exist);
     history_.Load(history); // TODO: create_if_not_exist
@@ -213,6 +217,8 @@ class VersionedRandomAccessStack {
     stack_.Set(set.i, set.data);
   }
 };
+
+
 }
 }
 
