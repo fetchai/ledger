@@ -251,6 +251,7 @@ public:
               {
                 fetch::logger.Warn("Thread pools must not be killed by a thread they own so I'm not going to try joining myself.");
                 thread->detach();
+                delete thread;
               }
           }
 
