@@ -390,6 +390,7 @@ public:
   
   void Revert(bookmark_type const &b) {
     stack_.Revert(b);
+    root_ = stack_.header_extra();
   }
 
   uint64_t const &root_element() const { return root_; }

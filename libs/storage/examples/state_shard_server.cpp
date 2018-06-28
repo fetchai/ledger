@@ -29,6 +29,8 @@ private:
 
 int main() 
 {
+  fetch::logger.DisableLogger();
+  
   fetch::network::ThreadManager tm(8);  
   StateShardService serv(8080, tm);
   tm.Start();

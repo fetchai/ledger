@@ -166,7 +166,7 @@ class DocumentStore {
 
   void Set(byte_array::ConstByteArray const &address, byte_array::ConstByteArray const& value) 
   {
-    Document doc = GetDocumentBuffer(address, false);
+    Document doc = GetDocumentBuffer(address, true);
     doc.Seek(0);
     doc.Write(value);
     // TODO: Shrink
@@ -218,12 +218,18 @@ class DocumentStoreProtocol : public fetch::service::Protocol {
 public:
   enum {
     GET = 0,
-    SET = 1
+    SET = 1,
+    COMMIT = 5,
+    REVERT = 6,
+    HASH = 7
   };
   
   DocumentStoreProtocol(DocumentStore *doc_store) : fetch::service::Protocol() {
     this->Expose(GET, doc_store, &DocumentStore::Get );
     this->Expose(SET, doc_store, &DocumentStore::Set);
+    this->Expose(COMMIT, doc_store, &DocumentStore::Commit);
+    this->Expose(REVERT, doc_store, &DocumentStore::Revert);
+    this->Expose(HASH, doc_store, &DocumentStore::Hash);
   }
 };
 

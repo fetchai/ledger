@@ -54,10 +54,21 @@ class VariantStack {
     Close();
   }
   
-  void Load(std::string const &filename) {
+  void Load(std::string const &filename, bool const &create_if_not_exists = true) {
     filename_ = filename;
     file_ = std::fstream(filename_,
       std::ios::in | std::ios::out | std::ios::binary);
+    if(!file_) {
+      if(create_if_not_exists) {
+        
+        Clear();
+        file_ = std::fstream(filename_,
+          std::ios::in | std::ios::out | std::ios::binary);
+      } else {
+        TODO_FAIL("Could not load file");
+      }
+    }
+    
     ReadHeader();
   }
 
@@ -136,7 +147,7 @@ class VariantStack {
   }
 
   void Clear() {
-    assert( bool(file_) );        
+
     assert(filename_ != "");
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
     fin.seekg(0, fin.beg);

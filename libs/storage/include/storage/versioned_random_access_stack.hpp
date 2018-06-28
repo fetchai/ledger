@@ -80,6 +80,19 @@ class VersionedRandomAccessStack {
     T data;
   };
 
+  struct HistoryHeader {
+    HistoryHeader() { memset(this, 0, sizeof(decltype(*this))); }
+
+    HistoryHeader(B const &d) {
+      memset(this, 0, sizeof(decltype(*this)));
+      data = d;
+    }
+
+    enum { value = 5 };
+    B data;
+  };
+  
+  
  public:
   typedef typename RandomAccessStack<T>::type type;
   typedef B bookmark_type;
@@ -130,9 +143,9 @@ class VersionedRandomAccessStack {
 
   static constexpr bool DirectWrite() { return stack_type::DirectWrite(); }
   
-  void Load(std::string const &filename, std::string const &history, bool const &create_if_not_exist = false) {
+  void Load(std::string const &filename, std::string const &history, bool const &create_if_not_exist = true) {
     stack_.Load(filename, create_if_not_exist);
-    history_.Load(history); // TODO: create_if_not_exist
+    history_.Load(history,  create_if_not_exist);
     bookmark_ = stack_.header_extra().bookmark;
   }
 
@@ -186,8 +199,10 @@ class VersionedRandomAccessStack {
   }
 
   void Revert(bookmark_type const &b) {
-
+    
     while ((!empty()) && (b != bookmark_)) {
+      std::cout << " -- next: ";
+      
       if(!history_.empty()) {
         
         uint64_t t = history_.Type();
@@ -195,42 +210,66 @@ class VersionedRandomAccessStack {
 
         switch (t) {
         case HistoryBookmark::value:
+          std::cout << "bookmark";
           RevertBookmark();
-          if( bookmark_ != b) history_.Pop();
+          if( bookmark_ != b) {
+            std::cout << " - found!";
+            history_.Pop();
+          }
+          
           break;
         case HistorySwap::value:
+          std::cout << "swap";
           RevertSwap();
           history_.Pop();
           break;
         case HistoryPop::value:
+          std::cout << "pop";          
           RevertPop();
           history_.Pop();
           break;
         case HistoryPush::value:
+          std::cout << "push";
+          
           RevertPush();
           history_.Pop();
           break;
         case HistorySet::value:
+          std::cout << "set";
+          
           RevertSet();
           history_.Pop();
           break;
+        case HistoryHeader::value:
+          std::cout << "header";
+          
+          RevertHeader();
+          history_.Pop();
+          break;          
         default:
           TODO_FAIL("Problem: undefined type");
         }
         
+      } else {
+        std::cout << "history is empty";
       }
-      
+      std::cout << std::endl;
     }
 
     header_type h = stack_.header_extra();
     h.bookmark = bookmark_;    
     stack_.SetExtraHeader(h);
+
+    NextBookmark();    
   }
 
   void SetExtraHeader(header_extra_type const &b) 
   {
     header_type h = stack_.header_extra();
-    h.header = b;
+    history_.Push(HistoryHeader(h.header), HistoryHeader::value);
+    std::cout << "New header: " << h.header << " > " << b << std::endl;
+    
+    h.header = b;    
     stack_.SetExtraHeader(h);
   }
   
@@ -241,7 +280,7 @@ class VersionedRandomAccessStack {
   
   bookmark_type Commit() {
     bookmark_type b = bookmark_;
-    NextBookmark();
+
     return Commit(b);
   }
 
@@ -252,6 +291,7 @@ class VersionedRandomAccessStack {
     header_type h = stack_.header_extra();
     h.bookmark = bookmark_ = b; 
     stack_.SetExtraHeader(h);
+    NextBookmark();    
     return b;
   }
 
@@ -313,6 +353,17 @@ class VersionedRandomAccessStack {
     history_.Top(set);
     stack_.Set(set.i, set.data);
   }
+  
+  void RevertHeader() {
+    HistoryHeader header;
+    history_.Top(header);
+    
+    header_type h = stack_.header_extra();
+    std::cout << " " << h.header << " > " << header.data ;
+    
+    h.header = header.data;
+    stack_.SetExtraHeader(h);
+  }  
 };
 
 
