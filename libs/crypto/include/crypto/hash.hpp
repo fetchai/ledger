@@ -1,6 +1,6 @@
 #ifndef CRYPTO_HASH_HPP
 #define CRYPTO_HASH_HPP
-#include "core/byte_array/const_byte_array.hpp"
+#include <core/byte_array/const_byte_array.hpp>
 
 namespace fetch {
 namespace crypto {

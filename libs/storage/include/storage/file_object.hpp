@@ -1,129 +1,341 @@
 #ifndef STORAGE_FILE_OBJECT_HPP
 #define STORAGE_FILE_OBJECT_HPP
 #include "storage/versioned_random_access_stack.hpp"
+#include "storage/cached_random_access_stack.hpp"
+#include "crypto/sha256.hpp"
 
 #include <cstdint>
 
 namespace fetch {
 namespace storage {
-namespace details {
-struct StorageBlockType {
-  enum { BYTES = 8, UNDEFINED = uint64_t(-1) };
 
-  StorageBlockType() {
+template< std::size_t BS = 2 >
+struct FileBlockType {
+  enum { BYTES = BS + 2 * sizeof(uint64_t), UNDEFINED = uint64_t(-1) };
+
+  FileBlockType() {
     // Ensures that paddded bytes are not uninitialized.
     memset(this, 0, sizeof(decltype(*this)));
     previous = UNDEFINED;
     next = UNDEFINED;
   }
 
+  FileBlockType(uint64_t const & prev, uint8_t const *bytes,
+                   std::size_t const &n = std::size_t(-1) ) {
+    memset(this, 0, sizeof(decltype(*this)));
+    memcpy(data, bytes, std::min(n , std::size_t(BYTES)));
+    previous = prev;
+    next = UNDEFINED;
+  }
+
+  
   uint64_t previous = UNDEFINED;
   uint64_t next = UNDEFINED;
   uint8_t data[BYTES];
 };
-};
 
-template <typename S = VersionedRandomAccessStack<details::StorageBlockType> >
-class FileObjectImplementation {
- public:
+
+template <typename S = VersionedRandomAccessStack< FileBlockType< > > >
+class FileObject {
+public:
   typedef S stack_type;
   typedef typename stack_type::type block_type;
-
-  FileObjectImplementation(uint64_t const &block_position, stack_type &stack)
-      : file_position_(block_position), stack_(stack) {}
-
-  void Seek(std::size_t const &n) {
-    uint64_t current_block_index = file_position_;
+  typedef crypto::SHA256 hasher_type; // TODO: make pluggable
+  
+  enum {
+    HEADER_SIZE = 2 * sizeof(uint64_t)
+  };
+  
+  FileObject(stack_type &stack)
+    : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE), length_(HEADER_SIZE)
+  {
     block_type block;
+    last_position_ = stack_.size();
+    
+    memcpy( block.data, reinterpret_cast< uint8_t const* >( &last_position_ ), sizeof(uint64_t));
+    memcpy( block.data + sizeof(uint64_t), reinterpret_cast< uint8_t const* >( &length_ ), sizeof(uint64_t));
 
-    int64_t remain = n;
+      
+    block_index_ = id_ =  stack_.Push(block);
 
-    // Searching forward for block
-    stack_.Get(current_block_index, block);
-    assert(block.previous == block_type::UNDEFINED);
-    while (remain >= block_type::BYTES) {
-      if (block.next == block_type::UNDEFINED) {
-        block.next = stack_.size();
-        stack_.Set(current_block_index, block);
-        block = block_type();
-        block.previous = current_block_index;
-        stack_.Push(block);
-      } else {
-        auto b = block.next;
-        (void) b;
-      }
-
-      stack_.Get(current_block_index, block);
-      remain -= block_type::BYTES;
-    }
-
-    block_index_ = current_block_index;
-    byte_index_ = remain;
+    block_count_ = length_ / block_type::BYTES;
+    if(block_count_ * block_type::BYTES < length_) ++block_count_;    
   }
 
-  std::size_t Tell() const {
-    return byte_index_ + block_index_ * block_type::BYTES;
+  FileObject(stack_type &stack, std::size_t const &position)
+    : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE)
+  {
+    block_type first;
+    assert( position < stack_.size() );
+    
+    block_index_ = id_ =  position;    
+    stack_.Get(id_, first);
+
+    memcpy( reinterpret_cast< uint8_t* >( &last_position_ ), first.data, sizeof(uint64_t));
+    memcpy( reinterpret_cast< uint8_t* >( &length_ ), first.data + sizeof(uint64_t), sizeof(uint64_t));
+
+    block_count_ = length_ / block_type::BYTES;
+    if(block_count_ * block_type::BYTES < length_) ++block_count_;
   }
 
-  void Write(uint8_t const *bytes, std::size_t const &n) {
-    std::size_t i = 0;
-    block_type block;
-    stack_.Get(block_index_, block);
-
-    while (i < n) {
-      block.data[byte_index_] = bytes[i];
-      ++i, ++byte_index_;
-      GetOrExpand(block);
-    }
+  ~FileObject() {
+    Flush();
   }
 
-  void Read(uint8_t *bytes, std::size_t const &n) {
-    std::size_t i = 0;
-    block_type block;
-    stack_.Get(block_index_, block);
-
-    while (i < n) {
-      bytes[i] = block.data[byte_index_];
-      ++i, ++byte_index_;
-      GetOrExpand(block);
-    }
+  void Flush() {
+    block_type first;
+    stack_.Get(id_, first);    
+    memcpy( first.data, reinterpret_cast< uint8_t const* >( &last_position_ ), sizeof(uint64_t));
+    memcpy( first.data + sizeof(uint64_t), reinterpret_cast< uint8_t const* >( &length_ ), sizeof(uint64_t));
+    stack_.Set(id_, first);
+    // TODO: Flush    stack_.Flush();
   }
 
-  uint64_t Size() const { return 0; }  // TODO
+  void Seek(uint64_t n) {
+    n += HEADER_SIZE;
+    uint64_t next_bn = n / block_type::BYTES;
+    block_type block;   
 
-  uint64_t Shrink() { return 0; }  // TODO
-
-  uint64_t const &file_position() const { return file_position_; }
-
- private:
-  void GetOrExpand(block_type &block) {
-    if (byte_index_ == block_type::BYTES) {
-      stack_.Set(block_index_, block);
+    
+    while( block_number_ < next_bn ) {
+      stack_.Get(block_index_, block);
       block_index_ = block.next;
-
-      if (block_index_ == block_type::UNDEFINED) {
-        block.next = stack_.size();
-        stack_.Set(block_index_, block);
-
-        block = block_type();
-        block.previous = block_index_;
-        block_index_ = stack_.size();
-        stack_.Push(block);
-
-      } else {
-        stack_.Get(block_index_, block);
+      ++block_number_;
+      assert(block_index_ != block_type::UNDEFINED);
+      
+      if(block_number_>= block_count_) {
+        TODO_FAIL("Seek is out of bounds");
       }
-      byte_index_ = 0;
     }
+
+    while( block_number_ > next_bn ) {
+      stack_.Get(block_index_, block);
+      block_index_ = block.previous;
+      --block_number_;      
+      assert(block_index_ != block_type::UNDEFINED);
+      
+      if(block_number_>= block_count_) {
+        TODO_FAIL("Seek is out of bounds");
+      }
+    }
+
+    byte_index_ = n % block_type::BYTES;
+    assert( (block_number_ != 0) || (block_index_ == id_) );
+    
   }
 
-  uint64_t file_position_;
+  uint64_t Tell() {
+    if((block_index_ == 0) && (byte_index_ < HEADER_SIZE)) return 0;
+    return block_index_ * block_type::BYTES + byte_index_ - HEADER_SIZE;
+  }
+  
+  void Write(uint8_t const * bytes, uint64_t const &m) 
+  {
+    uint64_t n = m + byte_index_ + block_number_  * block_type::BYTES;
+    
+    uint64_t last_block = (n) / block_type::BYTES;
+    if(last_block * block_type::BYTES < n) ++last_block;
+    --last_block;    
+
+    uint64_t first_bytes = block_type::BYTES - byte_index_;
+    if(first_bytes > m) {
+      first_bytes = m;
+    }
+
+    uint64_t last_bytes = n - (block_type::BYTES * last_block);
+    
+    // Writing first
+    block_type block;   
+    stack_.Get(block_index_, block);
+
+    if( ((last_block  != 0) && (block.next == block_type::UNDEFINED)) ||
+      ((last_block == 0) && ( ((byte_index_ + first_bytes) % block_type::BYTES) == 0) )) {
+      block_type empty;
+      empty.previous = block_index_;      
+      block.next = stack_.Push( empty );
+    }
+
+    memcpy(block.data + byte_index_, bytes, first_bytes);
+    stack_.Set(block_index_, block);
+    byte_index_ = (byte_index_ + first_bytes) % block_type::BYTES;
+
+    if(last_block  == 0 ) {
+      if(byte_index_ == 0) {
+        block_index_ = block.next;
+        ++block_number_;
+      }
+      
+    } else {
+      uint64_t offset = first_bytes;
+      
+      // Middle last_block
+      --last_block;
+      while(block_number_ < last_block) {
+        assert(byte_index_ == 0 );
+        ++block_number_;
+        block_index_ = block.next;
+        
+        stack_.Get(block_index_, block);
+        
+        if(block.next == block_type::UNDEFINED) {
+          block_type empty;
+          empty.previous = block_index_;      
+          block.next = stack_.Push( empty );
+        }
+        
+        memcpy(block.data, bytes + offset, block_type::BYTES);
+        stack_.Set(block_index_, block);
+        
+        offset += block_type::BYTES;
+      }
+      
+      // Last block
+      if(block_number_ == last_block) {
+        ++block_number_;      
+        block_index_ = block.next;      
+        stack_.Get(block_index_, block);
+        memcpy(block.data, bytes + offset, last_bytes);
+        stack_.Set(block_index_, block);
+        byte_index_ = last_bytes;
+      } 
+    }
+    
+    uint64_t position = byte_index_ + block_number_ * block_type::BYTES;
+    if(position > length_) {
+      length_ = position;
+    }
+    
+    if(block_number_ > block_count_) {
+      last_position_ = block_index_;
+      block_count_ = block_number_;
+    }    
+
+    Flush();
+
+  }
+
+  void Read(uint8_t *bytes, uint64_t const &m) {
+    uint64_t n = m + byte_index_ + block_number_  * block_type::BYTES;
+    
+    uint64_t last_block = (n) / block_type::BYTES;
+    if(last_block * block_type::BYTES < n) ++last_block;
+    --last_block;    
+
+    uint64_t first_bytes = block_type::BYTES - byte_index_;
+    if(first_bytes > m) {
+      first_bytes = m;
+    }
+
+    uint64_t last_bytes = n - (block_type::BYTES * last_block);
+    
+    // Writing first
+    assert(block_index_ < stack_.size());
+    
+    block_type block;   
+    stack_.Get(block_index_, block);
+
+    if((last_block  != 0) && (block.next == block_type::UNDEFINED)) {  
+      TODO_FAIL("Could not read block");
+    }
+
+    memcpy(bytes, block.data + byte_index_, first_bytes);
+    byte_index_ = (byte_index_ + first_bytes) % block_type::BYTES;
+
+    if(last_block  != 0 ) {
+      uint64_t offset = first_bytes;
+      
+      // Middle last block
+      --last_block;
+      while(block_number_ < last_block) {
+        assert(byte_index_ == 0 );
+        ++block_number_;
+        block_index_ = block.next;
+        
+        stack_.Get(block_index_, block);
+        
+        if(block.next == block_type::UNDEFINED) {
+          TODO_FAIL("Could not read block");          
+        }
+        
+        memcpy(bytes + offset, block.data, block_type::BYTES);
+        
+        offset += block_type::BYTES;
+      }
+      
+      // Last block
+      if(block_number_ == last_block) {
+        ++block_number_;      
+        block_index_ = block.next;      
+        stack_.Get(block_index_, block);
+        memcpy(bytes + offset, block.data, last_bytes);
+        
+        byte_index_ = last_bytes;
+      } 
+    }
+    
+    
+  }
+  
+  uint64_t const &id() const 
+  {
+    return id_;
+  }
+
+  uint64_t size() const
+  {
+    return length_ - HEADER_SIZE;
+  }
+
+  byte_array::ByteArray Hash() {
+    hasher_type hasher;
+    hasher.Reset();
+    UpdateHash(hasher);
+    hasher.Final();
+    return hasher.digest();
+  }
+
+  void UpdateHash(crypto::StreamHasher &hasher) {
+    uint64_t bi = id_;
+    uint64_t remaining = length_ - HEADER_SIZE;
+    
+    block_type block;
+    
+    stack_.Get(bi, block);
+    uint64_t n = std::min(remaining, uint64_t(block_type::BYTES - HEADER_SIZE) );
+    hasher.Update(block.data + HEADER_SIZE, n);
+    
+    remaining -= n;
+    while(remaining != 0) {
+      
+      bi  = block.next;
+      if(bi == block_type::UNDEFINED) {
+        std::cout << id_ << " " << bi << std::endl;
+        
+        TODO_FAIL("File corrupted");
+      }
+
+      stack_.Get(bi, block); 
+      n = std::min(remaining, uint64_t(block_type::BYTES)); 
+      hasher.Update(block.data, n);
+      
+      remaining -= n;
+    } 
+  }
+private:
+
+  uint64_t id_;
   stack_type &stack_;
 
+
+  uint64_t block_number_;
+  uint64_t block_count_;
+  
   uint64_t block_index_;
   uint64_t byte_index_;
+  uint64_t length_ = 0, last_position_;  
 };
 }
 }
 
 #endif
+

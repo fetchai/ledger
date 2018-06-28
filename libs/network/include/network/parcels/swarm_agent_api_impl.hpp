@@ -1,6 +1,7 @@
 #ifndef SWARM_AGENT_API_IMPL__
 #define SWARM_AGENT_API_IMPL__
 
+#include "network/swarm/swarm_agent_api.hpp"
 #include "network/swarm/swarm_karma_peers.hpp"
 #include "network/details/thread_pool.hpp"
 
@@ -35,6 +36,12 @@ public:
   {
     tm_ -> Start();
     startIdle();
+  }
+
+  void Stop()
+  {
+    tm_ -> Stop();
+    tm_.reset();
   }
 
   virtual ~SwarmAgentApiImpl()

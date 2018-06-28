@@ -1,12 +1,16 @@
 #ifndef SWARM_NODE__
 #define SWARM_NODE__
 
+#include <string>
+#include <unistd.h>
+#include <cstdlib>
+
+#include "swarm_peer_location.hpp"
+#include "swarm_karma_peers.hpp"
+#include "swarm_random.hpp"
+#include "exception.hpp"
 #include "core/script/variant.hpp"
 #include "core/json/document.hpp"
-#include "network/swarm/swarm_peer_location.hpp"
-#include "network/swarm/swarm_karma_peers.hpp"
-#include "network/swarm/swarm_random.hpp"
-#include "network/swarm/exception.hpp"
 #include "network/service/client.hpp"
 #include "network/service/server.hpp"
 #include "network/protocols/swarm/commands.hpp"
@@ -14,9 +18,6 @@
 
 #include <iostream>
 #include <string>
-#include <string>
-#include <unistd.h>
-#include <stdlib.h>
 
 namespace fetch
 {

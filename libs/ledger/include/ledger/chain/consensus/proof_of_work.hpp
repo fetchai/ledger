@@ -1,8 +1,8 @@
 #ifndef CHAIN_CONSENSUS_PROOF_OF_WORK_HPP
 #define CHAIN_CONSENSUS_PROOF_OF_WORK_HPP
-#include "core/byte_array/const_byte_array.hpp"
-#include "crypto/sha256.hpp"
-#include "math/bignumber.hpp"
+#include <core/byte_array/const_byte_array.hpp>
+#include <crypto/sha256.hpp>
+#include <math/bignumber.hpp>
 namespace fetch {
 namespace chain {
 namespace consensus {

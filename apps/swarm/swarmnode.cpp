@@ -1,20 +1,20 @@
 #include <iostream>
-#include <unistd.h>
 #include <string>
 #include <time.h>
+#include <unistd.h>
 
+#include "core/commandline/parameter_parser.hpp"
 #include "network/details/thread_manager.hpp"
+#include "network/service/protocol.hpp"
+#include "network/parcels/swarm_agent_api_impl.hpp"
+#include "network/parcels/swarm_agent_naive.hpp"
+#include "network/parcels/swarm_parcel_node.hpp"
+#include "network/parcels/swarm_parcel_protocol.hpp"
+#include "network/swarm/swarm_http_interface.hpp"
 #include "network/swarm/swarm_node.hpp"
-#include "network/swarm/swarm_service.hpp"
 #include "network/swarm/swarm_peer_location.hpp"
 #include "network/swarm/swarm_random.hpp"
-#include "network/service/protocol.hpp"
-#include "swarm_agent_naive.hpp"
-#include "swarm_agent_api_impl.hpp"
-#include "network/swarm/swarm_http_interface.hpp"
-#include "core/commandline/params.hpp"
-#include "swarm_parcel_node.hpp"
-#include "swarm_parcel_protocol.hpp"
+#include "network/swarm/swarm_service.hpp"
 
 typedef unsigned int uint;
 
@@ -39,8 +39,6 @@ int main(int argc, const char *argv[])
   params.add(peerlist,      "peerlist",       "Comma separated list of peer locations.");
 
   params.Parse(argc, argv);
-
-  std::list<fetch::swarm::SwarmPeerLocation> peers = fetch::swarm::SwarmPeerLocation::ParsePeerListString(peerlist);
 
   fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });
 

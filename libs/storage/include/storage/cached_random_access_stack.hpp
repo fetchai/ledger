@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include<unordered_map>
+#include<map>
 
 #include "core/assert.hpp"
 
@@ -11,46 +12,88 @@ namespace fetch {
 namespace storage {
 
 template <typename T, typename D = uint64_t>
-class CachedRandomAccessStack : private RandomAccessStack<T,D> {
+class CachedRandomAccessStack {
  public:
-  typedef RandomAccessStack<T,D> super_type;
+  typedef RandomAccessStack<T,D> stack_type;
   typedef D header_extra_type;
   typedef T type;
 
-  ~CachedRandomAccessStack() {
-    Flush();
-  }
-
-  virtual void OnFileLoaded() {
-
+  CachedRandomAccessStack()  
+  {
+    stack_.OnFileLoaded([this]() {
+        this-> objects_ = stack_.size();
+        SignalFileLoaded() ;
+      });
   }
   
+  ~CachedRandomAccessStack() {
+    stack_.ClearEventHandlers();
+  }
+
+  typedef std::function< void() > event_handler_type;
+
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
+
+  void ClearEventHandlers() 
+  {
+    on_file_loaded_ = nullptr;
+    on_before_flush_ = nullptr;
+  }
+
+  void OnFileLoaded(event_handler_type const &f) {
+    on_file_loaded_ = f;    
+  }
+  
+  void OnBeforeFlush(event_handler_type const &f) {
+    on_before_flush_ = f;
+  }
+
+  void SignalFileLoaded() {
+    if(on_file_loaded_) on_file_loaded_();
+  }
+  
+  void SignalBeforeFlush() 
+  {
+    if(on_before_flush_) on_before_flush_();    
+  }
+  
+  static constexpr bool DirectWrite() { return false; }
+  
   void Load(std::string const &filename) {
-    super_type::Load(filename);
+    stack_.Load(filename);
     total_access_ = 0;
-    OnFileLoaded();
+    this->SignalFileLoaded();
   }
 
   void New(std::string const &filename) {
-    super_type::New(filename);
+    stack_.New(filename);
     Clear();
     total_access_ = 0;
-    OnFileLoaded();
+    this->SignalFileLoaded();
   }
 
   void Get(uint64_t const &i, type &object)  {
+    assert( i < objects_ );
     ++total_access_;
+
     auto iter = data_.find(i);
     if(iter !=data_.end() ) {
       ++iter->second.reads;
       object = iter->second.data;
     } else {
-      assert(false);
+      stack_.Get(i, object);
+      CachedDataItem itm;
+      itm.data = object;
+      data_.insert(std::pair<uint64_t, CachedDataItem > (i, itm));      
+
     }
+    
   }
 
   void Set(uint64_t const &i, type const &object) {
     ++total_access_;
+
     auto iter = data_.find(i);
     if(iter !=data_.end() ) {
       ++iter->second.writes;
@@ -65,13 +108,17 @@ class CachedRandomAccessStack : private RandomAccessStack<T,D> {
     }
   }
 
-  /*
-  void SetExtraHeader(header_extra_type const &he) {
-    detailed_assert(filename_ != "");
-    header_.extra = he;
+  void Close() {
+    Flush();
+    
+    stack_.Close(true);    
   }
-  */
-  //  header_extra_type header_extra() const { return extra_; }
+  
+  void SetExtraHeader(header_extra_type const &he) {
+    stack_.SetExtraHeader(he);
+  }
+
+  header_extra_type header_extra() const { return stack_.header_extra(); }
 
   uint64_t Push(type const &object) {
     ++total_access_;
@@ -106,40 +153,44 @@ class CachedRandomAccessStack : private RandomAccessStack<T,D> {
   std::size_t empty() const { return objects_ == 0; }
 
   void Clear() {
-    super_type::Clear();
+    stack_.Clear();
     objects_ = 0;
     data_.clear();
   }
 
   void Flush() {
+    this->SignalBeforeFlush();
+
     for(auto &item: data_) {
       if(item.second.updated) {
-        if(item.first >= super_type::size()) {
-          assert( item.first == super_type::size());
-          super_type::LazyPush( item.second.data );
+        if(item.first >= stack_.size()) {
+          assert( item.first == stack_.size());
+          stack_.LazyPush( item.second.data );
         } else {
-          assert( item.first < super_type::size());
-          super_type::Set( item.first, item.second.data );
+          assert( item.first < stack_.size());
+          stack_.Set( item.first, item.second.data );
         }
       }
-
     }
-    super_type::StoreHeader();
-    super_type::Flush();
-    
-    for(auto &item: data_ ) {
 
+    stack_.Flush(true);
+    
+    for(auto &item: data_ ) {      
       item.second.reads = 0;
       item.second.writes = 0;
       item.second.updated = false;            
     }
     total_access_ = 0;
+    // TODO: Clear thos not needed
   }
 
-protected:
+  bool is_open() const 
+  {
+    return stack_.is_open();
+  }
   
-
  private:
+  stack_type stack_;    
   uint64_t total_access_;
   struct CachedDataItem {
     uint64_t reads = 0;

@@ -6,10 +6,14 @@
 
 #include <memory>
 
-namespace fetch
-{
-namespace chain
-{
+namespace fetch {
+namespace chain {
+
+
+struct BlockSlice {
+  std::vector<TransactionSummary> transactions;
+};
+
 
 struct BlockBody {
   fetch::byte_array::ByteArray previous_hash;

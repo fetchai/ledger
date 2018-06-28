@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <limits>
+#include <limits.h>
 #include <algorithm>
 
 namespace fetch

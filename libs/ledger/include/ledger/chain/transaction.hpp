@@ -1,7 +1,6 @@
 #ifndef CHAIN_TRANSACTION_HPP
 #define CHAIN_TRANSACTION_HPP
-#include<vector>
-#include "crypto/sha256.hpp"
+#include <crypto/sha256.hpp>
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
@@ -18,16 +17,19 @@ struct TransactionSummary {
   typedef byte_array::ConstByteArray digest_type;
   std::vector<group_type> groups;
   digest_type transaction_hash;
+
+  double fee = 0.0;
+  uint64_t short_id;
 };
 
 template <typename T>
 void Serialize(T &serializer, TransactionSummary const &b) {
-  serializer << b.groups << b.transaction_hash;
+  serializer << b.groups << b.fee << b.transaction_hash;
 }
 
 template <typename T>
 void Deserialize(T &serializer, TransactionSummary &b) {
-  serializer >> b.groups >> b.transaction_hash;
+  serializer >> b.groups >> b.fee >> b.transaction_hash;
 }
 
 class Transaction {
@@ -36,12 +38,6 @@ class Transaction {
   typedef TransactionSummary::digest_type digest_type;
   typedef byte_array::ConstByteArray
       arguments_type;  // TODO: json doc with native serialization
-
-  Transaction()                                  = default;
-  Transaction(Transaction const &rhs)            = default;
-  Transaction &operator=(Transaction const &rhs) = default;
-  Transaction(Transaction &&rhs)                 = default;
-  Transaction &operator=(Transaction&& rhs)      = default;
 
   enum { VERSION = 1 };
 
@@ -88,7 +84,7 @@ TODO: Make 32 bit compat
         d.bytes[1] = res[1];
       case 1:
         d.bytes[0] = res[0];
-    }
+    };
     //    std::cout << byte_array::ToHex( res) << " >> " << d.value <<
     //    std::endl;
 
@@ -151,12 +147,13 @@ TODO: Make 32 bit compat
 
   arguments_type const &arguments() const { return arguments_; }
   digest_type const &digest() const {
+
     return summary_.transaction_hash;
   }
 
   uint32_t signature_count() const { return signature_count_; }
 
-  byte_array::ConstByteArray data() const { return data_; }
+  byte_array::ConstByteArray data() const { return data_; };
 
   TransactionSummary const &summary() const {
     return summary_;
