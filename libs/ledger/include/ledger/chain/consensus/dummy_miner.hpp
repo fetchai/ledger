@@ -8,6 +8,7 @@ namespace consensus {
 class DummyMiner
 {
 
+public:
   template <typename block_type>
   static void Mine(block_type &block)
   {

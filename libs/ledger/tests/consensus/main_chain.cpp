@@ -27,7 +27,7 @@ double TimeDifference(time_point t1, time_point t2)
 
 typedef MainChain::block_type               block_type;
 typedef MainChain::block_type::body_type    body_type;
-typedef fetch::chain::concensus::DummyMiner miner;
+typedef fetch::chain::consensus::DummyMiner miner;
 
 int main(int argc, char const **argv)
 {
