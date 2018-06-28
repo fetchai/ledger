@@ -1,0 +1,50 @@
+[ [37;49m2018-06-28 14:04:03.621[0m, # 1:             0x0              (root) ] [37;49mCreating thread manager[0m
+[ [37;49m2018-06-28 14:04:03.621[0m, # 1:             0x0        SwarmService ] [37;49mConstructing test node service with HTTP port: 9017[0m
+[ [37;49m2018-06-28 14:04:03.622[0m, # 1:             0x0              (root) ] [37;49mCreating thread manager[0m
+***** START
+[ [33;49m2018-06-28 14:04:03.622[0m, # 1:             0x0              (root) ] [33;49mStarting thread manager[0m
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START IDLE
+[ [33;49m2018-06-28 14:04:03.622[0m, # 1:             0x0              (root) ] [33;49mStarting thread manager[0m
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~IDLE
+[ [33;49m2018-06-28 14:04:03.622[0m, # 2:             0x0              (root) ] [33;49mStarting HTTPServer[0m
+[ [33;49m2018-06-28 14:04:03.623[0m, # 2:             0x0              (root) ] [33;49mStarting HTTPServer Accept[0m
+[ [33;49m2018-06-28 14:04:03.623[0m, # 2:             0x0              Accept ] [33;49mStarting HTTPServer async accept[0m
+[ [37;49m2018-06-28 14:04:03.721[0m, # 3:             0x0    ClientConnection ] [37;49mServer: Connection from 127.0.0.1[0m
+[ [33;49m2018-06-28 14:04:03.721[0m, # 3:             0x0                Join ] [33;49mClient joining with handle 0[0m
+[ [37;49m2018-06-28 14:04:03.721[0m, # 3:             0x0          ReadHeader ] [37;49mServer: Waiting for next header.[0m
+[ [37;49m2018-06-28 14:04:03.722[0m, # 2:             0x0              (root) ] [37;49mServer: Read header.[0m
+[ [37;49m2018-06-28 14:04:03.722[0m, # 2:             0x0              (root) ] [37;49mServer: Read body.[0m
+[ [33;49m2018-06-28 14:04:03.722[0m, # 2:             0x0         PushRequest ] [33;49mRPC call from 0[0m
+[ [37;49m2018-06-28 14:04:03.722[0m, # 3:             0x0     ProcessMessages ] [37;49mServer side backlog: 1[0m
+[ [37;49m2018-06-28 14:04:03.722[0m, # 3:             0x0     ProcessMessages ] [37;49mServer side backlog: 0[0m
+[ [37;49m2018-06-28 14:04:03.722[0m, # 2:             0x0          ReadHeader ] [37;49mServer: Waiting for next header.[0m
+[ [37;49m2018-06-28 14:04:03.722[0m, # 3:             0x0              (root) ] [37;49mProcessing message call[0m
+[ [37;49m2018-06-28 14:04:03.723[0m, # 3:             0x0  PushProtocolReques ] [37;49mService Server processing call 2:1 from 0[0m
+[ [37;49m2018-06-28 14:04:03.723[0m, # 3:             0x0  PushProtocolReques ] [37;49mService Server responding to call from 0[0m
+[ [37;49m2018-06-28 14:04:03.723[0m, # 2:             0x0              (root) ] [37;49mServer: Wrote message.[0m
+[ [37;49m2018-06-28 14:04:03.723[0m, # 3:             0x0                Send ] [37;49mClient manager did send message to 0[0m
+[ [33;49m2018-06-28 14:04:03.724[0m, # 2:             0x0               Leave ] [33;49mClient 0 is leaving[0m
+[ [37;49m2018-06-28 14:04:03.725[0m, # 2:             0x0              (root) ] [37;49mClient posting connect[0m
+[ [33;49m2018-06-28 14:04:03.726[0m, # 3:             0x0          operator() ] [33;49mFinished connecting.[0m
+[ [37;49m2018-06-28 14:04:03.726[0m, # 3:             0x0          operator() ] [37;49mConnection established![0m
+[ [37;49m2018-06-28 14:04:03.727[0m, # 2:             0x0                Call ] [37;49mService Client Calling 2:1[0m
+[ [37;49m2018-06-28 14:04:03.728[0m, # 3:             0x0              (root) ] [37;49mRead message header.[0m
+[ [37;49m2018-06-28 14:04:03.728[0m, # 2:             0x0              (root) ] [37;49mClient posting connect[0m
+[ [33;49m2018-06-28 14:04:03.728[0m, # 3:             0x0          operator() ] [33;49mFinished connecting.[0m
+[ [37;49m2018-06-28 14:04:03.728[0m, # 3:             0x0          operator() ] [37;49mConnection established![0m
+[ [37;49m2018-06-28 14:04:03.729[0m, # 2:             0x0                Call ] [37;49mService Client Calling 2:1[0m
+[ [37;49m2018-06-28 14:04:03.730[0m, # 3:             0x0              (root) ] [37;49mRead message header.[0m
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~IDLE
+[ [37;49m2018-06-28 14:04:03.906[0m, # 3:             0x0      HTTPConnection ] [37;49mHTTP connection from 127.0.0.1[0m
+[ [33;49m2018-06-28 14:04:03.906[0m, # 3:             0x0                Join ] [33;49mClient joining with handle 0[0m
+[ [37;49m2018-06-28 14:04:03.906[0m, # 3:             0x0          ReadHeader ] [37;49mReady to ready HTTP header[0m
+[ [37;49m2018-06-28 14:04:03.906[0m, # 2:             0x0              (root) ] [37;49mRead HTTP header[0m
+[ [33;49m2018-06-28 14:04:03.906[0m, # 3:             0x0              Accept ] [33;49mStarting HTTPServer async accept[0m
+[ [33;49m200 OK[0m ] /peers, [35;49mtext/html[0m
+[ [37;49m2018-06-28 14:04:03.906[0m, # 2:             0x0                Send ] [37;49mClient manager did send message to 0[0m
+[ [37;49m2018-06-28 14:04:03.906[0m, # 2:             0x0          ReadHeader ] [37;49mReady to ready HTTP header[0m
+[ [37;49m2018-06-28 14:04:03.907[0m, # 3:             0x0              (root) ] [37;49mRead HTTP header[0m
+[ [37;49m2018-06-28 14:04:03.907[0m, # 3:             0x0         HandleError ] [37;49mHTTP error: asio.misc:2[0m
+[ [33;49m2018-06-28 14:04:03.907[0m, # 3:             0x0               Leave ] [33;49mClient 0 is leaving[0m
+[ [33;49m2018-06-28 14:04:03.907[0m, # 3:             0x0               Leave ] [33;49mClient 0 is leaving[0m
+[ [33;49m2018-06-28 14:04:03.907[0m, # 3:             0x0               Leave ] [33;49mClient 0 is leaving[0m

@@ -20,7 +20,7 @@ class SwarmAgentNaive(object):
     def __init__(self, idnum, port, maxpeers, idlespeed, solvespeed, peers):
         self.swarm = Swarm(idnum, port, maxpeers, idlespeed, solvespeed)
 
-        self.peers = peers.split(",")
+        self.peerlist = peers.split(",")
 
         self.rootblock = MainChainBlock()
         self.mainchain = MainChain(self.rootblock)
@@ -66,7 +66,7 @@ class SwarmAgentNaive(object):
         self.swarm.DoDiscoverBlocks(host, 10);
 
     def onPeerless(self):
-        for x in self.peers:
+        for x in self.peerlist:
             self.swarm.DoPing(x)
 
     def onNewPeerDiscovered(self, host):
@@ -96,7 +96,7 @@ def main():
     params.add_argument("-maxpeers",       type=int, help="Ideally how many peers to maintain good connections to.", default=3);
     params.add_argument("-solvespeed",     type=int, help="The rate of generating block solutions.", default=1000);
     params.add_argument("-idlespeed",      type=int, help="The rate, in milliseconds, of generating idle events to the Swarm Agent.", default=100);
-    params.add_argument("-peerlist",       type=str, help="Comma separated list of peer locations.", default=",".join(PEERS));
+    params.add_argument("-peers",          type=str, help="Comma separated list of peer locations.", default=",".join(PEERS));
 
     config = params.parse_args(sys.argv[1:])
 
@@ -106,7 +106,7 @@ def main():
         config.maxpeers,
         config.idlespeed,
         config.solvespeed,
-        config.peerlist
+        config.peers
         )
 
     while True:
