@@ -2,17 +2,18 @@
 #include <unistd.h>
 #include <string>
 #include <time.h>
+#include <iostream>
 
 #include "network/details/thread_manager.hpp"
+#include "core/commandline/params.hpp"
 #include "network/swarm/swarm_node.hpp"
 #include "network/swarm/swarm_service.hpp"
 #include "network/swarm/swarm_peer_location.hpp"
 #include "network/swarm/swarm_random.hpp"
 #include "network/service/protocol.hpp"
+#include "network/swarm/swarm_http_interface.hpp"
 #include "swarm_agent_naive.hpp"
 #include "swarm_agent_api_impl.hpp"
-#include "network/swarm/swarm_http_interface.hpp"
-#include "core/commandline/params.hpp"
 #include "swarm_parcel_node.hpp"
 #include "swarm_parcel_protocol.hpp"
 
@@ -46,6 +47,7 @@ int main(int argc, const char *argv[])
 
   fetch::network::ThreadManager tm(30);
 
+
   std::string identifier = "node-" + std::to_string(id);
 
   std::string myHost = "127.0.0.1:" + std::to_string(portNumber);
@@ -72,8 +74,8 @@ int main(int argc, const char *argv[])
 
   service -> addRpcProtocol(fetch::protocols::FetchProtocols::PARCEL, parcelProtocol);
 
-  //TODO(katie) move the handling of the node functions off the ThreadManager running the io_service.
 
+  /*
   swarmAgentApi -> ToPing([swarmAgentApi, node, parcelNode](fetch::swarm::SwarmAgentApi &unused, const std::string &host)
                           {
                             node -> Post([swarmAgentApi, node, parcelNode, host]()
@@ -229,7 +231,7 @@ int main(int argc, const char *argv[])
                                          }
                                      }
                                  });
-
+  */
   swarmAgentApi -> Start();
 
 
