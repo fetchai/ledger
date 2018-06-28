@@ -12,10 +12,10 @@
 #include "network/swarm/swarm_random.hpp"
 #include "network/service/protocol.hpp"
 #include "network/swarm/swarm_http_interface.hpp"
-#include "swarm_agent_naive.hpp"
-#include "swarm_agent_api_impl.hpp"
-#include "swarm_parcel_node.hpp"
-#include "swarm_parcel_protocol.hpp"
+#include "network/parcels/swarm_agent_naive.hpp"
+#include "network/parcels/swarm_agent_api_impl.hpp"
+#include "network/parcels/swarm_parcel_node.hpp"
+#include "network/parcels/swarm_parcel_protocol.hpp"
 
 typedef unsigned int uint;
 

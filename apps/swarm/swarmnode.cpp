@@ -3,7 +3,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "core/commandline/parameter_parser.hpp"
+#include "core/commandline/params.hpp"
 #include "network/details/thread_manager.hpp"
 #include "network/service/protocol.hpp"
 #include "network/parcels/swarm_agent_api_impl.hpp"
@@ -39,6 +39,8 @@ int main(int argc, const char *argv[])
   params.add(peerlist,      "peerlist",       "Comma separated list of peer locations.");
 
   params.Parse(argc, argv);
+
+  std::list<fetch::swarm::SwarmPeerLocation> peers = fetch::swarm::SwarmPeerLocation::ParsePeerListString(peerlist);
 
   fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });
 

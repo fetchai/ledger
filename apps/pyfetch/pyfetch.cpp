@@ -14,11 +14,18 @@
 #include "network/swarm/swarm_service.hpp"
 #include "python/fetch_pybind.hpp"
 #include "python/network/swarm/py_swarm_agent_api.hpp"
+#include "python/ledger/chain/py_main_chain.hpp"
 #include <pybind11/embed.h>
 
 PYBIND11_EMBEDDED_MODULE(fetchnetwork, module) {
   pybind11::module ns_fetch_network_swarm = module.def_submodule("swarm");
   fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
+}
+
+
+PYBIND11_EMBEDDED_MODULE(fetchledger, module) {
+  pybind11::module ns_fetch_ledger_chain_mainchain = module.def_submodule("chain");
+  fetch::chain::BuildMainChain(ns_fetch_ledger_chain_mainchain);
 }
 
 
@@ -48,37 +55,33 @@ public:
     interpreter.reset();
   }
 
-  void begin()
-  {
-    interpreter = INTERP_P(new pybind11::scoped_interpreter());
-
-    locals = std::make_shared<pybind11::dict>();
-  }
-
-  void done()
-  {
-    try
-      {
-        pySwarm = (*locals)["swarm"].cast<SWARM_P>();
-        pySwarm -> Start();
-      }
-    catch (std::exception &x)
-      {
-      }
-    pybind11::gil_scoped_release release;
-    sleep(10);
-  }
-
     /* See -- 
 https://github.com/pybind/pybind11/issues/1296
 https://github.com/cython/cython/issues/1877
 
     */
-  void runFile(const string &fn)
+  void runFile(const string &fn, int argc, char *argv[])
   {
-    begin();
+    interpreter = INTERP_P(new pybind11::scoped_interpreter());
+    locals = std::make_shared<pybind11::dict>();
+
+    
+    std::list<std::string> args;
+    for(int i=1;i<argc;i++)
+      {
+        args.push_back(std::string(argv[i]));
+      }
+
+    pybind11::list argsList;
+    for(auto &s : args)
+      {
+        argsList.append(s);
+      }
+
+    pybind11::module::import("sys").attr("argv") = argsList;
+
     pybind11::eval_file(fn, pybind11::globals());
-    done();
+    pybind11::gil_scoped_release release;
   }
 };
 
@@ -87,7 +90,7 @@ int main(int argc, char *argv[])
   PythonContext context;
   if (argc > 1)
     {
-      context.runFile(argv[1]);
+      context.runFile(argv[1], argc, argv);
     }
   else
     {
