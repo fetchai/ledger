@@ -1,4 +1,5 @@
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/consensus/dummy_miner.hpp"
 #include <iostream>
 #include "testing/unittest.hpp"
 
@@ -24,8 +25,9 @@ double TimeDifference(time_point t1, time_point t2)
   return std::chrono::duration_cast<std::chrono::duration<double>> (t1 - t2).count();
 }
 
-typedef MainChain::block_type            block_type;
-typedef MainChain::block_type::body_type body_type;
+typedef MainChain::block_type               block_type;
+typedef MainChain::block_type::body_type    body_type;
+typedef fetch::chain::concensus::DummyMiner miner;
 
 int main(int argc, char const **argv)
 {
@@ -34,7 +36,6 @@ int main(int argc, char const **argv)
   {
     SECTION("building on main chain")
     {
-
       block_type block;
 
       // Set the block number to guarantee non hash collision
@@ -80,7 +81,8 @@ int main(int argc, char const **argv)
       }
     };
 
-    SECTION("Testing for addition of blocks, out of order") {
+    SECTION("Testing for addition of blocks, out of order")
+    {
 
       block_type block;
 
@@ -133,6 +135,49 @@ int main(int argc, char const **argv)
       EXPECT(mainChain.HeaviestBlock().hash() == prevHash);
     };
 
+    SECTION("Testing for addition of blocks, with a break")
+    {
+      block_type block;
+
+      body_type body;
+      body.block_number = 1;
+      block.SetBody(body);
+      block.UpdateDigest();
+
+      MainChain mainChain{block};
+
+      EXPECT(mainChain.HeaviestBlock().hash() == block.hash());
+
+      fetch::byte_array::ByteArray prevHash = block.hash();
+      fetch::byte_array::ByteArray topHash = block.hash();
+
+      // Add another 3 blocks in order
+      for (std::size_t i = 2; i < 15; ++i)
+      {
+        // Create another block sequential to previous
+        block_type nextBlock;
+        body_type nextBody;
+        nextBody.block_number = i;
+        nextBody.previous_hash = prevHash;
+
+        nextBlock.SetBody(nextBody);
+        nextBlock.UpdateDigest();
+
+        if(i != 7)
+        {
+          mainChain.AddBlock(block);
+        }
+        else
+        {
+          topHash = block.hash();
+        }
+        prevHash = nextBlock.hash();
+      }
+
+      EXPECT(!(mainChain.HeaviestBlock().hash() == prevHash));
+      EXPECT(mainChain.HeaviestBlock().hash() == topHash);
+    };
+
     SECTION("Test mining/proof")
     {
 
@@ -153,11 +198,7 @@ int main(int argc, char const **argv)
           block.UpdateDigest();
           block.proof().SetTarget(diff); // Number of zeroes
 
-          while(!block.proof()())
-          {
-            block.body().nonce++;
-            block.UpdateDigest();
-          }
+          miner::Mine(block);
 
           blocks.push_back(block);
         }
@@ -192,11 +233,7 @@ int main(int argc, char const **argv)
         block.UpdateDigest();
         block.proof().SetTarget(2); // Number of zeroes
 
-        while(!block.proof()())
-        {
-          block.body().nonce++;
-          block.UpdateDigest();
-        }
+        miner::Mine(block);
 
         blocks.push_back(block);
       }
