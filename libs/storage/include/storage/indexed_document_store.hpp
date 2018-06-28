@@ -56,8 +56,6 @@ class IndexedDocumentStore {
     IndexedDocumentStore *store_;    
   };
   
-    
-  
   class Document
   {
   public:
@@ -73,9 +71,44 @@ class IndexedDocumentStore {
       pointer_ = std::make_shared< DocumentImplementation >(s, address, store, pos);      
     }
 
+    uint64_t Tell() {
+      return pointer_->Tell();
+    }
+
+    void Seek(uint64_t const &n) {
+      pointer_->Seek(n);
+    }
+    
+    
+    void Read(byte_array::ByteArray &arr) 
+    {
+      pointer_->Read(arr);
+    }
+  
+  
+    void Read(uint8_t *bytes, uint64_t const &m)
+    {
+      pointer_->Read(bytes, m);
+    }
+    
+    void Write(byte_array::ConstByteArray const &arr)
+    {
+      pointer_->Write(arr);
+    }
+    
+    void Write(uint8_t const * bytes, uint64_t const &m) 
+    {
+      pointer_->Write(bytes, m);
+    }
+    
     std::size_t id() const 
     {
       return pointer_->id();
+    }
+    
+    std::size_t size() const 
+    {
+      return pointer_->size();
     }
     
     byte_array::ConstByteArray const &address() const
@@ -83,24 +116,23 @@ class IndexedDocumentStore {
       return pointer_->address();
     }
 
-
   private:
     std::shared_ptr< DocumentImplementation > pointer_;
     
   };
   
   void Load(std::string const &doc_file, std::string const &doc_diff,
-    std::string const &index_file, bool const &create = true) 
+    std::string const &index_file, std::string const &index_diff, bool const &create = true) 
   {
     file_store_.Load(doc_file, doc_diff, create);    
-    key_index_.Load(index_file, create); //, index_diff); , std::string const &index_diff
+    key_index_.Load(index_file, index_diff, create); 
   }
 
   void New(std::string const &doc_file, std::string const &doc_diff,
-    std::string const &index_file)  // , std::string const &index_diff
+    std::string const &index_file, std::string const &index_diff)  
   {
     file_store_.New(doc_file, doc_diff);    
-    key_index_.New(index_file); // , index_diff
+    key_index_.New(index_file, index_diff); 
   }
 
 
@@ -125,6 +157,25 @@ class IndexedDocumentStore {
   byte_array::ConstByteArray Hash() 
   {
     return key_index_.Hash();
+  }
+
+  
+  typedef uint64_t bookmark_type;
+//  bookmark_type Commit() {
+//    return key_index_.Commit();
+//  }
+
+  bookmark_type Commit(bookmark_type const& b) {
+    file_store_.Commit(b);    
+    return key_index_.Commit(b);
+  }  
+  
+  void Revert(bookmark_type const &b) {
+    std::cout << "First revert" << std::endl;    
+    file_store_.Revert(b);
+    std::cout << "Second revert" << std::endl;
+    
+    key_index_.Revert(b);
   }
   
 private:  

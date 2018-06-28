@@ -2,6 +2,7 @@
 #define STORAGE_KEY_VALUE_INDEX_HPP
 #include "storage/random_access_stack.hpp"
 #include "storage/cached_random_access_stack.hpp"
+#include "storage/versioned_random_access_stack.hpp"
 #include "storage/key.hpp"
 #include "crypto/sha256.hpp"
 
@@ -68,7 +69,7 @@ struct KeyValuePair {
     
 };
   
-template <typename KV = KeyValuePair< >, typename D = CachedRandomAccessStack< KV, uint64_t > >
+template <typename KV = KeyValuePair< >, typename D = VersionedRandomAccessStack< KV, uint64_t > >
 class KeyValueIndex {
   struct UpdateTask {
     uint64_t priority;
@@ -87,6 +88,7 @@ public:
   typedef typename key_value_pair::key_type key_type;
     KeyValueIndex() 
     {
+      
       stack_.OnFileLoaded([this]() {
           root_ = stack_.header_extra();
         });
@@ -377,6 +379,18 @@ public:
       stack_.Close();
     }
     
+  typedef uint64_t bookmark_type;
+  bookmark_type Commit() {
+    return stack_.Commit();
+  }
+
+  bookmark_type Commit(bookmark_type const& b) {
+    return stack_.Commit(b);
+  }  
+  
+  void Revert(bookmark_type const &b) {
+    stack_.Revert(b);
+  }
 
   uint64_t const &root_element() const { return root_; }
 private:

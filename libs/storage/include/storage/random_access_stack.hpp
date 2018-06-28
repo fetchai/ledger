@@ -119,7 +119,6 @@ class RandomAccessStack {
     // TODO: Check magic
 
     SignalFileLoaded();    
-    
   }
 
   void New(std::string const &filename) {

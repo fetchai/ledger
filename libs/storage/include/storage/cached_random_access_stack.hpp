@@ -14,6 +14,7 @@ namespace storage {
 template <typename T, typename D = uint64_t>
 class CachedRandomAccessStack {
  public:
+  typedef std::function< void() > event_handler_type;  
   typedef RandomAccessStack<T,D> stack_type;
   typedef D header_extra_type;
   typedef T type;
@@ -24,16 +25,15 @@ class CachedRandomAccessStack {
         this-> objects_ = stack_.size();
         SignalFileLoaded() ;
       });
+    stack_.OnBeforeFlush([this]() {
+        SignalBeforeFlush() ;
+      });    
   }
   
   ~CachedRandomAccessStack() {
     stack_.ClearEventHandlers();
   }
 
-  typedef std::function< void() > event_handler_type;
-
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
 
   void ClearEventHandlers() 
   {
@@ -49,6 +49,7 @@ class CachedRandomAccessStack {
     on_before_flush_ = f;
   }
 
+//TODO: Move private or protected
   void SignalFileLoaded() {
     if(on_file_loaded_) on_file_loaded_();
   }
@@ -190,6 +191,10 @@ class CachedRandomAccessStack {
   }
   
  private:
+
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
+  
   stack_type stack_;    
   mutable uint64_t total_access_;
   struct CachedDataItem {

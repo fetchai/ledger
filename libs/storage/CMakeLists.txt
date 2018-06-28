@@ -27,5 +27,7 @@ add_fetch_test(versioned_random_access_stack_test fetch-storage tests/versioned_
 
 add_fetch_test(key_value_index_test fetch-storage tests/key_value_index.cpp)
 add_fetch_test(indexed_document_store_test fetch-storage tests/indexed_document_store.cpp)
-add_fetch_test(variant_stack_test fetch-storage tests/variant_stack.cpp DISABLED)
+add_fetch_test(variant_stack_test fetch-storage tests/variant_stack.cpp)
+add_fetch_test(versioned_file_object_test fetch-storage tests/versioned_file_object.cpp)
+add_fetch_test(versioned_kvi_test fetch-storage tests/versioned_kvi.cpp)
 

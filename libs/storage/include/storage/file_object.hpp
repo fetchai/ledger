@@ -228,7 +228,7 @@ public:
   }
 
 
-  void Read(byte_array::ConstByteArray const &arr) 
+  void Read(byte_array::ByteArray &arr) 
   {
     Read(arr.pointer(), arr.size());
   }
@@ -329,8 +329,6 @@ public:
       
       bi  = block.next;
       if(bi == block_type::UNDEFINED) {
-        std::cout << id_ << " " << bi << std::endl;
-        
         TODO_FAIL("File corrupted");
       }
 
