@@ -17,31 +17,7 @@ setup_compiler()
 setup_library(fetch-math)
 target_link_libraries(fetch-math INTERFACE fetch-core)
 
-#-------------------------------------------------------------------------------
-# Test Targets
-#-------------------------------------------------------------------------------
+add_test_target()
 
-add_fetch_test(exp_test fetch-math tests/math/test_exp.cpp)
-add_fetch_test(spline_test fetch-math tests/math/test_spline.cpp)
-add_fetch_test(rectangular_load_save_test fetch-math tests/math/rectangular_load_save_test.cpp)
-add_fetch_test(shared_rectangular_array_test fetch-math tests/math/shared_rectangular_array_test.cpp)
-add_fetch_test(matrix_test fetch-math tests/math/linalg/matrix.cpp)
-target_link_libraries(matrix_test PRIVATE pthread)
-add_fetch_test(hamming_test fetch-math tests/math/distance/hamming.cpp DISABLED)
-add_fetch_test(manhattan_test fetch-math tests/math/distance/manhattan.cpp)
-add_fetch_test(correlation_test fetch-math tests/math/distance/correlation.cpp)
-add_fetch_test(distance_matrix_test fetch-math tests/math/distance/distance_matrix.cpp DISABLED)
+add_subdirectory(benchmark)
 
-# disabled / not working tests
-add_fetch_test(ndarray_test fetch-math tests/math/ndarray.cpp DISABLED)
-add_fetch_test(load_image_read_exceptions_test fetch-math tests/image/load_image_read_exceptions.cpp DISABLED)
-
-#-------------------------------------------------------------------------------
-# Benchmark Targets
-#-------------------------------------------------------------------------------
-if(TRUE)
-  fetch_warning("Disabled Bencmark: benchmark_linalg_matrix (does not compile)")
-else()
-  add_executable(benchmark_linalg_matrix benchmark/linalg/matrix.cpp)
-  target_link_libraries(benchmark_linalg_matrix PRIVATE fetch-math)
-endif()
