@@ -147,7 +147,6 @@ TODO: Make 32 bit compat
 
   arguments_type const &arguments() const { return arguments_; }
   digest_type const &digest() const {
-
     return summary_.transaction_hash;
   }
 

@@ -15,9 +15,8 @@ namespace swarm
 {
 
 void BuildSwarmAgentApi(pybind11::module &module) {
-  namespace py = pybind11;
-  py::class_<fetch::swarm::PySwarm, std::shared_ptr<fetch::swarm::PySwarm>>(module, "Swarm" )
-    .def(py::init<unsigned int, uint16_t, unsigned int, unsigned int, unsigned int>())
+  pybind11::class_<fetch::swarm::PySwarm, std::shared_ptr<fetch::swarm::PySwarm>>(module, "Swarm" )
+    .def(pybind11::init<unsigned int, uint16_t, unsigned int, unsigned int, unsigned int>())
     .def("Start", &PySwarm::Start)
     .def("Stop", &PySwarm::Stop)
     .def("OnPeerless", &PySwarm::OnPeerless)
