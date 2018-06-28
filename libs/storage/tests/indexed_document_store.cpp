@@ -4,7 +4,7 @@
 using namespace fetch;
 
 using namespace fetch::storage;
-IndexedDocumentStore store;
+DocumentStore store;
 
 uint64_t book = 1;
 
@@ -12,7 +12,7 @@ void Add()
 {
   std::cout << "=============  ADD  ==================" << std::endl;;  
   {        
-    auto doc = store.GetDocument("Hello world");
+    auto doc = store.GetDocumentBuffer("Hello world");
     doc.Seek( doc.size() );
     doc.Write("Hello world");
   }
@@ -31,7 +31,7 @@ void Remove()
 void Print() 
 {
   std::cout << std::endl;
-  auto doc = store.GetDocument("Hello world");
+  auto doc = store.GetDocumentBuffer("Hello world");
   std::cout << "BOOK: " <<  book << " " << doc.id() << std::endl;
   std::cout << byte_array::ToBase64( store.Hash() ) << std::endl;
   byte_array::ByteArray x;

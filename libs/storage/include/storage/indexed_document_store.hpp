@@ -6,10 +6,11 @@
 #include "core/byte_array/referenced_byte_array.hpp"
 #include "storage/file_object.hpp"
 #include "storage/key_value_index.hpp"
+#include "network/service/protocol.hpp"
 namespace fetch {
 namespace storage {
 
-class IndexedDocumentStore {
+class DocumentStore {
  public:
   typedef byte_array::ByteArray byte_array_type;  
   
@@ -27,11 +28,11 @@ class IndexedDocumentStore {
   class DocumentImplementation : public file_object_type
   {
   public:
-    DocumentImplementation(IndexedDocumentStore *s, byte_array::ConstByteArray const &address, file_store_type &store)
+    DocumentImplementation(DocumentStore *s, byte_array::ConstByteArray const &address, file_store_type &store)
       : file_object_type(store), address_(address), store_(s)
     {  }
     
-    DocumentImplementation(IndexedDocumentStore *s, byte_array::ConstByteArray const &address, file_store_type &store, std::size_t const&pos )
+    DocumentImplementation(DocumentStore *s, byte_array::ConstByteArray const &address, file_store_type &store, std::size_t const&pos )
       : file_object_type(store, pos), address_(address), store_(s)
     {  }
     
@@ -53,19 +54,19 @@ class IndexedDocumentStore {
     
   private:
     byte_array::ConstByteArray address_;
-    IndexedDocumentStore *store_;    
+    DocumentStore *store_;    
   };
   
   class Document
   {
   public:
-    Document(IndexedDocumentStore *s, byte_array::ConstByteArray const &address,
+    Document(DocumentStore *s, byte_array::ConstByteArray const &address,
       file_store_type &store)
     {
       pointer_ = std::make_shared< DocumentImplementation >(s, address, store);      
     }
     
-    Document(IndexedDocumentStore *s, byte_array::ConstByteArray const &address,
+    Document(DocumentStore *s, byte_array::ConstByteArray const &address,
       file_store_type &store, std::size_t const&pos )
     {
       pointer_ = std::make_shared< DocumentImplementation >(s, address, store, pos);      
@@ -84,7 +85,6 @@ class IndexedDocumentStore {
     {
       pointer_->Read(arr);
     }
-  
   
     void Read(uint8_t *bytes, uint64_t const &m)
     {
@@ -118,9 +118,9 @@ class IndexedDocumentStore {
 
   private:
     std::shared_ptr< DocumentImplementation > pointer_;
-    
   };
-  
+
+
   void Load(std::string const &doc_file, std::string const &doc_diff,
     std::string const &index_file, std::string const &index_diff, bool const &create = true) 
   {
@@ -135,8 +135,8 @@ class IndexedDocumentStore {
     key_index_.New(index_file, index_diff); 
   }
 
-
-  Document GetDocument(byte_array::ConstByteArray const &address, bool const &create = true)
+    
+  Document GetDocumentBuffer(byte_array::ConstByteArray const &address, bool const &create = true)
   {
     index_type index = 0 ;
     
@@ -154,12 +154,31 @@ class IndexedDocumentStore {
     return doc;
   }
 
+
+  byte_array::ConstByteArray Get(byte_array::ConstByteArray const &address) 
+  {
+    Document doc = GetDocumentBuffer(address, false);
+    byte_array::ByteArray ret;
+    ret.Resize( doc.size() );
+    doc.Read(ret);
+    return ret;
+  }
+
+  void Set(byte_array::ConstByteArray const &address, byte_array::ConstByteArray const& value) 
+  {
+    Document doc = GetDocumentBuffer(address, false);
+    doc.Seek(0);
+    doc.Write(value);
+    // TODO: Shrink
+  }
+  
+  
   byte_array::ConstByteArray Hash() 
   {
     return key_index_.Hash();
   }
 
-  
+  // TODO
   typedef uint64_t bookmark_type;
 //  bookmark_type Commit() {
 //    return key_index_.Commit();
@@ -194,6 +213,22 @@ private:
   file_store_type file_store_;
 
 };
+
+class DocumentStoreProtocol : public fetch::service::Protocol {
+public:
+  enum {
+    GET = 0,
+    SET = 1
+  };
+  
+  DocumentStoreProtocol(DocumentStore *doc_store) : fetch::service::Protocol() {
+    this->Expose(GET, doc_store, &DocumentStore::Get );
+    this->Expose(SET, doc_store, &DocumentStore::Set);
+  }
+};
+
+
+
 }
 }
 
