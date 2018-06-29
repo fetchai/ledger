@@ -1,6 +1,7 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include <iostream>
+#include <list>
 #include "testing/unittest.hpp"
 
 using namespace fetch::chain;
@@ -260,6 +261,52 @@ int main(int argc, char const **argv)
 
       EXPECT(blockVerified == true);
 
+    };
+
+    SECTION("Testing time to add blocks sequentially")
+    {
+      block_type block;
+
+      body_type body;
+      body.block_number = 1;
+      block.SetBody(body);
+      block.UpdateDigest();
+
+      MainChain mainChain{block};
+
+      fetch::byte_array::ByteArray prevHash = block.hash();
+      constexpr std::size_t blocksToCreate = 1000000;
+      std::vector<block_type> blocks(blocksToCreate, block);
+
+      // Precreate since UpdateDigest not part of test
+      for (std::size_t i = 2; i < blocksToCreate-1; ++i)
+      {
+        // Create another block sequential to previous
+        block_type nextBlock;
+        body_type nextBody;
+        nextBody.block_number = i;
+        nextBody.previous_hash = prevHash;
+
+        nextBlock.SetBody(nextBody);
+        nextBlock.UpdateDigest();
+
+        blocks[i] = nextBlock;
+
+        prevHash = nextBlock.hash();
+      }
+
+      auto t1 = TimePoint();
+
+      for (std::size_t i = 2; i < blocksToCreate-1; ++i)
+      {
+        mainChain.AddBlock(blocks[i]);
+      }
+
+      auto t2 = TimePoint();
+      std::cout << "Blocks: " << blocksToCreate << ". Time: "
+        << TimeDifference(t2, t1) << std::endl;
+
+      EXPECT(mainChain.HeaviestBlock().hash() == prevHash);
     };
   };
 

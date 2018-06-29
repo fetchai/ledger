@@ -19,6 +19,19 @@ public:
     }
   }
 
+  template <typename block_type>
+  static bool Mine(block_type &block, uint64_t iterations)
+  {
+    while(!block.proof()() && iterations > 0)
+    {
+      block.body().nonce++;
+      block.UpdateDigest();
+      iterations--;
+    }
+
+    return block.proof()();
+  }
+
 };
 }
 }
