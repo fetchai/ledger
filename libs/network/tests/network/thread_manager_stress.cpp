@@ -19,7 +19,10 @@ void TestCase1() {
       ThreadManager tmanager(N);
       tmanager.Start();
 
-      tmanager.Post([&tmanager]() { tmanager.Stop(); });
+      // Don't post a stop to the original tmanager into itself or it will break
+      ThreadManager tmanagerCopy = tmanager;
+
+      tmanager.Post([&tmanagerCopy]() { tmanagerCopy.Stop(); });
       tmanager.Stop();
   }
 
