@@ -90,7 +90,7 @@ void load_format_b(std::string const &input_file, std::size_t &N, std::size_t &M
   case 3:
     M = 1;
     s >> K;
-    // fall through
+    break;
   case 2:
     M = 1;
     s >> lanes >> K;
