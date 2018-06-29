@@ -6,7 +6,7 @@ import time
 import threading
 import json
 
-POSSIBLE_PORTS = 10
+POSSIBLE_PORTS = 15
 
 class Monitoring(object):
 

@@ -111,9 +111,7 @@ public:
 
     thread_state_type r = THREAD_IDLE;
     try {
-      std::cout << ">> Calling workload"<< std::endl;
       workload();
-      std::cout << ">> Calling workload done"<< std::endl;
       r = std::max(r, THREAD_WORKED);
     } catch (std::exception &x) {
       cerr << "Caught exception inside ThreadPool::ExecuteWorkload" << x.what() << endl;

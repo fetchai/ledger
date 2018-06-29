@@ -5,6 +5,8 @@
 #include "core/mutex.hpp"
 #include "network/fetch_asio.hpp"
 
+#include <stdio.h>
+
 #include <functional>
 #include <map>
 #include <memory>
@@ -42,6 +44,7 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
     std::lock_guard< fetch::mutex::Mutex > lock( thread_mutex_ );
 
     if (threads_.size() == 0) {
+      std::cout << "running START " << number_of_threads_ << std::endl;
       fetch::logger.Info("Starting thread manager");
       {
         std::lock_guard< fetch::mutex::Mutex > lock( owning_mutex_ );
@@ -56,8 +59,27 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
       started_flag_ = true;
       
       for (std::size_t i = 0; i < number_of_threads_; ++i) {
-        threads_.push_back(new std::thread([this, self]() {
-              io_service_->run();
+        threads_.push_back(new std::thread([this, self, i]() {
+              while(1)
+                {
+                  char buf[1000];
+                  sprintf(buf, "running %d\n", int(i));
+                  //std::cout << buf;
+                  try
+                    {
+                      auto count = io_service_->poll_one();
+                      if (count)
+                        {
+                          sprintf(buf, "running %d ran %d\n", int(i), int(count));
+                          //std::cout << buf;
+                        }
+                    }
+                  catch(...)
+                    {
+                      std::cout << "ouch ex" << std::endl;
+                    }
+                  usleep(100);
+                }
             }));
       }
     }
@@ -104,7 +126,6 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
   template <typename F>
   void Post(F &&f)
   {
-    std::cout << "POST " << started_flag_ << std::endl;
     if(!protecting_io_)
     {
       io_service_->post(std::move(f));

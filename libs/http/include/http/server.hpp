@@ -68,7 +68,6 @@ class HTTPServer : public AbstractHTTPServer {
       fetch::logger.Info("Starting HTTPServer Accept");
       HTTPServer::Accept(soc, accep, manager);
     });
-
   }
 
   ~HTTPServer() {
@@ -98,6 +97,8 @@ class HTTPServer : public AbstractHTTPServer {
   }
 
   void PushRequest(handle_type client, HTTPRequest req) override {
+    std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << std::endl;
+
     LOG_STACK_TRACE_POINT;
 
     // TODO: improve such that it works for multiple threads.

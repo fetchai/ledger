@@ -58,6 +58,20 @@ public:
     nnCore_ -> AddProtocol(this);
   }
 
+  explicit SwarmNode(
+                     const std::string &identifier,
+                     unsigned int maxpeers,
+                     std::shared_ptr<fetch::swarm::SwarmRandom> rnd,
+                     const fetch::swarm::SwarmPeerLocation &uri
+                     ):
+    uri_(uri),
+    rnd_(rnd),
+    karmaPeerList_(identifier)
+  {
+    identifier_ = identifier;
+    maxpeers_ = maxpeers;
+  }
+
   virtual ~SwarmNode()
   {
   }
@@ -151,7 +165,7 @@ public:
 
   void Post(std::function<void ()> workload)
   {
-    nnCore_ -> Post(workload);
+    nnCore_ -> Post(workload, 0);
   }
 
 protected:

@@ -58,7 +58,7 @@ class SwarmAgentNaive(object):
         print("OnIdle", 3)
 
         if random.randint(0, self.solvespeed) == 0:
-            self.swarm.DoBlockSolved()
+            self.swarm.DoBlockSolved("hvgfjhfgbshdv")
 
         weightedPeers = [(x,self.swarm.GetKarma(x)) for x in goodPeers]
         total = sum([ x[1] for x in weightedPeers ])

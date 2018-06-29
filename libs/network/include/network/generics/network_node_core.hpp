@@ -13,6 +13,8 @@
 
 namespace fetch
 {
+
+
 namespace network
 {
 
@@ -40,9 +42,6 @@ public:
     :
     tm_(threads)
   {
-    tm_ . Start();
-    usleep(10000);
-
     httpServer_ = std::make_shared<fetch::http::HTTPServer>(httpPort, tm_);
     rpcServer_ = std::make_shared<service::ServiceServer<fetch::network::TCPServer>>(rpcPort, tm_);
 
@@ -58,6 +57,8 @@ public:
 
   virtual std::shared_ptr<client_type> ConnectTo(const std::string &host, unsigned short port)
   {
+    throw std::invalid_argument("Denied connection to " + host + ":" + std::to_string(port));
+
     lock_type mlock(mutex_);
     std::shared_ptr<client_type> client = std::make_shared<client_type>( host, port, tm_ );
 
@@ -155,7 +156,7 @@ public:
     return (INTERFACE_CLASS*)(interfaces_[protocolNumber]);
   }
 
-  virtual void Post(std::function<void ()> workload)
+  virtual void Post(std::function<void ()> workload, int foo)
   {
     tm_ . Post(workload);
   }
