@@ -69,9 +69,11 @@ private:
 class LoopbackServer
 {
 public:
-  LoopbackServer(uint16_t port) :
+  static constexpr std::size_t DEFAULT_NUM_THREADS = 4;
+
+  explicit LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS) :
     port_{port},
-    threadManager_{4}
+    threadManager_{num_threads}
   {
     threadManager_.Start();
     threadManager_.Post([this]
