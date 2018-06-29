@@ -106,7 +106,7 @@ private:
   uint16_t                                      port_;
   ThreadManager                                 threadManager_;
   std::weak_ptr<asio::ip::tcp::tcp::acceptor>   acceptor_;
-  bool                                          finished_setup_{false};
+  std::atomic<bool>                             finished_setup_{false};
 
   void Accept()
   {
