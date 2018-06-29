@@ -6,8 +6,24 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/block.hpp"
+#include "crypto/fnv.hpp"
 #include<map>
 #include<set>
+
+// Specialise hash of byte_array
+namespace std {
+
+  template <>
+  struct hash<fetch::byte_array::ByteArray>
+  {
+    std::size_t operator()(const fetch::byte_array::ByteArray& k) const
+    {
+      fetch::crypto::CallableFNV hasher;
+
+      return hasher(k);
+    }
+  };
+}
 
 namespace fetch
 {
@@ -118,13 +134,13 @@ class MainChain
         tip->loose          = true;
         block.root()        = block.body().previous_hash;
         block.loose()       = true;
-        danglingPrevious_[block.body().previous_hash].insert(block.hash());
+        danglingRoot_[block.body().previous_hash].insert(block.hash());
       }
     }
 
     // Every time we add a new block there is the possibility this will connect two or more trees
-    auto it = danglingPrevious_.find(block.hash());
-    if(it != danglingPrevious_.end())
+    auto it = danglingRoot_.find(block.hash());
+    if(it != danglingRoot_.end())
     {
       // Don't want to create a new tip if we are connecting a tree
       tip.reset();
@@ -188,14 +204,15 @@ class MainChain
   // TODO: (`HUT`) : callbacks
 
 private:
-  // TODO: (`HUT`) : make unordered
-  std::map<block_hash, block_type>           blockChain_;
-  std::map<block_hash, std::shared_ptr<Tip>> tips_;
-  std::map<block_hash, std::set<block_hash>> danglingPrevious_;
-  std::pair<uint64_t, block_hash>            heaviest_;
-  mutable fetch::mutex::Mutex                mutex_;
+  std::unordered_map<block_hash, block_type>           blockChain_;
+  std::unordered_map<block_hash, std::shared_ptr<Tip>> tips_;
+  std::unordered_map<block_hash, std::set<block_hash>> danglingRoot_;
+  std::pair<uint64_t, block_hash>                      heaviest_;
+  mutable fetch::mutex::Mutex                          mutex_;
 };
 
 }
 }
+
+
 #endif
