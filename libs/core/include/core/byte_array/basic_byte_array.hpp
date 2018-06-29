@@ -197,6 +197,13 @@ class BasicByteArray {
   }
 
   void Reserve(std::size_t const &n) {
+    if(n <= data_.size() )
+    {
+      return;
+    }
+      
+    assert(n != 0);
+    
     shared_array_type newdata(n);
     newdata.SetAllZero();
 
