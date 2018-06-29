@@ -1,7 +1,6 @@
-#include"network/thread_manager.hpp"
+#include"network/details/thread_manager.hpp"
 #include"./network_benchmark_service.hpp"
 #include"./node_basic.hpp"
-#include"chain/transaction.hpp"
 #include"../tests/include/helper_functions.hpp"
 
 using namespace fetch;
