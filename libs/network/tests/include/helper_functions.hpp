@@ -2,11 +2,11 @@
 #define HELPER_FUNCTIONS_HPP
 
 #include<random>
-//#include"core/random/lfg.hpp"
-//#include"core/byte_array/referenced_byte_array.hpp"
-//#include"network/serializers/counter.hpp"
-//#include"network/service/types.hpp"
-//#include"chain/transaction.hpp"
+#include"core/random/lfg.hpp"
+#include"core/byte_array/referenced_byte_array.hpp"
+#include"core/serializers/counter.hpp"
+#include"network/service/types.hpp"
+#include"ledger/chain/transaction.hpp"
 
 namespace fetch {
 namespace common {
@@ -39,7 +39,6 @@ double TimeDifference(time_point t1, time_point t2)
 }
 
 //  TODO: (`HUT`) : seperate helper functions by submodule
-/*
 class NoCopyClass
 {
 public:
@@ -113,7 +112,6 @@ T NextTransaction(std::size_t bytesToAdd = 0)
   return trans;
 }
 
-
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args)
 {
@@ -142,11 +140,11 @@ void BlockUntilTime(uint64_t startTime)
 
   std::this_thread::sleep_until(timeout_tp);
 }
-*/
+
 
 } // namespace commmon
 
-/*
+
 namespace network_benchmark
 {
 
@@ -156,7 +154,7 @@ typedef std::size_t                       block_hash;
 typedef std::vector<transaction_type>     block_type;
 typedef std::pair<block_hash, block_type> network_block;
 
-} */
+}
 
 }
 

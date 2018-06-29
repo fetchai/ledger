@@ -17,6 +17,3 @@ setup_compiler()
 setup_library(fetch-miner)
 target_link_libraries(fetch-miner INTERFACE fetch-core fetch-miner)
 
-#-------------------------------------------------------------------------------
-# Test Targets
-#-------------------------------------------------------------------------------

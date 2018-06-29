@@ -1,8 +1,8 @@
 ################################################################################
-# F E T C H   H T T P   E X A M P L E S
+# F E T C H   M A T H   B E N C H M A R K S
 ################################################################################
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project(fetch-http)
+project(fetch-math)
 
 # CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -10,5 +10,10 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-setup_library_examples(fetch-http)
+if(TRUE)
+  fetch_warning("Disabled Bencmark: benchmark_linalg_matrix (does not compile)")
+else()
+  add_executable(benchmark_linalg_matrix benchmark/linalg/matrix.cpp)
+  target_link_libraries(benchmark_linalg_matrix PRIVATE fetch-math)
+endif()
 
