@@ -1,5 +1,6 @@
 #include<iostream>
-#include"storage/indexed_document_store.hpp"
+#include"storage/document_store.hpp"
+#include"storage/document_store_protocol.hpp"
 #include"network/service/server.hpp"
 #include"core/commandline/cli_header.hpp"
 using namespace fetch::storage;

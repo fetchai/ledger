@@ -1,5 +1,5 @@
 #include<iostream>
-#include"storage/indexed_document_store.hpp"
+#include"storage/document_store.hpp"
 #include"core/byte_array/encoders.hpp"
 using namespace fetch;
 
@@ -12,7 +12,7 @@ void Add()
 {
   std::cout << "=============  ADD  ==================" << std::endl;;  
   {        
-    auto doc = store.GetDocumentBuffer("Hello world");
+    auto doc = store.GetDocumentBuffer( ResourceID("Hello world") );
     doc.Seek( doc.size() );
     doc.Write("Hello world");
   }
@@ -31,7 +31,7 @@ void Remove()
 void Print() 
 {
   std::cout << std::endl;
-  auto doc = store.GetDocumentBuffer("Hello world");
+  auto doc = store.GetDocumentBuffer( ResourceID("Hello world") );
   std::cout << "BOOK: " <<  book << " " << doc.id() << std::endl;
   std::cout << byte_array::ToBase64( store.Hash() ) << std::endl;
   byte_array::ByteArray x;

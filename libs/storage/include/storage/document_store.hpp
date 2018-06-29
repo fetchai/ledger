@@ -6,6 +6,7 @@
 #include "core/byte_array/referenced_byte_array.hpp"
 #include "storage/file_object.hpp"
 #include "storage/key_value_index.hpp"
+#include "storage/resource_mapper.hpp"
 #include "network/service/protocol.hpp"
 namespace fetch {
 namespace storage {
@@ -136,8 +137,9 @@ class DocumentStore {
   }
 
     
-  Document GetDocumentBuffer(byte_array::ConstByteArray const &address, bool const &create = true)
+  Document GetDocumentBuffer(ResourceID const &rid, bool const &create = true)
   {
+    byte_array::ConstByteArray const &address = rid.id();    
     index_type index = 0 ;
     
     
@@ -154,19 +156,18 @@ class DocumentStore {
     return doc;
   }
 
-
-  byte_array::ConstByteArray Get(byte_array::ConstByteArray const &address) 
+  byte_array::ConstByteArray Get(ResourceID const &rid) 
   {
-    Document doc = GetDocumentBuffer(address, false);
+    Document doc = GetDocumentBuffer(rid, false);
     byte_array::ByteArray ret;
     ret.Resize( doc.size() );
     doc.Read(ret);
     return ret;
   }
 
-  void Set(byte_array::ConstByteArray const &address, byte_array::ConstByteArray const& value) 
+  void Set(ResourceID const &rid, byte_array::ConstByteArray const& value) 
   {
-    Document doc = GetDocumentBuffer(address, true);
+    Document doc = GetDocumentBuffer(rid, true);
     doc.Seek(0);
     doc.Write(value);
     // TODO: Shrink
@@ -213,26 +214,6 @@ private:
   file_store_type file_store_;
 
 };
-
-class DocumentStoreProtocol : public fetch::service::Protocol {
-public:
-  enum {
-    GET = 0,
-    SET = 1,
-    COMMIT = 5,
-    REVERT = 6,
-    HASH = 7
-  };
-  
-  DocumentStoreProtocol(DocumentStore *doc_store) : fetch::service::Protocol() {
-    this->Expose(GET, doc_store, &DocumentStore::Get );
-    this->Expose(SET, doc_store, &DocumentStore::Set);
-    this->Expose(COMMIT, doc_store, &DocumentStore::Commit);
-    this->Expose(REVERT, doc_store, &DocumentStore::Revert);
-    this->Expose(HASH, doc_store, &DocumentStore::Hash);
-  }
-};
-
 
 
 }
