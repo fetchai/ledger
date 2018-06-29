@@ -49,10 +49,10 @@ def get_data2(context, mon):
         "nodes": [],
         "links": [],
     }
-    
+
     allnodenames = set([x for x in mon.world.keys()])
     extranodenames = set()
-    
+
     for s in mon.world.keys():
         for link in mon.world[s]["peers"]:
             t = link["peer"]
@@ -70,7 +70,7 @@ def get_data2(context, mon):
                 })
                 if t not in allnodenames:
                     extranodenames.add(t)
-            
+
     allnodenames = list(allnodenames)
     extranodenames = list(extranodenames)
 
@@ -90,6 +90,8 @@ def get_data2(context, mon):
             } for x in extranodenames
         ]),
 
+    print(data)
+
     return data
 
 def get_slash():
@@ -105,7 +107,7 @@ def main():
     #bottle.debug(True)
 
     context = {}
-    
+
     root = bottle.Bottle()
     root.route('/static/<filepath:path>', method='GET', callback=functools.partial(get_static))
     root.route('/data', method='GET', callback=functools.partial(get_data, context))

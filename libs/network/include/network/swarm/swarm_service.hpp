@@ -55,6 +55,7 @@ public:
     // and print requests to the terminal in colour
     this->AddMiddleware(fetch::http::middleware::AllowOrigin("*"));
     this->AddMiddleware(fetch::http::middleware::ColorLog);
+
     this->AddModule(*httpInterface_);
 
     addRpcProtocol(protocols::FetchProtocols::SWARM, rpcInterface_.get());

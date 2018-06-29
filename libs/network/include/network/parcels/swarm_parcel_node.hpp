@@ -20,6 +20,8 @@ public:
     :
     nnCore_(networkNodeCore)
   {
+    nnCore_ -> AddProtocol(this);
+
     /*
       // TODO(katie) move this into top-level code.
       node -> ToGetState([this](){
@@ -43,6 +45,7 @@ public:
 
   virtual std::string ClientNeedParcelList(const string &type, unsigned int count)
   {
+    std::cout << "ClientNeedParcelList!!!!" << std::endl;
     std::ostringstream ret;
     ret << "{" << std::endl;
     ret << "\"parcels\": [" << std::endl;

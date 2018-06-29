@@ -45,19 +45,17 @@ public:
                      const std::string &identifier,
                      unsigned int maxpeers,
                      std::shared_ptr<fetch::swarm::SwarmRandom> rnd,
-                     const fetch::swarm::SwarmPeerLocation &uri,
-                     unsigned int protocolNumber
+                     const fetch::swarm::SwarmPeerLocation &uri
                      ):
     nnCore_(networkNodeCore),
     uri_(uri),
     rnd_(rnd),
-    karmaPeerList_(identifier),
-    protocolNumber_(protocolNumber)
+    karmaPeerList_(identifier)
   {
     identifier_ = identifier;
     maxpeers_ = maxpeers;
 
-    //nnCore_ -> AddProtocol(this);
+    nnCore_ -> AddProtocol(this);
   }
 
   virtual ~SwarmNode()
@@ -99,7 +97,7 @@ public:
   virtual std::string AskPeerForPeers(const SwarmPeerLocation &peer)
   {
     std::shared_ptr<client_type> client = ConnectToPeer(peer);
-    auto promise = client->Call(protocolNumber_, protocols::Swarm::CLIENT_NEEDS_PEER);
+    auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     promise.Wait();
     auto result = promise.As<std::string>();
     return result;
@@ -153,10 +151,8 @@ public:
 
   void Post(std::function<void ()> workload)
   {
-    tm_ . Post(workload);
+    nnCore_ -> Post(workload);
   }
-
-  
 
 protected:
   mutable mutex_type                         mutex_;
@@ -166,7 +162,6 @@ protected:
   unsigned int                               maxpeers_;
   SwarmPeerLocation                          uri_;
   std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
-  fetch::network::ThreadManager              tm_;
   SwarmKarmaPeers                            karmaPeerList_;
   unsigned int                               protocolNumber_;
   std::function<int()>                       toGetState_;

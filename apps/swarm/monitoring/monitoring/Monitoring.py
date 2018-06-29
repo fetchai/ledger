@@ -6,6 +6,8 @@ import time
 import threading
 import json
 
+POSSIBLE_PORTS = 10
+
 class Monitoring(object):
 
     class WorkerThread(threading.Thread):
@@ -18,9 +20,9 @@ class Monitoring(object):
         def run(self):
             while not self.done:
                 self.poll(self.port + 10000, self.port)
-                self.port = (self.port + 1) % 180
+                self.port = (self.port + 1) % POSSIBLE_PORTS
                 if self.port == 0:
-                    time.sleep(2)                    
+                    time.sleep(2)
 
         def poll(self, port, nodenumber):
             ident = "127.0.0.1:{}".format(nodenumber + 9000)
@@ -28,6 +30,7 @@ class Monitoring(object):
                 url = "http://127.0.0.1:{}/peers".format(port)
                 data = None
                 try:
+                    print("URL=", url)
                     r = requests.get(url)
                     if r.status_code == 200:
                         data = json.loads(r.content.decode("utf-8", "strict"))
@@ -36,6 +39,7 @@ class Monitoring(object):
                         state = data.get("state", 0)
                 except requests.exceptions.ConnectionError as ex:
                     data = None
+                    print("Denied:", ident)
                 
                 if data != None:
                    self.owner.newData(ident, peers, state)

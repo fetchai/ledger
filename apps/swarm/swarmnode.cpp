@@ -58,22 +58,12 @@ int main(int argc, const char *argv[])
                                               identifier,
                                               maxpeers,
                                               rnd,
-                                              myHost,
-                                              fetch::protocols::FetchProtocols::SWARM
-                                              );
+                                              myHost
+                                                                                            );
   auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(nnCore);
-
-  //auto service = std::make_shared<fetch::swarm::SwarmService>(tm, portNumber, node, myHost, idlespeed);
-
   auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl>(myHost, idlespeed);
   auto agent = std::make_shared<fetch::swarm::SwarmAgentNaive>(swarmAgentApi, identifier, id, rnd, maxpeers, solvespeed);
 
-
-  auto parcelProtocol = std::make_shared<fetch::swarm::SwarmParcelProtocol>(parcelNode);
-
-  //service -> addRpcProtocol(fetch::protocols::FetchProtocols::PARCEL, parcelProtocol);
-
-  //TODO(katie) move the handling of the node functions off the ThreadManager running the io_service.
 
   swarmAgentApi -> ToPing([swarmAgentApi, node, parcelNode](fetch::swarm::SwarmAgentApi &unused, const std::string &host)
                           {

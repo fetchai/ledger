@@ -25,7 +25,8 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
 
   ThreadManagerImplementation(std::size_t threads = 1)
       : number_of_threads_(threads) {
-
+    started_flag_ = false;
+      
     fetch::logger.Debug("Creating thread manager");
   }
 
@@ -51,9 +52,12 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
 
       // TODO: (`HUT`) : look at this code, might be a race
       shared_ptr_type self = shared_from_this();
+
+      started_flag_ = true;
+      
       for (std::size_t i = 0; i < number_of_threads_; ++i) {
         threads_.push_back(new std::thread([this, self]() {
-	      io_service_->run();
+              io_service_->run();
             }));
       }
     }
@@ -100,6 +104,7 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
   template <typename F>
   void Post(F &&f)
   {
+    std::cout << "POST " << started_flag_ << std::endl;
     if(!protecting_io_)
     {
       io_service_->post(std::move(f));
@@ -110,6 +115,9 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
   }
 
  private:
+
+  bool started_flag_;
+  
   std::thread::id owning_thread_;
   std::size_t number_of_threads_ = 1;
   std::vector<std::thread *> threads_;

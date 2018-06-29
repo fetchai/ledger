@@ -8,7 +8,7 @@ using std::cerr;
 using std::string;
 
 #include "network/service/protocol.hpp"
-#include "swarm_parcel_node.hpp"
+#include "network/interfaces/parcels/swarm_parcel_node_interface.hpp"
 
 namespace fetch
 {
@@ -20,9 +20,9 @@ class SwarmParcelProtocol : public fetch::service::Protocol
   //TODO(katie) Check with Nathan if I need to keep a node refernce in this class
   //TODO(katie) service calls should be an enum
 public:
-  SwarmParcelProtocol(std::shared_ptr<SwarmParcelNode> parcelNode) : Protocol() {
-    this->Expose(1,           parcelNode.get(),  &SwarmParcelNode::ClientNeedParcelList);
-    this->Expose(2,           parcelNode.get(),  &SwarmParcelNode::ClientNeedParcelData);
+  SwarmParcelProtocol(SwarmParcelNodeInterface *node) : Protocol() {
+    this->Expose(1,           node,  &SwarmParcelNodeInterface::ClientNeedParcelList);
+    this->Expose(2,           node,  &SwarmParcelNodeInterface::ClientNeedParcelData);
    }
 };
 

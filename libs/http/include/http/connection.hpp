@@ -46,6 +46,9 @@ class HTTPConnection : public AbstractHTTPConnection,
 
     is_open_ = true;
     handle_ = manager_.Join(shared_from_this());
+
+    std::cout <<  "fuck is open "<< is_open_ << std::endl;
+
     if (is_open_) ReadHeader();
   }
 

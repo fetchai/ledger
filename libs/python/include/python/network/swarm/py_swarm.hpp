@@ -20,6 +20,7 @@ using std::string;
 #include "network/swarm/swarm_peer_location.hpp"
 #include "network/swarm/swarm_random.hpp"
 #include "network/parcels/swarm_agent_api_impl.hpp"
+#include "network/generics/network_node_core.hpp"
 #include "network/swarm/swarm_http_interface.hpp"
 
 #include <unistd.h>
@@ -36,18 +37,18 @@ class PySwarm
 public:
   PySwarm(const PySwarm &rhs)
   {
-    tm_            = rhs.tm_;
+    nnCore_        = rhs.nnCore_;
     rnd_           = rhs.rnd_;
-    node_          = rhs.node_;
-    service_       = rhs.service_;
+    swarmNode_     = rhs.swarmNode_;
+    parcelNode_    = rhs.parcelNode_;
     swarmAgentApi_ = rhs.swarmAgentApi_;
   }
   PySwarm(PySwarm &&rhs)
   {
-    tm_            = std::move(rhs.tm_);
+    nnCore_        = std::move(rhs.nnCore_);
     rnd_           = std::move(rhs.rnd_);
-    node_          = std::move(rhs.node_);
-    service_       = std::move(rhs.service_);
+    swarmNode_     = std::move(rhs.swarmNode_);
+    parcelNode_    = std::move(rhs.parcelNode_);
     swarmAgentApi_ = std::move(rhs.swarmAgentApi_);
   }
   PySwarm operator=(const PySwarm &rhs)  = delete;
@@ -55,75 +56,72 @@ public:
   bool operator==(const PySwarm &rhs) const = delete;
   bool operator<(const PySwarm &rhs) const = delete;
 
-  std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
-  std::shared_ptr<fetch::swarm::SwarmNode> node_;
-  std::shared_ptr<fetch::swarm::SwarmService> service_;
-  std::shared_ptr<fetch::network::ThreadManager> tm_;
-  std::shared_ptr<fetch::swarm::SwarmAgentApiImpl> swarmAgentApi_;
-
-
-  std::shared_ptr<fetch::swarm::SwarmParcelNode> parcelNode_;
-  std::shared_ptr<fetch::swarm::SwarmParcelProtocol> parcelProtocol_;
-
-  typedef std::recursive_mutex MUTEX_T;
-  typedef std::lock_guard<std::recursive_mutex> LOCK_T;
-  MUTEX_T mutex_;
+  typedef std::recursive_mutex mutex_type;
+  typedef std::lock_guard<std::recursive_mutex>lock_type;
+  mutex_type mutex_;
 
   virtual void Start()
   {
-    LOCK_T lock(mutex_);
+    lock_type lock(mutex_);
     cout << "***** START"<<endl;
     swarmAgentApi_ -> Start();
-    tm_ -> Start();
+    nnCore_ -> Start();
   }
 
   virtual void Stop()
   {
-    LOCK_T lock(mutex_);
-    tm_ -> Stop();
+    lock_type lock(mutex_);
+    nnCore_ -> Stop();
     swarmAgentApi_ -> Stop();
   }
 
-  explicit PySwarm(unsigned int id, uint16_t portNumber, unsigned int maxpeers, unsigned int idlespeed, unsigned int solvespeed)
+  std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
+  std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
+  std::shared_ptr<fetch::swarm::SwarmNode> swarmNode_;
+  std::shared_ptr<fetch::swarm::SwarmParcelNode> parcelNode_;
+  std::shared_ptr<fetch::swarm::SwarmAgentApiImpl> swarmAgentApi_;
+  std::shared_ptr<fetch::swarm::SwarmAgentNaive> agent_;
+  std::shared_ptr<fetch::swarm::SwarmHttpInterface> httpInterface_;
+
+  explicit PySwarm(unsigned int id, uint16_t rpcPort, uint16_t httpPort, unsigned int maxpeers, unsigned int idlespeed, unsigned int solvespeed)
   {
-    fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });
+    std::cout << "PySwarm: rpc=" << rpcPort << " http=" << httpPort << std::endl;
     std::string identifier = "node-" + std::to_string(id);
-    std::string myHost = "127.0.0.1:" + std::to_string(portNumber);
+    std::string myHost = "127.0.0.1:" + std::to_string(rpcPort);
     fetch::swarm::SwarmPeerLocation myHostLoc(myHost);
 
-
-    auto tm = std::make_shared<fetch::network::ThreadManager>(2);
+    auto nnCore = std::make_shared<fetch::network::NetworkNodeCore>(30, httpPort, rpcPort);
     auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
-    auto node = std::make_shared<fetch::swarm::SwarmNode>(*tm, identifier, maxpeers, rnd, myHost, fetch::protocols::FetchProtocols::SWARM);
-    auto service = std::make_shared<fetch::swarm::SwarmService>(*tm, portNumber, node, myHost, idlespeed);
+    auto swarmNode = std::make_shared<fetch::swarm::SwarmNode>(nnCore, identifier, maxpeers, rnd, myHost);
+    auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(nnCore);
     auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl>(myHost, idlespeed);
+    auto agent = std::make_shared<fetch::swarm::SwarmAgentNaive>(swarmAgentApi, identifier, id, rnd, maxpeers, solvespeed);
 
-    auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(node, fetch::protocols::FetchProtocols::PARCEL);
-    auto parcelProtocol = std::make_shared<fetch::swarm::SwarmParcelProtocol>(parcelNode);
+    auto httpInterface = std::make_shared<SwarmHttpInterface>(swarmNode);
+    nnCore -> AddModule(*httpInterface);
 
-    service -> addRpcProtocol(fetch::protocols::FetchProtocols::PARCEL, parcelProtocol);
+    fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });
 
-    tm_ = tm;
+    nnCore_ = nnCore;
     rnd_ = rnd;
-    node_ = node;
-    service_ = service;
-    swarmAgentApi_ = swarmAgentApi;
-
+    swarmNode_ = swarmNode;
     parcelNode_ = parcelNode;
-    parcelProtocol_ = parcelProtocol;
-
+    swarmAgentApi_ = swarmAgentApi;
+    agent_ = agent;
+    httpInterface_ = httpInterface;
+    
     // TODO(kll) Move this setup code somewhere more sensible.
-    swarmAgentApi -> ToPing([swarmAgentApi, node](fetch::swarm::SwarmAgentApi &unused, const std::string &host)
+    swarmAgentApi -> ToPing([swarmAgentApi, swarmNode](fetch::swarm::SwarmAgentApi &unused, const std::string &host)
                             {
-                              node -> Post([swarmAgentApi, node, host]()
+                              swarmNode -> Post([swarmAgentApi, swarmNode, host]()
                                            {
                                              try
                                                {
-                                                 auto newPeer = node -> AskPeerForPeers(host);
+                                                 auto newPeer = swarmNode -> AskPeerForPeers(host);
 
                                                  if (newPeer.length()) {
 
-                                                   if (!node -> IsOwnLocation(newPeer))
+                                                   if (!swarmNode -> IsOwnLocation(newPeer))
                                                      {
                                                        swarmAgentApi -> DoNewPeerDiscovered(newPeer);
                                                      }
@@ -138,21 +136,27 @@ public:
                                                {
                                                  swarmAgentApi -> DoPingFailed(host);
                                                }
+                                             catch(std::invalid_argument &x)
+                                               {
+                                                 swarmAgentApi -> DoPingFailed(host);
+                                               }
                                            });
                             });
 
-     swarmAgentApi -> ToBlockSolved([node, parcelNode](const std::string &data)
+     swarmAgentApi -> ToBlockSolved([swarmNode, parcelNode](const std::string &data)
                                     {
                                       parcelNode -> PublishParcel(std::make_shared<fetch::swarm::SwarmParcel>("block", data));
                                     });
 
-     swarmAgentApi -> ToDiscoverBlocks([swarmAgentApi, node, parcelNode](const std::string &host, unsigned int count)
+     swarmAgentApi -> ToDiscoverBlocks([swarmAgentApi, swarmNode, parcelNode](const std::string &host, unsigned int count)
                                        {
-                                         node ->Post([swarmAgentApi, node, parcelNode, host, count]()
+                                         swarmNode ->Post([swarmAgentApi, swarmNode, parcelNode, host, count]()
                                                      {
                                                        try
                                                          {
+                                                           std::cout << "ask peer for parcel ids" << std::endl;
                                                            auto blockids = parcelNode -> AskPeerForParcelIds(host, "block", count);
+                                                           std::cout << "ask peer for parcel ids done" << std::endl;
 
                                                            for(auto &blockid : blockids)
                                                              {
@@ -176,12 +180,16 @@ public:
                                                            cerr << " 4CAUGHT SwarmException" << x.what()<< endl;
                                                            swarmAgentApi -> DoPingFailed(host);
                                                          }
+                                                       catch(std::invalid_argument &x)
+                                                         {
+                                                           swarmAgentApi -> DoPingFailed(host);
+                                                         }
                                                      });
                                        });
 
-     swarmAgentApi -> ToGetBlock([swarmAgentApi, node, parcelNode](const std::string &host, const std::string &blockid)
+     swarmAgentApi -> ToGetBlock([swarmAgentApi, swarmNode, parcelNode](const std::string &host, const std::string &blockid)
                                  {
-                                   node -> Post([swarmAgentApi, node, parcelNode, host, blockid]()
+                                   swarmNode -> Post([swarmAgentApi, swarmNode, parcelNode, host, blockid]()
                                                 {
                                                   try
                                                     {
@@ -211,26 +219,30 @@ public:
                                                       cerr << " 6CAUGHT SwarmException" << x.what()<< endl;
                                                       swarmAgentApi -> DoPingFailed(host);
                                                     }
+                                                  catch(std::invalid_argument &x)
+                                                    {
+                                                      swarmAgentApi -> DoPingFailed(host);
+                                                    }
                                                 });
                                  });
-    swarmAgentApi -> ToGetKarma([node](const std::string &host)
+    swarmAgentApi -> ToGetKarma([swarmNode](const std::string &host)
                                 {
-                                  return node -> GetKarma(host);
+                                  return swarmNode -> GetKarma(host);
                                 });
-    swarmAgentApi -> ToAddKarma([node](const std::string &host, double amount)
+    swarmAgentApi -> ToAddKarma([swarmNode](const std::string &host, double amount)
                                 {
-                                  node -> AddOrUpdate(host, amount);
+                                  swarmNode -> AddOrUpdate(host, amount);
                                 });
-    swarmAgentApi -> ToAddKarmaMax([node](const std::string &host, double amount, double limit)
+    swarmAgentApi -> ToAddKarmaMax([swarmNode](const std::string &host, double amount, double limit)
                                    {
-                                     if (node -> GetKarma(host) < limit)
+                                     if (swarmNode -> GetKarma(host) < limit)
                                        {
-                                         node -> AddOrUpdate(host, amount);
+                                         swarmNode -> AddOrUpdate(host, amount);
                                        }
                                    });
-    swarmAgentApi -> ToGetPeers([swarmAgentApi, node](unsigned int count, double minKarma)
+    swarmAgentApi -> ToGetPeers([swarmAgentApi, swarmNode](unsigned int count, double minKarma)
                                 {
-                                  auto karmaPeers = node -> GetBestPeers(count, minKarma);
+                                  auto karmaPeers = swarmNode -> GetBestPeers(count, minKarma);
                                   std::list<std::string> results;
                                   for(auto &peer: karmaPeers)
                                     {
@@ -243,7 +255,7 @@ public:
                                   return results;
                                 });
 
-     swarmAgentApi -> ToQueryBlock([swarmAgentApi, node, parcelNode] (const std::string &id)
+     swarmAgentApi -> ToQueryBlock([swarmAgentApi, swarmNode, parcelNode] (const std::string &id)
                                    {
                                      if (!parcelNode -> HasParcel("block", id))
                                        {
@@ -252,7 +264,7 @@ public:
                                      return parcelNode -> GetParcel("block", id) -> GetData();
                                    });
 
-     swarmAgentApi -> ToVerifyBlock([swarmAgentApi, node, parcelNode](const std::string &id, bool validity)
+     swarmAgentApi -> ToVerifyBlock([swarmAgentApi, swarmNode, parcelNode](const std::string &id, bool validity)
                                     {
                                       if (parcelNode -> HasParcel("block", id))
                                         {

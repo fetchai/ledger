@@ -65,13 +65,34 @@ public:
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~IDLE"<<endl;
     if (this->onIdle_)
       {
-        this->onIdle_();
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~IDLE 1"<<endl;
+        try
+          {
+            cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~IDLE 1.1"<<endl;
+            this->onIdle_();
+            cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~IDLE 1.2"<<endl;
+          }
+        catch (std::exception &x)
+          {
+            cerr << ">>>>>>>>>>>>>>>>>" << x.what() << endl;
+            cout << ">>>>>>>>>>>>>>>>>" << x.what() << endl;
+          }
+        catch(...)
+          {
+            cerr << ">>>>>>>>>>>>>>>>> ??? EXCEPTION" << endl;
+            cout << ">>>>>>>>>>>>>>>>> ??? EXCEPTION" << endl;
+          }
+
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~IDLE 2"<<endl;
       }
+    cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~IDLE 3"<<endl;
     auto lambd = [this]
       {
         this->DoIdle();
       };
+    cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~IDLE 4"<<endl;
     tm_ -> Post(lambd, int(idlespeed_));
+    cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~IDLE DONE"<<endl;
   }
 
   virtual void OnIdle                (std::function<void ()> cb)

@@ -136,18 +136,24 @@ class HTTPServer : public AbstractHTTPServer {
     auto cb = [soc, accep, manager](std::error_code ec) {
       //LOG_LAMBDA_STACK_TRACE_POINT; // TODO: (`HUT`) : sort this
 
+      std::cout << "fuck 1" << std::endl;
+
       if (!ec) {
         std::make_shared<HTTPConnection>(std::move(*soc), *manager)
             ->Start();
+      std::cout << "fuck 2" << std::endl;
       } else {
         fetch::logger.Info("HTTP server terminated with ec: ", ec.message());
+      std::cout << "fuck 3" << std::endl;
         return;
       }
 
+      std::cout << "fuck 4" << std::endl;
       std::shared_ptr<socket_type> s = soc;
       std::shared_ptr<acceptor_type> a = accep;
       std::shared_ptr<manager_type> m = manager;
 
+      std::cout << "fuck 5" << std::endl;
       HTTPServer::Accept(s, a, m);
     };
 
@@ -175,16 +181,6 @@ class HTTPServer : public AbstractHTTPServer {
     }
   }
 
-  // TODO: (`HUT`) : refactor this out
-  template <typename F>
-  void Post(F &&f, int milliseconds) {
-    threadManager_.Post(std::move(f), milliseconds);
-  }
-  template <typename F>
-  void Post(F &&f) {
-    threadManager_.Post(std::move(f));
-  }
-  
  private:
   fetch::mutex::Mutex eval_mutex_;
 
