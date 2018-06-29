@@ -55,8 +55,9 @@ public:
   Client(std::string const &host,
     std::string const &port,
       ThreadManager &tmanager) :
-    TCPClient(host, port, tmanager )
+    TCPClient(tmanager)
   {
+    Connect(host, port);
   }
 
   ~Client()
@@ -92,8 +93,9 @@ public:
   SlowClient(std::string const &host,
     std::string const &port,
       ThreadManager &tmanager) :
-    TCPClient(host, port, tmanager )
+    TCPClient(tmanager)
   {
+    Connect(host, port);
   }
 
   ~SlowClient()
@@ -133,8 +135,9 @@ public:
   VerifyClient(std::string const &host,
     std::string const &port,
       ThreadManager &tmanager) :
-    TCPClient(host, port, tmanager )
+    TCPClient(tmanager)
   {
+    Connect(host, port);
   }
 
   ~VerifyClient()

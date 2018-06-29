@@ -9,8 +9,9 @@ public:
   Client(std::string const &host,
     std::string const &port,
       ThreadManager tmanager) :
-    TCPClient(host, port, tmanager )
+    TCPClient(tmanager )
   {
+    Connect(host, port);
   }  
   
   void PushMessage(message_type const &value) override
