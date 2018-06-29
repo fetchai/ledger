@@ -33,7 +33,21 @@ if(FETCH_ENABLE_EXAMPLES)
 
 endif(FETCH_ENABLE_EXAMPLES)
 
+<<<<<<< HEAD
+#-------------------------------------------------------------------------------
+# Test Targets
+#-------------------------------------------------------------------------------
 
+add_fetch_test(file_object_test fetch-storage tests/file_object.cpp)
+add_fetch_test(random_access_stack_test fetch-storage tests/random_access_stack.cpp)
+add_fetch_test(versioned_random_access_stack_test fetch-storage tests/versioned_random_access_stack.cpp)
+
+add_fetch_test(key_value_index_test fetch-storage tests/key_value_index.cpp)
+add_fetch_test(document_store_test fetch-storage tests/document_store.cpp)
+add_fetch_test(variant_stack_test fetch-storage tests/variant_stack.cpp)
+add_fetch_test(versioned_file_object_test fetch-storage tests/versioned_file_object.cpp)
+add_fetch_test(versioned_kvi_test fetch-storage tests/versioned_kvi.cpp)
+=======
 add_test_target()
-
+>>>>>>> develop
 

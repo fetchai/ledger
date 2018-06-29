@@ -136,15 +136,17 @@ public:
     return block_index_ * block_type::BYTES + byte_index_ - HEADER_SIZE;
   }
 
+  
   void Shrink(uint64_t const &size) 
   {
-    assert(length_ < (HEADER_SIZE + size) );
+    assert(length_ > (HEADER_SIZE + size) );
+   
+    Seek(0);
+
     length_ = HEADER_SIZE + size;
     uint64_t last_bn = length_ / block_type::BYTES;
     block_type block;
     
-    Seek(0);
-
     while( block_number_ < last_bn ) {
       stack_.Get(block_index_, block);
       block_index_ = block.next;

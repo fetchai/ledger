@@ -17,14 +17,7 @@ setup_compiler()
 setup_library(fetch-ledger)
 target_link_libraries(fetch-ledger INTERFACE fetch-network fetch-http fetch-crypto fetch-math)
 
-#-------------------------------------------------------------------------------
-# Test Targets
-#-------------------------------------------------------------------------------
+add_test_target()
 
-add_fetch_test(proof_of_work_test fetch-ledger tests/consensus/proof_of_work.cpp)
+add_subdirectory(examples)
 
-#-------------------------------------------------------------------------------
-# Example Targets
-#-------------------------------------------------------------------------------
-
-setup_library_examples(fetch-ledger)

@@ -1,8 +1,8 @@
 ################################################################################
-# F E T C H   H T T P   E X A M P L E S
+# F E T C H   C R Y P T O   T E S T S
 ################################################################################
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project(fetch-http)
+project(fetch-crypto)
 
 # CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -10,5 +10,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-setup_library_examples(fetch-http)
+add_fetch_test(ecdsa_test fetch-crypto ecdsa.cpp)
+add_fetch_test(sha256_test fetch-crypto sha256.cpp)
 

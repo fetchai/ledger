@@ -91,6 +91,12 @@ class DocumentStore {
     {
       pointer_->Read(bytes, m);
     }
+
+    void Shrink(uint64_t const &m)
+    {
+      pointer_->Shrink(m);
+    }
+    
     
     void Write(byte_array::ConstByteArray const &arr)
     {
@@ -169,8 +175,13 @@ class DocumentStore {
   {
     Document doc = GetDocumentBuffer(rid, true);
     doc.Seek(0);
+    
+    if(doc.size() > value.size() ) {
+      doc.Shrink(value.size());
+    }
+    
     doc.Write(value);
-    // TODO: Shrink
+
   }
   
   
