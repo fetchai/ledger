@@ -136,6 +136,41 @@ public:
     return block_index_ * block_type::BYTES + byte_index_ - HEADER_SIZE;
   }
 
+  void Shrink(uint64_t const &size) 
+  {
+    assert(length_ < (HEADER_SIZE + size) );
+    length_ = HEADER_SIZE + size;
+    uint64_t last_bn = length_ / block_type::BYTES;
+    block_type block;
+    
+    Seek(0);
+
+    while( block_number_ < last_bn ) {
+      stack_.Get(block_index_, block);
+      block_index_ = block.next;
+      ++block_number_;
+      assert(block_index_ != block_type::UNDEFINED);
+      
+      if(block_number_>= block_count_) {
+        TODO_FAIL("Seek is out of bounds");
+      }
+    }
+
+    last_position_ = block_index_;
+    block_count_ = block_number_;
+
+    // TODO: Delete whatever comes after
+  }
+
+  void Grow(uint64_t size) 
+  {
+    Seek(0);
+    size += HEADER_SIZE;
+//    std::size_t actual_size = 0;
+    // TODO
+  }
+  
+
   void Write(byte_array::ConstByteArray const &arr) 
   {
     Write(arr.pointer(), arr.size());
