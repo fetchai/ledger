@@ -4,9 +4,9 @@
 #include <deque>
 #include <iostream>
 #include <list>
+#include <memory>
 #include <set>
 #include <string>
-#include <memory>
 
 #include "network/swarm/swarm_agent_api.hpp"
 #include "network/swarm/swarm_random.hpp"
@@ -16,10 +16,6 @@ namespace fetch
 {
 namespace swarm
 {
-
-  using std::cout;
-  using std::cerr;
-  using std::cerr;
 
 class SwarmAgentNaive
 {
@@ -64,7 +60,7 @@ public:
     id_(id)
   {
     api -> OnIdle([this, api, id, identifier, solvespeed]{
-        cout << "AGENT NAIVE: OnIdle"<<std::endl;
+        std::cout << "AGENT NAIVE: OnIdle" << std::endl;
 
         if (this -> rnd_ -> r(solvespeed) <= static_cast<unsigned int>(id)) 
           {

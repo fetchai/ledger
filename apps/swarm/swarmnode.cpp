@@ -44,7 +44,7 @@ int main(int argc, const char *argv[])
 
   fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });
 
-  fetch::network::ThreadManager tm(30);
+  auto nnCore = std::make_shared<fetch::network::NetworkNodeCore>(30, portNumber+1000, portNumber);
 
   std::string identifier = "node-" + std::to_string(id);
 
@@ -54,23 +54,24 @@ int main(int argc, const char *argv[])
   auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
 
   std::shared_ptr<fetch::swarm::SwarmNode> node = std::make_shared<fetch::swarm::SwarmNode>(
-                                              tm,
+                                              nnCore,
                                               identifier,
                                               maxpeers,
                                               rnd,
                                               myHost,
                                               fetch::protocols::FetchProtocols::SWARM
                                               );
+  auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(nnCore);
 
-  auto service = std::make_shared<fetch::swarm::SwarmService>(tm, portNumber, node, myHost, idlespeed);
+  //auto service = std::make_shared<fetch::swarm::SwarmService>(tm, portNumber, node, myHost, idlespeed);
+
   auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl>(myHost, idlespeed);
   auto agent = std::make_shared<fetch::swarm::SwarmAgentNaive>(swarmAgentApi, identifier, id, rnd, maxpeers, solvespeed);
 
-  auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(node, fetch::protocols::FetchProtocols::PARCEL);
 
   auto parcelProtocol = std::make_shared<fetch::swarm::SwarmParcelProtocol>(parcelNode);
 
-  service -> addRpcProtocol(fetch::protocols::FetchProtocols::PARCEL, parcelProtocol);
+  //service -> addRpcProtocol(fetch::protocols::FetchProtocols::PARCEL, parcelProtocol);
 
   //TODO(katie) move the handling of the node functions off the ThreadManager running the io_service.
 
@@ -238,13 +239,13 @@ int main(int argc, const char *argv[])
       agent -> addInitialPeer(peer.AsString());
     }
 
-  tm.Start();
+  nnCore -> Start();
 
   int dummy;
 
   std::cout << "press any key to quit" << std::endl;
   std::cin >> dummy;
 
-  tm.Stop();
+  nnCore -> Stop();
 
 }

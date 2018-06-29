@@ -48,8 +48,8 @@ public:
 
     port_ = httpPort;
     node_ = node;
-    httpInterface_ = std::make_shared<SwarmHttpInterface>(node_);
-    rpcInterface_ = std::make_shared<SwarmProtocol>(node_);
+    httpInterface_ = std::make_shared<SwarmHttpInterface>(node);
+    rpcInterface_ = std::make_shared<SwarmProtocol>(node_.get());
 
     // Add middleware to the HTTP server - allow requests from any address,
     // and print requests to the terminal in colour

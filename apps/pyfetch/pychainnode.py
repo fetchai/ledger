@@ -21,6 +21,7 @@ class SwarmAgentNaive(object):
         self.swarm = Swarm(idnum, port, maxpeers, idlespeed, solvespeed)
 
         self.peerlist = peers.split(",")
+        self.solvespeed = solvespeed
 
         self.rootblock = MainChainBlock()
         self.mainchain = MainChain(self.rootblock)
@@ -51,6 +52,8 @@ class SwarmAgentNaive(object):
             return
         self.swarm.DoDiscoverBlocks(goodPeers[0], 10);
 
+        if random.randint(0, solvespeed) == 0:
+            self.swarm.DoBlockSolved()
 
         weightedPeers = [(x,self.swarm.GetKarma(x)) for x in goodPeers]
         total = sum([ x[1] for x in weightedPeers ])
