@@ -1,8 +1,8 @@
 ################################################################################
-# F E T C H   C O R E   B E N C H M A R K S
+# F E T C H    N E T W O R K   B E N C H M A R K S
 ################################################################################
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project(fetch-core)
+project(fetch-network)
 
 # CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -13,10 +13,9 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 # Benchmark Targets
 #-------------------------------------------------------------------------------
+add_executable(network_benchmark network/network_benchmark.cpp)
+target_link_libraries(network_benchmark PRIVATE fetch-http fetch-ledger)
 
-add_executable(benchmark_json_document json/document.cpp)
-target_link_libraries(benchmark_json_document PRIVATE fetch-core fetch-testing)
-
-add_executable(serialisation serialisation/main.cpp)
-target_link_libraries(serialisation PRIVATE fetch-core fetch-testing)
+add_executable(rpc rpc/main.cpp)
+target_link_libraries(rpc PRIVATE fetch-network fetch-ledger)
 

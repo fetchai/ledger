@@ -24,6 +24,7 @@ class RunSwarmArgs(object):
         self.parser.add_argument("--maxpeers", help="max peers to discover", type=int)
         self.parser.add_argument("--solvespeed", help="chance of solving a block as 1/N", type=int, default=1000)
         self.parser.add_argument("--idlespeed", help="idle cycle time in MS for a node", type=int, default=1000)
+        self.parser.add_argument("--logdir", help="where to put individual logfiles", type=str, default="./")
 
         self.data =  self.parser.parse_args()
 
@@ -50,6 +51,7 @@ class Node(object):
         peercount = args.initialpeers
         maxpeers = args.maxpeers
         myport = PORT_BASE + index
+        logdir = args.logdir
 
         peers = set()
         while len(peers)<args.initialpeers:
@@ -74,7 +76,7 @@ class Node(object):
 
         print(cmdstr)
 
-        self.p = subprocess.Popen("{} 2>&1 |tee swarmlog/{}".format(cmdstr, index),
+        self.p = subprocess.Popen("{} 2>&1 |tee {}".format(cmdstr, os.path.join(logdir, str(index))),
             shell=True
         )
 

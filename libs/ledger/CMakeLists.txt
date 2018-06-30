@@ -21,11 +21,5 @@ target_link_libraries(fetch-ledger INTERFACE fetch-http fetch-network fetch-cryp
 # Test Targets
 #-------------------------------------------------------------------------------
 
-add_fetch_test(proof_of_work_test fetch-ledger tests/consensus/proof_of_work.cpp)
-add_fetch_test(main_chain_test fetch-ledger tests/consensus/main_chain.cpp)
-
-#-------------------------------------------------------------------------------
-# Example Targets
-#-------------------------------------------------------------------------------
-
-setup_library_examples(fetch-ledger)
+add_test_target()
+add_subdirectory(examples)

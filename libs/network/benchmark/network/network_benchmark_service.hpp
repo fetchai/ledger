@@ -2,13 +2,13 @@
 #define NETWORK_BENCHMARK_SERVICE_HPP
 
 #include<memory>
+#include"core/logger.hpp"
 #include"network/service/server.hpp"
-#include"network/http/server.hpp"
+#include"http/server.hpp"
 #include"./protocols/network_benchmark.hpp"
 #include"./node_basic.hpp"
 #include"./http_interface.hpp"
 #include"../tests/include/helper_functions.hpp"
-#include"core/logger.hpp"
 
 
 namespace fetch

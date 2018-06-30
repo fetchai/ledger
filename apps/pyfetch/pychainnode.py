@@ -17,10 +17,12 @@ PEERS = [
     ]
 
 class SwarmAgentNaive(object):
-    def __init__(self, idnum, port, maxpeers, idlespeed, solvespeed, peers):
-        self.swarm = Swarm(idnum, port, maxpeers, idlespeed, solvespeed)
+    def __init__(self, idnum, rpcPort, httpPort, maxpeers, idlespeed, solvespeed, peers):
+        self.swarm = Swarm(idnum, rpcPort, httpPort, maxpeers, idlespeed, solvespeed)
+        self.idnum = idnum
 
         self.peerlist = peers.split(",")
+        self.solvespeed = solvespeed
 
         self.rootblock = MainChainBlock()
         self.mainchain = MainChain(self.rootblock)
@@ -46,11 +48,17 @@ class SwarmAgentNaive(object):
         self.swarm.AddKarmaMax(host, 1.0, 3.0);
 
     def onIdle(self):
-        goodPeers = self.swarm.GetPeers(10, -0.5);
+        goodPeers = self.swarm.GetPeers(10, -0.5)
         if not goodPeers:
+            print("OnIdle", 1.1)
             return
-        self.swarm.DoDiscoverBlocks(goodPeers[0], 10);
+        print("OnIdle", 2)
 
+        self.swarm.DoDiscoverBlocks(goodPeers[0], 10)
+        print("OnIdle", 3)
+
+        if random.randint(0, self.solvespeed) == 0:
+            self.swarm.DoBlockSolved()
 
         weightedPeers = [(x,self.swarm.GetKarma(x)) for x in goodPeers]
         total = sum([ x[1] for x in weightedPeers ])
@@ -103,6 +111,7 @@ def main():
     agent = SwarmAgentNaive(
         config.id,
         config.port,
+        config.port + 1000,
         config.maxpeers,
         config.idlespeed,
         config.solvespeed,

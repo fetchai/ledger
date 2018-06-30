@@ -14,7 +14,10 @@
 #include "network/service/client.hpp"
 #include "network/service/server.hpp"
 #include "network/protocols/swarm/commands.hpp"
+#include "network/generics/network_node_core.hpp"
+#include "network/interfaces/swarm/swarm_node_interface.hpp"
 #include "network/protocols/fetch_protocols.hpp"
+#include "network/protocols/swarm/swarm_protocol.hpp"
 
 #include <iostream>
 #include <string>
@@ -24,37 +27,35 @@ namespace fetch
 namespace swarm
 {
 
-  using std::cout;
-  using std::cerr;
-  using std::cerr;
-
 class SwarmHttpInterface;
 
-class SwarmNode
+class SwarmNode : public SwarmNodeInterface
 {
 public:
-  using clientType = fetch::service::ServiceClient<network::TCPClient>;
 protected:
-  typedef std::recursive_mutex MUTEX_T;
-  typedef std::lock_guard<MUTEX_T> LOCK_T;
-  typedef std::map<std::string, std::shared_ptr<clientType>> CONNECTIONS;
+  typedef std::recursive_mutex mutex_type;
+  typedef std::lock_guard<mutex_type> lock_type;
+  typedef fetch::network::NetworkNodeCore::client_type client_type;
 public:
+
+  std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
+
   explicit SwarmNode(
-                     fetch::network::ThreadManager tm,
+                     std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
                      const std::string &identifier,
                      unsigned int maxpeers,
                      std::shared_ptr<fetch::swarm::SwarmRandom> rnd,
-                     const fetch::swarm::SwarmPeerLocation &uri,
-                     unsigned int protocolNumber
+                     const fetch::swarm::SwarmPeerLocation &uri
                      ):
+    nnCore_(networkNodeCore),
     uri_(uri),
     rnd_(rnd),
-    tm_(tm),
-    karmaPeerList_(identifier),
-    protocolNumber_(protocolNumber)
+    karmaPeerList_(identifier)
   {
     identifier_ = identifier;
     maxpeers_ = maxpeers;
+
+    nnCore_ -> AddProtocol(this);
   }
 
   virtual ~SwarmNode()
@@ -81,22 +82,9 @@ public:
     return loc == uri_;
   }
 
-  virtual std::shared_ptr<clientType> ConnectToPeer(const SwarmPeerLocation &peer)
+  virtual std::shared_ptr<client_type> ConnectToPeer(const SwarmPeerLocation &peer)
   {
-    LOCK_T mlock(mutex_);
-    std::shared_ptr<clientType> client = std::make_shared<clientType>( peer.GetHost(), peer.GetPort(), tm_ );
-
-    int waits = 25;
-    while(!client->is_alive())
-      {
-        waits--;
-        if (waits <= 0)
-          {
-            throw SwarmException("Bad peer "+peer.AsString());
-          }
-        usleep(1000);
-      }
-    return client;
+    return nnCore_ -> ConnectTo(peer.GetHost(), peer.GetPort());
   }
 
   std::list<SwarmKarmaPeer> HttpWantsPeerList() const
@@ -104,12 +92,12 @@ public:
     return karmaPeerList_.GetBestPeers(10000, 0.0);
   }
 
-  void ToGetState(std::function<int()> cb) { toGetState_ = cb; }
+   void ToGetState(std::function<int()> cb) { toGetState_ = cb; }
 
   virtual std::string AskPeerForPeers(const SwarmPeerLocation &peer)
   {
-    std::shared_ptr<clientType> client = ConnectToPeer(peer);
-    auto promise = client->Call(protocolNumber_, protocols::Swarm::CLIENT_NEEDS_PEER);
+    std::shared_ptr<client_type> client = ConnectToPeer(peer);
+    auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     promise.Wait();
     auto result = promise.As<std::string>();
     return result;
@@ -163,19 +151,17 @@ public:
 
   void Post(std::function<void ()> workload)
   {
-    tm_ . Post(workload);
+    nnCore_ -> Post(workload);
   }
 
 protected:
-  mutable MUTEX_T                            mutex_;
+  mutable mutex_type                         mutex_;
   int                                        maxActivePeers_;
   int                                        maxKnownPeers_;
   std::string                                identifier_;
   unsigned int                               maxpeers_;
   SwarmPeerLocation                          uri_;
   std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
-  fetch::network::ThreadManager              tm_;
-  CONNECTIONS                                connections;
   SwarmKarmaPeers                            karmaPeerList_;
   unsigned int                               protocolNumber_;
   std::function<int()>                       toGetState_;

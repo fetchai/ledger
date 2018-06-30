@@ -17,9 +17,5 @@ setup_compiler()
 setup_library(fetch-http)
 target_link_libraries(fetch-http PUBLIC fetch-network)
 
-#-------------------------------------------------------------------------------
-# Example Targets
-#-------------------------------------------------------------------------------
-
-setup_library_examples(fetch-http)
+add_subdirectory(examples)
 
