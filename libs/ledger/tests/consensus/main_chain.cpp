@@ -206,7 +206,7 @@ int main(int argc, char const **argv)
 
         auto t2 = TimePoint();
         std::cout << "Difficulty: " << diff << ". Block time: "
-          << TimeDifference(t2, t1)/blockIterations << std::endl;
+          << TimeDifference(t2, t1)/double(blockIterations) << std::endl;
       }
 
       // Verify blocks
@@ -224,7 +224,7 @@ int main(int argc, char const **argv)
     {
       std::vector<block_type> blocks;
 
-      for (std::size_t j = 0; j < 100; ++j)
+      for (std::size_t j = 0; j < 10; ++j)
       {
         block_type block;
         body_type block_body;
@@ -232,7 +232,7 @@ int main(int argc, char const **argv)
         block_body.nonce = 0;
         block.SetBody(block_body);
         block.UpdateDigest();
-        block.proof().SetTarget(2); // Number of zeroes
+        block.proof().SetTarget(8); // Number of zeroes
 
         miner::Mine(block);
 
@@ -249,18 +249,20 @@ int main(int argc, char const **argv)
         arr.Seek(0);
         block_type block;
         arr >> block;
+
         block.UpdateDigest();       // digest and target not serialized due to trust issues
-        block.proof().SetTarget(2);
+        block.proof().SetTarget(8);
 
         if(!block.proof()())
         {
-          std::cout << "not verified" << std::endl;
+          std::cout << "block not verified" << std::endl;
           blockVerified = false;
         }
+
+        EXPECT(ToHex(i.hash()) == ToHex(block.hash()));
       }
 
       EXPECT(blockVerified == true);
-
     };
 
     SECTION("Testing time to add blocks sequentially")

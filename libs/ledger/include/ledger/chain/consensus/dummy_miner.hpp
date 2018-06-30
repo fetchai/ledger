@@ -8,10 +8,16 @@ namespace consensus {
 class DummyMiner
 {
 
+
 public:
   template <typename block_type>
   static void Mine(block_type &block)
   {
+    uint64_t initNonce = GetRandom();
+    block.body().nonce = initNonce;
+
+    block.UpdateDigest();
+
     while(!block.proof()())
     {
       block.body().nonce++;
@@ -22,6 +28,11 @@ public:
   template <typename block_type>
   static bool Mine(block_type &block, uint64_t iterations)
   {
+    uint32_t initNonce = GetRandom();
+    block.body().nonce = initNonce;
+
+    block.UpdateDigest();
+
     while(!block.proof()() && iterations > 0)
     {
       block.body().nonce++;
@@ -30,6 +41,16 @@ public:
     }
 
     return block.proof()();
+  }
+
+private:
+  static uint32_t GetRandom()
+  {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_int_distribution<uint32_t> dis(
+        0, std::numeric_limits<uint32_t>::max());
+    return dis(gen);
   }
 
 };

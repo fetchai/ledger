@@ -3,6 +3,7 @@
 #include "core/byte_array/referenced_byte_array.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "core/byte_array/encoders.hpp"
 
 #include <memory>
 
@@ -14,27 +15,26 @@ struct BlockSlice {
   std::vector<TransactionSummary> transactions;
 };
 
-
 struct BlockBody {
   fetch::byte_array::ByteArray previous_hash;
   fetch::byte_array::ByteArray merkle_hash;
-  uint64_t                     block_number;
-  uint64_t                     nonce;
-  std::vector<TransactionSummary> transactions; // TODO: (`HUT`) : slice these
+  fetch::byte_array::ByteArray state_hash;
+  uint64_t                     block_number{0};
+  uint64_t                     nonce{0};
 };
 
 template <typename T>
 void Serialize(T &serializer, BlockBody const &body)
 {
-  serializer << body.previous_hash << 
-    body.merkle_hash << body.transactions << body.nonce << body.block_number;
+  serializer << body.previous_hash <<
+    body.merkle_hash << body.nonce << body.block_number;
 }
 
 template <typename T>
 void Deserialize(T &serializer, BlockBody &body)
 {
-  serializer >> body.previous_hash >> 
-    body.merkle_hash >> body.transactions >> body.nonce >> body.block_number;
+  serializer >> body.previous_hash >>
+    body.merkle_hash >> body.nonce >> body.block_number;
 }
 
 template <typename P, typename H>
@@ -55,7 +55,7 @@ class BasicBlock
 
     serializers::ByteArrayBuffer buf;
     buf << body_.previous_hash << body_.merkle_hash << body_.block_number << body_.nonce;
-    //buf << body;
+
     hasher_type hash;
     hash.Reset();
     hash.Update(buf.data());
