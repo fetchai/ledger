@@ -168,6 +168,8 @@ public:
   {
     Seek(0);
     size += HEADER_SIZE;
+    TODO_FAIL("Grow is not implemented yet");
+    
 //    std::size_t actual_size = 0;
     // TODO
   }

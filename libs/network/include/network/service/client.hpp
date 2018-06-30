@@ -118,7 +118,7 @@ class ServiceClient : public T,
   thread_manager_type thread_manager_;
   std::deque<network::message_type> messages_;
   mutable fetch::mutex::Mutex message_mutex_;
-  //  std::thread *worker_thread_ = nullptr;  // TODO: use thread pool
+
 };
 }
 }

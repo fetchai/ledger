@@ -4,7 +4,7 @@
 using namespace fetch;
 
 using namespace fetch::storage;
-DocumentStore store;
+RevertibleDocumentStore store;
 
 uint64_t book = 1;
 

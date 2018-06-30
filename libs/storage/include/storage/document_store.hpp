@@ -11,29 +11,37 @@
 namespace fetch {
 namespace storage {
 
+
+template< std::size_t BS = 2048, typename A =  FileBlockType<BS>, typename B = KeyValueIndex<>,  typename C = VersionedRandomAccessStack< A >, typename D = FileObject<C>  >
 class DocumentStore {
- public:
-  typedef byte_array::ByteArray byte_array_type;  
-  
+public:
   enum {
-    BLOCK_SIZE = 2048
+    BLOCK_SIZE = BS
   };
   
-  typedef FileBlockType<BLOCK_SIZE> file_block_type;
+  typedef DocumentStore<BS,A,B,C,D> self_type;
+  typedef byte_array::ByteArray byte_array_type;  
+
+  typedef A file_block_type;
+  typedef B key_value_index_type;
+  typedef C file_store_type;
+  typedef D file_object_type;
+/*
+ typedef FileBlockType<BLOCK_SIZE> file_block_type;
   typedef KeyValueIndex<> key_value_index_type;
   typedef VersionedRandomAccessStack< file_block_type >  file_store_type;
   typedef FileObject<file_store_type> file_object_type;
-
+*/  
   typedef typename key_value_index_type::index_type index_type;
 
   class DocumentImplementation : public file_object_type
   {
   public:
-    DocumentImplementation(DocumentStore *s, byte_array::ConstByteArray const &address, file_store_type &store)
+    DocumentImplementation(self_type *s, byte_array::ConstByteArray const &address, file_store_type &store)
       : file_object_type(store), address_(address), store_(s)
     {  }
     
-    DocumentImplementation(DocumentStore *s, byte_array::ConstByteArray const &address, file_store_type &store, std::size_t const&pos )
+    DocumentImplementation(self_type *s, byte_array::ConstByteArray const &address, file_store_type &store, std::size_t const&pos )
       : file_object_type(store, pos), address_(address), store_(s)
     {  }
     
@@ -55,19 +63,19 @@ class DocumentStore {
     
   private:
     byte_array::ConstByteArray address_;
-    DocumentStore *store_;    
+    self_type *store_;    
   };
   
   class Document
   {
   public:
-    Document(DocumentStore *s, byte_array::ConstByteArray const &address,
+    Document(self_type *s, byte_array::ConstByteArray const &address,
       file_store_type &store)
     {
       pointer_ = std::make_shared< DocumentImplementation >(s, address, store);      
     }
     
-    Document(DocumentStore *s, byte_array::ConstByteArray const &address,
+    Document(self_type *s, byte_array::ConstByteArray const &address,
       file_store_type &store, std::size_t const&pos )
     {
       pointer_ = std::make_shared< DocumentImplementation >(s, address, store, pos);      
@@ -142,6 +150,19 @@ class DocumentStore {
     key_index_.New(index_file, index_diff); 
   }
 
+  void Load(std::string const &doc_file,
+    std::string const &index_file, bool const &create = true) 
+  {
+    file_store_.Load(doc_file, create);    
+    key_index_.Load(index_file,  create); 
+  }
+
+  void New(std::string const &doc_file, 
+    std::string const &index_file)  
+  {
+    file_store_.New(doc_file);    
+    key_index_.New(index_file); 
+  }
     
   Document GetDocumentBuffer(ResourceID const &rid, bool const &create = true)
   {
@@ -225,6 +246,10 @@ private:
   file_store_type file_store_;
 
 };
+
+
+// TODO: make more readible
+typedef DocumentStore<2048,  FileBlockType<2048>, KeyValueIndex<>,  VersionedRandomAccessStack<  FileBlockType<2048> >, FileObject< VersionedRandomAccessStack<  FileBlockType<2048> > > > RevertibleDocumentStore;
 
 
 }

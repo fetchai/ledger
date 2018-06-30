@@ -5,7 +5,7 @@
 namespace fetch {
 namespace storage {
 
-class DocumentStoreProtocol : public fetch::service::Protocol {
+class RevertibleDocumentStoreProtocol : public fetch::service::Protocol {
 public:
   enum {
     GET = 0,
@@ -15,12 +15,12 @@ public:
     HASH = 7
   };
   
-  DocumentStoreProtocol(DocumentStore *doc_store) : fetch::service::Protocol() {
-    this->Expose(GET, doc_store, &DocumentStore::Get);
-    this->Expose(SET, doc_store, &DocumentStore::Set);
-    this->Expose(COMMIT, doc_store, &DocumentStore::Commit);
-    this->Expose(REVERT, doc_store, &DocumentStore::Revert);
-    this->Expose(HASH, doc_store, &DocumentStore::Hash);
+  RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store) : fetch::service::Protocol() {
+    this->Expose(GET, doc_store, &RevertibleDocumentStore::Get);
+    this->Expose(SET, doc_store, &RevertibleDocumentStore::Set);
+    this->Expose(COMMIT, doc_store, &RevertibleDocumentStore::Commit);
+    this->Expose(REVERT, doc_store, &RevertibleDocumentStore::Revert);
+    this->Expose(HASH, doc_store, &RevertibleDocumentStore::Hash);
   }
 };
 

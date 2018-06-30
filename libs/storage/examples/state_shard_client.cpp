@@ -21,31 +21,31 @@ public:
   
   ByteArray Get(ByteArray const &key) 
   {
-    auto promise = this->Call(0, fetch::storage::DocumentStoreProtocol::GET, fetch::storage::ResourceID(key) );
+    auto promise = this->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::GET, fetch::storage::ResourceID(key) );
     return promise.As<ByteArray>();
   }
 
   void Set(ByteArray const &key, ByteArray const &value) 
   {
-    auto promise = this->Call(0, fetch::storage::DocumentStoreProtocol::SET, fetch::storage::ResourceID(key), value );
+    auto promise = this->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::SET, fetch::storage::ResourceID(key), value );
     promise.Wait(2000);
   }
   
   void Commit(uint64_t const &bookmark) 
   {
-    auto promise = this->Call(0, fetch::storage::DocumentStoreProtocol::COMMIT, bookmark);
+    auto promise = this->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
     promise.Wait(2000);
   }
   
   void Revert(uint64_t const &bookmark) 
   {
-    auto promise = this->Call(0, fetch::storage::DocumentStoreProtocol::REVERT, bookmark);
+    auto promise = this->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
     promise.Wait(2000);
   }  
 
   ByteArray Hash() 
   {
-    return this->Call(0, fetch::storage::DocumentStoreProtocol::HASH).As<ByteArray>();
+    return this->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::HASH).As<ByteArray>();
   }
 
   void SetID(ByteArray const&id) 
