@@ -120,7 +120,7 @@ class TCPClient
   virtual void PushMessage(message_type const& value) = 0;
   virtual void ConnectionFailed() = 0;
 
-  handle_type const& handle() const noexcept { return pointer_->handle(); }
+  handle_type handle() const noexcept { return pointer_->handle(); }
 
   std::string Address() const noexcept
   {

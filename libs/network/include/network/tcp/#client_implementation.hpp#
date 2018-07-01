@@ -248,9 +248,7 @@ class TCPClientImplementation final :
     {
       fetch::logger.Error("Magic incorrect during network read - dying: ", header_.content.magic);
       return;
-    }
-
-    byte_array::ByteArray message;
+    }_array::ByteArray message;
     message.Resize(header_.content.length);
 
     self_type self = shared_from_this();

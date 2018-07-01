@@ -20,17 +20,17 @@ namespace network {
 
 class ClientManager {
  public:
-  typedef typename AbstractClientConnection::shared_type connection_type;
-  typedef uint64_t handle_type;  // TODO make global definition
+  typedef typename AbstractConnection::shared_type connection_type;
+  typedef typename AbstractConnection::connection_handle_type connection_handle_type;
 
   ClientManager(AbstractNetworkServer& server)
       : server_(server), clients_mutex_(__LINE__, __FILE__) {
     LOG_STACK_TRACE_POINT;
   }
 
-  handle_type Join(connection_type client) {
+  connection_handle_type Join(connection_type client) {
     LOG_STACK_TRACE_POINT;
-    handle_type handle = server_.next_handle();
+    connection_handle_type handle = client->next_handle();
     fetch::logger.Info("Client joining with handle ", handle);
 
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
@@ -39,7 +39,7 @@ class ClientManager {
   }
 
   // TODO: (`HUT`) : may be risky if handle type is made small
-  void Leave(handle_type handle) {
+  void Leave(connection_handle_type handle) {
     LOG_STACK_TRACE_POINT;
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
 
@@ -49,7 +49,7 @@ class ClientManager {
     }
   }
 
-  bool Send(handle_type client, message_type const& msg) {
+  bool Send(connection_handle_type client, message_type const& msg) {
     LOG_STACK_TRACE_POINT;
     bool ret = true;
     clients_mutex_.lock();
@@ -80,12 +80,12 @@ class ClientManager {
     clients_mutex_.unlock();
   }
 
-  void PushRequest(handle_type client, message_type const& msg) {
+  void PushRequest(connection_handle_type client, message_type const& msg) {
     LOG_STACK_TRACE_POINT;
     server_.PushRequest(client, msg);
   }
 
-  std::string GetAddress(handle_type client) {
+  std::string GetAddress(connection_handle_type client) {
     LOG_STACK_TRACE_POINT;
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
     if (clients_.find(client) != clients_.end()) {
@@ -96,7 +96,7 @@ class ClientManager {
 
  private:
   AbstractNetworkServer& server_;
-  std::map<handle_type, connection_type> clients_;
+  std::map<connection_handle_type, connection_type> clients_;
   fetch::mutex::Mutex clients_mutex_;
 };
 }

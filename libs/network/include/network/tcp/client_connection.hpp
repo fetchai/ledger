@@ -10,6 +10,7 @@
 #include "core/serializers/referenced_byte_array.hpp"
 
 #include "network/fetch_asio.hpp"
+#include<atomic>
 namespace fetch {
 namespace network {
 
@@ -19,12 +20,12 @@ namespace network {
  * connected client.
  */
 
-class ClientConnection : public AbstractClientConnection,
+class ClientConnection : public AbstractConnection,
                          public std::enable_shared_from_this<ClientConnection> {
  public:
-  typedef typename AbstractClientConnection::shared_type connection_type;
+  typedef typename AbstractConnection::shared_type connection_type;
 
-  typedef ClientManager::handle_type handle_type;
+  typedef typename AbstractConnection::connection_handle_type handle_type;
 
   ClientConnection(asio::ip::tcp::tcp::socket socket, ClientManager& manager)
       : socket_(std::move(socket)),
@@ -63,11 +64,16 @@ class ClientConnection : public AbstractClientConnection,
     return socket_.remote_endpoint().address().to_string();
   }
 
-  handle_type const& handle() const {
+  handle_type handle() const {
     LOG_STACK_TRACE_POINT;
     return handle_;
   }
 
+  uint16_t Type() const override 
+  {
+    return AbstractConnection::TYPE_INCOMING;
+  }
+    
  private:
   void ReadHeader() {
     LOG_STACK_TRACE_POINT;
@@ -171,7 +177,7 @@ class ClientConnection : public AbstractClientConnection,
   ClientManager& manager_;
   message_queue_type write_queue_;
   fetch::mutex::Mutex write_mutex_;
-  handle_type handle_;
+  std::atomic< handle_type > handle_;
   std::string address_;
   const uint64_t networkMagic = 0xFE7C80A1FE7C80A1; // TODO: (`HUT`) : put this in shared class
 
