@@ -2,7 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <algorithm>
-//#include "network/serializers/stl_types.hpp" // TODO: (`HUT`) : delete
+
 #include"network/tcp/tcp_client.hpp"
 #include"network/tcp/tcp_server.hpp"
 #include"network/tcp/loopback_server.hpp"
@@ -852,9 +852,9 @@ int main(int argc, char* argv[]) {
   TestCase5<1>(host, port);
   TestCase6<1>(host, port);
   TestCase7<1>(host, port);
-  TestCase8<1>(host, port);
+  //TestCase8<1>(host, port); // tests move/copy which is now disabled
   TestCase9<1>(host, port);
-  TestCase10<1>(host, port);
+  //TestCase10<1>(host, port); // as 8
   TestCase11<1>(host, port);
   TestCase12<1>(host, port);
   TestCase13<1>(host, port);
@@ -868,9 +868,9 @@ int main(int argc, char* argv[]) {
   TestCase5<10>(host, port);
   TestCase6<10>(host, port);
   TestCase7<10>(host, port);
-  TestCase8<10>(host, port);
+  //TestCase8<10>(host, port); // tests move/copy which is now disabled
   TestCase9<10>(host, port);
-  TestCase10<10>(host, port);
+  //TestCase10<10>(host, port); // as 8
   TestCase11<10>(host, port);
   TestCase12<10>(host, port);
   TestCase13<10>(host, port);

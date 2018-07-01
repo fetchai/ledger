@@ -35,79 +35,46 @@ class TCPClient
   explicit TCPClient(thread_manager_type &thread_manager)
     : pointer_{std::make_shared< implementation_type >(thread_manager)}
   {
+    // Note we register handles here, but do not connect until the base class constructed
     RegisterHandlers();
   }
 
-  // Policy: copy and move constructors, the last client will be the one connected
-  TCPClient(TCPClient const &rhs)
-  {
-    pointer_ = rhs.pointer_;
-    rhs.pointer_ = nullptr; // avoid having other client clearing our closures
-    Cleanup();
-    RegisterHandlers();
-  }
-
-  TCPClient(TCPClient &&rhs)
-  {
-    pointer_ = rhs.pointer_;
-    rhs.pointer_ = nullptr; // avoid having other client clearing our closures
-    Cleanup();
-    RegisterHandlers();
-  }
-
-  TCPClient &operator=(TCPClient const &rhs)
-  {
-    pointer_ = rhs.pointer_;
-    rhs.pointer_ = nullptr; // avoid having other client clearing our closures
-    Cleanup();
-    RegisterHandlers();
-    return *this;
-  }
-
-  TCPClient &operator=(TCPClient&& rhs)
-  {
-    pointer_ = rhs.pointer_;
-    rhs.pointer_ = nullptr; // avoid having other client clearing our closures
-    Cleanup();
-    RegisterHandlers();
-    return *this;
-  }
+  // Disable copy and move to avoid races when creating a closure
+  // as inherited classes still won't be constructed at this point
+  TCPClient(TCPClient const &rhs)            = delete;
+  TCPClient(TCPClient &&rhs)                 = delete;
+  TCPClient &operator=(TCPClient const &rhs) = delete;
+  TCPClient &operator=(TCPClient&& rhs)      = delete;
 
   virtual ~TCPClient() noexcept {
     LOG_STACK_TRACE_POINT;
 
-    if(pointer_)
-    {
-      Cleanup();
-      pointer_->Close();
-      pointer_.reset();
-    }
+    Cleanup();
+    pointer_->Close();
+    pointer_.reset();
   }
 
   void Connect(byte_array::ConstByteArray const& host, uint16_t port)
   {
-    if (pointer_)
-    {
-      pointer_->Connect(host, port);
-    }
+    pointer_->Connect(host, port);
   }
 
   void Connect(byte_array::ConstByteArray const& host, byte_array::ConstByteArray const& port)
   {
-    if (pointer_)
-    {
-      pointer_->Connect(host, port);
-    }
+    pointer_->Connect(host, port);
   }
 
   // For safety, this MUST be called by the base class in its destructor
   // As closures to that class exist in the client implementation
-  void Cleanup()
+  void Cleanup() noexcept
   {
-    if(pointer_)
-    {
-      pointer_->ClearClosures();
-    }
+    pointer_->ClearClosures();
+    pointer_->Close();
+  }
+
+  bool Closed() const noexcept
+  {
+    return pointer_->Closed();
   }
 
   void Send(message_type const& msg) noexcept
@@ -129,9 +96,9 @@ class TCPClient
 
 protected:
 
-  mutable pointer_type  pointer_;
+  pointer_type  pointer_;
 
-  void RegisterHandlers()
+  void RegisterHandlers() noexcept
   {
     pointer_->OnConnectionFailed(
       [this]() {

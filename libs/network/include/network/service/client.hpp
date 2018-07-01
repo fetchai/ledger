@@ -42,10 +42,18 @@ class ServiceClient : public T,
     this->Connect(host, port);
   }
 
-  ~ServiceClient() {
+  ~ServiceClient()
+  {
     LOG_STACK_TRACE_POINT;
 
+    // Disconnect callbacks
     super_type::Cleanup();
+
+    // Can only guarantee we are not being called when socket is closed
+    while(!super_type::Closed())
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
   }
 
   void PushMessage(network::message_type const& msg) override {
@@ -56,12 +64,11 @@ class ServiceClient : public T,
       messages_.push_back(msg);
     }
 
-    //thread_manager_.Post([this]() {
-    //  if (running_) this->ProcessMessages();
-    //});
-
-    // TODO: (`HUT`) : fix this
-    ProcessMessages();
+    // Since this class isn't shared_from_this, try to ensure safety when destructing
+    thread_manager_.Post([this]()
+    {
+      ProcessMessages();
+    });
   }
 
   void ConnectionFailed() override {
@@ -117,9 +124,9 @@ class ServiceClient : public T,
     }
   }
 
-  thread_manager_type thread_manager_;
+  thread_manager_type               thread_manager_;
   std::deque<network::message_type> messages_;
-  mutable fetch::mutex::Mutex message_mutex_;
+  mutable fetch::mutex::Mutex       message_mutex_;
   //  std::thread *worker_thread_ = nullptr;  // TODO: use thread pool
 };
 }
