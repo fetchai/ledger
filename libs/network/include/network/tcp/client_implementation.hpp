@@ -165,6 +165,11 @@ class TCPClientImplementation final :
       });
   }
 
+  bool Closed() noexcept
+  {
+    return socket_.expired();
+  }
+
   void OnConnectionFailed(std::function< void() > const &fnc)
   {
     std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
@@ -177,7 +182,7 @@ class TCPClientImplementation final :
     on_push_message_ = fnc;
   }
 
-  void ClearClosures()
+  void ClearClosures() noexcept
   {
     std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
     on_connection_failed_  = nullptr;
@@ -220,7 +225,7 @@ class TCPClientImplementation final :
     auto socket = socket_.lock();
     byte_array::ByteArray header;
 
-    // TODO: (`HUT`) : fix.
+    // TODO: (`HUT`) : fix. the requirement for strong self here
     auto cb = [this, self, socket, header]
       (std::error_code ec, std::size_t) {
       shared_self_type selfLock = self.lock();
