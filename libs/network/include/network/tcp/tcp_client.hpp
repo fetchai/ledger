@@ -94,6 +94,12 @@ class TCPClient
 
   bool is_alive() const noexcept { return pointer_->is_alive(); }
 
+  typename implementation_type::weak_ptr_type network_client_pointer() 
+  {
+    return pointer_->network_client_pointer();
+    
+  }
+  
 protected:
 
   pointer_type  pointer_;

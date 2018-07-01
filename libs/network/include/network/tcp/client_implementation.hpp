@@ -24,14 +24,13 @@ namespace network
 {
 
 class TCPClientImplementation final :
-    public AbstractConnection,
-    public std::enable_shared_from_this<TCPClientImplementation>
+    public AbstractConnection
 {
  public:
   typedef ThreadManager                              thread_manager_type;
   typedef typename AbstractConnection::connection_handle_type handle_type;
-  typedef std::weak_ptr<TCPClientImplementation>     self_type;
-  typedef std::shared_ptr<TCPClientImplementation>   shared_self_type;
+  typedef std::weak_ptr<AbstractConnection>     self_type;
+  typedef std::shared_ptr<AbstractConnection>   shared_self_type;
   typedef asio::ip::tcp::tcp::socket                 socket_type;
   typedef asio::ip::tcp::resolver                    resolver_type;
 

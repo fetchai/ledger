@@ -20,8 +20,7 @@ namespace network {
  * connected client.
  */
 
-class ClientConnection : public AbstractConnection,
-                         public std::enable_shared_from_this<ClientConnection> {
+class ClientConnection : public AbstractConnection {
  public:
   typedef typename AbstractConnection::shared_type connection_type;
 
