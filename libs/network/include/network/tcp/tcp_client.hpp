@@ -69,7 +69,7 @@ class TCPClient
   void Cleanup() noexcept
   {
     pointer_->ClearClosures();
-    pointer_->Close();
+    //pointer_->Close(); // TODO: (`HUT`) : look at with Ed, this appears to induce segfault
   }
 
   bool Closed() const noexcept
