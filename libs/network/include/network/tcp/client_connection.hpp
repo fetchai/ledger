@@ -38,12 +38,12 @@ class ClientConnection : public AbstractConnection,
 
   ~ClientConnection() {
     LOG_STACK_TRACE_POINT;
-    manager_.Leave(handle_);
+    manager_.Leave(this->handle());
   }
 
   void Start() {
     LOG_STACK_TRACE_POINT;
-    handle_ = manager_.Join(shared_from_this());
+    manager_.Join(shared_from_this());
     ReadHeader();
   }
 
@@ -64,11 +64,6 @@ class ClientConnection : public AbstractConnection,
     return socket_.remote_endpoint().address().to_string();
   }
 
-  handle_type handle() const {
-    LOG_STACK_TRACE_POINT;
-    return handle_;
-  }
-
   uint16_t Type() const override 
   {
     return AbstractConnection::TYPE_INCOMING;
@@ -86,7 +81,7 @@ class ClientConnection : public AbstractConnection,
         fetch::logger.Debug("Server: Read header.");
         ReadBody();
       } else {
-        manager_.Leave(handle_);
+        manager_.Leave(this->handle());
       }
     };
 
@@ -102,7 +97,7 @@ class ClientConnection : public AbstractConnection,
     if (header_.content.magic != networkMagic) {
       fetch::logger.Debug("Magic incorrect - closing connection.");
 
-      manager_.Leave(handle_);
+      manager_.Leave(this->handle());
       return;
     }
 
@@ -112,10 +107,10 @@ class ClientConnection : public AbstractConnection,
 
       if (!ec) {
         fetch::logger.Debug("Server: Read body.");
-        manager_.PushRequest(handle_, message);
+        manager_.PushRequest(this->handle(), message);
         ReadHeader();
       } else {
-        manager_.Leave(handle_);
+        manager_.Leave(this->handle());
       }
     };
 
@@ -162,7 +157,7 @@ class ClientConnection : public AbstractConnection,
         fetch::logger.Debug("Server: Wrote message.");
         Write();
       } else {
-        manager_.Leave(handle_);
+        manager_.Leave(this->handle());
       }
     };
 
@@ -177,7 +172,6 @@ class ClientConnection : public AbstractConnection,
   ClientManager& manager_;
   message_queue_type write_queue_;
   fetch::mutex::Mutex write_mutex_;
-  std::atomic< handle_type > handle_;
   std::string address_;
   const uint64_t networkMagic = 0xFE7C80A1FE7C80A1; // TODO: (`HUT`) : put this in shared class
 

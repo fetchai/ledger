@@ -29,7 +29,7 @@ class TCPClientImplementation final :
 {
  public:
   typedef ThreadManager                              thread_manager_type;
-  typedef uint64_t                                   handle_type;
+  typedef typename AbstractConnection::connection_handle_type handle_type;
   typedef std::weak_ptr<TCPClientImplementation>     self_type;
   typedef std::shared_ptr<TCPClientImplementation>   shared_self_type;
   typedef asio::ip::tcp::tcp::socket                 socket_type;
@@ -40,7 +40,7 @@ class TCPClientImplementation final :
     threadManager_{thread_manager}
   {
     LOG_STACK_TRACE_POINT;
-    handle_ = AbstractConnection::next_handle();
+
   }
 
   TCPClientImplementation(TCPClientImplementation const &rhs)            = delete;
@@ -113,7 +113,7 @@ class TCPClientImplementation final :
     return (*socket).remote_endpoint().address().to_string();
   }
 
-  handle_type handle() const noexcept { return handle_; }
+
 
   bool is_alive() const noexcept
   {
@@ -207,7 +207,6 @@ class TCPClientImplementation final :
 
   bool                       connected_{false};
 
-  std::atomic< handle_type > handle_;
 
   union {
     char bytes[2 * sizeof(uint64_t)];

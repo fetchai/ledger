@@ -30,7 +30,7 @@ class ClientManager {
 
   connection_handle_type Join(connection_type client) {
     LOG_STACK_TRACE_POINT;
-    connection_handle_type handle = client->next_handle();
+    connection_handle_type handle = client->handle();
     fetch::logger.Info("Client joining with handle ", handle);
 
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
