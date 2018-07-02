@@ -5,6 +5,8 @@
 #include "core/mutex.hpp"
 #include "network/tcp/client_connection.hpp"
 #include "network/details/thread_manager.hpp"
+#include "network/tcp/client_connection.hpp"
+#include "network/tcp/connection_register.hpp"
 
 #include "network/fetch_asio.hpp"
 
@@ -14,6 +16,13 @@
 
 namespace fetch {
 namespace network {
+
+/*
+ * Handle TCP connections. Spawn new ClientConnections on connect and adds 
+ * them to the client manager. This can then be used for communication with 
+ * the rest of Fetch
+ * 
+ */
 
 class TCPServer : public AbstractNetworkServer {
  public:
@@ -27,40 +36,32 @@ class TCPServer : public AbstractNetworkServer {
     message_type meesage;
   };
 
-
-  TCPServer(uint16_t const port, const thread_manager_type thread_manager)
-    : request_mutex_(__LINE__, __FILE__)
+  TCPServer(uint16_t const& port, thread_manager_type const& thread_manager)
+      : thread_manager_(thread_manager),
+        port_{port},
+        request_mutex_(__LINE__, __FILE__)
   {
-    std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ MAKERING1" << " " << port << std::endl;
-    thread_manager_ = thread_manager;
-      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ MAKERING2" << std::endl;
-      acceptor_ = std::make_shared<asio::ip::tcp::tcp::acceptor>(thread_manager_.io_service(), asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
-    std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ MAKERING3" << std::endl;
-    socket_ = std::make_shared<asio::ip::tcp::tcp::socket>(thread_manager_.io_service());
-      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ MAKERING4" << std::endl;
-
-      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ MAKERING5" << std::endl;
     LOG_STACK_TRACE_POINT;
-    //event_service_start_ =
-    //    thread_manager_.OnBeforeStart([this]() { this->Accept(); });
-        std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ POSTING" << std::endl;
+    manager_ = std::make_shared< ClientManager >(*this);
+    
+      
+    thread_manager_.Post([this]
+    {
 
-    thread_manager_.Post([this]{
-         std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ IN POSTED TASK" << std::endl;
-     this->Accept();
+//      if(strongAccep && strongSocket)
+//      {
+//        acceptor_ = strongAccep;
+//        socket_ = strongSocket;
+        Accept();
+//      } else {
+//        std::cout << "Failed to get acceptor and socket in tcp server" << std::endl;
+//      }
     });
-
-    usleep(10000);
-
-    // TODO: If manager running -> Accept();
-    manager_ = new ClientManager(*this);
   }
 
   ~TCPServer() {
     LOG_STACK_TRACE_POINT;
-    //thread_manager_->Off(event_service_start_);
-    if (manager_ != nullptr) delete manager_;
-    socket_ -> close();
+//    if (manager_ != nullptr) delete manager_;
   }
 
   void PushRequest(handle_type client, message_type const& msg) override {
@@ -107,45 +108,58 @@ class TCPServer : public AbstractNetworkServer {
     requests_.pop_front();
   }
 
-  std::string GetAddress(handle_type const& client) const {
+  std::string GetAddress(handle_type const& client) {
     LOG_STACK_TRACE_POINT;
     return manager_->GetAddress(client);
   }
 
  private:
-  //thread_manager_ptr_type thread_manager_;
-  //event_handle_type event_service_start_;
+  thread_manager_type     thread_manager_;
+  uint16_t                port_;
+  //event_handle_type       event_service_start_;
+  std::deque<Request>     requests_;
+  fetch::mutex::Mutex     request_mutex_;
 
   void Accept() {
     LOG_STACK_TRACE_POINT;
-          std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ ACCEPTING 1" << std::endl;
-    auto cb = [=](std::error_code ec) {
-          std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ ACCEPTING 2" << std::endl;
-      LOG_LAMBDA_STACK_TRACE_POINT;
-      if (!ec) {
-        std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ ACCEPTING 3" << std::endl;
-        std::make_shared<ClientConnection>(std::move(*socket_), *manager_)
-            ->Start();
-      } else
-        {
-          std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ ACCEPTING ERK!" << ec << std::endl;
-        }
 
-      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ calling ACCEPT" << std::endl;
+    auto strongAccep = thread_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
+      (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
+    auto strongSocket = thread_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
+    
+//    auto strongAccep = acceptor_.lock();    
+//    auto strongSocket = socket_.lock();
+//    if(!strongAccep || !strongSocket) return;
+
+    std::weak_ptr< ClientManager >  man = manager_;
+        
+    auto cb = [this, man, strongAccep, strongSocket](std::error_code ec) {
+      auto lock_ptr = man.lock();
+      if(!lock_ptr) return;
+      
+      //LOG_LAMBDA_STACK_TRACE_POINT;
+      if (!ec) {
+        auto conn = std::make_shared<ClientConnection>(strongSocket, manager_);
+        auto ptr = connection_register_.lock();
+
+        if(ptr) {
+          ptr->Enter( conn->network_client_pointer() );
+        }
+        
+        conn->Start();
+      }
+
       Accept();
     };
 
-      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ calling async ACCEPT" << std::endl;
-      acceptor_ -> async_accept(*socket_, cb) ;
-      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ sdon calling async ACCEPT" << std::endl;
+    strongAccep->async_accept(*strongSocket, cb);
   }
 
-  thread_manager_type thread_manager_;
-  fetch::mutex::Mutex request_mutex_;
-  std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
-  std::shared_ptr<asio::ip::tcp::tcp::socket> socket_;
-  std::deque<Request> requests_;
-  ClientManager* manager_;
+  // TODO: (`HUT`) : make this solid
+  std::weak_ptr< ConnectionRegister > connection_register_;
+//  std::weak_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
+//  std::weak_ptr<asio::ip::tcp::tcp::socket>   socket_;
+  std::shared_ptr< ClientManager >            manager_;
 };
 }
 }

@@ -1,6 +1,7 @@
 #ifndef PARAMS_HPP
 #define PARAMS_HPP
 
+#include <functional>
 #include <iostream>
 #include <string>
 #include <list>

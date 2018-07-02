@@ -20,12 +20,12 @@ typedef unsigned int uint;
 
 int main(int argc, const char *argv[])
 {
-  unsigned int id;
-  uint16_t portNumber;
-  unsigned int maxpeers;
-  unsigned int idlespeed;
-  unsigned int solvespeed;
-  std::string peerlist;
+  uint16_t portNumber = 9000;
+  unsigned int id{0};
+  unsigned int maxpeers{3};
+  unsigned int idlespeed{100};
+  unsigned int solvespeed{1000};
+  std::string peerlist{"127.0.0.1:9006,127.0.0.1:9015"};
 
   fetch::commandline::Params params;
 
@@ -36,7 +36,7 @@ int main(int argc, const char *argv[])
   params.add(maxpeers,      "maxpeers",       "Ideally how many peers to maintain good connections to.");
   params.add(solvespeed,    "solvespeed",     "The rate of generating block solutions.");
   params.add(idlespeed,     "idlespeed",      "The rate, in milliseconds, of generating idle events to the Swarm Agent.");
-  params.add(peerlist,      "peerlist",       "Comma separated list of peer locations.");
+  params.add(peerlist,      "peers",          "Comma separated list of peer locations.");
 
   params.Parse(argc, argv);
 
@@ -44,6 +44,10 @@ int main(int argc, const char *argv[])
 
   fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });
 
+  std::cout << "######## " << portNumber << std::endl;
+  std::cout << "######## " << id << std::endl;
+  std::cout << "######## " << maxpeers << std::endl;
+  std::cout << "######## " << solvespeed << std::endl;
   auto nnCore = std::make_shared<fetch::network::NetworkNodeCore>(30, portNumber+1000, portNumber);
 
   std::string identifier = "node-" + std::to_string(id);

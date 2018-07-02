@@ -62,19 +62,19 @@ public:
     api -> OnIdle([this, api, id, identifier, solvespeed]{
         std::cout << "AGENT NAIVE: OnIdle" << std::endl;
 
-        if (this -> rnd_ -> r(solvespeed) <= static_cast<unsigned int>(id)) 
-          {
-            std::ostringstream ret;
-            ret << "\"";
-            ret << "block by " << identifier_ << " number " << std::to_string(blockCounter_);
-            this -> blockCounter_ += 1;
-            ret << "\"";
-
-            SwarmParcel newParcel("block", ret.str());
-
-            std::cout << identifier << " solved " << newParcel.GetName() << std::endl;
-            api -> DoBlockSolved(ret.str());
-          }
+//        if (this -> rnd_ -> r(solvespeed) <= static_cast<unsigned int>(id)) 
+//          {
+//            std::ostringstream ret;
+//            ret << "\"";
+//            ret << "block by " << identifier_ << " number " << std::to_string(blockCounter_);
+//            this -> blockCounter_ += 1;
+//            ret << "\"";
+//
+//            SwarmParcel newParcel("block", ret.str());
+//
+//            std::cout << identifier << " solved " << newParcel.GetName() << std::endl;
+//            api -> DoBlockSolved(ret.str());
+//          }
 
         auto goodPeers = api -> GetPeers(solvespeed, -0.5);
         if (goodPeers.empty())
@@ -87,11 +87,11 @@ public:
                                                         return api -> GetKarma(host);
                                                       });
           api -> DoPing(host);
-          api -> DoDiscoverBlocks(host, 10);
+          //api -> DoDiscoverBlocks(host, 10);
         }
         {
-          auto host = this -> rnd_ -> pickOne(goodPeers);
-          api -> DoDiscoverBlocks(host, 10);
+          //auto host = this -> rnd_ -> pickOne(goodPeers);
+          //api -> DoDiscoverBlocks(host, 10);
         }
       });
 

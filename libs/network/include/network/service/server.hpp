@@ -69,22 +69,10 @@ class ServiceServer : public T, public ServiceServerInterface {
   };
   typedef byte_array::ConstByteArray byte_array_type;
 
-  class Oink
-  {
-  public:
-    Oink(const char *msg)
-    {
-      std::cout << msg << std::endl;
-    }
-  };
-
   ServiceServer(uint16_t port, thread_manager_type thread_manager)
-    :   super_type(port, thread_manager),
-        oink1("OINK1111111!"),
+      : super_type(port, thread_manager),
         thread_manager_(thread_manager),
-        oink2("OINK22222222!"),
-        message_mutex_(__LINE__, __FILE__)
-  {
+        message_mutex_(__LINE__, __FILE__) {
     LOG_STACK_TRACE_POINT;
   }
 
@@ -181,9 +169,7 @@ class ServiceServer : public T, public ServiceServerInterface {
     }
   }
 
-  Oink oink1;
   thread_manager_type thread_manager_;
-  Oink oink2;
 
   std::deque<PendingMessage> messages_;
   mutable fetch::mutex::Mutex message_mutex_;

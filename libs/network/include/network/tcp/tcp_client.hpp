@@ -90,7 +90,7 @@ class TCPClient
   virtual void PushMessage(message_type const& value) = 0;
   virtual void ConnectionFailed() = 0;
 
-  handle_type const& handle() const noexcept { return pointer_->handle(); }
+  handle_type handle() const noexcept { return pointer_->handle(); }
 
   std::string Address() const noexcept
   {
@@ -99,6 +99,12 @@ class TCPClient
 
   bool is_alive() const noexcept { return pointer_->is_alive(); }
 
+  typename implementation_type::weak_ptr_type network_client_pointer() 
+  {
+    return pointer_->network_client_pointer();
+    
+  }
+  
 protected:
 
   pointer_type  pointer_;

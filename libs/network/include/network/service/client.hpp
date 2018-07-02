@@ -53,6 +53,7 @@ class ServiceClient : public T,
     // Can only guarantee we are not being called when socket is closed
     while(!super_type::Closed())
     {
+      std::cout << "Waiting for super to close!" << std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
   }
@@ -61,14 +62,18 @@ class ServiceClient : public T,
     LOG_STACK_TRACE_POINT;
 
     {
+      std::cout << "*****PUSHING CLIENT*****" << std::endl;
       std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
       messages_.push_back(msg);
+      std::cout << "*****PUSHED CLIENT*****" << std::endl;
     }
 
     // Since this class isn't shared_from_this, try to ensure safety when destructing
     thread_manager_.Post([this]()
     {
+    std::cout << "process messages!" << std::endl;
       ProcessMessages();
+    std::cout << "process messages finished!" << std::endl;
     });
   }
 

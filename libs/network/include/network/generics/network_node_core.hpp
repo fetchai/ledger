@@ -45,11 +45,11 @@ public:
     std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 1" << std::endl;
 
     tm_. Start();
-    tm_.Identify(" NetworkNodeCore:: NetworkNodeCore");
+    //tm_.Identify(" NetworkNodeCore:: NetworkNodeCore");
 
     std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 2" << std::endl;
     rpcServer_ = std::make_shared<service::ServiceServer<fetch::network::TCPServer>>(rpcPort, tm_);
-    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 3" << std::endl;
+    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 3 " << httpPort  << std::endl;
     httpServer_ = std::make_shared<fetch::http::HTTPServer>(httpPort, tm_);
     std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 4" << std::endl;
 

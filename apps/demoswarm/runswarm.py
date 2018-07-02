@@ -11,7 +11,7 @@ import random
 
 PORT_BASE = 9000
 
-# (clear;cd ../../build/;make swarm) && ./runswarm.py --members 51 --binary ../../build/examples/swarm --caching 1 --initialpeers 2 --maxpeers 4  --idlespeed 100 --solvespeed 10000 2>&1 | tee log 
+# (clear;cd ../../build/;make swarm) && ./runswarm.py --members 51 --binary ../../build/examples/swarm --caching 1 --initialpeers 2 --maxpeers 4  --idlespeed 100 --solvespeed 10000 2>&1 | tee log
 #
 #
 
@@ -71,6 +71,8 @@ class Node(object):
             "-maxpeers", "{}".format(maxpeers),
             "-port", "{}".format(PORT_BASE + index),
             "-peers", ",".join(peers),
+            "-solvespeed", "{}".format(args.solvespeed),
+            "-idlespeed", "{}".format(args.idlespeed),
         ]
         cmdstr = " ".join(self.myargs)
 

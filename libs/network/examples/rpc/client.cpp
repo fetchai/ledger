@@ -11,6 +11,7 @@ int main() {
 
   // Client setup
   fetch::network::ThreadManager tm(2);
+
   tm.Start();
   {
     ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
@@ -19,7 +20,7 @@ int main() {
 
   ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );
-
+  
   std::cout << client.Call( MYPROTO,GREET, "Fetch" ).As<std::string>( ) << std::endl;
 
   auto px = client.Call( MYPROTO,SLOWFUNCTION,"Greet"  );

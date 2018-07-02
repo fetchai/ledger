@@ -115,16 +115,22 @@ public:
     // TODO(kll) Move this setup code somewhere more sensible.
     swarmAgentApi -> ToPing([swarmAgentApi, swarmNode](fetch::swarm::SwarmAgentApi &unused, const std::string &host)
                             {
+                              std::cout << "ping this 1" << std::endl;
                               swarmNode -> Post([swarmAgentApi, swarmNode, host]()
                                            {
+                                              std::cout << "ping this 2" << std::endl;
                                              try
                                                {
+                                              std::cout << "ping this 3" << std::endl;
                                                  auto newPeer = swarmNode -> AskPeerForPeers(host);
+                                              std::cout << "ping this 4" << std::endl;
 
                                                  if (newPeer.length()) {
+                                              std::cout << "ping this 5" << std::endl;
 
                                                    if (!swarmNode -> IsOwnLocation(newPeer))
                                                      {
+                                              std::cout << "ping this 6" << std::endl;
                                                        swarmAgentApi -> DoNewPeerDiscovered(newPeer);
                                                      }
                                                  }
@@ -132,17 +138,22 @@ public:
                                                }
                                              catch(fetch::serializers::SerializableException &x)
                                                {
+                                              std::cout << "ping this 7" << std::endl;
                                                  swarmAgentApi -> DoPingFailed(host);
                                                }
                                              catch(fetch::swarm::SwarmException &x)
                                                {
+                                              std::cout << "ping this 444" << std::endl;
                                                  swarmAgentApi -> DoPingFailed(host);
                                                }
                                              catch(std::invalid_argument &x)
                                                {
+                                              std::cout << "ping this 8" << std::endl;
                                                  swarmAgentApi -> DoPingFailed(host);
                                                }
+                                              std::cout << "ping this 9" << std::endl;
                                            });
+                                              std::cout << "ping this 0" << std::endl;
                             });
 
      swarmAgentApi -> ToBlockSolved([swarmNode, parcelNode](const std::string &data)

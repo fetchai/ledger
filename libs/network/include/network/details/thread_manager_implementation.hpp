@@ -5,8 +5,6 @@
 #include "core/mutex.hpp"
 #include "network/fetch_asio.hpp"
 
-#include <stdio.h>
-
 #include <functional>
 #include <map>
 #include <memory>
@@ -25,41 +23,24 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
   typedef asio::ip::tcp::tcp::socket                   socket_type;
 
 
-  explicit ThreadManagerImplementation(std::size_t threads = 1)
+  ThreadManagerImplementation(std::size_t threads = 1)
       : number_of_threads_(threads) {
-    started_flag_ = false;
-      
+
     fetch::logger.Debug("Creating thread manager");
-    std::cout << "ThreadManagerImplementation::ThreadManagerImplementation." << std::endl;
   }
 
   ~ThreadManagerImplementation() {
     fetch::logger.Debug("Destroying thread manager");
-    std::cout << "ThreadManagerImplementation::~ThreadManagerImplementation." << std::endl;
   }
 
   ThreadManagerImplementation(ThreadManagerImplementation const& ) = delete;
   ThreadManagerImplementation(ThreadManagerImplementation && ) = default ;
 
-  void Identify(const char *prefix)
-  {
-    if (!this)
-      {
-        std::cout << prefix << "PTR: NULL" << std::endl;
-      }
-    else
-      {
-        std::cout << prefix << "PTR: " <<  this << std::endl;
-      }
-  }
-  
   void Start()
   {
     std::lock_guard< fetch::mutex::Mutex > lock( thread_mutex_ );
-    Identify("ThreadManagerImplementation::Start");
 
     if (threads_.size() == 0) {
-      std::cout << "running START " << number_of_threads_ << std::endl;
       fetch::logger.Info("Starting thread manager");
       {
         std::lock_guard< fetch::mutex::Mutex > lock( owning_mutex_ );
@@ -70,31 +51,9 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
 
       // TODO: (`HUT`) : look at this code, might be a race
       shared_ptr_type self = shared_from_this();
-
-      started_flag_ = true;
-      
       for (std::size_t i = 0; i < number_of_threads_; ++i) {
-        threads_.push_back(new std::thread([this, self, i]() {
-              while(1)
-                {
-                  char buf[1000];
-                  sprintf(buf, "running %d\n", int(i));
-                  //std::cout << buf;
-                  try
-                    {
-                      auto count = io_service_->poll_one();
-                      if (count)
-                        {
-                          sprintf(buf, "running %d ran %d\n", int(i), int(count));
-                          //std::cout << buf;
-                        }
-                    }
-                  catch(...)
-                    {
-                      std::cout << "ouch ex" << std::endl;
-                    }
-                  usleep(100);
-                }
+        threads_.push_back(new std::thread([this, self]() {
+	      io_service_->run();
             }));
       }
     }
@@ -102,8 +61,6 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
 
   void Stop()
   {
-    Identify("ThreadManagerImplementation::Stop");
-
     std::lock_guard< fetch::mutex::Mutex > lock( thread_mutex_ );
 
     {
@@ -152,38 +109,7 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
     }
   }
 
-  template <typename F>
-  void Post(F &&f, const char *noisy)
-  {
-    if(!protecting_io_)
-    {
-      auto myFunc = std::move(f);
-      auto wrapped = [noisy, myFunc]()
-        {
-          std::cout << "ThreadManagerImplementation::NOISY ->> " << noisy << std::endl;
-          myFunc();
-          std::cout << "ThreadManagerImplementation::NOISY <<- " << noisy << std::endl;
-        };
-      io_service_->post(std::move(wrapped));
-      thread_mutex_.unlock();
-    } else {
-      fetch::logger.Info("Failed to post: io_service protected.");
-    }
-  }
-
-  // TODO: (`HUT`) : delete this
-  asio::io_service &io_service() {
-    if (!io_service_)
-      {
-        std::cerr << "YUIKES" << std::endl;
-      }
-    return *io_service_;
-  }
-
  private:
-
-  bool started_flag_;
-  
   std::thread::id owning_thread_;
   std::size_t number_of_threads_ = 1;
   std::vector<std::thread *> threads_;

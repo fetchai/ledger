@@ -10,25 +10,27 @@
 #include "core/serializers/referenced_byte_array.hpp"
 
 #include "core/mutex.hpp"
-
+#include "network/tcp/abstract_connection.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <atomic>
 
 namespace fetch
 {
 namespace network
 {
 
-class TCPClientImplementation final : public std::enable_shared_from_this<TCPClientImplementation>
+class TCPClientImplementation final :
+    public AbstractConnection
 {
  public:
   typedef ThreadManager                              thread_manager_type;
-  typedef uint64_t                                   handle_type;
-  typedef std::weak_ptr<TCPClientImplementation>     self_type;
-  typedef std::shared_ptr<TCPClientImplementation>   shared_self_type;
+  typedef typename AbstractConnection::connection_handle_type handle_type;
+  typedef std::weak_ptr<AbstractConnection>     self_type;
+  typedef std::shared_ptr<AbstractConnection>   shared_self_type;
   typedef asio::ip::tcp::tcp::socket                 socket_type;
   typedef asio::ip::tcp::resolver                    resolver_type;
 
@@ -37,7 +39,7 @@ class TCPClientImplementation final : public std::enable_shared_from_this<TCPCli
     threadManager_{thread_manager}
   {
     LOG_STACK_TRACE_POINT;
-    handle_ = next_handle();
+
   }
 
   TCPClientImplementation(TCPClientImplementation const &rhs)            = delete;
@@ -55,16 +57,13 @@ class TCPClientImplementation final : public std::enable_shared_from_this<TCPCli
     byte_array::ConstByteArray const& port)
   {
     self_type self = shared_from_this();
+    strand_ = threadManager_.CreateIO<asio::io_service::strand>();
+    
     fetch::logger.Debug("Client posting connect");
-
-    std::cout << "Client posting connect " << std::string(host) << ":" <<  std::string(port) << std::endl;
-
-    threadManager_.Post([this, self, host, port]
+    threadManager_.Post(strand_->wrap( [this, self, host, port]
     {
       shared_self_type selfLock = self.lock();
-        std::cout << "Client posting connect 2" << std::string(host) << ":" <<  std::string(port) << std::endl;
       if(!selfLock) return;
-        std::cout << "Client posting connect 3 " << std::string(host) << ":" <<  std::string(port) << std::endl;
 
       // We get a weak socket from the thread manager. This must only be strong in the TM queue
       std::shared_ptr<socket_type> socket = threadManager_.CreateIO<socket_type>();
@@ -75,64 +74,42 @@ class TCPClientImplementation final : public std::enable_shared_from_this<TCPCli
       auto cb = [this, self, res, socket]
         (std::error_code ec, resolver_type::iterator)
       {
-        std::cout << "Client posting connect 7 " << std::endl;
         shared_self_type selfLock = self.lock();
-        std::cout << "Client posting connect 8 " <<  std::endl;
         if(!selfLock) return;
 
-        std::cout << "Client posting connect 9 " <<  std::endl;
         LOG_STACK_TRACE_POINT;
         fetch::logger.Info("Finished connecting.");
         if (!ec)
         {
-        std::cout << "Client posting connect 10 " <<  std::endl;
           fetch::logger.Debug("Connection established!");
+          this->SetAddress( (*socket).remote_endpoint().address().to_string() );
+          
           ReadHeader();
         } else
         {
-          std::cout << "Client posting connect 11 " << ec.message() << std::endl;
           fetch::logger.Debug("Client failed to connect");
-          //ConnectionFailed();
+          ConnectionFailed();
         }
       };
 
       if(socket && res)
       {
-        std::cout << "Client posting connect 4 " << std::string(host) << ":" <<  std::string(port) << std::endl;
-
         resolver_type::iterator it
           (res->resolve({std::string(host), std::string(port)}));
-        std::cout << "Client posting connect 5 " << std::string(host) << ":" <<  std::string(port) << std::endl;
-        asio::async_connect(*socket, it, cb);
-        std::cout << "Client posting connect 6 " << std::string(host) << ":" <<  std::string(port) << std::endl;
+        asio::async_connect(*socket, it, strand_->wrap(cb) );
       } else {
         fetch::logger.Error("Failed to create valid socket");
-        std::cout << "NO SOCKET!!" << std::endl;
       }
-    }, "Connect");
+    } ));
   }
 
-  // TODO: (`HUT`) : check this is safe, possibly not
-  std::string Address() const noexcept
-  {
-    auto socket = socket_.lock();
-    if(!socket)
-    {
-      fetch::logger.Error("Attempting to get Address of dead socket. Returning.");
-      return "";
-    }
-
-    return (*socket).remote_endpoint().address().to_string();
-  }
-
-  handle_type const& handle() const noexcept { return handle_; }
 
   bool is_alive() const noexcept
   {
     return !socket_.expired() && connected_;
   }
 
-  void Send(message_type const& msg) noexcept
+  void Send(message_type const& msg) override
   {
     if(!connected_)
     {
@@ -146,20 +123,26 @@ class TCPClientImplementation final : public std::enable_shared_from_this<TCPCli
     }
 
      self_type self = shared_from_this();
-     threadManager_.Post([this, self]
+     threadManager_.Post(strand_->wrap( [this, self]
      {
       shared_self_type selfLock = self.lock();
       if(!selfLock) return;
 
        WriteNext();
-     });
+     }));
   }
 
+  uint16_t Type() const override 
+  {
+    return AbstractConnection::TYPE_OUTGOING;
+  }
+
+  
   void Close() noexcept
   {
     std::weak_ptr<socket_type> socketWeak = socket_;
 
-    threadManager_.Post([socketWeak]
+    threadManager_.Post(strand_->wrap( [socketWeak]
       {
         auto socket = socketWeak.lock();
         if(socket)
@@ -168,7 +151,7 @@ class TCPClientImplementation final : public std::enable_shared_from_this<TCPCli
           socket->shutdown(asio::ip::tcp::socket::shutdown_both, dummy);
           socket->close(dummy);
         }
-      });
+      } ));
   }
 
   bool Closed() noexcept
@@ -201,7 +184,9 @@ class TCPClientImplementation final : public std::enable_shared_from_this<TCPCli
   thread_manager_type threadManager_;
   // socket is guaranteed to have lifetime less than the io_service/threadManager
   std::weak_ptr<socket_type>      socket_;
-
+  std::shared_ptr< asio::io_service::strand > strand_;
+  
+  
   message_queue_type          write_queue_;
   mutable fetch::mutex::Mutex queue_mutex_;
   mutable fetch::mutex::Mutex write_mutex_;
@@ -213,17 +198,6 @@ class TCPClientImplementation final : public std::enable_shared_from_this<TCPCli
 
   bool                       connected_{false};
 
-  handle_type handle_;
-  static handle_type global_handle_counter_;
-  static fetch::mutex::Mutex global_handle_mutex_;
-
-  static handle_type next_handle()
-  {
-    std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
-    handle_type ret = global_handle_counter_;
-    ++global_handle_counter_;
-    return ret;
-  }
 
   union {
     char bytes[2 * sizeof(uint64_t)];
@@ -378,8 +352,6 @@ class TCPClientImplementation final : public std::enable_shared_from_this<TCPCli
   }
 };
 
-TCPClientImplementation::handle_type TCPClientImplementation::global_handle_counter_ = 0;
-fetch::mutex::Mutex TCPClientImplementation::global_handle_mutex_(__LINE__, __FILE__);
 
 }
 }

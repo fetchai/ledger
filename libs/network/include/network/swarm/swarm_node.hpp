@@ -110,11 +110,21 @@ public:
 
   virtual std::string AskPeerForPeers(const SwarmPeerLocation &peer)
   {
+    try{
     std::shared_ptr<client_type> client = ConnectToPeer(peer);
+    std::cout << "**** calling 1" << std::endl;
     auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
+    std::cout << "**** calling 2" << std::endl;
     promise.Wait();
+    std::cout << "**** calling 3" << std::endl;
     auto result = promise.As<std::string>();
+    std::cout << "**** calling 4" << std::endl;
+    std::cout << result << std::endl;
     return result;
+    } catch (...)
+    {
+      return "";
+    }
   }
 
   virtual int GetState()
@@ -131,13 +141,18 @@ public:
 
   virtual std::string ClientNeedsPeer()
   {
+    std::cout << "************* rpc call location 1" << std::endl;
     if (!karmaPeerList_.empty())
       {
         auto p = karmaPeerList_.GetNthKarmicPeer(0);
         auto s = p.GetLocation().AsString();
+
+        std::cout << "finished arghadf call!!!!!!!!!!! " << std::endl;
         return s;
       }
-    return std::string("");
+
+    std::cout << "finished rpc call!!!!!!!!!!! " << std::endl;
+    return std::string("localhost:9000");
   }
 
   const std::string &GetId()
