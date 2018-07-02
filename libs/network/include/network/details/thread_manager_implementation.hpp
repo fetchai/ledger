@@ -25,23 +25,38 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
   typedef asio::ip::tcp::tcp::socket                   socket_type;
 
 
-  ThreadManagerImplementation(std::size_t threads = 1)
+  explicit ThreadManagerImplementation(std::size_t threads = 1)
       : number_of_threads_(threads) {
     started_flag_ = false;
       
     fetch::logger.Debug("Creating thread manager");
+    std::cout << "ThreadManagerImplementation::ThreadManagerImplementation." << std::endl;
   }
 
   ~ThreadManagerImplementation() {
     fetch::logger.Debug("Destroying thread manager");
+    std::cout << "ThreadManagerImplementation::~ThreadManagerImplementation." << std::endl;
   }
 
   ThreadManagerImplementation(ThreadManagerImplementation const& ) = delete;
   ThreadManagerImplementation(ThreadManagerImplementation && ) = default ;
 
+  void Identify(const char *prefix)
+  {
+    if (!this)
+      {
+        std::cout << prefix << "PTR: NULL" << std::endl;
+      }
+    else
+      {
+        std::cout << prefix << "PTR: " <<  this << std::endl;
+      }
+  }
+  
   void Start()
   {
     std::lock_guard< fetch::mutex::Mutex > lock( thread_mutex_ );
+    Identify("ThreadManagerImplementation::Start");
 
     if (threads_.size() == 0) {
       std::cout << "running START " << number_of_threads_ << std::endl;
@@ -87,6 +102,8 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
 
   void Stop()
   {
+    Identify("ThreadManagerImplementation::Stop");
+
     std::lock_guard< fetch::mutex::Mutex > lock( thread_mutex_ );
 
     {
@@ -135,8 +152,33 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
     }
   }
 
+  template <typename F>
+  void Post(F &&f, const char *noisy)
+  {
+    if(!protecting_io_)
+    {
+      auto myFunc = std::move(f);
+      auto wrapped = [noisy, myFunc]()
+        {
+          std::cout << "ThreadManagerImplementation::NOISY ->> " << noisy << std::endl;
+          myFunc();
+          std::cout << "ThreadManagerImplementation::NOISY <<- " << noisy << std::endl;
+        };
+      io_service_->post(std::move(wrapped));
+      thread_mutex_.unlock();
+    } else {
+      fetch::logger.Info("Failed to post: io_service protected.");
+    }
+  }
+
   // TODO: (`HUT`) : delete this
-  asio::io_service &io_service() { return *io_service_; }
+  asio::io_service &io_service() {
+    if (!io_service_)
+      {
+        std::cerr << "YUIKES" << std::endl;
+      }
+    return *io_service_;
+  }
 
  private:
 

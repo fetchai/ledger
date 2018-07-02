@@ -165,17 +165,17 @@ public:
     promise.Wait();
     auto jsonResult = promise.As<std::string>();
 
-    fetch::json::JSONDocument doc;
-    doc.Parse(jsonResult);
+    //fetch::json::JSONDocument doc;
+    //doc.Parse(jsonResult);
 
     std::list<std::string> result;
 
-    auto array = doc["parcels"];
-    for(unsigned int i=0;i<array.size();i++)
-      {
-        std::string foo(array[i].as_byte_array());
-        result.push_back(foo);
-      }
+   // /auto array = doc["parcels"];
+   // /for(unsigned int i=0;i<array.size();i++)
+    //  {
+    //    std::string foo(array[i].as_byte_array());
+    //    result.push_back(foo);
+    //  }
 
     return result;
   }

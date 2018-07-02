@@ -28,6 +28,7 @@ class ThreadManager
 
   explicit ThreadManager(std::size_t threads = 1)
   {
+    std::cout << "ThreadManager MAKING A REAL ONE." << threads << std::endl;
     pointer_      = std::make_shared< implementation_type >( threads );
   }
 
@@ -44,18 +45,46 @@ class ThreadManager
 
   ~ThreadManager()
   {
+    Identify("ThreadManager::~ThreadManager.");
     if(!is_copy_)
     {
       Stop();
     }
+    else
+      {
+      }
   }
 
-  ThreadManager(ThreadManager &&rhs)                 = default;
-  ThreadManager &operator=(ThreadManager const &rhs) = delete;
+  ThreadManager(ThreadManager &&rhs)                 = delete;
+  ThreadManager &operator=(ThreadManager const &rhs)
+  {
+    is_copy_ = true;
+    if(rhs.is_copy_)
+      {
+        weak_pointer_ = rhs.weak_pointer_;
+      } else {
+      weak_pointer_ = rhs.pointer_;
+    }
+    return *this;
+  }
+
   ThreadManager &operator=(ThreadManager&& rhs)      = delete;
+
+  void Identify(const char *prefix)
+  {
+    if (!this)
+      {
+        std::cout << prefix << "PTR: NULL" << std::endl;
+      }
+    else
+      {
+        std::cout << prefix << "PTR: " <<  this << "  COPY:" << is_copy_ << std::endl;
+      }
+  }
 
   void Start()
   {
+    Identify("ThreadManager::Start");
     if(is_copy_) return;
     auto ptr = lock();
     if(ptr)
@@ -66,6 +95,7 @@ class ThreadManager
 
   void Stop()
   {
+    Identify("ThreadManager::Stop");
     if(is_copy_)
     {
       return;
@@ -84,6 +114,18 @@ class ThreadManager
     if(ptr)
     {
       return ptr->Post(f);
+    } else {
+      fetch::logger.Info("Failed to post: thread man dead.");
+    }
+  }
+
+  template <typename F>
+  void Post(F &&f, const char *noisy)
+  {
+    auto ptr = lock();
+    if(ptr)
+    {
+      return ptr->Post(f, noisy);
     } else {
       fetch::logger.Info("Failed to post: thread man dead.");
     }

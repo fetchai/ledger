@@ -47,7 +47,7 @@ class ServiceClientInterface {
     promises_mutex_.unlock();
 
     PackCall(params, protocol, function, std::forward<arguments>(args)...);
-
+    std::cout << "ServiceClientInterface precall" << std::endl;
     if (!DeliverRequest(params.data())) {
       fetch::logger.Debug("Call failed!");
       prom.reference()->Fail(serializers::SerializableException(
@@ -58,6 +58,7 @@ class ServiceClientInterface {
       promises_mutex_.unlock();
     }
 
+    std::cout << "ServiceClientInterface postcall" << std::endl;
     return prom;
   }
 

@@ -56,10 +56,15 @@ class TCPClientImplementation final : public std::enable_shared_from_this<TCPCli
   {
     self_type self = shared_from_this();
     fetch::logger.Debug("Client posting connect");
+
+    std::cout << "Client posting connect " << std::string(host) << ":" <<  std::string(port) << std::endl;
+
     threadManager_.Post([this, self, host, port]
     {
       shared_self_type selfLock = self.lock();
+        std::cout << "Client posting connect 2" << std::string(host) << ":" <<  std::string(port) << std::endl;
       if(!selfLock) return;
+        std::cout << "Client posting connect 3 " << std::string(host) << ":" <<  std::string(port) << std::endl;
 
       // We get a weak socket from the thread manager. This must only be strong in the TM queue
       std::shared_ptr<socket_type> socket = threadManager_.CreateIO<socket_type>();
@@ -70,31 +75,41 @@ class TCPClientImplementation final : public std::enable_shared_from_this<TCPCli
       auto cb = [this, self, res, socket]
         (std::error_code ec, resolver_type::iterator)
       {
+        std::cout << "Client posting connect 7 " << std::endl;
         shared_self_type selfLock = self.lock();
+        std::cout << "Client posting connect 8 " <<  std::endl;
         if(!selfLock) return;
 
+        std::cout << "Client posting connect 9 " <<  std::endl;
         LOG_STACK_TRACE_POINT;
         fetch::logger.Info("Finished connecting.");
         if (!ec)
         {
+        std::cout << "Client posting connect 10 " <<  std::endl;
           fetch::logger.Debug("Connection established!");
           ReadHeader();
         } else
         {
+          std::cout << "Client posting connect 11 " << ec.message() << std::endl;
           fetch::logger.Debug("Client failed to connect");
-          ConnectionFailed();
+          //ConnectionFailed();
         }
       };
 
       if(socket && res)
       {
+        std::cout << "Client posting connect 4 " << std::string(host) << ":" <<  std::string(port) << std::endl;
+
         resolver_type::iterator it
           (res->resolve({std::string(host), std::string(port)}));
+        std::cout << "Client posting connect 5 " << std::string(host) << ":" <<  std::string(port) << std::endl;
         asio::async_connect(*socket, it, cb);
+        std::cout << "Client posting connect 6 " << std::string(host) << ":" <<  std::string(port) << std::endl;
       } else {
         fetch::logger.Error("Failed to create valid socket");
+        std::cout << "NO SOCKET!!" << std::endl;
       }
-    });
+    }, "Connect");
   }
 
   // TODO: (`HUT`) : check this is safe, possibly not

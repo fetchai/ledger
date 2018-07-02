@@ -83,8 +83,6 @@ public:
   std::shared_ptr<fetch::swarm::SwarmAgentNaive> agent_;
   std::shared_ptr<fetch::swarm::SwarmHttpInterface> httpInterface_;
 
-  fetch::network::ThreadManager tm_;
-
   explicit PySwarm(unsigned int id, uint16_t rpcPort, uint16_t httpPort, unsigned int maxpeers, unsigned int idlespeed, unsigned int solvespeed)
   {
     std::cout << "PySwarm: rpc=" << rpcPort << " http=" << httpPort << std::endl;
@@ -92,7 +90,7 @@ public:
     std::string myHost = "127.0.0.1:" + std::to_string(rpcPort);
     fetch::swarm::SwarmPeerLocation myHostLoc(myHost);
 
-    auto nnCore = std::make_shared<fetch::network::NetworkNodeCore>(5, httpPort, rpcPort);
+    auto nnCore = std::make_shared<fetch::network::NetworkNodeCore>(50, httpPort, rpcPort);
     auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
     auto swarmNode = std::make_shared<fetch::swarm::SwarmNode>(nnCore, identifier, maxpeers, rnd, myHost);
     auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(nnCore);

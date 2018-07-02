@@ -20,7 +20,6 @@ class TCPServer : public AbstractNetworkServer {
   typedef uint64_t handle_type;
 
   typedef ThreadManager thread_manager_type;
-  typedef thread_manager_type* thread_manager_ptr_type;
   typedef typename ThreadManager::event_handle_type event_handle_type;
 
   struct Request {
@@ -28,21 +27,30 @@ class TCPServer : public AbstractNetworkServer {
     message_type meesage;
   };
 
-  TCPServer(uint16_t const& port, thread_manager_ptr_type const& thread_manager)
-      : thread_manager_(thread_manager),
-        request_mutex_(__LINE__, __FILE__),
-        acceptor_(thread_manager->io_service(),
-                  asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
-        socket_(thread_manager->io_service())
 
+  TCPServer(uint16_t const port, const thread_manager_type thread_manager)
+    : request_mutex_(__LINE__, __FILE__)
   {
+    std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ MAKERING1" << " " << port << std::endl;
+    thread_manager_ = thread_manager;
+      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ MAKERING2" << std::endl;
+      acceptor_ = std::make_shared<asio::ip::tcp::tcp::acceptor>(thread_manager_.io_service(), asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+    std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ MAKERING3" << std::endl;
+    socket_ = std::make_shared<asio::ip::tcp::tcp::socket>(thread_manager_.io_service());
+      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ MAKERING4" << std::endl;
+
+      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ MAKERING5" << std::endl;
     LOG_STACK_TRACE_POINT;
     //event_service_start_ =
-    //    thread_manager->OnBeforeStart([this]() { this->Accept(); });
+    //    thread_manager_.OnBeforeStart([this]() { this->Accept(); });
+        std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ POSTING" << std::endl;
 
-    thread_manager->Post([this]{
-      this->Accept();
+    thread_manager_.Post([this]{
+         std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ IN POSTED TASK" << std::endl;
+     this->Accept();
     });
+
+    usleep(10000);
 
     // TODO: If manager running -> Accept();
     manager_ = new ClientManager(*this);
@@ -52,7 +60,7 @@ class TCPServer : public AbstractNetworkServer {
     LOG_STACK_TRACE_POINT;
     //thread_manager_->Off(event_service_start_);
     if (manager_ != nullptr) delete manager_;
-    socket_.close();
+    socket_ -> close();
   }
 
   void PushRequest(handle_type client, message_type const& msg) override {
@@ -105,28 +113,38 @@ class TCPServer : public AbstractNetworkServer {
   }
 
  private:
-  thread_manager_ptr_type thread_manager_;
-  event_handle_type event_service_start_;
-  std::deque<Request> requests_;
-  fetch::mutex::Mutex request_mutex_;
+  //thread_manager_ptr_type thread_manager_;
+  //event_handle_type event_service_start_;
 
   void Accept() {
     LOG_STACK_TRACE_POINT;
+          std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ ACCEPTING 1" << std::endl;
     auto cb = [=](std::error_code ec) {
+          std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ ACCEPTING 2" << std::endl;
       LOG_LAMBDA_STACK_TRACE_POINT;
       if (!ec) {
-        std::make_shared<ClientConnection>(std::move(socket_), *manager_)
+        std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ ACCEPTING 3" << std::endl;
+        std::make_shared<ClientConnection>(std::move(*socket_), *manager_)
             ->Start();
-      }
+      } else
+        {
+          std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ ACCEPTING ERK!" << ec << std::endl;
+        }
 
+      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ calling ACCEPT" << std::endl;
       Accept();
     };
 
-    acceptor_.async_accept(socket_, cb);
+      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ calling async ACCEPT" << std::endl;
+      acceptor_ -> async_accept(*socket_, cb) ;
+      std::cout << "$$$$$$$$$$$$$$$$$$$$$$$ sdon calling async ACCEPT" << std::endl;
   }
 
-  asio::ip::tcp::tcp::acceptor acceptor_;
-  asio::ip::tcp::tcp::socket socket_;
+  thread_manager_type thread_manager_;
+  fetch::mutex::Mutex request_mutex_;
+  std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
+  std::shared_ptr<asio::ip::tcp::tcp::socket> socket_;
+  std::deque<Request> requests_;
   ClientManager* manager_;
 };
 }

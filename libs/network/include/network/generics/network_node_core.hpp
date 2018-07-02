@@ -42,13 +42,24 @@ public:
     :
     tm_(threads)
   {
-    httpServer_ = std::make_shared<fetch::http::HTTPServer>(httpPort, tm_);
+    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 1" << std::endl;
+
+    tm_. Start();
+    tm_.Identify(" NetworkNodeCore:: NetworkNodeCore");
+
+    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 2" << std::endl;
     rpcServer_ = std::make_shared<service::ServiceServer<fetch::network::TCPServer>>(rpcPort, tm_);
+    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 3" << std::endl;
+    httpServer_ = std::make_shared<fetch::http::HTTPServer>(httpPort, tm_);
+    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 4" << std::endl;
 
     // Add middleware to the HTTP server - allow requests from any address,
     // and print requests to the terminal in colour
+    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 5" << std::endl;
     httpServer_->AddMiddleware(fetch::http::middleware::AllowOrigin("*"));
+    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 6" << std::endl;
     httpServer_->AddMiddleware(fetch::http::middleware::ColorLog);
+    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 7" << std::endl;
   }
 
   virtual ~NetworkNodeCore()
@@ -75,7 +86,8 @@ public:
 
   void Start()
   {
-    tm_ . Start();
+    //tm_ . Start();
+    // do nothing, already started in SEEKRIT
   }
 
   void Stop()
