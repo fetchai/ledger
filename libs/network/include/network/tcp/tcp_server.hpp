@@ -15,18 +15,12 @@
 namespace fetch {
 namespace network {
 
-/*
- * Handle TCP connections. Spawn new ClientConnections on connect and adds 
- * them to the client manager. This can then be used for communication with 
- * the rest of Fetch
- * 
- */
-
 class TCPServer : public AbstractNetworkServer {
  public:
   typedef uint64_t handle_type;
 
   typedef ThreadManager thread_manager_type;
+  typedef thread_manager_type* thread_manager_ptr_type;
   typedef typename ThreadManager::event_handle_type event_handle_type;
 
   struct Request {
@@ -34,28 +28,20 @@ class TCPServer : public AbstractNetworkServer {
     message_type meesage;
   };
 
-  TCPServer(uint16_t const& port, thread_manager_type const& thread_manager)
+  TCPServer(uint16_t const& port, thread_manager_ptr_type const& thread_manager)
       : thread_manager_(thread_manager),
-        port_{port},
-        request_mutex_(__LINE__, __FILE__)
+        request_mutex_(__LINE__, __FILE__),
+        acceptor_(thread_manager->io_service(),
+                  asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
+        socket_(thread_manager->io_service())
+
   {
     LOG_STACK_TRACE_POINT;
+    //event_service_start_ =
+    //    thread_manager->OnBeforeStart([this]() { this->Accept(); });
 
-    thread_manager_.Post([this]
-    {
-      auto strongAccep = thread_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
-        (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
-
-      auto strongSocket = thread_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
-
-      if(strongAccep && strongSocket)
-      {
-        acceptor_ = strongAccep;
-        socket_ = strongSocket;
-        Accept();
-      } else {
-        std::cout << "Failed to get acceptor and socket in tcp server" << std::endl;
-      }
+    thread_manager->Post([this]{
+      this->Accept();
     });
 
     // TODO: If manager running -> Accept();
@@ -64,7 +50,9 @@ class TCPServer : public AbstractNetworkServer {
 
   ~TCPServer() {
     LOG_STACK_TRACE_POINT;
+    //thread_manager_->Off(event_service_start_);
     if (manager_ != nullptr) delete manager_;
+    socket_.close();
   }
 
   void PushRequest(handle_type client, message_type const& msg) override {
@@ -117,36 +105,29 @@ class TCPServer : public AbstractNetworkServer {
   }
 
  private:
-  thread_manager_type     thread_manager_;
-  uint16_t                port_;
-  //event_handle_type       event_service_start_;
-  std::deque<Request>     requests_;
-  fetch::mutex::Mutex     request_mutex_;
+  thread_manager_ptr_type thread_manager_;
+  event_handle_type event_service_start_;
+  std::deque<Request> requests_;
+  fetch::mutex::Mutex request_mutex_;
 
   void Accept() {
     LOG_STACK_TRACE_POINT;
-
-    auto strongAccep = acceptor_.lock();
-    auto strongSocket = socket_.lock();
-    if(!strongAccep || !strongSocket) return;
-
-    auto cb = [this, strongAccep, strongSocket](std::error_code ec) {
-      //LOG_LAMBDA_STACK_TRACE_POINT;
+    auto cb = [=](std::error_code ec) {
+      LOG_LAMBDA_STACK_TRACE_POINT;
       if (!ec) {
-        std::make_shared<ClientConnection>(std::move(*strongSocket), *manager_)
+        std::make_shared<ClientConnection>(std::move(socket_), *manager_)
             ->Start();
       }
 
       Accept();
     };
 
-    strongAccep->async_accept(*strongSocket, cb);
+    acceptor_.async_accept(socket_, cb);
   }
 
-  // TODO: (`HUT`) : make this solid
-  std::weak_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
-  std::weak_ptr<asio::ip::tcp::tcp::socket>   socket_;
-  ClientManager*                              manager_;
+  asio::ip::tcp::tcp::acceptor acceptor_;
+  asio::ip::tcp::tcp::socket socket_;
+  ClientManager* manager_;
 };
 }
 }

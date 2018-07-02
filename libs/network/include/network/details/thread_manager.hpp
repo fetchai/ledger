@@ -130,6 +130,9 @@ class ThreadManager
     return std::shared_ptr<IO>(nullptr);
   }
 
+  // TODO: (`HUT`) : delete this
+  asio::io_service &io_service() { return pointer_->io_service(); }
+
  private:
   pointer_type pointer_;
   weak_ref_type weak_pointer_;

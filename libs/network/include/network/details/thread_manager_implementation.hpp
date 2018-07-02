@@ -109,6 +109,9 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
     }
   }
 
+  // TODO: (`HUT`) : delete this
+  asio::io_service &io_service() { return *io_service_; }
+
  private:
   std::thread::id owning_thread_;
   std::size_t number_of_threads_ = 1;
