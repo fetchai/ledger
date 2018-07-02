@@ -88,6 +88,9 @@ void TestCase3() {
   std::cout << "Success." << std::endl << std::endl;
 }
 
+/*
+Removed! Contract is now that killing TMs by their own hand, not allowed!!
+
 template< std::size_t N = 1>
 void TestCase4() {
   std::cout << "TEST CASE 4. Threads: " << N << std::endl;
@@ -100,6 +103,7 @@ void TestCase4() {
     }
   std::cout << "Success." << std::endl << std::endl;
 }
+*/
 
 int main(int argc, char* argv[]) {
 

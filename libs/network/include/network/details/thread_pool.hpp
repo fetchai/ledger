@@ -199,7 +199,7 @@ public:
       {
         for(auto workload : idleWork_)
           {
-            r = std::max(r, ExecuteWorkload(workload));
+            workload();
             if (shutdown_) // workload may be longer running, we need to test for exits here.
               {
                 return THREAD_SHOULD_QUIT;

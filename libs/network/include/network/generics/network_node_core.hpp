@@ -57,8 +57,6 @@ public:
 
   virtual std::shared_ptr<client_type> ConnectTo(const std::string &host, unsigned short port)
   {
-    throw std::invalid_argument("Denied connection to " + host + ":" + std::to_string(port));
-
     lock_type mlock(mutex_);
     std::shared_ptr<client_type> client = std::make_shared<client_type>( host, port, tm_ );
 
