@@ -57,8 +57,10 @@ class TCPClientImplementation final :
     byte_array::ConstByteArray const& port)
   {
     self_type self = shared_from_this();
+    strand_ = threadManager_.CreateIO<asio::io_service::strand>();
+    
     fetch::logger.Debug("Client posting connect");
-    threadManager_.Post([this, self, host, port]
+    threadManager_.Post(strand_->wrap( [this, self, host, port]
     {
       shared_self_type selfLock = self.lock();
       if(!selfLock) return;
@@ -80,6 +82,8 @@ class TCPClientImplementation final :
         if (!ec)
         {
           fetch::logger.Debug("Connection established!");
+          this->SetAddress( (*socket).remote_endpoint().address().to_string() );
+          
           ReadHeader();
         } else
         {
@@ -92,26 +96,12 @@ class TCPClientImplementation final :
       {
         resolver_type::iterator it
           (res->resolve({std::string(host), std::string(port)}));
-        asio::async_connect(*socket, it, cb);
+        asio::async_connect(*socket, it, strand_->wrap(cb) );
       } else {
         fetch::logger.Error("Failed to create valid socket");
       }
-    });
+    } ));
   }
-
-  // TODO: (`HUT`) : check this is safe, possibly not
-  std::string Address() override
-  {
-    auto socket = socket_.lock();
-    if(!socket)
-    {
-      fetch::logger.Error("Attempting to get Address of dead socket. Returning.");
-      return "";
-    }
-
-    return (*socket).remote_endpoint().address().to_string();
-  }
-
 
 
   bool is_alive() const noexcept
@@ -133,13 +123,13 @@ class TCPClientImplementation final :
     }
 
      self_type self = shared_from_this();
-     threadManager_.Post([this, self]
+     threadManager_.Post(strand_->wrap( [this, self]
      {
       shared_self_type selfLock = self.lock();
       if(!selfLock) return;
 
        WriteNext();
-     });
+     }));
   }
 
   uint16_t Type() const override 
@@ -152,7 +142,7 @@ class TCPClientImplementation final :
   {
     std::weak_ptr<socket_type> socketWeak = socket_;
 
-    threadManager_.Post([socketWeak]
+    threadManager_.Post(strand_->wrap( [socketWeak]
       {
         auto socket = socketWeak.lock();
         if(socket)
@@ -161,7 +151,7 @@ class TCPClientImplementation final :
           socket->shutdown(asio::ip::tcp::socket::shutdown_both, dummy);
           socket->close(dummy);
         }
-      });
+      } ));
   }
 
   bool Closed() noexcept
@@ -194,7 +184,9 @@ class TCPClientImplementation final :
   thread_manager_type threadManager_;
   // socket is guaranteed to have lifetime less than the io_service/threadManager
   std::weak_ptr<socket_type>      socket_;
-
+  std::shared_ptr< asio::io_service::strand > strand_;
+  
+  
   message_queue_type          write_queue_;
   mutable fetch::mutex::Mutex queue_mutex_;
   mutable fetch::mutex::Mutex write_mutex_;

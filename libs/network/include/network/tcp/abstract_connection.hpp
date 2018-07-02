@@ -36,10 +36,15 @@ class AbstractConnection : public std::enable_shared_from_this<AbstractConnectio
   }
   
   virtual void Send(message_type const&) = 0;
-  virtual std::string Address() = 0;
   virtual uint16_t Type() const = 0;
 
   // Common to all
+  std::string Address() const
+  {
+    std::lock_guard< mutex::Mutex > lock(address_mutex_);
+    return address_;
+  }
+  
   connection_handle_type handle() const noexcept { return handle_; }
   void SetConnectionManager(weak_register_type const &reg) 
   {
@@ -50,8 +55,17 @@ class AbstractConnection : public std::enable_shared_from_this<AbstractConnectio
   {
     return shared_from_this();
   }
+protected:
+  void SetAddress(std::string const &addr) 
+  {
+    std::lock_guard< mutex::Mutex > lock(address_mutex_);    
+    address_ = addr;
+  }
   
  private:
+  std::string address_;  
+  mutable mutex::Mutex address_mutex_;
+  
   static connection_handle_type next_handle() {
     std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
     connection_handle_type ret = global_handle_counter_;
