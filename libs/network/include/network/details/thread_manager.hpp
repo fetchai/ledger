@@ -26,7 +26,7 @@ class ThreadManager
   typedef implementation_type::shared_socket_type         shared_socket_type;
   typedef implementation_type::socket_type                socket_type;
 
-  explicit ThreadManager(std::size_t threads = 1)
+  explicit ThreadManager(std::size_t threads)
   {
     pointer_      = std::make_shared< implementation_type >( threads );
   }
@@ -73,7 +73,7 @@ class ThreadManager
     auto ptr = lock();
     if(ptr)
     {
-      ptr->Stop();
+      //ptr->Stop();
     }
   }
 

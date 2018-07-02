@@ -45,7 +45,6 @@ public:
     std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 1" << std::endl;
 
     tm_. Start();
-    //tm_.Identify(" NetworkNodeCore:: NetworkNodeCore");
 
     std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 2" << std::endl;
     rpcServer_ = std::make_shared<service::ServiceServer<fetch::network::TCPServer>>(rpcPort, tm_);
@@ -60,6 +59,8 @@ public:
     std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 6" << std::endl;
     httpServer_->AddMiddleware(fetch::http::middleware::ColorLog);
     std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 7" << std::endl;
+
+    tm_. Start();
   }
 
   virtual ~NetworkNodeCore()

@@ -54,7 +54,7 @@ class SwarmAgentNaive(object):
             return
         print("OnIdle", 2)
 
-        self.swarm.DoDiscoverBlocks(goodPeers[0], 10)
+        #self.swarm.DoDiscoverBlocks(goodPeers[0], 10)
         print("OnIdle", 3)
 
         if random.randint(0, self.solvespeed) == 0:
@@ -71,7 +71,7 @@ class SwarmAgentNaive(object):
 
         host = weightedPeer[0]
         self.swarm.DoPing(host);
-        self.swarm.DoDiscoverBlocks(host, 10);
+        #self.swarm.DoDiscoverBlocks(host, 10);
 
     def onPeerless(self):
         for x in self.peerlist:
