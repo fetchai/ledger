@@ -36,7 +36,6 @@ class AbstractConnection : public std::enable_shared_from_this<AbstractConnectio
   }
   
   virtual void Send(message_type const&) = 0;
-
   virtual std::string Address() = 0;
   virtual uint16_t Type() const = 0;
 

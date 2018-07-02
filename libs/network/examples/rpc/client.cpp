@@ -12,7 +12,6 @@ int main() {
   // Client setup
   fetch::network::ThreadManager tm(2);
 
-
   tm.Start();
   {
     ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);

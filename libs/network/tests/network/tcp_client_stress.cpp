@@ -373,20 +373,20 @@ void TestCase9(std::string host, std::string port)
 
   // Start echo server
   fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
-  std::array<Client *, 1000> clients;
+  std::array<Client *, 100> clients;
 
   for (std::size_t index = 0; index < 3; ++index)
   {
     ThreadManager tmanager(N);
     tmanager.Start();
-    for (std::size_t i = 0; i < 1000; ++i)
+    for (std::size_t i = 0; i < 100; ++i)
     {
       std::async(std::launch::async,
           [&clients, i, &host, &port, &tmanager] {clients[i] = new Client(host, port, tmanager);});
     }
     if(index % 2 == 0) tmanager.Stop();
 
-    for (std::size_t i = 0; i < 1000; ++i)
+    for (std::size_t i = 0; i < 100; ++i)
     {
       delete clients[i];
     }

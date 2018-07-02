@@ -26,23 +26,33 @@ class ClientConnection : public AbstractConnection {
 
   typedef typename AbstractConnection::connection_handle_type handle_type;
 
-  ClientConnection(asio::ip::tcp::tcp::socket socket, ClientManager& manager)
-      : socket_(std::move(socket)),
+  ClientConnection(std::weak_ptr< asio::ip::tcp::tcp::socket > socket , std::weak_ptr< ClientManager > manager)
+      : socket_(socket),
         manager_(manager),
         write_mutex_(__LINE__, __FILE__) {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Debug("Server: Connection from ",
-                        socket_.remote_endpoint().address().to_string());
+    auto ptr = socket_.lock();
+    if(ptr) {
+      fetch::logger.Debug("Server: Connection from ",
+        ptr->remote_endpoint().address().to_string());
+    }
+    
   }
 
   ~ClientConnection() {
     LOG_STACK_TRACE_POINT;
-    manager_.Leave(this->handle());
+    auto ptr = manager_.lock();
+    if(!ptr) return;
+
+    ptr->Leave(this->handle());
   }
 
   void Start() {
     LOG_STACK_TRACE_POINT;
-    manager_.Join(shared_from_this());
+    auto ptr = manager_.lock();
+    if(!ptr) return;
+    
+    ptr->Join(shared_from_this());
     ReadHeader();
   }
 
@@ -60,7 +70,10 @@ class ClientConnection : public AbstractConnection {
 
   std::string Address() override {
     LOG_STACK_TRACE_POINT;
-    return socket_.remote_endpoint().address().to_string();
+    auto ptr = socket_.lock();
+    if(!ptr) return "";
+    
+    return ptr->remote_endpoint().address().to_string();
   }
 
   uint16_t Type() const override 
@@ -71,49 +84,59 @@ class ClientConnection : public AbstractConnection {
  private:
   void ReadHeader() {
     LOG_STACK_TRACE_POINT;
+    auto ptr = socket_.lock();
+    if(!ptr) return;
 
     fetch::logger.Debug("Server: Waiting for next header.");
     auto self(shared_from_this());
     auto cb = [this, self](std::error_code ec, std::size_t len) {
+      auto ptr = manager_.lock();
+      if(!ptr) return;
 
       if (!ec) {
         fetch::logger.Debug("Server: Read header.");
         ReadBody();
       } else {
-        manager_.Leave(this->handle());
+        ptr->Leave(this->handle());
       }
     };
 
-    asio::async_read(socket_, asio::buffer(header_.bytes, 2 * sizeof(uint64_t)),
+    asio::async_read(*ptr, asio::buffer(header_.bytes, 2 * sizeof(uint64_t)),
                      cb);
   }
 
   void ReadBody() {
     LOG_STACK_TRACE_POINT;
-
+    auto ptr = socket_.lock();
+    if(!ptr) return;
+    
     byte_array::ByteArray message;
 
     if (header_.content.magic != networkMagic) {
       fetch::logger.Debug("Magic incorrect - closing connection.");
-
-      manager_.Leave(this->handle());
+      auto ptr = manager_.lock();
+      if(!ptr) return;
+      ptr->Leave(this->handle());
       return;
     }
 
     message.Resize(header_.content.length);
     auto self(shared_from_this());
     auto cb = [this, self, message](std::error_code ec, std::size_t len) {
-
+      auto ptr = manager_.lock();
+      if(!ptr) return;
+      
       if (!ec) {
         fetch::logger.Debug("Server: Read body.");
-        manager_.PushRequest(this->handle(), message);
+        ptr->PushRequest(this->handle(), message);
         ReadHeader();
       } else {
-        manager_.Leave(this->handle());
+        ptr->Leave(this->handle());
+
       }
     };
 
-    asio::async_read(socket_, asio::buffer(message.pointer(), message.size()),
+    asio::async_read(*ptr, asio::buffer(message.pointer(), message.size()),
                      cb);
   }
 
@@ -135,6 +158,8 @@ class ClientConnection : public AbstractConnection {
 
   void Write() {
     LOG_STACK_TRACE_POINT;
+    auto ptr = socket_.lock();
+    if(!ptr) return;
 
     write_mutex_.lock();
 
@@ -151,12 +176,14 @@ class ClientConnection : public AbstractConnection {
 
     auto self = shared_from_this();
     auto cb = [this, buffer, header, self](std::error_code ec, std::size_t) {
+      auto ptr = manager_.lock();
+      if(!ptr) return;
 
       if (!ec) {
         fetch::logger.Debug("Server: Wrote message.");
         Write();
       } else {
-        manager_.Leave(this->handle());
+        ptr->Leave(this->handle());
       }
     };
 
@@ -164,11 +191,11 @@ class ClientConnection : public AbstractConnection {
       asio::buffer(header.pointer(), header.size()),
       asio::buffer(buffer.pointer(), buffer.size())};
 
-    asio::async_write(socket_, buffers, cb);
+    asio::async_write(*ptr, buffers, cb);
   }
 
-  asio::ip::tcp::tcp::socket socket_;
-  ClientManager& manager_;
+  std::weak_ptr< asio::ip::tcp::tcp::socket > socket_;
+  std::weak_ptr< ClientManager > manager_;
   message_queue_type write_queue_;
   fetch::mutex::Mutex write_mutex_;
   std::string address_;

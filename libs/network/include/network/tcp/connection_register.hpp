@@ -20,17 +20,17 @@ public:
   std::shared_ptr< T > CreateClient(Args &&...args) 
   {
     std::shared_ptr< T > connection = std::make_shared< T > (std::forward<Args>( args )... );
-//    auto wptr = connection->network_client_pointer();
+    auto wptr = connection->network_client_pointer();
     
-//    auto ptr = wptr.lock();
-//    assert( ptr );
+    auto ptr = wptr.lock();
+    assert( ptr );
 
     {
-//      std::lock_guard< mutex::Mutex > lock( connections_lock_ );
-//      connections_[connection->handle()] = wptr;
+      std::lock_guard< mutex::Mutex > lock( connections_lock_ );
+      connections_[connection->handle()] = wptr;
     }
     
-//    ptr->SetConnectionManager( shared_from_this() );
+    ptr->SetConnectionManager( shared_from_this() );
 
     return connection;
   }
@@ -49,8 +49,27 @@ public:
 
   void Leave(connection_handle_type const &id) override 
   {
-    std::cout << "LEAVING: " << id << std::endl;
+    
+    std::lock_guard< mutex::Mutex > lock( connections_lock_ );
+    auto it =connections_.find( id );
+    
+    if( it != connections_.end() ) {
+      connections_.erase(it);
+    }
+
   }
+
+  void Enter(weak_connection_type wptr) 
+  {
+    auto ptr = wptr.lock();
+    if(ptr) {
+      std::lock_guard< mutex::Mutex > lock( connections_lock_ );      
+      connections_[ ptr->handle() ] = ptr;
+      
+    }
+    
+  }
+  
   
 private:
   mutable mutex::Mutex connections_lock_;
@@ -81,6 +100,12 @@ public:
     return ptr_->size();
   }
 
+  void Enter(weak_connection_type wptr) 
+  {
+    ptr_->Enter(wptr);
+  }
+
+  
 private:
   shared_implementation_pointer_type ptr_;
    

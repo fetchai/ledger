@@ -5,6 +5,8 @@
 #include "core/mutex.hpp"
 #include "network/tcp/client_connection.hpp"
 #include "network/details/thread_manager.hpp"
+#include "network/tcp/client_connection.hpp"
+#include "network/tcp/connection_register.hpp"
 
 #include "network/fetch_asio.hpp"
 
@@ -40,31 +42,26 @@ class TCPServer : public AbstractNetworkServer {
         request_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
-
+    manager_ = std::make_shared< ClientManager >(*this);
+    
+      
     thread_manager_.Post([this]
     {
-      auto strongAccep = thread_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
-        (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
 
-      auto strongSocket = thread_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
-
-      if(strongAccep && strongSocket)
-      {
-        acceptor_ = strongAccep;
-        socket_ = strongSocket;
+//      if(strongAccep && strongSocket)
+//      {
+//        acceptor_ = strongAccep;
+//        socket_ = strongSocket;
         Accept();
-      } else {
-        std::cout << "Failed to get acceptor and socket in tcp server" << std::endl;
-      }
+//      } else {
+//        std::cout << "Failed to get acceptor and socket in tcp server" << std::endl;
+//      }
     });
-
-    // TODO: If manager running -> Accept();
-    manager_ = new ClientManager(*this);
   }
 
   ~TCPServer() {
     LOG_STACK_TRACE_POINT;
-    if (manager_ != nullptr) delete manager_;
+//    if (manager_ != nullptr) delete manager_;
   }
 
   void PushRequest(handle_type client, message_type const& msg) override {
@@ -111,7 +108,7 @@ class TCPServer : public AbstractNetworkServer {
     requests_.pop_front();
   }
 
-  std::string GetAddress(handle_type const& client) const {
+  std::string GetAddress(handle_type const& client) {
     LOG_STACK_TRACE_POINT;
     return manager_->GetAddress(client);
   }
@@ -126,15 +123,30 @@ class TCPServer : public AbstractNetworkServer {
   void Accept() {
     LOG_STACK_TRACE_POINT;
 
-    auto strongAccep = acceptor_.lock();
-    auto strongSocket = socket_.lock();
-    if(!strongAccep || !strongSocket) return;
+    auto strongAccep = thread_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
+      (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
+    auto strongSocket = thread_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
+    
+//    auto strongAccep = acceptor_.lock();    
+//    auto strongSocket = socket_.lock();
+//    if(!strongAccep || !strongSocket) return;
 
-    auto cb = [this, strongAccep, strongSocket](std::error_code ec) {
+    std::weak_ptr< ClientManager >  man = manager_;
+        
+    auto cb = [this, man, strongAccep, strongSocket](std::error_code ec) {
+      auto lock_ptr = man.lock();
+      if(!lock_ptr) return;
+      
       //LOG_LAMBDA_STACK_TRACE_POINT;
       if (!ec) {
-        std::make_shared<ClientConnection>(std::move(*strongSocket), *manager_)
-            ->Start();
+        auto conn = std::make_shared<ClientConnection>(strongSocket, manager_);
+        auto ptr = connection_register_.lock();
+
+        if(ptr) {
+          ptr->Enter( conn->network_client_pointer() );
+        }
+        
+        conn->Start();
       }
 
       Accept();
@@ -144,9 +156,10 @@ class TCPServer : public AbstractNetworkServer {
   }
 
   // TODO: (`HUT`) : make this solid
-  std::weak_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
-  std::weak_ptr<asio::ip::tcp::tcp::socket>   socket_;
-  ClientManager*                              manager_;
+  std::weak_ptr< ConnectionRegister > connection_register_;
+//  std::weak_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
+//  std::weak_ptr<asio::ip::tcp::tcp::socket>   socket_;
+  std::shared_ptr< ClientManager >            manager_;
 };
 }
 }

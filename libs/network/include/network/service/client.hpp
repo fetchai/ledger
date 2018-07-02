@@ -48,6 +48,7 @@ class ServiceClient : public T,
 
     // Disconnect callbacks
     super_type::Cleanup();
+    super_type::Close();
 
     // Can only guarantee we are not being called when socket is closed
     while(!super_type::Closed())
