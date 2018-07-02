@@ -1,6 +1,8 @@
 #ifndef MINER_HPP
 #define MINER_HPP
 
+#include <random>
+
 namespace fetch {
 namespace chain {
 namespace consensus {
