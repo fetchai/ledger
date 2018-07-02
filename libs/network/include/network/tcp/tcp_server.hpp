@@ -43,8 +43,9 @@ class TCPServer : public AbstractNetworkServer {
   {
     LOG_STACK_TRACE_POINT;
     manager_ = std::make_shared< ClientManager >(*this);
+    acceptor_ = thread_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
+      (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));    
     
-      
     thread_manager_.Post([this]
     {
 
@@ -123,8 +124,7 @@ class TCPServer : public AbstractNetworkServer {
   void Accept() {
     LOG_STACK_TRACE_POINT;
 
-    auto strongAccep = thread_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
-      (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
+
     auto strongSocket = thread_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
     
 //    auto strongAccep = acceptor_.lock();    
@@ -133,7 +133,7 @@ class TCPServer : public AbstractNetworkServer {
 
     std::weak_ptr< ClientManager >  man = manager_;
         
-    auto cb = [this, man, strongAccep, strongSocket](std::error_code ec) {
+    auto cb = [this, man, strongSocket](std::error_code ec) {
       auto lock_ptr = man.lock();
       if(!lock_ptr) return;
       
@@ -152,12 +152,12 @@ class TCPServer : public AbstractNetworkServer {
       Accept();
     };
 
-    strongAccep->async_accept(*strongSocket, cb);
+    acceptor_->async_accept(*strongSocket, cb);
   }
 
   // TODO: (`HUT`) : make this solid
   std::weak_ptr< ConnectionRegister > connection_register_;
-//  std::weak_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
+  std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
 //  std::weak_ptr<asio::ip::tcp::tcp::socket>   socket_;
   std::shared_ptr< ClientManager >            manager_;
 };
