@@ -15,13 +15,24 @@
 #include "network/swarm/swarm_peer_location.hpp"
 #include "network/swarm/swarm_random.hpp"
 #include "network/swarm/swarm_service.hpp"
+#include<random>
 
 typedef unsigned int uint;
 
+static uint32_t GetRandom()
+{
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  static std::uniform_int_distribution<uint32_t> dis(
+      0, std::numeric_limits<uint32_t>::max());
+  return dis(gen);
+}
+
 int main(int argc, const char *argv[])
 {
-  uint16_t portNumber = 9000;
-  unsigned int id{0};
+  uint32_t rand = GetRandom();
+  uint16_t portNumber = 9000+(rand&0xf);
+  unsigned int id{9000+(rand&0xf)};
   unsigned int maxpeers{3};
   unsigned int idlespeed{100};
   unsigned int solvespeed{1000};
@@ -38,7 +49,7 @@ int main(int argc, const char *argv[])
   params.add(idlespeed,     "idlespeed",      "The rate, in milliseconds, of generating idle events to the Swarm Agent.");
   params.add(peerlist,      "peers",          "Comma separated list of peer locations.");
 
-  params.Parse(argc, argv);
+  params.Parse(argc, argv); 
 
   std::list<fetch::swarm::SwarmPeerLocation> peers = fetch::swarm::SwarmPeerLocation::ParsePeerListString(peerlist);
 
