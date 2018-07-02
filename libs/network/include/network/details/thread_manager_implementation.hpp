@@ -135,6 +135,9 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
     }
   }
 
+  // TODO: (`HUT`) : delete this
+  asio::io_service &io_service() { return *io_service_; }
+
  private:
 
   bool started_flag_;
