@@ -354,7 +354,6 @@ class TCPClientImplementation final : public std::enable_shared_from_this<TCPCli
   {
     std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
     if(on_connection_failed_) on_connection_failed_();
-      fetch::logger.Error("Foo!");
   }
 
   void PushMessage(message_type message)
