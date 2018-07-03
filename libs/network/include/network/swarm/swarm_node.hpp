@@ -96,11 +96,6 @@ public:
     return loc == uri_;
   }
 
-  virtual std::shared_ptr<client_type> ConnectToPeer(const SwarmPeerLocation &peer)
-  {
-    return nnCore_ -> ConnectTo(peer.GetHost(), peer.GetPort());
-  }
-
   std::list<SwarmKarmaPeer> HttpWantsPeerList() const
   {
     return karmaPeerList_.GetBestPeers(10000, 0.0);
@@ -111,7 +106,7 @@ public:
   virtual std::string AskPeerForPeers(const SwarmPeerLocation &peer)
   {
     try{
-    std::shared_ptr<client_type> client = ConnectToPeer(peer);
+    std::shared_ptr<client_type> client = nnCore_ -> ConnectToPeer(peer);
     std::cout << "**** calling 1" << std::endl;
     auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     std::cout << "**** calling 2" << std::endl;

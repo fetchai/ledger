@@ -6,7 +6,7 @@ import time
 import threading
 import json
 
-POSSIBLE_PORTS = 15
+POSSIBLE_PORTS = 20
 
 class Monitoring(object):
 
@@ -18,6 +18,7 @@ class Monitoring(object):
             super().__init__(group=None, target=None, name="pollingthread")
 
         def run(self):
+            print("MONITORING START")
             while not self.done:
                 self.poll(self.port + 10000, self.port)
                 self.port = (self.port + 1) % POSSIBLE_PORTS
@@ -31,26 +32,30 @@ class Monitoring(object):
                 data = None
                 try:
                     print("URL=", url)
-                    r = requests.get(url)
+                    r = requests.get(url, timeout=1)
                     if r.status_code == 200:
                         data = json.loads(r.content.decode("utf-8", "strict"))
                         print(url, r.content)
                         peers = data.get("peers", [])
                         state = data.get("state", 0)
+                except requests.exceptions.Timeout as ex:
+                    data = None
+                    print("Timeout:", ident)
                 except requests.exceptions.ConnectionError as ex:
                     data = None
                     print("Denied:", ident)
-                
+
                 if data != None:
                    self.owner.newData(ident, peers, state)
                 else:
                     self.owner.badNode(ident)
-                
+
             except Exception as x:
                 print("ERR:", x)
-            
-                
+
+
     def __init__(self):
+        print("MONITORING START?")
         self.thread = Monitoring.WorkerThread(self)
         self.thread.start()
 
@@ -65,7 +70,6 @@ class Monitoring(object):
         self.world[ident].setdefault("peers", [])
         self.world[ident].setdefault("state", 0)
 
-        
         self.world[ident]["state"] = state
         self.world[ident]["peers"] = peers
 

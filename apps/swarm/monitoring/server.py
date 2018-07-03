@@ -91,7 +91,6 @@ def get_data2(context, mon):
         ]),
 
     print(data)
-
     return data
 
 def get_slash():

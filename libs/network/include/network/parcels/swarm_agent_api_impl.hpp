@@ -61,11 +61,13 @@ public:
 
   void DoIdle()
   {
+    cout << ">>>>>>>>>>>>>>>>>>> DO IDLE"<<endl;
     if (this->onIdle_)
       {
         try
           {
             this->onIdle_();
+            cout << ">>>>>>>>>>>>>>>>>>> CALLED IDLE"<<endl;
           }
         catch (std::exception &x)
           {
@@ -78,6 +80,10 @@ public:
             cout << ">>>>>>>>>>>>>>>>> ??? EXCEPTION" << endl;
           }
       }
+    else
+      {
+        cout << ">>>>>>>>>>>>>>>>>>> DO IDLE SKIPPED"<<endl;
+      }
     auto lambd = [this]
       {
         this->DoIdle();
@@ -88,6 +94,7 @@ public:
   virtual void OnIdle                (std::function<void ()> cb)
   {
     onIdle_ = cb;
+    cout << ">>>>>>>>>>>>>>>>>>> ON IDLE SET"<<endl;
   }
 
   virtual void OnPeerless            (std::function<void ()> cb)

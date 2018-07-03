@@ -1,15 +1,18 @@
 #ifndef NETWORK_NODE_CORE_HPP
 #define NETWORK_NODE_CORE_HPP
 
+#include <functional>
 #include <iostream>
-#include <string>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
-#include "network/service/client.hpp"
-#include "network/service/server.hpp"
-#include "http/server.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/color_log.hpp"
+#include "http/server.hpp"
+#include "network/service/client.hpp"
+#include "network/service/server.hpp"
+#include "network/swarm/swarm_peer_location.hpp"
 
 namespace fetch
 {
@@ -17,6 +20,49 @@ namespace fetch
 
 namespace network
 {
+
+class NetworkNodeCoreBaseException : public std::exception
+{
+public:
+  NetworkNodeCoreBaseException()
+  {
+  }
+};
+
+class NetworkNodeCoreCannotReachException : public NetworkNodeCoreBaseException
+{
+public:
+  std::string host_;
+  int port_;
+  std::string msg_;
+
+  NetworkNodeCoreCannotReachException(const std::string &host, int port):
+    NetworkNodeCoreBaseException()
+  {
+    this -> host_ = host;
+    this -> port_ = port;
+    this -> msg_ = "cannot reach " + host + std::to_string(port);
+  }
+
+  virtual const char *what() const _NOEXCEPT
+  {
+    return this -> msg_.c_str();
+  }
+};
+
+  class NetworkNodeCoreRefusingSolipsism : public NetworkNodeCoreBaseException
+{
+public:
+  NetworkNodeCoreRefusingSolipsism() :
+    NetworkNodeCoreBaseException()
+  {
+  }
+
+  virtual const char *what() const _NOEXCEPT
+  {
+    return "Refusing to talk to myself.";
+  }
+};
 
 class NetworkNodeCore
 {
@@ -47,6 +93,9 @@ public:
     tm_. Start();
 
     std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 2" << std::endl;
+
+    rpcPort_ = rpcPort;
+    
     rpcServer_ = std::make_shared<service::ServiceServer<fetch::network::TCPServer>>(rpcPort, tm_);
     std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 3 " << httpPort  << std::endl;
     httpServer_ = std::make_shared<fetch::http::HTTPServer>(httpPort, tm_);
@@ -61,25 +110,55 @@ public:
     std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 7" << std::endl;
 
     tm_. Start();
+    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 8" << std::endl;
   }
 
   virtual ~NetworkNodeCore()
   {
   }
 
+  typedef std::pair<std::string, int> remote_host_identifier_type;
+  typedef std::map<remote_host_identifier_type, std::shared_ptr<client_type>> cache_type;
+
+  cache_type cache_;
+
+  virtual std::shared_ptr<client_type> ConnectToPeer(const fetch::swarm::SwarmPeerLocation &peer)
+  {
+    return ConnectTo(peer.GetHost(), peer.GetPort());
+  }
+
   virtual std::shared_ptr<client_type> ConnectTo(const std::string &host, unsigned short port)
+  {
+
+    if (port == rpcPort_)
+      {
+        throw NetworkNodeCoreRefusingSolipsism();
+      }
+
+    auto remote_host_identifier = std::make_pair(host, port);
+    auto iter = cache_.find(remote_host_identifier);
+    if (iter != cache_.end())
+      {
+        return iter -> second;
+      }
+    auto new_client_conn = ActuallyConnectTo(host, port);
+    cache_[remote_host_identifier] = new_client_conn;
+    return new_client_conn;
+  }
+
+  virtual std::shared_ptr<client_type> ActuallyConnectTo(const std::string &host, unsigned short port)
   {
     std::shared_ptr<client_type> client = std::make_shared<client_type>( host, port, tm_ );
 
-    int waits = 25;
+    int waits = 100;
     while(!client->is_alive())
       {
         waits--;
         if (waits <= 0)
           {
-            throw std::invalid_argument("Bad connection to " + host + ":" + std::to_string(port));
+            throw NetworkNodeCoreCannotReachException(host, port);
           }
-        usleep(200);
+        usleep(100);
       }
     return client;
   }
@@ -173,6 +252,7 @@ public:
 
 protected:
   fetch::network::ThreadManager tm_;
+  uint16_t rpcPort_;
   mutex_type mutex_;
   std:: map<protocol_number_type, std::shared_ptr<ProtocolOwner>> protocols_;
   std:: map<protocol_number_type, void*> interfaces_;

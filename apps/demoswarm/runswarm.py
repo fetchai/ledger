@@ -27,6 +27,7 @@ class RunSwarmArgs(object):
         self.parser.add_argument("--logdir", help="where to put individual logfiles", type=str, default="./")
         self.parser.add_argument("--startindex", help="Index of first launchable node", type=int, default=0)
         self.parser.add_argument("--debugger", help="Name of debugger", type=str, default="")
+        self.parser.add_argument("--clean", help="Name of debugger", default=False, action='store_true')
 
         self.data =  self.parser.parse_args()
 
@@ -60,14 +61,26 @@ class SwarmWatcher(object):
         pass
 
     def watch(self):
-        p = subprocess.Popen("ps -ef | grep apps/pyfetch/pyfetch | grep -- \"-id\" | grep -v bin/sh | grep -v python | grep -v grep | wc -l", shell=True)
+        p = subprocess.Popen(
+            "ps -ef | grep apps/pyfetch/pyfetch | grep -- \"-id\" | grep -v bin/sh | grep -v python | grep -v grep | wc -l",
+            shell=True,
+            stdout=subprocess.PIPE
+            )
         out, err = p.communicate()
-        alive = out.split('\n')
-        alive = 0 + alive[0]
+        alive = out.decode("utf-8").split('\n')
+        alive = int(alive[0])
         print("Still Alive: ", alive)
         if not alive:
             return False
         return True
+
+def killall():
+    cmd = "clear; ps -ef | grep pyfetch/pyfetch | grep -v 'bin/sh' | cut -c8-1000 | cut -d' ' -f1 | xargs kill"
+    p = subprocess.Popen(cmd,
+        shell=True,
+        stdout=subprocess.PIPE
+    )
+    out, err = p.communicate()
 
 class Node(object):
     def __init__(self, index, args):
@@ -135,6 +148,10 @@ class Node(object):
 def main():
     swarmArgs = RunSwarmArgs()
     args = swarmArgs.get()
+
+    if args.clean:
+        killall()
+
     with createSwarm(args) as swarm:
         with createSwarmWatcher() as watcher:
             while watcher.watch():
