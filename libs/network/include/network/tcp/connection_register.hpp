@@ -20,6 +20,10 @@ public:
   typedef G details_type;
   
   struct  LockableDetails : public details_type, public mutex::Mutex {  };
+
+  virtual ~ConnectionRegisterImpl() 
+  {
+  }
   
       
   template< typename T, typename... Args >
