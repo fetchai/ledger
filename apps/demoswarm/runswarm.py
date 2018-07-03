@@ -57,12 +57,13 @@ def createSwarmWatcher(*args, **kwargs):
 
 
 class SwarmWatcher(object):
-    def __init__(self):
+    def __init__(self, args):
+        self.binary = args.binary.split(' ')[0]
         pass
 
     def watch(self):
         p = subprocess.Popen(
-            "ps -ef | grep apps/pyfetch/pyfetch | grep -- \"-id\" | grep -v bin/sh | grep -v python | grep -v grep | wc -l",
+            "ps -ef | grep {} | grep -- \"-id\" | grep -v bin/sh | grep -v python | grep -v grep | wc -l".format(self.binary),
             shell=True,
             stdout=subprocess.PIPE
             )
@@ -73,6 +74,9 @@ class SwarmWatcher(object):
         if not alive:
             return False
         return True
+
+    def close(self):
+        pass
 
 def killall():
     cmd = "clear; ps -ef | grep pyfetch/pyfetch | grep -v 'bin/sh' | cut -c8-1000 | cut -d' ' -f1 | xargs kill"
@@ -153,7 +157,7 @@ def main():
         killall()
 
     with createSwarm(args) as swarm:
-        with createSwarmWatcher() as watcher:
+        with createSwarmWatcher(args) as watcher:
             while watcher.watch():
                 time.sleep(2)
 

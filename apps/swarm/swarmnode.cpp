@@ -9,7 +9,7 @@
 #include "network/parcels/swarm_agent_api_impl.hpp"
 #include "network/parcels/swarm_agent_naive.hpp"
 #include "network/parcels/swarm_parcel_node.hpp"
-#include "network/parcels/swarm_parcel_protocol.hpp"
+#include "network/protocols/parcels/swarm_parcel_protocol.hpp"
 #include "network/swarm/swarm_http_interface.hpp"
 #include "network/swarm/swarm_node.hpp"
 #include "network/swarm/swarm_peer_location.hpp"
@@ -78,7 +78,9 @@ int main(int argc, const char *argv[])
   auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(nnCore);
   auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl>(myHost, idlespeed);
   auto agent = std::make_shared<fetch::swarm::SwarmAgentNaive>(swarmAgentApi, identifier, id, rnd, maxpeers, solvespeed);
+  auto httpModule = std::make_shared<fetch::swarm::SwarmHttpModule>(node);
 
+  nnCore -> AddModule(httpModule);
 
   swarmAgentApi -> ToPing([swarmAgentApi, node, parcelNode](fetch::swarm::SwarmAgentApi &unused, const std::string &host)
                           {
@@ -97,6 +99,11 @@ int main(int argc, const char *argv[])
                                                    }
                                                    swarmAgentApi -> DoPingSucceeded(host);
                                                  }
+                                                         catch(fetch::network::NetworkNodeCoreBaseException &x)
+                                                           {
+                                                             cerr << " 3CAUGHT NetworkNodeCoreExceptionBase" << x.what()<< endl;
+                                                             swarmAgentApi -> DoPingFailed(host);
+                                                           }
                                                catch(fetch::serializers::SerializableException &x)
                                                  {
                                                    cerr << " 1CAUGHT fetch::serializers::SerializableException:" << x.what() << endl;
@@ -135,6 +142,11 @@ int main(int argc, const char *argv[])
                                                                    }
                                                                }
                                                            }
+                                                         catch(fetch::network::NetworkNodeCoreBaseException &x)
+                                                           {
+                                                             cerr << " 3CAUGHT NetworkNodeCoreExceptionBase" << x.what()<< endl;
+                                                             swarmAgentApi -> DoPingFailed(host);
+                                                           }
                                                          catch(fetch::serializers::SerializableException &x)
                                                            {
                                                              cerr << " 3CAUGHT fetch::serializers::SerializableException" << x.what()<< endl;
@@ -170,6 +182,11 @@ int main(int argc, const char *argv[])
                                                              }
                                                          }
                                                      }
+                                                         catch(fetch::network::NetworkNodeCoreBaseException &x)
+                                                           {
+                                                             cerr << " 3CAUGHT NetworkNodeCoreExceptionBase" << x.what()<< endl;
+                                                             swarmAgentApi -> DoPingFailed(host);
+                                                           }
                                                    catch(fetch::serializers::SerializableException &x)
                                                      {
                                                        cerr << " 5CAUGHT fetch::serializers::SerializableException" << x.what()<< endl;

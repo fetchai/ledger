@@ -168,7 +168,14 @@ public:
     auto promise = client->Call(protocol_number, 1, type, count);
     std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - wait" << std::endl;
     promise.Wait();
-    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - yes!" << std::endl;
+    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - yes!" <<  promise.is_fulfilled() << std::endl;
+
+    if (!promise.is_fulfilled())
+      {
+        std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - Arg, failed." << std::endl;
+        throw fetch::network::NetworkNodeCoreTimeOut("AskPeerForParcelIds");
+      }
+    
     auto jsonResult = promise.As<std::string>();
     std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - parse?" << std::endl;
 
@@ -204,6 +211,11 @@ public:
     std::shared_ptr<client_type> client = nnCore_ -> ConnectToPeer(peer);
     auto promise = client->Call(protocol_number, 2, type, parcelid);
     promise.Wait();
+    if (!promise.is_fulfilled())
+      {
+        throw fetch::network::NetworkNodeCoreTimeOut("AskPeerForParcelData");
+      }
+
     auto jsonResult = promise.As<std::string>();
 
     fetch::json::JSONDocument doc;

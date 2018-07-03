@@ -59,9 +59,21 @@ public:
     tm_ -> Post(lambd);
   }
 
+  int idleCount = 0;
+
   void DoIdle()
   {
-    cout << ">>>>>>>>>>>>>>>>>>> DO IDLE"<<endl;
+    cout << ">>>>>>>>>>>>>>>>>>> DO IDLE " << idleCount <<endl;
+
+    idleCount++;
+
+//    if (idleCount > 100)
+//      {
+//        fetch::logger.Error("Bailing at this point");
+      //        exit(1);
+//      }
+
+
     if (this->onIdle_)
       {
         try

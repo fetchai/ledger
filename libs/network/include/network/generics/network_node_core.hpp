@@ -29,40 +29,56 @@ public:
   }
 };
 
-class NetworkNodeCoreCannotReachException : public NetworkNodeCoreBaseException
-{
-public:
-  std::string host_;
-  int port_;
-  std::string msg_;
-
-  NetworkNodeCoreCannotReachException(const std::string &host, int port):
-    NetworkNodeCoreBaseException()
+  class NetworkNodeCoreCannotReachException : public NetworkNodeCoreBaseException
   {
-    this -> host_ = host;
-    this -> port_ = port;
-    this -> msg_ = "cannot reach " + host + std::to_string(port);
-  }
-
-  virtual const char *what() const _NOEXCEPT
-  {
-    return this -> msg_.c_str();
-  }
-};
+  public:
+    std::string host_;
+    int port_;
+    std::string msg_;
+    
+    NetworkNodeCoreCannotReachException(const std::string &host, int port):
+      NetworkNodeCoreBaseException()
+    {
+      this -> host_ = host;
+      this -> port_ = port;
+      this -> msg_ = "cannot reach " + host + std::to_string(port);
+    }
+    
+    virtual const char *what() const _NOEXCEPT
+    {
+      return this -> msg_.c_str();
+    }
+  };
 
   class NetworkNodeCoreRefusingSolipsism : public NetworkNodeCoreBaseException
-{
-public:
-  NetworkNodeCoreRefusingSolipsism() :
-    NetworkNodeCoreBaseException()
   {
-  }
-
-  virtual const char *what() const _NOEXCEPT
+  public:
+    NetworkNodeCoreRefusingSolipsism() :
+      NetworkNodeCoreBaseException()
+    {
+    }
+    
+    virtual const char *what() const _NOEXCEPT
+    {
+      return "Refusing to talk to myself.";
+    }
+  };
+  
+  class NetworkNodeCoreTimeOut : public NetworkNodeCoreBaseException
   {
-    return "Refusing to talk to myself.";
-  }
-};
+  public:
+    std::string where_;
+    NetworkNodeCoreTimeOut(const std::string &where) :
+      NetworkNodeCoreBaseException()
+    {
+      where_ = std::string("Timeout:") +where;
+    }
+    
+    virtual const char *what() const _NOEXCEPT
+    {
+      return where_.c_str();
+    }
+  };
 
 class NetworkNodeCore
 {
@@ -142,7 +158,7 @@ public:
         return iter -> second;
       }
     auto new_client_conn = ActuallyConnectTo(host, port);
-    cache_[remote_host_identifier] = new_client_conn;
+    //cache_[remote_host_identifier] = new_client_conn;
     return new_client_conn;
   }
 
@@ -199,9 +215,9 @@ public:
   };
 
   template<class HTTP_HANDLER>
-  void AddModule(HTTP_HANDLER &handler)
+  void AddModule(std::shared_ptr<HTTP_HANDLER> handler)
   {
-    httpServer_->AddModule(handler);
+    httpServer_->AddModule(*(handler.get()));
   }
 
   template<class INTERFACE_CLASS, class PROTOCOL_CLASS>

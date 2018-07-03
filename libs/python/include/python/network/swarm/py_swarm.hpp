@@ -80,7 +80,7 @@ public:
   std::shared_ptr<fetch::swarm::SwarmNode> swarmNode_;
   std::shared_ptr<fetch::swarm::SwarmParcelNode> parcelNode_;
   std::shared_ptr<fetch::swarm::SwarmAgentApiImpl> swarmAgentApi_;
-  std::shared_ptr<fetch::swarm::SwarmHttpInterface> httpInterface_;
+  std::shared_ptr<fetch::swarm::SwarmHttpModule> httpModule_;
 
   explicit PySwarm(unsigned int id, uint16_t rpcPort, uint16_t httpPort, unsigned int maxpeers, unsigned int idlespeed, unsigned int solvespeed)
   {
@@ -103,9 +103,9 @@ public:
     std::cout << "PySwarm: H" << std::endl;
 
     std::cout << "PySwarm: I" << std::endl;
-    auto httpInterface = std::make_shared<SwarmHttpInterface>(swarmNode);
+    auto httpModule = std::make_shared<SwarmHttpModule>(swarmNode);
     std::cout << "PySwarm: J" << std::endl;
-    nnCore -> AddModule(*httpInterface);
+    nnCore -> AddModule(httpModule);
     std::cout << "PySwarm: K" << std::endl;
 
     std::cout << "PySwarm: L" << std::endl;
@@ -116,7 +116,7 @@ public:
     swarmNode_ = swarmNode;
     parcelNode_ = parcelNode;
     swarmAgentApi_ = swarmAgentApi;
-    httpInterface_ = httpInterface;
+    httpModule_ = httpModule;
 
     nnCore_ -> Start();
 
