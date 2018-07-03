@@ -114,12 +114,14 @@ public:
   {
     std::string name_local(name);
     assigners_[name] =
-      [name_local,assignee,this](const std::set<std::string> &args, std::list<std::string> &errs) mutable {
+      [name_local,&assignee,this](const std::set<std::string> &args, std::list<std::string> &errs) mutable {
       if (args.find(name_local) == args.end())
         {
           errs.push_back(std::string("missingarg:") + name_local);
           return;
         }
+
+      //std::cout << "Assigning " < assignee << " to " << name_local << " is " <<  this->paramsParser_.GetParam<TYPE>(name_local, TYPE()) << std::endl;
       assignee = this -> paramsParser_.GetParam<TYPE>(name_local, TYPE());
     };
 

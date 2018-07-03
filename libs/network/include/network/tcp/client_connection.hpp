@@ -31,10 +31,11 @@ class ClientConnection : public AbstractConnection {
         manager_(manager),
         write_mutex_(__LINE__, __FILE__) {
     LOG_STACK_TRACE_POINT;
-    auto ptr = socket_.lock();
-    if(ptr) {
+    auto socket_ptr = socket_.lock();
+    if(socket_ptr) {
+      this->SetAddress(socket_ptr->remote_endpoint().address().to_string());
       fetch::logger.Debug("Server: Connection from ",
-        ptr->remote_endpoint().address().to_string());
+        socket_ptr->remote_endpoint().address().to_string());
     }
     
   }
@@ -68,13 +69,6 @@ class ClientConnection : public AbstractConnection {
     }
   }
 
-  std::string Address()  {
-    LOG_STACK_TRACE_POINT;
-    auto ptr = socket_.lock();
-    if(!ptr) return "";
-    
-    return ptr->remote_endpoint().address().to_string();
-  }
 
   uint16_t Type() const override 
   {
@@ -84,31 +78,37 @@ class ClientConnection : public AbstractConnection {
  private:
   void ReadHeader() {
     LOG_STACK_TRACE_POINT;
-    auto ptr = socket_.lock();
-    if(!ptr) return;
+    auto socket_ptr = socket_.lock();
+    if(!socket_ptr) return;
 
     fetch::logger.Debug("Server: Waiting for next header.");
     auto self(shared_from_this());
-    auto cb = [this, self](std::error_code ec, std::size_t len) {
+    auto cb = [this,socket_ptr, self](std::error_code ec, std::size_t len) {
       auto ptr = manager_.lock();
-      if(!ptr) return;
-
+      if(!ptr) {
+        std::cout << "YYY" << std::endl;
+        
+        return;
+      }
+      
       if (!ec) {
         fetch::logger.Debug("Server: Read header.");
         ReadBody();
       } else {
+        std::cout << "Blah blah: " << ec << std::endl;
+        
         ptr->Leave(this->handle());
       }
     };
-
-    asio::async_read(*ptr, asio::buffer(header_.bytes, 2 * sizeof(uint64_t)),
+    
+    asio::async_read(*socket_ptr, asio::buffer(header_.bytes, 2 * sizeof(uint64_t)),
                      cb);
   }
 
   void ReadBody() {
     LOG_STACK_TRACE_POINT;
-    auto ptr = socket_.lock();
-    if(!ptr) return;
+    auto socket_ptr = socket_.lock();
+    if(!socket_ptr) return;
     
     byte_array::ByteArray message;
 
@@ -122,21 +122,29 @@ class ClientConnection : public AbstractConnection {
 
     message.Resize(header_.content.length);
     auto self(shared_from_this());
-    auto cb = [this, self, message](std::error_code ec, std::size_t len) {
+    auto cb = [this, socket_ptr, self, message](std::error_code ec, std::size_t len) {
       auto ptr = manager_.lock();
-      if(!ptr) return;
+      if(!ptr)  {
+        std::cout << "XXXX" << std::endl;
+          
+        return;
+      }
+      
       
       if (!ec) {
         fetch::logger.Debug("Server: Read body.");
         ptr->PushRequest(this->handle(), message);
         ReadHeader();
       } else {
+
+        std::cout << "Was here?" << std::endl;
+        
         ptr->Leave(this->handle());
 
       }
     };
 
-    asio::async_read(*ptr, asio::buffer(message.pointer(), message.size()),
+    asio::async_read(*socket_ptr, asio::buffer(message.pointer(), message.size()),
                      cb);
   }
 
@@ -158,8 +166,8 @@ class ClientConnection : public AbstractConnection {
 
   void Write() {
     LOG_STACK_TRACE_POINT;
-    auto ptr = socket_.lock();
-    if(!ptr) return;
+    auto socket_ptr = socket_.lock();
+    if(!socket_ptr) return;
 
     write_mutex_.lock();
 
@@ -175,7 +183,7 @@ class ClientConnection : public AbstractConnection {
     write_mutex_.unlock();
 
     auto self = shared_from_this();
-    auto cb = [this, buffer, header, self](std::error_code ec, std::size_t) {
+    auto cb = [this, buffer,socket_ptr, header, self](std::error_code ec, std::size_t) {
       auto ptr = manager_.lock();
       if(!ptr) return;
 
@@ -191,7 +199,7 @@ class ClientConnection : public AbstractConnection {
       asio::buffer(header.pointer(), header.size()),
       asio::buffer(buffer.pointer(), buffer.size())};
 
-    asio::async_write(*ptr, buffers, cb);
+    asio::async_write(*socket_ptr, buffers, cb);
   }
 
   std::weak_ptr< asio::ip::tcp::tcp::socket > socket_;

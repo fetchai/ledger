@@ -49,12 +49,18 @@ class ServiceClient : public T,
     // Disconnect callbacks
     super_type::Cleanup();
     super_type::Close();
+    int counter{0};
 
     // Can only guarantee we are not being called when socket is closed
     while(!super_type::Closed())
     {
-      std::cout << "Waiting for super to close!" << std::endl;
+      std::cout << "Waiting for super to close! " << counter++  << std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+      if(counter > 1000)
+      {
+        break;
+      }
     }
   }
 
