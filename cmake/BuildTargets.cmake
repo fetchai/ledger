@@ -114,10 +114,14 @@ function(configure_vendor_targets)
     enable_testing()
   endif(FETCH_ENABLE_TESTS)
 
+  file(GLOB_RECURSE _asio_headers ${FETCH_ROOT_VENDOR_DIR}/asio/*.hpp)
+  file(GLOB_RECURSE _asio_impls ${FETCH_ROOT_VENDOR_DIR}/asio/*.ipp)
+
   # asio vendor library
   add_library(vendor-asio INTERFACE)
   target_include_directories(vendor-asio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/asio/asio/include)
   target_compile_definitions(vendor-asio INTERFACE ASIO_STANDALONE ASIO_HEADER_ONLY ASIO_HAS_STD_SYSTEM_ERROR)
+  target_sources(vendor-asio INTERFACE ${_asio_headers} ${_asio_impls})
 
   # Pybind11
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)
