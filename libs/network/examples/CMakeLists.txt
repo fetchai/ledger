@@ -38,6 +38,9 @@ if(FETCH_ENABLE_EXAMPLES)
   add_executable(example_connection_register_client connection_register/client.cpp)
   target_link_libraries(example_connection_register_client PRIVATE fetch-network)
 
+  add_executable(example_connection_register_server connection_register/server.cpp)
+  target_link_libraries(example_connection_register_server PRIVATE fetch-network)
+
 
   add_executable(example_adv_rpc_aea advanced_rpc/aea.cpp)
   target_link_libraries(example_adv_rpc_aea PRIVATE fetch-network)

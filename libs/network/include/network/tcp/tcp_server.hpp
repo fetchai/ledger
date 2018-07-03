@@ -101,6 +101,12 @@ class TCPServer : public AbstractNetworkServer {
     return manager_->GetAddress(client);
   }
 
+  template<typename X >
+  void SetConnectionRegister(X &reg) 
+  {
+    connection_register_ = reg.pointer();
+  }
+  
  private:
   thread_manager_type     thread_manager_;
   uint16_t                port_;
@@ -123,6 +129,7 @@ class TCPServer : public AbstractNetworkServer {
 
         if(ptr) {
           ptr->Enter( conn->network_client_pointer() );
+          conn->SetConnectionManager( ptr );
         }
         
         conn->Start();
@@ -134,8 +141,7 @@ class TCPServer : public AbstractNetworkServer {
     acceptor_->async_accept(*strongSocket, cb);
   }
 
-
-  std::weak_ptr< ConnectionRegister > connection_register_;
+  std::weak_ptr< AbstractConnectionRegister > connection_register_;
   std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
   std::shared_ptr< ClientManager >            manager_;
 };

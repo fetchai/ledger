@@ -4,6 +4,8 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <functional>
+
 #include "core/assert.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/referenced_byte_array.hpp"
@@ -11,6 +13,7 @@
 #include "network/service/error_codes.hpp"
 #include "network/service/feed_subscription_manager.hpp"
 #include "network/service/types.hpp"
+#include "network/tcp/abstract_connection.hpp"
 
 namespace fetch {
 namespace service {
@@ -33,7 +36,9 @@ class Protocol {
  public:
   typedef AbstractCallable callable_type;
   typedef byte_array::ConstByteArray byte_array_type;
-
+  typedef typename network::AbstractConnection::connection_handle_type connection_handle_type;  
+  typedef std::function< void(connection_handle_type const &, byte_array::ByteArray const &) > middleware_type;
+  
   Protocol() {
     for (std::size_t i = 0; i < 256; ++i) {
       members_[i] = nullptr;
@@ -185,7 +190,23 @@ class Protocol {
     return feeds_;
   }
 
+
+  void AddMiddleware(middleware_type const& m) 
+  {
+    middleware_.push_back(m);
+  }
+
+  void ApplyMiddleware(connection_handle_type const &id, byte_array::ByteArray const &msg) 
+  {
+    for(auto &m: middleware_) {
+      m(id, msg);
+    }
+  }
+  
+  
  private:
+  std::vector< middleware_type > middleware_;
+  
   callable_type *members_[256] = {nullptr};
   std::vector<std::shared_ptr<FeedSubscriptionManager> > feeds_;
   fetch::mutex::Mutex feeds_mutex_;

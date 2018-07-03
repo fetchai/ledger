@@ -28,9 +28,8 @@ class ServiceClient : public T,
                       public ServiceServerInterface {
  public:
   typedef T super_type;
-
   typedef typename super_type::thread_manager_type thread_manager_type;
-  typedef typename thread_manager_type::event_handle_type event_handle_type;
+
 
   ServiceClient(byte_array::ConstByteArray const& host, uint16_t const& port,
                 thread_manager_type thread_manager)
@@ -86,7 +85,7 @@ class ServiceClient : public T,
     return true;
   }
 
-  bool DeliverResponse(handle_type, network::message_type const& msg) override {
+  bool DeliverResponse(connection_handle_type, network::message_type const& msg) override {
     super_type::Send(msg);
     return true;
   }
@@ -115,7 +114,7 @@ class ServiceClient : public T,
         if (!ProcessServerMessage(msg)) {
           fetch::logger.Debug("Looking for RPC functionality");
 
-          if (!PushProtocolRequest(handle_type(-1), msg)) {
+          if (!PushProtocolRequest(connection_handle_type(-1), msg)) {
             throw serializers::SerializableException(
                 error::UNKNOWN_MESSAGE,
                 byte_array::ConstByteArray("Unknown message"));
