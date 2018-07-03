@@ -6,20 +6,32 @@
 #include"storage/object_store_syncronisation_protocol.hpp"
 #include"network/service/server.hpp"
 #include"core/commandline/cli_header.hpp"
+#include"core/commandline/parameter_parser.hpp"
 #include"ledger/chain/transaction.hpp"
+
+#include<sstream>
 using namespace fetch;
 using namespace fetch::storage;
 
 class LaneService : public fetch::service::ServiceServer< fetch::network::TCPServer > {
 public:
-  LaneService(uint16_t port, fetch::network::ThreadManager tm) : ServiceServer(port, tm) {
+  LaneService(uint32_t const &lane, uint16_t port, fetch::network::ThreadManager tm) : ServiceServer(port, tm) {
     store_ = new RevertibleDocumentStore();
-    store_->Load("a.db", "b.db", "c.db", "d.db", true);    
-    store_protocol_ = new RevertibleDocumentStoreProtocol(store_);    
+    std::stringstream s;
+    s << "lane" << lane << "_";
+    std::string prefix = s.str();    
+    
+    store_->Load(prefix+"a.db", prefix+"b.db", prefix+"c.db", prefix+"d.db", true);    
+    store_protocol_ = new RevertibleDocumentStoreProtocol(store_);
+    store_protocol_->AddMiddleware([lane](uint32_t const &n, byte_array::ConstByteArray const &msg) {
+        std::cout << "Getting request on lane " << lane << " from client " << n << std::endl;
+        
+      });
+    
     this->Add(0, store_protocol_ );
 
     tx_store_ = new ObjectStore< fetch::chain::Transaction >();
-    tx_store_->Load("e.db", "f.db", true);    
+    tx_store_->Load(prefix+"e.db", prefix+"f.db", true);    
     tx_store_protocol_ = new ObjectStoreProtocol< fetch::chain::Transaction >(tx_store_);    
     this->Add(1, tx_store_protocol_ );
 
@@ -52,16 +64,28 @@ private:
 };
 
 
-int main() 
+int main(int argc, char const **argv) 
 {
   fetch::logger.DisableLogger();
+  commandline::ParamsParser params;
+  params.Parse(argc, argv);
+  int lane_count =  params.GetParam<int>("lane-count", 1);  
+     
+  std::string dummy;
+  fetch::commandline::DisplayCLIHeader("Multi-lane server");
   
-  fetch::network::ThreadManager tm(8);  
-  LaneService serv(8080, tm);
+  std::cout << "Starting " << lane_count << " lanes." << std::endl << std::endl;
+  
+
+  fetch::network::ThreadManager tm(8);
+  std::vector< std::shared_ptr< LaneService > > lanes;
+  for(int i = 0 ; i < lane_count ; ++i ) {
+    lanes.push_back(std::make_shared< LaneService > (uint32_t(i), uint16_t(8080 + i), tm) );
+  }
+  
   tm.Start();
 
-  std::string dummy;
-  fetch::commandline::DisplayCLIHeader("Single lane server");
+
   
   std::cout << "Press ENTER to quit" << std::endl;                                       
   std::cin >> dummy;
