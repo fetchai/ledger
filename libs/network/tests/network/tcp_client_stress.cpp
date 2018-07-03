@@ -629,11 +629,11 @@ void TestCase14(std::string host, std::string port) {
     fetch::network::LoopbackServer echoServer(emptyPort);
     ThreadManager tmanager(N);
     tmanager.Start();
-    std::vector<VerifyClient *> clients;
+    std::vector<std::shared_ptr<VerifyClient>> clients;
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      clients.push_back(new VerifyClient(host, std::to_string(emptyPort), tmanager));
+      clients.push_back(std::make_shared<VerifyClient>(host, std::to_string(emptyPort), tmanager));
     }
 
     // Precreate data, this handles clearing global counter etc.
@@ -654,7 +654,7 @@ void TestCase14(std::string host, std::string port) {
     {
       auto &client = clients[k % clients.size()];
       auto &data = sendData[k];
-      std::async(std::launch::async, [&client, &data](){client->Send(data);});
+      std::async(std::launch::async, [client, &data](){client->Send(data);});
       expectCount++;
     }
 
@@ -727,11 +727,11 @@ void TestCase15(std::string host, std::string port) {
     fetch::network::LoopbackServer echoServer(emptyPort);
     ThreadManager tmanager(N);
     tmanager.Start();
-    std::vector<VerifyClient *> clients;
+    std::vector<std::shared_ptr<VerifyClient>> clients;
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      clients.push_back(new VerifyClient(host, std::to_string(emptyPort), tmanager));
+      clients.push_back(std::make_shared<VerifyClient>(host, std::to_string(emptyPort), tmanager));
     }
 
     std::size_t messagesToSend = 100;
@@ -787,10 +787,6 @@ void TestCase15(std::string host, std::string port) {
 
     tmanager.Stop();
 
-    for(auto i : clients)
-    {
-      delete i;
-    }
   }
   std::cerr << "Success." << std::endl;
 }
