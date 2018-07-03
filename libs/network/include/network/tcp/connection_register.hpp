@@ -11,7 +11,7 @@ namespace network {
 
 
 template< typename G >
-class ConnectionRegisterImpl : public AbstractConnectionRegister
+class ConnectionRegisterImpl final : public AbstractConnectionRegister
 {
 public:
   
@@ -19,7 +19,7 @@ public:
   typedef std::weak_ptr< AbstractConnection > weak_connection_type;
   typedef G details_type;
   
-  struct  LockableDetails : public details_type, public mutex::Mutex {  };
+  struct  LockableDetails final : public details_type, public mutex::Mutex {  };
 
   virtual ~ConnectionRegisterImpl() 
   {
