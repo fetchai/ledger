@@ -677,10 +677,6 @@ void TestCase14(std::string host, std::string port) {
         << TimeDifference(t1, t2) << std::endl;
     }
 
-    for(auto i : clients)
-    {
-      delete i;
-    }
 
     // Verify we transmitted correctly
     if(globalMessages.size() == 0)

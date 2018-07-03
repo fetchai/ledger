@@ -113,7 +113,7 @@ public:
     ptr_->Enter(wptr);
   }
 
-  lockable_details_type GetDetails(connection_handle_type const &i) 
+  std::shared_ptr< lockable_details_type > GetDetails(connection_handle_type const &i) 
   {
     return ptr_->GetDetails(i);
   }

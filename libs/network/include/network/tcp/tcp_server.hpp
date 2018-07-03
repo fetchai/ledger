@@ -41,12 +41,13 @@ class TCPServer : public AbstractNetworkServer {
   {
     LOG_STACK_TRACE_POINT;
     manager_ = std::make_shared< ClientManager >(*this);
-    acceptor_ = thread_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
-      (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));    
     
     thread_manager_.Post([this]
     {
-      Accept();
+      auto acceptor = thread_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
+        (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));    
+      
+      Accept(acceptor);
     });
   }
 
@@ -113,13 +114,13 @@ class TCPServer : public AbstractNetworkServer {
   std::deque<Request>     requests_;
   fetch::mutex::Mutex     request_mutex_;
 
-  void Accept() {
+  void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor) {
     LOG_STACK_TRACE_POINT;
 
     auto strongSocket = thread_manager_.CreateIO<asio::ip::tcp::tcp::socket>();    
     std::weak_ptr< ClientManager >  man = manager_;
         
-    auto cb = [this, man, strongSocket](std::error_code ec) {
+    auto cb = [this, man, acceptor, strongSocket](std::error_code ec) {
       auto lock_ptr = man.lock();
       if(!lock_ptr) return;
       
@@ -135,14 +136,13 @@ class TCPServer : public AbstractNetworkServer {
         conn->Start();
       }
 
-      Accept();
+      Accept(acceptor);
     };
 
-    acceptor_->async_accept(*strongSocket, cb);
+    acceptor->async_accept(*strongSocket, cb);
   }
 
   std::weak_ptr< AbstractConnectionRegister > connection_register_;
-  std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
   std::shared_ptr< ClientManager >            manager_;
 };
 }
