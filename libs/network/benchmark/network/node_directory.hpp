@@ -3,15 +3,16 @@
 
 // This file holds and manages connections to other nodes
 
-#include"chain/transaction.hpp"
-#include"./protocols/fetch_protocols.hpp"
-#include"./protocols/network_benchmark/commands.hpp"
-#include"./network_classes.hpp"
-#include"../tests/include/helper_functions.hpp"
-#include"network/service/client.hpp"
-#include"network/service/server.hpp"
-#include"core/logger.hpp"
-#include<set>
+#include "core/logger.hpp"
+#include "network/service/client.hpp"
+#include "network/service/server.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "./protocols/fetch_protocols.hpp"
+#include "./protocols/network_benchmark/commands.hpp"
+#include "./network_classes.hpp"
+#include "../tests/include/helper_functions.hpp"
+
+#include <set>
 
 namespace fetch
 {

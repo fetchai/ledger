@@ -2,6 +2,7 @@
 #define STORAGE_KEY_VALUE_INDEX_HPP
 #include "storage/random_access_stack.hpp"
 #include "storage/cached_random_access_stack.hpp"
+#include "storage/versioned_random_access_stack.hpp"
 #include "storage/key.hpp"
 #include "crypto/sha256.hpp"
 
@@ -68,7 +69,7 @@ struct KeyValuePair {
     
 };
   
-  template <typename KV = KeyValuePair< >, typename D = CachedRandomAccessStack< KV, uint64_t > >
+template <typename KV = KeyValuePair< >, typename D = VersionedRandomAccessStack< KV, uint64_t > >
 class KeyValueIndex {
   struct UpdateTask {
     uint64_t priority;
@@ -87,6 +88,7 @@ public:
   typedef typename key_value_pair::key_type key_type;
     KeyValueIndex() 
     {
+      
       stack_.OnFileLoaded([this]() {
           root_ = stack_.header_extra();
         });
@@ -192,6 +194,7 @@ public:
 
   
   void Delete(byte_array::ConstByteArray const &key) {
+    TODO_FAIL("Not implemented");
   }
 
   void GetElement(uint64_t const &i, index_type &v) {
@@ -199,7 +202,25 @@ public:
     stack_.Get(i, p);
     v = p.value;
   }
-  
+
+  bool GetIfExists(byte_array::ConstByteArray const &key_str, index_type &value) 
+  {
+    key_type key(key_str);   
+    bool split = true;
+    int pos = 0;
+    key_value_pair kv;
+    int left_right = 0;
+    index_type depth = 0;    
+    FindNearest(key, kv, split, pos, left_right, depth);
+
+    
+    if(!split) {
+      value = kv.value;
+    }
+    
+    return ! split ;
+  }   
+    
   index_type Get(byte_array::ConstByteArray const &key_str) {
     key_type key(key_str);   
     bool split;
@@ -324,9 +345,12 @@ public:
 
   byte_array::ByteArray Hash() {
     stack_.Flush();
-    
     key_value_pair kv;
-    stack_.Get(root_, kv);
+    
+    if(stack_.size() > 0) {
+      stack_.Get(root_, kv);
+    }
+    
     return kv.Hash();
   }
 
@@ -355,6 +379,19 @@ public:
       stack_.Close();
     }
     
+  typedef uint64_t bookmark_type;
+  bookmark_type Commit() {
+    return stack_.Commit();
+  }
+
+  bookmark_type Commit(bookmark_type const& b) {
+    return stack_.Commit(b);
+  }  
+  
+  void Revert(bookmark_type const &b) {
+    stack_.Revert(b);
+    root_ = stack_.header_extra();
+  }
 
   uint64_t const &root_element() const { return root_; }
 private:

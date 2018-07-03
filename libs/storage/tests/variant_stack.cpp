@@ -22,6 +22,7 @@ int main() {
 
       bool all_pass = true;
       for (int64_t i = 0; i < N; ++i) {
+
         SILENT_EXPECT((stack.size() == i));
         all_pass &= (stack.size() == i);
 

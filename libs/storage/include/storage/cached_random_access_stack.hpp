@@ -14,6 +14,7 @@ namespace storage {
 template <typename T, typename D = uint64_t>
 class CachedRandomAccessStack {
  public:
+  typedef std::function< void() > event_handler_type;  
   typedef RandomAccessStack<T,D> stack_type;
   typedef D header_extra_type;
   typedef T type;
@@ -24,16 +25,15 @@ class CachedRandomAccessStack {
         this-> objects_ = stack_.size();
         SignalFileLoaded() ;
       });
+    stack_.OnBeforeFlush([this]() {
+        SignalBeforeFlush() ;
+      });    
   }
   
   ~CachedRandomAccessStack() {
     stack_.ClearEventHandlers();
   }
 
-  typedef std::function< void() > event_handler_type;
-
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
 
   void ClearEventHandlers() 
   {
@@ -49,6 +49,7 @@ class CachedRandomAccessStack {
     on_before_flush_ = f;
   }
 
+//TODO: Move private or protected
   void SignalFileLoaded() {
     if(on_file_loaded_) on_file_loaded_();
   }
@@ -60,8 +61,8 @@ class CachedRandomAccessStack {
   
   static constexpr bool DirectWrite() { return false; }
   
-  void Load(std::string const &filename) {
-    stack_.Load(filename);
+  void Load(std::string const &filename, bool const &create_if_not_exists = true) {
+    stack_.Load(filename, create_if_not_exists);
     total_access_ = 0;
     this->SignalFileLoaded();
   }
@@ -73,7 +74,7 @@ class CachedRandomAccessStack {
     this->SignalFileLoaded();
   }
 
-  void Get(uint64_t const &i, type &object)  {
+  void Get(uint64_t const &i, type &object) const  {
     assert( i < objects_ );
     ++total_access_;
 
@@ -190,8 +191,12 @@ class CachedRandomAccessStack {
   }
   
  private:
+
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
+  
   stack_type stack_;    
-  uint64_t total_access_;
+  mutable uint64_t total_access_;
   struct CachedDataItem {
     uint64_t reads = 0;
     uint64_t writes = 0;
@@ -199,7 +204,7 @@ class CachedRandomAccessStack {
     type data;
   };
   
-  std::map< uint64_t, CachedDataItem > data_;
+  mutable std::map< uint64_t, CachedDataItem > data_;
   uint64_t objects_ = 0;
 };
 }

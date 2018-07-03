@@ -16,169 +16,169 @@ class VariantStack {
   struct Separator {
     uint64_t type;
     uint64_t object_size;
-    int64_t next;
     int64_t previous;
-
-    bool Write(std::fstream &stream) const {
-      if ((!stream) || (!stream.is_open())) return false;
-      stream.write(reinterpret_cast<char const *>(&type), sizeof(type));
-      stream.write(reinterpret_cast<char const *>(&object_size),
-                   sizeof(object_size));
-      stream.write(reinterpret_cast<char const *>(&next), sizeof(next));
-      stream.write(reinterpret_cast<char const *>(&previous), sizeof(previous));
-      return bool(stream);
+    Separator() 
+    {
+      memset(this, 0, sizeof(decltype(*this)));
     }
-
-    bool Read(std::fstream &stream) {
-      if ((!stream) || (!stream.is_open())) return false;
-      stream.read(reinterpret_cast<char *>(&type), sizeof(type));
-      stream.read(reinterpret_cast<char *>(&object_size), sizeof(object_size));
-      stream.read(reinterpret_cast<char *>(&next), sizeof(next));
-      stream.read(reinterpret_cast<char *>(&previous), sizeof(previous));
-
-      return bool(stream);
+    Separator(uint64_t const& t, uint64_t const& o, int64_t const& p) 
+    {
+      memset(this, 0, sizeof(decltype(*this))); 
+      type = t;
+      object_size = o;
+      previous = p;     
     }
-
-    constexpr std::size_t size() const {
-      return sizeof(type) + sizeof(object_size) + sizeof(next) +
-             sizeof(previous);
-    }
+    
   };
 
   struct Header {
-    int64_t start = int64_t(Header::size());
-    int64_t end = int64_t(Header::size());
-    int64_t last = -1;
-    int64_t object_count = 0;
-
-    bool Write(std::fstream &stream) const {
-      if ((!stream) || (!stream.is_open())) return false;
-      stream.seekg(0, stream.beg);
-      stream.write(reinterpret_cast<char const *>(&start), sizeof(start));
-      stream.write(reinterpret_cast<char const *>(&end), sizeof(end));
-      stream.write(reinterpret_cast<char const *>(&last), sizeof(last));
-      stream.write(reinterpret_cast<char const *>(&object_count),
-                   sizeof(object_count));
-      return bool(stream);
+    uint64_t object_count;
+    int64_t end;
+    
+    Header(uint64_t const &o, int64_t const &e) 
+    {
+      memset(this, 0, sizeof(decltype(*this)));      
+      object_count = o;
+      end = e;      
     }
-
-    bool Read(std::fstream &stream) {
-      if ((!stream) || (!stream.is_open())) return false;
-      stream.seekg(0, stream.beg);
-      stream.read(reinterpret_cast<char *>(&start), sizeof(start));
-      stream.read(reinterpret_cast<char *>(&end), sizeof(end));
-      stream.read(reinterpret_cast<char *>(&last), sizeof(last));
-      stream.read(reinterpret_cast<char *>(&object_count),
-                  sizeof(object_count));
-      return bool(stream);
-    }
-
-    constexpr std::size_t size() const {
-      return sizeof(start) + sizeof(end) + sizeof(last);
-    }
+    
+    Header() 
+    {
+      memset(this, 0, sizeof(decltype(*this)));
+      end = sizeof(decltype(*this)) + sizeof(Separator);
+    }   
   };
-
-  void Load(std::string const &filename) {
+  
+  ~VariantStack() 
+  {
+    Close();
+  }
+  
+  void Load(std::string const &filename, bool const &create_if_not_exists = true) {
     filename_ = filename;
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
-    header_.Read(fin);
+    file_ = std::fstream(filename_,
+      std::ios::in | std::ios::out | std::ios::binary);
+    if(!file_) {
+      if(create_if_not_exists) {
+        
+        Clear();
+        file_ = std::fstream(filename_,
+          std::ios::in | std::ios::out | std::ios::binary);
+      } else {
+        TODO_FAIL("Could not load file");
+      }
+    }
+    
+    ReadHeader();
   }
 
   void New(std::string const &filename) {
     filename_ = filename;
     Clear();
+    file_ = std::fstream(filename_,
+      std::ios::in | std::ios::out | std::ios::binary);
+    assert(bool(file_));
+    
+  }
+  
+  void Close() 
+  {
+    WriteHeader();
+    if(file_.is_open()) {
+      file_.close();
+    }
   }
 
-  enum { UNDEFINED_POSITION = -1 };
-
+  enum { UNDEFINED_POSITION =  int64_t(-1) };
+  enum { HEADER_OBJECT = uint64_t(-2) };
+  
   template <typename T>
-  void Push(T const &object, uint64_t const &type = 0) {
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
-    fin.seekg(header_.end, fin.beg);
+  void Push(T const &object, uint64_t const &type = uint64_t(-1)) {
+    assert( bool(file_) );    
+    file_.seekg(header_.end, file_.beg);
+    Separator separator = {type, sizeof(T),  header_.end };
 
-    Separator separator = {type, sizeof(T), UNDEFINED_POSITION, header_.last};
-
-    fin.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
-    fin.write(reinterpret_cast<char const *>(&object), sizeof(T));
-
-    fin.seekg(header_.last, fin.beg);
-    fin.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
-    separator.next = header_.end;
-    fin.seekg(header_.last, fin.beg);
-    fin.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
-
-    header_.last = header_.end;
+    file_.write(reinterpret_cast<char const *>(&object), sizeof(T));
+    file_.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
     header_.end += sizeof(T) + sizeof(Separator);
     ++header_.object_count;
-    header_.Write(fin);
-
-    fin.close();
+//    WriteHeader();    
   }
 
   void Pop() {
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
-    fin.seekg(header_.last, fin.beg);
+    file_.seekg(header_.end - int64_t(sizeof(Separator)), file_.beg);
     Separator separator;
 
-    fin.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
+    file_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
 
-    header_.end = header_.last;
-    header_.last = separator.previous;
+    header_.end = separator.previous;
     --header_.object_count;
-    header_.Write(fin);
-
-    fin.close();
+//    WriteHeader();    
   }
 
   template <typename T>
   uint64_t Top(T &object) {
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
-    fin.seekg(header_.last, fin.beg);
+    assert( bool(file_) );
+
+    file_.seekg(header_.end - int64_t(sizeof(Separator)), file_.beg);
     Separator separator;
 
-    fin.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
+    file_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
+    int64_t offset = int64_t(sizeof(Separator) + separator.object_size);
+    
     if (separator.object_size != sizeof(T)) {
+      std::cout << offset << " " << separator.object_size << " " << sizeof(T) << std::endl;
+      
       TODO_FAIL("TODO: Throw error, size mismatch in variantstack");
     }
 
-    fin.read(reinterpret_cast<char *>(&object), sizeof(T));
-    fin.close();
+    file_.seekg(header_.end - offset, file_.beg); 
+    file_.read(reinterpret_cast<char *>(&object), sizeof(T));
     return separator.type;
   }
 
   uint64_t Type() {
-    std::fstream fin(filename_,
-                     std::ios::in | std::ios::out | std::ios::binary);
-    fin.seekg(header_.last, fin.beg);
+    file_.seekg(header_.end - int64_t(sizeof(Separator)), file_.beg);
     Separator separator;
 
-    fin.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
-
-    fin.close();
+    file_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
+    
     return separator.type;
   }
 
   void Clear() {
+
     assert(filename_ != "");
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
-
+    fin.seekg(0, fin.beg);
+    
+    Separator separator = {HEADER_OBJECT, 0, UNDEFINED_POSITION} ;
+    
     header_ = Header();
-
-    if (!header_.Write(fin)) {
-      TODO_FAIL("Error: could not write header");
-    }
-
+    fin.write(reinterpret_cast<char const *>(&header_), sizeof(Header));
+    fin.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
+      
     fin.close();
   }
 
-  bool empty() const { return header_.start == header_.end; }
-  int64_t size() const { return header_.object_count; }
+  bool empty() const { return header_.object_count == 0; }
+  int64_t size() const { return int64_t(header_.object_count); }
+  protected: 
+  void ReadHeader() 
+  {
+    file_.seekg(0, file_.beg);
+    file_.read(reinterpret_cast<char *>(&header_), sizeof(Header));
+  }
 
- private:
+  void WriteHeader() 
+  {
+    file_.seekg(0, file_.beg);    
+    file_.write(reinterpret_cast<char const *>(&header_), sizeof(Header));    
+  }
+  
+  
+ private:  
+  std::fstream file_;  
   std::string filename_ = "";
   Header header_;
 };

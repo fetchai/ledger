@@ -37,7 +37,7 @@ function(setup_library_examples library)
     list(REMOVE_AT ARGV 0)
 
     # examples
-    set(examples_root ${CMAKE_CURRENT_SOURCE_DIR}/examples)
+    set(examples_root ${CMAKE_CURRENT_SOURCE_DIR})
     if(IS_DIRECTORY ${examples_root})
 
       file(GLOB children RELATIVE ${examples_root} ${examples_root}/*)

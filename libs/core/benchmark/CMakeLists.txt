@@ -1,5 +1,5 @@
 ################################################################################
-# F E T C H   H T T P   L I B R A R Y
+# F E T C H   C O R E   B E N C H M A R K S
 ################################################################################
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(fetch-core)
@@ -16,4 +16,7 @@ setup_compiler()
 
 add_executable(benchmark_json_document json/document.cpp)
 target_link_libraries(benchmark_json_document PRIVATE fetch-core fetch-testing)
+
+add_executable(serialisation serialisation/main.cpp)
+target_link_libraries(serialisation PRIVATE fetch-core fetch-testing)
 

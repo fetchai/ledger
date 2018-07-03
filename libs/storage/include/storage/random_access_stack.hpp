@@ -119,7 +119,6 @@ class RandomAccessStack {
     // TODO: Check magic
 
     SignalFileLoaded();    
-    
   }
 
   void New(std::string const &filename) {
@@ -246,7 +245,7 @@ class RandomAccessStack {
    
   void StoreHeader() {
     assert(filename_ != "");
-
+    
     if (!header_.Write(file_handle_)) {
       TODO_FAIL("Error could not write header - todo throw error");
     }
