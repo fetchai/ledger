@@ -171,13 +171,11 @@ public:
     
     
     if(key_index_.GetIfExists(address, index)) {
-      std::cout << "Get 1: " << index << std::endl;
-      
       return Document(this, address, file_store_, index);
     } else if(!create) {
-      TODO_FAIL("TODO: Throw error");
+      TODO_FAIL("TODO: Throw error, could not get doc as it does not exist");
     }
-    std::cout << "Get 2" << std::endl;
+
     Document doc = Document(this, address, file_store_);
 
     return doc;
