@@ -102,7 +102,7 @@ public:
   {
     std::string name_local(name);
     TYPE deflt_local = deflt;
-    assigners_[name] = [name_local,assignee,deflt_local,this](const std::set<std::string> &args, std::list<std::string> &errs) mutable {
+    assigners_[name] = [name_local,&assignee,deflt_local,this](const std::set<std::string> &args, std::list<std::string> &errs) mutable {
       assignee = this -> paramsParser_.GetParam<TYPE>(name_local, deflt_local);
     };
 

@@ -69,7 +69,6 @@ public:
 
   virtual std::shared_ptr<client_type> ConnectTo(const std::string &host, unsigned short port)
   {
-    lock_type mlock(mutex_);
     std::shared_ptr<client_type> client = std::make_shared<client_type>( host, port, tm_ );
 
     int waits = 25;
@@ -80,7 +79,7 @@ public:
           {
             throw std::invalid_argument("Bad connection to " + host + ":" + std::to_string(port));
           }
-        usleep(1000);
+        usleep(200);
       }
     return client;
   }
