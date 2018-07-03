@@ -65,8 +65,15 @@ class TCPClientImplementation final :
       shared_self_type selfLock = self.lock();
       if(!selfLock) return;
 
+      if(closed_)
+      {
+        std::cout << "**** *already closdd!!!!" << std::endl;
+        return;
+      }
+
       // We get a weak socket from the thread manager. This must only be strong in the TM queue
       std::shared_ptr<socket_type> socket = threadManager_.CreateIO<socket_type>();
+      std::cout << "Create new socket " << &socket_ << std::endl;
       socket_ = socket;
 
       std::shared_ptr<resolver_type> res = threadManager_.CreateIO<resolver_type>();
@@ -137,13 +144,17 @@ class TCPClientImplementation final :
     return AbstractConnection::TYPE_OUTGOING;
   }
 
+  bool closed_{false};
   
   void Close() noexcept
   {
     std::weak_ptr<socket_type> socketWeak = socket_;
+    bool &closed = closed_;
 
-    threadManager_.Post(strand_->wrap( [socketWeak]
+    threadManager_.Post(strand_->wrap( [socketWeak, &closed]
       {
+        closed = true;
+        //std::cout << "Close socket " << std::endl;
         auto socket = socketWeak.lock();
         if(socket)
         {
@@ -213,6 +224,7 @@ class TCPClientImplementation final :
     LOG_STACK_TRACE_POINT;
     self_type self = shared_from_this();
     auto socket = socket_.lock();
+    //std::weak_ptr<socket_type>      weakSocket = socket_;
     byte_array::ByteArray header;
 
     // TODO: (`HUT`) : fix. the requirement for strong self here
@@ -232,7 +244,7 @@ class TCPClientImplementation final :
 
     if(socket)
     {
-      asio::async_read(*socket, asio::buffer(this->header_.bytes, 2 * sizeof(uint64_t)), cb);
+      asio::async_read(*socket, asio::buffer(this->header_.bytes, 2 * sizeof(uint64_t)), strand_->wrap(cb));
       connected_ = true;
     }
   }
@@ -267,7 +279,7 @@ class TCPClientImplementation final :
 
     if(socket)
     {
-      asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), cb);
+      asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), strand_->wrap(cb));
     }
   }
 
@@ -333,7 +345,7 @@ class TCPClientImplementation final :
     //auto socket = socket_.lock();
     if(socket)
     {
-      asio::async_write(*socket, buffers, cb);
+      asio::async_write(*socket, buffers, strand_->wrap(cb));
     } else {
       fetch::logger.Error("Failed to lock socket in WriteNext!");
     }
