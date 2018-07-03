@@ -54,14 +54,18 @@ class ServiceClient : public T,
     // Can only guarantee we are not being called when socket is closed
     while(!super_type::Closed())
     {
+      super_type::Close();
+
       std::cout << "Waiting for super to close! " << counter++  << std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-      if(counter > 1000)
+      if(counter > 100)
       {
         break;
       }
     }
+
+    std::cout << "finished at counter: " << counter << std::endl;
   }
 
   void PushMessage(network::message_type const& msg) override {
@@ -74,13 +78,15 @@ class ServiceClient : public T,
       std::cout << "*****PUSHED CLIENT*****" << std::endl;
     }
 
+    ProcessMessages();
+    /*
     // Since this class isn't shared_from_this, try to ensure safety when destructing
     thread_manager_.Post([this]()
     {
     std::cout << "process messages!" << std::endl;
       ProcessMessages();
     std::cout << "process messages finished!" << std::endl;
-    });
+    }); */
   }
 
   void ConnectionFailed() override {
