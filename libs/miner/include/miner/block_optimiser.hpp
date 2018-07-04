@@ -73,7 +73,7 @@ public:
    */
   void ConfigureAnnealer(std::size_t const &sweeps, double const& b0, double const& b1 ) {
     annealer_.SetSweeps(sweeps);
-    annealer_.SetBetaEnd(b0);    
+    annealer_.SetBetaStart(b0);
     annealer_.SetBetaEnd(b1);
   }
 
