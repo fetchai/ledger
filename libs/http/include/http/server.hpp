@@ -45,6 +45,8 @@ class HTTPServer : public AbstractHTTPServer {
   {
     LOG_STACK_TRACE_POINT;
 
+    std::cout << "|||| HTTPServer::HTTPServer()" << std::endl;
+
     std::shared_ptr<manager_type> manager              = manager_;
     std::weak_ptr<socket_type>           &socRef       = socket_; // TODO: (`HUT`) : check this is valid
     std::weak_ptr<acceptor_type>         &accepRef     = acceptor_;
@@ -73,6 +75,7 @@ class HTTPServer : public AbstractHTTPServer {
   ~HTTPServer() {
     LOG_STACK_TRACE_POINT;
 
+    std::cout << "|||| HTTPServer::~HTTPServer()" << std::endl;
     auto socketWeak = socket_;
     auto accepWeak  = acceptor_;
 

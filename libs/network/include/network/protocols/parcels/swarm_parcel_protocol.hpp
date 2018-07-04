@@ -8,6 +8,7 @@ using std::cerr;
 using std::string;
 
 #include "network/service/protocol.hpp"
+#include "commands.hpp"
 #include "network/interfaces/parcels/swarm_parcel_node_interface.hpp"
 
 namespace fetch
@@ -21,8 +22,8 @@ class SwarmParcelProtocol : public fetch::service::Protocol
   //TODO(katie) service calls should be an enum
 public:
   SwarmParcelProtocol(SwarmParcelNodeInterface *node) : Protocol() {
-    this->Expose(1,           node,  &SwarmParcelNodeInterface::ClientNeedParcelList);
-    this->Expose(2,           node,  &SwarmParcelNodeInterface::ClientNeedParcelData);
+    this->Expose(protocols::SwarmParcels::CLIENT_NEEDS_PARCEL_IDS,           node,  &SwarmParcelNodeInterface::ClientNeedParcelList);
+    this->Expose(protocols::SwarmParcels::CLIENT_NEEDS_PARCEL_DATA,          node,  &SwarmParcelNodeInterface::ClientNeedParcelData);
    }
 };
 

@@ -160,6 +160,14 @@ class TCPServer : public AbstractNetworkServer {
   std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
 //  std::weak_ptr<asio::ip::tcp::tcp::socket>   socket_;
   std::shared_ptr< ClientManager >            manager_;
+
+///  fetch::mutex::Mutex request_mutex_;
+//  thread_manager_type thread_manager_;
+//  std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor_;
+//  std::shared_ptr<asio::ip::tcp::tcp::socket> socket_;
+//  std::deque<Request> requests_;
+//  ClientManager* manager_;
+
 };
 }
 }

@@ -48,7 +48,7 @@ public:
 
     port_ = httpPort;
     node_ = node;
-    httpInterface_ = std::make_shared<SwarmHttpInterface>(node);
+    httpModule_ = std::make_shared<SwarmHttpModule>(node);
     rpcInterface_ = std::make_shared<SwarmProtocol>(node_.get());
 
     // Add middleware to the HTTP server - allow requests from any address,
@@ -56,7 +56,7 @@ public:
     this->AddMiddleware(fetch::http::middleware::AllowOrigin("*"));
     this->AddMiddleware(fetch::http::middleware::ColorLog);
 
-    this->AddModule(*httpInterface_);
+    this->AddModule(*httpModule_);
 
     addRpcProtocol(protocols::FetchProtocols::SWARM, rpcInterface_.get());
   }
@@ -79,7 +79,7 @@ public:
 protected:
   uint16_t                            port_;
   std::shared_ptr<SwarmNode>          node_;
-  std::shared_ptr<SwarmHttpInterface> httpInterface_;
+  std::shared_ptr<SwarmHttpModule> httpModule_;
   std::shared_ptr<SwarmProtocol>      rpcInterface_;
   fetch::network::ThreadManager       tm_;
 };

@@ -25,6 +25,9 @@ class RunSwarmArgs(object):
         self.parser.add_argument("--solvespeed", help="chance of solving a block as 1/N", type=int, default=1000)
         self.parser.add_argument("--idlespeed", help="idle cycle time in MS for a node", type=int, default=1000)
         self.parser.add_argument("--logdir", help="where to put individual logfiles", type=str, default="./")
+        self.parser.add_argument("--startindex", help="Index of first launchable node", type=int, default=0)
+        self.parser.add_argument("--debugger", help="Name of debugger", type=str, default="")
+        self.parser.add_argument("--clean", help="Name of debugger", default=False, action='store_true')
 
         self.data =  self.parser.parse_args()
 
@@ -46,12 +49,50 @@ def createSwarm(args):
     yield swarm
     swarm.close()
 
+@contextmanager
+def createSwarmWatcher(*args, **kwargs):
+    x = SwarmWatcher(*args, **kwargs)
+    yield x
+    x.close()
+
+
+class SwarmWatcher(object):
+    def __init__(self, args):
+        self.binary = args.binary.split(' ')[0]
+        pass
+
+    def watch(self):
+        p = subprocess.Popen(
+            "ps -ef | grep {} | grep -- \"-id\" | grep -v bin/sh | grep -v python | grep -v grep | wc -l".format(self.binary),
+            shell=True,
+            stdout=subprocess.PIPE
+            )
+        out, err = p.communicate()
+        alive = out.decode("utf-8").split('\n')
+        alive = int(alive[0])
+        print("Still Alive: ", alive)
+        if not alive:
+            return False
+        return True
+
+    def close(self):
+        pass
+
+def killall():
+    cmd = "clear; ps -ef | grep pyfetch/pyfetch | grep -v 'bin/sh' | cut -c8-1000 | cut -d' ' -f1 | xargs kill"
+    p = subprocess.Popen(cmd,
+        shell=True,
+        stdout=subprocess.PIPE
+    )
+    out, err = p.communicate()
+
 class Node(object):
     def __init__(self, index, args):
-        peercount = args.initialpeers
-        maxpeers = args.maxpeers
-        myport = PORT_BASE + index
-        logdir = args.logdir
+        self.peercount = args.initialpeers
+        self.maxpeers = args.maxpeers
+        self.myport = PORT_BASE + index
+        self.logdir = args.logdir
+        self.index = index
 
         peers = set()
         while len(peers)<args.initialpeers:
@@ -60,25 +101,46 @@ class Node(object):
                 continue
             peers.add(rnd + PORT_BASE)
 
-        peers = [
+        self.peers = [
             "127.0.0.1:{}".format(x) for x in peers
         ]
 
         frontargs = re.split(r'\s+', args.binary)
 
-        self.myargs = frontargs + [
-            "-id", "{}".format(index),
-            "-maxpeers", "{}".format(maxpeers),
-            "-port", "{}".format(PORT_BASE + index),
-            "-peers", ",".join(peers),
-            "-solvespeed", "{}".format(args.solvespeed),
-            "-idlespeed", "{}".format(args.idlespeed),
-        ]
-        cmdstr = " ".join(self.myargs)
+        self.moreargs = frontargs[1:]
+        self.frontargs = frontargs[0]
 
+        self.backargs = {
+            "-id": "{}".format(self.index),
+            "-maxpeers": "{}".format(self.maxpeers),
+            "-port": "{}".format(PORT_BASE + self.index),
+            "-peers": ",".join(self.peers),
+            "-solvespeed": "{}".format(args.solvespeed),
+            "-idlespeed": "{}".format(args.idlespeed),
+        }
+
+        {
+            "": self.launchRun,
+            "gdb": self.launchGDB,
+            "lldb": self.launchLLDB,
+        }[args.debugger]()
+
+
+    def launchLLDB(self):
+        pass
+
+    def launchGDB(self):
+        pass
+
+    def launchRun(self):
+
+        cmdstr = ([ self.frontargs ] +
+            self.moreargs +
+            [ " ".join([ x[0], x[1] ]) for x in self.backargs.items() ])
+
+        cmdstr = " ".join(cmdstr)
         print(cmdstr)
-
-        self.p = subprocess.Popen("{} 2>&1 |tee {}".format(cmdstr, os.path.join(logdir, str(index))),
+        self.p = subprocess.Popen("{} >{}".format(cmdstr, os.path.join(self.logdir, str(self.index))),
             shell=True
         )
 
@@ -90,8 +152,14 @@ class Node(object):
 def main():
     swarmArgs = RunSwarmArgs()
     args = swarmArgs.get()
+
+    if args.clean:
+        killall()
+
     with createSwarm(args) as swarm:
-        time.sleep(2000)
+        with createSwarmWatcher(args) as watcher:
+            while watcher.watch():
+                time.sleep(2)
 
 
 if __name__ == "__main__":

@@ -63,6 +63,8 @@ public:
     }
     ret << "  ]" << std::endl;
     ret << "}" << std::endl;
+    std::cout << "ClientNeedParcelList!!!! done" << std::endl;
+    std::cout << ret.str() << std::endl;
     return ret.str();
   }
 
@@ -160,34 +162,72 @@ public:
 
   virtual std::list<std::string> AskPeerForParcelIds(const SwarmPeerLocation &peer, const string &type, unsigned int count)
   {
-    std::shared_ptr<client_type> client = node_ -> ConnectToPeer(peer);
-    auto promise = client->Call(protocolNumber_, 1, type, count);
+    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - conn" << std::endl;
+    std::shared_ptr<client_type> client = nnCore_ -> ConnectToPeer(peer);
+    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - call" << std::endl;
+    auto promise = client->Call(protocol_number, 1, type, count);
+    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - wait" << std::endl;
     promise.Wait();
-    auto jsonResult = promise.As<std::string>();
+    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - yes!" <<  promise.is_fulfilled() << std::endl;
 
-    //fetch::json::JSONDocument doc;
-    //doc.Parse(jsonResult);
+    if (!promise.is_fulfilled())
+      {
+        std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - Arg, failed." << std::endl;
+        throw fetch::network::NetworkNodeCoreTimeOut("AskPeerForParcelIds");
+      }
+    
+    auto jsonResult = promise.As<std::string>();
+    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - parse?" << std::endl;
 
     std::list<std::string> result;
 
-   // /auto array = doc["parcels"];
-   // /for(unsigned int i=0;i<array.size();i++)
-    //  {
-    //    std::string foo(array[i].as_byte_array());
-    //    result.push_back(foo);
-    //  }
+    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - 6" << std::endl;
+    fetch::json::JSONDocument doc;
+    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - 7" << std::endl;
+    try
+      {
+        doc.Parse(jsonResult);
+    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - parsed!" << std::endl;
+      }
+    catch(std::exception &x)
+      {
+        std::cout << "EXCEPTION PARSING JSON:" << x.what() << std::endl;
+        return result;
+      }
 
+    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - 9" << std::endl;
+    auto array = doc["parcels"];
+    std::cout << "AskPeerForParcelIds " << peer.AsString() << " " << type << " " << count << " - sz=" << array.size() << std::endl;
+    for(unsigned int i=0;i<array.size();i++)
+      {
+        std::string foo(array[i].as_byte_array());
+        result.push_back(foo);
+      }
     return result;
   }
 
   virtual std::string AskPeerForParcelData(const SwarmPeerLocation &peer, const string &type, const std::string &parcelid)
   {
-    std::shared_ptr<client_type> client = node_ -> ConnectToPeer(peer);
-    auto promise = client->Call(protocolNumber_, 2, type, parcelid);
+    std::shared_ptr<client_type> client = nnCore_ -> ConnectToPeer(peer);
+    auto promise = client->Call(protocol_number, 2, type, parcelid);
     promise.Wait();
+    if (!promise.is_fulfilled())
+      {
+        throw fetch::network::NetworkNodeCoreTimeOut("AskPeerForParcelData");
+      }
+
     auto jsonResult = promise.As<std::string>();
 
     fetch::json::JSONDocument doc;
+
+    try
+      {
+        doc.Parse(jsonResult);
+      }
+    catch(...)
+      {
+        return "";
+      }
     doc.Parse(jsonResult);
 
     std::ostringstream ret;
@@ -210,12 +250,9 @@ protected:
   typedef std::map<parcel_type_type, parcel_storage_type>                     warehouse_type;
 
   warehouse_type                      warehouse;
-  std::shared_ptr<SwarmNode>          node_;
   typedef std::recursive_mutex        mutex_type;
   typedef std::lock_guard<mutex_type> lock_type;
   mutable mutex_type                  mutex_;
-
-  unsigned int protocolNumber_;
 };
 
 }

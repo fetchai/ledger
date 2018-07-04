@@ -59,13 +59,27 @@ public:
     tm_ -> Post(lambd);
   }
 
+  int idleCount = 0;
+
   void DoIdle()
   {
+    cout << ">>>>>>>>>>>>>>>>>>> DO IDLE " << idleCount <<endl;
+
+    idleCount++;
+
+//    if (idleCount > 100)
+//      {
+//        fetch::logger.Error("Bailing at this point");
+      //        exit(1);
+//      }
+
+
     if (this->onIdle_)
       {
         try
           {
             this->onIdle_();
+            cout << ">>>>>>>>>>>>>>>>>>> CALLED IDLE"<<endl;
           }
         catch (std::exception &x)
           {
@@ -78,6 +92,10 @@ public:
             cout << ">>>>>>>>>>>>>>>>> ??? EXCEPTION" << endl;
           }
       }
+    else
+      {
+        cout << ">>>>>>>>>>>>>>>>>>> DO IDLE SKIPPED"<<endl;
+      }
     auto lambd = [this]
       {
         this->DoIdle();
@@ -88,6 +106,7 @@ public:
   virtual void OnIdle                (std::function<void ()> cb)
   {
     onIdle_ = cb;
+    cout << ">>>>>>>>>>>>>>>>>>> ON IDLE SET"<<endl;
   }
 
   virtual void OnPeerless            (std::function<void ()> cb)
