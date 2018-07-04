@@ -6,7 +6,7 @@
 #include"http/server.hpp"
 #include"./protocols/network_mine_test.hpp"
 #include"./node_basic.hpp"
-#include"./http_interface.hpp"
+#include"./mine_test_http_interface.hpp"
 #include"../tests/include/helper_functions.hpp"
 
 
@@ -27,7 +27,7 @@ public:
     LOG_STACK_TRACE_POINT ;
     fetch::logger.Debug("Constructing test node service with TCP port: ",
         tcpPort, " and HTTP port: ", httpPort);
-    node_                     = std::make_shared<T>(tm);
+    node_                     = std::make_shared<T>(tm, tcpPort);
 
     httpInterface_            = std::make_shared<network_mine_test::HttpInterface<T>>(node_);
     networkMineTestProtocol_ = common::make_unique<protocols::NetworkMineTestProtocol<T>>(node_);
@@ -48,5 +48,3 @@ private:
 };
 }
 }
-
-#endif

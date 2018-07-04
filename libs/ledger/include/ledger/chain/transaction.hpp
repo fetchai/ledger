@@ -5,8 +5,8 @@
 #include "core/logger.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/typed_byte_array_buffer.hpp"
 #include "crypto/sha256.hpp"
-//#include "storage/resource_mapper.hpp"
 
 namespace fetch {
 typedef uint16_t group_type;
@@ -16,9 +16,9 @@ namespace chain {
 struct TransactionSummary {
   typedef byte_array::ConstByteArray digest_type;
   std::vector<group_type> groups;
-  double fee = 0.0;  
-
   digest_type transaction_hash;
+
+  double fee = 0.0;
   uint64_t short_id;
 };
 
@@ -44,16 +44,13 @@ class Transaction {
   void UpdateDigest() {
     LOG_STACK_TRACE_POINT;
 
-    if (modified == true) {
-      serializers::ByteArrayBuffer buf;
-      buf << summary_.groups << signatures_ << contract_name_ << arguments_;
-      hasher_type hash;
-      hash.Reset();
-      hash.Update(buf.data());
-      hash.Final();
-      summary_.transaction_hash = hash.digest();
-      modified = false;
-    }
+    serializers::ByteArrayBuffer buf;
+    buf << summary_.groups << signatures_ << contract_name_ << arguments_;
+    hasher_type hash;
+    hash.Reset();
+    hash.Update(buf.data());
+    hash.Final();
+    summary_.transaction_hash = hash.digest();
   }
 
   bool operator==(const Transaction &rhs) const {
@@ -94,7 +91,6 @@ TODO: Make 32 bit compat
     //    assert(d.value < 10);
 
     PushGroup(d.value);
-    modified = true;
   }
 
   void PushGroup(group_type const &res) {
@@ -109,7 +105,6 @@ TODO: Make 32 bit compat
 
     if (add) {
       summary_.groups.push_back(res);
-      modified = true;
     }
   }
 
@@ -128,17 +123,14 @@ TODO: Make 32 bit compat
   void PushSignature(byte_array::ConstByteArray const &sig) {
     LOG_STACK_TRACE_POINT;
     signatures_.push_back(sig);
-    modified = true;
   }
 
   void set_contract_name(byte_array::ConstByteArray const &name) {
     contract_name_ = name;
-    modified = true;
   }
 
   void set_arguments(byte_array::ConstByteArray const &args) {
     arguments_ = args;
-    modified = true;
   }
 
   std::vector<group_type> const &groups() const { return summary_.groups; }
@@ -155,7 +147,6 @@ TODO: Make 32 bit compat
 
   arguments_type const &arguments() const { return arguments_; }
   digest_type const &digest() const {
-
     return summary_.transaction_hash;
   }
 
@@ -169,7 +160,6 @@ TODO: Make 32 bit compat
 
  private:
   TransactionSummary summary_;
-  mutable bool modified = true;
 
   uint32_t signature_count_;
   byte_array::ConstByteArray data_;
