@@ -8,11 +8,15 @@
 #include "network/service/server.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "./protocols/fetch_protocols.hpp"
-#include "./protocols/network_benchmark/commands.hpp"
+#include "./protocols/network_benchmark/commands.hpp" // TODO: (`HUT`) : delete this
+#include "./protocols/network_mine_test/commands.hpp"
 #include "./network_classes.hpp"
 #include "../tests/include/helper_functions.hpp"
 
+#include "core/byte_array/referenced_byte_array.hpp"
+
 #include <set>
+#include <utility>
 
 namespace fetch
 {
@@ -51,6 +55,64 @@ public:
       auto client = new clientType {endpoint.IP(), endpoint.TCPPort(), tm_};
       serviceClients_[endpoint] = client;
     }
+  }
+
+
+  // push blocks to the rest of the network 
+  template <typename T>
+  void PushBlock(T block)
+  {
+    LOG_STACK_TRACE_POINT;
+
+    for(auto &i : serviceClients_)
+    {
+      auto client = i.second;
+
+      if(!client->is_alive())
+      {
+        std::cerr << "Client has died (pushing)!\n\n" << std::endl;
+        fetch::logger.Error("Client has died in node direc");
+      }
+
+      client->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
+          protocols::NetworkMineTest::PUSH_NEW_HEADER, block);
+    }
+  }
+
+  template <typename H, typename T>
+  bool GetHeader(H hash, T &block)
+  {
+    LOG_STACK_TRACE_POINT;
+
+    for(auto &i : serviceClients_)
+    {
+      auto client = i.second;
+
+      if(!client->is_alive())
+      {
+        std::cerr << "Client has died (pulling)!\n\n" << std::endl;
+        fetch::logger.Error("Client has died in node direc");
+      }
+
+      std::pair<bool, T> result = client->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
+          protocols::NetworkMineTest::PROVIDE_HEADER, hash);
+
+      if(result.first)
+      {
+
+        {
+          result.second.UpdateDigest();
+          std::cout << "remote0.hash      " << ToHex(result.second.hash()) << std::endl;
+          std::cout << "remote0.prev hash " << ToHex(result.second.body().previous_hash) << std::endl;
+          std::cout << "remote0.Block number " << result.second.body().block_number << std::endl;
+        }
+
+        block = result.second;
+        return true;
+      }
+    }
+
+    return false;
   }
 
   // temporarily replicate invite functionality for easier debugging

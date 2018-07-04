@@ -11,4 +11,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 add_fetch_test(proof_of_work_test fetch-ledger consensus/proof_of_work.cpp)
-
+add_fetch_test(main_chain_test fetch-ledger consensus/main_chain.cpp) 
