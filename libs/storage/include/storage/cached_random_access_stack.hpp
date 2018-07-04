@@ -119,7 +119,7 @@ class CachedRandomAccessStack {
     stack_.SetExtraHeader(he);
   }
 
-  header_extra_type header_extra() const { return stack_.header_extra(); }
+  header_extra_type const &header_extra() const { return stack_.header_extra(); }
 
   uint64_t Push(type const &object) {
     ++total_access_;

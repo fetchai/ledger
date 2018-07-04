@@ -29,7 +29,7 @@ class TypedByte_ArrayBuffer {
 
   void ReadBytes(uint8_t *arr, std::size_t const &size) {
     if (int64_t(size) > bytes_left()) {
-      throw std::runtime_error("Not enough bytes");
+      throw std::runtime_error("Typed serializer error: Not enough bytes - TODO, make error serializable");
     }
 
     for (std::size_t i = 0; i < size; ++i) arr[i] = data_[pos_++];
@@ -37,7 +37,7 @@ class TypedByte_ArrayBuffer {
 
   void ReadByteArray(byte_array::BasicByteArray &b, std::size_t const &size) {
     if (int64_t(size) > bytes_left()) {
-      throw std::runtime_error("Not enough bytes II");
+      throw std::runtime_error("Typed serializer error 2: Not enough bytes - TODO, make error serializable");
     }
 
     b = data_.SubArray(pos_, size);

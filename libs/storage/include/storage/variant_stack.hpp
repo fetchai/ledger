@@ -2,6 +2,7 @@
 #define STORAGE_VARIANT_STACK_HPP
 
 #include <cassert>
+#include<cstring>
 #include <fstream>
 #include <string>
 #include "core/assert.hpp"

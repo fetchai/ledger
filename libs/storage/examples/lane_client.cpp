@@ -29,21 +29,42 @@ public:
   
   ByteArray Get(ByteArray const &key) 
   {
-    auto res = fetch::storage::ResourceID(key) ;
+    auto res = fetch::storage::ResourceAddress(key) ;
     std::size_t lane = res.lane( uint32_t(lanes_.size() ));    
-    std::cout << "Getting " << key << " from lane " << lane <<  " " << byte_array::ToBase64(res.id()) << std::endl;
+//    std::cout << "Getting " << key << " from lane " << lane <<  " " << byte_array::ToBase64(res.id()) << std::endl;
     auto promise = lanes_[ lane ]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::GET, res );
-
-
      
-    return promise.As<ByteArray>();
+    return promise.As<storage::Document>().document;
   }
 
+  bool Lock(ByteArray const &key) 
+  {
+//    std::cout << "Locking: " << key << std::endl;
+      
+    auto res = fetch::storage::ResourceAddress(key) ;
+    std::size_t lane = res.lane( uint32_t(lanes_.size() ));    
+    auto promise = lanes_[ lane ]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::LOCK, res );
+     
+    return promise.As<bool>();
+  }
+
+  bool Unlock(ByteArray const &key) 
+  {
+//    std::cout << "Unlocking: " << key << std::endl;
+    
+    auto res = fetch::storage::ResourceAddress(key) ;
+    std::size_t lane = res.lane( uint32_t(lanes_.size() ));    
+    auto promise = lanes_[ lane ]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK, res );
+     
+    return promise.As<bool>();
+  }
+  
+    
   void Set(ByteArray const &key, ByteArray const &value) 
   {
-    auto res = fetch::storage::ResourceID(key) ;
+    auto res = fetch::storage::ResourceAddress(key) ;
     std::size_t lane = res.lane( uint32_t(lanes_.size() ));
-    std::cout << "Setting " << key <<  " on lane " << lane << " " << byte_array::ToBase64(res.id()) << std::endl;    
+//    std::cout << "Setting " << key <<  " on lane " << lane << " " << byte_array::ToBase64(res.id()) << std::endl;    
     auto promise = lanes_[ lane ]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::SET, res, value );
     promise.Wait(2000);
   }
@@ -85,10 +106,27 @@ public:
   {
     id_ = id;
   }
+
+/*
+  void AddTransaction(ConstByteArray const& tx)
+  {
+    json::Document doc(tx);
+    chain::Transaction tx;
+    
+  }
+
+  void AddTransaction(chain::Transaction &tx) 
+  {
+    tx.UpdateDigests();
+    
+  }
+*/  
   
   ByteArray const &id() {
     return id_;
   }
+
+
 private:
   ByteArray id_;
   std::vector< shared_client_type > lanes_;
@@ -134,56 +172,77 @@ int main(int argc, char const **argv) {
 
     // Getting command
     std::getline(std::cin, line);
-    command.clear();
-    tokenizer.clear();
-    tokenizer.Parse( line );
+    try
+    {
+      
+      command.clear();
+      tokenizer.clear();
+      tokenizer.Parse( line );
 
-    for(auto &t: tokenizer ) {
-      if(t.type() != TOKEN_CATCH_ALL) command.push_back(t);
-    }
+      for(auto &t: tokenizer ) {
+        if(t.type() != TOKEN_CATCH_ALL) command.push_back(t);
+      }
 
     
-    if(command.size() > 0) {
-      if(command[0] == "get") {
-        if(command.size() == 2) {
-          std::cout << client.Get(command[1]) << std::endl;
-        } else {
+      if(command.size() > 0) {
+        if(command[0] == "get") {
+          if(command.size() == 2) {
+            std::cout << client.Get(command[1]) << std::endl;
+          } else {
             std::cout << "usage: get [id]" << std::endl;
           }
-          
+        } else if(command[0] == "lock") {
+        
+          if(command.size() == 2) {
+            client.Lock(command[1]);
+          } else {
+              std::cout << "usage: lock [id]" << std::endl;
+            }
+        } else if(command[0] == "unlock") {
+            if(command.size() == 2) {
+              client.Unlock(command[1]);
+            } else {
+              std::cout << "usage: unlock [id]" << std::endl;
+            }
             
-      } else if(command[0] == "set") {
-       if(command.size() == 3) {
-         client.Set(command[1], command[2]);
-        } else {
-         std::cout << "usage: set [id] \"[value]\"" << std::endl;
-        }
+          } else if(command[0] == "set") {
+            if(command.size() == 3) {
+              client.Set(command[1], command[2]);
+            } else {
+              std::cout << "usage: set [id] \"[value]\"" << std::endl;
+            }
         
-      } else if(command[0] == "commit") {
-       if(command.size() == 2) {
-         uint64_t bookmark = uint64_t(command[1].AsInt());
-         client.Commit( bookmark );
-        } else {
-         std::cout << "usage: commit [bookmark,int]" << std::endl;
-        }
-      } else if(command[0] == "revert") {
-       if(command.size() == 2) {
-         uint64_t bookmark = uint64_t(command[1].AsInt());         
-         client.Revert( bookmark );
-        } else {
-         std::cout << "usage: revert [bookmark,int]" << std::endl;
-        }
-      } else if(command[0] == "hash") {
-       if(command.size() == 1) {
-         ByteArray barr = client.Hash();
-         std::cout << "State hash: " << ToBase64( barr ) << std::endl;
+          } else if(command[0] == "commit") {
+            if(command.size() == 2) {
+              uint64_t bookmark = uint64_t(command[1].AsInt());
+              client.Commit( bookmark );
+            } else {
+              std::cout << "usage: commit [bookmark,int]" << std::endl;
+            }
+          } else if(command[0] == "revert") {
+            if(command.size() == 2) {
+              uint64_t bookmark = uint64_t(command[1].AsInt());         
+              client.Revert( bookmark );
+            } else {
+              std::cout << "usage: revert [bookmark,int]" << std::endl;
+            }
+          } else if(command[0] == "hash") {
+            if(command.size() == 1) {
+              ByteArray barr = client.Hash();
+              std::cout << "State hash: " << ToBase64( barr ) << std::endl;
          
-        } else {
-         std::cout << "usage: set [id] \"[value]\"" << std::endl;
-        }
-      }              
+            } else {
+              std::cout << "usage: set [id] \"[value]\"" << std::endl;
+            }
+          }                      
+      }
+    } catch(serializers::SerializableException &e ) {
+        std::cerr << "error: " << e.what() << std::endl;
         
-    }
+        
+      }
+        
+        
   }
   
 

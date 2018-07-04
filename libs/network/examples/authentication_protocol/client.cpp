@@ -1,4 +1,3 @@
-//#include"service_consts.hpp"
 #include<iostream>
 #include"core/serializers/referenced_byte_array.hpp"
 #include"network/service/client.hpp"
