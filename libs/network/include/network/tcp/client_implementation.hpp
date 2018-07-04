@@ -232,7 +232,7 @@ class TCPClientImplementation final :
 
     if(socket)
     {
-      asio::async_read(*socket, asio::buffer(this->header_.bytes, 2 * sizeof(uint64_t)), cb);
+      asio::async_read(*socket, asio::buffer(this->header_.bytes, 2 * sizeof(uint64_t)), strand_->wrap(cb));
       connected_ = true;
     }
   }
@@ -267,7 +267,7 @@ class TCPClientImplementation final :
 
     if(socket)
     {
-      asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), cb);
+      asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), strand_->wrap(cb));
     }
   }
 
@@ -333,7 +333,7 @@ class TCPClientImplementation final :
     //auto socket = socket_.lock();
     if(socket)
     {
-      asio::async_write(*socket, buffers, cb);
+      asio::async_write(*socket, buffers, strand_->wrap(cb));
     } else {
       fetch::logger.Error("Failed to lock socket in WriteNext!");
     }

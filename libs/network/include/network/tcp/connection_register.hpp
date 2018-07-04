@@ -21,10 +21,13 @@ public:
   
   struct  LockableDetails final : public details_type, public mutex::Mutex {  };
 
-  virtual ~ConnectionRegisterImpl() 
-  {
-  }
+  ConnectionRegisterImpl() = default;
+  ConnectionRegisterImpl(ConnectionRegisterImpl const &other) = delete;
+  ConnectionRegisterImpl(ConnectionRegisterImpl &&other) = default;  
+  ConnectionRegisterImpl& operator=(ConnectionRegisterImpl const &other) = delete;  
+  ConnectionRegisterImpl& operator=(ConnectionRegisterImpl &&other) = default;
   
+  virtual ~ConnectionRegisterImpl() = default;
       
   template< typename T, typename... Args >
   std::shared_ptr< T > CreateClient(Args &&...args) 
