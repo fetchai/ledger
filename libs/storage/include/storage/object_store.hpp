@@ -56,9 +56,9 @@ public:
   
   void Get(ResourceID const &rid, type &object) 
   {
-    byte_array::ByteArray data = store_.Get(rid);
-    
-    serializer_type ser(data);
+    Document doc = store_.Get(rid);
+    // TODO: Handle errors
+    serializer_type ser(doc.document);
     ser >> object;
   }
 

@@ -344,13 +344,16 @@ public:
 
 
   byte_array::ByteArray Hash() {
+    std::cout << "A: " << root_ <<  std::endl;
+    
     stack_.Flush();
     key_value_pair kv;
-    
+    std::cout << "B" << std::endl;
     if(stack_.size() > 0) {
       stack_.Get(root_, kv);
     }
-    
+
+    std::cout << "B3" << std::endl;    
     return kv.Hash();
   }
 
@@ -390,7 +393,12 @@ public:
   
   void Revert(bookmark_type const &b) {
     stack_.Revert(b);
+    std::cout << " --------------------------------- " << std::endl;
+      
     root_ = stack_.header_extra();
+    std::cout << "New root: " << root_ << std::endl;
+      
+                                    
   }
 
   uint64_t const &root_element() const { return root_; }

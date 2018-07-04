@@ -362,6 +362,7 @@ bool LoadSaveVsBulk() {
 int main() {
   SCENARIO("Inserting") {
     SECTION("Value consistency") {
+     
       EXPECT( ValueConsistency() );
       EXPECT( (LoadSaveValueConsistency<kvi_type, kvi_type>()) );
       EXPECT( (LoadSaveValueConsistency<kvi_type, cached_kvi_type>()) );

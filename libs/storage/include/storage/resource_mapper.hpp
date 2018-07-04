@@ -2,7 +2,7 @@
 #define STORAGE_RESOURCE_MAPPERL_HPP
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-
+#include"core/byte_array/encoders.hpp"
 
 namespace fetch {
 namespace storage {
@@ -28,6 +28,7 @@ public:
   }  
 
   resource_group_type lane(resource_group_type const & max_lanes) const {
+    
     return resource_group() % max_lanes;
   }  
   
@@ -48,7 +49,6 @@ template <typename T>
 void Deserialize(T &serializer, ResourceID &b) {
   serializer >> b.id_;
 }
-  
 
 class ResourceAddress : public ResourceID
 {

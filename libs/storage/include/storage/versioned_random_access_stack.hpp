@@ -201,7 +201,6 @@ class VersionedRandomAccessStack {
   void Revert(bookmark_type const &b) {
     
     while ((!empty()) && (b != bookmark_)) {
-      std::cout << " -- next: ";
       
       if(!history_.empty()) {
         
@@ -210,38 +209,31 @@ class VersionedRandomAccessStack {
 
         switch (t) {
         case HistoryBookmark::value:
-          std::cout << "bookmark";
           RevertBookmark();
           if( bookmark_ != b) {
-            std::cout << " - found!";
             history_.Pop();
           }
           
           break;
         case HistorySwap::value:
-          std::cout << "swap";
           RevertSwap();
           history_.Pop();
           break;
         case HistoryPop::value:
-          std::cout << "pop";          
           RevertPop();
           history_.Pop();
           break;
         case HistoryPush::value:
-          std::cout << "push";
           
           RevertPush();
           history_.Pop();
           break;
         case HistorySet::value:
-          std::cout << "set";
           
           RevertSet();
           history_.Pop();
           break;
         case HistoryHeader::value:
-          std::cout << "header";
           
           RevertHeader();
           history_.Pop();
@@ -249,11 +241,7 @@ class VersionedRandomAccessStack {
         default:
           TODO_FAIL("Problem: undefined type");
         }
-        
-      } else {
-        std::cout << "history is empty";
       }
-      std::cout << std::endl;
     }
 
     header_type h = stack_.header_extra();
@@ -267,13 +255,12 @@ class VersionedRandomAccessStack {
   {
     header_type h = stack_.header_extra();
     history_.Push(HistoryHeader(h.header), HistoryHeader::value);
-    std::cout << "New header: " << h.header << " > " << b << std::endl;
     
     h.header = b;    
     stack_.SetExtraHeader(h);
   }
   
-  header_extra_type const &header_extra() const
+  header_extra_type  const &header_extra() const
   {
     return stack_.header_extra().header;
   }
@@ -359,10 +346,12 @@ class VersionedRandomAccessStack {
     history_.Top(header);
     
     header_type h = stack_.header_extra();
-    std::cout << " " << h.header << " > " << header.data ;
     
     h.header = header.data;
     stack_.SetExtraHeader(h);
+    assert( this->header_extra() == h.header );
+    
+    
   }  
 };
 

@@ -27,7 +27,7 @@ int main()
   std::vector<TestData> bookmarks;
   
   std::vector< TestData > values;
-  for(std::size_t i = 0 ; i < 1000; ++i) {
+  for(std::size_t i = 0 ; i < 5; ++i) {
     byte_array::ByteArray key;
     key.Resize( 256 / 8 );
     for(std::size_t j=0; j < key.size() ; ++j) {
@@ -45,7 +45,7 @@ int main()
   for(std::size_t i=0; i < values.size();++i) {
     auto const &val = values[i];
     key_index.Set(val.key, val.value, val.key);
-    if( (i % 10) == 0) {
+    if( (i % 2) == 0) {
       byte_array::ByteArray h1 = key_index.Hash();
       TestData book;
       book.key = h1;      
@@ -53,7 +53,7 @@ int main()
       bookmarks.push_back(book);
       if(h1 != key_index.Hash()) {
         std::cerr << "Expected hash to be the same before and after commit" << std::endl;
-        exit(-1);        
+        exit(-1);  
       }      
     }    
   }

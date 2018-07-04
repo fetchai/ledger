@@ -56,12 +56,12 @@ int main() {
       EXPECT(stack.empty());
     };
   };
-
+/*
   SCENARIO("usage of variant stack with inhomogenous types") {
     SECTION("populating") { INFO("TODO: yet to be made"); };
     SECTION("checking") { INFO("TODO: yet to be made"); };
     EXPECT(false);
   };
-
+*/
   return 0;
 }

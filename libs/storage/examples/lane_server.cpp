@@ -15,14 +15,14 @@ using namespace fetch::storage;
 
 class LaneService : public fetch::service::ServiceServer< fetch::network::TCPServer > {
 public:
-  LaneService(uint32_t const &lane, uint16_t port, fetch::network::ThreadManager tm) : ServiceServer(port, tm) {
+  LaneService(uint32_t const &lane, uint16_t port, fetch::network::ThreadManager tm, uint32_t const &max_lanes) : ServiceServer(port, tm) {
     store_ = new RevertibleDocumentStore();
     std::stringstream s;
     s << "lane" << lane << "_";
     std::string prefix = s.str();    
     
     store_->Load(prefix+"a.db", prefix+"b.db", prefix+"c.db", prefix+"d.db", true);    
-    store_protocol_ = new RevertibleDocumentStoreProtocol(store_);
+    store_protocol_ = new RevertibleDocumentStoreProtocol(store_, lane, max_lanes);
     store_protocol_->AddMiddleware([lane](uint32_t const &n, byte_array::ConstByteArray const &msg) {
         std::cout << "Getting request on lane " << lane << " from client " << n << std::endl;
         
@@ -69,7 +69,7 @@ int main(int argc, char const **argv)
   fetch::logger.DisableLogger();
   commandline::ParamsParser params;
   params.Parse(argc, argv);
-  int lane_count =  params.GetParam<int>("lane-count", 1);  
+  uint32_t lane_count =  params.GetParam<uint32_t>("lane-count", 1);  
      
   std::string dummy;
   fetch::commandline::DisplayCLIHeader("Multi-lane server");
@@ -79,8 +79,8 @@ int main(int argc, char const **argv)
 
   fetch::network::ThreadManager tm(8);
   std::vector< std::shared_ptr< LaneService > > lanes;
-  for(int i = 0 ; i < lane_count ; ++i ) {
-    lanes.push_back(std::make_shared< LaneService > (uint32_t(i), uint16_t(8080 + i), tm) );
+  for(uint32_t i = 0 ; i < lane_count ; ++i ) {
+    lanes.push_back(std::make_shared< LaneService > (uint32_t(i), uint16_t(8080 + i), tm, lane_count ) );
   }
   
   tm.Start();

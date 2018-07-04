@@ -6,6 +6,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/referenced_byte_array.hpp"
 #include "crypto/sha256.hpp"
+//#include "storage/resource_mapper.hpp"
 
 namespace fetch {
 typedef uint16_t group_type;
