@@ -6,7 +6,6 @@ namespace byte_array {
 
 BasicByteArray ToBase64(BasicByteArray const &str) {
   // After https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
-
   std::size_t N = str.size();
   uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
   std::size_t idx = 0;

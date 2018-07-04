@@ -15,7 +15,39 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-storage)
-target_link_libraries(fetch-storage INTERFACE fetch-core fetch-crypto fetch-testing vendor-openssl)
+
+target_link_libraries(fetch-storage INTERFACE fetch-core fetch-crypto fetch-ledger fetch-testing fetch-network vendor-openssl)
+
+#-------------------------------------------------------------------------------
+# Example Targets
+#-------------------------------------------------------------------------------
+
+if(FETCH_ENABLE_EXAMPLES) 
+
+  add_executable(example_state_shard_server examples/state_shard_server.cpp)
+  target_link_libraries(example_state_shard_server PRIVATE fetch-storage)
+
+  add_executable(example_state_shard_client examples/state_shard_client.cpp)
+  target_link_libraries(example_state_shard_client PRIVATE fetch-storage)
+
+  add_executable(example_lane_server examples/lane_server.cpp)
+  target_link_libraries(example_lane_server PRIVATE fetch-storage)
+
+  add_executable(example_lane_client examples/lane_client.cpp)
+  target_link_libraries(example_lane_client PRIVATE fetch-storage)
+
+
+#  add_executable(example_lane_client examples/lane_client.cpp)
+#  target_link_libraries(example_lane_client PRIVATE fetch-storage)
+
+
+  add_executable(example_object_store examples/object_store.cpp)
+  target_link_libraries(example_object_store PRIVATE fetch-storage)
+
+
+endif(FETCH_ENABLE_EXAMPLES)
+
 
 add_test_target()
+
 

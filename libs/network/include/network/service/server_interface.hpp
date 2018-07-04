@@ -13,7 +13,7 @@ namespace service {
 
 class ServiceServerInterface {
  public:
-  typedef uint64_t handle_type;  // TODO: inconsistent way of defining handle
+  typedef network::AbstractConnection::connection_handle_type connection_handle_type;
   typedef byte_array::ConstByteArray byte_array_type;
 
   virtual ~ServiceServerInterface() {}
@@ -37,9 +37,9 @@ class ServiceServerInterface {
   }
 
  protected:
-  virtual bool DeliverResponse(handle_type, network::message_type const&) = 0;
+  virtual bool DeliverResponse(connection_handle_type, network::message_type const&) = 0;
 
-  bool PushProtocolRequest(handle_type client,
+  bool PushProtocolRequest(connection_handle_type client,
                            network::message_type const& msg) {
     LOG_STACK_TRACE_POINT;
     bool ret = false;
@@ -120,7 +120,7 @@ class ServiceServerInterface {
   }
 
  private:
-  void ExecuteCall(serializer_type& result, handle_type const& client,
+  void ExecuteCall(serializer_type& result, connection_handle_type const& client,
                    serializer_type params) {
     //    LOG_STACK_TRACE_POINT;
 
@@ -136,7 +136,10 @@ class ServiceServerInterface {
           byte_array_type("Could not find protocol: "));
     }
 
-    auto& mod = *members_[protocol];  //*it->second;
+    auto& mod = *members_[protocol];
+
+    mod.ApplyMiddleware(client, params.data());    
+    
     auto& fnc = mod[function];
 
     // If we need to add client id to function arguments
