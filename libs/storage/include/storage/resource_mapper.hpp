@@ -12,7 +12,12 @@ class ResourceID
 public:
   typedef uint32_t resource_group_type;
   ResourceID() { }
-  
+
+  ResourceID(byte_array::ByteArray &id)
+  {
+    id_ = id;
+  }
+
   ResourceID(byte_array::ConstByteArray const &id) 
   {
     id_ = id;
