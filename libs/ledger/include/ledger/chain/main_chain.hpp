@@ -134,8 +134,8 @@ class MainChain
       // Tip points to existing block
       if(blockRef != blockChain_.end())
       {
-        tip->total_weight     = block.weight() + (*blockRef).second.weight();
-        block.totalWeight()   = block.weight() + (*blockRef).second.weight();
+        tip->total_weight     = block.weight() + (*blockRef).second.totalWeight();
+        block.totalWeight()   = block.weight() + (*blockRef).second.totalWeight();
         tip->loose            = (*blockRef).second.loose();
 
         if((*blockRef).second.loose())
@@ -182,13 +182,6 @@ class MainChain
         // Update tip
         tips_[tipHash]->root = block.body().previous_hash;
         tips_[tipHash]->loose = block.loose();
-
-        //// Update block tip points to // TODO: (`HUT`) : delete
-        //auto &tipBlock = blockChain_[tipHash].second;
-        //tipBlock->root = block.body().previous_hash;
-        //tipBlock->loose = block.loose();
-
-        fetch::logger.Info("Setting the block to be loose? ", block.loose());
 
         block_hash hash = tipHash;
 
@@ -260,19 +253,14 @@ class MainChain
   std::vector<block_type> HeaviestChain()
   {
     std::vector<block_type> result;
-    std::cout << "walking a1" << std::endl;
 
     auto topBlock =  blockChain_.at(heaviest_.second);
-    std::cout << "walking a2" << std::endl;
 
     while(topBlock.body().block_number != 0)
     {
-    std::cout << "walking a3" << std::endl;
       result.push_back(topBlock);
-    std::cout << "walking a4" << std::endl;
 
       auto hash = topBlock.body().previous_hash;
-    std::cout << "walking a5" << std::endl;
 
       // Walk down
       auto it = blockChain_.find(hash);
@@ -281,15 +269,82 @@ class MainChain
         fetch::logger.Info("Failed while walking down from top block to find genesis!");
         break;
       }
-      std::cout << "walking a6" << std::endl;
 
       topBlock = (*it).second;
     }
 
-    std::cout << "walking returning!" << std::endl;
-
     result.push_back(topBlock); // this should be genesis
-    std::cout << "walking returning!!" << std::endl;
+    return result;
+  }
+
+  // for debugging: get all chains, and verify. First in pair is heaviest block
+  std::pair<block_type, std::vector<std::vector<block_type>>> AllChain()
+  {
+    // To verify, walk down the blocks making sure the block numbers decrement,
+    // the weights are correct etc.
+    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+    std::pair<block_type, std::vector<std::vector<block_type>>> result;
+    std::unordered_map<block_hash, block_type> blockChainCopy;
+
+    for(auto &i : tips_)
+    {
+      block_hash hash      = i.first;
+      uint64_t totalWeight = i.second->total_weight;
+      bool loose           = i.second->loose;
+      uint64_t blockNumber = 0;
+      bool first           = true;
+      std::vector<block_type> chain;
+
+      if(blockChain_.find(hash) == blockChain_.end())
+      {
+        fetch::logger.Error("Tip not found in blockchain! ", ToHex(hash));
+        return result;
+      }
+
+      // Walk down from this tip
+      while(true)
+      {
+        auto it = blockChain_.find(hash);
+        if(it == blockChain_.end())
+        {
+          break;
+        }
+
+        block_type &walkBlock = (*it).second;
+
+        totalWeight -= walkBlock.weight();
+
+        if(first)
+        {
+          first = false;
+          blockNumber = walkBlock.body().block_number;
+        }
+        else
+        {
+          if(blockNumber != walkBlock.body().block_number + 1)
+          {
+            fetch::logger.Error("Blocks not sequential when walking down chain ", ToHex(hash));
+            fetch::logger.Info("Prev: ", blockNumber);
+            fetch::logger.Info("current: ", walkBlock.body().block_number);
+            return result;
+          }
+          blockNumber = walkBlock.body().block_number;
+        }
+        hash = walkBlock.body().previous_hash;
+        chain.push_back(walkBlock);
+        blockChainCopy[walkBlock.hash()] = walkBlock;
+      }
+      result.second.push_back(chain);
+    }
+
+    // check that we have seen all blocks
+    if(blockChainCopy.size() != blockChain_.size())
+    {
+      fetch::logger.Error("blocks reachable from tips differ from blocks\
+          in the blockchain. Tips: ", blockChainCopy.size(), " blockchain: ", blockChain_.size());
+    }
+
+    result.first = blockChain_.at(heaviest_.second);
     return result;
   }
 
@@ -298,8 +353,8 @@ class MainChain
     std::cout << "resetting...\n\n\n\n" << std::endl;
     std::lock_guard<fetch::mutex::Mutex>                 lock(mutex_);
     blockChain_.clear();
-    //tips_.clear();
-    tips_ = std::unordered_map<block_hash, std::shared_ptr<Tip>>{};
+    tips_.clear();
+    //tips_ = std::unordered_map<block_hash, std::shared_ptr<Tip>>{};
     danglingRoot_.clear();
 
     // recreate genesis
@@ -340,10 +395,10 @@ class MainChain
   }
 
 private:
-  std::unordered_map<block_hash, block_type>           blockChain_;
-  std::unordered_map<block_hash, std::shared_ptr<Tip>> tips_;
-  std::unordered_map<block_hash, std::set<block_hash>> danglingRoot_; // TODO: (`HUT`) : not updated it seems
-  std::pair<uint64_t, block_hash>                      heaviest_;
+  std::unordered_map<block_hash, block_type>           blockChain_;   // all blocks are here
+  std::unordered_map<block_hash, std::shared_ptr<Tip>> tips_;         // Keep track of the tips
+  std::unordered_map<block_hash, std::set<block_hash>> danglingRoot_; // Waiting tips
+  std::pair<uint64_t, block_hash>                      heaviest_;     // Heaviest block
   mutable fetch::mutex::Mutex                          mutex_;
 };
 

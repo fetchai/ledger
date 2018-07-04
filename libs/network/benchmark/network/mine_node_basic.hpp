@@ -87,9 +87,10 @@ public:
       if(block.loose())
       {
         std::cout << "Loose block seen!" << std::endl;
-        auto fut = std::async(std::launch::async,
-            [this, block]{ block_type copy = block; this->SyncBlock(copy); });
-        pending_futures.push_back(std::move(fut));
+        std::thread
+        {
+          [this, block]{ block_type copy = block; this->SyncBlock(copy); }
+        }.detach();
       }
     }
   }
@@ -149,59 +150,53 @@ public:
     stopped_ = true;
   }
 
-  // hacky - push futures to this to keep stuff non blocking
-  std::vector<std::future<void>> pending_futures;
-
   ///////////////////////////////////////////////////////////
   // Mining loop
   void startMining()
   {
-    auto fut = std::async(std::launch::async,
-        [this]
+    auto closure = [this]
+    {
+      std::cout << "starting!" << std::endl;
+      // Loop code
+      while(!stopped_)
+      {
+        // Commence mining
+        auto block = mainChain.HeaviestBlock();
+
+        // Create another block sequential to previous
+        block_type nextBlock;
+        body_type nextBody;
+        nextBody.block_number = block.body().block_number + 1;
+        nextBody.previous_hash = block.hash();
+        nextBody.miner_number = minerNumber_;
+
+        nextBlock.SetBody(nextBody);
+        nextBlock.UpdateDigest();
+
+        nextBlock.proof().SetTarget(target_);
+        miner::Mine(nextBlock);
+
+        //// Optionally set the weight
+        //block.weight() = block.proof().GetWeight();
+
+        if(stopped_)
         {
+          break;
+        }
 
-          std::cout << "starting!" << std::endl;
-          // Loop code
-          while(!stopped_)
-          {
-            // Commence mining
-            auto block = mainChain.HeaviestBlock();
+        std::cout << "Mined block." << std::endl;
+        std::cout << "Block number " << nextBlock.body().block_number << std::endl;
+        std::cout << "prev hash " << ToHex(nextBlock.body().previous_hash) << std::endl;
+        std::cout << "hash " << ToHex(nextBlock.hash()) << std::endl;
 
-            // Create another block sequential to previous
-            block_type nextBlock;
-            body_type nextBody;
-            nextBody.block_number = block.body().block_number + 1;
-            nextBody.previous_hash = block.hash();
-            nextBody.miner_number = minerNumber_;
+        mainChain.AddBlock(nextBlock);
 
-            nextBlock.SetBody(nextBody);
-            nextBlock.UpdateDigest();
+        // Pass the block to other miners
+        nodeDirectory_.PushBlock(nextBlock);
+      }
+    };
 
-            nextBlock.proof().SetTarget(target_);
-            miner::Mine(nextBlock);
-
-            //// Optionally set the weight
-            //block.weight() = block.proof().GetWeight();
-
-            if(stopped_)
-            {
-              break;
-            }
-
-            std::cout << "Mined block." << std::endl;
-            std::cout << "Block number " << nextBlock.body().block_number << std::endl;
-            std::cout << "prev hash " << ToHex(nextBlock.body().previous_hash) << std::endl;
-            std::cout << "hash " << ToHex(nextBlock.hash()) << std::endl;
-
-            mainChain.AddBlock(nextBlock);
-
-            // Pass the block to other miners
-            nodeDirectory_.PushBlock(nextBlock);
-          }
-
-        });
-
-    pending_futures.push_back(std::move(fut));
+    std::thread{closure}.detach();
   }
 
   void stopMining()
@@ -211,13 +206,16 @@ public:
   }
 
 
-  ///////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////
   // HTTP functions to check that synchronisation was successful
-
   std::vector<block_type> HeaviestChain()
   {
-    std::cout << "argh" << std::endl;
     return mainChain.HeaviestChain();
+  }
+
+  std::pair<block_type, std::vector<std::vector<block_type>>> AllChain()
+  {
+    return mainChain.AllChain();
   }
 
 private:
