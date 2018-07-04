@@ -92,7 +92,6 @@ public:
       http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT ;
-    std::cout << "stop 1!!" << std::endl;
 
     node_->stopMining();
     return http::HTTPResponse(successString);
@@ -108,16 +107,12 @@ public:
   http::HTTPResponse Mainchain(http::ViewParameters const &params,
       http::HTTPRequest const &req)
   {
-    std::cout << "main chain 1" << std::endl;
     auto chainArray = node_->HeaviestChain();
-    std::cout << "main chain 2" << std::endl;
 
     script::Variant result = script::Variant::Array(chainArray.size());
-    std::cout << "main chain 3" << std::endl;
 
     std::size_t index = 0;
     for (auto &i : chainArray) {
-    std::cout << "main chain 4" << std::endl;
 
       script::Variant temp = script::Variant::Object();
       temp["minerNumber"]  = i.body().miner_number;

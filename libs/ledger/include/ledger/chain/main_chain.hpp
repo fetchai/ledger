@@ -30,6 +30,15 @@ namespace fetch
 namespace chain
 {
 
+  // Main chain contains and manages block headers. No verification of headers is done, the 
+  // structure will purely accept new headers and provide the current heaviest chain.
+  // The only high cost operation O(n) should be when adding blocks to the tail of a chain.
+  // 
+  // It is not necessary to walk up the chain at any point
+
+
+// Tips keep track of all chains. The root can be used to find what block the tip/chain is looking
+// for if it is loose
 struct Tip
 {
   fetch::byte_array::ByteArray    root{"0"};
@@ -46,15 +55,13 @@ class MainChain
 
   MainChain(block_type &genesis)
   {
-    // Add genesis to block chain
     genesis.loose()             = false;
     blockChain_[genesis.hash()] = genesis;
 
-    // Create tip
     auto tip = std::shared_ptr<Tip>(new Tip);
     tip->total_weight     = genesis.weight();
     tip->loose            = false;
-    tips_[genesis.hash()] = std::move(tip);
+    tips_[genesis.hash()] = tip;
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
   }
 
@@ -72,7 +79,6 @@ class MainChain
     auto tip = std::shared_ptr<Tip>(new Tip);
     tip->total_weight     = genesis.weight();
     tip->loose            = false;
-    //tips_[genesis.hash()] = std::move(tip);
     tips_[genesis.hash()] = tip;
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
   }
@@ -100,26 +106,24 @@ class MainChain
     if(tipRef != tips_.end())
     {
       fetch::logger.Info("Mainchain: Pushing block onto already existing tip");
-      // Advance that tip and put block into blockchain
-      //tip = std::move((*tipRef).second);
+
       tip = ((*tipRef).second);
       tips_.erase(tipRef);
-      block.loose() = tip->loose;
       tip->total_weight += block.weight();
+      block.loose() = tip->loose;
       block.totalWeight() = tip->total_weight;
 
-      // Blocks need to know if their root is not genesis
+      // Blocks need to know if their root is not genesis, for the case where another block
+      // arrives and points to this one. Non loose blocks don't need this.
       if(tip->loose)
       {
-        std::cout << "Expired? " << tip.use_count() << std::endl;
-        std::cout << "Tip is " << ToHex(((*tipRef).second)->root) << std::endl;
         block.root() = ((*tipRef).second)->root;
       }
 
       // Update heaviest pointer if necessary
       if(tip->loose == false && tip->total_weight > heaviest_.first)
       {
-        fetch::logger.Info("Updating heaviest with tip");
+        fetch::logger.Info("Mainchain: Updating heaviest with tip");
         heaviest_.first = tip->total_weight;
         heaviest_.second = block.hash();
       }
@@ -152,8 +156,8 @@ class MainChain
       }
       else
       {
-        fetch::logger.Info("Mainchain: new loose block");
         // we have a block that doesn't refer to anything
+        fetch::logger.Info("Mainchain: new loose block");
         tip->root           = block.body().previous_hash;
         tip->loose          = true;
         block.root()        = block.body().previous_hash;
@@ -175,11 +179,8 @@ class MainChain
       // We have seen that people are looking for this block. Update them.
       for(auto &tipHash : waitingTips)
       {
-        // TODO: (`HUT`) : in case of main chain, delete memory mgmt
         fetch::logger.Info("Mainchain: Walking down from tip: ", ToHex(tipHash));
-        std::cout << "prev hash is: " << ToHex(block.body().previous_hash) << std::endl;
-        std::cout << "prev tiphash is: " << ToHex(tips_[tipHash]->root) << std::endl;
-        // Update tip
+
         tips_[tipHash]->root = block.body().previous_hash;
         tips_[tipHash]->loose = block.loose();
 
@@ -188,18 +189,15 @@ class MainChain
         // Walk down the tree from the tip updating each block to let it know its root
         while(true)
         {
-          std::cout << "setting walk hash " << ToHex(hash) << std::endl;
           auto it = blockChain_.find(hash);
           if(it == blockChain_.end())
           {
-            std::cout << "not found." << ToHex(hash) << std::endl;
             break;
           }
 
           block_type &walkBlock = (*it).second;
           if(walkBlock.loose() == false || walkBlock.root() == block.body().previous_hash)
           {
-            std::cout << "found bottom of walk: " << walkBlock.loose() << std::endl;
             break;
           }
 
@@ -212,7 +210,6 @@ class MainChain
 
       if(block.loose())
       {
-        // TODO: (`HUT`) : std::move
         danglingRoot_[block.body().previous_hash] = waitingTips;
       }
 
@@ -222,8 +219,6 @@ class MainChain
 
     if(tip)
     {
-      std::cout << "pushing new tip on! " << std::endl;
-      //tips_[block.hash()] = std::move(tip);
       tips_[block.hash()] = tip;
     }
     blockChain_[block.hash()] = block;
@@ -247,8 +242,6 @@ class MainChain
     return blockChain_.size();
   }
 
-  // TODO: (`HUT`) : callbacks
-
   // for debugging: get the heaviest chain
   std::vector<block_type> HeaviestChain()
   {
@@ -266,7 +259,8 @@ class MainChain
       auto it = blockChain_.find(hash);
       if(it == blockChain_.end())
       {
-        fetch::logger.Info("Failed while walking down from top block to find genesis!");
+        fetch::logger.Info("Mainchain: Failed while walking down\
+            from top block to find genesis!");
         break;
       }
 
@@ -297,7 +291,7 @@ class MainChain
 
       if(blockChain_.find(hash) == blockChain_.end())
       {
-        fetch::logger.Error("Tip not found in blockchain! ", ToHex(hash));
+        fetch::logger.Error("Mainchain: Tip not found in blockchain! ", ToHex(hash));
         return result;
       }
 
@@ -340,7 +334,7 @@ class MainChain
     // check that we have seen all blocks
     if(blockChainCopy.size() != blockChain_.size())
     {
-      fetch::logger.Error("blocks reachable from tips differ from blocks\
+      fetch::logger.Error("Mainchain: blocks reachable from tips differ from blocks\
           in the blockchain. Tips: ", blockChainCopy.size(), " blockchain: ", blockChain_.size());
     }
 
@@ -350,11 +344,9 @@ class MainChain
 
   void reset()
   {
-    std::cout << "resetting...\n\n\n\n" << std::endl;
     std::lock_guard<fetch::mutex::Mutex>                 lock(mutex_);
     blockChain_.clear();
     tips_.clear();
-    //tips_ = std::unordered_map<block_hash, std::shared_ptr<Tip>>{};
     danglingRoot_.clear();
 
     // recreate genesis
@@ -371,7 +363,6 @@ class MainChain
     tip->loose            = false;
     tips_[genesis.hash()] = std::move(tip);
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
-    std::cout << "reset." << std::endl;
   }
 
   bool Get(block_hash hash, block_type &block)
@@ -383,11 +374,6 @@ class MainChain
     if(it != blockChain_.end())
     {
       block = (*it).second;
-
-      std::cout << "remote000.hash      " << ToHex(block.hash()) << std::endl;
-      std::cout << "remote000.prev hash " << ToHex(block.body().previous_hash) << std::endl;
-      std::cout << "remote000.Block number " << block.body().block_number << std::endl;
-
       return true;
     }
 
@@ -397,8 +383,8 @@ class MainChain
 private:
   std::unordered_map<block_hash, block_type>           blockChain_;   // all blocks are here
   std::unordered_map<block_hash, std::shared_ptr<Tip>> tips_;         // Keep track of the tips
-  std::unordered_map<block_hash, std::set<block_hash>> danglingRoot_; // Waiting tips
-  std::pair<uint64_t, block_hash>                      heaviest_;     // Heaviest block
+  std::unordered_map<block_hash, std::set<block_hash>> danglingRoot_; // Waiting (loose) tips
+  std::pair<uint64_t, block_hash>                      heaviest_;     // Heaviest block/tip
   mutable fetch::mutex::Mutex                          mutex_;
 };
 
