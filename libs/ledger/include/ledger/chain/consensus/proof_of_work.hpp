@@ -48,7 +48,7 @@ class ProofOfWork : public math::BigUnsigned {
  private:
   math::BigUnsigned digest_;
   math::BigUnsigned target_;
-  header_type header_;
+  header_type       header_;
 };
 }
 }
