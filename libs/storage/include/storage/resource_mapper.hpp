@@ -1,8 +1,10 @@
 #ifndef STORAGE_RESOURCE_MAPPERL_HPP
 #define STORAGE_RESOURCE_MAPPERL_HPP
+
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include"core/byte_array/encoders.hpp"
+#include "core/assert.hpp"
 
 namespace fetch {
 namespace storage {
@@ -29,13 +31,18 @@ public:
   }
 
   resource_group_type const & resource_group() const {
+    detailed_assert(id_.size() > sizeof(uint64_t));
     return *reinterpret_cast< resource_group_type const* >( id_.pointer() );
   }  
 
-  resource_group_type lane(resource_group_type const & max_lanes) const {
-    
-    return resource_group() % max_lanes;
-  }  
+  resource_group_type lane(resource_group_type const &log2_num_lanes) const {
+    detailed_assert(log2_num_lanes < (sizeof(resource_group_type) * 8));
+
+    // define the group
+    resource_group_type const group_mask = (1u << log2_num_lanes) - 1u;
+
+    return resource_group() & group_mask;
+  }
   
 private:
   byte_array::ConstByteArray id_;
