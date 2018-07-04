@@ -85,9 +85,11 @@ class BasicBlock
   proof_type                   proof_;
 
   // META data to help with block management
-  uint64_t weight_        = 1; // TODO: (`HUT`) : think about weighting
+  uint64_t weight_        = 1;
   uint64_t total_weight_  = 1;
   bool is_loose_        = false;
+
+  // root refers to the previous_hash of the bottom block of a chain
   fetch::byte_array::ByteArray root_;
 
   template <typename AT, typename AP, typename AH>

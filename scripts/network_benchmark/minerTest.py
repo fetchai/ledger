@@ -41,7 +41,6 @@ allEndpoints    = [ endpoint0, endpoint1, endpoint2, endpoint3, endpoint4]
 #allEndpoints    = [ endpoint0, endpoint1 ]
 
 # Set each nodes connection to each other
-
 # Fully connected topology
 for endpoint in allEndpoints:
     for otherEndpoint in allEndpoints:
@@ -60,7 +59,7 @@ print "waiting"
 time.sleep(8)
 
 print "resetting a miner"
-#HTTPpost(endpoint0, 'reset')
+HTTPpost(endpoint0, 'reset')
 
 time.sleep(8)
 

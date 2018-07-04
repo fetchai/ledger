@@ -10,8 +10,8 @@ namespace consensus {
 class DummyMiner
 {
 
-
 public:
+  // Blocking mine
   template <typename block_type>
   static void Mine(block_type &block)
   {
@@ -27,6 +27,7 @@ public:
     }
   }
 
+  // Mine for set number of iterations
   template <typename block_type>
   static bool Mine(block_type &block, uint64_t iterations)
   {
