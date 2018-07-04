@@ -109,7 +109,7 @@ protected:
 
   pointer_type  pointer_;
 
-  void RegisterHandlers() noexcept
+  void RegisterHandlers() 
   {
     pointer_->OnConnectionFailed(
       [this]() {

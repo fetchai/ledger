@@ -91,8 +91,8 @@ public:
   ProtectedService(uint16_t port, fetch::network::ThreadManager tm) : ServiceServer(port, tm) {
     this->SetConnectionRegister(register_);
 
-    auth_logic_ = new AuthenticationLogic<fetch::NodeDetails>(register_);      
-    auth_proto_ = new AuthenticationProtocol<fetch::NodeDetails> ( auth_logic_ ) ;  
+    auth_logic_.reset(new AuthenticationLogic<fetch::NodeDetails>(register_));
+    auth_proto_.reset( new AuthenticationProtocol<fetch::NodeDetails> ( auth_logic_.get() ) );  
     
     test_proto_.AddMiddleware([this](network::AbstractConnection::connection_handle_type const &n, byte_array::ByteArray const &data) {
         auto details = register_.GetDetails(n);
@@ -110,14 +110,14 @@ public:
         }
       });
     
-    this->Add(AUTH, auth_proto_ );
+    this->Add(AUTH, auth_proto_.get() );
     this->Add(TEST, &test_proto_);  
   }
 private:
   
   fetch::network::ConnectionRegister<fetch::NodeDetails> register_;
-  AuthenticationLogic<fetch::NodeDetails> *auth_logic_;  
-  AuthenticationProtocol<fetch::NodeDetails> *auth_proto_;  
+  std::unique_ptr< AuthenticationLogic<fetch::NodeDetails> > auth_logic_;  
+  std::unique_ptr< AuthenticationProtocol<fetch::NodeDetails> > auth_proto_;  
   TestProtocol test_proto_;
   
 
