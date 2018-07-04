@@ -31,6 +31,18 @@ class ProofOfWork : public math::BigUnsigned {
     return digest_ < target_;
   }
 
+  uint64_t GetWeight() {
+
+    if((*this)())
+    {
+      return target_ - digest_;
+    }
+    else
+    {
+      return 0;
+    }
+  }
+
   void SetTarget(std::size_t zeros) {
     target_ = 1;
     target_ <<= 8 * sizeof(uint8_t) * super_type::size() - 1 - zeros;

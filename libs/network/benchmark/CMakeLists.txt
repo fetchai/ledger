@@ -16,6 +16,9 @@ setup_compiler()
 add_executable(network_benchmark network/network_benchmark.cpp)
 target_link_libraries(network_benchmark PRIVATE fetch-http fetch-ledger)
 
+add_executable(network_mine_test network/network_mine_test.cpp)
+target_link_libraries(network_mine_test PRIVATE fetch-http fetch-ledger)
+
 add_executable(rpc rpc/main.cpp)
 target_link_libraries(rpc PRIVATE fetch-network fetch-ledger)
 

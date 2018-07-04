@@ -18,8 +18,9 @@ struct BlockSlice {
 struct BlockBody {
   fetch::byte_array::ByteArray previous_hash;
   fetch::byte_array::ByteArray merkle_hash;
-  fetch::byte_array::ByteArray state_hash;
+  //fetch::byte_array::ByteArray state_hash;
   uint64_t                     block_number{0};
+  uint64_t                     miner_number{0};
   uint64_t                     nonce{0};
 };
 
@@ -27,14 +28,14 @@ template <typename T>
 void Serialize(T &serializer, BlockBody const &body)
 {
   serializer << body.previous_hash <<
-    body.merkle_hash << body.nonce << body.block_number;
+    body.merkle_hash << body.nonce << body.block_number << body.miner_number;
 }
 
 template <typename T>
 void Deserialize(T &serializer, BlockBody &body)
 {
   serializer >> body.previous_hash >>
-    body.merkle_hash >> body.nonce >> body.block_number;
+    body.merkle_hash >> body.nonce >> body.block_number >> body.miner_number;
 }
 
 template <typename P, typename H>
@@ -54,7 +55,8 @@ class BasicBlock
   void UpdateDigest() {
 
     serializers::ByteArrayBuffer buf;
-    buf << body_.previous_hash << body_.merkle_hash << body_.block_number << body_.nonce;
+    buf << body_.previous_hash << body_.merkle_hash <<
+      body_.block_number << body_.nonce << body_.miner_number;
 
     hasher_type hash;
     hash.Reset();
