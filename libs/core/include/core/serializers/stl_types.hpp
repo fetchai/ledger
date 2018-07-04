@@ -109,7 +109,7 @@ inline void Deserialize(T &serializer, std::pair<fir, sec> &pair) {
   sec second;
   serializer >> first;
   serializer >> second;
-  pair = make_pair(std::move(first), std::move(second));
+  pair = std::make_pair(std::move(first), std::move(second));
 }
 }
 }
