@@ -373,23 +373,21 @@ void TestCase9(std::string host, std::string port)
 
   // Start echo server
   fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
-  std::array<Client *, 100> clients;
+  std::vector<std::shared_ptr<Client>> clients;
+  clients.resize(100);
 
   for (std::size_t index = 0; index < 3; ++index)
   {
     ThreadManager tmanager(N);
     tmanager.Start();
-    for (std::size_t i = 0; i < 100; ++i)
+    for(auto &i : clients)
     {
       std::async(std::launch::async,
-          [&clients, i, &host, &port, &tmanager] {clients[i] = new Client(host, port, tmanager);});
+          [&i, &host, &port, &tmanager]
+          {i = std::make_shared<Client>(host, port, tmanager);});
     }
     if(index % 2 == 0) tmanager.Stop();
 
-    for (std::size_t i = 0; i < 100; ++i)
-    {
-      delete clients[i];
-    }
   }
   std::cerr << "Success." << std::endl;
 }
@@ -844,9 +842,7 @@ int main(int argc, char* argv[]) {
   TestCase5<1>(host, port);
   TestCase6<1>(host, port);
   TestCase7<1>(host, port);
-  //TestCase8<1>(host, port); // tests move/copy which is now disabled
   TestCase9<1>(host, port);
-  //TestCase10<1>(host, port); // as 8
   TestCase11<1>(host, port);
   TestCase12<1>(host, port);
   TestCase13<1>(host, port);
@@ -860,9 +856,7 @@ int main(int argc, char* argv[]) {
   TestCase5<10>(host, port);
   TestCase6<10>(host, port);
   TestCase7<10>(host, port);
-  //TestCase8<10>(host, port); // tests move/copy which is now disabled
   TestCase9<10>(host, port);
-  //TestCase10<10>(host, port); // as 8
   TestCase11<10>(host, port);
   TestCase12<10>(host, port);
   TestCase13<10>(host, port);

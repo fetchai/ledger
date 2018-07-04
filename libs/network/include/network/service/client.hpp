@@ -48,11 +48,15 @@ class ServiceClient : public T,
     // Disconnect callbacks
     super_type::Cleanup();
     super_type::Close();
+    int timeout = 100;
 
     // Can only guarantee we are not being called when socket is closed
     while(!super_type::Closed())
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      timeout--;
+
+      if(timeout == 0) break;
     }
   }
 
