@@ -135,6 +135,7 @@ function(add_fetch_gtest name library directory)
       add_executable(${name} ${headers} ${srcs})
       target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
       target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
 
       # define the test
       add_test(${name} ${name} ${ARGV})
