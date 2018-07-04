@@ -11,7 +11,7 @@ namespace network {
 
 
 template< typename G >
-class ConnectionRegisterImpl : public AbstractConnectionRegister
+class ConnectionRegisterImpl final : public AbstractConnectionRegister
 {
 public:
   
@@ -19,8 +19,15 @@ public:
   typedef std::weak_ptr< AbstractConnection > weak_connection_type;
   typedef G details_type;
   
-  struct  LockableDetails : public details_type, public mutex::Mutex {  };
+  struct  LockableDetails final : public details_type, public mutex::Mutex {  };
+
+  ConnectionRegisterImpl() = default;
+  ConnectionRegisterImpl(ConnectionRegisterImpl const &other) = delete;
+  ConnectionRegisterImpl(ConnectionRegisterImpl &&other) = default;  
+  ConnectionRegisterImpl& operator=(ConnectionRegisterImpl const &other) = delete;  
+  ConnectionRegisterImpl& operator=(ConnectionRegisterImpl &&other) = default;
   
+  virtual ~ConnectionRegisterImpl() = default;
       
   template< typename T, typename... Args >
   std::shared_ptr< T > CreateClient(Args &&...args) 

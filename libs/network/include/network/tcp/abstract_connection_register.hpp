@@ -12,9 +12,13 @@ class AbstractConnectionRegister : public std::enable_shared_from_this< Abstract
 {
 public:
   typedef uint64_t connection_handle_type;
-  virtual ~AbstractConnectionRegister() 
-  {
-  }
+  AbstractConnectionRegister() = default;
+  AbstractConnectionRegister(AbstractConnectionRegister const &other) = delete;
+  AbstractConnectionRegister(AbstractConnectionRegister &&other) = default;  
+  AbstractConnectionRegister& operator=(AbstractConnectionRegister const &other) = delete;  
+  AbstractConnectionRegister& operator=(AbstractConnectionRegister &&other) = default;
+    
+  virtual ~AbstractConnectionRegister() = default;
   
   virtual void Leave(connection_handle_type const &id) = 0;
   virtual void Enter(std::weak_ptr< AbstractConnection> const &) = 0;  
