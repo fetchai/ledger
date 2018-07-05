@@ -126,7 +126,7 @@ function(configure_vendor_targets)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
 
 endfunction(configure_vendor_targets)
-
+
 function(configure_library_targets)
 
   set(library_root ${FETCH_ROOT_DIR}/libs)
