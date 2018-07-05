@@ -12,3 +12,4 @@ setup_compiler()
 
 add_fetch_test(proof_of_work_test fetch-ledger consensus/proof_of_work.cpp)
 add_fetch_test(ledger_identifier_test fetch-ledger identifier_test.cpp)
+add_fetch_gtest(chaincode_test fetch-ledger chaincode)

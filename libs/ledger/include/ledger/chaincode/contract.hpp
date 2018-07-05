@@ -35,50 +35,6 @@ public:
   using counter_map_type = std::unordered_map<std::string, counter_type>;
   using state_type = StateDatabaseInterface;
 
-#if 0
-  template <typename T>
-  class TransactionHandler {
-  public:
-    using class_type = T;
-    using member_function_type = Status (class_type::*)(transaction_type const&);
-
-    TransactionHandler(class_type *instance, member_function_type func)
-      : instance_{instance}
-      , function_{func} {
-    }
-
-    Status operator()(transaction_type const &tx) {
-      return (instance_->*function_)(tx);
-    }
-
-  private:
-
-    class_type *instance_;
-    member_function_type function_;
-  };
-
-  template <typename T>
-  class QueryHandler {
-  public:
-    using class_type = T;
-    using member_function_type = Status (class_type::*)(query_type const&, query_type &);
-
-    QueryHandler(class_type* instance, member_function_type func)
-      : instance_{instance}
-      , function_{func} {
-    }
-
-    Status operator()(query_type const &query, query_type &response) {
-      return (instance_->*function_)(query, response);
-    }
-
-  private:
-
-    class_type *instance_;
-    member_function_type function_;
-  };
-#endif
-
   Contract(Contract const &) = delete;
   Contract(Contract &&) = delete;
   Contract &operator=(Contract const &) = delete;
@@ -205,7 +161,7 @@ protected:
     auto index = CreateStateIndex(address);
 
     // retrieve the state data
-    auto document = state().GetOrCreate(index);
+    auto document = state().Get(index);
     if (document.failed) {
       return false;
     }

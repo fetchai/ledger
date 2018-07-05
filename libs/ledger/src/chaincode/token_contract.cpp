@@ -111,7 +111,25 @@ Contract::Status TokenContract::Transfer(transaction_type const &tx) {
 }
 
 Contract::Status TokenContract::Balance(query_type const &query, query_type &response) {
-  return Status::FAILED;
+  Status status = Status::FAILED;
+
+  byte_array::ByteArray address;
+  if (Extract(query, "address", address)) {
+    address = byte_array::FromBase64(address);
+
+    // lookup the record
+    WalletRecord record{};
+    if (!GetOrCreateStateRecord(record, address))
+      return Status::FAILED;
+
+    // formulate the response
+    response.MakeObject();
+    response["balance"] = record.balance;
+
+    status = Status::OK;
+  }
+
+  return status;
 }
 
 } // namespace ledger
