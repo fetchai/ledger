@@ -225,7 +225,9 @@ public:
   {
     lock_type mlock(mutex_);
     auto protocolInstance = std::make_shared<PROTOCOL_CLASS>(interface);
-    rpcServer_ -> Add(protocolNumber, protocolInstance.get());
+    PROTOCOL_CLASS *proto_ptr = protocolInstance.get();
+    fetch::service::Protocol *base_ptr = proto_ptr;
+    rpcServer_ -> Add(protocolNumber, base_ptr);
     auto protocolOwner = std::shared_ptr<ProtocolOwner>(new SpecificProtocolOwner<PROTOCOL_CLASS>(protocolInstance));
     protocols_[protocolNumber] = protocolOwner;
 
@@ -236,6 +238,14 @@ public:
   void AddProtocol(INTERFACE_CLASS *interface, unsigned int protocolNumber)
   {
     AddProtocol<INTERFACE_CLASS, typename INTERFACE_CLASS::protocol_class_type>(interface, protocolNumber);
+  }
+
+  template<class INTERFACE_CLASS>
+  void AddProtocol(std::shared_ptr<INTERFACE_CLASS> interface)
+  {
+    auto protocolNumber = INTERFACE_CLASS::protocol_number;
+    INTERFACE_CLASS *interface_ptr = interface.get();
+    AddProtocol<INTERFACE_CLASS>(interface_ptr, protocolNumber);
   }
 
   template<class INTERFACE_CLASS>

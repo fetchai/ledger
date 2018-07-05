@@ -14,13 +14,13 @@ using std::string;
 #include "network/generics/network_node_core.hpp"
 #include "network/parcels/swarm_parcel.hpp"
 #include "network/parcels/swarm_parcel_node.hpp"
-#include "network/parcels/swarm_parcel_protocol.hpp"
 #include "network/swarm/swarm_peer_location.hpp"
 #include "network/swarm/swarm_random.hpp"
 #include "network/parcels/swarm_agent_api_impl.hpp"
 #include "network/generics/network_node_core.hpp"
 #include "network/swarm/swarm_http_interface.hpp"
 #include "python/worker/python_worker.hpp"
+#include "ledger/main_chain_node.hpp"
 
 #include <unistd.h>
 #include <string>
@@ -37,7 +37,6 @@ public:
   PySwarm(const PySwarm &rhs)
   {
     nnCore_        = rhs.nnCore_;
-    node_          = rhs.node_;
     parcelNode_    = rhs.parcelNode_;
     rnd_           = rhs.rnd_;
     swarmAgentApi_ = rhs.swarmAgentApi_;
@@ -47,7 +46,6 @@ public:
   PySwarm(PySwarm &&rhs)
   {
     nnCore_        = std::move(rhs.nnCore_);
-    node_          = std::move(rhs.node_);
     parcelNode_    = std::move(rhs.parcelNode_);
     rnd_           = std::move(rhs.rnd_);
     swarmAgentApi_ = std::move(rhs.swarmAgentApi_);
@@ -85,33 +83,38 @@ public:
   std::shared_ptr<fetch::swarm::SwarmParcelNode> parcelNode_;
   std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
 
-  explicit PySwarm(unsigned int id, uint16_t rpcPort, uint16_t httpPort, unsigned int maxpeers, unsigned int idlespeed, unsigned int solvespeed)
+  std::shared_ptr<fetch::ledger::MainChain> chainNode_;
+
+  explicit PySwarm(unsigned int id, uint16_t rpcPort, uint16_t httpPort, unsigned int maxpeers, unsigned int idlespeed)
   {
     std::string identifier = "node-" + std::to_string(id);
     std::string myHost = "127.0.0.1:" + std::to_string(rpcPort);
     fetch::swarm::SwarmPeerLocation myHostLoc(myHost);
 
     auto nnCore = std::make_shared<fetch::network::NetworkNodeCore>(20, httpPort, rpcPort);
-
+    auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
     auto swarmNode = std::make_shared<fetch::swarm::SwarmNode>(nnCore, identifier, maxpeers, rnd, myHost);
 
     auto httpModule = std::make_shared<SwarmHttpModule>(swarmNode);
     auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(nnCore);
-    auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
+    auto chainNode = std::make_shared<fetch::ledger::MainChainNode>(nnCore);
     auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl>(myHost, idlespeed);
     auto worker = PythonWorker::instance();
+    worker -> UseCore(nnCore);
+
+    auto chain = std::make_shared<fetch::ledger::MainChain>();
 
     nnCore -> AddModule(httpModule);
     fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });
 
     httpModule_ = httpModule;
     nnCore_ = nnCore;
-    node_ = node;
     parcelNode_ = parcelNode;
     rnd_ = rnd;
     swarmAgentApi_ = swarmAgentApi;
     swarmNode_ = swarmNode;
     worker_ = worker;
+    chainNode_ = chainNode;
 
     nnCore_ -> Start();
 
@@ -173,6 +176,13 @@ public:
                                                      {
                                                        try
                                                          {
+
+
+                                                           auto client nnCore
+
+
+
+                                                           
                                                            std::cout << "ask peer for parcel ids" << std::endl;
                                                            auto blockids = parcelNode -> AskPeerForParcelIds(host, "block", count);
                                                            std::cout << "ask peer for parcel ids done" << std::endl;
@@ -201,10 +211,10 @@ public:
                                                            swarmAgentApi -> DoPingFailed(host);
                                                          }
                                                        catch(network::NetworkNodeCoreBaseException &x)
-                                               {
-                                                 std::cout << x.what() << std::endl;
-                                                 swarmAgentApi -> DoPingFailed(host);
-                                               }
+                                                         {
+                                                           std::cout << x.what() << std::endl;
+                                                           swarmAgentApi -> DoPingFailed(host);
+                                                         }
                                                        catch(std::invalid_argument &x)
                                                          {
                                                            swarmAgentApi -> DoPingFailed(host);

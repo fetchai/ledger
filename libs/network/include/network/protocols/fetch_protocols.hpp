@@ -14,6 +14,7 @@ enum
   SWARM = 2,
   PARCEL= 3,
   BLOCK_HEADERS = 4,
+  MAIN_CHAIN = 5,
 };
 
 };

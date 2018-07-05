@@ -18,7 +18,7 @@ PEERS = [
 
 class SwarmAgentNaive(object):
     def __init__(self, idnum, rpcPort, httpPort, maxpeers, idlespeed, solvespeed, peers):
-        self.swarm = Swarm(idnum, rpcPort, httpPort, maxpeers, idlespeed, solvespeed)
+        self.swarm = Swarm(idnum, rpcPort, httpPort, maxpeers, idlespeed)
         self.idnum = idnum
 
         self.peerlist = peers.split(",")

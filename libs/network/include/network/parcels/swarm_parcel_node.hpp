@@ -9,6 +9,7 @@
 #include "network/parcels/swarm_parcel_warehouse.hpp"
 #include "network/interfaces/parcels/swarm_parcel_node_interface.hpp"
 #include "network/protocols/parcels/commands.hpp"
+#include "network/protocols/parcels/swarm_parcel_protocol.hpp"
 
 namespace fetch
 {
