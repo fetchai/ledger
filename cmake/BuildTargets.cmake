@@ -122,8 +122,11 @@ function(configure_vendor_targets)
   # Pybind11
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)
 
-endfunction(configure_vendor_targets)
+  # Google Test
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
 
+endfunction(configure_vendor_targets)
+
 function(configure_library_targets)
 
   set(library_root ${FETCH_ROOT_DIR}/libs)
