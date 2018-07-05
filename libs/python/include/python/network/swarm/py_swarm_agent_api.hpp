@@ -55,6 +55,8 @@ void BuildSwarmAgentApi(pybind11::module &module) {
     .def("GetCost", &PySwarm::GetCost)
     .def("GetPeers", &PySwarm::GetPeers)
     .def("queryOwnLocation", &PySwarm::queryOwnLocation)
+
+    .def("HeaviestBlock", &PySwarm::HeaviestBlock)
     ;
 }
 

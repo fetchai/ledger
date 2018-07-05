@@ -5,22 +5,31 @@
 #include <string>
 
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/consensus/dummy_miner.hpp"
 #include "network/protocols/mainchain/protocol.hpp"
 #include "network/interfaces/mainchain/main_chain_node_interface.hpp"
+#include "network/generics/network_node_core.hpp"
+#include "network/generics/promise_of.hpp"
 #include "network/details/thread_pool.hpp"
+#include "network/protocols/mainchain/protocol.hpp"
+#include "network/protocols/mainchain/commands.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "core/byte_array/decoders.hpp"
+
 namespace fetch
 {
 namespace ledger
 {
 
-  class MainChainNode : MainChainNodeInterface
+class MainChainNode : public MainChainNodeInterface
 {
 public:
 
   typedef fetch::chain::MainChain::proof_type proof_type;
   typedef fetch::chain::MainChain::block_type block_type;
-  typedef fetch::chain::MainChain::body_type body_type;
+  typedef fetch::chain::MainChain::block_type::body_type body_type;
   typedef fetch::chain::MainChain::block_hash block_hash;
+  typedef fetch::chain::consensus::DummyMiner     miner;
 
   MainChainNode(const MainChainNode &rhs)           = delete;
   MainChainNode(MainChainNode &&rhs)           = delete;
@@ -29,19 +38,37 @@ public:
   bool operator==(const MainChainNode &rhs) const = delete;
   bool operator<(const MainChainNode &rhs) const = delete;
 
-  std::shared_ptr<MainChain> chain_;
+  std::shared_ptr<fetch::chain::MainChain> chain_;
   std::shared_ptr<network::ThreadPool> threadPool_;
   bool stopped_;
+  unsigned int minerNumber_;
+  unsigned int target_;
+  std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
 
-  MainChainNode()
+  MainChainNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore, unsigned int minerNumber) :
+    nnCore_(networkNodeCore)
   {
-    chain_ = std::make_shared<MainChain>();
+    chain_ = std::make_shared<fetch::chain::MainChain>();
     threadPool_ = std::make_shared<network::ThreadPool>(5);
     stopped_ = false;
+    minerNumber_ = minerNumber;
+    target_ = 16;
   }
 
   virtual ~MainChainNode()
   {
+  }
+
+  virtual fetch::network::PromiseOf<std::pair<bool, block_type>> RemoteGetHeader(const block_hash &hash, std::shared_ptr<network::NetworkNodeCore::client_type> client)
+  {
+    auto promise = client->Call(protocol_number, MainChain::GET_HEADER, hash);
+    return network::PromiseOf<std::pair<bool, block_type>>(promise);
+  }
+
+  virtual fetch::network::PromiseOf<std::vector<block_type>> RemoteGetHeaviestChain(unsigned int maxsize, std::shared_ptr<network::NetworkNodeCore::client_type> client)
+  {
+    auto promise = client->Call(protocol_number, MainChain::GET_HEAVIEST_CHAIN, maxsize);
+    return network::PromiseOf<std::vector<block_type>>(promise);
   }
 
   virtual std::pair<bool, block_type> GetHeader(const block_hash &hash)
@@ -79,10 +106,16 @@ public:
     return results;
   }
 
+  block_type const &HeaviestBlock() const
+  {
+    return chain_ -> HeaviestBlock();
+  }
+
   void StartMining()
   {
     auto closure = [this]
     {
+      std::cout << "MINER WORKER" <<  std::endl;
       // Loop code
       while(!stopped_)
       {
@@ -103,6 +136,8 @@ public:
         nextBlock.proof().SetTarget(target_);
         miner::Mine(nextBlock);
 
+        std::cout << "MINER GOT:" << fetch::byte_array::ToHex(nextBlock.hash()) << std::endl;
+
         if(stopped_)
         {
           break;
@@ -117,6 +152,7 @@ public:
     };
 
     threadPool_ -> Post(closure);
+    threadPool_ -> Start();
   }
 
 };

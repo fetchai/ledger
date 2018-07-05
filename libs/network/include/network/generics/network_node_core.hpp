@@ -143,6 +143,11 @@ public:
     return ConnectTo(peer.GetHost(), peer.GetPort());
   }
 
+  virtual std::shared_ptr<client_type> ConnectTo(const std::string &host)
+  {
+    return ConnectToPeer(fetch::swarm::SwarmPeerLocation(host));
+  }
+  
   virtual std::shared_ptr<client_type> ConnectTo(const std::string &host, unsigned short port)
   {
 

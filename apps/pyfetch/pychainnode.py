@@ -54,6 +54,9 @@ class SwarmAgentNaive(object):
     def onIdle(self):
         print("PYCHAINNODE===> OnIdle", 2)
         goodPeers = self.swarm.GetPeers(10, -0.5)
+
+        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ BIGBLOCK: ", self.swarm.HeaviestBlock())
+
         if not goodPeers:
             print("PYCHAINNODE===> OnIdle", 1.1)
             return
