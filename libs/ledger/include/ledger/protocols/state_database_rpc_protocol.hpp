@@ -14,6 +14,10 @@ public:
     RPC_ID_GET_OR_CREATE = 1,
     RPC_ID_GET,
     RPC_ID_SET,
+    RPC_ID_LOCK,
+    RPC_ID_UNLOCK,
+    RPC_ID_HAS_LOCK,
+    RPC_ID_HASH,
     RPC_ID_COMMIT,
     RPC_ID_REVERT
   };
@@ -25,6 +29,10 @@ public:
     Expose(RPC_ID_GET_OR_CREATE, &database_, &StateDatabaseInterface::GetOrCreate);
     Expose(RPC_ID_GET, &database_, &StateDatabaseInterface::Get);
     Expose(RPC_ID_SET, &database_, &StateDatabaseInterface::Set);
+    Expose(RPC_ID_LOCK, &database_, &StateDatabaseInterface::Lock);
+    Expose(RPC_ID_UNLOCK, &database_, &StateDatabaseInterface::Unlock);
+    Expose(RPC_ID_HAS_LOCK, &database_, &StateDatabaseInterface::HasLock);
+    Expose(RPC_ID_HASH, &database_, &StateDatabaseInterface::HasLock);
     Expose(RPC_ID_COMMIT, &database_, &StateDatabaseInterface::Commit);
     Expose(RPC_ID_REVERT, &database_, &StateDatabaseInterface::Revert);
   }

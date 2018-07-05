@@ -43,6 +43,25 @@ public:
     storage_[rid.id()] = value;
   }
 
+  void Lock(resource_id_type const &rid) override {
+    TODO_FAIL("Not implemented");
+
+  }
+
+  void Unlock(resource_id_type const &rid) override {
+    TODO_FAIL("Not implemented");
+
+  }
+
+  void HasLock(resource_id_type const &rid) override {
+    TODO_FAIL("Not implemented");
+  }
+
+  hash_type Hash() override {
+    TODO_FAIL("Not implemented");
+    return 0;
+  }
+
   bookmark_type Commit(bookmark_type const& b) override {
     TODO_FAIL("Not implemented");
     return 0;

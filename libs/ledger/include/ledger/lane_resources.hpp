@@ -27,6 +27,15 @@ public:
   document_type GetOrCreate(resource_id_type const &rid) override;
   document_type Get(resource_id_type const &rid) override;
   void Set(resource_id_type const &rid, byte_array::ConstByteArray const& value) override;
+
+  void Lock(resource_id_type const &rid) override;
+
+  void Unlock(resource_id_type const &rid) override;
+
+  void HasLock(resource_id_type const &rid) override;
+
+  hash_type Hash() override;
+
   bookmark_type Commit(bookmark_type const& b) override;
   void Revert(bookmark_type const &b) override;
   /// @}
