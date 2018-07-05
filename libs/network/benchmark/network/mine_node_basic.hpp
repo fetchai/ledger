@@ -133,7 +133,7 @@ public:
       while(!stopped_)
       {
         // Get heaviest block
-        auto block = mainChain.HeaviestBlock();
+        auto &block = mainChain.HeaviestBlock();
 
         // Create another block sequential to previous
         block_type nextBlock;

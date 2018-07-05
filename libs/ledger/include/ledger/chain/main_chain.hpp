@@ -10,7 +10,7 @@
 #include<map>
 #include<set>
 
-// Specialise hash of byte_array
+// Specialise hash of byte_array for unordered map/set
 namespace std {
 
   template <>
@@ -243,7 +243,7 @@ class MainChain
   }
 
   // for debugging: get the heaviest chain
-  std::vector<block_type> HeaviestChain()
+  std::vector<block_type> HeaviestChain() const
   {
     std::vector<block_type> result;
 
@@ -284,7 +284,6 @@ class MainChain
     {
       block_hash hash      = i.first;
       uint64_t totalWeight = i.second->total_weight;
-      bool loose           = i.second->loose;
       uint64_t blockNumber = 0;
       bool first           = true;
       std::vector<block_type> chain;
@@ -365,7 +364,7 @@ class MainChain
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
   }
 
-  bool Get(block_hash hash, block_type &block)
+  bool Get(block_hash hash, block_type &block) const
   {
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 

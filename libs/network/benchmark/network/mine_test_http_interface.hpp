@@ -152,7 +152,8 @@ public:
     // We now have an array of arrays
     script::Variant arrays = script::Variant::Array(chainArray.second.size());
 
-    int i, j = 0;
+    int i = 0;
+    int j = 0;
     for(auto &chain : chainArray.second)
     {
       script::Variant chainVar = script::Variant::Array(chain.size());
