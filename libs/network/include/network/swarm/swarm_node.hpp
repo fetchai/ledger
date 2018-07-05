@@ -108,9 +108,17 @@ public:
     try{
     std::shared_ptr<client_type> client = nnCore_ -> ConnectToPeer(peer);
     std::cout << "**** calling 1" << std::endl;
+    std::cout << "AskPeerForPeers " << peer.AsString() << " - call pn=" << protocol_number << " cn=" << protocols::Swarm::CLIENT_NEEDS_PEER << std::endl;
     auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     std::cout << "**** calling 2" << std::endl;
-    promise.Wait();
+    promise.Wait(500);
+
+    if (!promise.is_fulfilled())
+      {
+        std::cout << "AskPeerForPeers " << peer.AsString() << " - Arg, failed." << std::endl;
+        throw fetch::network::NetworkNodeCoreTimeOut("AskPeerForPeers");
+      }
+
     std::cout << "**** calling 3" << std::endl;
     auto result = promise.As<std::string>();
     std::cout << "**** calling 4" << std::endl;

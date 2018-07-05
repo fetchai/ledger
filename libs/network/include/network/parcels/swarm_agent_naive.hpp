@@ -62,6 +62,8 @@ public:
     api -> OnIdle([this, api, id, identifier, solvespeed]{
         std::cout << "AGENT NAIVE: OnIdle" << std::endl;
 
+        //usleep(10000);
+
         if (this -> rnd_ -> r(solvespeed) <= static_cast<unsigned int>(id)) 
           {
             std::ostringstream ret;

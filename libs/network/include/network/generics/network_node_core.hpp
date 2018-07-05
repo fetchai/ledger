@@ -108,12 +108,12 @@ public:
 
     tm_. Start();
 
-    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 2" << std::endl;
+    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 2 -- " << rpcPort << std::endl;
 
     rpcPort_ = rpcPort;
     
     rpcServer_ = std::make_shared<service::ServiceServer<fetch::network::TCPServer>>(rpcPort, tm_);
-    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 3 " << httpPort  << std::endl;
+    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 3 " << rpcPort  << std::endl;
     httpServer_ = std::make_shared<fetch::http::HTTPServer>(httpPort, tm_);
     std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 4" << std::endl;
 
@@ -228,29 +228,21 @@ public:
     rpcServer_ -> Add(protocolNumber, protocolInstance.get());
     auto protocolOwner = std::shared_ptr<ProtocolOwner>(new SpecificProtocolOwner<PROTOCOL_CLASS>(protocolInstance));
     protocols_[protocolNumber] = protocolOwner;
+
+    std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ADD PROTOCOL " << protocolNumber << std::endl;
   }
 
   template<class INTERFACE_CLASS>
   void AddProtocol(INTERFACE_CLASS *interface, unsigned int protocolNumber)
   {
-    lock_type mlock(mutex_);
-    auto protocolInstance = std::make_shared<typename INTERFACE_CLASS::protocol_class_type>(interface);
-    rpcServer_ -> Add(protocolNumber, protocolInstance.get());
-    auto protocolOwner = std::shared_ptr<ProtocolOwner>(new SpecificProtocolOwner<typename INTERFACE_CLASS::protocol_class_type>(protocolInstance));
-    protocols_[protocolNumber] = protocolOwner;
-    interfaces_[protocolNumber] = interface;
+    AddProtocol<INTERFACE_CLASS, typename INTERFACE_CLASS::protocol_class_type>(interface, protocolNumber);
   }
 
   template<class INTERFACE_CLASS>
   void AddProtocol(INTERFACE_CLASS *interface)
   {
-    lock_type mlock(mutex_);
     auto protocolNumber = INTERFACE_CLASS::protocol_number;
-    auto protocolInstance = std::make_shared<typename INTERFACE_CLASS::protocol_class_type>(interface);
-    rpcServer_ -> Add(protocolNumber, protocolInstance.get());
-    auto protocolOwner = std::shared_ptr<ProtocolOwner>(new SpecificProtocolOwner<typename INTERFACE_CLASS::protocol_class_type>(protocolInstance));
-    protocols_[protocolNumber] = protocolOwner;
-    interfaces_[protocolNumber] = interface;
+    AddProtocol<INTERFACE_CLASS>(interface, protocolNumber);
   }
 
   template<class INTERFACE_CLASS>

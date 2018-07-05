@@ -29,7 +29,7 @@ public:
   {
   }
 
-  virtual std::string ClientNeedParcelList(const string &type, unsigned int count) = 0;
+  virtual std::string ClientNeedParcelList(const std::string &type, unsigned int count) = 0;
   virtual std::string ClientNeedParcelData(const std::string &type, const std::string &parcelname) = 0;
 };
 

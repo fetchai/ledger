@@ -119,6 +119,8 @@ class Node(object):
             "-idlespeed": "{}".format(args.idlespeed),
         }
 
+        self.debugger = args.debugger
+
         {
             "": self.launchRun,
             "gdb": self.launchGDB,
@@ -127,9 +129,27 @@ class Node(object):
 
 
     def launchLLDB(self):
-        pass
+        cmdstr = (self.moreargs +
+            [ " ".join([ x[0], x[1] ]) for x in self.backargs.items() ])
+
+        cmdstr = " ".join(cmdstr)
+
+        cmdstr = "screen -S 'lldb-{}' -dm lldb ".format(self.index) + self.frontargs + " -s '/tmp/lldb.run.cmd' -- " + cmdstr
+        print(cmdstr)
+        self.p = subprocess.Popen("{} >{} 2>&1".format(cmdstr, os.path.join(self.logdir, str(self.index))),
+            shell=True
+        )
 
     def launchGDB(self):
+        pass
+
+    def killGDB(self):
+        pass
+
+    def killRun(self):
+        pass
+
+    def killLLDB(self):
         pass
 
     def launchRun(self):
@@ -140,11 +160,17 @@ class Node(object):
 
         cmdstr = " ".join(cmdstr)
         print(cmdstr)
-        self.p = subprocess.Popen("{} >{}".format(cmdstr, os.path.join(self.logdir, str(self.index))),
+        self.p = subprocess.Popen("{} >{} 2>&1".format(cmdstr, os.path.join(self.logdir, str(self.index))),
             shell=True
         )
 
     def close(self):
+        {
+            "": self.killRun,
+            "gdb": self.killGDB,
+            "lldb": self.killLLDB,
+        }[self.args.debugger]()
+
         self.p.terminate()
         self.p.kill()
 
@@ -152,6 +178,9 @@ class Node(object):
 def main():
     swarmArgs = RunSwarmArgs()
     args = swarmArgs.get()
+
+    with open("/tmp/lldb.run.cmd", "w") as fn:
+        fn.write("run\n");
 
     if args.clean:
         killall()

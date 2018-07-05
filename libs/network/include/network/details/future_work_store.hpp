@@ -87,7 +87,7 @@ public:
   void Post(F &&f, int milliseconds)
   {
     lock_type mlock(mutex_);
-    auto dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(5);
+    auto dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(milliseconds);
     workStore_.push_back(work_item_type(dueTime, f));
     std::push_heap(workStore_.begin(), workStore_.end(), sorter_);
   }
