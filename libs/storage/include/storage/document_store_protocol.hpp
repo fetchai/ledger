@@ -10,6 +10,7 @@
 namespace fetch {
 namespace storage {
 
+
 class RevertibleDocumentStoreProtocol : public fetch::service::Protocol {
 public:
   typedef network::AbstractConnection::connection_handle_type connection_handle_type;

@@ -59,6 +59,7 @@ class Transaction {
   }
 
   bool operator<(const Transaction &rhs) const {
+
     return digest() < rhs.digest();
   }
 
@@ -152,7 +153,7 @@ TODO: Make 32 bit compat
     return summary_.transaction_hash;
   }
 
-  uint32_t signature_count() const { return signature_count_; }
+  uint32_t signature_count() const { return uint32_t(signatures_.size()); }
 
   byte_array::ConstByteArray data() const { return data_; };
 
@@ -163,7 +164,6 @@ TODO: Make 32 bit compat
  private:
   TransactionSummary summary_;
 
-  uint32_t signature_count_;
   byte_array::ConstByteArray data_;
   // TODO: Add resources
   std::vector<byte_array::ConstByteArray> signatures_;
