@@ -1,6 +1,8 @@
 #ifndef STORAGE_DOCUMENT_HPP
 #define STORAGE_DOCUMENT_HPP
 
+#include "core/byte_array/const_byte_array.hpp"
+
 namespace fetch {
 namespace storage {
 

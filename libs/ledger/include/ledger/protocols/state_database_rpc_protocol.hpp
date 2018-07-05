@@ -11,7 +11,8 @@ namespace ledger {
 class StateDatabaseRpcProtocol : public fetch::service::Protocol {
 public:
   enum {
-    RPC_ID_GET = 1,
+    RPC_ID_GET_OR_CREATE = 1,
+    RPC_ID_GET,
     RPC_ID_SET,
     RPC_ID_COMMIT,
     RPC_ID_REVERT
@@ -21,6 +22,7 @@ public:
     : database_{db} {
 
     // expose the interface
+    Expose(RPC_ID_GET_OR_CREATE, &database_, &StateDatabaseInterface::GetOrCreate);
     Expose(RPC_ID_GET, &database_, &StateDatabaseInterface::Get);
     Expose(RPC_ID_SET, &database_, &StateDatabaseInterface::Set);
     Expose(RPC_ID_COMMIT, &database_, &StateDatabaseInterface::Commit);

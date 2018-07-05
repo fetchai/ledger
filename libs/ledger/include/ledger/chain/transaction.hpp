@@ -5,8 +5,9 @@
 #include "core/logger.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/stl_types.hpp"
 #include "crypto/sha256.hpp"
-//#include "storage/resource_mapper.hpp"
+#include "ledger/identifier.hpp"
 
 namespace fetch {
 typedef uint16_t group_type;
@@ -45,7 +46,7 @@ class Transaction {
     LOG_STACK_TRACE_POINT;
 
     serializers::ByteArrayBuffer buf;
-    buf << summary_.groups << signatures_ << contract_name_ << arguments_;
+    buf << summary_.groups << signatures_ << contract_name_.full_name() << arguments_;
     hasher_type hash;
     hash.Reset();
     hash.Update(buf.data());
@@ -125,8 +126,8 @@ TODO: Make 32 bit compat
     signatures_.push_back(sig);
   }
 
-  void set_contract_name(byte_array::ConstByteArray const &name) {
-    contract_name_ = name;
+  void set_contract_name(std::string const &name) {
+    contract_name_.Parse(name);
   }
 
   void set_arguments(byte_array::ConstByteArray const &args) {
@@ -141,7 +142,7 @@ TODO: Make 32 bit compat
 
   std::vector<byte_array::ConstByteArray> &signatures() { return signatures_; }
 
-  byte_array::ConstByteArray const &contract_name() const {
+  ledger::Identifier const &contract_name() const {
     return contract_name_;
   }
 
@@ -166,7 +167,7 @@ TODO: Make 32 bit compat
   byte_array::ConstByteArray data_;
   // TODO: Add resources
   std::vector<byte_array::ConstByteArray> signatures_;
-  byte_array::ConstByteArray contract_name_;
+  ledger::Identifier contract_name_;
 
   arguments_type arguments_;
 
@@ -187,7 +188,7 @@ inline void Serialize(T &serializer, Transaction const &b) {
     serializer << sig;
   }
 
-  serializer << b.contract_name();
+  serializer << b.contract_name().full_name();
   serializer << b.arguments();
 }
 
@@ -207,7 +208,7 @@ inline void Deserialize(T &serializer, Transaction &b) {
     b.PushSignature(sig);
   }
 
-  byte_array::ByteArray contract_name;
+  std::string contract_name;
   typename Transaction::arguments_type arguments;
   serializer >> contract_name >> arguments;
 

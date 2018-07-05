@@ -13,6 +13,8 @@ enum
 {
   SWARM = 2,
   PARCEL= 3,
+  EXECUTION_MANAGER = 4,
+  STATE_DATABASE = 5
 };
 
 };

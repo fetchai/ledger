@@ -11,7 +11,7 @@ namespace ledger {
 
 class StateDatabase : public StateDatabaseInterface {
 public:
-  using database_type = storage::DocumentStore<>;
+  using database_type = storage::RevertibleDocumentStore;
 
   // Construction / Destruction
   StateDatabase() = default;
@@ -19,10 +19,25 @@ public:
 
   /// @name State Database
   /// @{
-  bool Get(resource_id_type const &rid, byte_array::ByteArray &data) override;
-  bool Set(resource_id_type const &rid, byte_array::ConstByteArray const &value) override;
-  bookmark_type Commit(bookmark_type const &b) override;
-  void Revert(bookmark_type const &b) override;
+  document_type GetOrCreate(resource_id_type const &rid) override {
+    return database_.GetOrCreate(rid);
+  }
+
+  document_type Get(resource_id_type const &rid) override {
+    return database_.Get(rid);
+  }
+
+  void Set(resource_id_type const &rid, byte_array::ConstByteArray const& value) override {
+    database_.Set(rid, value);
+  }
+
+  bookmark_type Commit(bookmark_type const& b) override {
+    return database_.Commit(b);
+  }
+
+  void Revert(bookmark_type const &b) override {
+    database_.Revert(b);
+  }
   /// @}
 
 private:

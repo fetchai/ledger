@@ -16,9 +16,10 @@ public:
 
 /// @name State Database Interface
   /// @{
-  bool Get(resource_id_type const &rid, byte_array::ByteArray &data) override;
-  bool Set(resource_id_type const &rid, byte_array::ConstByteArray const &value) override;
-  bookmark_type Commit(bookmark_type const &b) override;
+  document_type GetOrCreate(resource_id_type const &rid) override;
+  document_type Get(resource_id_type const &rid) override;
+  void Set(resource_id_type const &rid, byte_array::ConstByteArray const& value) override;
+  bookmark_type Commit(bookmark_type const& b) override;
   void Revert(bookmark_type const &b) override;
   /// @}
 };

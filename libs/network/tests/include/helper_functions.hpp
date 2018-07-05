@@ -105,7 +105,7 @@ T NextTransaction(std::size_t bytesToAdd = 0)
 
   trans.PushSignature(sig1);
   trans.PushSignature(sig2);
-  trans.set_contract_name(contract_name);
+  trans.set_contract_name(std::string{contract_name.char_pointer(), contract_name.size()});
   trans.set_arguments(arg1);
   trans.UpdateDigest();
 
