@@ -157,6 +157,10 @@ TODO: Make 32 bit compat
 
   byte_array::ConstByteArray data() const { return data_; };
 
+  void set_data(byte_array::ConstByteArray const &data) {
+    data_ = data;
+  }
+
   TransactionSummary const &summary() const {
     return summary_;
   }

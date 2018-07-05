@@ -31,6 +31,22 @@ public:
     database_.Set(rid, value);
   }
 
+  void Lock(resource_id_type const &rid) override {
+    TODO_FAIL("Needs to be implemented");
+  }
+
+  void Unlock(resource_id_type const &rid) override {
+    TODO_FAIL("Needs to be implemented");
+  }
+
+  void HasLock(resource_id_type const &rid) override {
+    TODO_FAIL("Needs to be implemented");
+  }
+
+  hash_type Hash() override {
+    return 0;
+  }
+
   bookmark_type Commit(bookmark_type const& b) override {
     return database_.Commit(b);
   }
