@@ -7,7 +7,6 @@
 #include <type_traits>
 #include "core/logger.hpp"
 #include "vectorise/memory/shared_array.hpp"
-
 namespace fetch {
 namespace byte_array {
 class BasicByteArray;
@@ -73,7 +72,11 @@ class BasicByteArray {
   ~BasicByteArray() = default;
 
   explicit operator std::string() const {
-    return {char_pointer(), size()};
+    std::string ret;
+    ret.resize(length_);
+    char const *cstr = char_pointer();
+    for (std::size_t i = 0; i < length_; ++i) ret[i] = cstr[i];
+    return ret;
   }
 
   container_type const &operator[](std::size_t const &n) const {
