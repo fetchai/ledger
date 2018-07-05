@@ -9,19 +9,18 @@ using std::string;
 
 #include <iostream>
 #include "core/commandline/parameter_parser.hpp"
-
-#include "network/swarm/swarm_service.hpp"
 #include "network/swarm/swarm_node.hpp"
 
+#include "network/generics/network_node_core.hpp"
 #include "network/parcels/swarm_parcel.hpp"
 #include "network/parcels/swarm_parcel_node.hpp"
-#include "network/protocols/parcels/swarm_parcel_protocol.hpp"
-#include "network/swarm/swarm_service.hpp"
+#include "network/parcels/swarm_parcel_protocol.hpp"
 #include "network/swarm/swarm_peer_location.hpp"
 #include "network/swarm/swarm_random.hpp"
 #include "network/parcels/swarm_agent_api_impl.hpp"
 #include "network/generics/network_node_core.hpp"
 #include "network/swarm/swarm_http_interface.hpp"
+#include "python/worker/python_worker.hpp"
 
 #include <unistd.h>
 #include <string>
@@ -38,18 +37,22 @@ public:
   PySwarm(const PySwarm &rhs)
   {
     nnCore_        = rhs.nnCore_;
-    rnd_           = rhs.rnd_;
-    swarmNode_     = rhs.swarmNode_;
+    node_          = rhs.node_;
     parcelNode_    = rhs.parcelNode_;
+    rnd_           = rhs.rnd_;
     swarmAgentApi_ = rhs.swarmAgentApi_;
+    swarmNode_     = rhs.swarmNode_;
+    worker_        = rhs.worker_;
   }
   PySwarm(PySwarm &&rhs)
   {
     nnCore_        = std::move(rhs.nnCore_);
-    rnd_           = std::move(rhs.rnd_);
-    swarmNode_     = std::move(rhs.swarmNode_);
+    node_          = std::move(rhs.node_);
     parcelNode_    = std::move(rhs.parcelNode_);
+    rnd_           = std::move(rhs.rnd_);
     swarmAgentApi_ = std::move(rhs.swarmAgentApi_);
+    swarmNode_     = std::move(rhs.swarmNode_);
+    worker_        = std::move(rhs.worker_);
   }
   PySwarm operator=(const PySwarm &rhs)  = delete;
   PySwarm operator=(PySwarm &&rhs) = delete;
@@ -63,7 +66,6 @@ public:
   virtual void Start()
   {
     lock_type lock(mutex_);
-    cout << "***** START"<<endl;
     swarmAgentApi_ -> Start();
     nnCore_ -> Start();
   }
@@ -75,48 +77,41 @@ public:
     swarmAgentApi_ -> Stop();
   }
 
+  std::shared_ptr<PythonWorker> worker_;
   std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
-  std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
-  std::shared_ptr<fetch::swarm::SwarmNode> swarmNode_;
-  std::shared_ptr<fetch::swarm::SwarmParcelNode> parcelNode_;
   std::shared_ptr<fetch::swarm::SwarmAgentApiImpl> swarmAgentApi_;
   std::shared_ptr<fetch::swarm::SwarmHttpModule> httpModule_;
+  std::shared_ptr<fetch::swarm::SwarmNode> swarmNode_;
+  std::shared_ptr<fetch::swarm::SwarmParcelNode> parcelNode_;
+  std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
 
   explicit PySwarm(unsigned int id, uint16_t rpcPort, uint16_t httpPort, unsigned int maxpeers, unsigned int idlespeed, unsigned int solvespeed)
   {
-    std::cout << "PySwarm: rpc=" << rpcPort << " http=" << httpPort << std::endl;
     std::string identifier = "node-" + std::to_string(id);
     std::string myHost = "127.0.0.1:" + std::to_string(rpcPort);
     fetch::swarm::SwarmPeerLocation myHostLoc(myHost);
 
-    std::cout << "PySwarm: B" << std::endl;
     auto nnCore = std::make_shared<fetch::network::NetworkNodeCore>(20, httpPort, rpcPort);
-    std::cout << "PySwarm: C" << std::endl;
-    auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
-    std::cout << "PySwarm: D" << std::endl;
+
     auto swarmNode = std::make_shared<fetch::swarm::SwarmNode>(nnCore, identifier, maxpeers, rnd, myHost);
-    std::cout << "PySwarm: E" << std::endl;
-    auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(nnCore);
-    std::cout << "PySwarm: F" << std::endl;
-    auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl>(myHost, idlespeed);
-    std::cout << "PySwarm: G" << std::endl;
-    std::cout << "PySwarm: H" << std::endl;
 
-    std::cout << "PySwarm: I" << std::endl;
     auto httpModule = std::make_shared<SwarmHttpModule>(swarmNode);
-    std::cout << "PySwarm: J" << std::endl;
-    nnCore -> AddModule(httpModule);
-    std::cout << "PySwarm: K" << std::endl;
+    auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(nnCore);
+    auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
+    auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl>(myHost, idlespeed);
+    auto worker = PythonWorker::instance();
 
-    std::cout << "PySwarm: L" << std::endl;
+    nnCore -> AddModule(httpModule);
     fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });
 
-    nnCore_ = nnCore;
-    rnd_ = rnd;
-    swarmNode_ = swarmNode;
-    parcelNode_ = parcelNode;
-    swarmAgentApi_ = swarmAgentApi;
     httpModule_ = httpModule;
+    nnCore_ = nnCore;
+    node_ = node;
+    parcelNode_ = parcelNode;
+    rnd_ = rnd;
+    swarmAgentApi_ = swarmAgentApi;
+    swarmNode_ = swarmNode;
+    worker_ = worker;
 
     nnCore_ -> Start();
 
