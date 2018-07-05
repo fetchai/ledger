@@ -20,29 +20,22 @@ typedef unsigned int uint;
 
 int main(int argc, const char *argv[])
 {
-  unsigned int id;
-  uint16_t portNumber;
-  unsigned int maxpeers;
-  unsigned int idlespeed;
-  unsigned int solvespeed;
-  std::string peerlist;
-
-  fetch::commandline::Params params;
-
-  params.description("I am a demo node, for the v1 test network.");
-
-  params.add(id,            "id",             "Identifier number for this node.");
-  params.add(portNumber,    "port",           "Which port to run on.");
-  params.add(maxpeers,      "maxpeers",       "Ideally how many peers to maintain good connections to.");
-  params.add(solvespeed,    "solvespeed",     "The rate of generating block solutions.");
-  params.add(idlespeed,     "idlespeed",      "The rate, in milliseconds, of generating idle events to the Swarm Agent.");
-  params.add(peerlist,      "peerlist",       "Comma separated list of peer locations.");
-
+  fetch::commandline::ParamsParser params;
   params.Parse(argc, argv);
+
+  uint16_t portNumber = params.GetParam<uint16_t>("port", 0);
+  unsigned int maxpeers = params.GetParam<unsigned int>("maxpeers", 0);
+  unsigned int idlespeed = params.GetParam<unsigned int>("idlespeed", 1000);
+  unsigned int solvespeed = params.GetParam<unsigned int>("solvespeed", 1000);
+  std::list<fetch::swarm::SwarmPeerLocation> peers =
+    fetch::swarm::SwarmPeerLocation::ParsePeerListString(params.GetParam<std::string>("peers", ""));
 
   fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });
 
   fetch::network::ThreadManager tm(30);
+
+
+  unsigned int id = params.GetParam<unsigned int>("id", 0);
 
   std::string identifier = "node-" + std::to_string(id);
 
