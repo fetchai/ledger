@@ -1,10 +1,21 @@
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wpedantic"
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#pragma clang diagnostic ignored "-Wpedantic"
+#if defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+  #pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wconversion"
+  #pragma clang diagnostic ignored "-Wpedantic"
+#endif
 
 #include <asio.hpp>
-#pragma clang diagnostic pop
-#pragma GCC diagnostic pop
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
+
+#if defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
