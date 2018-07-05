@@ -86,8 +86,6 @@ class ClientConnection : public AbstractConnection {
     auto cb = [this,socket_ptr, self](std::error_code ec, std::size_t len) {
       auto ptr = manager_.lock();
       if(!ptr) {
-        std::cout << "YYY" << std::endl;
-        
         return;
       }
       
@@ -95,7 +93,6 @@ class ClientConnection : public AbstractConnection {
         fetch::logger.Debug("Server: Read header.");
         ReadBody();
       } else {
-        std::cout << "Blah blah: " << ec << std::endl;
         
         ptr->Leave(this->handle());
       }
@@ -125,8 +122,6 @@ class ClientConnection : public AbstractConnection {
     auto cb = [this, socket_ptr, self, message](std::error_code ec, std::size_t len) {
       auto ptr = manager_.lock();
       if(!ptr)  {
-        std::cout << "XXXX" << std::endl;
-          
         return;
       }
       
@@ -137,8 +132,6 @@ class ClientConnection : public AbstractConnection {
         ReadHeader();
       } else {
 
-        std::cout << "Was here?" << std::endl;
-        
         ptr->Leave(this->handle());
 
       }

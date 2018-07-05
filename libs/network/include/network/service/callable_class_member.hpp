@@ -132,6 +132,7 @@ struct UnrollPointers {
       auto const &arg = additional_args[COUNTER - 1];
 
       if (typeid(T) != arg.type.get()) {
+        // TODO: Make serializable
         throw std::runtime_error(
             "argument type mismatch for Callabale. TODO: Make custom "
             "exception");

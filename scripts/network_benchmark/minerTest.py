@@ -60,7 +60,7 @@ print "waiting"
 time.sleep(8)
 
 print "resetting a miner"
-#HTTPpost(endpoint0, 'reset')
+HTTPpost(endpoint0, 'reset')
 
 time.sleep(8)
 

@@ -205,56 +205,83 @@ class LogWrapper {
   typedef std::shared_ptr<ContextDetails> shared_context_type;
 
   LogWrapper() { log_ = new DefaultLogger(); }
+  
+  ~LogWrapper() {
+    if(log_!=nullptr) delete log_;
+  }
 
-  ~LogWrapper() { delete log_; }
-
+  void DisableLogger() 
+  {
+    if(log_!=nullptr) delete log_;
+    log_ = nullptr;
+  }
+  
+  
   template <typename... Args>
   void Info(Args... args) {
     std::lock_guard<std::mutex> lock(mutex_);
-    this->log_->StartEntry(DefaultLogger::INFO, TopContextImpl());
-    Unroll<Args...>::Append(this, args...);
-    this->log_->CloseEntry(DefaultLogger::INFO);
+    if(this->log_ != nullptr) {
+      this->log_->StartEntry(DefaultLogger::INFO, TopContextImpl());
+      Unroll<Args...>::Append(this, args...);
+      this->log_->CloseEntry(DefaultLogger::INFO);
+    }
+    
   }
 
   template <typename... Args>
   void Warn(Args... args) {
     std::lock_guard<std::mutex> lock(mutex_);
-    this->log_->StartEntry(DefaultLogger::WARNING, TopContextImpl());
-    Unroll<Args...>::Append(this, args...);
-    this->log_->CloseEntry(DefaultLogger::WARNING);
+    if(this->log_ != nullptr) {
+      this->log_->StartEntry(DefaultLogger::WARNING, TopContextImpl());
+      Unroll<Args...>::Append(this, args...);
+      this->log_->CloseEntry(DefaultLogger::WARNING);
+    }
+    
   }
 
   template <typename... Args>
   void Highlight(Args... args) {
     std::lock_guard<std::mutex> lock(mutex_);
-    this->log_->StartEntry(DefaultLogger::HIGHLIGHT, TopContextImpl());
-    Unroll<Args...>::Append(this, args...);
-    this->log_->CloseEntry(DefaultLogger::HIGHLIGHT);
+    if(this->log_ != nullptr) {
+      this->log_->StartEntry(DefaultLogger::HIGHLIGHT, TopContextImpl());
+      Unroll<Args...>::Append(this, args...);
+      this->log_->CloseEntry(DefaultLogger::HIGHLIGHT);
+    }
+    
   }
 
   template <typename... Args>
   void Error(Args... args) {
     std::lock_guard<std::mutex> lock(mutex_);
-    this->log_->StartEntry(DefaultLogger::ERROR, TopContextImpl());
-    Unroll<Args...>::Append(this, args...);
-    this->log_->CloseEntry(DefaultLogger::ERROR);
-
-    StackTrace();
+    if(this->log_ != nullptr) {
+      this->log_->StartEntry(DefaultLogger::ERROR, TopContextImpl());
+      Unroll<Args...>::Append(this, args...);
+      this->log_->CloseEntry(DefaultLogger::ERROR);
+    
+      StackTrace();
+    }
+    
     //    exit(-1);
   }
 
   template <typename... Args>
   void Debug(Args... args) {
     std::lock_guard<std::mutex> lock(mutex_);
-    this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl());
-    Unroll<Args...>::Append(this, args...);
-    this->log_->CloseEntry(DefaultLogger::DEBUG);
+    if(this->log_ != nullptr) {
+      this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl());
+      Unroll<Args...>::Append(this, args...);
+      this->log_->CloseEntry(DefaultLogger::DEBUG);
+    }
+    
   }
 
   void SetContext(shared_context_type ctx) {
-    std::thread::id id = std::this_thread::get_id();
+    std::thread::id id = std::this_thread::get_id();    
     std::lock_guard<std::mutex> lock(mutex_);
-    context_[id] = ctx;
+    if(this->log_ != nullptr) {
+      context_[id] = ctx;
+    }
+    
   }
 
   shared_context_type TopContext() {
@@ -264,40 +291,45 @@ class LogWrapper {
 
   void RegisterLock(fetch::mutex::AbstractMutex *ptr) {
     std::lock_guard<std::mutex> lock(mutex_);
-    active_locks_.insert(ptr);
+    if(this->log_ != nullptr) {
+      active_locks_.insert(ptr);
+    }
+    
   }
 
   void RegisterUnlock(fetch::mutex::AbstractMutex *ptr, double spent_time,
                       std::string filename, int line) {
     std::lock_guard<std::mutex> lock(mutex_);
-
-    std::stringstream ss;
-    ss << filename << line;
-    std::string s = ss.str();
-    if (mutex_timings_.find(s) == mutex_timings_.end()) {
-      TimingDetails t;
-      t.line = line;
-      t.context = "Mutex";
-      t.filename = filename;
-
-      mutex_timings_[s] = t;
-    }
-
-    auto &t = mutex_timings_[s];
-    t.total += spent_time;
-    if (t.peak < spent_time) t.peak = spent_time;
-
-    ++t.calls;
-
-    auto it = active_locks_.find(ptr);
-    if (it != active_locks_.end()) {
-      active_locks_.erase(it);
+    if(this->log_ != nullptr) {
+      std::stringstream ss;
+      ss << filename << line;
+      std::string s = ss.str();
+      if (mutex_timings_.find(s) == mutex_timings_.end()) {
+        TimingDetails t;
+        t.line = line;
+        t.context = "Mutex";
+        t.filename = filename;
+        
+        mutex_timings_[s] = t;
+      }
+      
+      auto &t = mutex_timings_[s];
+      t.total += spent_time;
+      if (t.peak < spent_time) t.peak = spent_time;
+      
+      ++t.calls;
+      
+      auto it = active_locks_.find(ptr);
+      if (it != active_locks_.end()) {
+        active_locks_.erase(it);
+      }
     }
   }
-
+  
   void StackTrace(shared_context_type ctx, uint32_t max = uint32_t(-1),
-                  bool show_locks = true,
-                  std::string const &trace_name = "Stack trace") {
+    bool show_locks = true,
+    std::string const &trace_name = "Stack trace") {
+
     if (!ctx) {
       std::cerr << "Stack trace context invalid" << std::endl;
       return;

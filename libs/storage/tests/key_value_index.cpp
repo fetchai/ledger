@@ -9,7 +9,7 @@
 #include "testing/unittest.hpp"
 using namespace fetch;
 using namespace fetch::storage;
-typedef KeyValueIndex<> cached_kvi_type;
+typedef KeyValueIndex< KeyValuePair< >, CachedRandomAccessStack< KeyValuePair< > > > cached_kvi_type;
 typedef KeyValueIndex< KeyValuePair< >, RandomAccessStack< KeyValuePair< > > > kvi_type;
 
 cached_kvi_type key_index;
@@ -362,6 +362,7 @@ bool LoadSaveVsBulk() {
 int main() {
   SCENARIO("Inserting") {
     SECTION("Value consistency") {
+     
       EXPECT( ValueConsistency() );
       EXPECT( (LoadSaveValueConsistency<kvi_type, kvi_type>()) );
       EXPECT( (LoadSaveValueConsistency<kvi_type, cached_kvi_type>()) );

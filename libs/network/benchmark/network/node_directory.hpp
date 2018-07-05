@@ -2,13 +2,14 @@
 #define NODE_DIRECTORY_HPP
 
 // This file holds and manages connections to other nodes
+// Not for long-term use
 
 #include "core/logger.hpp"
 #include "network/service/client.hpp"
 #include "network/service/server.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "./protocols/fetch_protocols.hpp"
-#include "./protocols/network_benchmark/commands.hpp" // TODO: (`HUT`) : delete this
+#include "./protocols/network_benchmark/commands.hpp"
 #include "./protocols/network_mine_test/commands.hpp"
 #include "./network_classes.hpp"
 #include "../tests/include/helper_functions.hpp"
@@ -57,8 +58,7 @@ public:
     }
   }
 
-
-  // push blocks to the rest of the network 
+  // push headers to the rest of the network
   template <typename T>
   void PushBlock(T block)
   {
@@ -99,14 +99,7 @@ public:
 
       if(result.first)
       {
-
-        {
-          result.second.UpdateDigest();
-          std::cout << "remote0.hash      " << ToHex(result.second.hash()) << std::endl;
-          std::cout << "remote0.prev hash " << ToHex(result.second.body().previous_hash) << std::endl;
-          std::cout << "remote0.Block number " << result.second.body().block_number << std::endl;
-        }
-
+        result.second.UpdateDigest();
         block = result.second;
         return true;
       }

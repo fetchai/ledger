@@ -23,29 +23,6 @@ public:
     return "Hello, " + name;
   }      
 };
-/*
-class AESEncryption 
-{
-public:
-  void Apply( serializer_type &serializer, byte_array_type const &data) 
-  {
-    
-  }
-
-  void Unapply( serializer_type &serializer, byte_array_type const &data)  override
-  {
-    
-  }  
-  
-};
-
-
-template<typename C, typename R, typename ...Args, typename ...DecArgs>
-void Decorate( C *instance, R (C::*function)(Args...), DecArgs ... decorators)  
-{
-
-}
-*/
 
 // Next we make a protocol for the implementation
 class ServiceProtocol :  public Protocol {
@@ -57,16 +34,6 @@ public:
     this->Expose(ADD, &impl_, &Implementation::Add);
     this->Expose(GREET, &impl_, &Implementation::Greet);
 
-//    AESEncryption aes;    
-//    Decorate(&impl_, &Implementation::SlowFunction, aes);
-    
-
-//      this->Using(aes).Expose( ... );
-    
-      /*
-        AESEncryption aes;    
-        this->Expose(SLOWFUNCTION, );    
-      */
   }
 private:
   Implementation impl_;  

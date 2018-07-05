@@ -138,6 +138,26 @@ int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
   return STRING;
 }
 
+template <int TOKEN>
+int Token(byte_array::ConstByteArray const &str, uint64_t &pos) {
+  uint8_t c = str[pos];
+  
+  if (! (('a'<=c &&c <'z') ||
+      ('A'<=c &&c <'Z')) ) return -1;
+  ++pos;
+  if(pos >= str.size()) return TOKEN;  
+  c = str[pos];  
+  while(('a'<= c && c <='z') ||
+        ('A'<= c && c <='Z') ||
+        ('0'<= c && c <='9')) {
+    ++pos;
+    if(pos >= str.size()) break;
+    c = str[pos];      
+  }
+  return TOKEN; 
+}
+
+
 template <int CATCH_ALL>
 int AnyChar(byte_array::ConstByteArray const &str, uint64_t &pos) {
   ++pos;

@@ -28,9 +28,8 @@ class ServiceClient : public T,
                       public ServiceServerInterface {
  public:
   typedef T super_type;
-
   typedef typename super_type::thread_manager_type thread_manager_type;
-  typedef typename thread_manager_type::event_handle_type event_handle_type;
+
 
   ServiceClient(byte_array::ConstByteArray const& host, uint16_t const& port,
                 thread_manager_type thread_manager)
@@ -49,44 +48,31 @@ class ServiceClient : public T,
     // Disconnect callbacks
     super_type::Cleanup();
     super_type::Close();
-    int counter{0};
+    int timeout = 100;
 
     // Can only guarantee we are not being called when socket is closed
     while(!super_type::Closed())
     {
-      super_type::Close();
-
-      std::cout << "Waiting for super to close! " << counter++  << std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      timeout--;
 
-      if(counter > 100)
-      {
-        break;
-      }
+      if(timeout == 0) break;
     }
-
-    std::cout << "finished at counter: " << counter << std::endl;
   }
 
   void PushMessage(network::message_type const& msg) override {
     LOG_STACK_TRACE_POINT;
 
     {
-      std::cout << "*****PUSHING CLIENT*****" << std::endl;
       std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
       messages_.push_back(msg);
-      std::cout << "*****PUSHED CLIENT*****" << std::endl;
     }
 
-    ProcessMessages();
-    /*
     // Since this class isn't shared_from_this, try to ensure safety when destructing
     thread_manager_.Post([this]()
     {
-    std::cout << "process messages!" << std::endl;
       ProcessMessages();
-    std::cout << "process messages finished!" << std::endl;
-    }); */
+    });
   }
 
   void ConnectionFailed() override {
@@ -103,7 +89,7 @@ class ServiceClient : public T,
     return true;
   }
 
-  bool DeliverResponse(handle_type, network::message_type const& msg) override {
+  bool DeliverResponse(connection_handle_type, network::message_type const& msg) override {
     super_type::Send(msg);
     return true;
   }
@@ -132,7 +118,7 @@ class ServiceClient : public T,
         if (!ProcessServerMessage(msg)) {
           fetch::logger.Debug("Looking for RPC functionality");
 
-          if (!PushProtocolRequest(handle_type(-1), msg)) {
+          if (!PushProtocolRequest(connection_handle_type(-1), msg)) {
             throw serializers::SerializableException(
                 error::UNKNOWN_MESSAGE,
                 byte_array::ConstByteArray("Unknown message"));
@@ -145,7 +131,7 @@ class ServiceClient : public T,
   thread_manager_type               thread_manager_;
   std::deque<network::message_type> messages_;
   mutable fetch::mutex::Mutex       message_mutex_;
-  //  std::thread *worker_thread_ = nullptr;  // TODO: use thread pool
+
 };
 }
 }

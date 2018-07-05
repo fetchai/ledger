@@ -28,7 +28,7 @@ class AbstractConnection : public std::enable_shared_from_this<AbstractConnectio
   }
 
   // Interface
-  virtual ~AbstractConnection() {
+  virtual ~AbstractConnection() {    
     auto ptr = connection_register_.lock();
     if(ptr) {
       ptr->Leave( handle_ );      
@@ -81,10 +81,7 @@ protected:
   
 };
 
-AbstractConnection::connection_handle_type
-    AbstractConnection::global_handle_counter_ = 0;
-fetch::mutex::Mutex AbstractConnection::global_handle_mutex_(__LINE__,
-                                                                __FILE__);
+
 }
 }
 

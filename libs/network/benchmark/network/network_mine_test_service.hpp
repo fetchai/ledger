@@ -4,11 +4,10 @@
 #include"core/logger.hpp"
 #include"network/service/server.hpp"
 #include"http/server.hpp"
+#include"./protocols/fetch_protocols.hpp"
 #include"./protocols/network_mine_test.hpp"
-#include"./node_basic.hpp"
 #include"./mine_test_http_interface.hpp"
 #include"../tests/include/helper_functions.hpp"
-
 
 namespace fetch
 {
