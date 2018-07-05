@@ -1,6 +1,7 @@
 #ifndef CRYPTO_ECDSA_HPP
 #define CRYPTO_ECDSA_HPP
 #include <crypto/hash.hpp>
+#include <core/assert.hpp>
 #include <crypto/prover.hpp>
 #include <crypto/sha256.hpp>
 
@@ -9,7 +10,7 @@
 #include <openssl/ecdsa.h>
 #include <openssl/obj_mac.h>
 
-#include <core/assert.hpp>
+#include <memory>
 
 namespace fetch {
 namespace crypto {
