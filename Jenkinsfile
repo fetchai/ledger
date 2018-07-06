@@ -1,13 +1,13 @@
 pipeline {
     agent {
         docker {
-            image "node:7-alpine"
+            image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
         }
     }
     stages {
         stage('Test') {
             steps {
-                sh 'node --version && ls -al'
+                sh 'make-d.sh'
             }
         }
     }
