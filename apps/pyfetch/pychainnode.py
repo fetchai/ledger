@@ -5,11 +5,11 @@ import random
 import sys
 import time
 
-from fetchnetwork.swarm import Swarm
+from fetchnetwork.swarm import Swarm, say
 from fetchledger.chain import MainChain, MainChainBlock
 from functools import partial
 
-from fetchnetwork.swarm import Swarm
+#from fetchnetwork.swarm import ostream_redirect
 
 PEERS = [
     "127.0.0.1:9000",
@@ -28,9 +28,9 @@ class SwarmAgentNaive(object):
         self.rootblock = MainChainBlock()
         self.mainchain = MainChain(self.rootblock)
 
-        print("SETTING ON IDLE PYCHAIN")
+        say("SETTING ON IDLE PYCHAIN")
         self.swarm.OnIdle(self.onIdle)
-        print("SET ON IDLE PYCHAIN")
+        say("SET ON IDLE PYCHAIN")
 
         self.swarm.OnPingFailed(self.onPingFailed)
         self.swarm.OnPingSucceeded(self.onPingSucceeded)
@@ -41,24 +41,24 @@ class SwarmAgentNaive(object):
         self.swarm.OnNewBlockAvailable(self.onNewBlockAvailable)
         self.swarm.OnBlockIdRepeated(self.onBlockIdRepeated)
 
-        print(self.mainchain.totalBlocks())
+        say(self.mainchain.totalBlocks())
         self.swarm.Start()
 
     def onPingFailed(self, host):
-        print("PYCHAINNODE===> Ping failed to:", host)
+        say("PYCHAINNODE===> Ping failed to:", host)
         self.swarm.AddKarma(host, -5.0);
 
     def onPingSucceeded(self, host):
         self.swarm.AddKarmaMax(host, 1.0, 3.0);
 
     def onIdle(self):
-        print("PYCHAINNODE===> OnIdle", 2)
+        say("PYCHAINNODE===> OnIdle")
         goodPeers = self.swarm.GetPeers(10, -0.5)
 
-        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ BIGBLOCK: ", self.swarm.HeaviestBlock())
+        say("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ BIGBLOCK: ", self.swarm.HeaviestBlock())
 
         if not goodPeers:
-            print("PYCHAINNODE===> OnIdle", 1.1)
+            say("PYCHAINNODE===> OnIdle No good peers")
             return
 
         self.swarm.DoDiscoverBlocks(goodPeers[0], 10)
@@ -87,11 +87,11 @@ class SwarmAgentNaive(object):
     def onNewPeerDiscovered(self, host):
         if host == self.swarm.queryOwnLocation():
             return
-        print("PYCHAINNODE===> NEW PEER", host);
+        say("PYCHAINNODE===> NEW PEER", host);
         self.swarm.DoPing(host)
 
     def onNewBlockIdFound(self, host, blockid):
-        print("PYCHAINNODE===> WOW - ", blockid)
+        say("PYCHAINNODE===> WOW - ", blockid)
         self.swarm.AddKarmaMax(host, 1.0, 6.0);
         self.swarm.DoGetBlock(host, blockid);
 
@@ -100,8 +100,23 @@ class SwarmAgentNaive(object):
         pass
 
     def onNewBlockAvailable(self, host, blockid):
-        print("PYCHAINNODE===> GOT - ", blockid)
-        print(self.swarm.GetBlock(blockid))
+        say("PYCHAINNODE===> GOT - ", blockid)
+        say(self.swarm.GetBlock(blockid))
+
+def run(config):
+    agent = SwarmAgentNaive(
+        config.id,
+        config.port,
+        config.port + 1000,
+        config.maxpeers,
+        config.idlespeed,
+        config.solvespeed,
+        config.peers
+    )
+
+    while True:
+        say("PYCHAINNODE===> Zzzz...")
+        time.sleep(2)
 
 def main():
     params = argparse.ArgumentParser(description='I am a Fetch node.')
@@ -115,19 +130,8 @@ def main():
 
     config = params.parse_args(sys.argv[1:])
 
-    agent = SwarmAgentNaive(
-        config.id,
-        config.port,
-        config.port + 1000,
-        config.maxpeers,
-        config.idlespeed,
-        config.solvespeed,
-        config.peers
-        )
-
-    while True:
-        print("PYCHAINNODE===> Zzzz...")
-        time.sleep(2)
+    #with ostream_redirect():
+    run(config)
 
 if __name__ == "__main__":
     main()

@@ -163,7 +163,7 @@ public:
         return iter -> second;
       }
     auto new_client_conn = ActuallyConnectTo(host, port);
-    //cache_[remote_host_identifier] = new_client_conn;
+    cache_[remote_host_identifier] = new_client_conn;
     return new_client_conn;
   }
 

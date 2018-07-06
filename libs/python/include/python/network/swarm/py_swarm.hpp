@@ -82,7 +82,7 @@ public:
 
   std::shared_ptr<PythonWorker> worker_;
   std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
-  std::shared_ptr<fetch::swarm::SwarmAgentApiImpl> swarmAgentApi_;
+  std::shared_ptr<fetch::swarm::SwarmAgentApiImpl<PythonWorker>> swarmAgentApi_;
   std::shared_ptr<fetch::swarm::SwarmHttpModule> httpModule_;
   std::shared_ptr<fetch::swarm::SwarmNode> swarmNode_;
   std::shared_ptr<fetch::swarm::SwarmParcelNode> parcelNode_;
@@ -106,6 +106,7 @@ public:
     std::string myHost = "127.0.0.1:" + std::to_string(rpcPort);
     fetch::swarm::SwarmPeerLocation myHostLoc(myHost);
 
+    auto worker = PythonWorker::instance();
     auto nnCore = std::make_shared<fetch::network::NetworkNodeCore>(20, httpPort, rpcPort);
     auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
     auto swarmNode = std::make_shared<fetch::swarm::SwarmNode>(nnCore, identifier, maxpeers, rnd, myHost);
@@ -113,8 +114,7 @@ public:
     auto httpModule = std::make_shared<SwarmHttpModule>(swarmNode);
     auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(nnCore);
     auto chainNode = std::make_shared<fetch::ledger::MainChainNode>(nnCore, id);
-    auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl>(myHost, idlespeed);
-    auto worker = PythonWorker::instance();
+    auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl<PythonWorker>>(worker, myHost, idlespeed);
     worker -> UseCore(nnCore);
 
     auto chain = std::make_shared<fetch::ledger::MainChain>();
@@ -138,45 +138,40 @@ public:
                             {
                               swarmNode -> Post([swarmAgentApi, swarmNode, host]()
                                            {
-                                              std::cout << "ping this 2" << std::endl;
                                              try
                                                {
-                                              std::cout << "ping this 3" << std::endl;
                                                  auto newPeer = swarmNode -> AskPeerForPeers(host);
-                                              std::cout << "ping this 4" << std::endl;
-
                                                  if (newPeer.length()) {
-                                              std::cout << "ping this 5" << std::endl;
-
+                                                   std::cout << "~~ GOT PEER" << std::endl;
                                                    if (!swarmNode -> IsOwnLocation(newPeer))
                                                      {
-                                              std::cout << "ping this 6" << std::endl;
-                                                       swarmAgentApi -> DoNewPeerDiscovered(newPeer);
+                                                       std::cout << "~~ GOT REMOTE PEER" << std::endl;
+                                                       if (!swarmNode -> IsExistingPeer(newPeer))
+                                                         {
+                                                           std::cout << "~~ GOT NEW REMOTE PEER" << std::endl;
+                                                           swarmNode -> AddOrUpdate(host, 0);
+                                                           swarmAgentApi -> DoNewPeerDiscovered(newPeer);
+                                                         }
                                                      }
                                                  }
                                                  swarmAgentApi -> DoPingSucceeded(host);
                                                }
                                              catch(fetch::serializers::SerializableException &x)
                                                {
-                                              std::cout << "ping this 7" << std::endl;
                                                  swarmAgentApi -> DoPingFailed(host);
                                                }
                                              catch(fetch::swarm::SwarmException &x)
                                                {
-                                              std::cout << "ping this 444" << std::endl;
                                                  swarmAgentApi -> DoPingFailed(host);
                                                }
                                              catch(network::NetworkNodeCoreBaseException &x)
                                                {
-                                                 std::cout << x.what() << std::endl;
                                                  swarmAgentApi -> DoPingFailed(host);
                                                }
                                              catch(std::invalid_argument &x)
                                                {
-                                              std::cout << "ping this 8" << std::endl;
                                                  swarmAgentApi -> DoPingFailed(host);
                                                }
-                                              std::cout << "ping this 9" << std::endl;
                                            });
                             });
 

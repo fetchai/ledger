@@ -107,11 +107,8 @@ public:
   {
     try{
     std::shared_ptr<client_type> client = nnCore_ -> ConnectToPeer(peer);
-    std::cout << "**** calling 1" << std::endl;
-    std::cout << "AskPeerForPeers " << peer.AsString() << " - call pn=" << protocol_number << " cn=" << protocols::Swarm::CLIENT_NEEDS_PEER << std::endl;
     auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
-    std::cout << "**** calling 2" << std::endl;
-    promise.Wait(500);
+    promise.Wait(2500);
 
     if (!promise.is_fulfilled())
       {
@@ -119,10 +116,7 @@ public:
         throw fetch::network::NetworkNodeCoreTimeOut("AskPeerForPeers");
       }
 
-    std::cout << "**** calling 3" << std::endl;
     auto result = promise.As<std::string>();
-    std::cout << "**** calling 4" << std::endl;
-    std::cout << result << std::endl;
     return result;
     } catch (...)
     {
@@ -142,20 +136,20 @@ public:
       }
   }
 
+  virtual bool IsExistingPeer(const std::string &host)
+  {
+    return karmaPeerList_.Has(host);
+  }
+
   virtual std::string ClientNeedsPeer()
   {
-    std::cout << "************* rpc call location 1" << std::endl;
     if (!karmaPeerList_.empty())
       {
         auto p = karmaPeerList_.GetNthKarmicPeer(0);
         auto s = p.GetLocation().AsString();
-
-        std::cout << "finished arghadf call!!!!!!!!!!! " << std::endl;
         return s;
       }
-
-    std::cout << "finished rpc call!!!!!!!!!!! " << std::endl;
-    return std::string("localhost:9000");
+    return std::string("");
   }
 
   const std::string &GetId()

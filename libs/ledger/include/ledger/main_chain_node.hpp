@@ -6,9 +6,9 @@
 
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "network/generics/network_node_core.hpp"
 #include "network/protocols/mainchain/protocol.hpp"
 #include "network/interfaces/mainchain/main_chain_node_interface.hpp"
-#include "network/generics/network_node_core.hpp"
 #include "network/generics/promise_of.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/protocols/mainchain/protocol.hpp"
@@ -53,6 +53,8 @@ public:
     stopped_ = false;
     minerNumber_ = minerNumber;
     target_ = 16;
+
+    nnCore_ -> AddProtocol(this);
   }
 
   virtual ~MainChainNode()
@@ -120,7 +122,7 @@ public:
       while(!stopped_)
       {
         // Get heaviest block
-        auto &block = chain_ -> HeaviestBlock();
+        auto block = chain_ -> HeaviestBlock();
 
         // Create another block sequential to previous
         block_type nextBlock;

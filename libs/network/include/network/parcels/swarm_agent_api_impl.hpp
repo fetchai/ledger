@@ -10,6 +10,7 @@ namespace fetch
 namespace swarm
 {
 
+template<class threading_system_type = network::details::ThreadPoolImplementation>
 class SwarmAgentApiImpl:public SwarmAgentApi
 {
 public:
@@ -18,13 +19,18 @@ public:
   SwarmAgentApiImpl operator=(SwarmAgentApiImpl &rhs)  = delete;
   SwarmAgentApiImpl operator=(SwarmAgentApiImpl &&rhs) = delete;
 
+  std::shared_ptr<threading_system_type> threadingSystem_;
   std::string identifier_;
   unsigned int idlespeed_;
-  std::shared_ptr<fetch::network::details::ThreadPoolImplementation> tm_;
 
   explicit SwarmAgentApiImpl(const std::string &identifier, unsigned int idlespeed):identifier_(identifier), idlespeed_(idlespeed)
   {
-    tm_ = std::make_shared<fetch::network::details::ThreadPoolImplementation>(1);
+    threadingSystem_ = std::make_shared<threading_system_type>(10);
+  }
+
+  explicit SwarmAgentApiImpl(std::shared_ptr<threading_system_type> threadingSystem, const std::string &identifier, unsigned int idlespeed):identifier_(identifier), idlespeed_(idlespeed)
+  {
+    threadingSystem_ = threadingSystem;
   }
 
   virtual std::string queryOwnLocation()
@@ -34,20 +40,19 @@ public:
 
   void Start()
   {
-    tm_ -> Start();
+    threadingSystem_ -> Start();
     startIdle();
   }
 
   void Stop()
   {
-    tm_ -> Stop();
-    tm_.reset();
+    threadingSystem_ -> Stop();
   }
 
   virtual ~SwarmAgentApiImpl()
   {
-    tm_ -> Stop();
-    tm_.reset();
+    threadingSystem_ -> Stop();
+    threadingSystem_.reset();
   }
 
   void startIdle()
@@ -56,51 +61,36 @@ public:
       {
         this->DoIdle();
       };
-    tm_ -> Post(lambd);
+    threadingSystem_ -> Post(lambd);
   }
 
   int idleCount = 0;
 
   void DoIdle()
   {
-    cout << ">>>>>>>>>>>>>>>>>>> DO IDLE " << idleCount <<endl;
-
     idleCount++;
-
-//    if (idleCount > 100)
-//      {
-//        fetch::logger.Error("Bailing at this point");
-      //        exit(1);
-//      }
-
-
     if (this->onIdle_)
       {
         try
           {
+            cout << ">>>>>>>>>>>>>>>>>>> ON IDLE " << idleCount<<endl;
             this->onIdle_();
-            cout << ">>>>>>>>>>>>>>>>>>> CALLED IDLE"<<endl;
+            cout << ">>>>>>>>>>>>>>>>>>> DONE IDLE " << idleCount<<endl;
           }
         catch (std::exception &x)
           {
-            cerr << ">>>>>>>>>>>>>>>>>" << x.what() << endl;
-            cout << ">>>>>>>>>>>>>>>>>" << x.what() << endl;
+            cerr << "SwarmAgentApiImpl::DoIdle Exception ignored:" << x.what() << endl;
           }
         catch(...)
           {
-            cerr << ">>>>>>>>>>>>>>>>> ??? EXCEPTION" << endl;
-            cout << ">>>>>>>>>>>>>>>>> ??? EXCEPTION" << endl;
+            cerr << "SwarmAgentApiImpl::DoIdle Exception ignored." << endl;
           }
-      }
-    else
-      {
-        cout << ">>>>>>>>>>>>>>>>>>> DO IDLE SKIPPED"<<endl;
       }
     auto lambd = [this]
       {
         this->DoIdle();
       };
-    tm_ -> Post(lambd, int(idlespeed_));
+    threadingSystem_ -> Post(lambd, int(idlespeed_));
   }
 
   virtual void OnIdle                (std::function<void ()> cb)
@@ -116,7 +106,7 @@ public:
 
   virtual void DoPing                (const std::string &host)
   {
-    tm_ -> Post([this, host]{
+    threadingSystem_ -> Post([this, host]{
         if (this->toPing_)
           {
             this->toPing_(std::ref(*this), std::cref(host));
@@ -126,7 +116,7 @@ public:
 
   virtual void DoPeerless            ()
   {
-    tm_ -> Post([this]{
+    threadingSystem_ -> Post([this]{
         if (this->onPeerless_)
           {
             this->onPeerless_();
@@ -151,7 +141,7 @@ public:
 
   virtual void DoPingSucceeded       (const std::string &host)
   {
-    tm_ -> Post([this, host]{
+    threadingSystem_ -> Post([this, host]{
         if (this->onPingSucceeded_)
           {
             this->onPingSucceeded_(std::cref(host));
@@ -161,7 +151,7 @@ public:
 
   virtual void DoPingFailed          (const std::string &host)
   {
-    tm_ -> Post([this, host]{
+    threadingSystem_ -> Post([this, host]{
         if (this->onPingFailed_)
           {
             this->onPingFailed_(std::cref(host));
@@ -171,7 +161,7 @@ public:
 
   virtual void DoDiscoverPeers       (const std::string &host, unsigned int count)
   {
-    tm_ -> Post([this, host, count]{
+    threadingSystem_ -> Post([this, host, count]{
         if (this->toDiscoverPeers_)
           {
             this->toDiscoverPeers_(std::ref(*this), std::cref(host), count);
@@ -191,7 +181,7 @@ public:
 
   virtual void DoNewPeerDiscovered   (const std::string &host)
   {
-    tm_ -> Post([this, host]{
+    threadingSystem_ -> Post([this, host]{
         if (this->onNewPeerDiscovered_)
           {
             this->onNewPeerDiscovered_(std::cref(host));
@@ -236,7 +226,7 @@ public:
 
   virtual void DoNewBlockIdFound   (const std::string &host, const std::string &blockid)
   {
-    tm_ -> Post([this, host, blockid]{
+    threadingSystem_ -> Post([this, host, blockid]{
         if (this->onNewBlockIdFound_)
           {
             this->onNewBlockIdFound_(std::cref(host), std::cref(blockid));
@@ -256,7 +246,7 @@ public:
 
   virtual void DoBlockIdRepeated   (const std::string &host, const std::string &blockid)
   {
-    tm_ -> Post([this, host, blockid]{
+    threadingSystem_ -> Post([this, host, blockid]{
         if (this -> onBlockIdRepeated_)
           {
             this -> onBlockIdRepeated_(host, blockid);
@@ -293,7 +283,7 @@ public:
 
   virtual void DoNewBlockAvailable   (const std::string &host, const std::string &blockid)
   {
-    tm_ -> Post([this, host, blockid]{
+    threadingSystem_ -> Post([this, host, blockid]{
         if (this -> onNewBlockAvailable_)
           {
             this -> onNewBlockAvailable_(host, blockid);

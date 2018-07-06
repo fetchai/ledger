@@ -1,5 +1,5 @@
-#ifndef __MAIN_CHAIN_PROTOCOL_HPP
-#define __MAIN_CHAIN_PROTOCOL_HPP
+#ifndef PROTOCOLS_MAIN_CHAIN_PROTOCOL_HPP
+#define PROTOCOLS_MAIN_CHAIN_PROTOCOL_HPP
 
 #include <iostream>
 #include <string>

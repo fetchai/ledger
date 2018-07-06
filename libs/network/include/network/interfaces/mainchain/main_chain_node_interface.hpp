@@ -4,12 +4,16 @@
 #include "network/protocols/fetch_protocols.hpp"
 #include "ledger/chain/main_chain.hpp"
 
+
 namespace fetch
 {
+namespace protocols
+{
+  class MainChainProtocol;
+}
+
 namespace ledger
 {
-
-class MainChainProtocol;
 
 class MainChainNodeInterface
 {
@@ -22,7 +26,7 @@ public:
   enum {
     protocol_number = fetch::protocols::FetchProtocols::MAIN_CHAIN
   };
-  typedef MainChainProtocol protocol_class_type;
+  typedef fetch::protocols::MainChainProtocol protocol_class_type;
 
   MainChainNodeInterface()
   {

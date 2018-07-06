@@ -100,8 +100,6 @@ class HTTPServer : public AbstractHTTPServer {
   }
 
   void PushRequest(handle_type client, HTTPRequest req) override {
-    std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << std::endl;
-
     LOG_STACK_TRACE_POINT;
 
     // TODO: improve such that it works for multiple threads.
@@ -140,24 +138,18 @@ class HTTPServer : public AbstractHTTPServer {
     auto cb = [soc, accep, manager](std::error_code ec) {
       //LOG_LAMBDA_STACK_TRACE_POINT; // TODO: (`HUT`) : sort this
 
-      std::cout << "fuck 1" << std::endl;
-
       if (!ec) {
         std::make_shared<HTTPConnection>(std::move(*soc), *manager)
             ->Start();
-      std::cout << "fuck 2" << std::endl;
       } else {
         fetch::logger.Info("HTTP server terminated with ec: ", ec.message());
-      std::cout << "fuck 3" << std::endl;
         return;
       }
 
-      std::cout << "fuck 4" << std::endl;
       std::shared_ptr<socket_type> s = soc;
       std::shared_ptr<acceptor_type> a = accep;
       std::shared_ptr<manager_type> m = manager;
 
-      std::cout << "fuck 5" << std::endl;
       HTTPServer::Accept(s, a, m);
     };
 

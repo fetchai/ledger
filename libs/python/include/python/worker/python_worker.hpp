@@ -53,6 +53,8 @@ public:
     return singleton;
   }
 
+  
+
   PythonWorker()
   {
     tm_ = std::make_shared<fetch::network::ThreadPool>(1);

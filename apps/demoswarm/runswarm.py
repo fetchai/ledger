@@ -136,7 +136,7 @@ class Node(object):
 
         cmdstr = "screen -S 'lldb-{}' -dm lldb ".format(self.index) + self.frontargs + " -s '/tmp/lldb.run.cmd' -- " + cmdstr
         print(cmdstr)
-        self.p = subprocess.Popen("{} >{} 2>&1".format(cmdstr, os.path.join(self.logdir, str(self.index))),
+        self.p = subprocess.Popen("{} | tee {}".format(cmdstr, os.path.join(self.logdir, str(self.index))),
             shell=True
         )
 
@@ -159,8 +159,15 @@ class Node(object):
             [ " ".join([ x[0], x[1] ]) for x in self.backargs.items() ])
 
         cmdstr = " ".join(cmdstr)
+
+        cmdstr = "{} >{}".format(
+                cmdstr
+                , os.path.join(self.logdir, str(self.index))
+            )
+
         print(cmdstr)
-        self.p = subprocess.Popen("{} >{} 2>&1".format(cmdstr, os.path.join(self.logdir, str(self.index))),
+        self.p = subprocess.Popen(
+            cmdstr,
             shell=True
         )
 
@@ -169,7 +176,7 @@ class Node(object):
             "": self.killRun,
             "gdb": self.killGDB,
             "lldb": self.killLLDB,
-        }[self.args.debugger]()
+        }[self.debugger]()
 
         self.p.terminate()
         self.p.kill()

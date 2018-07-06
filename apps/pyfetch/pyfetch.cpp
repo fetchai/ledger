@@ -16,11 +16,22 @@
 #include "python/network/swarm/py_swarm_agent_api.hpp"
 #include "python/ledger/chain/py_main_chain.hpp"
 #include <pybind11/embed.h>
+#include <pybind11/iostream.h>
+
+void say(pybind11::args args)
+{
+  std::cout << "PYTHON:";
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::cout << pybind11::str(args[i]);
+  }
+  std::cout << std::endl;
+}
 
 PYBIND11_EMBEDDED_MODULE(fetchnetwork, module) {
   pybind11::module ns_fetch_network_swarm = module.def_submodule("swarm");
   fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
-}
+  //pybind11::add_ostream_redirect(ns_fetch_network_swarm, "ostream_redirect");
+  ns_fetch_network_swarm.def("say", &say, "A function prints");}
 
 
 PYBIND11_EMBEDDED_MODULE(fetchledger, module) {
@@ -65,7 +76,8 @@ https://github.com/cython/cython/issues/1877
     interpreter = INTERP_P(new pybind11::scoped_interpreter());
     locals = std::make_shared<pybind11::dict>();
 
-    
+    pybind11::print("PYCHAIN? STARTING FILE RUN");
+
     std::list<std::string> args;
     for(int i=1;i<argc;i++)
       {
@@ -88,6 +100,7 @@ https://github.com/cython/cython/issues/1877
 int main(int argc, char *argv[])
 {
   PythonContext context;
+
   if (argc > 1)
     {
       context.runFile(argv[1], argc, argv);

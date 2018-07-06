@@ -14,9 +14,9 @@ namespace swarm
 class SwarmKarmaPeers
 {
 public:
-  typedef std::vector<SwarmKarmaPeer> PEERS;
-  typedef std::recursive_mutex MUTEX_T;
-  typedef std::lock_guard<MUTEX_T> LOCK_T;
+  typedef std::vector<SwarmKarmaPeer> peers_list_type;
+  typedef std::recursive_mutex mutex_type;
+  typedef std::lock_guard<mutex_type> lock_type;
 
   SwarmKarmaPeers(const std::string &ident): ident_(ident)
   {
@@ -32,24 +32,24 @@ public:
   }
 
   template<class KEY>
-  PEERS::iterator Find(const KEY &key)
+  peers_list_type::iterator Find(const KEY &key)
   {
-    LOCK_T mlock(mutex_);
+    lock_type mlock(mutex_);
     return std::find(peers.begin(), peers.end(), key);
   }
 
   template<class KEY>
-  PEERS::const_iterator Find(const KEY &key) const
+  peers_list_type::const_iterator Find(const KEY &key) const
   {
-    LOCK_T mlock(mutex_);
+    lock_type mlock(mutex_);
     return std::find(peers.begin(), peers.end(), key);
   }
 
   template<class KEY>
   void AddKarma(const KEY &key, double change)
   {
-    LOCK_T mlock(mutex_);
-    PEERS::iterator it = Find(key);
+    lock_type mlock(mutex_);
+    peers_list_type::iterator it = Find(key);
     if (it != peers.end())
       {
         it -> AddKarma(change);
@@ -57,10 +57,18 @@ public:
   }
 
   template<class KEY>
+  bool Has(const KEY &key)
+  {
+    lock_type mlock(mutex_);
+    peers_list_type::iterator it = Find(key);
+    return it != peers.end();
+  }
+
+  template<class KEY>
   double GetKarma(const KEY &key)
   {
-    LOCK_T mlock(mutex_);
-    PEERS::iterator it = Find(key);
+    lock_type mlock(mutex_);
+    peers_list_type::iterator it = Find(key);
     if (it != peers.end())
       {
         return it -> GetCurrentKarma();
@@ -70,7 +78,7 @@ public:
 
   void Age() const
   {
-    LOCK_T mlock(mutex_);
+    lock_type mlock(mutex_);
     for(auto &peer: peers)
       {
         peer.Age();
@@ -79,14 +87,14 @@ public:
 
   void Sort() const
   {
-    LOCK_T mlock(mutex_);
+    lock_type mlock(mutex_);
     std::sort(peers.begin(), peers.end());
 
   }
 
   std::list<SwarmKarmaPeer> GetBestPeers(unsigned int n, double minKarma = 0.0) const
   {
-    LOCK_T mlock(mutex_);
+    lock_type mlock(mutex_);
     std::list<SwarmKarmaPeer> results;
     Age();
     Sort();
@@ -109,8 +117,8 @@ public:
 
   void AddOrUpdate(const SwarmPeerLocation peer, double karma)
   {
-    LOCK_T mlock(mutex_);
-    PEERS::iterator it = Find(peer);
+    lock_type mlock(mutex_);
+    peers_list_type::iterator it = Find(peer);
     if (it == peers.end())
       {
         peers.push_back(SwarmKarmaPeer(peer, karma));
@@ -123,8 +131,8 @@ public:
 
   void AddOrUpdate(const std::string &host, double karma)
   {
-    LOCK_T mlock(mutex_);
-    PEERS::iterator it = Find(host);
+    lock_type mlock(mutex_);
+    peers_list_type::iterator it = Find(host);
     if (it == peers.end())
       {
         peers.push_back(SwarmKarmaPeer(host, karma));
@@ -137,7 +145,7 @@ public:
 
   SwarmKarmaPeer GetNthKarmicPeer(unsigned int n) const
   {
-    LOCK_T mlock(mutex_);
+    lock_type mlock(mutex_);
     Age();
     Sort();
 
@@ -158,9 +166,9 @@ public:
   SwarmKarmaPeers operator=(SwarmKarmaPeers &rhs)  = delete;
   SwarmKarmaPeers operator=(SwarmKarmaPeers &&rhs) = delete;
 protected:
-  mutable PEERS peers;
+  mutable peers_list_type peers;
   std::string ident_;
-  mutable MUTEX_T mutex_;
+  mutable mutex_type mutex_;
 };
 
 }
