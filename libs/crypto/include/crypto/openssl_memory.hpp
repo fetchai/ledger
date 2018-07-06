@@ -24,7 +24,7 @@ namespace openssl {
     template <constexpr eDeleterType freeingType = eFreeingType::canonical>
     struct OpenSSLDeleter {
         template <typename T>
-        void operator() (const T* ptr);
+        void operator() (T* &ptr);
     };
 
     template <> template <>
