@@ -7,7 +7,7 @@ pipeline {
     stages {
         stage('Test') {
             steps {
-                sh 'make-d.sh'
+                sh 'ls -al && ./develop-image/cmake-make.sh'
             }
         }
     }
