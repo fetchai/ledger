@@ -104,12 +104,46 @@ function(add_fetch_test name library file)
   endif(FETCH_ENABLE_TESTS)
 endfunction()
 
+function(add_fetch_gtest name library directory)
+  if(FETCH_ENABLE_TESTS)
 
-#function(add_fetch_dependency name dependency)
-#
-#  target_link_libraries(${name} PUBLIC ${dependency})
-#
-#endfunction(add_fetch_dependencies)
+    # remove all the arguments
+    list(REMOVE_AT ARGV 0)
+    list(REMOVE_AT ARGV 0)
+    list(REMOVE_AT ARGV 0)
+
+    # detect if the "DISABLED" flag has been passed to this test
+    set(is_disabled FALSE)
+    foreach(arg ${ARGV})
+      if(arg STREQUAL "DISABLED")
+        set(is_disabled TRUE)
+      endif()
+    endforeach()
+
+    if(is_disabled)
+      fetch_warning("Disabled Test: ${name} - ${file}")
+    else()
+
+      include(CTest)
+
+      # locate the headers for the test project
+      file(GLOB_RECURSE headers ${directory}/*.hpp)
+      file(GLOB_RECURSE srcs ${directory}/*.cpp)
+
+      # define the target
+      add_executable(${name} ${headers} ${srcs})
+      target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
+      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
+
+      # define the test
+      add_test(${name} ${name} ${ARGV})
+
+    endif()
+
+  endif(FETCH_ENABLE_TESTS)
+endfunction()
+
 
 macro(add_test_target)
   if (FETCH_ENABLE_TESTS)
