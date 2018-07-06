@@ -7,8 +7,7 @@ pipeline {
     stages {
         stage('Test') {
             steps {
-                sh './develop-image/cmake-make.sh'
-                sh 'make -C build test'
+                sh './develop-image/cmake-make.sh all test'
             }
         }
     }
