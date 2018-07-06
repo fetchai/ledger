@@ -124,8 +124,18 @@ class MainChain
       if(tip->loose == false && tip->total_weight > heaviest_.first)
       {
         fetch::logger.Info("Mainchain: Updating heaviest with tip");
+        bool tipWasHeaviest = (heaviest_.second == block.body().previous_hash);
         heaviest_.first = tip->total_weight;
         heaviest_.second = block.hash();
+
+        if(tipWasHeaviest)
+        {
+          onNewHeaviest();
+        }
+        else
+        {
+          onForkSwitch();
+        }
       }
     }
     else
@@ -152,6 +162,7 @@ class MainChain
           fetch::logger.Info("Mainchain: creating new tip that is now heaviest! (new fork)");
           heaviest_.first = tip->total_weight;
           heaviest_.second = block.hash();
+          onForkSwitch();
         }
       }
       else
@@ -377,6 +388,16 @@ class MainChain
     }
 
     return false;
+  }
+
+
+  // Methods called when a new heavy block arrives
+  void onNewHeaviest() const
+  {
+  }
+
+  void onForkSwitch() const
+  {
   }
 
 private:
