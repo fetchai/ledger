@@ -1,5 +1,15 @@
-node {
-    checkout scm
-    sh 'docker run -i --name "damn_thing" fetch-ledger-develop:latest bash -c "sleep 1000000" && develop-image/scripts/jenkins-ci-build.sh'
+pipeline {
+    agent {
+        docker {
+            image "node:7-alpine"
+        }
+    }
+    stages {
+        stage('Test') {
+            steps {
+                sh 'node --version && ls -al'
+            }
+        }
+    }
 }
 
