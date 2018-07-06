@@ -126,7 +126,7 @@ class ThreadManager
     {
       return ptr->CreateIO<IO>(std::forward<arguments>(args)...);
     }
-    std::cout << "Attempted to get IO from dead TM" << std::endl;
+    TODO_FAIL( "Attempted to get IO from dead TM" );    
     return std::shared_ptr<IO>(nullptr);
   }
 

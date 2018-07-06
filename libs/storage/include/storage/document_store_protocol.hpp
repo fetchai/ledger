@@ -1,6 +1,7 @@
 #ifndef STORAGE_INDEXED_DOCUMENT_STORE_PROTOCOL_HPP
 #define STORAGE_INDEXED_DOCUMENT_STORE_PROTOCOL_HPP
 #include "storage/document_store.hpp"
+#include "storage/revertible_document_store.hpp"
 #include "network/service/protocol.hpp"
 #include "core/mutex.hpp"
 #include"core/mutex.hpp"
@@ -10,8 +11,10 @@
 namespace fetch {
 namespace storage {
 
+  
 
-class RevertibleDocumentStoreProtocol : public fetch::service::Protocol {
+class RevertibleDocumentStoreProtocol :
+    public fetch::service::Protocol {
 public:
   typedef network::AbstractConnection::connection_handle_type connection_handle_type;
   enum {
@@ -29,8 +32,8 @@ public:
   
   RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store)
     : fetch::service::Protocol(), doc_store_(doc_store) {
-    this->Expose(GET, doc_store, &RevertibleDocumentStore::Get);
-    this->Expose(SET, doc_store, &RevertibleDocumentStore::Set);
+    this->Expose(GET, (RevertibleDocumentStore::super_type*)doc_store, &RevertibleDocumentStore::super_type::Get);
+    this->Expose(SET, (RevertibleDocumentStore::super_type*)doc_store, &RevertibleDocumentStore::super_type::Set);
     this->Expose(COMMIT, doc_store, &RevertibleDocumentStore::Commit);
     this->Expose(REVERT, doc_store, &RevertibleDocumentStore::Revert);
     this->Expose(HASH, doc_store, &RevertibleDocumentStore::Hash);

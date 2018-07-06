@@ -2,7 +2,7 @@
 #define FETCH_STATE_DATABASE_HPP
 
 #include "ledger/state_database_interface.hpp"
-#include "storage/document_store.hpp"
+#include "storage/revertible_document_store.hpp"
 
 #include <memory>
 

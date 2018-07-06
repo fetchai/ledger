@@ -1,5 +1,5 @@
-#ifndef STORAGE_INDEXED_DOCUMENT_STORE_HPP
-#define STORAGE_INDEXED_DOCUMENT_STORE_HPP 
+#ifndef STORAGE_DOCUMENT_STORE_HPP
+#define STORAGE_DOCUMENT_STORE_HPP 
 #include <cassert>
 #include <fstream>
 #include <memory>
@@ -7,14 +7,20 @@
 #include "storage/file_object.hpp"
 #include "storage/key_value_index.hpp"
 #include "storage/resource_mapper.hpp"
+
 #include "storage/document.hpp"
 #include "network/service/protocol.hpp"
 #include "core/mutex.hpp"
 namespace fetch {
 namespace storage {
 
-template< std::size_t BS = 2048, typename A =  FileBlockType<BS>, typename B = KeyValueIndex<>,  typename C = VersionedRandomAccessStack< A >, typename D = FileObject<C>  >
-class DocumentStore {
+template<
+  std::size_t BS = 2048,
+  typename A = FileBlockType<BS>,
+  typename B = KeyValueIndex<>,
+  typename C = VersionedRandomAccessStack< A >,
+  typename D = FileObject<C> >
+class DocumentStore  {
 public:
   enum {
     BLOCK_SIZE = BS
@@ -28,6 +34,8 @@ public:
   typedef C file_store_type;
   typedef D file_object_type;
 
+  typedef byte_array::ConstByteArray hash_type;
+  
   typedef typename key_value_index_type::index_type index_type;
 
   class DocumentFileImplementation : public file_object_type
@@ -246,37 +254,7 @@ public:
 
   }
   
-  
-  byte_array::ConstByteArray Hash() 
-  {
-    std::lock_guard<mutex::Mutex> lock(mutex_);    
-    return key_index_.Hash();
-  }
-
-  // TODO
-  typedef uint64_t bookmark_type;
-//  bookmark_type Commit() {
-//    return key_index_.Commit();
-//  }
-
-  bookmark_type Commit(bookmark_type const& b) {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
-    
-    file_store_.Commit(b);    
-    return key_index_.Commit(b);
-  }  
-  
-  void Revert(bookmark_type const &b) {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
-    
-    std::cout << "First revert" << std::endl;    
-    file_store_.Revert(b);
-    std::cout << "Second revert" << std::endl;
-    
-    key_index_.Revert(b);
-  }
 protected:
-  
   DocumentFile GetDocumentFile(ResourceID const &rid,  bool const &create = true)
   {
     byte_array::ConstByteArray const &address = rid.id();    
@@ -294,6 +272,10 @@ protected:
     return doc;
   }
   
+  mutex::Mutex mutex_;  
+  key_value_index_type key_index_;
+  file_store_type file_store_;
+  
 private:  
   void UpdateDocumentFile(DocumentFileImplementation &doc)
   {
@@ -304,17 +286,9 @@ private:
 //TODO:    file_store_.Flush();
     key_index_.Flush();    
   }
-  
-  mutex::Mutex mutex_;
-  
-  key_value_index_type key_index_;
-  file_store_type file_store_;
 
 };
 
-
-// TODO: make more readible
-typedef DocumentStore<2048,  FileBlockType<2048>, KeyValueIndex<>,  VersionedRandomAccessStack<  FileBlockType<2048> >, FileObject< VersionedRandomAccessStack<  FileBlockType<2048> > > > RevertibleDocumentStore;
 
 
 }

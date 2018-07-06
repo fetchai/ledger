@@ -1,5 +1,5 @@
 #include<iostream>
-#include"storage/document_store.hpp"
+#include"storage/revertible_document_store.hpp"
 #include"core/byte_array/encoders.hpp"
 using namespace fetch;
 

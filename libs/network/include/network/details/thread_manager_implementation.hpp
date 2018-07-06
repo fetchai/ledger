@@ -84,9 +84,10 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
       }
 
       threads_.clear();
-      protecting_io_ = true;
-      io_service_.reset(new asio::io_service);
-      protecting_io_ = false;
+      {
+        std::lock_guard< mutex::Mutex > lock(protecting_io_);
+        io_service_.reset(new asio::io_service);
+      }      
     }
   }
 
@@ -99,14 +100,9 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
 
   template <typename F>
   void Post(F &&f)
-  {
-    if(!protecting_io_)
-    {
-      io_service_->post(std::move(f));
-      thread_mutex_.unlock();
-    } else {
-      fetch::logger.Info("Failed to post: io_service protected.");
-    }
+  {      
+    std::lock_guard< mutex::Mutex > lock(protecting_io_);      
+    io_service_->post(std::move(f));
   }
 
  private:
@@ -114,7 +110,7 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
   std::size_t number_of_threads_ = 1;
   std::vector<std::thread *> threads_;
   std::unique_ptr<asio::io_service> io_service_{new asio::io_service};
-  bool protecting_io_{false};
+  mutex::Mutex protecting_io_;
 
   std::shared_ptr<asio::io_service::work> shared_work_;
 

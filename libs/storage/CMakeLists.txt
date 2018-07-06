@@ -30,12 +30,6 @@ if(FETCH_ENABLE_EXAMPLES)
   add_executable(example_state_shard_client examples/state_shard_client.cpp)
   target_link_libraries(example_state_shard_client PRIVATE fetch-storage)
 
-  add_executable(example_lane_server examples/lane_server.cpp)
-  target_link_libraries(example_lane_server PRIVATE fetch-storage)
-
-  add_executable(example_lane_client examples/lane_client.cpp)
-  target_link_libraries(example_lane_client PRIVATE fetch-storage)
-
 
 #  add_executable(example_lane_client examples/lane_client.cpp)
 #  target_link_libraries(example_lane_client PRIVATE fetch-storage)

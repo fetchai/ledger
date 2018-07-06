@@ -57,12 +57,12 @@ class TCPClientImplementation final :
     byte_array::ConstByteArray const& port)
   {
     self_type self = shared_from_this();
-    strand_ = threadManager_.CreateIO<asio::io_service::strand>();
-    
+
     fetch::logger.Debug("Client posting connect");
-    threadManager_.Post(strand_->wrap( [this, self, host, port]
+    threadManager_.Post([this, self, host, port]
     {
       shared_self_type selfLock = self.lock();
+      strand_ = threadManager_.CreateIO<asio::io_service::strand>();      
       if(!selfLock) return;
 
       // We get a weak socket from the thread manager. This must only be strong in the TM queue
@@ -100,7 +100,7 @@ class TCPClientImplementation final :
       } else {
         fetch::logger.Error("Failed to create valid socket");
       }
-    } ));
+    } );
   }
 
 
