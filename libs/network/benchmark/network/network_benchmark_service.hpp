@@ -1,10 +1,11 @@
-#pragma once
+#ifndef NETWORK_BENCHMARK_SERVICE_HPP
+#define NETWORK_BENCHMARK_SERVICE_HPP
 
 #include<memory>
 #include"core/logger.hpp"
 #include"network/service/server.hpp"
 #include"http/server.hpp"
-#include"./protocols/network_mine_test.hpp"
+#include"./protocols/network_benchmark.hpp"
 #include"./node_basic.hpp"
 #include"./http_interface.hpp"
 #include"../tests/include/helper_functions.hpp"
@@ -12,15 +13,15 @@
 
 namespace fetch
 {
-namespace network_mine_test
+namespace network_benchmark
 {
 
 template <typename T>
-class NetworkMineTestService :
+class NetworkBenchmarkService :
   public service::ServiceServer< fetch::network::TCPServer >, public http::HTTPServer
 {
 public:
-  NetworkMineTestService(fetch::network::ThreadManager tm, uint16_t tcpPort, uint16_t httpPort) :
+  NetworkBenchmarkService(fetch::network::ThreadManager tm, uint16_t tcpPort, uint16_t httpPort) :
     ServiceServer(tcpPort, tm),
     HTTPServer(httpPort, tm)
   {
@@ -29,10 +30,10 @@ public:
         tcpPort, " and HTTP port: ", httpPort);
     node_                     = std::make_shared<T>(tm);
 
-    httpInterface_            = std::make_shared<network_mine_test::HttpInterface<T>>(node_);
-    networkMineTestProtocol_ = common::make_unique<protocols::NetworkMineTestProtocol<T>>(node_);
+    httpInterface_            = std::make_shared<network_benchmark::HttpInterface<T>>(node_);
+    networkBenchmarkProtocol_ = common::make_unique<protocols::NetworkBenchmarkProtocol<T>>(node_);
 
-    this->Add(protocols::FetchProtocols::NETWORK_MINE_TEST, networkMineTestProtocol_.get());
+    this->Add(protocols::FetchProtocols::NETWORK_BENCHMARK, networkBenchmarkProtocol_.get());
 
     // Add middleware to the HTTP server - allow requests from any address,
     // and print requests to the terminal in colour
@@ -41,10 +42,15 @@ public:
     this->AddModule(*httpInterface_);
   }
 
+  void Start()
+  {
+    node_->Start();
+  }
+
 private:
-  std::shared_ptr<T>                                     node_;
-  std::shared_ptr<network_mine_test::HttpInterface<T>>   httpInterface_;
-  std::unique_ptr<protocols::NetworkMineTestProtocol<T>> networkMineTestProtocol_;
+  std::shared_ptr<T>                                         node_;
+  std::shared_ptr<network_benchmark::HttpInterface<T>>       httpInterface_;
+  std::unique_ptr<protocols::NetworkBenchmarkProtocol<T>>    networkBenchmarkProtocol_;
 };
 }
 }

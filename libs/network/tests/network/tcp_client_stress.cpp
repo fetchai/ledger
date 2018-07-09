@@ -774,7 +774,7 @@ void TestCase15(std::string host, std::string port) {
       {
         for(auto client : clients)
         {
-          std::async(std::launch::async, [client, &i](){client->Send(i);}); // TODO: (`HUT`) : uniq
+          std::async(std::launch::async, [client, &i](){client->Send(i);});
         }
       }
     }

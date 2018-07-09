@@ -16,47 +16,6 @@ int main() {
   {
     ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
     std::this_thread::sleep_for( std::chrono::milliseconds(100) );
-
-    for (std::size_t i = 0; i < 10; ++i)
-    {
-      ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
-      while(!client.is_alive())
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      }
-      std::cout << client.Call( MYPROTO,GREET, "Fetch" ).As<std::string>( ) << std::endl;
-    }
-  }
-
-  // Async connect
-  {
-    ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
-    std::this_thread::sleep_for( std::chrono::milliseconds(100) );
-
-    for (std::size_t i = 0; i < 10; ++i)
-    {
-      auto closure = [tm]{
-        ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
-        while(!client.is_alive())
-        {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-        std::cout << client.Call( MYPROTO,GREET, "Fetch" ).As<std::string>( ) << std::endl;
-      };
-
-      std::async(std::launch::async, closure);
-    }
-  }
-
-  {
-    ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
-    std::this_thread::sleep_for( std::chrono::milliseconds(100) );
-
-    for (std::size_t i = 0; i < 10; ++i)
-    {
-      ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
-      std::cout << client.Call( MYPROTO,GREET, "Fetch" ).As<std::string>( ) << std::endl;
-    }
   }
 
   ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);

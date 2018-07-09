@@ -158,7 +158,7 @@ public:
         mainChain.AddBlock(nextBlock);
 
         // Pass the block to other miners
-        //nodeDirectory_.PushBlock(nextBlock);
+        nodeDirectory_.PushBlock(nextBlock);
       }
     };
 

@@ -73,7 +73,7 @@ class ThreadManager
     auto ptr = lock();
     if(ptr)
     {
-      //ptr->Stop();
+      ptr->Stop();
     }
   }
 

@@ -101,32 +101,6 @@ public:
       }
   }
 
-  // DO NOT CALL THIS WITHOUT ACQUIRING THE RIGHT MUTEXES
-  virtual thread_state_type ExecuteWorkload(event_function_type workload)
-  {
-    if (shutdown_)
-      {
-        return THREAD_SHOULD_QUIT;
-      }
-
-    thread_state_type r = THREAD_IDLE;
-    try {
-      workload();
-      r = std::max(r, THREAD_WORKED);
-    } catch (std::exception &x) {
-      cerr << "Caught exception inside ThreadPool::ExecuteWorkload" << x.what() << endl;
-    } catch (...) {
-      cerr << "Caught non std::exception inside ThreadPool::ExecuteWorkload" << endl;
-    }
-
-    if (shutdown_)
-      {
-        return THREAD_SHOULD_QUIT;
-      }
-
-    return r;
-  }
-
   virtual thread_state_type Poll()
   {
     {
@@ -293,6 +267,31 @@ public:
   }
 
 private:
+  virtual thread_state_type ExecuteWorkload(event_function_type workload)
+  {
+    if (shutdown_)
+      {
+        return THREAD_SHOULD_QUIT;
+      }
+
+    thread_state_type r = THREAD_IDLE;
+    try {
+      workload();
+      r = std::max(r, THREAD_WORKED);
+    } catch (std::exception &x) {
+      cerr << "Caught exception inside ThreadPool::ExecuteWorkload" << x.what() << endl;
+    } catch (...) {
+      cerr << "Caught non std::exception inside ThreadPool::ExecuteWorkload" << endl;
+    }
+
+    if (shutdown_)
+      {
+        return THREAD_SHOULD_QUIT;
+      }
+
+    return r;
+  }
+
   std::size_t number_of_threads_ = 1;
   std::vector<std::thread *> threads_;
 

@@ -45,8 +45,6 @@ class HTTPServer : public AbstractHTTPServer {
   {
     LOG_STACK_TRACE_POINT;
 
-    std::cout << "|||| HTTPServer::HTTPServer()" << std::endl;
-
     std::shared_ptr<manager_type> manager              = manager_;
     std::weak_ptr<socket_type>           &socRef       = socket_; // TODO: (`HUT`) : check this is valid
     std::weak_ptr<acceptor_type>         &accepRef     = acceptor_;
@@ -70,12 +68,12 @@ class HTTPServer : public AbstractHTTPServer {
       fetch::logger.Info("Starting HTTPServer Accept");
       HTTPServer::Accept(soc, accep, manager);
     });
+
   }
 
   ~HTTPServer() {
     LOG_STACK_TRACE_POINT;
 
-    std::cout << "|||| HTTPServer::~HTTPServer()" << std::endl;
     auto socketWeak = socket_;
     auto accepWeak  = acceptor_;
 
@@ -177,6 +175,16 @@ class HTTPServer : public AbstractHTTPServer {
     }
   }
 
+  // TODO: (`HUT`) : refactor this out
+  template <typename F>
+  void Post(F &&f, int milliseconds) {
+    threadManager_.Post(std::move(f), milliseconds);
+  }
+  template <typename F>
+  void Post(F &&f) {
+    threadManager_.Post(std::move(f));
+  }
+  
  private:
   fetch::mutex::Mutex eval_mutex_;
 
