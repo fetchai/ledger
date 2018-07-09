@@ -63,7 +63,7 @@ class SwarmAgentNaive(object):
             say("PYCHAINNODE===> OnIdle No good peers")
             return
 
-        self.swarm.DoDiscoverBlocks(goodPeers[0], 10)
+        #self.swarm.DoDiscoverBlocks(goodPeers[0], 10)
 
         weightedPeers = [(x,self.swarm.GetKarma(x)) for x in goodPeers]
         total = sum([ x[1] for x in weightedPeers ])
@@ -75,8 +75,8 @@ class SwarmAgentNaive(object):
             weight -= weightedPeer[1]
 
         host = weightedPeer[0]
-        self.swarm.DoPing(host);
-        self.swarm.DoDiscoverBlocks(host, 10);
+        #self.swarm.DoPing(host);
+        #self.swarm.DoDiscoverBlocks(host, 10);
 
     def onPeerless(self):
         for x in self.peerlist:

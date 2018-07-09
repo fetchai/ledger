@@ -103,24 +103,20 @@ public:
 
    void ToGetState(std::function<int()> cb) { toGetState_ = cb; }
 
-  virtual std::string AskPeerForPeers(const SwarmPeerLocation &peer)
+    virtual std::string AskPeerForPeers(
+        const SwarmPeerLocation &peer, std::shared_ptr<client_type> client)
   {
-    std::shared_ptr<client_type> client = nnCore_ -> ConnectToPeer(peer);
-    if (!client)
-      {
-        return "";
-      }
-    auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
-    promise.Wait(2500);
-    if (!promise.is_fulfilled())
-      {
-        return "";
-      }
-    else
+    auto promise = client->Call(
+        protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
+    if (promise.Wait(2500, false))
       {
         auto result = promise.As<std::string>();
         return result;
       }
+    else
+    {
+        return "";
+    }
   }
 
   virtual int GetState()
@@ -176,7 +172,7 @@ public:
 
   void Post(std::function<void ()> workload)
   {
-    nnCore_ -> Post(workload, 0);
+      nnCore_ -> Post(workload);
   }
 
 protected:

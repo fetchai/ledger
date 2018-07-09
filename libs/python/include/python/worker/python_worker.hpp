@@ -40,7 +40,7 @@ public:
   }
 
   template <typename F> void Post(F &&f) { tm_ -> Post(f); }
-  template <typename F> void Post(F &&f, int milliseconds) { tm_ -> Post(f, milliseconds); }
+  template <typename F> void Post(F &&f, uint32_t milliseconds) { tm_ -> Post(f, milliseconds); }
 
   static std::shared_ptr<PythonWorker> instance()
   {

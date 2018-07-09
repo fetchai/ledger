@@ -70,7 +70,7 @@ https://github.com/pybind/pybind11/issues/1296
 https://github.com/cython/cython/issues/1877
 
     */
-  void runFile(const string &fn, int argc, char *argv[])
+    void runFile(const std::string &fn, int argc, char *argv[])
   {
     interpreter = INTERP_P(new pybind11::scoped_interpreter());
     locals = std::make_shared<pybind11::dict>();

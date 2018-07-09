@@ -80,7 +80,7 @@ public:
   }
 
   template <typename F>
-  void Post(F &&f, int milliseconds)
+  void Post(F &&f, uint32_t milliseconds)
   {
     lock_type mlock(mutex_);
     auto dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(milliseconds);

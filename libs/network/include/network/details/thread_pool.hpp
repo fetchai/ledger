@@ -277,7 +277,7 @@ public:
     }
 
     template <typename F>
-    void Post(F &&f, int milliseconds)
+    void Post(F &&f, uint32_t milliseconds)
     {
         if (!shutdown_)
         {
@@ -304,7 +304,7 @@ private:
         catch (...)
         {
             fetch::logger.Error(
-                "Caught exception in ThreadPool::ExecuteWorkload")
+                "Caught exception in ThreadPool::ExecuteWorkload");
         }
 
         if (shutdown_)
