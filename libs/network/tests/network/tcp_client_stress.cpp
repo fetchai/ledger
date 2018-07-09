@@ -719,7 +719,6 @@ void TestCase15(std::string host, std::string port) {
 
   uint16_t emptyPort = GetOpenPort();
 
-  bool smallPackets = true;
   for (std::size_t i = 0; i < 10; ++i)
   {
     std::cout << "Iteration: " << i << std::endl;
@@ -745,24 +744,12 @@ void TestCase15(std::string host, std::string port) {
       }
     }
 
-    if(i == 5)
-    {
-      smallPackets = false;
-    }
-
     // Precreate data
     std::vector<message_type> sendData;
 
     for (uint8_t k = 0; k < 8; k++)
     {
-      // note, this must be over default_max_transfer_size = 65536 to test composed interleaving
-      // as per: https://stackoverflow.com/questions/7362894/boostasiosocket-thread-safety
-      std::size_t packetSize = 100000;
-      if(smallPackets)
-      {
-        packetSize = 100;
-      }
-
+      std::size_t packetSize = 1000;
       message_type arr;
       arr.Resize(packetSize);
       for (std::size_t z = 0; z < arr.size(); z++)
@@ -779,7 +766,7 @@ void TestCase15(std::string host, std::string port) {
       {
         for(auto client : clients)
         {
-          std::thread( [client, &i](){client->Send(i);}).detach();
+          std::thread( [client, i](){client->Send(i);}).detach();
         }
       }
     }
@@ -835,18 +822,6 @@ int main(int argc, char* argv[]) {
   std::string host    = "localhost";
   uint16_t portNumber = 8080;
   std::string port    = std::to_string(portNumber);
-
-//  for (std::size_t i = 0; i < 3; ++i)
-//  {
-//    TestCase15<1>(host, port);
-//    TestCase15<1>(host, port);
-//    TestCase15<1>(host, port);
-//    TestCase15<1>(host, port);
-//    TestCase15<10>(host, port);
-//    TestCase15<10>(host, port);
-//    TestCase15<10>(host, port);
-//    TestCase15<10>(host, port);
-//  }
 
   TestCase0<1>(host, port);
   TestCase1<1>(host, port);
