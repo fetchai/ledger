@@ -86,7 +86,7 @@ public:
   typedef std::recursive_mutex mutex_type;
   typedef std::lock_guard<mutex_type> lock_type;
   typedef fetch::service::ServiceClient<network::TCPClient> client_type;
-  typedef unsigned int protocol_number_type;
+  typedef uint32_t protocol_number_type;
 
 public:
   NetworkNodeCore(const NetworkNodeCore &rhs)           = delete;
@@ -222,7 +222,7 @@ public:
   }
 
   template<class INTERFACE_CLASS, class PROTOCOL_CLASS>
-  void AddProtocol(INTERFACE_CLASS *interface, unsigned int protocolNumber)
+  void AddProtocol(INTERFACE_CLASS *interface, uint32_t protocolNumber)
   {
     lock_type mlock(mutex_);
     auto protocolInstance = std::make_shared<PROTOCOL_CLASS>(interface);
@@ -236,7 +236,7 @@ public:
   }
 
   template<class INTERFACE_CLASS>
-  void AddProtocol(INTERFACE_CLASS *interface, unsigned int protocolNumber)
+  void AddProtocol(INTERFACE_CLASS *interface, uint32_t protocolNumber)
   {
     AddProtocol<INTERFACE_CLASS, typename INTERFACE_CLASS::protocol_class_type>(interface, protocolNumber);
   }

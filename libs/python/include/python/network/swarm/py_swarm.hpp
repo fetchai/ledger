@@ -91,7 +91,7 @@ public:
     return std::string(fetch::byte_array::ToHex(hash));
   }
 
-  explicit PySwarm(unsigned int id, uint16_t rpcPort, uint16_t httpPort, unsigned int maxpeers, unsigned int idlespeed, int target)
+  explicit PySwarm(uint32_t id, uint16_t rpcPort, uint16_t httpPort, uint32_t maxpeers, uint32_t idlespeed, int target)
   {
     std::string identifier = "node-" + std::to_string(id);
     std::string myHost = "127.0.0.1:" + std::to_string(rpcPort);
@@ -168,7 +168,7 @@ public:
                                            });
                             });
 
-    swarmAgentApi -> ToDiscoverBlocks([this, swarmAgentApi, swarmNode, chainNode, nnCore](const std::string &host, unsigned int count)
+    swarmAgentApi -> ToDiscoverBlocks([this, swarmAgentApi, swarmNode, chainNode, nnCore](const std::string &host, uint32_t count)
                                        {
                                       auto pySwarm = this;
                                       swarmNode ->Post([swarmAgentApi, nnCore, chainNode, host, count, pySwarm]()
@@ -307,7 +307,7 @@ public:
                                          swarmNode -> AddOrUpdate(host, amount);
                                        }
                                    });
-    swarmAgentApi -> ToGetPeers([swarmAgentApi, swarmNode](unsigned int count, double minKarma)
+    swarmAgentApi -> ToGetPeers([swarmAgentApi, swarmNode](uint32_t count, double minKarma)
                                 {
                                   auto karmaPeers = swarmNode -> GetBestPeers(count, minKarma);
                                   std::list<std::string> results;
@@ -344,7 +344,7 @@ virtual void OnNewPeerDiscovered (pybind11::object func) { DELEGATE OnNewPeerDis
 virtual void OnPeerDiscoverFail (pybind11::object func) { DELEGATE OnPeerDiscoverFail (  [func DELEGATE_CAPTURED ](const std::string &host){  DELEGATE_WRAPPER func(host); } ); }
 virtual void DoBlockSolved (const std::string &blockdata) {  DELEGATE DoBlockSolved ( blockdata ); }
 virtual void DoTransactionListBuilt (const std::list<std::string> &txnlist) {  DELEGATE DoTransactionListBuilt ( txnlist ); }
-virtual void DoDiscoverBlocks (const std::string &host, unsigned int count) {  DELEGATE DoDiscoverBlocks ( host,count ); }
+virtual void DoDiscoverBlocks (const std::string &host, uint32_t count) {  DELEGATE DoDiscoverBlocks ( host,count ); }
 virtual void OnNewBlockIdFound (pybind11::object func) { DELEGATE OnNewBlockIdFound (  [func DELEGATE_CAPTURED ](const std::string &host, const std::string &blockid){  DELEGATE_WRAPPER func(host,blockid); } ); }
 virtual void OnBlockIdRepeated (pybind11::object func) { DELEGATE OnBlockIdRepeated (  [func DELEGATE_CAPTURED ](const std::string &host, const std::string &blockid){  DELEGATE_WRAPPER func(host,blockid); } ); }
 virtual void DoGetBlock (const std::string &host, const std::string &blockid) {  DELEGATE DoGetBlock ( host,blockid ); }
@@ -359,7 +359,7 @@ virtual void AddKarma (const std::string &host, double karma) {  DELEGATE AddKar
 virtual void AddKarmaMax (const std::string &host, double karma, double limit) {  DELEGATE AddKarmaMax ( host,karma,limit ); }
 virtual double GetKarma (const std::string &host) { return DELEGATE GetKarma ( host ); }
 virtual double GetCost (const std::string &host) { return DELEGATE GetCost ( host ); }
-virtual std::list<std::string> GetPeers (unsigned int count, double minKarma) { return DELEGATE GetPeers ( count,minKarma ); }
+virtual std::list<std::string> GetPeers (uint32_t count, double minKarma) { return DELEGATE GetPeers ( count,minKarma ); }
 virtual std::string queryOwnLocation () { return DELEGATE queryOwnLocation (  ); }
     /*-------------- MACHINE GENERATED CODE END -------------*/
 

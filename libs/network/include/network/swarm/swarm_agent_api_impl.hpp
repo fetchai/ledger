@@ -21,14 +21,14 @@ public:
 
   std::shared_ptr<threading_system_type> threadingSystem_;
   std::string identifier_;
-  unsigned int idlespeed_;
+  uint32_t idlespeed_;
 
-  explicit SwarmAgentApiImpl(const std::string &identifier, unsigned int idlespeed):identifier_(identifier), idlespeed_(idlespeed)
+  explicit SwarmAgentApiImpl(const std::string &identifier, uint32_t idlespeed):identifier_(identifier), idlespeed_(idlespeed)
   {
     threadingSystem_ = std::make_shared<threading_system_type>(10);
   }
 
-  explicit SwarmAgentApiImpl(std::shared_ptr<threading_system_type> threadingSystem, const std::string &identifier, unsigned int idlespeed):identifier_(identifier), idlespeed_(idlespeed)
+  explicit SwarmAgentApiImpl(std::shared_ptr<threading_system_type> threadingSystem, const std::string &identifier, uint32_t idlespeed):identifier_(identifier), idlespeed_(idlespeed)
   {
     threadingSystem_ = threadingSystem;
   }
@@ -156,7 +156,7 @@ public:
       });
   }
 
-  virtual void DoDiscoverPeers       (const std::string &host, unsigned int count)
+  virtual void DoDiscoverPeers       (const std::string &host, uint32_t count)
   {
     threadingSystem_ -> Post([this, host, count]{
         if (this->toDiscoverPeers_)
@@ -166,7 +166,7 @@ public:
       });
   }
 
-  virtual void ToDiscoverPeers       (std::function<void (SwarmAgentApi &api, const std::string &host, unsigned int count)> action)
+  virtual void ToDiscoverPeers       (std::function<void (SwarmAgentApi &api, const std::string &host, uint32_t count)> action)
   {
     toDiscoverPeers_ = action;
   }
@@ -206,7 +206,7 @@ public:
       }
   }
 
-  virtual void DoDiscoverBlocks       (const std::string &host, unsigned int count)
+  virtual void DoDiscoverBlocks       (const std::string &host, uint32_t count)
   {
     if (this->toDiscoverBlocks_)
       {
@@ -214,7 +214,7 @@ public:
       }
   }
 
-  virtual void ToDiscoverBlocks         (std::function<void (const std::string &host, unsigned int count)> action)
+  virtual void ToDiscoverBlocks         (std::function<void (const std::string &host, uint32_t count)> action)
   {
     this->toDiscoverBlocks_ = action;
   }
@@ -345,8 +345,8 @@ public:
   virtual void ToAddKarma(std::function<void (const std::string &host, double amount)> action) { this->toAddKarma_ = action; }
   virtual void AddKarma                  (const std::string &host, double amount) { if (this->toAddKarma_) { toAddKarma_(host, amount); } }
 
-  virtual void  ToGetPeers(std::function<std::list<std::string>(unsigned int count, double minKarma)> query) { this->toGetPeers_ = query; }
-  virtual std::list<std::string> GetPeers(unsigned int count, double minKarma) { if (this->toGetPeers_) { return toGetPeers_(count, minKarma); } return std::list<std::string>(); }
+  virtual void  ToGetPeers(std::function<std::list<std::string>(uint32_t count, double minKarma)> query) { this->toGetPeers_ = query; }
+  virtual std::list<std::string> GetPeers(uint32_t count, double minKarma) { if (this->toGetPeers_) { return toGetPeers_(count, minKarma); } return std::list<std::string>(); }
 
   virtual void ToAddKarmaMax(std::function<void(const std::string &host, double karma, double limit)> action) { this->toAddKarmaMax_ = action; }
   virtual void AddKarmaMax(const std::string &host, double karma, double limit) { if (this->toAddKarmaMax_) { return toAddKarmaMax_(host, karma, limit); } }
@@ -372,16 +372,16 @@ protected:
   std::function<void (const std::string &host, const std::string &txnlistid)> onNewTxnListAvailable_;
 
   std::function<void (SwarmAgentApi &api, const std::string &host)> toPing_;
-  std::function<void (SwarmAgentApi &api, const std::string &host, unsigned int count)> toDiscoverPeers_;
+  std::function<void (SwarmAgentApi &api, const std::string &host, uint32_t count)> toDiscoverPeers_;
 
   std::function<void(const std::string &blockdata)> toBlockSolved_;
   std::function<void(const std::string &host, const std::string &blockid)> toGetBlock_;
-  std::function<void (const std::string &host, unsigned int count)> toDiscoverBlocks_;
+  std::function<void (const std::string &host, uint32_t count)> toDiscoverBlocks_;
   std::function<std::string (const std::string &blockid)> toQueryBlock_;
 
   std::function<double (const std::string &host)>                            toGetKarma_;
   std::function<void (const std::string &host, double amount)>               toAddKarma_;
-  std::function<std::list<std::string>(unsigned int count, double minKarma)> toGetPeers_;
+  std::function<std::list<std::string>(uint32_t count, double minKarma)> toGetPeers_;
   std::function<void(const std::string &host, double karma, double limit)>   toAddKarmaMax_;
   std::function<void (const std::string &blockid, bool validity)> toVerifyBlock_;
 };

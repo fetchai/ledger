@@ -41,11 +41,11 @@ public:
   std::shared_ptr<fetch::chain::MainChain> chain_;
   std::shared_ptr<network::ThreadPool> threadPool_;
   bool stopped_;
-  unsigned int minerNumber_;
-  unsigned int target_;
+  uint32_t minerNumber_;
+  uint32_t target_;
   std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
 
-  MainChainNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore, unsigned int minerNumber, unsigned int target) :
+  MainChainNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore, uint32_t minerNumber, uint32_t target) :
     nnCore_(networkNodeCore)
   {
     chain_ = std::make_shared<fetch::chain::MainChain>();
@@ -99,7 +99,7 @@ public:
     return network::PromiseOf<std::pair<bool, block_type>>(promise);
   }
 
-  virtual fetch::network::PromiseOf<std::vector<block_type>> RemoteGetHeaviestChain(unsigned int maxsize, std::shared_ptr<network::NetworkNodeCore::client_type> client)
+  virtual fetch::network::PromiseOf<std::vector<block_type>> RemoteGetHeaviestChain(uint32_t maxsize, std::shared_ptr<network::NetworkNodeCore::client_type> client)
   {
     auto promise = client->Call(protocol_number, MainChain::GET_HEAVIEST_CHAIN, maxsize);
     return network::PromiseOf<std::vector<block_type>>(promise);
@@ -118,7 +118,7 @@ public:
       }
   }
 
-  virtual std::vector<block_type> GetHeaviestChain(unsigned int maxsize)
+  virtual std::vector<block_type> GetHeaviestChain(uint32_t maxsize)
   {
     std::vector<block_type> results;
 

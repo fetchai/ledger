@@ -36,7 +36,7 @@ public:
                         uint16_t httpPort,
                         std::shared_ptr<SwarmNode> node,
                         const std::string &hostname,
-                        unsigned int idlespeed
+                        uint32_t idlespeed
                         ) :
     HTTPServer(uint16_t(httpPort+1000), tm),
     ServiceServer(httpPort, tm),
@@ -61,13 +61,13 @@ public:
     addRpcProtocol(protocols::FetchProtocols::SWARM, rpcInterface_.get());
   }
 
-  void addRpcProtocol(unsigned int protocolNumber, fetch::service::Protocol *proto)
+  void addRpcProtocol(uint32_t protocolNumber, fetch::service::Protocol *proto)
   {
     this -> Add(protocolNumber, proto);
   }
 
   template<class PROTOCOL_DESCENDENT>
-  void addRpcProtocol(unsigned int protocolNumber, std::shared_ptr<PROTOCOL_DESCENDENT> sptr)
+  void addRpcProtocol(uint32_t protocolNumber, std::shared_ptr<PROTOCOL_DESCENDENT> sptr)
   {
     this -> addRpcProtocol(protocolNumber, sptr.get());
   }

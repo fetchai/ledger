@@ -43,7 +43,7 @@ public:
   explicit SwarmNode(
                      std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
                      const std::string &identifier,
-                     unsigned int maxpeers,
+                     uint32_t maxpeers,
                      std::shared_ptr<fetch::swarm::SwarmRandom> rnd,
                      const fetch::swarm::SwarmPeerLocation &uri
                      ):
@@ -60,7 +60,7 @@ public:
 
   explicit SwarmNode(
                      const std::string &identifier,
-                     unsigned int maxpeers,
+                     uint32_t maxpeers,
                      std::shared_ptr<fetch::swarm::SwarmRandom> rnd,
                      const fetch::swarm::SwarmPeerLocation &uri
                      ):
@@ -170,7 +170,7 @@ public:
     return karmaPeerList_.GetKarma(host);
   }
 
-  std::list<SwarmKarmaPeer> GetBestPeers(unsigned int n, double minKarma = 0.0) const
+  std::list<SwarmKarmaPeer> GetBestPeers(uint32_t n, double minKarma = 0.0) const
   {
     return karmaPeerList_.GetBestPeers(n, minKarma);
   }
@@ -185,11 +185,11 @@ protected:
   int                                        maxActivePeers_;
   int                                        maxKnownPeers_;
   std::string                                identifier_;
-  unsigned int                               maxpeers_;
+  uint32_t                               maxpeers_;
   SwarmPeerLocation                          uri_;
   std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
   SwarmKarmaPeers                            karmaPeerList_;
-  unsigned int                               protocolNumber_;
+  uint32_t                               protocolNumber_;
   std::function<int()>                       toGetState_;
 };
 
