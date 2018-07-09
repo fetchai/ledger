@@ -10,9 +10,11 @@ namespace ledger {
 ExecutionManagerRpcClient::ExecutionManagerRpcClient(byte_array::ConstByteArray const &host,
                                                      uint16_t const &port,
                                                      network::ThreadManager const &thread_manager)
-  : ServiceClient(host, port, thread_manager)
+  
 {
-
+  network::TCPClient connection(thread_manager);
+  connection.Connect(host, port);
+  service_.reset( new fetch::service::ServiceClient(connection, thread_manager ) );
 }
 
 bool ExecutionManagerRpcClient::Execute(tx_index_type const &index,
@@ -21,7 +23,7 @@ bool ExecutionManagerRpcClient::Execute(tx_index_type const &index,
                                         std::size_t num_slices)
 {
   // make the RPC call
-  auto result = this->Call(fetch::protocols::FetchProtocols::EXECUTION_MANAGER,
+  auto result = service_->Call(fetch::protocols::FetchProtocols::EXECUTION_MANAGER,
                            ExecutionManagerRpcProtocol::RPC_ID_EXECUTE,
                            index, map, num_lanes, num_slices);
 

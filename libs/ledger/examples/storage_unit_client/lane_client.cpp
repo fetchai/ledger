@@ -18,14 +18,16 @@ using namespace fetch::byte_array;
 class MultiLaneDBClient  //: private 
 {
 public:
-  typedef ServiceClient< fetch::network::TCPClient > client_type;
-  typedef std::shared_ptr< client_type > shared_client_type;
+  typedef ServiceClient service_client_type;
+  typedef std::shared_ptr< service_client_type > shared_service_client_type;
   
   MultiLaneDBClient (uint32_t lanes, std::string const &host, uint16_t const &port, fetch::network::ThreadManager &tm)
   {
     id_ = "my-fetch-id";
     for(uint32_t i = 0; i < lanes; ++i) {
-      lanes_.push_back( std::make_shared< client_type >(host, uint16_t(port +i), tm ) );
+      fetch::network::TCPClient connection(tm);
+      connection.Connect(host, uint16_t(port +i));
+      lanes_.push_back( std::make_shared< service_client_type >(connection, tm ) );
     }
     
   }
@@ -132,7 +134,7 @@ public:
 
 private:
   ByteArray id_;
-  std::vector< shared_client_type > lanes_;
+  std::vector< shared_service_client_type > lanes_;
   
 };
 

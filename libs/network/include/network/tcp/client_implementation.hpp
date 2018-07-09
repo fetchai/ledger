@@ -23,7 +23,7 @@ namespace fetch
 namespace network
 {
 
-class TCPClientImplementation final :
+class TCPClientImplementation :
     public AbstractConnection
 {
  public:
@@ -35,7 +35,7 @@ class TCPClientImplementation final :
   typedef asio::ip::tcp::resolver                    resolver_type;
 
 
-  TCPClientImplementation(thread_manager_type &thread_manager) noexcept :
+  TCPClientImplementation(thread_manager_type thread_manager) noexcept :
     threadManager_{thread_manager}
   {
     LOG_STACK_TRACE_POINT;
@@ -88,7 +88,7 @@ class TCPClientImplementation final :
         } else
         {
           fetch::logger.Debug("Client failed to connect");
-          ConnectionFailed();
+          SignalConnectionFailed();
         }
       };
 
@@ -104,7 +104,7 @@ class TCPClientImplementation final :
   }
 
 
-  bool is_alive() const noexcept
+  bool is_alive() const override
   {
     return !socket_.expired() && connected_;
   }
@@ -138,11 +138,12 @@ class TCPClientImplementation final :
   }
 
   
-  void Close() noexcept
+  void Close() override
   {
     std::weak_ptr<socket_type> socketWeak = socket_;
-
-    threadManager_.Post(strand_->wrap( [socketWeak]
+    auto s = strand_;
+    
+    threadManager_.Post(strand_->wrap( [s,socketWeak]
       {
         auto socket = socketWeak.lock();
         if(socket)
@@ -154,29 +155,11 @@ class TCPClientImplementation final :
       } ));
   }
 
-  bool Closed() noexcept
+  bool Closed() override
   {
     return socket_.expired();
   }
 
-  void OnConnectionFailed(std::function< void() > const &fnc)
-  {
-    std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-    on_connection_failed_ = fnc;
-  }
-
-  void OnPushMessage(std::function< void(message_type const&) > const &fnc)
-  {
-    std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-    on_push_message_ = fnc;
-  }
-
-  void ClearClosures() noexcept
-  {
-    std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-    on_connection_failed_  = nullptr;
-    on_push_message_  = nullptr;
-  }
 
  private:
   static const uint64_t networkMagic = 0xFE7C80A1FE7C80A1;
@@ -190,11 +173,6 @@ class TCPClientImplementation final :
   message_queue_type          write_queue_;
   mutable fetch::mutex::Mutex queue_mutex_;
   mutable fetch::mutex::Mutex write_mutex_;
-
-  mutable fetch::mutex::Mutex                callback_mutex_;
-  std::function< void(message_type const&) > on_push_message_;
-  std::function< void() >                    on_connection_failed_;
-  std::function<void()>                      on_leave_;
 
   bool                       connected_{false};
 
@@ -257,7 +235,9 @@ class TCPClientImplementation final :
 
       if (!ec)
       {
-        PushMessage(message);
+        SignalMessage(message);
+        
+//        PushMessage(message);
         ReadHeader();
       } else
       {
@@ -339,17 +319,14 @@ class TCPClientImplementation final :
     }
   }
 
-  void ConnectionFailed()
-  {
-    std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
-    if(on_connection_failed_) on_connection_failed_();
-  }
 
+  /*
   void PushMessage(message_type message)
   {
     std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
     if(on_push_message_) on_push_message_(message);
   }
+  */
 };
 
 

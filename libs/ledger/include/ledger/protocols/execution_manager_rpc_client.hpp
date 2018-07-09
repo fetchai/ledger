@@ -4,20 +4,24 @@
 #include "network/service/client.hpp"
 #include "ledger/execution_manager_interface.hpp"
 
+#include<memory>
 namespace fetch {
 namespace ledger {
 
-class ExecutionManagerRpcClient : public fetch::service::ServiceClient<fetch::network::TCPClient>
-                                , public ExecutionManagerInterface {
+class ExecutionManagerRpcClient: public ExecutionManagerInterface {
 public:
 
   ExecutionManagerRpcClient(byte_array::ConstByteArray const &host, uint16_t const &port,
-                            thread_manager_type const &thread_manager);
+                            network::ThreadManager const &thread_manager);
 
   bool Execute(tx_index_type const &index,
                block_map_type &map,
                std::size_t num_lanes,
                std::size_t num_slices) override;
+private:
+
+  std::unique_ptr<fetch::service::ServiceClient > service_;
+  
 };
 
 } // namespace ledger

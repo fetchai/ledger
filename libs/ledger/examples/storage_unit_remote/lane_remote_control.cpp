@@ -17,8 +17,10 @@ using namespace fetch::byte_array;
 
   
 int main(int argc, char const **argv) {
-  typedef ServiceClient< fetch::network::TCPClient > client_type;
-  typedef std::shared_ptr< client_type > shared_client_type;
+  typedef ServiceClient service_type;
+  typedef fetch::network::TCPClient  client_type;
+
+  typedef std::shared_ptr< service_type > shared_service_type;
   
   fetch::logger.DisableLogger();
   commandline::ParamsParser params;
@@ -36,11 +38,17 @@ int main(int argc, char const **argv) {
   uint16_t port = 8080;
   
   ledger::LaneRemoteControl remote;
-  std::vector< shared_client_type > clients;  
+  std::vector< shared_service_type > services;
+  
   for(uint32_t i=0; i < lane_count; ++i) {
-    auto client = std::make_shared< client_type >(host, uint16_t(port +i), tm ) ;
-    clients.push_back(client);
-    remote.AddClient(i, client);
+    client_type client( tm ) ;
+    client.Connect(host, uint16_t(port +i));
+
+    shared_service_type service = std::make_shared< service_type >(client, tm);
+        
+    services.push_back(service);
+    
+    remote.AddClient(i, service);
   }
 
   tm.Start();
@@ -80,12 +88,20 @@ int main(int argc, char const **argv) {
     
       if(command.size() > 0) {
         if(command[0] == "connect") {
-          if(command.size() == 1) {
-            remote.Connect(0, "localhnost", 8080);            
+          if(command.size() == 4) {
+            remote.Connect(uint32_t(command[1].AsInt()), command[2], uint16_t(command[3].AsInt()));
           } else {
-            std::cout << "usage: connect" << std::endl;
+            std::cout << "usage: connect [lane] [ip] [port]" << std::endl;
           }
         }
+
+        if(command[0] == "getlanenumber") {
+          if(command.size() == 2) {
+            std::cout << remote.GetLaneNumber(uint32_t(command[1].AsInt())) << std::endl;
+          } else {
+            std::cout << "usage: getlanenumber [lane]" << std::endl;
+          }
+        }        
         
       }
     } catch(serializers::SerializableException &e ) {

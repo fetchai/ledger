@@ -22,79 +22,108 @@
 namespace fetch {
 namespace service {
 
-template <typename T>
-class ServiceClient : public T,
-                      public ServiceClientInterface,
+//template <typename T>
+class ServiceClient : public ServiceClientInterface,
                       public ServiceServerInterface {
  public:
-  typedef T super_type;
-  typedef typename super_type::thread_manager_type thread_manager_type;
 
 
-  ServiceClient(byte_array::ConstByteArray const& host, uint16_t const& port,
-                thread_manager_type thread_manager)
-      : super_type(thread_manager),
-        thread_manager_(thread_manager),
-        message_mutex_(__LINE__, __FILE__) {
-    LOG_STACK_TRACE_POINT;
+  //typedef T super_type;
+  typedef network::ThreadManager thread_manager_type;
 
-    this->Connect(host, port);
+  ServiceClient(std::shared_ptr< network::AbstractConnection > connection,
+    thread_manager_type thread_manager)
+    : connection_(connection),
+      thread_manager_(thread_manager),
+      message_mutex_(__LINE__, __FILE__) 
+  {
+      
+    connection_->OnMessage([this](network::message_type const& msg) {
+        LOG_STACK_TRACE_POINT;
+        
+        {
+          std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
+          messages_.push_back(msg);
+        }
+        
+        // Since this class isn't shared_from_this, try to ensure safety when destructing
+        thread_manager_.Post([this]()
+          {
+            ProcessMessages();
+          });
+      });
+    
+      /*
+      ptr->OnConnectionFailed([this]() {
+          // TODO: Clear closures?
+        });
+      */
   }
+
+  ServiceClient(network::TCPClient &connection,
+    thread_manager_type thread_manager)
+    : ServiceClient(connection.connection_pointer().lock(), thread_manager)
+  { }
+  
 
   ~ServiceClient()
   {
     LOG_STACK_TRACE_POINT;
 
     // Disconnect callbacks
-    super_type::Cleanup();
-    super_type::Close();
-    int timeout = 100;
-
-    // Can only guarantee we are not being called when socket is closed
-    while(!super_type::Closed())
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      timeout--;
-
-      if(timeout == 0) break;
+    if(!connection_->Closed()) {
+      connection_->ClearClosures();
+      connection_->Close();
+      
+      int timeout = 100;
+      
+      // Can only guarantee we are not being called when socket is closed
+      while(!connection_->Closed())
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        timeout--;
+        
+        if(timeout == 0) break;
+      }
     }
+    
   }
 
-  void PushMessage(network::message_type const& msg) override {
-    LOG_STACK_TRACE_POINT;
+  void Close() 
+  {
+    connection_->Close();
+    connection_.reset();    
+  }    
 
-    {
-      std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
-      messages_.push_back(msg);
-    }
-
-    // Since this class isn't shared_from_this, try to ensure safety when destructing
-    thread_manager_.Post([this]()
-    {
-      ProcessMessages();
-    });
+  connection_handle_type handle() const 
+  {
+    return connection_->handle();
   }
-
-  void ConnectionFailed() override {
-    LOG_STACK_TRACE_POINT;
-
-    this->ClearPromises();
+  
+  bool is_alive() const 
+  {
+    return connection_->is_alive();
   }
-
+  
  protected:
   bool DeliverRequest(network::message_type const& msg) override {
-    if (!super_type::is_alive()) return false;
-
-    super_type::Send(msg);
+    if(connection_->Closed()) return false;
+    
+    connection_->Send(msg);
     return true;
+
   }
 
   bool DeliverResponse(connection_handle_type, network::message_type const& msg) override {
-    super_type::Send(msg);
+    if(connection_->Closed()) return false;
+    
+    connection_->Send(msg);
     return true;
+
   }
 
  private:
+  std::shared_ptr< network::AbstractConnection > connection_;  
   void ProcessMessages() {
     LOG_STACK_TRACE_POINT;
 

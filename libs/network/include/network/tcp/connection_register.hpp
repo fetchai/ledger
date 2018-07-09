@@ -1,6 +1,7 @@
 #ifndef NETWORK_CONNECTION_MANAGER_HPP
 #define NETWORK_CONNECTION_MANAGER_HPP
 #include "network/tcp/abstract_connection_register.hpp"
+#include "network/service/client.hpp"
 #include "core/mutex.hpp"
 
 #include<unordered_map>
@@ -17,6 +18,9 @@ public:
   
   typedef typename AbstractConnection::connection_handle_type connection_handle_type;
   typedef std::weak_ptr< AbstractConnection > weak_connection_type;
+  typedef service::ServiceClient service_client_type;
+  typedef std::shared_ptr< service::ServiceClient > shared_service_client_type;
+  
   typedef G details_type;
   
   struct  LockableDetails final : public details_type, public mutex::Mutex {  };
@@ -24,24 +28,33 @@ public:
   ConnectionRegisterImpl() = default;
   ConnectionRegisterImpl(ConnectionRegisterImpl const &other) = delete;
   ConnectionRegisterImpl(ConnectionRegisterImpl &&other) = default;  
-  ConnectionRegisterImpl& operator=(ConnectionRegisterImpl const &other) = delete;  
+  ConnectionRegisterImpl& operator=(ConnectionRegisterImpl const &other) = delete;
   ConnectionRegisterImpl& operator=(ConnectionRegisterImpl &&other) = default;
   
   virtual ~ConnectionRegisterImpl() = default;
       
-  template< typename T, typename... Args >
-  std::shared_ptr< T > CreateClient(Args &&...args) 
+  template< typename T,  typename... Args >
+  shared_service_client_type CreateServiceClient(ThreadManager const &tm, Args &&...args) 
   {
-    std::shared_ptr< T > connection = std::make_shared< T > (std::forward<Args>( args )... );
-    auto wptr = connection->network_client_pointer();
+
+    T connection(tm);
+    connection.Connect( std::forward<Args>(args)... );
+    shared_service_client_type service = std::make_shared< service_client_type >(connection.connection_pointer().lock(), tm );
     
+
+    auto wptr = connection.connection_pointer();    
     auto ptr = wptr.lock();
     assert( ptr );
 
     Enter(wptr);
     ptr->SetConnectionManager( shared_from_this() );
 
-    return connection;
+    {
+      std::lock_guard< mutex::Mutex > lock( connections_lock_ );      
+      services_[ ptr->handle() ] = service;
+    }
+    
+    return service;
   }
 
   std::size_t size() const 
@@ -84,7 +97,8 @@ public:
 private:
   mutable mutex::Mutex connections_lock_;
   std::unordered_map< connection_handle_type, weak_connection_type > connections_;
-  mutable mutex::Mutex details_lock_;  
+  std::unordered_map< connection_handle_type, shared_service_client_type > services_;  
+  mutable mutex::Mutex details_lock_;
   std::unordered_map< connection_handle_type, std::shared_ptr< LockableDetails > >  details_;
   
 };
@@ -98,6 +112,7 @@ public:
   typedef std::weak_ptr< AbstractConnection > weak_connection_type;
   typedef std::shared_ptr< ConnectionRegisterImpl<G> > shared_implementation_pointer_type;
   typedef typename ConnectionRegisterImpl<G>::LockableDetails lockable_details_type;
+  typedef std::shared_ptr< service::ServiceClient > shared_service_client_type;
   
   ConnectionRegister () 
   {
@@ -105,9 +120,9 @@ public:
   }
     
   template< typename T, typename... Args >
-  std::shared_ptr< T > CreateClient(Args &&...args) 
+  shared_service_client_type CreateServiceClient(ThreadManager const &tm, Args &&...args) 
   {
-    return ptr_->template CreateClient< T, Args... >( std::forward<Args>( args )...  );
+    return ptr_->template CreateServiceClient< T, Args... >(tm, std::forward<Args>( args )...  );
   }
 
   std::size_t size() const 

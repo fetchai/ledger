@@ -8,6 +8,8 @@
 #include"network/service/server.hpp"
 #include"ledger/storage_unit/lane_controller.hpp"
 #include"ledger/storage_unit/lane_controller_protocol.hpp"
+#include"ledger/storage_unit/lane_identity.hpp"
+#include"ledger/storage_unit/lane_identity_protocol.hpp"
 #include"ledger/storage_unit/lane_connectivity_details.hpp"
 #include"ledger/chain/transaction.hpp"
 #include"network/tcp/connection_register.hpp"
@@ -27,12 +29,17 @@ public:
   using transaction_store_protocol_type = storage::ObjectStoreProtocol<fetch::chain::Transaction>;
   using client_register_type = fetch::network::ConnectionRegister< connectivity_details_type >;  
   using controller_type = LaneController;
-  using controller_protocol_type = LaneControllerProtocol; 
+  using controller_protocol_type = LaneControllerProtocol;
+  using identity_type = LaneIdentity;
+  using identity_protocol_type = LaneIdentityProtocol;   
   using connection_handle_type = client_register_type::connection_handle_type; 
   using super_type = service::ServiceServer< fetch::network::TCPServer >;
+  using tx_sync_protocol_type = storage::ObjectStoreSyncronisationProtocol< fetch::chain::Transaction >;
+  
   
   enum {
-    STATE = 1,
+    IDENTITY = 1,
+    STATE,
     TX_STORE,
     TX_STORE_SYNC,
     SLICE_STORE,
@@ -49,26 +56,34 @@ public:
     s << "lane" << lane << "_";
     std::string prefix = s.str();    
 
+    // Lane Identity
+    identity_ = std::make_shared<identity_type>(register_, tm);    
+    identity_->SetLaneNumber( lane );    
+    identity_protocol_ = new identity_protocol_type(identity_.get());
+    this->Add(IDENTITY, identity_protocol_ );        
+
+    
     // TX Store
     tx_store_ = new transaction_store_type();    
     tx_store_->Load(prefix+"e.db", prefix+"f.db", true);
 
-//    tx_sync_ = new ObjectStoreSyncronisation< fetch::chain::Transaction >( tx_store_ );
-//    tx_sync_protocol_ = new ObjectStoreSyncronisationProtocol< fetch::chain::Transaction >(tx_sync_ );
-    
     tx_store_protocol_ = new transaction_store_protocol_type(tx_store_);
     this->Add(TX_STORE, tx_store_protocol_ );
 
+    // TX Sync
+    tx_sync_protocol_ = new tx_sync_protocol_type( tx_store_ );
+    this->Add(TX_STORE_SYNC, tx_store_protocol_ );    
+    
        
     // State DB
-    state_db_ = new document_store_type();  
+    state_db_ = new document_store_type();
     state_db_->Load(prefix+"a.db", prefix+"b.db", prefix+"c.db", prefix+"d.db", true);
     
     state_db_protocol_ = new document_store_protocol_type(state_db_, lane, max_lanes);        
     this->Add(STATE, state_db_protocol_ );
 
     // Controller
-    controller_ = new controller_type(register_, tm);
+    controller_ = new controller_type(IDENTITY, identity_, register_, tm);    
     controller_protocol_ = new controller_protocol_type(controller_);
     this->Add(CONTROLLER, controller_protocol_ );    
     
@@ -76,6 +91,9 @@ public:
   
   ~LaneService() 
   {
+    delete identity_protocol_;    
+    identity_.reset();
+        
     // TODO: Remove protocol
     delete state_db_protocol_;
     delete state_db_;
@@ -83,8 +101,8 @@ public:
     // TODO: Remove protocol
     delete tx_store_protocol_;
     delete tx_store_;
-//    delete tx_sync_;    
-//    delete tx_sync_protocol_;
+
+    delete tx_sync_protocol_;
 
     // TODO: Remove protocol
     delete controller_protocol_;    
@@ -93,6 +111,9 @@ public:
   
 private:
   client_register_type register_;
+
+  std::shared_ptr<identity_type> identity_;
+  identity_protocol_type *identity_protocol_;
   
   controller_type *controller_;
   controller_protocol_type *controller_protocol_;  
@@ -104,11 +125,8 @@ private:
   transaction_store_type *tx_store_;
   transaction_store_protocol_type *tx_store_protocol_;
 
-//  ObjectStoreSyncronisation< fetch::chain::Transaction > *tx_sync_;  
-//  ObjectStoreSyncronisationProtocol< fetch::chain::Transaction > *tx_sync_protocol_;
+  tx_sync_protocol_type *tx_sync_protocol_;
 
-
-//  ObjectStoreP2PController< fetch::chain::Transaction > *p2p_controller_;  
 };
 
 }

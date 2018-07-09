@@ -1,6 +1,7 @@
 #ifndef CHAIN_TRANSACTION_HPP
 #define CHAIN_TRANSACTION_HPP
-
+#include"core/assert.hpp"
+#include"core/logger.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array_buffer.hpp"

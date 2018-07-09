@@ -129,7 +129,7 @@ class TCPServer : public AbstractNetworkServer {
         auto ptr = connection_register_.lock();
 
         if(ptr) {
-          ptr->Enter( conn->network_client_pointer() );
+          ptr->Enter( conn->connection_pointer() );
           conn->SetConnectionManager( ptr );
         }
         

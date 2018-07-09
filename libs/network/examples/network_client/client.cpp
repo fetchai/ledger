@@ -12,17 +12,16 @@ public:
     TCPClient(tmanager )
   {
     Connect(host, port);
-  }  
+    this->OnMessage([](message_type const &value) 
+      {
+        std::cout << value << std::endl;
+      });
+    this->OnConnectionFailed([]() 
+      {
+        std::cerr << "Connection failed" << std::endl;
+      });
+  }
   
-  void PushMessage(message_type const &value) override
-  {
-    std::cout << value << std::endl;
-  }
-
-  void ConnectionFailed() override 
-  {
-    std::cerr << "Connection failed" << std::endl;
-  }
   
   
 private:

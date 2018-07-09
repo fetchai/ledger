@@ -33,7 +33,7 @@ class SwarmHttpInterface;
 class SwarmNode
 {
 public:
-  using clientType = fetch::service::ServiceClient<network::TCPClient>;
+  using clientType = fetch::service::ServiceClient;
 protected:
   typedef std::recursive_mutex MUTEX_T;
   typedef std::lock_guard<MUTEX_T> LOCK_T;
@@ -84,7 +84,10 @@ public:
   virtual std::shared_ptr<clientType> ConnectToPeer(const SwarmPeerLocation &peer)
   {
     LOCK_T mlock(mutex_);
-    std::shared_ptr<clientType> client = std::make_shared<clientType>( peer.GetHost(), peer.GetPort(), tm_ );
+    network::TCPClient connection(tm_);
+    connection.Connect(peer.GetHost(), peer.GetPort());
+    
+    std::shared_ptr<clientType> client = std::make_shared<clientType>( connection, tm_ );
 
     int waits = 25;
     while(!client->is_alive())

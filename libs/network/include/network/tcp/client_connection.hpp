@@ -74,7 +74,24 @@ class ClientConnection : public AbstractConnection {
   {
     return AbstractConnection::TYPE_INCOMING;
   }
-    
+
+
+  void Close() override 
+  {
+    TODO_FAIL("not implemented");    
+  }
+  
+  bool Closed() override 
+  {
+    TODO_FAIL("not implemented");    
+  }
+  
+  bool is_alive() const override
+  {
+    TODO_FAIL("not implemented");    
+  }
+  
+  
  private:
   void ReadHeader() {
     LOG_STACK_TRACE_POINT;
