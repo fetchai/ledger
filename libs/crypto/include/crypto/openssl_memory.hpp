@@ -1,5 +1,5 @@
-#ifndef CRYPTO_ECDSA_HPP
-#define CRYPTO_ECDSA_HPP
+#ifndef CRYPTO_OPENSSL_MEMORY_HPP
+#define CRYPTO_OPENSSL_MEMORY_HPP
 #include <crypto/hash.hpp>
 #include <core/assert.hpp>
 #include <crypto/prover.hpp>
@@ -26,68 +26,68 @@ namespace openssl {
         constexpr OpenSSLDeleter() noexcept = default;
 
         template <typename T>
-        void operator() (T* ptr);
+        void operator() (T* ptr) const;
     };
 
     template <> template <>
-    void OpenSSLDeleter<>::operator()<BIGNUM> (const BIGNUM* ptr) {
+    void OpenSSLDeleter<>::operator()<BIGNUM> (BIGNUM* ptr) const {
         BN_free(ptr);
     }
 
     template <> template <>
-    void OpenSSLDeleter<eFreeingType::clearing>::operator()<BIGNUM> (const BIGNUM* ptr) {
+    void OpenSSLDeleter<eFreeingType::clearing>::operator()<BIGNUM> (BIGNUM* ptr) const {
         BN_clear_free(ptr);
     }
 
     template <> template <>
-    void OpenSSLDeleter<>::operator()<BN_CTX> (const BN_CTX* ptr) {
+    void OpenSSLDeleter<>::operator()<BN_CTX> (BN_CTX* ptr) const {
         BN_CTX_free(ptr);
     }
 
     template <> template <>
-    void OpenSSLDeleter<>::operator()<EC_POINT> (const EC_POINT* ptr) {
+    void OpenSSLDeleter<>::operator()<EC_POINT> (EC_POINT* ptr) const {
         EC_POINT_free(ptr);
     }
 
     template <> template <>
-    void OpenSSLDeleter<eFreeingType::clearing>::operator()<EC_POINT> (const EC_POINT* ptr) {
+    void OpenSSLDeleter<eFreeingType::clearing>::operator()<EC_POINT> (EC_POINT* ptr) const {
         EC_POINT_clear_free(ptr);
     }
 
     template <> template <>
-    void OpenSSLDeleter<>::operator()<EC_KEY> (const EC_KEY* ptr) {
+    void OpenSSLDeleter<>::operator()<EC_KEY> (EC_KEY* ptr) const {
         EC_KEY_free(ptr);
     }
 
     template <> template <>
-    void OpenSSLDeleter<>::operator()<EC_GROUP> (const EC_KEY* ptr) {
+    void OpenSSLDeleter<>::operator()<EC_GROUP> (EC_GROUP* ptr) const {
         EC_GROUP_free(ptr);
     }
 
     template <> template <>
-    void OpenSSLDeleter<eFreeingType::clearing>::operator()<EC_GROUP> (const EC_GROUP* ptr) {
+    void OpenSSLDeleter<eFreeingType::clearing>::operator()<EC_GROUP> (EC_GROUP* ptr) const {
         EC_GROUP_clear_free(ptr);
     }
 
-    template <typename T, constexpr eFreeingType freeingType = eFreeingType::canonical>
+    template <typename T, const eFreeingType freeingType = eFreeingType::canonical>
     using ossl_unique_ptr = std::unique_ptr<T, OpenSSLDeleter<freeingType>>;
 
     //namespace appr2 {
 
     //    template <typename T>
-    //    using deleter_type = void(*)(const T* ptr);
+    //    using deleter_type = void(*)(T* ptr);
 
     //    namespace {
     //        template <typename T, constexpr deleter_type deleter>
     //        struct OpesSSLDeleter {
-    //            void operator() (const T* ptr) {
+    //            void operator() (T* ptr) {
     //                deleter(ptr);
     //            }
     //        };
 
     //        template <typename T>
     //        struct OpesSSLDeleter<T, nullptr> {
-    //            void operator() (const T* ptr);
+    //            void operator() (T* ptr);
     //        };
 
     //        using OpesSSLDeleter
@@ -96,4 +96,5 @@ namespace openssl {
 } //* openssl namespace
 } //* crypto namespace
 } //* fetch namespace
+#endif //CRYPTO_OPENSSL_MEMORY_HPP
 
