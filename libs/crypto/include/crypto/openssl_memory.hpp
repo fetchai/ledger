@@ -23,6 +23,8 @@ namespace openssl {
 
     template <const eFreeingType freeingType = eFreeingType::canonical>
     struct OpenSSLDeleter {
+        constexpr OpenSSLDeleter() noexcept = default;
+
         template <typename T>
         void operator() (T* ptr);
     };
