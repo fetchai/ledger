@@ -21,10 +21,10 @@ namespace openssl {
         clearing   //* XXX_clear_free(...)
     };
 
-    template <constexpr eDeleterType freeingType = eFreeingType::canonical>
+    template <const eFreeingType freeingType = eFreeingType::canonical>
     struct OpenSSLDeleter {
         template <typename T>
-        void operator() (T* &ptr);
+        void operator() (T* ptr);
     };
 
     template <> template <>
@@ -67,7 +67,7 @@ namespace openssl {
         EC_GROUP_clear_free(ptr);
     }
 
-    template <typename T, constexpr eDeleterType freeingType = eFreeingType::canonical>
+    template <typename T, constexpr eFreeingType freeingType = eFreeingType::canonical>
     using ossl_unique_ptr = std::unique_ptr<T, OpenSSLDeleter<freeingType>>;
 
     //namespace appr2 {

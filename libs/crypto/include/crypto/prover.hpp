@@ -12,7 +12,7 @@ class Prover {
   virtual bool Sign(byte_array_type const &text) = 0;
   virtual byte_array_type document_hash() = 0;
   virtual byte_array_type signature() = 0;
-  virtual bool Sign(
+  //virtual bool Sign(
   //        byte_array_type const &private_key,
   //        byte_array_type const &data_to_sign,
   //        byte_array_type &signature,
