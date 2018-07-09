@@ -198,6 +198,7 @@ class JSONDocument {
       switch (c) {
         case '\n':
           ++line;
+          // fall through
         case '\t':
         case ' ':
         case '\r':
