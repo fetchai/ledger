@@ -1,5 +1,8 @@
 #include"core/commandline/vt100.hpp"
 
+#include <cctype>
+#include <algorithm>
+
 namespace fetch {
 namespace commandline {
 namespace VT100 {
@@ -12,7 +15,9 @@ namespace VT100 {
     {"6", 6},       {"7", 7},    {"9", 9}};
 
   uint16_t ColorFromString(std::string name) {
-    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+    std::transform(name.begin(), name.end(), name.begin(), [](char c) {
+      return static_cast<char>(std::tolower(c));
+    });
     if (color_map.find(name) == color_map.end()) return 9;
     return color_map.find(name)->second;
   }
