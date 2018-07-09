@@ -16,61 +16,123 @@ namespace fetch {
 namespace crypto {
 namespace openssl {
 
-    enum eFreeingType : int {
+    enum eDeleteStrategy : int {
         canonical, //* canonical XXX_free(...)
         clearing   //* XXX_clear_free(...)
     };
 
-    template <const eFreeingType freeingType = eFreeingType::canonical>
+    namespace {
+
+        template <typename T, const eDeleteStrategy deleteStrategy = eDeleteStrategy::canonical>
+        using FunctionType = void(*)(T*);
+
+        template <typename T, const eDeleteStrategy deleteStrategy = eDeleteStrategy::canonical>
+        struct DeleterFunction {
+            static constexpr FunctionType<T, deleteStrategy> default_fnc(); 
+            static constexpr FunctionType<T, deleteStrategy> deleterFunction = default_fnc();
+        };
+
+        template<>
+        struct DeleterFunction<BIGNUM> {
+            static constexpr FunctionType<BIGNUM> deleterFunction = &BN_free;
+        };
+
+        template<>
+        struct DeleterFunction<BIGNUM, eDeleteStrategy::clearing> {
+            static constexpr FunctionType<BIGNUM, eDeleteStrategy::clearing> deleterFunction = &BN_clear_free;
+        };
+
+        template<>
+        struct DeleterFunction<BN_CTX> {
+            static constexpr FunctionType<BN_CTX> deleterFunction = &BN_CTX_free;
+        };
+
+        template<>
+        struct DeleterFunction<EC_POINT> {
+            static constexpr FunctionType<EC_POINT> deleterFunction = &EC_POINT_free;
+        };
+
+        template<>
+        struct DeleterFunction<EC_POINT, eDeleteStrategy::clearing> {
+            static constexpr FunctionType<EC_POINT, eDeleteStrategy::clearing> deleterFunction = &EC_POINT_clear_free;
+        };
+
+        template<>
+        struct DeleterFunction<EC_KEY> {
+            static constexpr FunctionType<EC_KEY> deleterFunction = &EC_KEY_free;
+        };
+
+        template<>
+        struct DeleterFunction<EC_GROUP> {
+            static constexpr FunctionType<EC_GROUP> deleterFunction = &EC_GROUP_free;
+        };
+
+        template<>
+        struct DeleterFunction<EC_GROUP, eDeleteStrategy::clearing> {
+            static constexpr FunctionType<EC_GROUP, eDeleteStrategy::clearing> deleterFunction = &EC_GROUP_clear_free;
+        };
+    }
+
+    template <typename T
+             , const eDeleteStrategy deleteStrategy
+             , typename T_DeleterFunction = DeleterFunction<T, deleteStrategy>>
     struct OpenSSLDeleter {
+        using DeleterFunction = T_DeleterFunction;
+
         constexpr OpenSSLDeleter() noexcept = default;
 
-        template <typename T>
-        void operator() (T* ptr) const;
+        void operator() (T* ptr) const {
+            (*DeleterFunction::deleterFunction)(ptr);
+        }
     };
 
-    template <> template <>
-    void OpenSSLDeleter<>::operator()<BIGNUM> (BIGNUM* ptr) const {
-        BN_free(ptr);
-    }
+    template <typename T
+            , const eDeleteStrategy deleteStrategy
+            , typename T_DeleterFunction = DeleterFunction<T, deleteStrategy>>
+    using ossl_unique_ptr = std::unique_ptr<T, OpenSSLDeleter<T, deleteStrategy, T_DeleterFunction>>;
 
-    template <> template <>
-    void OpenSSLDeleter<eFreeingType::clearing>::operator()<BIGNUM> (BIGNUM* ptr) const {
-        BN_clear_free(ptr);
-    }
+    //template <>
+    //void OpenSSLDeleter<>::operator()<BIGNUM> (BIGNUM* ptr) const {
+    //    BN_free(ptr);
+    //}
 
-    template <> template <>
-    void OpenSSLDeleter<>::operator()<BN_CTX> (BN_CTX* ptr) const {
-        BN_CTX_free(ptr);
-    }
+    //template <> template <>
+    //void OpenSSLDeleter<eDeleteStrategy::clearing>::operator()<BIGNUM> (BIGNUM* ptr) const {
+    //    BN_clear_free(ptr);
+    //}
 
-    template <> template <>
-    void OpenSSLDeleter<>::operator()<EC_POINT> (EC_POINT* ptr) const {
-        EC_POINT_free(ptr);
-    }
+    //template <> template <>
+    //void OpenSSLDeleter<>::operator()<BN_CTX> (BN_CTX* ptr) const {
+    //    BN_CTX_free(ptr);
+    //}
 
-    template <> template <>
-    void OpenSSLDeleter<eFreeingType::clearing>::operator()<EC_POINT> (EC_POINT* ptr) const {
-        EC_POINT_clear_free(ptr);
-    }
+    //template <> template <>
+    //void OpenSSLDeleter<>::operator()<EC_POINT> (EC_POINT* ptr) const {
+    //    EC_POINT_free(ptr);
+    //}
 
-    template <> template <>
-    void OpenSSLDeleter<>::operator()<EC_KEY> (EC_KEY* ptr) const {
-        EC_KEY_free(ptr);
-    }
+    //template <> template <>
+    //void OpenSSLDeleter<eDeleteStrategy::clearing>::operator()<EC_POINT> (EC_POINT* ptr) const {
+    //    EC_POINT_clear_free(ptr);
+    //}
 
-    template <> template <>
-    void OpenSSLDeleter<>::operator()<EC_GROUP> (EC_GROUP* ptr) const {
-        EC_GROUP_free(ptr);
-    }
+    //template <> template <>
+    //void OpenSSLDeleter<>::operator()<EC_KEY> (EC_KEY* ptr) const {
+    //    EC_KEY_free(ptr);
+    //}
 
-    template <> template <>
-    void OpenSSLDeleter<eFreeingType::clearing>::operator()<EC_GROUP> (EC_GROUP* ptr) const {
-        EC_GROUP_clear_free(ptr);
-    }
+    //template <> template <>
+    //void OpenSSLDeleter<>::operator()<EC_GROUP> (EC_GROUP* ptr) const {
+    //    EC_GROUP_free(ptr);
+    //}
 
-    template <typename T, const eFreeingType freeingType = eFreeingType::canonical>
-    using ossl_unique_ptr = std::unique_ptr<T, OpenSSLDeleter<freeingType>>;
+    //template <> template <>
+    //void OpenSSLDeleter<eDeleteStrategy::clearing>::operator()<EC_GROUP> (EC_GROUP* ptr) const {
+    //    EC_GROUP_clear_free(ptr);
+    //}
+
+    //template <typename T, const eDeleteStrategy deleteStrategy = eDeleteStrategy::canonical>
+    //using ossl_unique_ptr = std::unique_ptr<T, OpenSSLDeleter<deleteStrategy>>;
 
     //namespace appr2 {
 
