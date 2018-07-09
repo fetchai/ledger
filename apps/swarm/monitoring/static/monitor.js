@@ -29,9 +29,10 @@ class ForceGraph
 	d.fy = null;
     };
     
-    constructor(targetElement)
+    constructor(targetElement, distance)
     {
 	var self = this;
+        self.distance = distance;
 
 	this.highestGroupSeenSoFar = 0;
 
@@ -94,7 +95,7 @@ class ForceGraph
 	;
 	
 	this.simulation
-	    .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(250))
+	    .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(self.distance))
 	;
 
 	this.sync();
@@ -256,6 +257,8 @@ class ForceGraph
 	var addableNodes = g.nodes.filter(node => !oldNodeNames.has(node.id))
 	var addableLinks = g.links.filter(link => !oldLinkNames.has(self.getIdForLink(link)))
 
+        console.log(addableNodes);
+        
 	var killNodes = new Set(self.graphData.nodes.map(node => node.id).filter(nodeName => !newNodeNames.has(nodeName)));
 	var killLinks = new Set(self.graphData.links.map(link => self.getIdForLink(link)).filter(linkName => !newLinkNames.has(linkName)));
 	
@@ -298,9 +301,9 @@ class ForceGraph
 	    updatedLinksByName[k].value = (k in newLinks) ? newLinks[k].value : updatedLinksByName[k].value;
 	});
 
-	if (self.graphData.links.length > 1000) {
-	    debugger;
-	}
+	//if (self.graphData.links.length > 1000) {
+	//    debugger;
+	//}
 
 	self.sync();
     }

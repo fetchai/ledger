@@ -104,29 +104,19 @@ public:
     :
     tm_(threads)
   {
-    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 1" << std::endl;
-
     tm_. Start();
 
-    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 2 -- " << rpcPort << std::endl;
-
     rpcPort_ = rpcPort;
-    
     rpcServer_ = std::make_shared<service::ServiceServer<fetch::network::TCPServer>>(rpcPort, tm_);
-    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 3 " << rpcPort  << std::endl;
+
     httpServer_ = std::make_shared<fetch::http::HTTPServer>(httpPort, tm_);
-    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 4" << std::endl;
 
     // Add middleware to the HTTP server - allow requests from any address,
     // and print requests to the terminal in colour
-    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 5" << std::endl;
     httpServer_->AddMiddleware(fetch::http::middleware::AllowOrigin("*"));
-    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 6" << std::endl;
     httpServer_->AddMiddleware(fetch::http::middleware::ColorLog);
-    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 7" << std::endl;
 
     tm_. Start();
-    std::cout << "%%%%%%%%%%%%%%%%%%%%% NetworkNodeCore 8" << std::endl;
   }
 
   virtual ~NetworkNodeCore()
@@ -219,10 +209,16 @@ public:
     }
   };
 
-  template<class HTTP_HANDLER>
-  void AddModule(std::shared_ptr<HTTP_HANDLER> handler)
+  void AddModule(fetch::http::HTTPModule *handler)
   {
-    httpServer_->AddModule(*(handler.get()));
+    httpServer_->AddModule(*handler);
+  }
+
+  template<class MODULE>
+  void AddModule(std::shared_ptr<MODULE> module_p)
+  {
+    fetch::http::HTTPModule *h = module_p.get();
+    AddModule(h);
   }
 
   template<class INTERFACE_CLASS, class PROTOCOL_CLASS>

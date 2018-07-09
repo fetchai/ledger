@@ -17,12 +17,11 @@ PEERS = [
     ]
 
 class SwarmAgentNaive(object):
-    def __init__(self, idnum, rpcPort, httpPort, maxpeers, idlespeed, solvespeed, peers):
-        self.swarm = Swarm(idnum, rpcPort, httpPort, maxpeers, idlespeed)
+    def __init__(self, idnum, rpcPort, httpPort, maxpeers, idlespeed, peers, target):
+        self.swarm = Swarm(idnum, rpcPort, httpPort, maxpeers, idlespeed, target)
         self.idnum = idnum
 
         self.peerlist = peers.split(",")
-        self.solvespeed = solvespeed
         self.blockCounter = 0
 
         self.rootblock = MainChainBlock()
@@ -40,6 +39,9 @@ class SwarmAgentNaive(object):
         self.swarm.OnNewBlockIdFound(self.onNewBlockIdFound)
         self.swarm.OnNewBlockAvailable(self.onNewBlockAvailable)
         self.swarm.OnBlockIdRepeated(self.onBlockIdRepeated)
+        self.swarm.OnLooseBlock(self.onLooseBlock)
+        self.swarm.OnBlockSupplied(self.onBlockSupplied)
+        self.swarm.OnBlockNotSupplied(self.onBlockNotSupplied)
 
         say(self.mainchain.totalBlocks())
         self.swarm.Start()
@@ -62,10 +64,6 @@ class SwarmAgentNaive(object):
             return
 
         self.swarm.DoDiscoverBlocks(goodPeers[0], 10)
-
-        if random.randint(0, self.solvespeed) == 0:
-            self.swarm.DoBlockSolved("Block {} from {}".format(self.blockCounter, self.idnum))
-            self.blockCounter += 1
 
         weightedPeers = [(x,self.swarm.GetKarma(x)) for x in goodPeers]
         total = sum([ x[1] for x in weightedPeers ])
@@ -93,7 +91,6 @@ class SwarmAgentNaive(object):
     def onNewBlockIdFound(self, host, blockid):
         say("PYCHAINNODE===> WOW - ", blockid)
         self.swarm.AddKarmaMax(host, 1.0, 6.0);
-        self.swarm.DoGetBlock(host, blockid);
 
     def onBlockIdRepeated(self, host, blockid):
         # Awwww, we know about this.
@@ -103,6 +100,17 @@ class SwarmAgentNaive(object):
         say("PYCHAINNODE===> GOT - ", blockid)
         say(self.swarm.GetBlock(blockid))
 
+    def onLooseBlock(self, host, blockid):
+        say("PYCHAINNODE LOOSE: ", host, blockid)
+        self.swarm.DoGetBlock(host, blockid)
+
+    def onBlockSupplied(self, host, blockid):
+        say("PYCHAINNODE DELIVERED: ", host, blockid)
+
+    def onBlockNotSupplied(self, host, blockid):
+        say("PYCHAINNODE NOT DELIVERED: ", host, blockid)
+
+
 def run(config):
     agent = SwarmAgentNaive(
         config.id,
@@ -110,8 +118,8 @@ def run(config):
         config.port + 1000,
         config.maxpeers,
         config.idlespeed,
-        config.solvespeed,
-        config.peers
+        config.peers,
+        20
     )
 
     while True:
@@ -124,13 +132,11 @@ def main():
     params.add_argument("-id",             type=int, help="Identifier number for this node.", default=1);
     params.add_argument("-port",           type=int, help="Which port to run on.", default=9012);
     params.add_argument("-maxpeers",       type=int, help="Ideally how many peers to maintain good connections to.", default=3);
-    params.add_argument("-solvespeed",     type=int, help="The rate of generating block solutions.", default=1000);
     params.add_argument("-idlespeed",      type=int, help="The rate, in milliseconds, of generating idle events to the Swarm Agent.", default=100);
     params.add_argument("-peers",          type=str, help="Comma separated list of peer locations.", default=",".join(PEERS));
 
     config = params.parse_args(sys.argv[1:])
 
-    #with ostream_redirect():
     run(config)
 
 if __name__ == "__main__":

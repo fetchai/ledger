@@ -11,7 +11,7 @@ import random
 
 PORT_BASE = 9000
 
-# (clear;cd ../../build/;make swarm) && ./runswarm.py --members 51 --binary ../../build/examples/swarm --caching 1 --initialpeers 2 --maxpeers 4  --idlespeed 100 --solvespeed 10000 2>&1 | tee log
+# (clear;cd ../../build/;make swarm) && ./runswarm.py --members 51 --binary ../../build/examples/swarm --caching 1 --initialpeers 2 --maxpeers 4  --idlespeed 100 2>&1 | tee log
 #
 #
 
@@ -22,7 +22,6 @@ class RunSwarmArgs(object):
         self.parser.add_argument("--binary", help="swarm node binary", type=str)
         self.parser.add_argument("--initialpeers", help="number of seed peers", type=int)
         self.parser.add_argument("--maxpeers", help="max peers to discover", type=int)
-        self.parser.add_argument("--solvespeed", help="chance of solving a block as 1/N", type=int, default=1000)
         self.parser.add_argument("--idlespeed", help="idle cycle time in MS for a node", type=int, default=1000)
         self.parser.add_argument("--logdir", help="where to put individual logfiles", type=str, default="./")
         self.parser.add_argument("--startindex", help="Index of first launchable node", type=int, default=0)
@@ -115,7 +114,6 @@ class Node(object):
             "-maxpeers": "{}".format(self.maxpeers),
             "-port": "{}".format(PORT_BASE + self.index),
             "-peers": ",".join(self.peers),
-            "-solvespeed": "{}".format(args.solvespeed),
             "-idlespeed": "{}".format(args.idlespeed),
         }
 

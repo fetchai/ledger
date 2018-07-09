@@ -5,7 +5,7 @@
 
 
 
-#include "network/parcels/swarm_agent_naive.hpp"
+#include "network/swarm/swarm_agent_naive.hpp"
 #include "network/swarm/swarm_agent_api.hpp"
 #include "network/swarm/swarm_http_interface.hpp"
 #include "network/swarm/swarm_node.hpp"

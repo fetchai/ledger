@@ -21,6 +21,7 @@ class Monitoring(object):
             print("MONITORING START")
             while not self.done:
                 self.poll(self.port + 10000, self.port)
+                self.poll2(self.port + 10000, self.port)
                 self.port = (self.port + 1) % POSSIBLE_PORTS
                 if self.port == 0:
                     time.sleep(2)
@@ -31,11 +32,9 @@ class Monitoring(object):
                 url = "http://127.0.0.1:{}/peers".format(port)
                 data = None
                 try:
-                    print("URL=", url)
                     r = requests.get(url, timeout=1)
                     if r.status_code == 200:
                         data = json.loads(r.content.decode("utf-8", "strict"))
-                        print(url, r.content)
                         peers = data.get("peers", [])
                         state = data.get("state", 0)
                 except requests.exceptions.Timeout as ex:
@@ -53,6 +52,30 @@ class Monitoring(object):
             except Exception as x:
                 print("ERR:", x)
 
+        def poll2(self, port, nodenumber):
+            ident = "127.0.0.1:{}".format(nodenumber + 9000)
+            try:
+                url = "http://127.0.0.1:{}/mainchain".format(port)
+                data = None
+                try:
+                    r = requests.get(url, timeout=1)
+                    if r.status_code == 200:
+                        data = json.loads(r.content.decode("utf-8", "strict"))
+                except requests.exceptions.Timeout as ex:
+                    data = None
+                    print("Timeout:", ident)
+                except requests.exceptions.ConnectionError as ex:
+                    data = None
+                    print("Denied:", ident)
+
+                if data != None:
+                   self.owner.newChainData(ident, data)
+                else:
+                    self.owner.badNode(ident)
+
+            except Exception as x:
+                print("ERR:", x)
+
 
     def __init__(self):
         print("MONITORING START?")
@@ -60,6 +83,15 @@ class Monitoring(object):
         self.thread.start()
 
         self.world = {}
+
+        self.chain = {}
+
+    def newChainData(self, ident, blocks):
+        for block in blocks:
+            self.chain.setdefault(block["hashcurrent"], { 'id': len(self.chain)+1 })
+            self.chain[block["hashcurrent"]]["prev"] = block["hashprev"]
+            self.chain[block["hashcurrent"]].setdefault("nodes", set())
+            self.chain[block["hashcurrent"]]["nodes"].add(ident)
 
     def close(self):
         self.thread.done = True

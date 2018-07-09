@@ -39,6 +39,10 @@ public:
                     [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) \
                     { return this->GetPeers(params, req); }
                     );
+    HTTPModule::Get("/oink",
+                    [](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) \
+                    { return fetch::http::HTTPResponse(std::string("oink")); }
+                    );
   }
 
   fetch::http::HTTPResponse GetPeers(fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req)

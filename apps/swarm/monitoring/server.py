@@ -89,9 +89,41 @@ def get_data2(context, mon):
                 "status": "dead",
             } for x in extranodenames
         ]),
-
     print(data)
-    return data
+    return data;
+
+def get_chain_data(context, mon):
+    r = {
+        'nodes': [],
+        'links': []
+    }
+
+    allblocknames = list(mon.chain.keys())
+
+    for name in allblocknames:
+        b = mon.chain[name]
+        r['nodes'].append({
+            'id': str(b["id"]),
+            'group': 1,
+            'status': 1,
+        })
+
+    for name in allblocknames:
+        b = mon.chain[name]
+        prevHash = b.get("prev", "")
+        p = mon.chain.get(prevHash, None)
+
+        if p:
+            r['links'].append({
+                'source': str(b['id']),
+                'target': str(p['id']),
+                'value': len(b['nodes']),
+            })
+
+    print(r)
+    return r
+
+
 
 def get_slash():
     redirect("/static/monitor.html")
@@ -114,6 +146,7 @@ def main():
 
     with contextlib.closing(Monitoring()) as myMonitoring:
         root.route('/network', method='GET', callback=functools.partial(get_data2, context, myMonitoring))
+        root.route('/chain', method='GET', callback=functools.partial(get_chain_data, context, myMonitoring))
         if g_ssl:
             from utils import SSLWSGIRefServer
             srv = SSLWSGIRefServer.SSLWSGIRefServer(host="0.0.0.0", port=g_port)

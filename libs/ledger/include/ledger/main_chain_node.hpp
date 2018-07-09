@@ -21,7 +21,7 @@ namespace fetch
 namespace ledger
 {
 
-class MainChainNode : public MainChainNodeInterface
+  class MainChainNode : public MainChainNodeInterface, public fetch::http::HTTPModule
 {
 public:
 
@@ -45,20 +45,52 @@ public:
   unsigned int target_;
   std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
 
-  MainChainNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore, unsigned int minerNumber) :
+  MainChainNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore, unsigned int minerNumber, unsigned int target) :
     nnCore_(networkNodeCore)
   {
     chain_ = std::make_shared<fetch::chain::MainChain>();
     threadPool_ = std::make_shared<network::ThreadPool>(5);
     stopped_ = false;
     minerNumber_ = minerNumber;
-    target_ = 16;
+    target_ = target;
 
     nnCore_ -> AddProtocol(this);
+    HTTPModule::Post(
+                    "/mainchain",
+                    [this](http::ViewParameters const &params, http::HTTPRequest const &req) \
+                    {
+                      return this -> HttpGetMainchain(params, req);
+                    });
+    nnCore_ -> AddModule(this);
   }
 
   virtual ~MainChainNode()
   {
+  }
+
+  http::HTTPResponse HttpGetMainchain(http::ViewParameters const &params,
+      http::HTTPRequest const &req)
+  {
+    auto chainArray = chain_ -> HeaviestChain();
+
+    script::Variant result = script::Variant::Array(chainArray.size());
+
+    std::size_t index = 0;
+    for (auto &i : chainArray) {
+
+      script::Variant temp = script::Variant::Object();
+      temp["minerNumber"]  = i.body().miner_number;
+      temp["blockNumber"]  = i.body().block_number;
+      temp["hashcurrent"]         = ToHex(i.hash());
+      temp["hashprev"]     = ToHex(i.body().previous_hash);
+
+      result[index++] = temp;
+    }
+
+    std::ostringstream ret;
+    ret << result;
+
+    return http::HTTPResponse(ret.str());
   }
 
   virtual fetch::network::PromiseOf<std::pair<bool, block_type>> RemoteGetHeader(const block_hash &hash, std::shared_ptr<network::NetworkNodeCore::client_type> client)
@@ -108,6 +140,12 @@ public:
     return results;
   }
 
+  bool AddBlock(block_type &block)
+  {
+    chain_ -> AddBlock(block);
+    return block.loose();
+  }
+
   block_type const &HeaviestBlock() const
   {
     return chain_ -> HeaviestBlock();
@@ -117,7 +155,6 @@ public:
   {
     auto closure = [this]
     {
-      std::cout << "MINER WORKER" <<  std::endl;
       // Loop code
       while(!stopped_)
       {
@@ -128,6 +165,7 @@ public:
         block_type nextBlock;
         body_type nextBody;
         nextBody.block_number = block.body().block_number + 1;
+
         nextBody.previous_hash = block.hash();
         nextBody.miner_number = minerNumber_;
 
@@ -137,8 +175,6 @@ public:
         // Mine the block
         nextBlock.proof().SetTarget(target_);
         miner::Mine(nextBlock);
-
-        std::cout << "MINER GOT:" << fetch::byte_array::ToHex(nextBlock.hash()) << std::endl;
 
         if(stopped_)
         {

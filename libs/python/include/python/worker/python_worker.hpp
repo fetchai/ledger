@@ -1,6 +1,6 @@
 
 #include "network/swarm/swarm_random.hpp"
-#include "network/parcels/swarm_agent_api_impl.hpp"
+#include "network/swarm/swarm_agent_api_impl.hpp"
 #include "network/swarm/swarm_http_interface.hpp"
 #include "network/generics/network_node_core.hpp"
 
@@ -25,7 +25,6 @@ public:
   virtual void Start()
   {
     lock_type lock(mutex_);
-    cout << "***** START"<<endl;
     tm_ -> Start();
   }
 

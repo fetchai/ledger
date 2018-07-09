@@ -35,7 +35,6 @@ int main(int argc, const char *argv[])
   unsigned int id{9000+(rand&0xf)};
   unsigned int maxpeers{3};
   unsigned int idlespeed{100};
-  unsigned int solvespeed{1000};
   std::string peerlist{"127.0.0.1:9006,127.0.0.1:9015"};
 
   fetch::commandline::Params params;
@@ -45,7 +44,6 @@ int main(int argc, const char *argv[])
   params.add(id,            "id",             "Identifier number for this node.");
   params.add(portNumber,    "port",           "Which port to run on.");
   params.add(maxpeers,      "maxpeers",       "Ideally how many peers to maintain good connections to.");
-  params.add(solvespeed,    "solvespeed",     "The rate of generating block solutions.");
   params.add(idlespeed,     "idlespeed",      "The rate, in milliseconds, of generating idle events to the Swarm Agent.");
   params.add(peerlist,      "peers",          "Comma separated list of peer locations.");
 
@@ -58,7 +56,6 @@ int main(int argc, const char *argv[])
   std::cout << "######## " << portNumber << std::endl;
   std::cout << "######## " << id << std::endl;
   std::cout << "######## " << maxpeers << std::endl;
-  std::cout << "######## " << solvespeed << std::endl;
   auto nnCore = std::make_shared<fetch::network::NetworkNodeCore>(30, portNumber+1000, portNumber);
 
   std::string identifier = "node-" + std::to_string(id);
@@ -77,7 +74,7 @@ int main(int argc, const char *argv[])
                                                                                             );
   auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(nnCore);
   auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl>(myHost, idlespeed);
-  auto agent = std::make_shared<fetch::swarm::SwarmAgentNaive>(swarmAgentApi, identifier, id, rnd, maxpeers, solvespeed);
+  auto agent = std::make_shared<fetch::swarm::SwarmAgentNaive>(swarmAgentApi, identifier, id, rnd, maxpeers);
   auto httpModule = std::make_shared<fetch::swarm::SwarmHttpModule>(node);
 
   nnCore -> AddModule(httpModule);
@@ -116,11 +113,6 @@ int main(int argc, const char *argv[])
                                                  }
                                              });
                           });
-
-  swarmAgentApi -> ToBlockSolved([node, parcelNode](const std::string &data)
-                                 {
-                                   parcelNode -> PublishParcel(std::make_shared<fetch::swarm::SwarmParcel>("block", data));
-                                 });
 
   swarmAgentApi -> ToDiscoverBlocks([swarmAgentApi, node, parcelNode](const std::string &host, unsigned int count)
                                     {
@@ -237,21 +229,6 @@ int main(int argc, const char *argv[])
                                     }
                                   return parcelNode -> GetParcel("block", id) -> GetData();
                                 });
-
-  swarmAgentApi -> ToVerifyBlock([swarmAgentApi, node, parcelNode](const std::string &id, bool validity)
-                                 {
-                                   if (parcelNode -> HasParcel("block", id))
-                                     {
-                                       if (validity)
-                                         {
-                                           parcelNode -> PublishParcel("block", id);
-                                         }
-                                       else
-                                         {
-                                           parcelNode -> DeleteParcel("block", id);
-                                         }
-                                     }
-                                 });
 
   swarmAgentApi -> Start();
 

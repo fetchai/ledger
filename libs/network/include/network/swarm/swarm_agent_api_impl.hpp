@@ -73,9 +73,7 @@ public:
       {
         try
           {
-            cout << ">>>>>>>>>>>>>>>>>>> ON IDLE " << idleCount<<endl;
             this->onIdle_();
-            cout << ">>>>>>>>>>>>>>>>>>> DONE IDLE " << idleCount<<endl;
           }
         catch (std::exception &x)
           {
@@ -96,7 +94,6 @@ public:
   virtual void OnIdle                (std::function<void ()> cb)
   {
     onIdle_ = cb;
-    cout << ">>>>>>>>>>>>>>>>>>> ON IDLE SET"<<endl;
   }
 
   virtual void OnPeerless            (std::function<void ()> cb)

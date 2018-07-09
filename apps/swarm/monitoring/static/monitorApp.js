@@ -30,7 +30,7 @@ angular.module('monitorApp', []).controller('monitorController', [ '$location', 
         $scope.fetchedData = response.data;
 	//console.log($scope.fetchedData);
 	if (!$scope.g) {
-	    $scope.g = new ForceGraph(null);
+	    $scope.g = new ForceGraph(null, 250);
 	}
 	$scope.g.addData($scope.fetchedData);
     }
