@@ -11,17 +11,24 @@ namespace ledger {
 class ExecutionManagerRpcClient: public ExecutionManagerInterface {
 public:
 
+  // Construction / Destruction
   ExecutionManagerRpcClient(byte_array::ConstByteArray const &host, uint16_t const &port,
                             network::ThreadManager const &thread_manager);
+  ~ExecutionManagerRpcClient() override = default;
 
-  bool Execute(tx_index_type const &index,
+  /// @name Execution Manager Interface
+  /// @{
+  bool Execute(block_digest_type const &block_hash,
+               block_digest_type const &prev_block_hash,
+               tx_index_type const &index,
                block_map_type &map,
                std::size_t num_lanes,
                std::size_t num_slices) override;
-private:
-
-  std::unique_ptr<fetch::service::ServiceClient > service_;
-  
+  block_digest_type LastProcessedBlock() override;
+  bool IsActive() override;
+  bool IsIdle() override;
+  bool Abort() override;
+  /// @}
 };
 
 } // namespace ledger

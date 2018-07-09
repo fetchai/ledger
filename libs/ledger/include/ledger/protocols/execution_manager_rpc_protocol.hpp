@@ -10,14 +10,22 @@ namespace ledger {
 class ExecutionManagerRpcProtocol : public fetch::service::Protocol {
 public:
   enum {
-    RPC_ID_EXECUTE = 1
+    EXECUTE = 1,
+    LAST_PROCESSED_BLOCK,
+    IS_ACTIVE,
+    IS_IDLE,
+    ABORT
   };
 
   explicit ExecutionManagerRpcProtocol(ExecutionManagerInterface &manager)
     : manager_(manager) {
 
     // define the RPC endpoints
-    Expose(RPC_ID_EXECUTE, &manager_, &ExecutionManagerInterface::Execute);
+    Expose(EXECUTE, &manager_, &ExecutionManagerInterface::Execute);
+    Expose(LAST_PROCESSED_BLOCK, &manager_, &ExecutionManagerInterface::LastProcessedBlock);
+    Expose(IS_ACTIVE, &manager_, &ExecutionManagerInterface::IsActive);
+    Expose(IS_IDLE, &manager_, &ExecutionManagerInterface::IsIdle);
+    Expose(ABORT, &manager_, &ExecutionManagerInterface::Abort);
   }
 
 private:
