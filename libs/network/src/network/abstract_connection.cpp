@@ -1,4 +1,4 @@
-#include "network/tcp/abstract_connection.hpp"
+#include "network/management/abstract_connection.hpp"
 
 namespace fetch {
 namespace network {

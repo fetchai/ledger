@@ -88,7 +88,7 @@ private:
 
 class ProtectedService : public ServiceServer< fetch::network::TCPServer > {
 public:
-  ProtectedService(uint16_t port, fetch::network::ThreadManager tm) : ServiceServer(port, tm) {
+  ProtectedService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm) {
     this->SetConnectionRegister(register_);
 
     auth_logic_.reset(new AuthenticationLogic<fetch::NodeDetails>(register_));
@@ -125,7 +125,7 @@ private:
 
 
 int main() {
-  fetch::network::ThreadManager tm(8);  
+  fetch::network::NetworkManager tm(8);  
   ProtectedService serv(8080, tm);
   tm.Start();
 

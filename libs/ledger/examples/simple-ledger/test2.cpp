@@ -55,15 +55,15 @@ tx_type RandomTX(std::size_t const &n) {
 class FetchShardService {
 public:
   FetchShardService(uint16_t port) :   
-    thread_manager_( new fetch::network::ThreadManager(8) ),
-    service_(port, thread_manager_),
-    http_server_(8080, thread_manager_)
+    network_manager_( new fetch::network::NetworkManager(8) ),
+    service_(port, network_manager_),
+    http_server_(8080, network_manager_)
   {
     
     std::cout << "Listening for peers on " << (port) << ", clients on " << ( port ) << std::endl;
       
     // Creating a service contiaing the shard protocol
-    shard_ =  new ShardProtocol(thread_manager_, FetchProtocols::SHARD);
+    shard_ =  new ShardProtocol(network_manager_, FetchProtocols::SHARD);
     service_.Add(FetchProtocols::SHARD, shard_ );
 
 
@@ -82,16 +82,16 @@ public:
   
   void Start() 
   {
-    thread_manager_->Start();
+    network_manager_->Start();
   }
 
   void Stop() 
   {
-    thread_manager_->Stop();
+    network_manager_->Stop();
   }
 
 private:
-  fetch::network::ThreadManager *thread_manager_;    
+  fetch::network::NetworkManager *network_manager_;    
   fetch::service::ServiceServer< fetch::network::TCPServer > service_;
   fetch::http::HTTPServer http_server_;  
   
@@ -116,7 +116,7 @@ int main(int argc, char const **argv) {
   typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
   typedef std::shared_ptr< client_type >  client_shared_ptr_type;
   
-  fetch::network::ThreadManager tm(2);    
+  fetch::network::NetworkManager tm(2);    
   client_shared_ptr_type client = std::make_shared< client_type >("localhost", 1337, &tm);
   tm.Start();
   

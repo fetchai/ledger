@@ -1,6 +1,6 @@
 #ifndef LIBFETCHCORE_NETWORK_TCP_CLIENT_MANAGER_HPP
 #define LIBFETCHCORE_NETWORK_TCP_CLIENT_MANAGER_HPP
-#include "network/tcp/client_manager.hpp"
+#include "network/managementtcp.hpp"
 
 #include"fetch_pybind.hpp"
 

@@ -50,7 +50,8 @@ inline typename memory::VectorSlice<T,S>::type Pearson(memory::VectorSlice<T,S> 
       return d1 * d2;
     }, b );
 
-  type denom = sqrt(innerA * innerB);
+  //type denom = sqrt(innerA * innerB);
+  type denom = (innerA + innerB);
   
   return type(top / denom);
 }

@@ -3,7 +3,7 @@
 #include"core/commandline/parameter_parser.hpp"
 #include"core/commandline/vt100.hpp"
 
-#include"network/details/thread_manager.hpp"
+#include"network/management/network_manager.hpp"
 #include"./quick_start_service.hpp"
 
 using namespace fetch;
@@ -13,7 +13,7 @@ using namespace fetch::quick_start;
 int main(int argc, char const **argv)
 {
   // Networking needs this
-  fetch::network::ThreadManager tm(5);
+  fetch::network::NetworkManager tm(5);
 
   ParamsParser params;
   params.Parse(argc, argv);

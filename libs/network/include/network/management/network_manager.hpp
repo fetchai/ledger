@@ -4,7 +4,7 @@
 #include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
-#include "network/management/network_manager_implementation.hpp"
+#include "network/details/network_manager_implementation.hpp"
 
 #include <functional>
 #include <map>
@@ -20,7 +20,7 @@ class NetworkManager
  public:
   typedef std::function<void()> event_function_type;
 
-  typedef details::networkManagerImplementation            implementation_type;
+  typedef details::NetworkManagerImplementation            implementation_type;
   typedef std::shared_ptr<implementation_type>            pointer_type;
   typedef std::weak_ptr<implementation_type>              weak_ref_type;
 

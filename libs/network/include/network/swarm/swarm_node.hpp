@@ -40,7 +40,7 @@ protected:
   typedef std::map<std::string, std::shared_ptr<clientType>> CONNECTIONS;
 public:
   explicit SwarmNode(
-                     fetch::network::ThreadManager tm,
+                     fetch::network::NetworkManager tm,
                      const std::string &identifier,
                      unsigned int maxpeers,
                      std::shared_ptr<fetch::swarm::SwarmRandom> rnd,
@@ -174,7 +174,7 @@ protected:
   unsigned int                               maxpeers_;
   SwarmPeerLocation                          uri_;
   std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
-  fetch::network::ThreadManager              tm_;
+  fetch::network::NetworkManager              tm_;
   CONNECTIONS                                connections;
   SwarmKarmaPeers                            karmaPeerList_;
   unsigned int                               protocolNumber_;

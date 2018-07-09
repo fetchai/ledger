@@ -18,7 +18,7 @@ public:
   typedef ServiceClient< fetch::network::TCPClient > client_type;
   typedef std::shared_ptr< client_type > shared_client_type;
   
-  MultiLaneDBClient (uint32_t lanes, std::string const &host, uint16_t const &port, fetch::network::ThreadManager &tm)
+  MultiLaneDBClient (uint32_t lanes, std::string const &host, uint16_t const &port, fetch::network::NetworkManager &tm)
   {
     id_ = "my-fetch-id";
     for(uint32_t i = 0; i < lanes; ++i) {
@@ -152,7 +152,7 @@ int main(int argc, char const **argv) {
   fetch::commandline::DisplayCLIHeader("Multi-lane client");
   
   // Client setup
-  fetch::network::ThreadManager tm(8);
+  fetch::network::NetworkManager tm(8);
   MultiLaneDBClient client(lane_count, "localhost", 8080, tm);
 
   tm.Start();

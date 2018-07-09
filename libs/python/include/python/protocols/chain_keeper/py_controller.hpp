@@ -12,7 +12,7 @@ namespace protocols
 void BuildChainKeeperController(pybind11::module &module) {
   namespace py = pybind11;
   py::class_<ChainKeeperController, fetch::service::HasPublicationFeed>(module, "ChainKeeperController" )
-    .def(py::init< const uint64_t &, network::ThreadManager *, fetch::protocols::EntryPoint & >())
+    .def(py::init< const uint64_t &, network::NetworkManager *, fetch::protocols::EntryPoint & >())
     .def("ConnectTo", &ChainKeeperController::ConnectTo)
     .def("count_outgoing_connections", &ChainKeeperController::count_outgoing_connections)
     .def("applied_transaction_count", &ChainKeeperController::applied_transaction_count)

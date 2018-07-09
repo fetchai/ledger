@@ -55,7 +55,7 @@ public:
 // And finanly we build the service
 class MyCoolService : public ServiceServer< fetch::network::TCPServer > {
 public:
-  MyCoolService(uint16_t port, fetch::network::ThreadManager *tm) : ServiceServer(port, tm) {
+  MyCoolService(uint16_t port, fetch::network::NetworkManager *tm) : ServiceServer(port, tm) {
     this->Add(SERVICE, new ServiceProtocol() );
   }
 };
@@ -130,8 +130,8 @@ int main() {
     TestData.push_back(entry);
   }
 
-  fetch::network::ThreadManager tm(8);
-  fetch::network::ThreadManager tm2(8);  
+  fetch::network::NetworkManager tm(8);
+  fetch::network::NetworkManager tm2(8);  
   MyCoolService serv(8080, &tm);
   tm.Start();
 

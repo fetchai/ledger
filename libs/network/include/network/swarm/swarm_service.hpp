@@ -32,7 +32,7 @@ public:
   SwarmService operator=(SwarmService &&rhs) = delete;
 
   explicit SwarmService(
-                        fetch::network::ThreadManager tm,
+                        fetch::network::NetworkManager tm,
                         uint16_t httpPort,
                         std::shared_ptr<SwarmNode> node,
                         const std::string &hostname,
@@ -80,7 +80,7 @@ protected:
   std::shared_ptr<SwarmNode>          node_;
   std::shared_ptr<SwarmHttpInterface> httpInterface_;
   std::shared_ptr<SwarmProtocol>      rpcInterface_;
-  fetch::network::ThreadManager       tm_;
+  fetch::network::NetworkManager       tm_;
 };
 
 }

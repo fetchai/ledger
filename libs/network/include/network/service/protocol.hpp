@@ -13,7 +13,7 @@
 #include "network/service/error_codes.hpp"
 #include "network/service/feed_subscription_manager.hpp"
 #include "network/service/types.hpp"
-#include "network/tcp/abstract_connection.hpp"
+#include "network/management/abstract_connection.hpp"
 
 namespace fetch {
 namespace service {

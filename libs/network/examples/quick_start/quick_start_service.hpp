@@ -30,7 +30,7 @@ public:
 /*
  * Constructor for QuickStartService, will create a server to respond to rpc calls
  */
-  QuickStartService(fetch::network::ThreadManager tm, uint16_t tcpPort) :
+  QuickStartService(fetch::network::NetworkManager tm, uint16_t tcpPort) :
     ServiceServer(tcpPort, tm)
   {
     // Macro used for debugging

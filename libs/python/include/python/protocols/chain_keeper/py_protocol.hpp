@@ -12,7 +12,7 @@ namespace protocols
 void BuildChainKeeperProtocol(pybind11::module &module) {
   namespace py = pybind11;
   py::class_<ChainKeeperProtocol, fetch::protocols::ChainKeeperController, fetch::service::Protocol, fetch::http::HTTPModule>(module, "ChainKeeperProtocol" )
-    .def(py::init< network::ThreadManager *, const uint64_t &, fetch::protocols::EntryPoint & >())
+    .def(py::init< network::NetworkManager *, const uint64_t &, fetch::protocols::EntryPoint & >())
     .def("Ping", &ChainKeeperProtocol::Ping);
 
 }

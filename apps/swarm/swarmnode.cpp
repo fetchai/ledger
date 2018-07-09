@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 #include "core/commandline/parameter_parser.hpp"
-#include "network/details/thread_manager.hpp"
+#include "network/management/network_manager.hpp"
 #include "network/service/protocol.hpp"
 #include "network/parcels/swarm_agent_api_impl.hpp"
 #include "network/parcels/swarm_agent_naive.hpp"
@@ -32,7 +32,7 @@ int main(int argc, const char *argv[])
 
   fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });
 
-  fetch::network::ThreadManager tm(30);
+  fetch::network::NetworkManager tm(30);
 
 
   unsigned int id = params.GetParam<unsigned int>("id", 0);
@@ -63,7 +63,7 @@ int main(int argc, const char *argv[])
 
   service -> addRpcProtocol(fetch::protocols::FetchProtocols::PARCEL, parcelProtocol);
 
-  //TODO(katie) move the handling of the node functions off the ThreadManager running the io_service.
+  //TODO(katie) move the handling of the node functions off the NetworkManager running the io_service.
 
   swarmAgentApi -> ToPing([swarmAgentApi, node, parcelNode](fetch::swarm::SwarmAgentApi &unused, const std::string &host)
                           {

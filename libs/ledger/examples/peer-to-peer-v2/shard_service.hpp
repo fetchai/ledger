@@ -28,11 +28,11 @@
 
 class FetchChainKeeperService : public fetch::protocols::ChainKeeperProtocol {
 public:
-  FetchChainKeeperService(uint16_t const &port, uint16_t const& http_port, fetch::network::ThreadManager *tm ) :    
+  FetchChainKeeperService(uint16_t const &port, uint16_t const& http_port, fetch::network::NetworkManager *tm ) :    
     fetch::protocols::ChainKeeperProtocol(tm, fetch::protocols::FetchProtocols::CHAIN_KEEPER,  details_),
-    thread_manager_( tm),
-    service_(port, thread_manager_),
-    http_server_(http_port, thread_manager_)    
+    network_manager_( tm),
+    service_(port, network_manager_),
+    http_server_(http_port, network_manager_)    
   {
     LOG_STACK_TRACE_POINT;
     using namespace fetch::protocols;    
@@ -45,14 +45,14 @@ public:
     service_.Add(FetchProtocols::CHAIN_KEEPER, this);
     running_ = false;
     
-    start_event_ = thread_manager_->OnAfterStart([this]() {
+    start_event_ = network_manager_->OnAfterStart([this]() {
         running_ = true;        
-        thread_manager_->Post([this]() {
+        network_manager_->Post([this]() {
             this->SyncTransactions(); 
           });        
       });
 
-    stop_event_ = thread_manager_->OnBeforeStop([this]() {
+    stop_event_ = network_manager_->OnBeforeStop([this]() {
         running_ = false;
       });
 
@@ -75,8 +75,8 @@ public:
   
   ~FetchChainKeeperService() 
   {
-    thread_manager_->Off( start_event_ );
-    thread_manager_->Off( stop_event_ );
+    network_manager_->Off( start_event_ );
+    network_manager_->Off( stop_event_ );
   }
 
 
@@ -140,7 +140,7 @@ public:
     
     // Get unapplied transactions
     if(running_) {
-      thread_manager_->Post([this]() {
+      network_manager_->Post([this]() {
           this->SyncChain();          
         });    
     }
@@ -199,7 +199,7 @@ public:
     */
     
     if(running_) {
-      thread_manager_->Post([this]() {
+      network_manager_->Post([this]() {
           this->Mine();
         });
     }    
@@ -215,7 +215,7 @@ public:
     if(diff == 0) {
       fetch::logger.Debug("Exiting mining because diff = 0");            
       if(running_) {
-        thread_manager_->Post([this]() {
+        network_manager_->Post([this]() {
             this->SyncTransactions(); 
           }); 
       } 
@@ -263,7 +263,7 @@ public:
     */
     
     if(running_) {
-      thread_manager_->Post([this]() {
+      network_manager_->Post([this]() {
           this->SyncTransactions(); 
         }); 
     }    
@@ -280,13 +280,13 @@ private:
   int difficulty_ = 1;
   mutable fetch::mutex::Mutex difficulty_mutex_;
   
-  fetch::network::ThreadManager *thread_manager_;    
+  fetch::network::NetworkManager *network_manager_;    
   fetch::service::ServiceServer< fetch::network::TCPServer > service_;
   fetch::http::HTTPServer http_server_;
   fetch::protocols::EntryPoint details_;
   
-  typename fetch::network::ThreadManager::event_handle_type start_event_;
-  typename fetch::network::ThreadManager::event_handle_type stop_event_;  
+  typename fetch::network::NetworkManager::event_handle_type start_event_;
+  typename fetch::network::NetworkManager::event_handle_type stop_event_;  
   std::atomic< bool > running_;
   
 //  fetch::http::HTTPServer http_server_;   

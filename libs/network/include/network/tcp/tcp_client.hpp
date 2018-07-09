@@ -6,7 +6,7 @@
 #include "core/logger.hpp"
 #include "network/message.hpp"
 #include "network/tcp/client_implementation.hpp"
-#include "network/details/thread_manager.hpp"
+#include "network/management/network_manager.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/referenced_byte_array.hpp"
 
@@ -26,13 +26,13 @@ namespace network
 class TCPClient
 {
  public:
-  typedef ThreadManager                             thread_manager_type;
+  typedef NetworkManager                             network_manager_type;
   typedef uint64_t                                  handle_type;
   typedef TCPClientImplementation                   implementation_type;
   typedef std::shared_ptr<implementation_type>      pointer_type;
 
-  explicit TCPClient(thread_manager_type &thread_manager)
-    : pointer_{std::make_shared< implementation_type >(thread_manager)}
+  explicit TCPClient(network_manager_type &network_manager)
+    : pointer_{std::make_shared< implementation_type >(network_manager)}
   {
     // Note we register handles here, but do not connect until the base class constructed
     RegisterHandlers();

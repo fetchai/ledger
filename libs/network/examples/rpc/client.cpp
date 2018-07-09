@@ -10,7 +10,7 @@ using namespace fetch::byte_array;
 int main() {
 
   // Client setup
-  fetch::network::ThreadManager tm(2);
+  fetch::network::NetworkManager tm(2);
 
   tm.Start();
   {
@@ -97,7 +97,7 @@ int main() {
 int xmain() {
 
 
-  fetch::network::ThreadManager tm(1);
+  fetch::network::NetworkManager tm(1);
   tm.Start(); // Started thread manager before client construction!
   ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
 

@@ -54,7 +54,7 @@ class Client : public TCPClient {
 public:
   Client(std::string const &host,
     std::string const &port,
-      ThreadManager &tmanager) :
+      NetworkManager &tmanager) :
     TCPClient(tmanager)
   {
     Connect(host, port);
@@ -92,7 +92,7 @@ class SlowClient : public TCPClient
 public:
   SlowClient(std::string const &host,
     std::string const &port,
-      ThreadManager &tmanager) :
+      NetworkManager &tmanager) :
     TCPClient(tmanager)
   {
     Connect(host, port);
@@ -134,7 +134,7 @@ class VerifyClient : public TCPClient
 public:
   VerifyClient(std::string const &host,
     std::string const &port,
-      ThreadManager &tmanager) :
+      NetworkManager &tmanager) :
     TCPClient(tmanager)
   {
     Connect(host, port);
@@ -220,7 +220,7 @@ void TestCase1(std::string host, std::string port)
 
   for (std::size_t index = 0; index < 1000; ++index)
   {
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     Client client(host, std::to_string(emptyPort), tmanager);
   }
   std::cerr << "Success." << std::endl;
@@ -237,7 +237,7 @@ void TestCase2(std::string host, std::string port)
 
   for (std::size_t index = 0; index < 1000; ++index)
   {
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     tmanager.Start();
     Client client(host, std::to_string(emptyPort), tmanager);
     tmanager.Stop();
@@ -257,7 +257,7 @@ void TestCase3(std::string host, std::string port)
   std::cout << "starting" << std::endl;
   for (std::size_t index = 0; index < 1000; ++index)
   {
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     if(index % 2 == 0) tmanager.Start();
     Client client(host, std::to_string(emptyPort), tmanager);
     if(index % 3 == 0) tmanager.Stop();
@@ -277,7 +277,7 @@ void TestCase4(std::string host, std::string port)
   std::cout << "starting" << std::endl;
   for (std::size_t index = 0; index < 1000; ++index)
   {
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     if(index % 2 == 0) tmanager.Start();
     Client client(host, std::to_string(emptyPort), tmanager);
     if(index % 3 == 0) tmanager.Stop();
@@ -297,7 +297,7 @@ void TestCase5(std::string host, std::string port)
 
   for (std::size_t index = 0; index < 1000; ++index)
   {
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     Client client(host, port, tmanager);
   }
   std::cerr << "Success." << std::endl;
@@ -315,7 +315,7 @@ void TestCase6(std::string host, std::string port)
 
   for (std::size_t index = 0; index < 1000; ++index)
   {
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     tmanager.Start();
     Client client(host, port, tmanager);
     tmanager.Stop();
@@ -335,7 +335,7 @@ void TestCase7(std::string host, std::string port)
 
   for (std::size_t index = 0; index < 1000; ++index)
   {
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     if(index % 2 == 0) tmanager.Start();
     Client client(host, port, tmanager);
     if(index % 3 == 0) tmanager.Stop();
@@ -354,7 +354,7 @@ void TestCase8(std::string host, std::string port)
   fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
   std::vector<Client> clients;
 
-  ThreadManager tmanager(N);
+  NetworkManager tmanager(N);
   tmanager.Start();
   for (std::size_t index = 0; index < 1000; ++index)
   {
@@ -378,7 +378,7 @@ void TestCase9(std::string host, std::string port)
 
   for (std::size_t index = 0; index < 3; ++index)
   {
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     tmanager.Start();
     std::atomic<int> threadCount{0};
     for(auto &i : clients)
@@ -406,7 +406,7 @@ void TestCase10(std::string host, std::string port) {
   for (std::size_t index = 0; index < 120; ++index)
   {
     std::vector< Client > clients;
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     tmanager.Start();
 
     for (std::size_t j = 0; j < 4; ++j)
@@ -440,7 +440,7 @@ void TestCase11(std::string host, std::string port) {
   {
     std::cerr << "Iteration: " << i << std::endl;
     fetch::network::LoopbackServer echoServer(emptyPort);
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     tmanager.Start();
     Client client(host, std::to_string(emptyPort), tmanager);
 
@@ -496,7 +496,7 @@ void TestCase12(std::string host, std::string port) {
   {
     std::cout << "Iteration: " << i << std::endl;
     fetch::network::LoopbackServer echoServer(emptyPort);
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     tmanager.Start();
     SlowClient client(host, std::to_string(emptyPort), tmanager);
 
@@ -551,7 +551,7 @@ void TestCase13(std::string host, std::string port) {
   for (std::size_t i = 0; i < 10; ++i)
   {
     std::cout << "Iteration: " << i << std::endl;
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     tmanager.Start();
     fetch::network::LoopbackServer echoServer(emptyPort);
     VerifyClient client(host, std::to_string(emptyPort), tmanager);
@@ -630,7 +630,7 @@ void TestCase14(std::string host, std::string port) {
   {
     std::cout << "Iteration: " << index << std::endl;
     fetch::network::LoopbackServer echoServer(emptyPort);
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     tmanager.Start();
     std::vector<std::shared_ptr<VerifyClient>> clients;
 
@@ -724,7 +724,7 @@ void TestCase15(std::string host, std::string port) {
   {
     std::cout << "Iteration: " << i << std::endl;
     fetch::network::LoopbackServer echoServer(emptyPort);
-    ThreadManager tmanager(N);
+    NetworkManager tmanager(N);
     tmanager.Start();
     std::vector<std::shared_ptr<VerifyClient>> clients;
 

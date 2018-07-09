@@ -15,7 +15,7 @@ using namespace fetch::storage;
 
 class LaneService : public fetch::service::ServiceServer< fetch::network::TCPServer > {
 public:
-  LaneService(uint32_t const &lane, uint16_t port, fetch::network::ThreadManager tm, uint32_t const &max_lanes) : ServiceServer(port, tm) {
+  LaneService(uint32_t const &lane, uint16_t port, fetch::network::NetworkManager tm, uint32_t const &max_lanes) : ServiceServer(port, tm) {
     store_ = new RevertibleDocumentStore();
     std::stringstream s;
     s << "lane" << lane << "_";
@@ -77,7 +77,7 @@ int main(int argc, char const **argv)
   std::cout << "Starting " << lane_count << " lanes." << std::endl << std::endl;
   
 
-  fetch::network::ThreadManager tm(8);
+  fetch::network::NetworkManager tm(8);
   std::vector< std::shared_ptr< LaneService > > lanes;
   for(uint32_t i = 0 ; i < lane_count ; ++i ) {
     lanes.push_back(std::make_shared< LaneService > (uint32_t(i), uint16_t(8080 + i), tm, lane_count ) );
