@@ -11,7 +11,6 @@
 #include "network/swarm/swarm_node.hpp"
 #include "network/swarm/swarm_peer_location.hpp"
 #include "network/swarm/swarm_random.hpp"
-#include "network/swarm/swarm_service.hpp"
 #include "python/fetch_pybind.hpp"
 #include "python/network/swarm/py_swarm_agent_api.hpp"
 #include "python/ledger/chain/py_main_chain.hpp"
