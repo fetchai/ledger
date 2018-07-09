@@ -92,7 +92,7 @@ public:
 
   }
 
-  std::list<SwarmKarmaPeer> GetBestPeers(unsigned int n, double minKarma = 0.0) const
+  std::list<SwarmKarmaPeer> GetBestPeers(uint32_t n, double minKarma = 0.0) const
   {
     lock_type mlock(mutex_);
     std::list<SwarmKarmaPeer> results;
@@ -143,13 +143,13 @@ public:
       }
   }
 
-  SwarmKarmaPeer GetNthKarmicPeer(unsigned int n) const
+  SwarmKarmaPeer GetNthKarmicPeer(uint32_t n) const
   {
     lock_type mlock(mutex_);
     Age();
     Sort();
 
-    unsigned int i = 0;
+    uint32_t i = 0;
     for(auto peer: peers)
       {
         if (i==n)

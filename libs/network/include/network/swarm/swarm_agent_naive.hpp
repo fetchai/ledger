@@ -29,8 +29,8 @@ public:
 
   std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
   std::string identifier_;
-  unsigned int maxpeers_;
-  unsigned int blockCounter_;
+  uint32_t maxpeers_;
+  uint32_t blockCounter_;
   int id_;
 
   virtual ~SwarmAgentNaive()
@@ -49,7 +49,7 @@ public:
                   const std::string &identifier,
                   int id,
                   std::shared_ptr<fetch::swarm::SwarmRandom> rnd,
-                  unsigned int maxpeers
+                  uint32_t maxpeers
                   ):
     rnd_(rnd),
     identifier_(identifier),

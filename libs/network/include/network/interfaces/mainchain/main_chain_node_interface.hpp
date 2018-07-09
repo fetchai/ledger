@@ -37,7 +37,7 @@ public:
   }
 
   virtual std::pair<bool, block_type>  GetHeader(const block_hash &hash) = 0;
-  virtual std::vector<block_type> GetHeaviestChain(unsigned int maxsize) = 0;
+  virtual std::vector<block_type> GetHeaviestChain(uint32_t maxsize) = 0;
 };
 
 }
