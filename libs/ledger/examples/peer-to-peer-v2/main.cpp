@@ -18,23 +18,23 @@ class FetchLedger
 {
 public:
   FetchLedger(uint16_t offset, std::string const &name, std::size_t const &shards ) :
-    thread_manager_( new fetch::network::ThreadManager(64) ),
-    controller_( uint16_t(1337 + offset), uint16_t(7070 + offset), name, thread_manager_ )
+    network_manager_( new fetch::network::NetworkManager(64) ),
+    controller_( uint16_t(1337 + offset), uint16_t(7070 + offset), name, network_manager_ )
   {
     for(std::size_t i=0; i < shards; ++i)
     {
       std::size_t j =  offset * shards + i;      
-      shards_.push_back( std::make_shared< FetchChainKeeperService > (4000 + j, 9590 + j, thread_manager_ ));
+      shards_.push_back( std::make_shared< FetchChainKeeperService > (4000 + j, 9590 + j, network_manager_ ));
     }
 
-    start_event_ = thread_manager_->OnAfterStart([this]() {
+    start_event_ = network_manager_->OnAfterStart([this]() {
         
-        thread_manager_->io_service().post([this]() {
+        network_manager_->io_service().post([this]() {
             this->ConnectChainKeepers();
           });
       });
     
-    stop_event_ = thread_manager_->OnBeforeStop([this]() {
+    stop_event_ = network_manager_->OnBeforeStop([this]() {
 //        for(auto &s: shards_) {
           // TODO disconnect
 //        }
@@ -45,19 +45,19 @@ public:
   
   ~FetchLedger() 
   {
-    thread_manager_->Off( start_event_ );
-    thread_manager_->Off( stop_event_ );
+    network_manager_->Off( start_event_ );
+    network_manager_->Off( stop_event_ );
   }
   
   
   void Start() 
   {
-    thread_manager_->Start();
+    network_manager_->Start();
   }
 
   void Stop() 
   {
-    thread_manager_->Stop();
+    network_manager_->Stop();
   }
   
   void Bootstrap(std::string const &address, uint16_t const &port) 
@@ -82,12 +82,12 @@ private:
     }
   } 
   
-  fetch::network::ThreadManager *thread_manager_;      
+  fetch::network::NetworkManager *network_manager_;      
   FetchSwarmService controller_;
   std::vector< std::shared_ptr< FetchChainKeeperService > > shards_;
 
-  typename fetch::network::ThreadManager::event_handle_type start_event_;
-  typename fetch::network::ThreadManager::event_handle_type stop_event_;      
+  typename fetch::network::NetworkManager::event_handle_type start_event_;
+  typename fetch::network::NetworkManager::event_handle_type stop_event_;      
 };
 
 

@@ -30,7 +30,7 @@ public:
 /*
  * Constructor for SubscribeService, will create a server to respond to rpc calls
  */
-  SubscribeService(fetch::network::ThreadManager tm, uint16_t tcpPort) :
+  SubscribeService(fetch::network::NetworkManager tm, uint16_t tcpPort) :
     ServiceServer(tcpPort, tm)
   {
     // Macro used for debugging

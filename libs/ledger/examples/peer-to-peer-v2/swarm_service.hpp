@@ -16,11 +16,11 @@ class FetchSwarmService : public fetch::protocols::SwarmProtocol
 {
 public:
   FetchSwarmService(uint16_t port, uint16_t http_port, std::string const& pk,
-    fetch::network::ThreadManager *tm ) :
+    fetch::network::NetworkManager *tm ) :
     fetch::protocols::SwarmProtocol( tm,  fetch::protocols::FetchProtocols::SWARM, details_),
-    thread_manager_( tm ),
-    service_(port, thread_manager_),
-    http_server_(http_port, thread_manager_)
+    network_manager_( tm ),
+    service_(port, network_manager_),
+    http_server_(http_port, network_manager_)
   {
     using namespace fetch::protocols;
     
@@ -44,14 +44,14 @@ public:
 
     running_ = false;
     
-    start_event_ = thread_manager_->OnAfterStart([this]() {
+    start_event_ = network_manager_->OnAfterStart([this]() {
         running_ = true;        
-        thread_manager_->io_service().post([this]() {
+        network_manager_->io_service().post([this]() {
             this->UpdateNodeChainKeeperDetails();
           });
       });
 
-    stop_event_ = thread_manager_->OnBeforeStop([this]() {
+    stop_event_ = network_manager_->OnBeforeStop([this]() {
         running_ = false;
       });
     
@@ -150,7 +150,7 @@ public:
     });
   
     if(running_) {
-      thread_manager_->io_service().post([this]() {
+      network_manager_->io_service().post([this]() {
           this->UpdatePeerDetails();          
         });    
     }    
@@ -245,7 +245,7 @@ public:
     
     // Next we track peers 
     if(running_) {
-      thread_manager_->io_service().post([this]() {
+      network_manager_->io_service().post([this]() {
           this->TrackPeers();   
         });    
     }    
@@ -315,7 +315,7 @@ public:
     }
     
     if(running_) {
-      thread_manager_->io_service().post([this]() {
+      network_manager_->io_service().post([this]() {
           this->UpdateChainKeeperConnectivity();          
         });    
     }    
@@ -402,7 +402,7 @@ public:
       });
     
     if(running_) {
-      thread_manager_->Post([this]() {
+      network_manager_->Post([this]() {
           this->SyncChain();          
         });
     }    
@@ -451,7 +451,7 @@ public:
     
     
     if(running_) {
-      thread_manager_->Post([this]() {
+      network_manager_->Post([this]() {
           this->Mine();          
         });
       
@@ -479,7 +479,7 @@ public:
     
     
     if(running_) {
-      thread_manager_->Post([this]() {
+      network_manager_->Post([this]() {
           this->UpdateNodeChainKeeperDetails();          
         });
     }    
@@ -488,15 +488,15 @@ public:
   
 
 private:
-  fetch::network::ThreadManager *thread_manager_;    
+  fetch::network::NetworkManager *network_manager_;    
   fetch::service::ServiceServer< fetch::network::TCPServer > service_;
   fetch::http::HTTPServer http_server_;  
   
 //  fetch::protocols::SwarmProtocol *swarm_ = nullptr;
   fetch::protocols::SharedNodeDetails details_;
 
-  typename fetch::network::ThreadManager::event_handle_type start_event_;
-  typename fetch::network::ThreadManager::event_handle_type stop_event_;  
+  typename fetch::network::NetworkManager::event_handle_type start_event_;
+  typename fetch::network::NetworkManager::event_handle_type stop_event_;  
   std::atomic< bool > running_;  
 };
 

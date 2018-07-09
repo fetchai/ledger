@@ -68,7 +68,7 @@ private:
 // And finanly we build the service
 class OEFService : public ServiceServer< fetch::network::TCPServer > {
 public:
-  OEFService(uint16_t port, fetch::network::ThreadManager tm) : ServiceServer(port, tm) {
+  OEFService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm) {
     this->Add(FetchProtocols::AEA_TO_NODE, &aea_to_node_ );
     aea_to_node_.register_service_instance( this );
     
@@ -85,7 +85,7 @@ private:
 
 
 int main() {
-  fetch::network::ThreadManager tm(8);  
+  fetch::network::NetworkManager tm(8);  
   OEFService serv(8080, tm);
   tm.Start();
 

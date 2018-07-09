@@ -37,7 +37,7 @@ class MineNodeBasic
   typedef fetch::chain::consensus::DummyMiner     miner;
 
 public:
-  explicit MineNodeBasic(network::ThreadManager tm, uint64_t minerNumber) :
+  explicit MineNodeBasic(network::NetworkManager tm, uint64_t minerNumber) :
     nodeDirectory_{tm},
     minerNumber_{minerNumber}
   {}

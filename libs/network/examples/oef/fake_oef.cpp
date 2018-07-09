@@ -226,7 +226,7 @@ int main(int argc, char const **argv)
   ParamsParser params;
   params.Parse(argc, argv);
 
-  fetch::network::ThreadManager tm(8);  
+  fetch::network::NetworkManager tm(8);  
   HTTPServer http_server(8080, tm);
   FakeOEF oef_http_interface;  
   

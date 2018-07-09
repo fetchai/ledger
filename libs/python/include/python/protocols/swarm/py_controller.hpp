@@ -28,7 +28,7 @@ void BuildChainController(pybind11::module &module) {
 void BuildSwarmController(pybind11::module &module) {
   namespace py = pybind11;
   py::class_<SwarmController, fetch::protocols::ChainController, fetch::service::HasPublicationFeed>(module, "SwarmController" )
-    .def(py::init< const uint64_t &, network::ThreadManager *, fetch::protocols::SharedNodeDetails & >())
+    .def(py::init< const uint64_t &, network::NetworkManager *, fetch::protocols::SharedNodeDetails & >())
     .def("SetClientIPCallback", &SwarmController::SetClientIPCallback)
     .def("IncreaseGroupingParameter", &SwarmController::IncreaseGroupingParameter)
     .def("Connect", &SwarmController::Connect)

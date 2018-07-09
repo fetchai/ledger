@@ -18,11 +18,11 @@ class FetchService
 {
 public:
   FetchService(uint16_t port, std::string const&pk) :   
-    thread_manager_( new fetch::network::ThreadManager(8) ),
-    service_(port, thread_manager_)
+    network_manager_( new fetch::network::NetworkManager(8) ),
+    service_(port, network_manager_)
   {
     details_.public_key = pk;
-    discovery_ =  new DiscoveryProtocol(thread_manager_, FetchProtocols::DISCOVERY, details_);
+    discovery_ =  new DiscoveryProtocol(network_manager_, FetchProtocols::DISCOVERY, details_);
     
     service_.Add(FetchProtocols::DISCOVERY, discovery_ );
 
@@ -46,17 +46,17 @@ public:
 
   void Start() 
   {
-    thread_manager_->Start();
+    network_manager_->Start();
   }
 
   void Stop() 
   
   {
-    thread_manager_->Stop();
+    network_manager_->Stop();
   }
   
 private:
-  fetch::network::ThreadManager *thread_manager_;    
+  fetch::network::NetworkManager *network_manager_;    
   fetch::service::ServiceServer< fetch::network::TCPServer > service_;
   
   DiscoveryProtocol *discovery_ = nullptr;

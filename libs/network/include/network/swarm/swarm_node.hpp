@@ -59,6 +59,7 @@ public:
   }
 
   explicit SwarmNode(
+                     fetch::network::NetworkManager tm,
                      const std::string &identifier,
                      uint32_t maxpeers,
                      std::shared_ptr<fetch::swarm::SwarmRandom> rnd,
@@ -183,6 +184,8 @@ protected:
   uint32_t                               maxpeers_;
   SwarmPeerLocation                          uri_;
   std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
+  fetch::network::NetworkManager              tm_;
+  CONNECTIONS                                connections;
   SwarmKarmaPeers                            karmaPeerList_;
   uint32_t                               protocolNumber_;
   std::function<int()>                       toGetState_;

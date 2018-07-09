@@ -19,7 +19,7 @@ class NetworkMineTestService :
   public service::ServiceServer< fetch::network::TCPServer >, public http::HTTPServer
 {
 public:
-  NetworkMineTestService(fetch::network::ThreadManager tm, uint16_t tcpPort, uint16_t httpPort) :
+  NetworkMineTestService(fetch::network::NetworkManager tm, uint16_t tcpPort, uint16_t httpPort) :
     ServiceServer(tcpPort, tm),
     HTTPServer(httpPort, tm)
   {

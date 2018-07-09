@@ -42,16 +42,16 @@ public:
                              uint16_t rpcPort
                              )
         :
-        tm_(threads)
+        nm_(threads)
     {
         lock_type mlock(mutex_);
-        tm_. Start();
+        nm_. Start();
 
         rpcPort_ = rpcPort;
         rpcServer_ = std::make_shared<service::ServiceServer<
-            fetch::network::TCPServer>>(rpcPort, tm_);
+            fetch::network::TCPServer>>(rpcPort, nm_);
 
-        httpServer_ = std::make_shared<fetch::http::HTTPServer>(httpPort, tm_);
+        httpServer_ = std::make_shared<fetch::http::HTTPServer>(httpPort, nm_);
 
         // Add middleware to the HTTP server - allow requests from any address,
         // and print requests to the terminal in colour
@@ -116,7 +116,7 @@ public:
         const std::string &host, unsigned short port)
     {
         lock_type mlock(mutex_);
-        client_ptr client = std::make_shared<client_type>(host, port, tm_);
+        client_ptr client = std::make_shared<client_type>(host, port, nm_);
 
         std::cout << "ActuallyConnectTo " << host << ":" << port << std::endl;
 
@@ -143,7 +143,7 @@ public:
 
     void Stop()
     {
-        tm_ . Stop();
+        nm_ . Stop();
     }
 
     void AddModule(fetch::http::HTTPModule *handler)
@@ -209,11 +209,11 @@ public:
     
     virtual void Post(std::function<void ()> workload)
     {
-        tm_ . Post(workload);
+        nm_ . Post(workload);
     }
 
 protected:
-    fetch::network::ThreadManager tm_;
+    fetch::network::NetworkManager nm_;
     uint16_t rpcPort_;
     mutex_type mutex_;
     std:: map<protocol_number_type, void*> interfaces_;

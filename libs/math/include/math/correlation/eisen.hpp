@@ -29,7 +29,7 @@ inline typename memory::VectorSlice<T,S>::type Eisen(memory::VectorSlice<T,S> co
       return x * y;
     }, b );
 
-  type denom = sqrt(innerA * innerB);
+  type denom = type(sqrt(innerA * innerB));
   
   if(top < 0) top = - top;  
   return type(top / denom);

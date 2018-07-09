@@ -31,8 +31,7 @@ class ServiceServer : public T, public ServiceServerInterface {
   typedef T super_type;
   typedef ServiceServer<T> self_type;
 
-  typedef typename super_type::thread_manager_type thread_manager_type;
-  typedef typename thread_manager_type::event_handle_type event_handle_type;
+  typedef typename super_type::network_manager_type network_manager_type;
   typedef typename T::connection_handle_type handle_type;
 
   // TODO Rename and move
@@ -69,9 +68,9 @@ class ServiceServer : public T, public ServiceServerInterface {
   };
   typedef byte_array::ConstByteArray byte_array_type;
 
-  ServiceServer(uint16_t port, thread_manager_type thread_manager)
-      : super_type(port, thread_manager),
-        thread_manager_(thread_manager),
+  ServiceServer(uint16_t port, network_manager_type network_manager)
+      : super_type(port, network_manager),
+        network_manager_(network_manager),
         message_mutex_(__LINE__, __FILE__) {
     LOG_STACK_TRACE_POINT;
   }
@@ -117,7 +116,7 @@ class ServiceServer : public T, public ServiceServerInterface {
     messages_.push_back(pm);
 
     // TODO: (`HUT`) : look at this
-    thread_manager_.Post([this]() { this->ProcessMessages(); });
+    network_manager_.Post([this]() { this->ProcessMessages(); });
   }
 
   void ProcessMessages() {
@@ -141,7 +140,7 @@ class ServiceServer : public T, public ServiceServerInterface {
       message_mutex_.unlock();
 
       if (has_messages) {
-        thread_manager_.Post([this, pm]() {
+        network_manager_.Post([this, pm]() {
           fetch::logger.Debug("Processing message call");
           if (!this->PushProtocolRequest(pm.client, pm.message)) {
             bool processed = false;
@@ -169,7 +168,7 @@ class ServiceServer : public T, public ServiceServerInterface {
     }
   }
 
-  thread_manager_type thread_manager_;
+  network_manager_type network_manager_;
 
   std::deque<PendingMessage> messages_;
   mutable fetch::mutex::Mutex message_mutex_;

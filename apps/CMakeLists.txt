@@ -3,4 +3,3 @@ project(fetch-apps)
 
 add_subdirectory(pyfetch)
 add_subdirectory(miner)
-add_subdirectory(networktests)
