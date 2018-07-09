@@ -1,5 +1,6 @@
-#ifndef NETWORK_THREAD_MANAGER_HPP
-#define NETWORK_THREAD_MANAGER_HPP
+#ifndef NETWORK_MANAGER_HPP
+#define NETWORK_MANAGER_HPP
+
 #include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
@@ -20,11 +21,8 @@ class ThreadManager
   typedef std::function<void()> event_function_type;
 
   typedef details::ThreadManagerImplementation            implementation_type;
-  typedef typename implementation_type::event_handle_type event_handle_type;
   typedef std::shared_ptr<implementation_type>            pointer_type;
   typedef std::weak_ptr<implementation_type>              weak_ref_type;
-  typedef implementation_type::shared_socket_type         shared_socket_type;
-  typedef implementation_type::socket_type                socket_type;
 
   explicit ThreadManager(std::size_t threads = 1)
   {

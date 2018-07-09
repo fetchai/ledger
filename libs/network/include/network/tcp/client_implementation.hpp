@@ -1,6 +1,7 @@
 #ifndef NETWORK_TCP_CLIENT_IMPLEMENTATION_HPP
 #define NETWORK_TCP_CLIENT_IMPLEMENTATION_HPP
 
+#include "core/byte_array/encoders.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/referenced_byte_array.hpp"
 #include "core/logger.hpp"
@@ -27,12 +28,11 @@ class TCPClientImplementation final :
     public AbstractConnection
 {
  public:
-  typedef ThreadManager                              thread_manager_type;
-  typedef typename AbstractConnection::connection_handle_type handle_type;
-  typedef std::weak_ptr<AbstractConnection>     self_type;
-  typedef std::shared_ptr<AbstractConnection>   shared_self_type;
-  typedef asio::ip::tcp::tcp::socket                 socket_type;
-  typedef asio::ip::tcp::resolver                    resolver_type;
+  typedef ThreadManager                                       thread_manager_type;
+  typedef std::weak_ptr<AbstractConnection>                   self_type;
+  typedef std::shared_ptr<AbstractConnection>                 shared_self_type;
+  typedef asio::ip::tcp::tcp::socket                          socket_type;
+  typedef asio::ip::tcp::resolver                             resolver_type;
 
 
   TCPClientImplementation(thread_manager_type &thread_manager) noexcept :
@@ -58,7 +58,7 @@ class TCPClientImplementation final :
   {
     self_type self = shared_from_this();
     strand_ = threadManager_.CreateIO<asio::io_service::strand>();
-    
+
     fetch::logger.Debug("Client posting connect");
     threadManager_.Post(strand_->wrap( [this, self, host, port]
     {
@@ -83,7 +83,7 @@ class TCPClientImplementation final :
         {
           fetch::logger.Debug("Connection established!");
           this->SetAddress( (*socket).remote_endpoint().address().to_string() );
-          
+
           ReadHeader();
         } else
         {
@@ -132,12 +132,12 @@ class TCPClientImplementation final :
      }));
   }
 
-  uint16_t Type() const override 
+  uint16_t Type() const override
   {
     return AbstractConnection::TYPE_OUTGOING;
   }
 
-  
+
   void Close() noexcept
   {
     std::weak_ptr<socket_type> socketWeak = socket_;
@@ -179,14 +179,13 @@ class TCPClientImplementation final :
   }
 
  private:
-  static const uint64_t networkMagic = 0xFE7C80A1FE7C80A1;
+  static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
 
   thread_manager_type threadManager_;
   // socket is guaranteed to have lifetime less than the io_service/threadManager
   std::weak_ptr<socket_type>      socket_;
   std::shared_ptr< asio::io_service::strand > strand_;
-  
-  
+
   message_queue_type          write_queue_;
   mutable fetch::mutex::Mutex queue_mutex_;
   mutable fetch::mutex::Mutex write_mutex_;
@@ -198,24 +197,14 @@ class TCPClientImplementation final :
 
   bool                       connected_{false};
 
-
-  union {
-    char bytes[2 * sizeof(uint64_t)];
-    struct {
-      uint64_t magic;
-      uint64_t length;
-    } content;
-
-  } header_;
-
   void ReadHeader() noexcept
   {
     LOG_STACK_TRACE_POINT;
     self_type self = shared_from_this();
     auto socket = socket_.lock();
     byte_array::ByteArray header;
+    header.Resize(2 * sizeof(uint64_t));
 
-    // TODO: (`HUT`) : fix. the requirement for strong self here
     auto cb = [this, self, socket, header]
       (std::error_code ec, std::size_t) {
       shared_self_type selfLock = self.lock();
@@ -224,7 +213,7 @@ class TCPClientImplementation final :
       if (!ec)
       {
         fetch::logger.Debug("Read message header.");
-        ReadBody();
+        ReadBody(header);
       } else {
         // We expect to get an ec here when the socked is closed via a post
       }
@@ -232,21 +221,25 @@ class TCPClientImplementation final :
 
     if(socket)
     {
-      asio::async_read(*socket, asio::buffer(this->header_.bytes, 2 * sizeof(uint64_t)), strand_->wrap(cb));
+      asio::async_read(*socket, asio::buffer(header.pointer(), header.size()), strand_->wrap(cb));
       connected_ = true;
     }
   }
 
-  void ReadBody() noexcept
+  void ReadBody(byte_array::ByteArray const &header) noexcept
   {
-    if (header_.content.magic != networkMagic)
+    assert(header.size() >= sizeof(networkMagic_));
+    uint64_t magic = *reinterpret_cast<const uint64_t *>(header.pointer());
+    uint64_t size  = *reinterpret_cast<const uint64_t *>(header.pointer() + sizeof(uint64_t));
+
+    if (magic != networkMagic_)
     {
-      fetch::logger.Error("Magic incorrect during network read - dying: ", header_.content.magic);
+      fetch::logger.Error("Magic incorrect during network read - dying: ", ToHex(header));
       return;
     }
 
     byte_array::ByteArray message;
-    message.Resize(header_.content.length);
+    message.Resize(size);
 
     self_type self = shared_from_this();
     auto socket = socket_.lock();
@@ -277,7 +270,7 @@ class TCPClientImplementation final :
 
     for (std::size_t i = 0; i < 8; ++i)
     {
-      header[i] = uint8_t((networkMagic >> i*8) & 0xff);
+      header[i] = uint8_t((networkMagic_ >> i*8) & 0xff);
     }
 
     for (std::size_t i = 0; i < 8; ++i)
@@ -330,7 +323,6 @@ class TCPClientImplementation final :
         WriteNext();
     };
 
-    //auto socket = socket_.lock();
     if(socket)
     {
       asio::async_write(*socket, buffers, strand_->wrap(cb));

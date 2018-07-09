@@ -27,7 +27,6 @@ class TCPClient
 {
  public:
   typedef ThreadManager                             thread_manager_type;
-  typedef typename ThreadManager::event_handle_type event_handle_type;
   typedef uint64_t                                  handle_type;
   typedef TCPClientImplementation                   implementation_type;
   typedef std::shared_ptr<implementation_type>      pointer_type;

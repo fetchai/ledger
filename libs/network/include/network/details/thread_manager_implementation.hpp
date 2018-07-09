@@ -1,5 +1,6 @@
-#ifndef NETWORK_DETAILS_THREAD_MANAGER_IMPLEMENTATION_HPP
-#define NETWORK_DETAILS_THREAD_MANAGER_IMPLEMENTATION_HPP
+#ifndef NETWORK_DETAILS_MANAGER_IMPLEMENTATION_HPP
+#define NETWORK_DETAILS_MANAGER_IMPLEMENTATION_HPP
+
 #include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
@@ -15,13 +16,8 @@ namespace details {
 
 class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadManagerImplementation >  {
  public:
-  typedef std::function<void()>                        event_function_type; // TODO: (`HUT`) : curate
-  typedef uint64_t                                     event_handle_type;
   typedef std::weak_ptr<ThreadManagerImplementation>   weak_ptr_type;
   typedef std::shared_ptr<ThreadManagerImplementation> shared_ptr_type;
-  typedef std::shared_ptr<asio::ip::tcp::tcp::socket>  shared_socket_type;
-  typedef asio::ip::tcp::tcp::socket                   socket_type;
-
 
   ThreadManagerImplementation(std::size_t threads = 1)
       : number_of_threads_(threads) {
@@ -38,7 +34,7 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
 
   void Start()
   {
-    std::lock_guard< fetch::mutex::Mutex > lock( thread_mutex_ );
+    std::lock_guard<std::mutex> lock(thread_mutex_);
 
     if (threads_.size() == 0) {
       fetch::logger.Info("Starting thread manager");
@@ -49,11 +45,10 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
 
       shared_work_ = std::make_shared<asio::io_service::work>(*io_service_);
 
-      // TODO: (`HUT`) : look at this code, might be a race
       shared_ptr_type self = shared_from_this();
       for (std::size_t i = 0; i < number_of_threads_; ++i) {
         threads_.push_back(new std::thread([this, self]() {
-	      io_service_->run();
+        io_service_->run();
             }));
       }
     }
@@ -61,7 +56,7 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
 
   void Stop()
   {
-    std::lock_guard< fetch::mutex::Mutex > lock( thread_mutex_ );
+    std::lock_guard< std::mutex > lock( thread_mutex_ );
 
     {
       std::lock_guard< fetch::mutex::Mutex > lock( owning_mutex_ );
@@ -84,9 +79,10 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
       }
 
       threads_.clear();
-      protecting_io_ = true;
-      io_service_.reset(new asio::io_service);
-      protecting_io_ = false;
+      {
+        std::lock_guard< mutex::Mutex > lock(protecting_io_);
+        io_service_.reset(new asio::io_service);
+      }
     }
   }
 
@@ -100,13 +96,8 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
   template <typename F>
   void Post(F &&f)
   {
-    if(!protecting_io_)
-    {
-      io_service_->post(std::move(f));
-      thread_mutex_.unlock();
-    } else {
-      fetch::logger.Info("Failed to post: io_service protected.");
-    }
+    std::lock_guard< mutex::Mutex > lock(protecting_io_);
+    io_service_->post(std::move(f));
   }
 
  private:
@@ -114,11 +105,11 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
   std::size_t number_of_threads_ = 1;
   std::vector<std::thread *> threads_;
   std::unique_ptr<asio::io_service> io_service_{new asio::io_service};
-  bool protecting_io_{false};
+  mutex::Mutex protecting_io_;
 
   std::shared_ptr<asio::io_service::work> shared_work_;
 
-  mutable fetch::mutex::Mutex thread_mutex_{__LINE__, __FILE__};
+  mutable std::mutex          thread_mutex_{};
   mutable fetch::mutex::Mutex owning_mutex_{__LINE__, __FILE__};
 };
 

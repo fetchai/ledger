@@ -32,7 +32,6 @@ class ServiceServer : public T, public ServiceServerInterface {
   typedef ServiceServer<T> self_type;
 
   typedef typename super_type::thread_manager_type thread_manager_type;
-  typedef typename thread_manager_type::event_handle_type event_handle_type;
   typedef typename T::connection_handle_type handle_type;
 
   // TODO Rename and move

@@ -20,11 +20,9 @@ class HTTPServer : public AbstractHTTPServer {
   typedef uint64_t handle_type;  // TODO: Make global definition
 
   typedef network::ThreadManager thread_manager_type;
-  typedef typename thread_manager_type::event_handle_type event_handle_type;
   typedef asio::ip::tcp::tcp::socket                           socket_type;
   typedef asio::ip::tcp::tcp::acceptor                         acceptor_type;
   typedef HTTPConnectionManager                                manager_type;
-
 
   typedef std::function<void(HTTPRequest &)> request_middleware_type;
   typedef typename HTTPModule::view_type view_type;
@@ -46,7 +44,7 @@ class HTTPServer : public AbstractHTTPServer {
     LOG_STACK_TRACE_POINT;
 
     std::shared_ptr<manager_type> manager              = manager_;
-    std::weak_ptr<socket_type>           &socRef       = socket_; // TODO: (`HUT`) : check this is valid
+    std::weak_ptr<socket_type>           &socRef       = socket_;
     std::weak_ptr<acceptor_type>         &accepRef     = acceptor_;
     thread_manager_type                  &threadMan    = threadManager_;
 
@@ -175,16 +173,6 @@ class HTTPServer : public AbstractHTTPServer {
     }
   }
 
-  // TODO: (`HUT`) : refactor this out
-  template <typename F>
-  void Post(F &&f, int milliseconds) {
-    threadManager_.Post(std::move(f), milliseconds);
-  }
-  template <typename F>
-  void Post(F &&f) {
-    threadManager_.Post(std::move(f));
-  }
-  
  private:
   fetch::mutex::Mutex eval_mutex_;
 

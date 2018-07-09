@@ -380,14 +380,19 @@ void TestCase9(std::string host, std::string port)
   {
     ThreadManager tmanager(N);
     tmanager.Start();
+    std::atomic<int> threadCount{0};
     for(auto &i : clients)
     {
-      std::async(std::launch::async,
-          [&i, &host, &port, &tmanager]
-          {i = std::make_shared<Client>(host, port, tmanager);});
+      std::thread(
+          [&i, &host, &port, &tmanager, &threadCount]
+          {threadCount++; i = std::make_shared<Client>(host, port, tmanager); threadCount--;}).detach();
     }
     if(index % 2 == 0) tmanager.Stop();
 
+    while(threadCount != 0)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
   }
   std::cerr << "Success." << std::endl;
 }
@@ -452,7 +457,7 @@ void TestCase11(std::string host, std::string port) {
     {
       std::string mess{"Hello: "};
       mess += std::to_string(i);
-      std::async(std::launch::async, [&client, mess](){client.Send(mess);});
+      std::thread( [&client, mess](){client.Send(mess);}).detach();
     }
 
     while(clientReceivedCount != currentCount+messagesToSend)
@@ -508,7 +513,7 @@ void TestCase12(std::string host, std::string port) {
     {
       std::string mess{"Hello: "};
       mess += std::to_string(i);
-      std::async(std::launch::async, [&client, mess](){client.Send(mess);});
+      std::thread( [&client, mess](){client.Send(mess);}).detach();
     }
 
     while(clientReceivedCount != currentCount+messagesToSend)
@@ -652,7 +657,7 @@ void TestCase14(std::string host, std::string port) {
     {
       auto &client = clients[k % clients.size()];
       auto &data = sendData[k];
-      std::async(std::launch::async, [client, &data](){client->Send(data);});
+      std::thread( [client, &data](){client->Send(data);}).detach();
       expectCount++;
     }
 
@@ -774,13 +779,11 @@ void TestCase15(std::string host, std::string port) {
       {
         for(auto client : clients)
         {
-          std::async(std::launch::async, [client, &i](){client->Send(i);});
+          std::thread( [client, &i](){client->Send(i);}).detach();
         }
       }
     }
-
     tmanager.Stop();
-
   }
   std::cerr << "Success." << std::endl;
 }
@@ -808,7 +811,6 @@ void SegfaultTest(std::string host, std::string port) {
     for (std::size_t i = 0; i < 1000; ++i)
     {
       asio::async_read(*socket, asio::buffer(dummy, 1), cb);
-      //asio::async_write(*socket, asio::buffer(dummy, 99), cb);
     }
 
     serv->stop();
@@ -833,6 +835,18 @@ int main(int argc, char* argv[]) {
   std::string host    = "localhost";
   uint16_t portNumber = 8080;
   std::string port    = std::to_string(portNumber);
+
+//  for (std::size_t i = 0; i < 3; ++i)
+//  {
+//    TestCase15<1>(host, port);
+//    TestCase15<1>(host, port);
+//    TestCase15<1>(host, port);
+//    TestCase15<1>(host, port);
+//    TestCase15<10>(host, port);
+//    TestCase15<10>(host, port);
+//    TestCase15<10>(host, port);
+//    TestCase15<10>(host, port);
+//  }
 
   TestCase0<1>(host, port);
   TestCase1<1>(host, port);
