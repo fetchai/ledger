@@ -4,7 +4,7 @@
 #include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
-#include "network/details/thread_manager_implementation.hpp"
+#include "network/management/network_manager_implementation.hpp"
 
 #include <functional>
 #include <map>
@@ -15,21 +15,21 @@ namespace fetch
 namespace network
 {
 
-class ThreadManager
+class NetworkManager
 {
  public:
   typedef std::function<void()> event_function_type;
 
-  typedef details::ThreadManagerImplementation            implementation_type;
+  typedef details::networkManagerImplementation            implementation_type;
   typedef std::shared_ptr<implementation_type>            pointer_type;
   typedef std::weak_ptr<implementation_type>              weak_ref_type;
 
-  explicit ThreadManager(std::size_t threads = 1)
+  explicit NetworkManager(std::size_t threads = 1)
   {
     pointer_      = std::make_shared< implementation_type >( threads );
   }
 
-  ThreadManager(ThreadManager const &other) :
+  NetworkManager(NetworkManager const &other) :
     is_copy_(true)
   {
     if(other.is_copy_)
@@ -40,7 +40,7 @@ class ThreadManager
     }
   }
 
-  ~ThreadManager()
+  ~NetworkManager()
   {
     if(!is_copy_)
     {
@@ -48,9 +48,9 @@ class ThreadManager
     }
   }
 
-  ThreadManager(ThreadManager &&rhs)                 = default;
-  ThreadManager &operator=(ThreadManager const &rhs) = delete;
-  ThreadManager &operator=(ThreadManager&& rhs)      = delete;
+  NetworkManager(NetworkManager &&rhs)                 = default;
+  NetworkManager &operator=(NetworkManager const &rhs) = delete;
+  NetworkManager &operator=(NetworkManager&& rhs)      = delete;
 
   void Start()
   {
@@ -83,7 +83,7 @@ class ThreadManager
     {
       return ptr->Post(f);
     } else {
-      fetch::logger.Info("Failed to post: thread man dead.");
+      fetch::logger.Info("Failed to post: network man dead.");
     }
   }
 

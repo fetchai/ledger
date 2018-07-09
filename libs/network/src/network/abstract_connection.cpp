@@ -1,6 +1,5 @@
 #include "network/tcp/abstract_connection.hpp"
 
-
 namespace fetch {
 namespace network {
 

@@ -1,5 +1,5 @@
-#ifndef NETWORK_DETAILS_MANAGER_IMPLEMENTATION_HPP
-#define NETWORK_DETAILS_MANAGER_IMPLEMENTATION_HPP
+#ifndef NETWORK_MANAGER_IMPLEMENTATION_HPP
+#define NETWORK_MANAGER_IMPLEMENTATION_HPP
 
 #include "core/assert.hpp"
 #include "core/logger.hpp"
@@ -14,30 +14,30 @@ namespace fetch {
 namespace network {
 namespace details {
 
-class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadManagerImplementation >  {
+class NetworkManagerImplementation : public std::enable_shared_from_this< NetworkManagerImplementation >  {
  public:
-  typedef std::weak_ptr<ThreadManagerImplementation>   weak_ptr_type;
-  typedef std::shared_ptr<ThreadManagerImplementation> shared_ptr_type;
+  typedef std::weak_ptr<NetworkManagerImplementation>   weak_ptr_type;
+  typedef std::shared_ptr<NetworkManagerImplementation> shared_ptr_type;
 
-  ThreadManagerImplementation(std::size_t threads = 1)
+  NetworkManagerImplementation(std::size_t threads = 1)
       : number_of_threads_(threads) {
 
-    fetch::logger.Debug("Creating thread manager");
+    fetch::logger.Debug("Creating network manager");
   }
 
-  ~ThreadManagerImplementation() {
-    fetch::logger.Debug("Destroying thread manager");
+  ~NetworkManagerImplementation() {
+    fetch::logger.Debug("Destroying network manager");
   }
 
-  ThreadManagerImplementation(ThreadManagerImplementation const& ) = delete;
-  ThreadManagerImplementation(ThreadManagerImplementation && ) = default ;
+  NetworkManagerImplementation(NetworkManagerImplementation const& ) = delete;
+  NetworkManagerImplementation(NetworkManagerImplementation && ) = default ;
 
   void Start()
   {
     std::lock_guard<std::mutex> lock(thread_mutex_);
 
     if (threads_.size() == 0) {
-      fetch::logger.Info("Starting thread manager");
+      fetch::logger.Info("Starting network manager");
       {
         std::lock_guard< fetch::mutex::Mutex > lock( owning_mutex_ );
         owning_thread_ = std::this_thread::get_id();
@@ -61,7 +61,7 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
     {
       std::lock_guard< fetch::mutex::Mutex > lock( owning_mutex_ );
       if( std::this_thread::get_id() != owning_thread_ ) {
-        fetch::logger.Warn("Same thread must start and stop ThreadManager.");
+        fetch::logger.Warn("Same thread must start and stop NetworkManager.");
         return;
       }
     }
@@ -69,7 +69,7 @@ class ThreadManagerImplementation : public std::enable_shared_from_this< ThreadM
     if (threads_.size() != 0) {
 
       shared_work_.reset();
-      fetch::logger.Info("Stopping thread manager");
+      fetch::logger.Info("Stopping network manager");
 
       io_service_->stop();
 
