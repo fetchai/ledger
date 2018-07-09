@@ -58,7 +58,7 @@ public:
   std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
   std::shared_ptr<fetch::swarm::SwarmNode> node_;
   std::shared_ptr<fetch::swarm::SwarmService> service_;
-  std::shared_ptr<fetch::network::ThreadManager> tm_;
+  std::shared_ptr<fetch::network::NetworkManager> tm_;
   std::shared_ptr<fetch::swarm::SwarmAgentApiImpl> swarmAgentApi_;
 
 
@@ -92,7 +92,7 @@ public:
     fetch::swarm::SwarmPeerLocation myHostLoc(myHost);
 
 
-    auto tm = std::make_shared<fetch::network::ThreadManager>(2);
+    auto tm = std::make_shared<fetch::network::NetworkManager>(2);
     auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
     auto node = std::make_shared<fetch::swarm::SwarmNode>(*tm, identifier, maxpeers, rnd, myHost, fetch::protocols::FetchProtocols::SWARM);
     auto service = std::make_shared<fetch::swarm::SwarmService>(*tm, portNumber, node, myHost, idlespeed);

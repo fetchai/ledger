@@ -5,7 +5,7 @@ using namespace fetch::http;
 
 int main()
 {
-  fetch::network::ThreadManager tm(1);
+  fetch::network::NetworkManager tm(1);
   HTTPServer server(8080, tm);
 
   server.AddMiddleware( [](HTTPRequest &req) {

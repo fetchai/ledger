@@ -6,7 +6,7 @@ using namespace fetch::network;
 class Server : public TCPServer 
 {
 public:
-  Server(uint16_t p, ThreadManager tmanager ) :
+  Server(uint16_t p, NetworkManager tmanager ) :
     TCPServer(p, tmanager)
   {
   }
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    ThreadManager tmanager ;
+    NetworkManager tmanager ;
     
     Server s(uint16_t(std::atoi(argv[1])), tmanager);
     tmanager.Start();

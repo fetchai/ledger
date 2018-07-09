@@ -1,6 +1,6 @@
 #ifndef NETWORK_CONNECTION_MANAGER_HPP
 #define NETWORK_CONNECTION_MANAGER_HPP
-#include "network/tcp/abstract_connection_register.hpp"
+#include "network/management/abstract_connection_register.hpp"
 #include "core/mutex.hpp"
 
 #include<unordered_map>

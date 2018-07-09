@@ -4,7 +4,7 @@
 #include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
-#include "network/tcp/abstract_connection.hpp"
+#include "network/management/abstract_connection.hpp"
 #include "network/tcp/abstract_server.hpp"
 
 #include <map>

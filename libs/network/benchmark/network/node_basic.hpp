@@ -33,7 +33,7 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 class NodeBasic
 {
 public:
-  explicit NodeBasic(network::ThreadManager tm) :
+  explicit NodeBasic(network::NetworkManager tm) :
     nodeDirectory_{tm}
   {}
 

@@ -23,9 +23,9 @@ class ChainKeeperProtocol : public ChainKeeperController,
   typedef fetch::service::ServiceClient<fetch::network::TCPClient> client_type;
   typedef std::shared_ptr<client_type> client_shared_ptr_type;
 
-  ChainKeeperProtocol(network::ThreadManager *thread_manager,
+  ChainKeeperProtocol(network::NetworkManager *network_manager,
                       uint64_t const &protocol, EntryPoint &details)
-      : ChainKeeperController(protocol, thread_manager, details),
+      : ChainKeeperController(protocol, network_manager, details),
         fetch::service::Protocol() {
     using namespace fetch::service;
 
@@ -201,11 +201,11 @@ class ChainKeeperProtocol : public ChainKeeperController,
     };
     HTTPModule::Get("/list/transactions", list_transactions);
 
-    auto submit_transaction = [this, thread_manager](
+    auto submit_transaction = [this, network_manager](
         fetch::http::ViewParameters const &params,
         fetch::http::HTTPRequest const &req) {
       LOG_STACK_TRACE_POINT;
-      thread_manager->Post([this, req]() {
+      network_manager->Post([this, req]() {
         json::JSONDocument doc = req.JSON();
 
         typedef fetch::chain::Transaction transaction_type;

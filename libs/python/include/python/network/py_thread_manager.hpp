@@ -1,6 +1,6 @@
 #ifndef LIBFETCHCORE_NETWORK_THREAD_MANAGER_HPP
 #define LIBFETCHCORE_NETWORK_THREAD_MANAGER_HPP
-#include "network/thread_manager.hpp"
+#include "network/network_manager.hpp"
 
 #include"fetch_pybind.hpp"
 
@@ -9,18 +9,18 @@ namespace fetch
 namespace network
 {
 
-void BuildThreadManager(pybind11::module &module) {
+void BuildNetworkManager(pybind11::module &module) {
   namespace py = pybind11;
-  py::class_<ThreadManager>(module, "ThreadManager" )
+  py::class_<NetworkManager>(module, "NetworkManager" )
     .def(py::init< std::size_t >())
-    .def("io_service", &ThreadManager::io_service)
-    .def("OnBeforeStart", &ThreadManager::OnBeforeStart)
-    .def("OnAfterStop", &ThreadManager::OnAfterStop)
-    .def("OnAfterStart", &ThreadManager::OnAfterStart)
-    .def("Stop", &ThreadManager::Stop)
-    .def("OnBeforeStop", &ThreadManager::OnBeforeStop)
-    .def("Start", &ThreadManager::Start)
-    .def("Off", &ThreadManager::Off);
+    .def("io_service", &NetworkManager::io_service)
+    .def("OnBeforeStart", &NetworkManager::OnBeforeStart)
+    .def("OnAfterStop", &NetworkManager::OnAfterStop)
+    .def("OnAfterStart", &NetworkManager::OnAfterStart)
+    .def("Stop", &NetworkManager::Stop)
+    .def("OnBeforeStop", &NetworkManager::OnBeforeStop)
+    .def("Start", &NetworkManager::Start)
+    .def("Off", &NetworkManager::Off);
 
 }
 };

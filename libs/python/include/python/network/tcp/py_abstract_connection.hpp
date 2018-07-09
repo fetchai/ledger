@@ -1,6 +1,6 @@
 #ifndef LIBFETCHCORE_NETWORK_TCP_ABSTRACT_CONNECTION_HPP
 #define LIBFETCHCORE_NETWORK_TCP_ABSTRACT_CONNECTION_HPP
-#include "network/tcp/abstract_connection.hpp"
+#include "network/management/abstract_connection.hpp"
 
 #include"fetch_pybind.hpp"
 

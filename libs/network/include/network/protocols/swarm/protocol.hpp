@@ -15,9 +15,9 @@ class SwarmProtocol : public SwarmController,
                       public fetch::service::Protocol,
                       public fetch::http::HTTPModule {
  public:
-  SwarmProtocol(network::ThreadManager *thread_manager,
+  SwarmProtocol(network::NetworkManager *network_manager,
                 uint64_t const &protocol, SharedNodeDetails &details)
-      : SwarmController(protocol, thread_manager, details),
+      : SwarmController(protocol, network_manager, details),
         fetch::service::Protocol() {
     using namespace fetch::service;
 

@@ -30,7 +30,7 @@ public:
 
   using clientType = service::ServiceClient<network::TCPClient>;
 
-  NodeDirectory(network::ThreadManager tm) :
+  NodeDirectory(network::NetworkManager tm) :
   tm_{tm}
   {}
 
@@ -202,7 +202,7 @@ public:
   }
 
 private:
-  fetch::network::ThreadManager            tm_;
+  fetch::network::NetworkManager            tm_;
   std::map<Endpoint, clientType *>         serviceClients_;
 };
 
