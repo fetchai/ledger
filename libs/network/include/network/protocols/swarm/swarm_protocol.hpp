@@ -13,11 +13,10 @@ namespace swarm
 
 class SwarmProtocol : public fetch::service::Protocol
 {
-  //TODO(katie) Check with Nathan if I need to keep a node refernce in this class
-  //TODO(katie) service calls should be an enum
 public:
   SwarmProtocol(SwarmNodeInterface *node) : Protocol() {
-    this->Expose(protocols::Swarm::CLIENT_NEEDS_PEER,           node,  &SwarmNodeInterface::ClientNeedsPeer);
+      this->Expose(protocols::Swarm::CLIENT_NEEDS_PEER,
+                   node,  &SwarmNodeInterface::ClientNeedsPeer);
   }
 };
 
