@@ -100,7 +100,7 @@ public:
     auto worker = PythonWorker::instance();
     auto nnCore = std::make_shared<fetch::network::NetworkNodeCore>(20, httpPort, rpcPort);
     auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
-    auto swarmNode = std::make_shared<fetch::swarm::SwarmNode>(nnCore, identifier, maxpeers, rnd, myHost);
+    auto swarmNode = std::make_shared<fetch::swarm::SwarmNode>(nnCore, identifier, maxpeers, myHost);
 
     auto httpModule = std::make_shared<SwarmHttpModule>(swarmNode);
     nnCore -> AddModule(httpModule);

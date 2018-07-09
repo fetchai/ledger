@@ -16,53 +16,57 @@ namespace swarm
 class PythonWorker
 {
 public:
-  std::shared_ptr<fetch::network::ThreadPool> tm_;
-  typedef std::recursive_mutex mutex_type;
-  typedef std::lock_guard<std::recursive_mutex> lock_type;
-  mutex_type mutex_;
-  std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
+    std::shared_ptr<fetch::network::ThreadPool> tm_;
+    typedef std::recursive_mutex mutex_type;
+    typedef std::lock_guard<std::recursive_mutex> lock_type;
+    mutex_type mutex_;
+    std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
 
-  virtual void Start()
-  {
-    lock_type lock(mutex_);
-    tm_ -> Start();
-  }
+    virtual void Start()
+    {
+        lock_type lock(mutex_);
+        tm_ -> Start();
+    }
 
-  virtual void Stop()
-  {
-    lock_type lock(mutex_);
-    tm_ -> Stop();
-  }
+    virtual void Stop()
+    {
+        lock_type lock(mutex_);
+        tm_ -> Stop();
+    }
 
-  void UseCore(std::shared_ptr<fetch::network::NetworkNodeCore> nnCore)
-  {
-    nnCore_ = nnCore;
-  }
+    void UseCore(std::shared_ptr<fetch::network::NetworkNodeCore> nnCore)
+    {
+        nnCore_ = nnCore;
+    }
 
-  template <typename F> void Post(F &&f) { tm_ -> Post(f); }
-  template <typename F> void Post(F &&f, uint32_t milliseconds) { tm_ -> Post(f, milliseconds); }
+    template <typename F> void Post(F &&f)
+    {
+        tm_ -> Post(f);
+    }
+    template <typename F> void Post(F &&f, uint32_t milliseconds)
+    {
+        tm_ -> Post(f, milliseconds);
+    }
 
-  static std::shared_ptr<PythonWorker> instance()
-  {
-    static std::shared_ptr<PythonWorker> singleton;
-    if (!singleton)
-      {
-        singleton = std::make_shared<PythonWorker>();
-      }
-    return singleton;
-  }
+    static std::shared_ptr<PythonWorker> instance()
+    {
+        static std::shared_ptr<PythonWorker> singleton;
+        if (!singleton)
+        {
+            singleton = std::make_shared<PythonWorker>();
+        }
+        return singleton;
+    }
+    
+    PythonWorker()
+    {
+        tm_ = std::make_shared<fetch::network::ThreadPool>(1);
+    }
 
-  
-
-  PythonWorker()
-  {
-    tm_ = std::make_shared<fetch::network::ThreadPool>(1);
-  }
-
-  ~PythonWorker()
-  {
-    Stop();
-  }
+    virtual ~PythonWorker()
+    {
+        Stop();
+    }
 
 };
 

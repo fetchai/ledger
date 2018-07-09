@@ -44,12 +44,10 @@ public:
                      std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
                      const std::string &identifier,
                      uint32_t maxpeers,
-                     std::shared_ptr<fetch::swarm::SwarmRandom> rnd,
                      const fetch::swarm::SwarmPeerLocation &uri
                      ):
     nnCore_(networkNodeCore),
     uri_(uri),
-    rnd_(rnd),
     karmaPeerList_(identifier)
   {
     identifier_ = identifier;
@@ -62,11 +60,9 @@ public:
                      fetch::network::NetworkManager tm,
                      const std::string &identifier,
                      uint32_t maxpeers,
-                     std::shared_ptr<fetch::swarm::SwarmRandom> rnd,
                      const fetch::swarm::SwarmPeerLocation &uri
                      ):
     uri_(uri),
-    rnd_(rnd),
     karmaPeerList_(identifier)
   {
     identifier_ = identifier;
@@ -183,9 +179,7 @@ protected:
   std::string                                identifier_;
   uint32_t                               maxpeers_;
   SwarmPeerLocation                          uri_;
-  std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
   fetch::network::NetworkManager              tm_;
-  CONNECTIONS                                connections;
   SwarmKarmaPeers                            karmaPeerList_;
   uint32_t                               protocolNumber_;
   std::function<int()>                       toGetState_;
