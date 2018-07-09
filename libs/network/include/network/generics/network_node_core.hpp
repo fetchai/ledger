@@ -44,7 +44,7 @@ public:
       this -> msg_ = "cannot reach " + host + std::to_string(port);
     }
     
-    virtual const char *what() const _NOEXCEPT
+    virtual const char *what() const noexcept
     {
       return this -> msg_.c_str();
     }
@@ -58,7 +58,7 @@ public:
     {
     }
     
-    virtual const char *what() const _NOEXCEPT
+    virtual const char *what() const noexcept
     {
       return "Refusing to talk to myself.";
     }
@@ -74,7 +74,7 @@ public:
       where_ = std::string("Timeout:") +where;
     }
     
-    virtual const char *what() const _NOEXCEPT
+    virtual const char *what() const noexcept
     {
       return where_.c_str();
     }
