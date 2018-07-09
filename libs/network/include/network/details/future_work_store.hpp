@@ -1,13 +1,9 @@
-#ifndef __FUTURE_WORK_STORE__
-#define __FUTURE_WORK_STORE__
+#ifndef FUTURE_WORK_STORE__
+#define FUTURE_WORK_STORE__
 
 #include <algorithm>
 #include <iostream>
 #include <string>
-using std::cout;
-using std::cerr;
-using std::endl;
-using std::string;
 
 namespace fetch {
 namespace network {

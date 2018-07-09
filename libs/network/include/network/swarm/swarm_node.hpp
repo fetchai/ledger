@@ -108,18 +108,18 @@ public:
     std::shared_ptr<client_type> client = nnCore_ -> ConnectToPeer(peer);
     if (!client)
       {
-	return "";
+        return "";
       }
     auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     promise.Wait(2500);
     if (!promise.is_fulfilled())
       {
-	return "";
+        return "";
       }
     else
       {
-	auto result = promise.As<std::string>();
-	return result;
+        auto result = promise.As<std::string>();
+        return result;
       }
   }
 

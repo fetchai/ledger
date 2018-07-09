@@ -13,10 +13,10 @@ template<class TYPE>
 class PromiseOf
 {
   typedef fetch::service::Promise promise_type;
-  
+
 public:
   promise_type promise_;
-  
+
   PromiseOf(promise_type &promise)
   {
     this -> promise_ = promise;
@@ -52,7 +52,7 @@ public:
   {
     return promise_.As<TYPE>();
   }
-  
+
   operator bool() const
   {
     return promise_.is_fulfilled();
