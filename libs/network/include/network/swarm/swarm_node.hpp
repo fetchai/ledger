@@ -105,23 +105,22 @@ public:
 
   virtual std::string AskPeerForPeers(const SwarmPeerLocation &peer)
   {
-    try{
     std::shared_ptr<client_type> client = nnCore_ -> ConnectToPeer(peer);
+    if (!client)
+      {
+	return "";
+      }
     auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     promise.Wait(2500);
-
     if (!promise.is_fulfilled())
       {
-        std::cout << "AskPeerForPeers " << peer.AsString() << " - Arg, failed." << std::endl;
-        throw fetch::network::NetworkNodeCoreTimeOut("AskPeerForPeers");
+	return "";
       }
-
-    auto result = promise.As<std::string>();
-    return result;
-    } catch (...)
-    {
-      return "";
-    }
+    else
+      {
+	auto result = promise.As<std::string>();
+	return result;
+      }
   }
 
   virtual int GetState()

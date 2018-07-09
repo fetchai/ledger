@@ -128,44 +128,25 @@ public:
     swarmAgentApi -> ToPing([swarmAgentApi, swarmNode](fetch::swarm::SwarmAgentApi &unused, const std::string &host)
                             {
                               swarmNode -> Post([swarmAgentApi, swarmNode, host]()
-                                           {
-                                             try
-                                               {
-                                                 auto newPeer = swarmNode -> AskPeerForPeers(host);
-                                                 if (newPeer.length()) {
-                                                   if (!swarmNode -> IsOwnLocation(newPeer))
-                                                     {
-                                                       if (!swarmNode -> IsExistingPeer(newPeer))
-                                                         {
-                                                           swarmNode -> AddOrUpdate(host, 0);
-                                                           swarmAgentApi -> DoNewPeerDiscovered(newPeer);
-                                                         }
-                                                     }
-                                                 }
-                                                 swarmAgentApi -> DoPingSucceeded(host);
-                                               }
-                                             catch(fetch::serializers::SerializableException &x)
-                                               {
-                                                 cerr << "CAUGHT fetch::serializers::SerializableException " << x.what()<< endl;
-                                                 swarmAgentApi -> DoPingFailed(host);
-                                               }
-                                             catch(network::NetworkNodeCoreBaseException &x)
-                                               {
-                                                 cerr << "CAUGHT network::NetworkNodeCoreBaseException " << x.what()<< endl;
-                                                 std::cout << x.what() << std::endl;
-                                                 swarmAgentApi -> DoPingFailed(host);
-                                               }
-                                             catch(fetch::swarm::SwarmException &x)
-                                               {
-                                                 cerr << "CAUGHT SwarmException " << x.what()<< endl;
-                                                 swarmAgentApi -> DoPingFailed(host);
-                                               }
-                                             catch(std::invalid_argument &x)
-                                               {
-                                                 cerr << "CAUGHT std::invalid_argument " << x.what()<< endl;
-                                                 swarmAgentApi -> DoPingFailed(host);
-                                               }
-                                           });
+                                                {
+                                                  auto newPeer = swarmNode -> AskPeerForPeers(host);
+                                                  if (newPeer.length())
+                                                    {
+                                                      if (!swarmNode -> IsOwnLocation(newPeer))
+                                                        {
+                                                          if (!swarmNode -> IsExistingPeer(newPeer))
+                                                            {
+                                                              swarmNode -> AddOrUpdate(host, 0);
+                                                              swarmAgentApi -> DoNewPeerDiscovered(newPeer);
+                                                            }
+                                                        }
+                                                      swarmAgentApi -> DoPingSucceeded(host);
+                                                    }
+                                                  else
+                                                    {
+                                                      swarmAgentApi -> DoPingFailed(host);
+                                                    }
+                                                });
                             });
 
     swarmAgentApi -> ToDiscoverBlocks([this, swarmAgentApi, swarmNode, chainNode, nnCore](const std::string &host, uint32_t count)
@@ -173,58 +154,40 @@ public:
                                       auto pySwarm = this;
                                       swarmNode ->Post([swarmAgentApi, nnCore, chainNode, host, count, pySwarm]()
                                                      {
-                                                       try
+                                                       auto client = nnCore -> ConnectTo(host);
+                                                       if (!client)
                                                          {
-                                                           auto promised = chainNode -> RemoteGetHeaviestChain(
-                                                                                                               count,
-                                                                                                               nnCore -> ConnectTo(host)
-                                                                                                               );
-
-                                                           if (promised.Wait())
+                                                           swarmAgentApi -> DoPingFailed(host);
+                                                           return;
+                                                         }
+                                                       auto promised = chainNode -> RemoteGetHeaviestChain(count, client);
+                                                       if (promised.Wait())
+                                                         {
+                                                           auto collection = promised.Get();
+                                                           if (collection.empty())
                                                              {
-                                                               auto collection = promised.Get();
-                                                               bool loose = false;
-                                                               std::string blockId;
-
-                                                               for(auto  &block : collection)
-                                                                 {
-                                                                   block.UpdateDigest();
-                                                                   chainNode ->  AddBlock(block);
-                                                                   loose = block.loose();
-                                                                   blockId = pySwarm -> hashToBlockId(block.hash());
-                                                                   swarmAgentApi -> DoNewBlockIdFound(host, blockId);
-                                                                 }
-                                                               if (loose)
-                                                                 {
-                                                                   pySwarm -> DoLooseBlock(host, blockId);
-                                                                 }
-                                                             }
-                                                           else
-                                                             {
+                                                               // must get at least genesis or this is an error case.
                                                                swarmAgentApi -> DoPingFailed(host);
                                                              }
+                                                           bool loose = false;
+                                                           std::string blockId;
+                                                           for(auto  &block : collection)
+                                                             {
+                                                               block.UpdateDigest();
+                                                               chainNode ->  AddBlock(block);
+                                                               loose = block.loose();
+                                                               blockId = pySwarm -> hashToBlockId(block.hash());
+                                                               swarmAgentApi -> DoNewBlockIdFound(host, blockId);
+                                                             }
+                                                           if (loose)
+                                                             {
+                                                               pySwarm -> DoLooseBlock(host, blockId);
+                                                             }
                                                          }
-                                                  catch(fetch::serializers::SerializableException &x)
-                                                    {
-                                                      cerr << "CAUGHT fetch::serializers::SerializableException " << x.what()<< endl;
-                                                      swarmAgentApi -> DoPingFailed(host);
-                                                    }
-                                                  catch(network::NetworkNodeCoreBaseException &x)
-                                                    {
-                                                      cerr << "CAUGHT network::NetworkNodeCoreBaseException " << x.what()<< endl;
-                                                      std::cout << x.what() << std::endl;
-                                                      swarmAgentApi -> DoPingFailed(host);
-                                                    }
-                                                  catch(fetch::swarm::SwarmException &x)
-                                                    {
-                                                      cerr << "CAUGHT SwarmException " << x.what()<< endl;
-                                                      swarmAgentApi -> DoPingFailed(host);
-                                                    }
-                                                  catch(std::invalid_argument &x)
-                                                    {
-                                                      cerr << "CAUGHT std::invalid_argument " << x.what()<< endl;
-                                                      swarmAgentApi -> DoPingFailed(host);
-                                                    }
+                                                       else
+                                                         {
+                                                           swarmAgentApi -> DoPingFailed(host);
+                                                         }
                                                      });
                                        });
 
@@ -234,64 +197,43 @@ public:
                                    auto pySwarm = this;
                                    swarmNode -> Post([swarmAgentApi, swarmNode, chainNode, nnCore, host, hashBytes, blockid, pySwarm]()
                                                 {
-                                                  try
+                                                  auto client = nnCore -> ConnectTo(host);
+                                                  if (!client)
                                                     {
-                                                      auto promised = chainNode -> RemoteGetHeader(
-                                                                                                   hashBytes,
-                                                                                                   nnCore -> ConnectTo(host)
-                                                                                                   );
-                                                      if (promised.Wait())
+                                                      swarmAgentApi -> DoPingFailed(host);
+                                                      return;
+                                                    }
+                                                  auto promised = chainNode -> RemoteGetHeader(hashBytes, client);
+                                                  if (promised.Wait())
+                                                    {
+                                                      auto found = promised.Get().first;
+                                                      auto block = promised.Get().second;
+                                                      if (found)
                                                         {
-                                                          auto found = promised.Get().first;
-                                                          auto block = promised.Get().second;
-                                                          if (found)
-                                                            {
-                                                              // add the block to the chainNode.
-                                                              block.UpdateDigest();
-                                                              auto newHash = block.hash();
-                                                              auto newBlockId = pySwarm -> hashToBlockId(newHash);
-                                                              pySwarm -> DoBlockSupplied(host, newBlockId);
+                                                          // add the block to the chainNode.
+                                                          block.UpdateDigest();
+                                                          auto newHash = block.hash();
+                                                          auto newBlockId = pySwarm -> hashToBlockId(newHash);
+                                                          pySwarm -> DoBlockSupplied(host, newBlockId);
 
-                                                              chainNode ->  AddBlock(block);
+                                                          chainNode ->  AddBlock(block);
 
-                                                              if (block.loose())
-                                                                {
-                                                                  pySwarm -> DoLooseBlock(host, newBlockId);
-                                                                }
-                                                            }
-                                                          else
+                                                          if (block.loose())
                                                             {
-                                                              pySwarm -> DoBlockNotSupplied(host, blockid);
+                                                              pySwarm -> DoLooseBlock(host, newBlockId);
                                                             }
                                                         }
                                                       else
                                                         {
-                                                              pySwarm -> DoBlockNotSupplied(host, blockid);
+                                                          pySwarm -> DoBlockNotSupplied(host, blockid);
                                                         }
                                                     }
-                                                  catch(fetch::serializers::SerializableException &x)
+                                                  else
                                                     {
-                                                      cerr << "CAUGHT fetch::serializers::SerializableException " << x.what()<< endl;
-                                                      swarmAgentApi -> DoPingFailed(host);
-                                                    }
-                                                  catch(network::NetworkNodeCoreBaseException &x)
-                                                    {
-                                                      cerr << "CAUGHT network::NetworkNodeCoreBaseException " << x.what()<< endl;
-                                                      std::cout << x.what() << std::endl;
-                                                      swarmAgentApi -> DoPingFailed(host);
-                                                    }
-                                                  catch(fetch::swarm::SwarmException &x)
-                                                    {
-                                                      cerr << "CAUGHT SwarmException " << x.what()<< endl;
-                                                      swarmAgentApi -> DoPingFailed(host);
-                                                    }
-                                                  catch(std::invalid_argument &x)
-                                                    {
-                                                      cerr << "CAUGHT std::invalid_argument " << x.what()<< endl;
-                                                      swarmAgentApi -> DoPingFailed(host);
+                                                      pySwarm -> DoBlockNotSupplied(host, blockid);
                                                     }
                                                 });
-                                 });
+                                });
     swarmAgentApi -> ToGetKarma([swarmNode](const std::string &host)
                                 {
                                   return swarmNode -> GetKarma(host);

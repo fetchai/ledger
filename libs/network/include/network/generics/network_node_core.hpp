@@ -17,68 +17,8 @@
 namespace fetch
 {
 
-
 namespace network
 {
-
-class NetworkNodeCoreBaseException : public std::exception
-{
-public:
-  NetworkNodeCoreBaseException()
-  {
-  }
-};
-
-  class NetworkNodeCoreCannotReachException : public NetworkNodeCoreBaseException
-  {
-  public:
-    std::string host_;
-    int port_;
-    std::string msg_;
-    
-    NetworkNodeCoreCannotReachException(const std::string &host, int port):
-      NetworkNodeCoreBaseException()
-    {
-      this -> host_ = host;
-      this -> port_ = port;
-      this -> msg_ = "cannot reach " + host + std::to_string(port);
-    }
-    
-    virtual const char *what() const noexcept
-    {
-      return this -> msg_.c_str();
-    }
-  };
-
-  class NetworkNodeCoreRefusingSolipsism : public NetworkNodeCoreBaseException
-  {
-  public:
-    NetworkNodeCoreRefusingSolipsism() :
-      NetworkNodeCoreBaseException()
-    {
-    }
-    
-    virtual const char *what() const noexcept
-    {
-      return "Refusing to talk to myself.";
-    }
-  };
-  
-  class NetworkNodeCoreTimeOut : public NetworkNodeCoreBaseException
-  {
-  public:
-    std::string where_;
-    NetworkNodeCoreTimeOut(const std::string &where) :
-      NetworkNodeCoreBaseException()
-    {
-      where_ = std::string("Timeout:") +where;
-    }
-    
-    virtual const char *what() const noexcept
-    {
-      return where_.c_str();
-    }
-  };
 
 class NetworkNodeCore
 {
@@ -137,15 +77,9 @@ public:
   {
     return ConnectToPeer(fetch::swarm::SwarmPeerLocation(host));
   }
-  
+
   virtual std::shared_ptr<client_type> ConnectTo(const std::string &host, unsigned short port)
   {
-
-    if (port == rpcPort_)
-      {
-        throw NetworkNodeCoreRefusingSolipsism();
-      }
-
     auto remote_host_identifier = std::make_pair(host, port);
     auto iter = cache_.find(remote_host_identifier);
     if (iter != cache_.end())
@@ -153,7 +87,10 @@ public:
         return iter -> second;
       }
     auto new_client_conn = ActuallyConnectTo(host, port);
-    cache_[remote_host_identifier] = new_client_conn;
+    if (new_client_conn)
+      {
+        cache_[remote_host_identifier] = new_client_conn;
+      }
     return new_client_conn;
   }
 
@@ -167,7 +104,7 @@ public:
         waits--;
         if (waits <= 0)
           {
-            throw NetworkNodeCoreCannotReachException(host, port);
+            return std::shared_ptr<client_type> client();
           }
         usleep(100);
       }
