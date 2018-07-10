@@ -27,13 +27,14 @@ enum {
 
   
 int main(int argc, char const **argv) {
+  // Parameters
   fetch::logger.DisableLogger();
   commandline::ParamsParser params;
   params.Parse(argc, argv);
   uint32_t lane_count =  params.GetParam<uint32_t>("lane-count", 1);  
   
   std::cout << std::endl;
-  fetch::commandline::DisplayCLIHeader("Multi-lane client");
+  fetch::commandline::DisplayCLIHeader("Storage Unit Client");
   std::cout << "Connecting with " << lane_count << " lanes." << std::endl;
     
   
@@ -47,9 +48,10 @@ int main(int argc, char const **argv) {
     client.AddLaneConnection< fetch::network::TCPClient >("localhost", uint16_t(8080 + i)) ;
   }
   
-  
-  std::string line = "";
 
+
+  // Taking commands
+  std::string line = "";
   Tokenizer tokenizer;
   std::vector< ByteArray > command;
   

@@ -107,7 +107,6 @@ public:
 
   bool Lock(byte_array::ByteArray const &key) 
   {
-//    std::cout << "Locking: " << key << std::endl;
       
     auto res = fetch::storage::ResourceAddress(key) ;
     std::size_t lane = res.lane(  log2_lanes_ );    
@@ -118,7 +117,6 @@ public:
 
   bool Unlock(byte_array::ByteArray const &key) 
   {
-//    std::cout << "Unlocking: " << key << std::endl;
     
     auto res = fetch::storage::ResourceAddress(key) ;
     std::size_t lane = res.lane(  log2_lanes_  );    
@@ -132,7 +130,7 @@ public:
   {
     auto res = fetch::storage::ResourceAddress(key) ;
     std::size_t lane = res.lane(  log2_lanes_  );
-//    std::cout << "Setting " << key <<  " on lane " << lane << " " << byte_array::ToBase64(res.id()) << std::endl;    
+
     auto promise = lanes_[ lane ]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET, res, value );
     promise.Wait(2000);
   }
@@ -186,7 +184,11 @@ public:
     return id_;
   }
 
-
+  std::size_t lanes() const
+  {
+    return lanes_.size();
+  }
+  
 private:
   network_manager_type network_manager_;
   uint32_t log2_lanes_ = 0;
