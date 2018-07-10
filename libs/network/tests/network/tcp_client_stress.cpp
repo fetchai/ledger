@@ -121,7 +121,6 @@ public:
 
   void ConnectionFailed() override
   {
-
   }
 };
 
