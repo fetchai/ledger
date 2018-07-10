@@ -4,6 +4,7 @@
 #include"network/details/thread_pool.hpp"
 #include"network/service/promise.hpp"
 #include "network/service/protocol.hpp"
+#include"core/logger.hpp"
 
 #include<vector>
 #include<deque>
@@ -31,6 +32,8 @@ public:
     store_(store),
     running_(false) { // , register_(reg), manager_(nm) 
 
+    logger.Info("Exposing ", p, ":", PULL_OBJECTS);
+    
     this->Expose(OBJECT_COUNT, this, &self_type::ObjectCount);
     this->Expose(PULL_OBJECTS, this, &self_type::PullObjects);
 //    this->Expose(PULL_OLDER_OBJECTS, this, &self_type::PullOlderObjects);
@@ -48,9 +51,10 @@ public:
 
   void Start() 
   {
+    fetch::logger.Debug("Starting syncronisation of ", typeid(T).name());    
     if(running_) return;    
     running_ = true;
-    thread_pool_->Post([this]() { this->FetchObjectsFromPeers(); } );
+    thread_pool_->Post([this]() { this->IdleUntilPeers(); } );
   }
 
   void Stop() 
@@ -63,8 +67,23 @@ public:
   /// Methods for pull transactions from peers
   /// @{
 
+  void IdleUntilPeers() 
+  {
+    if(!running_) return;
+    
+    if(register_.number_of_services() == 0 ) {
+      thread_pool_->Post([this]() { this->IdleUntilPeers(); }, 1000 ); // TODO: Make time variable
+    } else {          
+      thread_pool_->Post([this]() { this->FetchObjectsFromPeers(); } );
+    }
+  }
+  
+
+  
   void FetchObjectsFromPeers() 
   {
+    fetch::logger.Debug("Fetching objects ", typeid(T).name(), " from peer");
+    
     if(!running_) return;
     
     std::lock_guard< mutex::Mutex > lock( object_list_mutex_);
@@ -100,7 +119,7 @@ public:
       if(!running_) return;
       
       incoming_objects_.clear();
-      if(!p.Wait(10)) continue;
+      if(!p.Wait(100, false)) continue;
       p.template As< std::vector< S > >( incoming_objects_ );
 
       // TODO: Update pointer
@@ -122,9 +141,9 @@ public:
   void UpdateCache() 
   {
     if(!running_) return;
-    TODO_FAIL("Yet to be implemented");
+//    TODO_FAIL("Yet to be implemented");
     if(running_) {
-      thread_pool_->Post([this]() { this->FetchObjectsFromPeers(); }, 100 ); // TODO: Make time parameter
+      thread_pool_->Post([this]() { this->IdleUntilPeers(); }, 100 ); // TODO: Make time parameter
     }
     
   }

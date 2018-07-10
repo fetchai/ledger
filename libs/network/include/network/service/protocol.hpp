@@ -70,7 +70,7 @@ class Protocol {
 
     if ((n >= 256) || (members_[n] == nullptr))
       throw serializers::SerializableException(
-          error::MEMBER_NOT_FOUND, byte_array_type("Could not find member "));
+          error::MEMBER_NOT_FOUND, byte_array_type("Could not find protocol member function"));
     return *members_[n];
   }
 
@@ -95,7 +95,7 @@ class Protocol {
 
     if (members_[n] != nullptr)
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Member already exists: "));
+          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
 
     members_[n] = fnc;
   }
@@ -108,7 +108,7 @@ class Protocol {
 
     if (members_[n] != nullptr)
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Member already exists: "));
+          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
 
     members_[n] = fnc;
   }

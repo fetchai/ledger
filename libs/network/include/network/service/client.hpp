@@ -37,21 +37,26 @@ class ServiceClient : public ServiceClientInterface,
       thread_manager_(thread_manager),
       message_mutex_(__LINE__, __FILE__) 
   {
+    auto ptr = connection_.lock();
+    if(ptr) {
+      ptr->ActivateSelfManage();
       
-    connection_->OnMessage([this](network::message_type const& msg) {
-        LOG_STACK_TRACE_POINT;
-        
-        {
-          std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
-          messages_.push_back(msg);
-        }
-        
-        // Since this class isn't shared_from_this, try to ensure safety when destructing
-        thread_manager_.Post([this]()
+      ptr->OnMessage([this](network::message_type const& msg) {
+          LOG_STACK_TRACE_POINT;
+          
           {
-            ProcessMessages();
-          });
-      });
+            std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
+            messages_.push_back(msg);
+          }
+          
+          // Since this class isn't shared_from_this, try to ensure safety when destructing
+          thread_manager_.Post([this]()
+            {
+              ProcessMessages();
+            });
+        });
+
+    }
     
       /*
       ptr->OnConnectionFailed([this]() {
@@ -69,21 +74,24 @@ class ServiceClient : public ServiceClientInterface,
   ~ServiceClient()
   {
     LOG_STACK_TRACE_POINT;
-
-    // Disconnect callbacks
-    if(!connection_->Closed()) {
-      connection_->ClearClosures();
-      connection_->Close();
+    auto ptr = connection_.lock();
+    if(ptr) {
+    
+      // Disconnect callbacks      
+      if(ptr->Closed()) {
+        ptr->ClearClosures();
+        ptr->Close();
       
-      int timeout = 100;
+        int timeout = 100;
       
-      // Can only guarantee we are not being called when socket is closed
-      while(!connection_->Closed())
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        timeout--;
+        // Can only guarantee we are not being called when socket is closed
+        while(!ptr->Closed())
+        {
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          timeout--;
         
-        if(timeout == 0) break;
+          if(timeout == 0) break;
+        }
       }
     }
     
@@ -91,39 +99,60 @@ class ServiceClient : public ServiceClientInterface,
 
   void Close() 
   {
-    connection_->Close();
-    connection_.reset();    
+    auto ptr = connection_.lock();
+    if(ptr) {
+      ptr->Close();
+    }
+    
   }    
 
   connection_handle_type handle() const 
   {
-    return connection_->handle();
+    auto ptr = connection_.lock();
+    if(ptr) {
+      return ptr->handle();
+    }
+    TODO_FAIL("connection is dead");
   }
   
   bool is_alive() const 
   {
-    return connection_->is_alive();
+    auto ptr = connection_.lock();
+    if(ptr) {
+      return ptr->is_alive();
+    }
+    return false;
   }
   
  protected:
   bool DeliverRequest(network::message_type const& msg) override {
-    if(connection_->Closed()) return false;
+    auto ptr = connection_.lock();
+    if(ptr) {
+      if(ptr->Closed()) return false;
     
-    connection_->Send(msg);
-    return true;
+      ptr->Send(msg);
+      return true;
+    }
 
+    return false;
   }
 
   bool DeliverResponse(connection_handle_type, network::message_type const& msg) override {
-    if(connection_->Closed()) return false;
+    auto ptr = connection_.lock();
+    if(ptr) {
+      if(ptr->Closed()) return false;
     
-    connection_->Send(msg);
-    return true;
+      ptr->Send(msg);
+      return true;
+    }
+
+    return false;
+    
 
   }
 
  private:
-  std::shared_ptr< network::AbstractConnection > connection_;  
+  std::weak_ptr< network::AbstractConnection > connection_;  
   void ProcessMessages() {
     LOG_STACK_TRACE_POINT;
 

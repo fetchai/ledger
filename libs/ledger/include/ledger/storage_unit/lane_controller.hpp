@@ -103,8 +103,6 @@ public:
 
   
   shared_service_client_type Connect(byte_array::ByteArray const& host, uint16_t const& port) {
-    std::cout << identity_protocol_ << std::endl;
-
     shared_service_client_type client = register_.CreateServiceClient<client_type >( manager_, host, port);
 
     auto ident = identity_.lock();

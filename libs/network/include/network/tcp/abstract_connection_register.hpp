@@ -4,6 +4,7 @@
 #include"core/mutex.hpp"
 #include<memory>
 #include<unordered_map>
+#include<atomic>
 
 namespace fetch {
 namespace service {
@@ -20,7 +21,11 @@ public:
   typedef std::weak_ptr< service::ServiceClient > weak_service_client_type;
   typedef std::unordered_map< connection_handle_type, weak_service_client_type > service_map_type;
   
-  AbstractConnectionRegister() = default;
+  AbstractConnectionRegister() 
+  {
+    number_of_services_ = 0;    
+  }
+  
   AbstractConnectionRegister(AbstractConnectionRegister const &other) = delete;
   AbstractConnectionRegister(AbstractConnectionRegister &&other) = default;  
   AbstractConnectionRegister& operator=(AbstractConnectionRegister const &other) = delete;  
@@ -42,9 +47,16 @@ public:
     std::lock_guard< mutex::Mutex > lock( service_lock_ );
     f(services_);
   }
+  
+  uint64_t number_of_services() const 
+  {
+    return number_of_services_;
+  }
+  
 protected:
   void RemoveService(connection_handle_type const &n) 
   {
+    --number_of_services_;
     std::lock_guard< mutex::Mutex > lock( service_lock_ );
     auto it = services_.find(n);
     if(it != services_.end()) services_.erase(it);   
@@ -52,14 +64,30 @@ protected:
 
   void AddService(connection_handle_type const &n, weak_service_client_type const &ptr) 
   {
+    ++number_of_services_;
+    
     std::lock_guard< mutex::Mutex > lock( service_lock_ );
     services_[n] = ptr;
-    
   }
+
+  template< typename T >
+  void ActivateSelfManage(T ptr) 
+  {
+    ptr->ActivateSelfManage();
+  }
+ 
+  template< typename T >
+  void DeactivateSelfManage(T ptr) 
+  {
+    ptr->ADativateSelfManage();
+  }
+ 
   
 private:
   mutable mutex::Mutex service_lock_;
-  service_map_type services_;      
+  service_map_type services_;
+  std::atomic< uint64_t > number_of_services_;
+  
 };
 
 

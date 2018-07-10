@@ -89,6 +89,7 @@ class TCPClientImplementation :
         {
           fetch::logger.Debug("Client failed to connect");
           SignalConnectionFailed();
+          SignalLeave();          
         }
       };
 
@@ -98,6 +99,7 @@ class TCPClientImplementation :
           (res->resolve({std::string(host), std::string(port)}));
         asio::async_connect(*socket, it, strand_->wrap(cb) );
       } else {
+        SignalLeave();        
         fetch::logger.Error("Failed to create valid socket");
       }
     } );
@@ -205,6 +207,7 @@ class TCPClientImplementation :
         ReadBody();
       } else {
         // We expect to get an ec here when the socked is closed via a post
+        SignalLeave();        
       }
     };
 
@@ -212,7 +215,11 @@ class TCPClientImplementation :
     {
       asio::async_read(*socket, asio::buffer(this->header_.bytes, 2 * sizeof(uint64_t)), strand_->wrap(cb));
       connected_ = true;
+    } else {
+      connected_ = false; 
+      SignalLeave();
     }
+    
   }
 
   void ReadBody() noexcept
@@ -236,19 +243,22 @@ class TCPClientImplementation :
       if (!ec)
       {
         SignalMessage(message);
-        
-//        PushMessage(message);
         ReadHeader();
-      } else
+      }
+      else
       {
         fetch::logger.Error("Reading body failed, dying: ", ec);
+        SignalLeave();   
       }
     };
 
     if(socket)
     {
       asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), strand_->wrap(cb));
+    } else {
+      SignalLeave();      
     }
+    
   }
 
   static void SetHeader(byte_array::ByteArray &header, uint64_t bufSize)
@@ -304,6 +314,7 @@ class TCPClientImplementation :
         if(ec)
         {
           fetch::logger.Error("Error writing to socket, closing.");
+          SignalLeave();          
           return;
         }
 
@@ -316,6 +327,7 @@ class TCPClientImplementation :
       asio::async_write(*socket, buffers, strand_->wrap(cb));
     } else {
       fetch::logger.Error("Failed to lock socket in WriteNext!");
+      SignalLeave();      
     }
   }
 

@@ -1,5 +1,6 @@
 #ifndef NETWORK_ABSTRACT_CONNECTION_HPP
 #define NETWORK_ABSTRACT_CONNECTION_HPP
+#include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "network/message.hpp"
 #include "network/tcp/abstract_connection_register.hpp"
@@ -37,7 +38,8 @@ class AbstractConnection : public std::enable_shared_from_this<AbstractConnectio
     auto ptr = connection_register_.lock();
     if(ptr) {
       ptr->Leave( handle_ );      
-    }    
+    }
+    fetch::logger.Debug("Connection destroyed"); 
   }
   
   virtual void Send(message_type const&) = 0;
@@ -59,7 +61,7 @@ class AbstractConnection : public std::enable_shared_from_this<AbstractConnectio
     connection_register_ = reg;
   }
 
-  shared_type connection_pointer() 
+  weak_ptr_type connection_pointer() 
   {
     return shared_from_this();
   }
@@ -75,6 +77,12 @@ class AbstractConnection : public std::enable_shared_from_this<AbstractConnectio
     std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
     on_connection_failed_ = fnc;
   }
+
+  void OnLeave(std::function< void() > const &fnc)
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
+    on_leave_ = fnc;
+  }
   
   void ClearClosures() noexcept
   {
@@ -82,6 +90,19 @@ class AbstractConnection : public std::enable_shared_from_this<AbstractConnectio
     on_connection_failed_  = nullptr;
     on_message_  = nullptr;
   }
+
+
+  void ActivateSelfManage() 
+  {
+    self_ = shared_from_this();
+  }
+  
+  
+  void DeactivateSelfManage() 
+  {
+    self_.reset();
+  }
+ 
   
 protected:
   void SetAddress(std::string const &addr) 
@@ -90,6 +111,15 @@ protected:
     address_ = addr;
   }
 
+  void SignalLeave() 
+  {
+    std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
+    fetch::logger.Debug("Connection terminated");
+   
+    if(on_leave_) on_leave_();
+    DeactivateSelfManage();    
+  }
+  
 
   void SignalMessage(network::message_type const& msg) 
   {
@@ -101,12 +131,14 @@ protected:
   {
     std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
     if(on_connection_failed_) on_connection_failed_();
-  }
 
+    DeactivateSelfManage();
+  }
   
  private:
   std::function< void(network::message_type const& msg) > on_message_;
   std::function< void() >                    on_connection_failed_;
+  std::function< void() >                    on_leave_;  
   
   std::string address_;  
   mutable mutex::Mutex address_mutex_;
@@ -124,7 +156,11 @@ protected:
   static connection_handle_type global_handle_counter_;
   static fetch::mutex::Mutex global_handle_mutex_;
 
-  mutable fetch::mutex::Mutex                callback_mutex_;  
+  mutable fetch::mutex::Mutex                callback_mutex_;
+
+  shared_type self_;
+  
+  friend class AbstractConnectionRegister;  
 };
 
 

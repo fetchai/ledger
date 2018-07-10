@@ -40,6 +40,7 @@ public:
 
     T connection(tm);
     connection.Connect( std::forward<Args>(args)... );
+
     shared_service_client_type service = std::make_shared< service_client_type >(connection.connection_pointer().lock(), tm );
     
 
@@ -85,17 +86,12 @@ public:
   {
     auto ptr = wptr.lock();
     if(ptr) {
-      std::lock_guard< mutex::Mutex > lock( connections_lock_ );      
+      std::lock_guard< mutex::Mutex > lock( connections_lock_ );
       connections_[ ptr->handle() ] = ptr;
       details_[ ptr->handle() ] = std::make_shared<LockableDetails>();
     }
   }
 
-  weak_service_client_type GetService(connection_handle_type const &i) 
-  {
-    std::lock_guard< mutex::Mutex > lock( connections_lock_ );
-    return details_[i];
-  }
   
   std::shared_ptr< LockableDetails > GetDetails(connection_handle_type const &i) 
   {
@@ -160,6 +156,10 @@ public:
   void WithServices(std::function< void(service_map_type const &) > const &f) const
   {
     ptr_->WithServices(f);
+  }
+  uint64_t number_of_services() const 
+  {
+    return ptr_->number_of_services();
   }
   
   shared_implementation_pointer_type pointer() { return ptr_; }  

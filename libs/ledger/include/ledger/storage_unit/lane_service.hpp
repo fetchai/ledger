@@ -48,7 +48,7 @@ public:
   };
   
   // TODO: Make config JSON
-  LaneService(uint32_t const &lane, uint32_t const &max_lanes,
+  LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &max_lanes,
     uint16_t port, fetch::network::ThreadManager tm)
     : super_type(port, tm) {
 
@@ -56,6 +56,7 @@ public:
     
     
     std::stringstream s;
+    s << db_dir;    
     s << "lane" << lane << "_";
     std::string prefix = s.str();    
 
@@ -75,7 +76,7 @@ public:
 
     // TX Sync
     tx_sync_protocol_ = new tx_sync_protocol_type( TX_STORE_SYNC, register_, thread_pool_, tx_store_ );
-    this->Add(TX_STORE_SYNC, tx_store_protocol_ );    
+    this->Add(TX_STORE_SYNC, tx_sync_protocol_);    
     
        
     // State DB
@@ -91,6 +92,7 @@ public:
     this->Add(CONTROLLER, controller_protocol_ );    
 
 
+    thread_pool_->Start();    
     tx_sync_protocol_->Start();
     
   }

@@ -39,7 +39,7 @@ protected:
   ThreadPoolImplementation(std::size_t threads = 1) : number_of_threads_(threads)
   {
 
-    fetch::logger.Debug("Creating thread manager");
+    fetch::logger.Debug("Creating thread pool with ", threads, " threads");
     shutdown_ = false;
   }
   
