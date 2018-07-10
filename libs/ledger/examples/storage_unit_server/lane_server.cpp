@@ -8,39 +8,38 @@
 #include"core/commandline/cli_header.hpp"
 #include"core/commandline/parameter_parser.hpp"
 #include"ledger/chain/transaction.hpp"
-#include"ledger/storage_unit/lane_service.hpp"
+
+#include"ledger/storage_unit/storage_unit_bundled_service.hpp"
 
 #include<sstream>
 using namespace fetch;
 using namespace fetch::ledger;
 
 int main(int argc, char const **argv) 
-{
- 
-//  fetch::logger.DisableLogger();
+{  
+  // Reading config
   commandline::ParamsParser params;
   params.Parse(argc, argv);
-  uint32_t lane_count =  params.GetParam<uint32_t>("lane-count", 1);
+  uint32_t lane_count =  params.GetParam<uint32_t>("lane-count", 8);
   uint16_t port =  params.GetParam<uint16_t>("port", 1);
   std::string dbdir =  params.GetParam<std::string>("db-dir", "db1/");      
-     
-  std::string dummy;
-  fetch::commandline::DisplayCLIHeader("Multi-lane server");
-  
-  std::cout << "Starting " << lane_count << " lanes." << std::endl << std::endl;
-  
-
-  fetch::network::ThreadManager tm(8);
-  std::vector< std::shared_ptr< LaneService > > lanes;
-  for(uint32_t i = 0 ; i < lane_count ; ++i ) {
-    lanes.push_back(std::make_shared< LaneService > (dbdir, uint32_t(i), lane_count, uint16_t(port + i), tm ) );
+  int log = params.GetParam<int>("showlog", 0);
+  if(log == 0) {
+    fetch::logger.DisableLogger();
   }
-  
+    
+  fetch::commandline::DisplayCLIHeader("Storage Unit Bundled Service");
+  std::cout << "Starting " << lane_count << " lanes." << std::endl << std::endl;
+
+  // Setting up
+  fetch::network::ThreadManager tm(8);
+  StorageUnitBundledService service(dbdir, lane_count, port, tm);    
   tm.Start();
 
 
-  
+  // Running until enter
   std::cout << "Press ENTER to quit" << std::endl;                                       
+std::string dummy;
   std::cin >> dummy;
   
   tm.Stop();

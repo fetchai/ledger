@@ -1,5 +1,4 @@
 #include<iostream>
-#include <ledger/chain/mutable_transaction.hpp>
 #include"network/service/client.hpp"
 #include"core/logger.hpp"
 #include"core/commandline/cli_header.hpp"
@@ -16,130 +15,6 @@ using namespace fetch::service;
 using namespace fetch::byte_array;
 
 
-class MultiLaneDBClient  //: private 
-{
-public:
-  typedef ServiceClient service_client_type;
-  typedef std::shared_ptr< service_client_type > shared_service_client_type;
-  
-  MultiLaneDBClient (uint32_t lanes, std::string const &host, uint16_t const &port, fetch::network::ThreadManager &tm)
-  {
-    id_ = "my-fetch-id";
-    for(uint32_t i = 0; i < lanes; ++i) {
-      fetch::network::TCPClient connection(tm);
-      connection.Connect(host, uint16_t(port +i));
-      lanes_.push_back( std::make_shared< service_client_type >(connection, tm ) );
-    }
-    
-  }
-  
-  ByteArray Get(ByteArray const &key) 
-  {
-    auto res = fetch::storage::ResourceAddress(key) ;
-    std::size_t lane = res.lane( uint32_t(lanes_.size() ));    
-//    std::cout << "Getting " << key << " from lane " << lane <<  " " << byte_array::ToBase64(res.id()) << std::endl;
-    auto promise = lanes_[ lane ]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::GET, res );
-     
-    return promise.As<storage::Document>().document;
-  }
-
-  bool Lock(ByteArray const &key) 
-  {
-//    std::cout << "Locking: " << key << std::endl;
-      
-    auto res = fetch::storage::ResourceAddress(key) ;
-    std::size_t lane = res.lane( uint32_t(lanes_.size() ));    
-    auto promise = lanes_[ lane ]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::LOCK, res );
-     
-    return promise.As<bool>();
-  }
-
-  bool Unlock(ByteArray const &key) 
-  {
-//    std::cout << "Unlocking: " << key << std::endl;
-    
-    auto res = fetch::storage::ResourceAddress(key) ;
-    std::size_t lane = res.lane( uint32_t(lanes_.size() ));    
-    auto promise = lanes_[ lane ]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK, res );
-     
-    return promise.As<bool>();
-  }
-  
-    
-  void Set(ByteArray const &key, ByteArray const &value) 
-  {
-    auto res = fetch::storage::ResourceAddress(key) ;
-    std::size_t lane = res.lane( uint32_t(lanes_.size() ));
-//    std::cout << "Setting " << key <<  " on lane " << lane << " " << byte_array::ToBase64(res.id()) << std::endl;    
-    auto promise = lanes_[ lane ]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::SET, res, value );
-    promise.Wait(2000);
-  }
-  
-  void Commit(uint64_t const &bookmark) 
-  {
-    std::vector< service::Promise > promises;    
-    for(std::size_t i=0; i < lanes_.size(); ++i) {      
-      auto promise = lanes_[i]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
-      promises.push_back(promise);
-    }
-
-    for(auto &p: promises) {
-      p.Wait();
-    }
-    
-  }
-  
-  void Revert(uint64_t const &bookmark) 
-  {
-    std::vector< service::Promise > promises;    
-    for(std::size_t i=0; i < lanes_.size(); ++i) {      
-      auto promise = lanes_[i]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
-      promises.push_back(promise);
-    }
-
-    for(auto &p: promises) {
-      p.Wait();
-    }
-  }  
-
-  ByteArray Hash() 
-  {
-    //TODO
-    return lanes_[0]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::HASH).As<ByteArray>();
-  }
-
-  void SetID(ByteArray const&id) 
-  {
-    id_ = id;
-  }
-
-
-  void AddTransaction(ConstByteArray const& tx_data)
-  {
-    json::JSONDocument doc(tx_data);
-    chain::Transaction tx;
-    
-  }
-
-  void AddTransaction(chain::Transaction &tx) 
-  {
-//    tx.UpdateDigests();
-    
-  }
-
-  
-  ByteArray const &id() {
-    return id_;
-  }
-
-
-private:
-  ByteArray id_;
-  std::vector< shared_service_client_type > lanes_;
-  
-};
-
-
 enum {
   TOKEN_NAME = 1,
   TOKEN_STRING = 2,
@@ -150,7 +25,7 @@ enum {
 
 void AddTransactionDialog() 
 {
-  chain::MutableTransaction tx;
+  chain::Transaction tx;
   std::string contract_name, args, res;
   std::cout << "Contract name: ";
     
@@ -158,13 +33,11 @@ void AddTransactionDialog()
   fetch::string::Trim( contract_name );
   tx.set_contract_name(contract_name);
 
-  // TODO: (EJF) This needs to be checked
-#if 0
+    
   std::cout << "Arguments: ";
   std::getline(std::cin, args);
   fetch::string::Trim( args );    
   tx.set_arguments(args);
-#endif
     
   std::cout << "Resources: " << std::endl;
 
@@ -195,10 +68,16 @@ int main(int argc, char const **argv) {
   
   // Client setup
   fetch::network::ThreadManager tm(8);
-  MultiLaneDBClient client(lane_count, "localhost", 8080, tm);
+  StorageUnitClient client(tm);
 
   tm.Start();
 
+  for(std::size_t i = 0 ; i < lane_count; ++i) {
+    StorageUnitClient.AddLaneConnection< TCPClient >("localhost", 8080 + i) ;
+    
+  }
+  
+  
   std::string line = "";
 
   Tokenizer tokenizer;
