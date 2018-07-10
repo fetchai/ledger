@@ -194,7 +194,6 @@ std::vector<message_type> CreateTestData(size_t index)
   return sendData;
 }
 
-
 template< std::size_t N = 1>
 void TestCase0(std::string host, std::string port)
 {
