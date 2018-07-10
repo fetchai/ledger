@@ -110,8 +110,10 @@ def get_chain_data2(context, mon):
             'name': {
                 'v': str(id),
                 'f': """
-{}<div style="font-style:italic">{} nodes</div>
-""".format(str(name)[0:16], len(b["nodes"])),
+{}
+<div style="font-weight:bold">{} nodes</div>
+<div style="font-style:italic">{}</div>
+""".format(str(name)[0:16], len(b["nodes"]), ",".join([ x[-1] for x in sorted(b["nodes"])])),
             },
             'manager': str(prev_id),
             'tooltip': '',

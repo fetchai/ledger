@@ -97,7 +97,7 @@ public:
     std::string myHost = "127.0.0.1:" + std::to_string(rpcPort);
     fetch::swarm::SwarmPeerLocation myHostLoc(myHost);
 
-    auto worker = PythonWorker::instance();
+    auto worker = std::make_shared<PythonWorker>();
     auto nnCore = std::make_shared<fetch::network::NetworkNodeCore>(20, httpPort, rpcPort);
     auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
     auto swarmNode = std::make_shared<fetch::swarm::SwarmNode>(nnCore, identifier, maxpeers, myHost);

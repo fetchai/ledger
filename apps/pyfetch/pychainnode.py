@@ -37,42 +37,57 @@ class SwarmAgentNaive(object):
 
         self.swarm.OnNewPeerDiscovered(self.onNewPeerDiscovered)
         self.swarm.OnNewBlockIdFound(self.onNewBlockIdFound)
-        self.swarm.OnNewBlockAvailable(self.onNewBlockAvailable)
         self.swarm.OnBlockIdRepeated(self.onBlockIdRepeated)
         self.swarm.OnLooseBlock(self.onLooseBlock)
         self.swarm.OnBlockSupplied(self.onBlockSupplied)
         self.swarm.OnBlockNotSupplied(self.onBlockNotSupplied)
 
+        self.in_progress = set()
+
         say(self.mainchain.totalBlocks())
         self.swarm.Start()
+
 
     def onPingFailed(self, host):
         say("PYCHAINNODE===> Ping failed to:", host)
         self.swarm.AddKarma(host, -5.0);
+        self.in_progress.discard(host)
 
     def onPingSucceeded(self, host):
-        self.swarm.AddKarmaMax(host, 1.0, 3.0);
+        self.swarm.AddKarmaMax(host, 10.0, 30.0);
+        self.in_progress.discard(host)
 
     def onIdle(self):
         say("idle")
         goodPeers = self.swarm.GetPeers(10, -0.5)
-        if not goodPeers:
-            return
 
-        self.swarm.DoDiscoverBlocks(goodPeers[0], 10)
+        goodPeers = [ x for x in goodPeers if x not in self.in_progress ]
+
+        if not goodPeers:
+            say("quiet")
+            return 100
+
+        hosts = []
 
         weightedPeers = [(x,self.swarm.GetKarma(x)) for x in goodPeers]
         total = sum([ x[1] for x in weightedPeers ])
         weight = random.random() * total
-
         weightedPeer = weightedPeers[0]
         while weight >= 0 and weightedPeers:
             weightedPeer = weightedPeers.pop(0)
             weight -= weightedPeer[1]
+        hosts.append(weightedPeer[0])
+        hosts.append(goodPeers[int(random.random() * len(goodPeers))])
 
-        host = weightedPeer[0]
-        self.swarm.DoPing(host);
-        self.swarm.DoDiscoverBlocks(host, 10);
+        for host in hosts:
+            if host not in self.in_progress:
+                self.in_progress.add(host)
+                self.swarm.DoPing(host);
+                self.swarm.DoDiscoverBlocks(host, 10);
+            else:
+                say("PYCHAINNODE===> Ping deferred to:", host)
+
+        return 0
 
     def onPeerless(self):
         for x in self.peerlist:
@@ -82,29 +97,25 @@ class SwarmAgentNaive(object):
         if host == self.swarm.queryOwnLocation():
             return
         say("PYCHAINNODE===> NEW PEER", host);
-        self.swarm.DoPing(host)
 
     def onNewBlockIdFound(self, host, blockid):
         say("PYCHAINNODE===> WOW - ", blockid)
-        self.swarm.AddKarmaMax(host, 1.0, 6.0);
+        self.swarm.AddKarmaMax(host, 2.0, 30.0);
 
     def onBlockIdRepeated(self, host, blockid):
         # Awwww, we know about this.
+        self.swarm.AddKarmaMax(host, 1.0, 10.0);
         pass
 
-    def onNewBlockAvailable(self, host, blockid):
-        say("PYCHAINNODE===> GOT - ", blockid)
-        say(self.swarm.GetBlock(blockid))
-
     def onLooseBlock(self, host, blockid):
-        say("PYCHAINNODE LOOSE: ", host, blockid)
+        say("PYCHAINNODE===> LOOSE: ", host, blockid)
         self.swarm.DoGetBlock(host, blockid)
 
     def onBlockSupplied(self, host, blockid):
-        say("PYCHAINNODE DELIVERED: ", host, blockid)
+        say("PYCHAINNODE===> DELIVERED: ", host, blockid)
 
     def onBlockNotSupplied(self, host, blockid):
-        say("PYCHAINNODE NOT DELIVERED: ", host, blockid)
+        say("PYCHAINNODE===> NOT DELIVERED: ", host, blockid)
 
 
 def run(config):

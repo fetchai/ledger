@@ -113,7 +113,7 @@ class Node(object):
         self.backargs = {
             "-id": "{}".format(self.index),
             "-maxpeers": "{}".format(self.maxpeers),
-            "-target": "{}".format(args.target),
+            "-target": "{}".format(args.target + int(index/3)),
             "-port": "{}".format(PORT_BASE + self.index),
             "-peers": ",".join(self.peers),
             "-idlespeed": "{}".format(args.idlespeed),

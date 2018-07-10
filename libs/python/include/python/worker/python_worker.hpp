@@ -48,16 +48,6 @@ public:
         tm_ -> Post(f, milliseconds);
     }
 
-    static std::shared_ptr<PythonWorker> instance()
-    {
-        static std::shared_ptr<PythonWorker> singleton;
-        if (!singleton)
-        {
-            singleton = std::make_shared<PythonWorker>();
-        }
-        return singleton;
-    }
-    
     PythonWorker()
     {
         tm_ = std::make_shared<fetch::network::ThreadPool>(1);
