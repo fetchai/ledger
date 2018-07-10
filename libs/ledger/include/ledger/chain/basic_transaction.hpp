@@ -40,10 +40,29 @@ public:
   typedef crypto::SHA256                  hasher_type;
   typedef TransactionSummary::digest_type digest_type;
 
+  std::vector<group_type> const &groups() const {
+    return summary_.groups;
+  }
+
+  TransactionSummary const &summary() const {
+    return summary_;
+  }
+
+  byte_array::ConstByteArray const &data() const {
+    return data_;
+  }
+
+  byte_array::ConstByteArray const &signature() const {
+    return signature_;
+  }
+
+  ledger::Identifier const &contract_name() const {
+    return contract_name_;
+  }
+
 protected:
 
-  BasicTransaction() {}
-
+  BasicTransaction() = default;
   BasicTransaction(BasicTransaction const &rhs) {
     summary_ = rhs.summary();
     summary_.transaction_hash = rhs.summary().transaction_hash.Copy();
@@ -104,28 +123,20 @@ protected:
     summary_.groups.push_back(res);
   }
 
-  void set_contract_name(std::string const &name) {
-    contract_name_.Parse(name);
+  void set_summary(TransactionSummary const &summary) {
+    summary_ = summary;
   }
 
   void set_data(byte_array::ConstByteArray const &data) {
     data_ = data;
   }
 
-  void set_summary(TransactionSummary const &summary) {
-    summary_ = summary;
-  }
-
   void set_signature(byte_array::ConstByteArray sig) {
     signature_ = sig;
   }
 
-  ledger::Identifier &contract_name() {
-    return contract_name_;
-  }
-
-  byte_array::ConstByteArray &signature() {
-    return signature_;
+  void set_contract_name(std::string const &name) {
+    contract_name_.Parse(name);
   }
 
   TransactionSummary         summary_;
