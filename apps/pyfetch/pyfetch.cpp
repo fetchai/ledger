@@ -4,7 +4,7 @@
 #include <time.h>
 
 
-
+#include "core/logger.hpp"
 #include "network/swarm/swarm_agent_naive.hpp"
 #include "network/swarm/swarm_agent_api.hpp"
 #include "network/swarm/swarm_http_interface.hpp"
@@ -19,11 +19,13 @@
 
 void say(pybind11::args args)
 {
-  std::cout << "PYTHON:";
-  for (size_t i = 0; i < args.size(); ++i) {
-    std::cout << pybind11::str(args[i]);
-  }
-  std::cout << std::endl;
+    std::vector<std::string> converted;
+    converted.push_back("PYFETCH:");
+    for (size_t i = 0; i < args.size(); ++i)
+    {
+        converted.push_back(pybind11::str(args[i]));
+    }
+    fetch::logger.Debug(converted);
 }
 
 PYBIND11_EMBEDDED_MODULE(fetchnetwork, module) {

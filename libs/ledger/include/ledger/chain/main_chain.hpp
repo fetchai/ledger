@@ -282,6 +282,34 @@ class MainChain
     return result;
   }
 
+  // for debugging: get the heaviest chain
+  std::vector<block_type> HeaviestChain(size_t limit) const
+  {
+    std::vector<block_type> result;
+
+    auto topBlock =  blockChain_.at(heaviest_.second);
+
+    while((topBlock.body().block_number != 0)  && (result.size() < limit))
+    {
+      result.push_back(topBlock);
+      auto hash = topBlock.body().previous_hash;
+
+      // Walk down
+      auto it = blockChain_.find(hash);
+      if(it == blockChain_.end())
+      {
+        fetch::logger.Info("Mainchain: Failed while walking down\
+            from top block to find genesis!");
+        break;
+      }
+
+      topBlock = (*it).second;
+    }
+
+    result.push_back(topBlock); // this should be genesis
+    return result;
+  }
+
   // for debugging: get all chains, and verify. First in pair is heaviest block
   std::pair<block_type, std::vector<std::vector<block_type>>> AllChain()
   {

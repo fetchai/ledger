@@ -18,15 +18,16 @@ PORT_BASE = 9000
 class RunSwarmArgs(object):
     def __init__(self):
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument("--members", help="number of swarmers", type=int)
-        self.parser.add_argument("--binary", help="swarm node binary", type=str)
-        self.parser.add_argument("--initialpeers", help="number of seed peers", type=int)
-        self.parser.add_argument("--maxpeers", help="max peers to discover", type=int)
+        self.parser.add_argument("--members", help="number of swarmers", type=int, default=7)
+        self.parser.add_argument("--binary", help="swarm node binary", type=str, default="build/apps/pyfetch/pyfetch apps/pyfetch/pychainnode.py")
+        self.parser.add_argument("--initialpeers", help="number of seed peers", type=int, default=2)
+        self.parser.add_argument("--maxpeers", help="max peers to discover", type=int, default=4)
         self.parser.add_argument("--idlespeed", help="idle cycle time in MS for a node", type=int, default=1000)
-        self.parser.add_argument("--logdir", help="where to put individual logfiles", type=str, default="./")
+        self.parser.add_argument("--logdir", help="where to put individual logfiles", type=str, default="build/swarmlog/")
         self.parser.add_argument("--startindex", help="Index of first launchable node", type=int, default=0)
         self.parser.add_argument("--debugger", help="Name of debugger", type=str, default="")
         self.parser.add_argument("--clean", help="Name of debugger", default=False, action='store_true')
+        self.parser.add_argument("--target", help="mining target", type=int, default=16)
 
         self.data =  self.parser.parse_args()
 
@@ -112,6 +113,7 @@ class Node(object):
         self.backargs = {
             "-id": "{}".format(self.index),
             "-maxpeers": "{}".format(self.maxpeers),
+            "-target": "{}".format(args.target),
             "-port": "{}".format(PORT_BASE + self.index),
             "-peers": ",".join(self.peers),
             "-idlespeed": "{}".format(args.idlespeed),

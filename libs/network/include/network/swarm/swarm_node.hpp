@@ -103,6 +103,7 @@ public:
     virtual std::string AskPeerForPeers(
         const SwarmPeerLocation &peer, std::shared_ptr<client_type> client)
   {
+    fetch::logger.Debug("AskPeerForPeers starts work");
     auto promise = client->Call(
         protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     if (promise.Wait(2500, false))
@@ -112,6 +113,9 @@ public:
       }
     else
     {
+        if (promise. has_failed()) {  fetch::logger.Debug("AskPeerForPeers has_failed"); }
+        else if (promise. is_connection_closed()) {  fetch::logger.Debug("AskPeerForPeers is_connection_closed"); }
+        else { fetch::logger.Debug("AskPeerForPeers failed ???"); }
         return "";
     }
   }
@@ -133,16 +137,19 @@ public:
     return karmaPeerList_.Has(host);
   }
 
-  virtual std::string ClientNeedsPeer()
-  {
-    if (!karmaPeerList_.empty())
-      {
-        auto p = karmaPeerList_.GetNthKarmicPeer(0);
-        auto s = p.GetLocation().AsString();
-        return s;
-      }
-    return std::string("");
-  }
+    virtual std::string ClientNeedsPeer()
+    {
+        fetch::logger.Debug("ClientNeedsPeer starts work");
+        if (!karmaPeerList_.empty())
+        {
+            auto p = karmaPeerList_.GetNthKarmicPeer(0);
+            fetch::logger.Debug("ClientNeedsPeer sorted & found");
+            auto s = p.GetLocation().AsString();
+            return s;
+        }
+        fetch::logger.Debug("ClientNeedsPeer no peers");
+        return std::string("");
+    }
 
   const std::string &GetId()
   {

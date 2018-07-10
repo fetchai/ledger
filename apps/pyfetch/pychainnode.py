@@ -54,16 +54,12 @@ class SwarmAgentNaive(object):
         self.swarm.AddKarmaMax(host, 1.0, 3.0);
 
     def onIdle(self):
-        say("PYCHAINNODE===> OnIdle")
+        say("idle")
         goodPeers = self.swarm.GetPeers(10, -0.5)
-
-        say("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ BIGBLOCK: ", self.swarm.HeaviestBlock())
-
         if not goodPeers:
-            say("PYCHAINNODE===> OnIdle No good peers")
             return
 
-        #self.swarm.DoDiscoverBlocks(goodPeers[0], 10)
+        self.swarm.DoDiscoverBlocks(goodPeers[0], 10)
 
         weightedPeers = [(x,self.swarm.GetKarma(x)) for x in goodPeers]
         total = sum([ x[1] for x in weightedPeers ])
@@ -75,8 +71,8 @@ class SwarmAgentNaive(object):
             weight -= weightedPeer[1]
 
         host = weightedPeer[0]
-        #self.swarm.DoPing(host);
-        #self.swarm.DoDiscoverBlocks(host, 10);
+        self.swarm.DoPing(host);
+        self.swarm.DoDiscoverBlocks(host, 10);
 
     def onPeerless(self):
         for x in self.peerlist:
@@ -119,16 +115,16 @@ def run(config):
         config.maxpeers,
         config.idlespeed,
         config.peers,
-        20
+        config.target
     )
 
     while True:
-        say("PYCHAINNODE===> Zzzz...")
         time.sleep(2)
 
 def main():
     params = argparse.ArgumentParser(description='I am a Fetch node.')
 
+    params.add_argument("-target",         type=int, help="Mining target.", default=16);
     params.add_argument("-id",             type=int, help="Identifier number for this node.", default=1);
     params.add_argument("-port",           type=int, help="Which port to run on.", default=9012);
     params.add_argument("-maxpeers",       type=int, help="Ideally how many peers to maintain good connections to.", default=3);

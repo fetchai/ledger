@@ -64,9 +64,9 @@ public:
     http::HTTPResponse HttpGetMainchain(
         http::ViewParameters const &params, http::HTTPRequest const &req)
     {
-        auto chainArray = chain_ -> HeaviestChain();
-
-        script::Variant result = script::Variant::Array(chainArray.size());
+        auto chainArray = chain_ -> HeaviestChain(16);
+        size_t limit = std::min(chainArray.size(), size_t(16));
+        script::Variant result = script::Variant::Array(limit);
 
         std::size_t index = 0;
         for (auto &i : chainArray)
@@ -77,9 +77,13 @@ public:
             temp["hashcurrent"]         = ToHex(i.hash());
             temp["hashprev"]     = ToHex(i.body().previous_hash);
             result[index++] = temp;
+            if (index >= limit)
+                break;
         }
         std::ostringstream ret;
         ret << result;
+
+        std::cout << "HTTPCHAIN" << ret.str() << std::endl;
 
         return http::HTTPResponse(ret.str());
     }
@@ -100,13 +104,16 @@ public:
 
     virtual std::pair<bool, block_type> GetHeader(const block_hash &hash)
     {
+        fetch::logger.Debug("GetHeader starting work");
         block_type block;
         if (chain_ -> Get(hash, block))
         {
+            fetch::logger.Debug("GetHeader done");
             return std::make_pair(true, block);
         }
         else
         {
+            fetch::logger.Debug("GetHeader not found");
             return std::make_pair(false, block);
         }
     }
@@ -115,6 +122,7 @@ public:
     {
         std::vector<block_type> results;
 
+        fetch::logger.Debug("GetHeaviestChain starting work ",  maxsize);
         auto currentHash = chain_ -> HeaviestBlock().hash();
 
         while(results.size() < maxsize)
@@ -130,6 +138,9 @@ public:
                 break;
             }
         }
+
+        fetch::logger.Debug("GetHeaviestChain returning ", results.size(), " of req ", maxsize);
+
         return results;
     }
 
@@ -176,6 +187,7 @@ public:
 
                     // Add the block
                     chain_ -> AddBlock(nextBlock);
+                    fetch::logger.Debug("Main Chain Node: Mined: ",  ToHex(block.hash()));
                 }
             };
 

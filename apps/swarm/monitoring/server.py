@@ -92,6 +92,45 @@ def get_data2(context, mon):
     print(data)
     return data;
 
+def get_chain_data2(context, mon):
+    r = []
+
+    allblocknames = list(mon.chain.keys())
+    blocknameToId = dict((name, index+1) for index,name in enumerate(allblocknames))
+    blocknameToId[""] = 0
+
+    for name in allblocknames:
+        b = mon.chain[name]
+
+        prev_name = b.get('prev', "")
+        prev_id = blocknameToId.get(prev_name, 0)
+        id = blocknameToId.get(name)
+
+        r.append({
+            'name': {
+                'v': str(id),
+                'f': """
+{}<div style="font-style:italic">{} nodes</div>
+""".format(str(name)[0:16], len(b["nodes"])),
+            },
+            'manager': str(prev_id),
+            'tooltip': '',
+        })
+
+    if any([ node['manager'] == '0' for node in r ]):
+        r.append({
+            'name': {
+                'v': '0',
+                'f': 'detached',
+            },
+            'manager': None,
+            'tooltip': ''
+        })
+
+    return {
+        'nodes': r
+    }
+
 def get_chain_data(context, mon):
     r = {
         'nodes': [],
@@ -147,6 +186,7 @@ def main():
     with contextlib.closing(Monitoring()) as myMonitoring:
         root.route('/network', method='GET', callback=functools.partial(get_data2, context, myMonitoring))
         root.route('/chain', method='GET', callback=functools.partial(get_chain_data, context, myMonitoring))
+        root.route('/chain2', method='GET', callback=functools.partial(get_chain_data2, context, myMonitoring))
         if g_ssl:
             from utils import SSLWSGIRefServer
             srv = SSLWSGIRefServer.SSLWSGIRefServer(host="0.0.0.0", port=g_port)
