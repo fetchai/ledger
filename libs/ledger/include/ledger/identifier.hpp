@@ -8,7 +8,7 @@ namespace fetch {
 namespace ledger {
 
 /**
- * A string identifier which is seperated with '.' used as to heirrachically
+ * A string identifier which is seperated with '.' used as to hierarchically
  * group related objects.
  *
  * For example:
