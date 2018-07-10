@@ -3,6 +3,8 @@
 #include"network/service/client.hpp"
 #include"network/tcp/connection_register.hpp"
 #include"network/service/client.hpp"
+#include"ledger/storage_unit/lane_identity.hpp"
+#include"ledger/storage_unit/lane_identity_protocol.hpp"
 #include"ledger/storage_unit/lane_connectivity_details.hpp"
 
 namespace fetch
@@ -13,55 +15,55 @@ namespace ledger
 class LaneController
 {
 public:
-  using connectivity_details_type = LaneConnectivityDetails;  
-  using client_type = fetch::service::ServiceClient< fetch::network::TCPClient >;
-  using shared_client_type = std::shared_ptr< client_type >;
-  using weak_client_type = std::shared_ptr< client_type >;    
+  using connectivity_details_type = LaneConnectivityDetails;
+  using client_type = fetch::network::TCPClient;  
+  using service_client_type = fetch::service::ServiceClient;
+  using shared_service_client_type = std::shared_ptr< service_client_type >;
+  using weak_service_client_type = std::shared_ptr< service_client_type >;    
   using client_register_type = fetch::network::ConnectionRegister< connectivity_details_type >;
   using network_manager_type = fetch::network::ThreadManager;
   using mutex_type = fetch::mutex::Mutex;
   using connection_handle_type = client_register_type::connection_handle_type;
+  using protocol_handler_type = service::protocol_handler_type;  
   
-  LaneController(client_register_type reg, network_manager_type &nm  )
-    : register_(reg), manager_(nm)
-  { }
+  LaneController(protocol_handler_type const &identity_protocol,
+    std::weak_ptr< LaneIdentity > const&identity,
+    client_register_type reg, network_manager_type nm  )
+    : identity_protocol_(identity_protocol), identity_(identity),
+      register_(reg), manager_(nm)
+  {
+
+  }
   
   
   /// External controls
   /// @{
   void RPCConnect(byte_array::ByteArray const& host, uint16_t const& port)
   {
-    std::cout << "Received connect command from remote" << std::endl;
-    
-    Connect(host, port);    
+    Connect(host, port);
   }
 
-  // TODO: Move
-  uint64_t Ping() 
-  {
-    return 1337;
-  }
   
-  void Authenticate(connection_handle_type const &client) 
-  {
-    auto details = register_.GetDetails(client);
-    {
-      std::lock_guard< mutex_type > lock( *details );
-      details->is_controller = true;
-    }
-  }
-  
-
   void Shutdown() 
   {
     TODO_FAIL("Needs to be implemented");
   }
 
+  void StartSync() 
+  {
+    TODO_FAIL("Needs to be implemented");
+  }
+
+  void StopSync() 
+  {
+    TODO_FAIL("Needs to be implemented");
+  }
+  
   int IncomingPeers() 
   {
-    std::lock_guard< mutex_type > lock_(clients_mutex_);
+    std::lock_guard< mutex_type > lock_(services_mutex_);
     int incoming = 0;
-    for(auto &peer: clients_) {
+    for(auto &peer: services_) {
       auto details = register_.GetDetails(peer.first);
       {
         if(details->is_peer && (!details->is_outgoing) ) {
@@ -75,9 +77,9 @@ public:
 
   int OutgoingPeers() 
   {
-    std::lock_guard< mutex_type > lock_(clients_mutex_);
+    std::lock_guard< mutex_type > lock_(services_mutex_);
     int outgoing = 0;
-    for(auto &peer: clients_) {
+    for(auto &peer: services_) {
       auto details = register_.GetDetails(peer.first);
       {
         if(details->is_peer && details->is_outgoing) {
@@ -88,27 +90,65 @@ public:
     }
     return outgoing;
   }  
+
   /// @}
 
   /// Internal controls
   /// @{
-  shared_client_type GetClient(connection_handle_type const &n) 
+  shared_service_client_type GetClient(connection_handle_type const &n) 
   {
-    std::lock_guard< mutex_type > lock_(clients_mutex_);
-    return clients_[n] ;
+    std::lock_guard< mutex_type > lock_(services_mutex_);
+    return services_[n] ;
   }
 
-  shared_client_type Connect(byte_array::ByteArray const& host, uint16_t const& port) {
-    std::cout << "Connecting " << host << " " << port << std::endl;
+  
+  shared_service_client_type Connect(byte_array::ByteArray const& host, uint16_t const& port) {
+    std::cout << identity_protocol_ << std::endl;
 
-    shared_client_type client = std::make_shared< client_type >(host, port, manager_);
+    shared_service_client_type client = register_.CreateServiceClient<client_type >( manager_, host, port);
+
+    auto ident = identity_.lock();
+    if(!ident) {
+      // TODO : Throw exception      
+      TODO_FAIL("Identity lost");
+    }
     
-//    shared_client_type client = register_.CreateClient<client_type>(host, port, manager_);
-    std::cout << "DONE!" << std::endl;
+
+    // Waiting for connection to be open
+    std::size_t n = 0;    
+    while( n < 10 ){
+      auto p = client->Call(identity_protocol_, LaneIdentityProtocol::PING);
+      if(p.Wait(100, false)) {
+        if(p.As<LaneIdentity::ping_type >() != LaneIdentity::PING_MAGIC) {
+          n = 10;          
+        }
+        break;        
+      }
+      ++n;
+    }
     
+    if(n >= 10) {
+      logger.Warn("Connection timed out - closing");
+      client->Close();
+      client.reset();
+      return nullptr;      
+    }
+    
+          
+    // Exchaning info
+    auto p = client->Call(identity_protocol_, LaneIdentityProtocol::GET_LANE_NUMBER);
+    p.Wait(1000);
+    if(p.As<LaneIdentity::lane_type>() != ident->GetLaneNumber() ) {
+      logger.Error("Could not connect to lane with different lane number: ", p.As<LaneIdentity::lane_type>(), " vs ", ident->GetLaneNumber() );
+      client->Close();
+      client.reset();
+      // TODO : Throw exception
+      return nullptr;        
+    }
+             
     {
-      std::lock_guard< mutex_type > lock_(clients_mutex_);
-      clients_[client->handle()] = client;
+      std::lock_guard< mutex_type > lock_(services_mutex_);
+      services_[client->handle()] = client;
     }
 
     // Setting up details such that the rest of the lane what kind of
@@ -119,16 +159,19 @@ public:
     details->is_peer = true;
     
     return client;
+    
   }
   
   /// @}
 private:
+  protocol_handler_type identity_protocol_;
+  std::weak_ptr< LaneIdentity > identity_;  
   client_register_type register_;
-  network_manager_type &manager_;
-  
-  mutex::Mutex clients_mutex_;  
-  std::unordered_map< connection_handle_type, weak_client_type > clients_;
-  std::vector< connection_handle_type > inactive_clients_;
+  network_manager_type manager_;
+
+  mutex::Mutex services_mutex_;  
+  std::unordered_map< connection_handle_type, shared_service_client_type > services_;
+  std::vector< connection_handle_type > inactive_services_;
   
   
 };

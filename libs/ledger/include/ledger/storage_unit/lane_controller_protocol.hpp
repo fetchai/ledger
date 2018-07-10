@@ -10,15 +10,21 @@ namespace ledger
 class LaneControllerProtocol : public service::Protocol
 {
 public:
+
   enum {
     CONNECT = 1,
     SHUTDOWN,
+    START_SYNC,
+    STOP_SYNC,
     INCOMING_PEERS,
     OUTGOING_PEERS
   };
 
+
+  
   LaneControllerProtocol(LaneController* ctrl) 
   {
+    
     this->Expose(CONNECT, ctrl, &LaneController::RPCConnect);
     this->Expose(SHUTDOWN, ctrl, &LaneController::Shutdown);
     this->Expose(INCOMING_PEERS, ctrl, &LaneController::IncomingPeers);

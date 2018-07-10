@@ -14,11 +14,18 @@ int main() {
 
   tm.Start();
   {
-    ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
+    fetch::network::TCPClient connection(tm);
+    connection.Connect("localhost", 8080);
+    
+    ServiceClient client(connection, tm);
     std::this_thread::sleep_for( std::chrono::milliseconds(100) );
   }
 
-  ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
+  fetch::network::TCPClient connection(tm);
+  connection.Connect("localhost", 8080);
+  
+  ServiceClient client(connection, tm);  
+
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );
   
   std::cout << client.Call( MYPROTO,GREET, "Fetch" ).As<std::string>( ) << std::endl;
@@ -94,23 +101,3 @@ int main() {
 
 }
 
-int xmain() {
-
-
-  fetch::network::ThreadManager tm(1);
-  tm.Start(); // Started thread manager before client construction!
-  ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
-
-  auto promise = client.Call( MYPROTO,SLOWFUNCTION, 2, 7 );
-
-  if(!promise.Wait(500)){ // wait 500 ms for a response
-    std::cout << "no response from node: " << client.is_alive() <<  std::endl;
-    promise = client.Call( MYPROTO,SLOWFUNCTION, 2, 7 );
-  } else {
-    std::cout << "response from node!" << std::endl << std::endl;
-  }
-
-  tm.Stop();
-
-  return 0;
-}

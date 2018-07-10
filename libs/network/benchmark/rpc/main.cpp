@@ -103,7 +103,12 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   std::size_t rpcCalls     = 0;
   std::size_t setupPayload = 0;
   fetch::network::ThreadManager tm;
-  ServiceClient<fetch::network::TCPClient> client(IP, port, tm);
+
+  fetch::network::TCPClient connection(tm);
+  connection.Connect(IP, port);
+  
+  ServiceClient client(connection, tm);  
+
   tm.Start();
 
   while(!client.is_alive())

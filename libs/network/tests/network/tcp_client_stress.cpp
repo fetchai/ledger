@@ -58,6 +58,21 @@ public:
     TCPClient(tmanager)
   {
     Connect(host, port);
+    this->OnMessage([](message_type const &value)
+      {
+        if(printingClientResponses)
+        {
+          std::cerr << "Client received: " << clientReceivedCount << std::endl;
+          for (std::size_t i = 0; i < std::min(std::size_t(30), value.size()); ++i)
+          {
+            std::cerr << value[i];
+          }
+          std::cerr << std::endl;
+        }
+        
+        clientReceivedCount++;
+      });
+    
   }
 
   ~Client()
@@ -65,25 +80,7 @@ public:
     TCPClient::Cleanup();
   }
 
-  void PushMessage(message_type const &value) override
-  {
-    if(printingClientResponses)
-    {
-      std::cerr << "Client received: " << clientReceivedCount << std::endl;
-      for (std::size_t i = 0; i < std::min(std::size_t(30), value.size()); ++i)
-      {
-        std::cerr << value[i];
-      }
-      std::cerr << std::endl;
-    }
 
-    clientReceivedCount++;
-  }
-
-  void ConnectionFailed() override
-  {
-
-  }
 };
 
 // Client takes a while to process
@@ -96,33 +93,30 @@ public:
     TCPClient(tmanager)
   {
     Connect(host, port);
+    this->OnMessage([](message_type const &value) 
+      {
+        if(printingClientResponses)
+        {
+          std::cerr << "Client received: " << clientReceivedCount << std::endl;
+          for (std::size_t i = 0; i < std::min(std::size_t(30), value.size()); ++i)
+          {
+            std::cerr << value[i];
+          }
+          std::cerr << std::endl;
+        }
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        clientReceivedCount++;
+      });
+    
   }
-
+  
   ~SlowClient()
   {
     TCPClient::Cleanup();
   }
 
-  void PushMessage(message_type const &value) override
-  {
-    if(printingClientResponses)
-    {
-      std::cerr << "Client received: " << clientReceivedCount << std::endl;
-      for (std::size_t i = 0; i < std::min(std::size_t(30), value.size()); ++i)
-      {
-        std::cerr << value[i];
-      }
-      std::cerr << std::endl;
-    }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    clientReceivedCount++;
-  }
-
-  void ConnectionFailed() override
-  {
-
-  }
 };
 
 std::vector<message_type> globalMessages{};
@@ -138,6 +132,14 @@ public:
     TCPClient(tmanager)
   {
     Connect(host, port);
+    this->OnMessage([](message_type const &value) {
+        {
+          std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+          globalMessages.push_back(std::move(value));
+        }
+        clientReceivedCount++;
+      });
+  
   }
 
   ~VerifyClient()
@@ -145,18 +147,7 @@ public:
     TCPClient::Cleanup();
   }
 
-  void PushMessage(message_type const &value) override
-  {
-    {
-      std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-      globalMessages.push_back(std::move(value));
-    }
-    clientReceivedCount++;
-  }
 
-  void ConnectionFailed() override
-  {
-  }
 };
 
 // Create random data for testing

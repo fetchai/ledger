@@ -12,7 +12,7 @@
 
 class NodeToNodeFunctionality : public fetch::service::HasPublicationFeed {
 public:
-  typedef fetch::service::ServiceClient< fetch::network::TCPClient > client_type;
+  typedef fetch::service::ServiceClient client_type;
   
   NodeToNodeFunctionality(fetch::network::ThreadManager thread_manager) :
     thread_manager_(thread_manager)
@@ -40,7 +40,10 @@ public:
 
     this->Publish(PeerToPeerFeed::CONNECTING, host, port);
 
-    connections_.push_back( std::make_shared< client_type >(host, port, thread_manager_ ) );
+    fetch::network::TCPClient connection(thread_manager_);
+    connection.Connect(host,port);
+    
+    connections_.push_back( std::make_shared< client_type >(connection, thread_manager_ ) );
   }
 
 

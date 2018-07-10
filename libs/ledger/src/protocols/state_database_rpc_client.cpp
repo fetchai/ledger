@@ -7,12 +7,14 @@ namespace ledger {
 
 StateDatabaseRpcClient::StateDatabaseRpcClient(byte_array::ConstByteArray const &host,
                                                uint16_t const &port,
-                                               network::ThreadManager const &thread_manager)
-  : ServiceClient(host, port, thread_manager) {
+                                               network::ThreadManager const &thread_manager) {
+  network::TCPClient connection(thread_manager);
+  connection.Connect(host, port);
+  service_.reset( new fetch::service::ServiceClient(connection, thread_manager ) );  
 }
 
 StateDatabaseRpcClient::document_type StateDatabaseRpcClient::GetOrCreate(resource_id_type const &rid) {
-  auto result_promise = Call(
+  auto result_promise = service_->Call(
     protocols::FetchProtocols::STATE_DATABASE,
     StateDatabaseRpcProtocol::RPC_ID_GET_OR_CREATE,
     rid
@@ -22,7 +24,7 @@ StateDatabaseRpcClient::document_type StateDatabaseRpcClient::GetOrCreate(resour
 }
 
 StateDatabaseRpcClient::document_type StateDatabaseRpcClient::Get(resource_id_type const &rid) {
-  auto result_promise = Call(
+  auto result_promise = service_->Call(
     protocols::FetchProtocols::STATE_DATABASE,
     StateDatabaseRpcProtocol::RPC_ID_GET,
     rid
@@ -32,7 +34,7 @@ StateDatabaseRpcClient::document_type StateDatabaseRpcClient::Get(resource_id_ty
 }
 
 void StateDatabaseRpcClient::Set(resource_id_type const &rid, byte_array::ConstByteArray const& value) {
-  auto result_promise = Call(
+  auto result_promise = service_->Call(
     protocols::FetchProtocols::STATE_DATABASE,
     StateDatabaseRpcProtocol::RPC_ID_SET,
     rid,
@@ -43,7 +45,7 @@ void StateDatabaseRpcClient::Set(resource_id_type const &rid, byte_array::ConstB
 }
 
 StateDatabaseRpcClient::bookmark_type StateDatabaseRpcClient::Commit(bookmark_type const& b) {
-  auto result_promise = Call(
+  auto result_promise = service_->Call(
     protocols::FetchProtocols::STATE_DATABASE,
     StateDatabaseRpcProtocol::RPC_ID_COMMIT,
     b
@@ -53,7 +55,7 @@ StateDatabaseRpcClient::bookmark_type StateDatabaseRpcClient::Commit(bookmark_ty
 }
 
 void StateDatabaseRpcClient::Revert(bookmark_type const &b) {
-  auto result_promise = Call(
+  auto result_promise = service_->Call(
     protocols::FetchProtocols::STATE_DATABASE,
     StateDatabaseRpcProtocol::RPC_ID_REVERT,
     b

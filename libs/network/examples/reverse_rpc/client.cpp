@@ -60,8 +60,11 @@ int main(int argc, char const** argv)
   params.Parse(argc, argv);
 
   // Client setup
-  fetch::network::ThreadManager tm;  
-  ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
+  fetch::network::ThreadManager tm;
+  fetch::network::TCPClient connection(tm);
+  connection.Connect( "localhost", 8080 );
+  ServiceClient client( connection, tm);
+  
   AEAProtocol aea_prot;
 
   for(std::size_t i = 0; i < params.arg_size(); ++i) {

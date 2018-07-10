@@ -13,13 +13,14 @@ namespace ledger
 class LaneRemoteControl 
 {
 public:
-  typedef service::ServiceClient< fetch::network::TCPClient > client_type;
-  typedef std::shared_ptr< client_type > shared_client_type;
-  typedef std::weak_ptr< client_type > weak_client_type;  
+  typedef service::ServiceClient service_type;
+  typedef std::shared_ptr< service_type > shared_service_type;
+  typedef std::weak_ptr< service_type > weak_service_type;  
   using lane_index_type = uint32_t;
 
   enum {
-    PROTOCOL_ID = LaneService::CONTROLLER   
+    CONTROLLER_PROTOCOL_ID = LaneService::CONTROLLER,
+    IDENTITY_PROTOCOL_ID = LaneService::IDENTITY
   };
   
   LaneRemoteControl() { }
@@ -30,7 +31,7 @@ public:
   
   ~LaneRemoteControl() = default;  
 
-  void AddClient(lane_index_type const &lane, weak_client_type const &client) 
+  void AddClient(lane_index_type const &lane, weak_service_type const &client) 
   {
     clients_[lane] = client;    
   }
@@ -41,11 +42,10 @@ public:
     if(clients_.find(lane) == clients_.end() ) {
       TODO_FAIL("Client not found");
     }
-
     
     auto ptr = clients_[lane].lock();
     if(ptr) {
-      auto p = ptr->Call(PROTOCOL_ID,LaneControllerProtocol::CONNECT, host, port );
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,LaneControllerProtocol::CONNECT, host, port );
       p.Wait();
       
     }
@@ -59,10 +59,28 @@ public:
     
     auto ptr = clients_[lane].lock();
     if(ptr) {
-      auto p = ptr->Call(PROTOCOL_ID,LaneControllerProtocol::SHUTDOWN);
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,LaneControllerProtocol::SHUTDOWN);
       p.Wait();      
     }
   }
+
+  uint32_t GetLaneNumber(lane_index_type const &lane) 
+  {
+    if(clients_.find(lane) == clients_.end() ) {
+      TODO_FAIL("Client not found");
+    }
+    
+    auto ptr = clients_[lane].lock();
+    if(ptr) {
+      auto p = ptr->Call(IDENTITY_PROTOCOL_ID, LaneIdentityProtocol::GET_LANE_NUMBER);
+      return p.As< uint32_t >();
+    }
+
+    TODO_FAIL("client connection has died");
+
+    return 0;        
+  }
+
   
   int IncomingPeers(lane_index_type const &lane) 
   {
@@ -72,7 +90,7 @@ public:
     
     auto ptr = clients_[lane].lock();
     if(ptr) {
-      auto p = ptr->Call(PROTOCOL_ID,LaneControllerProtocol::INCOMING_PEERS);
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,LaneControllerProtocol::INCOMING_PEERS);
       return p.As< int >();
     }
 
@@ -89,7 +107,7 @@ public:
         
     auto ptr = clients_[lane].lock();
     if(ptr) {
-      auto p = ptr->Call(PROTOCOL_ID,LaneControllerProtocol::OUTGOING_PEERS);
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,LaneControllerProtocol::OUTGOING_PEERS);
       return p.As< int >();
     }
 
@@ -109,7 +127,7 @@ public:
   }
   
 private:
-  std::unordered_map< lane_index_type, weak_client_type > clients_;
+  std::unordered_map< lane_index_type, weak_service_type > clients_;
   
 };
 

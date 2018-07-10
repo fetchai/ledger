@@ -23,7 +23,7 @@ class NodeDirectory
 {
 public:
 
-  using clientType = service::ServiceClient<network::TCPClient>;
+  using clientType = service::ServiceClient;
 
   NodeDirectory(network::ThreadManager tm) :
   tm_{tm}
@@ -48,7 +48,12 @@ public:
     LOG_STACK_TRACE_POINT;
     if (serviceClients_.find(endpoint) == serviceClients_.end())
     {
-      auto client = new clientType {endpoint.IP(), endpoint.TCPPort(), tm_};
+      fetch::network::TCPClient connection(tm_);
+      connection.Connect(endpoint.IP(), endpoint.TCPPort());
+      
+      auto client = new clientType(connection, tm_);  
+      
+
       serviceClients_[endpoint] = client;
     }
   }
