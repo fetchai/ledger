@@ -8,20 +8,19 @@
 #include"core/commandline/cli_header.hpp"
 #include"core/commandline/parameter_parser.hpp"
 #include"ledger/chain/transaction.hpp"
-
+#include"ledger/storage_unit/lane_service.hpp"
 #include"ledger/storage_unit/storage_unit_bundled_service.hpp"
 
 #include<sstream>
 using namespace fetch;
 using namespace fetch::ledger;
-
 int main(int argc, char const **argv) 
 {  
   // Reading config
   commandline::ParamsParser params;
   params.Parse(argc, argv);
   uint32_t lane_count =  params.GetParam<uint32_t>("lane-count", 8);
-  uint16_t port =  params.GetParam<uint16_t>("port", 1);
+  uint16_t port =  params.GetParam<uint16_t>("port", 8080);
   std::string dbdir =  params.GetParam<std::string>("db-dir", "db1/");      
   int log = params.GetParam<int>("showlog", 0);
   if(log == 0) {
@@ -33,8 +32,10 @@ int main(int argc, char const **argv)
 
   // Setting up
   fetch::network::ThreadManager tm(8);
-  StorageUnitBundledService service(dbdir, lane_count, port, tm);    
   tm.Start();
+  StorageUnitBundledService service;
+  service.Setup(dbdir, lane_count, port, tm);    
+
 
 
   // Running until enter

@@ -17,15 +17,14 @@ namespace ledger
 class StorageUnitBundledService 
 {
 public:
-  StorageUnitBundledService(std::string const &dbdir, uint32_t const& lanes, uint16_t const& port, fetch::network::ThreadManager const &tm) {
+  StorageUnitBundledService() = default;  
+  ~StorageUnitBundledService() = default;
+
+  void Setup(std::string const &dbdir, uint32_t const& lanes, uint16_t const& port, fetch::network::ThreadManager const &tm) {
     for(uint32_t i = 0 ; i < lanes ; ++i ) {
       lanes_.push_back(std::make_shared< LaneService > (dbdir, uint32_t(i), lanes, uint16_t(port + i), tm ) );
     }
-
   }
-  
-  ~StorageUnitBundledService() = default;
-
  
 private:
   std::vector< std::shared_ptr< LaneService > > lanes_;
