@@ -6,11 +6,12 @@
 #include"core/byte_array/tokenizer/tokenizer.hpp"
 #include"core/commandline/parameter_parser.hpp"
 #include"core/byte_array/consumers.hpp"
+#include"core/byte_array/decoders.hpp"
 #include"core/json/document.hpp"
 #include"ledger/chain/transaction.hpp"
 #include"ledger/storage_unit/storage_unit_client.hpp"
 #include"core/string/trim.hpp"
-
+#include"ledger/chain/helper_functions.hpp"
 using namespace fetch;
 
 using namespace fetch::ledger;
@@ -24,7 +25,6 @@ enum {
   TOKEN_CATCH_ALL = 12
 };
 
-
   
 int main(int argc, char const **argv) {
   // Parameters
@@ -36,8 +36,7 @@ int main(int argc, char const **argv) {
   std::cout << std::endl;
   fetch::commandline::DisplayCLIHeader("Storage Unit Client");
   std::cout << "Connecting with " << lane_count << " lanes." << std::endl;
-    
-  
+      
   // Client setup
   fetch::network::ThreadManager tm(8);
   StorageUnitClient client(tm);
@@ -48,8 +47,6 @@ int main(int argc, char const **argv) {
     client.AddLaneConnection< fetch::network::TCPClient >("localhost", uint16_t(8080 + i)) ;
   }
   
-
-
   // Taking commands
   std::string line = "";
   Tokenizer tokenizer;
@@ -78,11 +75,38 @@ int main(int argc, char const **argv) {
 
     
       if(command.size() > 0) {
-        if(command[0] == "addtx") {
-          if(command.size() == 1) {
-            std::cout << "TODO: Implement" << std::endl;
+        if(command[0] == "gettx") {
+          if(command.size() != 2) {
+            std::cout << "usage: gettx \"[hash]\"" << std::endl;
           } else {
-            std::cout << "usage: add" << std::endl;
+            auto enckey = command[1].SubArray(1, command[1].size() -2);
+            auto key = byte_array::FromBase64(enckey);
+            
+            chain::Transaction tx;
+            client.GetTransaction( key, tx );
+            std::cout << std::endl;
+            
+            std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
+            std::cout << "Signature: " << byte_array::ToBase64(tx.signature()) << std::endl;    
+            std::cout << "Fee: " << tx.summary().fee << std::endl;
+            std::cout << std::endl;              
+          }
+          
+          
+        }
+        else if(command[0] == "addtx") {
+          if(command.size() == 1) {
+            chain::Transaction tx = chain::MutableTransaction::MakeTransaction( chain::RandomTransaction() );
+            std::cout << std::endl;            
+            std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
+            std::cout << "Signature: " << byte_array::ToBase64(tx.signature()) << std::endl;    
+            std::cout << "Fee: " << tx.summary().fee << std::endl;
+            std::cout << std::endl;
+            
+            client.AddTransaction( tx );
+            
+          } else {
+            std::cout << "usage: addtx" << std::endl;
           }
         } else if(command[0] == "get") {
           if(command.size() == 2) {

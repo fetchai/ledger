@@ -10,6 +10,7 @@
 #include"ledger/storage_unit/lane_connectivity_details.hpp"
 
 #include"storage/document_store_protocol.hpp"
+#include"storage/object_store_protocol.hpp"
 #include"ledger/chain/transaction.hpp"
 
 
@@ -93,6 +94,28 @@ public:
     
     lanes_[lane] = client;
   }
+
+
+  void AddTransaction(chain::Transaction const &tx) 
+  {
+    using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
+    
+    auto res = fetch::storage::ResourceID( tx.digest() ) ;
+    std::size_t lane = res.lane( log2_lanes_ );
+    auto promise = lanes_[ lane ]->Call(LaneService::TX_STORE, protocol::SET, res, tx );
+  }
+
+
+  void GetTransaction(byte_array::ByteArray const &digest, chain::Transaction &tx) 
+  {
+    using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
+    
+    auto res = fetch::storage::ResourceID( digest ) ;
+    std::size_t lane = res.lane( log2_lanes_ );
+    auto promise = lanes_[ lane ]->Call(LaneService::TX_STORE, protocol::GET, res );
+    tx = promise.As< chain::Transaction >();    
+  }
+  
   
   
   byte_array::ByteArray Get(byte_array::ByteArray const &key) 
@@ -162,6 +185,7 @@ public:
     }
   }  
 
+  
   byte_array::ByteArray Hash() 
   {
     //TODO
@@ -173,11 +197,6 @@ public:
     id_ = id;
   }
 
-  void AddTransaction(chain::Transaction &tx) 
-  {
-//    tx.UpdateDigests();
-    
-  }
 
   
   byte_array::ByteArray const &id() {
