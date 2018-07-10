@@ -20,7 +20,6 @@ struct TransactionSummary {
   std::vector<group_type> groups;
   digest_type             transaction_hash;
   uint64_t                fee{0};
-  uint64_t                short_id;
 };
 
 template <typename T>

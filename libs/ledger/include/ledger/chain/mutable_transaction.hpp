@@ -24,9 +24,15 @@ public:
 
   using super_type::UpdateDigest;
 
-  template <typename T>
-  friend inline Transaction MakeTransaction(MutableTransaction &&);
+  static Transaction MakeTransaction(MutableTransaction &&);
 };
+
+// Conversion to Transaction
+Transaction MutableTransaction::MakeTransaction(MutableTransaction &&trans)
+{
+  Transaction ret(std::move(trans));
+  return ret;
+}
 
 }
 }

@@ -14,8 +14,12 @@ class Transaction : public BasicTransaction
 public:
   typedef BasicTransaction super_type;
 
-  Transaction() {}
-  explicit Transaction(super_type super) : super_type(super) {}
+  Transaction() = default;
+
+  explicit Transaction(super_type &&super) : super_type(super) 
+  {
+    UpdateDigest();
+  }
 
   bool operator==(const BasicTransaction &rhs) const { return super_type::operator==(rhs); }
   bool operator<(const BasicTransaction &rhs) const { return super_type::operator<(rhs);  }

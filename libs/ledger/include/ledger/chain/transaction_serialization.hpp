@@ -7,13 +7,6 @@
 namespace fetch {
 namespace chain {
 
-// Conversion to Transaction
-Transaction MakeTransaction(MutableTransaction &&trans)
-{
-  trans.UpdateDigest();
-  Transaction ret(std::move(trans));
-  return ret;
-}
 
 template <typename T>
 inline void Serialize(T &serializer, Transaction const &b)
