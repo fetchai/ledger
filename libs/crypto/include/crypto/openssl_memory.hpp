@@ -22,74 +22,74 @@ namespace memory {
         clearing   //* XXX_clear_free(...)
     };
 
-    namespace {
+    namespace detail {
 
         template <typename T, const eDeleteStrategy deleteStrategy = eDeleteStrategy::canonical>
         using FunctionType = void(*)(T*);
 
         template <typename T, const eDeleteStrategy deleteStrategy = eDeleteStrategy::canonical>
         struct DeleterFunction {
-            static constexpr FunctionType<T, deleteStrategy> default_fnc();
-            static constexpr FunctionType<T, deleteStrategy> deleterFunction = default_fnc();
+            static constexpr FunctionType<T, deleteStrategy> default_fnc(); 
+            static constexpr FunctionType<T, deleteStrategy> functionPtr = default_fnc();
         };
 
         template<>
         struct DeleterFunction<BIGNUM> {
-            static constexpr FunctionType<BIGNUM> deleterFunction = &BN_free;
+            static constexpr FunctionType<BIGNUM> functionPtr = &BN_free;
         };
 
         template<>
         struct DeleterFunction<BIGNUM, eDeleteStrategy::clearing> {
-            static constexpr FunctionType<BIGNUM, eDeleteStrategy::clearing> deleterFunction = &BN_clear_free;
+            static constexpr FunctionType<BIGNUM, eDeleteStrategy::clearing> functionPtr = &BN_clear_free;
         };
 
         template<>
         struct DeleterFunction<BN_CTX> {
-            static constexpr FunctionType<BN_CTX> deleterFunction = &BN_CTX_free;
+            static constexpr FunctionType<BN_CTX> functionPtr = &BN_CTX_free;
         };
 
         template<>
         struct DeleterFunction<EC_POINT> {
-            static constexpr FunctionType<EC_POINT> deleterFunction = &EC_POINT_free;
+            static constexpr FunctionType<EC_POINT> functionPtr = &EC_POINT_free;
         };
 
         template<>
         struct DeleterFunction<EC_POINT, eDeleteStrategy::clearing> {
-            static constexpr FunctionType<EC_POINT, eDeleteStrategy::clearing> deleterFunction = &EC_POINT_clear_free;
+            static constexpr FunctionType<EC_POINT, eDeleteStrategy::clearing> functionPtr = &EC_POINT_clear_free;
         };
 
         template<>
         struct DeleterFunction<EC_KEY> {
-            static constexpr FunctionType<EC_KEY> deleterFunction = &EC_KEY_free;
+            static constexpr FunctionType<EC_KEY> functionPtr = &EC_KEY_free;
         };
 
         template<>
         struct DeleterFunction<EC_GROUP> {
-            static constexpr FunctionType<EC_GROUP> deleterFunction = &EC_GROUP_free;
+            static constexpr FunctionType<EC_GROUP> functionPtr = &EC_GROUP_free;
         };
 
         template<>
         struct DeleterFunction<EC_GROUP, eDeleteStrategy::clearing> {
-            static constexpr FunctionType<EC_GROUP, eDeleteStrategy::clearing> deleterFunction = &EC_GROUP_clear_free;
+            static constexpr FunctionType<EC_GROUP, eDeleteStrategy::clearing> functionPtr = &EC_GROUP_clear_free;
         };
     }
 
     template <typename T
-             , const eDeleteStrategy deleteStrategy
-             , typename T_DeleterFunction = DeleterFunction<T, deleteStrategy>>
+             , const eDeleteStrategy deleteStrategy = eDeleteStrategy::canonical
+             , typename T_DeleterFunction = detail::DeleterFunction<T, deleteStrategy>>
     struct OpenSSLDeleter {
         using DeleterFunction = T_DeleterFunction;
 
         constexpr OpenSSLDeleter() noexcept = default;
 
         void operator() (T* ptr) const {
-            (*DeleterFunction::deleterFunction)(ptr);
+            (*DeleterFunction::functionPtr)(ptr);
         }
     };
 
     template <typename T
-            , const eDeleteStrategy deleteStrategy
-            , typename T_DeleterFunction = DeleterFunction<T, deleteStrategy>>
+            , const eDeleteStrategy deleteStrategy = eDeleteStrategy::canonical
+            , typename T_DeleterFunction = detail::DeleterFunction<T, deleteStrategy>>
     using ossl_unique_ptr = std::unique_ptr<T, OpenSSLDeleter<T, deleteStrategy, T_DeleterFunction>>;
 
     //template <>
