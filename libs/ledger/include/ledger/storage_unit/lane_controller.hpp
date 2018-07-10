@@ -170,7 +170,7 @@ private:
   network_manager_type manager_;
 
   mutex::Mutex services_mutex_;  
-  std::unordered_map< connection_handle_type, weak_service_client_type > services_;
+  std::unordered_map< connection_handle_type, shared_service_client_type > services_;
   std::vector< connection_handle_type > inactive_services_;
   
   

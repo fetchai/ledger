@@ -20,6 +20,7 @@ public:
   typedef std::weak_ptr< AbstractConnection > weak_connection_type;
   typedef service::ServiceClient service_client_type;
   typedef std::shared_ptr< service::ServiceClient > shared_service_client_type;
+  typedef std::weak_ptr< service::ServiceClient > weak_service_client_type;  
   
   typedef G details_type;
   
@@ -51,7 +52,7 @@ public:
 
     {
       std::lock_guard< mutex::Mutex > lock( connections_lock_ );      
-      services_[ ptr->handle() ] = service;
+      AddService( ptr->handle(), service);
     }
     
     return service;
@@ -65,6 +66,8 @@ public:
 
   void Leave(connection_handle_type const &id) override 
   {
+    RemoveService(id);
+    
     std::lock_guard< mutex::Mutex > lock( connections_lock_ );
     auto it =connections_.find( id );
     if( it != connections_.end() ) {
@@ -87,6 +90,12 @@ public:
       details_[ ptr->handle() ] = std::make_shared<LockableDetails>();
     }
   }
+
+  weak_service_client_type GetService(connection_handle_type const &i) 
+  {
+    std::lock_guard< mutex::Mutex > lock( connections_lock_ );
+    return details_[i];
+  }
   
   std::shared_ptr< LockableDetails > GetDetails(connection_handle_type const &i) 
   {
@@ -97,7 +106,7 @@ public:
 private:
   mutable mutex::Mutex connections_lock_;
   std::unordered_map< connection_handle_type, weak_connection_type > connections_;
-  std::unordered_map< connection_handle_type, shared_service_client_type > services_;  
+
   mutable mutex::Mutex details_lock_;
   std::unordered_map< connection_handle_type, std::shared_ptr< LockableDetails > >  details_;
   
@@ -113,6 +122,8 @@ public:
   typedef std::shared_ptr< ConnectionRegisterImpl<G> > shared_implementation_pointer_type;
   typedef typename ConnectionRegisterImpl<G>::LockableDetails lockable_details_type;
   typedef std::shared_ptr< service::ServiceClient > shared_service_client_type;
+  typedef std::weak_ptr< service::ServiceClient > weak_service_client_type;
+  typedef AbstractConnectionRegister::service_map_type  service_map_type;
   
   ConnectionRegister () 
   {
@@ -139,8 +150,18 @@ public:
   {
     return ptr_->GetDetails(i);
   }
-  
 
+  weak_service_client_type GetService(connection_handle_type &&i) 
+  {
+    return ptr_->GetService(std::move(i));
+  }  
+  
+  
+  void WithServices(std::function< void(service_map_type const &) > const &f) const
+  {
+    ptr_->WithServices(f);
+  }
+  
   shared_implementation_pointer_type pointer() { return ptr_; }  
 private:
   shared_implementation_pointer_type ptr_;

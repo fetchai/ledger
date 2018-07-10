@@ -34,7 +34,7 @@ public:
   using identity_protocol_type = LaneIdentityProtocol;   
   using connection_handle_type = client_register_type::connection_handle_type; 
   using super_type = service::ServiceServer< fetch::network::TCPServer >;
-  using tx_sync_protocol_type = storage::ObjectStoreSyncronisationProtocol< fetch::chain::Transaction >;
+  using tx_sync_protocol_type = storage::ObjectStoreSyncronisationProtocol< client_register_type, fetch::chain::Transaction >;
   
   
   enum {
@@ -71,7 +71,7 @@ public:
     this->Add(TX_STORE, tx_store_protocol_ );
 
     // TX Sync
-    tx_sync_protocol_ = new tx_sync_protocol_type( tx_store_ );
+    tx_sync_protocol_ = new tx_sync_protocol_type( TX_STORE_SYNC, register_, tm, tx_store_ );
     this->Add(TX_STORE_SYNC, tx_store_protocol_ );    
     
        
@@ -86,6 +86,9 @@ public:
     controller_ = new controller_type(IDENTITY, identity_, register_, tm);    
     controller_protocol_ = new controller_protocol_type(controller_);
     this->Add(CONTROLLER, controller_protocol_ );    
+
+
+    tx_sync_protocol_->Start();
     
   }
   
