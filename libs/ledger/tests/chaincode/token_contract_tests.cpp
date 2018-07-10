@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <random>
+#include <ledger/chain/mutable_transaction.hpp>
 
 using ::testing::_;
 using namespace fetch;
@@ -56,12 +57,15 @@ protected:
         << " }";
 
     // create the transaction
-    chain::Transaction tx;
+    chain::MutableTransaction tx;
     tx.set_contract_name("fetch.token.wealth");
     tx.set_data(oss.str());
 
     // dispatch the transaction
-    auto status = contract_->DispatchTransaction(tx.contract_name().name(), tx);
+    auto status = contract_->DispatchTransaction(
+      tx.contract_name().name(),
+      chain::MutableTransaction::MakeTransaction(std::move(tx))
+    );
 
     return (Contract::Status::OK == status);
   }
@@ -87,12 +91,12 @@ protected:
         << " }";
 
     // create the transaction
-    chain::Transaction tx;
+    chain::MutableTransaction tx;
     tx.set_contract_name("fetch.token.transfer");
     tx.set_data(oss.str());
 
     // dispatch the transaction
-    auto status = contract_->DispatchTransaction(tx.contract_name().name(), tx);
+    auto status = contract_->DispatchTransaction(tx.contract_name().name(), chain::MutableTransaction::MakeTransaction(std::move(tx)));
 
     return (Contract::Status::OK == status);
   }

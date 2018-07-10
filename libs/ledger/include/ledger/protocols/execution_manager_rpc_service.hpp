@@ -4,7 +4,7 @@
 #include "network/service/server.hpp"
 #include "network/protocols/fetch_protocols.hpp"
 #include "ledger/execution_manager.hpp"
-#include "ledger/protocols/execution_manager_protocol.hpp"
+#include "ledger/protocols/execution_manager_rpc_protocol.hpp"
 
 #include <memory>
 
@@ -14,12 +14,16 @@ namespace ledger {
 class ExecutionManagerRpcService : public fetch::service::ServiceServer<fetch::network::TCPServer> {
 public:
 
-  static const std::size_t DEFAULT_NUM_EXECUTORS = 8;
-
   using manager_type = std::shared_ptr<ExecutionManager>;
+  using executor_factory_type = ExecutionManager::executor_factory_type;
 
-  ExecutionManagerRpcService(uint16_t port, thread_manager_type const &thread_manager)
-    : ServiceServer(port, thread_manager) {
+  ExecutionManagerRpcService(uint16_t port,
+                             thread_manager_type const &thread_manager,
+                             std::size_t num_executors,
+                             executor_factory_type const &factory)
+    : ServiceServer(port, thread_manager)
+    , manager_(new ExecutionManager(num_executors, factory)) {
+
     this->Add(fetch::protocols::FetchProtocols::EXECUTION_MANAGER, &protocol_);
     manager_->Start();
   }
@@ -35,8 +39,8 @@ public:
 
 private:
 
-  manager_type manager_{ std::make_shared<ExecutionManager>(std::size_t(DEFAULT_NUM_EXECUTORS)) };
-  ExecutionManagerProtocol protocol_{*manager_};
+  manager_type manager_;
+  ExecutionManagerRpcProtocol protocol_{*manager_};
 };
 
 

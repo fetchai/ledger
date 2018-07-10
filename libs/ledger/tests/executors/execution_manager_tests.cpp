@@ -1,0 +1,149 @@
+#include "ledger/execution_manager.hpp"
+#include "core/logger.hpp"
+
+#include "mock_executor.hpp"
+#include "test_block.hpp"
+#include "block_configs.hpp"
+
+#include <gmock/gmock.h>
+
+#include <iostream>
+#include <iomanip>
+#include <random>
+#include <chrono>
+#include <thread>
+#include <algorithm>
+
+
+class ExecutionManagerTests : public ::testing::TestWithParam<BlockConfig> {
+protected:
+  using underlying_executor_type = FakeExecutor;
+  using shared_executor_type = std::shared_ptr<underlying_executor_type>;
+  using executor_list_type = std::vector<shared_executor_type>;
+  using underlying_execution_manager_type = fetch::ledger::ExecutionManager;
+  using executor_factory_type = underlying_execution_manager_type::executor_factory_type;
+  using execution_manager_type = std::shared_ptr<underlying_execution_manager_type>;
+
+  void SetUp() override {
+    auto const &config = GetParam();
+
+    executors_.clear();
+
+    // create the manager
+    manager_ = std::make_shared<underlying_execution_manager_type>(config.executors, [this]() {
+      return CreateExecutor();
+    });
+  }
+
+  shared_executor_type CreateExecutor() {
+    shared_executor_type executor = std::make_shared<underlying_executor_type>();
+    executors_.push_back(executor);
+    return executor;
+  }
+
+  bool WaitUntilExecutionComplete(std::size_t num_executions, std::size_t iterations = 100) {
+    bool success = false;
+
+    for (std::size_t i = 0; i < iterations; ++i) {
+
+      // the manager must be idle and have completed the required executions
+      if (manager_->IsIdle() && (manager_->completed_executions() >= num_executions)) {
+        success = true;
+        break;
+      }
+
+      std::this_thread::sleep_for(
+        std::chrono::milliseconds{100}
+      );
+    }
+
+    return success;
+  }
+
+  std::size_t GetNumExecutedTransaction() {
+    std::size_t total = 0;
+
+    for (auto const &executor : executors_) {
+      total += executor->GetNumExecutions();
+    }
+
+    return total;
+  }
+
+  bool CheckForExecutionOrder() {
+    using HistoryElement = underlying_executor_type::HistoryElement;
+    using history_cache_type = underlying_executor_type::history_cache_type;
+
+    bool success = false;
+
+    // Step 1. Collect all the data from each of the executors
+    history_cache_type history;
+    history.reserve(GetNumExecutedTransaction());
+    for (auto &exec : executors_) {
+      exec->CollectHistory(history);
+    }
+
+    // Step 2. Sort the elements by timestamp
+    std::sort(history.begin(),
+              history.end(),
+              [](HistoryElement const &a, HistoryElement const &b) {
+                return a.timestamp < b.timestamp;
+              });
+
+    // Step 3. Check that the start time
+    if (!history.empty()) {
+      std::size_t current_slice = 0;
+
+      success = true;
+      for (std::size_t i = 1; i < history.size(); ++i) {
+        auto const &current = history[i];
+
+        if (current.slice == current_slice) {
+          continue; // same slice
+        } else if (current.slice > current_slice) {
+          current_slice = current.slice;
+          continue; // next slice
+        } else {
+          success = false;
+          break;
+        }
+      }
+    }
+
+    return success;
+  }
+
+  execution_manager_type manager_;
+  executor_list_type executors_;
+};
+
+
+TEST_P(ExecutionManagerTests, CheckStuff) {
+  BlockConfig const &config = GetParam();
+
+  // generate a block with the desired lane and slice configuration
+  auto block = TestBlock::Generate(config.lanes, config.slices);
+
+  // start the execution manager
+  manager_->Start();
+
+  // execute the block
+  ASSERT_TRUE(
+    manager_->Execute(block.hash,
+                      block.hash,
+                      block.index,
+                      block.map,
+                      block.num_lanes,
+                      block.num_slices)
+  );
+
+  // wait for the manager to become idle again
+  ASSERT_TRUE(WaitUntilExecutionComplete(block.index.size()));
+  ASSERT_EQ(GetNumExecutedTransaction(), block.index.size());
+  ASSERT_TRUE(CheckForExecutionOrder());
+
+  // stop the ex
+  manager_->Stop();
+}
+
+INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerTests, ::testing::ValuesIn(BlockConfig::MAIN_SET),);

@@ -20,6 +20,9 @@ struct TransactionSummary {
   std::vector<group_type> groups;
   digest_type             transaction_hash;
   uint64_t                fee{0};
+
+  // TODO: (EJF) Remove but linked to optimisation
+  std::size_t short_id;
 };
 
 template <typename T>
@@ -33,12 +36,33 @@ void Deserialize(T &serializer, TransactionSummary &b) {
 }
 
 class BasicTransaction {
- public:
+public:
   typedef crypto::SHA256                  hasher_type;
   typedef TransactionSummary::digest_type digest_type;
 
-  BasicTransaction() {}
+  std::vector<group_type> const &groups() const {
+    return summary_.groups;
+  }
 
+  TransactionSummary const &summary() const {
+    return summary_;
+  }
+
+  byte_array::ConstByteArray const &data() const {
+    return data_;
+  }
+
+  byte_array::ConstByteArray const &signature() const {
+    return signature_;
+  }
+
+  ledger::Identifier const &contract_name() const {
+    return contract_name_;
+  }
+
+protected:
+
+  BasicTransaction() = default;
   BasicTransaction(BasicTransaction const &rhs) {
     summary_ = rhs.summary();
     summary_.transaction_hash = rhs.summary().transaction_hash.Copy();
@@ -79,39 +103,6 @@ class BasicTransaction {
     return *this;
   }
 
-protected:
-
-  // Const only
-  bool operator==(const BasicTransaction &rhs) const {
-    return digest() == rhs.digest();
-  }
-
-  bool operator<(const BasicTransaction &rhs) const {
-
-    return digest() < rhs.digest();
-  }
-
-  std::vector<group_type> const &groups() const { return summary_.groups; }
-
-  byte_array::ConstByteArray const &signature() const {
-    return signature_;
-  }
-
-  ledger::Identifier const &contract_name() const {
-    return contract_name_;
-  }
-
-  digest_type const &digest() const {
-    return summary_.transaction_hash;
-  }
-
-  byte_array::ConstByteArray data() const { return data_; };
-
-  TransactionSummary const &summary() const {
-    return summary_;
-  }
-
-  // Non const only
   enum { VERSION = 1 };
 
   void UpdateDigest() {
@@ -132,31 +123,22 @@ protected:
     summary_.groups.push_back(res);
   }
 
-  void set_contract_name(std::string const &name) {
-    contract_name_.Parse(name);
+  void set_summary(TransactionSummary const &summary) {
+    summary_ = summary;
   }
 
   void set_data(byte_array::ConstByteArray const &data) {
     data_ = data;
   }
 
-  void set_summary(TransactionSummary const &summary) {
-    summary_ = summary;
-  }
-
   void set_signature(byte_array::ConstByteArray sig) {
     signature_ = sig;
   }
 
-  ledger::Identifier &contract_name() {
-    return contract_name_;
+  void set_contract_name(std::string const &name) {
+    contract_name_.Parse(name);
   }
 
-  byte_array::ConstByteArray &signature() {
-    return signature_;
-  }
-
-private:
   TransactionSummary         summary_;
   byte_array::ConstByteArray data_;
   byte_array::ConstByteArray signature_;

@@ -12,9 +12,10 @@ template <typename T>
 inline void Serialize(T &serializer, Transaction const &b)
 {
   serializer << uint16_t(b.VERSION);
-  serializer << b.summary();
-  serializer << b.signature();
-  serializer << b.contract_name().full_name();
+  serializer << b.summary_;
+  serializer << b.data_;
+  serializer << b.signature_;
+  serializer << b.contract_name_.full_name();
 }
 
 template <typename T>
@@ -23,15 +24,13 @@ inline void Deserialize(T &serializer, Transaction &b)
   uint16_t version;
   serializer >> version; // TODO: (`HUT`) : set version
 
-  TransactionSummary summary;
-  serializer >> summary;
-  b.set_summary(summary);
-
-  serializer >> b.signature();
+  serializer >> b.summary_;
+  serializer >> b.data_;
+  serializer >> b.signature_;
 
   std::string name;
   serializer >> name;
-  b.contract_name().Parse(std::move(name));
+  b.contract_name_.Parse(std::move(name));
 }
 
 }

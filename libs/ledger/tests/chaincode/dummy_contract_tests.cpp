@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <iostream>
+#include <ledger/chain/mutable_transaction.hpp>
 
 using ::testing::_;
 using namespace fetch;
@@ -58,9 +59,9 @@ TEST_F(DummyContractTests, CheckDispatch) {
     .Times(0);
 
   // create the sample transaction
-  chain::Transaction tx;
+  chain::MutableTransaction tx;
   tx.set_contract_name("fetch.dummy.wait");
 
-  contract_->DispatchTransaction(tx.contract_name().name(), tx);
+  contract_->DispatchTransaction(tx.contract_name().name(), chain::MutableTransaction::MakeTransaction(std::move(tx)));
   EXPECT_EQ(contract_->GetTransactionCounter("wait"), 1u);
 }

@@ -143,7 +143,6 @@ public:
       {
         for(auto &j : blockArray_[i])
         {
-          j.UpdateDigest();
           ret.insert(j);
           tempCounter++;
         }
@@ -162,8 +161,6 @@ public:
 
     for (auto &i : trans)
     {
-      //TODO: The const_cast is just quick & dirty fixsince compiler things that `transaction_type` typedef-ed type ammounts to `const fetch::chain::Transaction`, what feels like mess with typedefs or mess directly with the `fetch::chain::Transaction` type (it ifeels like it might be typedef to real `fetch::chain::Transaction` type).
-      const_cast<transaction_type&>(i).UpdateDigest();
       hash = hash ^ static_cast<uint32_t>(hashStruct(i.summary().transaction_hash));
     }
 

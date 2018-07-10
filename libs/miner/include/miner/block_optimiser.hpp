@@ -214,7 +214,7 @@ public:
   void Init(std::size_t const &lane_count = 16,
     int strategy = 0,    
     std::size_t batch_size = std::size_t(- 1),
-    double penalty = 10) 
+    uint64_t penalty = 10)
   {
 
     best_solution_energy_ = 0;
@@ -260,7 +260,13 @@ public:
       auto &tx = unspent_[i];
 
       for(auto &g: tx->groups) {
-        group_collisions[g].push_back(i);
+
+        // TODO: (EJF) Need to integrate the lane resource mapping
+        TODO_FAIL("Need to integrate the lane resource mappinng here");
+        (void)g;
+        std::size_t const group_index = 0; // TBD
+
+        group_collisions[group_index].push_back(i);
       }
     }
     
@@ -321,7 +327,6 @@ public:
     }
   }
 
-    
   std::vector< std::vector< uint64_t > > block_;
   std::vector< double > block_fees_;
   double occupancy_;
@@ -339,7 +344,6 @@ public:
   std::vector<shared_transaction_type> unspent_, staged_;
 
 };
-
 
 }
 }

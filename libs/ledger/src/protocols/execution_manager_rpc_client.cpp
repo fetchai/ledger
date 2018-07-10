@@ -17,15 +17,56 @@ ExecutionManagerRpcClient::ExecutionManagerRpcClient(byte_array::ConstByteArray 
   service_.reset( new fetch::service::ServiceClient(connection, thread_manager ) );
 }
 
-bool ExecutionManagerRpcClient::Execute(tx_index_type const &index,
-                                        block_map_type &map,
-                                        std::size_t num_lanes,
-                                        std::size_t num_slices)
-{
-  // make the RPC call
-  auto result = service_->Call(fetch::protocols::FetchProtocols::EXECUTION_MANAGER,
-                           ExecutionManagerRpcProtocol::RPC_ID_EXECUTE,
-                           index, map, num_lanes, num_slices);
+bool ExecutionManagerRpcClient::Execute(block_digest_type const &block_hash,
+                                        block_digest_type const &prev_block_hash,
+                                        tx_index_type const &index,
+                                        block_map_type &map, std::size_t num_lanes,
+                                        std::size_t num_slices) {
+  auto result = service_->Call(
+    fetch::protocols::FetchProtocols::EXECUTION_MANAGER,
+    ExecutionManagerRpcProtocol::EXECUTE,
+    block_hash,
+    prev_block_hash,
+    index, map,
+    num_lanes,
+    num_slices
+  );
+
+  return result.As<bool>();
+}
+
+ExecutionManagerInterface::block_digest_type ExecutionManagerRpcClient::LastProcessedBlock() {
+  auto result = service_->Call(
+    protocols::FetchProtocols::EXECUTION_MANAGER,
+    ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK
+  );
+
+  return result.As<block_digest_type>();
+}
+
+bool ExecutionManagerRpcClient::IsActive() {
+  auto result = service_->Call(
+    protocols::FetchProtocols::EXECUTION_MANAGER,
+    ExecutionManagerRpcProtocol::IS_ACTIVE
+  );
+
+  return result.As<bool>();
+}
+
+bool ExecutionManagerRpcClient::IsIdle() {
+  auto result = service_->Call(
+    protocols::FetchProtocols::EXECUTION_MANAGER,
+    ExecutionManagerRpcProtocol::IS_IDLE
+  );
+
+  return result.As<bool>();
+}
+
+bool ExecutionManagerRpcClient::Abort() {
+  auto result = service_->Call(
+    protocols::FetchProtocols::EXECUTION_MANAGER,
+    ExecutionManagerRpcProtocol::ABORT
+  );
 
   return result.As<bool>();
 }
