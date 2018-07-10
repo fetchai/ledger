@@ -21,13 +21,13 @@ public:
   using self_type = ObjectStoreSyncronisationProtocol< R, T, S >;
   using protocol_handler_type = service::protocol_handler_type;
   using register_type = R;
-  using network_manager_type = network::ThreadManager;
+  using thread_pool_type = network::ThreadPool;
   
-  ObjectStoreSyncronisationProtocol(protocol_handler_type const &p, register_type const& r, network_manager_type const&nm, ObjectStore<T> *store) :
+  ObjectStoreSyncronisationProtocol(protocol_handler_type const &p, register_type const& r, thread_pool_type const&nm, ObjectStore<T> *store) :
     fetch::service::Protocol(),
     protocol_(p),
     register_(r),
-    network_manager_(nm),
+    thread_pool_(nm),
     store_(store),
     running_(false) { // , register_(reg), manager_(nm) 
 
@@ -50,7 +50,7 @@ public:
   {
     if(running_) return;    
     running_ = true;
-    network_manager_.Post([this]() { this->FetchObjectsFromPeers(); } );
+    thread_pool_->Post([this]() { this->FetchObjectsFromPeers(); } );
   }
 
   void Stop() 
@@ -83,7 +83,7 @@ public:
       });
 
     if(running_) {
-      network_manager_.Post([this]() { this->RealisePromises(); } );
+      thread_pool_->Post([this]() { this->RealisePromises(); } );
     }
     
   }
@@ -113,7 +113,7 @@ public:
 
     object_list_promises_.clear();
     if(running_) {
-      network_manager_.Post([this]() { this->UpdateCache(); } );
+      thread_pool_->Post([this]() { this->UpdateCache(); } );
     }
     
   }
@@ -124,7 +124,7 @@ public:
     if(!running_) return;
     TODO_FAIL("Yet to be implemented");
     if(running_) {
-      network_manager_.Post([this]() { this->FetchObjectsFromPeers(); }, 100 ); // TODO: Make time parameter
+      thread_pool_->Post([this]() { this->FetchObjectsFromPeers(); }, 100 ); // TODO: Make time parameter
     }
     
   }
@@ -133,7 +133,7 @@ public:
 private:
   protocol_handler_type protocol_;
   register_type register_;
-  network_manager_type network_manager_;
+  thread_pool_type thread_pool_;
    
   uint64_t ObjectCount() 
   {
@@ -141,26 +141,25 @@ private:
     return cache_.size() + uint64_t(first_);
   }
 
-  std::vector< S > PullObjects(int64_t const &from)
+  std::vector< S > PullObjects(uint64_t const &from)
   {
     std::lock_guard< mutex::Mutex > lock(mutex_);
     return std::vector< T > ();    
-/*    
+
     if(cache_.begin() == cache_.end()) {      
       return std::vector< T > ();
     }
     
-    int64_t first = from - first_;
-    
-    if(first < 0 ) {
+
+    uint64_t first = from - first_;    
+    if(from < first_ ) {
       TODO("Cannot currently handle back-log");
-      
       first = 0;
     }
     
     if(first >= cache_.size()) return std::vector< T > ();
                                 
-    uint64_t N = int64_t(cache_.size()) - first;
+    uint64_t N = cache_.size() - first;
 
     // Creating result
     std::vector<S> ret;    
@@ -172,7 +171,7 @@ private:
     }
     
     return ret;
-*/
+
   }
 
   void PushObjects(std::vector< S > const& txs)
@@ -197,8 +196,8 @@ private:
   
   std::deque< CachedObject > cache_;
 
-  int64_t first_ = 0;
-  int64_t max_cache_ = 2000;  
+  uint64_t first_ = 0;
+  uint64_t max_cache_ = 2000;  
 
 
   mutable mutex::Mutex object_list_mutex_;

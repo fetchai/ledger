@@ -20,11 +20,11 @@ public:
 
   std::string identifier_;
   unsigned int idlespeed_;
-  std::shared_ptr<fetch::network::details::ThreadPoolImplementation> tm_;
+  network::ThreadPool tm_;
 
   explicit SwarmAgentApiImpl(const std::string &identifier, unsigned int idlespeed):identifier_(identifier), idlespeed_(idlespeed)
   {
-    tm_ = std::make_shared<fetch::network::details::ThreadPoolImplementation>(1);
+    tm_ = network::MakeThreadPool(1);
   }
 
   virtual std::string queryOwnLocation()

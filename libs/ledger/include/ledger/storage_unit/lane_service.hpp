@@ -35,7 +35,7 @@ public:
   using connection_handle_type = client_register_type::connection_handle_type; 
   using super_type = service::ServiceServer< fetch::network::TCPServer >;
   using tx_sync_protocol_type = storage::ObjectStoreSyncronisationProtocol< client_register_type, fetch::chain::Transaction >;
-  
+  using thread_pool_type = network::ThreadPool;  
   
   enum {
     IDENTITY = 1,
@@ -52,6 +52,9 @@ public:
     uint16_t port, fetch::network::ThreadManager tm)
     : super_type(port, tm) {
 
+    thread_pool_ = network::MakeThreadPool(1);
+    
+    
     std::stringstream s;
     s << "lane" << lane << "_";
     std::string prefix = s.str();    
@@ -71,7 +74,7 @@ public:
     this->Add(TX_STORE, tx_store_protocol_ );
 
     // TX Sync
-    tx_sync_protocol_ = new tx_sync_protocol_type( TX_STORE_SYNC, register_, tm, tx_store_ );
+    tx_sync_protocol_ = new tx_sync_protocol_type( TX_STORE_SYNC, register_, thread_pool_, tx_store_ );
     this->Add(TX_STORE_SYNC, tx_store_protocol_ );    
     
        
@@ -129,6 +132,8 @@ private:
   transaction_store_protocol_type *tx_store_protocol_;
 
   tx_sync_protocol_type *tx_sync_protocol_;
+  thread_pool_type thread_pool_;
+  
 
 };
 
