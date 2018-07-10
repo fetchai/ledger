@@ -13,7 +13,12 @@ public:
   using block_map_type = std::vector<uint64_t>;
   using block_digest_type = byte_array::ConstByteArray;
 
+  // Construction / Destruction
+  ExecutionManagerInterface() = default;
+  virtual ~ExecutionManagerInterface() = default;
 
+  /// @name Execution Manager Interface
+  /// @{
   virtual bool Execute(block_digest_type const &block_hash,
                        block_digest_type const &prev_block_hash,
                        tx_index_type const &index,
@@ -24,6 +29,7 @@ public:
   virtual bool IsActive() = 0;
   virtual bool IsIdle() = 0;
   virtual bool Abort() = 0;
+  /// @}
 };
 
 } // namespace ledger

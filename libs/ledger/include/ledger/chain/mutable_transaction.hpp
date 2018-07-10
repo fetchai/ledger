@@ -2,6 +2,7 @@
 #define CHAIN_MUTABLE_TRANSACTION_HPP
 
 #include "ledger/chain/basic_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 
 namespace fetch {
 
@@ -13,15 +14,16 @@ public:
 
   using super_type::operator==;
   using super_type::operator<;
-  using super_type::PushGroup;
-  using super_type::set_contract_name;
   using super_type::groups;
+  using super_type::PushGroup;
   using super_type::contract_name;
+  using super_type::set_contract_name;
   using super_type::data;
   using super_type::set_data;
   using super_type::summary;
   using super_type::set_summary;
   using super_type::signature;
+  using super_type::set_signature;
 
   using super_type::UpdateDigest;
 
@@ -29,7 +31,7 @@ public:
 };
 
 // Conversion to Transaction
-Transaction MutableTransaction::MakeTransaction(MutableTransaction &&trans)
+inline Transaction MutableTransaction::MakeTransaction(MutableTransaction &&trans)
 {
   Transaction ret(std::move(trans));
   return ret;

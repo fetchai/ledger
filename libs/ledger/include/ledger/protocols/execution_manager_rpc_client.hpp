@@ -4,12 +4,14 @@
 #include "network/service/client.hpp"
 #include "ledger/execution_manager_interface.hpp"
 
-#include<memory>
+#include <memory>
+
 namespace fetch {
 namespace ledger {
 
 class ExecutionManagerRpcClient: public ExecutionManagerInterface {
 public:
+  using service_type = std::unique_ptr<fetch::service::ServiceClient>;
 
   // Construction / Destruction
   ExecutionManagerRpcClient(byte_array::ConstByteArray const &host, uint16_t const &port,
@@ -29,6 +31,14 @@ public:
   bool IsIdle() override;
   bool Abort() override;
   /// @}
+
+  bool is_alive() const {
+    return service_->is_alive();
+  }
+
+private:
+
+  service_type service_;
 };
 
 } // namespace ledger

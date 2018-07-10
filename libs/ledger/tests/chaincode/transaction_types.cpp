@@ -1,4 +1,5 @@
 #include <iostream>
+#include "core/serializers/referenced_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "ledger/chain/basic_transaction.hpp"
 #include "ledger/chain/transaction.hpp"

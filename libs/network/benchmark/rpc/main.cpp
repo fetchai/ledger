@@ -8,6 +8,7 @@
 #include "network/service/server.hpp"
 
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_serialization.hpp"
 #include "../tests/include/helper_functions.hpp"
 
 #include <chrono>

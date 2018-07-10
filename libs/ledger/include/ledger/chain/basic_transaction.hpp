@@ -20,6 +20,9 @@ struct TransactionSummary {
   std::vector<group_type> groups;
   digest_type             transaction_hash;
   uint64_t                fee{0};
+
+  // TODO: (EJF) Remove but linked to optimisation
+  std::size_t short_id;
 };
 
 template <typename T>
@@ -33,9 +36,11 @@ void Deserialize(T &serializer, TransactionSummary &b) {
 }
 
 class BasicTransaction {
- public:
+public:
   typedef crypto::SHA256                  hasher_type;
   typedef TransactionSummary::digest_type digest_type;
+
+protected:
 
   BasicTransaction() {}
 
@@ -79,39 +84,6 @@ class BasicTransaction {
     return *this;
   }
 
-protected:
-
-  // Const only
-  bool operator==(const BasicTransaction &rhs) const {
-    return digest() == rhs.digest();
-  }
-
-  bool operator<(const BasicTransaction &rhs) const {
-
-    return digest() < rhs.digest();
-  }
-
-  std::vector<group_type> const &groups() const { return summary_.groups; }
-
-  byte_array::ConstByteArray const &signature() const {
-    return signature_;
-  }
-
-  ledger::Identifier const &contract_name() const {
-    return contract_name_;
-  }
-
-  digest_type const &digest() const {
-    return summary_.transaction_hash;
-  }
-
-  byte_array::ConstByteArray data() const { return data_; };
-
-  TransactionSummary const &summary() const {
-    return summary_;
-  }
-
-  // Non const only
   enum { VERSION = 1 };
 
   void UpdateDigest() {
@@ -156,7 +128,6 @@ protected:
     return signature_;
   }
 
-private:
   TransactionSummary         summary_;
   byte_array::ConstByteArray data_;
   byte_array::ConstByteArray signature_;

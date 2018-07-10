@@ -1,4 +1,5 @@
 #include<iostream>
+#include <ledger/chain/mutable_transaction.hpp>
 #include"network/service/client.hpp"
 #include"core/logger.hpp"
 #include"core/commandline/cli_header.hpp"
@@ -149,7 +150,7 @@ enum {
 
 void AddTransactionDialog() 
 {
-  chain::Transaction tx;
+  chain::MutableTransaction tx;
   std::string contract_name, args, res;
   std::cout << "Contract name: ";
     
@@ -157,11 +158,13 @@ void AddTransactionDialog()
   fetch::string::Trim( contract_name );
   tx.set_contract_name(contract_name);
 
-    
+  // TODO: (EJF) This needs to be checked
+#if 0
   std::cout << "Arguments: ";
   std::getline(std::cin, args);
   fetch::string::Trim( args );    
   tx.set_arguments(args);
+#endif
     
   std::cout << "Resources: " << std::endl;
 

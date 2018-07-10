@@ -69,7 +69,7 @@ public:
   using execution_list_type = std::vector<execution_item_type>;
   using execution_plan_type = std::vector<execution_list_type>;
 
-  using thread_pool_type = std::shared_ptr<fetch::network::ThreadPool>;
+  using thread_pool_type = fetch::network::ThreadPool;
   using mutex_type = fetch::mutex::Mutex;
   using counter_type = std::atomic<std::size_t>;
   using flag_type = std::atomic<bool>;

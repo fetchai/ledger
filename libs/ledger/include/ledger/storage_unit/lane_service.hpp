@@ -12,6 +12,7 @@
 #include"ledger/storage_unit/lane_identity_protocol.hpp"
 #include"ledger/storage_unit/lane_connectivity_details.hpp"
 #include"ledger/chain/transaction.hpp"
+#include"ledger/chain/transaction_serialization.hpp"
 #include"network/tcp/connection_register.hpp"
 
 namespace fetch

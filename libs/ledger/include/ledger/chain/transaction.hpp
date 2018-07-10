@@ -15,8 +15,7 @@ public:
   typedef BasicTransaction super_type;
 
   Transaction() = default;
-
-  explicit Transaction(super_type &&super) : super_type(super) 
+  explicit Transaction(super_type &&super) : super_type(super)
   {
     UpdateDigest();
   }
@@ -56,8 +55,8 @@ public:
 
 private:
 
-  byte_array::ConstByteArray &signature() { return super_type::signature(); }
-  ledger::Identifier &contract_name() { return super_type::contract_name(); }
+//  byte_array::ConstByteArray &signature() { return super_type::signature(); }
+//  ledger::Identifier &contract_name() { return super_type::contract_name(); }
 
   template <typename T>
   friend inline void Serialize(T &, Transaction const &);

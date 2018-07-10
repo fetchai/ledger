@@ -7,6 +7,7 @@
 #include"core/serializers/counter.hpp"
 #include"network/service/types.hpp"
 #include"ledger/chain/transaction.hpp"
+#include"ledger/chain/mutable_transaction.hpp"
 
 namespace fetch {
 namespace common {
@@ -17,7 +18,21 @@ uint32_t GetRandom()
   static std::mt19937 gen(rd());
   static std::uniform_int_distribution<uint32_t> dis(
       0, std::numeric_limits<uint32_t>::max());
+
   return dis(gen);
+}
+
+byte_array::ConstByteArray GetRandomByteArray(std::size_t length)
+{
+  // convert to byte array
+  byte_array::ByteArray data;
+  data.Resize(length);
+
+  for (std::size_t i = 0; i < length; ++i) {
+    data[i] = static_cast<uint8_t>(GetRandom());
+  }
+
+  return {data};
 }
 
 // Time related functionality
@@ -93,23 +108,20 @@ std::size_t Size(const T &item)
 template <typename T>
 T NextTransaction(std::size_t bytesToAdd = 0)
 {
-  T trans;
+  fetch::chain::MutableTransaction trans;
 
-  trans.PushGroup(group_type(GetRandom()));
+  trans.PushGroup(GetRandomByteArray(64));
 
-  byte_array::ByteArray sig1, sig2, contract_name, arg1;
+  byte_array::ByteArray sig1, contract_name, data;
   MakeString(sig1);
-  MakeString(sig2);
   MakeString(contract_name);
-  MakeString(arg1, 1 + bytesToAdd);
+  MakeString(data, 1 + bytesToAdd);
 
-  trans.PushSignature(sig1);
-  trans.PushSignature(sig2);
+  trans.set_signature(sig1);
   trans.set_contract_name(std::string{contract_name.char_pointer(), contract_name.size()});
-  trans.set_arguments(arg1);
-  trans.UpdateDigest();
+  trans.set_data(data);
 
-  return trans;
+  return T(std::move(trans));
 }
 
 template<typename T, typename... Args>

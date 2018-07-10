@@ -292,13 +292,12 @@ private:
 
 }
 
-typedef typename std::shared_ptr<details::ThreadPoolImplementation>  ThreadPool;
+typedef typename std::shared_ptr<details::ThreadPoolImplementation> ThreadPool;
 
-ThreadPool MakeThreadPool(std::size_t threads = 1) 
+inline ThreadPool MakeThreadPool(std::size_t threads = 1)
 {
   return details::ThreadPoolImplementation::Create(threads);  
 }
-
 
 }
 }

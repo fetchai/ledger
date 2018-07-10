@@ -45,7 +45,7 @@ ExecutionManagerInterface::block_digest_type ExecutionManagerRpcClient::LastProc
 }
 
 bool ExecutionManagerRpcClient::IsActive() {
-  auto result = this->Call(
+  auto result = service_->Call(
     protocols::FetchProtocols::EXECUTION_MANAGER,
     ExecutionManagerRpcProtocol::IS_ACTIVE
   );
