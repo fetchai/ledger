@@ -4,6 +4,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
+#include "ledger/chain/helper_functions.hpp"
 #include "testing/unittest.hpp"
 
 using namespace fetch::chain;
@@ -63,7 +64,7 @@ int main(int argc, char const **argv)
       EXPECT(trans.groups()[0] == fetch::byte_array::BasicByteArray("a"));
 
       {
-        Transaction txTemp = MakeTransaction(std::move(trans));
+        Transaction txTemp = MutableTransaction::MakeTransaction(std::move(trans));
         fetch::serializers::ByteArrayBuffer arr;
         arr << txTemp;
         arr.Seek(0);
@@ -71,6 +72,22 @@ int main(int argc, char const **argv)
       }
 
       EXPECT(tx.groups()[0] == fetch::byte_array::BasicByteArray("a"));
+    };
+
+    SECTION("Random transaction generation")
+    {
+      for (std::size_t i = 0; i < 10; ++i)
+      {
+        MutableTransaction mutableTx = fetch::chain::RandomTransaction();
+
+        const Transaction transaction = MutableTransaction::MakeTransaction(std::move(mutableTx));
+
+        std::cout << "\n===========================================" << std::endl;
+        std::cout << ToHex(transaction.summary().transaction_hash) << std::endl;
+        std::cout << ToHex(transaction.data()) << std::endl;
+        std::cout << ToHex(transaction.signature()) << std::endl;
+        std::cout << transaction.contract_name().full_name() << std::endl;
+      }
     };
 
   };

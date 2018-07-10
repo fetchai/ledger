@@ -21,6 +21,7 @@ public:
   using super_type::set_data;
   using super_type::summary;
   using super_type::set_summary;
+  using super_type::signature;
 
   using super_type::UpdateDigest;
 

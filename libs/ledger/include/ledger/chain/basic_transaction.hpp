@@ -92,7 +92,8 @@ protected:
     LOG_STACK_TRACE_POINT;
 
     serializers::ByteArrayBuffer buf;
-    buf << summary_.groups << signature_ << contract_name_.full_name();
+    buf << summary_.groups << signature_
+      << contract_name_.full_name() << summary_.fee;
     hasher_type hash;
     hash.Reset();
     hash.Update(buf.data());
