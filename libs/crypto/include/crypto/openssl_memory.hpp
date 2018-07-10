@@ -15,9 +15,10 @@
 namespace fetch {
 namespace crypto {
 namespace openssl {
+namespace memory {
 
     enum eDeleteStrategy : int {
-        canonical, //* canonical XXX_free(...)
+        canonical, //* XXX_free(...)
         clearing   //* XXX_clear_free(...)
     };
 
@@ -28,7 +29,7 @@ namespace openssl {
 
         template <typename T, const eDeleteStrategy deleteStrategy = eDeleteStrategy::canonical>
         struct DeleterFunction {
-            static constexpr FunctionType<T, deleteStrategy> default_fnc(); 
+            static constexpr FunctionType<T, deleteStrategy> default_fnc();
             static constexpr FunctionType<T, deleteStrategy> deleterFunction = default_fnc();
         };
 
@@ -155,6 +156,8 @@ namespace openssl {
     //        using OpesSSLDeleter
     //    } //* annonymous namespace 
     //} //* appr2 namespace
+
+} //* memory namespace
 } //* openssl namespace
 } //* crypto namespace
 } //* fetch namespace
