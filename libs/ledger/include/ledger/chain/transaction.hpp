@@ -1,179 +1,59 @@
 #ifndef CHAIN_TRANSACTION_HPP
 #define CHAIN_TRANSACTION_HPP
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/referenced_byte_array.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "crypto/sha256.hpp"
-#include "ledger/identifier.hpp"
+#include "ledger/chain/basic_transaction.hpp"
 
-namespace fetch {
-typedef uint16_t group_type;
+namespace fetch
+{
 
-namespace chain {
+namespace chain
+{
 
-struct TransactionSummary {
-  typedef byte_array::ConstByteArray digest_type;
-  std::vector<group_type> groups;
-  digest_type transaction_hash;
+class Transaction : public BasicTransaction
+{
+public:
+  typedef BasicTransaction super_type;
 
-  double fee = 0.0;
-  uint64_t short_id;
-};
+  Transaction() {}
+  explicit Transaction(super_type super) : super_type(super) {}
 
-template <typename T>
-void Serialize(T &serializer, TransactionSummary const &b) {
-  serializer << b.groups << b.fee << b.transaction_hash;
-}
+  bool operator==(const BasicTransaction &rhs) const { return super_type::operator==(rhs); }
+  bool operator<(const BasicTransaction &rhs) const { return super_type::operator<(rhs);  }
 
-template <typename T>
-void Deserialize(T &serializer, TransactionSummary &b) {
-  serializer >> b.groups >> b.fee >> b.transaction_hash;
-}
-
-class Transaction {
- public:
-  typedef crypto::SHA256 hasher_type;
-  typedef TransactionSummary::digest_type digest_type;
-  typedef byte_array::ConstByteArray
-      arguments_type;  // TODO: json doc with native serialization
-
-  enum { VERSION = 1 };
-
-  void UpdateDigest() {
-    LOG_STACK_TRACE_POINT;
-
-    serializers::ByteArrayBuffer buf;
-    buf << summary_.groups << signatures_ << contract_name_.full_name() << arguments_;
-    hasher_type hash;
-    hash.Reset();
-    hash.Update(buf.data());
-    hash.Final();
-    summary_.transaction_hash = hash.digest();
+  std::vector<group_type> const &groups() const
+  {
+    return super_type::groups();
   }
 
-  bool operator==(const Transaction &rhs) const {
-    return digest() == rhs.digest();
+  byte_array::ConstByteArray const &signature() const
+  {
+    return super_type::signature();
   }
 
-  bool operator<(const Transaction &rhs) const {
-
-    return digest() < rhs.digest();
+  ledger::Identifier const &contract_name() const
+  {
+    return super_type::contract_name();
   }
 
-  void PushGroup(byte_array::ConstByteArray const &res) {
-    LOG_STACK_TRACE_POINT;
-    union {
-      uint8_t bytes[2];
-      uint16_t value;
-    } d;
-    d.value = 0;
-
-    switch (res.size()) {
-      case 0:
-        break;
-      default:
-      /*
-TODO: Make 32 bit compat
-    case 4:
-      d.bytes[3] = res[3];
-    case 3:
-      d.bytes[2] = res[2];
-*/
-      case 2:
-        d.bytes[1] = res[1];
-      case 1:
-        d.bytes[0] = res[0];
-    };
-    //    std::cout << byte_array::ToHex( res) << " >> " << d.value <<
-    //    std::endl;
-
-    //    assert(d.value < 10);
-
-    PushGroup(d.value);
+  digest_type const &digest() const
+  {
+    return super_type::digest();
   }
 
-  void PushGroup(group_type const &res) {
-    LOG_STACK_TRACE_POINT;
-    bool add = true;
-    for (auto &g : summary_.groups) {
-      if (g == res) {
-        add = false;
-        break;
-      }
-    }
+  byte_array::ConstByteArray data() const
+  {
+    return super_type::data();
+  };
 
-    if (add) {
-      summary_.groups.push_back(res);
-    }
+  TransactionSummary const &summary() const
+  {
+    return super_type::summary();
   }
 
-  bool UsesGroup(group_type g, group_type m) const {
-    --m;
-    g &= m;
+private:
 
-    bool ret = false;
-    for (auto const &gg : summary_.groups) {
-      ret |= (g == (gg & m));
-    }
-
-    return ret;
-  }
-
-  void PushSignature(byte_array::ConstByteArray const &sig) {
-    LOG_STACK_TRACE_POINT;
-    signatures_.push_back(sig);
-  }
-
-  void set_contract_name(std::string const &name) {
-    contract_name_.Parse(name);
-  }
-
-  void set_arguments(byte_array::ConstByteArray const &args) {
-    arguments_ = args;
-  }
-
-  std::vector<group_type> const &groups() const { return summary_.groups; }
-
-  std::vector<byte_array::ConstByteArray> const &signatures() const {
-    return signatures_;
-  }
-
-  std::vector<byte_array::ConstByteArray> &signatures() { return signatures_; }
-
-  ledger::Identifier const &contract_name() const {
-    return contract_name_;
-  }
-
-  arguments_type const &arguments() const { return arguments_; }
-  digest_type const &digest() const {
-
-    return summary_.transaction_hash;
-  }
-
-  uint32_t signature_count() const { return uint32_t(signatures_.size()); }
-
-  byte_array::ConstByteArray data() const { return data_; };
-
-  void set_data(byte_array::ConstByteArray const &data) {
-    data_ = data;
-  }
-
-  TransactionSummary const &summary() const {
-    return summary_;
-  }
-
- private:
-  TransactionSummary summary_;
-
-  byte_array::ConstByteArray data_;
-  // TODO: Add resources
-  std::vector<byte_array::ConstByteArray> signatures_;
-  ledger::Identifier contract_name_;
-
-  arguments_type arguments_;
+  byte_array::ConstByteArray &signature() { return super_type::signature(); }
+  ledger::Identifier &contract_name() { return super_type::contract_name(); }
 
   template <typename T>
   friend inline void Serialize(T &, Transaction const &);
@@ -181,44 +61,7 @@ TODO: Make 32 bit compat
   friend inline void Deserialize(T &, Transaction &);
 };
 
-template <typename T>
-inline void Serialize(T &serializer, Transaction const &b) {
-  serializer << uint16_t(b.VERSION);
-
-  serializer << b.summary_;
-
-  serializer << uint32_t(b.signatures().size());
-  for (auto &sig : b.signatures()) {
-    serializer << sig;
-  }
-
-  serializer << b.contract_name().full_name();
-  serializer << b.arguments();
-}
-
-template <typename T>
-inline void Deserialize(T &serializer, Transaction &b) {
-  uint16_t version;
-  serializer >> version;
-
-  serializer >> b.summary_;
-
-  uint32_t size;
-
-  serializer >> size;
-  for (std::size_t i = 0; i < size; ++i) {
-    byte_array::ByteArray sig;
-    serializer >> sig;
-    b.PushSignature(sig);
-  }
-
-  std::string contract_name;
-  typename Transaction::arguments_type arguments;
-  serializer >> contract_name >> arguments;
-
-  b.set_contract_name(contract_name);
-  b.set_arguments(arguments);
 }
 }
-}
+
 #endif
