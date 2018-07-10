@@ -6,7 +6,6 @@ namespace fetch
 namespace ledger
 {
 
-
 class LaneControllerProtocol : public service::Protocol
 {
 public:

@@ -49,7 +49,7 @@ public:
   };
   
   // TODO: Make config JSON
-  LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &max_lanes,
+  LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &total_lanes,
     uint16_t port, fetch::network::ThreadManager tm)
     : super_type(port, tm) {
 
@@ -63,7 +63,8 @@ public:
 
     // Lane Identity
     identity_ = std::make_shared<identity_type>(register_, tm);    
-    identity_->SetLaneNumber( lane );    
+    identity_->SetLaneNumber( lane );
+    identity_->SetTotalLanes( total_lanes );
     identity_protocol_ = new identity_protocol_type(identity_.get());
     this->Add(IDENTITY, identity_protocol_ );        
 
@@ -84,7 +85,7 @@ public:
     state_db_ = new document_store_type();
     state_db_->Load(prefix+"a.db", prefix+"b.db", prefix+"c.db", prefix+"d.db", true);
     
-    state_db_protocol_ = new document_store_protocol_type(state_db_, lane, max_lanes);        
+    state_db_protocol_ = new document_store_protocol_type(state_db_, lane, total_lanes);        
     this->Add(STATE, state_db_protocol_ );
 
     // Controller

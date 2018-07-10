@@ -37,7 +37,6 @@ int main(int argc, char const **argv)
   service.Setup(dbdir, lane_count, port, tm);    
 
 
-
   // Running until enter
   std::cout << "Press ENTER to quit" << std::endl;                                       
 std::string dummy;

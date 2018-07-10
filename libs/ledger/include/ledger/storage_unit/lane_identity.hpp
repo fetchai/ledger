@@ -30,6 +30,7 @@ public:
     : register_(reg), manager_(nm)
   {
     lane_ = uint32_t(-1);
+    total_lanes_ = 0;
   }
 
   /// External controls
@@ -61,6 +62,11 @@ public:
     return lane_;
   }
 
+  lane_type GetTotalLanes() 
+  {
+    return total_lanes_;
+  }
+  
   /// @}
 
   /// Internal controls
@@ -69,6 +75,11 @@ public:
   {
     lane_ = lane;
   }
+
+  void SetTotalLanes(lane_type const &t) 
+  {
+    total_lanes_ = t;
+  }
   
   
   /// @}
@@ -76,7 +87,8 @@ private:
   client_register_type register_;
   network_manager_type manager_;
 
-  std::atomic< lane_type > lane_;      
+  std::atomic< lane_type > lane_;
+  std::atomic< lane_type > total_lanes_;        
 };
 
 }

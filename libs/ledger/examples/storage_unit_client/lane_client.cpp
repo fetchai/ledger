@@ -8,10 +8,12 @@
 #include"core/byte_array/consumers.hpp"
 #include"core/json/document.hpp"
 #include"ledger/chain/transaction.hpp"
+#include"ledger/storage_unit/storage_unit_client.hpp"
 #include"core/string/trim.hpp"
+
 using namespace fetch;
 
-using namespace fetch::service;
+using namespace fetch::ledger;
 using namespace fetch::byte_array;
 
 
@@ -22,37 +24,6 @@ enum {
   TOKEN_CATCH_ALL = 12
 };
 
-
-void AddTransactionDialog() 
-{
-  chain::Transaction tx;
-  std::string contract_name, args, res;
-  std::cout << "Contract name: ";
-    
-  std::getline(std::cin, contract_name);
-  fetch::string::Trim( contract_name );
-  tx.set_contract_name(contract_name);
-
-    
-  std::cout << "Arguments: ";
-  std::getline(std::cin, args);
-  fetch::string::Trim( args );    
-  tx.set_arguments(args);
-    
-  std::cout << "Resources: " << std::endl;
-
-  std::getline(std::cin, res);
-  fetch::string::Trim( res );        
-  while(res != "") {
-    tx.PushGroup(res);
-    std::getline(std::cin, res);
-    fetch::string::Trim( res );          
-  } 
-  double fee;
-  std::cout << "Gas: " ;
-  std::cin >> fee;
-    
-}
 
   
 int main(int argc, char const **argv) {
@@ -73,8 +44,7 @@ int main(int argc, char const **argv) {
   tm.Start();
 
   for(std::size_t i = 0 ; i < lane_count; ++i) {
-    StorageUnitClient.AddLaneConnection< TCPClient >("localhost", 8080 + i) ;
-    
+    client.AddLaneConnection< fetch::network::TCPClient >("localhost", uint16_t(8080 + i)) ;
   }
   
   
@@ -108,8 +78,7 @@ int main(int argc, char const **argv) {
       if(command.size() > 0) {
         if(command[0] == "addtx") {
           if(command.size() == 1) {
-            AddTransactionDialog();
-            // TODO add
+            std::cout << "TODO: Implement" << std::endl;
           } else {
             std::cout << "usage: add" << std::endl;
           }

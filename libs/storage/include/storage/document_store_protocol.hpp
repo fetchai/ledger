@@ -4,7 +4,7 @@
 #include "storage/revertible_document_store.hpp"
 #include "network/service/protocol.hpp"
 #include "core/mutex.hpp"
-#include"core/mutex.hpp"
+#include"core/byte_array/encoders.hpp"
 
 
 #include<map>
@@ -17,6 +17,8 @@ class RevertibleDocumentStoreProtocol :
     public fetch::service::Protocol {
 public:
   typedef network::AbstractConnection::connection_handle_type connection_handle_type;
+  using lane_type = uint32_t; // TODO: Fetch from some other palce
+  
   enum {
     GET = 0,
     LAZY_GET,
@@ -43,8 +45,13 @@ public:
     this->ExposeWithClientArg(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);    
   }
 
-  RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store, uint32_t const &lane, uint32_t const &maxlanes)
-    : fetch::service::Protocol(), doc_store_(doc_store), max_lanes_(maxlanes), lane_assignment_(lane) {
+  RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store, lane_type const &lane, lane_type const &maxlanes)
+    : fetch::service::Protocol(), doc_store_(doc_store),lane_assignment_(lane) {
+
+    SetLaneLog2(maxlanes);
+    assert( maxlanes == (1 << log2_lanes_) );    
+    logger.Info("Spinning up lane ", lane_assignment_);
+    
     this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
     this->ExposeWithClientArg(SET, this, &RevertibleDocumentStoreProtocol::SetLaneChecked);
 
@@ -99,7 +106,10 @@ public:
 private:
   Document GetLaneChecked(ResourceID const &rid) 
   {
-    if(lane_assignment_ != rid.lane( max_lanes_ )) {
+    if(lane_assignment_ != rid.lane( log2_lanes_ )) {
+      logger.Warn("Lane assignment is ", lane_assignment_, " vs ", rid.lane( log2_lanes_ ));
+      logger.Debug("Address:", byte_array::ToHex(rid.id()) );
+      
       throw serializers::SerializableException( // TODO: set exception number
         0, byte_array_type("Get: Resource located on other lane. TODO, set error number"));
     }
@@ -109,7 +119,7 @@ private:
 
   void SetLaneChecked(connection_handle_type const &client_id, ResourceID const &rid, byte_array::ConstByteArray const& value) 
   {
-    if(lane_assignment_ != rid.lane( max_lanes_ )) {
+    if(lane_assignment_ != rid.lane( log2_lanes_ )) {
       throw serializers::SerializableException( // TODO: set exception number
         0, byte_array_type("Set: Resource located on other lane. TODO: Set error number."));
     }
@@ -125,9 +135,17 @@ private:
 
     doc_store_->Set(rid, value);
   }
+
+  void SetLaneLog2(lane_type const &count) 
+  {
+    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
+  }
+
   
   RevertibleDocumentStore *doc_store_;  
-  uint32_t max_lanes_ = 0;  
+
+  uint32_t log2_lanes_ = 0;
+  
   uint32_t lane_assignment_ = 0;
 
   mutex::Mutex lock_mutex_;
