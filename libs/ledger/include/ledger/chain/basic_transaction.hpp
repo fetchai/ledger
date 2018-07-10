@@ -39,8 +39,7 @@ class BasicTransaction {
 
   BasicTransaction() {}
 
-  BasicTransaction(BasicTransaction const &rhs)
-  {
+  BasicTransaction(BasicTransaction const &rhs) {
     summary_ = rhs.summary();
     summary_.transaction_hash = rhs.summary().transaction_hash.Copy();
 
@@ -49,8 +48,7 @@ class BasicTransaction {
     contract_name_ = rhs.contract_name_;
   }
 
-  BasicTransaction &operator=(BasicTransaction const &rhs)
-  {
+  BasicTransaction &operator=(BasicTransaction const &rhs) {
     summary_ = rhs.summary();
     summary_.transaction_hash = rhs.summary().transaction_hash.Copy();
 
@@ -61,8 +59,7 @@ class BasicTransaction {
     return *this;
   }
 
-  BasicTransaction(BasicTransaction &&rhs)
-  {
+  BasicTransaction(BasicTransaction &&rhs) {
     summary_ = rhs.summary();
     summary_.transaction_hash = rhs.summary().transaction_hash.Copy();
 
@@ -71,8 +68,7 @@ class BasicTransaction {
     contract_name_ = rhs.contract_name_;
   }
 
-  BasicTransaction &operator=(BasicTransaction&& rhs)
-  {
+  BasicTransaction &operator=(BasicTransaction&& rhs) {
     summary_ = rhs.summary();
     summary_.transaction_hash = rhs.summary().transaction_hash.Copy();
 
@@ -85,10 +81,40 @@ class BasicTransaction {
 
 protected:
 
+  // Const only
+  bool operator==(const BasicTransaction &rhs) const {
+    return digest() == rhs.digest();
+  }
+
+  bool operator<(const BasicTransaction &rhs) const {
+
+    return digest() < rhs.digest();
+  }
+
+  std::vector<group_type> const &groups() const { return summary_.groups; }
+
+  byte_array::ConstByteArray const &signature() const {
+    return signature_;
+  }
+
+  ledger::Identifier const &contract_name() const {
+    return contract_name_;
+  }
+
+  digest_type const &digest() const {
+    return summary_.transaction_hash;
+  }
+
+  byte_array::ConstByteArray data() const { return data_; };
+
+  TransactionSummary const &summary() const {
+    return summary_;
+  }
+
+  // Non const only
   enum { VERSION = 1 };
 
-  void UpdateDigest()
-  {
+  void UpdateDigest() {
     LOG_STACK_TRACE_POINT;
 
     serializers::ByteArrayBuffer buf;
@@ -101,19 +127,7 @@ protected:
     summary_.transaction_hash = hash.digest();
   }
 
-  bool operator==(const BasicTransaction &rhs) const
-  {
-    return digest() == rhs.digest();
-  }
-
-  bool operator<(const BasicTransaction &rhs) const
-  {
-
-    return digest() < rhs.digest();
-  }
-
-  void PushGroup(byte_array::ConstByteArray const &res)
-  {
+  void PushGroup(byte_array::ConstByteArray const &res) {
     LOG_STACK_TRACE_POINT;
     summary_.groups.push_back(res);
   }
@@ -122,47 +136,24 @@ protected:
     contract_name_.Parse(name);
   }
 
-  std::vector<group_type> const &groups() const { return summary_.groups; }
-
-  byte_array::ConstByteArray const &signature() const
-  {
-    return signature_;
-  }
-
-  byte_array::ConstByteArray &signature() { return signature_; }
-
-  byte_array::ConstByteArray &set_signature() { return signature_; }
-
-  ledger::Identifier const &contract_name() const
-  {
-    return contract_name_;
-  }
-
-  ledger::Identifier &contract_name()
-  {
-    return contract_name_;
-  }
-
-  digest_type const &digest() const
-  {
-    return summary_.transaction_hash;
-  }
-
-  byte_array::ConstByteArray data() const { return data_; };
-
-  void set_data(byte_array::ConstByteArray const &data)
-  {
+  void set_data(byte_array::ConstByteArray const &data) {
     data_ = data;
   }
 
-  TransactionSummary const &summary() const
-  {
-    return summary_;
+  void set_summary(TransactionSummary const &summary) {
+    summary_ = summary;
   }
 
-  void set_summary(TransactionSummary const &summary)
-  {
-    summary_ = summary;
+  void set_signature(byte_array::ConstByteArray sig) {
+    signature_ = sig;
+  }
+
+  ledger::Identifier &contract_name() {
+    return contract_name_;
+  }
+
+  byte_array::ConstByteArray &signature() {
+    return signature_;
   }
 
 private:

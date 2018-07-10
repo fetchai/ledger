@@ -39,7 +39,7 @@ MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
   trans.set_summary(summary);
 
   trans.set_data(GetRandomByteArray());
-  trans.signature() = GetRandomByteArray();
+  trans.set_signature(GetRandomByteArray());
   trans.contract_name().Parse(std::to_string(GetRandom()));
 
   return trans;
