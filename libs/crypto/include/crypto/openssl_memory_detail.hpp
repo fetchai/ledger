@@ -1,17 +1,8 @@
-#ifndef CRYPTO_OPENSSL_MEMORY_HPP
-#define CRYPTO_OPENSSL_MEMORY_HPP
-#include <crypto/hash.hpp>
-#include <core/assert.hpp>
-#include <crypto/prover.hpp>
-#include <crypto/sha256.hpp>
+#ifndef CRYPTO_OPENSSL_MEMORY_DETAIL_HPP
+#define CRYPTO_OPENSSL_MEMORY_DETAIL_HPP
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <openssl/ecdsa.h>
-#include <openssl/obj_mac.h>
-
-#include <memory>
-#include <functional>
 
 namespace fetch {
 namespace crypto {
@@ -85,15 +76,11 @@ namespace memory {
             }
         };
     }
-
-    template <typename T
-            , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical
-            , typename T_Deleter = detail::OpenSSLDeleter<T, P_DeleteStrategy>>
-    using ossl_unique_ptr = std::unique_ptr<T, T_Deleter>;
-
+ 
 } //* memory namespace
 } //* openssl namespace
 } //* crypto namespace
 } //* fetch namespace
-#endif //CRYPTO_OPENSSL_MEMORY_HPP
+
+#endif //CRYPTO_OPENSSL_MEMORY_DETAIL_HPP
 

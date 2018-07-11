@@ -1,4 +1,4 @@
-#include "crypto/openssl_memory.hpp"
+#include "crypto/openssl_memory_detail.hpp"
 #include "gtest/gtest.h"
 
 namespace fetch {
