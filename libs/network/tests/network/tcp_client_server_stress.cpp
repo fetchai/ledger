@@ -15,664 +15,671 @@ using namespace fetch::network;
 using namespace fetch::common;
 using namespace fetch::byte_array;
 
-// Watchdog
-class Watchdog
+//// Watchdog
+//class Watchdog
+//{
+//  void Start()
+//  {
+//  }
+//
+//private:
+//
+//}
+//
+//
+//std::atomic<std::size_t> clientReceivedCount_{0};
+//std::atomic<std::size_t> serverReceivedCount{0};
+//
+//std::vector<message_type> globalMessagesFromServer_{};
+//fetch::mutex::Mutex       mutexFromServer_;
+//std::vector<message_type> globalMessagesToServer_{};
+//fetch::mutex::Mutex       mutexToServer_;
+//
+//// Basic server
+//class Server : public TCPServer
+//{
+//public:
+//  Server(uint16_t p, ThreadManager tmanager) :
+//    TCPServer(p, tmanager)
+//  {
+//  }
+//
+//  void PushRequest(connection_handle_type client, message_type const& msg) override {
+//    std::cout << "Message: " << msg << std::endl;
+//  }
+//};
+//
+//// Basic client increments on received messages
+//class Client : public TCPClient {
+//public:
+//  Client(std::string const &host,
+//    std::string const &port,
+//      ThreadManager &tmanager) :
+//    TCPClient(tmanager)
+//  {
+//    Connect(host, port);
+//  }
+//
+//  ~Client()
+//  {
+//    TCPClient::Cleanup();
+//  }
+//
+//  void PushMessage(message_type const &value) override
+//  {
+//    {
+//      std::lock_guard<fetch::mutex::Mutex> lock(mutexFromServer_);
+//      globalMessagesFromServer_.push_back(std::move(value));
+//    }
+//    clientReceivedCount_++;
+//  }
+//
+//  void ConnectionFailed() override
+//  {
+//  }
+//};
+//
+//template< std::size_t N = 1>
+//void TestCase0(std::string host, std::string port)
+//{
+//  std::cout << "\nTEST CASE 0. Threads: " << N << std::endl;
+//  std::cout << "Info: Attempting to open the echo server multiple times" << std::endl;
+//
+//  WatchDog dog;
+//  dog.Start(1000);
+//
+//  for (std::size_t index = 0; index < 20; ++index)
+//  {
+//  }
+//  std::this_thread::sleep_for(std::chrono::milliseconds(1000*10));
+//
+//  std::cerr << "Success." << std::endl;
+//}
+//
+////template< std::size_t N = 1>
+////void TestCase1(std::string host, std::string port)
+////{
+////  std::cout << "\nTEST CASE 1. Threads: " << N << std::endl;
+////  std::cout << "Info: Attempting to open a connection to a port\
+////    that doesn't exist (TM dead)" << std::endl;
+////
+////  uint16_t emptyPort = GetOpenPort();
+////
+////  for (std::size_t index = 0; index < 1000; ++index)
+////  {
+////    ThreadManager tmanager(N);
+////    Client client(host, std::to_string(emptyPort), tmanager);
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase2(std::string host, std::string port)
+////{
+////  std::cout << "\nTEST CASE 2. Threads: " << N << std::endl;
+////  std::cout << "Info: Attempting to open a connection to a port\
+////    that doesn't exist (TM alive)" << std::endl;
+////
+////  uint16_t emptyPort = GetOpenPort();
+////
+////  for (std::size_t index = 0; index < 1000; ++index)
+////  {
+////    ThreadManager tmanager(N);
+////    tmanager.Start();
+////    Client client(host, std::to_string(emptyPort), tmanager);
+////    tmanager.Stop();
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase3(std::string host, std::string port)
+////{
+////  std::cout << "\nTEST CASE 3. Threads: " << N << std::endl;
+////  std::cout << "Info: Attempting to open a connection to a port that\
+////    doesn't exist (TM jittering)" << std::endl;
+////
+////  uint16_t emptyPort = GetOpenPort();
+////
+////  std::cout << "starting" << std::endl;
+////  for (std::size_t index = 0; index < 1000; ++index)
+////  {
+////    ThreadManager tmanager(N);
+////    if(index % 2 == 0) tmanager.Start();
+////    Client client(host, std::to_string(emptyPort), tmanager);
+////    if(index % 3 == 0) tmanager.Stop();
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase4(std::string host, std::string port)
+////{
+////  std::cout << "\nTEST CASE 4. Threads: " << N << std::endl;
+////  std::cout << "Info: Attempting to open a connection to a port that\
+////    doesn't exist (TM jittering)" << std::endl;
+////
+////  uint16_t emptyPort = GetOpenPort();
+////
+////  std::cout << "starting" << std::endl;
+////  for (std::size_t index = 0; index < 1000; ++index)
+////  {
+////    ThreadManager tmanager(N);
+////    if(index % 2 == 0) tmanager.Start();
+////    Client client(host, std::to_string(emptyPort), tmanager);
+////    if(index % 3 == 0) tmanager.Stop();
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase5(std::string host, std::string port)
+////{
+////  std::cout << "\nTEST CASE 5. Threads: " << N << std::endl;
+////  std::cout << "Info: Attempting to open a connection to a port that\
+////    does exist (TM dead)" << std::endl;
+////
+////  // Start echo server
+////  fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
+////
+////  for (std::size_t index = 0; index < 1000; ++index)
+////  {
+////    ThreadManager tmanager(N);
+////    Client client(host, port, tmanager);
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase6(std::string host, std::string port)
+////{
+////  std::cout << "\nTEST CASE 6. Threads: " << N << std::endl;
+////  std::cout << "Info: Attempting to open a connection to a\
+////    port that does exist (TM alive)" << std::endl;
+////
+////  // Start echo server
+////  fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
+////
+////  for (std::size_t index = 0; index < 1000; ++index)
+////  {
+////    ThreadManager tmanager(N);
+////    tmanager.Start();
+////    Client client(host, port, tmanager);
+////    tmanager.Stop();
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase7(std::string host, std::string port)
+////{
+////  std::cout << "\nTEST CASE 7. Threads: " << N << std::endl;
+////  std::cout << "Info: Attempting to open a connection to a\
+////    port that does exist (TM jittering)" << std::endl;
+////
+////  // Start echo server
+////  fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
+////
+////  for (std::size_t index = 0; index < 1000; ++index)
+////  {
+////    ThreadManager tmanager(N);
+////    if(index % 2 == 0) tmanager.Start();
+////    Client client(host, port, tmanager);
+////    if(index % 3 == 0) tmanager.Stop();
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase8(std::string host, std::string port)
+////{
+////  std::cout << "\nTEST CASE 8. Threads: " << N << std::endl;
+////  std::cout << "Info: Attempting to open multiple\
+////    connections to a port that does exist (move constr)" << std::endl;
+////
+////  // Start echo server
+////  fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
+////  std::vector<Client> clients;
+////
+////  ThreadManager tmanager(N);
+////  tmanager.Start();
+////  for (std::size_t index = 0; index < 1000; ++index)
+////  {
+////    clients.push_back(Client(host, port, tmanager));
+////  }
+////  tmanager.Stop();
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase9(std::string host, std::string port)
+////{
+////  std::cout << "\nTEST CASE 9. Threads: " << N << std::endl;
+////  std::cout << "Info: Attempting to open multiple\
+////    connections to a port that does exist, async" << std::endl;
+////
+////  // Start echo server
+////  fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
+////  std::vector<std::shared_ptr<Client>> clients;
+////  clients.resize(100);
+////
+////  for (std::size_t index = 0; index < 3; ++index)
+////  {
+////    ThreadManager tmanager(N);
+////    tmanager.Start();
+////    for(auto &i : clients)
+////    {
+////      std::async(std::launch::async,
+////          [&i, &host, &port, &tmanager]
+////          {i = std::make_shared<Client>(host, port, tmanager);});
+////    }
+////    if(index % 2 == 0) tmanager.Stop();
+////
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase10(std::string host, std::string port) {
+////  std::cout << "\nTEST CASE 10. Threads: " << N << std::endl;
+////  std::cout << "Info: (Legacy) Usually breaks due to the TM being destroyed before the clients"\
+////    << std::endl;
+////
+////  for (std::size_t index = 0; index < 120; ++index)
+////  {
+////    std::vector< Client > clients;
+////    ThreadManager tmanager(N);
+////    tmanager.Start();
+////
+////    for (std::size_t j = 0; j < 4; ++j)
+////    {
+////      clients.push_back( Client(host, port, tmanager) );
+////    }
+////
+////    tmanager.Stop();
+////
+////    for (std::size_t j = 0; j < 4; ++j)
+////    {
+////      clients.push_back( Client(host, port, tmanager) );
+////    }
+////    tmanager.Start();
+////    if(index%2) tmanager.Stop();
+////    if(index%3) tmanager.Stop();
+////    if(index%5) tmanager.Stop();
+////    std::this_thread::sleep_for(std::chrono::microseconds(1000));
+////  }
+////  std::cout << "success" << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase11(std::string host, std::string port) {
+////  std::cout << "\nTEST CASE 11. Threads: " << N << std::endl;
+////  std::cout << "Info: Bouncing messages off echo/loopback server and counting them" << std::endl;
+////
+////  uint16_t emptyPort = GetOpenPort();
+////
+////  for (std::size_t i = 0; i < 10; ++i)
+////  {
+////    std::cerr << "Iteration: " << i << std::endl;
+////    fetch::network::LoopbackServer echoServer(emptyPort);
+////    ThreadManager tmanager(N);
+////    tmanager.Start();
+////    Client client(host, std::to_string(emptyPort), tmanager);
+////
+////    while(!client.is_alive())
+////    {
+////      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+////    }
+////
+////    std::size_t currentCount = clientReceivedCount;
+////    std::size_t messagesToSend = 1000;
+////
+////    for (std::size_t j = 0; j < messagesToSend; ++j)
+////    {
+////      std::string mess{"Hello: "};
+////      mess += std::to_string(i);
+////      std::async(std::launch::async, [&client, mess](){client.Send(mess);});
+////    }
+////
+////    while(clientReceivedCount != currentCount+messagesToSend)
+////    {
+////      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+////    }
+////
+////    tmanager.Stop();
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase12(std::string host, std::string port) {
+////  std::cout << "\nTEST CASE 12. Threads: " << N << std::endl;
+////  std::cout << "Info: Bouncing messages off echo/loopback\
+////    server and counting them, slow client " << std::endl;
+////
+////  uint16_t emptyPort = GetOpenPort();
+////
+////  for (std::size_t i = 0; i < 5; ++i)
+////  {
+////    std::cout << "Iteration: " << i << std::endl;
+////    fetch::network::LoopbackServer echoServer(emptyPort);
+////    ThreadManager tmanager(N);
+////    tmanager.Start();
+////    SlowClient client(host, std::to_string(emptyPort), tmanager);
+////
+////    while(!client.is_alive())
+////    {
+////      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+////    }
+////
+////    std::size_t currentCount = clientReceivedCount;
+////    std::size_t messagesToSend = 100;
+////
+////    for (std::size_t j = 0; j < messagesToSend; ++j)
+////    {
+////      std::string mess{"Hello: "};
+////      mess += std::to_string(i);
+////      std::async(std::launch::async, [&client, mess](){client.Send(mess);});
+////    }
+////
+////    while(clientReceivedCount != currentCount+messagesToSend)
+////    {
+////      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+////    }
+////
+////    tmanager.Stop();
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase13(std::string host, std::string port) {
+////  std::cout << "\nTEST CASE 13. Threads: " << N << std::endl;
+////  std::cout << "Info: Bouncing messages off echo/loopback\
+////    server and checking ordering" << std::endl;
+////
+////  uint16_t emptyPort = GetOpenPort();
+////
+////  for (std::size_t i = 0; i < 10; ++i)
+////  {
+////    std::cout << "Iteration: " << i << std::endl;
+////    ThreadManager tmanager(N);
+////    tmanager.Start();
+////    fetch::network::LoopbackServer echoServer(emptyPort);
+////    VerifyClient client(host, std::to_string(emptyPort), tmanager);
+////
+////    while(!client.is_alive())
+////    {
+////      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+////    }
+////
+////    // Precreate data, this handles clearing global counter etc.
+////    std::vector<message_type> sendData = CreateTestData(i);
+////
+////    std::size_t expectCount = clientReceivedCount;
+////    auto t1 = TimePoint();
+////
+////    for(auto &dat : sendData)
+////    {
+////      client.Send(dat);
+////      expectCount++;
+////    }
+////
+////    while(clientReceivedCount != expectCount)
+////    {
+////      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+////    }
+////
+////    if(printingClientResponses)
+////    {
+////      std::cout << "Time for " << sendData.size() << " calls: "
+////        << TimeDifference(t1, t2) << std::endl;
+////    }
+////
+////    // Verify we transmitted correctly
+////    if(globalMessages.size() == 0)
+////    {
+////      std::cerr << "Failed to receive messages" << std::endl;
+////      exit(1);
+////    }
+////
+////    if(globalMessages.size() != sendData.size())
+////    {
+////      std::cerr << "Failed to receive all messages" << std::endl;
+////      exit(1);
+////    }
+////
+////    for (std::size_t i = 0; i < globalMessages.size(); ++i)
+////    {
+////      if(globalMessages[i] != sendData[i])
+////      {
+////        std::cerr << "Failed to verify messages" << std::endl;
+////        exit(1);
+////      }
+////    }
+////    tmanager.Stop();
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase14(std::string host, std::string port) {
+////  std::cout << "\nTEST CASE 14. Threads: " << N << std::endl;
+////  std::cout << "Info: Bouncing messages off echo/loopback\
+////    server and checking ordering, multiple clients" << std::endl;
+////
+////  uint16_t emptyPort = GetOpenPort();
+////
+////  for (std::size_t index = 0; index < 10; ++index)
+////  {
+////    std::cout << "Iteration: " << index << std::endl;
+////    fetch::network::LoopbackServer echoServer(emptyPort);
+////    ThreadManager tmanager(N);
+////    tmanager.Start();
+////    std::vector<std::shared_ptr<VerifyClient>> clients;
+////
+////    for (std::size_t i = 0; i < 5; ++i)
+////    {
+////      clients.push_back(std::make_shared<VerifyClient>(host, std::to_string(emptyPort), tmanager));
+////    }
+////
+////    // Precreate data, this handles clearing global counter etc.
+////    std::vector<message_type> sendData = CreateTestData(index);
+////
+////    for(auto i : clients)
+////    {
+////      while(!i->is_alive())
+////      {
+////        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+////      }
+////    }
+////
+////    std::size_t expectCount = clientReceivedCount;
+////    auto t1 = TimePoint();
+////
+////    for (std::size_t k = 0; k < sendData.size(); ++k)
+////    {
+////      auto &client = clients[k % clients.size()];
+////      auto &data = sendData[k];
+////      std::async(std::launch::async, [client, &data](){client->Send(data);});
+////      expectCount++;
+////    }
+////
+////    while(clientReceivedCount != expectCount)
+////    {
+////      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+////
+////      if(printingClientResponses)
+////      {
+////        std::cout << "Waiting for messages to be rec. " << clientReceivedCount <<
+////          " of " << expectCount << std::endl;
+////      }
+////    }
+////
+////    auto t2 = TimePoint();
+////
+////    if(printingClientResponses)
+////    {
+////      std::cout << "Time for " << sendData.size() << " calls: "
+////        << TimeDifference(t1, t2) << std::endl;
+////    }
+////
+////
+////    // Verify we transmitted correctly
+////    if(globalMessages.size() == 0)
+////    {
+////      std::cerr << "Failed to receive messages" << std::endl;
+////      exit(1);
+////    }
+////
+////    if(globalMessages.size() != sendData.size())
+////    {
+////      std::cerr << "Failed to receive all messages" << std::endl;
+////      exit(1);
+////    }
+////
+////    // We need to sort since this will not be ordered
+////    std::sort(globalMessages.begin(), globalMessages.end());
+////    std::sort(sendData.begin(), sendData.end());
+////
+////    for (std::size_t i = 0; i < globalMessages.size(); ++i)
+////    {
+////      if(globalMessages[i] != sendData[i])
+////      {
+////        std::cerr << "Failed to verify messages" << std::endl;
+////        exit(1);
+////      }
+////    }
+////
+////    tmanager.Stop();
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+////template< std::size_t N = 1>
+////void TestCase15(std::string host, std::string port) {
+////  std::cout << "\nTEST CASE 15. Threads: " << N << std::endl;
+////  std::cout << "Info: Killing during transmission, multiple clients" << std::endl;
+////
+////  uint16_t emptyPort = GetOpenPort();
+////
+////  bool smallPackets = true;
+////  for (std::size_t i = 0; i < 10; ++i)
+////  {
+////    std::cout << "Iteration: " << i << std::endl;
+////    fetch::network::LoopbackServer echoServer(emptyPort);
+////    ThreadManager tmanager(N);
+////    tmanager.Start();
+////    std::vector<std::shared_ptr<VerifyClient>> clients;
+////
+////    for (std::size_t i = 0; i < 5; ++i)
+////    {
+////      clients.push_back(std::make_shared<VerifyClient>(host, std::to_string(emptyPort), tmanager));
+////    }
+////
+////    std::size_t messagesToSend = 100;
+////    globalMessages.clear();
+////    globalMessages.reserve(messagesToSend);
+////
+////    for(auto i : clients)
+////    {
+////      while(!i->is_alive())
+////      {
+////        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+////      }
+////    }
+////
+////    if(i == 5)
+////    {
+////      smallPackets = false;
+////    }
+////
+////    // Precreate data
+////    std::vector<message_type> sendData;
+////
+////    for (uint8_t k = 0; k < 8; k++)
+////    {
+////      // note, this must be over default_max_transfer_size = 65536 to test composed interleaving
+////      // as per: https://stackoverflow.com/questions/7362894/boostasiosocket-thread-safety
+////      std::size_t packetSize = 100000;
+////      if(smallPackets)
+////      {
+////        packetSize = 100;
+////      }
+////
+////      message_type arr;
+////      arr.Resize(packetSize);
+////      for (std::size_t z = 0; z < arr.size(); z++)
+////      {
+////        arr[z] = k;
+////      }
+////
+////      sendData.push_back(arr);
+////    }
+////
+////    for (std::size_t j = 0; j < messagesToSend; ++j)
+////    {
+////      for(auto const &i : sendData)
+////      {
+////        for(auto client : clients)
+////        {
+////          std::async(std::launch::async, [client, &i](){client->Send(i);});
+////        }
+////      }
+////    }
+////
+////    tmanager.Stop();
+////
+////  }
+////  std::cerr << "Success." << std::endl;
+////}
+////
+//
+//int main(int argc, char* argv[]) {
+//
+//  std::string host    = "localhost";
+//  uint16_t portNumber = 8080;
+//  std::string port    = std::to_string(portNumber);
+//
+//  std::cout << "Testing communications on port: " << port << std::endl;
+//
+//  TestCase0<1>(host, port);
+////  TestCase1<1>(host, port);
+////  TestCase2<1>(host, port);
+////  TestCase3<1>(host, port);
+////  TestCase4<1>(host, port);
+////  TestCase5<1>(host, port);
+////  TestCase6<1>(host, port);
+////  TestCase7<1>(host, port);
+////  TestCase9<1>(host, port);
+////  TestCase11<1>(host, port);
+////  TestCase12<1>(host, port);
+////  TestCase13<1>(host, port);
+////  //TestCase14<1>(host, port); // occasionally segfault on socket close, need to fix
+////  TestCase15<1>(host, port);
+////
+////  TestCase1<10>(host, port);
+////  TestCase2<10>(host, port);
+////  TestCase3<10>(host, port);
+////  TestCase4<10>(host, port);
+////  TestCase5<10>(host, port);
+////  TestCase6<10>(host, port);
+////  TestCase7<10>(host, port);
+////  TestCase9<10>(host, port);
+////  TestCase11<10>(host, port);
+////  TestCase12<10>(host, port);
+////  TestCase13<10>(host, port);
+////  //TestCase14<10>(host, port); // occasionally segfault on socket close, need to fix
+////  TestCase15<10>(host, port);
+//
+//  std::cout << "finished all tests" << std::endl;
+//
+//  return 0;
+//}
+//
+
+int main(int argc, char *argv[])
 {
-  void Start()
-  {
-  }
-
-private:
-
-}
-
-
-std::atomic<std::size_t> clientReceivedCount_{0};
-std::atomic<std::size_t> serverReceivedCount{0};
-
-std::vector<message_type> globalMessagesFromServer_{};
-fetch::mutex::Mutex       mutexFromServer_;
-std::vector<message_type> globalMessagesToServer_{};
-fetch::mutex::Mutex       mutexToServer_;
-
-// Basic server
-class Server : public TCPServer
-{
-public:
-  Server(uint16_t p, ThreadManager tmanager) :
-    TCPServer(p, tmanager)
-  {
-  }
-
-  void PushRequest(connection_handle_type client, message_type const& msg) override {
-    std::cout << "Message: " << msg << std::endl;
-  }
-};
-
-// Basic client increments on received messages
-class Client : public TCPClient {
-public:
-  Client(std::string const &host,
-    std::string const &port,
-      ThreadManager &tmanager) :
-    TCPClient(tmanager)
-  {
-    Connect(host, port);
-  }
-
-  ~Client()
-  {
-    TCPClient::Cleanup();
-  }
-
-  void PushMessage(message_type const &value) override
-  {
-    {
-      std::lock_guard<fetch::mutex::Mutex> lock(mutexFromServer_);
-      globalMessagesFromServer_.push_back(std::move(value));
-    }
-    clientReceivedCount_++;
-  }
-
-  void ConnectionFailed() override
-  {
-  }
-};
-
-template< std::size_t N = 1>
-void TestCase0(std::string host, std::string port)
-{
-  std::cout << "\nTEST CASE 0. Threads: " << N << std::endl;
-  std::cout << "Info: Attempting to open the echo server multiple times" << std::endl;
-
-  WatchDog dog;
-  dog.Start(1000);
-
-  for (std::size_t index = 0; index < 20; ++index)
-  {
-  }
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000*10));
-
-  std::cerr << "Success." << std::endl;
-}
-
-//template< std::size_t N = 1>
-//void TestCase1(std::string host, std::string port)
-//{
-//  std::cout << "\nTEST CASE 1. Threads: " << N << std::endl;
-//  std::cout << "Info: Attempting to open a connection to a port\
-//    that doesn't exist (TM dead)" << std::endl;
-//
-//  uint16_t emptyPort = GetOpenPort();
-//
-//  for (std::size_t index = 0; index < 1000; ++index)
-//  {
-//    ThreadManager tmanager(N);
-//    Client client(host, std::to_string(emptyPort), tmanager);
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase2(std::string host, std::string port)
-//{
-//  std::cout << "\nTEST CASE 2. Threads: " << N << std::endl;
-//  std::cout << "Info: Attempting to open a connection to a port\
-//    that doesn't exist (TM alive)" << std::endl;
-//
-//  uint16_t emptyPort = GetOpenPort();
-//
-//  for (std::size_t index = 0; index < 1000; ++index)
-//  {
-//    ThreadManager tmanager(N);
-//    tmanager.Start();
-//    Client client(host, std::to_string(emptyPort), tmanager);
-//    tmanager.Stop();
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase3(std::string host, std::string port)
-//{
-//  std::cout << "\nTEST CASE 3. Threads: " << N << std::endl;
-//  std::cout << "Info: Attempting to open a connection to a port that\
-//    doesn't exist (TM jittering)" << std::endl;
-//
-//  uint16_t emptyPort = GetOpenPort();
-//
-//  std::cout << "starting" << std::endl;
-//  for (std::size_t index = 0; index < 1000; ++index)
-//  {
-//    ThreadManager tmanager(N);
-//    if(index % 2 == 0) tmanager.Start();
-//    Client client(host, std::to_string(emptyPort), tmanager);
-//    if(index % 3 == 0) tmanager.Stop();
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase4(std::string host, std::string port)
-//{
-//  std::cout << "\nTEST CASE 4. Threads: " << N << std::endl;
-//  std::cout << "Info: Attempting to open a connection to a port that\
-//    doesn't exist (TM jittering)" << std::endl;
-//
-//  uint16_t emptyPort = GetOpenPort();
-//
-//  std::cout << "starting" << std::endl;
-//  for (std::size_t index = 0; index < 1000; ++index)
-//  {
-//    ThreadManager tmanager(N);
-//    if(index % 2 == 0) tmanager.Start();
-//    Client client(host, std::to_string(emptyPort), tmanager);
-//    if(index % 3 == 0) tmanager.Stop();
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase5(std::string host, std::string port)
-//{
-//  std::cout << "\nTEST CASE 5. Threads: " << N << std::endl;
-//  std::cout << "Info: Attempting to open a connection to a port that\
-//    does exist (TM dead)" << std::endl;
-//
-//  // Start echo server
-//  fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
-//
-//  for (std::size_t index = 0; index < 1000; ++index)
-//  {
-//    ThreadManager tmanager(N);
-//    Client client(host, port, tmanager);
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase6(std::string host, std::string port)
-//{
-//  std::cout << "\nTEST CASE 6. Threads: " << N << std::endl;
-//  std::cout << "Info: Attempting to open a connection to a\
-//    port that does exist (TM alive)" << std::endl;
-//
-//  // Start echo server
-//  fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
-//
-//  for (std::size_t index = 0; index < 1000; ++index)
-//  {
-//    ThreadManager tmanager(N);
-//    tmanager.Start();
-//    Client client(host, port, tmanager);
-//    tmanager.Stop();
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase7(std::string host, std::string port)
-//{
-//  std::cout << "\nTEST CASE 7. Threads: " << N << std::endl;
-//  std::cout << "Info: Attempting to open a connection to a\
-//    port that does exist (TM jittering)" << std::endl;
-//
-//  // Start echo server
-//  fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
-//
-//  for (std::size_t index = 0; index < 1000; ++index)
-//  {
-//    ThreadManager tmanager(N);
-//    if(index % 2 == 0) tmanager.Start();
-//    Client client(host, port, tmanager);
-//    if(index % 3 == 0) tmanager.Stop();
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase8(std::string host, std::string port)
-//{
-//  std::cout << "\nTEST CASE 8. Threads: " << N << std::endl;
-//  std::cout << "Info: Attempting to open multiple\
-//    connections to a port that does exist (move constr)" << std::endl;
-//
-//  // Start echo server
-//  fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
-//  std::vector<Client> clients;
-//
-//  ThreadManager tmanager(N);
-//  tmanager.Start();
-//  for (std::size_t index = 0; index < 1000; ++index)
-//  {
-//    clients.push_back(Client(host, port, tmanager));
-//  }
-//  tmanager.Stop();
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase9(std::string host, std::string port)
-//{
-//  std::cout << "\nTEST CASE 9. Threads: " << N << std::endl;
-//  std::cout << "Info: Attempting to open multiple\
-//    connections to a port that does exist, async" << std::endl;
-//
-//  // Start echo server
-//  fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
-//  std::vector<std::shared_ptr<Client>> clients;
-//  clients.resize(100);
-//
-//  for (std::size_t index = 0; index < 3; ++index)
-//  {
-//    ThreadManager tmanager(N);
-//    tmanager.Start();
-//    for(auto &i : clients)
-//    {
-//      std::async(std::launch::async,
-//          [&i, &host, &port, &tmanager]
-//          {i = std::make_shared<Client>(host, port, tmanager);});
-//    }
-//    if(index % 2 == 0) tmanager.Stop();
-//
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase10(std::string host, std::string port) {
-//  std::cout << "\nTEST CASE 10. Threads: " << N << std::endl;
-//  std::cout << "Info: (Legacy) Usually breaks due to the TM being destroyed before the clients"\
-//    << std::endl;
-//
-//  for (std::size_t index = 0; index < 120; ++index)
-//  {
-//    std::vector< Client > clients;
-//    ThreadManager tmanager(N);
-//    tmanager.Start();
-//
-//    for (std::size_t j = 0; j < 4; ++j)
-//    {
-//      clients.push_back( Client(host, port, tmanager) );
-//    }
-//
-//    tmanager.Stop();
-//
-//    for (std::size_t j = 0; j < 4; ++j)
-//    {
-//      clients.push_back( Client(host, port, tmanager) );
-//    }
-//    tmanager.Start();
-//    if(index%2) tmanager.Stop();
-//    if(index%3) tmanager.Stop();
-//    if(index%5) tmanager.Stop();
-//    std::this_thread::sleep_for(std::chrono::microseconds(1000));
-//  }
-//  std::cout << "success" << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase11(std::string host, std::string port) {
-//  std::cout << "\nTEST CASE 11. Threads: " << N << std::endl;
-//  std::cout << "Info: Bouncing messages off echo/loopback server and counting them" << std::endl;
-//
-//  uint16_t emptyPort = GetOpenPort();
-//
-//  for (std::size_t i = 0; i < 10; ++i)
-//  {
-//    std::cerr << "Iteration: " << i << std::endl;
-//    fetch::network::LoopbackServer echoServer(emptyPort);
-//    ThreadManager tmanager(N);
-//    tmanager.Start();
-//    Client client(host, std::to_string(emptyPort), tmanager);
-//
-//    while(!client.is_alive())
-//    {
-//      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-//    }
-//
-//    std::size_t currentCount = clientReceivedCount;
-//    std::size_t messagesToSend = 1000;
-//
-//    for (std::size_t j = 0; j < messagesToSend; ++j)
-//    {
-//      std::string mess{"Hello: "};
-//      mess += std::to_string(i);
-//      std::async(std::launch::async, [&client, mess](){client.Send(mess);});
-//    }
-//
-//    while(clientReceivedCount != currentCount+messagesToSend)
-//    {
-//      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-//    }
-//
-//    tmanager.Stop();
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase12(std::string host, std::string port) {
-//  std::cout << "\nTEST CASE 12. Threads: " << N << std::endl;
-//  std::cout << "Info: Bouncing messages off echo/loopback\
-//    server and counting them, slow client " << std::endl;
-//
-//  uint16_t emptyPort = GetOpenPort();
-//
-//  for (std::size_t i = 0; i < 5; ++i)
-//  {
-//    std::cout << "Iteration: " << i << std::endl;
-//    fetch::network::LoopbackServer echoServer(emptyPort);
-//    ThreadManager tmanager(N);
-//    tmanager.Start();
-//    SlowClient client(host, std::to_string(emptyPort), tmanager);
-//
-//    while(!client.is_alive())
-//    {
-//      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-//    }
-//
-//    std::size_t currentCount = clientReceivedCount;
-//    std::size_t messagesToSend = 100;
-//
-//    for (std::size_t j = 0; j < messagesToSend; ++j)
-//    {
-//      std::string mess{"Hello: "};
-//      mess += std::to_string(i);
-//      std::async(std::launch::async, [&client, mess](){client.Send(mess);});
-//    }
-//
-//    while(clientReceivedCount != currentCount+messagesToSend)
-//    {
-//      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-//    }
-//
-//    tmanager.Stop();
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase13(std::string host, std::string port) {
-//  std::cout << "\nTEST CASE 13. Threads: " << N << std::endl;
-//  std::cout << "Info: Bouncing messages off echo/loopback\
-//    server and checking ordering" << std::endl;
-//
-//  uint16_t emptyPort = GetOpenPort();
-//
-//  for (std::size_t i = 0; i < 10; ++i)
-//  {
-//    std::cout << "Iteration: " << i << std::endl;
-//    ThreadManager tmanager(N);
-//    tmanager.Start();
-//    fetch::network::LoopbackServer echoServer(emptyPort);
-//    VerifyClient client(host, std::to_string(emptyPort), tmanager);
-//
-//    while(!client.is_alive())
-//    {
-//      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-//    }
-//
-//    // Precreate data, this handles clearing global counter etc.
-//    std::vector<message_type> sendData = CreateTestData(i);
-//
-//    std::size_t expectCount = clientReceivedCount;
-//    auto t1 = TimePoint();
-//
-//    for(auto &dat : sendData)
-//    {
-//      client.Send(dat);
-//      expectCount++;
-//    }
-//
-//    while(clientReceivedCount != expectCount)
-//    {
-//      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-//    }
-//
-//    if(printingClientResponses)
-//    {
-//      std::cout << "Time for " << sendData.size() << " calls: "
-//        << TimeDifference(t1, t2) << std::endl;
-//    }
-//
-//    // Verify we transmitted correctly
-//    if(globalMessages.size() == 0)
-//    {
-//      std::cerr << "Failed to receive messages" << std::endl;
-//      exit(1);
-//    }
-//
-//    if(globalMessages.size() != sendData.size())
-//    {
-//      std::cerr << "Failed to receive all messages" << std::endl;
-//      exit(1);
-//    }
-//
-//    for (std::size_t i = 0; i < globalMessages.size(); ++i)
-//    {
-//      if(globalMessages[i] != sendData[i])
-//      {
-//        std::cerr << "Failed to verify messages" << std::endl;
-//        exit(1);
-//      }
-//    }
-//    tmanager.Stop();
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase14(std::string host, std::string port) {
-//  std::cout << "\nTEST CASE 14. Threads: " << N << std::endl;
-//  std::cout << "Info: Bouncing messages off echo/loopback\
-//    server and checking ordering, multiple clients" << std::endl;
-//
-//  uint16_t emptyPort = GetOpenPort();
-//
-//  for (std::size_t index = 0; index < 10; ++index)
-//  {
-//    std::cout << "Iteration: " << index << std::endl;
-//    fetch::network::LoopbackServer echoServer(emptyPort);
-//    ThreadManager tmanager(N);
-//    tmanager.Start();
-//    std::vector<std::shared_ptr<VerifyClient>> clients;
-//
-//    for (std::size_t i = 0; i < 5; ++i)
-//    {
-//      clients.push_back(std::make_shared<VerifyClient>(host, std::to_string(emptyPort), tmanager));
-//    }
-//
-//    // Precreate data, this handles clearing global counter etc.
-//    std::vector<message_type> sendData = CreateTestData(index);
-//
-//    for(auto i : clients)
-//    {
-//      while(!i->is_alive())
-//      {
-//        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-//      }
-//    }
-//
-//    std::size_t expectCount = clientReceivedCount;
-//    auto t1 = TimePoint();
-//
-//    for (std::size_t k = 0; k < sendData.size(); ++k)
-//    {
-//      auto &client = clients[k % clients.size()];
-//      auto &data = sendData[k];
-//      std::async(std::launch::async, [client, &data](){client->Send(data);});
-//      expectCount++;
-//    }
-//
-//    while(clientReceivedCount != expectCount)
-//    {
-//      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-//
-//      if(printingClientResponses)
-//      {
-//        std::cout << "Waiting for messages to be rec. " << clientReceivedCount <<
-//          " of " << expectCount << std::endl;
-//      }
-//    }
-//
-//    auto t2 = TimePoint();
-//
-//    if(printingClientResponses)
-//    {
-//      std::cout << "Time for " << sendData.size() << " calls: "
-//        << TimeDifference(t1, t2) << std::endl;
-//    }
-//
-//
-//    // Verify we transmitted correctly
-//    if(globalMessages.size() == 0)
-//    {
-//      std::cerr << "Failed to receive messages" << std::endl;
-//      exit(1);
-//    }
-//
-//    if(globalMessages.size() != sendData.size())
-//    {
-//      std::cerr << "Failed to receive all messages" << std::endl;
-//      exit(1);
-//    }
-//
-//    // We need to sort since this will not be ordered
-//    std::sort(globalMessages.begin(), globalMessages.end());
-//    std::sort(sendData.begin(), sendData.end());
-//
-//    for (std::size_t i = 0; i < globalMessages.size(); ++i)
-//    {
-//      if(globalMessages[i] != sendData[i])
-//      {
-//        std::cerr << "Failed to verify messages" << std::endl;
-//        exit(1);
-//      }
-//    }
-//
-//    tmanager.Stop();
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-//template< std::size_t N = 1>
-//void TestCase15(std::string host, std::string port) {
-//  std::cout << "\nTEST CASE 15. Threads: " << N << std::endl;
-//  std::cout << "Info: Killing during transmission, multiple clients" << std::endl;
-//
-//  uint16_t emptyPort = GetOpenPort();
-//
-//  bool smallPackets = true;
-//  for (std::size_t i = 0; i < 10; ++i)
-//  {
-//    std::cout << "Iteration: " << i << std::endl;
-//    fetch::network::LoopbackServer echoServer(emptyPort);
-//    ThreadManager tmanager(N);
-//    tmanager.Start();
-//    std::vector<std::shared_ptr<VerifyClient>> clients;
-//
-//    for (std::size_t i = 0; i < 5; ++i)
-//    {
-//      clients.push_back(std::make_shared<VerifyClient>(host, std::to_string(emptyPort), tmanager));
-//    }
-//
-//    std::size_t messagesToSend = 100;
-//    globalMessages.clear();
-//    globalMessages.reserve(messagesToSend);
-//
-//    for(auto i : clients)
-//    {
-//      while(!i->is_alive())
-//      {
-//        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-//      }
-//    }
-//
-//    if(i == 5)
-//    {
-//      smallPackets = false;
-//    }
-//
-//    // Precreate data
-//    std::vector<message_type> sendData;
-//
-//    for (uint8_t k = 0; k < 8; k++)
-//    {
-//      // note, this must be over default_max_transfer_size = 65536 to test composed interleaving
-//      // as per: https://stackoverflow.com/questions/7362894/boostasiosocket-thread-safety
-//      std::size_t packetSize = 100000;
-//      if(smallPackets)
-//      {
-//        packetSize = 100;
-//      }
-//
-//      message_type arr;
-//      arr.Resize(packetSize);
-//      for (std::size_t z = 0; z < arr.size(); z++)
-//      {
-//        arr[z] = k;
-//      }
-//
-//      sendData.push_back(arr);
-//    }
-//
-//    for (std::size_t j = 0; j < messagesToSend; ++j)
-//    {
-//      for(auto const &i : sendData)
-//      {
-//        for(auto client : clients)
-//        {
-//          std::async(std::launch::async, [client, &i](){client->Send(i);});
-//        }
-//      }
-//    }
-//
-//    tmanager.Stop();
-//
-//  }
-//  std::cerr << "Success." << std::endl;
-//}
-//
-
-int main(int argc, char* argv[]) {
-
-  std::string host    = "localhost";
-  uint16_t portNumber = 8080;
-  std::string port    = std::to_string(portNumber);
-
-  std::cout << "Testing communications on port: " << port << std::endl;
-
-  TestCase0<1>(host, port);
-//  TestCase1<1>(host, port);
-//  TestCase2<1>(host, port);
-//  TestCase3<1>(host, port);
-//  TestCase4<1>(host, port);
-//  TestCase5<1>(host, port);
-//  TestCase6<1>(host, port);
-//  TestCase7<1>(host, port);
-//  TestCase9<1>(host, port);
-//  TestCase11<1>(host, port);
-//  TestCase12<1>(host, port);
-//  TestCase13<1>(host, port);
-//  //TestCase14<1>(host, port); // occasionally segfault on socket close, need to fix
-//  TestCase15<1>(host, port);
-//
-//  TestCase1<10>(host, port);
-//  TestCase2<10>(host, port);
-//  TestCase3<10>(host, port);
-//  TestCase4<10>(host, port);
-//  TestCase5<10>(host, port);
-//  TestCase6<10>(host, port);
-//  TestCase7<10>(host, port);
-//  TestCase9<10>(host, port);
-//  TestCase11<10>(host, port);
-//  TestCase12<10>(host, port);
-//  TestCase13<10>(host, port);
-//  //TestCase14<10>(host, port); // occasionally segfault on socket close, need to fix
-//  TestCase15<10>(host, port);
-
-  std::cout << "finished all tests" << std::endl;
-
+  
   return 0;
 }
