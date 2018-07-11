@@ -3,12 +3,12 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/referenced_byte_array.hpp"
 #include "core/logger.hpp"
 #include "network/message.hpp"
 #include "network/management/network_manager.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/byte_array.hpp"
+#include "core/serializers/referenced_byte_array.hpp"
 
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection.hpp"
@@ -67,15 +67,29 @@ class TCPClientImplementation final :
       // We get IO objects from the network manager, they will only be strong while in the post
       auto strand = networkManager_.CreateIO<strand_type>();
       if(!strand) return;
+      strand_ = strand;
 
-      strand->Post([this, selfLock, host, port, strand]
+      strand->post([this, self, host, port, strand]
       {
         assert(strand.running_in_this_thread());
+        shared_self_type selfLock = self.lock();
+        if(!selfLock) return;
 
         std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
         socket_ = socket;
 
         std::shared_ptr<resolver_type> res = networkManager_.CreateIO<resolver_type>();
+
+            if(!strand)
+            {
+              std::cerr << "no strand7" << std::endl;
+            }
+
+            if(!strand_.lock())
+            {
+              std::cerr << "no strand8" << std::endl;
+            }
+
 
         auto cb = [this, self, res, socket, strand]
         (std::error_code ec, resolver_type::iterator)
@@ -89,6 +103,16 @@ class TCPClientImplementation final :
           {
             fetch::logger.Debug("Connection established!");
             this->SetAddress( (*socket).remote_endpoint().address().to_string() );
+
+            if(!strand)
+            {
+              std::cerr << "no strand1" << std::endl;
+            }
+
+            if(!strand_.lock())
+            {
+              std::cerr << "no strand4" << std::endl;
+            }
 
             ReadHeader();
           } else
@@ -104,7 +128,7 @@ class TCPClientImplementation final :
             (res->resolve({std::string(host), std::string(port)}));
           asio::async_connect(*socket, it, strand->wrap(cb));
         } else {
-          fetch::logger.Error("Failed to create valid socket");
+          //fetch::logger.Error("Failed to create valid socket");
         }
       }); // end strand post
     }); // end NM post
@@ -119,7 +143,7 @@ class TCPClientImplementation final :
   {
     if(!connected_)
     {
-      fetch::logger.Error("Attempting to write to socket too early. Returning.");
+      //fetch::logger.Error("Attempting to write to socket too early. Returning.");
       return;
     }
 
@@ -137,7 +161,7 @@ class TCPClientImplementation final :
       auto strandLock           = strand_.lock();
       if(!selfLock || !strandLock) return;
 
-      strandLock->Post([selfLock] { WriteNext(selfLock); });
+      strandLock->post([this, selfLock] { WriteNext(selfLock); });
      });
   }
 
@@ -149,17 +173,23 @@ class TCPClientImplementation final :
   void Close() noexcept
   {
     std::weak_ptr<socket_type> socketWeak = socket_;
+    std::weak_ptr<strand_type> strandWeak = strand_;
 
-    networkManager_.Post(strand_->wrap( [socketWeak]
+    networkManager_.Post([socketWeak, strandWeak]
+    {
+      auto socket = socketWeak.lock();
+      auto strand = strandWeak.lock();
+
+      if(socket && strand)
       {
-        auto socket = socketWeak.lock();
-        if(socket)
+        strand->post([socket]
         {
           std::error_code dummy;
           socket->shutdown(asio::ip::tcp::socket::shutdown_both, dummy);
           socket->close(dummy);
-        }
-      } ));
+        });
+      }
+    });
   }
 
   bool Closed() noexcept
@@ -208,6 +238,11 @@ class TCPClientImplementation final :
   {
     LOG_STACK_TRACE_POINT;
     auto strand = strand_.lock();
+    if(!strand)
+    {
+      std::cerr << "strand died." << std::endl;
+      return;
+    }
     assert(strand.running_in_this_thread());
 
     self_type self = shared_from_this();
@@ -247,7 +282,7 @@ class TCPClientImplementation final :
 
     if (magic != networkMagic_)
     {
-      fetch::logger.Error("Magic incorrect during network read - dying: ", ToHex(header));
+      //fetch::logger.Error("Magic incorrect during network read - dying: ", ToHex(header));
       return;
     }
 
@@ -263,17 +298,29 @@ class TCPClientImplementation final :
 
       if (!ec)
       {
+            if(!strand)
+            {
+              std::cerr << "no strand2" << std::endl;
+            }
+
+            if(!strand_.lock())
+            {
+              std::cerr << "no strand3" << std::endl;
+            }
+
+
+
         PushMessage(message);
         ReadHeader();
       } else
       {
-        fetch::logger.Error("Reading body failed, dying: ", ec);
+        //fetch::logger.Error("Reading body failed, dying: ", ec);
       }
     };
 
     if(socket)
     {
-      asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), strand_->wrap(cb));
+      asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), strand->wrap(cb));
     }
   }
 
@@ -326,19 +373,23 @@ class TCPClientImplementation final :
 
       if(ec)
       {
-        fetch::logger.Error("Error writing to socket, closing.");
+        //fetch::logger.Error("Error writing to socket, closing.");
       }
       else
       {
-        strand_->Post([] { WriteNext(selfLock); });
+        auto strandLock = strand_.lock();
+        if(strandLock)
+        {
+          strandLock->post([this, selfLock] { WriteNext(selfLock); });
+        }
       }
     };
 
     if(socket)
     {
-      asio::async_write(*socket, buffers, strand_->wrap(cb));
+      asio::async_write(*socket, buffers, strand_.lock()->wrap(cb));
     } else {
-      fetch::logger.Error("Failed to lock socket in WriteNext!");
+      //fetch::logger.Error("Failed to lock socket in WriteNext!");
     }
   }
 
