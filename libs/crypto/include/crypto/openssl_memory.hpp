@@ -71,25 +71,25 @@ namespace memory {
         struct Deleter<EC_GROUP, eDeleteStrategy::clearing> {
             static constexpr FreeFunctionPtr<EC_GROUP> function = &EC_GROUP_clear_free;
         };
+
+        template <typename T
+                 , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical
+                 , typename T_Deleter = detail::Deleter<T, P_DeleteStrategy>>
+        struct OpenSSLDeleter {
+            using Deleter = T_Deleter;
+    
+            constexpr OpenSSLDeleter() noexcept = default;
+    
+            void operator() (T* ptr) const {
+                (*Deleter::function)(ptr);
+            }
+        };
     }
 
     template <typename T
-             , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical
-             , typename T_Deleter = detail::Deleter<T, P_DeleteStrategy>>
-    struct OpenSSLDeleter {
-        using Deleter = T_Deleter;
-
-        constexpr OpenSSLDeleter() noexcept = default;
-
-        void operator() (T* ptr) const {
-            (*Deleter::function)(ptr);
-        }
-    };
-
-    template <typename T
             , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical
-            , typename T_Deleter = detail::Deleter<T, P_DeleteStrategy>>
-    using ossl_unique_ptr = std::unique_ptr<T, OpenSSLDeleter<T, P_DeleteStrategy, T_Deleter>>;
+            , typename T_Deleter = detail::OpenSSLDeleter<T, P_DeleteStrategy>>
+    using ossl_unique_ptr = std::unique_ptr<T, T_Deleter>;
 
 } //* memory namespace
 } //* openssl namespace
