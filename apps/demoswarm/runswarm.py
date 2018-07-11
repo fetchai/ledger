@@ -36,7 +36,8 @@ class RunSwarmArgs(object):
 
 class Swarm(object):
     def __init__(self, args):
-        self.nodes = dict([ (x, Node(x, args)) for x in range(0, args.members)])
+        chainident = int(time.time())
+        self.nodes = dict([ (x, Node(x, args, chainident)) for x in range(0, args.members)])
 
     def close(self):
         for node in self.nodes.values():
@@ -87,7 +88,7 @@ def killall():
     out, err = p.communicate()
 
 class Node(object):
-    def __init__(self, index, args):
+    def __init__(self, index, args, chainident):
         self.peercount = args.initialpeers
         self.maxpeers = args.maxpeers
         self.myport = PORT_BASE + index
@@ -113,8 +114,9 @@ class Node(object):
         self.backargs = {
             "-id": "{}".format(self.index),
             "-maxpeers": "{}".format(self.maxpeers),
-            "-target": "{}".format(args.target + int(index/3)),
+            "-target": "{}".format(args.target),
             "-port": "{}".format(PORT_BASE + self.index),
+            "-chainident": "{}".format(chainident),
             "-peers": ",".join(self.peers),
             "-idlespeed": "{}".format(args.idlespeed),
         }

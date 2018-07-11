@@ -117,7 +117,7 @@ public:
         threadingSystem_ -> Post([this, host]{
                 if (this->toPing_)
                 {
-                    this->toPing_(std::ref(*this), std::cref(host));
+                    this->toPing_(*this, host);
                 }
             });
     }
@@ -156,7 +156,7 @@ public:
         threadingSystem_ -> Post([this, host]{
                 if (this->onPingSucceeded_)
                 {
-                    this->onPingSucceeded_(std::cref(host));
+                    this->onPingSucceeded_(host);
                 }
             });
     }
@@ -166,7 +166,7 @@ public:
         threadingSystem_ -> Post([this, host]{
                 if (this->onPingFailed_)
                 {
-                    this->onPingFailed_(std::cref(host));
+                    this->onPingFailed_(host);
                 }
             });
     }
@@ -176,8 +176,7 @@ public:
         threadingSystem_ -> Post([this, host, count]{
                 if (this->toDiscoverPeers_)
                 {
-                    this->toDiscoverPeers_(
-                        std::ref(*this), std::cref(host), count);
+                    this->toDiscoverPeers_(*this, host, count);
                 }
             });
     }
@@ -201,7 +200,7 @@ public:
         threadingSystem_ -> Post([this, host]{
                 if (this->onNewPeerDiscovered_)
                 {
-                    this->onNewPeerDiscovered_(std::cref(host));
+                    this->onNewPeerDiscovered_(host);
                 }
             });
     }
@@ -222,7 +221,7 @@ public:
     {
         if (this -> toBlockSolved_)
         {
-            this -> toBlockSolved_(std::cref(blockdata));
+            this -> toBlockSolved_(blockdata);
         }
     }
 
@@ -231,7 +230,7 @@ public:
     {
         if (this->toDiscoverBlocks_)
         {
-            this->toDiscoverBlocks_(std::cref(host), count);
+            this->toDiscoverBlocks_(host, count);
         }
     }
 
@@ -249,8 +248,7 @@ public:
         threadingSystem_ -> Post([this, host, blockid]{
                 if (this->onNewBlockIdFound_)
                 {
-                    this->onNewBlockIdFound_(
-                        std::cref(host), std::cref(blockid));
+                    this->onNewBlockIdFound_(host, blockid);
                 }
             });
     }
@@ -302,7 +300,7 @@ public:
     {
         if (this->toGetBlock_)
         {
-            this->toGetBlock_(std::cref(host), std::cref(blockid));
+            this->toGetBlock_(host, blockid);
         }
     }
 
@@ -329,7 +327,7 @@ public:
     {
         if (this->toQueryBlock_)
         {
-            return this->toQueryBlock_(std::cref(blockid));
+            return this->toQueryBlock_(blockid);
         }
         return "";
     }
@@ -343,7 +341,7 @@ public:
     {
         if (this->toVerifyBlock_)
         {
-            this->toVerifyBlock_(std::cref(blockid), validity);
+            this->toVerifyBlock_(blockid, validity);
         }
     }
 

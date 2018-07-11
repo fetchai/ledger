@@ -38,14 +38,15 @@ public:
     bool operator==(const MainChainNode &rhs) const = delete;
     bool operator<(const MainChainNode &rhs) const = delete;
 
-    MainChainNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore, uint32_t minerNumber, uint32_t target) :
-        nnCore_(networkNodeCore)
+    MainChainNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore, uint32_t minerNumber, uint32_t target, uint32_t chainident) :
+        nnCore_(std::move(networkNodeCore))
     {
         chain_ = std::make_shared<fetch::chain::MainChain>();
         threadPool_ = std::make_shared<network::ThreadPool>(5);
         stopped_ = false;
         minerNumber_ = minerNumber;
         target_ = target;
+        chainident_ = chainident;
 
         nnCore_ -> AddProtocol(this);
         HTTPModule::Post(
@@ -64,8 +65,8 @@ public:
     {
         auto chainArray = chain_ -> HeaviestChain(16);
         size_t limit = std::min(chainArray.size(), size_t(16));
-        script::Variant result = script::Variant::Array(limit);
 
+        script::Variant blocks = script::Variant::Array(limit);
         std::size_t index = 0;
         for (auto &i : chainArray)
         {
@@ -74,10 +75,15 @@ public:
             temp["blockNumber"]  = i.body().block_number;
             temp["hashcurrent"]         = ToHex(i.hash());
             temp["hashprev"]     = ToHex(i.body().previous_hash);
-            result[index++] = temp;
+            blocks[index++] = temp;
             if (index >= limit)
                 break;
         }
+
+        script::Variant result = script::Variant::Object();
+        result["blocks"] = blocks;
+        result["chainident"] = chainident_;
+
         std::ostringstream ret;
         ret << result;
 
@@ -167,6 +173,8 @@ public:
                     // Get heaviest block
                     auto block = chain_ -> HeaviestBlock();
 
+                    fetch::logger.Info("MINER: Determining heaviest chain as:", block.summarise());
+
                     // Create another block sequential to previous
                     block_type nextBlock;
                     body_type nextBody;
@@ -181,6 +189,8 @@ public:
                     // Mine the block
                     nextBlock.proof().SetTarget(target_);
                     miner::Mine(nextBlock);
+
+                    fetch::logger.Info("MINER: Mined block:", nextBlock.summarise());
 
                     if(stopped_)
                     {
@@ -203,6 +213,7 @@ private:
     std::atomic<bool> stopped_;
     uint32_t minerNumber_;
     uint32_t target_;
+    uint32_t chainident_;
     std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
   };
 

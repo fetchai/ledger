@@ -95,12 +95,24 @@ def get_data2(context, mon):
 def get_chain_data2(context, mon):
     r = []
 
-    allblocknames = list(mon.chain.keys())
+    if not mon.chain.keys():
+        return {
+            'nodes': []
+        }
+
+    chainident = max(mon.chain.keys())
+    blocks = mon.chain.get(chainident, {})
+    if not blocks:
+        return {
+            'nodes': []
+        }
+
+    allblocknames = list(blocks.keys())
     blocknameToId = dict((name, index+1) for index,name in enumerate(allblocknames))
     blocknameToId[""] = 0
 
     for name in allblocknames:
-        b = mon.chain[name]
+        b = blocks[name]
 
         prev_name = b.get('prev', "")
         prev_id = blocknameToId.get(prev_name, 0)
@@ -111,9 +123,20 @@ def get_chain_data2(context, mon):
                 'v': str(id),
                 'f': """
 {}
-<div style="font-weight:bold">{} nodes</div>
-<div style="font-style:italic">{}</div>
-""".format(str(name)[0:16], len(b["nodes"]), ",".join([ x[-1] for x in sorted(b["nodes"])])),
+<div>
+<span>blk:</span>&nbsp;<span style="font-weight:bold">{}</span>
+<span>by:</span>&nbsp;<span style="font-weight:bold">{}</span>
+</div>
+<div>
+<span style="font-weight:bold">{} &mdash;</span>
+<span style="font-style:italic">{}</span>
+</div>
+                """.format(
+                    str(name)[0:16],
+                    b["num"],
+                    b["miner"],
+                    len(b["nodes"]),
+                    ",".join([ x[-1] for x in sorted(b["nodes"])])),
             },
             'manager': str(prev_id),
             'tooltip': '',

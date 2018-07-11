@@ -4,6 +4,7 @@ import argparse
 import random
 import sys
 import time
+import datetime
 
 from fetchnetwork.swarm import Swarm, say
 from fetchledger.chain import MainChain, MainChainBlock
@@ -17,9 +18,13 @@ PEERS = [
     ]
 
 class SwarmAgentNaive(object):
-    def __init__(self, idnum, rpcPort, httpPort, maxpeers, idlespeed, peers, target):
-        self.swarm = Swarm(idnum, rpcPort, httpPort, maxpeers, idlespeed, target)
+    def __init__(self, idnum, rpcPort, httpPort,
+                     maxpeers, idlespeed, peers, target, chainident, introductions):
+        self.swarm = Swarm(idnum, rpcPort, httpPort,
+                               maxpeers, idlespeed, target, chainident)
         self.idnum = idnum
+
+        self.introductions = introductions
 
         self.peerlist = peers.split(",")
         self.blockCounter = 0
@@ -41,7 +46,7 @@ class SwarmAgentNaive(object):
         self.swarm.OnLooseBlock(self.onLooseBlock)
         self.swarm.OnBlockSupplied(self.onBlockSupplied)
         self.swarm.OnBlockNotSupplied(self.onBlockNotSupplied)
-
+        self.timeOfLastRemoteNewBlock = datetime.datetime.now()
         self.in_progress = set()
 
         say(self.mainchain.totalBlocks())
@@ -61,7 +66,14 @@ class SwarmAgentNaive(object):
         say("idle")
         goodPeers = self.swarm.GetPeers(10, -0.5)
 
-        goodPeers = [ x for x in goodPeers if x not in self.in_progress ]
+        if (datetime.datetime.now() - self.timeOfLastRemoteNewBlock
+                    ).total_seconds() > 40:
+            self.timeOfLastRemoteNewBlock = datetime.datetime.now()
+            self.in_progress = set()
+
+        goodPeers = [ x for x in goodPeers
+                          if x not in self.in_progress
+                          and x not in self.introductions ]
 
         if not goodPeers:
             say("quiet")
@@ -83,7 +95,7 @@ class SwarmAgentNaive(object):
             if host not in self.in_progress:
                 self.in_progress.add(host)
                 self.swarm.DoPing(host);
-                self.swarm.DoDiscoverBlocks(host, 10);
+                self.swarm.DoDiscoverBlocks(host, 3);
             else:
                 say("PYCHAINNODE===> Ping deferred to:", host)
 
@@ -92,6 +104,8 @@ class SwarmAgentNaive(object):
     def onPeerless(self):
         for x in self.peerlist:
             self.swarm.DoPing(x)
+        for x in self.introductions:
+            self.swarm.AddKarmaMax(x, 1000.0, 1000.0);
 
     def onNewPeerDiscovered(self, host):
         if host == self.swarm.queryOwnLocation():
@@ -101,21 +115,21 @@ class SwarmAgentNaive(object):
     def onNewBlockIdFound(self, host, blockid):
         say("PYCHAINNODE===> WOW - ", blockid)
         self.swarm.AddKarmaMax(host, 2.0, 30.0);
+        self.timeOfLastRemoteNewBlock = datetime.datetime.now()
 
     def onBlockIdRepeated(self, host, blockid):
         # Awwww, we know about this.
         self.swarm.AddKarmaMax(host, 1.0, 10.0);
-        pass
 
     def onLooseBlock(self, host, blockid):
-        say("PYCHAINNODE===> LOOSE: ", host, blockid)
+        say("PYCHAINNODE===> LOOSE FOUND: ", host, ' ', blockid)
         self.swarm.DoGetBlock(host, blockid)
 
     def onBlockSupplied(self, host, blockid):
-        say("PYCHAINNODE===> DELIVERED: ", host, blockid)
+        say("PYCHAINNODE===> LOOSE DELIVERED: ", host, ' ', blockid)
 
     def onBlockNotSupplied(self, host, blockid):
-        say("PYCHAINNODE===> NOT DELIVERED: ", host, blockid)
+        say("PYCHAINNODE===> LOOSE NOT DELIVERED: ", host, ' ', blockid)
 
 
 def run(config):
@@ -126,7 +140,9 @@ def run(config):
         config.maxpeers,
         config.idlespeed,
         config.peers,
-        config.target
+        config.target,
+        config.chainident,
+        [ "127.0.0.1:" + str(config.port) ] if config.introduce else []
     )
 
     while True:
@@ -135,12 +151,14 @@ def run(config):
 def main():
     params = argparse.ArgumentParser(description='I am a Fetch node.')
 
-    params.add_argument("-target",         type=int, help="Mining target.", default=16);
-    params.add_argument("-id",             type=int, help="Identifier number for this node.", default=1);
-    params.add_argument("-port",           type=int, help="Which port to run on.", default=9012);
-    params.add_argument("-maxpeers",       type=int, help="Ideally how many peers to maintain good connections to.", default=3);
-    params.add_argument("-idlespeed",      type=int, help="The rate, in milliseconds, of generating idle events to the Swarm Agent.", default=100);
-    params.add_argument("-peers",          type=str, help="Comma separated list of peer locations.", default=",".join(PEERS));
+    params.add_argument("-target",         type=int, help="Mining target.", default=16)
+    params.add_argument("-id",             type=int, help="Identifier number for this node.", default=1)
+    params.add_argument("-port",           type=int, help="Which port to run on.", default=9012)
+    params.add_argument("-maxpeers",       type=int, help="Ideally how many peers to maintain good connections to.", default=3)
+    params.add_argument("-idlespeed",      type=int, help="The rate, in milliseconds, of generating idle events to the Swarm Agent.", default=100)
+    params.add_argument("-peers",          type=str, help="Comma separated list of peer locations.", default=",".join(PEERS))
+    params.add_argument("-introduce",      default=False, help="Promote myself as a peer in order to join swarm.", action='store_true')
+    params.add_argument("-chainident",     help="a number which represents which chain this is part of (for monitoring to use)", type=int, default=0)
 
     config = params.parse_args(sys.argv[1:])
 
@@ -148,3 +166,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+DETAILS="""
+
+lldb build/apps/pyfetch/pyfetch -- apps/pyfetch/pychainnode.py -id 10 -maxpeers 4 -target 16 -port 9010 -peers 127.0.0.1:9001,127.0.0.1:9005 -idlespeed 50 --introduce
+
+"""

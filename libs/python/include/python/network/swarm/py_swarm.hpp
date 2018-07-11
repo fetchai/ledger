@@ -91,7 +91,7 @@ public:
     return std::string(fetch::byte_array::ToHex(hash));
   }
 
-  explicit PySwarm(uint32_t id, uint16_t rpcPort, uint16_t httpPort, uint32_t maxpeers, uint32_t idlespeed, int target)
+  explicit PySwarm(uint32_t id, uint16_t rpcPort, uint16_t httpPort, uint32_t maxpeers, uint32_t idlespeed, int target, int chainident)
   {
     std::string identifier = "node-" + std::to_string(id);
     std::string myHost = "127.0.0.1:" + std::to_string(rpcPort);
@@ -105,7 +105,7 @@ public:
     auto httpModule = std::make_shared<SwarmHttpModule>(swarmNode);
     nnCore -> AddModule(httpModule);
 
-    auto chainNode = std::make_shared<fetch::ledger::MainChainNode>(nnCore, id, target);
+    auto chainNode = std::make_shared<fetch::ledger::MainChainNode>(nnCore, id, target, chainident);
     auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl<PythonWorker>>(worker, myHost, idlespeed);
     worker -> UseCore(nnCore);
 
@@ -185,17 +185,20 @@ public:
                                                                    }
                                                                    bool loose = false;
                                                                    std::string blockId;
-                                                                   for(auto  &block : collection)
+
+                                                                   std::string prevHash;
+                                                                   for(auto &block : collection)
                                                                    {
                                                                        block.UpdateDigest();
-                                                                       chainNode ->  AddBlock(block);
+                                                                       chainNode -> AddBlock(block);
+                                                                       prevHash = block.prevString();
                                                                        loose = block.loose();
                                                                        blockId = pySwarm -> hashToBlockId(block.hash());
                                                                        swarmAgentApi -> DoNewBlockIdFound(host, blockId);
                                                                    }
                                                                    if (loose)
                                                                    {
-                                                                       pySwarm -> DoLooseBlock(host, blockId);
+                                                                       pySwarm -> DoLooseBlock(host, prevHash);
                                                                    }
                                                                }
                                                                else
@@ -235,13 +238,13 @@ public:
                                                                      block.UpdateDigest();
                                                                      auto newHash = block.hash();
                                                                      auto newBlockId = pySwarm -> hashToBlockId(newHash);
-                                                                     pySwarm -> DoBlockSupplied(host, newBlockId);
+                                                                     pySwarm -> DoBlockSupplied(host, block.hashString());
 
                                                                      chainNode ->  AddBlock(block);
 
                                                                      if (block.loose())
                                                                      {
-                                                                         pySwarm -> DoLooseBlock(host, newBlockId);
+                                                                         pySwarm -> DoLooseBlock(host, block.prevString());
                                                                      }
                                                                  }
                                                                  else

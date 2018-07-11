@@ -46,7 +46,7 @@ public:
                      uint32_t maxpeers,
                      const fetch::swarm::SwarmPeerLocation &uri
                      ):
-    nnCore_(networkNodeCore),
+      nnCore_(std::move(networkNodeCore)),
     uri_(uri),
     karmaPeerList_(identifier)
   {

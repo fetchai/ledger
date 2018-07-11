@@ -69,7 +69,7 @@ class Monitoring(object):
                     print("Denied:", ident)
 
                 if data != None:
-                   self.owner.newChainData(ident, data)
+                   self.owner.newChainData(ident, data["blocks"], data["chainident"])
                 else:
                     self.owner.badNode(ident)
 
@@ -86,12 +86,22 @@ class Monitoring(object):
 
         self.chain = {}
 
-    def newChainData(self, ident, blocks):
+    def newChainData(self, ident, blocks, chainident):
+
+        if self.chain.keys():
+            if chainident < max(self.chain.keys()):
+                return
+            if chainident > max(self.chain.keys()):
+                self.chain = {}
+
         for block in blocks:
-            self.chain.setdefault(block["hashcurrent"], { 'id': len(self.chain)+1 })
-            self.chain[block["hashcurrent"]]["prev"] = block["hashprev"]
-            self.chain[block["hashcurrent"]].setdefault("nodes", set())
-            self.chain[block["hashcurrent"]]["nodes"].add(ident)
+            self.chain.setdefault(chainident, {})
+            self.chain[chainident].setdefault(block["hashcurrent"], { 'id': len(self.chain)+1 })
+            self.chain[chainident][block["hashcurrent"]]["prev"] = block["hashprev"]
+            self.chain[chainident][block["hashcurrent"]].setdefault("nodes", set())
+            self.chain[chainident][block["hashcurrent"]]["nodes"].add(ident)
+            self.chain[chainident][block["hashcurrent"]]["num"] = block["blockNumber"]
+            self.chain[chainident][block["hashcurrent"]]["miner"] = block["minerNumber"]
 
     def close(self):
         self.thread.done = True
