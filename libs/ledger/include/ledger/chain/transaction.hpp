@@ -1,34 +1,40 @@
 #ifndef CHAIN_TRANSACTION_HPP
 #define CHAIN_TRANSACTION_HPP
 
-#include "ledger/chain/basic_transaction.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
 
 namespace fetch {
 namespace chain {
 
-class Transaction : public BasicTransaction
+class Transaction : private MutableTransaction
 {
+  
 public:
-  typedef BasicTransaction super_type;
+  typedef MutableTransaction super_type;  
 
-  Transaction() = default;
-  explicit Transaction(super_type &&super) : super_type(super) {
+  Transaction(Transaction const &other) = default;
+  Transaction(Transaction &&other) = default;
+
+  using super_type::groups;
+  using super_type::summary;
+  using super_type::data;
+  using super_type::signature;  
+  using super_type::contract_name;    
+  
+  operator MutableTransaction() 
+  {
+    MutableTransaction ret;
+    ret.Copy( *this );    
+  }
+  
+  bool Finalise( MutableTransaction &base ) 
+  {
+    base.copy_on_write_ = true;    
+    this->Copy(base);
     UpdateDigest();
+    return Verify();
   }
-
-  digest_type const &digest() const {
-    return summary_.transaction_hash;
-  }
-
-  bool operator==(const Transaction &rhs) const {
-    return digest() == rhs.digest();
-  }
-
-  bool operator<(const Transaction &rhs) const {
-    return digest() < rhs.digest();
-  }
-
-
+   
 private:
 
   template <typename T>
