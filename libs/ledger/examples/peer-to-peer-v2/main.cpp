@@ -1,4 +1,3 @@
-//#include"swarm_service.hpp"
 #include"shard_service.hpp"
 #include"service/server.hpp"
 #include"network/tcp_server.hpp"
