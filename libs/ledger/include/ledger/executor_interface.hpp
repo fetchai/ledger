@@ -25,6 +25,18 @@ public:
   /// @}
 };
 
+template <typename T>
+void Serialize(T &stream, ExecutorInterface::Status const &status) {
+  stream << static_cast<int>(status);
+}
+
+template <typename T>
+void Deserialize(T &stream, ExecutorInterface::Status &status) {
+  int raw_status{0};
+  stream >> raw_status;
+  status = static_cast<ExecutorInterface::Status>(raw_status);
+}
+
 } // namespace ledger
 } // namespace fetch
 

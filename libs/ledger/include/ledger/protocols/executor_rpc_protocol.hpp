@@ -13,14 +13,14 @@ public:
     EXECUTE = 1
   };
 
-  explicit ExecutorRpcProtocol(Executor& executor)
+  explicit ExecutorRpcProtocol(ExecutorInterface& executor)
     : executor_{executor} {
-    Expose(EXECUTE, &executor_, &Executor::Execute);
+    Expose(EXECUTE, &executor_, &ExecutorInterface::Execute);
   }
 
 private:
 
-  Executor &executor_;
+  ExecutorInterface &executor_;
 };
 
 } // namespace ledger
