@@ -56,7 +56,6 @@ void TestCase3() {
       {
         tmanager -> Post([&ints, &testRunning, k]() {
 
-            //while(testRunning < 1) {} // this never stops for some reason
             while(testRunning < 1) { std::this_thread::sleep_for(std::chrono::milliseconds(10));}
 
             while(testRunning == 1)
@@ -87,23 +86,6 @@ void TestCase3() {
   }
   std::cout << "Success." << std::endl << std::endl;
 }
-
-/*
-Removed! Contract is now that killing TMs by their own hand, not allowed!!
-
-template< std::size_t N = 1>
-void TestCase4() {
-  std::cout << "TEST CASE 4. Threads: " << N << std::endl;
-  std::cout << "Info: Stopping thread manager through its own post mechanism" << std::endl;
-  for (std::size_t i = 0; i < 1000; ++i)
-    {
-      auto tmanager = ThreadPool::Create(N);
-      tmanager -> Start();
-      tmanager -> Post([tmanager]() { tmanager -> Stop(); });
-    }
-  std::cout << "Success." << std::endl << std::endl;
-}
-*/
 
 int main(int argc, char* argv[]) {
 
