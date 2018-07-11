@@ -23,11 +23,15 @@ namespace network
 class NetworkNodeCore
 {
 public:
-    typedef std::recursive_mutex mutex_type;
+    typedef std::mutex mutex_type;
     typedef std::lock_guard<mutex_type> lock_type;
     typedef fetch::service::ServiceClient<network::TCPClient> client_type;
+    typedef service::ServiceServer<fetch::network::TCPServer> rpc_server_type;
     typedef uint32_t protocol_number_type;
-
+protected:
+    const uint32_t MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION = 100;
+    const uint32_t MICROSECONDS_PER_MILLISECOND = 1000;
+    const uint32_t NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION = 100;
 public:
     NetworkNodeCore(const NetworkNodeCore &rhs)           = delete;
     NetworkNodeCore(NetworkNodeCore &&rhs)           = delete;
@@ -45,11 +49,12 @@ public:
         nm_(threads)
     {
         lock_type mlock(mutex_);
+
+        //TODO(katie) investiaget if this can be moved to Start()
         nm_. Start();
 
         rpcPort_ = rpcPort;
-        rpcServer_ = std::make_shared<service::ServiceServer<
-            fetch::network::TCPServer>>(rpcPort, nm_);
+        rpcServer_ = std::make_shared<rpc_server_type>(rpcPort, nm_);
 
         httpServer_ = std::make_shared<fetch::http::HTTPServer>(httpPort, nm_);
 
@@ -86,54 +91,27 @@ public:
     virtual client_ptr ConnectTo(const std::string &host, unsigned short port)
     {
         lock_type mlock(mutex_);
-        std::cout << "ConnectTo " << host << ":" << port << "" << std::endl;
         auto remote_host_identifier = std::make_pair(host, port);
         auto iter = cache_.find(remote_host_identifier);
         if (iter != cache_.end())
         {
-            std::cout << "ConnectTo " << host << ":" << port << " FOUND" << std::endl;
             if (iter -> second)
             {
                 return iter -> second;
             }
             else
             {
-                std::cout << "ConnectTo " << host << ":" << port << " dead" << std::endl;
                 cache_.erase(remote_host_identifier);
             }
         }
-        std::cout << "ConnectTo " << host << ":" << port << " making" << std::endl;
         auto new_client_conn = ActuallyConnectTo(host, port);
         if (new_client_conn)
         {
-            std::cout << "ConnectTo " << host << ":" << port << " stored" << std::endl;
             cache_[remote_host_identifier] = new_client_conn;
         }
         return new_client_conn;
     }
 
-    virtual client_ptr ActuallyConnectTo(
-        const std::string &host, unsigned short port)
-    {
-        lock_type mlock(mutex_);
-        client_ptr client = std::make_shared<client_type>(host, port, nm_);
-
-        std::cout << "ActuallyConnectTo " << host << ":" << port << std::endl;
-
-        int waits = 100;
-        while(!client->is_alive())
-        {
-            usleep(100);
-            waits--;
-            if (waits <= 0)
-            {
-                std::cout << "ActuallyConnectTo " << host << ":" << port << " - FAIL" << std::endl;
-                throw std::invalid_argument(std::string("Timeout while connecting " + host + ":" + std::to_string(port)).c_str());
-            }
-        }
-        std::cout << "ActuallyConnectTo " << host << ":" << port << " - ALIVE" << std::endl;
-        return client;
-    }
 
     void Start()
     {
@@ -148,7 +126,6 @@ public:
 
     void AddModule(fetch::http::HTTPModule *handler)
     {
-        lock_type mlock(mutex_);
         httpServer_->AddModule(*handler);
     }
 
@@ -165,7 +142,8 @@ public:
     {
         lock_type mlock(mutex_);
         auto protocolInstance = std::make_shared<PROTOCOL_CLASS>(interface);
-        auto baseProtocolPtr = std::static_pointer_cast<fetch::service::Protocol>(protocolInstance);
+        auto baseProtocolPtr =
+            std::static_pointer_cast<fetch::service::Protocol>(protocolInstance);
         protocolCache_[protocolNumber] = baseProtocolPtr;
         PROTOCOL_CLASS *proto_ptr = protocolInstance.get();
         fetch::service::Protocol *base_ptr = proto_ptr;
@@ -175,7 +153,6 @@ public:
     template<class INTERFACE_CLASS>
     void AddProtocol(INTERFACE_CLASS *interface, uint32_t protocolNumber)
     {
-        lock_type mlock(mutex_);
         AddProtocol<INTERFACE_CLASS,
                     typename INTERFACE_CLASS::protocol_class_type>(
             interface, protocolNumber);
@@ -184,7 +161,6 @@ public:
     template<class INTERFACE_CLASS>
     void AddProtocol(std::shared_ptr<INTERFACE_CLASS> interface)
     {
-        lock_type mlock(mutex_);
         auto protocolNumber = INTERFACE_CLASS::protocol_number;
         INTERFACE_CLASS *interface_ptr = interface.get();
         AddProtocol<INTERFACE_CLASS>(interface_ptr, protocolNumber);
@@ -193,34 +169,49 @@ public:
     template<class INTERFACE_CLASS>
     void AddProtocol(INTERFACE_CLASS *interface)
     {
-        lock_type mlock(mutex_);
         auto protocolNumber = INTERFACE_CLASS::protocol_number;
         AddProtocol<INTERFACE_CLASS>(interface, protocolNumber);
     }
 
-    template<class INTERFACE_CLASS>
-    INTERFACE_CLASS *GetProtocol()
-    {
-        lock_type mlock(mutex_);
-        // Nasty. TODO(katie) Make this not suck later.
-        auto protocolNumber = INTERFACE_CLASS::protocol_number;
-        return (INTERFACE_CLASS*)(interfaces_[protocolNumber]);
-    }
-    
     virtual void Post(std::function<void ()> workload)
     {
         nm_ . Post(workload);
     }
 
 protected:
+    virtual client_ptr ActuallyConnectTo(
+        const std::string &host, unsigned short port)
+    {
+        client_ptr client = std::make_shared<client_type>(host, port, nm_);
+
+        auto waits = NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION;
+        auto waitTimeUS = MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION
+            * MICROSECONDS_PER_MILLISECOND
+            / NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION;
+        while(!client->is_alive())
+        {
+            usleep(waitTimeUS);
+            waits--;
+            if (waits <= 0)
+            {
+                // TODO(katie) make this non throwing and return empty sharedp.
+                throw std::invalid_argument(
+                    std::string(
+                        "Timeout while connecting "
+                        + host
+                        + ":"
+                        + std::to_string(port)).c_str());
+            }
+        }
+        return client;
+    }
+
     fetch::network::NetworkManager nm_;
     uint16_t rpcPort_;
     mutex_type mutex_;
-    std:: map<protocol_number_type, void*> interfaces_;
+
     std::shared_ptr<fetch::http::HTTPServer> httpServer_;
-    std::shared_ptr<
-        service::ServiceServer<
-            fetch::network::TCPServer>> rpcServer_;
+    std::shared_ptr<rpc_server_type> rpcServer_;
     protocol_cache_type protocolCache_;
 };
 

@@ -27,9 +27,7 @@ public:
     AttachPages();
   }
 
-  virtual ~SwarmHttpModule()
-  {
-  }
+    virtual ~SwarmHttpModule() = default;
 
   void AttachPages()
   {
@@ -38,10 +36,6 @@ public:
     HTTPModule::Get("/peers",
                     [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) \
                     { return this->GetPeers(params, req); }
-                    );
-    HTTPModule::Get("/oink",
-                    [](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) \
-                    { return fetch::http::HTTPResponse(std::string("oink")); }
                     );
   }
 

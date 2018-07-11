@@ -220,17 +220,17 @@ public:
 
     void Stop()
     {
-        bool suicidal = false;
+        bool tryingToKillFromThreadWeOwn = false;
         shutdown_ = true;
         for (auto &thread : threads_)
         {
             if (std::this_thread::get_id() == thread -> get_id())
             {
-                suicidal = true;
+                tryingToKillFromThreadWeOwn = true;
             }
         }
 
-        if (suicidal)
+        if (tryingToKillFromThreadWeOwn)
         {
             fetch::logger.Error(
                 "Thread pools must not be killed by a thread they own.");
@@ -326,7 +326,7 @@ private:
     mutable fetch::mutex::Mutex thread_mutex_{__LINE__, __FILE__};
     mutable std::condition_variable cv_;
     mutable mutex_type mutex_;
-    volatile bool shutdown_;
+    std::atomic<bool> shutdown_;
 };
 
 }

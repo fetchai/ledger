@@ -28,13 +28,8 @@ public:
   };
   typedef fetch::protocols::MainChainProtocol protocol_class_type;
 
-  MainChainNodeInterface()
-  {
-  }
-
-  virtual ~MainChainNodeInterface()
-  {
-  }
+    MainChainNodeInterface() = default;
+    virtual ~MainChainNodeInterface() = default;
 
   virtual std::pair<bool, block_type>  GetHeader(const block_hash &hash) = 0;
   virtual std::vector<block_type> GetHeaviestChain(uint32_t maxsize) = 0;

@@ -57,9 +57,7 @@ public:
         nnCore_ -> AddModule(this);
     }
 
-    virtual ~MainChainNode()
-    {
-    }
+    virtual ~MainChainNode() = default;
 
     http::HTTPResponse HttpGetMainchain(
         http::ViewParameters const &params, http::HTTPRequest const &req)
@@ -83,10 +81,10 @@ public:
         std::ostringstream ret;
         ret << result;
 
-        std::cout << "HTTPCHAIN" << ret.str() << std::endl;
-
         return http::HTTPResponse(ret.str());
     }
+
+    // *********** These are RPC calling methods returning a typed promise.
 
     virtual fetch::network::PromiseOf<std::pair<bool, block_type>> RemoteGetHeader(
         const block_hash &hash, std::shared_ptr<network::NetworkNodeCore::client_type> client)
@@ -101,6 +99,8 @@ public:
         auto promise = client->Call(protocol_number, MainChain::GET_HEAVIEST_CHAIN, maxsize);
         return network::PromiseOf<std::vector<block_type>>(promise);
     }
+
+    // *********** These are RPC handlers returning serialisable data.
 
     virtual std::pair<bool, block_type> GetHeader(const block_hash &hash)
     {
@@ -143,6 +143,8 @@ public:
 
         return results;
     }
+
+    // *********** These utility methods for node owners.
 
     bool AddBlock(block_type &block)
     {
@@ -198,7 +200,7 @@ public:
 private:
     std::shared_ptr<fetch::chain::MainChain> chain_;
     std::shared_ptr<network::ThreadPool> threadPool_;
-    bool stopped_;
+    std::atomic<bool> stopped_;
     uint32_t minerNumber_;
     uint32_t target_;
     std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;

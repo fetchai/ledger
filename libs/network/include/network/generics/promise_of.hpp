@@ -12,10 +12,8 @@ namespace network
 template<class TYPE>
 class PromiseOf
 {
-  typedef fetch::service::Promise promise_type;
-
 public:
-  promise_type promise_;
+  typedef fetch::service::Promise promise_type;
 
   PromiseOf(promise_type &promise)
   {
@@ -25,11 +23,6 @@ public:
   PromiseOf(const PromiseOf &rhs)
   {
     promise_ = rhs.promise_;
-  }
-
-  PromiseOf(PromiseOf &&rhs)
-  {
-    promise_ = std::move(rhs.promise_);
   }
 
   PromiseOf operator=(const PromiseOf &rhs)
@@ -63,6 +56,9 @@ public:
     promise_.Wait();
     return promise_.is_fulfilled();
   }
+private:
+  promise_type promise_;
+
 };
 
 }
