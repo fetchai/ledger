@@ -28,13 +28,13 @@ class ServiceClient : public T,
                       public ServiceServerInterface {
  public:
   typedef T super_type;
-  typedef typename super_type::thread_manager_type thread_manager_type;
+  typedef typename super_type::network_manager_type network_manager_type;
 
 
   ServiceClient(byte_array::ConstByteArray const& host, uint16_t const& port,
-                thread_manager_type thread_manager)
-      : super_type(thread_manager),
-        thread_manager_(thread_manager),
+                network_manager_type network_manager)
+      : super_type(network_manager),
+        network_manager_(network_manager),
         message_mutex_(__LINE__, __FILE__) {
     LOG_STACK_TRACE_POINT;
 
@@ -69,7 +69,7 @@ class ServiceClient : public T,
     }
 
     // Since this class isn't shared_from_this, try to ensure safety when destructing
-    thread_manager_.Post([this]()
+    network_manager_.Post([this]()
     {
       ProcessMessages();
     });
@@ -128,7 +128,7 @@ class ServiceClient : public T,
     }
   }
 
-  thread_manager_type               thread_manager_;
+  network_manager_type               network_manager_;
   std::deque<network::message_type> messages_;
   mutable fetch::mutex::Mutex       message_mutex_;
 

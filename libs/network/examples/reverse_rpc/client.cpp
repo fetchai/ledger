@@ -60,7 +60,7 @@ int main(int argc, char const** argv)
   params.Parse(argc, argv);
 
   // Client setup
-  fetch::network::ThreadManager tm;  
+  fetch::network::NetworkManager tm;  
   ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
   AEAProtocol aea_prot;
 

@@ -212,10 +212,10 @@ class SwarmController : public ChainController,
   typedef std::shared_ptr<client_type> client_shared_ptr_type;
 
   SwarmController(uint64_t const &protocol,
-                  network::ThreadManager *thread_manager,
+                  network::NetworkManager *network_manager,
                   SharedNodeDetails &details)
       : protocol_(protocol),
-        thread_manager_(thread_manager),
+        network_manager_(network_manager),
         details_(details),
         suggestion_mutex_(__LINE__, __FILE__),
         peers_mutex_(__LINE__, __FILE__),
@@ -386,7 +386,7 @@ class SwarmController : public ChainController,
 
     chain_keeper_mutex_.lock();
     client_shared_ptr_type client =
-        std::make_shared<client_type>(host, port, thread_manager_);
+        std::make_shared<client_type>(host, port, network_manager_);
     chain_keeper_mutex_.unlock();
 
     std::this_thread::sleep_for(
@@ -436,7 +436,7 @@ class SwarmController : public ChainController,
     using namespace fetch::service;
     fetch::logger.Debug("Connecting to server on ", host, " ", port);
     client_shared_ptr_type client =
-        std::make_shared<client_type>(host, port, thread_manager_);
+        std::make_shared<client_type>(host, port, network_manager_);
 
     std::this_thread::sleep_for(
         std::chrono::milliseconds(500));  // TODO: Connection feedback
@@ -644,7 +644,7 @@ class SwarmController : public ChainController,
   }
 
   uint64_t protocol_;
-  network::ThreadManager *thread_manager_;
+  network::NetworkManager *network_manager_;
 
   SharedNodeDetails &details_;
 

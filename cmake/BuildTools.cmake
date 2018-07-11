@@ -98,6 +98,7 @@ function(add_fetch_test name library file)
       target_link_libraries(${name} PRIVATE ${library} fetch-testing)
 
       add_test(${name} ${name} ${ARGV})
+      set_tests_properties(${name} PROPERTIES TIMEOUT 120)
 
     endif()
 
@@ -138,6 +139,7 @@ function(add_fetch_gtest name library directory)
 
       # define the test
       add_test(${name} ${name} ${ARGV})
+      set_tests_properties(${name} PROPERTIES TIMEOUT 120)
 
     endif()
 

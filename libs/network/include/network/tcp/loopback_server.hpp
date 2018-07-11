@@ -6,7 +6,7 @@
 #include<utility>
 #include"network/message.hpp"
 #include"network/fetch_asio.hpp" // required to avoid failing build due to -Werror
-#include"network/details/thread_manager.hpp"
+#include"network/management/network_manager.hpp"
 
 namespace fetch {
 namespace network {
@@ -73,12 +73,12 @@ public:
 
   explicit LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS) :
     port_{port},
-    threadManager_{num_threads}
+    networkManager_{num_threads}
   {
-    threadManager_.Start();
-    threadManager_.Post([this]
+    networkManager_.Start();
+    networkManager_.Post([this]
     {
-      auto strongAccep = threadManager_.CreateIO<asio::ip::tcp::tcp::acceptor>
+      auto strongAccep = networkManager_.CreateIO<asio::ip::tcp::tcp::acceptor>
         (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
 
       if(strongAccep)
@@ -100,13 +100,13 @@ public:
   ~LoopbackServer()
   {
     acceptor_.reset();
-    threadManager_.Stop();
+    networkManager_.Stop();
   }
 
 private:
-  // IO objects guaranteed to have lifetime less than the io_service/threadManager
+  // IO objects guaranteed to have lifetime less than the io_service/networkManager
   uint16_t                                      port_;
-  ThreadManager                                 threadManager_;
+  NetworkManager                                 networkManager_;
   std::weak_ptr<asio::ip::tcp::tcp::acceptor>   acceptor_;
   std::atomic<bool>                             finished_setup_{false};
 

@@ -19,7 +19,7 @@ public:
   PyServiceClient(PyServiceClient const &other)  = delete;  
   
   PyServiceClient() :
-    thread_manager_(4)
+    network_manager_(4)
   {  }
 
   ~PyServiceClient()  
@@ -30,13 +30,13 @@ public:
   
   void Connect(std::string const& host, uint16_t port)  
   {
-    client_ = std::make_shared< client_type >( host, port, &thread_manager_);    
-    thread_manager_.Start();    
+    client_ = std::make_shared< client_type >( host, port, &network_manager_);    
+    network_manager_.Start();    
   }
 
   void Disconnect() 
   {
-    thread_manager_.Stop();
+    network_manager_.Stop();
     client_.reset();
   }
 
@@ -51,7 +51,7 @@ public:
   
   
 private:
-  fetch::network::ThreadManager thread_manager_;
+  fetch::network::NetworkManager network_manager_;
   shared_client_type client_;
   
 } ;

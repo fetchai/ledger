@@ -11,7 +11,7 @@ int main(int argc, char const **argv) {
 
   uint16_t port = 8080;
 
-  fetch::network::ThreadManager tm;
+  fetch::network::NetworkManager tm;
   // Create a client connection to the server
   ServiceClient<fetch::network::TCPClient> client("localhost", port, tm);
   tm.Start();

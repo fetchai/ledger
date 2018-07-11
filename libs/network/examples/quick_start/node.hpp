@@ -21,7 +21,7 @@ public:
 class Node
 {
 public:
-  Node(fetch::network::ThreadManager tm) : tm_{tm} {}
+  Node(fetch::network::NetworkManager tm) : tm_{tm} {}
   ~Node() {}
 
   void sendMessage(std::string const &msg, uint16_t port)
@@ -90,7 +90,7 @@ public:
   }
 
 private:
-  fetch::network::ThreadManager tm_;
+  fetch::network::NetworkManager tm_;
 };
 
 // All classes and data types must have an associated Serialize and Deserialize function
