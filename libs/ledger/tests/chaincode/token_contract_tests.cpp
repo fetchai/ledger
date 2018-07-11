@@ -3,7 +3,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "core/json/document.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "mock_state_database.hpp"
+#include "mock_storage_unit.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 
 #include <gmock/gmock.h>
@@ -23,7 +23,7 @@ class TokenContractTests : public ::testing::Test {
 protected:
   using query_type = Contract::query_type;
   using contract_type = std::unique_ptr<TokenContract>;
-  using storage_type = std::unique_ptr<MockStateDatabase>;
+  using storage_type = std::unique_ptr<MockStorageUnit>;
   using address_type = fetch::byte_array::ConstByteArray;
 
   enum {
@@ -32,22 +32,32 @@ protected:
 
   void SetUp() override {
     contract_ = fetch::make_unique<TokenContract>();
-    storage_ = fetch::make_unique<MockStateDatabase>();
+    storage_ = fetch::make_unique<MockStorageUnit>();
 
     contract_->Attach(*storage_);
   }
 
   bool CreateWealth(address_type const &address, uint64_t amount) {
 
-    EXPECT_CALL(*storage_, GetOrCreate(_))
-      .Times(1);
     EXPECT_CALL(*storage_, Get(_))
       .Times(0);
+    EXPECT_CALL(*storage_, GetOrCreate(_))
+      .Times(1);
     EXPECT_CALL(*storage_, Set(_, _))
       .Times(1);
+    EXPECT_CALL(*storage_, Lock(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, Unlock(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, Hash())
+      .Times(0);
     EXPECT_CALL(*storage_, Commit(_))
       .Times(0);
     EXPECT_CALL(*storage_, Revert(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, AddTransaction(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, GetTransaction(_, _))
       .Times(0);
 
     std::ostringstream oss;
@@ -72,15 +82,25 @@ protected:
 
   bool Transfer(address_type const &from, address_type const &to, uint64_t amount) {
 
-    EXPECT_CALL(*storage_, GetOrCreate(_))
-      .Times(1);
     EXPECT_CALL(*storage_, Get(_))
+      .Times(1);
+    EXPECT_CALL(*storage_, GetOrCreate(_))
       .Times(1);
     EXPECT_CALL(*storage_, Set(_, _))
       .Times(2);
+    EXPECT_CALL(*storage_, Lock(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, Unlock(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, Hash())
+      .Times(0);
     EXPECT_CALL(*storage_, Commit(_))
       .Times(0);
     EXPECT_CALL(*storage_, Revert(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, AddTransaction(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, GetTransaction(_, _))
       .Times(0);
 
     std::ostringstream oss;
@@ -103,15 +123,25 @@ protected:
 
   bool GetBalance(address_type const &address, uint64_t &balance) {
 
-    EXPECT_CALL(*storage_, GetOrCreate(_))
-      .Times(1);
     EXPECT_CALL(*storage_, Get(_))
       .Times(0);
+    EXPECT_CALL(*storage_, GetOrCreate(_))
+      .Times(1);
     EXPECT_CALL(*storage_, Set(_, _))
+      .Times(0);
+    EXPECT_CALL(*storage_, Lock(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, Unlock(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, Hash())
       .Times(0);
     EXPECT_CALL(*storage_, Commit(_))
       .Times(0);
     EXPECT_CALL(*storage_, Revert(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, AddTransaction(_))
+      .Times(0);
+    EXPECT_CALL(*storage_, GetTransaction(_, _))
       .Times(0);
 
     bool success = false;

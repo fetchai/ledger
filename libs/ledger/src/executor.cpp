@@ -41,16 +41,12 @@ std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const &la
  * @param lanes The affected lanes for the transaction
  * @return The status code for the operation
  */
-Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes)
-{
-  // request the transaction from the lane (pick the first one)
-  detailed_assert(!lanes.empty());
-  detailed_assert(*lanes.begin() < lanes_.size());
+Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) {
 
   // Get the transaction from the store (we should be able to take the transaction from any of the lanes, for
   // simplicity, however, just pick the first one).
   chain::Transaction tx;
-  if (!lanes_[*lanes.begin()]->GetTransaction(hash, tx)) {
+  if (!resources_->GetTransaction(hash, tx)) {
     return Status::TX_LOOKUP_FAILURE;
   }
 
@@ -61,11 +57,11 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   }
 
   // attach the chain code to the current working context
-  chain_code->Attach(resources_);
+  chain_code->Attach(*resources_);
 
   // Dispatch the transaction to the contract
   auto result = chain_code->DispatchTransaction(tx.contract_name().name(), tx);
-  if (result != Contract::Status::OK) {
+  if (Contract::Status::OK != result) {
     return Status::CHAIN_CODE_EXEC_FAILURE;
   }
 

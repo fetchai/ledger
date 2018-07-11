@@ -5,6 +5,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_database_interface.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <functional>
 #include <atomic>
@@ -33,7 +34,7 @@ public:
   using query_handler_map_type = std::unordered_map<std::string, query_handler_type>;
   using counter_type = std::atomic<std::size_t>;
   using counter_map_type = std::unordered_map<std::string, counter_type>;
-  using state_type = StateDatabaseInterface;
+  using state_type = ledger::StateInterface;
 
   Contract(Contract const &) = delete;
   Contract(Contract &&) = delete;
@@ -193,7 +194,7 @@ private:
   counter_map_type transaction_counters_{};
   counter_map_type query_counters_{};
 
-  state_type *state_{nullptr};
+  state_type *state_ = nullptr;
 };
 
 } // namespace ledger

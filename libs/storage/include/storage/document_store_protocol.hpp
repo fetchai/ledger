@@ -21,6 +21,7 @@ public:
   
   enum {
     GET = 0,
+    GET_OR_CREATE,
     LAZY_GET,
     SET,
     COMMIT,
@@ -35,6 +36,7 @@ public:
   RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store)
     : fetch::service::Protocol(), doc_store_(doc_store) {
     this->Expose(GET, (RevertibleDocumentStore::super_type*)doc_store, &RevertibleDocumentStore::super_type::Get);
+    this->Expose(GET_OR_CREATE, (RevertibleDocumentStore::super_type*)doc_store, &RevertibleDocumentStore::super_type::GetOrCreate);
     this->Expose(SET, (RevertibleDocumentStore::super_type*)doc_store, &RevertibleDocumentStore::super_type::Set);
     this->Expose(COMMIT, doc_store, &RevertibleDocumentStore::Commit);
     this->Expose(REVERT, doc_store, &RevertibleDocumentStore::Revert);

@@ -2,11 +2,10 @@
 #define FETCH_EXECUTOR_HPP
 
 #include "ledger/chain/block.hpp"
-#include "ledger/lane_resources.hpp"
 #include "ledger/chaincode/factory.hpp"
-#include "ledger/lane_interface.hpp"
 #include "ledger/executor_interface.hpp"
 #include "crypto/fnv.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <vector>
 #include <unordered_set>
@@ -24,10 +23,15 @@ public:
   using tx_store_type = std::unordered_map<tx_digest_type, shared_tx_type, crypto::CallableFNV>;
   using block_digest_type = fetch::byte_array::ConstByteArray;
   using tx_digest_list_type = std::vector<tx_digest_type>;
-  using lane_type = std::shared_ptr<LaneInterface>;
-  using lane_list_type = std::vector<lane_type>;
+  using resources_type = std::shared_ptr<StorageUnitInterface>;
   using chain_code_type = ChainCodeFactory::chain_code_type;
   using contract_cache_type = std::unordered_map<std::string, chain_code_type>;
+
+  // Construction / Destruction
+  explicit Executor(resources_type resources)
+    : resources_{std::move(resources)} {
+  }
+  ~Executor() = default;
 
   /// @name Executor Interface
   /// @{
@@ -36,10 +40,9 @@ public:
 
 private:
 
-  lane_list_type lanes_;                  ///< The interfaces to the lanes of the system
-  LaneResources resources_;               ///< The collection of lane resources (as presented to chain code)
+  resources_type resources_;              ///< The collection of resources as published by the collection of lanes
   ChainCodeFactory factory_;              ///< The factory to create new chain code instances
-  contract_cache_type chain_code_cache_;  ///< The cache of the chain code instances
+  contract_cache_type chain_code_cache_;  ///< The cache of active chain code instances
 
   Executor::chain_code_type LookupChainCode(std::string const &name);
 };
