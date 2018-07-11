@@ -14,7 +14,7 @@
 #include<fstream>
 #include<vector>
 
-#include"core/byte_array/basic_byte_array.hpp"
+#include"core/byte_array/const_byte_array.hpp"
 #include"core/logger.hpp"
 #include"./network_classes.hpp"
 #include"./node_directory.hpp"

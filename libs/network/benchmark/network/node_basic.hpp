@@ -14,7 +14,7 @@
 #include<fstream>
 #include<vector>
 
-#include"core/byte_array/basic_byte_array.hpp"
+#include"core/byte_array/const_byte_array.hpp"
 #include"core/random/lfg.hpp"
 #include"core/logger.hpp"
 #include"ledger/chain/transaction.hpp"
