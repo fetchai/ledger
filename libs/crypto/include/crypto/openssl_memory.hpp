@@ -28,56 +28,6 @@ namespace memory {
         template <typename T>
         using FreeFunctionPtr = void(*)(T*);
 
-        template <const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
-        struct Deleter2
-        {
-            template<typename T>
-            static constexpr FreeFunctionPtr<T> getFreeFunction();
-        };
-
-        template<> template<>
-        constexpr FreeFunctionPtr<BN_CTX> Deleter2<>::getFreeFunction<BN_CTX>() {
-            return &BN_CTX_free;
-        }
-
-        template<> template<>
-        constexpr FreeFunctionPtr<EC_KEY> Deleter2<>::getFreeFunction<EC_KEY>() {
-            return &EC_KEY_free;
-        }
-
-        template<> template<>
-        constexpr FreeFunctionPtr<BIGNUM> Deleter2<>::getFreeFunction<BIGNUM>() {
-            return &BN_free;
-        }
-
-        template<> template<>
-        constexpr FreeFunctionPtr<BIGNUM> Deleter2<eDeleteStrategy::clearing>::getFreeFunction<BIGNUM>() {
-            return &BN_clear_free;
-        }
-
-        template<> template<>
-        constexpr FreeFunctionPtr<EC_POINT> Deleter2<>::getFreeFunction<EC_POINT>() {
-            return &EC_POINT_free;
-        }
-
-        template<> template<>
-        constexpr FreeFunctionPtr<EC_POINT> Deleter2<eDeleteStrategy::clearing>::getFreeFunction<EC_POINT>() {
-            return &EC_POINT_clear_free;
-        }
-
-        template<> template<>
-        constexpr FreeFunctionPtr<EC_GROUP> Deleter2<>::getFreeFunction<EC_GROUP>() {
-            return &EC_GROUP_free;
-        }
-
-        template<> template<>
-        constexpr FreeFunctionPtr<EC_GROUP> Deleter2<eDeleteStrategy::clearing>::getFreeFunction<EC_GROUP>() {
-            return &EC_GROUP_clear_free;
-        }
-
-
-        //================================================================================ 
-
         template <typename T
                 , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
         struct Deleter;

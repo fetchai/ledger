@@ -52,14 +52,6 @@ TEST_F(DeleterTest, test_EC_GROUP_clear_free) {
     EXPECT_EQ((Deleter<EC_GROUP, eDeleteStrategy::clearing>::function), &EC_GROUP_clear_free);
 }
 
-
-
-
-TEST_F(DeleterTest, test_BIGNUM_free_2) {
-    EXPECT_EQ(Deleter2<>::getFreeFunction<BIGNUM>(), &BN_free);
-}
-
-
 } // namespace anonymous
 
 } // namespace detail
