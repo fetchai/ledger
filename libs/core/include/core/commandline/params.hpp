@@ -24,10 +24,12 @@ namespace commandline {
         bool operator==(const Params &rhs) const = delete;
         bool operator<(const Params &rhs) const = delete;
 
-        typedef std::function<void(const std::set<std::string> &, std::list<std::string> &)> ACTION_FUNCTION;
-        typedef std::tuple<std::string, std::string> HELP_TEXT;
-        typedef std::map<std::string, ACTION_FUNCTION> ASSIGNERS;
-        typedef std::list<HELP_TEXT> HELP_TEXTS;
+        typedef std::function<
+            void(const std::set<std::string> &, std::list<std::string> &)
+        > action_func_type;
+        typedef std::tuple<std::string, std::string> help_text_type;
+        typedef std::map<std::string, action_func_type> assigners_type;
+        typedef std::list<help_text_type> help_texts_type;
 
         Params():paramsParser_()
         {
@@ -43,9 +45,9 @@ namespace commandline {
             for(int i=0;i<argc;i++)
             {
                 auto s = std::string(argv[i]);
-                if (s[0] == '-')
+                if (s.size()>0 && s[0] == '-')
                 {
-                    if (s[1] == '-')
+                    if (s.size()>1 && s[1] == '-')
                     {
                         args.insert(s.substr(2));
                     }
@@ -58,7 +60,7 @@ namespace commandline {
 
             for(auto action : assigners_)
             {
-                ACTION_FUNCTION func = action.second;
+                action_func_type func = action.second;
                 func(args, errs);
             }
 
@@ -162,8 +164,8 @@ namespace commandline {
 private:
     fetch::commandline::ParamsParser paramsParser_;
     std::string desc_;
-    HELP_TEXTS helpTexts_;
-    ASSIGNERS assigners_;
+    help_texts_type helpTexts_;
+    assigners_type assigners_;
 };
 
 }
