@@ -106,7 +106,7 @@ public:
     auto promise = lanes_[ lane ]->Call(LaneService::TX_STORE, protocol::SET, res, tx );
   }
 
-  bool GetTransaction(byte_array::ByteArray const &digest, chain::Transaction &tx) override
+  bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) override
   {
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
     
@@ -117,8 +117,18 @@ public:
 
     return true;
   }
+
+  document_type GetOrCreate(byte_array::ConstByteArray const &key) override
+  {
+    auto res = fetch::storage::ResourceAddress(key) ;
+    std::size_t lane = res.lane( log2_lanes_ );
+
+    auto promise = lanes_[ lane ]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE, res );
+
+    return promise.As<storage::Document>();
+  }
   
-  document_type Get(byte_array::ConstByteArray const &key, bool must_exist) override
+  document_type Get(byte_array::ConstByteArray const &key) override
   {
     auto res = fetch::storage::ResourceAddress(key) ;
     std::size_t lane = res.lane( log2_lanes_ );    

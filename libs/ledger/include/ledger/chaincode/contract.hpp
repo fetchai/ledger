@@ -4,7 +4,6 @@
 #include "core/script/variant.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/identifier.hpp"
-#include "ledger/state_database_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <functional>
