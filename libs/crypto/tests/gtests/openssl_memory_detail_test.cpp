@@ -9,7 +9,7 @@ namespace detail {
 
 namespace {
 
-class DeleterTest : public testing::Test {
+class DeleterPrimitiveTest : public testing::Test {
 protected:
     
     virtual void SetUp() {
@@ -20,36 +20,36 @@ protected:
 };
 
 
-TEST_F(DeleterTest, test_BIGNUM_free) {
-    EXPECT_EQ(Deleter<BIGNUM>::function, &BN_free);
+TEST_F(DeleterPrimitiveTest, test_BIGNUM_free) {
+    EXPECT_EQ(DeleterPrimitive<BIGNUM>::function, &BN_free);
 }
 
-TEST_F(DeleterTest, test_BIGNUM_clear_free) {
-    EXPECT_EQ((Deleter<BIGNUM, eDeleteStrategy::clearing>::function), &BN_clear_free);
+TEST_F(DeleterPrimitiveTest, test_BIGNUM_clear_free) {
+    EXPECT_EQ((DeleterPrimitive<BIGNUM, eDeleteStrategy::clearing>::function), &BN_clear_free);
 }
 
-TEST_F(DeleterTest, test_BN_CTX_free) {
-    EXPECT_EQ(Deleter<BN_CTX>::function, &BN_CTX_free);
+TEST_F(DeleterPrimitiveTest, test_BN_CTX_free) {
+    EXPECT_EQ(DeleterPrimitive<BN_CTX>::function, &BN_CTX_free);
 }
 
-TEST_F(DeleterTest, test_EC_POINT_free) {
-    EXPECT_EQ(Deleter<EC_POINT>::function, &EC_POINT_free);
+TEST_F(DeleterPrimitiveTest, test_EC_POINT_free) {
+    EXPECT_EQ(DeleterPrimitive<EC_POINT>::function, &EC_POINT_free);
 }
 
-TEST_F(DeleterTest, test_EC_POINT_clear_free) {
-    EXPECT_EQ((Deleter<EC_POINT, eDeleteStrategy::clearing>::function), &EC_POINT_clear_free);
+TEST_F(DeleterPrimitiveTest, test_EC_POINT_clear_free) {
+    EXPECT_EQ((DeleterPrimitive<EC_POINT, eDeleteStrategy::clearing>::function), &EC_POINT_clear_free);
 }
 
-TEST_F(DeleterTest, test_EC_KEY_free) {
-    EXPECT_EQ(Deleter<EC_KEY>::function, &EC_KEY_free);
+TEST_F(DeleterPrimitiveTest, test_EC_KEY_free) {
+    EXPECT_EQ(DeleterPrimitive<EC_KEY>::function, &EC_KEY_free);
 }
 
-TEST_F(DeleterTest, test_EC_GROUP_free) {
-    EXPECT_EQ(Deleter<EC_GROUP>::function, &EC_GROUP_free);
+TEST_F(DeleterPrimitiveTest, test_EC_GROUP_free) {
+    EXPECT_EQ(DeleterPrimitive<EC_GROUP>::function, &EC_GROUP_free);
 }
 
-TEST_F(DeleterTest, test_EC_GROUP_clear_free) {
-    EXPECT_EQ((Deleter<EC_GROUP, eDeleteStrategy::clearing>::function), &EC_GROUP_clear_free);
+TEST_F(DeleterPrimitiveTest, test_EC_GROUP_clear_free) {
+    EXPECT_EQ((DeleterPrimitive<EC_GROUP, eDeleteStrategy::clearing>::function), &EC_GROUP_clear_free);
 }
 
 } // namespace anonymous
