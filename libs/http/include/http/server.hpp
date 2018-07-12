@@ -69,7 +69,7 @@ class HTTPServer : public AbstractHTTPServer {
 
   }
 
-  ~HTTPServer() {
+  virtual ~HTTPServer() {
     LOG_STACK_TRACE_POINT;
 
     auto socketWeak = socket_;

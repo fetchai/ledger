@@ -84,6 +84,7 @@ class HTTPConnection : public AbstractHTTPConnection,
     auto cb = [this, buffer_ptr, request, self](std::error_code const &ec,
                                                 std::size_t const &len) {
       fetch::logger.Debug("Read HTTP header");
+      fetch::logger.Debug("Read HTTP header of " + std::to_string(len) + " bytes");
 
       if (ec) {
         this->HandleError(ec, request);
@@ -100,6 +101,7 @@ class HTTPConnection : public AbstractHTTPConnection,
   void ReadBody(buffer_ptr_type buffer_ptr, shared_request_type request) {
     LOG_STACK_TRACE_POINT;
 
+    fetch::logger.Debug("Read HTTP body");
     // Check if we got all the body
     if (request->content_length() <= buffer_ptr->size()) {
       HTTPRequest::SetBody(*request, *buffer_ptr);
@@ -115,6 +117,7 @@ class HTTPConnection : public AbstractHTTPConnection,
     auto cb = [this, buffer_ptr, request, self](std::error_code const &ec,
                                                 std::size_t const &len) {
 
+    fetch::logger.Debug("Read HTTP body cb");
       if (ec) {
         this->HandleError(ec, request);
         return;
@@ -133,7 +136,7 @@ class HTTPConnection : public AbstractHTTPConnection,
     LOG_STACK_TRACE_POINT;
 
     std::stringstream ss;
-    ss << ec;
+    ss << ec << ":" << ec.message();
     fetch::logger.Debug("HTTP error: ", ss.str());
 
     Close();

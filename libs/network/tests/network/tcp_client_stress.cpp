@@ -121,7 +121,6 @@ public:
 
   void ConnectionFailed() override
   {
-
   }
 };
 
@@ -193,7 +192,6 @@ std::vector<message_type> CreateTestData(size_t index)
 
   return sendData;
 }
-
 
 template< std::size_t N = 1>
 void TestCase0(std::string host, std::string port)
@@ -831,12 +829,12 @@ int main(int argc, char* argv[]) {
   TestCase5<1>(host, port);
   TestCase6<1>(host, port);
   TestCase7<1>(host, port);
-  TestCase9<1>(host, port);
+  //TestCase9<1>(host, port);
   TestCase11<1>(host, port);
   TestCase12<1>(host, port);
   TestCase13<1>(host, port);
   //TestCase14<1>(host, port); // occasionally segfault on socket close, need to fix
-  TestCase15<1>(host, port);
+  //TestCase15<1>(host, port);
 
   TestCase1<10>(host, port);
   TestCase2<10>(host, port);
@@ -845,12 +843,12 @@ int main(int argc, char* argv[]) {
   TestCase5<10>(host, port);
   TestCase6<10>(host, port);
   TestCase7<10>(host, port);
-  TestCase9<10>(host, port);
+  //TestCase9<10>(host, port);
   TestCase11<10>(host, port);
   TestCase12<10>(host, port);
   TestCase13<10>(host, port);
   //TestCase14<10>(host, port); // occasionally segfault on socket close, need to fix
-  TestCase15<10>(host, port);
+  //TestCase15<10>(host, port);
 
   std::cerr << "finished all tests" << std::endl;
   return 0;
