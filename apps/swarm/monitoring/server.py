@@ -189,7 +189,7 @@ def walk_backs(chain, inputs):
 
     r = {}
     for name in inputs:
-        for step in [ 10, 7, 4, 1 ]:
+        for step in [ 15, 12, 10, 7, 4, 1 ]:
             if name:
                 p = chain.get(name, {}).get("prev", "")
                 if p:
@@ -197,7 +197,8 @@ def walk_backs(chain, inputs):
                         "source": p[0:16],
                         "target": name[0:16],
                         "value": step * 1.2,
-                        'distance': 40 * step,
+                        'distance': 24 * step,
+                        'step': step,
                     }
                 name = p
     return r
@@ -215,7 +216,10 @@ def get_consensus_data(context, mon):
     attractors = dict([ (x, x[0:16]) for x in set(allnodes) ])
 
     nodeSize = dict([
-        (k, math.sqrt(10 + 100 * len([ x for x in mon.heaviests.values() if k == x ])))
+        (k,
+             allnodes[k]['step'] * 3
+             #math.sqrt(10 + 100 * len([ x for x in mon.heaviests.values() if k == x ]))
+        )
         for k in allnodes.keys()
         ])
 
