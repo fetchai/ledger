@@ -50,7 +50,7 @@ public:
   
   // TODO: Make config JSON
   LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &total_lanes,
-    uint16_t port, fetch::network::ThreadManager tm)
+    uint16_t port, fetch::network::ThreadManager tm, bool start_sync = true)
     : super_type(port, tm) {
 
     thread_pool_ = network::MakeThreadPool(1);
@@ -93,10 +93,11 @@ public:
     controller_protocol_ = new controller_protocol_type(controller_);
     this->Add(CONTROLLER, controller_protocol_ );    
 
+    thread_pool_->Start();
 
-    thread_pool_->Start();    
-    tx_sync_protocol_->Start();
-    
+    if (start_sync) {
+      tx_sync_protocol_->Start();
+    }
   }
   
   ~LaneService() 
