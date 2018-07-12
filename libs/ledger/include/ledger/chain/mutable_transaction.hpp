@@ -17,11 +17,12 @@ namespace chain {
  
 struct TransactionSummary {
   typedef byte_array::ConstByteArray group_type;  
-  typedef byte_array::ConstByteArray digest_type;
+  using digest_type = byte_array::ConstByteArray;
+  using group_list_type = std::vector<group_type>;
 
-  std::vector<group_type> groups;
-  digest_type             transaction_hash;
-  uint64_t                fee{0};
+  group_list_type groups;
+  digest_type     transaction_hash;
+  uint64_t        fee{0};
 
   // TODO: (EJF) Remove but linked to optimisation
   std::size_t short_id;

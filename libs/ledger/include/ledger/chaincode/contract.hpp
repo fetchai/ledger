@@ -34,6 +34,7 @@ public:
   using counter_type = std::atomic<std::size_t>;
   using counter_map_type = std::unordered_map<std::string, counter_type>;
   using state_type = ledger::StateInterface;
+  using group_list_type = chain::TransactionSummary::group_list_type;
 
   Contract(Contract const &) = delete;
   Contract(Contract &&) = delete;
@@ -64,12 +65,32 @@ public:
     return status;
   }
 
-  void Attach(state_type &state) {
+  bool Attach(state_type &state, group_list_type const &resources) {
+    bool success = true;
+
     state_ = &state;
+
+    for (auto const &group : resources) {
+      if (!state_->Lock(CreateStateIndex(group))) {
+        success = false;
+      }
+    }
+
+    return success;
   }
 
-  void Detach() {
+  bool Detach(group_list_type const &resources) {
+    bool success = true;
+
+    for (auto const &group : resources) {
+      if (!state_->Unlock(CreateStateIndex(group))) {
+        success = false;
+      }
+    }
+
     state_ = nullptr;
+
+    return success;
   }
 
   state_type &state() {

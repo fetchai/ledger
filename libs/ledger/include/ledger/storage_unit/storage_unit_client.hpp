@@ -15,6 +15,9 @@
 #include"storage/object_store_protocol.hpp"
 #include"ledger/chain/transaction.hpp"
 
+#include <thread>
+#include <chrono>
+
 
 namespace fetch {
 namespace ledger {
@@ -57,18 +60,28 @@ public:
     shared_service_client_type client = register_.template CreateServiceClient<T >( network_manager_, host, port);
 
     // Waiting for connection to be open
-    std::size_t n = 0;    
-    while( n < 10 ){
-      auto p = client->Call(LaneService::IDENTITY,  LaneIdentityProtocol::PING);
-      if(p.Wait(100, false)) {
-        if(p.As<LaneIdentity::ping_type >() != LaneIdentity::PING_MAGIC) {
-          n = 10;          
+
+    bool connection_timeout = false;
+    for(std::size_t n = 0; n < 10; ++n) {
+
+      // ensure the connection is live
+      if (client->is_alive()) {
+
+        // make the client call
+        auto p = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::PING);
+        if (p.Wait(100, false)) {
+          if (p.As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC) {
+            connection_timeout = true;
+          }
+          break;
         }
-        break;        
+
+      } else {
+        std::this_thread::sleep_for(std::chrono::milliseconds{20});
       }
-      ++n;
     }
-    if(n >= 10) {
+
+    if(connection_timeout) {
       logger.Warn("Connection timed out - closing");
       client->Close();
       client.reset();
@@ -104,6 +117,7 @@ public:
     auto res = fetch::storage::ResourceID( tx.digest() ) ;
     std::size_t lane = res.lane( log2_lanes_ );
     auto promise = lanes_[ lane ]->Call(LaneService::TX_STORE, protocol::SET, res, tx );
+    promise.Wait();
   }
 
   bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) override
@@ -214,6 +228,17 @@ public:
   std::size_t lanes() const
   {
     return lanes_.size();
+  }
+
+  bool is_alive() const {
+    bool alive = true;
+    for (auto &lane : lanes_) {
+      if (!lane->is_alive()) {
+        alive = false;
+        break;
+      }
+    }
+    return alive;
   }
   
 private:

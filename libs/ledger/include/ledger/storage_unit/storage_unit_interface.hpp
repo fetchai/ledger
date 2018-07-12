@@ -16,6 +16,9 @@ public:
   virtual document_type Get(byte_array::ConstByteArray const &key) = 0;
   virtual document_type GetOrCreate(byte_array::ConstByteArray const &key) = 0;
   virtual void Set(byte_array::ConstByteArray const &key, byte_array::ConstByteArray const& value) = 0;
+
+  virtual bool Lock(byte_array::ConstByteArray const &key) = 0;
+  virtual bool Unlock(byte_array::ConstByteArray const &key) = 0;
   /// @}
 };
 
@@ -28,12 +31,6 @@ public:
   // Construction / Destruction
   StorageUnitInterface() = default;
   virtual ~StorageUnitInterface() = default;
-
-  /// @name State Locking Interface
-  /// @{
-  virtual bool Lock(byte_array::ConstByteArray const &key) = 0;
-  virtual bool Unlock(byte_array::ConstByteArray const &key) = 0;
-  /// @}
 
   /// @name Transaction Interface
   /// @{

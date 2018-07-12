@@ -55,6 +55,7 @@ public:
     logger.Info("Spinning up lane ", lane_assignment_);
     
     this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
+    this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
     this->ExposeWithClientArg(SET, this, &RevertibleDocumentStoreProtocol::SetLaneChecked);
 
     this->Expose(COMMIT, doc_store, &RevertibleDocumentStore::Commit);
@@ -117,6 +118,19 @@ private:
     }
     
     return doc_store_->Get(rid);
+  }
+
+  Document GetOrCreateLaneChecked(ResourceID const &rid)
+  {
+    if(lane_assignment_ != rid.lane( log2_lanes_ )) {
+      logger.Warn("Lane assignment is ", lane_assignment_, " vs ", rid.lane( log2_lanes_ ));
+      logger.Debug("Address:", byte_array::ToHex(rid.id()) );
+
+      throw serializers::SerializableException( // TODO: set exception number
+        0, byte_array_type("Get: Resource located on other lane. TODO, set error number"));
+    }
+
+    return doc_store_->GetOrCreate(rid);
   }
 
   void SetLaneChecked(connection_handle_type const &client_id, ResourceID const &rid, byte_array::ConstByteArray const& value) 

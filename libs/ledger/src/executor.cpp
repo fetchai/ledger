@@ -60,7 +60,9 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   }
 
   // attach the chain code to the current working context
-  chain_code->Attach(*resources_);
+  if (!chain_code->Attach(*resources_, tx.summary().groups)) {
+    return Status::RESOURCE_FAILURE;
+  }
 
   // Dispatch the transaction to the contract
   auto result = chain_code->DispatchTransaction(identifier.name(), tx);
@@ -69,7 +71,9 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   }
 
   // detach the chain code from the current context
-  chain_code->Detach();
+  if (!chain_code->Detach(tx.summary().groups)) {
+    return Status::RESOURCE_FAILURE;
+  }
 
   return Status::SUCCESS;
 }

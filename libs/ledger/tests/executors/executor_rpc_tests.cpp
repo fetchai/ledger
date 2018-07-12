@@ -125,7 +125,8 @@ TEST_F(ExecutorRpcTests, CheckDummyContract) {
   // store the transaction inside the store
   storage_->AddTransaction(tx);
 
-  executor_->Execute(tx.digest(), 0, {0});
+  auto const status = executor_->Execute(tx.digest(), 0, {0});
+  EXPECT_EQ(status, fetch::ledger::ExecutorInterface::Status::SUCCESS);
 }
 
 TEST_F(ExecutorRpcTests, CheckTokenContract) {
@@ -145,5 +146,6 @@ TEST_F(ExecutorRpcTests, CheckTokenContract) {
   // store the transaction inside the store
   storage_->AddTransaction(tx);
 
-  executor_->Execute(tx.digest(), 0, {0});
+  auto const status = executor_->Execute(tx.digest(), 0, {0});
+  EXPECT_EQ(status, fetch::ledger::ExecutorInterface::Status::SUCCESS);
 }

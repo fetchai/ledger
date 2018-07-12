@@ -15,6 +15,7 @@ public:
   enum class Status {
     SUCCESS = 0,
     TX_LOOKUP_FAILURE,
+    RESOURCE_FAILURE,
     CHAIN_CODE_LOOKUP_FAILURE,
     CHAIN_CODE_EXEC_FAILURE
   };
