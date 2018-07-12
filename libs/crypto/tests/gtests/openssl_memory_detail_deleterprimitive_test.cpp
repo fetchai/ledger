@@ -15,10 +15,10 @@ namespace {
 
 class DeleterPrimitiveTest : public testing::Test {
 protected:
-    
+
     virtual void SetUp() {
     }
-    
+
     virtual void TearDown() {
     }
 };
