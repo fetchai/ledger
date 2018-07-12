@@ -10,27 +10,22 @@ class UnverifiedTransaction : private MutableTransaction
 {
 public:
   typedef MutableTransaction super_type;
-  UnverifiedTransaction() = default;
+  UnverifiedTransaction()  = default;
+  UnverifiedTransaction(UnverifiedTransaction &&other) = default;
+  UnverifiedTransaction& operator=(UnverifiedTransaction &&other) = default;
+  
   UnverifiedTransaction(UnverifiedTransaction const &other) 
   {
     this->Copy(other);
-  }
-  
-  UnverifiedTransaction(UnverifiedTransaction &&other) 
-  {
-    std::swap(*this, other);
-  }
+  }  
   
   UnverifiedTransaction& operator=(UnverifiedTransaction const &other) 
   {
     this->Copy(other);
     return *this;    
   }
-  UnverifiedTransaction& operator=(UnverifiedTransaction &&other) 
-  {
-    std::swap(*this, other);
-    return *this;
-  }
+
+  
 
   bool operator<(UnverifiedTransaction const&other) const 
   {
@@ -85,11 +80,9 @@ class VerifiedTransaction : public UnverifiedTransaction
 public:
   typedef UnverifiedTransaction super_type;  
 
-  VerifiedTransaction() = default;
-  VerifiedTransaction(VerifiedTransaction &&other) 
-  {
-    std::swap(*this, other);
-  }
+  VerifiedTransaction()  = default;
+  VerifiedTransaction(VerifiedTransaction &&other) = default;
+  VerifiedTransaction& operator=(VerifiedTransaction &&other) = default;
   
   VerifiedTransaction(VerifiedTransaction const &other) {
     this->Copy(other);
@@ -99,12 +92,6 @@ public:
   {
     this->Copy(other);
     return *this;        
-  }
-  
-  VerifiedTransaction& operator=(VerifiedTransaction &&other) 
-  {
-    std::swap(*this, other);
-    return *this;
   }
   
 

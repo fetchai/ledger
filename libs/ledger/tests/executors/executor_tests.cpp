@@ -34,7 +34,7 @@ protected:
   fetch::chain::Transaction CreateDummyTransaction() {
     fetch::chain::MutableTransaction tx;
     tx.set_contract_name("fetch.dummy.wait");
-    return fetch::chain::MutableTransaction::MakeTransaction(std::move(tx));
+    return fetch::chain::VerifiedTransaction::Create(std::move(tx));
   }
 
   fetch::byte_array::ConstByteArray CreateAddress() {
@@ -65,7 +65,7 @@ protected:
     tx.set_contract_name("fetch.token.wealth");
     tx.set_data(oss.str());
 
-    return fetch::chain::MutableTransaction::MakeTransaction(std::move(tx));
+    return fetch::chain::VerifiedTransaction::Create(std::move(tx));
   }
 
   storage_type storage_;
