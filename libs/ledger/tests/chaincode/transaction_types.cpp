@@ -1,7 +1,7 @@
 #include <iostream>
 #include "core/serializers/referenced_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "ledger/chain/basic_transaction.hpp"
+
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
@@ -58,14 +58,14 @@ int main(int argc, char const **argv)
     {
       MutableTransaction      trans;
       Transaction             tx;
-      fetch::group_type val = fetch::byte_array::BasicByteArray("a");
+      VerifiedTransaction::group_type val = fetch::byte_array::BasicByteArray("a");
 
       trans.PushGroup(val);
 
       EXPECT(trans.groups()[0] == fetch::byte_array::BasicByteArray("a"));
 
       {
-        Transaction txTemp = MutableTransaction::MakeTransaction(std::move(trans));
+        VerifiedTransaction txTemp = VerifiedTransaction::Create(trans);
         fetch::serializers::ByteArrayBuffer arr;
         arr << txTemp;
         arr.Seek(0);
@@ -81,13 +81,13 @@ int main(int argc, char const **argv)
       {
         MutableTransaction mutableTx = fetch::chain::RandomTransaction();
 
-        const Transaction transaction = MutableTransaction::MakeTransaction(std::move(mutableTx));
+        const VerifiedTransaction transaction = VerifiedTransaction::Create(mutableTx);
 
         std::cout << "\n===========================================" << std::endl;
         std::cout << ToHex(transaction.summary().transaction_hash) << std::endl;
         std::cout << ToHex(transaction.data()) << std::endl;
         std::cout << ToHex(transaction.signature()) << std::endl;
-        std::cout << transaction.contract_name().full_name() << std::endl;
+        std::cout << transaction.contract_name() << std::endl;
       }
     };
 

@@ -21,7 +21,7 @@ using namespace fetch::common;
 using namespace std::chrono;
 using namespace fetch;
 
-typedef fetch::chain::Transaction transaction_type;
+typedef fetch::chain::VerifiedTransaction transaction_type;
 
 std::size_t sizeOfTxMin   = 0; // base size of Tx
 ByteArray                           TestString;

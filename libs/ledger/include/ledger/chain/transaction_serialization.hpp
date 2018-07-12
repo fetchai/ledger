@@ -9,28 +9,77 @@ namespace chain {
 
 
 template <typename T>
-inline void Serialize(T &serializer, Transaction const &b)
+inline void Serialize(T &serializer, UnverifiedTransaction const &b)
 {
   serializer << uint16_t(b.VERSION);
-  serializer << b.summary_;
-  serializer << b.data_;
-  serializer << b.signature_;
-  serializer << b.contract_name_.full_name();
+  serializer << 'V';  
+  serializer << b.summary();
+  serializer << b.data();
+  serializer << b.signature();
+  serializer << b.contract_name();
 }
 
 template <typename T>
-inline void Deserialize(T &serializer, Transaction &b)
+inline void Deserialize(T &serializer, UnverifiedTransaction &b)
 {
   uint16_t version;
   serializer >> version; // TODO: (`HUT`) : set version
 
-  serializer >> b.summary_;
-  serializer >> b.data_;
-  serializer >> b.signature_;
+  char c;
+  serializer >> c;
+  
+  TransactionSummary summary;
+  byte_array::ByteArray data, signature, name;
+  
+  serializer >> summary;
+  b.set_summary(summary);
 
-  std::string name;
+  serializer >> data;
+  b.set_data(data);
+  
+  serializer >> signature;
+  b.set_signature(signature);
+
   serializer >> name;
-  b.contract_name_.Parse(std::move(name));
+  b.set_contract_name(name);
+}
+
+
+template <typename T>
+inline void Serialize(T &serializer, VerifiedTransaction const &b)
+{
+  serializer << uint16_t(b.VERSION);
+  serializer << 'V';  
+  serializer << b.summary();
+  serializer << b.data();
+  serializer << b.signature();
+  serializer << b.contract_name();
+}
+
+template <typename T>
+inline void Deserialize(T &serializer, VerifiedTransaction &b)
+{
+  uint16_t version;
+  serializer >> version; // TODO: (`HUT`) : set version
+
+  char c;
+  serializer >> c;
+  assert( c == 'V' );  
+  
+  TransactionSummary summary;
+  byte_array::ByteArray data, signature, name;
+  
+  serializer >> summary;
+  b.set_summary(summary);
+
+  serializer >> data;
+  b.set_data(data);
+  
+  serializer >> signature;
+  b.set_signature(signature);
+
+  serializer >> name;
+  b.set_contract_name(name);
 }
 
 }

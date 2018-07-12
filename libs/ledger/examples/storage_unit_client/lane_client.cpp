@@ -96,7 +96,7 @@ int main(int argc, char const **argv) {
         }
         else if(command[0] == "addtx") {
           if(command.size() == 1) {
-            chain::Transaction tx = chain::MutableTransaction::MakeTransaction( chain::RandomTransaction() );
+            chain::Transaction tx = chain::VerifiedTransaction::Create( chain::RandomTransaction());
             std::cout << std::endl;            
             std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
             std::cout << "Signature: " << byte_array::ToBase64(tx.signature()) << std::endl;    

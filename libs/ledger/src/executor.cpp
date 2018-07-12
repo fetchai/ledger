@@ -54,8 +54,11 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
     return Status::TX_LOOKUP_FAILURE;
   }
 
+  Identifier identifier;
+  identifier.Parse(std::string(tx.contract_name()));
+
   // Lookup the chain code associated with the transaction
-  auto chain_code = LookupChainCode(tx.contract_name().name_space());
+  auto chain_code = LookupChainCode(identifier.name_space());
   if (!chain_code) {
     return Status::CHAIN_CODE_LOOKUP_FAILURE;
   }
@@ -64,7 +67,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   chain_code->Attach(resources_);
 
   // Dispatch the transaction to the contract
-  auto result = chain_code->DispatchTransaction(tx.contract_name().name(), tx);
+  auto result = chain_code->DispatchTransaction(identifier.name(), tx);
   if (result != Contract::Status::OK) {
     return Status::CHAIN_CODE_EXEC_FAILURE;
   }

@@ -26,8 +26,8 @@ public:
   using connectivity_details_type = LaneConnectivityDetails;    
   using document_store_type = storage::RevertibleDocumentStore;
   using document_store_protocol_type = storage::RevertibleDocumentStoreProtocol;  
-  using transaction_store_type = storage::ObjectStore<fetch::chain::Transaction>;
-  using transaction_store_protocol_type = storage::ObjectStoreProtocol<fetch::chain::Transaction>;
+  using transaction_store_type = storage::ObjectStore<fetch::chain::VerifiedTransaction>;
+  using transaction_store_protocol_type = storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
   using client_register_type = fetch::network::ConnectionRegister< connectivity_details_type >;  
   using controller_type = LaneController;
   using controller_protocol_type = LaneControllerProtocol;
@@ -35,7 +35,7 @@ public:
   using identity_protocol_type = LaneIdentityProtocol;   
   using connection_handle_type = client_register_type::connection_handle_type; 
   using super_type = service::ServiceServer< fetch::network::TCPServer >;
-  using tx_sync_protocol_type = storage::ObjectStoreSyncronisationProtocol< client_register_type, fetch::chain::Transaction >;
+  using tx_sync_protocol_type = storage::ObjectStoreSyncronisationProtocol< client_register_type,  fetch::chain::VerifiedTransaction,  fetch::chain::UnverifiedTransaction >;
   using thread_pool_type = network::ThreadPool;  
   
   enum {

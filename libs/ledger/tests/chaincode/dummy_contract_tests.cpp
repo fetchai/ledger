@@ -62,6 +62,8 @@ TEST_F(DummyContractTests, CheckDispatch) {
   chain::MutableTransaction tx;
   tx.set_contract_name("fetch.dummy.wait");
 
-  contract_->DispatchTransaction(tx.contract_name().name(), chain::MutableTransaction::MakeTransaction(std::move(tx)));
+  Identifier identifier;
+  identifier.Parse(std::string(tx.contract_name()));
+  contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
   EXPECT_EQ(contract_->GetTransactionCounter("wait"), 1u);
 }

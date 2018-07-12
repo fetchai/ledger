@@ -9,11 +9,14 @@
 #include "crypto/sha256.hpp"
 #include "ledger/identifier.hpp"
 
-namespace fetch {
+#include<vector>
 
+namespace fetch {
 namespace chain {
 
+ 
 struct TransactionSummary {
+  typedef byte_array::ConstByteArray group_type;  
   typedef byte_array::ConstByteArray digest_type;
 
   std::vector<group_type> groups;
@@ -38,6 +41,7 @@ class MutableTransaction {
 public:
   typedef crypto::SHA256                  hasher_type;
   typedef TransactionSummary::digest_type digest_type;
+  typedef TransactionSummary::group_type group_type;  
 
   std::vector<group_type> const &groups() const {
     return summary_.groups;
@@ -55,10 +59,16 @@ public:
     return signature_;
   }
 
-  ledger::Identifier const &contract_name() const {
+  //ledger::Identifier
+  byte_array::ConstByteArray const &contract_name() const {
     return contract_name_;
   }
 
+  digest_type const &digest() const {
+    return summary_.transaction_hash;
+  }
+  
+  
   void Copy(MutableTransaction const &rhs) {
     copy_on_write_ = true;
     
@@ -66,14 +76,11 @@ public:
     data_          = rhs.data();
     signature_     = rhs.signature();    
     contract_name_ = rhs.contract_name_;
-
-    return *this;
   }
 
-  
   MutableTransaction() = default;
-  MutableTransaction(MutableTransaction const &rhs) = default;  
-  MutableTransaction &operator=(MutableTransaction const &rhs) = default;
+  MutableTransaction(MutableTransaction const &rhs) = delete;  
+  MutableTransaction &operator=(MutableTransaction const &rhs) = delete;
   MutableTransaction(MutableTransaction &&rhs) = default;  
   MutableTransaction &operator=(MutableTransaction&& rhs) = default;
   
@@ -84,7 +91,7 @@ public:
 
     serializers::ByteArrayBuffer buf;
     buf << summary_.groups << signature_
-      << contract_name_.full_name() << summary_.fee;
+      << contract_name_ << summary_.fee;
     hasher_type hash;
     hash.Reset();
     hash.Update(buf.data());
@@ -94,10 +101,10 @@ public:
 
   bool Verify() 
   {
-    TODO_FAIL("Needs implementing");
+    return true;    
+    // TODO_FAIL("Needs implementing");
   }
   
-
   void PushGroup(byte_array::ConstByteArray const &res) {
     LOG_STACK_TRACE_POINT;    
     if(copy_on_write_) Clone();    
@@ -114,14 +121,13 @@ public:
     data_ = data;
   }
 
-  void set_signature(byte_array::ConstByteArray sig) {
+  void set_signature(byte_array::ConstByteArray const & sig) {
     if(copy_on_write_) Clone();    
     signature_ = sig;
   }
 
-  void set_contract_name(std::string const &name) {
-    if(copy_on_write_) Copy();
-    contract_name_.Parse(name);
+  void set_contract_name(byte_array::ConstByteArray const & name) {
+    contract_name_ = name;
   }
 
 protected:
@@ -129,25 +135,16 @@ protected:
 
   void Clone() {
     copy_on_write_ = false;
-    summary_ = this->summary();
     summary_.transaction_hash = this->summary().transaction_hash.Copy();
-
     data_          = this->data().Copy();
     signature_     = this->signature().Copy();
-    contract_name_ = this->contract_name_.Copy();
-
-    return *this;
   }
-
-
   
 private:
   TransactionSummary         summary_;
   byte_array::ConstByteArray data_;
   byte_array::ConstByteArray signature_;
-  ledger::Identifier         contract_name_;
-
-
+  byte_array::ConstByteArray contract_name_;
 };
 
 
@@ -166,11 +163,6 @@ public:
 };
 */
 // Conversion to Transaction
-inline Transaction MutableTransaction::MakeTransaction(MutableTransaction &&trans)
-{
-  Transaction ret(std::move(trans));
-  return ret;
-}
 
 }
 }

@@ -3,7 +3,6 @@
 
 #include<random>
 #include"core/byte_array/referenced_byte_array.hpp"
-#include"ledger/chain/basic_transaction.hpp"
 #include"ledger/chain/transaction.hpp"
 #include"ledger/chain/mutable_transaction.hpp"
 #include"ledger/chain/transaction_serialization.hpp"

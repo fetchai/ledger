@@ -121,7 +121,7 @@ T NextTransaction(std::size_t bytesToAdd = 0)
   trans.set_contract_name(std::string{contract_name.char_pointer(), contract_name.size()});
   trans.set_data(data);
 
-  return T(std::move(trans));
+  return T::Create(trans);
 }
 
 template<typename T, typename... Args>

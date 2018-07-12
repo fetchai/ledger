@@ -61,10 +61,13 @@ protected:
     tx.set_contract_name("fetch.token.wealth");
     tx.set_data(oss.str());
 
+    Identifier identifier;
+    identifier.Parse(std::string( tx.contract_name() ) );
+
     // dispatch the transaction
     auto status = contract_->DispatchTransaction(
-      tx.contract_name().name(),
-      chain::MutableTransaction::MakeTransaction(std::move(tx))
+      identifier.name(),
+      chain::VerifiedTransaction::Create(tx)
     );
 
     return (Contract::Status::OK == status);
@@ -96,7 +99,10 @@ protected:
     tx.set_data(oss.str());
 
     // dispatch the transaction
-    auto status = contract_->DispatchTransaction(tx.contract_name().name(), chain::MutableTransaction::MakeTransaction(std::move(tx)));
+    Identifier identifier;
+    identifier.Parse(std::string( tx.contract_name() ) );
+
+    auto status = contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
 
     return (Contract::Status::OK == status);
   }

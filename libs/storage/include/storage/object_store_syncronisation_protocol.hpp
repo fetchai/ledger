@@ -125,9 +125,9 @@ public:
       // TODO: Update pointer
       
       if(!running_) return;
-      for(auto &o: incoming_objects_ ) {
-        new_objects_.push_back( T(o) );
-      }
+//      for(auto &o: incoming_objects_ ) {
+//        new_objects_.push_back( T(o) );
+//      }
     }
 
     object_list_promises_.clear();
@@ -163,10 +163,10 @@ private:
   std::vector< S > PullObjects(uint64_t const &from)
   {
     std::lock_guard< mutex::Mutex > lock(mutex_);
-    return std::vector< T > ();    
+    return std::vector< S > ();    
 
     if(cache_.begin() == cache_.end()) {      
-      return std::vector< T > ();
+      return std::vector< S > ();
     }
     
 
@@ -176,7 +176,7 @@ private:
       first = 0;
     }
     
-    if(first >= cache_.size()) return std::vector< T > ();
+    if(first >= cache_.size()) return std::vector< S > ();
                                 
     uint64_t N = cache_.size() - first;
 
@@ -186,7 +186,7 @@ private:
     
     for(uint64_t i=first; i < N; ++i) {
       ++cache_[i].passed_on;
-      ret.push_back( S( cache_[i].data ) );
+//      ret.push_back( T::Create( cache_[i].data ) );
     }
     
     return ret;

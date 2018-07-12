@@ -113,7 +113,7 @@ public:
     auto res = fetch::storage::ResourceID( digest ) ;
     std::size_t lane = res.lane( log2_lanes_ );
     auto promise = lanes_[ lane ]->Call(LaneService::TX_STORE, protocol::GET, res );
-    tx = promise.As< chain::Transaction >();    
+    tx = promise.As< chain::VerifiedTransaction >();    
   }
   
   
