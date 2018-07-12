@@ -56,14 +56,6 @@ TEST_F(DeleterPrimitiveTest, test_EC_GROUP_clear_free) {
     EXPECT_EQ((DeleterPrimitive<EC_GROUP, eDeleteStrategy::clearing>::function), &EC_GROUP_clear_free);
 }
 
-//void testFree(int* ptr) {
-//    delete ptr;
-//}
-//
-//TEST_F(DeleterPrimitiveTest, test_int_free) {
-//    EXPECT_EQ((DeleterPrimitive<int>::function), &testFree);
-//}
-
 } // namespace anonymous
 
 } // namespace detail

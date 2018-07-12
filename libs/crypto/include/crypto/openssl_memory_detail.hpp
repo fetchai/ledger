@@ -17,52 +17,39 @@ namespace memory {
 
     namespace detail {
 
-        template <typename T>
-        using FreeFunctionPtr = void(*)(T*);
+        namespace {
+            template <typename T>
+            using FreeFunctionPtr = void(*)(T*);
 
-        template <typename T
-                , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
-        struct DeleterPrimitive;
+            template <typename T
+                    , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
+            struct DeleterPrimitive//;
+            {
+                static const FreeFunctionPtr<T> function;
+            };
 
-        template <>
-        struct DeleterPrimitive<BN_CTX> {
-            static const FreeFunctionPtr<BN_CTX> function;
-        };
+            template<>
+            const FreeFunctionPtr<BN_CTX> DeleterPrimitive<BN_CTX>::function = &BN_CTX_free;
+            
+            template<>
+            const FreeFunctionPtr<EC_KEY> DeleterPrimitive<EC_KEY>::function = &EC_KEY_free;
+            
+            template<>
+            const FreeFunctionPtr<BIGNUM> DeleterPrimitive<BIGNUM>::function = &BN_free;
+            template<>
+            const FreeFunctionPtr<BIGNUM> DeleterPrimitive<BIGNUM, eDeleteStrategy::clearing>::function = &BN_clear_free;
+            
+            template<>
+            const FreeFunctionPtr<EC_POINT> DeleterPrimitive<EC_POINT>::function = &EC_POINT_free;
+            template<>
+            const FreeFunctionPtr<EC_POINT> DeleterPrimitive<EC_POINT, eDeleteStrategy::clearing>::function = &EC_POINT_clear_free;
+            
+            template<>
+            const FreeFunctionPtr<EC_GROUP> DeleterPrimitive<EC_GROUP>::function = &EC_GROUP_free;
+            template<>
+            const FreeFunctionPtr<EC_GROUP> DeleterPrimitive<EC_GROUP, eDeleteStrategy::clearing>::function = &EC_GROUP_clear_free;
 
-        template <>
-        struct DeleterPrimitive<EC_KEY> {
-            static const FreeFunctionPtr<EC_KEY> function;
-        };
-
-        template <>
-        struct DeleterPrimitive<BIGNUM> {
-            static const FreeFunctionPtr<BIGNUM> function;
-        };
-
-        template <>
-        struct DeleterPrimitive<BIGNUM, eDeleteStrategy::clearing> {
-            static const FreeFunctionPtr<BIGNUM> function;
-        };
-
-        template <>
-        struct DeleterPrimitive<EC_POINT> {
-            static const FreeFunctionPtr<EC_POINT> function;
-        };
-
-        template <>
-        struct DeleterPrimitive<EC_POINT, eDeleteStrategy::clearing> {
-            static const FreeFunctionPtr<EC_POINT> function;
-        };
-
-        template <>
-        struct DeleterPrimitive<EC_GROUP> {
-            static const FreeFunctionPtr<EC_GROUP> function;
-        };
-
-        template <>
-        struct DeleterPrimitive<EC_GROUP, eDeleteStrategy::clearing> {
-            static const FreeFunctionPtr<EC_GROUP> function;
-        };
+        }
 
         template <typename T
                  , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical
