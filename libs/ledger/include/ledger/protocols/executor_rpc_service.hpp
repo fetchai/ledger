@@ -12,10 +12,12 @@ namespace ledger {
 
 class ExecutorRpcService : public service::ServiceServer<network::TCPServer> {
 public:
+  using resources_type = Executor::resources_type;
 
   // Construction / Destruction
-  ExecutorRpcService(uint16_t port, thread_manager_type const &thread_manager)
-    : ServiceServer(port, thread_manager) {
+  ExecutorRpcService(uint16_t port, thread_manager_type const &thread_manager, resources_type resources)
+    : ServiceServer(port, thread_manager)
+    , executor_(std::move(resources)) {
     this->Add(protocols::FetchProtocols::EXECUTOR, &protocol_);
   }
   ~ExecutorRpcService() override = default;

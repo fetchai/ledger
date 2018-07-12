@@ -1,6 +1,7 @@
 #include "ledger/chaincode/factory.hpp"
 
 #include "ledger/chaincode/dummy_contract.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 
 #include <stdexcept>
 
@@ -10,8 +11,10 @@ namespace ledger {
 ChainCodeFactory::chain_code_type ChainCodeFactory::Create(std::string const &name)
 {
   chain_code_type chaincode;
-  if (name == "example") {
+  if (name == "fetch.dummy") {
     chaincode = std::make_shared<DummyContract>();
+  } else if (name == "fetch.token") {
+    chaincode = std::make_shared<TokenContract>();
   }
 
   if (!chaincode) {

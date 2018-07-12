@@ -110,7 +110,7 @@ int main(int argc, char const **argv) {
           }
         } else if(command[0] == "get") {
           if(command.size() == 2) {
-            std::cout << client.Get(command[1]) << std::endl;
+            std::cout << client.Get(command[1]).document << std::endl;
           } else {
             std::cout << "usage: get [id]" << std::endl;
           }

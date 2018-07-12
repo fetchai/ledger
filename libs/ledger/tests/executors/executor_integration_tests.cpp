@@ -4,6 +4,8 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/protocols/executor_rpc_client.hpp"
 #include "ledger/protocols/executor_rpc_service.hpp"
+#include "ledger/storage_unit/storage_unit_bundled_service.hpp"
+#include "ledger/storage_unit/storage_unit_client.hpp"
 
 #include "mock_storage_unit.hpp"
 
@@ -13,28 +15,39 @@
 
 using ::testing::_;
 
-class ExecutorRpcTests : public ::testing::Test {
+class ExecutorIntegrationTests : public ::testing::Test {
 protected:
   using underlying_client_type = fetch::ledger::ExecutorRpcClient;
   using underlying_service_type = fetch::ledger::ExecutorRpcService;
   using underlying_network_manager_type = underlying_client_type::thread_manager_type;
+  using underlying_storage_type = fetch::ledger::StorageUnitClient;
+  using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
+
   using client_type = std::unique_ptr<underlying_client_type>;
   using service_type = std::unique_ptr<underlying_service_type>;
   using network_manager_type = std::unique_ptr<underlying_network_manager_type>;
-  using underlying_storage_type = MockStorageUnit;
-  using storage_type = std::shared_ptr<underlying_storage_type>;
+  using storage_client_type = std::shared_ptr<underlying_storage_type>;
+  using storage_service_type = std::unique_ptr<underlying_storage_service_type>;
   using rng_type = std::mt19937;
 
   static constexpr std::size_t IDENTITY_SIZE = 64;
 
-  ExecutorRpcTests() {
+  ExecutorIntegrationTests() {
     rng_.seed(42);
   }
 
   void SetUp() override {
-    storage_.reset(new underlying_storage_type);
+
     network_manager_.reset(new underlying_network_manager_type{2});
     network_manager_->Start();
+
+    storage_service_.reset(new underlying_storage_service_type);
+    storage_service_->Setup("teststore", 4, 9001, *network_manager_);
+
+    storage_.reset(new underlying_storage_type{*network_manager_});
+    for(std::size_t i = 0 ; i < 4; ++i) {
+      storage_->AddLaneConnection< fetch::network::TCPClient >("localhost", uint16_t(9001 + i)) ;
+    }
 
     // create the executor service
     service_.reset(new underlying_service_type{
@@ -56,6 +69,8 @@ protected:
 
     executor_.reset();
     service_.reset();
+    storage_.reset();
+    storage_service_.reset();
     network_manager_.reset();
   }
 
@@ -97,18 +112,14 @@ protected:
   }
 
   network_manager_type network_manager_;
-  storage_type storage_;
+  storage_service_type storage_service_;
+  storage_client_type storage_;
   service_type service_;
   client_type executor_;
   rng_type rng_;
 };
 
-TEST_F(ExecutorRpcTests, CheckDummyContract) {
-
-  EXPECT_CALL(*storage_, AddTransaction(_))
-    .Times(1);
-  EXPECT_CALL(*storage_, GetTransaction(_, _))
-    .Times(1);
+TEST_F(ExecutorIntegrationTests, CheckDummyContract) {
 
   // create the dummy contract
   auto tx = CreateDummyTransaction();
@@ -119,22 +130,13 @@ TEST_F(ExecutorRpcTests, CheckDummyContract) {
   executor_->Execute(tx.digest(), 0, {0});
 }
 
-TEST_F(ExecutorRpcTests, CheckTokenContract) {
-
-  EXPECT_CALL(*storage_, AddTransaction(_))
-    .Times(1);
-  EXPECT_CALL(*storage_, GetTransaction(_, _))
-    .Times(1);
-  EXPECT_CALL(*storage_, GetOrCreate(_))
-    .Times(1);
-  EXPECT_CALL(*storage_, Set(_, _))
-    .Times(1);
-
-  // create the dummy contract
-  auto tx = CreateWalletTransaction();
-
-  // store the transaction inside the store
-  storage_->AddTransaction(tx);
-
-  executor_->Execute(tx.digest(), 0, {0});
-}
+//TEST_F(ExecutorIntegrationTests, CheckTokenContract) {
+//
+//  // create the dummy contract
+//  auto tx = CreateWalletTransaction();
+//
+//  // store the transaction inside the store
+//  storage_->AddTransaction(tx);
+//
+//  executor_->Execute(tx.digest(), 0, {0});
+//}

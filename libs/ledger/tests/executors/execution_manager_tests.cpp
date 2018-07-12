@@ -41,7 +41,7 @@ protected:
     return executor;
   }
 
-  bool WaitUntilExecutionComplete(std::size_t num_executions, std::size_t iterations = 100) {
+  bool WaitUntilExecutionComplete(std::size_t num_executions, std::size_t iterations = 120) {
     bool success = false;
 
     for (std::size_t i = 0; i < iterations; ++i) {

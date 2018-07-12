@@ -168,7 +168,7 @@ inline void Serialize(T &serializer, std::unordered_set<K,H> const &set) {
 }
 
 template <typename T, typename K, typename H>
-inline void Deserialize(T &serializer, std::unordered_map<K,H> &set) {
+inline void Deserialize(T &serializer, std::unordered_set<K,H> &set) {
 
   // Read the number of items in the map
   uint64_t size{0};
