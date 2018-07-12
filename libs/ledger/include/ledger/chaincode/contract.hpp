@@ -58,45 +58,41 @@ public:
 
     auto it = transaction_handlers_.find(name);
     if (it != transaction_handlers_.end()) {
+
+      // lock the contract resources
+      LockResources(tx.summary().groups);
+
+      // dispatch the contract
       status = it->second(tx);
+
+      // unlock the contract resources
+      UnlockResources(tx.summary().groups);
+
       ++transaction_counters_[name];
     }
 
     return status;
   }
 
-  bool Attach(state_type &state, group_list_type const &resources) {
-    bool success = true;
-
+  void Attach(state_type &state) {
     state_ = &state;
-
-    for (auto const &group : resources) {
-      if (!state_->Lock(CreateStateIndex(group))) {
-        success = false;
-      }
-    }
-
-    return success;
   }
 
-  bool Detach(group_list_type const &resources) {
-    bool success = true;
-
-    for (auto const &group : resources) {
-      if (!state_->Unlock(CreateStateIndex(group))) {
-        success = false;
-      }
-    }
-
+  void Detach() {
     state_ = nullptr;
-
-    return success;
   }
 
   state_type &state() {
+    if (state_ == nullptr) {
+      int i = 1 + 2;
+      (void)i;
+    }
+
     detailed_assert(state_ != nullptr);
     return *state_;
   }
+
+
 
   std::size_t GetQueryCounter(std::string const &name) {
     auto it = query_counters_.find(name);
@@ -207,6 +203,30 @@ protected:
   }
 
 private:
+
+  bool LockResources(group_list_type const &resources) {
+    bool success = true;
+
+    for (auto const &group : resources) {
+      if (!state().Lock(CreateStateIndex(group))) {
+        success = false;
+      }
+    }
+
+    return success;
+  }
+
+  bool UnlockResources(group_list_type const &resources) {
+    bool success = true;
+
+    for (auto const &group : resources) {
+      if (!state().Unlock(CreateStateIndex(group))) {
+        success = false;
+      }
+    }
+
+    return success;
+  }
 
   Identifier contract_identifier_;
   query_handler_map_type query_handlers_{};

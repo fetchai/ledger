@@ -46,9 +46,9 @@ protected:
     EXPECT_CALL(*storage_, Set(_, _))
       .Times(1);
     EXPECT_CALL(*storage_, Lock(_))
-      .Times(0);
+      .Times(1);
     EXPECT_CALL(*storage_, Unlock(_))
-      .Times(0);
+      .Times(1);
     EXPECT_CALL(*storage_, Hash())
       .Times(0);
     EXPECT_CALL(*storage_, Commit(_))
@@ -70,9 +70,10 @@ protected:
     chain::MutableTransaction tx;
     tx.set_contract_name("fetch.token.wealth");
     tx.set_data(oss.str());
+    tx.PushGroup(address);
 
     Identifier identifier;
-    identifier.Parse(std::string( tx.contract_name() ) );
+    identifier.Parse(static_cast<std::string>( tx.contract_name() ));
 
     // dispatch the transaction
     auto status = contract_->DispatchTransaction(
@@ -92,9 +93,9 @@ protected:
     EXPECT_CALL(*storage_, Set(_, _))
       .Times(2);
     EXPECT_CALL(*storage_, Lock(_))
-      .Times(0);
+      .Times(2);
     EXPECT_CALL(*storage_, Unlock(_))
-      .Times(0);
+      .Times(2);
     EXPECT_CALL(*storage_, Hash())
       .Times(0);
     EXPECT_CALL(*storage_, Commit(_))
@@ -117,13 +118,14 @@ protected:
     chain::MutableTransaction tx;
     tx.set_contract_name("fetch.token.transfer");
     tx.set_data(oss.str());
+    tx.PushGroup(from);
+    tx.PushGroup(to);
 
     // dispatch the transaction
     Identifier identifier;
-    identifier.Parse(std::string( tx.contract_name() ) );
+    identifier.Parse(static_cast<std::string>( tx.contract_name() ) );
 
     auto status = contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
-
     return (Contract::Status::OK == status);
   }
 

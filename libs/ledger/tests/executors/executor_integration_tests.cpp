@@ -91,7 +91,7 @@ protected:
   fetch::chain::Transaction CreateDummyTransaction() {
     fetch::chain::MutableTransaction tx;
     tx.set_contract_name("fetch.dummy.wait");
-    return fetch::chain::MutableTransaction::MakeTransaction(std::move(tx));
+    return fetch::chain::Transaction::Create(std::move(tx));
   }
 
   fetch::byte_array::ConstByteArray CreateAddress() {
@@ -123,7 +123,7 @@ protected:
     tx.set_data(oss.str());
     tx.PushGroup(address);
 
-    return fetch::chain::MutableTransaction::MakeTransaction(std::move(tx));
+    return fetch::chain::Transaction::Create(std::move(tx));
   }
 
   network_manager_type network_manager_;
