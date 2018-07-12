@@ -1,5 +1,5 @@
 #include<iostream>
-#include"core/serializers/referenced_byte_array.hpp"
+#include"core/serializers/byte_array.hpp"
 #include"network/service/client.hpp"
 #include"core/logger.hpp"
 #include"network/management/connection_register.hpp"

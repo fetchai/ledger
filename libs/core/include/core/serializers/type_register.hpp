@@ -59,9 +59,9 @@ REGISTER_SERIALIZE_SYMBOL_TYPE("i8", char, 9);
 
 REGISTER_SERIALIZE_TYPE("b8", bool, 11);
 
-REGISTER_SERIALIZE_TYPE("str", byte_array::BasicByteArray, 12);
+REGISTER_SERIALIZE_TYPE("str", byte_array::ConstByteArray, 12);
 REGISTER_SERIALIZE_SYMBOL_TYPE("str", byte_array::ByteArray, 12);
-REGISTER_SERIALIZE_SYMBOL_TYPE("str", byte_array::ConstByteArray, 12);
+//REGISTER_SERIALIZE_SYMBOL_TYPE("str", byte_array::ConstByteArray, 12);
 REGISTER_SERIALIZE_SYMBOL_TYPE("str", std::string, 12);
 REGISTER_SERIALIZE_SYMBOL_TYPE("str", char const*, 12);
 REGISTER_SERIALIZE_SYMBOL_TYPE("str", char*, 12);

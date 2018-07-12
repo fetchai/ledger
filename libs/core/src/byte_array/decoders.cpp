@@ -5,7 +5,7 @@
 namespace fetch {
 namespace byte_array {
 
-BasicByteArray FromBase64(BasicByteArray const &str) noexcept {
+ConstByteArray FromBase64(ConstByteArray const &str) noexcept {
   // After https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
   assert((str.size() % 4) == 0);
   std::size_t pad = 0;
@@ -25,7 +25,7 @@ BasicByteArray FromBase64(BasicByteArray const &str) noexcept {
       --i;
       break;
     } else if(c ==  details::INVALID) {
-      return BasicByteArray();      
+      return ConstByteArray();      
     }
 
     buf = buf << 6 | c;
@@ -52,7 +52,7 @@ BasicByteArray FromBase64(BasicByteArray const &str) noexcept {
 }
 
 
-BasicByteArray FromHex(BasicByteArray const &str) noexcept {
+ConstByteArray FromHex(ConstByteArray const &str) noexcept {
   char const *data = reinterpret_cast<char const *>(str.pointer());
   ByteArray ret;
   ret.Resize(str.size() >> 1);
@@ -70,7 +70,7 @@ BasicByteArray FromHex(BasicByteArray const &str) noexcept {
       ret[j++] = next;
     }
   } catch( std::runtime_error const &) {
-    return BasicByteArray();
+    return ConstByteArray();
   }
   
 

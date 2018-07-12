@@ -1,6 +1,6 @@
 #ifndef CRYPTO_STREAM_HASHER_HPP
 #define CRYPTO_STREAM_HASHER_HPP
-#include <core/byte_array/referenced_byte_array.hpp>
+#include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
 namespace crypto {

@@ -1,6 +1,6 @@
 #ifndef STORAGE_KEY_HPP
 #define STORAGE_KEY_HPP
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 
 #include <cstring>

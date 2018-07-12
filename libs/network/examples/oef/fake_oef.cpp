@@ -212,8 +212,8 @@ public:
   
 public:
   std::vector< Transaction > transactions_;
-  std::map< fetch::byte_array::BasicByteArray, Account > accounts_;
-  std::set< fetch::byte_array::BasicByteArray > users_;
+  std::map< fetch::byte_array::ConstByteArray, Account > accounts_;
+  std::set< fetch::byte_array::ConstByteArray > users_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
   fetch::mutex::Mutex mutex_;
 

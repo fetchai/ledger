@@ -1,8 +1,8 @@
 #ifndef PROTOCOLS_CHAIN_KEEPER_MANAGER_HPP
 #define PROTOCOLS_CHAIN_KEEPER_MANAGER_HPP
 #include "byte_array/const_byte_array.hpp"
-#include "byte_array/referenced_byte_array.hpp"
-#include "serializers/referenced_byte_array.hpp"
+#include "byte_array/byte_array.hpp"
+#include "serializers/byte_array.hpp"
 
 #include "chain/block.hpp"
 #include "chain/consensus/proof_of_work.hpp"

@@ -7,7 +7,7 @@
 #include "network/message.hpp"
 #include "network/management/client_manager.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 
 #include "network/fetch_asio.hpp"
 #include<atomic>

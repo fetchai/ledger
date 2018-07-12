@@ -1,9 +1,9 @@
 #include "core/random/lfg.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
-#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
-#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "network/service/client.hpp"
 #include "network/service/server.hpp"
 

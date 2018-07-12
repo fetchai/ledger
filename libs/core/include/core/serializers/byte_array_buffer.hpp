@@ -3,7 +3,7 @@
 #include <type_traits>
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
 
 namespace fetch {
@@ -30,7 +30,7 @@ class ByteArrayBuffer {
     for (std::size_t i = 0; i < size; ++i) arr[i] = data_[pos_++];
   }
 
-  void ReadByteArray(byte_array::BasicByteArray &b, std::size_t const &size) {
+  void ReadByteArray(byte_array::ConstByteArray &b, std::size_t const &size) {
     b = data_.SubArray(pos_, size);
     pos_ += size;
   }

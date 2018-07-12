@@ -3,7 +3,7 @@
 
 #include<random>
 #include"core/random/lfg.hpp"
-#include"core/byte_array/referenced_byte_array.hpp"
+#include"core/byte_array/byte_array.hpp"
 #include"core/serializers/counter.hpp"
 #include"network/service/types.hpp"
 #include"ledger/chain/transaction.hpp"

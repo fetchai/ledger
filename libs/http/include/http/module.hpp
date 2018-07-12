@@ -1,6 +1,6 @@
 #ifndef HTTP_MODULE_HPP
 #define HTTP_MODULE_HPP
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "http/method.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
