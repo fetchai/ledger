@@ -68,7 +68,7 @@ class TCPClient
   void Cleanup() noexcept
   {
     pointer_->ClearClosures();
-    //pointer_->Close(); // TODO: (`HUT`) : look at with Ed, this appears to induce segfault
+    pointer_->Close();
   }
 
   void Close() const noexcept
@@ -101,14 +101,13 @@ class TCPClient
   typename implementation_type::weak_ptr_type network_client_pointer() 
   {
     return pointer_->network_client_pointer();
-    
   }
-  
+
 protected:
 
   pointer_type  pointer_;
 
-  void RegisterHandlers() 
+  void RegisterHandlers()
   {
     pointer_->OnConnectionFailed(
       [this]() {

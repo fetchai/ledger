@@ -18,10 +18,10 @@ namespace fetch {
 namespace network {
 
 /*
- * Handle TCP connections. Spawn new ClientConnections on connect and adds 
- * them to the client manager. This can then be used for communication with 
+ * Handle TCP connections. Spawn new ClientConnections on connect and adds
+ * them to the client manager. This can then be used for communication with
  * the rest of Fetch
- * 
+ *
  */
 
 class TCPServer : public AbstractNetworkServer {
@@ -41,12 +41,12 @@ class TCPServer : public AbstractNetworkServer {
   {
     LOG_STACK_TRACE_POINT;
     manager_ = std::make_shared< ClientManager >(*this);
-    
+
     network_manager_.Post([this]
     {
       auto acceptor = network_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
-        (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));    
-      
+        (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
+
       Accept(acceptor);
     });
   }
@@ -103,11 +103,11 @@ class TCPServer : public AbstractNetworkServer {
   }
 
   template<typename X >
-  void SetConnectionRegister(X &reg) 
+  void SetConnectionRegister(X &reg)
   {
     connection_register_ = reg.pointer();
   }
-  
+
  private:
   network_manager_type     network_manager_;
   uint16_t                port_;
@@ -117,13 +117,13 @@ class TCPServer : public AbstractNetworkServer {
   void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor) {
     LOG_STACK_TRACE_POINT;
 
-    auto strongSocket = network_manager_.CreateIO<asio::ip::tcp::tcp::socket>();    
+    auto strongSocket = network_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
     std::weak_ptr< ClientManager >  man = manager_;
-        
+
     auto cb = [this, man, acceptor, strongSocket](std::error_code ec) {
       auto lock_ptr = man.lock();
       if(!lock_ptr) return;
-      
+
       if (!ec) {
         auto conn = std::make_shared<ClientConnection>(strongSocket, manager_);
         auto ptr = connection_register_.lock();
@@ -132,7 +132,7 @@ class TCPServer : public AbstractNetworkServer {
           ptr->Enter( conn->network_client_pointer() );
           conn->SetConnectionManager( ptr );
         }
-        
+
         conn->Start();
       }
 
@@ -142,8 +142,8 @@ class TCPServer : public AbstractNetworkServer {
     acceptor->async_accept(*strongSocket, cb);
   }
 
-  std::weak_ptr< AbstractConnectionRegister > connection_register_;
-  std::shared_ptr< ClientManager >            manager_;
+  std::weak_ptr<AbstractConnectionRegister> connection_register_;
+  std::shared_ptr<ClientManager>            manager_;
 };
 }
 }

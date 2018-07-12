@@ -71,7 +71,6 @@ class TCPClientImplementation final :
 
       strand->post([this, self, host, port, strand]
       {
-        assert(strand.running_in_this_thread());
         shared_self_type selfLock = self.lock();
         if(!selfLock) return;
 
@@ -79,17 +78,6 @@ class TCPClientImplementation final :
         socket_ = socket;
 
         std::shared_ptr<resolver_type> res = networkManager_.CreateIO<resolver_type>();
-
-            if(!strand)
-            {
-              std::cerr << "no strand7" << std::endl;
-            }
-
-            if(!strand_.lock())
-            {
-              std::cerr << "no strand8" << std::endl;
-            }
-
 
         auto cb = [this, self, res, socket, strand]
         (std::error_code ec, resolver_type::iterator)
@@ -104,16 +92,6 @@ class TCPClientImplementation final :
             fetch::logger.Debug("Connection established!");
             this->SetAddress( (*socket).remote_endpoint().address().to_string() );
 
-            if(!strand)
-            {
-              std::cerr << "no strand1" << std::endl;
-            }
-
-            if(!strand_.lock())
-            {
-              std::cerr << "no strand4" << std::endl;
-            }
-
             ReadHeader();
           } else
           {
@@ -126,9 +104,11 @@ class TCPClientImplementation final :
         {
           resolver_type::iterator it
             (res->resolve({std::string(host), std::string(port)}));
+
+          assert(strand->running_in_this_thread());
           asio::async_connect(*socket, it, strand->wrap(cb));
         } else {
-          //fetch::logger.Error("Failed to create valid socket");
+          fetch::logger.Error("Failed to create valid socket");
         }
       }); // end strand post
     }); // end NM post
@@ -143,7 +123,7 @@ class TCPClientImplementation final :
   {
     if(!connected_)
     {
-      //fetch::logger.Error("Attempting to write to socket too early. Returning.");
+      fetch::logger.Warn("Attempting to write to socket too early. Returning.");
       return;
     }
 
@@ -240,10 +220,9 @@ class TCPClientImplementation final :
     auto strand = strand_.lock();
     if(!strand)
     {
-      std::cerr << "strand died." << std::endl;
       return;
     }
-    assert(strand.running_in_this_thread());
+    assert(strand->running_in_this_thread());
 
     self_type self = shared_from_this();
     auto socket = socket_.lock();
@@ -266,6 +245,7 @@ class TCPClientImplementation final :
 
     if(socket)
     {
+      assert(strand->running_in_this_thread());
       asio::async_read(*socket, asio::buffer(header.pointer(), header.size()), strand->wrap(cb));
       connected_ = true;
     }
@@ -274,7 +254,7 @@ class TCPClientImplementation final :
   void ReadBody(byte_array::ByteArray const &header) noexcept
   {
     auto strand = strand_.lock();
-    assert(strand.running_in_this_thread());
+    assert(strand->running_in_this_thread());
 
     assert(header.size() >= sizeof(networkMagic_));
     uint64_t magic = *reinterpret_cast<const uint64_t *>(header.pointer());
@@ -282,7 +262,7 @@ class TCPClientImplementation final :
 
     if (magic != networkMagic_)
     {
-      //fetch::logger.Error("Magic incorrect during network read - dying: ", ToHex(header));
+      fetch::logger.Error("Magic incorrect during network read - dying: ", ToHex(header));
       return;
     }
 
@@ -298,28 +278,17 @@ class TCPClientImplementation final :
 
       if (!ec)
       {
-            if(!strand)
-            {
-              std::cerr << "no strand2" << std::endl;
-            }
-
-            if(!strand_.lock())
-            {
-              std::cerr << "no strand3" << std::endl;
-            }
-
-
-
         PushMessage(message);
         ReadHeader();
       } else
       {
-        //fetch::logger.Error("Reading body failed, dying: ", ec);
+        fetch::logger.Error("Reading body failed, dying: ", ec);
       }
     };
 
     if(socket)
     {
+      assert(strand->running_in_this_thread());
       asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), strand->wrap(cb));
     }
   }
@@ -339,7 +308,7 @@ class TCPClientImplementation final :
     }
   }
 
-  // Always executed in a run()
+  // Always executed in a run(), in a strand
   void WriteNext(shared_self_type selfLock)
   {
     // Only one thread can get past here at a time
@@ -373,7 +342,7 @@ class TCPClientImplementation final :
 
       if(ec)
       {
-        //fetch::logger.Error("Error writing to socket, closing.");
+        fetch::logger.Error("Error writing to socket, closing.");
       }
       else
       {
@@ -387,9 +356,10 @@ class TCPClientImplementation final :
 
     if(socket)
     {
+      assert(strand_.lock()->running_in_this_thread());
       asio::async_write(*socket, buffers, strand_.lock()->wrap(cb));
     } else {
-      //fetch::logger.Error("Failed to lock socket in WriteNext!");
+      fetch::logger.Error("Failed to lock socket in WriteNext!");
     }
   }
 
