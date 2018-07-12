@@ -130,7 +130,7 @@ class SwarmAgentNaive(object):
 
     def onBlockNotSupplied(self, host, blockid):
         say("PYCHAINNODE===> LOOSE NOT DELIVERED: ", host, ' ', blockid)
-        
+
 
 def run(config):
     agent = SwarmAgentNaive(
@@ -171,5 +171,8 @@ if __name__ == "__main__":
 DETAILS="""
 
 lldb build/apps/pyfetch/pyfetch -- apps/pyfetch/pychainnode.py -id 10 -maxpeers 4 -target 16 -port 9010 -peers 127.0.0.1:9001,127.0.0.1:9005 -idlespeed 50 --introduce
+
+
+(cd build;make -j100) && ./apps/demoswarm/runswarm.py --binary "./build/apps/pyfetch/pyfetch ./apps/pyfetch/pychainnode.py" --members 7 --maxpeers 3 --initialpeers 2 --idlespeed 50 --target 18
 
 """

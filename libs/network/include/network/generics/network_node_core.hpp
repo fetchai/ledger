@@ -13,6 +13,7 @@
 #include "network/service/client.hpp"
 #include "network/service/server.hpp"
 #include "network/swarm/swarm_peer_location.hpp"
+#include"network/service/publication_feed.hpp"
 
 namespace fetch
 {
@@ -20,7 +21,7 @@ namespace fetch
 namespace network
 {
 
-class NetworkNodeCore
+class NetworkNodeCore : public std::enable_shared_from_this<NetworkNodeCore>
 {
 public:
     typedef std::mutex mutex_type;
@@ -62,6 +63,8 @@ public:
         // and print requests to the terminal in colour
         httpServer_->AddMiddleware(fetch::http::middleware::AllowOrigin("*"));
         httpServer_->AddMiddleware(fetch::http::middleware::ColorLog);
+
+        publisher_ = std::make_shared<fetch::service::HasPublicationFeed>();
     }
 
     virtual ~NetworkNodeCore()
@@ -141,6 +144,12 @@ public:
     void AddProtocol(INTERFACE_CLASS *interface, uint32_t protocolNumber)
     {
         lock_type mlock(mutex_);
+
+        if (protocolCache_.find(protocolNumber) != protocolCache_.end())
+        {
+            return;
+        }
+
         auto protocolInstance = std::make_shared<PROTOCOL_CLASS>(interface);
         auto baseProtocolPtr =
             std::static_pointer_cast<fetch::service::Protocol>(protocolInstance);
@@ -178,7 +187,91 @@ public:
         nm_ . Post(workload);
     }
 
+    // ----------------------------------------------------------------------
+
+public:
+    class Publishing
+    {
+    public:
+        Publishing() = default;
+        virtual ~Publishing() = default;
+    };
+
+    template<class INTERFACE_CLASS>
+    std::shared_ptr<Publishing> CreatePublisherFor(INTERFACE_CLASS *interface, uint64_t verb)
+    {
+        auto protocol_number = INTERFACE_CLASS::protocol_number;
+        return CreatePublisherFor(interface, protocol_number);
+    }
+
+    template<class INTERFACE_CLASS, class FUNC_CLASS, class PROTOCOL_CLASS>
+    std::shared_ptr<Publishing> CreatePublisherFor(INTERFACE_CLASS *interface,
+                                                      uint64_t protocol_number,
+                                                      uint64_t verb
+                                            )
+    {
+        auto self = shared_from_this();
+        auto actor = std::make_shared<PublishActor>(publisher_);
+        return std::static_pointer_cast<Publishing>(actor);
+    }
+
+    class PublishActor:public Publishing
+    {
+    public:
+        PublishActor(
+            std::shared_ptr<fetch::service::HasPublicationFeed> publisher,
+            uint64_t verb)
+            : publisher_(publisher),
+              verb_(verb)
+        {
+        }
+        template<typename... arguments>
+        void Publish(arguments&&... args)
+        {
+            publisher_ -> Publish(verb_, std::forward<arguments>(args)...);
+        }
+        std::shared_ptr<fetch::service::HasPublicationFeed> publisher_;
+        uint64_t verb_;
+    };
+
+    // ----------------------------------------------------------------------
+
+
+public:
+    class Subscription
+    {
+    public:
+        Subscription(client_ptr client, fetch::service::subscription_handler_type handle) :
+            client_(client),
+            handle_(handle)
+        {
+        }
+        virtual ~Subscription()
+        {
+            client_ -> Unsubscribe( handle_ );
+        }
+    private:
+        client_ptr client_;
+        fetch::service::subscription_handler_type handle_;
+    };
+
+
+    template<class INTERFACE_CLASS, class FUNC_CLASS>
+    std::shared_ptr<Subscription> CreateSubscription(INTERFACE_CLASS *interface,
+                                                     uint64_t verb,
+                                                     client_ptr client,
+                                                     FUNC_CLASS func
+                                                     )
+    {
+        auto protocolNumber = INTERFACE_CLASS::protocol_number;
+        auto handle = client -> Subscribe(protocolNumber, verb, func);
+        return std::make_shared<Subscription>(client, handle);
+    }
+
+    // ----------------------------------------------------------------------
+
 protected:
+
     virtual client_ptr ActuallyConnectTo(
         const std::string &host, unsigned short port)
     {
@@ -213,6 +306,7 @@ protected:
     std::shared_ptr<fetch::http::HTTPServer> httpServer_;
     std::shared_ptr<rpc_server_type> rpcServer_;
     protocol_cache_type protocolCache_;
+    std::shared_ptr<fetch::service::HasPublicationFeed> publisher_;
 };
 
 }
