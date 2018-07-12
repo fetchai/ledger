@@ -10,6 +10,8 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <random>
+#include <chrono>
+#include <thread>
 
 using ::testing::_;
 
@@ -32,13 +34,15 @@ protected:
   }
 
   void SetUp() override {
+    static const uint16_t EXECUTOR_RPC_PORT = 9001;
+
     storage_.reset(new underlying_storage_type);
     network_manager_.reset(new underlying_network_manager_type{2});
     network_manager_->Start();
 
     // create the executor service
     service_.reset(new underlying_service_type{
-      9000,
+      EXECUTOR_RPC_PORT,
       *network_manager_,
       storage_
     });
@@ -46,9 +50,14 @@ protected:
     // create the executor client
     executor_.reset(new underlying_client_type{
       "127.0.0.1",
-      9000,
+      EXECUTOR_RPC_PORT,
       *network_manager_
     });
+
+    // wait for the executor to connect etc.
+    while (!executor_->is_alive()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    }
   }
 
   void TearDown() override {

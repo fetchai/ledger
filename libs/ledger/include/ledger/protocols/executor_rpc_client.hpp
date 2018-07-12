@@ -36,6 +36,10 @@ public:
     return result.As<Status>();
   }
 
+  bool is_alive() const {
+    return service_->is_alive();
+  }
+
 private:
 
   service_type service_;

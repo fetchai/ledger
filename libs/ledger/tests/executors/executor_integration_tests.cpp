@@ -1,142 +1,142 @@
-#include "core/make_unique.hpp"
-#include "core/byte_array/encoders.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/protocols/executor_rpc_client.hpp"
-#include "ledger/protocols/executor_rpc_service.hpp"
-#include "ledger/storage_unit/storage_unit_bundled_service.hpp"
-#include "ledger/storage_unit/storage_unit_client.hpp"
-
-#include "mock_storage_unit.hpp"
-
-#include <gtest/gtest.h>
-#include <memory>
-#include <random>
-
-using ::testing::_;
-
-class ExecutorIntegrationTests : public ::testing::Test {
-protected:
-  using underlying_client_type = fetch::ledger::ExecutorRpcClient;
-  using underlying_service_type = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type = underlying_client_type::thread_manager_type;
-  using underlying_storage_type = fetch::ledger::StorageUnitClient;
-  using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
-
-  using client_type = std::unique_ptr<underlying_client_type>;
-  using service_type = std::unique_ptr<underlying_service_type>;
-  using network_manager_type = std::unique_ptr<underlying_network_manager_type>;
-  using storage_client_type = std::shared_ptr<underlying_storage_type>;
-  using storage_service_type = std::unique_ptr<underlying_storage_service_type>;
-  using rng_type = std::mt19937;
-
-  static constexpr std::size_t IDENTITY_SIZE = 64;
-
-  ExecutorIntegrationTests() {
-    rng_.seed(42);
-  }
-
-  void SetUp() override {
-
-    network_manager_.reset(new underlying_network_manager_type{2});
-    network_manager_->Start();
-
-    storage_service_.reset(new underlying_storage_service_type);
-    storage_service_->Setup("teststore", 4, 9001, *network_manager_);
-
-    storage_.reset(new underlying_storage_type{*network_manager_});
-    for(std::size_t i = 0 ; i < 4; ++i) {
-      storage_->AddLaneConnection< fetch::network::TCPClient >("localhost", uint16_t(9001 + i)) ;
-    }
-
-    // create the executor service
-    service_.reset(new underlying_service_type{
-      9000,
-      *network_manager_,
-      storage_
-    });
-
-    // create the executor client
-    executor_.reset(new underlying_client_type{
-      "127.0.0.1",
-      9000,
-      *network_manager_
-    });
-  }
-
-  void TearDown() override {
-    network_manager_->Stop();
-
-    executor_.reset();
-    service_.reset();
-    storage_.reset();
-    storage_service_.reset();
-    network_manager_.reset();
-  }
-
-  fetch::chain::Transaction CreateDummyTransaction() {
-    fetch::chain::MutableTransaction tx;
-    tx.set_contract_name("fetch.dummy.wait");
-    return fetch::chain::VerifiedTransaction::Create(std::move(tx));
-  }
-
-  fetch::byte_array::ConstByteArray CreateAddress() {
-    fetch::byte_array::ByteArray address;
-    address.Resize(std::size_t{IDENTITY_SIZE});
-
-    for (std::size_t i = 0; i < std::size_t{IDENTITY_SIZE}; ++i) {
-      address[i] = static_cast<uint8_t>(rng_() & 0xFF);
-    }
-
-    return {address};
-  }
-
-  fetch::chain::Transaction CreateWalletTransaction() {
-
-    // generate an address
-    auto address = CreateAddress();
-
-    // format the transaction contents
-    std::ostringstream oss;
-    oss << "{ "
-        << R"("address": ")" << static_cast<std::string>(fetch::byte_array::ToBase64(address)) << "\", "
-        << R"("amount": )" << 1000
-        << " }";
-
-    // create the transaction
-    fetch::chain::MutableTransaction tx;
-    tx.set_contract_name("fetch.token.wealth");
-    tx.set_data(oss.str());
-
-    return fetch::chain::VerifiedTransaction::Create(std::move(tx));
-  }
-
-  network_manager_type network_manager_;
-  storage_service_type storage_service_;
-  storage_client_type storage_;
-  service_type service_;
-  client_type executor_;
-  rng_type rng_;
-};
-
-TEST_F(ExecutorIntegrationTests, CheckDummyContract) {
-
-  // create the dummy contract
-  auto tx = CreateDummyTransaction();
-
-  // store the transaction inside the store
-  storage_->AddTransaction(tx);
-
-  executor_->Execute(tx.digest(), 0, {0});
-}
-
-//TEST_F(ExecutorIntegrationTests, CheckTokenContract) {
+//#include "core/make_unique.hpp"
+//#include "core/byte_array/encoders.hpp"
+//#include "ledger/chain/transaction.hpp"
+//#include "ledger/chain/mutable_transaction.hpp"
+//#include "ledger/protocols/executor_rpc_client.hpp"
+//#include "ledger/protocols/executor_rpc_service.hpp"
+//#include "ledger/storage_unit/storage_unit_bundled_service.hpp"
+//#include "ledger/storage_unit/storage_unit_client.hpp"
+//
+//#include "mock_storage_unit.hpp"
+//
+//#include <gtest/gtest.h>
+//#include <memory>
+//#include <random>
+//
+//using ::testing::_;
+//
+//class ExecutorIntegrationTests : public ::testing::Test {
+//protected:
+//  using underlying_client_type = fetch::ledger::ExecutorRpcClient;
+//  using underlying_service_type = fetch::ledger::ExecutorRpcService;
+//  using underlying_network_manager_type = underlying_client_type::thread_manager_type;
+//  using underlying_storage_type = fetch::ledger::StorageUnitClient;
+//  using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
+//
+//  using client_type = std::unique_ptr<underlying_client_type>;
+//  using service_type = std::unique_ptr<underlying_service_type>;
+//  using network_manager_type = std::unique_ptr<underlying_network_manager_type>;
+//  using storage_client_type = std::shared_ptr<underlying_storage_type>;
+//  using storage_service_type = std::unique_ptr<underlying_storage_service_type>;
+//  using rng_type = std::mt19937;
+//
+//  static constexpr std::size_t IDENTITY_SIZE = 64;
+//
+//  ExecutorIntegrationTests() {
+//    rng_.seed(42);
+//  }
+//
+//  void SetUp() override {
+//
+//    network_manager_.reset(new underlying_network_manager_type{2});
+//    network_manager_->Start();
+//
+//    storage_service_.reset(new underlying_storage_service_type);
+//    storage_service_->Setup("teststore", 4, 9001, *network_manager_);
+//
+//    storage_.reset(new underlying_storage_type{*network_manager_});
+//    for(std::size_t i = 0 ; i < 4; ++i) {
+//      storage_->AddLaneConnection< fetch::network::TCPClient >("localhost", uint16_t(9001 + i)) ;
+//    }
+//
+//    // create the executor service
+//    service_.reset(new underlying_service_type{
+//      9000,
+//      *network_manager_,
+//      storage_
+//    });
+//
+//    // create the executor client
+//    executor_.reset(new underlying_client_type{
+//      "127.0.0.1",
+//      9000,
+//      *network_manager_
+//    });
+//  }
+//
+//  void TearDown() override {
+//    network_manager_->Stop();
+//
+//    executor_.reset();
+//    service_.reset();
+//    storage_.reset();
+//    storage_service_.reset();
+//    network_manager_.reset();
+//  }
+//
+//  fetch::chain::Transaction CreateDummyTransaction() {
+//    fetch::chain::MutableTransaction tx;
+//    tx.set_contract_name("fetch.dummy.wait");
+    return fetch::chain::MutableTransaction::MakeTransaction(std::move(tx));
+//  }
+//
+//  fetch::byte_array::ConstByteArray CreateAddress() {
+//    fetch::byte_array::ByteArray address;
+//    address.Resize(std::size_t{IDENTITY_SIZE});
+//
+//    for (std::size_t i = 0; i < std::size_t{IDENTITY_SIZE}; ++i) {
+//      address[i] = static_cast<uint8_t>(rng_() & 0xFF);
+//    }
+//
+//    return {address};
+//  }
+//
+//  fetch::chain::Transaction CreateWalletTransaction() {
+//
+//    // generate an address
+//    auto address = CreateAddress();
+//
+//    // format the transaction contents
+//    std::ostringstream oss;
+//    oss << "{ "
+//        << R"("address": ")" << static_cast<std::string>(fetch::byte_array::ToBase64(address)) << "\", "
+//        << R"("amount": )" << 1000
+//        << " }";
+//
+//    // create the transaction
+//    fetch::chain::MutableTransaction tx;
+//    tx.set_contract_name("fetch.token.wealth");
+//    tx.set_data(oss.str());
+//
+    return fetch::chain::MutableTransaction::MakeTransaction(std::move(tx));
+//  }
+//
+//  network_manager_type network_manager_;
+//  storage_service_type storage_service_;
+//  storage_client_type storage_;
+//  service_type service_;
+//  client_type executor_;
+//  rng_type rng_;
+//};
+//
+//TEST_F(ExecutorIntegrationTests, CheckDummyContract) {
 //
 //  // create the dummy contract
-//  auto tx = CreateWalletTransaction();
+//  auto tx = CreateDummyTransaction();
 //
 //  // store the transaction inside the store
 //  storage_->AddTransaction(tx);
 //
 //  executor_->Execute(tx.digest(), 0, {0});
 //}
+//
+////TEST_F(ExecutorIntegrationTests, CheckTokenContract) {
+////
+////  // create the dummy contract
+////  auto tx = CreateWalletTransaction();
+////
+////  // store the transaction inside the store
+////  storage_->AddTransaction(tx);
+////
+////  executor_->Execute(tx.digest(), 0, {0});
+////}
