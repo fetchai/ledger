@@ -7,6 +7,7 @@ import glob
 import json
 import os
 import pprint
+import math
 import re
 import socket
 import sqlite3
@@ -58,9 +59,6 @@ def get_data2(context, mon):
             t = link["peer"]
             w = link["weight"]
             if not t:
-                print("-----------------------------------")
-                print(s, link)
-                print("-----------------------------------")
                 continue
             if w > 0.1:
                 data["links"].append({
@@ -89,7 +87,6 @@ def get_data2(context, mon):
                 "status": "dead",
             } for x in extranodenames
         ]),
-    print(data)
     return data;
 
 def get_chain_data2(context, mon):
@@ -122,7 +119,7 @@ def get_chain_data2(context, mon):
             'name': {
                 'v': str(id),
                 'f': """
-{}
+<div style="{}">{}</div>
 <div>
 <span>blk:</span>&nbsp;<span style="font-weight:bold">{}</span>
 <span>by:</span>&nbsp;<span style="font-weight:bold">{}</span>
@@ -132,6 +129,7 @@ def get_chain_data2(context, mon):
 <span style="font-style:italic">{}</span>
 </div>
                 """.format(
+                    "color: red;" if name in mon.heaviests.values() else "",
                     str(name)[0:16],
                     b["num"],
                     b["miner"],
@@ -173,7 +171,7 @@ def get_chain_data(context, mon):
         })
 
     for name in allblocknames:
-        b = mon.chain[name]
+        b = mon.chain.get(name, {})
         prevHash = b.get("prev", "")
         p = mon.chain.get(prevHash, None)
 
@@ -184,9 +182,79 @@ def get_chain_data(context, mon):
                 'value': len(b['nodes']),
             })
 
-    print(r)
     return r
 
+
+def walk_backs(chain, inputs):
+
+    r = {}
+    for name in inputs:
+        for step in [ 10, 7, 4, 1 ]:
+            if name:
+                p = chain.get(name, {}).get("prev", "")
+                if p:
+                    r[name] = {
+                        "source": p[0:16],
+                        "target": name[0:16],
+                        "value": step * 1.2,
+                        'distance': 40 * step,
+                    }
+                name = p
+    return r
+
+
+def get_consensus_data(context, mon):
+    r = {
+        'nodes': [],
+        'links': [],
+    }
+
+    myChain = mon.getChain()
+
+    allnodes = walk_backs(myChain, set(mon.heaviests.values()))
+    attractors = dict([ (x, x[0:16]) for x in set(allnodes) ])
+
+    nodeSize = dict([
+        (k, math.sqrt(10 + 100 * len([ x for x in mon.heaviests.values() if k == x ])))
+        for k in allnodes.keys()
+        ])
+
+    r["nodes"].extend([
+        {
+            'id': k[0:16],
+            'group': ord((k or "0")[0]) & 0x0F,
+            'value': nodeSize[k],
+            'charge': -1500,
+            'status': "darken",
+            'inherit': myChain.get(k, {}).get("prev", "")[0:16],
+        }
+        for k in allnodes.keys()
+    ])
+
+    r["nodes"].extend([
+        {
+            'id': k,
+            'group': ord((attracted or "0")[0]) & 0x0F,
+            'charge': -300,
+            'value': 10,
+        } for k, attracted in mon.heaviests.items()
+    ])
+
+
+    for k,v in allnodes.items():
+            r["links"].append(v)
+
+    r["links"].extend([
+        {
+            'source': node,
+            'target': attractors[heaviest],
+            'value': 0,
+            'distance': 0.01,
+        }
+        for node, heaviest in mon.heaviests.items()
+    ])
+
+    return r
 
 
 def get_slash():
@@ -212,6 +280,7 @@ def main():
         root.route('/network', method='GET', callback=functools.partial(get_data2, context, myMonitoring))
         root.route('/chain', method='GET', callback=functools.partial(get_chain_data, context, myMonitoring))
         root.route('/chain2', method='GET', callback=functools.partial(get_chain_data2, context, myMonitoring))
+        root.route('/consensus', method='GET', callback=functools.partial(get_consensus_data, context, myMonitoring))
         if g_ssl:
             from utils import SSLWSGIRefServer
             srv = SSLWSGIRefServer.SSLWSGIRefServer(host="0.0.0.0", port=g_port)

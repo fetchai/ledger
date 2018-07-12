@@ -6,7 +6,7 @@ import time
 import threading
 import json
 
-POSSIBLE_PORTS = 20
+POSSIBLE_PORTS = 30
 
 class Monitoring(object):
 
@@ -83,7 +83,7 @@ class Monitoring(object):
         self.thread.start()
 
         self.world = {}
-
+        self.heaviests = {}
         self.chain = {}
 
     def newChainData(self, ident, blocks, chainident):
@@ -94,7 +94,9 @@ class Monitoring(object):
             if chainident > max(self.chain.keys()):
                 self.chain = {}
 
-        for block in blocks:
+        for i, block in enumerate(blocks):
+            if not i:
+                self.heaviests[ident] = block["hashcurrent"]
             self.chain.setdefault(chainident, {})
             self.chain[chainident].setdefault(block["hashcurrent"], { 'id': len(self.chain)+1 })
             self.chain[chainident][block["hashcurrent"]]["prev"] = block["hashprev"]
@@ -102,6 +104,11 @@ class Monitoring(object):
             self.chain[chainident][block["hashcurrent"]]["nodes"].add(ident)
             self.chain[chainident][block["hashcurrent"]]["num"] = block["blockNumber"]
             self.chain[chainident][block["hashcurrent"]]["miner"] = block["minerNumber"]
+
+    def getChain(self):
+        if len(self.chain):
+            return self.chain[max(self.chain.keys())]
+        return {}
 
     def close(self):
         self.thread.done = True
