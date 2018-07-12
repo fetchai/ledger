@@ -148,21 +148,6 @@ private:
 };
 
 
-/*
-class MutableTransaction : public MutableTransaction {
-public:
-  typedef MutableTransaction super_type;
-
-  using super_type::PushGroup;
-  using super_type::set_contract_name;
-  using super_type::set_data;
-  using super_type::set_summary;
-  using super_type::set_signature;
-
-  static Transaction MakeTransaction(MutableTransaction &&);
-};
-*/
-// Conversion to Transaction
 
 }
 }
