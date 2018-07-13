@@ -32,7 +32,7 @@ class Monitoring(object):
                 url = "http://127.0.0.1:{}/peers".format(port)
                 data = None
                 try:
-                    r = requests.get(url, timeout=1)
+                    r = requests.get(url, timeout=0.5)
                     if r.status_code == 200:
                         data = json.loads(r.content.decode("utf-8", "strict"))
                         peers = data.get("peers", [])
@@ -58,7 +58,7 @@ class Monitoring(object):
                 url = "http://127.0.0.1:{}/mainchain".format(port)
                 data = None
                 try:
-                    r = requests.get(url, timeout=1)
+                    r = requests.get(url, timeout=0.5)
                     if r.status_code == 200:
                         data = json.loads(r.content.decode("utf-8", "strict"))
                 except requests.exceptions.Timeout as ex:
@@ -93,6 +93,7 @@ class Monitoring(object):
                 return
             if chainident > max(self.chain.keys()):
                 self.chain = {}
+                self.heaviests = {}
 
         for i, block in enumerate(blocks):
             if not i:

@@ -187,8 +187,17 @@ class BubbleForceGraph
             return r.toString();
         }
 
+        this.getClassForNode = function(d) {
+            if (d.class)
+                return d.class;
+            return "";
+        }
+
         this.dataNodes
             .enter().append("circle")
+            .attr("class", function(d) {
+                return self.getClassForNode(d);
+            })
             .attr("r", 5)
             .attr("data-creationname", function(d) { return d.id; })
             .attr("fill", "#000")

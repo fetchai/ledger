@@ -28,7 +28,6 @@ angular.module('blobsApp', []).controller('blobsController', [ '$location', '$sc
     $scope.dataArrived = function(response) {
 	// process me here.
         $scope.fetchedData = response.data;
-	console.log($scope.fetchedData);
 	if (!$scope.g) {
 	    $scope.g = new BubbleForceGraph(null);
 	}
@@ -37,7 +36,7 @@ angular.module('blobsApp', []).controller('blobsController', [ '$location', '$sc
 
     $scope.init = function() {
         $scope.load();
-	$interval( $scope.load, 500);
+	$interval( $scope.load, 700);
     }
     
     $scope.init();
