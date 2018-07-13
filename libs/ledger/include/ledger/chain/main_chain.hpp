@@ -1,7 +1,7 @@
 #ifndef MAIN_CHAIN_HPP
 #define MAIN_CHAIN_HPP
 
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"

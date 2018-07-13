@@ -1,7 +1,8 @@
 
+
 #ifndef HTTP_ABSTRACT_CONNECTION_HPP
 #define HTTP_ABSTRACT_CONNECTION_HPP
-
+#include "core/byte_array/byte_array.hpp"
 #include "network/fetch_asio.hpp"
 #include "http/response.hpp"
 

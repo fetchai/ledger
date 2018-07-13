@@ -4,7 +4,7 @@
 namespace fetch {
 namespace byte_array {
 
-BasicByteArray ToBase64(BasicByteArray const &str) {
+ConstByteArray ToBase64(ConstByteArray const &str) {
   // After https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
   std::size_t N = str.size();
   uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
@@ -42,7 +42,7 @@ BasicByteArray ToBase64(BasicByteArray const &str) {
   return ret;
 }
 
-BasicByteArray ToHex(BasicByteArray const &str) {
+ConstByteArray ToHex(ConstByteArray const &str) {
   uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
   ByteArray ret;
   ret.Resize(str.size() << 1);

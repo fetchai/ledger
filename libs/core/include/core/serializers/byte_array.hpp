@@ -2,7 +2,7 @@
 #define SERIALIZER_REFERENCED_BYTE_ARRAY_HPP
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 
 #include <type_traits>
 
@@ -10,7 +10,7 @@ namespace fetch {
 namespace serializers {
 
 template <typename T>
-inline void Serialize(T &serializer, byte_array::BasicByteArray const &s) {
+inline void Serialize(T &serializer, byte_array::ConstByteArray const &s) {
   serializer.Allocate(sizeof(uint64_t) + s.size());
   uint64_t size = s.size();
 
@@ -21,7 +21,7 @@ inline void Serialize(T &serializer, byte_array::BasicByteArray const &s) {
 }
 
 template <typename T>
-inline void Deserialize(T &serializer, byte_array::BasicByteArray &s) {
+inline void Deserialize(T &serializer, byte_array::ConstByteArray &s) {
   uint64_t size = 0;
 
   detailed_assert(int64_t(sizeof(uint64_t)) <= serializer.bytes_left());

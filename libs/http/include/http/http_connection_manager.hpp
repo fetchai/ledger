@@ -1,5 +1,6 @@
 #ifndef HTTP_CONNECTION_MANAGER_HPP
 #define HTTP_CONNECTION_MANAGER_HPP
+#include "core/byte_array/byte_array.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
 #include "core/logger.hpp"
