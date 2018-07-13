@@ -65,6 +65,13 @@ public:
     
   }
 
+  bool Has(ResourceID const &rid) 
+  {
+    Document doc = store_.Get(rid);
+    return !doc.failed;
+  }
+
+  
   void Set(ResourceID const &rid, type const &object) 
   {    
     serializer_type ser;
