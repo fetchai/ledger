@@ -189,7 +189,14 @@ def walk_backs(chain, inputs):
 
     r = {}
     for name in inputs:
-        for step in [ 15, 12, 10, 7, 4, 1 ]:
+        for s in [
+                ( 15, 1.0  ),
+                ( 12, .50  ),
+                ( 10, .20  ),
+                ( 7,  .10  ),
+                ( 4,  .05, ),
+                ( 1,  .03, ) ]:
+            step = s[0];
             if name:
                 p = chain.get(name, {}).get("prev", "")
                 if p:
@@ -198,6 +205,7 @@ def walk_backs(chain, inputs):
                         "target": name[0:16],
                         "value": step * 1.2,
                         'distance': 24 * step,
+                        'opacity': s[1],
                         'step': step,
                     }
                 name = p
@@ -230,6 +238,7 @@ def get_consensus_data(context, mon):
             'value': nodeSize[k],
             'charge': -1500,
             'status': "darken",
+            'opacity': allnodes[k]['opacity'],
             'inherit': myChain.get(k, {}).get("prev", "")[0:16],
         }
         for k in allnodes.keys()

@@ -174,18 +174,17 @@ class BubbleForceGraph
                 return d.id;
             });
 
-        this.colourForGroupAndStatus = function(gr, st) {
-
-            //while(gr>this.highestGroupSeenSoFar) {
-            //    this.color(this.highestGroupSeenSoFar);
-            //    this.highestGroupSeenSoFar++;
-            //}
-
+        this.colourForGroupAndStatus = function(gr, st, d) {
             var r = this.color(gr/16.0);
             if (st == "darken") {
-                r = d3.hsl(r).darker(1.5).rgb().toString();
+                r = d3.hsl(r).darker(1.5)
+                if (d.opacity) {
+                    //r.s = d.opacity * r.s;
+                    r = r.rgb();
+                    r.opacity = d.opacity;
+                }
             }
-            return r;
+            return r.toString();
         }
 
         this.dataNodes
@@ -194,7 +193,7 @@ class BubbleForceGraph
             .attr("data-creationname", function(d) { return d.id; })
             .attr("fill", "#000")
             .attr("fill", function(d) {
-                return self.colourForGroupAndStatus(d.group, d.status);
+                return self.colourForGroupAndStatus(d.group, d.status, d);
             })
             .call(d3.drag()
                   .on("start", self.dragstarted.bind(this))
@@ -204,7 +203,7 @@ class BubbleForceGraph
 
         var foo =  this.dataNodes
             .attr("fill", function(d) {
-                return self.colourForGroupAndStatus(d.group, d.status); })
+                return self.colourForGroupAndStatus(d.group, d.status, d); })
             .attr("data-name", function(d) { return d.id; })
 
         this.dataLinks = this.linksG
@@ -349,7 +348,7 @@ class BubbleForceGraph
 
         Object.keys(updatedNodesByName).forEach(k => {
             [
-                "group", "status", "value", "charge"
+                "group", "status", "value", "charge", "darken", "opacity"
             ].forEach(copykey => {
                 updatedNodesByName[k][copykey] =
                     (k in newNodes) ? newNodes[k][copykey] : updatedNodesByName[k][copykey];
