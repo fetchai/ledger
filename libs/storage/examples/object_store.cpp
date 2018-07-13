@@ -7,13 +7,13 @@ int main()
 {
 //  fetch::logger.DisableLogger();
   ObjectStore< int > hello;
-  hello.Load("a.db", "b.db");
+  hello.New("a.db", "b.db");
 
   int x = 128312, y;
-  hello.Set(ResourceID("blah"), x);
+//  hello.Set(ResourceID("blah"), x);
   hello.Get(ResourceID("blah"), y);
 
-  std::cout << y << std::endl;
+  std::cout << y << " " << x << std::endl;
   
   return 0;
 }

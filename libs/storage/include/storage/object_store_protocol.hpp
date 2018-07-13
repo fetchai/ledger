@@ -2,12 +2,16 @@
 #define STORAGE_OBJECT_STORE_PROTOCOL_HPP
 #include "storage/object_store.hpp"
 #include "network/service/protocol.hpp"
+#include<functional>
+
 namespace fetch {
 namespace storage {
 
 template< typename T >
 class ObjectStoreProtocol : public fetch::service::Protocol {
 public:
+  using event_function_type = std::function< void(T const&) > ;
+  
   using self_type = ObjectStoreProtocol<T>;
   
   enum {
@@ -21,6 +25,12 @@ public:
     this->Expose(SET, obj_store, &ObjectStore<T>::Set);
   }
 
+  void OnSetObject(event_function_type const &f) 
+  {
+    on_set_ = f;
+    
+  }
+  
 
 private:
   T Get(ResourceID const &rid) 
@@ -31,6 +41,7 @@ private:
   }
   
   ObjectStore<T> *obj_store_;
+  event_function_type on_set_;
   
 };
 

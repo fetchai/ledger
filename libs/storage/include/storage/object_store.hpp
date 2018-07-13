@@ -54,12 +54,15 @@ public:
     store_.Close();
   }
   
-  void Get(ResourceID const &rid, type &object) 
+  bool Get(ResourceID const &rid, type &object) 
   {
     Document doc = store_.Get(rid);
-    // TODO: Handle errors
+    if(doc.failed) return false;
+
     serializer_type ser(doc.document);
     ser >> object;
+    return true;
+    
   }
 
   void Set(ResourceID const &rid, type const &object) 
