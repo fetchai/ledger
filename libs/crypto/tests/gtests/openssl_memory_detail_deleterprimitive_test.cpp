@@ -1,10 +1,6 @@
 #include "crypto/openssl_memory_detail.hpp"
 #include "gtest/gtest.h"
 
-#include <openssl/bn.h>
-#include <openssl/ec.h>
-
-
 namespace fetch {
 namespace crypto {
 namespace openssl {

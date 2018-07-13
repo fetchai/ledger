@@ -56,7 +56,9 @@ namespace memory {
                  , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical
                  , typename T_DeleterPrimitive = detail::DeleterPrimitive<typename std::remove_const<T>::type, P_DeleteStrategy>>
         struct OpenSSLDeleter {
+            using Type = T;
             using DeleterPrimitive = T_DeleterPrimitive;
+            static constexpr eDeleteStrategy deleteStrategy = P_DeleteStrategy;
 
             constexpr OpenSSLDeleter() noexcept = default;
 
