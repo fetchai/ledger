@@ -12,7 +12,7 @@ template <typename T>
 inline void Serialize(T &serializer, UnverifiedTransaction const &b)
 {
   serializer << uint16_t(b.VERSION);
-  serializer << 'V';  
+  serializer << ' ';  
   serializer << b.summary();
   serializer << b.data();
   serializer << b.signature();
@@ -61,7 +61,8 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
 {
   uint16_t version;
   serializer >> version; // TODO: (`HUT`) : set version
-
+  assert(version == b.VERSION);
+  
   char c;
   serializer >> c;
   assert( c == 'V' );  

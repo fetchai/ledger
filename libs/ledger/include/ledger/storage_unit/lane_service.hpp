@@ -73,11 +73,16 @@ public:
     tx_store_ = new transaction_store_type();    
     tx_store_->Load(prefix+"e.db", prefix+"f.db", true);
 
+    tx_sync_protocol_ = new tx_sync_protocol_type( TX_STORE_SYNC, register_, thread_pool_, tx_store_ );    
     tx_store_protocol_ = new transaction_store_protocol_type(tx_store_);
+    tx_store_protocol_->OnSetObject([this](fetch::chain::VerifiedTransaction const &tx) {
+        tx_sync_protocol_->AddToCache( tx );
+      });
+    
     this->Add(TX_STORE, tx_store_protocol_ );
 
     // TX Sync
-    tx_sync_protocol_ = new tx_sync_protocol_type( TX_STORE_SYNC, register_, thread_pool_, tx_store_ );
+
     this->Add(TX_STORE_SYNC, tx_sync_protocol_);    
     
        

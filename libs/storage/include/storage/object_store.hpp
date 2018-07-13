@@ -53,9 +53,16 @@ public:
   {
     store_.Close();
   }
-  
-  bool Get(ResourceID const &rid, type &object) 
+
+  void WithLock( std::function< void() > const &f) 
   {
+    std::lock_guard< mutex::Mutex > lock(mutex_);
+    f();
+  }
+
+  bool LocklessGet(ResourceID const &rid, type &object) 
+  {
+
     Document doc = store_.Get(rid);
     if(doc.failed) return false;
 
@@ -65,14 +72,14 @@ public:
     
   }
 
-  bool Has(ResourceID const &rid) 
+  bool LocklessHas(ResourceID const &rid) 
   {
     Document doc = store_.Get(rid);
     return !doc.failed;
   }
 
   
-  void Set(ResourceID const &rid, type const &object) 
+  void LocklessSet(ResourceID const &rid, type const &object) 
   {    
     serializer_type ser;
     ser << object;
@@ -80,8 +87,29 @@ public:
     store_.Set(rid, ser.data());
   }
   
-private:
+  
+  bool Get(ResourceID const &rid, type &object) 
+  {
+    std::lock_guard< mutex::Mutex > lock(mutex_);
+    return LocklessGet(rid, object);
+  }
 
+  bool Has(ResourceID const &rid) 
+  {
+    std::lock_guard< mutex::Mutex > lock(mutex_);    
+    return LocklessHas(rid);    
+  }
+
+  
+  void Set(ResourceID const &rid, type const &object) 
+  {
+    std::lock_guard< mutex::Mutex > lock(mutex_);     
+    return LocklessSet(rid, object);
+  }
+  
+private:
+  mutex::Mutex mutex_;
+  
   KeyByteArrayStore< S > store_;
   
 };

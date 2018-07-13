@@ -38,7 +38,7 @@ int main(int argc, char const **argv) {
   // Remote setup
   fetch::network::NetworkManager tm(8);
   std::string host = "localhost";
-  uint16_t port = 8080;
+  uint16_t port =  params.GetParam<uint16_t>("port", 8080);  
   
   ledger::LaneRemoteControl remote;
   std::vector< shared_service_type > services;
@@ -61,7 +61,7 @@ int main(int argc, char const **argv) {
   tm.Start();
 
   for(std::size_t i = 0 ; i < lane_count; ++i) {
-    client.AddLaneConnection< fetch::network::TCPClient >("localhost", uint16_t(8080 + i)) ;
+    client.AddLaneConnection< fetch::network::TCPClient >("localhost", uint16_t(port + i)) ;
   }
 
   
@@ -99,7 +99,16 @@ int main(int argc, char const **argv) {
 
     
       if(command.size() > 0) {
-        if(command[0] == "connect") {
+        if(command[0] == "connectall") {
+          if(command.size() == 3) {
+            for(std::size_t i=0; i< lane_count; ++i) {
+              remote.Connect(uint32_t(i), command[1], uint16_t(command[2].AsInt() + int(i)));
+            }
+            
+          } else {
+            std::cout << "usage: connectall [ip] [port]" << std::endl;
+          }          
+        } else if(command[0] == "connect") {
           if(command.size() == 4) {
             remote.Connect(uint32_t(command[1].AsInt()), command[2], uint16_t(command[3].AsInt()));
           } else {

@@ -33,6 +33,8 @@ int main(int argc, char const **argv)
   // Setting up
   fetch::network::NetworkManager tm(8);
   tm.Start();
+
+  
   StorageUnitBundledService service;
   service.Setup(dbdir, lane_count, port, tm);    
 

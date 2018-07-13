@@ -95,7 +95,7 @@ inline void Deserialize(T &serializer, std::vector<U> &vec) {
   // Reading the data
   vec.clear();
   vec.resize(size);
-
+    
   for (auto &a : vec) serializer >> a;
 }
 

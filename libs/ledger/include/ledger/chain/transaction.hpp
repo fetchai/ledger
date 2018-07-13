@@ -113,6 +113,22 @@ public:
   }
   
 
+  static VerifiedTransaction Create(UnverifiedTransaction &&trans)
+  {
+    UnverifiedTransaction x;
+    std::swap(x,trans);
+    return VerifiedTransaction::Create(x);
+  }
+  
+  
+  static VerifiedTransaction Create(UnverifiedTransaction &trans)
+  {
+    VerifiedTransaction ret;
+    ret.Finalise(trans);
+    return ret;    
+  }
+  
+
 
 protected:
   void Copy(VerifiedTransaction const &tx) 
@@ -121,6 +137,13 @@ protected:
   }
   
   bool Finalise(fetch::chain::MutableTransaction &base) 
+  {
+    this->Copy(base);
+    UpdateDigest();
+    return Verify();
+  }
+
+  bool Finalise(fetch::chain::UnverifiedTransaction &base) 
   {
     this->Copy(base);
     UpdateDigest();

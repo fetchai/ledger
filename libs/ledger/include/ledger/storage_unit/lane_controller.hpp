@@ -152,7 +152,7 @@ public:
     // Setting up details such that the rest of the lane what kind of
     // connection we are dealing with.
     auto details = register_.GetDetails(client->handle());
-
+    
     details->is_outgoing = true;
     details->is_peer = true;
     

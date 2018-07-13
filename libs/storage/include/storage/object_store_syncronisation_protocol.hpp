@@ -114,40 +114,61 @@ public:
     std::lock_guard< mutex::Mutex > lock( object_list_mutex_);
     incoming_objects_.reserve(uint64_t(max_cache_));
     
-    new_objects_.clear();    
+    new_objects_.clear();
+      
     for(auto &p : object_list_promises_) {
+      
       if(!running_) return;
       
       incoming_objects_.clear();
-      if(!p.Wait(100, false)) continue;
+      if(!p.Wait(100, false)) {
+        continue;
+      }
+      
       p.template As< std::vector< S > >( incoming_objects_ );
 
       // TODO: Update pointer
       
       if(!running_) return;
-//      for(auto &o: incoming_objects_ ) {
-//        new_objects_.push_back( T(o) );
-//      }
+
+      std::lock_guard< mutex::Mutex > lock(mutex_);
+
+        
+      store_->WithLock([this]() {
+          
+          for(auto &o: incoming_objects_ ) {
+            CachedObject obj;
+            obj.data = T::Create(o);        
+            ResourceID rid(obj.data.digest());
+            
+            if(store_->LocklessHas( rid  )) continue;        
+            store_->LocklessSet(  rid, obj.data );
+            cache_.push_back( obj );        
+            
+          }
+          
+        });
+
+      
     }
 
     object_list_promises_.clear();
     if(running_) {
-      thread_pool_->Post([this]() { this->UpdateCache(); } );
-    }
-    
-  }
-  
-  
-  void UpdateCache() 
-  {
-    if(!running_) return;
-//    TODO_FAIL("Yet to be implemented");
-    if(running_) {
-      thread_pool_->Post([this]() { this->IdleUntilPeers(); }, 100 ); // TODO: Make time parameter
+      thread_pool_->Post([this]() { this->IdleUntilPeers(); }, 100 ); // TODO: Make time parameter      
     }
     
   }
   /// @}
+
+
+  void AddToCache(T const & o) 
+  {
+    std::lock_guard< mutex::Mutex > lock(mutex_);
+    CachedObject obj;
+    obj.data = o;
+    cache_.push_back(obj);
+    
+  }
   
 private:
   protocol_handler_type protocol_;
@@ -163,13 +184,11 @@ private:
   std::vector< S > PullObjects(uint64_t const &from)
   {
     std::lock_guard< mutex::Mutex > lock(mutex_);
-    return std::vector< S > ();    
 
-    if(cache_.begin() == cache_.end()) {      
+    if(cache_.begin() == cache_.end()) {
       return std::vector< S > ();
     }
     
-
     uint64_t first = from - first_;    
     if(from < first_ ) {
       TODO("Cannot currently handle back-log");
@@ -179,21 +198,20 @@ private:
     if(first >= cache_.size()) return std::vector< S > ();
                                 
     uint64_t N = cache_.size() - first;
-
+    
     // Creating result
     std::vector<S> ret;    
-    ret.resize(N);
     
     for(uint64_t i=first; i < N; ++i) {
       ++cache_[i].passed_on;
-//      ret.push_back( T::Create( cache_[i].data ) );
+      ret.push_back(  cache_[i].data );
     }
     
     return ret;
 
   }
 
-  void PushObjects(std::vector< S > const& txs)
+  void PushObjects(std::vector< S > const& objs)
   {
     std::lock_guard< mutex::Mutex > lock(mutex_);
 
@@ -201,20 +219,18 @@ private:
     
   }
 
-
   struct CachedObject 
   {
     T data;
     int passed_on = 0;
   };  
-    
-  
  
   mutex::Mutex mutex_;  
   ObjectStore<T> *store_;
   
   std::deque< CachedObject > cache_;
 
+  
   uint64_t first_ = 0;
   uint64_t max_cache_ = 2000;  
 
