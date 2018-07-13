@@ -275,6 +275,19 @@ class LogWrapper {
     
   }
 
+    void Debug(const std::vector<std::string> &items) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if(this->log_ != nullptr) {
+      this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl());
+      for(auto &item : items)
+      {
+          this->log_->Append(item);
+      }
+      this->log_->CloseEntry(DefaultLogger::DEBUG);
+    }
+    
+  }
+
   void SetContext(shared_context_type ctx) {
     std::thread::id id = std::this_thread::get_id();    
     std::lock_guard<std::mutex> lock(mutex_);

@@ -3,7 +3,7 @@
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "network/message.hpp"
-#include "network/tcp/abstract_connection_register.hpp"
+#include "network/management/abstract_connection_register.hpp"
 
 #include <memory>
 #include<atomic>

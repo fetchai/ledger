@@ -13,7 +13,7 @@ PEERS = [
 
 class SwarmAgentNaive(object):
     def __init__(self):
-        self.swarm = Swarm(12, 9012, 3, 100, 1000)
+        self.swarm = Swarm(12, 9012, 10012, 3, 100, 1000)
 
         self.swarm.OnIdle(self.onIdle)
         self.swarm.OnPingFailed(self.onPingFailed)

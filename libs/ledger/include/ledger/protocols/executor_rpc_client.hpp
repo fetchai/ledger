@@ -15,17 +15,17 @@ class ExecutorRpcClient : public ExecutorInterface {
 public:
   using connection_type = network::TCPClient;
   using service_type = std::unique_ptr<service::ServiceClient>;
-  using thread_manager_type = service::ServiceClient::thread_manager_type;
+  using network_manager_type = service::ServiceClient::network_manager_type ;
 
   ExecutorRpcClient(byte_array::ConstByteArray const &host,
                     uint16_t const &port,
-                    thread_manager_type const &thread_manager) {
+                    network_manager_type const &network_manager) {
 
     // create the connection
-    connection_type connection{thread_manager};
+    connection_type connection{network_manager};
     service_.reset(new service::ServiceClient{
       connection,
-      thread_manager
+      network_manager
     });
 
     connection.Connect(host, port);

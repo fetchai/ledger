@@ -4,7 +4,7 @@
 #include "http/http_connection_manager.hpp"
 #include "http/module.hpp"
 #include "http/route.hpp"
-#include "network/details/thread_manager.hpp"
+#include "network/management/network_manager.hpp"
 
 #include <deque>
 #include <functional>
@@ -19,12 +19,10 @@ class HTTPServer : public AbstractHTTPServer {
  public:
   typedef uint64_t handle_type;  // TODO: Make global definition
 
-  typedef network::ThreadManager thread_manager_type;
-  typedef typename thread_manager_type::event_handle_type event_handle_type;
+  typedef network::NetworkManager network_manager_type;
   typedef asio::ip::tcp::tcp::socket                           socket_type;
   typedef asio::ip::tcp::tcp::acceptor                         acceptor_type;
   typedef HTTPConnectionManager                                manager_type;
-
 
   typedef std::function<void(HTTPRequest &)> request_middleware_type;
   typedef typename HTTPModule::view_type view_type;
@@ -38,24 +36,24 @@ class HTTPServer : public AbstractHTTPServer {
   };
 
   HTTPServer(uint16_t const &port,
-             thread_manager_type thread_manager)
+             network_manager_type network_manager)
       : eval_mutex_(__LINE__, __FILE__),
-        threadManager_(thread_manager),
+        networkManager_(network_manager),
         request_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
 
     std::shared_ptr<manager_type> manager              = manager_;
-    std::weak_ptr<socket_type>           &socRef       = socket_; // TODO: (`HUT`) : check this is valid
+    std::weak_ptr<socket_type>           &socRef       = socket_;
     std::weak_ptr<acceptor_type>         &accepRef     = acceptor_;
-    thread_manager_type                  &threadMan    = threadManager_;
+    network_manager_type                  &threadMan    = networkManager_;
 
-    threadManager_.Post([&socRef, &accepRef, manager, &threadMan, port]
+    networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port]
     {
       fetch::logger.Info("Starting HTTPServer");
 
       // TODO: (`HUT`) : fix this hack
-      thread_manager_type tm = threadMan;
+      network_manager_type tm = threadMan;
       auto soc = threadMan.CreateIO<socket_type>();
 
       auto accep = threadMan.CreateIO<acceptor_type>
@@ -71,13 +69,13 @@ class HTTPServer : public AbstractHTTPServer {
 
   }
 
-  ~HTTPServer() {
+  virtual ~HTTPServer() {
     LOG_STACK_TRACE_POINT;
 
     auto socketWeak = socket_;
     auto accepWeak  = acceptor_;
 
-    threadManager_.Post([socketWeak, accepWeak]
+    networkManager_.Post([socketWeak, accepWeak]
       {
         auto socket = socketWeak.lock();
         auto acceptor = accepWeak.lock();
@@ -175,16 +173,6 @@ class HTTPServer : public AbstractHTTPServer {
     }
   }
 
-  // TODO: (`HUT`) : refactor this out
-  template <typename F>
-  void Post(F &&f, int milliseconds) {
-    threadManager_.Post(std::move(f), milliseconds);
-  }
-  template <typename F>
-  void Post(F &&f) {
-    threadManager_.Post(std::move(f));
-  }
-  
  private:
   fetch::mutex::Mutex eval_mutex_;
 
@@ -192,7 +180,7 @@ class HTTPServer : public AbstractHTTPServer {
   std::vector<MountedView> views_;
   std::vector<response_middleware_type> post_view_middleware_;
 
-  thread_manager_type                    threadManager_;
+  network_manager_type                    networkManager_;
   std::deque<HTTPRequest>                requests_;
   fetch::mutex::Mutex                    request_mutex_;
   std::weak_ptr<acceptor_type>           acceptor_;

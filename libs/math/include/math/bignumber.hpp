@@ -4,9 +4,8 @@
 #include <cmath>
 #include <vector>
 #include "core/assert.hpp"
-#include "core/byte_array/basic_byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 namespace fetch {
 namespace math {
 /* Implements a subset of big number functionality.
@@ -15,12 +14,12 @@ namespace math {
  * functionalities that is handy when for instance computing
  * proof-of-work or other big uint manipulations.
  *
- * The implementation subclasses a <byte_array::BasicByteArray> such
+ * The implementation subclasses a <byte_array::ConstByteArray> such
  * one easily use this in combination with hashes etc.
  */
-class BigUnsigned : public byte_array::BasicByteArray {
+class BigUnsigned : public byte_array::ConstByteArray {
  public:
-  typedef byte_array::BasicByteArray super_type;
+  typedef byte_array::ConstByteArray super_type;
 
   BigUnsigned() {
     Resize(std::max(std::size_t(256 >> 3), sizeof(uint64_t)));
@@ -52,10 +51,6 @@ class BigUnsigned : public byte_array::BasicByteArray {
     return *this;
   }
 
-  BigUnsigned &operator=(byte_array::BasicByteArray const &v) {
-    super_type::operator=(v);
-    return *this;
-  }
 
   BigUnsigned &operator=(byte_array::ByteArray const &v) {
     super_type::operator=(v);

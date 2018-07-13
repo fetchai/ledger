@@ -1,4 +1,4 @@
-#include"network/details/thread_manager.hpp"
+#include"network/management/network_manager.hpp"
 #include"./network_benchmark_service.hpp"
 #include"./node_basic.hpp"
 #include"../tests/include/helper_functions.hpp"
@@ -10,7 +10,7 @@ using namespace fetch::serializers;
 int main(int argc, char **argv)
 {
 
-  fetch::network::ThreadManager tm(30);
+  fetch::network::NetworkManager tm(30);
 
   {
     int seed = 0;

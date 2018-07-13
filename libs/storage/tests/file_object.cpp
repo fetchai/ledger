@@ -1,6 +1,6 @@
 #include<iostream>
 #include<storage/file_object.hpp>
-#include<core/byte_array/referenced_byte_array.hpp>
+#include<core/byte_array/byte_array.hpp>
 #include<core/byte_array/encoders.hpp>
 #include<crypto/hash.hpp>
 #include<core/random/lfg.hpp>

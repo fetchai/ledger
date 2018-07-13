@@ -4,9 +4,9 @@
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "network/tcp/client_connection.hpp"
-#include "network/details/thread_manager.hpp"
+#include "network/management/network_manager.hpp"
 #include "network/tcp/client_connection.hpp"
-#include "network/tcp/connection_register.hpp"
+#include "network/management/connection_register.hpp"
 
 #include "network/fetch_asio.hpp"
 
@@ -27,24 +27,24 @@ namespace network {
 class TCPServer : public AbstractNetworkServer {
  public:
   typedef typename AbstractConnection::connection_handle_type connection_handle_type;
-  typedef ThreadManager thread_manager_type;
+  typedef NetworkManager network_manager_type;
 
   struct Request {
     connection_handle_type handle;
     message_type meesage;
   };
 
-  TCPServer(uint16_t const& port, thread_manager_type const& thread_manager)
-      : thread_manager_(thread_manager),
+  TCPServer(uint16_t const& port, network_manager_type const& network_manager)
+      : network_manager_(network_manager),
         port_{port},
         request_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
     manager_ = std::make_shared< ClientManager >(*this);
     
-    thread_manager_.Post([this]
+    network_manager_.Post([this]
     {
-      auto acceptor = thread_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
+      auto acceptor = network_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
         (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));    
       
       Accept(acceptor);
@@ -109,7 +109,7 @@ class TCPServer : public AbstractNetworkServer {
   }
   
  private:
-  thread_manager_type     thread_manager_;
+  network_manager_type     network_manager_;
   uint16_t                port_;
   std::deque<Request>     requests_;
   fetch::mutex::Mutex     request_mutex_;
@@ -117,7 +117,7 @@ class TCPServer : public AbstractNetworkServer {
   void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor) {
     LOG_STACK_TRACE_POINT;
 
-    auto strongSocket = thread_manager_.CreateIO<asio::ip::tcp::tcp::socket>();    
+    auto strongSocket = network_manager_.CreateIO<asio::ip::tcp::tcp::socket>();    
     std::weak_ptr< ClientManager >  man = manager_;
         
     auto cb = [this, man, acceptor, strongSocket](std::error_code ec) {

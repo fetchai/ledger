@@ -8,7 +8,7 @@ class Client : public TCPClient {
 public:
   Client(std::string const &host,
     std::string const &port,
-      ThreadManager tmanager) :
+      NetworkManager tmanager) :
     TCPClient(tmanager )
   {
     Connect(host, port);
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
       std::cerr << "Usage: client <host> <port>\n";
       return 1;
     }
-    ThreadManager tmanager;
+    NetworkManager tmanager;
     tmanager.Start();
 
     // Attempt to break the connection

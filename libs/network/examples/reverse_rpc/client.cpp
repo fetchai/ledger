@@ -1,7 +1,7 @@
 #define FETCH_DISABLE_LOGGING
 #include"service_consts.hpp"
 #include<iostream>
-#include"core/serializers/referenced_byte_array.hpp"
+#include"core/serializers/byte_array.hpp"
 #include"network/service/client.hpp"
 #include"core/logger.hpp"
 #include"core/commandline/parameter_parser.hpp"
@@ -60,7 +60,7 @@ int main(int argc, char const** argv)
   params.Parse(argc, argv);
 
   // Client setup
-  fetch::network::ThreadManager tm;
+  fetch::network::NetworkManager tm;  
   fetch::network::TCPClient connection(tm);
   connection.Connect( "localhost", 8080 );
   ServiceClient client( connection, tm);

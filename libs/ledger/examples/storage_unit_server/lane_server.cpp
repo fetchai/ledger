@@ -31,7 +31,7 @@ int main(int argc, char const **argv)
   std::cout << "Starting " << lane_count << " lanes." << std::endl << std::endl;
 
   // Setting up
-  fetch::network::ThreadManager tm(8);
+  fetch::network::NetworkManager tm(8);
   tm.Start();
   StorageUnitBundledService service;
   service.Setup(dbdir, lane_count, port, tm);    

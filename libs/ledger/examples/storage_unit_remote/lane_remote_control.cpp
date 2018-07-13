@@ -33,7 +33,7 @@ int main(int argc, char const **argv) {
     
   
   // Client setup
-  fetch::network::ThreadManager tm(8);
+  fetch::network::NetworkManager tm(8);
   std::string host = "localhost";
   uint16_t port = 8080;
   

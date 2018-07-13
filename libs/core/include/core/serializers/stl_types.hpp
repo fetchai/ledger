@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 #include "core/assert.hpp"
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
 namespace fetch {
 namespace serializers {
@@ -111,7 +111,7 @@ inline void Deserialize(T &serializer, std::pair<fir, sec> &pair) {
   sec second;
   serializer >> first;
   serializer >> second;
-  pair = make_pair(std::move(first), std::move(second));
+  pair = std::make_pair(std::move(first), std::move(second));
 }
 
 template <typename T, typename K, typename V, typename H>

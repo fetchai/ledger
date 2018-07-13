@@ -1,5 +1,15 @@
-
-node {
-    checkout scm
-    sh 'ci-image/scripts/jenkins-ci-docker-build-img.sh'
+pipeline {
+    agent {
+        docker {
+            image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+        }
+    }
+    stages {
+        stage('Test') {
+            steps {
+                sh './develop-image/cmake-make.sh CTEST_OUTPUT_ON_FAILURE=1 all test'
+            }
+        }
+    }
 }
+

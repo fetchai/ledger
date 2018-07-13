@@ -7,11 +7,11 @@
 class FetchService {
 public:
   FetchService(uint16_t port, std::string const&info) :
-    thread_manager_(8),
-    service_(port, thread_manager_) {
+    network_manager_(8),
+    service_(port, network_manager_) {
     
     aea_ =  new AEAProtocol(info);
-    node_ = new NodeToNodeProtocol( thread_manager_ );
+    node_ = new NodeToNodeProtocol( network_manager_ );
     
     aea_->set_node(node_);
     
@@ -34,16 +34,16 @@ public:
 
   void Start() 
   {
-    thread_manager_.Start();    
+    network_manager_.Start();    
   }
 
   void Stop() 
   {
-    thread_manager_.Stop();    
+    network_manager_.Stop();    
   }
   
 private:  
-  fetch::network::ThreadManager thread_manager_;
+  fetch::network::NetworkManager network_manager_;
   
   fetch::service::ServiceServer< fetch::network::TCPServer >  service_;  
   AEAProtocol *aea_;

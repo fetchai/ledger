@@ -1,7 +1,7 @@
 #ifndef LEDGER_STORAGE_UNIT_LANE_IDENTITY_HPP
 #define LEDGER_STORAGE_UNIT_LANE_IDENTITY_HPP
 #include"network/service/client.hpp"
-#include"network/tcp/connection_register.hpp"
+#include"network/management/connection_register.hpp"
 #include"network/service/client.hpp"
 #include"ledger/storage_unit/lane_connectivity_details.hpp"
 
@@ -15,7 +15,7 @@ class LaneIdentity
 public:
   using connectivity_details_type = LaneConnectivityDetails;  
   using client_register_type = fetch::network::ConnectionRegister< connectivity_details_type >;
-  using network_manager_type = fetch::network::ThreadManager;
+  using network_manager_type = fetch::network::NetworkManager;
   using mutex_type = fetch::mutex::Mutex;
   using connection_handle_type = client_register_type::connection_handle_type;
   using ping_type = uint32_t;

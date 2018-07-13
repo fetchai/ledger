@@ -18,10 +18,10 @@ public:
   using executor_factory_type = ExecutionManager::executor_factory_type;
 
   ExecutionManagerRpcService(uint16_t port,
-                             thread_manager_type const &thread_manager,
+                             network_manager_type const &network_manager,
                              std::size_t num_executors,
                              executor_factory_type const &factory)
-    : ServiceServer(port, thread_manager)
+    : ServiceServer(port, network_manager)
     , manager_(new ExecutionManager(num_executors, factory)) {
 
     this->Add(fetch::protocols::FetchProtocols::EXECUTION_MANAGER, &protocol_);

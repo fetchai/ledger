@@ -212,8 +212,8 @@ public:
   
 public:
   std::vector< Transaction > transactions_;
-  std::map< fetch::byte_array::BasicByteArray, Account > accounts_;
-  std::set< fetch::byte_array::BasicByteArray > users_;
+  std::map< fetch::byte_array::ConstByteArray, Account > accounts_;
+  std::set< fetch::byte_array::ConstByteArray > users_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
   fetch::mutex::Mutex mutex_;
 
@@ -226,7 +226,7 @@ int main(int argc, char const **argv)
   ParamsParser params;
   params.Parse(argc, argv);
 
-  fetch::network::ThreadManager tm(8);  
+  fetch::network::NetworkManager tm(8);  
   HTTPServer http_server(8080, tm);
   FakeOEF oef_http_interface;  
   

@@ -13,7 +13,7 @@
 #include"ledger/storage_unit/lane_connectivity_details.hpp"
 #include"ledger/chain/transaction.hpp"
 #include"ledger/chain/transaction_serialization.hpp"
-#include"network/tcp/connection_register.hpp"
+#include"network/management/connection_register.hpp"
 
 namespace fetch
 {
@@ -50,7 +50,7 @@ public:
   
   // TODO: Make config JSON
   LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &total_lanes,
-    uint16_t port, fetch::network::ThreadManager tm, bool start_sync = true)
+    uint16_t port, fetch::network::NetworkManager tm, bool start_sync = true)
     : super_type(port, tm) {
 
     thread_pool_ = network::MakeThreadPool(1);

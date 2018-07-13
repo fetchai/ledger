@@ -21,7 +21,7 @@ class ExecutorIntegrationTests : public ::testing::Test {
 protected:
   using underlying_client_type = fetch::ledger::ExecutorRpcClient;
   using underlying_service_type = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type = underlying_client_type::thread_manager_type;
+  using underlying_network_manager_type = underlying_client_type::network_manager_type;
   using underlying_storage_type = fetch::ledger::StorageUnitClient;
   using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
 

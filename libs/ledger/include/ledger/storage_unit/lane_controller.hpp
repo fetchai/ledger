@@ -1,7 +1,7 @@
 #ifndef LEDGER_STORAGE_UNIT_LANE_CONTROLLER_HPP
 #define LEDGER_STORAGE_UNIT_LANE_CONTROLLER_HPP
 #include"network/service/client.hpp"
-#include"network/tcp/connection_register.hpp"
+#include"network/management/connection_register.hpp"
 #include"network/service/client.hpp"
 #include"ledger/storage_unit/lane_identity.hpp"
 #include"ledger/storage_unit/lane_identity_protocol.hpp"
@@ -21,7 +21,7 @@ public:
   using shared_service_client_type = std::shared_ptr< service_client_type >;
   using weak_service_client_type = std::shared_ptr< service_client_type >;    
   using client_register_type = fetch::network::ConnectionRegister< connectivity_details_type >;
-  using network_manager_type = fetch::network::ThreadManager;
+  using network_manager_type = fetch::network::NetworkManager;
   using mutex_type = fetch::mutex::Mutex;
   using connection_handle_type = client_register_type::connection_handle_type;
   using protocol_handler_type = service::protocol_handler_type;  

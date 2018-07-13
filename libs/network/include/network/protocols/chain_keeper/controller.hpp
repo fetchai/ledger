@@ -1,8 +1,8 @@
 #ifndef PROTOCOLS_CHAIN_KEEPER_MANAGER_HPP
 #define PROTOCOLS_CHAIN_KEEPER_MANAGER_HPP
 #include "byte_array/const_byte_array.hpp"
-#include "byte_array/referenced_byte_array.hpp"
-#include "serializers/referenced_byte_array.hpp"
+#include "byte_array/byte_array.hpp"
+#include "serializers/byte_array.hpp"
 
 #include "chain/block.hpp"
 #include "chain/consensus/proof_of_work.hpp"
@@ -41,9 +41,9 @@ class ChainKeeperController : public fetch::service::HasPublicationFeed {
   typedef std::shared_ptr<client_type> client_shared_ptr_type;
 
   ChainKeeperController(uint64_t const &protocol,
-                        network::ThreadManager *thread_manager,
+                        network::NetworkManager *network_manager,
                         EntryPoint &details)
-      : thread_manager_(thread_manager),
+      : network_manager_(network_manager),
         details_(details),
         block_mutex_(__LINE__, __FILE__),
         chain_keeper_friends_mutex_(__LINE__, __FILE__),
@@ -116,7 +116,7 @@ class ChainKeeperController : public fetch::service::HasPublicationFeed {
     std::size_t i = 0;
     while ((!client) && (i < 3)) {  // TODO: make configurable
 
-      client = std::make_shared<client_type>(host, port, thread_manager_);
+      client = std::make_shared<client_type>(host, port, network_manager_);
       auto ping_promise =
           client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::PING);
       if (!ping_promise.Wait(500))  // TODO: Make configurable
@@ -263,7 +263,7 @@ class ChainKeeperController : public fetch::service::HasPublicationFeed {
   }
 
  private:
-  network::ThreadManager *thread_manager_;
+  network::NetworkManager *network_manager_;
   EntryPoint &details_;
   mutable fetch::mutex::Mutex details_mutex_;
 

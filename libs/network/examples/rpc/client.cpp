@@ -1,6 +1,6 @@
 #include"service_consts.hpp"
 #include<iostream>
-#include"core/serializers/referenced_byte_array.hpp"
+#include"core/serializers/byte_array.hpp"
 #include"network/service/client.hpp"
 #include"core/logger.hpp"
 using namespace fetch::service;
@@ -10,7 +10,7 @@ using namespace fetch::byte_array;
 int main() {
 
   // Client setup
-  fetch::network::ThreadManager tm(2);
+  fetch::network::NetworkManager tm(2);
 
   tm.Start();
   {
@@ -101,3 +101,27 @@ int main() {
 
 }
 
+int xmain() {
+
+
+  fetch::network::NetworkManager tm(1);
+  tm.Start(); // Started thread manager before client construction!
+
+  fetch::network::TCPClient connection(tm);
+  connection.Connect("localhost", 8080);
+
+  ServiceClient client(connection, tm);
+
+  auto promise = client.Call( MYPROTO,SLOWFUNCTION, 2, 7 );
+
+  if(!promise.Wait(500)){ // wait 500 ms for a response
+    std::cout << "no response from node: " << client.is_alive() <<  std::endl;
+    promise = client.Call( MYPROTO,SLOWFUNCTION, 2, 7 );
+  } else {
+    std::cout << "response from node!" << std::endl << std::endl;
+  }
+
+  tm.Stop();
+
+  return 0;
+}

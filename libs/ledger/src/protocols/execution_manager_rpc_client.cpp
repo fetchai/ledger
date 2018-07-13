@@ -9,12 +9,12 @@ namespace ledger {
 
 ExecutionManagerRpcClient::ExecutionManagerRpcClient(byte_array::ConstByteArray const &host,
                                                      uint16_t const &port,
-                                                     network::ThreadManager const &thread_manager)
+                                                     network::NetworkManager const &network_manager)
   
 {
-  network::TCPClient connection(thread_manager);
+  network::TCPClient connection(network_manager);
   connection.Connect(host, port);
-  service_.reset( new fetch::service::ServiceClient(connection, thread_manager ) );
+  service_.reset( new fetch::service::ServiceClient(connection, network_manager ) );
 }
 
 bool ExecutionManagerRpcClient::Execute(block_digest_type const &block_hash,

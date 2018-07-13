@@ -2,6 +2,7 @@
 #define NODE_DIRECTORY_HPP
 
 // This file holds and manages connections to other nodes
+// Not for long-term use
 
 #include "core/logger.hpp"
 #include "network/service/client.hpp"
@@ -9,10 +10,14 @@
 #include "ledger/chain/transaction.hpp"
 #include "./protocols/fetch_protocols.hpp"
 #include "./protocols/network_benchmark/commands.hpp"
+#include "./protocols/network_mine_test/commands.hpp"
 #include "./network_classes.hpp"
 #include "../tests/include/helper_functions.hpp"
 
+#include "core/byte_array/byte_array.hpp"
+
 #include <set>
+#include <utility>
 
 namespace fetch
 {
@@ -25,7 +30,7 @@ public:
 
   using clientType = service::ServiceClient;
 
-  NodeDirectory(network::ThreadManager tm) :
+  NodeDirectory(network::NetworkManager tm) :
   tm_{tm}
   {}
 
@@ -56,6 +61,56 @@ public:
 
       serviceClients_[endpoint] = client;
     }
+  }
+
+  // push headers to the rest of the network
+  template <typename T>
+  void PushBlock(T block)
+  {
+    LOG_STACK_TRACE_POINT;
+
+    for(auto &i : serviceClients_)
+    {
+      auto client = i.second;
+
+      if(!client->is_alive())
+      {
+        std::cerr << "Client has died (pushing)!\n\n" << std::endl;
+        fetch::logger.Error("Client has died in node direc");
+      }
+
+      client->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
+          protocols::NetworkMineTest::PUSH_NEW_HEADER, block);
+    }
+  }
+
+  template <typename H, typename T>
+  bool GetHeader(H hash, T &block)
+  {
+    LOG_STACK_TRACE_POINT;
+
+    for(auto &i : serviceClients_)
+    {
+      auto client = i.second;
+
+      if(!client->is_alive())
+      {
+        std::cerr << "Client has died (pulling)!\n\n" << std::endl;
+        fetch::logger.Error("Client has died in node direc");
+      }
+
+      std::pair<bool, T> result = client->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
+          protocols::NetworkMineTest::PROVIDE_HEADER, hash);
+
+      if(result.first)
+      {
+        result.second.UpdateDigest();
+        block = result.second;
+        return true;
+      }
+    }
+
+    return false;
   }
 
   // temporarily replicate invite functionality for easier debugging
@@ -152,7 +207,7 @@ public:
   }
 
 private:
-  fetch::network::ThreadManager            tm_;
+  fetch::network::NetworkManager            tm_;
   std::map<Endpoint, clientType *>         serviceClients_;
 };
 

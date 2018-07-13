@@ -4,7 +4,7 @@
 #include"math/distance/distance_matrix.hpp"
 #include"math/linalg/matrix.hpp"
 #include"python/fetch_pybind.hpp"
-#include"core/byte_array/referenced_byte_array.hpp"
+#include"core/byte_array/byte_array.hpp"
 
 namespace fetch
 {

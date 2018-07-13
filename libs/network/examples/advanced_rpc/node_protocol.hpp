@@ -8,8 +8,8 @@
 
 class NodeToNodeProtocol : public NodeToNodeFunctionality, public fetch::service::Protocol { 
 public:
-  NodeToNodeProtocol(fetch::network::ThreadManager thread_manager) :
-    NodeToNodeFunctionality(thread_manager),
+  NodeToNodeProtocol(fetch::network::NetworkManager network_manager) :
+    NodeToNodeFunctionality(network_manager),
     fetch::service::Protocol() {
 
     using namespace fetch::service;

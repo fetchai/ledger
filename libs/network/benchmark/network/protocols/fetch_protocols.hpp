@@ -6,17 +6,16 @@ namespace fetch
 namespace protocols
 {
 
-struct FetchProtocols 
+struct FetchProtocols
 {
-  
+
 enum
 {
-  NETWORK_BENCHMARK = 1
+  NETWORK_BENCHMARK = 1,
+  NETWORK_MINE_TEST = 2
 };
 
 };
-
-
 }
 }
 

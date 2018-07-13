@@ -2,7 +2,7 @@
 #define TRANSACTION_HELPER_FUNCTIONS_HPP
 
 #include<random>
-#include"core/byte_array/referenced_byte_array.hpp"
+#include"core/byte_array/byte_array.hpp"
 #include"ledger/chain/transaction.hpp"
 #include"ledger/chain/mutable_transaction.hpp"
 #include"ledger/chain/transaction_serialization.hpp"
@@ -19,9 +19,9 @@ uint64_t GetRandom()
   return dis(gen);
 }
 
-byte_array::BasicByteArray GetRandomByteArray()
+byte_array::ConstByteArray GetRandomByteArray()
 {
-  return byte_array::BasicByteArray(std::to_string(GetRandom()));
+  return {std::to_string(GetRandom())};
 }
 
 MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)

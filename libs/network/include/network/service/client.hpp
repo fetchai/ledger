@@ -1,7 +1,7 @@
 #ifndef SERVICE_SERVICE_CLIENT_HPP
 #define SERVICE_SERVICE_CLIENT_HPP
 
-#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/message_types.hpp"
@@ -27,14 +27,12 @@ class ServiceClient : public ServiceClientInterface,
                       public ServiceServerInterface {
  public:
 
-
-  //typedef T super_type;
-  typedef network::ThreadManager thread_manager_type;
+  using network_manager_type = fetch::network::NetworkManager;
 
   ServiceClient(std::shared_ptr< network::AbstractConnection > connection,
-    thread_manager_type thread_manager)
+                network_manager_type network_manager)
     : connection_(connection),
-      thread_manager_(thread_manager),
+        network_manager_(network_manager),
       message_mutex_(__LINE__, __FILE__) 
   {
     auto ptr = connection_.lock();
@@ -50,7 +48,7 @@ class ServiceClient : public ServiceClientInterface,
           }
           
           // Since this class isn't shared_from_this, try to ensure safety when destructing
-          thread_manager_.Post([this]()
+          network_manager_.Post([this]()
             {
               ProcessMessages();
             });
@@ -66,7 +64,7 @@ class ServiceClient : public ServiceClientInterface,
   }
 
   ServiceClient(network::TCPClient &connection,
-    thread_manager_type thread_manager)
+    network_manager_type thread_manager)
     : ServiceClient(connection.connection_pointer().lock(), thread_manager)
   { }
   
@@ -74,7 +72,7 @@ class ServiceClient : public ServiceClientInterface,
   ~ServiceClient()
   {
     LOG_STACK_TRACE_POINT;
-    auto ptr = connection_.lock();
+       auto ptr = connection_.lock();
     if(ptr) {
     
       // Disconnect callbacks      
@@ -186,7 +184,7 @@ class ServiceClient : public ServiceClientInterface,
     }
   }
 
-  thread_manager_type               thread_manager_;
+  network_manager_type               network_manager_;
   std::deque<network::message_type> messages_;
   mutable fetch::mutex::Mutex       message_mutex_;
 

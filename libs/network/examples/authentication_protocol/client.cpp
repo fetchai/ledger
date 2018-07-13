@@ -1,8 +1,8 @@
 #include<iostream>
-#include"core/serializers/referenced_byte_array.hpp"
+#include"core/serializers/byte_array.hpp"
 #include"network/service/client.hpp"
 #include"core/logger.hpp"
-#include"network/tcp/connection_register.hpp"
+#include"network/management/connection_register.hpp"
 #include"service_consts.hpp"
 #include"node_details.hpp"
 using namespace fetch::service;
@@ -10,7 +10,7 @@ using namespace fetch::byte_array;
 
 int main() {
   // Client setup
-  fetch::network::ThreadManager tm(2);
+  fetch::network::NetworkManager tm(2);
   typedef  fetch::network::TCPClient client_type;
   fetch::network::ConnectionRegister<fetch::NodeDetails> creg;
   

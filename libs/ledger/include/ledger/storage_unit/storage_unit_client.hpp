@@ -2,7 +2,7 @@
 #define LEDGER_STORAGE_UNIT_STORAGE_UNIT_CLIENT_HPP
 #include"core/logger.hpp"
 #include"network/service/client.hpp"
-#include"network/tcp/connection_register.hpp"
+#include"network/management/connection_register.hpp"
 #include"network/service/client.hpp"
 #include"ledger/storage_unit/lane_identity.hpp"
 #include"ledger/storage_unit/lane_identity_protocol.hpp"
@@ -34,7 +34,7 @@ public:
   typedef std::shared_ptr< service_client_type > shared_service_client_type;
   using client_register_type = fetch::network::ConnectionRegister< ClientDetails >;
   using connection_handle_type = client_register_type::connection_handle_type;
-  using network_manager_type = fetch::network::ThreadManager;
+  using network_manager_type = fetch::network::NetworkManager;
   using lane_type = LaneIdentity::lane_type;
 
   // TODO: (EJF) is move?

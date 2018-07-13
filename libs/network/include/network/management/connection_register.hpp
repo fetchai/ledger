@@ -1,6 +1,6 @@
 #ifndef NETWORK_CONNECTION_MANAGER_HPP
 #define NETWORK_CONNECTION_MANAGER_HPP
-#include "network/tcp/abstract_connection_register.hpp"
+#include "network/management/abstract_connection_register.hpp"
 #include "network/service/client.hpp"
 #include "core/mutex.hpp"
 
@@ -35,7 +35,7 @@ public:
   virtual ~ConnectionRegisterImpl() = default;
       
   template< typename T,  typename... Args >
-  shared_service_client_type CreateServiceClient(ThreadManager const &tm, Args &&...args) 
+  shared_service_client_type CreateServiceClient(NetworkManager const &tm, Args &&...args)
   {
 
     T connection(tm);
@@ -127,7 +127,7 @@ public:
   }
     
   template< typename T, typename... Args >
-  shared_service_client_type CreateServiceClient(ThreadManager const &tm, Args &&...args) 
+  shared_service_client_type CreateServiceClient(NetworkManager const &tm, Args &&...args)
   {
     return ptr_->template CreateServiceClient< T, Args... >(tm, std::forward<Args>( args )...  );
   }

@@ -13,7 +13,7 @@ using namespace fetch::byte_array;
 class SingleShardStateDBClient 
 {
 public:
-  SingleShardStateDBClient (std::string const &host, uint16_t const &port, fetch::network::ThreadManager &tm)
+  SingleShardStateDBClient (std::string const &host, uint16_t const &port, fetch::network::NetworkManager &tm)
   {
 
     fetch::network::TCPClient connection(tm);
@@ -82,7 +82,7 @@ int main() {
   fetch::logger.DisableLogger();
   
   // Client setup
-  fetch::network::ThreadManager tm(2);
+  fetch::network::NetworkManager tm(2);
   SingleShardStateDBClient client("localhost", 8080, tm);
 
   tm.Start();

@@ -75,7 +75,7 @@ int main(int argc, char const **argv) {
 
   std::cout << "Connecting to server " << host << " on " << port << std::endl;
 
-  fetch::network::ThreadManager tm;  
+  fetch::network::NetworkManager tm;  
   fetch::network::TCPClient connection(tm);
   connection.Connect(host, port);
   

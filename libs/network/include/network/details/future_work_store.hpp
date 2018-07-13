@@ -1,13 +1,9 @@
-#ifndef __FUTURE_WORK_STORE__
-#define __FUTURE_WORK_STORE__
+#ifndef FUTURE_WORK_STORE__
+#define FUTURE_WORK_STORE__
 
 #include <algorithm>
 #include <iostream>
 #include <string>
-using std::cout;
-using std::cerr;
-using std::endl;
-using std::string;
 
 namespace fetch {
 namespace network {
@@ -84,10 +80,10 @@ public:
   }
 
   template <typename F>
-  void Post(F &&f, int milliseconds)
+  void Post(F &&f, uint32_t milliseconds)
   {
     lock_type mlock(mutex_);
-    auto dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(5);
+    auto dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(milliseconds);
     workStore_.push_back(work_item_type(dueTime, f));
     std::push_heap(workStore_.begin(), workStore_.end(), sorter_);
   }

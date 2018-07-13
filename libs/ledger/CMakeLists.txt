@@ -25,6 +25,4 @@ target_link_libraries(fetch-ledger PUBLIC
 )
 
 add_test_target()
-
 add_subdirectory(examples)
-

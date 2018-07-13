@@ -19,7 +19,7 @@
 class ExecutionManagerRpcTests : public ::testing::TestWithParam<BlockConfig> {
 protected:
   using underlying_executor_type = FakeExecutor;
-  using network_manager_type = std::unique_ptr<fetch::network::ThreadManager>;
+  using network_manager_type = std::unique_ptr<fetch::network::NetworkManager>;
   using shared_executor_type = std::shared_ptr<underlying_executor_type>;
   using executor_list_type = std::vector<shared_executor_type>;
   using underlying_manager_type = fetch::ledger::ExecutionManager;
@@ -37,7 +37,7 @@ protected:
 
     executors_.clear();
 
-    network_manager_ = fetch::make_unique<fetch::network::ThreadManager>(NUM_NETWORK_THREADS);
+    network_manager_ = fetch::make_unique<fetch::network::NetworkManager>(NUM_NETWORK_THREADS);
     network_manager_->Start();
 
     // server

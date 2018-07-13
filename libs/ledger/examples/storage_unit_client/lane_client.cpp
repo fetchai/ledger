@@ -38,7 +38,7 @@ int main(int argc, char const **argv) {
   std::cout << "Connecting with " << lane_count << " lanes." << std::endl;
       
   // Client setup
-  fetch::network::ThreadManager tm(8);
+  fetch::network::NetworkManager tm(8);
   StorageUnitClient client(tm);
 
   tm.Start();

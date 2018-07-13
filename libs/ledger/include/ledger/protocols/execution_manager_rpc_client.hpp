@@ -15,7 +15,7 @@ public:
 
   // Construction / Destruction
   ExecutionManagerRpcClient(byte_array::ConstByteArray const &host, uint16_t const &port,
-                            network::ThreadManager const &thread_manager);
+                            network::NetworkManager const &network_manager);
   ~ExecutionManagerRpcClient() override = default;
 
   /// @name Execution Manager Interface

@@ -8,12 +8,12 @@
 
 #include "core/assert.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/error_codes.hpp"
 #include "network/service/feed_subscription_manager.hpp"
 #include "network/service/types.hpp"
-#include "network/tcp/abstract_connection.hpp"
+#include "network/management/abstract_connection.hpp"
 
 namespace fetch {
 namespace service {

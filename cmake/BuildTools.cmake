@@ -98,12 +98,12 @@ function(add_fetch_test name library file)
       target_link_libraries(${name} PRIVATE ${library} fetch-testing)
 
       add_test(${name} ${name} ${ARGV})
+      set_tests_properties(${name} PROPERTIES TIMEOUT 120)
 
     endif()
 
   endif(FETCH_ENABLE_TESTS)
 endfunction()
-
 
 function(add_fetch_gtest name library directory)
   if(FETCH_ENABLE_TESTS)
@@ -139,18 +139,13 @@ function(add_fetch_gtest name library directory)
 
       # define the test
       add_test(${name} ${name} ${ARGV})
+      set_tests_properties(${name} PROPERTIES TIMEOUT 120)
 
     endif()
 
   endif(FETCH_ENABLE_TESTS)
 endfunction()
 
-
-#function(add_fetch_dependency name dependency)
-#
-#  target_link_libraries(${name} PUBLIC ${dependency})
-#
-#endfunction(add_fetch_dependencies)
 
 macro(add_test_target)
   if (FETCH_ENABLE_TESTS)

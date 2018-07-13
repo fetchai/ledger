@@ -1,5 +1,5 @@
 #include <iostream>
-#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 
 #include "ledger/chain/transaction.hpp"
@@ -58,11 +58,11 @@ int main(int argc, char const **argv)
     {
       MutableTransaction      trans;
       Transaction             tx;
-      VerifiedTransaction::group_type val = fetch::byte_array::BasicByteArray("a");
+      VerifiedTransaction::group_type val = fetch::byte_array::ConstByteArray("a");
 
       trans.PushGroup(val);
 
-      EXPECT(trans.groups()[0] == fetch::byte_array::BasicByteArray("a"));
+      EXPECT(trans.groups()[0] == fetch::byte_array::ConstByteArray("a"));
 
       {
         VerifiedTransaction txTemp = VerifiedTransaction::Create(trans);
@@ -72,7 +72,7 @@ int main(int argc, char const **argv)
         arr >> tx;
       }
 
-      EXPECT(tx.groups()[0] == fetch::byte_array::BasicByteArray("a"));
+      EXPECT(tx.groups()[0] == fetch::byte_array::ConstByteArray("a"));
     };
 
     SECTION("Random transaction generation")

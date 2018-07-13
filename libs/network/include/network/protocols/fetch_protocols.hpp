@@ -8,7 +8,7 @@ struct FetchProtocols {
 
   enum {
     SWARM = 2,
-    PARCEL = 3,
+    MAIN_CHAIN = 3,
     EXECUTION_MANAGER = 4,
     EXECUTOR = 5,
     STATE_DATABASE = 6

@@ -14,8 +14,8 @@ class NodeToNodeFunctionality : public fetch::service::HasPublicationFeed {
 public:
   typedef fetch::service::ServiceClient client_type;
   
-  NodeToNodeFunctionality(fetch::network::ThreadManager thread_manager) :
-    thread_manager_(thread_manager)
+  NodeToNodeFunctionality(fetch::network::NetworkManager network_manager) :
+    network_manager_(network_manager)
   {  }
 
   void Tick() {
@@ -40,15 +40,15 @@ public:
 
     this->Publish(PeerToPeerFeed::CONNECTING, host, port);
 
-    fetch::network::TCPClient connection(thread_manager_);
+    fetch::network::TCPClient connection(network_manager_);
     connection.Connect(host,port);
     
-    connections_.push_back( std::make_shared< client_type >(connection, thread_manager_ ) );
+    connections_.push_back( std::make_shared< client_type >(connection, network_manager_ ) );
   }
 
 
 private:
-  fetch::network::ThreadManager thread_manager_;  
+  fetch::network::NetworkManager network_manager_;  
   std::vector< std::string > messages_;
   std::vector< std::shared_ptr< client_type> > connections_;  
 };

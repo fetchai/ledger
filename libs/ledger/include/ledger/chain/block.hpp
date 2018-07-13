@@ -1,9 +1,10 @@
 #ifndef CHAIN_BLOCK_HPP
 #define CHAIN_BLOCK_HPP
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-
+#include "core/byte_array/encoders.hpp"
+#include "crypto/fnv.hpp"
 #include <memory>
 
 namespace fetch {
@@ -14,33 +15,36 @@ struct BlockSlice {
   std::vector<TransactionSummary> transactions;
 };
 
-
 struct BlockBody {
   fetch::byte_array::ByteArray previous_hash;
   fetch::byte_array::ByteArray merkle_hash;
-  uint64_t block_number;
-  std::vector<TransactionSummary> transactions; // TODO: (`HUT`) : slice these
-                                                // TODO: (`HUT`) : proof
+  //fetch::byte_array::ByteArray state_hash;
+  uint64_t                     block_number{0};
+  uint64_t                     miner_number{0};
+  uint64_t                     nonce{0};
 };
 
 template <typename T>
 void Serialize(T &serializer, BlockBody const &body)
 {
-  serializer << body.previous_hash << body.merkle_hash << body.transactions;
+  serializer << body.previous_hash <<
+    body.merkle_hash << body.nonce << body.block_number << body.miner_number;
 }
 
 template <typename T>
 void Deserialize(T &serializer, BlockBody &body)
 {
-  serializer >> body.previous_hash >> body.merkle_hash >> body.transactions;
+  serializer >> body.previous_hash >>
+    body.merkle_hash >> body.nonce >> body.block_number >> body.miner_number;
 }
 
 template <typename P, typename H>
 class BasicBlock
 {
  public:
-  typedef BlockBody                        body_type;
-  typedef H                                hasher_type;
+  typedef BlockBody body_type;
+  typedef H         hasher_type;
+  typedef P         proof_type;
 
   body_type const &SetBody(body_type const &body) {
     body_ = body;
@@ -51,31 +55,102 @@ class BasicBlock
   void UpdateDigest() {
 
     serializers::ByteArrayBuffer buf;
-    buf << body_.previous_hash << body_.merkle_hash << body_.block_number;
+    buf << body_.previous_hash << body_.merkle_hash <<
+      body_.block_number << body_.nonce << body_.miner_number;
+
     hasher_type hash;
     hash.Reset();
     hash.Update(buf.data());
     hash.Final();
     hash_ = hash.digest();
+
+    proof_.SetHeader(hash_);
   }
 
-  body_type const &body() const { return body_; }
-  fetch::byte_array::ByteArray const &hash() const { return hash_; }
+    std::string summarise() const
+    {
+        char buffer[100];
 
+        char *p = buffer;
+
+        if (hash_.size()>0)
+        {
+            for(size_t i=0;i<16;i++)
+            {
+                sprintf(p, "%02x", hash_[i]);
+                p += 2;
+            }
+        }
+        else
+        {
+            *p++ = '?';
+        }
+
+        *p++ = '-';
+        *p++ = '>';
+
+        if (body_.block_number == 0)
+        {
+            p += sprintf(p, "genesis");
+        }
+        else
+        {
+            if (body_.previous_hash.size()>0)
+            {
+                for(size_t i=0;i<16;i++)
+                {
+                    sprintf(p, "%02x", body_.previous_hash[i]);
+                    p += 2;
+                }
+            }
+            else
+            {
+                *p++ = '?';
+                *p++ = '?';
+                *p++ = '?';
+            }
+        }
+
+        p += sprintf(p, " W=%d (%s)",
+                     int(total_weight_),
+                     is_loose_ ? "loose" : "attached"
+                     );
+
+        return std::string(buffer);
+    }
+
+  body_type const &body() const { return body_; }
+  body_type &body() { return body_; }
+  fetch::byte_array::ByteArray const &hash() const { return hash_; }
+  fetch::byte_array::ByteArray const &prev() const { return body_.previous_hash; }
+
+  proof_type const &proof() const { return proof_; }
+  proof_type &proof() { return proof_; }
 
   uint64_t &weight() { return weight_; }
   uint64_t &totalWeight() { return total_weight_; }
   bool &loose() { return is_loose_; }
   fetch::byte_array::ByteArray &root() { return root_; }
 
+    std::string hashString() const {
+        return std::string(ToHex(hash_));
+    }
+
+    std::string prevString() const {
+        return std::string(ToHex(body_.previous_hash));
+    }
+
  private:
   body_type                    body_;
   fetch::byte_array::ByteArray hash_;
+  proof_type                   proof_;
 
   // META data to help with block management
-  uint64_t weight_        = 1; // TODO: (`HUT`) : think about weighting
+  uint64_t weight_        = 1;
   uint64_t total_weight_  = 1;
   bool is_loose_        = false;
+
+  // root refers to the previous_hash of the bottom block of a chain
   fetch::byte_array::ByteArray root_;
 
   template <typename AT, typename AP, typename AH>
@@ -87,13 +162,13 @@ class BasicBlock
 
 template <typename T, typename P, typename H>
 inline void Serialize(T &serializer, BasicBlock<P, H> const &b) {
-  serializer << b.body_;
+  serializer << b.body_ << b.proof();
 }
 
 template <typename T, typename P, typename H>
 inline void Deserialize(T &serializer, BasicBlock<P, H> &b) {
   BlockBody body;
-  serializer >> body;
+  serializer >> body >> b.proof();
   b.SetBody(body);
 }
 }

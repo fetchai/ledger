@@ -49,10 +49,10 @@ def get_data2(context, mon):
         "nodes": [],
         "links": [],
     }
-    
+
     allnodenames = set([x for x in mon.world.keys()])
     extranodenames = set()
-    
+
     for s in mon.world.keys():
         for link in mon.world[s]["peers"]:
             t = link["peer"]
@@ -70,7 +70,7 @@ def get_data2(context, mon):
                 })
                 if t not in allnodenames:
                     extranodenames.add(t)
-            
+
     allnodenames = list(allnodenames)
     extranodenames = list(extranodenames)
 
@@ -89,8 +89,105 @@ def get_data2(context, mon):
                 "status": "dead",
             } for x in extranodenames
         ]),
+    print(data)
+    return data;
 
-    return data
+def get_chain_data2(context, mon):
+    r = []
+
+    if not mon.chain.keys():
+        return {
+            'nodes': []
+        }
+
+    chainident = max(mon.chain.keys())
+    blocks = mon.chain.get(chainident, {})
+    if not blocks:
+        return {
+            'nodes': []
+        }
+
+    allblocknames = list(blocks.keys())
+    blocknameToId = dict((name, index+1) for index,name in enumerate(allblocknames))
+    blocknameToId[""] = 0
+
+    for name in allblocknames:
+        b = blocks[name]
+
+        prev_name = b.get('prev', "")
+        prev_id = blocknameToId.get(prev_name, 0)
+        id = blocknameToId.get(name)
+
+        r.append({
+            'name': {
+                'v': str(id),
+                'f': """
+{}
+<div>
+<span>blk:</span>&nbsp;<span style="font-weight:bold">{}</span>
+<span>by:</span>&nbsp;<span style="font-weight:bold">{}</span>
+</div>
+<div>
+<span style="font-weight:bold">{} &mdash;</span>
+<span style="font-style:italic">{}</span>
+</div>
+                """.format(
+                    str(name)[0:16],
+                    b["num"],
+                    b["miner"],
+                    len(b["nodes"]),
+                    ",".join([ x[-1] for x in sorted(b["nodes"])])),
+            },
+            'manager': str(prev_id),
+            'tooltip': '',
+        })
+
+    if any([ node['manager'] == '0' for node in r ]):
+        r.append({
+            'name': {
+                'v': '0',
+                'f': 'detached',
+            },
+            'manager': None,
+            'tooltip': ''
+        })
+
+    return {
+        'nodes': r
+    }
+
+def get_chain_data(context, mon):
+    r = {
+        'nodes': [],
+        'links': []
+    }
+
+    allblocknames = list(mon.chain.keys())
+
+    for name in allblocknames:
+        b = mon.chain[name]
+        r['nodes'].append({
+            'id': str(b["id"]),
+            'group': 1,
+            'status': 1,
+        })
+
+    for name in allblocknames:
+        b = mon.chain[name]
+        prevHash = b.get("prev", "")
+        p = mon.chain.get(prevHash, None)
+
+        if p:
+            r['links'].append({
+                'source': str(b['id']),
+                'target': str(p['id']),
+                'value': len(b['nodes']),
+            })
+
+    print(r)
+    return r
+
+
 
 def get_slash():
     redirect("/static/monitor.html")
@@ -105,7 +202,7 @@ def main():
     #bottle.debug(True)
 
     context = {}
-    
+
     root = bottle.Bottle()
     root.route('/static/<filepath:path>', method='GET', callback=functools.partial(get_static))
     root.route('/data', method='GET', callback=functools.partial(get_data, context))
@@ -113,6 +210,8 @@ def main():
 
     with contextlib.closing(Monitoring()) as myMonitoring:
         root.route('/network', method='GET', callback=functools.partial(get_data2, context, myMonitoring))
+        root.route('/chain', method='GET', callback=functools.partial(get_chain_data, context, myMonitoring))
+        root.route('/chain2', method='GET', callback=functools.partial(get_chain_data2, context, myMonitoring))
         if g_ssl:
             from utils import SSLWSGIRefServer
             srv = SSLWSGIRefServer.SSLWSGIRefServer(host="0.0.0.0", port=g_port)

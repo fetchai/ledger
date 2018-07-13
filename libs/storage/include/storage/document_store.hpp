@@ -3,7 +3,7 @@
 #include <cassert>
 #include <fstream>
 #include <memory>
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "storage/file_object.hpp"
 #include "storage/key_value_index.hpp"
 #include "storage/resource_mapper.hpp"
