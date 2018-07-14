@@ -121,6 +121,16 @@ class ServiceClient : public ServiceClientInterface,
     }
     return false;
   }
+
+  uint16_t Type() const 
+  {
+    auto ptr = connection_.lock();
+    if(ptr) {
+      return ptr->Type();
+    }
+    return uint16_t(-1);
+  }
+  
   
  protected:
   bool DeliverRequest(network::message_type const& msg) override {

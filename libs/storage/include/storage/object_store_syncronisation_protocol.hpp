@@ -7,7 +7,7 @@
 #include"core/logger.hpp"
 
 #include<vector>
-#include<deque>
+#include<set>
 namespace fetch {
 namespace storage {
   
@@ -35,17 +35,8 @@ public:
     logger.Info("Exposing ", p, ":", PULL_OBJECTS);
     
     this->Expose(OBJECT_COUNT, this, &self_type::ObjectCount);
-    this->Expose(PULL_OBJECTS, this, &self_type::PullObjects);
+    this->ExposeWithClientArg(PULL_OBJECTS, this, &self_type::PullObjects);
 //    this->Expose(PULL_OLDER_OBJECTS, this, &self_type::PullOlderObjects);
-  }
-
-
-  void PushObject(S const &obj) 
-  {
-    std::lock_guard< mutex::Mutex > lock(mutex_);    
-    CachedObject c;
-    c.data = T( obj );
-    cache_.push_back( c );
   }
 
 
@@ -95,8 +86,7 @@ public:
           
           auto peer = p.second;
           auto ptr = peer.lock();
-          uint64_t from = 0; // TODO: Get variable
-          object_list_promises_.push_back( ptr->Call(protocol_, PULL_OBJECTS, from) );
+          object_list_promises_.push_back( ptr->Call(protocol_, PULL_OBJECTS) );
 
         }
       });
@@ -127,10 +117,7 @@ public:
       
       p.template As< std::vector< S > >( incoming_objects_ );
 
-      // TODO: Update pointer
-      
       if(!running_) return;
-
       std::lock_guard< mutex::Mutex > lock(mutex_);
 
         
@@ -143,22 +130,46 @@ public:
             
             if(store_->LocklessHas( rid  )) continue;        
             store_->LocklessSet(  rid, obj.data );
+
             cache_.push_back( obj );        
-            
           }
           
         });
-
-      
     }
 
     object_list_promises_.clear();
     if(running_) {
-      thread_pool_->Post([this]() { this->IdleUntilPeers(); }, 100 ); // TODO: Make time parameter      
+      thread_pool_->Post([this]() { this->TrimCache(); } ); 
     }
-    
   }
-  /// @}
+  
+  void TrimCache() 
+  {
+    std::lock_guard< mutex::Mutex > lock(mutex_);
+    std::size_t i = 0;
+    for(auto &c: cache_) {
+      c.UpdateLifetime();
+    }
+    std::sort(cache_.begin(), cache_.end());
+    
+    
+    while( (i < cache_.size()) &&
+      ( (cache_.size() > max_cache_ )  ||
+        (cache_.back().lifetime > max_cache_life_time_ ) ) ) {
+      auto back = cache_.back();
+//      std::cout << "DELETEING Object with " << back.lifetime << " ms lifetime" << std::endl;
+      cache_.pop_back();
+    }
+
+    
+    if(running_) {
+      // TODO: Make time parameter
+      thread_pool_->Post([this]() { this->IdleUntilPeers(); }, 5000 ); 
+    }
+  }
+  
+
+/// @}
 
 
   void AddToCache(T const & o) 
@@ -167,10 +178,10 @@ public:
     CachedObject obj;
     obj.data = o;
     cache_.push_back(obj);
-    
   }
   
 private:
+
   protocol_handler_type protocol_;
   register_type register_;
   thread_pool_type thread_pool_;
@@ -178,63 +189,78 @@ private:
   uint64_t ObjectCount() 
   {
     std::lock_guard< mutex::Mutex > lock(mutex_);    
-    return cache_.size() + uint64_t(first_);
+    return cache_.size() ; // TODO: Return store size
   }
 
-  std::vector< S > PullObjects(uint64_t const &from)
+  std::vector< S > PullObjects(uint64_t const &client_handle)
   {
+    
     std::lock_guard< mutex::Mutex > lock(mutex_);
 
+    /*
+    for(auto &c: cache_) {
+      std::cout << "--- " << byte_array::ToBase64( c.data.digest()) << std::endl;
+    }
+    */
+    
     if(cache_.begin() == cache_.end()) {
       return std::vector< S > ();
     }
     
-    uint64_t first = from - first_;    
-    if(from < first_ ) {
-      TODO("Cannot currently handle back-log");
-      first = 0;
-    }
-    
-    if(first >= cache_.size()) return std::vector< S > ();
-                                
-    uint64_t N = cache_.size() - first;
-    
     // Creating result
     std::vector<S> ret;    
     
-    for(uint64_t i=first; i < N; ++i) {
-      ++cache_[i].passed_on;
-      ret.push_back(  cache_[i].data );
+    for(auto &c: cache_) {
+      if(c.delivered_to.find(client_handle) == c.delivered_to.end()) {
+        c.delivered_to.insert( client_handle );
+        ret.push_back(  c.data );
+      }
+      
     }
+//    std::cout << "Sending " << ret.size() << std::endl;
     
     return ret;
 
   }
 
-  void PushObjects(std::vector< S > const& objs)
-  {
-    std::lock_guard< mutex::Mutex > lock(mutex_);
-
-    // TODO: Implement.
-    
-  }
-
   struct CachedObject 
   {
+    CachedObject() 
+    {
+      created = std::chrono::system_clock::now();
+    }
+
+    void UpdateLifetime() 
+    {
+      std::chrono::system_clock::time_point end =
+        std::chrono::system_clock::now();
+      lifetime = double(std::chrono::duration_cast<std::chrono::milliseconds>(
+          end - created)
+        .count());
+    }
+
+    bool operator<(CachedObject const&other) const
+    {
+      return lifetime < other.lifetime;
+    }
+        
     T data;
-    int passed_on = 0;
+    std::unordered_set< uint64_t > delivered_to;
+    std::chrono::system_clock::time_point created;
+    double lifetime = 0;
+    
+    
   };  
  
   mutex::Mutex mutex_;  
   ObjectStore<T> *store_;
   
-  std::deque< CachedObject > cache_;
+  std::vector< CachedObject > cache_;
 
-  
-  uint64_t first_ = 0;
+
   uint64_t max_cache_ = 2000;  
-
-
+  double  max_cache_life_time_ = 20000; // TODO: Make cache configurable
+  
   mutable mutex::Mutex object_list_mutex_;
   std::vector< service::Promise > object_list_promises_;
   std::vector< T > new_objects_;

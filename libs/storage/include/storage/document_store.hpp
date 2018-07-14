@@ -279,7 +279,7 @@ protected:
 private:  
   void UpdateDocumentFile(DocumentFileImplementation &doc)
   {
-    std::cout << "Flushing and closing" << std::endl;
+
     doc.Flush();
     key_index_.Set(doc.address(), doc.id(), doc.Hash());
     

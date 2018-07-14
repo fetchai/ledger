@@ -21,11 +21,12 @@ public:
   typedef service::ServiceClient service_client_type;
   typedef std::shared_ptr< service::ServiceClient > shared_service_client_type;
   typedef std::weak_ptr< service::ServiceClient > weak_service_client_type;  
-  
-  typedef G details_type;
-  
+  typedef G details_type;  
   struct  LockableDetails final : public details_type, public mutex::Mutex {  };
+  typedef std::unordered_map< connection_handle_type, std::shared_ptr< LockableDetails > >  details_map_type;
+  
 
+  
   ConnectionRegisterImpl() = default;
   ConnectionRegisterImpl(ConnectionRegisterImpl const &other) = delete;
   ConnectionRegisterImpl(ConnectionRegisterImpl &&other) = default;  
@@ -98,6 +99,18 @@ public:
     std::lock_guard< mutex::Mutex > lock( details_lock_ );
     return details_[i];
   }
+
+  void WithClientDetails(std::function< void(details_map_type const &) > fnc) const
+  {
+    std::lock_guard< mutex::Mutex > lock( details_lock_ );
+    fnc(details_);
+  }
+
+  void WithClientDetails(std::function< void(details_map_type &) > fnc) 
+  {
+    std::lock_guard< mutex::Mutex > lock( details_lock_ );
+    fnc(details_);
+  }
   
 private:
   mutable mutex::Mutex connections_lock_;
@@ -120,6 +133,7 @@ public:
   typedef std::shared_ptr< service::ServiceClient > shared_service_client_type;
   typedef std::weak_ptr< service::ServiceClient > weak_service_client_type;
   typedef AbstractConnectionRegister::service_map_type  service_map_type;
+  typedef typename ConnectionRegisterImpl<G>::details_map_type details_map_type;
   
   ConnectionRegister () 
   {
@@ -157,6 +171,18 @@ public:
   {
     ptr_->WithServices(f);
   }
+
+  void WithClientDetails(std::function< void(details_map_type const &) > fnc) const
+  {
+    ptr_->WithClientDetails(fnc);   
+  }
+
+  void WithClientDetails(std::function< void(details_map_type &) > fnc) 
+  {
+    ptr_->WithClientDetails(fnc);
+  }
+
+  
   uint64_t number_of_services() const 
   {
     return ptr_->number_of_services();
