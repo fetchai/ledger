@@ -41,7 +41,7 @@ public:
     MainChainNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore, uint32_t minerNumber, uint32_t target, uint32_t chainident) :
         nnCore_(std::move(networkNodeCore))
     {
-        chain_ = std::make_shared<fetch::chain::MainChain>();
+        chain_ = std::make_shared<fetch::chain::MainChain>(minerNumber);
         threadPool_ = fetch::network::MakeThreadPool(5);
         stopped_ = false;
         minerNumber_ = minerNumber;
@@ -63,8 +63,8 @@ public:
     http::HTTPResponse HttpGetMainchain(
         http::ViewParameters const &params, http::HTTPRequest const &req)
     {
-        auto chainArray = chain_ -> HeaviestChain(16);
-        size_t limit = std::min(chainArray.size(), size_t(16));
+        auto chainArray = chain_ -> HeaviestChain(999);
+        size_t limit = std::min(chainArray.size(), size_t(999));
 
         script::Variant blocks = script::Variant::Array(limit);
         std::size_t index = 0;
