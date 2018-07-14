@@ -5,6 +5,8 @@
 #include "test_block.hpp"
 #include "block_configs.hpp"
 
+#include "fake_storage_unit.hpp"
+
 #include <gmock/gmock.h>
 
 #include <iostream>
@@ -23,10 +25,12 @@ protected:
   using underlying_execution_manager_type = fetch::ledger::ExecutionManager;
   using executor_factory_type = underlying_execution_manager_type::executor_factory_type;
   using execution_manager_type = std::shared_ptr<underlying_execution_manager_type>;
+  using storage_type = std::shared_ptr<FakeStorageUnit>;
 
   void SetUp() override {
     auto const &config = GetParam();
 
+    storage_.reset(new FakeStorageUnit);
     executors_.clear();
 
     // create the manager
@@ -113,6 +117,7 @@ protected:
     return success;
   }
 
+  storage_type storage_;
   execution_manager_type manager_;
   executor_list_type executors_;
 };

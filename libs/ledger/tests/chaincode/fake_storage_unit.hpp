@@ -11,6 +11,7 @@ class FakeStorageUnit : public fetch::ledger::StorageUnitInterface {
 public:
   using transaction_store_type = std::unordered_map<fetch::byte_array::ConstByteArray,fetch::chain::Transaction, fetch::crypto::CallableFNV>;
   using state_store_type = std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray, fetch::crypto::CallableFNV>;
+  using state_archive_type = std::unordered_map<bookmark_type, state_store_type>;
   using lock_store_type = std::unordered_set<fetch::byte_array::ConstByteArray, fetch::crypto::CallableFNV>;
 
   document_type GetOrCreate(fetch::byte_array::ConstByteArray const &key) override {
@@ -90,11 +91,16 @@ public:
   }
 
   void Commit(bookmark_type const &bookmark) override {
-    TODO_FAIL("Not implemented");
+    state_archive_[bookmark] = state_;
   }
 
   void Revert(bookmark_type const &bookmark) override {
-    TODO_FAIL("Not implemented");
+    auto it = state_archive_.find(bookmark);
+    if (it != state_archive_.end()) {
+      state_ = it->second();
+    } else {
+      state_.clear();
+    }
   }
 
 private:
@@ -102,6 +108,7 @@ private:
   transaction_store_type transactions_;
   state_store_type state_;
   lock_store_type locks_;
+  state_archive_type state_archive_;
 };
 
 #endif //FETCH_FAKE_STORAGE_UNIT_HPP

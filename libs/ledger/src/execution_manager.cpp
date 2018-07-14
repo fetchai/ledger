@@ -21,8 +21,10 @@ namespace ledger {
  * @param num_executors The specified number of executors (and threads)
  */
 // std::make_shared<fetch::network::ThreadPool>(num_executors)
-ExecutionManager::ExecutionManager(std::size_t num_executors, executor_factory_type const &factory)
-  : idle_executors_(num_executors), thread_pool_(network::MakeThreadPool(num_executors)) {
+ExecutionManager::ExecutionManager(std::size_t num_executors, storage_unit_type storage, executor_factory_type const &factory)
+  : storage_(std::move(storage))
+  , idle_executors_(num_executors)
+  , thread_pool_(network::MakeThreadPool(num_executors)) {
 
   // setup the executor pool
   {
