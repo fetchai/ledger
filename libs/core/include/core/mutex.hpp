@@ -50,6 +50,7 @@ class DebugMutex : public AbstractMutex {
 
       });
     }
+    
     ~MutexTimeout() {
       running_ = false;
       thread_.join();
