@@ -9,18 +9,46 @@ namespace fetch
 namespace p2p
 {
 
-struct EntryPoint : public std::enable_shared_from_this< EntryPoint >
+struct EntryPoint 
 {
   mutable mutex::Mutex lock;
 
+  EntryPoint() 
+  {
+    port = 0;
+    lane_id = uint32_t(-1);
+    is_lane = false;
+    is_mainchain = false;
+  }
+  
+  EntryPoint(EntryPoint const&other) 
+  {
+    host = other.host.Copy();
+    port = other.port;
+    lane_id = uint32_t(other.lane_id);
+    is_lane = bool(other.is_lane);
+    is_mainchain = bool(other.is_mainchain);
+  }
+
+  EntryPoint& operator=(EntryPoint const&other) 
+  {
+    host = other.host.Copy();
+    port = other.port;
+    lane_id = uint32_t(other.lane_id);
+    is_lane = bool(other.is_lane);
+    is_mainchain = bool(other.is_mainchain);
+    return *this;
+  }
+  
+  
   /// Serializable fields
   /// @{
   byte_array::ConstByteArray host;
-  uint16_t port;
+  uint16_t port = 0;
 
   byte_array::ConstByteArray public_key;
 
-  std::atomic< uint64_t > lane_id;  
+  std::atomic< uint32_t > lane_id;  
   /// @}
 
   /// Meta data for keeping track of things
@@ -37,7 +65,7 @@ T& Serialize(T& serializer, EntryPoint const& data) {
   serializer << data.host;
   serializer << data.port;
   serializer << data.public_key;
-  serializer << uint64_t( data.lane_id);
+  serializer << uint32_t( data.lane_id);
 
   return serializer;
 }
@@ -47,7 +75,7 @@ T& Deserialize(T& serializer, EntryPoint& data) {
   serializer >> data.host;
   serializer >> data.port;
   serializer >> data.public_key;
-  uint64_t lane;
+  uint32_t lane;
   
   serializer >> lane;
   data.lane_id = lane;
@@ -61,6 +89,18 @@ struct PeerDetails
   PeerDetails() 
   {
     karma = 0;
+    is_authenticated = false;
+  }
+
+  PeerDetails(PeerDetails const & other)  
+  {
+    public_key = other.public_key.Copy();
+    entry_points = other.entry_points;
+
+    // TODO: consider whether to reset these fields 
+    nonce = other.nonce;
+    karma = double(other.karma);
+    is_authenticated = bool(other.is_authenticated);
   }
   
   /// Serializable

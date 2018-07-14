@@ -65,12 +65,28 @@ int main(int argc, char const **argv)
       
       if(command.size() > 0) {
         if(command[0] == "connect") {
-          if(command.size() != 2) {
+          if(command.size() != 3) {
             std::cout << "usage: connect [host] [port]" << std::endl;
             continue;
           }
           service.Connect(command[1], uint16_t(command[2].AsInt()));
         }
+
+        if(command[0] == "addl") {
+          if(command.size() != 4) {
+            std::cout << "usage: addl [lane] [host] [port]" << std::endl;
+            continue;
+          }
+          service.AddLane(uint32_t(command[1].AsInt()), command[2], uint16_t(command[3].AsInt()));
+        }
+
+        if(command[0] == "addmc") {
+          if(command.size() != 3) {
+            std::cout << "usage: addmc [host] [port]" << std::endl;
+            continue;
+          }
+          service.AddMainChain( command[1], uint16_t(command[2].AsInt()));
+        }            
       }
       
     } catch(serializers::SerializableException &e ) {

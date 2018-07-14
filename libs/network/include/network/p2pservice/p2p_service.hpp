@@ -4,6 +4,9 @@
 #include"network/management/connection_register.hpp"
 #include"network/p2pservice/p2p_peer_details.hpp"
 #include"network/details/thread_pool.hpp"
+
+#include"network/p2pservice/p2p_identity.hpp"
+#include"network/p2pservice/p2p_identity_protocol.hpp"
 namespace fetch
 {
 namespace p2p
@@ -37,6 +40,24 @@ public:
   {
     thread_pool_ = network::MakeThreadPool(1);
 
+
+    // Listening for new connections
+    this->SetConnectionRegister(register_);
+    register_.OnClientEnter([](connection_handle_type const&i) {
+        std::cout << "New connection " << i << std::endl;
+      });
+
+    register_.OnClientLeave([](connection_handle_type const&i) {
+        std::cout << "Peer left " << i << std::endl;
+      });
+
+    // Identity
+    identity_ = new P2PIdentity(register_, tm);
+    my_details_ = identity_->my_details();
+    identity_protocol_ = new P2PIdentityProtocol(identity_);    
+    this->Add(IDENTITY, identity_protocol_);
+
+    // TODO: Add pk etc.
     
   }
 
@@ -44,6 +65,32 @@ public:
   {
     shared_service_client_type client = register_.CreateServiceClient<client_type >( manager_, host, port);
 
+    std::size_t n = 0;    
+    while((n < 10) && (!client->is_alive())) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(2));
+      ++n;
+    }
+
+    if(n >= 10 ) {
+      fetch::logger.Error("Connection never came to live in P2P module");
+      // TODO: throw error?
+      client.reset();
+      return;            
+    }
+
+    { // Exchanging identities including node setup
+      std::lock_guard< mutex::Mutex > lock(my_details_->mutex);      
+      auto p = client->Call(IDENTITY, P2PIdentityProtocol::HELLO, my_details_->details);
+      PeerDetails details = p.As< PeerDetails >();
+
+      std::cout << "Got details: " << std::endl;
+      for(auto &e: details.entry_points) {
+        std::cout << " - " << e.host << " " << e.port << std::endl;
+      }
+      
+    }
+    
+    
     {
       std::lock_guard< mutex_type > lock_(peers_mutex_);
       peers_[client->handle()] = client;
@@ -51,6 +98,44 @@ public:
     
   }
 
+
+  /// Methods to add node components
+  /// @{
+  void AddLane(uint32_t const &lane, byte_array::ConstByteArray const &host, uint16_t const &port) 
+  {
+    // TODO: connect
+    
+    {      
+      std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
+      EntryPoint lane_details;
+      lane_details.host = host;
+      lane_details.port = port;
+      //     lane_details.public_key = "todo";
+      lane_details.lane_id = lane;
+      lane_details.is_lane = true;
+      my_details_->details.entry_points.push_back( lane_details );
+    }
+    
+
+  }
+
+  void AddMainChain(byte_array::ConstByteArray const &host, uint16_t const &port)
+  {
+
+    // TODO: connect
+    {      
+      std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
+      EntryPoint lane_details;
+      lane_details.host = host;
+      lane_details.port = port;
+      //     lane_details.public_key = "todo";
+      lane_details.is_mainchain = true;
+      my_details_->details.entry_points.push_back( lane_details );
+    }
+    
+  }  
+  /// @}
+  
 protected:
   /// Client setup pipeline
   /// @{
@@ -88,6 +173,10 @@ private:
   client_register_type register_;
   thread_pool_type thread_pool_;
 
+  P2PIdentity* identity_;
+  P2PIdentityProtocol* identity_protocol_;
+  NodeDetails my_details_;
+  
   mutex::Mutex peers_mutex_;    
   std::unordered_map< connection_handle_type, shared_service_client_type > peers_;  
 };
