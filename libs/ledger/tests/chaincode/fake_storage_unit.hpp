@@ -97,7 +97,7 @@ public:
   void Revert(bookmark_type const &bookmark) override {
     auto it = state_archive_.find(bookmark);
     if (it != state_archive_.end()) {
-      state_ = it->second();
+      state_ = it->second;
     } else {
       state_.clear();
     }

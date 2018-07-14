@@ -34,7 +34,7 @@ protected:
     executors_.clear();
 
     // create the manager
-    manager_ = std::make_shared<underlying_execution_manager_type>(config.executors, [this]() {
+    manager_ = std::make_shared<underlying_execution_manager_type>(config.executors, storage_, [this]() {
       return CreateExecutor();
     });
   }
