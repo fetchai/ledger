@@ -1,6 +1,7 @@
 #ifndef FETCH_EXECUTION_MANAGER_HPP
 #define FETCH_EXECUTION_MANAGER_HPP
 
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "network/details/thread_pool.hpp"
@@ -75,9 +76,10 @@ public:
   using flag_type = std::atomic<bool>;
   using thread_type = std::unique_ptr<std::thread>;
   using executor_factory_type = std::function<shared_executor_type()>;
+  using storage_unit_type = std::shared_ptr<StorageUnitInterface>;
 
   // Construction / Destruction
-  explicit ExecutionManager(std::size_t num_executors, executor_factory_type const &factory);
+  explicit ExecutionManager(std::size_t num_executors, storage_unit_type storage, executor_factory_type const &factory);
 
   /// @name Execution Manager Interface
   /// @{
@@ -109,6 +111,7 @@ private:
   flag_type active_{false};
   flag_type monitor_ready_{false};
 
+  storage_unit_type storage_;
   execution_plan_type execution_plan_;
   mutex_type execution_plan_lock_;
   block_digest_type last_block_hash_;

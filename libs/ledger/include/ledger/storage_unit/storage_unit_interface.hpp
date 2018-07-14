@@ -1,6 +1,7 @@
 #ifndef LEDGER_STORAGE_UNIT_INTERFACE_HPP
 #define LEDGER_STORAGE_UNIT_INTERFACE_HPP
 
+#include "core/byte_array/byte_array.hpp"
 #include "storage/document.hpp"
 #include "ledger/chain/transaction.hpp"
 

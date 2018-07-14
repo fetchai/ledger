@@ -11,6 +11,7 @@ namespace fetch
 namespace swarm
 {
 
+// TODO: (EJF) We should update this class to use the new C++11 <random> library
 class SwarmRandom
 {
 public:
@@ -19,11 +20,10 @@ public:
   SwarmRandom operator=(SwarmRandom &rhs)  = delete;
   SwarmRandom operator=(SwarmRandom &&rhs) = delete;
 
-  virtual ~SwarmRandom()
-  {
-  }
+  SwarmRandom() = default;
+  ~SwarmRandom() = default;
 
-  explicit SwarmRandom(int index)
+  explicit SwarmRandom(uint32_t index)
   {
     auto seed = time(NULL) * index * index;
     srand(uint(seed));

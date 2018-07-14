@@ -5,6 +5,7 @@
 #include "mock_executor.hpp"
 #include "test_block.hpp"
 #include "block_configs.hpp"
+#include "fake_storage_unit.hpp"
 
 #include <gmock/gmock.h>
 
@@ -28,6 +29,7 @@ protected:
   using underlying_service_type = fetch::ledger::ExecutionManagerRpcService;
   using execution_manager_client_type = std::unique_ptr<underlying_client_type>;
   using execution_manager_service_type = std::unique_ptr<underlying_service_type>;
+  using storage_type = std::shared_ptr<FakeStorageUnit>;
 
   void SetUp() override {
     static const uint16_t PORT = 9009;
@@ -35,13 +37,15 @@ protected:
 
     auto const &config = GetParam();
 
+    storage_.reset(new FakeStorageUnit);
+
     executors_.clear();
 
     network_manager_ = fetch::make_unique<fetch::network::NetworkManager>(NUM_NETWORK_THREADS);
     network_manager_->Start();
 
     // server
-    service_ = fetch::make_unique<underlying_service_type>(PORT, *network_manager_, config.executors, [this]() {
+    service_ = fetch::make_unique<underlying_service_type>(PORT, *network_manager_, config.executors, storage_, [this]() {
       return CreateExecutor();
     });
 
@@ -146,6 +150,7 @@ protected:
   execution_manager_client_type manager_;
   execution_manager_service_type service_;
   executor_list_type executors_;
+  storage_type storage_;
 };
 
 

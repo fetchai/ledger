@@ -13,13 +13,8 @@ namespace swarm
 class SwarmAgentApi
 {
 public:
-  SwarmAgentApi()
-  {
-  }
-
-  virtual ~SwarmAgentApi()
-  {
-  }
+  SwarmAgentApi() = default;
+  virtual ~SwarmAgentApi() = default;
 
   virtual void OnIdle                    (std::function<void ()> cb) = 0;
   virtual void OnPeerless                (std::function<void ()> cb) = 0;
