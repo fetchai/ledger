@@ -7,6 +7,8 @@
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/block.hpp"
 #include "crypto/fnv.hpp"
+#include "storage/object_store.hpp"
+#include "storage/resource_mapper.hpp"
 #include<map>
 #include<set>
 
@@ -53,7 +55,8 @@ class MainChain
   typedef BasicBlock<proof_type, fetch::crypto::SHA256> block_type;
   typedef fetch::byte_array::ByteArray                  block_hash;
 
-  MainChain(block_type &genesis)
+  MainChain(block_type &genesis, uint32_t minerNumber = 98) :
+    minerNumber_{minerNumber}
   {
     genesis.loose()             = false;
     blockChain_[genesis.hash()] = genesis;
@@ -63,10 +66,14 @@ class MainChain
     tip->loose            = false;
     tips_[genesis.hash()] = tip;
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
+
+    RecoverFromFile();
+    constructing_ = false;
   }
 
   // Default hard code genesis
-  MainChain()
+  MainChain(uint32_t minerNumber = 99) :
+    minerNumber_{minerNumber}
   {
     block_type genesis;
     genesis.UpdateDigest();
@@ -81,7 +88,11 @@ class MainChain
     tip->loose            = false;
     tips_[genesis.hash()] = tip;
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
+
+    RecoverFromFile();
+    constructing_ = false;
   }
+
 
   MainChain(MainChain const &rhs)            = delete;
   MainChain(MainChain &&rhs)                 = delete;
@@ -95,17 +106,18 @@ class MainChain
     // First check if block already exists
     if(blockChain_.find(block.hash()) != blockChain_.end())
     {
-        fetch::logger.Warn("Mainchain: Trying to add already seen block:", block.summarise());
+      fetch::logger.Warn("Mainchain: Trying to add already seen block:", block.summarise());
       return false;
     }
     else
     {
-        fetch::logger.Info("Mainchain: Add newly found block:", block.summarise());
+      fetch::logger.Info("Mainchain: Add newly found block:", block.summarise());
     }
 
     // Check whether blocks prev hash refers to a valid tip (common case)
     std::shared_ptr<Tip> tip = std::make_shared<Tip>();
     auto tipRef = tips_.find(block.body().previous_hash);
+    bool heaviestAdvanced = false;
 
     if(tipRef != tips_.end())
     {
@@ -131,9 +143,12 @@ class MainChain
       if(tip->loose == false && tip->total_weight > heaviest_.first)
       {
         fetch::logger.Info("Mainchain: Updating heaviest with tip");
+
         bool tipWasHeaviest = (heaviest_.second == block.body().previous_hash);
         heaviest_.first = tip->total_weight;
         heaviest_.second = block.hash();
+
+        heaviestAdvanced = true;
 
         if(tipWasHeaviest)
         {
@@ -149,6 +164,7 @@ class MainChain
     {
       // We are not building on a tip, create a new tip
       fetch::logger.Info("Mainchain: Creating new tip");
+
       auto blockRef = blockChain_.find(block.body().previous_hash);
       tip = std::shared_ptr<Tip>(new Tip);
 
@@ -167,8 +183,10 @@ class MainChain
         if(tip->loose == false && tip->total_weight > heaviest_.first)
         {
           fetch::logger.Info("Mainchain: creating new tip that is now heaviest! (new fork)");
+
           heaviest_.first = tip->total_weight;
           heaviest_.second = block.hash();
+          heaviestAdvanced = true;
           onForkSwitch();
         }
       }
@@ -190,9 +208,11 @@ class MainChain
     if(it != danglingRoot_.end())
     {
       fetch::logger.Info("Mainchain: This block completes a dangling root!");
+
       // Don't want to create a new tip if we are setting a root
       tip.reset();
       std::set<block_hash> &waitingTips = (*it).second;
+
       fetch::logger.Info("Mainchain: Number of dangling tips: ", waitingTips.size());
 
       // We have seen that people are looking for this block. Update them.
@@ -232,9 +252,12 @@ class MainChain
         if (!updatedTip->loose && updatedTip->total_weight > heaviest_.first)
         {
             fetch::logger.Info("Mainchain: Updating heaviest with tip");
+
             bool tipWasHeaviest = (heaviest_.second == block.body().previous_hash);
-            heaviest_.first = updatedTip->total_weight;
-            heaviest_.second = block.hash();
+            heaviest_.first  = updatedTip->total_weight;
+            heaviest_.second = tipHash;
+
+            heaviestAdvanced = true;
 
             if(tipWasHeaviest)
             {
@@ -263,13 +286,20 @@ class MainChain
     }
     blockChain_[block.hash()] = block;
 
+    if(heaviestAdvanced)
+    {
+      WriteToFile();
+    }
+
     return true;
   }
 
   block_type const &HeaviestBlock() const
   {
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-    return blockChain_.at(heaviest_.second);
+    auto const &block = blockChain_.at(heaviest_.second);
+
+    return block;
   }
 
   uint64_t weight() const
@@ -459,12 +489,87 @@ class MainChain
   {
   }
 
+  inline bool GetPrev(block_type &block)
+  {
+    auto it = blockChain_.find(block.body().previous_hash);
+
+    if(it == blockChain_.end())
+    {
+      return false;
+    }
+
+    block = (*it).second;
+    return true;
+  }
+
+  void WriteToFile()
+  {
+    if(constructing_) return;
+
+    // Add confirmed blocks to file
+    block_type block = blockChain_.at(heaviest_.second);
+    bool failed = false;
+    auto blockNum = block.body().block_number;
+
+    for (std::size_t i = 0; i < blockConfirmation_; ++i)
+    {
+      if(!GetPrev(block))
+      {
+        failed = true;
+        break;
+      }
+    }
+
+    if(!failed)
+    {
+      blockStore_.Set(storage::ResourceID("head"), block);
+      blockStore_.Set(storage::ResourceID(block.hash()), block);
+    }
+
+    // Walk down the file to check we have an unbroken chain
+    while(GetPrev(block) && !blockStore_.Has(storage::ResourceID(block.hash())))
+    {
+      blockStore_.Set(storage::ResourceID(block.hash()), block);
+    }
+
+  }
+
 private:
+  // Long term storage and backup
+  fetch::storage::ObjectStore<block_type>              blockStore_;
+  const uint32_t                                       blockConfirmation_ = 10;
+  const uint32_t                                       minerNumber_;
+  bool                                                 constructing_ = true;
+
   std::unordered_map<block_hash, block_type>           blockChain_;   // all blocks are here
   std::unordered_map<block_hash, std::shared_ptr<Tip>> tips_;         // Keep track of the tips
   std::unordered_map<block_hash, std::set<block_hash>> danglingRoot_; // Waiting (loose) tips
   std::pair<uint64_t, block_hash>                      heaviest_;     // Heaviest block/tip
   mutable fetch::mutex::Mutex                          mutex_;
+
+  void RecoverFromFile()
+  {
+    std::ostringstream fileMain;
+    std::ostringstream fileIndex;
+
+    fileMain << "chain_" << minerNumber_ << ".db";
+    fileIndex << "chainIndex_" << minerNumber_ << ".db";
+
+    blockStore_.Load(fileMain.str(), fileIndex.str());
+
+    block_type block;
+    if(blockStore_.Get(storage::ResourceID("head"), block))
+    {
+      block.UpdateDigest();
+      AddBlock(block);
+    }
+
+    while(blockStore_.Get(storage::ResourceID(block.body().previous_hash), block))
+    {
+      block.UpdateDigest();
+      AddBlock(block);
+    }
+  }
 };
 
 }

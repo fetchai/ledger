@@ -15,7 +15,7 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-ledger)
-target_link_libraries(fetch-ledger INTERFACE fetch-http fetch-network fetch-crypto fetch-math)
+target_link_libraries(fetch-ledger INTERFACE fetch-http fetch-network fetch-crypto fetch-math fetch-storage)
 
 #-------------------------------------------------------------------------------
 # Test Targets
