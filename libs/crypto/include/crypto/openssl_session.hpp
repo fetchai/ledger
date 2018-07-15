@@ -2,7 +2,7 @@
 #define CRYPTO_OPENSSL_CONTEXT_HPP
 
 #include "crypto/openssl_context_detail.hpp"
-#include "crypto/openssl_memory_detail.hpp"
+#include "crypto/openssl_memory.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -11,7 +11,7 @@ namespace context {
 
 template <typename T,
         , typename T_SessionPrimitive = detail::SessionPrimitive<T>,
-        , typename T_DeleterPrimitive = memory::detail::DeleterPrimitive<typename std::remove_const<T>::type>>
+        , typename T_OpenSSLSmartPointer = memory::DeleterPrimitive<typename std::remove_const<T>::type>>
 class Session
 {
 public:

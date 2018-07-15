@@ -1,9 +1,11 @@
 #include "crypto/openssl_memory.hpp"
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 
 #include <functional>
 #include <memory>
+
+#include "gtest/gtest.h"
+#include "gmock/gmock.h"
+
 namespace fetch {
 namespace crypto {
 namespace openssl {
@@ -30,25 +32,23 @@ public:
 
 MockDeleterPrimitive::SharedPtr MockDeleterPrimitive::value;
 
-namespace {
-    template <typename T
-            , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
-    struct StaticMockDeleterPrimitive;
+template <typename T
+        , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
+struct StaticMockDeleterPrimitive;
 
-    template<>
-    struct StaticMockDeleterPrimitive<TestType> {
-        static void function(TestType* ptr) {
-            MockDeleterPrimitive::value->free_TestType(ptr);
-        }
-    };
+template<>
+struct StaticMockDeleterPrimitive<TestType> {
+    static void function(TestType* ptr) {
+        MockDeleterPrimitive::value->free_TestType(ptr);
+    }
+};
 
-    template<>
-    struct StaticMockDeleterPrimitive<TestType, eDeleteStrategy::clearing> {
-        static void function(TestType* ptr) {
-            MockDeleterPrimitive::value->free_clearing_TestType(ptr);
-        }
-    };
-}
+template<>
+struct StaticMockDeleterPrimitive<TestType, eDeleteStrategy::clearing> {
+    static void function(TestType* ptr) {
+        MockDeleterPrimitive::value->free_clearing_TestType(ptr);
+    }
+};
 
 template <typename T
          , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
