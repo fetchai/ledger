@@ -21,9 +21,9 @@ public:
   {
 
     // RPC
-    Protocol::Expose(NEED_CONNECTIONS, directory_,
+    Protocol::ExposeWithClientArg(NEED_CONNECTIONS, directory_,
                      &P2PPeerDirectory::NeedConnections);
-    Protocol::Expose(ENOUGH_CONNECTIONS, directory_,
+    Protocol::ExposeWithClientArg(ENOUGH_CONNECTIONS, directory_,
                      &P2PPeerDirectory::EnoughConnections); 
     Protocol::Expose(SUGGEST_PEERS, directory_,
                      &P2PPeerDirectory::SuggestPeersToConnectTo);

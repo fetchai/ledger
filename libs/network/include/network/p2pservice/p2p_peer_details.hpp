@@ -140,15 +140,12 @@ struct PeerDetails
   {
     public_key = other.public_key.Copy();
     entry_points = other.entry_points;
-    looking_for_peers_timeout = uint32_t(other.looking_for_peers_timeout);
-    
   }
   
   /// Serializable
   /// @{
   byte_array::ConstByteArray public_key;
   std::vector< EntryPoint > entry_points;
-  std::atomic< uint32_t > looking_for_peers_timeout;
   
   /// @}
 

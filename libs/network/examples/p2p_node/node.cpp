@@ -104,6 +104,57 @@ int main(int argc, char const **argv)
           service.AddMainChain( command[1], uint16_t(command[2].AsInt()));
         }
 
+        if(command[0] == "needpeers") {
+          if(command.size() != 1) {
+            std::cout << "usage: needpeers" << std::endl;
+            continue;
+          }
+          service.RequestPeers();
+        }
+
+        if(command[0] == "enoughpeers") {
+          if(command.size() != 1) {
+            std::cout << "usage: enoughpeers" << std::endl;
+            continue;
+          }
+          service.EnoughPeers();
+        }
+
+        if(command[0] == "suggest") {
+          if(command.size() != 1) {
+            std::cout << "usage: suggest" << std::endl;
+            continue;
+          }
+          auto map = service.SuggestPeersToConnectTo();
+          std::cout << "Suggestions:" << std::endl;
+          
+
+          for(auto &me: map) {
+            auto pd = me.second;
+                
+            std::cout << "Peer: " << byte_array::ToBase64(pd.public_key) << std::endl;
+            for(auto &e: pd.entry_points) {
+              std::cout << "  - ";
+              for(auto &h: e.host)
+              {
+                std::cout << h << " ";
+              }                  
+              std::cout << ":" << e.port << " > ";
+              if(e.is_discovery) {
+                std::cout << "DISCOVERY ";
+              }                  
+              if(e.is_mainchain) {
+                std::cout << "MAIN CHAIN ";
+              }
+              if(e.is_lane) {
+                std::cout << "LANE " << e.lane_id << " " ;
+              }                  
+              std::cout << std::endl;                  
+            }
+          }
+        }
+        
+        
         if(command[0] == "list") {
           if(command.size() != 1) {
             std::cout << "usage: list" << std::endl;

@@ -41,6 +41,9 @@ public:
     last_handle_ = 0;
   }
 
+  
+
+  
   /// RPC calls
   /// @{
   void NeedConnections(connection_handle_type const &client_id) 
@@ -67,42 +70,6 @@ public:
   /// @}
 
 
-  /// Internals for updating the register
-  /// @{
-  bool AddPeer(connection_handle_type const &client_id, connectivity_details_type const &details) 
-  {
-    std::lock_guard< mutex::Mutex > lock( suggest_mutex_ );    
-    auto it = suggested_peers_.find(details.public_key);
-
-    if(it == suggested_peers_.end()) {    
-      suggested_peers_[details.public_key] = details;
-
-      // TODO: Post to manager
-      this->Publish(FEED_REQUEST_CONNECTIONS, details);
-      return true;
-    }
-    return false;
-  }
-  
-  bool RemovePeer(connection_handle_type const &client_id,
-    byte_array::ConstByteArray const& public_key) 
-  {
-    std::lock_guard< mutex::Mutex > lock( suggest_mutex_ );
-    auto it = suggested_peers_.find(public_key);
-
-    if(it != suggested_peers_.end()) {
-      suggested_peers_.erase(it);
-
-      // TODO: Post to manager
-      this->Publish(FEED_REQUEST_CONNECTIONS, public_key);
-      return true;
-    }
-
-    return false;
-  }
-  /// @}
-  
-
   /// Maintainance logic
   /// Methods to ensure that we get info from new peers
   /// @{
@@ -123,20 +90,23 @@ public:
   void ListenToNewPeers() 
   {
     if(!running_) return;
+
+    std::vector< service::Promise > promises;
     
-    register_.WithServices([this](network::AbstractConnectionRegister::service_map_type const &map) {
+    register_.WithServices([this, promises](network::AbstractConnectionRegister::service_map_type const &map) {
         for(auto const &p: map) {
           if(!running_) return;
-
-            auto peer = p.second;
-            auto ptr = peer.lock();
-            auto details = register_.GetDetails(p.first);
-            // TODO: Check if we got suggestions and add them
+          
+          auto peer = p.second;
+          auto ptr = peer.lock();
+          auto details = register_.GetDetails(p.first);
+          // TODO: Check if we got suggestions and add them
           
           if(p.first > last_handle_) {
             last_handle_ = p.first;
             
-
+// TODO            promises.push_back(ptr->Call(protocol_, SUGGEST_PEERS));
+            
             // TODO: Refactor subscribe such that there is no memory leak
             connection_handle_type client = p.first;            
             ptr->Subscribe(protocol_, FEED_REQUEST_CONNECTIONS,
@@ -177,6 +147,44 @@ public:
   /// @}
   
 private:
+
+  /// Internals for updating the register
+  /// @{
+  bool AddPeer(connection_handle_type const &client_id, connectivity_details_type const &details) 
+  {
+    std::lock_guard< mutex::Mutex > lock( suggest_mutex_ );    
+    auto it = suggested_peers_.find(details.public_key);
+
+    if(it == suggested_peers_.end()) {    
+      suggested_peers_[details.public_key] = details;
+
+      // TODO: Post to manager
+      this->Publish(FEED_REQUEST_CONNECTIONS, details);
+      return true;
+    }
+    return false;
+  }
+  
+  bool RemovePeer(connection_handle_type const &client_id,
+    byte_array::ConstByteArray const& public_key) 
+  {
+    std::lock_guard< mutex::Mutex > lock( suggest_mutex_ );
+    auto it = suggested_peers_.find(public_key);
+
+    if(it != suggested_peers_.end()) {
+      suggested_peers_.erase(it);
+
+      // TODO: Post to manager
+      this->Publish(FEED_REQUEST_CONNECTIONS, public_key);
+      return true;
+    }
+
+    return false;
+  }
+  /// @}
+  
+  
+  
   std::atomic< uint64_t > protocol_;
   
   std::atomic< bool > running_;  

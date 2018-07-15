@@ -115,6 +115,40 @@ public:
   client_register_type connection_register() {
     return register_;    
   };
+
+  /// 
+  /// @{
+  void RequestPeers() 
+  {
+    register_.WithServices([](network::AbstractConnectionRegister::service_map_type const &map) {
+        for(auto const &p: map) {
+          auto wptr = p.second;
+          auto peer = wptr.lock();
+          if(peer) {
+            peer->Call(DIRECTORY, P2PPeerDirectoryProtocol::NEED_CONNECTIONS);
+          }
+        }
+      });    
+  }
+
+  void EnoughPeers() 
+  {
+    register_.WithServices([](network::AbstractConnectionRegister::service_map_type const &map) {
+        for(auto const &p: map) {
+          auto wptr = p.second;
+          auto peer = wptr.lock();
+          if(peer) {
+            peer->Call(DIRECTORY, P2PPeerDirectoryProtocol::ENOUGH_CONNECTIONS);
+          }
+        }
+      });
+  }
+
+  P2PPeerDirectory::suggestion_map_type SuggestPeersToConnectTo() 
+  {
+    return directory_->SuggestPeersToConnectTo();
+  }
+  /// @}
   
   void Connect(byte_array::ConstByteArray const &host, uint16_t const &port) 
   {
