@@ -39,10 +39,29 @@ public:
     return PING_MAGIC;
   }
 
+  byte_array::ConstByteArray ExchangeAddress(connection_handle_type const &cid, byte_array::ByteArray const &address) 
+  {
+    {
+      std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
+      for(auto &e: my_details_->details.entry_points)
+      {
+        if(e.is_discovery) {
+          e.host.insert(address);
+        }
+      }
+    }
+    
+    
+    auto client = register_.GetClient(cid);
+    if(!client) return "";
+    return client->Address();
+  }
+    
+  
   PeerDetails Hello(connection_handle_type const &client, PeerDetails const&pd) 
   {    
     auto details = register_.GetDetails(client);
-
+    
     {
       std::lock_guard< mutex::Mutex > lock(*details);
       details->Update(pd);
@@ -53,15 +72,6 @@ public:
   }
   /// @}
 
-  void PrintMyDetails() 
-  {
-    std::lock_guard< mutex::Mutex > l(my_details_->mutex);
-    std::cout << "My details: " << std::endl;
-    for(auto &e: my_details_->details.entry_points) {
-      std::cout << " - " << e.host << " " << e.port << std::endl;
-      }    
-  }
-  
   
   void WithOwnDetails(std::function< void(PeerDetails const &) > const &f) 
   {

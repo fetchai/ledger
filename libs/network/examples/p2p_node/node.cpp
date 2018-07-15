@@ -120,7 +120,15 @@ int main(int argc, char const **argv)
                 std::lock_guard< mutex::Mutex> lock( *pd );
                 std::cout << "Peer: " << byte_array::ToBase64(pd->public_key) << std::endl;
                 for(auto &e: pd->entry_points) {
-                  std::cout << "  - " << e.host << ":" << e.port << " > ";
+                  std::cout << "  - ";
+                  for(auto &h: e.host)
+                  {
+                    std::cout << h << " ";
+                  }                  
+                  std::cout << ":" << e.port << " > ";
+                  if(e.is_discovery) {
+                    std::cout << "DISCOVERY ";
+                  }                  
                   if(e.is_mainchain) {
                     std::cout << "MAIN CHAIN ";
                   }

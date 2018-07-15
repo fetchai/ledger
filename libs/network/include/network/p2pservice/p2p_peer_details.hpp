@@ -1,6 +1,7 @@
 #ifndef NETWORK_P2PSERVICE_P2P_PEER_DETAILS_HPP
 #define NETWORK_P2PSERVICE_P2P_PEER_DETAILS_HPP
 #include"core/byte_array/byte_array.hpp"
+#include"crypto/fnv.hpp"
 
 #include<atomic>
 
@@ -17,22 +18,32 @@ struct EntryPoint
   {
     port = 0;
     lane_id = uint32_t(-1);
+    is_discovery = false;
     is_lane = false;
     is_mainchain = false;
   }
   
   EntryPoint(EntryPoint const&other) 
   {
-    host = other.host.Copy();
+    for(auto &s:other.host)
+    {
+      host.insert(s);
+    }
+    
     port = other.port;
     lane_id = uint32_t(other.lane_id);
+    is_discovery = bool(other.is_discovery);    
     is_lane = bool(other.is_lane);
     is_mainchain = bool(other.is_mainchain);
   }
 
   EntryPoint& operator=(EntryPoint const&other) 
   {
-    host = other.host.Copy();
+    for(auto &s:other.host)
+    {
+      host.insert(s);
+    }
+    
     port = other.port;
     lane_id = uint32_t(other.lane_id);
     is_lane = bool(other.is_lane);
@@ -43,13 +54,14 @@ struct EntryPoint
   
   /// Serializable fields
   /// @{
-  byte_array::ConstByteArray host;
+  std::unordered_set< byte_array::ConstByteArray, crypto::CallableFNV > host;
   uint16_t port = 0;
 
   byte_array::ConstByteArray public_key;
 
   std::atomic< uint32_t > lane_id;  
 
+  std::atomic< bool > is_discovery;  
   std::atomic< bool > is_lane;
   std::atomic< bool > is_mainchain;
   /// @}
@@ -63,6 +75,7 @@ T& Serialize(T& serializer, EntryPoint const& data) {
   serializer << data.port;
   serializer << data.public_key;
   serializer << uint32_t( data.lane_id);
+  serializer << bool(data.is_discovery);  
   serializer << bool(data.is_lane);
   serializer << bool(data.is_mainchain);  
   return serializer;
@@ -78,7 +91,10 @@ T& Deserialize(T& serializer, EntryPoint& data) {
   serializer >> lane;
   data.lane_id = lane;
 
-  bool islane, ismc;
+  bool islane, ismc, isdisc;
+  serializer >> isdisc;
+  data.is_discovery = isdisc;
+  
   serializer >> islane;
   data.is_lane = islane;
   

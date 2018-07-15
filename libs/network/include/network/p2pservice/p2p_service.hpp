@@ -56,10 +56,18 @@ public:
 
     // Identity
     identity_ = new P2PIdentity(register_, tm);
-    my_details_ = identity_->my_details();
+    my_details_ = identity_->my_details();    
     identity_protocol_ = new P2PIdentityProtocol(identity_);    
     this->Add(IDENTITY, identity_protocol_);
 
+    {
+      EntryPoint discovery_ep;
+      discovery_ep.is_discovery = true;
+      discovery_ep.port = port;
+      std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
+      my_details_->details.entry_points.push_back(discovery_ep);
+    }
+    
     // TODO(Troels): Add pk etc. to identity - ECDSA needed
 
     // P2P Peer Directory
@@ -116,7 +124,7 @@ public:
     while((n < 10) && (!client->is_alive())) {
       std::this_thread::sleep_for(std::chrono::milliseconds(2));
       ++n;
-    }
+   }
 
     if(n >= 10 ) {
       fetch::logger.Error("Connection never came to live in P2P module");
@@ -125,8 +133,25 @@ public:
       return;            
     }
 
+    // Getting own IP seen externally
+    byte_array::ByteArray address;      
+    auto p = client->Call(IDENTITY, P2PIdentityProtocol::EXCHANGE_ADDRESS, host);
+    p.As(address);
+    
     { // Exchanging identities including node setup
-      std::lock_guard< mutex::Mutex > lock(my_details_->mutex);      
+      std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
+
+      // Updating IP for P2P node
+//      bool has_discovery = false;      
+      for(auto &e: my_details_->details.entry_points) {
+        if(e.is_discovery) {
+          e.host.insert(address);
+//          has_discovery = true;
+        }
+      }
+      
+     
+        
       auto p = client->Call(IDENTITY, P2PIdentityProtocol::HELLO, my_details_->details);
       PeerDetails details = p.As< PeerDetails >();
 
@@ -154,7 +179,7 @@ public:
     {      
       std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
       EntryPoint lane_details;
-      lane_details.host = host;
+      lane_details.host.insert( host );
       lane_details.port = port;
       //     lane_details.public_key = "todo";
       lane_details.lane_id = lane;
@@ -172,7 +197,7 @@ public:
     {      
       std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
       EntryPoint lane_details;
-      lane_details.host = host;
+      lane_details.host.insert( host );
       lane_details.port = port;
       //     lane_details.public_key = "todo";
       lane_details.is_mainchain = true;

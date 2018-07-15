@@ -15,7 +15,8 @@ public:
 
   enum {
     PING = 1,
-    HELLO
+    HELLO,
+    EXCHANGE_ADDRESS
 //    AUTHENTICATE    
   };
 
@@ -24,6 +25,7 @@ public:
   {
     this->Expose(PING, ctrl, &P2PIdentity::Ping);
     this->ExposeWithClientArg(HELLO, ctrl, &P2PIdentity::Hello);
+    this->ExposeWithClientArg(EXCHANGE_ADDRESS, ctrl, &P2PIdentity::ExchangeAddress);
   }
   
 };

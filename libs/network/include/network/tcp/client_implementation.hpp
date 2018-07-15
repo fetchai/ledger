@@ -120,7 +120,8 @@ class TCPClientImplementation :
       fetch::logger.Error("Attempting to write to socket too early. Returning.");
       return;
     }
-
+//    std::cout << "SENDING: " << this->Address() << ":" << this->port() << std::endl;
+    
     {
       std::lock_guard<fetch::mutex::Mutex> lock(queue_mutex_);
       write_queue_.push_back(msg);

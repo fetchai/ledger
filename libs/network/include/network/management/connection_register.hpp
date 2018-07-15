@@ -18,6 +18,7 @@ public:
   
   typedef typename AbstractConnection::connection_handle_type connection_handle_type;
   typedef std::weak_ptr< AbstractConnection > weak_connection_type;
+  typedef std::shared_ptr< AbstractConnection > shared_connection_type;  
   typedef service::ServiceClient service_client_type;
   typedef std::shared_ptr< service::ServiceClient > shared_service_client_type;
   typedef std::weak_ptr< service::ServiceClient > weak_service_client_type;  
@@ -126,6 +127,12 @@ public:
     return details_[i];
   }
 
+  shared_connection_type GetClient(connection_handle_type const &i) 
+  {
+    std::lock_guard< mutex::Mutex > lock( connections_lock_ );
+    return connections_[i].lock();
+  }
+  
   void WithClientDetails(std::function< void(details_map_type const &) > fnc) const
   {
     std::lock_guard< mutex::Mutex > lock( details_lock_ );
@@ -138,7 +145,8 @@ public:
     std::lock_guard< mutex::Mutex > lock( details_lock_ );
     fnc(details_);
   }
-  
+
+
 private:
   mutable mutex::Mutex connections_lock_;
   std::unordered_map< connection_handle_type, weak_connection_type > connections_;
@@ -169,6 +177,7 @@ class ConnectionRegister
 public:
   typedef typename AbstractConnection::connection_handle_type connection_handle_type;
   typedef std::weak_ptr< AbstractConnection > weak_connection_type;
+  typedef std::shared_ptr< AbstractConnection > shared_connection_type;  
   typedef std::shared_ptr< ConnectionRegisterImpl<G> > shared_implementation_pointer_type;
   typedef typename ConnectionRegisterImpl<G>::LockableDetails lockable_details_type;
   typedef std::shared_ptr< service::ServiceClient > shared_service_client_type;
@@ -212,7 +221,12 @@ public:
   weak_service_client_type GetService(connection_handle_type &&i) 
   {
     return ptr_->GetService(std::move(i));
-  }  
+  }
+  
+  shared_connection_type GetClient(connection_handle_type const &i) 
+  {
+    return ptr_->GetClient(std::move(i));
+  }
   
   
   void WithServices(std::function< void(service_map_type const &) > const &f) const
