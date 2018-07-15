@@ -142,15 +142,12 @@ public:
       std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
 
       // Updating IP for P2P node
-//      bool has_discovery = false;      
       for(auto &e: my_details_->details.entry_points) {
         if(e.is_discovery) {
+          // TODO: Make mechanim for verifying address          
           e.host.insert(address);
-//          has_discovery = true;
         }
       }
-      
-     
         
       auto p = client->Call(IDENTITY, P2PIdentityProtocol::HELLO, my_details_->details);
       PeerDetails details = p.As< PeerDetails >();
@@ -197,6 +194,7 @@ public:
     {      
       std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
       EntryPoint lane_details;
+
       lane_details.host.insert( host );
       lane_details.port = port;
       //     lane_details.public_key = "todo";

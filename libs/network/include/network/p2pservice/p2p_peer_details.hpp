@@ -27,7 +27,7 @@ struct EntryPoint
   {
     for(auto &s:other.host)
     {
-      host.insert(s);
+      host.insert(s.Copy());
     }
     
     port = other.port;
@@ -41,7 +41,7 @@ struct EntryPoint
   {
     for(auto &s:other.host)
     {
-      host.insert(s);
+      host.insert(s.Copy());
     }
     
     port = other.port;
@@ -140,12 +140,16 @@ struct PeerDetails
   {
     public_key = other.public_key.Copy();
     entry_points = other.entry_points;
+    looking_for_peers_timeout = uint32_t(other.looking_for_peers_timeout);
+    
   }
   
   /// Serializable
   /// @{
   byte_array::ConstByteArray public_key;
   std::vector< EntryPoint > entry_points;
+  std::atomic< uint32_t > looking_for_peers_timeout;
+  
   /// @}
 
   /// Peer meta data

@@ -46,14 +46,17 @@ public:
       for(auto &e: my_details_->details.entry_points)
       {
         if(e.is_discovery) {
+          // TODO: Make mechanim for verifying address
           e.host.insert(address);
         }
       }
     }
-    
-    
+        
     auto client = register_.GetClient(cid);
-    if(!client) return "";
+    if(!client) {
+      return "";
+    }
+    
     return client->Address();
   }
     
