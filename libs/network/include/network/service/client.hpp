@@ -130,6 +130,11 @@ class ServiceClient : public ServiceClientInterface,
     }
     return uint16_t(-1);
   }
+
+  std::shared_ptr< network::AbstractConnection > connection() 
+  {
+    return connection_.lock();
+  }
   
   
  protected:

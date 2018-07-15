@@ -7,6 +7,9 @@
 
 #include"network/p2pservice/p2p_identity.hpp"
 #include"network/p2pservice/p2p_identity_protocol.hpp"
+
+#include"network/p2pservice/p2p_peer_directory.hpp"
+#include"network/p2pservice/p2p_peer_directory_protocol.hpp"
 namespace fetch
 {
 namespace p2p
@@ -57,9 +60,49 @@ public:
     identity_protocol_ = new P2PIdentityProtocol(identity_);    
     this->Add(IDENTITY, identity_protocol_);
 
-    // TODO: Add pk etc.
-    
+    // TODO(Troels): Add pk etc. to identity - ECDSA needed
+
+    // P2P Peer Directory
+    directory_ = new P2PPeerDirectory(DIRECTORY, register_, thread_pool_ );
+    directory_protocol_ = new P2PPeerDirectoryProtocol(directory_);
+    this->Add(DIRECTORY, directory_protocol_);
   }
+
+  /// Events for new peer discovery
+  /// @{
+  // TODO, WIP(Troels): Hooks for udpating other services
+  typedef std::function< void(connection_handle_type const&, PeerDetails const &) > callback_peer_connected_type;
+  typedef std::function< void(connection_handle_type const&, PeerDetails const &) > callback_peer_update_type;
+  typedef std::function< void(connection_handle_type const&, PeerDetails const &) > callback_peer_leave_type;
+  
+  void OnPeerConnected( callback_peer_connected_type const &f) 
+  {
+  }
+
+  void OnPeerUpdate(callback_peer_update_type const &f ) 
+  {
+
+  }
+
+  void OnPeerLeave( ) 
+  {
+
+  }   
+  /// @}
+
+  
+  /// Methods to interact with peers
+  /// @{
+  void Start() 
+  {
+    directory_->Start();
+  }
+
+  void Stop() 
+  {
+    directory_->Stop();
+  }
+  
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t const &port) 
   {
@@ -87,9 +130,7 @@ public:
       for(auto &e: details.entry_points) {
         std::cout << " - " << e.host << " " << e.port << std::endl;
       }
-      
-    }
-    
+    }    
     
     {
       std::lock_guard< mutex_type > lock_(peers_mutex_);
@@ -97,7 +138,7 @@ public:
     }
     
   }
-
+  /// @}
 
   /// Methods to add node components
   /// @{
@@ -175,6 +216,11 @@ private:
 
   P2PIdentity* identity_;
   P2PIdentityProtocol* identity_protocol_;
+
+  P2PPeerDirectory  *directory_;  
+  P2PPeerDirectoryProtocol *directory_protocol_;
+  
+  
   NodeDetails my_details_;
   
   mutex::Mutex peers_mutex_;    

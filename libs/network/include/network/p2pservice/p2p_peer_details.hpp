@@ -102,6 +102,18 @@ struct PeerDetails
     karma = double(other.karma);
     is_authenticated = bool(other.is_authenticated);
   }
+
+  PeerDetails& operator=(PeerDetails const & other)  
+  {
+    public_key = other.public_key.Copy();
+    entry_points = other.entry_points;
+
+    // TODO: consider whether to reset these fields 
+    nonce = other.nonce;
+    karma = double(other.karma);
+    is_authenticated = bool(other.is_authenticated);
+    return *this;
+  }
   
   /// Serializable
   /// @{

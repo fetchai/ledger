@@ -1,11 +1,11 @@
 #ifndef NETWORK_P2PSERVICE_P2P_PEER_DIRECTORY_PROTOCOL_HPP
 #define NETWORK_P2PSERVICE_P2P_PEER_DIRECTORY_PROTOCOL_HPP
+#include"network/p2pservice/p2p_peer_directory.hpp"
 
 namespace fetch
 {
-namespace ledger
+namespace p2p
 {
-class P2PPeerDirectory;
 
 class P2PPeerDirectoryProtocol : public fetch::service::Protocol
 {
@@ -41,3 +41,5 @@ private:
 
 }
 }
+
+#endif

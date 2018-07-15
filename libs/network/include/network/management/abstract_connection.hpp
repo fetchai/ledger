@@ -54,6 +54,12 @@ class AbstractConnection : public std::enable_shared_from_this<AbstractConnectio
     std::lock_guard< mutex::Mutex > lock(address_mutex_);
     return address_;
   }
+
+  uint16_t port() const
+  {
+    return port_;
+  }
+
   
   connection_handle_type handle() const noexcept { return handle_; }
   void SetConnectionManager(weak_register_type const &reg) 
@@ -111,6 +117,12 @@ protected:
     address_ = addr;
   }
 
+  void SetPort(uint16_t const &p) 
+  {
+    port_ = p;
+  }
+  
+  
   void SignalLeave() 
   {
     std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
@@ -140,7 +152,9 @@ protected:
   std::function< void() >                    on_connection_failed_;
   std::function< void() >                    on_leave_;  
   
-  std::string address_;  
+  std::string address_;
+  std::atomic< uint16_t > port_;
+  
   mutable mutex::Mutex address_mutex_;
   
   static connection_handle_type next_handle() {

@@ -72,7 +72,7 @@ class TCPClientImplementation :
 
       std::shared_ptr<resolver_type> res = networkManager_.CreateIO<resolver_type>();
 
-      auto cb = [this, self, res, socket]
+      auto cb = [this, self, res, socket, port]
         (std::error_code ec, resolver_type::iterator)
       {
         shared_self_type selfLock = self.lock();
@@ -84,7 +84,8 @@ class TCPClientImplementation :
         {
           fetch::logger.Debug("Connection established!");
           this->SetAddress( (*socket).remote_endpoint().address().to_string() );
-
+          this->SetPort(uint16_t(port.AsInt()));
+          
           ReadHeader();
         } else
         {
