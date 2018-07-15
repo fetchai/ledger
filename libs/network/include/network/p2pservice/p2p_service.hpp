@@ -47,11 +47,11 @@ public:
     // Listening for new connections
     this->SetConnectionRegister(register_);
     register_.OnClientEnter([](connection_handle_type const&i) {
-        std::cout << "New connection " << i << std::endl;
+        std::cout << "\rNew connection " << i << std::endl << ">> ";
       });
 
     register_.OnClientLeave([](connection_handle_type const&i) {
-        std::cout << "Peer left " << i << std::endl;
+        std::cout << "\rPeer left " << i << std::endl << ">> ";
       });
 
     // Identity
@@ -87,7 +87,8 @@ public:
   void OnPeerLeave( ) 
   {
 
-  }   
+  }
+  
   /// @}
 
   
@@ -103,7 +104,10 @@ public:
     directory_->Stop();
   }
   
-
+  client_register_type connection_register() {
+    return register_;    
+  };
+  
   void Connect(byte_array::ConstByteArray const &host, uint16_t const &port) 
   {
     shared_service_client_type client = register_.CreateServiceClient<client_type >( manager_, host, port);
@@ -126,9 +130,10 @@ public:
       auto p = client->Call(IDENTITY, P2PIdentityProtocol::HELLO, my_details_->details);
       PeerDetails details = p.As< PeerDetails >();
 
-      std::cout << "Got details: " << std::endl;
-      for(auto &e: details.entry_points) {
-        std::cout << " - " << e.host << " " << e.port << std::endl;
+      auto regdetails = register_.GetDetails( client->handle() );
+      {
+        std::lock_guard< mutex::Mutex > lock( *regdetails );
+        regdetails->Update(details);
       }
     }    
     

@@ -132,6 +132,7 @@ public:
     fnc(details_);
   }
 
+
   void WithClientDetails(std::function< void(details_map_type &) > fnc) 
   {
     std::lock_guard< mutex::Mutex > lock( details_lock_ );

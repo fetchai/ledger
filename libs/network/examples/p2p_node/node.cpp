@@ -72,6 +72,22 @@ int main(int argc, char const **argv)
           service.Connect(command[1], uint16_t(command[2].AsInt()));
         }
 
+        if(command[0] == "test") {
+          if(command.size() != 1) {
+            std::cout << "usage: test" << std::endl;
+            continue;
+          }
+          std::cout << "addmc mainchain " << port + 1 << std::endl;
+          std::cout << "addl 0 lane0 " << port + 2 << std::endl;
+          std::cout << "addl 1 lane0 " << port + 3 << std::endl;
+          service.AddMainChain("mainchain", port + 1);
+          service.AddLane(0, "lane0", port + 1);
+          service.AddLane(1, "lane1", port + 2);
+          
+//          service.Connect(command[1], uint16_t(command[2].AsInt()));
+        }
+        
+        
         if(command[0] == "addl") {
           if(command.size() != 4) {
             std::cout << "usage: addl [lane] [host] [port]" << std::endl;
@@ -86,7 +102,40 @@ int main(int argc, char const **argv)
             continue;
           }
           service.AddMainChain( command[1], uint16_t(command[2].AsInt()));
-        }            
+        }
+
+        if(command[0] == "list") {
+          if(command.size() != 1) {
+            std::cout << "usage: list" << std::endl;
+            continue;
+          }
+          auto reg = service.connection_register();
+          using details_map_type = typename fetch::network::ConnectionRegister< PeerDetails >::details_map_type;
+          
+          reg.WithClientDetails([](details_map_type map) {
+              std::cout << "Lising peers" << std::endl;
+              for(auto &me: map) {
+                auto pd = me.second;
+                
+                std::lock_guard< mutex::Mutex> lock( *pd );
+                std::cout << "Peer: " << byte_array::ToBase64(pd->public_key) << std::endl;
+                for(auto &e: pd->entry_points) {
+                  std::cout << "  - " << e.host << ":" << e.port << " > ";
+                  if(e.is_mainchain) {
+                    std::cout << "MAIN CHAIN ";
+                  }
+                  if(e.is_lane) {
+                    std::cout << "LANE " << e.lane_id << " " ;
+                  }                  
+                  std::cout << std::endl;                  
+                }
+                
+
+              }
+              
+            });
+          
+        }                    
       }
       
     } catch(serializers::SerializableException &e ) {

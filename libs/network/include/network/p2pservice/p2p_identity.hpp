@@ -45,9 +45,7 @@ public:
 
     {
       std::lock_guard< mutex::Mutex > lock(*details);
-
-      details->public_key = pd.public_key;
-      details->entry_points = pd.entry_points;
+      details->Update(pd);
     }
     
     std::lock_guard< mutex::Mutex > l(my_details_->mutex);

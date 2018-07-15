@@ -49,10 +49,7 @@ struct EntryPoint
   byte_array::ConstByteArray public_key;
 
   std::atomic< uint32_t > lane_id;  
-  /// @}
 
-  /// Meta data for keeping track of things
-  /// @{
   std::atomic< bool > is_lane;
   std::atomic< bool > is_mainchain;
   /// @}
@@ -66,7 +63,8 @@ T& Serialize(T& serializer, EntryPoint const& data) {
   serializer << data.port;
   serializer << data.public_key;
   serializer << uint32_t( data.lane_id);
-
+  serializer << bool(data.is_lane);
+  serializer << bool(data.is_mainchain);  
   return serializer;
 }
 
@@ -79,6 +77,13 @@ T& Deserialize(T& serializer, EntryPoint& data) {
   
   serializer >> lane;
   data.lane_id = lane;
+
+  bool islane, ismc;
+  serializer >> islane;
+  data.is_lane = islane;
+  
+  serializer >> ismc;
+  data.is_mainchain = ismc;
   
   return serializer;
 }
@@ -113,6 +118,12 @@ struct PeerDetails
     karma = double(other.karma);
     is_authenticated = bool(other.is_authenticated);
     return *this;
+  }
+
+  void Update(PeerDetails const & other)  
+  {
+    public_key = other.public_key.Copy();
+    entry_points = other.entry_points;
   }
   
   /// Serializable
