@@ -32,7 +32,12 @@ public:
   using shared_service_client_type = std::shared_ptr< service_client_type >;
   using network_manager_type = fetch::network::NetworkManager;  
   using mutex_type = fetch::mutex::Mutex;
-  
+
+  using p2p_identity_type = std::unique_ptr<P2PIdentity>;
+  using p2p_identity_protocol_type = std::unique_ptr<P2PIdentityProtocol>;
+  using p2p_directory_type = std::unique_ptr<P2PPeerDirectory>;
+  using p2p_directory_protocol_type = std::unique_ptr<P2PPeerDirectoryProtocol>;
+
   enum {
     IDENTITY = 1,
     DIRECTORY
@@ -43,15 +48,14 @@ public:
   {
     thread_pool_ = network::MakeThreadPool(1);
 
-
     // Listening for new connections
     this->SetConnectionRegister(register_);
 
     // Identity
-    identity_ = new P2PIdentity(IDENTITY, register_, tm);
+    identity_.reset(new P2PIdentity(IDENTITY, register_, tm));
     my_details_ = identity_->my_details();    
-    identity_protocol_ = new P2PIdentityProtocol(identity_);    
-    this->Add(IDENTITY, identity_protocol_);
+    identity_protocol_.reset(new P2PIdentityProtocol(identity_.get()));
+    this->Add(IDENTITY, identity_protocol_.get());
 
     {
       EntryPoint discovery_ep;
@@ -64,15 +68,13 @@ public:
     // TODO(Troels): Add pk etc. to identity - ECDSA needed
 
     // P2P Peer Directory
-    directory_ = new P2PPeerDirectory(DIRECTORY, register_, thread_pool_, my_details_ );
-    directory_protocol_ = new P2PPeerDirectoryProtocol(directory_);
-    this->Add(DIRECTORY, directory_protocol_);
+    directory_.reset(new P2PPeerDirectory(DIRECTORY, register_, thread_pool_, my_details_ ));
+    directory_protocol_.reset(new P2PPeerDirectoryProtocol(directory_.get()));
+    this->Add(DIRECTORY, directory_protocol_.get());
 
     directory_->Start();
     thread_pool_->Start();
     
-
-
     // Adding hooks for listening to feeds etc
     register_.OnClientEnter([](connection_handle_type const&i) {
         std::cout << "\rNew connection " << i << std::endl;
@@ -81,9 +83,6 @@ public:
     register_.OnClientLeave([](connection_handle_type const&i) {
         std::cout << "\rPeer left " << i << std::endl;
       });
-
-
-    
   }
 
   /// Events for new peer discovery
@@ -280,13 +279,12 @@ private:
   client_register_type register_;
   thread_pool_type thread_pool_;
 
-  P2PIdentity* identity_;
-  P2PIdentityProtocol* identity_protocol_;
+  p2p_identity_type identity_;
+  p2p_identity_protocol_type identity_protocol_;
 
-  P2PPeerDirectory  *directory_;  
-  P2PPeerDirectoryProtocol *directory_protocol_;
-  
-  
+  p2p_directory_type  directory_;
+  p2p_directory_protocol_type directory_protocol_;
+
   NodeDetails my_details_;
   
   mutex::Mutex peers_mutex_;    
