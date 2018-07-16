@@ -799,6 +799,8 @@ int main(int argc, char* argv[]) {
 
   for (std::size_t i = 0; i < iterations; ++i)
   {
+    TestCase9<10>(host, port);
+
     TestCase9<1>(host, port);
     TestCase0<1>(host, port);
     TestCase1<1>(host, port);
@@ -814,7 +816,6 @@ int main(int argc, char* argv[]) {
     TestCase14<1>(host, port);
     TestCase15<1>(host, port);
 
-    TestCase9<10>(host, port);
     TestCase1<10>(host, port);
     TestCase2<10>(host, port);
     TestCase3<10>(host, port);
