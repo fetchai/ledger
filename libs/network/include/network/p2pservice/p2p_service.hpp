@@ -46,13 +46,6 @@ public:
 
     // Listening for new connections
     this->SetConnectionRegister(register_);
-    register_.OnClientEnter([](connection_handle_type const&i) {
-        std::cout << "\rNew connection " << i << std::endl << ">> ";
-      });
-
-    register_.OnClientLeave([](connection_handle_type const&i) {
-        std::cout << "\rPeer left " << i << std::endl << ">> ";
-      });
 
     // Identity
     identity_ = new P2PIdentity(register_, tm);
@@ -74,6 +67,20 @@ public:
     directory_ = new P2PPeerDirectory(DIRECTORY, register_, thread_pool_ );
     directory_protocol_ = new P2PPeerDirectoryProtocol(directory_);
     this->Add(DIRECTORY, directory_protocol_);
+
+
+
+    // Adding hooks for listening to feeds etc
+    register_.OnClientEnter([](connection_handle_type const&i) {
+        std::cout << "\rNew connection " << i << std::endl;
+      });
+
+    register_.OnClientLeave([](connection_handle_type const&i) {
+        std::cout << "\rPeer left " << i << std::endl;
+      });
+
+
+    
   }
 
   /// Events for new peer discovery
@@ -197,6 +204,10 @@ public:
       std::lock_guard< mutex_type > lock_(peers_mutex_);
       peers_[client->handle()] = client;
     }
+
+    // Setup feeds to listen to
+    directory_->ListenTo(client);
+    
     
   }
   /// @}

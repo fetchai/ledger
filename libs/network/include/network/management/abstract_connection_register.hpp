@@ -19,6 +19,7 @@ class AbstractConnectionRegister : public std::enable_shared_from_this< Abstract
 public:
   typedef uint64_t connection_handle_type;
   typedef std::weak_ptr< service::ServiceClient > weak_service_client_type;
+  typedef std::shared_ptr< service::ServiceClient > shared_service_client_type;  
   typedef std::unordered_map< connection_handle_type, weak_service_client_type > service_map_type;
   
   AbstractConnectionRegister() 
@@ -36,10 +37,11 @@ public:
   virtual void Leave(connection_handle_type const &id) = 0;
   virtual void Enter(std::weak_ptr< AbstractConnection> const &) = 0;  
 
-  weak_service_client_type GetService(connection_handle_type const &i) 
+  shared_service_client_type GetService(connection_handle_type const &i) 
   {
     std::lock_guard< mutex::Mutex > lock( service_lock_ );
-    return services_[i];
+    if(services_.find(i) == services_.end()) return nullptr;
+    return services_[i].lock();
   }  
   
   void WithServices(std::function< void(service_map_type const &) > f) const

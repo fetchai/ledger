@@ -218,14 +218,20 @@ public:
     return ptr_->GetDetails(i);
   }
 
-  weak_service_client_type GetService(connection_handle_type &&i) 
+  shared_service_client_type GetService(connection_handle_type &&i) 
   {
     return ptr_->GetService(std::move(i));
   }
+
+  shared_service_client_type GetService(connection_handle_type const &i) 
+  {
+    return ptr_->GetService(i);
+  }
+
   
   shared_connection_type GetClient(connection_handle_type const &i) 
   {
-    return ptr_->GetClient(std::move(i));
+    return ptr_->GetClient(i);
   }
   
   

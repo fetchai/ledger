@@ -86,56 +86,47 @@ public:
     if(!running_) return;
     
   }
+  
+  void ListenTo(std::shared_ptr< service::ServiceClient > const &client) 
+  {
+//    if(!running_) return;
+    std::cout << "Adding hooks" << std::endl;
 
+    // TODO: Refactor subscribe such that there is no memory leak
+    connection_handle_type handle = client->handle();
+    
+    client->Subscribe(protocol_, FEED_REQUEST_CONNECTIONS,
+      new service::Function<void(PeerDetails)>(
+        [this, handle](PeerDetails const &details) {
+          this->AddPeer(handle, details);
+        }));
+    
+    client->Subscribe(protocol_, FEED_ENOUGH_CONNECTIONS,
+      new service::Function<void(byte_array::ConstByteArray)>(
+        [this, handle](byte_array::ConstByteArray const &public_key) {
+//          auto details = register_.GetDetails(handle);
+//          std::lock_guard< mutex::Mutex > lock( *details );          
+          this->RemovePeer(handle, public_key);
+        }));
+    
+    /*
+    // TODO: Work out whether we want this
+    ptr->Subscribe(protocol_, FEED_ANNOUNCE_PEER,
+    new service::Function<void(PeerDetails)>(
+    [this](PeerDetails const &details) {
+    this->AnnouncePeer(details);
+    }));
+    */
+    
+  }
+  
+
+  
   void ListenToNewPeers() 
   {
     if(!running_) return;
 
-    std::vector< service::Promise > promises;
-    
-    register_.WithServices([this, promises](network::AbstractConnectionRegister::service_map_type const &map) {
-        for(auto const &p: map) {
-          if(!running_) return;
-          
-          auto peer = p.second;
-          auto ptr = peer.lock();
-          auto details = register_.GetDetails(p.first);
-          // TODO: Check if we got suggestions and add them
-          
-          if(p.first > last_handle_) {
-            last_handle_ = p.first;
-            
-// TODO            promises.push_back(ptr->Call(protocol_, SUGGEST_PEERS));
-            
-            // TODO: Refactor subscribe such that there is no memory leak
-            connection_handle_type client = p.first;            
-            ptr->Subscribe(protocol_, FEED_REQUEST_CONNECTIONS,
-              new service::Function<void(PeerDetails)>(
-                [this, client](PeerDetails const &details) {
-                  this->AddPeer(client, details);
-                }));
 
-            ptr->Subscribe(protocol_, FEED_ENOUGH_CONNECTIONS,
-              new service::Function<void(byte_array::ConstByteArray)>(
-                [this, client](byte_array::ConstByteArray const &public_key) {
-                  this->RemovePeer(client, public_key);
-                }));
-
-            /*
-            // TODO: Work out whether we want this
-            ptr->Subscribe(protocol_, FEED_ANNOUNCE_PEER,
-              new service::Function<void(PeerDetails)>(
-                [this](PeerDetails const &details) {
-                  this->AnnouncePeer(details);
-                }));
-            */
-          }
-          
-          
-        }
-      });
-
-    thread_pool_->Post([this]() { this->UpdateAllKnownPeers(); } ); 
   }
 
   void UpdateAllKnownPeers() 
@@ -175,7 +166,7 @@ private:
       suggested_peers_.erase(it);
 
       // TODO: Post to manager
-      this->Publish(FEED_REQUEST_CONNECTIONS, public_key);
+      this->Publish(FEED_ENOUGH_CONNECTIONS, public_key);
       return true;
     }
 
