@@ -43,7 +43,7 @@ public:
     DIRECTORY
   };
 
-  P2PService(uint16_t port, fetch::network::NetworkManager tm)
+  P2PService(uint16_t port, fetch::network::NetworkManager const &tm)
     : super_type(port, tm), manager_(tm)  
   {
     thread_pool_ = network::MakeThreadPool(1);
@@ -69,7 +69,7 @@ public:
 
     // P2P Peer Directory
     directory_.reset(new P2PPeerDirectory(DIRECTORY, register_, thread_pool_, my_details_ ));
-    directory_protocol_.reset(new P2PPeerDirectoryProtocol(directory_.get()));
+    directory_protocol_.reset(new P2PPeerDirectoryProtocol(*directory_));
     this->Add(DIRECTORY, directory_protocol_.get());
 
     directory_->Start();

@@ -36,7 +36,7 @@ class HTTPServer : public AbstractHTTPServer {
   };
 
   HTTPServer(uint16_t const &port,
-             network_manager_type network_manager)
+             network_manager_type const &network_manager)
       : eval_mutex_(__LINE__, __FILE__),
         networkManager_(network_manager),
         request_mutex_(__LINE__, __FILE__)
