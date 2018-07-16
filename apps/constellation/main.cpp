@@ -1,19 +1,23 @@
+#include "core/macros.hpp"
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
 #include "network/management/network_manager.hpp"
+#include "network/adapters.hpp"
 
 #include "constellation.hpp"
 
 #include <iostream>
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 namespace {
 
 struct CommandLineArguments {
   using string_list_type = std::vector<std::string>;
   using peer_list_type = fetch::Constellation::peer_list_type;
+  using adapter_list_type = fetch::network::Adapter::adapter_list_type;
 
   static const std::size_t DEFAULT_NUM_LANES = 4;
   static const std::size_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
@@ -22,8 +26,9 @@ struct CommandLineArguments {
   peer_list_type peers;
   std::size_t num_executors;
   std::size_t num_lanes;
+  std::string interface;
 
-  static CommandLineArguments Parse(int argc, char **argv) {
+  static CommandLineArguments Parse(int argc, char **argv, adapter_list_type const &adapters) {
     CommandLineArguments args;
 
     // define the parameters
@@ -35,11 +40,34 @@ struct CommandLineArguments {
     parameters.add(args.num_lanes, "lanes", "The number of lanes to use", DEFAULT_NUM_LANES);
     parameters.add(raw_peers, "peers", "The comma separrated list of addresses to initially connect to", std::string{});
 
+    std::size_t const num_adapters = adapters.size();
+    if (num_adapters == 0) {
+      throw std::runtime_error("Unable to detect system network interfaces");
+    } else if (num_adapters == 1) {
+      args.interface = adapters[0].address().to_string();
+    } else {
+      parameters.add(args.interface, "interface", "The network interface to be used to bind to");
+    }
+
     // parse the args
     parameters.Parse(argc, const_cast<char const **>(argv));
 
     // update the peers
     args.SetPeers(raw_peers);
+
+    // validate the interface
+    bool valid_adapter = false;
+    for (auto const &adapter : adapters) {
+      if (adapter.address().to_string() == args.interface) {
+        valid_adapter = true;
+        break;
+      }
+    }
+
+    // handle invalid interface address
+    if (!valid_adapter) {
+      throw std::runtime_error("Invalid interface address");
+    }
 
     return args;
   }
@@ -71,7 +99,7 @@ struct CommandLineArguments {
     }
   }
 
-  friend std::ostream &operator<<(std::ostream &s, CommandLineArguments const &args) {
+  friend std::ostream &operator<<(std::ostream &s, CommandLineArguments const &args) FETCH_MAYBE_UNUSED {
     s << "port...: " << args.port << '\n';
     s << "peers..: ";
     for (auto const &peer : args.peers) {
@@ -91,7 +119,9 @@ int main(int argc, char **argv) {
 
   try {
 
-    auto const args = CommandLineArguments::Parse(argc, argv);
+    auto const network_adapters = fetch::network::Adapter::GetAdapters();
+
+    auto const args = CommandLineArguments::Parse(argc, argv, network_adapters);
 
     fetch::logger.Info("Configuration:\n", args);
 
