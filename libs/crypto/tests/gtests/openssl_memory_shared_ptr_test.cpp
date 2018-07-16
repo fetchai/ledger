@@ -62,7 +62,7 @@ protected:
     //}
 };
 
-TEST_F(OpenSSLSharedPtrTest, test_Deleter_called) {
+TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_construction) {
     TestType testValue;
 
     //* Expctation
@@ -72,9 +72,83 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called) {
         //* Production code
         ossl_shared_ptr__for_Testing<> x(&testValue);
         (void)x;
-        TestType& x_ref = *x;
-        (void)x_ref;
-        x->testMethod();
+    }
+}
+
+TEST_F(OpenSSLSharedPtrTest, test_Deleter_not_called_for_empty_smart_ptr) {
+    {
+        //* Production code
+        ossl_shared_ptr__for_Testing<> x;
+        (void)x;
+    }
+}
+
+TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_reset) {
+    TestType testValue;
+
+    //* Expctation
+    EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+
+    {
+        //* Production code
+        ossl_shared_ptr__for_Testing<> x(&testValue);
+        x.reset();
+    }
+}
+
+TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_reset_with_specific_pointer) {
+    TestType testValue;
+    TestType testValue2;
+
+    //* Expctation
+    EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+    EXPECT_CALL(*mock, free_TestType(&testValue2)).WillOnce(Return());
+
+    {
+        //* Production code
+        ossl_shared_ptr__for_Testing<> x(&testValue);
+        x.reset(&testValue2);
+    }
+}
+
+TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_swap) {
+    TestType testValue;
+
+    //* Expctation
+    EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+
+    {
+        //* Production code
+        ossl_shared_ptr__for_Testing<> x(&testValue);
+        ossl_shared_ptr__for_Testing<> y;
+        x.swap(y);
+    }
+}
+
+TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_assign) {
+    TestType testValue;
+
+    //* Expctation
+    EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+
+    {
+        //* Production code
+        ossl_shared_ptr__for_Testing<> x(&testValue);
+        ossl_shared_ptr__for_Testing<> y;
+        x = y;
+    }
+}
+
+TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_copy_construct) {
+    TestType testValue;
+
+    //* Expctation
+    EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+
+    {
+        //* Production code
+        ossl_shared_ptr__for_Testing<> x(&testValue);
+        ossl_shared_ptr__for_Testing<> y(x);
     }
 }
 

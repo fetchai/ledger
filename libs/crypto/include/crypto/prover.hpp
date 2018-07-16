@@ -1,6 +1,8 @@
 #ifndef CRYPTO_PROVER_HPP
 #define CRYPTO_PROVER_HPP
+
 #include "core/byte_array/byte_array.hpp"
+
 namespace fetch {
 namespace crypto {
 

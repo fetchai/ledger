@@ -17,7 +17,7 @@ namespace memory {
     template <typename T
             , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical
             , typename T_Deleter = detail::OpenSSLDeleter<T, P_DeleteStrategy>>
-    class ossl_shared_ptr : private std::shared_ptr<T>
+    class ossl_shared_ptr : public std::shared_ptr<T>
     {
     public:
         using Base = std::shared_ptr<T>;
@@ -25,10 +25,11 @@ namespace memory {
         static constexpr eDeleteStrategy deleteStrategy = P_DeleteStrategy;
 
         using Base::Base;
-        using Base::operator*;
-        using Base::operator->;
+        //using Base::operator*;
+        //using Base::operator->;
+        //using Base::reset;
+        //using Base::swap;
         using Base::reset;
-        using Base::swap;
 
         template< class Y >
         explicit ossl_shared_ptr( Y* ptr = nullptr) : Base(ptr, Deleter()) {

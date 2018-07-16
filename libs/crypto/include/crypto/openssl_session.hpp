@@ -11,37 +11,35 @@ namespace context {
 
 template <typename T,
         , typename T_SessionPrimitive = detail::SessionPrimitive<T>,
-        , typename T_OpenSSLSmartPointer = memory::DeleterPrimitive<typename std::remove_const<T>::type>>
 class Session
 {
 public:
     using Type = T;
     using NC_Type = typename std::remove_const<T>::type;
-
+    using ContextSmartPtr = ossl_shared_ptr<T>;
     using SessionPrimitive = T_SessionPrimitive;
-    using DeleterPrimitive = T_DeleterPrimitive;
 
 private:
-    Type* _ptr;
+    ossl_shared_ptr<T> _context;
     bool _isStarted;
 
 public:
-    explicit Session(Type* ptr, const bool is_already_started = false)
-        : _ptr(ptr)
+    explicit Session(ContextSmartPtr context, const bool is_already_started = false)
+        : _context(context)
         , _isStarted(is_already_started)
     {
     }
 
     ~Session() {
         end();
-        (*DeleterPrimitive::function)(const_cast<NC_Type*>(_ptr));
+        (*DeleterPrimitive::function)(const_cast<NC_Type*>(_context.get()));
     }
 
     void start() {
         if (_isStarted)
             return;
 
-        SessionPrimitive::start(_ptr);
+        SessionPrimitive::start(_context.get());
         _isStarted = true;
     }
 
@@ -50,35 +48,15 @@ public:
             return;
 
         _isStarted = false;
-        SessionPrimitive::stop(_ptr);
+        SessionPrimitive::stop(_context.get());
+    }
+
+    ContextSmartPtr context() const {
+        return _context;
     }
 
     bool isStarted() const {
         return _isStarted;
-    }
-
-    NC_Type* operator-> () {
-        return _ptr;
-    }
-
-    const NC_Type* operator-> () const {
-        return _ptr;
-    }
-
-    NC_Type& operator * () {
-        return *_ptr;
-    }
-
-    const NC_Type& operator * () const {
-        return *_ptr;
-    }
-
-    NC_Type* operator T* () {
-        return _ptr;
-    }
-
-    const NC_Type* operator const T* () const {
-        return _ptr;
     }
 };
 
