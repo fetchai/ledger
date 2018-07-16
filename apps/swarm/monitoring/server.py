@@ -16,17 +16,24 @@ import sys
 import contextlib
 import random
 
+from functools import reduce
+
 from monitoring.Monitoring import Monitoring
 
 from bottle import route, run, error, template, hook, request, response, static_file, redirect
 
 SIZE_OPACITY_HISTORY_SCALES = [
-    ( 45, 1.0, 1.0, ),
-    ( 30, .50, 0.4),
-    ( 13, .20, 0.3),
-    ( 7,  .10, 0.15),
-    ( 4,  .05, 0.07),
-    ( 1,  .03, 0.03)
+    ( 90, 1.0,  1.0, ),
+    ( 70, .80,  .07, ),
+    ( 60, .50,  .40, ),
+    ( 45, .20,  .30, ),
+    ( 30, .10,  .15, ),
+    ( 20, .05,  .07, ),
+    ( 12, .03,  .03, ),
+
+    ( 7,  .02,  .03, ),
+    ( 3,  .015, .02, ),
+    ( 1,  .01,  .01, ),
 ]
 
 MAX_DEPTH = len(SIZE_OPACITY_HISTORY_SCALES)-1
@@ -215,6 +222,8 @@ class CurrentNodesModel(object):
     def __init__(self):
         self.nodes = {}
         self.oldheads = set()
+        self.nodesizes = {}
+
 
     def clear(self):
         self.nodes = {}
@@ -257,6 +266,19 @@ class CurrentNodesModel(object):
         shallowest_num = currentHeadsInDecreasingBlockNumber[0][0]
         newoldheads = set()
 
+        def collect(store, value):
+            store.setdefault(value, 0)
+            store[value] += 1
+            return store
+
+        newNodeSizes = reduce(collect, currentheads, {})
+        totalNodeSizes = len(currentheads)
+        newNodeSizes = dict([ (k,v/totalNodeSizes) for k,v in newNodeSizes.items() ])
+
+        for k,v in newNodeSizes.items():
+            self.nodesizes[k] = max(self.nodesizes.get(k, 0), v)
+
+        touched = set()
         for num, name in currentHeadsInDecreasingBlockNumber:
             offs=shallowest_num - num
             ancs = get_ancestry(chain, name, MAX_DEPTH, offs=offs)
@@ -266,10 +288,12 @@ class CurrentNodesModel(object):
                 depth= foo[0]
                 name = foo[1]
                 prev = foo[2]
+                touched.add(name)
                 self.add(name, {
                     'depth': depth,
                     'name' : name,
                     'prev' : prev,
+                    'scale': self.nodesizes.get(name, 1),
                 })
                 newoldheads.add(name)
 
@@ -290,17 +314,25 @@ class CurrentNodesModel(object):
                     'depth': depth,
                     'name': name,
                     'prev': prev,
+                    'scale': self.nodesizes.get(name, 1),
                 })
                 for depth, name, prev
                 in ancs
             ]
             for a in foo:
+                touched.add(a[0])
                 self.add(a[0], a[1])
 
         self.oldheads = newoldheads
 
+        self.nodesizes = dict([
+            (k,v)
+            for k,v in self.nodesizes.items()
+            if k in touched])
+
 
 currentNodesModel = CurrentNodesModel()
+
 
 def get_consensus_data(context, mon):
     r = {
@@ -311,17 +343,21 @@ def get_consensus_data(context, mon):
     myChain = mon.getChain()
     currentNodesModel.populate(myChain, mon.heaviests.values())
 
-
     for node in currentNodesModel.yieldNodes():
         d = min(node['depth'], MAX_DEPTH)
         s = SIZE_OPACITY_HISTORY_SCALES[d]
         k = node['name']
+        name = k
         step = MAX_DEPTH - d
+
+        nodesize = s[0] * 0.8
+        if 'scale' in node:
+            nodesize *= math.sqrt(math.sqrt(node['scale']))
 
         n = {
             'id': k[0:16],
             'group': ord((k or "0")[0]) & 0x0F,
-            'value': s[0],
+            'value': nodesize,
             'charge': -1500,
             'status': "darken",
             'class': "BLOCK",
@@ -341,7 +377,6 @@ def get_consensus_data(context, mon):
     ])
 
 
-
     for node in currentNodesModel.yieldNodes():
         p = node['prev']
         name = node['name']
@@ -352,7 +387,7 @@ def get_consensus_data(context, mon):
                     "source": p[0:16],
                     "target": name[0:16],
                     "value": s[1] * 3,
-                    'distance': 100 * s[2],
+                    'distance': s[0] * 3,
             }])
 
     r["links"].extend([
