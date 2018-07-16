@@ -397,10 +397,12 @@ class TCPClientImplementation final :
       }
     };
 
-    if(socket)
+    auto strand = strand_.lock();
+
+    if(socket && strand)
     {
-      assert(strand_.lock()->running_in_this_thread());
-      asio::async_write(*socket, buffers, strand_.lock()->wrap(cb));
+      assert(strand->running_in_this_thread());
+      asio::async_write(*socket, buffers, strand->wrap(cb));
     } else {
       fetch::logger.Error("Failed to lock socket in WriteNext!");
     }
