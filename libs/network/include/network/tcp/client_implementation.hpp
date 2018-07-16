@@ -39,7 +39,6 @@ class TCPClientImplementation final :
   TCPClientImplementation(network_manager_type &network_manager) noexcept :
     networkManager_{network_manager}
   {
-    std::cout << "creating " << this << std::endl;
   }
 
   TCPClientImplementation(TCPClientImplementation const &rhs)            = delete;
@@ -49,7 +48,6 @@ class TCPClientImplementation final :
 
   ~TCPClientImplementation() {
     destructing_ = true;
-    std::cout << "destroying " << this << std::endl;
   }
 
   void Connect(byte_array::ConstByteArray const& host, uint16_t port)

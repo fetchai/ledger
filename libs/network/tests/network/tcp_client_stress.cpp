@@ -786,14 +786,17 @@ int main(int argc, char* argv[]) {
   std::string host    = "localhost";
   uint16_t portNumber = 8080;
   std::string port    = std::to_string(portNumber);
+  std::size_t iterations = 0;
 
-  for (std::size_t i = 0; i < 10; ++i)
+  if (argc > 1)
   {
-    TestCase9<1>(host, port);
-    TestCase9<10>(host, port);
+    std::stringstream s(argv[1]);
+    s >> iterations;
   }
 
-  for (std::size_t i = 0; i < 1; ++i)
+  fetch::logger.Info("Running test iterations: ", iterations);
+
+  for (std::size_t i = 0; i < iterations; ++i)
   {
     TestCase0<1>(host, port);
     TestCase1<1>(host, port);
