@@ -376,6 +376,7 @@ void TestCase9(std::string host, std::string port)
 
   for (std::size_t index = 0; index < 10; ++index)
   {
+    std::cerr << "Iteration: " << index << std::endl;
     NetworkManager nmanager(N);
     nmanager.Start();
     std::atomic<std::size_t> threadCount{0};
@@ -798,6 +799,7 @@ int main(int argc, char* argv[]) {
 
   for (std::size_t i = 0; i < iterations; ++i)
   {
+    TestCase9<1>(host, port);
     TestCase0<1>(host, port);
     TestCase1<1>(host, port);
     TestCase2<1>(host, port);
@@ -806,13 +808,13 @@ int main(int argc, char* argv[]) {
     TestCase5<1>(host, port);
     TestCase6<1>(host, port);
     TestCase7<1>(host, port);
-    TestCase9<1>(host, port);
     TestCase11<1>(host, port);
     TestCase12<1>(host, port);
     TestCase13<1>(host, port);
     TestCase14<1>(host, port);
     TestCase15<1>(host, port);
 
+    TestCase9<10>(host, port);
     TestCase1<10>(host, port);
     TestCase2<10>(host, port);
     TestCase3<10>(host, port);
@@ -820,7 +822,6 @@ int main(int argc, char* argv[]) {
     TestCase5<10>(host, port);
     TestCase6<10>(host, port);
     TestCase7<10>(host, port);
-    TestCase9<10>(host, port);
     TestCase11<10>(host, port);
     TestCase12<10>(host, port);
     TestCase13<10>(host, port);
