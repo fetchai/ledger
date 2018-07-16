@@ -27,5 +27,17 @@ int main() {
                "curve=ecdsa.SECP256k1)"
             << std::endl;
   std::cout << "vk.verify(sig.decode(\"hex\"), message) # True" << std::endl;
+
+
+  ECDSAVerifier verify(sig.identity());
+  
+  if( verify("Hello world", sig.signature() ) ) {
+    std::cout << "# VERIFIED!" << std::endl;    
+  } else {
+    std::cout << "# NOT VERIFIED!" << std::endl;
+    exit(-1);
+  }
+  
+  
   return 0;
 }
