@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
 #include "core/assert.hpp"
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/tokenizer/token.hpp"
 
 namespace fetch {

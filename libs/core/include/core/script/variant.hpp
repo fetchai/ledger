@@ -1,8 +1,7 @@
 #ifndef SCRIP_VARIANT_HPP
 #define SCRIP_VARIANT_HPP
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "vectorise/memory/shared_array.hpp"
-//#include "script/dictionary.hpp"
 #include "core/assert.hpp"
 
 #include <initializer_list>
@@ -56,11 +55,11 @@ class Variant {
   template <typename T>
   class VariantObjectEntryProxy : public T {
    public:
-    VariantObjectEntryProxy(byte_array::BasicByteArray const& key,
+    VariantObjectEntryProxy(byte_array::ConstByteArray const& key,
                             Variant* parent)
         : key_(key), parent_(parent), child_(nullptr) {}
 
-    VariantObjectEntryProxy(byte_array::BasicByteArray const& key,
+    VariantObjectEntryProxy(byte_array::ConstByteArray const& key,
                             Variant* parent, Variant* child)
         : T(*child), key_(key), parent_(parent), child_(child) {}
 
@@ -87,7 +86,7 @@ class Variant {
     }
 
    private:
-    byte_array::BasicByteArray key_;
+    byte_array::ConstByteArray key_;
     T *parent_, *child_;
     bool modified_ = false;
   };
@@ -195,7 +194,7 @@ class Variant {
 
   // Dict accessors
   VariantObjectEntryProxy<Variant> operator[](
-      byte_array::BasicByteArray const& key) {
+      byte_array::ConstByteArray const& key) {
     assert(type_ == OBJECT);
     std::size_t i = 0;
     for (; i < array_.size(); i += 2) {
@@ -207,7 +206,7 @@ class Variant {
     return VariantObjectEntryProxy<Variant>(key, this, &array_[i + 1]);
   }
 
-  Variant const& operator[](byte_array::BasicByteArray const& key) const {
+  Variant const& operator[](byte_array::ConstByteArray const& key) const {
     static Variant undefined_variant;
     assert(type_ == OBJECT);
     std::size_t i = FindKeyIndex(key);
@@ -223,7 +222,7 @@ class Variant {
   Variant const& operator[](std::size_t const& i) const;
   std::size_t size() const;
 
-  bool Append(byte_array::BasicByteArray const& key, Variant const& val) {
+  bool Append(byte_array::ConstByteArray const& key, Variant const& val) {
     std::size_t i = FindKeyIndex(key);
 
     if (i == array_.size()) {
@@ -275,7 +274,7 @@ class Variant {
   VariantType type() const { return type_; }
 
  private:
-  std::size_t FindKeyIndex(byte_array::BasicByteArray const& key) const {
+  std::size_t FindKeyIndex(byte_array::ConstByteArray const& key) const {
     std::size_t i = 0;
     for (; i < array_.size(); i += 2) {
       if (key == array_[i].as_byte_array()) break;
@@ -283,7 +282,7 @@ class Variant {
     return i;
   }
 
-  void LazyAppend(byte_array::BasicByteArray const& key, Variant const& val) {
+  void LazyAppend(byte_array::ConstByteArray const& key, Variant const& val) {
     assert(type_ == OBJECT);
     array_.Resize(array_.size() + 2);
 

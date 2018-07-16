@@ -4,7 +4,7 @@
 #include <type_traits>
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/stl_types.hpp"
@@ -35,7 +35,7 @@ class TypedByte_ArrayBuffer {
     for (std::size_t i = 0; i < size; ++i) arr[i] = data_[pos_++];
   }
 
-  void ReadByteArray(byte_array::BasicByteArray &b, std::size_t const &size) {
+  void ReadByteArray(byte_array::ConstByteArray &b, std::size_t const &size) {
     if (int64_t(size) > bytes_left()) {
       throw std::runtime_error("Typed serializer error 2: Not enough bytes - TODO, make error serializable");
     }

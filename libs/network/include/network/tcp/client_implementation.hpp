@@ -3,12 +3,12 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
 #include "network/message.hpp"
 #include "network/management/network_manager.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection.hpp"

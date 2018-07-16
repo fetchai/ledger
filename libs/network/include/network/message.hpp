@@ -1,7 +1,7 @@
 #ifndef NETWORK_MESSAGE_HPP
 #define NETWORK_MESSAGE_HPP
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 
 #include <deque>
 

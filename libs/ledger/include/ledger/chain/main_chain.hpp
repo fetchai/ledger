@@ -1,7 +1,7 @@
 #ifndef MAIN_CHAIN_HPP
 #define MAIN_CHAIN_HPP
 
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
@@ -95,8 +95,12 @@ class MainChain
     // First check if block already exists
     if(blockChain_.find(block.hash()) != blockChain_.end())
     {
-      fetch::logger.Warn("Mainchain: Trying to add already seen block");
+        fetch::logger.Warn("Mainchain: Trying to add already seen block:", block.summarise());
       return false;
+    }
+    else
+    {
+        fetch::logger.Info("Mainchain: Add newly found block:", block.summarise());
     }
 
     // Check whether blocks prev hash refers to a valid tip (common case)
@@ -105,13 +109,16 @@ class MainChain
 
     if(tipRef != tips_.end())
     {
-      fetch::logger.Info("Mainchain: Pushing block onto already existing tip");
 
       tip = ((*tipRef).second);
       tips_.erase(tipRef);
       tip->total_weight += block.weight();
       block.loose() = tip->loose;
       block.totalWeight() = tip->total_weight;
+
+      fetch::logger.Info("Mainchain: Pushing block onto already existing tip:", block.summarise());
+
+      fetch::logger.Info("Mainchain: ", "W=", block.weight(), " TW=", block.totalWeight());
 
       // Blocks need to know if their root is not genesis, for the case where another block
       // arrives and points to this one. Non loose blocks don't need this.
@@ -173,6 +180,7 @@ class MainChain
         tip->loose          = true;
         block.root()        = block.body().previous_hash;
         block.loose()       = true;
+        tip -> total_weight = block.weight();
         danglingRoot_[block.body().previous_hash].insert(block.hash());
       }
     }
@@ -194,6 +202,7 @@ class MainChain
 
         tips_[tipHash]->root = block.body().previous_hash;
         tips_[tipHash]->loose = block.loose();
+        tips_[tipHash]->total_weight += block.totalWeight();
 
         block_hash hash = tipHash;
 
@@ -217,6 +226,26 @@ class MainChain
           walkBlock.root()        = block.body().previous_hash;
           hash                    = walkBlock.body().previous_hash;
         }
+
+        // KLL: at this point we need to see if this connection has created a new heaviest tip.
+        auto updatedTip = tips_[tipHash];
+        if (!updatedTip->loose && updatedTip->total_weight > heaviest_.first)
+        {
+            fetch::logger.Info("Mainchain: Updating heaviest with tip");
+            bool tipWasHeaviest = (heaviest_.second == block.body().previous_hash);
+            heaviest_.first = updatedTip->total_weight;
+            heaviest_.second = block.hash();
+
+            if(tipWasHeaviest)
+            {
+                onNewHeaviest();
+            }
+            else
+            {
+                onForkSwitch();
+            }
+        }
+
       }
 
       if(block.loose())
@@ -264,6 +293,36 @@ class MainChain
     {
       result.push_back(topBlock);
 
+      auto hash = topBlock.body().previous_hash;
+
+      // Walk down
+      auto it = blockChain_.find(hash);
+      if(it == blockChain_.end())
+      {
+        fetch::logger.Info("Mainchain: Failed while walking down\
+            from top block to find genesis!");
+        break;
+      }
+
+      topBlock = (*it).second;
+    }
+
+    result.push_back(topBlock); // this should be genesis
+    return result;
+  }
+
+  // for debugging: get the heaviest chain
+  std::vector<block_type> HeaviestChain(size_t limit) const
+  {
+    std::vector<block_type> result;
+
+    auto topBlock =  blockChain_.at(heaviest_.second);
+
+    fetch::logger.Info("Mainchain: Determining heaviest chain as:", topBlock.summarise());
+
+    while((topBlock.body().block_number != 0)  && (result.size() < limit))
+    {
+      result.push_back(topBlock);
       auto hash = topBlock.body().previous_hash;
 
       // Walk down

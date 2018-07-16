@@ -33,7 +33,7 @@
 
 #include "python/byte_array/py_referenced_byte_array.hpp"
 #include "python/byte_array/py_encoders.hpp"
-#include "python/byte_array/py_const_byte_array.hpp"
+
 #include "python/byte_array/py_basic_byte_array.hpp"
 #include "python/byte_array/py_consumers.hpp"
 #include "python/byte_array/py_decoders.hpp"
@@ -187,7 +187,6 @@ PYBIND11_MODULE(fetch, module) {
   fetch::math::statistics::BuildStandardDeviationStatistics("StandardDeviation", ns_fetch_math_statistics);  
   
   
-  fetch::byte_array::BuildBasicByteArray(ns_fetch_byte_array);
   fetch::byte_array::BuildByteArray(ns_fetch_byte_array);
   fetch::byte_array::BuildConstByteArray(ns_fetch_byte_array);
   

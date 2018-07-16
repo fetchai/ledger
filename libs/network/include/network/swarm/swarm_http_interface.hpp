@@ -11,25 +11,23 @@ namespace fetch
 namespace swarm
 {
 
-class SwarmHttpInterface : public fetch::http::HTTPModule
+class SwarmHttpModule : public fetch::http::HTTPModule
 {
 public:
 
-  explicit SwarmHttpInterface(std::shared_ptr<SwarmNode> node) : node_{node}
+  explicit SwarmHttpModule(std::shared_ptr<SwarmNode> node) : node_{node}
   {
     AttachPages();
   }
 
-  SwarmHttpInterface(SwarmHttpInterface&& rhs)
+  SwarmHttpModule(SwarmHttpModule&& rhs)
   {
     LOG_STACK_TRACE_POINT ;
     node_ = std::move(rhs.node_);
     AttachPages();
   }
 
-  virtual ~SwarmHttpInterface()
-  {
-  }
+    virtual ~SwarmHttpModule() = default;
 
   void AttachPages()
   {
@@ -73,9 +71,9 @@ public:
       }
   }
 
-  SwarmHttpInterface(SwarmHttpInterface &rhs)            = delete;
-  SwarmHttpInterface operator=(SwarmHttpInterface &rhs)  = delete;
-  SwarmHttpInterface operator=(SwarmHttpInterface &&rhs) = delete;
+  SwarmHttpModule(SwarmHttpModule &rhs)            = delete;
+  SwarmHttpModule operator=(SwarmHttpModule &rhs)  = delete;
+  SwarmHttpModule operator=(SwarmHttpModule &&rhs) = delete;
 
 private:
   std::shared_ptr<SwarmNode> node_;

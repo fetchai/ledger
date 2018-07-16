@@ -1,7 +1,7 @@
-#ifndef BYTE_ARRAY_REFERENCED_BYTE_ARRAY_HPP
-#define BYTE_ARRAY_REFERENCED_BYTE_ARRAY_HPP
+#ifndef BYTE_ARRAY_BYTE_ARRAY_HPP
+#define BYTE_ARRAY_BYTE_ARRAY_HPP
 
-#include "core/byte_array/basic_byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -11,9 +11,9 @@
 namespace fetch {
 namespace byte_array {
 
-class ByteArray : public BasicByteArray {
+class ByteArray : public ConstByteArray {
  public:
-  typedef BasicByteArray super_type;
+  typedef ConstByteArray super_type;
 
   ByteArray() {}
   ByteArray(char const *str) : super_type(str) {}
@@ -37,26 +37,12 @@ class ByteArray : public BasicByteArray {
     return super_type::operator[](n);
   }
 
-  /*
-   *
-   * TODO: This breaks referencing - work out if this is the desired behaviour.
-   */
-  void Resize(std::size_t const &n) { return super_type::Resize(n); }
+  using super_type::Resize;
+  using super_type::Reserve;
+  using super_type::operator+;
+  using super_type::pointer;
+  using super_type::char_pointer;
 
-  /*
-   *
-   * TODO: This breaks referencing - work out if this is the desired behaviour.
-   */
-  void Reserve(std::size_t const &n) { return super_type::Reserve(n); }
-
-  ByteArray operator+(ByteArray const &other) const {
-    return super_type::operator+(other);
-  }
-
-  container_type const *pointer() const { return super_type::pointer(); }
-  char const *char_pointer() const { return super_type::char_pointer(); }
-  container_type *pointer() { return super_type::pointer(); }
-  char *char_pointer() { return super_type::char_pointer(); }
 };
 
 inline std::ostream &operator<<(std::ostream &os, ByteArray const &str) {

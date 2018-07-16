@@ -15,9 +15,8 @@ namespace swarm
 {
 
 void BuildSwarmAgentApi(pybind11::module &module) {
-  namespace py = pybind11;
-  py::class_<fetch::swarm::PySwarm, std::shared_ptr<fetch::swarm::PySwarm>>(module, "Swarm" )
-    .def(py::init<unsigned int, uint16_t, unsigned int, unsigned int, unsigned int>())
+  pybind11::class_<fetch::swarm::PySwarm, std::shared_ptr<fetch::swarm::PySwarm>>(module, "Swarm" )
+      .def(pybind11::init<uint32_t, uint16_t, uint16_t, uint32_t, uint32_t, uint32_t, uint32_t>())
     .def("Start", &PySwarm::Start)
     .def("Stop", &PySwarm::Stop)
     .def("OnPeerless", &PySwarm::OnPeerless)
@@ -56,6 +55,11 @@ void BuildSwarmAgentApi(pybind11::module &module) {
     .def("GetCost", &PySwarm::GetCost)
     .def("GetPeers", &PySwarm::GetPeers)
     .def("queryOwnLocation", &PySwarm::queryOwnLocation)
+
+    .def("OnBlockSupplied", &PySwarm::PyOnBlockSupplied)
+    .def("OnBlockNotSupplied", &PySwarm::PyOnBlockNotSupplied)
+    .def("OnLooseBlock", &PySwarm::PyOnLooseBlock)
+    .def("HeaviestBlock", &PySwarm::HeaviestBlock)
     ;
 }
 

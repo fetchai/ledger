@@ -1,7 +1,7 @@
 #ifndef SERVICE_TYPES_HPP
 #define SERVICE_TYPES_HPP
 #include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
 

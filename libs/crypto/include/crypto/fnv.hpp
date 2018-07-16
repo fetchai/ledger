@@ -1,7 +1,7 @@
 #ifndef CRYPTO_FNV_HPP
 #define CRYPTO_FNV_HPP
-#include <core/byte_array/referenced_byte_array.hpp>
-#include <crypto/stream_hasher.hpp>
+#include "core/byte_array/byte_array.hpp"
+#include "crypto/stream_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -41,7 +41,7 @@ class FNV : public StreamHasher {
 };
 
 struct CallableFNV {
-  std::size_t operator()(fetch::byte_array::BasicByteArray const& key) const {
+  std::size_t operator()(fetch::byte_array::ConstByteArray const& key) const {
     uint32_t hash = 2166136261;
     for (std::size_t i = 0; i < key.size(); ++i) {
       hash = (hash * 16777619) ^ key[i];
