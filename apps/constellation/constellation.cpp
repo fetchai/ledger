@@ -2,16 +2,12 @@
 
 namespace fetch {
 
-Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std::size_t num_lanes) {
-
-  // work out the port mappings
-  static constexpr uint16_t P2P_PORT_OFFSET = 1;
-  static constexpr uint16_t HTTP_PORT_OFFSET = 0;
-  static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
-
-  uint16_t const p2p_port = port_start + P2P_PORT_OFFSET;
-  uint16_t const http_port = port_start + HTTP_PORT_OFFSET;
-  uint16_t const storage_port_start = port_start + STORAGE_PORT_OFFSET;
+Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std::size_t num_lanes, std::string const &interface_address)
+  : interface_address_{interface_address}
+  , num_lanes_{static_cast<uint32_t>(num_lanes)}
+  , p2p_port_{static_cast<uint16_t>(port_start + P2P_PORT_OFFSET)}
+  , http_port_{static_cast<uint16_t>(port_start + HTTP_PORT_OFFSET)}
+  , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)} {
 
   // determine how many threads the network manager will require
   std::size_t const num_network_threads =
@@ -22,14 +18,14 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
   network_manager_->Start(); // needs to be started
 
   // setup the storage service
-  storage_service_.Setup("node_storage", num_lanes, storage_port_start, *network_manager_, false);
+  storage_service_.Setup("node_storage", num_lanes, lane_port_start_, *network_manager_, false);
 
   // create the aggregate storage client
   storage_.reset(new ledger::StorageUnitClient(*network_manager_));
   for (std::size_t i = 0; i < num_lanes; ++i) {
     storage_->AddLaneConnection<connection_type>(
-      "127.0.0.1",
-      static_cast<uint16_t>(storage_port_start + i)
+      interface_address,
+      static_cast<uint16_t>(lane_port_start_ + i)
     );
   }
 
@@ -42,10 +38,10 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
     })
   );
 
-  p2p_.reset(new p2p::P2PService(p2p_port, *network_manager_));
+  p2p_.reset(new p2p::P2PService(p2p_port_, *network_manager_));
   p2p_->Start();
 
-  http_.reset(new http::HTTPServer(http_port, *network_manager_));
+  http_.reset(new http::HTTPServer(http_port_, *network_manager_));
 }
 
 void Constellation::Run(peer_list_type const &initial_peers) {
@@ -55,6 +51,15 @@ void Constellation::Run(peer_list_type const &initial_peers) {
   // make the initial p2p connections
   for (auto const &peer : initial_peers) {
     p2p_->Connect(peer.address(), peer.port());
+  }
+
+  // expose our own interface
+  for (uint32_t i = 0; i < num_lanes_; ++i) {
+    p2p_->AddLane(
+      i,
+      interface_address_,
+      static_cast<uint16_t>(lane_port_start_ + i)
+    );
   }
 
   // monitor loop

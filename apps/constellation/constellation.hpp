@@ -44,6 +44,9 @@ public:
   using http_server_type = std::unique_ptr<http::HTTPServer>;
   using peer_list_type = std::vector<network::Peer>;
 
+  static constexpr uint16_t P2P_PORT_OFFSET = 1;
+  static constexpr uint16_t HTTP_PORT_OFFSET = 0;
+  static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
   static constexpr uint32_t DEFAULT_MINING_TARGET = 10;
   static constexpr uint32_t DEFAULT_IDLE_SPEED = 2000;
   static constexpr uint16_t DEFAULT_PORT_START = 5000;
@@ -66,7 +69,8 @@ public:
 
   explicit Constellation(uint16_t port_start = DEFAULT_PORT_START,
                          std::size_t num_executors = DEFAULT_NUM_EXECUTORS,
-                         std::size_t num_lanes = DEFAULT_NUM_LANES);
+                         std::size_t num_lanes = DEFAULT_NUM_LANES,
+                         std::string const &interface_address = "127.0.0.1");
 
   void Run(peer_list_type const &initial_peers = peer_list_type{});
 
@@ -78,6 +82,12 @@ public:
 private:
 
   flag_type active_{true};                      ///< Flag to control running of main thread
+  std::string interface_address_;
+  uint32_t num_lanes_;
+  uint16_t p2p_port_;
+  uint16_t http_port_;
+  uint16_t lane_port_start_;
+
   network_manager_type network_manager_;        ///< Top level network coordinator
 
   /// @name Lane Storage Components
