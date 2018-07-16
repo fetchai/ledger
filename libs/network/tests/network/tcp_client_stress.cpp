@@ -786,7 +786,7 @@ int main(int argc, char* argv[]) {
   std::string host    = "localhost";
   uint16_t portNumber = 8080;
   std::string port    = std::to_string(portNumber);
-  std::size_t iterations = 0;
+  std::size_t iterations = 1;
 
   if (argc > 1)
   {

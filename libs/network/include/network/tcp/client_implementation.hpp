@@ -50,13 +50,13 @@ class TCPClientImplementation final :
     destructing_ = true;
   }
 
-  void Connect(byte_array::ConstByteArray const& host, uint16_t port)
+  void Connect(byte_array::ConstByteArray const& host, uint16_t port) const noexcept
   {
     Connect(host, byte_array::ConstByteArray(std::to_string(port)));
   }
 
   void Connect( byte_array::ConstByteArray const& host,
-    byte_array::ConstByteArray const& port)
+    byte_array::ConstByteArray const& port) noexcept
   {
     self_type self = shared_from_this();
 
