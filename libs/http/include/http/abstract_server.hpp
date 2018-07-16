@@ -25,9 +25,6 @@ class AbstractHTTPServer {
   static fetch::mutex::Mutex global_handle_mutex_;
 };
 
-AbstractHTTPServer::handle_type AbstractHTTPServer::global_handle_counter_ = 0;
-fetch::mutex::Mutex AbstractHTTPServer::global_handle_mutex_(__LINE__,
-                                                             __FILE__);
 }
 }
 
