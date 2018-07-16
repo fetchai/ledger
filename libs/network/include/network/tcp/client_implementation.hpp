@@ -50,7 +50,7 @@ class TCPClientImplementation final :
     destructing_ = true;
   }
 
-  void Connect(byte_array::ConstByteArray const& host, uint16_t port) const noexcept
+  void Connect(byte_array::ConstByteArray const& host, uint16_t port) noexcept
   {
     Connect(host, byte_array::ConstByteArray(std::to_string(port)));
   }
