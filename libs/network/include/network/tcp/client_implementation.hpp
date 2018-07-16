@@ -224,7 +224,9 @@ class TCPClientImplementation final :
   message_queue_type          write_queue_;
   mutable mutex_type          queue_mutex_;
   mutable mutex_type          io_creation_mutex_;
-  std::atomic<int>            can_write_{0};
+
+  mutable mutex_type          can_write_mutex_;
+  bool                        can_write_{true};
   bool                        postedClose_ = false;
 
   mutable mutex_type                callback_mutex_;
@@ -335,17 +337,30 @@ class TCPClientImplementation final :
   // Always executed in a run(), in a strand
   void WriteNext(shared_self_type selfLock)
   {
-    // Only one thread can get past here at a time
-    int can_write = can_write_++;
-    if(can_write != 1)
+    // Only one thread can get past here at a time. Effectively a try_lock except that 
+    // we can't unlock a mutex in the callback (undefined behaviour)
+    bool can_write = false;
+
     {
-      return;
+      std::lock_guard<mutex_type> lock(can_write_mutex_);
+      if(can_write_)
+      {
+        can_write_ = false;
+        can_write  = true;
+      }
+      else
+      {
+        return;
+      }
     }
 
     message_type buffer;
     {
       std::lock_guard<mutex_type> lock(queue_mutex_);
-      if(write_queue_.empty()) { can_write_ = 0; return; }
+      if(write_queue_.empty()) {
+        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        can_write_ = true; return;
+      }
       buffer = write_queue_.front();
       write_queue_.pop_front();
     }
@@ -362,7 +377,10 @@ class TCPClientImplementation final :
 
     auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len)
     {
-      can_write_ = 0;
+      {
+        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        can_write_ = true;
+      }
 
       if(ec)
       {
