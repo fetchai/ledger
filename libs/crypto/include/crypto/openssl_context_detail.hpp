@@ -1,22 +1,11 @@
 #ifndef CRYPTO_OPENSSL_CONTEXT_DETAIL_HPP
 #define CRYPTO_OPENSSL_CONTEXT_DETAIL_HPP
 
-//#include "crypto/openssl_memory_detail.hpp"
 #include <openssl/bn.h>
 
 namespace fetch {
 namespace crypto {
 namespace openssl {
-
-//namespace memory {
-//namespace detail {
-//namespace {
-//    template<>
-//    const FreeFunctionPtr<BN_CTX> DeleterPrimitive<BN_CTX>::function = &BN_CTX_free;
-//} //* namespace
-//} //* namespace detail
-//} //* namespace memory
-
 namespace context {
 namespace detail {
 

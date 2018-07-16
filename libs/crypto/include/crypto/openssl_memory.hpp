@@ -25,10 +25,6 @@ namespace memory {
         static constexpr eDeleteStrategy deleteStrategy = P_DeleteStrategy;
 
         using Base::Base;
-        //using Base::operator*;
-        //using Base::operator->;
-        //using Base::reset;
-        //using Base::swap;
         using Base::reset;
 
         template< class Y >

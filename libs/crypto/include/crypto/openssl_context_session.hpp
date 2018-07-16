@@ -1,5 +1,5 @@
-#ifndef CRYPTO_OPENSSL_CONTEXT_HPP
-#define CRYPTO_OPENSSL_CONTEXT_HPP
+#ifndef CRYPTO_OPENSSL_CONTEXT_SESSION_HPP
+#define CRYPTO_OPENSSL_CONTEXT_SESSION_HPP
 
 #include "crypto/openssl_context_detail.hpp"
 #include "crypto/openssl_memory.hpp"
@@ -9,18 +9,19 @@ namespace crypto {
 namespace openssl {
 namespace context {
 
-template <typename T,
-        , typename T_SessionPrimitive = detail::SessionPrimitive<T>,
+template <typename T
+        , typename T_SessionPrimitive = detail::SessionPrimitive<T>
+        , typename T_ContextSmartPtr =  memory::ossl_shared_ptr<T>>
 class Session
 {
 public:
     using Type = T;
     using NC_Type = typename std::remove_const<T>::type;
-    using ContextSmartPtr = ossl_shared_ptr<T>;
+    using ContextSmartPtr = T_ContextSmartPtr;
     using SessionPrimitive = T_SessionPrimitive;
 
 private:
-    ossl_shared_ptr<T> _context;
+    ContextSmartPtr _context;
     bool _isStarted;
 
 public:
@@ -32,7 +33,6 @@ public:
 
     ~Session() {
         end();
-        (*DeleterPrimitive::function)(const_cast<NC_Type*>(_context.get()));
     }
 
     void start() {
@@ -65,5 +65,5 @@ public:
 } //* crypto namespace
 } //* fetch namespace
 
-#endif //CRYPTO_OPENSSL_CONTEXT_HPP
+#endif //CRYPTO_OPENSSL_CONTEXT_SESSION_HPP
 

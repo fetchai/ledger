@@ -1,7 +1,5 @@
 #include "crypto/openssl_memory.hpp"
 
-#include <functional>
-
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
