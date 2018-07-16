@@ -13,11 +13,7 @@ namespace {
 using ::testing::StrictMock;
 using ::testing::Return;
 
-struct TestType
-{
-    void testMethod() {
-    }
-};
+struct TestType {};
 
 class MockDeleterPrimitive {
 public:
