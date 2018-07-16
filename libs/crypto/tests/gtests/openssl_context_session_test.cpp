@@ -47,26 +47,6 @@ struct StaticMockContextPrimitive<TestType> {
 };
 
 
-
-//class MockDeleterPrimitive {
-//public:
-//    MOCK_CONST_METHOD1(free_TestType, void(TestType*));
-//
-//    using Type = StrictMock<MockDeleterPrimitive>;
-//    using SharedPtr = std::shared_ptr<MockDeleterPrimitive::Type>;
-//
-//    static SharedPtr value;
-//};
-//
-//MockDeleterPrimitive::SharedPtr MockDeleterPrimitive::value;
-//
-//class Deleter {
-//public:
-//    void operator() (TestType* ptr) {
-//        MockDeleterPrimitive::value->free_TestType(ptr);
-//    }
-//};
-
 class Deleter {
 public:
     void operator() (TestType* ptr) {
@@ -81,16 +61,13 @@ protected:
     using ossl_shared_ptr__for_Testing = memory::ossl_shared_ptr<TestType, P_DeleteStrategy, Deleter>;
     using Session__for_Testing = Session<TestType, StaticMockContextPrimitive<TestType>, ossl_shared_ptr__for_Testing<>>;
 
-    //MockDeleterPrimitive::SharedPtr& deleterMock = MockDeleterPrimitive::value;
     MockContextPrimitive::SharedPtr& contextMock = MockContextPrimitive::value;
 
     void SetUp() {
-        //deleterMock = std::make_shared<MockDeleterPrimitive::Type>();
         contextMock = std::make_shared<MockContextPrimitive::Type>();
     }
 
     void TearDown() {
-        //deleterMock = MockDeleterPrimitive::SharedPtr();
         contextMock = MockContextPrimitive::SharedPtr();
     }
 
