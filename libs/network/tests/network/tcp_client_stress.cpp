@@ -374,7 +374,7 @@ void TestCase9(std::string host, std::string port)
   // Start echo server
   fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
 
-  for (std::size_t index = 0; index < 100; ++index)
+  for (std::size_t index = 0; index < 10; ++index)
   {
     NetworkManager nmanager(N);
     nmanager.Start();
@@ -397,7 +397,7 @@ void TestCase9(std::string host, std::string port)
 
     while(threadCount != iterations)
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::this_thread::sleep_for(std::chrono::milliseconds(4));
     }
   }
   std::cerr << "Success." << std::endl;
@@ -806,7 +806,7 @@ int main(int argc, char* argv[]) {
     TestCase5<1>(host, port);
     TestCase6<1>(host, port);
     TestCase7<1>(host, port);
-    //TestCase9<1>(host, port);
+    TestCase9<1>(host, port);
     TestCase11<1>(host, port);
     TestCase12<1>(host, port);
     TestCase13<1>(host, port);
@@ -820,7 +820,7 @@ int main(int argc, char* argv[]) {
     TestCase5<10>(host, port);
     TestCase6<10>(host, port);
     TestCase7<10>(host, port);
-    //TestCase9<10>(host, port);
+    TestCase9<10>(host, port);
     TestCase11<10>(host, port);
     TestCase12<10>(host, port);
     TestCase13<10>(host, port);
