@@ -34,7 +34,7 @@ class TCPServer : public AbstractNetworkServer {
     message_type meesage;
   };
 
-  TCPServer(uint16_t const& port, network_manager_type const& network_manager)
+  TCPServer(uint16_t const& port, network_manager_type network_manager)
       : network_manager_(network_manager),
         port_{port},
         request_mutex_(__LINE__, __FILE__)
@@ -109,7 +109,7 @@ class TCPServer : public AbstractNetworkServer {
   }
 
  private:
-  network_manager_type     network_manager_;
+  network_manager_type    network_manager_;
   uint16_t                port_;
   std::deque<Request>     requests_;
   fetch::mutex::Mutex     request_mutex_;

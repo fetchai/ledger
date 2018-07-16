@@ -147,10 +147,51 @@ void TestCase2(std::string host, uint16_t port)
   std::cerr << "Success." << std::endl;
 }
 
+template< std::size_t N = 1>
+void TestCase3(std::string host, uint16_t port)
+{
+  std::cerr << "\nTEST CASE 3. Threads: " << N << std::endl;
+  std::cerr << "Info: Destruct server while people are connecting to it " << std::endl;
+
+  for (std::size_t index = 0; index < 20; ++index)
+  {
+    NetworkManager nmanager(N);
+    nmanager.Start();
+    std::unique_ptr<Server> server = std::unique_ptr<Server>(new Server(port, nmanager));
+
+    waitUntilConnected(host, port);
+    std::atomic<std::size_t> threadCount{0};
+    std::size_t iterations = 100;
+
+    for (std::size_t i = 0; i < iterations; ++i)
+    {
+      std::thread(
+          [host, port, nmanager, &threadCount]
+          {
+            NetworkManager managerCopy = nmanager;
+            auto i = std::make_shared<Client>(host, port, managerCopy);
+            i->Send("test");
+            threadCount++;
+          }).detach();
+    }
+
+    server.reset();
+
+    while(threadCount != iterations)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    if(index % 3) nmanager.Stop();
+  }
+
+  std::cerr << "Success." << std::endl;
+}
+
 int main(int argc, char* argv[]) {
 
   std::string host    = "localhost";
-  uint16_t portNumber = 8080;
+  uint16_t portNumber = 8079;
 
   std::cerr << "Testing communications on port: " << portNumber << std::endl;
 

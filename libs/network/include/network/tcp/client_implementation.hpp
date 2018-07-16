@@ -34,18 +34,18 @@ class TCPClientImplementation final :
   typedef asio::ip::tcp::tcp::socket          socket_type;
   typedef asio::io_service::strand            strand_type;
   typedef asio::ip::tcp::resolver             resolver_type;
+  //typedef fetch::mutex::Mutex                 mutex_type;
 
   TCPClientImplementation(network_manager_type &network_manager) noexcept :
     networkManager_{network_manager}
   {
-    LOG_STACK_TRACE_POINT;
   }
 
   TCPClientImplementation(TCPClientImplementation const &rhs)            = delete;
   TCPClientImplementation(TCPClientImplementation &&rhs)                 = delete;
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation&& rhs)      = delete;
-  ~TCPClientImplementation() { }
+  ~TCPClientImplementation() { destructing_ = true; }
 
   void Connect(byte_array::ConstByteArray const& host, uint16_t port)
   {
@@ -67,7 +67,10 @@ class TCPClientImplementation final :
       // We get IO objects from the network manager, they will only be strong while in the post
       auto strand = networkManager_.CreateIO<strand_type>();
       if(!strand) return;
-      strand_ = strand;
+      {
+        std::lock_guard<std::mutex> lock(io_creation_mutex_);
+        strand_ = strand;
+      }
 
       strand->post([this, self, host, port, strand]
       {
@@ -75,7 +78,14 @@ class TCPClientImplementation final :
         if(!selfLock) return;
 
         std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
-        socket_ = socket;
+
+        {
+          std::lock_guard<std::mutex> lock(io_creation_mutex_);
+          if(!postedClose_)
+          {
+            socket_ = socket;
+          }
+        }
 
         std::shared_ptr<resolver_type> res = networkManager_.CreateIO<resolver_type>();
 
@@ -116,19 +126,20 @@ class TCPClientImplementation final :
 
   bool is_alive() const noexcept
   {
+    std::lock_guard<std::mutex> lock(io_creation_mutex_);
     return !socket_.expired() && connected_;
   }
 
   void Send(message_type const& msg) override
   {
-    if(!connected_)
+    if(!connected_) // TODO: (`HUT`) : delete
     {
       fetch::logger.Warn("Attempting to write to socket too early. Returning.");
       return;
     }
 
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(queue_mutex_);
+      std::lock_guard<std::mutex> lock(queue_mutex_);
       write_queue_.push_back(msg);
     }
 
@@ -152,6 +163,8 @@ class TCPClientImplementation final :
 
   void Close() noexcept
   {
+    std::lock_guard<std::mutex> lock(io_creation_mutex_);
+    postedClose_ = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
     std::weak_ptr<strand_type> strandWeak = strand_;
 
@@ -179,25 +192,26 @@ class TCPClientImplementation final :
 
   void OnConnectionFailed(std::function< void() > const &fnc)
   {
-    std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
+    std::lock_guard< std::mutex > lock(callback_mutex_);
     on_connection_failed_ = fnc;
   }
 
   void OnPushMessage(std::function< void(message_type const&) > const &fnc)
   {
-    std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
+    std::lock_guard< std::mutex > lock(callback_mutex_);
     on_push_message_ = fnc;
   }
 
   void ClearClosures() noexcept
   {
-    std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
+    std::lock_guard< std::mutex > lock(callback_mutex_);
     on_connection_failed_  = nullptr;
     on_push_message_  = nullptr;
   }
 
  private:
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
+  bool destructing_ = false;
 
   network_manager_type networkManager_;
   // IO objects should be guaranteed to have lifetime less than the io_service/networkManager
@@ -205,14 +219,16 @@ class TCPClientImplementation final :
   std::weak_ptr<strand_type> strand_;
 
   message_queue_type          write_queue_;
-  mutable fetch::mutex::Mutex queue_mutex_;
-  mutable fetch::mutex::Mutex write_mutex_;
+  mutable std::mutex queue_mutex_;
+  mutable std::mutex write_mutex_;
+  mutable std::mutex io_creation_mutex_;
+  bool                        postedClose_ = false;
 
-  mutable fetch::mutex::Mutex                callback_mutex_;
+  mutable std::mutex                callback_mutex_;
   std::function< void(message_type const&) > on_push_message_;
   std::function< void() >                    on_connection_failed_;
   std::function<void()>                      on_leave_;
-  bool                                       connected_{false};
+  std::atomic<bool>                          connected_{false};
 
   void ReadHeader() noexcept
   {
@@ -262,7 +278,12 @@ class TCPClientImplementation final :
 
     if (magic != networkMagic_)
     {
-      fetch::logger.Error("Magic incorrect during network read - dying: ", ToHex(header));
+      byte_array::ByteArray dummy;
+      SetHeader(dummy, 0);
+      dummy.Resize(16);
+
+      fetch::logger.Error("Magic incorrect during network read:\ngot:      ",
+          ToHex(header), "\nExpected: ", ToHex(byte_array::ByteArray(dummy)));
       return;
     }
 
@@ -320,7 +341,7 @@ class TCPClientImplementation final :
 
     message_type buffer;
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(queue_mutex_);
+      std::lock_guard<std::mutex> lock(queue_mutex_);
       if(write_queue_.empty()) { write_mutex_.unlock(); return; }
       buffer = write_queue_.front();
       write_queue_.pop_front();
@@ -338,6 +359,7 @@ class TCPClientImplementation final :
 
     auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len)
     {
+      assert(destructing_ == false);
       write_mutex_.unlock();
 
       if(ec)
@@ -365,13 +387,13 @@ class TCPClientImplementation final :
 
   void ConnectionFailed()
   {
-    std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
+    std::lock_guard< std::mutex > lock(callback_mutex_);
     if(on_connection_failed_) on_connection_failed_();
   }
 
   void PushMessage(message_type message)
   {
-    std::lock_guard< fetch::mutex::Mutex > lock(callback_mutex_);
+    std::lock_guard< std::mutex > lock(callback_mutex_);
     if(on_push_message_) on_push_message_(message);
   }
 };

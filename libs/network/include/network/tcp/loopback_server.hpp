@@ -71,7 +71,7 @@ class LoopbackServer
 public:
   static constexpr std::size_t DEFAULT_NUM_THREADS = 4;
 
-  explicit LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS) :
+  LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS) :
     port_{port},
     networkManager_{num_threads}
   {
@@ -99,7 +99,6 @@ public:
 
   ~LoopbackServer()
   {
-    acceptor_.reset();
     networkManager_.Stop();
   }
 

@@ -126,7 +126,7 @@ public:
 };
 
 std::vector<message_type> globalMessages{};
-fetch::mutex::Mutex       mutex_;
+std::mutex       mutex_;
 
 // Client saves messages
 class VerifyClient : public TCPClient
@@ -148,7 +148,7 @@ public:
   void PushMessage(message_type const &value) override
   {
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+      std::lock_guard<std::mutex> lock(mutex_);
       globalMessages.push_back(std::move(value));
     }
     clientReceivedCount++;
@@ -787,34 +787,42 @@ int main(int argc, char* argv[]) {
   uint16_t portNumber = 8080;
   std::string port    = std::to_string(portNumber);
 
-  TestCase0<1>(host, port);
-  TestCase1<1>(host, port);
-  TestCase2<1>(host, port);
-  TestCase3<1>(host, port);
-  TestCase4<1>(host, port);
-  TestCase5<1>(host, port);
-  TestCase6<1>(host, port);
-  TestCase7<1>(host, port);
-  TestCase9<1>(host, port);
-  TestCase11<1>(host, port);
-  TestCase12<1>(host, port);
-  TestCase13<1>(host, port);
-  TestCase14<1>(host, port);
-  TestCase15<1>(host, port);
+  for (std::size_t i = 0; i < 4; ++i)
+  {
+    TestCase9<1>(host, port);
+  }
 
-  TestCase1<10>(host, port);
-  TestCase2<10>(host, port);
-  TestCase3<10>(host, port);
-  TestCase4<10>(host, port);
-  TestCase5<10>(host, port);
-  TestCase6<10>(host, port);
-  TestCase7<10>(host, port);
-  TestCase9<10>(host, port);
-  TestCase11<10>(host, port);
-  TestCase12<10>(host, port);
-  TestCase13<10>(host, port);
-  TestCase14<10>(host, port);
-  TestCase15<10>(host, port);
+  for (std::size_t i = 0; i < 1; ++i)
+  {
+    TestCase0<1>(host, port);
+    TestCase1<1>(host, port);
+    TestCase2<1>(host, port);
+    TestCase3<1>(host, port);
+    TestCase4<1>(host, port);
+    TestCase5<1>(host, port);
+    TestCase6<1>(host, port);
+    TestCase7<1>(host, port);
+    TestCase9<1>(host, port);
+    TestCase11<1>(host, port);
+    TestCase12<1>(host, port);
+    TestCase13<1>(host, port);
+    TestCase14<1>(host, port);
+    TestCase15<1>(host, port);
+
+    TestCase1<10>(host, port);
+    TestCase2<10>(host, port);
+    TestCase3<10>(host, port);
+    TestCase4<10>(host, port);
+    TestCase5<10>(host, port);
+    TestCase6<10>(host, port);
+    TestCase7<10>(host, port);
+    TestCase9<10>(host, port);
+    TestCase11<10>(host, port);
+    TestCase12<10>(host, port);
+    TestCase13<10>(host, port);
+    TestCase14<10>(host, port);
+    TestCase15<10>(host, port);
+  }
 
   std::cerr << "finished all tests" << std::endl;
   return 0;
