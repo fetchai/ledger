@@ -239,14 +239,14 @@ int main(int argc, char* argv[]) {
 
   std::cerr << "Testing communications on port: " << portNumber << std::endl;
 
-  TestCase0<1>(host, portNumber);
-  TestCase1<1>(host, portNumber);
+  //TestCase0<1>(host, portNumber);
+  //TestCase1<1>(host, portNumber);
   //TestCase2<1>(host, portNumber);
   //TestCase3<1>(host, portNumber);
   //TestCase4<1>(host, portNumber);
 
-  TestCase0<10>(host, portNumber);
-  TestCase1<10>(host, portNumber);
+  //TestCase0<10>(host, portNumber);
+  //TestCase1<10>(host, portNumber);
   //TestCase2<10>(host, portNumber);
   //TestCase3<10>(host, portNumber);
   //TestCase4<10>(host, portNumber);
