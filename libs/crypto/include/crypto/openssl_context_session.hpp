@@ -29,6 +29,7 @@ public:
         : _context(context)
         , _isStarted(is_already_started)
     {
+        start();
     }
 
     ~Session() {
@@ -48,7 +49,7 @@ public:
             return;
 
         _isStarted = false;
-        SessionPrimitive::stop(_context.get());
+        SessionPrimitive::end(_context.get());
     }
 
     ContextSmartPtr context() const {
