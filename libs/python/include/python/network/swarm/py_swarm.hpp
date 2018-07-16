@@ -17,6 +17,8 @@
 #include "ledger/main_chain_node.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "network/protocols/mainchain/commands.hpp"
+#include"network/service/function.hpp"
 
 #include <unistd.h>
 #include <string>
@@ -30,6 +32,9 @@ namespace swarm
 class PySwarm
 {
 public:
+    typedef fetch::ledger::MainChainNode::block_type block_type;
+    typedef fetch::service::protocol_handler_type protocol_handler_type;
+ 
   PySwarm(const PySwarm &rhs)
   {
     nnCore_        = rhs.nnCore_;
@@ -90,6 +95,20 @@ public:
   {
     return std::string(fetch::byte_array::ToHex(hash));
   }
+
+    class Discovery
+    {
+    public:
+        std::string host_;
+        std::shared_ptr<network::NetworkNodeCore::Subscription> subs_;
+        Discovery(std::string host, std::shared_ptr<network::NetworkNodeCore::Subscription> subs)
+        {
+            subs_ = subs;
+            host_ = host;
+        }
+    };
+
+    std::map<std::string, std::shared_ptr<Discovery>> disc;
 
   explicit PySwarm(uint32_t id, uint16_t rpcPort, uint16_t httpPort, uint32_t maxpeers, uint32_t idlespeed, int target, int chainident)
   {
@@ -161,56 +180,41 @@ public:
                                                   });
                             });
 
+    chainNode -> onBlockComplete_ = [chainNode](const block_type blk){
+        std::cout << "Would publish" << blk.summarise() << std::endl;
+
+        chainNode ->  Publish(fetch::ledger::MainChain::BLOCK_PUBLISH, blk);
+    };
+
+
+
     swarmAgentApi -> ToDiscoverBlocks([this, swarmAgentApi, swarmNode, chainNode, nnCore](const std::string &host, uint32_t count)
                                        {
                                       auto pySwarm = this;
-                                      swarmNode ->Post([swarmAgentApi, nnCore, chainNode, host, count, pySwarm]()
-                                                       {
-                                                           try
-                                                           {
-                                                               auto client = nnCore -> ConnectTo(host);
-                                                               if (!client)
-                                                               {
-                                                                   swarmAgentApi -> DoPingFailed(host);
-                                                                   return;
-                                                               }
-                                                               auto promised = chainNode -> RemoteGetHeaviestChain(count, client);
-                                                               if (promised.Wait())
-                                                               {
-                                                                   auto collection = promised.Get();
-                                                                   if (collection.empty())
-                                                                   {
-                                                                       // must get at least genesis or this is an error case.
-                                                                       swarmAgentApi -> DoPingFailed(host);
-                                                                   }
-                                                                   bool loose = false;
-                                                                   std::string blockId;
 
-                                                                   std::string prevHash;
-                                                                   for(auto &block : collection)
-                                                                   {
-                                                                       block.UpdateDigest();
-                                                                       chainNode -> AddBlock(block);
-                                                                       prevHash = block.prevString();
-                                                                       loose = block.loose();
-                                                                       blockId = pySwarm -> hashToBlockId(block.hash());
-                                                                       swarmAgentApi -> DoNewBlockIdFound(host, blockId);
-                                                                   }
-                                                                   if (loose)
-                                                                   {
-                                                                       pySwarm -> DoLooseBlock(host, prevHash);
-                                                                   }
-                                                               }
-                                                               else
-                                                               {
-                                                                   swarmAgentApi -> DoPingFailed(host);
-                                                               }
-                                                           }
-                                                           catch (...)
-                                                           {
-                                                               swarmAgentApi -> DoPingFailed(host);
-                                                           }
-                                                       });
+                                      auto func = new service::Function<void(const block_type)>
+                                          (
+                                           [pySwarm,host,chainNode,swarmAgentApi](const block_type &blk){
+                                               std::cout << "P/S Block arrived" << std::endl;
+                                               block_type block = blk;
+                                               block.UpdateDigest();
+                                               std::cout << "PO/S: GOT1 " << block.summarise() << std::endl;
+                                               chainNode -> AddBlock(block);
+                                               std::cout << "PO/S: GOT2 " << block.summarise() << std::endl;
+                                               auto blockId = pySwarm -> hashToBlockId(block.hash());
+                                               std::cout << "PO/S: GOT3 " << block.summarise() << std::endl;
+                                               swarmAgentApi -> DoNewBlockIdFound(host, blockId);
+                                               std::cout << "P/S Block handled" << std::endl;
+                                           }
+                                           );
+                                      auto subs = nnCore ->
+                                          CreateSubscription(nnCore -> ConnectTo(host),
+                                                             fetch::protocols::FetchProtocols::MAIN_CHAIN,
+                                                             fetch::ledger::MainChain::BLOCK_PUBLISH,
+                                                             func
+                                                             );
+                                      std::cout << "P/S: SUBSCRIBE " << host << std::endl;
+                                          this -> disc[host] = std::make_shared<Discovery>(host, subs);
                                        });
 
     swarmAgentApi -> ToGetBlock([this, swarmAgentApi, swarmNode, chainNode, nnCore](const std::string &host, const std::string &blockid)

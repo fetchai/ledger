@@ -11,9 +11,11 @@
 #include "http/middleware/color_log.hpp"
 #include "http/server.hpp"
 #include "network/service/client.hpp"
+#include "network/service/types.hpp"
 #include "network/service/server.hpp"
 #include "network/swarm/swarm_peer_location.hpp"
 #include"network/service/publication_feed.hpp"
+#include "network/service/callable_class_member.hpp"
 
 namespace fetch
 {
@@ -29,6 +31,8 @@ public:
     typedef fetch::service::ServiceClient<network::TCPClient> client_type;
     typedef service::ServiceServer<fetch::network::TCPServer> rpc_server_type;
     typedef uint32_t protocol_number_type;
+    typedef fetch::service::protocol_handler_type protocol_handler_type;
+    typedef fetch::service::feed_handler_type feed_handler_type;
 protected:
     const uint32_t MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION = 100;
     const uint32_t MICROSECONDS_PER_MILLISECOND = 1000;
@@ -211,26 +215,22 @@ public:
                                             )
     {
         auto self = shared_from_this();
-        auto actor = std::make_shared<PublishActor>(publisher_);
+        auto actor = std::make_shared<PublishActor>(verb);
         return std::static_pointer_cast<Publishing>(actor);
     }
 
     class PublishActor:public Publishing
     {
     public:
-        PublishActor(
-            std::shared_ptr<fetch::service::HasPublicationFeed> publisher,
-            uint64_t verb)
-            : publisher_(publisher),
-              verb_(verb)
+        PublishActor(uint64_t verb) :
+            verb_(verb)
         {
         }
         template<typename... arguments>
         void Publish(arguments&&... args)
         {
-            publisher_ -> Publish(verb_, std::forward<arguments>(args)...);
+            //this -> fetch::service::HasPublicationFeed::Publish(verb_, std::forward<arguments>(args)...);
         }
-        std::shared_ptr<fetch::service::HasPublicationFeed> publisher_;
         uint64_t verb_;
     };
 
@@ -249,22 +249,22 @@ public:
         virtual ~Subscription()
         {
             client_ -> Unsubscribe( handle_ );
+            std::cout << "P/S: UNSUBSCRIBE " << int(handle_) << std::endl;
         }
     private:
         client_ptr client_;
         fetch::service::subscription_handler_type handle_;
     };
 
-
-    template<class INTERFACE_CLASS, class FUNC_CLASS>
-    std::shared_ptr<Subscription> CreateSubscription(INTERFACE_CLASS *interface,
-                                                     uint64_t verb,
-                                                     client_ptr client,
-                                                     FUNC_CLASS func
+    template<class FUNC_CLASS>
+    std::shared_ptr<Subscription> CreateSubscription(client_ptr client,
+                                                     protocol_handler_type protocol_number,
+                                                     feed_handler_type verb,
+                                                     const FUNC_CLASS func
                                                      )
     {
-        auto protocolNumber = INTERFACE_CLASS::protocol_number;
-        auto handle = client -> Subscribe(protocolNumber, verb, func);
+        auto handle = client -> Subscribe(protocol_number, verb, func);
+        std::cout << "P/S: SUBSCRIBE " << int(handle) << std::endl;
         return std::make_shared<Subscription>(client, handle);
     }
 

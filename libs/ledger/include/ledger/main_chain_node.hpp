@@ -21,7 +21,7 @@ namespace fetch
 namespace ledger
 {
 
-class MainChainNode : public MainChainNodeInterface, public fetch::http::HTTPModule
+    class MainChainNode : public MainChainNodeInterface, public fetch::http::HTTPModule, public service::HasPublicationFeed
 {
 public:
 
@@ -33,8 +33,8 @@ public:
 
     MainChainNode(const MainChainNode &rhs)           = delete;
     MainChainNode(MainChainNode &&rhs)           = delete;
-    MainChainNode operator=(const MainChainNode &rhs)  = delete;
-    MainChainNode operator=(MainChainNode &&rhs) = delete;
+    MainChainNode &operator=(const MainChainNode &rhs)  = delete;
+    MainChainNode &operator=(MainChainNode &&rhs) = delete;
     bool operator==(const MainChainNode &rhs) const = delete;
     bool operator<(const MainChainNode &rhs) const = delete;
 
@@ -124,6 +124,11 @@ public:
         }
     }
 
+    virtual service::AbstractPublicationFeed *getPublisher(void)
+    {
+        return this;
+    }
+
     virtual std::vector<block_type> GetHeaviestChain(uint32_t maxsize)
     {
         std::vector<block_type> results;
@@ -157,6 +162,8 @@ public:
         chain_ -> AddBlock(block);
         return block.loose();
     }
+
+    std::function<void (const block_type)> onBlockComplete_;
 
     block_type const &HeaviestBlock() const
     {
@@ -199,6 +206,11 @@ public:
 
                     // Add the block
                     chain_ -> AddBlock(nextBlock);
+
+                    if (this -> onBlockComplete_)
+                    {
+                        this -> onBlockComplete_(nextBlock);
+                    }
                     fetch::logger.Debug("Main Chain Node: Mined: ",  ToHex(block.hash()));
                 }
             };

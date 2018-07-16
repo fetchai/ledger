@@ -131,6 +131,7 @@ class ServiceClientInterface {
 
     subscription_mutex_.lock();
     delete sub.callback;
+    sub.callback = nullptr;
     sub.protocol = 0;
     sub.feed = 0;
     subscription_mutex_.unlock();

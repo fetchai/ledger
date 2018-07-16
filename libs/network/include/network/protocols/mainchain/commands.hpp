@@ -12,6 +12,7 @@ enum
 {
   GET_HEADER         = 1,
   GET_HEAVIEST_CHAIN = 2,
+  BLOCK_PUBLISH      = 3,
 };
 };
 }
