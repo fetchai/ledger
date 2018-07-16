@@ -21,18 +21,27 @@ public:
   using connection_handle_type = client_register_type::connection_handle_type;
   using ping_type = uint32_t;
   using lane_type = uint32_t;  
+
+  enum {
+    PING = 1,
+    HELLO,
+    UPDATE_DETAILS, 
+    EXCHANGE_ADDRESS
+//    AUTHENTICATE    
+  };
   
   enum {
     PING_MAGIC = 1337
   };
 
-  P2PIdentity(client_register_type reg, network_manager_type nm )
+  P2PIdentity(uint64_t const &protocol, client_register_type reg, network_manager_type nm )
     : register_(reg), manager_(nm)
   {
+    protocol_ = protocol;
     my_details_ = MakeNodeDetails();
   }
 
-  /// External controls
+  /// External RPC callable
   /// @{
   ping_type Ping() 
   {
@@ -59,7 +68,6 @@ public:
     
     return client->Address();
   }
-    
   
   PeerDetails Hello(connection_handle_type const &client, PeerDetails const&pd) 
   {    
@@ -73,8 +81,36 @@ public:
     std::lock_guard< mutex::Mutex > l(my_details_->mutex);
     return my_details_->details;
   }
+
+  void UpdateDetails(connection_handle_type const &client, PeerDetails const&pd) 
+  {    
+    auto details = register_.GetDetails(client);
+    
+    {
+      std::lock_guard< mutex::Mutex > lock(*details);
+      details->Update(pd);
+    }
+  }  
   /// @}
 
+
+  ///
+  /// @{
+  void PublishProfile()
+  {
+    std::lock_guard< mutex::Mutex > l(my_details_->mutex);
+    register_.WithServices([this](network::AbstractConnectionRegister::service_map_type const &map) {
+        for(auto const &p: map) {
+          auto wptr = p.second;
+          auto peer = wptr.lock();
+          if(peer) {
+            peer->Call(protocol_, UPDATE_DETAILS, my_details_->details);
+          }
+        }
+      });
+  }
+  
+  /// @}
   
   void WithOwnDetails(std::function< void(PeerDetails const &) > const &f) 
   {
@@ -87,6 +123,7 @@ public:
   }
   
 private:
+  std::atomic< uint64_t > protocol_;  
   client_register_type register_;  
   network_manager_type manager_;
   

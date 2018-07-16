@@ -14,9 +14,10 @@ class P2PIdentityProtocol : public service::Protocol
 public:
 
   enum {
-    PING = 1,
-    HELLO,
-    EXCHANGE_ADDRESS
+    PING = P2PIdentity::PING,
+    HELLO = P2PIdentity::HELLO,
+    UPDATE_DETAILS = P2PIdentity::UPDATE_DETAILS,
+    EXCHANGE_ADDRESS = P2PIdentity::EXCHANGE_ADDRESS
 //    AUTHENTICATE    
   };
 
@@ -25,6 +26,7 @@ public:
   {
     this->Expose(PING, ctrl, &P2PIdentity::Ping);
     this->ExposeWithClientArg(HELLO, ctrl, &P2PIdentity::Hello);
+    this->ExposeWithClientArg(UPDATE_DETAILS, ctrl, &P2PIdentity::UpdateDetails);    
     this->ExposeWithClientArg(EXCHANGE_ADDRESS, ctrl, &P2PIdentity::ExchangeAddress);
   }
   

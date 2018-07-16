@@ -11,10 +11,11 @@ class P2PPeerDirectoryProtocol : public fetch::service::Protocol
 {
 public:
   enum {
-    SUGGEST_PEERS = 1,
-    NEED_CONNECTIONS,
-    ENOUGH_CONNECTIONS
+    SUGGEST_PEERS = P2PPeerDirectory::SUGGEST_PEERS,
+    NEED_CONNECTIONS = P2PPeerDirectory::NEED_CONNECTIONS,
+    ENOUGH_CONNECTIONS = P2PPeerDirectory::ENOUGH_CONNECTIONS
   };
+  
       
   P2PPeerDirectoryProtocol(P2PPeerDirectory *directory)
     : directory_(directory) 

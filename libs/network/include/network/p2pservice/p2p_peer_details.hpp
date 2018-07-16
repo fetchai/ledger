@@ -118,10 +118,10 @@ struct PeerDetails
     public_key = other.public_key.Copy();
     entry_points = other.entry_points;
 
-    // TODO: consider whether to reset these fields 
     nonce = other.nonce;
     karma = double(other.karma);
     is_authenticated = bool(other.is_authenticated);
+    last_updated = std::chrono::system_clock::now();    
   }
 
   PeerDetails& operator=(PeerDetails const & other)  
@@ -129,10 +129,10 @@ struct PeerDetails
     public_key = other.public_key.Copy();
     entry_points = other.entry_points;
 
-    // TODO: consider whether to reset these fields 
     nonce = other.nonce;
     karma = double(other.karma);
     is_authenticated = bool(other.is_authenticated);
+    last_updated = std::chrono::system_clock::now();
     return *this;
   }
 
@@ -141,6 +141,15 @@ struct PeerDetails
     public_key = other.public_key.Copy();
     entry_points = other.entry_points;
   }
+
+  double MillisecondsSinceUpdate() const 
+  {
+    std::chrono::system_clock::time_point end =
+      std::chrono::system_clock::now();
+    double ms = double(std::chrono::duration_cast<std::chrono::milliseconds>(end - last_updated).count());
+    return ms;
+  }
+  
   
   /// Serializable
   /// @{
@@ -154,7 +163,7 @@ struct PeerDetails
   byte_array::ConstByteArray nonce;
   std::atomic< double > karma;
   std::atomic< bool > is_authenticated;
-
+  std::chrono::system_clock::time_point last_updated;
   /// @}
 };
 

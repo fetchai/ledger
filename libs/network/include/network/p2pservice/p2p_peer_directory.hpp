@@ -26,8 +26,16 @@ public:
   using mutex_type = fetch::mutex::Mutex;
   using connection_handle_type = client_register_type::connection_handle_type;
   using protocol_handler_type = service::protocol_handler_type;  
-  using suggestion_map_type = std::unordered_map< byte_array::ConstByteArray, connectivity_details_type, crypto::CallableFNV  >;
+
+
+  using peer_details_map_type = std::unordered_map< byte_array::ConstByteArray, connectivity_details_type, crypto::CallableFNV  >;
   using thread_pool_type = network::ThreadPool;
+
+  enum {
+    SUGGEST_PEERS = 1,
+    NEED_CONNECTIONS,
+    ENOUGH_CONNECTIONS
+  };
   
   enum {
     FEED_ENOUGH_CONNECTIONS = 1,
@@ -35,13 +43,50 @@ public:
     FEED_ANNOUNCE_PEER
   };
   
-  P2PPeerDirectory(uint64_t const &protocol, client_register_type reg, thread_pool_type pool)
-    : protocol_(protocol), register_(reg), thread_pool_(pool) 
+  P2PPeerDirectory(uint64_t const &protocol, client_register_type reg, thread_pool_type pool,
+    NodeDetails my_details)
+    : protocol_(protocol), register_(reg), thread_pool_(pool),
+      my_details_(my_details)      
   {
-    last_handle_ = 0;
+
+    running_ = false;
   }
 
-  
+  /// Methods to update the state of this node
+  /// @{
+  void RequestPeersForThisNode() 
+  {
+    register_.WithServices([this](network::AbstractConnectionRegister::service_map_type const &map) {
+        for(auto const &p: map) {
+          auto wptr = p.second;
+          auto peer = wptr.lock();
+          if(peer) {
+            peer->Call(protocol_, NEED_CONNECTIONS);
+          }
+        }
+      });
+
+    std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
+    AddPeerToSuggested(my_details_->details);    
+  }
+
+  void EnoughPeersForThisNode() 
+  {
+    register_.WithServices([this](network::AbstractConnectionRegister::service_map_type const &map) {
+        for(auto const &p: map) {
+          auto wptr = p.second;
+          auto peer = wptr.lock();
+          if(peer) {
+            peer->Call(protocol_, ENOUGH_CONNECTIONS);
+          }
+        }
+      });
+    
+    std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
+    RemovePeerFromSuggested(my_details_->details.public_key);
+  }
+
+  /// @}
 
   
   /// RPC calls
@@ -51,7 +96,7 @@ public:
     auto details = register_.GetDetails(client_id);
     std::lock_guard< mutex::Mutex > lock( *details );
 
-    AddPeer(client_id, *details);    
+    AddPeerToSuggested(*details);    
   }
 
   void EnoughConnections(connection_handle_type const &client_id) 
@@ -59,10 +104,10 @@ public:
     auto details = register_.GetDetails(client_id);    
     std::lock_guard< mutex::Mutex > lock( *details );
 
-    RemovePeer(client_id, details->public_key);
+    RemovePeerFromSuggested(details->public_key);
   }
     
-  suggestion_map_type SuggestPeersToConnectTo() 
+  peer_details_map_type SuggestPeersToConnectTo() 
   {
     std::lock_guard< mutex::Mutex > lock( suggest_mutex_ );
     return suggested_peers_;
@@ -73,40 +118,20 @@ public:
   /// Maintainance logic
   /// Methods to ensure that we get info from new peers
   /// @{
-  void Start() 
-  {
-    if(running_) return;    
-    running_ = true;
-    thread_pool_->Post([this]() { this->ListenToNewPeers(); } );    
-    
-  }
-
-  void Stop() 
-  {
-    if(!running_) return;
-    
-  }
-  
   void ListenTo(std::shared_ptr< service::ServiceClient > const &client) 
   {
-//    if(!running_) return;
-    std::cout << "Adding hooks" << std::endl;
-
     // TODO: Refactor subscribe such that there is no memory leak
-    connection_handle_type handle = client->handle();
     
     client->Subscribe(protocol_, FEED_REQUEST_CONNECTIONS,
       new service::Function<void(PeerDetails)>(
-        [this, handle](PeerDetails const &details) {
-          this->AddPeer(handle, details);
+        [this](PeerDetails const &details) {
+          this->AddPeerToSuggested(details);
         }));
     
     client->Subscribe(protocol_, FEED_ENOUGH_CONNECTIONS,
       new service::Function<void(byte_array::ConstByteArray)>(
-        [this, handle](byte_array::ConstByteArray const &public_key) {
-//          auto details = register_.GetDetails(handle);
-//          std::lock_guard< mutex::Mutex > lock( *details );          
-          this->RemovePeer(handle, public_key);
+        [this](byte_array::ConstByteArray const &public_key) {
+          this->RemovePeerFromSuggested(public_key);
         }));
     
     /*
@@ -119,73 +144,108 @@ public:
     */
     
   }
-  
+
+  void Start() 
+  {
+    if(running_) return ;
+
+    
+    running_ = true;
+    NextMaintainanceCycle();    
+  }
+
+  void Stop() 
+  {
+    running_ = false;    
+  }  
 
   
-  void ListenToNewPeers() 
+  void NextMaintainanceCycle() 
   {
     if(!running_) return;
 
-
-  }
-
-  void UpdateAllKnownPeers() 
-  {
-    // Updating all known peers
-    thread_pool_->Post([this]() { this->ListenToNewPeers(); }, 1000 ); // TODO: Make configurable
+    thread_pool_->Post([this](){ this->PruneSuggestions(); }, 1000); // TODO: add to config
   }
   
+  void PruneSuggestions() 
+  {
+    if(!running_) return;
+    
+    std::unordered_set< byte_array::ConstByteArray, crypto::CallableFNV > to_delete;
+
+    {
+      std::lock_guard< mutex::Mutex > lock( suggest_mutex_ );    
+      for(auto &suggestion: suggested_peers_) {
+        auto ms = suggestion.second.MillisecondsSinceUpdate();
+
+        if(ms > 30000) { // TODO: Make variable, add to config
+          to_delete.insert(suggestion.first);
+        }
+      }
+    }
+    
+    for(auto &key: to_delete) {
+      RemovePeerFromSuggested(key, false);
+    }
+
+    NextMaintainanceCycle();
+  } 
   /// @}
   
 private:
 
   /// Internals for updating the register
   /// @{
-  bool AddPeer(connection_handle_type const &client_id, connectivity_details_type const &details) 
+  bool AddPeerToSuggested(connectivity_details_type const &details, bool const &propagate = true) 
   {
     std::lock_guard< mutex::Mutex > lock( suggest_mutex_ );    
     auto it = suggested_peers_.find(details.public_key);
-
+    bool ret = false;
+    
     if(it == suggested_peers_.end()) {    
       suggested_peers_[details.public_key] = details;
-
-      // TODO: Post to manager
-      this->Publish(FEED_REQUEST_CONNECTIONS, details);
-      return true;
+      if(propagate) this->Publish(FEED_REQUEST_CONNECTIONS, details);
+      ret = true;
+    } else {
+      
+      // We do not allow conseq updates unless separated by substatial tume
+      if(it->second.MillisecondsSinceUpdate() > 5000 ) { // TODO: Config variable 
+        suggested_peers_[details.public_key] = details;
+        if(propagate) this->Publish(FEED_REQUEST_CONNECTIONS, details);
+        ret = true;        
+      }
     }
-    return false;
+    
+    return ret;
   }
   
-  bool RemovePeer(connection_handle_type const &client_id,
-    byte_array::ConstByteArray const& public_key) 
+  bool RemovePeerFromSuggested(byte_array::ConstByteArray const& public_key, bool const &propagate = true) 
   {
     std::lock_guard< mutex::Mutex > lock( suggest_mutex_ );
     auto it = suggested_peers_.find(public_key);
+    bool ret = false;
 
-    if(it != suggested_peers_.end()) {
+    
+    if(it!= suggested_peers_.end()) {
       suggested_peers_.erase(it);
-
-      // TODO: Post to manager
-      this->Publish(FEED_ENOUGH_CONNECTIONS, public_key);
-      return true;
+      if(propagate) this->Publish(FEED_ENOUGH_CONNECTIONS, public_key);
+      ret = true;
     }
 
-    return false;
+    
+    return ret;
   }
   /// @}
   
-  
-  
   std::atomic< uint64_t > protocol_;
+ 
+  mutable mutex::Mutex suggest_mutex_; 
+  peer_details_map_type suggested_peers_;
   
-  std::atomic< bool > running_;  
-  suggestion_map_type suggested_peers_;
-  mutable mutex::Mutex suggest_mutex_;
-  
-  std::atomic< connection_handle_type > last_handle_;
+  std::atomic< bool > running_;
   client_register_type register_;
   thread_pool_type thread_pool_;
-  
+  NodeDetails my_details_;
 };
 
 

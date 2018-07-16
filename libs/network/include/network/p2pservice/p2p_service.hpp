@@ -48,7 +48,7 @@ public:
     this->SetConnectionRegister(register_);
 
     // Identity
-    identity_ = new P2PIdentity(register_, tm);
+    identity_ = new P2PIdentity(IDENTITY, register_, tm);
     my_details_ = identity_->my_details();    
     identity_protocol_ = new P2PIdentityProtocol(identity_);    
     this->Add(IDENTITY, identity_protocol_);
@@ -64,10 +64,13 @@ public:
     // TODO(Troels): Add pk etc. to identity - ECDSA needed
 
     // P2P Peer Directory
-    directory_ = new P2PPeerDirectory(DIRECTORY, register_, thread_pool_ );
+    directory_ = new P2PPeerDirectory(DIRECTORY, register_, thread_pool_, my_details_ );
     directory_protocol_ = new P2PPeerDirectoryProtocol(directory_);
     this->Add(DIRECTORY, directory_protocol_);
 
+    directory_->Start();
+    thread_pool_->Start();
+    
 
 
     // Adding hooks for listening to feeds etc
@@ -111,12 +114,12 @@ public:
   /// @{
   void Start() 
   {
-    directory_->Start();
+
   }
 
   void Stop() 
   {
-    directory_->Stop();
+
   }
   
   client_register_type connection_register() {
@@ -127,31 +130,15 @@ public:
   /// @{
   void RequestPeers() 
   {
-    register_.WithServices([](network::AbstractConnectionRegister::service_map_type const &map) {
-        for(auto const &p: map) {
-          auto wptr = p.second;
-          auto peer = wptr.lock();
-          if(peer) {
-            peer->Call(DIRECTORY, P2PPeerDirectoryProtocol::NEED_CONNECTIONS);
-          }
-        }
-      });    
+    directory_->RequestPeersForThisNode();
   }
 
   void EnoughPeers() 
   {
-    register_.WithServices([](network::AbstractConnectionRegister::service_map_type const &map) {
-        for(auto const &p: map) {
-          auto wptr = p.second;
-          auto peer = wptr.lock();
-          if(peer) {
-            peer->Call(DIRECTORY, P2PPeerDirectoryProtocol::ENOUGH_CONNECTIONS);
-          }
-        }
-      });
+    directory_->EnoughPeersForThisNode();    
   }
 
-  P2PPeerDirectory::suggestion_map_type SuggestPeersToConnectTo() 
+  P2PPeerDirectory::peer_details_map_type SuggestPeersToConnectTo() 
   {
     return directory_->SuggestPeersToConnectTo();
   }
@@ -247,7 +234,13 @@ public:
       my_details_->details.entry_points.push_back( lane_details );
     }
     
-  }  
+  }
+
+  void PublishProfile() 
+  {
+    identity_->PublishProfile() ;
+  }
+  
   /// @}
   
 protected:

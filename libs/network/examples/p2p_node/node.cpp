@@ -72,6 +72,14 @@ int main(int argc, char const **argv)
           service.Connect(command[1], uint16_t(command[2].AsInt()));
         }
 
+        if(command[0] == "publish_profile") {
+          if(command.size() != 1) {
+            std::cout << "usage: publish_profile" << std::endl;
+            continue;
+          }
+          service.PublishProfile();          
+        }
+        
         if(command[0] == "test") {
           if(command.size() != 1) {
             std::cout << "usage: test" << std::endl;
@@ -80,9 +88,12 @@ int main(int argc, char const **argv)
           std::cout << "addmc mainchain " << port + 1 << std::endl;
           std::cout << "addl 0 lane0 " << port + 2 << std::endl;
           std::cout << "addl 1 lane0 " << port + 3 << std::endl;
+          std::cout << "publish_profile " << std::endl;          
           service.AddMainChain("mainchain", port + 1);
           service.AddLane(0, "lane0", port + 1);
           service.AddLane(1, "lane1", port + 2);
+          service.PublishProfile();
+          
           
 //          service.Connect(command[1], uint16_t(command[2].AsInt()));
         }
