@@ -39,13 +39,18 @@ class TCPClientImplementation final :
   TCPClientImplementation(network_manager_type &network_manager) noexcept :
     networkManager_{network_manager}
   {
+    std::cout << "creating " << this << std::endl;
   }
 
   TCPClientImplementation(TCPClientImplementation const &rhs)            = delete;
   TCPClientImplementation(TCPClientImplementation &&rhs)                 = delete;
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation&& rhs)      = delete;
-  ~TCPClientImplementation() { destructing_ = true; }
+
+  ~TCPClientImplementation() {
+    destructing_ = true;
+    std::cout << "destroying " << this << std::endl;
+  }
 
   void Connect(byte_array::ConstByteArray const& host, uint16_t port)
   {
@@ -219,9 +224,9 @@ class TCPClientImplementation final :
   std::weak_ptr<strand_type> strand_;
 
   message_queue_type          write_queue_;
-  mutable mutex_type queue_mutex_;
-  mutable mutex_type write_mutex_;
-  mutable mutex_type io_creation_mutex_;
+  mutable mutex_type          queue_mutex_;
+  mutable mutex_type          io_creation_mutex_;
+  std::atomic<int>            can_write_{0};
   bool                        postedClose_ = false;
 
   mutable mutex_type                callback_mutex_;
@@ -333,7 +338,8 @@ class TCPClientImplementation final :
   void WriteNext(shared_self_type selfLock)
   {
     // Only one thread can get past here at a time
-    if(!write_mutex_.try_lock())
+    int can_write = can_write_++;
+    if(can_write != 1)
     {
       return;
     }
@@ -341,7 +347,7 @@ class TCPClientImplementation final :
     message_type buffer;
     {
       std::lock_guard<mutex_type> lock(queue_mutex_);
-      if(write_queue_.empty()) { write_mutex_.unlock(); return; }
+      if(write_queue_.empty()) { can_write_ = 0; return; }
       buffer = write_queue_.front();
       write_queue_.pop_front();
     }
@@ -358,8 +364,7 @@ class TCPClientImplementation final :
 
     auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len)
     {
-      assert(destructing_ == false);
-      write_mutex_.unlock();
+      can_write_ = 0;
 
       if(ec)
       {
@@ -367,6 +372,7 @@ class TCPClientImplementation final :
       }
       else
       {
+        // TODO: (`HUT`) : this strand should be unnecessary
         auto strandLock = strand_.lock();
         if(strandLock)
         {
