@@ -25,3 +25,5 @@ add_fetch_test(callable_test fetch-network callable.cpp)
 # not working
 add_fetch_test(promise_counter_test fetch-network rpc/promise_counter.cpp DISABLED)
 
+add_fetch_test(peer_test fetch-network peer_test.cpp)
+target_link_libraries(peer_test PRIVATE gtest gtest_main)

@@ -9,6 +9,7 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "network/p2pservice/p2p_service.hpp"
+#include "network/peer.hpp"
 #include "http/server.hpp"
 
 #include <memory>
@@ -41,6 +42,7 @@ public:
   using string_list_type = std::vector<std::string>;
   using p2p_service_type = std::unique_ptr<p2p::P2PService>;
   using http_server_type = std::unique_ptr<http::HTTPServer>;
+  using peer_list_type = std::vector<network::Peer>;
 
   static constexpr uint32_t DEFAULT_MINING_TARGET = 10;
   static constexpr uint32_t DEFAULT_IDLE_SPEED = 2000;
@@ -67,8 +69,8 @@ public:
                          std::size_t num_lanes = DEFAULT_NUM_LANES) {
 
     // work out the port mappings
-    static constexpr uint16_t P2P_PORT_OFFSET = 0;
-    static constexpr uint16_t HTTP_PORT_OFFSET = 1;
+    static constexpr uint16_t P2P_PORT_OFFSET = 1;
+    static constexpr uint16_t HTTP_PORT_OFFSET = 0;
     static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
 
     uint16_t const p2p_port = port_start + P2P_PORT_OFFSET;
@@ -80,7 +82,7 @@ public:
 
     // create the network manager
     network_manager_.reset(new fetch::network::NetworkManager(num_network_threads));
-    network_manager_->Start();
+    network_manager_->Start(); // needs to be started
 
     // setup the storage service
     storage_service_.Setup("node_storage", num_lanes, storage_port_start, *network_manager_, false);
@@ -104,13 +106,19 @@ public:
     );
 
     p2p_.reset(new p2p::P2PService(p2p_port, *network_manager_));
+    p2p_->Start();
 
     http_.reset(new http::HTTPServer(http_port, *network_manager_));
   }
 
-  void Run() {
+  void Run(peer_list_type const &initial_peers = peer_list_type{}) {
     using namespace std::chrono;
     using namespace std::this_thread;
+
+    // make the initial p2p connections
+    for (auto const &peer : initial_peers) {
+      p2p_->Connect(peer.address(), peer.port());
+    }
 
     // monitor loop
     while (active_) {

@@ -48,6 +48,8 @@ public:
   {
     thread_pool_ = network::MakeThreadPool(1);
 
+    fetch::logger.Warn("Establishing P2P Service on rpc://127.0.0.1:", port);
+
     // Listening for new connections
     this->SetConnectionRegister(register_);
 

@@ -50,7 +50,7 @@ class HTTPServer : public AbstractHTTPServer {
 
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port]
     {
-      fetch::logger.Info("Starting HTTPServer");
+      fetch::logger.Info("Starting HTTPServer on http://127.0.0.1:", port);
 
       // TODO: (`HUT`) : fix this hack
       network_manager_type tm = threadMan;

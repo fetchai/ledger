@@ -15,6 +15,8 @@
 #include"ledger/chain/transaction_serialization.hpp"
 #include"network/management/connection_register.hpp"
 
+#include <iomanip>
+
 namespace fetch
 {
 namespace ledger
@@ -53,13 +55,18 @@ public:
     uint16_t port, fetch::network::NetworkManager tm, bool start_sync = true)
     : super_type(port, tm) {
 
+    fetch::logger.Warn("Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port);
+
     thread_pool_ = network::MakeThreadPool(1);
-    
-    
-    std::stringstream s;
-    s << db_dir;    
-    s << "lane" << lane << "_";
-    std::string prefix = s.str();    
+
+    // format and generate the prefix
+    std::string prefix;
+    {
+      std::stringstream s;
+      s << db_dir;
+      s << "_lane" << std::setw(3) << std::setfill('0') << lane << "_";
+      prefix = s.str();
+    }
 
     // Lane Identity
     identity_ = std::make_shared<identity_type>(register_, tm);    
@@ -71,7 +78,11 @@ public:
     
     // TX Store
     tx_store_ = new transaction_store_type();    
-    tx_store_->Load(prefix+"e.db", prefix+"f.db", true);
+    tx_store_->Load(
+      prefix + "_transaction.db",
+      prefix + "_transaction_index.db",
+      true
+    );
 
     tx_sync_protocol_ = new tx_sync_protocol_type( TX_STORE_SYNC, register_, thread_pool_, tx_store_ );    
     tx_store_protocol_ = new transaction_store_protocol_type(tx_store_);
@@ -82,13 +93,17 @@ public:
     this->Add(TX_STORE, tx_store_protocol_ );
 
     // TX Sync
-
-    this->Add(TX_STORE_SYNC, tx_sync_protocol_);    
+    this->Add(TX_STORE_SYNC, tx_sync_protocol_);
     
-       
     // State DB
     state_db_ = new document_store_type();
-    state_db_->Load(prefix+"a.db", prefix+"b.db", prefix+"c.db", prefix+"d.db", true);
+    state_db_->Load(
+      prefix + "state.db",
+      prefix + "state_deltas.db",
+      prefix + "state_index.db",
+      prefix + "state_index_deltas.db",
+      true
+    );
     
     state_db_protocol_ = new document_store_protocol_type(state_db_, lane, total_lanes);        
     this->Add(STATE, state_db_protocol_ );
@@ -107,7 +122,7 @@ public:
   
   ~LaneService() 
   {
-    delete identity_protocol_;    
+    delete identity_protocol_;
     identity_.reset();
         
     // TODO: Remove protocol
