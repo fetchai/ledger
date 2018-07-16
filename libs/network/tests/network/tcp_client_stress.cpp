@@ -787,11 +787,6 @@ int main(int argc, char* argv[]) {
   uint16_t portNumber = 8080;
   std::string port    = std::to_string(portNumber);
 
-  for (std::size_t i = 0; i < 4; ++i)
-  {
-    TestCase9<1>(host, port);
-  }
-
   for (std::size_t i = 0; i < 1; ++i)
   {
     TestCase0<1>(host, port);

@@ -34,7 +34,7 @@ class TCPClientImplementation final :
   typedef asio::ip::tcp::tcp::socket          socket_type;
   typedef asio::io_service::strand            strand_type;
   typedef asio::ip::tcp::resolver             resolver_type;
-  //typedef fetch::mutex::Mutex                 mutex_type;
+  typedef std::mutex                          mutex_type;
 
   TCPClientImplementation(network_manager_type &network_manager) noexcept :
     networkManager_{network_manager}
@@ -68,7 +68,7 @@ class TCPClientImplementation final :
       auto strand = networkManager_.CreateIO<strand_type>();
       if(!strand) return;
       {
-        std::lock_guard<std::mutex> lock(io_creation_mutex_);
+        std::lock_guard<mutex_type> lock(io_creation_mutex_);
         strand_ = strand;
       }
 
@@ -80,7 +80,7 @@ class TCPClientImplementation final :
         std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
 
         {
-          std::lock_guard<std::mutex> lock(io_creation_mutex_);
+          std::lock_guard<mutex_type> lock(io_creation_mutex_);
           if(!postedClose_)
           {
             socket_ = socket;
@@ -126,20 +126,20 @@ class TCPClientImplementation final :
 
   bool is_alive() const noexcept
   {
-    std::lock_guard<std::mutex> lock(io_creation_mutex_);
+    std::lock_guard<mutex_type> lock(io_creation_mutex_);
     return !socket_.expired() && connected_;
   }
 
   void Send(message_type const& msg) override
   {
-    if(!connected_) // TODO: (`HUT`) : delete
+    if(!connected_)
     {
       fetch::logger.Warn("Attempting to write to socket too early. Returning.");
       return;
     }
 
     {
-      std::lock_guard<std::mutex> lock(queue_mutex_);
+      std::lock_guard<mutex_type> lock(queue_mutex_);
       write_queue_.push_back(msg);
     }
 
@@ -163,7 +163,7 @@ class TCPClientImplementation final :
 
   void Close() noexcept
   {
-    std::lock_guard<std::mutex> lock(io_creation_mutex_);
+    std::lock_guard<mutex_type> lock(io_creation_mutex_);
     postedClose_ = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
     std::weak_ptr<strand_type> strandWeak = strand_;
@@ -192,19 +192,19 @@ class TCPClientImplementation final :
 
   void OnConnectionFailed(std::function< void() > const &fnc)
   {
-    std::lock_guard< std::mutex > lock(callback_mutex_);
+    std::lock_guard< mutex_type > lock(callback_mutex_);
     on_connection_failed_ = fnc;
   }
 
   void OnPushMessage(std::function< void(message_type const&) > const &fnc)
   {
-    std::lock_guard< std::mutex > lock(callback_mutex_);
+    std::lock_guard< mutex_type > lock(callback_mutex_);
     on_push_message_ = fnc;
   }
 
   void ClearClosures() noexcept
   {
-    std::lock_guard< std::mutex > lock(callback_mutex_);
+    std::lock_guard< mutex_type > lock(callback_mutex_);
     on_connection_failed_  = nullptr;
     on_push_message_  = nullptr;
   }
@@ -219,12 +219,12 @@ class TCPClientImplementation final :
   std::weak_ptr<strand_type> strand_;
 
   message_queue_type          write_queue_;
-  mutable std::mutex queue_mutex_;
-  mutable std::mutex write_mutex_;
-  mutable std::mutex io_creation_mutex_;
+  mutable mutex_type queue_mutex_;
+  mutable mutex_type write_mutex_;
+  mutable mutex_type io_creation_mutex_;
   bool                        postedClose_ = false;
 
-  mutable std::mutex                callback_mutex_;
+  mutable mutex_type                callback_mutex_;
   std::function< void(message_type const&) > on_push_message_;
   std::function< void() >                    on_connection_failed_;
   std::function<void()>                      on_leave_;
@@ -333,7 +333,6 @@ class TCPClientImplementation final :
   void WriteNext(shared_self_type selfLock)
   {
     // Only one thread can get past here at a time
-    // TODO: (`HUT`) : discuss with Ed: now that we are stranding might not need to lock
     if(!write_mutex_.try_lock())
     {
       return;
@@ -341,7 +340,7 @@ class TCPClientImplementation final :
 
     message_type buffer;
     {
-      std::lock_guard<std::mutex> lock(queue_mutex_);
+      std::lock_guard<mutex_type> lock(queue_mutex_);
       if(write_queue_.empty()) { write_mutex_.unlock(); return; }
       buffer = write_queue_.front();
       write_queue_.pop_front();
@@ -371,7 +370,7 @@ class TCPClientImplementation final :
         auto strandLock = strand_.lock();
         if(strandLock)
         {
-          strandLock->post([this, selfLock] { WriteNext(selfLock); });
+          WriteNext(selfLock);
         }
       }
     };
@@ -387,13 +386,13 @@ class TCPClientImplementation final :
 
   void ConnectionFailed()
   {
-    std::lock_guard< std::mutex > lock(callback_mutex_);
+    std::lock_guard< mutex_type > lock(callback_mutex_);
     if(on_connection_failed_) on_connection_failed_();
   }
 
   void PushMessage(message_type message)
   {
-    std::lock_guard< std::mutex > lock(callback_mutex_);
+    std::lock_guard< mutex_type > lock(callback_mutex_);
     if(on_push_message_) on_push_message_(message);
   }
 };
