@@ -73,7 +73,7 @@ public:
 
 void waitUntilConnected(std::string const &host, uint16_t port)
 {
-  NetworkManager nmanager(1);
+  static NetworkManager nmanager(1);
   nmanager.Start();
 
   while(true)
@@ -142,7 +142,7 @@ void TestCase2(std::string host, uint16_t port)
 
     while(!client.is_alive())
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(3));
+      std::this_thread::sleep_for(std::chrono::milliseconds(4));
     }
     client.Send("test this");
     if(index % 3) nmanager.Stop();
@@ -183,7 +183,7 @@ void TestCase3(std::string host, uint16_t port)
 
     while(threadCount != iterations)
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::this_thread::sleep_for(std::chrono::milliseconds(4));
     }
 
     if(index % 3) nmanager.Stop();
@@ -225,7 +225,7 @@ void TestCase4(std::string host, uint16_t port)
 
     while(threadCount != iterations)
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::this_thread::sleep_for(std::chrono::milliseconds(4));
     }
   }
 
@@ -239,17 +239,30 @@ int main(int argc, char* argv[]) {
 
   std::cerr << "Testing communications on port: " << portNumber << std::endl;
 
-  //TestCase0<1>(host, portNumber);
-  //TestCase1<1>(host, portNumber);
-  //TestCase2<1>(host, portNumber);
-  //TestCase3<1>(host, portNumber);
-  //TestCase4<1>(host, portNumber);
+  std::size_t iterations = 1;
 
-  //TestCase0<10>(host, portNumber);
-  //TestCase1<10>(host, portNumber);
-  //TestCase2<10>(host, portNumber);
-  //TestCase3<10>(host, portNumber);
-  //TestCase4<10>(host, portNumber);
+  if (argc > 1)
+  {
+    std::stringstream s(argv[1]);
+    s >> iterations;
+  }
+
+  fetch::logger.Info("Running test iterations: ", iterations);
+
+  for (std::size_t i = 0; i < iterations; ++i)
+  {
+    TestCase0<1>(host, portNumber);
+    TestCase1<1>(host, portNumber);
+    TestCase2<1>(host, portNumber);
+    TestCase3<1>(host, portNumber);
+    TestCase4<1>(host, portNumber);
+
+    TestCase0<10>(host, portNumber);
+    TestCase1<10>(host, portNumber);
+    TestCase2<10>(host, portNumber);
+    TestCase3<10>(host, portNumber);
+    TestCase4<10>(host, portNumber);
+  }
 
   std::cerr << "finished all tests" << std::endl;
 

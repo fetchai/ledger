@@ -797,11 +797,6 @@ int main(int argc, char* argv[]) {
 
   fetch::logger.Info("Running test iterations: ", iterations);
 
-  //for (std::size_t i = 0; i < 10; ++i)
-  //{
-  //  TestCase9<10>(host, port);
-  //}
-
   for (std::size_t i = 0; i < iterations; ++i)
   {
     TestCase9<10>(host, port);

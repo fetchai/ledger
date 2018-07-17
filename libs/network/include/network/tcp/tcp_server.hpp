@@ -29,6 +29,7 @@ class TCPServer : public AbstractNetworkServer {
   typedef typename AbstractConnection::connection_handle_type connection_handle_type;
   typedef NetworkManager                                      network_manager_type;
   typedef asio::ip::tcp::tcp::acceptor                        acceptor_type;
+  typedef std::mutex                                          mutex_type;
 
   struct Request {
     connection_handle_type handle;
@@ -38,29 +39,35 @@ class TCPServer : public AbstractNetworkServer {
   TCPServer(uint16_t const& port, network_manager_type network_manager) :
         network_manager_{network_manager},
         port_{port},
-        request_mutex_(__LINE__, __FILE__)
+        request_mutex_{}
   {
     LOG_STACK_TRACE_POINT;
+    fetch::logger.Info("Creating TCP server");
     manager_ = std::make_shared< ClientManager >(*this);
 
-    std::shared_ptr<acceptor_type> acceptor =
-      network_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
-      (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
-
-    acceptor_ = acceptor;
-
-    auto closure = [this, acceptor]
+    auto closure = [this]
     {
-      std::cout << "starting: " << acceptor.use_count() << std::endl;
       std::lock_guard<std::mutex> lock(startMutex_);
+
       if(!stopping_)
       {
-        running_ = true;
-        Accept(acceptor);
+        std::shared_ptr<acceptor_type> acceptor =
+          network_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
+          (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
+
+        acceptor_ = acceptor;
+
+        fetch::logger.Info("Starting acceptor loop");
+        acceptor_ = acceptor;
+
+        if(acceptor)
+        {
+          running_ = true;
+          Accept(acceptor);
+          fetch::logger.Info("Accepting TCP connections");
+        }
       }
     };
-
-    acceptor.reset(); // The acceptor should be kept alive in the closure
 
     network_manager.Post(closure);
   }
@@ -82,21 +89,27 @@ class TCPServer : public AbstractNetworkServer {
       {
         std::error_code dummy;
         acceptorStrong->close(dummy);
+        fetch::logger.Info("closed acceptor: ");
+      }
+      else
+      {
+        fetch::logger.Info("failed to close acceptor: ");
       }
     });
 
     while(!acceptor_.expired() && running_)
     {
-      fetch::logger.Info("Waiting for acceptor to die in TCP server. ");
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      fetch::logger.Info("Waiting for acceptor to die in TCP server. ", acceptor_.use_count(), " : ", running_, " - ", this);
+      std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
+    fetch::logger.Info("Destructing TCP server");
   }
 
   void PushRequest(connection_handle_type client, message_type const& msg) override {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Got request from ", client);
 
-    std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
+    std::lock_guard<mutex_type> lock(request_mutex_);
     requests_.push_back({client, msg});
   }
 
@@ -112,7 +125,7 @@ class TCPServer : public AbstractNetworkServer {
 
   bool has_requests() {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
+    std::lock_guard<mutex_type> lock(request_mutex_);
     bool ret = (requests_.size() != 0);
     return ret;
   }
@@ -122,14 +135,14 @@ class TCPServer : public AbstractNetworkServer {
   **/
   Request Top() {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
+    std::lock_guard<mutex_type> lock(request_mutex_);
     Request top = requests_.front();
     return top;
   }
 
   void Pop() {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(request_mutex_);
+    std::lock_guard<mutex_type> lock(request_mutex_);
     requests_.pop_front();
   }
 
@@ -148,7 +161,7 @@ class TCPServer : public AbstractNetworkServer {
   network_manager_type       network_manager_;
   uint16_t                   port_;
   std::deque<Request>        requests_;
-  fetch::mutex::Mutex        request_mutex_;
+  mutex_type        request_mutex_;
 
   void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor) {
     LOG_STACK_TRACE_POINT;
@@ -170,9 +183,12 @@ class TCPServer : public AbstractNetworkServer {
         }
 
         conn->Start();
+        Accept(acceptor);
       }
-
-      Accept(acceptor);
+      else
+      {
+        fetch::logger.Info("Acceptor in TCP server received EC");
+      }
     };
 
     acceptor->async_accept(*strongSocket, cb);
