@@ -51,20 +51,28 @@ class TCPServer : public AbstractNetworkServer {
 
       if(!stopping_)
       {
-        std::shared_ptr<acceptor_type> acceptor =
-          network_manager_.CreateIO<asio::ip::tcp::tcp::acceptor>
-          (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
+        std::shared_ptr<acceptor_type> acceptor;
 
-        acceptor_ = acceptor;
-
-        fetch::logger.Info("Starting acceptor loop");
-        acceptor_ = acceptor;
-
-        if(acceptor)
+        try
         {
-          running_ = true;
-          Accept(acceptor);
-          fetch::logger.Info("Accepting TCP connections");
+          // This might throw if the port is not free
+          acceptor = network_manager_.CreateIO<acceptor_type>
+            (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
+
+          acceptor_ = acceptor;
+
+          fetch::logger.Info("Starting TCP server acceptor loop");
+          acceptor_ = acceptor;
+
+          if(acceptor)
+          {
+            running_ = true;
+            Accept(acceptor);
+            fetch::logger.Info("Accepting TCP server connections");
+          }
+        } catch (std::exception& e)
+        {
+          fetch::logger.Info("Failed to open socket: ", port_, " with error: ", e.what());
         }
       }
     };
@@ -89,7 +97,7 @@ class TCPServer : public AbstractNetworkServer {
       {
         std::error_code dummy;
         acceptorStrong->close(dummy);
-        fetch::logger.Info("closed acceptor: ");
+        fetch::logger.Info("closed TCP server server acceptor: ");
       }
       else
       {
@@ -99,7 +107,6 @@ class TCPServer : public AbstractNetworkServer {
 
     while(!acceptor_.expired() && running_)
     {
-      fetch::logger.Info("Waiting for acceptor to die in TCP server. ", acceptor_.use_count(), " : ", running_, " - ", this);
       std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
     fetch::logger.Info("Destructing TCP server");

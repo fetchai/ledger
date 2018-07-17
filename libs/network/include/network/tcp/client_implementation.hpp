@@ -103,9 +103,20 @@ class TCPClientImplementation final :
           if (!ec)
           {
             fetch::logger.Debug("Connection established!");
-            this->SetAddress( (*socket).remote_endpoint().address().to_string() );
 
-            ReadHeader();
+            // Prevent this from throwing
+            std::error_code ec2;
+            asio::ip::tcp::endpoint endpoint = (*socket).remote_endpoint(ec2);
+
+            if(!ec2)
+            {
+              this->SetAddress(endpoint.address().to_string());
+              ReadHeader();
+            }
+            else
+            {
+              fetch::logger.Warn("Failed to get endpoint of socket after connection");
+            }
           } else
           {
             fetch::logger.Debug("Client failed to connect");
