@@ -33,11 +33,23 @@ class ClientConnection : public AbstractConnection {
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if(socket_ptr) {
-      this->SetAddress(socket_ptr->remote_endpoint().address().to_string());
-      fetch::logger.Debug("Server: Connection from ",
-        socket_ptr->remote_endpoint().address().to_string());
+
+      // Prevent this from throwing
+      std::error_code ec;
+      asio::ip::tcp::endpoint endpoint = (*socket_ptr).remote_endpoint(ec);
+
+      if(!ec)
+      {
+        this->SetAddress(endpoint.address().to_string());
+
+        fetch::logger.Debug("Server: Connection from ",
+          socket_ptr->remote_endpoint().address().to_string());
+      }
+      else
+      {
+        fetch::logger.Warn("Server: Failed to get endpoint for socket!");
+      }
     }
-    
   }
 
   ~ClientConnection() {
