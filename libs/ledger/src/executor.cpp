@@ -54,7 +54,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   identifier.Parse(static_cast<std::string>(tx.contract_name()));
 
   // Lookup the chain code associated with the transaction
-  auto chain_code = LookupChainCode(identifier.name_space());
+  auto chain_code = chain_code_cache_.Lookup(identifier.name_space());
   if (!chain_code) {
     return Status::CHAIN_CODE_LOOKUP_FAILURE;
   }
@@ -72,30 +72,6 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   chain_code->Detach();
 
   return Status::SUCCESS;
-}
-
-/**
- * Creates or reuses a chain code instance based on a name
- *
- * @param name The name of the chain code contract
- * @return The chain code
- */
-Executor::chain_code_type Executor::LookupChainCode(std::string const &name) {
-  chain_code_type chain_code;
-
-  auto it = chain_code_cache_.find(name);
-  if (it != chain_code_cache_.end()) {
-    chain_code = it->second;
-  } else {
-    chain_code = factory_.Create(name);
-  }
-
-  // update the cache
-  if (chain_code) {
-    chain_code_cache_[name] = chain_code;
-  }
-
-  return chain_code;
 }
 
 } // namespace ledger

@@ -26,6 +26,9 @@ using IfIsBooleanLike = EnableIf<std::is_same<T, bool>::value, R>;
 template <typename T, typename R = T>
 using IfIsByteArrayLike = EnableIf<std::is_same<T, byte_array::ByteArray>::value, R>;
 
+template <typename T, typename R = T>
+using IfIsStdStringLike = EnableIf <std::is_same<T, std::string>::value, R>;
+
 } // namespace meta
 
 namespace script {
@@ -275,27 +278,33 @@ class Variant {
   bool& as_bool() { return data_.boolean; }
 
   template <typename T>
-  meta::IfIsIntegerLike<T> As() {
+  meta::IfIsIntegerLike<T, T> As() const {
     assert(type_ == INTEGER);
     return static_cast<T>(data_.integer);
   }
 
   template <typename T>
-  meta::IfIsBooleanLike<T> As() {
+  meta::IfIsBooleanLike<T, const T&> As() const {
     assert(type_ == BOOLEAN);
     return data_.boolean;
   }
 
   template <typename T>
-  meta::IfIsFloatLike<T> As() {
+  meta::IfIsFloatLike<T, T> As() const {
     assert(type_ == FLOATING_POINT);
     return static_cast<T>(data_.float_point);
   }
 
   template <typename T>
-  meta::IfIsByteArrayLike<T> As() {
+  meta::IfIsByteArrayLike<T, const T&> As() const {
     assert(type_ == STRING);
     return string_;
+  }
+
+  template <typename T>
+  meta::IfIsStdStringLike <T, T> As() const {
+    assert(type_ == STRING);
+    return static_cast<std::string>(string_);
   }
 
   bool is_int() const { return type_ == INTEGER; }
@@ -303,6 +312,7 @@ class Variant {
   bool is_bool() const { return type_ == BOOLEAN; }
   bool is_array() const { return type_ == ARRAY; }
   bool is_object() const { return type_ == OBJECT; }
+  bool is_string() const { return type_ == STRING; }
   bool is_byte_array() const { return type_ == STRING; }
   bool is_undefined() const {return type_ == UNDEFINED; }
 

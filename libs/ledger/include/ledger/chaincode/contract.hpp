@@ -82,18 +82,6 @@ public:
     state_ = nullptr;
   }
 
-  state_type &state() {
-    if (state_ == nullptr) {
-      int i = 1 + 2;
-      (void)i;
-    }
-
-    detailed_assert(state_ != nullptr);
-    return *state_;
-  }
-
-
-
   std::size_t GetQueryCounter(std::string const &name) {
     auto it = query_counters_.find(name);
     if (it != query_counters_.end()) {
@@ -113,6 +101,18 @@ public:
   }
 
   bool ParseAsJson(transaction_type const &tx, script::Variant &output);
+
+  Identifier const &identifier() const {
+    return contract_identifier_;
+  }
+
+  query_handler_map_type const &query_handlers() const {
+    return query_handlers_;
+  }
+
+  transaction_handler_map_type const &transaction_handlers() const {
+    return transaction_handlers_;
+  }
 
 protected:
 
@@ -142,6 +142,11 @@ protected:
     } else {
       throw std::logic_error("Duplicate query handler registered");
     }
+  }
+
+  state_type &state() {
+    detailed_assert(state_ != nullptr);
+    return *state_;
   }
 
   byte_array::ByteArray CreateStateIndex(byte_array::ByteArray const &suffix) {

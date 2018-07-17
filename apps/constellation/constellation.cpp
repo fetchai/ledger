@@ -41,7 +41,16 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
   p2p_.reset(new p2p::P2PService(p2p_port_, *network_manager_));
   p2p_->Start();
 
+  // define the list of HTTP modules to be used
+  http_modules_ = {
+    std::make_shared<ledger::ContractHttpInterface>(*storage_)
+  };
+
+  // create and register the HTTP modules
   http_.reset(new http::HTTPServer(http_port_, *network_manager_));
+  for (auto const &module : http_modules_) {
+    http_->AddModule(*module);
+  }
 }
 
 void Constellation::Run(peer_list_type const &initial_peers) {

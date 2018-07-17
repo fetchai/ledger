@@ -119,14 +119,15 @@ Contract::Status TokenContract::Balance(query_type const &query, query_type &res
 
     // lookup the record
     WalletRecord record{};
-    if (!GetOrCreateStateRecord(record, address))
-      return Status::FAILED;
+    GetStateRecord(record, address);
 
     // formulate the response
     response.MakeObject();
     response["balance"] = record.balance;
 
     status = Status::OK;
+  } else {
+    logger.Warn("Incorrect parameters to balance query");
   }
 
   return status;

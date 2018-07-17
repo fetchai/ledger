@@ -6,6 +6,7 @@
 #include "ledger/execution_manager.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/main_chain_node.hpp"
+#include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "network/p2pservice/p2p_service.hpp"
@@ -43,6 +44,8 @@ public:
   using p2p_service_type = std::unique_ptr<p2p::P2PService>;
   using http_server_type = std::unique_ptr<http::HTTPServer>;
   using peer_list_type = std::vector<network::Peer>;
+  using http_module_type = std::shared_ptr<http::HTTPModule>;
+  using http_modules_type = std::vector<http_module_type>;
 
   static constexpr uint16_t P2P_PORT_OFFSET = 1;
   static constexpr uint16_t HTTP_PORT_OFFSET = 0;
@@ -115,6 +118,7 @@ private:
   /// @name API Components
   /// @{
   http_server_type http_;                       ///< The HTTP interfaces server
+  http_modules_type http_modules_;
   /// @}
 };
 

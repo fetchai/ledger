@@ -55,7 +55,7 @@ public:
     logger.Info("Spinning up lane ", lane_assignment_);
     
     this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
-    this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
+    this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetOrCreateLaneChecked);
     this->ExposeWithClientArg(SET, this, &RevertibleDocumentStoreProtocol::SetLaneChecked);
 
     this->Expose(COMMIT, doc_store, &RevertibleDocumentStore::Commit);

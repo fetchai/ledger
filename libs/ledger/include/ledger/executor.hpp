@@ -2,14 +2,13 @@
 #define FETCH_EXECUTOR_HPP
 
 #include "ledger/chain/block.hpp"
-#include "ledger/chaincode/factory.hpp"
+#include "ledger/chaincode/cache.hpp"
 #include "ledger/executor_interface.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <vector>
 #include <unordered_set>
-#include <unordered_map>
 
 namespace fetch {
 namespace ledger {
@@ -40,11 +39,8 @@ public:
 
 private:
 
-  resources_type resources_;              ///< The collection of resources as published by the collection of lanes
-  ChainCodeFactory factory_;              ///< The factory to create new chain code instances
-  contract_cache_type chain_code_cache_;  ///< The cache of active chain code instances
-
-  Executor::chain_code_type LookupChainCode(std::string const &name);
+  resources_type resources_;            ///< The collection of resources as published by the collection of lanes
+  ChainCodeCache chain_code_cache_;     ///< The factory to create new chain code instances
 };
 
 } // namespace ledger
