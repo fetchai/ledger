@@ -132,9 +132,9 @@ protected:
   bool GetBalance(address_type const &address, uint64_t &balance) {
 
     EXPECT_CALL(*storage_, Get(_))
-      .Times(0);
-    EXPECT_CALL(*storage_, GetOrCreate(_))
       .Times(1);
+    EXPECT_CALL(*storage_, GetOrCreate(_))
+      .Times(0);
     EXPECT_CALL(*storage_, Set(_, _))
       .Times(0);
     EXPECT_CALL(*storage_, Lock(_))
