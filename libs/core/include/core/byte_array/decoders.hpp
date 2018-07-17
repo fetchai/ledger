@@ -1,12 +1,12 @@
 #ifndef BYTE_ARRAY_DECODERS_HPP
 #define BYTE_ARRAY_DECODERS_HPP
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
 namespace byte_array {
 
-BasicByteArray FromBase64(BasicByteArray const &str) noexcept;
-BasicByteArray FromHex(BasicByteArray const &str) noexcept;
+ConstByteArray FromBase64(ConstByteArray const &str) noexcept;
+ConstByteArray FromHex(ConstByteArray const &str) noexcept;
 }
 }
 

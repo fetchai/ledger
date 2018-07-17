@@ -3,7 +3,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/json/exceptions.hpp"
 #include "core/script/variant.hpp"
 
@@ -55,12 +55,12 @@ class JSONDocument {
   }
 
   typename script::Variant::variant_proxy_type operator[](
-      byte_array::BasicByteArray const &key) {
+      byte_array::ConstByteArray const &key) {
     return root()[key];
   }
 
   script::Variant const &operator[](
-      byte_array::BasicByteArray const &key) const {
+      byte_array::ConstByteArray const &key) const {
     return root()[key];
   }
 

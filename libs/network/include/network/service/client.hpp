@@ -1,7 +1,7 @@
 #ifndef SERVICE_SERVICE_CLIENT_HPP
 #define SERVICE_SERVICE_CLIENT_HPP
 
-#include "core/serializers/referenced_byte_array.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/message_types.hpp"

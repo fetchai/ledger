@@ -3,7 +3,7 @@
 #include "core/serializers/stl_types.hpp"
 
 #include <type_traits>
-#include "core/byte_array/referenced_byte_array.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/serializers/type_register.hpp"
 
 namespace fetch {

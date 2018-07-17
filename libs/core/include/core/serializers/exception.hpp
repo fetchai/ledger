@@ -2,7 +2,7 @@
 #define SERIALIZER_EXCEPTION_HPP
 #include <exception>
 #include <string>
-#include "core/byte_array/basic_byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
 namespace fetch {
 namespace serializers {
@@ -28,7 +28,7 @@ class SerializableException : public std::exception {
     LOG_SET_CONTEXT_VARIABLE(stack_trace_)
   }
 
-  SerializableException(byte_array::BasicByteArray const& explanation)
+  SerializableException(byte_array::ConstByteArray const& explanation)
       : error_code_(error::TYPE_ERROR), explanation_(std::string(explanation)) {
     LOG_STACK_TRACE_POINT;
 
@@ -43,7 +43,7 @@ class SerializableException : public std::exception {
   }
 
   SerializableException(error::error_type error_code,
-                        byte_array::BasicByteArray const& explanation)
+                        byte_array::ConstByteArray const& explanation)
       : error_code_(error_code), explanation_(std::string(explanation)) {
     LOG_STACK_TRACE_POINT;
 
