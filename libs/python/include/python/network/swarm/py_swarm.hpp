@@ -181,41 +181,50 @@ public:
                             });
 
     chainNode -> onBlockComplete_ = [chainNode](const block_type blk){
-        std::cout << "Would publish" << blk.summarise() << std::endl;
+        std::cout << "AGENT_API MINED " << blk.summarise() << std::endl;
 
         chainNode ->  Publish(fetch::ledger::MainChain::BLOCK_PUBLISH, blk);
     };
-
-
 
     swarmAgentApi -> ToDiscoverBlocks([this, swarmAgentApi, swarmNode, chainNode, nnCore](const std::string &host, uint32_t count)
                                        {
                                       auto pySwarm = this;
 
-                                      auto func = new service::Function<void(const block_type)>
-                                          (
-                                           [pySwarm,host,chainNode,swarmAgentApi](const block_type &blk){
-                                               std::cout << "P/S Block arrived" << std::endl;
-                                               block_type block = blk;
-                                               block.UpdateDigest();
-                                               std::cout << "PO/S: GOT1 " << block.summarise() << std::endl;
-                                               chainNode -> AddBlock(block);
-                                               std::cout << "PO/S: GOT2 " << block.summarise() << std::endl;
-                                               auto blockId = pySwarm -> hashToBlockId(block.hash());
-                                               std::cout << "PO/S: GOT3 " << block.summarise() << std::endl;
-                                               swarmAgentApi -> DoNewBlockIdFound(host, blockId);
-                                               std::cout << "P/S Block handled" << std::endl;
-                                           }
-                                           );
-                                      auto subs = nnCore ->
-                                          CreateSubscription(nnCore -> ConnectTo(host),
-                                                             fetch::protocols::FetchProtocols::MAIN_CHAIN,
-                                                             fetch::ledger::MainChain::BLOCK_PUBLISH,
-                                                             func
-                                                             );
-                                      std::cout << "P/S: SUBSCRIBE " << host << std::endl;
+                                      if (disc.find(host) == disc.end())
+                                      {
+                                          auto func = new service::Function<void(const block_type)>
+                                              (
+                                               [pySwarm,host,chainNode,swarmAgentApi](const block_type &blk){
+                                                   block_type block = blk;
+                                                   block.UpdateDigest();
+                                                   std::cout << "AGENT_API DISCOVER GOT " << block.summarise() << std::endl;
+                                                   auto newblock = chainNode -> AddBlock(block);
+                                                   auto blockId = pySwarm -> hashToBlockId(block.hash());
+                                                   swarmAgentApi -> DoNewBlockIdFound(host, blockId);
+
+                                                   if (block.loose())
+                                                   {
+                                                       std::cout << "AGENT_API DISCOVER LOOSE "<< block.prevString() << std::endl;
+                                                       pySwarm -> DoLooseBlock(host, block.prevString());
+                                                   }
+                                                   if (newblock)
+                                                   {
+                                                       std::cout << "AGENT_API DISCOVER FORWARDING" << block.summarise() << std::endl;
+                                                       chainNode ->  Publish(fetch::ledger::MainChain::BLOCK_PUBLISH, block);
+                                                   }
+
+                                               }
+                                               );
+                                          auto subs = nnCore ->
+                                              CreateSubscription(nnCore -> ConnectTo(host),
+                                                                 fetch::protocols::FetchProtocols::MAIN_CHAIN,
+                                                                 fetch::ledger::MainChain::BLOCK_PUBLISH,
+                                                                 func
+                                                                 );
+                                          std::cout << "AGENT_API SUBSCRIBE " << host << std::endl;
                                           this -> disc[host] = std::make_shared<Discovery>(host, subs);
-                                       });
+                                      }
+                                     });
 
     swarmAgentApi -> ToGetBlock([this, swarmAgentApi, swarmNode, chainNode, nnCore](const std::string &host, const std::string &blockid)
                                  {
@@ -243,12 +252,18 @@ public:
                                                                      auto newHash = block.hash();
                                                                      auto newBlockId = pySwarm -> hashToBlockId(newHash);
                                                                      pySwarm -> DoBlockSupplied(host, block.hashString());
-
-                                                                     chainNode ->  AddBlock(block);
+                                                                     std::cout << "AGENT_API GET GOT " << block.summarise() << std::endl;
+                                                                     auto newblock = chainNode ->  AddBlock(block);
 
                                                                      if (block.loose())
                                                                      {
+                                                                         std::cout << "AGENT_API GET LOOSE " << block.prevString() << std::endl;
                                                                          pySwarm -> DoLooseBlock(host, block.prevString());
+                                                                     }
+                                                                     if (newblock)
+                                                                     {
+                                                                         std::cout << "AGENT_API GET FORWARDING" << block.summarise() << std::endl;
+                                                                         chainNode ->  Publish(fetch::ledger::MainChain::BLOCK_PUBLISH, block);
                                                                      }
                                                                  }
                                                                  else

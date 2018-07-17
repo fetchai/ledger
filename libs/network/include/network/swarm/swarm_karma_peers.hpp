@@ -28,6 +28,7 @@ public:
 
   bool empty() const
   {
+    lock_type mlock(mutex_);
     return peers.empty();
   }
 

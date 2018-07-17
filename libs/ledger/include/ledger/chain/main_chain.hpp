@@ -109,9 +109,7 @@ class MainChain
 
     if(tipRef != tips_.end())
     {
-
       tip = ((*tipRef).second);
-      tips_.erase(tipRef);
       tip->total_weight += block.weight();
       block.loose() = tip->loose;
       block.totalWeight() = tip->total_weight;
@@ -144,6 +142,7 @@ class MainChain
           onForkSwitch();
         }
       }
+      tips_.erase(tipRef);
     }
     else
     {
@@ -413,7 +412,7 @@ class MainChain
 
   void reset()
   {
-    std::lock_guard<fetch::mutex::Mutex>                 lock(mutex_);
+    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     blockChain_.clear();
     tips_.clear();
     danglingRoot_.clear();

@@ -17,6 +17,10 @@ namespace fetch {
 namespace service {
 
 class ServiceClientInterface {
+    typedef fetch::mutex::Mutex subscription_mutex_type;
+    typedef std::lock_guard<subscription_mutex_type> subscription_mutex_lock_type;
+    class Subscription;
+    typedef std::map<subscription_handler_type, Subscription> subscriptions_type;
  public:
   ServiceClientInterface()
       : subscription_mutex_(__LINE__, __FILE__),
@@ -94,48 +98,70 @@ class ServiceClientInterface {
     return prom;
   }
 
-  subscription_handler_type Subscribe(protocol_handler_type const& protocol,
-                                      feed_handler_type const& feed,
-                                      AbstractCallable* callback) {
-    LOG_STACK_TRACE_POINT;
+    subscription_handler_type Subscribe(protocol_handler_type const& protocol,
+                                        feed_handler_type const& feed,
+                                        AbstractCallable* callback)
+    {
+        LOG_STACK_TRACE_POINT;
 
-    subscription_handler_type subid =
-        CreateSubscription(protocol, feed, callback);
-    serializer_type params;
+        subscription_handler_type subid =
+            CreateSubscription(protocol, feed, callback);
+        serializer_type params;
 
-    serializers::SizeCounter<serializer_type> counter;
-    counter << SERVICE_SUBSCRIBE << protocol << feed << subid;
-    params.Reserve(counter.size());
+        serializers::SizeCounter<serializer_type> counter;
+        counter << SERVICE_SUBSCRIBE << protocol << feed << subid;
+        params.Reserve(counter.size());
 
-    params << SERVICE_SUBSCRIBE << protocol << feed << subid;
-    DeliverRequest(params.data());
-    return subid;
-  }
+        params << SERVICE_SUBSCRIBE << protocol << feed << subid;
+        DeliverRequest(params.data());
+        return subid;
+    }
 
-  void Unsubscribe(subscription_handler_type id) {
-    LOG_STACK_TRACE_POINT;
+    void Unsubscribe(subscription_handler_type id)
+    {
+        LOG_STACK_TRACE_POINT;
+        Subscription sub;
+        {
+            subscription_mutex_lock_type lock(subscription_mutex_);
+            auto subscr = subscriptions_.find(id);
+            if (subscr == subscriptions_.end())
+            {
+                if (std::find(
+                              cancelled_subscriptions_.begin(),
+                              cancelled_subscriptions_.end(),
+                              id) != cancelled_subscriptions_.end())
+                {
+                    fetch::logger.Error("Trying to unsubscribe previously cancelled ID ", id);
+                }
+                else
+                {
+                    fetch::logger.Error("Trying to unsubscribe unknown ID ", id);
+                }
+                return;
+            }
 
-    subscription_mutex_.lock();
-    auto& sub = subscriptions_[id];
+            sub = subscriptions_[id];
 
-    serializer_type params;
+            cancelled_subscriptions_.push_back(id);
+            if (cancelled_subscriptions_.size() > 30)
+            {
+                cancelled_subscriptions_.pop_front();
+            }
+            subscriptions_.erase(id);
+        }
 
-    serializers::SizeCounter<serializer_type> counter;
-    counter << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
-    params.Reserve(counter.size());
+        if (sub.callback)
+        {
+            serializer_type params;
 
-    params << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
-    subscription_mutex_.unlock();
+            serializers::SizeCounter<serializer_type> counter;
+            counter << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
+            params.Reserve(counter.size());
 
-    DeliverRequest(params.data());
-
-    subscription_mutex_.lock();
-    delete sub.callback;
-    sub.callback = nullptr;
-    sub.protocol = 0;
-    sub.feed = 0;
-    subscription_mutex_.unlock();
-  }
+            params << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
+            DeliverRequest(params.data());
+        }
+    }
 
  protected:
   virtual bool DeliverRequest(network::message_type const&) = 0;
@@ -204,36 +230,56 @@ class ServiceClientInterface {
       promises_mutex_.unlock();
 
     } else if (type == SERVICE_FEED) {
-      feed_handler_type feed;
-      subscription_handler_type sub;
-      params >> feed >> sub;
-      subscription_mutex_.lock();
-      if (subscriptions_[sub].feed != feed) {
-        fetch::logger.Error("Feed id mismatch ", feed);
-        TODO_FAIL("feed id mismatch");
-      }
 
-      auto& subde = subscriptions_[sub];
-      subscription_mutex_.unlock();
+        feed_handler_type feed;
+        subscription_handler_type sub;
+        params >> feed >> sub;
 
-      subde.mutex.lock();
-      auto cb = subde.callback;
-      subde.mutex.unlock();
+        AbstractCallable *cb = 0;
+        {
+            subscription_mutex_lock_type lock(subscription_mutex_);
+            auto subscr = subscriptions_.find(sub);
+            if (subscr == subscriptions_.end())
+            {
+                if (std::find(
+                              cancelled_subscriptions_.begin(),
+                              cancelled_subscriptions_.end(),
+                              sub) == cancelled_subscriptions_.end())
+                {
+                    TODO_FAIL("We were sent a subscription ID we never allocated:", int(sub));
+                    return false;
+                }
+                else
+                {
+                    fetch::logger.Info("Ignoring message for old subscription.", int(sub));
+                    return true;
+                }
+            }
 
-      if (cb != nullptr) {
-        serializer_type result;
-        try {
-          (*cb)(result, params);
-        } catch (serializers::SerializableException const& e) {
-          e.StackTrace();
+            if ( (*subscr).second.feed != feed)
+            {
+                TODO_FAIL("Subscription's feed ID is different from message feed ID.");
+                return false;
+            }
 
-          fetch::logger.Error("Serialization error: ", e.what());
-          throw e;
+            cb =  (*subscr).second.callback;
         }
-      } else {
-        fetch::logger.Error("Callback is null for feed ", feed);
-      }
 
+        if (cb)
+        {
+            serializer_type result;
+            try {
+                (*cb)(result, params);
+            } catch (serializers::SerializableException const& e) {
+                e.StackTrace();
+                fetch::logger.Error("Serialization error: ", e.what());
+                throw e;
+            }
+        }
+        else
+        {
+            fetch::logger.Error("Callback is null for feed ", feed, " in subscription ", int(sub));
+        }
     } else {
       ret = false;
     }
@@ -242,41 +288,61 @@ class ServiceClientInterface {
   }
 
  private:
-  subscription_handler_type CreateSubscription(
-      protocol_handler_type const& protocol, feed_handler_type const& feed,
-      AbstractCallable* cb) {
-    LOG_STACK_TRACE_POINT;
 
-    subscription_mutex_.lock();
-    std::size_t i = 0;
-    for (; i < 256; ++i) {
-      if (subscriptions_[i].callback == nullptr) break;
+    subscription_handler_type CreateSubscription(
+        protocol_handler_type const& protocol, feed_handler_type const& feed,
+        AbstractCallable* cb)
+    {
+        LOG_STACK_TRACE_POINT;
+
+        subscription_mutex_lock_type lock(subscription_mutex_);
+        subscription_index_counter += 1;
+        subscriptions_[subscription_index_counter] = Subscription(protocol, feed, cb);
+        subscription_mutex_.unlock();
+        return subscription_handler_type(subscription_index_counter);
     }
+    
+    class Subscription
+    {
+    public:
+        Subscription()
+        {
+            protocol = 0;
+            feed = 0;
+            callback = nullptr;
+        }
+        Subscription(protocol_handler_type protocol, feed_handler_type feed, AbstractCallable* callback)
+        {
+            this -> protocol = protocol;
+            this -> feed = feed;
+            this -> callback = callback;
+        }
 
-    if (i >= 256) {
-      TODO_FAIL("could not allocate a free space for subscription");
-    }
+        Subscription(const Subscription &) = default;
+        Subscription(Subscription &&) = default;
+        Subscription& operator=(const Subscription&) = default;
+        Subscription& operator=(Subscription&&) = default;
 
-    auto& sub = subscriptions_[i];
-    sub.protocol = protocol;
-    sub.feed = feed;
-    sub.callback = cb;
-    subscription_mutex_.unlock();
-    return subscription_handler_type(i);
-  }
+        std::string summarise()
+        {
+            char buffer[1000];
+            char *p=buffer;
+            p += sprintf(p, " Subscription protocol=%d handler=%d callback=%p ",
+                         int(protocol), int(feed), ((void*)(callback)));
+            return std::string(buffer);
+        }
 
-  struct Subscription {
-    protocol_handler_type protocol = 0;
-    feed_handler_type feed = 0;
-    AbstractCallable* callback = nullptr;
-    fetch::mutex::Mutex mutex;
-  };
+        protocol_handler_type protocol = 0;
+        feed_handler_type feed = 0;
+        AbstractCallable* callback = nullptr;
+    };
+    
+  subscriptions_type subscriptions_;
+  std::list<subscription_handler_type> cancelled_subscriptions_;
+  subscription_mutex_type subscription_mutex_;
+  subscription_handler_type subscription_index_counter;
 
-  Subscription subscriptions_[256];  // TODO: make centrally configurable;
-  fetch::mutex::Mutex subscription_mutex_;
-
-  std::map<Promise::promise_counter_type, Promise::shared_promise_type>
-      promises_;
+  std::map<Promise::promise_counter_type, Promise::shared_promise_type> promises_;
   fetch::mutex::Mutex promises_mutex_;
 };
 }

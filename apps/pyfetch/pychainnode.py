@@ -47,7 +47,6 @@ class SwarmAgentNaive(object):
         self.swarm.OnBlockSupplied(self.onBlockSupplied)
         self.swarm.OnBlockNotSupplied(self.onBlockNotSupplied)
         self.timeOfLastRemoteNewBlock = datetime.datetime.now()
-        self.in_progress = set()
 
         say(self.mainchain.totalBlocks())
         self.swarm.Start()
@@ -56,24 +55,19 @@ class SwarmAgentNaive(object):
     def onPingFailed(self, host):
         say("PYCHAINNODE===> Ping failed to:", host)
         self.swarm.AddKarma(host, -5.0);
-        self.in_progress.discard(host)
 
     def onPingSucceeded(self, host):
         self.swarm.AddKarmaMax(host, 10.0, 30.0);
-        self.in_progress.discard(host)
 
     def onIdle(self):
         say("idle")
         goodPeers = self.swarm.GetPeers(10, -0.5)
 
         if (datetime.datetime.now() - self.timeOfLastRemoteNewBlock
-                    ).total_seconds() > 40:
-            self.timeOfLastRemoteNewBlock = datetime.datetime.now()
-            self.in_progress = set()
+                    ).total_seconds() < 5:
+            return;
 
-        goodPeers = [ x for x in goodPeers
-                          if x not in self.in_progress
-                          and x not in self.introductions ]
+        goodPeers = [ goodPeerFilter for goodPeerFilter in goodPeers if goodPeerFilter not in self.introductions ]
 
         if not goodPeers:
             say("quiet")
@@ -89,23 +83,17 @@ class SwarmAgentNaive(object):
             weightedPeer = weightedPeers.pop(0)
             weight -= weightedPeer[1]
         hosts.append(weightedPeer[0])
-        hosts.append(goodPeers[int(random.random() * len(goodPeers))])
 
-        for host in hosts:
-            if host not in self.in_progress:
-                self.in_progress.add(host)
-                self.swarm.DoPing(host);
-                self.swarm.DoDiscoverBlocks(host, 3);
-            else:
-                say("PYCHAINNODE===> Ping deferred to:", host)
-
+        host = hosts[0]
+        self.swarm.DoPing(host);
+        self.swarm.DoDiscoverBlocks(host, 3);
         return 0
 
     def onPeerless(self):
-        for x in self.peerlist:
-            self.swarm.DoPing(x)
-        for x in self.introductions:
-            self.swarm.AddKarmaMax(x, 1000.0, 1000.0);
+        for peerListMember in self.peerlist:
+            self.swarm.DoPing(peerListMember)
+        for introListMember in self.introductions:
+            self.swarm.AddKarmaMax(introListMember, 1000.0, 1000.0);
 
     def onNewPeerDiscovered(self, host):
         if host == self.swarm.queryOwnLocation():
