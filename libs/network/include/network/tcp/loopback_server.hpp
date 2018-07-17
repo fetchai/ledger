@@ -71,7 +71,7 @@ class LoopbackServer
 public:
   static constexpr std::size_t DEFAULT_NUM_THREADS = 4;
 
-  explicit LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS) :
+  LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS) :
     port_{port},
     networkManager_{num_threads}
   {
@@ -99,14 +99,13 @@ public:
 
   ~LoopbackServer()
   {
-    acceptor_.reset();
     networkManager_.Stop();
   }
 
 private:
   // IO objects guaranteed to have lifetime less than the io_service/networkManager
   uint16_t                                      port_;
-  NetworkManager                                 networkManager_;
+  NetworkManager                                networkManager_;
   std::weak_ptr<asio::ip::tcp::tcp::acceptor>   acceptor_;
   std::atomic<bool>                             finished_setup_{false};
 
@@ -128,7 +127,6 @@ private:
     finished_setup_ = true;
   }
 };
-
 
 }
 }
