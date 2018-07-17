@@ -15,7 +15,7 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-network)
-target_link_libraries(fetch-network PUBLIC fetch-core vendor-asio pthread)
+target_link_libraries(fetch-network PUBLIC fetch-core vendor-asio pthread fetch-storage)
 
 add_test_target()
 add_subdirectory(examples)

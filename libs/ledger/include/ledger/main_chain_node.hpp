@@ -180,7 +180,7 @@ public:
                     // Get heaviest block
                     auto block = chain_ -> HeaviestBlock();
 
-                    fetch::logger.Info("MINER: Determining heaviest chain as:", block.summarise());
+                    fetch::logger.Info("AGENT_API MINER: Determining heaviest chain as:", block.summarise());
 
                     // Create another block sequential to previous
                     block_type nextBlock;
@@ -197,7 +197,7 @@ public:
                     nextBlock.proof().SetTarget(target_);
                     miner::Mine(nextBlock);
 
-                    fetch::logger.Info("MINER: Mined block:", nextBlock.summarise());
+                    fetch::logger.Info("AGENT_API MINER: Mined block:", nextBlock.summarise());
 
                     if(stopped_)
                     {
@@ -211,7 +211,7 @@ public:
                     {
                         this -> onBlockComplete_(nextBlock);
                     }
-                    fetch::logger.Debug("Main Chain Node: Mined: ",  ToHex(block.hash()));
+                    fetch::logger.Debug("AGENT_API MINER: Added: ",  ToHex(block.hash()));
                 }
             };
 

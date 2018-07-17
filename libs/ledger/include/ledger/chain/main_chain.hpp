@@ -67,8 +67,8 @@ class MainChain
     tips_[genesis.hash()] = tip;
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
 
-    RecoverFromFile();
-    constructing_ = false;
+    //RecoverFromFile();
+    //constructing_ = false;
   }
 
   // Default hard code genesis
@@ -89,8 +89,8 @@ class MainChain
     tips_[genesis.hash()] = tip;
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
 
-    RecoverFromFile();
-    constructing_ = false;
+    //RecoverFromFile();
+    //constructing_ = false;
   }
 
 

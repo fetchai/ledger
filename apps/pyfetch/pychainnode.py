@@ -51,21 +51,47 @@ class SwarmAgentNaive(object):
         say(self.mainchain.totalBlocks())
         self.swarm.Start()
 
+        self.inflight = set()
+        self.subs = []
 
     def onPingFailed(self, host):
         say("PYCHAINNODE===> Ping failed to:", host)
         self.swarm.AddKarma(host, -5.0);
+        self.inflight.remove(host)
 
     def onPingSucceeded(self, host):
-        self.swarm.AddKarmaMax(host, 10.0, 30.0);
+        self.swarm.AddKarmaMax(host, 2.0, 5.0);
+        self.inflight.remove(host)
+
+    def RequestChain(self, host):
+        if (datetime.datetime.now() - self.timeOfLastRemoteNewBlock).total_seconds() > 10:
+            self.inflight = set()
+        if host in self.inflight:
+            return
+        self.inflight.add(host)
+        self.swarm.DoLoadChain(host, 30)
+        self.swarm.DoPing(host)
+
+    def SendPing(self, host):
+        if (datetime.datetime.now() - self.timeOfLastRemoteNewBlock).total_seconds() > 10:
+            inflight = set()
+        if host in self.inflight:
+            return
+        self.inflight.add(host)
+        self.swarm.DoPing(host)
+
+    def CreateSubscription(self, host):
+        if host in subs:
+            return
+        self.swarm.DoDiscoverBlocks(host, 3);
+        self.subs.append(host)
+
 
     def onIdle(self):
-        say("idle")
-        goodPeers = self.swarm.GetPeers(10, -0.5)
 
-        if (datetime.datetime.now() - self.timeOfLastRemoteNewBlock
-                    ).total_seconds() < 5:
-            return;
+        mode = "chain"
+
+        goodPeers = self.swarm.GetPeers(10, -0.5)
 
         goodPeers = [ goodPeerFilter for goodPeerFilter in goodPeers if goodPeerFilter not in self.introductions ]
 
@@ -73,20 +99,23 @@ class SwarmAgentNaive(object):
             say("quiet")
             return 100
 
-        hosts = []
-
         weightedPeers = [(x,self.swarm.GetKarma(x)) for x in goodPeers]
         total = sum([ x[1] for x in weightedPeers ])
         weight = random.random() * total
+
         weightedPeer = weightedPeers[0]
         while weight >= 0 and weightedPeers:
             weightedPeer = weightedPeers.pop(0)
             weight -= weightedPeer[1]
-        hosts.append(weightedPeer[0])
 
-        host = hosts[0]
-        self.swarm.DoPing(host);
-        self.swarm.DoDiscoverBlocks(host, 3);
+        host = weightedPeer[0]
+
+        if mode == "chain":
+            self.RequestChain(host)
+        else:
+            self.CreateSubscription(host)
+            self.SendPing(host)
+
         return 0
 
     def onPeerless(self):
