@@ -74,7 +74,24 @@ bool ExecutionManager::Execute(block_digest_type const &block_hash,
 
   // determine if the current block follows on from the previous block
   if (prev_block_hash != last_block_hash_) {
-    return false;
+    std::lock_guard<mutex_type> lock(state_archive_lock_);
+
+    // need to load the state from a previous application, so lookup the corresponding state hash
+    auto cache_it = block_state_cache_.find(prev_block_hash);
+    if (cache_it == block_state_cache_.end()) {
+      logger.Warn("Unable to lookup previous state hash");
+      return false;
+    }
+
+    // lookup the cached bookmark
+    bookmark_type bookmark{0};
+    if (!state_archive_.LookupBookmark(cache_it->second, bookmark)) {
+      logger.Warn("Unable to lookup previous state hash bookmark");
+      return false;
+    }
+
+    // revert the storage engine to the previous bookmark
+    storage_->Revert(bookmark);
   }
 
   // sanity check!
@@ -134,10 +151,6 @@ void ExecutionManager::PlanExecution(tx_index_type const &index, block_map_type 
       execution_plan_[slice_idx].emplace_back(std::move(item));
     }
   }
-}
-
-void ExecutionManager::ScheduleExecution() {
-
 }
 
 /**
@@ -245,17 +258,24 @@ bool ExecutionManager::Abort() {
 
 void ExecutionManager::MonitorThreadEntrypoint() {
   using namespace std::chrono;
-  using future_type = ExecutionItem::future_type;
-  using future_list_type = std::vector<future_type>;
 
-  future_list_type pending_executions{};
+  enum class MonitorState {
+    IDLE,
+    SCHEDULE_NEXT_SLICE,
+    RUNNING,
+    BOOKMARKING_STATE
+  };
+
+  MonitorState state = MonitorState::IDLE;
+
   std::size_t next_slice = 0;
   std::mutex wait_lock;
+  block_digest_type current_block;
 
   while (running_) {
     monitor_ready_ = true;
 
-    switch (monitor_state_.load()) {
+    switch (state) {
       case MonitorState::IDLE: {
         active_ = false;
 
@@ -266,10 +286,11 @@ void ExecutionManager::MonitorThreadEntrypoint() {
         }
 
         active_ = true;
+        current_block = last_block_hash_;
 
         // schedule the next slice if we have been triggered
         if (running_) {
-          monitor_state_ = MonitorState::SCHEDULE_NEXT_SLICE;
+          state = MonitorState::SCHEDULE_NEXT_SLICE;
           next_slice = 0;
         }
 
@@ -293,7 +314,7 @@ void ExecutionManager::MonitorThreadEntrypoint() {
           });
         }
 
-        monitor_state_ = MonitorState::RUNNING;
+        state = MonitorState::RUNNING;
         ++next_slice;
         break;
       }
@@ -308,8 +329,51 @@ void ExecutionManager::MonitorThreadEntrypoint() {
 
         // determine the next state (provided we have comlete
         if (remaining_executions_ == 0) {
-          monitor_state_ = (num_slices_ > next_slice) ? MonitorState::SCHEDULE_NEXT_SLICE : MonitorState::IDLE;
+          state = (num_slices_ > next_slice) ? MonitorState::SCHEDULE_NEXT_SLICE : MonitorState::BOOKMARKING_STATE;
         }
+
+        break;
+      }
+
+      case MonitorState::BOOKMARKING_STATE: {
+
+        // lookup the final hash
+        hash_type state_hash = storage_->Hash();
+
+        // request a bookmark
+        bookmark_type bookmark = 0;
+        bool new_bookmark = false;
+        if (state_hash.size()) {
+          std::lock_guard<mutex_type> lock(state_archive_lock_);
+          new_bookmark = state_archive_.RecordBookmark(state_hash, bookmark);
+        } else {
+          logger.Warn("Unable to request state hash");
+        }
+
+        // only need to commit the new bookmark if there is actually a change in state
+        if (new_bookmark) {
+
+          // commit the changes in state
+          try {
+            storage_->Commit(bookmark);
+          } catch (std::exception &ex) {
+            logger.Warn("Unable to commit state. Error: ", ex.what());
+          }
+
+          // update the state archives
+          {
+            std::lock_guard<mutex_type> lock(state_archive_lock_);
+            if (!state_archive_.ConfirmBookmark(state_hash, bookmark)) {
+              logger.Warn("Unable to confirm bookmark: ", bookmark);
+            }
+
+            // update the block state cache
+            block_state_cache_.emplace(current_block, state_hash);
+          }
+        }
+
+        // finished processing the block
+        state = MonitorState::IDLE;
 
         break;
       }

@@ -2,6 +2,7 @@
 #define FETCH_FAKE_EXECUTOR_HPP
 
 #include "ledger/executor_interface.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "core/logger.hpp"
 
 #include <chrono>
@@ -31,22 +32,15 @@ public:
   };
 
   using history_cache_type = std::vector<HistoryElement>;
+  using state_type = fetch::ledger::StateInterface;
 
   Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) override {
     history_.emplace_back(hash, slice, lanes);
 
-#if 0
-    // format the message
-    std::ostringstream oss;
-    oss << "Executing transaction for slice: " << slice << " lanes: ";
-    bool first_loop = true;
-    for (auto lane : lanes) {
-      if (!first_loop) oss << ", ";
-      oss << lane;
-      first_loop = false;
+    // if we have a state then make some changes to it
+    if (state_) {
+      state_->Set(hash, "executed");
     }
-    fetch::logger.Info(oss.str());
-#endif
 
     return Status::SUCCESS;
   }
@@ -60,8 +54,17 @@ public:
     history.insert(history.end(), history_.begin(), history_.end());
   }
 
+  void SetStateInterface(state_type &state) {
+    state_ = &state;
+  }
+
+  void ClearStateInterface() {
+    state_ = nullptr;
+  }
+
 private:
 
+  state_type *state_ = nullptr;
   history_cache_type history_;
 };
 

@@ -45,7 +45,7 @@ struct TestBlock {
     return (largest_tx_id + 1u) == index.size();
   }
 
-  void Generate(uint32_t seed = 42)
+  void Generate(uint32_t seed)
   {
     std::mt19937 rng;
     rng.seed(seed);
@@ -54,36 +54,38 @@ struct TestBlock {
     fetch::byte_array::ByteArray digest;
     digest.Resize(std::size_t(HASH_LENGTH));
     for (std::size_t i = 0; i < std::size_t(HASH_LENGTH); ++i) {
-      digest[i] = (rng() & 0xFF);
+      digest[i] = static_cast<uint8_t>(rng() & 0xFF);
     }
+    hash = digest;
 
     uint64_t tx_idx = 0;
-    for (std::size_t slice = 0; slice < num_slices; ++slice)
-    {
-      std::size_t remaining_lanes = num_lanes;
-      std::size_t lane_offset = 0;
+    while (tx_idx == 0) {
 
-      while (remaining_lanes)
-      {
-        // decide how many lanes will be consumed this round
-        std::size_t const consumed_lanes = std::min(std::max<std::size_t>(rng() % remaining_lanes, 1u),
-                                                    remaining_lanes);
-        // decide the transaction type
-        bool is_empty = (rng() & 0xFF) < 25; // ~10%
+      tx_idx = 0;
+      for (std::size_t slice = 0; slice < num_slices; ++slice) {
+        std::size_t remaining_lanes = num_lanes;
+        std::size_t lane_offset = 0;
 
-        for (std::size_t i = 0; i < consumed_lanes; ++i)
-        {
-          std::size_t const index = ((i + lane_offset) * num_slices) + slice;
-          map.at(index) = (is_empty) ? uint64_t(IV) : tx_idx;
+        while (remaining_lanes) {
+          // decide how many lanes will be consumed this round
+          std::size_t const consumed_lanes = std::min(std::max<std::size_t>(rng() % remaining_lanes, 1u),
+                                                      remaining_lanes);
+          // decide the transaction type
+          bool is_empty = (rng() & 0xFF) < 25; // ~10%
+
+          for (std::size_t i = 0; i < consumed_lanes; ++i) {
+            std::size_t const index = ((i + lane_offset) * num_slices) + slice;
+            map.at(index) = (is_empty) ? uint64_t(IV) : tx_idx;
+          }
+
+          // increment the transaction index
+          if (!is_empty)
+            ++tx_idx;
+
+          // update lane indexes
+          lane_offset += consumed_lanes;
+          remaining_lanes -= consumed_lanes;
         }
-
-        // increment the transaction index
-        if (!is_empty)
-          ++tx_idx;
-
-        // update lane indexes
-        lane_offset += consumed_lanes;
-        remaining_lanes -= consumed_lanes;
       }
     }
 
@@ -122,10 +124,10 @@ struct TestBlock {
     return stream;
   }
 
-  static TestBlock Generate(std::size_t lanes, std::size_t slices)
+  static TestBlock Generate(std::size_t lanes, std::size_t slices, uint32_t seed)
   {
     TestBlock block(lanes, slices);
-    block.Generate();
+    block.Generate(seed);
     return block;
   }
 };

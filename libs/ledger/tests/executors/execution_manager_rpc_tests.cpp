@@ -158,12 +158,14 @@ TEST_P(ExecutionManagerRpcTests, CheckStuff) {
   BlockConfig const &config = GetParam();
 
   // generate a block with the desired lane and slice configuration
-  auto block = TestBlock::Generate(config.lanes, config.slices);
+  auto block = TestBlock::Generate(config.lanes, config.slices, __LINE__);
+
+  fetch::byte_array::ConstByteArray prev_hash;
 
   // execute the block
   ASSERT_TRUE(
     manager_->Execute(block.hash,
-                      block.hash,
+                      prev_hash,
                       block.index,
                       block.map,
                       block.num_lanes,

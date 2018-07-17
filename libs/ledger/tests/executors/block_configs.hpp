@@ -13,6 +13,7 @@ struct BlockConfig {
   std::size_t slices;
 
   static config_array_type const MAIN_SET;
+  static config_array_type const REDUCED_SET;
 
   friend std::ostream &operator<<(std::ostream &stream, BlockConfig const &config) {
     stream << "{ executors: " << config.executors

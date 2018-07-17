@@ -5,7 +5,7 @@
 #include "test_block.hpp"
 #include "block_configs.hpp"
 
-#include "fake_storage_unit.hpp"
+#include "mock_storage_unit.hpp"
 
 #include <gmock/gmock.h>
 
@@ -16,6 +16,7 @@
 #include <thread>
 #include <algorithm>
 
+using ::testing::_;
 
 class ExecutionManagerTests : public ::testing::TestWithParam<BlockConfig> {
 protected:
@@ -24,19 +25,28 @@ protected:
   using executor_list_type = std::vector<shared_executor_type>;
   using underlying_execution_manager_type = fetch::ledger::ExecutionManager;
   using executor_factory_type = underlying_execution_manager_type::executor_factory_type;
+  using block_digest_type = underlying_execution_manager_type::block_digest_type;
   using execution_manager_type = std::shared_ptr<underlying_execution_manager_type>;
-  using storage_type = std::shared_ptr<FakeStorageUnit>;
+  using underlying_storage_type = MockStorageUnit;
+  using storage_type = std::shared_ptr<underlying_storage_type>;
+  using clock_type = std::chrono::high_resolution_clock;
 
   void SetUp() override {
     auto const &config = GetParam();
 
-    storage_.reset(new FakeStorageUnit);
+    storage_.reset(new underlying_storage_type);
     executors_.clear();
 
     // create the manager
     manager_ = std::make_shared<underlying_execution_manager_type>(config.executors, storage_, [this]() {
       return CreateExecutor();
     });
+  }
+
+  void TearDown() override {
+    manager_.reset();
+    executors_.clear();
+    storage_.reset();
   }
 
   shared_executor_type CreateExecutor() {
@@ -122,20 +132,26 @@ protected:
   executor_list_type executors_;
 };
 
-
-TEST_P(ExecutionManagerTests, CheckStuff) {
+TEST_P(ExecutionManagerTests, CheckIncrementalExecution) {
   BlockConfig const &config = GetParam();
 
   // generate a block with the desired lane and slice configuration
-  auto block = TestBlock::Generate(config.lanes, config.slices);
+  auto block = TestBlock::Generate(config.lanes, config.slices, __LINE__);
 
   // start the execution manager
   manager_->Start();
 
+  EXPECT_CALL(*storage_, Hash())
+      .Times(1);
+  EXPECT_CALL(*storage_, Commit(_))
+    .Times(1);
+
+  fetch::byte_array::ConstByteArray prev_hash;
+
   // execute the block
   ASSERT_TRUE(
     manager_->Execute(block.hash,
-                      block.hash,
+                      prev_hash,
                       block.index,
                       block.map,
                       block.num_lanes,

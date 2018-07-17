@@ -46,6 +46,10 @@ public:
   MOCK_METHOD1(AddTransaction, void(fetch::chain::Transaction const &));
   MOCK_METHOD2(GetTransaction, bool(fetch::byte_array::ConstByteArray const &, fetch::chain::Transaction &));
 
+  FakeStorageUnit &GetFake() {
+      return fake_;
+  }
+
 private:
 
   FakeStorageUnit fake_;

@@ -2,8 +2,11 @@
 #define FETCH_FAKE_STORAGE_UNIT_HPP
 
 #include "crypto/fnv.hpp"
+#include "crypto/sha256.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
+#include <vector>
+#include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -86,8 +89,23 @@ public:
   }
 
   hash_type Hash() override {
-    TODO_FAIL("Not implemented");
-    return {};
+    fetch::crypto::SHA256 hasher{};
+
+    std::vector<fetch::byte_array::ConstByteArray> keys;
+    for (auto const &elem : state_) {
+      keys.emplace_back(elem.first);
+    }
+
+    std::sort(keys.begin(), keys.end());
+
+    hasher.Reset();
+    for (auto const &key : keys) {
+      hasher.Update(key);
+      hasher.Update(state_[key]);
+    }
+    hasher.Final();
+
+    return hasher.digest();
   }
 
   void Commit(bookmark_type const &bookmark) override {
@@ -99,6 +117,8 @@ public:
     if (it != state_archive_.end()) {
       state_ = it->second;
     } else {
+      fetch::logger.Info("Reverting to clean state: ", bookmark);
+
       state_.clear();
     }
   }
