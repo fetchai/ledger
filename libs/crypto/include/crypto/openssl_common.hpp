@@ -9,10 +9,10 @@ namespace openssl {
 
 namespace {
 
-template <const int ECDSA_Curve_NID = NID_secp256k1>
+template <const int P_ECDSA_Curve_NID = NID_secp256k1>
 struct ECDSACurve
 {
-    static const int nid = ECDSA_Curve_NID;
+    static const int nid = P_ECDSA_Curve_NID;
     static const std::size_t privateKeySize;
 
     //static void print() {

@@ -37,9 +37,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_creation_of_private_key) {
     ECDSAPrivateKey<> y(priv_key_hex_str);
     EXPECT_TRUE(y.key());
 
-    std::cerr << "x.key().get() = " << x.key().get() << std::endl;
-    std::cerr << "x.key() len = " << i2d_ECPrivateKey(x.key().get(), NULL) << std::endl;
-    std::vector<unsigned char> x_out((std::size_t)i2d_ECPrivateKey(x.key().get(), NULL), 0);
+    std::vector<unsigned char> x_out((std::size_t)i2d_ECPrivateKey(const_cast<EC_KEY*>(x.key().get()), NULL), 0);
     std::cerr << "x_out = ";
     for (auto itm : x_out) {
         std::cerr << itm << ", ";
@@ -47,7 +45,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_creation_of_private_key) {
     std::cerr << std::endl;
 
     unsigned char *_x_out = &x_out.front();
-    if(!i2d_ECPrivateKey(x.key().get(), &_x_out)) {
+    if(!i2d_ECPrivateKey(const_cast<EC_KEY*>(x.key().get()), &_x_out)) {
     //    throw std::runtime_error("Error: i2d_ECPrivateKey(x, ..) fails.");
     }
     std::cerr << "x_out(after) = ";
@@ -56,9 +54,9 @@ TEST_F(ECDCSAPrivateKeyTest, test_creation_of_private_key) {
     }
     std::cerr << std::endl;
 
-    std::vector<unsigned char> y_out((std::size_t)i2d_ECPrivateKey(y.key().get(), NULL), 0);
+    std::vector<unsigned char> y_out((std::size_t)i2d_ECPrivateKey(const_cast<EC_KEY*>(y.key().get()), NULL), 0);
     unsigned char *_y_out = &y_out.front();
-    if(!i2d_ECPrivateKey(y.key().get(), &_y_out)) {
+    if(!i2d_ECPrivateKey(const_cast<EC_KEY*>(y.key().get()), &_y_out)) {
     //    throw std::runtime_error("Error: i2d_ECPrivateKey(y, ..) fails.");
     }
 

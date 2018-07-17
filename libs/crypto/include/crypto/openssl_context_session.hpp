@@ -27,9 +27,11 @@ private:
 public:
     explicit Session(ContextSmartPtr context, const bool is_already_started = false)
         : _context(context)
-        , _isStarted(is_already_started)
-    {
+        , _isStarted(is_already_started) {
         start();
+    }
+
+    explicit Session() : Session( ContextSmartPtr( BN_CTX_new() ) ) {
     }
 
     ~Session() {
