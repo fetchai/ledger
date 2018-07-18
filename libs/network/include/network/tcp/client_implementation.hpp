@@ -50,13 +50,13 @@ class TCPClientImplementation final :
     destructing_ = true;
   }
 
-  void Connect(byte_array::ConstByteArray const& host, uint16_t port) noexcept
+  void Connect(byte_array::ConstByteArray const& host, uint16_t port)
   {
     Connect(host, byte_array::ConstByteArray(std::to_string(port)));
   }
 
   void Connect( byte_array::ConstByteArray const& host,
-    byte_array::ConstByteArray const& port) noexcept
+    byte_array::ConstByteArray const& port)
   {
     self_type self = shared_from_this();
 
@@ -350,14 +350,11 @@ class TCPClientImplementation final :
   {
     // Only one thread can get past here at a time. Effectively a try_lock except that 
     // we can't unlock a mutex in the callback (undefined behaviour)
-    bool can_write = false;
-
     {
       std::lock_guard<mutex_type> lock(can_write_mutex_);
       if(can_write_)
       {
         can_write_ = false;
-        can_write  = true;
       }
       else
       {

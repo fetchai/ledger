@@ -80,7 +80,8 @@ class TCPServer : public AbstractNetworkServer {
     network_manager.Post(closure);
   }
 
-  virtual ~TCPServer() {
+  virtual ~TCPServer() override
+  {
     LOG_STACK_TRACE_POINT;
 
     {
@@ -107,9 +108,10 @@ class TCPServer : public AbstractNetworkServer {
 
     while(!acceptor_.expired() && running_)
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(2));
+      fetch::logger.Info("Waiting for TCP server ", this, " to destruct");
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
-    fetch::logger.Info("Destructing TCP server");
+    fetch::logger.Info("Destructing TCP server ", this);
   }
 
   void PushRequest(connection_handle_type client, message_type const& msg) override {

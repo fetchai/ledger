@@ -13,3 +13,5 @@ setup_compiler()
 add_fetch_test(ecdsa_test fetch-crypto ecdsa.cpp)
 add_fetch_test(sha256_test fetch-crypto sha256.cpp)
 
+add_fetch_gtest(fetch-crypto-gtests fetch-crypto gtests)
+
