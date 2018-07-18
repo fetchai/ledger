@@ -10,6 +10,7 @@ class Prover {
   typedef byte_array::ByteArray byte_array_type;
 
   virtual Identity identity() = 0;
+  virtual ~Prover(){}
   
   virtual void Load(byte_array_type const &) = 0;
   virtual bool Sign(byte_array_type const &text) = 0;
