@@ -6,16 +6,41 @@
 #include"core/string/trim.hpp"
 #include"core/commandline/parameter_parser.hpp"
 #include"core/commandline/cli_header.hpp"
+#include"crypto/fnv.hpp"
 
 #include<iostream>
 #include<fstream>
+#include<sstream>
+#include<iterator>
+#include<unordered_set>
+#include<random>
 
 using namespace fetch;
 using namespace fetch::optimisers;
 
 chain::BlockGenerator generator;
+std::mt19937 rng(42);
 
-void load_format_a(std::string const &input_file, std::size_t &N, std::size_t &M) {
+
+static byte_array::ConstByteArray CreateResource(int64_t value) {
+  std::ostringstream oss;
+  oss << "Resource " << value;
+
+  return {oss.str()};
+}
+
+static byte_array::ConstByteArray GenerateHash() {
+  byte_array::ByteArray hash;
+  hash.Resize(32);
+
+  for (std::size_t i = 0; i < 32; ++i) {
+    hash[i] = static_cast<uint8_t>(rng() & 0xFF);
+  }
+
+  return {hash};
+}
+
+static void load_format_a(std::string const &input_file, std::size_t &N, std::size_t &M) {
   // Loading
 
   std::fstream f(input_file, std::ios::in);
@@ -31,22 +56,25 @@ void load_format_a(std::string const &input_file, std::size_t &N, std::size_t &M
 
   double total_fee = 0;
   std::size_t id = 0;
-  
-  
+
   while(std::getline(f, line)) {
     fetch::string::Trim(line);
     if(line.size() == 0) continue;    
     std::stringstream s(line);
 
-    fetch::chain::TransactionSummary tx;
-    tx.short_id = id;
+    fetch::chain::TransactionSummary summary;
+    summary.transaction_hash = GenerateHash();
+    summary.short_id = id;
     ++id;
     
     
     while(s) {
-      int C = -1, V = -1;      
+      int C = -1, V = -1;
       s >> C >> V;
-      if(C == -1) break;     
+
+      auto group = CreateResource(C);
+
+      if( C == -1 ) break;
       if( V == -1 ) {
         std::cerr << "malformed input" << std::endl;
         f.close();        
@@ -58,21 +86,29 @@ void load_format_a(std::string const &input_file, std::size_t &N, std::size_t &M
         f.close();        
         exit(-1); 
       }
-      
-      tx.fee += V;
-      total_fee += V;
 
-      tx.groups.push_back( group_type( C ) );
+      summary.fee += static_cast<uint64_t>(V);
+      total_fee += static_cast<uint64_t>(V);
+
+      summary.groups.push_back( group );
     }    
-    
-    generator.PushTransactionSummary( tx, false);
+
+    std::cout << "Adding transaction: " << static_cast<std::string>(byte_array::ToBase64(summary.transaction_hash));
+    std::cout << " index: " << summary.short_id;
+    std::cout << " groups: ";
+    for (std::size_t i = 0, end = summary.groups.size(); i < end; ++i) {
+      if (i) std::cout << ", ";
+      std::cout << summary.groups.at(i);
+    }
+    std::cout << std::endl;
+
+    generator.PushTransactionSummary( summary, false );
   }
   f.close();
 
 }
 
-
-void load_format_b(std::string const &input_file, std::size_t &N, std::size_t &M, std::size_t const & header_format = 0) {
+static void load_format_b(std::string const &input_file, std::size_t &N, std::size_t &M, std::size_t const & header_format = 0) {
   // Loading
 
   std::fstream f(input_file, std::ios::in);
@@ -109,8 +145,9 @@ void load_format_b(std::string const &input_file, std::size_t &N, std::size_t &M
     if(line.size() == 0) continue;    
     std::stringstream s(line);
 
-    fetch::chain::TransactionSummary tx;
-    tx.short_id = id;
+    fetch::chain::TransactionSummary summary;
+    summary.transaction_hash = GenerateHash();
+    summary.short_id = id;
     ++id;
 
     int V = -1;
@@ -121,28 +158,35 @@ void load_format_b(std::string const &input_file, std::size_t &N, std::size_t &M
       exit(-1); 
     }    
 
-    tx.fee = V;
-    total_fee += V;
-    
+    summary.fee = static_cast<uint64_t>(V);
+    total_fee += static_cast<uint64_t>(V);
+
+    std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> groups;
     while(s) {
       int C = -1;  
       s >> C;
       if(C == -1) break;
-      group_type Q =  group_type( C % int(N) );
-      bool add = true;
-      for(auto &g : tx.groups) {
-        add &= ( g!= Q) ;
-      }
-      if(add) tx.groups.push_back(Q);
-    }    
-    
-    generator.PushTransactionSummary( tx, false);
+
+      groups.insert(CreateResource(C % int(N)));
+    }
+    std::copy(groups.begin(), groups.end(), std::back_inserter(summary.groups));
+
+    std::cout << "Adding transaction: " << static_cast<std::string>(byte_array::ToBase64(summary.transaction_hash));
+    std::cout << " index: " << summary.short_id;
+    std::cout << " groups: ";
+    for (std::size_t i = 0, end = summary.groups.size(); i < end; ++i) {
+      if (i) std::cout << ", ";
+      std::cout << summary.groups.at(i);
+    }
+    std::cout << std::endl;
+
+    generator.PushTransactionSummary( summary, false );
   }
   f.close();
 
 }
 
-void PrintSummary(std::size_t const &slice_count) 
+static void PrintSummary(std::size_t const &slice_count)
 {
   int total_fee = 0,  total_txs = 0;
   for(auto const &e: generator.block_fees()) total_fee += e;
@@ -150,8 +194,13 @@ void PrintSummary(std::size_t const &slice_count)
     total_txs += slice.size();
     
   }
+
+  std::size_t const capacity = slice_count * generator.lane_count();
+  double const occupancy_pc = (100. * generator.block_occupancy()) / static_cast<double>(capacity);
   
-  std::cout << total_fee << " " << total_txs << " " << generator.block_occupancy() / double(slice_count * generator.lane_count())  << std::endl;
+  std::cout << "Fee: " << total_fee
+            << " Txs: " << total_txs << " / " << capacity << " (" << occupancy_pc << "%)"
+            << std::endl;
 }
 
 int main(int argc, char const **argv) {
@@ -259,7 +308,7 @@ int main(int argc, char const **argv) {
     break;
   case 3:
     load_format_b(input_file, lane_count, slice_count, 3);
-    break;    
+    break;
   default:
     std::cerr << "unnknown file format" << std::endl;
     exit(-1);
@@ -292,6 +341,7 @@ int main(int argc, char const **argv) {
   for(std::size_t i = 0; i < reps; ++i) {
     generator.Reset();
     generator.GenerateBlock(lane_count, slice_count, strategy, batch_size, explore);
+
     if(print_solution) {
       int total_fee = 0;
       for(auto const &e: generator.block_fees()) total_fee += e;
@@ -299,6 +349,7 @@ int main(int argc, char const **argv) {
         best_fee = total_fee;
       }
     }
+
     if(print_stats) {  
       PrintSummary(slice_count);
     }    
@@ -311,7 +362,17 @@ int main(int argc, char const **argv) {
   if( print_solution ) {
     std::cout << "-- solution --" << std::endl;
     std::cout << best_fee << std::endl;
-// TODO    generator.PrintSolution();  
+
+    auto const &block = generator.block();
+    std::cout << "N: " << block.size() << std::endl;
+    for (auto const &item : block) {
+      std::cout << "M: " << item.size() << std::endl;
+      for (auto const &element : item) {
+        std::cout << " - : " << element << std::endl;
+      }
+    }
+
+// TODO    generator.PrintSolution();
   }
   
   std::cout << std::endl;  
