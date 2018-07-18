@@ -82,8 +82,7 @@ private:
 
     ECDSAPrivateKey(ShrdPtr<BIGNUM, eDelStrat::clearing> private_key_as_BN)
         : _private_key( keyAsECKEY( private_key_as_BN.get() ) )
-        , _public_key( derivePublicKey( private_key_as_BN.get(), _private_key.get() ) )
-        /*, _key_data(key_data)*/ {
+        , _public_key( derivePublicKey( private_key_as_BN.get(), _private_key.get() ) ) {
 
         //const int res = EC_KEY_set_private_key(_key.get(), private_key_as_BN.get());
         //if (!res) {
