@@ -150,13 +150,14 @@ public:
                                                   {
                                                       try
                                                       {
-                                                          auto client = nnCore -> ConnectTo(host);
-                                                          if (!client)
-                                                          {
-                                                              swarmAgentApi -> DoPingFailed(host);
-                                                              return;
-                                                          }
-                                                          auto newPeer = swarmNode -> AskPeerForPeers(host, client);
+                                          auto cli = nnCore -> ConnectTo(host);
+                                          if (!cli)
+                                          {
+                                               fetch::logger.Info("AGENT_API SUBSCRIBE TIMEOUT ", host );
+                                               swarmAgentApi -> DoPingFailed(host);
+                                               return;
+                                          }
+                                                          auto newPeer = swarmNode -> AskPeerForPeers(host, cli);
                                                           if (newPeer.length())
                                                           {
                                                               if (!swarmNode -> IsOwnLocation(newPeer))
@@ -181,13 +182,24 @@ public:
                             });
 
     chainNode -> onBlockComplete_ = [chainNode](const block_type blk){
-        fetch::logger.Info("AGENT_API MINED ", blk.summarise() );
+        fetch::logger.Info("AGENT_API PUBLISHING ", blk.summarise() );
 
         chainNode ->  Publish(fetch::ledger::MainChain::BLOCK_PUBLISH, blk);
     };
 
     
 
+    swarmAgentApi -> ToDiscoverBlocks([this, swarmAgentApi, swarmNode, chainNode, nnCore](const std::string &host, uint32_t count)
+                                      {
+                                          if (disc.find(host) != disc.end())
+                                          {
+                                              fetch::logger.Info("AGENT_API UNSUBSCRIBE ", host );
+                                              disc.erase(host);
+                                          }
+                                      });
+
+
+                                      
     swarmAgentApi -> ToDiscoverBlocks([this, swarmAgentApi, swarmNode, chainNode, nnCore](const std::string &host, uint32_t count)
                                        {
                                       auto pySwarm = this;
@@ -198,13 +210,14 @@ public:
                                               (
                                                [pySwarm,host,chainNode,swarmAgentApi](const block_type &blk){
                                                    block_type block = blk;
-
+                                                   fetch::logger.Info("AGENT_API DISCOVER WAS SENT ", block.summarise(), " from ", host );
+                   
                                                    block.UpdateDigest();
                                                    auto newblock = chainNode -> AddBlock(block);
 
                                                    if (newblock)
                                                    {
-                                                       fetch::logger.Info("AGENT_API DISCOVER GOT ", block.summarise(),  (newblock?" NEW":" OLD") );
+                                                       fetch::logger.Info("AGENT_API DISCOVER GOT ", block.summarise(),  (newblock?" NEW":" OLD"), " from ", host );
                                                        swarmAgentApi -> DoNewBlockIdFound(host, block.hashString());
                                                        if (block.loose())
                                                        {
@@ -214,11 +227,23 @@ public:
                                                        fetch::logger.Info("AGENT_API DISCOVER FORWARDING", block.summarise() );
                                                        chainNode ->  Publish(fetch::ledger::MainChain::BLOCK_PUBLISH, block);
                                                    }
+                                                   else
+                                                   {
+                                                       fetch::logger.Info("AGENT_API DISCOVER WAS DUPE ", block.summarise(), " from ", host );
+                                                   }
 
                                                }
                                                );
+                                          auto cli = nnCore -> ConnectTo(host);
+                                          if (!cli)
+                                          {
+                                               fetch::logger.Info("AGENT_API SUBSCRIBE TIMEOUT ", host );
+                                               swarmAgentApi -> DoPingFailed(host);
+                                               return;
+                                          }
+
                                           auto subs = nnCore ->
-                                              CreateSubscription(nnCore -> ConnectTo(host),
+                                              CreateSubscription(cli,
                                                                  fetch::protocols::FetchProtocols::MAIN_CHAIN,
                                                                  fetch::ledger::MainChain::BLOCK_PUBLISH,
                                                                  func
@@ -235,13 +260,14 @@ public:
                                                        {
                                                            try
                                                            {
-                                                               auto client = nnCore -> ConnectTo(host);
-                                                               if (!client)
-                                                               {
-                                                                   swarmAgentApi -> DoPingFailed(host);
-                                                                   return;
-                                                               }
-                                                               auto promised = chainNode -> RemoteGetHeaviestChain(count, client);
+                                          auto cli = nnCore -> ConnectTo(host);
+                                          if (!cli)
+                                          {
+                                               fetch::logger.Info("AGENT_API LOADCHAIN TIMEOUT ", host );
+                                               swarmAgentApi -> DoPingFailed(host);
+                                               return;
+                                          }
+                                                               auto promised = chainNode -> RemoteGetHeaviestChain(count, cli);
                                                                if (promised.Wait())
                                                                {
                                                                    auto collection = promised.Get();
@@ -257,15 +283,19 @@ public:
                                                                    for(auto &block : collection)
                                                                    {
                                                                        block.UpdateDigest();
-                                                                       chainNode -> AddBlock(block);
+                                                                       auto newblock = chainNode -> AddBlock(block);
                                                                        prevHash = block.prevString();
                                                                        loose = block.loose();
-                                                                       blockId = pySwarm -> hashToBlockId(block.hash());
-                                                                       swarmAgentApi -> DoNewBlockIdFound(host, blockId);
-                                                                   }
-                                                                   if (loose)
-                                                                   {
-                                                                       pySwarm -> DoLooseBlock(host, prevHash);
+                                                                       if (newblock)
+                                                                       {
+                                                                           fetch::logger.Info("AGENT_API LOADCHAIN GOT ", block.summarise(),  (newblock?" NEW":" OLD") );
+                                                                           swarmAgentApi -> DoNewBlockIdFound(host, block.hashString());
+                                                                           if (block.loose())
+                                                                           {
+                                                                               fetch::logger.Info("AGENT_API LOADCHAIN LOOSE ", block.prevString() );
+                                                                               pySwarm -> DoLooseBlock(host, block.prevString());
+                                                                           }
+                                                                       }
                                                                    }
                                                                }
                                                                else
@@ -288,13 +318,15 @@ public:
                                                      {
                                                          try
                                                          {
-                                                             auto client = nnCore -> ConnectTo(host);
-                                                             if (!client)
+                                                             fetch::logger.Info("AGENT_API GET STARTS ", host, " ", blockid);
+                                                             auto cli = nnCore -> ConnectTo(host);
+                                                             if (!cli)
                                                              {
+                                                                 fetch::logger.Info("AGENT_API GET TIMEOUT ", host, blockid );
                                                                  swarmAgentApi -> DoPingFailed(host);
                                                                  return;
                                                              }
-                                                             auto promised = chainNode -> RemoteGetHeader(hashBytes, client);
+                                                             auto promised = chainNode -> RemoteGetHeader(hashBytes, cli);
                                                              if (promised.Wait())
                                                              {
                                                                  auto found = promised.Get().first;
@@ -306,28 +338,36 @@ public:
                                                                      auto newHash = block.hash();
                                                                      auto newBlockId = pySwarm -> hashToBlockId(newHash);
 
-                                                   auto newblock = chainNode -> AddBlock(block);
-                                                   pySwarm -> DoBlockSupplied(host, block.hashString());
-                                                   if (newblock)
-                                                   {
-                                                       fetch::logger.Info("AGENT_API GET GOT ", block.summarise(),  (newblock?" NEW":" OLD") );
-                                                       swarmAgentApi -> DoNewBlockIdFound(host, block.hashString());
-                                                       if (block.loose())
-                                                       {
-                                                           fetch::logger.Info("AGENT_API GET LOOSE ", block.prevString() );
-                                                           pySwarm -> DoLooseBlock(host, block.prevString());
-                                                       }
-                                                       fetch::logger.Info("AGENT_API GET FORWARDING", block.summarise() );
-                                                       chainNode ->  Publish(fetch::ledger::MainChain::BLOCK_PUBLISH, block);
-                                                   }
+                                                                     auto newblock = chainNode -> AddBlock(block);
+
+                                                                     auto block2 = block;
+                                                                     chainNode -> Get(newHash, block2);
+
+                                                                     fetch::logger.Info("AGENT_API GET NOW ", block.summarise());
+
+                                                                     pySwarm -> DoBlockSupplied(host, block.hashString());
+                                                                     if (newblock)
+                                                                     {
+                                                                         fetch::logger.Info("AGENT_API GET GOT ", block.summarise(),  (newblock?" NEW":" OLD") );
+                                                                         swarmAgentApi -> DoNewBlockIdFound(host, block.hashString());
+                                                                         if (block.loose())
+                                                                         {
+                                                                             fetch::logger.Info("AGENT_API GET LOOSE ", block.prevString() );
+                                                                             pySwarm -> DoLooseBlock(host, block.prevString());
+                                                                         }
+                                                                         fetch::logger.Info("AGENT_API GET FORWARDING", block.summarise() );
+                                                                         chainNode ->  Publish(fetch::ledger::MainChain::BLOCK_PUBLISH, block);
+                                                                     }
                                                                  }
                                                                  else
                                                                  {
+                                                                     fetch::logger.Info("AGENT_API GET DECLINED ", host, " ", blockid);
                                                                      pySwarm -> DoBlockNotSupplied(host, blockid);
                                                                  }
                                                              }
                                                              else
                                                              {
+                                                                 fetch::logger.Info("AGENT_API GET WAIT TIMEOUT ", host, " ", blockid);
                                                                  pySwarm -> DoBlockNotSupplied(host, blockid);
                                                              }
                                                          }
@@ -389,8 +429,9 @@ virtual void OnNewPeerDiscovered (pybind11::object func) { DELEGATE OnNewPeerDis
 virtual void OnPeerDiscoverFail (pybind11::object func) { DELEGATE OnPeerDiscoverFail (  [func DELEGATE_CAPTURED ](const std::string &host){  DELEGATE_WRAPPER func(host); } ); }
 virtual void DoBlockSolved (const std::string &blockdata) {  DELEGATE DoBlockSolved ( blockdata ); }
 virtual void DoTransactionListBuilt (const std::list<std::string> &txnlist) {  DELEGATE DoTransactionListBuilt ( txnlist ); }
-virtual void DoDiscoverBlocks (const std::string &host, uint32_t count) {  DELEGATE DoLoadChain ( host,count ); }
-virtual void DoLoadChain (const std::string &host, uint32_t count) {  DELEGATE DoDiscoverBlocks ( host,count ); }
+virtual void DoDiscoverBlocks (const std::string &host, uint32_t count) {  DELEGATE DoDiscoverBlocks ( host,count ); }
+virtual void DoStopBlockDiscover (const std::string &host, uint32_t count) {  DELEGATE DoStopBlockDiscover ( host,count ); }
+virtual void DoLoadChain (const std::string &host, uint32_t count) {  DELEGATE DoLoadChain ( host,count ); }
 virtual void OnNewBlockIdFound (pybind11::object func) { DELEGATE OnNewBlockIdFound (  [func DELEGATE_CAPTURED ](const std::string &host, const std::string &blockid){  DELEGATE_WRAPPER func(host,blockid); } ); }
 virtual void OnBlockIdRepeated (pybind11::object func) { DELEGATE OnBlockIdRepeated (  [func DELEGATE_CAPTURED ](const std::string &host, const std::string &blockid){  DELEGATE_WRAPPER func(host,blockid); } ); }
 virtual void DoGetBlock (const std::string &host, const std::string &blockid) {  DELEGATE DoGetBlock ( host,blockid ); }

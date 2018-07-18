@@ -157,10 +157,14 @@ public:
 
     // *********** These utility methods for node owners.
 
+    bool Get(block_hash hash, block_type &block) const
+    {
+        return chain_ -> Get(hash, block);
+    }
+
     bool AddBlock(block_type &block)
     {
-        chain_ -> AddBlock(block);
-        return block.loose();
+        return chain_ -> AddBlock(block);
     }
 
     std::function<void (const block_type)> onBlockComplete_;
@@ -195,23 +199,30 @@ public:
 
                     // Mine the block
                     nextBlock.proof().SetTarget(target_);
-                    miner::Mine(nextBlock);
 
-                    fetch::logger.Info("AGENT_API MINER: Mined block:", nextBlock.summarise());
-
+                    if (miner::Mine(nextBlock, 16384))
+                    {
+                        fetch::logger.Info("AGENT_API MINER: Mined block:", nextBlock.summarise());
+                        chain_ -> AddBlock(nextBlock);
+                        if (this -> onBlockComplete_)
+                        {
+                            this -> onBlockComplete_(nextBlock);
+                        }
+                        else
+                        {
+                            fetch::logger.Info("AGENT_API MINER -- NO PUBLISH HOOK!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        }
+                        fetch::logger.Debug("AGENT_API MINER: Added: ",  ToHex(block.hash()));
+                    }
+                    else
+                    {
+                        fetch::logger.Debug("AGENT_API MINER: Failed to mine.");
+                    }
                     if(stopped_)
                     {
+                        fetch::logger.Info("AGENT_API MINER: STOPPED");
                         break;
                     }
-
-                    // Add the block
-                    chain_ -> AddBlock(nextBlock);
-
-                    if (this -> onBlockComplete_)
-                    {
-                        this -> onBlockComplete_(nextBlock);
-                    }
-                    fetch::logger.Debug("AGENT_API MINER: Added: ",  ToHex(block.hash()));
                 }
             };
 

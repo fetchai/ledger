@@ -301,6 +301,12 @@ private:
             workload();
             r = std::max(r, THREAD_WORKED);
         }
+        catch (std::exception &x)
+        {
+            fetch::logger.Error(
+                                "Caught exception in ThreadPool::ExecuteWorkload -- ",
+                                x.what());
+        }
         catch (...)
         {
             fetch::logger.Error(

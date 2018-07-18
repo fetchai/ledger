@@ -225,6 +225,21 @@ public:
         }
     }
 
+    virtual void DoStopBlockDiscover(
+       const std::string &host, uint32_t count)
+    {
+        if (this->toStopBlockDiscover_)
+        {
+            this->toStopBlockDiscover_(host, count);
+        }
+    }
+
+    virtual void ToStopBlockDiscover(
+        std::function<void (const std::string &host, uint32_t count)> action)
+    {
+        this->toStopBlockDiscover_ = action;
+    }
+
     virtual void DoDiscoverBlocks(
         const std::string &host, uint32_t count)
     {
@@ -480,6 +495,7 @@ protected:
     std::function<void(const std::string &blockdata)> toBlockSolved_;
     std::function<void(const std::string &host, const std::string &blockid)> toGetBlock_;
     std::function<void (const std::string &host, uint32_t count)> toDiscoverBlocks_;
+    std::function<void (const std::string &host, uint32_t count)> toStopBlockDiscover_;
     std::function<void (const std::string &host, uint32_t count)> toLoadChain_;
     std::function<std::string (const std::string &blockid)> toQueryBlock_;
 

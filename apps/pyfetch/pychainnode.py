@@ -28,6 +28,7 @@ class SwarmAgentNaive(object):
 
         self.peerlist = peers.split(",")
         self.blockCounter = 0
+        self.maxpeers = maxpeers
 
         self.rootblock = MainChainBlock()
         self.mainchain = MainChain(self.rootblock)
@@ -57,11 +58,11 @@ class SwarmAgentNaive(object):
     def onPingFailed(self, host):
         say("PYCHAINNODE===> Ping failed to:", host)
         self.swarm.AddKarma(host, -5.0);
-        self.inflight.remove(host)
+        self.inflight.discard(host)
 
     def onPingSucceeded(self, host):
-        self.swarm.AddKarmaMax(host, 2.0, 5.0);
-        self.inflight.remove(host)
+        self.swarm.AddKarmaMax(host, 3.0, 15.0);
+        self.inflight.discard(host)
 
     def RequestChain(self, host):
         if (datetime.datetime.now() - self.timeOfLastRemoteNewBlock).total_seconds() > 10:
@@ -81,15 +82,24 @@ class SwarmAgentNaive(object):
         self.swarm.DoPing(host)
 
     def CreateSubscription(self, host):
-        if host in subs:
+        if host in self.subs:
+            #say("AGENT_API PYCHAIN IGNORING ", host);
+            self.SendPing(host)
             return
-        self.swarm.DoDiscoverBlocks(host, 3);
+
+        while len(self.subs) >= self.maxpeers:
+            x = self.subs.pop(0)
+            say("AGENT_API PYCHAIN SUBSCRIBE ", x);
+            self.swarm.DoStopBlockDiscover(x, 0)
+        self.subs.append(host)
+        self.swarm.DoDiscoverBlocks(host, 0);
+        say("AGENT_API PYCHAIN SUBSCRIBE ", host);
         self.subs.append(host)
 
 
     def onIdle(self):
 
-        mode = "chain"
+        mode = ""
 
         goodPeers = self.swarm.GetPeers(10, -0.5)
 
@@ -114,7 +124,6 @@ class SwarmAgentNaive(object):
             self.RequestChain(host)
         else:
             self.CreateSubscription(host)
-            self.SendPing(host)
 
         return 0
 
@@ -122,31 +131,33 @@ class SwarmAgentNaive(object):
         for peerListMember in self.peerlist:
             self.swarm.DoPing(peerListMember)
         for introListMember in self.introductions:
-            self.swarm.AddKarmaMax(introListMember, 1000.0, 1000.0);
+            self.swarm.AddKarmaMax(introListMember, 100.0, 100.0);
 
     def onNewPeerDiscovered(self, host):
         if host == self.swarm.queryOwnLocation():
             return
-        say("PYCHAINNODE===> NEW PEER", host);
+        #say("AGENT_API PYCHAIN NEW PEER ", host);
 
     def onNewBlockIdFound(self, host, blockid):
-        say("PYCHAINNODE===> WOW - ", blockid)
+        say("AGENT_API PYCHAIN NEWBLOCK ", blockid)
         self.swarm.AddKarmaMax(host, 2.0, 3.0);
-        self.timeOfLastRemoteNewBlock = datetime.datetime.now()
+        #self.timeOfLastRemoteNewBlock = datetime.datetime.now()
 
     def onBlockIdRepeated(self, host, blockid):
         # Awwww, we know about this.
         self.swarm.AddKarmaMax(host, 1.0, 1.0);
 
     def onLooseBlock(self, host, blockid):
-        say("PYCHAINNODE===> LOOSE FOUND: ", host, ' ', blockid)
+        say("AGENT_API PYCHAIN LOOSE ", host, ' ', blockid)
         self.swarm.DoGetBlock(host, blockid)
 
     def onBlockSupplied(self, host, blockid):
-        say("PYCHAINNODE===> LOOSE DELIVERED: ", host, ' ', blockid)
+        say("AGENT_API PYCHAIN DELIVERED ", host, ' ', blockid)
+        self.swarm.AddKarmaMax(host, 3.0, 15.0);
 
     def onBlockNotSupplied(self, host, blockid):
-        say("PYCHAINNODE===> LOOSE NOT DELIVERED: ", host, ' ', blockid)
+        say("AGENT_API PYCHAIN FAILED  ", host, ' ', blockid)
+        self.swarm.AddKarma(host, -2.0)
 
 
 def run(config):

@@ -314,6 +314,7 @@ class MainChain
   // for debugging: get the heaviest chain
   std::vector<block_type> HeaviestChain() const
   {
+    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     std::vector<block_type> result;
 
     auto topBlock =  blockChain_.at(heaviest_.second);
@@ -343,6 +344,7 @@ class MainChain
   // for debugging: get the heaviest chain
   std::vector<block_type> HeaviestChain(size_t limit) const
   {
+    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     std::vector<block_type> result;
 
     auto topBlock =  blockChain_.at(heaviest_.second);

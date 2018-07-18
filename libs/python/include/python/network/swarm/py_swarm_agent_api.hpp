@@ -35,6 +35,7 @@ void BuildSwarmAgentApi(pybind11::module &module) {
 
     .def("DoBlockSolved", &PySwarm::DoBlockSolved)
     .def("DoDiscoverBlocks", &PySwarm::DoDiscoverBlocks)
+    .def("DoStopBlockDiscover", &PySwarm::DoStopBlockDiscover)
     .def("DoLoadChain", &PySwarm::DoLoadChain)
     .def("OnNewBlockIdFound", &PySwarm::OnNewBlockIdFound)
     .def("OnBlockIdRepeated", &PySwarm::OnBlockIdRepeated)

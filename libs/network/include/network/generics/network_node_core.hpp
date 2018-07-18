@@ -194,6 +194,7 @@ public:
     // ----------------------------------------------------------------------
 
 public:
+    /*
     class Publishing
     {
     public:
@@ -201,7 +202,7 @@ public:
         virtual ~Publishing() = default;
     };
 
-    template<class INTERFACE_CLASS>
+template<class INTERFACE_CLASS>
     std::shared_ptr<Publishing> CreatePublisherFor(INTERFACE_CLASS *interface, uint64_t verb)
     {
         auto protocol_number = INTERFACE_CLASS::protocol_number;
@@ -233,7 +234,7 @@ public:
         }
         uint64_t verb_;
     };
-
+    */
     // ----------------------------------------------------------------------
 
 
@@ -287,13 +288,8 @@ protected:
             waits--;
             if (waits <= 0)
             {
-                // TODO(katie) make this non throwing and return empty sharedp.
-                throw std::invalid_argument(
-                    std::string(
-                        "Timeout while connecting "
-                        + host
-                        + ":"
-                        + std::to_string(port)).c_str());
+                fetch::logger.Info("ActuallyConnectTo TIMEOUT ", host, ":", port);
+                return client_ptr();
             }
         }
         return client;

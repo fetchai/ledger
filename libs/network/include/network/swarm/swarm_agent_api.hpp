@@ -36,7 +36,10 @@ public:
   virtual void DoTransactionListBuilt(const std::list<std::string> &txnlist) = 0;
 
   virtual void DoLoadChain               (const std::string &host, uint32_t count) = 0;
+
   virtual void DoDiscoverBlocks          (const std::string &host, uint32_t count) = 0;
+  virtual void DoStopBlockDiscover       (const std::string &host, uint32_t count) = 0;
+
   virtual void OnNewBlockIdFound         (std::function<void (const std::string &host, const std::string &blockid)> cb) = 0;
   virtual void OnBlockIdRepeated  (std::function<void (const std::string &host, const std::string &blockid)> cb) = 0;
   virtual void DoGetBlock                (const std::string &host, const std::string &blockid) = 0;
