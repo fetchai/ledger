@@ -32,8 +32,6 @@ public:
     store_(store),
     running_(false) { // , register_(reg), manager_(nm) 
 
-    logger.Info("Exposing ", p, ":", PULL_OBJECTS);
-    
     this->Expose(OBJECT_COUNT, this, &self_type::ObjectCount);
     this->ExposeWithClientArg(PULL_OBJECTS, this, &self_type::PullObjects);
 //    this->Expose(PULL_OLDER_OBJECTS, this, &self_type::PullOlderObjects);

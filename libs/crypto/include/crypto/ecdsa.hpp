@@ -26,14 +26,13 @@ public:
     pub_bytes_copy = identity_.identifier().pointer();
 
     if (!o2i_ECPublicKey(&key_, &pub_bytes_copy, long(identity_.identifier().size()) )) {
+      std::cout << identity_.identifier().size() << std::endl;
+      
       TODO_FAIL("Failed to set the public key.");
     }
-    
-    
-
   }
   
-  bool operator()(byte_array_type const &data, byte_array_type const &signature) override {
+  bool Verify(byte_array_type const &data, byte_array_type const &signature) override {
     byte_array_type const hash = Hash<SHA256>(data);
 
     // TODO: Verify sizes
@@ -136,6 +135,13 @@ class ECDSASigner : public Prover {
     if (gen_success != gen_status) {
       TODO_FAIL("Failed to generate EC Key\n");
     }
+
+    public_key_.Resize(std::size_t(i2o_ECPublicKey(key_, NULL)));    
+    uint8_t *pub_copy = public_key_.pointer();
+    if (std::size_t(i2o_ECPublicKey(key_, &pub_copy)) != public_key_.size()) {
+      TODO_FAIL("Unable to decode public key");
+    }
+    
   }
 
   bool Sign(byte_array_type const &text) final override {

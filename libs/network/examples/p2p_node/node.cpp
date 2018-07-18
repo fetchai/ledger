@@ -143,7 +143,7 @@ int main(int argc, char const **argv)
           for(auto &me: map) {
             auto pd = me.second;
                 
-            std::cout << "Peer: " << byte_array::ToBase64(pd.public_key) << std::endl;
+            std::cout << "Peer: " << byte_array::ToBase64(pd.identity.identifier()) << std::endl;
             for(auto &e: pd.entry_points) {
               std::cout << "  - ";
               for(auto &h: e.host)
@@ -180,7 +180,7 @@ int main(int argc, char const **argv)
                 auto pd = me.second;
                 
                 std::lock_guard< mutex::Mutex> lock( *pd );
-                std::cout << "Peer: " << byte_array::ToBase64(pd->public_key) << std::endl;
+                std::cout << "Peer: " << byte_array::ToBase64(pd->identity.identifier()) << std::endl;
                 for(auto &e: pd->entry_points) {
                   std::cout << "  - ";
                   for(auto &h: e.host)
@@ -196,8 +196,10 @@ int main(int argc, char const **argv)
                   }
                   if(e.is_lane) {
                     std::cout << "LANE " << e.lane_id << " " ;
-                  }                  
-                  std::cout << std::endl;                  
+                  }
+                  std::cout << byte_array::ToBase64(e.identity.identifier()) ;
+                  
+                  std::cout <<  std::endl;                  
                 }
                 
 

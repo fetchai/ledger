@@ -83,7 +83,7 @@ public:
       });
     
     std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
-    RemovePeerFromSuggested(my_details_->details.public_key);
+    RemovePeerFromSuggested(my_details_->details.identity.identifier());
   }
 
   /// @}
@@ -104,7 +104,7 @@ public:
     auto details = register_.GetDetails(client_id);    
     std::lock_guard< mutex::Mutex > lock( *details );
 
-    RemovePeerFromSuggested(details->public_key);
+    RemovePeerFromSuggested(details->identity.identifier());
   }
     
   peer_details_map_type SuggestPeersToConnectTo() 
@@ -199,18 +199,18 @@ private:
   bool AddPeerToSuggested(connectivity_details_type const &details, bool const &propagate = true) 
   {
     std::lock_guard< mutex::Mutex > lock( suggest_mutex_ );    
-    auto it = suggested_peers_.find(details.public_key);
+    auto it = suggested_peers_.find(details.identity.identifier());
     bool ret = false;
     
     if(it == suggested_peers_.end()) {    
-      suggested_peers_[details.public_key] = details;
+      suggested_peers_[details.identity.identifier()] = details;
       if(propagate) this->Publish(FEED_REQUEST_CONNECTIONS, details);
       ret = true;
     } else {
       
       // We do not allow conseq updates unless separated by substatial tume
       if(it->second.MillisecondsSinceUpdate() > 5000 ) { // TODO: Config variable 
-        suggested_peers_[details.public_key] = details;
+        suggested_peers_[details.identity.identifier()] = details;
         if(propagate) this->Publish(FEED_REQUEST_CONNECTIONS, details);
         ret = true;        
       }

@@ -6,7 +6,8 @@ namespace crypto {
 
 class Identity {
 public:
-   
+  Identity() { }
+  
   Identity(byte_array::ConstByteArray identity_paramters, byte_array::ConstByteArray identifier) :
     identity_paramters_(identity_paramters.Copy()), identifier_(identifier.Copy()) 
   { }
@@ -15,11 +16,11 @@ public:
     identity_paramters_(other.identity_paramters_), identifier_(other.identifier_) 
   { }
   
-  byte_array::ConstByteArray const &identity_paramters() {
+  byte_array::ConstByteArray const &identity_paramters() const {
     return identity_paramters_;
   }
   
-  byte_array::ConstByteArray const &identifier() 
+  byte_array::ConstByteArray const &identifier() const
   {
     return identifier_; 
   }
@@ -36,6 +37,25 @@ private:
   byte_array::ConstByteArray identity_paramters_;
   byte_array::ConstByteArray identifier_;  
 };
+
+
+template <typename T>
+T& Serialize(T& serializer, Identity const& data) {
+  serializer << data.identity_paramters();
+  serializer << data.identifier();  
+
+  return serializer;
+}
+
+template <typename T>
+T& Deserialize(T& serializer, Identity& data) {
+  byte_array::ByteArray params, id;
+  serializer >> params;
+  serializer >> id;
+  data.SetParameters(params);
+  data.SetIdentifier(id);  
+  return serializer;
+}
 
 
 }

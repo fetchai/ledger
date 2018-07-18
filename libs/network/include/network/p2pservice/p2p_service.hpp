@@ -10,6 +10,8 @@
 
 #include"network/p2pservice/p2p_peer_directory.hpp"
 #include"network/p2pservice/p2p_peer_directory_protocol.hpp"
+#include"crypto/prover.hpp"
+#include"crypto/ecdsa.hpp"
 namespace fetch
 {
 namespace p2p
@@ -44,12 +46,18 @@ public:
   };
 
   P2PService(uint16_t port, fetch::network::NetworkManager const &tm)
-    : super_type(port, tm), manager_(tm)  
+    : super_type(port, tm), manager_(tm)
   {
+    running_ = false;
     thread_pool_ = network::MakeThreadPool(1);
-
     fetch::logger.Warn("Establishing P2P Service on rpc://127.0.0.1:", port);
 
+    // TODO: Load from somewhere
+    crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
+    certificate->GenerateKeys();
+    certificate_.reset( certificate );
+
+    
     // Listening for new connections
     this->SetConnectionRegister(register_);
 
@@ -61,21 +69,29 @@ public:
 
     {
       EntryPoint discovery_ep;
+      discovery_ep.identity = certificate_->identity();
       discovery_ep.is_discovery = true;
       discovery_ep.port = port;
       std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
       my_details_->details.entry_points.push_back(discovery_ep);
+      my_details_->details.identity = certificate_->identity();
+
+
+      my_details_->details.Sign( certificate_.get() );
+      /*
+        TODO: ECDSA verifier broke 
+      crypto::ECDSAVerifier verifier(certificate->identity());          
+      if(!my_details_->details.Verify(&verifier) ) {
+        TODO_FAIL("Could not verify own identity");
+      }
+      */
+      
     }
     
-    // TODO(Troels): Add pk etc. to identity - ECDSA needed
-
     // P2P Peer Directory
     directory_.reset(new P2PPeerDirectory(DIRECTORY, register_, thread_pool_, my_details_ ));
     directory_protocol_.reset(new P2PPeerDirectoryProtocol(*directory_));
     this->Add(DIRECTORY, directory_protocol_.get());
-
-    directory_->Start();
-    thread_pool_->Start();
     
     // Adding hooks for listening to feeds etc
     register_.OnClientEnter([](connection_handle_type const&i) {
@@ -85,6 +101,16 @@ public:
     register_.OnClientLeave([](connection_handle_type const&i) {
         std::cout << "\rPeer left " << i << std::endl;
       });
+
+    // TODO: Get from settings
+    min_connections_ = 2;
+    max_connections_ = 3;
+    tracking_peers_ = false;
+    
+    
+    // TODO: Remove long term
+    Start();
+    
   }
 
   /// Events for new peer discovery
@@ -115,12 +141,22 @@ public:
   /// @{
   void Start() 
   {
+    thread_pool_->Start();
+    directory_->Start();
 
+    if(running_) return;
+    running_ = true;
+    
+    NextServiceCycle();
   }
 
   void Stop() 
   {
+    if(!running_) return;
+    running_ = false;
 
+    directory_->Stop();
+    thread_pool_->Stop();
   }
   
   client_register_type connection_register() {
@@ -145,7 +181,7 @@ public:
   }
   /// @}
   
-  void Connect(byte_array::ConstByteArray const &host, uint16_t const &port) 
+  bool Connect(byte_array::ConstByteArray const &host, uint16_t const &port) 
   {
     shared_service_client_type client = register_.CreateServiceClient<client_type >( manager_, host, port);
 
@@ -159,7 +195,7 @@ public:
       fetch::logger.Error("Connection never came to live in P2P module");
       // TODO: throw error?
       client.reset();
-      return;            
+      return false;
     }
 
     // Getting own IP seen externally
@@ -186,7 +222,7 @@ public:
         std::lock_guard< mutex::Mutex > lock( *regdetails );
         regdetails->Update(details);
       }
-    }    
+    } 
     
     {
       std::lock_guard< mutex_type > lock_(peers_mutex_);
@@ -196,13 +232,13 @@ public:
     // Setup feeds to listen to
     directory_->ListenTo(client);
     
-    
+    return true;
   }
   /// @}
 
   /// Methods to add node components
   /// @{
-  void AddLane(uint32_t const &lane, byte_array::ConstByteArray const &host, uint16_t const &port) 
+  void AddLane(uint32_t const &lane, byte_array::ConstByteArray const &host, uint16_t const &port)
   {
     // TODO: connect
     
@@ -217,7 +253,7 @@ public:
       my_details_->details.entry_points.push_back( lane_details );
     }
     
-
+    identity_->MarkProfileAsUpdated();
   }
 
   void AddMainChain(byte_array::ConstByteArray const &host, uint16_t const &port)
@@ -234,45 +270,157 @@ public:
       lane_details.is_mainchain = true;
       my_details_->details.entry_points.push_back( lane_details );
     }
-    
+
+    identity_->MarkProfileAsUpdated();
   }
 
   void PublishProfile() 
   {
     identity_->PublishProfile() ;
   }
-  
   /// @}
+
+
   
 protected:
-  /// Client setup pipeline
-  /// @{
-  void Handshake() 
-  {
-
-  }
-
-  void EstablishNonce() 
-  {
-
-  }  
-  /// @}
-  
   
   /// Service maintainance
-  /// @{  
-  void PrunePeers() 
+  /// @{
+  void NextServiceCycle() 
   {
+    std::lock_guard< mutex::Mutex > lock(maintainance_mutex_);
+    if(!running_) return;
 
+    // Updating lists of incoming and outgoing
+    using map_type = client_register_type::connection_map_type;
+    incoming_.clear();
+    outgoing_.clear();    
+    
+    register_.WithConnections([this](map_type const &map) {
+        for(auto &c: map) {
+          auto conn = c.second.lock();
+          if(conn) {
+            auto details = register_.GetDetails(conn->handle());
+            std::lock_guard< mutex::Mutex > lock( *details );
+            
+            switch(conn->Type()) {
+            case network::AbstractConnection::TYPE_OUTGOING:
+              outgoing_.insert( details->identity.identifier() );
+              break;
+            case network::AbstractConnection::TYPE_INCOMING:
+              incoming_.insert( details->identity.identifier() );
+              break;
+            }
+          }
+        }
+        
+      });
+    
+    
+    thread_pool_->Post([this](){ this->ManageIncomingConnections(); }, 1000); // TODO: add to config
   }
 
+  void ManageIncomingConnections() 
+  {
+    std::lock_guard< mutex::Mutex > lock(maintainance_mutex_);
+
+    // Timeout to send out a new tracking signal if needed
+    // TODO: Pull from settings
+    { 
+      std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+      double ms = double(std::chrono::duration_cast<std::chrono::milliseconds>(end - track_start_).count());
+      if(ms > 5000) tracking_peers_ = false;
+    }
+    
+      
+    // Requesting new connections as needed
+    if(incoming_.size() < min_connections_ ) {
+      if( !tracking_peers_ ) {
+        track_start_ = std::chrono::system_clock::now();        
+        tracking_peers_ = true;        
+        directory_->RequestPeersForThisNode();
+      }
+    } else if (incoming_.size() >= min_connections_) {
+      if( tracking_peers_ ) {
+        tracking_peers_ = false;      
+        directory_->EnoughPeersForThisNode() ;
+      }
+    }
+    
+    // Kicking random peers if needed
+    if (incoming_.size() > max_connections_) {
+      std::cout << "Too many incoming connections" << std::endl;
+      // TODO:
+    }
+        
+    thread_pool_->Post([this](){ this->ConnectToNewPeers(); });
+  }  
+  
   void ConnectToNewPeers() 
   {
+    std::lock_guard< mutex::Mutex > lock(maintainance_mutex_);
+    
+    if(!running_) return;
+    uint64_t create_count = 0;    
+
+    if(outgoing_.size() < min_connections_) {
+      create_count = min_connections_ - outgoing_.size();
+    } else if(outgoing_.size() < max_connections_) {
+      create_count = 1;
+    }
+
+    byte_array::ConstByteArray my_pk;
+    {
+      std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
+      my_pk = my_details_->details.identity.identifier().Copy();
+    }
+    
+    
+    // Creating list of endpoints
+    P2PPeerDirectory::peer_details_map_type suggest = directory_->SuggestPeersToConnectTo() ;
+    std::vector< EntryPoint > endpoints;
+    for(auto &s: suggest) {
+      for(auto &e: s.second.entry_points) {
+        if(e.identity.identifier() == my_pk) continue;
+        
+        if(e.is_discovery) {
+          if(outgoing_.find( e.identity.identifier() ) == outgoing_.end()) {
+            endpoints.push_back(e);
+          }
+        }
+      }
+    }   
+    std::random_shuffle( endpoints.begin(), endpoints.end() );
+  
+    // Connecting to peers who need connection
+    for(auto e: endpoints) {
+      if(create_count == 0 ) break;
+      thread_pool_->Post([this, e](){ this->TryConnect(e); });      
+      --create_count;
+    }
+
+    // Connecting to other peers if needed
+    // TODO
+    
+    thread_pool_->Post([this](){ this->NextServiceCycle(); }); 
+  }
+
+
+  void TryConnect(EntryPoint const &e) 
+  {
+    if(e.identity.identifier()=="") {
+      fetch::logger.Error("Encountered empty identifier");
+      return;
+    }
+
+    fetch::logger.Debug("Trying to connect to ", byte_array::ToBase64( e.identity.identifier() ));
+    for(auto &h: e.host) {
+      if(Connect(h, e.port)) break;      
+    }
 
   }
   
-  
-
+    
   /// @}
   
   
@@ -280,7 +428,7 @@ private:
   network_manager_type manager_;
   client_register_type register_;
   thread_pool_type thread_pool_;
-
+  
   p2p_identity_type identity_;
   p2p_identity_protocol_type identity_protocol_;
 
@@ -290,7 +438,23 @@ private:
   NodeDetails my_details_;
   
   mutex::Mutex peers_mutex_;    
-  std::unordered_map< connection_handle_type, shared_service_client_type > peers_;  
+  std::unordered_map< connection_handle_type, shared_service_client_type > peers_;
+
+  std::unique_ptr<crypto::Prover> certificate_;
+  std::atomic< bool > running_;
+
+  mutex::Mutex maintainance_mutex_;  
+  std::atomic< uint64_t > min_connections_;
+  std::atomic< uint64_t > max_connections_;
+  std::atomic< bool > tracking_peers_;
+  std::chrono::system_clock::time_point track_start_;
+  
+
+  
+  std::unordered_set< byte_array::ConstByteArray, crypto::CallableFNV > incoming_;
+  std::unordered_set< byte_array::ConstByteArray, crypto::CallableFNV > outgoing_;  
+  std::vector< connection_handle_type > incoming_handles_;
+  std::vector< connection_handle_type > outgoing_handles_;
 };
 
 
