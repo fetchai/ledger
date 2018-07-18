@@ -28,7 +28,7 @@ namespace fetch {
 
 class Constellation {
 public:
-  using network_manager_type = std::shared_ptr<network::NetworkManager>;
+  using network_manager_type = std::unique_ptr<network::NetworkManager>;
   using executor_type = std::shared_ptr<ledger::Executor>;
   using executor_list_type = std::vector<executor_type>;
   using storage_client_type = std::shared_ptr<ledger::StorageUnitClient>;
