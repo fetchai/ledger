@@ -12,19 +12,19 @@ namespace fetch {
 namespace crypto {
 namespace openssl {
 
-template<const int P_ECDSA_Curve_NID = NID_secp256k1
-       , const point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
+template<int P_ECDSA_Curve_NID = NID_secp256k1
+       , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSAPrivateKey
 {
 public:
     using eDelStrat = memory::eDeleteStrategy;
 
     template <typename T
-            , const eDelStrat P_DeleteStrategy = eDelStrat::canonical>
+            , eDelStrat P_DeleteStrategy = eDelStrat::canonical>
     using ShrdPtr = memory::ossl_shared_ptr<T, P_DeleteStrategy>;
 
     template <typename T
-            , const eDelStrat P_DeleteStrategy = eDelStrat::canonical>
+            , eDelStrat P_DeleteStrategy = eDelStrat::canonical>
     using UniqPtr = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
 
     using ECDSACurveType = ECDSACurve<P_ECDSA_Curve_NID>;
@@ -40,7 +40,7 @@ private:
 
     static UniqPtr<BIGNUM, eDelStrat::clearing> keyAsBN(const byte_array::ConstByteArray& key_data) {
         if (ECDSACurveType::privateKeySize != key_data.size()) {
-            throw std::runtime_error("Lenght of provided byte array does not correspond to expected lenght for selected elliptic curve");
+            throw std::runtime_error("ECDSAPrivateKey::keyAsBN(const byte_array::ConstByteArray&): Lenght of provided byte array does not correspond to expected lenght for selected elliptic curve");
         }
         UniqPtr<BIGNUM, eDelStrat::clearing> private_key_as_BN(BN_new());
         BN_bin2bn(key_data.pointer(), int(ECDSACurveType::privateKeySize), private_key_as_BN.get());
@@ -83,15 +83,9 @@ private:
     ECDSAPrivateKey(ShrdPtr<BIGNUM, eDelStrat::clearing> private_key_as_BN)
         : _private_key( keyAsECKEY( private_key_as_BN.get() ) )
         , _public_key( derivePublicKey( private_key_as_BN.get(), _private_key.get() ) ) {
-
-        //const int res = EC_KEY_set_private_key(_key.get(), private_key_as_BN.get());
-        //if (!res) {
-        //    throw std::runtime_error("EC_KEY_set_private_key(...) failed.");
-        //}
     }
 
 public:
-    ECDSAPrivateKey() = delete;
 
     ECDSAPrivateKey(const byte_array::ConstByteArray& key_data)
         : ECDSAPrivateKey(ECDSAPrivateKey::keyAsBN(key_data)) {

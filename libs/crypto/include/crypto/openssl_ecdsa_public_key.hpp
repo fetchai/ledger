@@ -12,19 +12,19 @@ namespace crypto {
 namespace openssl {
 
 template<
-    const int P_ECDSA_Curve_NID = NID_secp256k1,
-    const point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
+    int P_ECDSA_Curve_NID = NID_secp256k1,
+    point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSAPublicKey
 {
 public:
     using eDelStrat = memory::eDeleteStrategy;
 
     template <typename T
-            , const eDelStrat P_DeleteStrategy = eDelStrat::canonical>
+            , eDelStrat P_DeleteStrategy = eDelStrat::canonical>
     using ShrdPtr = memory::ossl_shared_ptr<T, P_DeleteStrategy>;
 
     template <typename T
-            , const eDelStrat P_DeleteStrategy = eDelStrat::canonical>
+            , eDelStrat P_DeleteStrategy = eDelStrat::canonical>
     using UniqPtr = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
 
     using ECDSACurveType = ECDSACurve<P_ECDSA_Curve_NID>;
@@ -73,9 +73,6 @@ private:
     }
 
 public:
-
-    ECDSAPublicKey() = delete;
-
     ECDSAPublicKey(
           ShrdPtr<EC_POINT> _public_key,
           const EC_GROUP *group,
