@@ -12,7 +12,10 @@ public:
   using block_digest_type = block_type::digest_type;
 
   enum class Status {
-    SCHEDULED = 0,      ///< The block has been successfuly scheduled
+    COMPLETE = 0,       ///< The block has been successfully applied/executed
+    SCHEDULED,          ///< The block has been successfully scheduled
+
+    // Errors
     NOT_STARTED,        ///< The executor has not been started
     ALREADY_RUNNING,    ///< The executor is already running another block
     NO_PARENT_BLOCK,    ///< The executor has not processed the

@@ -110,6 +110,8 @@ private:
   bool PlanExecution(block_type const &block);
   void DispatchExecution(ExecutionItem &item);
 
+  bool AttemptRestoreToBlock(block_digest_type const &digest);
+
 };
 
 } // namespace ledger

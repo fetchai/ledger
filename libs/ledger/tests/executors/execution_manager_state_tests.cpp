@@ -30,6 +30,7 @@ protected:
   using underlying_storage_type = MockStorageUnit;
   using storage_type = std::shared_ptr<underlying_storage_type>;
   using clock_type = std::chrono::high_resolution_clock;
+  using status_type = underlying_execution_manager_type::Status;
 
   void SetUp() override {
     auto const &config = GetParam();
@@ -78,10 +79,10 @@ protected:
     return total;
   }
 
-  void ExecuteBlock(TestBlock &block) {
+  void ExecuteBlock(TestBlock &block, status_type expected_status = status_type::SCHEDULED) {
 
     // execute the block
-    ASSERT_EQ(manager_->Execute(block.block), fetch::ledger::ExecutionManagerInterface::Status::SCHEDULED);
+    ASSERT_EQ(manager_->Execute(block.block), expected_status);
 
     // wait for the manager to become idle again
     ASSERT_TRUE(WaitUntilManagerIsIdle());
@@ -154,15 +155,15 @@ TEST_P(ExecutionManagerStateTests, CheckStateRollBack) {
 
   {
     EXPECT_CALL(*storage_, Hash())
-      .Times(1);
+      .Times(0);
     EXPECT_CALL(*storage_, Set(_,_))
-      .Times(block2.num_transactions);
+      .Times(0);
     EXPECT_CALL(*storage_, Commit(_))
       .Times(0);
     EXPECT_CALL(*storage_, Revert(_))
       .Times(1);
 
-    ExecuteBlock(block2);
+    ExecuteBlock(block2, status_type::COMPLETE);
   }
 
   auto const reapply_hash = storage_->GetFake().Hash();

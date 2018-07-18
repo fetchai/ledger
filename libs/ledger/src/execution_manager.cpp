@@ -61,30 +61,21 @@ ExecutionManager::Status ExecutionManager::Execute(block_type const &block) {
     return Status::ALREADY_RUNNING;
   }
 
-  // determine if the current block follows on from the previous block
+  // if we have seen the transactions for this block simply revert to the known
+  // state of the block
+  if (AttemptRestoreToBlock(block.hash)) {
+    last_block_hash_ = block.hash;
+    return Status::COMPLETE;
+  }
+
+  // determine if the current block doesn't follow on from the previous block
   if (block.previous_hash != last_block_hash_) {
-    std::lock_guard<mutex_type> lock(state_archive_lock_);
-
-    // need to load the state from a previous application, so lookup the corresponding state hash
-    auto cache_it = block_state_cache_.find(block.previous_hash);
-    if (cache_it == block_state_cache_.end()) {
-      logger.Warn("Unable to lookup previous state hash");
+    if (!AttemptRestoreToBlock(block.previous_hash)) {
       return Status::NO_PARENT_BLOCK;
     }
-
-    // lookup the cached bookmark
-    bookmark_type bookmark{0};
-    if (!state_archive_.LookupBookmark(cache_it->second, bookmark)) {
-      logger.Warn("Unable to lookup previous state hash bookmark");
-      return Status::NO_PARENT_BLOCK;
-    }
-
-    // revert the storage engine to the previous bookmark
-    storage_->Revert(bookmark);
   }
 
   // TODO: (EJF) Detect and handle number of lanes updates
-  // TODO: (EJF) If we have seen this actual current block then we should just revert to the required state
 
   // plan the execution for this block
   if (!PlanExecution(block)) {
@@ -379,6 +370,27 @@ void ExecutionManager::MonitorThreadEntrypoint() {
       }
     }
   }
+}
+
+bool ExecutionManager::AttemptRestoreToBlock(block_digest_type const &digest) {
+  std::lock_guard<mutex_type> lock(state_archive_lock_);
+
+  // need to load the state from a previous application, so lookup the corresponding state hash
+  auto cache_it = block_state_cache_.find(digest);
+  if (cache_it == block_state_cache_.end()) {
+    return false;
+  }
+
+  // lookup the cached bookmark
+  bookmark_type bookmark{0};
+  if (!state_archive_.LookupBookmark(cache_it->second, bookmark)) {
+    return false;
+  }
+
+  // revert the storage engine to the previous bookmark
+  storage_->Revert(bookmark);
+
+  return true;
 }
 
 } // namespace ledger
