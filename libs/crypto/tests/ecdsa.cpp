@@ -31,13 +31,12 @@ int main() {
 
   ECDSAVerifier verify(sig.identity());
   
-  if( verify("Hello world", sig.signature() ) ) {
+  if( verify.Verify("Hello world", sig.signature() ) ) {
     std::cout << "# VERIFIED!" << std::endl;    
   } else {
     std::cout << "# NOT VERIFIED!" << std::endl;
     exit(-1);
   }
-  
-  
+    
   return 0;
 }

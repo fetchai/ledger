@@ -27,7 +27,7 @@ public:
   typedef std::unordered_map< connection_handle_type, std::shared_ptr< LockableDetails > >  details_map_type;
   typedef std::function< void(connection_handle_type) > callback_client_enter_type;
   typedef std::function< void(connection_handle_type) > callback_client_leave_type;
-
+  typedef std::unordered_map< connection_handle_type, weak_connection_type > connection_map_type;
   
   ConnectionRegisterImpl() = default;
   ConnectionRegisterImpl(ConnectionRegisterImpl const &other) = delete;
@@ -146,13 +146,19 @@ public:
     fnc(details_);
   }
 
-
+  
+  void WithConnections(std::function< void(connection_map_type const &) > fnc) 
+  {
+    std::lock_guard< mutex::Mutex > lock( connections_lock_ );    
+    fnc(connections_);    
+  }
+  
 private:
   mutable mutex::Mutex connections_lock_;
-  std::unordered_map< connection_handle_type, weak_connection_type > connections_;
+  connection_map_type connections_;
 
   mutable mutex::Mutex details_lock_;
-  std::unordered_map< connection_handle_type, std::shared_ptr< LockableDetails > >  details_;
+  details_map_type details_;
 
   
   void SignalClientLeave(connection_handle_type const&handle) 
@@ -186,7 +192,7 @@ public:
   typedef typename ConnectionRegisterImpl<G>::details_map_type details_map_type;
   typedef std::function< void(connection_handle_type) > callback_client_enter_type;
   typedef std::function< void(connection_handle_type) > callback_client_leave_type;
-  
+  typedef std::unordered_map< connection_handle_type, weak_connection_type > connection_map_type;
   ConnectionRegister () 
   {
     ptr_ = std::make_shared< ConnectionRegisterImpl<G> >();
@@ -250,6 +256,10 @@ public:
     ptr_->WithClientDetails(fnc);
   }
 
+  void WithConnections(std::function< void(connection_map_type const &) > fnc) 
+  {
+    ptr_->WithConnections(fnc);
+  }
   
   uint64_t number_of_services() const 
   {

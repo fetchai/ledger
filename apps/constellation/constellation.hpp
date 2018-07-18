@@ -30,7 +30,7 @@ namespace fetch {
 
 class Constellation {
 public:
-  using network_manager_type = std::shared_ptr<network::NetworkManager>;
+  using network_manager_type = std::unique_ptr<network::NetworkManager>;
   using executor_type = std::shared_ptr<ledger::Executor>;
   using executor_list_type = std::vector<executor_type>;
   using storage_client_type = std::shared_ptr<ledger::StorageUnitClient>;
@@ -69,6 +69,7 @@ public:
         num_lanes
       }
     };
+
     return constellation;
   }
 
@@ -86,14 +87,20 @@ public:
 
 private:
 
+  /// @name Configuration
+  /// @{
   flag_type active_{true};                      ///< Flag to control running of main thread
-  std::string interface_address_;
-  uint32_t num_lanes_;
-  uint16_t p2p_port_;
-  uint16_t http_port_;
-  uint16_t lane_port_start_;
+  std::string interface_address_;               ///< The publicly facing interface IP address
+  uint32_t num_lanes_;                          ///< The configured number of lanes
+  uint16_t p2p_port_;                           ///< The port that the P2P interface is running from
+  uint16_t http_port_;                          ///< The port of the HTTP server
+  uint16_t lane_port_start_;                    ///< The starting port of all the lane services
+  /// @}
 
+  /// @name Network Orchestration
+  /// @{
   network_manager_type network_manager_;        ///< Top level network coordinator
+  /// @}
 
   /// @name Lane Storage Components
   /// @{
@@ -130,7 +137,7 @@ private:
   /// @name API Components
   /// @{
   http_server_type http_;                       ///< The HTTP interfaces server
-  http_modules_type http_modules_;
+  http_modules_type http_modules_;              ///< The list of registered HTTP modules
   /// @}
 };
 

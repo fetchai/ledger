@@ -2,7 +2,9 @@
 #define NETWORK_P2PSERVICE_P2P_PEER_DETAILS_HPP
 #include"core/byte_array/byte_array.hpp"
 #include"crypto/fnv.hpp"
-
+#include"crypto/identity.hpp"
+#include"crypto/prover.hpp"
+#include"crypto/verifier.hpp"
 #include<atomic>
 
 namespace fetch
@@ -31,6 +33,7 @@ struct EntryPoint
     }
     
     port = other.port;
+    identity = other.identity;    
     lane_id = uint32_t(other.lane_id);
     is_discovery = bool(other.is_discovery);    
     is_lane = bool(other.is_lane);
@@ -45,6 +48,7 @@ struct EntryPoint
     }
     
     port = other.port;
+    identity = other.identity;
     lane_id = uint32_t(other.lane_id);
     is_lane = bool(other.is_lane);
     is_mainchain = bool(other.is_mainchain);
@@ -57,8 +61,7 @@ struct EntryPoint
   std::unordered_set< byte_array::ConstByteArray, crypto::CallableFNV > host;
   uint16_t port = 0;
 
-  byte_array::ConstByteArray public_key;
-
+  crypto::Identity identity;  
   std::atomic< uint32_t > lane_id;  
 
   std::atomic< bool > is_discovery;  
@@ -73,7 +76,7 @@ template <typename T>
 T& Serialize(T& serializer, EntryPoint const& data) {
   serializer << data.host;
   serializer << data.port;
-  serializer << data.public_key;
+  serializer << data.identity;
   serializer << uint32_t( data.lane_id);
   serializer << bool(data.is_discovery);  
   serializer << bool(data.is_lane);
@@ -85,7 +88,7 @@ template <typename T>
 T& Deserialize(T& serializer, EntryPoint& data) {
   serializer >> data.host;
   serializer >> data.port;
-  serializer >> data.public_key;
+  serializer >> data.identity;
   uint32_t lane;
   
   serializer >> lane;
@@ -115,7 +118,7 @@ struct PeerDetails
 
   PeerDetails(PeerDetails const & other)  
   {
-    public_key = other.public_key.Copy();
+    identity = other.identity;
     entry_points = other.entry_points;
 
     nonce = other.nonce;
@@ -126,7 +129,7 @@ struct PeerDetails
 
   PeerDetails& operator=(PeerDetails const & other)  
   {
-    public_key = other.public_key.Copy();
+    identity = other.identity;    
     entry_points = other.entry_points;
 
     nonce = other.nonce;
@@ -138,7 +141,7 @@ struct PeerDetails
 
   void Update(PeerDetails const & other)  
   {
-    public_key = other.public_key.Copy();
+    identity = other.identity;  
     entry_points = other.entry_points;
   }
 
@@ -149,14 +152,34 @@ struct PeerDetails
     double ms = double(std::chrono::duration_cast<std::chrono::milliseconds>(end - last_updated).count());
     return ms;
   }
+
+  void Sign(crypto::Prover *prov) 
+  {
+    serializers::ByteArrayBuffer buffer;
+    // TODO: Count count first
+    buffer << identity << entry_points;    
+    prov->Sign(buffer.data());
+    signature = prov->signature();
+  }
+
+  bool Verify(crypto::Verifier *ver) 
+  {
+    
+    serializers::ByteArrayBuffer buffer;
+    // TODO: Count count first
+    buffer << identity << entry_points;    
+    return ver->Verify(buffer.data(), signature);
+  }
+
   
   
   /// Serializable
   /// @{
-  byte_array::ConstByteArray public_key;
+  crypto::Identity identity;
   std::vector< EntryPoint > entry_points;
-  
+  byte_array::ConstByteArray signature;
   /// @}
+  
 
   /// Peer meta data
   /// @{  
@@ -169,7 +192,7 @@ struct PeerDetails
 
 template <typename T>
 T& Serialize(T& serializer, PeerDetails const& data) {
-  serializer << data.public_key;
+  serializer << data.identity;
   serializer << data.entry_points;
 
   return serializer;
@@ -177,7 +200,7 @@ T& Serialize(T& serializer, PeerDetails const& data) {
 
 template <typename T>
 T& Deserialize(T& serializer, PeerDetails& data) {
-  serializer >> data.public_key;
+  serializer >> data.identity;
   serializer >> data.entry_points;
 
   

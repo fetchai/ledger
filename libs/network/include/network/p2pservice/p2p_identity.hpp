@@ -39,6 +39,8 @@ public:
   {
     protocol_ = protocol;
     my_details_ = MakeNodeDetails();
+    profile_update_ = false;
+    
   }
 
   /// External RPC callable
@@ -94,7 +96,7 @@ public:
   /// @}
 
 
-  ///
+  /// Profile maintainance
   /// @{
   void PublishProfile()
   {
@@ -108,8 +110,14 @@ public:
           }
         }
       });
+    profile_update_ = false;
+   
   }
-  
+
+  void MarkProfileAsUpdated()
+  {
+    profile_update_ = true;
+  }
   /// @}
   
   void WithOwnDetails(std::function< void(PeerDetails const &) > const &f) 
@@ -126,6 +134,7 @@ private:
   std::atomic< uint64_t > protocol_;  
   client_register_type register_;  
   network_manager_type manager_;
+  std::atomic< bool > profile_update_;
   
   NodeDetails my_details_;
 };
