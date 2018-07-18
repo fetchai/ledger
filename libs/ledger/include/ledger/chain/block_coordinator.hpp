@@ -55,7 +55,7 @@ public:
         block_hash heaviest;
 
         {
-          std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+          std::unique_lock<fetch::mutex::Mutex> lock(mutex_);
           if(!heaviestHashes_.empty())
           {
             heaviest = heaviestHashes_.back();
