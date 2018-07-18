@@ -21,6 +21,7 @@ struct CommandLineArguments {
 
   static const std::size_t DEFAULT_NUM_LANES = 4;
   static const std::size_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
+  static const uint16_t DEFAULT_PORT = 8000;
 
   uint16_t port{0};
   peer_list_type peers;
@@ -35,10 +36,10 @@ struct CommandLineArguments {
     std::string raw_peers;
 
     fetch::commandline::Params parameters;
-    parameters.add(args.port, "port", "The number of lanes to be configured");
-    parameters.add(args.num_executors, "executors", "The number of executors to use", DEFAULT_NUM_EXECUTORS);
-    parameters.add(args.num_lanes, "lanes", "The number of lanes to use", DEFAULT_NUM_LANES);
-    parameters.add(raw_peers, "peers", "The comma separrated list of addresses to initially connect to", std::string{});
+    parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
+    parameters.add(args.num_executors, "executors", "The number of executors to configure", DEFAULT_NUM_EXECUTORS);
+    parameters.add(args.num_lanes, "lanes", "The number of lanes to be used", DEFAULT_NUM_LANES);
+    parameters.add(raw_peers, "peers", "The comma separated list of addresses to initially connect to", std::string{});
 
     std::size_t const num_adapters = adapters.size();
     if (num_adapters == 0) {
@@ -46,7 +47,7 @@ struct CommandLineArguments {
     } else if (num_adapters == 1) {
       args.interface = adapters[0].address().to_string();
     } else {
-      parameters.add(args.interface, "interface", "The network interface to be used to bind to");
+      parameters.add(args.interface, "interface", "The network interface to used for public communication");
     }
 
     // parse the args

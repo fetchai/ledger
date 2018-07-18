@@ -121,7 +121,7 @@ namespace commandline {
                 {
                     if (args.find(name_local) == args.end())
                     {
-                        errs.push_back(std::string("missingarg:") + name_local);
+                        errs.push_back("Missing required argument: " + name_local);
                         return;
                     }
                     assignee = this -> paramsParser_.GetParam<TYPE>(
@@ -138,8 +138,10 @@ namespace commandline {
 
         void help()
         {
-            std::cerr << desc_ << std::endl;
-            std::cerr << std::endl;
+            if (!desc_.empty())
+            {
+                std::cerr << desc_ << '\n' << std::endl;
+            }
 
             size_t w = 0;
 
@@ -155,7 +157,7 @@ namespace commandline {
             for(auto helpText : helpTexts_)
             {
                 auto padsize = w - std::get<0>(helpText).length();
-                std::cerr << "  "
+                std::cerr << "  -"
                           << std::get<0>(helpText)
                           << std::string( 2 + padsize, ' ')
                           << std::get<1>(helpText) << std::endl;
