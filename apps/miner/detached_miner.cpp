@@ -90,15 +90,17 @@ static void load_format_a(std::string const &input_file, std::size_t &N, std::si
       summary.fee += static_cast<uint64_t>(V);
       total_fee += static_cast<uint64_t>(V);
 
-      summary.groups.push_back( group );
+      summary.resources.insert( group );
     }    
 
     std::cout << "Adding transaction: " << static_cast<std::string>(byte_array::ToBase64(summary.transaction_hash));
     std::cout << " index: " << summary.short_id;
     std::cout << " groups: ";
-    for (std::size_t i = 0, end = summary.groups.size(); i < end; ++i) {
-      if (i) std::cout << ", ";
-      std::cout << summary.groups.at(i);
+    std::size_t resource_index = 0;
+    for (auto const &resource : summary.resources) {
+      if (resource_index) std::cout << ", ";
+      std::cout << static_cast<std::string>(resource);
+      ++resource_index;
     }
     std::cout << std::endl;
 
@@ -161,22 +163,22 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
     summary.fee = static_cast<uint64_t>(V);
     total_fee += static_cast<uint64_t>(V);
 
-    std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> groups;
     while(s) {
       int C = -1;  
       s >> C;
       if(C == -1) break;
 
-      groups.insert(CreateResource(C % int(N)));
+      summary.resources.insert(CreateResource(C % int(N)));
     }
-    std::copy(groups.begin(), groups.end(), std::back_inserter(summary.groups));
 
     std::cout << "Adding transaction: " << static_cast<std::string>(byte_array::ToBase64(summary.transaction_hash));
     std::cout << " index: " << summary.short_id;
     std::cout << " groups: ";
-    for (std::size_t i = 0, end = summary.groups.size(); i < end; ++i) {
-      if (i) std::cout << ", ";
-      std::cout << summary.groups.at(i);
+    std::size_t resource_index = 0;
+    for (auto const &resource : summary.resources) {
+      if (resource_index) std::cout << ", ";
+      std::cout << static_cast<std::string>(resource);
+      ++resource_index;
     }
     std::cout << std::endl;
 

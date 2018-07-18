@@ -112,9 +112,9 @@ class BasicBlock
   bool &loose() { return is_loose_; }
   fetch::byte_array::ByteArray &root() { return root_; }
 
-#if 0
+#if 1
     std::string hashString() const {
-        return std::string(ToHex(hash_));
+        return std::string(ToHex(body_.hash));
     }
 
     std::string prevString() const {

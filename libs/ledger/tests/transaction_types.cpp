@@ -58,11 +58,10 @@ int main(int argc, char const **argv)
     {
       MutableTransaction      trans;
       Transaction             tx;
-      VerifiedTransaction::group_type val = fetch::byte_array::ConstByteArray("a");
 
-      trans.PushGroup(val);
+      trans.PushGroup("a");
 
-      EXPECT(trans.groups()[0] == fetch::byte_array::ConstByteArray("a"));
+      EXPECT(trans.resources().count("a") == 1);
 
       {
         VerifiedTransaction txTemp = VerifiedTransaction::Create(trans);
@@ -72,7 +71,7 @@ int main(int argc, char const **argv)
         arr >> tx;
       }
 
-      EXPECT(tx.groups()[0] == fetch::byte_array::ConstByteArray("a"));
+      EXPECT(tx.resources().count("a") == 1);
     };
 
     SECTION("Random transaction generation")

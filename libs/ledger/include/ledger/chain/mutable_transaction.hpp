@@ -54,7 +54,7 @@ public:
   typedef TransactionSummary::digest_type       digest_type;
   typedef TransactionSummary::resource_set_type resource_set_type;
 
-  resource_set_type const &groups() const {
+  resource_set_type const &resources() const {
     return summary_.resources;
   }
 

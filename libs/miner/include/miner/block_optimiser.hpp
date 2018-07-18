@@ -120,7 +120,7 @@ public:
       for(auto &s: best_solution_) {
         if(s == 1) {
           auto &tx = unspent_[i];
-          occupancy_ += tx->groups.size();
+          occupancy_ += tx->resources.size();
           vec.push_back(tx->short_id);
           used.push_back(i);
         }
@@ -225,7 +225,7 @@ public:
     switch(strategy) {
     case 1:
       std::sort( unspent_.begin(), unspent_.end(), [](std::shared_ptr<TransactionSummary> const &a, std::shared_ptr<TransactionSummary> const &b) {
-          return (a->fee / a->groups.size())  > (b->fee / b->groups.size());
+          return (a->fee / a->resources.size())  > (b->fee / b->resources.size());
         });
       break;
     case 2:
@@ -259,7 +259,7 @@ public:
     for(std::size_t i=0; i < batch_size_; ++i) {
       auto &tx = unspent_[i];
 
-      for(auto &g: tx->groups) {
+      for(auto &g: tx->resources) {
 
         // TODO: (EJF) Need to integrate the lane resource mapping
         TODO_FAIL("Need to integrate the lane resource mappinng here");

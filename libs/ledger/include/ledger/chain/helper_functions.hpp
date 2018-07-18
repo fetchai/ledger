@@ -31,7 +31,7 @@ MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
 
   for (std::size_t i = 0; i < 3; ++i)
   {
-    summary.groups.push_back(GetRandomByteArray());
+    summary.resources.insert(GetRandomByteArray());
   }
 
   summary.fee = GetRandom();

@@ -37,7 +37,7 @@ public:
   using super_type::hasher_type;
   using super_type::digest_type;
   //using super_type::;
-  using super_type::groups;
+  using super_type::resources;
   using super_type::summary;
   using super_type::data;
   using super_type::signature;  
