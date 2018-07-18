@@ -9,20 +9,24 @@
 #include "crypto/sha256.hpp"
 #include "ledger/identifier.hpp"
 
-#include<vector>
+#include <vector>
+#include <set>
 
 namespace fetch {
 namespace chain {
 
  
 struct TransactionSummary {
-  typedef byte_array::ConstByteArray group_type;  
+  using resource_type = byte_array::ConstByteArray;
   using digest_type = byte_array::ConstByteArray;
-  using group_list_type = std::vector<group_type>;
+  using resource_set_type = std::set<resource_type>;
 
-  group_list_type groups;
-  digest_type     transaction_hash;
-  uint64_t        fee{0};
+  resource_set_type  resources;
+  digest_type        transaction_hash;
+  uint64_t           fee{0};
+
+  // TODO: (EJF) Needs to be replaced with some kind of ID
+  std::string contract_name_;
 
   // TODO: (EJF) Remove but linked to optimisation
   std::size_t short_id;
@@ -30,22 +34,28 @@ struct TransactionSummary {
 
 template <typename T>
 void Serialize(T &serializer, TransactionSummary const &b) {
-  serializer << b.groups << b.fee << b.transaction_hash;
+  serializer << b.resources
+             << b.fee
+             << b.transaction_hash
+             << b.contract_name_;
 }
 
 template <typename T>
 void Deserialize(T &serializer, TransactionSummary &b) {
-  serializer >> b.groups >> b.fee >> b.transaction_hash;
+  serializer >> b.resources
+             >> b.fee
+             >> b.transaction_hash
+             >> b.contract_name_;
 }
 
 class MutableTransaction {
 public:
-  typedef crypto::SHA256                  hasher_type;
-  typedef TransactionSummary::digest_type digest_type;
-  typedef TransactionSummary::group_type group_type;  
+  typedef crypto::SHA256                        hasher_type;
+  typedef TransactionSummary::digest_type       digest_type;
+  typedef TransactionSummary::resource_set_type resource_set_type;
 
-  std::vector<group_type> const &groups() const {
-    return summary_.groups;
+  resource_set_type const &groups() const {
+    return summary_.resources;
   }
 
   TransactionSummary const &summary() const {
@@ -60,9 +70,8 @@ public:
     return signature_;
   }
 
-  //ledger::Identifier
-  byte_array::ConstByteArray const &contract_name() const {
-    return contract_name_;
+  std::string const &contract_name() const {
+    return summary_.contract_name_;
   }
 
   digest_type const &digest() const {
@@ -76,7 +85,6 @@ public:
     summary_       = rhs.summary();
     data_          = rhs.data();
     signature_     = rhs.signature();    
-    contract_name_ = rhs.contract_name_;
   }
 
   MutableTransaction() = default;
@@ -90,9 +98,13 @@ public:
   void UpdateDigest() {
     LOG_STACK_TRACE_POINT;
 
+    // TODO: (EJF) Do we not want to make more fields here?
     serializers::ByteArrayBuffer buf;
-    buf << summary_.groups << signature_
-      << contract_name_ << summary_.fee;
+    buf << summary_.resources
+        << signature_
+        << summary_.contract_name_
+        << summary_.fee;
+
     hasher_type hash;
     hash.Reset();
     hash.Update(buf.data());
@@ -109,7 +121,7 @@ public:
   void PushGroup(byte_array::ConstByteArray const &res) {
     LOG_STACK_TRACE_POINT;    
     if(copy_on_write_) Clone();    
-    summary_.groups.push_back(res);
+    summary_.resources.insert(res);
   }
 
   void set_summary(TransactionSummary const &summary) {
@@ -127,8 +139,8 @@ public:
     signature_ = sig;
   }
 
-  void set_contract_name(byte_array::ConstByteArray const & name) {
-    contract_name_ = name;
+  void set_contract_name(std::string const &name) {
+    summary_.contract_name_ = name;
   }
 
 protected:
@@ -145,7 +157,6 @@ private:
   TransactionSummary         summary_;
   byte_array::ConstByteArray data_;
   byte_array::ConstByteArray signature_;
-  byte_array::ConstByteArray contract_name_;
 };
 
 

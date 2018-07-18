@@ -1,3 +1,4 @@
+#include "storage/resource_mapper.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/executor.hpp"
 #include "core/assert.hpp"
@@ -43,114 +44,113 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, storage_unit_type 
 /**
  * Initiates the execution of a given block across the set of executors
  *
- * @param block_hash The hash of the current block to process
- * @param prev_block_hash The prev hash of the current block to process
- * @param index The transaction index
- * @param map The map of transaction indexes
- * @param num_lanes The number of lanes
- * @param num_slices The number of slices for the block
- * @return true if successful, otherwise false
+ * @param block The block to be exectued
+ * @return the status of the execution
  */
-bool ExecutionManager::Execute(block_digest_type const &block_hash,
-                               block_digest_type const &prev_block_hash,
-                               tx_index_type const &index,
-                               block_map_type &map,
-                               std::size_t num_lanes,
-                               std::size_t num_slices) {
-
-  detailed_assert(map.size() == (num_lanes * num_slices));
+ExecutionManager::Status ExecutionManager::Execute(block_type const &block) {
 
   // if the execution manager is not running then no further transactions
   // should be scheduled
   if (!running_) {
-    return false;
+    return Status::NOT_STARTED;
   }
 
   // if a block is currently being processed we should not allow another block
   // to be processed
   if (IsActive()) {
-    return false;
+    return Status::ALREADY_RUNNING;
   }
 
   // determine if the current block follows on from the previous block
-  if (prev_block_hash != last_block_hash_) {
+  if (block.previous_hash != last_block_hash_) {
     std::lock_guard<mutex_type> lock(state_archive_lock_);
 
     // need to load the state from a previous application, so lookup the corresponding state hash
-    auto cache_it = block_state_cache_.find(prev_block_hash);
+    auto cache_it = block_state_cache_.find(block.previous_hash);
     if (cache_it == block_state_cache_.end()) {
       logger.Warn("Unable to lookup previous state hash");
-      return false;
+      return Status::NO_PARENT_BLOCK;
     }
 
     // lookup the cached bookmark
     bookmark_type bookmark{0};
     if (!state_archive_.LookupBookmark(cache_it->second, bookmark)) {
       logger.Warn("Unable to lookup previous state hash bookmark");
-      return false;
+      return Status::NO_PARENT_BLOCK;
     }
 
     // revert the storage engine to the previous bookmark
     storage_->Revert(bookmark);
   }
 
-  // sanity check!
-  detailed_assert(IsIdle());
-
   // TODO: (EJF) Detect and handle number of lanes updates
+  // TODO: (EJF) If we have seen this actual current block then we should just revert to the required state
 
   // plan the execution for this block
-  PlanExecution(index, map, num_lanes, num_slices);
+  if (!PlanExecution(block)) {
+    return Status::UNABLE_TO_PLAN;
+  }
 
   // update the last block hash
-  last_block_hash_ = block_hash;
-  num_slices_ = num_slices;
+  last_block_hash_ = block.hash;
+  num_slices_ = block.slices.size();
 
   // trigger the monitor / dispatch thread
   monitor_wake_.notify_one();
 
-  return true;
+  return Status::SCHEDULED;
 }
 
-void ExecutionManager::PlanExecution(tx_index_type const &index, block_map_type &map, std::size_t num_lanes,
-                                     std::size_t num_slices) {
-
-  static constexpr uint64_t INVALID_TRANSACTION = uint64_t(-1);
-  using lane_index_type = ExecutionItem::lane_index_type;
-
+/**
+ * Given a input block, plan the execution of the transactions across the lanes and slices
+ *
+ * @param block The input block to plan
+ * @return true if successful, otherwise false
+ */
+bool ExecutionManager::PlanExecution(block_type const &block) {
   std::lock_guard<mutex_type> lock(execution_plan_lock_);
 
   // clear and resize the execution plan
   execution_plan_.clear();
-  execution_plan_.resize(num_slices);
+  execution_plan_.resize(block.slices.size());
 
-  // TODO(EJF): This should be removed and processed at a higher level (also it is inefficient)
-  for (std::size_t slice_idx = 0; slice_idx < num_slices; ++slice_idx) {
-    for (lane_index_type lane_idx = 0; lane_idx < num_lanes; ++lane_idx) {
-      auto const tx_id = map[lane_idx * num_slices + slice_idx];
+//  fetch::logger.Info("Planning ", block.slices.size(), " slices...");
 
-      if (tx_id == INVALID_TRANSACTION) {
-        continue;
-      }
+  std::size_t slice_index = 0;
+  for (auto const &slice : block.slices) {
+    auto &slice_plan = execution_plan_[slice_index];
 
-      // determine if the transaction
-      auto item = fetch::make_unique<ExecutionItem>(index.at(tx_id), lane_idx, slice_idx);
+//    fetch::logger.Info("Planning slice ", slice_index, "...");
 
-      // determine all applicable lanes
-      for (std::size_t i = lane_idx + 1; i < num_lanes; ++i) {
-        std::size_t const search_idx = i * num_slices + slice_idx;
+    // process the transactions
+    for (auto const &tx : slice.transactions) {
 
-        // this transaction matches previous index
-        if (tx_id == map[search_idx]) {
-          map[search_idx] = INVALID_TRANSACTION;
-          item->AddLane(static_cast<uint16_t>(i));
+      // TODO: (EJF) Byte array copies
+      Identifier id;
+      id.Parse(tx.contract_name_);
+      auto contract = contracts_.Lookup(id.name_space());
+
+      if (contract) {
+        auto item = fetch::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
+
+        // transform the resources into lane allocation
+        for (auto const &resource : tx.resources) {
+          storage::ResourceID const id{ contract->CreateStateIndex(resource) };
+          item->AddLane(id.lane(block.log2_num_lanes));
         }
-      }
 
-      // update the execution plan
-      execution_plan_[slice_idx].emplace_back(std::move(item));
+        // insert the item into the execution plan
+        slice_plan.emplace_back(std::move(item));
+      } else {
+        fetch::logger.Warn("Unable to plan execution of tx: ", byte_array::ToBase64(tx.transaction_hash));
+        return false;
+      }
     }
+
+    ++slice_index;
   }
+
+  return true;
 }
 
 /**

@@ -29,7 +29,8 @@ inline void Deserialize(T &serializer, UnverifiedTransaction &b)
   serializer >> c;
   
   TransactionSummary summary;
-  byte_array::ByteArray data, signature, name;
+  byte_array::ByteArray data, signature;
+  std::string contract_name;
   
   serializer >> summary;
   b.set_summary(summary);
@@ -40,8 +41,8 @@ inline void Deserialize(T &serializer, UnverifiedTransaction &b)
   serializer >> signature;
   b.set_signature(signature);
 
-  serializer >> name;
-  b.set_contract_name(name);
+  serializer >> contract_name;
+  b.set_contract_name(contract_name);
 }
 
 
@@ -68,7 +69,8 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   assert( c == 'V' );  
   
   TransactionSummary summary;
-  byte_array::ByteArray data, signature, name;
+  byte_array::ByteArray data, signature;
+  std::string contract_name;
   
   serializer >> summary;
   b.set_summary(summary);
@@ -79,8 +81,8 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   serializer >> signature;
   b.set_signature(signature);
 
-  serializer >> name;
-  b.set_contract_name(name);
+  serializer >> contract_name;
+  b.set_contract_name(contract_name);
 }
 
 }

@@ -10,9 +10,10 @@ static constexpr std::size_t DELTA_TIME = MAXIMUM_TIME - MINIMUM_TIME;
 namespace fetch {
 namespace ledger {
 
-DummyContract::DummyContract() // TODO: (EJF) Rename this class
+DummyContract::DummyContract()
   : Contract("fetch.dummy") {
   OnTransaction("wait", this, &DummyContract::Wait);
+  OnTransaction("run", this, &DummyContract::Run);
 }
 
 DummyContract::Status DummyContract::Wait(transaction_type const &tx) {
@@ -30,6 +31,10 @@ DummyContract::Status DummyContract::Wait(transaction_type const &tx) {
   std::this_thread::sleep_for(std::chrono::milliseconds(work_time));
   ++counter_;
 
+  return Status::OK;
+}
+
+DummyContract::Status DummyContract::Run(transaction_type const &) {
   return Status::OK;
 }
 

@@ -3,7 +3,8 @@
 
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include"core/byte_array/encoders.hpp"
+#include "crypto/fnv.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/assert.hpp"
 
 namespace fetch {
@@ -13,16 +14,11 @@ class ResourceID
 {
 public:
   typedef uint32_t resource_group_type;
-  ResourceID() { }
-
-  ResourceID(byte_array::ByteArray &id)
-  {
-    id_ = id;
-  }
+  ResourceID() = default;
 
   ResourceID(byte_array::ConstByteArray const &id) 
   {
-    id_ = id;
+    set_id(id);
   }
   
   byte_array::ConstByteArray id() const 
@@ -31,8 +27,7 @@ public:
   }
 
   resource_group_type const & resource_group() const {
-    detailed_assert(id_.size() > sizeof(uint64_t));
-    return *reinterpret_cast< resource_group_type const* >( id_.pointer() );
+    return resource_group_;
   }  
 
   resource_group_type lane(resource_group_type const &log2_num_lanes) const {
@@ -45,7 +40,15 @@ public:
   }
   
 private:
+
+  void set_id(byte_array::ConstByteArray const &id) {
+    crypto::CallableFNV hash;
+    id_ = id;
+    resource_group_ = static_cast<uint32_t>(hash(id));
+  }
+
   byte_array::ConstByteArray id_;
+  uint32_t resource_group_{0};
   template <typename T>
   friend inline void Serialize(T &, ResourceID const &);
   template <typename T>

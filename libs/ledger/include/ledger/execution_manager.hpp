@@ -2,6 +2,7 @@
 #define FETCH_EXECUTION_MANAGER_HPP
 
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/chaincode/cache.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/state_summary_archive.hpp"
@@ -35,13 +36,14 @@ public:
   using executor_list_type = std::vector<shared_executor_type>;
   using block_slices_type = std::vector<chain::BlockSlice>;
   using block_digest_type = byte_array::ConstByteArray;
+  using contract_cache_type = ChainCodeCache;
 
   using execution_item_type = std::unique_ptr<ExecutionItem>;
   using execution_list_type = std::vector<execution_item_type>;
   using execution_plan_type = std::vector<execution_list_type>;
 
   using thread_pool_type = fetch::network::ThreadPool;
-  using mutex_type = fetch::mutex::Mutex;
+  using mutex_type = std::mutex;
   using counter_type = std::atomic<std::size_t>;
   using flag_type = std::atomic<bool>;
   using thread_type = std::unique_ptr<std::thread>;
@@ -56,13 +58,7 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  bool Execute(block_digest_type const &block_hash,
-               block_digest_type const &prev_block_hash,
-               tx_index_type const &index,
-               block_map_type &map,
-               std::size_t num_lanes,
-               std::size_t num_slices) override;
-
+  Status Execute(block_type const &block) override;
   block_digest_type LastProcessedBlock() override;
   bool IsActive() override;
   bool IsIdle() override;
@@ -84,6 +80,7 @@ private:
   flag_type active_{false};
   flag_type monitor_ready_{false};
 
+  contract_cache_type contracts_;
   storage_unit_type storage_;
   execution_plan_type execution_plan_;
   mutex_type execution_plan_lock_;
@@ -109,13 +106,10 @@ private:
   block_state_cache_type block_state_cache_; // TODO: (EJF) Both these caches required maintainence to stop them growing forever
 
   void MonitorThreadEntrypoint();
-  void PlanExecution(tx_index_type const &index,
-                     block_map_type &map,
-                     std::size_t num_lanes,
-                     std::size_t num_slices);
+
+  bool PlanExecution(block_type const &block);
   void DispatchExecution(ExecutionItem &item);
 
-  void NotifyComplete();
 };
 
 } // namespace ledger

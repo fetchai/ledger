@@ -158,23 +158,16 @@ TEST_P(ExecutionManagerRpcTests, CheckStuff) {
   BlockConfig const &config = GetParam();
 
   // generate a block with the desired lane and slice configuration
-  auto block = TestBlock::Generate(config.lanes, config.slices, __LINE__);
+  auto block = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
 
   fetch::byte_array::ConstByteArray prev_hash;
 
   // execute the block
-  ASSERT_TRUE(
-    manager_->Execute(block.hash,
-                      prev_hash,
-                      block.index,
-                      block.map,
-                      block.num_lanes,
-                      block.num_slices)
-  );
+  ASSERT_EQ(manager_->Execute(block.block), underlying_manager_type::Status::SCHEDULED);
 
   // wait for the manager to become idle again
-  ASSERT_TRUE(WaitUntilExecutionComplete(block.index.size()));
-  ASSERT_EQ(GetNumExecutedTransaction(), block.index.size());
+  ASSERT_TRUE(WaitUntilExecutionComplete(static_cast<std::size_t>(block.num_transactions)));
+  ASSERT_EQ(GetNumExecutedTransaction(), block.num_transactions);
   ASSERT_TRUE(CheckForExecutionOrder());
 }
 

@@ -9,7 +9,7 @@ namespace ledger {
 class ExecutorInterface {
 public:
   using tx_digest_type = chain::Transaction::digest_type;
-  using lane_index_type = uint16_t;
+  using lane_index_type = uint32_t;
   using lane_set_type = std::unordered_set<lane_index_type>;
 
   enum class Status {

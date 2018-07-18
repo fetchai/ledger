@@ -20,12 +20,7 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  bool Execute(block_digest_type const &block_hash,
-               block_digest_type const &prev_block_hash,
-               tx_index_type const &index,
-               block_map_type &map,
-               std::size_t num_lanes,
-               std::size_t num_slices) override;
+  Status Execute(block_type const &block) override;
   block_digest_type LastProcessedBlock() override;
   bool IsActive() override;
   bool IsIdle() override;

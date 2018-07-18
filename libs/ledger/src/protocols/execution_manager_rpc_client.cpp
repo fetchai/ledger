@@ -17,22 +17,14 @@ ExecutionManagerRpcClient::ExecutionManagerRpcClient(byte_array::ConstByteArray 
   service_.reset( new fetch::service::ServiceClient(connection, network_manager ) );
 }
 
-bool ExecutionManagerRpcClient::Execute(block_digest_type const &block_hash,
-                                        block_digest_type const &prev_block_hash,
-                                        tx_index_type const &index,
-                                        block_map_type &map, std::size_t num_lanes,
-                                        std::size_t num_slices) {
+ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(block_type const &block) {
   auto result = service_->Call(
     fetch::protocols::FetchProtocols::EXECUTION_MANAGER,
     ExecutionManagerRpcProtocol::EXECUTE,
-    block_hash,
-    prev_block_hash,
-    index, map,
-    num_lanes,
-    num_slices
+    block
   );
 
-  return result.As<bool>();
+  return result.As<Status>();
 }
 
 ExecutionManagerInterface::block_digest_type ExecutionManagerRpcClient::LastProcessedBlock() {

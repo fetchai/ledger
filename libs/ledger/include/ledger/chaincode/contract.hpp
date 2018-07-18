@@ -34,7 +34,7 @@ public:
   using counter_type = std::atomic<std::size_t>;
   using counter_map_type = std::unordered_map<std::string, counter_type>;
   using state_type = ledger::StateInterface;
-  using group_list_type = chain::TransactionSummary::group_list_type;
+  using resource_set_type = chain::TransactionSummary::resource_set_type;
 
   Contract(Contract const &) = delete;
   Contract(Contract &&) = delete;
@@ -60,13 +60,13 @@ public:
     if (it != transaction_handlers_.end()) {
 
       // lock the contract resources
-      LockResources(tx.summary().groups);
+      LockResources(tx.summary().resources);
 
       // dispatch the contract
       status = it->second(tx);
 
       // unlock the contract resources
-      UnlockResources(tx.summary().groups);
+      UnlockResources(tx.summary().resources);
 
       ++transaction_counters_[name];
     }
@@ -114,6 +114,13 @@ public:
     return transaction_handlers_;
   }
 
+  byte_array::ByteArray CreateStateIndex(byte_array::ByteArray const &suffix) const {
+    byte_array::ByteArray index(contract_identifier_.name_space());
+    index = index + ".state." + suffix;
+    return index;
+  }
+
+
 protected:
 
   explicit Contract(std::string const &identifer)
@@ -147,12 +154,6 @@ protected:
   state_type &state() {
     detailed_assert(state_ != nullptr);
     return *state_;
-  }
-
-  byte_array::ByteArray CreateStateIndex(byte_array::ByteArray const &suffix) {
-    byte_array::ByteArray index(contract_identifier_.name_space());
-    index = index + ".state." + suffix;
-    return index;
   }
 
   template <typename T>
@@ -209,7 +210,7 @@ protected:
 
 private:
 
-  bool LockResources(group_list_type const &resources) {
+  bool LockResources(resource_set_type const &resources) {
     bool success = true;
 
     for (auto const &group : resources) {
@@ -221,7 +222,7 @@ private:
     return success;
   }
 
-  bool UnlockResources(group_list_type const &resources) {
+  bool UnlockResources(resource_set_type const &resources) {
     bool success = true;
 
     for (auto const &group : resources) {

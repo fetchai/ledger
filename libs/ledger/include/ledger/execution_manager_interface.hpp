@@ -8,10 +8,16 @@ namespace ledger {
 
 class ExecutionManagerInterface {
 public:
-  using tx_digest_type = chain::Transaction::digest_type;
-  using tx_index_type = std::vector<tx_digest_type>;
-  using block_map_type = std::vector<uint64_t>;
-  using block_digest_type = byte_array::ConstByteArray;
+  using block_type = chain::BlockBody;
+  using block_digest_type = block_type::digest_type;
+
+  enum class Status {
+    SCHEDULED = 0,      ///< The block has been successfuly scheduled
+    NOT_STARTED,        ///< The executor has not been started
+    ALREADY_RUNNING,    ///< The executor is already running another block
+    NO_PARENT_BLOCK,    ///< The executor has not processed the
+    UNABLE_TO_PLAN      ///< The execution manager is unable to plan execution, typically because resources issues
+  };
 
   // Construction / Destruction
   ExecutionManagerInterface() = default;
@@ -19,18 +25,25 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  virtual bool Execute(block_digest_type const &block_hash,
-                       block_digest_type const &prev_block_hash,
-                       tx_index_type const &index,
-                       block_map_type &map,
-                       std::size_t num_lanes,
-                       std::size_t num_slices) = 0;
+  virtual Status Execute(block_type const &block) = 0;
   virtual block_digest_type LastProcessedBlock() = 0;
   virtual bool IsActive() = 0;
   virtual bool IsIdle() = 0;
   virtual bool Abort() = 0;
   /// @}
 };
+
+template <typename T>
+void Serialize(T &serializer, ExecutionManagerInterface::Status const &status) {
+  serializer << static_cast<uint8_t>(status);
+}
+
+template <typename T>
+void Deserialize(T &serializer, ExecutionManagerInterface::Status &status) {
+  uint8_t raw = 0xFF;
+  serializer >> raw;
+  status = static_cast<ExecutionManagerInterface::Status>(raw);
+}
 
 } // namespace ledger
 } // namespace fetch

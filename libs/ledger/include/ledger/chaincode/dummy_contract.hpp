@@ -22,6 +22,7 @@ public:
 private:
 
   Status Wait(transaction_type const &tx);
+  Status Run(transaction_type const &tx);
 
   counter_type counter_{0};
 };

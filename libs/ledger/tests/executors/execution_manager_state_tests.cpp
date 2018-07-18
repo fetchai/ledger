@@ -78,17 +78,10 @@ protected:
     return total;
   }
 
-  void ExecuteBlock(TestBlock &block, block_digest_type previous = block_digest_type{}) {
+  void ExecuteBlock(TestBlock &block) {
 
     // execute the block
-    ASSERT_TRUE(
-      manager_->Execute(block.hash,
-                        previous,
-                        block.index,
-                        block.map,
-                        block.num_lanes,
-                        block.num_slices)
-    );
+    ASSERT_EQ(manager_->Execute(block.block), fetch::ledger::ExecutionManagerInterface::Status::SCHEDULED);
 
     // wait for the manager to become idle again
     ASSERT_TRUE(WaitUntilManagerIsIdle());
@@ -115,9 +108,9 @@ TEST_P(ExecutionManagerStateTests, CheckStateRollBack) {
   // block1 -
   //         \ block3
   //
-  auto block1 = TestBlock::Generate(config.lanes, config.slices, __LINE__);
-  auto block2 = TestBlock::Generate(config.lanes, config.slices, __LINE__);
-  auto block3 = TestBlock::Generate(config.lanes, config.slices, __LINE__);
+  auto block1 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
+  auto block2 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__, block1.block.hash);
+  auto block3 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__, block1.block.hash);
 
   // start the execution manager
   manager_->Start();
@@ -126,7 +119,7 @@ TEST_P(ExecutionManagerStateTests, CheckStateRollBack) {
     EXPECT_CALL(*storage_, Hash())
       .Times(1);
     EXPECT_CALL(*storage_, Set(_,_))
-      .Times(static_cast<int>(block1.index.size()));
+      .Times(block1.num_transactions);
     EXPECT_CALL(*storage_, Commit(_))
       .Times(1);
 
@@ -137,11 +130,11 @@ TEST_P(ExecutionManagerStateTests, CheckStateRollBack) {
     EXPECT_CALL(*storage_, Hash())
       .Times(1);
     EXPECT_CALL(*storage_, Set(_,_))
-      .Times(static_cast<int>(block2.index.size()));
+      .Times(block2.num_transactions);
     EXPECT_CALL(*storage_, Commit(_))
       .Times(1);
 
-    ExecuteBlock(block2, block1.hash);
+    ExecuteBlock(block2);
   }
 
   auto const previous_hash = storage_->GetFake().Hash();
@@ -152,24 +145,24 @@ TEST_P(ExecutionManagerStateTests, CheckStateRollBack) {
     EXPECT_CALL(*storage_, Commit(_))
       .Times(1);
     EXPECT_CALL(*storage_, Set(_,_))
-      .Times(static_cast<int>(block3.index.size()));
+      .Times(block3.num_transactions);
     EXPECT_CALL(*storage_, Revert(_))
       .Times(1);
 
-    ExecuteBlock(block3, block1.hash);
+    ExecuteBlock(block3);
   }
 
   {
     EXPECT_CALL(*storage_, Hash())
       .Times(1);
     EXPECT_CALL(*storage_, Set(_,_))
-      .Times(static_cast<int>(block2.index.size()));
+      .Times(block2.num_transactions);
     EXPECT_CALL(*storage_, Commit(_))
       .Times(0);
     EXPECT_CALL(*storage_, Revert(_))
       .Times(1);
 
-    ExecuteBlock(block2, block1.hash);
+    ExecuteBlock(block2);
   }
 
   auto const reapply_hash = storage_->GetFake().Hash();
