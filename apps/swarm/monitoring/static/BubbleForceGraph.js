@@ -83,12 +83,6 @@ class BubbleForceGraph
             .attr("orient", "auto")
             .append("svg:path")
             .attr("d", "M0,-5L10,0L0,5")
-            // .append("svg:line")
-            // .attr("x1", "0")
-            // .attr("x2", "100")
-            // .attr("y1", "0")
-            // .attr("y2", "100")
-            // .attr("stroke-width", "10")
         ;
 
         this.linksG = this.svg.append("g").attr("class", "links")
@@ -148,10 +142,16 @@ class BubbleForceGraph
                     });
 
                 self.dataNodes
-                    .attr("cx", function(d) { return d.x; })
-                    .attr("cy", function(d) { return d.y; })
+                    .attr("transform", function(d){return "translate("+d.x+","+d.y+")"})
+                    .selectAll("circle")
                     .attr("r", function(d) { return d.value || 5; })
+                    .attr("fill", function(d) {
+                        return self.colourForGroupAndStatus(d);
+                    })
                 ;
+                self.dataNodes
+                    .selectAll("text")
+                    .attr("fill", function(d) {return self.getTextColourForGroup(d); })
             })
         ;
     }
@@ -169,22 +169,40 @@ class BubbleForceGraph
 
 
         this.dataNodes = this.nodesG
-            .selectAll("circle")
+            .selectAll("g")
             .data(this.graphData.nodes, function(d, i) {
                 return d.id;
             });
 
-        this.colourForGroupAndStatus = function(gr, st, d) {
-            var r = this.color(gr/16.0);
-            if (st == "darken") {
-                r = d3.hsl(r).darker(1.5)
-                if (d.opacity) {
-                    //r.s = d.opacity * r.s;
-                    r = r.rgb();
-                    r.opacity = d.opacity;
-                }
+        this.colourForGroupAndStatus = function(d) {
+            var col = d3.rgb(self.color(d.group/16.0));
+            if (d.opacity) {
+                col.opacity = d.opacity;
             }
-            return r.toString();
+            if (d.status == "darken") {
+                col = d3.hsl(col).darker(1.5).rgb();
+            }
+            return col.toString();
+        }
+
+        this.getTextColourForGroup = function(d) {
+            var col = d3.rgb(self.colourForGroupAndStatus(d));
+
+            var r = col.r / 255.0;
+            var g = col.g / 255.0;
+            var b = col.b / 255.0;
+
+            r *= .299;
+            g *= .587;
+            b *= .114;
+
+            var t = r+g+b;
+
+            if ( t < 0.6 ) {
+                return "white";
+            } else {
+                return "black";
+            }
         }
 
         this.getClassForNode = function(d) {
@@ -193,16 +211,17 @@ class BubbleForceGraph
             return "";
         }
 
-        this.dataNodes
-            .enter().append("circle")
+        var circles = this.dataNodes
+            .enter().append("g");
+
+        circles.append("circle")
             .attr("class", function(d) {
                 return self.getClassForNode(d);
             })
             .attr("r", 5)
             .attr("data-creationname", function(d) { return d.id; })
-            .attr("fill", "#000")
             .attr("fill", function(d) {
-                return self.colourForGroupAndStatus(d.group, d.status, d);
+                return self.colourForGroupAndStatus(d);
             })
             .call(d3.drag()
                   .on("start", self.dragstarted.bind(this))
@@ -210,10 +229,12 @@ class BubbleForceGraph
                   .on("end", self.dragended.bind(this)))
         ;
 
-        var foo =  this.dataNodes
-            .attr("fill", function(d) {
-                return self.colourForGroupAndStatus(d.group, d.status, d); })
-            .attr("data-name", function(d) { return d.id; })
+        circles.append("text")
+            .text(function(d) { return d.label; })
+            .attr("fill", function(d) { return self.getTextColourForGroup(d); })
+            .attr("text-anchor", "middle")
+            .attr("alignment-baseline", "middle")
+        ;
 
         this.dataLinks = this.linksG
             .selectAll("path")

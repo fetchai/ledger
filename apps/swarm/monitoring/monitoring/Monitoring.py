@@ -6,7 +6,71 @@ import time
 import threading
 import json
 
-POSSIBLE_PORTS = 30
+from multiprocessing import Pool
+
+POSSIBLE_PORTS = 31
+
+
+def poll( nodenumber):
+    ident = "127.0.0.1:{}".format(nodenumber + 9000)
+    port = nodenumber + 10000
+    try:
+        url = "http://127.0.0.1:{}/peers".format(port)
+        data = None
+        try:
+            r = requests.get(url, timeout=1)
+            if r.status_code == 200:
+                data = json.loads(r.content.decode("utf-8", "strict"))
+                peers = data.get("peers", [])
+                state = data.get("state", 0)
+        except requests.exceptions.Timeout as ex:
+            data = None
+            print("Timeout:", ident)
+        except requests.exceptions.ConnectionError as ex:
+            data = None
+            print("Denied:", ident)
+
+        if data != None:
+            return (ident, peers, state)
+        else:
+            return (None, None, None)
+
+    except Exception as x:
+        print("ERR:", x)
+        return (None, None, None)
+
+def poll2( nodenumber):
+    ident = "127.0.0.1:{}".format(nodenumber + 9000)
+    port = nodenumber + 10000
+    try:
+        url = "http://127.0.0.1:{}/mainchain".format(port)
+        data = None
+        try:
+            r = requests.get(url, timeout=1)
+            if r.status_code == 200:
+                data = json.loads(r.content.decode("utf-8", "strict"))
+        except requests.exceptions.Timeout as ex:
+            data = None
+            print("Timeout:", ident)
+        except requests.exceptions.ConnectionError as ex:
+            data = None
+            print("Denied:", ident)
+
+        if data != None:
+            return (ident, data["blocks"], data["chainident"])
+        else:
+            return (None, None, None)
+
+    except Exception as x:
+        print("ERR:", x)
+        return (None, None, None)
+
+def workfunc(ident):
+    return (
+        poll(ident),
+        poll2(ident),
+        )
+
 
 class Monitoring(object):
 
@@ -16,65 +80,23 @@ class Monitoring(object):
             self.owner = owner
             self.port = 0
             super().__init__(group=None, target=None, name="pollingthread")
+            self.myPool = Pool(10)
 
         def run(self):
             print("MONITORING START")
+
             while not self.done:
-                self.poll(self.port + 10000, self.port)
-                self.poll2(self.port + 10000, self.port)
-                self.port = (self.port + 1) % POSSIBLE_PORTS
-                if self.port == 0:
-                    time.sleep(2)
+                time.sleep(.6)
+                idents = list(range(0, POSSIBLE_PORTS))
+                newdata = self.myPool.map(workfunc, idents)
 
-        def poll(self, port, nodenumber):
-            ident = "127.0.0.1:{}".format(nodenumber + 9000)
-            try:
-                url = "http://127.0.0.1:{}/peers".format(port)
-                data = None
-                try:
-                    r = requests.get(url, timeout=0.5)
-                    if r.status_code == 200:
-                        data = json.loads(r.content.decode("utf-8", "strict"))
-                        peers = data.get("peers", [])
-                        state = data.get("state", 0)
-                except requests.exceptions.Timeout as ex:
-                    data = None
-                    print("Timeout:", ident)
-                except requests.exceptions.ConnectionError as ex:
-                    data = None
-                    print("Denied:", ident)
+                for newData, newChainData in newdata:
+                    if (newData[0]):
+                        self.owner.newData(newData[0], newData[1], newData[2])
+                    if (newChainData[0]):
+                        self.owner.newChainData(newChainData[0], newChainData[1], newChainData[2])
 
-                if data != None:
-                   self.owner.newData(ident, peers, state)
-                else:
-                    self.owner.badNode(ident)
 
-            except Exception as x:
-                print("ERR:", x)
-
-        def poll2(self, port, nodenumber):
-            ident = "127.0.0.1:{}".format(nodenumber + 9000)
-            try:
-                url = "http://127.0.0.1:{}/mainchain".format(port)
-                data = None
-                try:
-                    r = requests.get(url, timeout=0.5)
-                    if r.status_code == 200:
-                        data = json.loads(r.content.decode("utf-8", "strict"))
-                except requests.exceptions.Timeout as ex:
-                    data = None
-                    print("Timeout:", ident)
-                except requests.exceptions.ConnectionError as ex:
-                    data = None
-                    print("Denied:", ident)
-
-                if data != None:
-                   self.owner.newChainData(ident, data["blocks"], data["chainident"])
-                else:
-                    self.owner.badNode(ident)
-
-            except Exception as x:
-                print("ERR:", x)
 
 
     def __init__(self):
@@ -93,7 +115,6 @@ class Monitoring(object):
                 return
             if chainident > max(self.chain.keys()):
                 self.chain = {}
-                self.heaviests = {}
 
         for i, block in enumerate(blocks):
             if not i:

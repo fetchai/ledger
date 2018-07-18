@@ -63,8 +63,13 @@ class ForceGraph
             ],
         };
 
+        this.color = d3.scaleLinear()
+            .domain([ 0, 0.165, 0.33, 0.5, 0.665, 0.81, 1.0 ])
+            .range(["red", "yellow", "green", "blue", "cyan", "magenta", "red" ]
+                  );
+
         this.svg = d3.select("svg");
-        this.color = d3.scaleOrdinal(d3.schemeCategory10);
+
         this.width = 1000;
         this.height = 1000;
 
@@ -118,9 +123,18 @@ class ForceGraph
                         return Math.sqrt(d.value) || 1.0;
                     });
 
+               self.dataNodes
+                    .attr("transform", function(d){return "translate("+d.x+","+d.y+")"})
+                    .selectAll("circle")
+                    .attr("r", function(d) { return 15; })
+                    .attr("fill", function(d) {
+                        return self.colourForGroupAndStatus(d);
+                    })
+                ;
                 self.dataNodes
-                    .attr("cx", function(d) { return d.x; })
-                    .attr("cy", function(d) { return d.y; });
+                    .selectAll("text")
+                    .attr("fill", function(d) {return self.getTextColourForGroup(d); })
+                ;
             }).on("end", function() {
                 console.log("STATIC");
             });
@@ -140,32 +154,52 @@ class ForceGraph
 
 
         this.dataNodes = this.nodesG
-            .selectAll("circle")
+            .selectAll("g")
             .data(this.graphData.nodes, function(d, i) {
                 return d.id;
             });
 
-        this.colourForGroupAndStatus = function(gr, st) {
-
-            while(gr>this.highestGroupSeenSoFar) {
-                this.color(this.highestGroupSeenSoFar);
-                this.highestGroupSeenSoFar++;
+        this.colourForGroupAndStatus = function(d) {
+            var col = d3.rgb(self.color(d.group/16.0));
+            if (d.opacity) {
+                col.opacity = d.opacity;
+            }
+            if (d.status == "darken") {
+                col = d3.hsl(col).darker(1.5).rgb();
             }
 
-            var r = this.color(gr);
-            if (st != "ok") {
-                r = d3.hsl(r).brighter(1.5).rgb().toString();
-            }
-            return r;
+            return col.toString();
         }
 
-        this.dataNodes
-            .enter().append("circle")
+        this.getTextColourForGroup = function(d) {
+            var col = d3.rgb(self.colourForGroupAndStatus(d));
+
+            var r = col.r / 255.0;
+            var g = col.g / 255.0;
+            var b = col.b / 255.0;
+
+            r *= .299;
+            g *= .587;
+            b *= .114;
+
+            var t = r+g+b;
+
+            if ( t < 0.6 ) {
+                return "white";
+            } else {
+                return "black";
+            }
+        }
+
+        var circles = this.dataNodes
+            .enter().append("g");
+
+        circles.append("circle")
             .attr("r", 5)
+            .attr("data-name", function(d) { return d.id; })
             .attr("data-creationname", function(d) { return d.id; })
-            .attr("fill", "#000")
             .attr("fill", function(d) {
-                return self.colourForGroupAndStatus(d.group, d.status);
+                return self.colourForGroupAndStatus(d.group, d.status, d);
             })
             .call(d3.drag()
                   .on("start", self.dragstarted.bind(this))
@@ -173,10 +207,12 @@ class ForceGraph
                   .on("end", self.dragended.bind(this)))
         ;
 
-        var foo =  this.dataNodes
-            .attr("fill", function(d) {
-                return self.colourForGroupAndStatus(d.group, d.status); })
-            .attr("data-name", function(d) { return d.id; })
+        circles.append("text")
+            .text(function(d) { return d.label; })
+            .attr("fill",  function(d) { return self.getTextColourForGroup(d); })
+            .attr("text-anchor", "middle")
+            .attr("alignment-baseline", "middle")
+        ;
 
         this.dataLinks = this.linksG
             .selectAll("path")
@@ -305,20 +341,23 @@ class ForceGraph
                 return res; }, {});
 
         Object.keys(updatedNodesByName).forEach(k => {
-            updatedNodesByName[k].group =
-                (k in newNodes) ? newNodes[k].group : updatedNodesByName[k].group;
-            updatedNodesByName[k].status =
-                (k in newNodes) ? newNodes[k].status : updatedNodesByName[k].status;
+            [
+                "group", "status", "value", "charge", "darken", "opacity"
+            ].forEach(copykey => {
+                updatedNodesByName[k][copykey] =
+                    (k in newNodes) ? newNodes[k][copykey] : updatedNodesByName[k][copykey];
+            });
         });
 
         Object.keys(updatedLinksByName).forEach(k => {
-            updatedLinksByName[k].value =
-                (k in newLinks) ? newLinks[k].value : updatedLinksByName[k].value;
+            [
+                "value", "distance"
+            ].forEach(copykey => {
+                updatedLinksByName[k][copykey] =
+                    (k in newLinks) ? newLinks[k][copykey] : updatedLinksByName[k][copykey];
+            });
         });
 
-        //if (self.graphData.links.length > 1000) {
-        //    debugger;
-        //}
 
         self.sync();
     }

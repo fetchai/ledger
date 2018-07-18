@@ -36,7 +36,7 @@ angular.module('blobsApp', []).controller('blobsController', [ '$location', '$sc
 
     $scope.init = function() {
         $scope.load();
-	$interval( $scope.load, 300);
+	$interval( $scope.load, 133);
     }
     
     $scope.init();

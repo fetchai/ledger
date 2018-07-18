@@ -90,21 +90,23 @@ def get_data2(context, mon):
     allnodenames = list(allnodenames)
     extranodenames = list(extranodenames)
 
-    data["nodes"].extend([
-            {
-                "id": x,
-                "group": mon.world[x]["state"],
-                "status": "ok",
-            } for x in allnodenames
-        ]),
+    data["nodes"].extend([{
+        "id": x,
+        'label': int(x[-4:]) - 9000,
+        "group":
+        ord(mon.heaviests.get(x, "0")[0]) & 0x0F,
+        }
+        for x in allnodenames
+    ]),
 
-    data["nodes"].extend([
-            {
-                "id": x,
-                "group": 0,
-                "status": "dead",
-            } for x in extranodenames
-        ]),
+    data["nodes"].extend([{
+        'label': "X",
+        "id": x,
+        "group": 0,
+        "status": "dead",
+        }
+        for x in extranodenames
+    ]),
     return data;
 
 def get_chain_data2(context, mon):
@@ -357,6 +359,7 @@ def get_consensus_data(context, mon):
         n = {
             'id': k[0:16],
             'group': ord((k or "0")[0]) & 0x0F,
+            'label': '',
             'value': nodesize,
             'charge': -1500,
             'status': "darken",
@@ -370,6 +373,7 @@ def get_consensus_data(context, mon):
     r["nodes"].extend([
         {
             'id': k,
+            'label': int(k[-4:]) - 9000,
             'group': ord((attracted or "0")[0]) & 0x0F,
             'charge': -300,
             'value': 10,
