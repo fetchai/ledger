@@ -105,7 +105,7 @@ namespace commandline {
                         name_local, deflt_local);
                 };
 
-            helpTexts_.push_back({name, help});
+            helpTexts_.push_back(help_text_type{name, help});
         }
 
         template<class TYPE>
@@ -128,7 +128,7 @@ namespace commandline {
                         name_local, TYPE());
                 };
 
-            helpTexts_.push_back({name, help});
+            helpTexts_.push_back(help_text_type{name, help});
         }
 
         void description(const std::string &desc)

@@ -24,6 +24,8 @@ public:
   /// @{
   virtual Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) = 0;
   /// @}
+
+  virtual ~ExecutorInterface() {}
 };
 
 template <typename T>

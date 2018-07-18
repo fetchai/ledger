@@ -30,7 +30,7 @@ public:
   explicit Executor(resources_type resources)
     : resources_{std::move(resources)} {
   }
-  ~Executor() = default;
+  ~Executor() override = default;
 
   /// @name Executor Interface
   /// @{
