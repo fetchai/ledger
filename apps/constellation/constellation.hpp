@@ -5,6 +5,8 @@
 #include "ledger/executor.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/main_chain_miner.hpp"
+#include "ledger/chain/block_coordinator.hpp"
 #include "ledger/main_chain_node.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
@@ -108,6 +110,16 @@ private:
   /// @name Blockchain Components
   /// @{
   chain::MainChain main_chain_;                 ///< The main chain
+  /// @}
+
+  /// @name Blockchain Components
+  /// @{
+  chain::BlockCoordinator block_coordinator_;   ///< The block coordinator
+  /// @}
+
+  /// @name Blockchain Components
+  /// @{
+  chain::MainChainMiner main_chain_miner_;      ///< The main chain miner
   /// @}
 
   /// @name P2P Networking Components

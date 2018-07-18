@@ -55,6 +55,7 @@ class MainChain
   typedef BasicBlock<proof_type, fetch::crypto::SHA256> block_type;
   typedef fetch::byte_array::ByteArray                  block_hash;
 
+  /*
   MainChain(block_type &genesis, uint32_t minerNumber = 98) :
     minerNumber_{minerNumber}
   {
@@ -69,7 +70,7 @@ class MainChain
 
     RecoverFromFile();
     constructing_ = false;
-  }
+  } */
 
   // Default hard code genesis
   MainChain(uint32_t minerNumber = 99) :
@@ -106,12 +107,12 @@ class MainChain
     // First check if block already exists
     if(blockChain_.find(block.hash()) != blockChain_.end())
     {
-      fetch::logger.Warn("Mainchain: Trying to add already seen block:", block.summarise());
+      fetch::logger.Warn("Mainchain: Trying to add already seen block");
       return false;
     }
     else
     {
-      fetch::logger.Info("Mainchain: Add newly found block:", block.summarise());
+      fetch::logger.Info("Mainchain: Add newly found block:");
     }
 
     // Check whether blocks prev hash refers to a valid tip (common case)
@@ -121,14 +122,13 @@ class MainChain
 
     if(tipRef != tips_.end())
     {
-
       tip = ((*tipRef).second);
       tips_.erase(tipRef);
       tip->total_weight += block.weight();
       block.loose() = tip->loose;
       block.totalWeight() = tip->total_weight;
 
-      fetch::logger.Info("Mainchain: Pushing block onto already existing tip:", block.summarise());
+      fetch::logger.Info("Mainchain: Pushing block onto already existing tip:");
 
       fetch::logger.Info("Mainchain: ", "W=", block.weight(), " TW=", block.totalWeight());
 
@@ -136,7 +136,7 @@ class MainChain
       // arrives and points to this one. Non loose blocks don't need this.
       if(tip->loose)
       {
-        block.root() = ((*tipRef).second)->root;
+        block.root() = tip->root;
       }
 
       // Update heaviest pointer if necessary
@@ -144,20 +144,10 @@ class MainChain
       {
         fetch::logger.Info("Mainchain: Updating heaviest with tip");
 
-        bool tipWasHeaviest = (heaviest_.second == block.body().previous_hash);
         heaviest_.first = tip->total_weight;
         heaviest_.second = block.hash();
 
         heaviestAdvanced = true;
-
-        if(tipWasHeaviest)
-        {
-          onNewHeaviest();
-        }
-        else
-        {
-          onForkSwitch();
-        }
       }
     }
     else
@@ -187,7 +177,6 @@ class MainChain
           heaviest_.first = tip->total_weight;
           heaviest_.second = block.hash();
           heaviestAdvanced = true;
-          onForkSwitch();
         }
       }
       else
@@ -251,24 +240,13 @@ class MainChain
         auto updatedTip = tips_[tipHash];
         if (!updatedTip->loose && updatedTip->total_weight > heaviest_.first)
         {
-            fetch::logger.Info("Mainchain: Updating heaviest with tip");
+          fetch::logger.Info("Mainchain: Updating heaviest with tip");
 
-            bool tipWasHeaviest = (heaviest_.second == block.body().previous_hash);
-            heaviest_.first  = updatedTip->total_weight;
-            heaviest_.second = tipHash;
+          heaviest_.first  = updatedTip->total_weight;
+          heaviest_.second = tipHash;
 
-            heaviestAdvanced = true;
-
-            if(tipWasHeaviest)
-            {
-                onNewHeaviest();
-            }
-            else
-            {
-                onForkSwitch();
-            }
+          heaviestAdvanced = true;
         }
-
       }
 
       if(block.loose())
@@ -312,43 +290,13 @@ class MainChain
     return blockChain_.size();
   }
 
-  // for debugging: get the heaviest chain
-  std::vector<block_type> HeaviestChain() const
+  std::vector<block_type> HeaviestChain(std::size_t limit = std::numeric_limits<std::size_t>::max()) const
   {
+    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+
     std::vector<block_type> result;
 
     auto topBlock =  blockChain_.at(heaviest_.second);
-
-    while(topBlock.body().block_number != 0)
-    {
-      result.push_back(topBlock);
-
-      auto hash = topBlock.body().previous_hash;
-
-      // Walk down
-      auto it = blockChain_.find(hash);
-      if(it == blockChain_.end())
-      {
-        fetch::logger.Info("Mainchain: Failed while walking down\
-            from top block to find genesis!");
-        break;
-      }
-
-      topBlock = (*it).second;
-    }
-
-    result.push_back(topBlock); // this should be genesis
-    return result;
-  }
-
-  // for debugging: get the heaviest chain
-  std::vector<block_type> HeaviestChain(size_t limit) const
-  {
-    std::vector<block_type> result;
-
-    auto topBlock =  blockChain_.at(heaviest_.second);
-
-    fetch::logger.Info("Mainchain: Determining heaviest chain as:", topBlock.summarise());
 
     while((topBlock.body().block_number != 0)  && (result.size() < limit))
     {
@@ -479,60 +427,6 @@ class MainChain
     return false;
   }
 
-
-  // Methods called when a new heavy block arrives
-  void onNewHeaviest() const
-  {
-  }
-
-  void onForkSwitch() const
-  {
-  }
-
-  inline bool GetPrev(block_type &block)
-  {
-    auto it = blockChain_.find(block.body().previous_hash);
-
-    if(it == blockChain_.end())
-    {
-      return false;
-    }
-
-    block = (*it).second;
-    return true;
-  }
-
-  void WriteToFile()
-  {
-    if(constructing_) return;
-
-    // Add confirmed blocks to file
-    block_type block = blockChain_.at(heaviest_.second);
-    bool failed = false;
-
-    for (std::size_t i = 0; i < blockConfirmation_; ++i)
-    {
-      if(!GetPrev(block))
-      {
-        failed = true;
-        break;
-      }
-    }
-
-    if(!failed)
-    {
-      blockStore_.Set(storage::ResourceID("head"), block);
-      blockStore_.Set(storage::ResourceID(block.hash()), block);
-    }
-
-    // Walk down the file to check we have an unbroken chain
-    while(GetPrev(block) && !blockStore_.Has(storage::ResourceID(block.hash())))
-    {
-      blockStore_.Set(storage::ResourceID(block.hash()), block);
-    }
-
-  }
-
 private:
   // Long term storage and backup
   fetch::storage::ObjectStore<block_type>              blockStore_;
@@ -568,6 +462,49 @@ private:
       block.UpdateDigest();
       AddBlock(block);
     }
+  }
+
+  void WriteToFile()
+  {
+    if(constructing_) return;
+
+    // Add confirmed blocks to file
+    block_type block = blockChain_.at(heaviest_.second);
+    bool failed = false;
+
+    for (std::size_t i = 0; i < blockConfirmation_; ++i)
+    {
+      if(!GetPrev(block))
+      {
+        failed = true;
+        break;
+      }
+    }
+
+    if(!failed)
+    {
+      blockStore_.Set(storage::ResourceID("head"), block);
+      blockStore_.Set(storage::ResourceID(block.hash()), block);
+    }
+
+    // Walk down the file to check we have an unbroken chain
+    while(GetPrev(block) && !blockStore_.Has(storage::ResourceID(block.hash())))
+    {
+      blockStore_.Set(storage::ResourceID(block.hash()), block);
+    }
+  }
+
+  inline bool GetPrev(block_type &block)
+  {
+    auto it = blockChain_.find(block.body().previous_hash);
+
+    if(it == blockChain_.end())
+    {
+      return false;
+    }
+
+    block = (*it).second;
+    return true;
   }
 };
 

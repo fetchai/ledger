@@ -7,7 +7,11 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
   , num_lanes_{static_cast<uint32_t>(num_lanes)}
   , p2p_port_{static_cast<uint16_t>(port_start + P2P_PORT_OFFSET)}
   , http_port_{static_cast<uint16_t>(port_start + HTTP_PORT_OFFSET)}
-  , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)} {
+  , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
+  , main_chain_{}
+  , block_coordinator_{main_chain_, execution_manager_}
+  , main_chain_miner_{main_chain_, block_coordinator_}
+  {
 
   // determine how many threads the network manager will require
   std::size_t const num_network_threads =
@@ -37,6 +41,10 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
       return executor;
     })
   );
+
+  // Now that the execution manager is created, can start components that need it to exist
+  block_coordinator_.start();
+  main_chain_miner_.start();
 
   p2p_.reset(new p2p::P2PService(p2p_port_, *network_manager_));
   p2p_->Start();

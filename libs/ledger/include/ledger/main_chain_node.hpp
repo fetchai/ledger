@@ -173,7 +173,7 @@ public:
                     // Get heaviest block
                     auto block = chain_ -> HeaviestBlock();
 
-                    fetch::logger.Info("MINER: Determining heaviest chain as:", block.summarise());
+                    //fetch::logger.Info("MINER: Determining heaviest chain as:", block.summarise());
 
                     // Create another block sequential to previous
                     block_type nextBlock;
@@ -190,7 +190,7 @@ public:
                     nextBlock.proof().SetTarget(target_);
                     miner::Mine(nextBlock);
 
-                    fetch::logger.Info("MINER: Mined block:", nextBlock.summarise());
+                    //fetch::logger.Info("MINER: Mined block:", nextBlock.summarise());
 
                     if(stopped_)
                     {
