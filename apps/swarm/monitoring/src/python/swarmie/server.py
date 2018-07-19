@@ -17,10 +17,10 @@ import contextlib
 import random
 
 from functools import reduce
-
 from monitoring.Monitoring import Monitoring
 
-from bottle import route, run, error, template, hook, request, response, static_file, redirect
+from bottle import bottle
+#route, run, error, template, hook, request, response, static_file, redirect, Bottle
 
 SIZE_OPACITY_HISTORY_SCALES = [
     ( 90, 1.0,  1.0, ),
@@ -45,9 +45,11 @@ me = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(me)
 
 from utils import flags
+from utils import resources
 
 def getStaticFilePath(filepath):
     for i in [
+            g_statics_dir,
             './static/',
     ]:
         fn = os.path.join(str(i), str(filepath))
@@ -55,8 +57,9 @@ def getStaticFilePath(filepath):
             return (i, filepath)
 
 def get_static(filepath):
-    x = getStaticFilePath(filepath)
-    return static_file(filepath, root=x[0])
+    return resources.textfile(os.path.join(
+        g_statics_dir,
+        filepath))
 
 def get_data(context):
     fp = getStaticFilePath("dummydata.json")
@@ -415,10 +418,11 @@ def get_slash():
 flags.Flag(g_port = "port", help = "Which port to run on", required = True)
 flags.Flag(g_ssl = "ssl", type=bool, help = "Run https", default = False)
 flags.Flag(g_certfile = "cert", help = "Certificate", default = None)
+flags.Flag(g_statics_dir=flags.AUTOFLAG, help="Specify the dir containing static html/css/javascript elements.", default="main/statics/")
 
 def main():
     flags.startFlags(sys.argv)
-
+    resources.initialise(__package__)
     #bottle.debug(True)
 
     context = {}
