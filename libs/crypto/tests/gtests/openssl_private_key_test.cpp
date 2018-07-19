@@ -28,23 +28,39 @@ protected:
 //      in binary format - private ikey and corresponding public key
 //      in order to be able to compare calculated/acquired public key
 //      agains hardcoded expected public key.
-TEST_F(ECDCSAPrivateKeyTest, test_creation_of_private_key) {
+TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key) {
     const fetch::byte_array::ConstByteArray priv_key_data = {
         0x16, 0x26, 0x07, 0x83, 0xe4, 0x0b, 0x16, 0x73, 0x16, 0x73, 0x62,
         0x2a, 0xc8, 0xa5, 0xb0, 0x45, 0xfc, 0x3e, 0xa4, 0xaf, 0x70, 0xf7,
         0x27, 0xf3, 0xf9, 0xe9, 0x2b, 0xdd, 0x3a, 0x1d, 0xdc, 0x42};
     const std::string priv_key_hex_str = "16260783e40b16731673622ac8a5b045fc3ea4af70f727f3f9e92bdd3a1ddc42";
 
-    //* Production code
-    ECDSAPrivateKey<> x( priv_key_data );
-    EXPECT_TRUE( x.key() );
+    //* Production code:
+    ECDSAPrivateKey<> x(priv_key_data);
+    ECDSAPrivateKey<> y(priv_key_hex_str);
+    //std::cerr << y.publicKey().keyAsBin() << std::endl;
     //std::cerr << x.publicKey().keyAsBin() << std::endl;
 
-    ECDSAPrivateKey<> y( priv_key_hex_str );
-    EXPECT_TRUE( y.key() );
-    //std::cerr << y.publicKey().keyAsBin() << std::endl;
+    //* Expectations:
+    EXPECT_TRUE(x.key());
+    EXPECT_TRUE(y.key());
 
-    EXPECT_EQ( x.publicKey().keyAsBin(), y.publicKey().keyAsBin() );
+    EXPECT_EQ(x.publicKey().keyAsBin(), y.publicKey().keyAsBin());
+}
+
+TEST_F(ECDCSAPrivateKeyTest, test_generation_of_private_key) {
+    //* Production code:
+    ECDSAPrivateKey<> x;
+    ECDSAPrivateKey<> y;
+
+    //* Expectations:
+    EXPECT_TRUE(x.key());
+    EXPECT_TRUE(x.publicKey().keyAsEC_POINT());
+
+    EXPECT_TRUE(y.key());
+    EXPECT_TRUE(y.publicKey().keyAsEC_POINT());
+
+    EXPECT_NE(x.publicKey().keyAsBin(), y.publicKey().keyAsBin());
 }
 
 //TODO: Add more tests

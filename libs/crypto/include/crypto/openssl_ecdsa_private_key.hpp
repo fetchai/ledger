@@ -64,28 +64,62 @@ private:
         return priv_key;
     }
 
-    static PublicKeyType derivePublicKey( const BIGNUM *private_key_as_BN, EC_KEY *private_key ) {
-        const EC_GROUP *group = EC_KEY_get0_group( private_key );
-        ShrdPtr<EC_POINT> public_key( EC_POINT_new( group ) );
+    static PublicKeyType derivePublicKey(const BIGNUM *private_key_as_BN, EC_KEY *private_key) {
+        const EC_GROUP *group = EC_KEY_get0_group(private_key);
+        ShrdPtr<EC_POINT> public_key {EC_POINT_new(group)};
         context::Session<BN_CTX> session;
 
-        if( !EC_POINT_mul( group, public_key.get(), private_key_as_BN, NULL, NULL, session.context().get() ) ) {
+        if( !EC_POINT_mul(group, public_key.get(), private_key_as_BN, NULL, NULL, session.context().get())) {
             throw std::runtime_error("ECDSAPrivateKey::derivePublicKey(...): EC_POINT_mul(...) failed.");
         }
 
-        if( !EC_KEY_set_public_key(private_key, public_key.get() ) ) {
+        if(!EC_KEY_set_public_key(private_key, public_key.get())) {
             throw std::runtime_error("ECDSAPrivateKey::derivePublicKey(...): EC_KEY_set_public_key(...) failed.");
         }
 
-        return PublicKeyType(public_key, group, session);
+        return PublicKeyType {public_key, group, session};
     }
 
-    ECDSAPrivateKey(ShrdPtr<BIGNUM, eDelStrat::clearing> private_key_as_BN)
+    static PublicKeyType extractPublicKey(const EC_KEY *private_key) {
+        const EC_GROUP *group = EC_KEY_get0_group(private_key);
+        const EC_POINT *pub_key_reference = EC_KEY_get0_public_key(private_key);
+        ShrdPtr<EC_POINT> public_key {EC_POINT_dup(pub_key_reference, group)};
+        if(!public_key) {
+            throw std::runtime_error("ECDSAPrivateKey::extractPublicKey(...): EC_POINT_dup(...) failed.");
+        }
+
+        return  PublicKeyType {public_key, group, context::Session<BN_CTX>{}};
+    }
+
+   static UniqPtr<EC_KEY> GenerateKey() {
+        UniqPtr<EC_KEY> key {EC_KEY_new_by_curve_name(ECDSACurveType::nid)};
+        if(!key) {
+            throw std::runtime_error("ECDSAPrivateKey::GenerateKey(): EC_KEY_new_by_curve_name(...) failed.");
+        }
+
+        if(!EC_KEY_generate_key(key.get())) {
+            throw std::runtime_error("ECDSAPrivateKey::GenerateKey(): EC_KEY_generate_key(...) failed.");
+        }
+
+        ////TODO: Is it really necessary to call check after generate (generate shall be sufficient(shall fail in case of issue))
+        //if(!EC_KEY_check_key(key.get())) {
+        //    throw std::runtime_error("ECDSAPrivateKey::GenerateKey(): EC_KEY_check_key(...) failed.");
+        //}
+
+        return key;
+    }
+
+   ECDSAPrivateKey(ShrdPtr<BIGNUM, eDelStrat::clearing> private_key_as_BN)
         : _private_key( keyAsECKEY( private_key_as_BN.get() ) )
         , _public_key( derivePublicKey( private_key_as_BN.get(), _private_key.get() ) ) {
     }
 
 public:
+
+    ECDSAPrivateKey()
+        : _private_key(GenerateKey())
+        , _public_key(extractPublicKey(_private_key.get())) {
+    }
 
     ECDSAPrivateKey(const byte_array::ConstByteArray& key_data)
         : ECDSAPrivateKey(ECDSAPrivateKey::keyAsBN(key_data)) {
