@@ -296,7 +296,7 @@ class ServiceClientInterface {
         LOG_STACK_TRACE_POINT;
 
         subscription_mutex_lock_type lock(subscription_mutex_);
-        subscription_index_counter += 1;
+        subscription_index_counter++;
         subscriptions_[subscription_index_counter] = Subscription(protocol, feed, cb);
         subscription_mutex_.unlock();
         return subscription_handler_type(subscription_index_counter);

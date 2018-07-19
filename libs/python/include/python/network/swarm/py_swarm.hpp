@@ -276,7 +276,6 @@ public:
                                                                        // must get at least genesis or this is an error case.
                                                                        swarmAgentApi -> DoPingFailed(host);
                                                                    }
-                                                                   bool loose = false;
                                                                    std::string blockId;
 
                                                                    std::string prevHash;
@@ -285,7 +284,6 @@ public:
                                                                        block.UpdateDigest();
                                                                        auto newblock = chainNode -> AddBlock(block);
                                                                        prevHash = block.prevString();
-                                                                       loose = block.loose();
                                                                        if (newblock)
                                                                        {
                                                                            fetch::logger.Info("AGENT_API LOADCHAIN GOT ", block.summarise(),  (newblock?" NEW":" OLD") );
