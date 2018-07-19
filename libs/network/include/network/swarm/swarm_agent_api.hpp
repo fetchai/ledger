@@ -53,6 +53,7 @@ public:
   virtual void OnNewTxnListAvailable     (std::function<void (const std::string &host, const std::string &txnlistid)> cb) = 0;
   virtual std::string GetTxnList         (const std::string &txnlistid) = 0;
 
+  virtual void SetSitrep                 (const std::string &setrep) = 0;
   virtual void AddKarma                  (const std::string &host, double karma) = 0;
   virtual void AddKarmaMax               (const std::string &host, double karma, double limit) = 0;
   virtual double GetKarma                (const std::string &host) = 0;

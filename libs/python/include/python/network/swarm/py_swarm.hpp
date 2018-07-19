@@ -276,7 +276,6 @@ public:
                                                                        // must get at least genesis or this is an error case.
                                                                        swarmAgentApi -> DoPingFailed(host);
                                                                    }
-                                                                   bool loose = false;
                                                                    std::string blockId;
 
                                                                    std::string prevHash;
@@ -285,7 +284,6 @@ public:
                                                                        block.UpdateDigest();
                                                                        auto newblock = chainNode -> AddBlock(block);
                                                                        prevHash = block.prevString();
-                                                                       loose = block.loose();
                                                                        if (newblock)
                                                                        {
                                                                            fetch::logger.Info("AGENT_API LOADCHAIN GOT ", block.summarise(),  (newblock?" NEW":" OLD") );
@@ -406,6 +404,10 @@ public:
                                     }
                                   return results;
                                 });
+    swarmAgentApi -> ToSetSitrep([swarmNode](const std::string &sitrep)
+                                {
+                                  return swarmNode -> SetSitrep(sitrep);
+                                });
   }
 
   virtual ~PySwarm()
@@ -443,6 +445,7 @@ virtual void DoGetTxnList (const std::string &host, const std::string &txnlistid
 virtual void OnNewTxnListAvailable (pybind11::object func) { DELEGATE OnNewTxnListAvailable (  [func DELEGATE_CAPTURED ](const std::string &host, const std::string &txnlistid){  DELEGATE_WRAPPER func(host,txnlistid); } ); }
 virtual std::string GetTxnList (const std::string &txnlistid) { return DELEGATE GetTxnList ( txnlistid ); }
 virtual void AddKarma (const std::string &host, double karma) {  DELEGATE AddKarma ( host,karma ); }
+virtual void SetSitrep (const std::string &sitrep) {  DELEGATE SetSitrep ( sitrep ); }
 virtual void AddKarmaMax (const std::string &host, double karma, double limit) {  DELEGATE AddKarmaMax ( host,karma,limit ); }
 virtual double GetKarma (const std::string &host) { return DELEGATE GetKarma ( host ); }
 virtual double GetCost (const std::string &host) { return DELEGATE GetCost ( host ); }

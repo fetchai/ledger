@@ -80,12 +80,14 @@ public:
 
   virtual SwarmPeerLocation GetPingablePeer()
   {
+      lock_type lock(mutex_);
     return karmaPeerList_.GetNthKarmicPeer(maxpeers_).GetLocation();
   }
 
   virtual bool HasPeers()
   {
-    return !karmaPeerList_.empty();
+      lock_type lock(mutex_);
+      return !karmaPeerList_.empty();
   }
 
   virtual bool IsOwnLocation(const SwarmPeerLocation &loc) const
@@ -95,15 +97,19 @@ public:
 
   std::list<SwarmKarmaPeer> HttpWantsPeerList() const
   {
+      lock_type lock(mutex_);
     return karmaPeerList_.GetBestPeers(10000, 0.0);
   }
 
-   void ToGetState(std::function<int()> cb) { toGetState_ = cb; }
+  std::string HttpWantsSitrep() const
+  {
+      return GetSitrep();
+  }
 
     virtual std::string AskPeerForPeers(
         const SwarmPeerLocation &peer, std::shared_ptr<client_type> client)
   {
-    fetch::logger.Debug("AskPeerForPeers starts work");
+      lock_type lock(mutex_);
     auto promise = client->Call(
         protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     if (promise.Wait(2500, false))
@@ -113,32 +119,31 @@ public:
       }
     else
     {
-        if (promise. has_failed()) {  fetch::logger.Debug("AskPeerForPeers has_failed"); }
-        else if (promise. is_connection_closed()) {  fetch::logger.Debug("AskPeerForPeers is_connection_closed"); }
-        else { fetch::logger.Debug("AskPeerForPeers failed ???"); }
+        if (promise. has_failed())
+        {
+            fetch::logger.Debug("AskPeerForPeers has_failed");
+        }
+        else if (promise. is_connection_closed())
+        {
+            fetch::logger.Debug("AskPeerForPeers is_connection_closed");
+        }
+        else
+        {
+            fetch::logger.Debug("AskPeerForPeers failed ???");
+        }
         return "";
     }
   }
 
-  virtual int GetState()
-  {
-    if (toGetState_)
-      {
-        return toGetState_();
-      }
-    else
-      {
-        return 0;
-      }
-  }
-
   virtual bool IsExistingPeer(const std::string &host)
   {
+      lock_type lock(mutex_);
     return karmaPeerList_.Has(host);
   }
 
     virtual std::string ClientNeedsPeer()
     {
+      lock_type lock(mutex_);
         fetch::logger.Debug("ClientNeedsPeer starts work");
         if (!karmaPeerList_.empty())
         {
@@ -158,19 +163,23 @@ public:
 
   void AddOrUpdate(const std::string &host, double karma)
   {
+      lock_type lock(mutex_);
     karmaPeerList_.AddOrUpdate(host, karma);
   }
   void AddOrUpdate(const SwarmPeerLocation &host, double karma)
   {
+      lock_type lock(mutex_);
     karmaPeerList_.AddOrUpdate(host, karma);
   }
   double GetKarma(const std::string &host)
   {
+      lock_type lock(mutex_);
     return karmaPeerList_.GetKarma(host);
   }
 
   std::list<SwarmKarmaPeer> GetBestPeers(uint32_t n, double minKarma = 0.0) const
   {
+      lock_type lock(mutex_);
     return karmaPeerList_.GetBestPeers(n, minKarma);
   }
 
@@ -179,17 +188,30 @@ public:
       nnCore_ -> Post(workload);
   }
 
+    void SetSitrep(const std::string &new_sitrep)
+    {
+        lock_type lock(sitrep_mutex_);
+        sitrep_ = new_sitrep;
+    }
+
+    std::string GetSitrep(void) const
+    {
+        lock_type lock(sitrep_mutex_);
+        return sitrep_;
+    }
+
 protected:
-  mutable mutex_type                         mutex_;
-  int                                        maxActivePeers_;
-  int                                        maxKnownPeers_;
-  std::string                                identifier_;
-  uint32_t                               maxpeers_;
-  SwarmPeerLocation                          uri_;
-  fetch::network::NetworkManager              tm_;
-  SwarmKarmaPeers                            karmaPeerList_;
-  uint32_t                               protocolNumber_;
-  std::function<int()>                       toGetState_;
+    mutable mutex_type                         mutex_;
+    mutable mutex_type                         sitrep_mutex_;
+    int                                        maxActivePeers_;
+    int                                        maxKnownPeers_;
+    std::string                                identifier_;
+    uint32_t                                   maxpeers_;
+    SwarmPeerLocation                          uri_;
+    fetch::network::NetworkManager              tm_;
+    SwarmKarmaPeers                            karmaPeerList_;
+    uint32_t                                   protocolNumber_;
+    std::string                                sitrep_;
 };
 
 }

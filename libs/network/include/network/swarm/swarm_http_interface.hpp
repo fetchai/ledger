@@ -37,8 +37,16 @@ public:
                     [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) \
                     { return this->GetPeers(params, req); }
                     );
+    HTTPModule::Get("/sitrep",
+                    [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) \
+                    { return this->GetPeers(params, req); }
+                    );
   }
 
+  fetch::http::HTTPResponse GetSitrep(fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req)
+    {
+        return fetch::http::HTTPResponse(node_ -> HttpWantsSitrep());
+    }
   fetch::http::HTTPResponse GetPeers(fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT ;
@@ -60,7 +68,6 @@ public:
           }
 
         result["peers"] = outputlist;
-        result["state"] = node_ -> GetState();
 
         std::ostringstream ret;
         ret << result;

@@ -423,6 +423,19 @@ public:
         return 0.0;
     }
 
+    virtual void ToSetSitrep(
+        std::function<void (const std::string &)> action)
+    {
+        this->toSetSitrep_ = action;
+    }
+    virtual void SetSitrep(const std::string &sitrep)
+    {
+        if (this->toSetSitrep_)
+        {
+            this->toSetSitrep_(sitrep);
+        }
+    }
+
     virtual void ToAddKarma(
         std::function<void (const std::string &host, double amount)> action)
     {
@@ -499,6 +512,7 @@ protected:
     std::function<void (const std::string &host, uint32_t count)> toLoadChain_;
     std::function<std::string (const std::string &blockid)> toQueryBlock_;
 
+    std::function<void (const std::string &sitrep)>                            toSetSitrep_;
     std::function<double (const std::string &host)>                            toGetKarma_;
     std::function<void (const std::string &host, double amount)>               toAddKarma_;
     std::function<std::list<std::string>(uint32_t count, double minKarma)> toGetPeers_;

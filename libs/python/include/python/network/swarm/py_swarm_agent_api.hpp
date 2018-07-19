@@ -51,6 +51,7 @@ void BuildSwarmAgentApi(pybind11::module &module) {
     //.def("OnNewTxnListAvailable", &PySwarm::OnNewTxnListAvailable)
     //.def("GetTxnList", &PySwarm::GetTxnList)
 
+    .def("SetSitrep", &PySwarm::SetSitrep)
     .def("AddKarma", &PySwarm::AddKarma)
     .def("AddKarmaMax", &PySwarm::AddKarmaMax)
     .def("GetKarma", &PySwarm::GetKarma)

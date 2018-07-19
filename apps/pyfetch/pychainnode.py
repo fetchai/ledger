@@ -98,9 +98,6 @@ class SwarmAgentNaive(object):
 
 
     def onIdle(self):
-
-        mode = ""
-
         goodPeers = self.swarm.GetPeers(10, -0.5)
 
         goodPeers = [ goodPeerFilter for goodPeerFilter in goodPeers if goodPeerFilter not in self.introductions ]
@@ -119,11 +116,7 @@ class SwarmAgentNaive(object):
             weight -= weightedPeer[1]
 
         host = weightedPeer[0]
-
-        if mode == "chain":
-            self.RequestChain(host)
-        else:
-            self.CreateSubscription(host)
+        self.CreateSubscription(host)
 
         return 0
 
