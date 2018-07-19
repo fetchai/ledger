@@ -38,8 +38,8 @@ public:
   using execution_manager_type = std::shared_ptr<ledger::ExecutionManager>;
   using storage_service_type = ledger::StorageUnitBundledService;
   using flag_type = std::atomic<bool>;
-  using network_core_type = std::shared_ptr<network::NetworkNodeCore>;
-  using main_chain_node_type = std::shared_ptr<ledger::MainChainNode>;
+  using block_coordinator_type = std::unique_ptr<chain::BlockCoordinator>;
+  using chain_miner_type = std::unique_ptr<chain::MainChainMiner>;
   using clock_type = std::chrono::high_resolution_clock;
   using timepoint_type = clock_type::time_point;
   using string_list_type = std::vector<std::string>;
@@ -117,16 +117,8 @@ private:
   /// @name Blockchain Components
   /// @{
   chain::MainChain main_chain_;                 ///< The main chain
-  /// @}
-
-  /// @name Blockchain Components
-  /// @{
-  chain::BlockCoordinator block_coordinator_;   ///< The block coordinator
-  /// @}
-
-  /// @name Blockchain Components
-  /// @{
-  chain::MainChainMiner main_chain_miner_;      ///< The main chain miner
+  block_coordinator_type block_coordinator_;    ///< The block coordinator
+  chain_miner_type main_chain_miner_;           ///< The main chain miner
   /// @}
 
   /// @name P2P Networking Components

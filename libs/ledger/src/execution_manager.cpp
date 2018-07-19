@@ -291,22 +291,28 @@ void ExecutionManager::MonitorThreadEntrypoint() {
       case MonitorState::SCHEDULE_NEXT_SLICE: {
         std::lock_guard<mutex_type> lock(execution_plan_lock_);
 
-        auto const &slice_plan = execution_plan_[next_slice];
+        if (execution_plan_.empty()) {
+          state = MonitorState::BOOKMARKING_STATE;
+        } else {
 
-        // determine the target number of executions being expected (must be done before the
-        // thread pool dispatch)
-        remaining_executions_ = slice_plan.size();
+          auto const &slice_plan = execution_plan_[next_slice];
 
-        for (auto &item : slice_plan) {
-          // create the closure and dispatch to the thread pool
-          auto self = shared_from_this();
-          thread_pool_->Post([self, &item]() {
-            self->DispatchExecution(*item);
-          });
+          // determine the target number of executions being expected (must be done before the
+          // thread pool dispatch)
+          remaining_executions_ = slice_plan.size();
+
+          for (auto &item : slice_plan) {
+            // create the closure and dispatch to the thread pool
+            auto self = shared_from_this();
+            thread_pool_->Post([self, &item]() {
+              self->DispatchExecution(*item);
+            });
+          }
+
+          state = MonitorState::RUNNING;
+          ++next_slice;
         }
 
-        state = MonitorState::RUNNING;
-        ++next_slice;
         break;
       }
 

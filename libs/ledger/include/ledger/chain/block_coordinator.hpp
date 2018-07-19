@@ -3,6 +3,7 @@
 
 #include <thread>
 
+#include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/execution_manager.hpp"
 
@@ -14,13 +15,13 @@ namespace chain
 class BlockCoordinator
 {
 public:
-
   typedef chain::MainChain::block_type block_type;
   typedef chain::MainChain::block_hash block_hash;
   typedef fetch::mutex::Mutex          mutex_type;
+  typedef std::shared_ptr<BlockBody> block_body_type;
+  typedef ledger::ExecutionManagerInterface::Status status_type;
 
-  BlockCoordinator(chain::MainChain &mainChain,
-      std::shared_ptr<ledger::ExecutionManager> executionManager) :
+  BlockCoordinator(chain::MainChain &mainChain, ledger::ExecutionManagerInterface &executionManager) :
     mainChain_{mainChain},
     executionManager_{executionManager}
   {
@@ -39,8 +40,12 @@ public:
 
     if(block.hash() == heaviestHash)
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
-      heaviestHashes_.push_front(heaviestHash);
+      fetch::logger.Info("New block: ", ToBase64(block.hash()), " from: ", ToBase64(block.prev()));
+
+      {
+        std::lock_guard<mutex_type> lock(mutex_);
+        blocksToProcess_.push_front(std::make_shared<BlockBody>(block.body()));
+      }
     }
   }
 
@@ -50,31 +55,113 @@ public:
 
     auto closure = [this]
     {
+      block_body_type block;
+      bool executing_block = false;
+      bool schedule_block = false;
+
+      std::vector<block_body_type> pending_stack;
+
       while(!stop_)
       {
-        block_hash heaviest;
+        // update the status
+        executing_block = executionManager_.IsActive();
 
+        // debug
+        if (!executing_block && block)
         {
-          std::unique_lock<fetch::mutex::Mutex> lock(mutex_);
-          if(!heaviestHashes_.empty())
+          fetch::logger.Warn("Block Completed: ", ToBase64(block->hash));
+          block.reset();
+        }
+
+        if (!executing_block) {
+
+          // get the next block from the pending queue
+          if (!pending_stack.empty())
           {
-            heaviest = heaviestHashes_.back();
-            heaviestHashes_.pop_back();
-            lock.unlock();
+            block = pending_stack.back();
+            pending_stack.pop_back();
 
-            std::cout << "Found new heaviest: " << ToHex(heaviest) << std::endl;
-
-            if(executionManager_)
-            {
-              std::cout << "Manipulate E manager" << std::endl;
-            }
+            schedule_block = true;
           }
           else
           {
-            mutex_.unlock();
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            // get the next block from the queue (if there is one)
+            std::lock_guard<mutex_type> lock(mutex_);
+            if(!blocksToProcess_.empty()) {
+              block = blocksToProcess_.back();
+              blocksToProcess_.pop_back();
+              schedule_block = true;
+            }
           }
         }
+
+        if (schedule_block && block)
+        {
+          fetch::logger.Warn("Attempting exec on block: ", ToBase64(block->hash));
+
+          // execute the block
+          status_type const status = executionManager_.Execute(*block);
+
+          if (status == status_type::COMPLETE) {
+            fetch::logger.Warn("Block Completed: ", ToBase64(block->hash));
+          } else if (status == status_type::SCHEDULED) {
+            fetch::logger.Warn("Block Scheduled: ", ToBase64(block->hash));
+          } else if (status == status_type::NO_PARENT_BLOCK) {
+            block_type full_block;
+
+            if (mainChain_.Get(block->previous_hash, full_block)) {
+
+              // add the current block to the stack
+              pending_stack.push_back(block);
+
+              // add the current block to the stack
+              block = std::make_shared<BlockBody>(full_block.body());
+              pending_stack.push_back(block);
+
+              fetch::logger.Warn("Retrieved parent block: ", ToBase64(block->hash));
+            } else {
+              fetch::logger.Warn("Unable to retreive parent block: ", ToBase64(block->previous_hash));
+            }
+
+            // reset the block
+            block.reset();
+            continue; //erm...
+
+          } else {
+
+            char const *reason = "unknown";
+            switch (status) {
+              case status_type::COMPLETE:
+                reason = "COMPLETE";
+                break;
+              case status_type::SCHEDULED:
+                reason = "SCHEDULED";
+                break;
+              case status_type::NOT_STARTED:
+                reason = "NOT_STARTED";
+                break;
+              case status_type::ALREADY_RUNNING:
+                reason = "ALREADY_RUNNING";
+                break;
+              case status_type::NO_PARENT_BLOCK:
+                reason = "NO_PARENT_BLOCK";
+                break;
+              case status_type::UNABLE_TO_PLAN:
+                reason = "UNABLE_TO_PLAN";
+                break;
+            }
+
+            fetch::logger.Warn("Unable to execute block: ", ToBase64(block->hash), " Reason: ", reason);
+            block.reset(); // mostly for debug
+          }
+
+          executing_block = true;
+          schedule_block = false;
+        }
+
+        // wait for the block to process
+        //std::this_thread::sleep_for(std::chrono::milliseconds(750));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
     };
 
@@ -91,13 +178,12 @@ public:
   }
 
 private:
-  chain::MainChain                          &mainChain_;
-  std::shared_ptr<ledger::ExecutionManager> executionManager_;
-  std::deque<block_hash>                    heaviestHashes_;
-  mutex_type                                mutex_{__LINE__, __FILE__};
-  bool                                      stop_ = false;
-  std::thread                               thread_;
-
+  chain::MainChain                  &mainChain_;
+  ledger::ExecutionManagerInterface &executionManager_;
+  std::deque<block_body_type>       blocksToProcess_;
+  mutex_type                        mutex_{__LINE__, __FILE__};
+  bool                              stop_ = false;
+  std::thread                       thread_;
 };
 
 }
