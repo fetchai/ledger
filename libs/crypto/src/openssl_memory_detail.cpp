@@ -27,6 +27,9 @@ const FreeFunctionPtr<EC_GROUP> DeleterPrimitive<EC_GROUP>::function = &EC_GROUP
 template<>
 const FreeFunctionPtr<EC_GROUP> DeleterPrimitive<EC_GROUP, eDeleteStrategy::clearing>::function = &EC_GROUP_clear_free;
 
+template<>
+const FreeFunctionPtr<ECDSA_SIG> DeleterPrimitive<ECDSA_SIG>::function = &ECDSA_SIG_free;
+
 } //* detail namespace
 } //* memory namespace
 } //* openssl namespace

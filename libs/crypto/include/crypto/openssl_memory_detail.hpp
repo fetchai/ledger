@@ -3,6 +3,7 @@
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
+#include <openssl/ecdsa.h>
 
 #include <type_traits>
 
@@ -50,6 +51,9 @@ namespace memory {
         const FreeFunctionPtr<EC_GROUP> DeleterPrimitive<EC_GROUP>::function;
         template<>
         const FreeFunctionPtr<EC_GROUP> DeleterPrimitive<EC_GROUP, eDeleteStrategy::clearing>::function;
+
+        template<>
+        const FreeFunctionPtr<ECDSA_SIG> DeleterPrimitive<ECDSA_SIG>::function;
 
         template <typename T
                 , eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical

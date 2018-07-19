@@ -1,7 +1,5 @@
 #include "crypto/openssl_ecdsa_private_key.hpp"
 
-#include "openssl/ec.h"
-
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 

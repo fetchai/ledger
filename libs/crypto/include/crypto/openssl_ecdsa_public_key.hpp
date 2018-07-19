@@ -32,8 +32,9 @@ public:
     static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
 
 private:
-    ShrdPtr<EC_POINT> _key;
-    const byte_array::ConstByteArray _key_data;
+    ShrdPtr<EC_POINT> key_EC_POINT_;
+    ShrdPtr<EC_KEY> key_EC_KEY_;
+    const byte_array::ConstByteArray key_binary_;
 
     static byte_array::ByteArray convert(
         EC_POINT* public_key,
@@ -46,53 +47,68 @@ private:
         }
 
         byte_array::ByteArray pub_key_as_bin;
-        pub_key_as_bin.Resize( static_cast<std::size_t>( BN_num_bytes( public_key_as_BN.get() ) ) );
+        pub_key_as_bin.Resize(static_cast<std::size_t>( BN_num_bytes(public_key_as_BN.get())));
 
-        if( !BN_bn2bin( public_key_as_BN.get(), static_cast<unsigned char *>(pub_key_as_bin.pointer())) ) {
+        if (!BN_bn2bin(public_key_as_BN.get(), static_cast<unsigned char *>(pub_key_as_bin.pointer()))) {
             throw std::runtime_error("ECDSAPublicKey::convert(...) failed due to failure of the `BN_bn2bin(...)` function.");
         }
 
         return pub_key_as_bin;
     }
 
-    UniqPtr<EC_POINT> convert( const byte_array::ConstByteArray& key_data ) {
-        ShrdPtr<BIGNUM> pub_key_as_BN( BN_new() );
-        if( !BN_bin2bn( static_cast<const unsigned char*>( key_data.pointer() ), int(key_data.size()), pub_key_as_BN.get() ) ) {
+    static UniqPtr<EC_POINT> convert(byte_array::ConstByteArray const& key_data) {
+        ShrdPtr<BIGNUM> pub_key_as_BN {BN_new()};
+        if (!BN_bin2bn(static_cast<const unsigned char*>( key_data.pointer() ), int(key_data.size()), pub_key_as_BN.get())) {
             throw std::runtime_error("ECDSAPublicKey::convertToECPOINT(...): BN_bin2bn(...) failed.");
         }
 
         UniqPtr<const EC_GROUP> group( EC_GROUP_new_by_curve_name( ECDSACurveType::nid ) );
-        UniqPtr<EC_POINT> public_key( EC_POINT_new( group.get() ) );
+        UniqPtr<EC_POINT> public_key {EC_POINT_new( group.get())};
         context::Session<BN_CTX> session;
 
-        if( !EC_POINT_bn2point( group.get(), pub_key_as_BN.get(), public_key.get(), session.context().get() ) ) {
+        if( !EC_POINT_bn2point(group.get(), pub_key_as_BN.get(), public_key.get(), session.context().get()) ) {
             throw std::runtime_error("ECDSAPublicKey::convertToECPOINT(...): EC_POINT_bn2point(...) failed.");
         }
 
         return public_key;
     }
 
+    static UniqPtr<EC_KEY> CreateECKEY(const EC_POINT * key_EC_POINT) {
+        UniqPtr<EC_KEY> key {EC_KEY_new_by_curve_name(ECDSACurveType::nid)}; 
+        if (!EC_KEY_set_public_key(key.get(), key_EC_POINT)) {
+            throw std::runtime_error("ECDSAPublicKey::CreateECKEY(...): EC_KEY_set_public_key(...) failed.")            ;
+        }
+        return key;
+    }
+
 public:
+
     ECDSAPublicKey(
-          ShrdPtr<EC_POINT> _public_key,
+          ShrdPtr<EC_POINT> public_key,
           const EC_GROUP *group,
           const context::Session<BN_CTX>& session
           ) 
-        : _key( _public_key )
-        , _key_data( convert( _public_key.get(), group, session ) ) {
+        : key_EC_POINT_ {public_key}
+        , key_EC_KEY_ {CreateECKEY(public_key.get())}
+        , key_binary_ {convert(public_key.get(), group, session)} {
     }
 
-    ECDSAPublicKey( const byte_array::ConstByteArray& key_data )
-        : _key_data( key_data )
-        , _key( convertToEC_POINT( _key_data ) ) {
+    ECDSAPublicKey(const byte_array::ConstByteArray& key_data)
+        : key_EC_POINT_ {convert(key_data)}
+        , key_EC_KEY_ {CreateECKEY(key_EC_POINT_)}
+        , key_binary_ {key_data} {
     }
 
     ShrdPtr<const EC_POINT> keyAsEC_POINT() const {
-        return _key;
+        return key_EC_POINT_;
+    }
+
+    ShrdPtr<const EC_KEY> Key() const {
+        return key_EC_KEY_;
     }
 
     const byte_array::ConstByteArray& keyAsBin() const {
-        return _key_data;
+        return key_binary_;
     }
 
     //static std::shared_ptr<ECDSAPrivateKey> fromData(const byte_array::ConstByteArray& key_data) {
