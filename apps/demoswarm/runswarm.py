@@ -133,7 +133,6 @@ class Node(object):
     def launchLLDB(self):
         cmdstr = (self.moreargs +
             [ " ".join([ x[0], x[1] ]) for x in self.backargs.items() ])
-
         cmdstr = " ".join(cmdstr)
 
         cmdstr = "screen -S 'lldb-{}' -dm lldb ".format(self.index) + self.frontargs + " -s '/tmp/lldb.run.cmd' -- " + cmdstr
@@ -143,6 +142,19 @@ class Node(object):
         )
 
     def launchGDB(self):
+        cmdfile = os.path.join("/tmp", "run-node-{}".format(self.index))
+        cmdstr = (self.moreargs +
+            [ " ".join([ x[0], x[1] ]) for x in self.backargs.items() ])
+        cmdstr = " ".join(cmdstr)
+        with open(cmdfile, "w") as fh:
+            fh.write("run {}\n".format(cmdstr))
+
+        cmdstr = "screen -S 'gdb-{}' -dm gdb {} -x {}".format(self.index, self.frontargs, cmdfile)
+        print(cmdstr)
+        self.p = subprocess.Popen("{}".format(cmdstr), #, os.path.join(self.logdir, str(self.index))),
+            shell=True
+        )
+        time.sleep(0.2)
         pass
 
     def killGDB(self):

@@ -66,7 +66,7 @@ void BuildSwarmAgentApi(pybind11::module &module) {
     ;
 }
 
-};
-};
+}
+}
 
 #endif
