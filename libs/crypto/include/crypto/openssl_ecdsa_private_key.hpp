@@ -1,16 +1,28 @@
 #ifndef CRYPTO_OPENSSL_PRIVATE_KEY_HPP
 #define CRYPTO_OPENSSL_PRIVATE_KEY_HPP
 
-//#include "core/byte_array/const_byte_array.hpp"
-//#include "crypto/openssl_common.hpp"
-//#include "crypto/openssl_memory.hpp"
-//#include "crypto/openssl_context_session.hpp"
 #include "crypto/openssl_ecdsa_public_key.hpp"
 
 
 namespace fetch {
 namespace crypto {
 namespace openssl {
+
+
+namespace {
+    std::string toHexStr(const byte_array::ConstByteArray& data, const bool array_format = false) {
+        std::stringstream strs;
+        const std::size_t size = data.size();
+        const std::size_t last_index {size > 0 ? size - 1 : 0};
+
+        for(std::size_t i=0; i<size; ++i) {
+            if (array_format) strs << "0x";
+            strs << std::hex << static_cast<int>(data[i]);
+            if (array_format && i<last_index) strs << ", ";
+        }
+        return strs.str();
+    }
+}
 
 template<int P_ECDSA_Curve_NID = NID_secp256k1
        , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
@@ -76,6 +88,15 @@ private:
             throw std::runtime_error("ECDSAPrivateKey::derivePublicKey(...): EC_KEY_set_public_key(...) failed.");
         }
 
+        byte_array::ByteArray encoded_public_key;
+        encoded_public_key.Resize(static_cast<std::size_t>(i2o_ECPublicKey(private_key, nullptr)));
+        unsigned char* pkb {static_cast<unsigned char*>(encoded_public_key.pointer())};
+        if(!i2o_ECPublicKey(private_key, &pkb)) {
+            throw std::runtime_error("ECDSAPrivateKey::GenerateKey(): i2o_ECPublicKey(...) failed.");
+        }
+        
+        std::cerr << "ECDSAPrivateKey::GenerateKey(): encoded_public_key = " << toHexStr(encoded_public_key) << std::endl;
+
         return PublicKeyType {public_key, group, session};
     }
 
@@ -108,9 +129,23 @@ private:
         return key;
     }
 
+    void debugPrint(const std::string& msg = std::string()) {
+        //std::cerr << "PRIVATE key[" << msg << "] = " << toHexStr(KeyAsBin(), true) << std::endl;
+        //std::cerr << "PUBLIC  key[" << msg << "] = " << toHexStr(_public_key.KeyAsBin(), true) << std::endl;
+    }
+
    ECDSAPrivateKey(ShrdPtr<BIGNUM, eDelStrat::clearing> private_key_as_BN)
         : _private_key( keyAsECKEY( private_key_as_BN.get() ) )
         , _public_key( derivePublicKey( private_key_as_BN.get(), _private_key.get() ) ) {
+
+        byte_array::ByteArray encoded_public_key;
+        encoded_public_key.Resize(static_cast<std::size_t>(i2o_ECPublicKey(const_cast<EC_KEY*>(_public_key.Key().get()), nullptr)));
+        unsigned char* pkb {static_cast<unsigned char*>(encoded_public_key.pointer())};
+        if(!i2o_ECPublicKey(const_cast<EC_KEY*>(_public_key.Key().get()), &pkb)) {
+            throw std::runtime_error("ECDSAPrivateKey::GenerateKey(): i2o_ECPublicKey(...) failed.");
+        }
+
+        debugPrint();
     }
 
 public:
@@ -118,6 +153,8 @@ public:
     ECDSAPrivateKey()
         : _private_key(GenerateKey())
         , _public_key(extractPublicKey(_private_key.get())) {
+        
+        debugPrint();
     }
 
     ECDSAPrivateKey(const byte_array::ConstByteArray& key_data)

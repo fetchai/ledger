@@ -76,7 +76,7 @@ private:
     static UniqPtr<EC_KEY> CreateECKEY(const EC_POINT * key_EC_POINT) {
         UniqPtr<EC_KEY> key {EC_KEY_new_by_curve_name(ECDSACurveType::nid)}; 
         if (!EC_KEY_set_public_key(key.get(), key_EC_POINT)) {
-            throw std::runtime_error("ECDSAPublicKey::CreateECKEY(...): EC_KEY_set_public_key(...) failed.")            ;
+            throw std::runtime_error("ECDSAPublicKey::CreateECKEY(...): EC_KEY_set_public_key(...) failed.");
         }
         return key;
     }
@@ -107,7 +107,7 @@ public:
         return key_EC_KEY_;
     }
 
-    const byte_array::ConstByteArray& keyAsBin() const {
+    const byte_array::ConstByteArray& KeyAsBin() const {
         return key_binary_;
     }
 
