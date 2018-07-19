@@ -36,7 +36,6 @@ private:
     //TODO: Keep key encrypted
     const ShrdPtr<EC_KEY> _private_key;
     const PublicKeyType _public_key;
-    //const byte_array::ConstByteArray _key_data;
 
     static UniqPtr<BIGNUM, eDelStrat::clearing> keyAsBN(const byte_array::ConstByteArray& key_data) {
         if (ECDSACurveType::privateKeySize != key_data.size()) {
@@ -48,17 +47,17 @@ private:
     }
 
     static UniqPtr<BIGNUM, eDelStrat::clearing> keyAsBN(const std::string& hex_string_key_data) {
-        if( ECDSACurveType::privateKeySize*2 != hex_string_key_data.size() ) {
+        if(ECDSACurveType::privateKeySize*2 != hex_string_key_data.size()) {
             throw std::runtime_error("ECDSAPrivateKey::keyAsBN(const std::string&): Lenght of provided byte array does not correspond to expected lenght for priv key for selected elliptic curve");
         }
         BIGNUM *private_key_as_BN = nullptr;
         BN_hex2bn(&private_key_as_BN, hex_string_key_data.c_str());
-        return UniqPtr<BIGNUM, eDelStrat::clearing>(private_key_as_BN);
+        return UniqPtr<BIGNUM, eDelStrat::clearing>{private_key_as_BN};
     }
 
-    static UniqPtr<EC_KEY> keyAsECKEY( const BIGNUM* private_key_as_BN ) {
-        UniqPtr<EC_KEY> priv_key( EC_KEY_new_by_curve_name( ECDSACurveType::nid ) );
-        if( !EC_KEY_set_private_key( priv_key.get(), private_key_as_BN ) ) {
+    static UniqPtr<EC_KEY> keyAsECKEY(const BIGNUM* private_key_as_BN) {
+        UniqPtr<EC_KEY> priv_key {EC_KEY_new_by_curve_name(ECDSACurveType::nid)};
+        if( !EC_KEY_set_private_key(priv_key.get(), private_key_as_BN ) ) {
             throw std::runtime_error("ECDSAPrivateKey::keyAsECKEY(...): EC_KEY_set_private_key(...) failed.");
         }
         return priv_key;
@@ -131,6 +130,22 @@ public:
 
     ShrdPtr<const EC_KEY> key() const {
         return _private_key;
+    }
+
+    byte_array::ByteArray KeyAsBin() const {
+        const BIGNUM* key_as_BN = EC_KEY_get0_private_key(_private_key.get());
+        if(!key_as_BN) {
+            throw std::runtime_error("ECDSAPrivateKey::KeyAsBin(): EC_KEY_get0_private_key(...) failed.");
+        }
+
+        byte_array::ByteArray key_as_bin;
+        key_as_bin.Resize(static_cast<std::size_t>(BN_num_bytes(key_as_BN)));
+
+        if (!BN_bn2bin(key_as_BN, static_cast<unsigned char *>(key_as_bin.pointer()))) {
+            throw std::runtime_error("ECDSAPrivateKey::KeyAsBin(...): BN_bn2bin(...) failed.");
+        }
+
+        return key_as_bin;
     }
 
     const PublicKeyType& publicKey() const {

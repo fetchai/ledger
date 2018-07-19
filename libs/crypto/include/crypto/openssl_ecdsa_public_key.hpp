@@ -40,8 +40,8 @@ private:
         const EC_GROUP *group,
         const context::Session<BN_CTX>& session) {
 
-        ShrdPtr<BIGNUM> public_key_as_BN( BN_new() );
-        if( !EC_POINT_point2bn( group, public_key, ECDSAPublicKey::conversionForm, public_key_as_BN.get(), session.context().get() ) ) {
+        ShrdPtr<BIGNUM> public_key_as_BN {BN_new()};
+        if (!EC_POINT_point2bn(group, public_key, ECDSAPublicKey::conversionForm, public_key_as_BN.get(), session.context().get())) {
             throw std::runtime_error("ECDSAPublicKey::convert(...) failed due to failure of the `EC_POINT_point2bn(...)` function."); 
         }
 
