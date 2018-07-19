@@ -59,6 +59,8 @@ public:
 
         // Add the block
         blockCoordinator_.AddBlock(nextBlock);
+
+        std::this_thread::sleep_for(std::chrono::seconds{30});
       }
     };
 
