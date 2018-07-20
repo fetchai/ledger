@@ -33,8 +33,6 @@ int main(int argc, char const **argv)
 
   
   MainChainService service(dbdir, port, tm );
-//  service.Setup(dbdir, lane_count, port, tm);    
-
 
   // Running until enter
   std::cout << "Press ENTER to quit" << std::endl;                                       

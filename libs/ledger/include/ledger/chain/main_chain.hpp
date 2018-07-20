@@ -55,24 +55,7 @@ class MainChain
   typedef BasicBlock<proof_type, fetch::crypto::SHA256> block_type;
   typedef fetch::byte_array::ByteArray                  block_hash;
 
-  /*
-  MainChain(block_type &genesis, uint32_t minerNumber = 98) :
-    minerNumber_{minerNumber}
-  {
-    genesis.loose()             = false;
-    blockChain_[genesis.hash()] = genesis;
-
-    auto tip = std::shared_ptr<Tip>(new Tip);
-    tip->total_weight     = genesis.weight();
-    tip->loose            = false;
-    tips_[genesis.hash()] = tip;
-    heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
-
-    RecoverFromFile();
-    constructing_ = false;
-  } */
-
-  // Default hard code genesis
+  // Hard code genesis
   MainChain(uint32_t minerNumber = 99) :
     minerNumber_{minerNumber}
   {
@@ -290,7 +273,7 @@ class MainChain
     return blockChain_.size();
   }
 
-  std::vector<block_type> HeaviestChain(uint64_t const &limit = std::numeric_limits<std::size_t>::max()) const
+  std::vector<block_type> HeaviestChain(uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 

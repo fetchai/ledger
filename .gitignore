@@ -2,6 +2,7 @@
 *build*/
 *.pyc
 *.db
+CMakeCache.txt
 
 # Merge Outputs
 *.orig

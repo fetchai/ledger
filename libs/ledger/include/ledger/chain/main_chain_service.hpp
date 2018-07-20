@@ -105,6 +105,7 @@ public:
   {
     return mainchain_.get();
   }
+  
 private:
   client_register_type register_;
   thread_pool_type thread_pool_;  

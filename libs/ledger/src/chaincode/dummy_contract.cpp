@@ -24,17 +24,22 @@ DummyContract::Status DummyContract::Wait(transaction_type const &tx) {
   // generate a random amount of 'work' time
   std::size_t const work_time = (rng() % DELTA_TIME) + MINIMUM_TIME;
 
-//  logger.Info("Executing transaction: ", byte_array::ToBase64(hash), " slot: ", slot, ' ', work_time,
-//              "ms");
+  auto counter = counter_.load();
+
+  fetch::logger.Info("Running complicated transaction ", counter, " ... ");
 
   // wait for the work time
   std::this_thread::sleep_for(std::chrono::milliseconds(work_time));
+
+  fetch::logger.Info("Running complicated transaction ", counter, " ... complete");
+
   ++counter_;
 
   return Status::OK;
 }
 
 DummyContract::Status DummyContract::Run(transaction_type const &) {
+  fetch::logger.Info("Running that contract...");
   return Status::OK;
 }
 

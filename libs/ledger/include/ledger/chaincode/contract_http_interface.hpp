@@ -8,6 +8,11 @@
 #include "http/json_response.hpp"
 #include "ledger/chaincode/cache.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/transaction_processor.hpp"
+#include "miner/miner_interface.hpp"
+
+#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 
 #include <sstream>
 
@@ -19,8 +24,9 @@ namespace ledger {
 class ContractHttpInterface : public http::HTTPModule {
 public:
 
-  ContractHttpInterface(StateInterface &state)
-    : state_{&state} {
+  ContractHttpInterface(StateInterface &storage, TransactionProcessor &processor)
+    : storage_{storage}
+    , processor_{processor} {
 
     // create all the contracts
     auto const &contracts = contract_cache_.factory().GetContracts();
@@ -45,6 +51,27 @@ public:
         });
       }
     }
+
+    // add custom debug handlers
+    Post("/api/debug/submit", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+
+      chain::MutableTransaction tx;
+      tx.PushResource("foo.bar.baz" + std::to_string(transaction_index_));
+      tx.set_fee(transaction_index_);
+      tx.set_contract_name("fetch.dummy.run");
+      tx.set_data(std::to_string(transaction_index_++));
+
+      auto vtx = chain::VerifiedTransaction::Create(std::move(tx));
+
+      processor_.AddTransaction(vtx);
+
+      std::ostringstream oss;
+      oss << R"({ "submitted": true, "tx": ")"
+          << static_cast<std::string>(byte_array::ToBase64(vtx.digest()))
+          << "\" }";
+
+      return http::CreateJsonResponse(oss.str());
+    });
   }
 
 private:
@@ -63,7 +90,7 @@ private:
       auto contract = contract_cache_.Lookup(contract_name);
 
       // attach, dispatch and detach
-      contract->Attach(*state_);
+      contract->Attach(storage_);
       auto const status = contract->DispatchQuery(query, doc.root(), response);
       contract->Detach();
 
@@ -88,7 +115,10 @@ private:
     return http::CreateJsonResponse("", http::status_code::CLIENT_ERROR_BAD_REQUEST);
   }
 
-  StateInterface *state_;
+  std::size_t transaction_index_{0};
+
+  StateInterface &storage_;
+  TransactionProcessor &processor_;
   ChainCodeCache contract_cache_;
 };
 

@@ -22,6 +22,7 @@ target_link_libraries(fetch-ledger PUBLIC
   fetch-crypto
   fetch-math
   fetch-storage
+  fetch-miner
 )
 
 add_test_target()

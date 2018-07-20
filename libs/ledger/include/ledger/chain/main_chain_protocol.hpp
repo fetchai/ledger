@@ -36,7 +36,7 @@ public:
     this->Expose(GET_HEADER, this,  &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this,  &self_type::GetHeaviestChain);
     max_size_ = 100;
-
+ 
    }
   
   void Start() 

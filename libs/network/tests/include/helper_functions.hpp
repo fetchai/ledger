@@ -110,7 +110,7 @@ T NextTransaction(std::size_t bytesToAdd = 0)
 {
   fetch::chain::MutableTransaction trans;
 
-  trans.PushGroup(GetRandomByteArray(64));
+  trans.PushResource(GetRandomByteArray(64));
 
   byte_array::ByteArray sig1, contract_name, data;
   MakeString(sig1);

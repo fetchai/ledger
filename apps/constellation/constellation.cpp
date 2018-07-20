@@ -2,12 +2,18 @@
 
 namespace fetch {
 
-Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std::size_t num_lanes, std::string const &interface_address)
+Constellation::Constellation(uint16_t port_start,
+                             std::size_t num_executors,
+                             std::size_t num_lanes,
+                             std::size_t num_slices,
+                             std::string const &interface_address)
   : interface_address_{interface_address}
   , num_lanes_{static_cast<uint32_t>(num_lanes)}
+  , num_slices_{static_cast<uint32_t>(num_slices)}
   , p2p_port_{static_cast<uint16_t>(port_start + P2P_PORT_OFFSET)}
   , http_port_{static_cast<uint16_t>(port_start + HTTP_PORT_OFFSET)}
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
+  , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}    
 {
 
   // determine how many threads the network manager will require
@@ -41,8 +47,24 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
 
   execution_manager_->Start();
 
-  block_coordinator_.reset(new chain::BlockCoordinator{main_chain_, *execution_manager_});
-  main_chain_miner_.reset(new chain::MainChainMiner{main_chain_, *block_coordinator_});
+  // Main chain
+  main_chain_service_.reset( new chain::MainChainService( "node_storage", main_chain_port_, *network_manager_.get() ) );
+  main_chain_remote_.reset( new chain::MainChainRemoteControl() );  
+
+  // Mining and block coordination
+  block_coordinator_.reset(new chain::BlockCoordinator{ *main_chain_service_->mainchain(), *execution_manager_});
+  transaction_packer_.reset(new miner::AnnealerMiner);
+  main_chain_miner_.reset(
+    new chain::MainChainMiner{
+      num_lanes_,
+      num_slices_,
+      *main_chain_service_->mainchain(),
+      *block_coordinator_,
+      *transaction_packer_
+    }
+  );
+
+  tx_processor_.reset(new ledger::TransactionProcessor{*storage_, *transaction_packer_});
 
   // Now that the execution manager is created, can start components that need it to exist
   block_coordinator_->start();
@@ -53,7 +75,7 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
 
   // define the list of HTTP modules to be used
   http_modules_ = {
-    std::make_shared<ledger::ContractHttpInterface>(*storage_)
+    std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
   };
 
   // create and register the HTTP modules
@@ -83,7 +105,7 @@ void Constellation::Run(peer_list_type const &initial_peers) {
 
   // monitor loop
   while (active_) {
-    logger.Info("Still alive...");
+    logger.Debug("Still alive...");
     sleep_for(seconds{5});
   }
 }

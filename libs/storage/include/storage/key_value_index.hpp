@@ -257,7 +257,7 @@ public:
     } else if(split) {
       
       key_value_pair left, right, parent;
-      index_type rid, lid, pid, cid;
+      index_type rid = 0, lid = 0, pid = 0, cid = 0;
       bool update_root = (index == root_);
       
       switch(left_right) {
@@ -344,16 +344,16 @@ public:
 
 
   byte_array::ByteArray Hash() {
-    std::cout << "A: " << root_ <<  std::endl;
+    //std::cout << "A: " << root_ <<  std::endl;
     
     stack_.Flush();
     key_value_pair kv;
-    std::cout << "B" << std::endl;
+    //std::cout << "B" << std::endl;
     if(stack_.size() > 0) {
       stack_.Get(root_, kv);
     }
 
-    std::cout << "B3" << std::endl;    
+    //std::cout << "B3" << std::endl;
     return kv.Hash();
   }
 

@@ -15,16 +15,15 @@ namespace chain
 class MainChainController
 {
 public:
-  using connectivity_details_type = MainChainDetails;
-  using client_type = fetch::network::TCPClient;  
-  using service_client_type = fetch::service::ServiceClient;
+  using connectivity_details_type  = MainChainDetails;
+  using client_type                = fetch::network::TCPClient;
+  using service_client_type        = fetch::service::ServiceClient;
   using shared_service_client_type = std::shared_ptr< service_client_type >;
-  using weak_service_client_type = std::shared_ptr< service_client_type >;    
-  using client_register_type = fetch::network::ConnectionRegister< connectivity_details_type >;
-  using network_manager_type = fetch::network::NetworkManager;
-  using mutex_type = fetch::mutex::Mutex;
-  using connection_handle_type = client_register_type::connection_handle_type;
-  using protocol_handler_type = service::protocol_handler_type;  
+  using client_register_type       = fetch::network::ConnectionRegister< connectivity_details_type >;
+  using network_manager_type       = fetch::network::NetworkManager;
+  using mutex_type                 = fetch::mutex::Mutex;
+  using connection_handle_type     = client_register_type::connection_handle_type;
+  using protocol_handler_type      = service::protocol_handler_type;
   
   MainChainController(protocol_handler_type const &identity_protocol,
     std::weak_ptr< MainChainIdentity > const&identity,
