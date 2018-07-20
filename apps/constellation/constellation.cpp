@@ -7,7 +7,8 @@ Constellation::Constellation(uint16_t port_start,
                              std::size_t num_executors,
                              std::size_t num_lanes,
                              std::size_t num_slices,
-                             std::string const &interface_address)
+                             std::string const &interface_address,
+                             std::string const &db_prefix)
   : interface_address_{interface_address}
   , num_lanes_{static_cast<uint32_t>(num_lanes)}
   , num_slices_{static_cast<uint32_t>(num_slices)}
@@ -16,7 +17,8 @@ Constellation::Constellation(uint16_t port_start,
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}    
 {
-
+  std::cout << " ----------------------- " << db_prefix << std::endl;
+  
   // determine how many threads the network manager will require
   std::size_t const num_network_threads =
     num_lanes * 2 + 10; // 2 := Lane/Storage Server, Lane/Storage Client 10 := provision for http and p2p
@@ -26,7 +28,7 @@ Constellation::Constellation(uint16_t port_start,
   network_manager_->Start(); // needs to be started
 
   // setup the storage service
-  storage_service_.Setup("node_storage", num_lanes, lane_port_start_, *network_manager_, false);
+  storage_service_.Setup(db_prefix, num_lanes, lane_port_start_, *network_manager_, false);
 
   // create the aggregate storage client
   storage_.reset(new ledger::StorageUnitClient(*network_manager_));
@@ -49,7 +51,7 @@ Constellation::Constellation(uint16_t port_start,
   execution_manager_->Start();
 
   // Main chain
-  main_chain_service_.reset( new chain::MainChainService( "node_storage", main_chain_port_, *network_manager_.get() ) );
+  main_chain_service_.reset( new chain::MainChainService( db_prefix, main_chain_port_, *network_manager_.get() ) );
   main_chain_remote_.reset( new chain::MainChainRemoteControl() );  
 
   // Mining and block coordination
@@ -91,11 +93,6 @@ void Constellation::Run(peer_list_type const &initial_peers) {
   using namespace std::chrono;
   using namespace std::this_thread;
 
-  // make the initial p2p connections
-  for (auto const &peer : initial_peers) {
-    p2p_->Connect(peer.address(), peer.port());
-  }
-
   // expose our own interface
   for (uint32_t i = 0; i < num_lanes_; ++i) {
     p2p_->AddLane(
@@ -105,11 +102,24 @@ void Constellation::Run(peer_list_type const &initial_peers) {
     );
   }
 
+
+  // Make the initial p2p connections
+  // Note that we first connect after setting up the lanes to prevent that nodes will be
+  // too fast in trying to set up lane connections.
+  for (auto const &peer : initial_peers) {
+    fetch::logger.Warn("Connecting to ", peer.address(), ":", peer.port());
+    
+    p2p_->Connect(peer.address(), peer.port());
+  }
+
+
+  
   // monitor loop
   while (active_) {
     logger.Debug("Still alive...");
     sleep_for(seconds{5});
   }
+
 }
 
 } // namespace fetch

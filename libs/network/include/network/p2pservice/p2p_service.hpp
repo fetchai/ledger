@@ -116,24 +116,14 @@ public:
   /// Events for new peer discovery
   /// @{
   // TODO, WIP(Troels): Hooks for udpating other services
-  typedef std::function< void(connection_handle_type const&, PeerDetails const &) > callback_peer_connected_type;
-  typedef std::function< void(connection_handle_type const&, PeerDetails const &) > callback_peer_update_type;
-  typedef std::function< void(connection_handle_type const&, PeerDetails const &) > callback_peer_leave_type;
+  typedef std::function< void(connection_handle_type const&, PeerDetails const &) > callback_peer_update_profile_type;
   
-  void OnPeerConnected( callback_peer_connected_type const &f) 
+  void OnPeerUpdateProfile(callback_peer_connected_type const &f)
   {
+    callback_peer_update_profile_ = f;
   }
 
-  void OnPeerUpdate(callback_peer_update_type const &f ) 
-  {
-
-  }
-
-  void OnPeerLeave( ) 
-  {
-
-  }
-  
+  callback_peer_update_profile_type callback_peer_update_profile_;
   /// @}
 
   

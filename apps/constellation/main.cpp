@@ -28,6 +28,8 @@ struct CommandLineArguments {
   std::size_t num_executors;
   std::size_t num_lanes;
   std::string interface;
+  std::string dbdir;
+  
 
   static CommandLineArguments Parse(int argc, char **argv, adapter_list_type const &adapters) {
     CommandLineArguments args;
@@ -40,6 +42,8 @@ struct CommandLineArguments {
     parameters.add(args.num_executors, "executors", "The number of executors to configure", DEFAULT_NUM_EXECUTORS);
     parameters.add(args.num_lanes, "lanes", "The number of lanes to be used", DEFAULT_NUM_LANES);
     parameters.add(raw_peers, "peers", "The comma separated list of addresses to initially connect to", std::string{});
+    parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage", std::string{"node_storage"});
+    
 
     std::size_t const num_adapters = adapters.size();
     if (num_adapters == 0) {
@@ -101,8 +105,9 @@ struct CommandLineArguments {
   }
 
   friend std::ostream &operator<<(std::ostream &s, CommandLineArguments const &args) FETCH_MAYBE_UNUSED {
-    s << "port...: " << args.port << '\n';
-    s << "peers..: ";
+    s << "db-prefix: " << args.dbdir << std::endl;
+    s << "port.....: " << args.port << std::endl;
+    s << "peers....: ";
     for (auto const &peer : args.peers) {
       s << peer << ' ';
     }
@@ -130,7 +135,9 @@ int main(int argc, char **argv) {
     auto constellation = fetch::Constellation::Create(
       args.port,
       args.num_executors,
-      args.num_lanes
+      args.num_lanes,
+      fetch::Constellation::DEFAULT_NUM_SLICES,
+      args.dbdir
     );
     constellation->Run(args.peers);
 
