@@ -50,7 +50,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
     EXPECT_TRUE(x.key());
     EXPECT_TRUE(x.publicKey().key());
 
-    EXPECT_EQ(priv_key_data, x.keyAsBin());
+    EXPECT_EQ(priv_key_data, x.KeyAsBin());
     EXPECT_EQ(public_key_data, x.publicKey().keyAsBin());
 }
 
@@ -66,7 +66,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_from_bin_and_hex_data_format_giv
     EXPECT_TRUE(b.key());
     EXPECT_TRUE(h.key());
 
-    EXPECT_EQ(b.keyAsBin(), h.keyAsBin());
+    EXPECT_EQ(b.KeyAsBin(), h.KeyAsBin());
     EXPECT_EQ(b.publicKey().keyAsBin(), h.publicKey().keyAsBin());
 }
 
@@ -83,6 +83,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_each_generated_key_is_different) {
     EXPECT_TRUE(y.key());
     EXPECT_TRUE(y.publicKey().keyAsEC_POINT());
 
+    EXPECT_NE(x.KeyAsBin(), y.KeyAsBin());
     EXPECT_NE(x.publicKey().keyAsBin(), y.publicKey().keyAsBin());
 }
 
@@ -93,7 +94,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_key_conversion_to_byte_array) {
 
     //* Expectations:
     EXPECT_TRUE(x.key());
-    EXPECT_EQ(priv_key_data, x.keyAsBin());
+    EXPECT_EQ(priv_key_data, x.KeyAsBin());
 }
 
 //TODO: Add more tests
