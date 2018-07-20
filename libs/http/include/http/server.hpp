@@ -98,6 +98,18 @@ class HTTPServer : public AbstractHTTPServer {
   void PushRequest(handle_type client, HTTPRequest req) override {
     LOG_STACK_TRACE_POINT;
 
+    // TODO: (EJF) Need to actually add better support for the options here
+    if (req.method() == Method::OPTIONS) {
+
+      HTTPResponse res("", fetch::http::mime_types::GetMimeTypeFromExtension(".html"), status_code::SUCCESS_OK);
+      res.header().Add("Access-Control-Allow-Origin", "*");
+      res.header().Add("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
+      res.header().Add("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Length, X-Requested-With");
+
+      manager_->Send(client, res);
+      return;
+    }
+
     // TODO: improve such that it works for multiple threads.
     eval_mutex_.lock();
     for (auto &m : pre_view_middleware_) {
@@ -126,8 +138,9 @@ class HTTPServer : public AbstractHTTPServer {
   }
 
   // Accept static void to avoid having to create shared ptr to this class
-  static void Accept(std::shared_ptr<socket_type> soc, std::shared_ptr<acceptor_type> accep,
-      std::shared_ptr<manager_type> manager)
+  static void Accept(std::shared_ptr<socket_type> soc,
+                     std::shared_ptr<acceptor_type> accep,
+                     std::shared_ptr<manager_type> manager)
   {
     LOG_STACK_TRACE_POINT;
 
