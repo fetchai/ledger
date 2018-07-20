@@ -56,9 +56,13 @@ namespace fetch {
       reverse_iterator rend() { return reverse_iterator(pointer_ - 1, pointer_ - 1); }
 
       void SetAllZero() {
+#if 0
         assert(pointer_ != nullptr);
-        
-        std::memset(pointer_, 0, padded_size() * sizeof(type));
+#else
+        if (pointer_) {
+          std::memset(pointer_, 0, padded_size() * sizeof(type));
+        }
+#endif
       }
       
       void SetPaddedZero() {

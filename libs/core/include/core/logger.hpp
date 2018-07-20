@@ -266,16 +266,18 @@ class LogWrapper {
 
   template <typename... Args>
   void Debug(Args... args) {
+#if 0
     std::lock_guard<std::mutex> lock(mutex_);
     if(this->log_ != nullptr) {
       this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl());
       Unroll<Args...>::Append(this, args...);
       this->log_->CloseEntry(DefaultLogger::DEBUG);
     }
-    
+#endif
   }
 
-    void Debug(const std::vector<std::string> &items) {
+  void Debug(const std::vector<std::string> &items) {
+#if 0
     std::lock_guard<std::mutex> lock(mutex_);
     if(this->log_ != nullptr) {
       this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl());
@@ -285,7 +287,7 @@ class LogWrapper {
       }
       this->log_->CloseEntry(DefaultLogger::DEBUG);
     }
-    
+#endif
   }
 
   void SetContext(shared_context_type ctx) {

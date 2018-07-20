@@ -13,6 +13,8 @@
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
+#include "ledger/transaction_processor.hpp"
+#include "miner/annealer_miner.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/peer.hpp"
 #include "http/server.hpp"
@@ -52,6 +54,8 @@ public:
   using peer_list_type = std::vector<network::Peer>;
   using http_module_type = std::shared_ptr<http::HTTPModule>;
   using http_modules_type = std::vector<http_module_type>;
+  using miner_type = std::unique_ptr<miner::MinerInterface>;
+  using tx_processor_type = std::unique_ptr<ledger::TransactionProcessor>;
 
   static constexpr uint16_t P2P_PORT_OFFSET = 1;
   static constexpr uint16_t HTTP_PORT_OFFSET = 0;
@@ -60,17 +64,20 @@ public:
   static constexpr uint32_t DEFAULT_IDLE_SPEED = 2000;
   static constexpr uint16_t DEFAULT_PORT_START = 5000;
   static constexpr std::size_t DEFAULT_NUM_LANES = 8;
+  static constexpr std::size_t DEFAULT_NUM_SLICES = 4;
   static constexpr std::size_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
 
   static std::unique_ptr<Constellation> Create(uint16_t port_start = DEFAULT_PORT_START,
                                                std::size_t num_executors = DEFAULT_NUM_EXECUTORS,
-                                               std::size_t num_lanes = DEFAULT_NUM_LANES) {
+                                               std::size_t num_lanes = DEFAULT_NUM_LANES,
+                                               std::size_t num_slices = DEFAULT_NUM_SLICES) {
 
     std::unique_ptr<Constellation> constellation{
       new Constellation{
         port_start,
         num_executors,
-        num_lanes
+        num_lanes,
+        num_slices
       }
     };
 
@@ -80,6 +87,7 @@ public:
   explicit Constellation(uint16_t port_start = DEFAULT_PORT_START,
                          std::size_t num_executors = DEFAULT_NUM_EXECUTORS,
                          std::size_t num_lanes = DEFAULT_NUM_LANES,
+                         std::size_t num_slices = DEFAULT_NUM_SLICES,
                          std::string const &interface_address = "127.0.0.1");
 
   void Run(peer_list_type const &initial_peers = peer_list_type{});
@@ -96,6 +104,7 @@ private:
   flag_type active_{true};                      ///< Flag to control running of main thread
   std::string interface_address_;               ///< The publicly facing interface IP address
   uint32_t num_lanes_;                          ///< The configured number of lanes
+  uint32_t num_slices_;                         ///< The configured number of slices per block
   uint16_t p2p_port_;                           ///< The port that the P2P interface is running from
   uint16_t http_port_;                          ///< The port of the HTTP server
   uint16_t lane_port_start_;                    ///< The starting port of all the lane services
@@ -121,7 +130,9 @@ private:
   /// @name Blockchain Components
   /// @{
   chain::MainChain main_chain_;                 ///< The main chain
+  tx_processor_type tx_processor_;              ///< The transaction processor
   block_coordinator_type block_coordinator_;    ///< The block coordinator
+  miner_type transaction_packer_;               ///< The colourful puzzle solver
   chain_miner_type main_chain_miner_;           ///< The main chain miner
   /// @}
 

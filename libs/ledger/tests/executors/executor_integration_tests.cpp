@@ -121,7 +121,7 @@ protected:
     fetch::chain::MutableTransaction tx;
     tx.set_contract_name("fetch.token.wealth");
     tx.set_data(oss.str());
-    tx.PushGroup(address);
+    tx.PushResource(address);
 
     return fetch::chain::Transaction::Create(std::move(tx));
   }
