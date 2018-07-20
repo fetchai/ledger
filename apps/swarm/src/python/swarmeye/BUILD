@@ -3,7 +3,7 @@ python_binary(
     dependencies=[
         ':swarmeye_lib',
         ':misc',
-        'src/resources/swarmie/main/statics',
+        'src/resources/swarmeye/main/statics',
     ],
     shebang="#!/usr/bin/env python3",
     compatibility=">3.0",

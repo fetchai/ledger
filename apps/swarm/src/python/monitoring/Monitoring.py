@@ -8,7 +8,7 @@ import json
 
 from multiprocessing import Pool
 
-POSSIBLE_PORTS = 2
+POSSIBLE_PORTS = 31
 
 
 def poll( nodenumber):

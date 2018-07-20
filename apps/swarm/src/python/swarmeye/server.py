@@ -20,7 +20,6 @@ from functools import reduce
 from monitoring.Monitoring import Monitoring
 
 from bottle import bottle
-#route, run, error, template, hook, request, response, static_file, redirect, Bottle
 
 SIZE_OPACITY_HISTORY_SCALES = [
     ( 90, 1.0,  1.0, ),
@@ -61,14 +60,8 @@ def get_static(filepath):
         g_statics_dir,
         filepath))
 
-def get_data(context):
-    fp = getStaticFilePath("dummydata.json")
-    fp = os.path.join(fp[0], fp[1])
-    with open(fp, "r") as fh:
-        data = json.loads("\n".join(fh.readlines()))
-    return data
 
-def get_data2(context, mon):
+def get_data(context, mon):
 
     data = {
         "nodes": [],
@@ -115,7 +108,7 @@ def get_data2(context, mon):
     ]),
     return data;
 
-def get_chain_data2(context, mon):
+def get_chain_data(context, mon):
     r = []
 
     if not mon.chain.keys():
@@ -179,36 +172,6 @@ def get_chain_data2(context, mon):
     return {
         'nodes': r
     }
-
-def get_chain_data(context, mon):
-    r = {
-        'nodes': [],
-        'links': []
-    }
-
-    allblocknames = list(mon.chain.keys())
-
-    for name in allblocknames:
-        b = mon.chain[name]
-        r['nodes'].append({
-            'id': str(b["id"]),
-            'group': 1,
-            'status': 1,
-        })
-
-    for name in allblocknames:
-        b = mon.chain.get(name, {})
-        prevHash = b.get("prev", "")
-        p = mon.chain.get(prevHash, None)
-
-        if p:
-            r['links'].append({
-                'source': str(b['id']),
-                'target': str(p['id']),
-                'value': len(b['nodes']),
-            })
-
-    return r
 
 # Returns list of (depth, name, prev)
 def get_ancestry(chain, blockname, maxdepth, offs=0):
@@ -433,9 +396,8 @@ def main():
     root.route('/', method='GET', callback=functools.partial(get_slash))
 
     with contextlib.closing(Monitoring()) as myMonitoring:
-        root.route('/network', method='GET', callback=functools.partial(get_data2, context, myMonitoring))
+        root.route('/network', method='GET', callback=functools.partial(get_data, context, myMonitoring))
         root.route('/chain', method='GET', callback=functools.partial(get_chain_data, context, myMonitoring))
-        root.route('/chain2', method='GET', callback=functools.partial(get_chain_data2, context, myMonitoring))
         root.route('/consensus', method='GET', callback=functools.partial(get_consensus_data, context, myMonitoring))
         if g_ssl:
             from utils import SSLWSGIRefServer
