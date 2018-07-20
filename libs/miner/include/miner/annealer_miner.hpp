@@ -53,7 +53,7 @@ public:
     }
 
     // debugging interface
-    if (num_transactions > 1) {
+    if (num_transactions > 0) {
       logger.Info("Block Structure: ");
       std::size_t slice_index = 0;
       for (auto const &slice : block.slices) {

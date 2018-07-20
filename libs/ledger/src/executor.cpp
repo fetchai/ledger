@@ -43,6 +43,8 @@ std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const &la
  */
 Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) {
 
+  fetch::logger.Info("Executing tx ", byte_array::ToBase64(hash));
+
   // Get the transaction from the store (we should be able to take the transaction from any of the lanes, for
   // simplicity, however, just pick the first one).
   chain::Transaction tx;
@@ -70,6 +72,8 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
 
   // detach the chain code from the current context
   chain_code->Detach();
+
+  fetch::logger.Info("Executing tx ", byte_array::ToBase64(hash), " (success)");
 
   return Status::SUCCESS;
 }

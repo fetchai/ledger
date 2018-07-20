@@ -40,11 +40,14 @@ public:
                                    + string::Replace(contract_name, '.', '/')
                                    + '/';
 
+
       // enumerate all of the contract query handlers
       auto const &query_handlers = contract->query_handlers();
       for (auto const &handler : query_handlers) {
         std::string const &query_name = handler.first;
         std::string const api_path = api_prefix + query_name;
+
+        fetch::logger.Info("API: ", api_path);
 
         Post(api_path, [this, contract_name, query_name](http::ViewParameters const &, http::HTTPRequest const &request) {
           return OnQuery(contract_name, query_name, request);
