@@ -7,63 +7,7 @@ import threading
 import json
 
 from multiprocessing import Pool
-
-POSSIBLE_PORTS = 31
-
-
-def poll( nodenumber):
-    ident = "127.0.0.1:{}".format(nodenumber + 9000)
-    port = nodenumber + 10000
-    try:
-        url = "http://127.0.0.1:{}/peers".format(port)
-        data = None
-        try:
-            r = requests.get(url, timeout=1)
-            if r.status_code == 200:
-                data = json.loads(r.content.decode("utf-8", "strict"))
-                peers = data.get("peers", [])
-                state = data.get("state", 0)
-        except requests.exceptions.Timeout as ex:
-            data = None
-            print("Timeout:", ident)
-        except requests.exceptions.ConnectionError as ex:
-            data = None
-            print("Denied:", ident)
-
-        if data != None:
-            return (ident, peers, state)
-        else:
-            return (None, None, None)
-
-    except Exception as x:
-        print("ERR:", x)
-        return (None, None, None)
-
-def poll2( nodenumber):
-    ident = "127.0.0.1:{}".format(nodenumber + 9000)
-    port = nodenumber + 10000
-    try:
-        url = "http://127.0.0.1:{}/mainchain".format(port)
-        data = None
-        try:
-            r = requests.get(url, timeout=1)
-            if r.status_code == 200:
-                data = json.loads(r.content.decode("utf-8", "strict"))
-        except requests.exceptions.Timeout as ex:
-            data = None
-            print("Timeout:", ident)
-        except requests.exceptions.ConnectionError as ex:
-            data = None
-            print("Denied:", ident)
-
-        if data != None:
-            return (ident, data["blocks"], data["chainident"])
-        else:
-            return (None, None, None)
-
-    except Exception as x:
-        print("ERR:", x)
-        return (None, None, None)
+from monitoring import Getter
 
 def workfunc(ident):
     return (
@@ -71,44 +15,33 @@ def workfunc(ident):
         poll2(ident),
         )
 
+class NodeNumberGenerator(object):
+    def __init__(self):
+        pass
+
+    def getall(self):
+        for x in range(0, 25):
+            yield x
 
 class Monitoring(object):
-
-    class WorkerThread(threading.Thread):
-        def __init__(self, owner):
-            self.done = False
-            self.owner = owner
-            self.port = 0
-            super().__init__(group=None, target=None, name="pollingthread")
-            self.myPool = Pool(10)
-
-        def run(self):
-            print("MONITORING START")
-
-            while not self.done:
-                time.sleep(.6)
-                idents = list(range(0, POSSIBLE_PORTS))
-                newdata = self.myPool.map(workfunc, idents)
-
-                for newData, newChainData in newdata:
-                    if (newData[0]):
-                        self.owner.newData(newData[0], newData[1], newData[2])
-                    if (newChainData[0]):
-                        self.owner.newChainData(newChainData[0], newChainData[1], newChainData[2])
-
-
-
-
     def __init__(self):
         print("MONITORING START?")
-        self.thread = Monitoring.WorkerThread(self)
-        self.thread.start()
+        self.getter = Getter.Getter(
+            NodeNumberGenerator(),
+            {
+                '/peers': self.newData,
+                '/mainchain': self.newChainData,
+            }
+            )
+        self.getter.start()
 
         self.world = {}
         self.heaviests = {}
         self.chain = {}
 
-    def newChainData(self, ident, blocks, chainident):
+    def newChainData(self, nodenumber, ident, url, code, data):
+        blocks = data["blocks"]
+        chainident = data["chainident"]
 
         if self.chain.keys():
             if chainident < max(self.chain.keys()):
@@ -136,12 +69,11 @@ class Monitoring(object):
         self.thread.done = True
         self.thread.join(100)
 
-    def newData(self, ident, peers, state):
+    def newData(self, nodenumber, ident, url, code, data):
+        peers = data["peers"];
+
         self.world.setdefault(ident, {})
         self.world[ident].setdefault("peers", [])
-        self.world[ident].setdefault("state", 0)
-
-        self.world[ident]["state"] = state
         self.world[ident]["peers"] = peers
 
     def badNode(self, ident):

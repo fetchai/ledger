@@ -71,7 +71,7 @@ class SwarmAgentNaive(object):
             self.timeOfLastRemoteNewBlock = datetime.datetime.now()
             self.in_progress = set()
 
-        goodPeers = [ x for x in goodPeers
+        goodPeers = [ x for x in goodPeers 
                           if x not in self.in_progress
                           and x not in self.introductions ]
 
