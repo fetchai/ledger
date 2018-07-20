@@ -150,7 +150,12 @@ class MainChain
 
         if((*blockRef).second.loose())
         {
-          block.root()   = (*blockRef).second.root();
+          auto const &danglingRoot = (*blockRef).second.root();
+          block.root() = danglingRoot;
+          tip->root    = danglingRoot;
+
+          // Need to register ourselves as waiting
+          danglingRoot_.at(danglingRoot).insert(block.hash());
         }
 
         if(tip->loose == false && tip->total_weight > heaviest_.first)
@@ -243,6 +248,9 @@ class MainChain
 
     if(tip)
     {
+      // May need to update references to this tip
+      UpdateTipRefs(tip, block);
+
       tips_[block.hash()] = tip;
     }
     blockChain_[block.hash()] = block;
@@ -488,6 +496,30 @@ private:
 
     block = (*it).second;
     return true;
+  }
+
+  // Here we have advanced a tip, but it is still loose. This means the reference to this 
+  // tip in danglingRoot_ will need to be updated
+  void inline UpdateTipRefs(const std::shared_ptr<Tip> &tip, const block_type &block)
+  {
+    if(tip->loose)
+    {
+      auto const &tipRoot = tip->root;
+
+      std::set<block_hash> &tipsWaitingOnRoot = danglingRoot_.at(tipRoot);
+
+      // Set of 'tips', search for our prev tip
+      auto it = tipsWaitingOnRoot.find(block.body().previous_hash);
+
+      if(it == tipsWaitingOnRoot.end())
+      {
+        fetch::logger.Info("Failed to find tip in dangling root!");
+        return;
+      }
+
+      tipsWaitingOnRoot.erase(it);
+      tipsWaitingOnRoot.insert(block.hash());
+    }
   }
 };
 
