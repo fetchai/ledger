@@ -92,9 +92,15 @@ int main(int argc, char const **argv) {
           }
         }
 
-        // TODO: Add block
+        if(command[0] == "addblock") {
+          if(command.size() == 1) {
+//            remote.AddBlock();
+          } else {
+            std::cout << "usage: addblock" << std::endl;
+          }
+
+        }
       }
-      
     } catch(serializers::SerializableException &e ) {
         std::cerr << "error: " << e.what() << std::endl;
         

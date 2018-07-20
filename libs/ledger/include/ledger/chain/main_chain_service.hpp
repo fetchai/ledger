@@ -30,11 +30,13 @@ public:
   typedef fetch::chain::MainChain::block_type::body_type body_type;
   typedef fetch::chain::MainChain::block_hash block_hash;
 
-  using mainchain_type = fetch::chain::MainChain;
-  using mainchain_protocol_type = fetch::chain::MainChainProtocol;
   
   using connectivity_details_type = MainChainDetails;
   using client_register_type = fetch::network::ConnectionRegister< connectivity_details_type >;
+
+  using mainchain_type = fetch::chain::MainChain;
+  using mainchain_protocol_type = fetch::chain::MainChainProtocol< client_register_type >;
+
   
   using block_store_type = storage::ObjectStore<block_type>;
   using block_store_protocol_type = storage::ObjectStoreProtocol<block_type>;
@@ -79,14 +81,16 @@ public:
     this->Add(IDENTITY, identity_protocol_.get());
 
     mainchain_.reset( new mainchain_type() );
-    mainchain_protocol_.reset( new mainchain_protocol_type( mainchain_.get() ) );
+    mainchain_protocol_.reset( new mainchain_protocol_type( CHAIN, register_, thread_pool_, mainchain_.get() ) );
     this->Add(CHAIN, mainchain_protocol_.get());
 
     controller_.reset(new controller_type(IDENTITY, identity_, register_, tm));
     controller_protocol_.reset(new controller_protocol_type(controller_.get()));
     this->Add(CONTROLLER, controller_protocol_.get());
 
-    thread_pool_->Start();    
+    thread_pool_->Start();
+
+    mainchain_protocol_->Start();
   }
 
   ~MainChainService() 
@@ -97,7 +101,10 @@ public:
 
   }
 
-
+  mainchain_type* mainchain()
+  {
+    return mainchain_.get();
+  }
 private:
   client_register_type register_;
   thread_pool_type thread_pool_;  

@@ -112,7 +112,7 @@ class BasicBlock
   bool &loose() { return is_loose_; }
   fetch::byte_array::ByteArray &root() { return root_; }
 
-#if 1
+#if 1 // TODO: Move to py swarm?
     std::string hashString() const {
         return std::string(ToHex(body_.hash));
     }
