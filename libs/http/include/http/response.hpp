@@ -16,6 +16,7 @@ class HTTPResponse : public std::enable_shared_from_this<HTTPResponse> {
                Status const &status = status_code::SUCCESS_OK)
       : body_(body), mime_(mime), status_(status) {
     header_.Add("content-length", int64_t(body_.size()));
+    header_.Add("content-type", mime_.type);
   }
 
   static void WriteToBuffer(HTTPResponse &res, asio::streambuf &buffer) {
