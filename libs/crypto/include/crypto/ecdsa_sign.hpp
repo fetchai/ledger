@@ -80,11 +80,11 @@ bool ecdsa_verify_hash(
             const_cast<EC_KEY*>(public_key.key().get()));
 
     switch (res) {
-        case 0:
-            return false;
-
         case 1:
             return true;
+
+        case 0:
+            return false;
 
         case -1:
         default:
