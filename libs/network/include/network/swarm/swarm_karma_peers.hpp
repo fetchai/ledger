@@ -49,12 +49,14 @@ public:
   template<class KEY>
   void AddKarma(const KEY &key, double change)
   {
-    lock_type mlock(mutex_);
-    peers_list_type::iterator it = Find(key);
-    if (it != peers.end())
+      lock_type mlock(mutex_);
+      peers_list_type::iterator it = Find(key);
+      if (it == peers.end())
       {
-        it -> AddKarma(change);
+          return;
       }
+      it -> AddKarma(change);
+      Sort();
   }
 
   template<class KEY>
@@ -70,11 +72,11 @@ public:
   {
     lock_type mlock(mutex_);
     peers_list_type::iterator it = Find(key);
-    if (it != peers.end())
-      {
-        return it -> GetCurrentKarma();
-      }
-    return 0.0;
+    if (it == peers.end())
+    {
+        return 0.0;
+    }
+    return it -> GetCurrentKarma();
   }
 
   void Age() const
@@ -95,6 +97,8 @@ public:
 
   std::list<SwarmKarmaPeer> GetBestPeers(uint32_t n, double minKarma = 0.0) const
   {
+      fetch::logger.Info("TOTAL PEERS ", peers.size());
+
     lock_type mlock(mutex_);
     std::list<SwarmKarmaPeer> results;
     Age();
@@ -112,7 +116,7 @@ public:
           }
         results.push_back(peer);
       }
-
+     fetch::logger.Info("RETURNED PEERS ", results.size());
     return results;
   }
 
@@ -128,6 +132,7 @@ public:
       {
         it -> AddKarma(karma);
       }
+    Sort();
   }
 
   void AddOrUpdate(const std::string &host, double karma)
@@ -142,13 +147,13 @@ public:
       {
         it -> AddKarma(karma);
       }
+    Sort();
   }
 
   SwarmKarmaPeer GetNthKarmicPeer(uint32_t n) const
   {
     lock_type mlock(mutex_);
     Age();
-    Sort();
 
     uint32_t i = 0;
     for(auto peer: peers)

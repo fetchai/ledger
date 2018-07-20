@@ -63,6 +63,7 @@ class SwarmAgentNaive(object):
     def onPingSucceeded(self, host):
         self.swarm.AddKarmaMax(host, 3.0, 15.0);
         self.inflight.discard(host)
+        self.timeOfLastRemoteNewBlock = datetime.datetime.now()
 
     def RequestChain(self, host):
         if (datetime.datetime.now() - self.timeOfLastRemoteNewBlock).total_seconds() > 10:
@@ -98,9 +99,12 @@ class SwarmAgentNaive(object):
 
 
     def onIdle(self):
-        goodPeers = self.swarm.GetPeers(10, -0.5)
+        goodPeers = self.swarm.GetPeers(1000, -10000)
 
-        goodPeers = [ goodPeerFilter for goodPeerFilter in goodPeers if goodPeerFilter not in self.introductions ]
+        say("PYCHAINNODE===> idle1 ", len(goodPeers))
+        goodPeers = [ x for x in goodPeers if x not in self.introductions ]
+
+        say("PYCHAINNODE===> idle2 ", len(goodPeers))
 
         if not goodPeers:
             say("quiet")
@@ -122,6 +126,8 @@ class SwarmAgentNaive(object):
 
     def onPeerless(self):
         for peerListMember in self.peerlist:
+            say("PYCHAIN initial peer", peerListMember)
+            self.swarm.AddKarmaMax(peerListMember, 1.0, 1.0);
             self.swarm.DoPing(peerListMember)
         for introListMember in self.introductions:
             self.swarm.AddKarmaMax(introListMember, 100.0, 100.0);
@@ -134,7 +140,7 @@ class SwarmAgentNaive(object):
     def onNewBlockIdFound(self, host, blockid):
         say("AGENT_API PYCHAIN NEWBLOCK ", blockid)
         self.swarm.AddKarmaMax(host, 2.0, 3.0);
-        #self.timeOfLastRemoteNewBlock = datetime.datetime.now()
+        self.timeOfLastRemoteNewBlock = datetime.datetime.now()
 
     def onBlockIdRepeated(self, host, blockid):
         # Awwww, we know about this.
@@ -147,6 +153,7 @@ class SwarmAgentNaive(object):
     def onBlockSupplied(self, host, blockid):
         say("AGENT_API PYCHAIN DELIVERED ", host, ' ', blockid)
         self.swarm.AddKarmaMax(host, 3.0, 15.0);
+        self.timeOfLastRemoteNewBlock = datetime.datetime.now()
 
     def onBlockNotSupplied(self, host, blockid):
         say("AGENT_API PYCHAIN FAILED  ", host, ' ', blockid)

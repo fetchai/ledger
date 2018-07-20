@@ -49,12 +49,11 @@ public:
     }
   fetch::http::HTTPResponse GetPeers(fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req)
   {
-    LOG_STACK_TRACE_POINT ;
+      LOG_STACK_TRACE_POINT;
     fetch::json::JSONDocument doc;
     try
       {
         fetch::script::Variant result = fetch::script::Variant::Object();
-
         auto allpeers = node_ -> HttpWantsPeerList();
         auto outputlist = fetch::script::Variant::Array(allpeers.size());
 
@@ -63,11 +62,12 @@ public:
           {
             auto peerObject = fetch::script::Variant::Object();
             peerObject["peer"] = p.GetLocation().AsString();
-            peerObject["weight"] = p.GetKarma();
+            peerObject["weight"] = 1.0; //p.GetKarma();
             outputlist[i++]=peerObject;
           }
 
         result["peers"] = outputlist;
+
 
         std::ostringstream ret;
         ret << result;

@@ -97,8 +97,7 @@ public:
 
   std::list<SwarmKarmaPeer> HttpWantsPeerList() const
   {
-      lock_type lock(mutex_);
-    return karmaPeerList_.GetBestPeers(10000, 0.0);
+      return karmaPeerList_.GetBestPeers(10, 0.0);
   }
 
   std::string HttpWantsSitrep() const
@@ -110,7 +109,7 @@ public:
         const SwarmPeerLocation &peer, std::shared_ptr<client_type> client)
   {
       lock_type lock(mutex_);
-    auto promise = client->Call(
+      auto promise = client->Call(
         protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     if (promise.Wait(2500, false))
       {
@@ -136,14 +135,12 @@ public:
   }
 
   virtual bool IsExistingPeer(const std::string &host)
-  {
-      lock_type lock(mutex_);
-    return karmaPeerList_.Has(host);
+    {
+        return karmaPeerList_.Has(host);
   }
 
     virtual std::string ClientNeedsPeer()
     {
-      lock_type lock(mutex_);
         fetch::logger.Debug("ClientNeedsPeer starts work");
         if (!karmaPeerList_.empty())
         {
@@ -163,24 +160,21 @@ public:
 
   void AddOrUpdate(const std::string &host, double karma)
   {
-      lock_type lock(mutex_);
     karmaPeerList_.AddOrUpdate(host, karma);
   }
   void AddOrUpdate(const SwarmPeerLocation &host, double karma)
   {
-      lock_type lock(mutex_);
     karmaPeerList_.AddOrUpdate(host, karma);
   }
   double GetKarma(const std::string &host)
   {
-      lock_type lock(mutex_);
     return karmaPeerList_.GetKarma(host);
   }
 
   std::list<SwarmKarmaPeer> GetBestPeers(uint32_t n, double minKarma = 0.0) const
   {
-      lock_type lock(mutex_);
-    return karmaPeerList_.GetBestPeers(n, minKarma);
+      fetch::logger.Debug("GetBestPeers running");
+      return karmaPeerList_.GetBestPeers(n, minKarma);
   }
 
   void Post(std::function<void ()> workload)
