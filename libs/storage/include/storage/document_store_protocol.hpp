@@ -1,17 +1,17 @@
 #ifndef STORAGE_INDEXED_DOCUMENT_STORE_PROTOCOL_HPP
 #define STORAGE_INDEXED_DOCUMENT_STORE_PROTOCOL_HPP
+
 #include "storage/document_store.hpp"
 #include "storage/revertible_document_store.hpp"
 #include "network/service/protocol.hpp"
 #include "core/mutex.hpp"
-#include"core/byte_array/encoders.hpp"
+#include "core/byte_array/encoders.hpp"
 
 
 #include<map>
+
 namespace fetch {
 namespace storage {
-
-  
 
 class RevertibleDocumentStoreProtocol :
     public fetch::service::Protocol {
@@ -33,7 +33,7 @@ public:
     HAS_LOCK
   };
   
-  RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store)
+  explicit RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store)
     : fetch::service::Protocol(), doc_store_(doc_store) {
     this->Expose(GET, (RevertibleDocumentStore::super_type*)doc_store, &RevertibleDocumentStore::super_type::Get);
     this->Expose(GET_OR_CREATE, (RevertibleDocumentStore::super_type*)doc_store, &RevertibleDocumentStore::super_type::GetOrCreate);
@@ -51,7 +51,7 @@ public:
     : fetch::service::Protocol(), doc_store_(doc_store),lane_assignment_(lane) {
 
     SetLaneLog2(maxlanes);
-    assert( maxlanes == (1 << log2_lanes_) );    
+    assert( maxlanes == (1u << log2_lanes_) );
     logger.Info("Spinning up lane ", lane_assignment_);
     
     this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
@@ -127,7 +127,7 @@ private:
       logger.Debug("Address:", byte_array::ToHex(rid.id()) );
 
       throw serializers::SerializableException( // TODO: set exception number
-        0, byte_array_type("Get: Resource located on other lane. TODO, set error number"));
+        0, byte_array_type("GetOrCreate: Resource located on other lane. TODO, set error number"));
     }
 
     return doc_store_->GetOrCreate(rid);
