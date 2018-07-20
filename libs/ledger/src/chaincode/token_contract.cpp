@@ -9,16 +9,6 @@ namespace fetch {
 namespace ledger {
 namespace  {
 
-template <typename T>
-bool Extract(script::Variant const &obj, byte_array::ConstByteArray const &name, T& value) {
-  auto element = obj[name];
-  if (element.is_undefined()) {
-    return false;
-  }
-
-  value = element.As<T>();
-  return true;
-}
 
 struct WalletRecord {
   uint64_t balance{0};

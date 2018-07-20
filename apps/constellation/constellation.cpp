@@ -1,4 +1,5 @@
 #include "constellation.hpp"
+#include "ledger/chaincode/wallet_http_interface.hpp"
 
 namespace fetch {
 
@@ -76,6 +77,7 @@ Constellation::Constellation(uint16_t port_start,
   // define the list of HTTP modules to be used
   http_modules_ = {
     std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
+    std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_)
   };
 
   // create and register the HTTP modules
