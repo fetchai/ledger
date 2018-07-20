@@ -3,8 +3,8 @@
 
 #include"storage/object_store.hpp"
 #include"storage/object_store_protocol.hpp"
-#include"storage/object_store_syncronisation_protocol.hpp"
 #include"network/service/server.hpp"
+#include"network/details/thread_pool.hpp"
 
 #include"network/management/connection_register.hpp"
 #include"ledger/chain/main_chain.hpp"
@@ -25,31 +25,21 @@ class MainChainService : public service::ServiceServer< fetch::network::TCPServe
 {
 public:
 
-  typedef fetch::chain::MainChain::proof_type proof_type;
-  typedef fetch::chain::MainChain::block_type block_type;
-  typedef fetch::chain::MainChain::block_type::body_type body_type;
-  typedef fetch::chain::MainChain::block_hash block_hash;
-
   using mainchain_type = fetch::chain::MainChain;
   using mainchain_protocol_type = fetch::chain::MainChainProtocol;
-  
+
   using connectivity_details_type = MainChainDetails;
   using client_register_type = fetch::network::ConnectionRegister< connectivity_details_type >;
-  
-  using block_store_type = storage::ObjectStore<block_type>;
-  using block_store_protocol_type = storage::ObjectStoreProtocol<block_type>;
-  using block_sync_protocol_type = storage::ObjectStoreSyncronisationProtocol< client_register_type,  block_type >;
 
   using controller_type = MainChainController;
   using controller_protocol_type = MainChainControllerProtocol;
-  
+
   using identity_type = MainChainIdentity;
   using identity_protocol_type = MainChainIdentityProtocol;
-  using connection_handle_type = client_register_type::connection_handle_type; 
   using super_type = service::ServiceServer< fetch::network::TCPServer >;
 
   using thread_pool_type = network::ThreadPool;  
-  
+
   enum {
     IDENTITY = 1,
     CHAIN,

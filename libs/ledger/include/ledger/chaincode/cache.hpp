@@ -19,7 +19,6 @@ public:
 
   static constexpr uint64_t CLEANUP_PERIOD = 16;
   static constexpr uint64_t CLEANUP_MASK = CLEANUP_PERIOD - 1u;
-  static constexpr auto CACHE_LIFETIME = std::chrono::hours{1};
 
   struct Element {
     Element(chain_code_type c) : chain_code{c} {}
@@ -80,11 +79,13 @@ private:
   }
 
   void RunMaintenance() {
+    static const std::chrono::hours CACHE_LIFETIME{1};
+
     timepoint_type const now = clock_type::now();
 
     for (auto it = cache_.begin(), end = cache_.end(); it != end;) {
       auto const delta = now - it->second.timestamp;
-      if (delta >= decltype(CACHE_LIFETIME){CACHE_LIFETIME}) {
+      if (delta >= CACHE_LIFETIME) {
         it = cache_.erase(it);
       } else {
         ++it;

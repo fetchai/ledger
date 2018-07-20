@@ -46,29 +46,12 @@ private:
 
   std::vector<block_type> GetHeaviestChain(uint32_t maxsize)
   {
-    std::vector<block_type> results;
-
-    fetch::logger.Debug("GetHeaviestChain starting work ",  maxsize);
-    auto currentHash = chain_ -> HeaviestBlock().hash();
-
-    while(results.size() < maxsize)
-    {
-      block_type block;
-      if (chain_ -> Get(currentHash, block))
-      {
-        results.push_back(block);
-        currentHash = block.body().previous_hash;
-      }
-      else
-      {
-        break;
-      }
-    }
+    std::vector<block_type> results = chain_->HeaviestChain(maxsize);
 
     fetch::logger.Debug("GetHeaviestChain returning ", results.size(), " of req ", maxsize);
 
     return results;
-  }  
+  }
 };
 
 }

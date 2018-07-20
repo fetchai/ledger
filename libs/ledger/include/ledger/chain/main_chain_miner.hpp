@@ -12,6 +12,8 @@ namespace fetch
 namespace chain
 {
 
+// TODO: (`HUT`) : fine for now, but it would be more efficient if the block coordinator launched
+// mining tasks
 class MainChainMiner
 {
 public:
