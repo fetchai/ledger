@@ -31,7 +31,7 @@ public:
 
 private:
     //TODO: Keep key encrypted
-    const ShrdPtr<EC_KEY> _private_key;
+    const ShrdPtr<EC_KEY> private_key_;
     const PublicKeyType _public_key;
 
 
@@ -41,6 +41,11 @@ private:
         }
         UniqPtr<BIGNUM, eDelStrat::clearing> private_key_as_BN(BN_new());
         BN_bin2bn(key_data.pointer(), int(ECDSACurveType::privateKeySize), private_key_as_BN.get());
+
+        if (!private_key_as_BN) {
+            throw std::runtime_error("ECDSAPrivateKey::getPrivateKeyAsBIGNUM(const byte_array::ConstByteArray&): BN_bin2bn(...) failed.");
+        }
+
         return private_key_as_BN;
     }
 
@@ -50,8 +55,12 @@ private:
             throw std::runtime_error("ECDSAPrivateKey::getPrivateKeyAsBIGNUM(const std::string&): Lenght of provided byte array does not correspond to expected lenght for priv key for selected elliptic curve");
         }
         BIGNUM *private_key_as_BN = nullptr;
-        BN_hex2bn(&private_key_as_BN, hex_string_key_data.c_str());
-        return UniqPtr<BIGNUM, eDelStrat::clearing>{private_key_as_BN};
+        const int res = BN_hex2bn(&private_key_as_BN, hex_string_key_data.c_str());
+        UniqPtr<BIGNUM, eDelStrat::clearing> retval {private_key_as_BN};
+        if (!res || !retval) {
+            throw std::runtime_error("ECDSAPrivateKey::getPrivateKeyAsBIGNUM(const std::string&): BN_hex2bn(...) failed.");
+        }
+        return retval;
     }
 
 
@@ -114,15 +123,15 @@ private:
     }
 
    ECDSAPrivateKey(ShrdPtr<BIGNUM, eDelStrat::clearing> private_key_as_BN)
-        : _private_key( convertPrivateKeyBN2ECKEY(private_key_as_BN.get()))
-        , _public_key( derivePublicKey(private_key_as_BN.get(), _private_key.get())) {
+        : private_key_( convertPrivateKeyBN2ECKEY(private_key_as_BN.get()))
+        , _public_key( derivePublicKey(private_key_as_BN.get(), private_key_.get())) {
     }
 
 public:
 
     ECDSAPrivateKey()
-        : _private_key(generateKeyPair())
-        , _public_key(extractPublicKey(_private_key.get())) {
+        : private_key_(generateKeyPair())
+        , _public_key(extractPublicKey(private_key_.get())) {
     }
 
     ECDSAPrivateKey(const byte_array::ConstByteArray& key_data)
@@ -134,11 +143,11 @@ public:
     }
 
     ShrdPtr<const EC_KEY> key() const {
-        return _private_key;
+        return private_key_;
     }
 
     byte_array::ByteArray keyAsBin() const {
-        const BIGNUM* key_as_BN = EC_KEY_get0_private_key(_private_key.get());
+        const BIGNUM* key_as_BN = EC_KEY_get0_private_key(private_key_.get());
         if(!key_as_BN) {
             throw std::runtime_error("ECDSAPrivateKey::keyAsBin(): EC_KEY_get0_private_key(...) failed.");
         }
