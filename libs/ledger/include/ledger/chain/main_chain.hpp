@@ -290,7 +290,7 @@ class MainChain
     return blockChain_.size();
   }
 
-  std::vector<block_type> HeaviestChain(std::size_t limit = std::numeric_limits<std::size_t>::max()) const
+  std::vector<block_type> HeaviestChain(uint64_t const &limit = std::numeric_limits<std::size_t>::max()) const
   {
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 

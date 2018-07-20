@@ -4,10 +4,12 @@
 #include "core/logger.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/execution_manager.hpp"
+
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/main_chain_miner.hpp"
 #include "ledger/chain/block_coordinator.hpp"
-#include "ledger/main_chain_node.hpp"
+
+
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
@@ -38,8 +40,10 @@ public:
   using execution_manager_type = std::shared_ptr<ledger::ExecutionManager>;
   using storage_service_type = ledger::StorageUnitBundledService;
   using flag_type = std::atomic<bool>;
+  
   using block_coordinator_type = std::unique_ptr<chain::BlockCoordinator>;
   using chain_miner_type = std::unique_ptr<chain::MainChainMiner>;
+  
   using clock_type = std::chrono::high_resolution_clock;
   using timepoint_type = clock_type::time_point;
   using string_list_type = std::vector<std::string>;

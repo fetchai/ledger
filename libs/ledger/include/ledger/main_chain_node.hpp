@@ -33,8 +33,8 @@ public:
 
     MainChainNode(const MainChainNode &rhs)           = delete;
     MainChainNode(MainChainNode &&rhs)           = delete;
-    MainChainNode operator=(const MainChainNode &rhs)  = delete;
-    MainChainNode operator=(MainChainNode &&rhs) = delete;
+    MainChainNode& operator=(const MainChainNode &rhs)  = delete;
+    MainChainNode& operator=(MainChainNode &&rhs) = delete;
     bool operator==(const MainChainNode &rhs) const = delete;
     bool operator<(const MainChainNode &rhs) const = delete;
 
