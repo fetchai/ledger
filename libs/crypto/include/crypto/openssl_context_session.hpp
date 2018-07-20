@@ -15,21 +15,22 @@ template <typename T
 class Session
 {
 public:
-    using Type = T;
-    using NC_Type = typename std::remove_const<T>::type;
-    using ContextSmartPtr = T_ContextSmartPtr;
-    using SessionPrimitive = T_SessionPrimitive;
+    using type = T;
+    using context_smart_ptr = T_ContextSmartPtr;
+    using session_primitive_type = T_SessionPrimitive;
 
 private:
-    ContextSmartPtr _context;
-    bool _isStarted;
+    context_smart_ptr context_;
+    bool is_started_;
 
 public:
-    explicit Session(ContextSmartPtr context, const bool is_already_started = false)
-        : _context(context)
-        , _isStarted(is_already_started)
-    {
+    explicit Session(context_smart_ptr context, const bool is_already_started = false)
+        : context_(context)
+        , is_started_(is_already_started) {
         start();
+    }
+
+    explicit Session() : Session( context_smart_ptr( BN_CTX_new() ) ) {
     }
 
     ~Session() {
@@ -37,27 +38,27 @@ public:
     }
 
     void start() {
-        if (_isStarted)
+        if (is_started_)
             return;
 
-        SessionPrimitive::start(_context.get());
-        _isStarted = true;
+        session_primitive_type::start(context_.get());
+        is_started_ = true;
     }
 
     void end() {
-        if (!_isStarted)
+        if (!is_started_)
             return;
 
-        _isStarted = false;
-        SessionPrimitive::end(_context.get());
+        is_started_ = false;
+        session_primitive_type::end(context_.get());
     }
 
-    ContextSmartPtr context() const {
-        return _context;
+    context_smart_ptr context() const {
+        return context_;
     }
 
     bool isStarted() const {
-        return _isStarted;
+        return is_started_;
     }
 };
 

@@ -52,6 +52,11 @@ TEST_F(DeleterPrimitiveTest, test_EC_GROUP_clear_free) {
     EXPECT_EQ((DeleterPrimitive<EC_GROUP, eDeleteStrategy::clearing>::function), &EC_GROUP_clear_free);
 }
 
+TEST_F(DeleterPrimitiveTest, test_ECDSA_SIG_clear_free) {
+    EXPECT_EQ((DeleterPrimitive<ECDSA_SIG>::function), &ECDSA_SIG_free);
+}
+
+
 } // namespace anonymous
 
 } // namespace detail
