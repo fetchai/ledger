@@ -59,7 +59,7 @@ int main(int argc, char const **argv)
       MutableTransaction      trans;
       Transaction             tx;
 
-      trans.PushGroup("a");
+      trans.PushResource("a");
 
       EXPECT(trans.resources().count("a") == 1);
 

@@ -414,6 +414,19 @@ inline std::ostream& operator<<(std::ostream& os, VariantList const& v) {
 
   return os;
 }
+
+template <typename T>
+inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const &name, T& value) {
+  auto element = obj[name];
+  if (element.is_undefined()) {
+    return false;
+  }
+
+  value = element.As<T>();
+  return true;
+}
+
+
 }
 }
 #endif

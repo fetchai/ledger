@@ -15,7 +15,7 @@
 namespace fetch {
 namespace chain {
 
- 
+
 struct TransactionSummary {
   using resource_type = byte_array::ConstByteArray;
   using digest_type = byte_array::ConstByteArray;
@@ -27,9 +27,6 @@ struct TransactionSummary {
 
   // TODO: (EJF) Needs to be replaced with some kind of ID
   std::string contract_name_;
-
-  // TODO: (EJF) Remove but linked to optimisation
-  std::size_t short_id;
 };
 
 template <typename T>
@@ -98,12 +95,20 @@ public:
   void UpdateDigest() {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: (EJF) Do we not want to make more fields here?
+    // TODO: (EJF) This is annoying but we should maintain that the fields are kept in order
+    std::vector<byte_array::ConstByteArray> resources;
+    std::copy(summary().resources.begin(), summary().resources.end(), std::back_inserter(resources));
+    std::sort(resources.begin(), resources.end());
+
     serializers::ByteArrayBuffer buf;
-    buf << summary_.resources
-        << signature_
+    for (auto const &e : resources) {
+      buf << e;
+    }
+
+    buf << summary_.fee
         << summary_.contract_name_
-        << summary_.fee;
+        << data_
+        << signature_;
 
     hasher_type hash;
     hash.Reset();
@@ -118,7 +123,7 @@ public:
     // TODO_FAIL("Needs implementing");
   }
   
-  void PushGroup(byte_array::ConstByteArray const &res) {
+  void PushResource(byte_array::ConstByteArray const &res) {
     LOG_STACK_TRACE_POINT;    
     if(copy_on_write_) Clone();    
     summary_.resources.insert(res);
@@ -141,6 +146,10 @@ public:
 
   void set_contract_name(std::string const &name) {
     summary_.contract_name_ = name;
+  }
+
+  void set_fee(uint64_t fee) {
+    summary_.fee = fee;
   }
 
 protected:

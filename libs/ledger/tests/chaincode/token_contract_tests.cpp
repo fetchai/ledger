@@ -70,7 +70,7 @@ protected:
     chain::MutableTransaction tx;
     tx.set_contract_name("fetch.token.wealth");
     tx.set_data(oss.str());
-    tx.PushGroup(address);
+    tx.PushResource(address);
 
     Identifier identifier;
     identifier.Parse(static_cast<std::string>( tx.contract_name() ));
@@ -118,8 +118,8 @@ protected:
     chain::MutableTransaction tx;
     tx.set_contract_name("fetch.token.transfer");
     tx.set_data(oss.str());
-    tx.PushGroup(from);
-    tx.PushGroup(to);
+    tx.PushResource(from);
+    tx.PushResource(to);
 
     // dispatch the transaction
     Identifier identifier;

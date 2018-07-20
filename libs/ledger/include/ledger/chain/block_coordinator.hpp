@@ -2,6 +2,7 @@
 #define BLOCK_COORDINATOR_HPP
 
 #include <thread>
+#include <miner/miner_interface.hpp>
 
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
@@ -21,9 +22,10 @@ public:
   typedef std::shared_ptr<BlockBody> block_body_type;
   typedef ledger::ExecutionManagerInterface::Status status_type;
 
-  BlockCoordinator(chain::MainChain &mainChain, ledger::ExecutionManagerInterface &executionManager) :
-    mainChain_{mainChain},
-    executionManager_{executionManager}
+  BlockCoordinator(chain::MainChain &mainChain,
+                   ledger::ExecutionManagerInterface &executionManager)
+    : mainChain_{mainChain}
+    , executionManager_{executionManager}
   {
   }
 

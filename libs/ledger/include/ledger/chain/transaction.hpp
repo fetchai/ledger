@@ -14,7 +14,8 @@ public:
   UnverifiedTransaction(UnverifiedTransaction &&other) = default;
   UnverifiedTransaction& operator=(UnverifiedTransaction &&other) = default;
   
-  UnverifiedTransaction(UnverifiedTransaction const &other) 
+  UnverifiedTransaction(UnverifiedTransaction const &other)
+    : MutableTransaction()
   {
     this->Copy(other);
   }  
@@ -25,14 +26,11 @@ public:
     return *this;    
   }
 
-  
-
   bool operator<(UnverifiedTransaction const&other) const 
   {
     return digest() < other.digest();
   }
-  
-  
+
   using super_type::VERSION;  
   using super_type::hasher_type;
   using super_type::digest_type;
@@ -84,7 +82,8 @@ public:
   VerifiedTransaction(VerifiedTransaction &&other) = default;
   VerifiedTransaction& operator=(VerifiedTransaction &&other) = default;
   
-  VerifiedTransaction(VerifiedTransaction const &other) {
+  VerifiedTransaction(VerifiedTransaction const &other)
+    : UnverifiedTransaction() {
     this->Copy(other);
   }
 
@@ -93,7 +92,6 @@ public:
     this->Copy(other);
     return *this;        
   }
-  
 
   using super_type::GetMutable;
 
@@ -103,15 +101,13 @@ public:
     std::swap(x,trans);
     return VerifiedTransaction::Create(x);
   }
-  
-  
+
   static VerifiedTransaction Create(fetch::chain::MutableTransaction &trans)
   {
     VerifiedTransaction ret;
     ret.Finalise(trans);
     return ret;    
   }
-  
 
   static VerifiedTransaction Create(UnverifiedTransaction &&trans)
   {
@@ -119,16 +115,13 @@ public:
     std::swap(x,trans);
     return VerifiedTransaction::Create(x);
   }
-  
-  
+
   static VerifiedTransaction Create(UnverifiedTransaction &trans)
   {
     VerifiedTransaction ret;
     ret.Finalise(trans);
     return ret;    
   }
-  
-
 
 protected:
   void Copy(VerifiedTransaction const &tx) 

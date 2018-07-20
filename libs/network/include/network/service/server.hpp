@@ -111,7 +111,7 @@ class ServiceServer : public T, public ServiceServerInterface {
     LOG_STACK_TRACE_POINT;
 
     std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
-    fetch::logger.Info("RPC call from ", client);
+    fetch::logger.Debug("RPC call from ", client);
     PendingMessage pm = {client, msg};
     messages_.push_back(pm);
 
