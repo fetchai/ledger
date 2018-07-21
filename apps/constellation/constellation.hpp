@@ -61,6 +61,11 @@ public:
   using main_chain_service_type = std::unique_ptr< chain::MainChainService >;
   using main_chain_remote_type = std::unique_ptr< chain::MainChainRemoteControl >;
 
+  using service_type = service::ServiceClient;
+  using client_type = fetch::network::TCPClient;
+  using shared_service_type = std::shared_ptr< service_type >;
+
+  
   static constexpr uint16_t MAIN_CHAIN_PORT_OFFSET = 2;  
   static constexpr uint16_t P2P_PORT_OFFSET = 1;
   static constexpr uint16_t HTTP_PORT_OFFSET = 0;
@@ -76,8 +81,8 @@ public:
   static std::unique_ptr<Constellation> Create(uint16_t port_start = DEFAULT_PORT_START,
                                                std::size_t num_executors = DEFAULT_NUM_EXECUTORS,
                                                std::size_t num_lanes = DEFAULT_NUM_LANES,
-    std::size_t num_slices = DEFAULT_NUM_SLICES,
-    std::string const& prefix=  "node_storage") {
+                                               std::size_t num_slices = DEFAULT_NUM_SLICES,
+                                               std::string const& prefix=  "node_storage") {
     
     std::unique_ptr<Constellation> constellation{
       new Constellation{

@@ -52,8 +52,14 @@ Constellation::Constellation(uint16_t port_start,
 
   // Main chain
   main_chain_service_.reset( new chain::MainChainService( db_prefix, main_chain_port_, *network_manager_.get() ) );
-  main_chain_remote_.reset( new chain::MainChainRemoteControl() );  
 
+  // Mainchain remote
+  main_chain_remote_.reset( new chain::MainChainRemoteControl() );  
+  client_type client(  *network_manager_.get() ) ;
+  client.Connect(interface_address, main_chain_port_ );
+  shared_service_type service = std::make_shared< service_type >(client, *network_manager_.get()  );
+  main_chain_remote_->SetClient(service);
+  
   // Mining and block coordination
   block_coordinator_.reset(new chain::BlockCoordinator{ *main_chain_service_->mainchain(), *execution_manager_});
   transaction_packer_.reset(new miner::AnnealerMiner);
@@ -74,8 +80,22 @@ Constellation::Constellation(uint16_t port_start,
   main_chain_miner_->start();
 
   p2p_.reset(new p2p::P2PService(p2p_port_, *network_manager_));
-  p2p_->Start();
 
+
+  // Adding handle for the orchestration
+  p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const& ep) {
+      std::cout << "MAKING CALL ::: " << std::endl;
+      if(ep.is_mainchain) {
+        main_chain_remote_->TryConnect( ep );
+      }
+      if(ep.is_lane) {
+        storage_->TryConnect( ep );
+      }      
+
+    });
+  
+  
+  
   // define the list of HTTP modules to be used
   http_modules_ = {
     std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
@@ -102,6 +122,13 @@ void Constellation::Run(peer_list_type const &initial_peers) {
     );
   }
 
+  p2p_->AddMainChain(
+    interface_address_,
+    static_cast<uint16_t>(main_chain_port_)
+    );
+  p2p_->Start();
+
+  
 
   // Make the initial p2p connections
   // Note that we first connect after setting up the lanes to prevent that nodes will be

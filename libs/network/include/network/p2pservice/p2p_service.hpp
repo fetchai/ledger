@@ -116,9 +116,9 @@ public:
   /// Events for new peer discovery
   /// @{
   // TODO, WIP(Troels): Hooks for udpating other services
-  typedef std::function< void(connection_handle_type const&, PeerDetails const &) > callback_peer_update_profile_type;
+  typedef std::function< void(EntryPoint const &) > callback_peer_update_profile_type;
   
-  void OnPeerUpdateProfile(callback_peer_connected_type const &f)
+  void OnPeerUpdateProfile(callback_peer_update_profile_type const &f)
   {
     callback_peer_update_profile_ = f;
   }
@@ -278,34 +278,62 @@ protected:
   /// @{
   void NextServiceCycle() 
   {
-    std::lock_guard< mutex::Mutex > lock(maintainance_mutex_);
-    if(!running_) return;
-
-    // Updating lists of incoming and outgoing
-    using map_type = client_register_type::connection_map_type;
-    incoming_.clear();
-    outgoing_.clear();    
+    std::vector< EntryPoint > orchestration;
     
-    register_.WithConnections([this](map_type const &map) {
-        for(auto &c: map) {
-          auto conn = c.second.lock();
-          if(conn) {
-            auto details = register_.GetDetails(conn->handle());
-            std::lock_guard< mutex::Mutex > lock( *details );
+    {      
+      std::lock_guard< mutex::Mutex > lock(maintainance_mutex_);
+      if(!running_) return;
+
+      // Updating lists of incoming and outgoing
+      using map_type = client_register_type::connection_map_type;
+      incoming_.clear();
+      outgoing_.clear();    
+    
+      register_.WithConnections([this, &orchestration](map_type const &map) {
+          for(auto &c: map) {
+            auto conn = c.second.lock();
+            if(conn) {
+              auto details = register_.GetDetails(conn->handle());
+              std::lock_guard< mutex::Mutex > lock( *details );
             
-            switch(conn->Type()) {
-            case network::AbstractConnection::TYPE_OUTGOING:
-              outgoing_.insert( details->identity.identifier() );
-              break;
-            case network::AbstractConnection::TYPE_INCOMING:
-              incoming_.insert( details->identity.identifier() );
-              break;
+              switch(conn->Type())
+              {
+              case network::AbstractConnection::TYPE_OUTGOING:
+                outgoing_.insert( details->identity.identifier() );
+                for(auto &e: details->entry_points)
+                {
+                  if(!e.was_promoted)
+                  {
+                    orchestration.push_back(e);
+                    e.was_promoted = true;
+                  }
+                  
+                }
+                
+                break;
+              case network::AbstractConnection::TYPE_INCOMING:
+                incoming_.insert( details->identity.identifier() );
+                break;
+              }
             }
           }
-        }
         
-      });
+        });
     
+    }
+    
+
+    for(auto &e: orchestration)
+    {
+      thread_pool_->Post([this, e]() {
+          if(!e.is_discovery) {
+            if(callback_peer_update_profile_)
+            {
+              callback_peer_update_profile_(e);
+            }
+          }
+        });
+    }
     
     thread_pool_->Post([this](){ this->ManageIncomingConnections(); }, 1000); // TODO: add to config
   }
@@ -365,7 +393,6 @@ protected:
       my_pk = my_details_->details.identity.identifier().Copy();
     }
     
-    
     // Creating list of endpoints
     P2PPeerDirectory::peer_details_map_type suggest = directory_->SuggestPeersToConnectTo() ;
     std::vector< EntryPoint > endpoints;
@@ -378,6 +405,7 @@ protected:
             endpoints.push_back(e);
           }
         }
+        
       }
     }   
     std::random_shuffle( endpoints.begin(), endpoints.end() );

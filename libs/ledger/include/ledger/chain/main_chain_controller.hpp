@@ -6,6 +6,7 @@
 #include"ledger/chain/main_chain_identity.hpp"
 #include"ledger/chain/main_chain_identity_protocol.hpp"
 #include"ledger/chain/main_chain_details.hpp"
+#include"network/p2pservice/p2p_peer_details.hpp"
 
 namespace fetch
 {
@@ -42,6 +43,17 @@ public:
     Connect(host, port);
   }
 
+  void TryConnect(p2p::EntryPoint const &ep)
+  {
+      
+    for(auto &h: ep.host )
+    {
+      fetch::logger.Debug("Mainchain trying to connect to ", h, ":", ep.port);
+      if(Connect(h, ep.port)) break;
+    }
+    
+  }
+  
   
   void Shutdown() 
   {

@@ -6,7 +6,7 @@
 #include"ledger/storage_unit/lane_identity.hpp"
 #include"ledger/storage_unit/lane_identity_protocol.hpp"
 #include"ledger/storage_unit/lane_connectivity_details.hpp"
-
+#include"network/p2pservice/p2p_peer_details.hpp"
 namespace fetch
 {
 namespace ledger
@@ -43,6 +43,14 @@ public:
     Connect(host, port);
   }
 
+  void TryConnect(p2p::EntryPoint const &ep)
+  {
+    for(auto &h: ep.host )
+    {
+      fetch::logger.Debug("Lane trying to connect to ", h, ":", ep.port);
+      if(Connect(h, ep.port)) break;
+    }
+  }
   
   void Shutdown() 
   {

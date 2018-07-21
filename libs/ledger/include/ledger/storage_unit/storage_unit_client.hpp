@@ -109,6 +109,15 @@ public:
     lanes_[lane] = client;
   }
 
+  void TryConnect( p2p::EntryPoint const &ep ) 
+  {
+    if(ep.lane_id < lanes_.size() ) {
+      lanes_[ep.lane_id]->Call(LaneService::CONTROLLER, LaneControllerProtocol::TRY_CONNECT, ep);
+    }
+    
+  }
+  
+  
 
   void AddTransaction(chain::VerifiedTransaction const &tx) override
   {

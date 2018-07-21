@@ -23,6 +23,7 @@ struct EntryPoint
     is_discovery = false;
     is_lane = false;
     is_mainchain = false;
+    was_promoted = false;
   }
   
   EntryPoint(EntryPoint const&other) 
@@ -38,6 +39,7 @@ struct EntryPoint
     is_discovery = bool(other.is_discovery);    
     is_lane = bool(other.is_lane);
     is_mainchain = bool(other.is_mainchain);
+    was_promoted = bool(other.was_promoted);    
   }
 
   EntryPoint& operator=(EntryPoint const&other) 
@@ -52,6 +54,7 @@ struct EntryPoint
     lane_id = uint32_t(other.lane_id);
     is_lane = bool(other.is_lane);
     is_mainchain = bool(other.is_mainchain);
+    was_promoted = bool(other.was_promoted);        
     return *this;
   }
   
@@ -62,13 +65,14 @@ struct EntryPoint
   uint16_t port = 0;
 
   crypto::Identity identity;  
-  std::atomic< uint32_t > lane_id;  
+  std::atomic< uint32_t > lane_id;
 
   std::atomic< bool > is_discovery;  
   std::atomic< bool > is_lane;
-  std::atomic< bool > is_mainchain;
+  std::atomic< bool > is_mainchain;  
   /// @}
 
+  std::atomic< bool > was_promoted;
   
 };
 

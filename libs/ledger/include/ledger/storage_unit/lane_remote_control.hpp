@@ -51,6 +51,19 @@ public:
     }
   }
 
+  void TryConnect(lane_index_type const &lane, p2p::EntryPoint const &ep) 
+  {
+    auto ptr = clients_[lane].lock();
+    if(ptr) {
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,LaneControllerProtocol::TRY_CONNECT, ep);
+      p.Wait();
+    }
+    
+
+  }
+
+  
+
   void Shutdown(lane_index_type const &lane) 
   {
     if(clients_.find(lane) == clients_.end() ) {
