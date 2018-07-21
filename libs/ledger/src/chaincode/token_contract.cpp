@@ -53,6 +53,8 @@ Contract::Status TokenContract::CreateWealth(transaction_type const &tx) {
     record.balance += amount;
 
     SetStateRecord(record, address);
+  } else {
+    return Status::FAILED;
   }
 
   return Status::OK;

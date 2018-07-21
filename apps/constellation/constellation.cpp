@@ -1,5 +1,6 @@
 #include "constellation.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
+#include "http/middleware/allow_origin.hpp"
 
 namespace fetch {
 
@@ -104,6 +105,7 @@ Constellation::Constellation(uint16_t port_start,
 
   // create and register the HTTP modules
   http_.reset(new http::HTTPServer(http_port_, *network_manager_));
+  http_->AddMiddleware(http::middleware::AllowOrigin("*"));
   for (auto const &module : http_modules_) {
     http_->AddModule(*module);
   }

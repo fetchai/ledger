@@ -143,7 +143,7 @@ public:
 
   document_type GetOrCreate(byte_array::ConstByteArray const &key) override
   {
-    auto res = fetch::storage::ResourceAddress(key) ;
+    auto res = fetch::storage::ResourceID(key) ;
     std::size_t lane = res.lane( log2_lanes_ );
 
     auto promise = lanes_[ lane ]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE, res );
@@ -153,8 +153,8 @@ public:
   
   document_type Get(byte_array::ConstByteArray const &key) override
   {
-    auto res = fetch::storage::ResourceAddress(key) ;
-    std::size_t lane = res.lane( log2_lanes_ );    
+    auto res = fetch::storage::ResourceID(key) ;
+    std::size_t lane = res.lane( log2_lanes_ );
 
     auto promise = lanes_[ lane ]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET, res );
      
@@ -163,7 +163,7 @@ public:
 
   bool Lock(byte_array::ConstByteArray const &key) override
   {
-    auto res = fetch::storage::ResourceAddress(key) ;
+    auto res = fetch::storage::ResourceID(key) ;
     std::size_t lane = res.lane(  log2_lanes_ );    
     auto promise = lanes_[ lane ]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::LOCK, res );
      
@@ -173,7 +173,7 @@ public:
   bool Unlock(byte_array::ConstByteArray const &key) override
   {
     
-    auto res = fetch::storage::ResourceAddress(key) ;
+    auto res = fetch::storage::ResourceID(key) ;
     std::size_t lane = res.lane(  log2_lanes_  );    
     auto promise = lanes_[ lane ]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK, res );
      
@@ -182,7 +182,7 @@ public:
   
   void Set(byte_array::ConstByteArray const &key, byte_array::ConstByteArray const &value) override
   {
-    auto res = fetch::storage::ResourceAddress(key) ;
+    auto res = fetch::storage::ResourceID(key) ;
     std::size_t lane = res.lane(  log2_lanes_  );
 
     auto promise = lanes_[ lane ]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET, res, value );
@@ -200,7 +200,6 @@ public:
     for(auto &p: promises) {
       p.Wait();
     }
-    
   }
   
   void Revert(bookmark_type const &bookmark) override
@@ -216,7 +215,6 @@ public:
     }
   }  
 
-  
   byte_array::ConstByteArray Hash() override
   {
     //TODO
@@ -228,8 +226,6 @@ public:
     id_ = id;
   }
 
-
-  
   byte_array::ByteArray const &id() {
     return id_;
   }

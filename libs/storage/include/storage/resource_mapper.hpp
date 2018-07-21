@@ -7,6 +7,8 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/assert.hpp"
 
+#include <limits>
+
 namespace fetch {
 namespace storage {
 
@@ -48,7 +50,7 @@ private:
   }
 
   byte_array::ConstByteArray id_;
-  uint32_t resource_group_{0};
+  uint32_t resource_group_ = std::numeric_limits<uint32_t>::max();
   template <typename T>
   friend inline void Serialize(T &, ResourceID const &);
   template <typename T>
@@ -57,12 +59,12 @@ private:
 
 template <typename T>
 void Serialize(T &serializer, ResourceID const &b) {
-  serializer << b.id_;
+  serializer << b.id_ << b.resource_group_;
 }
 
 template <typename T>
 void Deserialize(T &serializer, ResourceID &b) {
-  serializer >> b.id_;
+  serializer >> b.id_ >> b.resource_group_;
 }
 
 class ResourceAddress : public ResourceID
