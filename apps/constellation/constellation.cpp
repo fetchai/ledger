@@ -1,5 +1,6 @@
 #include "constellation.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
+#include "network/p2pservice/explore_http_interface.hpp"
 #include "http/middleware/allow_origin.hpp"
 
 namespace fetch {
@@ -18,8 +19,6 @@ Constellation::Constellation(uint16_t port_start,
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}    
 {
-  std::cout << " ----------------------- " << db_prefix << std::endl;
-  
   // determine how many threads the network manager will require
   std::size_t const num_network_threads =
     num_lanes * 2 + 10; // 2 := Lane/Storage Server, Lane/Storage Client 10 := provision for http and p2p
@@ -28,16 +27,42 @@ Constellation::Constellation(uint16_t port_start,
   network_manager_.reset(new fetch::network::NetworkManager(num_network_threads));
   network_manager_->Start(); // needs to be started
 
+  // Creating P2P instance
+  p2p_.reset(new p2p::P2PService(p2p_port_, *network_manager_));
+
+  // Adding handle for the orchestration
+  p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const& ep) {
+      std::cout << "MAKING CALL ::: " << std::endl;
+      if(ep.is_mainchain) {
+        main_chain_remote_->TryConnect( ep );
+      }
+      if(ep.is_lane) {
+        storage_->TryConnect( ep );
+      }      
+
+    });
+
+
   // setup the storage service
   storage_service_.Setup(db_prefix, num_lanes, lane_port_start_, *network_manager_, false);
 
   // create the aggregate storage client
   storage_.reset(new ledger::StorageUnitClient(*network_manager_));
   for (std::size_t i = 0; i < num_lanes; ++i) {
-    storage_->AddLaneConnection<connection_type>(
+    // We connect to the lanes 
+    crypto::Identity ident = storage_->AddLaneConnection<connection_type>(
       interface_address,
       static_cast<uint16_t>(lane_port_start_ + i)
     );
+
+    // ... and make the lane details available for the P2P module
+    // to promote
+    p2p_->AddLane(
+      static_cast<uint32_t>(i),
+      interface_address,
+      static_cast<uint16_t>(lane_port_start_ + i),
+      ident
+    );    
   }
 
   // create the execution manager (and its executors)
@@ -80,27 +105,15 @@ Constellation::Constellation(uint16_t port_start,
   block_coordinator_->start();
   main_chain_miner_->start();
 
-  p2p_.reset(new p2p::P2PService(p2p_port_, *network_manager_));
 
-
-  // Adding handle for the orchestration
-  p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const& ep) {
-      std::cout << "MAKING CALL ::: " << std::endl;
-      if(ep.is_mainchain) {
-        main_chain_remote_->TryConnect( ep );
-      }
-      if(ep.is_lane) {
-        storage_->TryConnect( ep );
-      }      
-
-    });
   
   
   
   // define the list of HTTP modules to be used
   http_modules_ = {
     std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
-    std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_)
+    std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_),
+    std::make_shared<p2p::ExploreHttpInterface>(p2p_.get())
   };
 
   // create and register the HTTP modules
@@ -117,11 +130,7 @@ void Constellation::Run(peer_list_type const &initial_peers) {
 
   // expose our own interface
   for (uint32_t i = 0; i < num_lanes_; ++i) {
-    p2p_->AddLane(
-      i,
-      interface_address_,
-      static_cast<uint16_t>(lane_port_start_ + i)
-    );
+
   }
 
   p2p_->AddMainChain(

@@ -1,6 +1,10 @@
 #ifndef LEDGER_STORAGE_UNIT_LANE_CONNECTIVITY_DETAILS_HPP
 #define LEDGER_STORAGE_UNIT_LANE_CONNECTIVITY_DETAILS_HPP
-
+#include"core/byte_array/byte_array.hpp"
+#include"crypto/fnv.hpp"
+#include"crypto/identity.hpp"
+#include"crypto/prover.hpp"
+#include"crypto/verifier.hpp"
 #include<atomic>
 
 namespace fetch
@@ -19,7 +23,7 @@ struct LaneConnectivityDetails
     
   }
 
-  
+  crypto::Identity identity;
   std::atomic<bool> is_controller;
   std::atomic<bool> is_peer;
   std::atomic<bool> is_outgoing;

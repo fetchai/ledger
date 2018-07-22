@@ -147,6 +147,8 @@ private:
   /// @{
   main_chain_service_type main_chain_service_;  ///< The main chain 
   main_chain_remote_type main_chain_remote_;    ///< The controller unit of the main chain
+  
+  
   tx_processor_type tx_processor_;              ///< The transaction processor
   block_coordinator_type block_coordinator_;    ///< The block coordinator
   miner_type transaction_packer_;               ///< The colourful puzzle solver

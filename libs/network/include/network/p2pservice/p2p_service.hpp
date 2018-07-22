@@ -39,6 +39,7 @@ public:
   using p2p_identity_protocol_type = std::unique_ptr<P2PIdentityProtocol>;
   using p2p_directory_type = std::unique_ptr<P2PPeerDirectory>;
   using p2p_directory_protocol_type = std::unique_ptr<P2PPeerDirectoryProtocol>;
+  using callback_peer_update_profile_type = std::function< void(EntryPoint const &) > ;
 
   enum {
     IDENTITY = 1,
@@ -114,16 +115,12 @@ public:
   }
 
   /// Events for new peer discovery
-  /// @{
-  // TODO, WIP(Troels): Hooks for udpating other services
-  typedef std::function< void(EntryPoint const &) > callback_peer_update_profile_type;
-  
+  /// @{  
   void OnPeerUpdateProfile(callback_peer_update_profile_type const &f)
   {
     callback_peer_update_profile_ = f;
   }
 
-  callback_peer_update_profile_type callback_peer_update_profile_;
   /// @}
 
   
@@ -228,7 +225,8 @@ public:
 
   /// Methods to add node components
   /// @{
-  void AddLane(uint32_t const &lane, byte_array::ConstByteArray const &host, uint16_t const &port)
+  void AddLane(uint32_t const &lane, byte_array::ConstByteArray const &host,
+               uint16_t const &port, crypto::Identity const &identity = crypto::Identity())
   {
     // TODO: connect
     
@@ -237,7 +235,7 @@ public:
       EntryPoint lane_details;
       lane_details.host.insert( host );
       lane_details.port = port;
-      //     lane_details.public_key = "todo";
+      lane_details.identity = identity;
       lane_details.lane_id = lane;
       lane_details.is_lane = true;
       my_details_->details.entry_points.push_back( lane_details );
@@ -271,9 +269,18 @@ public:
   /// @}
 
 
+  /// Methods to get profile information
+  /// @{
+  PeerDetails Profile() const {
+    std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
+    return my_details_->details;
+  }
+  /// }
+
   
 protected:
-  
+  callback_peer_update_profile_type callback_peer_update_profile_;
+
   /// Service maintainance
   /// @{
   void NextServiceCycle() 

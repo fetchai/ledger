@@ -27,6 +27,7 @@ class StorageUnitClient : public StorageUnitInterface
 public:
   struct ClientDetails 
   {
+    crypto::Identity identity;
     std::atomic< uint32_t > lane;
   };
   
@@ -55,12 +56,11 @@ public:
   
 
   template< typename T >
-  void AddLaneConnection(byte_array::ByteArray const&host, uint16_t const &port ) 
+  crypto::Identity AddLaneConnection(byte_array::ByteArray const&host, uint16_t const &port ) 
   {
     shared_service_client_type client = register_.template CreateServiceClient<T >( network_manager_, host, port);
 
     // Waiting for connection to be open
-
     bool connection_timeout = false;
     for(std::size_t n = 0; n < 10; ++n) {
 
@@ -85,15 +85,23 @@ public:
       logger.Warn("Connection timed out - closing");
       client->Close();
       client.reset();
-      return;      
+      return crypto::InvalidIdentity();      
     }
     
           
     // Exchaning info
     auto p1 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
     auto p2 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);    
-    p1.Wait(1000);
-    p2.Wait(1000);    
+    auto p3 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_IDENTITY);        
+    if( (!p1.Wait(1000)) ||
+        (!p2.Wait(1000)) ||
+        (!p3.Wait(1000)) ) 
+    {
+      fetch::logger.Warn("Client timeout when trying to get identity details.");
+      client->Close();
+      client.reset();
+      return crypto::InvalidIdentity();        
+    }
 
     lane_type lane = p1.As<lane_type>();
     lane_type total_lanes = p2.As<lane_type>();
@@ -102,11 +110,22 @@ public:
       SetLaneLog2(uint32_t(lanes_.size()));
       assert( lanes_.size() == (1 << log2_lanes_) );      
     }
+
+    crypto::Identity lane_identity;
+    p3.As(lane_identity);
+    // TODO: Verify expected identity
     
     assert(lane < lanes_.size());
     fetch::logger.Debug("Adding lane ", lane);
     
     lanes_[lane] = client;
+
+    {
+      auto details = register_.GetDetails(client->handle());    
+      details->identity = lane_identity;
+    }
+
+    return lane_identity;
   }
 
   void TryConnect( p2p::EntryPoint const &ep ) 

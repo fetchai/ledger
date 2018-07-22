@@ -26,8 +26,12 @@ public:
   };
       
   
-  LaneIdentity(client_register_type reg, network_manager_type nm )
-    : register_(reg), manager_(nm)
+  LaneIdentity(client_register_type reg, 
+               network_manager_type nm,
+               crypto::Identity identity)
+    : identity_(identity),
+      register_(reg), 
+      manager_(nm)
   {
     lane_ = uint32_t(-1);
     total_lanes_ = 0;
@@ -40,10 +44,19 @@ public:
     return PING_MAGIC;
   }
 
-  void Hello(connection_handle_type const &client) 
+  crypto::Identity Hello(connection_handle_type const &client, 
+             crypto::Identity const& iden) 
   {    
     auto details = register_.GetDetails(client);
-    details->is_peer = true;
+    // TODO: Verify identity if already exists
+    { 
+      std::lock_guard< mutex::Mutex > lock(*details);
+      details->identity = iden;
+      details->is_peer = true;
+    }
+
+    std::lock_guard< mutex::Mutex > lock( identity_mutex_ );
+    return identity_;
   }
 
   
@@ -55,7 +68,11 @@ public:
       details->is_controller = true;
     }
   }
-  
+
+  crypto::Identity Identity() {
+    std::lock_guard< mutex::Mutex > lock( identity_mutex_ );
+    return identity_;
+  }
   
   lane_type GetLaneNumber() 
   {
@@ -80,15 +97,23 @@ public:
   {
     total_lanes_ = t;
   }
-  
-  
   /// @}
+  typedef std::function< byte_array::ConstByteArray(byte_array::ConstByteArray const&) > callable_sign_message_type;
+  void OnSignMessage(callable_sign_message_type const &fnc) {
+    on_sign_message_ = fnc;    
+  }
+
 private:
+  mutex::Mutex identity_mutex_;
+  crypto::Identity identity_;
+  callable_sign_message_type on_sign_message_;
+
   client_register_type register_;
   network_manager_type manager_;
 
   std::atomic< lane_type > lane_;
   std::atomic< lane_type > total_lanes_;        
+
 };
 
 }

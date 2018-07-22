@@ -26,10 +26,10 @@ public:
   using connection_handle_type = client_register_type::connection_handle_type;
   using protocol_handler_type = service::protocol_handler_type;  
   
-  LaneController(protocol_handler_type const &identity_protocol,
+  LaneController(protocol_handler_type const &lane_identity_protocol,
     std::weak_ptr< LaneIdentity > const&identity,
     client_register_type reg, network_manager_type nm  )
-    : identity_protocol_(identity_protocol), identity_(identity),
+    : lane_identity_protocol_(lane_identity_protocol), lane_identity_(identity),
       register_(reg), manager_(nm)
   {
 
@@ -113,7 +113,7 @@ public:
   shared_service_client_type Connect(byte_array::ByteArray const& host, uint16_t const& port) {
     shared_service_client_type client = register_.CreateServiceClient<client_type >( manager_, host, port);
 
-    auto ident = identity_.lock();
+    auto ident = lane_identity_.lock();
     if(!ident) {
       // TODO : Throw exception      
       TODO_FAIL("Identity lost");
@@ -123,7 +123,7 @@ public:
     // Waiting for connection to be open
     std::size_t n = 0;    
     while( n < 10 ){
-      auto p = client->Call(identity_protocol_, LaneIdentityProtocol::PING);
+      auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
       if(p.Wait(100, false)) {
         if(p.As<LaneIdentity::ping_type >() != LaneIdentity::PING_MAGIC) {
           n = 10;          
@@ -139,11 +139,33 @@ public:
       client.reset();
       return nullptr;      
     }
-    
+
+    crypto::Identity peer_identity;
+    {
+      auto ptr = lane_identity_.lock();
+      if(!ptr) 
+      {
+        logger.Warn("Lane identity not valid!");
+        client->Close();
+        client.reset();
+        return nullptr;
+      }
+
+      auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::HELLO, ptr->Identity());
+      if(!p.Wait(1000))  // TODO: Make timeout configurable
+      {
+        logger.Warn("Connection timed out - closing");
+        client->Close();
+        client.reset();
+        return nullptr;      
+      }
+
+      p.As(peer_identity);
+    }    
           
     // Exchaning info
-    auto p = client->Call(identity_protocol_, LaneIdentityProtocol::GET_LANE_NUMBER);
-    p.Wait(1000);
+    auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::GET_LANE_NUMBER);
+    p.Wait(1000); // TODO: Make timeout configurable
     if(p.As<LaneIdentity::lane_type>() != ident->GetLaneNumber() ) {
       logger.Error("Could not connect to lane with different lane number: ", p.As<LaneIdentity::lane_type>(), " vs ", ident->GetLaneNumber() );
       client->Close();
@@ -163,15 +185,16 @@ public:
     
     details->is_outgoing = true;
     details->is_peer = true;
-    
+    details->identity = peer_identity;
+
     return client;
     
   }
   
   /// @}
 private:
-  protocol_handler_type identity_protocol_;
-  std::weak_ptr< LaneIdentity > identity_;  
+  protocol_handler_type lane_identity_protocol_;
+  std::weak_ptr< LaneIdentity > lane_identity_;  
   client_register_type register_;
   network_manager_type manager_;
 

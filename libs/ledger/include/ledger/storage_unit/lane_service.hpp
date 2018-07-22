@@ -15,6 +15,8 @@
 #include"ledger/chain/transaction.hpp"
 #include"ledger/chain/transaction_serialization.hpp"
 #include"network/management/connection_register.hpp"
+#include"crypto/prover.hpp"
+#include"crypto/ecdsa.hpp"
 
 #include <iomanip>
 
@@ -57,8 +59,14 @@ public:
     : super_type(port, tm) {
 
     fetch::logger.Warn("Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port);
-
     thread_pool_ = network::MakeThreadPool(1);
+
+    // Setting lane certificate up
+    // TODO: Load from somewhere
+    crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
+    certificate->GenerateKeys();
+    certificate_.reset( certificate );
+
 
     // format and generate the prefix
     std::string prefix;
@@ -70,7 +78,7 @@ public:
     }
 
     // Lane Identity
-    identity_ = std::make_shared<identity_type>(register_, tm);    
+    identity_ = std::make_shared<identity_type>(register_, tm, certificate_->identity()); 
     identity_->SetLaneNumber( lane );
     identity_->SetTotalLanes( total_lanes );
     identity_protocol_.reset(new identity_protocol_type(identity_.get()));
@@ -159,6 +167,8 @@ private:
   std::unique_ptr<tx_sync_protocol_type> tx_sync_protocol_;
   thread_pool_type thread_pool_;
 
+  mutex::Mutex certificate_lock_;
+  std::unique_ptr<crypto::Prover> certificate_;
 };
 
 }
