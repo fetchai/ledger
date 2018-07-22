@@ -207,6 +207,7 @@ class LogWrapper {
   LogWrapper() { log_ = new DefaultLogger(); }
   
   ~LogWrapper() {
+    std::lock_guard<std::mutex> lock(mutex_);
     if(log_!=nullptr) delete log_;
   }
 

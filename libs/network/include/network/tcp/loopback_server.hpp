@@ -99,14 +99,13 @@ public:
 
   ~LoopbackServer()
   {
-    acceptor_.reset();
     networkManager_.Stop();
   }
 
 private:
   // IO objects guaranteed to have lifetime less than the io_service/networkManager
   uint16_t                                      port_;
-  NetworkManager                                 networkManager_;
+  NetworkManager                                networkManager_;
   std::weak_ptr<asio::ip::tcp::tcp::acceptor>   acceptor_;
   std::atomic<bool>                             finished_setup_{false};
 
@@ -128,7 +127,6 @@ private:
     finished_setup_ = true;
   }
 };
-
 
 }
 }

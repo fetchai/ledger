@@ -10,13 +10,10 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/byte_array.hpp"
 
-#include "core/mutex.hpp"
-
 #include "network/fetch_asio.hpp"
 
 #include <atomic>
 #include <memory>
-#include <mutex>
 
 namespace fetch
 {
@@ -26,7 +23,7 @@ namespace network
 class TCPClient
 {
  public:
-  typedef NetworkManager                             network_manager_type;
+  typedef NetworkManager                            network_manager_type;
   typedef uint64_t                                  handle_type;
   typedef TCPClientImplementation                   implementation_type;
   typedef std::shared_ptr<implementation_type>      pointer_type;
@@ -67,9 +64,8 @@ class TCPClient
   {
     if(pointer_) {      
       pointer_->ClearClosures();
+      pointer_->Close();
     }
-    
-    //pointer_->Close(); // TODO: (`HUT`) : look at with Ed, this appears to induce segfault
   }
 
   void OnMessage(std::function< void(network::message_type const& msg) > const &f) 
@@ -117,9 +113,8 @@ class TCPClient
   typename implementation_type::weak_ptr_type connection_pointer() 
   {
     return pointer_->connection_pointer();
-    
   }
-  
+
 protected:
 
   pointer_type  pointer_;
