@@ -3,12 +3,14 @@
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
+#include <openssl/ecdsa.h>
 
 #include <type_traits>
 
 namespace fetch {
 namespace crypto {
 namespace openssl {
+
 namespace memory {
 
     enum eDeleteStrategy : int {
@@ -18,43 +20,44 @@ namespace memory {
 
     namespace detail {
 
-        namespace {
-            template <typename T>
-            using FreeFunctionPtr = void(*)(T*);
+        template <typename T>
+        using FreeFunctionPtr = void(*)(T*);
 
-            template <typename T
-                    , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
-            struct DeleterPrimitive
-            {
-                static const FreeFunctionPtr<T> function;
-            };
-
-            template<>
-            const FreeFunctionPtr<BN_CTX> DeleterPrimitive<BN_CTX>::function = &BN_CTX_free;
-
-            template<>
-            const FreeFunctionPtr<EC_KEY> DeleterPrimitive<EC_KEY>::function = &EC_KEY_free;
-
-            template<>
-            const FreeFunctionPtr<BIGNUM> DeleterPrimitive<BIGNUM>::function = &BN_free;
-            template<>
-            const FreeFunctionPtr<BIGNUM> DeleterPrimitive<BIGNUM, eDeleteStrategy::clearing>::function = &BN_clear_free;
-
-            template<>
-            const FreeFunctionPtr<EC_POINT> DeleterPrimitive<EC_POINT>::function = &EC_POINT_free;
-            template<>
-            const FreeFunctionPtr<EC_POINT> DeleterPrimitive<EC_POINT, eDeleteStrategy::clearing>::function = &EC_POINT_clear_free;
-
-            template<>
-            const FreeFunctionPtr<EC_GROUP> DeleterPrimitive<EC_GROUP>::function = &EC_GROUP_free;
-            template<>
-            const FreeFunctionPtr<EC_GROUP> DeleterPrimitive<EC_GROUP, eDeleteStrategy::clearing>::function = &EC_GROUP_clear_free;
-
-        }
 
         template <typename T
-                 , const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical
-                 , typename T_DeleterPrimitive = detail::DeleterPrimitive<typename std::remove_const<T>::type, P_DeleteStrategy>>
+                , eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
+        struct DeleterPrimitive
+        {
+            static const FreeFunctionPtr<T> function;
+        };
+
+        template<>
+        const FreeFunctionPtr<BN_CTX> DeleterPrimitive<BN_CTX>::function;
+
+        template<>
+        const FreeFunctionPtr<EC_KEY> DeleterPrimitive<EC_KEY>::function;
+
+        template<>
+        const FreeFunctionPtr<BIGNUM> DeleterPrimitive<BIGNUM>::function;
+        template<>
+        const FreeFunctionPtr<BIGNUM> DeleterPrimitive<BIGNUM, eDeleteStrategy::clearing>::function;
+
+        template<>
+        const FreeFunctionPtr<EC_POINT> DeleterPrimitive<EC_POINT>::function;
+        template<>
+        const FreeFunctionPtr<EC_POINT> DeleterPrimitive<EC_POINT, eDeleteStrategy::clearing>::function;
+
+        template<>
+        const FreeFunctionPtr<EC_GROUP> DeleterPrimitive<EC_GROUP>::function;
+        template<>
+        const FreeFunctionPtr<EC_GROUP> DeleterPrimitive<EC_GROUP, eDeleteStrategy::clearing>::function;
+
+        template<>
+        const FreeFunctionPtr<ECDSA_SIG> DeleterPrimitive<ECDSA_SIG>::function;
+
+        template <typename T
+                , eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical
+                , typename T_DeleterPrimitive = detail::DeleterPrimitive<typename std::remove_const<T>::type, P_DeleteStrategy>>
         struct OpenSSLDeleter {
             using Type = T;
             using DeleterPrimitive = T_DeleterPrimitive;
@@ -66,7 +69,8 @@ namespace memory {
                 (*DeleterPrimitive::function)(const_cast<typename std::remove_const<T>::type *>(ptr));
             }
         };
-    }
+
+    } //* detail namespace
 
 } //* memory namespace
 } //* openssl namespace
