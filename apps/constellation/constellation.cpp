@@ -106,14 +106,11 @@ Constellation::Constellation(uint16_t port_start,
   main_chain_miner_->start();
 
 
-  
-  
-  
   // define the list of HTTP modules to be used
   http_modules_ = {
     std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
     std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_),
-    std::make_shared<p2p::ExploreHttpInterface>(p2p_.get())
+    std::make_shared<p2p::ExploreHttpInterface>(p2p_.get(), main_chain_service_->mainchain() )
   };
 
   // create and register the HTTP modules
@@ -127,11 +124,6 @@ Constellation::Constellation(uint16_t port_start,
 void Constellation::Run(peer_list_type const &initial_peers) {
   using namespace std::chrono;
   using namespace std::this_thread;
-
-  // expose our own interface
-  for (uint32_t i = 0; i < num_lanes_; ++i) {
-
-  }
 
   p2p_->AddMainChain(
     interface_address_,

@@ -60,7 +60,8 @@ static inline Identity InvalidIdentity()
 }
 
 template <typename T>
-T& Serialize(T& serializer, Identity const& data) {
+T& Serialize(T& serializer, Identity const& data) 
+{
   serializer << data.is_valid();
   serializer << data.parameters();
   serializer << data.identifier();  
