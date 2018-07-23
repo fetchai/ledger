@@ -48,6 +48,12 @@ public:
              crypto::Identity const& iden) 
   {    
     auto details = register_.GetDetails(client);
+
+    if(!details)
+    {
+      fetch::logger.Error("Failed to find client in client register! ", __FILE__, " ", __LINE__);
+      assert(details);
+    } else
     // TODO: Verify identity if already exists
     { 
       std::lock_guard< mutex::Mutex > lock(*details);

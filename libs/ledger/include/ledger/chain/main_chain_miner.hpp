@@ -30,12 +30,15 @@ public:
                  std::size_t num_slices,
                  chain::MainChain &mainChain,
                  chain::BlockCoordinator &blockCoordinator,
-                 miner_type &miner)
+                 miner_type &miner,
+                 uint64_t minerNumber
+                 )
     : num_lanes_{num_lanes}
     , num_slices_{num_slices}
     , mainChain_{mainChain}
     , blockCoordinator_{blockCoordinator}
     , miner_{miner}
+    , minerNumber_{minerNumber}
   {
   }
 
@@ -92,7 +95,6 @@ private:
   }
 
   std::atomic<bool>              stop_{false};
-  uint64_t                       minerNumber_{0};
   std::size_t                    target_ = 15;
   std::size_t                    num_lanes_;
   std::size_t                    num_slices_;
@@ -101,6 +103,7 @@ private:
   chain::BlockCoordinator        &blockCoordinator_;
   miner_type                     &miner_;
   std::thread                    thread_;
+  uint64_t                       minerNumber_{0};
 };
 
 }

@@ -56,7 +56,7 @@ class MainChain
   typedef fetch::byte_array::ByteArray                  block_hash;
 
   // Hard code genesis
-  MainChain(uint32_t minerNumber = 99) :
+  MainChain(uint32_t minerNumber = std::numeric_limits<uint32_t>::max()) :
     minerNumber_{minerNumber}
   {
     block_type genesis;
@@ -73,7 +73,10 @@ class MainChain
     tips_[genesis.hash()] = tip;
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
 
-    RecoverFromFile();
+    if(minerNumber_ != std::numeric_limits<uint32_t>::max())
+    {
+      RecoverFromFile();
+    }
     constructing_ = false;
   }
 
@@ -457,7 +460,7 @@ private:
 
   void WriteToFile()
   {
-    if(constructing_) return;
+    if(constructing_ || minerNumber_ == std::numeric_limits<uint32_t>::max()) return;
 
     // Add confirmed blocks to file
     block_type block = blockChain_.at(heaviest_.second);

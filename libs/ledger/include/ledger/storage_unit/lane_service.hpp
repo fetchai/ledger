@@ -58,6 +58,8 @@ public:
     uint16_t port, fetch::network::NetworkManager tm, bool start_sync = true)
     : super_type(port, tm) {
 
+    this->SetConnectionRegister(register_);
+
     fetch::logger.Warn("Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port);
     thread_pool_ = network::MakeThreadPool(1);
 

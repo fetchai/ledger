@@ -124,6 +124,11 @@ public:
   std::shared_ptr< LockableDetails > GetDetails(connection_handle_type const &i) 
   {
     std::lock_guard< mutex::Mutex > lock( details_lock_ );
+    if(details_.find(i) == details_.end())
+    {
+      return nullptr;
+    }
+
     return details_[i];
   }
 

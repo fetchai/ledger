@@ -38,8 +38,7 @@ Constellation::Constellation(uint16_t port_start,
       }
       if(ep.is_lane) {
         storage_->TryConnect( ep );
-      }      
-
+      }
     });
 
 
@@ -95,7 +94,8 @@ Constellation::Constellation(uint16_t port_start,
       num_slices_,
       *main_chain_service_->mainchain(),
       *block_coordinator_,
-      *transaction_packer_
+      *transaction_packer_,
+      main_chain_port_
     }
   );
 
