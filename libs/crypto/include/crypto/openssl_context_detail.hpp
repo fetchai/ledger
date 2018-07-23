@@ -9,24 +9,28 @@ namespace openssl {
 namespace context {
 namespace detail {
 
-namespace {
+template <typename T>
+using FunctionPtr = void(*)(T*);
 
-    template <typename T>
-    using FunctionPtr = void(*)(T*);
+//template <typename T>
+//struct SessionPrimitive;
+//
+//template <>
+//struct SessionPrimitive<BN_CTX>
+//{
+//    static const FunctionPtr<BN_CTX> start;
+//    static const FunctionPtr<BN_CTX> end;
+//};
 
-    template <typename T>
-    struct SessionPrimitive
-    {
-        static const FunctionPtr<T> start;
-        static const FunctionPtr<T> end;
-    };
+template <typename T>
+struct SessionPrimitive
+{
+    static const FunctionPtr<T> start;
+    static const FunctionPtr<T> end;
+};
 
-    template<>
-    const FunctionPtr<BN_CTX> SessionPrimitive<BN_CTX>::start = &BN_CTX_start;
-    template<>
-    const FunctionPtr<BN_CTX> SessionPrimitive<BN_CTX>::end = &BN_CTX_end;
-
-} //* namespace
+template<> const FunctionPtr<BN_CTX> SessionPrimitive<BN_CTX>::start;
+template<> const FunctionPtr<BN_CTX> SessionPrimitive<BN_CTX>::end;
 
 } //* namespace detail
 } //* context namespace
