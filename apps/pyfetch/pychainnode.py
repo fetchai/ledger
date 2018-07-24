@@ -89,6 +89,10 @@ class SwarmAgentNaive(object):
             self.SendPing(host)
             return
 
+        self.subs.append(host)
+        self.SendPing(host)
+        self.swarm.DoDiscoverBlocks(host, 0);
+
         weightedSubList = [
             {
                 'peer': x,
@@ -100,16 +104,21 @@ class SwarmAgentNaive(object):
         weightedSubList.sort(key=lambda x: x['weight'])
         self.subs = [ x['peer'] for x in weightedSubList ]
 
-        while len(self.subs) >= self.maxpeers:
+        while len(self.subs) > self.maxpeers:
             x = self.subs.pop(0)
             say("AGENT_API PYCHAIN UNSUBSCRIBE ", x);
             self.swarm.DoStopBlockDiscover(x, 0)
-        self.subs.append(host)
-        self.SendPing(host)
-        self.swarm.DoDiscoverBlocks(host, 0);
 
         self.swarm.SetSitrep(json.dumps({
-            "subscriptions": weightedSubList
+            "datatime": time.time(),
+            "ident": self.swarm.queryOwnLocation(),
+            "subscriptions": [
+                {
+                    'peer': x,
+                    'weight': self.swarm.GetKarma(x),
+                }
+                for x in self.subs
+            ]
         }))
 
         say("AGENT_API PYCHAIN SUBSCRIBE ", host);
@@ -148,12 +157,13 @@ class SwarmAgentNaive(object):
             self.swarm.AddKarmaMax(peerListMember, 1.0, 1.0);
             self.swarm.DoPing(peerListMember)
         for introListMember in self.introductions:
-            self.swarm.AddKarmaMax(introListMember, 100.0, 100.0);
+            self.swarm.AddKarmaMax(introListMember, 500.0, 500.0);
 
     def onNewPeerDiscovered(self, host):
         if host == self.swarm.queryOwnLocation():
             return
         #say("AGENT_API PYCHAIN NEW PEER ", host);
+        self.swarm.AddKarma(host, 20.0);
 
     def onNewBlockIdFound(self, host, blockid):
         say("AGENT_API PYCHAIN NEWBLOCK ", blockid)
