@@ -176,7 +176,7 @@ public:
     while((n < 10) && (!client->is_alive())) {
       std::this_thread::sleep_for(std::chrono::milliseconds(2));
       ++n;
-   }
+    }
 
     if(n >= 10 ) {
       fetch::logger.Error("Connection never came to live in P2P module");

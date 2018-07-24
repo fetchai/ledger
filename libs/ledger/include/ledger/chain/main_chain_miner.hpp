@@ -8,6 +8,7 @@
 
 #include <thread>
 #include <random>
+#include <chrono>
 
 namespace fetch
 {
@@ -63,39 +64,75 @@ public:
   }
 
 private:
+  using clock_type = std::chrono::high_resolution_clock;
+  using timestamp_type = clock_type::time_point;
+
+  template <typename T>
+  timestamp_type CalculateNextBlockTime(T &rng)
+  {
+    static constexpr uint32_t MAX_BLOCK_JITTER_US = 5000;
+    static constexpr uint32_t BLOCK_PERIOD_MS = 4000;
+
+    timestamp_type block_time = clock_type::now() + std::chrono::milliseconds{BLOCK_PERIOD_MS};
+    block_time += std::chrono::microseconds{rng() % MAX_BLOCK_JITTER_US};
+
+    return block_time;
+  }
 
   void MinerThreadEntrypoint()
   {
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
+    // schedule the next block time
+    timestamp_type next_block_time = CalculateNextBlockTime(rng);
+
+    block_hash previous_heaviest;
+
     while(!stop_)
     {
       // Get heaviest block
       auto &block = mainChain_.HeaviestBlock();
 
-      // Create another block sequential to previous
-      block_type nextBlock;
-      body_type nextBody;
-      nextBody.block_number = block.body().block_number + 1;
-      nextBody.previous_hash = block.hash();
-      nextBody.miner_number = minerNumber_;
+      // Handle case for network updates to heaviest block
+      if (block.hash() != previous_heaviest) {
+        fetch::logger.Info("==> New heaviest block: ", byte_array::ToBase64(block.hash()), " from: ", minerNumber_);
 
-      // Pack the block with transactions
-      miner_.GenerateBlock(nextBody, num_lanes_, num_slices_);
-      nextBlock.SetBody(nextBody);
-      nextBlock.UpdateDigest();
+        // schedule the next block
+        next_block_time = CalculateNextBlockTime(rng);
 
-      // Mine the block
-      nextBlock.proof().SetTarget(target_);
-      dummy_miner_type::Mine(nextBlock);
+        previous_heaviest = block.hash().Copy();
 
-      // Add the block
-      blockCoordinator_.AddBlock(nextBlock);
+      } else if (clock_type::now() >= next_block_time) {
+        fetch::logger.Info("==> Creating new block from: ", byte_array::ToBase64(block.hash()));
 
-      std::this_thread::sleep_for(std::chrono::seconds{5});
+        // Create another block sequential to previous
+        block_type nextBlock;
+        body_type nextBody;
+        nextBody.block_number = block.body().block_number + 1;
+        nextBody.previous_hash = block.hash();
+        nextBody.miner_number = minerNumber_;
+
+        // Pack the block with transactions
+        miner_.GenerateBlock(nextBody, num_lanes_, num_slices_);
+        nextBlock.SetBody(nextBody);
+        nextBlock.UpdateDigest();
+
+        // Mine the block
+        nextBlock.proof().SetTarget(target_);
+        dummy_miner_type::Mine(nextBlock);
+
+        // Add the block
+        blockCoordinator_.AddBlock(nextBlock);
+
+      } else {
+        std::this_thread::sleep_for(std::chrono::milliseconds{10});
+      }
     }
   }
 
   std::atomic<bool>              stop_{false};
-  std::size_t                    target_ = 15;
+  std::size_t                    target_ = 8;
   std::size_t                    num_lanes_;
   std::size_t                    num_slices_;
 
