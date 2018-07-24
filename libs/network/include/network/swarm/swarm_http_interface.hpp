@@ -39,7 +39,7 @@ public:
                     );
     HTTPModule::Get("/sitrep",
                     [this](fetch::http::ViewParameters const &params, fetch::http::HTTPRequest const &req) \
-                    { return this->GetPeers(params, req); }
+                    { return this->GetSitrep(params, req); }
                     );
   }
 

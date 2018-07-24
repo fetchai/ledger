@@ -5,6 +5,7 @@ import random
 import sys
 import time
 import datetime
+import json
 
 from fetchnetwork.swarm import Swarm, say
 from fetchledger.chain import MainChain, MainChainBlock
@@ -88,18 +89,35 @@ class SwarmAgentNaive(object):
             self.SendPing(host)
             return
 
+        weightedSubList = [
+            {
+                'peer': x,
+                'weight': self.swarm.GetKarma(x),
+            }
+            for x in self.subs
+        ]
+
+        weightedSubList.sort(key=lambda x: x['weight'])
+        self.subs = [ x['peer'] for x in weightedSubList ]
+
         while len(self.subs) >= self.maxpeers:
             x = self.subs.pop(0)
-            say("AGENT_API PYCHAIN SUBSCRIBE ", x);
+            say("AGENT_API PYCHAIN UNSUBSCRIBE ", x);
             self.swarm.DoStopBlockDiscover(x, 0)
         self.subs.append(host)
+        self.SendPing(host)
         self.swarm.DoDiscoverBlocks(host, 0);
+
+        self.swarm.SetSitrep(json.dumps({
+            "subscriptions": weightedSubList
+        }))
+
         say("AGENT_API PYCHAIN SUBSCRIBE ", host);
         self.subs.append(host)
 
 
     def onIdle(self):
-        goodPeers = self.swarm.GetPeers(1000, -10000)
+        goodPeers = self.swarm.GetPeers(self.maxpeers, 0)
 
         say("PYCHAINNODE===> idle1 ", len(goodPeers))
         goodPeers = [ x for x in goodPeers if x not in self.introductions ]
@@ -110,7 +128,7 @@ class SwarmAgentNaive(object):
             say("quiet")
             return 100
 
-        weightedPeers = [(x,self.swarm.GetKarma(x)) for x in goodPeers]
+        weightedPeers = [(x,max(self.swarm.GetKarma(x), 0)) for x in goodPeers]
         total = sum([ x[1] for x in weightedPeers ])
         weight = random.random() * total
 
@@ -144,7 +162,7 @@ class SwarmAgentNaive(object):
 
     def onBlockIdRepeated(self, host, blockid):
         # Awwww, we know about this.
-        self.swarm.AddKarmaMax(host, 1.0, 1.0);
+        self.swarm.AddKarma(host, -1.0);
 
     def onLooseBlock(self, host, blockid):
         say("AGENT_API PYCHAIN LOOSE ", host, ' ', blockid)
@@ -185,7 +203,7 @@ def main():
     params.add_argument("-maxpeers",       type=int, help="Ideally how many peers to maintain good connections to.", default=3)
     params.add_argument("-idlespeed",      type=int, help="The rate, in milliseconds, of generating idle events to the Swarm Agent.", default=100)
     params.add_argument("-peers",          type=str, help="Comma separated list of peer locations.", default=",".join(PEERS))
-    params.add_argument("-introduce",      default=False, help="Promote myself as a peer in order to join swarm.", action='store_true')
+    params.add_argument("-introduce",      default=True, help="Promote myself as a peer in order to join swarm.", action='store_true')
     params.add_argument("-chainident",     help="a number which represents which chain this is part of (for monitoring to use)", type=int, default=0)
 
     config = params.parse_args(sys.argv[1:])
