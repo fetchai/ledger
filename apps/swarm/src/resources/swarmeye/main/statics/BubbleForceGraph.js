@@ -366,6 +366,7 @@ class BubbleForceGraph
             node.y = node.iy || ((Math.random() *.7) +.15) * self.height;
         });
 
+        debugger;
         self.graphData.links.push(...addableLinks);
         self.graphData.nodes.unshift(...addableNodes);
 

@@ -5,6 +5,8 @@ from multiprocessing import Pool
 import time
 import json
 
+from utils.messages import title, note, text, info, debug, progress, warn, error, fatal
+
 def poll(url, nodenumber):
     ident = "127.0.0.1:{}".format(nodenumber + 9000)
     port = nodenumber + 10000
@@ -17,16 +19,19 @@ def poll(url, nodenumber):
             r = requests.get(fullurl, timeout=100)
             code = r.status_code
             if code == 200:
-                data = json.loads(r.content.decode("utf-8", "strict"))
+                if r.content:
+                    data = json.loads(r.content.decode("utf-8", "strict"))
+                else:
+                    data = None
             else:
                 data = None
         except requests.exceptions.Timeout as ex:
             data = None
             code = -1
-            print("Timeout:", ident)
+            warn("Timeout:", ident)
         except requests.exceptions.ConnectionError as ex:
             data = None
-            print("Denied:", ident)
+            info("Denied:", ident)
             code = -2
 
     except Exception as x:
@@ -53,6 +58,9 @@ class Getter(object):
     def start(self):
         self.thread.start()
 
+    def stop(self):
+        self.thread.stop()
+
     class WorkerThread(threading.Thread):
         def __init__(self, owner):
             self.done = False
@@ -60,6 +68,9 @@ class Getter(object):
             self.port = 0
             super().__init__(group=None, target=None, name="pollingthread")
             self.myPool = Pool(20)
+
+        def stop(self):
+            self.done = True
 
         def run(self):
             print("MONITORING START")

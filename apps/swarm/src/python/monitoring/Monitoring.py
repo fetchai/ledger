@@ -9,6 +9,9 @@ import json
 from multiprocessing import Pool
 from monitoring import Getter
 
+from utils.messages import title, note, text, info, debug, progress, warn, error, fatal
+
+
 def workfunc(ident):
     return (
         poll(ident),
@@ -16,21 +19,21 @@ def workfunc(ident):
         )
 
 class NodeNumberGenerator(object):
-    def __init__(self):
-        pass
+    def __init__(self, limit=25):
+        self.limit = limit
 
     def getall(self):
-        for x in range(0, 25):
+        for x in range(0, self.limit):
             yield x
 
 class Monitoring(object):
-    def __init__(self):
-        print("MONITORING START?")
+    def __init__(self, nodenumbergenerator=NodeNumberGenerator()):
         self.getter = Getter.Getter(
-            NodeNumberGenerator(),
+            nodenumbergenerator,
             {
-                '/peers': self.newData,
+                #'/peers': self.newData,
                 '/mainchain': self.newChainData,
+                '/sitrep': self.newSitrep,
             }
             )
         self.getter.start()
@@ -38,6 +41,11 @@ class Monitoring(object):
         self.world = {}
         self.heaviests = {}
         self.chain = {}
+
+    def newSitrep(self, nodenumber, ident, url, code, data):
+        progress("SITREP:", data)
+        peerlist = data["subscriptions"]
+        self.setPeerList(ident, peerlist)
 
     def newChainData(self, nodenumber, ident, url, code, data):
         blocks = data["blocks"]
@@ -66,16 +74,16 @@ class Monitoring(object):
         return {}
 
     def close(self):
-        self.thread.done = True
-        self.thread.join(100)
+        self.getter.stop()
 
-    def newData(self, nodenumber, ident, url, code, data):
-        peers = data["peers"];
-
+    def setPeerList(self, ident, peerlist):
         self.world.setdefault(ident, {})
         self.world[ident].setdefault("peers", [])
-        self.world[ident]["peers"] = peers
+        self.world[ident]["peers"] = peerlist
+
+    def newData(self, nodenumber, ident, url, code, data):
+        peerlist = data["peers"];
+        self.setPeerList(ident, peerlist)
 
     def badNode(self, ident):
         self.world.pop(ident, None)
-

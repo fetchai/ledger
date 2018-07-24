@@ -17,7 +17,7 @@ import contextlib
 import random
 
 from functools import reduce
-from monitoring.Monitoring import Monitoring
+from monitoring.Monitoring import Monitoring, NodeNumberGenerator
 
 from bottle import bottle
 
@@ -378,7 +378,8 @@ def get_consensus_data(context, mon):
 def get_slash():
     redirect("/static/monitor.html")
 
-flags.Flag(g_port = "port", help = "Which port to run on", required = True)
+flags.Flag(g_scan = "scan", help = "Scan nodes zero to..?", default = 25, type=int)
+flags.Flag(g_port = "port", help = "Which port to run on", required = True, type=int)
 flags.Flag(g_ssl = "ssl", type=bool, help = "Run https", default = False)
 flags.Flag(g_certfile = "cert", help = "Certificate", default = None)
 flags.Flag(g_statics_dir=flags.AUTOFLAG, help="Specify the dir containing static html/css/javascript elements.", default="main/statics/")
@@ -390,12 +391,14 @@ def main():
 
     context = {}
 
+    nodenumbergenerator = NodeNumberGenerator(g_scan)
+
     root = bottle.Bottle()
     root.route('/static/<filepath:path>', method='GET', callback=functools.partial(get_static))
     root.route('/data', method='GET', callback=functools.partial(get_data, context))
     root.route('/', method='GET', callback=functools.partial(get_slash))
 
-    with contextlib.closing(Monitoring()) as myMonitoring:
+    with contextlib.closing(Monitoring(nodenumbergenerator)) as myMonitoring:
         root.route('/network', method='GET', callback=functools.partial(get_data, context, myMonitoring))
         root.route('/chain', method='GET', callback=functools.partial(get_chain_data, context, myMonitoring))
         root.route('/consensus', method='GET', callback=functools.partial(get_consensus_data, context, myMonitoring))
