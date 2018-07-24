@@ -75,15 +75,7 @@ class ConstByteArray {
   ~ConstByteArray() = default;
 
   explicit operator std::string() const {
-#if 1
     return  {char_pointer(), length_};
-#else
-    std::string ret;
-    ret.resize(length_);
-    char const *cstr = char_pointer();
-    for (std::size_t i = 0; i < length_; ++i) ret[i] = cstr[i];
-    return ret;
-#endif
   }
 
   container_type const &operator[](std::size_t const &n) const {

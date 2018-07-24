@@ -172,7 +172,7 @@ class HTTPRequest {
     } else if (method == "delete") {
       method_ = Method::DELETE;
     } else if (method == "options") {
-      method_ = Method ::OPTIONS;
+      method_ = Method::OPTIONS;
     }
 
     ++i;
