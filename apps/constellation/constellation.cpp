@@ -131,8 +131,6 @@ void Constellation::Run(peer_list_type const &initial_peers) {
     );
   p2p_->Start();
 
-  
-
   // Make the initial p2p connections
   // Note that we first connect after setting up the lanes to prevent that nodes will be
   // too fast in trying to set up lane connections.
@@ -142,8 +140,6 @@ void Constellation::Run(peer_list_type const &initial_peers) {
     p2p_->Connect(peer.address(), peer.port());
   }
 
-
-  
   // monitor loop
   while (active_) {
     logger.Debug("Still alive...");

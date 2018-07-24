@@ -93,7 +93,7 @@ class MainChain
     // First check if block already exists
     if(blockChain_.find(block.hash()) != blockChain_.end())
     {
-      fetch::logger.Warn("Mainchain: Trying to add already seen block");
+//      fetch::logger.Warn("Mainchain: Trying to add already seen block");
       return false;
     }
     else

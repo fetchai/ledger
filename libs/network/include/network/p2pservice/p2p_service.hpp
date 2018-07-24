@@ -51,14 +51,13 @@ public:
   {
     running_ = false;
     thread_pool_ = network::MakeThreadPool(1);
-    fetch::logger.Warn("Establishing P2P Service on rpc://127.0.0.1:", port);
+    fetch::logger.Warn("Establishing P2P Service on rpc://0.0.0.0:", port);
 
     // TODO: Load from somewhere
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
     certificate->GenerateKeys();
     certificate_.reset( certificate );
 
-    
     // Listening for new connections
     this->SetConnectionRegister(register_);
 
@@ -356,8 +355,7 @@ protected:
       double ms = double(std::chrono::duration_cast<std::chrono::milliseconds>(end - track_start_).count());
       if(ms > 5000) tracking_peers_ = false;
     }
-    
-      
+
     // Requesting new connections as needed
     if(incoming_.size() < min_connections_ ) {
       if( !tracking_peers_ ) {
