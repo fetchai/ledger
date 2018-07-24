@@ -13,9 +13,9 @@ namespace openssl {
 
 
 
-template<typename T_Hasher = SHA256
+template<eECDSASignatureBinaryDataFormat P_ECDSASignatureBinaryDataFormat = eECDSASignatureBinaryDataFormat::canonical
+       , typename T_Hasher = SHA256
        , int P_ECDSA_Curve_NID = NID_secp256k1
-       , eECDSASignatureBinaryDataFormat P_ECDSASignatureBinaryDataFormat = eECDSASignatureBinaryDataFormat::canonical
        , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSASignature
 {
@@ -208,6 +208,19 @@ public:
     }
 
 
+    const byte_array::ConstByteArray& hash() {
+        return hash_;
+    }
+
+    const shrd_ptr_type<const ECDSA_SIG>& signature_ECDSA_SIG() {
+        return signature_ECDSA_SIG;
+    }
+
+    const byte_array::ConstByteArray& signature() {
+        return signature_;
+    }
+
+
 
     static ECDSASignature Sign(
         private_key_type const &private_key,
@@ -261,17 +274,17 @@ public:
 
 
 
-template<typename T_Hasher
+template<eECDSASignatureBinaryDataFormat P_ECDSASignatureBinaryDataFormat
+       , typename T_Hasher
        , int P_ECDSA_Curve_NID
-       , eECDSASignatureBinaryDataFormat P_ECDSASignatureBinaryDataFormat
        , point_conversion_form_t P_ConversionForm>
-const std::size_t ECDSASignature<T_Hasher, P_ECDSA_Curve_NID, P_ECDSASignatureBinaryDataFormat, P_ConversionForm>::r_size_ = ecdsa_curve_type::signatureSize>>1;
+const std::size_t ECDSASignature<P_ECDSASignatureBinaryDataFormat, T_Hasher, P_ECDSA_Curve_NID, P_ConversionForm>::r_size_ = ecdsa_curve_type::signatureSize>>1;
 
-template<typename T_Hasher
+template<eECDSASignatureBinaryDataFormat P_ECDSASignatureBinaryDataFormat
+       , typename T_Hasher
        , int P_ECDSA_Curve_NID
-       , eECDSASignatureBinaryDataFormat P_ECDSASignatureBinaryDataFormat
        , point_conversion_form_t P_ConversionForm>
-const std::size_t ECDSASignature<T_Hasher, P_ECDSA_Curve_NID, P_ECDSASignatureBinaryDataFormat, P_ConversionForm>::s_size_ = ECDSASignature<T_Hasher, P_ECDSA_Curve_NID, P_ECDSASignatureBinaryDataFormat, P_ConversionForm>::r_size_;
+const std::size_t ECDSASignature<P_ECDSASignatureBinaryDataFormat, T_Hasher, P_ECDSA_Curve_NID, P_ConversionForm>::s_size_ = ECDSASignature<P_ECDSASignatureBinaryDataFormat, T_Hasher, P_ECDSA_Curve_NID, P_ConversionForm>::r_size_;
 
 
 

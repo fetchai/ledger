@@ -27,6 +27,10 @@ template<> const std::size_t ECDSACurve<NID_secp256k1>::privateKeySize;
 template<> const std::size_t ECDSACurve<NID_secp256k1>::publicKeySize;
 template<> const std::size_t ECDSACurve<NID_secp256k1>::signatureSize;
 
+
+
+
+
 } //* openssl namespace
 } //* crypto namespace
 } //* fetch namespace
