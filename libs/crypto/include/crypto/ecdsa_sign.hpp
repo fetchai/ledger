@@ -1,7 +1,6 @@
 #ifndef CRYPTO_ECDSA_SIGN_HPP
 #define CRYPTO_ECDSA_SIGN_HPP
 
-#include "crypto/openssl_memory.hpp"
 #include "crypto/sha256.hpp"
 #include "crypto/openssl_ecdsa_private_key.hpp"
 
