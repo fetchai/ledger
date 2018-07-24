@@ -249,13 +249,13 @@ public:
     // TODO: connect
     {      
       std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
-      EntryPoint lane_details;
+      EntryPoint mainchain_details;
 
-      lane_details.host.insert( host );
-      lane_details.port = port;
+      mainchain_details.host.insert( host );
+      mainchain_details.port = port;
       //     lane_details.public_key = "todo";
-      lane_details.is_mainchain = true;
-      my_details_->details.entry_points.push_back( lane_details );
+      mainchain_details.is_mainchain = true;
+      my_details_->details.entry_points.push_back( mainchain_details );
     }
 
     identity_->MarkProfileAsUpdated();
