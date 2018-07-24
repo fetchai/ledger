@@ -5,6 +5,7 @@
 
 namespace fetch {
 namespace crypto {
+namespace openssl {
 
 namespace {
 
@@ -38,10 +39,11 @@ TEST_F(ECDCSASignatureTest, test_sign_verify_cycle) {
     //* Production code:
     openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
 
-    ECDSASignature signature {ECDSASignature::Sign(priv_key, test_data)};
+    using ecdsa_signature_type = ECDSASignature<>;
+    ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
 
     const auto verification_result {
-        signature(priv_key.publicKey(), test_data)};
+        signature.Verify(priv_key.publicKey(), test_data)};
 
     //* Expectations:
     EXPECT_TRUE(verification_result);
@@ -114,6 +116,7 @@ TEST_F(ECDCSASignatureTest, test_sign_verify_cycle) {
 
 } // namespace anonymous
 
+} // namespace openssl
 } // namespace crypto
 } // namespace fetch
 

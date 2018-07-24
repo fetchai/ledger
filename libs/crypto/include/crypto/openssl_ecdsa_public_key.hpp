@@ -25,6 +25,14 @@ using uniq_ptr_type = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
 
 
 
+enum eECDSASignatureBinaryDataFormat : int
+{
+    canonical,
+    DER
+};
+
+
+
 template<
     int P_ECDSA_Curve_NID = NID_secp256k1,
     point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
