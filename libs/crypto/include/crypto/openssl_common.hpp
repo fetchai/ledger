@@ -13,7 +13,6 @@ template <int P_ECDSA_Curve_NID = NID_secp256k1>
 struct ECDSACurve
 {
     static const int nid;
-    //static const int nid;
     static const char * const sn;
     static const std::size_t privateKeySize;
     static const std::size_t publicKeySize;

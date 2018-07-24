@@ -14,16 +14,6 @@ template<int P_ECDSA_Curve_NID = NID_secp256k1
 class ECDSAPrivateKey
 {
 public:
-    using del_strat_type = memory::eDeleteStrategy;
-
-    template <typename T
-            , del_strat_type P_DeleteStrategy = del_strat_type::canonical>
-    using shrd_ptr_type = memory::ossl_shared_ptr<T, P_DeleteStrategy>;
-
-    template <typename T
-            , del_strat_type P_DeleteStrategy = del_strat_type::canonical>
-    using uniq_ptr_type = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
-
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
     using public_key_type = ECDSAPublicKey<P_ECDSA_Curve_NID, P_ConversionForm>;
 

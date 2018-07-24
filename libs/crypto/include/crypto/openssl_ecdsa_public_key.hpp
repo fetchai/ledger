@@ -11,29 +11,33 @@ namespace fetch {
 namespace crypto {
 namespace openssl {
 
+
+
+using del_strat_type = memory::eDeleteStrategy;
+
+template <typename T
+        , del_strat_type P_DeleteStrategy = del_strat_type::canonical>
+using shrd_ptr_type = memory::ossl_shared_ptr<T, P_DeleteStrategy>;
+
+template <typename T
+        , del_strat_type P_DeleteStrategy = del_strat_type::canonical>
+using uniq_ptr_type = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
+
+
+
 template<
     int P_ECDSA_Curve_NID = NID_secp256k1,
     point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSAPublicKey
 {
 public:
-    using del_strat_type = memory::eDeleteStrategy;
-
-    template <typename T
-            , del_strat_type P_DeleteStrategy = del_strat_type::canonical>
-    using shrd_ptr = memory::ossl_shared_ptr<T, P_DeleteStrategy>;
-
-    template <typename T
-            , del_strat_type P_DeleteStrategy = del_strat_type::canonical>
-    using uniq_ptr_type = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
-
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
 
     static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
 
 private:
-    const shrd_ptr<EC_POINT> key_EC_POINT_;
-    const shrd_ptr<EC_KEY> key_EC_KEY_;
+    const shrd_ptr_type<EC_POINT> key_EC_POINT_;
+    const shrd_ptr_type<EC_KEY> key_EC_KEY_;
     const byte_array::ConstByteArray key_binary_;
 
 
@@ -42,7 +46,7 @@ private:
         const EC_GROUP *group,
         const context::Session<BN_CTX>& session) {
 
-        shrd_ptr<BIGNUM> public_key_as_BN {BN_new()};
+        shrd_ptr_type<BIGNUM> public_key_as_BN {BN_new()};
         if (!EC_POINT_point2bn(group, public_key, ECDSAPublicKey::conversionForm, public_key_as_BN.get(), session.context().get())) {
             throw std::runtime_error("ECDSAPublicKey::Convert(...) failed due to failure of the `EC_POINT_point2bn(...)` function."); 
         }
@@ -59,7 +63,7 @@ private:
 
 
     static uniq_ptr_type<EC_POINT> Convert(byte_array::ConstByteArray const& key_data) {
-        shrd_ptr<BIGNUM> pub_key_as_BN {BN_new()};
+        shrd_ptr_type<BIGNUM> pub_key_as_BN {BN_new()};
         if (!BN_bin2bn(static_cast<const unsigned char*>( key_data.pointer() ), int(key_data.size()), pub_key_as_BN.get())) {
             throw std::runtime_error("ECDSAPublicKey::ConvertToECPOINT(...): BN_bin2bn(...) failed.");
         }
@@ -91,7 +95,7 @@ private:
 public:
 
     ECDSAPublicKey(
-          shrd_ptr<EC_POINT> public_key,
+          shrd_ptr_type<EC_POINT> public_key,
           const EC_GROUP *group,
           const context::Session<BN_CTX>& session
           ) 
@@ -106,11 +110,11 @@ public:
         , key_binary_ {key_data} {
     }
 
-    shrd_ptr<const EC_POINT> keyAsEC_POINT() const {
+    shrd_ptr_type<const EC_POINT> keyAsEC_POINT() const {
         return key_EC_POINT_;
     }
 
-    shrd_ptr<const EC_KEY> key() const {
+    shrd_ptr_type<const EC_KEY> key() const {
         return key_EC_KEY_;
     }
 

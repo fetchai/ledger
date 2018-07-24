@@ -29,7 +29,7 @@ protected:
         EXPECT_EQ(expected_privateKeySize, ecdsa_curve_type::privateKeySize);
         EXPECT_EQ(expected_publicKeySize, ecdsa_curve_type::publicKeySize);
         EXPECT_EQ(expected_signatureSize, ecdsa_curve_type::signatureSize);
-}
+    }
 
 };
 
