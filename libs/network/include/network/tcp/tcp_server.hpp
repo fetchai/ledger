@@ -47,32 +47,36 @@ class TCPServer : public AbstractNetworkServer {
 
     auto closure = [this]
     {
-      std::lock_guard<std::mutex> lock(startMutex_);
-
-      if(!stopping_)
+      if (!destructed_)
       {
-        std::shared_ptr<acceptor_type> acceptor;
+        std::lock_guard<std::mutex> lock(startMutex_);
 
-        try
+        if (!stopping_)
         {
-          // This might throw if the port is not free
-          acceptor = network_manager_.CreateIO<acceptor_type>
-            (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
+          std::shared_ptr<acceptor_type> acceptor;
 
-          acceptor_ = acceptor;
-
-          fetch::logger.Info("Starting TCP server acceptor loop");
-          acceptor_ = acceptor;
-
-          if(acceptor)
+          try
           {
-            running_ = true;
-            Accept(acceptor);
-            fetch::logger.Info("Accepting TCP server connections");
+            // This might throw if the port is not free
+            acceptor = network_manager_.CreateIO<acceptor_type>
+              (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
+
+            acceptor_ = acceptor;
+
+            fetch::logger.Info("Starting TCP server acceptor loop");
+            acceptor_ = acceptor;
+
+            if (acceptor)
+            {
+              running_ = true;
+              Accept(acceptor);
+              fetch::logger.Info("Accepting TCP server connections");
+            }
           }
-        } catch (std::exception& e)
-        {
-          fetch::logger.Info("Failed to open socket: ", port_, " with error: ", e.what());
+          catch (std::exception &e)
+          {
+            fetch::logger.Info("Failed to open socket: ", port_, " with error: ", e.what());
+          }
         }
       }
     };
@@ -112,6 +116,8 @@ class TCPServer : public AbstractNetworkServer {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     fetch::logger.Info("Destructing TCP server ", this);
+
+    destructed_ = true;
   }
 
   void PushRequest(connection_handle_type client, message_type const& msg) override {
@@ -203,6 +209,7 @@ class TCPServer : public AbstractNetworkServer {
     acceptor->async_accept(*strongSocket, cb);
   }
 
+  std::atomic<bool>                         destructed_{false};
   std::weak_ptr<AbstractConnectionRegister> connection_register_;
   std::shared_ptr<ClientManager>            manager_;
   std::weak_ptr<acceptor_type>              acceptor_;
