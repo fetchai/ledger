@@ -45,38 +45,36 @@ class TCPServer : public AbstractNetworkServer {
     fetch::logger.Info("Creating TCP server");
     manager_ = std::make_shared< ClientManager >(*this);
 
-    auto closure = [this]
+    std::shared_ptr<int> destruct_guard = destruct_guard_;
+
+    auto closure = [this, destruct_guard]
     {
-      if (!destructed_)
+      std::lock_guard<std::mutex> lock(startMutex_);
+
+      if(!stopping_)
       {
-        std::lock_guard<std::mutex> lock(startMutex_);
+        std::shared_ptr<acceptor_type> acceptor;
 
-        if (!stopping_)
+        try
         {
-          std::shared_ptr<acceptor_type> acceptor;
+          // This might throw if the port is not free
+          acceptor = network_manager_.CreateIO<acceptor_type>
+            (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
 
-          try
+          acceptor_ = acceptor;
+
+          fetch::logger.Info("Starting TCP server acceptor loop");
+          acceptor_ = acceptor;
+
+          if(acceptor)
           {
-            // This might throw if the port is not free
-            acceptor = network_manager_.CreateIO<acceptor_type>
-              (asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
-
-            acceptor_ = acceptor;
-
-            fetch::logger.Info("Starting TCP server acceptor loop");
-            acceptor_ = acceptor;
-
-            if (acceptor)
-            {
-              running_ = true;
-              Accept(acceptor);
-              fetch::logger.Info("Accepting TCP server connections");
-            }
+            running_ = true;
+            Accept(acceptor);
+            fetch::logger.Info("Accepting TCP server connections");
           }
-          catch (std::exception &e)
-          {
-            fetch::logger.Info("Failed to open socket: ", port_, " with error: ", e.what());
-          }
+        } catch (std::exception& e)
+        {
+          fetch::logger.Info("Failed to open socket: ", port_, " with error: ", e.what());
         }
       }
     };
@@ -110,14 +108,18 @@ class TCPServer : public AbstractNetworkServer {
       }
     });
 
+    while(destruct_guard_.use_count() > 1)
+    {
+      fetch::logger.Info("Waiting for TCP server ", this, " start closure to clear");
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
     while(!acceptor_.expired() && running_)
     {
       fetch::logger.Info("Waiting for TCP server ", this, " to destruct");
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     fetch::logger.Info("Destructing TCP server ", this);
-
-    destructed_ = true;
   }
 
   void PushRequest(connection_handle_type client, message_type const& msg) override {
@@ -209,7 +211,7 @@ class TCPServer : public AbstractNetworkServer {
     acceptor->async_accept(*strongSocket, cb);
   }
 
-  std::atomic<bool>                         destructed_{false};
+  std::shared_ptr<int>                      destruct_guard_;
   std::weak_ptr<AbstractConnectionRegister> connection_register_;
   std::shared_ptr<ClientManager>            manager_;
   std::weak_ptr<acceptor_type>              acceptor_;
