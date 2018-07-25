@@ -20,7 +20,9 @@ template<eECDSABinaryDataFormat P_ECDSASignatureBinaryDataFormat = eECDSABinaryD
        , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSASignature
 {
-    using affine_coord_conversion_type = ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>;
+    const byte_array::ConstByteArray hash_;
+    const shrd_ptr_type<ECDSA_SIG> signature_ECDSA_SIG_;
+    const byte_array::ConstByteArray signature_;
 
 public:
     using hasher_type = T_Hasher;
@@ -31,10 +33,77 @@ public:
     static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
     static constexpr eECDSABinaryDataFormat signatureBinaryDataFormat = P_ECDSASignatureBinaryDataFormat;
 
+    ECDSASignature(ECDSASignature const &from) = default;
+    ECDSASignature(ECDSASignature &&from) = default;
+
+    ECDSASignature(byte_array::ConstByteArray const &binary_signature)
+        : hash_{}
+        , signature_ECDSA_SIG_{Convert(binary_signature, signatureBinaryDataFormat)}
+        , signature_{binary_signature} {
+    }
+
+
+    const byte_array::ConstByteArray& hash() const {
+        return hash_;
+    }
+
+    const shrd_ptr_type<const ECDSA_SIG>& signature_ECDSA_SIG() const {
+        return signature_ECDSA_SIG;
+    }
+
+    const byte_array::ConstByteArray& signature() const {
+        return signature_;
+    }
+
+
+
+    static ECDSASignature Sign(
+        private_key_type const &private_key,
+        byte_array::ConstByteArray const &data_to_sign) {
+
+        return ECDSASignature(private_key, data_to_sign, eBinaryDataType::data);
+    }
+
+    static ECDSASignature SignHash(
+        private_key_type const &private_key,
+        byte_array::ConstByteArray const &hash_to_sign) {
+
+        return ECDSASignature(private_key, hash_to_sign, eBinaryDataType::hash);
+    }
+
+    bool VerifyHash (
+        public_key_type const &public_key,
+        byte_array::ConstByteArray const &hash_to_verify) const {
+
+        const int res =
+            ECDSA_do_verify(
+                static_cast<const unsigned char *>(hash_to_verify.pointer()),
+                static_cast<int>(hash_to_verify.size()),
+                signature_ECDSA_SIG_.get(),
+                const_cast<EC_KEY*>(public_key.key().get()));
+
+        switch (res) {
+            case 1:
+                return true;
+
+            case 0:
+                return false;
+
+            case -1:
+            default:
+                throw std::runtime_error("VerifyHash(): ECDSA_do_verify(...) failed.");
+        }
+    }
+
+    bool Verify (
+        public_key_type const &public_key,
+        byte_array::ConstByteArray const &data_to_verify) const {
+
+        return VerifyHash(public_key, Hash<hasher_type>(data_to_verify));
+    }
+
 private:
-    const byte_array::ConstByteArray hash_;
-    const shrd_ptr_type<ECDSA_SIG> signature_ECDSA_SIG_;
-    const byte_array::ConstByteArray signature_;
+    using affine_coord_conversion_type = ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>;
 
 
     static shrd_ptr_type<ECDSA_SIG> CreateSignature (
@@ -136,77 +205,6 @@ private:
         : hash_{data_type == eBinaryDataType::data ? Hash<hasher_type>(data_to_sign) : byte_array::ByteArray()}
         , signature_ECDSA_SIG_{CreateSignature(private_key, hash_)}
         , signature_{Convert(signature_ECDSA_SIG_, signatureBinaryDataFormat)} {
-    }
-
-public:
-
-    ECDSASignature(ECDSASignature const &from) = default;
-    ECDSASignature(ECDSASignature &&from) = default;
-
-    ECDSASignature(byte_array::ConstByteArray const &binary_signature)
-        : hash_{}
-        , signature_ECDSA_SIG_{Convert(binary_signature, signatureBinaryDataFormat)}
-        , signature_{binary_signature} {
-    }
-
-
-    const byte_array::ConstByteArray& hash() {
-        return hash_;
-    }
-
-    const shrd_ptr_type<const ECDSA_SIG>& signature_ECDSA_SIG() {
-        return signature_ECDSA_SIG;
-    }
-
-    const byte_array::ConstByteArray& signature() {
-        return signature_;
-    }
-
-
-
-    static ECDSASignature Sign(
-        private_key_type const &private_key,
-        byte_array::ConstByteArray const &data_to_sign) {
-
-        return ECDSASignature(private_key, data_to_sign, eBinaryDataType::data);
-    }
-
-    static ECDSASignature SignHash(
-        private_key_type const &private_key,
-        byte_array::ConstByteArray const &hash_to_sign) {
-
-        return ECDSASignature(private_key, hash_to_sign, eBinaryDataType::hash);
-    }
-
-    bool VerifyHash (
-        public_key_type const &public_key,
-        byte_array::ConstByteArray const &hash_to_verify) const {
-
-        const int res =
-            ECDSA_do_verify(
-                static_cast<const unsigned char *>(hash_to_verify.pointer()),
-                static_cast<int>(hash_to_verify.size()),
-                signature_ECDSA_SIG_.get(),
-                const_cast<EC_KEY*>(public_key.key().get()));
-
-        switch (res) {
-            case 1:
-                return true;
-
-            case 0:
-                return false;
-
-            case -1:
-            default:
-                throw std::runtime_error("VerifyHash(): ECDSA_do_verify(...) failed.");
-        }
-    }
-
-    bool Verify (
-        public_key_type const &public_key,
-        byte_array::ConstByteArray const &data_to_verify) const {
-
-        return VerifyHash(public_key, Hash<hasher_type>(data_to_verify));
     }
 };
 
