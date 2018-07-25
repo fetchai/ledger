@@ -12,21 +12,49 @@ namespace openssl {
 
 
 
-
-
 template<int P_ECDSA_Curve_NID = NID_secp256k1
        , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSAPublicKey
 {
+    const shrd_ptr_type<EC_POINT> key_EC_POINT_;
+    const shrd_ptr_type<EC_KEY> key_EC_KEY_;
+    const byte_array::ConstByteArray key_binary_;
+
 public:
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
 
     static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
 
+    ECDSAPublicKey(
+          shrd_ptr_type<EC_POINT> public_key,
+          const EC_GROUP *group,
+          const context::Session<BN_CTX>& session
+          ) 
+        : key_EC_POINT_ {public_key}
+        , key_EC_KEY_ {ConvertToECKEY(public_key.get())}
+        , key_binary_ {Convert(public_key.get(), group, session)} {
+    }
+
+    ECDSAPublicKey(const byte_array::ConstByteArray& key_data)
+        : key_EC_POINT_ {Convert(key_data)}
+        , key_EC_KEY_ {ConvertToECKEY(key_EC_POINT_)}
+        , key_binary_ {key_data} {
+    }
+
+    shrd_ptr_type<const EC_POINT> keyAsEC_POINT() const {
+        return key_EC_POINT_;
+    }
+
+    shrd_ptr_type<const EC_KEY> key() const {
+        return key_EC_KEY_;
+    }
+
+    const byte_array::ConstByteArray& keyAsBin() const {
+        return key_binary_;
+    }
+
+
 private:
-    const shrd_ptr_type<EC_POINT> key_EC_POINT_;
-    const shrd_ptr_type<EC_KEY> key_EC_KEY_;
-    const byte_array::ConstByteArray key_binary_;
 
     static byte_array::ByteArray Convert(
         EC_POINT* public_key,
@@ -80,34 +108,6 @@ private:
     }
 
 public:
-
-    ECDSAPublicKey(
-          shrd_ptr_type<EC_POINT> public_key,
-          const EC_GROUP *group,
-          const context::Session<BN_CTX>& session
-          ) 
-        : key_EC_POINT_ {public_key}
-        , key_EC_KEY_ {ConvertToECKEY(public_key.get())}
-        , key_binary_ {Convert(public_key.get(), group, session)} {
-    }
-
-    ECDSAPublicKey(const byte_array::ConstByteArray& key_data)
-        : key_EC_POINT_ {Convert(key_data)}
-        , key_EC_KEY_ {ConvertToECKEY(key_EC_POINT_)}
-        , key_binary_ {key_data} {
-    }
-
-    shrd_ptr_type<const EC_POINT> keyAsEC_POINT() const {
-        return key_EC_POINT_;
-    }
-
-    shrd_ptr_type<const EC_KEY> key() const {
-        return key_EC_KEY_;
-    }
-
-    const byte_array::ConstByteArray& keyAsBin() const {
-        return key_binary_;
-    }
 };
 
 } //* openssl namespace
