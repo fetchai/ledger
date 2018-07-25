@@ -8,6 +8,12 @@
 namespace fetch {
 namespace network {
 
+/**
+ * Representation of an network adapter. I.e. an IP address and network mask of one of the
+ * system network adapter cards.
+ *
+ * This is to be used to select which interfaces a service should be bound to.
+ */
 class Adapter {
 public:
   using address_type = asio::ip::address_v4;
