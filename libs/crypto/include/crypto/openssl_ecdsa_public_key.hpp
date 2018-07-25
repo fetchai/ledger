@@ -12,7 +12,8 @@ namespace openssl {
 
 
 
-template<int P_ECDSA_Curve_NID = NID_secp256k1
+template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat = eECDSABinaryDataFormat::canonical
+       , int P_ECDSA_Curve_NID = NID_secp256k1
        , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSAPublicKey
 {
@@ -23,7 +24,14 @@ class ECDSAPublicKey
 public:
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
 
+    static constexpr eECDSABinaryDataFormat binaryDataFormat = P_ECDSABinaryDataFormat;
     static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
+
+    template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat2
+           , int P_ECDSA_Curve_NID2
+           , point_conversion_form_t P_ConversionForm2>
+    friend class ECDSAPublicKey;
+
 
     ECDSAPublicKey(
           shrd_ptr_type<EC_POINT> public_key,
@@ -32,22 +40,50 @@ public:
           ) 
         : key_EC_POINT_ {public_key}
         , key_EC_KEY_ {ConvertToECKEY(public_key.get())}
-        , key_binary_ {Convert(public_key.get(), group, session)} {
+        , key_binary_ {Convert(public_key.get(), group, session, binaryDataFormat)}
+    {
     }
 
+
     ECDSAPublicKey(const byte_array::ConstByteArray& key_data)
-        : key_EC_POINT_ {Convert(key_data)}
+        : key_EC_POINT_ {Convert(key_data, binaryDataFormat)}
         , key_EC_KEY_ {ConvertToECKEY(key_EC_POINT_)}
-        , key_binary_ {key_data} {
+        , key_binary_ {key_data}
+    {
+    }
+
+
+
+    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    using ecdsa_public_key_type = ECDSAPublicKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
+
+
+    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    ECDSAPublicKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> const & from)
+        : key_EC_POINT_ {from.key_EC_POINT_}
+        , key_EC_KEY_ {from.key_EC_KEY_}
+        , key_binary_ {BINARY_DATA_FORMAT == binaryDataFormat ? from.key_binary_ : Convert(key_EC_POINT_.get(), binaryDataFormat)}
+    {
+    }
+
+
+    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    ECDSAPublicKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> && from)
+        : key_EC_POINT_ {std::move(from.key_EC_POINT_)}
+        , key_EC_KEY_ {std::move(from.key_EC_KEY_)}
+        , key_binary_ {BINARY_DATA_FORMAT == binaryDataFormat ? std::move(from.key_binary_) : Convert(key_EC_POINT_.get(), binaryDataFormat)}
+    {
     }
 
     shrd_ptr_type<const EC_POINT> keyAsEC_POINT() const {
         return key_EC_POINT_;
     }
 
+
     shrd_ptr_type<const EC_KEY> key() const {
         return key_EC_KEY_;
     }
+
 
     const byte_array::ConstByteArray& keyAsBin() const {
         return key_binary_;
@@ -56,28 +92,116 @@ public:
 
 private:
 
-    static byte_array::ByteArray Convert(
-        EC_POINT* public_key,
-        const EC_GROUP *group,
-        const context::Session<BN_CTX>& session) {
+    using affine_coord_conversion_type = ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>;
 
+
+    static byte_array::ByteArray Convert(
+        EC_POINT const * const public_key,
+        EC_GROUP const * const group,
+        context::Session<BN_CTX> const & session,
+        eECDSABinaryDataFormat const binaryDataFormat)
+    {
+        switch(binaryDataFormat)
+        {
+            case eECDSABinaryDataFormat::canonical:
+                return Convert2Canonical(public_key, group, session);
+            case eECDSABinaryDataFormat::DER:
+                return Convert2DER(public_key, group, session);
+        }
+    }
+
+
+    static byte_array::ByteArray Convert(
+        EC_POINT const * const public_key,
+        eECDSABinaryDataFormat const binaryDataFormat)
+    {
+        uniq_ptr_type<const EC_GROUP> group {EC_GROUP_new_by_curve_name(ecdsa_curve_type::nid)};
+        context::Session<BN_CTX> session;
+
+        switch(binaryDataFormat)
+        {
+            case eECDSABinaryDataFormat::canonical:
+                return Convert(public_key, group.get(), session, binaryDataFormat);
+            case eECDSABinaryDataFormat::DER:
+                return Convert(public_key, group.get(), session, binaryDataFormat);
+        }
+    }
+
+
+    static uniq_ptr_type<EC_POINT> Convert(
+        byte_array::ConstByteArray const& key_data,
+        eECDSABinaryDataFormat const binaryDataFormat)
+    {
+        switch(binaryDataFormat)
+        {
+            case eECDSABinaryDataFormat::canonical:
+                return ConvertFromCanonical(key_data);
+            case eECDSABinaryDataFormat::DER:
+                return ConvertFromDER(key_data);
+        }
+    }
+
+
+    static byte_array::ByteArray Convert2Canonical(
+        EC_POINT const * const public_key,
+        EC_GROUP const * const group,
+        context::Session<BN_CTX> const & session)
+    {
+        shrd_ptr_type<BIGNUM> x {BN_new()};
+        shrd_ptr_type<BIGNUM> y {BN_new()};
+        EC_POINT_get_affine_coordinates_GFp(group, public_key, x.get(), y.get(), session.context().get());
+        return affine_coord_conversion_type::Convert2Canonical(x.get(), y.get());
+    }
+
+
+    static byte_array::ByteArray Convert2DER(
+        EC_POINT const * const public_key,
+        EC_GROUP const * const group,
+        context::Session<BN_CTX> const & session)
+    {
         shrd_ptr_type<BIGNUM> public_key_as_BN {BN_new()};
         if (!EC_POINT_point2bn(group, public_key, ECDSAPublicKey::conversionForm, public_key_as_BN.get(), session.context().get())) {
-            throw std::runtime_error("ECDSAPublicKey::Convert(...) failed due to failure of the `EC_POINT_point2bn(...)` function."); 
+            throw std::runtime_error("ECDSAPublicKey::Convert(...): `EC_POINT_point2bn(...)` functioni failed."); 
         }
 
         byte_array::ByteArray pub_key_as_bin;
         pub_key_as_bin.Resize(static_cast<std::size_t>( BN_num_bytes(public_key_as_BN.get())));
 
         if (!BN_bn2bin(public_key_as_BN.get(), static_cast<unsigned char *>(pub_key_as_bin.pointer()))) {
-            throw std::runtime_error("ECDSAPublicKey::Convert(...) failed due to failure of the `BN_bn2bin(...)` function.");
+            throw std::runtime_error("ECDSAPublicKey::Convert(...): `BN_bn2bin(...)` function failed.");
         }
 
         return pub_key_as_bin;
     }
 
 
-    static uniq_ptr_type<EC_POINT> Convert(byte_array::ConstByteArray const& key_data) {
+    static uniq_ptr_type<EC_POINT> ConvertFromCanonical(byte_array::ConstByteArray const& key_data)
+    {
+        uniq_ptr_type<const EC_GROUP> group {EC_GROUP_new_by_curve_name(ecdsa_curve_type::nid)};
+        uniq_ptr_type<EC_POINT> public_key {EC_POINT_new(group.get())};
+        context::Session<BN_CTX> session;
+        
+        shrd_ptr_type<BIGNUM> x {BN_new()};
+        shrd_ptr_type<BIGNUM> y {BN_new()};
+
+        affine_coord_conversion_type::ConvertFromCanonical(key_data, x.get(), x.get());
+
+        if (!EC_POINT_set_affine_coordinates_GFp(
+                group.get(),
+                public_key.get(),
+                x.get(),
+                y.get(),
+                session.context().get()))
+        {
+            throw std::runtime_error("ECDSAPublicKey::ConvertFromCanonical(...): `BN_bn2bin(...)` function failed.");
+        }
+
+        return public_key;
+    }
+
+
+    static uniq_ptr_type<EC_POINT> ConvertFromDER(byte_array::ConstByteArray const& key_data)
+    {
         shrd_ptr_type<BIGNUM> pub_key_as_BN {BN_new()};
         if (!BN_bin2bn(static_cast<const unsigned char*>( key_data.pointer() ), int(key_data.size()), pub_key_as_BN.get())) {
             throw std::runtime_error("ECDSAPublicKey::ConvertToECPOINT(...): BN_bin2bn(...) failed.");

@@ -9,19 +9,29 @@ namespace crypto {
 namespace openssl {
 
 
-template<int P_ECDSA_Curve_NID = NID_secp256k1
+template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat = eECDSABinaryDataFormat::canonical
+       , int P_ECDSA_Curve_NID = NID_secp256k1
        , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSAPrivateKey
 {
 public:
-    using public_key_type = ECDSAPublicKey<P_ECDSA_Curve_NID, P_ConversionForm>;
-    using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
+    static constexpr eECDSABinaryDataFormat binaryDataFormat = P_ECDSABinaryDataFormat;
     static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
+
+    using public_key_type = ECDSAPublicKey<binaryDataFormat, P_ECDSA_Curve_NID, P_ConversionForm>;
+    using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
+
+    template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat2
+           , int P_ECDSA_Curve_NID2
+           , point_conversion_form_t P_ConversionForm2>
+    friend class ECDSAPrivateKey;
+
 
 private:
     //TODO: Keep key encrypted
     const shrd_ptr_type<EC_KEY> private_key_;
     const public_key_type public_key_;
+
 
 public:
 
@@ -40,6 +50,31 @@ public:
 
     ECDSAPrivateKey(const std::string& hex_string_key_data)
         : ECDSAPrivateKey(ECDSAPrivateKey::GetPrivateKeyAsBIGNUM(hex_string_key_data))
+    {
+    }
+
+
+    template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat2
+           , int P_ECDSA_Curve_NID2
+           , point_conversion_form_t P_ConversionForm2>
+    friend class ECDSAPrivateKey;
+
+    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    using ecdsa_public_key_type = ECDSAPrivateKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
+
+
+    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    ECDSAPrivateKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> const & from)
+        : private_key_(from.private_key_)
+        , public_key_(from.public_key_)
+    {
+    }
+
+
+    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    ECDSAPrivateKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> && from)
+        : private_key_(std::move(from.private_key_))
+        , public_key_(std::move(from.public_key_))
     {
     }
 
