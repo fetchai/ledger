@@ -24,7 +24,7 @@ namespace fetch
 namespace network
 {
 
-class TCPClientImplementation :
+class TCPClientImplementation final :
     public AbstractConnection
 {
  public:

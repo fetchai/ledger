@@ -56,6 +56,7 @@ public:
   /// @{
   void RequestPeersForThisNode() 
   {
+    // TODO: (`HUT`) : comment/make this clear
     register_.WithServices([this](network::AbstractConnectionRegister::service_map_type const &map) {
         for(auto const &p: map) {
           auto wptr = p.second;

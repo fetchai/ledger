@@ -53,6 +53,7 @@ public:
   byte_array::ConstByteArray ExchangeAddress(connection_handle_type const &cid, byte_array::ByteArray const &address) 
   {
     {
+      // TODO: (`HUT`) : try not to lock mutexes that belong to other classes
       std::lock_guard< mutex::Mutex > lock(my_details_->mutex);
       for(auto &e: my_details_->details.entry_points)
       {

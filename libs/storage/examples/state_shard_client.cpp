@@ -25,6 +25,7 @@ public:
   
   ByteArray Get(ByteArray const &key) 
   {
+    // TODO: (`HUT`) : do not allow calls to enum 0!!!
     auto promise = client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::GET, fetch::storage::ResourceID(key) );
     return promise.As<ByteArray>();
   }
