@@ -34,7 +34,7 @@ protected:
     }
 
 
-    template<eECDSASignatureBinaryDataFormat P_ECDSASignatureBinaryDataFormat>
+    template<eECDSABinaryDataFormat P_ECDSASignatureBinaryDataFormat>
     void test_wrong_signature_fails_to_verify() {
         //* Production code:
         openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
@@ -57,7 +57,7 @@ protected:
         EXPECT_FALSE(verification_result);
     }
 
-    template<eECDSASignatureBinaryDataFormat P_ECDSASignatureBinaryDataFormat>
+    template<eECDSABinaryDataFormat P_ECDSASignatureBinaryDataFormat>
     void test_construct_signature_from_binary_data() {
         //* Production code:
         openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
@@ -92,18 +92,18 @@ TEST_F(ECDCSASignatureTest, test_sign_verify_cycle) {
 }
 
 TEST_F(ECDCSASignatureTest, test_wrong_signature_fails_to_verify__canonical) {
-    test_wrong_signature_fails_to_verify<eECDSASignatureBinaryDataFormat::canonical>();
+    test_wrong_signature_fails_to_verify<eECDSABinaryDataFormat::canonical>();
 }
 
 TEST_F(ECDCSASignatureTest, test_wrong_signature_fails_to_verify__DER) {
-    test_wrong_signature_fails_to_verify<eECDSASignatureBinaryDataFormat::DER>();
+    test_wrong_signature_fails_to_verify<eECDSABinaryDataFormat::DER>();
 }
 
 TEST_F(ECDCSASignatureTest, test_invalid_DER_signature_causes_exception) {
     //* Production code:
     openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
 
-    using ecdsa_signature_type = ECDSASignature<eECDSASignatureBinaryDataFormat::DER>;
+    using ecdsa_signature_type = ECDSASignature<eECDSABinaryDataFormat::DER>;
     ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
 
     //* Verify that acquired signature is correct:
@@ -150,18 +150,18 @@ TEST_F(ECDCSASignatureTest, test_wrong_data_fails_to_verify) {
 }
 
 TEST_F(ECDCSASignatureTest, test_construct_signature_from_binary_data__canonical) {
-    test_construct_signature_from_binary_data<eECDSASignatureBinaryDataFormat::canonical>();
+    test_construct_signature_from_binary_data<eECDSABinaryDataFormat::canonical>();
 }
 
 TEST_F(ECDCSASignatureTest, test_construct_signature_from_binary_data__DER) {
-    test_construct_signature_from_binary_data<eECDSASignatureBinaryDataFormat::DER>();
+    test_construct_signature_from_binary_data<eECDSABinaryDataFormat::DER>();
 }
 
 TEST_F(ECDCSASignatureTest, test_canonical_signature_binary_representation_has_expected_length) {
     //* Production code:
     openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
 
-    using ecdsa_signature_type = ECDSASignature<eECDSASignatureBinaryDataFormat::canonical>;
+    using ecdsa_signature_type = ECDSASignature<eECDSABinaryDataFormat::canonical>;
     ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
 
     //* Verify that acquired signature is correct:

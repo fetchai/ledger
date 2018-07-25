@@ -1,9 +1,8 @@
 #ifndef CRYPTO_OPENSSL_PUBLIC_KEY_HPP
 #define CRYPTO_OPENSSL_PUBLIC_KEY_HPP
 
-#include "core/byte_array/byte_array.hpp"
+
 #include "crypto/openssl_common.hpp"
-#include "crypto/openssl_memory.hpp"
 #include "crypto/openssl_context_session.hpp"
 
 
@@ -13,29 +12,10 @@ namespace openssl {
 
 
 
-using del_strat_type = memory::eDeleteStrategy;
-
-template <typename T
-        , del_strat_type P_DeleteStrategy = del_strat_type::canonical>
-using shrd_ptr_type = memory::ossl_shared_ptr<T, P_DeleteStrategy>;
-
-template <typename T
-        , del_strat_type P_DeleteStrategy = del_strat_type::canonical>
-using uniq_ptr_type = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
 
 
-
-enum eECDSASignatureBinaryDataFormat : int
-{
-    canonical,
-    DER
-};
-
-
-
-template<
-    int P_ECDSA_Curve_NID = NID_secp256k1,
-    point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
+template<int P_ECDSA_Curve_NID = NID_secp256k1
+       , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSAPublicKey
 {
 public:
@@ -47,7 +27,6 @@ private:
     const shrd_ptr_type<EC_POINT> key_EC_POINT_;
     const shrd_ptr_type<EC_KEY> key_EC_KEY_;
     const byte_array::ConstByteArray key_binary_;
-
 
     static byte_array::ByteArray Convert(
         EC_POINT* public_key,
