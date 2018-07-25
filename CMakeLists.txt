@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   L E D G E R   P R O J  E C T
 ################################################################################
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 project (fetch)
 
 #-------------------------------------------------------------------------------
@@ -44,6 +44,8 @@ endif (NOT CMAKE_BUILD_TYPE)
 # Global CMake Configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTargets.cmake)
+
+detect_environment()
 
 # Enable CTest support
 if (FETCH_ENABLE_TESTS)
