@@ -13,16 +13,15 @@ namespace crypto {
 namespace openssl {
 
 
-
 template<eECDSABinaryDataFormat P_ECDSASignatureBinaryDataFormat = eECDSABinaryDataFormat::canonical
        , typename T_Hasher = SHA256
        , int P_ECDSA_Curve_NID = NID_secp256k1
        , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSASignature
 {
-    const byte_array::ConstByteArray hash_;
-    const shrd_ptr_type<ECDSA_SIG> signature_ECDSA_SIG_;
-    const byte_array::ConstByteArray signature_;
+    byte_array::ConstByteArray hash_;
+    shrd_ptr_type<ECDSA_SIG> signature_ECDSA_SIG_;
+    byte_array::ConstByteArray signature_;
 
 public:
     using hasher_type = T_Hasher;
@@ -33,25 +32,55 @@ public:
     static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
     static constexpr eECDSABinaryDataFormat signatureBinaryDataFormat = P_ECDSASignatureBinaryDataFormat;
 
-    ECDSASignature(ECDSASignature const &from) = default;
-    ECDSASignature(ECDSASignature &&from) = default;
 
     ECDSASignature(byte_array::ConstByteArray const &binary_signature)
         : hash_{}
         , signature_ECDSA_SIG_{Convert(binary_signature, signatureBinaryDataFormat)}
-        , signature_{binary_signature} {
+        , signature_{binary_signature}
+    {
     }
 
 
-    const byte_array::ConstByteArray& hash() const {
+    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    using ecdsa_signature_type = ECDSASignature<BINARY_DATA_FORMAT, T_Hasher, P_ECDSA_Curve_NID, P_ConversionForm>;
+
+    template<eECDSABinaryDataFormat P_ECDSASignatureBinaryDataFormat2
+           , typename T_Hasher2
+           , int P_ECDSA_Curve_NID2
+           , point_conversion_form_t P_ConversionForm2>
+    friend class ECDSASignature;
+
+
+    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    ECDSASignature(ecdsa_signature_type<BINARY_DATA_FORMAT> const& from)
+        : hash_{from.hash_}
+        , signature_ECDSA_SIG_{from.signature_ECDSA_SIG_}
+        , signature_{BINARY_DATA_FORMAT == signatureBinaryDataFormat ? from.signature_ : Convert(signature_ECDSA_SIG_, signatureBinaryDataFormat)}
+    {
+    }
+
+    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    ECDSASignature(ecdsa_signature_type<BINARY_DATA_FORMAT>&& from)
+        : hash_{std::move(from.hash_)}
+        , signature_ECDSA_SIG_{std::move(from.signature_ECDSA_SIG_)}
+        , signature_{BINARY_DATA_FORMAT == signatureBinaryDataFormat ? std::move(from.signature_) : Convert(signature_ECDSA_SIG_, signatureBinaryDataFormat)}
+    {
+    }
+
+
+
+    const byte_array::ConstByteArray& hash() const
+    {
         return hash_;
     }
 
-    const shrd_ptr_type<const ECDSA_SIG>& signature_ECDSA_SIG() const {
-        return signature_ECDSA_SIG;
+    shrd_ptr_type<const ECDSA_SIG> signature_ECDSA_SIG() const
+    {
+        return signature_ECDSA_SIG_;
     }
 
-    const byte_array::ConstByteArray& signature() const {
+    const byte_array::ConstByteArray& signature() const
+    {
         return signature_;
     }
 
@@ -59,21 +88,25 @@ public:
 
     static ECDSASignature Sign(
         private_key_type const &private_key,
-        byte_array::ConstByteArray const &data_to_sign) {
+        byte_array::ConstByteArray const &data_to_sign)
+    {
 
         return ECDSASignature(private_key, data_to_sign, eBinaryDataType::data);
     }
 
     static ECDSASignature SignHash(
         private_key_type const &private_key,
-        byte_array::ConstByteArray const &hash_to_sign) {
+        byte_array::ConstByteArray const &hash_to_sign)
+    {
 
         return ECDSASignature(private_key, hash_to_sign, eBinaryDataType::hash);
     }
 
     bool VerifyHash (
         public_key_type const &public_key,
-        byte_array::ConstByteArray const &hash_to_verify) const {
+        byte_array::ConstByteArray const &hash_to_verify
+        ) const
+    {
 
         const int res =
             ECDSA_do_verify(
@@ -97,13 +130,32 @@ public:
 
     bool Verify (
         public_key_type const &public_key,
-        byte_array::ConstByteArray const &data_to_verify) const {
+        byte_array::ConstByteArray const &data_to_verify
+        ) const
+    {
 
         return VerifyHash(public_key, Hash<hasher_type>(data_to_verify));
     }
 
 private:
     using affine_coord_conversion_type = ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>;
+
+    enum class eBinaryDataType : int
+    {
+        hash,
+        data
+    };
+
+    ECDSASignature(
+        private_key_type const &private_key,
+        byte_array::ConstByteArray const &data_to_sign,
+        const eBinaryDataType data_type = eBinaryDataType::data
+        )
+        : hash_{data_type == eBinaryDataType::data ? Hash<hasher_type>(data_to_sign) : byte_array::ByteArray()}
+        , signature_ECDSA_SIG_{CreateSignature(private_key, hash_)}
+        , signature_{Convert(signature_ECDSA_SIG_, signatureBinaryDataFormat)}
+    {
+    }
 
 
     static shrd_ptr_type<ECDSA_SIG> CreateSignature (
@@ -190,21 +242,6 @@ private:
             case eECDSABinaryDataFormat::DER:
                 return ConvertDER(bin_sig);
         }
-    }
-
-    enum class eBinaryDataType : int
-    {
-        hash,
-        data
-    };
-
-    ECDSASignature(
-        private_key_type const &private_key,
-        byte_array::ConstByteArray const &data_to_sign,
-        const eBinaryDataType data_type = eBinaryDataType::data)
-        : hash_{data_type == eBinaryDataType::data ? Hash<hasher_type>(data_to_sign) : byte_array::ByteArray()}
-        , signature_ECDSA_SIG_{CreateSignature(private_key, hash_)}
-        , signature_{Convert(signature_ECDSA_SIG_, signatureBinaryDataFormat)} {
     }
 };
 

@@ -177,6 +177,26 @@ TEST_F(ECDCSASignatureTest, test_canonical_signature_binary_representation_has_e
     EXPECT_EQ(ecdsa_signature_type::ecdsa_curve_type::signatureSize, signature.signature().size());
 }
 
+template<typename T>
+void enforce_execution(volatile T const &ref) {
+    (void)ref;
+}
+
+TEST_F(ECDCSASignatureTest, test_moving_semantics_constructor) {
+    //* Production code:
+    openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
+
+    using ecdsa_signature_type = ECDSASignature<eECDSABinaryDataFormat::canonical>;
+
+    for (std::size_t i = 0; i<100; ++i) {
+        ecdsa_signature_type signature0 {ecdsa_signature_type::Sign(priv_key, test_data)};
+        enforce_execution(signature0);
+        ECDSASignature<eECDSABinaryDataFormat::DER> signature1 {std::move(signature0)};
+        enforce_execution(signature1);
+        EXPECT_FALSE(signature0.signature_ECDSA_SIG());
+    }
+}
+
 } // namespace anonymous
 
 } // namespace openssl
