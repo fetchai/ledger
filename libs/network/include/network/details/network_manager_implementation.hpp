@@ -100,7 +100,7 @@ public:
   void Post(F &&f)
   {
     std::lock_guard<mutex::Mutex> lock(protecting_io_);
-    io_service_->post(std::move(f));
+    io_service_->post(std::forward<F>(f));
   }
 
 private:

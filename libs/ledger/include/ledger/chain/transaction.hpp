@@ -73,7 +73,7 @@ public:
   VerifiedTransaction(VerifiedTransaction &&other) = default;
   VerifiedTransaction &operator=(VerifiedTransaction &&other) = default;
 
-  VerifiedTransaction(VerifiedTransaction const &other) : UnverifiedTransaction()
+  VerifiedTransaction(VerifiedTransaction const &other) : UnverifiedTransaction(other)
   {
     this->Copy(other);
   }
