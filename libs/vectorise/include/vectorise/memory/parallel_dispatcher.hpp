@@ -509,7 +509,7 @@ public:
   template <typename... Args>
   void Apply(TrivialRange const &range,
              typename details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<
-                 Args...>::signature_type &&apply,
+                 Args...>::signature_type const &apply,
              Args &&... args)
   {
 
@@ -532,7 +532,7 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<Args...>::Apply(
-          regs, std::move(apply), c);
+          regs, apply, c);
 
       int Q = vector_register_type::E_BLOCK_COUNT - (SF - int(range.from()));
       for (int i = 0; i < vector_register_type::E_BLOCK_COUNT; ++i)
@@ -552,7 +552,7 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<Args...>::Apply(
-          regs, std::move(apply), c);
+          regs, apply, c);
 
       c.Store(this->pointer() + i);
     }
@@ -562,7 +562,7 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<Args...>::Apply(
-          regs, std::move(apply), c);
+          regs, apply, c);
 
       int Q = (int(range.to()) - ST - 1);
       for (int i = 0; i <= Q; ++i)
@@ -600,7 +600,7 @@ public:
   template <class C, typename... Args>
   void Apply(C const &cls,
              typename details::MatrixApplyClassMember<C, type, void>::template Unroll<
-                 Args...>::signature_type &&fnc,
+                 Args...>::signature_type const &fnc,
              Args &&... args)
   {
 
@@ -616,7 +616,7 @@ public:
     {
 
       details::MatrixApplyClassMember<C, type, void>::template Unroll<Args...>::Apply(
-          regs, cls, std::move(fnc), c);
+          regs, cls, fnc, c);
 
       this->pointer()[i] = c;
 

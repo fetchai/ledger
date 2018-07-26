@@ -19,10 +19,10 @@ struct MatrixApplyFreeFunction
     typedef typename MatrixApplyFreeFunction<B, R, Args..., B const &>::template Unroll<
         Remaining...>::signature_type signature_type;
 
-    static R Apply(B const *regs, signature_type &&fnc, B &ret, Args &&... args)
+    static R Apply(B const *regs, signature_type const &fnc, B &ret, Args &&... args)
     {
       return MatrixApplyFreeFunction<B, R, Args..., B const &>::template Unroll<
-          Remaining...>::Apply(regs + 1, std::move(fnc), ret, std::forward<Args>(args)..., *regs);
+          Remaining...>::Apply(regs + 1, fnc, ret, std::forward<Args>(args)..., *regs);
     }
   };
 
@@ -30,7 +30,7 @@ struct MatrixApplyFreeFunction
   struct Unroll<T>
   {
     using signature_type = R (*)(Args..., const B &, B &);
-    static R Apply(B const *regs, signature_type &&fnc, B &ret, Args &&... args)
+    static R Apply(B const *regs, signature_type const &fnc, B &ret, Args &&... args)
     {
       return fnc(std::forward<Args>(args)..., *regs, ret);
     }
