@@ -18,7 +18,6 @@ def main():
     args = parse_commandline()
 
     print('Applying style...')
-    print(project_root)
 
     cmd_prefix = [
         'clang-format',
@@ -35,6 +34,9 @@ def main():
                 for file in fnmatch.filter(files, ext):
                     source_path = os.path.join(root, file)
                     subprocess.check_call(cmd_prefix + [source_path], cwd=project_root)
+
+
+    print('Applying style...complete')
 
 
 if __name__ == '__main__':
