@@ -577,7 +577,7 @@ public:
   template <class C, typename... Args>
   void Apply(C const &cls,
              typename details::MatrixApplyClassMember<
-                 C, vector_register_type, void>::template Unroll<Args...>::signature_type &&fnc,
+                 C, vector_register_type, void>::template Unroll<Args...>::signature_type const &fnc,
              Args &&... args)
   {
 
