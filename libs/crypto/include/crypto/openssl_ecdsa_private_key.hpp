@@ -152,7 +152,7 @@ private:
     }
 
     ////TODO: Is it really necessary to call check after generate (generate
-    ///shall be sufficient(shall fail in case of issue))
+    /// shall be sufficient(shall fail in case of issue))
     // if(!EC_KEY_check_key(key_pair.get())) {
     //    throw std::runtime_error("ECDSAPrivateKey::GenerateKeyPair():
     //    EC_KEY_check_key(...) failed.");

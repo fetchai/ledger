@@ -13,7 +13,7 @@ void BuildJSONDocument(pybind11::module &module)
   py::class_<JSONDocument>(module, "JSONDocument")
       .def(py::init<>())
       //.def(py::init< fetch::json::JSONDocument::string_type, const
-      //fetch::json::JSONDocument::const_string_type & >())
+      // fetch::json::JSONDocument::const_string_type & >())
       .def("Parse", &JSONDocument::Parse)
       //    .def("root", ( fetch::json::JSONDocument::variant_type &
       //    (JSONDocument::*)() ) &JSONDocument::root) .def("root", ( const
@@ -27,9 +27,9 @@ void BuildJSONDocument(pybind11::module &module)
           (const script::Variant &(JSONDocument::*)(const std::size_t &)const) &
               JSONDocument::operator[]);
   //.def("operator[]", ( script::Variant & (JSONDocument::*)(const
-  //byte_array::BasicByteArray &) ) &JSONDocument::operator[])
+  // byte_array::BasicByteArray &) ) &JSONDocument::operator[])
   //.def("operator[]", ( const script::Variant & (JSONDocument::*)(const
-  //byte_array::BasicByteArray &) const ) &JSONDocument::operator[]);
+  // byte_array::BasicByteArray &) const ) &JSONDocument::operator[]);
 }
 };  // namespace json
 };  // namespace fetch

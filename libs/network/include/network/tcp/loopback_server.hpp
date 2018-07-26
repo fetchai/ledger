@@ -59,8 +59,8 @@ private:
         // may be necessary to pass here `weak_ptr<>` instead of shared_ptr if
         // lambda nstance is set to `socket_` insatnce (and thus `socket_` would
         // take control over lyfecycle of lambda instace => it would create
-        // cyclic reference to `this` instance if we pass here shared_ptr instead
-        // of weak)
+        // cyclic reference to `this` instance if we pass here shared_ptr
+        // instead of weak)
         [this, self](std::error_code ec, std::size_t) {
           if (!ec)
           {
