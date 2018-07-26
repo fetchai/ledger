@@ -8,7 +8,7 @@ BlockConfig::config_array_type const BlockConfig::MAIN_SET{
   , {  8, 3,  128 }
   , { 16, 5,  128 }
   , { 32, 7,  256 }
-  , { 64, 7, 1024 }
+  //, { 64, 7, 1024 }
 };
 
 BlockConfig::config_array_type const BlockConfig::REDUCED_SET{
