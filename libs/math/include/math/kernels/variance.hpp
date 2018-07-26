@@ -1,19 +1,19 @@
 #pragma once
 
 namespace fetch {
-  namespace kernels {
+namespace kernels {
 
-    template< typename type, typename vector_register_type >
-    struct Variance {
-      Variance(type const&m, type const&r)
-        : mean(m), rec(r) { }
-      void operator()(vector_register_type const &a, vector_register_type &c) const {
-        c = a - mean;
-        c = rec * c * c;
-      }
-      vector_register_type mean;        
-      vector_register_type rec;
-    };
+template <typename type, typename vector_register_type>
+struct Variance
+{
+  Variance(type const &m, type const &r) : mean(m), rec(r) {}
+  void operator()(vector_register_type const &a, vector_register_type &c) const
+  {
+    c = a - mean;
+    c = rec * c * c;
   }
-}
-
+  vector_register_type mean;
+  vector_register_type rec;
+};
+}  // namespace kernels
+}  // namespace fetch

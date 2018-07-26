@@ -1,12 +1,12 @@
-#include<iostream>
-#include"storage/object_store.hpp"
-#include"core/commandline/cli_header.hpp"
+#include "storage/object_store.hpp"
+#include "core/commandline/cli_header.hpp"
+#include <iostream>
 using namespace fetch::storage;
 
-int main() 
+int main()
 {
-//  fetch::logger.DisableLogger();
-  ObjectStore< int > hello;
+  //  fetch::logger.DisableLogger();
+  ObjectStore<int> hello;
   hello.Load("fileA.db", "indexA.db");
 
   int x = 128312;

@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   V E C T O R I S A T I O N   T E S T S
 ################################################################################
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 project(fetch-vectorisation-tests)
 
 # CMake configuration

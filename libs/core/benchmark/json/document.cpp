@@ -21,8 +21,10 @@ void Serializer(T &t, Blah const&b)
 }
 */
 
-int main(int argc, char **argv) {
-  SCENARIO("Testing basic parsing") {
+int main(int argc, char **argv)
+{
+  SCENARIO("Testing basic parsing")
+  {
     ByteArray doc_content = R"({
   "a": 3,
   "x": { 
@@ -48,7 +50,8 @@ int main(int argc, char **argv) {
 
     // std::cout << doc_content << std::endl;
     JSONDocument doc;
-    for (std::size_t i = 0; i < 1; ++i) {
+    for (std::size_t i = 0; i < 1; ++i)
+    {
       doc.Parse(doc_content);
     }
 

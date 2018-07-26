@@ -9,19 +9,23 @@ using namespace fetch::storage;
 
 #define TYPE uint64_t
 
-int main() {
-  SCENARIO("usage of variant stack with basic type") {
-    static constexpr int64_t N = 100;
-    VariantStack stack;
-    std::stack<TYPE> reference;
+int main()
+{
+  SCENARIO("usage of variant stack with basic type")
+  {
+    static constexpr int64_t                  N = 100;
+    VariantStack                              stack;
+    std::stack<TYPE>                          reference;
     fetch::random::LaggedFibonacciGenerator<> lfg;
     stack.New("variant_stack_test_1.db");
 
-    SECTION_REF("populating the stack") {
+    SECTION_REF("populating the stack")
+    {
       EXPECT(stack.empty());
 
       bool all_pass = true;
-      for (int64_t i = 0; i < N; ++i) {
+      for (int64_t i = 0; i < N; ++i)
+      {
 
         SILENT_EXPECT((stack.size() == i));
         all_pass &= (stack.size() == i);
@@ -39,9 +43,11 @@ int main() {
       CHECK("populated correctly", all_pass);
     };
 
-    SECTION_REF("checking that elements come out in the right order") {
+    SECTION_REF("checking that elements come out in the right order")
+    {
       bool all_pass = true;
-      for (std::size_t i = 0; i < N; ++i) {
+      for (std::size_t i = 0; i < N; ++i)
+      {
         uint64_t top, ref;
         stack.Top(top);
         ref = reference.top();
@@ -56,12 +62,12 @@ int main() {
       EXPECT(stack.empty());
     };
   };
-/*
-  SCENARIO("usage of variant stack with inhomogenous types") {
-    SECTION("populating") { INFO("TODO: yet to be made"); };
-    SECTION("checking") { INFO("TODO: yet to be made"); };
-    EXPECT(false);
-  };
-*/
+  /*
+    SCENARIO("usage of variant stack with inhomogenous types") {
+      SECTION("populating") { INFO("TODO: yet to be made"); };
+      SECTION("checking") { INFO("TODO: yet to be made"); };
+      EXPECT(false);
+    };
+  */
   return 0;
 }

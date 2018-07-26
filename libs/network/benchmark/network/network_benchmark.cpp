@@ -1,7 +1,7 @@
-#include"network/management/network_manager.hpp"
-#include"./network_benchmark_service.hpp"
-#include"./node_basic.hpp"
-#include"../tests/include/helper_functions.hpp"
+#include "../tests/include/helper_functions.hpp"
+#include "./network_benchmark_service.hpp"
+#include "./node_basic.hpp"
+#include "network/management/network_manager.hpp"
 
 using namespace fetch;
 using namespace fetch::network_benchmark;
@@ -20,8 +20,8 @@ int main(int argc, char **argv)
       s >> seed;
     }
 
-    uint16_t tcpPort  = uint16_t(9080+seed);
-    uint16_t httpPort = uint16_t(8080+seed);
+    uint16_t tcpPort  = uint16_t(9080 + seed);
+    uint16_t httpPort = uint16_t(8080 + seed);
 
     fetch::network_benchmark::NetworkBenchmarkService<NodeBasic> serv(tm, tcpPort, httpPort);
     tm.Start();

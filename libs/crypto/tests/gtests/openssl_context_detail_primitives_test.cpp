@@ -10,30 +10,28 @@ namespace detail {
 
 namespace {
 
-class SessionPrimitiveTest : public ::testing::Test {
+class SessionPrimitiveTest : public ::testing::Test
+{
 protected:
+  virtual void SetUp() {}
 
-    virtual void SetUp() {
-    }
-
-    virtual void TearDown() {
-    }
+  virtual void TearDown() {}
 };
 
-
-TEST_F(SessionPrimitiveTest, test_BN_CTX_start) {
-    EXPECT_EQ(SessionPrimitive<BN_CTX>::start, &BN_CTX_start);
+TEST_F(SessionPrimitiveTest, test_BN_CTX_start)
+{
+  EXPECT_EQ(SessionPrimitive<BN_CTX>::start, &BN_CTX_start);
 }
 
-TEST_F(SessionPrimitiveTest, test_BN_CTX_end) {
-    EXPECT_EQ(SessionPrimitive<BN_CTX>::end, &BN_CTX_end);
+TEST_F(SessionPrimitiveTest, test_BN_CTX_end)
+{
+  EXPECT_EQ(SessionPrimitive<BN_CTX>::end, &BN_CTX_end);
 }
 
-} // namespace anonymous
+}  // namespace
 
-} // namespace detail
-} // namespace context
-} // namespace openssl
-} // namespace crypto
-} // namespace fetch
-
+}  // namespace detail
+}  // namespace context
+}  // namespace openssl
+}  // namespace crypto
+}  // namespace fetch

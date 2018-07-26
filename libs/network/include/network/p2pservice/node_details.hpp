@@ -1,27 +1,25 @@
 #pragma once
 
-#include"network/p2pservice/p2p_peer_details.hpp"
+#include "network/p2pservice/p2p_peer_details.hpp"
 
 namespace fetch {
 namespace p2p {
 namespace details {
 
-struct NodeDetailsImplementation 
+struct NodeDetailsImplementation
 {
   mutable mutex::Mutex mutex;
-  PeerDetails details;
+  PeerDetails          details;
 };
 
-} // namespace details
+}  // namespace details
 
-typedef std::shared_ptr< details::NodeDetailsImplementation > NodeDetails;
+typedef std::shared_ptr<details::NodeDetailsImplementation> NodeDetails;
 
 inline NodeDetails MakeNodeDetails()
 {
-  return std::make_shared< details::NodeDetailsImplementation  >();
+  return std::make_shared<details::NodeDetailsImplementation>();
 }
 
-} // namespace p2p
-} // namespace fetch
-
-  
+}  // namespace p2p
+}  // namespace fetch

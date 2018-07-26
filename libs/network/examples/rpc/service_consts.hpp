@@ -1,10 +1,12 @@
 #pragma once
-enum {
+enum
+{
   SLOWFUNCTION = 1,
   ADD,
   GREET
 };
 
-enum {
+enum
+{
   MYPROTO = 1
 };

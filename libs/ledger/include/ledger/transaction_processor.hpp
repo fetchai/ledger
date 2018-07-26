@@ -7,15 +7,15 @@
 namespace fetch {
 namespace ledger {
 
-class TransactionProcessor {
+class TransactionProcessor
+{
 public:
-
   TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner)
-    : storage_{storage}
-    , miner_{miner} {
-  }
+      : storage_{storage}, miner_{miner}
+  {}
 
-  void AddTransaction(chain::Transaction const &tx) {
+  void AddTransaction(chain::Transaction const &tx)
+  {
 
     // tell the node about the transaction
     storage_.AddTransaction(tx);
@@ -25,11 +25,9 @@ public:
   }
 
 private:
-
-  StorageUnitInterface &storage_;
+  StorageUnitInterface & storage_;
   miner::MinerInterface &miner_;
 };
 
-} // namespace ledger
-} // namespace fetch
-
+}  // namespace ledger
+}  // namespace fetch

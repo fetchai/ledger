@@ -1,35 +1,37 @@
 #pragma once
-#include "network/message.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "core/serializers/counter.hpp"
 #include "core/serializers/serializable_exception.hpp"
+#include "network/message.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/message_types.hpp"
 #include "network/service/protocol.hpp"
 #include "network/service/types.hpp"
-#include "core/serializers/counter.hpp"
 
+#include "core/serializers/counter.hpp"
 #include "network/service/error_codes.hpp"
 #include "network/service/promise.hpp"
-#include "core/serializers/counter.hpp"
 
 namespace fetch {
 namespace service {
 
-class ServiceClientInterface {
- public:
+class ServiceClientInterface
+{
+public:
   ServiceClientInterface()
-      : subscription_mutex_(__LINE__, __FILE__),
-        promises_mutex_(__LINE__, __FILE__) {}
+      : subscription_mutex_(__LINE__, __FILE__), promises_mutex_(__LINE__, __FILE__)
+  {}
 
   virtual ~ServiceClientInterface() {}
 
   template <typename... arguments>
-  Promise Call(protocol_handler_type const& protocol,
-               function_handler_type const& function, arguments&& ...args) {
+  Promise Call(protocol_handler_type const &protocol, function_handler_type const &function,
+               arguments &&... args)
+  {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Service Client Calling ", protocol, ":", function);
 
-    Promise prom;
+    Promise         prom;
     serializer_type params;
 
     serializers::SizeCounter<serializer_type> counter;
@@ -47,11 +49,11 @@ class ServiceClientInterface {
 
     PackCall(params, protocol, function, std::forward<arguments>(args)...);
 
-    if (!DeliverRequest(params.data())) {
+    if (!DeliverRequest(params.data()))
+    {
       fetch::logger.Debug("Call failed!");
       prom.reference()->Fail(serializers::SerializableException(
-          error::COULD_NOT_DELIVER,
-          byte_array::ConstByteArray("Could not deliver request")));
+          error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
       promises_mutex_.lock();
       promises_.erase(prom.id());
       promises_mutex_.unlock();
@@ -60,13 +62,14 @@ class ServiceClientInterface {
     return prom;
   }
 
-  Promise CallWithPackedArguments(protocol_handler_type const& protocol,
-                                  function_handler_type const& function,
-                                  byte_array::ByteArray const& args) {
+  Promise CallWithPackedArguments(protocol_handler_type const &protocol,
+                                  function_handler_type const &function,
+                                  byte_array::ByteArray const &args)
+  {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Service Client Calling (2) ", protocol, ":", function);
 
-    Promise prom;
+    Promise         prom;
     serializer_type params;
 
     serializers::SizeCounter<serializer_type> counter;
@@ -83,24 +86,23 @@ class ServiceClientInterface {
 
     PackCallWithPackedArguments(params, protocol, function, args);
 
-    if (!DeliverRequest(params.data())) {
+    if (!DeliverRequest(params.data()))
+    {
       fetch::logger.Debug("Call failed!");
       prom.reference()->Fail(serializers::SerializableException(
-          error::COULD_NOT_DELIVER,
-          byte_array::ConstByteArray("Could not deliver request")));
+          error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
     }
 
     return prom;
   }
 
-  subscription_handler_type Subscribe(protocol_handler_type const& protocol,
-                                      feed_handler_type const& feed,
-                                      AbstractCallable* callback) {
+  subscription_handler_type Subscribe(protocol_handler_type const &protocol,
+                                      feed_handler_type const &feed, AbstractCallable *callback)
+  {
     LOG_STACK_TRACE_POINT;
 
-    subscription_handler_type subid =
-        CreateSubscription(protocol, feed, callback);
-    serializer_type params;
+    subscription_handler_type subid = CreateSubscription(protocol, feed, callback);
+    serializer_type           params;
 
     serializers::SizeCounter<serializer_type> counter;
     counter << SERVICE_SUBSCRIBE << protocol << feed << subid;
@@ -111,11 +113,12 @@ class ServiceClientInterface {
     return subid;
   }
 
-  void Unsubscribe(subscription_handler_type id) {
+  void Unsubscribe(subscription_handler_type id)
+  {
     LOG_STACK_TRACE_POINT;
 
     subscription_mutex_.lock();
-    auto& sub = subscriptions_[id];
+    auto &sub = subscriptions_[id];
 
     serializer_type params;
 
@@ -131,23 +134,26 @@ class ServiceClientInterface {
     subscription_mutex_.lock();
     delete sub.callback;
     sub.protocol = 0;
-    sub.feed = 0;
+    sub.feed     = 0;
     subscription_mutex_.unlock();
   }
 
- protected:
-  virtual bool DeliverRequest(network::message_type const&) = 0;
+protected:
+  virtual bool DeliverRequest(network::message_type const &) = 0;
 
-  void ClearPromises() {
+  void ClearPromises()
+  {
     promises_mutex_.lock();
-    for (auto& p : promises_) {
+    for (auto &p : promises_)
+    {
       p.second->ConnectionFailed();
     }
     promises_.clear();
     promises_mutex_.unlock();
   }
 
-  bool ProcessServerMessage(network::message_type const& msg) {
+  bool ProcessServerMessage(network::message_type const &msg)
+  {
     LOG_STACK_TRACE_POINT;
     bool ret = true;
 
@@ -156,18 +162,19 @@ class ServiceClientInterface {
     service_classification_type type;
     params >> type;
 
-    if (type == SERVICE_RESULT) {
+    if (type == SERVICE_RESULT)
+    {
       Promise::promise_counter_type id;
       params >> id;
 
       promises_mutex_.lock();
       auto it = promises_.find(id);
-      if (it == promises_.end()) {
+      if (it == promises_.end())
+      {
         promises_mutex_.unlock();
 
         throw serializers::SerializableException(
-            error::PROMISE_NOT_FOUND,
-            byte_array::ConstByteArray("Could not find promise"));
+            error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
       }
       promises_mutex_.unlock();
 
@@ -177,7 +184,9 @@ class ServiceClientInterface {
       promises_mutex_.lock();
       promises_.erase(it);
       promises_mutex_.unlock();
-    } else if (type == SERVICE_ERROR) {
+    }
+    else if (type == SERVICE_ERROR)
+    {
       Promise::promise_counter_type id;
       params >> id;
 
@@ -186,11 +195,11 @@ class ServiceClientInterface {
 
       promises_mutex_.lock();
       auto it = promises_.find(id);
-      if (it == promises_.end()) {
+      if (it == promises_.end())
+      {
         promises_mutex_.unlock();
         throw serializers::SerializableException(
-            error::PROMISE_NOT_FOUND,
-            byte_array::ConstByteArray("Could not find promise"));
+            error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
       }
 
       promises_mutex_.unlock();
@@ -200,82 +209,93 @@ class ServiceClientInterface {
       promises_mutex_.lock();
       promises_.erase(it);
       promises_mutex_.unlock();
-
-    } else if (type == SERVICE_FEED) {
-      feed_handler_type feed;
+    }
+    else if (type == SERVICE_FEED)
+    {
+      feed_handler_type         feed;
       subscription_handler_type sub;
       params >> feed >> sub;
       subscription_mutex_.lock();
-      if (subscriptions_[sub].feed != feed) {
+      if (subscriptions_[sub].feed != feed)
+      {
         fetch::logger.Error("Feed id mismatch ", feed);
         TODO_FAIL("feed id mismatch");
       }
 
-      auto& subde = subscriptions_[sub];
+      auto &subde = subscriptions_[sub];
       subscription_mutex_.unlock();
 
       subde.mutex.lock();
       auto cb = subde.callback;
       subde.mutex.unlock();
 
-      if (cb != nullptr) {
+      if (cb != nullptr)
+      {
         serializer_type result;
-        try {
+        try
+        {
           (*cb)(result, params);
-        } catch (serializers::SerializableException const& e) {
+        }
+        catch (serializers::SerializableException const &e)
+        {
           e.StackTrace();
 
           fetch::logger.Error("Serialization error: ", e.what());
           throw e;
         }
-      } else {
+      }
+      else
+      {
         fetch::logger.Error("Callback is null for feed ", feed);
       }
-
-    } else {
+    }
+    else
+    {
       ret = false;
     }
 
     return ret;
   }
 
- private:
-  subscription_handler_type CreateSubscription(
-      protocol_handler_type const& protocol, feed_handler_type const& feed,
-      AbstractCallable* cb) {
+private:
+  subscription_handler_type CreateSubscription(protocol_handler_type const &protocol,
+                                               feed_handler_type const &feed, AbstractCallable *cb)
+  {
     LOG_STACK_TRACE_POINT;
 
     subscription_mutex_.lock();
     std::size_t i = 0;
-    for (; i < 256; ++i) {
+    for (; i < 256; ++i)
+    {
       if (subscriptions_[i].callback == nullptr) break;
     }
 
-    if (i >= 256) {
+    if (i >= 256)
+    {
       TODO_FAIL("could not allocate a free space for subscription");
     }
 
-    auto& sub = subscriptions_[i];
+    auto &sub    = subscriptions_[i];
     sub.protocol = protocol;
-    sub.feed = feed;
+    sub.feed     = feed;
     sub.callback = cb;
     subscription_mutex_.unlock();
     return subscription_handler_type(i);
   }
 
-  struct Subscription {
+  struct Subscription
+  {
     protocol_handler_type protocol = 0;
-    feed_handler_type feed = 0;
-    AbstractCallable* callback = nullptr;
-    fetch::mutex::Mutex mutex;
+    feed_handler_type     feed     = 0;
+    AbstractCallable *    callback = nullptr;
+    fetch::mutex::Mutex   mutex;
   };
 
-  Subscription subscriptions_[256];  // TODO: make centrally configurable;
+  Subscription        subscriptions_[256];  // TODO: make centrally configurable;
   fetch::mutex::Mutex subscription_mutex_;
 
-  std::map<Promise::promise_counter_type, Promise::shared_promise_type>
-      promises_;
-  fetch::mutex::Mutex promises_mutex_;
+  std::map<Promise::promise_counter_type, Promise::shared_promise_type> promises_;
+  fetch::mutex::Mutex                                                   promises_mutex_;
 };
-}
-}
+}  // namespace service
+}  // namespace fetch

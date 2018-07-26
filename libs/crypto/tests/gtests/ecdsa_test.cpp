@@ -11,10 +11,9 @@ namespace memory {
 
 namespace {
 
-} // namespace anonymous
+}  // namespace
 
-} // namespace memory
-} // namespace openssl
-} // namespace crypto
-} // namespace fetch
-
+}  // namespace memory
+}  // namespace openssl
+}  // namespace crypto
+}  // namespace fetch

@@ -6,10 +6,10 @@ namespace fetch {
 namespace vectorize {
 
 template <typename T, std::size_t>
-struct VectorInfo {
+struct VectorInfo
+{
   typedef T naitve_type;
   typedef T register_type;
 };
-}
-}
-
+}  // namespace vectorize
+}  // namespace fetch

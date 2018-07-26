@@ -1,20 +1,15 @@
 #pragma once
 
-namespace fetch
-{
-namespace protocols
-{
+namespace fetch {
+namespace protocols {
 
-struct FetchProtocols
+struct QuickStartProtocols
 {
-
-enum
-{
-  QUICK_START = 1
+  enum
+  {
+    QUICK_START = 1
+  };
 };
 
-};
-
-}
-}
-
+}  // namespace protocols
+}  // namespace fetch

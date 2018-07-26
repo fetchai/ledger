@@ -1,37 +1,29 @@
 #pragma once
 
-#include <thread>
 #include <miner/miner_interface.hpp>
+#include <thread>
 
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/execution_manager.hpp"
 
-namespace fetch
-{
-namespace chain
-{
+namespace fetch {
+namespace chain {
 
 class BlockCoordinator
 {
 public:
-  typedef chain::MainChain::block_type block_type;
-  typedef chain::MainChain::block_hash block_hash;
-  typedef fetch::mutex::Mutex          mutex_type;
-  typedef std::shared_ptr<BlockBody> block_body_type;
+  typedef chain::MainChain::block_type              block_type;
+  typedef chain::MainChain::block_hash              block_hash;
+  typedef fetch::mutex::Mutex                       mutex_type;
+  typedef std::shared_ptr<BlockBody>                block_body_type;
   typedef ledger::ExecutionManagerInterface::Status status_type;
 
-  BlockCoordinator(chain::MainChain &mainChain,
-                   ledger::ExecutionManagerInterface &executionManager)
-    : mainChain_{mainChain}
-    , executionManager_{executionManager}
-  {
-  }
+  BlockCoordinator(chain::MainChain &mainChain, ledger::ExecutionManagerInterface &executionManager)
+      : mainChain_{mainChain}, executionManager_{executionManager}
+  {}
 
-  ~BlockCoordinator()
-  {
-    Stop();
-  }
+  ~BlockCoordinator() { Stop(); }
 
   void AddBlock(block_type &block)
   {
@@ -39,7 +31,7 @@ public:
 
     auto heaviestHash = mainChain_.HeaviestBlock().hash();
 
-    if(block.hash() == heaviestHash)
+    if (block.hash() == heaviestHash)
     {
       fetch::logger.Info("New block: ", ToBase64(block.hash()), " from: ", ToBase64(block.prev()));
 
@@ -54,15 +46,14 @@ public:
   {
     stop_ = false;
 
-    auto closure = [this]
-    {
+    auto closure = [this] {
       block_body_type block;
-      bool executing_block = false;
-      bool schedule_block = false;
+      bool            executing_block = false;
+      bool            schedule_block  = false;
 
       std::vector<block_body_type> pending_stack;
 
-      while(!stop_)
+      while (!stop_)
       {
         // update the status
         executing_block = executionManager_.IsActive();
@@ -74,7 +65,8 @@ public:
           block.reset();
         }
 
-        if (!executing_block) {
+        if (!executing_block)
+        {
 
           // get the next block from the pending queue
           if (!pending_stack.empty())
@@ -88,7 +80,8 @@ public:
           {
             // get the next block from the queue (if there is one)
             std::lock_guard<mutex_type> lock(mutex_);
-            if(!blocksToProcess_.empty()) {
+            if (!blocksToProcess_.empty())
+            {
               block = blocksToProcess_.back();
               blocksToProcess_.pop_back();
               schedule_block = true;
@@ -103,14 +96,20 @@ public:
           // execute the block
           status_type const status = executionManager_.Execute(*block);
 
-          if (status == status_type::COMPLETE) {
+          if (status == status_type::COMPLETE)
+          {
             fetch::logger.Warn("Block Completed: ", ToBase64(block->hash));
-          } else if (status == status_type::SCHEDULED) {
+          }
+          else if (status == status_type::SCHEDULED)
+          {
             fetch::logger.Warn("Block Scheduled: ", ToBase64(block->hash));
-          } else if (status == status_type::NO_PARENT_BLOCK) {
+          }
+          else if (status == status_type::NO_PARENT_BLOCK)
+          {
             block_type full_block;
 
-            if (mainChain_.Get(block->previous_hash, full_block)) {
+            if (mainChain_.Get(block->previous_hash, full_block))
+            {
 
               // add the current block to the stack
               pending_stack.push_back(block);
@@ -120,48 +119,54 @@ public:
               pending_stack.push_back(block);
 
               fetch::logger.Warn("Retrieved parent block: ", ToBase64(block->hash));
-            } else {
-              fetch::logger.Warn("Unable to retreive parent block: ", ToBase64(block->previous_hash));
+            }
+            else
+            {
+              fetch::logger.Warn("Unable to retreive parent block: ",
+                                 ToBase64(block->previous_hash));
             }
 
             // reset the block
             block.reset();
-            continue; //erm...
-
-          } else {
+            continue;  // erm...
+          }
+          else
+          {
 
             char const *reason = "unknown";
-            switch (status) {
-              case status_type::COMPLETE:
-                reason = "COMPLETE";
-                break;
-              case status_type::SCHEDULED:
-                reason = "SCHEDULED";
-                break;
-              case status_type::NOT_STARTED:
-                reason = "NOT_STARTED";
-                break;
-              case status_type::ALREADY_RUNNING:
-                reason = "ALREADY_RUNNING";
-                break;
-              case status_type::NO_PARENT_BLOCK:
-                reason = "NO_PARENT_BLOCK";
-                break;
-              case status_type::UNABLE_TO_PLAN:
-                reason = "UNABLE_TO_PLAN";
-                break;
+            switch (status)
+            {
+            case status_type::COMPLETE:
+              reason = "COMPLETE";
+              break;
+            case status_type::SCHEDULED:
+              reason = "SCHEDULED";
+              break;
+            case status_type::NOT_STARTED:
+              reason = "NOT_STARTED";
+              break;
+            case status_type::ALREADY_RUNNING:
+              reason = "ALREADY_RUNNING";
+              break;
+            case status_type::NO_PARENT_BLOCK:
+              reason = "NO_PARENT_BLOCK";
+              break;
+            case status_type::UNABLE_TO_PLAN:
+              reason = "UNABLE_TO_PLAN";
+              break;
             }
 
-            fetch::logger.Warn("Unable to execute block: ", ToBase64(block->hash), " Reason: ", reason);
-            block.reset(); // mostly for debug
+            fetch::logger.Warn("Unable to execute block: ", ToBase64(block->hash),
+                               " Reason: ", reason);
+            block.reset();  // mostly for debug
           }
 
           executing_block = true;
-          schedule_block = false;
+          schedule_block  = false;
         }
 
         // wait for the block to process
-        //std::this_thread::sleep_for(std::chrono::milliseconds(750));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(750));
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
     };
@@ -171,7 +176,7 @@ public:
 
   void Stop()
   {
-    if(thread_.joinable())
+    if (thread_.joinable())
     {
       stop_ = true;
       thread_.join();
@@ -179,14 +184,13 @@ public:
   }
 
 private:
-  chain::MainChain                  &mainChain_;
+  chain::MainChain &                 mainChain_;
   ledger::ExecutionManagerInterface &executionManager_;
-  std::deque<block_body_type>       blocksToProcess_;
-  mutex_type                        mutex_{__LINE__, __FILE__};
-  bool                              stop_ = false;
-  std::thread                       thread_;
+  std::deque<block_body_type>        blocksToProcess_;
+  mutex_type                         mutex_{__LINE__, __FILE__};
+  bool                               stop_ = false;
+  std::thread                        thread_;
 };
 
-}
-}
-
+}  // namespace chain
+}  // namespace fetch

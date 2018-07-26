@@ -1,22 +1,21 @@
 #pragma once
 
-#include<random>
-#include"core/random/lfg.hpp"
-#include"core/byte_array/byte_array.hpp"
-#include"core/serializers/counter.hpp"
-#include"network/service/types.hpp"
-#include"ledger/chain/transaction.hpp"
-#include"ledger/chain/mutable_transaction.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "core/random/lfg.hpp"
+#include "core/serializers/counter.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "network/service/types.hpp"
+#include <random>
 
 namespace fetch {
 namespace common {
 
 uint32_t GetRandom()
 {
-  static std::random_device rd;
-  static std::mt19937 gen(rd());
-  static std::uniform_int_distribution<uint32_t> dis(
-      0, std::numeric_limits<uint32_t>::max());
+  static std::random_device                      rd;
+  static std::mt19937                            gen(rd());
+  static std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
 
   return dis(gen);
 }
@@ -27,7 +26,8 @@ byte_array::ConstByteArray GetRandomByteArray(std::size_t length)
   byte_array::ByteArray data;
   data.Resize(length);
 
-  for (std::size_t i = 0; i < length; ++i) {
+  for (std::size_t i = 0; i < length; ++i)
+  {
     data[i] = static_cast<uint8_t>(GetRandom());
   }
 
@@ -37,35 +37,30 @@ byte_array::ConstByteArray GetRandomByteArray(std::size_t length)
 // Time related functionality
 typedef std::chrono::high_resolution_clock::time_point time_point;
 
-time_point TimePoint()
-{
-  return std::chrono::high_resolution_clock::now();
-}
+time_point TimePoint() { return std::chrono::high_resolution_clock::now(); }
 
 double TimeDifference(time_point t1, time_point t2)
 {
   // If t1 before t2
-  if(t1 < t2)
+  if (t1 < t2)
   {
-    return std::chrono::duration_cast<std::chrono::duration<double>> (t2 - t1).count();
+    return std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
   }
-  return std::chrono::duration_cast<std::chrono::duration<double>> (t1 - t2).count();
+  return std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t2).count();
 }
 
 //  TODO: (`HUT`) : seperate helper functions by submodule
 class NoCopyClass
 {
 public:
+  NoCopyClass() {}
 
-  NoCopyClass(){}
+  NoCopyClass(int val) : classValue_{val} {}
 
-  NoCopyClass(int val) :
-    classValue_{val} { }
-
-  NoCopyClass(NoCopyClass &rhs)             = delete;
-  NoCopyClass &operator=(NoCopyClass& rhs)  = delete;
-  NoCopyClass(NoCopyClass &&rhs)            = delete;
-  NoCopyClass &operator=(NoCopyClass&& rhs) = delete;
+  NoCopyClass(NoCopyClass &rhs) = delete;
+  NoCopyClass &operator=(NoCopyClass &rhs) = delete;
+  NoCopyClass(NoCopyClass &&rhs)           = delete;
+  NoCopyClass &operator=(NoCopyClass &&rhs) = delete;
 
   int classValue_ = 0;
 };
@@ -86,7 +81,7 @@ template <typename T>
 void MakeString(T &str, std::size_t N = 4)
 {
   static fetch::random::LaggedFibonacciGenerator<> lfg;
-  byte_array::ByteArray entry;
+  byte_array::ByteArray                            entry;
   entry.Resize(N);
 
   for (std::size_t j = 0; j < N; ++j)
@@ -123,41 +118,38 @@ T NextTransaction(std::size_t bytesToAdd = 0)
   return T::Create(trans);
 }
 
-template<typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args)
+template <typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args &&... args)
 {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
 std::size_t Hash(fetch::byte_array::ConstByteArray const &arr)
 {
-    std::size_t hash = 2166136261;
-    for (std::size_t i = 0; i < arr.size(); ++i)
-    {
-      hash = (hash * 16777619) ^ arr[i];
-    }
-    return hash;
+  std::size_t hash = 2166136261;
+  for (std::size_t i = 0; i < arr.size(); ++i)
+  {
+    hash = (hash * 16777619) ^ arr[i];
+  }
+  return hash;
 }
 
 void BlockUntilTime(uint64_t startTime)
 {
   // get time as epoch, wait until that time to start
-  std::time_t t = static_cast<std::time_t>(startTime);
-  std::tm* timeout_tm = std::localtime(&t);
+  std::time_t t          = static_cast<std::time_t>(startTime);
+  std::tm *   timeout_tm = std::localtime(&t);
 
-  time_t timeout_time_t = mktime(timeout_tm);
+  time_t                                timeout_time_t = mktime(timeout_tm);
   std::chrono::system_clock::time_point timeout_tp =
-    std::chrono::system_clock::from_time_t(timeout_time_t);
+      std::chrono::system_clock::from_time_t(timeout_time_t);
 
   std::this_thread::sleep_until(timeout_tp);
 }
 
+}  // namespace common
 
-} // namespace commmon
-
-
-namespace network_benchmark
-{
+namespace network_benchmark {
 
 // Transactions are packaged up into blocks and referred to using a hash
 typedef fetch::chain::Transaction         transaction_type;
@@ -165,7 +157,6 @@ typedef std::size_t                       block_hash;
 typedef std::vector<transaction_type>     block_type;
 typedef std::pair<block_hash, block_type> network_block;
 
-}
+}  // namespace network_benchmark
 
-}
-
+}  // namespace fetch

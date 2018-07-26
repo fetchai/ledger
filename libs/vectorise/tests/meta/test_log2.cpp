@@ -1,15 +1,17 @@
 
-#include <iostream>
-#include "vectorise/meta/log2.hpp"
 #include "testing/unittest.hpp"
+#include "vectorise/meta/log2.hpp"
+#include <iostream>
 
 #define TEST_LOG_EX__EQ__X(X) fetch::meta::Log2<(1ull << X)>::value == X
 
-#define TEST_LOG_EX_PLUS_Y__EQ__X(X, Y) \
-  fetch::meta::Log2<(1ull << X) + Y>::value == X
-int main() {
-  SCENARIO("Testing exact exponents") {
-    SECTION("0 TO 9") {
+#define TEST_LOG_EX_PLUS_Y__EQ__X(X, Y) fetch::meta::Log2<(1ull << X) + Y>::value == X
+int main()
+{
+  SCENARIO("Testing exact exponents")
+  {
+    SECTION("0 TO 9")
+    {
       EXPECT(TEST_LOG_EX__EQ__X(0));
       EXPECT(TEST_LOG_EX__EQ__X(1));
       EXPECT(TEST_LOG_EX__EQ__X(2));
@@ -22,7 +24,8 @@ int main() {
       EXPECT(TEST_LOG_EX__EQ__X(9));
     };
 
-    SECTION("10 TO 19") {
+    SECTION("10 TO 19")
+    {
       EXPECT(TEST_LOG_EX__EQ__X(10));
       EXPECT(TEST_LOG_EX__EQ__X(11));
       EXPECT(TEST_LOG_EX__EQ__X(12));
@@ -35,7 +38,8 @@ int main() {
       EXPECT(TEST_LOG_EX__EQ__X(19));
     };
 
-    SECTION("20 TO 29") {
+    SECTION("20 TO 29")
+    {
       EXPECT(TEST_LOG_EX__EQ__X(20));
       EXPECT(TEST_LOG_EX__EQ__X(21));
       EXPECT(TEST_LOG_EX__EQ__X(22));
@@ -48,7 +52,8 @@ int main() {
       EXPECT(TEST_LOG_EX__EQ__X(29));
     };
 
-    SECTION("30 TO 39") {
+    SECTION("30 TO 39")
+    {
       EXPECT(TEST_LOG_EX__EQ__X(30));
       EXPECT(TEST_LOG_EX__EQ__X(31));
       EXPECT(TEST_LOG_EX__EQ__X(32));
@@ -61,7 +66,8 @@ int main() {
       EXPECT(TEST_LOG_EX__EQ__X(39));
     };
 
-    SECTION("40 TO 49") {
+    SECTION("40 TO 49")
+    {
       EXPECT(TEST_LOG_EX__EQ__X(40));
       EXPECT(TEST_LOG_EX__EQ__X(41));
       EXPECT(TEST_LOG_EX__EQ__X(42));
@@ -74,7 +80,8 @@ int main() {
       EXPECT(TEST_LOG_EX__EQ__X(49));
     };
 
-    SECTION("50 TO 59") {
+    SECTION("50 TO 59")
+    {
       EXPECT(TEST_LOG_EX__EQ__X(50));
       EXPECT(TEST_LOG_EX__EQ__X(51));
       EXPECT(TEST_LOG_EX__EQ__X(52));
@@ -87,7 +94,8 @@ int main() {
       EXPECT(TEST_LOG_EX__EQ__X(59));
     };
 
-    SECTION("60 TO 63") {
+    SECTION("60 TO 63")
+    {
       EXPECT(TEST_LOG_EX__EQ__X(60));
       EXPECT(TEST_LOG_EX__EQ__X(61));
       EXPECT(TEST_LOG_EX__EQ__X(62));
@@ -95,8 +103,10 @@ int main() {
     };
   };
 
-  SCENARIO("Testing exact exponents") {
-    SECTION("Randomly selected tests") {
+  SCENARIO("Testing exact exponents")
+  {
+    SECTION("Randomly selected tests")
+    {
       EXPECT(TEST_LOG_EX_PLUS_Y__EQ__X(0, 0));
       EXPECT(TEST_LOG_EX_PLUS_Y__EQ__X(1, 0));
       EXPECT(TEST_LOG_EX_PLUS_Y__EQ__X(2, 1));

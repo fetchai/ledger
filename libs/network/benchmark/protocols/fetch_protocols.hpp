@@ -1,22 +1,16 @@
 #pragma once
 
-namespace fetch
-{
-namespace protocols
+namespace fetch {
+namespace protocols {
+
+struct FetchProtocols
 {
 
-struct FetchProtocols 
-{
-  
-enum
-{
-  NETWORK_BENCHMARK = 1
+  enum
+  {
+    NETWORK_BENCHMARK = 1
+  };
 };
 
-};
-
-
-}
-}
-
-
+}  // namespace protocols
+}  // namespace fetch

@@ -1,15 +1,15 @@
-#include "core/byte_array/encoders.hpp"
 #include "ledger/executor.hpp"
+#include "core/byte_array/encoders.hpp"
 
 #include "core/assert.hpp"
 
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 
-#include <chrono>
-#include <thread>
-#include <random>
 #include <algorithm>
+#include <chrono>
+#include <random>
+#include <thread>
 
 namespace fetch {
 namespace ledger {
@@ -41,14 +41,18 @@ std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const &la
  * @param lanes The affected lanes for the transaction
  * @return The status code for the operation
  */
-Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) {
+Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice,
+                                   lane_set_type const &lanes)
+{
 
   fetch::logger.Info("Executing tx ", byte_array::ToBase64(hash));
 
-  // Get the transaction from the store (we should be able to take the transaction from any of the lanes, for
-  // simplicity, however, just pick the first one).
+  // Get the transaction from the store (we should be able to take the
+  // transaction from any of the lanes, for simplicity, however, just pick the
+  // first one).
   chain::Transaction tx;
-  if (!resources_->GetTransaction(hash, tx)) {
+  if (!resources_->GetTransaction(hash, tx))
+  {
     return Status::TX_LOOKUP_FAILURE;
   }
 
@@ -57,7 +61,8 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
 
   // Lookup the chain code associated with the transaction
   auto chain_code = chain_code_cache_.Lookup(identifier.name_space());
-  if (!chain_code) {
+  if (!chain_code)
+  {
     return Status::CHAIN_CODE_LOOKUP_FAILURE;
   }
 
@@ -66,7 +71,8 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
 
   // Dispatch the transaction to the contract
   auto result = chain_code->DispatchTransaction(identifier.name(), tx);
-  if (Contract::Status::OK != result) {
+  if (Contract::Status::OK != result)
+  {
     return Status::CHAIN_CODE_EXEC_FAILURE;
   }
 
@@ -78,7 +84,5 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   return Status::SUCCESS;
 }
 
-} // namespace ledger
-} // namespace fetch
-
-
+}  // namespace ledger
+}  // namespace fetch

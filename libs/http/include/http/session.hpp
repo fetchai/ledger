@@ -2,9 +2,9 @@
 namespace fetch {
 namespace http {
 
-class Session {
- public:
+class Session
+{
+public:
 };
-}
-}
-
+}  // namespace http
+}  // namespace fetch
