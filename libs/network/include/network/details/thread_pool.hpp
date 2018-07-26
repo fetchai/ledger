@@ -185,6 +185,8 @@ public:
   }
 
   void Stop() {
+    std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
+
     bool tryingToKillFromThreadWeOwn = false;
     shutdown_ = true;
     for (auto &thread : threads_) {
@@ -198,7 +200,6 @@ public:
         "Thread pools must not be killed by a thread they own.");
     }
 
-    std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
     if (threads_.size() != 0) {
 
       fetch::logger.Info("Stopping thread pool");
