@@ -1,5 +1,4 @@
-#ifndef NETWORK_P2PSERVICE_P2P_PEER_DETAILS_HPP
-#define NETWORK_P2PSERVICE_P2P_PEER_DETAILS_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
@@ -210,4 +209,3 @@ T &Deserialize(T &serializer, PeerDetails &data)
 
 }  // namespace p2p
 }  // namespace fetch
-#endif

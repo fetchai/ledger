@@ -1,5 +1,4 @@
-#ifndef LEDGER_CHAIN_MAIN_CHAIN_IDENTITY_HPP
-#define LEDGER_CHAIN_MAIN_CHAIN_IDENTITY_HPP
+#pragma once
 #include "ledger/chain/main_chain_details.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/service/client.hpp"
@@ -56,4 +55,3 @@ private:
 }  // namespace chain
 }  // namespace fetch
 
-#endif

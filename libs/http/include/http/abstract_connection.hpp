@@ -1,7 +1,6 @@
 
 
-#ifndef HTTP_ABSTRACT_CONNECTION_HPP
-#define HTTP_ABSTRACT_CONNECTION_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "http/response.hpp"
 #include "network/fetch_asio.hpp"
@@ -24,4 +23,3 @@ public:
 }  // namespace http
 }  // namespace fetch
 
-#endif

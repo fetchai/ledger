@@ -1,5 +1,4 @@
-#ifndef MAIN_CHAIN_MINER_HPP
-#define MAIN_CHAIN_MINER_HPP
+#pragma once
 
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
@@ -143,4 +142,3 @@ private:
 }  // namespace chain
 }  // namespace fetch
 
-#endif

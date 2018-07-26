@@ -1,5 +1,4 @@
-#ifndef MATH_DISTANCE_DISTANCE_MATRIX_HPP
-#define MATH_DISTANCE_DISTANCE_MATRIX_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "math/shape_less_array.hpp"
 
@@ -36,4 +35,3 @@ inline A &DistanceMatrix(A &r, A const &a, A const &b, F &&metric)
 }  // namespace math
 }  // namespace fetch
 
-#endif

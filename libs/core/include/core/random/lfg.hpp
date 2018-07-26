@@ -1,5 +1,4 @@
-#ifndef MATH_RANDOM_LFG_HPP
-#define MATH_RANDOM_LFG_HPP
+#pragma once
 #include "lcg.hpp"
 #include <cstdint>
 #include <limits>
@@ -60,4 +59,3 @@ private:
 };
 }  // namespace random
 }  // namespace fetch
-#endif

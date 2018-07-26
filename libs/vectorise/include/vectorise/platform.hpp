@@ -1,5 +1,4 @@
-#ifndef PLATFORM_HPP
-#define PLATFORM_HPP
+#pragma once
 #include "vectorise/vectorise.hpp"
 
 namespace fetch {
@@ -124,4 +123,3 @@ constexpr bool has_sse42()
 }  // namespace platform
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_IMAGE_LOAD_PNG_HPP
-#define LIBFETCHCORE_IMAGE_LOAD_PNG_HPP
+#pragma once
 
 #include "pythin/image/load_png.hpp"
 #include "python/fetch_pybind.hpp"
@@ -18,4 +17,3 @@ void BuildFileReadErrorException(pybind11::module &module)
 };  // namespace image
 };  // namespace fetch
 
-#endif

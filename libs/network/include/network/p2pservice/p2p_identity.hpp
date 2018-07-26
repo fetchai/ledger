@@ -1,5 +1,4 @@
-#ifndef NETWORK_P2PSERVICE_P2P_IDENTITY_HPP
-#define NETWORK_P2PSERVICE_P2P_IDENTITY_HPP
+#pragma once
 #include "network/management/connection_register.hpp"
 #include "network/p2pservice/node_details.hpp"
 #include "network/p2pservice/p2p_peer_details.hpp"
@@ -141,4 +140,3 @@ private:
 }  // namespace p2p
 }  // namespace fetch
 
-#endif

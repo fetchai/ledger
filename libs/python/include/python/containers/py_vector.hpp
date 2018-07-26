@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_CONTAINERS_VECTOR_HPP
-#define LIBFETCHCORE_CONTAINERS_VECTOR_HPP
+#pragma once
 #include "containers/vector.hpp"
 
 #include "fetch_pybind.hpp"
@@ -53,4 +52,3 @@ void BuildVector(std::string const &custom_name, pybind11::module &module)
 };  // namespace containers
 };  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LOGGER_HPP
-#define LOGGER_HPP
+#pragma once
 #include "core/abstract_mutex.hpp"
 #include "core/commandline/vt100.hpp"
 #include <atomic>
@@ -674,4 +673,3 @@ extern log::details::LogWrapper logger;
 
 //#define LOG_STACK_TRACE_POINT
 //#define LOG_LAMBDA_STACK_TRACE_POINT
-#endif

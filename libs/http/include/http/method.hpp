@@ -1,5 +1,4 @@
-#ifndef HTTP_METHOD_HPP
-#define HTTP_METHOD_HPP
+#pragma once
 
 namespace fetch {
 namespace http {
@@ -16,4 +15,3 @@ enum class Method
 }
 }  // namespace fetch
 
-#endif

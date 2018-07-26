@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_INFO_SSE_HPP
-#define VECTORIZE_INFO_SSE_HPP
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -61,4 +60,3 @@ struct VectorInfo<double, 128>
 }  // namespace vectorize
 }  // namespace fetch
 
-#endif

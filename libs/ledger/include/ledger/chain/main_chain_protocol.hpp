@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_MAIN_CHAIN_PROTOCOL_HPP
-#define PROTOCOLS_MAIN_CHAIN_PROTOCOL_HPP
+#pragma once
 #include "network/service/protocol.hpp"
 #include <vector>
 
@@ -194,4 +193,3 @@ private:
 }  // namespace chain
 }  // namespace fetch
 
-#endif  //__MAIN_CHAIN_PROTOCOL_HPP

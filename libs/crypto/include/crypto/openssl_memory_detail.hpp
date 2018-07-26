@@ -1,5 +1,4 @@
-#ifndef CRYPTO_OPENSSL_MEMORY_DETAIL_HPP
-#define CRYPTO_OPENSSL_MEMORY_DETAIL_HPP
+#pragma once
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
@@ -84,4 +83,3 @@ struct OpenSSLDeleter
 }  // namespace crypto
 }  // namespace fetch
 
-#endif  // CRYPTO_OPENSSL_MEMORY_DETAIL_HPP

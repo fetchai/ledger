@@ -1,5 +1,4 @@
-#ifndef OPTIMISATION_SIMULATED_ANNEALING_SPARSE_ANNEALER_HPP
-#define OPTIMISATION_SIMULATED_ANNEALING_SPARSE_ANNEALER_HPP
+#pragma once
 #include "math/exp.hpp"
 #include "memory/rectangular_array.hpp"
 #include "optimisation/abstract_spinglass_solver.hpp"
@@ -217,4 +216,3 @@ class SparseAnnealer : public AbstractSpinGlassSolver {
 };
 }
 }
-#endif

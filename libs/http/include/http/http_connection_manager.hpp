@@ -1,5 +1,4 @@
-#ifndef HTTP_CONNECTION_MANAGER_HPP
-#define HTTP_CONNECTION_MANAGER_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
 #include "http/abstract_connection.hpp"
@@ -97,4 +96,3 @@ private:
 }  // namespace http
 }  // namespace fetch
 
-#endif

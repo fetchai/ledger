@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_DETAILS_ENCODE_DECODE_HPP
-#define BYTE_ARRAY_DETAILS_ENCODE_DECODE_HPP
+#pragma once
 #include <cstddef>
 #include <cstdint>
 
@@ -32,4 +31,3 @@ enum
 }  // namespace byte_array
 }  // namespace fetch
 
-#endif

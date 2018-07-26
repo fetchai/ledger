@@ -1,5 +1,4 @@
-#ifndef SERVICE_ABSTRACT_PUBLICATION_FEED_HPP
-#define SERVICE_ABSTRACT_PUBLICATION_FEED_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "network/service/abstract_callable.hpp"
 
@@ -59,4 +58,3 @@ public:
 };
 }  // namespace service
 }  // namespace fetch
-#endif

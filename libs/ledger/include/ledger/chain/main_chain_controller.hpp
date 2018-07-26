@@ -1,5 +1,4 @@
-#ifndef LEDGER_CHAIN_MAIN_CHAIN_CONTROLLER_HPP
-#define LEDGER_CHAIN_MAIN_CHAIN_CONTROLLER_HPP
+#pragma once
 #include "ledger/chain/main_chain_details.hpp"
 #include "ledger/chain/main_chain_identity.hpp"
 #include "ledger/chain/main_chain_identity_protocol.hpp"
@@ -171,4 +170,3 @@ private:
 }  // namespace chain
 }  // namespace fetch
 
-#endif

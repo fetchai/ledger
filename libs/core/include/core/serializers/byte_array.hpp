@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_REFERENCED_BYTE_ARRAY_HPP
-#define SERIALIZER_REFERENCED_BYTE_ARRAY_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -37,4 +36,3 @@ inline void Deserialize(T &serializer, byte_array::ConstByteArray &s)
 }  // namespace serializers
 }  // namespace fetch
 
-#endif

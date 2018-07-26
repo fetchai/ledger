@@ -1,5 +1,4 @@
-#ifndef CHAIN_MUTABLE_TRANSACTION_HPP
-#define CHAIN_MUTABLE_TRANSACTION_HPP
+#pragma once
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
@@ -163,4 +162,3 @@ private:
 
 }  // namespace chain
 }  // namespace fetch
-#endif

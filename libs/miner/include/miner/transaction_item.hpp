@@ -1,5 +1,4 @@
-#ifndef FETCH_TRANSACTION_ITEM_HPP
-#define FETCH_TRANSACTION_ITEM_HPP
+#pragma once
 
 #include "ledger/chain/mutable_transaction.hpp"
 
@@ -30,4 +29,3 @@ private:
 }  // namespace miner
 }  // namespace fetch
 
-#endif  // FETCH_TRANSACTION_ITEM_HPP

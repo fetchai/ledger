@@ -1,5 +1,4 @@
-#ifndef KERNELS_APPROX_SOFT_MAX_HPP
-#define KERNELS_APPROX_SOFT_MAX_HPP
+#pragma once
 
 namespace fetch {
 namespace kernels {
@@ -39,4 +38,3 @@ private:
 }  // namespace kernels
 }  // namespace fetch
 
-#endif

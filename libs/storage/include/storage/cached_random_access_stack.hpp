@@ -1,5 +1,4 @@
-#ifndef STORAGE_CACHED_RANDOM_ACCESS_STACK_HPP
-#define STORAGE_CACHED_RANDOM_ACCESS_STACK_HPP
+#pragma once
 
 #include "core/assert.hpp"
 #include "storage/random_access_stack.hpp"
@@ -224,4 +223,3 @@ private:
 }  // namespace storage
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef FETCH_EXECUTION_MANAGER_INTERFACE_HPP
-#define FETCH_EXECUTION_MANAGER_INTERFACE_HPP
+#pragma once
 
 #include "ledger/chain/block.hpp"
 
@@ -56,4 +55,3 @@ void Deserialize(T &serializer, ExecutionManagerInterface::Status &status)
 }  // namespace ledger
 }  // namespace fetch
 
-#endif  // FETCH_EXECUTION_MANAGER_INTERFACE_HPP

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_SERVER_HPP
-#define LIBFETCHCORE_HTTP_SERVER_HPP
+#pragma once
 #include "http/server.hpp"
 
 #include "fetch_pybind.hpp"
@@ -30,4 +29,3 @@ void BuildHTTPServer(pybind11::module &module)
 };  // namespace http
 };  // namespace fetch
 
-#endif

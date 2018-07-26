@@ -1,5 +1,4 @@
-#ifndef CRYPTO_VERIFIER_HPP
-#define CRYPTO_VERIFIER_HPP
+#pragma once
 #include "crypto/identity.hpp"
 
 namespace fetch {
@@ -16,4 +15,3 @@ public:
 }  // namespace crypto
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef STORAGE_KEY_VALUE_INDEX_HPP
-#define STORAGE_KEY_VALUE_INDEX_HPP
+#pragma once
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/key.hpp"
@@ -483,4 +482,3 @@ private:
 }  // namespace storage
 }  // namespace fetch
 
-#endif

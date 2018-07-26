@@ -1,5 +1,4 @@
-#ifndef FETCH_FAKE_EXECUTOR_HPP
-#define FETCH_FAKE_EXECUTOR_HPP
+#pragma once
 
 #include "core/logger.hpp"
 #include "ledger/executor_interface.hpp"
@@ -65,4 +64,3 @@ private:
   history_cache_type history_;
 };
 
-#endif  // FETCH_FAKE_EXECUTOR_HPP

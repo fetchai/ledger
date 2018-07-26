@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_LANE_SERVICE_HPP
-#define LEDGER_STORAGE_UNIT_LANE_SERVICE_HPP
+#pragma once
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -180,4 +179,3 @@ private:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif

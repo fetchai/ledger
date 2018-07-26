@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_CRYPTO_ECDSA_HPP
-#define LIBFETCHCORE_CRYPTO_ECDSA_HPP
+#pragma once
 #include "crypto/ecdsa.hpp"
 
 #include "fetch_pybind.hpp"
@@ -25,4 +24,3 @@ void BuildECDSASigner(pybind11::module &module)
 };  // namespace crypto
 };  // namespace fetch
 
-#endif

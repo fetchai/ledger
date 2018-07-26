@@ -1,5 +1,4 @@
-#ifndef MATH_DISTANCE_PEARSON_HPP
-#define MATH_DISTANCE_PEARSON_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "math/correlation/pearson.hpp"
 #include "math/shape_less_array.hpp"
@@ -30,4 +29,3 @@ inline typename ShapeLessArray<T, C>::type Pearson(
 }  // namespace math
 }  // namespace fetch
 
-#endif

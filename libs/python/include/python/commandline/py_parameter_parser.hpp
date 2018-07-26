@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_COMMANDLINE_PARAMETER_PARSER_HPP
-#define LIBFETCHCORE_COMMANDLINE_PARAMETER_PARSER_HPP
+#pragma once
 #include "commandline/parameter_parser.hpp"
 
 #include "fetch_pybind.hpp"
@@ -24,4 +23,3 @@ void BuildParamsParser(pybind11::module &module)
 };  // namespace commandline
 };  // namespace fetch
 
-#endif

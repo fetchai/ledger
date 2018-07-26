@@ -1,5 +1,4 @@
-#ifndef CHAIN_BLOCK_HPP
-#define CHAIN_BLOCK_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -148,4 +147,3 @@ inline void Deserialize(T &serializer, BasicBlock<P, H> &b)
 }
 }  // namespace chain
 }  // namespace fetch
-#endif

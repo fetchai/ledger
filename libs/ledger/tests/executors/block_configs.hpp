@@ -1,5 +1,4 @@
-#ifndef FETCH_BLOCK_CONFIGS_HPP
-#define FETCH_BLOCK_CONFIGS_HPP
+#pragma once
 
 #include <cstddef>
 #include <iostream>
@@ -29,4 +28,3 @@ struct BlockConfig
   }
 };
 
-#endif  // FETCH_BLOCK_CONFIGS_HPP

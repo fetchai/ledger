@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_KEY_VALUE_SET_HPP
-#define LIBFETCHCORE_HTTP_KEY_VALUE_SET_HPP
+#pragma once
 #include "http/key_value_set.hpp"
 
 #include "fetch_pybind.hpp"
@@ -49,4 +48,3 @@ void BuildKeyValueSet(pybind11::module &module)
 };  // namespace http
 };  // namespace fetch
 
-#endif

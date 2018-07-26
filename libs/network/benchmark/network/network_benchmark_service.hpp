@@ -1,5 +1,4 @@
-#ifndef NETWORK_BENCHMARK_SERVICE_HPP
-#define NETWORK_BENCHMARK_SERVICE_HPP
+#pragma once
 
 #include "../tests/include/helper_functions.hpp"
 #include "./http_interface.hpp"
@@ -55,4 +54,3 @@ private:
 }  // namespace network_benchmark
 }  // namespace fetch
 
-#endif

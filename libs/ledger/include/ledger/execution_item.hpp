@@ -1,5 +1,4 @@
-#ifndef FETCH_EXECUTION_ITEM_HPP
-#define FETCH_EXECUTION_ITEM_HPP
+#pragma once
 
 #include "core/make_unique.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -44,4 +43,3 @@ private:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif  // FETCH_EXECUTION_ITEM_HPP

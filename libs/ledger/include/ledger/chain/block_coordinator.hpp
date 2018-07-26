@@ -1,5 +1,4 @@
-#ifndef BLOCK_COORDINATOR_HPP
-#define BLOCK_COORDINATOR_HPP
+#pragma once
 
 #include <miner/miner_interface.hpp>
 #include <thread>
@@ -200,4 +199,3 @@ private:
 }  // namespace chain
 }  // namespace fetch
 
-#endif

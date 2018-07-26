@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_SWARM_SERIALIZERS_HPP
-#define PROTOCOLS_SWARM_SERIALIZERS_HPP
+#pragma once
 
 #include "protocols/swarm/entry_point.hpp"
 #include "protocols/swarm/node_details.hpp"
@@ -82,4 +81,3 @@ T &Deserialize(T &serializer, std::vector<protocols::NodeDetails> &data)
 }  // namespace serializers
 }  // namespace fetch
 
-#endif

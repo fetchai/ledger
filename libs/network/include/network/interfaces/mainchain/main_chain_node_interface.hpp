@@ -1,5 +1,4 @@
-#ifndef MAIN_CHAIN_NODE_INTERFACE_HPP
-#define MAIN_CHAIN_NODE_INTERFACE_HPP
+#pragma once
 
 #include "ledger/chain/main_chain.hpp"
 #include "network/protocols/fetch_protocols.hpp"
@@ -34,4 +33,3 @@ public:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif  // MAIN_CHAIN_NODE_INTERFACE_HPP

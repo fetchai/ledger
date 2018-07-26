@@ -1,5 +1,4 @@
-#ifndef NETWORK_P2PSERVICE_P2P_PEER_DIRECTORY_PROTOCOL_HPP
-#define NETWORK_P2PSERVICE_P2P_PEER_DIRECTORY_PROTOCOL_HPP
+#pragma once
 #include "network/p2pservice/p2p_peer_directory.hpp"
 
 namespace fetch {
@@ -40,4 +39,3 @@ private:
 }  // namespace p2p
 }  // namespace fetch
 
-#endif

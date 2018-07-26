@@ -1,5 +1,4 @@
-#ifndef CRYPTO_ECDSA_HPP
-#define CRYPTO_ECDSA_HPP
+#pragma once
 #include "crypto/hash.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/sha256.hpp"
@@ -238,4 +237,3 @@ private:
 };
 }  // namespace crypto
 }  // namespace fetch
-#endif

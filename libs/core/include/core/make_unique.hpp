@@ -1,5 +1,4 @@
-#ifndef FETCH_MAKE_SHARED_HPP
-#define FETCH_MAKE_SHARED_HPP
+#pragma once
 
 #include <memory>
 
@@ -13,4 +12,3 @@ std::unique_ptr<T> make_unique(Args &&... args)
 
 }  // namespace fetch
 
-#endif  // FETCH_MAKE_SHARED_HPP

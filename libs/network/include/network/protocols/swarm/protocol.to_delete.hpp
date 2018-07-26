@@ -1,5 +1,4 @@
-#ifndef SWARM_PROTOCOL_HPP
-#define SWARM_PROTOCOL_HPP
+#pragma once
 
 #include "http/module.hpp"
 #include "json/document.hpp"
@@ -573,4 +572,3 @@ public:
 }  // namespace protocols
 }  // namespace fetch
 
-#endif  // SWARM_PROTOCOL_HPP

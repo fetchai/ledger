@@ -1,5 +1,4 @@
-#ifndef SERVICE_CONSTS
-#define SERVICE_CONSTS
+#pragma once
 struct AEAToNode
 {
 
@@ -28,4 +27,3 @@ struct FetchProtocols
   };
 };
 
-#endif

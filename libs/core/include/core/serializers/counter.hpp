@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_COUNTER_HPP
-#define SERIALIZER_COUNTER_HPP
+#pragma once
 #include "core/serializers/stl_types.hpp"
 
 #include "core/byte_array/byte_array.hpp"
@@ -86,4 +85,3 @@ private:
 }  // namespace serializers
 }  // namespace fetch
 
-#endif

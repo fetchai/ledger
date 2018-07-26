@@ -1,5 +1,4 @@
-#ifndef TRANSACTION_LIST_BASIC_HPP
-#define TRANSACTION_LIST_BASIC_HPP
+#pragma once
 #include "../tests/include/helper_functions.hpp"
 #include "crypto/fnv.hpp"
 #include <set>
@@ -179,4 +178,3 @@ private:
 
 }  // namespace network_benchmark
 }  // namespace fetch
-#endif

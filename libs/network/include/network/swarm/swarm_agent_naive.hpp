@@ -1,5 +1,4 @@
-#ifndef SWARM_AGENT_NAIVE__
-#define SWARM_AGENT_NAIVE__
+#pragma once
 
 #include <deque>
 #include <iostream>
@@ -128,4 +127,3 @@ public:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif  //__SWARM_AGENT_NAIVE__

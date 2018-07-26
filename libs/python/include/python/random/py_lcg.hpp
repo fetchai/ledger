@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_RANDOM_LCG_HPP
-#define LIBFETCHCORE_RANDOM_LCG_HPP
+#pragma once
 
 #include "core/random/lcg.hpp"
 #include "python/fetch_pybind.hpp"
@@ -26,4 +25,3 @@ void BuildLinearCongruentialGenerator(pybind11::module &module)
 };  // namespace random
 };  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_STATISTICS_MEAN_HPP
-#define LIBFETCHCORE_MATH_STATISTICS_MEAN_HPP
+#pragma once
 
 #include "math/linalg/matrix.hpp"
 #include "math/statistics/mean.hpp"
@@ -34,4 +33,3 @@ inline void BuildMeanStatistics(std::string const &custom_name,
 }  // namespace math
 }  // namespace fetch
 
-#endif

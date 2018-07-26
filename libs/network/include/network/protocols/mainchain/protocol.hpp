@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_MAIN_CHAIN_PROTOCOL_HPP
-#define PROTOCOLS_MAIN_CHAIN_PROTOCOL_HPP
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -26,4 +25,3 @@ public:
 }  // namespace protocols
 }  // namespace fetch
 
-#endif  //__MAIN_CHAIN_PROTOCOL_HPP

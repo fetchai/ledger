@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_CORRELATION_JACCARD_HPP
-#define LIBFETCHCORE_MATH_CORRELATION_JACCARD_HPP
+#pragma once
 
 #include "math/correlation/jaccard.hpp"
 #include "math/linalg/matrix.hpp"
@@ -69,4 +68,3 @@ inline void BuildGeneralisedJaccardCorrelation(std::string const &custom_name,
 }  // namespace math
 }  // namespace fetch
 
-#endif

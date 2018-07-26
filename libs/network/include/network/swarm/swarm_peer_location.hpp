@@ -1,5 +1,4 @@
-#ifndef SWARM_PEER_LOCATION__
-#define SWARM_PEER_LOCATION__
+#pragma once
 
 #include <iostream>
 #include <list>
@@ -95,4 +94,3 @@ private:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif  //__SWARM_PEER_LOCATION__

@@ -1,5 +1,4 @@
-#ifndef FETCH_MACROS_HPP
-#define FETCH_MACROS_HPP
+#pragma once
 
 #define FETCH_UNUSED(x) (void)(x)
 
@@ -9,4 +8,3 @@
 #define FETCH_MAYBE_UNUSED
 #endif
 
-#endif  // FETCH_MACROS_HPP

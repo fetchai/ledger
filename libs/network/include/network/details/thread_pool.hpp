@@ -1,5 +1,4 @@
-#ifndef NETWORK_DETAILS_THREAD_POOL__
-#define NETWORK_DETAILS_THREAD_POOL__
+#pragma once
 
 #include <condition_variable>
 #include <functional>
@@ -336,4 +335,3 @@ inline ThreadPool MakeThreadPool(std::size_t threads = 1)
 }  // namespace network
 }  // namespace fetch
 
-#endif

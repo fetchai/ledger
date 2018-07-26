@@ -1,5 +1,4 @@
-#ifndef VECTORISE_MEMORY_VECTOR_SLICE_HPP
-#define VECTORISE_MEMORY_VECTOR_SLICE_HPP
+#pragma once
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/meta/log2.hpp"
@@ -165,4 +164,3 @@ protected:
 }  // namespace memory
 }  // namespace fetch
 
-#endif

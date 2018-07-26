@@ -1,5 +1,4 @@
-#ifndef HELPER_FUNCTIONS_HPP
-#define HELPER_FUNCTIONS_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/random/lfg.hpp"
@@ -166,4 +165,3 @@ typedef std::pair<block_hash, block_type> network_block;
 
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERVICE_FUNCTION_HPP
-#define LIBFETCHCORE_SERVICE_FUNCTION_HPP
+#pragma once
 #include "service/function.hpp"
 
 #include "fetch_pybind.hpp"
@@ -19,4 +18,3 @@ void BuildFunction(std::string const &custom_name, pybind11::module &module)
 };  // namespace service
 };  // namespace fetch
 
-#endif

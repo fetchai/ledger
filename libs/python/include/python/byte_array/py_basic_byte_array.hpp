@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_BYTE_ARRAY_BASIC_BYTE_ARRAY_HPP
-#define LIBFETCHCORE_BYTE_ARRAY_BASIC_BYTE_ARRAY_HPP
+#pragma once
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "python/fetch_pybind.hpp"
@@ -49,4 +48,3 @@ void BuildConstByteArray(pybind11::module &module)
 };  // namespace byte_array
 };  // namespace fetch
 
-#endif

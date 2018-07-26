@@ -1,5 +1,4 @@
-#ifndef SERVICE_CALLABLE_CLASS_MEMBER_HPP
-#define SERVICE_CALLABLE_CLASS_MEMBER_HPP
+#pragma once
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -391,4 +390,3 @@ private:
 }  // namespace service
 }  // namespace fetch
 
-#endif

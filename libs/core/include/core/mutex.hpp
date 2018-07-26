@@ -1,5 +1,4 @@
-#ifndef MUTEX_HPP
-#define MUTEX_HPP
+#pragma once
 
 #include "core/logger.hpp"
 
@@ -154,4 +153,3 @@ typedef DebugMutex Mutex;
 }  // namespace mutex
 }  // namespace fetch
 
-#endif

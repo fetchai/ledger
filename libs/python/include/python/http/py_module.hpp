@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_MODULE_HPP
-#define LIBFETCHCORE_HTTP_MODULE_HPP
+#pragma once
 #include "http/module.hpp"
 
 #include "fetch_pybind.hpp"
@@ -23,4 +22,3 @@ void BuildHTTPModule(pybind11::module &module)
 };  // namespace http
 };  // namespace fetch
 
-#endif

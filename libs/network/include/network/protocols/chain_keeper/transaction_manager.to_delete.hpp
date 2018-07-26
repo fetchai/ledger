@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_CHAIN_KEEPER_TRANSACTION_MANAGER_HPP
-#define PROTOCOLS_CHAIN_KEEPER_TRANSACTION_MANAGER_HPP
+#pragma once
 
 #include "assert.hpp"
 #include "byte_array/encoders.hpp"
@@ -206,4 +205,3 @@ private:
 }  // namespace protocols
 }  // namespace fetch
 
-#endif

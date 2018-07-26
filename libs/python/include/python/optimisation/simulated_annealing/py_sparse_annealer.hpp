@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_OPTIMISATION_SIMULATED_ANNEALING_SPARSE_ANNEALER_HPP
-#define LIBFETCHCORE_OPTIMISATION_SIMULATED_ANNEALING_SPARSE_ANNEALER_HPP
+#pragma once
 #include "optimisation/simulated_annealing/sparse_annealer.hpp"
 
 #include <pybind11/operators.h>
@@ -36,4 +35,3 @@ void BuildSparseAnnealer(pybind11::module &module)
 };  // namespace optimisers
 };  // namespace fetch
 
-#endif

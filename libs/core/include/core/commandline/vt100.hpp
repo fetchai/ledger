@@ -1,5 +1,4 @@
-#ifndef VT100_HPP
-#define VT100_HPP
+#pragma once
 
 #include <algorithm>
 #include <map>
@@ -53,4 +52,3 @@ inline static const std::string Left(uint16_t y)
 }  // namespace VT100
 }  // namespace commandline
 }  // namespace fetch
-#endif

@@ -1,5 +1,4 @@
-#ifndef SERVICE_TYPES_HPP
-#define SERVICE_TYPES_HPP
+#pragma once
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
@@ -19,4 +18,3 @@ typedef uint8_t  subscription_handler_type;
 typedef uint64_t service_classification_type;
 }  // namespace service
 }  // namespace fetch
-#endif

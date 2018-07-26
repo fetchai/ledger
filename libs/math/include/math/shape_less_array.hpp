@@ -1,5 +1,4 @@
-#ifndef MATH_SHAPE_LESS_ARRAY_HPP
-#define MATH_SHAPE_LESS_ARRAY_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "core/random.hpp"
 #include "math/kernels/approx_exp.hpp"
@@ -1632,4 +1631,3 @@ private:
 }  // namespace math
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_SUBSCRIBE_PROTOCOL_HPP
-#define PROTOCOLS_SUBSCRIBE_PROTOCOL_HPP
+#pragma once
 
 #include "network/service/protocol.hpp"
 
@@ -32,4 +31,3 @@ public:
 }  // namespace protocols
 }  // namespace fetch
 
-#endif

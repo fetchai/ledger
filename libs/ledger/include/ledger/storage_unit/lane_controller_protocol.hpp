@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_LANE_REMOTE_CONTROL_PROTOCOL_HPP
-#define LEDGER_STORAGE_UNIT_LANE_REMOTE_CONTROL_PROTOCOL_HPP
+#pragma once
 #include "ledger/storage_unit/lane_controller.hpp"
 namespace fetch {
 namespace ledger {
@@ -34,4 +33,3 @@ public:
 
 }  // namespace fetch
 
-#endif

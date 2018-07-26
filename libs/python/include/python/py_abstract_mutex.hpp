@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_ABSTRACT_MUTEX_HPP
-#define LIBFETCHCORE_ABSTRACT_MUTEX_HPP
+#pragma once
 #include "abstract_mutex.hpp"
 
 #include "fetch_pybind.hpp"
@@ -18,4 +17,3 @@ void BuildAbstractMutex(pybind11::module &module)
 };  // namespace mutex
 };  // namespace fetch
 
-#endif

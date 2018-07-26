@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_PROTOCOLS_SWARM_CONTROLLER_HPP
-#define LIBFETCHCORE_PROTOCOLS_SWARM_CONTROLLER_HPP
+#pragma once
 #include "protocols/swarm/controller.hpp"
 
 #include "fetch_pybind.hpp"
@@ -72,4 +71,3 @@ void BuildSwarmController(pybind11::module &module)
 };  // namespace protocols
 };  // namespace fetch
 
-#endif

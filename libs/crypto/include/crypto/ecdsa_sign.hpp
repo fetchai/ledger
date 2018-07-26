@@ -1,5 +1,4 @@
-#ifndef CRYPTO_ECDSA_SIGN_HPP
-#define CRYPTO_ECDSA_SIGN_HPP
+#pragma once
 
 #include "crypto/openssl_ecdsa_private_key.hpp"
 #include "crypto/openssl_memory.hpp"
@@ -119,4 +118,3 @@ bool ecdsa_verify(openssl::ECDSAPublicKey<P_ECDSA_Curve_NID,
 }  // namespace crypto
 }  // namespace fetch
 
-#endif  // CRYPTO_ECDSA_SIGN_HPP

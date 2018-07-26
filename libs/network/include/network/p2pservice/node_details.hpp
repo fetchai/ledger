@@ -1,5 +1,4 @@
-#ifndef NETWORK_P2PSERVICE_NODE_DETAILS_HPP
-#define NETWORK_P2PSERVICE_NODE_DETAILS_HPP
+#pragma once
 
 #include "network/p2pservice/p2p_peer_details.hpp"
 
@@ -25,4 +24,3 @@ inline NodeDetails MakeNodeDetails()
 }  // namespace p2p
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef OPTIMISATION_SIMULATED_ANNEALING_BINARY_ANNEALER_HPP
-#define OPTIMISATION_SIMULATED_ANNEALING_BINARY_ANNEALER_HPP
+#pragma once
 #include <core/random/lcg.hpp>
 #include <core/random/lfg.hpp>
 #include <math/exp.hpp>
@@ -257,4 +256,3 @@ private:
 }  // namespace optimisers
 }  // namespace fetch
 
-#endif

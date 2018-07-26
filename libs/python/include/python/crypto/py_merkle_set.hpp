@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_CRYPTO_MERKLE_SET_HPP
-#define LIBFETCHCORE_CRYPTO_MERKLE_SET_HPP
+#pragma once
 
 #include "fetch_pybind.hpp"
 namespace fetch {
@@ -8,4 +7,3 @@ namespace crypto {
 };
 };  // namespace fetch
 
-#endif

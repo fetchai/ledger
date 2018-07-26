@@ -1,5 +1,4 @@
-#ifndef SWARM_AGENT_API_IMPL__
-#define SWARM_AGENT_API_IMPL__
+#pragma once
 
 #include "network/details/thread_pool.hpp"
 #include "network/swarm/swarm_agent_api.hpp"
@@ -443,4 +442,3 @@ protected:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif  //__SWARM_AGENT_API_IMPL__

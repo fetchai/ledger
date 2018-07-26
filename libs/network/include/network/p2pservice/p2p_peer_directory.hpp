@@ -1,5 +1,4 @@
-#ifndef NETWORK_P2PSERVICE_P2P_PEER_DIRECTORY_HPP
-#define NETWORK_P2PSERVICE_P2P_PEER_DIRECTORY_HPP
+#pragma once
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "network/management/connection_register.hpp"
@@ -264,4 +263,3 @@ private:
 }  // namespace p2p
 }  // namespace fetch
 
-#endif

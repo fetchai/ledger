@@ -1,5 +1,4 @@
-#ifndef SWARM_CONTROLLER_HPP
-#define SWARM_CONTROLLER_HPP
+#pragma once
 #include "service/client.hpp"
 #include "service/publication_feed.hpp"
 
@@ -739,4 +738,3 @@ private:
 };
 }  // namespace protocols
 }  // namespace fetch
-#endif

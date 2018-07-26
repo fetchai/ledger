@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_NETWORK_THREAD_MANAGER_HPP
-#define LIBFETCHCORE_NETWORK_THREAD_MANAGER_HPP
+#pragma once
 #include "network/network_manager.hpp"
 
 #include "fetch_pybind.hpp"
@@ -24,4 +23,3 @@ void BuildNetworkManager(pybind11::module &module)
 };  // namespace network
 };  // namespace fetch
 
-#endif

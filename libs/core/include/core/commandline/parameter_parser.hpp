@@ -1,5 +1,4 @@
-#ifndef COMMANDLINE_PARAMETER_PARSER_HPP
-#define COMMANDLINE_PARAMETER_PARSER_HPP
+#pragma once
 
 #include <algorithm>
 #include <exception>
@@ -109,4 +108,3 @@ public:
 };
 }  // namespace commandline
 }  // namespace fetch
-#endif

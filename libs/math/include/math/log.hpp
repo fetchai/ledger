@@ -1,5 +1,4 @@
-#ifndef MATH_LOG_HPP
-#define MATH_LOG_HPP
+#pragma once
 #include <cmath>
 
 namespace fetch {
@@ -14,4 +13,3 @@ public:
 }  // namespace math
 }  // namespace fetch
 
-#endif

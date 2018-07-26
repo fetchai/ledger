@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_NETWORK_BENCHMARK_COMMANDS_HPP
-#define PROTOCOLS_NETWORK_BENCHMARK_COMMANDS_HPP
+#pragma once
 
 namespace fetch {
 namespace protocols {
@@ -18,4 +17,3 @@ struct NetworkBenchmark
 }  // namespace protocols
 }  // namespace fetch
 
-#endif

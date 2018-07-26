@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_STORAGE_FILE_OBJECT_HPP
-#define LIBFETCHCORE_STORAGE_FILE_OBJECT_HPP
+#pragma once
 //#include "storage/file_object.hpp"
 
 #include "fetch_pybind.hpp"
@@ -27,4 +26,3 @@ void BuildFileObjectImplementation(std::string const &custom_name,
 };  // namespace storage
 };  // namespace fetch
 
-#endif

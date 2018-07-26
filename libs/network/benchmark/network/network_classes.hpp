@@ -1,5 +1,4 @@
-#ifndef NETWORK_CLASSES_HPP
-#define NETWORK_CLASSES_HPP
+#pragma once
 
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
@@ -76,4 +75,3 @@ private:
 }  // namespace network_benchmark
 }  // namespace fetch
 
-#endif /* NETWORK_CLASSES_HPP */

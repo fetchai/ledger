@@ -1,5 +1,4 @@
-#ifndef MINER_BLOCK_OPTIMISER_HPP
-#define MINER_BLOCK_OPTIMISER_HPP
+#pragma once
 
 #include "core/assert.hpp"
 
@@ -392,4 +391,3 @@ private:
 }  // namespace chain
 }  // namespace fetch
 
-#endif

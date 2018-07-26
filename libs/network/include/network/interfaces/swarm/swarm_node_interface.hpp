@@ -1,5 +1,4 @@
-#ifndef SWARM_NODE_INTERFACE__
-#define SWARM_NODE_INTERFACE__
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -28,4 +27,3 @@ public:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif

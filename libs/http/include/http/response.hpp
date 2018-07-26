@@ -1,5 +1,4 @@
-#ifndef HTTP_RESPONSE_HPP
-#define HTTP_RESPONSE_HPP
+#pragma once
 #include "http/header.hpp"
 #include "http/mime_types.hpp"
 #include "http/status.hpp"
@@ -67,4 +66,3 @@ private:
 }  // namespace http
 }  // namespace fetch
 
-#endif

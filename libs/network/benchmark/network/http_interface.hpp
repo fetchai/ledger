@@ -1,5 +1,4 @@
-#ifndef NETWORK_BENCHMARK_HTTP_INTERFACE_HPP
-#define NETWORK_BENCHMARK_HTTP_INTERFACE_HPP
+#pragma once
 
 #include "./network_classes.hpp"
 #include "core/logger.hpp"
@@ -332,4 +331,3 @@ private:
 
 }  // namespace network_benchmark
 }  // namespace fetch
-#endif

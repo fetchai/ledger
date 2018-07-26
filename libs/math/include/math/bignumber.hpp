@@ -1,5 +1,4 @@
-#ifndef MATH_BIGNUMBER_HPP
-#define MATH_BIGNUMBER_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -260,4 +259,3 @@ inline double ToDouble(BigUnsigned const &x)
 }  // namespace math
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef CRYPTO_STREAM_HASHER_HPP
-#define CRYPTO_STREAM_HASHER_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
@@ -19,4 +18,3 @@ public:
 }  // namespace crypto
 }  // namespace fetch
 
-#endif

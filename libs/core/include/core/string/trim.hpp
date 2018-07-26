@@ -1,5 +1,4 @@
-#ifndef STRING_TRIM_HPP
-#define STRING_TRIM_HPP
+#pragma once
 
 // after
 // http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
@@ -31,4 +30,3 @@ inline void Trim(std::string &s)
 }
 }  // namespace string
 }  // namespace fetch
-#endif

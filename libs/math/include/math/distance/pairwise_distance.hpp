@@ -1,5 +1,4 @@
-#ifndef MATH_DISTANCE_PAIRWISE_DISTANCE_HPP
-#define MATH_DISTANCE_PAIRWISE_DISTANCE_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/range.hpp"
@@ -40,4 +39,3 @@ inline A &PairWiseDistance(A &r, A const &a, F &&metric)
 }  // namespace math
 }  // namespace fetch
 
-#endif

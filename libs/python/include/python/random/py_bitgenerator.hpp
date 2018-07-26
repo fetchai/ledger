@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_RANDOM_BITGENERATOR_HPP
-#define LIBFETCHCORE_RANDOM_BITGENERATOR_HPP
+#pragma once
 
 #include "core/random/bitgenerator.hpp"
 #include "python/fetch_pybind.hpp"
@@ -20,4 +19,3 @@ void BuildBitGenerator(std::string const &custom_name, pybind11::module &module)
 };  // namespace random
 };  // namespace fetch
 
-#endif

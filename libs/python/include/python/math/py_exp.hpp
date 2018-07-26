@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_EXP_HPP
-#define LIBFETCHCORE_MATH_EXP_HPP
+#pragma once
 
 #include "math/exp.hpp"
 #include "python/fetch_pybind.hpp"
@@ -21,4 +20,3 @@ void BuildExp(std::string const &custom_name, pybind11::module &module)
 };  // namespace math
 };  // namespace fetch
 
-#endif

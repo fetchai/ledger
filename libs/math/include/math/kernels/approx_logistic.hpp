@@ -1,5 +1,4 @@
-#ifndef KERNELS_APPROX_LOGISTIC_HPP
-#define KERNELS_APPROX_LOGISTIC_HPP
+#pragma once
 
 namespace fetch {
 namespace kernels {
@@ -18,4 +17,3 @@ struct ApproxLogistic
 }  // namespace kernels
 }  // namespace fetch
 
-#endif

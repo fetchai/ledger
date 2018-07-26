@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MEMORY_SHARED_ARRAY_HPP
-#define LIBFETCHCORE_MEMORY_SHARED_ARRAY_HPP
+#pragma once
 
 #include "python/fetch_pybind.hpp"
 #include "vectorise/memory/shared_array.hpp"
@@ -40,4 +39,3 @@ void BuildSharedArray(std::string const &custom_name, pybind11::module &module)
 };  // namespace memory
 };  // namespace fetch
 
-#endif

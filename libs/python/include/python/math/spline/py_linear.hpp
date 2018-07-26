@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_SPLINE_LINEAR_HPP
-#define LIBFETCHCORE_MATH_SPLINE_LINEAR_HPP
+#pragma once
 
 #include "math/spline/linear.hpp"
 #include "python/fetch_pybind.hpp"
@@ -22,4 +21,3 @@ void BuildSpline(std::string const &custom_name, pybind11::module &module)
 };  // namespace math
 };  // namespace fetch
 
-#endif

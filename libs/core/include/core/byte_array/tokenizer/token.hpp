@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_TOKENIZER_TOKEN_HPP
-#define BYTE_ARRAY_TOKENIZER_TOKEN_HPP
+#pragma once
 #include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
@@ -48,4 +47,3 @@ private:
 }  // namespace byte_array
 }  // namespace fetch
 
-#endif

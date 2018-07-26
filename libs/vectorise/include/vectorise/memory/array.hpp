@@ -1,5 +1,4 @@
-#ifndef MEMORY_ARRAY_HPP
-#define MEMORY_ARRAY_HPP
+#pragma once
 
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
@@ -196,4 +195,3 @@ private:
 };
 }  // namespace memory
 }  // namespace fetch
-#endif

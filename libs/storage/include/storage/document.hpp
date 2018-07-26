@@ -1,5 +1,4 @@
-#ifndef STORAGE_DOCUMENT_HPP
-#define STORAGE_DOCUMENT_HPP
+#pragma once
 
 #include "core/byte_array/const_byte_array.hpp"
 
@@ -30,4 +29,3 @@ void Deserialize(T &serializer, Document &b)
 }  // namespace storage
 }  // namespace fetch
 
-#endif

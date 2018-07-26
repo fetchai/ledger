@@ -1,5 +1,4 @@
-#ifndef MATH_DISTANCE_CHEBYSHEV_HPP
-#define MATH_DISTANCE_CHEBYSHEV_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/range.hpp"
@@ -34,4 +33,3 @@ inline typename A::type Chebyshev(A const &a, A const &b)
 }  // namespace math
 }  // namespace fetch
 
-#endif

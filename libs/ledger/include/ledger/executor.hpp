@@ -1,5 +1,4 @@
-#ifndef FETCH_EXECUTOR_HPP
-#define FETCH_EXECUTOR_HPP
+#pragma once
 
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
@@ -49,4 +48,3 @@ private:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif  // FETCH_EXECUTOR_HPP

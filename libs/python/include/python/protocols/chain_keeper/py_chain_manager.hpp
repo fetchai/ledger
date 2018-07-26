@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_PROTOCOLS_CHAIN_KEEPER_CHAIN_MANAGER_HPP
-#define LIBFETCHCORE_PROTOCOLS_CHAIN_KEEPER_CHAIN_MANAGER_HPP
+#pragma once
 #include "protocols/chain_keeper/chain_manager.hpp"
 
 #include "fetch_pybind.hpp"
@@ -28,4 +27,3 @@ void BuildChainManager(pybind11::module &module)
 };  // namespace protocols
 };  // namespace fetch
 
-#endif

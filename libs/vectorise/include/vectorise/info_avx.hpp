@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_INFO_AVX_HPP
-#define VECTORIZE_INFO_AVX_HPP
+#pragma once
 #ifdef __AVX__
 #include <cstddef>
 #include <cstdint>
@@ -60,5 +59,4 @@ struct VectorInfo<double, 256>
 };
 }  // namespace vectorize
 }  // namespace fetch
-#endif
 #endif

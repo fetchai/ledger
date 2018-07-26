@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_STIL_TYPES_HPP
-#define SERIALIZER_STIL_TYPES_HPP
+#pragma once
 
 #include <map>
 #include <set>
@@ -251,4 +250,3 @@ inline void Deserialize(T &serializer, std::set<K> &set)
 }  // namespace serializers
 }  // namespace fetch
 
-#endif

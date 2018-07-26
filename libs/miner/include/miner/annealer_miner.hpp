@@ -1,5 +1,4 @@
-#ifndef FETCH_ANNEALER_MINER_HPP
-#define FETCH_ANNEALER_MINER_HPP
+#pragma once
 
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
@@ -157,4 +156,3 @@ private:
 }  // namespace miner
 }  // namespace fetch
 
-#endif  // FETCH_ANNEALER_MINER_HPP

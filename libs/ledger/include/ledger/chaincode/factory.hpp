@@ -1,5 +1,4 @@
-#ifndef FETCH_CHAINCODE_FACTORY_HPP
-#define FETCH_CHAINCODE_FACTORY_HPP
+#pragma once
 
 #include "ledger/chaincode/contract.hpp"
 
@@ -28,4 +27,3 @@ public:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif  // FETCH_CHAINCODE_FACTORY_HPP

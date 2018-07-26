@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERVICE_FEED_SUBSCRIPTION_MANAGER_HPP
-#define LIBFETCHCORE_SERVICE_FEED_SUBSCRIPTION_MANAGER_HPP
+#pragma once
 #include "service/feed_subscription_manager.hpp"
 
 #include "fetch_pybind.hpp"
@@ -21,4 +20,3 @@ void BuildFeedSubscriptionManager(pybind11::module &module)
 };  // namespace service
 };  // namespace fetch
 
-#endif

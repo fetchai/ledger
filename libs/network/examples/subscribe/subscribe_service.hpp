@@ -1,5 +1,4 @@
-#ifndef QUICK_START_SERVICE_HPP
-#define QUICK_START_SERVICE_HPP
+#pragma once
 
 #include "./protocols/fetch_protocols.hpp"  // defines enum
 #include "./protocols/subscribe/protocol.hpp"
@@ -59,4 +58,3 @@ private:
 }  // namespace subscribe
 }  // namespace fetch
 
-#endif

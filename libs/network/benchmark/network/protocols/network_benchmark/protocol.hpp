@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_NETWORK_BENCHMARK_PROTOCOL_HPP
-#define PROTOCOLS_NETWORK_BENCHMARK_PROTOCOL_HPP
+#pragma once
 
 #include "./commands.hpp"
 
@@ -24,4 +23,3 @@ public:
 }  // namespace protocols
 }  // namespace fetch
 
-#endif

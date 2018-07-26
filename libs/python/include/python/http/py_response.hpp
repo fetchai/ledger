@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_RESPONSE_HPP
-#define LIBFETCHCORE_HTTP_RESPONSE_HPP
+#pragma once
 #include "http/response.hpp"
 
 #include "fetch_pybind.hpp"
@@ -31,4 +30,3 @@ void BuildHTTPResponse(pybind11::module &module)
 };  // namespace http
 };  // namespace fetch
 
-#endif

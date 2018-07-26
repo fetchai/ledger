@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_ROUTE_HPP
-#define LIBFETCHCORE_HTTP_ROUTE_HPP
+#pragma once
 #include "http/route.hpp"
 
 #include "fetch_pybind.hpp"
@@ -17,4 +16,3 @@ void BuildRoute(pybind11::module &module)
 };  // namespace http
 };  // namespace fetch
 
-#endif

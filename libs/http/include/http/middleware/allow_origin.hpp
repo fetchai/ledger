@@ -1,5 +1,4 @@
-#ifndef HTTP_MIDDLEWARE_ALLOW_ORIGIN_HPP
-#define HTTP_MIDDLEWARE_ALLOW_ORIGIN_HPP
+#pragma once
 #include "http/server.hpp"
 namespace fetch {
 namespace http {
@@ -17,4 +16,3 @@ inline typename HTTPServer::response_middleware_type AllowOrigin(
 }  // namespace http
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef KERNELS_APPROX_LOG_HPP
-#define KERNELS_APPROX_LOG_HPP
+#pragma once
 
 namespace fetch {
 namespace kernels {
@@ -16,4 +15,3 @@ struct ApproxLog
 }  // namespace kernels
 }  // namespace fetch
 
-#endif

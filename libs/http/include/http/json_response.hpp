@@ -1,5 +1,4 @@
-#ifndef FETCH_JSON_RESPONSE_HPP
-#define FETCH_JSON_RESPONSE_HPP
+#pragma once
 
 #include "core/script/variant.hpp"
 #include "http/mime_types.hpp"
@@ -31,4 +30,3 @@ inline http::HTTPResponse CreateJsonResponse(
 }  // namespace http
 }  // namespace fetch
 
-#endif  // FETCH_JSON_RESPONSE_HPP

@@ -1,5 +1,4 @@
-#ifndef TESTS_RANDOM_BITSTATISTICS_HPP
-#define TESTS_RANDOM_BITSTATISTICS_HPP
+#pragma once
 
 #include "core/random/lfg.hpp"
 
@@ -72,4 +71,3 @@ private:
   std::size_t           counter_ = 0;
 };
 
-#endif

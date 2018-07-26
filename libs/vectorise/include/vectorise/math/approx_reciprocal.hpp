@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_MATH_APPROX_RECIPROCAL_HPP
-#define VECTORIZE_MATH_APPROX_RECIPROCAL_HPP
+#pragma once
 namespace fetch {
 namespace vectorize {
 
@@ -21,4 +20,3 @@ inline VectorRegister<double, 128> approx_reciprocal(
 }  // namespace vectorize
 }  // namespace fetch
 
-#endif

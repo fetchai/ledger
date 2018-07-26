@@ -1,5 +1,4 @@
-#ifndef FETCH_FAKE_STORAGE_UNIT_HPP
-#define FETCH_FAKE_STORAGE_UNIT_HPP
+#pragma once
 
 #include "crypto/fnv.hpp"
 #include "crypto/sha256.hpp"
@@ -177,4 +176,3 @@ private:
   state_archive_type     state_archive_;
 };
 
-#endif  // FETCH_FAKE_STORAGE_UNIT_HPP

@@ -1,5 +1,4 @@
-#ifndef MATH_SPLINE_LINEAR_HPP
-#define MATH_SPLINE_LINEAR_HPP
+#pragma once
 #include <cassert>
 #include <vector>
 namespace fetch {
@@ -52,4 +51,3 @@ private:
 }  // namespace spline
 }  // namespace math
 }  // namespace fetch
-#endif

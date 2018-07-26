@@ -1,5 +1,4 @@
-#ifndef SWARM_PROTOCOL__
-#define SWARM_PROTOCOL__
+#pragma once
 
 #include "commands.hpp"
 #include "network/interfaces/swarm/swarm_node_interface.hpp"
@@ -22,4 +21,3 @@ public:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif  // SWARM_PROTOCOL__

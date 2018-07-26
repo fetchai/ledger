@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_LINALG_MATRIX_HPP
-#define LIBFETCHCORE_MATH_LINALG_MATRIX_HPP
+#pragma once
 
 #include "math/linalg/matrix.hpp"
 #include "python/fetch_pybind.hpp"
@@ -151,4 +150,3 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
 };  // namespace math
 };  // namespace fetch
 
-#endif

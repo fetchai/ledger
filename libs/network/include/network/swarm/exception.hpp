@@ -1,5 +1,4 @@
-#ifndef SWARM_EXCEPTION_HPP
-#define SWARM_EXCEPTION_HPP
+#pragma once
 #include "core/logger.hpp"
 #include <exception>
 #include <string>
@@ -36,4 +35,3 @@ private:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif

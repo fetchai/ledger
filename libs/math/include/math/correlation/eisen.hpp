@@ -1,5 +1,4 @@
-#ifndef MATH_CORRELATION_EISEN_HPP
-#define MATH_CORRELATION_EISEN_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/range.hpp"
@@ -51,4 +50,3 @@ inline typename ShapeLessArray<T, C>::type Eisen(ShapeLessArray<T, C> const &a,
 }  // namespace math
 }  // namespace fetch
 
-#endif

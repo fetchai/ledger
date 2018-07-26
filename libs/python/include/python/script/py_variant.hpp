@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SCRIPT_VARIANT_HPP
-#define LIBFETCHCORE_SCRIPT_VARIANT_HPP
+#pragma once
 #include "script/variant.hpp"
 
 #include "fetch_pybind.hpp"
@@ -66,4 +65,3 @@ void BuildVariant(pybind11::module &module)
 };  // namespace script
 };  // namespace fetch
 
-#endif

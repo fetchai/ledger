@@ -1,5 +1,4 @@
-#ifndef SERVICE_PUBLICATION_FEED_HPP
-#define SERVICE_PUBLICATION_FEED_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "network/service/abstract_callable.hpp"
 #include "network/service/abstract_publication_feed.hpp"
@@ -121,4 +120,3 @@ private:
 };
 }  // namespace service
 }  // namespace fetch
-#endif

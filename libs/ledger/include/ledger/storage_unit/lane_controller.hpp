@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_LANE_CONTROLLER_HPP
-#define LEDGER_STORAGE_UNIT_LANE_CONTROLLER_HPP
+#pragma once
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
@@ -208,4 +207,3 @@ private:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif

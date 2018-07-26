@@ -1,5 +1,4 @@
-#ifndef HTTP_MIDDLEWARE_HPP
-#define HTTP_MIDDLEWARE_HPP
+#pragma once
 namespace fetch {
 namespace http {
 namespace middleware {
@@ -7,4 +6,3 @@ namespace middleware {
 }  // namespace http
 }  // namespace fetch
 
-#endif

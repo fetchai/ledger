@@ -1,5 +1,4 @@
-#ifndef PROTOCLS_CHAIN_KEEPER_COMMANDS_HPP
-#define PROTOCLS_CHAIN_KEEPER_COMMANDS_HPP
+#pragma once
 
 namespace fetch {
 namespace protocols {
@@ -32,4 +31,3 @@ struct ChainKeeperFeed
 }  // namespace protocols
 }  // namespace fetch
 
-#endif

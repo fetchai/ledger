@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_STATISTICS_VARIANCE_HPP
-#define LIBFETCHCORE_MATH_STATISTICS_VARIANCE_HPP
+#pragma once
 
 #include "math/linalg/matrix.hpp"
 #include "math/statistics/variance.hpp"
@@ -34,4 +33,3 @@ inline void BuildVarianceStatistics(std::string const &custom_name,
 }  // namespace math
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef STORAGE_FILE_OBJECT_HPP
-#define STORAGE_FILE_OBJECT_HPP
+#pragma once
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
@@ -418,4 +417,3 @@ private:
 }  // namespace storage
 }  // namespace fetch
 
-#endif

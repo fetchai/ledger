@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_CRYPTO_FNV_HPP
-#define LIBFETCHCORE_CRYPTO_FNV_HPP
+#pragma once
 #include "crypto/fnv.hpp"
 
 #include "fetch_pybind.hpp"
@@ -21,4 +20,3 @@ void BuildFNV(pybind11::module &module)
 };  // namespace crypto
 };  // namespace fetch
 
-#endif

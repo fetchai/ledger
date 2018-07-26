@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_ABSTRACT_CONNECTION_HPP
-#define LIBFETCHCORE_HTTP_ABSTRACT_CONNECTION_HPP
+#pragma once
 #include "http/abstract_connection.hpp"
 
 #include "fetch_pybind.hpp"
@@ -16,4 +15,3 @@ void BuildAbstractHTTPConnection(pybind11::module &module)
 };  // namespace http
 };  // namespace fetch
 
-#endif

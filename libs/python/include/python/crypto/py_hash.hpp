@@ -1,7 +1,5 @@
-#ifndef LIBFETCHCORE_CRYPTO_HASH_HPP
-#define LIBFETCHCORE_CRYPTO_HASH_HPP
+#pragma once
 #include "crypto/hash.hpp"
 
 #include "fetch_pybind.hpp"
 
-#endif

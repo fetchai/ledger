@@ -1,5 +1,4 @@
-#ifndef FETCH_MOCK_EXECUTOR_HPP
-#define FETCH_MOCK_EXECUTOR_HPP
+#pragma once
 
 #include "fake_executor.hpp"
 #include "ledger/executor_interface.hpp"
@@ -25,4 +24,3 @@ private:
   FakeExecutor fake_;
 };
 
-#endif  // FETCH_MOCK_EXECUTOR_HPP

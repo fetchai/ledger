@@ -1,5 +1,4 @@
-#ifndef SWARM_KARMA_PEERS__
-#define SWARM_KARMA_PEERS__
+#pragma once
 
 #include "swarm_karma_peer.hpp"
 #include <iostream>
@@ -166,4 +165,3 @@ protected:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif  //__SWARM_KARMA_PEERS__

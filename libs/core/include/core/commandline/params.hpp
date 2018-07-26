@@ -1,5 +1,4 @@
-#ifndef PARAMS_HPP
-#define PARAMS_HPP
+#pragma once
 
 #include <functional>
 #include <iostream>
@@ -156,4 +155,3 @@ private:
 }  // namespace commandline
 }  // namespace fetch
 
-#endif  //__PARAMS_HPP

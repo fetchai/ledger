@@ -1,5 +1,4 @@
-#ifndef BITMANIP_BITVECTOR_HPP
-#define BITMANIP_BITVECTOR_HPP
+#pragma once
 #include <initializer_list>
 #include <type_traits>
 #include <vectorise/memory/shared_array.hpp>
@@ -225,4 +224,3 @@ typedef details::BitVectorImplementation<0> BitVector;
 }  // namespace bitmanip
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef STORAGE_VARIANT_STACK_HPP
-#define STORAGE_VARIANT_STACK_HPP
+#pragma once
 
 #include "core/assert.hpp"
 #include <cassert>
@@ -202,4 +201,3 @@ private:
 }  // namespace storage
 }  // namespace fetch
 
-#endif

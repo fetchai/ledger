@@ -1,5 +1,4 @@
-#ifndef KERNELS_CONCURRENT_VM_HPP
-#define KERNELS_CONCURRENT_VM_HPP
+#pragma once
 #include <vector>
 
 namespace fetch {
@@ -60,4 +59,3 @@ struct ConcurrentVM
 }  // namespace kernels
 }  // namespace fetch
 
-#endif

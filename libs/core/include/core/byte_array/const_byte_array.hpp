@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_CONST_BYTE_ARRAY_HPP
-#define BYTE_ARRAY_CONST_BYTE_ARRAY_HPP
+#pragma once
 #include "core/logger.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include <algorithm>
@@ -264,4 +263,3 @@ inline ConstByteArray operator+(char const *a, ConstByteArray const &b)
 }
 }  // namespace byte_array
 }  // namespace fetch
-#endif

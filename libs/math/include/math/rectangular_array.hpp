@@ -1,5 +1,4 @@
-#ifndef MATH_RECTANGULAR_ARRAY_HPP
-#define MATH_RECTANGULAR_ARRAY_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/array.hpp"
@@ -646,4 +645,3 @@ private:
 };
 }  // namespace math
 }  // namespace fetch
-#endif

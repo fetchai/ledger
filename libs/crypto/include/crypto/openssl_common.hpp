@@ -1,5 +1,4 @@
-#ifndef CRYPTO_OPENSSL_COMMON_HPP
-#define CRYPTO_OPENSSL_COMMON_HPP
+#pragma once
 
 #include "openssl/obj_mac.h"
 
@@ -23,4 +22,3 @@ const std::size_t ECDSACurve<NID_secp256k1>::privateKeySize;
 }  // namespace crypto
 }  // namespace fetch
 
-#endif  // CRYPTO_OPENSSL_COMMON_HPP

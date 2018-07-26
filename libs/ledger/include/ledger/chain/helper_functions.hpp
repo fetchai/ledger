@@ -1,5 +1,4 @@
-#ifndef TRANSACTION_HELPER_FUNCTIONS_HPP
-#define TRANSACTION_HELPER_FUNCTIONS_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
@@ -47,4 +46,3 @@ MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
 }  // namespace chain
 }  // namespace fetch
 
-#endif

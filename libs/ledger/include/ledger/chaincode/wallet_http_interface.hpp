@@ -1,5 +1,4 @@
-#ifndef FETCH_WALLET_HTTP_INTERFACE_HPP
-#define FETCH_WALLET_HTTP_INTERFACE_HPP
+#pragma once
 
 #include "core/assert.hpp"
 #include "core/byte_array/decoders.hpp"
@@ -226,4 +225,3 @@ private:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif  // FETCH_WALLET_HTTP_INTERFACE_HPP

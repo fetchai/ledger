@@ -1,7 +1,6 @@
 // TODO: This file is legacy
 
-#ifndef PROTOCOLS_CHAIN_KEEPER_CHAIN_MANAGER_HPP
-#define PROTOCOLS_CHAIN_KEEPER_CHAIN_MANAGER_HPP
+#pragma once
 
 #include "assert.hpp"
 #include "chain/transaction.hpp"
@@ -132,4 +131,3 @@ private:
 }  // namespace protocols
 }  // namespace fetch
 
-#endif

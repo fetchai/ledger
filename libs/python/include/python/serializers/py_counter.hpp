@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERIALIZER_COUNTER_HPP
-#define LIBFETCHCORE_SERIALIZER_COUNTER_HPP
+#pragma once
 #include "serializers/counter.hpp"
 
 #include "fetch_pybind.hpp"
@@ -28,4 +27,3 @@ void BuildSizeCounter(std::string const &custom_name, pybind11::module &module)
 };  // namespace serializers
 };  // namespace fetch
 
-#endif

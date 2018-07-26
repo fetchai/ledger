@@ -1,5 +1,4 @@
-#ifndef MATH_LINALG_MATRIX_HPP
-#define MATH_LINALG_MATRIX_HPP
+#pragma once
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "math/rectangular_array.hpp"
@@ -239,4 +238,3 @@ private:
 }  // namespace linalg
 }  // namespace math
 }  // namespace fetch
-#endif

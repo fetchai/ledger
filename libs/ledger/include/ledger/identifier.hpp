@@ -1,5 +1,4 @@
-#ifndef FETCH_LEDGER_IDENTIFIER_HPP
-#define FETCH_LEDGER_IDENTIFIER_HPP
+#pragma once
 
 #include <string>
 #include <vector>
@@ -177,4 +176,3 @@ inline void Identifier::Append(std::string const &element)
 }  // namespace ledger
 }  // namespace fetch
 
-#endif  // FETCH_LEDGER_IDENTIFIER_HPP

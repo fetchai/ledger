@@ -1,5 +1,4 @@
-#ifndef HTTP_CONNECTION_HPP
-#define HTTP_CONNECTION_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
@@ -212,4 +211,3 @@ public:
 }  // namespace http
 }  // namespace fetch
 
-#endif

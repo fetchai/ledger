@@ -1,5 +1,4 @@
-#ifndef STORAGE_DOCUMENT_STORE_HPP
-#define STORAGE_DOCUMENT_STORE_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "storage/file_object.hpp"
 #include "storage/key_value_index.hpp"
@@ -264,4 +263,3 @@ private:
 }  // namespace storage
 }  // namespace fetch
 
-#endif

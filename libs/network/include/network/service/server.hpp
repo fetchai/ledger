@@ -1,5 +1,4 @@
-#ifndef SERVICE_SERVER_HPP
-#define SERVICE_SERVER_HPP
+#pragma once
 
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/serializable_exception.hpp"
@@ -198,4 +197,3 @@ private:
 }  // namespace service
 }  // namespace fetch
 
-#endif

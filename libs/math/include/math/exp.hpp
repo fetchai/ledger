@@ -1,5 +1,4 @@
-#ifndef MATH_EXP_HPP
-#define MATH_EXP_HPP
+#pragma once
 
 #include "core/assert.hpp"
 
@@ -154,4 +153,3 @@ double Exp<N, C, OF>::corrections_[E_ENTRIES] = {0};
 }  // namespace math
 }  // namespace fetch
 
-#endif

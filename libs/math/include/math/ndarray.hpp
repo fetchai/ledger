@@ -1,5 +1,4 @@
-#ifndef MEMORY_NDARRAY_HPP
-#define MEMORY_NDARRAY_HPP
+#pragma once
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/array.hpp"
 
@@ -137,4 +136,3 @@ private:
 }  // namespace math
 }  // namespace fetch
 
-#endif

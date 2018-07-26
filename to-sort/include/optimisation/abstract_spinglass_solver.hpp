@@ -1,5 +1,4 @@
-#ifndef OPTIMISATION_ABSTRACT_SPINGLASS_SOLVER_HPP
-#define OPTIMISATION_ABSTRACT_SPINGLASS_SOLVER_HPP
+#pragma once
 
 namespace fetch {
 namespace optimisers {
@@ -17,4 +16,3 @@ class AbstractSpinGlassSolver {
 };
 }
 }
-#endif

@@ -1,5 +1,4 @@
-#ifndef CRYPTO_IDENTITY_HPP
-#define CRYPTO_IDENTITY_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 namespace fetch {
 namespace crypto {
@@ -89,4 +88,3 @@ T &Deserialize(T &serializer, Identity &data)
 
 }  // namespace crypto
 }  // namespace fetch
-#endif

@@ -1,5 +1,4 @@
-#ifndef STORAGE_OBJECT_STORE_SYNCRONISATION_PROTOCOL_HPP
-#define STORAGE_OBJECT_STORE_SYNCRONISATION_PROTOCOL_HPP
+#pragma once
 #include "core/logger.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/service/promise.hpp"
@@ -269,4 +268,3 @@ private:
 }  // namespace storage
 }  // namespace fetch
 
-#endif

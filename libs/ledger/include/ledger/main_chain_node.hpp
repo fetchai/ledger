@@ -1,5 +1,4 @@
-#ifndef MAIN_CHAIN_NODE_HPP
-#define MAIN_CHAIN_NODE_HPP
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -218,4 +217,3 @@ private:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif  // MAIN_CHAIN_NODE_HPP

@@ -1,5 +1,4 @@
-#ifndef FETCH_EXECUTION_MANAGER_HPP
-#define FETCH_EXECUTION_MANAGER_HPP
+#pragma once
 
 #include "core/make_unique.hpp"
 #include "core/mutex.hpp"
@@ -120,4 +119,3 @@ private:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif  // FETCH_EXECUTION_MANAGER_HPP

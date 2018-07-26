@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_QUICK_START_PROTOCOL_HPP
-#define PROTOCOLS_QUICK_START_PROTOCOL_HPP
+#pragma once
 
 #include "network/service/protocol.hpp"
 
@@ -33,4 +32,3 @@ public:
 }  // namespace protocols
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef RANDOM_BITGENERATOR_HPP
-#define RANDOM_BITGENERATOR_HPP
+#pragma once
 #include "core/random/bitmask.hpp"
 #include "core/random/lfg.hpp"
 namespace fetch {
@@ -34,4 +33,3 @@ private:
 };
 }  // namespace random
 }  // namespace fetch
-#endif

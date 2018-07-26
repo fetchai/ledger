@@ -1,5 +1,4 @@
-#ifndef CHAIN_TRANSACTION_HPP
-#define CHAIN_TRANSACTION_HPP
+#pragma once
 
 #include "ledger/chain/mutable_transaction.hpp"
 
@@ -157,4 +156,3 @@ typedef VerifiedTransaction Transaction;
 }  // namespace chain
 }  // namespace fetch
 
-#endif

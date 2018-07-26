@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MEMORY_ARRAY_HPP
-#define LIBFETCHCORE_MEMORY_ARRAY_HPP
+#pragma once
 
 #include "python/fetch_pybind.hpp"
 #include "vectorise/memory/array.hpp"
@@ -38,4 +37,3 @@ void BuildArray(std::string const &custom_name, pybind11::module &module)
 };  // namespace memory
 };  // namespace fetch
 
-#endif

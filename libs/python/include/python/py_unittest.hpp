@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_UNITTEST_HPP
-#define LIBFETCHCORE_UNITTEST_HPP
+#pragma once
 #include "unittest.hpp"
 
 #include "fetch_pybind.hpp"
@@ -10,4 +9,3 @@ namespace unittest {
 };
 };  // namespace fetch
 
-#endif

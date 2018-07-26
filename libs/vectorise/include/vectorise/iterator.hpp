@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_ITERATOR_HPP
-#define VECTORIZE_ITERATOR_HPP
+#pragma once
 
 #include "vectorise/register.hpp"
 
@@ -45,4 +44,3 @@ private:
 }  // namespace vectorize
 }  // namespace fetch
 
-#endif

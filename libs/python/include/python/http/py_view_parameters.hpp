@@ -1,7 +1,5 @@
-#ifndef LIBFETCHCORE_HTTP_VIEW_PARAMETERS_HPP
-#define LIBFETCHCORE_HTTP_VIEW_PARAMETERS_HPP
+#pragma once
 #include "http/view_parameters.hpp"
 
 #include "fetch_pybind.hpp"
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_PROTOCOLS_CHAIN_KEEPER_PROTOCOL_HPP
-#define LIBFETCHCORE_PROTOCOLS_CHAIN_KEEPER_PROTOCOL_HPP
+#pragma once
 #include "protocols/chain_keeper/protocol.hpp"
 
 #include "fetch_pybind.hpp"
@@ -20,4 +19,3 @@ void BuildChainKeeperProtocol(pybind11::module &module)
 };  // namespace protocols
 };  // namespace fetch
 
-#endif

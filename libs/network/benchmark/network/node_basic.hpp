@@ -1,5 +1,4 @@
-#ifndef NETWORK_BENCHMARK_NODE_BASIC_HPP
-#define NETWORK_BENCHMARK_NODE_BASIC_HPP
+#pragma once
 
 // This represents the API to the network test
 #include <chrono>
@@ -374,4 +373,3 @@ private:
 };
 }  // namespace network_benchmark
 }  // namespace fetch
-#endif

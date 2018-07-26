@@ -1,5 +1,4 @@
-#ifndef STORAGE_RANDOM_ACCESS_STACK_HPP
-#define STORAGE_RANDOM_ACCESS_STACK_HPP
+#pragma once
 #include <cassert>
 #include <fstream>
 #include <functional>
@@ -289,4 +288,3 @@ private:
 }  // namespace storage
 }  // namespace fetch
 
-#endif

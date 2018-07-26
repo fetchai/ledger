@@ -1,5 +1,4 @@
-#ifndef __PY_SWARM_HPP
-#define __PY_SWARM_HPP
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -542,4 +541,3 @@ public:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif  //__PY_SWARM_HPP

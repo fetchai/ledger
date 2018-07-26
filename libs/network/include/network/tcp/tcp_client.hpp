@@ -1,5 +1,4 @@
-#ifndef NETWORK_TCP_CLIENT_HPP
-#define NETWORK_TCP_CLIENT_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -104,4 +103,3 @@ protected:
 }  // namespace network
 }  // namespace fetch
 
-#endif

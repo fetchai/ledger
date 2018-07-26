@@ -1,5 +1,4 @@
-#ifndef SWARM_KARMA_PEER__
-#define SWARM_KARMA_PEER__
+#pragma once
 
 #include <functional>
 #include <time.h>
@@ -162,4 +161,3 @@ protected:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif  //__SWARM_KARMA_PEER__

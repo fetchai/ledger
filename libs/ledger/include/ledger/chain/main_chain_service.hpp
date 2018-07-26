@@ -1,5 +1,4 @@
-#ifndef LEDGER_CHAIN_MAIN_CHAIN_SERVICE_HPP
-#define LEDGER_CHAIN_MAIN_CHAIN_SERVICE_HPP
+#pragma once
 
 #include "network/service/server.hpp"
 #include "storage/object_store.hpp"
@@ -122,4 +121,3 @@ private:
 }  // namespace chain
 }  // namespace fetch
 
-#endif

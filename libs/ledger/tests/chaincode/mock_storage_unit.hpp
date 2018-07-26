@@ -1,5 +1,4 @@
-#ifndef FETCH_MOCK_STATE_DATABASE_HPP
-#define FETCH_MOCK_STATE_DATABASE_HPP
+#pragma once
 
 #include "fake_storage_unit.hpp"
 
@@ -55,4 +54,3 @@ private:
   FakeStorageUnit fake_;
 };
 
-#endif  // FETCH_MOCK_STATE_DATABASE_HPP

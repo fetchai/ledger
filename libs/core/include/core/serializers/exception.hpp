@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_EXCEPTION_HPP
-#define SERIALIZER_EXCEPTION_HPP
+#pragma once
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
 #include <exception>
@@ -76,4 +75,3 @@ private:
 }  // namespace serializers
 }  // namespace fetch
 
-#endif

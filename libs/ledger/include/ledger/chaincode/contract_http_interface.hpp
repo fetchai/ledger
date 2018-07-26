@@ -1,5 +1,4 @@
-#ifndef FETCH_CONTRACT_HTTP_INTERFACE_HPP
-#define FETCH_CONTRACT_HTTP_INTERFACE_HPP
+#pragma once
 
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
@@ -140,4 +139,3 @@ private:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif  // FETCH_CONTRACT_HTTP_INTERFACE_HPP

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_IMAGE_IMAGE_HPP
-#define LIBFETCHCORE_IMAGE_IMAGE_HPP
+#pragma once
 
 #include "python/fetch_pybind.hpp"
 #include "python/image/image.hpp"
@@ -42,4 +41,3 @@ void BuildImageType(std::string const &custom_name, pybind11::module &module)
 };  // namespace image
 };  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_DISTANCE_PEARSON_HPP
-#define LIBFETCHCORE_MATH_DISTANCE_PEARSON_HPP
+#pragma once
 
 #include "math/distance/pearson.hpp"
 #include "math/linalg/matrix.hpp"
@@ -39,4 +38,3 @@ inline void BuildPearsonDistance(std::string const &custom_name,
 }  // namespace math
 }  // namespace fetch
 
-#endif

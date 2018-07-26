@@ -1,5 +1,4 @@
-#ifndef ABSTRACT_MUTEX_HPP
-#define ABSTRACT_MUTEX_HPP
+#pragma once
 
 #include <mutex>
 #include <string>
@@ -19,4 +18,3 @@ public:
 }  // namespace mutex
 }  // namespace fetch
 
-#endif

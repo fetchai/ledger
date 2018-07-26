@@ -1,5 +1,4 @@
-#ifndef CRYPTO_PROVER_HPP
-#define CRYPTO_PROVER_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/identity.hpp"
@@ -29,4 +28,3 @@ public:
 }  // namespace crypto
 }  // namespace fetch
 
-#endif

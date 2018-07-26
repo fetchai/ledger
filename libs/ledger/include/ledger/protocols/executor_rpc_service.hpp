@@ -1,5 +1,4 @@
-#ifndef FETCH_EXECUTOR_RPC_SERVICE_HPP
-#define FETCH_EXECUTOR_RPC_SERVICE_HPP
+#pragma once
 
 #include "ledger/executor.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"
@@ -32,4 +31,3 @@ private:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif  // FETCH_EXECUTOR_RPC_SERVICE_HPP

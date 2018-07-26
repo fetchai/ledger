@@ -1,5 +1,4 @@
-#ifndef KERNELS_BASIC_ARITMETIC_HPP
-#define KERNELS_BASIC_ARITMETIC_HPP
+#pragma once
 
 namespace fetch {
 namespace kernels {
@@ -19,4 +18,3 @@ struct Add
 }  // namespace kernels
 }  // namespace fetch
 
-#endif

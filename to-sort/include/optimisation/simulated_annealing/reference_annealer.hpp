@@ -1,5 +1,4 @@
-#ifndef OPTIMISATION_SIMULATED_ANNEALING_HPP
-#define OPTIMISATION_SIMULATED_ANNEALING_HPP
+#pragma once
 #include "math/exp.hpp"
 #include "memory/rectangular_array.hpp"
 #include "optimisation/abstract_spinglass_solver.hpp"
@@ -204,4 +203,3 @@ class ReferenceAnnealer : public AbstractSpinGlassSolver {
 };
 }
 }
-#endif

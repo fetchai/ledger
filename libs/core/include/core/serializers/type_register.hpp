@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_TYPE_REGISTER_HPP
-#define SERIALIZER_TYPE_REGISTER_HPP
+#pragma once
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/serializable_exception.hpp"
@@ -133,4 +132,3 @@ inline byte_array::ConstByteArray ErrorCodeToMessage(std::size_t n)
 }  // namespace serializers
 }  // namespace fetch
 
-#endif

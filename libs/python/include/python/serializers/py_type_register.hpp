@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERIALIZER_TYPE_REGISTER_HPP
-#define LIBFETCHCORE_SERIALIZER_TYPE_REGISTER_HPP
+#pragma once
 #include "serializers/type_register.hpp"
 
 #include "fetch_pybind.hpp"
@@ -18,4 +17,3 @@ void BuildTypeRegister(std::string const &custom_name, pybind11::module &module)
 };  // namespace serializers
 };  // namespace fetch
 
-#endif

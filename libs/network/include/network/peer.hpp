@@ -1,5 +1,4 @@
-#ifndef FETCH_PEER_HPP
-#define FETCH_PEER_HPP
+#pragma once
 
 #include <cstdint>
 #include <iostream>
@@ -49,4 +48,3 @@ private:
 }  // namespace network
 }  // namespace fetch
 
-#endif  // FETCH_PEER_HPP

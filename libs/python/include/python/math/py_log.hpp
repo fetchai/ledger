@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_LOG_HPP
-#define LIBFETCHCORE_MATH_LOG_HPP
+#pragma once
 
 #include "math/log.hpp"
 #include "python/fetch_pybind.hpp"
@@ -19,4 +18,3 @@ void BuildLog(pybind11::module &module)
 };  // namespace math
 };  // namespace fetch
 
-#endif

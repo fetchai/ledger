@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_DISTANCE_DISTANCE_MATRIX_HPP
-#define LIBFETCHCORE_MATH_DISTANCE_DISTANCE_MATRIX_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "math/distance/distance_matrix.hpp"
@@ -96,4 +95,3 @@ inline void BuildDistanceMatrixDistance(std::string const &custom_name,
 }  // namespace math
 }  // namespace fetch
 
-#endif

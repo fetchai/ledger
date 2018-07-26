@@ -1,5 +1,4 @@
-#ifndef STORAGE_INDEXED_DOCUMENT_STORE_PROTOCOL_HPP
-#define STORAGE_INDEXED_DOCUMENT_STORE_PROTOCOL_HPP
+#pragma once
 
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
@@ -206,4 +205,3 @@ private:
 }  // namespace storage
 }  // namespace fetch
 
-#endif

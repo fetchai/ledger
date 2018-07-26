@@ -1,5 +1,4 @@
-#ifndef SWARM_RANDOM__
-#define SWARM_RANDOM__
+#pragma once
 
 #include <algorithm>
 #include <limits.h>
@@ -94,4 +93,3 @@ public:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif  //__SWARM_RANDOM__

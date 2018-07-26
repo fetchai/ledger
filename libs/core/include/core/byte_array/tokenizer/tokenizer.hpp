@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_TOKENIZER_TOKENIZER_HPP
-#define BYTE_ARRAY_TOKENIZER_TOKENIZER_HPP
+#pragma once
 
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
@@ -159,4 +158,3 @@ private:
 }  // namespace byte_array
 }  // namespace fetch
 
-#endif

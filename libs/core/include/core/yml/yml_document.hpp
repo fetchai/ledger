@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_YML_DOCUMENT_HPP
-#define BYTE_ARRAY_YML_DOCUMENT_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -264,4 +263,3 @@ private:
 }  // namespace yml
 }  // namespace fetch
 
-#endif

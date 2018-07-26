@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_BIGNUMBER_HPP
-#define LIBFETCHCORE_MATH_BIGNUMBER_HPP
+#pragma once
 
 #include "math/bignumber.hpp"
 #include "python/fetch_pybind.hpp"
@@ -29,4 +28,3 @@ void BuildBigUnsigned(pybind11::module &module)
 };  // namespace math
 };  // namespace fetch
 
-#endif

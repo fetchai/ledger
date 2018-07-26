@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_MATH_APPROX_EXP_HPP
-#define VECTORIZE_MATH_APPROX_EXP_HPP
+#pragma once
 namespace fetch {
 namespace vectorize {
 
@@ -52,4 +51,3 @@ inline VectorRegister<double, 128> approx_exp(
 }  // namespace vectorize
 }  // namespace fetch
 
-#endif

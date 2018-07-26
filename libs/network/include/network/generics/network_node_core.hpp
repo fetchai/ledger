@@ -1,5 +1,4 @@
-#ifndef NETWORK_NODE_CORE_HPP
-#define NETWORK_NODE_CORE_HPP
+#pragma once
 
 #include <functional>
 #include <iostream>
@@ -211,4 +210,3 @@ protected:
 }  // namespace network
 }  // namespace fetch
 
-#endif  // NETWORK_NODE_CORE_HPP

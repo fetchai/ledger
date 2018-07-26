@@ -1,5 +1,4 @@
-#ifndef SCRIP_VARIANT_HPP
-#define SCRIP_VARIANT_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "vectorise/memory/shared_array.hpp"
@@ -484,4 +483,3 @@ inline bool Extract(script::Variant const &           obj,
 
 }  // namespace script
 }  // namespace fetch
-#endif

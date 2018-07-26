@@ -1,5 +1,4 @@
-#ifndef CONTAINERS_VECTOR_HPP
-#define CONTAINERS_VECTOR_HPP
+#pragma once
 
 #include <vector>
 
@@ -53,4 +52,3 @@ public:
 };
 }  // namespace containers
 }  // namespace fetch
-#endif

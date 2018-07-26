@@ -1,5 +1,4 @@
-#ifndef NODE_HPP
-#define NODE_HPP
+#pragma once
 
 #include "aea_protocol.hpp"
 #include "node_protocol.hpp"
@@ -42,4 +41,3 @@ private:
   NodeToNodeProtocol *                                     node_;
 };
 
-#endif

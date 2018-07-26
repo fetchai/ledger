@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_STORAGE_RANDOM_ACCESS_STACK_HPP
-#define LIBFETCHCORE_STORAGE_RANDOM_ACCESS_STACK_HPP
+#pragma once
 #include "fetch_pybind.hpp"
 #include "storage/random_access_stack.hpp"
 
@@ -31,4 +30,3 @@ void BuildRandomAccessStack(std::string const &custom_name,
 };  // namespace storage
 };  // namespace fetch
 
-#endif

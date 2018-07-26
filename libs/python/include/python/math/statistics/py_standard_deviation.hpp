@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_STATISTICS_STANDARD_DEVIATION_HPP
-#define LIBFETCHCORE_MATH_STATISTICS_STANDARD_DEVIATION_HPP
+#pragma once
 
 #include "math/linalg/matrix.hpp"
 #include "math/statistics/standard_deviation.hpp"
@@ -38,4 +37,3 @@ inline void BuildStandardDeviationStatistics(std::string const &custom_name,
 }  // namespace math
 }  // namespace fetch
 
-#endif

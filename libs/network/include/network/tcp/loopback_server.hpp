@@ -1,5 +1,4 @@
-#ifndef TCP_SERVER_LOOPBACK_HPP
-#define TCP_SERVER_LOOPBACK_HPP
+#pragma once
 
 #include "network/fetch_asio.hpp"  // required to avoid failing build due to -Werror
 #include "network/management/network_manager.hpp"
@@ -137,4 +136,3 @@ private:
 }  // namespace network
 }  // namespace fetch
 
-#endif

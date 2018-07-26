@@ -1,5 +1,4 @@
-#ifndef NETWORK_ABSTRACT_SERVER_HPP
-#define NETWORK_ABSTRACT_SERVER_HPP
+#pragma once
 
 #include "network/management/abstract_connection.hpp"
 #include "network/message.hpp"
@@ -22,4 +21,3 @@ public:
 }  // namespace network
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_REGISTER_HPP
-#define VECTORIZE_REGISTER_HPP
+#pragma once
 #include "vectorise/info.hpp"
 
 #include <iostream>
@@ -80,4 +79,3 @@ private:
 #undef APPLY_OPERATOR_LIST
 }  // namespace vectorize
 }  // namespace fetch
-#endif

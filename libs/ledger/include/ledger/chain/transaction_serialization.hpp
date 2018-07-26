@@ -1,5 +1,4 @@
-#ifndef CHAIN_TRANSACTION_SERIALIZATION_HPP
-#define CHAIN_TRANSACTION_SERIALIZATION_HPP
+#pragma once
 
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -85,4 +84,3 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
 
 }  // namespace chain
 }  // namespace fetch
-#endif

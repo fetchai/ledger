@@ -1,5 +1,4 @@
-#ifndef SERVICE_ABSTRACT_CALLABLE_HPP
-#define SERVICE_ABSTRACT_CALLABLE_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
 #include "network/service/types.hpp"
@@ -214,4 +213,3 @@ private:
 }  // namespace service
 }  // namespace fetch
 
-#endif

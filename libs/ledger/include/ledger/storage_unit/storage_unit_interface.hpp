@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_INTERFACE_HPP
-#define LEDGER_STORAGE_UNIT_INTERFACE_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -53,4 +52,3 @@ public:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif

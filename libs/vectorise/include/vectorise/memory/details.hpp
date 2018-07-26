@@ -1,5 +1,4 @@
-#ifndef MEMORY_DETAILS_HPP
-#define MEMORY_DETAILS_HPP
+#pragma once
 #include <algorithm>
 #include <functional>
 #include <type_traits>
@@ -136,4 +135,3 @@ struct UnrollNext<0, A, B>
 
 }  // namespace memory
 }  // namespace fetch
-#endif

@@ -1,5 +1,4 @@
-#ifndef SWARM_SERVICE_HPP
-#define SWARM_SERVICE_HPP
+#pragma once
 
 #include "commandline/parameter_parser.hpp"
 #include "network/service/server.hpp"
@@ -512,4 +511,3 @@ private:
   std::atomic<bool>                                          running_;
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef KERNELS_VARIANCE_HPP
-#define KERNELS_VARIANCE_HPP
+#pragma once
 
 namespace fetch {
 namespace kernels {
@@ -19,4 +18,3 @@ struct Variance
 }  // namespace kernels
 }  // namespace fetch
 
-#endif

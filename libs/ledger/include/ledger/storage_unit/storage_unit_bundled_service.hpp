@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_BUNDLED_SERVICE_HPP
-#define LEDGER_STORAGE_UNIT_BUNDLED_SERVICE_HPP
+#pragma once
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
@@ -36,4 +35,3 @@ private:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef QUICK_START_SERVICE_HPP
-#define QUICK_START_SERVICE_HPP
+#pragma once
 
 #include "./node.hpp"
 #include "./protocols/fetch_protocols.hpp"  // defines QUICK_START enum
@@ -62,4 +61,3 @@ private:
 }  // namespace quick_start
 }  // namespace fetch
 
-#endif

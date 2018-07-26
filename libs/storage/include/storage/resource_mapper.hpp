@@ -1,5 +1,4 @@
-#ifndef STORAGE_RESOURCE_MAPPERL_HPP
-#define STORAGE_RESOURCE_MAPPERL_HPP
+#pragma once
 
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -80,4 +79,3 @@ private:
 }  // namespace storage
 }  // namespace fetch
 
-#endif

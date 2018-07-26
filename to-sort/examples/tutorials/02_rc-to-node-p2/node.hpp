@@ -1,5 +1,4 @@
-#ifndef NODE_HPP
-#define NODE_HPP
+#pragma once
 #include"node_functionality.hpp"
 #include"node_protocol.hpp"
 
@@ -10,4 +9,3 @@ public:
   }
 };
 
-#endif

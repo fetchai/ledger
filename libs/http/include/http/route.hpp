@@ -1,5 +1,4 @@
-#ifndef HTTP_ROUTE_HPP
-#define HTTP_ROUTE_HPP
+#pragma once
 #include "http/view_parameters.hpp"
 
 #include "core/byte_array/byte_array.hpp"
@@ -153,4 +152,3 @@ private:
 };
 }  // namespace http
 }  // namespace fetch
-#endif

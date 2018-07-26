@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_DISTANCE_HAMMING_HPP
-#define LIBFETCHCORE_MATH_DISTANCE_HAMMING_HPP
+#pragma once
 
 #include "math/distance/hamming.hpp"
 #include "math/linalg/matrix.hpp"
@@ -39,4 +38,3 @@ inline void BuildHammingDistance(std::string const &custom_name,
 }  // namespace math
 }  // namespace fetch
 
-#endif

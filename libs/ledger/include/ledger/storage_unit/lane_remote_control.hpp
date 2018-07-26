@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_LANE_REMOTE_CONTROL_HPP
-#define LEDGER_STORAGE_UNIT_LANE_REMOTE_CONTROL_HPP
+#pragma once
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "network/service/client.hpp"
@@ -157,4 +156,3 @@ private:
 }  // namespace ledger
 }  // namespace fetch
 
-#endif

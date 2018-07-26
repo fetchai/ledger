@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERIALIZER_BYTE_ARRAY_BUFFER_HPP
-#define LIBFETCHCORE_SERIALIZER_BYTE_ARRAY_BUFFER_HPP
+#pragma once
 #include "serializers/byte_array_buffer.hpp"
 
 #include "fetch_pybind.hpp"
@@ -28,4 +27,3 @@ void BuildByteArrayBuffer(pybind11::module &module)
 };  // namespace serializers
 };  // namespace fetch
 
-#endif

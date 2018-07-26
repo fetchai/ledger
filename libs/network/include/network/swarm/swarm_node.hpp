@@ -1,5 +1,4 @@
-#ifndef SWARM_NODE__
-#define SWARM_NODE__
+#pragma once
 
 #include <cstdlib>
 #include <string>
@@ -189,4 +188,3 @@ protected:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif  //__SWARM_NODE__

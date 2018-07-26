@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERVICE_ABSTRACT_CALLABLE_HPP
-#define LIBFETCHCORE_SERVICE_ABSTRACT_CALLABLE_HPP
+#pragma once
 #include "service/abstract_callable.hpp"
 
 #include "fetch_pybind.hpp"
@@ -32,4 +31,3 @@ void BuildAbstractCallable(pybind11::module &module)
 };  // namespace service
 };  // namespace fetch
 
-#endif

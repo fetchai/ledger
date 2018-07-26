@@ -1,5 +1,4 @@
-#ifndef HTTP_MIME_TYPES_HPP
-#define HTTP_MIME_TYPES_HPP
+#pragma once
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -22,4 +21,3 @@ MimeType GetMimeTypeFromExtension(std::string const &ext);
 }  // namespace http
 }  // namespace fetch
 
-#endif

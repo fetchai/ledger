@@ -1,5 +1,4 @@
-#ifndef STORAGE_OBJECT_STORE_PROTOCOL_HPP
-#define STORAGE_OBJECT_STORE_PROTOCOL_HPP
+#pragma once
 #include "network/service/protocol.hpp"
 #include "storage/object_store.hpp"
 #include <functional>
@@ -57,4 +56,3 @@ private:
 }  // namespace storage
 }  // namespace fetch
 
-#endif

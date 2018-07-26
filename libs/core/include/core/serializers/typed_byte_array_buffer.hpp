@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_TYPED_BYTE_ARRAY_BUFFER_HPP
-#define SERIALIZER_TYPED_BYTE_ARRAY_BUFFER_HPP
+#pragma once
 
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
@@ -129,4 +128,3 @@ private:
 }  // namespace serializers
 }  // namespace fetch
 
-#endif

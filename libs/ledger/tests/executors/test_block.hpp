@@ -1,5 +1,4 @@
-#ifndef FETCH_TEST_BLOCK_HPP
-#define FETCH_TEST_BLOCK_HPP
+#pragma once
 
 #include "ledger/execution_manager.hpp"
 #include "storage/resource_mapper.hpp"
@@ -165,4 +164,3 @@ struct TestBlock
   }
 };
 
-#endif  // FETCH_TEST_BLOCK_HPP

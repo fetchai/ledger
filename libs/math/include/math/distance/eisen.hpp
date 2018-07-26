@@ -1,5 +1,4 @@
-#ifndef MATH_DISTANCE_EISEN_HPP
-#define MATH_DISTANCE_EISEN_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "math/correlation/eisen.hpp"
 #include "math/shape_less_array.hpp"
@@ -30,4 +29,3 @@ inline typename ShapeLessArray<T, C>::type Eisen(ShapeLessArray<T, C> const &a,
 }  // namespace math
 }  // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_PROTOCOLS_SWARM_PROTOCOL_HPP
-#define LIBFETCHCORE_PROTOCOLS_SWARM_PROTOCOL_HPP
+#pragma once
 #include "protocols/swarm/protocol.hpp"
 
 #include "fetch_pybind.hpp"
@@ -19,4 +18,3 @@ void BuildSwarmProtocol(pybind11::module &module)
 };  // namespace protocols
 };  // namespace fetch
 
-#endif

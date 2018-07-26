@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_JSON_DOCUMENT_HPP
-#define LIBFETCHCORE_JSON_DOCUMENT_HPP
+#pragma once
 #include "json/document.hpp"
 
 #include "fetch_pybind.hpp"
@@ -34,4 +33,3 @@ void BuildJSONDocument(pybind11::module &module)
 };  // namespace json
 };  // namespace fetch
 
-#endif

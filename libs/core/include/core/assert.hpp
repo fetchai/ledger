@@ -1,5 +1,4 @@
-#ifndef ASSERT_HPP
-#define ASSERT_HPP
+#pragma once
 
 #include <iostream>
 #include <stdexcept>
@@ -52,4 +51,3 @@ struct Printer
     throw std::runtime_error("Assertion failed");                      \
   }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef KERNELS_APPROX_EXP_HPP
-#define KERNELS_APPROX_EXP_HPP
+#pragma once
 
 namespace fetch {
 namespace kernels {
@@ -16,4 +15,3 @@ struct ApproxExp
 }  // namespace kernels
 }  // namespace fetch
 
-#endif

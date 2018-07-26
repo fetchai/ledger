@@ -1,5 +1,4 @@
-#ifndef SERVICE_PROTOCOL_HPP
-#define SERVICE_PROTOCOL_HPP
+#pragma once
 
 #include <functional>
 #include <map>
@@ -234,4 +233,3 @@ private:
 }  // namespace service
 }  // namespace fetch
 
-#endif

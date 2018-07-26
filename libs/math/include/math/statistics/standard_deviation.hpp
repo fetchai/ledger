@@ -1,5 +1,4 @@
-#ifndef MATH_STATISTICS_STANDARD_DEVIATION_HPP
-#define MATH_STATISTICS_STANDARD_DEVIATION_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "math/shape_less_array.hpp"
 #include "math/statistics/variance.hpp"
@@ -24,4 +23,3 @@ inline typename A::type StandardDeviation(A const &a)
 }  // namespace math
 }  // namespace fetch
 
-#endif

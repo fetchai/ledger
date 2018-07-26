@@ -1,5 +1,4 @@
-#ifndef NETWORK_MANAGER_HPP
-#define NETWORK_MANAGER_HPP
+#pragma once
 
 #include "core/assert.hpp"
 #include "core/logger.hpp"
@@ -131,4 +130,3 @@ private:
 }  // namespace network
 }  // namespace fetch
 
-#endif

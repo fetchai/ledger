@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_NETWORK_TCP_SERVER_HPP
-#define LIBFETCHCORE_NETWORK_TCP_SERVER_HPP
+#pragma once
 #include "network/tcp_server.hpp"
 
 #include "fetch_pybind.hpp"
@@ -26,4 +25,3 @@ void BuildTCPServer(pybind11::module &module)
 };  // namespace network
 };  // namespace fetch
 
-#endif

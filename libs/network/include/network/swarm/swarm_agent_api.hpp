@@ -1,5 +1,4 @@
-#ifndef SWARM_AGENT_API__
-#define SWARM_AGENT_API__
+#pragma once
 
 #include <functional>
 #include <list>
@@ -75,4 +74,3 @@ public:
 }  // namespace swarm
 }  // namespace fetch
 
-#endif  //__SWARM_AGENT_API__

@@ -1,5 +1,4 @@
-#ifndef AEA_FUNCTIONALITY_HPP
-#define AEA_FUNCTIONALITY_HPP
+#pragma once
 #include "node_functionality.hpp"
 
 #include <iostream>
@@ -39,4 +38,3 @@ private:
   std::vector<std::string> peers_;
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_SSE_HPP
-#define VECTORIZE_SSE_HPP
+#pragma once
 #include "vectorise/info.hpp"
 #include "vectorise/info_sse.hpp"
 #include "vectorise/register.hpp"
@@ -365,4 +364,3 @@ inline bool any_less_than(VectorRegister<double, 128> const &x,
 
 }  // namespace vectorize
 }  // namespace fetch
-#endif
