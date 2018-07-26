@@ -46,6 +46,7 @@ using uniq_ptr_type = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
 enum eECDSABinaryDataFormat : int
 {
     canonical,
+    bin,
     DER
 };
 

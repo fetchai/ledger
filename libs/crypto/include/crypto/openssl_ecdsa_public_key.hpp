@@ -34,10 +34,10 @@ public:
 
 
     ECDSAPublicKey(
-          shrd_ptr_type<EC_POINT> public_key,
+          shrd_ptr_type<EC_POINT>&& public_key,
           const EC_GROUP *group,
           const context::Session<BN_CTX>& session
-          ) 
+          )
         : key_EC_POINT_ {public_key}
         , key_EC_KEY_ {ConvertToECKEY(public_key.get())}
         , key_binary_ {Convert(public_key.get(), group, session, binaryDataFormat)}
@@ -105,8 +105,12 @@ private:
         {
             case eECDSABinaryDataFormat::canonical:
                 return Convert2Canonical(public_key, group, session);
+
+            case eECDSABinaryDataFormat::bin:
+                return Convert2Bin(public_key, group, session);
+
             case eECDSABinaryDataFormat::DER:
-                return Convert2DER(public_key, group, session);
+                throw std::domain_error("ECDSAPublicKey::Convert(...): Conversion in to DER encoded data is NOT implemented yet.");
         }
     }
 
@@ -115,13 +119,15 @@ private:
         EC_POINT const * const public_key,
         eECDSABinaryDataFormat const binaryDataFormat)
     {
-        uniq_ptr_type<const EC_GROUP> group {EC_GROUP_new_by_curve_name(ecdsa_curve_type::nid)};
+        uniq_ptr_type<EC_GROUP> group {createGroup()};
         context::Session<BN_CTX> session;
 
         switch(binaryDataFormat)
         {
             case eECDSABinaryDataFormat::canonical:
+            case eECDSABinaryDataFormat::bin:
                 return Convert(public_key, group.get(), session, binaryDataFormat);
+
             case eECDSABinaryDataFormat::DER:
                 return Convert(public_key, group.get(), session, binaryDataFormat);
         }
@@ -129,15 +135,19 @@ private:
 
 
     static uniq_ptr_type<EC_POINT> Convert(
-        byte_array::ConstByteArray const& key_data,
+        byte_array::ConstByteArray const & key_data,
         eECDSABinaryDataFormat const binaryDataFormat)
     {
         switch(binaryDataFormat)
         {
             case eECDSABinaryDataFormat::canonical:
                 return ConvertFromCanonical(key_data);
+
+            case eECDSABinaryDataFormat::bin:
+                return ConvertFromBin(key_data);
+
             case eECDSABinaryDataFormat::DER:
-                return ConvertFromDER(key_data);
+                throw std::domain_error("ECDSAPublicKey::Convert(...): Conversion from DER encoded data is NOT implemented yet.");
         }
     }
 
@@ -145,7 +155,8 @@ private:
     static byte_array::ByteArray Convert2Canonical(
         EC_POINT const * const public_key,
         EC_GROUP const * const group,
-        context::Session<BN_CTX> const & session)
+        context::Session<BN_CTX> const & session
+        )
     {
         shrd_ptr_type<BIGNUM> x {BN_new()};
         shrd_ptr_type<BIGNUM> y {BN_new()};
@@ -154,14 +165,15 @@ private:
     }
 
 
-    static byte_array::ByteArray Convert2DER(
+    static byte_array::ByteArray Convert2Bin(
         EC_POINT const * const public_key,
         EC_GROUP const * const group,
-        context::Session<BN_CTX> const & session)
+        context::Session<BN_CTX> const & session
+        )
     {
         shrd_ptr_type<BIGNUM> public_key_as_BN {BN_new()};
         if (!EC_POINT_point2bn(group, public_key, ECDSAPublicKey::conversionForm, public_key_as_BN.get(), session.context().get())) {
-            throw std::runtime_error("ECDSAPublicKey::Convert(...): `EC_POINT_point2bn(...)` functioni failed."); 
+            throw std::runtime_error("ECDSAPublicKey::Convert(...): `EC_POINT_point2bn(...)` functioni failed.");
         }
 
         byte_array::ByteArray pub_key_as_bin;
@@ -177,10 +189,10 @@ private:
 
     static uniq_ptr_type<EC_POINT> ConvertFromCanonical(byte_array::ConstByteArray const& key_data)
     {
-        uniq_ptr_type<const EC_GROUP> group {EC_GROUP_new_by_curve_name(ecdsa_curve_type::nid)};
+        uniq_ptr_type<EC_GROUP> group {createGroup()};
         uniq_ptr_type<EC_POINT> public_key {EC_POINT_new(group.get())};
         context::Session<BN_CTX> session;
-        
+
         shrd_ptr_type<BIGNUM> x {BN_new()};
         shrd_ptr_type<BIGNUM> y {BN_new()};
 
@@ -200,15 +212,15 @@ private:
     }
 
 
-    static uniq_ptr_type<EC_POINT> ConvertFromDER(byte_array::ConstByteArray const& key_data)
+    static uniq_ptr_type<EC_POINT> ConvertFromBin(byte_array::ConstByteArray const& key_data)
     {
         shrd_ptr_type<BIGNUM> pub_key_as_BN {BN_new()};
         if (!BN_bin2bn(static_cast<const unsigned char*>( key_data.pointer() ), int(key_data.size()), pub_key_as_BN.get())) {
             throw std::runtime_error("ECDSAPublicKey::ConvertToECPOINT(...): BN_bin2bn(...) failed.");
         }
 
-        uniq_ptr_type<const EC_GROUP> group( EC_GROUP_new_by_curve_name( ecdsa_curve_type::nid ) );
-        uniq_ptr_type<EC_POINT> public_key {EC_POINT_new( group.get())};
+        uniq_ptr_type<EC_GROUP> group {createGroup()};
+        uniq_ptr_type<EC_POINT> public_key {EC_POINT_new(group.get())};
         context::Session<BN_CTX> session;
 
         if( !EC_POINT_bn2point(group.get(), pub_key_as_BN.get(), public_key.get(), session.context().get()) ) {
@@ -219,10 +231,11 @@ private:
     }
 
 
-    static uniq_ptr_type<EC_KEY> ConvertToECKEY(const EC_POINT * key_EC_POINT) {
-        uniq_ptr_type<EC_KEY> key {EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)}; 
+    static uniq_ptr_type<EC_KEY> ConvertToECKEY(const EC_POINT * key_EC_POINT)
+    {
+        uniq_ptr_type<EC_KEY> key {EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)};
         //TODO: setting conv. form might not be really necessary (stuff works without it)
-        EC_KEY_set_conv_form(key.get(), ECDSAPublicKey::conversionForm);
+        EC_KEY_set_conv_form(key.get(), conversionForm);
 
         if (!EC_KEY_set_public_key(key.get(), key_EC_POINT)) {
             throw std::runtime_error("ECDSAPublicKey::ConvertToECKEY(...): EC_KEY_set_public_key(...) failed.");
@@ -231,7 +244,13 @@ private:
         return key;
     }
 
-public:
+
+    static uniq_ptr_type<EC_GROUP> createGroup()
+    {
+        uniq_ptr_type<EC_GROUP> group{ EC_GROUP_new_by_curve_name(ecdsa_curve_type::nid) };
+        EC_GROUP_set_point_conversion_form(group.get(), conversionForm);
+        return group;
+    }
 };
 
 } //* openssl namespace
