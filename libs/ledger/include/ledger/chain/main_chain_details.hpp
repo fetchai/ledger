@@ -22,4 +22,3 @@ struct MainChainDetails
 
 }  // namespace chain
 }  // namespace fetch
-

@@ -27,4 +27,3 @@ inline typename A::type GeometricMean(A const &a)
 }  // namespace statistics
 }  // namespace math
 }  // namespace fetch
-

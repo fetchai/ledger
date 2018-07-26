@@ -8,4 +8,3 @@ namespace unittest {
 
 };
 };  // namespace fetch
-

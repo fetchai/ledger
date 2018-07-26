@@ -163,4 +163,3 @@ protected:
 
 }  // namespace memory
 }  // namespace fetch
-

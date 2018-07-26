@@ -17,4 +17,3 @@ struct Variance
 };
 }  // namespace kernels
 }  // namespace fetch
-

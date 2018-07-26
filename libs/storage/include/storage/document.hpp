@@ -28,4 +28,3 @@ void Deserialize(T &serializer, Document &b)
 
 }  // namespace storage
 }  // namespace fetch
-

@@ -8,4 +8,3 @@ namespace byte_array {
 
 };
 };  // namespace fetch
-

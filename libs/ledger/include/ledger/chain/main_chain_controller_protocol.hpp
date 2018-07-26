@@ -33,4 +33,3 @@ public:
 }  // namespace chain
 
 }  // namespace fetch
-

@@ -60,4 +60,3 @@ private:
 };
 }  // namespace quick_start
 }  // namespace fetch
-

@@ -155,4 +155,3 @@ typedef VerifiedTransaction Transaction;
 
 }  // namespace chain
 }  // namespace fetch
-

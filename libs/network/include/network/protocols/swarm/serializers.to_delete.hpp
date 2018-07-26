@@ -80,4 +80,3 @@ T &Deserialize(T &serializer, std::vector<protocols::NodeDetails> &data)
 }
 }  // namespace serializers
 }  // namespace fetch
-

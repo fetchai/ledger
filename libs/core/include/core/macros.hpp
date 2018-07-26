@@ -7,4 +7,3 @@
 #else
 #define FETCH_MAYBE_UNUSED
 #endif
-

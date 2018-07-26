@@ -175,4 +175,3 @@ inline void Identifier::Append(std::string const &element)
 
 }  // namespace ledger
 }  // namespace fetch
-

@@ -94,4 +94,3 @@ inline void BuildDistanceMatrixDistance(std::string const &custom_name,
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

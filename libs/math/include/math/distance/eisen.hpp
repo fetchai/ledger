@@ -28,4 +28,3 @@ inline typename ShapeLessArray<T, C>::type Eisen(ShapeLessArray<T, C> const &a,
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

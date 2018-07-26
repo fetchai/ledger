@@ -38,4 +38,3 @@ inline typename ShapeLessArray<T, C>::type Manhattan(
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

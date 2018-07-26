@@ -22,4 +22,3 @@ VectorRegister<T, S> pow(VectorRegister<T, S> base, int p)
 
 }  // namespace vectorize
 }  // namespace fetch
-

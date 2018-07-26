@@ -28,4 +28,3 @@ void BuildTransactionManager(pybind11::module &module)
 }
 };  // namespace protocols
 };  // namespace fetch
-

@@ -43,4 +43,3 @@ private:
 };
 }  // namespace vectorize
 }  // namespace fetch
-

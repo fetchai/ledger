@@ -255,4 +255,3 @@ private:
 
 }  // namespace optimisers
 }  // namespace fetch
-

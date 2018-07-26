@@ -23,4 +23,3 @@ void BuildProofOfWork(pybind11::module &module)
 };  // namespace consensus
 };  // namespace chain
 };  // namespace fetch
-

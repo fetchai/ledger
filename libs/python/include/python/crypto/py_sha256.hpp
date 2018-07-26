@@ -18,4 +18,3 @@ void BuildSHA256(pybind11::module &module)
 }
 };  // namespace crypto
 };  // namespace fetch
-

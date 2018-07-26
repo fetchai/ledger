@@ -149,4 +149,3 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
 };  // namespace linalg
 };  // namespace math
 };  // namespace fetch
-

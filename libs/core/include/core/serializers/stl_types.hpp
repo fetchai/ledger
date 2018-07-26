@@ -249,4 +249,3 @@ inline void Deserialize(T &serializer, std::set<K> &set)
 
 }  // namespace serializers
 }  // namespace fetch
-

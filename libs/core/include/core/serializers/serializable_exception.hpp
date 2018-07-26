@@ -40,4 +40,3 @@ inline void Deserialize(T &serializer, SerializableException &s)
 }
 }  // namespace serializers
 }  // namespace fetch
-

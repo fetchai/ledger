@@ -20,4 +20,3 @@ public:
 
 }  // namespace network
 }  // namespace fetch
-

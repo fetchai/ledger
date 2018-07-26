@@ -19,4 +19,3 @@ struct StandardDeviation
 
 }  // namespace kernels
 }  // namespace fetch
-

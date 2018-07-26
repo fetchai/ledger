@@ -24,4 +24,3 @@ public:
     this->RegisterFeed(PeerToPeerFeed::NEW_MESSAGE, this);
   }
 };
-

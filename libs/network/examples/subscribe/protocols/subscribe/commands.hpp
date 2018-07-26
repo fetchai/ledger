@@ -12,4 +12,3 @@ struct SubscribeProto
 };
 }  // namespace protocols
 }  // namespace fetch
-

@@ -5,4 +5,3 @@ namespace middleware {
 }
 }  // namespace http
 }  // namespace fetch
-

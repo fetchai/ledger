@@ -19,4 +19,3 @@ void BuildExp(std::string const &custom_name, pybind11::module &module)
 }
 };  // namespace math
 };  // namespace fetch
-

@@ -6,4 +6,3 @@ namespace crypto {
 
 };
 };  // namespace fetch
-

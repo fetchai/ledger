@@ -20,4 +20,3 @@ void BuildProtocol(pybind11::module &module)
 }
 };  // namespace service
 };  // namespace fetch
-

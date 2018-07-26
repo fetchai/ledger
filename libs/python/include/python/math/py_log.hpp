@@ -17,4 +17,3 @@ void BuildLog(pybind11::module &module)
 }
 };  // namespace math
 };  // namespace fetch
-

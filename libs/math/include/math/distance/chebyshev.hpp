@@ -32,4 +32,3 @@ inline typename A::type Chebyshev(A const &a, A const &b)
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

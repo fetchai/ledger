@@ -15,4 +15,3 @@ struct IsLog2
 
 }  // namespace meta
 }  // namespace fetch
-

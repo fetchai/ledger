@@ -18,4 +18,3 @@ void BuildBitGenerator(std::string const &custom_name, pybind11::module &module)
 }
 };  // namespace random
 };  // namespace fetch
-

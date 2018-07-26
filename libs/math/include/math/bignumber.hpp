@@ -258,4 +258,3 @@ inline double ToDouble(BigUnsigned const &x)
 }
 }  // namespace math
 }  // namespace fetch
-

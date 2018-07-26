@@ -510,4 +510,3 @@ private:
   typename fetch::network::NetworkManager::event_handle_type stop_event_;
   std::atomic<bool>                                          running_;
 };
-

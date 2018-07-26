@@ -45,4 +45,3 @@ inline typename ShapeLessArray<T, C>::type Braycurtis(
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

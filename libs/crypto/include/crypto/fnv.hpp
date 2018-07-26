@@ -59,4 +59,3 @@ struct CallableFNV
 };
 }  // namespace crypto
 }  // namespace fetch
-

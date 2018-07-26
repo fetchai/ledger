@@ -16,4 +16,3 @@ inline VectorRegister<double, 128> min(VectorRegister<double, 128> const &a,
 
 }  // namespace vectorize
 }  // namespace fetch
-

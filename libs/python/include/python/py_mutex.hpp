@@ -8,4 +8,3 @@ namespace mutex {
 
 };
 };  // namespace fetch
-

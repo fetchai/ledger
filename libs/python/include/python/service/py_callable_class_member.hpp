@@ -18,4 +18,3 @@ void BuildCallableClassMember(std::string const &custom_name,
 
 };  // namespace service
 };  // namespace fetch
-

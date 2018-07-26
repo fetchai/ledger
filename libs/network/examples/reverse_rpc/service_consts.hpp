@@ -26,4 +26,3 @@ struct FetchProtocols
     NODE_TO_AEA = 2
   };
 };
-

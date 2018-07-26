@@ -16,4 +16,3 @@ void BuildUnrecognisedJSONSymbolException(pybind11::module &module)
 }
 };  // namespace json
 };  // namespace fetch
-

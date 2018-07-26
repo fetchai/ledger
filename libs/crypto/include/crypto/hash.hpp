@@ -16,4 +16,3 @@ byte_array::ByteArray Hash(byte_array::ConstByteArray const &str)
 }
 }  // namespace crypto
 }  // namespace fetch
-

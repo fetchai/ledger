@@ -198,4 +198,3 @@ private:
 
 }  // namespace chain
 }  // namespace fetch
-

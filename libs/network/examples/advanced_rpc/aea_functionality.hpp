@@ -37,4 +37,3 @@ private:
   std::string              node_info_;
   std::vector<std::string> peers_;
 };
-

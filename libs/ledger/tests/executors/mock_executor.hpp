@@ -23,4 +23,3 @@ public:
 private:
   FakeExecutor fake_;
 };
-

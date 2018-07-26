@@ -14,4 +14,3 @@ inline void DisplayCLIHeader(std::string const &name,
 }
 }  // namespace commandline
 }  // namespace fetch
-

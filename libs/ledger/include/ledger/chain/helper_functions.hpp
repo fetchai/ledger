@@ -45,4 +45,3 @@ MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
 
 }  // namespace chain
 }  // namespace fetch
-

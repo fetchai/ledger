@@ -47,4 +47,3 @@ void BuildConstByteArray(pybind11::module &module)
 }
 };  // namespace byte_array
 };  // namespace fetch
-

@@ -30,4 +30,3 @@ struct ChainKeeperFeed
 };
 }  // namespace protocols
 }  // namespace fetch
-

@@ -22,4 +22,3 @@ inline typename A::type StandardDeviation(A const &a)
 }  // namespace statistics
 }  // namespace math
 }  // namespace fetch
-

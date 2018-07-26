@@ -152,4 +152,3 @@ typedef DebugMutex Mutex;
 #endif
 }  // namespace mutex
 }  // namespace fetch
-

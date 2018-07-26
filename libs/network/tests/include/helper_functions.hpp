@@ -164,4 +164,3 @@ typedef std::pair<block_hash, block_type> network_block;
 }  // namespace network_benchmark
 
 }  // namespace fetch
-

@@ -23,4 +23,3 @@ inline VectorRegister<double, 128> abs(VectorRegister<double, 128> const &a)
 
 }  // namespace vectorize
 }  // namespace fetch
-

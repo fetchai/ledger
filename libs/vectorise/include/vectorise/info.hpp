@@ -13,4 +13,3 @@ struct VectorInfo
 };
 }  // namespace vectorize
 }  // namespace fetch
-

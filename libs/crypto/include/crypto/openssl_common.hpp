@@ -21,4 +21,3 @@ const std::size_t ECDSACurve<NID_secp256k1>::privateKeySize;
 }  // namespace openssl
 }  // namespace crypto
 }  // namespace fetch
-

@@ -84,4 +84,3 @@ struct DivideScalar
 
 }  // namespace kernels
 }  // namespace fetch
-

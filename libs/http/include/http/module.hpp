@@ -82,4 +82,3 @@ private:
 };
 }  // namespace http
 }  // namespace fetch
-

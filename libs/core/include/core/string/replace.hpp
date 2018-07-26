@@ -13,4 +13,3 @@ inline std::string Replace(std::string value, char before, char after)
 
 }  // namespace string
 }  // namespace fetch
-

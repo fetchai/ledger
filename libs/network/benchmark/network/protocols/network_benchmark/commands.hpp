@@ -16,4 +16,3 @@ struct NetworkBenchmark
 };
 }  // namespace protocols
 }  // namespace fetch
-

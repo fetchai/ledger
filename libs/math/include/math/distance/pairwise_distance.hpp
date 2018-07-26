@@ -38,4 +38,3 @@ inline A &PairWiseDistance(A &r, A const &a, F &&metric)
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

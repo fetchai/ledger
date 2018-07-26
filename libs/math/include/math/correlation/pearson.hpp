@@ -70,4 +70,3 @@ inline typename ShapeLessArray<T, C>::type Pearson(
 }  // namespace correlation
 }  // namespace math
 }  // namespace fetch
-

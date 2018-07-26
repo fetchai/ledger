@@ -89,4 +89,3 @@ Status const SERVER_ERROR_NETWORK_AUTHENTICATION_REQUIRED = {
 }  // namespace status_code
 }  // namespace http
 }  // namespace fetch
-

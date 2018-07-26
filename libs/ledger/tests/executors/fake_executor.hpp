@@ -63,4 +63,3 @@ private:
   state_type *       state_ = nullptr;
   history_cache_type history_;
 };
-

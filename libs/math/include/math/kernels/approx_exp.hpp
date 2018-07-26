@@ -14,4 +14,3 @@ struct ApproxExp
 
 }  // namespace kernels
 }  // namespace fetch
-

@@ -14,4 +14,3 @@ inline VectorRegister<double, 128> sqrt(VectorRegister<double, 128> const &a)
 
 }  // namespace vectorize
 }  // namespace fetch
-

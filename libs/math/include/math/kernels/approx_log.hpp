@@ -14,4 +14,3 @@ struct ApproxLog
 
 }  // namespace kernels
 }  // namespace fetch
-

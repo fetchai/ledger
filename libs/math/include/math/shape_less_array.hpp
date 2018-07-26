@@ -1630,4 +1630,3 @@ private:
 };
 }  // namespace math
 }  // namespace fetch
-

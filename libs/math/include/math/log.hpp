@@ -12,4 +12,3 @@ public:
 };
 }  // namespace math
 }  // namespace fetch
-

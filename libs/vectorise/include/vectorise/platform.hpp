@@ -122,4 +122,3 @@ constexpr bool has_sse42()
 }
 }  // namespace platform
 }  // namespace fetch
-

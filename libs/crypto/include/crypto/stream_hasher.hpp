@@ -17,4 +17,3 @@ public:
 };
 }  // namespace crypto
 }  // namespace fetch
-

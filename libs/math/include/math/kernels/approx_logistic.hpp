@@ -16,4 +16,3 @@ struct ApproxLogistic
 
 }  // namespace kernels
 }  // namespace fetch
-

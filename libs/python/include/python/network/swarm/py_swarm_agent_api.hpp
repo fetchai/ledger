@@ -65,4 +65,3 @@ void BuildSwarmAgentApi(pybind11::module &module)
 
 };  // namespace swarm
 };  // namespace fetch
-

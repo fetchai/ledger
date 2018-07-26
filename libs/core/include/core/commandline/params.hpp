@@ -154,4 +154,3 @@ private:
 
 }  // namespace commandline
 }  // namespace fetch
-

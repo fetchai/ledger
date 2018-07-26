@@ -37,4 +37,3 @@ inline void BuildManhattanDistance(std::string const &custom_name,
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

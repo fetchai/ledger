@@ -50,4 +50,3 @@ inline VectorRegister<double, 128> approx_exp(
 
 }  // namespace vectorize
 }  // namespace fetch
-

@@ -117,4 +117,3 @@ bool ecdsa_verify(openssl::ECDSAPublicKey<P_ECDSA_Curve_NID,
 
 }  // namespace crypto
 }  // namespace fetch
-

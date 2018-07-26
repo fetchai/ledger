@@ -33,4 +33,3 @@ inline typename A::type Variance(A const &a)
 }  // namespace statistics
 }  // namespace math
 }  // namespace fetch
-

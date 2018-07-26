@@ -32,4 +32,3 @@ inline void BuildGeometricMeanStatistics(std::string const &custom_name,
 }  // namespace statistics
 }  // namespace math
 }  // namespace fetch
-

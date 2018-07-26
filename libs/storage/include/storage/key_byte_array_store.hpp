@@ -30,4 +30,3 @@ using KeyByteArrayStore = typename details::ByteArrayMapConfigurator<S>::type;
 
 }  // namespace storage
 }  // namespace fetch
-

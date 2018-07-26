@@ -59,4 +59,3 @@ struct VectorInfo<double, 128>
 };
 }  // namespace vectorize
 }  // namespace fetch
-

@@ -28,4 +28,3 @@ private:
 
 }  // namespace miner
 }  // namespace fetch
-

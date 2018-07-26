@@ -34,4 +34,3 @@ inline A &DistanceMatrix(A &r, A const &a, A const &b, F &&metric)
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

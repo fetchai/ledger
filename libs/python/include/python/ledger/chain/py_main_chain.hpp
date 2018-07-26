@@ -25,4 +25,3 @@ void BuildMainChain(pybind11::module &module)
 
 }  // namespace chain
 }  // namespace fetch
-

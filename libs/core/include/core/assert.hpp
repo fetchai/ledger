@@ -50,4 +50,3 @@ struct Printer
               << __LINE__ << std::endl;                                \
     throw std::runtime_error("Assertion failed");                      \
   }
-

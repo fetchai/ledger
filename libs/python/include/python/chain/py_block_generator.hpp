@@ -20,4 +20,3 @@ void BuildBlockGenerator(pybind11::module &module)
 }
 };  // namespace chain
 };  // namespace fetch
-

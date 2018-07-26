@@ -44,4 +44,3 @@ inline typename ShapeLessArray<T, C>::type GeneralisedJaccard(
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

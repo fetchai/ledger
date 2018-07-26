@@ -14,4 +14,3 @@ void BuildAbstractHTTPServer(pybind11::module &module)
 }
 };  // namespace http
 };  // namespace fetch
-

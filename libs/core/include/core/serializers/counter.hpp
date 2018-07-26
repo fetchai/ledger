@@ -84,4 +84,3 @@ private:
 };
 }  // namespace serializers
 }  // namespace fetch
-

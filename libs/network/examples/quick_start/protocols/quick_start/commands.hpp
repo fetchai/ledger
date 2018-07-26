@@ -14,4 +14,3 @@ struct QuickStart
 };
 }  // namespace protocols
 }  // namespace fetch
-

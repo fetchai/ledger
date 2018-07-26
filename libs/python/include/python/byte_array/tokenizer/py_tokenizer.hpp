@@ -17,4 +17,3 @@ void BuildTokenizer(pybind11::module &module)
 }
 };  // namespace byte_array
 };  // namespace fetch
-

@@ -10,4 +10,3 @@ typedef byte_array::ByteArray    message_type;
 typedef std::deque<message_type> message_queue_type;
 }  // namespace network
 }  // namespace fetch
-

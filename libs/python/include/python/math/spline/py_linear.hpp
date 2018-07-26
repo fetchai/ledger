@@ -20,4 +20,3 @@ void BuildSpline(std::string const &custom_name, pybind11::module &module)
 };  // namespace spline
 };  // namespace math
 };  // namespace fetch
-

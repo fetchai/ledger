@@ -38,4 +38,3 @@ void BuildSharedArray(std::string const &custom_name, pybind11::module &module)
 }
 };  // namespace memory
 };  // namespace fetch
-

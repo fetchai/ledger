@@ -39,4 +39,3 @@ inline typename ShapeLessArray<T, C>::type Euclidean(
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

@@ -223,4 +223,3 @@ typedef details::BitVectorImplementation<0> BitVector;
 
 }  // namespace bitmanip
 }  // namespace fetch
-

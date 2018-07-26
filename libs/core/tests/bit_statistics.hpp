@@ -70,4 +70,3 @@ private:
   T                     generator_;
   std::size_t           counter_ = 0;
 };
-

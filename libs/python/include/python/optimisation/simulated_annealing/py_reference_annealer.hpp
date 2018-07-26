@@ -54,4 +54,3 @@ void BuildReferenceAnnealer(pybind11::module &module)
 }
 };  // namespace optimisers
 };  // namespace fetch
-

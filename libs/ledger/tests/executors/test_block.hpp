@@ -163,4 +163,3 @@ struct TestBlock
     return block;
   }
 };
-

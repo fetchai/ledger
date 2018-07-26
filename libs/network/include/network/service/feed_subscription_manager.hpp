@@ -154,4 +154,3 @@ private:
 };
 }  // namespace service
 }  // namespace fetch
-

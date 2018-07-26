@@ -53,4 +53,3 @@ private:
 };
 }  // namespace network_benchmark
 }  // namespace fetch
-

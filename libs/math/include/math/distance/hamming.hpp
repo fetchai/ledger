@@ -36,4 +36,3 @@ inline typename ShapeLessArray<T, C>::type Hamming(
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

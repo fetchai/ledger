@@ -12,4 +12,3 @@ struct Swarm
 };
 }  // namespace protocols
 }  // namespace fetch
-

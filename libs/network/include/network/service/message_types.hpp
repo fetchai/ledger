@@ -13,4 +13,3 @@ service_classification_type const SERVICE_FEED          = 40ull;
 service_classification_type const SERVICE_ERROR = 999ull;
 }  // namespace service
 }  // namespace fetch
-

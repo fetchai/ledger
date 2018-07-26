@@ -24,4 +24,3 @@ void BuildLinearCongruentialGenerator(pybind11::module &module)
 }
 };  // namespace random
 };  // namespace fetch
-

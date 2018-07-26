@@ -64,4 +64,3 @@ void BuildVariant(pybind11::module &module)
 }
 };  // namespace script
 };  // namespace fetch
-

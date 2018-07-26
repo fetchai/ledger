@@ -21,4 +21,3 @@ void BuildSerializableException(pybind11::module &module)
 }
 };  // namespace serializers
 };  // namespace fetch
-

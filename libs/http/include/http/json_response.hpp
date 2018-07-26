@@ -29,4 +29,3 @@ inline http::HTTPResponse CreateJsonResponse(
 
 }  // namespace http
 }  // namespace fetch
-

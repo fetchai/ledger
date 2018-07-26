@@ -55,4 +55,3 @@ private:
 };
 }  // namespace crypto
 }  // namespace fetch
-

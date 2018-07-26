@@ -40,4 +40,3 @@ private:
   AEAProtocol *                                            aea_;
   NodeToNodeProtocol *                                     node_;
 };
-

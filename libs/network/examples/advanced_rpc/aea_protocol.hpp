@@ -26,4 +26,3 @@ public:
     this->Expose(AEACommands::CONNECT, controller, &AEAFunctionality::Connect);
   }
 };
-

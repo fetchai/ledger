@@ -28,4 +28,3 @@ inline typename A::type Mean(A const &a)
 }  // namespace statistics
 }  // namespace math
 }  // namespace fetch
-

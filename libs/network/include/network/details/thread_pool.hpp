@@ -334,4 +334,3 @@ inline ThreadPool MakeThreadPool(std::size_t threads = 1)
 
 }  // namespace network
 }  // namespace fetch
-

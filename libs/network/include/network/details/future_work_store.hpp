@@ -96,4 +96,3 @@ private:
 }  // namespace details
 }  // namespace network
 }  // namespace fetch
-

@@ -39,4 +39,3 @@ struct EntryPoint
 };
 }  // namespace protocols
 }  // namespace fetch
-

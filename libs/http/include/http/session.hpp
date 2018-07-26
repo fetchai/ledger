@@ -8,4 +8,3 @@ public:
 };
 }  // namespace http
 }  // namespace fetch
-

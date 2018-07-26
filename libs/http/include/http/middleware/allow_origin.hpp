@@ -15,4 +15,3 @@ inline typename HTTPServer::response_middleware_type AllowOrigin(
 }  // namespace middleware
 }  // namespace http
 }  // namespace fetch
-

@@ -12,4 +12,3 @@ struct Random
 
 }  // namespace random
 }  // namespace fetch
-

@@ -241,4 +241,3 @@ void BuildRectangularArray(std::string const &custom_name,
 }
 };  // namespace math
 };  // namespace fetch
-

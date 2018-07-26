@@ -267,4 +267,3 @@ private:
 
 }  // namespace storage
 }  // namespace fetch
-

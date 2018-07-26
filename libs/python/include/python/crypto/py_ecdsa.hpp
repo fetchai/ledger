@@ -23,4 +23,3 @@ void BuildECDSASigner(pybind11::module &module)
 }
 };  // namespace crypto
 };  // namespace fetch
-

@@ -26,4 +26,3 @@ void BuildChainManager(pybind11::module &module)
 }
 };  // namespace protocols
 };  // namespace fetch
-

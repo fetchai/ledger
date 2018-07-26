@@ -23,4 +23,3 @@ struct LaneConnectivityDetails
 
 }  // namespace ledger
 }  // namespace fetch
-

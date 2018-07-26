@@ -216,4 +216,3 @@ private:
 
 }  // namespace ledger
 }  // namespace fetch
-

@@ -16,4 +16,3 @@ inline VectorRegister<double, 128> max(VectorRegister<double, 128> const &a,
 
 }  // namespace vectorize
 }  // namespace fetch
-

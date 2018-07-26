@@ -23,4 +23,3 @@ enum FetchProtocols
   AEA_PROTOCOL = 1,
   PEER_TO_PEER = 2
 };
-

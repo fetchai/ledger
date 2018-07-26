@@ -16,4 +16,3 @@ void BuildTypeRegister(std::string const &custom_name, pybind11::module &module)
 }
 };  // namespace serializers
 };  // namespace fetch
-

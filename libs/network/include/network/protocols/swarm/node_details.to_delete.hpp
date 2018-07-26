@@ -114,4 +114,3 @@ private:
 };
 }  // namespace protocols
 }  // namespace fetch
-

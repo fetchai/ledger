@@ -19,4 +19,3 @@ void BuildHTTPConnectionManager(pybind11::module &module)
 }
 };  // namespace http
 };  // namespace fetch
-

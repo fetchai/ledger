@@ -175,4 +175,3 @@ private:
   lock_store_type        locks_;
   state_archive_type     state_archive_;
 };
-

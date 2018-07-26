@@ -80,4 +80,3 @@ inline typename ShapeLessArray<T, C>::type GeneralisedJaccard(
 }  // namespace correlation
 }  // namespace math
 }  // namespace fetch
-

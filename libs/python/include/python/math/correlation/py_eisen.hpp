@@ -38,4 +38,3 @@ inline void BuildEisenCorrelation(std::string const &custom_name,
 }  // namespace correlation
 }  // namespace math
 }  // namespace fetch
-

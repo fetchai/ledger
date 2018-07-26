@@ -28,4 +28,3 @@ inline typename ShapeLessArray<T, C>::type Pearson(
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

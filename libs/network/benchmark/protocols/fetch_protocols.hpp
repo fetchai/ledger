@@ -14,4 +14,3 @@ struct FetchProtocols
 
 }  // namespace protocols
 }  // namespace fetch
-

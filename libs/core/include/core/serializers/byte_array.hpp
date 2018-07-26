@@ -35,4 +35,3 @@ inline void Deserialize(T &serializer, byte_array::ConstByteArray &s)
 }
 }  // namespace serializers
 }  // namespace fetch
-

@@ -19,4 +19,3 @@ inline VectorRegister<double, 128> approx_reciprocal(
 
 }  // namespace vectorize
 }  // namespace fetch
-

@@ -14,4 +14,3 @@ void BuildAbstractSpinGlassSolver(pybind11::module &module)
 }
 };  // namespace optimisers
 };  // namespace fetch
-

@@ -378,4 +378,3 @@ private:
 };
 }  // namespace json
 }  // namespace fetch
-

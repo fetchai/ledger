@@ -20,4 +20,3 @@ MimeType GetMimeTypeFromExtension(std::string const &ext);
 }
 }  // namespace http
 }  // namespace fetch
-

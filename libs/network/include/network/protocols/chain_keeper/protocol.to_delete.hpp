@@ -245,4 +245,3 @@ public:
 };
 }  // namespace protocols
 }  // namespace fetch
-

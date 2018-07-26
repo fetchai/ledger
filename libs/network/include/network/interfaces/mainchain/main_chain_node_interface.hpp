@@ -32,4 +32,3 @@ public:
 
 }  // namespace ledger
 }  // namespace fetch
-

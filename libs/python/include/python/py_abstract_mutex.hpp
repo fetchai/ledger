@@ -16,4 +16,3 @@ void BuildAbstractMutex(pybind11::module &module)
 }
 };  // namespace mutex
 };  // namespace fetch
-

@@ -80,4 +80,3 @@ bool Load(T &optimiser, std::string const &filename)
 }
 }  // namespace optimisers
 }  // namespace fetch
-

@@ -46,4 +46,3 @@ void Deserialize(T &stream, ExecutorInterface::Status &status)
 
 }  // namespace ledger
 }  // namespace fetch
-

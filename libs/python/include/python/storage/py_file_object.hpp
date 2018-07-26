@@ -25,4 +25,3 @@ void BuildFileObjectImplementation(std::string const &custom_name,
 }
 };  // namespace storage
 };  // namespace fetch
-

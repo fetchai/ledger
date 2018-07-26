@@ -38,4 +38,3 @@ inline typename ShapeLessArray<T, C>::type Minkowski(
 }  // namespace distance
 }  // namespace math
 }  // namespace fetch
-

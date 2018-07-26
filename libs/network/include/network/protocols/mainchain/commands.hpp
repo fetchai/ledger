@@ -13,4 +13,3 @@ struct MainChain
 };
 }  // namespace ledger
 }  // namespace fetch
-

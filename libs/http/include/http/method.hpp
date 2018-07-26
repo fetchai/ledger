@@ -14,4 +14,3 @@ enum class Method
 };
 }
 }  // namespace fetch
-

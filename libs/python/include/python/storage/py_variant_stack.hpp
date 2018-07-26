@@ -21,4 +21,3 @@ void BuildVariantStack(pybind11::module &module)
 }
 };  // namespace storage
 };  // namespace fetch
-

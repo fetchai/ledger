@@ -437,4 +437,3 @@ struct Isunordered
 }  // namespace stdlib
 }  // namespace kernels
 }  // namespace fetch
-

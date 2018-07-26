@@ -26,4 +26,3 @@ void BuildByteArrayBuffer(pybind11::module &module)
 }
 };  // namespace serializers
 };  // namespace fetch
-

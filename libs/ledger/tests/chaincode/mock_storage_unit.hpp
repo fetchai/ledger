@@ -53,4 +53,3 @@ public:
 private:
   FakeStorageUnit fake_;
 };
-

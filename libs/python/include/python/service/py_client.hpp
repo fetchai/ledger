@@ -22,4 +22,3 @@ void BuildServiceClient(std::string const &custom_name,
 }
 };  // namespace service
 };  // namespace fetch
-

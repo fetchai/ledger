@@ -74,4 +74,3 @@ private:
 };
 }  // namespace script
 }  // namespace fetch
-

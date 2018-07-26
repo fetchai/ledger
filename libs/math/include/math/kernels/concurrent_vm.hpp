@@ -58,4 +58,3 @@ struct ConcurrentVM
 
 }  // namespace kernels
 }  // namespace fetch
-

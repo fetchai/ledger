@@ -28,4 +28,3 @@ VectorRegister<T, S> exp(VectorRegister<T, S> x, T const &precision = 0.00001)
 
 }  // namespace vectorize
 }  // namespace fetch
-

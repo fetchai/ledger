@@ -22,4 +22,3 @@ void BuildParamsParser(pybind11::module &module)
 }
 };  // namespace commandline
 };  // namespace fetch
-

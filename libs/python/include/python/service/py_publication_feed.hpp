@@ -16,4 +16,3 @@ void BuildHasPublicationFeed(pybind11::module &module)
 }
 };  // namespace service
 };  // namespace fetch
-

@@ -26,4 +26,3 @@ void BuildLaggedFibonacciGenerator(std::string const &custom_name,
 }
 };  // namespace random
 };  // namespace fetch
-

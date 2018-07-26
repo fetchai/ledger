@@ -16,4 +16,3 @@ void BuildFileReadErrorException(pybind11::module &module)
 }
 };  // namespace image
 };  // namespace fetch
-

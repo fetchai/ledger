@@ -30,4 +30,3 @@ enum
 }  // namespace details
 }  // namespace byte_array
 }  // namespace fetch
-

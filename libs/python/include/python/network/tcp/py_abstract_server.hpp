@@ -14,4 +14,3 @@ void BuildAbstractNetworkServer(pybind11::module &module)
 }
 };  // namespace network
 };  // namespace fetch
-

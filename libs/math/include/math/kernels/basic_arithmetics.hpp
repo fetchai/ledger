@@ -17,4 +17,3 @@ struct Add
 }  // namespace basic_aritmetics
 }  // namespace kernels
 }  // namespace fetch
-

@@ -51,4 +51,3 @@ inline VectorRegister<double, 128> approx_log(
 
 }  // namespace vectorize
 }  // namespace fetch
-

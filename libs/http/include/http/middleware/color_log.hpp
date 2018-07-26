@@ -41,4 +41,3 @@ inline void ColorLog(fetch::http::HTTPResponse &     res,
 }  // namespace middleware
 }  // namespace http
 }  // namespace fetch
-

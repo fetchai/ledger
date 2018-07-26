@@ -23,4 +23,3 @@ inline NodeDetails MakeNodeDetails()
 
 }  // namespace p2p
 }  // namespace fetch
-

@@ -48,4 +48,3 @@ private:
   std::vector<std::string>                  messages_;
   std::vector<std::shared_ptr<client_type>> connections_;
 };
-

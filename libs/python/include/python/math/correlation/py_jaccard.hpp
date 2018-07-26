@@ -67,4 +67,3 @@ inline void BuildGeneralisedJaccardCorrelation(std::string const &custom_name,
 }  // namespace correlation
 }  // namespace math
 }  // namespace fetch
-

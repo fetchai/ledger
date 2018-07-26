@@ -47,4 +47,3 @@ void BuildBasicBlock(std::string const &custom_name, pybind11::module &module)
 }
 };  // namespace chain
 };  // namespace fetch
-

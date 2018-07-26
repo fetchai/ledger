@@ -38,4 +38,3 @@ const FunctionPtr<BN_CTX> SessionPrimitive<BN_CTX>::end;
 }  // namespace openssl
 }  // namespace crypto
 }  // namespace fetch
-
