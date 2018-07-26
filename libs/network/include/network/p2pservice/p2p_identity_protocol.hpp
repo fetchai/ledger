@@ -1,6 +1,5 @@
 
-#ifndef NETWORK_P2PSERVICE_P2P_IDENTITY_PROTOCOL_HPP
-#define NETWORK_P2PSERVICE_P2P_IDENTITY_PROTOCOL_HPP
+#pragma once
 #include"network/p2pservice/p2p_identity.hpp"
 
 namespace fetch
@@ -36,4 +35,3 @@ public:
 
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef FETCH_CONSTELLATION_HPP
-#define FETCH_CONSTELLATION_HPP
+#pragma once
 
 #include "core/logger.hpp"
 #include "ledger/executor.hpp"
@@ -169,4 +168,3 @@ private:
 
 } // namespace fetch
 
-#endif //FETCH_CONSTELLATION_HPP

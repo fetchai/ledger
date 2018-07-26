@@ -1,5 +1,4 @@
-#ifndef TESTS_RANDOM_BITSTATISTICS_HPP
-#define TESTS_RANDOM_BITSTATISTICS_HPP
+#pragma once
 
 template <typename T = fetch::random::LaggedFibonacciGenerator<> >
 class BitStatistics {
@@ -54,4 +53,3 @@ class BitStatistics {
   std::size_t counter_ = 0;
 };
 
-#endif

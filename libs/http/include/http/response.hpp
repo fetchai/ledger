@@ -1,5 +1,4 @@
-#ifndef HTTP_RESPONSE_HPP
-#define HTTP_RESPONSE_HPP
+#pragma once
 #include <ostream>
 #include "network/fetch_asio.hpp"
 #include "http/header.hpp"
@@ -63,4 +62,3 @@ class HTTPResponse : public std::enable_shared_from_this<HTTPResponse> {
 }
 }
 
-#endif

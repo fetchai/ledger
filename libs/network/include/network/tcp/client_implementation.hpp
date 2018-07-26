@@ -1,5 +1,4 @@
-#ifndef NETWORK_TCP_CLIENT_IMPLEMENTATION_HPP
-#define NETWORK_TCP_CLIENT_IMPLEMENTATION_HPP
+#pragma once
 
 #include "core/byte_array/encoders.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -422,4 +421,3 @@ class TCPClientImplementation final :
 
 }
 }
-#endif

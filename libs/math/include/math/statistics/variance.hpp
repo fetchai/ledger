@@ -1,5 +1,4 @@
-#ifndef MATH_STATISTICS_VARIANCE_HPP
-#define MATH_STATISTICS_VARIANCE_HPP
+#pragma once
 #include"math/shape_less_array.hpp"
 #include"math/statistics/mean.hpp"
 #include"vectorise/memory/range.hpp"
@@ -37,4 +36,3 @@ inline typename A::type Variance(A const &a)
 }
 
 
-#endif

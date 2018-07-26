@@ -1,5 +1,4 @@
-#ifndef MATH_DISTANCE_HAMMING_HPP
-#define MATH_DISTANCE_HAMMING_HPP
+#pragma once
 #include"math/shape_less_array.hpp"
 #include"vectorise/memory/range.hpp"
 #include"core/assert.hpp"
@@ -34,4 +33,3 @@ inline typename memory::VectorSlice<T,S>::type Hamming(memory::VectorSlice<T,S> 
 }
 
 
-#endif

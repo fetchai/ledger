@@ -1,5 +1,4 @@
-#ifndef SERVICE_SERVER_INTERFACE_HPP
-#define SERVICE_SERVER_INTERFACE_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "network/message.hpp"
 #include "network/service/callable_class_member.hpp"
@@ -157,4 +156,3 @@ class ServiceServerInterface {
 };
 }
 }
-#endif

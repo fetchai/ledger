@@ -1,5 +1,4 @@
-#ifndef NETWORK_CLIENT_CONNECTION_HPP
-#define NETWORK_CLIENT_CONNECTION_HPP
+#pragma once
 
 #include "core/assert.hpp"
 #include "core/logger.hpp"
@@ -243,4 +242,3 @@ class ClientConnection : public AbstractConnection {
 }
 }
 
-#endif

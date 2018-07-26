@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_REQUEST_HPP
-#define LIBFETCHCORE_HTTP_REQUEST_HPP
+#pragma once
 #include "http/request.hpp"
 
 #include"fetch_pybind.hpp"
@@ -28,4 +27,3 @@ void BuildHTTPRequest(pybind11::module &module) {
 };
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef SWARM_PEER_LOCATION__
-#define SWARM_PEER_LOCATION__
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -112,4 +111,3 @@ private:
 }
 }
 
-#endif //__SWARM_PEER_LOCATION__

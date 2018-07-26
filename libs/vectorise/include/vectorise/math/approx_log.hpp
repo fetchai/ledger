@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_MATH_APPROX_LOG_HPP
-#define VECTORIZE_MATH_APPROX_LOG_HPP
+#pragma once
 namespace fetch {
 namespace vectorize {
 
@@ -47,4 +46,3 @@ inline VectorRegister<double, 128> approx_log( VectorRegister<double, 128> const
 }
 }
 
-#endif

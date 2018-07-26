@@ -1,5 +1,4 @@
-#ifndef MATH_RECTANGULAR_ARRAY_HPP
-#define MATH_RECTANGULAR_ARRAY_HPP
+#pragma once
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/vectorise.hpp"
@@ -599,5 +598,4 @@ class RectangularArray : public math::ShapeLessArray< T, C > {
 };
 }
 }
-#endif
 

@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_LANE_SERVICE_HPP
-#define LEDGER_STORAGE_UNIT_LANE_SERVICE_HPP
+#pragma once
 #include"storage/revertible_document_store.hpp"
 #include"storage/document_store_protocol.hpp"
 #include"storage/object_store.hpp"
@@ -176,4 +175,3 @@ private:
 }
 }
 
-#endif

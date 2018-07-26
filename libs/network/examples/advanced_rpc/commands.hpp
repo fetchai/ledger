@@ -1,5 +1,4 @@
-#ifndef COMMANDS_HPP
-#define COMMANDS_HPP
+#pragma once
 
 enum AEACommands {
   GET_INFO = 1,
@@ -21,4 +20,3 @@ enum FetchProtocols {
   PEER_TO_PEER = 2
 };
 
-#endif

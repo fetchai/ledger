@@ -1,5 +1,4 @@
-#ifndef SWARM_AGENT_NAIVE__
-#define SWARM_AGENT_NAIVE__
+#pragma once
 
 #include <deque>
 #include <iostream>
@@ -134,4 +133,3 @@ public:
 }
 }
 
-#endif //__SWARM_AGENT_NAIVE__

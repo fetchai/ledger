@@ -1,5 +1,4 @@
-#ifndef CRYPTO_OPENSSL_PUBLIC_KEY_HPP
-#define CRYPTO_OPENSSL_PUBLIC_KEY_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/openssl_common.hpp"
@@ -123,5 +122,4 @@ public:
 } //* crypto namespace
 } //* fetch namespace
 
-#endif //CRYPTO_OPENSSL_PUBLIC_KEY_HPP
 

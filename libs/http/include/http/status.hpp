@@ -1,5 +1,4 @@
-#ifndef HTTP_STATUS_HPP
-#define HTTP_STATUS_HPP
+#pragma once
 namespace fetch {
 namespace http {
 
@@ -90,4 +89,3 @@ Status const SERVER_ERROR_NETWORK_AUTHENTICATION_REQUIRED = {
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef VECTORISE_MEMORY_VECTOR_SLICE_HPP
-#define VECTORISE_MEMORY_VECTOR_SLICE_HPP
+#pragma once
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/meta/log2.hpp"
 #include "vectorise/platform.hpp"
@@ -141,4 +140,3 @@ namespace fetch {
   }
 }
 
-#endif

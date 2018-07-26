@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_QUICK_START_COMMANDS_HPP
-#define PROTOCOLS_QUICK_START_COMMANDS_HPP
+#pragma once
 
 namespace fetch
 {
@@ -18,4 +17,3 @@ enum
 }
 }
 
-#endif

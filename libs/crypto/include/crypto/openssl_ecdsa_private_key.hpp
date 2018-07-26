@@ -1,5 +1,4 @@
-#ifndef CRYPTO_OPENSSL_PRIVATE_KEY_HPP
-#define CRYPTO_OPENSSL_PRIVATE_KEY_HPP
+#pragma once
 
 #include "crypto/openssl_ecdsa_public_key.hpp"
 
@@ -171,5 +170,4 @@ public:
 } //* crypto namespace
 } //* fetch namespace
 
-#endif //CRYPTO_OPENSSL_PRIVATE_KEY_HPP
 

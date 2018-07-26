@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_CHAIN_KEEPER_TRANSACTION_MANAGER_HPP
-#define PROTOCOLS_CHAIN_KEEPER_TRANSACTION_MANAGER_HPP
+#pragma once
 
 #include "assert.hpp"
 #include "byte_array/encoders.hpp"
@@ -183,4 +182,3 @@ class TransactionManager {
 }
 }
 
-#endif

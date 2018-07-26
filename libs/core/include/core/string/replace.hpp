@@ -1,5 +1,4 @@
-#ifndef FETCH_REPLACE_HPP
-#define FETCH_REPLACE_HPP
+#pragma once
 
 #include <algorithm>
 
@@ -14,4 +13,3 @@ inline std::string Replace(std::string value, char before, char after) {
 } // namespace string
 } // namespace fetch
 
-#endif //FETCH_REPLACE_HPP

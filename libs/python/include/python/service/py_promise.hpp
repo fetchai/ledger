@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERVICE_PROMISE_HPP
-#define LIBFETCHCORE_SERVICE_PROMISE_HPP
+#pragma once
 #include "service/promise.hpp"
 
 #include"fetch_pybind.hpp"
@@ -49,4 +48,3 @@ void BuildPromise(pybind11::module &module) {
 };
 };
 
-#endif

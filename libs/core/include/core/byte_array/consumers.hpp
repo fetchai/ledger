@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_CONSUMERS_HPP
-#define BYTE_ARRAY_CONSUMERS_HPP
+#pragma once
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 
@@ -166,4 +165,3 @@ int AnyChar(byte_array::ConstByteArray const &str, uint64_t &pos) {
 }
 }
 }
-#endif

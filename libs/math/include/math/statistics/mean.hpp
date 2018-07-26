@@ -1,5 +1,4 @@
-#ifndef MATH_STATISTICS_MEAN_HPP
-#define MATH_STATISTICS_MEAN_HPP
+#pragma once
 #include"math/shape_less_array.hpp"
 #include"vectorise/memory/range.hpp"
 #include"core/assert.hpp"
@@ -28,4 +27,3 @@ inline typename A::type Mean(A const &a)
 }
 
 
-#endif

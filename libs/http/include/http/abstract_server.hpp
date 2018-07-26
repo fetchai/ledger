@@ -1,5 +1,4 @@
-#ifndef HTTP_ABSTRACT_SERVER_HPP
-#define HTTP_ABSTRACT_SERVER_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "http/request.hpp"
 #include "core/mutex.hpp"
@@ -28,4 +27,3 @@ class AbstractHTTPServer {
 }
 }
 
-#endif

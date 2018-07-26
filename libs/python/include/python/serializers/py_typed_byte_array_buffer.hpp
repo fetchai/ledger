@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERIALIZER_TYPED_BYTE_ARRAY_BUFFER_HPP
-#define LIBFETCHCORE_SERIALIZER_TYPED_BYTE_ARRAY_BUFFER_HPP
+#pragma once
 #include "serializers/typed_byte_array_buffer.hpp"
 
 #include"fetch_pybind.hpp"
@@ -30,4 +29,3 @@ void BuildTypedByte_ArrayBuffer(pybind11::module &module) {
 };
 };
 
-#endif

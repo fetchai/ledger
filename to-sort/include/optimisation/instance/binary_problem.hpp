@@ -1,5 +1,4 @@
-#ifndef OPTIMISATION_INSTANCE_BINARY_PROBLEM_HPP
-#define OPTIMISATION_INSTANCE_BINARY_PROBLEM_HPP
+#pragma once
 #include <memory/rectangular_array.hpp>
 #include <memory/shared_array.hpp>
 #include <unordered_set>
@@ -82,4 +81,3 @@ class BinaryProblem {
 }
 }
 
-#endif

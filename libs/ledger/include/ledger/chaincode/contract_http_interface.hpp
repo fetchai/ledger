@@ -1,5 +1,4 @@
-#ifndef FETCH_CONTRACT_HTTP_INTERFACE_HPP
-#define FETCH_CONTRACT_HTTP_INTERFACE_HPP
+#pragma once
 
 #include "core/logger.hpp"
 #include "core/string/replace.hpp"
@@ -128,4 +127,3 @@ private:
 } // namespace ledger
 } // namespace fetch
 
-#endif //FETCH_CONTRACT_HTTP_INTERFACE_HPP

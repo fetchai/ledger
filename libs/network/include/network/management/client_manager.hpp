@@ -1,5 +1,4 @@
-#ifndef NETWORK_CLIENT_MANAGER_HPP
-#define NETWORK_CLIENT_MANAGER_HPP
+#pragma once
 
 #include "core/assert.hpp"
 #include "core/logger.hpp"
@@ -102,4 +101,3 @@ class ClientManager {
 }
 }
 
-#endif

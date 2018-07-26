@@ -1,5 +1,4 @@
-#ifndef MATH_DISTANCE_PAIRWISE_DISTANCE_HPP
-#define MATH_DISTANCE_PAIRWISE_DISTANCE_HPP
+#pragma once
 #include"math/shape_less_array.hpp"
 #include"vectorise/memory/range.hpp"
 #include"core/assert.hpp"
@@ -41,4 +40,3 @@ namespace distance {
 }
 
 
-#endif

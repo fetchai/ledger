@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_DISTANCE_EUCLIDEAN_HPP
-#define LIBFETCHCORE_MATH_DISTANCE_EUCLIDEAN_HPP
+#pragma once
 
 #include"math/distance/euclidean.hpp"
 #include"math/linalg/matrix.hpp"
@@ -42,4 +41,3 @@ inline void BuildEuclideanDistance(std::string const &custom_name, pybind11::mod
 }
 }
 
-#endif

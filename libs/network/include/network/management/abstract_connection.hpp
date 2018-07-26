@@ -1,5 +1,4 @@
-#ifndef NETWORK_ABSTRACT_CONNECTION_HPP
-#define NETWORK_ABSTRACT_CONNECTION_HPP
+#pragma once
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "network/message.hpp"
@@ -181,4 +180,3 @@ protected:
 }
 }
 
-#endif

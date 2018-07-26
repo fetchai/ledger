@@ -1,5 +1,4 @@
-#ifndef NETWORK_NODE_CORE_HPP
-#define NETWORK_NODE_CORE_HPP
+#pragma once
 
 #include <functional>
 #include <iostream>
@@ -222,4 +221,3 @@ protected:
 }
 }
 
-#endif //NETWORK_NODE_CORE_HPP

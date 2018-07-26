@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_DETAILS_ENCODE_DECODE_HPP
-#define BYTE_ARRAY_DETAILS_ENCODE_DECODE_HPP
+#pragma once
 #include <cstddef>
 #include <cstdint>
 
@@ -22,4 +21,3 @@ enum { B64_WHITESPACE = 64, B64_EQUALS = 65, B64_INVALID = 66 };
 }
 }
 
-#endif

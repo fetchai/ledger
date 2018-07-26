@@ -1,5 +1,4 @@
-#ifndef SERVICE_PY_PROMISE_HPP
-#define SERVICE_PY_PROMISE_HPP
+#pragma once
 #include"service/promise.hpp"
 
 namespace fetch
@@ -25,4 +24,3 @@ void BuildPromise(pybind11::module &m)
 };
 
 
-#endif

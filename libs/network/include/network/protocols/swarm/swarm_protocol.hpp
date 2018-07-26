@@ -1,5 +1,4 @@
-#ifndef SWARM_PROTOCOL__
-#define SWARM_PROTOCOL__
+#pragma once
 
 #include "network/service/protocol.hpp"
 #include "commands.hpp"
@@ -23,4 +22,3 @@ public:
 }
 }
 
-#endif //SWARM_PROTOCOL__

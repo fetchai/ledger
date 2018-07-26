@@ -1,5 +1,4 @@
-#ifndef NETWORK_CLASSES_HPP
-#define NETWORK_CLASSES_HPP
+#pragma once
 #include"core/logger.hpp"
 namespace fetch
 {
@@ -70,4 +69,3 @@ private:
 }
 }
 
-#endif /* NETWORK_CLASSES_HPP */

@@ -1,5 +1,4 @@
-#ifndef HTTP_ROUTE_HPP
-#define HTTP_ROUTE_HPP
+#pragma once
 #include "http/view_parameters.hpp"
 
 #include <functional>
@@ -137,4 +136,3 @@ class Route {
 };
 }
 }
-#endif

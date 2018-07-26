@@ -1,5 +1,4 @@
-#ifndef QUICK_START_NODE_HPP
-#define QUICK_START_NODE_HPP
+#pragma once
 
 #include"network/service/client.hpp"
 #include"./protocols/quick_start/protocol.hpp" // defines our quick start protocol
@@ -110,4 +109,3 @@ inline void Deserialize(T &serializer, DataClass &data) {
 
 } // namespace quick_start
 } // namespace fetch
-#endif

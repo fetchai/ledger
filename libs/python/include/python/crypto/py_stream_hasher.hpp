@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_CRYPTO_STREAM_HASHER_HPP
-#define LIBFETCHCORE_CRYPTO_STREAM_HASHER_HPP
+#pragma once
 #include "crypto/stream_hasher.hpp"
 
 #include"fetch_pybind.hpp"
@@ -18,4 +17,3 @@ void BuildStreamHasher(pybind11::module &module) {
 };
 };
 
-#endif

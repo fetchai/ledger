@@ -1,5 +1,4 @@
-#ifndef SERVICE_CLIENT_INTERFACE_HPP
-#define SERVICE_CLIENT_INTERFACE_HPP
+#pragma once
 #include "network/message.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/serializable_exception.hpp"
@@ -280,4 +279,3 @@ class ServiceClientInterface {
 };
 }
 }
-#endif

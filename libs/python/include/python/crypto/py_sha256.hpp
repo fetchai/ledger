@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_CRYPTO_SHA256_HPP
-#define LIBFETCHCORE_CRYPTO_SHA256_HPP
+#pragma once
 #include "crypto/sha256.hpp"
 
 #include"fetch_pybind.hpp"
@@ -22,4 +21,3 @@ void BuildSHA256(pybind11::module &module) {
 };
 };
 
-#endif

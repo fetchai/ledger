@@ -1,5 +1,4 @@
-#ifndef STORAGE_OBJECT_STORE_SYNCRONISATION_PROTOCOL_HPP
-#define STORAGE_OBJECT_STORE_SYNCRONISATION_PROTOCOL_HPP
+#pragma once
 #include "storage/object_store.hpp"
 #include"network/details/thread_pool.hpp"
 #include"network/service/promise.hpp"
@@ -274,4 +273,3 @@ private:
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef CRYPTO_OPENSSL_CONTEXT_SESSION_HPP
-#define CRYPTO_OPENSSL_CONTEXT_SESSION_HPP
+#pragma once
 
 #include "crypto/openssl_context_detail.hpp"
 #include "crypto/openssl_memory.hpp"
@@ -67,5 +66,4 @@ public:
 } //* crypto namespace
 } //* fetch namespace
 
-#endif //CRYPTO_OPENSSL_CONTEXT_SESSION_HPP
 

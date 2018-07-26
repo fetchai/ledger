@@ -1,5 +1,4 @@
-#ifndef CONTAINERS_VECTOR_HPP
-#define CONTAINERS_VECTOR_HPP
+#pragma once
 
 #include <vector>
 
@@ -51,4 +50,3 @@ class Vector : private std::vector<T> {
 };
 }
 }
-#endif

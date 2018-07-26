@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_SERIALIZER_EXCEPTION_HPP
-#define SERIALIZER_SERIALIZER_EXCEPTION_HPP
+#pragma once
 #include "core/serializers/exception.hpp"
 
 #include <type_traits>
@@ -40,4 +39,3 @@ inline void Deserialize(T &serializer, SerializableException &s) {
 }
 }
 
-#endif

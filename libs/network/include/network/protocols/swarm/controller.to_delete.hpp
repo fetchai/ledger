@@ -1,5 +1,4 @@
-#ifndef SWARM_CONTROLLER_HPP
-#define SWARM_CONTROLLER_HPP
+#pragma once
 #include "service/client.hpp"
 #include "service/publication_feed.hpp"
 
@@ -669,4 +668,3 @@ class SwarmController : public ChainController,
 };
 }
 }
-#endif

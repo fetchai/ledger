@@ -1,5 +1,4 @@
-#ifndef NETWORK_ABSTRACT_CONNECTION_REGISTER_HPP
-#define NETWORK_ABSTRACT_CONNECTION_REGISTER_HPP
+#pragma once
 
 #include"core/mutex.hpp"
 #include<memory>
@@ -96,4 +95,3 @@ private:
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_MATH_ABS_HPP
-#define VECTORIZE_MATH_ABS_HPP
+#pragma once
 
 #include<limits>
 
@@ -19,4 +18,3 @@ inline VectorRegister<double, 128> abs( VectorRegister<double, 128> const &a) {
 }
 }
 
-#endif

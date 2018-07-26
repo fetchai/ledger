@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_DISTANCE_JACCARD_HPP
-#define LIBFETCHCORE_MATH_DISTANCE_JACCARD_HPP
+#pragma once
 
 #include"math/distance/jaccard.hpp"
 #include"math/linalg/matrix.hpp"
@@ -69,4 +68,3 @@ inline void BuildGeneralisedJaccardDistance(std::string const &custom_name, pybi
 }
 }
 
-#endif

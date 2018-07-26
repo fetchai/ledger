@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_CHAIN_BLOCK_GENERATOR_HPP
-#define LIBFETCHCORE_CHAIN_BLOCK_GENERATOR_HPP
+#pragma once
 #include "chain/block_generator.hpp"
 
 #include"fetch_pybind.hpp"
@@ -24,4 +23,3 @@ void BuildBlockGenerator(pybind11::module &module) {
 };
 };
 
-#endif

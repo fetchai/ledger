@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_STORAGE_UNIT_CLIENT_HPP
-#define LEDGER_STORAGE_UNIT_STORAGE_UNIT_CLIENT_HPP
+#pragma once
 #include"core/logger.hpp"
 #include"network/service/client.hpp"
 #include"network/management/connection_register.hpp"
@@ -283,4 +282,3 @@ private:
 }
 }
 
-#endif

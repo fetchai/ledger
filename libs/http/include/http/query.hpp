@@ -1,5 +1,4 @@
-#ifndef HTTP_QUERY_HPP
-#define HTTP_QUERY_HPP
+#pragma once
 
 #include "http/key_value_set.hpp"
 namespace fetch {
@@ -9,4 +8,3 @@ typedef KeyValueSet QuerySet;
 }
 }
 
-#endif

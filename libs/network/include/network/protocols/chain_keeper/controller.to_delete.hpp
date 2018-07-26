@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_CHAIN_KEEPER_MANAGER_HPP
-#define PROTOCOLS_CHAIN_KEEPER_MANAGER_HPP
+#pragma once
 #include "byte_array/const_byte_array.hpp"
 #include "byte_array/byte_array.hpp"
 #include "serializers/byte_array.hpp"
@@ -280,4 +279,3 @@ class ChainKeeperController : public fetch::service::HasPublicationFeed {
 }
 }
 
-#endif

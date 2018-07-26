@@ -1,5 +1,4 @@
-#ifndef HTTP_MIDDLEWARE_COLOR_LOG_HPP
-#define HTTP_MIDDLEWARE_COLOR_LOG_HPP
+#pragma once
 #include <iostream>
 #include "core/commandline/vt100.hpp"
 namespace fetch {
@@ -41,4 +40,3 @@ inline void ColorLog(fetch::http::HTTPResponse &res,
 }
 }
 
-#endif

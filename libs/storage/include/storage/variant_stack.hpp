@@ -1,5 +1,4 @@
-#ifndef STORAGE_VARIANT_STACK_HPP
-#define STORAGE_VARIANT_STACK_HPP
+#pragma once
 
 #include <cassert>
 #include<cstring>
@@ -186,4 +185,3 @@ class VariantStack {
 }
 }
 
-#endif

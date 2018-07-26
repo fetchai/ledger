@@ -1,5 +1,4 @@
-#ifndef CRYPTO_FNV_HPP
-#define CRYPTO_FNV_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/stream_hasher.hpp"
 
@@ -53,4 +52,3 @@ struct CallableFNV {
 }
 }
 
-#endif

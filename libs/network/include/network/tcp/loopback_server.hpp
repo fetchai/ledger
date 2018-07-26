@@ -1,5 +1,4 @@
-#ifndef TCP_SERVER_LOOPBACK_HPP
-#define TCP_SERVER_LOOPBACK_HPP
+#pragma once
 
 #include<iostream>
 #include<memory>
@@ -131,4 +130,3 @@ private:
 }
 }
 
-#endif

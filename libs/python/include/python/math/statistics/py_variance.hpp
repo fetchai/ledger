@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_STATISTICS_VARIANCE_HPP
-#define LIBFETCHCORE_MATH_STATISTICS_VARIANCE_HPP
+#pragma once
 
 #include"math/statistics/variance.hpp"
 #include"math/linalg/matrix.hpp"
@@ -38,4 +37,3 @@ inline void BuildVarianceStatistics(std::string const &custom_name, pybind11::mo
 }
 }
 
-#endif

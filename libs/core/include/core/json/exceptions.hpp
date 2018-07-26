@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_JSON_EXCEPTIONS
-#define BYTE_ARRAY_JSON_EXCEPTIONS
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/tokenizer/token.hpp"
@@ -35,4 +34,3 @@ class JSONParseException : public std::exception {
 };
 }
 }
-#endif

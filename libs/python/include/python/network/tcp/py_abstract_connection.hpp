@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_NETWORK_TCP_ABSTRACT_CONNECTION_HPP
-#define LIBFETCHCORE_NETWORK_TCP_ABSTRACT_CONNECTION_HPP
+#pragma once
 #include "network/management/abstract_connection.hpp"
 
 #include"fetch_pybind.hpp"
@@ -18,4 +17,3 @@ void BuildAbstractClientConnection(pybind11::module &module) {
 };
 };
 
-#endif

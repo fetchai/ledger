@@ -1,5 +1,4 @@
-#ifndef MATH_DISTANCE_DISTANCE_MATRIX_HPP
-#define MATH_DISTANCE_DISTANCE_MATRIX_HPP
+#pragma once
 #include"math/shape_less_array.hpp"
 #include"core/assert.hpp"
 
@@ -36,4 +35,3 @@ namespace distance {
 }
 
 
-#endif

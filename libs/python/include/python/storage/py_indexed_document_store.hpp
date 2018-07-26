@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_STORAGE_INDEXED_DOCUMENT_STORE_HPP
-#define LIBFETCHCORE_STORAGE_INDEXED_DOCUMENT_STORE_HPP
+#pragma once
 //#include "storage/indexed_document_store.hpp"
 #include"fetch_pybind.hpp"
 namespace fetch
@@ -23,4 +22,3 @@ void BuildIndexedDocumentStore(std::string const &custom_name, pybind11::module 
 };
 };
 
-#endif

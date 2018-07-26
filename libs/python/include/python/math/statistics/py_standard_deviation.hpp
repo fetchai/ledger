@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_STATISTICS_STANDARD_DEVIATION_HPP
-#define LIBFETCHCORE_MATH_STATISTICS_STANDARD_DEVIATION_HPP
+#pragma once
 
 #include"math/statistics/standard_deviation.hpp"
 #include"math/linalg/matrix.hpp"
@@ -38,4 +37,3 @@ inline void BuildStandardDeviationStatistics(std::string const &custom_name, pyb
 }
 }
 
-#endif

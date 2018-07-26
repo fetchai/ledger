@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_BYTE_ARRAY_HPP
-#define BYTE_ARRAY_BYTE_ARRAY_HPP
+#pragma once
 
 #include "core/byte_array/const_byte_array.hpp"
 
@@ -58,4 +57,3 @@ inline ByteArray operator+(char const *a, ByteArray const &b) {
 }
 }
 }
-#endif

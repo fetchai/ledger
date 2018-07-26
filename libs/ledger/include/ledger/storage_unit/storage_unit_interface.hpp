@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_INTERFACE_HPP
-#define LEDGER_STORAGE_UNIT_INTERFACE_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "storage/document.hpp"
@@ -52,4 +51,3 @@ public:
 
 
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_FETCH_PROTOCOLS_HPP
-#define PROTOCOLS_FETCH_PROTOCOLS_HPP
+#pragma once
 
 namespace fetch
 {
@@ -20,4 +19,3 @@ enum
 }
 
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef FETCH_EXECUTOR_RPC_SERVICE_HPP
-#define FETCH_EXECUTOR_RPC_SERVICE_HPP
+#pragma once
 
 #include "network/tcp/tcp_server.hpp"
 #include "network/service/server.hpp"
@@ -31,4 +30,3 @@ private:
 } // namespace ledger
 } // namespace fetch
 
-#endif //FETCH_EXECUTOR_RPC_SERVICE_HPP

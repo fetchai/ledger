@@ -1,5 +1,4 @@
-#ifndef AEA_PROTOCOL_HPP
-#define AEA_PROTOCOL_HPP
+#pragma once
 
 #include"aea_functionality.hpp"
 #include"commands.hpp"
@@ -22,4 +21,3 @@ public:
   }
 };
 
-#endif

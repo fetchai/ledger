@@ -1,5 +1,4 @@
-#ifndef HTTP_REQUEST_HPP
-#define HTTP_REQUEST_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/byte_array.hpp"
@@ -260,4 +259,3 @@ class HTTPRequest {
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef QUICK_START_SERVICE_HPP
-#define QUICK_START_SERVICE_HPP
+#pragma once
 
 #include<memory>
 #include"network/service/server.hpp"
@@ -60,4 +59,3 @@ private:
 }
 }
 
-#endif

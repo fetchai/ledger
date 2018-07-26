@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_TYPE_REGISTER_HPP
-#define SERIALIZER_TYPE_REGISTER_HPP
+#pragma once
 
 #include <string>
 #include <typeinfo>
@@ -111,4 +110,3 @@ inline byte_array::ConstByteArray ErrorCodeToMessage(std::size_t n) {
 }
 }
 
-#endif

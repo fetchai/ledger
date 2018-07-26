@@ -1,5 +1,4 @@
-#ifndef CHAIN_BLOCK_HPP
-#define CHAIN_BLOCK_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "core/serializers/stl_types.hpp"
@@ -155,4 +154,3 @@ inline void Deserialize(T &serializer, BasicBlock<P, H> &b) {
 }
 }
 }
-#endif

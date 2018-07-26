@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_OPTIMISATION_ABSTRACT_SPINGLASS_SOLVER_HPP
-#define LIBFETCHCORE_OPTIMISATION_ABSTRACT_SPINGLASS_SOLVER_HPP
+#pragma once
 #include "optimisation/abstract_spinglass_solver.hpp"
 
 #include"fetch_pybind.hpp"
@@ -18,4 +17,3 @@ void BuildAbstractSpinGlassSolver(pybind11::module &module) {
 };
 };
 
-#endif

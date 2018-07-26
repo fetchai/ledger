@@ -1,5 +1,4 @@
-#ifndef SERVICE_MESSAGE_TYPES_HPP
-#define SERVICE_MESSAGE_TYPES_HPP
+#pragma once
 #include "network/service/types.hpp"
 
 namespace fetch {
@@ -15,4 +14,3 @@ service_classification_type const SERVICE_ERROR = 999ull;
 }
 }
 
-#endif

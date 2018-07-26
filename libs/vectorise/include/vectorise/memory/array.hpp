@@ -1,5 +1,4 @@
-#ifndef MEMORY_ARRAY_HPP
-#define MEMORY_ARRAY_HPP
+#pragma once
 
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/meta/log2.hpp"
@@ -170,4 +169,3 @@ class Array {
 };
 }
 }
-#endif

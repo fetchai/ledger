@@ -1,5 +1,4 @@
-#ifndef EXPLORE_WALLET_HTTP_INTERFACE_HPP
-#define EXPLORE_WALLET_HTTP_INTERFACE_HPP
+#pragma once
 
 #include "core/json/document.hpp"
 #include "core/assert.hpp"
@@ -123,4 +122,3 @@ private:
 } // namespace p2p
 } // namespace fetch
 
-#endif //FETCH_WALLET_HTTP_INTERFACE_HPP

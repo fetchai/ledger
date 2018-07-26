@@ -1,5 +1,4 @@
-#ifndef NODE_FUNCTIONALITY_HPP
-#define NODE_FUNCTIONALITY_HPP
+#pragma once
 #include"commands.hpp"
 #include"network/service/client.hpp"
 #include"network/service/publication_feed.hpp"
@@ -53,4 +52,3 @@ private:
   std::vector< std::shared_ptr< client_type> > connections_;  
 };
 
-#endif

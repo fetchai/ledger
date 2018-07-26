@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERVICE_CLIENT_HPP
-#define LIBFETCHCORE_SERVICE_CLIENT_HPP
+#pragma once
 #include "service/client.hpp"
 
 #include"fetch_pybind.hpp"
@@ -22,4 +21,3 @@ void BuildServiceClient(std::string const &custom_name, pybind11::module &module
 };
 };
 
-#endif

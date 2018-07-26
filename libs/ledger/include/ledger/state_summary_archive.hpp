@@ -1,5 +1,4 @@
-#ifndef FETCH_STATE_SUMMARY_ARCHIVE_HPP
-#define FETCH_STATE_SUMMARY_ARCHIVE_HPP
+#pragma once
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -78,4 +77,3 @@ private:
 } // namespace ledger
 } // namespace fetch
 
-#endif //FETCH_STATE_SUMMARY_ARCHIVE_HPP

@@ -1,5 +1,4 @@
-#ifndef MATH_CORRELATION_JACCARD_HPP
-#define MATH_CORRELATION_JACCARD_HPP
+#pragma once
 #include"math/shape_less_array.hpp"
 #include"vectorise/memory/range.hpp"
 #include"core/assert.hpp"
@@ -70,4 +69,3 @@ inline typename ShapeLessArray<T,C>::type GeneralisedJaccard( ShapeLessArray<T,C
 }
 
 
-#endif

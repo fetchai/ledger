@@ -1,5 +1,4 @@
-#ifndef CRYPTO_HASH_HPP
-#define CRYPTO_HASH_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
@@ -17,4 +16,3 @@ byte_array::ByteArray Hash(byte_array::ConstByteArray const &str) {
 }
 }
 
-#endif

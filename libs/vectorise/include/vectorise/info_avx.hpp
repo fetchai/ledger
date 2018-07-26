@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_INFO_AVX_HPP
-#define VECTORIZE_INFO_AVX_HPP
+#pragma once
 #ifdef __AVX__
 #include <emmintrin.h>
 #include <immintrin.h>
@@ -53,5 +52,4 @@ struct VectorInfo<double, 256> {
 };
 }
 }
-#endif
 #endif

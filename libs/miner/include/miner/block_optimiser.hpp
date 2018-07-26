@@ -1,5 +1,4 @@
-#ifndef MINER_BLOCK_OPTIMISER_HPP
-#define MINER_BLOCK_OPTIMISER_HPP
+#pragma once
 
 #include "core/assert.hpp"
 
@@ -377,4 +376,3 @@ public:
 }
 }
 
-#endif

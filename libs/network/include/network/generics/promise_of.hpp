@@ -1,5 +1,4 @@
-#ifndef PROMISE_OF_HPP
-#define PROMISE_OF_HPP
+#pragma once
 
 #include "network/service/promise.hpp"
 
@@ -64,4 +63,3 @@ private:
 }
 }
 
-#endif

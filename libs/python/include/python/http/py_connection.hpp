@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_CONNECTION_HPP
-#define LIBFETCHCORE_HTTP_CONNECTION_HPP
+#pragma once
 #include "http/connection.hpp"
 
 #include"fetch_pybind.hpp"
@@ -27,4 +26,3 @@ void BuildHTTPConnection(pybind11::module &module) {
 };
 };
 
-#endif

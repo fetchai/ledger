@@ -1,5 +1,4 @@
-#ifndef MAIN_CHAIN_HPP
-#define MAIN_CHAIN_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
@@ -530,4 +529,3 @@ private:
 }
 
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef KERNELS_APPROX_EXP_HPP
-#define KERNELS_APPROX_EXP_HPP
+#pragma once
 
 namespace fetch {
   namespace kernels {
@@ -14,4 +13,3 @@ namespace fetch {
   }
 }
 
-#endif

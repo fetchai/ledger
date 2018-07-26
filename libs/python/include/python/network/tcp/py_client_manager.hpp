@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_NETWORK_TCP_CLIENT_MANAGER_HPP
-#define LIBFETCHCORE_NETWORK_TCP_CLIENT_MANAGER_HPP
+#pragma once
 #include "network/managementtcp.hpp"
 
 #include"fetch_pybind.hpp"
@@ -24,4 +23,3 @@ void BuildClientManager(pybind11::module &module) {
 };
 };
 
-#endif

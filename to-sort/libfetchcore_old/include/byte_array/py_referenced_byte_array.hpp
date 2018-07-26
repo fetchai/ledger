@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_BYTE_ARRAY_REFERENCED_BYTE_ARRAY_HPP
-#define LIBFETCHCORE_BYTE_ARRAY_REFERENCED_BYTE_ARRAY_HPP
+#pragma once
 #include "byte_array/referenced_byte_array.hpp"
 
 #include <pybind11/pybind11.h>
@@ -33,4 +32,3 @@ void BuildByteArray(pybind11::module &module) {
 };
 };
 
-#endif

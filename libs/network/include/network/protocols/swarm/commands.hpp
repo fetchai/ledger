@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_SWARM_COMMANDS_HPP
-#define PROTOCOLS_SWARM_COMMANDS_HPP
+#pragma once
 
 namespace fetch
 {
@@ -16,4 +15,3 @@ enum
 }
 }
 
-#endif

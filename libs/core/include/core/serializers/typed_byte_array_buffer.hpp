@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_TYPED_BYTE_ARRAY_BUFFER_HPP
-#define SERIALIZER_TYPED_BYTE_ARRAY_BUFFER_HPP
+#pragma once
 
 #include <type_traits>
 #include "core/assert.hpp"
@@ -110,4 +109,3 @@ class TypedByte_ArrayBuffer {
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef NETWORK_ABSTRACT_SERVER_HPP
-#define NETWORK_ABSTRACT_SERVER_HPP
+#pragma once
 
 #include "network/message.hpp"
 #include "network/management/abstract_connection.hpp"
@@ -19,4 +18,3 @@ class AbstractNetworkServer {
 }
 }
 
-#endif

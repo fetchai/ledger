@@ -1,5 +1,4 @@
-#ifndef SWARM_AGENT_API__
-#define SWARM_AGENT_API__
+#pragma once
 
 #include <string>
 #include <list>
@@ -59,4 +58,3 @@ public:
 }
 }
 
-#endif //__SWARM_AGENT_API__

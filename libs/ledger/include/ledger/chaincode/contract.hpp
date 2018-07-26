@@ -1,5 +1,4 @@
-#ifndef FETCH_CHAINCODE_INTERFACE_HPP
-#define FETCH_CHAINCODE_INTERFACE_HPP
+#pragma once
 
 #include "core/script/variant.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -246,4 +245,3 @@ private:
 } // namespace ledger
 } // namespace fetch
 
-#endif //FETCH_CHAINCODE_INTERFACE_HPP

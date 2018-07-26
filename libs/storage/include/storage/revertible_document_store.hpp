@@ -1,5 +1,4 @@
-#ifndef STORAGE_REVERTIBLE_DOCUMENT_STORE_HPP
-#define STORAGE_REVERTIBLE_DOCUMENT_STORE_HPP
+#pragma once
 #include"core/byte_array/const_byte_array.hpp"
 #include"storage/document_store.hpp"
 
@@ -63,4 +62,3 @@ protected:
 }
 }
 
-#endif

@@ -1,7 +1,6 @@
 
 
-#ifndef HTTP_ABSTRACT_CONNECTION_HPP
-#define HTTP_ABSTRACT_CONNECTION_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "network/fetch_asio.hpp"
 #include "http/response.hpp"
@@ -23,4 +22,3 @@ class AbstractHTTPConnection {
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef HELPER_FUNCTIONS_HPP
-#define HELPER_FUNCTIONS_HPP
+#pragma once
 
 #include<memory>
 #include<limits>
@@ -139,4 +138,3 @@ typedef std::pair<block_hash, block_type> network_block;
 
 }
 
-#endif

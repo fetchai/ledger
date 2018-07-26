@@ -1,5 +1,4 @@
-#ifndef STORAGE_OBJECT_STORE_PROTOCOL_HPP
-#define STORAGE_OBJECT_STORE_PROTOCOL_HPP
+#pragma once
 #include "storage/object_store.hpp"
 #include "network/service/protocol.hpp"
 #include<functional>
@@ -62,4 +61,3 @@ private:
 }
 }
 
-#endif

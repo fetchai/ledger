@@ -1,5 +1,4 @@
-#ifndef STORAGE_OBJECT_STORE_HPP
-#define STORAGE_OBJECT_STORE_HPP
+#pragma once
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
@@ -117,4 +116,3 @@ private:
 }
 }
 
-#endif

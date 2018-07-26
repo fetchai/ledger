@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_LANE_CONNECTIVITY_DETAILS_HPP
-#define LEDGER_STORAGE_UNIT_LANE_CONNECTIVITY_DETAILS_HPP
+#pragma once
 #include"core/byte_array/byte_array.hpp"
 #include"crypto/fnv.hpp"
 #include"crypto/identity.hpp"
@@ -34,4 +33,3 @@ struct LaneConnectivityDetails
 }
 
 
-#endif

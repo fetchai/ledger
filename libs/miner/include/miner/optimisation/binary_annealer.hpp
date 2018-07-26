@@ -1,5 +1,4 @@
-#ifndef OPTIMISATION_SIMULATED_ANNEALING_BINARY_ANNEALER_HPP
-#define  OPTIMISATION_SIMULATED_ANNEALING_BINARY_ANNEALER_HPP
+#pragma once
 #include <math/exp.hpp>
 #include <miner/optimisation/bitvector.hpp>
 #include <core/random/lcg.hpp>
@@ -249,5 +248,4 @@ private:
 }
 
 
-#endif 
 

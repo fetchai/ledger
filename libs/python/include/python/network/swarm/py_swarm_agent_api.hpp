@@ -1,5 +1,4 @@
-#ifndef LIBFETCHNETWORK_SWARM_SWARM_AGENT_API
-#define LIBFETCHNETWORK_SWARM_SWARM_AGENT_API
+#pragma once
 
 #include "network/swarm/swarm_peer_location.hpp"
 #include "py_swarm.hpp"
@@ -66,4 +65,3 @@ void BuildSwarmAgentApi(pybind11::module &module) {
 };
 };
 
-#endif

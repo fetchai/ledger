@@ -1,5 +1,4 @@
-#ifndef FETCH_IS_LOG2_HPP
-#define FETCH_IS_LOG2_HPP
+#pragma once
 
 #include "vectorise/meta/log2.hpp"
 
@@ -16,4 +15,3 @@ namespace meta {
 } // namespace meta
 } // namespace fetch
 
-#endif //FETCH_IS_LOG2_HPP

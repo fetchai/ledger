@@ -1,5 +1,4 @@
-#ifndef VECTOR_SERIALIZE_HPP
-#define VECTOR_SERIALIZE_HPP
+#pragma once
 #include<vector>
 namespace fetch {
 namespace serializers {
@@ -38,4 +37,3 @@ void Deserialize(T &serializer, std::vector< double > &vec) {
 
 };
 };
-#endif

@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_INFO_HPP
-#define VECTORIZE_INFO_HPP
+#pragma once
 #include <cstddef>
 #include <cstdint>
 
@@ -14,4 +13,3 @@ struct VectorInfo {
 }
 }
 
-#endif

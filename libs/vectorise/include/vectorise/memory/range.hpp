@@ -1,5 +1,4 @@
-#ifndef MEMORY_RANGE_HPP
-#define MEMORY_RANGE_HPP
+#pragma once
 
 
 namespace fetch {
@@ -84,4 +83,3 @@ private:
 
 }
 }
-#endif

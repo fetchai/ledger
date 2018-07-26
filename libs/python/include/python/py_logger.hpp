@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_LOGGER_HPP
-#define LIBFETCHCORE_LOGGER_HPP
+#pragma once
 #include "logger.hpp"
 
 #include"fetch_pybind.hpp"
@@ -13,4 +12,3 @@ namespace log
 };
 };
 
-#endif

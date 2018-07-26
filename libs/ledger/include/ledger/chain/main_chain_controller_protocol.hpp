@@ -1,5 +1,4 @@
-#ifndef LEDGER_CHAIN_MAIN_CHAIN_CONTROLLER_PROTOCOL_HPP
-#define LEDGER_CHAIN_MAIN_CHAIN_CONTROLLER_PROTOCOL_HPP
+#pragma once
 #include"ledger/chain/main_chain_controller.hpp"
 #include"network/p2pservice/p2p_peer_details.hpp"
 namespace fetch
@@ -40,4 +39,3 @@ public:
 
 }
 
-#endif

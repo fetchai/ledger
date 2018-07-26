@@ -1,5 +1,4 @@
-#ifndef NODE_DIRECTORY_HPP
-#define NODE_DIRECTORY_HPP
+#pragma once
 
 // This file holds and manages connections to other nodes
 // Not for long-term use
@@ -213,4 +212,3 @@ private:
 
 }
 }
-#endif

@@ -1,5 +1,4 @@
-#ifndef CRYPTO_ECDSA_HPP
-#define CRYPTO_ECDSA_HPP
+#pragma once
 #include "crypto/hash.hpp"
 #include "crypto/verifier.hpp"
 #include "crypto/prover.hpp"
@@ -222,4 +221,3 @@ class ECDSASigner : public Prover {
 };
 }
 }
-#endif

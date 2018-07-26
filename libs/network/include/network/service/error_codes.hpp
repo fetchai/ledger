@@ -1,5 +1,4 @@
-#ifndef SERVICE_ERROR_CODES_HPP
-#define SERVICE_ERROR_CODES_HPP
+#pragma once
 #include "core/serializers/exception.hpp"
 namespace fetch {
 namespace service {
@@ -23,4 +22,3 @@ error_type const UNKNOWN_MESSAGE = 1001 | ERROR_SERVICE_PROTOCOL;
 }
 }
 }
-#endif

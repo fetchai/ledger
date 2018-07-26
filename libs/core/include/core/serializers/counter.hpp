@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_COUNTER_HPP
-#define SERIALIZER_COUNTER_HPP
+#pragma once
 #include "core/serializers/stl_types.hpp"
 
 #include <type_traits>
@@ -80,4 +79,3 @@ class SizeCounter<TypedByte_ArrayBuffer> {
 }
 }
 
-#endif

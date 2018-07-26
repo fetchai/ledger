@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_NETWORK_TCP_CLIENT_HPP
-#define LIBFETCHCORE_NETWORK_TCP_CLIENT_HPP
+#pragma once
 #include "network/tcp_client.hpp"
 
 #include"fetch_pybind.hpp"
@@ -22,4 +21,3 @@ void BuildTCPClient(pybind11::module &module) {
 };
 };
 
-#endif

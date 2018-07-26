@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_MATH_POW_HPP
-#define VECTORIZE_MATH_POW_HPP
+#pragma once
 
 namespace fetch {
 namespace vectorize {
@@ -27,4 +26,3 @@ VectorRegister<T, S>  pow(VectorRegister<T, S> base, int p)
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef MATH_BIGNUMBER_HPP
-#define MATH_BIGNUMBER_HPP
+#pragma once
 #include <algorithm>
 #include <cmath>
 #include <vector>
@@ -227,4 +226,3 @@ inline double ToDouble(BigUnsigned const &x) {
 }
 }
 
-#endif

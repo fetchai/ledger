@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_MATH_SQRT_HPP
-#define VECTORIZE_MATH_SQRT_HPP
+#pragma once
 namespace fetch {
 namespace vectorize {
 
@@ -14,4 +13,3 @@ inline VectorRegister<double, 128> sqrt( VectorRegister<double, 128> const &a) {
 }
 }
 
-#endif

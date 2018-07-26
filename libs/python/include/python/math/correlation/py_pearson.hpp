@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_CORRELATION_PEARSON_HPP
-#define LIBFETCHCORE_MATH_CORRELATION_PEARSON_HPP
+#pragma once
 
 #include"math/correlation/pearson.hpp"
 #include"math/linalg/matrix.hpp"
@@ -42,4 +41,3 @@ inline void BuildPearsonCorrelation(std::string const &custom_name, pybind11::mo
 }
 }
 
-#endif

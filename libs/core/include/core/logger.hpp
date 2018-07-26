@@ -1,5 +1,4 @@
-#ifndef LOGGER_HPP
-#define LOGGER_HPP
+#pragma once
 #include <atomic>
 #include <chrono>
 #include <ctime>
@@ -609,4 +608,3 @@ extern log::details::LogWrapper logger;
 
 //#define LOG_STACK_TRACE_POINT
 //#define LOG_LAMBDA_STACK_TRACE_POINT
-#endif

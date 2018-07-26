@@ -1,5 +1,4 @@
-#ifndef TRANSACTION_LIST_BASIC_HPP
-#define TRANSACTION_LIST_BASIC_HPP
+#pragma once
 #include<type_traits>
 #include<unordered_map>
 #include<utility>
@@ -182,4 +181,3 @@ private:
 
 }
 }
-#endif

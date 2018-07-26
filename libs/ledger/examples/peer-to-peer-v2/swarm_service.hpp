@@ -1,5 +1,4 @@
-#ifndef SWARM_SERVICE_HPP
-#define SWARM_SERVICE_HPP
+#pragma once
 
 #include"network/service/server.hpp"
 #include"network/tcp/tcp_server.hpp"
@@ -500,4 +499,3 @@ private:
   std::atomic< bool > running_;  
 };
 
-#endif

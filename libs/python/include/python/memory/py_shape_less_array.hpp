@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MEMORY_SHAPE_LESS_ARRAY_HPP
-#define LIBFETCHCORE_MEMORY_SHAPE_LESS_ARRAY_HPP
+#pragma once
 
 #include"math/rectangular_array.hpp"
 #include"python/fetch_pybind.hpp"
@@ -247,4 +246,3 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
 };
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LEDGER_CHAIN_MAIN_CHAIN_CONTROLLER_HPP
-#define LEDGER_CHAIN_MAIN_CHAIN_CONTROLLER_HPP
+#pragma once
 #include"network/service/client.hpp"
 #include"network/management/connection_register.hpp"
 #include"network/service/client.hpp"
@@ -177,4 +176,3 @@ private:
 }
 }
 
-#endif

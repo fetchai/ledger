@@ -1,5 +1,4 @@
-#ifndef NETWORK_mine_test_HTTP_INTERFACE_HPP
-#define NETWORK_mine_test_HTTP_INTERFACE_HPP
+#pragma once
 
 #include"core/script/variant.hpp"
 #include"core/logger.hpp"
@@ -192,4 +191,3 @@ private:
 
 }
 }
-#endif

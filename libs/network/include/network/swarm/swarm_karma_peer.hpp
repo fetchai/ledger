@@ -1,5 +1,4 @@
-#ifndef SWARM_KARMA_PEER__
-#define SWARM_KARMA_PEER__
+#pragma once
 
 #include <time.h>
 #include <functional>
@@ -189,4 +188,3 @@ protected:
 }
 }
 
-#endif //__SWARM_KARMA_PEER__

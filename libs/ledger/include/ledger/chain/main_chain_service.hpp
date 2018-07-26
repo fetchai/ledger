@@ -1,5 +1,4 @@
-#ifndef LEDGER_CHAIN_MAIN_CHAIN_SERVICE_HPP
-#define LEDGER_CHAIN_MAIN_CHAIN_SERVICE_HPP
+#pragma once
 
 #include"storage/object_store.hpp"
 #include"storage/object_store_protocol.hpp"
@@ -125,4 +124,3 @@ private:
 }
 }
 
-#endif
