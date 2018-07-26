@@ -9,7 +9,7 @@ using namespace fetch::crypto;
 #include "testing/unittest.hpp"
 
 using byte_array_type = byte_array::ByteArray;
-int                           main()
+int main()
 {
   SCENARIO("The SHA256 implmentation differs from other libraries")
   {

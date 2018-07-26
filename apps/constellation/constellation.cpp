@@ -61,17 +61,18 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
   }
 
   // create the execution manager (and its executors)
-  execution_manager_ = std::make_shared<ledger::ExecutionManager>(num_executors, storage_, [this]() {
-    auto executor = CreateExecutor();
-    executors_.push_back(executor);
-    return executor;
-  });
+  execution_manager_ =
+      std::make_shared<ledger::ExecutionManager>(num_executors, storage_, [this]() {
+        auto executor = CreateExecutor();
+        executors_.push_back(executor);
+        return executor;
+      });
 
   execution_manager_->Start();
 
   // Main chain
-  main_chain_service_ = std::make_unique<chain::MainChainService>(
-    db_prefix, main_chain_port_, *network_manager_.get());
+  main_chain_service_ = std::make_unique<chain::MainChainService>(db_prefix, main_chain_port_,
+                                                                  *network_manager_.get());
 
   // Mainchain remote
   main_chain_remote_ = std::make_unique<chain::MainChainRemoteControl>();
@@ -81,12 +82,12 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
   main_chain_remote_->SetClient(service);
 
   // Mining and block coordination
-  block_coordinator_ = std::make_unique<chain::BlockCoordinator>(
-    *main_chain_service_->mainchain(), *execution_manager_);
+  block_coordinator_  = std::make_unique<chain::BlockCoordinator>(*main_chain_service_->mainchain(),
+                                                                 *execution_manager_);
   transaction_packer_ = std::make_unique<miner::AnnealerMiner>();
-  main_chain_miner_ = std::make_unique<chain::MainChainMiner>(
-    num_lanes_, num_slices_, *main_chain_service_->mainchain(),
-                                *block_coordinator_, *transaction_packer_, main_chain_port_);
+  main_chain_miner_   = std::make_unique<chain::MainChainMiner>(
+      num_lanes_, num_slices_, *main_chain_service_->mainchain(), *block_coordinator_,
+      *transaction_packer_, main_chain_port_);
 
   tx_processor_ = std::make_unique<ledger::TransactionProcessor>(*storage_, *transaction_packer_);
 

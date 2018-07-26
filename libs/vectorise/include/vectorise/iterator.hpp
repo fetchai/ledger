@@ -12,7 +12,7 @@ class VectorRegisterIterator
 {
 public:
   using type = T;
-  typedef VectorRegister<T, N>                            vector_register_type;
+  typedef VectorRegister<T, N> vector_register_type;
   using mm_register_type = typename vector_register_type::mm_register_type;
 
   VectorRegisterIterator() : ptr_(nullptr), end_(nullptr) {}

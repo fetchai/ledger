@@ -55,7 +55,7 @@ public:
   VariantList(VariantList &&other) noexcept;
 
   VariantList &operator=(VariantList const &other) = default;
-  VariantList &operator=(VariantList &&other) noexcept;
+  VariantList &operator                            =(VariantList &&other) noexcept;
 
   Variant const &operator[](std::size_t const &i) const;
   Variant &      operator[](std::size_t const &i);

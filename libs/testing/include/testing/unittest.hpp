@@ -27,7 +27,7 @@ class TestContext : public std::enable_shared_from_this<TestContext>
 public:
   using self_shared_type = std::shared_ptr<TestContext>;
   using function_type    = std::function<void(self_shared_type)>;
-  std::vector<TestContext *>                    sections;
+  std::vector<TestContext *> sections;
 
   TestContext(std::string const &explanation) : explanation_(explanation)
   {
@@ -227,7 +227,7 @@ private:
 
 namespace details {
 using shared_context_type = std::shared_ptr<TestContext>;
-std::vector<shared_context_type>     unit_tests;
+std::vector<shared_context_type> unit_tests;
 template <typename... A>
 shared_context_type NewTest(A... Args)
 {
@@ -237,7 +237,7 @@ shared_context_type NewTest(A... Args)
 }
 
 using shared_inserter_type = std::shared_ptr<ProgramInserter>;
-std::vector<shared_inserter_type>        inserted_programs;
+std::vector<shared_inserter_type> inserted_programs;
 template <typename... A>
 shared_inserter_type NewNestedProgram(A... Args)
 {

@@ -5,6 +5,5 @@
 
 namespace details {
 namespace meta {
-
 };
 };  // namespace details
