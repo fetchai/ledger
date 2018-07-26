@@ -11,4 +11,5 @@ CMakeCache.txt
 \#*#
 .\#*
 *~
+*.swp
 .idea/
