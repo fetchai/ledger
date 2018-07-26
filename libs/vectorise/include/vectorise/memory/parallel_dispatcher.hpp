@@ -158,7 +158,7 @@ public:
   template <typename... Args>
   type SumReduce(TrivialRange const &range,
                  typename details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<
-                     Args...>::signature_type &&reduce,
+                     Args...>::signature_type const &reduce,
                  Args &&... args)
   {
 
@@ -191,7 +191,7 @@ public:
 
       tmp =
           details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
-              self, regs, std::move(reduce));
+              self, regs, reduce);
 
       int Q = vector_register_type::E_BLOCK_COUNT - (SF - int(range.from()));
       for (int i = 0; i < vector_register_type::E_BLOCK_COUNT; ++i)
@@ -246,7 +246,7 @@ public:
 
   template <typename... Args>
   type ProductReduce(typename details::MatrixReduceFreeFunction<
-                         vector_register_type>::template Unroll<Args...>::signature_type &&kernel,
+                         vector_register_type>::template Unroll<Args...>::signature_type const &kernel,
                      Args &&... args)
   {
 
@@ -265,7 +265,7 @@ public:
       self_iter.Next(self);
       tmp =
           details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
-              self, regs, std::move(kernel));
+              self, regs, kernel);
       c = c * tmp;
     }
 
