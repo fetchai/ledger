@@ -1,5 +1,4 @@
-#ifndef FETCH_EXAMPLE_CHAINCODE_HPP
-#define FETCH_EXAMPLE_CHAINCODE_HPP
+#pragma once
 
 #include "ledger/chaincode/contract.hpp"
 
@@ -30,4 +29,3 @@ private:
 } // namespace ledger
 } // namespace fetch
 
-#endif //FETCH_EXAMPLE_CHAINCODE_HPP

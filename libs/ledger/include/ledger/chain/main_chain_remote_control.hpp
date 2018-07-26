@@ -1,5 +1,4 @@
-#ifndef LEDGER_CHAIN_MAIN_CHAIN_REMOTE_HPP
-#define LEDGER_CHAIN_MAIN_CHAIN_REMOTE_HPP
+#pragma once
 
 #include"network/service/client.hpp"
 #include"ledger/chain/main_chain_controller_protocol.hpp"
@@ -111,4 +110,3 @@ private:
 }
 }
 
-#endif

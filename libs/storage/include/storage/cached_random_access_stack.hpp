@@ -1,5 +1,4 @@
-#ifndef STORAGE_CACHED_RANDOM_ACCESS_STACK_HPP
-#define STORAGE_CACHED_RANDOM_ACCESS_STACK_HPP
+#pragma once
 #include <fstream>
 #include <string>
 #include<unordered_map>
@@ -210,4 +209,3 @@ class CachedRandomAccessStack {
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_PROTOCOLS_SWARM_NODE_DETAILS_HPP
-#define LIBFETCHCORE_PROTOCOLS_SWARM_NODE_DETAILS_HPP
+#pragma once
 #include "protocols/swarm/node_details.hpp"
 
 #include"fetch_pybind.hpp"
@@ -25,4 +24,3 @@ void BuildSharedNodeDetails(pybind11::module &module) {
 };
 };
 
-#endif

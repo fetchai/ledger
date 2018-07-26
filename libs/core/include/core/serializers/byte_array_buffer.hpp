@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_BYTE_ARRAY_BUFFER_HPP
-#define SERIALIZER_BYTE_ARRAY_BUFFER_HPP
+#pragma once
 #include <type_traits>
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -88,4 +87,3 @@ class ByteArrayBuffer {
 }
 }
 
-#endif

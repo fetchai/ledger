@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_LANE_CONTROLLER_HPP
-#define LEDGER_STORAGE_UNIT_LANE_CONTROLLER_HPP
+#pragma once
 #include"network/service/client.hpp"
 #include"network/management/connection_register.hpp"
 #include"network/service/client.hpp"
@@ -208,4 +207,3 @@ private:
 }
 }
 
-#endif

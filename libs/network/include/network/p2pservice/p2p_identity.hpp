@@ -1,5 +1,4 @@
-#ifndef NETWORK_P2PSERVICE_P2P_IDENTITY_HPP
-#define NETWORK_P2PSERVICE_P2P_IDENTITY_HPP
+#pragma once
 #include"network/service/client.hpp"
 #include"network/management/connection_register.hpp"
 #include"network/service/client.hpp"
@@ -143,5 +142,4 @@ private:
 }
 }
 
-#endif
 

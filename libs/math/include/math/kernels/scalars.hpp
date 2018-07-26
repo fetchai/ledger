@@ -1,5 +1,4 @@
-#ifndef KERNELS_SCALARS_HPP
-#define KERNELS_SCALARS_HPP
+#pragma once
 #include<cmath>
 
 namespace fetch {
@@ -100,4 +99,3 @@ struct DivideScalar
 }
 }
 
-#endif

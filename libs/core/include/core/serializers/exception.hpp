@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_EXCEPTION_HPP
-#define SERIALIZER_EXCEPTION_HPP
+#pragma once
 #include <exception>
 #include <string>
 #include "core/byte_array/const_byte_array.hpp"
@@ -69,4 +68,3 @@ class SerializableException : public std::exception {
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef MATH_SHAPE_LESS_ARRAY_HPP
-#define MATH_SHAPE_LESS_ARRAY_HPP
+#pragma once
 #include"vectorise/memory/array.hpp"
 #include"vectorise/memory/shared_array.hpp"
 #include"core/random.hpp"
@@ -1547,4 +1546,3 @@ private:
 }
 }
 
-#endif

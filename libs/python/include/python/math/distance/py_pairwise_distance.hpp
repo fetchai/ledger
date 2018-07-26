@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_DISTANCE_PAIRWISE_DISTANCE_HPP
-#define LIBFETCHCORE_MATH_DISTANCE_PAIRWISE_DISTANCE_HPP
+#pragma once
 
 #include"math/distance/pairwise_distance.hpp"
 #include"math/linalg/matrix.hpp"
@@ -63,4 +62,3 @@ inline void BuildPairWiseDistanceDistance(std::string const &custom_name, pybind
 }
 }
 
-#endif

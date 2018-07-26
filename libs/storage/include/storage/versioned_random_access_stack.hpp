@@ -1,5 +1,4 @@
-#ifndef STORAGE_VERSIONED_RANDOM_ACCESS_STACK_HPP
-#define STORAGE_VERSIONED_RANDOM_ACCESS_STACK_HPP
+#pragma once
 #include "storage/random_access_stack.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/variant_stack.hpp"
@@ -359,4 +358,3 @@ class VersionedRandomAccessStack {
 }
 }
 
-#endif

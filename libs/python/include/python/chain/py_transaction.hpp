@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_CHAIN_TRANSACTION_HPP
-#define LIBFETCHCORE_CHAIN_TRANSACTION_HPP
+#pragma once
 #include "chain/transaction.hpp"
 
 #include"fetch_pybind.hpp"
@@ -33,4 +32,3 @@ void BuildTransaction(pybind11::module &module) {
 };
 };
 
-#endif

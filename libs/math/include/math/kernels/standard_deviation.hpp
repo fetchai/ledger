@@ -1,5 +1,4 @@
-#ifndef KERNELS_STANDARD_DEVIATION_HPP
-#define KERNELS_STANDARD_DEVIATION_HPP
+#pragma once
 
 namespace fetch {
   namespace kernels {
@@ -20,4 +19,3 @@ namespace fetch {
   }
 }
 
-#endif

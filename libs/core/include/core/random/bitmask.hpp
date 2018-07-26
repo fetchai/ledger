@@ -1,5 +1,4 @@
-#ifndef RANDOM_BITMASK_HPP
-#define RANDOM_BITMASK_HPP
+#pragma once
 namespace fetch {
 namespace random {
 
@@ -38,4 +37,3 @@ class BitMask {
 };
 }
 }
-#endif

@@ -1,5 +1,4 @@
-#ifndef SWARM_EXCEPTION_HPP
-#define SWARM_EXCEPTION_HPP
+#pragma once
 #include <exception>
 #include <string>
 #include "core/logger.hpp"
@@ -37,4 +36,3 @@ private:
 }
 }
 
-#endif

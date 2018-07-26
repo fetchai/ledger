@@ -1,5 +1,4 @@
-#ifndef FETCH_ADAPTERS_HPP
-#define FETCH_ADAPTERS_HPP
+#pragma once
 
 #include "fetch_asio.hpp"
 
@@ -46,4 +45,3 @@ private:
 } // namespace network
 } // namespace fetch
 
-#endif //FETCH_ADAPTERS_HPP

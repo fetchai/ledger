@@ -1,5 +1,4 @@
-#ifndef MATH_DISTANCE_MINKOWSKI_HPP
-#define MATH_DISTANCE_MINKOWSKI_HPP
+#pragma once
 #include"math/shape_less_array.hpp"
 #include"vectorise/memory/range.hpp"
 #include"core/assert.hpp"
@@ -39,4 +38,3 @@ inline typename ShapeLessArray<T,C>::type Minkowski( ShapeLessArray<T,C> const &
 }
 
 
-#endif

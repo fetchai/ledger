@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_CHAIN_CONSENSUS_PROOF_OF_WORK_HPP
-#define LIBFETCHCORE_CHAIN_CONSENSUS_PROOF_OF_WORK_HPP
+#pragma once
 #include "chain/consensus/proof_of_work.hpp"
 
 #include"fetch_pybind.hpp"
@@ -28,4 +27,3 @@ void BuildProofOfWork(pybind11::module &module) {
 };
 };
 
-#endif

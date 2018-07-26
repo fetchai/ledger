@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_FETCH_PROTOCOLS_HPP
-#define PROTOCOLS_FETCH_PROTOCOLS_HPP
+#pragma once
 
 namespace fetch {
 namespace protocols {
@@ -19,4 +18,3 @@ struct FetchProtocols {
 } // namespace protocols
 } // namespace fetch
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef THREADING_POOL_HPP
-#define THREADING_POOL_HPP
+#pragma once
 
 #include "core/mutex.hpp"
 
@@ -108,4 +107,3 @@ private:
 };
 };
 
-#endif

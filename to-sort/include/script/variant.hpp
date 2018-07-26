@@ -1,5 +1,4 @@
-#ifndef SCRIP_VARIANT_HPP
-#define SCRIP_VARIANT_HPP
+#pragma once
 #include "byte_array/referenced_byte_array.hpp"
 #include "memory/shared_array.hpp"
 //#include "script/dictionary.hpp"
@@ -366,4 +365,3 @@ inline std::ostream& operator<<(std::ostream& os, VariantList const& v) {
 }
 }
 }
-#endif

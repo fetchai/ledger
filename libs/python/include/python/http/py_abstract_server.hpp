@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_ABSTRACT_SERVER_HPP
-#define LIBFETCHCORE_HTTP_ABSTRACT_SERVER_HPP
+#pragma once
 #include "http/abstract_server.hpp"
 
 #include"fetch_pybind.hpp"
@@ -18,4 +17,3 @@ void BuildAbstractHTTPServer(pybind11::module &module) {
 };
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_TOKENIZER_TOKENIZER_HPP
-#define BYTE_ARRAY_TOKENIZER_TOKENIZER_HPP
+#pragma once
 
 #include <functional>
 #include <map>
@@ -138,4 +137,3 @@ class Tokenizer : public std::vector<Token> {
 }
 }
 
-#endif

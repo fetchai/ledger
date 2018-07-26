@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_STORAGE_VARIANT_STACK_HPP
-#define LIBFETCHCORE_STORAGE_VARIANT_STACK_HPP
+#pragma once
 #include "storage/variant_stack.hpp"
 
 #include"fetch_pybind.hpp"
@@ -25,4 +24,3 @@ void BuildVariantStack(pybind11::module &module) {
 };
 };
 
-#endif

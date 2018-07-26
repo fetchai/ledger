@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_MATH_EXP_HPP
-#define VECTORIZE_MATH_EXP_HPP
+#pragma once
 
 namespace fetch {
 namespace vectorize {
@@ -26,4 +25,3 @@ VectorRegister<T, S>  exp(VectorRegister<T, S> x, T const &precision = 0.00001)
 }
 }
 
-#endif

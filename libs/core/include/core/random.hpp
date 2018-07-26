@@ -1,5 +1,4 @@
-#ifndef RANDOM_HPP
-#define RANDOM_HPP
+#pragma once
 #include"core/random/lcg.hpp"
 #include"core/random/lfg.hpp"
 
@@ -16,4 +15,3 @@ struct Random
 }
 }
 
-#endif

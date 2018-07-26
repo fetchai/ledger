@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_DISTANCE_DISTANCE_MATRIX_HPP
-#define LIBFETCHCORE_MATH_DISTANCE_DISTANCE_MATRIX_HPP
+#pragma once
 
 #include"math/distance/distance_matrix.hpp"
 #include"math/linalg/matrix.hpp"
@@ -66,4 +65,3 @@ inline void BuildDistanceMatrixDistance(std::string const &custom_name, pybind11
 }
 }
 
-#endif

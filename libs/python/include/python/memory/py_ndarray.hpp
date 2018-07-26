@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MEMORY_RECTANGULAR_ARRAY_HPP
-#define LIBFETCHCORE_MEMORY_RECTANGULAR_ARRAY_HPP
+#pragma once
 
 #include"math/rectangular_array.hpp"
 #include"python/fetch_pybind.hpp"
@@ -107,4 +106,3 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
 };
 };
 
-#endif

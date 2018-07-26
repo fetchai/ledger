@@ -1,5 +1,4 @@
-#ifndef LEDGER_CHAIN_MAIN_CHAIN_IDENTITY_PROTOCOL_HPP
-#define LEDGER_CHAIN_MAIN_CHAIN_IDENTITY_PROTOCOL_HPP
+#pragma once
 
 namespace fetch
 {
@@ -31,4 +30,3 @@ public:
 
 }
 
-#endif

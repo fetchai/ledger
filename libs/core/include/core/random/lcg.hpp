@@ -1,5 +1,4 @@
-#ifndef MATH_RANDOM_LCG_HPP
-#define MATH_RANDOM_LCG_HPP
+#pragma once
 #include <cstdlib>
 #include <cstdint>
 #include <limits>
@@ -35,4 +34,3 @@ class LinearCongruentialGenerator {
 };
 }
 }
-#endif

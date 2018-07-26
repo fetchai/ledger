@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERVICE_PUBLICATION_FEED_HPP
-#define LIBFETCHCORE_SERVICE_PUBLICATION_FEED_HPP
+#pragma once
 #include "service/publication_feed.hpp"
 
 #include"fetch_pybind.hpp"
@@ -19,4 +18,3 @@ void BuildHasPublicationFeed(pybind11::module &module) {
 };
 };
 
-#endif

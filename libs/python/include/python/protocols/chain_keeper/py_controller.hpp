@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_PROTOCOLS_CHAIN_KEEPER_CONTROLLER_HPP
-#define LIBFETCHCORE_PROTOCOLS_CHAIN_KEEPER_CONTROLLER_HPP
+#pragma once
 #include "protocols/chain_keeper/controller.hpp"
 
 #include"fetch_pybind.hpp"
@@ -34,4 +33,3 @@ void BuildChainKeeperController(pybind11::module &module) {
 };
 };
 
-#endif

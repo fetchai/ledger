@@ -1,5 +1,4 @@
-#ifndef FETCH_EXECUTION_MANAGER_PROTOCOL_HPP
-#define FETCH_EXECUTION_MANAGER_PROTOCOL_HPP
+#pragma once
 
 #include "network/service/protocol.hpp"
 #include "ledger/execution_manager_interface.hpp"
@@ -36,4 +35,3 @@ private:
 } // namespace ledger
 } // namespace fetch
 
-#endif //FETCH_EXECUTION_MANAGER_PROTOCOL_HPP

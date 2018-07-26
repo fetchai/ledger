@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_AVX_HPP
-#define VECTORIZE_AVX_HPP
+#pragma once
 #ifdef __AVX__
 #include "vectorise/info.hpp"
 #include "vectorise/info_avx.hpp"
@@ -440,6 +439,5 @@ inline float first_element(VectorRegister<float, 256> const &x) {
 
 }
 }
-#endif
 #endif
 

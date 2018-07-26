@@ -1,5 +1,4 @@
-#ifndef NODE_DETAILS_HPP
-#define NODE_DETAILS_HPP
+#pragma once
 #include "byte_array/referenced_byte_array.hpp"
 #include "chain/transaction.hpp"
 #include "mutex.hpp"
@@ -98,4 +97,3 @@ class SharedNodeDetails {
 }
 }
 
-#endif

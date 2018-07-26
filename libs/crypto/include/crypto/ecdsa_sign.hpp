@@ -1,5 +1,4 @@
-#ifndef CRYPTO_ECDSA_SIGN_HPP
-#define CRYPTO_ECDSA_SIGN_HPP
+#pragma once
 
 #include "crypto/openssl_memory.hpp"
 #include "crypto/sha256.hpp"
@@ -113,4 +112,3 @@ bool ecdsa_verify(
 } //namespace crypto
 } //namespace fetch
 
-#endif //CRYPTO_ECDSA_SIGN_HPP

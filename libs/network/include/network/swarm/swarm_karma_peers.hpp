@@ -1,5 +1,4 @@
-#ifndef SWARM_KARMA_PEERS__
-#define SWARM_KARMA_PEERS__
+#pragma once
 
 #include <vector>
 #include "swarm_karma_peer.hpp"
@@ -174,4 +173,3 @@ protected:
 }
 }
 
-#endif //__SWARM_KARMA_PEERS__

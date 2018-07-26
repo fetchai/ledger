@@ -1,5 +1,4 @@
-#ifndef META_LOG2_HPP
-#define META_LOG2_HPP
+#pragma once
 
 #include <cstdint>
 namespace fetch {
@@ -15,4 +14,3 @@ struct Log2<1> {
 };
 }
 }
-#endif

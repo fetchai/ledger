@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERVICE_CALLABLE_CLASS_MEMBER_HPP
-#define LIBFETCHCORE_SERVICE_CALLABLE_CLASS_MEMBER_HPP
+#pragma once
 #include "service/callable_class_member.hpp"
 
 #include"fetch_pybind.hpp"
@@ -22,4 +21,3 @@ void BuildCallableClassMember(std::string const &custom_name, pybind11::module &
 };
 };
 
-#endif

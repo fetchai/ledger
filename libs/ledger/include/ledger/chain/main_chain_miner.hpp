@@ -1,5 +1,4 @@
-#ifndef MAIN_CHAIN_MINER_HPP
-#define MAIN_CHAIN_MINER_HPP
+#pragma once
 
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -146,4 +145,3 @@ private:
 }
 }
 
-#endif

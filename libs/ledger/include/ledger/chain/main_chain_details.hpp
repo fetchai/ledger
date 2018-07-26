@@ -1,5 +1,4 @@
-#ifndef LEDGER_CHAIN_MAIN_CHAIN_DETAILS_HPP
-#define LEDGER_CHAIN_MAIN_CHAIN_DETAILS_HPP
+#pragma once
 
 #include<atomic>
 
@@ -32,4 +31,3 @@ struct MainChainDetails
 }
 
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_ENCODERS_HPP
-#define BYTE_ARRAY_ENCODERS_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
@@ -10,4 +9,3 @@ ConstByteArray ToHex(ConstByteArray const &str);
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef NETWORK_TCP_SERVER_HPP
-#define NETWORK_TCP_SERVER_HPP
+#pragma once
 
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
@@ -222,4 +221,3 @@ class TCPServer : public AbstractNetworkServer {
 }
 }
 
-#endif

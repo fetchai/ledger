@@ -1,5 +1,4 @@
-#ifndef BLOCK_COORDINATOR_HPP
-#define BLOCK_COORDINATOR_HPP
+#pragma once
 
 #include <thread>
 #include <miner/miner_interface.hpp>
@@ -191,4 +190,3 @@ private:
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef NETWORK_MANAGER_IMPLEMENTATION_HPP
-#define NETWORK_MANAGER_IMPLEMENTATION_HPP
+#pragma once
 
 #include "core/assert.hpp"
 #include "core/logger.hpp"
@@ -117,4 +116,3 @@ class NetworkManagerImplementation : public std::enable_shared_from_this< Networ
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef MATH_DISTANCE_MANHATTAN_HPP
-#define MATH_DISTANCE_MANHATTAN_HPP
+#pragma once
 #include"math/shape_less_array.hpp"
 #include"vectorise/memory/range.hpp"
 #include"core/assert.hpp"
@@ -37,4 +36,3 @@ inline typename memory::VectorSlice<T,S>::type Manhattan(memory::VectorSlice<T,S
 }
 
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef CRYPTO_PROVER_HPP
-#define CRYPTO_PROVER_HPP
+#pragma once
 
 #include "crypto/identity.hpp"
 #include "core/byte_array/byte_array.hpp"
@@ -28,5 +27,4 @@ class Prover {
 }
 }
 
-#endif
 

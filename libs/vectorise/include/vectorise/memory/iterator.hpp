@@ -1,5 +1,4 @@
-#ifndef MEMORY_ITERATOR_HPP
-#define MEMORY_ITERATOR_HPP
+#pragma once
 
 #include <cassert>
 
@@ -71,4 +70,3 @@ class BackwardIterator {
 };
 }
 }
-#endif

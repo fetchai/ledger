@@ -1,5 +1,4 @@
-#ifndef CHAIN_KEEPER_SERVICE_HPP
-#define CHAIN_KEEPER_SERVICE_HPP
+#pragma once
 
 #include "network/service/client.hpp"
 #include"network/service/server.hpp"
@@ -292,4 +291,3 @@ private:
 //  fetch::http::HTTPServer http_server_;   
 };
 
-#endif 

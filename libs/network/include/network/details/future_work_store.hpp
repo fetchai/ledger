@@ -1,5 +1,4 @@
-#ifndef FUTURE_WORK_STORE__
-#define FUTURE_WORK_STORE__
+#pragma once
 
 #include <algorithm>
 #include <iostream>
@@ -98,4 +97,3 @@ private:
 }
 }
 
-#endif //__FUTURE_WORK_STORE__

@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_INFO_SSE_HPP
-#define VECTORIZE_INFO_SSE_HPP
+#pragma once
 
 #include <emmintrin.h>
 #include <immintrin.h>
@@ -54,4 +53,3 @@ struct VectorInfo<double, 128> {
 }
 }
 
-#endif

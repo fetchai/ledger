@@ -1,5 +1,4 @@
-#ifndef OPTIMISATION_INSTANCE_LOAD_TXT_HPP
-#define OPTIMISATION_INSTANCE_LOAD_TXT_HPP
+#pragma once
 
 #include <string/trim.hpp>
 
@@ -76,4 +75,3 @@ bool Load(T &optimiser, std::string const &filename) {
 }
 }
 
-#endif

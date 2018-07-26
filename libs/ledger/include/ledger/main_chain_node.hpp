@@ -1,5 +1,4 @@
-#ifndef MAIN_CHAIN_NODE_HPP
-#define MAIN_CHAIN_NODE_HPP
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -220,4 +219,3 @@ private:
 }
 }
 
-#endif //MAIN_CHAIN_NODE_HPP

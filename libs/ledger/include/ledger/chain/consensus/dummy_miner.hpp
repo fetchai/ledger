@@ -1,5 +1,4 @@
-#ifndef MINER_HPP
-#define MINER_HPP
+#pragma once
 
 #include <random>
 
@@ -60,4 +59,3 @@ private:
 }
 }
 }
-#endif

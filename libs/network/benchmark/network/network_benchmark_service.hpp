@@ -1,5 +1,4 @@
-#ifndef NETWORK_BENCHMARK_SERVICE_HPP
-#define NETWORK_BENCHMARK_SERVICE_HPP
+#pragma once
 
 #include<memory>
 #include"core/logger.hpp"
@@ -56,4 +55,3 @@ private:
 }
 }
 
-#endif

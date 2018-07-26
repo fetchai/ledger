@@ -1,5 +1,4 @@
-#ifndef SCRIPT_ARRAY_HPP
-#define SCRIPT_ARRAY_HPP
+#pragma once
 #include "byte_array/byte_array.hpp"
 #include "crypto/fnv.hpp"
 #include "memory/shared_hashtable.hpp"
@@ -71,4 +70,3 @@ class Array {
 }
 }
 
-#endif

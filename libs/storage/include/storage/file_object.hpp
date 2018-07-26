@@ -1,5 +1,4 @@
-#ifndef STORAGE_FILE_OBJECT_HPP
-#define STORAGE_FILE_OBJECT_HPP
+#pragma once
 #include "storage/versioned_random_access_stack.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "crypto/sha256.hpp"
@@ -394,5 +393,4 @@ private:
 }
 }
 
-#endif
 

@@ -1,5 +1,4 @@
-#ifndef NODE_FUNCTIONALITY_HPP
-#define NODE_FUNCTIONALITY_HPP
+#pragma once
 
 #include<map>
 #include<vector>
@@ -42,4 +41,3 @@ private:
   std::map< std::string, std::vector< double > > data_;  
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef SERVICE_CONSTS
-#define SERVICE_CONSTS
+#pragma once
 enum {
   SLOWFUNCTION = 1,
   ADD,
@@ -9,4 +8,3 @@ enum {
 enum {
   MYPROTO = 1
 };
-#endif

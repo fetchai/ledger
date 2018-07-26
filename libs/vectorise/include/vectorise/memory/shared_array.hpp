@@ -1,5 +1,4 @@
-#ifndef MEMORY_SHARED_ARRAY_HPP
-#define MEMORY_SHARED_ARRAY_HPP
+#pragma once
 
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
@@ -240,4 +239,3 @@ class SharedArray {
   
 }
 }
-#endif

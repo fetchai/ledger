@@ -1,5 +1,4 @@
-#ifndef SERVICE_FEED_HPP
-#define SERVICE_FEED_HPP
+#pragma once
 #include "core/mutex.hpp"
 #include "network/service/abstract_publication_feed.hpp"
 #include "network/service/message_types.hpp"
@@ -150,4 +149,3 @@ class FeedSubscriptionManager {
 }
 }
 
-#endif

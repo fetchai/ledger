@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_MATH_MIN_HPP
-#define VECTORIZE_MATH_MIN_HPP
+#pragma once
 namespace fetch {
 namespace vectorize {
 
@@ -17,4 +16,3 @@ inline VectorRegister<double, 128> min( VectorRegister<double, 128> const &a,
 }
 }
 
-#endif

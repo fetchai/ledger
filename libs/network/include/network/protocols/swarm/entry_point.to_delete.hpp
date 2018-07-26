@@ -1,5 +1,4 @@
-#ifndef ENTRY_POINT_HPP
-#define ENTRY_POINT_HPP
+#pragma once
 
 #include "byte_array/referenced_byte_array.hpp"
 #include "chain/transaction.hpp"
@@ -31,4 +30,3 @@ struct EntryPoint {
 }
 }
 
-#endif  // ENTRY_POINT_HPP

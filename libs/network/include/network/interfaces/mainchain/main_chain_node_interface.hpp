@@ -1,5 +1,4 @@
-#ifndef MAIN_CHAIN_NODE_INTERFACE_HPP
-#define MAIN_CHAIN_NODE_INTERFACE_HPP
+#pragma once
 
 #include "network/protocols/fetch_protocols.hpp"
 #include "ledger/chain/main_chain.hpp"
@@ -38,4 +37,3 @@ public:
 }
 }
 
-#endif //MAIN_CHAIN_NODE_INTERFACE_HPP

@@ -1,5 +1,4 @@
-#ifndef SERVICE_ABSTRACT_DECORATOR_HPP
-#define SERVICE_ABSTRACT_DECORATOR_HPP
+#pragma once
 namespace fetch {
 namespace service {
 
@@ -12,4 +11,3 @@ class AbstractDecorator {
 };
 }
 }
-#endif

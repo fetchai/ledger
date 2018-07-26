@@ -1,5 +1,4 @@
-#ifndef ABSTRACT_MUTEX_HPP
-#define ABSTRACT_MUTEX_HPP
+#pragma once
 
 #include <mutex>
 #include <string>
@@ -18,4 +17,3 @@ class AbstractMutex : public std::mutex {
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MEMORY_RANGE_HPP
-#define LIBFETCHCORE_MEMORY_RANGE_HPP
+#pragma once
 
 #include"math/rectangular_array.hpp"
 #include"vectorise/memory/range.hpp"
@@ -23,4 +22,3 @@ void BuildRange(std::string const &custom_name, pybind11::module &module) {
 };
 };
 
-#endif

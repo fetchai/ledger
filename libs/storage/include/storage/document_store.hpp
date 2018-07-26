@@ -1,5 +1,4 @@
-#ifndef STORAGE_DOCUMENT_STORE_HPP
-#define STORAGE_DOCUMENT_STORE_HPP 
+#pragma once
 #include <cassert>
 #include <fstream>
 #include <memory>
@@ -294,4 +293,3 @@ private:
 }
 }
 
-#endif

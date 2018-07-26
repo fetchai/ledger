@@ -1,5 +1,4 @@
-#ifndef HTTP_SESSION_HPP
-#define HTTP_SESSION_HPP
+#pragma once
 namespace fetch {
 namespace http {
 
@@ -9,4 +8,3 @@ class Session {
 }
 }
 
-#endif

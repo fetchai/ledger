@@ -1,5 +1,4 @@
-#ifndef __PY_SWARM_HPP
-#define __PY_SWARM_HPP
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -381,4 +380,3 @@ virtual std::string queryOwnLocation () { return DELEGATE queryOwnLocation (  );
 }
 }
 
-#endif //__PY_SWARM_HPP

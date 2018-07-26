@@ -1,5 +1,4 @@
-#ifndef BITMANIP_BITVECTOR_HPP
-#define BITMANIP_BITVECTOR_HPP
+#pragma once
 #include<vectorise/memory/shared_array.hpp>
 #include<vectorise/platform.hpp>
 #include<type_traits>
@@ -219,4 +218,3 @@ typedef details::BitVectorImplementation<0> BitVector;
 
 
 
-#endif

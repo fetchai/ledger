@@ -1,5 +1,4 @@
-#ifndef SWARM_HTTP_INTERFACE__
-#define SWARM_HTTP_INTERFACE__
+#pragma once
 
 #include "http/server.hpp"
 #include <iostream>
@@ -82,4 +81,3 @@ private:
 }
 }
 
-#endif //__SWARM_HTTP_INTERFACE__

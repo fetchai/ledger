@@ -1,5 +1,4 @@
-#ifndef MATH_DISTANCE_PEARSON_HPP
-#define MATH_DISTANCE_PEARSON_HPP
+#pragma once
 #include"math/shape_less_array.hpp"
 #include"math/correlation/pearson.hpp"
 #include"vectorise/memory/range.hpp"
@@ -29,4 +28,3 @@ inline typename memory::VectorSlice<T,S>::type Pearson(memory::VectorSlice<T,S> 
 }
 
 
-#endif

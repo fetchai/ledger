@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_CHAIN_KEEPER_PROTOCOL_HPP
-#define PROTOCOLS_CHAIN_KEEPER_PROTOCOL_HPP
+#pragma once
 #include "byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
 #include "http/module.hpp"
@@ -239,4 +238,3 @@ class ChainKeeperProtocol : public ChainKeeperController,
 }
 }
 
-#endif

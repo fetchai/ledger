@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_CONST_BYTE_ARRAY_HPP
-#define BYTE_ARRAY_CONST_BYTE_ARRAY_HPP
+#pragma once
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -242,4 +241,3 @@ inline ConstByteArray operator+(char const *a, ConstByteArray const &b) {
 }
 }
 }
-#endif

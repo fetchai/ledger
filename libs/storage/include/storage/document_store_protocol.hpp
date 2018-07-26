@@ -1,5 +1,4 @@
-#ifndef STORAGE_INDEXED_DOCUMENT_STORE_PROTOCOL_HPP
-#define STORAGE_INDEXED_DOCUMENT_STORE_PROTOCOL_HPP
+#pragma once
 
 #include "storage/document_store.hpp"
 #include "storage/revertible_document_store.hpp"
@@ -172,4 +171,3 @@ private:
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERVICE_CLIENT_INTERFACE_HPP
-#define LIBFETCHCORE_SERVICE_CLIENT_INTERFACE_HPP
+#pragma once
 #include "service/client_interface.hpp"
 
 #include"fetch_pybind.hpp"
@@ -21,4 +20,3 @@ void BuildServiceClientInterface(pybind11::module &module) {
 };
 };
 
-#endif

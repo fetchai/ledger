@@ -1,5 +1,4 @@
-#ifndef PARAMS_HPP
-#define PARAMS_HPP
+#pragma once
 
 #include <functional>
 #include <iostream>
@@ -173,4 +172,3 @@ private:
 }
 }
 
-#endif //__PARAMS_HPP

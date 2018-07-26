@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_HTTP_CONNECTION_MANAGER_HPP
-#define LIBFETCHCORE_HTTP_HTTP_CONNECTION_MANAGER_HPP
+#pragma once
 #include "http/http_connection_manager.hpp"
 
 #include"fetch_pybind.hpp"
@@ -23,4 +22,3 @@ void BuildHTTPConnectionManager(pybind11::module &module) {
 };
 };
 
-#endif

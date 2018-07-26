@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_DISTANCE_EISEN_HPP
-#define LIBFETCHCORE_MATH_DISTANCE_EISEN_HPP
+#pragma once
 
 #include"math/distance/eisen.hpp"
 #include"math/linalg/matrix.hpp"
@@ -42,4 +41,3 @@ inline void BuildEisenDistance(std::string const &custom_name, pybind11::module 
 }
 }
 
-#endif

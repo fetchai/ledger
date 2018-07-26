@@ -1,5 +1,4 @@
-#ifndef CRYPTO_OPENSSL_MEMORY_HPP
-#define CRYPTO_OPENSSL_MEMORY_HPP
+#pragma once
 
 #include "crypto/openssl_memory_detail.hpp"
 #include <memory>
@@ -42,5 +41,4 @@ public:
 } //* crypto namespace
 } //* fetch namespace
 
-#endif //CRYPTO_OPENSSL_MEMORY_HPP
 

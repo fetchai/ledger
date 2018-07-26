@@ -1,6 +1,5 @@
 
-#ifndef STORAGE_KEY_ARRAY_STORE_HPP
-#define STORAGE_KEY_ARRAY_STORE_HPP
+#pragma once
 
 #include "storage/document_store.hpp"
 namespace fetch {
@@ -32,4 +31,3 @@ using KeyByteArrayStore = typename details::ByteArrayMapConfigurator<S>::type;
 }
 }
 
-#endif

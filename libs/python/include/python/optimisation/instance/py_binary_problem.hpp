@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_OPTIMISATION_INSTANCE_BINARY_PROBLEM_HPP
-#define LIBFETCHCORE_OPTIMISATION_INSTANCE_BINARY_PROBLEM_HPP
+#pragma once
 #include "optimisation/instance/binary_problem.hpp"
 
 #include"fetch_pybind.hpp"
@@ -21,4 +20,3 @@ void BuildBinaryProblem(pybind11::module &module) {
 };
 };
 
-#endif

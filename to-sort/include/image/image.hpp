@@ -1,5 +1,4 @@
-#ifndef IMAGE_IMAGE_HPP
-#define IMAGE_IMAGE_HPP
+#pragma once
 #include "image/load_png.hpp"
 #include "math/linalg/matrix.hpp"
 
@@ -66,4 +65,3 @@ typedef ImageType<colors::RGBA8> ImageRGBA;
 }
 }
 
-#endif

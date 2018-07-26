@@ -1,5 +1,4 @@
-#ifndef SWARM_RANDOM__
-#define SWARM_RANDOM__
+#pragma once
 
 #include <unistd.h>
 #include <limits>
@@ -97,4 +96,3 @@ public:
 }
 }
 
-#endif //__SWARM_RANDOM__

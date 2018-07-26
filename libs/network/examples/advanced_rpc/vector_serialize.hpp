@@ -1,5 +1,4 @@
-#ifndef VECTOR_SERIALIZE_HPP
-#define VECTOR_SERIALIZE_HPP
+#pragma once
 #include"core/serializers/stl_types.hpp"
 #include<vector>
 namespace fetch {
@@ -35,4 +34,3 @@ void Deserialize(T &serializer, std::vector< std::string > &vec) {
 
 }
 }
-#endif

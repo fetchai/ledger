@@ -1,5 +1,4 @@
-#ifndef SCRIP_VARIANT_HPP
-#define SCRIP_VARIANT_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "core/assert.hpp"
@@ -429,4 +428,3 @@ inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const
 
 }
 }
-#endif

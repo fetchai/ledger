@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_RANDOM_BITMASK_HPP
-#define LIBFETCHCORE_RANDOM_BITMASK_HPP
+#pragma once
 
 #include"core/random/bitmask.hpp"
 #include"python/fetch_pybind.hpp"
@@ -21,4 +20,3 @@ void BuildBitMask(std::string const &custom_name, pybind11::module &module) {
 };
 };
 
-#endif

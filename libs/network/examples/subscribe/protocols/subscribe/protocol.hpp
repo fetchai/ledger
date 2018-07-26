@@ -1,5 +1,4 @@
-#ifndef PROTOCOLS_SUBSCRIBE_PROTOCOL_HPP
-#define PROTOCOLS_SUBSCRIBE_PROTOCOL_HPP
+#pragma once
 
 #include"./commands.hpp"
 #include"./node.hpp"
@@ -30,4 +29,3 @@ public:
 }
 }
 
-#endif

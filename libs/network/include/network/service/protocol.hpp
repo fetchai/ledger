@@ -1,5 +1,4 @@
-#ifndef SERVICE_PROTOCOL_HPP
-#define SERVICE_PROTOCOL_HPP
+#pragma once
 
 #include <map>
 #include <memory>
@@ -214,4 +213,3 @@ class Protocol {
 }
 }
 
-#endif

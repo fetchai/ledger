@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_JSON_DOCUMENT_HPP
-#define BYTE_ARRAY_JSON_DOCUMENT_HPP
+#pragma once
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
@@ -350,4 +349,3 @@ class JSONDocument {
 }
 }
 
-#endif

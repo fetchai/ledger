@@ -1,5 +1,4 @@
-#ifndef PY_MAIN_CHAIN_HPP
-#define PY_MAIN_CHAIN_HPP
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -26,4 +25,3 @@ void BuildMainChain(pybind11::module &module) {
 }
 }
 
-#endif //__PY_MAIN_CHAIN_HPP

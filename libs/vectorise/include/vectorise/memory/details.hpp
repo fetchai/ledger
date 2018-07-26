@@ -1,5 +1,4 @@
-#ifndef MEMORY_DETAILS_HPP
-#define MEMORY_DETAILS_HPP
+#pragma once
 #include<type_traits>
 #include<utility>
 #include<algorithm>
@@ -114,4 +113,3 @@ struct UnrollNext<0, A, B> {
 
 }
 }
-#endif

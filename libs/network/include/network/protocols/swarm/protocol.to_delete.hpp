@@ -1,5 +1,4 @@
-#ifndef SWARM_PROTOCOL_HPP
-#define SWARM_PROTOCOL_HPP
+#pragma once
 
 #include "http/module.hpp"
 #include "json/document.hpp"
@@ -559,4 +558,3 @@ class SwarmProtocol : public SwarmController,
 }
 }
 
-#endif  // SWARM_PROTOCOL_HPP

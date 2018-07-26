@@ -1,5 +1,4 @@
-#ifndef MATH_STATISTICS_GEOMETRICMEAN_HPP
-#define MATH_STATISTICS_GEOMETRICMEAN_HPP
+#pragma once
 #include"math/shape_less_array.hpp"
 #include"vectorise/memory/range.hpp"
 #include"core/assert.hpp"
@@ -27,4 +26,3 @@ inline typename A::type GeometricMean(A const &a)
 }
 
 
-#endif

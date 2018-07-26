@@ -1,5 +1,4 @@
-#ifndef FETCH_EXECUTOR_RPC_CLIENT_HPP
-#define FETCH_EXECUTOR_RPC_CLIENT_HPP
+#pragma once
 
 #include "core/serializers/stl_types.hpp"
 #include "network/service/client.hpp"
@@ -48,4 +47,3 @@ private:
 } // namespace ledger
 } // namespace fetch
 
-#endif //FETCH_EXECUTOR_RPC_CLIENT_HPP

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_PROTOCOLS_CHAIN_KEEPER_TRANSACTION_MANAGER_HPP
-#define LIBFETCHCORE_PROTOCOLS_CHAIN_KEEPER_TRANSACTION_MANAGER_HPP
+#pragma once
 #include "protocols/chain_keeper/transaction_manager.hpp"
 
 #include"fetch_pybind.hpp"
@@ -32,4 +31,3 @@ void BuildTransactionManager(pybind11::module &module) {
 };
 };
 
-#endif

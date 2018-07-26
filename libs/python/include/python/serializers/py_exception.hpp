@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERIALIZER_EXCEPTION_HPP
-#define LIBFETCHCORE_SERIALIZER_EXCEPTION_HPP
+#pragma once
 #include "serializers/exception.hpp"
 
 #include"fetch_pybind.hpp"
@@ -24,4 +23,3 @@ void BuildSerializableException(pybind11::module &module) {
 };
 };
 
-#endif

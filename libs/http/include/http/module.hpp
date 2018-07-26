@@ -1,5 +1,4 @@
-#ifndef HTTP_MODULE_HPP
-#define HTTP_MODULE_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "http/method.hpp"
 #include "http/request.hpp"
@@ -75,4 +74,3 @@ class HTTPModule {
 }
 }
 
-#endif

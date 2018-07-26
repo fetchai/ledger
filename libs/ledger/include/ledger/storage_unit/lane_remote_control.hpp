@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_LANE_REMOTE_CONTROL_HPP
-#define LEDGER_STORAGE_UNIT_LANE_REMOTE_CONTROL_HPP
+#pragma once
 #include"network/service/client.hpp"
 #include"ledger/storage_unit/lane_controller_protocol.hpp"
 #include"ledger/storage_unit/lane_service.hpp"
@@ -148,4 +147,3 @@ private:
 }
 }
 
-#endif

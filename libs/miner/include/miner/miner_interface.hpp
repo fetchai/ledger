@@ -1,5 +1,4 @@
-#ifndef FETCH_MINER_INTERFACE_HPP
-#define FETCH_MINER_INTERFACE_HPP
+#pragma once
 
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
@@ -24,4 +23,3 @@ public:
 } // namespace miner
 } // namespace fetch
 
-#endif //FETCH_MINER_INTERFACE_HPP

@@ -1,5 +1,4 @@
-#ifndef SERVICE_PROMISE_HPP
-#define SERVICE_PROMISE_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
@@ -178,4 +177,3 @@ class Promise {
 }
 }
 
-#endif

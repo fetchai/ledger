@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_BYTE_ARRAY_TOKENIZER_TOKENIZER_HPP
-#define LIBFETCHCORE_BYTE_ARRAY_TOKENIZER_TOKENIZER_HPP
+#pragma once
 
 #include"core/byte_array/tokenizer/tokenizer.hpp"
 #include"python/fetch_pybind.hpp"
@@ -21,4 +20,3 @@ void BuildTokenizer(pybind11::module &module) {
 };
 };
 
-#endif

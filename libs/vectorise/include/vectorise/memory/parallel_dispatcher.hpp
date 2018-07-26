@@ -1,5 +1,4 @@
-#ifndef MEMORY_PARALLEL_DISPATCHER_HPP
-#define MEMORY_PARALLEL_DISPATCHER_HPP
+#pragma once
 
 #include "vectorise/memory/details.hpp"
 #include "vectorise/memory/range.hpp"
@@ -678,4 +677,3 @@ private:
 }
 
 
-#endif

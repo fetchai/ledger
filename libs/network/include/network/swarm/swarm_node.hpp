@@ -1,5 +1,4 @@
-#ifndef SWARM_NODE__
-#define SWARM_NODE__
+#pragma once
 
 #include <string>
 #include <unistd.h>
@@ -197,4 +196,3 @@ protected:
 }
 }
 
-#endif //__SWARM_NODE__

@@ -1,5 +1,4 @@
-#ifndef HTTP_SERVER_HPP
-#define HTTP_SERVER_HPP
+#pragma once
 #include "http/connection.hpp"
 #include "http/http_connection_manager.hpp"
 #include "http/module.hpp"
@@ -203,4 +202,3 @@ class HTTPServer : public AbstractHTTPServer {
 }
 }
 
-#endif

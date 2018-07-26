@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_SESSION_HPP
-#define LIBFETCHCORE_HTTP_SESSION_HPP
+#pragma once
 #include "http/session.hpp"
 
 #include"fetch_pybind.hpp"
@@ -18,4 +17,3 @@ void BuildSession(pybind11::module &module) {
 };
 };
 
-#endif

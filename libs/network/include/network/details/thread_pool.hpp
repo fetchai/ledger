@@ -1,5 +1,4 @@
-#ifndef NETWORK_DETAILS_THREAD_POOL__
-#define NETWORK_DETAILS_THREAD_POOL__
+#pragma once
 
 #include<iostream>
 #include<string>
@@ -291,4 +290,3 @@ inline ThreadPool MakeThreadPool(std::size_t threads = 1) {
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_MATH_STATISTICS_MEAN_HPP
-#define LIBFETCHCORE_MATH_STATISTICS_MEAN_HPP
+#pragma once
 
 #include"math/statistics/mean.hpp"
 #include"math/linalg/matrix.hpp"
@@ -38,4 +37,3 @@ inline void BuildMeanStatistics(std::string const &custom_name, pybind11::module
 }
 }
 
-#endif

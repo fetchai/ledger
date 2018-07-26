@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_OPTIMISATION_SIMULATED_ANNEALING_REFERENCE_ANNEALER_HPP
-#define LIBFETCHCORE_OPTIMISATION_SIMULATED_ANNEALING_REFERENCE_ANNEALER_HPP
+#pragma once
 #include "optimisation/simulated_annealing/reference_annealer.hpp"
 
 #include <pybind11/pybind11.h>
@@ -41,4 +40,3 @@ void BuildReferenceAnnealer(pybind11::module &module) {
 };
 };
 
-#endif

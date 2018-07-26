@@ -1,5 +1,4 @@
-#ifndef SERIALIZER_STIL_TYPES_HPP
-#define SERIALIZER_STIL_TYPES_HPP
+#pragma once
 
 #include <string>
 #include <utility>
@@ -225,4 +224,3 @@ inline void Deserialize(T &serializer, std::set<K> &set) {
 }
 }
 
-#endif

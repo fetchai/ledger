@@ -1,5 +1,4 @@
-#ifndef STORAGE_RESOURCE_MAPPERL_HPP
-#define STORAGE_RESOURCE_MAPPERL_HPP
+#pragma once
 
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
@@ -91,4 +90,3 @@ private:
 }
 }
 
-#endif

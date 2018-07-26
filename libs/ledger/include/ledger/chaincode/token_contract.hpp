@@ -1,5 +1,4 @@
-#ifndef FETCH_WALLET_HPP
-#define FETCH_WALLET_HPP
+#pragma once
 
 #include "ledger/chaincode/contract.hpp"
 
@@ -26,4 +25,3 @@ private:
 } // namespace ledger
 } // namespace fetch
 
-#endif //FETCH_WALLET_HPP

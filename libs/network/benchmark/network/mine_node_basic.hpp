@@ -1,5 +1,4 @@
-#ifndef NETWORK_MINE_TEST_NODE_BASIC_HPP
-#define NETWORK_MINE_TEST_NODE_BASIC_HPP
+#pragma once
 
 // This represents the API to the network test
 #include<stdlib.h>
@@ -196,4 +195,3 @@ private:
 };
 } // namespace network_mine_test
 } // namespace fetch
-#endif

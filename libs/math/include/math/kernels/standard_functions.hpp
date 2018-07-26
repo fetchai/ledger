@@ -1,5 +1,4 @@
-#ifndef KERNELS_STD_FUNCTIONS_HPP
-#define KERNELS_STD_FUNCTIONS_HPP
+#pragma once
 #include<cmath>
 
 namespace fetch {
@@ -508,4 +507,3 @@ namespace stdlib {
 }
 }
 
-#endif

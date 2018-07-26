@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_REGISTER_HPP
-#define VECTORIZE_REGISTER_HPP
+#pragma once
 #include "vectorise/info.hpp"
 
 #include <iostream>
@@ -76,4 +75,3 @@ class VectorRegister {
 #undef APPLY_OPERATOR_LIST
 }
 }
-#endif

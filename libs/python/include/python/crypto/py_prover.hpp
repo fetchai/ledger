@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_CRYPTO_PROVER_HPP
-#define LIBFETCHCORE_CRYPTO_PROVER_HPP
+#pragma once
 #include "crypto/prover.hpp"
 
 #include"fetch_pybind.hpp"
@@ -18,4 +17,3 @@ void BuildProver(pybind11::module &module) {
 };
 };
 
-#endif

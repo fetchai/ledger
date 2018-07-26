@@ -1,5 +1,4 @@
-#ifndef LEDGER_STORAGE_UNIT_LANE_REMOTE_IDENTITY_PROTOCOL_HPP
-#define LEDGER_STORAGE_UNIT_LANE_REMOTE_IDENTITY_PROTOCOL_HPP
+#pragma once
 #include"ledger/storage_unit/lane_identity.hpp"
 namespace fetch
 {
@@ -39,4 +38,3 @@ public:
 
 }
 
-#endif

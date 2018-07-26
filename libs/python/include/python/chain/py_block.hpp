@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_CHAIN_BLOCK_HPP
-#define LIBFETCHCORE_CHAIN_BLOCK_HPP
+#pragma once
 #include "chain/block.hpp"
 
 #include"fetch_pybind.hpp"
@@ -41,4 +40,3 @@ void BuildBasicBlock(std::string const &custom_name, pybind11::module &module) {
 };
 };
 
-#endif

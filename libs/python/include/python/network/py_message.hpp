@@ -1,7 +1,5 @@
-#ifndef LIBFETCHCORE_NETWORK_MESSAGE_HPP
-#define LIBFETCHCORE_NETWORK_MESSAGE_HPP
+#pragma once
 #include "network/message.hpp"
 
 #include"fetch_pybind.hpp"
 
-#endif

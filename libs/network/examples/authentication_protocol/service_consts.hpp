@@ -1,5 +1,4 @@
-#ifndef SERVICE_CONSTS
-#define SERVICE_CONSTS
+#pragma once
 enum {
   GREET = 1,
   ADD,
@@ -14,4 +13,3 @@ enum {
   AUTH = 1,
   TEST = 2
 };
-#endif

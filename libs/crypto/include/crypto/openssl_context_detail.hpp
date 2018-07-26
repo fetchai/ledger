@@ -1,5 +1,4 @@
-#ifndef CRYPTO_OPENSSL_CONTEXT_DETAIL_HPP
-#define CRYPTO_OPENSSL_CONTEXT_DETAIL_HPP
+#pragma once
 
 #include <openssl/bn.h>
 
@@ -38,5 +37,4 @@ template<> const FunctionPtr<BN_CTX> SessionPrimitive<BN_CTX>::end;
 } //* crypto namespace
 } //* fetch namespace
 
-#endif //CRYPTO_OPENSSL_CONTEXT_DETAIL_HPP
 

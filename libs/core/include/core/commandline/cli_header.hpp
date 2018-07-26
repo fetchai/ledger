@@ -1,5 +1,4 @@
-#ifndef COMMANDLINE_CLI_HEADER_HPP
-#define COMMANDLINE_CLI_HEADER_HPP
+#pragma once
 #include<iostream>
 #include<string>
 namespace fetch {
@@ -14,4 +13,3 @@ inline void DisplayCLIHeader(std::string const &name, std::string const &years =
 }
 
 
-#endif

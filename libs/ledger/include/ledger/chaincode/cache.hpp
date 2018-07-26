@@ -1,5 +1,4 @@
-#ifndef FETCH_CACHE_HPP
-#define FETCH_CACHE_HPP
+#pragma once
 
 #include "core/meta/is_log2.hpp"
 #include "ledger/chaincode/factory.hpp"
@@ -103,4 +102,3 @@ private:
 } // namespace ledger
 } // namespace fetch
 
-#endif //FETCH_CACHE_HPP

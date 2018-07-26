@@ -1,5 +1,4 @@
-#ifndef HTTP_CONNECTION_HPP
-#define HTTP_CONNECTION_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "core/assert.hpp"
 #include "network/fetch_asio.hpp"
@@ -189,4 +188,3 @@ class HTTPConnection : public AbstractHTTPConnection,
 }
 }
 
-#endif

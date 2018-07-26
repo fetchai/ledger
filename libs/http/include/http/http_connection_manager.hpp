@@ -1,5 +1,4 @@
-#ifndef HTTP_CONNECTION_MANAGER_HPP
-#define HTTP_CONNECTION_MANAGER_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
@@ -85,4 +84,3 @@ class HTTPConnectionManager {
 }
 }
 
-#endif

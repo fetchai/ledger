@@ -1,5 +1,4 @@
-#ifndef UNITTEST_HPP
-#define UNITTEST_HPP
+#pragma once
 
 #include "core/commandline/vt100.hpp"
 
@@ -345,4 +344,3 @@ ProgramInserter& last_inserter() { return *inserted_programs.back(); }
   ](fetch::unittest::TestContext::self_shared_type self)
 }
 }
-#endif

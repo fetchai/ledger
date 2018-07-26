@@ -1,5 +1,4 @@
-#ifndef HTTP_KEYVALUE_SET
-#define HTTP_KEYVALUE_SET
+#pragma once
 #include "core/byte_array/const_byte_array.hpp"
 
 #include <map>
@@ -69,4 +68,3 @@ class KeyValueSet
 }
 }
 
-#endif

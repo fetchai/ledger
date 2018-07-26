@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_RANDOM_LFG_HPP
-#define LIBFETCHCORE_RANDOM_LFG_HPP
+#pragma once
 
 #include"core/random/lfg.hpp"
 #include"python/fetch_pybind.hpp"
@@ -25,4 +24,3 @@ void BuildLaggedFibonacciGenerator(std::string const &custom_name, pybind11::mod
 };
 };
 
-#endif

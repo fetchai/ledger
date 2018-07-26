@@ -1,5 +1,4 @@
-#ifndef MATH_SPLINE_LINEAR_HPP
-#define MATH_SPLINE_LINEAR_HPP
+#pragma once
 #include <cassert>
 #include <vector>
 namespace fetch {
@@ -48,4 +47,3 @@ class Spline {
 }
 }
 }
-#endif

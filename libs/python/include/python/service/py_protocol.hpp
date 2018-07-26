@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_SERVICE_PROTOCOL_HPP
-#define LIBFETCHCORE_SERVICE_PROTOCOL_HPP
+#pragma once
 #include "service/protocol.hpp"
 
 #include"fetch_pybind.hpp"
@@ -24,4 +23,3 @@ void BuildProtocol(pybind11::module &module) {
 };
 };
 
-#endif

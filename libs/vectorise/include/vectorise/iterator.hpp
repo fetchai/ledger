@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_ITERATOR_HPP
-#define VECTORIZE_ITERATOR_HPP
+#pragma once
 //#include"vectorise/memory/shared_array.hpp"
 //#include"vectorise/memory/array.hpp"
 #include <cassert>
@@ -44,4 +43,3 @@ class VectorRegisterIterator {
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_JSON_EXCEPTIONS_HPP
-#define LIBFETCHCORE_JSON_EXCEPTIONS_HPP
+#pragma once
 #include "json/exceptions.hpp"
 
 #include"fetch_pybind.hpp"
@@ -19,4 +18,3 @@ void BuildUnrecognisedJSONSymbolException(pybind11::module &module) {
 };
 };
 
-#endif

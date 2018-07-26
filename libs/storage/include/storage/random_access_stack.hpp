@@ -1,5 +1,4 @@
-#ifndef STORAGE_RANDOM_ACCESS_STACK_HPP
-#define STORAGE_RANDOM_ACCESS_STACK_HPP
+#pragma once
 #include <fstream>
 #include <string>
 #include<cassert>
@@ -272,4 +271,3 @@ class RandomAccessStack {
 }
 }
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef MATH_RANDOM_LFG_HPP
-#define MATH_RANDOM_LFG_HPP
+#pragma once
 #include <limits>
 #include <cstdint>
 #include "lcg.hpp"
@@ -56,4 +55,3 @@ class LaggedFibonacciGenerator {
 };
 }
 }
-#endif
