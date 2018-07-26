@@ -33,7 +33,10 @@ def main():
             for ext in SOURCE_EXT:
                 for file in fnmatch.filter(files, ext):
                     source_path = os.path.join(root, file)
-                    subprocess.check_call(cmd_prefix + [source_path], cwd=project_root)
+
+                    # apply twice to allow the changes to "settle"
+                    for _ in range(2):
+                        subprocess.check_call(cmd_prefix + [source_path], cwd=project_root)
 
 
     print('Applying style...complete')
