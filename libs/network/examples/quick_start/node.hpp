@@ -1,6 +1,7 @@
 #ifndef QUICK_START_NODE_HPP
 #define QUICK_START_NODE_HPP
 
+#include "./protocols/fetch_protocols.hpp"
 #include "./protocols/quick_start/protocol.hpp"  // defines our quick start protocol
 #include "network/service/client.hpp"
 
@@ -45,13 +46,13 @@ public:
     }
 
     // Ping the client
-    client.Call(protocols::FetchProtocols::QUICK_START,
+    client.Call(protocols::QuickStartProtocols::QUICK_START,
                 protocols::QuickStart::PING);
 
     // Call the SEND_MESSAGE function using the QUICK_START protocol
     // sending msg, and getting result (calls receiveMessage)
     int result = client
-                     .Call(protocols::FetchProtocols::QUICK_START,
+                     .Call(protocols::QuickStartProtocols::QUICK_START,
                            protocols::QuickStart::SEND_MESSAGE, msg)
                      .As<int>();
 
@@ -60,7 +61,7 @@ public:
     // Send data using our custom class
     DataClass d;
     d.data_   = {1, 2, 3};
-    auto prom = client.Call(protocols::FetchProtocols::QUICK_START,
+    auto prom = client.Call(protocols::QuickStartProtocols::QUICK_START,
                             protocols::QuickStart::SEND_DATA, d);
 
     prom.Wait();

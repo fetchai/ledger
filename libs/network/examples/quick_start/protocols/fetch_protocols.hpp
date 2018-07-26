@@ -4,9 +4,8 @@
 namespace fetch {
 namespace protocols {
 
-struct FetchProtocols
+struct QuickStartProtocols
 {
-
   enum
   {
     QUICK_START = 1

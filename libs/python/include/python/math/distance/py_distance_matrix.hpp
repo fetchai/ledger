@@ -3,6 +3,12 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "math/distance/distance_matrix.hpp"
+#include "math/distance/eisen.hpp"
+#include "math/distance/euclidean.hpp"
+#include "math/distance/hamming.hpp"
+#include "math/distance/jaccard.hpp"
+#include "math/distance/manhattan.hpp"
+#include "math/distance/pearson.hpp"
 #include "math/linalg/matrix.hpp"
 #include "python/fetch_pybind.hpp"
 

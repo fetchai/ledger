@@ -1,6 +1,9 @@
 #ifndef VECTORIZE_MATH_ABS_HPP
 #define VECTORIZE_MATH_ABS_HPP
 
+#include "vectorise/sse.hpp"
+
+#include <emmintrin.h>
 #include <limits>
 
 namespace fetch {

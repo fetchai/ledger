@@ -1,6 +1,12 @@
 #ifndef TESTS_RANDOM_BITSTATISTICS_HPP
 #define TESTS_RANDOM_BITSTATISTICS_HPP
 
+#include "core/random/lfg.hpp"
+
+#include <cmath>
+#include <iostream>
+#include <vector>
+
 template <typename T = fetch::random::LaggedFibonacciGenerator<>>
 class BitStatistics
 {

@@ -1,14 +1,15 @@
 #ifndef STORAGE_CACHED_RANDOM_ACCESS_STACK_HPP
 #define STORAGE_CACHED_RANDOM_ACCESS_STACK_HPP
+
+#include "core/assert.hpp"
+#include "storage/random_access_stack.hpp"
+
 #include <fstream>
 #include <map>
 #include <string>
 #include <unordered_map>
 
-#include "core/assert.hpp"
-
 namespace fetch {
-
 namespace storage {
 
 template <typename T, typename D = uint64_t>

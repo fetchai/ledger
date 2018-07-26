@@ -1,6 +1,8 @@
 #ifndef PROTOCOLS_SUBSCRIBE_PROTOCOL_HPP
 #define PROTOCOLS_SUBSCRIBE_PROTOCOL_HPP
 
+#include "network/service/protocol.hpp"
+
 #include "./commands.hpp"
 #include "./node.hpp"
 

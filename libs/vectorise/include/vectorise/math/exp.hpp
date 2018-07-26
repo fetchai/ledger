@@ -1,6 +1,10 @@
 #ifndef VECTORIZE_MATH_EXP_HPP
 #define VECTORIZE_MATH_EXP_HPP
 
+#include "vectorise/sse.hpp"
+
+#include <cstddef>
+
 namespace fetch {
 namespace vectorize {
 

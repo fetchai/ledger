@@ -45,7 +45,7 @@ public:
         make_unique<protocols::QuickStartProtocol<Node>>(node_);
 
     // We 'Add' these protocols under our QUICK_START enum
-    this->Add(protocols::FetchProtocols::QUICK_START,
+    this->Add(protocols::QuickStartProtocols::QUICK_START,
               quickStartProtocol_.get());
   }
 

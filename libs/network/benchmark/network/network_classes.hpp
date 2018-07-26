@@ -1,6 +1,9 @@
 #ifndef NETWORK_CLASSES_HPP
 #define NETWORK_CLASSES_HPP
+
+#include "core/json/document.hpp"
 #include "core/logger.hpp"
+
 namespace fetch {
 namespace network_benchmark {
 
