@@ -19,6 +19,7 @@ AlignTrailingComments: true
 MaxEmptyLinesToKeep: 1
 BreakConstructorInitializers: BeforeComma
 PointerAlignment: Right
+SortUsingDeclarations: false
 SortIncludes: true
 BreakBeforeBraces: Custom
 DerivePointerAlignment: false
