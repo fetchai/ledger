@@ -1,4 +1,4 @@
-Checks: '*,-hicpp-*,-readability*,-cppcoreguidelines*,-fuchsia-*,-cert-*,-modernize-use-auto,-google-runtime-references,-llvm-header-guard'
+Checks: '-*,bugprone-*'
 FormatStyle: file
 CheckOptions:
   - key:             readability-identifier-naming.ClassCase
