@@ -8,25 +8,25 @@ namespace fetch {
 namespace crypto {
 namespace openssl {
 
-template <eECDSABinaryDataFormat P_ECDSABinaryDataFormat>
+template <eECDSAEncoding P_ECDSABinaryDataFormat>
 struct SupportedEncodingForPublicKey
 {
-    static constexpr eECDSABinaryDataFormat value = P_ECDSABinaryDataFormat;
+    static constexpr eECDSAEncoding value = P_ECDSABinaryDataFormat;
 };
 
 template <>
-struct SupportedEncodingForPublicKey<eECDSABinaryDataFormat::DER>
+struct SupportedEncodingForPublicKey<eECDSAEncoding::DER>
 {
-    static constexpr eECDSABinaryDataFormat value = eECDSABinaryDataFormat::bin;
+    static constexpr eECDSAEncoding value = eECDSAEncoding::bin;
 };
 
-template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat = eECDSABinaryDataFormat::canonical
+template<eECDSAEncoding P_ECDSABinaryDataFormat = eECDSAEncoding::canonical
        , int P_ECDSA_Curve_NID = NID_secp256k1
        , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSAPrivateKey
 {
 public:
-    static constexpr eECDSABinaryDataFormat binaryDataFormat = P_ECDSABinaryDataFormat;
+    static constexpr eECDSAEncoding binaryDataFormat = P_ECDSABinaryDataFormat;
     static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
 
     //using public_key_type = ECDSAPublicKey<binaryDataFormat, P_ECDSA_Curve_NID, P_ConversionForm>;
@@ -35,7 +35,7 @@ public:
 
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
 
-    template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat2
+    template<eECDSAEncoding P_ECDSABinaryDataFormat2
            , int P_ECDSA_Curve_NID2
            , point_conversion_form_t P_ConversionForm2>
     friend class ECDSAPrivateKey;
@@ -61,16 +61,16 @@ public:
     }
 
 
-    template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat2
+    template<eECDSAEncoding P_ECDSABinaryDataFormat2
            , int P_ECDSA_Curve_NID2
            , point_conversion_form_t P_ConversionForm2>
     friend class ECDSAPrivateKey;
 
-    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    template<eECDSAEncoding BINARY_DATA_FORMAT>
     using ecdsa_public_key_type = ECDSAPrivateKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
 
 
-    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    template<eECDSAEncoding BINARY_DATA_FORMAT>
     ECDSAPrivateKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> const & from)
         : private_key_(from.private_key_)
         , public_key_(from.public_key_)
@@ -78,7 +78,7 @@ public:
     }
 
 
-    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    template<eECDSAEncoding BINARY_DATA_FORMAT>
     ECDSAPrivateKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> && from)
         : private_key_(std::move(from.private_key_))
         , public_key_(std::move(from.public_key_))
@@ -96,11 +96,11 @@ public:
     {
         switch(binaryDataFormat)
         {
-            case eECDSABinaryDataFormat::canonical:
-            case eECDSABinaryDataFormat::bin:
+            case eECDSAEncoding::canonical:
+            case eECDSAEncoding::bin:
                 return Convert2Bin(private_key_.get());
 
-            case eECDSABinaryDataFormat::DER:
+            case eECDSAEncoding::DER:
                 return Convert2DER(private_key_.get());
         }
     }
@@ -127,11 +127,11 @@ private:
     {
         switch (binaryDataFormat)
         {
-            case eECDSABinaryDataFormat::canonical:
-            case eECDSABinaryDataFormat::bin:
+            case eECDSAEncoding::canonical:
+            case eECDSAEncoding::bin:
                 return ConvertFromBin(key_data);
 
-            case eECDSABinaryDataFormat::DER:
+            case eECDSAEncoding::DER:
                 return ConvertFromDER(key_data);
         }
     }

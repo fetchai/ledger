@@ -12,7 +12,7 @@ namespace openssl {
 
 
 
-template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat = eECDSABinaryDataFormat::canonical
+template<eECDSAEncoding P_ECDSABinaryDataFormat = eECDSAEncoding::canonical
        , int P_ECDSA_Curve_NID = NID_secp256k1
        , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSAPublicKey
@@ -24,10 +24,10 @@ class ECDSAPublicKey
 public:
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
 
-    static constexpr eECDSABinaryDataFormat binaryDataFormat = P_ECDSABinaryDataFormat;
+    static constexpr eECDSAEncoding binaryDataFormat = P_ECDSABinaryDataFormat;
     static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
 
-    template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat2
+    template<eECDSAEncoding P_ECDSABinaryDataFormat2
            , int P_ECDSA_Curve_NID2
            , point_conversion_form_t P_ConversionForm2>
     friend class ECDSAPublicKey;
@@ -54,11 +54,11 @@ public:
 
 
 
-    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    template<eECDSAEncoding BINARY_DATA_FORMAT>
     using ecdsa_public_key_type = ECDSAPublicKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
 
 
-    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    template<eECDSAEncoding BINARY_DATA_FORMAT>
     ECDSAPublicKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> const & from)
         : key_EC_POINT_ {from.key_EC_POINT_}
         , key_EC_KEY_ {from.key_EC_KEY_}
@@ -67,7 +67,7 @@ public:
     }
 
 
-    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    template<eECDSAEncoding BINARY_DATA_FORMAT>
     ECDSAPublicKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> && from)
         : key_EC_POINT_ {std::move(from.key_EC_POINT_)}
         , key_EC_KEY_ {std::move(from.key_EC_KEY_)}
@@ -99,17 +99,17 @@ private:
         EC_POINT const * const public_key,
         EC_GROUP const * const group,
         context::Session<BN_CTX> const & session,
-        eECDSABinaryDataFormat const binaryDataFormat)
+        eECDSAEncoding const binaryDataFormat)
     {
         switch(binaryDataFormat)
         {
-            case eECDSABinaryDataFormat::canonical:
+            case eECDSAEncoding::canonical:
                 return Convert2Canonical(public_key, group, session);
 
-            case eECDSABinaryDataFormat::bin:
+            case eECDSAEncoding::bin:
                 return Convert2Bin(public_key, group, session);
 
-            case eECDSABinaryDataFormat::DER:
+            case eECDSAEncoding::DER:
                 throw std::domain_error("ECDSAPublicKey::Convert(...): Conversion in to DER encoded data is NOT implemented yet.");
         }
     }
@@ -117,18 +117,18 @@ private:
 
     static byte_array::ByteArray Convert(
         EC_POINT const * const public_key,
-        eECDSABinaryDataFormat const binaryDataFormat)
+        eECDSAEncoding const binaryDataFormat)
     {
         uniq_ptr_type<EC_GROUP> group {createGroup()};
         context::Session<BN_CTX> session;
 
         switch(binaryDataFormat)
         {
-            case eECDSABinaryDataFormat::canonical:
-            case eECDSABinaryDataFormat::bin:
+            case eECDSAEncoding::canonical:
+            case eECDSAEncoding::bin:
                 return Convert(public_key, group.get(), session, binaryDataFormat);
 
-            case eECDSABinaryDataFormat::DER:
+            case eECDSAEncoding::DER:
                 return Convert(public_key, group.get(), session, binaryDataFormat);
         }
     }
@@ -136,17 +136,17 @@ private:
 
     static uniq_ptr_type<EC_POINT> Convert(
         byte_array::ConstByteArray const & key_data,
-        eECDSABinaryDataFormat const binaryDataFormat)
+        eECDSAEncoding const binaryDataFormat)
     {
         switch(binaryDataFormat)
         {
-            case eECDSABinaryDataFormat::canonical:
+            case eECDSAEncoding::canonical:
                 return ConvertFromCanonical(key_data);
 
-            case eECDSABinaryDataFormat::bin:
+            case eECDSAEncoding::bin:
                 return ConvertFromBin(key_data);
 
-            case eECDSABinaryDataFormat::DER:
+            case eECDSAEncoding::DER:
                 throw std::domain_error("ECDSAPublicKey::Convert(...): Conversion from DER encoded data is NOT implemented yet.");
         }
     }

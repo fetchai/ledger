@@ -12,7 +12,7 @@ namespace crypto {
 namespace openssl {
 
 
-template<eECDSABinaryDataFormat P_ECDSASignatureBinaryDataFormat = eECDSABinaryDataFormat::canonical
+template<eECDSAEncoding P_ECDSASignatureBinaryDataFormat = eECDSAEncoding::canonical
        , typename T_Hasher = SHA256
        , int P_ECDSA_Curve_NID = NID_secp256k1>
 class ECDSASignature
@@ -24,14 +24,14 @@ class ECDSASignature
 public:
     using hasher_type = T_Hasher;
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
-    template<eECDSABinaryDataFormat  BIN_ENC
+    template<eECDSAEncoding  BIN_ENC
            , point_conversion_form_t POINT_CONV_FORM>
     using public_key_type = ECDSAPublicKey<BIN_ENC, P_ECDSA_Curve_NID, POINT_CONV_FORM>;
-    template<eECDSABinaryDataFormat  BIN_ENC
+    template<eECDSAEncoding  BIN_ENC
            , point_conversion_form_t POINT_CONV_FORM>
     using private_key_type = ECDSAPrivateKey<BIN_ENC, P_ECDSA_Curve_NID, POINT_CONV_FORM>;
 
-    static constexpr eECDSABinaryDataFormat signatureBinaryDataFormat = P_ECDSASignatureBinaryDataFormat;
+    static constexpr eECDSAEncoding signatureBinaryDataFormat = P_ECDSASignatureBinaryDataFormat;
 
 
     ECDSASignature(byte_array::ConstByteArray const &binary_signature)
@@ -42,16 +42,16 @@ public:
     }
 
 
-    template<eECDSABinaryDataFormat BIN_FORMAT>
+    template<eECDSAEncoding BIN_FORMAT>
     using ecdsa_signature_type = ECDSASignature<BIN_FORMAT, T_Hasher, P_ECDSA_Curve_NID>;
 
-    template<eECDSABinaryDataFormat P_ECDSASignatureBinaryDataFormat2
+    template<eECDSAEncoding P_ECDSASignatureBinaryDataFormat2
            , typename T_Hasher2
            , int P_ECDSA_Curve_NID2>
     friend class ECDSASignature;
 
 
-    template<eECDSABinaryDataFormat BIN_FORMAT>
+    template<eECDSAEncoding BIN_FORMAT>
     ECDSASignature(ecdsa_signature_type<BIN_FORMAT> const& from)
         : hash_{from.hash_}
         , signature_ECDSA_SIG_{from.signature_ECDSA_SIG_}
@@ -62,7 +62,7 @@ public:
 
     ECDSASignature(ECDSASignature&& from) = default;
 
-    template<eECDSABinaryDataFormat BIN_FORMAT>
+    template<eECDSAEncoding BIN_FORMAT>
     ECDSASignature(ecdsa_signature_type<BIN_FORMAT>&& from)
         : ECDSASignature{ safeMoveConstruct(std::move(from)) }
     {
@@ -87,7 +87,7 @@ public:
     }
 
 
-    template<eECDSABinaryDataFormat  BIN_ENC
+    template<eECDSAEncoding  BIN_ENC
            , point_conversion_form_t POINT_CONV_FORM>
     static ECDSASignature
     Sign(
@@ -100,7 +100,7 @@ public:
     }
 
 
-    template<eECDSABinaryDataFormat  BIN_ENC
+    template<eECDSAEncoding  BIN_ENC
            , point_conversion_form_t POINT_CONV_FORM>
     static ECDSASignature
     SignHash(
@@ -112,7 +112,7 @@ public:
     }
 
 
-    template<eECDSABinaryDataFormat  BIN_ENC
+    template<eECDSAEncoding  BIN_ENC
            , point_conversion_form_t POINT_CONV_FORM>
     bool VerifyHash (
         public_key_type<BIN_ENC, POINT_CONV_FORM> const & public_key,
@@ -139,7 +139,7 @@ public:
         }
     }
 
-    template<eECDSABinaryDataFormat  BIN_ENC
+    template<eECDSAEncoding  BIN_ENC
            , point_conversion_form_t POINT_CONV_FORM>
    bool Verify (
         public_key_type<BIN_ENC, POINT_CONV_FORM> const & public_key,
@@ -174,7 +174,7 @@ private:
     }
 
 
-    template<eECDSABinaryDataFormat BIN_FORMAT>
+    template<eECDSAEncoding BIN_FORMAT>
     static ECDSASignature
     safeMoveConstruct(ecdsa_signature_type<BIN_FORMAT>&& from)
     {
@@ -187,7 +187,7 @@ private:
     }
 
 
-    template<eECDSABinaryDataFormat  BIN_ENC
+    template<eECDSAEncoding  BIN_ENC
            , point_conversion_form_t POINT_CONV_FORM>
     ECDSASignature(
         private_key_type<BIN_ENC, POINT_CONV_FORM> const & private_key,
@@ -201,7 +201,7 @@ private:
     }
 
 
-    template<eECDSABinaryDataFormat  BIN_ENC
+    template<eECDSAEncoding  BIN_ENC
            , point_conversion_form_t POINT_CONV_FORM>
     static shrd_ptr_type<ECDSA_SIG> 
     CreateSignature (
@@ -231,7 +231,7 @@ private:
         der_sig.Resize(est_size);
 
         if (est_size < 1) {
-            throw std::runtime_error("Convert2Bin<...,eECDSABinaryDataFormat::DER,...>(): i2d_ECDSA_SIG(..., nullptr) failed.");
+            throw std::runtime_error("Convert2Bin<...,eECDSAEncoding::DER,...>(): i2d_ECDSA_SIG(..., nullptr) failed.");
         }
 
         unsigned char* der_sig_ptr = static_cast<unsigned char*>(der_sig.pointer());
@@ -239,11 +239,11 @@ private:
 
         if (res_size < 1)
         {
-            throw std::runtime_error("Convert2Bin<...,eECDSABinaryDataFormat::DER,...(): i2d_ECDSA_SIG(..., &ptr) failed.");
+            throw std::runtime_error("Convert2Bin<...,eECDSAEncoding::DER,...(): i2d_ECDSA_SIG(..., &ptr) failed.");
         }
         else if (res_size > est_size)
         {
-            throw std::runtime_error("Convert2Bin<...,eECDSABinaryDataFormat::DER,...(): i2d_ECDSA_SIG(..., &ptr) returned bigger DER signature size then originally anticipated for allocation.");
+            throw std::runtime_error("Convert2Bin<...,eECDSAEncoding::DER,...(): i2d_ECDSA_SIG(..., &ptr) returned bigger DER signature size then originally anticipated for allocation.");
         }
 
         der_sig.Resize(res_size);
@@ -260,7 +260,7 @@ private:
             d2i_ECDSA_SIG(nullptr, &der_sig_ptr, static_cast<long>(bin_sig.size()))};
         if (!signature)
         {
-            throw std::runtime_error("Convert<...,eECDSABinaryDataFormat::DER,...>(const byte_array::ConstByteArray&): d2i_ECDSA_SIG(...) failed.");
+            throw std::runtime_error("Convert<...,eECDSAEncoding::DER,...>(const byte_array::ConstByteArray&): d2i_ECDSA_SIG(...) failed.");
         }
 
         return signature;
@@ -284,16 +284,16 @@ private:
 
     static byte_array::ByteArray Convert(
         shrd_ptr_type<const ECDSA_SIG>&& signature,
-        eECDSABinaryDataFormat ouput_signature_binary_data_type
+        eECDSAEncoding ouput_signature_binary_data_type
         )
     {
         switch(ouput_signature_binary_data_type)
         {
-            case eECDSABinaryDataFormat::canonical:
-            case eECDSABinaryDataFormat::bin:
+            case eECDSAEncoding::canonical:
+            case eECDSAEncoding::bin:
                 return ConvertCanonical(std::move(signature));
 
-            case eECDSABinaryDataFormat::DER:
+            case eECDSAEncoding::DER:
                 return ConvertDER(std::move(signature));
         }
     }
@@ -301,16 +301,16 @@ private:
 
     static uniq_ptr_type<ECDSA_SIG> Convert(
         const byte_array::ConstByteArray & bin_sig,
-        eECDSABinaryDataFormat input_signature_binary_data_type
+        eECDSAEncoding input_signature_binary_data_type
         )
     {
         switch(input_signature_binary_data_type)
         {
-            case eECDSABinaryDataFormat::canonical:
-            case eECDSABinaryDataFormat::bin:
+            case eECDSAEncoding::canonical:
+            case eECDSAEncoding::bin:
                 return ConvertCanonical(bin_sig);
 
-            case eECDSABinaryDataFormat::DER:
+            case eECDSAEncoding::DER:
                 return ConvertDER(bin_sig);
         }
     }
