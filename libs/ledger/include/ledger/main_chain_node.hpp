@@ -35,7 +35,7 @@ public:
 
   MainChainNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
                 uint32_t minerNumber, uint32_t target, uint32_t chainident)
-      : nnCore_(std::move(networkNodeCore))
+    : nnCore_(std::move(networkNodeCore))
   {
     chain_       = std::make_shared<fetch::chain::MainChain>(minerNumber);
     threadPool_  = fetch::network::MakeThreadPool(5);

@@ -42,7 +42,7 @@ public:
   explicit SwarmNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
                      const std::string &identifier, uint32_t maxpeers,
                      const fetch::swarm::SwarmPeerLocation &uri)
-      : nnCore_(std::move(networkNodeCore)), uri_(uri), karmaPeerList_(identifier)
+    : nnCore_(std::move(networkNodeCore)), uri_(uri), karmaPeerList_(identifier)
   {
     identifier_ = identifier;
     maxpeers_   = maxpeers;
@@ -52,7 +52,7 @@ public:
 
   explicit SwarmNode(fetch::network::NetworkManager tm, const std::string &identifier,
                      uint32_t maxpeers, const fetch::swarm::SwarmPeerLocation &uri)
-      : uri_(uri), karmaPeerList_(identifier)
+    : uri_(uri), karmaPeerList_(identifier)
   {
     identifier_ = identifier;
     maxpeers_   = maxpeers;

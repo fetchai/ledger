@@ -43,7 +43,7 @@ public:
 
   P2PPeerDirectory(uint64_t const &protocol, client_register_type reg, thread_pool_type pool,
                    NodeDetails my_details)
-      : protocol_(protocol), register_(reg), thread_pool_(pool), my_details_(my_details)
+    : protocol_(protocol), register_(reg), thread_pool_(pool), my_details_(my_details)
   {
 
     running_ = false;

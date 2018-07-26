@@ -26,7 +26,7 @@ public:
       end_((mm_register_type *)(arr.pointer() + arr.size())) {}
   */
   VectorRegisterIterator(type const *d, std::size_t size)
-      : ptr_((mm_register_type *)d), end_((mm_register_type *)(d + size))
+    : ptr_((mm_register_type *)d), end_((mm_register_type *)(d + size))
   {}
 
   void Next(vector_register_type &m)

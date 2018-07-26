@@ -22,7 +22,7 @@ public:
   };
 
   MainChainIdentity(client_register_type reg, network_manager_type nm)
-      : register_(reg), manager_(nm)
+    : register_(reg), manager_(nm)
   {}
 
   /// External controls

@@ -142,7 +142,7 @@ public:
   }
 
   Expression(std::string const &expr, Expression const &lhs, Expression const &rhs)
-      : expression_(expr), lhs_(new Expression(lhs)), rhs_(new Expression(rhs))
+    : expression_(expr), lhs_(new Expression(lhs)), rhs_(new Expression(rhs))
   {}
 
 #define ADD_OP(OP)                           \

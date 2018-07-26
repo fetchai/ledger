@@ -41,16 +41,16 @@ public:
   bool            operator<(const NetworkNodeCore &rhs) const  = delete;
 
   NetworkNodeCore(size_t threads, uint16_t httpPort, uint16_t rpcPort)
-      : NetworkNodeCore(NetworkManager{threads}, httpPort, rpcPort)
+    : NetworkNodeCore(NetworkManager{threads}, httpPort, rpcPort)
   {}
 
   NetworkNodeCore(NetworkManager networkManager, uint16_t httpPort, uint16_t rpcPort)
-      : nm_(std::move(networkManager))
+    : nm_(std::move(networkManager))
   {
     lock_type mlock(mutex_);
 
     // TODO(katie) investiaget if this can be moved to Start()
-    // TODO: (EJF) Confusing now network manager is passed in (and is copy)
+    // TODO(EJF):  Confusing now network manager is passed in (and is copy)
     nm_.Start();
 
     rpcPort_   = rpcPort;

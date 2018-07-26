@@ -28,7 +28,7 @@ class DebugMutex : public AbstractMutex
   {
   public:
     MutexTimeout(std::string const &filename, int const &line, double const timeout = 300)
-        : filename_(filename), line_(line)
+      : filename_(filename), line_(line)
     {
       LOG_STACK_TRACE_POINT;
 

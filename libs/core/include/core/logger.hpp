@@ -45,26 +45,26 @@ class ContextDetails
 public:
   typedef std::shared_ptr<ContextDetails> shared_type;
   ContextDetails(void *instance = nullptr)
-      : context_("(root)"), filename_(""), line_(0), instance_(instance)
+    : context_("(root)"), filename_(""), line_(0), instance_(instance)
   {
     id_ = std::this_thread::get_id();
   }
 
   ContextDetails(shared_type ctx, shared_type parent, std::string const &context,
                  std::string const &filename = "", int const &line = 0, void *instance = nullptr)
-      : context_(context)
-      , filename_(filename)
-      , line_(line)
-      , parent_(parent)
-      , derived_from_(ctx)
-      , instance_(instance)
+    : context_(context)
+    , filename_(filename)
+    , line_(line)
+    , parent_(parent)
+    , derived_from_(ctx)
+    , instance_(instance)
   {
     id_ = std::this_thread::get_id();
   }
 
   ContextDetails(shared_type parent, std::string const &context, std::string const &filename = "",
                  int const &line = 0, void *instance = nullptr)
-      : context_(context), filename_(filename), line_(line), parent_(parent), instance_(instance)
+    : context_(context), filename_(filename), line_(line), parent_(parent), instance_(instance)
   {
     id_ = std::this_thread::get_id();
   }

@@ -230,13 +230,13 @@ public:
 
   SwarmController(uint64_t const &protocol, network::NetworkManager *network_manager,
                   SharedNodeDetails &details)
-      : protocol_(protocol)
-      , network_manager_(network_manager)
-      , details_(details)
-      , suggestion_mutex_(__LINE__, __FILE__)
-      , peers_mutex_(__LINE__, __FILE__)
-      , chain_keeper_mutex_(__LINE__, __FILE__)
-      , grouping_parameter_(1)
+    : protocol_(protocol)
+    , network_manager_(network_manager)
+    , details_(details)
+    , suggestion_mutex_(__LINE__, __FILE__)
+    , peers_mutex_(__LINE__, __FILE__)
+    , chain_keeper_mutex_(__LINE__, __FILE__)
+    , grouping_parameter_(1)
   {
     LOG_STACK_TRACE_POINT;
 

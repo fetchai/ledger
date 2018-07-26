@@ -8,7 +8,7 @@ VariantList::VariantList() : size_(0) { pointer_ = data_.pointer(); }
 VariantList::VariantList(std::size_t const &size) { Resize(size); }
 
 VariantList::VariantList(VariantList const &other, std::size_t offset, std::size_t size)
-    : size_(size), offset_(offset), data_(other.data_)
+  : size_(size), offset_(offset), data_(other.data_)
 {
   pointer_ = data_.pointer() + offset_;
 }

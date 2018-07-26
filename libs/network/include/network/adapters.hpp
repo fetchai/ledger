@@ -22,7 +22,7 @@ public:
   static adapter_list_type GetAdapters();
 
   Adapter(address_type const &address, address_type const &network_mask)
-      : address_{address}, network_mask_{network_mask}
+    : address_{address}, network_mask_{network_mask}
   {}
   Adapter(Adapter const &) = default;
   ~Adapter()               = default;

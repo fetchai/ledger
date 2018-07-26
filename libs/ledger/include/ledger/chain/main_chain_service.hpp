@@ -55,7 +55,7 @@ public:
 
   MainChainService(std::string const &db_dir, uint16_t port, fetch::network::NetworkManager tm,
                    bool start_sync = true)
-      : super_type(port, tm)
+    : super_type(port, tm)
   {
 
     fetch::logger.Warn("Establishing mainchain Service on rpc://127.0.0.1:", port);

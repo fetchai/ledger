@@ -41,7 +41,7 @@ public:
 
   SharedArray() {}
   SharedArray(SharedArray const &other)
-      : super_type(other.data_.get(), other.size()), data_(other.data_)
+    : super_type(other.data_.get(), other.size()), data_(other.data_)
   {}
 
   SharedArray(SharedArray &&other)

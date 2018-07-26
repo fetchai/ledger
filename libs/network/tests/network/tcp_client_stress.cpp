@@ -57,7 +57,7 @@ class Client : public TCPClient
 {
 public:
   Client(std::string const &host, std::string const &port, NetworkManager &nmanager)
-      : TCPClient(nmanager)
+    : TCPClient(nmanager)
   {
     Connect(host, port);
     this->OnMessage([](message_type const &value) {
@@ -83,7 +83,7 @@ class SlowClient : public TCPClient
 {
 public:
   SlowClient(std::string const &host, std::string const &port, NetworkManager &nmanager)
-      : TCPClient(nmanager)
+    : TCPClient(nmanager)
   {
     Connect(host, port);
     this->OnMessage([](message_type const &value) {
@@ -113,7 +113,7 @@ class VerifyClient : public TCPClient
 {
 public:
   VerifyClient(std::string const &host, std::string const &port, NetworkManager &nmanager)
-      : TCPClient(nmanager)
+    : TCPClient(nmanager)
   {
     Connect(host, port);
     this->OnMessage([](message_type const &value) {

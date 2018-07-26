@@ -21,7 +21,7 @@ public:
   ExecutionItem(tx_digest_type const &hash, std::size_t slice) : hash_(hash), slice_(slice) {}
 
   ExecutionItem(tx_digest_type const &hash, lane_index_type lane, std::size_t slice)
-      : hash_(hash), lanes_{lane}, slice_(slice)
+    : hash_(hash), lanes_{lane}, slice_(slice)
   {}
 
   ExecutorInterface::Status Execute(ExecutorInterface &executor)

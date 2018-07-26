@@ -21,14 +21,14 @@ public:
   uint32_t                               idlespeed_;
 
   explicit SwarmAgentApiImpl(const std::string &identifier, uint32_t idlespeed)
-      : identifier_(identifier), idlespeed_(idlespeed)
+    : identifier_(identifier), idlespeed_(idlespeed)
   {
     threadingSystem_ = std::make_shared<threading_system_type>(10);
   }
 
   explicit SwarmAgentApiImpl(std::shared_ptr<threading_system_type> threadingSystem,
                              const std::string &identifier, uint32_t idlespeed)
-      : identifier_(identifier), idlespeed_(idlespeed)
+    : identifier_(identifier), idlespeed_(idlespeed)
   {
     threadingSystem_ = threadingSystem;
   }

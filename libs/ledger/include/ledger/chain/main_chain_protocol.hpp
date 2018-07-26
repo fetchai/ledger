@@ -24,7 +24,7 @@ public:
 
   MainChainProtocol(protocol_handler_type const &p, register_type const &r,
                     thread_pool_type const &nm, chain::MainChain *node)
-      : Protocol(), protocol_(p), register_(r), thread_pool_(nm), chain_(node), running_(false)
+    : Protocol(), protocol_(p), register_(r), thread_pool_(nm), chain_(node), running_(false)
   {
     this->Expose(GET_HEADER, this, &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this, &self_type::GetHeaviestChain);

@@ -17,7 +17,7 @@ class SwarmProtocol : public SwarmController,
 public:
   SwarmProtocol(network::NetworkManager *network_manager, uint64_t const &protocol,
                 SharedNodeDetails &details)
-      : SwarmController(protocol, network_manager, details), fetch::service::Protocol()
+    : SwarmController(protocol, network_manager, details), fetch::service::Protocol()
   {
     using namespace fetch::service;
 

@@ -28,7 +28,7 @@ public:
 
   ClientConnection(std::weak_ptr<asio::ip::tcp::tcp::socket> socket,
                    std::weak_ptr<ClientManager>              manager)
-      : socket_(socket), manager_(manager), write_mutex_(__LINE__, __FILE__)
+    : socket_(socket), manager_(manager), write_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();

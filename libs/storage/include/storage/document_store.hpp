@@ -40,12 +40,12 @@ public:
   public:
     DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
                                file_store_type &store)
-        : file_object_type(store), address_(address), store_(s)
+      : file_object_type(store), address_(address), store_(s)
     {}
 
     DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
                                file_store_type &store, std::size_t const &pos)
-        : file_object_type(store, pos), address_(address), store_(s)
+      : file_object_type(store, pos), address_(address), store_(s)
     {}
 
     ~DocumentFileImplementation() { store_->UpdateDocumentFile(*this); }

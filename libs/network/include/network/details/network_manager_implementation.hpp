@@ -14,7 +14,7 @@ namespace network {
 namespace details {
 
 class NetworkManagerImplementation
-    : public std::enable_shared_from_this<NetworkManagerImplementation>
+  : public std::enable_shared_from_this<NetworkManagerImplementation>
 {
 public:
   typedef std::weak_ptr<NetworkManagerImplementation>   weak_ptr_type;

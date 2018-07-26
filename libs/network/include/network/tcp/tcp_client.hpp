@@ -26,7 +26,7 @@ public:
   typedef std::shared_ptr<implementation_type> pointer_type;
 
   explicit TCPClient(network_manager_type const &network_manager)
-      : pointer_{std::make_shared<implementation_type>(network_manager)}
+    : pointer_{std::make_shared<implementation_type>(network_manager)}
   {
     // Note we register handles here, but do not connect until the base class
     // constructed

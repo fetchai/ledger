@@ -22,12 +22,12 @@ public:
   ByteArray(std::initializer_list<container_type> l) : super_type(l) {}
 
   ByteArray(ByteArray const &other, std::size_t const &start, std::size_t const &length)
-      : super_type(other, start, length)
+    : super_type(other, start, length)
   {}
 
   ByteArray(super_type const &other) : super_type(other) {}
   ByteArray(super_type const &other, std::size_t const &start, std::size_t const &length)
-      : super_type(other, start, length)
+    : super_type(other, start, length)
   {}
 
   container_type &      operator[](std::size_t const &n) { return super_type::operator[](n); }

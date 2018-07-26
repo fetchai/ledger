@@ -217,7 +217,7 @@ public:
   }
 
   CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value)
-      : AbstractCallable(arguments)
+    : AbstractCallable(arguments)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -278,7 +278,7 @@ public:
   }
 
   CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value)
-      : AbstractCallable(arguments)
+    : AbstractCallable(arguments)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -333,7 +333,7 @@ public:
   }
 
   CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value)
-      : AbstractCallable(arguments)
+    : AbstractCallable(arguments)
   {
     LOG_STACK_TRACE_POINT;
 

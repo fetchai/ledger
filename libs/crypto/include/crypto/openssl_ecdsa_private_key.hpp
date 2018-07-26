@@ -151,21 +151,21 @@ private:
   }
 
   ECDSAPrivateKey(shrd_ptr_type<BIGNUM, del_strat_type::clearing> private_key_as_BN)
-      : private_key_(ConvertPrivateKeyBN2ECKEY(private_key_as_BN.get()))
-      , public_key_(DerivePublicKey(private_key_as_BN.get(), private_key_.get()))
+    : private_key_(ConvertPrivateKeyBN2ECKEY(private_key_as_BN.get()))
+    , public_key_(DerivePublicKey(private_key_as_BN.get(), private_key_.get()))
   {}
 
 public:
   ECDSAPrivateKey()
-      : private_key_(GenerateKeyPair()), public_key_(ExtractPublicKey(private_key_.get()))
+    : private_key_(GenerateKeyPair()), public_key_(ExtractPublicKey(private_key_.get()))
   {}
 
   ECDSAPrivateKey(const byte_array::ConstByteArray &key_data)
-      : ECDSAPrivateKey(ECDSAPrivateKey::GetPrivateKeyAsBIGNUM(key_data))
+    : ECDSAPrivateKey(ECDSAPrivateKey::GetPrivateKeyAsBIGNUM(key_data))
   {}
 
   ECDSAPrivateKey(const std::string &hex_string_key_data)
-      : ECDSAPrivateKey(ECDSAPrivateKey::GetPrivateKeyAsBIGNUM(hex_string_key_data))
+    : ECDSAPrivateKey(ECDSAPrivateKey::GetPrivateKeyAsBIGNUM(hex_string_key_data))
   {}
 
   shrd_ptr_type<const EC_KEY> key() const { return private_key_; }

@@ -27,11 +27,11 @@ public:
   explicit BitVectorImplementation(std::size_t const &n) { Resize(n); }
 
   BitVectorImplementation(BitVectorImplementation const &other)
-      : data_(other.data_.Copy()), size_(other.size_), blocks_(other.blocks_)
+    : data_(other.data_.Copy()), size_(other.size_), blocks_(other.blocks_)
   {}
 
   BitVectorImplementation(std::size_t const &size, std::initializer_list<uint64_t> const &data)
-      : BitVectorImplementation(data)
+    : BitVectorImplementation(data)
   {
     assert(size <= size_);
     size_ = size;

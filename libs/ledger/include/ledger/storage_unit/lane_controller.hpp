@@ -25,10 +25,10 @@ public:
   LaneController(protocol_handler_type const &      lane_identity_protocol,
                  std::weak_ptr<LaneIdentity> const &identity, client_register_type reg,
                  network_manager_type nm)
-      : lane_identity_protocol_(lane_identity_protocol)
-      , lane_identity_(identity)
-      , register_(reg)
-      , manager_(nm)
+    : lane_identity_protocol_(lane_identity_protocol)
+    , lane_identity_(identity)
+    , register_(reg)
+    , manager_(nm)
   {}
 
   /// External controls

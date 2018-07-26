@@ -26,7 +26,7 @@ public:
   typedef std::shared_ptr<asio::streambuf>             buffer_ptr_type;
 
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
-      : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__)
+    : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
 

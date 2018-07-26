@@ -32,7 +32,7 @@ public:
   typedef std::mutex                          mutex_type;
 
   TCPClientImplementation(network_manager_type const &network_manager) noexcept
-      : networkManager_{network_manager}
+    : networkManager_{network_manager}
   {}
 
   TCPClientImplementation(TCPClientImplementation const &rhs) = delete;

@@ -45,7 +45,7 @@ public:
   };
 
   P2PService(uint16_t port, fetch::network::NetworkManager const &tm)
-      : super_type(port, tm), manager_(tm)
+    : super_type(port, tm), manager_(tm)
   {
     running_     = false;
     thread_pool_ = network::MakeThreadPool(1);

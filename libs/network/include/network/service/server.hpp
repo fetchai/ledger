@@ -72,9 +72,9 @@ public:
   typedef byte_array::ConstByteArray byte_array_type;
 
   ServiceServer(uint16_t port, network_manager_type network_manager)
-      : super_type(port, network_manager)
-      , network_manager_(network_manager)
-      , message_mutex_(__LINE__, __FILE__)
+    : super_type(port, network_manager)
+    , network_manager_(network_manager)
+    , message_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
   }

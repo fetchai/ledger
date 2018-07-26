@@ -42,11 +42,11 @@ public:
 
   ChainKeeperController(uint64_t const &protocol, network::NetworkManager *network_manager,
                         EntryPoint &details)
-      : network_manager_(network_manager)
-      , details_(details)
-      , block_mutex_(__LINE__, __FILE__)
-      , chain_keeper_friends_mutex_(__LINE__, __FILE__)
-      , grouping_parameter_(1)
+    : network_manager_(network_manager)
+    , details_(details)
+    , block_mutex_(__LINE__, __FILE__)
+    , chain_keeper_friends_mutex_(__LINE__, __FILE__)
+    , grouping_parameter_(1)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);

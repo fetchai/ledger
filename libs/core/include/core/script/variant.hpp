@@ -81,11 +81,11 @@ class Variant
   {
   public:
     VariantObjectEntryProxy(byte_array::ConstByteArray const &key, Variant *parent)
-        : key_(key), parent_(parent), child_(nullptr)
+      : key_(key), parent_(parent), child_(nullptr)
     {}
 
     VariantObjectEntryProxy(byte_array::ConstByteArray const &key, Variant *parent, Variant *child)
-        : T(*child), key_(key), parent_(parent), child_(child)
+      : T(*child), key_(key), parent_(parent), child_(child)
     {}
 
     ~VariantObjectEntryProxy()

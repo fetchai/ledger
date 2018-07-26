@@ -19,7 +19,7 @@ class ServiceClientInterface
 {
 public:
   ServiceClientInterface()
-      : subscription_mutex_(__LINE__, __FILE__), promises_mutex_(__LINE__, __FILE__)
+    : subscription_mutex_(__LINE__, __FILE__), promises_mutex_(__LINE__, __FILE__)
   {}
 
   virtual ~ServiceClientInterface() {}

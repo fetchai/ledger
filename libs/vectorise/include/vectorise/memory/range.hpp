@@ -54,7 +54,7 @@ public:
   typedef std::size_t size_type;
 
   Range(size_type const &from = 0, size_type const &to = size_type(-1), size_type const &step = 1)
-      : from_(from), to_(to), step_(step)
+    : from_(from), to_(to), step_(step)
   {}
 
   size_type const &from() const { return from_; }

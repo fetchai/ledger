@@ -101,15 +101,15 @@ private:
 public:
   ECDSAPublicKey(shrd_ptr<EC_POINT> public_key, const EC_GROUP *group,
                  const context::Session<BN_CTX> &session)
-      : key_EC_POINT_{public_key}
-      , key_EC_KEY_{ConvertToECKEY(public_key.get())}
-      , key_binary_{Convert(public_key.get(), group, session)}
+    : key_EC_POINT_{public_key}
+    , key_EC_KEY_{ConvertToECKEY(public_key.get())}
+    , key_binary_{Convert(public_key.get(), group, session)}
   {}
 
   ECDSAPublicKey(const byte_array::ConstByteArray &key_data)
-      : key_EC_POINT_{Convert(key_data)}
-      , key_EC_KEY_{ConvertToECKEY(key_EC_POINT_)}
-      , key_binary_{key_data}
+    : key_EC_POINT_{Convert(key_data)}
+    , key_EC_KEY_{ConvertToECKEY(key_EC_POINT_)}
+    , key_binary_{key_data}
   {}
 
   shrd_ptr<const EC_POINT> keyAsEC_POINT() const { return key_EC_POINT_; }

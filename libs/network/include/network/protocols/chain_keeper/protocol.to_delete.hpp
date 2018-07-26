@@ -24,7 +24,7 @@ public:
 
   ChainKeeperProtocol(network::NetworkManager *network_manager, uint64_t const &protocol,
                       EntryPoint &details)
-      : ChainKeeperController(protocol, network_manager, details), fetch::service::Protocol()
+    : ChainKeeperController(protocol, network_manager, details), fetch::service::Protocol()
   {
     using namespace fetch::service;
 

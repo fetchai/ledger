@@ -40,7 +40,7 @@ public:
 
   SwarmAgentNaive(std::shared_ptr<SwarmAgentApi> api, const std::string &identifier, int id,
                   std::shared_ptr<fetch::swarm::SwarmRandom> rnd, uint32_t maxpeers)
-      : rnd_(rnd), identifier_(identifier), maxpeers_(maxpeers), blockCounter_(0), id_(id)
+    : rnd_(rnd), identifier_(identifier), maxpeers_(maxpeers), blockCounter_(0), id_(id)
   {
     api->OnIdle([this, api, identifier] {
       auto goodPeers = api->GetPeers(10, -0.5);

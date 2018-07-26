@@ -16,10 +16,10 @@ class FetchSwarmService : public fetch::protocols::SwarmProtocol
 public:
   FetchSwarmService(uint16_t port, uint16_t http_port, std::string const &pk,
                     fetch::network::NetworkManager *tm)
-      : fetch::protocols::SwarmProtocol(tm, fetch::protocols::FetchProtocols::SWARM, details_)
-      , network_manager_(tm)
-      , service_(port, network_manager_)
-      , http_server_(http_port, network_manager_)
+    : fetch::protocols::SwarmProtocol(tm, fetch::protocols::FetchProtocols::SWARM, details_)
+    , network_manager_(tm)
+    , service_(port, network_manager_)
+    , http_server_(http_port, network_manager_)
   {
     using namespace fetch::protocols;
 

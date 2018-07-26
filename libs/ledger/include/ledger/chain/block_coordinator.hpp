@@ -20,7 +20,7 @@ public:
   typedef ledger::ExecutionManagerInterface::Status status_type;
 
   BlockCoordinator(chain::MainChain &mainChain, ledger::ExecutionManagerInterface &executionManager)
-      : mainChain_{mainChain}, executionManager_{executionManager}
+    : mainChain_{mainChain}, executionManager_{executionManager}
   {}
 
   ~BlockCoordinator() { Stop(); }

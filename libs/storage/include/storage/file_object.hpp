@@ -59,7 +59,7 @@ public:
   FileObject &operator=(FileObject &&other) = default;
 
   FileObject(stack_type &stack)
-      : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE), length_(HEADER_SIZE)
+    : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE), length_(HEADER_SIZE)
   {
     block_type block;
     last_position_ = stack_.size();
@@ -75,7 +75,7 @@ public:
   }
 
   FileObject(stack_type &stack, std::size_t const &position)
-      : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE)
+    : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE)
   {
     block_type first;
     assert(position < stack_.size());

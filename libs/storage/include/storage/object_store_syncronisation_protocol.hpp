@@ -27,12 +27,12 @@ public:
 
   ObjectStoreSyncronisationProtocol(protocol_handler_type const &p, register_type const &r,
                                     thread_pool_type const &nm, ObjectStore<T> *store)
-      : fetch::service::Protocol()
-      , protocol_(p)
-      , register_(r)
-      , thread_pool_(nm)
-      , store_(store)
-      , running_(false)
+    : fetch::service::Protocol()
+    , protocol_(p)
+    , register_(r)
+    , thread_pool_(nm)
+    , store_(store)
+    , running_(false)
   {  // , register_(reg), manager_(nm)
 
     this->Expose(OBJECT_COUNT, this, &self_type::ObjectCount);

@@ -25,12 +25,12 @@ public:
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
                  chain::BlockCoordinator &blockCoordinator, miner_type &miner, uint64_t minerNumber)
-      : num_lanes_{num_lanes}
-      , num_slices_{num_slices}
-      , mainChain_{mainChain}
-      , blockCoordinator_{blockCoordinator}
-      , miner_{miner}
-      , minerNumber_{minerNumber}
+    : num_lanes_{num_lanes}
+    , num_slices_{num_slices}
+    , mainChain_{mainChain}
+    , blockCoordinator_{blockCoordinator}
+    , miner_{miner}
+    , minerNumber_{minerNumber}
   {}
 
   ~MainChainMiner() { Stop(); }

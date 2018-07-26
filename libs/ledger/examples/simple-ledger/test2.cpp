@@ -64,9 +64,9 @@ class FetchShardService
 {
 public:
   FetchShardService(uint16_t port)
-      : network_manager_(new fetch::network::NetworkManager(8))
-      , service_(port, network_manager_)
-      , http_server_(8080, network_manager_)
+    : network_manager_(new fetch::network::NetworkManager(8))
+    , service_(port, network_manager_)
+    , http_server_(8080, network_manager_)
   {
 
     std::cout << "Listening for peers on " << (port) << ", clients on " << (port) << std::endl;

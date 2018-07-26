@@ -14,7 +14,7 @@ public:
   typedef uint64_t                                     handle_type;
 
   HTTPConnectionManager(AbstractHTTPServer &server)
-      : server_(server), clients_mutex_(__LINE__, __FILE__)
+    : server_(server), clients_mutex_(__LINE__, __FILE__)
   {}
 
   handle_type Join(connection_type client)

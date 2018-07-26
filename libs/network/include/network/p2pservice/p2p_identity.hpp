@@ -33,7 +33,7 @@ public:
   };
 
   P2PIdentity(uint64_t const &protocol, client_register_type reg, network_manager_type nm)
-      : register_(reg), manager_(nm)
+    : register_(reg), manager_(nm)
   {
     protocol_       = protocol;
     my_details_     = MakeNodeDetails();

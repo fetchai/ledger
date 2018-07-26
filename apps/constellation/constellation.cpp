@@ -8,13 +8,13 @@ namespace fetch {
 Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std::size_t num_lanes,
                              std::size_t num_slices, std::string const &interface_address,
                              std::string const &db_prefix)
-    : interface_address_{interface_address}
-    , num_lanes_{static_cast<uint32_t>(num_lanes)}
-    , num_slices_{static_cast<uint32_t>(num_slices)}
-    , p2p_port_{static_cast<uint16_t>(port_start + P2P_PORT_OFFSET)}
-    , http_port_{static_cast<uint16_t>(port_start + HTTP_PORT_OFFSET)}
-    , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
-    , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
+  : interface_address_{interface_address}
+  , num_lanes_{static_cast<uint32_t>(num_lanes)}
+  , num_slices_{static_cast<uint32_t>(num_slices)}
+  , p2p_port_{static_cast<uint16_t>(port_start + P2P_PORT_OFFSET)}
+  , http_port_{static_cast<uint16_t>(port_start + HTTP_PORT_OFFSET)}
+  , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
+  , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
 {
   // determine how many threads the network manager will require
   std::size_t const num_network_threads =

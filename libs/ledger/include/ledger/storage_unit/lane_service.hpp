@@ -56,7 +56,7 @@ public:
   // TODO: Make config JSON
   LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &total_lanes,
               uint16_t port, fetch::network::NetworkManager tm, bool start_sync = true)
-      : super_type(port, tm)
+    : super_type(port, tm)
   {
 
     this->SetConnectionRegister(register_);

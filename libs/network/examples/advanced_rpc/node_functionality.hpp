@@ -15,7 +15,7 @@ public:
   typedef fetch::service::ServiceClient client_type;
 
   NodeToNodeFunctionality(fetch::network::NetworkManager network_manager)
-      : network_manager_(network_manager)
+    : network_manager_(network_manager)
   {}
 
   void Tick() { this->Publish(PeerToPeerFeed::NEW_MESSAGE, "tick"); }

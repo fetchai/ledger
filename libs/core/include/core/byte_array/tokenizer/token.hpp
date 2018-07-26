@@ -17,7 +17,7 @@ public:
   Token(ConstByteArray &&other) : ConstByteArray(other) {}
 
   Token(ConstByteArray const &other, std::size_t const &start, std::size_t const &length)
-      : ConstByteArray(other, start, length)
+    : ConstByteArray(other, start, length)
   {}
 
   bool operator==(ConstByteArray const &other) const { return ConstByteArray::operator==(other); }

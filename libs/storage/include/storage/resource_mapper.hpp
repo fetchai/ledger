@@ -65,7 +65,7 @@ class ResourceAddress : public ResourceID
 {
 public:
   ResourceAddress(byte_array::ConstByteArray const &address)
-      : ResourceID(crypto::Hash<crypto::SHA256>(address))
+    : ResourceID(crypto::Hash<crypto::SHA256>(address))
   {
     address_ = address;
   }
