@@ -8,6 +8,17 @@ namespace fetch {
 namespace crypto {
 namespace openssl {
 
+template <eECDSABinaryDataFormat P_ECDSABinaryDataFormat>
+struct SupportedEncodingForPublicKey
+{
+    static constexpr eECDSABinaryDataFormat value = P_ECDSABinaryDataFormat;
+};
+
+template <>
+struct SupportedEncodingForPublicKey<eECDSABinaryDataFormat::DER>
+{
+    static constexpr eECDSABinaryDataFormat value = eECDSABinaryDataFormat::bin;
+};
 
 template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat = eECDSABinaryDataFormat::canonical
        , int P_ECDSA_Curve_NID = NID_secp256k1
@@ -18,7 +29,10 @@ public:
     static constexpr eECDSABinaryDataFormat binaryDataFormat = P_ECDSABinaryDataFormat;
     static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
 
-    using public_key_type = ECDSAPublicKey<binaryDataFormat, P_ECDSA_Curve_NID, P_ConversionForm>;
+    //using public_key_type = ECDSAPublicKey<binaryDataFormat, P_ECDSA_Curve_NID, P_ConversionForm>;
+    //TODO: Implement DER encoding. It mis missing now so defaulting to canonical encoding to void failures when construcing this class (ECDSAPrivateKey) with DER encoding.
+    using public_key_type = ECDSAPublicKey<SupportedEncodingForPublicKey<P_ECDSABinaryDataFormat>::value, P_ECDSA_Curve_NID, P_ConversionForm>;
+
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
 
     template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat2
@@ -29,12 +43,12 @@ public:
 
 private:
     //TODO: Keep key encrypted
-    const shrd_ptr_type<EC_KEY> private_key_;
-    const public_key_type public_key_;
+    shrd_ptr_type<EC_KEY> private_key_;
+    //TODO: Do lazy initilisation of the public key to minimize impact at construction time of this class
+    public_key_type public_key_;
 
 
 public:
-
     ECDSAPrivateKey()
         : ECDSAPrivateKey(Generate())
     {
@@ -291,6 +305,7 @@ private:
 
         return ECDSAPrivateKey {std::move(private_key), std::move(public_key) };
     }
+
 
     static ECDSAPrivateKey ConvertFromDER (byte_array::ConstByteArray const & key_data)
     {

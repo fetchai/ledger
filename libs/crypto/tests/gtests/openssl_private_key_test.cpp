@@ -16,16 +16,16 @@ using ::testing::Return;
 class ECDCSAPrivateKeyTest : public testing::Test {
 protected:
 
-    const fetch::byte_array::ConstByteArray priv_key_data = {
+    const fetch::byte_array::ConstByteArray priv_key_data__bin = {
         0x92, 0xad, 0x61, 0xcf, 0xfc, 0xb9, 0x2a, 0x17,
         0x02, 0xa3, 0xd6, 0x03, 0xa0, 0x0d, 0x6e, 0xb3,
         0xad, 0x92, 0x0f, 0x8c, 0xec, 0x43, 0xda, 0x41,
         0x8f, 0x01, 0x04, 0xc6, 0xc6, 0xc9, 0xe0, 0x5e};
 
-    const std::string priv_key_hex_str = 
+    const std::string priv_key_hex_str__bin = 
         "92ad61cffcb92a1702a3d603a00d6eb3ad920f8cec43da418f0104c6c6c9e05e";
 
-    const fetch::byte_array::ConstByteArray public_key_data = {
+    const fetch::byte_array::ConstByteArray public_key_data__bin = {
         0x04, 0x55, 0x5a, 0x38, 0xa4, 0x2d, 0xb2, 0x9d,
         0x05, 0xcd, 0xe3, 0xea, 0xa0, 0x93, 0x07, 0x89,
         0x46, 0x16, 0xb5, 0xa2, 0xb5, 0xa3, 0x02, 0xe9,
@@ -43,24 +43,50 @@ protected:
 };
 
 
-TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key__DER)
+TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key__bin)
 {
     //* Production code:
-    ECDSAPrivateKey<eECDSABinaryDataFormat::DER> x(priv_key_data);
+    ECDSAPrivateKey<eECDSABinaryDataFormat::bin> x(priv_key_data__bin);
 
     //* Expectations:
     EXPECT_TRUE(x.key());
     EXPECT_TRUE(x.publicKey().key());
 
-    EXPECT_EQ(priv_key_data, x.KeyAsBin());
-    EXPECT_EQ(public_key_data, x.publicKey().keyAsBin());
+    EXPECT_EQ(priv_key_data__bin, x.KeyAsBin());
+    EXPECT_EQ(public_key_data__bin, x.publicKey().keyAsBin());
+}
+
+//TODO: A bit lame test, needs to be tesetd rather with & against hardcoded DER encoded data
+TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key__DER)
+{
+    //* Production code:
+    ECDSAPrivateKey<eECDSABinaryDataFormat::bin> x(priv_key_data__bin);
+
+    //* Expectations:
+    ASSERT_TRUE(x.key());
+    ASSERT_TRUE(x.publicKey().key());
+
+    //* Conv. binary data from bin to DER encoding
+    ECDSAPrivateKey<eECDSABinaryDataFormat::DER> x_der(x);
+
+    //* Expectations:
+    ASSERT_TRUE(x_der.key());
+    ASSERT_TRUE(x_der.publicKey().key());
+    ASSERT_NE(x.key(), x_der.key());
+    ASSERT_NE(x.publicKey().key(), x_der.publicKey().key());
+
+    //* Conv. binary data back from DER to bin encoding
+    ECDSAPrivateKey<eECDSABinaryDataFormat::bin> x_2(x_der);
+
+    EXPECT_EQ(priv_key_data__bin, x_2.KeyAsBin());
+    EXPECT_EQ(public_key_data__bin, x_2.publicKey().keyAsBin());
 }
 
 
 TEST_F(ECDCSAPrivateKeyTest, test_convert_from_DER_to_canonical)
 {
     //* Production code:
-    ECDSAPrivateKey<eECDSABinaryDataFormat::DER> k_der(priv_key_data);
+    ECDSAPrivateKey<eECDSABinaryDataFormat::DER> k_der(priv_key_data__bin);
     //std::cerr << "pub key0 DER         = " << byte_array::ToHex(k_der.publicKey().keyAsBin()) << std::endl;
 
     //* Necessary:
@@ -72,25 +98,10 @@ TEST_F(ECDCSAPrivateKeyTest, test_convert_from_DER_to_canonical)
 
     ECDSAPrivateKey<eECDSABinaryDataFormat::DER> k_der_2(std::move(k_can));
     //std::cerr << "pub key2 DER         = " << byte_array::ToHex(k_der_2.publicKey().keyAsBin()) << std::endl;
-    //std::cerr << "public_key_data DER  = " << byte_array::ToHex(public_key_data) << std::endl;
+    //std::cerr << "public_key_data__bin DER  = " << byte_array::ToHex(public_key_data__bin) << std::endl;
 
-    EXPECT_EQ(priv_key_data, k_der_2.KeyAsBin());
-    EXPECT_EQ(public_key_data, k_der_2.publicKey().keyAsBin());
-}
-
-
-TEST_F(ECDCSAPrivateKeyTest, test_instantiation_from_bin_and_hex_data_format_gives_the_same_key)
-{
-    //* Production code:
-    ECDSAPrivateKey<> b(priv_key_data);
-    ECDSAPrivateKey<> h(priv_key_hex_str);
-
-    //* Expectations:
-    EXPECT_TRUE(b.key());
-    EXPECT_TRUE(h.key());
-
-    EXPECT_EQ(b.KeyAsBin(), h.KeyAsBin());
-    EXPECT_EQ(b.publicKey().keyAsBin(), h.publicKey().keyAsBin());
+    EXPECT_EQ(priv_key_data__bin, k_der_2.KeyAsBin());
+    EXPECT_EQ(public_key_data__bin, k_der_2.publicKey().keyAsBin());
 }
 
 
@@ -113,11 +124,11 @@ TEST_F(ECDCSAPrivateKeyTest, test_each_generated_key_is_different) {
 
 TEST_F(ECDCSAPrivateKeyTest, test_key_conversion_to_byte_array) {
     //* Production code:
-    ECDSAPrivateKey<> x(priv_key_data);
+    ECDSAPrivateKey<> x(priv_key_data__bin);
 
     //* Expectations:
     EXPECT_TRUE(x.key());
-    EXPECT_EQ(priv_key_data, x.KeyAsBin());
+    EXPECT_EQ(priv_key_data__bin, x.KeyAsBin());
 }
 
 //TODO: Add more tests

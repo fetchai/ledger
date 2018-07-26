@@ -17,9 +17,9 @@ template<eECDSABinaryDataFormat P_ECDSABinaryDataFormat = eECDSABinaryDataFormat
        , point_conversion_form_t P_ConversionForm = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSAPublicKey
 {
-    const shrd_ptr_type<EC_POINT> key_EC_POINT_;
-    const shrd_ptr_type<EC_KEY> key_EC_KEY_;
-    const byte_array::ConstByteArray key_binary_;
+    shrd_ptr_type<EC_POINT> key_EC_POINT_;
+    shrd_ptr_type<EC_KEY> key_EC_KEY_;
+    byte_array::ConstByteArray key_binary_;
 
 public:
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
