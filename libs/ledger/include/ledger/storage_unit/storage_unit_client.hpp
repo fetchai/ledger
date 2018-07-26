@@ -34,7 +34,7 @@ public:
   using network_manager_type   = fetch::network::NetworkManager;
   using lane_type              = LaneIdentity::lane_type;
 
-  // TODO: (EJF) is move?
+  // TODO(EJF):  is move?
   explicit StorageUnitClient(network_manager_type tm) : network_manager_(tm)
   {
     id_ = "my-fetch-id";

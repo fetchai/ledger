@@ -3,7 +3,7 @@
 namespace fetch {
 namespace script {
 
-VariantList::VariantList() : size_(0) { pointer_ = data_.pointer(); }
+VariantList::VariantList() { pointer_ = data_.pointer(); }
 
 VariantList::VariantList(std::size_t const &size) { Resize(size); }
 
@@ -13,11 +13,7 @@ VariantList::VariantList(VariantList const &other, std::size_t offset, std::size
   pointer_ = data_.pointer() + offset_;
 }
 
-VariantList::VariantList(VariantList const &other)
-    : size_(other.size_), offset_(other.offset_), data_(other.data_), pointer_(other.pointer_)
-{}
-
-VariantList::VariantList(VariantList &&other)
+VariantList::VariantList(VariantList &&other) noexcept
 {
   std::swap(size_, other.size_);
   std::swap(offset_, other.offset_);
@@ -25,15 +21,7 @@ VariantList::VariantList(VariantList &&other)
   std::swap(pointer_, other.pointer_);
 }
 
-VariantList const &VariantList::operator=(VariantList const &other)
-{
-  size_    = other.size_;
-  offset_  = other.offset_;
-  data_    = other.data_;
-  pointer_ = other.pointer_;
-  return *this;
-}
-VariantList const &VariantList::operator=(VariantList &&other)
+VariantList &VariantList::operator=(VariantList &&other) noexcept
 {
   std::swap(size_, other.size_);
   std::swap(offset_, other.offset_);

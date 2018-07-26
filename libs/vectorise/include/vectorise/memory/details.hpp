@@ -29,7 +29,7 @@ struct MatrixApplyFreeFunction
   template <typename T>
   struct Unroll<T>
   {
-    typedef R (*signature_type)(Args..., B const &, B &);
+    using signature_type = R (*)(Args..., const B &, B &);
     static R Apply(B const *regs, signature_type &&fnc, B &ret, Args &&... args)
     {
       return fnc(std::forward<Args>(args)..., *regs, ret);
@@ -59,7 +59,7 @@ struct MatrixReduceFreeFunction
   struct Unroll<T>
   {
     //    typedef B(*signature_type)(B const&, Args..., B const&);
-    typedef std::function<B(B const &, Args..., B const &)> signature_type;
+    using signature_type = std::function<B(const B &, Args..., const B &)>;
     static B Apply(B const &self, B const *regs, signature_type &&fnc, Args &&... args)
     {
       return fnc(self, std::forward<Args>(args)..., *regs);
@@ -92,7 +92,7 @@ struct MatrixApplyClassMember
   template <typename T>
   struct Unroll<T>
   {
-    typedef R (C::*signature_type)(Args..., B const &, B &) const;
+    using signature_type = R (C::*)(Args..., const B &, B &) const;
     static R Apply(B const *regs, C const &cls, signature_type &&fnc, B &ret, Args... args)
     {
       return (cls.*fnc)(args..., *regs, ret);

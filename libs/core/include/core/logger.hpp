@@ -11,6 +11,7 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -43,33 +44,38 @@ private:
 class ContextDetails
 {
 public:
-  typedef std::shared_ptr<ContextDetails> shared_type;
+  using shared_type = std::shared_ptr<ContextDetails>;
+
   ContextDetails(void *instance = nullptr)
     : context_("(root)"), filename_(""), line_(0), instance_(instance)
   {
     id_ = std::this_thread::get_id();
   }
 
-  ContextDetails(shared_type ctx, shared_type parent, std::string const &context,
-                 std::string const &filename = "", int const &line = 0, void *instance = nullptr)
-    : context_(context)
-    , filename_(filename)
+  ContextDetails(shared_type ctx, shared_type parent, std::string context,
+                 std::string filename = "", int const &line = 0, void *instance = nullptr)
+    : context_(std::move(context))
+    , filename_(std::move(filename))
     , line_(line)
-    , parent_(parent)
-    , derived_from_(ctx)
+    , parent_(std::move(std::move(parent)))
+    , derived_from_(std::move(std::move(ctx)))
     , instance_(instance)
   {
     id_ = std::this_thread::get_id();
   }
 
-  ContextDetails(shared_type parent, std::string const &context, std::string const &filename = "",
+  ContextDetails(shared_type parent, std::string context, std::string filename = "",
                  int const &line = 0, void *instance = nullptr)
-    : context_(context), filename_(filename), line_(line), parent_(parent), instance_(instance)
+    : context_(std::move(context))
+    , filename_(std::move(filename))
+    , line_(line)
+    , parent_(std::move(std::move(parent)))
+    , instance_(instance)
   {
     id_ = std::this_thread::get_id();
   }
 
-  ~ContextDetails() {}
+  ~ContextDetails() = default;
 
   shared_type parent() { return parent_; }
 
@@ -89,7 +95,7 @@ public:
 private:
   std::string     context_;
   std::string     filename_;
-  int             line_;
+  int             line_{0};
   shared_type     parent_;
   shared_type     derived_from_;
   std::thread::id id_;
@@ -99,8 +105,8 @@ private:
 class Context
 {
 public:
-  typedef std::shared_ptr<ContextDetails> shared_type;
   Context(void *instance = nullptr);
+  using shared_type = std::shared_ptr<ContextDetails>;
   Context(shared_type ctx, std::string const &context, std::string const &filename = "",
           int const &line = 0, void *instance = nullptr);
   Context(std::string const &context, std::string const &filename = "", int const &line = 0,
@@ -127,10 +133,10 @@ private:
 class DefaultLogger
 {
 public:
-  typedef std::shared_ptr<ContextDetails> shared_context_type;
+  using shared_context_type = std::shared_ptr<ContextDetails>;
 
-  DefaultLogger() {}
-  virtual ~DefaultLogger() {}
+  DefaultLogger()          = default;
+  virtual ~DefaultLogger() = default;
 
   enum
   {
@@ -216,7 +222,7 @@ namespace details {
 class LogWrapper
 {
 public:
-  typedef std::shared_ptr<ContextDetails> shared_context_type;
+  using shared_context_type = std::shared_ptr<ContextDetails>;
 
   LogWrapper() { log_ = new DefaultLogger(); }
 
@@ -316,7 +322,7 @@ public:
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
-      context_[id] = ctx;
+      context_[id] = std::move(ctx);
     }
   }
 
@@ -335,8 +341,8 @@ public:
     }
   }
 
-  void RegisterUnlock(fetch::mutex::AbstractMutex *ptr, double spent_time, std::string filename,
-                      int line)
+  void RegisterUnlock(fetch::mutex::AbstractMutex *ptr, double spent_time,
+                      const std::string &filename, int line)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
@@ -410,7 +416,7 @@ public:
     StackTrace(ctx, max, show_locks);
   }
 
-  void UpdateContextTime(shared_context_type ctx, double spent_time)
+  void UpdateContextTime(const shared_context_type &ctx, double spent_time)
   {
     std::lock_guard<std::mutex> lock(timing_mutex_);
     std::stringstream           ss;
@@ -585,7 +591,7 @@ private:
 extern log::details::LogWrapper logger;
 }  // namespace fetch
 
-// TODO: Move somewhere else
+// TODO(unknown): Move somewhere else
 
 #ifndef __FUNCTION_NAME__
 #ifdef WIN32  // WINDOWS

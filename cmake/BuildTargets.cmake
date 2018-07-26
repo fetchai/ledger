@@ -10,7 +10,7 @@ endmacro(fetch_warning message)
 
 macro(setup_compiler)
 
-  set(CMAKE_CXX_STANDARD 11)
+  set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
   # ensure that only one architecture is enable
@@ -170,7 +170,15 @@ macro(detect_environment)
       message(STATUS "clang-tidy: disabled")
     else()
       message(STATUS "clang-tidy: ${CLANG_TIDY_EXE}")
-      set(FETCH_CLANG_TIDY_CFG "${CLANG_TIDY_EXE}" "-checks=*")
+
+      set (CMAKE_EXPORT_COMPILE_COMMANDS  ON)
+
+      if (FETCH_WARNINGS_AS_ERRORS)
+        set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=file -warnings-as-errors=*")
+      else()
+        set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=file")
+      endif ()
+
     endif()
 
   endif(FETCH_ENABLE_CLANG_TIDY)

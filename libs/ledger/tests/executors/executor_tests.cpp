@@ -1,5 +1,4 @@
 #include "core/byte_array/encoders.hpp"
-#include "core/make_unique.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/executor.hpp"

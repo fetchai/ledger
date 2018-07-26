@@ -51,11 +51,11 @@ public:
   VariantList();
   VariantList(std::size_t const &size);
   VariantList(VariantList const &other, std::size_t offset, std::size_t size);
-  VariantList(VariantList const &other);
-  VariantList(VariantList &&other);
+  VariantList(VariantList const &other) = default;
+  VariantList(VariantList &&other) noexcept;
 
-  VariantList const &operator=(VariantList const &other);
-  VariantList const &operator=(VariantList &&other);
+  VariantList &operator=(VariantList const &other) = default;
+  VariantList &operator=(VariantList &&other) noexcept;
 
   Variant const &operator[](std::size_t const &i) const;
   Variant &      operator[](std::size_t const &i);

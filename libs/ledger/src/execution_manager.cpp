@@ -84,7 +84,7 @@ ExecutionManager::Status ExecutionManager::Execute(block_type const &block)
     }
   }
 
-  // TODO: (EJF) Detect and handle number of lanes updates
+  // TODO(EJF):  Detect and handle number of lanes updates
 
   // plan the execution for this block
   if (!PlanExecution(block))
@@ -130,14 +130,14 @@ bool ExecutionManager::PlanExecution(block_type const &block)
     for (auto const &tx : slice.transactions)
     {
 
-      // TODO: (EJF) Byte array copies
+      // TODO(EJF):  Byte array copies
       Identifier id;
       id.Parse(tx.contract_name_);
       auto contract = contracts_.Lookup(id.name_space());
 
       if (contract)
       {
-        auto item = fetch::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
+        auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
 
         // transform the resources into lane allocation
         for (auto const &resource : tx.resources)
@@ -194,7 +194,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     ++active_count_;
     auto status = item.Execute(*executor);
     (void)status;
-    // TODO: (EJF) Should work out what the status of this is
+    // TODO(EJF):  Should work out what the status of this is
     --active_count_;
     --remaining_executions_;
     ++completed_executions_;
@@ -217,8 +217,7 @@ void ExecutionManager::Start()
   running_ = true;
 
   // create and start the monitor thread
-  monitor_thread_ =
-      fetch::make_unique<std::thread>(&ExecutionManager::MonitorThreadEntrypoint, this);
+  monitor_thread_ = std::make_unique<std::thread>(&ExecutionManager::MonitorThreadEntrypoint, this);
 
   // wait for the monitor thread to be setup
   for (std::size_t i = 0; i < 20; ++i)
@@ -259,7 +258,7 @@ void ExecutionManager::Stop()
 
 ExecutionManagerInterface::block_digest_type ExecutionManager::LastProcessedBlock()
 {
-  // TODO: (EJF) thread saftey
+  // TODO(EJF):  thread saftey
   return last_block_hash_;
 }
 
@@ -271,8 +270,6 @@ bool ExecutionManager::Abort() { return false; }
 
 void ExecutionManager::MonitorThreadEntrypoint()
 {
-  using namespace std::chrono;
-
   enum class MonitorState
   {
     IDLE,
@@ -354,7 +351,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
       if (remaining_executions_ > 0)
       {
         std::unique_lock<std::mutex> lock(wait_lock);
-        monitor_notify_.wait_for(lock, milliseconds{100});
+        monitor_notify_.wait_for(lock, std::chrono::milliseconds{100});
       }
 
       // determine the next state (provided we have comlete

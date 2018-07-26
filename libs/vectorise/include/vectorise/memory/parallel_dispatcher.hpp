@@ -14,7 +14,7 @@ template <typename T>
 class ConstParallelDispatcher
 {
 public:
-  typedef T type;
+  using type = T;
 
   enum
   {
@@ -309,7 +309,7 @@ public:
       b = vector_reduction(a, b);
     }
 
-    // TODO: Make reduction tree / Wallace tree
+    // TODO(unknown): Make reduction tree / Wallace tree
     type ret = 0;
     for (std::size_t i = 0; i < vector_register_type::E_BLOCK_COUNT; ++i)
     {
@@ -389,8 +389,8 @@ protected:
   }
 
   template <typename G>
-  static void SetPointers(std::size_t const &offset, std::size_t const &size, type const **regs,
-                          G &next)
+  static void SetPointers(std::size_t const &offset, std::size_t const & size,
+                          type const **regs, G &next)
   {
     assert(next.size() >= offset + size);
     *regs = next.pointer() + offset;
@@ -405,9 +405,9 @@ template <typename T>
 class ParallelDispatcher : public ConstParallelDispatcher<T>
 {
 public:
-  typedef T type;
+  using type = T;
 
-  typedef ConstParallelDispatcher<T> super_type;
+  using super_type = ConstParallelDispatcher<T>;
 
   enum
   {

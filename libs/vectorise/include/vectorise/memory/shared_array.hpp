@@ -9,10 +9,10 @@
 #include <atomic>
 #include <cassert>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <mm_malloc.h>
-#include <stdlib.h>
 #include <type_traits>
 namespace fetch {
 namespace memory {
@@ -21,11 +21,11 @@ template <typename T, std::size_t type_size = sizeof(T)>
 class SharedArray : public VectorSlice<T, type_size>
 {
 public:
-  typedef std::size_t               size_type;
-  typedef std::shared_ptr<T>        data_type;
+  using size_type = std::size_t;
+  using data_type = std::shared_ptr<T>;
   typedef VectorSlice<T, type_size> super_type;
-  typedef SharedArray               self_type;
-  typedef T                         type;
+  using self_type = SharedArray<T, type_size>;
+  using type      = T;
 
   SharedArray(std::size_t const &n) : super_type()
   {
@@ -39,7 +39,7 @@ public:
     }
   }
 
-  SharedArray() {}
+  SharedArray() = default;
   SharedArray(SharedArray const &other)
     : super_type(other.data_.get(), other.size()), data_(other.data_)
   {}
@@ -68,11 +68,11 @@ public:
     return *this;
   }
 
-  ~SharedArray() {}
+  ~SharedArray() = default;
 
   self_type Copy() const
   {
-    // TODO: Use memcopy
+    // TODO(unknown): Use memcopy
     self_type ret(this->size_);
     for (std::size_t i = 0; i < this->size_; ++i)
     {

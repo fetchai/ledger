@@ -79,7 +79,7 @@ public:
     std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(type));
   }
 
-  // TODO: THis is ugly. The right way to do this would be to have a separate
+  // TODO(unknown): THis is ugly. The right way to do this would be to have a separate
   // constant class that is return for slice(...) const
   vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const
   {

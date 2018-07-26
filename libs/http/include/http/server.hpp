@@ -96,7 +96,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: (EJF) Need to actually add better support for the options here
+    // TODO(EJF):  Need to actually add better support for the options here
     if (req.method() == Method::OPTIONS)
     {
 

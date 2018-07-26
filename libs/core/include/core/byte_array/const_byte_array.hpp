@@ -9,28 +9,28 @@
 namespace fetch {
 namespace byte_array {
 class ConstByteArray;
-}
+}  // namespace byte_array
 
-namespace serializers {  // TODO: refactor
+namespace serializers {  // TODO(unknown): refactor
 template <typename T>
 inline void Deserialize(T &, byte_array::ConstByteArray &);
-}
+}  // namespace serializers
 
 namespace byte_array {
 
 class ConstByteArray
 {
 public:
-  typedef uint8_t                             container_type;
-  typedef ConstByteArray                      self_type;
-  typedef memory::SharedArray<container_type> shared_array_type;
+  using container_type    = uint8_t;
+  using self_type         = ConstByteArray;
+  using shared_array_type = memory::SharedArray<container_type>;
 
   enum
   {
     NPOS = uint64_t(-1)
   };
 
-  ConstByteArray() {}
+  ConstByteArray() = default;
   explicit ConstByteArray(std::size_t const &n) { Resize(n); }
 
   ConstByteArray(char const *str)
@@ -54,15 +54,12 @@ public:
     }
   }
 
-  // TODO: make explicit
+  // TODO(unknown): make explicit
   ConstByteArray(std::string const &s) : ConstByteArray(s.c_str()) {}
 
   ConstByteArray(self_type const &other)
-    : data_(other.data_)
-    , arr_pointer_(other.arr_pointer_)
-    , start_(other.start_)
-    , length_(other.length_)
-  {}
+
+      = default;
 
   ConstByteArray(self_type const &other, std::size_t const &start, std::size_t const &length)
     : data_(other.data_), start_(start), length_(length)
@@ -94,7 +91,9 @@ public:
     std::size_t n = std::min(length_, other.length_);
     std::size_t i = 0;
     for (; i < n; ++i)
+    {
       if (arr_pointer_[i] != other.arr_pointer_[i]) break;
+    }
     if (i < n) return arr_pointer_[i] < other.arr_pointer_[i];
     return length_ < other.length_;
   }
@@ -180,7 +179,7 @@ public:
     start_       = other.start_ + start;
     length_      = length;
     arr_pointer_ = data_.pointer() + start_;
-  }  // TODO: Move to protected
+  }  // TODO(unknown): Move to protected
 
 protected:
   container_type &operator[](std::size_t const &n)

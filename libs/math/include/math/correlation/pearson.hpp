@@ -1,4 +1,5 @@
 #pragma once
+
 #include "core/assert.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/range.hpp"

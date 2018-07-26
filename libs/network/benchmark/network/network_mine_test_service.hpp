@@ -26,7 +26,7 @@ public:
     node_ = std::make_shared<T>(tm, tcpPort);
 
     httpInterface_           = std::make_shared<network_mine_test::HttpInterface<T>>(node_);
-    networkMineTestProtocol_ = common::make_unique<protocols::NetworkMineTestProtocol<T>>(node_);
+    networkMineTestProtocol_ = std::make_unique<protocols::NetworkMineTestProtocol<T>>(node_);
 
     this->Add(protocols::FetchProtocols::NETWORK_MINE_TEST, networkMineTestProtocol_.get());
 

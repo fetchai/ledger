@@ -27,7 +27,7 @@ public:
     node_ = std::make_shared<T>(tm);
 
     httpInterface_            = std::make_shared<network_benchmark::HttpInterface<T>>(node_);
-    networkBenchmarkProtocol_ = common::make_unique<protocols::NetworkBenchmarkProtocol<T>>(node_);
+    networkBenchmarkProtocol_ = std::make_unique<protocols::NetworkBenchmarkProtocol<T>>(node_);
 
     this->Add(protocols::FetchProtocols::NETWORK_BENCHMARK, networkBenchmarkProtocol_.get());
 

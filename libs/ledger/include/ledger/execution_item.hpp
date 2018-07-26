@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/make_unique.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/executor_interface.hpp"
 

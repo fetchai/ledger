@@ -13,12 +13,12 @@ namespace byte_array {
 class ByteArray : public ConstByteArray
 {
 public:
-  typedef ConstByteArray super_type;
+  using super_type = ConstByteArray;
 
-  ByteArray() {}
+  ByteArray() = default;
   ByteArray(char const *str) : super_type(str) {}
   ByteArray(std::string const &s) : super_type(s) {}
-  ByteArray(ByteArray const &other) : super_type(other) {}
+  ByteArray(ByteArray const &other) = default;
   ByteArray(std::initializer_list<container_type> l) : super_type(l) {}
 
   ByteArray(ByteArray const &other, std::size_t const &start, std::size_t const &length)
