@@ -23,8 +23,7 @@ public:
   bool   operator==(const Params &rhs) const = delete;
   bool   operator<(const Params &rhs) const  = delete;
 
-  typedef std::function<void(const std::set<std::string> &,
-                             std::list<std::string> &)>
+  typedef std::function<void(const std::set<std::string> &, std::list<std::string> &)>
                                                   action_func_type;
   typedef std::tuple<std::string, std::string>    help_text_type;
   typedef std::map<std::string, action_func_type> assigners_type;
@@ -84,8 +83,7 @@ public:
   virtual ~Params() {}
 
   template <class TYPE>
-  void add(TYPE &assignee, const std::string &name, const std::string &help,
-           TYPE deflt)
+  void add(TYPE &assignee, const std::string &name, const std::string &help, TYPE deflt)
   {
     std::string name_local(name);
     TYPE        deflt_local = deflt;
@@ -102,9 +100,8 @@ public:
   void add(TYPE &assignee, const std::string &name, const std::string &help)
   {
     std::string name_local(name);
-    assigners_[name] = [name_local, &assignee, this](
-                           const std::set<std::string> &args,
-                           std::list<std::string> &     errs) mutable {
+    assigners_[name] = [name_local, &assignee, this](const std::set<std::string> &args,
+                                                     std::list<std::string> &     errs) mutable {
       if (args.find(name_local) == args.end())
       {
         errs.push_back("Missing required argument: " + name_local);
@@ -139,9 +136,8 @@ public:
     for (auto helpText : helpTexts_)
     {
       auto padsize = w - std::get<0>(helpText).length();
-      std::cerr << "  -" << std::get<0>(helpText)
-                << std::string(2 + padsize, ' ') << std::get<1>(helpText)
-                << std::endl;
+      std::cerr << "  -" << std::get<0>(helpText) << std::string(2 + padsize, ' ')
+                << std::get<1>(helpText) << std::endl;
     }
   }
 

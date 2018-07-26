@@ -11,13 +11,12 @@ class P2PIdentity
 {
 public:
   using connectivity_details_type = PeerDetails;
-  using client_register_type =
-      fetch::network::ConnectionRegister<connectivity_details_type>;
-  using network_manager_type   = fetch::network::NetworkManager;
-  using mutex_type             = fetch::mutex::Mutex;
-  using connection_handle_type = client_register_type::connection_handle_type;
-  using ping_type              = uint32_t;
-  using lane_type              = uint32_t;
+  using client_register_type      = fetch::network::ConnectionRegister<connectivity_details_type>;
+  using network_manager_type      = fetch::network::NetworkManager;
+  using mutex_type                = fetch::mutex::Mutex;
+  using connection_handle_type    = client_register_type::connection_handle_type;
+  using ping_type                 = uint32_t;
+  using lane_type                 = uint32_t;
 
   enum
   {
@@ -33,8 +32,7 @@ public:
     PING_MAGIC = 1337
   };
 
-  P2PIdentity(uint64_t const &protocol, client_register_type reg,
-              network_manager_type nm)
+  P2PIdentity(uint64_t const &protocol, client_register_type reg, network_manager_type nm)
       : register_(reg), manager_(nm)
   {
     protocol_       = protocol;
@@ -46,8 +44,8 @@ public:
   /// @{
   ping_type Ping() { return PING_MAGIC; }
 
-  byte_array::ConstByteArray ExchangeAddress(
-      connection_handle_type const &cid, byte_array::ByteArray const &address)
+  byte_array::ConstByteArray ExchangeAddress(connection_handle_type const &cid,
+                                             byte_array::ByteArray const & address)
   {
     {
       // TODO: (`HUT`) : try not to lock mutexes that belong to other classes
@@ -84,8 +82,7 @@ public:
     return my_details_->details;
   }
 
-  void UpdateDetails(connection_handle_type const &client,
-                     PeerDetails const &           pd)
+  void UpdateDetails(connection_handle_type const &client, PeerDetails const &pd)
   {
     auto details = register_.GetDetails(client);
 
@@ -102,8 +99,7 @@ public:
   {
     std::lock_guard<mutex::Mutex> l(my_details_->mutex);
     register_.WithServices(
-        [this](
-            network::AbstractConnectionRegister::service_map_type const &map) {
+        [this](network::AbstractConnectionRegister::service_map_type const &map) {
           for (auto const &p : map)
           {
             auto wptr = p.second;

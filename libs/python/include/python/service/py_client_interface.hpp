@@ -12,8 +12,7 @@ void BuildServiceClientInterface(pybind11::module &module)
   py::class_<ServiceClientInterface>(module, "ServiceClientInterface")
       .def(py::init<>())
       .def("Subscribe", &ServiceClientInterface::Subscribe)
-      .def("CallWithPackedArguments",
-           &ServiceClientInterface::CallWithPackedArguments)
+      .def("CallWithPackedArguments", &ServiceClientInterface::CallWithPackedArguments)
       .def("Unsubscribe", &ServiceClientInterface::Unsubscribe);
 }
 };  // namespace service

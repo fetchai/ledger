@@ -19,8 +19,7 @@ inline typename A::type WrapperEuclidean(A const &a, A const &b)
   return Euclidean(a, b);
 }
 
-inline void BuildEuclideanDistance(std::string const &custom_name,
-                                   pybind11::module & module)
+inline void BuildEuclideanDistance(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;

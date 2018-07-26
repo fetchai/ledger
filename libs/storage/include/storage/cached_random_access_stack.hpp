@@ -54,8 +54,7 @@ public:
 
   static constexpr bool DirectWrite() { return false; }
 
-  void Load(std::string const &filename,
-            bool const &       create_if_not_exists = true)
+  void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
     stack_.Load(filename, create_if_not_exists);
     total_access_ = 0;
@@ -118,15 +117,9 @@ public:
     stack_.Close(true);
   }
 
-  void SetExtraHeader(header_extra_type const &he)
-  {
-    stack_.SetExtraHeader(he);
-  }
+  void SetExtraHeader(header_extra_type const &he) { stack_.SetExtraHeader(he); }
 
-  header_extra_type const &header_extra() const
-  {
-    return stack_.header_extra();
-  }
+  header_extra_type const &header_extra() const { return stack_.header_extra(); }
 
   uint64_t Push(type const &object)
   {

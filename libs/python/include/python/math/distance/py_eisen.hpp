@@ -19,8 +19,7 @@ inline typename A::type WrapperEisen(A const &a, A const &b)
   return Eisen(a, b);
 }
 
-inline void BuildEisenDistance(std::string const &custom_name,
-                               pybind11::module & module)
+inline void BuildEisenDistance(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;

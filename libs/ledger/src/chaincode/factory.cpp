@@ -33,14 +33,12 @@ contract_set_type CreateContractSet(factory_registry_type const &registry)
   return contracts;
 }
 
-factory_registry_type const global_registry = CreateRegistry();
-contract_set_type const     global_contract_set =
-    CreateContractSet(global_registry);
+factory_registry_type const global_registry     = CreateRegistry();
+contract_set_type const     global_contract_set = CreateContractSet(global_registry);
 
 }  // namespace
 
-ChainCodeFactory::chain_code_type ChainCodeFactory::Create(
-    std::string const &name) const
+ChainCodeFactory::chain_code_type ChainCodeFactory::Create(std::string const &name) const
 {
 
   // lookup the chain code instance
@@ -60,8 +58,7 @@ ChainCodeFactory::chain_code_type ChainCodeFactory::Create(
   return chain_code;
 }
 
-ChainCodeFactory::contract_set_type const &ChainCodeFactory::GetContracts()
-    const
+ChainCodeFactory::contract_set_type const &ChainCodeFactory::GetContracts() const
 {
   return global_contract_set;
 }

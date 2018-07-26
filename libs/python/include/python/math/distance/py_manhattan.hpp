@@ -19,8 +19,7 @@ inline typename A::type WrapperManhattan(A const &a, A const &b)
   return Manhattan(a, b);
 }
 
-inline void BuildManhattanDistance(std::string const &custom_name,
-                                   pybind11::module & module)
+inline void BuildManhattanDistance(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;

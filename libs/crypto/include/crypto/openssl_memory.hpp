@@ -8,13 +8,11 @@ namespace crypto {
 namespace openssl {
 namespace memory {
 
-template <typename T,
-          eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical,
+template <typename T, eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical,
           typename T_Deleter = detail::OpenSSLDeleter<T, P_DeleteStrategy>>
 using ossl_unique_ptr = std::unique_ptr<T, T_Deleter>;
 
-template <typename T,
-          eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical,
+template <typename T, eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical,
           typename T_Deleter = detail::OpenSSLDeleter<T, P_DeleteStrategy>>
 class ossl_shared_ptr : public std::shared_ptr<T>
 {

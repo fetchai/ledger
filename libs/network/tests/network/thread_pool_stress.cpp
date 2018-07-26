@@ -9,8 +9,7 @@ template <std::size_t N = 1>
 void TestCase1()
 {
   std::cout << "TEST CASE 1. Threads: " << N << std::endl;
-  std::cout << "Info: Testing thread manager starting, stopping and posting"
-            << std::endl;
+  std::cout << "Info: Testing thread manager starting, stopping and posting" << std::endl;
 
   {
     std::cout << "Info: Testing thread manager starting" << std::endl;
@@ -19,8 +18,7 @@ void TestCase1()
   }
 
   {
-    std::cout << "Info: Testing thread manager starting, stop, posting"
-              << std::endl;
+    std::cout << "Info: Testing thread manager starting, stop, posting" << std::endl;
     auto tmanager = MakeThreadPool(N);
     tmanager->Start();
 
@@ -29,13 +27,11 @@ void TestCase1()
   }
 
   {
-    std::cout << "Info: Testing thread manager starting, post, activity, stop"
-              << std::endl;
+    std::cout << "Info: Testing thread manager starting, post, activity, stop" << std::endl;
     auto tmanager = MakeThreadPool(N);
     tmanager->Start();
 
-    tmanager->Post(
-        []() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
+    tmanager->Post([]() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
     tmanager->Post([]() {
       std::cout << "This thread prints stuff" << std::endl;
       ;
@@ -50,8 +46,7 @@ template <std::size_t N = 1>
 void TestCase1a()
 {
   std::cout << "TEST CASE 1a. Threads: " << N << std::endl;
-  std::cout << "Info: Testing thread manager starting, stopping and posting"
-            << std::endl;
+  std::cout << "Info: Testing thread manager starting, stopping and posting" << std::endl;
 
   {
     std::cout << "Info: Testing thread manager starting" << std::endl;
@@ -65,12 +60,10 @@ template <std::size_t N = 1>
 void TestCase1b()
 {
   std::cout << "TEST CASE 1b. Threads: " << N << std::endl;
-  std::cout << "Info: Testing thread manager starting, stopping and posting"
-            << std::endl;
+  std::cout << "Info: Testing thread manager starting, stopping and posting" << std::endl;
 
   {
-    std::cout << "Info: Testing thread manager starting, stop, posting"
-              << std::endl;
+    std::cout << "Info: Testing thread manager starting, stop, posting" << std::endl;
     auto tmanager = MakeThreadPool(N);
     tmanager->Start();
 
@@ -85,17 +78,14 @@ template <std::size_t N = 1>
 void TestCase1c()
 {
   std::cout << "TEST CASE 1c. Threads: " << N << std::endl;
-  std::cout << "Info: Testing thread manager starting, stopping and posting"
-            << std::endl;
+  std::cout << "Info: Testing thread manager starting, stopping and posting" << std::endl;
 
   {
-    std::cout << "Info: Testing thread manager starting, post, activity, stop"
-              << std::endl;
+    std::cout << "Info: Testing thread manager starting, post, activity, stop" << std::endl;
     auto tmanager = MakeThreadPool(N);
     tmanager->Start();
 
-    tmanager->Post(
-        []() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
+    tmanager->Post([]() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
     tmanager->Post([]() {
       std::cout << "This thread prints stuff" << std::endl;
       ;
@@ -110,8 +100,7 @@ template <std::size_t N = 1>
 void TestCase3()
 {
   std::cout << "TEST CASE 3. Threads: " << N << std::endl;
-  std::cout << "Info: Testing thread manager thread starvation/balancing"
-            << std::endl;
+  std::cout << "Info: Testing thread manager thread starvation/balancing" << std::endl;
 
   for (std::size_t index = 0; index < 10; ++index)
   {

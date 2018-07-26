@@ -47,8 +47,7 @@ public:
     return true;
   }
 
-  static bool SetHeader(HTTPRequest &req, asio::streambuf &buffer,
-                        std::size_t const &end)
+  static bool SetHeader(HTTPRequest &req, asio::streambuf &buffer, std::size_t const &end)
   {
     LOG_STACK_TRACE_POINT;
 

@@ -15,10 +15,7 @@ std::atomic<std::size_t> openSessions{0};
 class BasicLoopback : public std::enable_shared_from_this<BasicLoopback>
 {
 public:
-  BasicLoopback(asio::ip::tcp::tcp::socket socket) : socket_(std::move(socket))
-  {
-    openSessions++;
-  }
+  BasicLoopback(asio::ip::tcp::tcp::socket socket) : socket_(std::move(socket)) { openSessions++; }
 
   ~BasicLoopback() { openSessions--; }
 
@@ -36,36 +33,34 @@ private:
   void Read() noexcept
   {
     auto self = shared_from_this();
-    socket_.async_read_some(
-        asio::buffer(message_.pointer(), lengthPerRead_),
-        [this, self](std::error_code ec, std::size_t length) {
-          if (!ec)
-          {
-            Write(length);
-          }
-        });
+    socket_.async_read_some(asio::buffer(message_.pointer(), lengthPerRead_),
+                            [this, self](std::error_code ec, std::size_t length) {
+                              if (!ec)
+                              {
+                                Write(length);
+                              }
+                            });
   }
 
   void Write(std::size_t length) noexcept
   {
     auto self = shared_from_this();
-    asio::async_write(
-        socket_, asio::buffer(message_.pointer(), length),
-        // TODO: couple of thigs worth to check here: 1) It does not make sense
-        // to pass both - `this` raw pointer and shared_ptr<...> for the same
-        // instance, 2) depending on how `asio::async_write(...)` uses instance
-        // of passed lambda (who will control lifecycle of lambda instance), it
-        // may be necessary to pass here `weak_ptr<>` instead of shared_ptr if
-        // lambda nstance is set to `socket_` insatnce (and thus `socket_` would
-        // take control over lyfecycle of lambda instace => it would create
-        // cyclic reference to `this` instance if we pass here shared_ptr
-        // instead of weak)
-        [this, self](std::error_code ec, std::size_t) {
-          if (!ec)
-          {
-            Read();
-          }
-        });
+    asio::async_write(socket_, asio::buffer(message_.pointer(), length),
+                      // TODO: couple of thigs worth to check here: 1) It does not make sense
+                      // to pass both - `this` raw pointer and shared_ptr<...> for the same
+                      // instance, 2) depending on how `asio::async_write(...)` uses instance
+                      // of passed lambda (who will control lifecycle of lambda instance), it
+                      // may be necessary to pass here `weak_ptr<>` instead of shared_ptr if
+                      // lambda nstance is set to `socket_` insatnce (and thus `socket_` would
+                      // take control over lyfecycle of lambda instace => it would create
+                      // cyclic reference to `this` instance if we pass here shared_ptr
+                      // instead of weak)
+                      [this, self](std::error_code ec, std::size_t) {
+                        if (!ec)
+                        {
+                          Read();
+                        }
+                      });
   }
 };
 
@@ -74,8 +69,7 @@ class LoopbackServer
 public:
   static constexpr std::size_t DEFAULT_NUM_THREADS = 4;
 
-  explicit LoopbackServer(uint16_t    port,
-                          std::size_t num_threads = DEFAULT_NUM_THREADS)
+  explicit LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS)
       : port_{port}, networkManager_{num_threads}
   {
     networkManager_.Start();
@@ -116,8 +110,7 @@ private:
     auto strongAccep = acceptor_.lock();
     if (!strongAccep) return;
     strongAccep->async_accept(
-        [this, strongAccep](std::error_code            ec,
-                            asio::ip::tcp::tcp::socket socket) {
+        [this, strongAccep](std::error_code ec, asio::ip::tcp::tcp::socket socket) {
           if (!ec)
           {
             std::make_shared<BasicLoopback>(std::move(socket))->Start();

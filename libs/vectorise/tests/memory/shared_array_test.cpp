@@ -25,8 +25,7 @@ void test_set_get()
   {
     if (array[i] != lcg2())
     {
-      std::cout << "1: memory doesn't store what it is supposed to"
-                << std::endl;
+      std::cout << "1: memory doesn't store what it is supposed to" << std::endl;
       exit(-1);
     }
   }
@@ -38,8 +37,7 @@ void test_set_get()
   {
     if (other[i] != lcg2())
     {
-      std::cout << "2: memory doesn't store what it is supposed to"
-                << std::endl;
+      std::cout << "2: memory doesn't store what it is supposed to" << std::endl;
       exit(-1);
     }
   }
@@ -51,8 +49,7 @@ void test_set_get()
   {
     if (yao[i] != lcg2())
     {
-      std::cout << "3: memory doesn't store what it is supposed to"
-                << std::endl;
+      std::cout << "3: memory doesn't store what it is supposed to" << std::endl;
       exit(-1);
     }
   }

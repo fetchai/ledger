@@ -5,8 +5,7 @@ namespace fetch {
 namespace http {
 namespace middleware {
 
-inline void ColorLog(fetch::http::HTTPResponse &     res,
-                     fetch::http::HTTPRequest const &req)
+inline void ColorLog(fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req)
 {
   using namespace fetch::commandline::VT100;
   std::string color = "";
@@ -33,10 +32,9 @@ inline void ColorLog(fetch::http::HTTPResponse &     res,
     break;
   };
 
-  std::cout << "[ " << color << res.status().explanation << DefaultAttributes()
-            << " ] " << req.uri();
-  std::cout << ", " << GetColor(5, 9) << res.mime_type().type
-            << DefaultAttributes() << std::endl;
+  std::cout << "[ " << color << res.status().explanation << DefaultAttributes() << " ] "
+            << req.uri();
+  std::cout << ", " << GetColor(5, 9) << res.mime_type().type << DefaultAttributes() << std::endl;
 }
 }  // namespace middleware
 }  // namespace http

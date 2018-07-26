@@ -21,10 +21,8 @@ public:
   {
     this->Expose(PING, ctrl, &P2PIdentity::Ping);
     this->ExposeWithClientArg(HELLO, ctrl, &P2PIdentity::Hello);
-    this->ExposeWithClientArg(UPDATE_DETAILS, ctrl,
-                              &P2PIdentity::UpdateDetails);
-    this->ExposeWithClientArg(EXCHANGE_ADDRESS, ctrl,
-                              &P2PIdentity::ExchangeAddress);
+    this->ExposeWithClientArg(UPDATE_DETAILS, ctrl, &P2PIdentity::UpdateDetails);
+    this->ExposeWithClientArg(EXCHANGE_ADDRESS, ctrl, &P2PIdentity::ExchangeAddress);
   }
 };
 

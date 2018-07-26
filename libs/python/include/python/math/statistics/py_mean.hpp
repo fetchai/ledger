@@ -14,8 +14,7 @@ inline typename A::type WrapperMean(A const &a)
   return Mean(a);
 }
 
-inline void BuildMeanStatistics(std::string const &custom_name,
-                                pybind11::module & module)
+inline void BuildMeanStatistics(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;

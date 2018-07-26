@@ -46,11 +46,10 @@ struct ConcurrentVM
     reg3 = regs[2];
   }
 
-  void AddInstruction(uint32_t const &inst, uint32_t const &reg1,
-                      uint32_t const &reg2, uint32_t const &reg3)
+  void AddInstruction(uint32_t const &inst, uint32_t const &reg1, uint32_t const &reg2,
+                      uint32_t const &reg3)
   {
-    uint32_t i = (inst & 255) | ((reg1 & 255) << 8) | ((reg2 & 255) << 16) |
-                 ((reg3 & 255) << 24);
+    uint32_t i = (inst & 255) | ((reg1 & 255) << 8) | ((reg2 & 255) << 16) | ((reg3 & 255) << 24);
 
     instructions.push_back(i);
   }

@@ -10,13 +10,12 @@ namespace math {
 namespace distance {
 
 template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::type Minkowski(
-    memory::VectorSlice<T, S> const &a, memory::VectorSlice<T, S> const &b)
+inline typename memory::VectorSlice<T, S>::type Minkowski(memory::VectorSlice<T, S> const &a,
+                                                          memory::VectorSlice<T, S> const &b)
 {
   detailed_assert(a.size() == b.size());
-  typedef typename memory::VectorSlice<T, S>::type type;
-  typedef typename memory::VectorSlice<T, S>::vector_register_type
-      vector_register_type;
+  typedef typename memory::VectorSlice<T, S>::type                 type;
+  typedef typename memory::VectorSlice<T, S>::vector_register_type vector_register_type;
 
   type dist = a.data().in_parallel().SumReduce(
       memory::TrivialRange(0, a.size()),
@@ -29,8 +28,8 @@ inline typename memory::VectorSlice<T, S>::type Minkowski(
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::type Minkowski(
-    ShapeLessArray<T, C> const &a, ShapeLessArray<T, C> const &b)
+inline typename ShapeLessArray<T, C>::type Minkowski(ShapeLessArray<T, C> const &a,
+                                                     ShapeLessArray<T, C> const &b)
 {
   return Minkowski(a.data(), b.data());
 }

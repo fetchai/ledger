@@ -20,14 +20,13 @@ public:
   typedef ServiceClient<fetch::network::TCPClient> client_type;
   typedef std::shared_ptr<client_type>             shared_client_type;
 
-  MultiLaneDBClient(uint32_t lanes, std::string const &host,
-                    uint16_t const &port, fetch::network::NetworkManager &tm)
+  MultiLaneDBClient(uint32_t lanes, std::string const &host, uint16_t const &port,
+                    fetch::network::NetworkManager &tm)
   {
     id_ = "my-fetch-id";
     for (uint32_t i = 0; i < lanes; ++i)
     {
-      lanes_.push_back(
-          std::make_shared<client_type>(host, uint16_t(port + i), tm));
+      lanes_.push_back(std::make_shared<client_type>(host, uint16_t(port + i), tm));
     }
   }
 
@@ -37,8 +36,7 @@ public:
     std::size_t lane = res.lane(uint32_t(lanes_.size()));
     //    std::cout << "Getting " << key << " from lane " << lane <<  " " <<
     //    byte_array::ToBase64(res.id()) << std::endl;
-    auto promise = lanes_[lane]->Call(
-        0, fetch::storage::RevertibleDocumentStoreProtocol::GET, res);
+    auto promise = lanes_[lane]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::GET, res);
 
     return promise.As<storage::Document>().document;
   }
@@ -47,10 +45,10 @@ public:
   {
     //    std::cout << "Locking: " << key << std::endl;
 
-    auto        res     = fetch::storage::ResourceAddress(key);
-    std::size_t lane    = res.lane(uint32_t(lanes_.size()));
-    auto        promise = lanes_[lane]->Call(
-        0, fetch::storage::RevertibleDocumentStoreProtocol::LOCK, res);
+    auto        res  = fetch::storage::ResourceAddress(key);
+    std::size_t lane = res.lane(uint32_t(lanes_.size()));
+    auto        promise =
+        lanes_[lane]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::LOCK, res);
 
     return promise.As<bool>();
   }
@@ -59,10 +57,10 @@ public:
   {
     //    std::cout << "Unlocking: " << key << std::endl;
 
-    auto        res     = fetch::storage::ResourceAddress(key);
-    std::size_t lane    = res.lane(uint32_t(lanes_.size()));
-    auto        promise = lanes_[lane]->Call(
-        0, fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK, res);
+    auto        res  = fetch::storage::ResourceAddress(key);
+    std::size_t lane = res.lane(uint32_t(lanes_.size()));
+    auto        promise =
+        lanes_[lane]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK, res);
 
     return promise.As<bool>();
   }
@@ -73,8 +71,8 @@ public:
     std::size_t lane = res.lane(uint32_t(lanes_.size()));
     //    std::cout << "Setting " << key <<  " on lane " << lane << " " <<
     //    byte_array::ToBase64(res.id()) << std::endl;
-    auto promise = lanes_[lane]->Call(
-        0, fetch::storage::RevertibleDocumentStoreProtocol::SET, res, value);
+    auto promise =
+        lanes_[lane]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::SET, res, value);
     promise.Wait(2000);
   }
 
@@ -83,8 +81,8 @@ public:
     std::vector<service::Promise> promises;
     for (std::size_t i = 0; i < lanes_.size(); ++i)
     {
-      auto promise = lanes_[i]->Call(
-          0, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
+      auto promise =
+          lanes_[i]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
       promises.push_back(promise);
     }
 
@@ -99,8 +97,8 @@ public:
     std::vector<service::Promise> promises;
     for (std::size_t i = 0; i < lanes_.size(); ++i)
     {
-      auto promise = lanes_[i]->Call(
-          0, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
+      auto promise =
+          lanes_[i]->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
       promises.push_back(promise);
     }
 

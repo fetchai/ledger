@@ -11,8 +11,7 @@ int main()
   for (auto const &adapter : adapters)
   {
     std::cout << " - " << adapter.address().to_string()
-              << " (mask: " << adapter.network_mask().to_string() << ')'
-              << std::endl;
+              << " (mask: " << adapter.network_mask().to_string() << ')' << std::endl;
   }
 
   return 0;

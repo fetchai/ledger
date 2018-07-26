@@ -7,8 +7,7 @@ namespace fetch {
 namespace math {
 
 template <typename T>
-void BuildShapeLessArray(std::string const &custom_name,
-                         pybind11::module & module)
+void BuildShapeLessArray(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;
@@ -21,101 +20,77 @@ void BuildShapeLessArray(std::string const &custom_name,
       .def("Copy", &ShapeLessArray<T>::Copy)
 
       .def("InlineAdd", (ShapeLessArray<T> &
-                         (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                                memory::Range const &)) &
+                         (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, memory::Range const &)) &
                             ShapeLessArray<T>::InlineAdd)
-      .def("InlineAdd", (ShapeLessArray<T> &
-                         (ShapeLessArray<T>::*)(ShapeLessArray<T> const &)) &
+      .def("InlineAdd", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &)) &
                             ShapeLessArray<T>::InlineAdd)
       .def("InlineAdd",
-           (ShapeLessArray<T> & (ShapeLessArray<T>::*)(T const &)) &
-               ShapeLessArray<T>::InlineAdd)
+           (ShapeLessArray<T> & (ShapeLessArray<T>::*)(T const &)) & ShapeLessArray<T>::InlineAdd)
       .def("Add", (ShapeLessArray<T> &
-                   (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                          ShapeLessArray<T> const &)) &
+                   (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, ShapeLessArray<T> const &)) &
                       ShapeLessArray<T>::Add)
-      .def("Add", (ShapeLessArray<T> &
-                   (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                          ShapeLessArray<T> const &,
-                                          memory::Range const &)) &
+      .def("Add", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
+                                                              ShapeLessArray<T> const &,
+                                                              memory::Range const &)) &
                       ShapeLessArray<T>::Add)
       .def("Add",
-           (ShapeLessArray<T> &
-            (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, T const &)) &
+           (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, T const &)) &
                ShapeLessArray<T>::Add)
 
-      .def("InlineSubtract", (ShapeLessArray<T> &
-                              (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                                     memory::Range const &)) &
+      .def("InlineSubtract", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
+                                                                         memory::Range const &)) &
                                  ShapeLessArray<T>::InlineSubtract)
       .def("InlineSubtract",
-           (ShapeLessArray<T> &
-            (ShapeLessArray<T>::*)(ShapeLessArray<T> const &)) &
+           (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &)) &
                ShapeLessArray<T>::InlineSubtract)
-      .def("InlineSubtract",
-           (ShapeLessArray<T> & (ShapeLessArray<T>::*)(T const &)) &
-               ShapeLessArray<T>::InlineSubtract)
-      .def("Subtract", (ShapeLessArray<T> &
-                        (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                               ShapeLessArray<T> const &,
-                                               memory::Range const &)) &
+      .def("InlineSubtract", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(T const &)) &
+                                 ShapeLessArray<T>::InlineSubtract)
+      .def("Subtract", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
+                                                                   ShapeLessArray<T> const &,
+                                                                   memory::Range const &)) &
                            ShapeLessArray<T>::Subtract)
-      .def("Subtract", (ShapeLessArray<T> &
-                        (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                               ShapeLessArray<T> const &)) &
+      .def("Subtract", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
+                                                                   ShapeLessArray<T> const &)) &
                            ShapeLessArray<T>::Subtract)
       .def("Subtract",
-           (ShapeLessArray<T> &
-            (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, T const &)) &
+           (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, T const &)) &
                ShapeLessArray<T>::Subtract)
 
-      .def("InlineMultiply", (ShapeLessArray<T> &
-                              (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                                     memory::Range const &)) &
+      .def("InlineMultiply", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
+                                                                         memory::Range const &)) &
                                  ShapeLessArray<T>::InlineMultiply)
       .def("InlineMultiply",
-           (ShapeLessArray<T> &
-            (ShapeLessArray<T>::*)(ShapeLessArray<T> const &)) &
+           (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &)) &
                ShapeLessArray<T>::InlineMultiply)
-      .def("InlineMultiply",
-           (ShapeLessArray<T> & (ShapeLessArray<T>::*)(T const &)) &
-               ShapeLessArray<T>::InlineMultiply)
-      .def("Multiply", (ShapeLessArray<T> &
-                        (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                               ShapeLessArray<T> const &,
-                                               memory::Range const &)) &
+      .def("InlineMultiply", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(T const &)) &
+                                 ShapeLessArray<T>::InlineMultiply)
+      .def("Multiply", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
+                                                                   ShapeLessArray<T> const &,
+                                                                   memory::Range const &)) &
                            ShapeLessArray<T>::Multiply)
-      .def("Multiply", (ShapeLessArray<T> &
-                        (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                               ShapeLessArray<T> const &)) &
+      .def("Multiply", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
+                                                                   ShapeLessArray<T> const &)) &
                            ShapeLessArray<T>::Multiply)
       .def("Multiply",
-           (ShapeLessArray<T> &
-            (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, T const &)) &
+           (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, T const &)) &
                ShapeLessArray<T>::Multiply)
 
-      .def("InlineDivide", (ShapeLessArray<T> &
-                            (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                                   memory::Range const &)) &
+      .def("InlineDivide", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
+                                                                       memory::Range const &)) &
                                ShapeLessArray<T>::InlineDivide)
-      .def("InlineDivide", (ShapeLessArray<T> &
-                            (ShapeLessArray<T>::*)(ShapeLessArray<T> const &)) &
+      .def("InlineDivide", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &)) &
                                ShapeLessArray<T>::InlineDivide)
-      .def("InlineDivide",
-           (ShapeLessArray<T> & (ShapeLessArray<T>::*)(T const &)) &
-               ShapeLessArray<T>::InlineDivide)
-      .def("Divide", (ShapeLessArray<T> &
-                      (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                             ShapeLessArray<T> const &,
-                                             memory::Range const &)) &
+      .def("InlineDivide", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(T const &)) &
+                               ShapeLessArray<T>::InlineDivide)
+      .def("Divide", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
+                                                                 ShapeLessArray<T> const &,
+                                                                 memory::Range const &)) &
                          ShapeLessArray<T>::Divide)
-      .def("Divide", (ShapeLessArray<T> &
-                      (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
-                                             ShapeLessArray<T> const &)) &
+      .def("Divide", (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &,
+                                                                 ShapeLessArray<T> const &)) &
                          ShapeLessArray<T>::Divide)
       .def("Divide",
-           (ShapeLessArray<T> &
-            (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, T const &)) &
+           (ShapeLessArray<T> & (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, T const &)) &
                ShapeLessArray<T>::Divide)
 
       .def("__add__",
@@ -217,14 +192,12 @@ void BuildShapeLessArray(std::string const &custom_name,
            })
 
       .def_static("Zeros", &ShapeLessArray<T>::Zeros)
-      .def_static("Arange",
-                  (ShapeLessArray<T>(*)(T const &, T const &, T const &)) &
-                      ShapeLessArray<T>::Arange)
-      .def_static("UniformRandom", (ShapeLessArray<T>(*)(std::size_t const &)) &
-                                       ShapeLessArray<T>::UniformRandom)
+      .def_static("Arange", (ShapeLessArray<T>(*)(T const &, T const &, T const &)) &
+                                ShapeLessArray<T>::Arange)
+      .def_static("UniformRandom",
+                  (ShapeLessArray<T>(*)(std::size_t const &)) & ShapeLessArray<T>::UniformRandom)
       .def_static("UniformRandomIntegers",
-                  (ShapeLessArray<T>(*)(std::size_t const &, int64_t const &,
-                                        int64_t const &)) &
+                  (ShapeLessArray<T>(*)(std::size_t const &, int64_t const &, int64_t const &)) &
                       ShapeLessArray<T>::UniformRandomIntegers)
 
       .def("AllClose", &ShapeLessArray<T>::AllClose)
@@ -280,13 +253,10 @@ void BuildShapeLessArray(std::string const &custom_name,
       .def("ApproxLog", &ShapeLessArray<T>::ApproxLog)
       .def("ApproxLogistic", &ShapeLessArray<T>::ApproxLogistic)
       //    .def("Round", &ShapeLessArray< T >::Round)
-      .def("Fill",
-           (void (ShapeLessArray<T>::*)(T const &)) & ShapeLessArray<T>::Fill)
-      .def("Fill",
-           (void (ShapeLessArray<T>::*)(T const &, memory::Range const &)) &
-               ShapeLessArray<T>::Fill)
-      .def("At", (T & (ShapeLessArray<T>::
-                           *)(const typename ShapeLessArray<T>::size_type &)) &
+      .def("Fill", (void (ShapeLessArray<T>::*)(T const &)) & ShapeLessArray<T>::Fill)
+      .def("Fill", (void (ShapeLessArray<T>::*)(T const &, memory::Range const &)) &
+                       ShapeLessArray<T>::Fill)
+      .def("At", (T & (ShapeLessArray<T>::*)(const typename ShapeLessArray<T>::size_type &)) &
                      ShapeLessArray<T>::At)
       .def("Reserve", &ShapeLessArray<T>::Reserve)
       .def("Resize", &ShapeLessArray<T>::Resize)
@@ -314,8 +284,7 @@ void BuildShapeLessArray(std::string const &custom_name,
            [](ShapeLessArray<T> &s, py::array_t<T> arr) {
              auto                                          buf = arr.request();
              typedef typename ShapeLessArray<T>::size_type size_type;
-             if (buf.ndim != 1)
-               throw std::runtime_error("Dimension must be exactly one.");
+             if (buf.ndim != 1) throw std::runtime_error("Dimension must be exactly one.");
 
              T *         ptr = (T *)buf.ptr;
              std::size_t idx = 0;

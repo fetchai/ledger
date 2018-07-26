@@ -11,9 +11,8 @@ namespace http {
 class HTTPResponse : public std::enable_shared_from_this<HTTPResponse>
 {
 public:
-  HTTPResponse(byte_array::ConstByteArray body,
-               MimeType const &           mime   = {".html", "text/html"},
-               Status const &             status = status_code::SUCCESS_OK)
+  HTTPResponse(byte_array::ConstByteArray body, MimeType const &mime = {".html", "text/html"},
+               Status const &status = status_code::SUCCESS_OK)
       : body_(body), mime_(mime), status_(status)
   {
     header_.Add("content-length", int64_t(body_.size()));
@@ -38,8 +37,7 @@ public:
       out << field.first << ": " << field.second << "\r\n";
     }
     out << "\r\n";
-    out.write(const_cast<const byte_array::ConstByteArray &>(res.body_)
-                  .char_pointer(),
+    out.write(const_cast<const byte_array::ConstByteArray &>(res.body_).char_pointer(),
               static_cast<int>(res.body_.size()));
   }
 

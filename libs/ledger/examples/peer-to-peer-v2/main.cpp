@@ -16,22 +16,19 @@ using namespace fetch::protocols;
 class FetchLedger
 {
 public:
-  FetchLedger(uint16_t offset, std::string const &name,
-              std::size_t const &shards)
+  FetchLedger(uint16_t offset, std::string const &name, std::size_t const &shards)
       : network_manager_(new fetch::network::NetworkManager(64))
-      , controller_(uint16_t(1337 + offset), uint16_t(7070 + offset), name,
-                    network_manager_)
+      , controller_(uint16_t(1337 + offset), uint16_t(7070 + offset), name, network_manager_)
   {
     for (std::size_t i = 0; i < shards; ++i)
     {
       std::size_t j = offset * shards + i;
-      shards_.push_back(std::make_shared<FetchChainKeeperService>(
-          4000 + j, 9590 + j, network_manager_));
+      shards_.push_back(
+          std::make_shared<FetchChainKeeperService>(4000 + j, 9590 + j, network_manager_));
     }
 
     start_event_ = network_manager_->OnAfterStart([this]() {
-      network_manager_->io_service().post(
-          [this]() { this->ConnectChainKeepers(); });
+      network_manager_->io_service().post([this]() { this->ConnectChainKeepers(); });
     });
 
     stop_event_ = network_manager_->OnBeforeStop([this]() {
@@ -70,9 +67,8 @@ private:
       std::cout << " - localhost " << s->port() << std::endl;
       auto client = controller_.ConnectChainKeeper("localhost", s->port());
 
-      client->Call(fetch::protocols::FetchProtocols::CHAIN_KEEPER,
-                   ChainKeeperRPC::SET_GROUP_NUMBER, i,
-                   uint32_t(shards_.size()));
+      client->Call(fetch::protocols::FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::SET_GROUP_NUMBER,
+                   i, uint32_t(shards_.size()));
       ++i;
     }
   }
@@ -92,10 +88,8 @@ int main(int argc, char const **argv)
 
   if (params.arg_size() < 4)
   {
-    std::cout
-        << "usage: " << argv[0]
-        << " [port offset] [info] [shards] [[bootstrap_host] [bootstrap_port]]"
-        << std::endl;
+    std::cout << "usage: " << argv[0]
+              << " [port offset] [info] [shards] [[bootstrap_host] [bootstrap_port]]" << std::endl;
     exit(-1);
   }
 

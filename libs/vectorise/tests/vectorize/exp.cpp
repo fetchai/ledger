@@ -10,8 +10,7 @@ typedef typename array_type::vector_register_type vector_type;
 
 void Exponentials(array_type const &A, array_type &C)
 {
-  C.in_parallel().Apply([](vector_type const &a,
-                           vector_type &c) { c = fetch::vectorize::exp(a); },
+  C.in_parallel().Apply([](vector_type const &a, vector_type &c) { c = fetch::vectorize::exp(a); },
                         A);
 }
 

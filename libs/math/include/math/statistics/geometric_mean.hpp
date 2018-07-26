@@ -17,9 +17,7 @@ inline typename A::type GeometricMean(A const &a)
 
   type ret = a.data().in_parallel().Reduce(
       memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &a, vector_register_type const &b) {
-        return a * b;
-      });
+      [](vector_register_type const &a, vector_register_type const &b) { return a * b; });
 
   return type(std::pow(ret, double(1.) / double(a.size())));
 }

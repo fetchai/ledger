@@ -12,9 +12,7 @@ class ClientRegister
 public:
   void Register(uint64_t client)
   {
-    std::cout << "\rRegistering " << client << std::endl
-              << std::endl
-              << "> " << std::flush;
+    std::cout << "\rRegistering " << client << std::endl << std::endl << "> " << std::flush;
 
     mutex_.lock();
     registered_aeas_.insert(client);
@@ -32,8 +30,7 @@ public:
       auto &rpc = service_->ServiceInterfaceOf(id);
 
       std::string s =
-          rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val)
-              .As<std::string>();
+          rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val).As<std::string>();
       if (s != "")
       {
         ret.push_back(s);
@@ -45,10 +42,7 @@ public:
     return ret;
   }
 
-  void register_service_instance(ServiceServer<fetch::network::TCPServer> *ptr)
-  {
-    service_ = ptr;
-  }
+  void register_service_instance(ServiceServer<fetch::network::TCPServer> *ptr) { service_ = ptr; }
 
 private:
   ServiceServer<fetch::network::TCPServer> *service_ = nullptr;
@@ -73,17 +67,13 @@ private:
 class OEFService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  OEFService(uint16_t port, fetch::network::NetworkManager tm)
-      : ServiceServer(port, tm)
+  OEFService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
   {
     this->Add(FetchProtocols::AEA_TO_NODE, &aea_to_node_);
     aea_to_node_.register_service_instance(this);
   }
 
-  std::vector<std::string> SearchFor(std::string const &val)
-  {
-    return aea_to_node_.SearchFor(val);
-  }
+  std::vector<std::string> SearchFor(std::string const &val) { return aea_to_node_.SearchFor(val); }
 
 private:
   AEAToNodeProtocol aea_to_node_;

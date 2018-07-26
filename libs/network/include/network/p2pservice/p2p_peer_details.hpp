@@ -147,11 +147,9 @@ struct PeerDetails
 
   double MillisecondsSinceUpdate() const
   {
-    std::chrono::system_clock::time_point end =
-        std::chrono::system_clock::now();
-    double ms = double(std::chrono::duration_cast<std::chrono::milliseconds>(
-                           end - last_updated)
-                           .count());
+    std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+    double                                ms =
+        double(std::chrono::duration_cast<std::chrono::milliseconds>(end - last_updated).count());
     return ms;
   }
 

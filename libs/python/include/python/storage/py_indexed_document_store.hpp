@@ -5,8 +5,7 @@ namespace fetch {
 namespace storage {
 
 template <typename B>
-void BuildIndexedDocumentStore(std::string const &custom_name,
-                               pybind11::module & module)
+void BuildIndexedDocumentStore(std::string const &custom_name, pybind11::module &module)
 {
   /*
   namespace py = pybind11;

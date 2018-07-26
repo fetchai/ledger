@@ -39,8 +39,7 @@ private:
 class MyCoolService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  MyCoolService(uint16_t port, fetch::network::NetworkManager tm)
-      : ServiceServer(port, tm)
+  MyCoolService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
   {
     this->Add(MYPROTO, new ServiceProtocol());
   }

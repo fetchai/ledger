@@ -38,8 +38,7 @@ double test_timing(double x_value)
   }
   auto t2a = std::chrono::high_resolution_clock::now();
 
-  double us1 = double(
-      std::chrono::duration_cast<std::chrono::milliseconds>(t2a - t1a).count());
+  double us1 = double(std::chrono::duration_cast<std::chrono::milliseconds>(t2a - t1a).count());
 
   auto t1b = std::chrono::high_resolution_clock::now();
   for (std::size_t i = 0; i < MAX; ++i)
@@ -49,8 +48,7 @@ double test_timing(double x_value)
   }
   auto t2b = std::chrono::high_resolution_clock::now();
 
-  double us2 = double(
-      std::chrono::duration_cast<std::chrono::milliseconds>(t2b - t1b).count());
+  double us2 = double(std::chrono::duration_cast<std::chrono::milliseconds>(t2b - t1b).count());
 
   auto t1c = std::chrono::high_resolution_clock::now();
   for (std::size_t i = 0; i < MAX; ++i)
@@ -60,8 +58,7 @@ double test_timing(double x_value)
   }
   auto t2c = std::chrono::high_resolution_clock::now();
 
-  double us3 = double(
-      std::chrono::duration_cast<std::chrono::milliseconds>(t2c - t1c).count());
+  double us3 = double(std::chrono::duration_cast<std::chrono::milliseconds>(t2c - t1c).count());
 
   return (us3 - us1) / (us2 - us1);
   //  auto t3 = std::chrono::high_resolution_clock::now();
@@ -76,18 +73,15 @@ void benchmark()
 
   std::cout << "Test time 2: ";
   for (std::size_t i = 0; i < 10; ++i)
-    std::cout << test_timing<8, 60801>(gen.AsDouble() * 100) << " "
-              << std::flush;
+    std::cout << test_timing<8, 60801>(gen.AsDouble() * 100) << " " << std::flush;
 
   std::cout << "Test time 3: ";
   for (std::size_t i = 0; i < 10; ++i)
-    std::cout << test_timing<12, 60801>(gen.AsDouble() * 100) << " "
-              << std::flush;
+    std::cout << test_timing<12, 60801>(gen.AsDouble() * 100) << " " << std::flush;
 
   std::cout << "Test time 4: ";
   for (std::size_t i = 0; i < 16; ++i)
-    std::cout << test_timing<12, 60801>(gen.AsDouble() * 100) << " "
-              << std::flush;
+    std::cout << test_timing<12, 60801>(gen.AsDouble() * 100) << " " << std::flush;
 }
 
 int main(int argc, char **argv)

@@ -99,8 +99,7 @@ private:
       }
     }
 
-    for (std::size_t i = 0; i < E_ENTRIES; ++i)
-      corrections_[i] = accumulated[i] / frequency[i];
+    for (std::size_t i = 0; i < E_ENTRIES; ++i) corrections_[i] = accumulated[i] / frequency[i];
 
     initialized_ = true;
   }
@@ -121,7 +120,7 @@ class Exp<0, C, OF>
   static constexpr double multiplier_pow2_ = double(1ull << E_MANTISSA);
   static constexpr double exponent_offset_ = ((1ull << (E_EXPONENT - 1)) - 1);
   double                  a_               = multiplier_pow2_ / M_LN2;
-  double                  b_ = exponent_offset_ * multiplier_pow2_ - C;
+  double                  b_               = exponent_offset_ * multiplier_pow2_ - C;
 
 public:
   Exp() {}

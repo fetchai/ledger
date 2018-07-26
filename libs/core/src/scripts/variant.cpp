@@ -7,18 +7,14 @@ VariantList::VariantList() : size_(0) { pointer_ = data_.pointer(); }
 
 VariantList::VariantList(std::size_t const &size) { Resize(size); }
 
-VariantList::VariantList(VariantList const &other, std::size_t offset,
-                         std::size_t size)
+VariantList::VariantList(VariantList const &other, std::size_t offset, std::size_t size)
     : size_(size), offset_(offset), data_(other.data_)
 {
   pointer_ = data_.pointer() + offset_;
 }
 
 VariantList::VariantList(VariantList const &other)
-    : size_(other.size_)
-    , offset_(other.offset_)
-    , data_(other.data_)
-    , pointer_(other.pointer_)
+    : size_(other.size_), offset_(other.offset_), data_(other.data_), pointer_(other.pointer_)
 {}
 
 VariantList::VariantList(VariantList &&other)
@@ -46,10 +42,7 @@ VariantList const &VariantList::operator=(VariantList &&other)
   return *this;
 }
 
-Variant const &VariantList::operator[](std::size_t const &i) const
-{
-  return pointer_[i];
-}
+Variant const &VariantList::operator[](std::size_t const &i) const { return pointer_[i]; }
 
 Variant &VariantList::operator[](std::size_t const &i) { return pointer_[i]; }
 
@@ -96,8 +89,7 @@ void VariantList::LazyReserve(std::size_t const &n)
   pointer_ = data_.pointer();
 }
 
-void VariantList::SetData(VariantList const &other, std::size_t offset,
-                          std::size_t size)
+void VariantList::SetData(VariantList const &other, std::size_t offset, std::size_t size)
 {
   data_    = other.data_;
   size_    = size;
@@ -113,10 +105,7 @@ Variant &Variant::operator[](std::size_t const &i)
   return array_[i];
 }
 
-Variant const &Variant::operator[](std::size_t const &i) const
-{
-  return array_[i];
-}
+Variant const &Variant::operator[](std::size_t const &i) const { return array_[i]; }
 
 std::size_t Variant::size() const
 {

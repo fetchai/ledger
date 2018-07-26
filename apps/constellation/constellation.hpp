@@ -59,7 +59,7 @@ public:
   using tx_processor_type = std::unique_ptr<ledger::TransactionProcessor>;
 
   using main_chain_service_type = std::unique_ptr<chain::MainChainService>;
-  using main_chain_remote_type = std::unique_ptr<chain::MainChainRemoteControl>;
+  using main_chain_remote_type  = std::unique_ptr<chain::MainChainRemoteControl>;
 
   using service_type        = service::ServiceClient;
   using client_type         = fetch::network::TCPClient;
@@ -77,24 +77,23 @@ public:
   static constexpr std::size_t DEFAULT_NUM_EXECUTORS  = DEFAULT_NUM_LANES;
   //  static const std::string DEFAULT_DB_PREFIX =;
 
-  static std::unique_ptr<Constellation> Create(
-      uint16_t           port_start    = DEFAULT_PORT_START,
-      std::size_t        num_executors = DEFAULT_NUM_EXECUTORS,
-      std::size_t        num_lanes     = DEFAULT_NUM_LANES,
-      std::size_t        num_slices    = DEFAULT_NUM_SLICES,
-      std::string const &prefix        = "node_storage")
+  static std::unique_ptr<Constellation> Create(uint16_t    port_start    = DEFAULT_PORT_START,
+                                               std::size_t num_executors = DEFAULT_NUM_EXECUTORS,
+                                               std::size_t num_lanes     = DEFAULT_NUM_LANES,
+                                               std::size_t num_slices    = DEFAULT_NUM_SLICES,
+                                               std::string const &prefix = "node_storage")
   {
 
-    std::unique_ptr<Constellation> constellation{new Constellation{
-        port_start, num_executors, num_lanes, num_slices, "127.0.0.1", prefix}};
+    std::unique_ptr<Constellation> constellation{
+        new Constellation{port_start, num_executors, num_lanes, num_slices, "127.0.0.1", prefix}};
 
     return constellation;
   }
 
-  explicit Constellation(uint16_t    port_start    = DEFAULT_PORT_START,
-                         std::size_t num_executors = DEFAULT_NUM_EXECUTORS,
-                         std::size_t num_lanes     = DEFAULT_NUM_LANES,
-                         std::size_t num_slices    = DEFAULT_NUM_SLICES,
+  explicit Constellation(uint16_t           port_start        = DEFAULT_PORT_START,
+                         std::size_t        num_executors     = DEFAULT_NUM_EXECUTORS,
+                         std::size_t        num_lanes         = DEFAULT_NUM_LANES,
+                         std::size_t        num_slices        = DEFAULT_NUM_SLICES,
                          std::string const &interface_address = "127.0.0.1",
                          std::string const &prefix            = "node_storage");
 
@@ -112,11 +111,11 @@ private:
   flag_type   active_{true};       ///< Flag to control running of main thread
   std::string interface_address_;  ///< The publicly facing interface IP address
   uint32_t    num_lanes_;          ///< The configured number of lanes
-  uint32_t    num_slices_;  ///< The configured number of slices per block
-  uint16_t    p2p_port_;    ///< The port that the P2P interface is running from
-  uint16_t    http_port_;   ///< The port of the HTTP server
-  uint16_t    lane_port_start_;  ///< The starting port of all the lane services
-  uint16_t    main_chain_port_;  ///< The main chain port
+  uint32_t    num_slices_;         ///< The configured number of slices per block
+  uint16_t    p2p_port_;           ///< The port that the P2P interface is running from
+  uint16_t    http_port_;          ///< The port of the HTTP server
+  uint16_t    lane_port_start_;    ///< The starting port of all the lane services
+  uint16_t    main_chain_port_;    ///< The main chain port
   /// @}
 
   /// @name Network Orchestration
@@ -126,22 +125,20 @@ private:
 
   /// @name Lane Storage Components
   /// @{
-  storage_service_type
-                      storage_service_;  ///< The combination of all the lane services
-  storage_client_type storage_;          ///< The storage client
+  storage_service_type storage_service_;  ///< The combination of all the lane services
+  storage_client_type  storage_;          ///< The storage client
   /// @}
 
   /// @name Block Execution
   /// @{
-  executor_list_type     executors_;  ///< The list of transaction executors
+  executor_list_type     executors_;          ///< The list of transaction executors
   execution_manager_type execution_manager_;  ///< The execution manager
   /// @}
 
   /// @name Blockchain Components
   /// @{
   main_chain_service_type main_chain_service_;  ///< The main chain
-  main_chain_remote_type
-      main_chain_remote_;  ///< The controller unit of the main chain
+  main_chain_remote_type  main_chain_remote_;   ///< The controller unit of the main chain
 
   tx_processor_type      tx_processor_;        ///< The transaction processor
   block_coordinator_type block_coordinator_;   ///< The block coordinator

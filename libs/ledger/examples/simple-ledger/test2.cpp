@@ -35,19 +35,16 @@ enum FetchProtocols
 };
 
 std::vector<std::string> words = {
-    "squeak",     "fork",       "governor", "peace",       "courageous",
-    "support",    "tight",      "reject",   "extra-small", "slimy",
-    "form",       "bushes",     "telling",  "outrageous",  "cure",
-    "occur",      "plausible",  "scent",    "kick",        "melted",
-    "perform",    "rhetorical", "good",     "selfish",     "dime",
-    "tree",       "prevent",    "camera",   "paltry",      "allow",
-    "follow",     "balance",    "wave",     "curved",      "woman",
-    "rampant",    "eatable",    "faulty",   "sordid",      "tooth",
-    "bitter",     "library",    "spiders",  "mysterious",  "stop",
-    "talk",       "watch",      "muddle",   "windy",       "meal",
-    "arm",        "hammer",     "purple",   "company",     "political",
-    "territory",  "open",       "attract",  "admire",      "undress",
-    "accidental", "happy",      "lock",     "delicious"};
+    "squeak",     "fork",        "governor",  "peace",   "courageous", "support",   "tight",
+    "reject",     "extra-small", "slimy",     "form",    "bushes",     "telling",   "outrageous",
+    "cure",       "occur",       "plausible", "scent",   "kick",       "melted",    "perform",
+    "rhetorical", "good",        "selfish",   "dime",    "tree",       "prevent",   "camera",
+    "paltry",     "allow",       "follow",    "balance", "wave",       "curved",    "woman",
+    "rampant",    "eatable",     "faulty",    "sordid",  "tooth",      "bitter",    "library",
+    "spiders",    "mysterious",  "stop",      "talk",    "watch",      "muddle",    "windy",
+    "meal",       "arm",         "hammer",    "purple",  "company",    "political", "territory",
+    "open",       "attract",     "admire",    "undress", "accidental", "happy",     "lock",
+    "delicious"};
 
 fetch::random::LaggedFibonacciGenerator<> lfg;
 tx_type                                   RandomTX(std::size_t const &n)
@@ -72,8 +69,7 @@ public:
       , http_server_(8080, network_manager_)
   {
 
-    std::cout << "Listening for peers on " << (port) << ", clients on "
-              << (port) << std::endl;
+    std::cout << "Listening for peers on " << (port) << ", clients on " << (port) << std::endl;
 
     // Creating a service contiaing the shard protocol
     shard_ = new ShardProtocol(network_manager_, FetchProtocols::SHARD);
@@ -117,11 +113,10 @@ int main(int argc, char const **argv)
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
   typedef fetch::service::ServiceClient<fetch::network::TCPClient> client_type;
-  typedef std::shared_ptr<client_type> client_shared_ptr_type;
+  typedef std::shared_ptr<client_type>                             client_shared_ptr_type;
 
   fetch::network::NetworkManager tm(2);
-  client_shared_ptr_type         client =
-      std::make_shared<client_type>("localhost", 1337, &tm);
+  client_shared_ptr_type         client = std::make_shared<client_type>("localhost", 1337, &tm);
   tm.Start();
 
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -144,41 +139,29 @@ int main(int argc, char const **argv)
     client->Call(FetchProtocols::SHARD, ShardRPC::PUSH_TRANSACTION, tx);
     manager.PushTransaction(tx);
 
-    auto server_block =
-        client->Call(FetchProtocols::SHARD, ShardRPC::GET_NEXT_BLOCK)
-            .As<ShardManager::block_type>();
+    auto server_block = client->Call(FetchProtocols::SHARD, ShardRPC::GET_NEXT_BLOCK)
+                            .As<ShardManager::block_type>();
     auto local_block = manager.GetNextBlock();
 
-    if ((server_block.body().previous_hash !=
-         local_block.body().previous_hash) ||
+    if ((server_block.body().previous_hash != local_block.body().previous_hash) ||
         (server_block.header() != local_block.header()) ||
-        (server_block.body().transaction_hash !=
-         local_block.body().transaction_hash))
+        (server_block.body().transaction_hash != local_block.body().transaction_hash))
     {
       std::cout << "FAILED" << std::endl;
 
-      std::cout << "Server block: " << server_block.meta_data().block_number
-                << " " << server_block.meta_data().total_work << std::endl;
-      std::cout << "  <- "
-                << fetch::byte_array::ToBase64(
-                       server_block.body().previous_hash)
+      std::cout << "Server block: " << server_block.meta_data().block_number << " "
+                << server_block.meta_data().total_work << std::endl;
+      std::cout << "  <- " << fetch::byte_array::ToBase64(server_block.body().previous_hash)
                 << std::endl;
-      std::cout << "   = " << fetch::byte_array::ToBase64(server_block.header())
-                << std::endl;
-      std::cout << "    ("
-                << fetch::byte_array::ToBase64(
-                       server_block.body().transaction_hash)
+      std::cout << "   = " << fetch::byte_array::ToBase64(server_block.header()) << std::endl;
+      std::cout << "    (" << fetch::byte_array::ToBase64(server_block.body().transaction_hash)
                 << ")" << std::endl;
-      std::cout << "Local block: " << local_block.meta_data().block_number
-                << " " << local_block.meta_data().total_work << std::endl;
-      std::cout << "  <- "
-                << fetch::byte_array::ToBase64(local_block.body().previous_hash)
+      std::cout << "Local block: " << local_block.meta_data().block_number << " "
+                << local_block.meta_data().total_work << std::endl;
+      std::cout << "  <- " << fetch::byte_array::ToBase64(local_block.body().previous_hash)
                 << std::endl;
-      std::cout << "   = " << fetch::byte_array::ToBase64(local_block.header())
-                << std::endl;
-      std::cout << "    ("
-                << fetch::byte_array::ToBase64(
-                       local_block.body().transaction_hash)
+      std::cout << "   = " << fetch::byte_array::ToBase64(local_block.header()) << std::endl;
+      std::cout << "    (" << fetch::byte_array::ToBase64(local_block.body().transaction_hash)
                 << ")" << std::endl;
       exit(-1);
     }

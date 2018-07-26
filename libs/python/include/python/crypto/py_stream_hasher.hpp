@@ -9,8 +9,7 @@ namespace crypto {
 void BuildStreamHasher(pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<StreamHasher>(module, "StreamHasher")
-      .def(py::init<>()) /* No constructors found */;
+  py::class_<StreamHasher>(module, "StreamHasher").def(py::init<>()) /* No constructors found */;
 }
 };  // namespace crypto
 };  // namespace fetch

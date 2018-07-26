@@ -26,39 +26,35 @@ public:
   ByteArray Get(ByteArray const &key)
   {
     // TODO: (`HUT`) : do not allow calls to enum 0!!!
-    auto promise =
-        client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::GET,
-                      fetch::storage::ResourceID(key));
+    auto promise = client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::GET,
+                                 fetch::storage::ResourceID(key));
     return promise.As<ByteArray>();
   }
 
   void Set(ByteArray const &key, ByteArray const &value)
   {
-    auto promise =
-        client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::SET,
-                      fetch::storage::ResourceID(key), value);
+    auto promise = client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::SET,
+                                 fetch::storage::ResourceID(key), value);
     promise.Wait(2000);
   }
 
   void Commit(uint64_t const &bookmark)
   {
-    auto promise = client_->Call(
-        0, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
+    auto promise =
+        client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
     promise.Wait(2000);
   }
 
   void Revert(uint64_t const &bookmark)
   {
-    auto promise = client_->Call(
-        0, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
+    auto promise =
+        client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
     promise.Wait(2000);
   }
 
   ByteArray Hash()
   {
-    return client_
-        ->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
-        .As<ByteArray>();
+    return client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::HASH).As<ByteArray>();
   }
 
   void SetID(ByteArray const &id) { id_ = id; }

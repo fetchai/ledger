@@ -21,19 +21,16 @@ using namespace fetch::byte_array;
 typedef typename ShardManager::transaction_type tx_type;
 
 std::vector<std::string> words = {
-    "squeak",     "fork",       "governor", "peace",       "courageous",
-    "support",    "tight",      "reject",   "extra-small", "slimy",
-    "form",       "bushes",     "telling",  "outrageous",  "cure",
-    "occur",      "plausible",  "scent",    "kick",        "melted",
-    "perform",    "rhetorical", "good",     "selfish",     "dime",
-    "tree",       "prevent",    "camera",   "paltry",      "allow",
-    "follow",     "balance",    "wave",     "curved",      "woman",
-    "rampant",    "eatable",    "faulty",   "sordid",      "tooth",
-    "bitter",     "library",    "spiders",  "mysterious",  "stop",
-    "talk",       "watch",      "muddle",   "windy",       "meal",
-    "arm",        "hammer",     "purple",   "company",     "political",
-    "territory",  "open",       "attract",  "admire",      "undress",
-    "accidental", "happy",      "lock",     "delicious"};
+    "squeak",     "fork",        "governor",  "peace",   "courageous", "support",   "tight",
+    "reject",     "extra-small", "slimy",     "form",    "bushes",     "telling",   "outrageous",
+    "cure",       "occur",       "plausible", "scent",   "kick",       "melted",    "perform",
+    "rhetorical", "good",        "selfish",   "dime",    "tree",       "prevent",   "camera",
+    "paltry",     "allow",       "follow",    "balance", "wave",       "curved",    "woman",
+    "rampant",    "eatable",     "faulty",    "sordid",  "tooth",      "bitter",    "library",
+    "spiders",    "mysterious",  "stop",      "talk",    "watch",      "muddle",    "windy",
+    "meal",       "arm",         "hammer",    "purple",  "company",    "political", "territory",
+    "open",       "attract",     "admire",    "undress", "accidental", "happy",     "lock",
+    "delicious"};
 
 fetch::random::LaggedFibonacciGenerator<> lfg;
 tx_type                                   RandomTX(std::size_t const &n)
@@ -66,8 +63,7 @@ int main(int argc, char const **argv)
       // Making output for comparison
       fetch::serializers::ByteArrayBuffer buf;
       buf << "hello world";
-      EXPECT(tx.digest() ==
-             fetch::crypto::Hash<fetch::crypto::SHA256>(buf.data()));
+      EXPECT(tx.digest() == fetch::crypto::Hash<fetch::crypto::SHA256>(buf.data()));
     };
 
     SECTION_REF("Checking that transaction can only be added once")

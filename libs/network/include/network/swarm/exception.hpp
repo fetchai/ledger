@@ -21,10 +21,7 @@ public:
   uint64_t    error_code() const { return 1; }
   std::string explanation() const { return explanation_; }
 
-  void StackTrace() const
-  {
-    LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception");
-  }
+  void StackTrace() const { LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception"); }
 
 private:
   std::string explanation_;

@@ -74,8 +74,7 @@ struct KeyValuePair
   }
 };
 
-template <typename KV = KeyValuePair<>,
-          typename D  = VersionedRandomAccessStack<KV, uint64_t>>
+template <typename KV = KeyValuePair<>, typename D = VersionedRandomAccessStack<KV, uint64_t>>
 class KeyValueIndex
 {
   struct UpdateTask
@@ -86,10 +85,7 @@ class KeyValueIndex
     {
       return (priority == other.priority) && (other.element == element);
     }
-    bool operator<(UpdateTask const &other) const
-    {
-      return priority < other.priority;
-    }
+    bool operator<(UpdateTask const &other) const { return priority < other.priority; }
   };
 
 public:
@@ -205,10 +201,7 @@ public:
     return FindNearest(key, kv, split, pos, left_right, depth);
   }
 
-  void Delete(byte_array::ConstByteArray const &key)
-  {
-    TODO_FAIL("Not implemented");
-  }
+  void Delete(byte_array::ConstByteArray const &key) { TODO_FAIL("Not implemented"); }
 
   void GetElement(uint64_t const &i, index_type &v)
   {
@@ -446,8 +439,8 @@ private:
     }
   }
 
-  index_type FindNearest(key_type const &key, key_value_pair &kv, bool &split,
-                         int &pos, int &left_right, uint64_t &depth)
+  index_type FindNearest(key_type const &key, key_value_pair &kv, bool &split, int &pos,
+                         int &left_right, uint64_t &depth)
   {
     depth = 0;
     if (this->empty()) return index_type(-1);

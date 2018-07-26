@@ -16,11 +16,10 @@ void BuildChainManager(pybind11::module &module)
       .def("latest_blocks", &ChainManager::latest_blocks)
       .def("head", &ChainManager::head)
       .def("set_group", &ChainManager::set_group)
-      .def("chains", (const fetch::protocols::ChainManager::chain_map_type &(
-                         ChainManager::*)() const) &
-                         ChainManager::chains)
-      .def("chains", (fetch::protocols::ChainManager::chain_map_type &
-                      (ChainManager::*)()) &
+      .def("chains",
+           (const fetch::protocols::ChainManager::chain_map_type &(ChainManager::*)() const) &
+               ChainManager::chains)
+      .def("chains", (fetch::protocols::ChainManager::chain_map_type & (ChainManager::*)()) &
                          ChainManager::chains)
       .def("size", &ChainManager::size);
 }

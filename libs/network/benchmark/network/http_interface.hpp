@@ -14,83 +14,73 @@ template <typename T>
 class HttpInterface : public fetch::http::HTTPModule
 {
 public:
-  explicit HttpInterface(std::shared_ptr<T> node) : node_{node}
-  {
-    AttachPages();
-  }
+  explicit HttpInterface(std::shared_ptr<T> node) : node_{node} { AttachPages(); }
 
   void AttachPages()
   {
     LOG_STACK_TRACE_POINT;
-    HTTPModule::Post("/add-endpoint", [this](http::ViewParameters const &params,
-                                             http::HTTPRequest const &   req) {
-      return this->AddEndpoint(params, req);
-    });
+    HTTPModule::Post("/add-endpoint",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->AddEndpoint(params, req);
+                     });
 
-    HTTPModule::Post("/transactions", [this](http::ViewParameters const &params,
-                                             http::HTTPRequest const &   req) {
-      return this->Transactions(params, req);
-    });
+    HTTPModule::Post("/transactions",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->Transactions(params, req);
+                     });
 
     HTTPModule::Post("/transactions-per-call",
-                     [this](http::ViewParameters const &params,
-                            http::HTTPRequest const &   req) {
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
                        return this->SetTPC(params, req);
                      });
 
-    HTTPModule::Post("/reset", [this](http::ViewParameters const &params,
-                                      http::HTTPRequest const &   req) {
-      return this->Reset(params, req);
-    });
+    HTTPModule::Post("/reset",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->Reset(params, req);
+                     });
 
     HTTPModule::Post("/transactions-hash",
-                     [this](http::ViewParameters const &params,
-                            http::HTTPRequest const &   req) {
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
                        return this->TransactionsHash(params, req);
                      });
 
     HTTPModule::Post("/transactions-to-sync",
-                     [this](http::ViewParameters const &params,
-                            http::HTTPRequest const &   req) {
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
                        return this->TransactionsToSync(params, req);
                      });
 
     HTTPModule::Post("/stop-condition",
-                     [this](http::ViewParameters const &params,
-                            http::HTTPRequest const &   req) {
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
                        return this->StopCondition(params, req);
                      });
 
-    HTTPModule::Post("/is-slave", [this](http::ViewParameters const &params,
-                                         http::HTTPRequest const &   req) {
-      return this->IsSlave(params, req);
-    });
+    HTTPModule::Post("/is-slave",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->IsSlave(params, req);
+                     });
 
-    HTTPModule::Post("/start-time", [this](http::ViewParameters const &params,
-                                           http::HTTPRequest const &   req) {
-      return this->StartTime(params, req);
-    });
+    HTTPModule::Post("/start-time",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->StartTime(params, req);
+                     });
 
     HTTPModule::Post("/start-test-as-master",
-                     [this](http::ViewParameters const &params,
-                            http::HTTPRequest const &   req) {
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
                        return this->StartTestAsMaster(params, req);
                      });
 
     HTTPModule::Post("/time-to-complete",
-                     [this](http::ViewParameters const &params,
-                            http::HTTPRequest const &   req) {
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
                        return this->TimeToComplete(params, req);
                      });
 
-    HTTPModule::Post("/finished", [this](http::ViewParameters const &params,
-                                         http::HTTPRequest const &   req) {
-      return this->Finished(params, req);
-    });
+    HTTPModule::Post("/finished",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->Finished(params, req);
+                     });
 
     HTTPModule::Post("/transaction-size",
-                     [this](http::ViewParameters const &params,
-                            http::HTTPRequest const &   req) {
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
                        return this->TransactionSize(params, req);
                      });
   }
@@ -102,8 +92,7 @@ public:
     AttachPages();
   }
 
-  http::HTTPResponse AddEndpoint(http::ViewParameters const &params,
-                                 http::HTTPRequest const &   req)
+  http::HTTPResponse AddEndpoint(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT;
     json::JSONDocument doc;
@@ -124,8 +113,7 @@ public:
     }
   }
 
-  http::HTTPResponse Transactions(http::ViewParameters const &params,
-                                  http::HTTPRequest const &   req)
+  http::HTTPResponse Transactions(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     auto transactions = node_->GetTransactions();
 
@@ -143,8 +131,7 @@ public:
     return http::HTTPResponse(ret.str());
   }
 
-  http::HTTPResponse SetTPC(http::ViewParameters const &params,
-                            http::HTTPRequest const &   req)
+  http::HTTPResponse SetTPC(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     json::JSONDocument doc;
     try
@@ -164,8 +151,7 @@ public:
     }
   }
 
-  http::HTTPResponse Reset(http::ViewParameters const &params,
-                           http::HTTPRequest const &   req)
+  http::HTTPResponse Reset(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     node_->Reset();
     return http::HTTPResponse(successString);
@@ -206,8 +192,7 @@ public:
     }
   }
 
-  http::HTTPResponse StopCondition(http::ViewParameters const &params,
-                                   http::HTTPRequest const &   req)
+  http::HTTPResponse StopCondition(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     json::JSONDocument doc;
     try
@@ -225,15 +210,13 @@ public:
     }
   }
 
-  http::HTTPResponse IsSlave(http::ViewParameters const &params,
-                             http::HTTPRequest const &   req)
+  http::HTTPResponse IsSlave(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     node_->isSlave();
     return http::HTTPResponse(successString);
   }
 
-  http::HTTPResponse StartTime(http::ViewParameters const &params,
-                               http::HTTPRequest const &   req)
+  http::HTTPResponse StartTime(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT;
     json::JSONDocument doc;
@@ -286,8 +269,7 @@ public:
     return http::HTTPResponse(ret.str());
   }
 
-  http::HTTPResponse Finished(http::ViewParameters const &params,
-                              http::HTTPRequest const &   req)
+  http::HTTPResponse Finished(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT;
     script::Variant result = script::Variant::Object();

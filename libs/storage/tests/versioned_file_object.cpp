@@ -52,8 +52,7 @@ int main()
       std::cout << std::endl;
       std::cout << "Commiting " << i << std::endl;
       std::cout << "=====================" << std::endl;
-      std::cout << "Hash: " << byte_array::ToBase64(expected_hashes[i])
-                << std::endl;
+      std::cout << "Hash: " << byte_array::ToBase64(expected_hashes[i]) << std::endl;
 
       fs.Commit(i + 1);
     }
@@ -63,8 +62,7 @@ int main()
       std::cout << std::endl;
       std::cout << "Reverting to " << i << std::endl;
       std::cout << "=====================" << std::endl;
-      std::cout << "Expecting " << byte_array::ToBase64(expected_hashes[i])
-                << std::endl;
+      std::cout << "Expecting " << byte_array::ToBase64(expected_hashes[i]) << std::endl;
       fs.Revert(i);
       {
         file_object_type fobj(fs, record);

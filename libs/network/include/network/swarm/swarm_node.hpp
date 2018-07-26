@@ -39,13 +39,10 @@ protected:
 public:
   std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
 
-  explicit SwarmNode(
-      std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
-      const std::string &identifier, uint32_t maxpeers,
-      const fetch::swarm::SwarmPeerLocation &uri)
-      : nnCore_(std::move(networkNodeCore))
-      , uri_(uri)
-      , karmaPeerList_(identifier)
+  explicit SwarmNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
+                     const std::string &identifier, uint32_t maxpeers,
+                     const fetch::swarm::SwarmPeerLocation &uri)
+      : nnCore_(std::move(networkNodeCore)), uri_(uri), karmaPeerList_(identifier)
   {
     identifier_ = identifier;
     maxpeers_   = maxpeers;
@@ -53,9 +50,8 @@ public:
     nnCore_->AddProtocol(this);
   }
 
-  explicit SwarmNode(fetch::network::NetworkManager tm,
-                     const std::string &identifier, uint32_t maxpeers,
-                     const fetch::swarm::SwarmPeerLocation &uri)
+  explicit SwarmNode(fetch::network::NetworkManager tm, const std::string &identifier,
+                     uint32_t maxpeers, const fetch::swarm::SwarmPeerLocation &uri)
       : uri_(uri), karmaPeerList_(identifier)
   {
     identifier_ = identifier;
@@ -76,10 +72,7 @@ public:
 
   virtual bool HasPeers() { return !karmaPeerList_.empty(); }
 
-  virtual bool IsOwnLocation(const SwarmPeerLocation &loc) const
-  {
-    return loc == uri_;
-  }
+  virtual bool IsOwnLocation(const SwarmPeerLocation &loc) const { return loc == uri_; }
 
   std::list<SwarmKarmaPeer> HttpWantsPeerList() const
   {
@@ -93,8 +86,7 @@ public:
   {
     fetch::logger.Debug("AskPeerForPeers starts work");
 
-    auto promise =
-        client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
+    auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     if (promise.Wait(2500, false))
     {
       auto result = promise.As<std::string>();
@@ -130,10 +122,7 @@ public:
     }
   }
 
-  virtual bool IsExistingPeer(const std::string &host)
-  {
-    return karmaPeerList_.Has(host);
-  }
+  virtual bool IsExistingPeer(const std::string &host) { return karmaPeerList_.Has(host); }
 
   virtual std::string ClientNeedsPeer()
   {
@@ -159,13 +148,9 @@ public:
   {
     karmaPeerList_.AddOrUpdate(host, karma);
   }
-  double GetKarma(const std::string &host)
-  {
-    return karmaPeerList_.GetKarma(host);
-  }
+  double GetKarma(const std::string &host) { return karmaPeerList_.GetKarma(host); }
 
-  std::list<SwarmKarmaPeer> GetBestPeers(uint32_t n,
-                                         double   minKarma = 0.0) const
+  std::list<SwarmKarmaPeer> GetBestPeers(uint32_t n, double minKarma = 0.0) const
   {
     return karmaPeerList_.GetBestPeers(n, minKarma);
   }

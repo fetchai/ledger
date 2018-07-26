@@ -33,8 +33,7 @@ public:
    * This method can be invoked when defining the protocol using either
    * lambda or free functions.
    **/
-  virtual void create_publisher(feed_handler_type feed,
-                                function_type     function) = 0;
+  virtual void create_publisher(feed_handler_type feed, function_type function) = 0;
 
   /* Creates publication function.
    * @feed is the feed handler.
@@ -44,16 +43,13 @@ public:
    * member functions as publisher.
    **/
   template <typename C>
-  void create_publisher(
-      feed_handler_type feed, C *cls,
-      void (C::*function)(fetch::byte_array::ConstByteArray const &))
+  void create_publisher(feed_handler_type feed, C *cls,
+                        void (C::*function)(fetch::byte_array::ConstByteArray const &))
   {
     LOG_STACK_TRACE_POINT;
 
     this->create_publisher(
-        feed, [=](fetch::byte_array::ConstByteArray const &msg) -> void {
-          (cls->*function)(msg);
-        });
+        feed, [=](fetch::byte_array::ConstByteArray const &msg) -> void { (cls->*function)(msg); });
   }
 };
 }  // namespace service

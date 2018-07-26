@@ -153,10 +153,7 @@ public:
     return *this;
   }
 
-  uint8_t operator[](std::size_t const &n) const
-  {
-    return super_type::operator[](n);
-  }
+  uint8_t operator[](std::size_t const &n) const { return super_type::operator[](n); }
 
   bool operator<(BigUnsigned const &other) const
   {
@@ -214,8 +211,7 @@ inline double Log(BigUnsigned const &x)
   uint64_t tz       = uint64_t(__builtin_ctz(fraction.value));
   uint64_t exponent = (last_byte << 3) - tz;
 
-  return double(exponent) +
-         std::log(double(fraction.value << tz) * (1. / double(uint32_t(-1))));
+  return double(exponent) + std::log(double(fraction.value << tz) * (1. / double(uint32_t(-1))));
 }
 
 inline double ToDouble(BigUnsigned const &x)
@@ -238,9 +234,8 @@ inline double ToDouble(BigUnsigned const &x)
   fraction.bytes[3] = x[j + 3];
 
   assert(fraction.value != 0);
-  uint16_t tz       = uint16_t(__builtin_ctz(
-      fraction
-          .value));  // TODO: Wrap in function for cross compiler portability
+  uint16_t tz = uint16_t(
+      __builtin_ctz(fraction.value));  // TODO: Wrap in function for cross compiler portability
   uint16_t exponent = uint16_t((last_byte << 3) - tz);
 
   assert(exponent < 1023);

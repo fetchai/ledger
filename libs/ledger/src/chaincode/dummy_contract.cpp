@@ -32,8 +32,7 @@ DummyContract::Status DummyContract::Wait(transaction_type const &tx)
   // wait for the work time
   std::this_thread::sleep_for(std::chrono::milliseconds(work_time));
 
-  fetch::logger.Info("Running complicated transaction ", counter,
-                     " ... complete");
+  fetch::logger.Info("Running complicated transaction ", counter, " ... complete");
 
   ++counter_;
 

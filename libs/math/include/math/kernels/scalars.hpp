@@ -9,10 +9,7 @@ struct MultiplyScalar
 {
   MultiplyScalar(type const &val) : scalar(val) {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y)
-  {
-    y = scalar * x;
-  }
+  void operator()(vector_register_type const &x, vector_register_type &y) { y = scalar * x; }
 
   vector_register_type scalar;
 };
@@ -22,10 +19,7 @@ struct AddScalar
 {
   AddScalar(type const &val) : scalar(val) {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y)
-  {
-    y = scalar + x;
-  }
+  void operator()(vector_register_type const &x, vector_register_type &y) { y = scalar + x; }
 
   vector_register_type scalar;
 };
@@ -35,10 +29,7 @@ struct SubtractScalar
 {
   SubtractScalar(type const &val) : scalar(val) {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y)
-  {
-    y = x - scalar;
-  }
+  void operator()(vector_register_type const &x, vector_register_type &y) { y = x - scalar; }
 
   vector_register_type scalar;
 };
@@ -48,10 +39,7 @@ struct DivideScalar
 {
   DivideScalar(type const &val) : scalar(val) {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y)
-  {
-    y = x / scalar;
-  }
+  void operator()(vector_register_type const &x, vector_register_type &y) { y = x / scalar; }
 
   vector_register_type scalar;
 };
@@ -61,10 +49,7 @@ struct ScalarSubtract
 {
   ScalarSubtract(type const &val) : scalar(val) {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y)
-  {
-    y = scalar - x;
-  }
+  void operator()(vector_register_type const &x, vector_register_type &y) { y = scalar - x; }
 
   vector_register_type scalar;
 };
@@ -74,10 +59,7 @@ struct DivideScalar
 {
   ScalarDivide(type const &val) : scalar(val) {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y)
-  {
-    y = scalar / x;
-  }
+  void operator()(vector_register_type const &x, vector_register_type &y) { y = scalar / x; }
 
   vector_register_type scalar;
 };

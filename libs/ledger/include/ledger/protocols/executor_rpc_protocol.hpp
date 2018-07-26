@@ -14,8 +14,7 @@ public:
     EXECUTE = 1
   };
 
-  explicit ExecutorRpcProtocol(ExecutorInterface &executor)
-      : executor_{executor}
+  explicit ExecutorRpcProtocol(ExecutorInterface &executor) : executor_{executor}
   {
     Expose(EXECUTE, &executor_, &ExecutorInterface::Execute);
   }

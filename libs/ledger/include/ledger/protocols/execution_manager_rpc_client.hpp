@@ -14,9 +14,8 @@ public:
   using service_type = std::unique_ptr<fetch::service::ServiceClient>;
 
   // Construction / Destruction
-  ExecutionManagerRpcClient(byte_array::ConstByteArray const &host,
-                            uint16_t const &                  port,
-                            network::NetworkManager const &   network_manager);
+  ExecutionManagerRpcClient(byte_array::ConstByteArray const &host, uint16_t const &port,
+                            network::NetworkManager const &network_manager);
   ~ExecutionManagerRpcClient() override = default;
 
   /// @name Execution Manager Interface

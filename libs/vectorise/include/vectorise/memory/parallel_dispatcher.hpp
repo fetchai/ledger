@@ -20,17 +20,13 @@ public:
   {
     vector_size = platform::VectorRegisterSize<type>::value
   };
-  typedef typename vectorize::VectorRegister<type, vector_size>
-      vector_register_type;
-  typedef vectorize::VectorRegisterIterator<type, vector_size>
-      vector_register_iterator_type;
+  typedef typename vectorize::VectorRegister<type, vector_size> vector_register_type;
+  typedef vectorize::VectorRegisterIterator<type, vector_size>  vector_register_iterator_type;
 
-  ConstParallelDispatcher(type *ptr, std::size_t const &size)
-      : pointer_(ptr), size_(size)
-  {}
+  ConstParallelDispatcher(type *ptr, std::size_t const &size) : pointer_(ptr), size_(size) {}
 
-  type Reduce(vector_register_type (*vector_reduction)(
-      vector_register_type const &, vector_register_type const &)) const
+  type Reduce(vector_register_type (*vector_reduction)(vector_register_type const &,
+                                                       vector_register_type const &)) const
   {
     vector_register_type          a, b(type(0));
     vector_register_iterator_type iter(this->pointer(), this->size());
@@ -64,16 +60,14 @@ public:
   }
 
   template <typename... Args>
-  type SumReduce(
-      typename details::MatrixReduceFreeFunction<vector_register_type>::
-          template Unroll<Args...>::signature_type &&kernel,
-      Args &&... args)
+  type SumReduce(typename details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<
+                     Args...>::signature_type &&kernel,
+                 Args &&... args)
   {
 
     vector_register_type          regs[sizeof...(args)];
     vector_register_iterator_type iters[sizeof...(args)];
-    InitializeVectorIterators(0, this->size(), iters,
-                              std::forward<Args>(args)...);
+    InitializeVectorIterators(0, this->size(), iters, std::forward<Args>(args)...);
 
     vector_register_iterator_type self_iter(this->pointer(), this->size());
     vector_register_type          c(type(0)), tmp, self;
@@ -84,10 +78,9 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       self_iter.Next(self);
-      tmp = details::MatrixReduceFreeFunction<
-          vector_register_type>::template Unroll<Args...>::Apply(self, regs,
-                                                                 std::move(
-                                                                     kernel));
+      tmp =
+          details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
+              self, regs, std::move(kernel));
       c = c + tmp;
     }
 
@@ -103,7 +96,7 @@ public:
     int SF = int(range.SIMDFromUpper<vector_register_type::E_BLOCK_COUNT>());
     int ST = int(range.SIMDToLower<vector_register_type::E_BLOCK_COUNT>());
 
-    int STU = int(range.SIMDToUpper<vector_register_type::E_BLOCK_COUNT>());
+    int STU      = int(range.SIMDToUpper<vector_register_type::E_BLOCK_COUNT>());
     int SIMDSize = STU - SFL;
 
     vector_register_iterator_type self_iter(this->pointer() + std::size_t(SFL),
@@ -163,11 +156,10 @@ public:
   }
 
   template <typename... Args>
-  type SumReduce(
-      TrivialRange const &range,
-      typename details::MatrixReduceFreeFunction<vector_register_type>::
-          template Unroll<Args...>::signature_type &&reduce,
-      Args &&... args)
+  type SumReduce(TrivialRange const &range,
+                 typename details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<
+                     Args...>::signature_type &&reduce,
+                 Args &&... args)
   {
 
     int SFL = int(range.SIMDFromLower<vector_register_type::E_BLOCK_COUNT>());
@@ -175,7 +167,7 @@ public:
     int SF = int(range.SIMDFromUpper<vector_register_type::E_BLOCK_COUNT>());
     int ST = int(range.SIMDToLower<vector_register_type::E_BLOCK_COUNT>());
 
-    int STU = int(range.SIMDToUpper<vector_register_type::E_BLOCK_COUNT>());
+    int STU      = int(range.SIMDToUpper<vector_register_type::E_BLOCK_COUNT>());
     int SIMDSize = STU - SFL;
 
     vector_register_type          regs[sizeof...(args)];
@@ -197,10 +189,9 @@ public:
                           vector_register_iterator_type>::Apply(regs, iters);
       self_iter.Next(self);
 
-      tmp = details::MatrixReduceFreeFunction<
-          vector_register_type>::template Unroll<Args...>::Apply(self, regs,
-                                                                 std::move(
-                                                                     reduce));
+      tmp =
+          details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
+              self, regs, std::move(reduce));
 
       int Q = vector_register_type::E_BLOCK_COUNT - (SF - int(range.from()));
       for (int i = 0; i < vector_register_type::E_BLOCK_COUNT; ++i)
@@ -220,10 +211,9 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       self_iter.Next(self);
-      tmp = details::MatrixReduceFreeFunction<
-          vector_register_type>::template Unroll<Args...>::Apply(self, regs,
-                                                                 std::move(
-                                                                     reduce));
+      tmp =
+          details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
+              self, regs, std::move(reduce));
       c = c + tmp;
     }
 
@@ -238,10 +228,9 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       self_iter.Next(self);
-      tmp = details::MatrixReduceFreeFunction<
-          vector_register_type>::template Unroll<Args...>::Apply(self, regs,
-                                                                 std::move(
-                                                                     reduce));
+      tmp =
+          details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
+              self, regs, std::move(reduce));
 
       int Q = (int(range.to()) - ST - 1);
       for (int i = 0; i <= Q; ++i)
@@ -256,16 +245,14 @@ public:
   }
 
   template <typename... Args>
-  type ProductReduce(
-      typename details::MatrixReduceFreeFunction<vector_register_type>::
-          template Unroll<Args...>::signature_type &&kernel,
-      Args &&... args)
+  type ProductReduce(typename details::MatrixReduceFreeFunction<
+                         vector_register_type>::template Unroll<Args...>::signature_type &&kernel,
+                     Args &&... args)
   {
 
     vector_register_type          regs[sizeof...(args)];
     vector_register_iterator_type iters[sizeof...(args)];
-    InitializeVectorIterators(0, this->size(), iters,
-                              std::forward<Args>(args)...);
+    InitializeVectorIterators(0, this->size(), iters, std::forward<Args>(args)...);
 
     vector_register_iterator_type self_iter(this->pointer(), this->size());
     vector_register_type          c(type(0)), tmp, self;
@@ -276,10 +263,9 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       self_iter.Next(self);
-      tmp = details::MatrixReduceFreeFunction<
-          vector_register_type>::template Unroll<Args...>::Apply(self, regs,
-                                                                 std::move(
-                                                                     kernel));
+      tmp =
+          details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
+              self, regs, std::move(kernel));
       c = c * tmp;
     }
 
@@ -287,9 +273,8 @@ public:
   }
 
   type Reduce(TrivialRange const &range,
-              vector_register_type (*vector_reduction)(
-                  vector_register_type const &,
-                  vector_register_type const &)) const
+              vector_register_type (*vector_reduction)(vector_register_type const &,
+                                                       vector_register_type const &)) const
   {
 
     int SFL = int(range.SIMDFromLower<vector_register_type::E_BLOCK_COUNT>());
@@ -297,18 +282,17 @@ public:
     int SF = int(range.SIMDFromUpper<vector_register_type::E_BLOCK_COUNT>());
     int ST = int(range.SIMDToLower<vector_register_type::E_BLOCK_COUNT>());
 
-    int STU = int(range.SIMDToUpper<vector_register_type::E_BLOCK_COUNT>());
+    int STU      = int(range.SIMDToUpper<vector_register_type::E_BLOCK_COUNT>());
     int SIMDSize = STU - SFL;
 
     vector_register_type          a, b(type(0));
-    vector_register_iterator_type iter(this->pointer() + SFL,
-                                       std::size_t(SIMDSize));
+    vector_register_iterator_type iter(this->pointer() + SFL, std::size_t(SIMDSize));
 
     if (SFL != SF)
     {
       iter.Next(a);
-      a = vector_zero_below_element(
-          a, vector_register_type::E_BLOCK_COUNT - (SF - int(range.from())));
+      a = vector_zero_below_element(a,
+                                    vector_register_type::E_BLOCK_COUNT - (SF - int(range.from())));
       b = vector_reduction(a, b);
     }
 
@@ -372,10 +356,9 @@ protected:
   std::size_t size_;
 
   template <typename G, typename... Args>
-  static void InitializeVectorIterators(std::size_t const &            offset,
-                                        std::size_t const &            size,
-                                        vector_register_iterator_type *iters,
-                                        G &next, Args... remaining)
+  static void InitializeVectorIterators(std::size_t const &offset, std::size_t const &size,
+                                        vector_register_iterator_type *iters, G &next,
+                                        Args... remaining)
   {
 
     assert(next.size() >= offset + size);
@@ -384,23 +367,20 @@ protected:
   }
 
   template <typename G>
-  static void InitializeVectorIterators(std::size_t const &            offset,
-                                        std::size_t const &            size,
-                                        vector_register_iterator_type *iters,
-                                        G &                            next)
+  static void InitializeVectorIterators(std::size_t const &offset, std::size_t const &size,
+                                        vector_register_iterator_type *iters, G &next)
   {
     assert(next.padded_size() >= offset + size);
     (*iters) = vector_register_iterator_type(next.pointer() + offset, size);
   }
 
-  static void InitializeVectorIterators(std::size_t const &            offset,
-                                        std::size_t const &            size,
+  static void InitializeVectorIterators(std::size_t const &offset, std::size_t const &size,
                                         vector_register_iterator_type *iters)
   {}
 
   template <typename G, typename... Args>
-  static void SetPointers(std::size_t const &offset, std::size_t const &size,
-                          type const **regs, G &next, Args... remaining)
+  static void SetPointers(std::size_t const &offset, std::size_t const &size, type const **regs,
+                          G &next, Args... remaining)
   {
 
     assert(next.size() >= offset + size);
@@ -409,8 +389,8 @@ protected:
   }
 
   template <typename G>
-  static void SetPointers(std::size_t const &offset, std::size_t const &size,
-                          type const **regs, G &next)
+  static void SetPointers(std::size_t const &offset, std::size_t const &size, type const **regs,
+                          G &next)
   {
     assert(next.size() >= offset + size);
     *regs = next.pointer() + offset;
@@ -433,13 +413,10 @@ public:
   {
     vector_size = platform::VectorRegisterSize<type>::value
   };
-  typedef typename vectorize::VectorRegister<type, vector_size>
-      vector_register_type;
-  typedef vectorize::VectorRegisterIterator<type, vector_size>
-      vector_register_iterator_type;
+  typedef typename vectorize::VectorRegister<type, vector_size> vector_register_type;
+  typedef vectorize::VectorRegisterIterator<type, vector_size>  vector_register_iterator_type;
 
-  ParallelDispatcher(type *ptr, std::size_t const &size) : super_type(ptr, size)
-  {}
+  ParallelDispatcher(type *ptr, std::size_t const &size) : super_type(ptr, size) {}
 
   template <typename F>
   void Apply(F &&apply)
@@ -457,16 +434,15 @@ public:
   }
 
   template <typename... Args>
-  void Apply(typename details::MatrixApplyFreeFunction<
-                 vector_register_type,
-                 void>::template Unroll<Args...>::signature_type &&apply,
+  void Apply(typename details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<
+                 Args...>::signature_type &&apply,
              Args &&... args)
   {
 
     vector_register_type          regs[sizeof...(args)], c;
     vector_register_iterator_type iters[sizeof...(args)];
-    ConstParallelDispatcher<T>::InitializeVectorIterators(
-        0, this->size(), iters, std::forward<Args>(args)...);
+    ConstParallelDispatcher<T>::InitializeVectorIterators(0, this->size(), iters,
+                                                          std::forward<Args>(args)...);
 
     std::size_t N = this->size();
     for (std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT)
@@ -474,8 +450,8 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
 
-      details::MatrixApplyFreeFunction<vector_register_type, void>::
-          template Unroll<Args...>::Apply(regs, std::move(apply), c);
+      details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<Args...>::Apply(
+          regs, std::move(apply), c);
 
       c.Store(this->pointer() + i);
     }
@@ -532,9 +508,8 @@ public:
 
   template <typename... Args>
   void Apply(TrivialRange const &range,
-             typename details::MatrixApplyFreeFunction<
-                 vector_register_type,
-                 void>::template Unroll<Args...>::signature_type &&apply,
+             typename details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<
+                 Args...>::signature_type &&apply,
              Args &&... args)
   {
 
@@ -543,22 +518,21 @@ public:
     int SF = int(range.SIMDFromUpper<vector_register_type::E_BLOCK_COUNT>());
     int ST = int(range.SIMDToLower<vector_register_type::E_BLOCK_COUNT>());
 
-    int STU = int(range.SIMDToUpper<vector_register_type::E_BLOCK_COUNT>());
+    int STU      = int(range.SIMDToUpper<vector_register_type::E_BLOCK_COUNT>());
     int SIMDSize = STU - SFL;
 
     vector_register_type          regs[sizeof...(args)], c;
     vector_register_iterator_type iters[sizeof...(args)];
 
-    ConstParallelDispatcher<T>::InitializeVectorIterators(
-        std::size_t(SFL), std::size_t(SIMDSize), iters,
-        std::forward<Args>(args)...);
+    ConstParallelDispatcher<T>::InitializeVectorIterators(std::size_t(SFL), std::size_t(SIMDSize),
+                                                          iters, std::forward<Args>(args)...);
 
     if (SFL != SF)
     {
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
-      details::MatrixApplyFreeFunction<vector_register_type, void>::
-          template Unroll<Args...>::Apply(regs, std::move(apply), c);
+      details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<Args...>::Apply(
+          regs, std::move(apply), c);
 
       int Q = vector_register_type::E_BLOCK_COUNT - (SF - int(range.from()));
       for (int i = 0; i < vector_register_type::E_BLOCK_COUNT; ++i)
@@ -577,8 +551,8 @@ public:
     {
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
-      details::MatrixApplyFreeFunction<vector_register_type, void>::
-          template Unroll<Args...>::Apply(regs, std::move(apply), c);
+      details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<Args...>::Apply(
+          regs, std::move(apply), c);
 
       c.Store(this->pointer() + i);
     }
@@ -587,8 +561,8 @@ public:
     {
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
-      details::MatrixApplyFreeFunction<vector_register_type, void>::
-          template Unroll<Args...>::Apply(regs, std::move(apply), c);
+      details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<Args...>::Apply(
+          regs, std::move(apply), c);
 
       int Q = (int(range.to()) - ST - 1);
       for (int i = 0; i <= Q; ++i)
@@ -603,23 +577,22 @@ public:
   template <class C, typename... Args>
   void Apply(C const &cls,
              typename details::MatrixApplyClassMember<
-                 C, vector_register_type,
-                 void>::template Unroll<Args...>::signature_type &&fnc,
+                 C, vector_register_type, void>::template Unroll<Args...>::signature_type &&fnc,
              Args &&... args)
   {
 
     vector_register_type          regs[sizeof...(args)], c;
     vector_register_iterator_type iters[sizeof...(args)];
     std::size_t                   N = super_type::size();
-    ConstParallelDispatcher<T>::InitializeVectorIterators(
-        0, N, iters, std::forward<Args>(args)...);
+    ConstParallelDispatcher<T>::InitializeVectorIterators(0, N, iters, std::forward<Args>(args)...);
     for (std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT)
     {
       assert(i < N);
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
-      details::MatrixApplyClassMember<C, vector_register_type, void>::
-          template Unroll<Args...>::Apply(regs, cls, std::move(fnc), c);
+      details::MatrixApplyClassMember<C, vector_register_type,
+                                      void>::template Unroll<Args...>::Apply(regs, cls,
+                                                                             std::move(fnc), c);
 
       c.Store(this->pointer() + i);
     }
@@ -627,8 +600,8 @@ public:
 
   template <class C, typename... Args>
   void Apply(C const &cls,
-             typename details::MatrixApplyClassMember<
-                 C, type, void>::template Unroll<Args...>::signature_type &&fnc,
+             typename details::MatrixApplyClassMember<C, type, void>::template Unroll<
+                 Args...>::signature_type &&fnc,
              Args &&... args)
   {
 
@@ -638,14 +611,13 @@ public:
 
     std::size_t N = super_type::size();
 
-    ConstParallelDispatcher<T>::SetPointers(0, N, regs,
-                                            std::forward<Args>(args)...);
+    ConstParallelDispatcher<T>::SetPointers(0, N, regs, std::forward<Args>(args)...);
 
     for (std::size_t i = 0; i < N; ++i)
     {
 
-      details::MatrixApplyClassMember<C, type, void>::template Unroll<
-          Args...>::Apply(regs, cls, std::move(fnc), c);
+      details::MatrixApplyClassMember<C, type, void>::template Unroll<Args...>::Apply(
+          regs, cls, std::move(fnc), c);
 
       this->pointer()[i] = c;
 
@@ -657,11 +629,10 @@ public:
   }
 
   template <class C, typename... Args>
-  typename std::enable_if<
-      std::is_same<decltype(&C::operator()),
-                   typename details::MatrixApplyClassMember<C, type, void>::
-                       template Unroll<Args...>::signature_type>::value,
-      void>::type
+  typename std::enable_if<std::is_same<decltype(&C::operator()),
+                                       typename details::MatrixApplyClassMember<C, type, void>::
+                                           template Unroll<Args...>::signature_type>::value,
+                          void>::type
   Apply(C const &cls, Args &&... args)
   {
     return Apply(cls, &C::operator(), std::forward<Args>(args)...);
@@ -670,9 +641,8 @@ public:
   template <class C, typename... Args>
   typename std::enable_if<
       std::is_same<decltype(&C::operator()),
-                   typename details::MatrixApplyClassMember<
-                       C, vector_register_type,
-                       void>::template Unroll<Args...>::signature_type>::value,
+                   typename details::MatrixApplyClassMember<C, vector_register_type, void>::
+                       template Unroll<Args...>::signature_type>::value,
       void>::type
   Apply(C const &cls, Args &&... args)
   {
@@ -683,8 +653,7 @@ public:
   template <class C, typename... Args>
   void Apply(TrivialRange const &range, C const &cls,
              typename details::MatrixApplyClassMember<
-                 C, vector_register_type,
-                 void>::template Unroll<Args...>::signature_type &fnc,
+                 C, vector_register_type, void>::template Unroll<Args...>::signature_type &fnc,
              Args &&... args)
   {
 
@@ -693,24 +662,20 @@ public:
     int SF = int(range.SIMDFromUpper<vector_register_type::E_BLOCK_COUNT>());
     int ST = int(range.SIMDToLower<vector_register_type::E_BLOCK_COUNT>());
 
-    int STU = int(range.SIMDToUpper<vector_register_type::E_BLOCK_COUNT>());
+    int STU      = int(range.SIMDToUpper<vector_register_type::E_BLOCK_COUNT>());
     int SIMDSize = STU - SFL;
 
     vector_register_type          regs[sizeof...(args)], c;
     vector_register_iterator_type iters[sizeof...(args)];
-    ConstParallelDispatcher<T>::InitializeVectorIterators(
-        std::size_t(SFL), std::size_t(SIMDSize), iters,
-        std::forward<Args>(args)...);
+    ConstParallelDispatcher<T>::InitializeVectorIterators(std::size_t(SFL), std::size_t(SIMDSize),
+                                                          iters, std::forward<Args>(args)...);
 
     if (SFL != SF)
     {
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
-      details::MatrixApplyClassMember<
-          C, vector_register_type, void>::template Unroll<Args...>::Apply(regs,
-                                                                          cls,
-                                                                          fnc,
-                                                                          c);
+      details::MatrixApplyClassMember<C, vector_register_type,
+                                      void>::template Unroll<Args...>::Apply(regs, cls, fnc, c);
 
       int Q = vector_register_type::E_BLOCK_COUNT - (SF - int(range.from()));
       for (int i = 0; i < vector_register_type::E_BLOCK_COUNT; ++i)
@@ -728,11 +693,8 @@ public:
     {
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
-      details::MatrixApplyClassMember<
-          C, vector_register_type, void>::template Unroll<Args...>::Apply(regs,
-                                                                          cls,
-                                                                          fnc,
-                                                                          c);
+      details::MatrixApplyClassMember<C, vector_register_type,
+                                      void>::template Unroll<Args...>::Apply(regs, cls, fnc, c);
       c.Store(this->pointer() + i);
     }
 
@@ -740,11 +702,8 @@ public:
     {
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
-      details::MatrixApplyClassMember<
-          C, vector_register_type, void>::template Unroll<Args...>::Apply(regs,
-                                                                          cls,
-                                                                          fnc,
-                                                                          c);
+      details::MatrixApplyClassMember<C, vector_register_type,
+                                      void>::template Unroll<Args...>::Apply(regs, cls, fnc, c);
 
       int Q = (int(range.to()) - ST - 1);
       for (int i = 0; i <= Q; ++i)

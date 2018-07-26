@@ -28,21 +28,18 @@ public:
   using connectivity_details_type    = LaneConnectivityDetails;
   using document_store_type          = storage::RevertibleDocumentStore;
   using document_store_protocol_type = storage::RevertibleDocumentStoreProtocol;
-  using transaction_store_type =
-      storage::ObjectStore<fetch::chain::VerifiedTransaction>;
+  using transaction_store_type       = storage::ObjectStore<fetch::chain::VerifiedTransaction>;
   using transaction_store_protocol_type =
       storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
-  using client_register_type =
-      fetch::network::ConnectionRegister<connectivity_details_type>;
+  using client_register_type     = fetch::network::ConnectionRegister<connectivity_details_type>;
   using controller_type          = LaneController;
   using controller_protocol_type = LaneControllerProtocol;
   using identity_type            = LaneIdentity;
   using identity_protocol_type   = LaneIdentityProtocol;
   using connection_handle_type   = client_register_type::connection_handle_type;
-  using super_type = service::ServiceServer<fetch::network::TCPServer>;
-  using tx_sync_protocol_type = storage::ObjectStoreSyncronisationProtocol<
-      client_register_type, fetch::chain::VerifiedTransaction,
-      fetch::chain::UnverifiedTransaction>;
+  using super_type               = service::ServiceServer<fetch::network::TCPServer>;
+  using tx_sync_protocol_type    = storage::ObjectStoreSyncronisationProtocol<
+      client_register_type, fetch::chain::VerifiedTransaction, fetch::chain::UnverifiedTransaction>;
   using thread_pool_type = network::ThreadPool;
 
   enum
@@ -57,16 +54,14 @@ public:
   };
 
   // TODO: Make config JSON
-  LaneService(std::string const &db_dir, uint32_t const &lane,
-              uint32_t const &total_lanes, uint16_t port,
-              fetch::network::NetworkManager tm, bool start_sync = true)
+  LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &total_lanes,
+              uint16_t port, fetch::network::NetworkManager tm, bool start_sync = true)
       : super_type(port, tm)
   {
 
     this->SetConnectionRegister(register_);
 
-    fetch::logger.Warn("Establishing Lane ", lane,
-                       " Service on rpc://127.0.0.1:", port);
+    fetch::logger.Warn("Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port);
     thread_pool_ = network::MakeThreadPool(1);
 
     // Setting lane certificate up
@@ -85,8 +80,7 @@ public:
     }
 
     // Lane Identity
-    identity_ = std::make_shared<identity_type>(register_, tm,
-                                                certificate_->identity());
+    identity_ = std::make_shared<identity_type>(register_, tm, certificate_->identity());
     identity_->SetLaneNumber(lane);
     identity_->SetTotalLanes(total_lanes);
     identity_protocol_.reset(new identity_protocol_type(identity_.get()));
@@ -94,17 +88,13 @@ public:
 
     // TX Store
     tx_store_.reset(new transaction_store_type());
-    tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db",
-                    true);
+    tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
 
-    tx_sync_protocol_.reset(new tx_sync_protocol_type(
-        TX_STORE_SYNC, register_, thread_pool_, tx_store_.get()));
-    tx_store_protocol_.reset(
-        new transaction_store_protocol_type(tx_store_.get()));
+    tx_sync_protocol_.reset(
+        new tx_sync_protocol_type(TX_STORE_SYNC, register_, thread_pool_, tx_store_.get()));
+    tx_store_protocol_.reset(new transaction_store_protocol_type(tx_store_.get()));
     tx_store_protocol_->OnSetObject(
-        [this](fetch::chain::VerifiedTransaction const &tx) {
-          tx_sync_protocol_->AddToCache(tx);
-        });
+        [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->AddToCache(tx); });
 
     this->Add(TX_STORE, tx_store_protocol_.get());
 
@@ -113,12 +103,10 @@ public:
 
     // State DB
     state_db_.reset(new document_store_type());
-    state_db_->Load(prefix + "state.db", prefix + "state_deltas.db",
-                    prefix + "state_index.db", prefix + "state_index_deltas.db",
-                    true);
+    state_db_->Load(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
+                    prefix + "state_index_deltas.db", true);
 
-    state_db_protocol_.reset(
-        new document_store_protocol_type(state_db_.get(), lane, total_lanes));
+    state_db_protocol_.reset(new document_store_protocol_type(state_db_.get(), lane, total_lanes));
     this->Add(STATE, state_db_protocol_.get());
 
     // Controller

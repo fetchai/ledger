@@ -37,8 +37,7 @@ public:
 
   TCPClientImplementation(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation(TCPClientImplementation &&rhs)      = delete;
-  TCPClientImplementation &operator=(TCPClientImplementation const &rhs) =
-      delete;
+  TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation &&rhs) = delete;
 
   ~TCPClientImplementation() { destructing_ = true; }
@@ -48,8 +47,7 @@ public:
     Connect(host, byte_array::ConstByteArray(std::to_string(port)));
   }
 
-  void Connect(byte_array::ConstByteArray const &host,
-               byte_array::ConstByteArray const &port)
+  void Connect(byte_array::ConstByteArray const &host, byte_array::ConstByteArray const &port)
   {
     self_type self = shared_from_this();
 
@@ -72,8 +70,7 @@ public:
         shared_self_type selfLock = self.lock();
         if (!selfLock) return;
 
-        std::shared_ptr<socket_type> socket =
-            networkManager_.CreateIO<socket_type>();
+        std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
 
         {
           std::lock_guard<mutex_type> lock(io_creation_mutex_);
@@ -83,11 +80,10 @@ public:
           }
         }
 
-        std::shared_ptr<resolver_type> res =
-            networkManager_.CreateIO<resolver_type>();
+        std::shared_ptr<resolver_type> res = networkManager_.CreateIO<resolver_type>();
 
-        auto cb = [this, self, res, socket, strand, port](
-                      std::error_code ec, resolver_type::iterator) {
+        auto cb = [this, self, res, socket, strand, port](std::error_code ec,
+                                                          resolver_type::iterator) {
           shared_self_type selfLock = self.lock();
           if (!selfLock) return;
 
@@ -109,8 +105,7 @@ public:
             }
             else
             {
-              fetch::logger.Warn(
-                  "Failed to get endpoint of socket after connection");
+              fetch::logger.Warn("Failed to get endpoint of socket after connection");
             }
           }
           else
@@ -122,8 +117,7 @@ public:
 
         if (socket && res)
         {
-          resolver_type::iterator it(
-              res->resolve({std::string(host), std::string(port)}));
+          resolver_type::iterator it(res->resolve({std::string(host), std::string(port)}));
 
           assert(strand->running_in_this_thread());
           asio::async_connect(*socket, it, strand->wrap(cb));
@@ -232,8 +226,7 @@ private:
     byte_array::ByteArray header;
     header.Resize(2 * sizeof(uint64_t));
 
-    auto cb = [this, self, socket, header, strand](std::error_code ec,
-                                                   std::size_t) {
+    auto cb = [this, self, socket, header, strand](std::error_code ec, std::size_t) {
       shared_self_type selfLock = self.lock();
       if (!selfLock) return;
 
@@ -252,8 +245,7 @@ private:
     if (socket)
     {
       assert(strand->running_in_this_thread());
-      asio::async_read(*socket, asio::buffer(header.pointer(), header.size()),
-                       strand->wrap(cb));
+      asio::async_read(*socket, asio::buffer(header.pointer(), header.size()), strand->wrap(cb));
       connected_ = true;
     }
     else
@@ -270,8 +262,7 @@ private:
 
     assert(header.size() >= sizeof(networkMagic_));
     uint64_t magic = *reinterpret_cast<const uint64_t *>(header.pointer());
-    uint64_t size  = *reinterpret_cast<const uint64_t *>(header.pointer() +
-                                                        sizeof(uint64_t));
+    uint64_t size  = *reinterpret_cast<const uint64_t *>(header.pointer() + sizeof(uint64_t));
 
     if (magic != networkMagic_)
     {
@@ -279,9 +270,8 @@ private:
       SetHeader(dummy, 0);
       dummy.Resize(16);
 
-      fetch::logger.Error(
-          "Magic incorrect during network read:\ngot:      ", ToHex(header),
-          "\nExpected: ", ToHex(byte_array::ByteArray(dummy)));
+      fetch::logger.Error("Magic incorrect during network read:\ngot:      ", ToHex(header),
+                          "\nExpected: ", ToHex(byte_array::ByteArray(dummy)));
       return;
     }
 
@@ -290,8 +280,7 @@ private:
 
     self_type self   = shared_from_this();
     auto      socket = socket_.lock();
-    auto      cb     = [this, self, message, socket, strand](std::error_code ec,
-                                                    std::size_t     len) {
+    auto      cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
       shared_self_type selfLock = self.lock();
       if (!selfLock) return;
 
@@ -310,8 +299,7 @@ private:
     if (socket)
     {
       assert(strand->running_in_this_thread());
-      asio::async_read(*socket, asio::buffer(message.pointer(), message.size()),
-                       strand->wrap(cb));
+      asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), strand->wrap(cb));
     }
     else
     {
@@ -367,14 +355,12 @@ private:
     byte_array::ByteArray header;
     SetHeader(header, buffer.size());
 
-    std::vector<asio::const_buffer> buffers{
-        asio::buffer(header.pointer(), header.size()),
-        asio::buffer(buffer.pointer(), buffer.size())};
+    std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
+                                            asio::buffer(buffer.pointer(), buffer.size())};
 
     auto socket = socket_.lock();
 
-    auto cb = [this, selfLock, socket, buffer, header](std::error_code ec,
-                                                       std::size_t     len) {
+    auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len) {
       {
         std::lock_guard<mutex_type> lock(can_write_mutex_);
         can_write_ = true;

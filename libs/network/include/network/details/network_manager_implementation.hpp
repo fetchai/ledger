@@ -20,17 +20,13 @@ public:
   typedef std::weak_ptr<NetworkManagerImplementation>   weak_ptr_type;
   typedef std::shared_ptr<NetworkManagerImplementation> shared_ptr_type;
 
-  NetworkManagerImplementation(std::size_t threads = 1)
-      : number_of_threads_(threads)
+  NetworkManagerImplementation(std::size_t threads = 1) : number_of_threads_(threads)
   {
 
     fetch::logger.Debug("Creating network manager");
   }
 
-  ~NetworkManagerImplementation()
-  {
-    fetch::logger.Debug("Destroying network manager");
-  }
+  ~NetworkManagerImplementation() { fetch::logger.Debug("Destroying network manager"); }
 
   NetworkManagerImplementation(NetworkManagerImplementation const &) = delete;
   NetworkManagerImplementation(NetworkManagerImplementation &&)      = default;
@@ -52,8 +48,7 @@ public:
       shared_ptr_type self = shared_from_this();
       for (std::size_t i = 0; i < number_of_threads_; ++i)
       {
-        threads_.push_back(
-            new std::thread([this, self]() { io_service_->run(); }));
+        threads_.push_back(new std::thread([this, self]() { io_service_->run(); }));
       }
     }
   }

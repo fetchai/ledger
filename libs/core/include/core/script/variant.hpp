@@ -14,8 +14,7 @@ template <bool C, typename R = void>
 using EnableIf = typename std::enable_if<C, R>::type;
 
 template <typename T, typename R = T>
-using IfIsIntegerLike =
-    EnableIf<(!std::is_same<T, bool>::value) && std::is_integral<T>::value, R>;
+using IfIsIntegerLike = EnableIf<(!std::is_same<T, bool>::value) && std::is_integral<T>::value, R>;
 
 template <typename T, typename R = T>
 using IfIsFloatLike = EnableIf<std::is_floating_point<T>::value, R>;
@@ -24,8 +23,7 @@ template <typename T, typename R = T>
 using IfIsBooleanLike = EnableIf<std::is_same<T, bool>::value, R>;
 
 template <typename T, typename R = T>
-using IfIsByteArrayLike =
-    EnableIf<std::is_same<T, byte_array::ByteArray>::value, R>;
+using IfIsByteArrayLike = EnableIf<std::is_same<T, byte_array::ByteArray>::value, R>;
 
 template <typename T, typename R = T>
 using IfIsStdStringLike = EnableIf<std::is_same<T, std::string>::value, R>;
@@ -82,13 +80,11 @@ class Variant
   class VariantObjectEntryProxy : public T
   {
   public:
-    VariantObjectEntryProxy(byte_array::ConstByteArray const &key,
-                            Variant *                         parent)
+    VariantObjectEntryProxy(byte_array::ConstByteArray const &key, Variant *parent)
         : key_(key), parent_(parent), child_(nullptr)
     {}
 
-    VariantObjectEntryProxy(byte_array::ConstByteArray const &key,
-                            Variant *parent, Variant *child)
+    VariantObjectEntryProxy(byte_array::ConstByteArray const &key, Variant *parent, Variant *child)
         : T(*child), key_(key), parent_(parent), child_(child)
     {}
 
@@ -237,8 +233,7 @@ public:
   }
 
   // Dict accessors
-  VariantObjectEntryProxy<Variant> operator[](
-      byte_array::ConstByteArray const &key)
+  VariantObjectEntryProxy<Variant> operator[](byte_array::ConstByteArray const &key)
   {
     assert(type_ == OBJECT);
     std::size_t i = 0;
@@ -468,8 +463,7 @@ inline std::ostream &operator<<(std::ostream &os, VariantList const &v)
 }
 
 template <typename T>
-inline bool Extract(script::Variant const &           obj,
-                    byte_array::ConstByteArray const &name, T &value)
+inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const &name, T &value)
 {
   auto element = obj[name];
   if (element.is_undefined())

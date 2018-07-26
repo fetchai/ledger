@@ -25,8 +25,7 @@ public:
   MainChainRemoteControl() {}
   MainChainRemoteControl(MainChainRemoteControl const &other) = default;
   MainChainRemoteControl(MainChainRemoteControl &&other)      = default;
-  MainChainRemoteControl &operator=(MainChainRemoteControl const &other) =
-      default;
+  MainChainRemoteControl &operator=(MainChainRemoteControl const &other) = default;
   MainChainRemoteControl &operator=(MainChainRemoteControl &&other) = default;
 
   ~MainChainRemoteControl() = default;
@@ -40,8 +39,8 @@ public:
       TODO_FAIL("Not connected or bad pointer");
     }
 
-    auto p = client_->Call(CONTROLLER_PROTOCOL_ID,
-                           MainChainControllerProtocol::CONNECT, host, port);
+    auto p =
+        client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::CONNECT, host, port);
     p.Wait();
   }
 
@@ -52,8 +51,7 @@ public:
       TODO_FAIL("Not connected or bad pointer");
     }
 
-    auto p = client_->Call(CONTROLLER_PROTOCOL_ID,
-                           MainChainControllerProtocol::TRY_CONNECT, ep);
+    auto p = client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::TRY_CONNECT, ep);
     p.Wait();
   }
 
@@ -64,8 +62,7 @@ public:
       TODO_FAIL("Not connected or bad pointer");
     }
 
-    auto p = client_->Call(CONTROLLER_PROTOCOL_ID,
-                           MainChainControllerProtocol::SHUTDOWN);
+    auto p = client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::SHUTDOWN);
     p.Wait();
   }
 
@@ -77,8 +74,7 @@ public:
       TODO_FAIL("Not connected or bad pointer");
     }
 
-    auto p = client_->Call(CONTROLLER_PROTOCOL_ID,
-                           MainChainControllerProtocol::INCOMING_PEERS);
+    auto p = client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::INCOMING_PEERS);
     return p.As<int>();
 
     return 0;
@@ -92,8 +88,7 @@ public:
       TODO_FAIL("Not connected or bad pointer");
     }
 
-    auto p = client_->Call(CONTROLLER_PROTOCOL_ID,
-                           MainChainControllerProtocol::OUTGOING_PEERS);
+    auto p = client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::OUTGOING_PEERS);
     return p.As<int>();
 
     return 0;

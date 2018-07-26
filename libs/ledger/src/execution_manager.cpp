@@ -22,8 +22,7 @@ namespace ledger {
  * @param num_executors The specified number of executors (and threads)
  */
 // std::make_shared<fetch::network::ThreadPool>(num_executors)
-ExecutionManager::ExecutionManager(std::size_t                  num_executors,
-                                   storage_unit_type            storage,
+ExecutionManager::ExecutionManager(std::size_t num_executors, storage_unit_type storage,
                                    executor_factory_type const &factory)
     : storage_(std::move(storage))
     , idle_executors_(num_executors)
@@ -138,8 +137,7 @@ bool ExecutionManager::PlanExecution(block_type const &block)
 
       if (contract)
       {
-        auto item =
-            fetch::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
+        auto item = fetch::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
 
         // transform the resources into lane allocation
         for (auto const &resource : tx.resources)
@@ -219,8 +217,8 @@ void ExecutionManager::Start()
   running_ = true;
 
   // create and start the monitor thread
-  monitor_thread_ = fetch::make_unique<std::thread>(
-      &ExecutionManager::MonitorThreadEntrypoint, this);
+  monitor_thread_ =
+      fetch::make_unique<std::thread>(&ExecutionManager::MonitorThreadEntrypoint, this);
 
   // wait for the monitor thread to be setup
   for (std::size_t i = 0; i < 20; ++i)
@@ -259,8 +257,7 @@ void ExecutionManager::Stop()
   thread_pool_->Stop();
 }
 
-ExecutionManagerInterface::block_digest_type
-ExecutionManager::LastProcessedBlock()
+ExecutionManagerInterface::block_digest_type ExecutionManager::LastProcessedBlock()
 {
   // TODO: (EJF) thread saftey
   return last_block_hash_;
@@ -340,8 +337,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         {
           // create the closure and dispatch to the thread pool
           auto self = shared_from_this();
-          thread_pool_->Post(
-              [self, &item]() { self->DispatchExecution(*item); });
+          thread_pool_->Post([self, &item]() { self->DispatchExecution(*item); });
         }
 
         state = MonitorState::RUNNING;

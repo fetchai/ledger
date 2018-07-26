@@ -14,43 +14,40 @@ template <typename T>
 class HttpInterface : public fetch::http::HTTPModule
 {
 public:
-  explicit HttpInterface(std::shared_ptr<T> node) : node_{node}
-  {
-    AttachPages();
-  }
+  explicit HttpInterface(std::shared_ptr<T> node) : node_{node} { AttachPages(); }
 
   void AttachPages()
   {
     LOG_STACK_TRACE_POINT;
-    HTTPModule::Post("/add-endpoint", [this](http::ViewParameters const &params,
-                                             http::HTTPRequest const &   req) {
-      return this->AddEndpoint(params, req);
-    });
+    HTTPModule::Post("/add-endpoint",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->AddEndpoint(params, req);
+                     });
 
-    HTTPModule::Post("/start", [this](http::ViewParameters const &params,
-                                      http::HTTPRequest const &   req) {
-      return this->Start(params, req);
-    });
+    HTTPModule::Post("/start",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->Start(params, req);
+                     });
 
-    HTTPModule::Post("/stop", [this](http::ViewParameters const &params,
-                                     http::HTTPRequest const &   req) {
-      return this->Stop(params, req);
-    });
+    HTTPModule::Post("/stop",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->Stop(params, req);
+                     });
 
-    HTTPModule::Post("/reset", [this](http::ViewParameters const &params,
-                                      http::HTTPRequest const &   req) {
-      return this->Reset(params, req);
-    });
+    HTTPModule::Post("/reset",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->Reset(params, req);
+                     });
 
-    HTTPModule::Post("/mainchain", [this](http::ViewParameters const &params,
-                                          http::HTTPRequest const &   req) {
-      return this->Mainchain(params, req);
-    });
+    HTTPModule::Post("/mainchain",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->Mainchain(params, req);
+                     });
 
-    HTTPModule::Post("/allchain", [this](http::ViewParameters const &params,
-                                         http::HTTPRequest const &   req) {
-      return this->AllChain(params, req);
-    });
+    HTTPModule::Post("/allchain",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->AllChain(params, req);
+                     });
   }
 
   HttpInterface(HttpInterface &&rhs)
@@ -60,8 +57,7 @@ public:
     AttachPages();
   }
 
-  http::HTTPResponse AddEndpoint(http::ViewParameters const &params,
-                                 http::HTTPRequest const &   req)
+  http::HTTPResponse AddEndpoint(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT;
     json::JSONDocument doc;
@@ -82,8 +78,7 @@ public:
     }
   }
 
-  http::HTTPResponse Start(http::ViewParameters const &params,
-                           http::HTTPRequest const &   req)
+  http::HTTPResponse Start(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -91,8 +86,7 @@ public:
     return http::HTTPResponse(successString);
   }
 
-  http::HTTPResponse Stop(http::ViewParameters const &params,
-                          http::HTTPRequest const &   req)
+  http::HTTPResponse Stop(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -100,15 +94,13 @@ public:
     return http::HTTPResponse(successString);
   }
 
-  http::HTTPResponse Reset(http::ViewParameters const &params,
-                           http::HTTPRequest const &   req)
+  http::HTTPResponse Reset(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     node_->reset();
     return http::HTTPResponse(successString);
   }
 
-  http::HTTPResponse Mainchain(http::ViewParameters const &params,
-                               http::HTTPRequest const &   req)
+  http::HTTPResponse Mainchain(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     auto chainArray = node_->HeaviestChain();
 
@@ -133,8 +125,7 @@ public:
     return http::HTTPResponse(ret.str());
   }
 
-  http::HTTPResponse AllChain(http::ViewParameters const &params,
-                              http::HTTPRequest const &   req)
+  http::HTTPResponse AllChain(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     auto chainArray = node_->AllChain();
 

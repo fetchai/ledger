@@ -14,8 +14,7 @@ inline typename A::type WrapperGeometricMean(A const &a)
   return GeometricMean(a);
 }
 
-inline void BuildGeometricMeanStatistics(std::string const &custom_name,
-                                         pybind11::module & module)
+inline void BuildGeometricMeanStatistics(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;

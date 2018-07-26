@@ -33,8 +33,7 @@ public:
   using history_cache_type = std::vector<HistoryElement>;
   using state_type         = fetch::ledger::StateInterface;
 
-  Status Execute(tx_digest_type const &hash, std::size_t slice,
-                 lane_set_type const &lanes) override
+  Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) override
   {
     history_.emplace_back(hash, slice, lanes);
 

@@ -17,17 +17,15 @@ public:
   using service_client_type        = fetch::service::ServiceClient;
   using shared_service_client_type = std::shared_ptr<service_client_type>;
   using weak_service_client_type   = std::shared_ptr<service_client_type>;
-  using client_register_type =
-      fetch::network::ConnectionRegister<connectivity_details_type>;
-  using network_manager_type   = fetch::network::NetworkManager;
-  using mutex_type             = fetch::mutex::Mutex;
-  using connection_handle_type = client_register_type::connection_handle_type;
-  using protocol_handler_type  = service::protocol_handler_type;
+  using client_register_type       = fetch::network::ConnectionRegister<connectivity_details_type>;
+  using network_manager_type       = fetch::network::NetworkManager;
+  using mutex_type                 = fetch::mutex::Mutex;
+  using connection_handle_type     = client_register_type::connection_handle_type;
+  using protocol_handler_type      = service::protocol_handler_type;
 
-  using peer_details_map_type =
-      std::unordered_map<byte_array::ConstByteArray, connectivity_details_type,
-                         crypto::CallableFNV>;
-  using thread_pool_type = network::ThreadPool;
+  using peer_details_map_type = std::unordered_map<byte_array::ConstByteArray,
+                                                   connectivity_details_type, crypto::CallableFNV>;
+  using thread_pool_type      = network::ThreadPool;
 
   enum
   {
@@ -43,12 +41,9 @@ public:
     FEED_ANNOUNCE_PEER
   };
 
-  P2PPeerDirectory(uint64_t const &protocol, client_register_type reg,
-                   thread_pool_type pool, NodeDetails my_details)
-      : protocol_(protocol)
-      , register_(reg)
-      , thread_pool_(pool)
-      , my_details_(my_details)
+  P2PPeerDirectory(uint64_t const &protocol, client_register_type reg, thread_pool_type pool,
+                   NodeDetails my_details)
+      : protocol_(protocol), register_(reg), thread_pool_(pool), my_details_(my_details)
   {
 
     running_ = false;
@@ -60,8 +55,7 @@ public:
   {
     // TODO: (`HUT`) : comment/make this clear
     register_.WithServices(
-        [this](
-            network::AbstractConnectionRegister::service_map_type const &map) {
+        [this](network::AbstractConnectionRegister::service_map_type const &map) {
           for (auto const &p : map)
           {
             auto wptr = p.second;
@@ -80,8 +74,7 @@ public:
   void EnoughPeersForThisNode()
   {
     register_.WithServices(
-        [this](
-            network::AbstractConnectionRegister::service_map_type const &map) {
+        [this](network::AbstractConnectionRegister::service_map_type const &map) {
           for (auto const &p : map)
           {
             auto wptr = p.second;
@@ -132,10 +125,9 @@ public:
     // TODO: Refactor subscribe such that there is no memory leak
 
     client->Subscribe(protocol_, FEED_REQUEST_CONNECTIONS,
-                      new service::Function<void(PeerDetails)>(
-                          [this](PeerDetails const &details) {
-                            this->AddPeerToSuggested(details);
-                          }));
+                      new service::Function<void(PeerDetails)>([this](PeerDetails const &details) {
+                        this->AddPeerToSuggested(details);
+                      }));
 
     client->Subscribe(protocol_, FEED_ENOUGH_CONNECTIONS,
                       new service::Function<void(byte_array::ConstByteArray)>(
@@ -175,8 +167,7 @@ public:
   {
     if (!running_) return;
 
-    std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV>
-        to_delete;
+    std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> to_delete;
 
     {
       std::lock_guard<mutex::Mutex> lock(suggest_mutex_);
@@ -203,12 +194,11 @@ public:
 private:
   /// Internals for updating the register
   /// @{
-  bool AddPeerToSuggested(connectivity_details_type const &details,
-                          bool const &                     propagate = true)
+  bool AddPeerToSuggested(connectivity_details_type const &details, bool const &propagate = true)
   {
     std::lock_guard<mutex::Mutex> lock(suggest_mutex_);
-    auto it  = suggested_peers_.find(details.identity.identifier());
-    bool ret = false;
+    auto                          it  = suggested_peers_.find(details.identity.identifier());
+    bool                          ret = false;
 
     if (it == suggested_peers_.end())
     {
@@ -232,7 +222,7 @@ private:
   }
 
   bool RemovePeerFromSuggested(byte_array::ConstByteArray const &public_key,
-                               bool const &propagate = true)
+                               bool const &                      propagate = true)
   {
     std::lock_guard<mutex::Mutex> lock(suggest_mutex_);
     auto                          it  = suggested_peers_.find(public_key);

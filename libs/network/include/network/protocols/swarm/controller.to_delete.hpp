@@ -20,15 +20,13 @@ class ChainController
 public:
   typedef crypto::CallableFNV hasher_type;
   // Block defs
-  typedef fetch::chain::consensus::ProofOfWork proof_type;
-  typedef fetch::chain::BlockBody              block_body_type;
-  typedef typename proof_type::header_type     block_header_type;
-  typedef fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256>
-                                      block_type;
-  typedef std::shared_ptr<block_type> shared_block_type;
+  typedef fetch::chain::consensus::ProofOfWork                        proof_type;
+  typedef fetch::chain::BlockBody                                     block_body_type;
+  typedef typename proof_type::header_type                            block_header_type;
+  typedef fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256> block_type;
+  typedef std::shared_ptr<block_type>                                 shared_block_type;
 
-  typedef std::unordered_map<block_header_type, shared_block_type, hasher_type>
-      chain_map_type;
+  typedef std::unordered_map<block_header_type, shared_block_type, hasher_type> chain_map_type;
 
   ChainController()
   {
@@ -55,8 +53,7 @@ public:
     if (latest_blocks_.size() > 25)
     {
       std::vector<block_type> ret;
-      std::size_t             n = latest_blocks_.size() -
-                      std::min(std::size_t(25), latest_blocks_.size());
+      std::size_t n = latest_blocks_.size() - std::min(std::size_t(25), latest_blocks_.size());
       for (; n < latest_blocks_.size(); ++n)
       {
         ret.push_back(latest_blocks_[n]);
@@ -83,8 +80,7 @@ public:
     body.group_parameter = grouping_parameter_;
 
     block_generator_.set_group_count(grouping_parameter_);
-    block_generator_.GenerateBlock(body,
-                                   std::size_t(1.5 * grouping_parameter_));
+    block_generator_.GenerateBlock(body, std::size_t(1.5 * grouping_parameter_));
     double tw = head_->total_weight();
 
     block_mutex_.unlock();
@@ -192,18 +188,17 @@ public:
     grouping_parameter_ = total_groups;
   }
 
-  void with_blocks_do(std::function<void(ChainManager::shared_block_type,
-                                         ChainManager::chain_map_type const &)>
-                          fnc) const
+  void with_blocks_do(
+      std::function<void(ChainManager::shared_block_type, ChainManager::chain_map_type const &)>
+          fnc) const
   {
     block_mutex_.lock();
     fnc(head_, chains_);
     block_mutex_.unlock();
   }
 
-  void with_blocks_do(std::function<void(ChainManager::shared_block_type,
-                                         ChainManager::chain_map_type &)>
-                          fnc)
+  void with_blocks_do(
+      std::function<void(ChainManager::shared_block_type, ChainManager::chain_map_type &)> fnc)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
@@ -227,16 +222,14 @@ private:
   std::atomic<uint32_t> grouping_parameter_;
 };
 
-class SwarmController : public ChainController,
-                        public fetch::service::HasPublicationFeed
+class SwarmController : public ChainController, public fetch::service::HasPublicationFeed
 {
 public:
   typedef fetch::service::ServiceClient<fetch::network::TCPClient> client_type;
-  typedef std::shared_ptr<client_type> client_shared_ptr_type;
+  typedef std::shared_ptr<client_type>                             client_shared_ptr_type;
 
-  SwarmController(uint64_t const &         protocol,
-                  network::NetworkManager *network_manager,
-                  SharedNodeDetails &      details)
+  SwarmController(uint64_t const &protocol, network::NetworkManager *network_manager,
+                  SharedNodeDetails &details)
       : protocol_(protocol)
       , network_manager_(network_manager)
       , details_(details)
@@ -290,8 +283,7 @@ public:
     NodeDetails me = details_.details();
 
     suggestion_mutex_.lock();
-    if (already_seen_.find(std::string(details.public_key)) ==
-        already_seen_.end())
+    if (already_seen_.find(std::string(details.public_key)) == already_seen_.end())
     {
       std::cout << "Discovered " << details.public_key << std::endl;
       peers_with_few_followers_.push_back(details);
@@ -402,8 +394,7 @@ public:
       for (auto &c : vec)
       {
         chain_keepers_details_[c.index].group = group_type(i);
-        c.client->Call(FetchProtocols::CHAIN_KEEPER,
-                       ChainKeeperRPC::SET_GROUP_NUMBER, uint32_t(i),
+        c.client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::SET_GROUP_NUMBER, uint32_t(i),
                        uint32_t(n));
       }
     }
@@ -425,25 +416,22 @@ public:
 
   ////////////////////////
   // Not service protocol
-  client_shared_ptr_type ConnectChainKeeper(
-      byte_array::ConstByteArray const &host, uint16_t const &port)
+  client_shared_ptr_type ConnectChainKeeper(byte_array::ConstByteArray const &host,
+                                            uint16_t const &                  port)
   {
     LOG_STACK_TRACE_POINT;
 
     fetch::logger.Debug("Connecting to group ", host, ":", port);
 
     chain_keeper_mutex_.lock();
-    client_shared_ptr_type client =
-        std::make_shared<client_type>(host, port, network_manager_);
+    client_shared_ptr_type client = std::make_shared<client_type>(host, port, network_manager_);
     chain_keeper_mutex_.unlock();
 
-    std::this_thread::sleep_for(
-        std::chrono::milliseconds(500));  // TODO: Make variable
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));  // TODO: Make variable
 
-    EntryPoint ep = client
-                        ->Call(fetch::protocols::FetchProtocols::CHAIN_KEEPER,
-                               ChainKeeperRPC::HELLO, host)
-                        .As<EntryPoint>();
+    EntryPoint ep =
+        client->Call(fetch::protocols::FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::HELLO, host)
+            .As<EntryPoint>();
 
     fetch::logger.Highlight("Before Add");
 
@@ -478,18 +466,15 @@ public:
     request_ip_ = request_ip;
   }
 
-  client_shared_ptr_type Connect(byte_array::ConstByteArray const &host,
-                                 uint16_t const &                  port)
+  client_shared_ptr_type Connect(byte_array::ConstByteArray const &host, uint16_t const &port)
   {
     LOG_STACK_TRACE_POINT;
 
     using namespace fetch::service;
     fetch::logger.Debug("Connecting to server on ", host, " ", port);
-    client_shared_ptr_type client =
-        std::make_shared<client_type>(host, port, network_manager_);
+    client_shared_ptr_type client = std::make_shared<client_type>(host, port, network_manager_);
 
-    std::this_thread::sleep_for(
-        std::chrono::milliseconds(500));  // TODO: Connection feedback
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));  // TODO: Connection feedback
 
     fetch::logger.Debug("Pinging server to confirm connection.");
     auto ping_promise = client->Call(protocol_, SwarmRPC::PING);
@@ -502,22 +487,19 @@ public:
 
     fetch::logger.Debug("Subscribing to feeds.");
     client->Subscribe(protocol_, SwarmFeed::FEED_REQUEST_CONNECTIONS,
-                      new service::Function<void(NodeDetails)>(
-                          [this](NodeDetails const &details) {
-                            SwarmController::RequestPeerConnections(details);
-                          }));
+                      new service::Function<void(NodeDetails)>([this](NodeDetails const &details) {
+                        SwarmController::RequestPeerConnections(details);
+                      }));
 
-    client->Subscribe(
-        protocol_, SwarmFeed::FEED_ENOUGH_CONNECTIONS,
-        new Function<void(NodeDetails)>([this](NodeDetails const &details) {
-          SwarmController::EnoughPeerConnections(details);
-        }));
+    client->Subscribe(protocol_, SwarmFeed::FEED_ENOUGH_CONNECTIONS,
+                      new Function<void(NodeDetails)>([this](NodeDetails const &details) {
+                        SwarmController::EnoughPeerConnections(details);
+                      }));
 
-    client->Subscribe(
-        protocol_, SwarmFeed::FEED_ANNOUNCE_NEW_COMER,
-        new Function<void(NodeDetails)>([](NodeDetails const &details) {
-          std::cout << "TODO: figure out what to do here" << std::endl;
-        }));
+    client->Subscribe(protocol_, SwarmFeed::FEED_ANNOUNCE_NEW_COMER,
+                      new Function<void(NodeDetails)>([](NodeDetails const &details) {
+                        std::cout << "TODO: figure out what to do here" << std::endl;
+                      }));
 
     uint64_t ping = uint64_t(ping_promise);
 
@@ -530,9 +512,8 @@ public:
       peers_.push_back(client);
       peers_mutex_.unlock();
 
-      service::Promise ip_promise =
-          client->Call(protocol_, SwarmRPC::WHATS_MY_IP);
-      std::string own_ip = ip_promise.As<std::string>();
+      service::Promise ip_promise = client->Call(protocol_, SwarmRPC::WHATS_MY_IP);
+      std::string      own_ip     = ip_promise.As<std::string>();
       fetch::logger.Info("Node host is ", own_ip);
 
       // Creating
@@ -545,15 +526,13 @@ public:
       details_.AddEntryPoint(e);
 
       //      if(need_more_connections() ) {
-      auto             mydetails = details_.details();
-      service::Promise details_promise =
-          client->Call(protocol_, SwarmRPC::HELLO, mydetails);
+      auto             mydetails       = details_.details();
+      service::Promise details_promise = client->Call(protocol_, SwarmRPC::HELLO, mydetails);
       client->Call(protocol_, SwarmRPC::REQUEST_PEER_CONNECTIONS, mydetails);
 
       // TODO: add mutex
       NodeDetails server_details = details_promise.As<NodeDetails>();
-      std::cout << "Setting details for server with handle: "
-                << client->handle() << std::endl;
+      std::cout << "Setting details for server with handle: " << client->handle() << std::endl;
 
       if (server_details.entry_points.size() == 0)
       {
@@ -597,8 +576,7 @@ public:
 
     auto peer_promise = client->Call(protocol_, SwarmRPC::SUGGEST_PEERS);
 
-    std::vector<NodeDetails> others =
-        peer_promise.As<std::vector<NodeDetails>>();
+    std::vector<NodeDetails> others = peer_promise.As<std::vector<NodeDetails>>();
 
     for (auto &o : others)
     {
@@ -620,8 +598,7 @@ public:
   }
 
   void with_shards_do(
-      std::function<void(std::vector<client_shared_ptr_type> const &,
-                         std::vector<EntryPoint> &)>
+      std::function<void(std::vector<client_shared_ptr_type> const &, std::vector<EntryPoint> &)>
           fnc)
   {
     chain_keeper_mutex_.lock();
@@ -629,8 +606,7 @@ public:
     chain_keeper_mutex_.unlock();
   }
 
-  void with_shards_do(
-      std::function<void(std::vector<client_shared_ptr_type> const &)> fnc)
+  void with_shards_do(std::function<void(std::vector<client_shared_ptr_type> const &)> fnc)
   {
     chain_keeper_mutex_.lock();
     fnc(chain_keepers_);
@@ -643,43 +619,37 @@ public:
     fnc(peers_with_few_followers_);
   }
 
-  void with_client_details_do(
-      std::function<void(std::map<uint64_t, NodeDetails> const &)> fnc)
+  void with_client_details_do(std::function<void(std::map<uint64_t, NodeDetails> const &)> fnc)
   {
     std::lock_guard<fetch::mutex::Mutex> lock(client_details_mutex_);
 
     fnc(client_details_);
   }
 
-  void with_peers_do(
-      std::function<void(std::vector<client_shared_ptr_type>)> fnc)
+  void with_peers_do(std::function<void(std::vector<client_shared_ptr_type>)> fnc)
   {
     std::lock_guard<fetch::mutex::Mutex> lock(peers_mutex_);
 
     fnc(peers_);
   }
 
-  void with_peers_do(std::function<void(std::vector<client_shared_ptr_type>,
-                                        std::map<uint64_t, NodeDetails> &)>
-                         fnc)
+  void with_peers_do(
+      std::function<void(std::vector<client_shared_ptr_type>, std::map<uint64_t, NodeDetails> &)>
+          fnc)
   {
     std::lock_guard<fetch::mutex::Mutex> lock(peers_mutex_);
 
     fnc(peers_, server_details_);
   }
 
-  void with_server_details_do(
-      std::function<void(std::map<uint64_t, NodeDetails> const &)> fnc)
+  void with_server_details_do(std::function<void(std::map<uint64_t, NodeDetails> const &)> fnc)
   {
     peers_mutex_.lock();
     fnc(server_details_);
     peers_mutex_.unlock();
   }
 
-  void with_node_details(std::function<void(NodeDetails &)> fnc)
-  {
-    details_.with_details(fnc);
-  }
+  void with_node_details(std::function<void(NodeDetails &)> fnc) { details_.with_details(fnc); }
 
 private:
   void SendConnectivityDetailsToChainKeepers(NodeDetails const &server_details)
@@ -695,15 +665,14 @@ private:
         for (std::size_t k = 0; k < chain_keepers_.size(); ++k)
         {
           auto sd = chain_keepers_details_[k];
-          fetch::logger.Debug(" - Connect ", e2.host, ":", e2.port, " >> ",
-                              sd.host, ":", sd.port, "?");
+          fetch::logger.Debug(" - Connect ", e2.host, ":", e2.port, " >> ", sd.host, ":", sd.port,
+                              "?");
 
           if (sd.group == e2.group)
           {
             std::cout << "       YES!" << std::endl;
             auto sc = chain_keepers_[k];
-            sc->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::LISTEN_TO,
-                     e2);
+            sc->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::LISTEN_TO, e2);
           }
         }
 

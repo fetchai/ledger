@@ -26,8 +26,7 @@ public:
 
     auto stx = std::make_shared<TransactionItem>(tx, transaction_index_++);
 
-    logger.Info("EnqueueTransaction: ",
-                byte_array::ToBase64(tx.transaction_hash));
+    logger.Info("EnqueueTransaction: ", byte_array::ToBase64(tx.transaction_hash));
     pending_queue_.push_back(stx);
   }
 
@@ -41,8 +40,7 @@ public:
 
       for (auto &tx : pending_queue_)
       {
-        logger.Info("Pushing Transaction: ",
-                    byte_array::ToBase64(tx->summary().transaction_hash));
+        logger.Info("Pushing Transaction: ", byte_array::ToBase64(tx->summary().transaction_hash));
         generator_.PushTransactionSummary(tx);
       }
       pending_queue_.clear();
@@ -81,8 +79,7 @@ public:
   }
 
 private:
-  void FillBlock(chain::BlockBody &block, std::size_t num_lanes,
-                 std::size_t num_slices)
+  void FillBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices)
   {
     block.slices.clear();
     block.slices.resize(num_slices);
@@ -97,8 +94,7 @@ private:
     unspent.clear();
   }
 
-  void PopulateBlock(chain::BlockBody &block, std::size_t num_lanes,
-                     std::size_t num_slices)
+  void PopulateBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices)
   {
 
     // configure the solver
@@ -114,8 +110,7 @@ private:
     for (std::size_t i = 0; i < repetitions; ++i)
     {
       generator_.Reset();
-      generator_.GenerateBlock(num_lanes, num_slices, strategy, batch_size,
-                               explore);
+      generator_.GenerateBlock(num_lanes, num_slices, strategy, batch_size, explore);
     }
 
     // DEBUG PRINT OUT SOLUTIONS

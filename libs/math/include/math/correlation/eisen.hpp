@@ -10,28 +10,22 @@ namespace math {
 namespace correlation {
 
 template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::type Eisen(
-    memory::VectorSlice<T, S> const &a, memory::VectorSlice<T, S> const &b)
+inline typename memory::VectorSlice<T, S>::type Eisen(memory::VectorSlice<T, S> const &a,
+                                                      memory::VectorSlice<T, S> const &b)
 {
   detailed_assert(a.size() == b.size());
-  typedef typename memory::VectorSlice<T, S>::vector_register_type
-                                                   vector_register_type;
-  typedef typename memory::VectorSlice<T, S>::type type;
+  typedef typename memory::VectorSlice<T, S>::vector_register_type vector_register_type;
+  typedef typename memory::VectorSlice<T, S>::type                 type;
 
-  type innerA = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &x) { return x * x; });
+  type innerA = a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
+                                          [](vector_register_type const &x) { return x * x; });
 
-  type innerB = b.in_parallel().SumReduce(
-      memory::TrivialRange(0, b.size()),
-      [](vector_register_type const &x) { return x * x; });
+  type innerB = b.in_parallel().SumReduce(memory::TrivialRange(0, b.size()),
+                                          [](vector_register_type const &x) { return x * x; });
 
   type top = a.in_parallel().SumReduce(
       memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &x, vector_register_type const &y) {
-        return x * y;
-      },
-      b);
+      [](vector_register_type const &x, vector_register_type const &y) { return x * y; }, b);
 
   type denom = type(sqrt(innerA * innerB));
 

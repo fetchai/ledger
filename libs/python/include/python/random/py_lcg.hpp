@@ -13,13 +13,11 @@ void BuildLinearCongruentialGenerator(pybind11::module &module)
       .def(py::init<>()) /* No constructors found */
       .def("Reset", &LinearCongruentialGenerator::Reset)
       .def("operator()", &LinearCongruentialGenerator::operator())
-      .def("Seed", (uint64_t(LinearCongruentialGenerator::*)() const) &
-                       LinearCongruentialGenerator::Seed)
       .def("Seed",
-           (uint64_t(LinearCongruentialGenerator::*)(
-               const fetch::random::LinearCongruentialGenerator::random_type
-                   &)) &
-               LinearCongruentialGenerator::Seed)
+           (uint64_t(LinearCongruentialGenerator::*)() const) & LinearCongruentialGenerator::Seed)
+      .def("Seed", (uint64_t(LinearCongruentialGenerator::*)(
+                       const fetch::random::LinearCongruentialGenerator::random_type &)) &
+                       LinearCongruentialGenerator::Seed)
       .def("AsDouble", &LinearCongruentialGenerator::AsDouble);
 }
 };  // namespace random

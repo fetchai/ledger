@@ -18,14 +18,12 @@ public:
     ABORT
   };
 
-  explicit ExecutionManagerRpcProtocol(ExecutionManagerInterface &manager)
-      : manager_(manager)
+  explicit ExecutionManagerRpcProtocol(ExecutionManagerInterface &manager) : manager_(manager)
   {
 
     // define the RPC endpoints
     Expose(EXECUTE, &manager_, &ExecutionManagerInterface::Execute);
-    Expose(LAST_PROCESSED_BLOCK, &manager_,
-           &ExecutionManagerInterface::LastProcessedBlock);
+    Expose(LAST_PROCESSED_BLOCK, &manager_, &ExecutionManagerInterface::LastProcessedBlock);
     Expose(IS_ACTIVE, &manager_, &ExecutionManagerInterface::IsActive);
     Expose(IS_IDLE, &manager_, &ExecutionManagerInterface::IsIdle);
     Expose(ABORT, &manager_, &ExecutionManagerInterface::Abort);

@@ -62,8 +62,7 @@ public:
     AddView(Method::DELETE, path, view);
   }
 
-  void AddView(Method method, byte_array::ByteArray const &path,
-               view_type const &view)
+  void AddView(Method method, byte_array::ByteArray const &path, view_type const &view)
   {
     LOG_STACK_TRACE_POINT;
 

@@ -10,18 +10,15 @@
 namespace fetch {
 namespace ledger {
 
-class ExecutionManagerRpcService
-    : public fetch::service::ServiceServer<fetch::network::TCPServer>
+class ExecutionManagerRpcService : public fetch::service::ServiceServer<fetch::network::TCPServer>
 {
 public:
   using manager_type          = std::shared_ptr<ExecutionManager>;
   using executor_factory_type = ExecutionManager::executor_factory_type;
   using storage_unit_type     = ExecutionManager::storage_unit_type;
 
-  ExecutionManagerRpcService(uint16_t                     port,
-                             network_manager_type const & network_manager,
-                             std::size_t                  num_executors,
-                             storage_unit_type            storage,
+  ExecutionManagerRpcService(uint16_t port, network_manager_type const &network_manager,
+                             std::size_t num_executors, storage_unit_type storage,
                              executor_factory_type const &factory)
       : ServiceServer(port, network_manager)
       , manager_(new ExecutionManager(num_executors, storage, factory))
@@ -34,10 +31,7 @@ public:
   ~ExecutionManagerRpcService() override { manager_->Stop(); }
 
   // helpful statistics
-  std::size_t completed_executions() const
-  {
-    return manager_->completed_executions();
-  }
+  std::size_t completed_executions() const { return manager_->completed_executions(); }
 
 private:
   manager_type                manager_;

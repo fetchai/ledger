@@ -25,10 +25,8 @@ public:
   using register_type         = R;
   using thread_pool_type      = network::ThreadPool;
 
-  ObjectStoreSyncronisationProtocol(protocol_handler_type const &p,
-                                    register_type const &        r,
-                                    thread_pool_type const &     nm,
-                                    ObjectStore<T> *             store)
+  ObjectStoreSyncronisationProtocol(protocol_handler_type const &p, register_type const &r,
+                                    thread_pool_type const &nm, ObjectStore<T> *store)
       : fetch::service::Protocol()
       , protocol_(p)
       , register_(r)
@@ -153,8 +151,7 @@ public:
     std::sort(cache_.begin(), cache_.end());
 
     while ((i < cache_.size()) &&
-           ((cache_.size() > max_cache_) ||
-            (cache_.back().lifetime > max_cache_life_time_)))
+           ((cache_.size() > max_cache_) || (cache_.back().lifetime > max_cache_life_time_)))
     {
       auto back = cache_.back();
       //      std::cout << "DELETEING Object with " << back.lifetime << " ms
@@ -231,17 +228,12 @@ private:
 
     void UpdateLifetime()
     {
-      std::chrono::system_clock::time_point end =
-          std::chrono::system_clock::now();
-      lifetime = double(
-          std::chrono::duration_cast<std::chrono::milliseconds>(end - created)
-              .count());
+      std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+      lifetime =
+          double(std::chrono::duration_cast<std::chrono::milliseconds>(end - created).count());
     }
 
-    bool operator<(CachedObject const &other) const
-    {
-      return lifetime < other.lifetime;
-    }
+    bool operator<(CachedObject const &other) const { return lifetime < other.lifetime; }
 
     T                                     data;
     std::unordered_set<uint64_t>          delivered_to;

@@ -39,26 +39,22 @@ public:
   FakeOEF()
   {
 
-    HTTPModule::Post(
-        "/check", [this](ViewParameters const &params, HTTPRequest const &req) {
-          return this->CheckUser(params, req);
-        });
-    HTTPModule::Post("/register", [this](ViewParameters const &params,
-                                         HTTPRequest const &   req) {
+    HTTPModule::Post("/check", [this](ViewParameters const &params, HTTPRequest const &req) {
+      return this->CheckUser(params, req);
+    });
+    HTTPModule::Post("/register", [this](ViewParameters const &params, HTTPRequest const &req) {
       return this->RegisterUser(params, req);
     });
-    HTTPModule::Post("/balance", [this](ViewParameters const &params,
-                                        HTTPRequest const &   req) {
+    HTTPModule::Post("/balance", [this](ViewParameters const &params, HTTPRequest const &req) {
       return this->GetBalance(params, req);
     });
-    HTTPModule::Post(
-        "/send", [this](ViewParameters const &params, HTTPRequest const &req) {
-          return this->SendTransaction(params, req);
-        });
-    HTTPModule::Post("/get-transactions", [this](ViewParameters const &params,
-                                                 HTTPRequest const &   req) {
-      return this->GetHistory(params, req);
+    HTTPModule::Post("/send", [this](ViewParameters const &params, HTTPRequest const &req) {
+      return this->SendTransaction(params, req);
     });
+    HTTPModule::Post("/get-transactions",
+                     [this](ViewParameters const &params, HTTPRequest const &req) {
+                       return this->GetHistory(params, req);
+                     });
   }
 
   HTTPResponse CheckUser(ViewParameters const &params, HTTPRequest const &req)
@@ -84,8 +80,7 @@ public:
     return HTTPResponse("{\"response\": \"true\"}");
   }
 
-  HTTPResponse RegisterUser(ViewParameters const &params,
-                            HTTPRequest const &   req)
+  HTTPResponse RegisterUser(ViewParameters const &params, HTTPRequest const &req)
   {
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
@@ -142,8 +137,7 @@ public:
     return HTTPResponse(ret.str());
   }
 
-  HTTPResponse SendTransaction(ViewParameters const &params,
-                               HTTPRequest const &   req)
+  HTTPResponse SendTransaction(ViewParameters const &params, HTTPRequest const &req)
   {
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
@@ -187,8 +181,7 @@ public:
 
     if (accounts_[tx.fromAddress].balance < tx.amount)
     {
-      return HTTPResponse(
-          "{\"response\": \"false\", \"reason\": \"insufficient funds\"}");
+      return HTTPResponse("{\"response\": \"false\", \"reason\": \"insufficient funds\"}");
     }
 
     accounts_[tx.fromAddress].balance -= tx.amount;

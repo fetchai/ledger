@@ -23,8 +23,8 @@ namespace math {
  * according to the platform standard by using either
  * <fetch::memory::SharedArray> or <fetch::memory::Array>.
  */
-template <typename T, typename C = memory::SharedArray<T>,
-          bool PAD_HEIGHT = false, bool PAD_WIDTH = true>
+template <typename T, typename C = memory::SharedArray<T>, bool PAD_HEIGHT = false,
+          bool PAD_WIDTH = true>
 class RectangularArray : public math::ShapeLessArray<T, C>
 {
 public:
@@ -33,10 +33,9 @@ public:
   typedef typename super_type::container_type container_type;
   typedef typename super_type::size_type      size_type;
 
-  typedef RectangularArray<T, C>                    self_type;
-  typedef typename super_type::vector_register_type vector_register_type;
-  typedef typename super_type::vector_register_iterator_type
-      vector_register_iterator_type;
+  typedef RectangularArray<T, C>                             self_type;
+  typedef typename super_type::vector_register_type          vector_register_type;
+  typedef typename super_type::vector_register_iterator_type vector_register_iterator_type;
 
   /* Contructs an empty rectangular array. */
   RectangularArray() : super_type() {}
@@ -86,8 +85,7 @@ public:
     return ret;
   }
 
-  static RectangularArray UniformRandom(std::size_t const &n,
-                                        std::size_t const &m)
+  static RectangularArray UniformRandom(std::size_t const &n, std::size_t const &m)
   {
     RectangularArray ret;
 
@@ -109,8 +107,8 @@ public:
    * This method allocates new array to make the crop. (TODO: Reuse
    * memory for effiency, if array and not sharedarray is used)
    */
-  void Crop(self_type const &A, size_type const &i, size_type const &h,
-            size_type const &j, size_type const &w)
+  void Crop(self_type const &A, size_type const &i, size_type const &h, size_type const &j,
+            size_type const &w)
   {
     assert(this->height() == h);
     assert(this->width() == w);
@@ -186,8 +184,7 @@ public:
    * @cj is the position along the width.
    * @fill is the data empty entries awill be filled with.
    */
-  void Rotate(double const &radians, double const &ci, double const &cj,
-              type const fill = type())
+  void Rotate(double const &radians, double const &ci, double const &cj, type const fill = type())
   {
     assert(false);
     // TODO: FIXME, make new implementation
@@ -235,10 +232,7 @@ public:
    *
    * This method is sensitive to height and width.
    */
-  bool operator!=(RectangularArray const &other) const
-  {
-    return !(this->operator==(other));
-  }
+  bool operator!=(RectangularArray const &other) const { return !(this->operator==(other)); }
 
   /* One-dimensional reference index operator.
    * @param n is the index which is being accessed.
@@ -369,10 +363,7 @@ public:
    * This function is here to satisfy the requirement for an
    * optimisation problem container.
    */
-  type const &Insert(size_type const &i, size_type const &j, type const &v)
-  {
-    return Set(i, j, v);
-  }
+  type const &Insert(size_type const &i, size_type const &j, type const &v) { return Set(i, j, v); }
 
   /* Resizes the array into a square array.
    * @param hw is the new height and the width of the array.
@@ -393,8 +384,7 @@ public:
     width_  = w;
   }
 
-  void Resize(std::vector<std::size_t> const &shape,
-              std::size_t const &             offset = 0)
+  void Resize(std::vector<std::size_t> const &shape, std::size_t const &offset = 0)
   {
 
     switch ((shape.size() - offset))
@@ -465,8 +455,7 @@ public:
 
   void Flatten() { Reshape(1, width_ * height_); }
 
-  void Fill(type const &value, memory::Range const &rows,
-            memory::Range const &cols)
+  void Fill(type const &value, memory::Range const &rows, memory::Range const &cols)
   {
     std::size_t height = (rows.to() - rows.from()) / rows.step();
     std::size_t width  = (cols.to() - cols.from()) / cols.step();
@@ -474,8 +463,7 @@ public:
     // TODO: Implement
   }
 
-  void Fill(type const &value, memory::TrivialRange const &rows,
-            memory::TrivialRange const &cols)
+  void Fill(type const &value, memory::TrivialRange const &rows, memory::TrivialRange const &cols)
   {
     std::size_t height = (rows.to() - rows.from());
     std::size_t width  = (cols.to() - cols.from());
@@ -541,8 +529,8 @@ public:
       TODO_FAIL("Could not write width - todo: make custom exc");
     }
 
-    if (fwrite(super_type::data().pointer(), sizeof(type), this->padded_size(),
-               fp) != this->padded_size())
+    if (fwrite(super_type::data().pointer(), sizeof(type), this->padded_size(), fp) !=
+        this->padded_size())
     {
       TODO_FAIL("Could not write matrix body - todo: make custom exc");
     }
@@ -590,8 +578,8 @@ public:
 
     Resize(height, width);
 
-    if (fread(super_type::data().pointer(), sizeof(type), this->padded_size(),
-              fp) != (this->padded_size()))
+    if (fread(super_type::data().pointer(), sizeof(type), this->padded_size(), fp) !=
+        (this->padded_size()))
     {
       TODO_FAIL("failed to read body of matrix - TODO, ,make custom exception");
     }
@@ -628,18 +616,16 @@ private:
 
     if (PAD_HEIGHT)
     {
-      padded_height_ = size_type(h / vector_register_type::E_BLOCK_COUNT) *
-                       vector_register_type::E_BLOCK_COUNT;
-      if (padded_height_ < h)
-        padded_height_ += vector_register_type::E_BLOCK_COUNT;
+      padded_height_ =
+          size_type(h / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
+      if (padded_height_ < h) padded_height_ += vector_register_type::E_BLOCK_COUNT;
     }
 
     if (PAD_WIDTH)
     {
-      padded_width_ = size_type(w / vector_register_type::E_BLOCK_COUNT) *
-                      vector_register_type::E_BLOCK_COUNT;
-      if (padded_width_ < w)
-        padded_width_ += vector_register_type::E_BLOCK_COUNT;
+      padded_width_ =
+          size_type(w / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
+      if (padded_width_ < w) padded_width_ += vector_register_type::E_BLOCK_COUNT;
     }
   }
 };

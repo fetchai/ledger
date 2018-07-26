@@ -8,27 +8,23 @@ int main()
   fetch::network::NetworkManager tm(1);
   HTTPServer                     server(8080, tm);
 
-  server.AddMiddleware(
-      [](HTTPRequest &req) { std::cout << "Middleware 1" << std::endl; });
+  server.AddMiddleware([](HTTPRequest &req) { std::cout << "Middleware 1" << std::endl; });
 
   server.AddMiddleware([](HTTPResponse &res, HTTPRequest const &req) {
     std::cout << res.status().code << " " << req.uri() << std::endl;
   });
 
-  server.AddView(
-      Method::GET, "/",
-      [](ViewParameters const &params, HTTPRequest const &req) {
-        HTTPResponse res("Hello world -- this is a render of the view");
+  server.AddView(Method::GET, "/", [](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPResponse res("Hello world -- this is a render of the view");
 
-        return res;
-      });
+    return res;
+  });
 
-  server.AddView(Method::GET, "/pages",
-                 [](ViewParameters const &params, HTTPRequest const &req) {
-                   HTTPResponse res("pages index");
+  server.AddView(Method::GET, "/pages", [](ViewParameters const &params, HTTPRequest const &req) {
+    HTTPResponse res("pages index");
 
-                   return res;
-                 });
+    return res;
+  });
 
   server.AddView(Method::GET, "/pages/sub",
                  [](ViewParameters const &params, HTTPRequest const &req) {
@@ -58,38 +54,36 @@ int main()
                    return res;
                  });
 
-  server.AddView(
-      Method::GET, "/other/(name=\\w+)/(number=\\d+)",
-      [](ViewParameters const &params, HTTPRequest const &req) {
-        HTTPResponse res("Secret page with name and number: " + params["name"] +
-                         " and " + params["number"]);
+  server.AddView(Method::GET, "/other/(name=\\w+)/(number=\\d+)",
+                 [](ViewParameters const &params, HTTPRequest const &req) {
+                   HTTPResponse res("Secret page with name and number: " + params["name"] +
+                                    " and " + params["number"]);
 
-        return res;
-      });
+                   return res;
+                 });
 
-  server.AddView(
-      Method::GET, "/static/(filename=.+)",
-      [](ViewParameters const &params, HTTPRequest const &req) {
-        std::string filename = std::string(params["filename"]);
-        std::size_t pos      = filename.find_last_of('.');
-        std::string ext      = filename.substr(pos, filename.size() - pos);
-        auto mtype = fetch::http::mime_types::GetMimeTypeFromExtension(ext);
+  server.AddView(Method::GET, "/static/(filename=.+)",
+                 [](ViewParameters const &params, HTTPRequest const &req) {
+                   std::string filename = std::string(params["filename"]);
+                   std::size_t pos      = filename.find_last_of('.');
+                   std::string ext      = filename.substr(pos, filename.size() - pos);
+                   auto        mtype    = fetch::http::mime_types::GetMimeTypeFromExtension(ext);
 
-        std::cout << mtype.type << std::endl;
-        std::fstream fin(filename, std::ios::in | std::ios::binary);
-        fin.seekg(0, fin.end);
-        int64_t length = fin.tellg();
-        fin.seekg(0, fin.beg);
+                   std::cout << mtype.type << std::endl;
+                   std::fstream fin(filename, std::ios::in | std::ios::binary);
+                   fin.seekg(0, fin.end);
+                   int64_t length = fin.tellg();
+                   fin.seekg(0, fin.beg);
 
-        fetch::byte_array::ByteArray data;
-        data.Resize(std::size_t(length));
-        fin.read(reinterpret_cast<char *>(data.pointer()), length);
+                   fetch::byte_array::ByteArray data;
+                   data.Resize(std::size_t(length));
+                   fin.read(reinterpret_cast<char *>(data.pointer()), length);
 
-        fin.close();
+                   fin.close();
 
-        HTTPResponse res(data, mtype);
-        return res;
-      });
+                   HTTPResponse res(data, mtype);
+                   return res;
+                 });
 
   tm.Start();
 

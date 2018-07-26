@@ -40,20 +40,13 @@ public:
 
   YMLDocument() {}
 
-  YMLDocument(const_string_type const &document) : YMLDocument()
-  {
-    Parse(document);
-  }
+  YMLDocument(const_string_type const &document) : YMLDocument() { Parse(document); }
 
   script::Variant &operator[](std::size_t const &i) { return root()[i]; }
 
-  script::Variant const &operator[](std::size_t const &i) const
-  {
-    return root()[i];
-  }
+  script::Variant const &operator[](std::size_t const &i) const { return root()[i]; }
 
-  typename script::Variant::variant_proxy_type operator[](
-      byte_array::ConstByteArray const &key)
+  typename script::Variant::variant_proxy_type operator[](byte_array::ConstByteArray const &key)
   {
     return root()[key];
   }
@@ -91,8 +84,7 @@ private:
       {
         PushArray();  // TODO:
         ++pos;
-        indent_size = 1 + ConsumeWhitespaces(const_string_type const &document,
-                                             uint64_t &               pos);
+        indent_size = 1 + ConsumeWhitespaces(const_string_type const &document, uint64_t &pos);
         mod         = HandleIndent(indent_size);
       }
 
@@ -165,8 +157,7 @@ private:
   uint64_t ConsumeWhitespaces(const_string_type const &document, uint64_t &pos)
   {
     uint64_t old = pos;
-    while ((pos < document.size()) &&
-           ((document[pos] == ' ') || (document[pos] == '\t')))
+    while ((pos < document.size()) && ((document[pos] == ' ') || (document[pos] == '\t')))
     {
       ++pos
     }
@@ -183,8 +174,7 @@ private:
     return pos - old;
   }
 
-  const_string_type ParseBlockText(const_string_type const &document,
-                                   uint64_t &               pos)
+  const_string_type ParseBlockText(const_string_type const &document, uint64_t &pos)
   {
     while ((pos < document.size()) && (document[pos] != '\n'))
     {

@@ -53,8 +53,7 @@ public:
 
   template <class C>
   const typename C::value_type &pickOneWeighted(
-      const C &                                              c,
-      std::function<double(const typename C::value_type &v)> weightFunction)
+      const C &c, std::function<double(const typename C::value_type &v)> weightFunction)
   {
     double total = 0;
     for (const typename C::value_type &value : c)

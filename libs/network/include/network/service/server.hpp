@@ -43,9 +43,7 @@ public:
     ClientRPCInterface(ClientRPCInterface const &) = delete;
     ClientRPCInterface const &operator=(ClientRPCInterface const &) = delete;
 
-    ClientRPCInterface(self_type *server, handle_type client)
-        : server_(server), client_(client)
-    {}
+    ClientRPCInterface(self_type *server, handle_type client) : server_(server), client_(client) {}
 
     bool ProcessMessage(network::message_type const &msg)
     {
@@ -110,15 +108,13 @@ public:
   }
 
 protected:
-  bool DeliverResponse(handle_type                  client,
-                       network::message_type const &msg) override
+  bool DeliverResponse(handle_type client, network::message_type const &msg) override
   {
     return super_type::Send(client, msg);
   }
 
 private:
-  void PushRequest(handle_type                  client,
-                   network::message_type const &msg) override
+  void PushRequest(handle_type client, network::message_type const &msg) override
   {
     LOG_STACK_TRACE_POINT;
 
@@ -176,8 +172,7 @@ private:
               fetch::logger.Error("Possibly a response to a client?");
 
               throw serializers::SerializableException(
-                  error::UNKNOWN_MESSAGE,
-                  byte_array::ConstByteArray("Unknown message"));
+                  error::UNKNOWN_MESSAGE, byte_array::ConstByteArray("Unknown message"));
               TODO_FAIL("call type not implemented yet");
             }
           }

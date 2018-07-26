@@ -25,11 +25,10 @@ namespace network {
 class TCPServer : public AbstractNetworkServer
 {
 public:
-  typedef typename AbstractConnection::connection_handle_type
-                                       connection_handle_type;
-  typedef NetworkManager               network_manager_type;
-  typedef asio::ip::tcp::tcp::acceptor acceptor_type;
-  typedef std::mutex                   mutex_type;
+  typedef typename AbstractConnection::connection_handle_type connection_handle_type;
+  typedef NetworkManager                                      network_manager_type;
+  typedef asio::ip::tcp::tcp::acceptor                        acceptor_type;
+  typedef std::mutex                                          mutex_type;
 
   struct Request
   {
@@ -73,8 +72,7 @@ public:
         }
         catch (std::exception &e)
         {
-          fetch::logger.Info("Failed to open socket: ", port_,
-                             " with error: ", e.what());
+          fetch::logger.Info("Failed to open socket: ", port_, " with error: ", e.what());
         }
       }
     };
@@ -109,8 +107,7 @@ public:
 
     while (destruct_guard_.use_count() > 1)
     {
-      fetch::logger.Info("Waiting for TCP server ", this,
-                         " start closure to clear");
+      fetch::logger.Info("Waiting for TCP server ", this, " start closure to clear");
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
@@ -122,8 +119,7 @@ public:
     fetch::logger.Info("Destructing TCP server ", this);
   }
 
-  void PushRequest(connection_handle_type client,
-                   message_type const &   msg) override
+  void PushRequest(connection_handle_type client, message_type const &msg) override
   {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Got request from ", client);
@@ -192,7 +188,7 @@ private:
   {
     LOG_STACK_TRACE_POINT;
 
-    auto strongSocket = network_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
+    auto strongSocket                = network_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
     std::weak_ptr<ClientManager> man = manager_;
 
     auto cb = [this, man, acceptor, strongSocket](std::error_code ec) {

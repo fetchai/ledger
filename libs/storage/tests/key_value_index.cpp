@@ -9,10 +9,8 @@
 #include <iostream>
 using namespace fetch;
 using namespace fetch::storage;
-typedef KeyValueIndex<KeyValuePair<>, CachedRandomAccessStack<KeyValuePair<>>>
-    cached_kvi_type;
-typedef KeyValueIndex<KeyValuePair<>, RandomAccessStack<KeyValuePair<>>>
-    kvi_type;
+typedef KeyValueIndex<KeyValuePair<>, CachedRandomAccessStack<KeyValuePair<>>> cached_kvi_type;
+typedef KeyValueIndex<KeyValuePair<>, RandomAccessStack<KeyValuePair<>>>       kvi_type;
 
 cached_kvi_type key_index;
 kvi_type        ref_index;
@@ -103,15 +101,14 @@ bool LoadSaveValueConsistency()
     test.Load("test1.db");
     if (index1.size() != test.size())
     {
-      std::cout << "Size mismatch: " << test.size() << " " << index1.size()
-                << std::endl;
+      std::cout << "Size mismatch: " << test.size() << " " << index1.size() << std::endl;
       return false;
     }
 
     if (index1.root_element() != test.root_element())
     {
-      std::cout << "Root mismatch: " << test.root_element() << " "
-                << index1.root_element() << std::endl;
+      std::cout << "Root mismatch: " << test.root_element() << " " << index1.root_element()
+                << std::endl;
       return false;
     }
 

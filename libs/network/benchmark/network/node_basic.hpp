@@ -116,8 +116,8 @@ public:
   double TimeToComplete()
   {
     LOG_STACK_TRACE_POINT;
-    return std::chrono::duration_cast<std::chrono::duration<double>>(
-               finishTimePoint_ - startTimePoint_)
+    return std::chrono::duration_cast<std::chrono::duration<double>>(finishTimePoint_ -
+                                                                     startTimePoint_)
         .count();
   }
 
@@ -133,16 +133,14 @@ public:
 
   bool finished() const
   {
-    std::cerr << "Trans list: " << transactionList_.size() << " of "
-              << stopCondition_ << std::endl;
+    std::cerr << "Trans list: " << transactionList_.size() << " of " << stopCondition_ << std::endl;
     return finished_;
   }
 
   void TransactionSize(uint32_t transactionSize)
   {
-    std::size_t baseTxSize =
-        common::Size(common::NextTransaction<transaction_type>(0));
-    int32_t pad = (int32_t(transactionSize) - int32_t(baseTxSize));
+    std::size_t baseTxSize = common::Size(common::NextTransaction<transaction_type>(0));
+    int32_t     pad        = (int32_t(transactionSize) - int32_t(baseTxSize));
     if (pad < 0)
     {
       fetch::logger.Info("Failed to set tx size to: ", transactionSize,
@@ -158,17 +156,14 @@ public:
   // Nodes will invite this node to be pushed their transactions
   bool InvitePush(block_hash const &hash)
   {
-    fetch::logger.Info("Responding to invite: ",
-                       !transactionList_.Contains(hash));
+    fetch::logger.Info("Responding to invite: ", !transactionList_.Contains(hash));
     return !transactionList_.Contains(hash);
   }
 
   void PushConfident(block_hash const &blockHash, block_type &block)
   {
     transactionList_.Add(blockHash, std::move(block));
-    auto cb = [&] {
-      nodeDirectory_.InviteAllForw(blockHash, transactionList_.Get(blockHash));
-    };
+    auto cb = [&] { nodeDirectory_.InviteAllForw(blockHash, transactionList_.Get(blockHash)); };
     std::async(std::launch::async, cb);
   }
 
@@ -228,10 +223,9 @@ public:
   }
 
 private:
-  NodeDirectory nodeDirectory_;  // Manage connections to other nodes
-  TransactionList<block_hash, block_type>
-                      transactionList_;  // List of all transactions
-  fetch::mutex::Mutex mutex_;
+  NodeDirectory                           nodeDirectory_;    // Manage connections to other nodes
+  TransactionList<block_hash, block_type> transactionList_;  // List of all transactions
+  fetch::mutex::Mutex                     mutex_;
 
   // Transmitting thread
   std::thread                thread_;
@@ -240,28 +234,27 @@ private:
   std::vector<network_block> premadeTrans_;
   uint64_t                   stopCondition_{0};
   uint64_t                   startTime_{0};
-  time_point startTimePoint_  = std::chrono::high_resolution_clock::now();
-  time_point finishTimePoint_ = std::chrono::high_resolution_clock::now();
-  bool       finished_        = false;
-  bool       slave_           = false;
-  bool       destructing_     = false;
-  std::atomic<std::size_t> sendIndex_{0};
+  time_point                 startTimePoint_  = std::chrono::high_resolution_clock::now();
+  time_point                 finishTimePoint_ = std::chrono::high_resolution_clock::now();
+  bool                       finished_        = false;
+  bool                       slave_           = false;
+  bool                       destructing_     = false;
+  std::atomic<std::size_t>   sendIndex_{0};
 
   mutable std::condition_variable forwardQueueCond_;
   std::mutex                      forwardQueueMutex_;
   bool                            wakeMe{false};
-  std::thread forwardQueueThread_{[this]() { ForwardThread(); }};
-  std::array<block_type, 10000> forwardQueue_;
-  std::array<block_hash, 10000> forwardQueueHash_;
-  std::array<int, 10000>        forwardQueueSafe_;
+  std::thread                     forwardQueueThread_{[this]() { ForwardThread(); }};
+  std::array<block_type, 10000>   forwardQueue_;
+  std::array<block_hash, 10000>   forwardQueueHash_;
+  std::array<int, 10000>          forwardQueueSafe_;
 
   void PrecreateTrans(uint64_t total)
   {
     if (total % transactionsPerCall_ != 0)
     {
       std::cerr << "Incorrect setup." << std::endl;
-      std::cerr << "Total not integer multiple of tx per call. Exiting."
-                << std::endl;
+      std::cerr << "Total not integer multiple of tx per call. Exiting." << std::endl;
       exit(1);
     }
 
@@ -276,14 +269,12 @@ private:
 
       for (std::size_t j = 0; j < transactionsPerCall_; j++)
       {
-        transBlock.second[j] =
-            common::NextTransaction<transaction_type>(txPad_);
+        transBlock.second[j] = common::NextTransaction<transaction_type>(txPad_);
       }
 
       // Use the first Tx for the block hash, should be adequate to avoid
       // collisions (sha256)
-      transBlock.first =
-          common::Hash(transBlock.second[0].summary().transaction_hash);
+      transBlock.first = common::Hash(transBlock.second[0].summary().transaction_hash);
     }
   }
 
@@ -319,8 +310,8 @@ private:
     finished_        = true;
 
     std::cerr << "Time: "
-              << std::chrono::duration_cast<std::chrono::duration<double>>(
-                     finishTimePoint_ - startTimePoint_)
+              << std::chrono::duration_cast<std::chrono::duration<double>>(finishTimePoint_ -
+                                                                           startTimePoint_)
                      .count()
               << std::endl;
   }
@@ -365,8 +356,8 @@ private:
     finished_        = true;
 
     std::cerr << "Time: "
-              << std::chrono::duration_cast<std::chrono::duration<double>>(
-                     finishTimePoint_ - startTimePoint_)
+              << std::chrono::duration_cast<std::chrono::duration<double>>(finishTimePoint_ -
+                                                                           startTimePoint_)
                      .count()
               << std::endl;
   }

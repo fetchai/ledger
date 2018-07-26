@@ -31,8 +31,7 @@ struct CommandLineArguments
   std::string    interface;
   std::string    dbdir;
 
-  static CommandLineArguments Parse(int argc, char **argv,
-                                    adapter_list_type const &adapters)
+  static CommandLineArguments Parse(int argc, char **argv, adapter_list_type const &adapters)
   {
     CommandLineArguments args;
 
@@ -40,19 +39,13 @@ struct CommandLineArguments
     std::string raw_peers;
 
     fetch::commandline::Params parameters;
-    parameters.add(args.port, "port", "The starting port for ledger services",
-                   DEFAULT_PORT);
-    parameters.add(args.num_executors, "executors",
-                   "The number of executors to configure",
+    parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
+    parameters.add(args.num_executors, "executors", "The number of executors to configure",
                    DEFAULT_NUM_EXECUTORS);
-    parameters.add(args.num_lanes, "lanes", "The number of lanes to be used",
-                   DEFAULT_NUM_LANES);
-    parameters.add(
-        raw_peers, "peers",
-        "The comma separated list of addresses to initially connect to",
-        std::string{});
-    parameters.add(args.dbdir, "db-prefix",
-                   "The directory or prefix added to the node storage",
+    parameters.add(args.num_lanes, "lanes", "The number of lanes to be used", DEFAULT_NUM_LANES);
+    parameters.add(raw_peers, "peers",
+                   "The comma separated list of addresses to initially connect to", std::string{});
+    parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage",
                    std::string{"node_storage"});
 
     std::size_t const num_adapters = adapters.size();
@@ -109,16 +102,14 @@ struct CommandLineArguments
       std::size_t const separator_position = raw_peers.find(',', position);
 
       // parse the peer
-      std::string const peer_address =
-          raw_peers.substr(position, separator_position);
+      std::string const peer_address = raw_peers.substr(position, separator_position);
       if (peer.Parse(peer_address))
       {
         peers.push_back(peer);
       }
       else
       {
-        fetch::logger.Warn("Failed to parse input peer address: ",
-                           peer_address);
+        fetch::logger.Warn("Failed to parse input peer address: ", peer_address);
       }
 
       // update the position for the next search
@@ -133,8 +124,8 @@ struct CommandLineArguments
     }
   }
 
-  friend std::ostream &operator<<(
-      std::ostream &s, CommandLineArguments const &args) FETCH_MAYBE_UNUSED
+  friend std::ostream &operator<<(std::ostream &              s,
+                                  CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
     s << "db-prefix: " << args.dbdir << std::endl;
     s << "port.....: " << args.port << std::endl;
@@ -166,9 +157,9 @@ int main(int argc, char **argv)
     fetch::logger.Info("Configuration:\n", args);
 
     // create and run the constellation
-    auto constellation = fetch::Constellation::Create(
-        args.port, args.num_executors, args.num_lanes,
-        fetch::Constellation::DEFAULT_NUM_SLICES, args.dbdir);
+    auto constellation =
+        fetch::Constellation::Create(args.port, args.num_executors, args.num_lanes,
+                                     fetch::Constellation::DEFAULT_NUM_SLICES, args.dbdir);
     constellation->Run(args.peers);
 
     exit_code = EXIT_SUCCESS;

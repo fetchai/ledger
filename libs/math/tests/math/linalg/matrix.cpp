@@ -40,17 +40,13 @@ void Test1()
 
     //    INFO("Vector SIMD count for int: "
     //         << _M<int>::vector_register_type::E_BLOCK_COUNT);
-    INFO("Vector SIMD count for float: "
-         << _M<float>::vector_register_type::E_BLOCK_COUNT);
-    INFO("Vector SIMD count for double: "
-         << _M<double>::vector_register_type::E_BLOCK_COUNT);
+    INFO("Vector SIMD count for float: " << _M<float>::vector_register_type::E_BLOCK_COUNT);
+    INFO("Vector SIMD count for double: " << _M<double>::vector_register_type::E_BLOCK_COUNT);
 
     //    INFO("Vector SIMD count for int: "
     //         << _M<int>::vector_register_type::E_VECTOR_SIZE);
-    INFO("Vector SIMD count for float: "
-         << _M<float>::vector_register_type::E_VECTOR_SIZE);
-    INFO("Vector SIMD count for double: "
-         << _M<double>::vector_register_type::E_VECTOR_SIZE);
+    INFO("Vector SIMD count for float: " << _M<float>::vector_register_type::E_VECTOR_SIZE);
+    INFO("Vector SIMD count for double: " << _M<double>::vector_register_type::E_VECTOR_SIZE);
   };
 
   SCENARIO("SoftMax for double")

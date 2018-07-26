@@ -26,8 +26,7 @@ struct FileBlockType
     next     = UNDEFINED;
   }
 
-  FileBlockType(uint64_t const &prev, uint8_t const *bytes,
-                std::size_t const &n = std::size_t(-1))
+  FileBlockType(uint64_t const &prev, uint8_t const *bytes, std::size_t const &n = std::size_t(-1))
   {
     memset(this, 0, sizeof(decltype(*this)));
     memcpy(data, bytes, std::min(n, std::size_t(BYTES)));
@@ -60,18 +59,14 @@ public:
   FileObject &operator=(FileObject &&other) = default;
 
   FileObject(stack_type &stack)
-      : stack_(stack)
-      , block_number_(0)
-      , byte_index_(HEADER_SIZE)
-      , length_(HEADER_SIZE)
+      : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE), length_(HEADER_SIZE)
   {
     block_type block;
     last_position_ = stack_.size();
 
-    memcpy(block.data, reinterpret_cast<uint8_t const *>(&last_position_),
+    memcpy(block.data, reinterpret_cast<uint8_t const *>(&last_position_), sizeof(uint64_t));
+    memcpy(block.data + sizeof(uint64_t), reinterpret_cast<uint8_t const *>(&length_),
            sizeof(uint64_t));
-    memcpy(block.data + sizeof(uint64_t),
-           reinterpret_cast<uint8_t const *>(&length_), sizeof(uint64_t));
 
     block_index_ = id_ = stack_.Push(block);
 
@@ -88,10 +83,8 @@ public:
     block_index_ = id_ = position;
     stack_.Get(id_, first);
 
-    memcpy(reinterpret_cast<uint8_t *>(&last_position_), first.data,
-           sizeof(uint64_t));
-    memcpy(reinterpret_cast<uint8_t *>(&length_), first.data + sizeof(uint64_t),
-           sizeof(uint64_t));
+    memcpy(reinterpret_cast<uint8_t *>(&last_position_), first.data, sizeof(uint64_t));
+    memcpy(reinterpret_cast<uint8_t *>(&length_), first.data + sizeof(uint64_t), sizeof(uint64_t));
 
     block_count_ = length_ / block_type::BYTES;
     if (block_count_ * block_type::BYTES < length_) ++block_count_;
@@ -103,10 +96,9 @@ public:
   {
     block_type first;
     stack_.Get(id_, first);
-    memcpy(first.data, reinterpret_cast<uint8_t const *>(&last_position_),
+    memcpy(first.data, reinterpret_cast<uint8_t const *>(&last_position_), sizeof(uint64_t));
+    memcpy(first.data + sizeof(uint64_t), reinterpret_cast<uint8_t const *>(&length_),
            sizeof(uint64_t));
-    memcpy(first.data + sizeof(uint64_t),
-           reinterpret_cast<uint8_t const *>(&length_), sizeof(uint64_t));
     stack_.Set(id_, first);
     // TODO: Flush    stack_.Flush();
   }
@@ -192,10 +184,7 @@ public:
     // TODO
   }
 
-  void Write(byte_array::ConstByteArray const &arr)
-  {
-    Write(arr.pointer(), arr.size());
-  }
+  void Write(byte_array::ConstByteArray const &arr) { Write(arr.pointer(), arr.size()); }
 
   void Write(uint8_t const *bytes, uint64_t const &m)
   {
@@ -218,8 +207,7 @@ public:
     stack_.Get(block_index_, block);
 
     if (((last_block != 0) && (block.next == block_type::UNDEFINED)) ||
-        ((last_block == 0) &&
-         (((byte_index_ + first_bytes) % block_type::BYTES) == 0)))
+        ((last_block == 0) && (((byte_index_ + first_bytes) % block_type::BYTES) == 0)))
     {
       block_type empty;
       empty.previous = block_index_;

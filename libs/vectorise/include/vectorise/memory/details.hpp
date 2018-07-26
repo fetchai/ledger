@@ -16,14 +16,13 @@ struct MatrixApplyFreeFunction
   template <typename T, typename... Remaining>
   struct Unroll
   {
-    typedef typename MatrixApplyFreeFunction<B, R, Args..., B const &>::
-        template Unroll<Remaining...>::signature_type signature_type;
+    typedef typename MatrixApplyFreeFunction<B, R, Args..., B const &>::template Unroll<
+        Remaining...>::signature_type signature_type;
 
     static R Apply(B const *regs, signature_type &&fnc, B &ret, Args &&... args)
     {
       return MatrixApplyFreeFunction<B, R, Args..., B const &>::template Unroll<
-          Remaining...>::Apply(regs + 1, std::move(fnc), ret,
-                               std::forward<Args>(args)..., *regs);
+          Remaining...>::Apply(regs + 1, std::move(fnc), ret, std::forward<Args>(args)..., *regs);
     }
   };
 
@@ -45,16 +44,14 @@ struct MatrixReduceFreeFunction
   template <typename T, typename... Remaining>
   struct Unroll
   {
-    typedef typename MatrixReduceFreeFunction<B, Args..., B const &>::
-        template Unroll<Remaining...>::signature_type signature_type;
+    typedef typename MatrixReduceFreeFunction<B, Args..., B const &>::template Unroll<
+        Remaining...>::signature_type signature_type;
 
-    static B Apply(B const &self, B const *regs, signature_type &&fnc,
-                   Args &&... args)
+    static B Apply(B const &self, B const *regs, signature_type &&fnc, Args &&... args)
     {
 
-      return MatrixReduceFreeFunction<B, Args..., B const &>::template Unroll<
-          Remaining...>::Apply(self, regs + 1, std::move(fnc),
-                               std::forward<Args>(args)..., *regs);
+      return MatrixReduceFreeFunction<B, Args..., B const &>::template Unroll<Remaining...>::Apply(
+          self, regs + 1, std::move(fnc), std::forward<Args>(args)..., *regs);
     }
   };
 
@@ -63,8 +60,7 @@ struct MatrixReduceFreeFunction
   {
     //    typedef B(*signature_type)(B const&, Args..., B const&);
     typedef std::function<B(B const &, Args..., B const &)> signature_type;
-    static B Apply(B const &self, B const *regs, signature_type &&fnc,
-                   Args &&... args)
+    static B Apply(B const &self, B const *regs, signature_type &&fnc, Args &&... args)
     {
       return fnc(self, std::forward<Args>(args)..., *regs);
     }
@@ -78,22 +74,18 @@ struct MatrixApplyClassMember
   template <typename T, typename... Remaining>
   struct Unroll
   {
-    typedef typename MatrixApplyClassMember<C, B, R, Args..., B const &>::
-        template Unroll<Remaining...>::signature_type signature_type;
-    static R Apply(B const *regs, C const &cls, signature_type &&fnc, B &ret,
-                   Args... args)
+    typedef typename MatrixApplyClassMember<C, B, R, Args..., B const &>::template Unroll<
+        Remaining...>::signature_type signature_type;
+    static R Apply(B const *regs, C const &cls, signature_type &&fnc, B &ret, Args... args)
     {
-      return MatrixApplyClassMember<C, B, R, Args..., B const &>::
-          template Unroll<Remaining...>::Apply(regs + 1, cls, std::move(fnc),
-                                               ret, args..., *regs);
+      return MatrixApplyClassMember<C, B, R, Args..., B const &>::template Unroll<
+          Remaining...>::Apply(regs + 1, cls, std::move(fnc), ret, args..., *regs);
     }
 
-    static R Apply(B const **regs, C const &cls, signature_type &&fnc, B &ret,
-                   Args... args)
+    static R Apply(B const **regs, C const &cls, signature_type &&fnc, B &ret, Args... args)
     {
-      return MatrixApplyClassMember<C, B, R, Args..., B const &>::
-          template Unroll<Remaining...>::Apply(regs + 1, cls, std::move(fnc),
-                                               ret, args..., **regs);
+      return MatrixApplyClassMember<C, B, R, Args..., B const &>::template Unroll<
+          Remaining...>::Apply(regs + 1, cls, std::move(fnc), ret, args..., **regs);
     }
   };
 
@@ -101,14 +93,12 @@ struct MatrixApplyClassMember
   struct Unroll<T>
   {
     typedef R (C::*signature_type)(Args..., B const &, B &) const;
-    static R Apply(B const *regs, C const &cls, signature_type &&fnc, B &ret,
-                   Args... args)
+    static R Apply(B const *regs, C const &cls, signature_type &&fnc, B &ret, Args... args)
     {
       return (cls.*fnc)(args..., *regs, ret);
     }
 
-    static R Apply(B const **regs, C const &cls, signature_type &&fnc, B &ret,
-                   Args... args)
+    static R Apply(B const **regs, C const &cls, signature_type &&fnc, B &ret, Args... args)
     {
       return (cls.*fnc)(args..., **regs, ret);
     }

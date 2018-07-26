@@ -17,8 +17,7 @@
 namespace fetch {
 namespace ledger {
 
-class MainChainNode : public MainChainNodeInterface,
-                      public fetch::http::HTTPModule
+class MainChainNode : public MainChainNodeInterface, public fetch::http::HTTPModule
 {
 public:
   typedef fetch::chain::MainChain::proof_type            proof_type;
@@ -34,9 +33,8 @@ public:
   bool           operator==(const MainChainNode &rhs) const = delete;
   bool           operator<(const MainChainNode &rhs) const  = delete;
 
-  MainChainNode(
-      std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
-      uint32_t minerNumber, uint32_t target, uint32_t chainident)
+  MainChainNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
+                uint32_t minerNumber, uint32_t target, uint32_t chainident)
       : nnCore_(std::move(networkNodeCore))
   {
     chain_       = std::make_shared<fetch::chain::MainChain>(minerNumber);
@@ -47,10 +45,10 @@ public:
     chainident_  = chainident;
 
     nnCore_->AddProtocol(this);
-    HTTPModule::Post("/mainchain", [this](http::ViewParameters const &params,
-                                          http::HTTPRequest const &   req) {
-      return this->HttpGetMainchain(params, req);
-    });
+    HTTPModule::Post("/mainchain",
+                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+                       return this->HttpGetMainchain(params, req);
+                     });
     nnCore_->AddModule(this);
   }
 
@@ -87,21 +85,17 @@ public:
 
   // *********** These are RPC calling methods returning a typed promise.
 
-  virtual fetch::network::PromiseOf<std::pair<bool, block_type>>
-  RemoteGetHeader(const block_hash &                                     hash,
-                  std::shared_ptr<network::NetworkNodeCore::client_type> client)
+  virtual fetch::network::PromiseOf<std::pair<bool, block_type>> RemoteGetHeader(
+      const block_hash &hash, std::shared_ptr<network::NetworkNodeCore::client_type> client)
   {
     auto promise = client->Call(protocol_number, MainChain::GET_HEADER, hash);
     return network::PromiseOf<std::pair<bool, block_type>>(promise);
   }
 
-  virtual fetch::network::PromiseOf<std::vector<block_type>>
-  RemoteGetHeaviestChain(
-      uint32_t                                               maxsize,
-      std::shared_ptr<network::NetworkNodeCore::client_type> client)
+  virtual fetch::network::PromiseOf<std::vector<block_type>> RemoteGetHeaviestChain(
+      uint32_t maxsize, std::shared_ptr<network::NetworkNodeCore::client_type> client)
   {
-    auto promise =
-        client->Call(protocol_number, MainChain::GET_HEAVIEST_CHAIN, maxsize);
+    auto promise = client->Call(protocol_number, MainChain::GET_HEAVIEST_CHAIN, maxsize);
     return network::PromiseOf<std::vector<block_type>>(promise);
   }
 
@@ -144,8 +138,7 @@ public:
       }
     }
 
-    fetch::logger.Debug("GetHeaviestChain returning ", results.size(),
-                        " of req ", maxsize);
+    fetch::logger.Debug("GetHeaviestChain returning ", results.size(), " of req ", maxsize);
 
     return results;
   }

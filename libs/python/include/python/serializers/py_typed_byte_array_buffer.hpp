@@ -11,8 +11,7 @@ void BuildTypedByte_ArrayBuffer(pybind11::module &module)
   namespace py = pybind11;
   py::class_<TypedByte_ArrayBuffer>(module, "TypedByte_ArrayBuffer")
       .def(py::init<>())
-      .def(py::init<
-           fetch::serializers::TypedByte_ArrayBuffer::byte_array_type>())
+      .def(py::init<fetch::serializers::TypedByte_ArrayBuffer::byte_array_type>())
       .def("WriteBytes", &TypedByte_ArrayBuffer::WriteBytes)
       .def("bytes_left", &TypedByte_ArrayBuffer::bytes_left)
       .def("data", &TypedByte_ArrayBuffer::data)

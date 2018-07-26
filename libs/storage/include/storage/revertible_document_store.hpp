@@ -6,17 +6,15 @@ namespace fetch {
 namespace storage {
 
 class RevertibleDocumentStore
-    : public DocumentStore<
-          2048, FileBlockType<2048>, KeyValueIndex<>,
-          VersionedRandomAccessStack<FileBlockType<2048>>,
-          FileObject<VersionedRandomAccessStack<FileBlockType<2048>>>>
+    : public DocumentStore<2048, FileBlockType<2048>, KeyValueIndex<>,
+                           VersionedRandomAccessStack<FileBlockType<2048>>,
+                           FileObject<VersionedRandomAccessStack<FileBlockType<2048>>>>
 {
 public:
   using hash_type  = byte_array::ConstByteArray;
-  using super_type = DocumentStore<
-      2048, FileBlockType<2048>, KeyValueIndex<>,
-      VersionedRandomAccessStack<FileBlockType<2048>>,
-      FileObject<VersionedRandomAccessStack<FileBlockType<2048>>>>;
+  using super_type = DocumentStore<2048, FileBlockType<2048>, KeyValueIndex<>,
+                                   VersionedRandomAccessStack<FileBlockType<2048>>,
+                                   FileObject<VersionedRandomAccessStack<FileBlockType<2048>>>>;
 
   typedef uint64_t bookmark_type;  // TODO: From keyvalue index
 

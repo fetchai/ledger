@@ -35,34 +35,25 @@ public:
 
 MockDeleterPrimitive::SharedPtr MockDeleterPrimitive::value;
 
-template <typename T,
-          const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
+template <typename T, const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
 struct StaticMockDeleterPrimitive;
 
 template <>
 struct StaticMockDeleterPrimitive<TestType>
 {
-  static void function(TestType *ptr)
-  {
-    MockDeleterPrimitive::value->free_TestType(ptr);
-  }
+  static void function(TestType *ptr) { MockDeleterPrimitive::value->free_TestType(ptr); }
 };
 
 template <>
 struct StaticMockDeleterPrimitive<TestType, eDeleteStrategy::clearing>
 {
-  static void function(TestType *ptr)
-  {
-    MockDeleterPrimitive::value->free_clearing_TestType(ptr);
-  }
+  static void function(TestType *ptr) { MockDeleterPrimitive::value->free_clearing_TestType(ptr); }
 };
 
-template <typename T,
-          const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
-using OpenSSLDeleter_forTesting =
-    OpenSSLDeleter<T, P_DeleteStrategy,
-                   StaticMockDeleterPrimitive<
-                       typename std::remove_const<T>::type, P_DeleteStrategy>>;
+template <typename T, const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
+using OpenSSLDeleter_forTesting = OpenSSLDeleter<
+    T, P_DeleteStrategy,
+    StaticMockDeleterPrimitive<typename std::remove_const<T>::type, P_DeleteStrategy>>;
 
 class OpenSSLDeleterTest : public testing::Test
 {
@@ -80,8 +71,7 @@ protected:
   //}
 };
 
-TEST_F(OpenSSLDeleterTest,
-       test_that_DeleterPrimitive_function_is_called_for_CONST_qualified_type)
+TEST_F(OpenSSLDeleterTest, test_that_DeleterPrimitive_function_is_called_for_CONST_qualified_type)
 {
   TestType        testValue;
   const TestType &const_testValue = testValue;
@@ -94,9 +84,8 @@ TEST_F(OpenSSLDeleterTest,
   openSSLDeleter(&const_testValue);
 }
 
-TEST_F(
-    OpenSSLDeleterTest,
-    test_that_DeleterPrimitive_function_is_called_for_NON_const_qualified_type)
+TEST_F(OpenSSLDeleterTest,
+       test_that_DeleterPrimitive_function_is_called_for_NON_const_qualified_type)
 {
   TestType testValue;
 
@@ -108,9 +97,8 @@ TEST_F(
   openSSLDeleter(&testValue);
 }
 
-TEST_F(
-    OpenSSLDeleterTest,
-    test_that_clearing_DeleterPrimitive_function_is_called_for_CONST_qualified_type)
+TEST_F(OpenSSLDeleterTest,
+       test_that_clearing_DeleterPrimitive_function_is_called_for_CONST_qualified_type)
 {
   TestType        testValue;
   const TestType &const_testValue = testValue;
@@ -119,14 +107,12 @@ TEST_F(
   EXPECT_CALL(*mock, free_clearing_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
-  OpenSSLDeleter_forTesting<const TestType, eDeleteStrategy::clearing>
-      openSSLDeleter;
+  OpenSSLDeleter_forTesting<const TestType, eDeleteStrategy::clearing> openSSLDeleter;
   openSSLDeleter(&const_testValue);
 }
 
-TEST_F(
-    OpenSSLDeleterTest,
-    test_that_clearing_DeleterPrimitive_function_is_called_for_NON_const_qualified_type)
+TEST_F(OpenSSLDeleterTest,
+       test_that_clearing_DeleterPrimitive_function_is_called_for_NON_const_qualified_type)
 {
   TestType testValue;
 

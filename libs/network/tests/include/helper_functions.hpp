@@ -15,8 +15,7 @@ uint32_t GetRandom()
 {
   static std::random_device                      rd;
   static std::mt19937                            gen(rd());
-  static std::uniform_int_distribution<uint32_t> dis(
-      0, std::numeric_limits<uint32_t>::max());
+  static std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
 
   return dis(gen);
 }
@@ -45,11 +44,9 @@ double TimeDifference(time_point t1, time_point t2)
   // If t1 before t2
   if (t1 < t2)
   {
-    return std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1)
-        .count();
+    return std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
   }
-  return std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t2)
-      .count();
+  return std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t2).count();
 }
 
 //  TODO: (`HUT`) : seperate helper functions by submodule
@@ -115,8 +112,7 @@ T NextTransaction(std::size_t bytesToAdd = 0)
   MakeString(data, 1 + bytesToAdd);
 
   trans.set_signature(sig1);
-  trans.set_contract_name(
-      std::string{contract_name.char_pointer(), contract_name.size()});
+  trans.set_contract_name(std::string{contract_name.char_pointer(), contract_name.size()});
   trans.set_data(data);
 
   return T::Create(trans);

@@ -48,8 +48,7 @@ Contract::Status TokenContract::CreateWealth(transaction_type const &tx)
   uint64_t              amount = 0;
   if (Extract(data, "address", address) && Extract(data, "amount", amount))
   {
-    address =
-        byte_array::FromBase64(address);  //  the address needs to be converted
+    address = byte_array::FromBase64(address);  //  the address needs to be converted
 
     // retrieve the record (if it exists)
     WalletRecord record{};
@@ -84,10 +83,8 @@ Contract::Status TokenContract::Transfer(transaction_type const &tx)
       Extract(data, "amount", amount))
   {
 
-    to_address = byte_array::FromBase64(
-        to_address);  //  the address needs to be converted
-    from_address = byte_array::FromBase64(
-        from_address);  //  the address needs to be converted
+    to_address   = byte_array::FromBase64(to_address);    //  the address needs to be converted
+    from_address = byte_array::FromBase64(from_address);  //  the address needs to be converted
 
     WalletRecord to_record{};
     WalletRecord from_record{};
@@ -111,8 +108,7 @@ Contract::Status TokenContract::Transfer(transaction_type const &tx)
   return Status::OK;
 }
 
-Contract::Status TokenContract::Balance(query_type const &query,
-                                        query_type &      response)
+Contract::Status TokenContract::Balance(query_type const &query, query_type &response)
 {
   Status status = Status::FAILED;
 

@@ -28,16 +28,16 @@ class FetchChainKeeperService : public fetch::protocols::ChainKeeperProtocol
 public:
   FetchChainKeeperService(uint16_t const &port, uint16_t const &http_port,
                           fetch::network::NetworkManager *tm)
-      : fetch::protocols::ChainKeeperProtocol(
-            tm, fetch::protocols::FetchProtocols::CHAIN_KEEPER, details_)
+      : fetch::protocols::ChainKeeperProtocol(tm, fetch::protocols::FetchProtocols::CHAIN_KEEPER,
+                                              details_)
       , network_manager_(tm)
       , service_(port, network_manager_)
       , http_server_(http_port, network_manager_)
   {
     LOG_STACK_TRACE_POINT;
     using namespace fetch::protocols;
-    std::cout << "ChainKeeper listening for peers on " << (port)
-              << ", clients on " << (http_port) << std::endl;
+    std::cout << "ChainKeeper listening for peers on " << (port) << ", clients on " << (http_port)
+              << std::endl;
 
     details_.port      = port;
     details_.http_port = http_port;
@@ -51,25 +51,23 @@ public:
       network_manager_->Post([this]() { this->SyncTransactions(); });
     });
 
-    stop_event_ =
-        network_manager_->OnBeforeStop([this]() { running_ = false; });
+    stop_event_ = network_manager_->OnBeforeStop([this]() { running_ = false; });
 
     http_server_.AddMiddleware(fetch::http::middleware::AllowOrigin("*"));
     http_server_.AddMiddleware(fetch::http::middleware::ColorLog);
     http_server_.AddModule(*this);
 
     using namespace fetch::http;
-    http_server_.AddView(
-        Method::GET, "/mining-power/(power=\\d+)",
-        [this](ViewParameters const &params, HTTPRequest const &req) {
-          HTTPResponse res("{}");
-          this->difficulty_mutex_.lock();
-          this->difficulty_ = params["power"].AsInt();
-          fetch::logger.Highlight("Mine power set to: ", this->difficulty_);
+    http_server_.AddView(Method::GET, "/mining-power/(power=\\d+)",
+                         [this](ViewParameters const &params, HTTPRequest const &req) {
+                           HTTPResponse res("{}");
+                           this->difficulty_mutex_.lock();
+                           this->difficulty_ = params["power"].AsInt();
+                           fetch::logger.Highlight("Mine power set to: ", this->difficulty_);
 
-          this->difficulty_mutex_.unlock();
-          return res;
-        });
+                           this->difficulty_mutex_.unlock();
+                           return res;
+                         });
   }
 
   ~FetchChainKeeperService()
@@ -105,8 +103,7 @@ public:
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     using namespace fetch::protocols;
 
-    std::unordered_map<tx_digest_type, transaction_type,
-                       fetch::crypto::CallableFNV>
+    std::unordered_map<tx_digest_type, transaction_type, fetch::crypto::CallableFNV>
         incoming_transactions;
     // Get missing transactions
 
@@ -115,14 +112,12 @@ public:
     // Get latest transactions
     std::vector<fetch::service::Promise> promises;
 
-    this->with_peers_do(
-        [&promises](std::vector<client_shared_ptr_type> const &clients) {
-          for (auto const &c : clients)
-          {
-            promises.push_back(c->Call(FetchProtocols::CHAIN_KEEPER,
-                                       ChainKeeperRPC::GET_TRANSACTIONS));
-          }
-        });
+    this->with_peers_do([&promises](std::vector<client_shared_ptr_type> const &clients) {
+      for (auto const &c : clients)
+      {
+        promises.push_back(c->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::GET_TRANSACTIONS));
+      }
+    });
 
     txs_.reserve(1000);
 

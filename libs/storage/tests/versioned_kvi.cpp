@@ -59,8 +59,7 @@ int main()
       bookmarks.push_back(book);
       if (h1 != key_index.Hash())
       {
-        std::cerr << "Expected hash to be the same before and after commit"
-                  << std::endl;
+        std::cerr << "Expected hash to be the same before and after commit" << std::endl;
         exit(-1);
       }
     }
@@ -87,8 +86,8 @@ int main()
   for (auto &b : bookmarks)
   {
     key_index.Revert(b.value);
-    std::cout << "Reverting: " << b.value << " " << byte_array::ToBase64(b.key)
-              << " " << byte_array::ToBase64(key_index.Hash()) << std::endl;
+    std::cout << "Reverting: " << b.value << " " << byte_array::ToBase64(b.key) << " "
+              << byte_array::ToBase64(key_index.Hash()) << std::endl;
     if (b.key != key_index.Hash())
     {
       std::cout << "Expected " << std::endl;

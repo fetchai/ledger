@@ -33,8 +33,7 @@ public:
    * must implement a Send function that fulfills the concept given for
    * a service.
    */
-  FeedSubscriptionManager(feed_handler_type const &feed,
-                          AbstractPublicationFeed *publisher)
+  FeedSubscriptionManager(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
       : subscribe_mutex_(__LINE__, __FILE__), feed_(feed), publisher_(publisher)
   {}
 
@@ -51,36 +50,34 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    publisher_->create_publisher(
-        feed_, [=](fetch::byte_array::ConstByteArray const &msg) {
-          serializer_type params;
-          params << SERVICE_FEED << feed_;
-          uint64_t p = params.Tell();
-          params << subscription_handler_type(0);  // placeholder
+    publisher_->create_publisher(feed_, [=](fetch::byte_array::ConstByteArray const &msg) {
+      serializer_type params;
+      params << SERVICE_FEED << feed_;
+      uint64_t p = params.Tell();
+      params << subscription_handler_type(0);  // placeholder
 
-          params.Allocate(msg.size());
-          params.WriteBytes(msg.pointer(), msg.size());
+      params.Allocate(msg.size());
+      params.WriteBytes(msg.pointer(), msg.size());
 
-          subscribe_mutex_.lock();
-          std::vector<std::size_t> remove;
-          for (std::size_t i = 0; i < subscribers_.size(); ++i)
-          {
-            auto &s = subscribers_[i];
-            params.Seek(p);
-            params << s.id;
+      subscribe_mutex_.lock();
+      std::vector<std::size_t> remove;
+      for (std::size_t i = 0; i < subscribers_.size(); ++i)
+      {
+        auto &s = subscribers_[i];
+        params.Seek(p);
+        params << s.id;
 
-            // Copy is important here as we reuse an existing buffer
-            if (!service->DeliverResponse(s.client, params.data().Copy()))
-            {
-              remove.push_back(i);
-            }
-          }
+        // Copy is important here as we reuse an existing buffer
+        if (!service->DeliverResponse(s.client, params.data().Copy()))
+        {
+          remove.push_back(i);
+        }
+      }
 
-          std::reverse(remove.begin(), remove.end());
-          for (auto &i : remove)
-            subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
-          subscribe_mutex_.unlock();
-        });
+      std::reverse(remove.begin(), remove.end());
+      for (auto &i : remove) subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
+      subscribe_mutex_.unlock();
+    });
   }
 
   /* Subscribe client to feed.
@@ -115,12 +112,10 @@ public:
     subscribe_mutex_.lock();
     std::vector<std::size_t> ids;
     for (std::size_t i = 0; i < subscribers_.size(); ++i)
-      if ((subscribers_[i].client == client) && (subscribers_[i].id == id))
-        ids.push_back(i);
+      if ((subscribers_[i].client == client) && (subscribers_[i].id == id)) ids.push_back(i);
 
     std::reverse(ids.begin(), ids.end());
-    for (auto &i : ids)
-      subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
+    for (auto &i : ids) subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
     subscribe_mutex_.unlock();
   }
 
@@ -134,10 +129,7 @@ public:
    *
    * @return the publisher.
    */
-  fetch::service::AbstractPublicationFeed *publisher() const
-  {
-    return publisher_;
-  }
+  fetch::service::AbstractPublicationFeed *publisher() const { return publisher_; }
 
 private:
   struct ClientSubscription

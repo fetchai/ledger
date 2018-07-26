@@ -43,9 +43,8 @@ public:
       {
         this->SetAddress(endpoint.address().to_string());
 
-        fetch::logger.Debug(
-            "Server: Connection from ",
-            socket_ptr->remote_endpoint().address().to_string());
+        fetch::logger.Debug("Server: Connection from ",
+                            socket_ptr->remote_endpoint().address().to_string());
       }
       else
       {
@@ -123,8 +122,7 @@ private:
       }
     };
 
-    asio::async_read(*socket_ptr,
-                     asio::buffer(header_.bytes, 2 * sizeof(uint64_t)), cb);
+    asio::async_read(*socket_ptr, asio::buffer(header_.bytes, 2 * sizeof(uint64_t)), cb);
   }
 
   void ReadBody()
@@ -146,8 +144,7 @@ private:
 
     message.Resize(header_.content.length);
     auto self(shared_from_this());
-    auto cb = [this, socket_ptr, self, message](std::error_code ec,
-                                                std::size_t     len) {
+    auto cb = [this, socket_ptr, self, message](std::error_code ec, std::size_t len) {
       auto ptr = manager_.lock();
       if (!ptr)
       {
@@ -167,8 +164,7 @@ private:
       }
     };
 
-    asio::async_read(*socket_ptr,
-                     asio::buffer(message.pointer(), message.size()), cb);
+    asio::async_read(*socket_ptr, asio::buffer(message.pointer(), message.size()), cb);
   }
 
   void SetHeader(byte_array::ByteArray &header, uint64_t bufSize)
@@ -207,8 +203,7 @@ private:
     write_mutex_.unlock();
 
     auto self = shared_from_this();
-    auto cb   = [this, buffer, socket_ptr, header, self](std::error_code ec,
-                                                       std::size_t) {
+    auto cb   = [this, buffer, socket_ptr, header, self](std::error_code ec, std::size_t) {
       auto ptr = manager_.lock();
       if (!ptr) return;
 
@@ -223,9 +218,8 @@ private:
       }
     };
 
-    std::vector<asio::const_buffer> buffers{
-        asio::buffer(header.pointer(), header.size()),
-        asio::buffer(buffer.pointer(), buffer.size())};
+    std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
+                                            asio::buffer(buffer.pointer(), buffer.size())};
 
     asio::async_write(*socket_ptr, buffers, cb);
   }
@@ -235,8 +229,7 @@ private:
   message_queue_type                        write_queue_;
   fetch::mutex::Mutex                       write_mutex_;
   std::string                               address_;
-  const uint64_t                            networkMagic =
-      0xFE7C80A1FE7C80A1;  // TODO: (`HUT`) : put this in shared class
+  const uint64_t networkMagic = 0xFE7C80A1FE7C80A1;  // TODO: (`HUT`) : put this in shared class
 
   // TODO: (`HUT`) : fix this to be self-contained
   union

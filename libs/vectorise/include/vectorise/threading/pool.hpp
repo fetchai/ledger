@@ -35,8 +35,7 @@ public:
   }
 
   template <typename F, typename... Args>
-  std::future<typename std::result_of<F(Args...)>::type> Dispatch(
-      F &&f, Args &&... args)
+  std::future<typename std::result_of<F(Args...)>::type> Dispatch(F &&f, Args &&... args)
   {
     typedef typename std::result_of<F(Args...)>::type return_type;
     typedef std::packaged_task<return_type()>         task_type;
@@ -80,8 +79,7 @@ private:
   std::function<void()> NextTask()
   {
     std::unique_lock<std::mutex> lock(mutex_);
-    condition_.wait(lock,
-                    [this] { return (!bool(running_)) || (!tasks_.empty()); });
+    condition_.wait(lock, [this] { return (!bool(running_)) || (!tasks_.empty()); });
     if (!bool(running_)) return std::function<void()>();
 
     std::function<void()> task = std::move(tasks_.front());

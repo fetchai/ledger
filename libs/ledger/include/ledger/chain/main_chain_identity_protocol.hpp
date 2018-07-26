@@ -18,8 +18,7 @@ public:
   {
     this->Expose(PING, ctrl, &MainChainIdentity::Ping);
     this->Expose(HELLO, ctrl, &MainChainIdentity::Hello);
-    this->Expose(AUTHENTICATE_CONTROLLER, ctrl,
-                 &MainChainIdentity::AuthenticateController);
+    this->Expose(AUTHENTICATE_CONTROLLER, ctrl, &MainChainIdentity::AuthenticateController);
   }
 };
 

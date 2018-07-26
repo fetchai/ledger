@@ -10,8 +10,7 @@ namespace math {
 namespace distance {
 
 template <typename A>
-inline A WrapperPairWiseDistance(A const &          a,
-                                 std::string const &method = "eucludian")
+inline A WrapperPairWiseDistance(A const &a, std::string const &method = "eucludian")
 {
 
   A ret;
@@ -63,8 +62,7 @@ inline A WrapperPairWiseDistance(A const &          a,
   return ret;
 }
 
-inline void BuildPairWiseDistanceDistance(std::string const &custom_name,
-                                          pybind11::module & module)
+inline void BuildPairWiseDistanceDistance(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;
@@ -72,10 +70,8 @@ inline void BuildPairWiseDistanceDistance(std::string const &custom_name,
   namespace py = pybind11;
   module.def(custom_name.c_str(), &WrapperPairWiseDistance<Matrix<double>>)
       .def(custom_name.c_str(), &WrapperPairWiseDistance<Matrix<float>>)
-      .def(custom_name.c_str(),
-           &WrapperPairWiseDistance<RectangularArray<double>>)
-      .def(custom_name.c_str(),
-           &WrapperPairWiseDistance<RectangularArray<float>>);
+      .def(custom_name.c_str(), &WrapperPairWiseDistance<RectangularArray<double>>)
+      .def(custom_name.c_str(), &WrapperPairWiseDistance<RectangularArray<float>>);
   //    .def(custom_name.c_str(), &WrapperPairWiseDistance< ShapeLessArray<
   //    double > >) .def(custom_name.c_str(), &WrapperPairWiseDistance<
   //    ShapeLessArray< float > >);

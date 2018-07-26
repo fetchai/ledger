@@ -22,10 +22,9 @@ public:
   typedef ForwardIterator<T>  iterator;
   typedef BackwardIterator<T> reverse_iterator;
 
-  typedef ConstParallelDispatcher<type> const_parallel_dispatcher_type;
-  typedef ParallelDispatcher<type>      parallel_dispatcher_type;
-  typedef typename parallel_dispatcher_type::vector_register_type
-      vector_register_type;
+  typedef ConstParallelDispatcher<type>                           const_parallel_dispatcher_type;
+  typedef ParallelDispatcher<type>                                parallel_dispatcher_type;
+  typedef typename parallel_dispatcher_type::vector_register_type vector_register_type;
   typedef typename parallel_dispatcher_type::vector_register_iterator_type
       vector_register_iterator_type;
 
@@ -35,39 +34,26 @@ public:
     E_SIMD_SIZE     = (platform::VectorRegisterSize<type>::value >> 3),
     E_SIMD_COUNT_IM = E_SIMD_SIZE / type_size,
     E_SIMD_COUNT =
-        (E_SIMD_COUNT_IM > 0
-             ? E_SIMD_COUNT_IM
-             : 1),  // Note that if a type is too big to fit, we pretend it can
+        (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM
+                             : 1),  // Note that if a type is too big to fit, we pretend it can
     E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value,
     IS_SHARED        = 0
   };
 
-  static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT),
-                "type does not fit in SIMD");
+  static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT), "type does not fit in SIMD");
 
-  VectorSlice(pointer_type ptr = nullptr, std::size_t const &n = 0)
-      : pointer_(ptr), size_(n)
-  {}
+  VectorSlice(pointer_type ptr = nullptr, std::size_t const &n = 0) : pointer_(ptr), size_(n) {}
 
   ConstParallelDispatcher<type> in_parallel() const
   {
     return ConstParallelDispatcher<type>(pointer_, size());
   }
-  ParallelDispatcher<type> in_parallel()
-  {
-    return ParallelDispatcher<type>(pointer(), size());
-  }
+  ParallelDispatcher<type> in_parallel() { return ParallelDispatcher<type>(pointer(), size()); }
 
-  iterator begin() { return iterator(pointer_, pointer_ + size()); }
-  iterator end() { return iterator(pointer_ + size(), pointer_ + size()); }
-  reverse_iterator rbegin()
-  {
-    return reverse_iterator(pointer_ + size() - 1, pointer_ - 1);
-  }
-  reverse_iterator rend()
-  {
-    return reverse_iterator(pointer_ - 1, pointer_ - 1);
-  }
+  iterator         begin() { return iterator(pointer_, pointer_ + size()); }
+  iterator         end() { return iterator(pointer_ + size(), pointer_ + size()); }
+  reverse_iterator rbegin() { return reverse_iterator(pointer_ + size() - 1, pointer_ - 1); }
+  reverse_iterator rend() { return reverse_iterator(pointer_ - 1, pointer_ - 1); }
 
   void SetAllZero()
   {
@@ -95,8 +81,7 @@ public:
 
   // TODO: THis is ugly. The right way to do this would be to have a separate
   // constant class that is return for slice(...) const
-  vector_slice_type slice(std::size_t const &offset,
-                          std::size_t const &length) const
+  vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const
   {
     assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
     assert(std::size_t(length / E_SIMD_COUNT) * E_SIMD_COUNT == length);
@@ -146,8 +131,7 @@ public:
 
   std::size_t padded_size() const
   {
-    std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT)
-                         << E_LOG_SIMD_COUNT;
+    std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT) << E_LOG_SIMD_COUNT;
     if (padded < size_) padded += E_SIMD_COUNT;
     return padded;
   }

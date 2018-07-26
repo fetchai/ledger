@@ -10,12 +10,11 @@ class MainChainIdentity
 {
 public:
   using connectivity_details_type = MainChainDetails;
-  using client_register_type =
-      fetch::network::ConnectionRegister<connectivity_details_type>;
-  using network_manager_type   = fetch::network::NetworkManager;
-  using mutex_type             = fetch::mutex::Mutex;
-  using connection_handle_type = client_register_type::connection_handle_type;
-  using ping_type              = uint32_t;
+  using client_register_type      = fetch::network::ConnectionRegister<connectivity_details_type>;
+  using network_manager_type      = fetch::network::NetworkManager;
+  using mutex_type                = fetch::mutex::Mutex;
+  using connection_handle_type    = client_register_type::connection_handle_type;
+  using ping_type                 = uint32_t;
 
   enum
   {

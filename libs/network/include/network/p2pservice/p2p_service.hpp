@@ -18,8 +18,7 @@ class P2PService : public service::ServiceServer<fetch::network::TCPServer>
 {
 public:
   using connectivity_details_type = PeerDetails;
-  using client_register_type =
-      fetch::network::ConnectionRegister<connectivity_details_type>;
+  using client_register_type      = fetch::network::ConnectionRegister<connectivity_details_type>;
   //  using identity_type = LaneIdentity;
   //  using identity_protocol_type = LaneIdentityProtocol;
   using connection_handle_type = client_register_type::connection_handle_type;
@@ -33,12 +32,11 @@ public:
   using network_manager_type       = fetch::network::NetworkManager;
   using mutex_type                 = fetch::mutex::Mutex;
 
-  using p2p_identity_type           = std::unique_ptr<P2PIdentity>;
-  using p2p_identity_protocol_type  = std::unique_ptr<P2PIdentityProtocol>;
-  using p2p_directory_type          = std::unique_ptr<P2PPeerDirectory>;
-  using p2p_directory_protocol_type = std::unique_ptr<P2PPeerDirectoryProtocol>;
-  using callback_peer_update_profile_type =
-      std::function<void(EntryPoint const &)>;
+  using p2p_identity_type                 = std::unique_ptr<P2PIdentity>;
+  using p2p_identity_protocol_type        = std::unique_ptr<P2PIdentityProtocol>;
+  using p2p_directory_type                = std::unique_ptr<P2PPeerDirectory>;
+  using p2p_directory_protocol_type       = std::unique_ptr<P2PPeerDirectoryProtocol>;
+  using callback_peer_update_profile_type = std::function<void(EntryPoint const &)>;
 
   enum
   {
@@ -87,8 +85,7 @@ public:
     }
 
     // P2P Peer Directory
-    directory_.reset(
-        new P2PPeerDirectory(DIRECTORY, register_, thread_pool_, my_details_));
+    directory_.reset(new P2PPeerDirectory(DIRECTORY, register_, thread_pool_, my_details_));
     directory_protocol_.reset(new P2PPeerDirectoryProtocol(*directory_));
     this->Add(DIRECTORY, directory_protocol_.get());
 
@@ -97,9 +94,8 @@ public:
       std::cout << "\rNew connection " << i << std::endl;
     });
 
-    register_.OnClientLeave([](connection_handle_type const &i) {
-      std::cout << "\rPeer left " << i << std::endl;
-    });
+    register_.OnClientLeave(
+        [](connection_handle_type const &i) { std::cout << "\rPeer left " << i << std::endl; });
 
     // TODO: Get from settings
     min_connections_ = 2;
@@ -177,8 +173,7 @@ public:
 
     // Getting own IP seen externally
     byte_array::ByteArray address;
-    auto                  p =
-        client->Call(IDENTITY, P2PIdentityProtocol::EXCHANGE_ADDRESS, host);
+    auto                  p = client->Call(IDENTITY, P2PIdentityProtocol::EXCHANGE_ADDRESS, host);
     p.As(address);
 
     {  // Exchanging identities including node setup
@@ -194,8 +189,7 @@ public:
         }
       }
 
-      auto        p       = client->Call(IDENTITY, P2PIdentityProtocol::HELLO,
-                            my_details_->details);
+      auto        p = client->Call(IDENTITY, P2PIdentityProtocol::HELLO, my_details_->details);
       PeerDetails details = p.As<PeerDetails>();
 
       auto regdetails = register_.GetDetails(client->handle());
@@ -219,8 +213,7 @@ public:
 
   /// Methods to add node components
   /// @{
-  void AddLane(uint32_t const &lane, byte_array::ConstByteArray const &host,
-               uint16_t const &        port,
+  void AddLane(uint32_t const &lane, byte_array::ConstByteArray const &host, uint16_t const &port,
                crypto::Identity const &identity = crypto::Identity())
   {
     // TODO: connect
@@ -239,8 +232,7 @@ public:
     identity_->MarkProfileAsUpdated();
   }
 
-  void AddMainChain(byte_array::ConstByteArray const &host,
-                    uint16_t const &                  port)
+  void AddMainChain(byte_array::ConstByteArray const &host, uint16_t const &port)
   {
 
     // TODO: connect
@@ -294,7 +286,7 @@ protected:
           auto conn = c.second.lock();
           if (conn)
           {
-            auto details = register_.GetDetails(conn->handle());
+            auto                          details = register_.GetDetails(conn->handle());
             std::lock_guard<mutex::Mutex> lock(*details);
 
             switch (conn->Type())
@@ -344,11 +336,9 @@ protected:
     // Timeout to send out a new tracking signal if needed
     // TODO: Pull from settings
     {
-      std::chrono::system_clock::time_point end =
-          std::chrono::system_clock::now();
-      double ms = double(std::chrono::duration_cast<std::chrono::milliseconds>(
-                             end - track_start_)
-                             .count());
+      std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+      double                                ms =
+          double(std::chrono::duration_cast<std::chrono::milliseconds>(end - track_start_).count());
       if (ms > 5000) tracking_peers_ = false;
     }
 
@@ -404,9 +394,8 @@ protected:
     }
 
     // Creating list of endpoints
-    P2PPeerDirectory::peer_details_map_type suggest =
-        directory_->SuggestPeersToConnectTo();
-    std::vector<EntryPoint> endpoints;
+    P2PPeerDirectory::peer_details_map_type suggest = directory_->SuggestPeersToConnectTo();
+    std::vector<EntryPoint>                 endpoints;
     for (auto &s : suggest)
     {
       for (auto &e : s.second.entry_points)
@@ -446,8 +435,7 @@ protected:
       return;
     }
 
-    fetch::logger.Debug("Trying to connect to ",
-                        byte_array::ToBase64(e.identity.identifier()));
+    fetch::logger.Debug("Trying to connect to ", byte_array::ToBase64(e.identity.identifier()));
     for (auto &h : e.host)
     {
       if (Connect(h, e.port)) break;
@@ -469,7 +457,7 @@ private:
 
   NodeDetails my_details_;
 
-  mutex::Mutex peers_mutex_;
+  mutex::Mutex                                                           peers_mutex_;
   std::unordered_map<connection_handle_type, shared_service_client_type> peers_;
 
   std::unique_ptr<crypto::Prover> certificate_;
@@ -483,8 +471,8 @@ private:
 
   std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> incoming_;
   std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> outgoing_;
-  std::vector<connection_handle_type> incoming_handles_;
-  std::vector<connection_handle_type> outgoing_handles_;
+  std::vector<connection_handle_type>                                 incoming_handles_;
+  std::vector<connection_handle_type>                                 outgoing_handles_;
 };
 
 }  // namespace p2p

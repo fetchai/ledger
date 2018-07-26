@@ -22,13 +22,12 @@ template <typename T, typename C = memory::SharedArray<T>>
 class ShapeLessArray
 {
 public:
-  typedef T                                             type;
-  typedef C                                             container_type;
-  typedef std::size_t                                   size_type;
-  typedef typename container_type::vector_slice_type    vector_slice_type;
-  typedef typename container_type::vector_register_type vector_register_type;
-  typedef typename container_type::vector_register_iterator_type
-      vector_register_iterator_type;
+  typedef T                                                      type;
+  typedef C                                                      container_type;
+  typedef std::size_t                                            size_type;
+  typedef typename container_type::vector_slice_type             vector_slice_type;
+  typedef typename container_type::vector_register_type          vector_register_type;
+  typedef typename container_type::vector_register_iterator_type vector_register_iterator_type;
 
   /* Iterators for accessing and modifying the array */
   typedef typename container_type::iterator         iterator;
@@ -69,8 +68,7 @@ public:
     std::sort(data_.pointer() + range.from(), data_.pointer() + range.to());
   }
 
-  ShapeLessArray &InlineAdd(ShapeLessArray const &other,
-                            memory::Range const & range)
+  ShapeLessArray &InlineAdd(ShapeLessArray const &other, memory::Range const &range)
   {
     assert(other.data().size() == this->data().size());
 
@@ -100,8 +98,9 @@ public:
     assert(other.data().size() == this->data().size());
 
     this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y,
-           vector_register_type &z) { z = x + y; },
+        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+          z = x + y;
+        },
         this->data(), other.data());
     return *this;
   }
@@ -111,16 +110,13 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &x, vector_register_type &z) {
-          z = x + val;
-        },
+        [val](vector_register_type const &x, vector_register_type &z) { z = x + val; },
         this->data());
 
     return *this;
   }
 
-  ShapeLessArray &InlineMultiply(ShapeLessArray const &other,
-                                 memory::Range const & range)
+  ShapeLessArray &InlineMultiply(ShapeLessArray const &other, memory::Range const &range)
   {
     assert(other.data().size() == this->data().size());
 
@@ -149,8 +145,9 @@ public:
   {
     assert(other.data().size() == this->data().size());
     this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y,
-           vector_register_type &z) { z = x * y; },
+        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+          z = x * y;
+        },
         this->data(), other.data());
     return *this;
   }
@@ -160,16 +157,13 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &x, vector_register_type &z) {
-          z = x * val;
-        },
+        [val](vector_register_type const &x, vector_register_type &z) { z = x * val; },
         this->data());
 
     return *this;
   }
 
-  ShapeLessArray &InlineSubtract(ShapeLessArray const &other,
-                                 memory::Range const & range)
+  ShapeLessArray &InlineSubtract(ShapeLessArray const &other, memory::Range const &range)
   {
     assert(other.data().size() == this->data().size());
 
@@ -198,8 +192,9 @@ public:
   {
     assert(other.data().size() == this->data().size());
     this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y,
-           vector_register_type &z) { z = x - y; },
+        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+          z = x - y;
+        },
         this->data(), other.data());
     return *this;
   }
@@ -208,8 +203,9 @@ public:
   {
     assert(other.data().size() == this->data().size());
     this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y,
-           vector_register_type &z) { z = y - x; },
+        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+          z = y - x;
+        },
         this->data(), other.data());
     return *this;
   }
@@ -219,16 +215,13 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &y, vector_register_type &z) {
-          z = y - val;
-        },
+        [val](vector_register_type const &y, vector_register_type &z) { z = y - val; },
         this->data());
 
     return *this;
   }
 
-  ShapeLessArray &InlineDivide(ShapeLessArray const &other,
-                               memory::Range const & range)
+  ShapeLessArray &InlineDivide(ShapeLessArray const &other, memory::Range const &range)
   {
     assert(other.data().size() == this->data().size());
 
@@ -257,8 +250,9 @@ public:
   {
     assert(other.data().size() == this->data().size());
     this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y,
-           vector_register_type &z) { z = x / y; },
+        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+          z = x / y;
+        },
         this->data(), other.data());
     return *this;
   }
@@ -268,9 +262,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &y, vector_register_type &z) {
-          z = y / val;
-        },
+        [val](vector_register_type const &y, vector_register_type &z) { z = y / val; },
         this->data());
 
     return *this;
@@ -281,9 +273,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &y, vector_register_type &z) {
-          z = val - y;
-        },
+        [val](vector_register_type const &y, vector_register_type &z) { z = val - y; },
         this->data());
 
     return *this;
@@ -294,8 +284,9 @@ public:
     assert(other.data().size() == this->data().size());
 
     this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y,
-           vector_register_type &z) { z = y / x; },
+        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+          z = y / x;
+        },
         this->data(), other.data());
     return *this;
   }
@@ -305,9 +296,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &y, vector_register_type &z) {
-          z = val / y;
-        },
+        [val](vector_register_type const &y, vector_register_type &z) { z = val / y; },
         this->data());
 
     return *this;
@@ -347,8 +336,7 @@ public:
     assert(obj1.data().size() == this->data().size());
 
     this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y,
-           vector_register_type &z) {
+        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
           z = x + y;
           /*
           alignas(16) type q[4] = {0
@@ -375,17 +363,14 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &x, vector_register_type &z) {
-          z = x + val;
-        },
+        [val](vector_register_type const &x, vector_register_type &z) { z = x + val; },
         obj1.data());
 
     return *this;
   }
 
-  ShapeLessArray &Multiply(ShapeLessArray const &obj1,
-                           ShapeLessArray const &obj2,
-                           memory::Range const & range)
+  ShapeLessArray &Multiply(ShapeLessArray const &obj1, ShapeLessArray const &obj2,
+                           memory::Range const &range)
   {
     assert(obj1.data().size() == obj2.data().size());
     assert(obj1.data().size() == this->data().size());
@@ -412,15 +397,15 @@ public:
     return *this;
   }
 
-  ShapeLessArray &Multiply(ShapeLessArray const &obj1,
-                           ShapeLessArray const &obj2)
+  ShapeLessArray &Multiply(ShapeLessArray const &obj1, ShapeLessArray const &obj2)
   {
     assert(obj1.data().size() == obj2.data().size());
     assert(obj1.data().size() == this->data().size());
 
     this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y,
-           vector_register_type &z) { z = x * y; },
+        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+          z = x * y;
+        },
         obj1.data(), obj2.data());
 
     return *this;
@@ -433,17 +418,14 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &x, vector_register_type &z) {
-          z = x * val;
-        },
+        [val](vector_register_type const &x, vector_register_type &z) { z = x * val; },
         obj1.data());
 
     return *this;
   }
 
-  ShapeLessArray &Subtract(ShapeLessArray const &obj1,
-                           ShapeLessArray const &obj2,
-                           memory::Range const & range)
+  ShapeLessArray &Subtract(ShapeLessArray const &obj1, ShapeLessArray const &obj2,
+                           memory::Range const &range)
   {
     assert(obj1.data().size() == obj2.data().size());
     assert(obj1.data().size() == this->data().size());
@@ -470,15 +452,15 @@ public:
     return *this;
   }
 
-  ShapeLessArray &Subtract(ShapeLessArray const &obj1,
-                           ShapeLessArray const &obj2)
+  ShapeLessArray &Subtract(ShapeLessArray const &obj1, ShapeLessArray const &obj2)
   {
     assert(obj1.data().size() == obj2.data().size());
     assert(obj1.data().size() == this->data().size());
 
     this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y,
-           vector_register_type &z) { z = x - y; },
+        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+          z = x - y;
+        },
         obj1.data(), obj2.data());
 
     return *this;
@@ -491,9 +473,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &x, vector_register_type &z) {
-          z = x - val;
-        },
+        [val](vector_register_type const &x, vector_register_type &z) { z = x - val; },
         obj1.data());
 
     return *this;
@@ -506,9 +486,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &x, vector_register_type &z) {
-          z = val - x;
-        },
+        [val](vector_register_type const &x, vector_register_type &z) { z = val - x; },
         obj1.data());
 
     return *this;
@@ -548,8 +526,9 @@ public:
     assert(obj1.data().size() == this->data().size());
 
     this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y,
-           vector_register_type &z) { z = x / y; },
+        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+          z = x / y;
+        },
         obj1.data(), obj2.data());
 
     return *this;
@@ -562,9 +541,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &x, vector_register_type &z) {
-          z = x / val;
-        },
+        [val](vector_register_type const &x, vector_register_type &z) { z = x / val; },
         obj1.data());
 
     return *this;
@@ -577,9 +554,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &x, vector_register_type &z) {
-          z = val / x;
-        },
+        [val](vector_register_type const &x, vector_register_type &z) { z = val / x; },
         obj1.data());
 
     return *this;
@@ -591,8 +566,7 @@ public:
   type Max() const
   {
     return data_.in_parallel().Reduce(
-        [](vector_register_type const &a,
-           vector_register_type const &b) -> vector_register_type {
+        [](vector_register_type const &a, vector_register_type const &b) -> vector_register_type {
           return max(a, b);
         });
   }
@@ -600,8 +574,7 @@ public:
   type Min() const
   {
     return data_.in_parallel().Reduce(
-        [](vector_register_type const &a,
-           vector_register_type const &b) -> vector_register_type {
+        [](vector_register_type const &a, vector_register_type const &b) -> vector_register_type {
           return min(a, b);
         });
   }
@@ -609,8 +582,7 @@ public:
   type Product() const
   {
     return data_.in_parallel().Reduce(
-        [](vector_register_type const &a,
-           vector_register_type const &b) -> vector_register_type {
+        [](vector_register_type const &a, vector_register_type const &b) -> vector_register_type {
           return a * b;
         });
   }
@@ -619,8 +591,7 @@ public:
   {
     // TODO: restrict to size
     return data_.in_parallel().Reduce(
-        [](vector_register_type const &a,
-           vector_register_type const &b) -> vector_register_type {
+        [](vector_register_type const &a, vector_register_type const &b) -> vector_register_type {
           return a + b;
         });
   }
@@ -646,16 +617,14 @@ public:
   {
     vector_register_type val(value);
 
-    this->data().in_parallel().Apply(
-        range, [val](vector_register_type &z) { z = val; });
+    this->data().in_parallel().Apply(range, [val](vector_register_type &z) { z = val; });
   }
 
   void Fill(type const &value)
   {
     vector_register_type val(value);
 
-    this->data().in_parallel().Apply(
-        [val](vector_register_type &z) { z = val; });
+    this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
   }
 
   void CumlativeProduct()
@@ -676,8 +645,7 @@ public:
     LazyResize(x.size());
 
     assert(size_ > 1);
-    kernels::StandardDeviation<type, vector_register_type> kernel(
-        Mean(), type(1) / type(size_));
+    kernels::StandardDeviation<type, vector_register_type> kernel(Mean(), type(1) / type(size_));
     this->data_.in_parallel().Apply(kernel, x.data());
   }
 
@@ -685,8 +653,7 @@ public:
   {
     LazyResize(x.size());
     assert(size_ > 1);
-    kernels::Variance<type, vector_register_type> kernel(Mean(),
-                                                         type(1) / type(size_));
+    kernels::Variance<type, vector_register_type> kernel(Mean(), type(1) / type(size_));
     this->data_.in_parallel().Apply(kernel, x.data_);
   }
 
@@ -695,10 +662,9 @@ public:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply(
-        [](vector_register_type const &a, vector_register_type const &b,
-           vector_register_type &c) { c = (a == b); },
-        a.data(), b.data());
+    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
+                                       vector_register_type &c) { c = (a == b); },
+                                    a.data(), b.data());
   }
 
   void NotEqual(self_type const &a, self_type const &b)
@@ -706,10 +672,9 @@ public:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply(
-        [](vector_register_type const &a, vector_register_type const &b,
-           vector_register_type &c) { c = (a != b); },
-        a.data(), b.data());
+    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
+                                       vector_register_type &c) { c = (a != b); },
+                                    a.data(), b.data());
   }
 
   void LessThan(self_type const &a, self_type const &b)
@@ -717,10 +682,9 @@ public:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply(
-        [](vector_register_type const &a, vector_register_type const &b,
-           vector_register_type &c) { c = (a < b); },
-        a.data(), b.data());
+    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
+                                       vector_register_type &c) { c = (a < b); },
+                                    a.data(), b.data());
   }
 
   void LessThanEqual(self_type const &a, self_type const &b)
@@ -728,10 +692,9 @@ public:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply(
-        [](vector_register_type const &a, vector_register_type const &b,
-           vector_register_type &c) { c = (a <= b); },
-        a.data(), b.data());
+    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
+                                       vector_register_type &c) { c = (a <= b); },
+                                    a.data(), b.data());
   }
 
   void GreaterThan(self_type const &a, self_type const &b)
@@ -739,10 +702,9 @@ public:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply(
-        [](vector_register_type const &a, vector_register_type const &b,
-           vector_register_type &c) { c = (a > b); },
-        a.data(), b.data());
+    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
+                                       vector_register_type &c) { c = (a > b); },
+                                    a.data(), b.data());
   }
 
   void GreaterThanEqual(self_type const &a, self_type const &b)
@@ -750,10 +712,9 @@ public:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply(
-        [](vector_register_type const &a, vector_register_type const &b,
-           vector_register_type &c) { c = (a >= b); },
-        a.data(), b.data());
+    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
+                                       vector_register_type &c) { c = (a >= b); },
+                                    a.data(), b.data());
   }
 
   /*
@@ -1393,10 +1354,7 @@ public:
    *
    * This method is sensitive to height and width.
    */
-  bool operator!=(ShapeLessArray const &other) const
-  {
-    return !(this->operator==(other));
-  }
+  bool operator!=(ShapeLessArray const &other) const { return !(this->operator==(other)); }
 
   /* One-dimensional reference index operator.
    * @param n is the index which is being accessed.
@@ -1431,8 +1389,7 @@ public:
    */
   type &At(size_type const &i) { return data_[i]; }
 
-  static ShapeLessArray Arange(type const &from, type const &to,
-                               type const &delta)
+  static ShapeLessArray Arange(type const &from, type const &to, type const &delta)
   {
     ShapeLessArray ret;
 
@@ -1473,9 +1430,8 @@ public:
     return ret;
   }
 
-  static ShapeLessArray UniformRandomIntegers(std::size_t const &N,
-                                              int64_t const &    min,
-                                              int64_t const &    max)
+  static ShapeLessArray UniformRandomIntegers(std::size_t const &N, int64_t const &min,
+                                              int64_t const &max)
   {
     ShapeLessArray ret;
     ret.LazyResize(N);
@@ -1494,8 +1450,7 @@ public:
     return *this;
   }
 
-  ShapeLessArray &FillUniformRandomIntegers(int64_t const &min,
-                                            int64_t const &max)
+  ShapeLessArray &FillUniformRandomIntegers(int64_t const &min, int64_t const &max)
   {
     assert(min <= max);
 
@@ -1517,8 +1472,8 @@ public:
     return ret;
   }
 
-  bool AllClose(ShapeLessArray const &other, double const &rtol = 1e-5,
-                double const &atol = 1e-8, bool ignoreNaN = true) const
+  bool AllClose(ShapeLessArray const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
+                bool ignoreNaN = true) const
   {
     std::size_t N = this->size();
     if (other.size() != N) return false;
@@ -1539,8 +1494,7 @@ public:
     }
     if (!ret)
     {
-      for (std::size_t i = 0; i < N; ++i)
-        std::cout << this->At(i) << " " << other[i] << std::endl;
+      for (std::size_t i = 0; i < N; ++i) std::cout << this->At(i) << " " << other[i] << std::endl;
     }
 
     return ret;

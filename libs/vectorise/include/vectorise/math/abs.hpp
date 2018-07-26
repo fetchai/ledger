@@ -16,8 +16,7 @@ inline VectorRegister<float, 128> abs(VectorRegister<float, 128> const &a)
 
 inline VectorRegister<double, 128> abs(VectorRegister<double, 128> const &a)
 {
-  const __m128d mask =
-      _mm_castsi128_pd(_mm_set1_epi64x(std::numeric_limits<int64_t>::max()));
+  const __m128d mask = _mm_castsi128_pd(_mm_set1_epi64x(std::numeric_limits<int64_t>::max()));
   return VectorRegister<double, 128>(_mm_and_pd(mask, a.data()));
 }
 

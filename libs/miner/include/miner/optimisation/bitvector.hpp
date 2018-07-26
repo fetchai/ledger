@@ -30,8 +30,7 @@ public:
       : data_(other.data_.Copy()), size_(other.size_), blocks_(other.blocks_)
   {}
 
-  BitVectorImplementation(std::size_t const &                    size,
-                          std::initializer_list<uint64_t> const &data)
+  BitVectorImplementation(std::size_t const &size, std::initializer_list<uint64_t> const &data)
       : BitVectorImplementation(data)
   {
     assert(size <= size_);
@@ -71,15 +70,11 @@ public:
   {
     bool ret = this->size_ == other.size_;
     if (!ret) return ret;
-    for (std::size_t i = 0; i < blocks_; ++i)
-      ret &= (this->operator()(i) == other(i));
+    for (std::size_t i = 0; i < blocks_; ++i) ret &= (this->operator()(i) == other(i));
     return ret;
   }
 
-  bool operator!=(BitVectorImplementation const &other)
-  {
-    return !(this->operator==(other));
-  }
+  bool operator!=(BitVectorImplementation const &other) { return !(this->operator==(other)); }
 
   BitVectorImplementation &operator^=(BitVectorImplementation const &other)
   {
@@ -113,11 +108,9 @@ public:
     return ret;
   }
 
-  void InlineAndAssign(BitVectorImplementation const &a,
-                       BitVectorImplementation const &b)
+  void InlineAndAssign(BitVectorImplementation const &a, BitVectorImplementation const &b)
   {
-    for (std::size_t i = 0; i < blocks_; ++i)
-      data_[i] = a.data_[i] & b.data_[i];
+    for (std::size_t i = 0; i < blocks_; ++i) data_[i] = a.data_[i] & b.data_[i];
   }
 
   BitVectorImplementation &operator|=(BitVectorImplementation const &other)
@@ -136,8 +129,7 @@ public:
     return ret;
   }
 
-  void conditional_flip(std::size_t const &block, std::size_t const &bit,
-                        uint64_t const &base)
+  void conditional_flip(std::size_t const &block, std::size_t const &bit, uint64_t const &base)
   {
     assert((base == 1) || (base == 0));
     data_[block] ^= base << bit;
@@ -148,10 +140,7 @@ public:
     conditional_flip(bit >> LOG_BITS, bit & BIT_MASK, base);
   }
 
-  void flip(std::size_t const &block, std::size_t const &bit)
-  {
-    data_[block] ^= 1ull << bit;
-  }
+  void flip(std::size_t const &block, std::size_t const &bit) { data_[block] ^= 1ull << bit; }
 
   void flip(std::size_t const &bit) { flip(bit >> LOG_BITS, bit & BIT_MASK); }
 
@@ -160,13 +149,9 @@ public:
     return (data_[block] >> b) & 1;
   }
 
-  data_type bit(std::size_t const &b) const
-  {
-    return bit(b >> LOG_BITS, b & BIT_MASK);
-  }
+  data_type bit(std::size_t const &b) const { return bit(b >> LOG_BITS, b & BIT_MASK); }
 
-  void set(std::size_t const &block, std::size_t const &bit,
-           uint64_t const &val)
+  void set(std::size_t const &block, std::size_t const &bit, uint64_t const &val)
   {
     uint64_t mask_bit = 1ull << bit;
     data_[block] &= ~mask_bit;
@@ -179,10 +164,7 @@ public:
   }
 
   data_type &      operator()(std::size_t const &n) { return data_.At(n); }
-  data_type const &operator()(std::size_t const &n) const
-  {
-    return data_.At(n);
-  }
+  data_type const &operator()(std::size_t const &n) const { return data_.At(n); }
 
   std::size_t const &   size() const { return size_; }
   std::size_t const &   blocks() const { return blocks_; }

@@ -11,8 +11,7 @@ void BuildTypeRegister(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;
-  py::class_<TypeRegister<T>>(module, custom_name)
-      .def(py::init<>()) /* No constructors found */;
+  py::class_<TypeRegister<T>>(module, custom_name).def(py::init<>()) /* No constructors found */;
 }
 };  // namespace serializers
 };  // namespace fetch

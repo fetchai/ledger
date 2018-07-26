@@ -19,8 +19,7 @@ std::unique_ptr<T> make_unique(Args &&... args)
  * Class containing one or more protocols, thus defining a service. Inherits
  * from ServiceServer to provide network functionality
  */
-class QuickStartService
-    : public service::ServiceServer<fetch::network::TCPServer>
+class QuickStartService : public service::ServiceServer<fetch::network::TCPServer>
 {
 public:
   /*
@@ -35,24 +34,18 @@ public:
 
     // Prints when compiled in debug mode. Options: logger.Debug logger.Info
     // logger.Error
-    fetch::logger.Debug("Constructing test node service with TCP port: ",
-                        tcpPort);
+    fetch::logger.Debug("Constructing test node service with TCP port: ", tcpPort);
 
     // We construct our node, and attach it to the protocol
-    node_ = std::make_shared<Node>(tm);
-    quickStartProtocol_ =
-        make_unique<protocols::QuickStartProtocol<Node>>(node_);
+    node_               = std::make_shared<Node>(tm);
+    quickStartProtocol_ = make_unique<protocols::QuickStartProtocol<Node>>(node_);
 
     // We 'Add' these protocols under our QUICK_START enum
-    this->Add(protocols::QuickStartProtocols::QUICK_START,
-              quickStartProtocol_.get());
+    this->Add(protocols::QuickStartProtocols::QUICK_START, quickStartProtocol_.get());
   }
 
   // We can use this to send messages from node to node
-  void sendMessage(std::string const &mes, uint16_t port)
-  {
-    node_->sendMessage(mes, port);
-  }
+  void sendMessage(std::string const &mes, uint16_t port) { node_->sendMessage(mes, port); }
 
 private:
   std::shared_ptr<Node>                                node_;

@@ -16,28 +16,21 @@ public:
   using client_type                = fetch::network::TCPClient;
   using service_client_type        = fetch::service::ServiceClient;
   using shared_service_client_type = std::shared_ptr<service_client_type>;
-  using client_register_type =
-      fetch::network::ConnectionRegister<connectivity_details_type>;
-  using network_manager_type   = fetch::network::NetworkManager;
-  using mutex_type             = fetch::mutex::Mutex;
-  using connection_handle_type = client_register_type::connection_handle_type;
-  using protocol_handler_type  = service::protocol_handler_type;
+  using client_register_type       = fetch::network::ConnectionRegister<connectivity_details_type>;
+  using network_manager_type       = fetch::network::NetworkManager;
+  using mutex_type                 = fetch::mutex::Mutex;
+  using connection_handle_type     = client_register_type::connection_handle_type;
+  using protocol_handler_type      = service::protocol_handler_type;
 
   MainChainController(protocol_handler_type const &           identity_protocol,
-                      std::weak_ptr<MainChainIdentity> const &identity,
-                      client_register_type reg, network_manager_type nm)
-      : identity_protocol_(identity_protocol)
-      , identity_(identity)
-      , register_(reg)
-      , manager_(nm)
+                      std::weak_ptr<MainChainIdentity> const &identity, client_register_type reg,
+                      network_manager_type nm)
+      : identity_protocol_(identity_protocol), identity_(identity), register_(reg), manager_(nm)
   {}
 
   /// External controls
   /// @{
-  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port)
-  {
-    Connect(host, port);
-  }
+  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port) { Connect(host, port); }
 
   void TryConnect(p2p::EntryPoint const &ep)
   {
@@ -99,8 +92,7 @@ public:
     return services_[n];
   }
 
-  shared_service_client_type Connect(byte_array::ByteArray const &host,
-                                     uint16_t const &             port)
+  shared_service_client_type Connect(byte_array::ByteArray const &host, uint16_t const &port)
   {
     shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
@@ -116,12 +108,10 @@ public:
     std::size_t n = 0;
     while (n < 10)
     {
-      auto p =
-          client->Call(identity_protocol_, MainChainIdentityProtocol::PING);
+      auto p = client->Call(identity_protocol_, MainChainIdentityProtocol::PING);
       if (p.Wait(100, false))
       {
-        if (p.As<MainChainIdentity::ping_type>() !=
-            MainChainIdentity::PING_MAGIC)
+        if (p.As<MainChainIdentity::ping_type>() != MainChainIdentity::PING_MAGIC)
         {
           n = 10;
         }
@@ -161,10 +151,9 @@ private:
   client_register_type             register_;
   network_manager_type             manager_;
 
-  mutex::Mutex services_mutex_;
-  std::unordered_map<connection_handle_type, shared_service_client_type>
-                                      services_;
-  std::vector<connection_handle_type> inactive_services_;
+  mutex::Mutex                                                           services_mutex_;
+  std::unordered_map<connection_handle_type, shared_service_client_type> services_;
+  std::vector<connection_handle_type>                                    inactive_services_;
 };
 
 }  // namespace chain

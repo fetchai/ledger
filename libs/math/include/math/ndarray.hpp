@@ -93,9 +93,8 @@ public:
 
 private:
   template <typename... Indices>
-  void ComputeIndex(std::size_t const &N, std::size_t &index,
-                    std::size_t &shift, std::size_t const &next,
-                    Indices const &... indices) const
+  void ComputeIndex(std::size_t const &N, std::size_t &index, std::size_t &shift,
+                    std::size_t const &next, Indices const &... indices) const
   {
     ComputeIndex(N + 1, index, shift, indices...);
 
@@ -105,8 +104,7 @@ private:
   }
 
   template <typename... Indices>
-  void ComputeIndex(std::size_t const &N, std::size_t &index,
-                    std::size_t &shift, int const &next,
+  void ComputeIndex(std::size_t const &N, std::size_t &index, std::size_t &shift, int const &next,
                     Indices const &... indices) const
   {
     ComputeIndex(N + 1, index, shift, indices...);
@@ -116,15 +114,15 @@ private:
     shift *= shape_[N];
   }
 
-  void ComputeIndex(std::size_t const &N, std::size_t &index,
-                    std::size_t &shift, std::size_t const &next) const
+  void ComputeIndex(std::size_t const &N, std::size_t &index, std::size_t &shift,
+                    std::size_t const &next) const
   {
     index += next * shift;
     shift *= shape_[N];
   }
 
-  void ComputeIndex(std::size_t const &N, std::size_t &index,
-                    std::size_t &shift, int const &next) const
+  void ComputeIndex(std::size_t const &N, std::size_t &index, std::size_t &shift,
+                    int const &next) const
   {
     index += std::size_t(next) * shift;
     shift *= shape_[N];

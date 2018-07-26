@@ -23,14 +23,10 @@ inline void BuildStandardDeviationStatistics(std::string const &custom_name,
   namespace py = pybind11;
   module.def(custom_name.c_str(), &WrapperStandardDeviation<Matrix<double>>)
       .def(custom_name.c_str(), &WrapperStandardDeviation<Matrix<float>>)
-      .def(custom_name.c_str(),
-           &WrapperStandardDeviation<RectangularArray<double>>)
-      .def(custom_name.c_str(),
-           &WrapperStandardDeviation<RectangularArray<float>>)
-      .def(custom_name.c_str(),
-           &WrapperStandardDeviation<ShapeLessArray<double>>)
-      .def(custom_name.c_str(),
-           &WrapperStandardDeviation<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperStandardDeviation<RectangularArray<double>>)
+      .def(custom_name.c_str(), &WrapperStandardDeviation<RectangularArray<float>>)
+      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapeLessArray<double>>)
+      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapeLessArray<float>>);
 };
 
 }  // namespace statistics

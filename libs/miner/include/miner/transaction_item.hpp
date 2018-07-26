@@ -9,9 +9,7 @@ class TransactionItem
 {
 public:
   // Construction / Destruction
-  TransactionItem(chain::TransactionSummary const &tx, std::size_t id)
-      : summary_(tx), id_(id)
-  {}
+  TransactionItem(chain::TransactionSummary const &tx, std::size_t id) : summary_(tx), id_(id) {}
   ~TransactionItem() = default;
 
   chain::TransactionSummary const &summary() const { return summary_; }

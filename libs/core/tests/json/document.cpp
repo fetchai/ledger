@@ -25,8 +25,7 @@ int main(int argc, char **argv)
   {
     SECTION("Nathan test")
     {
-      ByteArray data =
-          "{\"HTTPPort\": 8081, \"IP\": \"localhost\", \"TCPPort\": 9081}";
+      ByteArray    data = "{\"HTTPPort\": 8081, \"IP\": \"localhost\", \"TCPPort\": 9081}";
       JSONDocument test(data);
       std::cout << data << std::endl;
       std::cout << "---" << std::endl;
@@ -57,23 +56,20 @@ int main(int argc, char **argv)
 
       std::stringstream ss;
       ss << doc.root();
-      EXPECT(
-          ss.str() ==
-          R"({"a": 3, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})");
+      EXPECT(ss.str() ==
+             R"({"a": 3, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})");
 
       doc["a"] = 4;
       ss.str("");
       ss << doc.root();
-      EXPECT(
-          ss.str() ==
-          R"({"a": 4, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})");
+      EXPECT(ss.str() ==
+             R"({"a": 4, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})");
 
       doc["x"]["y"][1] = 5;
       ss.str("");
       ss << doc.root();
-      EXPECT(
-          ss.str() ==
-          R"({"a": 4, "x": {"y": [1, 5, 3], "z": null, "q": [], "hello world": {}}})");
+      EXPECT(ss.str() ==
+             R"({"a": 4, "x": {"y": [1, 5, 3], "z": null, "q": [], "hello world": {}}})");
 
       doc["x"]["z"] = fetch::script::Variant({1, 2, 3, 4, 5});
       ss.str("");
@@ -118,10 +114,8 @@ int main(int argc, char **argv)
       EXPECT_EXCEPTION(doc.Parse("{"), fetch::json::JSONParseException);
       EXPECT_EXCEPTION(doc.Parse("{]"), fetch::json::JSONParseException);
 
-      EXPECT_EXCEPTION(doc.Parse(R"(["a":"b"])"),
-                       fetch::json::JSONParseException);
-      EXPECT_EXCEPTION(doc.Parse(R"({"a": 2.fs})"),
-                       fetch::json::JSONParseException);
+      EXPECT_EXCEPTION(doc.Parse(R"(["a":"b"])"), fetch::json::JSONParseException);
+      EXPECT_EXCEPTION(doc.Parse(R"({"a": 2.fs})"), fetch::json::JSONParseException);
       // TODO      EXPECT_EXCEPTION(doc.Parse(R"({"a":})"),
       // fetch::json::JSONParseException);
     };

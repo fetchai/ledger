@@ -13,22 +13,21 @@ namespace service {
 class ServiceServerInterface
 {
 public:
-  typedef network::AbstractConnection::connection_handle_type
-                                     connection_handle_type;
-  typedef byte_array::ConstByteArray byte_array_type;
+  typedef network::AbstractConnection::connection_handle_type connection_handle_type;
+  typedef byte_array::ConstByteArray                          byte_array_type;
 
   virtual ~ServiceServerInterface() {}
 
   void Add(protocol_handler_type const &name,
-           Protocol *protocol)  // TODO: Rename to AddProtocol
+           Protocol *                   protocol)  // TODO: Rename to AddProtocol
   {
     LOG_STACK_TRACE_POINT;
 
     // TODO: (`HUT`) : better reporting of errors
     if (members_[name] != nullptr)
     {
-      throw serializers::SerializableException(
-          error::PROTOCOL_EXISTS, byte_array_type("Protocol already exists. "));
+      throw serializers::SerializableException(error::PROTOCOL_EXISTS,
+                                               byte_array_type("Protocol already exists. "));
     }
 
     members_[name] = protocol;
@@ -40,11 +39,9 @@ public:
   }
 
 protected:
-  virtual bool DeliverResponse(connection_handle_type,
-                               network::message_type const &) = 0;
+  virtual bool DeliverResponse(connection_handle_type, network::message_type const &) = 0;
 
-  bool PushProtocolRequest(connection_handle_type       client,
-                           network::message_type const &msg)
+  bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg)
   {
     LOG_STACK_TRACE_POINT;
     bool            ret = false;
@@ -135,22 +132,21 @@ protected:
   }
 
 private:
-  void ExecuteCall(serializer_type &             result,
-                   connection_handle_type const &client, serializer_type params)
+  void ExecuteCall(serializer_type &result, connection_handle_type const &client,
+                   serializer_type params)
   {
     //    LOG_STACK_TRACE_POINT;
 
     protocol_handler_type protocol;
     function_handler_type function;
     params >> protocol >> function;
-    fetch::logger.Debug("Service Server processing call ", protocol, ":",
-                        function, " from ", client);
+    fetch::logger.Debug("Service Server processing call ", protocol, ":", function, " from ",
+                        client);
 
     if (members_[protocol] == nullptr)
     {
-      throw serializers::SerializableException(
-          error::PROTOCOL_NOT_FOUND,
-          byte_array_type("Could not find protocol: "));
+      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND,
+                                               byte_array_type("Could not find protocol: "));
     }
 
     auto &mod = *members_[protocol];

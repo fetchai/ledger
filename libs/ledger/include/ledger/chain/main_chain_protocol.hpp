@@ -24,12 +24,7 @@ public:
 
   MainChainProtocol(protocol_handler_type const &p, register_type const &r,
                     thread_pool_type const &nm, chain::MainChain *node)
-      : Protocol()
-      , protocol_(p)
-      , register_(r)
-      , thread_pool_(nm)
-      , chain_(node)
-      , running_(false)
+      : Protocol(), protocol_(p), register_(r), thread_pool_(nm), chain_(node), running_(false)
   {
     this->Expose(GET_HEADER, this, &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this, &self_type::GetHeaviestChain);
@@ -85,8 +80,7 @@ private:
 
         auto peer = p.second;
         auto ptr  = peer.lock();
-        block_list_promises_.push_back(
-            ptr->Call(protocol_, GET_HEAVIEST_CHAIN, ms));
+        block_list_promises_.push_back(ptr->Call(protocol_, GET_HEAVIEST_CHAIN, ms));
       }
     });
 
@@ -172,8 +166,7 @@ private:
 
     results = chain_->HeaviestChain(maxsize);
 
-    fetch::logger.Debug("GetHeaviestChain returning ", results.size(),
-                        " of req ", maxsize);
+    fetch::logger.Debug("GetHeaviestChain returning ", results.size(), " of req ", maxsize);
 
     return results;
   }

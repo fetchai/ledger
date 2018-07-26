@@ -10,21 +10,19 @@ class LaneIdentity
 {
 public:
   using connectivity_details_type = LaneConnectivityDetails;
-  using client_register_type =
-      fetch::network::ConnectionRegister<connectivity_details_type>;
-  using network_manager_type   = fetch::network::NetworkManager;
-  using mutex_type             = fetch::mutex::Mutex;
-  using connection_handle_type = client_register_type::connection_handle_type;
-  using ping_type              = uint32_t;
-  using lane_type              = uint32_t;
+  using client_register_type      = fetch::network::ConnectionRegister<connectivity_details_type>;
+  using network_manager_type      = fetch::network::NetworkManager;
+  using mutex_type                = fetch::mutex::Mutex;
+  using connection_handle_type    = client_register_type::connection_handle_type;
+  using ping_type                 = uint32_t;
+  using lane_type                 = uint32_t;
 
   enum
   {
     PING_MAGIC = 1337
   };
 
-  LaneIdentity(client_register_type reg, network_manager_type nm,
-               crypto::Identity identity)
+  LaneIdentity(client_register_type reg, network_manager_type nm, crypto::Identity identity)
       : identity_(identity), register_(reg), manager_(nm)
   {
     lane_        = uint32_t(-1);
@@ -35,15 +33,13 @@ public:
   /// @{
   ping_type Ping() { return PING_MAGIC; }
 
-  crypto::Identity Hello(connection_handle_type const &client,
-                         crypto::Identity const &      iden)
+  crypto::Identity Hello(connection_handle_type const &client, crypto::Identity const &iden)
   {
     auto details = register_.GetDetails(client);
 
     if (!details)
     {
-      fetch::logger.Error("Failed to find client in client register! ",
-                          __FILE__, " ", __LINE__);
+      fetch::logger.Error("Failed to find client in client register! ", __FILE__, " ", __LINE__);
       assert(details);
     }
     else
@@ -85,13 +81,9 @@ public:
 
   void SetTotalLanes(lane_type const &t) { total_lanes_ = t; }
   /// @}
-  typedef std::function<byte_array::ConstByteArray(
-      byte_array::ConstByteArray const &)>
+  typedef std::function<byte_array::ConstByteArray(byte_array::ConstByteArray const &)>
        callable_sign_message_type;
-  void OnSignMessage(callable_sign_message_type const &fnc)
-  {
-    on_sign_message_ = fnc;
-  }
+  void OnSignMessage(callable_sign_message_type const &fnc) { on_sign_message_ = fnc; }
 
 private:
   mutex::Mutex               identity_mutex_;

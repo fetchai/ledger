@@ -19,8 +19,7 @@ public:
   typedef std::shared_ptr<BlockBody>                block_body_type;
   typedef ledger::ExecutionManagerInterface::Status status_type;
 
-  BlockCoordinator(chain::MainChain &                 mainChain,
-                   ledger::ExecutionManagerInterface &executionManager)
+  BlockCoordinator(chain::MainChain &mainChain, ledger::ExecutionManagerInterface &executionManager)
       : mainChain_{mainChain}, executionManager_{executionManager}
   {}
 
@@ -34,8 +33,7 @@ public:
 
     if (block.hash() == heaviestHash)
     {
-      fetch::logger.Info("New block: ", ToBase64(block.hash()),
-                         " from: ", ToBase64(block.prev()));
+      fetch::logger.Info("New block: ", ToBase64(block.hash()), " from: ", ToBase64(block.prev()));
 
       {
         std::lock_guard<mutex_type> lock(mutex_);
@@ -93,8 +91,7 @@ public:
 
         if (schedule_block && block)
         {
-          fetch::logger.Warn("Attempting exec on block: ",
-                             ToBase64(block->hash));
+          fetch::logger.Warn("Attempting exec on block: ", ToBase64(block->hash));
 
           // execute the block
           status_type const status = executionManager_.Execute(*block);
@@ -121,8 +118,7 @@ public:
               block = std::make_shared<BlockBody>(full_block.body());
               pending_stack.push_back(block);
 
-              fetch::logger.Warn("Retrieved parent block: ",
-                                 ToBase64(block->hash));
+              fetch::logger.Warn("Retrieved parent block: ", ToBase64(block->hash));
             }
             else
             {
@@ -160,8 +156,8 @@ public:
               break;
             }
 
-            fetch::logger.Warn("Unable to execute block: ",
-                               ToBase64(block->hash), " Reason: ", reason);
+            fetch::logger.Warn("Unable to execute block: ", ToBase64(block->hash),
+                               " Reason: ", reason);
             block.reset();  // mostly for debug
           }
 

@@ -12,8 +12,7 @@ namespace protocols {
  * exposed to remotes. In this instance we are allowing interested parties to
  * register to listen to 'new message's from the Node
  */
-class SubscribeProtocol : public fetch::service::Protocol,
-                          public subscribe::Node
+class SubscribeProtocol : public fetch::service::Protocol, public subscribe::Node
 {
 public:
   /*

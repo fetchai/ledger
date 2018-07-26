@@ -4,8 +4,7 @@
 namespace fetch {
 namespace random {
 
-template <typename R = LaggedFibonacciGenerator<>, uint8_t B = 12,
-          bool MSBF = true>
+template <typename R = LaggedFibonacciGenerator<>, uint8_t B = 12, bool MSBF = true>
 class BitGenerator
 {
 public:

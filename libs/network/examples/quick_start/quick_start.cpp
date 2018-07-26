@@ -32,8 +32,8 @@ int main(int argc, char const **argv)
 
   uint16_t tcpPort    = uint16_t(std::stoi(params.GetArg(1)));
   uint16_t remotePort = uint16_t(std::stoi(params.GetArg(2)));
-  std::cout << "Starting server on tcp: " << tcpPort
-            << " connecting to: " << remotePort << std::endl;
+  std::cout << "Starting server on tcp: " << tcpPort << " connecting to: " << remotePort
+            << std::endl;
 
   // Start our service
   QuickStartService serv(tm, tcpPort);

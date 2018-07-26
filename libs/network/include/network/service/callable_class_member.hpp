@@ -25,8 +25,7 @@ struct CountArguments
  * This implementation invokes the member function with unpacked
  * arguments and packs the result using the supplied serializer.
  */
-template <typename class_type, typename member_function_pointer, typename U,
-          typename... used_args>
+template <typename class_type, typename member_function_pointer, typename U, typename... used_args>
 struct Invoke
 {
   /* Calls a member function with unpacked arguments.
@@ -35,8 +34,8 @@ struct Invoke
    * @m is a pointer to the member function.
    * @used_args are the unpacked arguments.
    */
-  static void MemberFunction(serializer_type &result, class_type &cls,
-                             member_function_pointer &m, used_args &... args)
+  static void MemberFunction(serializer_type &result, class_type &cls, member_function_pointer &m,
+                             used_args &... args)
   {
     auto                                      ret = (cls.*m)(args...);
     serializers::SizeCounter<serializer_type> counter;
@@ -53,12 +52,11 @@ struct Invoke
  * In case of void as return type, the result is always 0 packed in a
  * uint8_t.
  */
-template <typename class_type, typename member_function_pointer,
-          typename... used_args>
+template <typename class_type, typename member_function_pointer, typename... used_args>
 struct Invoke<class_type, member_function_pointer, void, used_args...>
 {
-  static void MemberFunction(serializer_type &result, class_type &cls,
-                             member_function_pointer &m, used_args &... args)
+  static void MemberFunction(serializer_type &result, class_type &cls, member_function_pointer &m,
+                             used_args &... args)
   {
     result << uint8_t(0);
     (cls.*m)(args...);
@@ -68,8 +66,8 @@ struct Invoke<class_type, member_function_pointer, void, used_args...>
 /* Struct used for unrolling arguments in a function signature.
  * @used_args are the unpacked arguments.
  */
-template <typename class_type, typename member_function_pointer,
-          typename return_type, typename... used_args>
+template <typename class_type, typename member_function_pointer, typename return_type,
+          typename... used_args>
 struct UnrollArguments
 {
   /* Struct for loop definition.
@@ -82,17 +80,14 @@ struct UnrollArguments
   template <std::size_t R, typename T, typename... remaining_args>
   struct LoopOver<R, T, remaining_args...>
   {
-    static void Unroll(serializer_type &result, class_type &cls,
-                       member_function_pointer &m, serializer_type &s,
-                       used_args &... used)
+    static void Unroll(serializer_type &result, class_type &cls, member_function_pointer &m,
+                       serializer_type &s, used_args &... used)
     {
       typename std::decay<T>::type l;
       s >> l;
-      UnrollArguments<
-          class_type, member_function_pointer, return_type, used_args...,
-          T>::template LoopOver<CountArguments<remaining_args...>::value,
-                                remaining_args...>::Unroll(result, cls, m, s,
-                                                           used..., l);
+      UnrollArguments<class_type, member_function_pointer, return_type, used_args..., T>::
+          template LoopOver<CountArguments<remaining_args...>::value, remaining_args...>::Unroll(
+              result, cls, m, s, used..., l);
     }
   };
 
@@ -102,45 +97,41 @@ struct UnrollArguments
   template <std::size_t R, typename T>
   struct LoopOver<R, T>
   {
-    static void Unroll(serializer_type &result, class_type &cls,
-                       member_function_pointer &m, serializer_type &s,
-                       used_args &... used)
+    static void Unroll(serializer_type &result, class_type &cls, member_function_pointer &m,
+                       serializer_type &s, used_args &... used)
     {
       typename std::decay<T>::type l;
 
       s >> l;
-      Invoke<class_type, member_function_pointer, return_type, used_args...,
-             T>::MemberFunction(result, cls, m, used..., l);
+      Invoke<class_type, member_function_pointer, return_type, used_args..., T>::MemberFunction(
+          result, cls, m, used..., l);
     }
   };
 
   template <std::size_t R>
   struct LoopOver<R>
   {
-    static void Unroll(serializer_type &result, class_type &cls,
-                       member_function_pointer &m, serializer_type &s,
-                       used_args &... used)
+    static void Unroll(serializer_type &result, class_type &cls, member_function_pointer &m,
+                       serializer_type &s, used_args &... used)
     {
       assert(R == 0);
 
-      Invoke<class_type, member_function_pointer, return_type,
-             used_args...>::MemberFunction(result, cls, m, used...);
+      Invoke<class_type, member_function_pointer, return_type, used_args...>::MemberFunction(
+          result, cls, m, used...);
     }
   };
 };
 
-template <std::size_t COUNTER, typename class_type,
-          typename member_function_pointer, typename return_type,
-          typename... used_args>
+template <std::size_t COUNTER, typename class_type, typename member_function_pointer,
+          typename return_type, typename... used_args>
 struct UnrollPointers
 {
   template <typename T, typename... remaining_args>
   struct LoopOver
   {
-    static void Unroll(serializer_type &result, class_type &cls,
-                       member_function_pointer &   m,
-                       CallableArgumentList const &additional_args,
-                       serializer_type &           s, used_args &... used)
+    static void Unroll(serializer_type &result, class_type &cls, member_function_pointer &m,
+                       CallableArgumentList const &additional_args, serializer_type &s,
+                       used_args &... used)
     {
       assert(COUNTER - 1 < additional_args.size());
       auto const &arg = additional_args[COUNTER - 1];
@@ -153,34 +144,29 @@ struct UnrollPointers
             "exception");
       }
 
-      typename std::decay<T>::type *ptr =
-          (typename std::decay<T>::type *)arg.pointer;
-      UnrollPointers<COUNTER - 1, class_type, member_function_pointer,
-                     return_type, used_args..., T>::
-          template LoopOver<remaining_args...>::Unroll(
-              result, cls, m, additional_args, s, used..., *ptr);
+      typename std::decay<T>::type *ptr = (typename std::decay<T>::type *)arg.pointer;
+      UnrollPointers<COUNTER - 1, class_type, member_function_pointer, return_type, used_args...,
+                     T>::template LoopOver<remaining_args...>::Unroll(result, cls, m,
+                                                                      additional_args, s, used...,
+                                                                      *ptr);
     }
   };
 };
 
-template <typename class_type, typename member_function_pointer,
-          typename return_type, typename... used_args>
-struct UnrollPointers<0, class_type, member_function_pointer, return_type,
-                      used_args...>
+template <typename class_type, typename member_function_pointer, typename return_type,
+          typename... used_args>
+struct UnrollPointers<0, class_type, member_function_pointer, return_type, used_args...>
 {
   template <typename... remaining_args>
   struct LoopOver
   {
-    static void Unroll(serializer_type &result, class_type &cls,
-                       member_function_pointer &   m,
-                       CallableArgumentList const &additional_args,
-                       serializer_type &           s, used_args &... used)
+    static void Unroll(serializer_type &result, class_type &cls, member_function_pointer &m,
+                       CallableArgumentList const &additional_args, serializer_type &s,
+                       used_args &... used)
     {
-      UnrollArguments<class_type, member_function_pointer, return_type,
-                      used_args...>::
-          template LoopOver<CountArguments<remaining_args...>::value,
-                            remaining_args...>::Unroll(result, cls, m, s,
-                                                       used...);
+      UnrollArguments<class_type, member_function_pointer, return_type, used_args...>::
+          template LoopOver<CountArguments<remaining_args...>::value, remaining_args...>::Unroll(
+              result, cls, m, s, used...);
     }
   };
 };
@@ -230,8 +216,7 @@ public:
     function_ = function;
   }
 
-  CallableClassMember(uint64_t arguments, class_type *cls,
-                      member_function_pointer value)
+  CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value)
       : AbstractCallable(arguments)
   {
     LOG_STACK_TRACE_POINT;
@@ -253,26 +238,20 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    details::UnrollArguments<class_type, member_function_pointer, return_type>::
-        template LoopOver<details::CountArguments<Args...>::value,
-                          Args...>::Unroll(result, *class_, this->function_,
-                                           params);
+    details::UnrollArguments<class_type, member_function_pointer, return_type>::template LoopOver<
+        details::CountArguments<Args...>::value, Args...>::Unroll(result, *class_, this->function_,
+                                                                  params);
   }
 
-  void operator()(serializer_type &           result,
-                  CallableArgumentList const &additional_args,
-                  serializer_type &           params) override
+  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
+                  serializer_type &params) override
   {
     LOG_STACK_TRACE_POINT;
 
     detailed_assert(EXTRA_ARGS == additional_args.size());
 
-    details::UnrollPointers<
-        N, class_type, member_function_pointer,
-        return_type>::template LoopOver<Args...>::Unroll(result, *class_,
-                                                         this->function_,
-                                                         additional_args,
-                                                         params);
+    details::UnrollPointers<N, class_type, member_function_pointer, return_type>::template LoopOver<
+        Args...>::Unroll(result, *class_, this->function_, additional_args, params);
   }
 
 private:
@@ -298,8 +277,7 @@ public:
     function_ = value;
   }
 
-  CallableClassMember(uint64_t arguments, class_type *cls,
-                      member_function_pointer value)
+  CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value)
       : AbstractCallable(arguments)
   {
     LOG_STACK_TRACE_POINT;
@@ -319,9 +297,8 @@ public:
     result << ret;
   }
 
-  void operator()(serializer_type &           result,
-                  CallableArgumentList const &additional_args,
-                  serializer_type &           params) override
+  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
+                  serializer_type &params) override
   {
     LOG_STACK_TRACE_POINT;
 
@@ -355,8 +332,7 @@ public:
     function_ = value;
   }
 
-  CallableClassMember(uint64_t arguments, class_type *cls,
-                      member_function_pointer value)
+  CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value)
       : AbstractCallable(arguments)
   {
     LOG_STACK_TRACE_POINT;
@@ -373,9 +349,8 @@ public:
     ((*class_).*function_)();
   }
 
-  void operator()(serializer_type &           result,
-                  CallableArgumentList const &additional_args,
-                  serializer_type &           params) override
+  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
+                  serializer_type &params) override
   {
     LOG_STACK_TRACE_POINT;
 

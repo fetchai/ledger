@@ -9,8 +9,7 @@ namespace http {
 void BuildSession(pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<Session>(module, "Session")
-      .def(py::init<>()) /* No constructors found */;
+  py::class_<Session>(module, "Session").def(py::init<>()) /* No constructors found */;
 }
 };  // namespace http
 };  // namespace fetch

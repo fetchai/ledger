@@ -92,9 +92,8 @@ public:
         fetch::logger.Error("Client has died in node direc");
       }
 
-      std::pair<bool, T> result =
-          client->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
-                       protocols::NetworkMineTest::PROVIDE_HEADER, hash);
+      std::pair<bool, T> result = client->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
+                                               protocols::NetworkMineTest::PROVIDE_HEADER, hash);
 
       if (result.first)
       {
@@ -121,9 +120,8 @@ public:
         std::cerr << "Client has died (forw)!\n\n" << std::endl;
       }
 
-      bool clientWants =
-          client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-                       protocols::NetworkBenchmark::INVITE_PUSH, blockHash);
+      bool clientWants = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+                                      protocols::NetworkBenchmark::INVITE_PUSH, blockHash);
 
       if (clientWants)
       {
@@ -149,8 +147,7 @@ public:
       }
 
       client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-                   protocols::NetworkBenchmark::PUSH_CONFIDENT, blockHash,
-                   block);
+                   protocols::NetworkBenchmark::PUSH_CONFIDENT, blockHash, block);
     }
   }
 
@@ -169,8 +166,7 @@ public:
       }
 
       auto p1 = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-                             protocols::NetworkBenchmark::PUSH_CONFIDENT,
-                             blockHash, block);
+                             protocols::NetworkBenchmark::PUSH_CONFIDENT, blockHash, block);
       p1.Wait();
     }
   }

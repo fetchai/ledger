@@ -58,8 +58,7 @@ public:
   template <typename T>
   TypedByte_ArrayBuffer &operator<<(T const *val)
   {
-    Serialize(*this,
-              TypeRegister<void>::value_type(TypeRegister<T const *>::value));
+    Serialize(*this, TypeRegister<void>::value_type(TypeRegister<T const *>::value));
     Serialize(*this, val);
     return *this;
   }
@@ -79,18 +78,15 @@ public:
     Deserialize(*this, type);
     if (TypeRegister<T>::value != type)
     {
-      fetch::logger.Debug("Serializer at position ", pos_, " out of ",
-                          data_.size());
-      fetch::logger.Error(
-          byte_array_type("Expected type '") + TypeRegister<T>::name() +
-          byte_array_type("' differs from deserialized type '") +
-          ErrorCodeToMessage(type) + byte_array_type("'"));
+      fetch::logger.Debug("Serializer at position ", pos_, " out of ", data_.size());
+      fetch::logger.Error(byte_array_type("Expected type '") + TypeRegister<T>::name() +
+                          byte_array_type("' differs from deserialized type '") +
+                          ErrorCodeToMessage(type) + byte_array_type("'"));
 
-      throw SerializableException(
-          error::TYPE_ERROR,
-          byte_array_type("Expected type '") + TypeRegister<T>::name() +
-              byte_array_type("' differs from deserialized type '") +
-              ErrorCodeToMessage(type) + byte_array_type("'"));
+      throw SerializableException(error::TYPE_ERROR,
+                                  byte_array_type("Expected type '") + TypeRegister<T>::name() +
+                                      byte_array_type("' differs from deserialized type '") +
+                                      ErrorCodeToMessage(type) + byte_array_type("'"));
     }
     Deserialize(*this, val);
     return *this;
@@ -117,8 +113,8 @@ public:
   void        Seek(std::size_t const &p) { pos_ = p; }
   std::size_t Tell() const { return pos_; }
 
-  std::size_t size() const { return data_.size(); }
-  int64_t bytes_left() const { return int64_t(data_.size()) - int64_t(pos_); }
+  std::size_t            size() const { return data_.size(); }
+  int64_t                bytes_left() const { return int64_t(data_.size()) - int64_t(pos_); }
   byte_array_type const &data() const { return data_; }
 
 private:

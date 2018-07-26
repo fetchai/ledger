@@ -60,8 +60,7 @@ protected:
     // format the transaction contents
     std::ostringstream oss;
     oss << "{ "
-        << R"("address": ")"
-        << static_cast<std::string>(fetch::byte_array::ToBase64(address))
+        << R"("address": ")" << static_cast<std::string>(fetch::byte_array::ToBase64(address))
         << "\", "
         << R"("amount": )" << 1000 << " }";
 

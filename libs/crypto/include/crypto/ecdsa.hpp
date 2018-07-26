@@ -23,8 +23,7 @@ public:
     key_           = EC_KEY_new_by_curve_name(NID_secp256k1);
     pub_bytes_copy = identity_.identifier().pointer();
 
-    if (!o2i_ECPublicKey(&key_, &pub_bytes_copy,
-                         long(identity_.identifier().size())))
+    if (!o2i_ECPublicKey(&key_, &pub_bytes_copy, long(identity_.identifier().size())))
     {
       std::cout << identity_.identifier().size() << std::endl;
 
@@ -32,15 +31,13 @@ public:
     }
   }
 
-  bool Verify(byte_array_type const &data,
-              byte_array_type const &signature) override
+  bool Verify(byte_array_type const &data, byte_array_type const &signature) override
   {
     byte_array_type const hash = Hash<SHA256>(data);
 
     // TODO: Verify sizes
-    int verify_status =
-        ECDSA_verify(0, hash.pointer(), int(hash.size()), signature.pointer(),
-                     int(signature.size()), key_);
+    int verify_status = ECDSA_verify(0, hash.pointer(), int(hash.size()), signature.pointer(),
+                                     int(signature.size()), key_);
 
     return (1 == verify_status);
   }
@@ -68,10 +65,7 @@ public:
     PRIVATE_KEY_SIZE = 32
   };
 
-  void Load(byte_array_type const &private_key) override
-  {
-    SetPrivateKey(private_key);
-  }
+  void Load(byte_array_type const &private_key) override { SetPrivateKey(private_key); }
 
   void SetPrivateKey(byte_array_type const &private_key)
   {
@@ -161,15 +155,11 @@ public:
     hash_ = Hash<SHA256>(text);
     signature_.Resize(std::size_t(ECDSA_size(key_)));
     uint32_t len = uint32_t(signature_.size());
-    int      ret = ECDSA_sign(0, hash_.pointer(), int(hash_.size()),
-                         signature_.pointer(), &len, key_);
+    int ret = ECDSA_sign(0, hash_.pointer(), int(hash_.size()), signature_.pointer(), &len, key_);
     return (ret != 1);
   }
 
-  Identity identity() final override
-  {
-    return Identity("ECDSA_NID_secp192k1", public_key_);
-  }
+  Identity identity() final override { return Identity("ECDSA_NID_secp192k1", public_key_); }
 
   byte_array_type document_hash() final override { return hash_; }
 

@@ -50,8 +50,7 @@ private:
   {
     static std::random_device                      rd;
     static std::mt19937                            gen(rd());
-    static std::uniform_int_distribution<uint32_t> dis(
-        0, std::numeric_limits<uint32_t>::max());
+    static std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
     return dis(gen);
   }
 };

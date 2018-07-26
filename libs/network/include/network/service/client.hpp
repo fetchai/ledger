@@ -22,8 +22,7 @@ namespace fetch {
 namespace service {
 
 // template <typename T>
-class ServiceClient : public ServiceClientInterface,
-                      public ServiceServerInterface
+class ServiceClient : public ServiceClientInterface, public ServiceServerInterface
 {
 public:
   using network_manager_type = fetch::network::NetworkManager;
@@ -60,8 +59,7 @@ public:
     */
   }
 
-  ServiceClient(network::TCPClient & connection,
-                network_manager_type thread_manager)
+  ServiceClient(network::TCPClient &connection, network_manager_type thread_manager)
       : ServiceClient(connection.connection_pointer().lock(), thread_manager)
   {}
 
@@ -131,10 +129,7 @@ public:
     return uint16_t(-1);
   }
 
-  std::shared_ptr<network::AbstractConnection> connection()
-  {
-    return connection_.lock();
-  }
+  std::shared_ptr<network::AbstractConnection> connection() { return connection_.lock(); }
 
 protected:
   bool DeliverRequest(network::message_type const &msg) override
@@ -151,8 +146,7 @@ protected:
     return false;
   }
 
-  bool DeliverResponse(connection_handle_type,
-                       network::message_type const &msg) override
+  bool DeliverResponse(connection_handle_type, network::message_type const &msg) override
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -198,9 +192,8 @@ private:
 
           if (!PushProtocolRequest(connection_handle_type(-1), msg))
           {
-            throw serializers::SerializableException(
-                error::UNKNOWN_MESSAGE,
-                byte_array::ConstByteArray("Unknown message"));
+            throw serializers::SerializableException(error::UNKNOWN_MESSAGE,
+                                                     byte_array::ConstByteArray("Unknown message"));
           }
         }
       }

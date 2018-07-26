@@ -24,10 +24,9 @@ public:
   typedef asio::ip::tcp::tcp::acceptor acceptor_type;
   typedef HTTPConnectionManager        manager_type;
 
-  typedef std::function<void(HTTPRequest &)> request_middleware_type;
-  typedef typename HTTPModule::view_type     view_type;
-  typedef std::function<void(HTTPResponse &, HTTPRequest const &)>
-      response_middleware_type;
+  typedef std::function<void(HTTPRequest &)>                       request_middleware_type;
+  typedef typename HTTPModule::view_type                           view_type;
+  typedef std::function<void(HTTPResponse &, HTTPRequest const &)> response_middleware_type;
 
   struct MountedView
   {
@@ -55,8 +54,8 @@ public:
       network_manager_type tm  = threadMan;
       auto                 soc = threadMan.CreateIO<socket_type>();
 
-      auto accep = threadMan.CreateIO<acceptor_type>(
-          asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+      auto accep =
+          threadMan.CreateIO<acceptor_type>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
 
       // allow initiating class to post closes to these
       socRef   = soc;
@@ -101,15 +100,12 @@ public:
     if (req.method() == Method::OPTIONS)
     {
 
-      HTTPResponse res(
-          "", fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
-          status_code::SUCCESS_OK);
+      HTTPResponse res("", fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+                       status_code::SUCCESS_OK);
       res.header().Add("Access-Control-Allow-Origin", "*");
-      res.header().Add("Access-Control-Allow-Methods",
-                       "GET, PUT, POST, DELETE, OPTIONS");
-      res.header().Add(
-          "Access-Control-Allow-Headers",
-          "Content-Type, Authorization, Content-Length, X-Requested-With");
+      res.header().Add("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
+      res.header().Add("Access-Control-Allow-Headers",
+                       "Content-Type, Authorization, Content-Length, X-Requested-With");
 
       manager_->Send(client, res);
       return;
@@ -122,8 +118,7 @@ public:
       m(req);
     }
 
-    HTTPResponse   res("page not found",
-                     fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+    HTTPResponse   res("page not found", fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
                      http::status_code::CLIENT_ERROR_NOT_FOUND);
     ViewParameters params;
 
@@ -147,9 +142,8 @@ public:
   }
 
   // Accept static void to avoid having to create shared ptr to this class
-  static void Accept(std::shared_ptr<socket_type>   soc,
-                     std::shared_ptr<acceptor_type> accep,
-                     std::shared_ptr<manager_type>  manager)
+  static void Accept(std::shared_ptr<socket_type> soc, std::shared_ptr<acceptor_type> accep,
+                     std::shared_ptr<manager_type> manager)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -187,8 +181,7 @@ public:
     post_view_middleware_.push_back(middleware);
   }
 
-  void AddView(Method method, byte_array::ByteArray const &path,
-               view_type const &view)
+  void AddView(Method method, byte_array::ByteArray const &path, view_type const &view)
   {
     views_.push_back({method, Route::FromString(path), view});
   }

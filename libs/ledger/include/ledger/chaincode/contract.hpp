@@ -27,28 +27,23 @@ public:
     NOT_FOUND,
   };
 
-  using transaction_type = chain::Transaction;
-  using query_type       = script::Variant;
-  using transaction_handler_type =
-      std::function<Status(transaction_type const &)>;
-  using transaction_handler_map_type =
-      std::unordered_map<std::string, transaction_handler_type>;
-  using query_handler_type =
-      std::function<Status(query_type const &, query_type &)>;
-  using query_handler_map_type =
-      std::unordered_map<std::string, query_handler_type>;
-  using counter_type      = std::atomic<std::size_t>;
-  using counter_map_type  = std::unordered_map<std::string, counter_type>;
-  using state_type        = ledger::StateInterface;
-  using resource_set_type = chain::TransactionSummary::resource_set_type;
+  using transaction_type             = chain::Transaction;
+  using query_type                   = script::Variant;
+  using transaction_handler_type     = std::function<Status(transaction_type const &)>;
+  using transaction_handler_map_type = std::unordered_map<std::string, transaction_handler_type>;
+  using query_handler_type           = std::function<Status(query_type const &, query_type &)>;
+  using query_handler_map_type       = std::unordered_map<std::string, query_handler_type>;
+  using counter_type                 = std::atomic<std::size_t>;
+  using counter_map_type             = std::unordered_map<std::string, counter_type>;
+  using state_type                   = ledger::StateInterface;
+  using resource_set_type            = chain::TransactionSummary::resource_set_type;
 
   Contract(Contract const &) = delete;
   Contract(Contract &&)      = delete;
   Contract &operator=(Contract const &) = delete;
   Contract &operator=(Contract &&) = delete;
 
-  Status DispatchQuery(std::string const &name, query_type const &query,
-                       query_type &response)
+  Status DispatchQuery(std::string const &name, query_type const &query, query_type &response)
   {
     Status status{Status::NOT_FOUND};
 
@@ -62,8 +57,7 @@ public:
     return status;
   }
 
-  Status DispatchTransaction(std::string const &     name,
-                             transaction_type const &tx)
+  Status DispatchTransaction(std::string const &name, transaction_type const &tx)
   {
     Status status{Status::NOT_FOUND};
 
@@ -120,18 +114,11 @@ public:
 
   Identifier const &identifier() const { return contract_identifier_; }
 
-  query_handler_map_type const &query_handlers() const
-  {
-    return query_handlers_;
-  }
+  query_handler_map_type const &query_handlers() const { return query_handlers_; }
 
-  transaction_handler_map_type const &transaction_handlers() const
-  {
-    return transaction_handlers_;
-  }
+  transaction_handler_map_type const &transaction_handlers() const { return transaction_handlers_; }
 
-  byte_array::ByteArray CreateStateIndex(
-      byte_array::ByteArray const &suffix) const
+  byte_array::ByteArray CreateStateIndex(byte_array::ByteArray const &suffix) const
   {
     byte_array::ByteArray index(contract_identifier_.name_space());
     index = index + ".state." + suffix;
@@ -139,9 +126,7 @@ public:
   }
 
 protected:
-  explicit Contract(std::string const &identifer)
-      : contract_identifier_{identifer}
-  {}
+  explicit Contract(std::string const &identifer) : contract_identifier_{identifer} {}
 
   template <typename C>
   void OnTransaction(std::string const &name, C *instance,
@@ -149,8 +134,7 @@ protected:
   {
     if (transaction_handlers_.find(name) == transaction_handlers_.end())
     {
-      transaction_handlers_[name] = [instance,
-                                     func](transaction_type const &tx) {
+      transaction_handlers_[name] = [instance, func](transaction_type const &tx) {
         return (instance->*func)(tx);
       };
       transaction_counters_[name] = 0;
@@ -167,8 +151,7 @@ protected:
   {
     if (query_handlers_.find(name) == query_handlers_.end())
     {
-      query_handlers_[name] = [instance, func](query_type const &query,
-                                               query_type &      response) {
+      query_handlers_[name] = [instance, func](query_type const &query, query_type &response) {
         return (instance->*func)(query, response);
       };
       query_counters_[name] = 0;

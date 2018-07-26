@@ -21,16 +21,13 @@ using ::testing::_;
 class ExecutionManagerStateTests : public ::testing::TestWithParam<BlockConfig>
 {
 protected:
-  using underlying_executor_type = FakeExecutor;
-  using shared_executor_type     = std::shared_ptr<underlying_executor_type>;
-  using executor_list_type       = std::vector<shared_executor_type>;
+  using underlying_executor_type          = FakeExecutor;
+  using shared_executor_type              = std::shared_ptr<underlying_executor_type>;
+  using executor_list_type                = std::vector<shared_executor_type>;
   using underlying_execution_manager_type = fetch::ledger::ExecutionManager;
-  using executor_factory_type =
-      underlying_execution_manager_type::executor_factory_type;
-  using block_digest_type =
-      underlying_execution_manager_type::block_digest_type;
-  using execution_manager_type =
-      std::shared_ptr<underlying_execution_manager_type>;
+  using executor_factory_type   = underlying_execution_manager_type::executor_factory_type;
+  using block_digest_type       = underlying_execution_manager_type::block_digest_type;
+  using execution_manager_type  = std::shared_ptr<underlying_execution_manager_type>;
   using underlying_storage_type = MockStorageUnit;
   using storage_type            = std::shared_ptr<underlying_storage_type>;
   using clock_type              = std::chrono::high_resolution_clock;
@@ -50,8 +47,7 @@ protected:
 
   shared_executor_type CreateExecutor()
   {
-    shared_executor_type executor =
-        std::make_shared<underlying_executor_type>();
+    shared_executor_type executor = std::make_shared<underlying_executor_type>();
     executors_.push_back(executor);
     return executor;
   }
@@ -88,8 +84,7 @@ protected:
     return total;
   }
 
-  void ExecuteBlock(TestBlock & block,
-                    status_type expected_status = status_type::SCHEDULED)
+  void ExecuteBlock(TestBlock &block, status_type expected_status = status_type::SCHEDULED)
   {
 
     // execute the block
@@ -124,10 +119,8 @@ TEST_P(ExecutionManagerStateTests, CheckStateRollBack)
   //         \ block3
   //
   auto block1 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
-  auto block2 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__,
-                                    block1.block.hash);
-  auto block3 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__,
-                                    block1.block.hash);
+  auto block2 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__, block1.block.hash);
+  auto block3 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__, block1.block.hash);
 
   // start the execution manager
   manager_->Start();

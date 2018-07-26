@@ -32,10 +32,7 @@ public:
     tm_->Stop();
   }
 
-  void UseCore(std::shared_ptr<fetch::network::NetworkNodeCore> nnCore)
-  {
-    nnCore_ = nnCore;
-  }
+  void UseCore(std::shared_ptr<fetch::network::NetworkNodeCore> nnCore) { nnCore_ = nnCore; }
 
   template <typename F>
   void Post(F &&f)

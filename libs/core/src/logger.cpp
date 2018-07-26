@@ -16,21 +16,21 @@ Context::Context(void *instance)
   fetch::logger.SetContext(details_);
 }
 
-Context::Context(shared_type ctx, std::string const &context,
-                 std::string const &filename, int const &line, void *instance)
-{
-  created_ = std::chrono::high_resolution_clock::now();
-  details_ = std::make_shared<ContextDetails>(
-      ctx, fetch::logger.TopContext(), context, filename, line, instance);
-  fetch::logger.SetContext(details_);
-}
-
-Context::Context(std::string const &context, std::string const &filename,
+Context::Context(shared_type ctx, std::string const &context, std::string const &filename,
                  int const &line, void *instance)
 {
   created_ = std::chrono::high_resolution_clock::now();
-  details_ = std::make_shared<ContextDetails>(
-      fetch::logger.TopContext(), context, filename, line, instance);
+  details_ = std::make_shared<ContextDetails>(ctx, fetch::logger.TopContext(), context, filename,
+                                              line, instance);
+  fetch::logger.SetContext(details_);
+}
+
+Context::Context(std::string const &context, std::string const &filename, int const &line,
+                 void *instance)
+{
+  created_ = std::chrono::high_resolution_clock::now();
+  details_ = std::make_shared<ContextDetails>(fetch::logger.TopContext(), context, filename, line,
+                                              instance);
   fetch::logger.SetContext(details_);
 }
 
@@ -38,9 +38,8 @@ Context::~Context()
 {
   std::chrono::high_resolution_clock::time_point end_time =
       std::chrono::high_resolution_clock::now();
-  double total_time = double(
-      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - created_)
-          .count());
+  double total_time =
+      double(std::chrono::duration_cast<std::chrono::milliseconds>(end_time - created_).count());
   fetch::logger.UpdateContextTime(details_, total_time);
 
   if (primary_ && details_->parent())

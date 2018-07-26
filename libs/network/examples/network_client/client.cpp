@@ -7,15 +7,12 @@ using namespace fetch::network;
 class Client : public TCPClient
 {
 public:
-  Client(std::string const &host, std::string const &port,
-         NetworkManager tmanager)
+  Client(std::string const &host, std::string const &port, NetworkManager tmanager)
       : TCPClient(tmanager)
   {
     Connect(host, port);
-    this->OnMessage(
-        [](message_type const &value) { std::cout << value << std::endl; });
-    this->OnConnectionFailed(
-        []() { std::cerr << "Connection failed" << std::endl; });
+    this->OnMessage([](message_type const &value) { std::cout << value << std::endl; });
+    this->OnConnectionFailed([]() { std::cerr << "Connection failed" << std::endl; });
   }
 
 private:

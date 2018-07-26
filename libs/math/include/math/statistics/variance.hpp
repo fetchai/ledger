@@ -19,11 +19,11 @@ inline typename A::type Variance(A const &a)
   type                 m = Mean(a);
   vector_register_type mean(m);
 
-  type ret = a.data().in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()), [mean](vector_register_type const &x) {
-        vector_register_type d = x - mean;
-        return d * d;
-      });
+  type ret = a.data().in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
+                                              [mean](vector_register_type const &x) {
+                                                vector_register_type d = x - mean;
+                                                return d * d;
+                                              });
 
   ret /= a.size();
 

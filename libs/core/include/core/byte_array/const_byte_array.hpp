@@ -64,8 +64,7 @@ public:
       , length_(other.length_)
   {}
 
-  ConstByteArray(self_type const &other, std::size_t const &start,
-                 std::size_t const &length)
+  ConstByteArray(self_type const &other, std::size_t const &start, std::size_t const &length)
       : data_(other.data_), start_(start), length_(length)
   {
     assert(start_ + length_ <= data_.size());
@@ -106,23 +105,18 @@ public:
   {
     if (other.size() != size()) return false;
     bool ret = true;
-    for (std::size_t i = 0; i < length_; ++i)
-      ret &= (arr_pointer_[i] == other.arr_pointer_[i]);
+    for (std::size_t i = 0; i < length_; ++i) ret &= (arr_pointer_[i] == other.arr_pointer_[i]);
     return ret;
   }
 
   bool operator!=(self_type const &other) const { return !(*this == other); }
 
-  std::size_t capacity() const
-  {
-    return data_.size() == 0 ? 0 : data_.size() - 1;
-  }
+  std::size_t capacity() const { return data_.size() == 0 ? 0 : data_.size() - 1; }
 
   bool operator==(char const *str) const
   {
     std::size_t i = 0;
-    while ((str[i] != '\0') && (i < length_) && (str[i] == arr_pointer_[i]))
-      ++i;
+    while ((str[i] != '\0') && (i < length_) && (str[i] == arr_pointer_[i])) ++i;
     return (str[i] == '\0') && (i == length_);
   }
 
@@ -130,8 +124,7 @@ public:
 
   bool operator!=(char const *str) const { return !(*this == str); }
 
-  self_type SubArray(std::size_t const &start,
-                     std::size_t        length = std::size_t(-1)) const
+  self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
     length = std::min(length, length_ - start);
     assert(start + length <= start_ + length_);
@@ -141,16 +134,14 @@ public:
   bool Match(self_type const &str, std::size_t pos = 0) const
   {
     std::size_t p = 0;
-    while ((pos < length_) && (p < str.size()) && (str[p] == arr_pointer_[pos]))
-      ++pos, ++p;
+    while ((pos < length_) && (p < str.size()) && (str[p] == arr_pointer_[pos])) ++pos, ++p;
     return (p == str.size());
   }
 
   bool Match(container_type const *str, std::size_t pos = 0) const
   {
     std::size_t p = 0;
-    while ((pos < length_) && (str[p] != '\0') && (str[p] == arr_pointer_[pos]))
-      ++pos, ++p;
+    while ((pos < length_) && (str[p] != '\0') && (str[p] == arr_pointer_[pos])) ++pos, ++p;
     return (str[p] == '\0');
   }
 
@@ -164,10 +155,7 @@ public:
   std::size_t const &   size() const { return length_; }
   container_type const *pointer() const { return arr_pointer_; }
 
-  char const *char_pointer() const
-  {
-    return reinterpret_cast<char const *>(arr_pointer_);
-  }
+  char const *char_pointer() const { return reinterpret_cast<char const *>(arr_pointer_); }
 
   self_type operator+(self_type const &other) const
   {
@@ -181,19 +169,12 @@ public:
     return ret;
   }
 
-  int AsInt() const
-  {
-    return atoi(reinterpret_cast<char const *>(arr_pointer_));
-  }
+  int AsInt() const { return atoi(reinterpret_cast<char const *>(arr_pointer_)); }
 
-  double AsFloat() const
-  {
-    return atof(reinterpret_cast<char const *>(arr_pointer_));
-  }
+  double AsFloat() const { return atof(reinterpret_cast<char const *>(arr_pointer_)); }
 
   // Non-const functions go here
-  void FromByteArray(self_type const &other, std::size_t const &start,
-                     std::size_t length)
+  void FromByteArray(self_type const &other, std::size_t const &start, std::size_t length)
   {
     data_        = other.data_;
     start_       = other.start_ + start;

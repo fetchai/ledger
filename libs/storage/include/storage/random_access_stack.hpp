@@ -45,10 +45,7 @@ private:
       return bool(stream);
     }
 
-    constexpr std::size_t size() const
-    {
-      return sizeof(magic) + sizeof(objects) + sizeof(D);
-    }
+    constexpr std::size_t size() const { return sizeof(magic) + sizeof(objects) + sizeof(D); }
   };
 
 public:
@@ -94,20 +91,17 @@ public:
     file_handle_.close();
   }
 
-  void Load(std::string const &filename,
-            bool const &       create_if_not_exist = false)
+  void Load(std::string const &filename, bool const &create_if_not_exist = false)
   {
     filename_    = filename;
-    file_handle_ = std::fstream(
-        filename_, std::ios::in | std::ios::out | std::ios::binary);
+    file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
 
     if (!file_handle_)
     {
       if (create_if_not_exist)
       {
         Clear();
-        file_handle_ = std::fstream(
-            filename_, std::ios::in | std::ios::out | std::ios::binary);
+        file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
       }
       else
       {
@@ -120,8 +114,7 @@ public:
     file_handle_.seekg(0, file_handle_.beg);
     header_.Read(file_handle_);
 
-    int64_t capacity =
-        (length - int64_t(header_.size())) / int64_t(sizeof(type));
+    int64_t capacity = (length - int64_t(header_.size())) / int64_t(sizeof(type));
     assert(capacity >= 0);
 
     if (std::size_t(capacity) < header_.objects)
@@ -138,8 +131,7 @@ public:
   {
     filename_ = filename;
     Clear();
-    file_handle_ = std::fstream(
-        filename_, std::ios::in | std::ios::out | std::ios::binary);
+    file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
 
     SignalFileLoaded();
   }
@@ -253,10 +245,7 @@ public:
     file_handle_.flush();
   }
 
-  bool is_open() const
-  {
-    return bool(file_handle_) && (file_handle_.is_open());
-  }
+  bool is_open() const { return bool(file_handle_) && (file_handle_.is_open()); }
 
   void StoreHeader()
   {

@@ -50,9 +50,8 @@ public:
     id_ = std::this_thread::get_id();
   }
 
-  ContextDetails(shared_type ctx, shared_type parent,
-                 std::string const &context, std::string const &filename = "",
-                 int const &line = 0, void *instance = nullptr)
+  ContextDetails(shared_type ctx, shared_type parent, std::string const &context,
+                 std::string const &filename = "", int const &line = 0, void *instance = nullptr)
       : context_(context)
       , filename_(filename)
       , line_(line)
@@ -63,14 +62,9 @@ public:
     id_ = std::this_thread::get_id();
   }
 
-  ContextDetails(shared_type parent, std::string const &context,
-                 std::string const &filename = "", int const &line = 0,
-                 void *instance = nullptr)
-      : context_(context)
-      , filename_(filename)
-      , line_(line)
-      , parent_(parent)
-      , instance_(instance)
+  ContextDetails(shared_type parent, std::string const &context, std::string const &filename = "",
+                 int const &line = 0, void *instance = nullptr)
+      : context_(context), filename_(filename), line_(line), parent_(parent), instance_(instance)
   {
     id_ = std::this_thread::get_id();
   }
@@ -107,11 +101,10 @@ class Context
 public:
   typedef std::shared_ptr<ContextDetails> shared_type;
   Context(void *instance = nullptr);
-  Context(shared_type ctx, std::string const &context,
-          std::string const &filename = "", int const &line = 0,
-          void *instance = nullptr);
-  Context(std::string const &context, std::string const &filename = "",
+  Context(shared_type ctx, std::string const &context, std::string const &filename = "",
           int const &line = 0, void *instance = nullptr);
+  Context(std::string const &context, std::string const &filename = "", int const &line = 0,
+          void *instance = nullptr);
 
   Context(Context const &context)
   {
@@ -175,22 +168,18 @@ public:
 
     int thread_number = ReadableThread::GetThreadID(std::this_thread::get_id());
 
-    std::chrono::system_clock::time_point now =
-        std::chrono::system_clock::now();
-    auto duration = now.time_since_epoch();
-    auto millis =
-        std::chrono::duration_cast<std::chrono::milliseconds>(duration)
-            .count() %
-        1000;
+    std::chrono::system_clock::time_point now      = std::chrono::system_clock::now();
+    auto                                  duration = now.time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() % 1000;
 
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
     std::cout << "[ " << GetColor(color, bg_color)
               << std::put_time(std::localtime(&now_c), "%F %T");
 
-    std::cout << "." << std::setw(3) << millis << DefaultAttributes() << ", #"
-              << std::setw(2) << thread_number;
-    std::cout << ": " << std::setw(15) << ctx->instance() << std::setw(20)
-              << ctx->context(18) << " ] ";
+    std::cout << "." << std::setw(3) << millis << DefaultAttributes() << ", #" << std::setw(2)
+              << thread_number;
+    std::cout << ": " << std::setw(15) << ctx->instance() << std::setw(20) << ctx->context(18)
+              << " ] ";
     std::cout << GetColor(color, bg_color);
 
 #endif
@@ -346,8 +335,8 @@ public:
     }
   }
 
-  void RegisterUnlock(fetch::mutex::AbstractMutex *ptr, double spent_time,
-                      std::string filename, int line)
+  void RegisterUnlock(fetch::mutex::AbstractMutex *ptr, double spent_time, std::string filename,
+                      int line)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
@@ -379,8 +368,7 @@ public:
     }
   }
 
-  void StackTrace(shared_context_type ctx, uint32_t max = uint32_t(-1),
-                  bool               show_locks = true,
+  void StackTrace(shared_context_type ctx, uint32_t max = uint32_t(-1), bool show_locks = true,
                   std::string const &trace_name = "Stack trace")
   {
 
@@ -390,8 +378,8 @@ public:
       return;
     }
 
-    std::cout << trace_name << " for #"
-              << ReadableThread::GetThreadID(ctx->thread_id()) << std::endl;
+    std::cout << trace_name << " for #" << ReadableThread::GetThreadID(ctx->thread_id())
+              << std::endl;
     PrintTrace(ctx, max);
 
     if (show_locks)
@@ -408,8 +396,7 @@ public:
       std::cout << std::endl;
       for (auto &id : locked_threads)
       {
-        std::cout << "Additionally trace for #"
-                  << ReadableThread::GetThreadID(id) << std::endl;
+        std::cout << "Additionally trace for #" << ReadableThread::GetThreadID(id) << std::endl;
         ctx = context_[id];
         PrintTrace(ctx);
         std::cout << std::endl;
@@ -458,22 +445,19 @@ public:
     // [](TimingDetails const &a, TimingDetails const &b) { return (a.total /
     // a.calls) > (b.total / b.calls); }
     std::sort(all_timings.begin(), all_timings.end(),
-              [](TimingDetails const &a, TimingDetails const &b) {
-                return (a.peak) > (b.peak);
-              });
+              [](TimingDetails const &a, TimingDetails const &b) { return (a.peak) > (b.peak); });
     std::size_t N = std::min(max, all_timings.size());
 
     std::cout << "Profile for monitored function calls: " << std::endl;
     for (std::size_t i = 0; i < N; ++i)
     {
       std::cout << std::setw(3) << i << std::setw(20)
-                << double(all_timings[i].total) / double(all_timings[i].calls)
-                << " ";
+                << double(all_timings[i].total) / double(all_timings[i].calls) << " ";
       std::cout << std::setw(20) << all_timings[i].peak << " ";
       std::cout << std::setw(20) << all_timings[i].calls << " ";
       std::cout << std::setw(20) << all_timings[i].total << " ";
-      std::cout << all_timings[i].context << " " << all_timings[i].filename
-                << " " << all_timings[i].line;
+      std::cout << all_timings[i].context << " " << all_timings[i].filename << " "
+                << all_timings[i].line;
       std::cout << std::endl;
     }
     std::cout << std::endl;
@@ -492,8 +476,7 @@ public:
 
     std::sort(all_timings.begin(), all_timings.end(),
               [](TimingDetails const &a, TimingDetails const &b) {
-                return (double(a.total) / double(a.calls)) >
-                       (double(b.total) / double(b.calls));
+                return (double(a.total) / double(a.calls)) > (double(b.total) / double(b.calls));
               });
     std::size_t N = std::min(max, all_timings.size());
 
@@ -501,13 +484,12 @@ public:
     for (std::size_t i = 0; i < N; ++i)
     {
       std::cout << std::setw(3) << i << std::setw(20)
-                << double(all_timings[i].total) / double(all_timings[i].calls)
-                << " ";
+                << double(all_timings[i].total) / double(all_timings[i].calls) << " ";
       std::cout << std::setw(20) << all_timings[i].peak << " ";
       std::cout << std::setw(20) << all_timings[i].calls << " ";
       std::cout << std::setw(20) << all_timings[i].total << " ";
-      std::cout << all_timings[i].context << " " << all_timings[i].filename
-                << " " << all_timings[i].line;
+      std::cout << all_timings[i].context << " " << all_timings[i].filename << " "
+                << all_timings[i].line;
       std::cout << std::endl;
     }
     std::cout << std::endl;
@@ -566,10 +548,9 @@ private:
     {
       std::cout << std::setw(3) << i << ": In thread #"
                 << ReadableThread::GetThreadID(ctx->thread_id()) << ": ";
-      std::cout << GetColor(5, 9) << ctx->context() << DefaultAttributes()
-                << " " << ctx->filename() << ", ";
-      std::cout << GetColor(3, 9) << ctx->line() << DefaultAttributes()
-                << std::endl;
+      std::cout << GetColor(5, 9) << ctx->context() << DefaultAttributes() << " " << ctx->filename()
+                << ", ";
+      std::cout << GetColor(3, 9) << ctx->line() << DefaultAttributes() << std::endl;
 
       if (ctx->derived_from())
       {
@@ -626,12 +607,11 @@ extern log::details::LogWrapper logger;
 #define LOG_STACK_TRACE_POINT \
   fetch::log::Context log_context(__FUNCTION_NAME__, __FILE__, __LINE__);
 
-#define LOG_LAMBDA_STACK_TRACE_POINT      \
-  fetch::log::Context log_lambda_context( \
-      log_context.details(), __FUNCTION_NAME__, __FILE__, __LINE__)
+#define LOG_LAMBDA_STACK_TRACE_POINT                                                         \
+  fetch::log::Context log_lambda_context(log_context.details(), __FUNCTION_NAME__, __FILE__, \
+                                         __LINE__)
 
-#define LOG_CONTEXT_VARIABLE(name) \
-  std::shared_ptr<fetch::log::ContextDetails> name;
+#define LOG_CONTEXT_VARIABLE(name) std::shared_ptr<fetch::log::ContextDetails> name;
 
 #define LOG_SET_CONTEXT_VARIABLE(name) name = fetch::logger.TopContext();
 

@@ -28,8 +28,7 @@ int main()
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  std::cout << client.Call(MYPROTO, GREET, "Fetch").As<std::string>()
-            << std::endl;
+  std::cout << client.Call(MYPROTO, GREET, "Fetch").As<std::string>() << std::endl;
 
   auto px = client.Call(MYPROTO, SLOWFUNCTION, "Greet");
 
@@ -58,7 +57,7 @@ int main()
   }
 
   // Testing performance
-  auto t_start = std::chrono::high_resolution_clock::now();
+  auto                                 t_start = std::chrono::high_resolution_clock::now();
   std::vector<fetch::service::Promise> promises;
 
   std::size_t N = 100000;
@@ -68,8 +67,7 @@ int main()
   }
   fetch::logger.Highlight("DONE!");
 
-  std::cout << "Waiting for last promise: " << promises.back().id()
-            << std::endl;
+  std::cout << "Waiting for last promise: " << promises.back().id() << std::endl;
   promises.back().Wait(false);
 
   std::size_t failed = 0, not_fulfilled = 0;
@@ -90,13 +88,10 @@ int main()
   std::this_thread::sleep_for(std::chrono::milliseconds(2000));
   auto t_end = std::chrono::high_resolution_clock::now();
 
-  std::cout
-      << "Wall clock time passed: "
-      << std::chrono::duration<double, std::milli>(t_end - t_start).count()
-      << " ms\n";
+  std::cout << "Wall clock time passed: "
+            << std::chrono::duration<double, std::milli>(t_end - t_start).count() << " ms\n";
   std::cout << "Time per call:: "
-            << double(std::chrono::duration<double, std::milli>(t_end - t_start)
-                          .count()) /
+            << double(std::chrono::duration<double, std::milli>(t_end - t_start).count()) /
                    double(N) * 1000.
             << " us\n";
 

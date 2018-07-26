@@ -50,20 +50,17 @@ public:
 
   ~VariantStack() { Close(); }
 
-  void Load(std::string const &filename,
-            bool const &       create_if_not_exists = true)
+  void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
     filename_ = filename;
-    file_     = std::fstream(filename_,
-                         std::ios::in | std::ios::out | std::ios::binary);
+    file_     = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
     if (!file_)
     {
       if (create_if_not_exists)
       {
 
         Clear();
-        file_ = std::fstream(filename_,
-                             std::ios::in | std::ios::out | std::ios::binary);
+        file_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
       }
       else
       {
@@ -78,8 +75,7 @@ public:
   {
     filename_ = filename;
     Clear();
-    file_ = std::fstream(filename_,
-                         std::ios::in | std::ios::out | std::ios::binary);
+    file_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
     assert(bool(file_));
   }
 
@@ -140,8 +136,7 @@ public:
 
     if (separator.object_size != sizeof(T))
     {
-      std::cout << offset << " " << separator.object_size << " " << sizeof(T)
-                << std::endl;
+      std::cout << offset << " " << separator.object_size << " " << sizeof(T) << std::endl;
 
       TODO_FAIL("TODO: Throw error, size mismatch in variantstack");
     }

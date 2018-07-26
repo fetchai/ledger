@@ -18,16 +18,15 @@ using ::testing::_;
 class ExecutorRpcTests : public ::testing::Test
 {
 protected:
-  using underlying_client_type  = fetch::ledger::ExecutorRpcClient;
-  using underlying_service_type = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type =
-      underlying_client_type::network_manager_type;
-  using client_type          = std::unique_ptr<underlying_client_type>;
-  using service_type         = std::unique_ptr<underlying_service_type>;
-  using network_manager_type = std::unique_ptr<underlying_network_manager_type>;
-  using underlying_storage_type = MockStorageUnit;
-  using storage_type            = std::shared_ptr<underlying_storage_type>;
-  using rng_type                = std::mt19937;
+  using underlying_client_type          = fetch::ledger::ExecutorRpcClient;
+  using underlying_service_type         = fetch::ledger::ExecutorRpcService;
+  using underlying_network_manager_type = underlying_client_type::network_manager_type;
+  using client_type                     = std::unique_ptr<underlying_client_type>;
+  using service_type                    = std::unique_ptr<underlying_service_type>;
+  using network_manager_type            = std::unique_ptr<underlying_network_manager_type>;
+  using underlying_storage_type         = MockStorageUnit;
+  using storage_type                    = std::shared_ptr<underlying_storage_type>;
+  using rng_type                        = std::mt19937;
 
   static constexpr std::size_t IDENTITY_SIZE = 64;
 
@@ -42,12 +41,10 @@ protected:
     network_manager_->Start();
 
     // create the executor service
-    service_.reset(new underlying_service_type{EXECUTOR_RPC_PORT,
-                                               *network_manager_, storage_});
+    service_.reset(new underlying_service_type{EXECUTOR_RPC_PORT, *network_manager_, storage_});
 
     // create the executor client
-    executor_.reset(new underlying_client_type{"127.0.0.1", EXECUTOR_RPC_PORT,
-                                               *network_manager_});
+    executor_.reset(new underlying_client_type{"127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_});
 
     // wait for the executor to connect etc.
     while (!executor_->is_alive())
@@ -94,8 +91,7 @@ protected:
     // format the transaction contents
     std::ostringstream oss;
     oss << "{ "
-        << R"("address": ")"
-        << static_cast<std::string>(fetch::byte_array::ToBase64(address))
+        << R"("address": ")" << static_cast<std::string>(fetch::byte_array::ToBase64(address))
         << "\", "
         << R"("amount": )" << 1000 << " }";
 

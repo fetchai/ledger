@@ -19,18 +19,17 @@
 class ExecutionManagerRpcTests : public ::testing::TestWithParam<BlockConfig>
 {
 protected:
-  using underlying_executor_type = FakeExecutor;
-  using network_manager_type = std::unique_ptr<fetch::network::NetworkManager>;
-  using shared_executor_type = std::shared_ptr<underlying_executor_type>;
-  using executor_list_type   = std::vector<shared_executor_type>;
-  using underlying_manager_type = fetch::ledger::ExecutionManager;
-  using executor_factory_type  = underlying_manager_type::executor_factory_type;
-  using underlying_client_type = fetch::ledger::ExecutionManagerRpcClient;
-  using underlying_service_type = fetch::ledger::ExecutionManagerRpcService;
-  using execution_manager_client_type = std::unique_ptr<underlying_client_type>;
-  using execution_manager_service_type =
-      std::unique_ptr<underlying_service_type>;
-  using storage_type = std::shared_ptr<FakeStorageUnit>;
+  using underlying_executor_type       = FakeExecutor;
+  using network_manager_type           = std::unique_ptr<fetch::network::NetworkManager>;
+  using shared_executor_type           = std::shared_ptr<underlying_executor_type>;
+  using executor_list_type             = std::vector<shared_executor_type>;
+  using underlying_manager_type        = fetch::ledger::ExecutionManager;
+  using executor_factory_type          = underlying_manager_type::executor_factory_type;
+  using underlying_client_type         = fetch::ledger::ExecutionManagerRpcClient;
+  using underlying_service_type        = fetch::ledger::ExecutionManagerRpcService;
+  using execution_manager_client_type  = std::unique_ptr<underlying_client_type>;
+  using execution_manager_service_type = std::unique_ptr<underlying_service_type>;
+  using storage_type                   = std::shared_ptr<FakeStorageUnit>;
 
   void SetUp() override
   {
@@ -43,18 +42,15 @@ protected:
 
     executors_.clear();
 
-    network_manager_ =
-        fetch::make_unique<fetch::network::NetworkManager>(NUM_NETWORK_THREADS);
+    network_manager_ = fetch::make_unique<fetch::network::NetworkManager>(NUM_NETWORK_THREADS);
     network_manager_->Start();
 
     // server
     service_ = fetch::make_unique<underlying_service_type>(
-        PORT, *network_manager_, config.executors, storage_,
-        [this]() { return CreateExecutor(); });
+        PORT, *network_manager_, config.executors, storage_, [this]() { return CreateExecutor(); });
 
     // client
-    manager_ = fetch::make_unique<underlying_client_type>("127.0.0.1", PORT,
-                                                          *network_manager_);
+    manager_ = fetch::make_unique<underlying_client_type>("127.0.0.1", PORT, *network_manager_);
 
     // wait for the client to connect before proceeding
     fetch::logger.Info("Connecting client to service...");
@@ -76,14 +72,12 @@ protected:
 
   shared_executor_type CreateExecutor()
   {
-    shared_executor_type executor =
-        std::make_shared<underlying_executor_type>();
+    shared_executor_type executor = std::make_shared<underlying_executor_type>();
     executors_.push_back(executor);
     return executor;
   }
 
-  bool WaitUntilExecutionComplete(std::size_t num_executions,
-                                  std::size_t iterations = 4000)
+  bool WaitUntilExecutionComplete(std::size_t num_executions, std::size_t iterations = 4000)
   {
     bool success = false;
 
@@ -91,8 +85,7 @@ protected:
     {
 
       // the manager must be idle and have completed the required executions
-      if (manager_->IsIdle() &&
-          (service_->completed_executions() >= num_executions))
+      if (manager_->IsIdle() && (service_->completed_executions() >= num_executions))
       {
         success = true;
         break;
@@ -132,10 +125,9 @@ protected:
     }
 
     // Step 2. Sort the elements by timestamp
-    std::sort(history.begin(), history.end(),
-              [](HistoryElement const &a, HistoryElement const &b) {
-                return a.timestamp < b.timestamp;
-              });
+    std::sort(history.begin(), history.end(), [](HistoryElement const &a, HistoryElement const &b) {
+      return a.timestamp < b.timestamp;
+    });
 
     // Step 3. Check that the start time
     if (!history.empty())
@@ -184,12 +176,10 @@ TEST_P(ExecutionManagerRpcTests, CheckStuff)
   fetch::byte_array::ConstByteArray prev_hash;
 
   // execute the block
-  ASSERT_EQ(manager_->Execute(block.block),
-            underlying_manager_type::Status::SCHEDULED);
+  ASSERT_EQ(manager_->Execute(block.block), underlying_manager_type::Status::SCHEDULED);
 
   // wait for the manager to become idle again
-  ASSERT_TRUE(WaitUntilExecutionComplete(
-      static_cast<std::size_t>(block.num_transactions)));
+  ASSERT_TRUE(WaitUntilExecutionComplete(static_cast<std::size_t>(block.num_transactions)));
   ASSERT_EQ(GetNumExecutedTransaction(), block.num_transactions);
   ASSERT_TRUE(CheckForExecutionOrder());
 }

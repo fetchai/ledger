@@ -19,8 +19,7 @@ inline typename A::type WrapperPearson(A const &a, A const &b)
   return Pearson(a, b);
 }
 
-inline void BuildPearsonCorrelation(std::string const &custom_name,
-                                    pybind11::module & module)
+inline void BuildPearsonCorrelation(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;

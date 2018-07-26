@@ -64,7 +64,7 @@ int main(int argc, char const **argv)
       EXPECT(trans.resources().count("a") == 1);
 
       {
-        VerifiedTransaction txTemp = VerifiedTransaction::Create(trans);
+        VerifiedTransaction                 txTemp = VerifiedTransaction::Create(trans);
         fetch::serializers::ByteArrayBuffer arr;
         arr << txTemp;
         arr.Seek(0);
@@ -80,11 +80,9 @@ int main(int argc, char const **argv)
       {
         MutableTransaction mutableTx = fetch::chain::RandomTransaction();
 
-        const VerifiedTransaction transaction =
-            VerifiedTransaction::Create(mutableTx);
+        const VerifiedTransaction transaction = VerifiedTransaction::Create(mutableTx);
 
-        std::cout << "\n==========================================="
-                  << std::endl;
+        std::cout << "\n===========================================" << std::endl;
         std::cout << ToHex(transaction.summary().transaction_hash) << std::endl;
         std::cout << ToHex(transaction.data()) << std::endl;
         std::cout << ToHex(transaction.signature()) << std::endl;

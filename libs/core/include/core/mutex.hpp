@@ -27,8 +27,7 @@ class DebugMutex : public AbstractMutex
   class MutexTimeout
   {
   public:
-    MutexTimeout(std::string const &filename, int const &line,
-                 double const timeout = 300)
+    MutexTimeout(std::string const &filename, int const &line, double const timeout = 300)
         : filename_(filename), line_(line)
     {
       LOG_STACK_TRACE_POINT;
@@ -43,11 +42,9 @@ class DebugMutex : public AbstractMutex
         while ((running_) && (ms < timeout))
         {
           std::this_thread::sleep_for(std::chrono::milliseconds(1));
-          std::chrono::system_clock::time_point end =
-              std::chrono::system_clock::now();
-          ms = double(std::chrono::duration_cast<std::chrono::milliseconds>(
-                          end - created_)
-                          .count());
+          std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+          ms =
+              double(std::chrono::duration_cast<std::chrono::milliseconds>(end - created_).count());
         }
         if (running_)
         {
@@ -80,9 +77,7 @@ class DebugMutex : public AbstractMutex
   };
 
 public:
-  DebugMutex(int line, std::string file)
-      : AbstractMutex(), line_(line), file_(file)
-  {}
+  DebugMutex(int line, std::string file) : AbstractMutex(), line_(line), file_(file) {}
   DebugMutex() = default;
 
   DebugMutex &operator=(DebugMutex const &other) = delete;
@@ -109,9 +104,7 @@ public:
     std::chrono::high_resolution_clock::time_point end_time =
         std::chrono::high_resolution_clock::now();
     double total_time =
-        double(std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
-                                                                     locked_)
-                   .count());
+        double(std::chrono::duration_cast<std::chrono::milliseconds>(end_time - locked_).count());
     lock_mutex_.unlock();
 
     timeout_.reset(nullptr);
@@ -127,8 +120,7 @@ public:
   std::string AsString() override
   {
     std::stringstream ss;
-    ss << "Locked by thread #"
-       << fetch::log::ReadableThread::GetThreadID(thread_id_) << " in "
+    ss << "Locked by thread #" << fetch::log::ReadableThread::GetThreadID(thread_id_) << " in "
        << filename() << " on " << line();
     return ss.str();
   }

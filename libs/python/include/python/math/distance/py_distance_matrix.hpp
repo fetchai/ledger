@@ -16,8 +16,7 @@ namespace math {
 namespace distance {
 
 template <typename A>
-inline A WrapperDistanceMatrix(A const &a, A const &b,
-                               std::string const &method = "eucludian")
+inline A WrapperDistanceMatrix(A const &a, A const &b, std::string const &method = "eucludian")
 {
   if (a.width() != b.width())
   {
@@ -73,8 +72,7 @@ inline A WrapperDistanceMatrix(A const &a, A const &b,
   return ret;
 }
 
-inline void BuildDistanceMatrixDistance(std::string const &custom_name,
-                                        pybind11::module & module)
+inline void BuildDistanceMatrixDistance(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;
@@ -82,10 +80,8 @@ inline void BuildDistanceMatrixDistance(std::string const &custom_name,
   namespace py = pybind11;
   module.def(custom_name.c_str(), &WrapperDistanceMatrix<Matrix<double>>)
       .def(custom_name.c_str(), &WrapperDistanceMatrix<Matrix<float>>)
-      .def(custom_name.c_str(),
-           &WrapperDistanceMatrix<RectangularArray<double>>)
-      .def(custom_name.c_str(),
-           &WrapperDistanceMatrix<RectangularArray<float>>);
+      .def(custom_name.c_str(), &WrapperDistanceMatrix<RectangularArray<double>>)
+      .def(custom_name.c_str(), &WrapperDistanceMatrix<RectangularArray<float>>);
   //    .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapeLessArray< double
   //    > >) .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapeLessArray<
   //    float > >);

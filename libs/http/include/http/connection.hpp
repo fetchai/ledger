@@ -25,16 +25,12 @@ public:
   typedef std::shared_ptr<HTTPRequest>                 shared_request_type;
   typedef std::shared_ptr<asio::streambuf>             buffer_ptr_type;
 
-  HTTPConnection(asio::ip::tcp::tcp::socket socket,
-                 HTTPConnectionManager &    manager)
-      : socket_(std::move(socket))
-      , manager_(manager)
-      , write_mutex_(__LINE__, __FILE__)
+  HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
+      : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
 
-    fetch::logger.Debug("HTTP connection from ",
-                        socket_.remote_endpoint().address().to_string());
+    fetch::logger.Debug("HTTP connection from ", socket_.remote_endpoint().address().to_string());
   }
 
   ~HTTPConnection()
@@ -68,10 +64,7 @@ public:
     }
   }
 
-  std::string Address() override
-  {
-    return socket_.remote_endpoint().address().to_string();
-  }
+  std::string Address() override { return socket_.remote_endpoint().address().to_string(); }
 
   asio::ip::tcp::tcp::socket &socket() { return socket_; }
 
@@ -84,16 +77,13 @@ public:
 
     shared_request_type request = std::make_shared<HTTPRequest>();
     if (!buffer_ptr)
-      buffer_ptr = std::make_shared<asio::streambuf>(
-          std::numeric_limits<std::size_t>::max());
+      buffer_ptr = std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
 
     auto self = shared_from_this();
 
-    auto cb = [this, buffer_ptr, request, self](std::error_code const &ec,
-                                                std::size_t const &    len) {
+    auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
       fetch::logger.Debug("Read HTTP header");
-      fetch::logger.Debug("Read HTTP header of " + std::to_string(len) +
-                          " bytes");
+      fetch::logger.Debug("Read HTTP header of " + std::to_string(len) + " bytes");
 
       if (ec)
       {
@@ -128,8 +118,7 @@ public:
 
     // Reading remaining bits if not all was read.
     auto self = shared_from_this();
-    auto cb   = [this, buffer_ptr, request, self](std::error_code const &ec,
-                                                std::size_t const &    len) {
+    auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
       fetch::logger.Debug("Read HTTP body cb");
       if (ec)
       {
@@ -142,10 +131,8 @@ public:
       }
     };
 
-    asio::async_read(
-        socket_, *buffer_ptr,
-        asio::transfer_exactly(request->content_length() - buffer_ptr->size()),
-        cb);
+    asio::async_read(socket_, *buffer_ptr,
+                     asio::transfer_exactly(request->content_length() - buffer_ptr->size()), cb);
   }
 
   void HandleError(std::error_code const &ec, shared_request_type req)
@@ -163,8 +150,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    buffer_ptr_type buffer_ptr = std::make_shared<asio::streambuf>(
-        std::numeric_limits<std::size_t>::max());
+    buffer_ptr_type buffer_ptr =
+        std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
     write_mutex_.lock();
     HTTPResponse res = write_queue_.front();
     write_queue_.pop_front();

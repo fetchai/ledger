@@ -56,8 +56,7 @@ uint16_t GetOpenPort()
 class Client : public TCPClient
 {
 public:
-  Client(std::string const &host, std::string const &port,
-         NetworkManager &nmanager)
+  Client(std::string const &host, std::string const &port, NetworkManager &nmanager)
       : TCPClient(nmanager)
   {
     Connect(host, port);
@@ -65,8 +64,7 @@ public:
       if (printingClientResponses)
       {
         std::cerr << "Client received: " << clientReceivedCount << std::endl;
-        for (std::size_t i = 0; i < std::min(std::size_t(30), value.size());
-             ++i)
+        for (std::size_t i = 0; i < std::min(std::size_t(30), value.size()); ++i)
         {
           std::cerr << value[i];
         }
@@ -84,8 +82,7 @@ public:
 class SlowClient : public TCPClient
 {
 public:
-  SlowClient(std::string const &host, std::string const &port,
-             NetworkManager &nmanager)
+  SlowClient(std::string const &host, std::string const &port, NetworkManager &nmanager)
       : TCPClient(nmanager)
   {
     Connect(host, port);
@@ -93,8 +90,7 @@ public:
       if (printingClientResponses)
       {
         std::cerr << "Client received: " << clientReceivedCount << std::endl;
-        for (std::size_t i = 0; i < std::min(std::size_t(30), value.size());
-             ++i)
+        for (std::size_t i = 0; i < std::min(std::size_t(30), value.size()); ++i)
         {
           std::cerr << value[i];
         }
@@ -116,8 +112,7 @@ std::mutex                mutex_;
 class VerifyClient : public TCPClient
 {
 public:
-  VerifyClient(std::string const &host, std::string const &port,
-               NetworkManager &nmanager)
+  VerifyClient(std::string const &host, std::string const &port, NetworkManager &nmanager)
       : TCPClient(nmanager)
   {
     Connect(host, port);
@@ -172,8 +167,7 @@ template <std::size_t N = 1>
 void TestCase0(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 0. Threads: " << N << std::endl;
-  std::cerr << "Info: Attempting to open the echo server multiple times"
-            << std::endl;
+  std::cerr << "Info: Attempting to open the echo server multiple times" << std::endl;
 
   for (std::size_t index = 0; index < 20; ++index)
   {
@@ -369,7 +363,7 @@ void TestCase9(std::string host, std::string port)
     {
       std::thread([&host, &port, &nmanager, &threadCount] {
         NetworkManager managerCopy = nmanager;
-        auto           i = std::make_shared<Client>(host, port, managerCopy);
+        auto           i           = std::make_shared<Client>(host, port, managerCopy);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         i->Send("test");
         threadCount++;
@@ -424,9 +418,7 @@ template <std::size_t N = 1>
 void TestCase11(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 11. Threads: " << N << std::endl;
-  std::cerr
-      << "Info: Bouncing messages off echo/loopback server and counting them"
-      << std::endl;
+  std::cerr << "Info: Bouncing messages off echo/loopback server and counting them" << std::endl;
 
   uint16_t emptyPort = GetOpenPort();
 
@@ -460,8 +452,8 @@ void TestCase11(std::string host, std::string port)
 
       if (printingClientResponses)
       {
-        std::cerr << "Waiting for messages to be rec. " << clientReceivedCount
-                  << " of " << currentCount + messagesToSend << std::endl;
+        std::cerr << "Waiting for messages to be rec. " << clientReceivedCount << " of "
+                  << currentCount + messagesToSend << std::endl;
       }
     }
 
@@ -469,8 +461,8 @@ void TestCase11(std::string host, std::string port)
 
     if (printingClientResponses)
     {
-      std::cerr << "Time for " << messagesToSend
-                << " calls: " << TimeDifference(t1, t2) << std::endl;
+      std::cerr << "Time for " << messagesToSend << " calls: " << TimeDifference(t1, t2)
+                << std::endl;
     }
 
     nmanager.Stop();
@@ -518,8 +510,8 @@ void TestCase12(std::string host, std::string port)
 
       if (printingClientResponses)
       {
-        std::cerr << "Waiting for messages to be rec. " << clientReceivedCount
-                  << " of " << currentCount + messagesToSend << std::endl;
+        std::cerr << "Waiting for messages to be rec. " << clientReceivedCount << " of "
+                  << currentCount + messagesToSend << std::endl;
       }
     }
 
@@ -527,8 +519,8 @@ void TestCase12(std::string host, std::string port)
 
     if (printingClientResponses)
     {
-      std::cerr << "Time for " << messagesToSend
-                << " calls: " << TimeDifference(t1, t2) << std::endl;
+      std::cerr << "Time for " << messagesToSend << " calls: " << TimeDifference(t1, t2)
+                << std::endl;
     }
 
     nmanager.Stop();
@@ -552,7 +544,7 @@ void TestCase13(std::string host, std::string port)
     NetworkManager nmanager(N);
     nmanager.Start();
     fetch::network::LoopbackServer echoServer(emptyPort);
-    VerifyClient client(host, std::to_string(emptyPort), nmanager);
+    VerifyClient                   client(host, std::to_string(emptyPort), nmanager);
 
     while (!client.is_alive())
     {
@@ -577,8 +569,8 @@ void TestCase13(std::string host, std::string port)
 
       if (printingClientResponses)
       {
-        std::cerr << "Waiting for messages to be rec. " << clientReceivedCount
-                  << " of " << expectCount << std::endl;
+        std::cerr << "Waiting for messages to be rec. " << clientReceivedCount << " of "
+                  << expectCount << std::endl;
       }
     }
 
@@ -586,8 +578,8 @@ void TestCase13(std::string host, std::string port)
 
     if (printingClientResponses)
     {
-      std::cerr << "Time for " << sendData.size()
-                << " calls: " << TimeDifference(t1, t2) << std::endl;
+      std::cerr << "Time for " << sendData.size() << " calls: " << TimeDifference(t1, t2)
+                << std::endl;
     }
 
     // Verify we transmitted correctly
@@ -636,8 +628,7 @@ void TestCase14(std::string host, std::string port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      clients.push_back(std::make_shared<VerifyClient>(
-          host, std::to_string(emptyPort), nmanager));
+      clients.push_back(std::make_shared<VerifyClient>(host, std::to_string(emptyPort), nmanager));
     }
 
     // Precreate data, this handles clearing global counter etc.
@@ -668,8 +659,8 @@ void TestCase14(std::string host, std::string port)
 
       if (printingClientResponses)
       {
-        std::cerr << "Waiting for messages to be rec. " << clientReceivedCount
-                  << " of " << expectCount << std::endl;
+        std::cerr << "Waiting for messages to be rec. " << clientReceivedCount << " of "
+                  << expectCount << std::endl;
       }
     }
 
@@ -677,8 +668,8 @@ void TestCase14(std::string host, std::string port)
 
     if (printingClientResponses)
     {
-      std::cerr << "Time for " << sendData.size()
-                << " calls: " << TimeDifference(t1, t2) << std::endl;
+      std::cerr << "Time for " << sendData.size() << " calls: " << TimeDifference(t1, t2)
+                << std::endl;
     }
 
     // Verify we transmitted correctly
@@ -716,8 +707,7 @@ template <std::size_t N = 1>
 void TestCase15(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 15. Threads: " << N << std::endl;
-  std::cerr << "Info: Killing during transmission, multiple clients"
-            << std::endl;
+  std::cerr << "Info: Killing during transmission, multiple clients" << std::endl;
 
   uint16_t emptyPort = GetOpenPort();
 
@@ -731,8 +721,7 @@ void TestCase15(std::string host, std::string port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      clients.push_back(std::make_shared<VerifyClient>(
-          host, std::to_string(emptyPort), nmanager));
+      clients.push_back(std::make_shared<VerifyClient>(host, std::to_string(emptyPort), nmanager));
     }
 
     std::size_t messagesToSend = 100;

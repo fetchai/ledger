@@ -11,12 +11,8 @@ class Endpoint
 public:
   Endpoint() {}
 
-  Endpoint(const std::string &IP, const int TCPPort)
-      : IP_{IP}, TCPPort_{uint16_t(TCPPort)}
-  {}
-  Endpoint(const std::string &IP, const uint16_t TCPPort)
-      : IP_{IP}, TCPPort_{TCPPort}
-  {}
+  Endpoint(const std::string &IP, const int TCPPort) : IP_{IP}, TCPPort_{uint16_t(TCPPort)} {}
+  Endpoint(const std::string &IP, const uint16_t TCPPort) : IP_{IP}, TCPPort_{TCPPort} {}
 
   Endpoint(const json::JSONDocument &jsonDoc)
   {

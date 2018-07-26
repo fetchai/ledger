@@ -17,12 +17,11 @@ template <typename T, typename C = fetch::memory::SharedArray<T>,
 class Matrix : public S
 {
 public:
-  typedef S                                         super_type;
-  typedef typename super_type::type                 type;
-  typedef typename super_type::vector_register_type vector_register_type;
-  typedef typename super_type::vector_register_iterator_type
-                                             vector_register_iterator_type;
-  typedef RectangularArray<T, C, true, true> working_memory_2d_type;
+  typedef S                                                  super_type;
+  typedef typename super_type::type                          type;
+  typedef typename super_type::vector_register_type          vector_register_type;
+  typedef typename super_type::vector_register_iterator_type vector_register_iterator_type;
+  typedef RectangularArray<T, C, true, true>                 working_memory_2d_type;
 
   typedef Matrix<T, C, S> self_type;
 
@@ -125,8 +124,7 @@ public:
     this->LazyResize(other.width(), other.height());
 
     for (std::size_t i = 0; i < other.height(); ++i)
-      for (std::size_t j = 0; j < other.width(); ++j)
-        this->At(j, i) = other.At(i, j);
+      for (std::size_t j = 0; j < other.width(); ++j) this->At(j, i) = other.At(i, j);
 
     return *this;
   }
@@ -186,8 +184,7 @@ public:
   }
 
 private:
-  Matrix &DotTransposedOf(working_memory_2d_type const &mA,
-                          working_memory_2d_type const &mB)
+  Matrix &DotTransposedOf(working_memory_2d_type const &mA, working_memory_2d_type const &mB)
   {
 
     assert(mA.width() == mB.width());
@@ -208,9 +205,9 @@ private:
           std::size_t k   = 0;
           type        ele = 0;
 
-          vector_register_iterator_type ia(
-              mA.data().pointer() + i * mA.padded_width(), mA.padded_height());
-          vector_register_type c(type(0));
+          vector_register_iterator_type ia(mA.data().pointer() + i * mA.padded_width(),
+                                           mA.padded_height());
+          vector_register_type          c(type(0));
 
           for (; k < width; k += vector_register_type::E_BLOCK_COUNT)
           {

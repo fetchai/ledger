@@ -50,10 +50,7 @@ public:
                 "type cannot be contained in the given register size.");
 
   VectorRegister() {}
-  VectorRegister(type const *d)
-  {
-    data_ = _mm256_load_si256((mm_register_type *)d);
-  }
+  VectorRegister(type const *d) { data_ = _mm256_load_si256((mm_register_type *)d); }
   VectorRegister(type const &c)
   {
     alignas(16) type constant[E_BLOCK_COUNT];
@@ -65,14 +62,8 @@ public:
 
   explicit operator mm_register_type() { return data_; }
 
-  void Store(type *ptr) const
-  {
-    _mm256_store_si256((mm_register_type *)ptr, data_);
-  }
-  void Stream(type *ptr) const
-  {
-    _mm256_stream_si256((mm_register_type *)ptr, data_);
-  }
+  void Store(type *ptr) const { _mm256_store_si256((mm_register_type *)ptr, data_); }
+  void Stream(type *ptr) const { _mm256_stream_si256((mm_register_type *)ptr, data_); }
 
   mm_register_type const &data() const { return data_; }
   mm_register_type &      data() { return data_; }
@@ -161,12 +152,12 @@ private:
   mm_register_type data_;
 };
 
-#define FETCH_ADD_OPERATOR(op, type, fnc)                                      \
-  inline VectorRegister<type, 256> operator op(                                \
-      VectorRegister<type, 256> const &a, VectorRegister<type, 256> const &b)  \
-  {                                                                            \
-    VectorRegister<type, 256>::mm_register_type ret = fnc(a.data(), b.data()); \
-    return VectorRegister<type, 256>(ret);                                     \
+#define FETCH_ADD_OPERATOR(op, type, fnc)                                          \
+  inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a, \
+                                               VectorRegister<type, 256> const &b) \
+  {                                                                                \
+    VectorRegister<type, 256>::mm_register_type ret = fnc(a.data(), b.data());     \
+    return VectorRegister<type, 256>(ret);                                         \
   }
 
 #ifdef __AVX2__
@@ -191,18 +182,17 @@ FETCH_ADD_OPERATOR(+, double, _mm256_add_pd);
 #undef FETCH_ADD_OPERATOR
 
 // TODO: Misses alignas
-#define FETCH_ADD_OPERATOR(op, type, fnc)                                     \
-  inline VectorRegister<type, 256> operator op(                               \
-      VectorRegister<type, 256> const &a, VectorRegister<type, 256> const &b) \
-  {                                                                           \
-    VectorRegister<type, 256>::mm_register_type imm =                         \
-        _mm256_cmp_ps(a.data(), b.data(), fnc);                               \
-    __m256i ival = _mm256_castps_si256(imm);                                  \
-    type    done[VectorRegister<type, 256>::E_BLOCK_COUNT] = {                \
-        1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};                   \
-    static const __m256i one = _mm256_castps_si256(_mm256_load_ps(done));     \
-    __m256i              ret = _mm256_and_si256(ival, one);                   \
-    return VectorRegister<type, 256>(_mm256_castsi256_ps(ret));               \
+#define FETCH_ADD_OPERATOR(op, type, fnc)                                                           \
+  inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a,                  \
+                                               VectorRegister<type, 256> const &b)                  \
+  {                                                                                                 \
+    VectorRegister<type, 256>::mm_register_type imm  = _mm256_cmp_ps(a.data(), b.data(), fnc);      \
+    __m256i                                     ival = _mm256_castps_si256(imm);                    \
+    type                 done[VectorRegister<type, 256>::E_BLOCK_COUNT] = {1.0f, 1.0f, 1.0f, 1.0f,  \
+                                                           1.0f, 1.0f, 1.0f, 1.0f}; \
+    static const __m256i one = _mm256_castps_si256(_mm256_load_ps(done));                           \
+    __m256i              ret = _mm256_and_si256(ival, one);                                         \
+    return VectorRegister<type, 256>(_mm256_castsi256_ps(ret));                                     \
   }
 
 FETCH_ADD_OPERATOR(==, float, _CMP_EQ_OQ)
@@ -215,18 +205,16 @@ FETCH_ADD_OPERATOR(<, float, _CMP_LT_OQ)
 #undef FETCH_ADD_OPERATOR
 
 // TODO: Misses alignas
-#define FETCH_ADD_OPERATOR(op, type, fnc)                                     \
-  inline VectorRegister<type, 256> operator op(                               \
-      VectorRegister<type, 256> const &a, VectorRegister<type, 256> const &b) \
-  {                                                                           \
-    VectorRegister<type, 256>::mm_register_type imm =                         \
-        _mm256_cmp_pd(a.data(), b.data(), fnc);                               \
-    __m256i ival = _mm256_castpd_si256(imm);                                  \
-    type    done[VectorRegister<type, 256>::E_BLOCK_COUNT] = {1.0, 1.0, 1.0,  \
-                                                           1.0};           \
-    static const __m256i one = _mm256_castpd_si256(_mm256_load_pd(done));     \
-    __m256i              ret = _mm256_and_si256(ival, one);                   \
-    return VectorRegister<type, 256>(_mm256_castsi256_pd(ret));               \
+#define FETCH_ADD_OPERATOR(op, type, fnc)                                                       \
+  inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a,              \
+                                               VectorRegister<type, 256> const &b)              \
+  {                                                                                             \
+    VectorRegister<type, 256>::mm_register_type imm  = _mm256_cmp_pd(a.data(), b.data(), fnc);  \
+    __m256i                                     ival = _mm256_castpd_si256(imm);                \
+    type                 done[VectorRegister<type, 256>::E_BLOCK_COUNT] = {1.0, 1.0, 1.0, 1.0}; \
+    static const __m256i one = _mm256_castpd_si256(_mm256_load_pd(done));                       \
+    __m256i              ret = _mm256_and_si256(ival, one);                                     \
+    return VectorRegister<type, 256>(_mm256_castsi256_pd(ret));                                 \
   }
 
 FETCH_ADD_OPERATOR(==, double, _CMP_EQ_OQ)
@@ -260,8 +248,7 @@ inline VectorRegister<float, 256> sqrt(VectorRegister<float, 256> const &a)
   return VectorRegister<float, 256>(_mm256_sqrt_ps(a.data()));
 }
 
-inline VectorRegister<float, 256> approx_exp(
-    VectorRegister<float, 256> const &x)
+inline VectorRegister<float, 256> approx_exp(VectorRegister<float, 256> const &x)
 {
   enum
   {
@@ -269,12 +256,10 @@ inline VectorRegister<float, 256> approx_exp(
     exponent = 8,
   };
 
-  static constexpr float multiplier = float(1ull << mantissa);
-  static constexpr float exponent_offset =
-      (float(((1ull << (exponent - 1)) - 1)));
+  static constexpr float            multiplier      = float(1ull << mantissa);
+  static constexpr float            exponent_offset = (float(((1ull << (exponent - 1)) - 1)));
   static VectorRegister<float, 256> a(float(multiplier / M_LN2));
-  static VectorRegister<float, 256> b(
-      float(exponent_offset * multiplier - 60801));
+  static VectorRegister<float, 256> b(float(exponent_offset * multiplier - 60801));
 
   VectorRegister<float, 256> y    = a * x + b;
   __m256i                    conv = _mm256_cvtps_epi32(y.data());
@@ -282,8 +267,7 @@ inline VectorRegister<float, 256> approx_exp(
   return VectorRegister<float, 256>(_mm256_castsi256_ps(conv));
 }
 
-inline VectorRegister<float, 256> approx_log(
-    VectorRegister<float, 256> const &x)
+inline VectorRegister<float, 256> approx_log(VectorRegister<float, 256> const &x)
 {
   enum
   {
@@ -291,12 +275,10 @@ inline VectorRegister<float, 256> approx_log(
     exponent = 8,
   };
 
-  static constexpr float multiplier = float(1ull << mantissa);
-  static constexpr float exponent_offset =
-      (float(((1ull << (exponent - 1)) - 1)));
+  static constexpr float                  multiplier      = float(1ull << mantissa);
+  static constexpr float                  exponent_offset = (float(((1ull << (exponent - 1)) - 1)));
   static const VectorRegister<float, 256> a(float(M_LN2 / multiplier));
-  static const VectorRegister<float, 256> b(
-      float(exponent_offset * multiplier - 60801));
+  static const VectorRegister<float, 256> b(float(exponent_offset * multiplier - 60801));
 
   __m256i conv = _mm256_castps_si256(x.data());
 
@@ -305,8 +287,7 @@ inline VectorRegister<float, 256> approx_log(
   return a * (y - b);
 }
 
-inline VectorRegister<float, 256> approx_reciprocal(
-    VectorRegister<float, 256> const &x)
+inline VectorRegister<float, 256> approx_reciprocal(VectorRegister<float, 256> const &x)
 {
 
   return VectorRegister<float, 256>(_mm256_rcp_ps(x.data()));
@@ -324,8 +305,8 @@ inline VectorRegister<double, 256> min(VectorRegister<double, 256> const &a,
   return VectorRegister<double, 256>(_mm256_min_pd(a.data(), b.data()));
 }
 
-inline VectorRegister<double, 256> vector_zero_below_element(
-    VectorRegister<double, 256> const &a, int const &n)
+inline VectorRegister<double, 256> vector_zero_below_element(VectorRegister<double, 256> const &a,
+                                                             int const &                        n)
 {
   alignas(16) uint64_t mask[2] = {uint64_t(-(0 >= n)), uint64_t(-(1 >= n))};
 
@@ -335,8 +316,8 @@ inline VectorRegister<double, 256> vector_zero_below_element(
   return VectorRegister<double, 256>(_mm256_castsi256_pd(conv));
 }
 
-inline VectorRegister<double, 256> vector_zero_above_element(
-    VectorRegister<double, 256> const &a, int const &n)
+inline VectorRegister<double, 256> vector_zero_above_element(VectorRegister<double, 256> const &a,
+                                                             int const &                        n)
 {
   alignas(16) uint64_t mask[2] = {uint64_t(-(0 <= n)), uint64_t(-(1 <= n))};
 
@@ -346,12 +327,11 @@ inline VectorRegister<double, 256> vector_zero_above_element(
   return VectorRegister<double, 256>(_mm256_castsi256_pd(conv));
 }
 
-inline VectorRegister<float, 256> vector_zero_below_element(
-    VectorRegister<float, 256> const &a, int const &n)
+inline VectorRegister<float, 256> vector_zero_below_element(VectorRegister<float, 256> const &a,
+                                                            int const &                       n)
 {
-  alignas(16)
-      const uint32_t mask[4] = {uint32_t(-(0 >= n)), uint32_t(-(1 >= n)),
-                                uint32_t(-(2 >= n)), uint32_t(-(3 >= n))};
+  alignas(16) const uint32_t mask[4] = {uint32_t(-(0 >= n)), uint32_t(-(1 >= n)),
+                                        uint32_t(-(2 >= n)), uint32_t(-(3 >= n))};
 
   __m256i conv = _mm256_castpd_si256(a.data());
   conv         = _mm256_and_si256(conv, *(__m256i *)mask);
@@ -359,12 +339,11 @@ inline VectorRegister<float, 256> vector_zero_below_element(
   return VectorRegister<float, 256>(_mm256_castsi256_pd(conv));
 }
 
-inline VectorRegister<float, 256> vector_zero_above_element(
-    VectorRegister<float, 256> const &a, int const &n)
+inline VectorRegister<float, 256> vector_zero_above_element(VectorRegister<float, 256> const &a,
+                                                            int const &                       n)
 {
-  alignas(16)
-      const uint32_t mask[4] = {uint32_t(-(0 <= n)), uint32_t(-(1 <= n)),
-                                uint32_t(-(2 <= n)), uint32_t(-(3 <= n))};
+  alignas(16) const uint32_t mask[4] = {uint32_t(-(0 <= n)), uint32_t(-(1 <= n)),
+                                        uint32_t(-(2 <= n)), uint32_t(-(3 <= n))};
 
   __m256i conv = _mm256_castpd_si256(a.data());
   conv         = _mm256_and_si256(conv, *(__m256i *)mask);
@@ -448,24 +427,18 @@ inline double first_element(VectorRegister<double, 256, __m256d> const &x) {
 
 */
 
-inline VectorRegister<float, 256> shift_elements_left(
-    VectorRegister<float, 256> const &x)
+inline VectorRegister<float, 256> shift_elements_left(VectorRegister<float, 256> const &x)
 {
-  __m256 t0 =
-      _mm256_permute_ps(x.data(), 0x39);  // [x4  x7  x6  x5  x0  x3  x2  x1]
-  __m256 t1 =
-      _mm256_permute2f128_ps(t0, t0, 0x81);  // [ 0   0   0   0  x4  x7  x6  x5]
+  __m256 t0 = _mm256_permute_ps(x.data(), 0x39);     // [x4  x7  x6  x5  x0  x3  x2  x1]
+  __m256 t1 = _mm256_permute2f128_ps(t0, t0, 0x81);  // [ 0   0   0   0  x4  x7  x6  x5]
   return VectorRegister<float, 256>(
       _mm256_blend_ps(t0, t1, 0x88));  // [ 0  x7  x6  x5  x4  x3  x2  x1]
 }
 
-inline VectorRegister<float, 256> shift_elements_right(
-    VectorRegister<float, 256> const &x)
+inline VectorRegister<float, 256> shift_elements_right(VectorRegister<float, 256> const &x)
 {
-  __m256 t0 =
-      _mm256_permute_ps(x.data(), 0x39);  // [x4  x7  x6  x5  x0  x3  x2  x1]
-  __m256 t1 =
-      _mm256_permute2f128_ps(t0, t0, 0x81);  // [ 0   0   0   0  x4  x7  x6  x5]
+  __m256 t0 = _mm256_permute_ps(x.data(), 0x39);     // [x4  x7  x6  x5  x0  x3  x2  x1]
+  __m256 t1 = _mm256_permute2f128_ps(t0, t0, 0x81);  // [ 0   0   0   0  x4  x7  x6  x5]
   return VectorRegister<float, 256>(
       _mm256_blend_ps(t0, t1, 0x88));  // [ 0  x7  x6  x5  x4  x3  x2  x1]
 }

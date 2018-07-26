@@ -32,12 +32,11 @@ int main(int argc, char const **argv)
 
   // We define a function for what we want to happen when the remote has a new
   // message. Count incremented by reference
-  auto handle1 = client.Subscribe(
-      FetchProtocols::SUBSCRIBE_PROTO, SubscribeProto::NEW_MESSAGE,
-      new Function<void(std::string)>([&count](std::string const &msg) {
-        std::cout << "Got message: " << msg << std::endl;
-        count++;
-      }));
+  auto handle1 = client.Subscribe(FetchProtocols::SUBSCRIBE_PROTO, SubscribeProto::NEW_MESSAGE,
+                                  new Function<void(std::string)>([&count](std::string const &msg) {
+                                    std::cout << "Got message: " << msg << std::endl;
+                                    count++;
+                                  }));
 
   while (count < 5)
   {
@@ -45,8 +44,7 @@ int main(int argc, char const **argv)
   }
 
   std::cout << "Leaving" << std::endl;
-  client.Unsubscribe(
-      handle1);  // Example of how we can unsubscribe from listening
+  client.Unsubscribe(handle1);  // Example of how we can unsubscribe from listening
 
   return 0;
 }

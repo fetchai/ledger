@@ -24,8 +24,7 @@ TEST_F(DeleterPrimitiveTest, test_BIGNUM_free)
 
 TEST_F(DeleterPrimitiveTest, test_BIGNUM_clear_free)
 {
-  EXPECT_EQ((DeleterPrimitive<BIGNUM, eDeleteStrategy::clearing>::function),
-            &BN_clear_free);
+  EXPECT_EQ((DeleterPrimitive<BIGNUM, eDeleteStrategy::clearing>::function), &BN_clear_free);
 }
 
 TEST_F(DeleterPrimitiveTest, test_BN_CTX_free)

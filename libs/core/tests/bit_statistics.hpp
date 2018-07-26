@@ -23,8 +23,7 @@ public:
   void operator()()
   {
     uint64_t s = generator_();
-    for (std::size_t i = 0; i < E_BIT_COUNT; ++i)
-      stats_[i] += uint32_t((s >> i) & 1);
+    for (std::size_t i = 0; i < E_BIT_COUNT; ++i) stats_[i] += uint32_t((s >> i) & 1);
     ++counter_;
   }
 

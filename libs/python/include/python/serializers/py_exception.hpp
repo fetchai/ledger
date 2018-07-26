@@ -9,8 +9,7 @@ namespace serializers {
 void BuildSerializableException(pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<SerializableException, std::exception>(module,
-                                                    "SerializableException")
+  py::class_<SerializableException, std::exception>(module, "SerializableException")
       .def(py::init<>())
       .def(py::init<std::string>())
       .def(py::init<error::error_type, std::string>())

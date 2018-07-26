@@ -60,8 +60,7 @@ int main(int argc, char const **argv)
 
   for (std::size_t i = 0; i < lane_count; ++i)
   {
-    client.AddLaneConnection<fetch::network::TCPClient>("localhost",
-                                                        uint16_t(port + i));
+    client.AddLaneConnection<fetch::network::TCPClient>("localhost", uint16_t(port + i));
   }
 
   // Setting tokenizer up
@@ -107,8 +106,7 @@ int main(int argc, char const **argv)
           {
             for (std::size_t i = 0; i < lane_count; ++i)
             {
-              remote.Connect(uint32_t(i), command[1],
-                             uint16_t(command[2].AsInt() + int(i)));
+              remote.Connect(uint32_t(i), command[1], uint16_t(command[2].AsInt() + int(i)));
             }
           }
           else
@@ -120,8 +118,7 @@ int main(int argc, char const **argv)
         {
           if (command.size() == 4)
           {
-            remote.Connect(uint32_t(command[1].AsInt()), command[2],
-                           uint16_t(command[3].AsInt()));
+            remote.Connect(uint32_t(command[1].AsInt()), command[2], uint16_t(command[3].AsInt()));
           }
           else
           {
@@ -133,8 +130,7 @@ int main(int argc, char const **argv)
         {
           if (command.size() == 2)
           {
-            std::cout << remote.GetLaneNumber(uint32_t(command[1].AsInt()))
-                      << std::endl;
+            std::cout << remote.GetLaneNumber(uint32_t(command[1].AsInt())) << std::endl;
           }
           else
           {
@@ -157,10 +153,8 @@ int main(int argc, char const **argv)
             client.GetTransaction(key, tx);
             std::cout << std::endl;
 
-            std::cout << "Transaction: " << byte_array::ToBase64(tx.digest())
-                      << std::endl;
-            std::cout << "Signature: " << byte_array::ToBase64(tx.signature())
-                      << std::endl;
+            std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
+            std::cout << "Signature: " << byte_array::ToBase64(tx.signature()) << std::endl;
             std::cout << "Fee: " << tx.summary().fee << std::endl;
             std::cout << std::endl;
           }
@@ -169,13 +163,10 @@ int main(int argc, char const **argv)
         {
           if (command.size() == 1)
           {
-            chain::Transaction tx =
-                chain::VerifiedTransaction::Create(chain::RandomTransaction());
+            chain::Transaction tx = chain::VerifiedTransaction::Create(chain::RandomTransaction());
             std::cout << std::endl;
-            std::cout << "Transaction: " << byte_array::ToBase64(tx.digest())
-                      << std::endl;
-            std::cout << "Signature: " << byte_array::ToBase64(tx.signature())
-                      << std::endl;
+            std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
+            std::cout << "Signature: " << byte_array::ToBase64(tx.signature()) << std::endl;
             std::cout << "Fee: " << tx.summary().fee << std::endl;
             std::cout << std::endl;
 

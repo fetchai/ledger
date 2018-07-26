@@ -39,8 +39,7 @@ public:
     fetch::network::TCPClient connection(network_manager_);
     connection.Connect(host, port);
 
-    connections_.push_back(
-        std::make_shared<client_type>(connection, network_manager_));
+    connections_.push_back(std::make_shared<client_type>(connection, network_manager_));
   }
 
 private:

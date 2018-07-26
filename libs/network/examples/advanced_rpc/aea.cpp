@@ -89,18 +89,15 @@ int main(int argc, char const **argv)
   {
     if (params.arg_size() <= 2)
     {
-      std::cout << "usage: ./" << argv[0] << " connect [host] [[port=8080]]"
-                << std::endl;
+      std::cout << "usage: ./" << argv[0] << " connect [host] [[port=8080]]" << std::endl;
       return -1;
     }
 
     std::string h = params.GetArg(2);
     uint16_t    p = params.GetArg<uint16_t>(3, 8080);
-    std::cout << "Sending 'connect' command with parameters " << h << " " << p
-              << std::endl;
+    std::cout << "Sending 'connect' command with parameters " << h << " " << p << std::endl;
 
-    auto prom =
-        client.Call(FetchProtocols::AEA_PROTOCOL, AEACommands::CONNECT, h, p);
+    auto prom = client.Call(FetchProtocols::AEA_PROTOCOL, AEACommands::CONNECT, h, p);
     prom.Wait();
   }
 
@@ -110,8 +107,7 @@ int main(int argc, char const **argv)
 
     std::cout << "Sending 'info' command with no parameters " << std::endl;
 
-    auto prom =
-        client.Call(FetchProtocols::AEA_PROTOCOL, AEACommands::GET_INFO);
+    auto prom = client.Call(FetchProtocols::AEA_PROTOCOL, AEACommands::GET_INFO);
     std::cout << "Info about the node: " << std::endl;
     std::cout << prom.As<std::string>() << std::endl << std::endl;
   }
@@ -119,21 +115,18 @@ int main(int argc, char const **argv)
   if (command == "listen")
   {
     std::cout << "Listening to " << std::endl;
-    auto handle1 = client.Subscribe(
-        FetchProtocols::PEER_TO_PEER, PeerToPeerFeed::NEW_MESSAGE,
-        new Function<void(std::string)>([](std::string const &msg) {
-          std::cout << VT100::GetColor("blue", "default")
-                    << "Got message: " << msg << VT100::DefaultAttributes()
-                    << std::endl;
-        }));
+    auto handle1 = client.Subscribe(FetchProtocols::PEER_TO_PEER, PeerToPeerFeed::NEW_MESSAGE,
+                                    new Function<void(std::string)>([](std::string const &msg) {
+                                      std::cout << VT100::GetColor("blue", "default")
+                                                << "Got message: " << msg
+                                                << VT100::DefaultAttributes() << std::endl;
+                                    }));
 
-    client.Subscribe(
-        FetchProtocols::PEER_TO_PEER, PeerToPeerFeed::NEW_MESSAGE,
-        new Function<void(std::string)>([](std::string const &msg) {
-          std::cout << VT100::GetColor("red", "default")
-                    << "Got message 2: " << msg << VT100::DefaultAttributes()
-                    << std::endl;
-        }));
+    client.Subscribe(FetchProtocols::PEER_TO_PEER, PeerToPeerFeed::NEW_MESSAGE,
+                     new Function<void(std::string)>([](std::string const &msg) {
+                       std::cout << VT100::GetColor("red", "default") << "Got message 2: " << msg
+                                 << VT100::DefaultAttributes() << std::endl;
+                     }));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
@@ -146,11 +139,9 @@ int main(int argc, char const **argv)
   if (command == "sendmsg")
   {
     std::string msg = params.GetArg(2);
-    std::cout << "Peer-to-peer command 'sendmsg' command with " << msg
-              << std::endl;
+    std::cout << "Peer-to-peer command 'sendmsg' command with " << msg << std::endl;
 
-    auto prom = client.Call(FetchProtocols::PEER_TO_PEER,
-                            PeerToPeerCommands::SEND_MESSAGE, msg);
+    auto prom = client.Call(FetchProtocols::PEER_TO_PEER, PeerToPeerCommands::SEND_MESSAGE, msg);
 
     prom.Wait();
   }
@@ -158,10 +149,8 @@ int main(int argc, char const **argv)
   // Testing the send message
   if (command == "messages")
   {
-    std::cout << "Peer-to-peer command 'messages' command with no parameters "
-              << std::endl;
-    auto prom = client.Call(FetchProtocols::PEER_TO_PEER,
-                            PeerToPeerCommands::GET_MESSAGES);
+    std::cout << "Peer-to-peer command 'messages' command with no parameters " << std::endl;
+    auto prom = client.Call(FetchProtocols::PEER_TO_PEER, PeerToPeerCommands::GET_MESSAGES);
 
     std::vector<std::string> msgs = prom.As<std::vector<std::string>>();
     for (auto &msg : msgs)

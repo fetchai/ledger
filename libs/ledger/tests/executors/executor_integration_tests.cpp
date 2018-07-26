@@ -20,13 +20,11 @@ using ::testing::_;
 class ExecutorIntegrationTests : public ::testing::Test
 {
 protected:
-  using underlying_client_type  = fetch::ledger::ExecutorRpcClient;
-  using underlying_service_type = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type =
-      underlying_client_type::network_manager_type;
-  using underlying_storage_type = fetch::ledger::StorageUnitClient;
-  using underlying_storage_service_type =
-      fetch::ledger::StorageUnitBundledService;
+  using underlying_client_type          = fetch::ledger::ExecutorRpcClient;
+  using underlying_service_type         = fetch::ledger::ExecutorRpcService;
+  using underlying_network_manager_type = underlying_client_type::network_manager_type;
+  using underlying_storage_type         = fetch::ledger::StorageUnitClient;
+  using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
 
   using client_type          = std::unique_ptr<underlying_client_type>;
   using service_type         = std::unique_ptr<underlying_service_type>;
@@ -49,23 +47,20 @@ protected:
     network_manager_->Start();
 
     storage_service_.reset(new underlying_storage_service_type);
-    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START,
-                            *network_manager_, false);
+    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, false);
 
     storage_.reset(new underlying_storage_type{*network_manager_});
     for (std::size_t i = 0; i < NUM_LANES; ++i)
     {
-      storage_->AddLaneConnection<fetch::network::TCPClient>(
-          "localhost", uint16_t(LANE_RPC_PORT_START + i));
+      storage_->AddLaneConnection<fetch::network::TCPClient>("localhost",
+                                                             uint16_t(LANE_RPC_PORT_START + i));
     }
 
     // create the executor service
-    service_.reset(new underlying_service_type{EXECUTOR_RPC_PORT,
-                                               *network_manager_, storage_});
+    service_.reset(new underlying_service_type{EXECUTOR_RPC_PORT, *network_manager_, storage_});
 
     // create the executor client
-    executor_.reset(new underlying_client_type{"127.0.0.1", EXECUTOR_RPC_PORT,
-                                               *network_manager_});
+    executor_.reset(new underlying_client_type{"127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_});
 
     for (;;)
     {
@@ -117,8 +112,7 @@ protected:
     // format the transaction contents
     std::ostringstream oss;
     oss << "{ "
-        << R"("address": ")"
-        << static_cast<std::string>(fetch::byte_array::ToBase64(address))
+        << R"("address": ")" << static_cast<std::string>(fetch::byte_array::ToBase64(address))
         << "\", "
         << R"("amount": )" << 1000 << " }";
 

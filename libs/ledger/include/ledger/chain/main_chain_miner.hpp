@@ -23,10 +23,8 @@ public:
   typedef fetch::chain::consensus::DummyMiner     dummy_miner_type;
   typedef fetch::miner::MinerInterface            miner_type;
 
-  MainChainMiner(std::size_t num_lanes, std::size_t num_slices,
-                 chain::MainChain &       mainChain,
-                 chain::BlockCoordinator &blockCoordinator, miner_type &miner,
-                 uint64_t minerNumber)
+  MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
+                 chain::BlockCoordinator &blockCoordinator, miner_type &miner, uint64_t minerNumber)
       : num_lanes_{num_lanes}
       , num_slices_{num_slices}
       , mainChain_{mainChain}
@@ -62,8 +60,7 @@ private:
     static constexpr uint32_t MAX_BLOCK_JITTER_US = 5000;
     static constexpr uint32_t BLOCK_PERIOD_MS     = 4000;
 
-    timestamp_type block_time =
-        clock_type::now() + std::chrono::milliseconds{BLOCK_PERIOD_MS};
+    timestamp_type block_time = clock_type::now() + std::chrono::milliseconds{BLOCK_PERIOD_MS};
     block_time += std::chrono::microseconds{rng() % MAX_BLOCK_JITTER_US};
 
     return block_time;
@@ -87,9 +84,8 @@ private:
       // Handle case for network updates to heaviest block
       if (block.hash() != previous_heaviest)
       {
-        fetch::logger.Info(
-            "==> New heaviest block: ", byte_array::ToBase64(block.hash()),
-            " from: ", minerNumber_);
+        fetch::logger.Info("==> New heaviest block: ", byte_array::ToBase64(block.hash()),
+                           " from: ", minerNumber_);
 
         // schedule the next block
         next_block_time = CalculateNextBlockTime(rng);
@@ -98,8 +94,7 @@ private:
       }
       else if (clock_type::now() >= next_block_time)
       {
-        fetch::logger.Info("==> Creating new block from: ",
-                           byte_array::ToBase64(block.hash()));
+        fetch::logger.Info("==> Creating new block from: ", byte_array::ToBase64(block.hash()));
 
         // Create another block sequential to previous
         block_type nextBlock;

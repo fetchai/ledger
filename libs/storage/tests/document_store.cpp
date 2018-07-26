@@ -7,8 +7,8 @@ using namespace fetch::storage;
 class TestStore : public RevertibleDocumentStore
 {
 public:
-  typename RevertibleDocumentStore::DocumentFile GetDocumentFile(
-      ResourceID const &rid, bool const &create = true)
+  typename RevertibleDocumentStore::DocumentFile GetDocumentFile(ResourceID const &rid,
+                                                                 bool const &      create = true)
   {
     return RevertibleDocumentStore::GetDocumentFile(rid, create);
   }

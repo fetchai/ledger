@@ -9,10 +9,7 @@ struct MimeType
 {
   std::string extension;
   std::string type;
-  bool        operator<(MimeType const &other) const
-  {
-    return extension < other.extension;
-  }
+  bool        operator<(MimeType const &other) const { return extension < other.extension; }
 };
 
 namespace mime_types {

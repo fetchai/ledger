@@ -10,8 +10,7 @@ namespace ledger {
 class TransactionProcessor
 {
 public:
-  TransactionProcessor(StorageUnitInterface & storage,
-                       miner::MinerInterface &miner)
+  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner)
       : storage_{storage}, miner_{miner}
   {}
 

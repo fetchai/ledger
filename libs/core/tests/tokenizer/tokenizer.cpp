@@ -8,8 +8,7 @@
 
 using namespace fetch::byte_array;
 
-bool equals(Tokenizer const &                                     tokenizer,
-            std::vector<fetch::byte_array::ConstByteArray> const &ref)
+bool equals(Tokenizer const &tokenizer, std::vector<fetch::byte_array::ConstByteArray> const &ref)
 {
   if (ref.size() != tokenizer.size()) return false;
   for (std::size_t i = 0; i < ref.size(); ++i)
@@ -70,9 +69,7 @@ int main(int argc, char **argv)
     SECTION("Any character")
     {
       Tokenizer test;
-      test.AddConsumer(
-          fetch::byte_array::consumers::NumberConsumer<E_INTEGER,
-                                                       E_FLOATING_POINT>);
+      test.AddConsumer(fetch::byte_array::consumers::NumberConsumer<E_INTEGER, E_FLOATING_POINT>);
       test.AddConsumer(fetch::byte_array::consumers::AnyChar<E_CATCH_ALL>);
 
       std::string test_str;
@@ -80,8 +77,8 @@ int main(int argc, char **argv)
       test_str = "93 -12.31 -12.e+3";
       EXPECT(test.Parse(test_str));
       EXPECT(equals(test, {"93", " ", "-12.31", " ", "-12.e+3"}));
-      EXPECT(equals(test, {E_INTEGER, E_CATCH_ALL, E_FLOATING_POINT,
-                           E_CATCH_ALL, E_FLOATING_POINT}));
+      EXPECT(
+          equals(test, {E_INTEGER, E_CATCH_ALL, E_FLOATING_POINT, E_CATCH_ALL, E_FLOATING_POINT}));
     };
   };
 

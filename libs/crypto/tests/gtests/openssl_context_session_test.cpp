@@ -50,13 +50,10 @@ public:
 class OpenSSLContextSessionTest : public testing::Test
 {
 protected:
-  template <const memory::eDeleteStrategy P_DeleteStrategy =
-                memory::eDeleteStrategy::canonical>
-  using ossl_shared_ptr__for_Testing =
-      memory::ossl_shared_ptr<TestType, P_DeleteStrategy, Deleter>;
+  template <const memory::eDeleteStrategy P_DeleteStrategy = memory::eDeleteStrategy::canonical>
+  using ossl_shared_ptr__for_Testing = memory::ossl_shared_ptr<TestType, P_DeleteStrategy, Deleter>;
   using Session__for_Testing =
-      Session<TestType, StaticMockContextPrimitive<TestType>,
-              ossl_shared_ptr__for_Testing<>>;
+      Session<TestType, StaticMockContextPrimitive<TestType>, ossl_shared_ptr__for_Testing<>>;
 
   MockContextPrimitive::SharedPtr &contextMock = MockContextPrimitive::value;
 
@@ -71,8 +68,7 @@ protected:
   //}
 };
 
-TEST_F(OpenSSLContextSessionTest,
-       test_Session_basic_scenario_constructro_and_destructor)
+TEST_F(OpenSSLContextSessionTest, test_Session_basic_scenario_constructro_and_destructor)
 {
   TestType testValue;
 
@@ -136,8 +132,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_started_and_end)
   }
 }
 
-TEST_F(OpenSSLContextSessionTest,
-       test_Session_constructor_and_start_and_destructor)
+TEST_F(OpenSSLContextSessionTest, test_Session_constructor_and_start_and_destructor)
 {
   TestType testValue;
 

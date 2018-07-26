@@ -36,9 +36,8 @@ public:
 
   /// @name Transaction Interface
   /// @{
-  virtual void AddTransaction(chain::Transaction const &tx) = 0;
-  virtual bool GetTransaction(byte_array::ConstByteArray const &digest,
-                              chain::Transaction &              tx)       = 0;
+  virtual void AddTransaction(chain::Transaction const &tx)                                     = 0;
+  virtual bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) = 0;
   /// @}
 
   /// @name Revertible Document Store Interface

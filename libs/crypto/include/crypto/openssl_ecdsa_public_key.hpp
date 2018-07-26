@@ -10,19 +10,16 @@ namespace crypto {
 namespace openssl {
 
 template <int                     P_ECDSA_Curve_NID = NID_secp256k1,
-          point_conversion_form_t P_ConversionForm =
-              POINT_CONVERSION_UNCOMPRESSED>
+          point_conversion_form_t P_ConversionForm  = POINT_CONVERSION_UNCOMPRESSED>
 class ECDSAPublicKey
 {
 public:
   using del_strat_type = memory::eDeleteStrategy;
 
-  template <typename T,
-            del_strat_type P_DeleteStrategy = del_strat_type::canonical>
+  template <typename T, del_strat_type P_DeleteStrategy = del_strat_type::canonical>
   using shrd_ptr = memory::ossl_shared_ptr<T, P_DeleteStrategy>;
 
-  template <typename T,
-            del_strat_type P_DeleteStrategy = del_strat_type::canonical>
+  template <typename T, del_strat_type P_DeleteStrategy = del_strat_type::canonical>
   using uniq_ptr_type = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
 
   using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
@@ -34,8 +31,7 @@ private:
   const shrd_ptr<EC_KEY>           key_EC_KEY_;
   const byte_array::ConstByteArray key_binary_;
 
-  static byte_array::ByteArray Convert(EC_POINT *      public_key,
-                                       const EC_GROUP *group,
+  static byte_array::ByteArray Convert(EC_POINT *public_key, const EC_GROUP *group,
                                        const context::Session<BN_CTX> &session)
   {
 
@@ -49,11 +45,9 @@ private:
     }
 
     byte_array::ByteArray pub_key_as_bin;
-    pub_key_as_bin.Resize(
-        static_cast<std::size_t>(BN_num_bytes(public_key_as_BN.get())));
+    pub_key_as_bin.Resize(static_cast<std::size_t>(BN_num_bytes(public_key_as_BN.get())));
 
-    if (!BN_bn2bin(public_key_as_BN.get(),
-                   static_cast<unsigned char *>(pub_key_as_bin.pointer())))
+    if (!BN_bn2bin(public_key_as_BN.get(), static_cast<unsigned char *>(pub_key_as_bin.pointer())))
     {
       throw std::runtime_error(
           "ECDSAPublicKey::Convert(...) failed due to failure of the "
@@ -63,21 +57,18 @@ private:
     return pub_key_as_bin;
   }
 
-  static uniq_ptr_type<EC_POINT> Convert(
-      byte_array::ConstByteArray const &key_data)
+  static uniq_ptr_type<EC_POINT> Convert(byte_array::ConstByteArray const &key_data)
   {
     shrd_ptr<BIGNUM> pub_key_as_BN{BN_new()};
-    if (!BN_bin2bn(static_cast<const unsigned char *>(key_data.pointer()),
-                   int(key_data.size()), pub_key_as_BN.get()))
+    if (!BN_bin2bn(static_cast<const unsigned char *>(key_data.pointer()), int(key_data.size()),
+                   pub_key_as_BN.get()))
     {
-      throw std::runtime_error(
-          "ECDSAPublicKey::ConvertToECPOINT(...): BN_bin2bn(...) failed.");
+      throw std::runtime_error("ECDSAPublicKey::ConvertToECPOINT(...): BN_bin2bn(...) failed.");
     }
 
-    uniq_ptr_type<const EC_GROUP> group(
-        EC_GROUP_new_by_curve_name(ecdsa_curve_type::nid));
-    uniq_ptr_type<EC_POINT>  public_key{EC_POINT_new(group.get())};
-    context::Session<BN_CTX> session;
+    uniq_ptr_type<const EC_GROUP> group(EC_GROUP_new_by_curve_name(ecdsa_curve_type::nid));
+    uniq_ptr_type<EC_POINT>       public_key{EC_POINT_new(group.get())};
+    context::Session<BN_CTX>      session;
 
     if (!EC_POINT_bn2point(group.get(), pub_key_as_BN.get(), public_key.get(),
                            session.context().get()))

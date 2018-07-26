@@ -19,8 +19,7 @@ inline typename A::type WrapperJaccard(A const &a, A const &b)
   return Jaccard(a, b);
 }
 
-inline void BuildJaccardCorrelation(std::string const &custom_name,
-                                    pybind11::module & module)
+inline void BuildJaccardCorrelation(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;
@@ -54,14 +53,10 @@ inline void BuildGeneralisedJaccardCorrelation(std::string const &custom_name,
   namespace py = pybind11;
   module.def(custom_name.c_str(), &WrapperGeneralisedJaccard<Matrix<double>>)
       .def(custom_name.c_str(), &WrapperGeneralisedJaccard<Matrix<float>>)
-      .def(custom_name.c_str(),
-           &WrapperGeneralisedJaccard<RectangularArray<double>>)
-      .def(custom_name.c_str(),
-           &WrapperGeneralisedJaccard<RectangularArray<float>>)
-      .def(custom_name.c_str(),
-           &WrapperGeneralisedJaccard<ShapeLessArray<double>>)
-      .def(custom_name.c_str(),
-           &WrapperGeneralisedJaccard<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperGeneralisedJaccard<RectangularArray<double>>)
+      .def(custom_name.c_str(), &WrapperGeneralisedJaccard<RectangularArray<float>>)
+      .def(custom_name.c_str(), &WrapperGeneralisedJaccard<ShapeLessArray<double>>)
+      .def(custom_name.c_str(), &WrapperGeneralisedJaccard<ShapeLessArray<float>>);
 };
 
 }  // namespace correlation

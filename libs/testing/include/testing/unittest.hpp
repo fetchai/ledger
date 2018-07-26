@@ -65,8 +65,7 @@ public:
         std::cout << "     - ";
         break;
       }
-      std::cout << explanation_ << commandline::VT100::DefaultAttributes()
-                << std::endl;
+      std::cout << explanation_ << commandline::VT100::DefaultAttributes() << std::endl;
       if (format_ == UnitTestOutputFormat::FORMAT_HEADING)
       {
         for (std::size_t i = 0; i < explanation_.size(); ++i) std::cout << "=";
@@ -142,8 +141,7 @@ public:
     expression_ = s.str();
   }
 
-  Expression(std::string const &expr, Expression const &lhs,
-             Expression const &rhs)
+  Expression(std::string const &expr, Expression const &lhs, Expression const &rhs)
       : expression_(expr), lhs_(new Expression(lhs)), rhs_(new Expression(rhs))
   {}
 
@@ -252,14 +250,12 @@ ProgramInserter &last_inserter() { return *inserted_programs.back(); }
 #define SECTION_REF(EXPLANATION)                                            \
   self->NewContext<fetch::unittest::TestContext>(EXPLANATION);              \
   (*self->last()) << fetch::unittest::UnitTestOutputFormat::FORMAT_SECTION; \
-  (*self->last()) = [&](                                                    \
-      fetch::unittest::TestContext::self_shared_type self) mutable
+  (*self->last()) = [&](fetch::unittest::TestContext::self_shared_type self) mutable
 
 #define SECTION(EXPLANATION)                                                \
   self->NewContext<fetch::unittest::TestContext>(EXPLANATION);              \
   (*self->last()) << fetch::unittest::UnitTestOutputFormat::FORMAT_SECTION; \
-  (*self->last()) = [=                                                      \
-  ](fetch::unittest::TestContext::self_shared_type self) mutable
+  (*self->last()) = [=](fetch::unittest::TestContext::self_shared_type self) mutable
 
 #define SCENARIO(NAME)                                          \
   fetch::unittest::details::NewTest(NAME);                      \
@@ -268,114 +264,96 @@ ProgramInserter &last_inserter() { return *inserted_programs.back(); }
   (*fetch::unittest::details::unit_tests.back()) = [&](         \
       fetch::unittest::TestContext::self_shared_type self)
 
-#define CAPTURE(EXPRESSION) \
-  (*self) << #EXPRESSION << " := " << EXPRESSION << "\n";
+#define CAPTURE(EXPRESSION) (*self) << #EXPRESSION << " := " << EXPRESSION << "\n";
 
 #define INFO(EXPRESSION) (*self) << "     - " << EXPRESSION << "\n";
 
-#define EXPECT_FAIL_SUCCESS(EXPRESSION)                                  \
-  if (EXPRESSION)                                                        \
-  {                                                                      \
-    (*self) << fetch::commandline::VT100::Return                         \
-            << fetch::commandline::VT100::Right(70);                     \
-    (*self) << " [  " << fetch::commandline::VT100::Bold;                \
-    (*self) << fetch::commandline::VT100::GetColor("yellow", "default"); \
-    (*self) << "OK" << fetch::commandline::VT100::DefaultAttributes()    \
-            << "  ]\n";                                                  \
-  }                                                                      \
-  else                                                                   \
-  {                                                                      \
-    (*self) << fetch::commandline::VT100::Return                         \
-            << fetch::commandline::VT100::Right(70);                     \
-    (*self) << " [ " << fetch::commandline::VT100::Bold;                 \
-    (*self) << fetch::commandline::VT100::GetColor("red", "default");    \
-    (*self) << "FAIL" << fetch::commandline::VT100::DefaultAttributes()  \
-            << " ]\n\n\n";                                               \
-    (*self) << "Expect failed " << __FILE__ << " on line " << __LINE__   \
-            << ": \n\n";                                                 \
-    (*self) << "    " << #EXPRESSION << "\n\nwhich expands to:\n\n    "; \
-    (*self) << (fetch::unittest::ExpressionStart() * EXPRESSION)         \
-            << "\n\n\n\n";                                               \
-    exit(-1);                                                            \
+#define EXPECT_FAIL_SUCCESS(EXPRESSION)                                                   \
+  if (EXPRESSION)                                                                         \
+  {                                                                                       \
+    (*self) << fetch::commandline::VT100::Return << fetch::commandline::VT100::Right(70); \
+    (*self) << " [  " << fetch::commandline::VT100::Bold;                                 \
+    (*self) << fetch::commandline::VT100::GetColor("yellow", "default");                  \
+    (*self) << "OK" << fetch::commandline::VT100::DefaultAttributes() << "  ]\n";         \
+  }                                                                                       \
+  else                                                                                    \
+  {                                                                                       \
+    (*self) << fetch::commandline::VT100::Return << fetch::commandline::VT100::Right(70); \
+    (*self) << " [ " << fetch::commandline::VT100::Bold;                                  \
+    (*self) << fetch::commandline::VT100::GetColor("red", "default");                     \
+    (*self) << "FAIL" << fetch::commandline::VT100::DefaultAttributes() << " ]\n\n\n";    \
+    (*self) << "Expect failed " << __FILE__ << " on line " << __LINE__ << ": \n\n";       \
+    (*self) << "    " << #EXPRESSION << "\n\nwhich expands to:\n\n    ";                  \
+    (*self) << (fetch::unittest::ExpressionStart() * EXPRESSION) << "\n\n\n\n";           \
+    exit(-1);                                                                             \
   }
 
 #define EXPECT(EXPRESSION)             \
   (*self) << "     - " << #EXPRESSION; \
   EXPECT_FAIL_SUCCESS(EXPRESSION)
 
-#define EXPECT_EXCEPTION(EXPRESSION, EXC)                                  \
-  (*self) << "     - " << #EXPRESSION << " => throw " << #EXC;             \
-  {                                                                        \
-    bool test_success = false;                                             \
-    try                                                                    \
-    {                                                                      \
-      EXPRESSION;                                                          \
-    }                                                                      \
-    catch (EXC const &e)                                                   \
-    {                                                                      \
-      test_success = true;                                                 \
-    }                                                                      \
-    if (test_success)                                                      \
-    {                                                                      \
-      (*self) << fetch::commandline::VT100::Return                         \
-              << fetch::commandline::VT100::Right(70);                     \
-      (*self) << " [  " << fetch::commandline::VT100::Bold;                \
-      (*self) << fetch::commandline::VT100::GetColor("yellow", "default"); \
-      (*self) << "OK" << fetch::commandline::VT100::DefaultAttributes()    \
-              << "  ]\n";                                                  \
-    }                                                                      \
-    else                                                                   \
-    {                                                                      \
-      (*self) << fetch::commandline::VT100::Return                         \
-              << fetch::commandline::VT100::Right(70);                     \
-      (*self) << " [ " << fetch::commandline::VT100::Bold;                 \
-      (*self) << fetch::commandline::VT100::GetColor("red", "default");    \
-      (*self) << "FAIL" << fetch::commandline::VT100::DefaultAttributes()  \
-              << " ]\n\n\n";                                               \
-      (*self) << "Expect failed " << __FILE__ << " on line " << __LINE__   \
-              << ": \n\n";                                                 \
-      (*self) << "    " << #EXC << "was never thrown    "                  \
-              << "\n\n";                                                   \
-      exit(-1);                                                            \
-    }                                                                      \
+#define EXPECT_EXCEPTION(EXPRESSION, EXC)                                                   \
+  (*self) << "     - " << #EXPRESSION << " => throw " << #EXC;                              \
+  {                                                                                         \
+    bool test_success = false;                                                              \
+    try                                                                                     \
+    {                                                                                       \
+      EXPRESSION;                                                                           \
+    }                                                                                       \
+    catch (EXC const &e)                                                                    \
+    {                                                                                       \
+      test_success = true;                                                                  \
+    }                                                                                       \
+    if (test_success)                                                                       \
+    {                                                                                       \
+      (*self) << fetch::commandline::VT100::Return << fetch::commandline::VT100::Right(70); \
+      (*self) << " [  " << fetch::commandline::VT100::Bold;                                 \
+      (*self) << fetch::commandline::VT100::GetColor("yellow", "default");                  \
+      (*self) << "OK" << fetch::commandline::VT100::DefaultAttributes() << "  ]\n";         \
+    }                                                                                       \
+    else                                                                                    \
+    {                                                                                       \
+      (*self) << fetch::commandline::VT100::Return << fetch::commandline::VT100::Right(70); \
+      (*self) << " [ " << fetch::commandline::VT100::Bold;                                  \
+      (*self) << fetch::commandline::VT100::GetColor("red", "default");                     \
+      (*self) << "FAIL" << fetch::commandline::VT100::DefaultAttributes() << " ]\n\n\n";    \
+      (*self) << "Expect failed " << __FILE__ << " on line " << __LINE__ << ": \n\n";       \
+      (*self) << "    " << #EXC << "was never thrown    "                                   \
+              << "\n\n";                                                                    \
+      exit(-1);                                                                             \
+    }                                                                                       \
   }
 
 #define CHECK(TEXT, EXPRESSION) \
   (*self) << "     - " << TEXT; \
   EXPECT_FAIL_SUCCESS(EXPRESSION)
 
-#define SILENT_EXPECT(EXPRESSION)                                        \
-  if (!(EXPRESSION))                                                     \
-  {                                                                      \
-    (*self) << fetch::commandline::VT100::Return                         \
-            << fetch::commandline::VT100::Right(70);                     \
-    (*self) << " [ " << fetch::commandline::VT100::Bold;                 \
-    (*self) << fetch::commandline::VT100::GetColor("red", "default");    \
-    (*self) << "FAIL" << fetch::commandline::VT100::DefaultAttributes()  \
-            << " ]\n\n\n";                                               \
-    (*self) << "Expect failed " << __FILE__ << " on line " << __LINE__   \
-            << ": \n\n";                                                 \
-    (*self) << "    " << #EXPRESSION << "\n\nwhich expands to:\n\n    "; \
-    (*self) << (fetch::unittest::ExpressionStart() * EXPRESSION)         \
-            << "\n\n\n\n";                                               \
-    exit(-1);                                                            \
+#define SILENT_EXPECT(EXPRESSION)                                                         \
+  if (!(EXPRESSION))                                                                      \
+  {                                                                                       \
+    (*self) << fetch::commandline::VT100::Return << fetch::commandline::VT100::Right(70); \
+    (*self) << " [ " << fetch::commandline::VT100::Bold;                                  \
+    (*self) << fetch::commandline::VT100::GetColor("red", "default");                     \
+    (*self) << "FAIL" << fetch::commandline::VT100::DefaultAttributes() << " ]\n\n\n";    \
+    (*self) << "Expect failed " << __FILE__ << " on line " << __LINE__ << ": \n\n";       \
+    (*self) << "    " << #EXPRESSION << "\n\nwhich expands to:\n\n    ";                  \
+    (*self) << (fetch::unittest::ExpressionStart() * EXPRESSION) << "\n\n\n\n";           \
+    exit(-1);                                                                             \
   }
 
-#define DETAILED_EXPECT(EXPRESSION)                                            \
-  fetch::unittest::details::NewNestedProgram(                                  \
-      [=](fetch::unittest::ProgramInserter::sub_function_type sub) {           \
-        if (!(EXPRESSION))                                                     \
-        {                                                                      \
-          (*self) << "Expect failed " << __FILE__ << " on line " << __LINE__   \
-                  << ": \n\n";                                                 \
-          (*self) << "    " << #EXPRESSION << "\n\nwhich expands to:\n\n    "; \
-          (*self) << (fetch::unittest::ExpressionStart() * EXPRESSION)         \
-                  << "\n\n";                                                   \
-          sub(self);                                                           \
-          exit(-1);                                                            \
-        }                                                                      \
-      });                                                                      \
-  fetch::unittest::details::last_inserter() = [=                               \
+#define DETAILED_EXPECT(EXPRESSION)                                                       \
+  fetch::unittest::details::NewNestedProgram(                                             \
+      [=](fetch::unittest::ProgramInserter::sub_function_type sub) {                      \
+        if (!(EXPRESSION))                                                                \
+        {                                                                                 \
+          (*self) << "Expect failed " << __FILE__ << " on line " << __LINE__ << ": \n\n"; \
+          (*self) << "    " << #EXPRESSION << "\n\nwhich expands to:\n\n    ";            \
+          (*self) << (fetch::unittest::ExpressionStart() * EXPRESSION) << "\n\n";         \
+          sub(self);                                                                      \
+          exit(-1);                                                                       \
+        }                                                                                 \
+      });                                                                                 \
+  fetch::unittest::details::last_inserter() = [=                                          \
   ](fetch::unittest::TestContext::self_shared_type self)
 }  // namespace unittest
 }  // namespace fetch

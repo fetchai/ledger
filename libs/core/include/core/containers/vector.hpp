@@ -17,10 +17,7 @@ public:
   type const &At(std::size_t const i) const { return super_type::at(i); }
 
   type &      operator[](std::size_t const i) { return super_type::at(i); }
-  type const &operator[](std::size_t const i) const
-  {
-    return super_type::at(i);
-  }
+  type const &operator[](std::size_t const i) const { return super_type::at(i); }
 
   type &      Front() { return super_type::front(); }
   type const &Front() const { return super_type::front(); }

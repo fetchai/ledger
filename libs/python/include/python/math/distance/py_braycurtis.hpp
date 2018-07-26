@@ -19,8 +19,7 @@ inline typename A::type WrapperBraycurtis(A const &a, A const &b)
   return Braycurtis(a, b);
 }
 
-inline void BuildBraycurtisDistance(std::string const &custom_name,
-                                    pybind11::module & module)
+inline void BuildBraycurtisDistance(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;

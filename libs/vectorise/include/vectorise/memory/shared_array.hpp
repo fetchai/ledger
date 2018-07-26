@@ -33,8 +33,8 @@ public:
 
     if (n > 0)
     {
-      data_ = std::shared_ptr<T>(
-          (type *)_mm_malloc(this->padded_size() * sizeof(type), 16), _mm_free);
+      data_ =
+          std::shared_ptr<T>((type *)_mm_malloc(this->padded_size() * sizeof(type), 16), _mm_free);
       this->pointer_ = data_.get();
     }
   }

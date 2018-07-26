@@ -38,11 +38,10 @@ public:
 
   // Other groups
   typedef fetch::service::ServiceClient<fetch::network::TCPClient> client_type;
-  typedef std::shared_ptr<client_type> client_shared_ptr_type;
+  typedef std::shared_ptr<client_type>                             client_shared_ptr_type;
 
-  ChainKeeperController(uint64_t const &         protocol,
-                        network::NetworkManager *network_manager,
-                        EntryPoint &             details)
+  ChainKeeperController(uint64_t const &protocol, network::NetworkManager *network_manager,
+                        EntryPoint &details)
       : network_manager_(network_manager)
       , details_(details)
       , block_mutex_(__LINE__, __FILE__)
@@ -106,9 +105,8 @@ public:
     }
     auto const &groups = tx_manager_.Next().groups();
     // TODO: Migrate to shared_ptr< Transaction >
-    fetch::logger.Highlight(
-        "Total group size: ", tx_manager_.Next().groups().size(), " ",
-        groups.size());
+    fetch::logger.Highlight("Total group size: ", tx_manager_.Next().groups().size(), " ",
+                            groups.size());
     block_mutex_.unlock();
 
     fetch::logger.Warn("Verify transaction");
@@ -126,9 +124,8 @@ public:
     while ((!client) && (i < 3))
     {  // TODO: make configurable
 
-      client = std::make_shared<client_type>(host, port, network_manager_);
-      auto ping_promise =
-          client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::PING);
+      client            = std::make_shared<client_type>(host, port, network_manager_);
+      auto ping_promise = client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::PING);
       if (!ping_promise.Wait(500))  // TODO: Make configurable
       {
         fetch::logger.Debug("Server not repsonding - retrying !");
@@ -159,8 +156,7 @@ public:
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
-    fetch::logger.Highlight("Updating connectivity for ", details_.host, ":",
-                            details_.port);
+    fetch::logger.Highlight("Updating connectivity for ", details_.host, ":", details_.port);
 
     for (auto &e : list)
     {
@@ -232,9 +228,8 @@ public:
     return details_.group;
   }
 
-  void with_peers_do(std::function<void(std::vector<client_shared_ptr_type>,
-                                        std::vector<EntryPoint> const &)>
-                         fnc)
+  void with_peers_do(
+      std::function<void(std::vector<client_shared_ptr_type>, std::vector<EntryPoint> const &)> fnc)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
@@ -243,8 +238,7 @@ public:
     chain_keeper_friends_mutex_.unlock();
   }
 
-  void with_peers_do(
-      std::function<void(std::vector<client_shared_ptr_type>)> fnc)
+  void with_peers_do(std::function<void(std::vector<client_shared_ptr_type>)> fnc)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
@@ -273,16 +267,14 @@ public:
 
   bool AddBulkTransactions(
       std::unordered_map<tx_digest_type, transaction_type,
-                         typename TransactionManager::hasher_type> const
-          &new_txs)
+                         typename TransactionManager::hasher_type> const &new_txs)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     std::lock_guard<fetch::mutex::Mutex> lock(block_mutex_);
     return tx_manager_.AddBulkTransactions(new_txs);
   }
 
-  void with_transactions_do(
-      std::function<void(std::vector<transaction_type> &)> fnc)
+  void with_transactions_do(std::function<void(std::vector<transaction_type> &)> fnc)
   {
     std::lock_guard<fetch::mutex::Mutex> lock(block_mutex_);
     tx_manager_.with_transactions_do(fnc);

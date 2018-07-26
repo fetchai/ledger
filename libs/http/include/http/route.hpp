@@ -83,16 +83,14 @@ public:
   }
 
 private:
-  typedef std::function<bool(std::size_t &, byte_array::ByteArray const &,
-                             ViewParameters &)>
+  typedef std::function<bool(std::size_t &, byte_array::ByteArray const &, ViewParameters &)>
       match_function_type;
 
   void AddMatch(byte_array::ByteArray const &value)
   {
     LOG_STACK_TRACE_POINT;
 
-    match_.push_back([value](std::size_t &i, byte_array::ByteArray const &path,
-                             ViewParameters &) {
+    match_.push_back([value](std::size_t &i, byte_array::ByteArray const &path, ViewParameters &) {
       bool ret = path.Match(value, i);
       if (ret)
       {
@@ -122,29 +120,28 @@ private:
     std::string reg = "^" + std::string(value.SubArray(i, value.size() - i));
 
     std::regex rgx(reg);
-    match_.push_back([rgx, var](std::size_t &                i,
-                                byte_array::ByteArray const &path,
-                                ViewParameters &             params) {
-      std::string s = std::string(path.SubArray(i));
-      std::smatch matches;
-      bool        ret = std::regex_search(s, matches, rgx);
+    match_.push_back(
+        [rgx, var](std::size_t &i, byte_array::ByteArray const &path, ViewParameters &params) {
+          std::string s = std::string(path.SubArray(i));
+          std::smatch matches;
+          bool        ret = std::regex_search(s, matches, rgx);
 
-      if (ret)
-      {
-        if (matches.size() != 1)
-        {
-          TODO_FAIL("Only expected one match");
-        }
+          if (ret)
+          {
+            if (matches.size() != 1)
+            {
+              TODO_FAIL("Only expected one match");
+            }
 
-        std::string m = matches[0];
+            std::string m = matches[0];
 
-        params[var] = path.SubArray(i, m.size());
+            params[var] = path.SubArray(i, m.size());
 
-        i += m.size();
-      }
+            i += m.size();
+          }
 
-      return ret;
-    });
+          return ret;
+        });
   }
 
   byte_array::ByteArray            original_;

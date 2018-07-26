@@ -42,7 +42,7 @@ private:
   }
 
   byte_array::ConstByteArray id_;
-  uint32_t resource_group_ = std::numeric_limits<uint32_t>::max();
+  uint32_t                   resource_group_ = std::numeric_limits<uint32_t>::max();
   template <typename T>
   friend inline void Serialize(T &, ResourceID const &);
   template <typename T>

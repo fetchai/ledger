@@ -77,16 +77,14 @@ public:
     return args_[i];
   }
 
-  std::string GetArg(std::size_t const &i,
-                     std::string const &default_value) const
+  std::string GetArg(std::size_t const &i, std::string const &default_value) const
   {
     if (i >= args_.size()) return default_value;
 
     return args_[i];
   }
 
-  std::string GetParam(std::string const &key,
-                       std::string const &default_value) const
+  std::string GetParam(std::string const &key, std::string const &default_value) const
   {
     if (params_.find(key) == params_.end()) return default_value;
 

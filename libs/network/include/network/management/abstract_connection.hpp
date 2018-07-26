@@ -9,15 +9,13 @@
 namespace fetch {
 namespace network {
 
-class AbstractConnection
-    : public std::enable_shared_from_this<AbstractConnection>
+class AbstractConnection : public std::enable_shared_from_this<AbstractConnection>
 {
 public:
-  typedef std::shared_ptr<AbstractConnection> shared_type;
-  typedef typename AbstractConnectionRegister::connection_handle_type
-                                                    connection_handle_type;
-  typedef std::weak_ptr<AbstractConnection>         weak_ptr_type;
-  typedef std::weak_ptr<AbstractConnectionRegister> weak_register_type;
+  typedef std::shared_ptr<AbstractConnection>                         shared_type;
+  typedef typename AbstractConnectionRegister::connection_handle_type connection_handle_type;
+  typedef std::weak_ptr<AbstractConnection>                           weak_ptr_type;
+  typedef std::weak_ptr<AbstractConnectionRegister>                   weak_register_type;
 
   enum
   {
@@ -60,10 +58,7 @@ public:
   uint16_t port() const { return port_; }
 
   connection_handle_type handle() const noexcept { return handle_; }
-  void                   SetConnectionManager(weak_register_type const &reg)
-  {
-    connection_register_ = reg;
-  }
+  void SetConnectionManager(weak_register_type const &reg) { connection_register_ = reg; }
 
   weak_ptr_type connection_pointer() { return shared_from_this(); }
 

@@ -9,10 +9,8 @@ namespace http {
 void BuildHTTPConnection(pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<HTTPConnection, fetch::http::AbstractHTTPConnection>(
-      module, "HTTPConnection")
-      .def(py::init<asio::ip::tcp::tcp::socket,
-                    fetch::http::HTTPConnectionManager &>())
+  py::class_<HTTPConnection, fetch::http::AbstractHTTPConnection>(module, "HTTPConnection")
+      .def(py::init<asio::ip::tcp::tcp::socket, fetch::http::HTTPConnectionManager &>())
       .def("socket", &HTTPConnection::socket)
       .def("ReadHeader", &HTTPConnection::ReadHeader)
       .def("ReadBody", &HTTPConnection::ReadBody)

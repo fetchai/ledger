@@ -22,8 +22,7 @@ int main()
       EXPECT(str.SubArray(0, 5) == basecpp.substr(0, 5));
 
       EXPECT(str.SubArray(6, str.size() - 6) == "world");
-      EXPECT(str.SubArray(6, str.size() - 6) ==
-             basecpp.substr(6, basecpp.size() - 6));
+      EXPECT(str.SubArray(6, str.size() - 6) == basecpp.substr(6, basecpp.size() - 6));
     };
 
     SECTION("testing that referencing persists after subbyte_arraying ")

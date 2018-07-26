@@ -39,177 +39,159 @@ int main(int argc, const char *argv[])
 
   std::string identifier = "node-" + std::to_string(id);
 
-  std::string myHost = "127.0.0.1:" + std::to_string(portNumber);
+  std::string                     myHost = "127.0.0.1:" + std::to_string(portNumber);
   fetch::swarm::SwarmPeerLocation myHostLoc(myHost);
 
   auto rnd = std::make_shared<fetch::swarm::SwarmRandom>(id);
 
-  std::shared_ptr<fetch::swarm::SwarmNode> node =
-      std::make_shared<fetch::swarm::SwarmNode>(
-          tm, identifier, maxpeers, rnd, myHost,
-          fetch::protocols::FetchProtocols::SWARM);
+  std::shared_ptr<fetch::swarm::SwarmNode> node = std::make_shared<fetch::swarm::SwarmNode>(
+      tm, identifier, maxpeers, rnd, myHost, fetch::protocols::FetchProtocols::SWARM);
 
-  auto service = std::make_shared<fetch::swarm::SwarmService>(
-      tm, portNumber, node, myHost, idlespeed);
-  auto swarmAgentApi =
-      std::make_shared<fetch::swarm::SwarmAgentApiImpl>(myHost, idlespeed);
-  auto agent = std::make_shared<fetch::swarm::SwarmAgentNaive>(
-      swarmAgentApi, identifier, id, rnd, maxpeers, solvespeed);
+  auto service =
+      std::make_shared<fetch::swarm::SwarmService>(tm, portNumber, node, myHost, idlespeed);
+  auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl>(myHost, idlespeed);
+  auto agent = std::make_shared<fetch::swarm::SwarmAgentNaive>(swarmAgentApi, identifier, id, rnd,
+                                                               maxpeers, solvespeed);
 
   auto parcelNode = std::make_shared<fetch::swarm::SwarmParcelNode>(
       node, fetch::protocols::FetchProtocols::PARCEL);
 
-  auto parcelProtocol =
-      std::make_shared<fetch::swarm::SwarmParcelProtocol>(parcelNode);
+  auto parcelProtocol = std::make_shared<fetch::swarm::SwarmParcelProtocol>(parcelNode);
 
-  service->addRpcProtocol(fetch::protocols::FetchProtocols::PARCEL,
-                          parcelProtocol);
+  service->addRpcProtocol(fetch::protocols::FetchProtocols::PARCEL, parcelProtocol);
 
   // TODO(katie) move the handling of the node functions off the ThreadManager
   // running the io_service.
 
-  swarmAgentApi->ToPing(
-      [swarmAgentApi, node, parcelNode](fetch::swarm::SwarmAgentApi &unused,
-                                        const std::string &          host) {
-        node->Post([swarmAgentApi, node, parcelNode, host]() {
+  swarmAgentApi->ToPing([swarmAgentApi, node, parcelNode](fetch::swarm::SwarmAgentApi &unused,
+                                                          const std::string &          host) {
+    node->Post([swarmAgentApi, node, parcelNode, host]() {
+      try
+      {
+        auto newPeer = node->AskPeerForPeers(host);
+
+        if (newPeer.length())
+        {
+
+          if (!node->IsOwnLocation(newPeer))
+          {
+            swarmAgentApi->DoNewPeerDiscovered(newPeer);
+          }
+        }
+        swarmAgentApi->DoPingSucceeded(host);
+      }
+      catch (fetch::serializers::SerializableException &x)
+      {
+        cerr << " 1CAUGHT fetch::serializers::SerializableException:" << x.what() << endl;
+        swarmAgentApi->DoPingFailed(host);
+      }
+      catch (fetch::swarm::SwarmException &x)
+      {
+        cerr << " 2CAUGHT SwarmException" << x.what() << endl;
+        swarmAgentApi->DoPingFailed(host);
+      }
+    });
+  });
+
+  swarmAgentApi->ToBlockSolved([node, parcelNode](const std::string &data) {
+    parcelNode->PublishParcel(std::make_shared<fetch::swarm::SwarmParcel>("block", data));
+  });
+
+  swarmAgentApi->ToDiscoverBlocks(
+      [swarmAgentApi, node, parcelNode](const std::string &host, unsigned int count) {
+        node->Post([swarmAgentApi, node, parcelNode, host, count]() {
           try
           {
-            auto newPeer = node->AskPeerForPeers(host);
+            auto blockids = parcelNode->AskPeerForParcelIds(host, "block", count);
 
-            if (newPeer.length())
+            for (auto &blockid : blockids)
             {
-
-              if (!node->IsOwnLocation(newPeer))
+              if (!parcelNode->HasParcel("block", blockid))
               {
-                swarmAgentApi->DoNewPeerDiscovered(newPeer);
+                swarmAgentApi->DoNewBlockIdFound(host, blockid);
+              }
+              else
+              {
+                swarmAgentApi->DoBlockIdRepeated(host, blockid);
               }
             }
-            swarmAgentApi->DoPingSucceeded(host);
           }
           catch (fetch::serializers::SerializableException &x)
           {
-            cerr << " 1CAUGHT fetch::serializers::SerializableException:"
-                 << x.what() << endl;
+            cerr << " 3CAUGHT fetch::serializers::SerializableException" << x.what() << endl;
             swarmAgentApi->DoPingFailed(host);
           }
           catch (fetch::swarm::SwarmException &x)
           {
-            cerr << " 2CAUGHT SwarmException" << x.what() << endl;
+            cerr << " 4CAUGHT SwarmException" << x.what() << endl;
             swarmAgentApi->DoPingFailed(host);
           }
         });
       });
 
-  swarmAgentApi->ToBlockSolved([node, parcelNode](const std::string &data) {
-    parcelNode->PublishParcel(
-        std::make_shared<fetch::swarm::SwarmParcel>("block", data));
-  });
-
-  swarmAgentApi->ToDiscoverBlocks([swarmAgentApi, node, parcelNode](
-                                      const std::string &host,
-                                      unsigned int       count) {
-    node->Post([swarmAgentApi, node, parcelNode, host, count]() {
-      try
-      {
-        auto blockids = parcelNode->AskPeerForParcelIds(host, "block", count);
-
-        for (auto &blockid : blockids)
-        {
-          if (!parcelNode->HasParcel("block", blockid))
+  swarmAgentApi->ToGetBlock(
+      [swarmAgentApi, node, parcelNode](const std::string &host, const std::string &blockid) {
+        node->Post([swarmAgentApi, node, parcelNode, host, blockid]() {
+          try
           {
-            swarmAgentApi->DoNewBlockIdFound(host, blockid);
+            auto data = parcelNode->AskPeerForParcelData(host, "block", blockid);
+
+            auto parcel = std::make_shared<fetch::swarm::SwarmParcel>("block", data);
+            if (parcel->GetName() != blockid)
+            {
+              swarmAgentApi->VerifyBlock(blockid, false);
+            }
+            else
+            {
+              if (!parcelNode->HasParcel("block", blockid))
+              {
+                parcelNode->StoreParcel(parcel);
+                swarmAgentApi->DoNewBlockAvailable(host, blockid);
+              }
+            }
           }
-          else
+          catch (fetch::serializers::SerializableException &x)
           {
-            swarmAgentApi->DoBlockIdRepeated(host, blockid);
+            cerr << " 5CAUGHT fetch::serializers::SerializableException" << x.what() << endl;
+            swarmAgentApi->DoPingFailed(host);
           }
-        }
-      }
-      catch (fetch::serializers::SerializableException &x)
-      {
-        cerr << " 3CAUGHT fetch::serializers::SerializableException" << x.what()
-             << endl;
-        swarmAgentApi->DoPingFailed(host);
-      }
-      catch (fetch::swarm::SwarmException &x)
-      {
-        cerr << " 4CAUGHT SwarmException" << x.what() << endl;
-        swarmAgentApi->DoPingFailed(host);
-      }
-    });
-  });
-
-  swarmAgentApi->ToGetBlock([swarmAgentApi, node, parcelNode](
-                                const std::string &host,
-                                const std::string &blockid) {
-    node->Post([swarmAgentApi, node, parcelNode, host, blockid]() {
-      try
-      {
-        auto data = parcelNode->AskPeerForParcelData(host, "block", blockid);
-
-        auto parcel =
-            std::make_shared<fetch::swarm::SwarmParcel>("block", data);
-        if (parcel->GetName() != blockid)
-        {
-          swarmAgentApi->VerifyBlock(blockid, false);
-        }
-        else
-        {
-          if (!parcelNode->HasParcel("block", blockid))
+          catch (fetch::swarm::SwarmException &x)
           {
-            parcelNode->StoreParcel(parcel);
-            swarmAgentApi->DoNewBlockAvailable(host, blockid);
+            cerr << " 6CAUGHT SwarmException" << x.what() << endl;
+            swarmAgentApi->DoPingFailed(host);
           }
-        }
-      }
-      catch (fetch::serializers::SerializableException &x)
-      {
-        cerr << " 5CAUGHT fetch::serializers::SerializableException" << x.what()
-             << endl;
-        swarmAgentApi->DoPingFailed(host);
-      }
-      catch (fetch::swarm::SwarmException &x)
-      {
-        cerr << " 6CAUGHT SwarmException" << x.what() << endl;
-        swarmAgentApi->DoPingFailed(host);
-      }
-    });
-  });
-  swarmAgentApi->ToGetKarma(
-      [node](const std::string &host) { return node->GetKarma(host); });
-  swarmAgentApi->ToAddKarma([node](const std::string &host, double amount) {
-    node->AddOrUpdate(host, amount);
-  });
-  swarmAgentApi->ToAddKarmaMax(
-      [node](const std::string &host, double amount, double limit) {
-        if (node->GetKarma(host) < limit)
-        {
-          node->AddOrUpdate(host, amount);
-        }
+        });
       });
-  swarmAgentApi->ToGetPeers(
-      [swarmAgentApi, node, parcelNode](unsigned int count, double minKarma) {
-        auto                   karmaPeers = node->GetBestPeers(count, minKarma);
-        std::list<std::string> results;
-        for (auto &peer : karmaPeers)
-        {
-          results.push_back(peer.GetLocation().AsString());
-        }
-        if (results.empty())
-        {
-          swarmAgentApi->DoPeerless();
-        }
-        return results;
-      });
+  swarmAgentApi->ToGetKarma([node](const std::string &host) { return node->GetKarma(host); });
+  swarmAgentApi->ToAddKarma(
+      [node](const std::string &host, double amount) { node->AddOrUpdate(host, amount); });
+  swarmAgentApi->ToAddKarmaMax([node](const std::string &host, double amount, double limit) {
+    if (node->GetKarma(host) < limit)
+    {
+      node->AddOrUpdate(host, amount);
+    }
+  });
+  swarmAgentApi->ToGetPeers([swarmAgentApi, node, parcelNode](unsigned int count, double minKarma) {
+    auto                   karmaPeers = node->GetBestPeers(count, minKarma);
+    std::list<std::string> results;
+    for (auto &peer : karmaPeers)
+    {
+      results.push_back(peer.GetLocation().AsString());
+    }
+    if (results.empty())
+    {
+      swarmAgentApi->DoPeerless();
+    }
+    return results;
+  });
 
-  swarmAgentApi->ToQueryBlock(
-      [swarmAgentApi, node, parcelNode](const std::string &id) {
-        if (!parcelNode->HasParcel("block", id))
-        {
-          return std::string("<NO PARCEL>");
-        }
-        return parcelNode->GetParcel("block", id)->GetData();
-      });
+  swarmAgentApi->ToQueryBlock([swarmAgentApi, node, parcelNode](const std::string &id) {
+    if (!parcelNode->HasParcel("block", id))
+    {
+      return std::string("<NO PARCEL>");
+    }
+    return parcelNode->GetParcel("block", id)->GetData();
+  });
 
   swarmAgentApi->ToVerifyBlock(
       [swarmAgentApi, node, parcelNode](const std::string &id, bool validity) {

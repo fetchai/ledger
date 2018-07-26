@@ -9,8 +9,7 @@ namespace crypto {
 void BuildProver(pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<Prover>(module, "Prover")
-      .def(py::init<>()) /* No constructors found */;
+  py::class_<Prover>(module, "Prover").def(py::init<>()) /* No constructors found */;
 }
 };  // namespace crypto
 };  // namespace fetch

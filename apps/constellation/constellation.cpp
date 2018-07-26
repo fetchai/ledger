@@ -5,9 +5,8 @@
 
 namespace fetch {
 
-Constellation::Constellation(uint16_t port_start, std::size_t num_executors,
-                             std::size_t num_lanes, std::size_t num_slices,
-                             std::string const &interface_address,
+Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std::size_t num_lanes,
+                             std::size_t num_slices, std::string const &interface_address,
                              std::string const &db_prefix)
     : interface_address_{interface_address}
     , num_lanes_{static_cast<uint32_t>(num_lanes)}
@@ -15,8 +14,7 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors,
     , p2p_port_{static_cast<uint16_t>(port_start + P2P_PORT_OFFSET)}
     , http_port_{static_cast<uint16_t>(port_start + HTTP_PORT_OFFSET)}
     , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
-    , main_chain_port_{
-          static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
+    , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
 {
   // determine how many threads the network manager will require
   std::size_t const num_network_threads =
@@ -24,8 +22,7 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors,
                            // := provision for http and p2p
 
   // create the network manager
-  network_manager_.reset(
-      new fetch::network::NetworkManager(num_network_threads));
+  network_manager_.reset(new fetch::network::NetworkManager(num_network_threads));
   network_manager_->Start();  // needs to be started
 
   // Creating P2P instance
@@ -45,8 +42,7 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors,
   });
 
   // setup the storage service
-  storage_service_.Setup(db_prefix, num_lanes, lane_port_start_,
-                         *network_manager_, false);
+  storage_service_.Setup(db_prefix, num_lanes, lane_port_start_, *network_manager_, false);
 
   // create the aggregate storage client
   storage_.reset(new ledger::StorageUnitClient(*network_manager_));
@@ -63,37 +59,34 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors,
   }
 
   // create the execution manager (and its executors)
-  execution_manager_.reset(
-      new ledger::ExecutionManager(num_executors, storage_, [this]() {
-        auto executor = CreateExecutor();
-        executors_.push_back(executor);
-        return executor;
-      }));
+  execution_manager_.reset(new ledger::ExecutionManager(num_executors, storage_, [this]() {
+    auto executor = CreateExecutor();
+    executors_.push_back(executor);
+    return executor;
+  }));
 
   execution_manager_->Start();
 
   // Main chain
-  main_chain_service_.reset(new chain::MainChainService(
-      db_prefix, main_chain_port_, *network_manager_.get()));
+  main_chain_service_.reset(
+      new chain::MainChainService(db_prefix, main_chain_port_, *network_manager_.get()));
 
   // Mainchain remote
   main_chain_remote_.reset(new chain::MainChainRemoteControl());
   client_type client(*network_manager_.get());
   client.Connect(interface_address, main_chain_port_);
-  shared_service_type service =
-      std::make_shared<service_type>(client, *network_manager_.get());
+  shared_service_type service = std::make_shared<service_type>(client, *network_manager_.get());
   main_chain_remote_->SetClient(service);
 
   // Mining and block coordination
-  block_coordinator_.reset(new chain::BlockCoordinator{
-      *main_chain_service_->mainchain(), *execution_manager_});
+  block_coordinator_.reset(
+      new chain::BlockCoordinator{*main_chain_service_->mainchain(), *execution_manager_});
   transaction_packer_.reset(new miner::AnnealerMiner);
-  main_chain_miner_.reset(new chain::MainChainMiner{
-      num_lanes_, num_slices_, *main_chain_service_->mainchain(),
-      *block_coordinator_, *transaction_packer_, main_chain_port_});
+  main_chain_miner_.reset(
+      new chain::MainChainMiner{num_lanes_, num_slices_, *main_chain_service_->mainchain(),
+                                *block_coordinator_, *transaction_packer_, main_chain_port_});
 
-  tx_processor_.reset(
-      new ledger::TransactionProcessor{*storage_, *transaction_packer_});
+  tx_processor_.reset(new ledger::TransactionProcessor{*storage_, *transaction_packer_});
 
   // Now that the execution manager is created, can start components that need
   // it to exist
@@ -102,11 +95,9 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors,
 
   // define the list of HTTP modules to be used
   http_modules_ = {
-      std::make_shared<ledger::ContractHttpInterface>(*storage_,
-                                                      *tx_processor_),
+      std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
       std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_),
-      std::make_shared<p2p::ExploreHttpInterface>(
-          p2p_.get(), main_chain_service_->mainchain())};
+      std::make_shared<p2p::ExploreHttpInterface>(p2p_.get(), main_chain_service_->mainchain())};
 
   // create and register the HTTP modules
   http_.reset(new http::HTTPServer(http_port_, *network_manager_));
@@ -122,8 +113,7 @@ void Constellation::Run(peer_list_type const &initial_peers)
   using namespace std::chrono;
   using namespace std::this_thread;
 
-  p2p_->AddMainChain(interface_address_,
-                     static_cast<uint16_t>(main_chain_port_));
+  p2p_->AddMainChain(interface_address_, static_cast<uint16_t>(main_chain_port_));
   p2p_->Start();
 
   // Make the initial p2p connections

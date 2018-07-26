@@ -87,8 +87,7 @@ public:
       bool success = nodeDirectory_.GetHeader(hash, walkBlock);
       if (!success) break;
 
-      walkBlock
-          .UpdateDigest();  // critical we update the hash after transmission
+      walkBlock.UpdateDigest();  // critical we update the hash after transmission
       hash = walkBlock.body().previous_hash;
 
     } while (mainChain.AddBlock(walkBlock));
@@ -177,12 +176,11 @@ public:
   }
 
 private:
-  network_benchmark::NodeDirectory
-                      nodeDirectory_;  // Manage connections to other nodes
-  fetch::mutex::Mutex mutex_;
-  bool                stopped_{false};
-  std::size_t         target_ = 16;  // 16 = roughly one block every 0.18s
-  uint64_t            minerNumber_{1};
+  network_benchmark::NodeDirectory nodeDirectory_;  // Manage connections to other nodes
+  fetch::mutex::Mutex              mutex_;
+  bool                             stopped_{false};
+  std::size_t                      target_ = 16;  // 16 = roughly one block every 0.18s
+  uint64_t                         minerNumber_{1};
 
   chain::MainChain mainChain{uint32_t(minerNumber_)};
 };

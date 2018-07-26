@@ -28,17 +28,16 @@ std::vector<transaction_type>       TestData;
 const std::vector<transaction_type> RefVec;
 
 template <typename T, std::size_t N = 256>
-std::size_t MakeTransactionVector(std::vector<T> &vec, std::size_t payload,
-                                  std::size_t txPerCall)
+std::size_t MakeTransactionVector(std::vector<T> &vec, std::size_t payload, std::size_t txPerCall)
 {
   vec.clear();
   for (std::size_t i = 0; i < txPerCall - 1; ++i)
   {
-    vec.push_back(NextTransaction<transaction_type>(
-        (payload - Size(RefVec)) / txPerCall - sizeOfTxMin));
+    vec.push_back(
+        NextTransaction<transaction_type>((payload - Size(RefVec)) / txPerCall - sizeOfTxMin));
   }
-  vec.push_back(NextTransaction<transaction_type>(
-      payload - Size(RefVec) - (txPerCall - 1) * Size(vec[0]) - sizeOfTxMin));
+  vec.push_back(NextTransaction<transaction_type>(payload - Size(RefVec) -
+                                                  (txPerCall - 1) * Size(vec[0]) - sizeOfTxMin));
 
   return payload;
 }
@@ -81,8 +80,7 @@ public:
 class BenchmarkService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  BenchmarkService(uint16_t port, fetch::network::NetworkManager tm)
-      : ServiceServer(port, tm)
+  BenchmarkService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
   {
     this->Add(SERVICE, &serviceProtocol);
   }
@@ -97,8 +95,8 @@ double             mbps_running_count = 0;
 double             mbps_peak          = 0;
 double             mbps_min           = 0;
 
-void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP,
-             uint16_t port, bool isMaster, bool pullTest)
+void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, uint16_t port,
+             bool isMaster, bool pullTest)
 {
 
   if (payload / txPerCall < sizeOfTxMin)
@@ -136,8 +134,8 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP,
 
   if (0 == setupPayload)
   {
-    std::cerr << "Failed to setup for payload: " << payload
-              << " TX/call: " << txPerCall << std::endl;
+    std::cerr << "Failed to setup for payload: " << payload << " TX/call: " << txPerCall
+              << std::endl;
     tm.Stop();
     return;
   }
@@ -192,11 +190,9 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP,
   }
 
   std::ostringstream result;
-  result << std::left << std::setw(10) << double(setupPayload) / 1000
-         << std::left << std::setw(10) << txPerCall << std::left
-         << std::setw(10) << double(txData) / seconds << std::left
-         << std::setw(10) << mbps << std::left << std::setw(10) << seconds
-         << std::endl;
+  result << std::left << std::setw(10) << double(setupPayload) / 1000 << std::left << std::setw(10)
+         << txPerCall << std::left << std::setw(10) << double(txData) / seconds << std::left
+         << std::setw(10) << mbps << std::left << std::setw(10) << seconds << std::endl;
 
   std::cout << result.str();
   finalResult << result.str();
@@ -207,9 +203,9 @@ int main(int argc, char *argv[])
   sizeOfTxMin = Size(NextTransaction<transaction_type>(0));
   std::cout << "Base tx size: " << sizeOfTxMin << std::endl;
 
-  std::string IP;
-  uint16_t    port     = 8080;  // Default for all benchmark tests
-  bool        pullTest = true;
+  std::string                    IP;
+  uint16_t                       port     = 8080;  // Default for all benchmark tests
+  bool                           pullTest = true;
   fetch::network::NetworkManager tm(8);
   std::thread                    benchmarkThread;
 
@@ -227,8 +223,7 @@ int main(int argc, char *argv[])
     pullTest = result.compare("--push") == 0 ? false : true;
   }
 
-  std::cout << "test IP:port " << pullTest << " " << IP << ":" << port
-            << std::endl;
+  std::cout << "test IP:port " << pullTest << " " << IP << ":" << port << std::endl;
 
   if (IP.size() == 0 || IP.compare("localhost") == 0)
   {
@@ -247,10 +242,9 @@ int main(int argc, char *argv[])
 
   if (IP.size() != 0)
   {
-    std::cout << std::left << std::setw(10) << "Pay_kB" << std::left
-              << std::setw(10) << "TX/rpc" << std::left << std::setw(10)
-              << "Tx/sec" << std::left << std::setw(10) << "Mbps" << std::left
-              << std::setw(10) << "time" << std::endl;
+    std::cout << std::left << std::setw(10) << "Pay_kB" << std::left << std::setw(10) << "TX/rpc"
+              << std::left << std::setw(10) << "Tx/sec" << std::left << std::setw(10) << "Mbps"
+              << std::left << std::setw(10) << "time" << std::endl;
 
     for (std::size_t i = 0; i <= 10; ++i)
     {
@@ -266,8 +260,7 @@ int main(int argc, char *argv[])
     }
 
     // std::cout << finalResult.str();
-    std::cout << "Average Mb/s: " << mbps_running / mbps_running_count
-              << std::endl;
+    std::cout << "Average Mb/s: " << mbps_running / mbps_running_count << std::endl;
     std::cout << "Peak Mb/s: " << mbps_peak << std::endl;
     std::cout << "Min Mb/s: " << mbps_min << std::endl;
   }

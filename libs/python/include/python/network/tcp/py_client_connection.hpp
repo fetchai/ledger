@@ -9,10 +9,8 @@ namespace network {
 void BuildClientConnection(pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<ClientConnection, fetch::network::AbstractClientConnection>(
-      module, "ClientConnection")
-      .def(py::init<asio::ip::tcp::tcp::socket,
-                    fetch::network::ClientManager &>())
+  py::class_<ClientConnection, fetch::network::AbstractClientConnection>(module, "ClientConnection")
+      .def(py::init<asio::ip::tcp::tcp::socket, fetch::network::ClientManager &>())
       .def("Start", &ClientConnection::Start)
       .def("handle", &ClientConnection::handle)
       .def("Send", &ClientConnection::Send)

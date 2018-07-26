@@ -18,19 +18,16 @@ class FetchService
 {
 public:
   FetchService(uint16_t port, std::string const &pk)
-      : network_manager_(new fetch::network::NetworkManager(8))
-      , service_(port, network_manager_)
+      : network_manager_(new fetch::network::NetworkManager(8)), service_(port, network_manager_)
   {
     details_.public_key = pk;
-    discovery_          = new DiscoveryProtocol(network_manager_,
-                                       FetchProtocols::DISCOVERY, details_);
+    discovery_ = new DiscoveryProtocol(network_manager_, FetchProtocols::DISCOVERY, details_);
 
     service_.Add(FetchProtocols::DISCOVERY, discovery_);
 
     // Setting callback to resolve IP
-    discovery_->SetClientIPCallback([this](uint64_t const &n) -> std::string {
-      return service_.GetAddress(n);
-    });
+    discovery_->SetClientIPCallback(
+        [this](uint64_t const &n) -> std::string { return service_.GetAddress(n); });
   }
 
   ~FetchService()
@@ -64,8 +61,7 @@ int main(int argc, char const **argv)
 
   if (params.arg_size() < 3)
   {
-    std::cout << "usage: " << argv[0]
-              << " [port] [info] [[bootstrap_host] [bootstrap_port]]"
+    std::cout << "usage: " << argv[0] << " [port] [info] [[bootstrap_host] [bootstrap_port]]"
               << std::endl;
     exit(-1);
   }

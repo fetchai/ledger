@@ -18,18 +18,14 @@ public:
   {
 
     // RPC
-    Protocol::ExposeWithClientArg(NEED_CONNECTIONS, directory_,
-                                  &P2PPeerDirectory::NeedConnections);
+    Protocol::ExposeWithClientArg(NEED_CONNECTIONS, directory_, &P2PPeerDirectory::NeedConnections);
     Protocol::ExposeWithClientArg(ENOUGH_CONNECTIONS, directory_,
                                   &P2PPeerDirectory::EnoughConnections);
-    Protocol::Expose(SUGGEST_PEERS, directory_,
-                     &P2PPeerDirectory::SuggestPeersToConnectTo);
+    Protocol::Expose(SUGGEST_PEERS, directory_, &P2PPeerDirectory::SuggestPeersToConnectTo);
 
     // Feeds
-    Protocol::RegisterFeed(P2PPeerDirectory::FEED_REQUEST_CONNECTIONS,
-                           directory_);
-    Protocol::RegisterFeed(P2PPeerDirectory::FEED_ENOUGH_CONNECTIONS,
-                           directory_);
+    Protocol::RegisterFeed(P2PPeerDirectory::FEED_REQUEST_CONNECTIONS, directory_);
+    Protocol::RegisterFeed(P2PPeerDirectory::FEED_ENOUGH_CONNECTIONS, directory_);
   }
 
 private:

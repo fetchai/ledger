@@ -5,8 +5,7 @@
 
 #include "network/service/server.hpp"
 
-class NodeToNodeProtocol : public NodeToNodeFunctionality,
-                           public fetch::service::Protocol
+class NodeToNodeProtocol : public NodeToNodeFunctionality, public fetch::service::Protocol
 {
 public:
   NodeToNodeProtocol(fetch::network::NetworkManager network_manager)
@@ -17,8 +16,7 @@ public:
     NodeToNodeFunctionality *controller = (NodeToNodeFunctionality *)this;
     this->Expose(PeerToPeerCommands::SEND_MESSAGE, controller,
                  &NodeToNodeFunctionality::SendMessage);
-    this->Expose(PeerToPeerCommands::GET_MESSAGES, controller,
-                 &NodeToNodeFunctionality::messages);
+    this->Expose(PeerToPeerCommands::GET_MESSAGES, controller, &NodeToNodeFunctionality::messages);
 
     // Using the event feed that
     this->RegisterFeed(PeerToPeerFeed::NEW_MESSAGE, this);

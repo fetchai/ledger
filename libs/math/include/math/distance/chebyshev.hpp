@@ -16,8 +16,7 @@ inline typename A::type Chebyshev(A const &a, A const &b)
   //  typedef typename A::vector_register_type vector_register_type;
   //  typedef typename A::type type;
 
-  throw std::runtime_error(
-      "not implemented yet due to lacking features in vectorisation unit");
+  throw std::runtime_error("not implemented yet due to lacking features in vectorisation unit");
 
   /*
   type m = a.data().in_parallel().Reduce(memory::TrivialRange(0, a.size()),

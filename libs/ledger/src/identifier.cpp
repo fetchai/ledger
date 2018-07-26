@@ -10,10 +10,7 @@ namespace ledger {
  *
  * @param identifier The fully qualified name to parse
  */
-Identifier::Identifier(std::string identifier) : full_{identifier}
-{
-  Tokenise();
-}
+Identifier::Identifier(std::string identifier) : full_{identifier} { Tokenise(); }
 
 /**
  * Internal: Break up the fully qualified name into tokens
@@ -64,10 +61,7 @@ bool Identifier::IsParentTo(Identifier const &other) const
  * @param other The prospective parent identifier
  * @return true if it is a parent, otherwise false
  */
-bool Identifier::IsChildTo(Identifier const &other) const
-{
-  return other.IsParentTo(*this);
-}
+bool Identifier::IsChildTo(Identifier const &other) const { return other.IsParentTo(*this); }
 
 /**
  * Determine if the current identifier is a direct parent to a specified

@@ -9,8 +9,7 @@ template <std::size_t N = 1>
 void TestCase1()
 {
   std::cout << "TEST CASE 1. Threads: " << N << std::endl;
-  std::cout << "Info: Testing thread manager starting, stopping and posting"
-            << std::endl;
+  std::cout << "Info: Testing thread manager starting, stopping and posting" << std::endl;
 
   {
     NetworkManager tmanager(N);
@@ -32,8 +31,7 @@ void TestCase1()
     NetworkManager tmanager(N);
     tmanager.Start();
 
-    tmanager.Post(
-        []() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
+    tmanager.Post([]() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
     tmanager.Post([]() {
       std::cout << "This thread prints stuff" << std::endl;
       ;
@@ -48,8 +46,7 @@ template <std::size_t N = 1>
 void TestCase2()
 {
   std::cout << "TEST CASE 2. Threads: " << N << std::endl;
-  std::cout << "Info: Testing thread manager operation when it is being moved"
-            << std::endl;
+  std::cout << "Info: Testing thread manager operation when it is being moved" << std::endl;
 
   {
     NetworkManager tmanager(N);
@@ -80,8 +77,7 @@ void TestCase2()
   }
 
   {
-    std::shared_ptr<NetworkManager> shared =
-        std::make_shared<NetworkManager>(N);
+    std::shared_ptr<NetworkManager> shared = std::make_shared<NetworkManager>(N);
     shared->Start();
 
     std::atomic<int> counter{0};
@@ -116,8 +112,7 @@ template <std::size_t N = 1>
 void TestCase3()
 {
   std::cout << "TEST CASE 3. Threads: " << N << std::endl;
-  std::cout << "Info: Testing thread manager thread starvation/balancing"
-            << std::endl;
+  std::cout << "Info: Testing thread manager thread starvation/balancing" << std::endl;
 
   for (std::size_t index = 0; index < 10; ++index)
   {
@@ -169,8 +164,7 @@ template <std::size_t N = 1>
 void TestCase4()
 {
   std::cout << "TEST CASE 4. Threads: " << N << std::endl;
-  std::cout << "Info: Stopping thread manager through its own post mechanism"
-            << std::endl;
+  std::cout << "Info: Stopping thread manager through its own post mechanism" << std::endl;
   for (std::size_t i = 0; i < 1000; ++i)
   {
     NetworkManager tmanager(N);

@@ -24,17 +24,16 @@ public:
   typedef std::shared_ptr<transaction_type>      shared_transaction_type;
   typedef typename transaction_type::digest_type tx_digest_type;
 
-  typedef fetch::chain::consensus::ProofOfWork proof_type;
-  typedef fetch::chain::BlockBody              block_body_type;
-  typedef typename proof_type::header_type     block_header_type;
-  typedef fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256>
-                                      block_type;
-  typedef std::shared_ptr<block_type> shared_block_type;
+  typedef fetch::chain::consensus::ProofOfWork                        proof_type;
+  typedef fetch::chain::BlockBody                                     block_body_type;
+  typedef typename proof_type::header_type                            block_header_type;
+  typedef fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256> block_type;
+  typedef std::shared_ptr<block_type>                                 shared_block_type;
 
   TransactionManager() { group_ = 0; }
 
-  bool AddBulkTransactions(std::unordered_map<tx_digest_type, transaction_type,
-                                              hasher_type> const &new_txs)
+  bool AddBulkTransactions(
+      std::unordered_map<tx_digest_type, transaction_type, hasher_type> const &new_txs)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
 
@@ -134,8 +133,7 @@ public:
       if (ref[i] != applied_[i])
       {
         fetch::logger.Warn("Transaction mismatch at ", i, ": ");
-        fetch::logger.Warn(i, " ", ToBase64(ref[i]), " <> ",
-                           ToBase64(applied_[i]));
+        fetch::logger.Warn(i, " ", ToBase64(ref[i]), " <> ", ToBase64(applied_[i]));
         ret = false;
       }
     }
@@ -143,8 +141,7 @@ public:
     {
       for (std::size_t i = 0; i < ref.size(); ++i)
       {
-        fetch::logger.Debug(i, ") ", ToBase64(ref[i]),
-                            " == ", ToBase64(applied_[i]));
+        fetch::logger.Debug(i, ") ", ToBase64(ref[i]), " == ", ToBase64(applied_[i]));
       }
     }
 
@@ -165,8 +162,7 @@ public:
 
   void set_group(uint32_t g) { group_ = g; }
 
-  void with_transactions_do(
-      std::function<void(std::vector<transaction_type> &)> fnc)
+  void with_transactions_do(std::function<void(std::vector<transaction_type> &)> fnc)
   {
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     fnc(last_transactions_);
@@ -182,9 +178,8 @@ private:
     transactions_[tx.digest()] = std::make_shared<transaction_type>(tx);
     known_transactions_.insert(tx.digest());
     unapplied_.insert(tx.digest());
-    fetch::logger.Highlight(
-        "========================================= >>>>>>>>>>>>>>>>>>> ",
-        known_transactions_.size());
+    fetch::logger.Highlight("========================================= >>>>>>>>>>>>>>>>>>> ",
+                            known_transactions_.size());
 
     TODO("Trim last transactions");
   }
@@ -197,8 +192,7 @@ private:
   std::unordered_set<tx_digest_type, hasher_type> known_transactions_;
   std::vector<tx_digest_type>                     applied_;
 
-  std::unordered_map<tx_digest_type, shared_transaction_type, hasher_type>
-      transactions_;
+  std::unordered_map<tx_digest_type, shared_transaction_type, hasher_type> transactions_;
 
   mutable fetch::mutex::Mutex mutex_;
 };

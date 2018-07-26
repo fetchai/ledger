@@ -13,10 +13,8 @@
 namespace fetch {
 namespace storage {
 
-template <std::size_t BS = 2048, typename A = FileBlockType<BS>,
-          typename B = KeyValueIndex<>,
-          typename C = VersionedRandomAccessStack<A>,
-          typename D = FileObject<C>>
+template <std::size_t BS = 2048, typename A = FileBlockType<BS>, typename B = KeyValueIndex<>,
+          typename C = VersionedRandomAccessStack<A>, typename D = FileObject<C>>
 class DocumentStore
 {
 public:
@@ -40,27 +38,22 @@ public:
   class DocumentFileImplementation : public file_object_type
   {
   public:
-    DocumentFileImplementation(self_type *                       s,
-                               byte_array::ConstByteArray const &address,
-                               file_store_type &                 store)
+    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
+                               file_store_type &store)
         : file_object_type(store), address_(address), store_(s)
     {}
 
-    DocumentFileImplementation(self_type *                       s,
-                               byte_array::ConstByteArray const &address,
+    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
                                file_store_type &store, std::size_t const &pos)
         : file_object_type(store, pos), address_(address), store_(s)
     {}
 
     ~DocumentFileImplementation() { store_->UpdateDocumentFile(*this); }
-    DocumentFileImplementation(DocumentFileImplementation const &other) =
-        delete;
-    DocumentFileImplementation operator          =(
-        DocumentFileImplementation const &other) = delete;
+    DocumentFileImplementation(DocumentFileImplementation const &other) = delete;
+    DocumentFileImplementation operator=(DocumentFileImplementation const &other) = delete;
 
     DocumentFileImplementation(DocumentFileImplementation &&other) = default;
-    DocumentFileImplementation &operator=(DocumentFileImplementation &&other) =
-        default;
+    DocumentFileImplementation &operator=(DocumentFileImplementation &&other) = default;
 
     byte_array::ConstByteArray const &address() const { return address_; }
 
@@ -78,19 +71,16 @@ public:
 
     DocumentFile() : pointer_(nullptr) {}
 
-    DocumentFile(self_type *s, byte_array::ConstByteArray const &address,
-                 file_store_type &store)
+    DocumentFile(self_type *s, byte_array::ConstByteArray const &address, file_store_type &store)
     {
-      pointer_ =
-          std::make_shared<DocumentFileImplementation>(s, address, store);
+      pointer_     = std::make_shared<DocumentFileImplementation>(s, address, store);
       was_created_ = true;
     }
 
-    DocumentFile(self_type *s, byte_array::ConstByteArray const &address,
-                 file_store_type &store, std::size_t const &pos)
+    DocumentFile(self_type *s, byte_array::ConstByteArray const &address, file_store_type &store,
+                 std::size_t const &pos)
     {
-      pointer_ =
-          std::make_shared<DocumentFileImplementation>(s, address, store, pos);
+      pointer_ = std::make_shared<DocumentFileImplementation>(s, address, store, pos);
     }
 
     uint64_t Tell() { return pointer_->Tell(); }
@@ -105,19 +95,13 @@ public:
 
     void Write(byte_array::ConstByteArray const &arr) { pointer_->Write(arr); }
 
-    void Write(uint8_t const *bytes, uint64_t const &m)
-    {
-      pointer_->Write(bytes, m);
-    }
+    void Write(uint8_t const *bytes, uint64_t const &m) { pointer_->Write(bytes, m); }
 
     std::size_t id() const { return pointer_->id(); }
 
     std::size_t size() const { return pointer_->size(); }
 
-    byte_array::ConstByteArray const &address() const
-    {
-      return pointer_->address();
-    }
+    byte_array::ConstByteArray const &address() const { return pointer_->address(); }
 
     bool was_created() const { return was_created_; }
 
@@ -126,25 +110,23 @@ public:
     bool                                        was_created_ = false;
   };
 
-  void Load(std::string const &doc_file, std::string const &doc_diff,
-            std::string const &index_file, std::string const &index_diff,
-            bool const &create = true)
+  void Load(std::string const &doc_file, std::string const &doc_diff, std::string const &index_file,
+            std::string const &index_diff, bool const &create = true)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     file_store_.Load(doc_file, doc_diff, create);
     key_index_.Load(index_file, index_diff, create);
   }
 
-  void New(std::string const &doc_file, std::string const &doc_diff,
-           std::string const &index_file, std::string const &index_diff)
+  void New(std::string const &doc_file, std::string const &doc_diff, std::string const &index_file,
+           std::string const &index_diff)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     file_store_.New(doc_file, doc_diff);
     key_index_.New(index_file, index_diff);
   }
 
-  void Load(std::string const &doc_file, std::string const &index_file,
-            bool const &create = true)
+  void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     file_store_.Load(doc_file, create);

@@ -19,15 +19,14 @@ class ServiceClientInterface
 {
 public:
   ServiceClientInterface()
-      : subscription_mutex_(__LINE__, __FILE__)
-      , promises_mutex_(__LINE__, __FILE__)
+      : subscription_mutex_(__LINE__, __FILE__), promises_mutex_(__LINE__, __FILE__)
   {}
 
   virtual ~ServiceClientInterface() {}
 
   template <typename... arguments>
-  Promise Call(protocol_handler_type const &protocol,
-               function_handler_type const &function, arguments &&... args)
+  Promise Call(protocol_handler_type const &protocol, function_handler_type const &function,
+               arguments &&... args)
   {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Service Client Calling ", protocol, ":", function);
@@ -54,8 +53,7 @@ public:
     {
       fetch::logger.Debug("Call failed!");
       prom.reference()->Fail(serializers::SerializableException(
-          error::COULD_NOT_DELIVER,
-          byte_array::ConstByteArray("Could not deliver request")));
+          error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
       promises_mutex_.lock();
       promises_.erase(prom.id());
       promises_mutex_.unlock();
@@ -92,22 +90,19 @@ public:
     {
       fetch::logger.Debug("Call failed!");
       prom.reference()->Fail(serializers::SerializableException(
-          error::COULD_NOT_DELIVER,
-          byte_array::ConstByteArray("Could not deliver request")));
+          error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
     }
 
     return prom;
   }
 
   subscription_handler_type Subscribe(protocol_handler_type const &protocol,
-                                      feed_handler_type const &    feed,
-                                      AbstractCallable *           callback)
+                                      feed_handler_type const &feed, AbstractCallable *callback)
   {
     LOG_STACK_TRACE_POINT;
 
-    subscription_handler_type subid =
-        CreateSubscription(protocol, feed, callback);
-    serializer_type params;
+    subscription_handler_type subid = CreateSubscription(protocol, feed, callback);
+    serializer_type           params;
 
     serializers::SizeCounter<serializer_type> counter;
     counter << SERVICE_SUBSCRIBE << protocol << feed << subid;
@@ -179,8 +174,7 @@ protected:
         promises_mutex_.unlock();
 
         throw serializers::SerializableException(
-            error::PROMISE_NOT_FOUND,
-            byte_array::ConstByteArray("Could not find promise"));
+            error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
       }
       promises_mutex_.unlock();
 
@@ -205,8 +199,7 @@ protected:
       {
         promises_mutex_.unlock();
         throw serializers::SerializableException(
-            error::PROMISE_NOT_FOUND,
-            byte_array::ConstByteArray("Could not find promise"));
+            error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
       }
 
       promises_mutex_.unlock();
@@ -265,9 +258,8 @@ protected:
   }
 
 private:
-  subscription_handler_type CreateSubscription(
-      protocol_handler_type const &protocol, feed_handler_type const &feed,
-      AbstractCallable *cb)
+  subscription_handler_type CreateSubscription(protocol_handler_type const &protocol,
+                                               feed_handler_type const &feed, AbstractCallable *cb)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -299,12 +291,11 @@ private:
     fetch::mutex::Mutex   mutex;
   };
 
-  Subscription subscriptions_[256];  // TODO: make centrally configurable;
+  Subscription        subscriptions_[256];  // TODO: make centrally configurable;
   fetch::mutex::Mutex subscription_mutex_;
 
-  std::map<Promise::promise_counter_type, Promise::shared_promise_type>
-                      promises_;
-  fetch::mutex::Mutex promises_mutex_;
+  std::map<Promise::promise_counter_type, Promise::shared_promise_type> promises_;
+  fetch::mutex::Mutex                                                   promises_mutex_;
 };
 }  // namespace service
 }  // namespace fetch

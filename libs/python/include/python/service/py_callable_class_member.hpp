@@ -7,8 +7,7 @@ namespace fetch {
 namespace service {
 
 template <typename C, typename F>
-void BuildCallableClassMember(std::string const &custom_name,
-                              pybind11::module & module)
+void BuildCallableClassMember(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;

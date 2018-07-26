@@ -20,11 +20,9 @@ void BuildSparseAnnealer(pybind11::module &module)
       .def("Update", &SparseAnnealer::Update)
       .def("SetBeta", &SparseAnnealer::SetBeta)
       .def("SetBetaStart", &SparseAnnealer::SetBetaStart)
+      .def("FindMinimum", (double (SparseAnnealer::*)()) & SparseAnnealer::FindMinimum)
       .def("FindMinimum",
-           (double (SparseAnnealer::*)()) & SparseAnnealer::FindMinimum)
-      .def("FindMinimum",
-           (double (SparseAnnealer::*)(
-               fetch::optimisers::SparseAnnealer::state_type &, bool)) &
+           (double (SparseAnnealer::*)(fetch::optimisers::SparseAnnealer::state_type &, bool)) &
                SparseAnnealer::FindMinimum)
       .def("CostOf", &SparseAnnealer::CostOf)
       .def("sweeps", &SparseAnnealer::sweeps)

@@ -14,8 +14,7 @@ struct BookmarkHeader
   uint64_t bookmark;
 };
 
-template <typename T, typename B = uint64_t,
-          typename S = RandomAccessStack<T, BookmarkHeader<B>>>
+template <typename T, typename B = uint64_t, typename S = RandomAccessStack<T, BookmarkHeader<B>>>
 class VersionedRandomAccessStack
 {
 private:
@@ -287,10 +286,7 @@ public:
     stack_.SetExtraHeader(h);
   }
 
-  header_extra_type const &header_extra() const
-  {
-    return stack_.header_extra().header;
-  }
+  header_extra_type const &header_extra() const { return stack_.header_extra().header; }
 
   bookmark_type Commit()
   {

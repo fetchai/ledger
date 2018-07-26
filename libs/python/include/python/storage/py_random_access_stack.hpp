@@ -6,8 +6,7 @@ namespace fetch {
 namespace storage {
 
 template <typename T, typename D>
-void BuildRandomAccessStack(std::string const &custom_name,
-                            pybind11::module & module)
+void BuildRandomAccessStack(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;

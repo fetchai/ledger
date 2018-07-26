@@ -13,8 +13,7 @@ public:
   UnverifiedTransaction(UnverifiedTransaction &&other) = default;
   UnverifiedTransaction &operator=(UnverifiedTransaction &&other) = default;
 
-  UnverifiedTransaction(UnverifiedTransaction const &other)
-      : MutableTransaction()
+  UnverifiedTransaction(UnverifiedTransaction const &other) : MutableTransaction()
   {
     this->Copy(other);
   }
@@ -25,10 +24,7 @@ public:
     return *this;
   }
 
-  bool operator<(UnverifiedTransaction const &other) const
-  {
-    return digest() < other.digest();
-  }
+  bool operator<(UnverifiedTransaction const &other) const { return digest() < other.digest(); }
 
   using super_type::VERSION;
   using super_type::hasher_type;
@@ -77,8 +73,7 @@ public:
   VerifiedTransaction(VerifiedTransaction &&other) = default;
   VerifiedTransaction &operator=(VerifiedTransaction &&other) = default;
 
-  VerifiedTransaction(VerifiedTransaction const &other)
-      : UnverifiedTransaction()
+  VerifiedTransaction(VerifiedTransaction const &other) : UnverifiedTransaction()
   {
     this->Copy(other);
   }

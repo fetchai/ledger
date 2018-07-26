@@ -42,9 +42,8 @@ public:
   ServiceProtocol() : Implementation(), Protocol()
   {
 
-    this->Expose(
-        GET, new CallableClassMember<Implementation, std::vector<ByteArray>()>(
-                 this, &Implementation::GetData));
+    this->Expose(GET, new CallableClassMember<Implementation, std::vector<ByteArray>()>(
+                          this, &Implementation::GetData));
     this->Expose(GET2, new CallableClassMember<Implementation, ByteArray()>(
                            this, &Implementation::GetData2));
   }
@@ -54,8 +53,7 @@ public:
 class MyCoolService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  MyCoolService(uint16_t port, fetch::network::NetworkManager *tm)
-      : ServiceServer(port, tm)
+  MyCoolService(uint16_t port, fetch::network::NetworkManager *tm) : ServiceServer(port, tm)
   {
     this->Add(SERVICE, new ServiceProtocol());
   }
@@ -94,9 +92,9 @@ void TestSerializationSpeed()
   buffer.Seek(0);
   buffer >> b;
   std::sort(c.begin(), c.end());
-  high_resolution_clock::time_point t3 = high_resolution_clock::now();
-  duration<double> ts1 = duration_cast<duration<double>>(t2 - t1);
-  duration<double> ts2 = duration_cast<duration<double>>(t3 - t2);
+  high_resolution_clock::time_point t3  = high_resolution_clock::now();
+  duration<double>                  ts1 = duration_cast<duration<double>>(t2 - t1);
+  duration<double>                  ts2 = duration_cast<duration<double>>(t3 - t2);
   std::cout << "It took " << ts1.count() << " seconds.";
   std::cout << std::endl;
   std::cout << "It took " << ts2.count() << " seconds.";
@@ -151,8 +149,8 @@ int main()
   std::cout << "calling " << std::endl;
   client.Call(SERVICE, GET2).As(ret2);
   std::cout << "Done " << std::endl;
-  high_resolution_clock::time_point t3 = high_resolution_clock::now();
-  duration<double> ts1 = duration_cast<duration<double>>(t2 - t1);
+  high_resolution_clock::time_point t3  = high_resolution_clock::now();
+  duration<double>                  ts1 = duration_cast<duration<double>>(t2 - t1);
   std::cout << "It took " << ts1.count() << " seconds." << std::endl;
   duration<double> ts2 = duration_cast<duration<double>>(t3 - t2);
   std::cout << "It took " << ts2.count() << " seconds." << std::endl;

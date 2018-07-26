@@ -7,8 +7,7 @@ namespace fetch {
 namespace storage {
 
 template <typename S>
-void BuildFileObjectImplementation(std::string const &custom_name,
-                                   pybind11::module & module)
+void BuildFileObjectImplementation(std::string const &custom_name, pybind11::module &module)
 {
   /*
   namespace py = pybind11;

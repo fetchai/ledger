@@ -16,20 +16,13 @@ public:
   Token(ConstByteArray const &other) : ConstByteArray(other) {}
   Token(ConstByteArray &&other) : ConstByteArray(other) {}
 
-  Token(ConstByteArray const &other, std::size_t const &start,
-        std::size_t const &length)
+  Token(ConstByteArray const &other, std::size_t const &start, std::size_t const &length)
       : ConstByteArray(other, start, length)
   {}
 
-  bool operator==(ConstByteArray const &other) const
-  {
-    return ConstByteArray::operator==(other);
-  }
+  bool operator==(ConstByteArray const &other) const { return ConstByteArray::operator==(other); }
 
-  bool operator!=(ConstByteArray const &other) const
-  {
-    return !(*this == other);
-  }
+  bool operator!=(ConstByteArray const &other) const { return !(*this == other); }
 
   void SetType(int const &t) { type_ = t; }
   void SetLine(int const &l) { line_ = l; }

@@ -20,27 +20,25 @@ namespace p2p {
 class ExploreHttpInterface : public http::HTTPModule
 {
 public:
-  ExploreHttpInterface(
-      p2p::P2PService *                                            p2p,
-      /* , ledger::StorageUnitClient *storage,*/ chain::MainChain *chain)
+  ExploreHttpInterface(p2p::P2PService *                                            p2p,
+                       /* , ledger::StorageUnitClient *storage,*/ chain::MainChain *chain)
       : p2p_(p2p)
       ,
       //    storage_(storage),
       chain_(chain)
   {
     // register all the routes
-    Get("/node-entry-points", [this](http::ViewParameters const &params,
-                                     http::HTTPRequest const &   request) {
-      return OnGetEntryPoints(params, request);
-    });
+    Get("/node-entry-points",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return OnGetEntryPoints(params, request);
+        });
 
-    Get("/peer-connections/", [this](http::ViewParameters const &params,
-                                     http::HTTPRequest const &   request) {
-      return OnPeerConnections(params, request);
-    });
+    Get("/peer-connections/",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return OnPeerConnections(params, request);
+        });
 
-    Get("/get-chain", [this](http::ViewParameters const &params,
-                             http::HTTPRequest const &   request) {
+    Get("/get-chain", [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
       return OnGetChain(params, request);
     });
   }

@@ -19,34 +19,27 @@ void BuildReferenceAnnealer(pybind11::module &module)
       .def("SetBetaEnd", &ReferenceAnnealer::SetBetaEnd)
       .def("Insert", &ReferenceAnnealer::Insert)
       .def("PrintGraph", &ReferenceAnnealer::PrintGraph)
-      .def("operator()",
-           (const fetch::optimisers::ReferenceAnnealer::cost_type &(
-               ReferenceAnnealer::*)(const std::size_t &,
-                                     const std::size_t &)const) &
-               ReferenceAnnealer::operator())
-      .def("operator()",
-           (fetch::optimisers::ReferenceAnnealer::cost_type &
-            (ReferenceAnnealer::*)(const std::size_t &, const std::size_t &)) &
-               ReferenceAnnealer::operator())
+      .def("operator()", (const fetch::optimisers::ReferenceAnnealer::cost_type &(
+                             ReferenceAnnealer::*)(const std::size_t &, const std::size_t &)const) &
+                             ReferenceAnnealer::operator())
+      .def("operator()", (fetch::optimisers::ReferenceAnnealer::cost_type &
+                          (ReferenceAnnealer::*)(const std::size_t &, const std::size_t &)) &
+                             ReferenceAnnealer::operator())
       .def("attempts", &ReferenceAnnealer::attempts)
       .def("sweeps", &ReferenceAnnealer::sweeps)
       .def("Update", &ReferenceAnnealer::Update)
       .def("SetBeta", &ReferenceAnnealer::SetBeta)
       .def("beta", &ReferenceAnnealer::beta)
-      .def("FindMinimum",
-           (double (ReferenceAnnealer::*)()) & ReferenceAnnealer::FindMinimum)
-      .def("FindMinimum",
-           (double (ReferenceAnnealer::*)(
-               fetch::optimisers::ReferenceAnnealer::state_type &, bool)) &
-               ReferenceAnnealer::FindMinimum)
+      .def("FindMinimum", (double (ReferenceAnnealer::*)()) & ReferenceAnnealer::FindMinimum)
+      .def("FindMinimum", (double (ReferenceAnnealer::*)(
+                              fetch::optimisers::ReferenceAnnealer::state_type &, bool)) &
+                              ReferenceAnnealer::FindMinimum)
       .def("At", (const fetch::optimisers::ReferenceAnnealer::cost_type &(
-                     ReferenceAnnealer::*)(const std::size_t &,
-                                           const std::size_t &)const) &
+                     ReferenceAnnealer::*)(const std::size_t &, const std::size_t &)const) &
                      ReferenceAnnealer::At)
-      .def("At",
-           (fetch::optimisers::ReferenceAnnealer::cost_type &
-            (ReferenceAnnealer::*)(const std::size_t &, const std::size_t &)) &
-               ReferenceAnnealer::At)
+      .def("At", (fetch::optimisers::ReferenceAnnealer::cost_type &
+                  (ReferenceAnnealer::*)(const std::size_t &, const std::size_t &)) &
+                     ReferenceAnnealer::At)
       .def("Anneal", &ReferenceAnnealer::Anneal)
       .def("CostOf", &ReferenceAnnealer::CostOf)
       .def("Resize", &ReferenceAnnealer::Resize)

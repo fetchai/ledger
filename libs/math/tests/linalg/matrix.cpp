@@ -44,8 +44,7 @@ void test_invert(std::size_t const &n)
       {
         if (fabs(ret(i, j) - 1) > 1e-10)
         {
-          std::cerr << "Expected 1 on the diagonal, but found " << ret(i, j)
-                    << std::endl;
+          std::cerr << "Expected 1 on the diagonal, but found " << ret(i, j) << std::endl;
           exit(-1);
         }
       }
@@ -75,19 +74,13 @@ void Test1()
     INFO("Vector SIMD count for float: " << _S<float>::E_SIMD_SIZE);
     INFO("Vector SIMD count for double: " << _S<double>::E_SIMD_SIZE);
 
-    INFO("Vector SIMD count for int: "
-         << _M<int>::vector_register_type::E_BLOCK_COUNT);
-    INFO("Vector SIMD count for float: "
-         << _M<float>::vector_register_type::E_BLOCK_COUNT);
-    INFO("Vector SIMD count for double: "
-         << _M<double>::vector_register_type::E_BLOCK_COUNT);
+    INFO("Vector SIMD count for int: " << _M<int>::vector_register_type::E_BLOCK_COUNT);
+    INFO("Vector SIMD count for float: " << _M<float>::vector_register_type::E_BLOCK_COUNT);
+    INFO("Vector SIMD count for double: " << _M<double>::vector_register_type::E_BLOCK_COUNT);
 
-    INFO("Vector SIMD count for int: "
-         << _M<int>::vector_register_type::E_VECTOR_SIZE);
-    INFO("Vector SIMD count for float: "
-         << _M<float>::vector_register_type::E_VECTOR_SIZE);
-    INFO("Vector SIMD count for double: "
-         << _M<double>::vector_register_type::E_VECTOR_SIZE);
+    INFO("Vector SIMD count for int: " << _M<int>::vector_register_type::E_VECTOR_SIZE);
+    INFO("Vector SIMD count for float: " << _M<float>::vector_register_type::E_VECTOR_SIZE);
+    INFO("Vector SIMD count for double: " << _M<double>::vector_register_type::E_VECTOR_SIZE);
   };
 
   SCENARIO("Addition for int")

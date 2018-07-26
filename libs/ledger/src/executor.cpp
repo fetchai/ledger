@@ -41,9 +41,8 @@ std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const &la
  * @param lanes The affected lanes for the transaction
  * @return The status code for the operation
  */
-Executor::Status Executor::Execute(tx_digest_type const &hash,
-                                   std::size_t           slice,
-                                   lane_set_type const & lanes)
+Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice,
+                                   lane_set_type const &lanes)
 {
 
   fetch::logger.Info("Executing tx ", byte_array::ToBase64(hash));

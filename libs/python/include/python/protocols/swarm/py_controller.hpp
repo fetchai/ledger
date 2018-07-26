@@ -14,16 +14,13 @@ void BuildChainController(pybind11::module &module)
       .def("block_count", &ChainController::block_count)
       .def("AddBulkBlocks", &ChainController::AddBulkBlocks)
       .def("PushBlock", &ChainController::PushBlock)
+      .def("with_blocks_do", (void (ChainController::*)(
+                                 std::function<void(ChainManager::shared_block_type,
+                                                    const ChainManager::chain_map_type &)>) const) &
+                                 ChainController::with_blocks_do)
       .def("with_blocks_do",
-           (void (ChainController::*)(
-               std::function<void(ChainManager::shared_block_type,
-                                  const ChainManager::chain_map_type &)>)
-                const) &
-               ChainController::with_blocks_do)
-      .def("with_blocks_do",
-           (void (ChainController::*)(
-               std::function<void(ChainManager::shared_block_type,
-                                  ChainManager::chain_map_type &)>)) &
+           (void (ChainController::*)(std::function<void(ChainManager::shared_block_type,
+                                                         ChainManager::chain_map_type &)>)) &
                ChainController::with_blocks_do)
       .def("GetLatestBlocks", &ChainController::GetLatestBlocks)
       .def("GetNextBlock", &ChainController::GetNextBlock)
@@ -39,8 +36,7 @@ void BuildSwarmController(pybind11::module &module)
       .def(py::init<const uint64_t &, network::NetworkManager *,
                     fetch::protocols::SharedNodeDetails &>())
       .def("SetClientIPCallback", &SwarmController::SetClientIPCallback)
-      .def("IncreaseGroupingParameter",
-           &SwarmController::IncreaseGroupingParameter)
+      .def("IncreaseGroupingParameter", &SwarmController::IncreaseGroupingParameter)
       .def("Connect", &SwarmController::Connect)
       .def("Bootstrap", &SwarmController::Bootstrap)
       .def("SuggestPeers", &SwarmController::SuggestPeers)

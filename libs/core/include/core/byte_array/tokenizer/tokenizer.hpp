@@ -13,18 +13,13 @@ namespace byte_array {
 class Tokenizer : public std::vector<Token>
 {
 public:
-  typedef ConstByteArray byte_array_type;
-  typedef std::function<int(byte_array_type const &, uint64_t &)>
-      consumer_function_type;
+  typedef ConstByteArray                                          byte_array_type;
+  typedef std::function<int(byte_array_type const &, uint64_t &)> consumer_function_type;
 
-  typedef std::function<int(byte_array_type const &, uint64_t const &,
-                            int const &)>
+  typedef std::function<int(byte_array_type const &, uint64_t const &, int const &)>
       indexer_function_type;
 
-  void SetConsumerIndexer(indexer_function_type function)
-  {
-    indexer_ = function;
-  }
+  void SetConsumerIndexer(indexer_function_type function) { indexer_ = function; }
 
   std::size_t AddConsumer(consumer_function_type function)
   {
@@ -80,8 +75,8 @@ public:
         }
         if (pos == oldpos)
         {
-          TODO_FAIL("Unable to parse char on ", pos, "  '", str[pos], "'",
-                    ", '", contents[pos], "'");
+          TODO_FAIL("Unable to parse char on ", pos, "  '", str[pos], "'", ", '", contents[pos],
+                    "'");
         }
         ++n;
       }
@@ -126,8 +121,7 @@ public:
 
       if (pos == oldpos)
       {
-        TODO_FAIL("Unable to parse char on ", pos, "  '", str[pos], "'", ", '",
-                  contents[pos], "'");
+        TODO_FAIL("Unable to parse char on ", pos, "  '", str[pos], "'", ", '", contents[pos], "'");
       }
 
       this->emplace_back(contents, oldpos, pos - oldpos);

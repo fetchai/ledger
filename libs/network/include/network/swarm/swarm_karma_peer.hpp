@@ -40,15 +40,9 @@ public:
     return *this;
   }
 
-  bool operator==(SwarmKarmaPeer &rhs) const
-  {
-    return location_ == rhs.location_;
-  }
+  bool operator==(SwarmKarmaPeer &rhs) const { return location_ == rhs.location_; }
 
-  bool operator==(const SwarmPeerLocation &rhs) const
-  {
-    return location_ == rhs;
-  }
+  bool operator==(const SwarmPeerLocation &rhs) const { return location_ == rhs; }
 
   bool operator==(const std::string &host) const { return location_ == host; }
 
@@ -74,10 +68,7 @@ public:
     return cb;
   }
 
-  static void ToGetCurrentTime(std::function<time_t()> cb)
-  {
-    getCurrentTimeCBRef() = cb;
-  }
+  static void ToGetCurrentTime(std::function<time_t()> cb) { getCurrentTimeCBRef() = cb; }
 
   static time_t GetCurrentTime()
   {
@@ -90,8 +81,7 @@ public:
 
   const SwarmPeerLocation GetLocation(void) const { return location_; }
 
-  static double ComputeKarmaForTime(double karmaValue, time_t timeStart,
-                                    time_t timeFinish)
+  static double ComputeKarmaForTime(double karmaValue, time_t timeStart, time_t timeFinish)
   {
     // TODO(katie) This should probably be some half-life asymptotic function.
     // Might be expensive to compute tho. Consider making the internal store

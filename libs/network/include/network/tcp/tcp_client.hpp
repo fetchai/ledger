@@ -46,8 +46,7 @@ public:
     pointer_->Connect(host, port);
   }
 
-  void Connect(byte_array::ConstByteArray const &host,
-               byte_array::ConstByteArray const &port)
+  void Connect(byte_array::ConstByteArray const &host, byte_array::ConstByteArray const &port)
   {
     pointer_->Connect(host, port);
   }

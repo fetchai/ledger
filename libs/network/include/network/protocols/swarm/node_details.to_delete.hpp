@@ -43,10 +43,7 @@ struct NodeDetails
     return true;
   }
 
-  bool operator!=(NodeDetails const &other)
-  {
-    return !(this->operator==(other));
-  }
+  bool operator!=(NodeDetails const &other) { return !(this->operator==(other)); }
 
   byte_array::ByteArray   public_key;
   std::vector<EntryPoint> entry_points;

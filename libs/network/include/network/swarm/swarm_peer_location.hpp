@@ -48,20 +48,11 @@ public:
     return *this;
   }
 
-  bool operator==(const SwarmPeerLocation &other) const
-  {
-    return this->locn_ == other.locn_;
-  }
+  bool operator==(const SwarmPeerLocation &other) const { return this->locn_ == other.locn_; }
 
-  bool operator!=(const SwarmPeerLocation &other) const
-  {
-    return this->locn_ != other.locn_;
-  }
+  bool operator!=(const SwarmPeerLocation &other) const { return this->locn_ != other.locn_; }
 
-  bool operator<(const SwarmPeerLocation &other) const
-  {
-    return this->locn_ < other.locn_;
-  }
+  bool operator<(const SwarmPeerLocation &other) const { return this->locn_ < other.locn_; }
 
   virtual ~SwarmPeerLocation() {}
 

@@ -156,8 +156,7 @@ public:
 
     for (auto &i : trans)
     {
-      hash = hash ^
-             static_cast<uint32_t>(hashStruct(i.summary().transaction_hash));
+      hash = hash ^ static_cast<uint32_t>(hashStruct(i.summary().transaction_hash));
     }
 
     fetch::logger.Info("Hash is now::", hash);

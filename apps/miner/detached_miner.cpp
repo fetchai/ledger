@@ -43,8 +43,7 @@ static byte_array::ConstByteArray GenerateHash()
   return {hash};
 }
 
-static void load_format_a(std::string const &input_file, std::size_t &N,
-                          std::size_t &M)
+static void load_format_a(std::string const &input_file, std::size_t &N, std::size_t &M)
 {
   // Loading
 
@@ -101,8 +100,7 @@ static void load_format_a(std::string const &input_file, std::size_t &N,
     }
 
     std::cout << "Adding transaction: "
-              << static_cast<std::string>(
-                     byte_array::ToBase64(summary.transaction_hash));
+              << static_cast<std::string>(byte_array::ToBase64(summary.transaction_hash));
     std::cout << " index: " << id;
     std::cout << " groups: ";
     std::size_t resource_index = 0;
@@ -120,8 +118,8 @@ static void load_format_a(std::string const &input_file, std::size_t &N,
   f.close();
 }
 
-static void load_format_b(std::string const &input_file, std::size_t &N,
-                          std::size_t &M, std::size_t const &header_format = 0)
+static void load_format_b(std::string const &input_file, std::size_t &N, std::size_t &M,
+                          std::size_t const &header_format = 0)
 {
   // Loading
 
@@ -187,8 +185,7 @@ static void load_format_b(std::string const &input_file, std::size_t &N,
     }
 
     std::cout << "Adding transaction: "
-              << static_cast<std::string>(
-                     byte_array::ToBase64(summary.transaction_hash));
+              << static_cast<std::string>(byte_array::ToBase64(summary.transaction_hash));
     std::cout << " index: " << id << " fee: " << summary.fee;
     std::cout << " groups: ";
     std::size_t resource_index = 0;
@@ -216,11 +213,10 @@ static void PrintSummary(std::size_t const &slice_count)
   }
 
   std::size_t const capacity = slice_count * generator.lane_count();
-  double const      occupancy_pc =
-      (100. * generator.block_occupancy()) / static_cast<double>(capacity);
+  double const occupancy_pc  = (100. * generator.block_occupancy()) / static_cast<double>(capacity);
 
-  std::cout << "Fee: " << total_fee << " Txs: " << total_txs << " / "
-            << capacity << " (" << occupancy_pc << "%)" << std::endl;
+  std::cout << "Fee: " << total_fee << " Txs: " << total_txs << " / " << capacity << " ("
+            << occupancy_pc << "%)" << std::endl;
 }
 
 int main(int argc, char const **argv)
@@ -236,8 +232,7 @@ int main(int argc, char const **argv)
 
     fetch::commandline::DisplayCLIHeader("Detached Miner");
 
-    std::cout << "Usage: " << argv[0] << " [input] [parameters ...]"
-              << std::endl;
+    std::cout << "Usage: " << argv[0] << " [input] [parameters ...]" << std::endl;
     std::cout << std::endl << std::endl;
 
     std::cout << "Parameters:" << std::endl;
@@ -308,8 +303,7 @@ int main(int argc, char const **argv)
   std::size_t lane_count = 0, slice_count;
   std::string input_file = params.GetArg(1);
 
-  std::chrono::high_resolution_clock::time_point t0 =
-      std::chrono::high_resolution_clock::now();
+  std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
 
   int         file_format = params.GetParam<int>("file-format", 1);
   double      beta0, beta1;
@@ -355,8 +349,7 @@ int main(int argc, char const **argv)
   // Solving
   generator.ConfigureAnnealer(sweeps, beta0, beta1);
 
-  std::chrono::high_resolution_clock::time_point t1 =
-      std::chrono::high_resolution_clock::now();
+  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
   batch_size = std::min(generator.unspent_count(), batch_size);
 
@@ -365,8 +358,7 @@ int main(int argc, char const **argv)
   for (std::size_t i = 0; i < reps; ++i)
   {
     generator.Reset();
-    generator.GenerateBlock(lane_count, slice_count, strategy, batch_size,
-                            explore);
+    generator.GenerateBlock(lane_count, slice_count, strategy, batch_size, explore);
 
     if (print_solution)
     {
@@ -384,8 +376,7 @@ int main(int argc, char const **argv)
     }
   }
 
-  std::chrono::high_resolution_clock::time_point t2 =
-      std::chrono::high_resolution_clock::now();
+  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
   if (print_solution)
   {
@@ -417,20 +408,14 @@ int main(int argc, char const **argv)
     std::cout << params.GetArg(i) << " ";
   }
 
-  std::cout << " -sweeps " << sweeps << " -b0 " << beta0 << " -b1 " << beta1
-            << " -lane-count " << lane_count << " -slice-count " << slice_count
-            << std::endl;
+  std::cout << " -sweeps " << sweeps << " -b0 " << beta0 << " -b1 " << beta1 << " -lane-count "
+            << lane_count << " -slice-count " << slice_count << std::endl;
 
-  double ts0 =
-      std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t0)
-          .count();
-  double ts1 =
-      std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1)
-          .count();
+  double ts0 = std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t0).count();
+  double ts1 = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
   std::cout << "# load: " << ts0 * 1000 << " ms, ";
   std::cout << "runtime: " << ts1 * 1000 << " ms, ";
-  std::cout << "runtime pr. run: " << ts1 * 1000. / double(reps) << " ms"
-            << std::endl;
+  std::cout << "runtime pr. run: " << ts1 * 1000. / double(reps) << " ms" << std::endl;
 
   return 0;
 }

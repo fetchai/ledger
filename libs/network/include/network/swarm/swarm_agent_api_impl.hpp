@@ -26,9 +26,8 @@ public:
     threadingSystem_ = std::make_shared<threading_system_type>(10);
   }
 
-  explicit SwarmAgentApiImpl(
-      std::shared_ptr<threading_system_type> threadingSystem,
-      const std::string &identifier, uint32_t idlespeed)
+  explicit SwarmAgentApiImpl(std::shared_ptr<threading_system_type> threadingSystem,
+                             const std::string &identifier, uint32_t idlespeed)
       : identifier_(identifier), idlespeed_(idlespeed)
   {
     threadingSystem_ = threadingSystem;
@@ -69,13 +68,11 @@ public:
       }
       catch (std::exception &x)
       {
-        std::cerr << "SwarmAgentApiImpl::DoIdle Exception ignored:" << x.what()
-                  << std::endl;
+        std::cerr << "SwarmAgentApiImpl::DoIdle Exception ignored:" << x.what() << std::endl;
       }
       catch (...)
       {
-        std::cerr << "SwarmAgentApiImpl::DoIdle Exception ignored."
-                  << std::endl;
+        std::cerr << "SwarmAgentApiImpl::DoIdle Exception ignored." << std::endl;
       }
     }
     auto lambd = [this] { this->DoIdle(); };
@@ -106,8 +103,7 @@ public:
     });
   }
 
-  virtual void ToPing(
-      std::function<void(SwarmAgentApi &api, const std::string &host)> action)
+  virtual void ToPing(std::function<void(SwarmAgentApi &api, const std::string &host)> action)
   {
     toPing_ = action;
   }
@@ -117,10 +113,7 @@ public:
     onPingSucceeded_ = cb;
   }
 
-  virtual void OnPingFailed(std::function<void(const std::string &host)> cb)
-  {
-    onPingFailed_ = cb;
-  }
+  virtual void OnPingFailed(std::function<void(const std::string &host)> cb) { onPingFailed_ = cb; }
 
   virtual void DoPingSucceeded(const std::string &host)
   {
@@ -153,15 +146,12 @@ public:
   }
 
   virtual void ToDiscoverPeers(
-      std::function<void(SwarmAgentApi &api, const std::string &host,
-                         uint32_t count)>
-          action)
+      std::function<void(SwarmAgentApi &api, const std::string &host, uint32_t count)> action)
   {
     toDiscoverPeers_ = action;
   }
 
-  virtual void OnNewPeerDiscovered(
-      std::function<void(const std::string &host)> cb)
+  virtual void OnNewPeerDiscovered(std::function<void(const std::string &host)> cb)
   {
     onNewPeerDiscovered_ = cb;
   }
@@ -176,14 +166,12 @@ public:
     });
   }
 
-  virtual void OnPeerDiscoverFail(
-      std::function<void(const std::string &host)> cb)
+  virtual void OnPeerDiscoverFail(std::function<void(const std::string &host)> cb)
   {
     onPeerDiscoverFail_ = cb;
   }
 
-  virtual void ToBlockSolved(
-      std::function<void(const std::string &blockdata)> action)
+  virtual void ToBlockSolved(std::function<void(const std::string &blockdata)> action)
   {
     this->toBlockSolved_ = action;
   }
@@ -204,16 +192,14 @@ public:
     }
   }
 
-  virtual void ToDiscoverBlocks(
-      std::function<void(const std::string &host, uint32_t count)> action)
+  virtual void ToDiscoverBlocks(std::function<void(const std::string &host, uint32_t count)> action)
   {
     this->toDiscoverBlocks_ = action;
   }
 
   // Announce new block IDs to the agent.
 
-  virtual void DoNewBlockIdFound(const std::string &host,
-                                 const std::string &blockid)
+  virtual void DoNewBlockIdFound(const std::string &host, const std::string &blockid)
   {
     threadingSystem_->Post([this, host, blockid] {
       if (this->onNewBlockIdFound_)
@@ -224,21 +210,18 @@ public:
   }
 
   virtual void OnNewBlockIdFound(
-      std::function<void(const std::string &host, const std::string &blockid)>
-          cb)
+      std::function<void(const std::string &host, const std::string &blockid)> cb)
   {
     onNewBlockIdFound_ = cb;
   }
 
   virtual void OnBlockIdRepeated(
-      std::function<void(const std::string &host, const std::string &blockid)>
-          cb)
+      std::function<void(const std::string &host, const std::string &blockid)> cb)
   {
     onBlockIdRepeated_ = cb;
   }
 
-  virtual void DoBlockIdRepeated(const std::string &host,
-                                 const std::string &blockid)
+  virtual void DoBlockIdRepeated(const std::string &host, const std::string &blockid)
   {
     threadingSystem_->Post([this, host, blockid] {
       if (this->onBlockIdRepeated_)
@@ -251,14 +234,12 @@ public:
   // Verb for pulling blocks over network.
 
   virtual void ToGetBlock(
-      std::function<void(const std::string &host, const std::string &blockid)>
-          action)
+      std::function<void(const std::string &host, const std::string &blockid)> action)
   {
     toGetBlock_ = action;
   }
 
-  virtual void ToQueryBlock(
-      std::function<std::string(const std::string &blockid)> action)
+  virtual void ToQueryBlock(std::function<std::string(const std::string &blockid)> action)
   {
     toQueryBlock_ = action;
   }
@@ -274,14 +255,12 @@ public:
   // Announce new blocks to the agent.
 
   virtual void OnNewBlockAvailable(
-      std::function<void(const std::string &host, const std::string &blockid)>
-          cb)
+      std::function<void(const std::string &host, const std::string &blockid)> cb)
   {
     onNewBlockAvailable_ = cb;
   }
 
-  virtual void DoNewBlockAvailable(const std::string &host,
-                                   const std::string &blockid)
+  virtual void DoNewBlockAvailable(const std::string &host, const std::string &blockid)
   {
     threadingSystem_->Post([this, host, blockid] {
       if (this->onNewBlockAvailable_)
@@ -302,8 +281,7 @@ public:
     return "";
   }
 
-  virtual void ToVerifyBlock(
-      std::function<void(const std::string &blockid, bool validity)> action)
+  virtual void ToVerifyBlock(std::function<void(const std::string &blockid, bool validity)> action)
   {
     toVerifyBlock_ = action;
   }
@@ -323,19 +301,15 @@ public:
   // TODO(katie) Implement below.
 
   virtual void OnNewTxnListIdFound(
-      std::function<void(const std::string &host, const std::string &txnlistid)>
-          cb)
+      std::function<void(const std::string &host, const std::string &txnlistid)> cb)
   {
     onNewTxnListIdFound_ = cb;
   }
 
-  virtual void DoGetTxnList(const std::string &host,
-                            const std::string &txnlistid)
-  {}
+  virtual void DoGetTxnList(const std::string &host, const std::string &txnlistid) {}
 
   virtual void OnNewTxnListAvailable(
-      std::function<void(const std::string &host, const std::string &blockid)>
-          cb)
+      std::function<void(const std::string &host, const std::string &blockid)> cb)
   {
     onNewTxnListAvailable_ = cb;
   }
@@ -355,8 +329,7 @@ public:
     return 0.0;
   }
 
-  virtual void ToAddKarma(
-      std::function<void(const std::string &host, double amount)> action)
+  virtual void ToAddKarma(std::function<void(const std::string &host, double amount)> action)
   {
     this->toAddKarma_ = action;
   }
@@ -369,8 +342,7 @@ public:
   }
 
   virtual void ToGetPeers(
-      std::function<std::list<std::string>(uint32_t count, double minKarma)>
-          query)
+      std::function<std::list<std::string>(uint32_t count, double minKarma)> query)
   {
     this->toGetPeers_ = query;
   }
@@ -385,8 +357,7 @@ public:
   }
 
   virtual void ToAddKarmaMax(
-      std::function<void(const std::string &host, double karma, double limit)>
-          action)
+      std::function<void(const std::string &host, double karma, double limit)> action)
   {
     this->toAddKarmaMax_ = action;
   }
@@ -404,40 +375,29 @@ protected:
   std::function<void()> onIdle_;
   std::function<void()> onPeerless_;
 
-  std::function<void(const std::string &host)> onPingSucceeded_;
-  std::function<void(const std::string &host)> onPingFailed_;
-  std::function<void(const std::string &host)> onNewPeerDiscovered_;
-  std::function<void(const std::string &host)> onPeerDiscoverFail_;
-  std::function<void(const std::string &host, const std::string &blockid)>
-      onNewBlockIdFound_;
-  std::function<void(const std::string &host, const std::string &blockid)>
-      onBlockIdRepeated_;
-  std::function<void(const std::string &host, const std::string &blockid)>
-      onNewBlockAvailable_;
-  std::function<void(const std::string &host, const std::string &txnlistid)>
-      onNewTxnListIdFound_;
-  std::function<void(const std::string &host, const std::string &txnlistid)>
-      onNewTxnListAvailable_;
+  std::function<void(const std::string &host)>                               onPingSucceeded_;
+  std::function<void(const std::string &host)>                               onPingFailed_;
+  std::function<void(const std::string &host)>                               onNewPeerDiscovered_;
+  std::function<void(const std::string &host)>                               onPeerDiscoverFail_;
+  std::function<void(const std::string &host, const std::string &blockid)>   onNewBlockIdFound_;
+  std::function<void(const std::string &host, const std::string &blockid)>   onBlockIdRepeated_;
+  std::function<void(const std::string &host, const std::string &blockid)>   onNewBlockAvailable_;
+  std::function<void(const std::string &host, const std::string &txnlistid)> onNewTxnListIdFound_;
+  std::function<void(const std::string &host, const std::string &txnlistid)> onNewTxnListAvailable_;
 
-  std::function<void(SwarmAgentApi &api, const std::string &host)> toPing_;
-  std::function<void(SwarmAgentApi &api, const std::string &host,
-                     uint32_t count)>
-      toDiscoverPeers_;
+  std::function<void(SwarmAgentApi &api, const std::string &host)>                 toPing_;
+  std::function<void(SwarmAgentApi &api, const std::string &host, uint32_t count)> toDiscoverPeers_;
 
-  std::function<void(const std::string &blockdata)> toBlockSolved_;
-  std::function<void(const std::string &host, const std::string &blockid)>
-      toGetBlock_;
-  std::function<void(const std::string &host, uint32_t count)>
-                                                         toDiscoverBlocks_;
-  std::function<std::string(const std::string &blockid)> toQueryBlock_;
+  std::function<void(const std::string &blockdata)>                        toBlockSolved_;
+  std::function<void(const std::string &host, const std::string &blockid)> toGetBlock_;
+  std::function<void(const std::string &host, uint32_t count)>             toDiscoverBlocks_;
+  std::function<std::string(const std::string &blockid)>                   toQueryBlock_;
 
-  std::function<double(const std::string &host)>              toGetKarma_;
-  std::function<void(const std::string &host, double amount)> toAddKarma_;
-  std::function<std::list<std::string>(uint32_t count, double minKarma)>
-      toGetPeers_;
-  std::function<void(const std::string &host, double karma, double limit)>
-                                                                 toAddKarmaMax_;
-  std::function<void(const std::string &blockid, bool validity)> toVerifyBlock_;
+  std::function<double(const std::string &host)>                           toGetKarma_;
+  std::function<void(const std::string &host, double amount)>              toAddKarma_;
+  std::function<std::list<std::string>(uint32_t count, double minKarma)>   toGetPeers_;
+  std::function<void(const std::string &host, double karma, double limit)> toAddKarmaMax_;
+  std::function<void(const std::string &blockid, bool validity)>           toVerifyBlock_;
 };
 }  // namespace swarm
 }  // namespace fetch

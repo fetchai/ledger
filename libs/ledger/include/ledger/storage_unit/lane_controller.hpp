@@ -16,16 +16,15 @@ public:
   using service_client_type        = fetch::service::ServiceClient;
   using shared_service_client_type = std::shared_ptr<service_client_type>;
   using weak_service_client_type   = std::shared_ptr<service_client_type>;
-  using client_register_type =
-      fetch::network::ConnectionRegister<connectivity_details_type>;
-  using network_manager_type   = fetch::network::NetworkManager;
-  using mutex_type             = fetch::mutex::Mutex;
-  using connection_handle_type = client_register_type::connection_handle_type;
-  using protocol_handler_type  = service::protocol_handler_type;
+  using client_register_type       = fetch::network::ConnectionRegister<connectivity_details_type>;
+  using network_manager_type       = fetch::network::NetworkManager;
+  using mutex_type                 = fetch::mutex::Mutex;
+  using connection_handle_type     = client_register_type::connection_handle_type;
+  using protocol_handler_type      = service::protocol_handler_type;
 
   LaneController(protocol_handler_type const &      lane_identity_protocol,
-                 std::weak_ptr<LaneIdentity> const &identity,
-                 client_register_type reg, network_manager_type nm)
+                 std::weak_ptr<LaneIdentity> const &identity, client_register_type reg,
+                 network_manager_type nm)
       : lane_identity_protocol_(lane_identity_protocol)
       , lane_identity_(identity)
       , register_(reg)
@@ -34,10 +33,7 @@ public:
 
   /// External controls
   /// @{
-  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port)
-  {
-    Connect(host, port);
-  }
+  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port) { Connect(host, port); }
 
   void TryConnect(p2p::EntryPoint const &ep)
   {
@@ -98,8 +94,7 @@ public:
     return services_[n];
   }
 
-  shared_service_client_type Connect(byte_array::ByteArray const &host,
-                                     uint16_t const &             port)
+  shared_service_client_type Connect(byte_array::ByteArray const &host, uint16_t const &port)
   {
     shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
@@ -115,8 +110,7 @@ public:
     std::size_t n = 0;
     while (n < 10)
     {
-      auto p =
-          client->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
+      auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
       if (p.Wait(100, false))
       {
         if (p.As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
@@ -147,8 +141,7 @@ public:
         return nullptr;
       }
 
-      auto p = client->Call(lane_identity_protocol_,
-                            LaneIdentityProtocol::HELLO, ptr->Identity());
+      auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::HELLO, ptr->Identity());
       if (!p.Wait(1000))  // TODO: Make timeout configurable
       {
         logger.Warn("Connection timed out - closing");
@@ -161,14 +154,12 @@ public:
     }
 
     // Exchaning info
-    auto p = client->Call(lane_identity_protocol_,
-                          LaneIdentityProtocol::GET_LANE_NUMBER);
+    auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::GET_LANE_NUMBER);
     p.Wait(1000);  // TODO: Make timeout configurable
     if (p.As<LaneIdentity::lane_type>() != ident->GetLaneNumber())
     {
       logger.Error("Could not connect to lane with different lane number: ",
-                   p.As<LaneIdentity::lane_type>(), " vs ",
-                   ident->GetLaneNumber());
+                   p.As<LaneIdentity::lane_type>(), " vs ", ident->GetLaneNumber());
       client->Close();
       client.reset();
       // TODO : Throw exception
@@ -198,10 +189,9 @@ private:
   client_register_type        register_;
   network_manager_type        manager_;
 
-  mutex::Mutex services_mutex_;
-  std::unordered_map<connection_handle_type, shared_service_client_type>
-                                      services_;
-  std::vector<connection_handle_type> inactive_services_;
+  mutex::Mutex                                                           services_mutex_;
+  std::unordered_map<connection_handle_type, shared_service_client_type> services_;
+  std::vector<connection_handle_type>                                    inactive_services_;
 };
 
 }  // namespace ledger

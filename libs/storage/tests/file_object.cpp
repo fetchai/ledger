@@ -82,7 +82,7 @@ bool Overwriting()
   stack.New("document_data.db", "doc_diff.db");
 
   FileObject<stack_type> file_object(stack);
-  ByteArray str("Hello world! This is a great world."), f("Fetch"), ret;
+  ByteArray              str("Hello world! This is a great world."), f("Fetch"), ret;
   file_object.Seek(0);
   file_object.Write(str.pointer(), str.size());
   file_object.Seek(6);
@@ -125,8 +125,7 @@ bool HashConsistency()
   file_object.Seek(0);
   file_object.Read(ret.pointer(), ret.size());
 
-  return (str == ret) &&
-         (file_object.Hash() == crypto::Hash<crypto::SHA256>(str));
+  return (str == ret) && (file_object.Hash() == crypto::Hash<crypto::SHA256>(str));
 }
 
 template <std::size_t BS>
@@ -269,8 +268,7 @@ bool FileLoadHashConsistency()
 
       if (file_object.Hash() != hashes[n])
       {
-        std::cout << "Failed??? " << strings[n].size() << " "
-                  << file_object.size() << std::endl;
+        std::cout << "Failed??? " << strings[n].size() << " " << file_object.size() << std::endl;
 
         return false;
       }

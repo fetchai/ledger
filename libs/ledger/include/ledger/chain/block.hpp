@@ -46,17 +46,15 @@ struct BlockBody
 template <typename T>
 void Serialize(T &serializer, BlockBody const &body)
 {
-  serializer << body.previous_hash << body.merkle_hash << body.nonce
-             << body.block_number << body.miner_number << body.log2_num_lanes
-             << body.slices;
+  serializer << body.previous_hash << body.merkle_hash << body.nonce << body.block_number
+             << body.miner_number << body.log2_num_lanes << body.slices;
 }
 
 template <typename T>
 void Deserialize(T &serializer, BlockBody &body)
 {
-  serializer >> body.previous_hash >> body.merkle_hash >> body.nonce >>
-      body.block_number >> body.miner_number >> body.log2_num_lanes >>
-      body.slices;
+  serializer >> body.previous_hash >> body.merkle_hash >> body.nonce >> body.block_number >>
+      body.miner_number >> body.log2_num_lanes >> body.slices;
 }
 
 template <typename P, typename H>
@@ -79,8 +77,8 @@ public:
   {
 
     serializers::ByteArrayBuffer buf;
-    buf << body_.previous_hash << body_.merkle_hash << body_.block_number
-        << body_.nonce << body_.miner_number;
+    buf << body_.previous_hash << body_.merkle_hash << body_.block_number << body_.nonce
+        << body_.miner_number;
 
     hasher_type hash;
     hash.Reset();
@@ -107,10 +105,7 @@ public:
 #if 1  // TODO: Move to py swarm?
   std::string hashString() const { return std::string(ToHex(body_.hash)); }
 
-  std::string prevString() const
-  {
-    return std::string(ToHex(body_.previous_hash));
-  }
+  std::string prevString() const { return std::string(ToHex(body_.previous_hash)); }
 #endif
 
 private:

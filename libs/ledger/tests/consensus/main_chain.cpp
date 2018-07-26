@@ -18,11 +18,9 @@ double TimeDifference(time_point t1, time_point t2)
   // If t1 before t2
   if (t1 < t2)
   {
-    return std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1)
-        .count();
+    return std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
   }
-  return std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t2)
-      .count();
+  return std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t2).count();
 }
 
 typedef MainChain::block_type               block_type;
@@ -186,8 +184,8 @@ int main(int argc, char const **argv)
         }
 
         auto t2 = TimePoint();
-        std::cout << "Difficulty: " << diff << ". Block time: "
-                  << TimeDifference(t2, t1) / double(blockIterations)
+        std::cout << "Difficulty: " << diff
+                  << ". Block time: " << TimeDifference(t2, t1) / double(blockIterations)
                   << std::endl;
       }
 
@@ -284,8 +282,8 @@ int main(int argc, char const **argv)
       }
 
       auto t2 = TimePoint();
-      std::cout << "Blocks: " << blocksToCreate
-                << ". Time: " << TimeDifference(t2, t1) << std::endl;
+      std::cout << "Blocks: " << blocksToCreate << ". Time: " << TimeDifference(t2, t1)
+                << std::endl;
 
       EXPECT(mainChain.HeaviestBlock().hash() == prevHash);
     };

@@ -34,8 +34,8 @@ public:
       std::size_t block = 0;
       std::size_t bit   = 0;
 
-      double    r     = sim_rng_.AsDouble();
-      double    TlogR = std::log(r) / beta_ / 2. / normalisation_constant_;
+      double    r           = sim_rng_.AsDouble();
+      double    TlogR       = std::log(r) / beta_ / 2. / normalisation_constant_;
       cost_type approxTlogR = cost_type(TlogR);
 
       for (std::size_t i = 0; i < size_; ++i)
@@ -65,8 +65,8 @@ public:
           B(1) = s.couplings(1) & state_(1);
           B(2) = s.couplings(2) & state_(2);
           B(3) = s.couplings(3) & state_(3);
-          p    = __builtin_popcountl(B(0)) + __builtin_popcountl(B(1)) +
-              __builtin_popcountl(B(2)) + __builtin_popcountl(B(3));
+          p    = __builtin_popcountl(B(0)) + __builtin_popcountl(B(1)) + __builtin_popcountl(B(2)) +
+              __builtin_popcountl(B(3));
           break;
 
         default:

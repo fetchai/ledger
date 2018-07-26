@@ -21,16 +21,13 @@ using ::testing::_;
 class ExecutionManagerTests : public ::testing::TestWithParam<BlockConfig>
 {
 protected:
-  using underlying_executor_type = FakeExecutor;
-  using shared_executor_type     = std::shared_ptr<underlying_executor_type>;
-  using executor_list_type       = std::vector<shared_executor_type>;
+  using underlying_executor_type          = FakeExecutor;
+  using shared_executor_type              = std::shared_ptr<underlying_executor_type>;
+  using executor_list_type                = std::vector<shared_executor_type>;
   using underlying_execution_manager_type = fetch::ledger::ExecutionManager;
-  using executor_factory_type =
-      underlying_execution_manager_type::executor_factory_type;
-  using block_digest_type =
-      underlying_execution_manager_type::block_digest_type;
-  using execution_manager_type =
-      std::shared_ptr<underlying_execution_manager_type>;
+  using executor_factory_type   = underlying_execution_manager_type::executor_factory_type;
+  using block_digest_type       = underlying_execution_manager_type::block_digest_type;
+  using execution_manager_type  = std::shared_ptr<underlying_execution_manager_type>;
   using underlying_storage_type = MockStorageUnit;
   using storage_type            = std::shared_ptr<underlying_storage_type>;
   using clock_type              = std::chrono::high_resolution_clock;
@@ -56,14 +53,12 @@ protected:
 
   shared_executor_type CreateExecutor()
   {
-    shared_executor_type executor =
-        std::make_shared<underlying_executor_type>();
+    shared_executor_type executor = std::make_shared<underlying_executor_type>();
     executors_.push_back(executor);
     return executor;
   }
 
-  bool WaitUntilExecutionComplete(std::size_t num_executions,
-                                  std::size_t iterations = 120)
+  bool WaitUntilExecutionComplete(std::size_t num_executions, std::size_t iterations = 120)
   {
     bool success = false;
 
@@ -71,8 +66,7 @@ protected:
     {
 
       // the manager must be idle and have completed the required executions
-      if (manager_->IsIdle() &&
-          (manager_->completed_executions() >= num_executions))
+      if (manager_->IsIdle() && (manager_->completed_executions() >= num_executions))
       {
         success = true;
         break;
@@ -112,10 +106,9 @@ protected:
     }
 
     // Step 2. Sort the elements by timestamp
-    std::sort(history.begin(), history.end(),
-              [](HistoryElement const &a, HistoryElement const &b) {
-                return a.timestamp < b.timestamp;
-              });
+    std::sort(history.begin(), history.end(), [](HistoryElement const &a, HistoryElement const &b) {
+      return a.timestamp < b.timestamp;
+    });
 
     // Step 3. Check that the start time
     if (!history.empty())
@@ -171,12 +164,10 @@ TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
   fetch::byte_array::ConstByteArray prev_hash;
 
   // execute the block
-  ASSERT_EQ(manager_->Execute(block.block),
-            underlying_execution_manager_type::Status::SCHEDULED);
+  ASSERT_EQ(manager_->Execute(block.block), underlying_execution_manager_type::Status::SCHEDULED);
 
   // wait for the manager to become idle again
-  ASSERT_TRUE(WaitUntilExecutionComplete(
-      static_cast<std::size_t>(block.num_transactions)));
+  ASSERT_TRUE(WaitUntilExecutionComplete(static_cast<std::size_t>(block.num_transactions)));
   ASSERT_EQ(GetNumExecutedTransaction(), block.num_transactions);
   ASSERT_TRUE(CheckForExecutionOrder());
 
@@ -184,5 +175,4 @@ TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
   manager_->Stop();
 }
 
-INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerTests,
-                        ::testing::ValuesIn(BlockConfig::MAIN_SET), );
+INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerTests, ::testing::ValuesIn(BlockConfig::MAIN_SET), );

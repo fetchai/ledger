@@ -14,10 +14,8 @@ inline void Serialize(T &serializer, byte_array::ConstByteArray const &s)
   serializer.Allocate(sizeof(uint64_t) + s.size());
   uint64_t size = s.size();
 
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size),
-                        sizeof(uint64_t));
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(s.pointer()),
-                        s.size());
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(s.pointer()), s.size());
 }
 
 template <typename T>

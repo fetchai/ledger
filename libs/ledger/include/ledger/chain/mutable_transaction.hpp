@@ -136,10 +136,7 @@ public:
     signature_ = sig;
   }
 
-  void set_contract_name(std::string const &name)
-  {
-    summary_.contract_name_ = name;
-  }
+  void set_contract_name(std::string const &name) { summary_.contract_name_ = name; }
 
   void set_fee(uint64_t fee) { summary_.fee = fee; }
 

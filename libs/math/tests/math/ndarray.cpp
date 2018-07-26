@@ -38,9 +38,7 @@ int main(int argc, char **argv)
     }
   }
 
-  std::cout << vector_register_type::dsp_sum_of_products(a.pointer(),
-                                                         b.pointer(), N)
-            << std::endl;
+  std::cout << vector_register_type::dsp_sum_of_products(a.pointer(), b.pointer(), N) << std::endl;
 
   return 0;
 
@@ -51,16 +49,16 @@ int main(int argc, char **argv)
 
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
   c.in_parallel().Apply(vm, a, b);
-  high_resolution_clock::time_point t2 = high_resolution_clock::now();
-  duration<double> ts1 = duration_cast<duration<double>>(t2 - t1);
+  high_resolution_clock::time_point t2  = high_resolution_clock::now();
+  duration<double>                  ts1 = duration_cast<duration<double>>(t2 - t1);
 
   high_resolution_clock::time_point t3 = high_resolution_clock::now();
   for (std::size_t i = 0; i < N; ++i)
   {
     c[i] = (a[i] + b[i]) / (a[i] - b[i]);
   }
-  high_resolution_clock::time_point t4 = high_resolution_clock::now();
-  duration<double> ts2 = duration_cast<duration<double>>(t4 - t3);
+  high_resolution_clock::time_point t4  = high_resolution_clock::now();
+  duration<double>                  ts2 = duration_cast<duration<double>>(t4 - t3);
 
   fetch::kernels::ConcurrentVM<type> vm2;
   vm2.AddInstruction(1, 0, 1, 2);
@@ -69,24 +67,21 @@ int main(int argc, char **argv)
 
   high_resolution_clock::time_point t5 = high_resolution_clock::now();
   c.in_parallel().Apply(vm2, a, b);
-  high_resolution_clock::time_point t6 = high_resolution_clock::now();
-  duration<double> ts3 = duration_cast<duration<double>>(t6 - t5);
+  high_resolution_clock::time_point t6  = high_resolution_clock::now();
+  duration<double>                  ts3 = duration_cast<duration<double>>(t6 - t5);
 
   high_resolution_clock::time_point t7 = high_resolution_clock::now();
-  c.in_parallel().Apply(
-      [](vector_register_type const &x, vector_register_type const &y,
-         vector_register_type &z) { z = x + y; },
-      a, b);
+  c.in_parallel().Apply([](vector_register_type const &x, vector_register_type const &y,
+                           vector_register_type &z) { z = x + y; },
+                        a, b);
 
-  c.in_parallel().Apply(
-      [](vector_register_type const &x, vector_register_type const &y,
-         vector_register_type &z) { z = z / (x - y); },
-      a, b);
-  high_resolution_clock::time_point t8 = high_resolution_clock::now();
-  duration<double> ts4 = duration_cast<duration<double>>(t8 - t7);
+  c.in_parallel().Apply([](vector_register_type const &x, vector_register_type const &y,
+                           vector_register_type &z) { z = z / (x - y); },
+                        a, b);
+  high_resolution_clock::time_point t8  = high_resolution_clock::now();
+  duration<double>                  ts4 = duration_cast<duration<double>>(t8 - t7);
 
-  std::cout << "Non-concurrent VM: " << ts3.count() * 1000 << " ms"
-            << std::endl;
+  std::cout << "Non-concurrent VM: " << ts3.count() * 1000 << " ms" << std::endl;
   std::cout << "Concurrent VM: " << ts1.count() * 1000 << " ms" << std::endl;
   std::cout << "Vectorised ops: " << ts4.count() * 1000 << " ms" << std::endl;
   std::cout << "Native C++: " << ts2.count() * 1000 << " ms" << std::endl;
@@ -102,8 +97,7 @@ int main(int argc, char **argv)
   std::cout << "Did this break? "
             << a.in_parallel().SumReduce(
                    TrivialRange(SS, BB + 1),
-                   [](vector_register_type const &x,
-                      vector_register_type const &y,
+                   [](vector_register_type const &x, vector_register_type const &y,
                       vector_register_type const &z) { return (x + y) * z; },
                    b, c)
             << std::endl;

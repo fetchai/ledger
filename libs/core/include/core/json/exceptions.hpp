@@ -17,8 +17,8 @@ public:
   {
     std::stringstream msg;
     msg << "Unrecognised symbol '";
-    msg << token << '\'' << " at line " << token.line() << ", character "
-        << token.character() << "\n";
+    msg << token << '\'' << " at line " << token.line() << ", character " << token.character()
+        << "\n";
     str_ = msg.str();
   }
 

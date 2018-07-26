@@ -12,8 +12,7 @@ void Serialize(T &serializer, std::vector<std::string> const &vec)
   uint64_t size = vec.size();
 
   // Writing the size to the byte array
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size),
-                        sizeof(uint64_t));
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
 
   for (auto const &a : vec) serializer << a;
 }

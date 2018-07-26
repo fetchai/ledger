@@ -56,20 +56,18 @@ PYBIND11_MODULE(fetch, module)
 
   // Namespaces
 
-  py::module ns_fetch_random       = module.def_submodule("random");
-  py::module ns_fetch_vectorize    = module.def_submodule("vectorize");
-  py::module ns_fetch_image        = module.def_submodule("image");
-  py::module ns_fetch_image_colors = ns_fetch_image.def_submodule("colors");
-  py::module ns_fetch_math         = module.def_submodule("math");
-  py::module ns_fetch_math_correlation =
-      ns_fetch_math.def_submodule("correlation");
-  py::module ns_fetch_math_distance = ns_fetch_math.def_submodule("distance");
-  py::module ns_fetch_math_statistics =
-      ns_fetch_math.def_submodule("statistics");
-  py::module ns_fetch_math_spline = ns_fetch_math.def_submodule("spline");
-  py::module ns_fetch_memory      = module.def_submodule("memory");
-  py::module ns_fetch_byte_array  = module.def_submodule("byte_array");
-  py::module ns_fetch_math_linalg = ns_fetch_math.def_submodule("linalg");
+  py::module ns_fetch_random           = module.def_submodule("random");
+  py::module ns_fetch_vectorize        = module.def_submodule("vectorize");
+  py::module ns_fetch_image            = module.def_submodule("image");
+  py::module ns_fetch_image_colors     = ns_fetch_image.def_submodule("colors");
+  py::module ns_fetch_math             = module.def_submodule("math");
+  py::module ns_fetch_math_correlation = ns_fetch_math.def_submodule("correlation");
+  py::module ns_fetch_math_distance    = ns_fetch_math.def_submodule("distance");
+  py::module ns_fetch_math_statistics  = ns_fetch_math.def_submodule("statistics");
+  py::module ns_fetch_math_spline      = ns_fetch_math.def_submodule("spline");
+  py::module ns_fetch_memory           = module.def_submodule("memory");
+  py::module ns_fetch_byte_array       = module.def_submodule("byte_array");
+  py::module ns_fetch_math_linalg      = ns_fetch_math.def_submodule("linalg");
 
   fetch::memory::BuildArray<int8_t>("ArrayInt8", ns_fetch_memory);
   fetch::memory::BuildArray<int16_t>("ArrayInt16", ns_fetch_memory);
@@ -90,12 +88,9 @@ PYBIND11_MODULE(fetch, module)
   fetch::memory::BuildSharedArray<int64_t>("SharedArrayInt64", ns_fetch_memory);
 
   fetch::memory::BuildSharedArray<uint8_t>("SharedArrayUInt8", ns_fetch_memory);
-  fetch::memory::BuildSharedArray<uint16_t>("SharedArrayUInt16",
-                                            ns_fetch_memory);
-  fetch::memory::BuildSharedArray<uint32_t>("SharedArrayUInt32",
-                                            ns_fetch_memory);
-  fetch::memory::BuildSharedArray<uint64_t>("SharedArrayUInt64",
-                                            ns_fetch_memory);
+  fetch::memory::BuildSharedArray<uint16_t>("SharedArrayUInt16", ns_fetch_memory);
+  fetch::memory::BuildSharedArray<uint32_t>("SharedArrayUInt32", ns_fetch_memory);
+  fetch::memory::BuildSharedArray<uint64_t>("SharedArrayUInt64", ns_fetch_memory);
 
   fetch::memory::BuildSharedArray<float>("SharedArrayFloat", ns_fetch_memory);
   fetch::memory::BuildSharedArray<double>("SharedArrayDouble", ns_fetch_memory);
@@ -120,10 +115,8 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::BuildShapeLessArray<uint64_t>("ShapeLessArrayUInt64",
   ns_fetch_memory);
   */
-  fetch::math::BuildShapeLessArray<float>("ShapeLessArrayFloat",
-                                          ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<double>("ShapeLessArrayDouble",
-                                           ns_fetch_memory);
+  fetch::math::BuildShapeLessArray<float>("ShapeLessArrayFloat", ns_fetch_memory);
+  fetch::math::BuildShapeLessArray<double>("ShapeLessArrayDouble", ns_fetch_memory);
 
   /*
   fetch::math::BuildRectangularArray<int8_t>("RectangularArrayInt8",
@@ -144,10 +137,8 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::BuildRectangularArray<uint64_t>("RectangularArrayUInt64",
   ns_fetch_memory);
   */
-  fetch::math::BuildRectangularArray<float>("RectangularArrayFloat",
-                                            ns_fetch_memory);
-  fetch::math::BuildRectangularArray<double>("RectangularArrayDouble",
-                                             ns_fetch_memory);
+  fetch::math::BuildRectangularArray<float>("RectangularArrayFloat", ns_fetch_memory);
+  fetch::math::BuildRectangularArray<double>("RectangularArrayDouble", ns_fetch_memory);
 
   //  fetch::math::BuildExp< 0, 60801, false>("Exp0", ns_fetch_math);
   //  fetch::math::BuildLog(ns_fetch_math);
@@ -171,8 +162,7 @@ PYBIND11_MODULE(fetch, module)
   //  ns_fetch_math_linalg);
 
   fetch::math::linalg::BuildMatrix<float>("MatrixFloat", ns_fetch_math_linalg);
-  fetch::math::linalg::BuildMatrix<double>("MatrixDouble",
-                                           ns_fetch_math_linalg);
+  fetch::math::linalg::BuildMatrix<double>("MatrixDouble", ns_fetch_math_linalg);
 
   //  fetch::math::BuildSpline(ns_fetch_math_spline);
   //  fetch::image::colors::BuildAbstractColor<uint32_t, 8,
@@ -187,59 +177,45 @@ PYBIND11_MODULE(fetch, module)
   ///////////
   // Comparisons
 
-  fetch::math::correlation::BuildPearsonCorrelation("Pearson",
-                                                    ns_fetch_math_correlation);
-  fetch::math::correlation::BuildEisenCorrelation("Eisen",
-                                                  ns_fetch_math_correlation);
-  fetch::math::correlation::BuildJaccardCorrelation("Jaccard",
-                                                    ns_fetch_math_correlation);
-  fetch::math::correlation::BuildGeneralisedJaccardCorrelation(
-      "GeneralisedJaccard", ns_fetch_math_correlation);
+  fetch::math::correlation::BuildPearsonCorrelation("Pearson", ns_fetch_math_correlation);
+  fetch::math::correlation::BuildEisenCorrelation("Eisen", ns_fetch_math_correlation);
+  fetch::math::correlation::BuildJaccardCorrelation("Jaccard", ns_fetch_math_correlation);
+  fetch::math::correlation::BuildGeneralisedJaccardCorrelation("GeneralisedJaccard",
+                                                               ns_fetch_math_correlation);
 
-  fetch::math::distance::BuildPearsonDistance("Pearson",
-                                              ns_fetch_math_distance);
+  fetch::math::distance::BuildPearsonDistance("Pearson", ns_fetch_math_distance);
   fetch::math::distance::BuildEisenDistance("Eisen", ns_fetch_math_distance);
   fetch::math::distance::BuildEisenDistance("Cosine", ns_fetch_math_distance);
-  fetch::math::distance::BuildManhattanDistance("Manhattan",
-                                                ns_fetch_math_distance);
-  fetch::math::distance::BuildEuclideanDistance("Euclidean",
-                                                ns_fetch_math_distance);
-  fetch::math::distance::BuildJaccardDistance("Jaccard",
-                                              ns_fetch_math_distance);
-  fetch::math::distance::BuildGeneralisedJaccardDistance(
-      "GeneralisedJaccard", ns_fetch_math_distance);
+  fetch::math::distance::BuildManhattanDistance("Manhattan", ns_fetch_math_distance);
+  fetch::math::distance::BuildEuclideanDistance("Euclidean", ns_fetch_math_distance);
+  fetch::math::distance::BuildJaccardDistance("Jaccard", ns_fetch_math_distance);
+  fetch::math::distance::BuildGeneralisedJaccardDistance("GeneralisedJaccard",
+                                                         ns_fetch_math_distance);
 
-  fetch::math::distance::BuildHammingDistance("Hamming",
-                                              ns_fetch_math_distance);
-  fetch::math::distance::BuildChebyshevDistance("Chebyshev",
-                                                ns_fetch_math_distance);
-  fetch::math::distance::BuildBraycurtisDistance("Braycurtis",
-                                                 ns_fetch_math_distance);
+  fetch::math::distance::BuildHammingDistance("Hamming", ns_fetch_math_distance);
+  fetch::math::distance::BuildChebyshevDistance("Chebyshev", ns_fetch_math_distance);
+  fetch::math::distance::BuildBraycurtisDistance("Braycurtis", ns_fetch_math_distance);
 
-  fetch::math::distance::BuildDistanceMatrixDistance("DistanceMatrix",
-                                                     ns_fetch_math_distance);
-  fetch::math::distance::BuildPairWiseDistanceDistance("PairWiseDistance",
-                                                       ns_fetch_math_distance);
+  fetch::math::distance::BuildDistanceMatrixDistance("DistanceMatrix", ns_fetch_math_distance);
+  fetch::math::distance::BuildPairWiseDistanceDistance("PairWiseDistance", ns_fetch_math_distance);
 
   ////////////
   // Statisticsfetch_math_statistics);
-  fetch::math::statistics::BuildGeometricMeanStatistics(
-      "GeometricMean", ns_fetch_math_statistics);
-  fetch::math::statistics::BuildVarianceStatistics("Variance",
-                                                   ns_fetch_math_statistics);
-  fetch::math::statistics::BuildStandardDeviationStatistics(
-      "StandardDeviation", ns_fetch_math_statistics);
+  fetch::math::statistics::BuildGeometricMeanStatistics("GeometricMean", ns_fetch_math_statistics);
+  fetch::math::statistics::BuildVarianceStatistics("Variance", ns_fetch_math_statistics);
+  fetch::math::statistics::BuildStandardDeviationStatistics("StandardDeviation",
+                                                            ns_fetch_math_statistics);
 
   fetch::byte_array::BuildByteArray(ns_fetch_byte_array);
   fetch::byte_array::BuildConstByteArray(ns_fetch_byte_array);
 
-  fetch::random::BuildLaggedFibonacciGenerator<418, 1279>(
-      "LaggedFibonacciGenerator", ns_fetch_random);
+  fetch::random::BuildLaggedFibonacciGenerator<418, 1279>("LaggedFibonacciGenerator",
+                                                          ns_fetch_random);
   fetch::random::BuildLinearCongruentialGenerator(ns_fetch_random);
   fetch::random::BuildBitMask<uint64_t, 12, true>("BitMask", ns_fetch_random);
 
-  fetch::random::BuildBitGenerator<fetch::random::LaggedFibonacciGenerator<>,
-                                   12, true>("BitGenerator", ns_fetch_random);
+  fetch::random::BuildBitGenerator<fetch::random::LaggedFibonacciGenerator<>, 12, true>(
+      "BitGenerator", ns_fetch_random);
 
   // py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
   // fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);

@@ -25,7 +25,7 @@ public:
   // typedef fetch::service::ServiceClient<network::TCPClient> client_type;
   typedef fetch::service::ServiceClient                     client_type;
   typedef service::ServiceServer<fetch::network::TCPServer> rpc_server_type;
-  typedef uint32_t protocol_number_type;
+  typedef uint32_t                                          protocol_number_type;
 
 protected:
   const uint32_t MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION = 100;
@@ -44,8 +44,7 @@ public:
       : NetworkNodeCore(NetworkManager{threads}, httpPort, rpcPort)
   {}
 
-  NetworkNodeCore(NetworkManager networkManager, uint16_t httpPort,
-                  uint16_t rpcPort)
+  NetworkNodeCore(NetworkManager networkManager, uint16_t httpPort, uint16_t rpcPort)
       : nm_(std::move(networkManager))
   {
     lock_type mlock(mutex_);
@@ -67,8 +66,8 @@ public:
 
   virtual ~NetworkNodeCore() {}
 
-  typedef std::pair<std::string, int>  remote_host_identifier_type;
-  typedef std::shared_ptr<client_type> client_ptr;
+  typedef std::pair<std::string, int>                       remote_host_identifier_type;
+  typedef std::shared_ptr<client_type>                      client_ptr;
   typedef std::map<remote_host_identifier_type, client_ptr> cache_type;
 
   cache_type cache_;
@@ -76,8 +75,7 @@ public:
   typedef std::shared_ptr<fetch::service::Protocol> protocol_ptr;
   typedef std::map<uint32_t, protocol_ptr>          protocol_cache_type;
 
-  virtual std::shared_ptr<client_type> ConnectToPeer(
-      const fetch::swarm::SwarmPeerLocation &peer)
+  virtual std::shared_ptr<client_type> ConnectToPeer(const fetch::swarm::SwarmPeerLocation &peer)
   {
     return ConnectTo(peer.GetHost(), peer.GetPort());
   }
@@ -119,10 +117,7 @@ public:
 
   void Stop() { nm_.Stop(); }
 
-  void AddModule(fetch::http::HTTPModule *handler)
-  {
-    httpServer_->AddModule(*handler);
-  }
+  void AddModule(fetch::http::HTTPModule *handler) { httpServer_->AddModule(*handler); }
 
   template <class MODULE>
   void AddModule(std::shared_ptr<MODULE> module_p)
@@ -137,8 +132,7 @@ public:
   {
     lock_type mlock(mutex_);
     auto      protocolInstance = std::make_shared<PROTOCOL_CLASS>(interface);
-    auto      baseProtocolPtr =
-        std::static_pointer_cast<fetch::service::Protocol>(protocolInstance);
+    auto baseProtocolPtr = std::static_pointer_cast<fetch::service::Protocol>(protocolInstance);
     protocolCache_[protocolNumber]      = baseProtocolPtr;
     PROTOCOL_CLASS *          proto_ptr = protocolInstance.get();
     fetch::service::Protocol *base_ptr  = proto_ptr;
@@ -148,8 +142,8 @@ public:
   template <class INTERFACE_CLASS>
   void AddProtocol(INTERFACE_CLASS *interface, uint32_t protocolNumber)
   {
-    AddProtocol<INTERFACE_CLASS, typename INTERFACE_CLASS::protocol_class_type>(
-        interface, protocolNumber);
+    AddProtocol<INTERFACE_CLASS, typename INTERFACE_CLASS::protocol_class_type>(interface,
+                                                                                protocolNumber);
   }
 
   template <class INTERFACE_CLASS>
@@ -170,8 +164,7 @@ public:
   virtual void Post(std::function<void()> workload) { nm_.Post(workload); }
 
 protected:
-  virtual client_ptr ActuallyConnectTo(const std::string &host,
-                                       unsigned short     port)
+  virtual client_ptr ActuallyConnectTo(const std::string &host, unsigned short port)
   {
     network::TCPClient connection(nm_);
     connection.Connect(host, port);
@@ -179,8 +172,7 @@ protected:
     client_ptr client = std::make_shared<client_type>(connection, nm_);
 
     auto waits      = NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION;
-    auto waitTimeUS = MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION *
-                      MICROSECONDS_PER_MILLISECOND /
+    auto waitTimeUS = MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION * MICROSECONDS_PER_MILLISECOND /
                       NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION;
     while (!client->is_alive())
     {
@@ -189,10 +181,8 @@ protected:
       if (waits <= 0)
       {
         // TODO(katie) make this non throwing and return empty sharedp.
-        throw std::invalid_argument(std::string("Timeout while connecting " +
-                                                host + ":" +
-                                                std::to_string(port))
-                                        .c_str());
+        throw std::invalid_argument(
+            std::string("Timeout while connecting " + host + ":" + std::to_string(port)).c_str());
       }
     }
     return client;

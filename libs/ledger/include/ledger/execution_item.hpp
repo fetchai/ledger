@@ -18,12 +18,9 @@ public:
   using tx_digest_type  = chain::Transaction::digest_type;
   using lane_set_type   = std::unordered_set<lane_index_type>;
 
-  ExecutionItem(tx_digest_type const &hash, std::size_t slice)
-      : hash_(hash), slice_(slice)
-  {}
+  ExecutionItem(tx_digest_type const &hash, std::size_t slice) : hash_(hash), slice_(slice) {}
 
-  ExecutionItem(tx_digest_type const &hash, lane_index_type lane,
-                std::size_t slice)
+  ExecutionItem(tx_digest_type const &hash, lane_index_type lane, std::size_t slice)
       : hash_(hash), lanes_{lane}, slice_(slice)
   {}
 

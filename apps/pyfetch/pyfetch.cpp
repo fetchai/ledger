@@ -37,8 +37,7 @@ PYBIND11_EMBEDDED_MODULE(fetchnetwork, module)
 
 PYBIND11_EMBEDDED_MODULE(fetchledger, module)
 {
-  pybind11::module ns_fetch_ledger_chain_mainchain =
-      module.def_submodule("chain");
+  pybind11::module ns_fetch_ledger_chain_mainchain = module.def_submodule("chain");
   fetch::chain::BuildMainChain(ns_fetch_ledger_chain_mainchain);
 }
 

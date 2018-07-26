@@ -14,8 +14,7 @@ namespace storage {
 class RevertibleDocumentStoreProtocol : public fetch::service::Protocol
 {
 public:
-  typedef network::AbstractConnection::connection_handle_type
-      connection_handle_type;
+  typedef network::AbstractConnection::connection_handle_type connection_handle_type;
   using lane_type = uint32_t;  // TODO: Fetch from some other palce
 
   enum
@@ -38,8 +37,7 @@ public:
   {
     this->Expose(GET, (RevertibleDocumentStore::super_type *)doc_store,
                  &RevertibleDocumentStore::super_type::Get);
-    this->Expose(GET_OR_CREATE,
-                 (RevertibleDocumentStore::super_type *)doc_store,
+    this->Expose(GET_OR_CREATE, (RevertibleDocumentStore::super_type *)doc_store,
                  &RevertibleDocumentStore::super_type::GetOrCreate);
     this->Expose(SET, (RevertibleDocumentStore::super_type *)doc_store,
                  &RevertibleDocumentStore::super_type::Set);
@@ -47,20 +45,14 @@ public:
     this->Expose(REVERT, doc_store, &RevertibleDocumentStore::Revert);
     this->Expose(HASH, doc_store, &RevertibleDocumentStore::Hash);
 
-    this->ExposeWithClientArg(LOCK, this,
-                              &RevertibleDocumentStoreProtocol::LockResource);
-    this->ExposeWithClientArg(UNLOCK, this,
-                              &RevertibleDocumentStoreProtocol::UnlockResource);
-    this->ExposeWithClientArg(HAS_LOCK, this,
-                              &RevertibleDocumentStoreProtocol::HasLock);
+    this->ExposeWithClientArg(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
+    this->ExposeWithClientArg(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
+    this->ExposeWithClientArg(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
-  RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store,
-                                  lane_type const &        lane,
-                                  lane_type const &        maxlanes)
-      : fetch::service::Protocol()
-      , doc_store_(doc_store)
-      , lane_assignment_(lane)
+  RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store, lane_type const &lane,
+                                  lane_type const &maxlanes)
+      : fetch::service::Protocol(), doc_store_(doc_store), lane_assignment_(lane)
   {
 
     SetLaneLog2(maxlanes);
@@ -68,21 +60,16 @@ public:
     logger.Info("Spinning up lane ", lane_assignment_);
 
     this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
-    this->Expose(GET_OR_CREATE, this,
-                 &RevertibleDocumentStoreProtocol::GetOrCreateLaneChecked);
-    this->ExposeWithClientArg(SET, this,
-                              &RevertibleDocumentStoreProtocol::SetLaneChecked);
+    this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetOrCreateLaneChecked);
+    this->ExposeWithClientArg(SET, this, &RevertibleDocumentStoreProtocol::SetLaneChecked);
 
     this->Expose(COMMIT, doc_store, &RevertibleDocumentStore::Commit);
     this->Expose(REVERT, doc_store, &RevertibleDocumentStore::Revert);
     this->Expose(HASH, doc_store, &RevertibleDocumentStore::Hash);
 
-    this->ExposeWithClientArg(LOCK, this,
-                              &RevertibleDocumentStoreProtocol::LockResource);
-    this->ExposeWithClientArg(UNLOCK, this,
-                              &RevertibleDocumentStoreProtocol::UnlockResource);
-    this->ExposeWithClientArg(HAS_LOCK, this,
-                              &RevertibleDocumentStoreProtocol::HasLock);
+    this->ExposeWithClientArg(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
+    this->ExposeWithClientArg(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
+    this->ExposeWithClientArg(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
   bool HasLock(connection_handle_type const &client_id, ResourceID const &rid)
@@ -94,8 +81,7 @@ public:
     return (it->second == client_id);
   }
 
-  bool LockResource(connection_handle_type const &client_id,
-                    ResourceID const &            rid)
+  bool LockResource(connection_handle_type const &client_id, ResourceID const &rid)
   {
     std::lock_guard<mutex::Mutex> lock(lock_mutex_);
     auto                          it = locks_.find(rid.id());
@@ -108,8 +94,7 @@ public:
     return (it->second == client_id);
   }
 
-  bool UnlockResource(connection_handle_type const &client_id,
-                      ResourceID const &            rid)
+  bool UnlockResource(connection_handle_type const &client_id, ResourceID const &rid)
   {
 
     std::lock_guard<mutex::Mutex> lock(lock_mutex_);
@@ -133,14 +118,11 @@ private:
   {
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
-      logger.Warn("Lane assignment is ", lane_assignment_, " vs ",
-                  rid.lane(log2_lanes_));
+      logger.Warn("Lane assignment is ", lane_assignment_, " vs ", rid.lane(log2_lanes_));
       logger.Debug("Address:", byte_array::ToHex(rid.id()));
 
       throw serializers::SerializableException(  // TODO: set exception number
-          0,
-          byte_array_type(
-              "Get: Resource located on other lane. TODO, set error number"));
+          0, byte_array_type("Get: Resource located on other lane. TODO, set error number"));
     }
 
     return doc_store_->Get(rid);
@@ -150,8 +132,7 @@ private:
   {
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
-      logger.Warn("Lane assignment is ", lane_assignment_, " vs ",
-                  rid.lane(log2_lanes_));
+      logger.Warn("Lane assignment is ", lane_assignment_, " vs ", rid.lane(log2_lanes_));
       logger.Debug("Address:", byte_array::ToHex(rid.id()));
 
       throw serializers::SerializableException(  // TODO: set exception number
@@ -162,16 +143,13 @@ private:
     return doc_store_->GetOrCreate(rid);
   }
 
-  void SetLaneChecked(connection_handle_type const &    client_id,
-                      ResourceID const &                rid,
+  void SetLaneChecked(connection_handle_type const &client_id, ResourceID const &rid,
                       byte_array::ConstByteArray const &value)
   {
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
       throw serializers::SerializableException(  // TODO: set exception number
-          0,
-          byte_array_type(
-              "Set: Resource located on other lane. TODO: Set error number."));
+          0, byte_array_type("Set: Resource located on other lane. TODO: Set error number."));
     }
     {
       std::lock_guard<mutex::Mutex> lock(lock_mutex_);
@@ -188,8 +166,7 @@ private:
 
   void SetLaneLog2(lane_type const &count)
   {
-    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) -
-                           uint32_t(__builtin_clz(uint32_t(count)) + 1));
+    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
   RevertibleDocumentStore *doc_store_;

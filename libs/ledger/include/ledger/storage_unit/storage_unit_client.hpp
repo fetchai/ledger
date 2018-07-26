@@ -29,8 +29,7 @@ public:
 
   typedef service::ServiceClient               service_client_type;
   typedef std::shared_ptr<service_client_type> shared_service_client_type;
-  using client_register_type =
-      fetch::network::ConnectionRegister<ClientDetails>;
+  using client_register_type   = fetch::network::ConnectionRegister<ClientDetails>;
   using connection_handle_type = client_register_type::connection_handle_type;
   using network_manager_type   = fetch::network::NetworkManager;
   using lane_type              = LaneIdentity::lane_type;
@@ -50,8 +49,7 @@ public:
   }
 
   template <typename T>
-  crypto::Identity AddLaneConnection(byte_array::ByteArray const &host,
-                                     uint16_t const &             port)
+  crypto::Identity AddLaneConnection(byte_array::ByteArray const &host, uint16_t const &port)
   {
     shared_service_client_type client =
         register_.template CreateServiceClient<T>(network_manager_, host, port);
@@ -66,8 +64,7 @@ public:
       {
 
         // make the client call
-        auto p =
-            client->Call(LaneService::IDENTITY, LaneIdentityProtocol::PING);
+        auto p = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::PING);
         if (p.Wait(100, false))
         {
           if (p.As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
@@ -92,12 +89,9 @@ public:
     }
 
     // Exchaning info
-    auto p1 = client->Call(LaneService::IDENTITY,
-                           LaneIdentityProtocol::GET_LANE_NUMBER);
-    auto p2 = client->Call(LaneService::IDENTITY,
-                           LaneIdentityProtocol::GET_TOTAL_LANES);
-    auto p3 =
-        client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
+    auto p1 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+    auto p2 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
+    auto p3 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
     if ((!p1.Wait(1000)) || (!p2.Wait(1000)) || (!p3.Wait(1000)))
     {
       fetch::logger.Warn("Client timeout when trying to get identity details.");
@@ -136,8 +130,7 @@ public:
   {
     if (ep.lane_id < lanes_.size())
     {
-      lanes_[ep.lane_id]->Call(LaneService::CONTROLLER,
-                               LaneControllerProtocol::TRY_CONNECT, ep);
+      lanes_[ep.lane_id]->Call(LaneService::CONTROLLER, LaneControllerProtocol::TRY_CONNECT, ep);
     }
   }
 
@@ -145,23 +138,20 @@ public:
   {
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
 
-    auto        res  = fetch::storage::ResourceID(tx.digest());
-    std::size_t lane = res.lane(log2_lanes_);
-    auto        promise =
-        lanes_[lane]->Call(LaneService::TX_STORE, protocol::SET, res, tx);
+    auto        res     = fetch::storage::ResourceID(tx.digest());
+    std::size_t lane    = res.lane(log2_lanes_);
+    auto        promise = lanes_[lane]->Call(LaneService::TX_STORE, protocol::SET, res, tx);
     promise.Wait();
   }
 
-  bool GetTransaction(byte_array::ConstByteArray const &digest,
-                      chain::Transaction &              tx) override
+  bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) override
   {
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
 
-    auto        res  = fetch::storage::ResourceID(digest);
-    std::size_t lane = res.lane(log2_lanes_);
-    auto        promise =
-        lanes_[lane]->Call(LaneService::TX_STORE, protocol::GET, res);
-    tx = promise.As<chain::VerifiedTransaction>();
+    auto        res     = fetch::storage::ResourceID(digest);
+    std::size_t lane    = res.lane(log2_lanes_);
+    auto        promise = lanes_[lane]->Call(LaneService::TX_STORE, protocol::GET, res);
+    tx                  = promise.As<chain::VerifiedTransaction>();
 
     return true;
   }
@@ -172,8 +162,7 @@ public:
     std::size_t lane = res.lane(log2_lanes_);
 
     auto promise = lanes_[lane]->Call(
-        LaneService::STATE,
-        fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE, res);
+        LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE, res);
 
     return promise.As<storage::Document>();
   }
@@ -183,9 +172,8 @@ public:
     auto        res  = fetch::storage::ResourceID(key);
     std::size_t lane = res.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(
-        LaneService::STATE,
-        fetch::storage::RevertibleDocumentStoreProtocol::GET, res);
+    auto promise = lanes_[lane]->Call(LaneService::STATE,
+                                      fetch::storage::RevertibleDocumentStoreProtocol::GET, res);
 
     return promise.As<storage::Document>();
   }
@@ -194,9 +182,8 @@ public:
   {
     auto        res     = fetch::storage::ResourceID(key);
     std::size_t lane    = res.lane(log2_lanes_);
-    auto        promise = lanes_[lane]->Call(
-        LaneService::STATE,
-        fetch::storage::RevertibleDocumentStoreProtocol::LOCK, res);
+    auto        promise = lanes_[lane]->Call(LaneService::STATE,
+                                      fetch::storage::RevertibleDocumentStoreProtocol::LOCK, res);
 
     return promise.As<bool>();
   }
@@ -206,22 +193,19 @@ public:
 
     auto        res     = fetch::storage::ResourceID(key);
     std::size_t lane    = res.lane(log2_lanes_);
-    auto        promise = lanes_[lane]->Call(
-        LaneService::STATE,
-        fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK, res);
+    auto        promise = lanes_[lane]->Call(LaneService::STATE,
+                                      fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK, res);
 
     return promise.As<bool>();
   }
 
-  void Set(byte_array::ConstByteArray const &key,
-           byte_array::ConstByteArray const &value) override
+  void Set(byte_array::ConstByteArray const &key, byte_array::ConstByteArray const &value) override
   {
     auto        res  = fetch::storage::ResourceID(key);
     std::size_t lane = res.lane(log2_lanes_);
 
     auto promise = lanes_[lane]->Call(
-        LaneService::STATE,
-        fetch::storage::RevertibleDocumentStoreProtocol::SET, res, value);
+        LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET, res, value);
     promise.Wait(2000);
   }
 
@@ -231,8 +215,7 @@ public:
     for (std::size_t i = 0; i < lanes_.size(); ++i)
     {
       auto promise = lanes_[i]->Call(
-          LaneService::STATE,
-          fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
+          LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
       promises.push_back(promise);
     }
 
@@ -248,8 +231,7 @@ public:
     for (std::size_t i = 0; i < lanes_.size(); ++i)
     {
       auto promise = lanes_[i]->Call(
-          LaneService::STATE,
-          fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
+          LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
       promises.push_back(promise);
     }
 
@@ -263,8 +245,7 @@ public:
   {
     // TODO
     return lanes_[0]
-        ->Call(LaneService::STATE,
-               fetch::storage::RevertibleDocumentStoreProtocol::HASH)
+        ->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
         .As<byte_array::ByteArray>();
   }
 
@@ -294,8 +275,7 @@ private:
 
   void SetLaneLog2(lane_type const &count)
   {
-    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) -
-                           uint32_t(__builtin_clz(uint32_t(count)) + 1));
+    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
   client_register_type                    register_;

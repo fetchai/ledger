@@ -14,8 +14,7 @@ error_type const TYPE_ERROR = 0;
 class SerializableException : public std::exception
 {
 public:
-  SerializableException()
-      : error_code_(error::TYPE_ERROR), explanation_("unknown")
+  SerializableException() : error_code_(error::TYPE_ERROR), explanation_("unknown")
   {
     LOG_STACK_TRACE_POINT;
 
@@ -46,8 +45,7 @@ public:
     LOG_SET_CONTEXT_VARIABLE(stack_trace_)
   }
 
-  SerializableException(error::error_type                 error_code,
-                        byte_array::ConstByteArray const &explanation)
+  SerializableException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
       : error_code_(error_code), explanation_(std::string(explanation))
   {
     LOG_STACK_TRACE_POINT;
@@ -61,10 +59,7 @@ public:
   uint64_t    error_code() const { return error_code_; }
   std::string explanation() const { return explanation_; }
 
-  void StackTrace() const
-  {
-    LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception")
-  }
+  void StackTrace() const { LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception") }
 
 private:
   uint64_t    error_code_;

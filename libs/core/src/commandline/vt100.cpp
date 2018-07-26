@@ -8,10 +8,9 @@ namespace commandline {
 namespace VT100 {
 
 std::map<std::string, uint16_t> const color_map = {
-    {"black", 0},   {"red", 1},  {"green", 2}, {"yellow", 3},  {"blue", 4},
-    {"magenta", 5}, {"cyan", 6}, {"white", 7}, {"default", 9}, {"0", 0},
-    {"1", 1},       {"2", 2},    {"3", 3},     {"4", 4},       {"5", 5},
-    {"6", 6},       {"7", 7},    {"9", 9}};
+    {"black", 0}, {"red", 1},   {"green", 2},   {"yellow", 3}, {"blue", 4}, {"magenta", 5},
+    {"cyan", 6},  {"white", 7}, {"default", 9}, {"0", 0},      {"1", 1},    {"2", 2},
+    {"3", 3},     {"4", 4},     {"5", 5},       {"6", 6},      {"7", 7},    {"9", 9}};
 
 uint16_t ColorFromString(std::string name)
 {

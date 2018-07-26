@@ -19,8 +19,7 @@ inline typename A::type WrapperHamming(A const &a, A const &b)
   return Hamming(a, b);
 }
 
-inline void BuildHammingDistance(std::string const &custom_name,
-                                 pybind11::module & module)
+inline void BuildHammingDistance(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;

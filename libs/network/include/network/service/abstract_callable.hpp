@@ -28,8 +28,7 @@ struct Packer
   {
 
     serializer << next;
-    Packer<arguments...>::SerializeArguments(serializer,
-                                             std::forward<arguments>(args)...);
+    Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
   }
 };
 
@@ -77,8 +76,7 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
   serializer << protocol;
   serializer << function;
 
-  details::Packer<arguments...>::SerializeArguments(
-      serializer, std::forward<arguments>(args)...);
+  details::Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
 }
 
 /* This function is the no-argument packer.
@@ -112,8 +110,7 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
  * The serializer is left at position 0.
  */
 template <typename S>
-void PackCallWithPackedArguments(S &                          serializer,
-                                 protocol_handler_type const &protocol,
+void PackCallWithPackedArguments(S &serializer, protocol_handler_type const &protocol,
                                  function_handler_type const &function,
                                  byte_array::ByteArray const &args)
 {
@@ -136,8 +133,7 @@ void PackCallWithPackedArguments(S &                          serializer,
 template <typename S, typename... arguments>
 void PackArgs(S &serializer, arguments &&... args)
 {
-  details::Packer<arguments...>::SerializeArguments(
-      serializer, std::forward<arguments>(args)...);
+  details::Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
 }
 
 /* This is the no-argument packer.
@@ -171,8 +167,7 @@ public:
   template <typename T>
   void PushArgument(T *value)
   {
-    std::vector<CallableArgumentType>::push_back(
-        CallableArgumentType{typeid(T), (void *)value});
+    std::vector<CallableArgumentType>::push_back(CallableArgumentType{typeid(T), (void *)value});
   }
 
   CallableArgumentType const &operator[](std::size_t const &n) const
@@ -201,9 +196,8 @@ public:
    * @params is a serializer that is used to deserialize the arguments.
    */
   virtual void operator()(serializer_type &result, serializer_type &params) = 0;
-  virtual void operator()(serializer_type &           result,
-                          CallableArgumentList const &additional_args,
-                          serializer_type &           params)                          = 0;
+  virtual void operator()(serializer_type &result, CallableArgumentList const &additional_args,
+                          serializer_type &params)                          = 0;
 
   uint64_t const &meta_data() const { return meta_data_; }
 

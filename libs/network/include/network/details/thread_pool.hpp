@@ -18,8 +18,7 @@ namespace fetch {
 namespace network {
 namespace details {
 
-class ThreadPoolImplementation
-    : public std::enable_shared_from_this<ThreadPoolImplementation>
+class ThreadPoolImplementation : public std::enable_shared_from_this<ThreadPoolImplementation>
 {
 protected:
   typedef std::function<void()>                     event_function_type;
@@ -97,8 +96,7 @@ public:
         lock_type lock(mutex_);
         cv_.wait_for(
             lock,
-            std::chrono::milliseconds(
-                100));  // so the future work will get serviced eventually.
+            std::chrono::milliseconds(100));  // so the future work will get serviced eventually.
         // go round again.
       }
     }
@@ -200,11 +198,9 @@ public:
       while (futureWork_.IsDue())
       {
         // removes work from the pool and returns it.
-        auto moreWork =
-            futureWork_
-                .GetNext();  // removes work from the pool and returns it.
-        Post(moreWork);      // We give that work to the other threads.
-        r = THREAD_WORKED;   // We did something.
+        auto moreWork = futureWork_.GetNext();  // removes work from the pool and returns it.
+        Post(moreWork);                         // We give that work to the other threads.
+        r = THREAD_WORKED;                      // We did something.
       }
     }
     // if we didn't get the lock, one thread is already
@@ -228,8 +224,7 @@ public:
 
     if (tryingToKillFromThreadWeOwn)
     {
-      fetch::logger.Error(
-          "Thread pools must not be killed by a thread they own.");
+      fetch::logger.Error("Thread pools must not be killed by a thread they own.");
     }
 
     if (threads_.size() != 0)

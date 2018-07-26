@@ -34,8 +34,7 @@ public:
     clients_[lane] = client;
   }
 
-  void Connect(lane_index_type const &lane, byte_array::ByteArray const &host,
-               uint16_t const &port)
+  void Connect(lane_index_type const &lane, byte_array::ByteArray const &host, uint16_t const &port)
   {
     if (clients_.find(lane) == clients_.end())
     {
@@ -45,8 +44,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,
-                         LaneControllerProtocol::CONNECT, host, port);
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::CONNECT, host, port);
       p.Wait();
     }
   }
@@ -56,8 +54,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,
-                         LaneControllerProtocol::TRY_CONNECT, ep);
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::TRY_CONNECT, ep);
       p.Wait();
     }
   }
@@ -72,8 +69,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p =
-          ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::SHUTDOWN);
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::SHUTDOWN);
       p.Wait();
     }
   }
@@ -88,8 +84,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p = ptr->Call(IDENTITY_PROTOCOL_ID,
-                         LaneIdentityProtocol::GET_LANE_NUMBER);
+      auto p = ptr->Call(IDENTITY_PROTOCOL_ID, LaneIdentityProtocol::GET_LANE_NUMBER);
       return p.As<uint32_t>();
     }
 
@@ -108,8 +103,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,
-                         LaneControllerProtocol::INCOMING_PEERS);
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::INCOMING_PEERS);
       return p.As<int>();
     }
 
@@ -128,8 +122,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,
-                         LaneControllerProtocol::OUTGOING_PEERS);
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::OUTGOING_PEERS);
       return p.As<int>();
     }
 

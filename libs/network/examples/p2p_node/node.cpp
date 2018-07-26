@@ -114,8 +114,7 @@ int main(int argc, char const **argv)
             std::cout << "usage: addl [lane] [host] [port]" << std::endl;
             continue;
           }
-          service.AddLane(uint32_t(command[1].AsInt()), command[2],
-                          uint16_t(command[3].AsInt()));
+          service.AddLane(uint32_t(command[1].AsInt()), command[2], uint16_t(command[3].AsInt()));
         }
 
         if (command[0] == "addmc")
@@ -162,9 +161,7 @@ int main(int argc, char const **argv)
           {
             auto pd = me.second;
 
-            std::cout << "Peer: "
-                      << byte_array::ToBase64(pd.identity.identifier())
-                      << std::endl;
+            std::cout << "Peer: " << byte_array::ToBase64(pd.identity.identifier()) << std::endl;
             for (auto &e : pd.entry_points)
             {
               std::cout << "  - ";
@@ -197,9 +194,9 @@ int main(int argc, char const **argv)
             std::cout << "usage: list" << std::endl;
             continue;
           }
-          auto reg               = service.connection_register();
-          using details_map_type = typename fetch::network::ConnectionRegister<
-              PeerDetails>::details_map_type;
+          auto reg = service.connection_register();
+          using details_map_type =
+              typename fetch::network::ConnectionRegister<PeerDetails>::details_map_type;
 
           reg.WithClientDetails([](details_map_type map) {
             std::cout << "Lising peers" << std::endl;
@@ -208,9 +205,7 @@ int main(int argc, char const **argv)
               auto pd = me.second;
 
               std::lock_guard<mutex::Mutex> lock(*pd);
-              std::cout << "Peer: "
-                        << byte_array::ToBase64(pd->identity.identifier())
-                        << std::endl;
+              std::cout << "Peer: " << byte_array::ToBase64(pd->identity.identifier()) << std::endl;
               for (auto &e : pd->entry_points)
               {
                 std::cout << "  - ";

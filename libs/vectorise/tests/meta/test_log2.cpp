@@ -5,8 +5,7 @@
 
 #define TEST_LOG_EX__EQ__X(X) fetch::meta::Log2<(1ull << X)>::value == X
 
-#define TEST_LOG_EX_PLUS_Y__EQ__X(X, Y) \
-  fetch::meta::Log2<(1ull << X) + Y>::value == X
+#define TEST_LOG_EX_PLUS_Y__EQ__X(X, Y) fetch::meta::Log2<(1ull << X) + Y>::value == X
 int main()
 {
   SCENARIO("Testing exact exponents")

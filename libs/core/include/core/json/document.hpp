@@ -52,20 +52,13 @@ public:
     variants_.Reserve(1024);
   }
 
-  JSONDocument(const_string_type const &document) : JSONDocument()
-  {
-    Parse(document);
-  }
+  JSONDocument(const_string_type const &document) : JSONDocument() { Parse(document); }
 
   script::Variant &operator[](std::size_t const &i) { return root()[i]; }
 
-  script::Variant const &operator[](std::size_t const &i) const
-  {
-    return root()[i];
-  }
+  script::Variant const &operator[](std::size_t const &i) const { return root()[i]; }
 
-  typename script::Variant::variant_proxy_type operator[](
-      byte_array::ConstByteArray const &key)
+  typename script::Variant::variant_proxy_type operator[](byte_array::ConstByteArray const &key)
   {
     return root()[key];
   }
@@ -103,8 +96,7 @@ public:
         variants_[current_object.i++].MakeNull();  // = nullptr;
         break;
       case STRING:
-        variants_[current_object.i++].EmplaceSetString(document, t.first,
-                                                       t.second - t.first);
+        variants_[current_object.i++].EmplaceSetString(document, t.first, t.second - t.first);
         break;
 
       case NUMBER_INT:
@@ -125,8 +117,8 @@ public:
         allocation_counter += uint32_t(t.second);
         break;
       case CLOSE_OBJECT:
-        variants_[object_assembly_.back().i].SetObject(
-            variants_, current_object.start, current_object.size);
+        variants_[object_assembly_.back().i].SetObject(variants_, current_object.start,
+                                                       current_object.size);
 
         current_object = object_assembly_.back();
         object_assembly_.pop_back();
@@ -146,8 +138,8 @@ public:
 
         break;
       case CLOSE_ARRAY:
-        variants_[object_assembly_.back().i].SetArray(
-            variants_, current_object.start, current_object.size);
+        variants_[object_assembly_.back().i].SetArray(variants_, current_object.start,
+                                                      current_object.size);
 
         current_object = object_assembly_.back();
         object_assembly_.pop_back();
@@ -317,8 +309,7 @@ private:
       case ':':
         if (brace_stack_.back() != '}')
         {
-          throw JSONParseException(
-              "Cannot set property outside of object context");
+          throw JSONParseException("Cannot set property outside of object context");
         }
         //        tokens_.back().type = KEY;
         ++pos;
@@ -332,9 +323,8 @@ private:
       default:  // If none of the above it must be number:
 
         ++element_counter;
-        type = uint8_t(
-            byte_array::consumers::NumberConsumer<NUMBER_INT, NUMBER_FLOAT>(
-                document, pos));
+        type =
+            uint8_t(byte_array::consumers::NumberConsumer<NUMBER_INT, NUMBER_FLOAT>(document, pos));
         if (type == uint8_t(-1))
         {
           throw JSONParseException("Unable to parse integer.");

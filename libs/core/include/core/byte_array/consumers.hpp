@@ -44,9 +44,7 @@ int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
   */
   uint64_t oldpos = pos;
   uint64_t N      = pos + 1;
-  if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
-      (str[N] <= '9'))
-    pos += 2;
+  if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) && (str[N] <= '9')) pos += 2;
 
   while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
   if (pos != oldpos)
@@ -57,8 +55,7 @@ int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
     {
       ++pos;
       ret = int(NUMBER_FLOAT);
-      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9'))
-        ++pos;
+      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
     }
 
     if ((pos < str.size()) && ((str[pos] == 'e') || (str[pos] == 'E')))
@@ -73,8 +70,7 @@ int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
       }
 
       oldpos = pos;
-      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9'))
-        ++pos;
+      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
       if (oldpos == pos)
       {
         pos -= rev;
@@ -107,9 +103,8 @@ int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos)
   alignas(16) uint8_t compare[16] = {'"', '"', '"', '"', '"', '"', '"', '"',
                                      '"', '"', '"', '"', '"', '"', '"', '"'};
 
-  __m128i comp = _mm_load_si128((__m128i *)compare);
-  __m128i mptr =
-      _mm_loadu_si128((__m128i *)ptr);  // TODO: Optimise to follow alignment
+  __m128i  comp  = _mm_load_si128((__m128i *)compare);
+  __m128i  mptr  = _mm_loadu_si128((__m128i *)ptr);  // TODO: Optimise to follow alignment
   __m128i  mret  = _mm_cmpeq_epi8(comp, mptr);
   uint16_t found = uint16_t(_mm_movemask_epi8(mret));
 
@@ -156,8 +151,7 @@ int Token(byte_array::ConstByteArray const &str, uint64_t &pos)
   ++pos;
   if (pos >= str.size()) return TOKEN;
   c = str[pos];
-  while (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
-         ('0' <= c && c <= '9'))
+  while (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
   {
     ++pos;
     if (pos >= str.size()) break;

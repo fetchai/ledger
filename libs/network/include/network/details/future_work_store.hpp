@@ -38,10 +38,7 @@ public:
     }
   };
 
-  FutureWorkStore()
-  {
-    std::make_heap(workStore_.begin(), workStore_.end(), sorter_);
-  }
+  FutureWorkStore() { std::make_heap(workStore_.begin(), workStore_.end(), sorter_); }
 
   virtual ~FutureWorkStore() {}
 
@@ -81,8 +78,7 @@ public:
   void Post(F &&f, uint32_t milliseconds)
   {
     lock_type mlock(mutex_);
-    auto      dueTime = std::chrono::system_clock::now() +
-                   std::chrono::milliseconds(milliseconds);
+    auto      dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(milliseconds);
     workStore_.push_back(work_item_type(dueTime, f));
     std::push_heap(workStore_.begin(), workStore_.end(), sorter_);
   }

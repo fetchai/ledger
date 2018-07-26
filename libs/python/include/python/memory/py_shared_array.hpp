@@ -23,15 +23,12 @@ void BuildSharedArray(std::string const &custom_name, pybind11::module &module)
       //    .def("rend", &SharedArray< T >::rend)
       // g    .def("rbegin", &SharedArray< T >::rbegin)
       .def("padded_size", &SharedArray<T>::padded_size)
-      .def("At",
-           (T & (SharedArray<T>::*)(const std::size_t &)) & SharedArray<T>::At)
-      .def("At", (const T &(SharedArray<T>::*)(const std::size_t &)const) &
-                     SharedArray<T>::At)
-      .def("operator[]", (T & (SharedArray<T>::*)(const std::size_t &)) &
-                             SharedArray<T>::operator[])
+      .def("At", (T & (SharedArray<T>::*)(const std::size_t &)) & SharedArray<T>::At)
+      .def("At", (const T &(SharedArray<T>::*)(const std::size_t &)const) & SharedArray<T>::At)
       .def("operator[]",
-           (const T &(SharedArray<T>::*)(const std::size_t &)const) &
-               SharedArray<T>::operator[])
+           (T & (SharedArray<T>::*)(const std::size_t &)) & SharedArray<T>::operator[])
+      .def("operator[]",
+           (const T &(SharedArray<T>::*)(const std::size_t &)const) & SharedArray<T>::operator[])
       //    .def(py::self = py::self )
       .def("Copy", &SharedArray<T>::Copy)
       .def("size", [](SharedArray<T> const &o) { return o.size(); });

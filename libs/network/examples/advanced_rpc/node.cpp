@@ -23,8 +23,7 @@ int main(int argc, char const **argv)
     return -1;
   }
 
-  std::cout << "Starting service on " << params.GetArg<uint16_t>(1)
-            << std::endl;
+  std::cout << "Starting service on " << params.GetArg<uint16_t>(1) << std::endl;
 
   FetchService serv(params.GetArg<uint16_t>(1), params.GetArg(2));
   serv.Start();

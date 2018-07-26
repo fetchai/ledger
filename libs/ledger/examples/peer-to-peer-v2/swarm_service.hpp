@@ -16,16 +16,14 @@ class FetchSwarmService : public fetch::protocols::SwarmProtocol
 public:
   FetchSwarmService(uint16_t port, uint16_t http_port, std::string const &pk,
                     fetch::network::NetworkManager *tm)
-      : fetch::protocols::SwarmProtocol(
-            tm, fetch::protocols::FetchProtocols::SWARM, details_)
+      : fetch::protocols::SwarmProtocol(tm, fetch::protocols::FetchProtocols::SWARM, details_)
       , network_manager_(tm)
       , service_(port, network_manager_)
       , http_server_(http_port, network_manager_)
   {
     using namespace fetch::protocols;
 
-    std::cout << "Listening for peers on " << (port) << ", clients on "
-              << (http_port) << std::endl;
+    std::cout << "Listening for peers on " << (port) << ", clients on " << (http_port) << std::endl;
 
     details_.with_details([=](NodeDetails &details) {
       details.public_key        = pk;
@@ -48,19 +46,16 @@ public:
 
     start_event_ = network_manager_->OnAfterStart([this]() {
       running_ = true;
-      network_manager_->io_service().post(
-          [this]() { this->UpdateNodeChainKeeperDetails(); });
+      network_manager_->io_service().post([this]() { this->UpdateNodeChainKeeperDetails(); });
     });
 
-    stop_event_ =
-        network_manager_->OnBeforeStop([this]() { running_ = false; });
+    stop_event_ = network_manager_->OnBeforeStop([this]() { running_ = false; });
 
     service_.Add(fetch::protocols::FetchProtocols::SWARM, this);
 
     // Setting callback to resolve IP
-    this->SetClientIPCallback([this](uint64_t const &n) -> std::string {
-      return service_.GetAddress(n);
-    });
+    this->SetClientIPCallback(
+        [this](uint64_t const &n) -> std::string { return service_.GetAddress(n); });
 
     // Creating a http server based on the swarm protocol
     http_server_.AddMiddleware(fetch::http::middleware::AllowOrigin("*"));
@@ -112,26 +107,24 @@ public:
     std::vector<EntryPoint> entries;
 
     // Updating shard list
-    this->with_shards_do([&entries](
-                             std::vector<client_shared_ptr_type> const &sh,
-                             std::vector<EntryPoint> &                  det) {
-      std::size_t i = 0;
+    this->with_shards_do(
+        [&entries](std::vector<client_shared_ptr_type> const &sh, std::vector<EntryPoint> &det) {
+          std::size_t i = 0;
 
-      for (auto &s : sh)
-      {
-        auto p =
-            s->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::GROUP_NUMBER);
-        if (!p.Wait(2300))
-        {
-          fetch::logger.Error("ChainKeeper timed out!");
-          continue;
-        }
+          for (auto &s : sh)
+          {
+            auto p = s->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::GROUP_NUMBER);
+            if (!p.Wait(2300))
+            {
+              fetch::logger.Error("ChainKeeper timed out!");
+              continue;
+            }
 
-        det[i].group = p.As<fetch::group_type>();
-        entries.push_back(det[i]);
-        ++i;
-      }
-    });
+            det[i].group = p.As<fetch::group_type>();
+            entries.push_back(det[i]);
+            ++i;
+          }
+        });
 
     // Updating node list
     this->with_node_details([&entries](NodeDetails &details) {
@@ -150,8 +143,7 @@ public:
 
     if (running_)
     {
-      network_manager_->io_service().post(
-          [this]() { this->UpdatePeerDetails(); });
+      network_manager_->io_service().post([this]() { this->UpdatePeerDetails(); });
     }
   }
 
@@ -169,9 +161,8 @@ public:
     fetch::logger.Highlight("Updating outgoing");
     std::map<fetch::byte_array::ByteArray, NodeDetails> all_details;
 
-    this->with_peers_do([&all_details, details](
-                            std::vector<client_shared_ptr_type> const &peers,
-                            std::map<uint64_t, NodeDetails> &peer_details) {
+    this->with_peers_do([&all_details, details](std::vector<client_shared_ptr_type> const &peers,
+                                                std::map<uint64_t, NodeDetails> &peer_details) {
       LOG_STACK_TRACE_POINT;
       for (auto &c : peers)
       {
@@ -217,8 +208,7 @@ public:
             for (auto &e : d.second.entry_points)
             {
 
-              fetch::logger.Debug("   > ", e.host, ":", e.port, ", shard ",
-                                  e.group);
+              fetch::logger.Debug("   > ", e.host, ":", e.port, ", shard ", e.group);
             }
 
             all_details[d.second.public_key] = d.second;
@@ -262,14 +252,13 @@ public:
     public_keys.insert(this->details_.details().public_key);
 
     // Finding keys to those we are connected to
-    this->with_server_details_do(
-        [&](std::map<uint64_t, NodeDetails> const &details) {
-          LOG_STACK_TRACE_POINT;
-          for (auto const &d : details)
-          {
-            public_keys.insert(d.second.public_key);
-          }
-        });
+    this->with_server_details_do([&](std::map<uint64_t, NodeDetails> const &details) {
+      LOG_STACK_TRACE_POINT;
+      for (auto const &d : details)
+      {
+        public_keys.insert(d.second.public_key);
+      }
+    });
 
     /*
     this->with_client_details_do([&](std::map< uint64_t, NodeDetails > const &
@@ -282,23 +271,22 @@ public:
 
     // Finding hosts we are not connected to
     std::vector<EntryPoint> swarm_entries;
-    this->with_suggestions_do(
-        [=, &swarm_entries](std::vector<NodeDetails> const &details) {
-          LOG_STACK_TRACE_POINT;
-          for (auto const &d : details)
+    this->with_suggestions_do([=, &swarm_entries](std::vector<NodeDetails> const &details) {
+      LOG_STACK_TRACE_POINT;
+      for (auto const &d : details)
+      {
+        if (public_keys.find(d.public_key) == public_keys.end())
+        {
+          for (auto const &e : d.entry_points)
           {
-            if (public_keys.find(d.public_key) == public_keys.end())
+            if (e.configuration & EntryPoint::NODE_SWARM)
             {
-              for (auto const &e : d.entry_points)
-              {
-                if (e.configuration & EntryPoint::NODE_SWARM)
-                {
-                  swarm_entries.push_back(e);
-                }
-              }
+              swarm_entries.push_back(e);
             }
           }
-        });
+        }
+      }
+    });
 
     std::random_shuffle(swarm_entries.begin(), swarm_entries.end());
     std::cout << "I wish to connect to: " << std::endl;
@@ -319,8 +307,7 @@ public:
 
     if (running_)
     {
-      network_manager_->io_service().post(
-          [this]() { this->UpdateChainKeeperConnectivity(); });
+      network_manager_->io_service().post([this]() { this->UpdateChainKeeperConnectivity(); });
     }
   }
 
@@ -331,20 +318,19 @@ public:
 
     // Getting the list of shards
     std::vector<EntryPoint> shard_entries;
-    this->with_suggestions_do(
-        [=, &shard_entries](std::vector<NodeDetails> const &details) {
-          LOG_STACK_TRACE_POINT;
-          for (auto const &d : details)
+    this->with_suggestions_do([=, &shard_entries](std::vector<NodeDetails> const &details) {
+      LOG_STACK_TRACE_POINT;
+      for (auto const &d : details)
+      {
+        for (auto const &e : d.entry_points)
+        {
+          if (e.configuration & EntryPoint::NODE_CHAIN_KEEPER)
           {
-            for (auto const &e : d.entry_points)
-            {
-              if (e.configuration & EntryPoint::NODE_CHAIN_KEEPER)
-              {
-                shard_entries.push_back(e);
-              }
-            }
+            shard_entries.push_back(e);
           }
-        });
+        }
+      }
+    });
 
     fetch::logger.Highlight("Updating shards!");
     for (auto &s : shard_entries)
@@ -358,19 +344,18 @@ public:
     std::vector<client_shared_ptr_type> shards;
     std::vector<EntryPoint>             details;
 
-    this->with_shards_do(
-        [&shards, &details](std::vector<client_shared_ptr_type> const &sh,
-                            std::vector<EntryPoint> &                  det) {
-          LOG_STACK_TRACE_POINT;
-          std::size_t i = 0;
+    this->with_shards_do([&shards, &details](std::vector<client_shared_ptr_type> const &sh,
+                                             std::vector<EntryPoint> &                  det) {
+      LOG_STACK_TRACE_POINT;
+      std::size_t i = 0;
 
-          for (auto &s : sh)
-          {
-            shards.push_back(s);
-            details.push_back(det[i]);
-            ++i;
-          }
-        });
+      for (auto &s : sh)
+      {
+        shards.push_back(s);
+        details.push_back(det[i]);
+        ++i;
+      }
+    });
 
     std::cout << "Updating shards: " << std::endl;
     for (std::size_t i = 0; i < shards.size(); ++i)
@@ -388,18 +373,16 @@ public:
       uint32_t shard =  uint32_t( p2  );
       details[i].group = shard;
       */
-      std::cout << "  - " << i << " : " << details[i].host << " "
-                << details[i].port << " " << details[i].group << std::endl;
+      std::cout << "  - " << i << " : " << details[i].host << " " << details[i].port << " "
+                << details[i].group << std::endl;
       // TODO: set shard detail
 
-      client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::LISTEN_TO,
-                   shard_entries);
+      client->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::LISTEN_TO, shard_entries);
     }
 
     // Updating shard details
     this->with_shards_do(
-        [&details](std::vector<client_shared_ptr_type> const &sh,
-                   std::vector<EntryPoint> &                  det) {
+        [&details](std::vector<client_shared_ptr_type> const &sh, std::vector<EntryPoint> &det) {
           LOG_STACK_TRACE_POINT;
           for (std::size_t i = 0; i < details.size(); ++i)
           {
@@ -425,14 +408,12 @@ public:
 
     std::vector<block_type>              blocks;
     std::vector<fetch::service::Promise> promises;
-    this->with_peers_do(
-        [&promises](std::vector<client_shared_ptr_type> clients) {
-          for (auto &c : clients)
-          {
-            promises.push_back(
-                c->Call(FetchProtocols::SWARM, ChainCommands::GET_BLOCKS));
-          }
-        });
+    this->with_peers_do([&promises](std::vector<client_shared_ptr_type> clients) {
+      for (auto &c : clients)
+      {
+        promises.push_back(c->Call(FetchProtocols::SWARM, ChainCommands::GET_BLOCKS));
+      }
+    });
 
     std::vector<block_type> newblocks;
     newblocks.reserve(1000);
@@ -449,15 +430,13 @@ public:
 
     // Getting transaction summaries
     promises.clear();
-    this->with_shards_do(
-        [&promises](std::vector<client_shared_ptr_type> const &clients) {
-          LOG_STACK_TRACE_POINT;
-          for (auto const &c : clients)
-          {
-            promises.push_back(c->Call(FetchProtocols::CHAIN_KEEPER,
-                                       ChainKeeperRPC::GET_SUMMARIES));
-          }
-        });
+    this->with_shards_do([&promises](std::vector<client_shared_ptr_type> const &clients) {
+      LOG_STACK_TRACE_POINT;
+      for (auto const &c : clients)
+      {
+        promises.push_back(c->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::GET_SUMMARIES));
+      }
+    });
     std::vector<fetch::chain::TransactionSummary> summaries;
 
     for (auto &p : promises)
@@ -493,8 +472,7 @@ public:
 
     if (running_)
     {
-      network_manager_->Post(
-          [this]() { this->UpdateNodeChainKeeperDetails(); });
+      network_manager_->Post([this]() { this->UpdateNodeChainKeeperDetails(); });
     }
   }
 

@@ -56,8 +56,7 @@ protected:
 
     std::ostringstream oss;
     oss << "{ "
-        << R"("address": ")"
-        << static_cast<std::string>(byte_array::ToBase64(address)) << "\", "
+        << R"("address": ")" << static_cast<std::string>(byte_array::ToBase64(address)) << "\", "
         << R"("amount": )" << amount << " }";
 
     // create the transaction
@@ -70,14 +69,13 @@ protected:
     identifier.Parse(static_cast<std::string>(tx.contract_name()));
 
     // dispatch the transaction
-    auto status = contract_->DispatchTransaction(
-        identifier.name(), chain::VerifiedTransaction::Create(tx));
+    auto status =
+        contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
 
     return (Contract::Status::OK == status);
   }
 
-  bool Transfer(address_type const &from, address_type const &to,
-                uint64_t amount)
+  bool Transfer(address_type const &from, address_type const &to, uint64_t amount)
   {
 
     EXPECT_CALL(*storage_, Get(_)).Times(1);
@@ -93,10 +91,8 @@ protected:
 
     std::ostringstream oss;
     oss << "{ "
-        << R"("from": ")"
-        << static_cast<std::string>(byte_array::ToBase64(from)) << "\", "
-        << R"("to": ")" << static_cast<std::string>(byte_array::ToBase64(to))
-        << "\", "
+        << R"("from": ")" << static_cast<std::string>(byte_array::ToBase64(from)) << "\", "
+        << R"("to": ")" << static_cast<std::string>(byte_array::ToBase64(to)) << "\", "
         << R"("amount": )" << amount << " }";
 
     // create the transaction
@@ -110,8 +106,8 @@ protected:
     Identifier identifier;
     identifier.Parse(static_cast<std::string>(tx.contract_name()));
 
-    auto status = contract_->DispatchTransaction(
-        identifier.name(), chain::VerifiedTransaction::Create(tx));
+    auto status =
+        contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
     return (Contract::Status::OK == status);
   }
 
@@ -137,8 +133,7 @@ protected:
     query["address"] = byte_array::ToBase64(address);
 
     query_type response;
-    if (Contract::Status::OK ==
-        contract_->DispatchQuery("balance", query, response))
+    if (Contract::Status::OK == contract_->DispatchQuery("balance", query, response))
     {
       balance = response["balance"].As<uint64_t>();
       success = true;

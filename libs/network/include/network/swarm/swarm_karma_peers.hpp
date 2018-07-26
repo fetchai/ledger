@@ -81,8 +81,7 @@ public:
     std::sort(peers.begin(), peers.end());
   }
 
-  std::list<SwarmKarmaPeer> GetBestPeers(uint32_t n,
-                                         double   minKarma = 0.0) const
+  std::list<SwarmKarmaPeer> GetBestPeers(uint32_t n, double minKarma = 0.0) const
   {
     lock_type                 mlock(mutex_);
     std::list<SwarmKarmaPeer> results;

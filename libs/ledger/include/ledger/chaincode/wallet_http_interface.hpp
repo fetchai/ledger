@@ -33,23 +33,19 @@ public:
   {
 
     // register all the routes
-    Post("/register", [this](http::ViewParameters const &,
-                             http::HTTPRequest const &request) {
+    Post("/register", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
       return OnRegister(request);
     });
 
-    Post("/balance", [this](http::ViewParameters const &,
-                            http::HTTPRequest const &request) {
+    Post("/balance", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
       return OnBalance(request);
     });
 
-    Post("/transfer", [this](http::ViewParameters const &,
-                             http::HTTPRequest const &request) {
+    Post("/transfer", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
       return OnTransfer(request);
     });
 
-    Post("/transactions", [this](http::ViewParameters const &,
-                                 http::HTTPRequest const &request) {
+    Post("/transactions", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
       return OnTransactions(request);
     });
   }
@@ -90,8 +86,7 @@ private:
       mtx.PushResource(address);
 
       // dispatch the transaction
-      processor_.AddTransaction(
-          chain::VerifiedTransaction::Create(std::move(mtx)));
+      processor_.AddTransaction(chain::VerifiedTransaction::Create(std::move(mtx)));
     }
 
     std::ostringstream oss;
@@ -142,8 +137,7 @@ private:
       uint64_t              amount;
 
       // extract all the requeset parameters
-      if (script::Extract(doc.root(), "from", from) &&
-          script::Extract(doc.root(), "to", to) &&
+      if (script::Extract(doc.root(), "from", from) && script::Extract(doc.root(), "to", to) &&
           script::Extract(doc.root(), "amount", amount))
       {
 
@@ -165,14 +159,12 @@ private:
         mtx.PushResource(byte_array::FromBase64(to));
 
         // create the final / sealed transaction
-        chain::VerifiedTransaction tx =
-            chain::VerifiedTransaction::Create(std::move(mtx));
+        chain::VerifiedTransaction tx = chain::VerifiedTransaction::Create(std::move(mtx));
 
         // dispatch to the wider system
         processor_.AddTransaction(tx);
 
-        return http::CreateJsonResponse(R"({"success": true})",
-                                        http::status_code::SUCCESS_OK);
+        return http::CreateJsonResponse(R"({"success": true})", http::status_code::SUCCESS_OK);
       }
     }
     catch (json::JSONParseException const &ex)
@@ -193,11 +185,10 @@ private:
 
     std::ostringstream oss;
     oss << '{' << R"("success": false,)"
-        << R"("error_code": )" << static_cast<int>(error_code) << ','
-        << R"("message": )" << ToString(error_code) << '}';
+        << R"("error_code": )" << static_cast<int>(error_code) << ',' << R"("message": )"
+        << ToString(error_code) << '}';
 
-    return http::CreateJsonResponse(
-        oss.str(), http::status_code::CLIENT_ERROR_BAD_REQUEST);
+    return http::CreateJsonResponse(oss.str(), http::status_code::CLIENT_ERROR_BAD_REQUEST);
   }
 
   static const char *ToString(ErrorCode error_code)

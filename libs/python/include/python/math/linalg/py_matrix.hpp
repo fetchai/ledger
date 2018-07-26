@@ -12,12 +12,10 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;
-  py::class_<Matrix<T>, fetch::math::RectangularArray<T>>(module,
-                                                          custom_name.c_str())
+  py::class_<Matrix<T>, fetch::math::RectangularArray<T>>(module, custom_name.c_str())
       .def(py::init<>())
       .def(py::init<const Matrix<T> &>())
-      .def(py::init<
-           const typename fetch::math::linalg::Matrix<T>::super_type &>())
+      .def(py::init<const typename fetch::math::linalg::Matrix<T>::super_type &>())
       .def(py::init<const std::size_t &, const std::size_t &>())
       .def(py::init<const fetch::byte_array::ByteArray>())
       .def(py::init<const std::string>())
@@ -133,8 +131,7 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
       .def("__len__", [](Matrix<T> const &a) { return a.size(); })
       //    .def("Invert", &Matrix< T >::Invert)
       // Matrix-matrix operations
-      .def("Transpose", (Matrix<T> & (Matrix<T>::*)(Matrix<T> const &)) &
-                            Matrix<T>::Transpose)
+      .def("Transpose", (Matrix<T> & (Matrix<T>::*)(Matrix<T> const &)) & Matrix<T>::Transpose)
       .def("Sum", &Matrix<T>::Sum)
       .def("Dot", [](Matrix<T> &a, Matrix<T> const &b, Matrix<T> const &c) {
         if (b.width() != c.height())

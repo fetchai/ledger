@@ -10,10 +10,7 @@ namespace swarm {
 class SwarmHttpModule : public fetch::http::HTTPModule
 {
 public:
-  explicit SwarmHttpModule(std::shared_ptr<SwarmNode> node) : node_{node}
-  {
-    AttachPages();
-  }
+  explicit SwarmHttpModule(std::shared_ptr<SwarmNode> node) : node_{node} { AttachPages(); }
 
   SwarmHttpModule(SwarmHttpModule &&rhs)
   {

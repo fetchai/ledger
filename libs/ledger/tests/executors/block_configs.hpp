@@ -17,12 +17,10 @@ struct BlockConfig
   static config_array_type const MAIN_SET;
   static config_array_type const REDUCED_SET;
 
-  friend std::ostream &operator<<(std::ostream &     stream,
-                                  BlockConfig const &config)
+  friend std::ostream &operator<<(std::ostream &stream, BlockConfig const &config)
   {
-    stream << "{ executors: " << config.executors
-           << " lanes: " << config.lanes() << " slices: " << config.slices
-           << " }";
+    stream << "{ executors: " << config.executors << " lanes: " << config.lanes()
+           << " slices: " << config.slices << " }";
 
     return stream;
   }

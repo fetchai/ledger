@@ -17,32 +17,32 @@ namespace fetch {
 namespace serializers {
 
 template <typename T, typename U>
-inline typename std::enable_if<std::is_integral<U>::value, void>::type
-Serialize(T &serializer, U const &val)
+inline typename std::enable_if<std::is_integral<U>::value, void>::type Serialize(T &serializer,
+                                                                                 U const &val)
 {
   serializer.Allocate(sizeof(U));
   serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&val), sizeof(U));
 }
 
 template <typename T, typename U>
-inline typename std::enable_if<std::is_integral<U>::value, void>::type
-Deserialize(T &serializer, U &val)
+inline typename std::enable_if<std::is_integral<U>::value, void>::type Deserialize(T &serializer,
+                                                                                   U &val)
 {
   //  detailed_assert( sizeof(U) <= serializer.bytes_left());
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&val), sizeof(U));
 }
 
 template <typename T, typename U>
-inline typename std::enable_if<std::is_floating_point<U>::value, void>::type
-Serialize(T &serializer, U const &val)
+inline typename std::enable_if<std::is_floating_point<U>::value, void>::type Serialize(
+    T &serializer, U const &val)
 {
   serializer.Allocate(sizeof(U));
   serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&val), sizeof(U));
 }
 
 template <typename T, typename U>
-inline typename std::enable_if<std::is_floating_point<U>::value, void>::type
-Deserialize(T &serializer, U &val)
+inline typename std::enable_if<std::is_floating_point<U>::value, void>::type Deserialize(
+    T &serializer, U &val)
 {
   //  detailed_assert( sizeof(U) <= serializer.bytes_left());
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&val), sizeof(U));
@@ -55,8 +55,7 @@ inline void Serialize(T &serializer, std::string const &s)
   serializer.Allocate(sizeof(uint64_t) + s.size());
   uint64_t size = s.size();
 
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size),
-                        sizeof(uint64_t));
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
   serializer.WriteBytes(reinterpret_cast<uint8_t const *>(s.data()), s.size());
 }
 
@@ -90,8 +89,7 @@ inline void Serialize(T &serializer, std::vector<U> const &vec)
 
   uint64_t size = vec.size();
   // Writing the size to the byte array
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size),
-                        sizeof(uint64_t));
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
 
   for (auto const &a : vec) serializer << a;
 }
@@ -137,8 +135,7 @@ inline void Serialize(T &serializer, std::unordered_map<K, V, H> const &map)
   uint64_t size = map.size();
 
   // Writing the size to the byte array
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size),
-                        sizeof(uint64_t));
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
 
   for (auto const &element : map)
   {
@@ -179,8 +176,7 @@ inline void Serialize(T &serializer, std::unordered_set<K, H> const &set)
   uint64_t size = set.size();
 
   // Writing the size to the byte array
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size),
-                        sizeof(uint64_t));
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
 
   for (auto const &element : set)
   {
@@ -218,8 +214,7 @@ inline void Serialize(T &serializer, std::set<K> const &set)
   uint64_t size = set.size();
 
   // Writing the size to the byte array
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size),
-                        sizeof(uint64_t));
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
 
   for (auto const &element : set)
   {

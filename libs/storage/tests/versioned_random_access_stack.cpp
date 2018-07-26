@@ -14,8 +14,7 @@ int main()
   SCENARIO("random access stack is being created and manipulated")
   {
     VersionedRandomAccessStack<TYPE> stack;
-    stack.New("versioned_random_access_stack_test_1.db",
-              "versioned_random_access_stack_diff.db");
+    stack.New("versioned_random_access_stack_test_1.db", "versioned_random_access_stack_diff.db");
     VersionedRandomAccessStack<TYPE>::bookmark_type cp1, cp2, cp3;
 
     SECTION_REF("testing basic manipulation")
@@ -115,8 +114,7 @@ int main()
       }
     };
     VersionedRandomAccessStack<Element> stack;
-    stack.New("versioned_random_access_stack_test_2.db",
-              "versioned_random_access_stack_diff2.db");
+    stack.New("versioned_random_access_stack_test_2.db", "versioned_random_access_stack_diff2.db");
     std::vector<Element> reference;
 
     auto newElement = [&stack, &reference, &lfg]() -> Element {

@@ -14,8 +14,7 @@ public:
   {
     if (node_ != nullptr)
     {
-      std::cout << "Remote asking to connect to " << address << " " << port
-                << std::endl;
+      std::cout << "Remote asking to connect to " << address << " " << port << std::endl;
       node_->Connect(address, port);
     }
   }

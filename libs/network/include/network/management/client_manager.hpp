@@ -20,12 +20,10 @@ namespace network {
 class ClientManager
 {
 public:
-  typedef typename AbstractConnection::shared_type connection_type;
-  typedef typename AbstractConnection::connection_handle_type
-      connection_handle_type;
+  typedef typename AbstractConnection::shared_type            connection_type;
+  typedef typename AbstractConnection::connection_handle_type connection_handle_type;
 
-  ClientManager(AbstractNetworkServer &server)
-      : server_(server), clients_mutex_(__LINE__, __FILE__)
+  ClientManager(AbstractNetworkServer &server) : server_(server), clients_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
   }

@@ -38,15 +38,13 @@ public:
   using state_type              = annealer_type::state_type;
 
   static uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
-                                    std::string const &               contract,
-                                    uint32_t log2_num_lanes)
+                                    std::string const &contract, uint32_t log2_num_lanes)
   {
     ledger::Identifier identifier(contract);
 
     std::string const prefix = identifier.name_space() + ".state.";
 
-    return storage::ResourceID{prefix + static_cast<std::string>(resource)}
-        .lane(log2_num_lanes);
+    return storage::ResourceID{prefix + static_cast<std::string>(resource)}.lane(log2_num_lanes);
   }
 
   /* Pushes a transaction into the queue of transactions that needs to
@@ -84,8 +82,7 @@ public:
    * the batch size). Likewise the inverse temperatures are likely to
    * change as the problem is changing.
    */
-  void ConfigureAnnealer(std::size_t const &sweeps, double const &b0,
-                         double const &b1)
+  void ConfigureAnnealer(std::size_t const &sweeps, double const &b0, double const &b1)
   {
     annealer_.SetSweeps(sweeps);
     annealer_.SetBetaStart(b0);
@@ -108,9 +105,8 @@ public:
    *
    * The resulting block is garantueed (TODO) to be valid.
    */
-  void GenerateBlock(std::size_t const &lane_count,
-                     std::size_t const &slice_count, int const &strategy = 0,
-                     std::size_t batch_size = 1, std::size_t explore = 10)
+  void GenerateBlock(std::size_t const &lane_count, std::size_t const &slice_count,
+                     int const &strategy = 0, std::size_t batch_size = 1, std::size_t explore = 10)
   {
     block_.clear();
     block_fees_.clear();
@@ -269,8 +265,7 @@ private:
 
     lane_count_ = lane_count;
     log2_lane_count_ =
-        uint32_t((sizeof(uint32_t) << 3) -
-                 uint32_t(__builtin_clz(uint32_t(lane_count)) + 1));
+        uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(lane_count)) + 1));
     detailed_assert(lane_count_ == (1u << log2_lane_count_));
     batch_size_ = batch_size;
 
@@ -293,8 +288,8 @@ private:
       {
 
         // TODO: (EJF) Move to Transaction item?
-        std::size_t const lane_index = MapResourceToLane(
-            resource, tx->summary().contract_name_, log2_lane_count_);
+        std::size_t const lane_index =
+            MapResourceToLane(resource, tx->summary().contract_name_, log2_lane_count_);
 
         tx->lanes.insert(lane_index);
 
@@ -334,8 +329,7 @@ private:
 
     for (std::size_t i = 0; i < batch_size; ++i)
     {
-      if (unspent_[i]->summary().fee > max_fee)
-        max_fee = unspent_[i]->summary().fee;
+      if (unspent_[i]->summary().fee > max_fee) max_fee = unspent_[i]->summary().fee;
     }
 
     for (std::size_t i = 0; i < batch_size; ++i)

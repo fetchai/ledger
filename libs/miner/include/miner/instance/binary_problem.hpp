@@ -21,8 +21,7 @@ public:
     normalisation_constant_ = 1.0;
   }
 
-  void Resize(std::size_t const &n,
-              std::size_t const &max_connectivity = std::size_t(-1))
+  void Resize(std::size_t const &n, std::size_t const &max_connectivity = std::size_t(-1))
   {
     couplings_.Resize(n, n);
     coupling_sum_ = memory::SharedArray<cost_type>(n);
@@ -102,8 +101,7 @@ public:
       {
         if (couplings_(i, j) != 0)
         {
-          annealer.Insert(i, j,
-                          normalisation_constant_ * 0.25 * couplings_(i, j));
+          annealer.Insert(i, j, normalisation_constant_ * 0.25 * couplings_(i, j));
         }
       }
     }
@@ -123,12 +121,9 @@ public:
     return max_connectivity;
   }
 
-  cost_type energy_offset() const { return energy_offset_; }
-  memory::RectangularArray<cost_type> const &couplings() const
-  {
-    return couplings_;
-  }
-  std::size_t const &size() const { return size_; }
+  cost_type                                  energy_offset() const { return energy_offset_; }
+  memory::RectangularArray<cost_type> const &couplings() const { return couplings_; }
+  std::size_t const &                        size() const { return size_; }
 
   cost_type max_abs_coupling() const { return max_abs_coupling_; }
 

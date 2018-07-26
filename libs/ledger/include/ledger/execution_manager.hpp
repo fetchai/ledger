@@ -55,8 +55,7 @@ public:
       std::unordered_map<block_digest_type, hash_type, crypto::CallableFNV>;
 
   // Construction / Destruction
-  explicit ExecutionManager(std::size_t                  num_executors,
-                            storage_unit_type            storage,
+  explicit ExecutionManager(std::size_t num_executors, storage_unit_type storage,
                             executor_factory_type const &factory);
 
   /// @name Execution Manager Interface
@@ -103,10 +102,9 @@ private:
 
   mutex_type state_archive_lock_;  ///< guards both the state_archive_ and the
                                    ///< block_state_cache_
-  StateSummaryArchive state_archive_;
-  block_state_cache_type
-      block_state_cache_;  // TODO: (EJF) Both these caches required
-                           // maintainence to stop them growing forever
+  StateSummaryArchive    state_archive_;
+  block_state_cache_type block_state_cache_;  // TODO: (EJF) Both these caches required
+                                              // maintainence to stop them growing forever
 
   void MonitorThreadEntrypoint();
 

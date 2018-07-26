@@ -37,8 +37,7 @@ private:
   template <typename U, typename... used_args>
   struct Invoke
   {
-    static void MemberFunction(serializer_type &result, function_type &m,
-                               used_args &... args)
+    static void MemberFunction(serializer_type &result, function_type &m, used_args &... args)
     {
       result << return_type(m(args...));
     };
@@ -53,8 +52,7 @@ private:
   template <typename... used_args>
   struct Invoke<void, used_args...>
   {
-    static void MemberFunction(serializer_type &result, function_type &m,
-                               used_args &... args)
+    static void MemberFunction(serializer_type &result, function_type &m, used_args &... args)
     {
       result << uint8_t(0);
       m(args...);
@@ -74,13 +72,13 @@ private:
     template <typename T, typename... remaining_args>
     struct LoopOver
     {
-      static void Unroll(serializer_type &result, function_type &m,
-                         serializer_type &s, used_args &... used)
+      static void Unroll(serializer_type &result, function_type &m, serializer_type &s,
+                         used_args &... used)
       {
         T l;
         s >> l;
-        UnrollArguments<used_args..., T>::template LoopOver<
-            remaining_args...>::Unroll(result, m, s, used..., l);
+        UnrollArguments<used_args..., T>::template LoopOver<remaining_args...>::Unroll(result, m, s,
+                                                                                       used..., l);
       }
     };
 
@@ -90,13 +88,12 @@ private:
     template <typename T>
     struct LoopOver<T>
     {
-      static void Unroll(serializer_type &result, function_type &m,
-                         serializer_type &s, used_args &... used)
+      static void Unroll(serializer_type &result, function_type &m, serializer_type &s,
+                         used_args &... used)
       {
         T l;
         s >> l;
-        Invoke<return_type, used_args..., T>::MemberFunction(result, m, used...,
-                                                             l);
+        Invoke<return_type, used_args..., T>::MemberFunction(result, m, used..., l);
       }
     };
   };
@@ -125,12 +122,10 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    UnrollArguments<>::template LoopOver<Args...>::Unroll(
-        result, this->function_, params);
+    UnrollArguments<>::template LoopOver<Args...>::Unroll(result, this->function_, params);
   }
-  void operator()(serializer_type &           result,
-                  CallableArgumentList const &additional_args,
-                  serializer_type &           params) override
+  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
+                  serializer_type &params) override
   {
     TODO_FAIL("No support for custom added args yet");
   }
@@ -162,9 +157,8 @@ public:
     result << R(function_());
   }
 
-  void operator()(serializer_type &           result,
-                  CallableArgumentList const &additional_args,
-                  serializer_type &           params) override
+  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
+                  serializer_type &params) override
   {
     TODO_FAIL("No support for custom added args yet");
   }
@@ -194,9 +188,8 @@ public:
     result << 0;
     function_();
   }
-  void operator()(serializer_type &           result,
-                  CallableArgumentList const &additional_args,
-                  serializer_type &           params) override
+  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
+                  serializer_type &params) override
   {
     TODO_FAIL("No support for custom added args yet");
   }

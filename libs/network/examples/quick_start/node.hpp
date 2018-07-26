@@ -45,8 +45,7 @@ public:
     }
 
     // Ping the client
-    client.Call(protocols::QuickStartProtocols::QUICK_START,
-                protocols::QuickStart::PING);
+    client.Call(protocols::QuickStartProtocols::QUICK_START, protocols::QuickStart::PING);
 
     // Call the SEND_MESSAGE function using the QUICK_START protocol
     // sending msg, and getting result (calls receiveMessage)

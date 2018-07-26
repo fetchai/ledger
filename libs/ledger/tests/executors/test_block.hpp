@@ -10,7 +10,7 @@ struct TestBlock
 {
   using resource_id_map_type = std::vector<std::string>;
   using block_type           = fetch::ledger::ExecutionManager::block_type;
-  using block_digest_type = fetch::ledger::ExecutionManager::block_digest_type;
+  using block_digest_type    = fetch::ledger::ExecutionManager::block_digest_type;
 
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;
@@ -31,8 +31,7 @@ struct TestBlock
     return {digest};
   }
 
-  void GenerateBlock(uint32_t seed, uint32_t log2_num_lanes,
-                     std::size_t              num_slices,
+  void GenerateBlock(uint32_t seed, uint32_t log2_num_lanes, std::size_t num_slices,
                      block_digest_type const &previous_hash)
   {
 
@@ -78,8 +77,7 @@ struct TestBlock
 
           // decide how many lanes will be consumed this round
           std::size_t const consumed_lanes =
-              std::min(std::max<std::size_t>(rng() % remaining_lanes, 1u),
-                       remaining_lanes);
+              std::min(std::max<std::size_t>(rng() % remaining_lanes, 1u), remaining_lanes);
           // decide the transaction type
           bool is_empty = (rng() & 0xFF) < 25;  // ~10%
 
@@ -138,8 +136,7 @@ struct TestBlock
       std::string const value  = oss.str();
 
       // create the resource
-      uint32_t const resource =
-          fetch::storage::ResourceID{prefix + value}.lane(log2_num_lanes);
+      uint32_t const resource = fetch::storage::ResourceID{prefix + value}.lane(log2_num_lanes);
 
       // locate the resource
       auto it = set.find(resource);
@@ -153,13 +150,11 @@ struct TestBlock
     return values;
   }
 
-  static TestBlock Generate(
-      std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
-      block_digest_type const &previous_hash = block_digest_type{})
+  static TestBlock Generate(std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
+                            block_digest_type const &previous_hash = block_digest_type{})
   {
     TestBlock block;
-    block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices,
-                        previous_hash);
+    block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices, previous_hash);
     return block;
   }
 };

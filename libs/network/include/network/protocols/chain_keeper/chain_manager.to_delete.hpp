@@ -25,15 +25,13 @@ public:
   typedef typename transaction_type::digest_type tx_digest_type;
 
   // Block defs
-  typedef fetch::chain::consensus::ProofOfWork proof_type;
-  typedef fetch::chain::BlockBody              block_body_type;
-  typedef typename proof_type::header_type     block_header_type;
-  typedef fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256>
-                                      block_type;
-  typedef std::shared_ptr<block_type> shared_block_type;
+  typedef fetch::chain::consensus::ProofOfWork                        proof_type;
+  typedef fetch::chain::BlockBody                                     block_body_type;
+  typedef typename proof_type::header_type                            block_header_type;
+  typedef fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256> block_type;
+  typedef std::shared_ptr<block_type>                                 shared_block_type;
 
-  typedef std::unordered_map<block_header_type, shared_block_type, hasher_type>
-      chain_map_type;
+  typedef std::unordered_map<block_header_type, shared_block_type, hasher_type> chain_map_type;
 
   ChainManager() { group_ = 0; }
 
@@ -111,10 +109,7 @@ public:
 
   chain_map_type &chains() { return chains_; }
 
-  std::vector<block_type> const &latest_blocks() const
-  {
-    return latest_blocks_;
-  }
+  std::vector<block_type> const &latest_blocks() const { return latest_blocks_; }
 
   std::size_t size() const { return chains_.size(); }
 

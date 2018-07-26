@@ -113,14 +113,14 @@ Result BenchmarkSingle(Args... args)
   buffer.Seek(0);
   buffer >> des;
 
-  high_resolution_clock::time_point t3 = high_resolution_clock::now();
-  duration<double> ts1     = duration_cast<duration<double>>(t2 - t1);
-  duration<double> ts2     = duration_cast<duration<double>>(t3 - t2);
-  ret.size                 = double(size) * 1e-6;
-  ret.serialization_time   = ts1.count();
-  ret.deserialization_time = ts2.count();
-  ret.serialization        = double(size) * 1e-6 / double(ts1.count());
-  ret.deserialization      = double(size) * 1e-6 / double(ts2.count());
+  high_resolution_clock::time_point t3  = high_resolution_clock::now();
+  duration<double>                  ts1 = duration_cast<duration<double>>(t2 - t1);
+  duration<double>                  ts2 = duration_cast<duration<double>>(t3 - t2);
+  ret.size                              = double(size) * 1e-6;
+  ret.serialization_time                = ts1.count();
+  ret.deserialization_time              = ts2.count();
+  ret.serialization                     = double(size) * 1e-6 / double(ts1.count());
+  ret.deserialization                   = double(size) * 1e-6 / double(ts2.count());
   return ret;
 }
 

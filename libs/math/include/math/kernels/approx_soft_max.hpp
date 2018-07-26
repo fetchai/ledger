@@ -16,16 +16,14 @@ struct ApproxSoftMax
     B.in_parallel().Apply(*this, &ApproxSoftMax::ScaleElements, B);
   }
 
-  void ExponentiateAndSum(vector_register_type const &a,
-                          vector_register_type &      b) const
+  void ExponentiateAndSum(vector_register_type const &a, vector_register_type &b) const
   {
     vector_register_type e = approx_exp(a);
     sum_                   = sum_ + e;
     b                      = e;
   };
 
-  void ScaleElements(vector_register_type const &a,
-                     vector_register_type &      b) const
+  void ScaleElements(vector_register_type const &a, vector_register_type &b) const
   {
     b = a * scale_;
   };

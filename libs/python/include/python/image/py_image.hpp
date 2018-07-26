@@ -8,14 +8,13 @@ namespace image {
 namespace colors {
 
 template <typename V, std::size_t B, std::size_t C>
-void BuildAbstractColor(std::string const &custom_name,
-                        pybind11::module & module)
+void BuildAbstractColor(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;
   py::class_<AbstractColor<V, B, C>>(module, custom_name.c_str())
-      .def(py::init<const typename fetch::image::colors::AbstractColor<
-               V, B, C>::container_type &>())
+      .def(
+          py::init<const typename fetch::image::colors::AbstractColor<V, B, C>::container_type &>())
       .def("operator[]", &AbstractColor<V, B, C>::operator[]);
 }
 };  // namespace colors
@@ -25,8 +24,7 @@ void BuildImageType(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;
-  py::class_<ImageType<T>,
-             fetch::math::linalg::Matrix<typename T::container_type>>(
+  py::class_<ImageType<T>, fetch::math::linalg::Matrix<typename T::container_type>>(
       module, custom_name.c_str())
       .def(py::init<>())
       //    .def(py::init< ImageType<T> && >())

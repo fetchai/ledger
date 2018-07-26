@@ -27,15 +27,11 @@ struct EntryPoint
 
   bool operator==(EntryPoint const &other)
   {
-    return (group == other.group) && (port == other.port) &&
-           (http_port == other.http_port) &&
+    return (group == other.group) && (port == other.port) && (http_port == other.http_port) &&
            (configuration == other.configuration) && (host == other.host);
   }
 
-  bool operator!=(EntryPoint const &other)
-  {
-    return !(this->operator==(other));
-  }
+  bool operator!=(EntryPoint const &other) { return !(this->operator==(other)); }
 };
 }  // namespace protocols
 }  // namespace fetch

@@ -36,8 +36,7 @@ TEST_F(ECDCSASignTest, test_sign_verify_cycle)
 
   const byte_array::ConstByteArray signature{ecdsa_sign(priv_key, test_data)};
 
-  const auto verification_result{
-      ecdsa_verify(priv_key.publicKey(), test_data, signature)};
+  const auto verification_result{ecdsa_verify(priv_key.publicKey(), test_data, signature)};
 
   //* Expectations:
   EXPECT_TRUE(verification_result);
@@ -55,8 +54,7 @@ TEST_F(ECDCSASignTest, test_wrong_signature_fails_to_verify)
   //* Modify the correct signature to invalidate it
   signature[signature.size() - 1] += 1;
 
-  const auto verification_result{
-      ecdsa_verify(priv_key.publicKey(), test_data, signature)};
+  const auto verification_result{ecdsa_verify(priv_key.publicKey(), test_data, signature)};
 
   //* Expectations:
   EXPECT_FALSE(verification_result);
@@ -103,8 +101,7 @@ TEST_F(ECDCSASignTest, test_wrong_data_fails_to_verify)
   //* Modify original data
   modified_data[0] += 1;
 
-  const auto verification_result{
-      ecdsa_verify(priv_key.publicKey(), modified_data, signature)};
+  const auto verification_result{ecdsa_verify(priv_key.publicKey(), modified_data, signature)};
 
   //* Expectations:
   EXPECT_FALSE(verification_result);

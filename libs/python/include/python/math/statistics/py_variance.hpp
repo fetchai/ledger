@@ -14,8 +14,7 @@ inline typename A::type WrapperVariance(A const &a)
   return Variance(a);
 }
 
-inline void BuildVarianceStatistics(std::string const &custom_name,
-                                    pybind11::module & module)
+inline void BuildVarianceStatistics(std::string const &custom_name, pybind11::module &module)
 {
   using namespace fetch::math::linalg;
   using namespace fetch::memory;

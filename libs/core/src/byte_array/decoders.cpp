@@ -11,9 +11,7 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
   // https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
   assert((str.size() % 4) == 0);
   std::size_t pad = 0;
-  while ((pad < str.size()) &&
-         (str[str.size() - pad - 1] == details::base64pad))
-    ++pad;
+  while ((pad < str.size()) && (str[str.size() - pad - 1] == details::base64pad)) ++pad;
 
   ByteArray ret;
   ret.Resize(((3 * str.size()) >> 2) - pad);

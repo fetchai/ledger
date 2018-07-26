@@ -22,8 +22,7 @@ private:
   bool              is_started_;
 
 public:
-  explicit Session(context_smart_ptr context,
-                   const bool        is_already_started = false)
+  explicit Session(context_smart_ptr context, const bool is_already_started = false)
       : context_(context), is_started_(is_already_started)
   {
     start();

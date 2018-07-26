@@ -16,8 +16,8 @@ void BuildConstByteArray(pybind11::module &module)
       .def(py::init<std::initializer_list<ConstByteArray::container_type>>())
       .def(py::init<const std::string &>())
       .def(py::init<const fetch::byte_array::ConstByteArray::self_type &>())
-      .def(py::init<const fetch::byte_array::ConstByteArray::self_type &,
-                    const std::size_t &, const std::size_t &>())
+      .def(py::init<const fetch::byte_array::ConstByteArray::self_type &, const std::size_t &,
+                    const std::size_t &>())
       .def("AsInt", &ConstByteArray::AsInt)
       .def(py::self != fetch::byte_array::ConstByteArray::self_type())
       //    .def(py::self != char*() )
@@ -34,14 +34,12 @@ void BuildConstByteArray(pybind11::module &module)
       .def("Copy", &ConstByteArray::Copy)
       //    .def("pointer", &ConstByteArray::pointer)
       .def("Find", &ConstByteArray::Find)
-      .def("Match", (bool (ConstByteArray::*)(
-                        const fetch::byte_array::ConstByteArray::self_type &,
-                        std::size_t) const) &
+      .def("Match", (bool (ConstByteArray::*)(const fetch::byte_array::ConstByteArray::self_type &,
+                                              std::size_t) const) &
                         ConstByteArray::Match)
       .def("Match",
-           (bool (ConstByteArray::*)(
-               const fetch::byte_array::ConstByteArray::container_type *,
-               std::size_t) const) &
+           (bool (ConstByteArray::*)(const fetch::byte_array::ConstByteArray::container_type *,
+                                     std::size_t) const) &
                ConstByteArray::Match)
       .def("size", &ConstByteArray::size);
 }

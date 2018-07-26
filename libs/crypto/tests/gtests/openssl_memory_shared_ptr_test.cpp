@@ -33,18 +33,14 @@ MockDeleterPrimitive::SharedPtr MockDeleterPrimitive::value;
 class Deleter
 {
 public:
-  void operator()(TestType *ptr)
-  {
-    MockDeleterPrimitive::value->free_TestType(ptr);
-  }
+  void operator()(TestType *ptr) { MockDeleterPrimitive::value->free_TestType(ptr); }
 };
 
 class OpenSSLSharedPtrTest : public testing::Test
 {
 protected:
   template <const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
-  using ossl_shared_ptr__for_Testing =
-      ossl_shared_ptr<TestType, P_DeleteStrategy, Deleter>;
+  using ossl_shared_ptr__for_Testing = ossl_shared_ptr<TestType, P_DeleteStrategy, Deleter>;
 
   MockDeleterPrimitive::SharedPtr &mock = MockDeleterPrimitive::value;
 
@@ -96,8 +92,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_reset)
   }
 }
 
-TEST_F(OpenSSLSharedPtrTest,
-       test_Deleter_called_after_reset_with_specific_pointer)
+TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_reset_with_specific_pointer)
 {
   TestType testValue;
   TestType testValue2;

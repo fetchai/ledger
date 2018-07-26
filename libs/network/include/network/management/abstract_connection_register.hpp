@@ -3,8 +3,8 @@
 #include "core/mutex.hpp"
 
 #include <atomic>
-#include <memory>
 #include <functional>
+#include <memory>
 #include <unordered_map>
 
 namespace fetch {
@@ -15,24 +15,20 @@ class ServiceClient;
 namespace network {
 class AbstractConnection;
 
-class AbstractConnectionRegister
-    : public std::enable_shared_from_this<AbstractConnectionRegister>
+class AbstractConnectionRegister : public std::enable_shared_from_this<AbstractConnectionRegister>
 {
 public:
   typedef uint64_t                                connection_handle_type;
   typedef std::weak_ptr<service::ServiceClient>   weak_service_client_type;
   typedef std::shared_ptr<service::ServiceClient> shared_service_client_type;
-  typedef std::unordered_map<connection_handle_type, weak_service_client_type>
-      service_map_type;
+  typedef std::unordered_map<connection_handle_type, weak_service_client_type> service_map_type;
 
   AbstractConnectionRegister() { number_of_services_ = 0; }
 
   AbstractConnectionRegister(AbstractConnectionRegister const &other) = delete;
   AbstractConnectionRegister(AbstractConnectionRegister &&other)      = default;
-  AbstractConnectionRegister &operator                                =(
-      AbstractConnectionRegister const &other) = delete;
-  AbstractConnectionRegister &operator=(AbstractConnectionRegister &&other) =
-      default;
+  AbstractConnectionRegister &operator=(AbstractConnectionRegister const &other) = delete;
+  AbstractConnectionRegister &operator=(AbstractConnectionRegister &&other) = default;
 
   virtual ~AbstractConnectionRegister() = default;
 
@@ -63,8 +59,7 @@ protected:
     if (it != services_.end()) services_.erase(it);
   }
 
-  void AddService(connection_handle_type const &  n,
-                  weak_service_client_type const &ptr)
+  void AddService(connection_handle_type const &n, weak_service_client_type const &ptr)
   {
     ++number_of_services_;
 

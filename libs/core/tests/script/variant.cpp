@@ -56,8 +56,7 @@ int main()
     {
       Variant obj                 = Variant::Object();
       obj["numberOfTransactions"] = uint32_t(9);
-      EXPECT(obj["numberOfTransactions"].type() ==
-             fetch::script::VariantType::INTEGER);
+      EXPECT(obj["numberOfTransactions"].type() == fetch::script::VariantType::INTEGER);
       EXPECT(obj["numberOfTransactions"].as_int() == 9);
 
       obj["numberOfTransactions"] = "Hello world";
@@ -68,8 +67,7 @@ int main()
 
       std::cout << obj["numberOfTransactions"].type() << std::endl;
 
-      EXPECT(obj["numberOfTransactions"].type() ==
-             fetch::script::VariantType::STRING);
+      EXPECT(obj["numberOfTransactions"].type() == fetch::script::VariantType::STRING);
       EXPECT(obj["numberOfTransactions"].as_byte_array() == "Hello world");
 
       EXPECT(obj["blah"].type() == fetch::script::VariantType::INTEGER);
@@ -90,14 +88,12 @@ int main()
 
       // Remove all spaces for string compare
       std::string           asString{stream.str()};
-      std::string::iterator end_pos =
-          std::remove(asString.begin(), asString.end(), ' ');
+      std::string::iterator end_pos = std::remove(asString.begin(), asString.end(), ' ');
       asString.erase(end_pos, asString.end());
 
       std::cerr << asString << std::endl;
 
-      EXPECT(asString.compare(
-                 "{\"numberOfTransactions\":2,\"hash\":\"some_hash\"}") == 0);
+      EXPECT(asString.compare("{\"numberOfTransactions\":2,\"hash\":\"some_hash\"}") == 0);
     };
 
     SECTION("Nested variants")

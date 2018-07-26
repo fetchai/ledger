@@ -31,8 +31,7 @@ public:
 
   ~Server() {}
 
-  void PushRequest(connection_handle_type client,
-                   message_type const &   msg) override
+  void PushRequest(connection_handle_type client, message_type const &msg) override
   {
     std::cerr << "Message: " << msg << std::endl;
   }
@@ -42,8 +41,7 @@ public:
 class Client : public TCPClient
 {
 public:
-  Client(std::string const &host, uint16_t &port, NetworkManager &nmanager)
-      : TCPClient(nmanager)
+  Client(std::string const &host, uint16_t &port, NetworkManager &nmanager) : TCPClient(nmanager)
   {
     Connect(host, port);
   }
@@ -76,8 +74,7 @@ template <std::size_t N = 1>
 void TestCase0(std::string host, uint16_t port)
 {
   std::cerr << "\nTEST CASE 0. Threads: " << N << std::endl;
-  std::cerr << "Info: Attempting to open the server multiple times, no start"
-            << std::endl;
+  std::cerr << "Info: Attempting to open the server multiple times, no start" << std::endl;
 
   for (std::size_t index = 0; index < 20; ++index)
   {
@@ -92,8 +89,7 @@ template <std::size_t N = 1>
 void TestCase1(std::string host, uint16_t port)
 {
   std::cerr << "\nTEST CASE 1. Threads: " << N << std::endl;
-  std::cerr << "Info: Attempting to open the server multiple times"
-            << std::endl;
+  std::cerr << "Info: Attempting to open the server multiple times" << std::endl;
 
   for (std::size_t index = 0; index < 20; ++index)
   {
@@ -110,8 +106,7 @@ template <std::size_t N = 1>
 void TestCase2(std::string host, uint16_t port)
 {
   std::cerr << "\nTEST CASE 2. Threads: " << N << std::endl;
-  std::cerr << "Info: Attempting to open the server and send data to it"
-            << std::endl;
+  std::cerr << "Info: Attempting to open the server and send data to it" << std::endl;
 
   for (std::size_t index = 0; index < 20; ++index)
   {
@@ -138,15 +133,13 @@ template <std::size_t N = 1>
 void TestCase3(std::string host, uint16_t port)
 {
   std::cerr << "\nTEST CASE 3. Threads: " << N << std::endl;
-  std::cerr << "Info: Destruct server while people are connecting to it "
-            << std::endl;
+  std::cerr << "Info: Destruct server while people are connecting to it " << std::endl;
 
   for (std::size_t index = 0; index < 3; ++index)
   {
     NetworkManager nmanager(N);
     nmanager.Start();
-    std::unique_ptr<Server> server =
-        std::unique_ptr<Server>(new Server(port, nmanager));
+    std::unique_ptr<Server> server = std::unique_ptr<Server>(new Server(port, nmanager));
 
     waitUntilConnected(host, port);
     std::atomic<std::size_t> threadCount{0};
@@ -156,7 +149,7 @@ void TestCase3(std::string host, uint16_t port)
     {
       std::thread([&host, &port, nmanager, &threadCount] {
         NetworkManager managerCopy = nmanager;
-        auto           i = std::make_shared<Client>(host, port, managerCopy);
+        auto           i           = std::make_shared<Client>(host, port, managerCopy);
         i->Send("test");
         threadCount++;
       })
@@ -180,16 +173,14 @@ template <std::size_t N = 1>
 void TestCase4(std::string host, uint16_t port)
 {
   std::cerr << "\nTEST CASE 4. Threads: " << N << std::endl;
-  std::cerr << "Info: Destruct server, test that its acceptor is dying "
-            << std::endl;
+  std::cerr << "Info: Destruct server, test that its acceptor is dying " << std::endl;
 
   NetworkManager nmanager(N);
   nmanager.Start();
 
   for (std::size_t index = 0; index < 3; ++index)
   {
-    std::unique_ptr<Server> server =
-        std::unique_ptr<Server>(new Server(port, nmanager));
+    std::unique_ptr<Server> server = std::unique_ptr<Server>(new Server(port, nmanager));
 
     waitUntilConnected(host, port);
     std::atomic<std::size_t> threadCount{0};
@@ -199,7 +190,7 @@ void TestCase4(std::string host, uint16_t port)
     {
       std::thread([&host, &port, nmanager, &threadCount] {
         NetworkManager managerCopy = nmanager;
-        auto           i = std::make_shared<Client>(host, port, managerCopy);
+        auto           i           = std::make_shared<Client>(host, port, managerCopy);
         i->Send("test");
         threadCount++;
       })
