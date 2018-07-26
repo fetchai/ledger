@@ -7,12 +7,11 @@
 namespace fetch {
 namespace chain {
 
-
 template <typename T>
 inline void Serialize(T &serializer, UnverifiedTransaction const &b)
 {
   serializer << uint16_t(b.VERSION);
-  serializer << ' ';  
+  serializer << ' ';
   serializer << b.summary();
   serializer << b.data();
   serializer << b.signature();
@@ -23,21 +22,21 @@ template <typename T>
 inline void Deserialize(T &serializer, UnverifiedTransaction &b)
 {
   uint16_t version;
-  serializer >> version; // TODO: (`HUT`) : set version
+  serializer >> version;  // TODO: (`HUT`) : set version
 
   char c;
   serializer >> c;
-  
-  TransactionSummary summary;
+
+  TransactionSummary    summary;
   byte_array::ByteArray data, signature;
-  std::string contract_name;
-  
+  std::string           contract_name;
+
   serializer >> summary;
   b.set_summary(summary);
 
   serializer >> data;
   b.set_data(data);
-  
+
   serializer >> signature;
   b.set_signature(signature);
 
@@ -45,12 +44,11 @@ inline void Deserialize(T &serializer, UnverifiedTransaction &b)
   b.set_contract_name(contract_name);
 }
 
-
 template <typename T>
 inline void Serialize(T &serializer, VerifiedTransaction const &b)
 {
   serializer << uint16_t(b.VERSION);
-  serializer << 'V';  
+  serializer << 'V';
   serializer << b.summary();
   serializer << b.data();
   serializer << b.signature();
@@ -61,23 +59,23 @@ template <typename T>
 inline void Deserialize(T &serializer, VerifiedTransaction &b)
 {
   uint16_t version;
-  serializer >> version; // TODO: (`HUT`) : set version
+  serializer >> version;  // TODO: (`HUT`) : set version
   assert(version == b.VERSION);
-  
+
   char c;
   serializer >> c;
-  assert( c == 'V' );  
-  
-  TransactionSummary summary;
+  assert(c == 'V');
+
+  TransactionSummary    summary;
   byte_array::ByteArray data, signature;
-  std::string contract_name;
-  
+  std::string           contract_name;
+
   serializer >> summary;
   b.set_summary(summary);
 
   serializer >> data;
   b.set_data(data);
-  
+
   serializer >> signature;
   b.set_signature(signature);
 
@@ -85,6 +83,6 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   b.set_contract_name(contract_name);
 }
 
-}
-}
+}  // namespace chain
+}  // namespace fetch
 #endif

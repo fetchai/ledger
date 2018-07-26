@@ -11,32 +11,38 @@
 
 namespace fetch {
 namespace mutex {
-class ProductionMutex : public AbstractMutex {
- public:
+class ProductionMutex : public AbstractMutex
+{
+public:
   ProductionMutex(int, std::string) {}
   ProductionMutex() = default;
 };
 
-class DebugMutex : public AbstractMutex {
-  struct LockInfo {
+class DebugMutex : public AbstractMutex
+{
+  struct LockInfo
+  {
     bool locked = true;
   };
 
-  class MutexTimeout {
-   public:
+  class MutexTimeout
+  {
+  public:
     MutexTimeout(std::string const &filename, int const &line,
                  double const timeout = 300)
-        : filename_(filename), line_(line) {
+        : filename_(filename), line_(line)
+    {
       LOG_STACK_TRACE_POINT;
 
       running_ = true;
       created_ = std::chrono::system_clock::now();
-      thread_ = std::thread([=]() {
+      thread_  = std::thread([=]() {
         LOG_LAMBDA_STACK_TRACE_POINT;
 
         double ms = 0;
 
-        while ((running_) && (ms < timeout)) {
+        while ((running_) && (ms < timeout))
+        {
           std::this_thread::sleep_for(std::chrono::milliseconds(1));
           std::chrono::system_clock::time_point end =
               std::chrono::system_clock::now();
@@ -44,42 +50,46 @@ class DebugMutex : public AbstractMutex {
                           end - created_)
                           .count());
         }
-        if (running_) {
+        if (running_)
+        {
           this->Eval();
         }
-
       });
     }
-    
-    ~MutexTimeout() {
+
+    ~MutexTimeout()
+    {
       running_ = false;
       thread_.join();
     }
 
-    void Eval() {
+    void Eval()
+    {
       LOG_STACK_TRACE_POINT;
       fetch::logger.Error("Mutex timed out: ", filename_, " ", line_);
 
       exit(-1);
     }
 
-   private:
+  private:
     std::string filename_;
-    int line_;
+    int         line_;
 
-    std::thread thread_;
+    std::thread                           thread_;
     std::chrono::system_clock::time_point created_;
-    std::atomic<bool> running_;
+    std::atomic<bool>                     running_;
   };
 
- public:
+public:
   DebugMutex(int line, std::string file)
-      : AbstractMutex(), line_(line), file_(file) {}
+      : AbstractMutex(), line_(line), file_(file)
+  {}
   DebugMutex() = default;
 
   DebugMutex &operator=(DebugMutex const &other) = delete;
 
-  void lock() {
+  void lock()
+  {
     LOG_STACK_TRACE_POINT;
     lock_mutex_.lock();
     locked_ = std::chrono::high_resolution_clock::now();
@@ -92,7 +102,8 @@ class DebugMutex : public AbstractMutex {
     thread_id_ = std::this_thread::get_id();
   }
 
-  void unlock() {
+  void unlock()
+  {
     LOG_STACK_TRACE_POINT;
 
     lock_mutex_.lock();
@@ -114,7 +125,8 @@ class DebugMutex : public AbstractMutex {
 
   std::string filename() const { return file_; }
 
-  std::string AsString() override {
+  std::string AsString() override
+  {
     std::stringstream ss;
     ss << "Locked by thread #"
        << fetch::log::ReadableThread::GetThreadID(thread_id_) << " in "
@@ -124,22 +136,22 @@ class DebugMutex : public AbstractMutex {
 
   std::thread::id thread_id() const override { return thread_id_; }
 
- private:
-  std::mutex lock_mutex_;
+private:
+  std::mutex                                     lock_mutex_;
   std::chrono::high_resolution_clock::time_point locked_;
 
-  int line_ = 0;
-  std::string file_ = "";
+  int                           line_ = 0;
+  std::string                   file_ = "";
   std::unique_ptr<MutexTimeout> timeout_;
-  std::thread::id thread_id_;
+  std::thread::id               thread_id_;
 };
 
 #ifdef NDEBUG
-  typedef ProductionMutex Mutex;
+typedef ProductionMutex Mutex;
 #else
-  typedef DebugMutex Mutex;
+typedef DebugMutex Mutex;
 #endif
-}
-}
+}  // namespace mutex
+}  // namespace fetch
 
 #endif

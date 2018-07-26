@@ -20,7 +20,7 @@ public:
 
     block.UpdateDigest();
 
-    while(!block.proof()())
+    while (!block.proof()())
     {
       block.body().nonce++;
       block.UpdateDigest();
@@ -36,7 +36,7 @@ public:
 
     block.UpdateDigest();
 
-    while(!block.proof()() && iterations > 0)
+    while (!block.proof()() && iterations > 0)
     {
       block.body().nonce++;
       block.UpdateDigest();
@@ -49,15 +49,14 @@ public:
 private:
   static uint32_t GetRandom()
   {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
+    static std::random_device                      rd;
+    static std::mt19937                            gen(rd());
     static std::uniform_int_distribution<uint32_t> dis(
         0, std::numeric_limits<uint32_t>::max());
     return dis(gen);
   }
-
 };
-}
-}
-}
+}  // namespace consensus
+}  // namespace chain
+}  // namespace fetch
 #endif

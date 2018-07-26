@@ -8,8 +8,9 @@ namespace fetch {
 namespace serializers {
 
 template <typename T>
-inline void Serialize(T &serializer, SerializableException const &s) {
-  uint64_t size = s.explanation().size();
+inline void Serialize(T &serializer, SerializableException const &s)
+{
+  uint64_t          size = s.explanation().size();
   error::error_type code = s.error_code();
 
   serializer.Allocate(sizeof(error::error_type) + sizeof(uint64_t) +
@@ -24,9 +25,10 @@ inline void Serialize(T &serializer, SerializableException const &s) {
 }
 
 template <typename T>
-inline void Deserialize(T &serializer, SerializableException &s) {
+inline void Deserialize(T &serializer, SerializableException &s)
+{
   error::error_type code;
-  uint64_t size = 0;
+  uint64_t          size = 0;
 
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&code),
                        sizeof(error::error_type));
@@ -37,7 +39,7 @@ inline void Deserialize(T &serializer, SerializableException &s) {
   serializer.ReadBytes(buffer.pointer(), size);
   s = SerializableException(code, buffer);
 }
-}
-}
+}  // namespace serializers
+}  // namespace fetch
 
 #endif

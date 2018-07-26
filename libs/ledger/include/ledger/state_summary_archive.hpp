@@ -9,60 +9,72 @@
 namespace fetch {
 namespace ledger {
 
-class StateSummaryArchive {
+class StateSummaryArchive
+{
 public:
-  using hash_type = StorageUnitInterface::hash_type;
-  using bookmark_type = StorageUnitInterface::bookmark_type;
+  using hash_type         = StorageUnitInterface::hash_type;
+  using bookmark_type     = StorageUnitInterface::bookmark_type;
   using block_digest_type = byte_array::ConstByteArray;
-  using clock_type = std::chrono::high_resolution_clock;
-  using timepoint_type = clock_type::time_point;
+  using clock_type        = std::chrono::high_resolution_clock;
+  using timepoint_type    = clock_type::time_point;
 
-  struct Element {
+  struct Element
+  {
     Element(bookmark_type b) : bookmark{b} {}
 
-    bookmark_type bookmark;
-    bool confirmed{false};
+    bookmark_type  bookmark;
+    bool           confirmed{false};
     timepoint_type timestamp{clock_type::now()};
   };
 
-  using archive_type = std::unordered_map<hash_type, Element, crypto::CallableFNV>;
+  using archive_type =
+      std::unordered_map<hash_type, Element, crypto::CallableFNV>;
 
-  bool LookupBookmark(hash_type const &state_hash, bookmark_type &bookmark) {
+  bool LookupBookmark(hash_type const &state_hash, bookmark_type &bookmark)
+  {
     bool success = false;
 
     auto it = archive_.find(state_hash);
-    if ((it != archive_.end()) && it->second.confirmed) {
+    if ((it != archive_.end()) && it->second.confirmed)
+    {
       bookmark = it->second.bookmark;
-      success = true;
+      success  = true;
     }
 
     return success;
   }
 
-  bool RecordBookmark(hash_type const &state_hash, bookmark_type &bookmark) {
+  bool RecordBookmark(hash_type const &state_hash, bookmark_type &bookmark)
+  {
 
-    // check to see if there is already a confirmed bookmark already with this state hash
+    // check to see if there is already a confirmed bookmark already with this
+    // state hash
     auto it = archive_.find(state_hash);
-    if ((it != archive_.end()) && it->second.confirmed) {
+    if ((it != archive_.end()) && it->second.confirmed)
+    {
       return false;
     }
 
-    // we have determined that this is the first time we have seen this hash so we need to make a
-    // new hash
+    // we have determined that this is the first time we have seen this hash so
+    // we need to make a new hash
     bookmark = next_bookmark_++;
     archive_.emplace(state_hash, bookmark);
 
     return true;
   }
 
-  bool ConfirmBookmark(hash_type const &state_hash, bookmark_type const &bookmark) {
+  bool ConfirmBookmark(hash_type const &    state_hash,
+                       bookmark_type const &bookmark)
+  {
     bool success = false;
 
     auto it = archive_.find(state_hash);
-    if (it != archive_.end()) {
-      if (it->second.bookmark == bookmark) {
+    if (it != archive_.end())
+    {
+      if (it->second.bookmark == bookmark)
+      {
         it->second.confirmed = true;
-        success = true;
+        success              = true;
       }
     }
 
@@ -70,12 +82,11 @@ public:
   }
 
 private:
-
   bookmark_type next_bookmark_{1};
-  archive_type archive_;
+  archive_type  archive_;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
 
-#endif //FETCH_STATE_SUMMARY_ARCHIVE_HPP
+#endif  // FETCH_STATE_SUMMARY_ARCHIVE_HPP

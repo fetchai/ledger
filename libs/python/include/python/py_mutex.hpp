@@ -2,14 +2,12 @@
 #define LIBFETCHCORE_MUTEX_HPP
 #include "mutex.hpp"
 
-#include"fetch_pybind.hpp"
+#include "fetch_pybind.hpp"
 
-namespace fetch
-{
-namespace mutex
-{
+namespace fetch {
+namespace mutex {
 
 };
-};
+};  // namespace fetch
 
 #endif

@@ -1,10 +1,10 @@
-#include<iostream>
+#include <iostream>
 
-#include"core/commandline/parameter_parser.hpp"
-#include"core/commandline/vt100.hpp"
+#include "core/commandline/parameter_parser.hpp"
+#include "core/commandline/vt100.hpp"
 
-#include"network/management/network_manager.hpp"
-#include"./quick_start_service.hpp"
+#include "./quick_start_service.hpp"
+#include "network/management/network_manager.hpp"
 
 using namespace fetch;
 using namespace fetch::commandline;
@@ -19,7 +19,8 @@ int main(int argc, char const **argv)
   params.Parse(argc, argv);
 
   // get our port and the port of the remote we want to connect to
-  if(params.arg_size() <= 1) {
+  if (params.arg_size() <= 1)
+  {
     std::cout << "usage: ./" << argv[0] << " [params ...]" << std::endl;
     std::cout << std::endl << "Params are" << std::endl;
     std::cout << "  --port=[8000]" << std::endl;
@@ -29,10 +30,10 @@ int main(int argc, char const **argv)
     return -1;
   }
 
-  uint16_t tcpPort  = uint16_t(std::stoi(params.GetArg(1)));
-  uint16_t remotePort  = uint16_t(std::stoi(params.GetArg(2)));
-  std::cout << "Starting server on tcp: " << tcpPort 
-    << " connecting to: " << remotePort << std::endl;
+  uint16_t tcpPort    = uint16_t(std::stoi(params.GetArg(1)));
+  uint16_t remotePort = uint16_t(std::stoi(params.GetArg(2)));
+  std::cout << "Starting server on tcp: " << tcpPort
+            << " connecting to: " << remotePort << std::endl;
 
   // Start our service
   QuickStartService serv(tm, tcpPort);

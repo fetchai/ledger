@@ -2,30 +2,28 @@
 #define NETWORK_MINE_TEST_NODE_BASIC_HPP
 
 // This represents the API to the network test
-#include<stdlib.h>
-#include<random>
-#include<memory>
-#include<utility>
-#include<limits>
-#include<set>
-#include<chrono>
-#include<ctime>
-#include<iostream>
-#include<fstream>
-#include<vector>
+#include <chrono>
+#include <ctime>
+#include <fstream>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <random>
+#include <set>
+#include <stdlib.h>
+#include <utility>
+#include <vector>
 
-#include"core/byte_array/const_byte_array.hpp"
-#include"core/logger.hpp"
-#include"./network_classes.hpp"
-#include"./node_directory.hpp"
+#include "./network_classes.hpp"
+#include "./node_directory.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/logger.hpp"
 
-#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/main_chain.hpp"
 
-namespace fetch
-{
-namespace network_mine_test
-{
+namespace fetch {
+namespace network_mine_test {
 
 class MineNodeBasic
 {
@@ -37,19 +35,16 @@ class MineNodeBasic
   typedef fetch::chain::consensus::DummyMiner     miner;
 
 public:
-  explicit MineNodeBasic(network::NetworkManager tm, uint64_t minerNumber) :
-    nodeDirectory_{tm},
-    minerNumber_{minerNumber}
+  explicit MineNodeBasic(network::NetworkManager tm, uint64_t minerNumber)
+      : nodeDirectory_{tm}, minerNumber_{minerNumber}
   {}
 
-  MineNodeBasic(MineNodeBasic &rhs)            = delete;
-  MineNodeBasic(MineNodeBasic &&rhs)           = delete;
-  MineNodeBasic operator=(MineNodeBasic& rhs)  = delete;
-  MineNodeBasic operator=(MineNodeBasic&& rhs) = delete;
+  MineNodeBasic(MineNodeBasic &rhs)  = delete;
+  MineNodeBasic(MineNodeBasic &&rhs) = delete;
+  MineNodeBasic operator=(MineNodeBasic &rhs) = delete;
+  MineNodeBasic operator=(MineNodeBasic &&rhs) = delete;
 
-  ~MineNodeBasic()
-  {
-  }
+  ~MineNodeBasic() {}
 
   ///////////////////////////////////////////////////////////
   // RPC calls
@@ -60,7 +55,7 @@ public:
     // Verify the block
     block.proof().SetTarget(target_);
 
-    if(!block.proof()())
+    if (!block.proof()())
     {
       fetch::logger.Warn("Received not verified");
     }
@@ -70,17 +65,19 @@ public:
 
       // The main chain will set whether that block was loose. If it was, try
       // and walk down until it touches the main chain
-      if(block.loose())
+      if (block.loose())
       {
-        std::thread
-        {
-          [this, block]{ block_type copy = block; this->SyncBlock(copy); }
-        }.detach();
+        std::thread{[this, block] {
+          block_type copy = block;
+          this->SyncBlock(copy);
+        }}
+            .detach();
       }
     }
   }
 
-  // Called async. when we see a new block that's loose, work to connect it to the main chain
+  // Called async. when we see a new block that's loose, work to connect it to
+  // the main chain
   void SyncBlock(block_type &block)
   {
     block_type walkBlock;
@@ -89,19 +86,20 @@ public:
     do
     {
       bool success = nodeDirectory_.GetHeader(hash, walkBlock);
-      if(!success) break;
+      if (!success) break;
 
-      walkBlock.UpdateDigest(); // critical we update the hash after transmission
+      walkBlock
+          .UpdateDigest();  // critical we update the hash after transmission
       hash = walkBlock.body().previous_hash;
 
-    } while(mainChain.AddBlock(walkBlock));
+    } while (mainChain.AddBlock(walkBlock));
   }
 
   // Nodes will provide each other with headers
   std::pair<bool, block_type> ProvideHeader(block_hash hash)
   {
     block_type block;
-    bool success = mainChain.Get(hash, block);
+    bool       success = mainChain.Get(hash, block);
 
     return std::make_pair(success, block);
   }
@@ -127,20 +125,19 @@ public:
   // Mining loop
   void startMining()
   {
-    auto closure = [this]
-    {
+    auto closure = [this] {
       // Loop code
-      while(!stopped_)
+      while (!stopped_)
       {
         // Get heaviest block
         auto &block = mainChain.HeaviestBlock();
 
         // Create another block sequential to previous
         block_type nextBlock;
-        body_type nextBody;
-        nextBody.block_number = block.body().block_number + 1;
+        body_type  nextBody;
+        nextBody.block_number  = block.body().block_number + 1;
         nextBody.previous_hash = block.hash();
-        nextBody.miner_number = minerNumber_;
+        nextBody.miner_number  = minerNumber_;
 
         nextBlock.SetBody(nextBody);
         nextBlock.UpdateDigest();
@@ -149,7 +146,7 @@ public:
         nextBlock.proof().SetTarget(target_);
         miner::Mine(nextBlock);
 
-        if(stopped_)
+        if (stopped_)
         {
           break;
         }
@@ -171,13 +168,9 @@ public:
     stopped_ = true;
   }
 
-
   ///////////////////////////////////////////////////////////////
   // HTTP functions to check that synchronisation was successful
-  std::vector<block_type> HeaviestChain()
-  {
-    return mainChain.HeaviestChain();
-  }
+  std::vector<block_type> HeaviestChain() { return mainChain.HeaviestChain(); }
 
   std::pair<block_type, std::vector<std::vector<block_type>>> AllChain()
   {
@@ -185,15 +178,15 @@ public:
   }
 
 private:
-  network_benchmark::NodeDirectory        nodeDirectory_;   // Manage connections to other nodes
-  fetch::mutex::Mutex                     mutex_;
-  bool                                    stopped_{false};
-  std::size_t                             target_ = 16; // 16 = roughly one block every 0.18s
-  uint64_t                                minerNumber_{1};
+  network_benchmark::NodeDirectory
+                      nodeDirectory_;  // Manage connections to other nodes
+  fetch::mutex::Mutex mutex_;
+  bool                stopped_{false};
+  std::size_t         target_ = 16;  // 16 = roughly one block every 0.18s
+  uint64_t            minerNumber_{1};
 
   chain::MainChain mainChain{uint32_t(minerNumber_)};
-
 };
-} // namespace network_mine_test
-} // namespace fetch
+}  // namespace network_mine_test
+}  // namespace fetch
 #endif

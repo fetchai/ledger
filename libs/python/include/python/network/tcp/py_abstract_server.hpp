@@ -2,20 +2,18 @@
 #define LIBFETCHCORE_NETWORK_TCP_ABSTRACT_SERVER_HPP
 #include "network/tcp/abstract_server.hpp"
 
-#include"fetch_pybind.hpp"
+#include "fetch_pybind.hpp"
 
-namespace fetch
-{
-namespace network
-{
+namespace fetch {
+namespace network {
 
-void BuildAbstractNetworkServer(pybind11::module &module) {
+void BuildAbstractNetworkServer(pybind11::module &module)
+{
   namespace py = pybind11;
-  py::class_<AbstractNetworkServer>(module, "AbstractNetworkServer" )
-    .def(py::init<>()) /* No constructors found */;
-
+  py::class_<AbstractNetworkServer>(module, "AbstractNetworkServer")
+      .def(py::init<>()) /* No constructors found */;
 }
-};
-};
+};  // namespace network
+};  // namespace fetch
 
 #endif

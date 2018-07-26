@@ -17,18 +17,20 @@ namespace details {
  * exposed directly to the developer.
  */
 template <typename T, typename... arguments>
-struct Packer {
+struct Packer
+{
   /* Implementation of the serialization.
    *
    * @serializer is a reference to the serializer.
    *  @next is the next argument that will be fed into the serializer.
    */
   template <typename S>
-  static void SerializeArguments(S &serializer, T&& next,
-                                 arguments&&... args) {
+  static void SerializeArguments(S &serializer, T &&next, arguments &&... args)
+  {
 
     serializer << next;
-    Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
+    Packer<arguments...>::SerializeArguments(serializer,
+                                             std::forward<arguments>(args)...);
   }
 };
 
@@ -37,19 +39,21 @@ struct Packer {
  * This specialisation is invoked when only one argument is left.
  */
 template <typename T>
-struct Packer<T> {
+struct Packer<T>
+{
   /* Implementation of the serialization.
    *
    * @serializer is a reference to the serializer.
    * @last is the last argument that will be fed into the serializer.
    */
   template <typename S>
-  static void SerializeArguments(S &serializer, T&& last) {
+  static void SerializeArguments(S &serializer, T &&last)
+  {
     serializer << last;
     serializer.Seek(0);
   }
 };
-}
+}  // namespace details
 
 /* This function packs a function call into a byte array.
  * @arguments are the argument types of args.
@@ -65,16 +69,17 @@ struct Packer<T> {
  * The serializer is is always left at position 0.
  */
 template <typename S, typename... arguments>
-void PackCall(S &serializer,
-              protocol_handler_type const &protocol,
-              function_handler_type const &function, arguments&& ...args) {
+void PackCall(S &serializer, protocol_handler_type const &protocol,
+              function_handler_type const &function, arguments &&... args)
+{
 
   LOG_STACK_TRACE_POINT;
 
   serializer << protocol;
   serializer << function;
 
-  details::Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
+  details::Packer<arguments...>::SerializeArguments(
+      serializer, std::forward<arguments>(args)...);
 }
 
 /* This function is the no-argument packer.
@@ -86,9 +91,9 @@ void PackCall(S &serializer,
  * serializer is is always left at position 0.
  */
 template <typename S>
-void PackCall(S &serializer,
-              protocol_handler_type const &protocol,
-              function_handler_type const &function) {
+void PackCall(S &serializer, protocol_handler_type const &protocol,
+              function_handler_type const &function)
+{
   LOG_STACK_TRACE_POINT;
 
   serializer << protocol;
@@ -108,10 +113,11 @@ void PackCall(S &serializer,
  * The serializer is left at position 0.
  */
 template <typename S>
-void PackCallWithPackedArguments(S &serializer,
+void PackCallWithPackedArguments(S &                          serializer,
                                  protocol_handler_type const &protocol,
                                  function_handler_type const &function,
-                                 byte_array::ByteArray const &args) {
+                                 byte_array::ByteArray const &args)
+{
   LOG_STACK_TRACE_POINT;
 
   serializer << protocol;
@@ -129,8 +135,10 @@ void PackCallWithPackedArguments(S &serializer,
  * Serializers for all arguments in the argument list are requried.
  */
 template <typename S, typename... arguments>
-void PackArgs(S &serializer, arguments&&... args) {
-  details::Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
+void PackArgs(S &serializer, arguments &&... args)
+{
+  details::Packer<arguments...>::SerializeArguments(
+      serializer, std::forward<arguments>(args)...);
 }
 
 /* This is the no-argument packer.
@@ -140,31 +148,40 @@ void PackArgs(S &serializer, arguments&&... args) {
  * serializer is is always left at position 0.
  */
 template <typename S>
-void PackArgs(S &serializer) {
+void PackArgs(S &serializer)
+{
   LOG_STACK_TRACE_POINT;
 
   serializer.Seek(0);
 }
 
-enum Callable { CLIENT_ID_ARG = 1ull };
-
-struct CallableArgumentType {
-  std::reference_wrapper<std::type_info const> type;
-  void *pointer;
+enum Callable
+{
+  CLIENT_ID_ARG = 1ull
 };
 
-class CallableArgumentList : public std::vector<CallableArgumentType> {
- public:
+struct CallableArgumentType
+{
+  std::reference_wrapper<std::type_info const> type;
+  void *                                       pointer;
+};
+
+class CallableArgumentList : public std::vector<CallableArgumentType>
+{
+public:
   template <typename T>
-  void PushArgument(T *value) {
+  void PushArgument(T *value)
+  {
     std::vector<CallableArgumentType>::push_back(
         CallableArgumentType{typeid(T), (void *)value});
   }
 
-  CallableArgumentType const &operator[](std::size_t const &n) const {
+  CallableArgumentType const &operator[](std::size_t const &n) const
+  {
     return std::vector<CallableArgumentType>::operator[](n);
   }
-  CallableArgumentType &operator[](std::size_t const &n) {
+  CallableArgumentType &operator[](std::size_t const &n)
+  {
     return std::vector<CallableArgumentType>::operator[](n);
   }
 };
@@ -173,8 +190,9 @@ class CallableArgumentList : public std::vector<CallableArgumentType> {
  *
  * This class defines but a single virtual operator.
  */
-class AbstractCallable {
- public:
+class AbstractCallable
+{
+public:
   AbstractCallable(uint64_t meta_data = 0) : meta_data_(meta_data) {}
 
   virtual ~AbstractCallable(){};
@@ -184,16 +202,16 @@ class AbstractCallable {
    * @params is a serializer that is used to deserialize the arguments.
    */
   virtual void operator()(serializer_type &result, serializer_type &params) = 0;
-  virtual void operator()(serializer_type &result,
+  virtual void operator()(serializer_type &           result,
                           CallableArgumentList const &additional_args,
-                          serializer_type &params) = 0;
+                          serializer_type &           params)                          = 0;
 
   uint64_t const &meta_data() const { return meta_data_; }
 
- private:
+private:
   uint64_t meta_data_ = 0;
 };
-}
-}
+}  // namespace service
+}  // namespace fetch
 
 #endif

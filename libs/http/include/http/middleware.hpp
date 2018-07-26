@@ -2,8 +2,9 @@
 #define HTTP_MIDDLEWARE_HPP
 namespace fetch {
 namespace http {
-namespace middleware {}
+namespace middleware {
 }
-}
+}  // namespace http
+}  // namespace fetch
 
 #endif

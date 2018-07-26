@@ -21,9 +21,10 @@ class Function;
  * @Args are the arguments.
  */
 template <typename R, typename... Args>
-class Function<R(Args...)> : public AbstractCallable {
- private:
-  typedef R return_type;
+class Function<R(Args...)> : public AbstractCallable
+{
+private:
+  typedef R                         return_type;
   typedef std::function<R(Args...)> function_type;
 
   /* A struct for invoking the function once we have unpacked all
@@ -35,9 +36,11 @@ class Function<R(Args...)> : public AbstractCallable {
    * and packs the result using the supplied serializer.
    */
   template <typename U, typename... used_args>
-  struct Invoke {
+  struct Invoke
+  {
     static void MemberFunction(serializer_type &result, function_type &m,
-                               used_args &... args) {
+                               used_args &... args)
+    {
       result << return_type(m(args...));
     };
   };
@@ -49,9 +52,11 @@ class Function<R(Args...)> : public AbstractCallable {
    * uint8_t.
    */
   template <typename... used_args>
-  struct Invoke<void, used_args...> {
+  struct Invoke<void, used_args...>
+  {
     static void MemberFunction(serializer_type &result, function_type &m,
-                               used_args &... args) {
+                               used_args &... args)
+    {
       result << uint8_t(0);
       m(args...);
     };
@@ -61,15 +66,18 @@ class Function<R(Args...)> : public AbstractCallable {
    * @used_args are the unpacked arguments.
    */
   template <typename... used_args>
-  struct UnrollArguments {
+  struct UnrollArguments
+  {
     /* Struct for loop definition.
      * @T is the type of the next argument to be unrolled.
      * @remaining_args are the arugments which has not yet been unrolled.
      */
     template <typename T, typename... remaining_args>
-    struct LoopOver {
+    struct LoopOver
+    {
       static void Unroll(serializer_type &result, function_type &m,
-                         serializer_type &s, used_args &... used) {
+                         serializer_type &s, used_args &... used)
+      {
         T l;
         s >> l;
         UnrollArguments<used_args..., T>::template LoopOver<
@@ -81,9 +89,11 @@ class Function<R(Args...)> : public AbstractCallable {
      * @T is the type of the last argument to be unrolled.
      */
     template <typename T>
-    struct LoopOver<T> {
+    struct LoopOver<T>
+    {
       static void Unroll(serializer_type &result, function_type &m,
-                         serializer_type &s, used_args &... used) {
+                         serializer_type &s, used_args &... used)
+      {
         T l;
         s >> l;
         Invoke<return_type, used_args..., T>::MemberFunction(result, m, used...,
@@ -92,11 +102,12 @@ class Function<R(Args...)> : public AbstractCallable {
     };
   };
 
- public:
+public:
   /* Creates a function with serialized arguments.
    * @function is the member function.
    */
-  Function(function_type value) {
+  Function(function_type value)
+  {
     LOG_STACK_TRACE_POINT;
 
     function_ = value;
@@ -111,80 +122,90 @@ class Function<R(Args...)> : public AbstractCallable {
    * that the serializer is positioned at the beginning of the argument
    * list.
    */
-  void operator()(serializer_type &result, serializer_type &params) override {
+  void operator()(serializer_type &result, serializer_type &params) override
+  {
     LOG_STACK_TRACE_POINT;
 
     UnrollArguments<>::template LoopOver<Args...>::Unroll(
         result, this->function_, params);
   }
-  void operator()(serializer_type &result,
+  void operator()(serializer_type &           result,
                   CallableArgumentList const &additional_args,
-                  serializer_type &params) override {
+                  serializer_type &           params) override
+  {
     TODO_FAIL("No support for custom added args yet");
   }
 
- private:
+private:
   function_type function_;
 };
 
 // No function args
 template <typename R>
-class Function<R()> : public AbstractCallable {
- private:
-  typedef R return_type;
+class Function<R()> : public AbstractCallable
+{
+private:
+  typedef R                  return_type;
   typedef std::function<R()> function_type;
 
- public:
-  Function(function_type value) {
+public:
+  Function(function_type value)
+  {
     LOG_STACK_TRACE_POINT;
 
     function_ = value;
   }
 
-  void operator()(serializer_type &result, serializer_type &params) override {
+  void operator()(serializer_type &result, serializer_type &params) override
+  {
     LOG_STACK_TRACE_POINT;
 
     result << R(function_());
   }
 
-  void operator()(serializer_type &result,
+  void operator()(serializer_type &           result,
                   CallableArgumentList const &additional_args,
-                  serializer_type &params) override {
+                  serializer_type &           params) override
+  {
     TODO_FAIL("No support for custom added args yet");
   }
 
- private:
+private:
   function_type function_;
 };
 
 // No function args, void return
 template <>
-class Function<void()> : public AbstractCallable {
- private:
-  typedef void return_type;
+class Function<void()> : public AbstractCallable
+{
+private:
+  typedef void                  return_type;
   typedef std::function<void()> function_type;
 
- public:
-  Function(function_type value) {
+public:
+  Function(function_type value)
+  {
     LOG_STACK_TRACE_POINT;
     function_ = value;
   }
 
-  void operator()(serializer_type &result, serializer_type &params) override {
+  void operator()(serializer_type &result, serializer_type &params) override
+  {
     LOG_STACK_TRACE_POINT;
     result << 0;
     function_();
   }
-  void operator()(serializer_type &result,
+  void operator()(serializer_type &           result,
                   CallableArgumentList const &additional_args,
-                  serializer_type &params) override {
+                  serializer_type &           params) override
+  {
     TODO_FAIL("No support for custom added args yet");
   }
 
- private:
+private:
   function_type function_;
 };
-}
-}
+}  // namespace service
+}  // namespace fetch
 
 #endif

@@ -7,7 +7,7 @@ namespace byte_array {
 
 ConstByteArray ToBase64(ConstByteArray const &str);
 ConstByteArray ToHex(ConstByteArray const &str);
-}
-}
+}  // namespace byte_array
+}  // namespace fetch
 
 #endif

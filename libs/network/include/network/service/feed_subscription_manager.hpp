@@ -19,8 +19,9 @@ namespace service {
  * multi-service support yet. This is, however, easily implmented at a
  * later point.
  */
-class FeedSubscriptionManager {
- public:
+class FeedSubscriptionManager
+{
+public:
   /* A feed that services can subscribe to.
    * @feed is the feed number defined in the protocol.
    * @publisher is an implementation class that subclasses
@@ -35,9 +36,8 @@ class FeedSubscriptionManager {
    */
   FeedSubscriptionManager(feed_handler_type const &feed,
                           AbstractPublicationFeed *publisher)
-      : subscribe_mutex_(__LINE__, __FILE__),
-        feed_(feed),
-        publisher_(publisher) {}
+      : subscribe_mutex_(__LINE__, __FILE__), feed_(feed), publisher_(publisher)
+  {}
 
   /* Attaches a feed to a given service.
    * @T is the type of the service
@@ -48,7 +48,8 @@ class FeedSubscriptionManager {
    * right client.
    */
   template <typename T>
-  void AttachToService(T *service) {
+  void AttachToService(T *service)
+  {
     LOG_STACK_TRACE_POINT;
 
     publisher_->create_publisher(
@@ -63,13 +64,15 @@ class FeedSubscriptionManager {
 
           subscribe_mutex_.lock();
           std::vector<std::size_t> remove;
-          for (std::size_t i = 0; i < subscribers_.size(); ++i) {
+          for (std::size_t i = 0; i < subscribers_.size(); ++i)
+          {
             auto &s = subscribers_[i];
             params.Seek(p);
             params << s.id;
 
             // Copy is important here as we reuse an existing buffer
-            if (!service->DeliverResponse(s.client, params.data().Copy())) {
+            if (!service->DeliverResponse(s.client, params.data().Copy()))
+            {
               remove.push_back(i);
             }
           }
@@ -88,7 +91,8 @@ class FeedSubscriptionManager {
    * This function is intended to be used by the <Protocol> through
    * which services can subscribe their clients to the feed.
    */
-  void Subscribe(uint64_t const &client, subscription_handler_type const &id) {
+  void Subscribe(uint64_t const &client, subscription_handler_type const &id)
+  {
     LOG_STACK_TRACE_POINT;
 
     // TODO: change uint64_t to global client id.
@@ -104,8 +108,8 @@ class FeedSubscriptionManager {
    * This function is intended to be used by the <Protocol> through
    * which services can unsubscribe their clients to the feed.
    */
-  void Unsubscribe(uint64_t const &client,
-                   subscription_handler_type const &id) {
+  void Unsubscribe(uint64_t const &client, subscription_handler_type const &id)
+  {
     LOG_STACK_TRACE_POINT;
 
     // TODO: change uint64_t to global client id.
@@ -131,23 +135,25 @@ class FeedSubscriptionManager {
    *
    * @return the publisher.
    */
-  fetch::service::AbstractPublicationFeed *publisher() const {
+  fetch::service::AbstractPublicationFeed *publisher() const
+  {
     return publisher_;
   }
 
- private:
-  struct ClientSubscription {
-    uint64_t client;
+private:
+  struct ClientSubscription
+  {
+    uint64_t                  client;
     subscription_handler_type id;
   };
 
   std::vector<ClientSubscription> subscribers_;
-  fetch::mutex::Mutex subscribe_mutex_;
-  feed_handler_type feed_;
+  fetch::mutex::Mutex             subscribe_mutex_;
+  feed_handler_type               feed_;
 
   fetch::service::AbstractPublicationFeed *publisher_ = nullptr;
 };
-}
-}
+}  // namespace service
+}  // namespace fetch
 
 #endif

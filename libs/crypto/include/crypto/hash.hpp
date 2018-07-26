@@ -5,7 +5,8 @@
 namespace fetch {
 namespace crypto {
 template <typename T>
-byte_array::ByteArray Hash(byte_array::ConstByteArray const &str) {
+byte_array::ByteArray Hash(byte_array::ConstByteArray const &str)
+{
   T hasher;
 
   hasher.Reset();
@@ -14,7 +15,7 @@ byte_array::ByteArray Hash(byte_array::ConstByteArray const &str) {
 
   return hasher.digest();
 }
-}
-}
+}  // namespace crypto
+}  // namespace fetch
 
 #endif

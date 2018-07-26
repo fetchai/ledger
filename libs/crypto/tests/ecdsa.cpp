@@ -1,12 +1,13 @@
 #include <iostream>
 
-#include "crypto/ecdsa.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "crypto/ecdsa.hpp"
 
 using namespace fetch::crypto;
 
-int main() {
-  ECDSASigner sig;
+int main()
+{
+  ECDSASigner                  sig;
   fetch::byte_array::ByteArray key = {
       0x16, 0x26, 0x07, 0x83, 0xe4, 0x0b, 0x16, 0x73, 0x16, 0x73, 0x62,
       0x2a, 0xc8, 0xa5, 0xb0, 0x45, 0xfc, 0x3e, 0xa4, 0xaf, 0x70, 0xf7,
@@ -28,15 +29,17 @@ int main() {
             << std::endl;
   std::cout << "vk.verify(sig.decode(\"hex\"), message) # True" << std::endl;
 
-
   ECDSAVerifier verify(sig.identity());
-  
-  if( verify.Verify("Hello world", sig.signature() ) ) {
-    std::cout << "# VERIFIED!" << std::endl;    
-  } else {
+
+  if (verify.Verify("Hello world", sig.signature()))
+  {
+    std::cout << "# VERIFIED!" << std::endl;
+  }
+  else
+  {
     std::cout << "# NOT VERIFIED!" << std::endl;
     exit(-1);
   }
-    
+
   return 0;
 }

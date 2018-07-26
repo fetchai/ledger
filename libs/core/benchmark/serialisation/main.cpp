@@ -1,14 +1,13 @@
 #include "core/random/lfg.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
-#include "core/serializers/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
-#include "core/serializers/byte_array.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
 
-#include <iostream>
 #include <chrono>
 #include <iomanip>
+#include <iostream>
 #include <vector>
 
 using namespace fetch::serializers;
@@ -18,11 +17,13 @@ using namespace std::chrono;
 fetch::random::LaggedFibonacciGenerator<> lfg;
 
 template <typename T, std::size_t N = 256>
-void MakeString(T &str) {
+void MakeString(T &str)
+{
   ByteArray entry;
   entry.Resize(256);
 
-  for (std::size_t j = 0; j < 256; ++j) {
+  for (std::size_t j = 0; j < 256; ++j)
+  {
     entry[j] = uint8_t(lfg() >> 19);
   }
 
@@ -30,50 +31,60 @@ void MakeString(T &str) {
 }
 
 template <typename T, std::size_t N = 256>
-void MakeStringVector(std::vector<T> &vec, std::size_t size) {
-  for (std::size_t i = 0; i < size; ++i) {
+void MakeStringVector(std::vector<T> &vec, std::size_t size)
+{
+  for (std::size_t i = 0; i < size; ++i)
+  {
     T s;
     MakeString(s);
     vec.push_back(s);
   }
 }
 
-std::size_t PopulateData(std::vector<uint32_t> &s) {
+std::size_t PopulateData(std::vector<uint32_t> &s)
+{
   s.resize(16 * 100000);
 
-  for (std::size_t i = 0; i < s.size(); ++i) {
+  for (std::size_t i = 0; i < s.size(); ++i)
+  {
     s[i] = uint32_t(lfg());
   }
 
   return sizeof(uint32_t) * s.size();
 }
 
-std::size_t PopulateData(std::vector<uint64_t> &s) {
+std::size_t PopulateData(std::vector<uint64_t> &s)
+{
   s.resize(16 * 100000);
 
-  for (std::size_t i = 0; i < s.size(); ++i) {
+  for (std::size_t i = 0; i < s.size(); ++i)
+  {
     s[i] = lfg();
   }
 
   return sizeof(uint64_t) * s.size();
 }
 
-std::size_t PopulateData(std::vector<ConstByteArray> &s) {
+std::size_t PopulateData(std::vector<ConstByteArray> &s)
+{
   MakeStringVector(s, 100000);
   return s[0].size() * s.size();
 }
 
-std::size_t PopulateData(std::vector<ByteArray> &s) {
+std::size_t PopulateData(std::vector<ByteArray> &s)
+{
   MakeStringVector(s, 100000);
   return s[0].size() * s.size();
 }
 
-std::size_t PopulateData(std::vector<std::string> &s) {
+std::size_t PopulateData(std::vector<std::string> &s)
+{
   MakeStringVector(s, 100000);
   return s[0].size() * s.size();
 }
 
-struct Result {
+struct Result
+{
   double serialization_time;
   double deserialization_time;
   double serialization;
@@ -82,15 +93,16 @@ struct Result {
 };
 
 template <typename S, typename T, typename... Args>
-Result BenchmarkSingle(Args... args) {
-  Result ret;
-  T data;
+Result BenchmarkSingle(Args... args)
+{
+  Result      ret;
+  T           data;
   std::size_t size = PopulateData(data, args...);
 
   S buffer;
 
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
-  SizeCounter<S> counter;
+  SizeCounter<S>                    counter;
   counter << data;
   buffer.Reserve(counter.size());
   buffer << data;
@@ -102,13 +114,13 @@ Result BenchmarkSingle(Args... args) {
   buffer >> des;
 
   high_resolution_clock::time_point t3 = high_resolution_clock::now();
-  duration<double> ts1 = duration_cast<duration<double>>(t2 - t1);
-  duration<double> ts2 = duration_cast<duration<double>>(t3 - t2);
-  ret.size = double(size) * 1e-6;
-  ret.serialization_time = ts1.count();
+  duration<double> ts1     = duration_cast<duration<double>>(t2 - t1);
+  duration<double> ts2     = duration_cast<duration<double>>(t3 - t2);
+  ret.size                 = double(size) * 1e-6;
+  ret.serialization_time   = ts1.count();
   ret.deserialization_time = ts2.count();
-  ret.serialization = double(size) * 1e-6 / double(ts1.count());
-  ret.deserialization = double(size) * 1e-6 / double(ts2.count());
+  ret.serialization        = double(size) * 1e-6 / double(ts1.count());
+  ret.deserialization      = double(size) * 1e-6 / double(ts2.count());
   return ret;
 }
 
@@ -121,9 +133,10 @@ Result BenchmarkSingle(Args... args) {
   std::cout << std::setw(width) << result.serialization;        \
   std::cout << std::setw(width) << result.deserialization << std::endl
 
-int main() {
+int main()
+{
   int type_width = 35;
-  int width = 12;
+  int width      = 12;
 
   std::cout << std::setw(type_width) << "Type";
   std::cout << std::setw(width) << "MBs";

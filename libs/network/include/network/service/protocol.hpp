@@ -1,19 +1,19 @@
 #ifndef SERVICE_PROTOCOL_HPP
 #define SERVICE_PROTOCOL_HPP
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <vector>
-#include <functional>
 
 #include "core/assert.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "network/management/abstract_connection.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/error_codes.hpp"
 #include "network/service/feed_subscription_manager.hpp"
 #include "network/service/types.hpp"
-#include "network/management/abstract_connection.hpp"
 
 namespace fetch {
 namespace service {
@@ -32,22 +32,31 @@ namespace service {
  * this should be changed to be variable and allocated at construction
  * time (TODO).
  */
-class Protocol {
- public:
-  typedef AbstractCallable callable_type;
+class Protocol
+{
+public:
+  typedef AbstractCallable           callable_type;
   typedef byte_array::ConstByteArray byte_array_type;
-  typedef typename network::AbstractConnection::connection_handle_type connection_handle_type;  
-  typedef std::function< void(connection_handle_type const &, byte_array::ByteArray const &) > middleware_type;
-  
-  Protocol() {
-    for (std::size_t i = 0; i < 256; ++i) {
+  typedef typename network::AbstractConnection::connection_handle_type
+      connection_handle_type;
+  typedef std::function<void(connection_handle_type const &,
+                             byte_array::ByteArray const &)>
+      middleware_type;
+
+  Protocol()
+  {
+    for (std::size_t i = 0; i < 256; ++i)
+    {
       members_[i] = nullptr;
     }
   }
 
-  ~Protocol() {
-    for (std::size_t i = 0; i < 256; ++i) {
-      if (members_[i] != nullptr) {
+  ~Protocol()
+  {
+    for (std::size_t i = 0; i < 256; ++i)
+    {
+      if (members_[i] != nullptr)
+      {
         delete members_[i];
       }
     }
@@ -65,12 +74,14 @@ class Protocol {
    *
    * @return a reference to the call.
    */
-  callable_type &operator[](function_handler_type const &n) {
+  callable_type &operator[](function_handler_type const &n)
+  {
     LOG_STACK_TRACE_POINT;
 
     if ((n >= 256) || (members_[n] == nullptr))
       throw serializers::SerializableException(
-          error::MEMBER_NOT_FOUND, byte_array_type("Could not find protocol member function"));
+          error::MEMBER_NOT_FOUND,
+          byte_array_type("Could not find protocol member function"));
     return *members_[n];
   }
 
@@ -89,26 +100,30 @@ class Protocol {
    */
   template <typename C, typename R, typename... Args>
   void Expose(function_handler_type const &n, C *instance,
-              R (C::*function)(Args...)) {
+              R (C::*function)(Args...))
+  {
     callable_type *fnc =
         new service::CallableClassMember<C, R(Args...)>(instance, function);
 
     if (members_[n] != nullptr)
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+          error::MEMBER_EXISTS,
+          byte_array_type("Protocol member function already exists: "));
 
     members_[n] = fnc;
   }
 
   template <typename C, typename R, typename... Args>
   void ExposeWithClientArg(function_handler_type const &n, C *instance,
-                           R (C::*function)(Args...)) {
+                           R (C::*function)(Args...))
+  {
     callable_type *fnc = new service::CallableClassMember<C, R(Args...), 1>(
         Callable::CLIENT_ID_ARG, instance, function);
 
     if (members_[n] != nullptr)
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+          error::MEMBER_EXISTS,
+          byte_array_type("Protocol member function already exists: "));
 
     members_[n] = fnc;
   }
@@ -119,7 +134,8 @@ class Protocol {
    *
    */
   void RegisterFeed(feed_handler_type const &feed,
-                    AbstractPublicationFeed *publisher) {
+                    AbstractPublicationFeed *publisher)
+  {
     LOG_STACK_TRACE_POINT;
 
     feeds_.push_back(
@@ -136,17 +152,20 @@ class Protocol {
    */
   void Subscribe(
       uint64_t const &client,  // TODO: Standardize client type over the code.
-      feed_handler_type const &feed, subscription_handler_type const &id) {
+      feed_handler_type const &feed, subscription_handler_type const &id)
+  {
     LOG_STACK_TRACE_POINT;
 
     fetch::logger.Debug("Making subscription for ", client, " ", feed, " ", id);
 
     feeds_mutex_.lock();
     std::size_t i = 0;
-    for (; i < feeds_.size(); ++i) {
+    for (; i < feeds_.size(); ++i)
+    {
       if (feeds_[i]->feed() == feed) break;
     }
-    if (i == feeds_.size()) {
+    if (i == feeds_.size())
+    {
       TODO_FAIL("make serializable error, feed not found");
     }
     auto &f = feeds_[i];
@@ -165,15 +184,18 @@ class Protocol {
    */
   void Unsubscribe(
       uint64_t const &client,  // TODO: Standardize client type over the code.
-      feed_handler_type const &feed, subscription_handler_type const &id) {
+      feed_handler_type const &feed, subscription_handler_type const &id)
+  {
     LOG_STACK_TRACE_POINT;
 
     feeds_mutex_.lock();
     std::size_t i = 0;
-    for (; i < feeds_.size(); ++i) {
+    for (; i < feeds_.size(); ++i)
+    {
       if (feeds_[i]->feed() == feed) break;
     }
-    if (i == feeds_.size()) {
+    if (i == feeds_.size())
+    {
       TODO_FAIL("make serializable error, feed not found");
     }
     auto &f = feeds_[i];
@@ -186,32 +208,30 @@ class Protocol {
    *
    * @return a reference to the feeds.
    */
-  std::vector<std::shared_ptr<FeedSubscriptionManager> > &feeds() {
+  std::vector<std::shared_ptr<FeedSubscriptionManager>> &feeds()
+  {
     return feeds_;
   }
 
+  void AddMiddleware(middleware_type const &m) { middleware_.push_back(m); }
 
-  void AddMiddleware(middleware_type const& m) 
+  void ApplyMiddleware(connection_handle_type const &id,
+                       byte_array::ByteArray const & msg)
   {
-    middleware_.push_back(m);
-  }
-
-  void ApplyMiddleware(connection_handle_type const &id, byte_array::ByteArray const &msg) 
-  {
-    for(auto &m: middleware_) {
+    for (auto &m : middleware_)
+    {
       m(id, msg);
     }
   }
-  
-  
- private:
-  std::vector< middleware_type > middleware_;
-  
+
+private:
+  std::vector<middleware_type> middleware_;
+
   callable_type *members_[256] = {nullptr};
-  std::vector<std::shared_ptr<FeedSubscriptionManager> > feeds_;
-  fetch::mutex::Mutex feeds_mutex_;
+  std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
+  fetch::mutex::Mutex                                   feeds_mutex_;
 };
-}
-}
+}  // namespace service
+}  // namespace fetch
 
 #endif

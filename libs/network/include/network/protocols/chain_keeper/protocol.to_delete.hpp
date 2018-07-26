@@ -14,10 +14,11 @@ namespace protocols {
 
 class ChainKeeperProtocol : public ChainKeeperController,
                             public fetch::service::Protocol,
-                            public fetch::http::HTTPModule {
- public:
+                            public fetch::http::HTTPModule
+{
+public:
   typedef typename ChainKeeperController::transaction_summary_type
-      transaction_summary_type;
+                                                           transaction_summary_type;
   typedef typename ChainKeeperController::transaction_type transaction_type;
 
   typedef fetch::service::ServiceClient<fetch::network::TCPClient> client_type;
@@ -25,8 +26,9 @@ class ChainKeeperProtocol : public ChainKeeperController,
 
   ChainKeeperProtocol(network::NetworkManager *network_manager,
                       uint64_t const &protocol, EntryPoint &details)
-      : ChainKeeperController(protocol, network_manager, details),
-        fetch::service::Protocol() {
+      : ChainKeeperController(protocol, network_manager, details)
+      , fetch::service::Protocol()
+  {
     using namespace fetch::service;
 
     // RPC Protocol
@@ -53,7 +55,7 @@ class ChainKeeperProtocol : public ChainKeeperController,
 
     // Web interface
     auto connect_to = [this](fetch::http::ViewParameters const &params,
-                             fetch::http::HTTPRequest const &req) {
+                             fetch::http::HTTPRequest const &   req) {
       this->ConnectTo(params["ip"], uint16_t(params["port"].AsInt()));
       return fetch::http::HTTPResponse("{\"status\":\"ok\"}");
     };
@@ -64,7 +66,7 @@ class ChainKeeperProtocol : public ChainKeeperController,
         connect_to);
 
     auto all_details = [this](fetch::http::ViewParameters const &params,
-                              fetch::http::HTTPRequest const &req) {
+                              fetch::http::HTTPRequest const &   req) {
       LOG_STACK_TRACE_POINT;
       std::stringstream response;
       response << "{\"outgoing\": [";
@@ -72,7 +74,8 @@ class ChainKeeperProtocol : public ChainKeeperController,
           [&response](std::vector<client_shared_ptr_type> const &,
                       std::vector<EntryPoint> const &details) {
             bool first = true;
-            for (auto &d : details) {
+            for (auto &d : details)
+            {
               if (!first) response << ", \n";
               response << "{\n";
 
@@ -85,17 +88,17 @@ class ChainKeeperProtocol : public ChainKeeperController,
               response << "}";
               first = false;
             }
-
           });
 
       response << "],";
       response << "\"transactions\": [";
       this->with_transactions_do(
           [&response](std::vector<transaction_type> const &alltxs) {
-            bool first = true;
-            std::size_t i = 0;
+            bool        first = true;
+            std::size_t i     = 0;
 
-            for (auto const &t : alltxs) {
+            for (auto const &t : alltxs)
+            {
               auto sum = t.summary();
 
               if (!first) response << ", \n";
@@ -103,7 +106,8 @@ class ChainKeeperProtocol : public ChainKeeperController,
 
               bool bfi = true;
               response << "\"groups\": [";
-              for (auto &g : sum.groups) {
+              for (auto &g : sum.groups)
+              {
                 if (!bfi) response << ", ";
                 response << g;
                 bfi = false;
@@ -128,7 +132,7 @@ class ChainKeeperProtocol : public ChainKeeperController,
     HTTPModule::Get("/all-details", all_details);
 
     auto list_outgoing = [this](fetch::http::ViewParameters const &params,
-                                fetch::http::HTTPRequest const &req) {
+                                fetch::http::HTTPRequest const &   req) {
       LOG_STACK_TRACE_POINT;
       std::stringstream response;
       response << "{\"outgoing\": [";
@@ -136,7 +140,8 @@ class ChainKeeperProtocol : public ChainKeeperController,
           [&response](std::vector<client_shared_ptr_type> const &,
                       std::vector<EntryPoint> const &details) {
             bool first = true;
-            for (auto &d : details) {
+            for (auto &d : details)
+            {
               if (!first) response << ", \n";
               response << "{\n";
 
@@ -149,7 +154,6 @@ class ChainKeeperProtocol : public ChainKeeperController,
               response << "}";
               first = false;
             }
-
           });
 
       response << "]}";
@@ -161,16 +165,17 @@ class ChainKeeperProtocol : public ChainKeeperController,
     HTTPModule::Get("/list/outgoing", list_outgoing);
 
     auto list_transactions = [this](fetch::http::ViewParameters const &params,
-                                    fetch::http::HTTPRequest const &req) {
+                                    fetch::http::HTTPRequest const &   req) {
       LOG_STACK_TRACE_POINT;
       std::stringstream response;
       response << "{\"transactions\": [";
       this->with_transactions_do(
           [&response](std::vector<transaction_type> const &alltxs) {
-            bool first = true;
-            std::size_t i = 0;
+            bool        first = true;
+            std::size_t i     = 0;
 
-            for (auto const &t : alltxs) {
+            for (auto const &t : alltxs)
+            {
               auto sum = t.summary();
 
               if (!first) response << ", \n";
@@ -178,7 +183,8 @@ class ChainKeeperProtocol : public ChainKeeperController,
 
               bool bfi = true;
               response << "\"groups\": [";
-              for (auto &g : sum.groups) {
+              for (auto &g : sum.groups)
+              {
                 if (!bfi) response << ", ";
                 response << g;
                 bfi = false;
@@ -202,18 +208,19 @@ class ChainKeeperProtocol : public ChainKeeperController,
     HTTPModule::Get("/list/transactions", list_transactions);
 
     auto submit_transaction = [this, network_manager](
-        fetch::http::ViewParameters const &params,
-        fetch::http::HTTPRequest const &req) {
+                                  fetch::http::ViewParameters const &params,
+                                  fetch::http::HTTPRequest const &   req) {
       LOG_STACK_TRACE_POINT;
       network_manager->Post([this, req]() {
         json::JSONDocument doc = req.JSON();
 
         typedef fetch::chain::Transaction transaction_type;
-        transaction_type tx;
-        auto res = doc["resources"];
+        transaction_type                  tx;
+        auto                              res = doc["resources"];
 
-        for (std::size_t i = 0; i < res.size(); ++i) {
-          auto s = res[i].as_byte_array();
+        for (std::size_t i = 0; i < res.size(); ++i)
+        {
+          auto                  s = res[i].as_byte_array();
           byte_array::ByteArray group =
               byte_array::FromHex(s.SubArray(2, s.size() - 2));
 
@@ -229,14 +236,15 @@ class ChainKeeperProtocol : public ChainKeeperController,
     HTTPModule::Post("/group/submit-transaction", submit_transaction);
   }
 
-  uint64_t Ping() {
+  uint64_t Ping()
+  {
     LOG_STACK_TRACE_POINT;
 
     fetch::logger.Debug("Responding to Ping request");
     return 1337;
   }
 };
-}
-}
+}  // namespace protocols
+}  // namespace fetch
 
 #endif

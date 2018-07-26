@@ -1,11 +1,11 @@
 #ifndef FETCH_CONTRACT_HTTP_INTERFACE_HPP
 #define FETCH_CONTRACT_HTTP_INTERFACE_HPP
 
+#include "core/json/document.hpp"
 #include "core/logger.hpp"
 #include "core/string/replace.hpp"
-#include "core/json/document.hpp"
-#include "http/module.hpp"
 #include "http/json_response.hpp"
+#include "http/module.hpp"
 #include "ledger/chaincode/cache.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
@@ -21,43 +21,46 @@
 namespace fetch {
 namespace ledger {
 
-class ContractHttpInterface : public http::HTTPModule {
+class ContractHttpInterface : public http::HTTPModule
+{
 public:
-
-  ContractHttpInterface(StateInterface &storage, TransactionProcessor &processor)
-    : storage_{storage}
-    , processor_{processor} {
+  ContractHttpInterface(StateInterface &      storage,
+                        TransactionProcessor &processor)
+      : storage_{storage}, processor_{processor}
+  {
 
     // create all the contracts
     auto const &contracts = contract_cache_.factory().GetContracts();
-    for (auto const &contract_name : contracts) {
+    for (auto const &contract_name : contracts)
+    {
 
       // create the contract
       auto contract = contract_cache_.factory().Create(contract_name);
 
       // define the api prefix
-      std::string const api_prefix = "/api/contract/"
-                                   + string::Replace(contract_name, '.', '/')
-                                   + '/';
-
+      std::string const api_prefix =
+          "/api/contract/" + string::Replace(contract_name, '.', '/') + '/';
 
       // enumerate all of the contract query handlers
       auto const &query_handlers = contract->query_handlers();
-      for (auto const &handler : query_handlers) {
+      for (auto const &handler : query_handlers)
+      {
         std::string const &query_name = handler.first;
-        std::string const api_path = api_prefix + query_name;
+        std::string const  api_path   = api_prefix + query_name;
 
         fetch::logger.Info("API: ", api_path);
 
-        Post(api_path, [this, contract_name, query_name](http::ViewParameters const &, http::HTTPRequest const &request) {
+        Post(api_path, [this, contract_name, query_name](
+                           http::ViewParameters const &,
+                           http::HTTPRequest const &request) {
           return OnQuery(contract_name, query_name, request);
         });
       }
     }
 
     // add custom debug handlers
-    Post("/api/debug/submit", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-
+    Post("/api/debug/submit", [this](http::ViewParameters const &,
+                                     http::HTTPRequest const &request) {
       chain::MutableTransaction tx;
       tx.PushResource("foo.bar.baz" + std::to_string(transaction_index_));
       tx.set_fee(transaction_index_);
@@ -78,11 +81,12 @@ public:
   }
 
 private:
-
-  http::HTTPResponse OnQuery(std::string const &contract_name,
-                             std::string const &query,
-                             http::HTTPRequest const &request) {
-    try {
+  http::HTTPResponse OnQuery(std::string const &      contract_name,
+                             std::string const &      query,
+                             http::HTTPRequest const &request)
+  {
+    try
+    {
 
       // parse the incoming request
       json::JSONDocument doc;
@@ -90,42 +94,50 @@ private:
 
       // dispatch the contract type
       script::Variant response;
-      auto contract = contract_cache_.Lookup(contract_name);
+      auto            contract = contract_cache_.Lookup(contract_name);
 
       // attach, dispatch and detach
       contract->Attach(storage_);
       auto const status = contract->DispatchQuery(query, doc.root(), response);
       contract->Detach();
 
-      if (status == Contract::Status::OK) {
+      if (status == Contract::Status::OK)
+      {
         // encode the response
         std::ostringstream oss;
         oss << response;
 
         // generate the response object
         return http::CreateJsonResponse(oss.str());
-      } else {
-        fetch::logger.Warn("Error running query. status = ", static_cast<int>(status));
       }
-    } catch (std::exception &ex) {
+      else
+      {
+        fetch::logger.Warn("Error running query. status = ",
+                           static_cast<int>(status));
+      }
+    }
+    catch (std::exception &ex)
+    {
       fetch::logger.Warn("Query error: ", ex.what());
     }
 
     return JsonBadRequest();
   }
 
-  static http::HTTPResponse JsonBadRequest() {
-    return http::CreateJsonResponse("", http::status_code::CLIENT_ERROR_BAD_REQUEST);
+  static http::HTTPResponse JsonBadRequest()
+  {
+    return http::CreateJsonResponse(
+        "", http::status_code::CLIENT_ERROR_BAD_REQUEST);
   }
 
   std::size_t transaction_index_{0};
 
-  StateInterface &storage_;
+  StateInterface &      storage_;
   TransactionProcessor &processor_;
-  ChainCodeCache contract_cache_;
+  ChainCodeCache        contract_cache_;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
 
-#endif //FETCH_CONTRACT_HTTP_INTERFACE_HPP
+#endif  // FETCH_CONTRACT_HTTP_INTERFACE_HPP

@@ -1,13 +1,14 @@
 #define FETCH_TESTING_ENABLED
-#include"iostream"
-#include"vectorise/memory/shared_array.hpp"
-#include"random/lcg.hpp"
+#include "vectorise/memory/shared_array.hpp"
+#include "iostream"
+#include "random/lcg.hpp"
 using namespace fetch::memory;
 
-typedef uint64_t data_type;
+typedef uint64_t               data_type;
 typedef SharedArray<data_type> array_type;
 
-void test_set_get() {
+void test_set_get()
+{
   static fetch::random::LinearCongruentialGenerator lcg1, lcg2;
   lcg1.Reset();
   lcg2.Reset();
@@ -15,12 +16,15 @@ void test_set_get() {
   lcg2();
 
   array_type array(N), other;
-  for (std::size_t i = 0; i < N; ++i) {
+  for (std::size_t i = 0; i < N; ++i)
+  {
     array[i] = lcg1();
   }
 
-  for (std::size_t i = 0; i < N; ++i) {
-    if (array[i] != lcg2()) {
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    if (array[i] != lcg2())
+    {
       std::cout << "1: memory doesn't store what it is supposed to"
                 << std::endl;
       exit(-1);
@@ -30,8 +34,10 @@ void test_set_get() {
   other = array;
   lcg2.Reset();
   lcg2();
-  for (std::size_t i = 0; i < N; ++i) {
-    if (other[i] != lcg2()) {
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    if (other[i] != lcg2())
+    {
       std::cout << "2: memory doesn't store what it is supposed to"
                 << std::endl;
       exit(-1);
@@ -41,8 +47,10 @@ void test_set_get() {
   array_type yao(other);
   lcg2.Reset();
   lcg2();
-  for (std::size_t i = 0; i < N; ++i) {
-    if (yao[i] != lcg2()) {
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    if (yao[i] != lcg2())
+    {
       std::cout << "3: memory doesn't store what it is supposed to"
                 << std::endl;
       exit(-1);
@@ -66,8 +74,10 @@ void test_set_get() {
   lcg2.Seed(lcg2());
 }
 
-int main() {
-  for (std::size_t i = 0; i < 100; ++i) {
+int main()
+{
+  for (std::size_t i = 0; i < 100; ++i)
+  {
     test_set_get();
   }
   return 0;

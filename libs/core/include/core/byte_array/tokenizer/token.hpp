@@ -5,8 +5,9 @@
 namespace fetch {
 namespace byte_array {
 
-class Token : public ConstByteArray {
- public:
+class Token : public ConstByteArray
+{
+public:
   Token() : ConstByteArray() {}
 
   Token(char const *str) : ConstByteArray(str) {}
@@ -18,13 +19,16 @@ class Token : public ConstByteArray {
 
   Token(ConstByteArray const &other, std::size_t const &start,
         std::size_t const &length)
-      : ConstByteArray(other, start, length) {}
+      : ConstByteArray(other, start, length)
+  {}
 
-  bool operator==(ConstByteArray const &other) const {
+  bool operator==(ConstByteArray const &other) const
+  {
     return ConstByteArray::operator==(other);
   }
 
-  bool operator!=(ConstByteArray const &other) const {
+  bool operator!=(ConstByteArray const &other) const
+  {
     return !(*this == other);
   }
 
@@ -32,16 +36,16 @@ class Token : public ConstByteArray {
   void SetLine(int const &l) { line_ = l; }
   void SetChar(std::size_t const &c) { char_ = c; }
 
-  int type() const { return type_; }
-  int line() const { return line_; }
+  int         type() const { return type_; }
+  int         line() const { return line_; }
   std::size_t character() const { return char_; }
 
- private:
-  int type_ = -1;
-  int line_ = 0;
+private:
+  int         type_ = -1;
+  int         line_ = 0;
   std::size_t char_ = 0;
 };
-}
-}
+}  // namespace byte_array
+}  // namespace fetch
 
 #endif

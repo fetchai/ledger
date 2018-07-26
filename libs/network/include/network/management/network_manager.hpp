@@ -6,57 +6,56 @@
 #include "core/mutex.hpp"
 #include "network/details/network_manager_implementation.hpp"
 
+#include "network/fetch_asio.hpp"
 #include <functional>
 #include <map>
-#include "network/fetch_asio.hpp"
 
-namespace fetch
-{
-namespace network
-{
+namespace fetch {
+namespace network {
 
 class NetworkManager
 {
- public:
+public:
   typedef std::function<void()> event_function_type;
 
-  typedef details::NetworkManagerImplementation            implementation_type;
-  typedef std::shared_ptr<implementation_type>            pointer_type;
-  typedef std::weak_ptr<implementation_type>              weak_ref_type;
+  typedef details::NetworkManagerImplementation implementation_type;
+  typedef std::shared_ptr<implementation_type>  pointer_type;
+  typedef std::weak_ptr<implementation_type>    weak_ref_type;
 
   explicit NetworkManager(std::size_t threads = 1)
   {
-    pointer_      = std::make_shared< implementation_type >( threads );
+    pointer_ = std::make_shared<implementation_type>(threads);
   }
 
-  NetworkManager(NetworkManager const &other) :
-    is_copy_(true)
+  NetworkManager(NetworkManager const &other) : is_copy_(true)
   {
-    if(other.is_copy_)
+    if (other.is_copy_)
     {
       weak_pointer_ = other.weak_pointer_;
-    } else {
+    }
+    else
+    {
       weak_pointer_ = other.pointer_;
     }
   }
 
   ~NetworkManager()
   {
-    if(!is_copy_)
+    if (!is_copy_)
     {
       Stop();
     }
   }
 
-  NetworkManager(NetworkManager &&rhs)                 = default;
+  NetworkManager(NetworkManager &&rhs) = default;
   NetworkManager &operator=(NetworkManager const &rhs) = delete;
-  NetworkManager &operator=(NetworkManager&& rhs)      = delete;
+  NetworkManager &operator=(NetworkManager &&rhs) = delete;
 
   void Start()
   {
-    if(is_copy_) return;
+    if (is_copy_) return;
     auto ptr = lock();
-    if(ptr)
+    if (ptr)
     {
       ptr->Start();
     }
@@ -64,12 +63,12 @@ class NetworkManager
 
   void Stop()
   {
-    if(is_copy_)
+    if (is_copy_)
     {
       return;
     }
     auto ptr = lock();
-    if(ptr)
+    if (ptr)
     {
       ptr->Stop();
     }
@@ -79,10 +78,12 @@ class NetworkManager
   void Post(F &&f)
   {
     auto ptr = lock();
-    if(ptr)
+    if (ptr)
     {
       return ptr->Post(f);
-    } else {
+    }
+    else
+    {
       fetch::logger.Info("Failed to post: network man dead.");
     }
   }
@@ -91,25 +92,19 @@ class NetworkManager
   void Post(F &&f, int milliseconds)
   {
     auto ptr = lock();
-    if(ptr)
+    if (ptr)
     {
       return ptr->Post(f, milliseconds);
     }
   }
 
-  bool is_valid()
-  {
-    return (!is_copy_) || bool(weak_pointer_.lock());
-  }
+  bool is_valid() { return (!is_copy_) || bool(weak_pointer_.lock()); }
 
-  bool is_primary()
-  {
-    return (!is_copy_);
-  }
+  bool is_primary() { return (!is_copy_); }
 
   pointer_type lock()
   {
-    if(is_copy_)
+    if (is_copy_)
     {
       return weak_pointer_.lock();
     }
@@ -117,23 +112,23 @@ class NetworkManager
   }
 
   template <typename IO, typename... arguments>
-  std::shared_ptr<IO> CreateIO(arguments&&... args)
+  std::shared_ptr<IO> CreateIO(arguments &&... args)
   {
     auto ptr = lock();
-    if(ptr)
+    if (ptr)
     {
       return ptr->CreateIO<IO>(std::forward<arguments>(args)...);
     }
-    TODO_FAIL( "Attempted to get IO from dead TM" );    
+    TODO_FAIL("Attempted to get IO from dead TM");
     return std::shared_ptr<IO>(nullptr);
   }
 
- private:
-  pointer_type pointer_;
+private:
+  pointer_type  pointer_;
   weak_ref_type weak_pointer_;
-  bool is_copy_ = false;
+  bool          is_copy_ = false;
 };
-}
-}
+}  // namespace network
+}  // namespace fetch
 
 #endif

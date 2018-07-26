@@ -1,35 +1,27 @@
 #ifndef LEDGER_CHAIN_MAIN_CHAIN_DETAILS_HPP
 #define LEDGER_CHAIN_MAIN_CHAIN_DETAILS_HPP
 
-#include<atomic>
+#include <atomic>
 
-namespace fetch
-{
-namespace chain
-{
+namespace fetch {
+namespace chain {
 
 struct MainChainDetails
 {
-  MainChainDetails() 
-    :
-    is_controller( false ),
-    is_peer( false ),
-    is_miner( false),
-    is_outgoing( false ) 
-  {
-    
-  }
+  MainChainDetails()
+      : is_controller(false)
+      , is_peer(false)
+      , is_miner(false)
+      , is_outgoing(false)
+  {}
 
-  
   std::atomic<bool> is_controller;
   std::atomic<bool> is_peer;
-  std::atomic<bool> is_miner;  
+  std::atomic<bool> is_miner;
   std::atomic<bool> is_outgoing;
 };
 
-
-}
-}
-
+}  // namespace chain
+}  // namespace fetch
 
 #endif

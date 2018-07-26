@@ -9,63 +9,55 @@ namespace crypto {
 namespace openssl {
 namespace context {
 
-template <typename T
-        , typename T_SessionPrimitive = detail::SessionPrimitive<T>
-        , typename T_ContextSmartPtr =  memory::ossl_shared_ptr<T>>
+template <typename T, typename T_SessionPrimitive = detail::SessionPrimitive<T>,
+          typename T_ContextSmartPtr = memory::ossl_shared_ptr<T>>
 class Session
 {
 public:
-    using type = T;
-    using context_smart_ptr = T_ContextSmartPtr;
-    using session_primitive_type = T_SessionPrimitive;
+  using type                   = T;
+  using context_smart_ptr      = T_ContextSmartPtr;
+  using session_primitive_type = T_SessionPrimitive;
 
 private:
-    context_smart_ptr context_;
-    bool is_started_;
+  context_smart_ptr context_;
+  bool              is_started_;
 
 public:
-    explicit Session(context_smart_ptr context, const bool is_already_started = false)
-        : context_(context)
-        , is_started_(is_already_started) {
-        start();
-    }
+  explicit Session(context_smart_ptr context,
+                   const bool        is_already_started = false)
+      : context_(context), is_started_(is_already_started)
+  {
+    start();
+  }
 
-    explicit Session() : Session( context_smart_ptr( BN_CTX_new() ) ) {
-    }
+  explicit Session() : Session(context_smart_ptr(BN_CTX_new())) {}
 
-    ~Session() {
-        end();
-    }
+  ~Session() { end(); }
 
-    void start() {
-        if (is_started_)
-            return;
+  void start()
+  {
+    if (is_started_) return;
 
-        session_primitive_type::start(context_.get());
-        is_started_ = true;
-    }
+    session_primitive_type::start(context_.get());
+    is_started_ = true;
+  }
 
-    void end() {
-        if (!is_started_)
-            return;
+  void end()
+  {
+    if (!is_started_) return;
 
-        is_started_ = false;
-        session_primitive_type::end(context_.get());
-    }
+    is_started_ = false;
+    session_primitive_type::end(context_.get());
+  }
 
-    context_smart_ptr context() const {
-        return context_;
-    }
+  context_smart_ptr context() const { return context_; }
 
-    bool isStarted() const {
-        return is_started_;
-    }
+  bool isStarted() const { return is_started_; }
 };
 
-} //* context namespace
-} //* openssl namespace
-} //* crypto namespace
-} //* fetch namespace
+}  // namespace context
+}  // namespace openssl
+}  // namespace crypto
+}  // namespace fetch
 
-#endif //CRYPTO_OPENSSL_CONTEXT_SESSION_HPP
-
+#endif  // CRYPTO_OPENSSL_CONTEXT_SESSION_HPP

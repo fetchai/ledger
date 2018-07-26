@@ -9,11 +9,13 @@
 namespace fetch {
 namespace json {
 
-class UnrecognisedJSONSymbolException : public std::exception {
+class UnrecognisedJSONSymbolException : public std::exception
+{
   std::string str_;
 
- public:
-  UnrecognisedJSONSymbolException(byte_array::Token const& token) {
+public:
+  UnrecognisedJSONSymbolException(byte_array::Token const &token)
+  {
     std::stringstream msg;
     msg << "Unrecognised symbol '";
     msg << token << '\'' << " at line " << token.line() << ", character "
@@ -21,18 +23,19 @@ class UnrecognisedJSONSymbolException : public std::exception {
     str_ = msg.str();
   }
 
-  virtual const char* what() const throw() { return str_.c_str(); }
+  virtual const char *what() const throw() { return str_.c_str(); }
 };
 
-class JSONParseException : public std::exception {
- public:
-  JSONParseException(std::string const& err) : error_(err) {}
+class JSONParseException : public std::exception
+{
+public:
+  JSONParseException(std::string const &err) : error_(err) {}
   virtual ~JSONParseException() {}
-  virtual char const* what() const throw() { return error_.c_str(); }
+  virtual char const *what() const throw() { return error_.c_str(); }
 
- private:
+private:
   std::string error_;
 };
-}
-}
+}  // namespace json
+}  // namespace fetch
 #endif

@@ -13,24 +13,27 @@ namespace fetch {
 namespace optimisers {
 
 template <typename T>
-bool Load(T &optimiser, std::string const &filename) {
+bool Load(T &optimiser, std::string const &filename)
+{
   std::fstream fin(filename, std::ios::in);
   if (!fin) return false;
 
   std::string line;
 
-  struct Coupling {
+  struct Coupling
+  {
     uint64_t i = uint64_t(-1), j = uint64_t(-1);
-    double c = 0;
+    double   c = 0;
   };
 
-  std::vector<Coupling> couplings;
+  std::vector<Coupling>             couplings;
   std::unordered_map<int, uint64_t> indices;
   std::unordered_map<int, uint64_t> connectivity;
 
   uint64_t k = 0;
 
-  while (fin) {
+  while (fin)
+  {
     std::getline(fin, line);
 
     uint64_t p = uint64_t(line.find('#'));
@@ -38,19 +41,21 @@ bool Load(T &optimiser, std::string const &filename) {
     string::Trim(line);
     if (line == "") continue;
     std::stringstream ss(line);
-    Coupling c;
-    int i, j;
+    Coupling          c;
+    int               i, j;
 
     ss >> i >> j >> c.c;
     if ((i == -1) || (j == -1)) break;
 
-    if (indices.find(i) == indices.end()) {
-      indices[i] = k++;
+    if (indices.find(i) == indices.end())
+    {
+      indices[i]      = k++;
       connectivity[i] = 0;
     }
 
-    if (indices.find(j) == indices.end()) {
-      indices[j] = k++;
+    if (indices.find(j) == indices.end())
+    {
+      indices[j]      = k++;
       connectivity[j] = 0;
     }
 
@@ -64,7 +69,8 @@ bool Load(T &optimiser, std::string const &filename) {
   }
 
   std::size_t connect_count = 0;
-  for (auto &p : connectivity) {
+  for (auto &p : connectivity)
+  {
     if (connect_count < p.second) connect_count = p.second;
   }
 
@@ -73,7 +79,7 @@ bool Load(T &optimiser, std::string const &filename) {
   for (auto &c : couplings) optimiser.Insert(c.i, c.j, c.c);
   return true;
 }
-}
-}
+}  // namespace optimisers
+}  // namespace fetch
 
 #endif

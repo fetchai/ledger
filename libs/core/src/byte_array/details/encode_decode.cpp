@@ -1,13 +1,12 @@
-#include"core/byte_array/details/encode_decode.hpp"
-#include<stdexcept>
+#include "core/byte_array/details/encode_decode.hpp"
+#include <stdexcept>
 namespace fetch {
 namespace byte_array {
 namespace details {
 
-  
 const char base64chars[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-const char base64pad = '=';
+const char base64pad  = '=';
 const char hexChars[] = "0123456789abcdef";
 
 const unsigned char base64decode[] = {
@@ -26,7 +25,8 @@ const unsigned char base64decode[] = {
     66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,
     66, 66, 66, 66, 66, 66, 66, 66, 66};
 
-uint8_t DecodeHexChar(char const &c) {
+uint8_t DecodeHexChar(char const &c)
+{
   char ret = 0;
   if (('0' <= c) && (c <= '9'))
     ret = char(c - '0');
@@ -39,7 +39,7 @@ uint8_t DecodeHexChar(char const &c) {
 
   return uint8_t(ret);
 }
-  
-}
-}
-}
+
+}  // namespace details
+}  // namespace byte_array
+}  // namespace fetch

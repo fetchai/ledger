@@ -1,5 +1,5 @@
-#include <iostream>
 #include "core/json/document.hpp"
+#include <iostream>
 using namespace fetch::json;
 using namespace fetch::byte_array;
 
@@ -19,9 +19,12 @@ void Serializer(T &t, Blah const&b)
 }
 */
 
-int main(int argc, char **argv) {
-  SCENARIO("Testing basic parsing") {
-    SECTION("Nathan test") {
+int main(int argc, char **argv)
+{
+  SCENARIO("Testing basic parsing")
+  {
+    SECTION("Nathan test")
+    {
       ByteArray data =
           "{\"HTTPPort\": 8081, \"IP\": \"localhost\", \"TCPPort\": 9081}";
       JSONDocument test(data);
@@ -29,14 +32,15 @@ int main(int argc, char **argv) {
       std::cout << "---" << std::endl;
       std::cout << test.root() << std::endl;
 
-      std::string IP_ = std::string(test["IP"].as_byte_array());
-      uint32_t port_ = uint16_t(test["TCPPort"].as_int());
+      std::string IP_   = std::string(test["IP"].as_byte_array());
+      uint32_t    port_ = uint16_t(test["TCPPort"].as_int());
 
       std::cerr << "port is is " << port_ << std::endl;
       std::cerr << "IP is " << IP_ << " >>> " << test["IP"] << std::endl;
     };
 
-    SECTION("Parsing and modification of document") {
+    SECTION("Parsing and modification of document")
+    {
       ByteArray doc_content = R"({
   "a": 3,
   "x": { 
@@ -83,7 +87,8 @@ int main(int argc, char **argv) {
       EXPECT(ss.str() == "[1, 5, 3]")
     };
 
-    SECTION("Type parsing") {
+    SECTION("Type parsing")
+    {
       ByteArray doc_content = R"({
   "a": 3,
   "b": 2.3e-2,
@@ -107,7 +112,8 @@ int main(int argc, char **argv) {
       EXPECT(doc["g"].type() == fetch::script::VariantType::BOOLEAN);
     };
 
-    SECTION("Parsing exeptions") {
+    SECTION("Parsing exeptions")
+    {
       JSONDocument doc;
       EXPECT_EXCEPTION(doc.Parse("{"), fetch::json::JSONParseException);
       EXPECT_EXCEPTION(doc.Parse("{]"), fetch::json::JSONParseException);

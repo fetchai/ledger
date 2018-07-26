@@ -1,16 +1,18 @@
 #ifndef SERVICE_CONSTS
 #define SERVICE_CONSTS
-enum {
+enum
+{
   GREET = 1,
   ADD,
-  
+
   PING,
   HELLO,
   GET_CHALLENGE,
   RESPOND_TO_CHALLENGE
 };
 
-enum {
+enum
+{
   AUTH = 1,
   TEST = 2
 };

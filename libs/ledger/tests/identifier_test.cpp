@@ -1,12 +1,15 @@
-#include "testing/unittest.hpp"
 #include "ledger/identifier.hpp"
+#include "testing/unittest.hpp"
 
 using fetch::ledger::Identifier;
 
-int main() {
+int main()
+{
 
-  SCENARIO("Parsing") {
-    SECTION("Basic Checks") {
+  SCENARIO("Parsing")
+  {
+    SECTION("Basic Checks")
+    {
       Identifier id("foo.bar.baz");
 
       EXPECT(id.name() == "baz");
@@ -17,8 +20,10 @@ int main() {
     };
   };
 
-  SCENARIO("Ancestry Checks") {
-    SECTION("Direct Parent") {
+  SCENARIO("Ancestry Checks")
+  {
+    SECTION("Direct Parent")
+    {
       Identifier parent("foo");
       Identifier child("foo.bar");
 
@@ -30,7 +35,8 @@ int main() {
       EXPECT(!child.IsParentTo(parent));
     };
 
-    SECTION("Indirect Parent") {
+    SECTION("Indirect Parent")
+    {
       Identifier parent("foo");
       Identifier child("foo.bar.baz");
 
@@ -42,7 +48,8 @@ int main() {
       EXPECT(!child.IsParentTo(parent));
     };
 
-    SECTION("Child") {
+    SECTION("Child")
+    {
       Identifier parent("foo.baz");
       Identifier child("foo.bar");
 

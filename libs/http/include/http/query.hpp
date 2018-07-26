@@ -7,6 +7,6 @@ namespace http {
 
 typedef KeyValueSet QuerySet;
 }
-}
+}  // namespace fetch
 
 #endif

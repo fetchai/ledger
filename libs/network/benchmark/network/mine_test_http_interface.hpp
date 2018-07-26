@@ -1,22 +1,20 @@
 #ifndef NETWORK_mine_test_HTTP_INTERFACE_HPP
 #define NETWORK_mine_test_HTTP_INTERFACE_HPP
 
-#include"core/script/variant.hpp"
-#include"core/logger.hpp"
-#include"http/server.hpp"
-#include"http/middleware/allow_origin.hpp"
-#include"http/middleware/color_log.hpp"
-#include"./network_classes.hpp"
+#include "./network_classes.hpp"
+#include "core/logger.hpp"
+#include "core/script/variant.hpp"
+#include "http/middleware/allow_origin.hpp"
+#include "http/middleware/color_log.hpp"
+#include "http/server.hpp"
 
-namespace fetch
-{
-namespace network_mine_test
-{
+namespace fetch {
+namespace network_mine_test {
 
 template <typename T>
-class HttpInterface : public fetch::http::HTTPModule {
+class HttpInterface : public fetch::http::HTTPModule
+{
 public:
-
   explicit HttpInterface(std::shared_ptr<T> node) : node_{node}
   {
     AttachPages();
@@ -24,44 +22,49 @@ public:
 
   void AttachPages()
   {
-    LOG_STACK_TRACE_POINT ;
-    HTTPModule::Post("/add-endpoint",\
-    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
-    { return this->AddEndpoint(params, req); });
+    LOG_STACK_TRACE_POINT;
+    HTTPModule::Post("/add-endpoint", [this](http::ViewParameters const &params,
+                                             http::HTTPRequest const &   req) {
+      return this->AddEndpoint(params, req);
+    });
 
-    HTTPModule::Post("/start",\
-    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
-    { return this->Start(params, req); });
+    HTTPModule::Post("/start", [this](http::ViewParameters const &params,
+                                      http::HTTPRequest const &   req) {
+      return this->Start(params, req);
+    });
 
-    HTTPModule::Post("/stop",\
-    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
-    { return this->Stop(params, req); });
+    HTTPModule::Post("/stop", [this](http::ViewParameters const &params,
+                                     http::HTTPRequest const &   req) {
+      return this->Stop(params, req);
+    });
 
-    HTTPModule::Post("/reset",\
-    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
-    { return this->Reset(params, req); });
+    HTTPModule::Post("/reset", [this](http::ViewParameters const &params,
+                                      http::HTTPRequest const &   req) {
+      return this->Reset(params, req);
+    });
 
-    HTTPModule::Post("/mainchain",\
-    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
-    { return this->Mainchain(params, req); });
+    HTTPModule::Post("/mainchain", [this](http::ViewParameters const &params,
+                                          http::HTTPRequest const &   req) {
+      return this->Mainchain(params, req);
+    });
 
-    HTTPModule::Post("/allchain",\
-    [this](http::ViewParameters const &params, http::HTTPRequest const &req)\
-    { return this->AllChain(params, req); });
-
+    HTTPModule::Post("/allchain", [this](http::ViewParameters const &params,
+                                         http::HTTPRequest const &   req) {
+      return this->AllChain(params, req);
+    });
   }
 
-  HttpInterface(HttpInterface&& rhs)
+  HttpInterface(HttpInterface &&rhs)
   {
-    LOG_STACK_TRACE_POINT ;
+    LOG_STACK_TRACE_POINT;
     node_ = std::move(rhs.node());
     AttachPages();
   }
 
   http::HTTPResponse AddEndpoint(http::ViewParameters const &params,
-      http::HTTPRequest const &req)
+                                 http::HTTPRequest const &   req)
   {
-    LOG_STACK_TRACE_POINT ;
+    LOG_STACK_TRACE_POINT;
     json::JSONDocument doc;
     try
     {
@@ -73,51 +76,53 @@ public:
       node_->AddEndpoint(endpoint);
 
       return http::HTTPResponse(successString);
-    } catch (...)
+    }
+    catch (...)
     {
       return http::HTTPResponse(failureString);
     }
   }
 
   http::HTTPResponse Start(http::ViewParameters const &params,
-      http::HTTPRequest const &req)
+                           http::HTTPRequest const &   req)
   {
-    LOG_STACK_TRACE_POINT ;
+    LOG_STACK_TRACE_POINT;
 
     node_->startMining();
     return http::HTTPResponse(successString);
   }
 
   http::HTTPResponse Stop(http::ViewParameters const &params,
-      http::HTTPRequest const &req)
+                          http::HTTPRequest const &   req)
   {
-    LOG_STACK_TRACE_POINT ;
+    LOG_STACK_TRACE_POINT;
 
     node_->stopMining();
     return http::HTTPResponse(successString);
   }
 
   http::HTTPResponse Reset(http::ViewParameters const &params,
-      http::HTTPRequest const &req)
+                           http::HTTPRequest const &   req)
   {
     node_->reset();
     return http::HTTPResponse(successString);
   }
 
   http::HTTPResponse Mainchain(http::ViewParameters const &params,
-      http::HTTPRequest const &req)
+                               http::HTTPRequest const &   req)
   {
     auto chainArray = node_->HeaviestChain();
 
     script::Variant result = script::Variant::Array(chainArray.size());
 
     std::size_t index = 0;
-    for (auto &i : chainArray) {
+    for (auto &i : chainArray)
+    {
 
       script::Variant temp = script::Variant::Object();
       temp["minerNumber"]  = i.body().miner_number;
       temp["blockNumber"]  = i.body().block_number;
-      temp["hashcurrent"]         = ToHex(i.hash());
+      temp["hashcurrent"]  = ToHex(i.hash());
       temp["hashprev"]     = ToHex(i.body().previous_hash);
 
       result[index++] = temp;
@@ -130,7 +135,7 @@ public:
   }
 
   http::HTTPResponse AllChain(http::ViewParameters const &params,
-      http::HTTPRequest const &req)
+                              http::HTTPRequest const &   req)
   {
     auto chainArray = node_->AllChain();
 
@@ -141,10 +146,10 @@ public:
 
     {
       script::Variant temp = script::Variant::Object();
-      temp["minerNumber"] = heaviestBlock.body().miner_number;
-      temp["blockNumber"] = heaviestBlock.body().block_number;
-      temp["hashcurrent"] = ToHex(heaviestBlock.hash());
-      temp["hashprev"]    = ToHex(heaviestBlock.body().previous_hash);
+      temp["minerNumber"]  = heaviestBlock.body().miner_number;
+      temp["blockNumber"]  = heaviestBlock.body().block_number;
+      temp["hashcurrent"]  = ToHex(heaviestBlock.hash());
+      temp["hashprev"]     = ToHex(heaviestBlock.body().previous_hash);
 
       result["heaviest"] = temp;
     }
@@ -154,11 +159,11 @@ public:
 
     std::size_t i = 0;
     std::size_t j = 0;
-    for(auto &chain : chainArray.second)
+    for (auto &chain : chainArray.second)
     {
       script::Variant chainVar = script::Variant::Array(chain.size());
 
-      for(auto &block : chain)
+      for (auto &block : chain)
       {
         script::Variant temp = script::Variant::Object();
         temp["minerNumber"]  = block.body().miner_number;
@@ -170,7 +175,7 @@ public:
       }
 
       arrays[i++] = chainVar;
-      j = 0;
+      j           = 0;
     }
 
     result["chains"] = arrays;
@@ -185,11 +190,12 @@ public:
 
 private:
   std::shared_ptr<T> node_;
-  const std::string successString{"{\"response\": \"success\" }"};
-  const std::string
-    failureString{"{\"response\": \"failure\", \"reason\": \"problems with parsing JSON!\"}"};
+  const std::string  successString{"{\"response\": \"success\" }"};
+  const std::string  failureString{
+      "{\"response\": \"failure\", \"reason\": \"problems with parsing "
+      "JSON!\"}"};
 };
 
-}
-}
+}  // namespace network_mine_test
+}  // namespace fetch
 #endif

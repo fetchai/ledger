@@ -1,31 +1,34 @@
 #include <iostream>
 
+#include "unittest.hpp"
 #include <iomanip>
 #include <math/linalg/matrix.hpp>
 #include <random/lcg.hpp>
-#include "unittest.hpp"
 using namespace fetch::math::linalg;
 
-typedef float data_type;
-typedef fetch::memory::SharedArray<data_type> container_type;
-typedef Matrix<data_type, container_type> matrix_type;
+typedef float                                      data_type;
+typedef fetch::memory::SharedArray<data_type>      container_type;
+typedef Matrix<data_type, container_type>          matrix_type;
 typedef typename matrix_type::vector_register_type vector_register_type;
 
-Matrix<data_type, container_type> RandomMatrix(std::size_t n, std::size_t m) {
+Matrix<data_type, container_type> RandomMatrix(std::size_t n, std::size_t m)
+{
   static fetch::random::LinearCongruentialGenerator gen;
-  Matrix<data_type, container_type> m1(n, m);
+  Matrix<data_type, container_type>                 m1(n, m);
   for (std::size_t i = 0; i < n; ++i)
     for (std::size_t j = 0; j < m; ++j) m1(i, j) = data_type(gen.AsDouble());
   return m1;
 }
 
-void test_invert(std::size_t const &n) {
+void test_invert(std::size_t const &n)
+{
   Matrix<data_type, container_type> m1 = RandomMatrix(n, n);
 
-  Matrix<data_type, container_type> m2 = m1.Copy();
-  int errcode = m2.Invert();
+  Matrix<data_type, container_type> m2      = m1.Copy();
+  int                               errcode = m2.Invert();
 
-  if (errcode != Matrix<data_type, container_type>::INVERSION_OK) {
+  if (errcode != Matrix<data_type, container_type>::INVERSION_OK)
+  {
     std::cerr << "inversion singular" << std::endl;
     exit(-1);
   }
@@ -33,15 +36,21 @@ void test_invert(std::size_t const &n) {
 
   Matrix<data_type, container_type> ret;
   m1.DotReference(m2, ret);
-  for (std::size_t i = 0; i < n; ++i) {
-    for (std::size_t j = 0; j < n; ++j) {
-      if (i == j) {
-        if (fabs(ret(i, j) - 1) > 1e-10) {
+  for (std::size_t i = 0; i < n; ++i)
+  {
+    for (std::size_t j = 0; j < n; ++j)
+    {
+      if (i == j)
+      {
+        if (fabs(ret(i, j) - 1) > 1e-10)
+        {
           std::cerr << "Expected 1 on the diagonal, but found " << ret(i, j)
                     << std::endl;
           exit(-1);
         }
-      } else if (fabs(ret(i, j)) > 1e-10) {
+      }
+      else if (fabs(ret(i, j)) > 1e-10)
+      {
         std::cerr << "Off-diagonal is non-zero" << std::endl;
         exit(-1);
       }
@@ -53,10 +62,12 @@ template <typename D>
 using _S = fetch::memory::Array<D>;
 
 template <typename D>
-using _M = Matrix<D, _S<D> >;
+using _M = Matrix<D, _S<D>>;
 
-void Test1() {
-  SCENARIO("Basic info") {
+void Test1()
+{
+  SCENARIO("Basic info")
+  {
     INFO("Vector register size for int: " << _M<int>::vector_size);
     INFO("Vector register size for float: " << _M<float>::vector_size);
     INFO("Vector register size for double: " << _M<double>::vector_size);
@@ -79,7 +90,8 @@ void Test1() {
          << _M<double>::vector_register_type::E_VECTOR_SIZE);
   };
 
-  SCENARIO("Addition for int") {
+  SCENARIO("Addition for int")
+  {
     _M<int> A, B, C, R;
 
     R.Resize(7, 7);
@@ -117,7 +129,8 @@ void Test1() {
     EXPECT((A + B).AllClose(C));
   };
 
-  SCENARIO("Multiplication for int") {
+  SCENARIO("Multiplication for int")
+  {
     _M<int> A, B, C, R;
 
     R.Resize(7, 7);
@@ -155,7 +168,8 @@ void Test1() {
     EXPECT((A * B).AllClose(C));
   };
 
-  SCENARIO("Subtraction for int") {
+  SCENARIO("Subtraction for int")
+  {
     _M<int> A, B, C, R;
 
     R.Resize(7, 7);
@@ -194,7 +208,8 @@ void Test1() {
     EXPECT((A - B).AllClose(C));
   };
 
-  SCENARIO("Dot product for int") {
+  SCENARIO("Dot product for int")
+  {
     _M<int> A, B, C, R;
 
     R.Resize(7, 7);
@@ -230,7 +245,8 @@ void Test1() {
     // EXPECT( ( R = A, R.InlineDot(B) ).AllClose(C) );
   };
 
-  SCENARIO("Addition for float") {
+  SCENARIO("Addition for float")
+  {
     _M<float> A, B, C, R;
 
     R.Resize(7, 7);
@@ -268,7 +284,8 @@ void Test1() {
     EXPECT((A + B).AllClose(C));
   };
 
-  SCENARIO("Multiplication for float") {
+  SCENARIO("Multiplication for float")
+  {
     _M<float> A, B, C, R;
 
     R.Resize(7, 7);
@@ -306,7 +323,8 @@ void Test1() {
     EXPECT((A * B).AllClose(C));
   };
 
-  SCENARIO("Subtraction for float") {
+  SCENARIO("Subtraction for float")
+  {
     _M<float> A, B, C, R;
 
     R.Resize(7, 7);
@@ -345,7 +363,8 @@ void Test1() {
     EXPECT((A - B).AllClose(C));
   };
 
-  SCENARIO("Dot product for float") {
+  SCENARIO("Dot product for float")
+  {
     _M<float> A, B, C, R;
 
     R.Resize(7, 7);
@@ -381,7 +400,8 @@ void Test1() {
     // EXPECT( ( R = A, R.InlineDot(B) ).AllClose(C) );
   };
 
-  SCENARIO("Division for float") {
+  SCENARIO("Division for float")
+  {
     _M<float> A, B, C, R;
 
     R.Resize(7, 7);
@@ -420,7 +440,8 @@ void Test1() {
     EXPECT((A / B).AllClose(C));
   };
 
-  SCENARIO("Addition for double") {
+  SCENARIO("Addition for double")
+  {
     _M<double> A, B, C, R;
 
     R.Resize(7, 7);
@@ -458,7 +479,8 @@ void Test1() {
     EXPECT((A + B).AllClose(C));
   };
 
-  SCENARIO("Multiplication for double") {
+  SCENARIO("Multiplication for double")
+  {
     _M<double> A, B, C, R;
 
     R.Resize(7, 7);
@@ -496,7 +518,8 @@ void Test1() {
     EXPECT((A * B).AllClose(C));
   };
 
-  SCENARIO("Subtraction for double") {
+  SCENARIO("Subtraction for double")
+  {
     _M<double> A, B, C, R;
 
     R.Resize(7, 7);
@@ -535,7 +558,8 @@ void Test1() {
     EXPECT((A - B).AllClose(C));
   };
 
-  SCENARIO("Dot product for double") {
+  SCENARIO("Dot product for double")
+  {
     _M<double> A, B, C, R;
 
     R.Resize(7, 7);
@@ -571,7 +595,8 @@ void Test1() {
     // EXPECT( ( R = A, R.InlineDot(B) ).AllClose(C) );
   };
 
-  SCENARIO("Division for double") {
+  SCENARIO("Division for double")
+  {
     _M<double> A, B, C, R;
 
     R.Resize(7, 7);
@@ -611,7 +636,8 @@ void Test1() {
   };
 }
 
-int main() {
+int main()
+{
   Test1();
 
   return 0;

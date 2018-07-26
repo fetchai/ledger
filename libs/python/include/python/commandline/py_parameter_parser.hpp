@@ -2,26 +2,26 @@
 #define LIBFETCHCORE_COMMANDLINE_PARAMETER_PARSER_HPP
 #include "commandline/parameter_parser.hpp"
 
+#include "fetch_pybind.hpp"
 
-#include"fetch_pybind.hpp"
+namespace fetch {
+namespace commandline {
 
-namespace fetch
+void BuildParamsParser(pybind11::module &module)
 {
-namespace commandline
-{
-
-void BuildParamsParser(pybind11::module &module) {
   namespace py = pybind11;
-  py::class_<ParamsParser>(module, "ParamsParser" )
-    .def(py::init<>()) /* No constructors found */
-    .def("Parse", &ParamsParser::Parse)
-    .def("arg_size", &ParamsParser::arg_size)
-    .def("GetArg", ( std::string (ParamsParser::*)(const std::size_t &) const ) &ParamsParser::GetArg)
-    .def("GetArg", ( std::string (ParamsParser::*)(const std::size_t &, const std::string &) const ) &ParamsParser::GetArg);
-    //    .def("GetParam", &ParamsParser::GetParam);
-
+  py::class_<ParamsParser>(module, "ParamsParser")
+      .def(py::init<>()) /* No constructors found */
+      .def("Parse", &ParamsParser::Parse)
+      .def("arg_size", &ParamsParser::arg_size)
+      .def("GetArg", (std::string(ParamsParser::*)(const std::size_t &) const) &
+                         ParamsParser::GetArg)
+      .def("GetArg", (std::string(ParamsParser::*)(const std::size_t &,
+                                                   const std::string &) const) &
+                         ParamsParser::GetArg);
+  //    .def("GetParam", &ParamsParser::GetParam);
 }
-};
-};
+};  // namespace commandline
+};  // namespace fetch
 
 #endif

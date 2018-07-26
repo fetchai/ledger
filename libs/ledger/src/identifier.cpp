@@ -10,25 +10,30 @@ namespace ledger {
  *
  * @param identifier The fully qualified name to parse
  */
-Identifier::Identifier(std::string identifier)
-  : full_{identifier} {
+Identifier::Identifier(std::string identifier) : full_{identifier}
+{
   Tokenise();
 }
 
 /**
  * Internal: Break up the fully qualified name into tokens
  */
-void Identifier::Tokenise() {
+void Identifier::Tokenise()
+{
   tokens_.clear();
 
   std::size_t offset = 0;
-  for (;;) {
+  for (;;)
+  {
     std::size_t index = full_.find(SEPERATOR, offset);
 
-    if (index == std::string::npos) {
+    if (index == std::string::npos)
+    {
       tokens_.push_back(full_.substr(offset));
       break;
-    } else {
+    }
+    else
+    {
       tokens_.push_back(full_.substr(offset, index - offset));
       offset = index + 1;
     }
@@ -41,9 +46,12 @@ void Identifier::Tokenise() {
  * @param other The prospective child identifier
  * @return true if it is a parent, otherwise false
  */
-bool Identifier::IsParentTo(Identifier const &other) const {
-  if (!tokens_.empty() && !other.tokens_.empty()) {
-    if (tokens_.size() < other.tokens_.size()) {
+bool Identifier::IsParentTo(Identifier const &other) const
+{
+  if (!tokens_.empty() && !other.tokens_.empty())
+  {
+    if (tokens_.size() < other.tokens_.size())
+    {
       return tokens_[0] == other.tokens_[0];
     }
   }
@@ -56,23 +64,29 @@ bool Identifier::IsParentTo(Identifier const &other) const {
  * @param other The prospective parent identifier
  * @return true if it is a parent, otherwise false
  */
-bool Identifier::IsChildTo(Identifier const &other) const {
+bool Identifier::IsChildTo(Identifier const &other) const
+{
   return other.IsParentTo(*this);
 }
 
 /**
- * Determine if the current identifier is a direct parent to a specified identifier
+ * Determine if the current identifier is a direct parent to a specified
+ * identifier
  *
  * @param other The prospective child identifier
  * @return true if it is a direct parent, otherwise false
  */
-bool Identifier::IsDirectParentTo(Identifier const &other) const {
+bool Identifier::IsDirectParentTo(Identifier const &other) const
+{
   bool is_parent{false};
 
-  if ((tokens_.size() + 1) == other.tokens_.size()) {
+  if ((tokens_.size() + 1) == other.tokens_.size())
+  {
     is_parent = true;
-    for (std::size_t i = 0; i < tokens_.size(); ++i) {
-      if (tokens_[i] != other.tokens_[i]) {
+    for (std::size_t i = 0; i < tokens_.size(); ++i)
+    {
+      if (tokens_[i] != other.tokens_[i])
+      {
         is_parent = false;
         break;
       }
@@ -83,14 +97,16 @@ bool Identifier::IsDirectParentTo(Identifier const &other) const {
 }
 
 /**
- * Determine if the current identifier is a direct child to a specified identifier
+ * Determine if the current identifier is a direct child to a specified
+ * identifier
  *
  * @param other The prospective parent identifier
  * @return true if is a direct child, otherwise false
  */
-bool Identifier::IsDirectChildTo(Identifier const &other) const {
+bool Identifier::IsDirectChildTo(Identifier const &other) const
+{
   return other.IsDirectParentTo(*this);
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

@@ -11,8 +11,9 @@
 namespace fetch {
 namespace byte_array {
 
-class ByteArray : public ConstByteArray {
- public:
+class ByteArray : public ConstByteArray
+{
+public:
   typedef ConstByteArray super_type;
 
   ByteArray() {}
@@ -23,17 +24,21 @@ class ByteArray : public ConstByteArray {
 
   ByteArray(ByteArray const &other, std::size_t const &start,
             std::size_t const &length)
-      : super_type(other, start, length) {}
+      : super_type(other, start, length)
+  {}
 
   ByteArray(super_type const &other) : super_type(other) {}
   ByteArray(super_type const &other, std::size_t const &start,
             std::size_t const &length)
-      : super_type(other, start, length) {}
+      : super_type(other, start, length)
+  {}
 
-  container_type &operator[](std::size_t const &n) {
+  container_type &operator[](std::size_t const &n)
+  {
     return super_type::operator[](n);
   }
-  container_type const &operator[](std::size_t const &n) const {
+  container_type const &operator[](std::size_t const &n) const
+  {
     return super_type::operator[](n);
   }
 
@@ -42,20 +47,21 @@ class ByteArray : public ConstByteArray {
   using super_type::operator+;
   using super_type::pointer;
   using super_type::char_pointer;
-
 };
 
-inline std::ostream &operator<<(std::ostream &os, ByteArray const &str) {
+inline std::ostream &operator<<(std::ostream &os, ByteArray const &str)
+{
   char const *arr = reinterpret_cast<char const *>(str.pointer());
   for (std::size_t i = 0; i < str.size(); ++i) os << arr[i];
   return os;
 }
 
-inline ByteArray operator+(char const *a, ByteArray const &b) {
+inline ByteArray operator+(char const *a, ByteArray const &b)
+{
   ByteArray s(a);
   s = s + b;
   return s;
 }
-}
-}
+}  // namespace byte_array
+}  // namespace fetch
 #endif

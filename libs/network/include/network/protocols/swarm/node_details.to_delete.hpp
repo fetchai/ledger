@@ -9,26 +9,34 @@ namespace fetch {
 
 namespace protocols {
 
-struct NodeDetails {
-  bool operator==(NodeDetails const& other) {
-    if (public_key != other.public_key) {
+struct NodeDetails
+{
+  bool operator==(NodeDetails const &other)
+  {
+    if (public_key != other.public_key)
+    {
       return false;
     }
 
-    if (default_port != other.default_port) {
+    if (default_port != other.default_port)
+    {
       return false;
     }
 
-    if (default_http_port != other.default_http_port) {
+    if (default_http_port != other.default_http_port)
+    {
       return false;
     }
 
-    if (entry_points.size() != other.entry_points.size()) {
+    if (entry_points.size() != other.entry_points.size())
+    {
       return false;
     }
 
-    for (std::size_t i = 0; i < entry_points.size(); ++i) {
-      if (entry_points[i] != entry_points[i]) {
+    for (std::size_t i = 0; i < entry_points.size(); ++i)
+    {
+      if (entry_points[i] != entry_points[i])
+      {
         return false;
       }
     }
@@ -36,31 +44,37 @@ struct NodeDetails {
     return true;
   }
 
-  bool operator!=(NodeDetails const& other) {
+  bool operator!=(NodeDetails const &other)
+  {
     return !(this->operator==(other));
   }
 
-  byte_array::ByteArray public_key;
+  byte_array::ByteArray   public_key;
   std::vector<EntryPoint> entry_points;
 
   uint16_t default_port;
   uint16_t default_http_port;
 };
 
-class SharedNodeDetails {
- public:
+class SharedNodeDetails
+{
+public:
   SharedNodeDetails() {}
-  SharedNodeDetails(SharedNodeDetails const&) = delete;
+  SharedNodeDetails(SharedNodeDetails const &) = delete;
 
-  bool operator==(SharedNodeDetails const& other) {
+  bool operator==(SharedNodeDetails const &other)
+  {
     return details_.public_key == other.details_.public_key;
   }
 
-  void AddEntryPoint(EntryPoint const& ep) {
+  void AddEntryPoint(EntryPoint const &ep)
+  {
     mutex_.lock();
     bool found_ep = false;
-    for (auto& e : details_.entry_points) {
-      if ((e.host == ep.host) && (e.port == ep.port)) {
+    for (auto &e : details_.entry_points)
+    {
+      if ((e.host == ep.host) && (e.port == ep.port))
+      {
         found_ep = true;
         break;
       }
@@ -69,33 +83,37 @@ class SharedNodeDetails {
     mutex_.unlock();
   }
 
-  uint16_t default_port() {
+  uint16_t default_port()
+  {
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     return details_.default_port;
   }
 
-  uint16_t default_http_port() {
+  uint16_t default_http_port()
+  {
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
     return details_.default_http_port;
   }
 
-  void with_details(std::function<void(NodeDetails&)> fnc) {
+  void with_details(std::function<void(NodeDetails &)> fnc)
+  {
     mutex_.lock();
     fnc(details_);
     mutex_.unlock();
   }
 
-  NodeDetails details() {
+  NodeDetails details()
+  {
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
     return details_;
   }
 
- private:
-  NodeDetails details_;
+private:
+  NodeDetails         details_;
   fetch::mutex::Mutex mutex_;
 };
-}
-}
+}  // namespace protocols
+}  // namespace fetch
 
 #endif

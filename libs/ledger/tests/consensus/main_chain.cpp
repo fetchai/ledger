@@ -1,8 +1,8 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "testing/unittest.hpp"
 #include <iostream>
 #include <list>
-#include "testing/unittest.hpp"
 
 using namespace fetch::chain;
 using namespace fetch::byte_array;
@@ -11,19 +11,18 @@ using namespace fetch::byte_array;
 // Time related functionality
 typedef std::chrono::high_resolution_clock::time_point time_point;
 
-time_point TimePoint()
-{
-  return std::chrono::high_resolution_clock::now();
-}
+time_point TimePoint() { return std::chrono::high_resolution_clock::now(); }
 
 double TimeDifference(time_point t1, time_point t2)
 {
   // If t1 before t2
-  if(t1 < t2)
+  if (t1 < t2)
   {
-    return std::chrono::duration_cast<std::chrono::duration<double>> (t2 - t1).count();
+    return std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1)
+        .count();
   }
-  return std::chrono::duration_cast<std::chrono::duration<double>> (t1 - t2).count();
+  return std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t2)
+      .count();
 }
 
 typedef MainChain::block_type               block_type;
@@ -48,7 +47,7 @@ int main(int argc, char const **argv)
 
       // Try adding a non-sequential block (prev hash missing)
       block_type dummy;
-      body_type dummy_body;
+      body_type  dummy_body;
       dummy_body.block_number = 1;
       dummy.SetBody(dummy_body);
       dummy.UpdateDigest();
@@ -64,8 +63,8 @@ int main(int argc, char const **argv)
       {
         // Create another block sequential to previous
         block_type nextBlock;
-        body_type nextBody;
-        nextBody.block_number = 1+i;
+        body_type  nextBody;
+        nextBody.block_number  = 1 + i;
         nextBody.previous_hash = prevHash;
 
         nextBlock.SetBody(nextBody);
@@ -88,7 +87,7 @@ int main(int argc, char const **argv)
 
       // Try adding a non-sequential block (prev hash missing)
       block_type dummy;
-      body_type dummy_body;
+      body_type  dummy_body;
       dummy_body.block_number = 2;
       dummy.SetBody(dummy_body);
       dummy.UpdateDigest();
@@ -98,15 +97,15 @@ int main(int argc, char const **argv)
       EXPECT(mainChain.HeaviestBlock().hash() == block.hash());
 
       fetch::byte_array::ByteArray prevHash = block.hash();
-      std::vector<block_type> blocks;
+      std::vector<block_type>      blocks;
 
       // Add another 3 blocks in order
       for (std::size_t i = 0; i < 3; ++i)
       {
         // Create another block sequential to previous
         block_type nextBlock;
-        body_type nextBody;
-        nextBody.block_number = 1+i;
+        body_type  nextBody;
+        nextBody.block_number  = 1 + i;
         nextBody.previous_hash = prevHash;
 
         nextBlock.SetBody(nextBody);
@@ -117,7 +116,7 @@ int main(int argc, char const **argv)
         prevHash = nextBlock.hash();
       }
 
-      for(auto i : blocks)
+      for (auto i : blocks)
       {
         mainChain.AddBlock(i);
       }
@@ -133,21 +132,21 @@ int main(int argc, char const **argv)
       auto block = mainChain.HeaviestBlock();
 
       fetch::byte_array::ByteArray prevHash = block.hash();
-      fetch::byte_array::ByteArray topHash = block.hash();
+      fetch::byte_array::ByteArray topHash  = block.hash();
 
       // Add another N blocks in order
-      for (std::size_t i = block.body().block_number+1; i < 15; ++i)
+      for (std::size_t i = block.body().block_number + 1; i < 15; ++i)
       {
         // Create another block sequential to previous
         block_type nextBlock;
-        body_type nextBody;
-        nextBody.block_number = i;
+        body_type  nextBody;
+        nextBody.block_number  = i;
         nextBody.previous_hash = prevHash;
 
         nextBlock.SetBody(nextBody);
         nextBlock.UpdateDigest();
 
-        if(i != 7)
+        if (i != 7)
         {
           mainChain.AddBlock(block);
         }
@@ -165,7 +164,7 @@ int main(int argc, char const **argv)
     SECTION("Test mining/proof")
     {
       std::vector<block_type> blocks;
-      std::size_t blockIterations = 10;
+      std::size_t             blockIterations = 10;
 
       for (std::size_t diff = 1; diff < 16; diff <<= 1)
       {
@@ -174,12 +173,12 @@ int main(int argc, char const **argv)
         for (std::size_t j = 0; j < blockIterations; ++j)
         {
           block_type block;
-          body_type block_body;
+          body_type  block_body;
           block_body.block_number = j;
-          block_body.nonce = 0;
+          block_body.nonce        = 0;
           block.SetBody(block_body);
           block.UpdateDigest();
-          block.proof().SetTarget(diff); // Number of zeroes
+          block.proof().SetTarget(diff);  // Number of zeroes
 
           miner::Mine(block);
 
@@ -188,18 +187,18 @@ int main(int argc, char const **argv)
 
         auto t2 = TimePoint();
         std::cout << "Difficulty: " << diff << ". Block time: "
-          << TimeDifference(t2, t1)/double(blockIterations) << std::endl;
+                  << TimeDifference(t2, t1) / double(blockIterations)
+                  << std::endl;
       }
 
       // Verify blocks
-      for(auto &i : blocks)
+      for (auto &i : blocks)
       {
-        if(!i.proof()())
+        if (!i.proof()())
         {
           EXPECT(i.proof()() == 1);
         }
       }
-
     };
 
     SECTION("Test mining/proof after serialization")
@@ -209,12 +208,12 @@ int main(int argc, char const **argv)
       for (std::size_t j = 0; j < 10; ++j)
       {
         block_type block;
-        body_type block_body;
+        body_type  block_body;
         block_body.block_number = j;
-        block_body.nonce = 0;
+        block_body.nonce        = 0;
         block.SetBody(block_body);
         block.UpdateDigest();
-        block.proof().SetTarget(8); // Number of zeroes
+        block.proof().SetTarget(8);  // Number of zeroes
 
         miner::Mine(block);
 
@@ -224,7 +223,7 @@ int main(int argc, char const **argv)
       bool blockVerified = true;
 
       // Verify blocks
-      for(auto &i : blocks)
+      for (auto &i : blocks)
       {
         fetch::serializers::ByteArrayBuffer arr;
         arr << i;
@@ -232,10 +231,11 @@ int main(int argc, char const **argv)
         block_type block;
         arr >> block;
 
-        block.UpdateDigest();       // digest and target not serialized due to trust issues
+        block.UpdateDigest();  // digest and target not serialized due to trust
+                               // issues
         block.proof().SetTarget(8);
 
-        if(!block.proof()())
+        if (!block.proof()())
         {
           std::cout << "block not verified" << std::endl;
           blockVerified = false;
@@ -254,18 +254,18 @@ int main(int argc, char const **argv)
 
       auto block = mainChain.HeaviestBlock();
 
-      fetch::byte_array::ByteArray prevHash = block.hash();
-      constexpr std::size_t blocksToCreate = 1000000;
-      std::vector<block_type> blocks(blocksToCreate, block);
-      uint64_t blockNumber = block.body().block_number++;
+      fetch::byte_array::ByteArray prevHash       = block.hash();
+      constexpr std::size_t        blocksToCreate = 1000000;
+      std::vector<block_type>      blocks(blocksToCreate, block);
+      uint64_t                     blockNumber = block.body().block_number++;
 
       // Precreate since UpdateDigest not part of test
       for (std::size_t i = 0; i < blocksToCreate; ++i)
       {
         // Create another block sequential to previous
         block_type nextBlock;
-        body_type nextBody;
-        nextBody.block_number = blockNumber++;
+        body_type  nextBody;
+        nextBody.block_number  = blockNumber++;
         nextBody.previous_hash = prevHash;
 
         nextBlock.SetBody(nextBody);
@@ -284,8 +284,8 @@ int main(int argc, char const **argv)
       }
 
       auto t2 = TimePoint();
-      std::cout << "Blocks: " << blocksToCreate << ". Time: "
-        << TimeDifference(t2, t1) << std::endl;
+      std::cout << "Blocks: " << blocksToCreate
+                << ". Time: " << TimeDifference(t2, t1) << std::endl;
 
       EXPECT(mainChain.HeaviestBlock().hash() == prevHash);
     };

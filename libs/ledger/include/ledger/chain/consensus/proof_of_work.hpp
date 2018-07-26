@@ -7,15 +7,17 @@ namespace fetch {
 namespace chain {
 namespace consensus {
 
-class ProofOfWork : public math::BigUnsigned {
- public:
-  typedef math::BigUnsigned super_type;
+class ProofOfWork : public math::BigUnsigned
+{
+public:
+  typedef math::BigUnsigned          super_type;
   typedef byte_array::ConstByteArray header_type;
 
   ProofOfWork() = default;
   ProofOfWork(header_type header) { header_ = header; }
 
-  bool operator()() {
+  bool operator()()
+  {
     crypto::SHA256 hasher;
     hasher.Reset();
     hasher.Update(header_);
@@ -31,26 +33,28 @@ class ProofOfWork : public math::BigUnsigned {
     return digest_ < target_;
   }
 
-  void SetTarget(std::size_t zeros) {
+  void SetTarget(std::size_t zeros)
+  {
     target_ = 1;
     target_ <<= 8 * sizeof(uint8_t) * super_type::size() - 1 - zeros;
   }
 
-  void SetHeader(byte_array::ByteArray header) {
+  void SetHeader(byte_array::ByteArray header)
+  {
     header_ = header;
     assert(header_ == header);
   }
 
-  header_type const& header() const { return header_; }
-  math::BigUnsigned digest() const { return digest_; }
-  math::BigUnsigned target() const { return target_; }
+  header_type const &header() const { return header_; }
+  math::BigUnsigned  digest() const { return digest_; }
+  math::BigUnsigned  target() const { return target_; }
 
- private:
+private:
   math::BigUnsigned digest_;
   math::BigUnsigned target_;
   header_type       header_;
 };
-}
-}
-}
+}  // namespace consensus
+}  // namespace chain
+}  // namespace fetch
 #endif

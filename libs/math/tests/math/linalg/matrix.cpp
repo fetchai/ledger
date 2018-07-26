@@ -1,20 +1,21 @@
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
-#include <math/linalg/matrix.hpp>
 #include "core/random/lcg.hpp"
 #include "testing/unittest.hpp"
+#include <math/linalg/matrix.hpp>
 
 using namespace fetch::math::linalg;
 
-typedef float data_type;
-typedef fetch::memory::SharedArray<data_type> container_type;
-typedef Matrix<data_type, container_type> matrix_type;
+typedef float                                      data_type;
+typedef fetch::memory::SharedArray<data_type>      container_type;
+typedef Matrix<data_type, container_type>          matrix_type;
 typedef typename matrix_type::vector_register_type vector_register_type;
 
-Matrix<data_type, container_type> RandomMatrix(std::size_t n, std::size_t m) {
+Matrix<data_type, container_type> RandomMatrix(std::size_t n, std::size_t m)
+{
   static fetch::random::LinearCongruentialGenerator gen;
-  Matrix<data_type, container_type> m1(n, m);
+  Matrix<data_type, container_type>                 m1(n, m);
   for (std::size_t i = 0; i < n; ++i)
     for (std::size_t j = 0; j < m; ++j) m1(i, j) = data_type(gen.AsDouble());
   return m1;
@@ -24,33 +25,36 @@ template <typename D>
 using _S = fetch::memory::SharedArray<D>;
 
 template <typename D>
-using _M = Matrix<D, _S<D> >;
+using _M = Matrix<D, _S<D>>;
 
-void Test1() {
-  SCENARIO("Basic info") {
-//    INFO("Vector register size for int: " << _M<int>::vector_size);
-//    INFO("Vector register size for float: " << _M<float>::vector_size);
-//    INFO("Vector register size for double: " << _M<double>::vector_size);
-//    INFO("Vector SIMD count for int: " << _S<int>::E_SIMD_SIZE);
-//    INFO("Vector SIMD count for float: " << _S<float>::E_SIMD_SIZE);
-//    INFO("Vector SIMD count for double: " << _S<double>::E_SIMD_SIZE);
+void Test1()
+{
+  SCENARIO("Basic info")
+  {
+    //    INFO("Vector register size for int: " << _M<int>::vector_size);
+    //    INFO("Vector register size for float: " << _M<float>::vector_size);
+    //    INFO("Vector register size for double: " << _M<double>::vector_size);
+    //    INFO("Vector SIMD count for int: " << _S<int>::E_SIMD_SIZE);
+    //    INFO("Vector SIMD count for float: " << _S<float>::E_SIMD_SIZE);
+    //    INFO("Vector SIMD count for double: " << _S<double>::E_SIMD_SIZE);
 
-//    INFO("Vector SIMD count for int: "
-//         << _M<int>::vector_register_type::E_BLOCK_COUNT);
+    //    INFO("Vector SIMD count for int: "
+    //         << _M<int>::vector_register_type::E_BLOCK_COUNT);
     INFO("Vector SIMD count for float: "
          << _M<float>::vector_register_type::E_BLOCK_COUNT);
     INFO("Vector SIMD count for double: "
          << _M<double>::vector_register_type::E_BLOCK_COUNT);
 
-//    INFO("Vector SIMD count for int: "
-//         << _M<int>::vector_register_type::E_VECTOR_SIZE);
+    //    INFO("Vector SIMD count for int: "
+    //         << _M<int>::vector_register_type::E_VECTOR_SIZE);
     INFO("Vector SIMD count for float: "
          << _M<float>::vector_register_type::E_VECTOR_SIZE);
     INFO("Vector SIMD count for double: "
          << _M<double>::vector_register_type::E_VECTOR_SIZE);
   };
 
-  SCENARIO("SoftMax for double") {
+  SCENARIO("SoftMax for double")
+  {
     _M<double> A, R;
 
     R.Resize(7, 7);
@@ -64,169 +68,169 @@ void Test1() {
 0.0278604896043 -0.434628108296 -0.385180745714 0.252128451234 -0.405710699869 -0.761730146467 -0.903675404106
 )");
     R.ApproxSoftMax(A);
-    
-  };
-  
-  SCENARIO("Addition for int") {
-/*
-    _M<int> A, B, C, R;
-
-    R.Resize(7, 7);
-    A = _M<int>(R"(
-0 4 4 2 -9 -7 7 ;
-2 -2 4 5 -1 3 0 ;
--3 9 8 0 -10 -2 -5 ;
-8 -4 4 -5 4 -2 -9 ;
-9 1 3 -1 3 -5 -5 ;
--3 8 -10 5 8 9 0 ;
--6 -4 3 -3 -5 2 2
-)");
-    B = _M<int>(R"(
--4 -5 5 -1 -10 -9 9 ;
--10 -3 -6 7 -9 -7 -6 ;
-1 7 3 0 0 9 9 ;
-8 -6 5 -3 3 2 9 ;
--2 -7 5 2 4 -7 -5 ;
--4 -5 2 -2 9 -9 -9 ;
-2 7 4 6 -3 -4 5
-)");
-    C = _M<int>(R"(
--4 -1 9 1 -19 -16 16 ;
--8 -5 -2 12 -10 -4 -6 ;
--2 16 11 0 -10 7 4 ;
-16 -10 9 -8 7 0 0 ;
-7 -6 8 1 7 -12 -10 ;
--7 3 -8 3 17 0 -9 ;
--4 3 7 3 -8 -2 7
-)");
-
-    EXPECT(R.Add(A, B).AllClose(C));
-    EXPECT((R = A, R.InlineAdd(B)).AllClose(C));
-    EXPECT((R = A, R += B).AllClose(C));
-    EXPECT((A + B).AllClose(C));
-*/
   };
 
-  SCENARIO("Multiplication for int") {
-/*
-    _M<int> A, B, C, R;
+  SCENARIO("Addition for int"){
+      /*
+          _M<int> A, B, C, R;
 
-    R.Resize(7, 7);
-    A = _M<int>(R"(
--9 -7 -5 -2 -5 -4 -10 ;
--8 -8 9 2 -4 9 -9 ;
--2 4 -2 1 -6 7 3 ;
-5 -2 -9 -2 -1 -1 3 ;
--7 -5 4 -2 -8 -2 -1 ;
-8 0 -1 -8 -2 -2 -2 ;
--7 -9 -6 2 5 -3 -7
-)");
-    B = _M<int>(R"(
-5 -3 -7 -1 3 -6 -5 ;
-1 -10 0 -4 8 -8 9 ;
--4 -8 1 -10 2 -4 -6 ;
-3 -8 6 -10 -9 8 -6 ;
--4 -10 6 4 -6 -6 -8 ;
-1 -7 0 -6 -10 -9 -10 ;
-1 3 -3 0 -1 1 -5
-)");
-    C = _M<int>(R"(
--45 21 35 2 -15 24 50 ;
--8 80 0 -8 -32 -72 -81 ;
-8 -32 -2 -10 -12 -28 -18 ;
-15 16 -54 20 9 -8 -18 ;
-28 50 24 -8 48 12 8 ;
-8 0 0 48 20 18 20 ;
--7 -27 18 0 -5 -3 35
-)");
+          R.Resize(7, 7);
+          A = _M<int>(R"(
+      0 4 4 2 -9 -7 7 ;
+      2 -2 4 5 -1 3 0 ;
+      -3 9 8 0 -10 -2 -5 ;
+      8 -4 4 -5 4 -2 -9 ;
+      9 1 3 -1 3 -5 -5 ;
+      -3 8 -10 5 8 9 0 ;
+      -6 -4 3 -3 -5 2 2
+      )");
+          B = _M<int>(R"(
+      -4 -5 5 -1 -10 -9 9 ;
+      -10 -3 -6 7 -9 -7 -6 ;
+      1 7 3 0 0 9 9 ;
+      8 -6 5 -3 3 2 9 ;
+      -2 -7 5 2 4 -7 -5 ;
+      -4 -5 2 -2 9 -9 -9 ;
+      2 7 4 6 -3 -4 5
+      )");
+          C = _M<int>(R"(
+      -4 -1 9 1 -19 -16 16 ;
+      -8 -5 -2 12 -10 -4 -6 ;
+      -2 16 11 0 -10 7 4 ;
+      16 -10 9 -8 7 0 0 ;
+      7 -6 8 1 7 -12 -10 ;
+      -7 3 -8 3 17 0 -9 ;
+      -4 3 7 3 -8 -2 7
+      )");
 
-    EXPECT(R.Multiply(A, B).AllClose(C));
-    EXPECT((R = A, R.InlineMultiply(B)).AllClose(C));
-    EXPECT((R = A, R *= B).AllClose(C));
-    EXPECT((A * B).AllClose(C));
-*/
+          EXPECT(R.Add(A, B).AllClose(C));
+          EXPECT((R = A, R.InlineAdd(B)).AllClose(C));
+          EXPECT((R = A, R += B).AllClose(C));
+          EXPECT((A + B).AllClose(C));
+      */
   };
 
-  SCENARIO("Subtraction for int") {
-/*
-    _M<int> A, B, C, R;
+  SCENARIO("Multiplication for int"){
+      /*
+          _M<int> A, B, C, R;
 
-    R.Resize(7, 7);
-    A = _M<int>(R"(
--4 7 6 -6 -7 -5 0 ;
--2 -10 -5 6 8 -8 4 ;
-8 -10 1 9 1 0 -6 ;
--7 -10 -6 -10 8 -4 2 ;
--9 7 -2 -8 3 3 -7 ;
-4 8 -5 -7 -4 -4 2 ;
--4 6 -8 0 1 8 5
-)");
-    B = _M<int>(R"(
-9 2 7 -7 -6 -10 9 ;
-3 2 -5 1 6 2 -3 ;
--7 -3 2 -6 -5 2 -6 ;
-0 3 0 -1 -7 -1 -1 ;
--10 9 -1 3 0 -3 8 ;
--9 -10 -1 -4 6 0 5 ;
--5 -4 -1 0 6 2 -9
-)");
-    C = _M<int>(R"(
--13 5 -1 1 -1 5 -9 ;
--5 -12 0 5 2 -10 7 ;
-15 -7 -1 15 6 -2 0 ;
--7 -13 -6 -9 15 -3 3 ;
-1 -2 -1 -11 3 6 -15 ;
-13 18 -4 -3 -10 -4 -3 ;
-1 10 -7 0 -5 6 14
-)");
+          R.Resize(7, 7);
+          A = _M<int>(R"(
+      -9 -7 -5 -2 -5 -4 -10 ;
+      -8 -8 9 2 -4 9 -9 ;
+      -2 4 -2 1 -6 7 3 ;
+      5 -2 -9 -2 -1 -1 3 ;
+      -7 -5 4 -2 -8 -2 -1 ;
+      8 0 -1 -8 -2 -2 -2 ;
+      -7 -9 -6 2 5 -3 -7
+      )");
+          B = _M<int>(R"(
+      5 -3 -7 -1 3 -6 -5 ;
+      1 -10 0 -4 8 -8 9 ;
+      -4 -8 1 -10 2 -4 -6 ;
+      3 -8 6 -10 -9 8 -6 ;
+      -4 -10 6 4 -6 -6 -8 ;
+      1 -7 0 -6 -10 -9 -10 ;
+      1 3 -3 0 -1 1 -5
+      )");
+          C = _M<int>(R"(
+      -45 21 35 2 -15 24 50 ;
+      -8 80 0 -8 -32 -72 -81 ;
+      8 -32 -2 -10 -12 -28 -18 ;
+      15 16 -54 20 9 -8 -18 ;
+      28 50 24 -8 48 12 8 ;
+      8 0 0 48 20 18 20 ;
+      -7 -27 18 0 -5 -3 35
+      )");
 
-    EXPECT(R.Subtract(A, B).AllClose(C));
-    EXPECT((R = A, R.InlineSubtract(B)).AllClose(C));
-    EXPECT((R = B, R.InlineReverseSubtract(A)).AllClose(C));
-    EXPECT((R = A, R -= B).AllClose(C));
-    EXPECT((A - B).AllClose(C));
-*/
+          EXPECT(R.Multiply(A, B).AllClose(C));
+          EXPECT((R = A, R.InlineMultiply(B)).AllClose(C));
+          EXPECT((R = A, R *= B).AllClose(C));
+          EXPECT((A * B).AllClose(C));
+      */
   };
 
-  SCENARIO("Dot product for int") {
-/*    
-    _M<int> A, B, C, R;
+  SCENARIO("Subtraction for int"){
+      /*
+          _M<int> A, B, C, R;
 
-    R.Resize(7, 7);
-    A = _M<int>(R"(
--6 -2 -3 -9 -6 8 -5 ;
--7 -5 -1 -7 -9 9 6 ;
-0 2 7 5 6 -1 -4 ;
--8 -2 -8 0 5 -2 -1 ;
--7 -2 -6 -5 8 2 -6 ;
-5 9 9 8 -1 -8 0 ;
-8 3 0 8 -1 -3 4
-)");
-    B = _M<int>(R"(
--4 -2 1 2 -3 -5 -4 ;
-8 1 5 7 9 -9 -7 ;
-3 -7 -1 2 -5 -4 7 ;
-8 8 4 3 1 -4 -10 ;
-9 3 7 6 8 -4 -8 ;
-8 8 9 7 -7 -4 6 ;
--7 -4 -3 9 -5 -1 9
-)");
-    C = _M<int>(R"(
--28 25 -4 -84 -73 93 158 ;
--122 -19 -59 -9 -191 106 306 ;
-151 19 68 36 63 -82 -105 ;
-28 73 10 -39 105 79 -71 ;
-84 78 61 -47 108 63 -56 ;
-70 -67 -6 53 77 -138 -140 ;
--5 8 9 70 4 -87 -107
-)");
+          R.Resize(7, 7);
+          A = _M<int>(R"(
+      -4 7 6 -6 -7 -5 0 ;
+      -2 -10 -5 6 8 -8 4 ;
+      8 -10 1 9 1 0 -6 ;
+      -7 -10 -6 -10 8 -4 2 ;
+      -9 7 -2 -8 3 3 -7 ;
+      4 8 -5 -7 -4 -4 2 ;
+      -4 6 -8 0 1 8 5
+      )");
+          B = _M<int>(R"(
+      9 2 7 -7 -6 -10 9 ;
+      3 2 -5 1 6 2 -3 ;
+      -7 -3 2 -6 -5 2 -6 ;
+      0 3 0 -1 -7 -1 -1 ;
+      -10 9 -1 3 0 -3 8 ;
+      -9 -10 -1 -4 6 0 5 ;
+      -5 -4 -1 0 6 2 -9
+      )");
+          C = _M<int>(R"(
+      -13 5 -1 1 -1 5 -9 ;
+      -5 -12 0 5 2 -10 7 ;
+      15 -7 -1 15 6 -2 0 ;
+      -7 -13 -6 -9 15 -3 3 ;
+      1 -2 -1 -11 3 6 -15 ;
+      13 18 -4 -3 -10 -4 -3 ;
+      1 10 -7 0 -5 6 14
+      )");
 
-    EXPECT(R.Dot(A, B).AllClose(C));
-    // EXPECT( ( R = A, R.InlineDot(B) ).AllClose(C) );
-    */
+          EXPECT(R.Subtract(A, B).AllClose(C));
+          EXPECT((R = A, R.InlineSubtract(B)).AllClose(C));
+          EXPECT((R = B, R.InlineReverseSubtract(A)).AllClose(C));
+          EXPECT((R = A, R -= B).AllClose(C));
+          EXPECT((A - B).AllClose(C));
+      */
   };
 
-  SCENARIO("Addition for float") {
+  SCENARIO("Dot product for int"){
+      /*
+          _M<int> A, B, C, R;
+
+          R.Resize(7, 7);
+          A = _M<int>(R"(
+      -6 -2 -3 -9 -6 8 -5 ;
+      -7 -5 -1 -7 -9 9 6 ;
+      0 2 7 5 6 -1 -4 ;
+      -8 -2 -8 0 5 -2 -1 ;
+      -7 -2 -6 -5 8 2 -6 ;
+      5 9 9 8 -1 -8 0 ;
+      8 3 0 8 -1 -3 4
+      )");
+          B = _M<int>(R"(
+      -4 -2 1 2 -3 -5 -4 ;
+      8 1 5 7 9 -9 -7 ;
+      3 -7 -1 2 -5 -4 7 ;
+      8 8 4 3 1 -4 -10 ;
+      9 3 7 6 8 -4 -8 ;
+      8 8 9 7 -7 -4 6 ;
+      -7 -4 -3 9 -5 -1 9
+      )");
+          C = _M<int>(R"(
+      -28 25 -4 -84 -73 93 158 ;
+      -122 -19 -59 -9 -191 106 306 ;
+      151 19 68 36 63 -82 -105 ;
+      28 73 10 -39 105 79 -71 ;
+      84 78 61 -47 108 63 -56 ;
+      70 -67 -6 53 77 -138 -140 ;
+      -5 8 9 70 4 -87 -107
+      )");
+
+          EXPECT(R.Dot(A, B).AllClose(C));
+          // EXPECT( ( R = A, R.InlineDot(B) ).AllClose(C) );
+          */
+  };
+
+  SCENARIO("Addition for float")
+  {
     _M<float> A, B, C, R;
 
     R.Resize(7, 7);
@@ -262,7 +266,8 @@ void Test1() {
     EXPECT((R = A, R.InlineAdd(B)).AllClose(C));
   };
 
-  SCENARIO("Multiplication for float") {
+  SCENARIO("Multiplication for float")
+  {
     _M<float> A, B, C, R;
 
     R.Resize(7, 7);
@@ -298,7 +303,8 @@ void Test1() {
     EXPECT((R = A, R.InlineMultiply(B)).AllClose(C));
   };
 
-  SCENARIO("Subtraction for float") {
+  SCENARIO("Subtraction for float")
+  {
     _M<float> A, B, C, R;
 
     R.Resize(7, 7);
@@ -333,10 +339,10 @@ void Test1() {
     EXPECT(R.Subtract(A, B).AllClose(C));
     EXPECT((R.Copy(A), R.InlineSubtract(B)).AllClose(C));
     EXPECT((R.Copy(B), R.InlineReverseSubtract(A)).AllClose(C));
-
   };
 
-  SCENARIO("Dot product for float") {
+  SCENARIO("Dot product for float")
+  {
     _M<float> A, B, C, R;
 
     R.Resize(7, 7);
@@ -372,7 +378,8 @@ void Test1() {
     // EXPECT( ( R.Copy(A), R.InlineDot(B) ).AllClose(C) );
   };
 
-  SCENARIO("Division for float") {
+  SCENARIO("Division for float")
+  {
     _M<float> A, B, C, R;
 
     R.Resize(7, 7);
@@ -409,7 +416,8 @@ void Test1() {
     EXPECT((R.Copy(B), R.InlineReverseDivide(A)).AllClose(C));
   };
 
-  SCENARIO("Addition for double") {
+  SCENARIO("Addition for double")
+  {
     _M<double> A, B, C, R;
 
     R.Resize(7, 7);
@@ -441,14 +449,14 @@ void Test1() {
 -1.25002660266 0.0999749154649 0.254945525747 -2.45446422185 -1.33244081708 -0.00783165681988 -0.985654932354
 )");
 
-    std::cout << "Check: " <<  A[0] << " " << B[0] << std::endl;
-    
+    std::cout << "Check: " << A[0] << " " << B[0] << std::endl;
+
     EXPECT(R.Add(A, B).AllClose(C));
     EXPECT((R.Copy(A), R.InlineAdd(B)).AllClose(C));
-
   };
 
-  SCENARIO("Multiplication for double") {
+  SCENARIO("Multiplication for double")
+  {
     _M<double> A, B, C, R;
 
     R.Resize(7, 7);
@@ -482,10 +490,10 @@ void Test1() {
 
     EXPECT(R.Multiply(A, B).AllClose(C));
     EXPECT((R.Copy(A), R.InlineMultiply(B)).AllClose(C));
-
   };
 
-  SCENARIO("Subtraction for double") {
+  SCENARIO("Subtraction for double")
+  {
     _M<double> A, B, C, R;
 
     R.Resize(7, 7);
@@ -522,7 +530,8 @@ void Test1() {
     EXPECT((R.Copy(B), R.InlineReverseSubtract(A)).AllClose(C));
   };
 
-  SCENARIO("Dot product for double") {
+  SCENARIO("Dot product for double")
+  {
     _M<double> A, B, C, R;
 
     R.Resize(7, 7);
@@ -558,7 +567,8 @@ void Test1() {
     // EXPECT( ( R = A, R.InlineDot(B) ).AllClose(C) );
   };
 
-  SCENARIO("Division for double") {
+  SCENARIO("Division for double")
+  {
     _M<double> A, B, C, R;
 
     R.Resize(7, 7);
@@ -593,14 +603,12 @@ void Test1() {
     EXPECT(R.Divide(A, B).AllClose(C));
     EXPECT((R.Copy(A), R.InlineDivide(B)).AllClose(C));
     EXPECT((R.Copy(B), R.InlineReverseDivide(A)).AllClose(C));
-
   };
 }
 
-int main() {
+int main()
+{
   Test1();
 
   return 0;
 }
-
-

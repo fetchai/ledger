@@ -1,14 +1,14 @@
-#include"http/mime_types.hpp"
-#include<vector>
-#include<algorithm>
+#include "http/mime_types.hpp"
+#include <algorithm>
+#include <vector>
 namespace fetch {
 namespace http {
 
 namespace mime_types {
-  // Note this vector MUST be sorted!
-  std::vector< MimeType > const types = {
-    {".aac","audio/aac"},
-    {".abw","application/x-abiword"},
+// Note this vector MUST be sorted!
+std::vector<MimeType> const types = {
+    {".aac", "audio/aac"},
+    {".abw", "application/x-abiword"},
     {".arc", "application/octet-stream"},
     {".avi", "video/x-msvideo"},
     {".azw", "application/vnd.amazon.ebook"},
@@ -19,7 +19,8 @@ namespace mime_types {
     {".css", "text/css"},
     {".csv", "text/csv"},
     {".doc", "application/msword"},
-    {".doc", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+    {".doc",
+     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
     {".eot", "application/vnd.ms-fontobject"},
     {".epub", "application/epub+zip"},
     {".gif", "image/gif"},
@@ -46,7 +47,9 @@ namespace mime_types {
     {".png", "image/png"},
     {".pdf", "application/pdf"},
     {".ppt", "application/vnd.ms-powerpoint"},
-    {".pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+    {".pptx",
+     "application/"
+     "vnd.openxmlformats-officedocument.presentationml.presentation"},
     {".rar", "application/x-rar-compressed"},
     {".rtf", "application/rtf"},
     {".sh", "application/x-sh"},
@@ -57,7 +60,7 @@ namespace mime_types {
     {".tiff", "image/tiff"},
     {".ts", "application/typescript"},
     {".ttf", "font/ttf"},
-    {".txt", "text/plain"},    
+    {".txt", "text/plain"},
     {".vsd", "application/vnd.visio"},
     {".wav", "audio/x-wav"},
     {".weba", "audio/webm"},
@@ -67,29 +70,29 @@ namespace mime_types {
     {".woff2", "font/woff2"},
     {".xhtml", "application/xhtml+xml"},
     {".xls", "application/vnd.ms-excel"},
-    {".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+    {".xlsx",
+     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
     {".xml", "application/xml"},
     {".xul", "application/vnd.mozilla.xul+xml"},
     {".zip", "application/zip"},
     {".3gp", "video/3gpp"},
     {".3g2", "video/3gpp2"},
-    {".7z", "application/x-7z-compressed"}
- };
+    {".7z", "application/x-7z-compressed"}};
 
-MimeType GetMimeTypeFromExtension(std::string const& ext) 
+MimeType GetMimeTypeFromExtension(std::string const &ext)
 {
   MimeType mime({ext, "application/octet-stream"});
-      
-  auto first = types.begin(); 
-  first = std::lower_bound(first, types.end(), mime);
-  if(first->extension == ext)
+
+  auto first = types.begin();
+  first      = std::lower_bound(first, types.end(), mime);
+  if (first->extension == ext)
   {
-    return *first;    
+    return *first;
   }
-  return mime;  
+  return mime;
 }
 
-}
+}  // namespace mime_types
 
-}
-}
+}  // namespace http
+}  // namespace fetch

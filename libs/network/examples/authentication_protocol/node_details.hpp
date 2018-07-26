@@ -1,12 +1,10 @@
-#include"network/service/server.hpp"
+#include "network/service/server.hpp"
 namespace fetch {
 
-
-struct NodeDetails 
+struct NodeDetails
 {
   byte_array::ByteArray public_key;
-  bool authenticated = false;
+  bool                  authenticated = false;
 };
 
-}
-
+}  // namespace fetch
