@@ -22,79 +22,150 @@
 namespace fetch {
 namespace service {
 
-template <typename T>
-class ServiceClient : public T,
-                      public ServiceClientInterface,
+//template <typename T>
+class ServiceClient : public ServiceClientInterface,
                       public ServiceServerInterface {
  public:
-  typedef T super_type;
-  typedef typename super_type::network_manager_type network_manager_type;
 
+  using network_manager_type = fetch::network::NetworkManager;
 
-  ServiceClient(byte_array::ConstByteArray const& host, uint16_t const& port,
+  ServiceClient(std::shared_ptr< network::AbstractConnection > connection,
                 network_manager_type network_manager)
-      : super_type(network_manager),
+    : connection_(connection),
         network_manager_(network_manager),
-        message_mutex_(__LINE__, __FILE__) {
-    LOG_STACK_TRACE_POINT;
+      message_mutex_(__LINE__, __FILE__) 
+  {
+    auto ptr = connection_.lock();
+    if(ptr) {
+      ptr->ActivateSelfManage();
+      
+      ptr->OnMessage([this](network::message_type const& msg) {
+          LOG_STACK_TRACE_POINT;
+          
+          {
+            std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
+            messages_.push_back(msg);
+          }
+          
+          // Since this class isn't shared_from_this, try to ensure safety when destructing
+          network_manager_.Post([this]()
+            {
+              ProcessMessages();
+            });
+        });
 
-    this->Connect(host, port);
+    }
+    
+      /*
+      ptr->OnConnectionFailed([this]() {
+          // TODO: Clear closures?
+        });
+      */
   }
+
+  ServiceClient(network::TCPClient &connection,
+    network_manager_type thread_manager)
+    : ServiceClient(connection.connection_pointer().lock(), thread_manager)
+  { }
+  
 
   ~ServiceClient()
   {
     LOG_STACK_TRACE_POINT;
-
-    // Disconnect callbacks
-    super_type::Cleanup();
-    super_type::Close();
-    int timeout = 100;
-
-    // Can only guarantee we are not being called when socket is closed
-    while(!super_type::Closed())
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      timeout--;
-
-      if(timeout == 0) break;
+       auto ptr = connection_.lock();
+    if(ptr) {
+    
+      // Disconnect callbacks      
+      if(ptr->Closed()) {
+        ptr->ClearClosures();
+        ptr->Close();
+      
+        int timeout = 100;
+      
+        // Can only guarantee we are not being called when socket is closed
+        while(!ptr->Closed())
+        {
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          timeout--;
+        
+          if(timeout == 0) break;
+        }
+      }
     }
+    
   }
 
-  void PushMessage(network::message_type const& msg) override {
-    LOG_STACK_TRACE_POINT;
-
-    {
-      std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
-      messages_.push_back(msg);
+  void Close() 
+  {
+    auto ptr = connection_.lock();
+    if(ptr) {
+      ptr->Close();
     }
+    
+  }    
 
-    // Since this class isn't shared_from_this, try to ensure safety when destructing
-    network_manager_.Post([this]()
-    {
-      ProcessMessages();
-    });
+  connection_handle_type handle() const 
+  {
+    auto ptr = connection_.lock();
+    if(ptr) {
+      return ptr->handle();
+    }
+    TODO_FAIL("connection is dead");
+  }
+  
+  bool is_alive() const 
+  {
+    auto ptr = connection_.lock();
+    if(ptr) {
+      return ptr->is_alive();
+    }
+    return false;
   }
 
-  void ConnectionFailed() override {
-    LOG_STACK_TRACE_POINT;
-
-    this->ClearPromises();
+  uint16_t Type() const 
+  {
+    auto ptr = connection_.lock();
+    if(ptr) {
+      return ptr->Type();
+    }
+    return uint16_t(-1);
   }
 
+  std::shared_ptr< network::AbstractConnection > connection() 
+  {
+    return connection_.lock();
+  }
+  
+  
  protected:
   bool DeliverRequest(network::message_type const& msg) override {
-    if (!super_type::is_alive()) return false;
+    auto ptr = connection_.lock();
+    if(ptr) {
+      if(ptr->Closed()) return false;
+    
+      ptr->Send(msg);
+      return true;
+    }
 
-    super_type::Send(msg);
-    return true;
+    return false;
   }
 
   bool DeliverResponse(connection_handle_type, network::message_type const& msg) override {
-    super_type::Send(msg);
-    return true;
+    auto ptr = connection_.lock();
+    if(ptr) {
+      if(ptr->Closed()) return false;
+    
+      ptr->Send(msg);
+      return true;
+    }
+
+    return false;
+    
+
   }
 
  private:
+  std::weak_ptr< network::AbstractConnection > connection_;  
   void ProcessMessages() {
     LOG_STACK_TRACE_POINT;
 

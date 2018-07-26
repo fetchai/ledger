@@ -45,7 +45,9 @@ class TCPServer : public AbstractNetworkServer {
     fetch::logger.Info("Creating TCP server");
     manager_ = std::make_shared< ClientManager >(*this);
 
-    auto closure = [this]
+    std::shared_ptr<int> destruct_guard = destruct_guard_;
+
+    auto closure = [this, destruct_guard]
     {
       std::lock_guard<std::mutex> lock(startMutex_);
 
@@ -105,6 +107,12 @@ class TCPServer : public AbstractNetworkServer {
         fetch::logger.Info("failed to close acceptor: ");
       }
     });
+
+    while(destruct_guard_.use_count() > 1)
+    {
+      fetch::logger.Info("Waiting for TCP server ", this, " start closure to clear");
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
 
     while(!acceptor_.expired() && running_)
     {
@@ -187,7 +195,7 @@ class TCPServer : public AbstractNetworkServer {
         auto ptr = connection_register_.lock();
 
         if(ptr) {
-          ptr->Enter( conn->network_client_pointer() );
+          ptr->Enter( conn->connection_pointer() );
           conn->SetConnectionManager( ptr );
         }
 
@@ -203,6 +211,7 @@ class TCPServer : public AbstractNetworkServer {
     acceptor->async_accept(*strongSocket, cb);
   }
 
+  std::shared_ptr<int>                      destruct_guard_;
   std::weak_ptr<AbstractConnectionRegister> connection_register_;
   std::shared_ptr<ClientManager>            manager_;
   std::weak_ptr<acceptor_type>              acceptor_;

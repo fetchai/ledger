@@ -25,7 +25,8 @@ class NetworkNodeCore
 public:
     typedef std::mutex mutex_type;
     typedef std::lock_guard<mutex_type> lock_type;
-    typedef fetch::service::ServiceClient<network::TCPClient> client_type;
+    //typedef fetch::service::ServiceClient<network::TCPClient> client_type;
+    typedef fetch::service::ServiceClient client_type;
     typedef service::ServiceServer<fetch::network::TCPServer> rpc_server_type;
     typedef uint32_t protocol_number_type;
 protected:
@@ -40,17 +41,17 @@ public:
     bool operator==(const NetworkNodeCore &rhs) const = delete;
     bool operator<(const NetworkNodeCore &rhs) const = delete;
 
-    explicit NetworkNodeCore(
-                             size_t threads,
-                             uint16_t httpPort,
-                             uint16_t rpcPort
-                             )
-        :
-        nm_(threads)
+    NetworkNodeCore(size_t threads, uint16_t httpPort, uint16_t rpcPort)
+      : NetworkNodeCore(NetworkManager{threads}, httpPort, rpcPort) {
+    }
+
+    NetworkNodeCore(NetworkManager networkManager, uint16_t httpPort, uint16_t rpcPort)
+      : nm_(std::move(networkManager))
     {
         lock_type mlock(mutex_);
 
         //TODO(katie) investiaget if this can be moved to Start()
+        // TODO: (EJF) Confusing now network manager is passed in (and is copy)
         nm_. Start();
 
         rpcPort_ = rpcPort;
@@ -182,7 +183,10 @@ protected:
     virtual client_ptr ActuallyConnectTo(
         const std::string &host, unsigned short port)
     {
-        client_ptr client = std::make_shared<client_type>(host, port, nm_);
+        network::TCPClient connection(nm_);
+        connection.Connect(host, port);
+
+        client_ptr client = std::make_shared<client_type>(connection, nm_);
 
         auto waits = NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION;
         auto waitTimeUS = MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION

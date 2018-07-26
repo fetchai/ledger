@@ -14,11 +14,18 @@ int main() {
 
   tm.Start();
   {
-    ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
+    fetch::network::TCPClient connection(tm);
+    connection.Connect("localhost", 8080);
+    
+    ServiceClient client(connection, tm);
     std::this_thread::sleep_for( std::chrono::milliseconds(100) );
   }
 
-  ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
+  fetch::network::TCPClient connection(tm);
+  connection.Connect("localhost", 8080);
+  
+  ServiceClient client(connection, tm);  
+
   std::this_thread::sleep_for( std::chrono::milliseconds(100) );
   
   std::cout << client.Call( MYPROTO,GREET, "Fetch" ).As<std::string>( ) << std::endl;
@@ -99,7 +106,11 @@ int xmain() {
 
   fetch::network::NetworkManager tm(1);
   tm.Start(); // Started thread manager before client construction!
-  ServiceClient< fetch::network::TCPClient > client("localhost", 8080, tm);
+
+  fetch::network::TCPClient connection(tm);
+  connection.Connect("localhost", 8080);
+
+  ServiceClient client(connection, tm);
 
   auto promise = client.Call( MYPROTO,SLOWFUNCTION, 2, 7 );
 

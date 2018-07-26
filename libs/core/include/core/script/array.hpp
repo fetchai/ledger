@@ -39,8 +39,6 @@ class Array {
   void Resize(std::size_t const& n) { data_->resize(n); }
 
   Array<T> Copy() const {
-    std::cout << "Was here?" << std::endl;
-
     Array<T> ret;
 
     ret.Resize(size());

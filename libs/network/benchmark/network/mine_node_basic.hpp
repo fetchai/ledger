@@ -191,7 +191,7 @@ private:
   std::size_t                             target_ = 16; // 16 = roughly one block every 0.18s
   uint64_t                                minerNumber_{1};
 
-  chain::MainChain mainChain{};
+  chain::MainChain mainChain{uint32_t(minerNumber_)};
 
 };
 } // namespace network_mine_test

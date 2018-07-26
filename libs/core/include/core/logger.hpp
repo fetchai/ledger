@@ -12,6 +12,8 @@
 #include <vector>
 #include "core/abstract_mutex.hpp"
 #include "core/commandline/vt100.hpp"
+#include <execinfo.h>
+
 namespace fetch {
 
 namespace log {
@@ -273,10 +275,9 @@ class LogWrapper {
       Unroll<Args...>::Append(this, args...);
       this->log_->CloseEntry(DefaultLogger::DEBUG);
     }
-    
   }
 
-    void Debug(const std::vector<std::string> &items) {
+  void Debug(const std::vector<std::string> &items) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(this->log_ != nullptr) {
       this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl());
@@ -286,7 +287,6 @@ class LogWrapper {
       }
       this->log_->CloseEntry(DefaultLogger::DEBUG);
     }
-    
   }
 
   void SetContext(shared_context_type ctx) {
@@ -573,6 +573,28 @@ extern log::details::LogWrapper logger;
 
 #define LOG_PRINT_STACK_TRACE(name, custom_name) \
   fetch::logger.StackTrace(name, uint32_t(-1), false, custom_name);
+
+
+#define ERROR_BACKTRACE                                         \
+{                                                               \
+  constexpr int framesMax = 20;                                 \
+  std::vector<std::string> results;                             \
+                                                                \
+  void* callstack[framesMax];                                   \
+                                                                \
+  int frames = backtrace(callstack, framesMax);                 \
+                                                                \
+  char** frameStrings = backtrace_symbols(callstack, frames);   \
+                                                                \
+  std::ostringstream trace;                                     \
+                                                                \
+  for (int i = 0; i < frames; ++i) {                            \
+    trace << frameStrings[i] << std::endl;                      \
+  }                                                             \
+  free(frameStrings);                                           \
+                                                                \
+  fetch::logger.Info("Trace: \n", trace.str());                 \
+}
 
 #else
 

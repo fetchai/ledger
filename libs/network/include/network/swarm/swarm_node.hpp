@@ -32,6 +32,7 @@ class SwarmHttpInterface;
 class SwarmNode : public SwarmNodeInterface
 {
 public:
+  using clientType = fetch::service::ServiceClient;
 protected:
   typedef std::recursive_mutex mutex_type;
   typedef std::lock_guard<mutex_type> lock_type;
@@ -104,6 +105,7 @@ public:
         const SwarmPeerLocation &peer, std::shared_ptr<client_type> client)
   {
     fetch::logger.Debug("AskPeerForPeers starts work");
+
     auto promise = client->Call(
         protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     if (promise.Wait(2500, false))

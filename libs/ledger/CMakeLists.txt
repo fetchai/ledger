@@ -15,11 +15,15 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-ledger)
-target_link_libraries(fetch-ledger INTERFACE fetch-http fetch-network fetch-crypto fetch-math)
-
-#-------------------------------------------------------------------------------
-# Test Targets
-#-------------------------------------------------------------------------------
+target_link_libraries(fetch-ledger PUBLIC
+  fetch-core
+  fetch-http
+  fetch-network
+  fetch-crypto
+  fetch-math
+  fetch-storage
+  fetch-miner
+)
 
 add_test_target()
 add_subdirectory(examples)

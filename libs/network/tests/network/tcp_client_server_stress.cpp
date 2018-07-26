@@ -56,19 +56,6 @@ public:
   {
     TCPClient::Cleanup();
   }
-
-  void PushMessage(message_type const &value) override
-  {
-    {
-      std::lock_guard<fetch::mutex::Mutex> lock(mutexFromServer_);
-      globalMessagesFromServer_.push_back(std::move(value));
-    }
-    clientReceivedCount_++;
-  }
-
-  void ConnectionFailed() override
-  {
-  }
 };
 
 void waitUntilConnected(std::string const &host, uint16_t port)

@@ -9,6 +9,7 @@
 #include"./node_basic.hpp"
 #include"./http_interface.hpp"
 #include"../tests/include/helper_functions.hpp"
+#include"ledger/chain/transaction_serialization.hpp"
 
 
 namespace fetch

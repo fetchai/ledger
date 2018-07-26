@@ -59,7 +59,7 @@ macro(setup_compiler)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m${_compiler_arch}")
 
   # warnings
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -Wextra -Wconversion -Wpedantic")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Wpedantic")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
   if(FETCH_WARNINGS_AS_ERRORS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
@@ -67,7 +67,7 @@ macro(setup_compiler)
 
   # prefer PIC
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 
   # fetch logging defines
   set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -DFETCH_DISABLE_COUT_LOGGING")
@@ -92,10 +92,6 @@ endmacro(setup_compiler)
 
 function(configure_vendor_targets)
 
-  #find_package(PNG REQUIRED)
-  #set(THREADS_PREFER_PTHREAD_FLAG ON)
-  #find_package(Threads REQUIRED)
-
   find_package(OpenSSL REQUIRED)
 
   if(FETCH_VERBOSE_CMAKE)
@@ -114,10 +110,14 @@ function(configure_vendor_targets)
     enable_testing()
   endif(FETCH_ENABLE_TESTS)
 
+  file(GLOB_RECURSE _asio_headers ${FETCH_ROOT_VENDOR_DIR}/asio/*.hpp)
+  file(GLOB_RECURSE _asio_impls ${FETCH_ROOT_VENDOR_DIR}/asio/*.ipp)
+
   # asio vendor library
   add_library(vendor-asio INTERFACE)
   target_include_directories(vendor-asio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/asio/asio/include)
   target_compile_definitions(vendor-asio INTERFACE ASIO_STANDALONE ASIO_HEADER_ONLY ASIO_HAS_STD_SYSTEM_ERROR)
+  target_sources(vendor-asio INTERFACE ${_asio_headers} ${_asio_impls})
 
   # Pybind11
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)

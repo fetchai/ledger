@@ -16,7 +16,7 @@ namespace swarm
 class PythonWorker
 {
 public:
-    std::shared_ptr<fetch::network::ThreadPool> tm_;
+    fetch::network::ThreadPool tm_;
     typedef std::recursive_mutex mutex_type;
     typedef std::lock_guard<std::recursive_mutex> lock_type;
     mutex_type mutex_;
@@ -50,7 +50,7 @@ public:
 
     PythonWorker()
     {
-        tm_ = std::make_shared<fetch::network::ThreadPool>(1);
+        tm_ = fetch::network::MakeThreadPool(1);
     }
 
     virtual ~PythonWorker()

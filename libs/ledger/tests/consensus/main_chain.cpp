@@ -39,28 +39,25 @@ int main(int argc, char const **argv)
     {
       block_type block;
 
-      // Set the block number to guarantee non hash collision
-      body_type body;
-      body.block_number = 1;
-      block.SetBody(body);
-      block.UpdateDigest();
+      MainChain mainChain{};
+      mainChain.reset();
 
-      MainChain mainChain{block};
+      auto genesis = mainChain.HeaviestBlock();
 
-      EXPECT(mainChain.HeaviestBlock().hash() == block.hash());
+      EXPECT(genesis.body().block_number == 0);
 
       // Try adding a non-sequential block (prev hash missing)
       block_type dummy;
       body_type dummy_body;
-      dummy_body.block_number = 2;
+      dummy_body.block_number = 1;
       dummy.SetBody(dummy_body);
       dummy.UpdateDigest();
 
       mainChain.AddBlock(dummy);
 
-      EXPECT(mainChain.HeaviestBlock().hash() == block.hash());
+      EXPECT(mainChain.HeaviestBlock().hash() == genesis.hash());
 
-      fetch::byte_array::ByteArray prevHash = block.hash();
+      fetch::byte_array::ByteArray prevHash = genesis.hash();
 
       // Add another 3 blocks in order
       for (std::size_t i = 0; i < 3; ++i)
@@ -68,7 +65,7 @@ int main(int argc, char const **argv)
         // Create another block sequential to previous
         block_type nextBlock;
         body_type nextBody;
-        nextBody.block_number = 2+i;
+        nextBody.block_number = 1+i;
         nextBody.previous_hash = prevHash;
 
         nextBlock.SetBody(nextBody);
@@ -84,18 +81,10 @@ int main(int argc, char const **argv)
 
     SECTION("Testing for addition of blocks, out of order")
     {
+      MainChain mainChain{};
+      mainChain.reset();
 
-      block_type block;
-
-      // Set the block number to guarantee non hash collision
-      body_type body;
-      body.block_number = 1;
-      block.SetBody(body);
-      block.UpdateDigest();
-
-      MainChain mainChain{block};
-
-      EXPECT(mainChain.HeaviestBlock().hash() == block.hash());
+      auto block = mainChain.HeaviestBlock();
 
       // Try adding a non-sequential block (prev hash missing)
       block_type dummy;
@@ -117,7 +106,7 @@ int main(int argc, char const **argv)
         // Create another block sequential to previous
         block_type nextBlock;
         body_type nextBody;
-        nextBody.block_number = 2+i;
+        nextBody.block_number = 1+i;
         nextBody.previous_hash = prevHash;
 
         nextBlock.SetBody(nextBody);
@@ -138,22 +127,16 @@ int main(int argc, char const **argv)
 
     SECTION("Testing for addition of blocks, with a break")
     {
-      block_type block;
+      MainChain mainChain{};
+      mainChain.reset();
 
-      body_type body;
-      body.block_number = 1;
-      block.SetBody(body);
-      block.UpdateDigest();
-
-      MainChain mainChain{block};
-
-      EXPECT(mainChain.HeaviestBlock().hash() == block.hash());
+      auto block = mainChain.HeaviestBlock();
 
       fetch::byte_array::ByteArray prevHash = block.hash();
       fetch::byte_array::ByteArray topHash = block.hash();
 
-      // Add another 3 blocks in order
-      for (std::size_t i = 2; i < 15; ++i)
+      // Add another N blocks in order
+      for (std::size_t i = block.body().block_number+1; i < 15; ++i)
       {
         // Create another block sequential to previous
         block_type nextBlock;
@@ -181,11 +164,10 @@ int main(int argc, char const **argv)
 
     SECTION("Test mining/proof")
     {
-
       std::vector<block_type> blocks;
       std::size_t blockIterations = 10;
 
-      for (std::size_t diff = 1; diff < 32; diff <<= 1)
+      for (std::size_t diff = 1; diff < 16; diff <<= 1)
       {
         auto t1 = TimePoint();
 
@@ -267,26 +249,23 @@ int main(int argc, char const **argv)
 
     SECTION("Testing time to add blocks sequentially")
     {
-      block_type block;
+      MainChain mainChain{};
+      mainChain.reset();
 
-      body_type body;
-      body.block_number = 1;
-      block.SetBody(body);
-      block.UpdateDigest();
-
-      MainChain mainChain{block};
+      auto block = mainChain.HeaviestBlock();
 
       fetch::byte_array::ByteArray prevHash = block.hash();
       constexpr std::size_t blocksToCreate = 1000000;
       std::vector<block_type> blocks(blocksToCreate, block);
+      uint64_t blockNumber = block.body().block_number++;
 
       // Precreate since UpdateDigest not part of test
-      for (std::size_t i = 2; i < blocksToCreate-1; ++i)
+      for (std::size_t i = 0; i < blocksToCreate; ++i)
       {
         // Create another block sequential to previous
         block_type nextBlock;
         body_type nextBody;
-        nextBody.block_number = i;
+        nextBody.block_number = blockNumber++;
         nextBody.previous_hash = prevHash;
 
         nextBlock.SetBody(nextBody);
@@ -299,7 +278,7 @@ int main(int argc, char const **argv)
 
       auto t1 = TimePoint();
 
-      for (std::size_t i = 2; i < blocksToCreate-1; ++i)
+      for (std::size_t i = 0; i < blocksToCreate; ++i)
       {
         mainChain.AddBlock(blocks[i]);
       }

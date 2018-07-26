@@ -20,7 +20,7 @@ class HTTPConnectionManager {
     LOG_STACK_TRACE_POINT;
 
     handle_type handle = server_.next_handle();
-    fetch::logger.Info("Client joining with handle ", handle);
+    fetch::logger.Debug("Client joining with handle ", handle);
 
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
     clients_[handle] = client;
@@ -33,11 +33,11 @@ class HTTPConnectionManager {
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
 
     if (clients_.find(handle) != clients_.end()) {
-      fetch::logger.Info("Client ", handle, " is leaving");
+      fetch::logger.Debug("Client ", handle, " is leaving");
       // TODO: Close socket!
       clients_.erase(handle);
     }
-    fetch::logger.Info("Client ", handle, " is leaving");
+    fetch::logger.Debug("Client ", handle, " is leaving");
   }
 
   bool Send(handle_type client, HTTPResponse const& res) {

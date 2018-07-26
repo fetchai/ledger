@@ -109,9 +109,6 @@ public:
     auto swarmAgentApi = std::make_shared<fetch::swarm::SwarmAgentApiImpl<PythonWorker>>(worker, myHost, idlespeed);
     worker -> UseCore(nnCore);
 
-    auto chain = std::make_shared<fetch::ledger::MainChain>();
-
-
     fetch::swarm::SwarmKarmaPeer::ToGetCurrentTime([](){ return time(0); });
 
     httpModule_ = httpModule;

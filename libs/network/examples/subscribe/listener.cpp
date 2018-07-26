@@ -13,7 +13,12 @@ int main(int argc, char const **argv) {
 
   fetch::network::NetworkManager tm;
   // Create a client connection to the server
-  ServiceClient<fetch::network::TCPClient> client("localhost", port, tm);
+  fetch::network::TCPClient connection(tm);
+  connection.Connect("localhost", 8080);
+  
+  ServiceClient client(connection, tm);  
+  
+
   tm.Start();
 
   while(!client.is_alive())

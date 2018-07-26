@@ -9,6 +9,28 @@
 #include <type_traits>
 #include <vector>
 namespace fetch {
+namespace meta {
+
+template <bool C, typename R = void>
+using EnableIf = typename std::enable_if<C, R>::type;
+
+template <typename T, typename R = T>
+using IfIsIntegerLike = EnableIf<(!std::is_same<T, bool>::value) && std::is_integral<T>::value, R>;
+
+template <typename T, typename R = T>
+using IfIsFloatLike = EnableIf<std::is_floating_point<T>::value, R>;
+
+template <typename T, typename R = T>
+using IfIsBooleanLike = EnableIf<std::is_same<T, bool>::value, R>;
+
+template <typename T, typename R = T>
+using IfIsByteArrayLike = EnableIf<std::is_same<T, byte_array::ByteArray>::value, R>;
+
+template <typename T, typename R = T>
+using IfIsStdStringLike = EnableIf <std::is_same<T, std::string>::value, R>;
+
+} // namespace meta
+
 namespace script {
 enum VariantType {
   UNDEFINED = 0,
@@ -163,24 +185,21 @@ class Variant {
   }
 
   template <typename T>
-  typename std::enable_if<
-      (!std::is_same<T, bool>::value) && std::is_integral<T>::value, T>::type
-  operator=(T const& i) {
+  meta::IfIsIntegerLike<T> operator=(T const& i) {
     type_ = INTEGER;
     data_.integer = int64_t(i);
     return T(data_.integer);
   }
 
   template <typename T>
-  typename std::enable_if<std::is_floating_point<T>::value, T>::type operator=(
-      T const& f) {
+  meta::IfIsFloatLike<T> operator=(T const& f) {
     type_ = FLOATING_POINT;
     data_.float_point = double(f);
     return T(data_.float_point);
   }
 
   template <typename T>
-  typename std::enable_if<std::is_same<T, bool>::value, T>::type operator=(
+  meta::IfIsBooleanLike<T> operator=(
       T const& b) {
     type_ = BOOLEAN;
     return data_.boolean = b;
@@ -258,12 +277,44 @@ class Variant {
   bool const& as_bool() const { return data_.boolean; }
   bool& as_bool() { return data_.boolean; }
 
+  template <typename T>
+  meta::IfIsIntegerLike<T, T> As() const {
+    assert(type_ == INTEGER);
+    return static_cast<T>(data_.integer);
+  }
+
+  template <typename T>
+  meta::IfIsBooleanLike<T, const T&> As() const {
+    assert(type_ == BOOLEAN);
+    return data_.boolean;
+  }
+
+  template <typename T>
+  meta::IfIsFloatLike<T, T> As() const {
+    assert(type_ == FLOATING_POINT);
+    return static_cast<T>(data_.float_point);
+  }
+
+  template <typename T>
+  meta::IfIsByteArrayLike<T, const T&> As() const {
+    assert(type_ == STRING);
+    return string_;
+  }
+
+  template <typename T>
+  meta::IfIsStdStringLike <T, T> As() const {
+    assert(type_ == STRING);
+    return static_cast<std::string>(string_);
+  }
+
   bool is_int() const { return type_ == INTEGER; }
   bool is_float() const { return type_ == FLOATING_POINT; }
   bool is_bool() const { return type_ == BOOLEAN; }
   bool is_array() const { return type_ == ARRAY; }
   bool is_object() const { return type_ == OBJECT; }
+  bool is_string() const { return type_ == STRING; }
   bool is_byte_array() const { return type_ == STRING; }
+  bool is_undefined() const {return type_ == UNDEFINED; }
 
   byte_array_type const& as_byte_array() const { return string_; }
   byte_array_type& as_byte_array() { return string_; }
@@ -363,6 +414,19 @@ inline std::ostream& operator<<(std::ostream& os, VariantList const& v) {
 
   return os;
 }
+
+template <typename T>
+inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const &name, T& value) {
+  auto element = obj[name];
+  if (element.is_undefined()) {
+    return false;
+  }
+
+  value = element.As<T>();
+  return true;
+}
+
+
 }
 }
 #endif

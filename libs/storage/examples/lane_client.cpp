@@ -6,6 +6,9 @@
 #include"core/byte_array/tokenizer/tokenizer.hpp"
 #include"core/commandline/parameter_parser.hpp"
 #include"core/byte_array/consumers.hpp"
+#include"core/json/document.hpp"
+#include"ledger/chain/transaction.hpp"
+#include"core/string/trim.hpp"
 using namespace fetch;
 
 using namespace fetch::service;
@@ -107,20 +110,20 @@ public:
     id_ = id;
   }
 
-/*
-  void AddTransaction(ConstByteArray const& tx)
+
+  void AddTransaction(ConstByteArray const& tx_data)
   {
-    json::Document doc(tx);
+    json::JSONDocument doc(tx_data);
     chain::Transaction tx;
     
   }
 
   void AddTransaction(chain::Transaction &tx) 
   {
-    tx.UpdateDigests();
+//    tx.UpdateDigests();
     
   }
-*/  
+
   
   ByteArray const &id() {
     return id_;
@@ -141,6 +144,38 @@ enum {
   TOKEN_CATCH_ALL = 12
 };
 
+
+void AddTransactionDialog() 
+{
+  chain::Transaction tx;
+  std::string contract_name, args, res;
+  std::cout << "Contract name: ";
+    
+  std::getline(std::cin, contract_name);
+  fetch::string::Trim( contract_name );
+  tx.set_contract_name(contract_name);
+
+    
+  std::cout << "Arguments: ";
+  std::getline(std::cin, args);
+  fetch::string::Trim( args );    
+  tx.set_arguments(args);
+    
+  std::cout << "Resources: " << std::endl;
+
+  std::getline(std::cin, res);
+  fetch::string::Trim( res );        
+  while(res != "") {
+    tx.PushGroup(res);
+    std::getline(std::cin, res);
+    fetch::string::Trim( res );          
+  } 
+  double fee;
+  std::cout << "Gas: " ;
+  std::cin >> fee;
+    
+}
+
   
 int main(int argc, char const **argv) {
   fetch::logger.DisableLogger();
@@ -150,6 +185,8 @@ int main(int argc, char const **argv) {
   
   std::cout << std::endl;
   fetch::commandline::DisplayCLIHeader("Multi-lane client");
+  std::cout << "Connecting with " << lane_count << " lanes." << std::endl;
+    
   
   // Client setup
   fetch::network::NetworkManager tm(8);
@@ -185,7 +222,14 @@ int main(int argc, char const **argv) {
 
     
       if(command.size() > 0) {
-        if(command[0] == "get") {
+        if(command[0] == "addtx") {
+          if(command.size() == 1) {
+            AddTransactionDialog();
+            // TODO add
+          } else {
+            std::cout << "usage: add" << std::endl;
+          }
+        } else if(command[0] == "get") {
           if(command.size() == 2) {
             std::cout << client.Get(command[1]) << std::endl;
           } else {

@@ -284,7 +284,6 @@ private:
       }
 
       // Use the first Tx for the block hash, should be adequate to avoid collisions (sha256)
-      transBlock.second[0].UpdateDigest();
       transBlock.first = common::Hash(transBlock.second[0].summary().transaction_hash);
     }
   }

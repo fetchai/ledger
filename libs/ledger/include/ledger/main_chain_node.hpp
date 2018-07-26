@@ -33,16 +33,16 @@ public:
 
     MainChainNode(const MainChainNode &rhs)           = delete;
     MainChainNode(MainChainNode &&rhs)           = delete;
-    MainChainNode operator=(const MainChainNode &rhs)  = delete;
-    MainChainNode operator=(MainChainNode &&rhs) = delete;
+    MainChainNode& operator=(const MainChainNode &rhs)  = delete;
+    MainChainNode& operator=(MainChainNode &&rhs) = delete;
     bool operator==(const MainChainNode &rhs) const = delete;
     bool operator<(const MainChainNode &rhs) const = delete;
 
     MainChainNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore, uint32_t minerNumber, uint32_t target, uint32_t chainident) :
         nnCore_(std::move(networkNodeCore))
     {
-        chain_ = std::make_shared<fetch::chain::MainChain>();
-        threadPool_ = std::make_shared<network::ThreadPool>(5);
+        chain_ = std::make_shared<fetch::chain::MainChain>(minerNumber);
+        threadPool_ = fetch::network::MakeThreadPool(5);
         stopped_ = false;
         minerNumber_ = minerNumber;
         target_ = target;
@@ -63,8 +63,8 @@ public:
     http::HTTPResponse HttpGetMainchain(
         http::ViewParameters const &params, http::HTTPRequest const &req)
     {
-        auto chainArray = chain_ -> HeaviestChain(16);
-        size_t limit = std::min(chainArray.size(), size_t(16));
+        auto chainArray = chain_ -> HeaviestChain(999);
+        size_t limit = std::min(chainArray.size(), size_t(999));
 
         script::Variant blocks = script::Variant::Array(limit);
         std::size_t index = 0;
@@ -173,7 +173,7 @@ public:
                     // Get heaviest block
                     auto block = chain_ -> HeaviestBlock();
 
-                    fetch::logger.Info("MINER: Determining heaviest chain as:", block.summarise());
+                    //fetch::logger.Info("MINER: Determining heaviest chain as:", block.summarise());
 
                     // Create another block sequential to previous
                     block_type nextBlock;
@@ -190,7 +190,7 @@ public:
                     nextBlock.proof().SetTarget(target_);
                     miner::Mine(nextBlock);
 
-                    fetch::logger.Info("MINER: Mined block:", nextBlock.summarise());
+                    //fetch::logger.Info("MINER: Mined block:", nextBlock.summarise());
 
                     if(stopped_)
                     {
@@ -209,7 +209,7 @@ public:
 
 private:
     std::shared_ptr<fetch::chain::MainChain> chain_;
-    std::shared_ptr<network::ThreadPool> threadPool_;
+    network::ThreadPool threadPool_;
     std::atomic<bool> stopped_;
     uint32_t minerNumber_;
     uint32_t target_;

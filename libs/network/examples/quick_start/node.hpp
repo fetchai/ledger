@@ -9,7 +9,7 @@ namespace fetch
 namespace quick_start
 {
 
-using clientType = service::ServiceClient<network::TCPClient>;
+using clientType = service::ServiceClient;
 
 // Custom class we want to pass using the RPC interface
 class DataClass
@@ -28,7 +28,10 @@ public:
   {
     std::cout << "\nNode sending: \"" << msg << "\" to: " << port <<  std::endl;
 
-    clientType client{"localhost", port, tm_};
+    fetch::network::TCPClient connection(tm_);
+    connection.Connect("localhost", port);
+  
+    clientType client(connection, tm_);  
 
     for (std::size_t i = 0; ; ++i)
     {

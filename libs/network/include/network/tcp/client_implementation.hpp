@@ -36,7 +36,7 @@ class TCPClientImplementation final :
   typedef asio::ip::tcp::resolver             resolver_type;
   typedef std::mutex                          mutex_type;
 
-  TCPClientImplementation(network_manager_type &network_manager) noexcept :
+  TCPClientImplementation(network_manager_type const &network_manager) noexcept :
     networkManager_{network_manager}
   {
   }
@@ -92,7 +92,7 @@ class TCPClientImplementation final :
 
         std::shared_ptr<resolver_type> res = networkManager_.CreateIO<resolver_type>();
 
-        auto cb = [this, self, res, socket, strand]
+        auto cb = [this, self, res, socket, strand, port]
         (std::error_code ec, resolver_type::iterator)
         {
           shared_self_type selfLock = self.lock();
@@ -111,6 +111,7 @@ class TCPClientImplementation final :
             if(!ec2)
             {
               this->SetAddress(endpoint.address().to_string());
+              this->SetPort(uint16_t(port.AsInt()));
               ReadHeader();
             }
             else
@@ -120,7 +121,7 @@ class TCPClientImplementation final :
           } else
           {
             fetch::logger.Debug("Client failed to connect");
-            ConnectionFailed();
+            SignalLeave();
           }
         };
 
@@ -132,13 +133,14 @@ class TCPClientImplementation final :
           assert(strand->running_in_this_thread());
           asio::async_connect(*socket, it, strand->wrap(cb));
         } else {
+        SignalLeave();        
           fetch::logger.Error("Failed to create valid socket");
         }
       }); // end strand post
     }); // end NM post
   }
 
-  bool is_alive() const noexcept
+  bool is_alive() const override
   {
     std::lock_guard<mutex_type> lock(io_creation_mutex_);
     return !socket_.expired() && connected_;
@@ -151,7 +153,8 @@ class TCPClientImplementation final :
       fetch::logger.Warn("Attempting to write to socket too early. Returning.");
       return;
     }
-
+//    std::cout << "SENDING: " << this->Address() << ":" << this->port() << std::endl;
+    
     {
       std::lock_guard<mutex_type> lock(queue_mutex_);
       write_queue_.push_back(msg);
@@ -175,7 +178,7 @@ class TCPClientImplementation final :
     return AbstractConnection::TYPE_OUTGOING;
   }
 
-  void Close() noexcept
+  void Close() override
   {
     std::lock_guard<mutex_type> lock(io_creation_mutex_);
     postedClose_ = true;
@@ -199,29 +202,11 @@ class TCPClientImplementation final :
     });
   }
 
-  bool Closed() noexcept
+  bool Closed() override
   {
     return socket_.expired();
   }
 
-  void OnConnectionFailed(std::function< void() > const &fnc)
-  {
-    std::lock_guard< mutex_type > lock(callback_mutex_);
-    on_connection_failed_ = fnc;
-  }
-
-  void OnPushMessage(std::function< void(message_type const&) > const &fnc)
-  {
-    std::lock_guard< mutex_type > lock(callback_mutex_);
-    on_push_message_ = fnc;
-  }
-
-  void ClearClosures() noexcept
-  {
-    std::lock_guard< mutex_type > lock(callback_mutex_);
-    on_connection_failed_  = nullptr;
-    on_push_message_  = nullptr;
-  }
 
  private:
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
@@ -241,9 +226,6 @@ class TCPClientImplementation final :
   bool                        postedClose_ = false;
 
   mutable mutex_type                callback_mutex_;
-  std::function< void(message_type const&) > on_push_message_;
-  std::function< void() >                    on_connection_failed_;
-  std::function<void()>                      on_leave_;
   std::atomic<bool>                          connected_{false};
 
   void ReadHeader() noexcept
@@ -272,6 +254,7 @@ class TCPClientImplementation final :
         ReadBody(header);
       } else {
         // We expect to get an ec here when the socked is closed via a post
+        SignalLeave();        
       }
     };
 
@@ -280,7 +263,11 @@ class TCPClientImplementation final :
       assert(strand->running_in_this_thread());
       asio::async_read(*socket, asio::buffer(header.pointer(), header.size()), strand->wrap(cb));
       connected_ = true;
+    } else {
+      connected_ = false; 
+      SignalLeave();
     }
+    
   }
 
   void ReadBody(byte_array::ByteArray const &header) noexcept
@@ -315,11 +302,13 @@ class TCPClientImplementation final :
 
       if (!ec)
       {
-        PushMessage(message);
+        SignalMessage(message);
         ReadHeader();
-      } else
+      }
+      else
       {
         fetch::logger.Error("Reading body failed, dying: ", ec);
+        SignalLeave();   
       }
     };
 
@@ -327,7 +316,10 @@ class TCPClientImplementation final :
     {
       assert(strand->running_in_this_thread());
       asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), strand->wrap(cb));
+    } else {
+      SignalLeave();      
     }
+    
   }
 
   static void SetHeader(byte_array::ByteArray &header, uint64_t bufSize)
@@ -393,6 +385,7 @@ class TCPClientImplementation final :
       if(ec)
       {
         fetch::logger.Error("Error writing to socket, closing.");
+          SignalLeave();          
       }
       else
       {
@@ -413,20 +406,18 @@ class TCPClientImplementation final :
       asio::async_write(*socket, buffers, strand->wrap(cb));
     } else {
       fetch::logger.Error("Failed to lock socket in WriteNext!");
+      SignalLeave();      
     }
   }
 
-  void ConnectionFailed()
-  {
-    std::lock_guard< mutex_type > lock(callback_mutex_);
-    if(on_connection_failed_) on_connection_failed_();
-  }
 
+  /*
   void PushMessage(message_type message)
   {
     std::lock_guard< mutex_type > lock(callback_mutex_);
     if(on_push_message_) on_push_message_(message);
   }
+  */
 };
 
 }

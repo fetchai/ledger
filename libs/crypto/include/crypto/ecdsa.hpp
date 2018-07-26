@@ -1,8 +1,9 @@
 #ifndef CRYPTO_ECDSA_HPP
 #define CRYPTO_ECDSA_HPP
-#include <crypto/hash.hpp>
-#include <crypto/prover.hpp>
-#include <crypto/sha256.hpp>
+#include "crypto/hash.hpp"
+#include "crypto/verifier.hpp"
+#include "crypto/prover.hpp"
+#include "crypto/sha256.hpp"
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
@@ -13,6 +14,44 @@
 
 namespace fetch {
 namespace crypto {
+
+class ECDSAVerifier : public Verifier 
+{
+public:
+  ECDSAVerifier(Identity const &ident)
+    : identity_(ident)
+  {
+    uint8_t const *pub_bytes_copy;
+    key_ = EC_KEY_new_by_curve_name(NID_secp256k1);
+    pub_bytes_copy = identity_.identifier().pointer();
+
+    if (!o2i_ECPublicKey(&key_, &pub_bytes_copy, long(identity_.identifier().size()) )) {
+      std::cout << identity_.identifier().size() << std::endl;
+      
+      TODO_FAIL("Failed to set the public key.");
+    }
+  }
+  
+  bool Verify(byte_array_type const &data, byte_array_type const &signature) override {
+    byte_array_type const hash = Hash<SHA256>(data);
+
+    // TODO: Verify sizes
+    int verify_status = ECDSA_verify(0, hash.pointer(), int(hash.size()),
+      signature.pointer(), int(signature.size()), key_ ); 
+
+    return (1 == verify_status);
+  }
+
+  Identity identity() override
+  {
+    return identity_;
+  }
+  
+private:
+  Identity identity_;
+  EC_KEY *key_ = nullptr;
+};
+  
 
 class ECDSASigner : public Prover {
   void FreeMemory() {
@@ -96,6 +135,13 @@ class ECDSASigner : public Prover {
     if (gen_success != gen_status) {
       TODO_FAIL("Failed to generate EC Key\n");
     }
+
+    public_key_.Resize(std::size_t(i2o_ECPublicKey(key_, NULL)));    
+    uint8_t *pub_copy = public_key_.pointer();
+    if (std::size_t(i2o_ECPublicKey(key_, &pub_copy)) != public_key_.size()) {
+      TODO_FAIL("Unable to decode public key");
+    }
+    
   }
 
   bool Sign(byte_array_type const &text) final override {
@@ -107,19 +153,11 @@ class ECDSASigner : public Prover {
     return (ret != 1);
   }
 
-  void Verify() {
-    /*
-    const int verify_success = 1;
-    int verify_status = ECDSA_do_verify(hash_.pointer(), hash_.size(),
-    signature_, key_);
 
-    if (verify_success != verify_status)   {
-      TODO_FAIL("Failed to verify EC Signature\n");
-    }
-    printf("Verifed EC Signature\n");
-    */
-  }
-
+  Identity identity() final override {
+    return Identity("ECDSA_NID_secp192k1", public_key_);
+  }  
+  
   byte_array_type document_hash() final override { return hash_; }
 
   byte_array_type signature() final override { return signature_; }

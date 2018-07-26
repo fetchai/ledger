@@ -8,6 +8,7 @@
 #include "network/service/server.hpp"
 
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_serialization.hpp"
 #include "../tests/include/helper_functions.hpp"
 
 #include <chrono>
@@ -20,7 +21,7 @@ using namespace fetch::common;
 using namespace std::chrono;
 using namespace fetch;
 
-typedef fetch::chain::Transaction transaction_type;
+typedef fetch::chain::VerifiedTransaction transaction_type;
 
 std::size_t sizeOfTxMin   = 0; // base size of Tx
 ByteArray                           TestString;
@@ -103,7 +104,12 @@ void RunTest(std::size_t payload, std::size_t txPerCall,
   std::size_t rpcCalls     = 0;
   std::size_t setupPayload = 0;
   fetch::network::NetworkManager tm;
-  ServiceClient<fetch::network::TCPClient> client(IP, port, tm);
+
+  fetch::network::TCPClient connection(tm);
+  connection.Connect(IP, port);
+  
+  ServiceClient client(connection, tm);  
+
   tm.Start();
 
   while(!client.is_alive())

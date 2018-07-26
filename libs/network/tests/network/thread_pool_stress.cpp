@@ -12,13 +12,13 @@ void TestCase1() {
 
   {
       std::cout << "Info: Testing thread manager starting" << std::endl;
-      auto tmanager = ThreadPool::Create(N);
+      auto tmanager = MakeThreadPool(N);
       tmanager -> Start();
   }
 
   {
       std::cout << "Info: Testing thread manager starting, stop, posting" << std::endl;
-      auto tmanager = ThreadPool::Create(N);
+      auto tmanager = MakeThreadPool(N);
       tmanager -> Start();
 
       tmanager -> Post([tmanager]() { tmanager -> Stop(); });
@@ -27,7 +27,55 @@ void TestCase1() {
 
   {
       std::cout << "Info: Testing thread manager starting, post, activity, stop" << std::endl;
-      auto tmanager = ThreadPool::Create(N);
+      auto tmanager = MakeThreadPool(N);
+      tmanager -> Start();
+
+      tmanager -> Post([]() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
+      tmanager -> Post([]() { std::cout << "This thread prints stuff" << std::endl;; });
+      tmanager -> Stop();
+  }
+
+  std::cout << "Success." << std::endl << std::endl;
+}
+
+template< std::size_t N = 1>
+void TestCase1a() {
+  std::cout << "TEST CASE 1a. Threads: " << N << std::endl;
+  std::cout << "Info: Testing thread manager starting, stopping and posting" << std::endl;
+
+  {
+      std::cout << "Info: Testing thread manager starting" << std::endl;
+      auto tmanager = MakeThreadPool(N);
+      tmanager -> Start();
+  }
+  std::cout << "Success." << std::endl << std::endl;
+}
+
+template< std::size_t N = 1>
+void TestCase1b() {
+  std::cout << "TEST CASE 1b. Threads: " << N << std::endl;
+  std::cout << "Info: Testing thread manager starting, stopping and posting" << std::endl;
+
+  {
+      std::cout << "Info: Testing thread manager starting, stop, posting" << std::endl;
+      auto tmanager = MakeThreadPool(N);
+      tmanager -> Start();
+
+      tmanager -> Post([tmanager]() { tmanager -> Stop(); });
+      tmanager -> Stop();
+  }
+
+  std::cout << "Success." << std::endl << std::endl;
+}
+
+template< std::size_t N = 1>
+void TestCase1c() {
+  std::cout << "TEST CASE 1c. Threads: " << N << std::endl;
+  std::cout << "Info: Testing thread manager starting, stopping and posting" << std::endl;
+
+  {
+      std::cout << "Info: Testing thread manager starting, post, activity, stop" << std::endl;
+      auto tmanager = MakeThreadPool(N);
       tmanager -> Start();
 
       tmanager -> Post([]() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
@@ -46,7 +94,7 @@ void TestCase3() {
   for (std::size_t index = 0; index < 10; ++index)
   {
     {
-      auto tmanager = ThreadPool::Create(N);
+      auto tmanager = MakeThreadPool(N);
       tmanager -> Start();
 
       std::vector<int> ints{0,0,0,0};
@@ -92,6 +140,9 @@ int main(int argc, char* argv[]) {
   TestCase1<1>();
   TestCase3<1>();
 
+  TestCase1a<10>();
+  TestCase1b<10>();
+  TestCase1c<10>();
   TestCase1<10>();
   TestCase3<10>();
 

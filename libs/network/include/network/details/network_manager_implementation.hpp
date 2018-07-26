@@ -82,7 +82,7 @@ class NetworkManagerImplementation : public std::enable_shared_from_this< Networ
       {
         std::lock_guard< mutex::Mutex > lock(protecting_io_);
         io_service_.reset(new asio::io_service);
-      }
+      }      
     }
   }
 
@@ -95,8 +95,8 @@ class NetworkManagerImplementation : public std::enable_shared_from_this< Networ
 
   template <typename F>
   void Post(F &&f)
-  {
-    std::lock_guard< mutex::Mutex > lock(protecting_io_);
+  {      
+    std::lock_guard< mutex::Mutex > lock(protecting_io_);      
     io_service_->post(std::move(f));
   }
 
