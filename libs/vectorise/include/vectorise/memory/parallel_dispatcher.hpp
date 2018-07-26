@@ -213,7 +213,7 @@ public:
       self_iter.Next(self);
       tmp =
           details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
-              self, regs, std::move(reduce));
+              self, regs, reduce);
       c = c + tmp;
     }
 
@@ -230,7 +230,7 @@ public:
       self_iter.Next(self);
       tmp =
           details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
-              self, regs, std::move(reduce));
+              self, regs, reduce);
 
       int Q = (int(range.to()) - ST - 1);
       for (int i = 0; i <= Q; ++i)
@@ -591,8 +591,7 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       details::MatrixApplyClassMember<C, vector_register_type,
-                                      void>::template Unroll<Args...>::Apply(regs, cls,
-                                                                             std::move(fnc), c);
+                                      void>::template Unroll<Args...>::Apply(regs, cls, fnc, c);
 
       c.Store(this->pointer() + i);
     }
