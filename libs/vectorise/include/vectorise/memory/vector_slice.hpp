@@ -55,7 +55,8 @@ public:
   reverse_iterator rbegin() { return reverse_iterator(pointer_ + size() - 1, pointer_ - 1); }
   reverse_iterator rend() { return reverse_iterator(pointer_ - 1, pointer_ - 1); }
 
-  void SetAllZero()
+  template <typename R = T>
+  typename std::enable_if<std::is_pod<R>::value>::type SetAllZero()
   {
 #if 0
         assert(pointer_ != nullptr);
@@ -65,6 +66,20 @@ public:
       std::memset(pointer_, 0, padded_size() * sizeof(type));
     }
 #endif
+  }
+
+  template <typename R = T>
+  typename std::enable_if<(!std::is_pod<R>::value) && (std::is_default_constructible<R>::value && std::is_copy_assignable<R>::value)>::type
+  SetAllZero()
+  {
+    if (pointer_)
+    {
+      R const initial_value;
+      for (std::size_t i = 0; i < size(); ++i)
+      {
+        operator[](i) = initial_value;
+      }
+    }
   }
 
   void SetPaddedZero()
