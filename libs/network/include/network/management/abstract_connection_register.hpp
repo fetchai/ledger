@@ -1,8 +1,10 @@
 #pragma once
 
 #include "core/mutex.hpp"
+
 #include <atomic>
 #include <memory>
+#include <functional>
 #include <unordered_map>
 
 namespace fetch {
