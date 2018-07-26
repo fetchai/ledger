@@ -24,13 +24,13 @@ class ECDSASignature
     byte_array::ConstByteArray signature_;
 
 public:
-    static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
-    static constexpr eECDSABinaryDataFormat signatureBinaryDataFormat = P_ECDSASignatureBinaryDataFormat;
-
     using hasher_type = T_Hasher;
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
-    using private_key_type = ECDSAPrivateKey<signatureBinaryDataFormat, P_ECDSA_Curve_NID, P_ConversionForm>;
-    using public_key_type = typename private_key_type::public_key_type;
+    using public_key_type = ECDSAPublicKey<P_ECDSASignatureBinaryDataFormat, P_ECDSA_Curve_NID, P_ConversionForm>;
+    using private_key_type = ECDSAPrivateKey<P_ECDSASignatureBinaryDataFormat, P_ECDSA_Curve_NID, P_ConversionForm>;
+
+    static constexpr point_conversion_form_t conversionForm = P_ConversionForm;
+    static constexpr eECDSABinaryDataFormat signatureBinaryDataFormat = P_ECDSASignatureBinaryDataFormat;
 
 
     ECDSASignature(byte_array::ConstByteArray const &binary_signature)
@@ -41,14 +41,14 @@ public:
     }
 
 
+    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
+    using ecdsa_signature_type = ECDSASignature<BINARY_DATA_FORMAT, T_Hasher, P_ECDSA_Curve_NID, P_ConversionForm>;
+
     template<eECDSABinaryDataFormat P_ECDSASignatureBinaryDataFormat2
            , typename T_Hasher2
            , int P_ECDSA_Curve_NID2
            , point_conversion_form_t P_ConversionForm2>
     friend class ECDSASignature;
-
-    template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
-    using ecdsa_signature_type = ECDSASignature<BINARY_DATA_FORMAT, T_Hasher, P_ECDSA_Curve_NID, P_ConversionForm>;
 
 
     template<eECDSABinaryDataFormat BINARY_DATA_FORMAT>
@@ -199,7 +199,6 @@ private:
         return der_sig;
     }
 
-
     static uniq_ptr_type<ECDSA_SIG> ConvertDER(const byte_array::ConstByteArray& bin_sig) {
         const unsigned char *der_sig_ptr = static_cast<const unsigned char *>(bin_sig.pointer());
 
@@ -211,11 +210,9 @@ private:
         return signature;
     }
 
-
     static byte_array::ByteArray ConvertCanonical(const shrd_ptr_type<const ECDSA_SIG> signature) {
         return affine_coord_conversion_type::Convert2Canonical(signature.get()->r, signature.get()->s);
     }
-
 
     static uniq_ptr_type<ECDSA_SIG> ConvertCanonical(const byte_array::ConstByteArray& bin_sig) {
         uniq_ptr_type<ECDSA_SIG> signature {ECDSA_SIG_new()};
@@ -223,13 +220,11 @@ private:
         return signature;
     }
 
-
     static byte_array::ByteArray Convert(
         const shrd_ptr_type<const ECDSA_SIG> signature,
         eECDSABinaryDataFormat ouput_signature_binary_data_type) {
 
-        switch(ouput_signature_binary_data_type)
-        {
+        switch(ouput_signature_binary_data_type) {
             case eECDSABinaryDataFormat::canonical:
                 return ConvertCanonical(signature);
             case eECDSABinaryDataFormat::DER:
@@ -237,13 +232,11 @@ private:
         }
     }
 
-
     static uniq_ptr_type<ECDSA_SIG> Convert(
         const byte_array::ConstByteArray& bin_sig,
         eECDSABinaryDataFormat input_signature_binary_data_type) {
 
-        switch(input_signature_binary_data_type)
-        {
+        switch(input_signature_binary_data_type) {
             case eECDSABinaryDataFormat::canonical:
                 return ConvertCanonical(bin_sig);
             case eECDSABinaryDataFormat::DER:

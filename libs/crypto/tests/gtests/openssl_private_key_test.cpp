@@ -1,4 +1,5 @@
 #include "crypto/openssl_ecdsa_private_key.hpp"
+#include "core/byte_array/encoders.hpp"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -42,9 +43,10 @@ protected:
 };
 
 
-TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key) {
+TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key__DER)
+{
     //* Production code:
-    ECDSAPrivateKey<> x(priv_key_data);
+    ECDSAPrivateKey<eECDSABinaryDataFormat::DER> x(priv_key_data);
 
     //* Expectations:
     EXPECT_TRUE(x.key());
@@ -55,9 +57,30 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
 }
 
 
-TEST_F(ECDCSAPrivateKeyTest, test_instantiation_from_bin_and_hex_data_format_gives_the_same_key) {
+TEST_F(ECDCSAPrivateKeyTest, test_convert_from_DER_to_canonical)
+{
+    //* Production code:
+    ECDSAPrivateKey<eECDSABinaryDataFormat::DER> k_der(priv_key_data);
+    //std::cerr << "pub key0 DER         = " << byte_array::ToHex(k_der.publicKey().keyAsBin()) << std::endl;
+
+    //* Necessary:
+    ASSERT_TRUE(k_der.key());
+    ASSERT_TRUE(k_der.publicKey().key());
+
+    ECDSAPrivateKey<eECDSABinaryDataFormat::canonical> k_can(std::move(k_der));
+    //std::cerr << "pub key1 Can         = " << byte_array::ToHex(k_can.publicKey().keyAsBin()) << std::endl;
+
+    ECDSAPrivateKey<eECDSABinaryDataFormat::DER> k_der_2(std::move(k_can));
+    //std::cerr << "pub key2 DER         = " << byte_array::ToHex(k_der_2.publicKey().keyAsBin()) << std::endl;
+    //std::cerr << "public_key_data DER  = " << byte_array::ToHex(public_key_data) << std::endl;
+
+    EXPECT_EQ(priv_key_data, k_der_2.KeyAsBin());
+    EXPECT_EQ(public_key_data, k_der_2.publicKey().keyAsBin());
+}
 
 
+TEST_F(ECDCSAPrivateKeyTest, test_instantiation_from_bin_and_hex_data_format_gives_the_same_key)
+{
     //* Production code:
     ECDSAPrivateKey<> b(priv_key_data);
     ECDSAPrivateKey<> h(priv_key_hex_str);
