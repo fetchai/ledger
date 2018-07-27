@@ -17,9 +17,6 @@ class NetworkManagerImplementation
     : public std::enable_shared_from_this<NetworkManagerImplementation>
 {
 public:
-  typedef std::weak_ptr<NetworkManagerImplementation>   weak_ptr_type;
-  typedef std::shared_ptr<NetworkManagerImplementation> shared_ptr_type;
-
   NetworkManagerImplementation(std::size_t threads = 1) : number_of_threads_(threads)
   {
 
@@ -43,10 +40,9 @@ public:
       owning_thread_ = std::this_thread::get_id();
       shared_work_ = std::make_shared<asio::io_service::work>(*io_service_);
 
-      shared_ptr_type self = shared_from_this();
       for (std::size_t i = 0; i < number_of_threads_; ++i)
       {
-        threads_.push_back(new std::thread([this, self]() { io_service_->run(); }));
+        threads_.push_back(new std::thread([this]() { io_service_->run(); }));
       }
     }
   }
