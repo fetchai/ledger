@@ -8,6 +8,9 @@
 #include <vector>
 #include <array>
 
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/mutex.hpp"
+
 #include "p2ptrust_interface.hpp"
 
 namespace fetch
@@ -117,6 +120,10 @@ public:
     lock_type lock(mutex_);
     for(size_t pos = 0; pos < std::min(maximum, trust_store_.size()); pos++)
     {
+      if (trust_store_[ pos ].trust < 0.0)
+      {
+        break;
+      }
       result.push_back(trust_store_[ pos ].peer_ident);
     }
     return result;
