@@ -4,8 +4,6 @@
 #include "crypto/openssl_ecdsa_private_key.hpp"
 #include "crypto/hash.hpp"
 
-#include <openssl/ecdsa.h>
-
 
 namespace fetch {
 namespace crypto {
@@ -260,7 +258,7 @@ private:
             d2i_ECDSA_SIG(nullptr, &der_sig_ptr, static_cast<long>(bin_sig.size()))};
         if (!signature)
         {
-            throw std::runtime_error("Convert<...,eECDSAEncoding::DER,...>(const byte_array::ConstByteArray&): d2i_ECDSA_SIG(...) failed.");
+            throw std::runtime_error("ConvertDER(const byte_array::ConstByteArray&): d2i_ECDSA_SIG(...) failed.");
         }
 
         return signature;
@@ -269,15 +267,30 @@ private:
 
     static byte_array::ByteArray ConvertCanonical(shrd_ptr_type<const ECDSA_SIG>&& signature)
     {
-        return affine_coord_conversion_type::Convert2Canonical(
-            signature.get()->r, signature.get()->s);
+        BIGNUM const * r;
+        BIGNUM const * s;
+        ECDSA_SIG_get0(signature.get(), &r, &s);
+
+        return affine_coord_conversion_type::Convert2Canonical(r, s);
     }
 
 
     static uniq_ptr_type<ECDSA_SIG> ConvertCanonical(const byte_array::ConstByteArray& bin_sig)
     {
+        uniq_ptr_type<BIGNUM, memory::eDeleteStrategy::clearing> r{ BN_new() };
+        uniq_ptr_type<BIGNUM, memory::eDeleteStrategy::clearing> s{ BN_new() };
+
+        affine_coord_conversion_type::ConvertFromCanonical(bin_sig, r.get(), s.get());
+
         uniq_ptr_type<ECDSA_SIG> signature {ECDSA_SIG_new()};
-        affine_coord_conversion_type::ConvertFromCanonical(bin_sig, signature.get()->r, signature.get()->s);
+        if (!ECDSA_SIG_set0(signature.get(), r.get(), s.get()))
+        {
+            throw std::runtime_error("ConvertCanonical<...,eECDSAEncoding::DER,...>(const byte_array::ConstByteArray&): d2i_ECDSA_SIG(...) failed.");
+        }
+
+        r.release();
+        s.release();
+
         return signature;
     }
 
@@ -314,8 +327,28 @@ private:
                 return ConvertDER(bin_sig);
         }
     }
-};
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    static void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
+    {
+        if (pr != NULL)
+            *pr = sig->r;
+        if (ps != NULL)
+        *ps = sig->s;
+    }
+
+    static int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+    {
+        if (r == NULL || s == NULL)
+            return 0;
+        BN_clear_free(sig->r);
+        BN_clear_free(sig->s);
+        sig->r = r;
+        sig->s = s;
+        return 1;
+    }
+#endif
+};
 
 } //namespace openssl
 } //namespace crypto
