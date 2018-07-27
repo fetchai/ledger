@@ -47,7 +47,7 @@ public:
 
     ECDSAPublicKey(const byte_array::ConstByteArray& key_data)
         : key_EC_POINT_ {Convert(key_data, binaryDataFormat)}
-        , key_EC_KEY_ {ConvertToECKEY(key_EC_POINT_)}
+        , key_EC_KEY_ {ConvertToECKEY(key_EC_POINT_.get())}
         , key_binary_ {key_data}
     {
     }
