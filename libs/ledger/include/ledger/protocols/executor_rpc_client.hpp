@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "core/serializers/stl_types.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"
@@ -23,7 +25,7 @@ public:
 
     // create the connection
     connection_type connection{network_manager};
-    service_.reset(new service::ServiceClient{connection, network_manager});
+    service_ = std::make_unique<service::ServiceClient>(connection, network_manager);
 
     connection.Connect(host, port);
   }

@@ -42,10 +42,10 @@ protected:
     static const uint16_t    LANE_RPC_PORT_START = 9001;
     static const std::size_t NUM_LANES           = 4;
 
-    network_manager_.reset(new underlying_network_manager_type{2});
+    network_manager_ = std::make_unique<underlying_network_manager_type>(2);
     network_manager_->Start();
 
-    storage_service_.reset(new underlying_storage_service_type);
+    storage_service_ = std::make_unique<underlying_storage_service_type>();
     storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, false);
 
     storage_.reset(new underlying_storage_type{*network_manager_});
@@ -56,10 +56,12 @@ protected:
     }
 
     // create the executor service
-    service_.reset(new underlying_service_type{EXECUTOR_RPC_PORT, *network_manager_, storage_});
+    service_ =
+        std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
 
     // create the executor client
-    executor_.reset(new underlying_client_type{"127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_});
+    executor_ =
+        std::make_unique<underlying_client_type>("127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_);
 
     for (;;)
     {

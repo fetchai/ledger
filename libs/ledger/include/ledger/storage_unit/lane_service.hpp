@@ -18,6 +18,7 @@
 #include "storage/revertible_document_store.hpp"
 
 #include <iomanip>
+#include <memory>
 
 namespace fetch {
 namespace ledger {
@@ -83,16 +84,16 @@ public:
     identity_ = std::make_shared<identity_type>(register_, tm, certificate_->identity());
     identity_->SetLaneNumber(lane);
     identity_->SetTotalLanes(total_lanes);
-    identity_protocol_.reset(new identity_protocol_type(identity_.get()));
+    identity_protocol_ = std::make_unique<identity_protocol_type>(identity_.get());
     this->Add(IDENTITY, identity_protocol_.get());
 
     // TX Store
-    tx_store_.reset(new transaction_store_type());
+    tx_store_ = std::make_unique<transaction_store_type>();
     tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
 
-    tx_sync_protocol_.reset(
-        new tx_sync_protocol_type(TX_STORE_SYNC, register_, thread_pool_, tx_store_.get()));
-    tx_store_protocol_.reset(new transaction_store_protocol_type(tx_store_.get()));
+    tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(TX_STORE_SYNC, register_,
+                                                                thread_pool_, tx_store_.get());
+    tx_store_protocol_ = std::make_unique<transaction_store_protocol_type>(tx_store_.get());
     tx_store_protocol_->OnSetObject(
         [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->AddToCache(tx); });
 
@@ -102,16 +103,17 @@ public:
     this->Add(TX_STORE_SYNC, tx_sync_protocol_.get());
 
     // State DB
-    state_db_.reset(new document_store_type());
+    state_db_ = std::make_unique<document_store_type>();
     state_db_->Load(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
                     prefix + "state_index_deltas.db", true);
 
-    state_db_protocol_.reset(new document_store_protocol_type(state_db_.get(), lane, total_lanes));
+    state_db_protocol_ =
+        std::make_unique<document_store_protocol_type>(state_db_.get(), lane, total_lanes);
     this->Add(STATE, state_db_protocol_.get());
 
     // Controller
-    controller_.reset(new controller_type(IDENTITY, identity_, register_, tm));
-    controller_protocol_.reset(new controller_protocol_type(controller_.get()));
+    controller_          = std::make_unique<controller_type>(IDENTITY, identity_, register_, tm);
+    controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     this->Add(CONTROLLER, controller_protocol_.get());
 
     thread_pool_->Start();

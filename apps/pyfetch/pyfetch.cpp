@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <string>
 #include <time.h>
 #include <unistd.h>
@@ -72,7 +73,7 @@ https://github.com/cython/cython/issues/1877
   */
   void runFile(const std::string &fn, int argc, char *argv[])
   {
-    interpreter = INTERP_P(new pybind11::scoped_interpreter());
+    interpreter = std::make_unique<pybind11::scoped_interpreter>();
     locals      = std::make_shared<pybind11::dict>();
 
     pybind11::print("PYCHAIN? STARTING FILE RUN");

@@ -139,7 +139,7 @@ void TestCase3(std::string host, uint16_t port)
   {
     NetworkManager nmanager(N);
     nmanager.Start();
-    std::unique_ptr<Server> server = std::unique_ptr<Server>(new Server(port, nmanager));
+    std::unique_ptr<Server> server = std::make_unique<Server>(port, nmanager);
 
     waitUntilConnected(host, port);
     std::atomic<std::size_t> threadCount{0};
@@ -180,7 +180,7 @@ void TestCase4(std::string host, uint16_t port)
 
   for (std::size_t index = 0; index < 3; ++index)
   {
-    std::unique_ptr<Server> server = std::unique_ptr<Server>(new Server(port, nmanager));
+    std::unique_ptr<Server> server = std::make_unique<Server>(port, nmanager);
 
     waitUntilConnected(host, port);
     std::atomic<std::size_t> threadCount{0};

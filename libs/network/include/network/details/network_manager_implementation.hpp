@@ -83,7 +83,7 @@ public:
       threads_.clear();
       {
         std::lock_guard<mutex::Mutex> lock(protecting_io_);
-        io_service_.reset(new asio::io_service);
+        io_service_ = std::make_unique<asio::io_service>();
       }
     }
   }

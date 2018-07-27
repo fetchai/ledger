@@ -91,7 +91,7 @@ public:
 
     std::mutex::lock();
 
-    timeout_ = std::unique_ptr<MutexTimeout>(new MutexTimeout(file_, line_));
+    timeout_ = std::make_unique<MutexTimeout>(file_, line_);
     fetch::logger.RegisterLock(this);
     thread_id_ = std::this_thread::get_id();
   }

@@ -2,6 +2,7 @@
 #include "node_details.hpp"
 #include "service_consts.hpp"
 #include <iostream>
+#include <memory>
 using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
@@ -83,8 +84,8 @@ public:
   {
     this->SetConnectionRegister(register_);
 
-    auth_logic_.reset(new AuthenticationLogic<fetch::NodeDetails>(register_));
-    auth_proto_.reset(new AuthenticationProtocol<fetch::NodeDetails>(auth_logic_.get()));
+    auth_logic_ = std::make_unique<AuthenticationLogic<fetch::NodeDetails>>(register_);
+    auth_proto_ = std::make_unique<AuthenticationProtocol<fetch::NodeDetails>>(auth_logic_.get());
 
     test_proto_.AddMiddleware([this](network::AbstractConnection::connection_handle_type const &n,
                                      byte_array::ByteArray const &data) {
