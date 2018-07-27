@@ -1,5 +1,6 @@
 #ifndef CRYPTO_SHA256_HPP
 #define CRYPTO_SHA256_HPP
+
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/stream_hasher.hpp"
 
