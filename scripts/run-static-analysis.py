@@ -27,6 +27,12 @@ def main():
         '-warnings-as-errors=.*'
     ]
 
+    if args.fix:
+        cmd += ['-fix']
+        num_workers = 1
+    else:
+        num_workers = 4
+
     def analyse_file(source_path):
         print('Analysing {} ...'.format(os.path.relpath(source_path, project_root)))
         exit_code = subprocess.call(cmd + [source_path])
@@ -39,7 +45,7 @@ def main():
                     source_path = os.path.join(root, path)
                     yield source_path
 
-    with ThreadPoolExecutor(max_workers=4) as e:
+    with ThreadPoolExecutor(max_workers=num_workers) as e:
         results = e.map(analyse_file, project_source_files())
         if any(results):
             sys.exit(1)
