@@ -11,7 +11,7 @@
 namespace fetch {
 namespace http {
 
-typedef KeyValueSet ViewParameters;
+using ViewParameters = KeyValueSet;
 
 class Route
 {
@@ -83,8 +83,7 @@ public:
   }
 
 private:
-  typedef std::function<bool(std::size_t &, byte_array::ByteArray const &, ViewParameters &)>
-      match_function_type;
+  using match_function_type = std::function<bool(std::size_t &, byte_array::ByteArray const &, ViewParameters &)>;
 
   void AddMatch(byte_array::ByteArray const &value)
   {

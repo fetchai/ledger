@@ -20,8 +20,8 @@ public:
   {
     vector_size = platform::VectorRegisterSize<type>::value
   };
-  typedef typename vectorize::VectorRegister<type, vector_size> vector_register_type;
-  typedef vectorize::VectorRegisterIterator<type, vector_size>  vector_register_iterator_type;
+  using vector_register_type = typename vectorize::VectorRegister<type, vector_size>;
+  using vector_register_iterator_type = vectorize::VectorRegisterIterator<type, vector_size>;
 
   ConstParallelDispatcher(type *ptr, std::size_t const &size) : pointer_(ptr), size_(size) {}
 
@@ -413,8 +413,8 @@ public:
   {
     vector_size = platform::VectorRegisterSize<type>::value
   };
-  typedef typename vectorize::VectorRegister<type, vector_size> vector_register_type;
-  typedef vectorize::VectorRegisterIterator<type, vector_size>  vector_register_iterator_type;
+  using vector_register_type = typename vectorize::VectorRegister<type, vector_size>;
+  using vector_register_iterator_type = vectorize::VectorRegisterIterator<type, vector_size>;
 
   ParallelDispatcher(type *ptr, std::size_t const &size) : super_type(ptr, size) {}
 

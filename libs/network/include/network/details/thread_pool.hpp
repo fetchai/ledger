@@ -21,19 +21,21 @@ namespace details {
 class ThreadPoolImplementation : public std::enable_shared_from_this<ThreadPoolImplementation>
 {
 protected:
-  typedef std::function<void()>                     event_function_type;
-  typedef uint64_t                                  event_handle_type;
-  typedef std::shared_ptr<ThreadPoolImplementation> shared_ptr_type;
-  typedef std::mutex                                mutex_type;
-  typedef std::unique_lock<mutex_type>              lock_type;
-  typedef std::queue<event_function_type>           work_queue_type;
-  typedef enum
+  using event_function_type = std::function<void()>;
+  using event_handle_type = uint64_t;
+  using shared_ptr_type = std::shared_ptr<ThreadPoolImplementation>;
+  using mutex_type = std::mutex;
+  using lock_type = std::unique_lock<mutex_type>;
+  using work_queue_type = std::queue<event_function_type>;
+
+  enum thread_state_type
   {
     THREAD_IDLE        = 0x00,
     THREAD_WORKED      = 0x01,
     THREAD_SHOULD_QUIT = 0x02,
-  } thread_state_type;
-  typedef std::list<event_function_type> idle_work_type;
+  };
+
+  using idle_work_type = std::list<event_function_type>;
 
 public:
   static std::shared_ptr<ThreadPoolImplementation> Create(std::size_t threads)
@@ -320,7 +322,7 @@ private:
 
 }  // namespace details
 
-typedef typename std::shared_ptr<details::ThreadPoolImplementation> ThreadPool;
+using ThreadPool = typename std::shared_ptr<details::ThreadPoolImplementation>;
 
 inline ThreadPool MakeThreadPool(std::size_t threads = 1)
 {

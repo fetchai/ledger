@@ -23,7 +23,7 @@ class SharedArray : public VectorSlice<T, type_size>
 public:
   using size_type = std::size_t;
   using data_type = std::shared_ptr<T>;
-  typedef VectorSlice<T, type_size> super_type;
+  using super_type = VectorSlice<T, type_size>;
   using self_type = SharedArray<T, type_size>;
   using type      = T;
 
@@ -90,16 +90,16 @@ private:
 template <typename T, std::size_t type_size = sizeof(T)>
 class SharedArray {
 public:
-typedef std::size_t size_type;
-typedef std::shared_ptr<T> data_type;
+using size_type = std::size_t;
+using data_type = std::shared_ptr<T>;
 
-typedef ForwardIterator<T> iterator;
-typedef BackwardIterator<T> reverse_iterator;
-typedef SharedArray<T, type_size> self_type;
-typedef T type;
+using iterator = ForwardIterator<T>;
+using reverse_iterator = BackwardIterator<T>;
+using self_type = SharedArray<T, type_size>;
+using type = T;
 
-typedef ConstParallelDispatcher<type> const_parallel_dispatcher_type;
-typedef ParallelDispatcher<type> parallel_dispatcher_type;
+using const_parallel_dispatcher_type = ConstParallelDispatcher<type>;
+using parallel_dispatcher_type = ParallelDispatcher<type>;
 typedef typename parallel_dispatcher_type::vector_register_type
 vector_register_type; typedef typename
 parallel_dispatcher_type::vector_register_iterator_type

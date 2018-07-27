@@ -519,7 +519,7 @@ public:
       this->with_shards_do([req](std::vector<client_shared_ptr_type> shards,
                                  std::vector<EntryPoint> const &     detail_list) {
         std::cout << "Sending tx to " << shards.size() << " shards" << std::endl;
-        typedef fetch::chain::Transaction transaction_type;
+        using transaction_type = fetch::chain::Transaction;
         transaction_type                  tx;
         tx.set_arguments(req.body());
         for (auto &s : shards)

@@ -13,8 +13,8 @@ namespace statistics {
 template <typename A>
 inline typename A::type Variance(A const &a)
 {
-  typedef typename A::vector_register_type vector_register_type;
-  typedef typename A::type                 type;
+  using vector_register_type = typename A::vector_register_type;
+  using type = typename A::type;
 
   type                 m = Mean(a);
   vector_register_type mean(m);

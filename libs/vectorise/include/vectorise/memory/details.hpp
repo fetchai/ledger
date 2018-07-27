@@ -16,8 +16,7 @@ struct MatrixApplyFreeFunction
   template <typename T, typename... Remaining>
   struct Unroll
   {
-    typedef typename MatrixApplyFreeFunction<B, R, Args..., B const &>::template Unroll<
-        Remaining...>::signature_type signature_type;
+    using signature_type = typename MatrixApplyFreeFunction<B, R, Args..., B const &>::template Unroll<Remaining...>::signature_type;
 
     static R Apply(B const *regs, signature_type const &fnc, B &ret, Args &&... args)
     {
@@ -44,8 +43,7 @@ struct MatrixReduceFreeFunction
   template <typename T, typename... Remaining>
   struct Unroll
   {
-    typedef typename MatrixReduceFreeFunction<B, Args..., B const &>::template Unroll<
-        Remaining...>::signature_type signature_type;
+    using signature_type = typename MatrixReduceFreeFunction<B, Args..., B const &>::template Unroll<Remaining...>::signature_type;
 
     static B Apply(B const &self, B const *regs, signature_type &&fnc, Args &&... args)
     {
@@ -74,8 +72,8 @@ struct MatrixApplyClassMember
   template <typename T, typename... Remaining>
   struct Unroll
   {
-    typedef typename MatrixApplyClassMember<C, B, R, Args..., B const &>::template Unroll<
-        Remaining...>::signature_type signature_type;
+    using signature_type = typename MatrixApplyClassMember<C, B, R, Args..., B const &>::template Unroll<Remaining...>::signature_type;
+
     static R Apply(B const *regs, C const &cls, signature_type const &fnc, B &ret, Args... args)
     {
       return MatrixApplyClassMember<C, B, R, Args..., B const &>::template Unroll<

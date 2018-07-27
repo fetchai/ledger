@@ -193,9 +193,9 @@ template <typename C, typename R, typename... Args, std::size_t N>
 class CallableClassMember<C, R(Args...), N> : public AbstractCallable
 {
 private:
-  typedef R return_type;
-  typedef C class_type;
-  typedef return_type (class_type::*member_function_pointer)(Args...);
+  using return_type = R;
+  using class_type = C;
+  using member_function_pointer = return_type (class_type::*)(Args...);
   //< definintion of the member function type.
 
 public:
@@ -264,9 +264,9 @@ template <typename C, typename R>
 class CallableClassMember<C, R(), 0> : public AbstractCallable
 {
 private:
-  typedef R return_type;
-  typedef C class_type;
-  typedef return_type (class_type::*member_function_pointer)();
+  using return_type = R;
+  using class_type = C;
+  using member_function_pointer = return_type (class_type::*)();
 
 public:
   CallableClassMember(class_type *cls, member_function_pointer value)
@@ -319,9 +319,9 @@ template <typename C>
 class CallableClassMember<C, void(), 0> : public AbstractCallable
 {
 private:
-  typedef void return_type;
-  typedef C    class_type;
-  typedef return_type (class_type::*member_function_pointer)();
+  using return_type = void;
+  using class_type = C;
+  using member_function_pointer = return_type (class_type::*)();
 
 public:
   CallableClassMember(class_type *cls, member_function_pointer value)

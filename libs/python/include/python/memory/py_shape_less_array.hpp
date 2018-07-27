@@ -283,7 +283,7 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
       .def("FromNumpy",
            [](ShapeLessArray<T> &s, py::array_t<T> arr) {
              auto                                          buf = arr.request();
-             typedef typename ShapeLessArray<T>::size_type size_type;
+             using size_type = typename ShapeLessArray<T>::size_type;
              if (buf.ndim != 1) throw std::runtime_error("Dimension must be exactly one.");
 
              T *         ptr = (T *)buf.ptr;

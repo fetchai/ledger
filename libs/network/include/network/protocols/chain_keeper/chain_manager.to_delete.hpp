@@ -18,20 +18,20 @@ namespace protocols {
 class ChainManager
 {
 public:
-  typedef crypto::CallableFNV hasher_type;
+  using hasher_type = crypto::CallableFNV;
 
   // Transaction defs
-  typedef fetch::chain::Transaction              transaction_type;
-  typedef typename transaction_type::digest_type tx_digest_type;
+  using transaction_type = fetch::chain::Transaction;
+  using tx_digest_type = typename transaction_type::digest_type;
 
   // Block defs
-  typedef fetch::chain::consensus::ProofOfWork                        proof_type;
-  typedef fetch::chain::BlockBody                                     block_body_type;
-  typedef typename proof_type::header_type                            block_header_type;
-  typedef fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256> block_type;
-  typedef std::shared_ptr<block_type>                                 shared_block_type;
+  using proof_type = fetch::chain::consensus::ProofOfWork;
+  using block_body_type = fetch::chain::BlockBody;
+  using block_header_type = typename proof_type::header_type;
+  using block_type = fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256>;
+  using shared_block_type = std::shared_ptr<block_type>;
 
-  typedef std::unordered_map<block_header_type, shared_block_type, hasher_type> chain_map_type;
+  using chain_map_type = std::unordered_map<block_header_type, shared_block_type, hasher_type>;
 
   ChainManager() { group_ = 0; }
 

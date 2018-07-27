@@ -48,8 +48,8 @@ public:
   bool    operator==(const PySwarm &rhs) const = delete;
   bool    operator<(const PySwarm &rhs) const  = delete;
 
-  typedef std::recursive_mutex                  mutex_type;
-  typedef std::lock_guard<std::recursive_mutex> lock_type;
+  using mutex_type = std::recursive_mutex;
+  using lock_type = std::lock_guard<std::recursive_mutex>;
   mutex_type                                    mutex_;
 
   virtual void Start()

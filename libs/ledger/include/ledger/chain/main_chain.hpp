@@ -48,9 +48,9 @@ struct Tip
 class MainChain
 {
 public:
-  typedef fetch::chain::consensus::ProofOfWork          proof_type;
-  typedef BasicBlock<proof_type, fetch::crypto::SHA256> block_type;
-  typedef fetch::byte_array::ByteArray                  block_hash;
+  using proof_type = fetch::chain::consensus::ProofOfWork;
+  using block_type = BasicBlock<proof_type, fetch::crypto::SHA256>;
+  using block_hash = fetch::byte_array::ByteArray;
 
   // Hard code genesis
   MainChain(uint32_t minerNumber = std::numeric_limits<uint32_t>::max()) : minerNumber_{minerNumber}

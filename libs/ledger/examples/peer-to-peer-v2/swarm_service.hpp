@@ -404,7 +404,7 @@ public:
     LOG_STACK_TRACE_POINT;
     // Getting transactions
     using namespace fetch::protocols;
-    typedef typename ChainController::block_type block_type;
+    using block_type = typename ChainController::block_type;
 
     std::vector<block_type>              blocks;
     std::vector<fetch::service::Promise> promises;

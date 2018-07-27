@@ -20,10 +20,10 @@ namespace network {
 class TCPClient
 {
 public:
-  typedef NetworkManager                       network_manager_type;
-  typedef uint64_t                             handle_type;
-  typedef TCPClientImplementation              implementation_type;
-  typedef std::shared_ptr<implementation_type> pointer_type;
+  using network_manager_type = NetworkManager;
+  using handle_type = uint64_t;
+  using implementation_type = TCPClientImplementation;
+  using pointer_type = std::shared_ptr<implementation_type>;
 
   explicit TCPClient(network_manager_type const &network_manager)
     : pointer_{std::make_shared<implementation_type>(network_manager)}

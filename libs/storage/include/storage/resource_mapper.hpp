@@ -14,7 +14,7 @@ namespace storage {
 class ResourceID
 {
 public:
-  typedef uint32_t resource_group_type;
+  using resource_group_type = uint32_t;
   ResourceID() = default;
 
   ResourceID(byte_array::ConstByteArray const &id) { set_id(id); }

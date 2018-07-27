@@ -15,7 +15,7 @@ namespace serializers {
 class TypedByte_ArrayBuffer
 {
 public:
-  typedef byte_array::ByteArray byte_array_type;
+  using byte_array_type = byte_array::ByteArray;
   TypedByte_ArrayBuffer() { detailed_assert(size() == 0); }
   TypedByte_ArrayBuffer(byte_array_type s) { data_ = s; }
 

@@ -81,8 +81,8 @@ public:
 
   void SetTotalLanes(lane_type const &t) { total_lanes_ = t; }
   /// @}
-  typedef std::function<byte_array::ConstByteArray(byte_array::ConstByteArray const &)>
-       callable_sign_message_type;
+  using callable_sign_message_type = std::function<byte_array::ConstByteArray(byte_array::ConstByteArray const &)>;
+
   void OnSignMessage(callable_sign_message_type const &fnc) { on_sign_message_ = fnc; }
 
 private:

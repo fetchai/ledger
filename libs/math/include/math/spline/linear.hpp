@@ -9,8 +9,8 @@ template <typename T = double>
 class Spline
 {
 public:
-  typedef T      type;
-  typedef double float_type;
+  using type = T;
+  using float_type = double;
 
   template <typename F>
   void SetFunction(F &f, type from, type to, std::size_t n)

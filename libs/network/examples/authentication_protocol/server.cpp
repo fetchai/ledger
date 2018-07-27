@@ -10,7 +10,7 @@ template <typename D>
 class AuthenticationLogic
 {
 public:
-  typedef D node_details_type;
+  using node_details_type = D;
 
   AuthenticationLogic(fetch::network::ConnectionRegister<D> const &reg) : register_(reg) {}
 

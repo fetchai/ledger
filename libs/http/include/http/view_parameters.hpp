@@ -4,6 +4,6 @@
 namespace fetch {
 namespace http {
 
-typedef KeyValueSet ViewParameters;
+using ViewParameters = KeyValueSet;
 }
 }  // namespace fetch

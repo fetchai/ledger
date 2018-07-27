@@ -18,15 +18,15 @@ namespace protocols {
 class ChainController
 {
 public:
-  typedef crypto::CallableFNV hasher_type;
+  using hasher_type = crypto::CallableFNV;
   // Block defs
-  typedef fetch::chain::consensus::ProofOfWork                        proof_type;
-  typedef fetch::chain::BlockBody                                     block_body_type;
-  typedef typename proof_type::header_type                            block_header_type;
-  typedef fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256> block_type;
-  typedef std::shared_ptr<block_type>                                 shared_block_type;
+  using proof_type = fetch::chain::consensus::ProofOfWork;
+  using block_body_type = fetch::chain::BlockBody;
+  using block_header_type = typename proof_type::header_type;
+  using block_type = fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256>;
+  using shared_block_type = std::shared_ptr<block_type>;
 
-  typedef std::unordered_map<block_header_type, shared_block_type, hasher_type> chain_map_type;
+  using chain_map_type = std::unordered_map<block_header_type, shared_block_type, hasher_type>;
 
   ChainController()
   {
@@ -225,8 +225,8 @@ private:
 class SwarmController : public ChainController, public fetch::service::HasPublicationFeed
 {
 public:
-  typedef fetch::service::ServiceClient<fetch::network::TCPClient> client_type;
-  typedef std::shared_ptr<client_type>                             client_shared_ptr_type;
+  using client_type = fetch::service::ServiceClient<fetch::network::TCPClient>;
+  using client_shared_ptr_type = std::shared_ptr<client_type>;
 
   SwarmController(uint64_t const &protocol, network::NetworkManager *network_manager,
                   SharedNodeDetails &details)

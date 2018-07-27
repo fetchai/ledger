@@ -17,11 +17,11 @@ namespace chain {
 class MainChainMiner
 {
 public:
-  typedef chain::MainChain::block_type            block_type;
-  typedef chain::MainChain::block_hash            block_hash;
-  typedef chain::MainChain::block_type::body_type body_type;
-  typedef fetch::chain::consensus::DummyMiner     dummy_miner_type;
-  typedef fetch::miner::MinerInterface            miner_type;
+  using block_type = chain::MainChain::block_type;
+  using block_hash = chain::MainChain::block_hash;
+  using body_type = chain::MainChain::block_type::body_type;
+  using dummy_miner_type = fetch::chain::consensus::DummyMiner;
+  using miner_type = fetch::miner::MinerInterface;
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
                  chain::BlockCoordinator &blockCoordinator, miner_type &miner, uint64_t minerNumber)

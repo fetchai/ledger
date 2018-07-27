@@ -20,10 +20,10 @@ namespace chain {
 class MainChainService : public service::ServiceServer<fetch::network::TCPServer>
 {
 public:
-  typedef fetch::chain::MainChain::proof_type            proof_type;
-  typedef fetch::chain::MainChain::block_type            block_type;
-  typedef fetch::chain::MainChain::block_type::body_type body_type;
-  typedef fetch::chain::MainChain::block_hash            block_hash;
+  using proof_type = fetch::chain::MainChain::proof_type;
+  using block_type = fetch::chain::MainChain::block_type;
+  using body_type = fetch::chain::MainChain::block_type::body_type;
+  using block_hash = fetch::chain::MainChain::block_hash;
 
   using connectivity_details_type = MainChainDetails;
   using client_register_type      = fetch::network::ConnectionRegister<connectivity_details_type>;

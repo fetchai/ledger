@@ -10,9 +10,9 @@ namespace ledger {
 class LaneRemoteControl
 {
 public:
-  typedef service::ServiceClient        service_type;
-  typedef std::shared_ptr<service_type> shared_service_type;
-  typedef std::weak_ptr<service_type>   weak_service_type;
+  using service_type = service::ServiceClient;
+  using shared_service_type = std::shared_ptr<service_type>;
+  using weak_service_type = std::weak_ptr<service_type>;
   using lane_index_type = uint32_t;
 
   enum

@@ -17,8 +17,8 @@ class NetworkManagerImplementation
   : public std::enable_shared_from_this<NetworkManagerImplementation>
 {
 public:
-  typedef std::weak_ptr<NetworkManagerImplementation>   weak_ptr_type;
-  typedef std::shared_ptr<NetworkManagerImplementation> shared_ptr_type;
+  using weak_ptr_type = std::weak_ptr<NetworkManagerImplementation>;
+  using shared_ptr_type = std::shared_ptr<NetworkManagerImplementation>;
 
   NetworkManagerImplementation(std::size_t threads = 1) : number_of_threads_(threads)
   {

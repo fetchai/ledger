@@ -9,10 +9,10 @@ using namespace fetch::storage;
 
 #define BLOCK_SIZE 2048
 
-typedef FileBlockType<BLOCK_SIZE>                   file_block_type;
-typedef KeyValueIndex<>                             key_value_index_type;
-typedef VersionedRandomAccessStack<file_block_type> file_store_type;
-typedef FileObject<file_store_type>                 file_object_type;
+using file_block_type = FileBlockType<BLOCK_SIZE>;
+using key_value_index_type = KeyValueIndex<>;
+using file_store_type = VersionedRandomAccessStack<file_block_type>;
+using file_object_type = FileObject<file_store_type>;
 
 int main()
 {

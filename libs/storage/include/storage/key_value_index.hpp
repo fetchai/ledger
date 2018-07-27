@@ -20,7 +20,7 @@ struct KeyValuePair
     parent = uint64_t(-1);
   }
 
-  typedef Key<S> key_type;
+  using key_type = Key<S>;
 
   key_type key;
   uint8_t  hash[N];
@@ -89,10 +89,10 @@ class KeyValueIndex
   };
 
 public:
-  typedef uint64_t                          index_type;
-  typedef D                                 stack_type;
-  typedef KeyValuePair<>                    key_value_pair;
-  typedef typename key_value_pair::key_type key_type;
+  using index_type = uint64_t;
+  using stack_type = D;
+  using key_value_pair = KeyValuePair<>;
+  using key_type = typename key_value_pair::key_type;
   KeyValueIndex()
   {
 
@@ -390,7 +390,7 @@ public:
 
   void Close() { stack_.Close(); }
 
-  typedef uint64_t bookmark_type;
+  using bookmark_type = uint64_t;
   bookmark_type    Commit() { return stack_.Commit(); }
 
   bookmark_type Commit(bookmark_type const &b) { return stack_.Commit(b); }

@@ -23,17 +23,17 @@ public:
     BLOCK_SIZE = BS
   };
 
-  typedef DocumentStore<BS, A, B, C, D> self_type;
-  typedef byte_array::ByteArray         byte_array_type;
+  using self_type = DocumentStore<BS, A, B, C, D>;
+  using byte_array_type = byte_array::ByteArray;
 
-  typedef A file_block_type;
-  typedef B key_value_index_type;
-  typedef C file_store_type;
-  typedef D file_object_type;
+  using file_block_type = A;
+  using key_value_index_type = B;
+  using file_store_type = C;
+  using file_object_type = D;
 
-  typedef byte_array::ConstByteArray hash_type;
+  using hash_type = byte_array::ConstByteArray;
 
-  typedef typename key_value_index_type::index_type index_type;
+  using index_type = typename key_value_index_type::index_type;
 
   class DocumentFileImplementation : public file_object_type
   {

@@ -8,7 +8,7 @@ namespace chain {
 class UnverifiedTransaction : private MutableTransaction
 {
 public:
-  typedef MutableTransaction super_type;
+  using super_type = MutableTransaction;
   UnverifiedTransaction()                              = default;
   UnverifiedTransaction(UnverifiedTransaction &&other) = default;
   UnverifiedTransaction &operator=(UnverifiedTransaction &&other) = default;
@@ -67,7 +67,7 @@ protected:
 class VerifiedTransaction : public UnverifiedTransaction
 {
 public:
-  typedef UnverifiedTransaction super_type;
+  using super_type = UnverifiedTransaction;
 
   VerifiedTransaction()                            = default;
   VerifiedTransaction(VerifiedTransaction &&other) = default;
@@ -146,7 +146,7 @@ protected:
   friend void Deserialize(T &serializer, VerifiedTransaction &b);
 };
 
-typedef VerifiedTransaction Transaction;
+using Transaction = VerifiedTransaction;
 
 }  // namespace chain
 }  // namespace fetch

@@ -124,9 +124,9 @@ class Variant
   };
 
 public:
-  typedef byte_array::ByteArray            byte_array_type;
-  typedef VariantList                      variant_array_type;
-  typedef VariantObjectEntryProxy<Variant> variant_proxy_type;
+  using byte_array_type = byte_array::ByteArray;
+  using variant_array_type = VariantList;
+  using variant_proxy_type = VariantObjectEntryProxy<Variant>;
 
   Variant() : type_(UNDEFINED) {}
 

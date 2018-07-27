@@ -20,19 +20,18 @@ template <typename T, std::size_t type_size = sizeof(T)>
 class Array
 {
 public:
-  typedef std::size_t size_type;
-  typedef T *         data_type;
+  using size_type = std::size_t;
+  using data_type = T *;
 
-  typedef ForwardIterator<T>  iterator;
-  typedef BackwardIterator<T> reverse_iterator;
-  typedef Array<T>            self_type;
-  typedef T                   type;
+  using iterator = ForwardIterator<T>;
+  using reverse_iterator = BackwardIterator<T>;
+  using self_type = Array<T>;
+  using type = T;
 
-  typedef ConstParallelDispatcher<type>                           const_parallel_dispatcher_type;
-  typedef ParallelDispatcher<type>                                parallel_dispatcher_type;
-  typedef typename parallel_dispatcher_type::vector_register_type vector_register_type;
-  typedef typename parallel_dispatcher_type::vector_register_iterator_type
-      vector_register_iterator_type;
+  using const_parallel_dispatcher_type = ConstParallelDispatcher<type>;
+  using parallel_dispatcher_type = ParallelDispatcher<type>;
+  using vector_register_type = typename parallel_dispatcher_type::vector_register_type;
+  using vector_register_iterator_type =  typename parallel_dispatcher_type::vector_register_iterator_type;
 
   enum
   {

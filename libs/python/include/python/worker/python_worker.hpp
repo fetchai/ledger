@@ -15,8 +15,8 @@ class PythonWorker
 {
 public:
   fetch::network::ThreadPool                       tm_;
-  typedef std::recursive_mutex                     mutex_type;
-  typedef std::lock_guard<std::recursive_mutex>    lock_type;
+  using mutex_type = std::recursive_mutex;
+  using lock_type = std::lock_guard<std::recursive_mutex>;
   mutex_type                                       mutex_;
   std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
 

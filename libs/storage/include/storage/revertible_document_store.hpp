@@ -16,7 +16,7 @@ public:
                                    VersionedRandomAccessStack<FileBlockType<2048>>,
                                    FileObject<VersionedRandomAccessStack<FileBlockType<2048>>>>;
 
-  typedef uint64_t bookmark_type;  // TODO: From keyvalue index
+  using bookmark_type = uint64_t;
 
   hash_type Hash()
   {

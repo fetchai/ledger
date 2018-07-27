@@ -20,11 +20,11 @@ namespace ledger {
 class MainChainNode : public MainChainNodeInterface, public fetch::http::HTTPModule
 {
 public:
-  typedef fetch::chain::MainChain::proof_type            proof_type;
-  typedef fetch::chain::MainChain::block_type            block_type;
-  typedef fetch::chain::MainChain::block_type::body_type body_type;
-  typedef fetch::chain::MainChain::block_hash            block_hash;
-  typedef fetch::chain::consensus::DummyMiner            miner;
+  using proof_type = fetch::chain::MainChain::proof_type;
+  using block_type = fetch::chain::MainChain::block_type;
+  using body_type = fetch::chain::MainChain::block_type::body_type;
+  using block_hash = fetch::chain::MainChain::block_hash;
+  using miner = fetch::chain::consensus::DummyMiner;
 
   MainChainNode(const MainChainNode &rhs) = delete;
   MainChainNode(MainChainNode &&rhs)      = delete;

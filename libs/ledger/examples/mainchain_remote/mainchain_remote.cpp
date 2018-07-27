@@ -19,9 +19,9 @@ using namespace fetch::byte_array;
 
 int main(int argc, char const **argv)
 {
-  typedef ServiceClient                 service_type;
-  typedef fetch::network::TCPClient     client_type;
-  typedef std::shared_ptr<service_type> shared_service_type;
+  using service_type = ServiceClient;
+  using client_type = fetch::network::TCPClient;
+  using shared_service_type = std::shared_ptr<service_type>;
 
   fetch::logger.DisableLogger();
   commandline::ParamsParser params;

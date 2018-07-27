@@ -10,8 +10,8 @@ namespace http {
 class HTTPConnectionManager
 {
 public:
-  typedef typename AbstractHTTPConnection::shared_type connection_type;
-  typedef uint64_t                                     handle_type;
+  using connection_type = typename AbstractHTTPConnection::shared_type;
+  using handle_type = uint64_t;
 
   HTTPConnectionManager(AbstractHTTPServer &server)
     : server_(server), clients_mutex_(__LINE__, __FILE__)

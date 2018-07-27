@@ -9,8 +9,8 @@
 #include <iostream>
 using namespace fetch;
 using namespace fetch::storage;
-typedef KeyValueIndex<KeyValuePair<>, CachedRandomAccessStack<KeyValuePair<>>> cached_kvi_type;
-typedef KeyValueIndex<KeyValuePair<>, RandomAccessStack<KeyValuePair<>>>       kvi_type;
+using cached_kvi_type = KeyValueIndex<KeyValuePair<>, CachedRandomAccessStack<KeyValuePair<>>>;
+using kvi_type = KeyValueIndex<KeyValuePair<>, RandomAccessStack<KeyValuePair<>>>;
 
 cached_kvi_type key_index;
 kvi_type        ref_index;

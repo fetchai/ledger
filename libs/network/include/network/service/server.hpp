@@ -28,11 +28,11 @@ template <typename T>
 class ServiceServer : public T, public ServiceServerInterface
 {
 public:
-  typedef T                super_type;
-  typedef ServiceServer<T> self_type;
+  using super_type = T;
+  using self_type = ServiceServer<T>;
 
-  typedef typename super_type::network_manager_type network_manager_type;
-  typedef typename T::connection_handle_type        handle_type;
+  using network_manager_type = typename super_type::network_manager_type;
+  using handle_type = typename T::connection_handle_type;
 
   // TODO Rename and move
   class ClientRPCInterface : public ServiceClientInterface
@@ -69,7 +69,7 @@ public:
     handle_type           client;
     network::message_type message;
   };
-  typedef byte_array::ConstByteArray byte_array_type;
+  using byte_array_type = byte_array::ConstByteArray;
 
   ServiceServer(uint16_t port, network_manager_type network_manager)
     : super_type(port, network_manager)

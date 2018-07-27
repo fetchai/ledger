@@ -138,9 +138,9 @@ private:
 };
 
 #ifdef NDEBUG
-typedef ProductionMutex Mutex;
+using Mutex = ProductionMutex;
 #else
-typedef DebugMutex Mutex;
+using Mutex = DebugMutex;
 #endif
 }  // namespace mutex
 }  // namespace fetch

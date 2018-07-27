@@ -34,9 +34,9 @@ class YMLDocument
   };
 
 public:
-  typedef byte_array::ByteArray      string_type;
-  typedef byte_array::ConstByteArray const_string_type;
-  //  typedef script::Variant variant_type;
+  using string_type = byte_array::ByteArray;
+  using const_string_type = byte_array::ConstByteArray;
+  //  using variant_type = script::Variant;
 
   YMLDocument() {}
 

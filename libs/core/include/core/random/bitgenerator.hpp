@@ -8,9 +8,9 @@ template <typename R = LaggedFibonacciGenerator<>, uint8_t B = 12, bool MSBF = t
 class BitGenerator
 {
 public:
-  typedef R                                           random_generator_type;
-  typedef typename random_generator_type::random_type word_type;
-  typedef BitMask<word_type, B, MSBF>                 mask_type;
+  using random_generator_type = R;
+  using word_type = typename random_generator_type::random_type;
+  using mask_type = BitMask<word_type, B, MSBF>;
 
   word_type operator()(mask_type const &m)
   {

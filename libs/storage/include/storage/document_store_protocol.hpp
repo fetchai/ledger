@@ -14,7 +14,7 @@ namespace storage {
 class RevertibleDocumentStoreProtocol : public fetch::service::Protocol
 {
 public:
-  typedef network::AbstractConnection::connection_handle_type connection_handle_type;
+  using connection_handle_type = network::AbstractConnection::connection_handle_type;
   using lane_type = uint32_t;  // TODO: Fetch from some other palce
 
   enum

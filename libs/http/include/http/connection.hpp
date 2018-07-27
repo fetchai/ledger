@@ -19,11 +19,11 @@ class HTTPConnection : public AbstractHTTPConnection,
                        public std::enable_shared_from_this<HTTPConnection>
 {
 public:
-  typedef std::deque<HTTPResponse>                     response_queue_type;
-  typedef typename AbstractHTTPConnection::shared_type connection_type;
-  typedef HTTPConnectionManager::handle_type           handle_type;
-  typedef std::shared_ptr<HTTPRequest>                 shared_request_type;
-  typedef std::shared_ptr<asio::streambuf>             buffer_ptr_type;
+  using response_queue_type = std::deque<HTTPResponse>;
+  using connection_type = typename AbstractHTTPConnection::shared_type;
+  using handle_type = HTTPConnectionManager::handle_type;
+  using shared_request_type = std::shared_ptr<HTTPRequest>;
+  using buffer_ptr_type = std::shared_ptr<asio::streambuf>;
 
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
     : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__)

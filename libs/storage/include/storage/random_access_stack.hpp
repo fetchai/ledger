@@ -49,9 +49,9 @@ private:
   };
 
 public:
-  typedef D                     header_extra_type;
-  typedef T                     type;
-  typedef std::function<void()> event_handler_type;
+  using header_extra_type = D;
+  using type = T;
+  using event_handler_type = std::function<void()>;
   event_handler_type            on_file_loaded_;
   event_handler_type            on_before_flush_;
 

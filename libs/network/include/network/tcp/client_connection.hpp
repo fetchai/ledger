@@ -22,9 +22,9 @@ namespace network {
 class ClientConnection : public AbstractConnection
 {
 public:
-  typedef typename AbstractConnection::shared_type connection_type;
+  using connection_type = typename AbstractConnection::shared_type;
 
-  typedef typename AbstractConnection::connection_handle_type handle_type;
+  using handle_type = typename AbstractConnection::connection_handle_type;
 
   ClientConnection(std::weak_ptr<asio::ip::tcp::tcp::socket> socket,
                    std::weak_ptr<ClientManager>              manager)

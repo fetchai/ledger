@@ -7,8 +7,8 @@
 
 using namespace fetch::math;
 
-typedef double                      data_type;
-typedef RectangularArray<data_type> array_type;
+using data_type = double;
+using array_type = RectangularArray<data_type>;
 
 void test1()
 {

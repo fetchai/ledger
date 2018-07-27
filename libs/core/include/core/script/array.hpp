@@ -12,11 +12,11 @@ template <typename T>
 class Array
 {
 public:
-  typedef T                                       type;
-  typedef std::vector<type>                       container_type;
-  typedef std::shared_ptr<container_type>         shared_container_type;
-  typedef typename container_type::iterator       iterator;
-  typedef typename container_type::const_iterator const_iterator;
+  using type = T;
+  using container_type = std::vector<type>;
+  using shared_container_type = std::shared_ptr<container_type>;
+  using iterator = typename container_type::iterator;
+  using const_iterator = typename container_type::const_iterator;
 
   Array() { data_ = std::make_shared<container_type>(); }
 

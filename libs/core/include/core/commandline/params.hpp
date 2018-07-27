@@ -23,11 +23,10 @@ public:
   bool   operator==(const Params &rhs) const = delete;
   bool   operator<(const Params &rhs) const  = delete;
 
-  typedef std::function<void(const std::set<std::string> &, std::list<std::string> &)>
-                                                  action_func_type;
-  typedef std::tuple<std::string, std::string>    help_text_type;
-  typedef std::map<std::string, action_func_type> assigners_type;
-  typedef std::list<help_text_type>               help_texts_type;
+  using action_func_type = std::function<void(const std::set<std::string> &, std::list<std::string> &)>;
+  using help_text_type = std::tuple<std::string, std::string>;
+  using assigners_type = std::map<std::string, action_func_type>;
+  using help_texts_type = std::list<help_text_type>;
 
   Params() : paramsParser_() {}
 

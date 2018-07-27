@@ -226,7 +226,7 @@ private:
   std::size_t       start_ = 0, length_ = 0;
 };
 
-// typedef ConstByteArray BasicByteArray;
+// using BasicByteArray = ConstByteArray;
 
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
 {

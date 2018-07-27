@@ -19,8 +19,8 @@ namespace details {
 class PromiseImplementation
 {
 public:
-  typedef uint64_t                   promise_counter_type;
-  typedef byte_array::ConstByteArray byte_array_type;
+  using promise_counter_type = uint64_t;
+  using byte_array_type = byte_array::ConstByteArray;
 
   PromiseImplementation()
   {
@@ -90,9 +90,9 @@ private:
 class Promise
 {
 public:
-  typedef typename details::PromiseImplementation     promise_type;
-  typedef typename promise_type::promise_counter_type promise_counter_type;
-  typedef std::shared_ptr<promise_type>               shared_promise_type;
+  using promise_type = typename details::PromiseImplementation;
+  using promise_counter_type = typename promise_type::promise_counter_type;
+  using shared_promise_type = std::shared_ptr<promise_type>;
 
   Promise()
   {

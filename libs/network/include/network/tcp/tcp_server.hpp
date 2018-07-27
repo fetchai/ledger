@@ -25,10 +25,10 @@ namespace network {
 class TCPServer : public AbstractNetworkServer
 {
 public:
-  typedef typename AbstractConnection::connection_handle_type connection_handle_type;
-  typedef NetworkManager                                      network_manager_type;
-  typedef asio::ip::tcp::tcp::acceptor                        acceptor_type;
-  typedef std::mutex                                          mutex_type;
+  using connection_handle_type = typename AbstractConnection::connection_handle_type;
+  using network_manager_type = NetworkManager;
+  using acceptor_type = asio::ip::tcp::tcp::acceptor;
+  using mutex_type = std::mutex;
 
   struct Request
   {
