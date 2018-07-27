@@ -30,25 +30,43 @@ protected:
     void SetUp() {
     }
 
-    void TearDown() {
+    void TearDown()
+    {
+    }
+
+    template<eECDSAEncoding SIG_ENCODING, eECDSAEncoding KEY_ENCODING>
+    void test_sign_verify_cycle()
+    {
+        //* Production code:
+        openssl::ECDSAPrivateKey<KEY_ENCODING> priv_key { openssl::ECDSAPrivateKey<eECDSAEncoding::bin>(priv_key_data) };
+
+        using ecdsa_signature_type = ECDSASignature<SIG_ENCODING>;
+        ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
+
+        const auto verification_result =
+            signature.Verify(priv_key.publicKey(), test_data);
+
+        //* Expectations:
+        EXPECT_TRUE(verification_result);
     }
 
 
-    template<eECDSAEncoding P_ECDSASignatureBinaryDataFormat>
-    void test_wrong_signature_fails_to_verify() {
+    template<eECDSAEncoding ENCODING>
+    void test_wrong_signature_fails_to_verify()
+    {
         //* Production code:
         openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
 
-        using ecdsa_signature_type = ECDSASignature<P_ECDSASignatureBinaryDataFormat>;
+        using ecdsa_signature_type = ECDSASignature<ENCODING>;
         ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
 
-        byte_array::ByteArray signature_copy {signature.signature()};
+        byte_array::ByteArray inv_sig_enc {signature.signature()};
 
-        ASSERT_TRUE(signature_copy.size() > 0);
+        ASSERT_TRUE(inv_sig_enc.size() > 0);
 
         //* Modify the correct signature to invalidate it
-        signature_copy[signature_copy.size()-1] += 1;
-        ecdsa_signature_type wrong_signature {signature_copy};
+        inv_sig_enc[inv_sig_enc.size()-1] += 1;
+        ecdsa_signature_type wrong_signature {inv_sig_enc};
 
         const auto verification_result =
             wrong_signature.Verify(priv_key.publicKey(), test_data);
@@ -57,12 +75,14 @@ protected:
         EXPECT_FALSE(verification_result);
     }
 
-    template<eECDSAEncoding P_ECDSASignatureBinaryDataFormat>
-    void test_construct_signature_from_binary_data() {
+
+    template<eECDSAEncoding ENCODING>
+    void test_construct_signature_from_binary_data()
+    {
         //* Production code:
         openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
 
-        using ecdsa_signature_type = ECDSASignature<P_ECDSASignatureBinaryDataFormat>;
+        using ecdsa_signature_type = ECDSASignature<ENCODING>;
         ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
 
         //* Verify that acquired signature is correct:
@@ -74,22 +94,89 @@ protected:
         //* Verify that re-constructed signature is able to verify:
         EXPECT_TRUE(signature_from_canonical_bin.Verify(priv_key.publicKey(), test_data));
     }
+
+
+    template<eECDSAEncoding ENCODING>
+    void test_invalidated_signature()
+    {
+        //static_assert(ENCODING == eECDSAEncoding::DER, "");
+
+        openssl::ECDSAPrivateKey<eECDSAEncoding::bin> priv_key(priv_key_data);
+
+        //* Production code:
+        using ecdsa_signature_type = ECDSASignature<ENCODING>;
+        ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
+
+        //* Verify that acquired signature is correct:
+        ASSERT_TRUE(signature.Verify(priv_key.publicKey(), test_data));
+
+
+        //* Invalidating signature by modifying it's first byte of it's format
+        byte_array::ByteArray inv_sig_enc {signature.signature().Copy()};
+
+        ASSERT_TRUE(inv_sig_enc.size() > 0);
+
+        //* Modify the correct signature to invalidate it
+        inv_sig_enc[0] += 1;
+
+        //* It is not possible to invalidate (format-wise) canonical or bin encoded signature, since it does NOT contain any structural/format information exept just pure data (r & s values). Thus it is only possible to make such signature not to verify.
+        if (ENCODING == eECDSAEncoding::DER)
+        {
+            EXPECT_THROW (
+                {
+                    ecdsa_signature_type inv_sig {std::move(inv_sig_enc)};
+                },
+                std::runtime_error
+            );
+        }
+        else
+        {
+            //* This shall pass without exception
+            ecdsa_signature_type inv_sig {std::move(inv_sig_enc)};
+        }
+    }
+
+    template<eECDSAEncoding ENCODING>
+    void test_wrong_data_fails_to_verify()
+    {
+        //* Production code:
+        openssl::ECDSAPrivateKey<eECDSAEncoding::bin> priv_key(priv_key_data);
+    
+        using ecdsa_signature_type = ECDSASignature<ENCODING>;
+        ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
+    
+        //* Verify that acquired signature is correct:
+        ASSERT_TRUE(signature.Verify(priv_key.publicKey(), test_data));
+    
+        byte_array::ByteArray modified_data = test_data.Copy();
+        ASSERT_TRUE(modified_data.size() > 0);
+    
+        //* Modify original data to make verification fail
+        modified_data[0] += 1;
+    
+        const auto verification_result =
+            signature.Verify(priv_key.publicKey(), modified_data);
+    
+        //* Expectations:
+        EXPECT_FALSE(verification_result);
+    }
 };
 
 
 TEST_F(ECDCSASignatureTest, test_sign_verify_cycle) {
-    //* Production code:
-    openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
+    test_sign_verify_cycle<eECDSAEncoding::canonical, eECDSAEncoding::canonical> ();
+    test_sign_verify_cycle<eECDSAEncoding::canonical, eECDSAEncoding::bin> ();
+    test_sign_verify_cycle<eECDSAEncoding::canonical, eECDSAEncoding::DER> ();
 
-    using ecdsa_signature_type = ECDSASignature<>;
-    ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
+    test_sign_verify_cycle<eECDSAEncoding::bin, eECDSAEncoding::canonical> ();
+    test_sign_verify_cycle<eECDSAEncoding::bin, eECDSAEncoding::bin> ();
+    test_sign_verify_cycle<eECDSAEncoding::bin, eECDSAEncoding::DER> ();
 
-    const auto verification_result =
-        signature.Verify(priv_key.publicKey(), test_data);
-
-    //* Expectations:
-    EXPECT_TRUE(verification_result);
+    test_sign_verify_cycle<eECDSAEncoding::DER, eECDSAEncoding::canonical> ();
+    test_sign_verify_cycle<eECDSAEncoding::DER, eECDSAEncoding::bin> ();
+    test_sign_verify_cycle<eECDSAEncoding::DER, eECDSAEncoding::DER> ();
 }
+
 
 TEST_F(ECDCSASignatureTest, test_wrong_signature_fails_to_verify__canonical) {
     test_wrong_signature_fails_to_verify<eECDSAEncoding::canonical>();
@@ -99,55 +186,6 @@ TEST_F(ECDCSASignatureTest, test_wrong_signature_fails_to_verify__DER) {
     test_wrong_signature_fails_to_verify<eECDSAEncoding::DER>();
 }
 
-TEST_F(ECDCSASignatureTest, test_invalid_DER_signature_causes_exception) {
-    //* Production code:
-    openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
-
-    using ecdsa_signature_type = ECDSASignature<eECDSAEncoding::DER>;
-    ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
-
-    //* Verify that acquired signature is correct:
-    ASSERT_TRUE(signature.Verify(priv_key.publicKey(), test_data));
-
-
-    //* Invalidating signature by modifying it's first byte of DER format
-    byte_array::ByteArray signature_copy {signature.signature()};
-
-    ASSERT_TRUE(signature_copy.size() > 0);
-
-    //* Modify the correct signature to invalidate it
-    signature_copy[0] += 1;
-
-    EXPECT_THROW (
-        {
-            ecdsa_signature_type wrong_signature {signature_copy};
-        },
-        std::runtime_error
-    );
-}
-
-TEST_F(ECDCSASignatureTest, test_wrong_data_fails_to_verify) {
-    //* Production code:
-    openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
-
-    using ecdsa_signature_type = ECDSASignature<>;
-    ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
-
-    //* Verify that acquired signature is correct:
-    ASSERT_TRUE(signature.Verify(priv_key.publicKey(), test_data));
-
-    byte_array::ByteArray modified_data = test_data.Copy();
-    ASSERT_TRUE(modified_data.size() > 0);
-
-    //* Modify original data to make verification fail
-    modified_data[0] += 1;
-
-    const auto verification_result =
-        signature.Verify(priv_key.publicKey(), modified_data);
-
-    //* Expectations:
-    EXPECT_FALSE(verification_result);
-}
 
 TEST_F(ECDCSASignatureTest, test_construct_signature_from_binary_data__canonical) {
     test_construct_signature_from_binary_data<eECDSAEncoding::canonical>();
@@ -157,9 +195,36 @@ TEST_F(ECDCSASignatureTest, test_construct_signature_from_binary_data__DER) {
     test_construct_signature_from_binary_data<eECDSAEncoding::DER>();
 }
 
+
+TEST_F(ECDCSASignatureTest, test_invalid_signature_causes_exception__DER) {
+    test_invalidated_signature<eECDSAEncoding::DER> ();
+}
+
+TEST_F(ECDCSASignatureTest, test_bin_signature_does_not_invalidate) {
+    test_invalidated_signature<eECDSAEncoding::bin> ();
+}
+
+TEST_F(ECDCSASignatureTest, test_canonical_signature_does_not_invalidate) {
+    test_invalidated_signature<eECDSAEncoding::canonical> ();
+}
+
+
+TEST_F(ECDCSASignatureTest, test_wrong_data_fails_to_verify__canonical_sig) {
+    test_wrong_data_fails_to_verify<eECDSAEncoding::canonical>();
+}
+
+TEST_F(ECDCSASignatureTest, test_wrong_data_fails_to_verify__bin_sig) {
+    test_wrong_data_fails_to_verify<eECDSAEncoding::bin>();
+}
+
+TEST_F(ECDCSASignatureTest, test_wrong_data_fails_to_verify__DER_sig) {
+    test_wrong_data_fails_to_verify<eECDSAEncoding::DER>();
+}
+
+
 TEST_F(ECDCSASignatureTest, test_canonical_signature_binary_representation_has_expected_length) {
     //* Production code:
-    openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
+    openssl::ECDSAPrivateKey<eECDSAEncoding::bin> priv_key(priv_key_data);
 
     using ecdsa_signature_type = ECDSASignature<eECDSAEncoding::canonical>;
     ecdsa_signature_type signature {ecdsa_signature_type::Sign(priv_key, test_data)};
@@ -170,31 +235,35 @@ TEST_F(ECDCSASignatureTest, test_canonical_signature_binary_representation_has_e
     //* Create signature from Canonical binary from:
     ecdsa_signature_type signature_from_canonical_bin {signature.signature()};
 
-    //* Verify that signature reconstructed from canonical bin agle to verify:
+    //* Verify that signature reconstructed from canonical binar data is able to verify:
     ASSERT_TRUE(signature_from_canonical_bin.Verify(priv_key.publicKey(), test_data));
 
     //* Expectations:
     EXPECT_EQ(ecdsa_signature_type::ecdsa_curve_type::signatureSize, signature.signature().size());
 }
 
-template<typename T>
-void enforce_execution(volatile T const &ref) {
-    (void)ref;
-}
 
 TEST_F(ECDCSASignatureTest, test_moving_semantics_constructor) {
     //* Production code:
-    openssl::ECDSAPrivateKey<> priv_key(priv_key_data);
+    openssl::ECDSAPrivateKey<eECDSAEncoding::bin> priv_key(priv_key_data);
 
-    using ecdsa_signature_type = ECDSASignature<eECDSAEncoding::canonical>;
 
-    for (std::size_t i = 0; i<100; ++i) {
-        ecdsa_signature_type signature0 {ecdsa_signature_type::Sign(priv_key, test_data)};
-        enforce_execution(signature0);
-        ECDSASignature<eECDSAEncoding::DER> signature1 {std::move(signature0)};
-        enforce_execution(signature1);
-        EXPECT_FALSE(signature0.signature_ECDSA_SIG());
-    }
+    ECDSASignature<eECDSAEncoding::canonical> sig_0{ ECDSASignature<eECDSAEncoding::canonical>::Sign(priv_key, test_data) };
+    //* Verify that acquired signature is correct:
+    ASSERT_TRUE(sig_0.Verify(priv_key.publicKey(), test_data));
+    ASSERT_TRUE(sig_0.signature_ECDSA_SIG());
+
+    ECDSASignature<eECDSAEncoding::canonical> sig_1{ std::move(sig_0) };
+    //* Expectations:
+    EXPECT_FALSE(sig_0.signature_ECDSA_SIG());
+    EXPECT_TRUE(sig_1.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_1.Verify(priv_key.publicKey(), test_data));
+    
+    ECDSASignature<eECDSAEncoding::canonical> sig_2{ std::move(sig_1) };
+    //* Expectations:
+    EXPECT_FALSE(sig_1.signature_ECDSA_SIG());
+    EXPECT_TRUE(sig_2.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_2.Verify(priv_key.publicKey(), test_data));
 }
 
 } // namespace anonymous
