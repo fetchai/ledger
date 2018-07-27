@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_PY_BYTE_ARRAY_HPP
-#define BYTE_ARRAY_PY_BYTE_ARRAY_HPP
+#pragma once
 #include "byte_array/referenced_byte_array.hpp"
 namespace fetch {
 namespace byte_array {
@@ -24,4 +23,3 @@ void Build(pybind11::module &m)
 }
 };
 };
-#endif

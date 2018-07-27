@@ -1,12 +1,9 @@
-#ifndef FETCH_MACROS_HPP
-#define FETCH_MACROS_HPP
+#pragma once
 
-#define FETCH_UNUSED(x)   (void)(x)
+#define FETCH_UNUSED(x) (void)(x)
 
 #ifdef __GNUC__
-  #define FETCH_MAYBE_UNUSED __attribute__((used))
+#define FETCH_MAYBE_UNUSED __attribute__((used))
 #else
-  #define FETCH_MAYBE_UNUSED
+#define FETCH_MAYBE_UNUSED
 #endif
-
-#endif //FETCH_MACROS_HPP

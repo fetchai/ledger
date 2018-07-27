@@ -1,19 +1,14 @@
-#ifndef PROTOCOLS_QUICK_START_COMMANDS_HPP
-#define PROTOCOLS_QUICK_START_COMMANDS_HPP
+#pragma once
 
-namespace fetch
-{
-namespace protocols
-{
+namespace fetch {
+namespace protocols {
 
 struct SubscribeProto
 {
-enum
-{
-  NEW_MESSAGE = 125,
+  enum
+  {
+    NEW_MESSAGE = 125,
+  };
 };
-};
-}
-}
-
-#endif
+}  // namespace protocols
+}  // namespace fetch

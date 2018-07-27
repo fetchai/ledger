@@ -1,5 +1,5 @@
-#include <iostream>
 #include "core/script/variant.hpp"
+#include <iostream>
 
 #include <algorithm>
 #include <cassert>
@@ -9,9 +9,12 @@ using namespace fetch::script;
 
 #include "testing/unittest.hpp"
 
-int main() {
-  SCENARIO("Basic manipulation") {
-    SECTION("Variant") {
+int main()
+{
+  SCENARIO("Basic manipulation")
+  {
+    SECTION("Variant")
+    {
       Variant x;
       x = 1;
       EXPECT(x.type() == fetch::script::VariantType::INTEGER);
@@ -25,7 +28,8 @@ int main() {
       EXPECT(x.type() == fetch::script::VariantType::UNDEFINED);
     };
 
-    SECTION("Variant list") {
+    SECTION("Variant list")
+    {
       VariantList x(6);
       EXPECT(x.size() == 6);
 
@@ -48,23 +52,22 @@ int main() {
       EXPECT(y[2].type() == fetch::script::VariantType::UNDEFINED);
     };
 
-    SECTION("Variant object") {
-      Variant obj = Variant::Object();
+    SECTION("Variant object")
+    {
+      Variant obj                 = Variant::Object();
       obj["numberOfTransactions"] = uint32_t(9);
-      EXPECT(obj["numberOfTransactions"].type() ==
-             fetch::script::VariantType::INTEGER);
+      EXPECT(obj["numberOfTransactions"].type() == fetch::script::VariantType::INTEGER);
       EXPECT(obj["numberOfTransactions"].as_int() == 9);
 
       obj["numberOfTransactions"] = "Hello world";
       std::cout << obj["numberOfTransactions"].type() << std::endl;
-      obj["blah"] = 9;
+      obj["blah"]  = 9;
       obj["Hello"] = false;
-      obj["XX"] = nullptr;
+      obj["XX"]    = nullptr;
 
       std::cout << obj["numberOfTransactions"].type() << std::endl;
 
-      EXPECT(obj["numberOfTransactions"].type() ==
-             fetch::script::VariantType::STRING);
+      EXPECT(obj["numberOfTransactions"].type() == fetch::script::VariantType::STRING);
       EXPECT(obj["numberOfTransactions"].as_byte_array() == "Hello world");
 
       EXPECT(obj["blah"].type() == fetch::script::VariantType::INTEGER);
@@ -76,33 +79,32 @@ int main() {
       EXPECT(obj["XX"].type() == fetch::script::VariantType::NULL_VALUE);
 
       // Failing test
-      Variant result = Variant::Object();
+      Variant result                 = Variant::Object();
       result["numberOfTransactions"] = uint32_t(2);
-      result["hash"] = "some_hash";
+      result["hash"]                 = "some_hash";
 
       std::ostringstream stream;
       stream << result;  // failing operation
 
       // Remove all spaces for string compare
-      std::string asString{stream.str()};
-      std::string::iterator end_pos =
-          std::remove(asString.begin(), asString.end(), ' ');
+      std::string           asString{stream.str()};
+      std::string::iterator end_pos = std::remove(asString.begin(), asString.end(), ' ');
       asString.erase(end_pos, asString.end());
 
       std::cerr << asString << std::endl;
 
-      EXPECT(asString.compare(
-                 "{\"numberOfTransactions\":2,\"hash\":\"some_hash\"}") == 0);
+      EXPECT(asString.compare("{\"numberOfTransactions\":2,\"hash\":\"some_hash\"}") == 0);
     };
 
-    SECTION("Nested variants") {
+    SECTION("Nested variants")
+    {
       Variant x;
       x.MakeArray(2);
       x[0].MakeArray(3);
       x[0][0] = 1;
       x[0][1] = 3;
       x[0][2] = 7;
-      x[1] = 1.23e-6;
+      x[1]    = 1.23e-6;
 
       EXPECT(x.type() == fetch::script::VariantType::ARRAY);
       EXPECT(x[0].type() == fetch::script::VariantType::ARRAY);
@@ -115,8 +117,10 @@ int main() {
     };
   };
 
-  SCENARIO("Streaming") {
-    SECTION("Variant list") {
+  SCENARIO("Streaming")
+  {
+    SECTION("Variant list")
+    {
       VariantList x(6);
       EXPECT(x.size() == 6);
 
@@ -132,7 +136,8 @@ int main() {
       EXPECT(ss.str() == "[1.2, \"Hello world\", 2, true, (undefined), null]");
     };
 
-    SECTION("Nested variants") {
+    SECTION("Nested variants")
+    {
       Variant x;
 
       x.MakeArray(2);
@@ -140,7 +145,7 @@ int main() {
       x[0][0] = 1;
       x[0][1] = 3;
       x[0][2] = 7;
-      x[1] = 1.23;
+      x[1]    = 1.23;
 
       std::stringstream ss;
       ss.str("");

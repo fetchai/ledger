@@ -1,15 +1,14 @@
-#ifndef HTTP_REQUEST_HPP
-#define HTTP_REQUEST_HPP
+#pragma once
 #include "core/assert.hpp"
-#include "core/byte_array/consumers.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
-#include "network/fetch_asio.hpp"
+#include "core/json/document.hpp"
 #include "http/header.hpp"
 #include "http/method.hpp"
 #include "http/query.hpp"
 #include "http/status.hpp"
-#include "core/json/document.hpp"
+#include "network/fetch_asio.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -17,35 +16,39 @@
 namespace fetch {
 namespace http {
 
-class HTTPRequest {
- public:
+class HTTPRequest
+{
+public:
   typedef byte_array::ConstByteArray byte_array_type;
 
   HTTPRequest() {}
 
-  static bool SetBody(HTTPRequest &req, asio::streambuf &buffer) {
+  static bool SetBody(HTTPRequest &req, asio::streambuf &buffer)
+  {
     LOG_STACK_TRACE_POINT;
 
     // TODO: Handle encoding
     req.body_data_ = byte_array::ByteArray();
     req.body_data_.Resize(req.content_length());
-    if (buffer.size() < req.body_data_.size()) {
+    if (buffer.size() < req.body_data_.size())
+    {
       req.is_valid_ = false;
       return false;
     }
 
-    std::istream is(&buffer);
+    std::istream                   is(&buffer);
     std::istreambuf_iterator<char> cit(is);
 
-    for (std::size_t i = 0; i < req.body_data_.size(); ++i) {
+    for (std::size_t i = 0; i < req.body_data_.size(); ++i)
+    {
       req.body_data_[i] = uint8_t(*cit);
       ++cit;
     }
     return true;
   }
 
-  static bool SetHeader(HTTPRequest &req, asio::streambuf &buffer,
-                        std::size_t const &end) {
+  static bool SetHeader(HTTPRequest &req, asio::streambuf &buffer, std::size_t const &end)
+  {
     LOG_STACK_TRACE_POINT;
 
     req.header_data_ = byte_array::ByteArray();
@@ -53,65 +56,75 @@ class HTTPRequest {
 
     std::istream is(&buffer);
 
-    if (buffer.size() < end) {
+    if (buffer.size() < end)
+    {
       TODO_FAIL("trying to extract more than possible");
     }
 
     std::istreambuf_iterator<char> cit(is);
 
-    std::size_t last_pos = 0, split_key_at = 0, split_val_at = 0;
-    std::size_t line = 0;
+    std::size_t           last_pos = 0, split_key_at = 0, split_val_at = 0;
+    std::size_t           line = 0;
     byte_array::ByteArray key, value, start_line;
 
-    for (std::size_t i = 0; i < end; ++i) {
+    for (std::size_t i = 0; i < end; ++i)
+    {
       char c = *cit;
       ++cit;
 
       req.header_data_[i] = uint8_t(c);
 
-      switch (c) {
-        case ':':
-          if (split_key_at == 0) {
-            split_val_at = split_key_at = i;
+      switch (c)
+      {
+      case ':':
+        if (split_key_at == 0)
+        {
+          split_val_at = split_key_at = i;
+          ++split_val_at;
+          while ((i + 1 < end) && (*cit) == ' ')
+          {
             ++split_val_at;
-            while ((i + 1 < end) && (*cit) == ' ') {
-              ++split_val_at;
-              ++i;
-              ++cit;
-            }
+            ++i;
+            ++cit;
           }
-          break;
-        case '\n':
-          last_pos = i + 1;
-          split_key_at = 0;
-          break;
-        case '\r':
-          if (last_pos != i) {
-            if (line > 0) {
-              key =
-                  req.header_data_.SubArray(last_pos, split_key_at - last_pos);
+        }
+        break;
+      case '\n':
+        last_pos     = i + 1;
+        split_key_at = 0;
+        break;
+      case '\r':
+        if (last_pos != i)
+        {
+          if (line > 0)
+          {
+            key = req.header_data_.SubArray(last_pos, split_key_at - last_pos);
 
-              for (std::size_t t = 0; t < key.size(); ++t) {
-                char &cc = reinterpret_cast<char &>(key[t]);
-                if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
-              }
-
-              ++split_key_at;
-              value = req.header_data_.SubArray(split_val_at, i - split_val_at);
-
-              if (key == "content-length") {
-                req.content_length_ = uint64_t(value.AsInt());
-              }
-
-              req.header_.Add(key, value);
-            } else {
-              start_line = req.header_data_.SubArray(0, i);
+            for (std::size_t t = 0; t < key.size(); ++t)
+            {
+              char &cc = reinterpret_cast<char &>(key[t]);
+              if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
             }
 
-            ++line;
+            ++split_key_at;
+            value = req.header_data_.SubArray(split_val_at, i - split_val_at);
+
+            if (key == "content-length")
+            {
+              req.content_length_ = uint64_t(value.AsInt());
+            }
+
+            req.header_.Add(key, value);
+          }
+          else
+          {
+            start_line = req.header_data_.SubArray(0, i);
           }
 
-          break;
+          ++line;
+        }
+
+        break;
       }
     }
 
@@ -138,19 +151,23 @@ class HTTPRequest {
 
   byte_array::ConstByteArray body() const { return body_data_; }
 
-  json::JSONDocument JSON() const {
+  json::JSONDocument JSON() const
+  {
     LOG_STACK_TRACE_POINT;
 
     return json::JSONDocument(body());
   }
 
- private:
-  void ParseStartLine(byte_array::ByteArray &line) {
+private:
+  void ParseStartLine(byte_array::ByteArray &line)
+  {
     LOG_STACK_TRACE_POINT;
 
     std::size_t i = 0;
-    while (line[i] != ' ') {
-      if (i >= line.size()) {
+    while (line[i] != ' ')
+    {
+      if (i >= line.size())
+      {
         is_valid_ = false;
         return;
       }
@@ -161,25 +178,38 @@ class HTTPRequest {
     }
 
     byte_array_type method = line.SubArray(0, i);
-    if (method == "get") {
+    if (method == "get")
+    {
       method_ = Method::GET;
-    } else if (method == "post") {
+    }
+    else if (method == "post")
+    {
       method_ = Method::POST;
-    } else if (method == "put") {
+    }
+    else if (method == "put")
+    {
       method_ = Method::PUT;
-    } else if (method == "patch") {
+    }
+    else if (method == "patch")
+    {
       method_ = Method::PATCH;
-    } else if (method == "delete") {
+    }
+    else if (method == "delete")
+    {
       method_ = Method::DELETE;
-    } else if (method == "options") {
+    }
+    else if (method == "options")
+    {
       method_ = Method::OPTIONS;
     }
 
     ++i;
 
     std::size_t j = i;
-    while (line[i] != ' ') {
-      if (i >= line.size()) {
+    while (line[i] != ' ')
+    {
+      if (i >= line.size())
+      {
         is_valid_ = false;
         return;
       }
@@ -191,8 +221,10 @@ class HTTPRequest {
 
     // Extracting URI parameters
     std::size_t k = j;
-    while (k < i) {
-      if (line[k] == '?') {
+    while (k < i)
+    {
+      if (line[k] == '?')
+      {
         break;
       }
       ++k;
@@ -200,43 +232,48 @@ class HTTPRequest {
 
     uri_ = line.SubArray(j, k - j);
 
-    std::size_t last = k + 1, equal = std::size_t(-1);
+    std::size_t           last = k + 1, equal = std::size_t(-1);
     byte_array::ByteArray key, value;
 
-    while (k < i) {
-      switch (line[k]) {
-        case '=':
-          equal = k;
-          break;
-        case '&':
-          equal = std::min(k, equal);
-          key = line.SubArray(last, equal - last);
-          equal += (equal < k);
-          value = line.SubArray(equal, k - equal);
+    while (k < i)
+    {
+      switch (line[k])
+      {
+      case '=':
+        equal = k;
+        break;
+      case '&':
+        equal = std::min(k, equal);
+        key   = line.SubArray(last, equal - last);
+        equal += (equal < k);
+        value = line.SubArray(equal, k - equal);
 
-          query_.Add(key, value);
-          equal = std::size_t(-1);
-          last = k + 1;
-          break;
+        query_.Add(key, value);
+        equal = std::size_t(-1);
+        last  = k + 1;
+        break;
       }
       ++k;
     }
 
     equal = std::min(k, equal);
-    key = line.SubArray(last, equal - last);
+    key   = line.SubArray(last, equal - last);
     equal += (equal < k);
     value = line.SubArray(equal, k - equal);
     query_.Add(key, value);
 
-    while (line[i] == ' ') {
-      if (i >= line.size()) {
+    while (line[i] == ' ')
+    {
+      if (i >= line.size())
+      {
         is_valid_ = false;
         return;
       }
       ++i;
     }
     protocol_ = line.SubArray(i, line.size() - i);
-    for (std::size_t t = i; t < line.size(); ++t) {
+    for (std::size_t t = i; t < line.size(); ++t)
+    {
       char &cc = reinterpret_cast<char &>(line[t]);
       if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
     }
@@ -245,10 +282,10 @@ class HTTPRequest {
   byte_array::ByteArray header_data_;
   byte_array::ByteArray body_data_;
 
-  Header header_;
+  Header   header_;
   QuerySet query_;
 
-  Method method_;
+  Method          method_;
   byte_array_type full_uri_;
   byte_array_type uri_;
   byte_array_type protocol_;
@@ -257,7 +294,5 @@ class HTTPRequest {
 
   std::size_t content_length_ = 0;
 };
-}
-}
-
-#endif
+}  // namespace http
+}  // namespace fetch

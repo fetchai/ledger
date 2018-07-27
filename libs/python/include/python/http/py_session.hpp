@@ -1,21 +1,15 @@
-#ifndef LIBFETCHCORE_HTTP_SESSION_HPP
-#define LIBFETCHCORE_HTTP_SESSION_HPP
+#pragma once
 #include "http/session.hpp"
 
-#include"fetch_pybind.hpp"
+#include "fetch_pybind.hpp"
 
-namespace fetch
-{
-namespace http
-{
+namespace fetch {
+namespace http {
 
-void BuildSession(pybind11::module &module) {
+void BuildSession(pybind11::module &module)
+{
   namespace py = pybind11;
-  py::class_<Session>(module, "Session" )
-    .def(py::init<>()) /* No constructors found */;
-
+  py::class_<Session>(module, "Session").def(py::init<>()) /* No constructors found */;
 }
-};
-};
-
-#endif
+};  // namespace http
+};  // namespace fetch

@@ -1,111 +1,98 @@
-#ifndef THREADING_POOL_HPP
-#define THREADING_POOL_HPP
+#pragma once
 
 #include "core/mutex.hpp"
 
-#include <future>
+#include <condition_variable>
 #include <functional>
+#include <future>
 #include <queue>
+#include <thread>
 #include <type_traits>
 #include <utility>
-#include <condition_variable>
-#include <thread>
 
 namespace fetch {
 namespace threading {
 
-
-
-class Pool 
+class Pool
 {
 public:
-  Pool() : Pool(2*std::thread::hardware_concurrency()) 
+  Pool() : Pool(2 * std::thread::hardware_concurrency()) {}
+
+  Pool(std::size_t const &n)
   {
-  }
-  
-  Pool(std::size_t const &n)    
-  {
-    running_ = true;    
-    for(std::size_t i=0; i < n; ++i) {
+    running_ = true;
+    for (std::size_t i = 0; i < n; ++i)
+    {
       workers_.emplace_back([this]() { this->Work(); });
     }
-    
   }
 
-  ~Pool() 
+  ~Pool()
   {
     running_ = false;
     condition_.notify_all();
-    for(auto &w: workers_)
-      w.join();
-    
+    for (auto &w : workers_) w.join();
   }
-   
-  template< typename F, typename ...Args>
-  std::future< typename std::result_of<F(Args...)>::type >
-  Dispatch(F &&f, Args &&...args) 
+
+  template <typename F, typename... Args>
+  std::future<typename std::result_of<F(Args...)>::type> Dispatch(F &&f, Args &&... args)
   {
-    typedef typename std::result_of<F(Args...)>::type  return_type;
-    typedef std::packaged_task< return_type() > task_type;
-    
-    std::shared_ptr< task_type >  task = std::make_shared< task_type >(std::bind(f, std::forward<Args>(args)... ));
+    typedef typename std::result_of<F(Args...)>::type return_type;
+    typedef std::packaged_task<return_type()>         task_type;
+
+    std::shared_ptr<task_type> task =
+        std::make_shared<task_type>(std::bind(f, std::forward<Args>(args)...));
 
     {
-      std::lock_guard< std::mutex > lock(mutex_);
-      tasks_.emplace( [task](){ (*task)(); } );
+      std::lock_guard<std::mutex> lock(mutex_);
+      tasks_.emplace([task]() { (*task)(); });
     }
-    
+
     condition_.notify_one();
     return task->get_future();
   }
 
-  void Wait() 
+  void Wait()
   {
-    while(!Empty()) {
+    while (!Empty())
+    {
       std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
   }
-  
-  bool Empty() 
+
+  bool Empty()
   {
-    std::unique_lock< std::mutex > lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     return tasks_.empty();
   }
-  
+
 private:
-  void Work() 
+  void Work()
   {
-    while(running_) {
+    while (running_)
+    {
       std::function<void()> task = NextTask();
-      if(task) task();
-      
-    }   
+      if (task) task();
+    }
   }
 
-  std::function<void()> NextTask() 
+  std::function<void()> NextTask()
   {
-    std::unique_lock< std::mutex > lock(mutex_);
-    condition_.wait(lock,[this]{
-        return (!bool(running_)) || (!tasks_.empty());
-      });
-    if( !bool(running_) ) return std::function<void()> ();
-    
+    std::unique_lock<std::mutex> lock(mutex_);
+    condition_.wait(lock, [this] { return (!bool(running_)) || (!tasks_.empty()); });
+    if (!bool(running_)) return std::function<void()>();
+
     std::function<void()> task = std::move(tasks_.front());
     tasks_.pop();
     return task;
-    
   }
-  
-  std::atomic< bool > running_;  
-  std::mutex mutex_;
-  std::vector< std::thread > workers_;
-  std::queue< std::function< void() > > tasks_;
-  std::condition_variable condition_;
-  
+
+  std::atomic<bool>                 running_;
+  std::mutex                        mutex_;
+  std::vector<std::thread>          workers_;
+  std::queue<std::function<void()>> tasks_;
+  std::condition_variable           condition_;
 };
 
-
-};
-};
-
-#endif
+};  // namespace threading
+};  // namespace fetch

@@ -1,7 +1,4 @@
-#ifndef LIBFETCHCORE_STRING_TRIM_HPP
-#define LIBFETCHCORE_STRING_TRIM_HPP
+#pragma once
 #include "string/trim.hpp"
 
-#include"fetch_pybind.hpp"
-
-#endif
+#include "fetch_pybind.hpp"

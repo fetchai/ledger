@@ -1,5 +1,4 @@
-#ifndef SERVICE_PUBLICATION_FEED_HPP
-#define SERVICE_PUBLICATION_FEED_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "network/service/abstract_callable.hpp"
 #include "network/service/abstract_publication_feed.hpp"
@@ -54,12 +53,14 @@ namespace service {
  * As default 256 feeds are supported, but this can be changed at the
  * time where the object is constructed.
  */
-class HasPublicationFeed : public AbstractPublicationFeed {
- public:
+class HasPublicationFeed : public AbstractPublicationFeed
+{
+public:
   /* Constructor for HasPublicationFeed.
    * @n is the maximum number of support feeds.
    */
-  HasPublicationFeed(std::size_t const &n = 256) {
+  HasPublicationFeed(std::size_t const &n = 256)
+  {
     LOG_STACK_TRACE_POINT;
 
     publisher_.resize(n);
@@ -70,11 +71,12 @@ class HasPublicationFeed : public AbstractPublicationFeed {
    * See <AbstractPublicationFeed::create_publisher> for documentation
    * related to general purpose of this function.
    */
-  void create_publisher(feed_handler_type feed,
-                        function_type function) override {
+  void create_publisher(feed_handler_type feed, function_type function) override
+  {
     LOG_STACK_TRACE_POINT;
 
-    if (publisher_[feed]) {
+    if (publisher_[feed])
+    {
       TODO_FAIL(
           "FeedEvents does not have support for multiple publishers. Please "
           "use MultiFeedEvents");
@@ -93,7 +95,8 @@ class HasPublicationFeed : public AbstractPublicationFeed {
    * while having another protocol that would publish messages over TCP.
    */
   template <typename... Args>
-  void Publish(feed_handler_type feed, Args&&... args) {
+  void Publish(feed_handler_type feed, Args &&... args)
+  {
     LOG_STACK_TRACE_POINT;
 
     serializer_type params;
@@ -105,15 +108,15 @@ class HasPublicationFeed : public AbstractPublicationFeed {
 
     if (publisher_[feed])
       publisher_[feed](params.data());
-    else {
+    else
+    {
       fetch::logger.Warn("Could not find publisher for ", feed);
       fetch::logger.StackTrace(2, false);
     }
   }
 
- private:
+private:
   std::vector<function_type> publisher_;
 };
-}
-}
-#endif
+}  // namespace service
+}  // namespace fetch

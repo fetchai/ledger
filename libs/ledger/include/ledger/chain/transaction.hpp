@@ -1,74 +1,65 @@
-#ifndef CHAIN_TRANSACTION_HPP
-#define CHAIN_TRANSACTION_HPP
+#pragma once
 
 #include "ledger/chain/mutable_transaction.hpp"
 
 namespace fetch {
 namespace chain {
 
-class UnverifiedTransaction : private MutableTransaction 
+class UnverifiedTransaction : private MutableTransaction
 {
 public:
   typedef MutableTransaction super_type;
-  UnverifiedTransaction()  = default;
+  UnverifiedTransaction()                              = default;
   UnverifiedTransaction(UnverifiedTransaction &&other) = default;
-  UnverifiedTransaction& operator=(UnverifiedTransaction &&other) = default;
-  
-  UnverifiedTransaction(UnverifiedTransaction const &other)
-    : MutableTransaction()
+  UnverifiedTransaction &operator=(UnverifiedTransaction &&other) = default;
+
+  UnverifiedTransaction(UnverifiedTransaction const &other) : MutableTransaction()
   {
     this->Copy(other);
-  }  
-  
-  UnverifiedTransaction& operator=(UnverifiedTransaction const &other) 
+  }
+
+  UnverifiedTransaction &operator=(UnverifiedTransaction const &other)
   {
     this->Copy(other);
-    return *this;    
+    return *this;
   }
 
-  bool operator<(UnverifiedTransaction const&other) const 
-  {
-    return digest() < other.digest();
-  }
+  bool operator<(UnverifiedTransaction const &other) const { return digest() < other.digest(); }
 
-  using super_type::VERSION;  
+  using super_type::VERSION;
   using super_type::hasher_type;
   using super_type::digest_type;
-  //using super_type::;
+  // using super_type::;
   using super_type::resources;
   using super_type::summary;
   using super_type::data;
-  using super_type::signature;  
-  using super_type::contract_name;    
+  using super_type::signature;
+  using super_type::contract_name;
   using super_type::digest;
-  
-  MutableTransaction GetMutable() 
+
+  MutableTransaction GetMutable()
   {
     MutableTransaction ret;
-    ret.Copy( *this );
+    ret.Copy(*this);
     return ret;
   }
+
 protected:
   using super_type::set_summary;
   using super_type::set_data;
   using super_type::set_signature;
   using super_type::set_contract_name;
-  
+
   using super_type::UpdateDigest;
-  using super_type::Verify;  
+  using super_type::Verify;
 
   using super_type::Copy;
-  
-  
-  void Copy(UnverifiedTransaction const &tx) 
-  {
-    super_type::Copy(tx);
-  }
-  
-  
+
+  void Copy(UnverifiedTransaction const &tx) { super_type::Copy(tx); }
+
   template <typename T>
   friend void Serialize(T &serializer, UnverifiedTransaction const &b);
-  
+
   template <typename T>
   friend void Deserialize(T &serializer, UnverifiedTransaction &b);
 };
@@ -76,21 +67,21 @@ protected:
 class VerifiedTransaction : public UnverifiedTransaction
 {
 public:
-  typedef UnverifiedTransaction super_type;  
+  typedef UnverifiedTransaction super_type;
 
-  VerifiedTransaction()  = default;
+  VerifiedTransaction()                            = default;
   VerifiedTransaction(VerifiedTransaction &&other) = default;
-  VerifiedTransaction& operator=(VerifiedTransaction &&other) = default;
-  
-  VerifiedTransaction(VerifiedTransaction const &other)
-    : UnverifiedTransaction() {
+  VerifiedTransaction &operator=(VerifiedTransaction &&other) = default;
+
+  VerifiedTransaction(VerifiedTransaction const &other) : UnverifiedTransaction()
+  {
     this->Copy(other);
   }
 
-  VerifiedTransaction& operator=(VerifiedTransaction const &other) 
+  VerifiedTransaction &operator=(VerifiedTransaction const &other)
   {
     this->Copy(other);
-    return *this;        
+    return *this;
   }
 
   using super_type::GetMutable;
@@ -98,7 +89,7 @@ public:
   static VerifiedTransaction Create(fetch::chain::MutableTransaction &&trans)
   {
     fetch::chain::MutableTransaction x;
-    std::swap(x,trans);
+    std::swap(x, trans);
     return VerifiedTransaction::Create(x);
   }
 
@@ -106,13 +97,13 @@ public:
   {
     VerifiedTransaction ret;
     ret.Finalise(trans);
-    return ret;    
+    return ret;
   }
 
   static VerifiedTransaction Create(UnverifiedTransaction &&trans)
   {
     UnverifiedTransaction x;
-    std::swap(x,trans);
+    std::swap(x, trans);
     return VerifiedTransaction::Create(x);
   }
 
@@ -120,47 +111,42 @@ public:
   {
     VerifiedTransaction ret;
     ret.Finalise(trans);
-    return ret;    
+    return ret;
   }
 
 protected:
-  void Copy(VerifiedTransaction const &tx) 
-  {
-    super_type::Copy(tx);
-  }
-  
-  bool Finalise(fetch::chain::MutableTransaction &base) 
+  void Copy(VerifiedTransaction const &tx) { super_type::Copy(tx); }
+
+  bool Finalise(fetch::chain::MutableTransaction &base)
   {
     this->Copy(base);
     UpdateDigest();
     return Verify();
   }
 
-  bool Finalise(fetch::chain::UnverifiedTransaction &base) 
+  bool Finalise(fetch::chain::UnverifiedTransaction &base)
   {
     this->Copy(base);
     UpdateDigest();
     return Verify();
   }
-  
+
   using super_type::set_summary;
   using super_type::set_data;
   using super_type::set_signature;
   using super_type::set_contract_name;
   using super_type::Copy;
   using super_type::UpdateDigest;
-  using super_type::Verify;  
-  
+  using super_type::Verify;
+
   template <typename T>
   friend void Serialize(T &serializer, VerifiedTransaction const &b);
-  
+
   template <typename T>
   friend void Deserialize(T &serializer, VerifiedTransaction &b);
 };
 
 typedef VerifiedTransaction Transaction;
 
-} // namespace chain
-} // namespace fetch
-
-#endif
+}  // namespace chain
+}  // namespace fetch

@@ -148,3 +148,31 @@ function(configure_library_targets)
   endforeach()
 
 endfunction(configure_library_targets)
+
+macro(detect_environment)
+
+  # detect if we are running in a Jetbrains IDE
+  set(FETCH_IS_JETBRAINS_IDE FALSE)
+  if ($ENV{JETBRAINS_IDE})
+    set(FETCH_IS_JETBRAINS_IDE TRUE)
+  endif()
+
+  if (FETCH_ENABLE_CLANG_TIDY)
+
+    find_program(
+      CLANG_TIDY_EXE
+      NAMES "clang-tidy"
+      DOC "Path to clang-tidy executable"
+    )
+    if(NOT CLANG_TIDY_EXE)
+      message(STATUS "clang-tidy: not found.")
+    elseif(FETCH_IS_JETBRAINS_IDE)
+      message(STATUS "clang-tidy: disabled")
+    else()
+      message(STATUS "clang-tidy: ${CLANG_TIDY_EXE}")
+      set(FETCH_CLANG_TIDY_CFG "${CLANG_TIDY_EXE}" "-checks=*")
+    endif()
+
+  endif(FETCH_ENABLE_CLANG_TIDY)
+
+endmacro()

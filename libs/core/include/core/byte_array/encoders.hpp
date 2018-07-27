@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_ENCODERS_HPP
-#define BYTE_ARRAY_ENCODERS_HPP
+#pragma once
 #include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
@@ -7,7 +6,5 @@ namespace byte_array {
 
 ConstByteArray ToBase64(ConstByteArray const &str);
 ConstByteArray ToHex(ConstByteArray const &str);
-}
-}
-
-#endif
+}  // namespace byte_array
+}  // namespace fetch

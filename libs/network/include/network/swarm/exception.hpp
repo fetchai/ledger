@@ -1,8 +1,7 @@
-#ifndef SWARM_EXCEPTION_HPP
-#define SWARM_EXCEPTION_HPP
+#pragma once
+#include "core/logger.hpp"
 #include <exception>
 #include <string>
-#include "core/logger.hpp"
 
 namespace fetch {
 namespace swarm {
@@ -10,8 +9,7 @@ namespace swarm {
 class SwarmException : public std::exception
 {
 public:
-  SwarmException(std::string explanation)
-    : explanation_(explanation)
+  SwarmException(std::string explanation) : explanation_(explanation)
   {
     LOG_STACK_TRACE_POINT;
     LOG_SET_CONTEXT_VARIABLE(stack_trace_);
@@ -19,14 +17,11 @@ public:
 
   virtual ~SwarmException() { LOG_STACK_TRACE_POINT; }
 
-  char const* what() const noexcept override { return explanation_.c_str(); }
-  uint64_t error_code() const { return 1; }
+  char const *what() const noexcept override { return explanation_.c_str(); }
+  uint64_t    error_code() const { return 1; }
   std::string explanation() const { return explanation_; }
 
-  void StackTrace() const
-  {
-    LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception");
-  }
+  void StackTrace() const { LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception"); }
 
 private:
   std::string explanation_;
@@ -34,7 +29,5 @@ private:
   LOG_CONTEXT_VARIABLE(stack_trace_)
 };
 
-}
-}
-
-#endif
+}  // namespace swarm
+}  // namespace fetch

@@ -1,22 +1,15 @@
-#ifndef PROTOCOLS_FETCH_PROTOCOLS_HPP
-#define PROTOCOLS_FETCH_PROTOCOLS_HPP
+#pragma once
 
-namespace fetch
-{
-namespace protocols
-{
+namespace fetch {
+namespace protocols {
 
-struct FetchProtocols
+struct QuickStartProtocols
 {
-
-enum
-{
-  QUICK_START = 1
+  enum
+  {
+    QUICK_START = 1
+  };
 };
 
-};
-
-}
-}
-
-#endif
+}  // namespace protocols
+}  // namespace fetch

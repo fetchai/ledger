@@ -1,19 +1,14 @@
-#ifndef PROTOCOLS_SWARM_COMMANDS_HPP
-#define PROTOCOLS_SWARM_COMMANDS_HPP
+#pragma once
 
-namespace fetch
-{
-namespace protocols
-{
+namespace fetch {
+namespace protocols {
 
 struct Swarm
 {
-enum
-{
-  CLIENT_NEEDS_PEER = 1
+  enum
+  {
+    CLIENT_NEEDS_PEER = 1
+  };
 };
-};
-}
-}
-
-#endif
+}  // namespace protocols
+}  // namespace fetch

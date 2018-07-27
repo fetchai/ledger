@@ -1,7 +1,4 @@
-#ifndef LIBFETCHCORE_HTTP_QUERY_HPP
-#define LIBFETCHCORE_HTTP_QUERY_HPP
+#pragma once
 #include "http/query.hpp"
 
-#include"fetch_pybind.hpp"
-
-#endif
+#include "fetch_pybind.hpp"

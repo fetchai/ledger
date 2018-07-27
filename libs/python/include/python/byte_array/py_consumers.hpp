@@ -1,7 +1,4 @@
-#ifndef LIBFETCHCORE_BYTE_ARRAY_CONSUMERS_HPP
-#define LIBFETCHCORE_BYTE_ARRAY_CONSUMERS_HPP
+#pragma once
 
-#include"core/byte_array/consumers.hpp"
-#include"python/fetch_pybind.hpp"
-
-#endif
+#include "core/byte_array/consumers.hpp"
+#include "python/fetch_pybind.hpp"

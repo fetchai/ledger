@@ -27,6 +27,13 @@ function(setup_library name)
     add_library(${name} ${headers} ${srcs})
     target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+    if(FETCH_CLANG_TIDY_CFG)
+      set_target_properties(
+        ${name} PROPERTIES
+        CXX_CLANG_TIDY "${FETCH_CLANG_TIDY_CFG}"
+      )
+    endif(FETCH_CLANG_TIDY_CFG)
+
   endif()
 endfunction()
 

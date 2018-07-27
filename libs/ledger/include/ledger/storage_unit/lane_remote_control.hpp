@@ -1,151 +1,150 @@
-#ifndef LEDGER_STORAGE_UNIT_LANE_REMOTE_CONTROL_HPP
-#define LEDGER_STORAGE_UNIT_LANE_REMOTE_CONTROL_HPP
-#include"network/service/client.hpp"
-#include"ledger/storage_unit/lane_controller_protocol.hpp"
-#include"ledger/storage_unit/lane_service.hpp"
+#pragma once
+#include "ledger/storage_unit/lane_controller_protocol.hpp"
+#include "ledger/storage_unit/lane_service.hpp"
+#include "network/service/client.hpp"
 
-#include<unordered_map>
-namespace fetch
-{
-namespace ledger
-{
+#include <unordered_map>
+namespace fetch {
+namespace ledger {
 
-class LaneRemoteControl 
+class LaneRemoteControl
 {
 public:
-  typedef service::ServiceClient service_type;
-  typedef std::shared_ptr< service_type > shared_service_type;
-  typedef std::weak_ptr< service_type > weak_service_type;  
+  typedef service::ServiceClient        service_type;
+  typedef std::shared_ptr<service_type> shared_service_type;
+  typedef std::weak_ptr<service_type>   weak_service_type;
   using lane_index_type = uint32_t;
 
-  enum {
+  enum
+  {
     CONTROLLER_PROTOCOL_ID = LaneService::CONTROLLER,
-    IDENTITY_PROTOCOL_ID = LaneService::IDENTITY
+    IDENTITY_PROTOCOL_ID   = LaneService::IDENTITY
   };
-  
-  LaneRemoteControl() { }
+
+  LaneRemoteControl() {}
   LaneRemoteControl(LaneRemoteControl const &other) = default;
-  LaneRemoteControl(LaneRemoteControl &&other) = default;
-  LaneRemoteControl& operator=(LaneRemoteControl const &other) = default;
-  LaneRemoteControl& operator=(LaneRemoteControl &&other) = default;
-  
-  ~LaneRemoteControl() = default;  
+  LaneRemoteControl(LaneRemoteControl &&other)      = default;
+  LaneRemoteControl &operator=(LaneRemoteControl const &other) = default;
+  LaneRemoteControl &operator=(LaneRemoteControl &&other) = default;
 
-  void AddClient(lane_index_type const &lane, weak_service_type const &client) 
+  ~LaneRemoteControl() = default;
+
+  void AddClient(lane_index_type const &lane, weak_service_type const &client)
   {
-    clients_[lane] = client;    
+    clients_[lane] = client;
   }
 
-  
-  void Connect(lane_index_type const &lane, byte_array::ByteArray const& host, uint16_t const& port) 
+  void Connect(lane_index_type const &lane, byte_array::ByteArray const &host, uint16_t const &port)
   {
-    if(clients_.find(lane) == clients_.end() ) {
+    if (clients_.find(lane) == clients_.end())
+    {
       TODO_FAIL("Client not found");
     }
-    
-    auto ptr = clients_[lane].lock();
-    if(ptr) {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,LaneControllerProtocol::CONNECT, host, port );
-      p.Wait();
-      
-    }
-  }
 
-  void TryConnect(lane_index_type const &lane, p2p::EntryPoint const &ep) 
-  {
     auto ptr = clients_[lane].lock();
-    if(ptr) {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,LaneControllerProtocol::TRY_CONNECT, ep);
+    if (ptr)
+    {
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::CONNECT, host, port);
       p.Wait();
     }
-    
-
   }
 
-  
-
-  void Shutdown(lane_index_type const &lane) 
+  void TryConnect(lane_index_type const &lane, p2p::EntryPoint const &ep)
   {
-    if(clients_.find(lane) == clients_.end() ) {
-      TODO_FAIL("Client not found");
-    }
-    
     auto ptr = clients_[lane].lock();
-    if(ptr) {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,LaneControllerProtocol::SHUTDOWN);
-      p.Wait();      
+    if (ptr)
+    {
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::TRY_CONNECT, ep);
+      p.Wait();
     }
   }
 
-  uint32_t GetLaneNumber(lane_index_type const &lane) 
+  void Shutdown(lane_index_type const &lane)
   {
-    if(clients_.find(lane) == clients_.end() ) {
+    if (clients_.find(lane) == clients_.end())
+    {
       TODO_FAIL("Client not found");
     }
-    
+
     auto ptr = clients_[lane].lock();
-    if(ptr) {
+    if (ptr)
+    {
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::SHUTDOWN);
+      p.Wait();
+    }
+  }
+
+  uint32_t GetLaneNumber(lane_index_type const &lane)
+  {
+    if (clients_.find(lane) == clients_.end())
+    {
+      TODO_FAIL("Client not found");
+    }
+
+    auto ptr = clients_[lane].lock();
+    if (ptr)
+    {
       auto p = ptr->Call(IDENTITY_PROTOCOL_ID, LaneIdentityProtocol::GET_LANE_NUMBER);
-      return p.As< uint32_t >();
+      return p.As<uint32_t>();
     }
 
     TODO_FAIL("client connection has died");
 
-    return 0;        
+    return 0;
   }
 
-  
-  int IncomingPeers(lane_index_type const &lane) 
+  int IncomingPeers(lane_index_type const &lane)
   {
-    if(clients_.find(lane) == clients_.end() ) {
+    if (clients_.find(lane) == clients_.end())
+    {
       TODO_FAIL("Client not found");
     }
-    
+
     auto ptr = clients_[lane].lock();
-    if(ptr) {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,LaneControllerProtocol::INCOMING_PEERS);
-      return p.As< int >();
+    if (ptr)
+    {
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::INCOMING_PEERS);
+      return p.As<int>();
     }
 
     TODO_FAIL("client connection has died");
 
-    return 0;        
+    return 0;
   }
-  
-  int OutgoingPeers(lane_index_type const &lane) 
+
+  int OutgoingPeers(lane_index_type const &lane)
   {
-    if(clients_.find(lane) == clients_.end() ) {
+    if (clients_.find(lane) == clients_.end())
+    {
       TODO_FAIL("Client not found");
     }
-        
+
     auto ptr = clients_[lane].lock();
-    if(ptr) {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID,LaneControllerProtocol::OUTGOING_PEERS);
-      return p.As< int >();
+    if (ptr)
+    {
+      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::OUTGOING_PEERS);
+      return p.As<int>();
     }
 
     TODO_FAIL("client connection has died");
 
-    return 0;    
+    return 0;
   }
 
-  bool IsAlive(lane_index_type const &lane) 
+  bool IsAlive(lane_index_type const &lane)
   {
-    if(clients_.find(lane) == clients_.end() ) {
+    if (clients_.find(lane) == clients_.end())
+    {
       TODO_FAIL("Client not found");
     }
-    
+
     auto ptr = clients_[lane].lock();
     return bool(ptr);
   }
-  
+
 private:
-  std::unordered_map< lane_index_type, weak_service_type > clients_;
-  
+  std::unordered_map<lane_index_type, weak_service_type> clients_;
 };
 
-  
-}
-}
-
-#endif
+}  // namespace ledger
+}  // namespace fetch

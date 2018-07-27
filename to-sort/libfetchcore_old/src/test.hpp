@@ -1,5 +1,4 @@
-#ifndef LIBFETCHCORE_GUARD_HPP
-#define LIBFETCHCORE_GUARD_HPP
+#pragma once
 namespace fetch
 {
 namespace byte_array
@@ -30,4 +29,3 @@ void BuildByteArray(pybind11::module &module) {
 };
 };
 
-#endif

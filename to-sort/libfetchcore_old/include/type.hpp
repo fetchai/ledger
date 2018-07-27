@@ -1,5 +1,4 @@
-#ifndef FETCH_PYTHON_TYPE
-#define FETCH_PYTHON_TYPE
+#pragma once
 namespace fetch
 {
 namespace base_types
@@ -54,4 +53,3 @@ private:
 };
 
 };
-#endif

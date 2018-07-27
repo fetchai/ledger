@@ -4,20 +4,19 @@
 #include "network/service/callable_class_member.hpp"
 using namespace fetch::service;
 
-class Foo {
- public:
-  void Test(int a, int b, int c) {
-    std::cout << a << " " << b << " " << c << std::endl;
-  }
+class Foo
+{
+public:
+  void Test(int a, int b, int c) { std::cout << a << " " << b << " " << c << std::endl; }
   void Blah(int n) {}
 };
 
-int main() {
-  Foo class_instance;
-  AbstractCallable *ac = new CallableClassMember<Foo, void(int, int, int), 1>(
-      &class_instance, &Foo::Test);
-  AbstractCallable *t2 =
-      new CallableClassMember<Foo, void(int), 1>(&class_instance, &Foo::Blah);
+int main()
+{
+  Foo               class_instance;
+  AbstractCallable *ac =
+      new CallableClassMember<Foo, void(int, int, int), 1>(&class_instance, &Foo::Test);
+  AbstractCallable *t2 = new CallableClassMember<Foo, void(int), 1>(&class_instance, &Foo::Blah);
 
   CallableClassMember<Foo, void(int, int, int), 1> &f =
       *((CallableClassMember<Foo, void(int, int, int), 1> *)ac);

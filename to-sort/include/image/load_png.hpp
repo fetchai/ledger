@@ -1,5 +1,4 @@
-#ifndef IMAGE_LOAD_PNG_HPP
-#define IMAGE_LOAD_PNG_HPP
+#pragma once
 
 #include "image/image.hpp"
 
@@ -127,4 +126,3 @@ void LoadPNG(std::string const &filename, T &image) {
 }
 }
 
-#endif

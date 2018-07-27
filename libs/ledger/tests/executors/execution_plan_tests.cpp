@@ -6,13 +6,13 @@
 //
 //#include <string>
 //
-//namespace {
+// namespace {
 //
 //} // namespace
 //
 //
 //#if 0
-//int main()
+// int main()
 //{
 //  fetch::network::ThreadManager tm;
 //  fetch::ledger::ExecutionManagerService service(3000, tm);

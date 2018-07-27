@@ -1,7 +1,4 @@
-#ifndef LIBFETCHCORE_PROTOCOLS_SWARM_HPP
-#define LIBFETCHCORE_PROTOCOLS_SWARM_HPP
+#pragma once
 #include "protocols/swarm.hpp"
 
-#include"fetch_pybind.hpp"
-
-#endif
+#include "fetch_pybind.hpp"
