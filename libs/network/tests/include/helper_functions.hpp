@@ -118,12 +118,6 @@ T NextTransaction(std::size_t bytesToAdd = 0)
   return T::Create(trans);
 }
 
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args &&... args)
-{
-  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
 std::size_t Hash(fetch::byte_array::ConstByteArray const &arr)
 {
   std::size_t hash = 2166136261;

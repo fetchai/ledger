@@ -9,12 +9,6 @@
 namespace fetch {
 namespace quick_start {
 
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args &&... args)
-{
-  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
 /*
  * Class containing one or more protocols, thus defining a service. Inherits
  * from ServiceServer to provide network functionality
@@ -38,7 +32,7 @@ public:
 
     // We construct our node, and attach it to the protocol
     node_               = std::make_shared<Node>(tm);
-    quickStartProtocol_ = make_unique<protocols::QuickStartProtocol<Node>>(node_);
+    quickStartProtocol_ = std::make_unique<protocols::QuickStartProtocol<Node>>(node_);
 
     // We 'Add' these protocols under our QUICK_START enum
     this->Add(protocols::QuickStartProtocols::QUICK_START, quickStartProtocol_.get());
