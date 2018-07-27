@@ -24,7 +24,6 @@ def main():
     cmd = [
         'clang-tidy',
         '-p', args.build_path,
-        '-header-filter=.*',
         '-warnings-as-errors=.*'
     ]
 
