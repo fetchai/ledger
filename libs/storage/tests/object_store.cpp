@@ -20,6 +20,11 @@ struct TestSerDeser
   {
     return third < rhs.third;
   }
+
+  bool operator==(TestSerDeser const &rhs)
+  {
+    return first == rhs.first && second == rhs.second && third == rhs.third;
+  }
 };
 
 template <typename T>
@@ -187,46 +192,50 @@ int main(int argc, char const **argv)
 
     SECTION("Test iterator over basic struct")
     {
-      using testType = TestSerDeser;
-      ObjectStore<testType> testStore;
-      testStore.New("testFile.db", "testIndex.db");
-
-      std::vector<testType> objects;
-      fetch::random::LaggedFibonacciGenerator<> lfg;
-
-      // Create vector of random numbers
-      //for (std::size_t i = 0; i < std::numeric_limits<std::size_t>::max()/4; ++i)
-      for (std::size_t i = 0; i < 600; ++i)
+      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 8, 100, 1000, 10000};
+      for(auto const &numberOfKeys : keyTests)
       {
-        uint64_t random = lfg();
+        std::cout << "Testing keys: " << numberOfKeys << std::endl;
+        using testType = TestSerDeser;
+        ObjectStore<testType> testStore;
+        testStore.New("testFile.db", "testIndex.db");
 
-        testType test;
-        test.first = int(-random);
-        test.second = random;
-        test.third = std::to_string(random);
+        std::vector<testType> objects;
+        std::vector<testType> objectsCopy;
+        fetch::random::LaggedFibonacciGenerator<> lfg;
 
-        testStore.Set(ResourceID(test.third), test);
-        objects.push_back(test);
-      }
+        // Create vector of random numbers
+        for (std::size_t i = 0; i < numberOfKeys; ++i)
+        {
+          uint64_t random = lfg();
 
-      std::sort(objects.begin(), objects.end());
+          testType test;
+          test.first = int(-random);
+          test.second = random;
 
-      std::cout << "Ordered keys:" << std::endl;
-      for(auto const &i : objects)
-      {
-        std::cout << i.third << std::endl;
-      }
+          test.third = std::to_string(i); // guarantee no clashes
+          test.third += "_";
+          test.third += std::to_string(random);
 
-      std::cout  << std::endl;
-      std::cout << "Iterated:" << std::endl;
+          testStore.Set(ResourceID(test.third), test);
+          objects.push_back(test);
+        }
 
-      auto it = testStore.begin();
-      int count = 0;
-      while(it != testStore.end() && count < 10)
-      {
-        std::cout << (*it).third << std::endl;
-        it++;
-        //count++;
+        std::sort(objects.begin(), objects.end());
+
+        auto it = testStore.begin();
+        while(it != testStore.end())
+        {
+          objectsCopy.push_back(*it);
+          //std::cout << (*it).third << std::endl;
+          it++;
+        }
+
+        std::sort(objectsCopy.begin(), objectsCopy.end());
+
+        EXPECT(objectsCopy.size() == objects.size());
+        bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
+        EXPECT(allMatch == true);
       }
     };
 

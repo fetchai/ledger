@@ -268,6 +268,8 @@ protected:
 
     if (result)
     {
+      std::cerr << "Exists!" << std::endl;
+      exit(1);
       return DocumentFile(this, address, file_store_, index);
     }
     else if (!create)

@@ -35,9 +35,13 @@ struct KeyValuePair
   };
   uint64_t right;
 
+  //bool operator==(KeyValuePair const &kv)
+  //{
+  //  return kv.parent == parent && kv.right == right && kv.left == left;
+  //}
   bool operator==(KeyValuePair const &kv)
   {
-    return kv.parent == parent && kv.right == right && kv.left == left;
+    return Hash() == kv.Hash();
   }
 
   bool operator!=(KeyValuePair const &kv)
@@ -458,6 +462,9 @@ public:
     stack_.Get(root_, kv);
 
     GetLeftLeaf(kv);
+
+    assert(iterator(this, kv) != end());
+
     return iterator(this, kv);
   }
 
@@ -535,7 +542,6 @@ private:
       stack_.Get(next, kv);
 
       left_right = key.Compare(kv.key, pos, kv.split >> 8, kv.split & 63);
-                           // (Key const &other, int &pos, int last_block, int last_bit) const
 
       switch (left_right)
       {
