@@ -18,8 +18,11 @@ struct ByteArrayMapConfigurator
   typedef RandomAccessStack<file_block_type> document_stack_type;
   typedef FileObject<document_stack_type>    file_object_type;
 
-  typedef DocumentStore<BS, file_block_type, kvi_store_type, document_stack_type, file_object_type>
-      type;
+  typedef DocumentStore<BS,
+          file_block_type,
+          kvi_store_type,
+          document_stack_type,
+          file_object_type> type;
 };
 
 }  // namespace details

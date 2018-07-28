@@ -13,18 +13,18 @@
 namespace fetch {
 namespace storage {
 
-template <std::size_t BS = 2048, typename A = FileBlockType<BS>, typename B = KeyValueIndex<>,
-          typename C = VersionedRandomAccessStack<A>, typename D = FileObject<C>>
+template <
+     std::size_t BLOCK_SIZE = 2048
+  , typename A = FileBlockType<BLOCK_SIZE>
+  , typename B = KeyValueIndex<>
+  , typename C = VersionedRandomAccessStack<A>
+  , typename D = FileObject<C>>
 class DocumentStore
 {
 public:
-  enum
-  {
-    BLOCK_SIZE = BS
-  };
 
-  typedef DocumentStore<BS, A, B, C, D> self_type;
-  typedef byte_array::ByteArray         byte_array_type;
+  typedef DocumentStore<BLOCK_SIZE, A, B, C, D> self_type;
+  typedef byte_array::ByteArray                 byte_array_type;
 
   typedef A file_block_type;
   typedef B key_value_index_type;
@@ -49,11 +49,11 @@ public:
     {}
 
     ~DocumentFileImplementation() { store_->UpdateDocumentFile(*this); }
-    DocumentFileImplementation(DocumentFileImplementation const &other) = delete;
-    DocumentFileImplementation operator=(DocumentFileImplementation const &other) = delete;
 
-    DocumentFileImplementation(DocumentFileImplementation &&other) = default;
-    DocumentFileImplementation &operator=(DocumentFileImplementation &&other) = default;
+    DocumentFileImplementation(DocumentFileImplementation const &other)           = delete;
+    DocumentFileImplementation operator=(DocumentFileImplementation const &other) = delete;
+    DocumentFileImplementation(DocumentFileImplementation &&other)                = default;
+    DocumentFileImplementation &operator=(DocumentFileImplementation &&other)     = default;
 
     byte_array::ConstByteArray const &address() const { return address_; }
 
@@ -171,18 +171,17 @@ public:
     Document ret;
 
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    DocumentFile                  doc = GetDocumentFile(rid, false);
+    DocumentFile doc = GetDocumentFile(rid, false);
+
     if (!doc)
     {
       ret.failed = true;
     }
     else
     {
-
       ret.was_created = doc.was_created();
       if (!doc.was_created())
       {
-
         ret.document.Resize(doc.size());
         doc.Read(ret.document);
       }
@@ -193,31 +192,86 @@ public:
 
   void Set(ResourceID const &rid, byte_array::ConstByteArray const &value)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
-    DocumentFile                  doc = GetDocumentFile(rid, true);
-    doc.Seek(0);
-
-    if (doc.size() > value.size())
     {
-      doc.Shrink(value.size());
-    }
+      std::lock_guard<mutex::Mutex> lock(mutex_);
+      DocumentFile                  doc = GetDocumentFile(rid, true);
+      doc.Seek(0);
 
-    doc.Write(value);
+      if (doc.size() > value.size())
+      {
+        doc.Shrink(value.size());
+      }
+
+      doc.Write(value);
+    }
   }
 
+  class iterator
+  {
+  public:
+    iterator(self_type *store, typename key_value_index_type::iterator it) :
+        wrapped_iterator_{it}
+      , store_{store}
+    {}
+
+    iterator()                               = default;
+    iterator(iterator const &rhs)            = default;
+    iterator(iterator &&rhs)                 = default;
+    iterator &operator=(iterator const &rhs) = default;
+    iterator &operator=(iterator&& rhs)      = default;
+
+    void operator++()    { ++wrapped_iterator_; }
+    void operator++(int) { ++wrapped_iterator_; }
+
+    bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
+    bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
+
+    Document operator*() const
+    {
+      auto kv = *wrapped_iterator_;
+
+      DocumentFile doc(store_, kv.first, store_->file_store_, kv.second);
+
+      Document ret;
+      ret.document.Resize(doc.size());
+      doc.Read(ret.document);
+
+      return ret;
+    }
+
+  protected:
+    typename key_value_index_type::iterator wrapped_iterator_;
+    self_type                               *store_;
+  };
+
+  // STL-like functionality
+  self_type::iterator Find(ResourceID const &rid)
+  {
+    byte_array::ConstByteArray const &address = rid.id();
+
+    auto it = key_index_.Find(address);
+
+    return iterator(this, it);
+  }
+
+  self_type::iterator begin() { return iterator(this, key_index_.begin()); }
+  self_type::iterator end()   { return iterator(this, key_index_.end()); }
+
 protected:
+
   DocumentFile GetDocumentFile(ResourceID const &rid, bool const &create = true)
   {
     byte_array::ConstByteArray const &address = rid.id();
     index_type                        index   = 0;
 
-    if (key_index_.GetIfExists(address, index))
+    bool result = key_index_.GetIfExists(address, index);
+
+    if (result)
     {
       return DocumentFile(this, address, file_store_, index);
     }
     else if (!create)
     {
-
       return DocumentFile();
     }
 
@@ -227,8 +281,8 @@ protected:
   }
 
   mutex::Mutex         mutex_;
-  key_value_index_type key_index_;
-  file_store_type      file_store_;
+  key_value_index_type key_index_; // Document store made up of key_index and
+  file_store_type      file_store_; // file store
 
 private:
   void UpdateDocumentFile(DocumentFileImplementation &doc)

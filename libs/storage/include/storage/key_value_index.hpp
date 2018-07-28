@@ -35,6 +35,16 @@ struct KeyValuePair
   };
   uint64_t right;
 
+  bool operator==(KeyValuePair const &kv)
+  {
+    return kv.parent == parent && kv.right == right && kv.left == left;
+  }
+
+  bool operator!=(KeyValuePair const &kv)
+  {
+    return !(kv.parent == parent && kv.right == right && kv.left == left);
+  }
+
   bool is_leaf() const { return split == S; }
 
   bool UpdateLeaf(uint64_t const &val, byte_array::ConstByteArray const &data)
@@ -81,7 +91,8 @@ class KeyValueIndex
   {
     uint64_t priority;
     uint64_t element;
-    bool     operator==(UpdateTask const &other) const
+
+    bool operator==(UpdateTask const &other) const
     {
       return (priority == other.priority) && (other.element == element);
     }
@@ -89,10 +100,12 @@ class KeyValueIndex
   };
 
 public:
-  typedef uint64_t                          index_type;
-  typedef D                                 stack_type;
-  typedef KeyValuePair<>                    key_value_pair;
-  typedef typename key_value_pair::key_type key_type;
+  using self_type      = KeyValueIndex<KV, D>;
+  using index_type     = uint64_t;
+  using stack_type     = D;
+  using key_value_pair = KeyValuePair<>;
+  using key_type       = KeyValuePair<>::key_type;
+
   KeyValueIndex()
   {
 
@@ -190,16 +203,16 @@ public:
     schedule_update_.clear();
   }
 
-  index_type Find(byte_array::ConstByteArray const &key_str)
-  {
-    key_type       key(key_str);
-    bool           split;
-    int            pos;
-    key_value_pair kv;
-    int            left_right;
-    index_type     depth;
-    return FindNearest(key, kv, split, pos, left_right, depth);
-  }
+//  index_type Find(byte_array::ConstByteArray const &key_str)
+//  {
+//    key_type       key(key_str);
+//    bool           split;
+//    int            pos;
+//    key_value_pair kv;
+//    int            left_right;
+//    index_type     depth;
+//    return FindNearest(key, kv, split, pos, left_right, depth);
+//  }
 
   void Delete(byte_array::ConstByteArray const &key) { TODO_FAIL("Not implemented"); }
 
@@ -213,11 +226,11 @@ public:
   bool GetIfExists(byte_array::ConstByteArray const &key_str, index_type &value)
   {
     key_type       key(key_str);
-    bool           split = true;
-    int            pos   = 0;
-    key_value_pair kv;
+    bool           split      = true;
+    int            pos        = 0;
     int            left_right = 0;
     index_type     depth      = 0;
+    key_value_pair kv;
     FindNearest(key, kv, split, pos, left_right, depth);
 
     if (!split)
@@ -246,7 +259,7 @@ public:
   {
     key_type       key(key_str);
     bool           split;
-    int            pos;
+    int            pos = 0;
     key_value_pair kv;
     int            left_right;
 
@@ -309,7 +322,7 @@ public:
         break;
       }
 
-      kv.split  = uint16_t(pos);
+      kv.split  = uint16_t(pos); // TODO: (`HUT`) : look at this.
       kv.left   = lid;
       kv.right  = rid;
       kv.parent = pid;
@@ -366,17 +379,13 @@ public:
 
   byte_array::ByteArray Hash()
   {
-    // std::cout << "A: " << root_ <<  std::endl;
-
     stack_.Flush();
     key_value_pair kv;
-    // std::cout << "B" << std::endl;
     if (stack_.size() > 0)
     {
       stack_.Get(root_, kv);
     }
 
-    // std::cout << "B3" << std::endl;
     return kv.Hash();
   }
 
@@ -405,6 +414,71 @@ public:
   }
 
   uint64_t const &root_element() const { return root_; }
+
+  class iterator
+  {
+  public:
+    iterator(self_type *self, key_value_pair kv) : kv_{kv}, self_{self} {}
+    iterator()                               = default;
+    iterator(iterator const &rhs)            = default;
+    iterator(iterator &&rhs)                 = default;
+    iterator &operator=(iterator const &rhs) = default;
+    iterator &operator=(iterator&& rhs)      = default;
+
+    bool operator==(iterator const &rhs)
+    {
+      return kv_ == rhs.kv_;
+    }
+
+    bool operator!=(iterator const &rhs)
+    {
+      return !(kv_ == rhs.kv_);
+    }
+
+    void operator++()
+    {
+      self_->GetNext(kv_);
+    }
+
+    std::pair<byte_array::ByteArray, uint64_t> operator*() const
+    {
+      return std::make_pair(kv_.key.ToByteArray(), kv_.value);
+    }
+
+  protected:
+    key_value_pair kv_;
+    self_type      *self_;
+  };
+
+
+  self_type::iterator begin()
+  {
+    if (this->empty()) return end();
+    key_value_pair kv;
+    stack_.Get(root_, kv);
+
+    GetLeftLeaf(kv);
+    return iterator(this, kv);
+  }
+
+  self_type::iterator end()
+  {
+    return iterator(this, key_value_pair());
+  }
+
+  // STL-like functionality
+  self_type::iterator Find(byte_array::ConstByteArray const &key_str)
+  {
+    key_type       key(key_str);
+    bool           split      = true;
+    int            pos        = 0;
+    int            left_right = 0;
+    index_type     depth      = 0;
+    key_value_pair kv;
+    FindNearest(key, kv, split, pos, left_right, depth);
+
+    return iterator(this, kv);
+  }
 
 private:
   stack_type stack_;
@@ -439,22 +513,29 @@ private:
     }
   }
 
-  index_type FindNearest(key_type const &key, key_value_pair &kv, bool &split, int &pos,
-                         int &left_right, uint64_t &depth)
+  index_type FindNearest(key_type const &key // Find nearest to key
+                       , key_value_pair &kv
+                       , bool &split
+                       , int &pos
+                       , int &left_right
+                       , uint64_t &depth)
   {
     depth = 0;
     if (this->empty()) return index_type(-1);
 
-    std::size_t next = root_, index;
+    std::size_t next = root_;
+    std::size_t index;
     do
     {
       ++depth;
       index = next;
-      pos   = int(key.size());
+
+      pos = int(key.size()); // TODO: (`HUT`) : determine if needs to be in loop
 
       stack_.Get(next, kv);
 
       left_right = key.Compare(kv.key, pos, kv.split >> 8, kv.split & 63);
+                           // (Key const &other, int &pos, int last_block, int last_bit) const
 
       switch (left_right)
       {
@@ -469,6 +550,80 @@ private:
 
     split = (left_right != 0) && (pos < int(kv.split));
     return index;
+  }
+
+  // given KV, find nearest parent we are a left branch of, AND has a right 
+  // KV will be set to that node
+  void GetLeftParent(key_value_pair &kv) const
+  {
+    assert(kv.parent != uint64_t(-1));
+
+    key_value_pair parent;
+    key_value_pair parent_right;
+    stack_.Get(kv.parent,    parent);
+    stack_.Get(parent.right, parent_right);
+
+    while(kv == parent_right || parent.right == 0)
+    {
+      if(parent.parent == uint64_t(-1))
+      {
+        break;
+      }
+
+      kv = parent;
+      stack_.Get(parent.parent,    parent);
+      stack_.Get(parent.right, parent_right);
+    }
+    kv = parent;
+  }
+
+  void GetLeftLeaf(key_value_pair &kv) const
+  {
+    while(!kv.is_leaf())
+    {
+      stack_.Get(kv.left, kv);
+    }
+  }
+
+  bool GetNext(key_value_pair &kv)
+  {
+    assert(kv.is_leaf());
+    assert(kv.parent != uint64_t(-1));
+    assert(kv.parent != stack_.size() + 1);
+
+    // Get parent so we can check which branch we were on. Assume
+    // we were on a leaf.
+    key_value_pair parent;
+    stack_.Get(kv.parent, parent);
+
+    // We're in a binary tree, going left to right
+    // TODO: (`HUT`) : upgrade this slightly using split
+    key_value_pair parent_right;
+    stack_.Get(parent.right, parent_right);
+
+    if(parent_right != kv)
+    {
+      GetLeftLeaf(parent_right);
+      kv = parent_right;
+      return true;
+    }
+    else if(parent.parent == uint64_t(-1))
+    {
+      kv = key_value_pair();
+      return false;
+    }
+    else
+    {
+      GetLeftParent(parent);
+
+      // Switch to rhs branch since we travelled up to find a node we were the left of
+      assert(parent.right != 0);
+      stack_.Get(parent.right, parent);
+
+      GetLeftLeaf(parent);
+      kv = parent;
+      return true;
+    }
   }
 };
 
