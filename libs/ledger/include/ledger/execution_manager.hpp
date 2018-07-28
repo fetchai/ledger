@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/make_unique.hpp"
 #include "core/mutex.hpp"
 #include "ledger/chaincode/cache.hpp"
 #include "ledger/execution_item.hpp"

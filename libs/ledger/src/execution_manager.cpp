@@ -137,7 +137,7 @@ bool ExecutionManager::PlanExecution(block_type const &block)
 
       if (contract)
       {
-        auto item = fetch::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
+        auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
 
         // transform the resources into lane allocation
         for (auto const &resource : tx.resources)
@@ -218,7 +218,7 @@ void ExecutionManager::Start()
 
   // create and start the monitor thread
   monitor_thread_ =
-      fetch::make_unique<std::thread>(&ExecutionManager::MonitorThreadEntrypoint, this);
+      std::make_unique<std::thread>(&ExecutionManager::MonitorThreadEntrypoint, this);
 
   // wait for the monitor thread to be setup
   for (std::size_t i = 0; i < 20; ++i)
