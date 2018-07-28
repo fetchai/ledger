@@ -196,7 +196,7 @@ int main(int argc, char const **argv)
 
       // Create vector of random numbers
       //for (std::size_t i = 0; i < std::numeric_limits<std::size_t>::max()/4; ++i)
-      for (std::size_t i = 0; i < 6; ++i)
+      for (std::size_t i = 0; i < 600; ++i)
       {
         uint64_t random = lfg();
 
@@ -221,10 +221,12 @@ int main(int argc, char const **argv)
       std::cout << "Iterated:" << std::endl;
 
       auto it = testStore.begin();
-      while(it != testStore.end())
+      int count = 0;
+      while(it != testStore.end() && count < 10)
       {
         std::cout << (*it).third << std::endl;
         it++;
+        //count++;
       }
     };
 

@@ -554,7 +554,7 @@ private:
 
   // given KV, find nearest parent we are a left branch of, AND has a right 
   // KV will be set to that node
-  void GetLeftParent(key_value_pair &kv) const
+  bool GetLeftParent(key_value_pair &kv) const
   {
     assert(kv.parent != uint64_t(-1));
 
@@ -563,10 +563,12 @@ private:
     stack_.Get(kv.parent,    parent);
     stack_.Get(parent.right, parent_right);
 
-    while(kv == parent_right || parent.right == 0)
+    while(kv == parent_right || parent.right == uint64_t(-1))
     {
+      // Root condition
       if(parent.parent == uint64_t(-1))
       {
+        return false;
         break;
       }
 
@@ -575,6 +577,7 @@ private:
       stack_.Get(parent.right, parent_right);
     }
     kv = parent;
+    return true;
   }
 
   void GetLeftLeaf(key_value_pair &kv) const
@@ -585,7 +588,7 @@ private:
     }
   }
 
-  bool GetNext(key_value_pair &kv)
+  void GetNext(key_value_pair &kv)
   {
     assert(kv.is_leaf());
     assert(kv.parent != uint64_t(-1));
@@ -605,24 +608,28 @@ private:
     {
       GetLeftLeaf(parent_right);
       kv = parent_right;
-      return true;
     }
     else if(parent.parent == uint64_t(-1))
     {
       kv = key_value_pair();
-      return false;
     }
     else
     {
-      GetLeftParent(parent);
+      bool gotParent = GetLeftParent(parent);
 
-      // Switch to rhs branch since we travelled up to find a node we were the left of
-      assert(parent.right != 0);
-      stack_.Get(parent.right, parent);
+      if(!gotParent)
+      {
+        kv = key_value_pair();
+      }
+      else
+      {
+        // Switch to rhs branch since we travelled up to find a node we were the left of
+        assert(parent.right != 0);
+        stack_.Get(parent.right, parent);
 
-      GetLeftLeaf(parent);
-      kv = parent;
-      return true;
+        GetLeftLeaf(parent);
+        kv = parent;
+      }
     }
   }
 };
