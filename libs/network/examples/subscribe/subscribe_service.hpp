@@ -9,11 +9,6 @@
 namespace fetch {
 namespace subscribe {
 
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args &&... args)
-{
-  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
 
 /*
  * Class containing one or more protocols, thus defining a service. Inherits
@@ -36,7 +31,7 @@ public:
     fetch::logger.Debug("Constructing test node service with TCP port: ", tcpPort);
 
     // We construct our node, and attach it to the protocol
-    subscribeProto_ = make_unique<protocols::SubscribeProtocol>();
+    subscribeProto_ = std::make_unique<protocols::SubscribeProtocol>();
 
     // We 'Add' these protocols
     this->Add(protocols::FetchProtocols::SUBSCRIBE_PROTO, subscribeProto_.get());

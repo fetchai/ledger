@@ -1,6 +1,5 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
-#include "core/make_unique.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/token_contract.hpp"
@@ -34,8 +33,8 @@ protected:
 
   void SetUp() override
   {
-    contract_ = fetch::make_unique<TokenContract>();
-    storage_  = fetch::make_unique<MockStorageUnit>();
+    contract_ = std::make_unique<TokenContract>();
+    storage_  = std::make_unique<MockStorageUnit>();
 
     contract_->Attach(*storage_);
   }

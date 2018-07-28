@@ -1,4 +1,3 @@
-#include "core/make_unique.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
@@ -21,8 +20,8 @@ protected:
 
   void SetUp() override
   {
-    contract_ = fetch::make_unique<DummyContract>();
-    storage_  = fetch::make_unique<MockStorageUnit>();
+    contract_ = std::make_unique<DummyContract>();
+    storage_  = std::make_unique<MockStorageUnit>();
 
     contract_->Attach(*storage_);
   }
