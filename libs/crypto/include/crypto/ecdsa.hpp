@@ -40,8 +40,6 @@ class ECDSASigner : public Prover
   using PrivateKey = openssl::ECDSAPrivateKey<>;
   using Signature = openssl::ECDSASignature<>;
 
-  using PrivateKeyPtr = std::unique_ptr<PrivateKey>; 
-  using SignaturePtr = std::unique_ptr<Signature>; 
 public:
   void Load(byte_array_type const &private_key) override
   {
@@ -50,17 +48,17 @@ public:
 
   void SetPrivateKey(byte_array_type const &private_key)
   {
-     private_key_ = std::make_unique<PrivateKey>(private_key); 
+     private_key_ = PrivateKey(private_key);
   }
 
   void GenerateKeys()
   {
-     private_key_ = std::make_unique<PrivateKey>();
+     private_key_ = PrivateKey();
   }
 
   bool Sign(byte_array_type const &text) final override
   {
-   signature_ = std::make_unique<Signature>(Signature::Sign(*private_key_, text));
+   signature_ = Signature::Sign(private_key_, text);
    return true;
   }
 
@@ -69,14 +67,14 @@ public:
     return Identity(PrivateKey::ecdsa_curve_type::sn, public_key());
   }
 
-  byte_array_type document_hash() final override { return signature_->hash(); }
-  byte_array_type signature() final override { return signature_->signature(); }
-  byte_array_type public_key() { return private_key_->publicKey().keyAsBin(); }
-  byte_array_type private_key() { return private_key_->KeyAsBin();}
+  byte_array_type document_hash() final override { return signature_.hash(); }
+  byte_array_type signature() final override { return signature_.signature(); }
+  byte_array_type public_key() { return private_key_.publicKey().keyAsBin(); }
+  byte_array_type private_key() { return private_key_.KeyAsBin();}
 
 private:
-  PrivateKeyPtr private_key_;
-  SignaturePtr signature_;
+  PrivateKey private_key_;
+  Signature signature_;
 };
 
 }  // namespace crypto

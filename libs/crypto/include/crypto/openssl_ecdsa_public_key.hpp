@@ -33,6 +33,9 @@ public:
     friend class ECDSAPublicKey;
 
 
+    ECDSAPublicKey() = default;
+
+
     ECDSAPublicKey(
           shrd_ptr_type<EC_POINT>&& public_key,
           const EC_GROUP *group,
@@ -74,6 +77,23 @@ public:
         , key_binary_ {BINARY_DATA_FORMAT == binaryDataFormat ? std::move(from.key_binary_) : Convert(key_EC_POINT_.get(), binaryDataFormat)}
     {
     }
+
+
+    template<eECDSAEncoding BINARY_DATA_FORMAT>
+    ECDSAPublicKey& operator = (ecdsa_public_key_type<BINARY_DATA_FORMAT> const & from)
+    {
+        *this = ECDSAPublicKey(from);
+        return *this;
+    }
+
+
+    template<eECDSAEncoding BINARY_DATA_FORMAT>
+    ECDSAPublicKey& operator = (ecdsa_public_key_type<BINARY_DATA_FORMAT>&& from)
+    {
+        *this = ECDSAPublicKey(from);
+        return *this;
+    }
+
 
     shrd_ptr_type<const EC_POINT> keyAsEC_POINT() const {
         return key_EC_POINT_;

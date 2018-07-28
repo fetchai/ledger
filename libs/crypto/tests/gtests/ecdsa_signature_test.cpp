@@ -244,27 +244,112 @@ TEST_F(ECDCSASignatureTest, test_canonical_signature_binary_representation_has_e
 
 
 TEST_F(ECDCSASignatureTest, test_moving_semantics_constructor) {
-    //* Production code:
     openssl::ECDSAPrivateKey<eECDSAEncoding::bin> priv_key(priv_key_data);
 
 
     ECDSASignature<eECDSAEncoding::canonical> sig_0{ ECDSASignature<eECDSAEncoding::canonical>::Sign(priv_key, test_data) };
     //* Verify that acquired signature is correct:
-    ASSERT_TRUE(sig_0.Verify(priv_key.publicKey(), test_data));
     ASSERT_TRUE(sig_0.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_0.Verify(priv_key.publicKey(), test_data));
 
+    //* Production code:
     ECDSASignature<eECDSAEncoding::canonical> sig_1{ std::move(sig_0) };
     //* Expectations:
     EXPECT_FALSE(sig_0.signature_ECDSA_SIG());
     EXPECT_TRUE(sig_1.signature_ECDSA_SIG());
     ASSERT_TRUE(sig_1.Verify(priv_key.publicKey(), test_data));
     
+    //* Production code:
     ECDSASignature<eECDSAEncoding::canonical> sig_2{ std::move(sig_1) };
     //* Expectations:
     EXPECT_FALSE(sig_1.signature_ECDSA_SIG());
     EXPECT_TRUE(sig_2.signature_ECDSA_SIG());
     ASSERT_TRUE(sig_2.Verify(priv_key.publicKey(), test_data));
 }
+
+
+TEST_F(ECDCSASignatureTest, test_moving_semantics_assign_operator) {
+    openssl::ECDSAPrivateKey<eECDSAEncoding::bin> priv_key(priv_key_data);
+
+
+    ECDSASignature<eECDSAEncoding::canonical> sig_0{ ECDSASignature<eECDSAEncoding::canonical>::Sign(priv_key, test_data) };
+    //* Verify that acquired signature is correct:
+    ASSERT_TRUE(sig_0.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_0.Verify(priv_key.publicKey(), test_data));
+
+    ECDSASignature<eECDSAEncoding::canonical> sig_1;
+    //* Production code:
+    sig_1 = std::move(sig_0);
+    //* Expectations:
+    EXPECT_FALSE(sig_0.signature_ECDSA_SIG());
+    EXPECT_TRUE(sig_1.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_1.Verify(priv_key.publicKey(), test_data));
+    
+    ECDSASignature<eECDSAEncoding::canonical> sig_2;
+    //* Production code:
+    sig_2 = std::move(sig_1);
+    //* Expectations:
+    EXPECT_FALSE(sig_1.signature_ECDSA_SIG());
+    EXPECT_TRUE(sig_2.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_2.Verify(priv_key.publicKey(), test_data));
+}
+
+
+TEST_F(ECDCSASignatureTest, test_copy_constructor) {
+    openssl::ECDSAPrivateKey<eECDSAEncoding::bin> priv_key(priv_key_data);
+
+
+    ECDSASignature<eECDSAEncoding::canonical> sig_0{ ECDSASignature<eECDSAEncoding::canonical>::Sign(priv_key, test_data) };
+    //* Verify that acquired signature is correct:
+    ASSERT_TRUE(sig_0.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_0.Verify(priv_key.publicKey(), test_data));
+
+    //* Production code:
+    ECDSASignature<eECDSAEncoding::canonical> sig_1{ sig_0 };
+    //* Expectations:
+    EXPECT_TRUE(sig_0.signature_ECDSA_SIG());
+    EXPECT_TRUE(sig_1.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_0.Verify(priv_key.publicKey(), test_data));
+    ASSERT_TRUE(sig_1.Verify(priv_key.publicKey(), test_data));
+    
+    //* Production code:
+    ECDSASignature<eECDSAEncoding::canonical> sig_2{ sig_1 };
+    //* Expectations:
+    EXPECT_TRUE(sig_1.signature_ECDSA_SIG());
+    EXPECT_TRUE(sig_2.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_1.Verify(priv_key.publicKey(), test_data));
+    ASSERT_TRUE(sig_2.Verify(priv_key.publicKey(), test_data));
+}
+
+
+TEST_F(ECDCSASignatureTest, test_copy_assign_operator) {
+    openssl::ECDSAPrivateKey<eECDSAEncoding::bin> priv_key(priv_key_data);
+
+
+    ECDSASignature<eECDSAEncoding::canonical> sig_0{ ECDSASignature<eECDSAEncoding::canonical>::Sign(priv_key, test_data) };
+    //* Verify that acquired signature is correct:
+    ASSERT_TRUE(sig_0.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_0.Verify(priv_key.publicKey(), test_data));
+
+    ECDSASignature<eECDSAEncoding::canonical> sig_1;
+    //* Production code:
+    sig_1 = sig_0;
+    //* Expectations:
+    EXPECT_TRUE(sig_0.signature_ECDSA_SIG());
+    EXPECT_TRUE(sig_1.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_0.Verify(priv_key.publicKey(), test_data));
+    ASSERT_TRUE(sig_1.Verify(priv_key.publicKey(), test_data));
+    
+    ECDSASignature<eECDSAEncoding::canonical> sig_2;
+    //* Production code:
+    sig_2 = sig_1;
+    //* Expectations:
+    EXPECT_TRUE(sig_1.signature_ECDSA_SIG());
+    EXPECT_TRUE(sig_2.signature_ECDSA_SIG());
+    ASSERT_TRUE(sig_1.Verify(priv_key.publicKey(), test_data));
+    ASSERT_TRUE(sig_2.Verify(priv_key.publicKey(), test_data));
+}
+
 
 } // namespace anonymous
 

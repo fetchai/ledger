@@ -32,6 +32,9 @@ public:
     static constexpr eECDSAEncoding signatureBinaryDataFormat = P_ECDSASignatureBinaryDataFormat;
 
 
+    ECDSASignature() = default;
+
+
     ECDSASignature(byte_array::ConstByteArray const &binary_signature)
         : hash_{}
         , signature_ECDSA_SIG_{Convert(binary_signature, signatureBinaryDataFormat)}
@@ -58,7 +61,7 @@ public:
     }
 
 
-    ECDSASignature(ECDSASignature&& from) = default;
+    //ECDSASignature(ECDSASignature&& from) = default;
 
     template<eECDSAEncoding BIN_FORMAT>
     ECDSASignature(ecdsa_signature_type<BIN_FORMAT>&& from)
@@ -67,11 +70,29 @@ public:
     }
 
 
+    //ECDSASignature& operator = (ECDSASignature const & from) = default;
+
+    template<eECDSAEncoding BIN_FORMAT>
+    ECDSASignature operator = (ecdsa_signature_type<BIN_FORMAT> const & from)
+    {
+        *this = ECDSASignature(from);
+        return *this;
+    }
+
+
+    template<eECDSAEncoding BIN_FORMAT>
+    ECDSASignature operator = (ecdsa_signature_type<BIN_FORMAT>&& from)
+    {
+        *this = safeMoveConstruct(std::move(from));
+        return *this;
+    }
+
 
     const byte_array::ConstByteArray& hash() const
     {
         return hash_;
     }
+
 
     shrd_ptr_type<const ECDSA_SIG> signature_ECDSA_SIG() const
     {
@@ -331,15 +352,15 @@ private:
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
     static void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
     {
-        if (pr != NULL)
+        if (pr != nullptr)
             *pr = sig->r;
-        if (ps != NULL)
+        if (ps != nullptr)
         *ps = sig->s;
     }
 
     static int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     {
-        if (r == NULL || s == NULL)
+        if (r == nullptr || s == nullptr)
             return 0;
         BN_clear_free(sig->r);
         BN_clear_free(sig->s);

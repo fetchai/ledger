@@ -67,24 +67,39 @@ public:
     friend class ECDSAPrivateKey;
 
     template<eECDSAEncoding BINARY_DATA_FORMAT>
-    using ecdsa_public_key_type = ECDSAPrivateKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
+    using private_key_type = ECDSAPrivateKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
 
 
     template<eECDSAEncoding BINARY_DATA_FORMAT>
-    ECDSAPrivateKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> const & from)
+    ECDSAPrivateKey(private_key_type<BINARY_DATA_FORMAT> const & from)
         : private_key_(from.private_key_)
         , public_key_(from.public_key_)
     {
     }
 
-
     template<eECDSAEncoding BINARY_DATA_FORMAT>
-    ECDSAPrivateKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> && from)
+    ECDSAPrivateKey(private_key_type<BINARY_DATA_FORMAT> && from)
         : private_key_(std::move(from.private_key_))
         , public_key_(std::move(from.public_key_))
     {
     }
 
+
+    template<eECDSAEncoding BINARY_DATA_FORMAT>
+    ECDSAPrivateKey& operator = (private_key_type<BINARY_DATA_FORMAT> const & from)
+    {
+        private_key_ = from.private_key_;
+        public_key_ = from.public_key_;
+        return *this;
+    }
+
+    template<eECDSAEncoding BINARY_DATA_FORMAT>
+    ECDSAPrivateKey& operator = (private_key_type<BINARY_DATA_FORMAT> && from)
+    {
+        private_key_ = std::move(from.private_key_);
+        public_key_ = std::move(from.public_key_);
+        return *this;
+    }
 
     shrd_ptr_type<const EC_KEY> key() const
     {
