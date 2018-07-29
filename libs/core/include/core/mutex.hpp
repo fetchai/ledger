@@ -7,6 +7,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <utility>
 
 namespace fetch {
 namespace mutex {
@@ -27,8 +28,8 @@ class DebugMutex : public AbstractMutex
   class MutexTimeout
   {
   public:
-    MutexTimeout(std::string const &filename, int const &line, double const timeout = 300)
-      : filename_(filename), line_(line)
+    MutexTimeout(std::string filename, int const &line, double const timeout = 300)
+      : filename_(std::move(filename)), line_(line)
     {
       LOG_STACK_TRACE_POINT;
 
@@ -77,7 +78,7 @@ class DebugMutex : public AbstractMutex
   };
 
 public:
-  DebugMutex(int line, std::string file) : AbstractMutex(), line_(line), file_(file) {}
+  DebugMutex(int line, std::string file) : AbstractMutex(), line_(line), file_(std::move(file)) {}
   DebugMutex() = default;
 
   DebugMutex &operator=(DebugMutex const &other) = delete;

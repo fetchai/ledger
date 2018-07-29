@@ -3,6 +3,7 @@
 #include "fetch_asio.hpp"
 
 #include <iostream>
+#include <utility>
 
 namespace fetch {
 namespace network {
@@ -21,8 +22,8 @@ public:
 
   static adapter_list_type GetAdapters();
 
-  Adapter(address_type const &address, address_type const &network_mask)
-    : address_{address}, network_mask_{network_mask}
+  Adapter(address_type address, address_type network_mask)
+    : address_{std::move(address)}, network_mask_{std::move(network_mask)}
   {}
   Adapter(Adapter const &) = default;
   ~Adapter()               = default;

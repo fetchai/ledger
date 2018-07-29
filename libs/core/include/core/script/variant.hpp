@@ -1,4 +1,5 @@
 #pragma once
+
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "vectorise/memory/shared_array.hpp"
@@ -7,6 +8,7 @@
 #include <ostream>
 #include <type_traits>
 #include <vector>
+
 namespace fetch {
 namespace meta {
 
@@ -44,35 +46,10 @@ enum VariantType
 };
 
 class Variant;
+class VariantList;
 
-class VariantList
-{
-public:
-  VariantList();
-  VariantList(std::size_t const &size);
-  VariantList(VariantList const &other, std::size_t offset, std::size_t size);
-  VariantList(VariantList const &other) = default;
-  VariantList(VariantList &&other) noexcept;
 
-  VariantList &operator=(VariantList const &other) = default;
-  VariantList &operator                            =(VariantList &&other) noexcept;
 
-  Variant const &operator[](std::size_t const &i) const;
-  Variant &      operator[](std::size_t const &i);
-  void           Resize(std::size_t const &n);
-  void           LazyResize(std::size_t const &n);
-  void           Reserve(std::size_t const &n);
-  void           LazyReserve(std::size_t const &n);
-  std::size_t    size() const { return size_; }
-
-  void SetData(VariantList const &other, std::size_t offset, std::size_t size);
-
-private:
-  std::size_t                      size_   = 0;
-  std::size_t                      offset_ = 0;
-  memory::SharedArray<Variant, 16> data_;
-  Variant *                        pointer_ = nullptr;
-};
 
 class Variant
 {
@@ -124,8 +101,38 @@ class Variant
   };
 
 public:
-  using byte_array_type = byte_array::ByteArray;
-  using variant_array_type = VariantList;
+
+  class List
+  {
+  public:
+    List();
+    List(std::size_t const &size);
+    List(List const &other, std::size_t offset, std::size_t size);
+    List(List const &other) = default;
+    List(List &&other) noexcept;
+
+    List &operator=(List const &other) = default;
+    List &operator=(List &&other) noexcept;
+
+    Variant const &operator[](std::size_t const &i) const;
+    Variant &      operator[](std::size_t const &i);
+    void           Resize(std::size_t const &n);
+    void           LazyResize(std::size_t const &n);
+    void           Reserve(std::size_t const &n);
+    void           LazyReserve(std::size_t const &n);
+    std::size_t    size() const { return size_; }
+
+    void SetData(List const &other, std::size_t offset, std::size_t size);
+
+  private:
+    std::size_t                      size_   = 0;
+    std::size_t                      offset_ = 0;
+    memory::SharedArray<Variant, 128>     data_;
+    Variant *                        pointer_ = nullptr;
+  };
+
+  using byte_array_type = byte_array::ConstByteArray;
+  using variant_array_type = List;
   using variant_proxy_type = VariantObjectEntryProxy<Variant>;
 
   Variant() : type_(UNDEFINED) {}
@@ -136,14 +143,14 @@ public:
   Variant(uint64_t const &i) { *this = i; }
   Variant(uint32_t const &i) { *this = i; }
   Variant(uint16_t const &i) { *this = i; }
-
+//  Variant(byte_array_type const &s) { *this = s; }
   Variant(float const &f) { *this = f; }
   Variant(double const &f) { *this = f; }
 
   Variant(std::initializer_list<Variant> const &lst)
   {
     type_ = ARRAY;
-    VariantList data(lst.size());
+    Variant::List data(lst.size());
     std::size_t i = 0;
     for (auto const &a : lst) data[i++] = a;
 
@@ -159,13 +166,13 @@ public:
   void MakeArray(std::size_t n)
   {
     type_  = ARRAY;
-    array_ = VariantList(n);
+    array_ = Variant::List(n);
   }
 
   void MakeObject()
   {
     type_  = OBJECT;
-    array_ = VariantList();
+    array_ = Variant::List();
   }
 
   static Variant Array(std::size_t n)
@@ -280,13 +287,13 @@ public:
     return false;
   }
 
-  void SetArray(VariantList const &data, std::size_t offset, std::size_t size)
+  void SetArray(Variant::List const &data, std::size_t offset, std::size_t size)
   {
     type_ = ARRAY;
     array_.SetData(data, offset, size);
   }
 
-  void SetObject(VariantList const &data, std::size_t offset, std::size_t size)
+  void SetObject(Variant::List const &data, std::size_t offset, std::size_t size)
   {
     type_ = OBJECT;
     array_.SetData(data, offset, size);
@@ -446,7 +453,7 @@ inline std::ostream &operator<<(std::ostream &os, Variant const &v)
   return os;
 }
 
-inline std::ostream &operator<<(std::ostream &os, VariantList const &v)
+inline std::ostream &operator<<(std::ostream &os, Variant::variant_array_type const &v)
 {
   os << "[";
   for (std::size_t i = 0; i < v.size(); ++i)

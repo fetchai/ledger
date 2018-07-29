@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <thread>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -35,7 +36,7 @@ public:
   using lane_type              = LaneIdentity::lane_type;
 
   // TODO(EJF):  is move?
-  explicit StorageUnitClient(network_manager_type tm) : network_manager_(tm)
+  explicit StorageUnitClient(network_manager_type tm) : network_manager_(std::move(tm))
   {
     id_ = "my-fetch-id";
     // libs/ledger/include/ledger/chain/helper_functions.hpp

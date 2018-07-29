@@ -16,6 +16,7 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <utility>
 
 namespace fetch {
 namespace network {
@@ -31,8 +32,8 @@ public:
   using resolver_type = asio::ip::tcp::resolver;
   using mutex_type = std::mutex;
 
-  TCPClientImplementation(network_manager_type const &network_manager) noexcept
-    : networkManager_{network_manager}
+  TCPClientImplementation(network_manager_type network_manager) noexcept
+    : networkManager_{std::move(network_manager)}
   {}
 
   TCPClientImplementation(TCPClientImplementation const &rhs) = delete;

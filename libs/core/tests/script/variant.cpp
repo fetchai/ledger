@@ -11,6 +11,8 @@ using namespace fetch::script;
 
 int main()
 {
+  std::cout << "Size of variant: " << sizeof(Variant) << std::endl;
+
   SCENARIO("Basic manipulation")
   {
     SECTION("Variant")
@@ -30,7 +32,7 @@ int main()
 
     SECTION("Variant list")
     {
-      VariantList x(6);
+      Variant::variant_array_type x(6);
       EXPECT(x.size() == 6);
 
       x[0] = 1.2;
@@ -45,11 +47,6 @@ int main()
       EXPECT(x[3].type() == fetch::script::VariantType::BOOLEAN);
       EXPECT(x[4].type() == fetch::script::VariantType::UNDEFINED);
       EXPECT(x[5].type() == fetch::script::VariantType::NULL_VALUE);
-
-      VariantList y(x, 2, 3);
-      EXPECT(y[0].type() == fetch::script::VariantType::INTEGER);
-      EXPECT(y[1].type() == fetch::script::VariantType::BOOLEAN);
-      EXPECT(y[2].type() == fetch::script::VariantType::UNDEFINED);
     };
 
     SECTION("Variant object")
@@ -121,7 +118,7 @@ int main()
   {
     SECTION("Variant list")
     {
-      VariantList x(6);
+      Variant::variant_array_type x(6);
       EXPECT(x.size() == 6);
 
       x[0] = 1.2;

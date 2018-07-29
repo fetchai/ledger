@@ -3,17 +3,17 @@
 namespace fetch {
 namespace script {
 
-VariantList::VariantList() { pointer_ = data_.pointer(); }
+Variant::List::List() { pointer_ = data_.pointer(); }
 
-VariantList::VariantList(std::size_t const &size) { Resize(size); }
+Variant::List::List(std::size_t const &size) { Resize(size); }
 
-VariantList::VariantList(VariantList const &other, std::size_t offset, std::size_t size)
+Variant::List::List(List const &other, std::size_t offset, std::size_t size)
   : size_(size), offset_(offset), data_(other.data_)
 {
   pointer_ = data_.pointer() + offset_;
 }
 
-VariantList::VariantList(VariantList &&other) noexcept
+Variant::List::List(List &&other) noexcept
 {
   std::swap(size_, other.size_);
   std::swap(offset_, other.offset_);
@@ -21,7 +21,7 @@ VariantList::VariantList(VariantList &&other) noexcept
   std::swap(pointer_, other.pointer_);
 }
 
-VariantList &VariantList::operator=(VariantList &&other) noexcept
+Variant::List &Variant::List::operator=(List &&other) noexcept
 {
   std::swap(size_, other.size_);
   std::swap(offset_, other.offset_);
@@ -30,30 +30,29 @@ VariantList &VariantList::operator=(VariantList &&other) noexcept
   return *this;
 }
 
-Variant const &VariantList::operator[](std::size_t const &i) const { return pointer_[i]; }
+Variant const &Variant::List::operator[](std::size_t const &i) const { return pointer_[i]; }
 
-Variant &VariantList::operator[](std::size_t const &i) { return pointer_[i]; }
+Variant &Variant::List::operator[](std::size_t const &i) { return pointer_[i]; }
 
-void VariantList::Resize(std::size_t const &n)
+void Variant::List::Resize(std::size_t const &n)
 {
   if (size_ == n) return;
   Reserve(n);
   size_ = n;
 }
 
-void VariantList::LazyResize(std::size_t const &n)
+void Variant::List::LazyResize(std::size_t const &n)
 {
   if (size_ == n) return;
   LazyReserve(n);
   size_ = n;
 }
 
-void VariantList::Reserve(std::size_t const &n)
+void Variant::List::Reserve(std::size_t const &n)
 {
   if (offset_ + n < data_.size()) return;
 
-  memory::SharedArray<Variant, 16> new_data(n);
-  new_data.SetAllZero();
+  memory::SharedArray<Variant> new_data(n);
 
   for (std::size_t i = 0; i < size_; ++i)
   {
@@ -65,19 +64,18 @@ void VariantList::Reserve(std::size_t const &n)
   pointer_ = data_.pointer();
 }
 
-void VariantList::LazyReserve(std::size_t const &n)
+void Variant::List::LazyReserve(std::size_t const &n)
 {
   if (offset_ + n < data_.size()) return;
 
-  memory::SharedArray<Variant, 16> new_data(n);
-  new_data.SetAllZero();
+  memory::SharedArray<Variant> new_data(n);
 
   data_    = new_data;
   offset_  = 0;
   pointer_ = data_.pointer();
 }
 
-void VariantList::SetData(VariantList const &other, std::size_t offset, std::size_t size)
+void Variant::List::SetData(List const &other, std::size_t offset, std::size_t size)
 {
   data_    = other.data_;
   size_    = size;

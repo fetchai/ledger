@@ -3,6 +3,7 @@
 #include "core/logger.hpp"
 #include <exception>
 #include <string>
+#include <utility>
 namespace fetch {
 namespace serializers {
 
@@ -22,7 +23,7 @@ public:
   }
 
   SerializableException(std::string explanation)
-    : error_code_(error::TYPE_ERROR), explanation_(explanation)
+    : error_code_(error::TYPE_ERROR), explanation_(std::move(explanation))
   {
     LOG_STACK_TRACE_POINT;
 
@@ -38,7 +39,7 @@ public:
   }
 
   SerializableException(error::error_type error_code, std::string explanation)
-    : error_code_(error_code), explanation_(explanation)
+    : error_code_(error_code), explanation_(std::move(explanation))
   {
     LOG_STACK_TRACE_POINT;
 

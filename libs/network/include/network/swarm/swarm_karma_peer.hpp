@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <time.h>
+#include <utility>
 
 #include "swarm_peer_location.hpp"
 
@@ -16,8 +17,8 @@ public:
     : location_(rhs.location_), karma_(rhs.karma_), karmaTime_(rhs.karmaTime_)
   {}
 
-  explicit SwarmKarmaPeer(const SwarmPeerLocation &loc, double karma = 0.0)
-    : location_(loc), karma_(karma), karmaTime_(GetCurrentTime())
+  explicit SwarmKarmaPeer(SwarmPeerLocation loc, double karma = 0.0)
+    : location_(std::move(loc)), karma_(karma), karmaTime_(GetCurrentTime())
   {}
 
   explicit SwarmKarmaPeer(const std::string &loc, double karma = 0.0)

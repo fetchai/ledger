@@ -1,4 +1,6 @@
 #pragma once
+#include <utility>
+
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/service/client.hpp"
@@ -23,7 +25,7 @@ public:
   };
 
   LaneIdentity(client_register_type reg, network_manager_type nm, crypto::Identity identity)
-    : identity_(identity), register_(reg), manager_(nm)
+    : identity_(identity), register_(std::move(reg)), manager_(std::move(nm))
   {
     lane_        = uint32_t(-1);
     total_lanes_ = 0;

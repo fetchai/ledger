@@ -21,21 +21,32 @@ template <typename T, std::size_t type_size = sizeof(T)>
 class SharedArray : public VectorSlice<T, type_size>
 {
 public:
+  //static_assert(sizeof(T) >= type_size, "The size allocated to the type must at least be larger than the type itself");
+//  static_assert(std::is_pod<T>::value, "The shared array can only be used with plain old data types");
+
   using size_type = std::size_t;
   using data_type = std::shared_ptr<T>;
   using super_type = VectorSlice<T, type_size>;
   using self_type = SharedArray<T, type_size>;
   using type      = T;
 
-  SharedArray(std::size_t const &n) : super_type()
+  SharedArray(std::size_t const &n)
+    : super_type()
   {
     this->size_ = n;
 
     if (n > 0)
     {
-      data_ =
-          std::shared_ptr<T>((type *)_mm_malloc(this->padded_size() * sizeof(type), 16), _mm_free);
+      data_ = std::shared_ptr<T>(
+        reinterpret_cast<type *>(
+          _mm_malloc(this->padded_size() * sizeof(type), 16)
+        ),
+        _mm_free
+      );
+
       this->pointer_ = data_.get();
+
+      Initialise();
     }
   }
 
@@ -58,17 +69,30 @@ public:
     std::swap(this->pointer_, other.pointer_);
     return *this;
   }
+
   self_type &operator=(SharedArray const &other)
   {
     if (&other == this) return *this;
 
     this->size_    = other.size_;
-    this->data_    = other.data_;
+
+    if (other.data_)
+    {
+      this->data_ = other.data_;
+    }
+    else
+    {
+      this->data_.reset();
+    }
+
     this->pointer_ = other.pointer_;
     return *this;
   }
 
-  ~SharedArray() = default;
+  ~SharedArray()
+  {
+    CleanUp();
+  }
 
   self_type Copy() const
   {
@@ -83,6 +107,46 @@ public:
   }
 
 private:
+
+  template <typename R = T>
+  typename std::enable_if<std::is_pod<R>::value>::type
+  Initialise()
+  {
+    this->SetAllZero();
+  }
+
+  template <typename R = T>
+  typename std::enable_if<(!std::is_pod<R>::value) && std::is_default_constructible<R>::value>::type
+  Initialise()
+  {
+    for (std::size_t i = 0; i < this->size_; ++i)
+    {
+      // construct the object in place
+      new (&(*this)[i]) T();
+    }
+  }
+
+  template <typename R = T>
+  typename std::enable_if<std::is_pod<R>::value>::type
+  CleanUp()
+  {
+    this->SetAllZero();
+  }
+
+  template <typename R = T>
+  typename std::enable_if<(!std::is_pod<R>::value) && std::is_default_constructible<R>::value>::type
+  CleanUp()
+  {
+    if (data_)
+    {
+      for (std::size_t i = 0; i < this->size_; ++i)
+      {
+        // destruct the object in place
+        (*this)[i].~T();
+      }
+    }
+  }
+
   data_type data_ = nullptr;
 };
 

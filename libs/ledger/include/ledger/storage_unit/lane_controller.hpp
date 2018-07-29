@@ -1,4 +1,6 @@
 #pragma once
+#include <utility>
+
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
@@ -22,13 +24,13 @@ public:
   using connection_handle_type     = client_register_type::connection_handle_type;
   using protocol_handler_type      = service::protocol_handler_type;
 
-  LaneController(protocol_handler_type const &      lane_identity_protocol,
-                 std::weak_ptr<LaneIdentity> const &identity, client_register_type reg,
+  LaneController(protocol_handler_type const &lane_identity_protocol,
+                 std::weak_ptr<LaneIdentity> identity, client_register_type reg,
                  network_manager_type nm)
     : lane_identity_protocol_(lane_identity_protocol)
-    , lane_identity_(identity)
-    , register_(reg)
-    , manager_(nm)
+    , lane_identity_(std::move(identity))
+    , register_(std::move(reg))
+    , manager_(std::move(nm))
   {}
 
   /// External controls

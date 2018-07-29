@@ -29,7 +29,7 @@ public:
   using function_type    = std::function<void(self_shared_type)>;
   std::vector<TestContext *> sections;
 
-  TestContext(std::string const &explanation) : explanation_(explanation)
+  TestContext(std::string explanation) : explanation_(std::move(explanation))
   {
     TestContext::sections.push_back(this);
   }
@@ -132,7 +132,7 @@ public:
   Expression()                        = default;
   Expression(Expression const &other) = default;
   Expression(Expression &&other)      = default;
-  Expression(std::string const &expr) : expression_(expr) {}
+  Expression(std::string expr) : expression_(std::move(expr)) {}
 
   template <typename T>
   Expression(T const &v)
@@ -203,7 +203,7 @@ public:
   using sub_function_type   = std::function<void(shared_context_type)>;
   using main_function_type  = std::function<void(sub_function_type)>;
 
-  ProgramInserter(main_function_type fnc) : main_(fnc) {}
+  ProgramInserter(main_function_type fnc) : main_(std::move(fnc)) {}
 
   void operator()()
   {

@@ -3,6 +3,7 @@
 #include "service_consts.hpp"
 #include <iostream>
 #include <memory>
+#include <utility>
 using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
@@ -13,7 +14,7 @@ class AuthenticationLogic
 public:
   using node_details_type = D;
 
-  AuthenticationLogic(fetch::network::ConnectionRegister<D> const &reg) : register_(reg) {}
+  AuthenticationLogic(fetch::network::ConnectionRegister<D> reg) : register_(std::move(reg)) {}
 
   uint64_t Ping() { return 1337; }
 

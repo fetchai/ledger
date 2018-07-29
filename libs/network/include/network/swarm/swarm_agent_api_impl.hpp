@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "network/details/thread_pool.hpp"
 #include "network/swarm/swarm_agent_api.hpp"
 #include "network/swarm/swarm_karma_peers.hpp"
@@ -20,15 +22,15 @@ public:
   std::string                            identifier_;
   uint32_t                               idlespeed_;
 
-  explicit SwarmAgentApiImpl(const std::string &identifier, uint32_t idlespeed)
-    : identifier_(identifier), idlespeed_(idlespeed)
+  explicit SwarmAgentApiImpl(std::string identifier, uint32_t idlespeed)
+    : identifier_(std::move(identifier)), idlespeed_(idlespeed)
   {
     threadingSystem_ = std::make_shared<threading_system_type>(10);
   }
 
   explicit SwarmAgentApiImpl(std::shared_ptr<threading_system_type> threadingSystem,
-                             const std::string &identifier, uint32_t idlespeed)
-    : identifier_(identifier), idlespeed_(idlespeed)
+                             std::string identifier, uint32_t idlespeed)
+    : identifier_(std::move(identifier)), idlespeed_(idlespeed)
   {
     threadingSystem_ = threadingSystem;
   }

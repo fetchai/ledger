@@ -4,6 +4,7 @@
 #include "http/status.hpp"
 #include "network/fetch_asio.hpp"
 #include <ostream>
+#include <utility>
 
 namespace fetch {
 namespace http {
@@ -11,9 +12,9 @@ namespace http {
 class HTTPResponse : public std::enable_shared_from_this<HTTPResponse>
 {
 public:
-  HTTPResponse(byte_array::ConstByteArray body, MimeType const &mime = {".html", "text/html"},
-               Status const &status = status_code::SUCCESS_OK)
-    : body_(body), mime_(mime), status_(status)
+  HTTPResponse(byte_array::ConstByteArray body, MimeType mime = {".html", "text/html"},
+               Status status = status_code::SUCCESS_OK)
+    : body_(body), mime_(std::move(mime)), status_(std::move(status))
   {
     header_.Add("content-length", int64_t(body_.size()));
     header_.Add("content-type", mime_.type);

@@ -55,38 +55,22 @@ public:
   template <typename R = T>
   typename std::enable_if<std::is_pod<R>::value>::type SetAllZero()
   {
-#if 0
-        assert(pointer_ != nullptr);
-#else
     if (pointer_)
     {
       std::memset(pointer_, 0, padded_size() * sizeof(type));
     }
-#endif
   }
 
   template <typename R = T>
-  typename std::enable_if<(!std::is_pod<R>::value) && (std::is_default_constructible<R>::value && std::is_copy_assignable<R>::value)>::type
-  SetAllZero()
-  {
-    if (pointer_)
-    {
-      R const initial_value;
-      for (std::size_t i = 0; i < size(); ++i)
-      {
-        operator[](i) = initial_value;
-      }
-    }
-  }
-
-  void SetPaddedZero()
+  typename std::enable_if<std::is_pod<R>::value>::type SetPaddedZero()
   {
     assert(pointer_ != nullptr);
 
     std::memset(pointer_ + size(), 0, (padded_size() - size()) * sizeof(type));
   }
 
-  void SetZeroAfter(std::size_t const &n)
+  template <typename R = T>
+  typename std::enable_if<std::is_pod<R>::value>::type SetZeroAfter(std::size_t const &n)
   {
     std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(type));
   }

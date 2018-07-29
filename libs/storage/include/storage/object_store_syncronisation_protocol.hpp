@@ -6,6 +6,7 @@
 #include "storage/object_store.hpp"
 
 #include <set>
+#include <utility>
 #include <vector>
 namespace fetch {
 namespace storage {
@@ -25,12 +26,12 @@ public:
   using register_type         = R;
   using thread_pool_type      = network::ThreadPool;
 
-  ObjectStoreSyncronisationProtocol(protocol_handler_type const &p, register_type const &r,
-                                    thread_pool_type const &nm, ObjectStore<T> *store)
+  ObjectStoreSyncronisationProtocol(protocol_handler_type const &p, register_type r,
+                                    thread_pool_type nm, ObjectStore<T> *store)
     : fetch::service::Protocol()
     , protocol_(p)
-    , register_(r)
-    , thread_pool_(nm)
+    , register_(std::move(r))
+    , thread_pool_(std::move(nm))
     , store_(store)
     , running_(false)
   {  // , register_(reg), manager_(nm)
