@@ -8,6 +8,7 @@
 #include <ostream>
 #include <type_traits>
 #include <vector>
+#include <memory>
 
 namespace fetch {
 namespace meta {
@@ -46,307 +47,82 @@ enum VariantType
 };
 
 class Variant;
-class VariantList;
-
-
-
+class VariantArray;
+class VariantProxy;
 
 class Variant
 {
-  template <typename T>
-  class VariantObjectEntryProxy : public T
-  {
-  public:
-    VariantObjectEntryProxy(byte_array::ConstByteArray const &key, Variant *parent)
-      : key_(key), parent_(parent), child_(nullptr)
-    {}
-
-    VariantObjectEntryProxy(byte_array::ConstByteArray const &key, Variant *parent, Variant *child)
-      : T(*child), key_(key), parent_(parent), child_(child)
-    {}
-
-    ~VariantObjectEntryProxy()
-    {
-      if (modified_)
-      {
-        if (child_ != nullptr)
-        {
-          child_->operator=(*this);
-        }
-        else
-        {
-          parent_->LazyAppend(key_, *this);
-        }
-      }
-    }
-
-    template <typename S>
-    S operator=(S val)
-    {
-      modified_  = true;
-      T::operator=(val);
-      return val;
-    }
-
-    template <typename S>
-    bool operator==(S const &val)
-    {
-      return T::operator==(val);
-    }
-
-  private:
-    byte_array::ConstByteArray key_;
-    T *                        parent_, *child_;
-    bool                       modified_ = false;
-  };
-
 public:
+  using ConstByteArray = byte_array::ConstByteArray;
+  using VariantArrayPtr = std::shared_ptr<VariantArray>;
 
-  class List
-  {
-  public:
-    List();
-    List(std::size_t const &size);
-    List(List const &other, std::size_t offset, std::size_t size);
-    List(List const &other) = default;
-    List(List &&other) noexcept;
+  // Construction / Destruction
+  Variant();
+  Variant(int64_t const &i);
+  Variant(int32_t const &i);
+  Variant(int16_t const &i);
+  Variant(uint64_t const &i);
+  Variant(uint32_t const &i);
+  Variant(uint16_t const &i);
+  Variant(float const &f);
+  Variant(double const &f);
+  Variant(std::initializer_list<Variant> const &lst);
+  ~Variant() = default;
 
-    List &operator=(List const &other) = default;
-    List &operator=(List &&other) noexcept;
+  // Type creations
+  void MakeNull();
+  void MakeUndefined();
+  void MakeArray(std::size_t n);
+  void MakeObject();
 
-    Variant const &operator[](std::size_t const &i) const;
-    Variant &      operator[](std::size_t const &i);
-    void           Resize(std::size_t const &n);
-    void           LazyResize(std::size_t const &n);
-    void           Reserve(std::size_t const &n);
-    void           LazyReserve(std::size_t const &n);
-    std::size_t    size() const { return size_; }
+  // Helpers
+  static Variant Array(std::size_t n);
+  static Variant Object();
 
-    void SetData(List const &other, std::size_t offset, std::size_t size);
-
-  private:
-    std::size_t                      size_   = 0;
-    std::size_t                      offset_ = 0;
-    memory::SharedArray<Variant, 128>     data_;
-    Variant *                        pointer_ = nullptr;
-  };
-
-  using byte_array_type = byte_array::ConstByteArray;
-  using variant_array_type = List;
-  using variant_proxy_type = VariantObjectEntryProxy<Variant>;
-
-  Variant() : type_(UNDEFINED) {}
-
-  Variant(int64_t const &i) { *this = i; }
-  Variant(int32_t const &i) { *this = i; }
-  Variant(int16_t const &i) { *this = i; }
-  Variant(uint64_t const &i) { *this = i; }
-  Variant(uint32_t const &i) { *this = i; }
-  Variant(uint16_t const &i) { *this = i; }
-//  Variant(byte_array_type const &s) { *this = s; }
-  Variant(float const &f) { *this = f; }
-  Variant(double const &f) { *this = f; }
-
-  Variant(std::initializer_list<Variant> const &lst)
-  {
-    type_ = ARRAY;
-    Variant::List data(lst.size());
-    std::size_t i = 0;
-    for (auto const &a : lst) data[i++] = a;
-
-    array_ = data;
-  }
-
-  ~Variant() {}
-
-  void MakeNull() { type_ = NULL_VALUE; }
-
-  void MakeUndefined() { type_ = UNDEFINED; }
-
-  void MakeArray(std::size_t n)
-  {
-    type_  = ARRAY;
-    array_ = Variant::List(n);
-  }
-
-  void MakeObject()
-  {
-    type_  = OBJECT;
-    array_ = Variant::List();
-  }
-
-  static Variant Array(std::size_t n)
-  {
-    Variant ret;
-    ret.MakeArray(n);
-    return ret;
-  }
-
-  static Variant Object()
-  {
-    Variant ret;
-    ret.MakeObject();
-    return ret;
-  }
-
-  byte_array_type const &operator=(byte_array_type const &b)
-  {
-    type_   = STRING;
-    string_ = b;
-    return b;
-  }
-
-  char const *operator=(char const *data)
-  {
-    if (data == nullptr)
-      type_ = NULL_VALUE;
-    else
-    {
-      type_   = STRING;
-      string_ = byte_array_type(data);
-    }
-
-    return data;
-  }
+  // Assignment
+  template <typename T>
+  meta::IfIsIntegerLike<T, Variant&> operator=(T const &i);
 
   template <typename T>
-  meta::IfIsIntegerLike<T> operator=(T const &i)
-  {
-    type_         = INTEGER;
-    data_.integer = int64_t(i);
-    return T(data_.integer);
-  }
+  meta::IfIsFloatLike<T, Variant&> operator=(T const &f);
 
   template <typename T>
-  meta::IfIsFloatLike<T> operator=(T const &f)
-  {
-    type_             = FLOATING_POINT;
-    data_.float_point = double(f);
-    return T(data_.float_point);
-  }
+  meta::IfIsBooleanLike<T, Variant&> operator=(T const &b);
 
-  template <typename T>
-  meta::IfIsBooleanLike<T> operator=(T const &b)
-  {
-    type_                = BOOLEAN;
-    return data_.boolean = b;
-  }
-
-  variant_array_type const &operator=(variant_array_type const &array)
-  {
-    type_  = ARRAY;
-    array_ = array;
-    return array;
-  }
+  Variant &operator=(VariantArray const &array);
+  Variant &operator=(ConstByteArray const &b);
+  Variant &operator=(char const *data);
 
   // Dict accessors
-  VariantObjectEntryProxy<Variant> operator[](byte_array::ConstByteArray const &key)
-  {
-    assert(type_ == OBJECT);
-    std::size_t i = 0;
-    for (; i < array_.size(); i += 2)
-    {
-      if (key == array_[i].as_byte_array()) break;
-    }
-    if (i == array_.size())
-    {
-      return VariantObjectEntryProxy<Variant>(key, this);
-    }
-    return VariantObjectEntryProxy<Variant>(key, this, &array_[i + 1]);
-  }
-
-  Variant const &operator[](byte_array::ConstByteArray const &key) const
-  {
-    static Variant undefined_variant;
-    assert(type_ == OBJECT);
-    std::size_t i = FindKeyIndex(key);
-
-    if (i == array_.size())
-    {
-      return undefined_variant;
-    }
-    return array_[i + 1];
-  }
+  VariantProxy operator[](ConstByteArray const &key);
+  Variant const &operator[](ConstByteArray const &key) const;
 
   // Array accessors
   Variant &      operator[](std::size_t const &i);
   Variant const &operator[](std::size_t const &i) const;
   std::size_t    size() const;
 
-  bool Append(byte_array::ConstByteArray const &key, Variant const &val)
-  {
-    std::size_t i = FindKeyIndex(key);
-
-    if (i == array_.size())
-    {
-      LazyAppend(key, val);
-
-      return true;
-    }
-
-    return false;
-  }
-
-  void SetArray(Variant::List const &data, std::size_t offset, std::size_t size)
-  {
-    type_ = ARRAY;
-    array_.SetData(data, offset, size);
-  }
-
-  void SetObject(Variant::List const &data, std::size_t offset, std::size_t size)
-  {
-    type_ = OBJECT;
-    array_.SetData(data, offset, size);
-  }
+  bool Append(ConstByteArray const &key, Variant const &val);
+  void SetArray(VariantArray const &data, std::size_t offset, std::size_t size);
+  void SetObject(VariantArray const &data, std::size_t offset, std::size_t size);
 
   template <typename... A>
-  void EmplaceSetString(A... args)
-  {
-    type_ = STRING;
-    string_.FromByteArray(args...);
-  }
-
-  int64_t const &as_int() const { return data_.integer; }
-  int64_t &      as_int() { return data_.integer; }
-  double const & as_double() const { return data_.float_point; }
-  double &       as_double() { return data_.float_point; }
-  bool const &   as_bool() const { return data_.boolean; }
-  bool &         as_bool() { return data_.boolean; }
+  void EmplaceSetString(A... args);
 
   template <typename T>
-  meta::IfIsIntegerLike<T, T> As() const
-  {
-    assert(type_ == INTEGER);
-    return static_cast<T>(data_.integer);
-  }
+  meta::IfIsIntegerLike<T, T> As() const;
 
   template <typename T>
-  meta::IfIsBooleanLike<T, const T &> As() const
-  {
-    assert(type_ == BOOLEAN);
-    return data_.boolean;
-  }
+  meta::IfIsBooleanLike<T, const T &> As() const;
 
   template <typename T>
-  meta::IfIsFloatLike<T, T> As() const
-  {
-    assert(type_ == FLOATING_POINT);
-    return static_cast<T>(data_.float_point);
-  }
+  meta::IfIsFloatLike<T, T> As() const;
 
   template <typename T>
-  meta::IfIsByteArrayLike<T, const T &> As() const
-  {
-    assert(type_ == STRING);
-    return string_;
-  }
+  meta::IfIsByteArrayLike<T, const T &> As() const;
 
   template <typename T>
-  meta::IfIsStdStringLike<T, T> As() const
-  {
-    assert(type_ == STRING);
-    return static_cast<std::string>(string_);
-  }
+  meta::IfIsStdStringLike<T, T> As() const;
 
   bool is_int() const { return type_ == INTEGER; }
   bool is_float() const { return type_ == FLOATING_POINT; }
@@ -357,46 +133,222 @@ public:
   bool is_byte_array() const { return type_ == STRING; }
   bool is_undefined() const { return type_ == UNDEFINED; }
 
-  byte_array_type const &as_byte_array() const { return string_; }
-  byte_array_type &      as_byte_array() { return string_; }
-
-  variant_array_type const &as_array() const { return array_; }
-  variant_array_type &      as_array() { return array_; }
+  ConstByteArray const &as_byte_array() const { return string_; }
 
   VariantType type() const { return type_; }
 
+  friend std::ostream &operator<<(std::ostream &os, Variant const &v);
+
 private:
-  std::size_t FindKeyIndex(byte_array::ConstByteArray const &key) const
-  {
-    std::size_t i = 0;
-    for (; i < array_.size(); i += 2)
-    {
-      if (key == array_[i].as_byte_array()) break;
-    }
-    return i;
-  }
 
-  void LazyAppend(byte_array::ConstByteArray const &key, Variant const &val)
-  {
-    assert(type_ == OBJECT);
-    array_.Resize(array_.size() + 2);
+  std::size_t FindKeyIndex(byte_array::ConstByteArray const &key) const;
+  void LazyAppend(byte_array::ConstByteArray const &key, Variant const &val);
 
-    array_[array_.size() - 2] = key;
-    array_[array_.size() - 1] = val;
-  }
-
-  union
+  union PrimitiveData
   {
     int64_t integer;
     double  float_point;
     bool    boolean;
-  } data_;
+  };
 
+  PrimitiveData data_;
   byte_array::ByteArray string_;
-  variant_array_type    array_;
-
+  VariantArrayPtr       array_ = std::make_unique<VariantArray>();
   VariantType type_ = UNDEFINED;
+
+  friend VariantProxy;
 };
+
+class VariantProxy : public Variant
+{
+public:
+  using ConstByteArray = byte_array::ConstByteArray;
+
+  VariantProxy(ConstByteArray const &key, Variant *parent)
+    : key_(key), parent_(parent), child_(nullptr)
+  {}
+
+  VariantProxy(ConstByteArray const &key, Variant *parent, Variant *child)
+    : Variant(*child), key_(key), parent_(parent), child_(child)
+  {}
+
+  ~VariantProxy()
+  {
+    if (modified_)
+    {
+      if (child_ != nullptr)
+      {
+        child_->operator=(*this);
+      }
+      else
+      {
+        parent_->LazyAppend(key_, *this);
+      }
+    }
+  }
+
+  template <typename S>
+  S operator=(S val)
+  {
+    modified_  = true;
+    Variant::operator=(val);
+    return val;
+  }
+
+private:
+  ConstByteArray key_;
+  Variant        *parent_ = nullptr;
+  Variant        *child_ = nullptr;
+  bool           modified_ = false;
+};
+
+class VariantArray
+{
+public:
+  VariantArray();
+  VariantArray(std::size_t const &size);
+  VariantArray(VariantArray const &other, std::size_t offset, std::size_t size);
+  VariantArray(VariantArray const &other) = default;
+  VariantArray(VariantArray &&other) noexcept;
+
+  VariantArray &operator=(VariantArray const &other) = default;
+  VariantArray &operator=(VariantArray &&other) noexcept;
+
+  Variant const &operator[](std::size_t const &i) const;
+  Variant &      operator[](std::size_t const &i);
+  void           Resize(std::size_t const &n);
+  void           LazyResize(std::size_t const &n);
+  void           Reserve(std::size_t const &n);
+  void           LazyReserve(std::size_t const &n);
+  std::size_t    size() const { return size_; }
+
+  void SetData(VariantArray const &other, std::size_t offset, std::size_t size);
+
+private:
+  std::size_t                      size_   = 0;
+  std::size_t                      offset_ = 0;
+  memory::SharedArray<Variant>     data_;
+  Variant *                        pointer_ = nullptr;
+};
+
+inline Variant::Variant() : type_(UNDEFINED) {}
+inline Variant::Variant(int64_t const &i){ *this = i; }
+inline Variant::Variant(int32_t const &i) { *this = i; }
+inline Variant::Variant(int16_t const &i) { *this = i; }
+inline Variant::Variant(uint64_t const &i) { *this = i; }
+inline Variant::Variant(uint32_t const &i) { *this = i; }
+inline Variant::Variant(uint16_t const &i) { *this = i; }
+inline Variant::Variant(float const &f) { *this = f; }
+inline Variant::Variant(double const &f) { *this = f; }
+
+inline void Variant::MakeNull() { type_ = NULL_VALUE; }
+inline void Variant::MakeUndefined() { type_ = UNDEFINED; }
+
+inline void Variant::MakeArray(std::size_t n)
+{
+  type_  = ARRAY;
+  *array_ = VariantArray(n);
+}
+
+inline void Variant::MakeObject()
+{
+  type_  = OBJECT;
+  *array_ = VariantArray();
+}
+
+inline Variant Variant::Array(std::size_t n)
+{
+  Variant ret;
+  ret.MakeArray(n);
+  return ret;
+}
+
+inline Variant Variant::Object()
+{
+  Variant ret;
+  ret.MakeObject();
+  return ret;
+}
+
+inline Variant &Variant::operator=(ConstByteArray const &b)
+{
+  type_   = STRING;
+  string_ = b;
+  return *this;
+}
+
+template <typename T>
+meta::IfIsIntegerLike<T, Variant&> Variant::operator=(T const &i)
+{
+  type_         = INTEGER;
+  data_.integer = int64_t(i);
+  return *this;
+}
+
+template <typename T>
+meta::IfIsFloatLike<T, Variant&> Variant::operator=(T const &f)
+{
+  type_             = FLOATING_POINT;
+  data_.float_point = double(f);
+  return *this;
+}
+
+template <typename T>
+meta::IfIsBooleanLike<T, Variant&> Variant::operator=(T const &b)
+{
+  type_                = BOOLEAN;
+  data_.boolean = b;
+  return *this;
+}
+
+inline Variant &Variant::operator=(VariantArray const &array)
+{
+  type_  = ARRAY;
+  *array_ = array;
+  return *this;
+}
+
+template <typename... A>
+void Variant::EmplaceSetString(A... args)
+{
+  type_ = STRING;
+  string_.FromByteArray(args...);
+}
+
+template <typename T>
+meta::IfIsIntegerLike<T> Variant::As() const
+{
+  assert(type_ == INTEGER);
+  return static_cast<T>(data_.integer);
+}
+
+template <typename T>
+meta::IfIsBooleanLike<T, const T &> Variant::As() const
+{
+  assert(type_ == BOOLEAN);
+  return data_.boolean;
+}
+
+template <typename T>
+meta::IfIsFloatLike<T, T> Variant::As() const
+{
+  assert(type_ == FLOATING_POINT);
+  return static_cast<T>(data_.float_point);
+}
+
+template <typename T>
+meta::IfIsByteArrayLike<T, const T &> Variant::As() const
+{
+  assert(type_ == STRING);
+  return string_;
+}
+
+template <typename T>
+meta::IfIsStdStringLike<T, T> Variant::As() const
+{
+  assert(type_ == STRING);
+  return static_cast<std::string>(string_);
+}
 
 inline std::ostream &operator<<(std::ostream &os, Variant const &v)
 {
@@ -406,16 +358,16 @@ inline std::ostream &operator<<(std::ostream &os, Variant const &v)
     os << "(undefined)";
     break;
   case VariantType::INTEGER:
-    os << v.as_int();
+    os << v.As<int64_t>();
     break;
   case VariantType::FLOATING_POINT:
-    os << v.as_double();
+    os << v.As<double>();
     break;
   case VariantType::STRING:
     os << '"' << v.as_byte_array() << '"';
     break;
   case VariantType::BOOLEAN:
-    os << (v.as_bool() ? "true" : "false");
+    os << (v.As<bool>() ? "true" : "false");
     break;
   case VariantType::NULL_VALUE:
     os << "null";
@@ -423,13 +375,13 @@ inline std::ostream &operator<<(std::ostream &os, Variant const &v)
   case VariantType::ARRAY:
     os << "[";
 
-    for (std::size_t i = 0; i < v.as_array().size(); ++i)
+    for (std::size_t i = 0; i < v.array_->size(); ++i)
     {
       if (i != 0)
       {
         os << ", ";
       }
-      os << v.as_array()[i];
+      os << (*v.array_)[i];
     }
 
     os << "]";
@@ -437,13 +389,13 @@ inline std::ostream &operator<<(std::ostream &os, Variant const &v)
     break;
   case VariantType::OBJECT:
     os << "{";
-    for (std::size_t i = 0; i < v.as_array().size(); i += 2)
+    for (std::size_t i = 0; i < v.array_->size(); i += 2)
     {
       if (i != 0)
       {
         os << ", ";
       }
-      os << v.as_array()[i] << ": " << v.as_array()[i + 1];
+      os << (*v.array_)[i] << ": " << (*v.array_)[i + 1];
     }
 
     os << "}";
@@ -453,7 +405,7 @@ inline std::ostream &operator<<(std::ostream &os, Variant const &v)
   return os;
 }
 
-inline std::ostream &operator<<(std::ostream &os, Variant::variant_array_type const &v)
+inline std::ostream &operator<<(std::ostream &os, VariantArray const &v)
 {
   os << "[";
   for (std::size_t i = 0; i < v.size(); ++i)
@@ -481,6 +433,38 @@ inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const
   value = element.As<T>();
   return true;
 }
+
+
+
+template <typename T>
+class List
+{
+public:
+  List();
+  List(std::size_t const &size);
+  List(List const &other, std::size_t offset, std::size_t size);
+  List(List const &other) = default;
+  List(List &&other) noexcept;
+
+  List &operator=(List const &other) = default;
+  List &operator=(List &&other) noexcept;
+
+  Variant const &operator[](std::size_t const &i) const;
+  Variant &      operator[](std::size_t const &i);
+  void           Resize(std::size_t const &n);
+  void           LazyResize(std::size_t const &n);
+  void           Reserve(std::size_t const &n);
+  void           LazyReserve(std::size_t const &n);
+  std::size_t    size() const { return size_; }
+
+  void SetData(List const &other, std::size_t offset, std::size_t size);
+
+private:
+  std::size_t                      size_   = 0;
+  std::size_t                      offset_ = 0;
+  memory::SharedArray<Variant>     data_;
+  Variant *                        pointer_ = nullptr;
+};
 
 }  // namespace script
 }  // namespace fetch

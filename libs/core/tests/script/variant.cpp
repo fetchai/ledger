@@ -32,7 +32,7 @@ int main()
 
     SECTION("Variant list")
     {
-      Variant::variant_array_type x(6);
+      VariantArray x(6);
       EXPECT(x.size() == 6);
 
       x[0] = 1.2;
@@ -54,7 +54,7 @@ int main()
       Variant obj                 = Variant::Object();
       obj["numberOfTransactions"] = uint32_t(9);
       EXPECT(obj["numberOfTransactions"].type() == fetch::script::VariantType::INTEGER);
-      EXPECT(obj["numberOfTransactions"].as_int() == 9);
+      EXPECT(obj["numberOfTransactions"].As<int>() == 9);
 
       obj["numberOfTransactions"] = "Hello world";
       std::cout << obj["numberOfTransactions"].type() << std::endl;
@@ -68,10 +68,10 @@ int main()
       EXPECT(obj["numberOfTransactions"].as_byte_array() == "Hello world");
 
       EXPECT(obj["blah"].type() == fetch::script::VariantType::INTEGER);
-      EXPECT(obj["blah"].as_int() == 9);
+      EXPECT(obj["blah"].As<int>() == 9);
 
       EXPECT(obj["Hello"].type() == fetch::script::VariantType::BOOLEAN);
-      EXPECT(obj["Hello"].as_bool() == false);
+      EXPECT(obj["Hello"].As<bool>() == false);
 
       EXPECT(obj["XX"].type() == fetch::script::VariantType::NULL_VALUE);
 
@@ -118,7 +118,7 @@ int main()
   {
     SECTION("Variant list")
     {
-      Variant::variant_array_type x(6);
+      VariantArray x(6);
       EXPECT(x.size() == 6);
 
       x[0] = 1.2;

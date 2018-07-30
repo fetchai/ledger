@@ -158,9 +158,9 @@ public:
     Transaction tx;
 
     tx.fromAddress = doc["fromAddress"].as_byte_array();
-    tx.amount      = doc["balance"].as_int();
+    tx.amount      = doc["balance"].As<int64_t>();
     tx.notes       = doc["notes"].as_byte_array();
-    tx.time        = uint64_t(doc["time"].as_int());
+    tx.time        = doc["time"].As<uint64_t>();
     tx.toAddress   = doc["toAddress"].as_byte_array();
     tx.json        = req.body();
 
