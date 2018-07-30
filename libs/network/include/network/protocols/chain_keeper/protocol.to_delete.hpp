@@ -17,9 +17,9 @@ class ChainKeeperProtocol : public ChainKeeperController,
 {
 public:
   using transaction_summary_type = typename ChainKeeperController::transaction_summary_type;
-  using transaction_type = typename ChainKeeperController::transaction_type;
+  using transaction_type         = typename ChainKeeperController::transaction_type;
 
-  using client_type = fetch::service::ServiceClient<fetch::network::TCPClient>;
+  using client_type            = fetch::service::ServiceClient<fetch::network::TCPClient>;
   using client_shared_ptr_type = std::shared_ptr<client_type>;
 
   ChainKeeperProtocol(network::NetworkManager *network_manager, uint64_t const &protocol,
@@ -205,8 +205,8 @@ public:
         json::JSONDocument doc = req.JSON();
 
         using transaction_type = fetch::chain::Transaction;
-        transaction_type                  tx;
-        auto                              res = doc["resources"];
+        transaction_type tx;
+        auto             res = doc["resources"];
 
         for (std::size_t i = 0; i < res.size(); ++i)
         {

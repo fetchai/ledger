@@ -10,7 +10,7 @@
 using namespace fetch;
 using namespace fetch::storage;
 using cached_kvi_type = KeyValueIndex<KeyValuePair<>, CachedRandomAccessStack<KeyValuePair<>>>;
-using kvi_type = KeyValueIndex<KeyValuePair<>, RandomAccessStack<KeyValuePair<>>>;
+using kvi_type        = KeyValueIndex<KeyValuePair<>, RandomAccessStack<KeyValuePair<>>>;
 
 cached_kvi_type key_index;
 kvi_type        ref_index;

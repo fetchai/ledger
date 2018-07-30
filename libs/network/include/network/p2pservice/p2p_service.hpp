@@ -63,7 +63,7 @@ public:
 
     // Identity
     identity_          = std::make_unique<P2PIdentity>(IDENTITY, register_, tm);
-    my_details_ = identity_->my_details();
+    my_details_        = identity_->my_details();
     identity_protocol_ = std::make_unique<P2PIdentityProtocol>(identity_.get());
     this->Add(IDENTITY, identity_protocol_.get());
 

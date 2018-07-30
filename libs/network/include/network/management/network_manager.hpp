@@ -18,8 +18,8 @@ public:
   using event_function_type = std::function<void()>;
 
   using implementation_type = details::NetworkManagerImplementation;
-  using pointer_type = std::shared_ptr<implementation_type>;
-  using weak_ref_type = std::weak_ptr<implementation_type>;
+  using pointer_type        = std::shared_ptr<implementation_type>;
+  using weak_ref_type       = std::weak_ptr<implementation_type>;
 
   explicit NetworkManager(std::size_t threads = 1)
   {

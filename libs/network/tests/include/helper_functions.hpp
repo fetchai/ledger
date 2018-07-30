@@ -147,9 +147,9 @@ namespace network_benchmark {
 
 // Transactions are packaged up into blocks and referred to using a hash
 using transaction_type = fetch::chain::Transaction;
-using block_hash = std::size_t;
-using block_type = std::vector<transaction_type>;
-using network_block = std::pair<block_hash, block_type>;
+using block_hash       = std::size_t;
+using block_type       = std::vector<transaction_type>;
+using network_block    = std::pair<block_hash, block_type>;
 
 }  // namespace network_benchmark
 

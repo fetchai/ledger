@@ -34,10 +34,11 @@ namespace service {
 class Protocol
 {
 public:
-  using callable_type = AbstractCallable;
-  using byte_array_type = byte_array::ConstByteArray;
+  using callable_type          = AbstractCallable;
+  using byte_array_type        = byte_array::ConstByteArray;
   using connection_handle_type = typename network::AbstractConnection::connection_handle_type;
-  using middleware_type = std::function<void(connection_handle_type const &, byte_array::ByteArray const &)>;
+  using middleware_type =
+      std::function<void(connection_handle_type const &, byte_array::ByteArray const &)>;
 
   Protocol()
   {

@@ -83,7 +83,8 @@ public:
 
   void SetTotalLanes(lane_type const &t) { total_lanes_ = t; }
   /// @}
-  using callable_sign_message_type = std::function<byte_array::ConstByteArray(byte_array::ConstByteArray const &)>;
+  using callable_sign_message_type =
+      std::function<byte_array::ConstByteArray(byte_array::ConstByteArray const &)>;
 
   void OnSignMessage(callable_sign_message_type const &fnc) { on_sign_message_ = fnc; }
 

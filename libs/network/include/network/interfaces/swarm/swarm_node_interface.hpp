@@ -14,7 +14,7 @@ class SwarmNodeInterface
 {
 public:
   static const uint32_t protocol_number = fetch::protocols::FetchProtocols::SWARM;
-  using protocol_class_type = SwarmProtocol;
+  using protocol_class_type             = SwarmProtocol;
 
   SwarmNodeInterface() {}
 

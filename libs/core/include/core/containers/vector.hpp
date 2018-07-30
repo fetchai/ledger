@@ -10,7 +10,7 @@ class Vector : private std::vector<T>
 {
 public:
   using super_type = std::vector<T>;
-  using type = T;
+  using type       = T;
 
   type &At(std::size_t const i) { return super_type::at(i); }
 

@@ -11,12 +11,12 @@ namespace details {
 class FutureWorkStore
 {
 protected:
-  using work_func_type = std::function<void()>;
-  using due_date_type = std::chrono::time_point<std::chrono::system_clock>;
-  using work_item_type = std::pair<due_date_type, work_func_type>;
+  using work_func_type    = std::function<void()>;
+  using due_date_type     = std::chrono::time_point<std::chrono::system_clock>;
+  using work_item_type    = std::pair<due_date_type, work_func_type>;
   using heap_storage_type = std::vector<work_item_type>;
-  using mutex_type = std::recursive_mutex;
-  using lock_type = std::lock_guard<mutex_type>;
+  using mutex_type        = std::recursive_mutex;
+  using lock_type         = std::lock_guard<mutex_type>;
 
 public:
   FutureWorkStore(const FutureWorkStore &rhs) = delete;

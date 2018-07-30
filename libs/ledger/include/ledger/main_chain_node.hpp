@@ -22,9 +22,9 @@ class MainChainNode : public MainChainNodeInterface, public fetch::http::HTTPMod
 public:
   using proof_type = fetch::chain::MainChain::proof_type;
   using block_type = fetch::chain::MainChain::block_type;
-  using body_type = fetch::chain::MainChain::block_type::body_type;
+  using body_type  = fetch::chain::MainChain::block_type::body_type;
   using block_hash = fetch::chain::MainChain::block_hash;
-  using miner = fetch::chain::consensus::DummyMiner;
+  using miner      = fetch::chain::consensus::DummyMiner;
 
   MainChainNode(const MainChainNode &rhs) = delete;
   MainChainNode(MainChainNode &&rhs)      = delete;

@@ -29,10 +29,10 @@ class ServiceServer : public T, public ServiceServerInterface
 {
 public:
   using super_type = T;
-  using self_type = ServiceServer<T>;
+  using self_type  = ServiceServer<T>;
 
   using network_manager_type = typename super_type::network_manager_type;
-  using handle_type = typename T::connection_handle_type;
+  using handle_type          = typename T::connection_handle_type;
 
   // TODO Rename and move
   class ClientRPCInterface : public ServiceClientInterface

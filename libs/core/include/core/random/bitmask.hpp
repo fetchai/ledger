@@ -7,7 +7,7 @@ class BitMask
 {
 public:
   using float_type = double;
-  using word_type = W;
+  using word_type  = W;
   enum
   {
     BITS_OF_PRECISION = B

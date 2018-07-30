@@ -4,8 +4,8 @@
 #include <cmath>
 #include <iostream>
 
-using type = double;
-using array_type = fetch::memory::Array<type>;
+using type        = double;
+using array_type  = fetch::memory::Array<type>;
 using vector_type = typename array_type::vector_register_type;
 
 void Exponentials(array_type const &A, array_type &C)

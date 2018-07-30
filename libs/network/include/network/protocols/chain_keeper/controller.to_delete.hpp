@@ -33,11 +33,11 @@ public:
   // TODO: Get from chain manager
   // Transaction defs
   using transaction_summary_type = fetch::chain::TransactionSummary;
-  using transaction_type = fetch::chain::Transaction;
-  using tx_digest_type = typename transaction_type::digest_type;
+  using transaction_type         = fetch::chain::Transaction;
+  using tx_digest_type           = typename transaction_type::digest_type;
 
   // Other groups
-  using client_type = fetch::service::ServiceClient<fetch::network::TCPClient>;
+  using client_type            = fetch::service::ServiceClient<fetch::network::TCPClient>;
   using client_shared_ptr_type = std::shared_ptr<client_type>;
 
   ChainKeeperController(uint64_t const &protocol, network::NetworkManager *network_manager,

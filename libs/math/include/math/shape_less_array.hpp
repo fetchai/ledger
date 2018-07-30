@@ -22,15 +22,15 @@ template <typename T, typename C = memory::SharedArray<T>>
 class ShapeLessArray
 {
 public:
-  using type = T;
-  using container_type = C;
-  using size_type = std::size_t;
-  using vector_slice_type = typename container_type::vector_slice_type;
-  using vector_register_type = typename container_type::vector_register_type;
+  using type                          = T;
+  using container_type                = C;
+  using size_type                     = std::size_t;
+  using vector_slice_type             = typename container_type::vector_slice_type;
+  using vector_register_type          = typename container_type::vector_register_type;
   using vector_register_iterator_type = typename container_type::vector_register_iterator_type;
 
   /* Iterators for accessing and modifying the array */
-  using iterator = typename container_type::iterator;
+  using iterator         = typename container_type::iterator;
   using reverse_iterator = typename container_type::reverse_iterator;
 
   /* Contructs an empty shape-less array. */
@@ -1550,8 +1550,7 @@ public:
 
   template <typename S,
             typename D = memory::SharedArray<S>>  // TODO deduce D from parent
-  void
-  As(ShapeLessArray<S, D> &ret) const
+  void As(ShapeLessArray<S, D> &ret) const
   {
     ret.LazyResize(size_);
     // TODO: Vectorize

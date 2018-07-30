@@ -42,9 +42,9 @@ class JSONDocument
   };
 
 public:
-  using string_type = byte_array::ByteArray;
+  using string_type       = byte_array::ByteArray;
   using const_string_type = byte_array::ConstByteArray;
-  using VariantArray = script::VariantArray;
+  using VariantArray      = script::VariantArray;
 
   //  using variant_type = script::Variant;
 
@@ -60,10 +60,7 @@ public:
 
   script::Variant const &operator[](std::size_t const &i) const { return root()[i]; }
 
-  script::VariantProxy operator[](byte_array::ConstByteArray const &key)
-  {
-    return root()[key];
-  }
+  script::VariantProxy operator[](byte_array::ConstByteArray const &key) { return root()[key]; }
 
   script::Variant const &operator[](byte_array::ConstByteArray const &key) const
   {

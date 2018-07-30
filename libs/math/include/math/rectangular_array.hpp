@@ -28,13 +28,13 @@ template <typename T, typename C = memory::SharedArray<T>, bool PAD_HEIGHT = fal
 class RectangularArray : public math::ShapeLessArray<T, C>
 {
 public:
-  using super_type = math::ShapeLessArray<T, C>;
-  using type = typename super_type::type;
+  using super_type     = math::ShapeLessArray<T, C>;
+  using type           = typename super_type::type;
   using container_type = typename super_type::container_type;
-  using size_type = typename super_type::size_type;
+  using size_type      = typename super_type::size_type;
 
-  using self_type = RectangularArray<T, C>;
-  using vector_register_type = typename super_type::vector_register_type;
+  using self_type                     = RectangularArray<T, C>;
+  using vector_register_type          = typename super_type::vector_register_type;
   using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
 
   /* Contructs an empty rectangular array. */

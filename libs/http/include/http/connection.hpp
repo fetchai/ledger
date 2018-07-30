@@ -20,10 +20,10 @@ class HTTPConnection : public AbstractHTTPConnection,
 {
 public:
   using response_queue_type = std::deque<HTTPResponse>;
-  using connection_type = typename AbstractHTTPConnection::shared_type;
-  using handle_type = HTTPConnectionManager::handle_type;
+  using connection_type     = typename AbstractHTTPConnection::shared_type;
+  using handle_type         = HTTPConnectionManager::handle_type;
   using shared_request_type = std::shared_ptr<HTTPRequest>;
-  using buffer_ptr_type = std::shared_ptr<asio::streambuf>;
+  using buffer_ptr_type     = std::shared_ptr<asio::streambuf>;
 
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
     : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__)

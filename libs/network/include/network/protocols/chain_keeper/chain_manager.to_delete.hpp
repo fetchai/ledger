@@ -22,13 +22,13 @@ public:
 
   // Transaction defs
   using transaction_type = fetch::chain::Transaction;
-  using tx_digest_type = typename transaction_type::digest_type;
+  using tx_digest_type   = typename transaction_type::digest_type;
 
   // Block defs
-  using proof_type = fetch::chain::consensus::ProofOfWork;
-  using block_body_type = fetch::chain::BlockBody;
+  using proof_type        = fetch::chain::consensus::ProofOfWork;
+  using block_body_type   = fetch::chain::BlockBody;
   using block_header_type = typename proof_type::header_type;
-  using block_type = fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256>;
+  using block_type        = fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256>;
   using shared_block_type = std::shared_ptr<block_type>;
 
   using chain_map_type = std::unordered_map<block_header_type, shared_block_type, hasher_type>;

@@ -9,7 +9,7 @@ class BinaryProblem
 {
 public:
   using cost_type = double;
-  void           Reset()
+  void Reset()
   {
     for (std::size_t i = 0; i < couplings_.size(); ++i) couplings_[i] = 0.;
     for (std::size_t i = 0; i < coupling_sum_.size(); ++i) coupling_sum_[i] = 0;

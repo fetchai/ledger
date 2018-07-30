@@ -8,11 +8,11 @@ namespace http {
 class KeyValueSet : private std::map<byte_array::ConstByteArray, byte_array::ConstByteArray>
 {
 public:
-  using super_type = std::map<byte_array::ConstByteArray, byte_array::ConstByteArray>;
+  using super_type      = std::map<byte_array::ConstByteArray, byte_array::ConstByteArray>;
   using byte_array_type = byte_array::ConstByteArray;
-  using map_type = std::map<byte_array_type, byte_array_type>;
-  using iterator = map_type::iterator;
-  using const_iterator = map_type::const_iterator;
+  using map_type        = std::map<byte_array_type, byte_array_type>;
+  using iterator        = map_type::iterator;
+  using const_iterator  = map_type::const_iterator;
 
   iterator       begin() noexcept { return map_type::begin(); }
   iterator       end() noexcept { return map_type::end(); }

@@ -25,12 +25,12 @@ class TCPClientImplementation final : public AbstractConnection
 {
 public:
   using network_manager_type = NetworkManager;
-  using self_type = std::weak_ptr<AbstractConnection>;
-  using shared_self_type = std::shared_ptr<AbstractConnection>;
-  using socket_type = asio::ip::tcp::tcp::socket;
-  using strand_type = asio::io_service::strand;
-  using resolver_type = asio::ip::tcp::resolver;
-  using mutex_type = std::mutex;
+  using self_type            = std::weak_ptr<AbstractConnection>;
+  using shared_self_type     = std::shared_ptr<AbstractConnection>;
+  using socket_type          = asio::ip::tcp::tcp::socket;
+  using strand_type          = asio::io_service::strand;
+  using resolver_type        = asio::ip::tcp::resolver;
+  using mutex_type           = std::mutex;
 
   TCPClientImplementation(network_manager_type network_manager) noexcept
     : networkManager_{std::move(network_manager)}

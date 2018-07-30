@@ -14,7 +14,7 @@ inline typename memory::VectorSlice<T, S>::type Manhattan(memory::VectorSlice<T,
                                                           memory::VectorSlice<T, S> const &b)
 {
   detailed_assert(a.size() == b.size());
-  using type = typename memory::VectorSlice<T, S>::type;
+  using type                 = typename memory::VectorSlice<T, S>::type;
   using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
 
   type dist =

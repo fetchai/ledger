@@ -28,12 +28,12 @@ public:
     std::atomic<uint32_t> lane;
   };
 
-  using service_client_type = service::ServiceClient;
+  using service_client_type        = service::ServiceClient;
   using shared_service_client_type = std::shared_ptr<service_client_type>;
-  using client_register_type   = fetch::network::ConnectionRegister<ClientDetails>;
-  using connection_handle_type = client_register_type::connection_handle_type;
-  using network_manager_type   = fetch::network::NetworkManager;
-  using lane_type              = LaneIdentity::lane_type;
+  using client_register_type       = fetch::network::ConnectionRegister<ClientDetails>;
+  using connection_handle_type     = client_register_type::connection_handle_type;
+  using network_manager_type       = fetch::network::NetworkManager;
+  using lane_type                  = LaneIdentity::lane_type;
 
   // TODO(EJF):  is move?
   explicit StorageUnitClient(network_manager_type tm) : network_manager_(std::move(tm))

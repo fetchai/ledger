@@ -9,7 +9,7 @@ template <typename T = double>
 class Spline
 {
 public:
-  using type = T;
+  using type       = T;
   using float_type = double;
 
   template <typename F>

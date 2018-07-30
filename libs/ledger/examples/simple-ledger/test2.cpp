@@ -112,7 +112,7 @@ int main(int argc, char const **argv)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-  using client_type = fetch::service::ServiceClient<fetch::network::TCPClient>;
+  using client_type            = fetch::service::ServiceClient<fetch::network::TCPClient>;
   using client_shared_ptr_type = std::shared_ptr<client_type>;
 
   fetch::network::NetworkManager tm(2);

@@ -43,8 +43,8 @@ void Deserialize(T &serializer, TransactionSummary &b)
 class MutableTransaction
 {
 public:
-  using hasher_type = crypto::SHA256;
-  using digest_type = TransactionSummary::digest_type;
+  using hasher_type       = crypto::SHA256;
+  using digest_type       = TransactionSummary::digest_type;
   using resource_set_type = TransactionSummary::resource_set_type;
 
   resource_set_type const &resources() const { return summary_.resources; }

@@ -7,7 +7,7 @@ Variant::Variant(std::initializer_list<Variant> const &lst)
 {
   type_ = ARRAY;
   VariantArray data(lst.size());
-  std::size_t i = 0;
+  std::size_t  i = 0;
   for (auto const &a : lst) data[i++] = a;
 
   *array_ = data;
@@ -101,15 +101,9 @@ void Variant::LazyAppend(ConstByteArray const &key, Variant const &val)
 
 // Variant Array
 
-VariantArray::VariantArray()
-{
-  pointer_ = data_.pointer();
-}
+VariantArray::VariantArray() { pointer_ = data_.pointer(); }
 
-VariantArray::VariantArray(std::size_t const &size)
-{
-  Resize(size);
-}
+VariantArray::VariantArray(std::size_t const &size) { Resize(size); }
 
 VariantArray::VariantArray(VariantArray const &other, std::size_t offset, std::size_t size)
   : size_(size), offset_(offset), data_(other.data_)
@@ -134,15 +128,9 @@ VariantArray &VariantArray::operator=(VariantArray &&other) noexcept
   return *this;
 }
 
-Variant const &VariantArray::operator[](std::size_t const &i) const
-{
-  return pointer_[i];
-}
+Variant const &VariantArray::operator[](std::size_t const &i) const { return pointer_[i]; }
 
-Variant &VariantArray::operator[](std::size_t const &i)
-{
-  return pointer_[i];
-}
+Variant &VariantArray::operator[](std::size_t const &i) { return pointer_[i]; }
 
 void VariantArray::Resize(std::size_t const &n)
 {
@@ -200,10 +188,7 @@ Variant &Variant::operator[](std::size_t const &i)
   return (*array_)[i];
 }
 
-Variant const &Variant::operator[](std::size_t const &i) const
-{
-  return (*array_)[i];
-}
+Variant const &Variant::operator[](std::size_t const &i) const { return (*array_)[i]; }
 
 std::size_t Variant::size() const
 {

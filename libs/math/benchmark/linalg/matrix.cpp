@@ -7,9 +7,9 @@
 #include <iomanip>
 using namespace fetch::math::linalg;
 
-using data_type = double;
-using container_type = fetch::memory::Array<data_type>;
-using matrix_type = Matrix<data_type, container_type>;
+using data_type            = double;
+using container_type       = fetch::memory::Array<data_type>;
+using matrix_type          = Matrix<data_type, container_type>;
 using vector_register_type = typename matrix_type::vector_register_type;
 
 Matrix<data_type, container_type> RandomMatrix(std::size_t n, std::size_t m)

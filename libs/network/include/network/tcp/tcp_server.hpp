@@ -26,9 +26,9 @@ class TCPServer : public AbstractNetworkServer
 {
 public:
   using connection_handle_type = typename AbstractConnection::connection_handle_type;
-  using network_manager_type = NetworkManager;
-  using acceptor_type = asio::ip::tcp::tcp::acceptor;
-  using mutex_type = std::mutex;
+  using network_manager_type   = NetworkManager;
+  using acceptor_type          = asio::ip::tcp::tcp::acceptor;
+  using mutex_type             = std::mutex;
 
   struct Request
   {

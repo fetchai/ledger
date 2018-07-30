@@ -21,12 +21,12 @@ public:
   using handle_type = uint64_t;
 
   using network_manager_type = network::NetworkManager;
-  using socket_type = asio::ip::tcp::tcp::socket;
-  using acceptor_type = asio::ip::tcp::tcp::acceptor;
-  using manager_type = HTTPConnectionManager;
+  using socket_type          = asio::ip::tcp::tcp::socket;
+  using acceptor_type        = asio::ip::tcp::tcp::acceptor;
+  using manager_type         = HTTPConnectionManager;
 
-  using request_middleware_type = std::function<void(HTTPRequest &)>;
-  using view_type = typename HTTPModule::view_type;
+  using request_middleware_type  = std::function<void(HTTPRequest &)>;
+  using view_type                = typename HTTPModule::view_type;
   using response_middleware_type = std::function<void(HTTPResponse &, HTTPRequest const &)>;
 
   struct MountedView

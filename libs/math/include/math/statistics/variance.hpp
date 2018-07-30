@@ -14,7 +14,7 @@ template <typename A>
 inline typename A::type Variance(A const &a)
 {
   using vector_register_type = typename A::vector_register_type;
-  using type = typename A::type;
+  using type                 = typename A::type;
 
   type                 m = Mean(a);
   vector_register_type mean(m);

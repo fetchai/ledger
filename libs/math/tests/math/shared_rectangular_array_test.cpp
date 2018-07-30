@@ -7,7 +7,7 @@
 
 using namespace fetch::math;
 
-using data_type = double;
+using data_type  = double;
 using array_type = RectangularArray<data_type>;
 
 void test1()

@@ -12,7 +12,7 @@ template <std::size_t IMPL>
 class BitVectorImplementation
 {
 public:
-  using data_type = uint64_t;
+  using data_type      = uint64_t;
   using container_type = memory::SharedArray<data_type>;
 
   enum

@@ -5,8 +5,8 @@
 
 using namespace fetch::memory;
 
-using type = float;
-using ndarray_type = SharedArray<type>;
+using type                 = float;
+using ndarray_type         = SharedArray<type>;
 using vector_register_type = typename ndarray_type::vector_register_type;
 #define M 10000   // 100000
 #define N 100000  // 4 * 100000

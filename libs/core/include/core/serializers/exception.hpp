@@ -8,7 +8,7 @@ namespace fetch {
 namespace serializers {
 
 namespace error {
-using error_type = uint64_t;
+using error_type            = uint64_t;
 error_type const TYPE_ERROR = 0;
 }  // namespace error
 

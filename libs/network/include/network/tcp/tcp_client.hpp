@@ -21,9 +21,9 @@ class TCPClient
 {
 public:
   using network_manager_type = NetworkManager;
-  using handle_type = uint64_t;
-  using implementation_type = TCPClientImplementation;
-  using pointer_type = std::shared_ptr<implementation_type>;
+  using handle_type          = uint64_t;
+  using implementation_type  = TCPClientImplementation;
+  using pointer_type         = std::shared_ptr<implementation_type>;
 
   explicit TCPClient(network_manager_type const &network_manager)
     : pointer_{std::make_shared<implementation_type>(network_manager)}

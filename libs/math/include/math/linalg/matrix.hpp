@@ -17,11 +17,11 @@ template <typename T, typename C = fetch::memory::SharedArray<T>,
 class Matrix : public S
 {
 public:
-  using super_type = S;
-  using type = typename super_type::type;
-  using vector_register_type = typename super_type::vector_register_type;
+  using super_type                    = S;
+  using type                          = typename super_type::type;
+  using vector_register_type          = typename super_type::vector_register_type;
   using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
-  using working_memory_2d_type = RectangularArray<T, C, true, true>;
+  using working_memory_2d_type        = RectangularArray<T, C, true, true>;
 
   using self_type = Matrix<T, C, S>;
 

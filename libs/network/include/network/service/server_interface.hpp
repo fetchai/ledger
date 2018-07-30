@@ -14,7 +14,7 @@ class ServiceServerInterface
 {
 public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
-  using byte_array_type = byte_array::ConstByteArray;
+  using byte_array_type        = byte_array::ConstByteArray;
 
   virtual ~ServiceServerInterface() {}
 

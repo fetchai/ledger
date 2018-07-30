@@ -20,7 +20,7 @@ public:
   {
     vector_size = platform::VectorRegisterSize<type>::value
   };
-  using vector_register_type = typename vectorize::VectorRegister<type, vector_size>;
+  using vector_register_type          = typename vectorize::VectorRegister<type, vector_size>;
   using vector_register_iterator_type = vectorize::VectorRegisterIterator<type, vector_size>;
 
   ConstParallelDispatcher(type *ptr, std::size_t const &size) : pointer_(ptr), size_(size) {}
@@ -245,8 +245,8 @@ public:
   }
 
   template <typename... Args>
-  type ProductReduce(typename details::MatrixReduceFreeFunction<
-                         vector_register_type>::template Unroll<Args...>::signature_type const &kernel,
+  type ProductReduce(typename details::MatrixReduceFreeFunction<vector_register_type>::
+                         template Unroll<Args...>::signature_type const &kernel,
                      Args &&... args)
   {
 
@@ -413,7 +413,7 @@ public:
   {
     vector_size = platform::VectorRegisterSize<type>::value
   };
-  using vector_register_type = typename vectorize::VectorRegister<type, vector_size>;
+  using vector_register_type          = typename vectorize::VectorRegister<type, vector_size>;
   using vector_register_iterator_type = vectorize::VectorRegisterIterator<type, vector_size>;
 
   ParallelDispatcher(type *ptr, std::size_t const &size) : super_type(ptr, size) {}
@@ -576,8 +576,8 @@ public:
 
   template <class C, typename... Args>
   void Apply(C const &cls,
-             typename details::MatrixApplyClassMember<
-                 C, vector_register_type, void>::template Unroll<Args...>::signature_type const &fnc,
+             typename details::MatrixApplyClassMember<C, vector_register_type, void>::
+                 template Unroll<Args...>::signature_type const &fnc,
              Args &&... args)
   {
 
@@ -615,8 +615,8 @@ public:
     for (std::size_t i = 0; i < N; ++i)
     {
 
-      details::MatrixApplyClassMember<C, type, void>::template Unroll<Args...>::Apply(
-          regs, cls, fnc, c);
+      details::MatrixApplyClassMember<C, type, void>::template Unroll<Args...>::Apply(regs, cls,
+                                                                                      fnc, c);
 
       this->pointer()[i] = c;
 

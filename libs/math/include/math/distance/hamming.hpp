@@ -12,7 +12,7 @@ inline typename memory::VectorSlice<T, S>::type Hamming(memory::VectorSlice<T, S
                                                         memory::VectorSlice<T, S> const &b)
 {
   detailed_assert(a.size() == b.size());
-  using type = typename memory::VectorSlice<T, S>::type;
+  using type                 = typename memory::VectorSlice<T, S>::type;
   using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
 
   double dist = a.in_parallel().SumReduce(

@@ -18,7 +18,7 @@ template <std::size_t BS>
 bool BasicFileCreation()
 {
   using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
-  stack_type                                            stack;
+  stack_type stack;
   stack.Load("document_data.db", "doc_diff.db", true);
 
   FileObject<stack_type> file_object(stack);
@@ -78,7 +78,7 @@ template <std::size_t BS>
 bool Overwriting()
 {
   using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
-  stack_type                                            stack;
+  stack_type stack;
   stack.New("document_data.db", "doc_diff.db");
 
   FileObject<stack_type> file_object(stack);
@@ -106,7 +106,7 @@ template <std::size_t BS>
 bool HashConsistency()
 {
   using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
-  stack_type                                            stack;
+  stack_type stack;
   stack.New("document_data.db", "doc_diff.db");
 
   FileObject<stack_type> file_object(stack);
@@ -132,8 +132,8 @@ template <std::size_t BS>
 bool FileLoadValueConsistency()
 {
   using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
-  std::vector<ByteArray>                                values;
-  std::vector<uint64_t>                                 file_ids;
+  std::vector<ByteArray> values;
+  std::vector<uint64_t>  file_ids;
 
   {
     stack_type stack;
@@ -196,8 +196,8 @@ template <std::size_t BS, std::size_t FS>
 bool FileSaveLoadFixedSize()
 {
   using stack_type = RandomAccessStack<FileBlockType<BS>>;
-  std::vector<ByteArray>                       strings;
-  std::vector<uint64_t>                        file_ids;
+  std::vector<ByteArray> strings;
+  std::vector<uint64_t>  file_ids;
 
   {
     stack_type stack;
@@ -238,9 +238,9 @@ template <std::size_t BS>
 bool FileLoadHashConsistency()
 {
   using stack_type = RandomAccessStack<FileBlockType<BS>>;
-  std::vector<ByteArray>                       strings;
-  std::vector<ByteArray>                       hashes;
-  std::vector<uint64_t>                        file_ids;
+  std::vector<ByteArray> strings;
+  std::vector<ByteArray> hashes;
+  std::vector<uint64_t>  file_ids;
 
   {
     stack_type stack;

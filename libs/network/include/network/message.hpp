@@ -6,7 +6,7 @@
 
 namespace fetch {
 namespace network {
-using message_type = byte_array::ByteArray;
+using message_type       = byte_array::ByteArray;
 using message_queue_type = std::deque<message_type>;
 }  // namespace network
 }  // namespace fetch

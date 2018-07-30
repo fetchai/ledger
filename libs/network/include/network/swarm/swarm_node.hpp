@@ -33,8 +33,8 @@ public:
   using clientType = fetch::service::ServiceClient;
 
 protected:
-  using mutex_type = std::recursive_mutex;
-  using lock_type = std::lock_guard<mutex_type>;
+  using mutex_type  = std::recursive_mutex;
+  using lock_type   = std::lock_guard<mutex_type>;
   using client_type = fetch::network::NetworkNodeCore::client_type;
 
 public:

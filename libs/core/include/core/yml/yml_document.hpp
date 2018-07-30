@@ -34,7 +34,7 @@ class YMLDocument
   };
 
 public:
-  using string_type = byte_array::ByteArray;
+  using string_type       = byte_array::ByteArray;
   using const_string_type = byte_array::ConstByteArray;
   //  using variant_type = script::Variant;
 

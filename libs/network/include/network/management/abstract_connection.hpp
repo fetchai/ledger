@@ -12,10 +12,10 @@ namespace network {
 class AbstractConnection : public std::enable_shared_from_this<AbstractConnection>
 {
 public:
-  using shared_type = std::shared_ptr<AbstractConnection>;
+  using shared_type            = std::shared_ptr<AbstractConnection>;
   using connection_handle_type = typename AbstractConnectionRegister::connection_handle_type;
-  using weak_ptr_type = std::weak_ptr<AbstractConnection>;
-  using weak_register_type = std::weak_ptr<AbstractConnectionRegister>;
+  using weak_ptr_type          = std::weak_ptr<AbstractConnection>;
+  using weak_register_type     = std::weak_ptr<AbstractConnectionRegister>;
 
   enum
   {

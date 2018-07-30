@@ -12,8 +12,8 @@ namespace chain {
 class MainChainRemoteControl
 {
 public:
-  using service_type = service::ServiceClient;
-  using shared_service_type = std::shared_ptr<service_type>;
+  using service_type         = service::ServiceClient;
+  using shared_service_type  = std::shared_ptr<service_type>;
   using mainchain_index_type = uint32_t;
 
   enum

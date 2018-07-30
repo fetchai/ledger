@@ -19,8 +19,8 @@ using namespace fetch::byte_array;
 
 int main(int argc, char const **argv)
 {
-  using service_type = ServiceClient;
-  using client_type = fetch::network::TCPClient;
+  using service_type        = ServiceClient;
+  using client_type         = fetch::network::TCPClient;
   using shared_service_type = std::shared_ptr<service_type>;
 
   fetch::logger.DisableLogger();

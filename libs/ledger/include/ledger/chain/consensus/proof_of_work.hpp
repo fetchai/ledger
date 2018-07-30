@@ -9,7 +9,7 @@ namespace consensus {
 class ProofOfWork : public math::BigUnsigned
 {
 public:
-  using super_type = math::BigUnsigned;
+  using super_type  = math::BigUnsigned;
   using header_type = byte_array::ConstByteArray;
 
   ProofOfWork() = default;

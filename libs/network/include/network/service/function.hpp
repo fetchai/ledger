@@ -23,7 +23,7 @@ template <typename R, typename... Args>
 class Function<R(Args...)> : public AbstractCallable
 {
 private:
-  using return_type = R;
+  using return_type   = R;
   using function_type = std::function<R(Args...)>;
 
   /* A struct for invoking the function once we have unpacked all
@@ -139,7 +139,7 @@ template <typename R>
 class Function<R()> : public AbstractCallable
 {
 private:
-  using return_type = R;
+  using return_type   = R;
   using function_type = std::function<R()>;
 
 public:
@@ -172,7 +172,7 @@ template <>
 class Function<void()> : public AbstractCallable
 {
 private:
-  using return_type = void;
+  using return_type   = void;
   using function_type = std::function<void()>;
 
 public:

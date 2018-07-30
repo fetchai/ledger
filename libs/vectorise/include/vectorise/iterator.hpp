@@ -11,9 +11,9 @@ template <typename T, std::size_t N = sizeof(T)>
 class VectorRegisterIterator
 {
 public:
-  using type = T;
+  using type                 = T;
   using vector_register_type = VectorRegister<T, N>;
-  using mm_register_type = typename vector_register_type::mm_register_type;
+  using mm_register_type     = typename vector_register_type::mm_register_type;
 
   VectorRegisterIterator() : ptr_(nullptr), end_(nullptr) {}
   /*

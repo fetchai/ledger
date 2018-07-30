@@ -21,10 +21,10 @@ class NetworkNodeCore
 {
 public:
   using mutex_type = std::mutex;
-  using lock_type = std::lock_guard<mutex_type>;
+  using lock_type  = std::lock_guard<mutex_type>;
   // using client_type = fetch::service::ServiceClient<network::TCPClient>;
-  using client_type = fetch::service::ServiceClient;
-  using rpc_server_type = service::ServiceServer<fetch::network::TCPServer>;
+  using client_type          = fetch::service::ServiceClient;
+  using rpc_server_type      = service::ServiceServer<fetch::network::TCPServer>;
   using protocol_number_type = uint32_t;
 
 protected:
@@ -67,12 +67,12 @@ public:
   virtual ~NetworkNodeCore() {}
 
   using remote_host_identifier_type = std::pair<std::string, int>;
-  using client_ptr = std::shared_ptr<client_type>;
-  using cache_type = std::map<remote_host_identifier_type, client_ptr>;
+  using client_ptr                  = std::shared_ptr<client_type>;
+  using cache_type                  = std::map<remote_host_identifier_type, client_ptr>;
 
   cache_type cache_;
 
-  using protocol_ptr = std::shared_ptr<fetch::service::Protocol>;
+  using protocol_ptr        = std::shared_ptr<fetch::service::Protocol>;
   using protocol_cache_type = std::map<uint32_t, protocol_ptr>;
 
   virtual std::shared_ptr<client_type> ConnectToPeer(const fetch::swarm::SwarmPeerLocation &peer)

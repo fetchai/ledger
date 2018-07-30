@@ -43,8 +43,8 @@ template <typename S = VersionedRandomAccessStack<FileBlockType<>>>
 class FileObject
 {
 public:
-  using stack_type = S;
-  using block_type = typename stack_type::type;
+  using stack_type  = S;
+  using block_type  = typename stack_type::type;
   using hasher_type = crypto::SHA256;
 
   enum

@@ -30,8 +30,8 @@ class MineNodeBasic
   // Main chain
   using block_type = chain::MainChain::block_type;
   using block_hash = chain::MainChain::block_hash;
-  using body_type = chain::MainChain::block_type::body_type;
-  using miner = fetch::chain::consensus::DummyMiner;
+  using body_type  = chain::MainChain::block_type::body_type;
+  using miner      = fetch::chain::consensus::DummyMiner;
 
 public:
   explicit MineNodeBasic(network::NetworkManager tm, uint64_t minerNumber)

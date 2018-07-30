@@ -13,8 +13,8 @@ class SwarmKarmaPeers
 {
 public:
   using peers_list_type = std::vector<SwarmKarmaPeer>;
-  using mutex_type = std::recursive_mutex;
-  using lock_type = std::lock_guard<mutex_type>;
+  using mutex_type      = std::recursive_mutex;
+  using lock_type       = std::lock_guard<mutex_type>;
 
   SwarmKarmaPeers(std::string ident) : ident_(std::move(ident)) {}
 

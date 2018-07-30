@@ -24,8 +24,8 @@ double TimeDifference(time_point t1, time_point t2)
 }
 
 using block_type = MainChain::block_type;
-using body_type = MainChain::block_type::body_type;
-using miner = fetch::chain::consensus::DummyMiner;
+using body_type  = MainChain::block_type::body_type;
+using miner      = fetch::chain::consensus::DummyMiner;
 
 int main(int argc, char const **argv)
 {

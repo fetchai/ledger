@@ -11,7 +11,7 @@
   FUNCTION(-)                         \
   FUNCTION(&)                         \
   FUNCTION(|)                         \
-  FUNCTION (^)
+  FUNCTION(^)
 
 namespace fetch {
 namespace vectorize {

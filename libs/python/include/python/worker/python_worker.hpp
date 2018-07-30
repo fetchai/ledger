@@ -14,9 +14,9 @@ namespace swarm {
 class PythonWorker
 {
 public:
-  fetch::network::ThreadPool                       tm_;
+  fetch::network::ThreadPool tm_;
   using mutex_type = std::recursive_mutex;
-  using lock_type = std::lock_guard<std::recursive_mutex>;
+  using lock_type  = std::lock_guard<std::recursive_mutex>;
   mutex_type                                       mutex_;
   std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
 

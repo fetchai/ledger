@@ -36,7 +36,7 @@ template <typename T>
 class VectorRegister<T, 256>
 {
 public:
-  using type = T;
+  using type             = T;
   using mm_register_type = __m256i;
 
   enum
@@ -76,7 +76,7 @@ template <>
 class VectorRegister<float, 256>
 {
 public:
-  using type = float;
+  using type             = float;
   using mm_register_type = __m256;
 
   enum
@@ -116,7 +116,7 @@ template <>
 class VectorRegister<double, 256>
 {
 public:
-  using type = double;
+  using type             = double;
   using mm_register_type = __m256d;
 
   enum

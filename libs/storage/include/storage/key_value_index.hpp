@@ -89,10 +89,10 @@ class KeyValueIndex
   };
 
 public:
-  using index_type = uint64_t;
-  using stack_type = D;
+  using index_type     = uint64_t;
+  using stack_type     = D;
   using key_value_pair = KeyValuePair<>;
-  using key_type = typename key_value_pair::key_type;
+  using key_type       = typename key_value_pair::key_type;
   KeyValueIndex()
   {
 
@@ -391,7 +391,7 @@ public:
   void Close() { stack_.Close(); }
 
   using bookmark_type = uint64_t;
-  bookmark_type    Commit() { return stack_.Commit(); }
+  bookmark_type Commit() { return stack_.Commit(); }
 
   bookmark_type Commit(bookmark_type const &b) { return stack_.Commit(b); }
 

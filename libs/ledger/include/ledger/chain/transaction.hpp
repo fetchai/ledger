@@ -8,7 +8,7 @@ namespace chain {
 class UnverifiedTransaction : private MutableTransaction
 {
 public:
-  using super_type = MutableTransaction;
+  using super_type                                     = MutableTransaction;
   UnverifiedTransaction()                              = default;
   UnverifiedTransaction(UnverifiedTransaction &&other) = default;
   UnverifiedTransaction &operator=(UnverifiedTransaction &&other) = default;

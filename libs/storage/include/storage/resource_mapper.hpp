@@ -15,7 +15,7 @@ class ResourceID
 {
 public:
   using resource_group_type = uint32_t;
-  ResourceID() = default;
+  ResourceID()              = default;
 
   ResourceID(byte_array::ConstByteArray const &id) { set_id(id); }
 

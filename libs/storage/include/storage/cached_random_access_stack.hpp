@@ -16,9 +16,9 @@ class CachedRandomAccessStack
 {
 public:
   using event_handler_type = std::function<void()>;
-  using stack_type = RandomAccessStack<T, D>;
-  using header_extra_type = D;
-  using type = T;
+  using stack_type         = RandomAccessStack<T, D>;
+  using header_extra_type  = D;
+  using type               = T;
 
   CachedRandomAccessStack()
   {

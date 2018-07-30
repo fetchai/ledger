@@ -20,14 +20,14 @@ public:
 
   // Transaction defs
   using transaction_summary_type = chain::TransactionSummary;
-  using transaction_type = chain::Transaction;
-  using shared_transaction_type = std::shared_ptr<transaction_type>;
-  using tx_digest_type = typename transaction_type::digest_type;
+  using transaction_type         = chain::Transaction;
+  using shared_transaction_type  = std::shared_ptr<transaction_type>;
+  using tx_digest_type           = typename transaction_type::digest_type;
 
-  using proof_type = fetch::chain::consensus::ProofOfWork;
-  using block_body_type = fetch::chain::BlockBody;
+  using proof_type        = fetch::chain::consensus::ProofOfWork;
+  using block_body_type   = fetch::chain::BlockBody;
   using block_header_type = typename proof_type::header_type;
-  using block_type = fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256>;
+  using block_type        = fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256>;
   using shared_block_type = std::shared_ptr<block_type>;
 
   TransactionManager() { group_ = 0; }

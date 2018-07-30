@@ -22,11 +22,11 @@ class ThreadPoolImplementation : public std::enable_shared_from_this<ThreadPoolI
 {
 protected:
   using event_function_type = std::function<void()>;
-  using event_handle_type = uint64_t;
-  using shared_ptr_type = std::shared_ptr<ThreadPoolImplementation>;
-  using mutex_type = std::mutex;
-  using lock_type = std::unique_lock<mutex_type>;
-  using work_queue_type = std::queue<event_function_type>;
+  using event_handle_type   = uint64_t;
+  using shared_ptr_type     = std::shared_ptr<ThreadPoolImplementation>;
+  using mutex_type          = std::mutex;
+  using lock_type           = std::unique_lock<mutex_type>;
+  using work_queue_type     = std::queue<event_function_type>;
 
   enum thread_state_type
   {

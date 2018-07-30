@@ -17,7 +17,7 @@ using namespace fetch::byte_array;
 class MultiLaneDBClient  //: private
 {
 public:
-  using client_type = ServiceClient<fetch::network::TCPClient>;
+  using client_type        = ServiceClient<fetch::network::TCPClient>;
   using shared_client_type = std::shared_ptr<client_type>;
 
   MultiLaneDBClient(uint32_t lanes, std::string const &host, uint16_t const &port,

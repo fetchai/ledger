@@ -520,7 +520,7 @@ public:
                                  std::vector<EntryPoint> const &     detail_list) {
         std::cout << "Sending tx to " << shards.size() << " shards" << std::endl;
         using transaction_type = fetch::chain::Transaction;
-        transaction_type                  tx;
+        transaction_type tx;
         tx.set_arguments(req.body());
         for (auto &s : shards)
         {

@@ -13,11 +13,11 @@ namespace chain {
 class BlockCoordinator
 {
 public:
-  using block_type = chain::MainChain::block_type;
-  using block_hash = chain::MainChain::block_hash;
-  using mutex_type = fetch::mutex::Mutex;
+  using block_type      = chain::MainChain::block_type;
+  using block_hash      = chain::MainChain::block_hash;
+  using mutex_type      = fetch::mutex::Mutex;
   using block_body_type = std::shared_ptr<BlockBody>;
-  using status_type = ledger::ExecutionManagerInterface::Status;
+  using status_type     = ledger::ExecutionManagerInterface::Status;
 
   BlockCoordinator(chain::MainChain &mainChain, ledger::ExecutionManagerInterface &executionManager)
     : mainChain_{mainChain}, executionManager_{executionManager}

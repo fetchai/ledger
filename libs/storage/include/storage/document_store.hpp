@@ -23,13 +23,13 @@ public:
     BLOCK_SIZE = BS
   };
 
-  using self_type = DocumentStore<BS, A, B, C, D>;
+  using self_type       = DocumentStore<BS, A, B, C, D>;
   using byte_array_type = byte_array::ByteArray;
 
-  using file_block_type = A;
+  using file_block_type      = A;
   using key_value_index_type = B;
-  using file_store_type = C;
-  using file_object_type = D;
+  using file_store_type      = C;
+  using file_object_type     = D;
 
   using hash_type = byte_array::ConstByteArray;
 

@@ -13,7 +13,7 @@ template <typename T, std::size_t S = 2048>
 class ObjectStore
 {
 public:
-  using type = T;
+  using type            = T;
   using serializer_type = serializers::TypedByte_ArrayBuffer;
 
   template <typename... Args>

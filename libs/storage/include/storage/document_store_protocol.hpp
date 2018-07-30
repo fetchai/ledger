@@ -15,7 +15,7 @@ class RevertibleDocumentStoreProtocol : public fetch::service::Protocol
 {
 public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
-  using lane_type = uint32_t;  // TODO: Fetch from some other palce
+  using lane_type              = uint32_t;  // TODO: Fetch from some other palce
 
   enum
   {

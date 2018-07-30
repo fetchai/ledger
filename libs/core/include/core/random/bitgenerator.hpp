@@ -9,8 +9,8 @@ class BitGenerator
 {
 public:
   using random_generator_type = R;
-  using word_type = typename random_generator_type::random_type;
-  using mask_type = BitMask<word_type, B, MSBF>;
+  using word_type             = typename random_generator_type::random_type;
+  using mask_type             = BitMask<word_type, B, MSBF>;
 
   word_type operator()(mask_type const &m)
   {

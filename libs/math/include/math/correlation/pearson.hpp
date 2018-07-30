@@ -16,7 +16,7 @@ inline typename memory::VectorSlice<T, S>::type Pearson(memory::VectorSlice<T, S
 {
   detailed_assert(a.size() == b.size());
   using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
-  using type = typename memory::VectorSlice<T, S>::type;
+  using type                 = typename memory::VectorSlice<T, S>::type;
 
   type meanA = a.in_parallel().Reduce(
       [](vector_register_type const &x, vector_register_type const &y) { return x + y; });

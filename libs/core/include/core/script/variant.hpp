@@ -5,10 +5,10 @@
 #include "vectorise/memory/shared_array.hpp"
 
 #include <initializer_list>
+#include <memory>
 #include <ostream>
 #include <type_traits>
 #include <vector>
-#include <memory>
 
 namespace fetch {
 namespace meta {
@@ -53,7 +53,7 @@ class VariantProxy;
 class Variant
 {
 public:
-  using ConstByteArray = byte_array::ConstByteArray;
+  using ConstByteArray  = byte_array::ConstByteArray;
   using VariantArrayPtr = std::shared_ptr<VariantArray>;
 
   // Construction / Destruction
@@ -81,20 +81,20 @@ public:
 
   // Assignment
   template <typename T>
-  meta::IfIsIntegerLike<T, Variant&> operator=(T const &i);
+  meta::IfIsIntegerLike<T, Variant &> operator=(T const &i);
 
   template <typename T>
-  meta::IfIsFloatLike<T, Variant&> operator=(T const &f);
+  meta::IfIsFloatLike<T, Variant &> operator=(T const &f);
 
   template <typename T>
-  meta::IfIsBooleanLike<T, Variant&> operator=(T const &b);
+  meta::IfIsBooleanLike<T, Variant &> operator=(T const &b);
 
   Variant &operator=(VariantArray const &array);
   Variant &operator=(ConstByteArray const &b);
   Variant &operator=(char const *data);
 
   // Dict accessors
-  VariantProxy operator[](ConstByteArray const &key);
+  VariantProxy   operator[](ConstByteArray const &key);
   Variant const &operator[](ConstByteArray const &key) const;
 
   // Array accessors
@@ -140,9 +140,8 @@ public:
   friend std::ostream &operator<<(std::ostream &os, Variant const &v);
 
 private:
-
   std::size_t FindKeyIndex(byte_array::ConstByteArray const &key) const;
-  void LazyAppend(byte_array::ConstByteArray const &key, Variant const &val);
+  void        LazyAppend(byte_array::ConstByteArray const &key, Variant const &val);
 
   union PrimitiveData
   {
@@ -151,10 +150,10 @@ private:
     bool    boolean;
   };
 
-  PrimitiveData data_;
+  PrimitiveData         data_;
   byte_array::ByteArray string_;
   VariantArrayPtr       array_ = std::make_unique<VariantArray>();
-  VariantType type_ = UNDEFINED;
+  VariantType           type_  = UNDEFINED;
 
   friend VariantProxy;
 };
@@ -190,15 +189,15 @@ public:
   template <typename S>
   S operator=(S val)
   {
-    modified_  = true;
+    modified_        = true;
     Variant::operator=(val);
     return val;
   }
 
 private:
   ConstByteArray key_;
-  Variant        *parent_ = nullptr;
-  Variant        *child_ = nullptr;
+  Variant *      parent_   = nullptr;
+  Variant *      child_    = nullptr;
   bool           modified_ = false;
 };
 
@@ -212,7 +211,7 @@ public:
   VariantArray(VariantArray &&other) noexcept;
 
   VariantArray &operator=(VariantArray const &other) = default;
-  VariantArray &operator=(VariantArray &&other) noexcept;
+  VariantArray &operator                             =(VariantArray &&other) noexcept;
 
   Variant const &operator[](std::size_t const &i) const;
   Variant &      operator[](std::size_t const &i);
@@ -225,14 +224,14 @@ public:
   void SetData(VariantArray const &other, std::size_t offset, std::size_t size);
 
 private:
-  std::size_t                      size_   = 0;
-  std::size_t                      offset_ = 0;
-  memory::SharedArray<Variant>     data_;
-  Variant *                        pointer_ = nullptr;
+  std::size_t                  size_   = 0;
+  std::size_t                  offset_ = 0;
+  memory::SharedArray<Variant> data_;
+  Variant *                    pointer_ = nullptr;
 };
 
 inline Variant::Variant() : type_(UNDEFINED) {}
-inline Variant::Variant(int64_t const &i){ *this = i; }
+inline Variant::Variant(int64_t const &i) { *this = i; }
 inline Variant::Variant(int32_t const &i) { *this = i; }
 inline Variant::Variant(int16_t const &i) { *this = i; }
 inline Variant::Variant(uint64_t const &i) { *this = i; }
@@ -246,13 +245,13 @@ inline void Variant::MakeUndefined() { type_ = UNDEFINED; }
 
 inline void Variant::MakeArray(std::size_t n)
 {
-  type_  = ARRAY;
+  type_   = ARRAY;
   *array_ = VariantArray(n);
 }
 
 inline void Variant::MakeObject()
 {
-  type_  = OBJECT;
+  type_   = OBJECT;
   *array_ = VariantArray();
 }
 
@@ -278,7 +277,7 @@ inline Variant &Variant::operator=(ConstByteArray const &b)
 }
 
 template <typename T>
-meta::IfIsIntegerLike<T, Variant&> Variant::operator=(T const &i)
+meta::IfIsIntegerLike<T, Variant &> Variant::operator=(T const &i)
 {
   type_         = INTEGER;
   data_.integer = int64_t(i);
@@ -286,7 +285,7 @@ meta::IfIsIntegerLike<T, Variant&> Variant::operator=(T const &i)
 }
 
 template <typename T>
-meta::IfIsFloatLike<T, Variant&> Variant::operator=(T const &f)
+meta::IfIsFloatLike<T, Variant &> Variant::operator=(T const &f)
 {
   type_             = FLOATING_POINT;
   data_.float_point = double(f);
@@ -294,16 +293,16 @@ meta::IfIsFloatLike<T, Variant&> Variant::operator=(T const &f)
 }
 
 template <typename T>
-meta::IfIsBooleanLike<T, Variant&> Variant::operator=(T const &b)
+meta::IfIsBooleanLike<T, Variant &> Variant::operator=(T const &b)
 {
-  type_                = BOOLEAN;
+  type_         = BOOLEAN;
   data_.boolean = b;
   return *this;
 }
 
 inline Variant &Variant::operator=(VariantArray const &array)
 {
-  type_  = ARRAY;
+  type_   = ARRAY;
   *array_ = array;
   return *this;
 }
@@ -434,8 +433,6 @@ inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const
   return true;
 }
 
-
-
 template <typename T>
 class List
 {
@@ -447,7 +444,7 @@ public:
   List(List &&other) noexcept;
 
   List &operator=(List const &other) = default;
-  List &operator=(List &&other) noexcept;
+  List &operator                     =(List &&other) noexcept;
 
   Variant const &operator[](std::size_t const &i) const;
   Variant &      operator[](std::size_t const &i);
@@ -460,10 +457,10 @@ public:
   void SetData(List const &other, std::size_t offset, std::size_t size);
 
 private:
-  std::size_t                      size_   = 0;
-  std::size_t                      offset_ = 0;
-  memory::SharedArray<Variant>     data_;
-  Variant *                        pointer_ = nullptr;
+  std::size_t                  size_   = 0;
+  std::size_t                  offset_ = 0;
+  memory::SharedArray<Variant> data_;
+  Variant *                    pointer_ = nullptr;
 };
 
 }  // namespace script

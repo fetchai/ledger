@@ -12,8 +12,8 @@ using namespace fetch::memory;
 using namespace fetch::threading;
 using namespace std::chrono;
 
-using type = double;
-using ndarray_type = SharedArray<type>;
+using type                 = double;
+using ndarray_type         = SharedArray<type>;
 using vector_register_type = typename ndarray_type::vector_register_type;
 #define N 200
 

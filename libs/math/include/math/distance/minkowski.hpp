@@ -14,7 +14,7 @@ inline typename memory::VectorSlice<T, S>::type Minkowski(memory::VectorSlice<T,
                                                           memory::VectorSlice<T, S> const &b)
 {
   detailed_assert(a.size() == b.size());
-  using type = typename memory::VectorSlice<T, S>::type;
+  using type                 = typename memory::VectorSlice<T, S>::type;
   using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
 
   type dist = a.data().in_parallel().SumReduce(

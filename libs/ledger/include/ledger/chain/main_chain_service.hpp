@@ -24,7 +24,7 @@ class MainChainService : public service::ServiceServer<fetch::network::TCPServer
 public:
   using proof_type = fetch::chain::MainChain::proof_type;
   using block_type = fetch::chain::MainChain::block_type;
-  using body_type = fetch::chain::MainChain::block_type::body_type;
+  using body_type  = fetch::chain::MainChain::block_type::body_type;
   using block_hash = fetch::chain::MainChain::block_hash;
 
   using connectivity_details_type = MainChainDetails;
@@ -74,7 +74,7 @@ public:
     }
 
     // Main chain Identity
-    identity_ = std::make_shared<identity_type>(register_, tm);
+    identity_          = std::make_shared<identity_type>(register_, tm);
     identity_protocol_ = std::make_unique<identity_protocol_type>(identity_.get());
     this->Add(IDENTITY, identity_protocol_.get());
 

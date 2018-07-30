@@ -11,7 +11,7 @@ class HTTPConnectionManager
 {
 public:
   using connection_type = typename AbstractHTTPConnection::shared_type;
-  using handle_type = uint64_t;
+  using handle_type     = uint64_t;
 
   HTTPConnectionManager(AbstractHTTPServer &server)
     : server_(server), clients_mutex_(__LINE__, __FILE__)

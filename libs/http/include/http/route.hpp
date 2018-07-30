@@ -83,7 +83,8 @@ public:
   }
 
 private:
-  using match_function_type = std::function<bool(std::size_t &, byte_array::ByteArray const &, ViewParameters &)>;
+  using match_function_type =
+      std::function<bool(std::size_t &, byte_array::ByteArray const &, ViewParameters &)>;
 
   void AddMatch(byte_array::ByteArray const &value)
   {
