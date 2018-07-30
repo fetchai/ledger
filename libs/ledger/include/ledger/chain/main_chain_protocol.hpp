@@ -1,5 +1,6 @@
 #pragma once
 #include "network/service/protocol.hpp"
+#include "network/service/publication_feed.hpp"
 #include <vector>
 
 namespace fetch {
@@ -7,6 +8,7 @@ namespace chain {
 
 template <typename R>
 class MainChainProtocol : public fetch::service::Protocol
+                        , public fetch::service::HasPublicationFeed
 {
 public:
   using block_type            = chain::MainChain::block_type;
@@ -20,6 +22,7 @@ public:
   {
     GET_HEADER         = 1,
     GET_HEAVIEST_CHAIN = 2,
+    BLOCK_PUBLISH      = 3,
   };
 
   MainChainProtocol(protocol_handler_type const &p, register_type const &r,
@@ -28,6 +31,8 @@ public:
   {
     this->Expose(GET_HEADER, this, &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this, &self_type::GetHeaviestChain);
+
+    this->RegisterFeed(BLOCK_PUBLISH, this);
     max_size_ = 100;
   }
 
