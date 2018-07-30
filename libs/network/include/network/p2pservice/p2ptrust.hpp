@@ -18,6 +18,36 @@ namespace fetch
 namespace p2p
 {
 
+  struct TrustModifier
+  {
+    double delta;
+    double min;
+    double max;
+  };
+
+  class TrustModifier2
+  {
+  public:
+    TrustModifier2()
+    {
+      this -> delta = 19.73; 
+    }
+    TrustModifier2(double delta, double min, double max)
+    {
+      this -> delta = delta;
+      this -> min = min;
+      this -> max = max;
+    }
+    double delta, min, max;
+
+    ~TrustModifier2()
+    {
+    }
+  };
+
+  using trust_modifiers_type = std::array<std::array<TrustModifier, 4>, 3>;  
+  extern const trust_modifiers_type trust_modifiers_;
+
 template< class PEER_IDENT >
 class P2PTrust: public P2PTrustInterface< PEER_IDENT >
 {
@@ -40,11 +70,6 @@ protected:
     }
   }; // TODO(kll)
 
-  struct TrustModifier{
-    double delta, min, max;
-  };
-
-  using trust_modifiers_type = std::array<std::array<TrustModifier, 4>, 3>;
   using trust_store_type     = std::vector<Snoopy>;
   using ranking_store_type   = std::map<PEER_IDENT, size_t>;
   using mutex_type           = mutex::Mutex;
@@ -94,7 +119,7 @@ public:
       pos = ranking->second;
     }
 
-    auto update = trust_modifiers_[subject][quality];
+    auto update = fetch::p2p::trust_modifiers_[subject][quality];
     auto trust = trust_store_[pos].computeCurrentTrust(currenttime);
 
     if (
@@ -200,7 +225,6 @@ private:
   bool dirty_ = false;
   mutex_type mutex_;
 
-  trust_modifiers_type trust_modifiers_;
 
   trust_store_type trust_store_;
   ranking_store_type ranking_store_;

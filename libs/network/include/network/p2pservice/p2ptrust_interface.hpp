@@ -52,8 +52,19 @@ public:
   virtual double                  GetTrustRatingOfPeer(const PEER_IDENT &peer_ident) = 0;
   virtual bool                    IsPeerTrusted(const PEER_IDENT &peer_ident) = 0;
 };
-
 }
+}
+
+
+inline std::ostream & operator<<(std::ostream &os, const fetch::p2p::P2PTrustFeedbackQuality q)
+{
+  const char* names[] = {
+    "LIED",
+    "BAD_CONNECTION",
+    "DUPLICATE",
+    "NEW_INFORMATION",
+  };
+  return os << names[q];
 }
 
 #endif //P2PTRUST_INTERFACE_HPP

@@ -218,7 +218,7 @@ private:
     acceptor->async_accept(*strongSocket, cb);
   }
 
-  std::shared_ptr<int>                      destruct_guard_;
+  std::shared_ptr<int>                      destruct_guard_ = std::make_shared<int>(0);
   std::weak_ptr<AbstractConnectionRegister> connection_register_;
   std::shared_ptr<ClientManager>            manager_;
   std::weak_ptr<acceptor_type>              acceptor_;
