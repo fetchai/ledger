@@ -36,10 +36,7 @@ struct KeyValuePair
   };
   uint64_t right;
 
-  bool operator==(KeyValuePair const &kv)
-  {
-    return Hash() == kv.Hash();
-  }
+  bool operator==(KeyValuePair const &kv) { return Hash() == kv.Hash(); }
 
   bool operator!=(KeyValuePair const &kv)
   {
@@ -406,36 +403,27 @@ public:
   {
   public:
     iterator(self_type *self, key_value_pair kv, bool node_iterator = false)
-    : kv_{kv}
-    , kv_node_{kv}
-    , node_iterator_{node_iterator}
-    , self_{self}
+        : kv_{kv}, kv_node_{kv}, node_iterator_{node_iterator}, self_{self}
     {
-      if(node_iterator)
+      if (node_iterator)
       {
         self->GetLeftLeaf(kv_);
       }
     }
 
-    iterator()                               = default;
-    iterator(iterator const &rhs)            = default;
-    iterator(iterator &&rhs)                 = default;
+    iterator()                    = default;
+    iterator(iterator const &rhs) = default;
+    iterator(iterator &&rhs)      = default;
     iterator &operator=(iterator const &rhs) = default;
-    iterator &operator=(iterator&& rhs)      = default;
+    iterator &operator=(iterator &&rhs) = default;
 
-    bool operator==(iterator const &rhs)
-    {
-      return kv_ == rhs.kv_;
-    }
+    bool operator==(iterator const &rhs) { return kv_ == rhs.kv_; }
 
-    bool operator!=(iterator const &rhs)
-    {
-      return !(kv_ == rhs.kv_);
-    }
+    bool operator!=(iterator const &rhs) { return !(kv_ == rhs.kv_); }
 
     void operator++()
     {
-      if(node_iterator_)
+      if (node_iterator_)
       {
         self_->GetNext(kv_, kv_node_.parent);
       }
@@ -454,7 +442,7 @@ public:
     key_value_pair kv_;
     key_value_pair kv_node_;
     bool           node_iterator_ = false;
-    self_type      *self_;
+    self_type *    self_;
   };
 
   self_type::iterator begin()
@@ -470,10 +458,7 @@ public:
     return iterator(this, kv);
   }
 
-  self_type::iterator end()
-  {
-    return iterator(this, key_value_pair());
-  }
+  self_type::iterator end() { return iterator(this, key_value_pair()); }
 
   // STL-like functionality
   self_type::iterator Find(byte_array::ConstByteArray const &key_str)
@@ -486,7 +471,7 @@ public:
     key_value_pair kv;
     FindNearest(key, kv, split, pos, left_right, depth);
 
-    if(split)
+    if (split)
     {
       return end();
     }
@@ -510,7 +495,7 @@ public:
     pos = 0;
     kv.key.Compare(key_str, pos, 0, 64);
 
-    if(uint64_t(pos) < bits)
+    if (uint64_t(pos) < bits)
     {
       return end();
     }
@@ -551,13 +536,10 @@ private:
     }
   }
 
-  index_type FindNearest(key_type const &key // Find nearest to key
-                       , key_value_pair &kv
-                       , bool &split
-                       , int &pos
-                       , int &left_right
-                       , uint64_t &depth
-                       , uint64_t max_depth = std::numeric_limits<uint64_t>::max())
+  index_type FindNearest(key_type const &key  // Find nearest to key
+                         ,
+                         key_value_pair &kv, bool &split, int &pos, int &left_right,
+                         uint64_t &depth, uint64_t max_depth = std::numeric_limits<uint64_t>::max())
   {
     depth = 0;
     if (this->empty()) return index_type(-1);
@@ -592,34 +574,34 @@ private:
     return index;
   }
 
-  // given KV, find nearest parent we are a left branch of, AND has a right 
+  // given KV, find nearest parent we are a left branch of, AND has a right
   // KV will be set to that node
   // Optionally specify a forbidden parent
   bool GetLeftParent(key_value_pair &kv, uint64_t forbidden_parent) const
   {
     assert(kv.parent != uint64_t(-1));
 
-    if(kv.parent == forbidden_parent)
+    if (kv.parent == forbidden_parent)
     {
       return false;
     }
 
     key_value_pair parent;
     key_value_pair parent_right;
-    stack_.Get(kv.parent,    parent);
+    stack_.Get(kv.parent, parent);
     stack_.Get(parent.right, parent_right);
 
-    while(kv == parent_right)
+    while (kv == parent_right)
     {
       // Root condition
-      if(parent.parent == uint64_t(-1) || parent.parent == forbidden_parent)
+      if (parent.parent == uint64_t(-1) || parent.parent == forbidden_parent)
       {
         return false;
         break;
       }
 
       kv = parent;
-      stack_.Get(parent.parent,    parent);
+      stack_.Get(parent.parent, parent);
       stack_.Get(parent.right, parent_right);
     }
     kv = parent;
@@ -628,7 +610,7 @@ private:
 
   void GetLeftLeaf(key_value_pair &kv) const
   {
-    while(!kv.is_leaf())
+    while (!kv.is_leaf())
     {
       stack_.Get(kv.left, kv);
     }
@@ -641,7 +623,7 @@ private:
 
     // Get parent so we can check which branch we were on. Assume
     // we were on a leaf. Check we're not root.
-    if(kv.parent == uint64_t(-1) || kv.parent == forbidden_parent)
+    if (kv.parent == uint64_t(-1) || kv.parent == forbidden_parent)
     {
       kv = key_value_pair();
       return;
@@ -654,12 +636,12 @@ private:
     key_value_pair parent_right;
     stack_.Get(parent.right, parent_right);
 
-    if(parent_right != kv )
+    if (parent_right != kv)
     {
       GetLeftLeaf(parent_right);
       kv = parent_right;
     }
-    else if(parent.parent == uint64_t(-1))
+    else if (parent.parent == uint64_t(-1))
     {
       kv = key_value_pair();
     }
@@ -667,7 +649,7 @@ private:
     {
       bool gotParent = GetLeftParent(parent, forbidden_parent);
 
-      if(!gotParent)
+      if (!gotParent)
       {
         kv = key_value_pair();
       }

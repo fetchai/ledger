@@ -1,11 +1,11 @@
-#include "testing/unittest.hpp"
 #include "storage/object_store.hpp"
 #include "core/random/lfg.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
-#include <iostream>
+#include "testing/unittest.hpp"
 #include <algorithm>
+#include <iostream>
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;
@@ -16,10 +16,7 @@ struct TestSerDeser
   uint64_t    second;
   std::string third;
 
-  bool operator<(TestSerDeser const &rhs)
-  {
-    return third < rhs.third;
-  }
+  bool operator<(TestSerDeser const &rhs) { return third < rhs.third; }
 
   bool operator==(TestSerDeser const &rhs)
   {
@@ -52,17 +49,17 @@ int main(int argc, char const **argv)
   {
     SECTION("Test iterator over basic struct")
     {
-      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-        100, 11, /*1000, 10000*/};
-      for(auto const &numberOfKeys : keyTests)
+      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100, 11,
+                                        /*1000, 10000*/};
+      for (auto const &numberOfKeys : keyTests)
       {
         std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
 
-        std::vector<testType> objects;
-        std::vector<testType> objectsCopy;
+        std::vector<testType>                     objects;
+        std::vector<testType>                     objectsCopy;
         fetch::random::LaggedFibonacciGenerator<> lfg;
 
         // Create vector of random numbers
@@ -71,7 +68,7 @@ int main(int argc, char const **argv)
           uint64_t random = lfg();
 
           testType test;
-          test.first = int(-random);
+          test.first  = int(-random);
           test.second = random;
 
           test.third = std::to_string(random);
@@ -83,23 +80,25 @@ int main(int argc, char const **argv)
         std::sort(objects.begin(), objects.end());
 
         auto it = testStore.begin();
-        while(it != testStore.end())
+        while (it != testStore.end())
         {
           ++it;
         }
 
         it = testStore.begin();
-        while(it != testStore.end())
+        while (it != testStore.end())
         {
           objectsCopy.push_back(*it);
           ++it;
         }
 
-        for(auto i : testStore)
-        { }
+        for (auto i : testStore)
+        {
+        }
 
-        for(auto i : testStore)
-        { }
+        for (auto i : testStore)
+        {
+        }
 
         std::sort(objectsCopy.begin(), objectsCopy.end());
 
@@ -111,17 +110,17 @@ int main(int argc, char const **argv)
 
     SECTION("Test find over basic struct")
     {
-      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-        100, /*1000, 10000 */};
-      for(auto const &numberOfKeys : keyTests)
+      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100,
+                                        /*1000, 10000 */};
+      for (auto const &numberOfKeys : keyTests)
       {
         std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
 
-        std::vector<testType> objects;
-        std::vector<testType> objectsCopy;
+        std::vector<testType>                     objects;
+        std::vector<testType>                     objectsCopy;
         fetch::random::LaggedFibonacciGenerator<> lfg;
 
         // Create vector of random numbers
@@ -130,7 +129,7 @@ int main(int argc, char const **argv)
           uint64_t random = lfg();
 
           testType test;
-          test.first = int(-random);
+          test.first  = int(-random);
           test.second = random;
 
           test.third = std::to_string(random);
@@ -143,10 +142,10 @@ int main(int argc, char const **argv)
 
         // Test successfully finding and testing to find elements
         bool successfullyFound = true;
-        for(auto const &i : objects)
+        for (auto const &i : objects)
         {
           auto it = testStore.Find(ResourceAddress(i.third));
-          if(it == testStore.end())
+          if (it == testStore.end())
           {
             successfullyFound = false;
             break;
@@ -161,7 +160,7 @@ int main(int argc, char const **argv)
         {
           auto it = testStore.Find(ResourceAddress(std::to_string(lfg())));
 
-          if(it != testStore.end())
+          if (it != testStore.end())
           {
             successfullyFound = true;
             break;
@@ -174,9 +173,9 @@ int main(int argc, char const **argv)
 
     SECTION("Test find over basic struct, expect failures")
     {
-      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-        100, /*1000, 10000 */};
-      for(auto const &numberOfKeys : keyTests)
+      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100,
+                                        /*1000, 10000 */};
+      for (auto const &numberOfKeys : keyTests)
       {
         std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
@@ -187,7 +186,7 @@ int main(int argc, char const **argv)
         for (std::size_t i = 0; i < numberOfKeys; ++i)
         {
           testType test;
-          test.first = int(-i);
+          test.first  = int(-i);
           test.second = i;
 
           test.third = std::to_string(i);
@@ -198,10 +197,10 @@ int main(int argc, char const **argv)
         bool successfullyFound = false;
 
         // Expect in the case of hash collisions, we shouldn't find these
-        for (std::size_t i = numberOfKeys+1; i < numberOfKeys*2; ++i)
+        for (std::size_t i = numberOfKeys + 1; i < numberOfKeys * 2; ++i)
         {
           auto it = testStore.Find(ResourceAddress(std::to_string(i)));
-          if(it != testStore.end())
+          if (it != testStore.end())
           {
             successfullyFound = true;
             break;
@@ -214,21 +213,21 @@ int main(int argc, char const **argv)
 
     SECTION("Test subtree iterator over basic struct")
     {
-      std::vector<std::size_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-        99, 9999, 0, 1, 9, 12, 14, 100, 1000, 10000};
-      for(auto const &numberOfKeys : keyTests)
+      std::vector<std::size_t> keyTests{0,  1,  2,  3,    4, 5, 6, 7,  8,  9,   10,   11,   12,
+                                        13, 14, 99, 9999, 0, 1, 9, 12, 14, 100, 1000, 10000};
+      for (auto const &numberOfKeys : keyTests)
       {
         std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
 
-        std::vector<testType> objects;
-        std::vector<testType> objectsCopy;
+        std::vector<testType>                     objects;
+        std::vector<testType>                     objectsCopy;
         fetch::random::LaggedFibonacciGenerator<> lfg;
 
         ByteArray array;
-        array.Resize(256/8);
+        array.Resize(256 / 8);
 
         for (std::size_t i = 0; i < array.size(); ++i)
         {
@@ -243,7 +242,7 @@ int main(int argc, char const **argv)
           uint64_t random = lfg();
 
           testType test;
-          test.first = int(-random);
+          test.first  = int(-random);
           test.second = random;
 
           test.third = std::to_string(random);
@@ -263,7 +262,7 @@ int main(int argc, char const **argv)
 
           auto it = testStore.GetSubtree(rid, uint64_t(4));
 
-          while(it != testStore.end())
+          while (it != testStore.end())
           {
             objectsCopy.push_back(*it);
             ++it;

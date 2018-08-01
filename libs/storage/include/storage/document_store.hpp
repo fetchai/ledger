@@ -13,16 +13,12 @@
 namespace fetch {
 namespace storage {
 
-template <
-     std::size_t BLOCK_SIZE = 2048
-  , typename A = FileBlockType<BLOCK_SIZE>
-  , typename B = KeyValueIndex<>
-  , typename C = VersionedRandomAccessStack<A>
-  , typename D = FileObject<C>>
+template <std::size_t BLOCK_SIZE = 2048, typename A = FileBlockType<BLOCK_SIZE>,
+          typename B = KeyValueIndex<>, typename C = VersionedRandomAccessStack<A>,
+          typename D = FileObject<C>>
 class DocumentStore
 {
 public:
-
   typedef DocumentStore<BLOCK_SIZE, A, B, C, D> self_type;
   typedef byte_array::ByteArray                 byte_array_type;
 
@@ -50,10 +46,10 @@ public:
 
     ~DocumentFileImplementation() { store_->UpdateDocumentFile(*this); }
 
-    DocumentFileImplementation(DocumentFileImplementation const &other)           = delete;
+    DocumentFileImplementation(DocumentFileImplementation const &other) = delete;
     DocumentFileImplementation operator=(DocumentFileImplementation const &other) = delete;
     DocumentFileImplementation(DocumentFileImplementation &&other)                = default;
-    DocumentFileImplementation &operator=(DocumentFileImplementation &&other)     = default;
+    DocumentFileImplementation &operator=(DocumentFileImplementation &&other) = default;
 
     byte_array::ConstByteArray const &address() const { return address_; }
 
@@ -171,7 +167,7 @@ public:
     Document ret;
 
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    DocumentFile doc = GetDocumentFile(rid, false);
+    DocumentFile                  doc = GetDocumentFile(rid, false);
 
     if (!doc)
     {
@@ -210,18 +206,17 @@ public:
   class iterator
   {
   public:
-    iterator(self_type *store, typename key_value_index_type::iterator it) :
-        wrapped_iterator_{it}
-      , store_{store}
+    iterator(self_type *store, typename key_value_index_type::iterator it)
+        : wrapped_iterator_{it}, store_{store}
     {}
 
-    iterator()                               = default;
-    iterator(iterator const &rhs)            = default;
-    iterator(iterator &&rhs)                 = default;
+    iterator()                    = default;
+    iterator(iterator const &rhs) = default;
+    iterator(iterator &&rhs)      = default;
     iterator &operator=(iterator const &rhs) = default;
-    iterator &operator=(iterator&& rhs)      = default;
+    iterator &operator=(iterator &&rhs) = default;
 
-    void operator++()    { ++wrapped_iterator_; }
+    void operator++() { ++wrapped_iterator_; }
 
     bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
     bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
@@ -241,13 +236,13 @@ public:
 
   protected:
     typename key_value_index_type::iterator wrapped_iterator_;
-    self_type                               *store_;
+    self_type *                             store_;
   };
 
   self_type::iterator Find(ResourceID const &rid)
   {
     byte_array::ConstByteArray const &address = rid.id();
-    auto it = key_index_.Find(address);
+    auto                              it      = key_index_.Find(address);
 
     return iterator(this, it);
   }
@@ -255,16 +250,15 @@ public:
   self_type::iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
     byte_array::ConstByteArray const &address = rid.id();
-    auto it = key_index_.GetSubtree(address, bits);
+    auto                              it      = key_index_.GetSubtree(address, bits);
 
     return iterator(this, it);
   }
 
   self_type::iterator begin() { return iterator(this, key_index_.begin()); }
-  self_type::iterator end()   { return iterator(this, key_index_.end()); }
+  self_type::iterator end() { return iterator(this, key_index_.end()); }
 
 protected:
-
   DocumentFile GetDocumentFile(ResourceID const &rid, bool const &create = true)
   {
     byte_array::ConstByteArray const &address = rid.id();
@@ -285,8 +279,8 @@ protected:
   }
 
   mutex::Mutex         mutex_;
-  key_value_index_type key_index_;  // Document store made up of key_index to locate and
-  file_store_type      file_store_; // file store to store files
+  key_value_index_type key_index_;   // Document store made up of key_index to locate and
+  file_store_type      file_store_;  // file store to store files
 
 private:
   void UpdateDocumentFile(DocumentFileImplementation &doc)

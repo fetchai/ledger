@@ -217,8 +217,7 @@ void ExecutionManager::Start()
   running_ = true;
 
   // create and start the monitor thread
-  monitor_thread_ =
-      std::make_unique<std::thread>(&ExecutionManager::MonitorThreadEntrypoint, this);
+  monitor_thread_ = std::make_unique<std::thread>(&ExecutionManager::MonitorThreadEntrypoint, this);
 
   // wait for the monitor thread to be setup
   for (std::size_t i = 0; i < 20; ++i)

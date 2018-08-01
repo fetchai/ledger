@@ -63,10 +63,10 @@ ConstByteArray ToHex(ConstByteArray const &str)
 // Reverse bits in byte
 uint8_t Reverse(uint8_t c)
 {
-   c = uint8_t((c & 0xF0) >> 4) | uint8_t((c & 0x0F) << 4);
-   c = uint8_t((c & 0xCC) >> 2) | uint8_t((c & 0x33) << 2);
-   c = uint8_t((c & 0xAA) >> 1) | uint8_t((c & 0x55) << 1);
-   return c;
+  c = uint8_t((c & 0xF0) >> 4) | uint8_t((c & 0x0F) << 4);
+  c = uint8_t((c & 0xCC) >> 2) | uint8_t((c & 0x33) << 2);
+  c = uint8_t((c & 0xAA) >> 1) | uint8_t((c & 0x55) << 1);
+  return c;
 }
 
 // To hex, but with the bits in the bytes reversed endianness
@@ -80,7 +80,7 @@ ConstByteArray ToHexReverse(ConstByteArray const &str)
   for (std::size_t i = 0; i < str.size(); ++i)
   {
     uint8_t c = data[i];
-    c = Reverse(c);
+    c         = Reverse(c);
     ret[j++]  = uint8_t(details::hexChars[(c >> 4) & 0xF]);
     ret[j++]  = uint8_t(details::hexChars[c & 0xF]);
   }
@@ -120,7 +120,7 @@ ConstByteArray ToBinReverse(ConstByteArray const &str)
   for (std::size_t i = 0; i < str.size(); ++i)
   {
     uint8_t c = data[i];
-    c = Reverse(c);
+    c         = Reverse(c);
     ret[j++]  = uint8_t(c & 0x80 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x40 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x20 ? '1' : '0');

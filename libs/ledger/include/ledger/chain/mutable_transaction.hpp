@@ -47,11 +47,11 @@ public:
   using digest_type       = TransactionSummary::digest_type;
   using resource_set_type = TransactionSummary::resource_set_type;
 
-  MutableTransaction()                                         = default;
-  MutableTransaction(MutableTransaction const &rhs)            = delete;
+  MutableTransaction()                              = default;
+  MutableTransaction(MutableTransaction const &rhs) = delete;
   MutableTransaction &operator=(MutableTransaction const &rhs) = delete;
   MutableTransaction(MutableTransaction &&rhs)                 = default;
-  MutableTransaction &operator=(MutableTransaction &&rhs)      = default;
+  MutableTransaction &operator=(MutableTransaction &&rhs) = default;
 
   resource_set_type const &resources() const { return summary_.resources; }
 

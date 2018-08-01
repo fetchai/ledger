@@ -14,15 +14,13 @@ struct ByteArrayMapConfigurator
   typedef RandomAccessStack<kvi_pair_type, uint64_t>   kvi_stack_type;
   typedef KeyValueIndex<kvi_pair_type, kvi_stack_type> kvi_store_type;
 
-  typedef FileBlockType<BLOCK_SIZE>                  file_block_type;
+  typedef FileBlockType<BLOCK_SIZE>          file_block_type;
   typedef RandomAccessStack<file_block_type> document_stack_type;
   typedef FileObject<document_stack_type>    file_object_type;
 
-  typedef DocumentStore<BLOCK_SIZE,
-          file_block_type,
-          kvi_store_type,
-          document_stack_type,
-          file_object_type> type;
+  typedef DocumentStore<BLOCK_SIZE, file_block_type, kvi_store_type, document_stack_type,
+                        file_object_type>
+      type;
 };
 
 }  // namespace details
