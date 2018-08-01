@@ -50,9 +50,16 @@ public:
     }
   }
 
+  void onBlockComplete(std::function<void (const block_type)> func)
+  {
+    onBlockComplete_ = func;
+  }
+
 private:
   using clock_type     = std::chrono::high_resolution_clock;
   using timestamp_type = clock_type::time_point;
+
+  std::function<void (const block_type)> onBlockComplete_;
 
   template <typename T>
   timestamp_type CalculateNextBlockTime(T &rng)
@@ -114,6 +121,10 @@ private:
 
         // Add the block
         blockCoordinator_.AddBlock(nextBlock);
+        if (onBlockComplete_)
+          {
+            onBlockComplete_(nextBlock);
+          }
       }
       else
       {

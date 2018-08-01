@@ -97,6 +97,16 @@ public:
     identity_.reset();
   }
 
+  void ConnectionDropped(fetch::network::TCPClient::handle_type connection_handle)
+  {
+    mainchain_protocol_ -> ConnectionDropped(connection_handle);
+  }
+
+  void PublishBlock(const chain::MainChain::block_type &blk)
+  {
+    mainchain_protocol_ -> PublishBlock(blk);
+  }
+
   mainchain_type *mainchain() { return mainchain_.get(); }
 
 private:

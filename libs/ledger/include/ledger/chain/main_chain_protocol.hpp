@@ -1,6 +1,8 @@
 #pragma once
 #include "network/service/protocol.hpp"
 #include "network/service/publication_feed.hpp"
+#include "network/service/function.hpp"
+#include "network/generics/subscriptions_container.hpp"
 #include <vector>
 
 namespace fetch {
@@ -46,13 +48,26 @@ public:
 
   void Stop() { running_ = false; }
 
+  void PublishBlock(const chain::MainChain::block_type &blk)
+  {
+    fetch::logger.Warn("MINED A BLOCK:" + blk.summarise());
+    Publish(BLOCK_PUBLISH, blk);
+  }
+
+  void ConnectionDropped(fetch::network::TCPClient::handle_type connection_handle)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    blockPublishSubscriptions_.ConnectionDropped(connection_handle);
+  }
 private:
-  protocol_handler_type protocol_;
-  register_type         register_;
-  thread_pool_type      thread_pool_;
+  protocol_handler_type  protocol_;
+  register_type          register_;
+  thread_pool_type       thread_pool_;
+  network::SubscriptionsContainer blockPublishSubscriptions_;
 
   /// Protocol logic
   /// @{
+
 
   void IdleUntilPeers()
   {
@@ -62,6 +77,7 @@ private:
     {
       thread_pool_->Post([this]() { this->IdleUntilPeers(); },
                          1000);  // TODO: Make time variable
+      fetch::logger.Warn("OMG STILL IDLE");
     }
     else
     {
@@ -81,10 +97,28 @@ private:
     register_.WithServices([this, ms](service_map_type const &map) {
       for (auto const &p : map)
       {
-        if (!running_) return;
+        if (!running_)
+        {
+          fetch::logger.Warn("OMG NOT RUNNING");
+          return;
+        }
 
         auto peer = p.second;
         auto ptr  = peer.lock();
+
+        fetch::logger.Warn("OMG SUBS?");
+        service::Function<void(const chain::MainChain::block_type)> foo(
+                                                                        [](const chain::MainChain::block_type blk){
+                                                                          fetch::logger.Warn("OMG GOT BLOCK BY SUBS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " + blk.summarise());
+                                                                        }
+                                                                        );
+        
+        blockPublishSubscriptions_.Subscribe(
+          ptr,
+          protocol_,
+          BLOCK_PUBLISH,
+          foo);
+
         block_list_promises_.push_back(ptr->Call(protocol_, GET_HEAVIEST_CHAIN, ms));
       }
     });

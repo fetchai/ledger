@@ -2,6 +2,7 @@
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection_register.hpp"
 #include "network/service/client.hpp"
+#include "network/generics/callbacks.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -69,7 +70,6 @@ public:
   }
 
   void OnClientEnter(callback_client_enter_type const &f) { on_client_enter_ = f; }
-
   void OnClientLeave(callback_client_enter_type const &f) { on_client_leave_ = f; }
 
   void Leave(connection_handle_type const &id) override
@@ -167,8 +167,8 @@ private:
     if (on_client_enter_) on_client_enter_(handle);
   }
 
-  callback_client_enter_type on_client_leave_;
-  callback_client_enter_type on_client_enter_;
+  generics::Callbacks<callback_client_enter_type> on_client_leave_;
+  generics::Callbacks<callback_client_enter_type> on_client_enter_;
 };
 
 template <typename G>

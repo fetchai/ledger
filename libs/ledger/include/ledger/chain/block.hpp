@@ -89,6 +89,58 @@ public:
     proof_.SetHeader(body_.hash);
   }
 
+  std::string summarise() const
+  {
+    char buffer[100];
+
+    char *p = buffer;
+
+    if (hash().size()>0)
+    {
+      for(size_t i=0;i<16;i++)
+      {
+        sprintf(p, "%02x", hash()[i]);
+        p += 2;
+      }
+    }
+    else
+    {
+      *p++ = '?';
+    }
+
+    *p++ = '-';
+    *p++ = '>';
+
+    if (body_.block_number == 0)
+    {
+      p += sprintf(p, "genesis");
+    }
+    else
+    {
+      if (body_.previous_hash.size()>0)
+      {
+        for(size_t i=0;i<16;i++)
+        {
+          sprintf(p, "%02x", body_.previous_hash[i]);
+          p += 2;
+        }
+      }
+      else
+      {
+        *p++ = '?';
+        *p++ = '?';
+        *p++ = '?';
+      }
+    }
+
+    p += sprintf(p, " W=%d (%s)",
+                 int(total_weight_),
+                 is_loose_ ? "loose" : "attached"
+                 );
+
+    return std::string(buffer);
+  }
+
   body_type const &  body() const { return body_; }
   body_type &        body() { return body_; }
   digest_type const &hash() const { return body_.hash; }

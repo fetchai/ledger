@@ -86,6 +86,10 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
       new chain::MainChainMiner{num_lanes_, num_slices_, *main_chain_service_->mainchain(),
                                 *block_coordinator_, *transaction_packer_, main_chain_port_});
 
+  main_chain_miner_ -> onBlockComplete([this](const chain::MainChain::block_type blk){
+      this -> main_chain_service_ -> PublishBlock(blk);
+    });
+
   tx_processor_.reset(new ledger::TransactionProcessor{*storage_, *transaction_packer_});
 
   // Now that the execution manager is created, can start components that need
