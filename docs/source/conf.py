@@ -40,8 +40,8 @@ release = u'0.1'
 # ones.
 extensions = [
     'sphinx.ext.imgmath',
-    'sphinxcontrib.mermaid'
-
+    'sphinxcontrib.mermaid',
+    'sphinx.ext.todo'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

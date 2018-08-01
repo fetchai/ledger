@@ -84,7 +84,7 @@ needed to do this are defined as typedefs in the vectorisationfetch-corevectoris
 structures. The example can be found in
 vectorisationexamples/01_elementwise_manipulation/fetch_solution.cppvectorisation and core part is
 
-.. literalinclude:: ../../../libs/vectorise/examples/01_elementwise_manipulation/fetch_solution.cpp
+.. literalinclude:: ../../../libs/vectorise/examples/01_elementwise_manipulation_fetch/main.cpp
    :language: c++
    :lines: 7-20
 
@@ -132,7 +132,7 @@ define how any to elements are reduced. It is in particular useful for
 trivial functions such as addition, differences, any and all. We outline
 the Fetch implementation here:
 
-.. literalinclude:: ../../../libs/vectorise/examples/02_reduction/fetch_solution.cpp
+.. literalinclude:: ../../../libs/vectorise/examples/02_reduction_fetch/main.cpp
    :language: c++
    :lines: 12-22
 
@@ -176,7 +176,7 @@ for floats - that is, due to the vectorisationvector_register_typevectorisation 
 does not need to worry about the underlying data structures or assmbly
 codes to perform the vectorisation:
 
-.. literalinclude:: ../../../libs/vectorise/examples/03_sum_reduce/fetch_solution.cpp
+.. literalinclude:: ../../../libs/vectorise/examples/03_sum_reduce_fetch/main.cpp
    :language: c++
    :lines: 8-24
 
@@ -220,7 +220,7 @@ the standard exponential and the second function reduces a vector
 registers content to that of the underlying type. The algoithm is
 implemented as follows:
 
-.. literalinclude:: ../../../libs/vectorise/examples/05_softmax_approx/fetch_solution.cpp
+.. literalinclude:: ../../../libs/vectorise/examples/05_softmax_approx_fetch/main.cpp
    :language: c++
    :lines: 13-31
 
@@ -243,7 +243,25 @@ execution.
 
 Ranges: Operating on a subset
 -----------------------------
-(yet to be written)
+In many cases we do not want to operate on the full range of a shared array, but manipulate a subset of sequently occuring elements. To this end, the Fetch vectorisation framework introduces ranges which specify starting and ending elements for a vectorised operation. 
+
+
+.. todo::
+        
+        Write the rest of the example
+
+Slicing: Operating on shifted arrays
+------------------------------------
+In a lot of cases, we do not want to manipulate arrays elementwise at the same indices. This is for instance the case when 
+caclulating the dot product of a matrix :math:`A` with the transposed of another matrix :math:`B` which leads to elements calculated as
+
+.. math::
+    \left[ A\cdot B^T \right]_{i,j} = \sum_{k=0}^{N-1} A(i, k)\cdot B(j, k) .
+
+In this case we would vectorise over the index :math:`k`. We note that size of :math:`A` and :math:`B` may be different and therefore the meaning of :math:`k` is relative to some starting position that differs if :math:`A` and :math:`B` are represented internally as continous arrays. 
+
+To make it possible to implement routines like the one above we introduce the notation of slicing which represent a subview of a shared array with the constratint that starting position much be a multitude of the SIMD size. Any vectorisation method must use slices of same size.
+
 
 Advanced use-cases
 ------------------
