@@ -32,6 +32,9 @@ public:
   }
 
   ResourceID(byte_array::ConstByteArray const &id) { set_id(id); }
+
+  // TODO: (`HUT`) : (in next commit or so) make the relation
+  // between resource id and resource address more obv/explicit
 protected:
 
 private:

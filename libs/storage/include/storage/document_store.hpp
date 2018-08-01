@@ -271,12 +271,8 @@ protected:
     byte_array::ConstByteArray const &address = rid.id();
     index_type                        index   = 0;
 
-    bool result = key_index_.GetIfExists(address, index);
-
-    if (result)
+    if (key_index_.GetIfExists(address, index))
     {
-      //std::cerr << "Exists!" << std::endl;
-      //exit(1);
       return DocumentFile(this, address, file_store_, index);
     }
     else if (!create)
@@ -290,8 +286,8 @@ protected:
   }
 
   mutex::Mutex         mutex_;
-  key_value_index_type key_index_; // Document store made up of key_index and
-  file_store_type      file_store_; // file store
+  key_value_index_type key_index_;  // Document store made up of key_index to locate and
+  file_store_type      file_store_; // file store to store files
 
 private:
   void UpdateDocumentFile(DocumentFileImplementation &doc)

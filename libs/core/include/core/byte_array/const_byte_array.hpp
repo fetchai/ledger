@@ -182,14 +182,13 @@ public:
     arr_pointer_ = data_.pointer() + start_;
   }  // TODO: Move to protected
 
+protected:
   container_type &operator[](std::size_t const &n)
   {
     assert(n < length_);
     return arr_pointer_[n];
   }
 
-
-protected:
   void Resize(std::size_t const &n)
   {
     if (data_.size() < n) Reserve(n);

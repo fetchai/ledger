@@ -99,8 +99,8 @@ public:
     return iterator(it);
   }
 
-  self_type::iterator begin() {/* std::cout << "B" << std::endl;*/return iterator(store_.begin()); }
-  self_type::iterator end()   {/* std::cout << "E" << std::endl; */return iterator(store_.end()); }
+  self_type::iterator begin() { return iterator(store_.begin()); }
+  self_type::iterator end()   { return iterator(store_.end()); }
 
   class iterator
   {

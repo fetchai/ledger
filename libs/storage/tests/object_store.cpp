@@ -27,14 +27,6 @@ struct TestSerDeser
   }
 };
 
-uint8_t Reverse(uint8_t b)
-{
-   b = uint8_t((b & 0xF0) >> 4) | uint8_t((b & 0x0F) << 4);
-   b = uint8_t((b & 0xCC) >> 2) | uint8_t((b & 0x33) << 2);
-   b = uint8_t((b & 0xAA) >> 1) | uint8_t((b & 0x55) << 1);
-   return b;
-}
-
 template <typename T>
 inline void Serialize(T &serializer, TestSerDeser const &b)
 {
@@ -123,6 +115,7 @@ int main(int argc, char const **argv)
         100, /*1000, 10000 */};
       for(auto const &numberOfKeys : keyTests)
       {
+        std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
@@ -168,6 +161,46 @@ int main(int argc, char const **argv)
         {
           auto it = testStore.Find(ResourceAddress(std::to_string(lfg())));
 
+          if(it != testStore.end())
+          {
+            successfullyFound = true;
+            break;
+          }
+        }
+
+        EXPECT(successfullyFound == false);
+      }
+    };
+
+    SECTION("Test find over basic struct, expect failures")
+    {
+      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+        100, /*1000, 10000 */};
+      for(auto const &numberOfKeys : keyTests)
+      {
+        std::cout << "Testing keys: " << numberOfKeys << std::endl;
+        using testType = TestSerDeser;
+        ObjectStore<testType> testStore;
+        testStore.New("testFile.db", "testIndex.db");
+
+        // Create vector of random numbers
+        for (std::size_t i = 0; i < numberOfKeys; ++i)
+        {
+          testType test;
+          test.first = int(-i);
+          test.second = i;
+
+          test.third = std::to_string(i);
+
+          testStore.Set(ResourceAddress(test.third), test);
+        }
+
+        bool successfullyFound = false;
+
+        // Expect in the case of hash collisions, we shouldn't find these
+        for (std::size_t i = numberOfKeys+1; i < numberOfKeys*2; ++i)
+        {
+          auto it = testStore.Find(ResourceAddress(std::to_string(i)));
           if(it != testStore.end())
           {
             successfullyFound = true;

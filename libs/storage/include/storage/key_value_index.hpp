@@ -8,6 +8,7 @@
 #include <cstring>
 #include <deque>
 #include <queue>
+
 namespace fetch {
 namespace storage {
 
@@ -35,10 +36,6 @@ struct KeyValuePair
   };
   uint64_t right;
 
-  //bool operator==(KeyValuePair const &kv)
-  //{
-  //  return kv.parent == parent && kv.right == right && kv.left == left;
-  //}
   bool operator==(KeyValuePair const &kv)
   {
     return Hash() == kv.Hash();
@@ -112,7 +109,6 @@ public:
 
   KeyValueIndex()
   {
-
     stack_.OnFileLoaded([this]() { root_ = stack_.header_extra(); });
     stack_.OnBeforeFlush([this]() { this->BeforeFlushHandler(); });
   }
@@ -252,7 +248,7 @@ public:
   {
     key_type       key(key_str);
     bool           split;
-    int            pos = 0;
+    int            pos;
     key_value_pair kv;
     int            left_right;
 
@@ -315,7 +311,7 @@ public:
         break;
       }
 
-      kv.split  = uint16_t(pos); // TODO: (`HUT`) : look at this.
+      kv.split  = uint16_t(pos);
       kv.left   = lid;
       kv.right  = rid;
       kv.parent = pid;
@@ -574,7 +570,7 @@ private:
       ++depth;
       index = next;
 
-      pos = int(key.size()); // TODO: (`HUT`) : determine if needs to be in loop
+      pos = int(key.size());
 
       stack_.Get(next, kv);
 
@@ -679,7 +675,6 @@ private:
       else
       {
         // Switch to rhs branch since we travelled up to find a node we were the left of
-        //assert(parent.right != 0);
         stack_.Get(parent.right, parent);
 
         GetLeftLeaf(parent);
