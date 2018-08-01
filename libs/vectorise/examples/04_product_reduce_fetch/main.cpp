@@ -5,7 +5,7 @@
 typedef fetch::memory::SharedArray< float > array_type;
 typedef typename array_type::vector_register_type vector_type;
 
-float InnerProduct(array_type const &A) 
+float InnerProduct(array_type const &A, array_type const &B) 
 {
   float ret = 0;
   

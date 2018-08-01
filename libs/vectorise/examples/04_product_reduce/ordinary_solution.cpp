@@ -8,7 +8,7 @@ float InnerProduct(array_type const &A, array_type const &B)
   float ret = 0;
   
   for(std::size_t i = 0; i < A.size(); ++i) {
-    float d = A[i] - B[i]
+    float d = A[i] - B[i];
     ret += d * d;
   }
   
