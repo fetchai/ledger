@@ -11,6 +11,10 @@ from monitoring import Getter
 
 from utils.messages import title, note, text, info, debug, progress, warn, error, fatal
 
+from utils import flags
+from utils import resources
+
+flags.Flag(g_sitrepfile = flags.AUTOFLAG, help = "File to write log of all sitreps to", default = None)
 
 def workfunc(ident):
     return (
@@ -29,11 +33,14 @@ class NodeNumberGenerator(object):
 class Monitoring(object):
     def __init__(self, nodenumbergenerator=NodeNumberGenerator()):
         self.getter = Getter.Getter(
+            self,
             nodenumbergenerator,
             {
                 #'/peers': self.newData,
                 '/mainchain': self.newChainData,
                 '/sitrep': self.newSitrep,
+                200: self.okPeer,
+                None: self.deadPeer,
             }
             )
         self.getter.start()
@@ -41,11 +48,19 @@ class Monitoring(object):
         self.world = {}
         self.heaviests = {}
         self.chain = {}
+        self.deadPeers = {}
+
+        self.sitreps = open(g_sitrepfile,  'w') if g_sitrepfile else None
 
     def newSitrep(self, nodenumber, ident, url, code, data):
+        if data == None:
+            return
         progress("SITREP:", data)
         peerlist = data["subscriptions"]
         self.setPeerList(ident, peerlist)
+        if self.sitreps:
+            self.sitreps.write(json.dumps(data))
+            self.sitreps.write("\n\n")
 
     def newChainData(self, nodenumber, ident, url, code, data):
         blocks = data["blocks"]
@@ -68,13 +83,40 @@ class Monitoring(object):
             self.chain[chainident][block["hashcurrent"]]["num"] = block["blockNumber"]
             self.chain[chainident][block["hashcurrent"]]["miner"] = block["minerNumber"]
 
+    def complete(self):
+        if not self.sitreps:
+            return
+        sitrep = {
+            "datatime": time.time(),
+            "headcount": len(set(self.heaviests.values())),
+            "heads": {
+            },
+            "nodecount": len(set(self.heaviests.keys())),
+        }
+
+        for k,v in self.heaviests.items():
+            sitrep['heads'][v] = sitrep['heads'].get(v, 0) + 1
+
+        self.sitreps.write(json.dumps(sitrep))
+        self.sitreps.write("\n\n")
+        self.sitreps.flush()
+
     def getChain(self):
         if len(self.chain):
             return self.chain[max(self.chain.keys())]
         return {}
 
+    def deadPeer(self, nodenumber, ident, url, code, data):
+        self.deadPeers[ident] = 1 + self.deadPeers.get(ident, 0)
+        if self.deadPeers[ident] > 20:
+            self.badNode(ident)
+
+    def okPeer(self, nodenumber, ident, url, code, data):
+        self.deadPeers.pop(ident, None)
+
     def close(self):
         self.getter.stop()
+        self.sitreps.close()
 
     def setPeerList(self, ident, peerlist):
         self.world.setdefault(ident, {})
@@ -87,3 +129,4 @@ class Monitoring(object):
 
     def badNode(self, ident):
         self.world.pop(ident, None)
+        self.heaviests.pop(ident, None)

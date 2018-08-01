@@ -37,6 +37,7 @@ def poll(url, nodenumber):
     except Exception as x:
         print("ERR:", x)
         code = -4
+        exit(77)
     time.sleep(0.1)
     return (nodenumber, ident, url, code, data)
 
@@ -48,12 +49,14 @@ class Getter(object):
 
     def __init__(
             self,
+            owner,
             nodeRangeGenerator,
             actions
             ):
         self.nodeRangeGenerator = nodeRangeGenerator
         self.actions = actions
         self.thread = Getter.WorkerThread(self)
+        self.owner = owner
 
     def start(self):
         self.thread.start()
@@ -78,13 +81,21 @@ class Getter(object):
             while not self.done:
                 time.sleep(.25)
                 idents = list(self.owner.nodeRangeGenerator.getall())
-                urls = self.owner.actions.keys()
+                urls = [ x for x in self.owner.actions.keys() if isinstance(x, str) ]
 
                 tasks = itertools.product(idents, urls)
                 newdata = self.myPool.map(doTask, tasks)
 
                 for newstuff in newdata:
                     if newstuff[3] == 200:
+                        func = self.owner.actions.get(200, None)
+                        if func:
+                            func(*newstuff)
                         func = self.owner.actions.get(newstuff[2], None)
                         if func:
                             func(*newstuff)
+                    else:
+                        func = self.owner.actions.get(None, None)
+                        if func:
+                            func(*newstuff)
+                self.owner.owner.complete()

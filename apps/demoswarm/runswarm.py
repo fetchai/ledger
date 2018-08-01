@@ -144,7 +144,7 @@ class Node(object):
         else:
             cmdstr += " >/dev/null"
 
-        self.p = subprocess.Popen("{}".format(cmdstr))
+        self.p = subprocess.Popen("{}".format(cmdstr)),
             shell=True
         )
 
