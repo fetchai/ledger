@@ -5,15 +5,22 @@ import argparse
 import fnmatch
 import subprocess
 import difflib
+import threading
+import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 
 SOURCE_FOLDERS = ('apps', 'libs')
 SOURCE_EXT = ('*.cpp', '*.hpp')
 
 
+output_lock = threading.Lock()
+
+
 def parse_commandline():
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--warn-only', dest='fix', action='store_false', help='Only display warnings')
+    parser.add_argument('-j', dest='jobs', type=int, default=multiprocessing.cpu_count(), help='The number of jobs to do in parallel')
+    parser.add_argument('-a', '--all', action='store_true', help='Evaluate all files, do not stop on first failure')
     return parser.parse_args()
 
 
@@ -37,13 +44,16 @@ def compare_against_original(reformated, source_path, rel_path):
 
     out = list(difflib.context_diff(original.splitlines(), reformated.splitlines()))
 
-    changes = False
+    success = True
     if len(out) != 0:
+        output_lock.acquire()
         print('Style mismatch in:', rel_path)
-        print('\n'.join(out))
-        changes = True
+        print()
+        print('\n'.join(out[3:])) # first 3 elements are garbage
+        success = False
+        output_lock.release()
 
-    return changes
+    return success
 
 
 def main():
@@ -66,7 +76,7 @@ def main():
         subprocess.check_call(cmd_prefix + [source_path], cwd=project_root)
         subprocess.check_call(cmd_prefix + [source_path], cwd=project_root)
 
-        return False
+        return True
 
     def diff_style_to_file(source_path):
         output = subprocess.check_output(cmd_prefix + [source_path], cwd=project_root).decode()
@@ -83,11 +93,18 @@ def main():
     print('{} style...'.format(verb))
 
     # process all the files
-    failure = any(map(handler, project_sources(project_root)))
+    success = False
+    with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+        result = map(handler, project_sources(project_root))
+
+        if args.all:
+            result = list(result)
+
+        success = all(result)
 
     print('{} style...complete'.format(verb))
 
-    if failure:
+    if not success:
         sys.exit(1)
 
 
