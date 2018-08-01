@@ -16,6 +16,7 @@ struct Key
     BYTES  = S / 8
   };
 
+  // TODO: (`HUT`) : memset
   Key()
   {
     std::size_t i = 0;

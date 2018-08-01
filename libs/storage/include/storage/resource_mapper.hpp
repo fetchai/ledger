@@ -17,8 +17,6 @@ public:
   typedef uint32_t resource_group_type;
   ResourceID() = default;
 
-  ResourceID(byte_array::ConstByteArray const &id) { set_id(id); }
-
   byte_array::ConstByteArray id() const { return id_; }
 
   resource_group_type const &resource_group() const { return resource_group_; }
@@ -32,6 +30,12 @@ public:
 
     return resource_group() & group_mask;
   }
+
+  ResourceID(byte_array::ConstByteArray const &id) { set_id(id); }
+
+  // TODO: (`HUT`) : (in next commit or so) make the relation
+  // between resource id and resource address more obv/explicit
+protected:
 
 private:
   void set_id(byte_array::ConstByteArray const &id)
