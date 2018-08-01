@@ -32,7 +32,7 @@ int main(int argc, char **argv)
       std::cout << test.root() << std::endl;
 
       std::string IP_   = std::string(test["IP"].as_byte_array());
-      uint32_t    port_ = uint16_t(test["TCPPort"].As<uint32_t>());
+      uint32_t    port_ = test["TCPPort"].As<uint16_t>();
 
       std::cerr << "port is is " << port_ << std::endl;
       std::cerr << "IP is " << IP_ << " >>> " << test["IP"] << std::endl;

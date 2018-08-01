@@ -56,11 +56,7 @@ public:
 
   // TODO(unknown): make explicit
   ConstByteArray(std::string const &s) : ConstByteArray(s.c_str()) {}
-
-  ConstByteArray(self_type const &other)
-
-      = default;
-
+  ConstByteArray(self_type const &other) = default;
   ConstByteArray(self_type const &other, std::size_t const &start, std::size_t const &length)
     : data_(other.data_), start_(start), length_(length)
   {

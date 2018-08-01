@@ -54,7 +54,6 @@ class Variant
 {
 public:
   using ConstByteArray  = byte_array::ConstByteArray;
-  using VariantArrayPtr = std::shared_ptr<VariantArray>;
 
   // Construction / Destruction
   Variant();
@@ -66,6 +65,7 @@ public:
   Variant(uint16_t const &i);
   Variant(float const &f);
   Variant(double const &f);
+  explicit Variant(ConstByteArray const &o) { *this = o; }
   Variant(std::initializer_list<Variant> const &lst);
   ~Variant() = default;
 
@@ -140,6 +140,9 @@ public:
   friend std::ostream &operator<<(std::ostream &os, Variant const &v);
 
 private:
+  using VariantArrayPtr  = std::shared_ptr<VariantArray>;
+
+
   std::size_t FindKeyIndex(byte_array::ConstByteArray const &key) const;
   void        LazyAppend(byte_array::ConstByteArray const &key, Variant const &val);
 
@@ -152,7 +155,7 @@ private:
 
   PrimitiveData         data_;
   byte_array::ByteArray string_;
-  VariantArrayPtr       array_ = std::make_unique<VariantArray>();
+  VariantArrayPtr       array_ = std::make_shared<VariantArray>();
   VariantType           type_  = UNDEFINED;
 
   friend VariantProxy;
@@ -165,11 +168,13 @@ public:
 
   VariantProxy(ConstByteArray const &key, Variant *parent)
     : key_(key), parent_(parent), child_(nullptr)
-  {}
+  {
+  }
 
   VariantProxy(ConstByteArray const &key, Variant *parent, Variant *child)
     : Variant(*child), key_(key), parent_(parent), child_(child)
-  {}
+  {
+  }
 
   ~VariantProxy()
   {
@@ -204,30 +209,33 @@ private:
 class VariantArray
 {
 public:
-  VariantArray();
+
+  VariantArray() = default;
   VariantArray(std::size_t const &size);
   VariantArray(VariantArray const &other, std::size_t offset, std::size_t size);
   VariantArray(VariantArray const &other) = default;
-  VariantArray(VariantArray &&other) noexcept;
+  VariantArray(VariantArray &&other) = default;
 
   VariantArray &operator=(VariantArray const &other) = default;
-  VariantArray &operator                             =(VariantArray &&other) noexcept;
+  VariantArray &operator=(VariantArray &&other) noexcept = default;
 
   Variant const &operator[](std::size_t const &i) const;
   Variant &      operator[](std::size_t const &i);
   void           Resize(std::size_t const &n);
-  void           LazyResize(std::size_t const &n);
   void           Reserve(std::size_t const &n);
-  void           LazyReserve(std::size_t const &n);
   std::size_t    size() const { return size_; }
 
   void SetData(VariantArray const &other, std::size_t offset, std::size_t size);
 
 private:
-  std::size_t                  size_   = 0;
-  std::size_t                  offset_ = 0;
-  memory::SharedArray<Variant> data_;
-  Variant *                    pointer_ = nullptr;
+
+  using Container = std::vector<Variant>;
+  using ContainerPtr = std::shared_ptr<Container>;
+
+  std::size_t  size_   = 0;
+  std::size_t  offset_ = 0;
+  ContainerPtr data_;
+  Variant *    pointer_ = nullptr;
 };
 
 inline Variant::Variant() : type_(UNDEFINED) {}
@@ -432,36 +440,6 @@ inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const
   value = element.As<T>();
   return true;
 }
-
-template <typename T>
-class List
-{
-public:
-  List();
-  List(std::size_t const &size);
-  List(List const &other, std::size_t offset, std::size_t size);
-  List(List const &other) = default;
-  List(List &&other) noexcept;
-
-  List &operator=(List const &other) = default;
-  List &operator                     =(List &&other) noexcept;
-
-  Variant const &operator[](std::size_t const &i) const;
-  Variant &      operator[](std::size_t const &i);
-  void           Resize(std::size_t const &n);
-  void           LazyResize(std::size_t const &n);
-  void           Reserve(std::size_t const &n);
-  void           LazyReserve(std::size_t const &n);
-  std::size_t    size() const { return size_; }
-
-  void SetData(List const &other, std::size_t offset, std::size_t size);
-
-private:
-  std::size_t                  size_   = 0;
-  std::size_t                  offset_ = 0;
-  memory::SharedArray<Variant> data_;
-  Variant *                    pointer_ = nullptr;
-};
 
 }  // namespace script
 }  // namespace fetch

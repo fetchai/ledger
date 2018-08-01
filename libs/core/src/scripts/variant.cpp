@@ -30,14 +30,21 @@ VariantProxy Variant::operator[](ConstByteArray const &key)
 {
   assert(type_ == OBJECT);
   std::size_t i = 0;
+
+  // locate the desired entry
   for (; i < array_->size(); i += 2)
   {
-    if (key == (*array_)[i].as_byte_array()) break;
+    if (key == (*array_)[i].as_byte_array())
+      break;
   }
+
+  // new entry
   if (i == array_->size())
   {
     return VariantProxy(key, this);
   }
+
+  // existing entry
   return VariantProxy(key, this, &(*array_)[i + 1]);
 }
 
@@ -101,31 +108,15 @@ void Variant::LazyAppend(ConstByteArray const &key, Variant const &val)
 
 // Variant Array
 
-VariantArray::VariantArray() { pointer_ = data_.pointer(); }
-
-VariantArray::VariantArray(std::size_t const &size) { Resize(size); }
+VariantArray::VariantArray(std::size_t const &size)
+{
+  Resize(size);
+}
 
 VariantArray::VariantArray(VariantArray const &other, std::size_t offset, std::size_t size)
   : size_(size), offset_(offset), data_(other.data_)
 {
-  pointer_ = data_.pointer() + offset_;
-}
-
-VariantArray::VariantArray(VariantArray &&other) noexcept
-{
-  std::swap(size_, other.size_);
-  std::swap(offset_, other.offset_);
-  std::swap(data_, other.data_);
-  std::swap(pointer_, other.pointer_);
-}
-
-VariantArray &VariantArray::operator=(VariantArray &&other) noexcept
-{
-  std::swap(size_, other.size_);
-  std::swap(offset_, other.offset_);
-  std::swap(data_, other.data_);
-  std::swap(pointer_, other.pointer_);
-  return *this;
+  pointer_ = data_->data() + offset_;
 }
 
 Variant const &VariantArray::operator[](std::size_t const &i) const { return pointer_[i]; }
@@ -139,38 +130,22 @@ void VariantArray::Resize(std::size_t const &n)
   size_ = n;
 }
 
-void VariantArray::LazyResize(std::size_t const &n)
-{
-  if (size_ == n) return;
-  LazyReserve(n);
-  size_ = n;
-}
-
 void VariantArray::Reserve(std::size_t const &n)
 {
-  if (offset_ + n < data_.size()) return;
+  std::size_t const data_size = (data_) ? data_->size() : 0;
 
-  memory::SharedArray<Variant> new_data(n);
+  if (offset_ + n < data_size) return;
+
+  ContainerPtr new_data = std::make_shared<Container>(n);
 
   for (std::size_t i = 0; i < size_; ++i)
   {
-    new_data[i] = data_[i];
+    (*new_data)[i] = (*data_)[i];
   }
 
   data_    = new_data;
   offset_  = 0;
-  pointer_ = data_.pointer();
-}
-
-void VariantArray::LazyReserve(std::size_t const &n)
-{
-  if (offset_ + n < data_.size()) return;
-
-  memory::SharedArray<Variant> new_data(n);
-
-  data_    = new_data;
-  offset_  = 0;
-  pointer_ = data_.pointer();
+  pointer_ = data_->data();
 }
 
 void VariantArray::SetData(VariantArray const &other, std::size_t offset, std::size_t size)
@@ -178,7 +153,7 @@ void VariantArray::SetData(VariantArray const &other, std::size_t offset, std::s
   data_    = other.data_;
   size_    = size;
   offset_  = offset;
-  pointer_ = data_.pointer() + offset;
+  pointer_ = data_->data() + offset;
 }
 
 Variant &Variant::operator[](std::size_t const &i)

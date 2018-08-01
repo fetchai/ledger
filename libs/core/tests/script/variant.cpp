@@ -11,8 +11,6 @@ using namespace fetch::script;
 
 int main()
 {
-  std::cout << "Size of variant: " << sizeof(Variant) << std::endl;
-
   SCENARIO("Basic manipulation")
   {
     SECTION("Variant")
