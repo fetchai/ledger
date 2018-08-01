@@ -52,10 +52,10 @@ public:
     HEADER_SIZE = 2 * sizeof(uint64_t)
   };
 
-  FileObject(FileObject const &other)           = delete;
+  FileObject(FileObject const &other) = delete;
   FileObject operator=(FileObject const &other) = delete;
   FileObject(FileObject &&other)                = default;
-  FileObject &operator=(FileObject &&other)     = default;
+  FileObject &operator=(FileObject &&other) = default;
 
   FileObject(stack_type &stack)
       : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE), length_(HEADER_SIZE)

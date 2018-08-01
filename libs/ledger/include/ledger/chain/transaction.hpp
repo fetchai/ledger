@@ -19,8 +19,8 @@ public:
   using super_type::contract_name;
   using super_type::digest;
 
-  UnverifiedTransaction()                                         = default;
-  UnverifiedTransaction(UnverifiedTransaction &&other)            = default;
+  UnverifiedTransaction()                              = default;
+  UnverifiedTransaction(UnverifiedTransaction &&other) = default;
   UnverifiedTransaction &operator=(UnverifiedTransaction &&other) = default;
 
   UnverifiedTransaction(UnverifiedTransaction const &other) : MutableTransaction()
@@ -69,8 +69,8 @@ public:
   using super_type = UnverifiedTransaction;
   using super_type::GetMutable;
 
-  VerifiedTransaction()                                       = default;
-  VerifiedTransaction(VerifiedTransaction &&other)            = default;
+  VerifiedTransaction()                            = default;
+  VerifiedTransaction(VerifiedTransaction &&other) = default;
   VerifiedTransaction &operator=(VerifiedTransaction &&other) = default;
 
   VerifiedTransaction(VerifiedTransaction const &other) : UnverifiedTransaction()

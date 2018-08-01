@@ -19,10 +19,16 @@ public:
   class iterator;
 
   template <typename... Args>
-  void New(Args &&... args) { store_.New(std::forward<Args>(args)...); }
+  void New(Args &&... args)
+  {
+    store_.New(std::forward<Args>(args)...);
+  }
 
   template <typename... Args>
-  void Load(Args &&... args) { store_.Load(std::forward<Args>(args)...); }
+  void Load(Args &&... args)
+  {
+    store_.Load(std::forward<Args>(args)...);
+  }
 
   void Clear() { store_.Clear(); }
 
@@ -83,7 +89,7 @@ public:
   }
 
   // STL-like functionality
-  //template <typename... Args>
+  // template <typename... Args>
   self_type::iterator Find(ResourceID const &rid)
   {
     auto it = store_.Find(rid);
@@ -100,19 +106,19 @@ public:
   }
 
   self_type::iterator begin() { return iterator(store_.begin()); }
-  self_type::iterator end()   { return iterator(store_.end()); }
+  self_type::iterator end() { return iterator(store_.end()); }
 
   class iterator
   {
   public:
     iterator(typename KeyByteArrayStore<S>::iterator it) : wrapped_iterator_{it} {}
-    iterator()                               = default;
-    iterator(iterator const &rhs)            = default;
-    iterator(iterator &&rhs)                 = default;
+    iterator()                    = default;
+    iterator(iterator const &rhs) = default;
+    iterator(iterator &&rhs)      = default;
     iterator &operator=(iterator const &rhs) = default;
-    iterator &operator=(iterator&& rhs)      = default;
+    iterator &operator=(iterator &&rhs) = default;
 
-    void operator++()    { ++wrapped_iterator_; }
+    void operator++() { ++wrapped_iterator_; }
 
     bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
     bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
@@ -121,7 +127,7 @@ public:
     {
       Document doc = *wrapped_iterator_;
 
-      type ret;
+      type            ret;
       serializer_type ser(doc.document);
       ser >> ret;
 
@@ -133,7 +139,7 @@ public:
   };
 
 private:
-  mutex::Mutex mutex_;
+  mutex::Mutex         mutex_;
   KeyByteArrayStore<S> store_;
 };
 

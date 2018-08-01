@@ -23,7 +23,8 @@ public:
     fetch::logger.Debug("Creating network manager");
   }
 
-  ~NetworkManagerImplementation() {
+  ~NetworkManagerImplementation()
+  {
     fetch::logger.Debug("Destroying network manager");
     Stop();
   }
@@ -38,7 +39,7 @@ public:
     if (threads_.size() == 0)
     {
       owning_thread_ = std::this_thread::get_id();
-      shared_work_ = std::make_shared<asio::io_service::work>(*io_service_);
+      shared_work_   = std::make_shared<asio::io_service::work>(*io_service_);
 
       for (std::size_t i = 0; i < number_of_threads_; ++i)
       {
@@ -96,7 +97,7 @@ private:
 
   std::shared_ptr<asio::io_service::work> shared_work_;
 
-  mutable std::mutex          thread_mutex_{};
+  mutable std::mutex thread_mutex_{};
 };
 
 }  // namespace details
