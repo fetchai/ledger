@@ -102,7 +102,7 @@ public:
   using index_type     = uint64_t;
   using stack_type     = D;
   using key_value_pair = KeyValuePair<>;
-  using key_type       = typename key_value_pair::key_type key_type;
+  using key_type       = typename key_value_pair::key_type;
 
   KeyValueIndex()
   {

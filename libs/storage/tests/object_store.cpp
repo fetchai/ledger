@@ -16,9 +16,9 @@ struct TestSerDeser
   uint64_t    second;
   std::string third;
 
-  bool operator<(TestSerDeser const &rhs) { return third < rhs.third; }
+  bool operator<(TestSerDeser const &rhs) const { return third < rhs.third; }
 
-  bool operator==(TestSerDeser const &rhs)
+  bool operator==(TestSerDeser const &rhs) const
   {
     return first == rhs.first && second == rhs.second && third == rhs.third;
   }
