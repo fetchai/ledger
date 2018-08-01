@@ -107,12 +107,11 @@ private:
         auto ptr  = peer.lock();
 
         fetch::logger.Warn("OMG SUBS?");
-        service::Function<void(const chain::MainChain::block_type)> foo(
-                                                                        [](const chain::MainChain::block_type blk){
-                                                                          fetch::logger.Warn("OMG GOT BLOCK BY SUBS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " + blk.summarise());
-                                                                        }
-                                                                        );
-        
+        auto foo = new service::Function<void(chain::MainChain::block_type)>(
+                                                                  [](const chain::MainChain::block_type blk){
+                                                                    fetch::logger.Warn("OMG GOT BLOCK BY SUBS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " );
+                                                                  }
+                                                                  );
         blockPublishSubscriptions_.Subscribe(
           ptr,
           protocol_,

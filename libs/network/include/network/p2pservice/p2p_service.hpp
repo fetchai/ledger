@@ -153,12 +153,15 @@ public:
 
   bool Connect(byte_array::ConstByteArray const &host, uint16_t const &port)
   {
-    shared_service_client_type client =
-        register_.CreateServiceClient<client_type>(manager_, host, port);
 
+     shared_service_client_type client =
+        register_.CreateServiceClient<client_type>(manager_, host, port);
+     
+     LOG_STACK_TRACE_POINT;
     std::size_t n = 0;
     while ((n < 10) && (!client->is_alive()))
     {
+      LOG_STACK_TRACE_POINT;
       std::this_thread::sleep_for(std::chrono::milliseconds(2));
       ++n;
     }
@@ -174,16 +177,18 @@ public:
     // Getting own IP seen externally
     byte_array::ByteArray address;
     auto p = client->Call(IDENTITY, P2PIdentityProtocol::EXCHANGE_ADDRESS, host);
-    if (!p.Wait(300))
+    /*
+      if (!p.Wait(20))
     {
       fetch::logger.Error("Connection doesn't seem to do IDENTITY");
       client.reset();
       return false;
     }
+    */
     p.As(address);
 
     {  // Exchanging identities including node setup
-      std::lock_guard<mutex::Mutex> lock(my_details_->mutex);
+      LOG_STACK_TRACE_POINT;
 
       // Updating IP for P2P node
       for (auto &e : my_details_->details.entry_points)
@@ -191,6 +196,7 @@ public:
         if (e.is_discovery)
         {
           // TODO: Make mechanim for verifying address
+          std::lock_guard<mutex::Mutex> lock(my_details_->mutex);
           e.host.insert(address);
         }
       }

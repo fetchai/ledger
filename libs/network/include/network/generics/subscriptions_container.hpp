@@ -42,7 +42,7 @@ public:
     client_ptr client,
     protocol_handler_type protocol_number,
     feed_handler_type verb,
-    FUNC_CLASS func
+    FUNC_CLASS *func
     )
   {
     lock_type lock(mutex);
@@ -115,13 +115,13 @@ private:
   std::shared_ptr<Subscription> CreateSubscription(client_ptr client,
                                                    protocol_handler_type protocol_number,
                                                    feed_handler_type verb,
-                                                   FUNC_CLASS func
+                                                   FUNC_CLASS *func
                                                    )
   {
     
       fetch::logger.Warn("OMG SUB");
 
-    auto handle = client -> Subscribe(protocol_number, verb, &func);
+    auto handle = client -> Subscribe(protocol_number, verb, func);
     return std::make_shared<Subscription>(client, handle);
   }
 

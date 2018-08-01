@@ -127,6 +127,8 @@ void Constellation::Run(peer_list_type const &initial_peers)
   {
     fetch::logger.Warn("Connecting to ", peer.address(), ":", peer.port());
 
+    LOG_STACK_TRACE_POINT;
+
     p2p_->Connect(peer.address(), peer.port());
   }
 
@@ -136,6 +138,8 @@ void Constellation::Run(peer_list_type const &initial_peers)
     logger.Debug("Still alive...");
     sleep_for(seconds{5});
   }
+  
+  logger.Debug("Exiting...");
 }
 
 }  // namespace fetch
