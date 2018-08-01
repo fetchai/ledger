@@ -83,10 +83,10 @@ public:
   }
 
   // STL-like functionality
-  template <typename... Args>
-  self_type::iterator Find(Args &&... args)
+  //template <typename... Args>
+  self_type::iterator Find(ResourceID const &rid)
   {
-    auto it = store_.Find(std::forward<Args>(args)...);
+    auto it = store_.Find(rid);
 
     return iterator(it);
   }
@@ -113,7 +113,7 @@ public:
     iterator &operator=(iterator&& rhs)      = default;
 
     void operator++()    { ++wrapped_iterator_; }
-    void operator++(int) { ++wrapped_iterator_; }
+    void operator++(int) { wrapped_iterator_++; }
 
     bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
     bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }

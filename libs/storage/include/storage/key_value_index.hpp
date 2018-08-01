@@ -405,8 +405,8 @@ public:
   class iterator
   {
   public:
-    iterator(self_type *self, key_value_pair kv, bool node_iterator = false) :
-      kv_{kv}
+    iterator(self_type *self, key_value_pair kv, bool node_iterator = false)
+    : kv_{kv}
     , kv_node_{kv}
     , node_iterator_{node_iterator}
     , self_{self}
@@ -437,7 +437,19 @@ public:
     {
       if(node_iterator_)
       {
-        self_->GetNext(kv_, kv_node_.parent, true);
+        self_->GetNext(kv_, kv_node_.parent);
+      }
+      else
+      {
+        self_->GetNext(kv_);
+      }
+    }
+
+    void operator++(int)
+    {
+      if(node_iterator_)
+      {
+        self_->GetNext(kv_, kv_node_.parent);
       }
       else
       {
@@ -447,7 +459,6 @@ public:
 
     std::pair<byte_array::ByteArray, uint64_t> operator*() const
     {
-
       return std::make_pair(kv_.key.ToByteArray(), kv_.value);
     }
 
@@ -635,7 +646,7 @@ private:
     }
   }
 
-  void GetNext(key_value_pair &kv, uint64_t forbidden_parent = uint64_t(-1), bool testing = false)
+  void GetNext(key_value_pair &kv, uint64_t forbidden_parent = uint64_t(-1))
   {
     assert(kv.is_leaf());
     assert(kv.parent != stack_.size() + 1);
