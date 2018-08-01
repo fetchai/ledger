@@ -11,8 +11,11 @@ Welcome to Fetch Ledger's documentation!
    :caption: Contents:
 
    ledger/index.rst
-   services/index.rst     
-   vectorise/index.rst   
+   services/index.rst
+   vectorise/index.rst
+   network/index.rst
+   storage/index.rst
+   core/index.rst
 
 
 Indices and tables
