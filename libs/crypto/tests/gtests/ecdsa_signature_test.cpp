@@ -247,14 +247,14 @@ TEST_F(ECDCSASignatureTest, test_moving_semantics_constructor)
   //* Production code:
   ECDSASignature<eECDSAEncoding::canonical> sig_1{std::move(sig_0)};
   //* Expectations:
-  EXPECT_FALSE(sig_0.signature_ECDSA_SIG());
+  EXPECT_FALSE(sig_0.signature_ECDSA_SIG()); // NOLINT
   EXPECT_TRUE(sig_1.signature_ECDSA_SIG());
   ASSERT_TRUE(sig_1.Verify(priv_key.publicKey(), test_data));
 
   //* Production code:
   ECDSASignature<eECDSAEncoding::canonical> sig_2{std::move(sig_1)};
   //* Expectations:
-  EXPECT_FALSE(sig_1.signature_ECDSA_SIG());
+  EXPECT_FALSE(sig_1.signature_ECDSA_SIG()); // NOLINT
   EXPECT_TRUE(sig_2.signature_ECDSA_SIG());
   ASSERT_TRUE(sig_2.Verify(priv_key.publicKey(), test_data));
 }
@@ -273,7 +273,7 @@ TEST_F(ECDCSASignatureTest, test_moving_semantics_assign_operator)
   //* Production code:
   sig_1 = std::move(sig_0);
   //* Expectations:
-  EXPECT_FALSE(sig_0.signature_ECDSA_SIG());
+  EXPECT_FALSE(sig_0.signature_ECDSA_SIG()); // NOLINT
   EXPECT_TRUE(sig_1.signature_ECDSA_SIG());
   ASSERT_TRUE(sig_1.Verify(priv_key.publicKey(), test_data));
 
@@ -281,7 +281,7 @@ TEST_F(ECDCSASignatureTest, test_moving_semantics_assign_operator)
   //* Production code:
   sig_2 = std::move(sig_1);
   //* Expectations:
-  EXPECT_FALSE(sig_1.signature_ECDSA_SIG());
+  EXPECT_FALSE(sig_1.signature_ECDSA_SIG()); // NOLINT
   EXPECT_TRUE(sig_2.signature_ECDSA_SIG());
   ASSERT_TRUE(sig_2.Verify(priv_key.publicKey(), test_data));
 }
