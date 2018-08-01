@@ -27,6 +27,14 @@ struct TestSerDeser
   }
 };
 
+uint8_t Reverse(uint8_t b)
+{
+   b = uint8_t((b & 0xF0) >> 4) | uint8_t((b & 0x0F) << 4);
+   b = uint8_t((b & 0xCC) >> 2) | uint8_t((b & 0x33) << 2);
+   b = uint8_t((b & 0xAA) >> 1) | uint8_t((b & 0x55) << 1);
+   return b;
+}
+
 template <typename T>
 inline void Serialize(T &serializer, TestSerDeser const &b)
 {
@@ -48,151 +56,12 @@ inline void Deserialize(T &serializer, TestSerDeser &b)
 int main(int argc, char const **argv)
 {
 
-  SCENARIO("Testing object store with primitives")
-  {
-  //  SECTION("Test 1")
-  //  {
-  //    // Run this twice to check we correctly clear state between runs
-  //    for (std::size_t i = 0; i < 2; ++i)
-  //    {
-  //      ObjectStore<int> testStore;
-  //      testStore.New("testFile.db", "testIndex.db");
-
-  //      int x = 1283112;
-  //      int y = 0;
-
-  //      // Expect this file to not contain 
-  //      EXPECT(testStore.Get(ResourceID("testSet"), y) == false);
-  //      EXPECT(y == 0);
-
-  //      testStore.Set(ResourceID("testSet"), x);
-
-  //      testStore.Get(ResourceID("testSet"), y);
-  //      //EXPECT(testStore.Get(ResourceID("testSet"), y) == true);
-  //      EXPECT(y == x);
-  //    }
-  //  };
-
-    //SECTION("Test iterator over keys")
-    //{
-    //  ObjectStore<int> testStore;
-    //  testStore.New("testFile.db", "testIndex.db");
-
-    //  std::vector<std::string> keys;
-    //  fetch::random::LaggedFibonacciGenerator<> lfg;
-
-    //  // Create vector of random numbers
-    //  //for (std::size_t i = 0; i < std::numeric_limits<std::size_t>::max()/4; ++i)
-    //  for (std::size_t i = 0; i < 3; ++i)
-    //  {
-    //    int random = int(lfg());
-
-    //    std::cout << "===================================" << std::endl;
-    //    std::string key = std::to_string(random);
-    //    key += "_key";
-    //    testStore.Set(ResourceID(key), random);
-    //    std::cout << "+++++++++++++++++++++++++++++++++++" << std::endl;
-    //    keys.push_back(key);
-    //  }
-
-    //  std::cout << "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII" << std::endl;
-
-    //  std::sort(keys.begin(), keys.end());
-
-    //  for(auto const &i : keys)
-    //  {
-    //    int dummy;
-    //    std::cout << "############ normal get" <<  std::endl;
-    //    testStore.Get(ResourceID(i), dummy);
-
-    //    std::cout << i << ":" << dummy << std::endl;
-
-    //    std::cout << "############ find" << std::endl;
-    //    auto it = testStore.Find(ResourceID(i));
-    //    //auto obj = it.Get();
-
-    //    std::cout << "############ dereference" << std::endl;
-    //    auto obj = *it;
-
-    //    std::cout << "name 2 " << obj << std::endl;
-
-    //    //EXPECT(ToHex(i.contract_name()) == ToHex((*it).contract_name()));
-    //  }
-
-    //  std::cout << "finished" << std::endl;
-
-    //  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-    //};
-
-  };
-
   SCENARIO("Testing object store with classes")
   {
-
-    //SECTION("Test iterator over basic struct")
-    //{
-    //  using testType = TestSerDeser;
-    //  ObjectStore<testType> testStore;
-    //  testStore.New("testFile.db", "testIndex.db");
-
-    //  std::vector<testType> objects;
-    //  fetch::random::LaggedFibonacciGenerator<> lfg;
-
-    //  // Create vector of random numbers
-    //  //for (std::size_t i = 0; i < std::numeric_limits<std::size_t>::max()/4; ++i)
-    //  for (std::size_t i = 0; i < 3; ++i)
-    //  {
-    //    uint64_t random = lfg();
-
-    //    testType test;
-    //    test.first = int(-random);
-    //    test.second = random;
-    //    test.third = std::to_string(random);
-
-    //    std::cout << "===================================" << std::endl;
-    //    testStore.Set(ResourceID(test.third), test);
-    //    std::cout << "+++++++++++++++++++++++++++++++++++" << std::endl;
-    //    objects.push_back(test);
-
-    //    std::cout << ">name 1   " << test.first << std::endl;
-    //    std::cout << ">name 2   " << test.second << std::endl;
-    //    std::cout << ">name 3   " << test.third << std::endl;
-    //  }
-
-    //  std::cout << "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII" << std::endl;
-
-    //  //std::sort(objects.begin(), objects.end());
-
-    //  for(auto const &i : objects)
-    //  {
-    //    testType dummy;
-    //    std::cout << "############ normal get" <<  std::endl;
-    //    testStore.Get(ResourceID(i.third), dummy);
-
-    //    std::cout << "############ find" << std::endl;
-    //    auto it = testStore.Find(ResourceID(i.third));
-    //    //auto obj = it.Get();
-
-    //    std::cout << "############ dereference" << std::endl;
-    //    auto obj = *it;
-
-    //    std::cout << "name ref " << i.third << std::endl;
-    //    std::cout << "name 1   " << obj.first << std::endl;
-    //    std::cout << "name 2   " << obj.second << std::endl;
-    //    std::cout << "name 3   " << obj.third << std::endl;
-    //  }
-
-    //  std::cout << "finished" << std::endl;
-
-    //  //for(auto &i : testStore)
-    //  //{
-    //  //}
-    //  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-    //};
-
     SECTION("Test iterator over basic struct")
     {
-      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 8, 100, 1000, 10000};
+      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+        100, 11, /*1000, 10000*/};
       for(auto const &numberOfKeys : keyTests)
       {
         std::cout << "Testing keys: " << numberOfKeys << std::endl;
@@ -213,11 +82,9 @@ int main(int argc, char const **argv)
           test.first = int(-random);
           test.second = random;
 
-          test.third = std::to_string(i); // guarantee no clashes
-          test.third += "_";
-          test.third += std::to_string(random);
+          test.third = std::to_string(random);
 
-          testStore.Set(ResourceID(test.third), test);
+          testStore.Set(ResourceAddress(test.third), test);
           objects.push_back(test);
         }
 
@@ -226,10 +93,21 @@ int main(int argc, char const **argv)
         auto it = testStore.begin();
         while(it != testStore.end())
         {
-          objectsCopy.push_back(*it);
-          //std::cout << (*it).third << std::endl;
           it++;
         }
+
+        it = testStore.begin();
+        while(it != testStore.end())
+        {
+          objectsCopy.push_back(*it);
+          it++;
+        }
+
+        for(auto i : testStore)
+        { }
+
+        for(auto i : testStore)
+        { }
 
         std::sort(objectsCopy.begin(), objectsCopy.end());
 
@@ -239,65 +117,136 @@ int main(int argc, char const **argv)
       }
     };
 
-    //SECTION("Test iterator over keys")
-    //{
-    //  // TODO: (`HUT`) : we should have TX tests to ensure their hash is same when converting
-    //  // between types
-    //  using txMutable = fetch::chain::MutableTransaction;
-    //  using tx        = fetch::chain::VerifiedTransaction;
-    //  ObjectStore<tx> testStore;
-    //  testStore.New("testFile.db", "testIndex.db");
+    SECTION("Test find over basic struct")
+    {
+      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+        100, /*1000, 10000 */};
+      for(auto const &numberOfKeys : keyTests)
+      {
+        using testType = TestSerDeser;
+        ObjectStore<testType> testStore;
+        testStore.New("testFile.db", "testIndex.db");
 
-    //  std::vector<tx> transactions;
-    //  fetch::random::LaggedFibonacciGenerator<> lfg;
+        std::vector<testType> objects;
+        std::vector<testType> objectsCopy;
+        fetch::random::LaggedFibonacciGenerator<> lfg;
 
-    //  // Create vector of random numbers
-    //  //for (std::size_t i = 0; i < std::numeric_limits<std::size_t>::max()/4; ++i)
-    //  for (std::size_t i = 0; i < 3; ++i)
-    //  {
-    //    uint64_t random = lfg();
-    //    txMutable transactionMutable;
-    //    transactionMutable.set_contract_name(std::to_string(random));
+        // Create vector of random numbers
+        for (std::size_t i = 0; i < numberOfKeys; ++i)
+        {
+          uint64_t random = lfg();
 
-    //    tx transaction = tx::Create(transactionMutable);
+          testType test;
+          test.first = int(-random);
+          test.second = random;
 
-    //    std::cout << "===================================" << std::endl;
-    //    testStore.Set(ResourceID(transaction.digest()), transaction);
-    //    std::cout << "+++++++++++++++++++++++++++++++++++" << std::endl;
-    //    transactions.push_back(transaction);
-    //  }
+          test.third = std::to_string(random);
 
-    //  std::cout << "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII" << std::endl;
+          testStore.Set(ResourceAddress(test.third), test);
+          objects.push_back(test);
+        }
 
-    //  std::sort(transactions.begin(), transactions.end());
+        std::sort(objects.begin(), objects.end());
 
-    //  for(auto const &i : transactions)
-    //  {
-    //    tx dummy;
-    //    std::cout << "############ normal get" <<  std::endl;
-    //    testStore.Get(ResourceID(i.digest()), dummy);
+        // Test successfully finding and testing to find elements
+        bool successfullyFound = true;
+        for(auto const &i : objects)
+        {
+          auto it = testStore.Find(ResourceAddress(i.third));
+          if(it == testStore.end())
+          {
+            successfullyFound = false;
+            break;
+          }
+        }
 
-    //    std::cout << "############ find" << std::endl;
-    //    auto it = testStore.Find(ResourceID(i.digest()));
-    //    //auto obj = it.Get();
+        EXPECT(successfullyFound == true);
 
-    //    std::cout << "############ dereference" << std::endl;
-    //    auto obj = *it;
+        successfullyFound = false;
 
-    //    std::cout << "name 1 " << i.contract_name() << std::endl;
-    //    std::cout << "name 2 " << (*it).contract_name() << std::endl;
+        for (std::size_t i = 0; i < 100; ++i)
+        {
+          auto it = testStore.Find(ResourceAddress(std::to_string(lfg())));
 
-    //    EXPECT(ToHex(i.contract_name()) == ToHex((*it).contract_name()));
-    //  }
+          if(it != testStore.end())
+          {
+            successfullyFound = true;
+            break;
+          }
+        }
 
-    //  std::cout << "finished" << std::endl;
+        EXPECT(successfullyFound == false);
+      }
+    };
 
-    //  //for(auto &i : testStore)
-    //  //{
-    //  //}
-    //  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-    //};
+    SECTION("Test subtree iterator over basic struct")
+    {
+      std::vector<std::size_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+        99, 9999, 0, 1, 9, 12, 14, 100, 1000, 10000};
+      for(auto const &numberOfKeys : keyTests)
+      {
+        std::cout << "Testing keys: " << numberOfKeys << std::endl;
+        using testType = TestSerDeser;
+        ObjectStore<testType> testStore;
+        testStore.New("testFile.db", "testIndex.db");
 
+        std::vector<testType> objects;
+        std::vector<testType> objectsCopy;
+        fetch::random::LaggedFibonacciGenerator<> lfg;
+
+        ByteArray array;
+        array.Resize(256/8);
+
+        for (std::size_t i = 0; i < array.size(); ++i)
+        {
+          array[i] = 0;
+        }
+
+        testType dummy;
+
+        // Create vector of random numbers
+        for (std::size_t i = 0; i < numberOfKeys; ++i)
+        {
+          uint64_t random = lfg();
+
+          testType test;
+          test.first = int(-random);
+          test.second = random;
+
+          test.third = std::to_string(random);
+
+          testStore.Set(ResourceAddress(test.third), test);
+          objects.push_back(test);
+        }
+
+        // Now, aim to split the store up and copy it across perfectly
+        for (uint8_t keyBegin = 0; keyBegin < 16; ++keyBegin)
+        {
+          array[0] = (keyBegin);
+
+          auto rid = ResourceID(array);
+
+          testStore.Get(rid, dummy);
+
+          auto it = testStore.GetSubtree(rid, uint64_t(4));
+
+          while(it != testStore.end())
+          {
+            objectsCopy.push_back(*it);
+            it++;
+          }
+        }
+
+        // expect iterator test to go well
+        EXPECT(objectsCopy.size() == objects.size());
+
+        std::sort(objects.begin(), objects.end());
+        std::sort(objectsCopy.begin(), objectsCopy.end());
+
+        bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
+        EXPECT(allMatch == true);
+      }
+    };
   };
 
   return 0;

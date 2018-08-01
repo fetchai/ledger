@@ -206,6 +206,7 @@ public:
     }
   }
 
+  // STL-like functionality
   class iterator
   {
   public:
@@ -244,12 +245,18 @@ public:
     self_type                               *store_;
   };
 
-  // STL-like functionality
   self_type::iterator Find(ResourceID const &rid)
   {
     byte_array::ConstByteArray const &address = rid.id();
-
     auto it = key_index_.Find(address);
+
+    return iterator(this, it);
+  }
+
+  self_type::iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  {
+    byte_array::ConstByteArray const &address = rid.id();
+    auto it = key_index_.GetSubtree(address, bits);
 
     return iterator(this, it);
   }
@@ -268,8 +275,8 @@ protected:
 
     if (result)
     {
-      std::cerr << "Exists!" << std::endl;
-      exit(1);
+      //std::cerr << "Exists!" << std::endl;
+      //exit(1);
       return DocumentFile(this, address, file_store_, index);
     }
     else if (!create)
@@ -289,7 +296,6 @@ protected:
 private:
   void UpdateDocumentFile(DocumentFileImplementation &doc)
   {
-
     doc.Flush();
     key_index_.Set(doc.address(), doc.id(), doc.Hash());
 

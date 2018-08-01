@@ -86,14 +86,21 @@ public:
   template <typename... Args>
   self_type::iterator Find(Args &&... args)
   {
-    //Document doc = store_.Get(rid);
     auto it = store_.Find(std::forward<Args>(args)...);
 
     return iterator(it);
   }
 
-  self_type::iterator begin() { return iterator(store_.begin()); }
-  self_type::iterator end() { return iterator(store_.end()); }
+  template <typename... Args>
+  self_type::iterator GetSubtree(Args &&... args)
+  {
+    auto it = store_.GetSubtree(std::forward<Args>(args)...);
+
+    return iterator(it);
+  }
+
+  self_type::iterator begin() {/* std::cout << "B" << std::endl;*/return iterator(store_.begin()); }
+  self_type::iterator end()   {/* std::cout << "E" << std::endl; */return iterator(store_.end()); }
 
   class iterator
   {

@@ -207,17 +207,6 @@ public:
     schedule_update_.clear();
   }
 
-//  index_type Find(byte_array::ConstByteArray const &key_str)
-//  {
-//    key_type       key(key_str);
-//    bool           split;
-//    int            pos;
-//    key_value_pair kv;
-//    int            left_right;
-//    index_type     depth;
-//    return FindNearest(key, kv, split, pos, left_right, depth);
-//  }
-
   void Delete(byte_array::ConstByteArray const &key) { TODO_FAIL("Not implemented"); }
 
   void GetElement(uint64_t const &i, index_type &v)
@@ -411,10 +400,8 @@ public:
   void Revert(bookmark_type const &b)
   {
     stack_.Revert(b);
-    std::cout << " --------------------------------- " << std::endl;
 
     root_ = stack_.header_extra();
-    std::cout << "New root: " << root_ << std::endl;
   }
 
   uint64_t const &root_element() const { return root_; }
@@ -422,7 +409,18 @@ public:
   class iterator
   {
   public:
-    iterator(self_type *self, key_value_pair kv) : kv_{kv}, self_{self} {}
+    iterator(self_type *self, key_value_pair kv, bool node_iterator = false) :
+      kv_{kv}
+    , kv_node_{kv}
+    , node_iterator_{node_iterator}
+    , self_{self}
+    {
+      if(node_iterator)
+      {
+        self->GetLeftLeaf(kv_);
+      }
+    }
+
     iterator()                               = default;
     iterator(iterator const &rhs)            = default;
     iterator(iterator &&rhs)                 = default;
@@ -441,19 +439,28 @@ public:
 
     void operator++()
     {
-      self_->GetNext(kv_);
+      if(node_iterator_)
+      {
+        self_->GetNext(kv_, kv_node_.parent, true);
+      }
+      else
+      {
+        self_->GetNext(kv_);
+      }
     }
 
     std::pair<byte_array::ByteArray, uint64_t> operator*() const
     {
+
       return std::make_pair(kv_.key.ToByteArray(), kv_.value);
     }
 
   protected:
     key_value_pair kv_;
+    key_value_pair kv_node_;
+    bool           node_iterator_ = false;
     self_type      *self_;
   };
-
 
   self_type::iterator begin()
   {
@@ -484,7 +491,36 @@ public:
     key_value_pair kv;
     FindNearest(key, kv, split, pos, left_right, depth);
 
+    if(split)
+    {
+      return end();
+    }
+
     return iterator(this, kv);
+  }
+
+  self_type::iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t bits)
+  {
+    if (this->empty()) return end();
+
+    key_type       key(key_str);
+    bool           split      = true;
+    int            pos        = 0;
+    int            left_right = 0;
+    index_type     depth      = 0;
+    key_value_pair kv;
+
+    FindNearest(key, kv, split, pos, left_right, depth, bits);
+
+    pos = 0;
+    kv.key.Compare(key_str, pos, 0, 64);
+
+    if(uint64_t(pos) < bits)
+    {
+      return end();
+    }
+
+    return iterator(this, kv, true);
   }
 
 private:
@@ -525,7 +561,8 @@ private:
                        , bool &split
                        , int &pos
                        , int &left_right
-                       , uint64_t &depth)
+                       , uint64_t &depth
+                       , uint64_t max_depth = std::numeric_limits<uint64_t>::max())
   {
     depth = 0;
     if (this->empty()) return index_type(-1);
@@ -552,27 +589,35 @@ private:
         next = kv.right;
         break;
       }
-    } while ((left_right != 0) && (pos >= int(kv.split)));
+
+    } while ((left_right != 0) && (pos >= int(kv.split)) && depth < max_depth);
 
     split = (left_right != 0) && (pos < int(kv.split));
+
     return index;
   }
 
   // given KV, find nearest parent we are a left branch of, AND has a right 
   // KV will be set to that node
-  bool GetLeftParent(key_value_pair &kv) const
+  // Optionally specify a forbidden parent
+  bool GetLeftParent(key_value_pair &kv, uint64_t forbidden_parent) const
   {
     assert(kv.parent != uint64_t(-1));
+
+    if(kv.parent == forbidden_parent)
+    {
+      return false;
+    }
 
     key_value_pair parent;
     key_value_pair parent_right;
     stack_.Get(kv.parent,    parent);
     stack_.Get(parent.right, parent_right);
 
-    while(kv == parent_right || parent.right == uint64_t(-1))
+    while(kv == parent_right)
     {
       // Root condition
-      if(parent.parent == uint64_t(-1))
+      if(parent.parent == uint64_t(-1) || parent.parent == forbidden_parent)
       {
         return false;
         break;
@@ -594,23 +639,27 @@ private:
     }
   }
 
-  void GetNext(key_value_pair &kv)
+  void GetNext(key_value_pair &kv, uint64_t forbidden_parent = uint64_t(-1), bool testing = false)
   {
     assert(kv.is_leaf());
-    assert(kv.parent != uint64_t(-1));
     assert(kv.parent != stack_.size() + 1);
 
     // Get parent so we can check which branch we were on. Assume
-    // we were on a leaf.
+    // we were on a leaf. Check we're not root.
+    if(kv.parent == uint64_t(-1) || kv.parent == forbidden_parent)
+    {
+      kv = key_value_pair();
+      return;
+    }
+
     key_value_pair parent;
     stack_.Get(kv.parent, parent);
 
     // We're in a binary tree, going left to right
-    // TODO: (`HUT`) : upgrade this slightly using split
     key_value_pair parent_right;
     stack_.Get(parent.right, parent_right);
 
-    if(parent_right != kv)
+    if(parent_right != kv )
     {
       GetLeftLeaf(parent_right);
       kv = parent_right;
@@ -621,7 +670,7 @@ private:
     }
     else
     {
-      bool gotParent = GetLeftParent(parent);
+      bool gotParent = GetLeftParent(parent, forbidden_parent);
 
       if(!gotParent)
       {
@@ -630,7 +679,7 @@ private:
       else
       {
         // Switch to rhs branch since we travelled up to find a node we were the left of
-        assert(parent.right != 0);
+        //assert(parent.right != 0);
         stack_.Get(parent.right, parent);
 
         GetLeftLeaf(parent);
