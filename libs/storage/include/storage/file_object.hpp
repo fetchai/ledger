@@ -20,7 +20,7 @@ struct FileBlockType
 
   FileBlockType()
   {
-    // Ensures that paddded bytes are not uninitialized.
+    // Ensures that padded bytes are not uninitialized.
     memset(this, 0, sizeof(decltype(*this)));
     previous = UNDEFINED;
     next     = UNDEFINED;
@@ -54,8 +54,7 @@ public:
 
   FileObject(FileObject const &other) = delete;
   FileObject operator=(FileObject const &other) = delete;
-
-  FileObject(FileObject &&other) = default;
+  FileObject(FileObject &&other)                = default;
   FileObject &operator=(FileObject &&other) = default;
 
   FileObject(stack_type &stack)

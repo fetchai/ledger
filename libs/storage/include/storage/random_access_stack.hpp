@@ -136,7 +136,7 @@ public:
     SignalFileLoaded();
   }
 
-  // TODO: Protectected functions
+  // TODO: Protected functions
   void Get(std::size_t const &i, type &object) const
   {
     assert(filename_ != "");

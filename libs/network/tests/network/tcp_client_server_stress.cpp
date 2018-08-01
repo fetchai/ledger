@@ -74,12 +74,13 @@ template <std::size_t N = 1>
 void TestCase0(std::string host, uint16_t port)
 {
   std::cerr << "\nTEST CASE 0. Threads: " << N << std::endl;
-  std::cerr << "Info: Attempting to open the server multiple times, no start" << std::endl;
+  std::cerr << "Info: Attempting to open the server multiple times" << std::endl;
 
   for (std::size_t index = 0; index < 20; ++index)
   {
     NetworkManager nmanager(N);
     Server         server(port, nmanager);
+    nmanager.Start();
   }
 
   std::cerr << "Success." << std::endl;
@@ -97,6 +98,7 @@ void TestCase1(std::string host, uint16_t port)
     if (index % 2) nmanager.Start();
     Server server(port, nmanager);
     if (index % 3) nmanager.Stop();
+    nmanager.Start();
   }
 
   std::cerr << "Success." << std::endl;
