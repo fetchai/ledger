@@ -34,8 +34,7 @@ VariantProxy Variant::operator[](ConstByteArray const &key)
   // locate the desired entry
   for (; i < array_->size(); i += 2)
   {
-    if (key == (*array_)[i].as_byte_array())
-      break;
+    if (key == (*array_)[i].as_byte_array()) break;
   }
 
   // new entry
@@ -108,10 +107,7 @@ void Variant::LazyAppend(ConstByteArray const &key, Variant const &val)
 
 // Variant Array
 
-VariantArray::VariantArray(std::size_t const &size)
-{
-  Resize(size);
-}
+VariantArray::VariantArray(std::size_t const &size) { Resize(size); }
 
 VariantArray::VariantArray(VariantArray const &other, std::size_t offset, std::size_t size)
   : size_(size), offset_(offset), data_(other.data_)

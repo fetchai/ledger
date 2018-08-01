@@ -53,7 +53,7 @@ class VariantProxy;
 class Variant
 {
 public:
-  using ConstByteArray  = byte_array::ConstByteArray;
+  using ConstByteArray = byte_array::ConstByteArray;
 
   // Construction / Destruction
   Variant();
@@ -140,8 +140,7 @@ public:
   friend std::ostream &operator<<(std::ostream &os, Variant const &v);
 
 private:
-  using VariantArrayPtr  = std::shared_ptr<VariantArray>;
-
+  using VariantArrayPtr = std::shared_ptr<VariantArray>;
 
   std::size_t FindKeyIndex(byte_array::ConstByteArray const &key) const;
   void        LazyAppend(byte_array::ConstByteArray const &key, Variant const &val);
@@ -168,13 +167,11 @@ public:
 
   VariantProxy(ConstByteArray const &key, Variant *parent)
     : key_(key), parent_(parent), child_(nullptr)
-  {
-  }
+  {}
 
   VariantProxy(ConstByteArray const &key, Variant *parent, Variant *child)
     : Variant(*child), key_(key), parent_(parent), child_(child)
-  {
-  }
+  {}
 
   ~VariantProxy()
   {
@@ -209,12 +206,11 @@ private:
 class VariantArray
 {
 public:
-
   VariantArray() = default;
   VariantArray(std::size_t const &size);
   VariantArray(VariantArray const &other, std::size_t offset, std::size_t size);
   VariantArray(VariantArray const &other) = default;
-  VariantArray(VariantArray &&other) = default;
+  VariantArray(VariantArray &&other)      = default;
 
   VariantArray &operator=(VariantArray const &other) = default;
   VariantArray &operator=(VariantArray &&other) noexcept = default;
@@ -228,8 +224,7 @@ public:
   void SetData(VariantArray const &other, std::size_t offset, std::size_t size);
 
 private:
-
-  using Container = std::vector<Variant>;
+  using Container    = std::vector<Variant>;
   using ContainerPtr = std::shared_ptr<Container>;
 
   std::size_t  size_   = 0;
