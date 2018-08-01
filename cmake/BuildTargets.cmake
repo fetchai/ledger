@@ -10,7 +10,7 @@ endmacro(fetch_warning message)
 
 macro(setup_compiler)
 
-  set(CMAKE_CXX_STANDARD 11)
+  set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
   # ensure that only one architecture is enable
