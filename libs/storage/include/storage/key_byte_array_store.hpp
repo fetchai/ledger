@@ -18,7 +18,8 @@ struct ByteArrayMapConfigurator
   using document_stack_type = RandomAccessStack<file_block_type>;
   using file_object_type    = FileObject<document_stack_type>;
 
-  using type = DocumentStore<BLOCK_SIZE, file_block_type, kvi_store_type, document_stack_type, file_object_type>;
+  using type = DocumentStore<BLOCK_SIZE, file_block_type, kvi_store_type, document_stack_type,
+                             file_object_type>;
 };
 
 }  // namespace details

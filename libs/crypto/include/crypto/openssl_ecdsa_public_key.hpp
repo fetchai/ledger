@@ -30,15 +30,15 @@ public:
 
   ECDSAPublicKey(shrd_ptr_type<EC_POINT> &&public_key, const EC_GROUP *group,
                  const context::Session<BN_CTX> &session)
-      : key_EC_POINT_{public_key}
-      , key_EC_KEY_{ConvertToECKEY(public_key.get())}
-      , key_binary_{Convert(public_key.get(), group, session, binaryDataFormat)}
+    : key_EC_POINT_{public_key}
+    , key_EC_KEY_{ConvertToECKEY(public_key.get())}
+    , key_binary_{Convert(public_key.get(), group, session, binaryDataFormat)}
   {}
 
   ECDSAPublicKey(const byte_array::ConstByteArray &key_data)
-      : key_EC_POINT_{Convert(key_data, binaryDataFormat)}
-      , key_EC_KEY_{ConvertToECKEY(key_EC_POINT_.get())}
-      , key_binary_{key_data}
+    : key_EC_POINT_{Convert(key_data, binaryDataFormat)}
+    , key_EC_KEY_{ConvertToECKEY(key_EC_POINT_.get())}
+    , key_binary_{key_data}
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
@@ -47,20 +47,20 @@ public:
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
   ECDSAPublicKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> const &from)
-      : key_EC_POINT_{from.key_EC_POINT_}
-      , key_EC_KEY_{from.key_EC_KEY_}
-      , key_binary_{BINARY_DATA_FORMAT == binaryDataFormat
-                        ? from.key_binary_
-                        : Convert(key_EC_POINT_.get(), binaryDataFormat)}
+    : key_EC_POINT_{from.key_EC_POINT_}
+    , key_EC_KEY_{from.key_EC_KEY_}
+    , key_binary_{BINARY_DATA_FORMAT == binaryDataFormat
+                      ? from.key_binary_
+                      : Convert(key_EC_POINT_.get(), binaryDataFormat)}
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
   ECDSAPublicKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> &&from)
-      : key_EC_POINT_{std::move(from.key_EC_POINT_)}
-      , key_EC_KEY_{std::move(from.key_EC_KEY_)}
-      , key_binary_{BINARY_DATA_FORMAT == binaryDataFormat
-                        ? std::move(from.key_binary_)
-                        : Convert(key_EC_POINT_.get(), binaryDataFormat)}
+    : key_EC_POINT_{std::move(from.key_EC_POINT_)}
+    , key_EC_KEY_{std::move(from.key_EC_KEY_)}
+    , key_binary_{BINARY_DATA_FORMAT == binaryDataFormat
+                      ? std::move(from.key_binary_)
+                      : Convert(key_EC_POINT_.get(), binaryDataFormat)}
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
@@ -244,4 +244,3 @@ private:
 }  // namespace openssl
 }  // namespace crypto
 }  // namespace fetch
-

@@ -17,7 +17,6 @@ class NetworkManagerImplementation
   : public std::enable_shared_from_this<NetworkManagerImplementation>
 {
 public:
-
   NetworkManagerImplementation(std::size_t threads = 1) : number_of_threads_(threads)
   {
     fetch::logger.Debug("Creating network manager");
@@ -71,7 +70,7 @@ public:
       }
 
       threads_.clear();
-        io_service_ = std::make_unique<asio::io_service>();
+      io_service_ = std::make_unique<asio::io_service>();
     }
   }
 

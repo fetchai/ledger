@@ -403,7 +403,7 @@ public:
   {
   public:
     iterator(self_type *self, key_value_pair kv, bool node_iterator = false)
-        : kv_{kv}, kv_node_{kv}, node_iterator_{node_iterator}, self_{self}
+      : kv_{kv}, kv_node_{kv}, node_iterator_{node_iterator}, self_{self}
     {
       if (node_iterator)
       {

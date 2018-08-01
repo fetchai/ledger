@@ -8,7 +8,7 @@ namespace chain {
 class UnverifiedTransaction : private MutableTransaction
 {
 public:
-  using super_type                                     = MutableTransaction;
+  using super_type = MutableTransaction;
   using super_type::VERSION;
   using super_type::hasher_type;
   using super_type::digest_type;

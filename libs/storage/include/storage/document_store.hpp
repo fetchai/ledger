@@ -207,7 +207,7 @@ public:
   {
   public:
     iterator(self_type *store, typename key_value_index_type::iterator it)
-        : wrapped_iterator_{it}, store_{store}
+      : wrapped_iterator_{it}, store_{store}
     {}
 
     iterator()                    = default;
