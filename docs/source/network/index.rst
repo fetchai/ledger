@@ -1,22 +1,10 @@
-.. fetch-network documentation master file, created by
-   sphinx-quickstart on Sat Jun  2 13:58:33 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to fetch-network's documentation!
-===============================================
+Network Framework
+=================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-
-
-Getting started
-========================
-The Fetch network library depends on various submodules to provide dependencies.
-Follow the instructions in the README to ensure 
-that all submodules are correctly updated and you can build the repo.
 
 Objective
 ---------
@@ -24,8 +12,8 @@ The objective of the Fetch network library is to make it easy to network,
 in particular to make it easy to create protocols using our rpc framework.
 fetch-networking handles low level internet protocol (TCP) and RPCs and serialization.
 
-I don't care how this works, get me started ASAP
-------------------------------------------------------
+Quick start
+-----------
 So you want to create a P2P network making RPC calls to each other. To this end, there is a basic
 `quick start` example program. This will illustrate all of the components working together to
 create basic network communications.
@@ -103,12 +91,12 @@ What if I want to send my custom class over the rpc interface?
 Refer to the serialization section if you need to understand implementation details. Otherwise,
 the quick start example creates a dummy class that illustrates how you can do this.
 
-.. literalinclude:: ../../examples/quick_start/node.hpp
+.. literalinclude:: ../../../libs/network/examples/quick_start/node.hpp
    :language: c++
    :lines: 14-19
 
 
-.. literalinclude:: ../../examples/quick_start/node.hpp
+.. literalinclude:: ../../../libs/network/examples/quick_start/node.hpp
    :language: c++
    :lines: 96-106
 
@@ -126,21 +114,7 @@ Gotchas
 Sample text here
 --------------------------------------
 
-.. literalinclude:: ../../examples/network/server.cpp
+.. literalinclude:: ../../../libs/network/examples/network_server/server.cpp
    :language: c++
    :lines: 7-20
 
-
-API Documentation
-=================
-(yet to be written)
-
-.. image:: swarm-architecture-overview.png
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
