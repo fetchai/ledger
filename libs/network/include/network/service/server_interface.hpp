@@ -158,6 +158,7 @@ private:
     // If we need to add client id to function arguments
     if (fnc.meta_data() & Callable::CLIENT_ID_ARG)
     {
+      fetch::logger.Debug("Adding client ID meta data to ", protocol, ":", function);
       CallableArgumentList extra_args;
       extra_args.PushArgument(&client);
       return fnc(result, extra_args, params);

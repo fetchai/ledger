@@ -78,7 +78,7 @@ class ConstellationNode(object):
             rnd = (index + random.randint(0, args.members)) % args.members
             if rnd == index:
                 continue
-            peers.add(rnd * 20 + PORT_BASE)
+            peers.add(rnd * 20 + PORT_BASE + 1)
 
         os.makedirs(args.logdir, exist_ok=True)
         os.makedirs("data-{}/".format(self.index), exist_ok=True)
@@ -101,6 +101,8 @@ class ConstellationNode(object):
         self.debugger = args.debugger
 
         self.launchRun()
+        #print("Snooze")
+        #time.sleep(2)
 
     def launchRun(self):
 
@@ -110,7 +112,7 @@ class ConstellationNode(object):
 
         cmdstr = " ".join(cmdstr)
 
-        cmdstr = "{} >{}".format(
+        cmdstr = "env | grep ASAN ; {} >{} 2>&1".format(
                 cmdstr
                 , os.path.join(self.logdir, str(self.index))
             )

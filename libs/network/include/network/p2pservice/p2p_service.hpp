@@ -173,7 +173,13 @@ public:
 
     // Getting own IP seen externally
     byte_array::ByteArray address;
-    auto                  p = client->Call(IDENTITY, P2PIdentityProtocol::EXCHANGE_ADDRESS, host);
+    auto p = client->Call(IDENTITY, P2PIdentityProtocol::EXCHANGE_ADDRESS, host);
+    if (!p.Wait(300))
+    {
+      fetch::logger.Error("Connection doesn't seem to do IDENTITY");
+      client.reset();
+      return false;
+    }
     p.As(address);
 
     {  // Exchanging identities including node setup

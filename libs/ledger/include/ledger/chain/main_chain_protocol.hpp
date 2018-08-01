@@ -199,7 +199,6 @@ private:
   std::vector<block_type> GetHeaviestChain(uint32_t const &maxsize)
   {
     std::vector<block_type> results;
-    std::cerr << "this happened\n\n" << std::endl;
 
     fetch::logger.Debug("GetHeaviestChain starting work ", maxsize);
 
