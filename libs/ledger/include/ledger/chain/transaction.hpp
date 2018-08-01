@@ -8,9 +8,19 @@ namespace chain {
 class UnverifiedTransaction : private MutableTransaction
 {
 public:
-  typedef MutableTransaction super_type;
-  UnverifiedTransaction()                              = default;
-  UnverifiedTransaction(UnverifiedTransaction &&other) = default;
+  using super_type = MutableTransaction;
+  using super_type::VERSION;
+  using super_type::hasher_type;
+  using super_type::digest_type;
+  using super_type::resources;
+  using super_type::summary;
+  using super_type::data;
+  using super_type::signature;
+  using super_type::contract_name;
+  using super_type::digest;
+
+  UnverifiedTransaction()                                         = default;
+  UnverifiedTransaction(UnverifiedTransaction &&other)            = default;
   UnverifiedTransaction &operator=(UnverifiedTransaction &&other) = default;
 
   UnverifiedTransaction(UnverifiedTransaction const &other) : MutableTransaction()
@@ -25,17 +35,6 @@ public:
   }
 
   bool operator<(UnverifiedTransaction const &other) const { return digest() < other.digest(); }
-
-  using super_type::VERSION;
-  using super_type::hasher_type;
-  using super_type::digest_type;
-  // using super_type::;
-  using super_type::resources;
-  using super_type::summary;
-  using super_type::data;
-  using super_type::signature;
-  using super_type::contract_name;
-  using super_type::digest;
 
   MutableTransaction GetMutable()
   {
@@ -67,10 +66,11 @@ protected:
 class VerifiedTransaction : public UnverifiedTransaction
 {
 public:
-  typedef UnverifiedTransaction super_type;
+  using super_type = UnverifiedTransaction;
+  using super_type::GetMutable;
 
-  VerifiedTransaction()                            = default;
-  VerifiedTransaction(VerifiedTransaction &&other) = default;
+  VerifiedTransaction()                                       = default;
+  VerifiedTransaction(VerifiedTransaction &&other)            = default;
   VerifiedTransaction &operator=(VerifiedTransaction &&other) = default;
 
   VerifiedTransaction(VerifiedTransaction const &other) : UnverifiedTransaction()
@@ -83,8 +83,6 @@ public:
     this->Copy(other);
     return *this;
   }
-
-  using super_type::GetMutable;
 
   static VerifiedTransaction Create(fetch::chain::MutableTransaction &&trans)
   {
