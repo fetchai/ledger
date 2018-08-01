@@ -222,7 +222,6 @@ public:
     iterator &operator=(iterator&& rhs)      = default;
 
     void operator++()    { ++wrapped_iterator_; }
-    void operator++(int) { wrapped_iterator_++; }
 
     bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
     bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }

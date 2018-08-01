@@ -445,18 +445,6 @@ public:
       }
     }
 
-    void operator++(int)
-    {
-      if(node_iterator_)
-      {
-        self_->GetNext(kv_, kv_node_.parent);
-      }
-      else
-      {
-        self_->GetNext(kv_);
-      }
-    }
-
     std::pair<byte_array::ByteArray, uint64_t> operator*() const
     {
       return std::make_pair(kv_.key.ToByteArray(), kv_.value);

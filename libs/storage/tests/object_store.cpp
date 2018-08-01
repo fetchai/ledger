@@ -85,14 +85,14 @@ int main(int argc, char const **argv)
         auto it = testStore.begin();
         while(it != testStore.end())
         {
-          it++;
+          ++it;
         }
 
         it = testStore.begin();
         while(it != testStore.end())
         {
           objectsCopy.push_back(*it);
-          it++;
+          ++it;
         }
 
         for(auto i : testStore)
@@ -266,7 +266,7 @@ int main(int argc, char const **argv)
           while(it != testStore.end())
           {
             objectsCopy.push_back(*it);
-            it++;
+            ++it;
           }
         }
 
