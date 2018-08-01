@@ -1,5 +1,4 @@
-#ifndef QUICK_START_NODE_HPP
-#define QUICK_START_NODE_HPP  // TODO: (`HUT`) : change headers
+#pragma once
 
 //#include"network/service/client.hpp"
 #include "./protocol.hpp"
@@ -23,4 +22,3 @@ public:
 
 }  // namespace subscribe
 }  // namespace fetch
-#endif
