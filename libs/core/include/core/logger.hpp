@@ -56,8 +56,8 @@ public:
     : context_(std::move(context))
     , filename_(std::move(filename))
     , line_(line)
-    , parent_(std::move(std::move(parent)))
-    , derived_from_(std::move(std::move(ctx)))
+    , parent_(std::move(parent))
+    , derived_from_(std::move(ctx))
     , instance_(instance)
   {
     id_ = std::this_thread::get_id();
@@ -68,7 +68,7 @@ public:
     : context_(std::move(context))
     , filename_(std::move(filename))
     , line_(line)
-    , parent_(std::move(std::move(parent)))
+    , parent_(std::move(parent))
     , instance_(instance)
   {
     id_ = std::this_thread::get_id();
