@@ -1550,7 +1550,8 @@ public:
 
   template <typename S,
             typename D = memory::SharedArray<S>>  // TODO deduce D from parent
-  void As(ShapeLessArray<S, D> &ret) const
+  void
+  As(ShapeLessArray<S, D> &ret) const
   {
     ret.LazyResize(size_);
     // TODO: Vectorize

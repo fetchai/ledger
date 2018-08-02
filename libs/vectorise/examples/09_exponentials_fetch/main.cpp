@@ -1,48 +1,45 @@
-#include"vectorise/memory/shared_array.hpp"
-#include"vectorise/memory/array.hpp"
-#include<iostream>
-#include<chrono>
-#include<vector>
+#include "vectorise/memory/array.hpp"
+#include "vectorise/memory/shared_array.hpp"
+#include <chrono>
+#include <iostream>
+#include <vector>
 
-typedef double type;
-typedef fetch::memory::Array< type > array_type;
-typedef typename array_type::vector_register_type vector_type;
+using type        = double;
+using array_type  = fetch::memory::Array<type>;
+using vector_type = typename array_type::vector_register_type;
 
-void Exponentials(array_type const &A, array_type &C) 
+void Exponentials(array_type const &A, array_type &C)
 {
-  C.in_parallel().Apply([](vector_type const& a, vector_type &c) {
-      c = exp(a);      
-    }, A);  
+  C.in_parallel().Apply([](vector_type const &a, vector_type &c) { c = exp(a); }, A);
 }
 
-
-int main(int argc, char const **argv) 
+int main(int argc, char const **argv)
 {
-  if(argc != 2) {
-    std::cout << std::endl;    
+  if (argc != 2)
+  {
+    std::cout << std::endl;
     std::cout << "Usage: " << argv[0] << " [array size] " << std::endl;
     std::cout << std::endl;
-    return 0;    
+    return 0;
   }
 
   std::size_t N = std::size_t(atoi(argv[1]));
-  array_type A(N), C(N);    
-  
-  for(std::size_t i=0; i < N; ++i) {
-    A[i] = double(type(0.1*double(i)) - type(double(N)*0.5));
+  array_type  A(N), C(N);
+
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    A[i] = double(type(0.1 * double(i)) - type(double(N) * 0.5));
   }
-  
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-  for(std::size_t i = 0; i < 10000; ++i) { 
-    Exponentials(A,C);
+  for (std::size_t i = 0; i < 10000; ++i)
+  {
+    Exponentials(A, C);
   }
   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
   double time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
 
   std::cout << time_span << " s" << std::endl;
 
- 
-  return 0;  
+  return 0;
 }
-

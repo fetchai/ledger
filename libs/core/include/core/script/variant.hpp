@@ -98,7 +98,7 @@ public:
   Variant const &operator[](ConstByteArray const &key) const;
 
   // Array accessors
-  Variant       &operator[](std::size_t const &i);
+  Variant &      operator[](std::size_t const &i);
   Variant const &operator[](std::size_t const &i) const;
   std::size_t    size() const;
 
