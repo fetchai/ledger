@@ -7,7 +7,7 @@
 namespace fetch {
 namespace service {
 
-using serializer_type = serializers::TypedByte_ArrayBuffer;
+using serializer_type = serializers::TypedByteArrayBuffer;
 
 // using serializer_type = serializers::ByteArrayBuffer;
 

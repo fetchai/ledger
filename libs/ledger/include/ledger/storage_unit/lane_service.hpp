@@ -54,7 +54,7 @@ public:
     CONTROLLER
   };
 
-  // TODO: Make config JSON
+  // TODO(tfr): Make config JSON
   LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &total_lanes,
               uint16_t port, fetch::network::NetworkManager tm, bool start_sync = true)
     : super_type(port, tm)
@@ -66,7 +66,7 @@ public:
     thread_pool_ = network::MakeThreadPool(1);
 
     // Setting lane certificate up
-    // TODO: Load from somewhere
+    // TODO(tfr): Load from somewhere
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
     certificate->GenerateKeys();
     certificate_.reset(certificate);

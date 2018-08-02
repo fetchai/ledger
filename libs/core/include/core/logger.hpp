@@ -571,15 +571,6 @@ private:
     }
   }
 
-  /*
-  template<  >
-  struct Unroll<  >
-  {
-    static void Append(LogWrapper *cls )
-    {
-    }
-  };
-  */
   DefaultLogger *                                          log_;
   mutable std::mutex                                       mutex_;
   std::unordered_map<std::thread::id, shared_context_type> context_;
@@ -590,7 +581,7 @@ private:
 extern log::details::LogWrapper logger;
 }  // namespace fetch
 
-// TODO(unknown): Move somewhere else
+// TODO(EJF): Move somewhere else
 
 #ifndef __FUNCTION_NAME__
 #ifdef WIN32  // WINDOWS

@@ -35,12 +35,13 @@ public:
   using network_manager_type       = fetch::network::NetworkManager;
   using lane_type                  = LaneIdentity::lane_type;
 
-  // TODO(EJF):  is move?
   explicit StorageUnitClient(network_manager_type const &tm) : network_manager_(tm)
   {
     id_ = "my-fetch-id";
-    // libs/ledger/include/ledger/chain/helper_functions.hpp
   }
+
+  StorageUnitClient(StorageUnitClient const &) = default;
+  StorageUnitClient(StorageUnitClient &&) = default;
 
   void SetNumberOfLanes(lane_type const &count)
   {

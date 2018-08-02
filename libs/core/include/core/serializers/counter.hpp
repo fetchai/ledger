@@ -8,7 +8,7 @@
 namespace fetch {
 namespace serializers {
 
-class TypedByte_ArrayBuffer;
+class TypedByteArrayBuffer;
 
 template <typename S>
 class SizeCounter
@@ -46,7 +46,7 @@ private:
 };
 
 template <>
-class SizeCounter<TypedByte_ArrayBuffer>
+class SizeCounter<TypedByteArrayBuffer>
 {
 public:
   void Allocate(std::size_t const &val) { size_ += val; }

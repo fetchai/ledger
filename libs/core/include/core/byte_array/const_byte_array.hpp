@@ -175,7 +175,7 @@ public:
     start_       = other.start_ + start;
     length_      = length;
     arr_pointer_ = data_.pointer() + start_;
-  }  // TODO(unknown): Move to protected
+  }
 
 protected:
   container_type &operator[](std::size_t const &n)
@@ -222,8 +222,6 @@ private:
   std::size_t       start_ = 0, length_ = 0;
 };
 
-// using BasicByteArray = ConstByteArray;
-
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
 {
   char const *arr = reinterpret_cast<char const *>(str.pointer());
@@ -237,5 +235,6 @@ inline ConstByteArray operator+(char const *a, ConstByteArray const &b)
   s = s + b;
   return s;
 }
+
 }  // namespace byte_array
 }  // namespace fetch
