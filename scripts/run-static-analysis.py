@@ -4,6 +4,7 @@ import sys
 import fnmatch
 import argparse
 import subprocess
+import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 from distutils.spawn import find_executable
 
@@ -13,6 +14,7 @@ PROJECT_FOLDERS = ('libs', 'apps')
 def parse_commandline():
     parser = argparse.ArgumentParser()
     parser.add_argument('--fix', action='store_true', help='Apply suggested fixes to files')
+    parser.add_argument('-j', dest='jobs', type=int, default=multiprocessing.cpu_count(), help='The number of jobs to run in parallel')
     parser.add_argument('build_path', type=os.path.abspath, help='Path to build directory')
     return parser.parse_args()
 
@@ -33,7 +35,7 @@ def main():
         cmd += ['-fix']
         num_workers = 1
     else:
-        num_workers = 4
+        num_workers = args.jobs
 
     def analyse_file(source_path):
         print('Analysing {} ...'.format(os.path.relpath(source_path, project_root)))
