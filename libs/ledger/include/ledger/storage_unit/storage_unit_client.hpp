@@ -41,7 +41,7 @@ public:
   }
 
   StorageUnitClient(StorageUnitClient const &) = default;
-  StorageUnitClient(StorageUnitClient &&) = default;
+  StorageUnitClient(StorageUnitClient &&)      = default;
 
   void SetNumberOfLanes(lane_type const &count)
   {
