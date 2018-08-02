@@ -7,6 +7,7 @@ import subprocess
 import difflib
 import threading
 import multiprocessing
+import codecs
 from concurrent.futures import ThreadPoolExecutor
 
 SOURCE_FOLDERS = ('apps', 'libs')
@@ -39,8 +40,17 @@ def compare_against_original(reformated, source_path, rel_path):
 
     # read the contents of the original file
     original = None
-    with open(source_path, 'r') as source_file:
-        original = source_file.read()
+    with codecs.open(source_path, 'r', encoding='utf8') as source_file:
+        try:
+            original = source_file.read()
+        except UnicodeDecodeError as ex:
+            print('Unable to read contents of file:', rel_path)
+            print(ex)
+            sys.exit(1)
+
+    # handle the read error
+    if original is None:
+        return False
 
     out = list(difflib.context_diff(original.splitlines(), reformated.splitlines()))
 
