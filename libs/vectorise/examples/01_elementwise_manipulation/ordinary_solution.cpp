@@ -1,0 +1,51 @@
+#include"vectorise/memory/shared_array.hpp"
+#include<iostream>
+#include<chrono>
+#include<vector>
+
+typedef float type;
+typedef std::vector< type > array_type;
+
+void RelativeDifference(array_type const &A, array_type const &B,
+                        array_type &C) 
+{
+  for(std::size_t i = 0; i < A.size(); ++i) {
+    type a = A[i];
+    type b = B[i];    
+    C[i] = type(0.5) * (a - b) / (a + b);   
+  }
+}
+
+int main(int argc, char const **argv) 
+{
+  std::vector< type > A, B, C;
+
+  if(argc!=2) {
+    std::cout << std::endl;    
+    std::cout << "Usage: " << argv[0] << " [array size] " << std::endl;
+    std::cout << std::endl;
+    return 0;    
+  }
+
+  std::size_t N = std::size_t(atoi(argv[1]));
+  A.resize(N);
+  B.resize(N);
+  C.resize(N);
+  
+  for(std::size_t i=0; i < N; ++i) {
+    A[i] = type(i);
+    B[i] = 2 * type(i);
+  }
+  
+
+  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();  
+  for(std::size_t i = 0; i < 10000; ++i) { 
+    RelativeDifference(A,B,C);
+  }
+  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();  
+  double time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
+
+  std::cout << time_span << " s" << std::endl;  
+  
+  return 0;  
+}
