@@ -23,7 +23,7 @@ def main():
     args = parse_commandline()
 
     project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    clang_tidy = find_executable('clang-tidy')
+    clang_tidy = find_executable('clang-tidy') or 'clang-tidy'
 
     cmd = [
         clang_tidy,
