@@ -7,14 +7,14 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh './develop-image/cmake-make.sh CTEST_OUTPUT_ON_FAILURE=1 all'
+                sh './develop-image/cmake-make.sh all'
             }
         }
         stage('Basic Checks') {
             parallel {
                 stage('Static Analysis') {
                     steps {
-                        sh './develop-image/cmake-make.sh all'
+                        sh './scripts/run-static-analysis.py build/'
                     }
                 }
                 stage('Code Style') {
