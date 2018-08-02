@@ -5,12 +5,23 @@ pipeline {
         }
     }
     stages {
-        stage('Test') {
-            steps {
-                sh 'echo ./develop-image/cmake-make.sh CTEST_OUTPUT_ON_FAILURE=1 all test'
-                sh 'which clang-tidy'
-                sh 'which clang-format'
-                sh './scripts/apply-style.py -w -a'
+        stage('Build') {
+            parallel {
+                stage('Unit Tests') {
+                    steps {
+                        sh './develop-image/cmake-make.sh CTEST_OUTPUT_ON_FAILURE=1 all test'
+                    }
+                }
+                stage('Static Analysis') {
+                    steps {
+                        sh './develop-image/cmake-make.sh all'
+                    }
+                }
+                stage('Code Style') {
+                    steps {
+                        sh './scripts/apply-style.py -w -a'
+                    }
+                }
             }
         }
     }
