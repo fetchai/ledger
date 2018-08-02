@@ -6,12 +6,12 @@ pipeline {
     }
     stages {
         stage('Build') {
+            steps {
+                sh './develop-image/cmake-make.sh CTEST_OUTPUT_ON_FAILURE=1 all'
+            }
+        }
+        stage('Basic Checks') {
             parallel {
-                stage('Unit Tests') {
-                    steps {
-                        sh './develop-image/cmake-make.sh CTEST_OUTPUT_ON_FAILURE=1 all test'
-                    }
-                }
                 stage('Static Analysis') {
                     steps {
                         sh './develop-image/cmake-make.sh all'
@@ -22,6 +22,11 @@ pipeline {
                         sh './scripts/apply-style.py -w -a'
                     }
                 }
+            }
+        }
+        stage('Unit Tests') {
+            steps {
+                sh './develop-image/cmake-make.sh CTEST_OUTPUT_ON_FAILURE=1 test'
             }
         }
     }
