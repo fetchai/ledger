@@ -61,7 +61,7 @@ public:
 
   template <typename... Args>
   type SumReduce(typename details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<
-                     Args...>::signature_type &&kernel,
+                     Args...>::signature_type const &kernel,
                  Args &&... args)
   {
 
@@ -80,7 +80,7 @@ public:
       self_iter.Next(self);
       tmp =
           details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
-              self, regs, std::move(kernel));
+              self, regs, kernel);
       c = c + tmp;
     }
 
