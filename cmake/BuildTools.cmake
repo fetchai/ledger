@@ -27,23 +27,6 @@ function(setup_library name)
     add_library(${name} ${headers} ${srcs})
     target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-#    if(FETCH_CLANG_TIDY_CFG)
-#      set_target_properties(
-#        ${name} PROPERTIES
-#        CXX_CLANG_TIDY "${FETCH_CLANG_TIDY_CFG}"
-#      )
-#
-##      target_include_directories(${name}
-##        PRIVATE
-##        /Library/Developer/CommandLineTools/usr/include/c++/v1
-##        /usr/local/include
-##        /Library/Developer/CommandLineTools/usr/lib/clang/9.1.0/include
-##        /Library/Developer/CommandLineTools/usr/include
-##        /usr/include
-##      )
-#
-#    endif(FETCH_CLANG_TIDY_CFG)
-
   endif()
 endfunction()
 
