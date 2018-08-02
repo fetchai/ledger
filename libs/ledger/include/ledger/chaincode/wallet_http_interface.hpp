@@ -29,7 +29,7 @@ public:
   };
 
   WalletHttpInterface(StateInterface &state, TransactionProcessor &processor)
-      : state_{state}, processor_{processor}
+    : state_{state}, processor_{processor}
   {
 
     // register all the routes

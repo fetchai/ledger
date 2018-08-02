@@ -10,7 +10,7 @@ template <class TYPE>
 class PromiseOf
 {
 public:
-  typedef fetch::service::Promise promise_type;
+  using promise_type = fetch::service::Promise;
 
   PromiseOf(promise_type &promise) { this->promise_ = promise; }
 

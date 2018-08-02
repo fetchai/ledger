@@ -18,10 +18,10 @@ class AbstractConnection;
 class AbstractConnectionRegister : public std::enable_shared_from_this<AbstractConnectionRegister>
 {
 public:
-  typedef uint64_t                                connection_handle_type;
-  typedef std::weak_ptr<service::ServiceClient>   weak_service_client_type;
-  typedef std::shared_ptr<service::ServiceClient> shared_service_client_type;
-  typedef std::unordered_map<connection_handle_type, weak_service_client_type> service_map_type;
+  using connection_handle_type     = uint64_t;
+  using weak_service_client_type   = std::weak_ptr<service::ServiceClient>;
+  using shared_service_client_type = std::shared_ptr<service::ServiceClient>;
+  using service_map_type = std::unordered_map<connection_handle_type, weak_service_client_type>;
 
   AbstractConnectionRegister() { number_of_services_ = 0; }
 

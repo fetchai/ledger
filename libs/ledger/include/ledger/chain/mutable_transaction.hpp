@@ -24,7 +24,7 @@ struct TransactionSummary
   digest_type       transaction_hash;
   uint64_t          fee{0};
 
-  // TODO: (EJF) Needs to be replaced with some kind of ID
+  // TODO(EJF):  Needs to be replaced with some kind of ID
   std::string contract_name_;
 };
 
@@ -83,7 +83,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: (EJF) This is annoying but we should maintain that the fields are
+    // TODO(EJF):  This is annoying but we should maintain that the fields are
     // kept in order
     std::vector<byte_array::ConstByteArray> resources;
     std::copy(summary().resources.begin(), summary().resources.end(),

@@ -4,6 +4,6 @@
 namespace fetch {
 namespace http {
 
-typedef KeyValueSet QuerySet;
+using QuerySet = KeyValueSet;
 }
 }  // namespace fetch

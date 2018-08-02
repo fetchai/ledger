@@ -16,15 +16,15 @@ class ChainKeeperProtocol : public ChainKeeperController,
                             public fetch::http::HTTPModule
 {
 public:
-  typedef typename ChainKeeperController::transaction_summary_type transaction_summary_type;
-  typedef typename ChainKeeperController::transaction_type         transaction_type;
+  using transaction_summary_type = typename ChainKeeperController::transaction_summary_type;
+  using transaction_type         = typename ChainKeeperController::transaction_type;
 
-  typedef fetch::service::ServiceClient<fetch::network::TCPClient> client_type;
-  typedef std::shared_ptr<client_type>                             client_shared_ptr_type;
+  using client_type            = fetch::service::ServiceClient<fetch::network::TCPClient>;
+  using client_shared_ptr_type = std::shared_ptr<client_type>;
 
   ChainKeeperProtocol(network::NetworkManager *network_manager, uint64_t const &protocol,
                       EntryPoint &details)
-      : ChainKeeperController(protocol, network_manager, details), fetch::service::Protocol()
+    : ChainKeeperController(protocol, network_manager, details), fetch::service::Protocol()
   {
     using namespace fetch::service;
 
@@ -204,9 +204,9 @@ public:
       network_manager->Post([this, req]() {
         json::JSONDocument doc = req.JSON();
 
-        typedef fetch::chain::Transaction transaction_type;
-        transaction_type                  tx;
-        auto                              res = doc["resources"];
+        using transaction_type = fetch::chain::Transaction;
+        transaction_type tx;
+        auto             res = doc["resources"];
 
         for (std::size_t i = 0; i < res.size(); ++i)
         {

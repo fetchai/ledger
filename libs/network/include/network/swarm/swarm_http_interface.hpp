@@ -3,6 +3,7 @@
 #include "http/server.hpp"
 #include "network/swarm/swarm_node.hpp"
 #include <iostream>
+#include <utility>
 
 namespace fetch {
 namespace swarm {
@@ -10,7 +11,10 @@ namespace swarm {
 class SwarmHttpModule : public fetch::http::HTTPModule
 {
 public:
-  explicit SwarmHttpModule(std::shared_ptr<SwarmNode> node) : node_{node} { AttachPages(); }
+  explicit SwarmHttpModule(std::shared_ptr<SwarmNode> node) : node_{std::move(node)}
+  {
+    AttachPages();
+  }
 
   SwarmHttpModule(SwarmHttpModule &&rhs)
   {

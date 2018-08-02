@@ -21,7 +21,7 @@ struct KeyValuePair
     parent = uint64_t(-1);
   }
 
-  typedef Key<S> key_type;
+  using key_type = Key<S>;
 
   key_type key;
   uint8_t  hash[N];
@@ -102,7 +102,7 @@ public:
   using index_type     = uint64_t;
   using stack_type     = D;
   using key_value_pair = KeyValuePair<>;
-  using key_type       = KeyValuePair<>::key_type;
+  using key_type       = typename key_value_pair::key_type;
 
   KeyValueIndex()
   {
@@ -385,8 +385,8 @@ public:
 
   void Close() { stack_.Close(); }
 
-  typedef uint64_t bookmark_type;
-  bookmark_type    Commit() { return stack_.Commit(); }
+  using bookmark_type = uint64_t;
+  bookmark_type Commit() { return stack_.Commit(); }
 
   bookmark_type Commit(bookmark_type const &b) { return stack_.Commit(b); }
 
@@ -403,7 +403,7 @@ public:
   {
   public:
     iterator(self_type *self, key_value_pair kv, bool node_iterator = false)
-        : kv_{kv}, kv_node_{kv}, node_iterator_{node_iterator}, self_{self}
+      : kv_{kv}, kv_node_{kv}, node_iterator_{node_iterator}, self_{self}
     {
       if (node_iterator)
       {

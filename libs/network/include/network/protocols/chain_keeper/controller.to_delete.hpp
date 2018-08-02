@@ -32,21 +32,21 @@ class ChainKeeperController : public fetch::service::HasPublicationFeed
 public:
   // TODO: Get from chain manager
   // Transaction defs
-  typedef fetch::chain::TransactionSummary       transaction_summary_type;
-  typedef fetch::chain::Transaction              transaction_type;
-  typedef typename transaction_type::digest_type tx_digest_type;
+  using transaction_summary_type = fetch::chain::TransactionSummary;
+  using transaction_type         = fetch::chain::Transaction;
+  using tx_digest_type           = typename transaction_type::digest_type;
 
   // Other groups
-  typedef fetch::service::ServiceClient<fetch::network::TCPClient> client_type;
-  typedef std::shared_ptr<client_type>                             client_shared_ptr_type;
+  using client_type            = fetch::service::ServiceClient<fetch::network::TCPClient>;
+  using client_shared_ptr_type = std::shared_ptr<client_type>;
 
   ChainKeeperController(uint64_t const &protocol, network::NetworkManager *network_manager,
                         EntryPoint &details)
-      : network_manager_(network_manager)
-      , details_(details)
-      , block_mutex_(__LINE__, __FILE__)
-      , chain_keeper_friends_mutex_(__LINE__, __FILE__)
-      , grouping_parameter_(1)
+    : network_manager_(network_manager)
+    , details_(details)
+    , block_mutex_(__LINE__, __FILE__)
+    , chain_keeper_friends_mutex_(__LINE__, __FILE__)
+    , grouping_parameter_(1)
   {
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     fetch::logger.Debug("Entering ", __FUNCTION_NAME__);

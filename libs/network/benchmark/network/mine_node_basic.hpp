@@ -28,14 +28,14 @@ class MineNodeBasic
 {
 
   // Main chain
-  typedef chain::MainChain::block_type            block_type;
-  typedef chain::MainChain::block_hash            block_hash;
-  typedef chain::MainChain::block_type::body_type body_type;
-  typedef fetch::chain::consensus::DummyMiner     miner;
+  using block_type = chain::MainChain::block_type;
+  using block_hash = chain::MainChain::block_hash;
+  using body_type  = chain::MainChain::block_type::body_type;
+  using miner      = fetch::chain::consensus::DummyMiner;
 
 public:
   explicit MineNodeBasic(network::NetworkManager tm, uint64_t minerNumber)
-      : nodeDirectory_{tm}, minerNumber_{minerNumber}
+    : nodeDirectory_{tm}, minerNumber_{minerNumber}
   {}
 
   MineNodeBasic(MineNodeBasic &rhs)  = delete;

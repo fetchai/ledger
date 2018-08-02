@@ -9,8 +9,8 @@ template <typename T>
 class Vector : private std::vector<T>
 {
 public:
-  typedef std::vector<T> super_type;
-  typedef T              type;
+  using super_type = std::vector<T>;
+  using type       = T;
 
   type &At(std::size_t const i) { return super_type::at(i); }
 

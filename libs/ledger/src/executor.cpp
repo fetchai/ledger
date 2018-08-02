@@ -1,9 +1,8 @@
 #include "ledger/executor.hpp"
-#include "core/byte_array/encoders.hpp"
-
 #include "core/assert.hpp"
-
+#include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
+#include "core/macros.hpp"
 #include "core/mutex.hpp"
 
 #include <algorithm>
@@ -46,6 +45,10 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
 {
 
   fetch::logger.Info("Executing tx ", byte_array::ToBase64(hash));
+
+  // TODO(EJF): Add code to validate / check lane resources
+  FETCH_UNUSED(slice);
+  FETCH_UNUSED(lanes);
 
   // Get the transaction from the store (we should be able to take the
   // transaction from any of the lanes, for simplicity, however, just pick the

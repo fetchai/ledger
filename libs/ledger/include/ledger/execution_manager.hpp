@@ -102,8 +102,8 @@ private:
   mutex_type state_archive_lock_;  ///< guards both the state_archive_ and the
                                    ///< block_state_cache_
   StateSummaryArchive    state_archive_;
-  block_state_cache_type block_state_cache_;  // TODO: (EJF) Both these caches required
-                                              // maintainence to stop them growing forever
+  block_state_cache_type block_state_cache_;  // TODO(EJF): Both these caches require
+                                              // maintenance to stop them growing forever
 
   void MonitorThreadEntrypoint();
 

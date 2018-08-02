@@ -139,7 +139,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      uint32_t tpc = uint32_t(doc["transactions"].as_int());
+      uint32_t tpc = doc["transactions"].As<uint32_t>();
 
       node_->transactionsPerCall(tpc);
 
@@ -182,7 +182,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->TransactionsToSync(uint64_t(doc["transactionsToSync"].as_int()));
+      node_->TransactionsToSync(doc["transactionsToSync"].As<uint64_t>());
 
       return http::HTTPResponse(successString);
     }
@@ -200,7 +200,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->stopCondition(uint64_t(doc["stopCondition"].as_int()));
+      node_->stopCondition(doc["stopCondition"].As<uint64_t>());
 
       return http::HTTPResponse(successString);
     }
@@ -225,7 +225,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->StartTime(uint64_t(doc["startTime"].as_int()));
+      node_->StartTime(doc["startTime"].As<uint64_t>());
 
       return http::HTTPResponse(successString);
     }
@@ -245,7 +245,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->StartTestAsMaster(uint64_t(doc["startTime"].as_int()));
+      node_->StartTestAsMaster(doc["startTime"].As<uint64_t>());
 
       return http::HTTPResponse(successString);
     }
@@ -291,7 +291,7 @@ public:
       doc = req.JSON();
       std::cerr << "correctly parsed JSON: " << req.body() << std::endl;
 
-      node_->TransactionSize(uint32_t(doc["transactionSize"].as_int()));
+      node_->TransactionSize(doc["transactionSize"].As<uint32_t>());
 
       return http::HTTPResponse(successString);
     }

@@ -9,6 +9,7 @@
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
 #include <map>
+#include <memory>
 #include <set>
 
 // Specialise hash of byte_array for unordered map/set
@@ -48,9 +49,9 @@ struct Tip
 class MainChain
 {
 public:
-  typedef fetch::chain::consensus::ProofOfWork          proof_type;
-  typedef BasicBlock<proof_type, fetch::crypto::SHA256> block_type;
-  typedef fetch::byte_array::ByteArray                  block_hash;
+  using proof_type = fetch::chain::consensus::ProofOfWork;
+  using block_type = BasicBlock<proof_type, fetch::crypto::SHA256>;
+  using block_hash = fetch::byte_array::ByteArray;
 
   // Hard code genesis
   MainChain(uint32_t minerNumber = std::numeric_limits<uint32_t>::max()) : minerNumber_{minerNumber}
@@ -63,7 +64,7 @@ public:
     blockChain_[genesis.hash()] = genesis;
 
     // Create tip
-    auto tip              = std::shared_ptr<Tip>(new Tip);
+    auto tip              = std::make_shared<Tip>();
     tip->total_weight     = genesis.weight();
     tip->loose            = false;
     tips_[genesis.hash()] = tip;
@@ -138,7 +139,7 @@ public:
       fetch::logger.Info("Mainchain: Creating new tip");
 
       auto blockRef = blockChain_.find(block.body().previous_hash);
-      tip           = std::shared_ptr<Tip>(new Tip);
+      tip           = std::make_shared<Tip>();
 
       // Tip points to existing block
       if (blockRef != blockChain_.end())
@@ -396,7 +397,7 @@ public:
     blockChain_[genesis.hash()] = genesis;
 
     // Create tip
-    auto tip              = std::shared_ptr<Tip>(new Tip);
+    auto tip              = std::make_shared<Tip>();
     tip->total_weight     = genesis.weight();
     tip->loose            = false;
     tips_[genesis.hash()] = std::move(tip);

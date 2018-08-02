@@ -20,8 +20,8 @@ template <typename T, std::size_t N = sizeof(T)>
 class VectorRegister
 {
 public:
-  typedef T type;
-  typedef T mm_register_type;
+  using type             = T;
+  using mm_register_type = T;
 
   enum
   {

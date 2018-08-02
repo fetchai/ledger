@@ -8,7 +8,7 @@
 namespace fetch {
 namespace swarm {
 
-// TODO: (EJF) We should update this class to use the new C++11 <random> library
+// TODO(EJF):  We should update this class to use the new C++11 <random> library
 class SwarmRandom
 {
 public:

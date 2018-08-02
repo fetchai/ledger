@@ -22,16 +22,16 @@ template <typename T, typename C = memory::SharedArray<T>>
 class ShapeLessArray
 {
 public:
-  typedef T                                                      type;
-  typedef C                                                      container_type;
-  typedef std::size_t                                            size_type;
-  typedef typename container_type::vector_slice_type             vector_slice_type;
-  typedef typename container_type::vector_register_type          vector_register_type;
-  typedef typename container_type::vector_register_iterator_type vector_register_iterator_type;
+  using type                          = T;
+  using container_type                = C;
+  using size_type                     = std::size_t;
+  using vector_slice_type             = typename container_type::vector_slice_type;
+  using vector_register_type          = typename container_type::vector_register_type;
+  using vector_register_iterator_type = typename container_type::vector_register_iterator_type;
 
   /* Iterators for accessing and modifying the array */
-  typedef typename container_type::iterator         iterator;
-  typedef typename container_type::reverse_iterator reverse_iterator;
+  using iterator         = typename container_type::iterator;
+  using reverse_iterator = typename container_type::reverse_iterator;
 
   /* Contructs an empty shape-less array. */
   ShapeLessArray(std::size_t const &n) : data_(n), size_(n) {}
@@ -59,7 +59,7 @@ public:
    */
   void SetPaddedZero() { data().SetPaddedZero(); }
 
-  typedef ShapeLessArray<T, C> self_type;
+  using self_type = ShapeLessArray<T, C>;
 
   void Sort() { std::sort(data_.pointer(), data_.pointer() + data_.size()); }
 
@@ -1550,7 +1550,8 @@ public:
 
   template <typename S,
             typename D = memory::SharedArray<S>>  // TODO deduce D from parent
-  void As(ShapeLessArray<S, D> &ret) const
+  void
+  As(ShapeLessArray<S, D> &ret) const
   {
     ret.LazyResize(size_);
     // TODO: Vectorize

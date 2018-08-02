@@ -20,12 +20,12 @@ namespace network {
 class NetworkNodeCore
 {
 public:
-  typedef std::mutex                  mutex_type;
-  typedef std::lock_guard<mutex_type> lock_type;
-  // typedef fetch::service::ServiceClient<network::TCPClient> client_type;
-  typedef fetch::service::ServiceClient                     client_type;
-  typedef service::ServiceServer<fetch::network::TCPServer> rpc_server_type;
-  typedef uint32_t                                          protocol_number_type;
+  using mutex_type = std::mutex;
+  using lock_type  = std::lock_guard<mutex_type>;
+  // using client_type = fetch::service::ServiceClient<network::TCPClient>;
+  using client_type          = fetch::service::ServiceClient;
+  using rpc_server_type      = service::ServiceServer<fetch::network::TCPServer>;
+  using protocol_number_type = uint32_t;
 
 protected:
   const uint32_t MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION = 100;
@@ -41,16 +41,16 @@ public:
   bool            operator<(const NetworkNodeCore &rhs) const  = delete;
 
   NetworkNodeCore(size_t threads, uint16_t httpPort, uint16_t rpcPort)
-      : NetworkNodeCore(NetworkManager{threads}, httpPort, rpcPort)
+    : NetworkNodeCore(NetworkManager{threads}, httpPort, rpcPort)
   {}
 
-  NetworkNodeCore(NetworkManager networkManager, uint16_t httpPort, uint16_t rpcPort)
-      : nm_(std::move(networkManager))
+  NetworkNodeCore(NetworkManager const &networkManager, uint16_t httpPort, uint16_t rpcPort)
+    : nm_(networkManager)
   {
     lock_type mlock(mutex_);
 
     // TODO(katie) investiaget if this can be moved to Start()
-    // TODO: (EJF) Confusing now network manager is passed in (and is copy)
+    // TODO(EJF):  Confusing now network manager is passed in (and is copy)
     nm_.Start();
 
     rpcPort_   = rpcPort;
@@ -66,14 +66,14 @@ public:
 
   virtual ~NetworkNodeCore() {}
 
-  typedef std::pair<std::string, int>                       remote_host_identifier_type;
-  typedef std::shared_ptr<client_type>                      client_ptr;
-  typedef std::map<remote_host_identifier_type, client_ptr> cache_type;
+  using remote_host_identifier_type = std::pair<std::string, int>;
+  using client_ptr                  = std::shared_ptr<client_type>;
+  using cache_type                  = std::map<remote_host_identifier_type, client_ptr>;
 
   cache_type cache_;
 
-  typedef std::shared_ptr<fetch::service::Protocol> protocol_ptr;
-  typedef std::map<uint32_t, protocol_ptr>          protocol_cache_type;
+  using protocol_ptr        = std::shared_ptr<fetch::service::Protocol>;
+  using protocol_cache_type = std::map<uint32_t, protocol_ptr>;
 
   virtual std::shared_ptr<client_type> ConnectToPeer(const fetch::swarm::SwarmPeerLocation &peer)
   {

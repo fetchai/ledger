@@ -25,13 +25,21 @@ uint8_t DecodeHexChar(char const &c)
 {
   char ret = 0;
   if (('0' <= c) && (c <= '9'))
+  {
     ret = char(c - '0');
+  }
   else if (('A' <= c) && (c <= 'F'))
+  {
     ret = char(c - 'A' + 10);
+  }
   else if (('a' <= c) && (c <= 'f'))
+  {
     ret = char(c - 'a' + 10);
+  }
   else
+  {
     throw std::runtime_error("Could not decode from hex");
+  }
 
   return uint8_t(ret);
 }

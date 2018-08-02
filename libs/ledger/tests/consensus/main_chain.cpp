@@ -9,7 +9,7 @@ using namespace fetch::byte_array;
 
 // TODO: (`HUT`) : get these from helper_functions when it's sorted
 // Time related functionality
-typedef std::chrono::high_resolution_clock::time_point time_point;
+using time_point = std::chrono::high_resolution_clock::time_point;
 
 time_point TimePoint() { return std::chrono::high_resolution_clock::now(); }
 
@@ -23,9 +23,9 @@ double TimeDifference(time_point t1, time_point t2)
   return std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t2).count();
 }
 
-typedef MainChain::block_type               block_type;
-typedef MainChain::block_type::body_type    body_type;
-typedef fetch::chain::consensus::DummyMiner miner;
+using block_type = MainChain::block_type;
+using body_type  = MainChain::block_type::body_type;
+using miner      = fetch::chain::consensus::DummyMiner;
 
 int main(int argc, char const **argv)
 {

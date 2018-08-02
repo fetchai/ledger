@@ -11,7 +11,7 @@ using namespace fetch;
 using namespace fetch::storage;
 // typedef KeyValueIndex< KeyValuePair< >, CachedRandomAccessStack<
 // KeyValuePair< > > > kvi_type;
-typedef KeyValueIndex<> kvi_type;
+using kvi_type = KeyValueIndex<>;
 
 kvi_type key_index;
 

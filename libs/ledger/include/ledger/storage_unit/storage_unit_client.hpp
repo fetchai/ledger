@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <thread>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -27,19 +28,20 @@ public:
     std::atomic<uint32_t> lane;
   };
 
-  typedef service::ServiceClient               service_client_type;
-  typedef std::shared_ptr<service_client_type> shared_service_client_type;
-  using client_register_type   = fetch::network::ConnectionRegister<ClientDetails>;
-  using connection_handle_type = client_register_type::connection_handle_type;
-  using network_manager_type   = fetch::network::NetworkManager;
-  using lane_type              = LaneIdentity::lane_type;
+  using service_client_type        = service::ServiceClient;
+  using shared_service_client_type = std::shared_ptr<service_client_type>;
+  using client_register_type       = fetch::network::ConnectionRegister<ClientDetails>;
+  using connection_handle_type     = client_register_type::connection_handle_type;
+  using network_manager_type       = fetch::network::NetworkManager;
+  using lane_type                  = LaneIdentity::lane_type;
 
-  // TODO: (EJF) is move?
-  explicit StorageUnitClient(network_manager_type tm) : network_manager_(tm)
+  explicit StorageUnitClient(network_manager_type const &tm) : network_manager_(tm)
   {
     id_ = "my-fetch-id";
-    // libs/ledger/include/ledger/chain/helper_functions.hpp
   }
+
+  StorageUnitClient(StorageUnitClient const &) = default;
+  StorageUnitClient(StorageUnitClient &&) = default;
 
   void SetNumberOfLanes(lane_type const &count)
   {

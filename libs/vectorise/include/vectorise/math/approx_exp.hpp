@@ -37,7 +37,7 @@ inline VectorRegister<double, 128> approx_exp(VectorRegister<double, 128> const 
 
   VectorRegister<double, 128> y    = a * x + b;
   __m128i                     conv = _mm_cvtpd_epi32(y.data());
-  conv                             = _mm_and_si128(conv, *(__m128i *)mask);
+  conv                             = _mm_and_si128(conv, *reinterpret_cast<__m128i const *>(mask));
 
   conv = _mm_shuffle_epi32(conv, 3 | (0 << 2) | (3 << 4) | (1 << 6));
 

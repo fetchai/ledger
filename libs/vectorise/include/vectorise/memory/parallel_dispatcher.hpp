@@ -14,14 +14,14 @@ template <typename T>
 class ConstParallelDispatcher
 {
 public:
-  typedef T type;
+  using type = T;
 
   enum
   {
     vector_size = platform::VectorRegisterSize<type>::value
   };
-  typedef typename vectorize::VectorRegister<type, vector_size> vector_register_type;
-  typedef vectorize::VectorRegisterIterator<type, vector_size>  vector_register_iterator_type;
+  using vector_register_type          = typename vectorize::VectorRegister<type, vector_size>;
+  using vector_register_iterator_type = vectorize::VectorRegisterIterator<type, vector_size>;
 
   ConstParallelDispatcher(type *ptr, std::size_t const &size) : pointer_(ptr), size_(size) {}
 
@@ -158,7 +158,7 @@ public:
   template <typename... Args>
   type SumReduce(TrivialRange const &range,
                  typename details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<
-                     Args...>::signature_type &&reduce,
+                     Args...>::signature_type const &reduce,
                  Args &&... args)
   {
 
@@ -191,7 +191,7 @@ public:
 
       tmp =
           details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
-              self, regs, std::move(reduce));
+              self, regs, reduce);
 
       int Q = vector_register_type::E_BLOCK_COUNT - (SF - int(range.from()));
       for (int i = 0; i < vector_register_type::E_BLOCK_COUNT; ++i)
@@ -213,7 +213,7 @@ public:
       self_iter.Next(self);
       tmp =
           details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
-              self, regs, std::move(reduce));
+              self, regs, reduce);
       c = c + tmp;
     }
 
@@ -230,7 +230,7 @@ public:
       self_iter.Next(self);
       tmp =
           details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
-              self, regs, std::move(reduce));
+              self, regs, reduce);
 
       int Q = (int(range.to()) - ST - 1);
       for (int i = 0; i <= Q; ++i)
@@ -245,8 +245,8 @@ public:
   }
 
   template <typename... Args>
-  type ProductReduce(typename details::MatrixReduceFreeFunction<
-                         vector_register_type>::template Unroll<Args...>::signature_type &&kernel,
+  type ProductReduce(typename details::MatrixReduceFreeFunction<vector_register_type>::
+                         template Unroll<Args...>::signature_type const &kernel,
                      Args &&... args)
   {
 
@@ -265,7 +265,7 @@ public:
       self_iter.Next(self);
       tmp =
           details::MatrixReduceFreeFunction<vector_register_type>::template Unroll<Args...>::Apply(
-              self, regs, std::move(kernel));
+              self, regs, kernel);
       c = c * tmp;
     }
 
@@ -309,7 +309,7 @@ public:
       b = vector_reduction(a, b);
     }
 
-    // TODO: Make reduction tree / Wallace tree
+    // TODO(unknown): Make reduction tree / Wallace tree
     type ret = 0;
     for (std::size_t i = 0; i < vector_register_type::E_BLOCK_COUNT; ++i)
     {
@@ -405,16 +405,16 @@ template <typename T>
 class ParallelDispatcher : public ConstParallelDispatcher<T>
 {
 public:
-  typedef T type;
+  using type = T;
 
-  typedef ConstParallelDispatcher<T> super_type;
+  using super_type = ConstParallelDispatcher<T>;
 
   enum
   {
     vector_size = platform::VectorRegisterSize<type>::value
   };
-  typedef typename vectorize::VectorRegister<type, vector_size> vector_register_type;
-  typedef vectorize::VectorRegisterIterator<type, vector_size>  vector_register_iterator_type;
+  using vector_register_type          = typename vectorize::VectorRegister<type, vector_size>;
+  using vector_register_iterator_type = vectorize::VectorRegisterIterator<type, vector_size>;
 
   ParallelDispatcher(type *ptr, std::size_t const &size) : super_type(ptr, size) {}
 
@@ -509,7 +509,7 @@ public:
   template <typename... Args>
   void Apply(TrivialRange const &range,
              typename details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<
-                 Args...>::signature_type &&apply,
+                 Args...>::signature_type const &apply,
              Args &&... args)
   {
 
@@ -532,7 +532,7 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<Args...>::Apply(
-          regs, std::move(apply), c);
+          regs, apply, c);
 
       int Q = vector_register_type::E_BLOCK_COUNT - (SF - int(range.from()));
       for (int i = 0; i < vector_register_type::E_BLOCK_COUNT; ++i)
@@ -552,7 +552,7 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<Args...>::Apply(
-          regs, std::move(apply), c);
+          regs, apply, c);
 
       c.Store(this->pointer() + i);
     }
@@ -562,7 +562,7 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       details::MatrixApplyFreeFunction<vector_register_type, void>::template Unroll<Args...>::Apply(
-          regs, std::move(apply), c);
+          regs, apply, c);
 
       int Q = (int(range.to()) - ST - 1);
       for (int i = 0; i <= Q; ++i)
@@ -576,8 +576,8 @@ public:
 
   template <class C, typename... Args>
   void Apply(C const &cls,
-             typename details::MatrixApplyClassMember<
-                 C, vector_register_type, void>::template Unroll<Args...>::signature_type &&fnc,
+             typename details::MatrixApplyClassMember<C, vector_register_type, void>::
+                 template Unroll<Args...>::signature_type const &fnc,
              Args &&... args)
   {
 
@@ -591,8 +591,7 @@ public:
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       details::MatrixApplyClassMember<C, vector_register_type,
-                                      void>::template Unroll<Args...>::Apply(regs, cls,
-                                                                             std::move(fnc), c);
+                                      void>::template Unroll<Args...>::Apply(regs, cls, fnc, c);
 
       c.Store(this->pointer() + i);
     }
@@ -601,7 +600,7 @@ public:
   template <class C, typename... Args>
   void Apply(C const &cls,
              typename details::MatrixApplyClassMember<C, type, void>::template Unroll<
-                 Args...>::signature_type &&fnc,
+                 Args...>::signature_type const &fnc,
              Args &&... args)
   {
 
@@ -616,8 +615,8 @@ public:
     for (std::size_t i = 0; i < N; ++i)
     {
 
-      details::MatrixApplyClassMember<C, type, void>::template Unroll<Args...>::Apply(
-          regs, cls, std::move(fnc), c);
+      details::MatrixApplyClassMember<C, type, void>::template Unroll<Args...>::Apply(regs, cls,
+                                                                                      fnc, c);
 
       this->pointer()[i] = c;
 

@@ -1,6 +1,6 @@
-#include<iostream>
+#include <iostream>
 
-typedef fetch::memory::SharedArray< type > array_type;
+typedef fetch::memory::SharedArray<type>          array_type;
 typedef typename array_type::vector_register_type vector_type;
 
 template <typename D>
@@ -9,28 +9,27 @@ using _S = fetch::memory::SharedArray<D>;
 template <typename D>
 using _M = Matrix<D, _S<D>>;
 
-
-void Dot(array_type const &mA, array_type const &mB, array_type &mC) 
+void Dot(array_type const &mA, array_type const &mB, array_type &mC)
 {
-  for (std::size_t i = 0; i < mA.height(); ++i) {
+  for (std::size_t i = 0; i < mA.height(); ++i)
+  {
     auto A = mA.slice(i * mA.padded_width(), mA.padded_height());
-    for (std::size_t j = 0; j < mB.height(); ++j) {      
+    for (std::size_t j = 0; j < mB.height(); ++j)
+    {
 
-      auto B = mB.slice(j * mB.padded_width(), mA.padded_height());
-      type ele = A.in_parallel().SumReduce([](vector_type const &a, vector_type const &b) {      
-        return a * b;
-      }, B)
-      mC.Set(i, j, ele);
-    }    
+      auto B   = mB.slice(j * mB.padded_width(), mA.padded_height());
+      type ele = A.in_parallel()
+                     .SumReduce([](vector_type const &a, vector_type const &b) { return a * b; }, B)
+                         mC.Set(i, j, ele);
+    }
   }
 }
 
-
-int main() 
+int main()
 {
   _M<double> A, B, C, R;
   R.Resize(7, 7);
-    A = _M<double>(R"(
+  A = _M<double>(R"(
 -0.110255536702 1.16455707117 0.483156207079 -0.822864927503 2.1399957063 0.502458535614 0.0104965839893 ;
 0.248408187151 -0.069653723501 0.189842928665 0.276933298712 0.921931208942 -1.31026029885 -1.12882684957 ;
 0.121318976781 -0.97751914839 -0.717617609338 -0.924317559786 0.233683935993 0.402642247873 -0.191914722504 ;
@@ -39,7 +38,7 @@ int main()
 1.70134433962 -0.176658772545 -0.969849860334 0.925512715904 -0.872133907354 1.92808342061 -1.09108310394 ;
 0.419388743269 -1.11579661665 -0.144438994263 -0.993875730161 -0.927831594645 0.0835181806493 -0.856972684823
 )");
-    B = _M<double>(R"(
+  B = _M<double>(R"(
 -0.599018869905 1.16794149153 0.73479242779 -0.695886341907 0.268931568945 0.289327695646 1.09872219467 ;
 0.730496158961 -1.45277115851 -0.50189312604 0.0253094043775 0.623443070562 -0.467176654852 -0.911519033508 ;
 0.527662784095 -0.702879116321 -0.621857012945 1.30079513141 0.0107413745168 -0.0675452169503 0.523792754301 ;
@@ -48,7 +47,7 @@ int main()
 -0.894957100226 -0.0878673943496 0.731317325442 1.11820558017 -0.376684651897 -0.403513143519 -1.46206701665 ;
 -1.36333317473 -0.647806195524 -0.566366799723 1.92974334085 0.140776091852 0.716927530166 -0.251861064705
 )");
-    C = _M<double>(R"(
+  C = _M<double>(R"(
 -3.22658840046 -0.0644187677103 -0.441489607854 -0.727062626009 1.71528818806 2.27700172248 -1.3308366894 ;
 1.52691142649 1.9648917181 0.604293611972 -4.58998153493 0.0215362451946 1.21021742862 1.73850105514 ;
 -2.49954976554 2.47443064428 0.451115151386 -1.00316253737 0.499438153916 0.481503581171 1.52197543972 ;

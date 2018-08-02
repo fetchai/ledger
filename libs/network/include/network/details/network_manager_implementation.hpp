@@ -14,12 +14,11 @@ namespace network {
 namespace details {
 
 class NetworkManagerImplementation
-    : public std::enable_shared_from_this<NetworkManagerImplementation>
+  : public std::enable_shared_from_this<NetworkManagerImplementation>
 {
 public:
   NetworkManagerImplementation(std::size_t threads = 1) : number_of_threads_(threads)
   {
-
     fetch::logger.Debug("Creating network manager");
   }
 
@@ -71,7 +70,7 @@ public:
       }
 
       threads_.clear();
-      io_service_.reset(new asio::io_service);
+      io_service_ = std::make_unique<asio::io_service>();
     }
   }
 
@@ -86,7 +85,7 @@ public:
   template <typename F>
   void Post(F &&f)
   {
-    io_service_->post(std::move(f));
+    io_service_->post(std::forward<F>(f));
   }
 
 private:

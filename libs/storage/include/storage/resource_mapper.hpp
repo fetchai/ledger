@@ -14,8 +14,8 @@ namespace storage {
 class ResourceID
 {
 public:
-  typedef uint32_t resource_group_type;
-  ResourceID() = default;
+  using resource_group_type = uint32_t;
+  ResourceID()              = default;
 
   byte_array::ConstByteArray id() const { return id_; }
 
@@ -68,7 +68,7 @@ class ResourceAddress : public ResourceID
 {
 public:
   ResourceAddress(byte_array::ConstByteArray const &address)
-      : ResourceID(crypto::Hash<crypto::SHA256>(address))
+    : ResourceID(crypto::Hash<crypto::SHA256>(address))
   {
     address_ = address;
   }

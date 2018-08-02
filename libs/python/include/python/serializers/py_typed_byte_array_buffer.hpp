@@ -6,23 +6,23 @@
 namespace fetch {
 namespace serializers {
 
-void BuildTypedByte_ArrayBuffer(pybind11::module &module)
+void BuildTypedByteArrayBuffer(pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<TypedByte_ArrayBuffer>(module, "TypedByte_ArrayBuffer")
+  py::class_<TypedByteArrayBuffer>(module, "TypedByteArrayBuffer")
       .def(py::init<>())
-      .def(py::init<fetch::serializers::TypedByte_ArrayBuffer::byte_array_type>())
-      .def("WriteBytes", &TypedByte_ArrayBuffer::WriteBytes)
-      .def("bytes_left", &TypedByte_ArrayBuffer::bytes_left)
-      .def("data", &TypedByte_ArrayBuffer::data)
-      .def("SkipBytes", &TypedByte_ArrayBuffer::SkipBytes)
-      .def("ReadByteArray", &TypedByte_ArrayBuffer::ReadByteArray)
-      .def("ReadBytes", &TypedByte_ArrayBuffer::ReadBytes)
-      .def("Allocate", &TypedByte_ArrayBuffer::Allocate)
-      .def("size", &TypedByte_ArrayBuffer::size)
-      .def("Seek", &TypedByte_ArrayBuffer::Seek)
-      .def("Tell", &TypedByte_ArrayBuffer::Tell)
-      .def("Reserve", &TypedByte_ArrayBuffer::Reserve);
+      .def(py::init<fetch::serializers::TypedByteArrayBuffer::byte_array_type>())
+      .def("WriteBytes", &TypedByteArrayBuffer::WriteBytes)
+      .def("bytes_left", &TypedByteArrayBuffer::bytes_left)
+      .def("data", &TypedByteArrayBuffer::data)
+      .def("SkipBytes", &TypedByteArrayBuffer::SkipBytes)
+      .def("ReadByteArray", &TypedByteArrayBuffer::ReadByteArray)
+      .def("ReadBytes", &TypedByteArrayBuffer::ReadBytes)
+      .def("Allocate", &TypedByteArrayBuffer::Allocate)
+      .def("size", &TypedByteArrayBuffer::size)
+      .def("Seek", &TypedByteArrayBuffer::Seek)
+      .def("Tell", &TypedByteArrayBuffer::Tell)
+      .def("Reserve", &TypedByteArrayBuffer::Reserve);
 }
 };  // namespace serializers
 };  // namespace fetch

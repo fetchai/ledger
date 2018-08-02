@@ -6,7 +6,7 @@ namespace crypto {
 class StreamHasher
 {
 public:
-  typedef byte_array::ByteArray byte_array_type;
+  using byte_array_type = byte_array::ByteArray;
 
   virtual void            Reset()                                           = 0;
   virtual bool            Update(byte_array_type const &data)               = 0;

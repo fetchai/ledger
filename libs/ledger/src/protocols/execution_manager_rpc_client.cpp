@@ -1,5 +1,7 @@
-#include "ledger/protocols/execution_manager_rpc_client.hpp"
+#include <memory>
+
 #include "core/serializers/stl_types.hpp"
+#include "ledger/protocols/execution_manager_rpc_client.hpp"
 #include "ledger/protocols/execution_manager_rpc_protocol.hpp"
 #include "network/protocols/fetch_protocols.hpp"
 
@@ -13,7 +15,8 @@ ExecutionManagerRpcClient::ExecutionManagerRpcClient(byte_array::ConstByteArray 
 {
   network::TCPClient connection(network_manager);
   connection.Connect(host, port);
-  service_.reset(new fetch::service::ServiceClient(connection, network_manager));
+
+  service_ = std::make_unique<fetch::service::ServiceClient>(connection, network_manager);
 }
 
 ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(block_type const &block)
