@@ -5,6 +5,7 @@ import fnmatch
 import argparse
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
+from distutils.spawn import find_executable
 
 PROJECT_FOLDERS = ('libs', 'apps')
 
@@ -20,9 +21,10 @@ def main():
     args = parse_commandline()
 
     project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    clang_tidy = find_executable('clang-tidy')
 
     cmd = [
-        'clang-tidy',
+        clang_tidy,
         '-p', args.build_path,
         '-warnings-as-errors=.*'
     ]

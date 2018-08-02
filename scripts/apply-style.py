@@ -9,6 +9,7 @@ import threading
 import multiprocessing
 import codecs
 from concurrent.futures import ThreadPoolExecutor
+from distutils.spawn import find_executable
 
 SOURCE_FOLDERS = ('apps', 'libs')
 SOURCE_EXT = ('*.cpp', '*.hpp')
@@ -71,9 +72,11 @@ def main():
 
     args = parse_commandline()
 
+    clang_format = find_executable('clang-format')
+
     # generate the 
     cmd_prefix = [
-        'clang-format',
+        clang_format,
         '-style=file',
     ]
 
