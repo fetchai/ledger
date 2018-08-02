@@ -36,9 +36,9 @@ public:
     view_type view;
   };
 
-  HTTPServer(uint16_t const &port, network_manager_type network_manager)
+  HTTPServer(uint16_t const &port, network_manager_type const &network_manager)
     : eval_mutex_(__LINE__, __FILE__)
-    , networkManager_(std::move(network_manager))
+    , networkManager_(network_manager)
     , request_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;

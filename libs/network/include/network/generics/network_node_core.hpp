@@ -44,8 +44,8 @@ public:
     : NetworkNodeCore(NetworkManager{threads}, httpPort, rpcPort)
   {}
 
-  NetworkNodeCore(NetworkManager networkManager, uint16_t httpPort, uint16_t rpcPort)
-    : nm_(std::move(networkManager))
+  NetworkNodeCore(NetworkManager const &networkManager, uint16_t httpPort, uint16_t rpcPort)
+    : nm_(networkManager)
   {
     lock_type mlock(mutex_);
 

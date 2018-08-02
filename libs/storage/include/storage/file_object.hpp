@@ -43,6 +43,7 @@ template <typename S = VersionedRandomAccessStack<FileBlockType<>>>
 class FileObject
 {
 public:
+  // TODO(unknown): make pluggable
   using stack_type  = S;
   using block_type  = typename stack_type::type;
   using hasher_type = crypto::SHA256;

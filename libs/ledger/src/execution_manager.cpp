@@ -129,8 +129,6 @@ bool ExecutionManager::PlanExecution(block_type const &block)
     // process the transactions
     for (auto const &tx : slice.transactions)
     {
-
-      // TODO(EJF):  Byte array copies
       Identifier id;
       id.Parse(tx.contract_name_);
       auto contract = contracts_.Lookup(id.name_space());

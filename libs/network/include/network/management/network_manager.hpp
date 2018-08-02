@@ -46,7 +46,7 @@ public:
     }
   }
 
-  NetworkManager(NetworkManager &&rhs) = default;
+  NetworkManager(NetworkManager &&rhs) = delete;
   NetworkManager &operator=(NetworkManager const &rhs) = delete;
   NetworkManager &operator=(NetworkManager &&rhs) = delete;
 

@@ -47,7 +47,7 @@ public:
   using shared_type = std::shared_ptr<ContextDetails>;
 
   ContextDetails(void *instance = nullptr)
-    : context_("(root)"), filename_(""), line_(0), instance_(instance)
+    : instance_(instance)
   {
     id_ = std::this_thread::get_id();
   }
@@ -93,13 +93,13 @@ public:
   void *          instance() const { return instance_; }
 
 private:
-  std::string     context_;
-  std::string     filename_;
-  int             line_{0};
+  std::string     context_        = "(root)";
+  std::string     filename_       = "";
+  int             line_           = 0;
   shared_type     parent_;
   shared_type     derived_from_;
-  std::thread::id id_;
-  void *          instance_ = nullptr;
+  std::thread::id id_             = std::this_thread::get_id();
+  void *          instance_       = nullptr;
 };
 
 class Context
@@ -416,7 +416,7 @@ public:
     StackTrace(ctx, max, show_locks);
   }
 
-  void UpdateContextTime(const shared_context_type &ctx, double spent_time)
+  void UpdateContextTime(shared_context_type const &ctx, double spent_time)
   {
     std::lock_guard<std::mutex> lock(timing_mutex_);
     std::stringstream           ss;

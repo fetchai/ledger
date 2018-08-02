@@ -20,12 +20,10 @@ namespace p2p {
 class ExploreHttpInterface : public http::HTTPModule
 {
 public:
-  ExploreHttpInterface(p2p::P2PService *                                            p2p,
-                       /* , ledger::StorageUnitClient *storage,*/ chain::MainChain *chain)
+  ExploreHttpInterface(p2p::P2PService *p2p,
+                       chain::MainChain *chain)
     : p2p_(p2p)
-    ,
-    //    storage_(storage),
-    chain_(chain)
+    , chain_(chain)
   {
     // register all the routes
     Get("/node-entry-points",
@@ -45,7 +43,6 @@ public:
 
 private:
   p2p::P2PService *p2p_;
-  //  ledger::StorageUnitClient *storage_;
   chain::MainChain *chain_;
 
   http::HTTPResponse OnGetEntryPoints(http::ViewParameters const &params,

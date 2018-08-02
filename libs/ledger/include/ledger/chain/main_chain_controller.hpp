@@ -26,11 +26,11 @@ public:
 
   MainChainController(protocol_handler_type const &    identity_protocol,
                       std::weak_ptr<MainChainIdentity> identity, client_register_type reg,
-                      network_manager_type nm)
+                      network_manager_type const &nm)
     : identity_protocol_(identity_protocol)
     , identity_(std::move(identity))
     , register_(std::move(reg))
-    , manager_(std::move(nm))
+    , manager_(nm)
   {}
 
   /// External controls
