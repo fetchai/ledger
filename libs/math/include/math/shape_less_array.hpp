@@ -1548,12 +1548,12 @@ public:
   reverse_iterator rbegin() { return data_.rbegin(); }
   reverse_iterator rend() { return data_.rend(); }
 
-  template <typename S,
-            typename D = memory::SharedArray<S>>  // TODO deduce D from parent
+  // TODO(TFR): deduce D from parent
+  template <typename S, typename D = memory::SharedArray<S>>
   void As(ShapeLessArray<S, D> &ret) const
   {
     ret.LazyResize(size_);
-    // TODO: Vectorize
+    // TODO(TFR): Vectorize
     for (std::size_t i = 0; i < size_; ++i)
     {
       ret.data_[i] = data_[i];
