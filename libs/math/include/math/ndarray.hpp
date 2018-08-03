@@ -8,7 +8,7 @@
 namespace fetch {
 namespace math {
 
-template <typename T, typename C = SharedArray<T>>
+template <typename T, typename C = memory::SharedArray<T>>
 class NDArray : public ShapeLessArray<T, C>
 {
 public:
@@ -19,19 +19,30 @@ public:
   using self_type            = NDArray<T, C>;
 
   NDArray(std::size_t const &n = 0) : super_type(n) { size_ = 0; }
+  NDArray(super_type const &arr) : super_type(arr) {}
 
-  void Copy(self_type &copy)
+  /*
+   * Returns a copy of the object
+   */
+  self_type Copy()
   {
-    copy.data_ = this->data_.Copy();
-    copy.size  = this->size_;
+      self_type copy = self_type(super_type::Copy());
+      copy.LazyReshape(this->shape());
+      return copy;
   }
 
+  /*
+   * flattens to 1 dimension efficiently
+   */
   void Flatten()
   {
     shape_.clear();
     shape_.push_back(super_type::size());
   }
 
+  /*
+   * directly copies shape value without checking anything
+   */
   void LazyReshape(std::vector<std::size_t> const &shape) { shape_ = shape; }
 
   template <typename... Indices>
@@ -72,6 +83,9 @@ public:
     }
   }
 
+  /*
+   * reshapes the array
+   */
   void Reshape(std::vector<std::size_t> const &shape)
   {
     std::size_t total = 1;
@@ -89,6 +103,9 @@ public:
     size_ = total;
   }
 
+  /*
+   * returns the shape of the array
+   */
   std::vector<std::size_t> const &shape() const { return shape_; }
 
 private:

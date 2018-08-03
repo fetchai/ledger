@@ -21,6 +21,8 @@
 #include "python/math/py_exp.hpp"
 #include "python/math/py_log.hpp"
 #include "python/math/spline/py_linear.hpp"
+#include "python/math/py_ndarray.hpp"
+
 
 #include "python/math/correlation/py_eisen.hpp"
 #include "python/math/correlation/py_jaccard.hpp"
@@ -162,6 +164,9 @@ PYBIND11_MODULE(fetch, module)
 
   fetch::math::linalg::BuildMatrix<float>("MatrixFloat", ns_fetch_math_linalg);
   fetch::math::linalg::BuildMatrix<double>("MatrixDouble", ns_fetch_math_linalg);
+
+  fetch::math::BuildNDArray<double>("NDArrayDouble", ns_fetch_math);
+
 
   //  fetch::math::BuildSpline(ns_fetch_math_spline);
   //  fetch::image::colors::BuildAbstractColor<uint32_t, 8,
