@@ -17,6 +17,14 @@ SOURCE_EXT = ('*.cpp', '*.hpp')
 
 output_lock = threading.Lock()
 
+def output(text=None):
+    output_lock.acquire()
+    if text is not None:
+        sys.stdout.write(str(text))
+    sys.stdout.write('\n')
+    sys.stdout.flush()
+    output_lock.release()
+
 
 def parse_commandline():
     parser = argparse.ArgumentParser()
@@ -45,8 +53,8 @@ def compare_against_original(reformated, source_path, rel_path):
         try:
             original = source_file.read()
         except UnicodeDecodeError as ex:
-            print('Unable to read contents of file:', rel_path)
-            print(ex)
+            output('Unable to read contents of file: {}'.format(rel_path))
+            output(ex)
             sys.exit(1)
 
     # handle the read error
@@ -58,9 +66,9 @@ def compare_against_original(reformated, source_path, rel_path):
     success = True
     if len(out) != 0:
         output_lock.acquire()
-        print('Style mismatch in:', rel_path)
-        print()
-        print('\n'.join(out[3:])) # first 3 elements are garbage
+        output('Style mismatch in: {}'.format(rel_path))
+        output()
+        output('\n'.join(out[3:])) # first 3 elements are garbage
         success = False
         output_lock.release()
 
@@ -92,9 +100,9 @@ def main():
         return True
 
     def diff_style_to_file(source_path):
-        output = subprocess.check_output(cmd_prefix + [source_path], cwd=project_root).decode()
+        formatted_output = subprocess.check_output(cmd_prefix + [source_path], cwd=project_root).decode()
         rel_path = os.path.relpath(source_path, project_root)
-        return compare_against_original(output, source_path, rel_path)
+        return compare_against_original(formatted_output, source_path, rel_path)
 
     if args.fix:
         handler = apply_style_to_file
@@ -103,7 +111,7 @@ def main():
         handler = diff_style_to_file
         verb = 'Checking'
 
-    print('{} style...'.format(verb))
+    output('{} style...'.format(verb))
 
     # process all the files
     success = False
@@ -115,7 +123,7 @@ def main():
 
         success = all(result)
 
-    print('{} style...complete'.format(verb))
+    output('{} style...complete'.format(verb))
 
     if not success:
         sys.exit(1)

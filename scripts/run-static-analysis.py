@@ -11,6 +11,13 @@ from distutils.spawn import find_executable
 PROJECT_FOLDERS = ('libs', 'apps')
 
 
+def output(text=None):
+    if text is not None:
+        sys.stdout.write(text)
+    sys.stdout.write('\n')
+    sys.stdout.flush()
+
+
 def parse_commandline():
     parser = argparse.ArgumentParser()
     parser.add_argument('--fix', action='store_true', help='Apply suggested fixes to files')
@@ -38,7 +45,7 @@ def main():
         num_workers = args.jobs
 
     def analyse_file(source_path):
-        print('Analysing {} ...'.format(os.path.relpath(source_path, project_root)))
+        output('Analysing {} ...'.format(os.path.relpath(source_path, project_root)))
         exit_code = subprocess.call(cmd + [source_path])
         return exit_code != 0
 
