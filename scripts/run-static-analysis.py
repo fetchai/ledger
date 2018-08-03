@@ -17,7 +17,6 @@ def find_clang_tidy():
 
     # try and find the executable
     path = shutil.which(name)
-    path = None
     if path is not None:
         return path
 
