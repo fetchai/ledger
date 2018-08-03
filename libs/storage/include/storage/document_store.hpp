@@ -1,4 +1,5 @@
 #pragma once
+
 #include "core/byte_array/byte_array.hpp"
 #include "storage/file_object.hpp"
 #include "storage/key_value_index.hpp"
@@ -10,9 +11,17 @@
 #include "core/mutex.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document.hpp"
+
 namespace fetch {
 namespace storage {
 
+/**
+* DocumenStore maps keys to serialized data (documents) which is stored on your filesystem
+*
+* To do this it maintains two files, a file that stores a mapping of the keys to locations
+* in the document store
+*
+*/
 template <std::size_t BLOCK_SIZE = 2048, typename A = FileBlockType<BLOCK_SIZE>,
           typename B = KeyValueIndex<>, typename C = VersionedRandomAccessStack<A>,
           typename D = FileObject<C>>
@@ -31,6 +40,12 @@ public:
 
   typedef typename key_value_index_type::index_type index_type;
 
+  /**
+  *
+  * @param: 
+  *
+  * @return: 
+  */
   class DocumentFileImplementation : public file_object_type
   {
   public:
@@ -46,10 +61,10 @@ public:
 
     ~DocumentFileImplementation() { store_->UpdateDocumentFile(*this); }
 
-    DocumentFileImplementation(DocumentFileImplementation const &other) = delete;
+    DocumentFileImplementation(DocumentFileImplementation const &other)           = delete;
     DocumentFileImplementation operator=(DocumentFileImplementation const &other) = delete;
     DocumentFileImplementation(DocumentFileImplementation &&other)                = default;
-    DocumentFileImplementation &operator=(DocumentFileImplementation &&other) = default;
+    DocumentFileImplementation &operator=(DocumentFileImplementation &&other)     = default;
 
     byte_array::ConstByteArray const &address() const { return address_; }
 
