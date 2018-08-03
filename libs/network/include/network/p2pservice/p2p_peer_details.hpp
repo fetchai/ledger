@@ -11,7 +11,7 @@ namespace p2p {
 
 struct EntryPoint
 {
-  mutable mutex::Mutex lock;
+  mutable mutex::Mutex lock{ __LINE__, __FILE__ };
 
   EntryPoint()
   {

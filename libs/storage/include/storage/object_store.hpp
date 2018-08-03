@@ -88,7 +88,7 @@ public:
   }
 
 private:
-  mutex::Mutex mutex_;
+  mutex::Mutex mutex_{ __LINE__, __FILE__ };
 
   KeyByteArrayStore<S> store_;
 };

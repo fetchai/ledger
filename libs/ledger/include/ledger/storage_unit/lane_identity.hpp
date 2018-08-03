@@ -86,7 +86,7 @@ public:
   void OnSignMessage(callable_sign_message_type const &fnc) { on_sign_message_ = fnc; }
 
 private:
-  mutex::Mutex               identity_mutex_;
+  mutex::Mutex               identity_mutex_{ __LINE__, __FILE__ };
   crypto::Identity           identity_;
   callable_sign_message_type on_sign_message_;
 

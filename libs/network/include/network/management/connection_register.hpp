@@ -21,9 +21,16 @@ public:
   typedef std::shared_ptr<service::ServiceClient>             shared_service_client_type;
   typedef std::weak_ptr<service::ServiceClient>               weak_service_client_type;
   typedef G                                                   details_type;
-  struct LockableDetails final : public details_type, public mutex::Mutex
+  typedef mutex::Mutex                                        mutex_type;
+
+  struct LockableDetails final : public details_type, public mutex_type
   {
+    LockableDetails() : details_type()
+                      , mutex_type( __LINE__, __FILE__ )
+    {
+    }
   };
+
   typedef std::unordered_map<connection_handle_type, std::shared_ptr<LockableDetails>>
                                                       details_map_type;
   typedef std::function<void(connection_handle_type)> callback_client_enter_type;
@@ -151,10 +158,10 @@ public:
   }
 
 private:
-  mutable mutex::Mutex connections_lock_;
+  mutable mutex::Mutex connections_lock_{ __LINE__, __FILE__ };
   connection_map_type  connections_;
 
-  mutable mutex::Mutex details_lock_;
+  mutable mutex::Mutex details_lock_{ __LINE__, __FILE__ };
   details_map_type     details_;
 
   void SignalClientLeave(connection_handle_type const &handle)

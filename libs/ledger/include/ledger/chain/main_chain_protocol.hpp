@@ -3,6 +3,7 @@
 #include "network/service/publication_feed.hpp"
 #include "network/service/function.hpp"
 #include "network/generics/subscriptions_container.hpp"
+#include "network/generics/work_items_queue.hpp"
 #include <vector>
 
 namespace fetch {
@@ -28,8 +29,8 @@ public:
   };
 
   MainChainProtocol(protocol_handler_type const &p, register_type const &r,
-                    thread_pool_type const &nm, chain::MainChain *node)
-      : Protocol(), protocol_(p), register_(r), thread_pool_(nm), chain_(node), running_(false)
+                    thread_pool_type const &nm, chain::MainChain *chain)
+      : Protocol(), protocol_(p), register_(r), thread_pool_(nm), chain_(chain), running_(false)
   {
     this->Expose(GET_HEADER, this, &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this, &self_type::GetHeaviestChain);
@@ -50,12 +51,14 @@ public:
 
   void PublishBlock(const chain::MainChain::block_type &blk)
   {
-    fetch::logger.Warn("MINED A BLOCK:" + blk.summarise());
+       LOG_STACK_TRACE_POINT;
+   fetch::logger.Warn("MINED A BLOCK:" + blk.summarise());
     Publish(BLOCK_PUBLISH, blk);
   }
 
   void ConnectionDropped(fetch::network::TCPClient::handle_type connection_handle)
   {
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<mutex::Mutex> lock(mutex_);
     blockPublishSubscriptions_.ConnectionDropped(connection_handle);
   }
@@ -71,6 +74,7 @@ private:
 
   void IdleUntilPeers()
   {
+      LOG_STACK_TRACE_POINT;
     if (!running_) return;
 
     if (register_.number_of_services() == 0)
@@ -87,11 +91,11 @@ private:
 
   void FetchHeaviestFromPeers()
   {
+    LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Fetching blocks from peer");
 
     if (!running_) return;
 
-    std::lock_guard<mutex::Mutex> lock(block_list_mutex_);
     uint32_t                      ms = max_size_;
     using service_map_type           = typename R::service_map_type;
     register_.WithServices([this, ms](service_map_type const &map) {
@@ -108,79 +112,107 @@ private:
 
         fetch::logger.Warn("OMG SUBS?");
         auto foo = new service::Function<void(chain::MainChain::block_type)>(
-                                                                  [](const chain::MainChain::block_type blk){
-                                                                    fetch::logger.Warn("OMG GOT BLOCK BY SUBS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " );
-                                                                  }
-                                                                  );
+          [this](chain::MainChain::block_type block){
+            this -> pending_blocks_.Add(block);
+            this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
+          }
+        );
         blockPublishSubscriptions_.Subscribe(
           ptr,
           protocol_,
           BLOCK_PUBLISH,
           foo);
 
-        block_list_promises_.push_back(ptr->Call(protocol_, GET_HEAVIEST_CHAIN, ms));
+        auto prom = ptr->Call(protocol_, GET_HEAVIEST_CHAIN, ms);
+        prom.Then([prom, ms, this](){
+          fetch::logger.Warn("OMG HEAVYPULL CALLED THEN");
+          std::vector<block_type> incoming;
+          incoming.reserve(uint64_t(ms));
+          prom.As(incoming);
+          this -> pending_blocks_.Add(incoming.begin(), incoming.end());
+          this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
+        });
       }
     });
 
     if (running_)
     {
-      thread_pool_->Post([this]() { this->RealisePromises(); });
+      thread_pool_->Post([this]() { this->IdleUntilPeers(); }, 2000);
     }
   }
 
-  void RealisePromises()
+  void ForwardBlocks()
   {
-    if (!running_) return;
-    std::lock_guard<mutex::Mutex> lock(block_list_mutex_);
-    incoming_objects_.reserve(uint64_t(max_size_));
-
-    for (auto &p : block_list_promises_)
+    std::vector<block_type> work;
+    if (forward_blocks_.Get(work, 16))
     {
+       for(auto &block: work)
+       {
+         fetch::logger.Warn("OMG FORWARDING NEW BLOCK", block.summarise());
+         Publish(BLOCK_PUBLISH, block);
+       }
+    }
+    if (forward_blocks_.Remaining())
+    {
+      this -> thread_pool_ -> Post([this]() { this -> ForwardBlocks(); });
+    }
+  }
 
-      if (!running_) return;
+  void AddPendingBlocks()
+  {
+    std::vector<block_type> work;
 
-      incoming_objects_.clear();
-      if (!p.Wait(100, false))
-      {
-        continue;
-      }
-
-      p.template As<std::vector<block_type>>(incoming_objects_);
-
-      if (!running_) return;
-      std::lock_guard<mutex::Mutex> lock(mutex_);
-
-      bool                  loose = false;
-      byte_array::ByteArray blockId;
-
-      byte_array::ByteArray prevHash;
-      for (auto &block : incoming_objects_)
+    if (pending_blocks_.Get(work, 16))
+    {
+      for(auto &block: work)
       {
         block.UpdateDigest();
-        chain_->AddBlock(block);
-        prevHash = block.prev();
-        loose    = block.loose();
-      }
-      if (loose)
-      {
-        fetch::logger.Warn("Loose block");
-        TODO("Make list with missing blocks: ", prevHash);
+        if (chain_->AddBlock(block))
+        {
+          forward_blocks_.Add(block);
+          this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
+          fetch::logger.Warn("OMG GOT NEW BLOCK", block.summarise());
+          if (block.loose())
+          {
+            this -> thread_pool_ -> Post([this]() { this -> QueryLooseBlocks(); });
+            fetch::logger.Warn("OMG LOOSE BLOCK", block.summarise());
+          }
+        }
       }
     }
-
-    block_list_promises_.clear();
-    if (running_)
+    if (pending_blocks_.Remaining())
     {
-      thread_pool_->Post([this]() { this->IdleUntilPeers(); },
-                         5000);  /// TODO: Set from parameter
+      this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
+    }
+    if (forward_blocks_.Remaining())
+    {
+      this -> thread_pool_ -> Post([this]() { this -> ForwardBlocks(); });
+    }
+    if (loose_blocks_.Remaining())
+    {
+      this -> thread_pool_ -> Post([this]() { this -> QueryLooseBlocks(); });
     }
   }
+
+  void QueryLooseBlocks()
+  {
+    std::vector<block_type> work;
+    if (loose_blocks_.Get(work, 16))
+    {
+    }
+    if (loose_blocks_.Remaining())
+    {
+      this -> thread_pool_ -> Post([this]() { this -> ForwardBlocks(); });
+    }
+  }
+
   /// @}
 
   /// RPC
   /// @{
   std::pair<bool, block_type> GetHeader(block_hash_type const &hash)
   {
+      LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("GetHeader starting work");
     block_type block;
     if (chain_->Get(hash, block))
@@ -197,6 +229,7 @@ private:
 
   std::vector<block_type> GetHeaviestChain(uint32_t const &maxsize)
   {
+      LOG_STACK_TRACE_POINT;
     std::vector<block_type> results;
 
     fetch::logger.Debug("GetHeaviestChain starting work ", maxsize);
@@ -210,11 +243,11 @@ private:
   /// @}
 
   chain::MainChain *chain_;
-  mutex::Mutex      mutex_;
+  mutex::Mutex      mutex_{ __LINE__, __FILE__ };
 
-  mutable mutex::Mutex          block_list_mutex_;
-  std::vector<service::Promise> block_list_promises_;
-  std::vector<block_type>       incoming_objects_;
+  generics::WorkItemsQueue<block_type> pending_blocks_;
+  generics::WorkItemsQueue<block_type> loose_blocks_;
+  generics::WorkItemsQueue<block_type> forward_blocks_;
 
   std::atomic<bool>     running_;
   std::atomic<uint32_t> max_size_;

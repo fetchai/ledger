@@ -90,7 +90,7 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
       this -> main_chain_service_ -> PublishBlock(blk);
     });
 
-  tx_processor_.reset(new ledger::TransactionProcessor{*storage_, *transaction_packer_});
+ tx_processor_.reset(new ledger::TransactionProcessor{*storage_, *transaction_packer_});
 
   // Now that the execution manager is created, can start components that need
   // it to exist

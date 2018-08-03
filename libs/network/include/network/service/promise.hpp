@@ -19,8 +19,16 @@ namespace details {
 class PromiseImplementation
 {
 public:
-  typedef uint64_t                   promise_counter_type;
-  typedef byte_array::ConstByteArray byte_array_type;
+  typedef uint64_t                              promise_counter_type;
+  typedef byte_array::ConstByteArray            byte_array_type;
+  ///typedef std::function<void (const PromiseImplementation &)> callback_type;
+  typedef std::function<void (void)> callback_type;
+
+  typedef enum
+    {
+      NONE, SUCCESS, FAIL
+    }
+    Conclusion;
 
   PromiseImplementation()
   {
@@ -29,7 +37,32 @@ public:
     connection_closed_ = false;
     fulfilled_         = false;
     failed_            = false;
+    conclusion_        = NONE;
     id_                = next_promise_id();
+  }
+
+  void ConcludeSuccess(void)
+  {
+    if (conclusion_.exchange(SUCCESS) == NONE)
+    {
+      auto func = on_success_;
+      if (func)
+      {
+        func();
+      }
+    }
+  }
+
+  void ConcludeFail(void)
+  {
+    if (conclusion_.exchange(FAIL) == NONE)
+    {
+      auto func = on_fail_;
+      if (func)
+      {
+        func();
+      }
+    }
   }
 
   void Fulfill(byte_array_type const &value)
@@ -38,6 +71,32 @@ public:
 
     value_     = value;
     fulfilled_ = true;
+    ConcludeSuccess();
+  }
+
+  PromiseImplementation &Then(callback_type func)
+  {
+    on_success_ = func;
+    if (fulfilled_)
+    {
+      if (!failed_)
+      {
+        ConcludeSuccess(); // if this is called >1, it will protect itself.
+      }
+    }
+    return *this;
+  }
+  PromiseImplementation &Else(callback_type func)
+  {
+    on_fail_ = func;
+    if (fulfilled_)
+    {
+      if (failed_ || connection_closed_)
+      {
+        ConcludeFail(); // if this is called >1, it will protect itself.
+      }
+    }
+    return *this;
   }
 
   void Fail(serializers::SerializableException const &excp)
@@ -47,6 +106,7 @@ public:
     exception_ = excp;
     failed_    = true;  // Note that order matters here due to threading!
     fulfilled_ = true;
+    ConcludeFail();
   }
 
   void ConnectionFailed()
@@ -54,7 +114,8 @@ public:
     LOG_STACK_TRACE_POINT;
 
     connection_closed_ = true;
-    fulfilled_         = true;
+    fulfilled_         = true; // Note that order matters here due to threading!
+    ConcludeFail();
   }
 
   serializers::SerializableException exception() const { return exception_; }
@@ -72,6 +133,9 @@ private:
   std::atomic<bool>                  failed_;
   std::atomic<uint64_t>              id_;
   byte_array_type                    value_;
+  std::atomic<Conclusion>            conclusion_;
+  callback_type on_success_;
+  callback_type on_fail_;
 
   static uint64_t next_promise_id()
   {
@@ -93,6 +157,8 @@ public:
   typedef typename details::PromiseImplementation     promise_type;
   typedef typename promise_type::promise_counter_type promise_counter_type;
   typedef std::shared_ptr<promise_type>               shared_promise_type;
+
+  using callback_type = details::PromiseImplementation::callback_type;
 
   Promise()
   {
@@ -172,6 +238,19 @@ public:
   }
 
   template <typename T>
+  void As(T &ret) const
+  {
+    LOG_STACK_TRACE_POINT;
+    if (!is_fulfilled())
+    {
+      TODO_FAIL("Don't call non-waity As until promise filled");
+    }
+
+    serializer_type ser(reference_->value());
+    ser >> ret;
+  }
+
+  template <typename T>
   operator T()
   {
     LOG_STACK_TRACE_POINT;
@@ -181,6 +260,8 @@ public:
   bool is_fulfilled() const { return reference_->is_fulfilled(); }
   bool has_failed() const { return reference_->has_failed(); }
   bool is_connection_closed() const { return reference_->is_connection_closed(); }
+  Promise &Then(callback_type func) { reference_ -> Then(func); return *this; }
+  Promise &Else(callback_type func) { reference_ -> Else(func); return *this; }
 
   shared_promise_type  reference() { return reference_; }
   promise_counter_type id() const { return reference_->id(); }

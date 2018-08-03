@@ -160,7 +160,7 @@ private:
   std::unique_ptr<tx_sync_protocol_type> tx_sync_protocol_;
   thread_pool_type                       thread_pool_;
 
-  mutex::Mutex                    certificate_lock_;
+  mutex::Mutex                    certificate_lock_{ __LINE__, __FILE__ };
   std::unique_ptr<crypto::Prover> certificate_;
 };
 

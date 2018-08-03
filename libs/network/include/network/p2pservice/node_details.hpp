@@ -8,7 +8,7 @@ namespace details {
 
 struct NodeDetailsImplementation
 {
-  mutable mutex::Mutex mutex;
+  mutable mutex::Mutex mutex{ __LINE__, __FILE__ };
   PeerDetails          details;
 };
 

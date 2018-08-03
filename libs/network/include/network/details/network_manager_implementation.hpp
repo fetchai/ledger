@@ -42,9 +42,14 @@ public:
 
       for (std::size_t i = 0; i < number_of_threads_; ++i)
       {
-        threads_.push_back(new std::thread([this]() { io_service_->run(); }));
+        threads_.push_back(new std::thread([this]() { this -> Work(); }));
       }
     }
+  }
+
+  void Work()
+  {
+    io_service_->run();
   }
 
   void Stop()

@@ -78,7 +78,7 @@ public:
 
     mainchain_.reset(new mainchain_type());
     mainchain_protocol_.reset(
-        new mainchain_protocol_type(CHAIN, register_, thread_pool_, mainchain_.get()));
+      new mainchain_protocol_type(CHAIN, register_, thread_pool_, mainchain_.get()));
     this->Add(CHAIN, mainchain_protocol_.get());
 
     controller_.reset(new controller_type(IDENTITY, identity_, register_, tm));

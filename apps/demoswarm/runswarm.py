@@ -277,6 +277,7 @@ def main():
     args = swarmArgs.get()
 
     with open("/tmp/lldb.run.cmd", "w") as fn:
+        fn.write("settings set thread-format thread #${thread.index}: tid = ${thread.id}{, name = ${thread.name}}{, function: ${function.name}} {, stop reason = ${thread.stop-reason}}{, return = ${thread.return-value}}\\n\n")
         fn.write("breakpoint set --name abort\n")
         fn.write("breakpoint set --name exit\n")
         fn.write("run\n");

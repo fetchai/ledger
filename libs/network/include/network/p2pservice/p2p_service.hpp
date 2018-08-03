@@ -480,13 +480,13 @@ private:
 
   NodeDetails my_details_;
 
-  mutex::Mutex                                                           peers_mutex_;
+  mutex::Mutex                                                           peers_mutex_{ __LINE__, __FILE__ };
   std::unordered_map<connection_handle_type, shared_service_client_type> peers_;
 
   std::unique_ptr<crypto::Prover> certificate_;
   std::atomic<bool>               running_;
 
-  mutex::Mutex                          maintainance_mutex_;
+  mutex::Mutex                          maintainance_mutex_{ __LINE__, __FILE__ };
   std::atomic<uint64_t>                 min_connections_;
   std::atomic<uint64_t>                 max_connections_;
   std::atomic<bool>                     tracking_peers_;

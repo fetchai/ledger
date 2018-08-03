@@ -241,7 +241,7 @@ private:
     double                                lifetime = 0;
   };
 
-  mutex::Mutex    mutex_;
+  mutex::Mutex    mutex_{ __LINE__, __FILE__ };
   ObjectStore<T> *store_;
 
   std::vector<CachedObject> cache_;
@@ -249,7 +249,7 @@ private:
   uint64_t max_cache_           = 2000;
   double   max_cache_life_time_ = 20000;  // TODO: Make cache configurable
 
-  mutable mutex::Mutex          object_list_mutex_;
+  mutable mutex::Mutex          object_list_mutex_{ __LINE__, __FILE__ };
   std::vector<service::Promise> object_list_promises_;
   std::vector<T>                new_objects_;
   std::vector<S>                incoming_objects_;

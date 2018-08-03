@@ -8,6 +8,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
+#include "network/generics/milli_timer.hpp"
 #include <map>
 #include <set>
 
@@ -17,12 +18,12 @@ namespace std {
 template <>
 struct hash<fetch::byte_array::ByteArray>
 {
-  std::size_t operator()(const fetch::byte_array::ByteArray &k) const
-  {
-    fetch::crypto::CallableFNV hasher;
+ std::size_t operator()(const fetch::byte_array::ByteArray &k) const
+ {
+   std::size_t hash = *reinterpret_cast<const std::size_t *>(k.pointer());
 
-    return hasher(k);
-  }
+   return hash;
+ }
 };
 }  // namespace std
 
@@ -83,7 +84,13 @@ public:
 
   bool AddBlock(block_type &block)
   {
+    fetch::generics::MilliTimer myTimer("MainChain::AddBlock");
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+
+    if (block.hash().size() == 0)
+    {
+      fetch::logger.Info("Erk! You called AddBlock with no UpdateDigest");
+    }
 
     // First check if block already exists
     if (blockChain_.find(block.hash()) != blockChain_.end())
@@ -280,6 +287,7 @@ public:
   std::vector<block_type> HeaviestChain(
       uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
+    fetch::generics::MilliTimer myTimer("MainChain::HeaviestChain");
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
     std::vector<block_type> result;
@@ -311,6 +319,7 @@ public:
   // for debugging: get all chains, and verify. First in pair is heaviest block
   std::pair<block_type, std::vector<std::vector<block_type>>> AllChain()
   {
+    fetch::generics::MilliTimer myTimer("MainChain::AllChain");
     // To verify, walk down the blocks making sure the block numbers decrement,
     // the weights are correct etc.
     std::lock_guard<fetch::mutex::Mutex>                        lock(mutex_);
@@ -429,7 +438,7 @@ private:
   std::unordered_map<block_hash, std::shared_ptr<Tip>> tips_;          // Keep track of the tips
   std::unordered_map<block_hash, std::set<block_hash>> danglingRoot_;  // Waiting (loose) tips
   std::pair<uint64_t, block_hash>                      heaviest_;      // Heaviest block/tip
-  mutable fetch::mutex::Mutex                          mutex_;
+  mutable fetch::mutex::Mutex                          mutex_{ __LINE__, __FILE__ };
 
   void RecoverFromFile()
   {
@@ -457,6 +466,8 @@ private:
 
   void WriteToFile()
   {
+    fetch::generics::MilliTimer myTimer("MainChain::WriteToFile");
+    return; // TODO(remove before flight)
     if (constructing_ || minerNumber_ == std::numeric_limits<uint32_t>::max()) return;
 
     // Add confirmed blocks to file
@@ -502,6 +513,7 @@ private:
   // reference to this tip in danglingRoot_ will need to be updated
   void inline UpdateTipRefs(const std::shared_ptr<Tip> &tip, const block_type &block)
   {
+    fetch::generics::MilliTimer myTimer("MainChain::UpdateTipRefs");
     if (tip->loose)
     {
       auto const &tipRoot = tip->root;

@@ -175,7 +175,7 @@ private:
 
   uint32_t lane_assignment_ = 0;
 
-  mutex::Mutex                                                 lock_mutex_;
+  mutex::Mutex                                                 lock_mutex_{ __LINE__, __FILE__ };
   std::map<byte_array::ConstByteArray, connection_handle_type> locks_;
 };
 
