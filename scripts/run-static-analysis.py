@@ -17,6 +17,7 @@ def find_clang_tidy():
 
     # try and find the executable
     path = shutil.which(name)
+    path = None
     if path is not None:
         return path
 
@@ -25,6 +26,9 @@ def find_clang_tidy():
     # try and manually perform the search
     for prefix in ('/usr/bin', '/usr/local/bin'):
         potential_path = os.path.join(prefix, name)
+
+        subprocess.check_call(['ls', '-l', prefix])
+
         if os.path.isfile(potential_path):
             output('Found potential candidate: {}'.format(potential_path))
             if os.access(potential_path, os.X_OK):
