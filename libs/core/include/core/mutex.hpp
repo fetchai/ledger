@@ -35,7 +35,7 @@ class DebugMutex : public AbstractMutex
       running_ = true;
       created_ = std::chrono::system_clock::now();
       thread_  = std::thread([=]() {
-        LOG_LAMBDA_STACK_TRACE_POINT;
+          LOG_LAMBDA_STACK_TRACE_POINT;
 
         double ms = 0;
 

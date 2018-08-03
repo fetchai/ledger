@@ -1,5 +1,6 @@
 #pragma once
 
+#include"vectorise/platform.hpp"
 
 namespace fetch
 {
@@ -8,8 +9,7 @@ namespace math
 namespace linalg 
 {
 
-
-template< typename T, uint64_t I >
+template< typename T, uint64_t I, uint64_t V = platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING >
 class Blas 
 {
 public:
@@ -20,15 +20,6 @@ public:
   }
 };
 
-template<>
-class Blas< double, Computes( _A * _B + _alpha * _C ) > 
-{
-public:
-  void operator()() 
-  {
-    std::cout << "You've just got A * B + C" << std::endl;
-  }  
-};
 
 }
 }

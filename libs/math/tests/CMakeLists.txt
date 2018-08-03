@@ -10,6 +10,10 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
+
+add_fetch_gtest(dgemm_nn fetch-math linalg/blas/)
+add_fetch_gtest(blas fetch-math math/linalg/blas/)
+
 add_fetch_test(exp_test fetch-math math/test_exp.cpp)
 add_fetch_test(spline_test fetch-math math/test_spline.cpp)
 add_fetch_test(rectangular_load_save_test fetch-math math/rectangular_load_save_test.cpp)
@@ -20,6 +24,8 @@ add_fetch_test(hamming_test fetch-math math/distance/hamming.cpp DISABLED)
 add_fetch_test(manhattan_test fetch-math math/distance/manhattan.cpp)
 add_fetch_test(correlation_test fetch-math math/distance/correlation.cpp)
 add_fetch_test(distance_matrix_test fetch-math math/distance/distance_matrix.cpp DISABLED)
+
+
 
 # disabled / not working tests
 add_fetch_test(ndarray_test fetch-math math/ndarray.cpp DISABLED)

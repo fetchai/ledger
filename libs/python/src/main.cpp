@@ -206,8 +206,9 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::statistics::BuildStandardDeviationStatistics("StandardDeviation",
                                                             ns_fetch_math_statistics);
 
+  fetch::byte_array::BuildConstByteArray(ns_fetch_byte_array);  
   fetch::byte_array::BuildByteArray(ns_fetch_byte_array);
-  fetch::byte_array::BuildConstByteArray(ns_fetch_byte_array);
+
 
   fetch::random::BuildLaggedFibonacciGenerator<418, 1279>("LaggedFibonacciGenerator",
                                                           ns_fetch_random);
