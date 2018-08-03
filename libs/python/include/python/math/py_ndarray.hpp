@@ -133,6 +133,12 @@ namespace fetch {
                  {
                      return a.shape();
                  });
+//             .def("Relu",
+//                  [](NDArray<T> &a, NDArray<T> &b)
+//                  {
+//                    a.Relu(b);
+//                    return a;
+//                  });
 
         }
     };

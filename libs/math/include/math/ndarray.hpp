@@ -84,23 +84,21 @@ public:
   }
 
   /*
-   * reshapes the array
+   * reshapes the array as specified.
+   * returns false if new shape does not match number of elements in array.
    */
-  void Reshape(std::vector<std::size_t> const &shape)
+  bool Reshape(std::vector<std::size_t> const &shape)
   {
-    std::size_t total = 1;
-    shape_.reserve(shape.size());
-    shape_.clear();
-
-    for (auto const &s : shape)
-    {
-      total *= s;
-      shape_.push_back(s);
-    }
-
-    assert(total <= this->size());
-
-    size_ = total;
+      shape_.clear();
+      std::size_t total = 1;
+      for (auto const &s : shape)
+      {
+          total *= s;
+          shape_.push_back(s);
+      }
+      auto success = false;
+      (total != this->size()) ? success = false : success = true;
+      return success;
   }
 
   /*
