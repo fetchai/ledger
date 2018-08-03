@@ -2,6 +2,8 @@
 #include "node_details.hpp"
 #include "service_consts.hpp"
 #include <iostream>
+#include <memory>
+#include <utility>
 using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
@@ -10,9 +12,9 @@ template <typename D>
 class AuthenticationLogic
 {
 public:
-  typedef D node_details_type;
+  using node_details_type = D;
 
-  AuthenticationLogic(fetch::network::ConnectionRegister<D> const &reg) : register_(reg) {}
+  AuthenticationLogic(fetch::network::ConnectionRegister<D> reg) : register_(std::move(reg)) {}
 
   uint64_t Ping() { return 1337; }
 
@@ -83,8 +85,8 @@ public:
   {
     this->SetConnectionRegister(register_);
 
-    auth_logic_.reset(new AuthenticationLogic<fetch::NodeDetails>(register_));
-    auth_proto_.reset(new AuthenticationProtocol<fetch::NodeDetails>(auth_logic_.get()));
+    auth_logic_ = std::make_unique<AuthenticationLogic<fetch::NodeDetails>>(register_);
+    auth_proto_ = std::make_unique<AuthenticationProtocol<fetch::NodeDetails>>(auth_logic_.get());
 
     test_proto_.AddMiddleware([this](network::AbstractConnection::connection_handle_type const &n,
                                      byte_array::ByteArray const &data) {

@@ -28,7 +28,8 @@ class ObjectStore
 public:
   using type            = T;
   using self_type       = ObjectStore<T, S>;
-  using serializer_type = serializers::TypedByte_ArrayBuffer;
+  using serializer_type = serializers::TypedByteArrayBuffer;
+  class iterator;
 
   /**
   * Create a new file(s) with these args

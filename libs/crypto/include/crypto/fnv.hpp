@@ -8,7 +8,7 @@ namespace crypto {
 class FNV : public StreamHasher
 {
 public:
-  typedef typename StreamHasher::byte_array_type byte_array_type;
+  using byte_array_type = typename StreamHasher::byte_array_type;
 
   FNV() { digest_.Resize(4); }
 

@@ -1,4 +1,6 @@
 #pragma once
+#include <memory>
+
 #include "network/details/thread_pool.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/p2pservice/p2p_peer_details.hpp"
@@ -45,7 +47,7 @@ public:
   };
 
   P2PService(uint16_t port, fetch::network::NetworkManager const &tm)
-      : super_type(port, tm), manager_(tm)
+    : super_type(port, tm), manager_(tm)
   {
     running_     = false;
     thread_pool_ = network::MakeThreadPool(1);
@@ -60,9 +62,9 @@ public:
     this->SetConnectionRegister(register_);
 
     // Identity
-    identity_.reset(new P2PIdentity(IDENTITY, register_, tm));
-    my_details_ = identity_->my_details();
-    identity_protocol_.reset(new P2PIdentityProtocol(identity_.get()));
+    identity_          = std::make_unique<P2PIdentity>(IDENTITY, register_, tm);
+    my_details_        = identity_->my_details();
+    identity_protocol_ = std::make_unique<P2PIdentityProtocol>(identity_.get());
     this->Add(IDENTITY, identity_protocol_.get());
 
     {
@@ -85,8 +87,9 @@ public:
     }
 
     // P2P Peer Directory
-    directory_.reset(new P2PPeerDirectory(DIRECTORY, register_, thread_pool_, my_details_));
-    directory_protocol_.reset(new P2PPeerDirectoryProtocol(*directory_));
+    directory_ =
+        std::make_unique<P2PPeerDirectory>(DIRECTORY, register_, thread_pool_, my_details_);
+    directory_protocol_ = std::make_unique<P2PPeerDirectoryProtocol>(*directory_);
     this->Add(DIRECTORY, directory_protocol_.get());
 
     // Adding hooks for listening to feeds etc

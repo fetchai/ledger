@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <string>
+#include <utility>
 
 namespace fetch {
 namespace swarm {
@@ -32,17 +33,17 @@ public:
   using clientType = fetch::service::ServiceClient;
 
 protected:
-  typedef std::recursive_mutex                         mutex_type;
-  typedef std::lock_guard<mutex_type>                  lock_type;
-  typedef fetch::network::NetworkNodeCore::client_type client_type;
+  using mutex_type  = std::recursive_mutex;
+  using lock_type   = std::lock_guard<mutex_type>;
+  using client_type = fetch::network::NetworkNodeCore::client_type;
 
 public:
   std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
 
   explicit SwarmNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
                      const std::string &identifier, uint32_t maxpeers,
-                     const fetch::swarm::SwarmPeerLocation &uri)
-      : nnCore_(std::move(networkNodeCore)), uri_(uri), karmaPeerList_(identifier)
+                     fetch::swarm::SwarmPeerLocation uri)
+    : nnCore_(std::move(networkNodeCore)), uri_(std::move(uri)), karmaPeerList_(identifier)
   {
     identifier_ = identifier;
     maxpeers_   = maxpeers;
@@ -51,8 +52,8 @@ public:
   }
 
   explicit SwarmNode(fetch::network::NetworkManager tm, const std::string &identifier,
-                     uint32_t maxpeers, const fetch::swarm::SwarmPeerLocation &uri)
-      : uri_(uri), karmaPeerList_(identifier)
+                     uint32_t maxpeers, fetch::swarm::SwarmPeerLocation uri)
+    : uri_(std::move(uri)), karmaPeerList_(identifier)
   {
     identifier_ = identifier;
     maxpeers_   = maxpeers;

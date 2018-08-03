@@ -15,11 +15,11 @@ namespace network {
 class NetworkManager
 {
 public:
-  typedef std::function<void()> event_function_type;
+  using event_function_type = std::function<void()>;
 
-  typedef details::NetworkManagerImplementation implementation_type;
-  typedef std::shared_ptr<implementation_type>  pointer_type;
-  typedef std::weak_ptr<implementation_type>    weak_ref_type;
+  using implementation_type = details::NetworkManagerImplementation;
+  using pointer_type        = std::shared_ptr<implementation_type>;
+  using weak_ref_type       = std::weak_ptr<implementation_type>;
 
   explicit NetworkManager(std::size_t threads = 1)
   {
@@ -46,7 +46,7 @@ public:
     }
   }
 
-  NetworkManager(NetworkManager &&rhs) = default;
+  NetworkManager(NetworkManager &&rhs) = delete;
   NetworkManager &operator=(NetworkManager const &rhs) = delete;
   NetworkManager &operator=(NetworkManager &&rhs) = delete;
 

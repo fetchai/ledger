@@ -12,11 +12,11 @@ template <typename T, typename C = SharedArray<T>>
 class NDArray : public ShapeLessArray<T, C>
 {
 public:
-  typedef T                                             type;
-  typedef C                                             container_type;
-  typedef typename container_type::vector_register_type vector_register_type;
-  typedef ShapeLessArray<T, C>                          super_type;
-  typedef NDArray<T, C>                                 self_type;
+  using type                 = T;
+  using container_type       = C;
+  using vector_register_type = typename container_type::vector_register_type;
+  using super_type           = ShapeLessArray<T, C>;
+  using self_type            = NDArray<T, C>;
 
   NDArray(std::size_t const &n = 0) : super_type(n) { size_ = 0; }
 

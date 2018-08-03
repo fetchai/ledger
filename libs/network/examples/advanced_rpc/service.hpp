@@ -7,7 +7,7 @@ class FetchService
 {
 public:
   FetchService(uint16_t port, std::string const &info)
-      : network_manager_(8), service_(port, network_manager_)
+    : network_manager_(8), service_(port, network_manager_)
   {
 
     aea_  = new AEAProtocol(info);

@@ -1,5 +1,4 @@
-#ifndef CRYPTO_OPENSSL_COMMON_HPP
-#define CRYPTO_OPENSSL_COMMON_HPP
+#pragma once
 
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/openssl_memory.hpp"
@@ -127,5 +126,3 @@ const std::size_t ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::y_size_ =
 }  // namespace openssl
 }  // namespace crypto
 }  // namespace fetch
-
-#endif  // CRYPTO_OPENSSL_COMMON_HPP

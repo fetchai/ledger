@@ -5,6 +5,5 @@
 
 namespace fetch {
 namespace byte_array {
-
 };
 };  // namespace fetch

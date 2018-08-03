@@ -60,9 +60,9 @@ class OpenSSLDeleterTest : public testing::Test
 protected:
   MockDeleterPrimitive::SharedPtr &mock = MockDeleterPrimitive::value;
 
-  void SetUp() { mock = std::make_shared<MockDeleterPrimitive::Type>(); }
+  void SetUp() override { mock = std::make_shared<MockDeleterPrimitive::Type>(); }
 
-  void TearDown() { mock = MockDeleterPrimitive::SharedPtr(); }
+  void TearDown() override { mock = MockDeleterPrimitive::SharedPtr(); }
 
   // static void SetUpTestCase() {
   //}

@@ -17,8 +17,8 @@ class FetchLedger
 {
 public:
   FetchLedger(uint16_t offset, std::string const &name, std::size_t const &shards)
-      : network_manager_(new fetch::network::NetworkManager(64))
-      , controller_(uint16_t(1337 + offset), uint16_t(7070 + offset), name, network_manager_)
+    : network_manager_(new fetch::network::NetworkManager(64))
+    , controller_(uint16_t(1337 + offset), uint16_t(7070 + offset), name, network_manager_)
   {
     for (std::size_t i = 0; i < shards; ++i)
     {

@@ -28,17 +28,17 @@ template <std::size_t BLOCK_SIZE = 2048, typename A = FileBlockType<BLOCK_SIZE>,
 class DocumentStore
 {
 public:
-  typedef DocumentStore<BLOCK_SIZE, A, B, C, D> self_type;
-  typedef byte_array::ByteArray                 byte_array_type;
+  using self_type       = DocumentStore<BLOCK_SIZE, A, B, C, D>;
+  using byte_array_type = byte_array::ByteArray;
 
-  typedef A file_block_type;
-  typedef B key_value_index_type;
-  typedef C file_store_type;
-  typedef D file_object_type;
+  using file_block_type      = A;
+  using key_value_index_type = B;
+  using file_store_type      = C;
+  using file_object_type     = D;
 
-  typedef byte_array::ConstByteArray hash_type;
+  using hash_type = byte_array::ConstByteArray;
 
-  typedef typename key_value_index_type::index_type index_type;
+  using index_type = typename key_value_index_type::index_type;
 
   /**
   *
@@ -51,12 +51,12 @@ public:
   public:
     DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
                                file_store_type &store)
-        : file_object_type(store), address_(address), store_(s)
+      : file_object_type(store), address_(address), store_(s)
     {}
 
     DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
                                file_store_type &store, std::size_t const &pos)
-        : file_object_type(store, pos), address_(address), store_(s)
+      : file_object_type(store, pos), address_(address), store_(s)
     {}
 
     ~DocumentFileImplementation() { store_->UpdateDocumentFile(*this); }
@@ -222,7 +222,7 @@ public:
   {
   public:
     iterator(self_type *store, typename key_value_index_type::iterator it)
-        : wrapped_iterator_{it}, store_{store}
+      : wrapped_iterator_{it}, store_{store}
     {}
 
     iterator()                    = default;

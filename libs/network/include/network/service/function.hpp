@@ -23,8 +23,8 @@ template <typename R, typename... Args>
 class Function<R(Args...)> : public AbstractCallable
 {
 private:
-  typedef R                         return_type;
-  typedef std::function<R(Args...)> function_type;
+  using return_type   = R;
+  using function_type = std::function<R(Args...)>;
 
   /* A struct for invoking the function once we have unpacked all
    * arguments.
@@ -139,8 +139,8 @@ template <typename R>
 class Function<R()> : public AbstractCallable
 {
 private:
-  typedef R                  return_type;
-  typedef std::function<R()> function_type;
+  using return_type   = R;
+  using function_type = std::function<R()>;
 
 public:
   Function(function_type value)
@@ -172,8 +172,8 @@ template <>
 class Function<void()> : public AbstractCallable
 {
 private:
-  typedef void                  return_type;
-  typedef std::function<void()> function_type;
+  using return_type   = void;
+  using function_type = std::function<void()>;
 
 public:
   Function(function_type value)

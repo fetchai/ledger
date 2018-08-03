@@ -14,7 +14,7 @@ namespace http {
 class AbstractHTTPConnection
 {
 public:
-  typedef std::shared_ptr<AbstractHTTPConnection> shared_type;
+  using shared_type = std::shared_ptr<AbstractHTTPConnection>;
 
   virtual ~AbstractHTTPConnection() {}
   virtual void        Send(HTTPResponse const &) = 0;

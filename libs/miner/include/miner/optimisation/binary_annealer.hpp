@@ -10,13 +10,13 @@ namespace optimisers {
 class BinaryAnnealer
 {
 public:
-  typedef int16_t                spin_type;
-  typedef std::vector<spin_type> state_type;
+  using spin_type  = int16_t;
+  using state_type = std::vector<spin_type>;
 
-  typedef math::Exp<0>        exp_type;
-  typedef uint64_t            bit_data_type;
-  typedef bitmanip::BitVector bit_vector_type;
-  typedef double              cost_type;
+  using exp_type        = math::Exp<0>;
+  using bit_data_type   = uint64_t;
+  using bit_vector_type = bitmanip::BitVector;
+  using cost_type       = double;
 
   void Anneal()
   {

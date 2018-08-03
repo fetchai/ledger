@@ -20,8 +20,8 @@ namespace network {
 class ClientManager
 {
 public:
-  typedef typename AbstractConnection::shared_type            connection_type;
-  typedef typename AbstractConnection::connection_handle_type connection_handle_type;
+  using connection_type        = typename AbstractConnection::shared_type;
+  using connection_handle_type = typename AbstractConnection::connection_handle_type;
 
   ClientManager(AbstractNetworkServer &server) : server_(server), clients_mutex_(__LINE__, __FILE__)
   {

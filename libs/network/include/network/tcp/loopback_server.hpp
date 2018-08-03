@@ -70,7 +70,7 @@ public:
   static constexpr std::size_t DEFAULT_NUM_THREADS = 4;
 
   explicit LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS)
-      : port_{port}, networkManager_{num_threads}
+    : port_{port}, networkManager_{num_threads}
   {
     networkManager_.Start();
     networkManager_.Post([this] {

@@ -25,7 +25,7 @@
 namespace fetch {
 namespace network_benchmark {
 
-typedef std::chrono::high_resolution_clock::time_point time_point;
+using time_point = std::chrono::high_resolution_clock::time_point;
 
 class NodeBasic
 {

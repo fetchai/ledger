@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "crypto/openssl_context_detail.hpp"
 #include "crypto/openssl_memory.hpp"
 
@@ -23,7 +25,7 @@ private:
 
 public:
   explicit Session(context_smart_ptr context, const bool is_already_started = false)
-      : context_(context), is_started_(is_already_started)
+    : context_(std::move(context)), is_started_(is_already_started)
   {
     start();
   }

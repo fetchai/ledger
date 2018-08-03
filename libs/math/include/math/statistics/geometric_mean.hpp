@@ -12,8 +12,8 @@ namespace statistics {
 template <typename A>
 inline typename A::type GeometricMean(A const &a)
 {
-  typedef typename A::vector_register_type vector_register_type;
-  typedef typename A::type                 type;
+  using vector_register_type = typename A::vector_register_type;
+  using type                 = typename A::type;
 
   type ret = a.data().in_parallel().Reduce(
       memory::TrivialRange(0, a.size()),

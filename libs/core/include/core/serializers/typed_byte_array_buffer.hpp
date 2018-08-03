@@ -12,12 +12,12 @@
 namespace fetch {
 namespace serializers {
 
-class TypedByte_ArrayBuffer
+class TypedByteArrayBuffer
 {
 public:
-  typedef byte_array::ByteArray byte_array_type;
-  TypedByte_ArrayBuffer() { detailed_assert(size() == 0); }
-  TypedByte_ArrayBuffer(byte_array_type s) { data_ = s; }
+  using byte_array_type = byte_array::ByteArray;
+  TypedByteArrayBuffer() { detailed_assert(size() == 0); }
+  TypedByteArrayBuffer(byte_array_type s) { data_ = s; }
 
   void Allocate(std::size_t const &val) { data_.Resize(data_.size() + val); }
 
@@ -56,7 +56,7 @@ public:
   void SkipBytes(std::size_t const &size) { pos_ += size; }
 
   template <typename T>
-  TypedByte_ArrayBuffer &operator<<(T const *val)
+  TypedByteArrayBuffer &operator<<(T const *val)
   {
     Serialize(*this, TypeRegister<void>::value_type(TypeRegister<T const *>::value));
     Serialize(*this, val);
@@ -64,7 +64,7 @@ public:
   }
 
   template <typename T>
-  TypedByte_ArrayBuffer &operator<<(T const &val)
+  TypedByteArrayBuffer &operator<<(T const &val)
   {
     Serialize(*this, TypeRegister<void>::value_type(TypeRegister<T>::value));
     Serialize(*this, val);
@@ -72,7 +72,7 @@ public:
   }
 
   template <typename T>
-  TypedByte_ArrayBuffer &operator>>(T &val)
+  TypedByteArrayBuffer &operator>>(T &val)
   {
     TypeRegister<void>::value_type type;
     Deserialize(*this, type);
@@ -93,19 +93,19 @@ public:
   }
 
   template <typename T>
-  TypedByte_ArrayBuffer &Pack(T const *val)
+  TypedByteArrayBuffer &Pack(T const *val)
   {
     return this->operator<<(val);
   }
 
   template <typename T>
-  TypedByte_ArrayBuffer &Pack(T const &val)
+  TypedByteArrayBuffer &Pack(T const &val)
   {
     return this->operator<<(val);
   }
 
   template <typename T>
-  TypedByte_ArrayBuffer &Unpack(T &val)
+  TypedByteArrayBuffer &Unpack(T &val)
   {
     return this->operator>>(val);
   }

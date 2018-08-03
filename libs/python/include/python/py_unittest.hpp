@@ -5,6 +5,5 @@
 
 namespace fetch {
 namespace unittest {
-
 };
 };  // namespace fetch

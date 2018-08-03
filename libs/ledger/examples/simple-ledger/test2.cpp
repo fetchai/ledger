@@ -27,7 +27,7 @@ using namespace fetch::protocols;
 using namespace fetch::commandline;
 using namespace fetch::byte_array;
 
-typedef typename ShardManager::transaction_type tx_type;
+using tx_type = typename ShardManager::transaction_type;
 
 enum FetchProtocols
 {
@@ -64,9 +64,9 @@ class FetchShardService
 {
 public:
   FetchShardService(uint16_t port)
-      : network_manager_(new fetch::network::NetworkManager(8))
-      , service_(port, network_manager_)
-      , http_server_(8080, network_manager_)
+    : network_manager_(new fetch::network::NetworkManager(8))
+    , service_(port, network_manager_)
+    , http_server_(8080, network_manager_)
   {
 
     std::cout << "Listening for peers on " << (port) << ", clients on " << (port) << std::endl;
@@ -112,8 +112,8 @@ int main(int argc, char const **argv)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-  typedef fetch::service::ServiceClient<fetch::network::TCPClient> client_type;
-  typedef std::shared_ptr<client_type>                             client_shared_ptr_type;
+  using client_type            = fetch::service::ServiceClient<fetch::network::TCPClient>;
+  using client_shared_ptr_type = std::shared_ptr<client_type>;
 
   fetch::network::NetworkManager tm(2);
   client_shared_ptr_type         client = std::make_shared<client_type>("localhost", 1337, &tm);

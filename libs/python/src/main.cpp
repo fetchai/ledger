@@ -41,7 +41,6 @@
 #include "python/byte_array/tokenizer/py_token.hpp"
 #include "python/byte_array/tokenizer/py_tokenizer.hpp"
 
-#include "python/random/py_bitgenerator.hpp"
 #include "python/random/py_bitmask.hpp"
 #include "python/random/py_lcg.hpp"
 #include "python/random/py_lfg.hpp"
@@ -213,9 +212,6 @@ PYBIND11_MODULE(fetch, module)
                                                           ns_fetch_random);
   fetch::random::BuildLinearCongruentialGenerator(ns_fetch_random);
   fetch::random::BuildBitMask<uint64_t, 12, true>("BitMask", ns_fetch_random);
-
-  fetch::random::BuildBitGenerator<fetch::random::LaggedFibonacciGenerator<>, 12, true>(
-      "BitGenerator", ns_fetch_random);
 
   // py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
   // fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);

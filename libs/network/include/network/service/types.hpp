@@ -7,14 +7,14 @@
 namespace fetch {
 namespace service {
 
-typedef serializers::TypedByte_ArrayBuffer serializer_type;
+using serializer_type = serializers::TypedByteArrayBuffer;
 
-// typedef serializers::ByteArrayBuffer serializer_type;
+// using serializer_type = serializers::ByteArrayBuffer;
 
-typedef uint64_t protocol_handler_type;
-typedef uint64_t function_handler_type;
-typedef uint8_t  feed_handler_type;
-typedef uint8_t  subscription_handler_type;
-typedef uint64_t service_classification_type;
+using protocol_handler_type       = uint64_t;
+using function_handler_type       = uint64_t;
+using feed_handler_type           = uint8_t;
+using subscription_handler_type   = uint8_t;
+using service_classification_type = uint64_t;
 }  // namespace service
 }  // namespace fetch

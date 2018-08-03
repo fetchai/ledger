@@ -9,7 +9,7 @@ namespace http {
 class AbstractHTTPServer
 {
 public:
-  typedef uint64_t handle_type;
+  using handle_type = uint64_t;
 
   virtual void PushRequest(handle_type client, HTTPRequest req) = 0;
 

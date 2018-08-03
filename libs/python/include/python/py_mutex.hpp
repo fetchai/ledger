@@ -5,6 +5,5 @@
 
 namespace fetch {
 namespace mutex {
-
 };
 };  // namespace fetch

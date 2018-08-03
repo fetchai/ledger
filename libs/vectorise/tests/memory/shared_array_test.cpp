@@ -4,8 +4,8 @@
 #include "random/lcg.hpp"
 using namespace fetch::memory;
 
-typedef uint64_t               data_type;
-typedef SharedArray<data_type> array_type;
+using data_type  = uint64_t;
+using array_type = SharedArray<data_type>;
 
 void test_set_get()
 {
