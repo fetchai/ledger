@@ -5,10 +5,31 @@ import fnmatch
 import argparse
 import subprocess
 import multiprocessing
+import shutil
 from concurrent.futures import ThreadPoolExecutor
-from distutils.spawn import find_executable
+
 
 PROJECT_FOLDERS = ('libs', 'apps')
+
+
+def find_clang_tidy():
+    name = 'clang-tidy'
+
+    # try and find the executable
+    path = shutil.which(name)
+    if path is not None:
+        return path
+
+    output('Unable to find clang-tidy using which attempting manual search...')
+
+    # try and manually perform the search
+    for prefix in ('/usr/bin', '/usr/local/bin'):
+        potential_path = os.path.join(prefix, name)
+        if os.path.isfile(potential_path):
+            output('Found potential candidate: {}'.format(potential_path))
+            if os.access(potential_path, os.X_OK):
+                output('Found candidate: {}'.format(potential_path))
+                return potential_path
 
 
 def output(text=None):
@@ -30,7 +51,10 @@ def main():
     args = parse_commandline()
 
     project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    clang_tidy = find_executable('clang-tidy') or 'clang-tidy'
+    clang_tidy = find_clang_tidy()
+    if clang_tidy is None:
+        output('Failed to locate clang tidy tool')
+        sys.exit(1)
 
     cmd = [
         clang_tidy,

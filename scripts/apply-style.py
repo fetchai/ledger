@@ -8,14 +8,34 @@ import difflib
 import threading
 import multiprocessing
 import codecs
+import shutil
 from concurrent.futures import ThreadPoolExecutor
-from distutils.spawn import find_executable
 
 SOURCE_FOLDERS = ('apps', 'libs')
 SOURCE_EXT = ('*.cpp', '*.hpp')
 
 
 output_lock = threading.Lock()
+
+def find_clang_format():
+    name = 'clang-format'
+
+    # try and find the executable
+    path = shutil.which(name)
+    if path is not None:
+        return path
+
+    output('Unable to find clang-format using which attempting manual search...')
+
+    # try and manually perform the search
+    for prefix in ('/usr/bin', '/usr/local/bin'):
+        potential_path = os.path.join(prefix, name)
+        if os.path.isfile(potential_path):
+            output('Found potential candidate: {}'.format(potential_path))
+            if os.access(potential_path, os.X_OK):
+                output('Found candidate: {}'.format(potential_path))
+                return potential_path
+
 
 def output(text=None):
     output_lock.acquire()
@@ -80,7 +100,10 @@ def main():
 
     args = parse_commandline()
 
-    clang_format = find_executable('clang-format')
+    clang_format = find_clang_format()
+    if clang_format is None:
+        output('Unable to locate clang-format tool')
+        sys.exit(1)
 
     # generate the 
     cmd_prefix = [
