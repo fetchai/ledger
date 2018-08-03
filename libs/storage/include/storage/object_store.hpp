@@ -153,7 +153,7 @@ public:
 
   /**
   * STL-like functionality achieved with an iterator class. This has to wrap an iterator to the
-  * key value store since we need to deserialize at this level to return the object
+  * KeyByteArrayStore since we need to deserialize at this level to return the object
   */
   class iterator
   {
@@ -165,19 +165,10 @@ public:
     iterator &operator=(iterator const &rhs) = default;
     iterator &operator=(iterator &&rhs)      = default;
 
-    /**
-    * Pre increment operator
-    */
     void operator++() { ++wrapped_iterator_; }
 
-    /**
-    * equal to operator
-    */
     bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
 
-    /**
-    * not equal to operator
-    */
     bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
 
     /**
@@ -200,13 +191,6 @@ public:
     typename KeyByteArrayStore<S>::iterator wrapped_iterator_;
   };
 
-  /**
-  * STL-like find, given a key
-  *
-  * @param: rid The key
-  *
-  * @return: An iterator to the element
-  */
   self_type::iterator Find(ResourceID const &rid)
   {
     auto it = store_.Find(rid);
@@ -230,18 +214,8 @@ public:
     return iterator(it);
   }
 
-  /**
-  * Iterator to beginning of object store
-  *
-  * @return: iterator to begin
-  */
   self_type::iterator begin() { return iterator(store_.begin()); }
 
-  /**
-  * Iterator to end of object store
-  *
-  * @return: iterator to end
-  */
   self_type::iterator end() { return iterator(store_.end()); }
 
 
