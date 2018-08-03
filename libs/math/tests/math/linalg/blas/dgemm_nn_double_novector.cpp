@@ -7,54 +7,54 @@
 
 using namespace fetch;
 using namespace fetch::math::linalg;
-
+/*
 std::ostream& operator<<(std::ostream& os, Matrix< double > const & d)  
 {  
   os << d.height() << " " << d.width() << std::endl;
   for(std::size_t i=0; i < d.height(); ++i) {
     for(std::size_t j=0; j < d.width(); ++j)  {
-      os << d(j, i) <<" ";
+      os << d(i, j) <<" ";
     }
     os << std::endl;
   }
 
   return os;  
 }  
-
+*/
 TEST(blas_DGEMM, blas_dgemm_nn_double_novector) {
 
-  Blas< double, Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::THREADING> dgemm_nn_double_novector;
+	Blas< double, Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
+	// Compuing _C <= _alpha * _A * _B + _beta * _C  
 
-        
-	// Compuing _C <= _alpha * _A * _B + _beta * _C
   double alpha = 1, beta = 0;
-	Matrix< double > A = Matrix< double >(R"(
-	0.47448196842021717 0.8578992562624433;
- 0.39501626898313924 0.46685015232059635;
- 0.5509845677604795 0.6620939034839237
+
+  Matrix< double > A = Matrix< double >(R"(
+	0.30169185364333373 0.8945423972470693;
+ 0.04466903170163927 0.3314110217654498;
+ 0.3985719812230776 0.34247532861166874
 	)");
 
-	Matrix< double > B = Matrix< double >(R"(
-	0.5228221825957788 0.08903332737716774 0.9965283250813561;
- 0.12748197003735073 0.9121745478867886 0.22274946196232892
+  Matrix< double > B = Matrix< double >(R"(
+	0.5514786044649475 0.18220489074321267 0.9295365942778178;
+ 0.12886903952316242 0.3914826500907078 0.13624108034372373
 	)");
 
-	Matrix< double > C = Matrix< double >(R"(
-	0.40080868622416077 0.8572351238262121 0.1601332420651449;
- 0.5588299226771567 0.19792373261190288 0.6556725891915544;
- 0.9041654512846383 0.06374249728055537 0.6989787907523035
+  Matrix< double > C = Matrix< double >(R"(
+	0.7858433367659107 0.4623268657812528 0.8402115432496992;
+ 0.41164803091772795 0.6093238489388062 0.7242938970398791;
+ 0.5138165945307044 0.9067201443135698 0.37035401914270616
 	)");
 
-	Matrix< double > R = Matrix< double >(R"(
-	0.3574363856137136 0.8247985746425267 0.6639313190214453;
- 0.26603824504067297 0.4610184394196016 0.4976355211560983;
- 0.37247198945897586 0.6530011964702332 0.6965527892256078
+  Matrix< double > R = Matrix< double >(R"(
+	0.2816554219716459 0.4051675595239783 0.4023070407711915;
+ 0.06734263532792391 0.1378805811108098 0.08667329524077186;
+ 0.26393838664229724 0.20669491352763875 0.4171464507617874
 	)");
   
 	dgemm_nn_double_novector(alpha, A, B, beta, C);
 
-  std::cout << C << std::endl << std::endl;
-  std::cout << R << std::endl << std::endl;  
+//  std::cout << C << std::endl << std::endl;
+//  std::cout << R << std::endl << std::endl;  
 
 	ASSERT_TRUE( R.AllClose(C) ); 
 }

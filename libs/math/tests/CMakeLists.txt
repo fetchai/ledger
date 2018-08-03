@@ -11,7 +11,7 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 
-add_fetch_gtest(dgemm_nn fetch-math linalg/blas/)
+
 add_fetch_gtest(blas fetch-math math/linalg/blas/)
 
 add_fetch_test(exp_test fetch-math math/test_exp.cpp)

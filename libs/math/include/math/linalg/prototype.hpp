@@ -29,6 +29,13 @@ struct Prototype
     TRANSPOSE = 6ull | IS_OP
   };
 
+
+  
+  template< uint64_t OP >
+  using one_op_return_type = Prototype<
+    P + OpSize,
+    uint64_t(S1) | (uint64_t(OP) << (P) )
+      >;
   
   template< typename O, uint64_t OP >
   using two_op_return_type = Prototype<
@@ -54,8 +61,6 @@ struct Prototype
   constexpr operator<=(O const &other) const {
     return two_op_return_type< O, EQ >();
   }
-  
-    
 };
 
 Prototype<4, 0> const _A;
@@ -64,6 +69,13 @@ Prototype<4, 2> const _C;
 Prototype<4, 3> const _alpha;
 Prototype<4, 4> const _beta;
 Prototype<4, 5> const _gamma;
+
+template<uint64_t P, uint64_t S>
+constexpr typename Prototype<P, S>::template one_op_return_type< Prototype<P, S>::TRANSPOSE > T(Prototype<P, S> const&) {
+  return typename Prototype<P, S>::template one_op_return_type< Prototype<P, S>::TRANSPOSE >();
+}
+
+
 
 template<uint64_t P, uint64_t S>
 std::ostream& operator<<(std::ostream& os, Prototype<P, S> const &prototype)  

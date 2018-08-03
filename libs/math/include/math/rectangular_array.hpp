@@ -278,8 +278,8 @@ public:
    */
   type &operator()(size_type const &i, size_type const &j)
   {
-    assert(i < padded_width_);
-    assert(j < padded_height_);
+    assert(j < padded_width_);
+    assert(i < padded_height_);
     return super_type::data()[(j * padded_height_ + i)];
   }
 

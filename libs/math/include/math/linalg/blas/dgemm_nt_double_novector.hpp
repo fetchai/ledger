@@ -13,23 +13,25 @@ namespace linalg
 
 
 template<>
-class Blas< double, Computes( _C <= _alpha * _A * T(_A) + _beta * _C ) > 
+class Blas< double, Computes( _C <= _alpha * _A * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL>
 {
 public:
-  void operator()(double const &alpha, Matrix< double > const &a, double const &beta, Matrix< double > &c ) 
+  void operator()(double const &alpha, Matrix< double > const &a, Matrix< double > const &b, double const &beta, Matrix< double > &c ) 
   {
-    constexpr bool upper = true;
     constexpr double one = 1.0;
     constexpr double zero = 0.0;
-    constexpr int info = 0;
     double temp;
     std::size_t i;
     std::size_t j;
     std::size_t l;
+    std::size_t ncola;
     std::size_t nrowa;
+    std::size_t nrowb;
 
-    nrowa = a.height();
-    if( (a.height() == 0) || (((alpha == zero) || (a.width() == 0)) && (beta == one)) ) 
+    nrowa = c.height();
+    ncola = a.width();
+    nrowb = c.width();
+    if( (c.height() == 0) || ((c.width() == 0) || (((alpha == zero) || (a.width() == 0)) && (beta == one))) ) 
     {
       return;
     } // endif
@@ -38,9 +40,10 @@ public:
     {
       if( beta == zero ) 
       {
-        for(j = 0 ; j < a.height(); ++j )
+        for(j = 0 ; j < c.width(); ++j )
         {
-          for(i = 0 ; i < j; ++i )
+          /* TODO: Vectorise loop */
+          for(i = 0 ; i < c.height(); ++i )
           {
             c(i, j) = zero;
           }
@@ -48,9 +51,10 @@ public:
       }
       else 
       {
-        for(j = 0 ; j < a.height(); ++j )
+        for(j = 0 ; j < c.width(); ++j )
         {
-          for(i = 0 ; i < j; ++i )
+          /* TODO: Vectorise loop */
+          for(i = 0 ; i < c.height(); ++i )
           {
             c(i, j) = beta * c(i, j);
           }
@@ -61,18 +65,20 @@ public:
     } // endif
     
     /* TODO: parallelise over threads */
-    for(j = 0 ; j < a.height(); ++j )
+    for(j = 0 ; j < c.width(); ++j )
     {
       if( beta == zero ) 
       {
-        for(i = 0 ; i < j; ++i )
+        /* TODO: Vectorise loop */
+        for(i = 0 ; i < c.height(); ++i )
         {
           c(i, j) = zero;
         }
       }
       else if ( beta != one )
       {
-        for(i = 0 ; i < j; ++i )
+        /* TODO: Vectorise loop */
+        for(i = 0 ; i < c.height(); ++i )
         {
           c(i, j) = beta * c(i, j);
         }
@@ -80,14 +86,12 @@ public:
       
       for(l = 0 ; l < a.width(); ++l )
       {
-        if( a(j, l) != zero ) 
+        temp = alpha * b(j, l);
+        /* TODO: Vectorise loop */
+        for(i = 0 ; i < c.height(); ++i )
         {
-          temp = alpha * a(j, l);
-          for(i = 0 ; i < j; ++i )
-          {
-            c(i, j) = c(i, j) + temp * a(i, l);
-          }
-        } // endif
+          c(i, j) = c(i, j) + temp * a(i, l);
+        }
       }
     }
     return;
