@@ -41,10 +41,7 @@ public:
   using index_type = typename key_value_index_type::index_type;
 
   /**
-  *
-  * Represents an open 'document', effectively just a serialized memory block.
-  * When modifications are finished to it, it will write the state back to the store
-  * on destruction
+  * Implementation of a document file
   */
   class DocumentFileImplementation : public file_object_type
   {
@@ -76,7 +73,9 @@ public:
   };
 
   /**
-  *
+  * Represents an open 'document', effectively just a serialized memory block.
+  * When modifications are finished to it, it will write the state back to the store
+  * on destruction. Has a PIMPL to an implementation
   */
   class DocumentFile
   {
