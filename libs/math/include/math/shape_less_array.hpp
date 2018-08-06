@@ -10,6 +10,7 @@
 #include "math/kernels/sign.hpp"
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
+#include "math/kernels/sum_of_squares.hpp"
 #include "math/kernels/variance.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
@@ -743,6 +744,21 @@ public:
     // TODO: Update vector library
     //    kernels::ApproxSoftMax< type, vector_register_type > kernel;
     //    kernel( this->data_, x.data());
+  }
+
+  double L2Loss()
+  {
+    // just write it without vectorising for now!
+
+    double sum = 0;
+    for (std::size_t i = 0; i < this->size(); ++i)
+    {
+      sum += std::pow(this->At(i), 2);
+    }
+    return sum / 2;
+    //
+    //    kernels::SumOfSquares<type> kernel;
+    //    data_.in_parallel().Apply(kernel, x.data_);
   }
 
   void Fmod(self_type const &x)
