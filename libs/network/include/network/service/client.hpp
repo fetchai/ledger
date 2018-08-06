@@ -16,49 +16,12 @@
 #include "core/mutex.hpp"
 #include "network/tcp/tcp_client.hpp"
 
+#include "network/generics/life_tracker.hpp"
+
 #include <map>
 
 namespace fetch {
 namespace service {
-
-template<typename WORKER>
-class LifeTracker
-{
-  using p_target_type = std::mutex;
-  using strong_p_type = std::shared_ptr<p_target_type>;
-  using weak_p_type = std::weak_ptr<p_target_type>;
-  using mutex_type = std::mutex;
-  using lock_type = std::lock_guard<mutex_type>;
-public:
-  LifeTracker(fetch::network::NetworkManager worker):worker_(worker)
-  {
-  }
-
-  void reset(void)
-  {
-    lock_type lock(*alive_);
-    auto alsoAlive = alive_;
-    alive_.reset();
-  }
-
-  void Post(std::function <void (void)> func)
-  {
-    std::weak_ptr<std::mutex> deadOrAlive(alive_);
-
-    auto cb = [deadOrAlive, func](){
-      auto aliveOrElse = deadOrAlive.lock();
-      if (aliveOrElse)
-      {
-        lock_type lock(*aliveOrElse);
-        func();
-      }
-    };
-    worker_ . Post(func);
-  }
-private:
-  strong_p_type alive_ = std::make_shared<p_target_type>();
-  fetch::network::NetworkManager worker_;
-};
 
 // template <typename T>
 class ServiceClient : public ServiceClientInterface, public ServiceServerInterface
@@ -248,7 +211,7 @@ private:
   network_manager_type              network_manager_;
   std::deque<network::message_type> messages_;
   mutable fetch::mutex::Mutex       message_mutex_;
-  LifeTracker<network_manager_type> lifeTracker_;
+  generics::LifeTracker<network_manager_type> lifeTracker_;
 };
 }  // namespace service
 }  // namespace fetch

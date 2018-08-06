@@ -344,8 +344,6 @@ protected:
   {
     std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
 
-    uint64_t x =     min_connections_;
-
     // Timeout to send out a new tracking signal if needed
     // TODO: Pull from settings
     {
