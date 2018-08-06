@@ -8,16 +8,8 @@ namespace fetch {
         {
             void operator()(vector_register_type const &x, vector_register_type &y) const
             {
-                static const vector_register_type zero(0);
-                if (x > zero)
-                {
-                    y = x;
-                }
-                else
-                {
-                    y = 0;
-                }
-//                y = (x > zero) ? x : zero;
+                const vector_register_type zero(0);
+                y = max(x, zero);
             }
         };
 

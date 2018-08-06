@@ -1328,12 +1328,12 @@ public:
     data_.in_parallel().Apply(alog, x.data_);
   }
 
-//  void Relu(self_type const &x) {
-//      LazyResize(x.size());
-//
-//      kernels::Relu<vector_register_type> relu;
-//      data_.in_parallel().Apply(relu, x.data_);
-//  }
+  void Relu(self_type const &x) {
+      LazyResize(x.size());
+
+      kernels::Relu<vector_register_type> relu;
+      data_.in_parallel().Apply(relu, x.data_);
+  }
 
     /* Equality operator.
    * @other is the array which this instance is compared against.
