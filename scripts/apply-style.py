@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+
+#
+# CODE STYLE SCRIPT
+#
+# This script is used to run the clang-format based code style checks on the project.
+#
+# It can be run simply with the following command:
+#
+# ./scripts/apply-style.py
+#
+# By default the script will "fix" all style issues that it finds. However, if the user
+# only requires warning of the style issues then it is recommended to use the `-w` and
+# `-a` options.
+#
+
 import os
 import sys
 import argparse
@@ -8,14 +23,42 @@ import difflib
 import threading
 import multiprocessing
 import codecs
+import shutil
 from concurrent.futures import ThreadPoolExecutor
-from distutils.spawn import find_executable
 
 SOURCE_FOLDERS = ('apps', 'libs')
 SOURCE_EXT = ('*.cpp', '*.hpp')
 
 
 output_lock = threading.Lock()
+
+def find_clang_format():
+    name = 'clang-format'
+
+    # try and find the executable
+    path = shutil.which(name)
+    if path is not None:
+        return path
+
+    output('Unable to find clang-format using which attempting manual search...')
+
+    # try and manually perform the search
+    for prefix in ('/usr/bin', '/usr/local/bin'):
+        potential_path = os.path.join(prefix, name)
+        if os.path.isfile(potential_path):
+            output('Found potential candidate: {}'.format(potential_path))
+            if os.access(potential_path, os.X_OK):
+                output('Found candidate: {}'.format(potential_path))
+                return potential_path
+
+
+def output(text=None):
+    output_lock.acquire()
+    if text is not None:
+        sys.stdout.write(str(text))
+    sys.stdout.write('\n')
+    sys.stdout.flush()
+    output_lock.release()
 
 
 def parse_commandline():
@@ -45,8 +88,8 @@ def compare_against_original(reformated, source_path, rel_path):
         try:
             original = source_file.read()
         except UnicodeDecodeError as ex:
-            print('Unable to read contents of file:', rel_path)
-            print(ex)
+            output('Unable to read contents of file: {}'.format(rel_path))
+            output(ex)
             sys.exit(1)
 
     # handle the read error
@@ -58,9 +101,9 @@ def compare_against_original(reformated, source_path, rel_path):
     success = True
     if len(out) != 0:
         output_lock.acquire()
-        print('Style mismatch in:', rel_path)
-        print()
-        print('\n'.join(out[3:])) # first 3 elements are garbage
+        output('Style mismatch in: {}'.format(rel_path))
+        output()
+        output('\n'.join(out[3:])) # first 3 elements are garbage
         success = False
         output_lock.release()
 
@@ -72,7 +115,10 @@ def main():
 
     args = parse_commandline()
 
-    clang_format = find_executable('clang-format')
+    clang_format = find_clang_format()
+    if clang_format is None:
+        output('Unable to locate clang-format tool')
+        sys.exit(1)
 
     # generate the 
     cmd_prefix = [
@@ -92,9 +138,9 @@ def main():
         return True
 
     def diff_style_to_file(source_path):
-        output = subprocess.check_output(cmd_prefix + [source_path], cwd=project_root).decode()
+        formatted_output = subprocess.check_output(cmd_prefix + [source_path], cwd=project_root).decode()
         rel_path = os.path.relpath(source_path, project_root)
-        return compare_against_original(output, source_path, rel_path)
+        return compare_against_original(formatted_output, source_path, rel_path)
 
     if args.fix:
         handler = apply_style_to_file
@@ -103,7 +149,7 @@ def main():
         handler = diff_style_to_file
         verb = 'Checking'
 
-    print('{} style...'.format(verb))
+    output('{} style...'.format(verb))
 
     # process all the files
     success = False
@@ -115,7 +161,7 @@ def main():
 
         success = all(result)
 
-    print('{} style...complete'.format(verb))
+    output('{} style...complete'.format(verb))
 
     if not success:
         sys.exit(1)

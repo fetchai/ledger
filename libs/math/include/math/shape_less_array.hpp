@@ -6,6 +6,7 @@
 #include "math/kernels/approx_logistic.hpp"
 #include "math/kernels/approx_soft_max.hpp"
 #include "math/kernels/basic_arithmetics.hpp"
+#include "math/kernels/relu.hpp"
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
 #include "math/kernels/variance.hpp"
@@ -1327,6 +1328,14 @@ public:
     data_.in_parallel().Apply(alog, x.data_);
   }
 
+  void Relu(self_type const &x)
+  {
+    LazyResize(x.size());
+
+    kernels::Relu<vector_register_type> relu;
+    data_.in_parallel().Apply(relu, x.data_);
+  }
+
   /* Equality operator.
    * @other is the array which this instance is compared against.
    *
@@ -1567,6 +1576,12 @@ public:
     copy.size_ = this->size_;
 
     return copy;
+  }
+
+  void Copy(self_type const &x)
+  {
+    this->data_ = x.data_.Copy();
+    this->size_ = x.size_;
   }
 
   // TODO: Make referenced copy
