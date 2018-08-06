@@ -146,11 +146,9 @@ public:
     assert(CanReshape());
 
     shape_.clear();
-    std::size_t total = 1;
     shape_.reserve(shape.size());
     for (auto const &s : shape)
     {
-      total *= s;
       shape_.push_back(s);
     }
   }
