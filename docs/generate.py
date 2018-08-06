@@ -3,6 +3,8 @@ import argparse
 import os
 import time
 import subprocess
+import webbrowser
+
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -15,6 +17,7 @@ DOCUMENTATION_ROOT = os.path.abspath(os.path.dirname(__file__))
 def parse_commandline():
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--watch', action='store_true', help='Watch the filesystem')
+    parser.add_argument('-b', '--open-browser', action='store_true', help='Open the documentation in the browser')
     return parser.parse_args()
 
 
@@ -54,11 +57,16 @@ def watch():
 
 def main():
     
-
     args = parse_commandline()
 
     # build the documentation
     build_documentation()
+
+    if args.open_browser:
+        index_path = os.path.join(DOCUMENTATION_ROOT, BUILDDIR, 'html', 'index.html')
+        index_url = 'file://' + index_path.replace(os.sep, '/')
+        print('Openning:', index_url)
+        webbrowser.open(index_url)
 
     # watch for update if required
     if args.watch:

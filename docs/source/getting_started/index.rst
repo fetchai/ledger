@@ -9,50 +9,52 @@ The Fetch ledger only depends on CMake, OpenSSL and ASIO. Optionally, it depends
 
 .. code:: bash
 
-					sudo port install cmake openssl
+	$ sudo brew install cmake openssl
 
 On Ubuntu / Debian:
 
 .. code:: bash
 
-					sudo apt-get install cmake libssl-dev libpng-dev python-dev
+	$ sudo apt install cmake cmake-curses-gui libssl-dev python3-dev
 
 Download
 --------
-The Fetch ledger is kept in the repository https://github.com/uvue-git/fetch-ledger. First thing to do, is to checkout the repository:
+
+The Fetch ledger is kept in the repository https://github.com/fetchai/ledger.git. First thing to do, is to checkout the repository:
 
 .. code:: bash
 					
-					cd [working_directory]
-					git clone git@github.com:uvue-git/fetch-ledger.git
+	$ cd [working_directory]
+	$ git clone https://github.com/fetchai/ledger.git
 
 Next initialise submodules:
 
 .. code:: bash
 					
-					cd fetch-ledger
-					git submodule init
-					git submodule update --recursive --remote
+	$ cd fetch-ledger
+	$ git submodule update --init
 
 Building
 --------
-Assuming that you are in the Fetch ledger repository, you need to do following
+
+Assuming that you are in the Fetch ledger repository, you need to do following to build the library:
 
 .. code:: bash
 					
-					mkdir build
-					cd build
-					cmake ..
-					make
+	$ mkdir build
+	$ cd build
+	$ cmake ..
+	$ make -j
 
-in order to build the library. If you use Brew as your package manager on OS X, you will need to run
-
-.. code:: bash
-					
-					cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl .
-
-You can configure the build by running
+If you use Brew as your package manager on OS X, before building the code you will need to define the location for cmake to find the openssl libraries. An example is shown below. It is recommened that you add this to `~/.bash_profiles` or similar configuration file.
 
 .. code:: bash
 					
-					ccmake .
+	$ export OPENSSL_ROOT_DIR=/usr/local/Cellar/openssl/1.0.2o_2
+
+
+Users can interactively configure the build by executing the following command inside the build directory to the project:
+
+.. code:: bash
+					
+	$ ccmake .
