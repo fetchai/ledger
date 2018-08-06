@@ -9,6 +9,7 @@
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
 #include "math/kernels/variance.hpp"
+#include "math/kernels/relu.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
@@ -1327,7 +1328,14 @@ public:
     data_.in_parallel().Apply(alog, x.data_);
   }
 
-  /* Equality operator.
+  void Relu(self_type const &x) {
+      LazyResize(x.size());
+
+      kernels::Relu<vector_register_type> relu;
+      data_.in_parallel().Apply(relu, x.data_);
+  }
+
+    /* Equality operator.
    * @other is the array which this instance is compared against.
    *
    * This method is sensitive to height and width.
@@ -1567,6 +1575,12 @@ public:
     copy.size_ = this->size_;
 
     return copy;
+  }
+
+  void Copy(self_type const &x)
+  {
+    this->data_ = x.data_.Copy();
+    this->size_ = x.size_;
   }
 
   // TODO: Make referenced copy

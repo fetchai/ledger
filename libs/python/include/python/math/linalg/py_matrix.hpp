@@ -130,7 +130,7 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
            })
       .def("__len__", [](Matrix<T> const &a) { return a.size(); })
       //    .def("Invert", &Matrix< T >::Invert)
-      // Matrix-matrix operations
+      // Matrix-matrix ions
       .def("Transpose", (Matrix<T> & (Matrix<T>::*)(Matrix<T> const &)) & Matrix<T>::Transpose)
       .def("Sum", &Matrix<T>::Sum)
       .def("Dot", [](Matrix<T> &a, Matrix<T> const &b, Matrix<T> const &c) {
