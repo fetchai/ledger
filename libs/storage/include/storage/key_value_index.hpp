@@ -13,12 +13,12 @@ namespace fetch {
 namespace storage {
 
 /**
-* Key value pair for binary trees where the key is a byte array. The tree can be traversed given
-* a key by switching on each bit of the key
-*
-* The parent of the tree will be identifiable with 0xffffffff
-*
-*/
+ * Key value pair for binary trees where the key is a byte array. The tree can be traversed given
+ * a key by switching on each bit of the key
+ *
+ * The parent of the tree will be identifiable with 0xffffffff
+ *
+ */
 template <std::size_t S = 256, std::size_t N = 64>
 struct KeyValuePair
 {

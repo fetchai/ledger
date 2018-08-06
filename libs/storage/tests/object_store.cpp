@@ -11,8 +11,8 @@ using namespace fetch::storage;
 using namespace fetch::byte_array;
 
 /**
-* Test class used to verify that the object store can ser/deser objects correctly
-*/
+ * Test class used to verify that the object store can ser/deser objects correctly
+ */
 struct TestSerDeser
 {
   int         first;
@@ -20,21 +20,21 @@ struct TestSerDeser
   std::string third;
 
   /**
-  * Comparison operator
-  *
-  * @param: rhs Other test class
-  *
-  * @return: less than
-  */
+   * Comparison operator
+   *
+   * @param: rhs Other test class
+   *
+   * @return: less than
+   */
   bool operator<(TestSerDeser const &rhs) const { return third < rhs.third; }
 
   /**
-  * Equality operator
-  *
-  * @param: rhs Other test class
-  *
-  * @return: is equal to
-  */
+   * Equality operator
+   *
+   * @param: rhs Other test class
+   *
+   * @return: is equal to
+   */
   bool operator==(TestSerDeser const &rhs) const
   {
     return first == rhs.first && second == rhs.second && third == rhs.third;
@@ -42,11 +42,11 @@ struct TestSerDeser
 };
 
 /**
-* Serializer for TestSerDeser
-*
-* @param: serializer The serializer
-* @param: b The class to serialize
-*/
+ * Serializer for TestSerDeser
+ *
+ * @param: serializer The serializer
+ * @param: b The class to serialize
+ */
 template <typename T>
 inline void Serialize(T &serializer, TestSerDeser const &b)
 {
@@ -56,11 +56,11 @@ inline void Serialize(T &serializer, TestSerDeser const &b)
 }
 
 /**
-* Deserializer for TestSerDeser
-*
-* @param: serializer The deserializer
-* @param: b The class to deserialize
-*/
+ * Deserializer for TestSerDeser
+ *
+ * @param: serializer The deserializer
+ * @param: b The class to deserialize
+ */
 template <typename T>
 inline void Deserialize(T &serializer, TestSerDeser &b)
 {
@@ -77,9 +77,9 @@ int main(int argc, char const **argv)
   SCENARIO("Testing object store with classes")
   {
     /**
-    * Test of the iterator functionality of the object store. Iterate over the store and 
-    * verify 1 to 1 mapping of the set variables of the store to the iterated variables
-    */
+     * Test of the iterator functionality of the object store. Iterate over the store and
+     * verify 1 to 1 mapping of the set variables of the store to the iterated variables
+     */
     SECTION("Test iterator over basic struct")
     {
       std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100, 11,
@@ -89,7 +89,7 @@ int main(int argc, char const **argv)
         std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
-        testStore.New("testFile.db", "testIndex.db"); // create new file to reset the test
+        testStore.New("testFile.db", "testIndex.db");  // create new file to reset the test
 
         std::vector<testType>                     objects;
         std::vector<testType>                     objectsCopy;
@@ -143,9 +143,9 @@ int main(int argc, char const **argv)
     };
 
     /**
-    * Test of the find functionality of the object store. Check that we can find objects 
-    * after putting them in the store
-    */
+     * Test of the find functionality of the object store. Check that we can find objects
+     * after putting them in the store
+     */
     SECTION("Test find over basic struct")
     {
       std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100,
@@ -210,9 +210,9 @@ int main(int argc, char const **argv)
     };
 
     /**
-    * Test of the find functionality of the object store. Check that we can't find objects 
-    * we haven't put in the store
-    */
+     * Test of the find functionality of the object store. Check that we can't find objects
+     * we haven't put in the store
+     */
     SECTION("Test find over basic struct, expect failures")
     {
       std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100,
@@ -254,9 +254,9 @@ int main(int argc, char const **argv)
     };
 
     /**
-    * Test of the subtree iterator functionality. Check that we can specify a root and then
-    * iterate over the returned iterator to get all objects that begin with that key
-    */
+     * Test of the subtree iterator functionality. Check that we can specify a root and then
+     * iterate over the returned iterator to get all objects that begin with that key
+     */
     SECTION("Test subtree iterator over basic struct")
     {
       std::vector<std::size_t> keyTests{0,  1,  2,  3,    4, 5, 6, 7,  8,  9,   10,   11,   12,
