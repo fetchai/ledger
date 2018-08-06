@@ -10,6 +10,7 @@
 #include "math/kernels/standard_functions.hpp"
 #include "math/kernels/variance.hpp"
 #include "math/kernels/relu.hpp"
+#include "math/kernels/sign.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
@@ -1329,13 +1330,22 @@ public:
   }
 
   void Relu(self_type const &x) {
-      LazyResize(x.size());
+    LazyResize(x.size());
 
-      kernels::Relu<vector_register_type> relu;
-      data_.in_parallel().Apply(relu, x.data_);
+    kernels::Relu<vector_register_type> relu;
+    data_.in_parallel().Apply(relu, x.data_);
   }
 
-    /* Equality operator.
+  void Sign(self_type const &x) {
+    LazyResize(x.size());
+
+    kernels::Sign<vector_register_type> sign;
+    data_.in_parallel().Apply(sign, x.data_);
+  }
+
+
+
+  /* Equality operator.
    * @other is the array which this instance is compared against.
    *
    * This method is sensitive to height and width.
