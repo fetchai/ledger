@@ -59,5 +59,5 @@ TEST(ndarray, simple_reshape) {
 TEST(ndarray, faulty_reshape) {
   _A<double> a = NDArray<double>(49);
 
-  ASSERT_FALSE(a.Reshape({2, 4}));
+  ASSERT_FALSE(a.CanReshape({2, 4}));
 }
