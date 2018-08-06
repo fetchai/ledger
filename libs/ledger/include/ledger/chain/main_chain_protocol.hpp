@@ -81,7 +81,6 @@ private:
     {
       thread_pool_->Post([this]() { this->IdleUntilPeers(); },
                          1000);  // TODO: Make time variable
-      fetch::logger.Warn("OMG STILL IDLE");
     }
     else
     {
@@ -103,14 +102,12 @@ private:
       {
         if (!running_)
         {
-          fetch::logger.Warn("OMG NOT RUNNING");
           return;
         }
 
         auto peer = p.second;
         auto ptr  = peer.lock();
 
-        fetch::logger.Warn("OMG SUBS?");
         auto foo = new service::Function<void(chain::MainChain::block_type)>(
           [this](chain::MainChain::block_type block){
             this -> pending_blocks_.Add(block);
@@ -125,7 +122,6 @@ private:
 
         auto prom = ptr->Call(protocol_, GET_HEAVIEST_CHAIN, ms);
         prom.Then([prom, ms, this](){
-          fetch::logger.Warn("OMG HEAVYPULL CALLED THEN");
           std::vector<block_type> incoming;
           incoming.reserve(uint64_t(ms));
           prom.As(incoming);
@@ -148,7 +144,6 @@ private:
     {
        for(auto &block: work)
        {
-         fetch::logger.Warn("OMG FORWARDING NEW BLOCK", block.summarise());
          Publish(BLOCK_PUBLISH, block);
        }
     }
@@ -171,11 +166,9 @@ private:
         {
           forward_blocks_.Add(block);
           this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
-          fetch::logger.Warn("OMG GOT NEW BLOCK", block.summarise());
           if (block.loose())
           {
             this -> thread_pool_ -> Post([this]() { this -> QueryLooseBlocks(); });
-            fetch::logger.Warn("OMG LOOSE BLOCK", block.summarise());
           }
         }
       }

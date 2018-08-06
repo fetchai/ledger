@@ -63,7 +63,6 @@ public:
 
   void ConnectionDropped(fetch::network::TCPClient::handle_type connection_handle)
   {
-      fetch::logger.Warn("OMG GONE");
     auto item = existing_subscriptions.begin();
     while(item!=existing_subscriptions.end())
     {
@@ -86,7 +85,6 @@ public:
     auto location = subscriptions.find(handle);
     if (location != subscriptions.end())
     {
-      fetch::logger.Warn("OMG UNSUB");
       subscriptions.erase(location);
       return true;
     }
@@ -118,9 +116,6 @@ private:
                                                    FUNC_CLASS *func
                                                    )
   {
-    
-      fetch::logger.Warn("OMG SUB");
-
     auto handle = client -> Subscribe(protocol_number, verb, func);
     return std::make_shared<Subscription>(client, handle);
   }

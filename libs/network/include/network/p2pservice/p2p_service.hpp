@@ -281,10 +281,7 @@ protected:
   /// @{
   void NextServiceCycle()
   {
-          fetch::logger.Info("NextServiceCycle OMG");
-
-          std::vector<EntryPoint> orchestration;
-
+    std::vector<EntryPoint> orchestration;
     {
       std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
       if (!running_) return;
@@ -326,15 +323,11 @@ protected:
       });
     }
 
-    fetch::logger.Info("NextServiceCycle OMG new stuffs=", orchestration.size());
-
     for (auto &e : orchestration)
     {
       thread_pool_->Post([this, e]() {
-          fetch::logger.Info("FOUND A NEW PERSON TO CHAT TO OMG");
         if (!e.is_discovery)
         {
-          fetch::logger.Info("PROMOTING OUR NEW FWEND OMG");
           if (callback_peer_update_profile_)
           {
             callback_peer_update_profile_(e);
@@ -352,8 +345,6 @@ protected:
     std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
 
     uint64_t x =     min_connections_;
-        fetch::logger.Info("ManageIncomingConnections OMG min_connections__=", x);
-        fetch::logger.Info("ManageIncomingConnections OMG incoming_=", incoming_.size());
 
     // Timeout to send out a new tracking signal if needed
     // TODO: Pull from settings
@@ -371,7 +362,6 @@ protected:
       {
         track_start_    = std::chrono::system_clock::now();
         tracking_peers_ = true;
-        fetch::logger.Info("OMG req new peers!!!");
         directory_->RequestPeersForThisNode();
       }
     }

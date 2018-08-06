@@ -55,18 +55,14 @@ public:
   {
     // TODO: (`HUT`) : comment/make this clear
 
-    fetch::logger.Info("OMG req new peers!!!");
-
         register_.WithServices(
         [this](network::AbstractConnectionRegister::service_map_type const &map) {
           for (auto const &p : map)
           {
-            fetch::logger.Info("OMG req new peer from someone!!!");
             auto wptr = p.second;
             auto peer = wptr.lock();
             if (peer)
             {
-              fetch::logger.Info("OMG actually req new peer from someone!!!");
               if (!peer->Call(protocol_, NEED_CONNECTIONS).Wait(300))
               {
                 fetch::logger.Error("Yikes, NEED_CONNECTIONS failed");
@@ -106,7 +102,6 @@ public:
   {
     auto                          details = register_.GetDetails(client_id);
     std::lock_guard<mutex::Mutex> lock(*details);
-    fetch::logger.Info("OMG got invcomgin NeedConnections.");
     AddPeerToSuggested(*details);
   }
 
@@ -114,7 +109,6 @@ public:
   {
     auto                          details = register_.GetDetails(client_id);
     std::lock_guard<mutex::Mutex> lock(*details);
-fetch::logger.Info("OMG got invcomgin EnoughConnections.");
 
     RemovePeerFromSuggested(details->identity.identifier());
   }
