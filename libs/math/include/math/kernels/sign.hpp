@@ -12,13 +12,6 @@ struct Sign
     const vector_register_type one(typename vector_register_type::type(1));
     const vector_register_type min_one(typename vector_register_type::type(-1));
 
-    if (x == 0)
-      y = 0;
-    else if (x < 0)
-      y = -1;
-    else if (x > 0)
-      y = 1;
-
     y = ((x == zero) & (zero)) | ((x > zero) & (one)) | ((x < zero) & (min_one));
   }
 };
