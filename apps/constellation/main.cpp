@@ -160,9 +160,8 @@ int main(int argc, char **argv)
     fetch::logger.Info("Configuration:\n", args);
 
     // create and run the constellation
-    auto constellation =
-        fetch::Constellation::Create(args.port, args.num_executors, args.num_lanes,
-                                     args.num_slices, args.dbdir);
+    auto constellation = fetch::Constellation::Create(args.port, args.num_executors, args.num_lanes,
+                                                      args.num_slices, args.dbdir);
     constellation->Run(args.peers);
 
     exit_code = EXIT_SUCCESS;

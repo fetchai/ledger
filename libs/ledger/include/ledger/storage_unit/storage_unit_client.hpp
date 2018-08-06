@@ -162,9 +162,9 @@ public:
   {
     std::size_t lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(LaneService::STATE,
-                                      fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE,
-                                      key.as_resource_id());
+    auto promise = lanes_[lane]->Call(
+        LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE,
+        key.as_resource_id());
 
     return promise.As<storage::Document>();
   }
@@ -173,9 +173,9 @@ public:
   {
     std::size_t lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(LaneService::STATE,
-                                      fetch::storage::RevertibleDocumentStoreProtocol::GET,
-                                      key.as_resource_id());
+    auto promise =
+        lanes_[lane]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET,
+                           key.as_resource_id());
 
     return promise.As<storage::Document>();
   }
@@ -206,9 +206,9 @@ public:
   {
     std::size_t lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(LaneService::STATE,
-                                      fetch::storage::RevertibleDocumentStoreProtocol::SET,
-                                      key.as_resource_id(), value);
+    auto promise =
+        lanes_[lane]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET,
+                           key.as_resource_id(), value);
 
     promise.Wait(2000);
   }
@@ -218,9 +218,8 @@ public:
     std::vector<service::Promise> promises;
     for (std::size_t i = 0; i < lanes_.size(); ++i)
     {
-      auto promise = lanes_[i]->Call(LaneService::STATE,
-                                     fetch::storage::RevertibleDocumentStoreProtocol::COMMIT,
-                                     bookmark);
+      auto promise = lanes_[i]->Call(
+          LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
       promises.push_back(promise);
     }
 
@@ -235,9 +234,8 @@ public:
     std::vector<service::Promise> promises;
     for (std::size_t i = 0; i < lanes_.size(); ++i)
     {
-      auto promise = lanes_[i]->Call(LaneService::STATE,
-                                     fetch::storage::RevertibleDocumentStoreProtocol::REVERT,
-                                     bookmark);
+      auto promise = lanes_[i]->Call(
+          LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
       promises.push_back(promise);
     }
 

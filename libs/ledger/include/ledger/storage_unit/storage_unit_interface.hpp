@@ -11,9 +11,9 @@ namespace ledger {
 class StateInterface
 {
 public:
-  using Document = storage::Document;
+  using Document        = storage::Document;
   using ResourceAddress = storage::ResourceAddress;
-  using StateValue = byte_array::ConstByteArray;
+  using StateValue      = byte_array::ConstByteArray;
 
   /// @name State Interface
   /// @{

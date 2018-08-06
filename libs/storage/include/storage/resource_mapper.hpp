@@ -27,12 +27,11 @@ public:
 
   // Accessors
   byte_array::ConstByteArray id() const;
-  Group resource_group() const;
-  Group lane(std::size_t log2_num_lanes) const;
+  Group                      resource_group() const;
+  Group                      lane(std::size_t log2_num_lanes) const;
 
 private:
-
-  byte_array::ConstByteArray id_; ///< The byte array containing the hashed resource address
+  byte_array::ConstByteArray id_;  ///< The byte array containing the hashed resource address
 
   template <typename T>
   friend inline void Serialize(T &, ResourceID const &);
@@ -45,20 +44,14 @@ private:
  *
  * @param id The hashed array
  */
-inline ResourceID::ResourceID(byte_array::ConstByteArray const &id)
-  : id_(id)
-{
-}
+inline ResourceID::ResourceID(byte_array::ConstByteArray const &id) : id_(id) {}
 
 /**
  * Gets the current id (hashed) value
  *
  * @return The id value
  */
-inline byte_array::ConstByteArray ResourceID::id() const
-{
-  return id_;
-}
+inline byte_array::ConstByteArray ResourceID::id() const { return id_; }
 
 /**
  * Gets the resource group value.
@@ -140,8 +133,7 @@ public:
   ResourceID const &as_resource_id() const { return *this; }
 
 private:
-
-  byte_array::ByteArray address_; ///< The canonical resource address
+  byte_array::ByteArray address_;  ///< The canonical resource address
 };
 
 }  // namespace storage

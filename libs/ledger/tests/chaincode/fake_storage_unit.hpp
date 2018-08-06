@@ -28,7 +28,7 @@ public:
   Document GetOrCreate(ResourceAddress const &key) override
   {
     lock_guard_type lock(mutex_);
-    Document   doc;
+    Document        doc;
 
     auto it = state_.find(key.id());
     if (it != state_.end())
@@ -46,7 +46,7 @@ public:
   Document Get(ResourceAddress const &key) override
   {
     lock_guard_type lock(mutex_);
-    Document   doc;
+    Document        doc;
 
     auto it = state_.find(key.id());
     if (it != state_.end())
