@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/logger.hpp"
+#include "storage/resource_mapper.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -40,7 +41,7 @@ public:
     // if we have a state then make some changes to it
     if (state_)
     {
-      state_->Set(hash, "executed");
+      state_->Set(fetch::storage::ResourceAddress{hash}, "executed");
     }
 
     return Status::SUCCESS;
