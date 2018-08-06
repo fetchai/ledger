@@ -30,7 +30,7 @@ NDArray<data_type, container_type> RandomArray(std::size_t n, std::size_t m)
   NDArray<data_type, container_type>                 a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-      a1(i) = data_type(gen.AsDouble());
+    a1(i) = data_type(gen.AsDouble());
   }
   return a1;
 }
@@ -44,20 +44,20 @@ using _A = NDArray<D, _S<D>>;
 
 
 TEST(ndarray, simple_reshape) {
-    _A<double> a = NDArray<double>(49);
-    a.Reshape({7, 7});
-    ASSERT_TRUE(a.shape().size() == 2);
-    ASSERT_TRUE(a.shape()[0] == 7);
-    ASSERT_TRUE(a.shape()[1] == 7);
+  _A<double> a = NDArray<double>(49);
+  a.Reshape({7, 7});
+  ASSERT_TRUE(a.shape().size() == 2);
+  ASSERT_TRUE(a.shape()[0] == 7);
+  ASSERT_TRUE(a.shape()[1] == 7);
 
-    a.Reshape({1, 49});
-    ASSERT_TRUE(a.shape().size() == 2);
-    ASSERT_TRUE(a.shape()[0] == 1);
-    ASSERT_TRUE(a.shape()[1] == 49);
+  a.Reshape({1, 49});
+  ASSERT_TRUE(a.shape().size() == 2);
+  ASSERT_TRUE(a.shape()[0] == 1);
+  ASSERT_TRUE(a.shape()[1] == 49);
 }
 
 TEST(ndarray, faulty_reshape) {
-    _A<double> a = NDArray<double>(49);
+  _A<double> a = NDArray<double>(49);
 
-    ASSERT_FALSE(a.Reshape({2, 4}));
+  ASSERT_FALSE(a.Reshape({2, 4}));
 }
