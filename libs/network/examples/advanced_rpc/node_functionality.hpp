@@ -12,10 +12,10 @@
 class NodeToNodeFunctionality : public fetch::service::HasPublicationFeed
 {
 public:
-  typedef fetch::service::ServiceClient client_type;
+  using client_type = fetch::service::ServiceClient;
 
   NodeToNodeFunctionality(fetch::network::NetworkManager network_manager)
-      : network_manager_(network_manager)
+    : network_manager_(network_manager)
   {}
 
   void Tick() { this->Publish(PeerToPeerFeed::NEW_MESSAGE, "tick"); }

@@ -18,9 +18,9 @@ template <typename T, typename B = uint64_t, typename S = RandomAccessStack<T, B
 class VersionedRandomAccessStack
 {
 private:
-  typedef S                 stack_type;
-  typedef B                 header_extra_type;
-  typedef BookmarkHeader<B> header_type;
+  using stack_type        = S;
+  using header_extra_type = B;
+  using header_type       = BookmarkHeader<B>;
 
   struct HistoryBookmark
   {
@@ -121,10 +121,10 @@ private:
   };
 
 public:
-  typedef typename RandomAccessStack<T>::type type;
-  typedef B                                   bookmark_type;
+  using type          = typename RandomAccessStack<T>::type;
+  using bookmark_type = B;
 
-  typedef std::function<void()> event_handler_type;
+  using event_handler_type = std::function<void()>;
 
   event_handler_type on_file_loaded_;
   event_handler_type on_before_flush_;

@@ -8,7 +8,7 @@ class Client : public TCPClient
 {
 public:
   Client(std::string const &host, std::string const &port, NetworkManager tmanager)
-      : TCPClient(tmanager)
+    : TCPClient(tmanager)
   {
     Connect(host, port);
     this->OnMessage([](message_type const &value) { std::cout << value << std::endl; });

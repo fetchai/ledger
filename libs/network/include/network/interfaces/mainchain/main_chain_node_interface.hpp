@@ -13,15 +13,15 @@ namespace ledger {
 class MainChainNodeInterface
 {
 public:
-  typedef fetch::chain::MainChain::proof_type proof_type;
-  typedef fetch::chain::MainChain::block_type block_type;
-  typedef fetch::chain::MainChain::block_hash block_hash;
+  using proof_type = fetch::chain::MainChain::proof_type;
+  using block_type = fetch::chain::MainChain::block_type;
+  using block_hash = fetch::chain::MainChain::block_hash;
 
   enum
   {
     protocol_number = fetch::protocols::FetchProtocols::MAIN_CHAIN
   };
-  typedef fetch::protocols::MainChainProtocol protocol_class_type;
+  using protocol_class_type = fetch::protocols::MainChainProtocol;
 
   MainChainNodeInterface()          = default;
   virtual ~MainChainNodeInterface() = default;

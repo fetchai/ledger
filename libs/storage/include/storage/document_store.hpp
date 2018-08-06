@@ -13,46 +13,42 @@
 namespace fetch {
 namespace storage {
 
-template <std::size_t BS = 2048, typename A = FileBlockType<BS>, typename B = KeyValueIndex<>,
-          typename C = VersionedRandomAccessStack<A>, typename D = FileObject<C>>
+template <std::size_t BLOCK_SIZE = 2048, typename A = FileBlockType<BLOCK_SIZE>,
+          typename B = KeyValueIndex<>, typename C = VersionedRandomAccessStack<A>,
+          typename D = FileObject<C>>
 class DocumentStore
 {
 public:
-  enum
-  {
-    BLOCK_SIZE = BS
-  };
+  using self_type       = DocumentStore<BLOCK_SIZE, A, B, C, D>;
+  using byte_array_type = byte_array::ByteArray;
 
-  typedef DocumentStore<BS, A, B, C, D> self_type;
-  typedef byte_array::ByteArray         byte_array_type;
+  using file_block_type      = A;
+  using key_value_index_type = B;
+  using file_store_type      = C;
+  using file_object_type     = D;
 
-  typedef A file_block_type;
-  typedef B key_value_index_type;
-  typedef C file_store_type;
-  typedef D file_object_type;
+  using hash_type = byte_array::ConstByteArray;
 
-  typedef byte_array::ConstByteArray hash_type;
-
-  typedef typename key_value_index_type::index_type index_type;
+  using index_type = typename key_value_index_type::index_type;
 
   class DocumentFileImplementation : public file_object_type
   {
   public:
     DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
                                file_store_type &store)
-        : file_object_type(store), address_(address), store_(s)
+      : file_object_type(store), address_(address), store_(s)
     {}
 
     DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
                                file_store_type &store, std::size_t const &pos)
-        : file_object_type(store, pos), address_(address), store_(s)
+      : file_object_type(store, pos), address_(address), store_(s)
     {}
 
     ~DocumentFileImplementation() { store_->UpdateDocumentFile(*this); }
+
     DocumentFileImplementation(DocumentFileImplementation const &other) = delete;
     DocumentFileImplementation operator=(DocumentFileImplementation const &other) = delete;
-
-    DocumentFileImplementation(DocumentFileImplementation &&other) = default;
+    DocumentFileImplementation(DocumentFileImplementation &&other)                = default;
     DocumentFileImplementation &operator=(DocumentFileImplementation &&other) = default;
 
     byte_array::ConstByteArray const &address() const { return address_; }
@@ -172,17 +168,16 @@ public:
 
     std::lock_guard<mutex::Mutex> lock(mutex_);
     DocumentFile                  doc = GetDocumentFile(rid, false);
+
     if (!doc)
     {
       ret.failed = true;
     }
     else
     {
-
       ret.was_created = doc.was_created();
       if (!doc.was_created())
       {
-
         ret.document.Resize(doc.size());
         doc.Read(ret.document);
       }
@@ -193,17 +188,75 @@ public:
 
   void Set(ResourceID const &rid, byte_array::ConstByteArray const &value)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
-    DocumentFile                  doc = GetDocumentFile(rid, true);
-    doc.Seek(0);
-
-    if (doc.size() > value.size())
     {
-      doc.Shrink(value.size());
+      std::lock_guard<mutex::Mutex> lock(mutex_);
+      DocumentFile                  doc = GetDocumentFile(rid, true);
+      doc.Seek(0);
+
+      if (doc.size() > value.size())
+      {
+        doc.Shrink(value.size());
+      }
+
+      doc.Write(value);
+    }
+  }
+
+  // STL-like functionality
+  class iterator
+  {
+  public:
+    iterator(self_type *store, typename key_value_index_type::iterator it)
+      : wrapped_iterator_{it}, store_{store}
+    {}
+
+    iterator()                    = default;
+    iterator(iterator const &rhs) = default;
+    iterator(iterator &&rhs)      = default;
+    iterator &operator=(iterator const &rhs) = default;
+    iterator &operator=(iterator &&rhs) = default;
+
+    void operator++() { ++wrapped_iterator_; }
+
+    bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
+    bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
+
+    Document operator*() const
+    {
+      auto kv = *wrapped_iterator_;
+
+      DocumentFile doc(store_, kv.first, store_->file_store_, kv.second);
+
+      Document ret;
+      ret.document.Resize(doc.size());
+      doc.Read(ret.document);
+
+      return ret;
     }
 
-    doc.Write(value);
+  protected:
+    typename key_value_index_type::iterator wrapped_iterator_;
+    self_type *                             store_;
+  };
+
+  self_type::iterator Find(ResourceID const &rid)
+  {
+    byte_array::ConstByteArray const &address = rid.id();
+    auto                              it      = key_index_.Find(address);
+
+    return iterator(this, it);
   }
+
+  self_type::iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  {
+    byte_array::ConstByteArray const &address = rid.id();
+    auto                              it      = key_index_.GetSubtree(address, bits);
+
+    return iterator(this, it);
+  }
+
+  self_type::iterator begin() { return iterator(this, key_index_.begin()); }
+  self_type::iterator end() { return iterator(this, key_index_.end()); }
 
 protected:
   DocumentFile GetDocumentFile(ResourceID const &rid, bool const &create = true)
@@ -217,7 +270,6 @@ protected:
     }
     else if (!create)
     {
-
       return DocumentFile();
     }
 
@@ -227,13 +279,12 @@ protected:
   }
 
   mutex::Mutex         mutex_{ __LINE__, __FILE__ };
-  key_value_index_type key_index_;
-  file_store_type      file_store_;
+  key_value_index_type key_index_;   // Document store made up of key_index to locate and
+  file_store_type      file_store_;  // file store to store files
 
 private:
   void UpdateDocumentFile(DocumentFileImplementation &doc)
   {
-
     doc.Flush();
     key_index_.Set(doc.address(), doc.id(), doc.Hash());
 

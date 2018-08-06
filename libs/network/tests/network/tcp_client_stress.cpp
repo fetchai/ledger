@@ -57,7 +57,7 @@ class Client : public TCPClient
 {
 public:
   Client(std::string const &host, std::string const &port, NetworkManager &nmanager)
-      : TCPClient(nmanager)
+    : TCPClient(nmanager)
   {
     Connect(host, port);
     this->OnMessage([](message_type const &value) {
@@ -83,7 +83,7 @@ class SlowClient : public TCPClient
 {
 public:
   SlowClient(std::string const &host, std::string const &port, NetworkManager &nmanager)
-      : TCPClient(nmanager)
+    : TCPClient(nmanager)
   {
     Connect(host, port);
     this->OnMessage([](message_type const &value) {
@@ -113,7 +113,7 @@ class VerifyClient : public TCPClient
 {
 public:
   VerifyClient(std::string const &host, std::string const &port, NetworkManager &nmanager)
-      : TCPClient(nmanager)
+    : TCPClient(nmanager)
   {
     Connect(host, port);
     this->OnMessage([](message_type const &value) {
@@ -634,7 +634,7 @@ void TestCase14(std::string host, std::string port)
     // Precreate data, this handles clearing global counter etc.
     std::vector<message_type> sendData = CreateTestData(index);
 
-    for (auto i : clients)
+    for (auto const &i : clients)
     {
       while (!i->is_alive())
       {
@@ -704,7 +704,7 @@ void TestCase14(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase15(std::string host, std::string port)
+void TestCase15(std::string host, std::string const &port)
 {
   std::cerr << "\nTEST CASE 15. Threads: " << N << std::endl;
   std::cerr << "Info: Killing during transmission, multiple clients" << std::endl;
@@ -756,7 +756,7 @@ void TestCase15(std::string host, std::string port)
     {
       for (auto const &i : sendData)
       {
-        for (auto client : clients)
+        for (auto const &client : clients)
         {
           std::thread([client, i]() { client->Send(i); }).detach();
         }

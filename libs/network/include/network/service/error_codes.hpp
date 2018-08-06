@@ -3,7 +3,7 @@
 namespace fetch {
 namespace service {
 namespace error {
-typedef typename serializers::error::error_type error_type;
+using error_type                        = typename serializers::error::error_type;
 error_type const ERROR_SERVICE_PROTOCOL = 1 << 16;  // TODO: move to global place
 
 error_type const USER_ERROR       = 0 | ERROR_SERVICE_PROTOCOL;

@@ -22,7 +22,7 @@ public:
    * subsequently member functions from classes with (to this
    * implementation) unknown base class.
    */
-  typedef std::function<void(fetch::byte_array::ConstByteArray)> function_type;
+  using function_type = std::function<void(fetch::byte_array::ConstByteArray)>;
 
   virtual ~AbstractPublicationFeed() {}
 

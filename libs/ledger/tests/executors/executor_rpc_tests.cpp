@@ -36,14 +36,16 @@ protected:
     static const uint16_t EXECUTOR_RPC_PORT = 9001;
 
     storage_.reset(new underlying_storage_type);
-    network_manager_.reset(new underlying_network_manager_type{2});
+    network_manager_ = std::make_unique<underlying_network_manager_type>(2);
     network_manager_->Start();
 
     // create the executor service
-    service_.reset(new underlying_service_type{EXECUTOR_RPC_PORT, *network_manager_, storage_});
+    service_ =
+        std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
 
     // create the executor client
-    executor_.reset(new underlying_client_type{"127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_});
+    executor_ =
+        std::make_unique<underlying_client_type>("127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_);
 
     // wait for the executor to connect etc.
     while (!executor_->is_alive())

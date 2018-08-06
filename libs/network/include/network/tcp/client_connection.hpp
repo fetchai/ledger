@@ -10,6 +10,7 @@
 
 #include "network/fetch_asio.hpp"
 #include <atomic>
+#include <utility>
 namespace fetch {
 namespace network {
 
@@ -22,13 +23,13 @@ namespace network {
 class ClientConnection : public AbstractConnection
 {
 public:
-  typedef typename AbstractConnection::shared_type connection_type;
+  using connection_type = typename AbstractConnection::shared_type;
 
-  typedef typename AbstractConnection::connection_handle_type handle_type;
+  using handle_type = typename AbstractConnection::connection_handle_type;
 
   ClientConnection(std::weak_ptr<asio::ip::tcp::tcp::socket> socket,
                    std::weak_ptr<ClientManager>              manager)
-      : socket_(socket), manager_(manager), write_mutex_(__LINE__, __FILE__)
+    : socket_(std::move(socket)), manager_(std::move(manager)), write_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();

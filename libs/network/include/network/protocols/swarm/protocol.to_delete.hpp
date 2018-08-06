@@ -17,7 +17,7 @@ class SwarmProtocol : public SwarmController,
 public:
   SwarmProtocol(network::NetworkManager *network_manager, uint64_t const &protocol,
                 SharedNodeDetails &details)
-      : SwarmController(protocol, network_manager, details), fetch::service::Protocol()
+    : SwarmController(protocol, network_manager, details), fetch::service::Protocol()
   {
     using namespace fetch::service;
 
@@ -519,8 +519,8 @@ public:
       this->with_shards_do([req](std::vector<client_shared_ptr_type> shards,
                                  std::vector<EntryPoint> const &     detail_list) {
         std::cout << "Sending tx to " << shards.size() << " shards" << std::endl;
-        typedef fetch::chain::Transaction transaction_type;
-        transaction_type                  tx;
+        using transaction_type = fetch::chain::Transaction;
+        transaction_type tx;
         tx.set_arguments(req.body());
         for (auto &s : shards)
         {

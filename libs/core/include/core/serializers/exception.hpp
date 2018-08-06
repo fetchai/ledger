@@ -3,11 +3,12 @@
 #include "core/logger.hpp"
 #include <exception>
 #include <string>
+#include <utility>
 namespace fetch {
 namespace serializers {
 
 namespace error {
-typedef uint64_t error_type;
+using error_type            = uint64_t;
 error_type const TYPE_ERROR = 0;
 }  // namespace error
 
@@ -22,7 +23,7 @@ public:
   }
 
   SerializableException(std::string explanation)
-      : error_code_(error::TYPE_ERROR), explanation_(explanation)
+    : error_code_(error::TYPE_ERROR), explanation_(std::move(explanation))
   {
     LOG_STACK_TRACE_POINT;
 
@@ -30,7 +31,7 @@ public:
   }
 
   SerializableException(byte_array::ConstByteArray const &explanation)
-      : error_code_(error::TYPE_ERROR), explanation_(std::string(explanation))
+    : error_code_(error::TYPE_ERROR), explanation_(std::string(explanation))
   {
     LOG_STACK_TRACE_POINT;
 
@@ -38,7 +39,7 @@ public:
   }
 
   SerializableException(error::error_type error_code, std::string explanation)
-      : error_code_(error_code), explanation_(explanation)
+    : error_code_(error_code), explanation_(std::move(explanation))
   {
     LOG_STACK_TRACE_POINT;
 
@@ -46,7 +47,7 @@ public:
   }
 
   SerializableException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
-      : error_code_(error_code), explanation_(std::string(explanation))
+    : error_code_(error_code), explanation_(std::string(explanation))
   {
     LOG_STACK_TRACE_POINT;
 

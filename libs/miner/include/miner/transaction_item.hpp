@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "ledger/chain/mutable_transaction.hpp"
 
 namespace fetch {
@@ -9,7 +11,8 @@ class TransactionItem
 {
 public:
   // Construction / Destruction
-  TransactionItem(chain::TransactionSummary const &tx, std::size_t id) : summary_(tx), id_(id) {}
+  TransactionItem(chain::TransactionSummary tx, std::size_t id) : summary_(std::move(tx)), id_(id)
+  {}
   ~TransactionItem() = default;
 
   chain::TransactionSummary const &summary() const { return summary_; }

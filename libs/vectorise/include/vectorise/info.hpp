@@ -8,8 +8,8 @@ namespace vectorize {
 template <typename T, std::size_t>
 struct VectorInfo
 {
-  typedef T naitve_type;
-  typedef T register_type;
+  using naitve_type   = T;
+  using register_type = T;
 };
 }  // namespace vectorize
 }  // namespace fetch

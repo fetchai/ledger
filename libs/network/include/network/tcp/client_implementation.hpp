@@ -16,6 +16,7 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <utility>
 
 namespace fetch {
 namespace network {
@@ -23,20 +24,21 @@ namespace network {
 class TCPClientImplementation final : public AbstractConnection
 {
 public:
-  typedef NetworkManager                      network_manager_type;
-  typedef std::weak_ptr<AbstractConnection>   self_type;
-  typedef std::shared_ptr<AbstractConnection> shared_self_type;
-  typedef asio::ip::tcp::tcp::socket          socket_type;
-  typedef asio::io_service::strand            strand_type;
-  typedef asio::ip::tcp::resolver             resolver_type;
-  typedef std::mutex                          mutex_type;
+  using network_manager_type = NetworkManager;
+  using self_type            = std::weak_ptr<AbstractConnection>;
+  using shared_self_type     = std::shared_ptr<AbstractConnection>;
+  using socket_type          = asio::ip::tcp::tcp::socket;
+  using strand_type          = asio::io_service::strand;
+  using resolver_type        = asio::ip::tcp::resolver;
+  using mutex_type           = std::mutex;
 
   TCPClientImplementation(network_manager_type const &network_manager) noexcept
-      : networkManager_{network_manager}
+    : networkManager_(network_manager)
   {}
 
   TCPClientImplementation(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation(TCPClientImplementation &&rhs)      = delete;
+
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation &&rhs) = delete;
 

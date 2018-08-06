@@ -18,7 +18,7 @@ public:
   HTTPModule &operator=(HTTPModule const &rhs) = delete;
   HTTPModule &operator=(HTTPModule &&rhs) = delete;
 
-  typedef std::function<HTTPResponse(ViewParameters, HTTPRequest)> view_type;
+  using view_type = std::function<HTTPResponse(ViewParameters, HTTPRequest)>;
 
   struct UnmountedView
   {

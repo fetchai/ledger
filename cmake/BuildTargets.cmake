@@ -151,6 +151,8 @@ endfunction(configure_library_targets)
 
 macro(detect_environment)
 
+  set (CMAKE_EXPORT_COMPILE_COMMANDS  ON)
+
   # detect if we are running in a Jetbrains IDE
   set(FETCH_IS_JETBRAINS_IDE FALSE)
   if ($ENV{JETBRAINS_IDE})
@@ -170,7 +172,13 @@ macro(detect_environment)
       message(STATUS "clang-tidy: disabled")
     else()
       message(STATUS "clang-tidy: ${CLANG_TIDY_EXE}")
-      set(FETCH_CLANG_TIDY_CFG "${CLANG_TIDY_EXE}" "-checks=*")
+
+      if (FETCH_WARNINGS_AS_ERRORS)
+        set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=file -warnings-as-errors=*")
+      else()
+        set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=file")
+      endif ()
+
     endif()
 
   endif(FETCH_ENABLE_CLANG_TIDY)

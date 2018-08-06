@@ -21,7 +21,7 @@ public:
    * calls
    */
   QuickStartService(fetch::network::NetworkManager tm, uint16_t tcpPort)
-      : ServiceServer(tcpPort, tm)
+    : ServiceServer(tcpPort, tm)
   {
     // Macro used for debugging
     LOG_STACK_TRACE_POINT;

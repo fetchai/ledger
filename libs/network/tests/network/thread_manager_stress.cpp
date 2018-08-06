@@ -43,72 +43,6 @@ void TestCase1()
 }
 
 template <std::size_t N = 1>
-void TestCase2()
-{
-  std::cout << "TEST CASE 2. Threads: " << N << std::endl;
-  std::cout << "Info: Testing thread manager operation when it is being moved" << std::endl;
-
-  {
-    NetworkManager tmanager(N);
-    tmanager.Start();
-
-    std::atomic<int> counter{0};
-
-    tmanager.Post([&counter]() {
-      for (std::size_t i = 0; i < 5; ++i)
-      {
-        counter++;
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      }
-    });
-
-    while (true)
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      if (counter == 5)
-      {
-        break;
-      }
-
-      std::cout << "Waiting for counter, test 2.0 -" << counter << std::endl;
-    }
-
-    tmanager.Stop();
-  }
-
-  {
-    std::shared_ptr<NetworkManager> shared = std::make_shared<NetworkManager>(N);
-    shared->Start();
-
-    std::atomic<int> counter{0};
-
-    shared->Post([&counter]() {
-      for (std::size_t i = 0; i < 5; ++i)
-      {
-        counter++;
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      }
-    });
-
-    NetworkManager tm(std::move(*shared));
-    shared.reset();
-
-    while (true)
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      if (counter == 5)
-      {
-        break;
-      }
-
-      std::cout << "Waiting for counter, test 2.1 -" << counter << std::endl;
-    }
-  }
-
-  std::cout << "Success." << std::endl << std::endl;
-}
-
-template <std::size_t N = 1>
 void TestCase3()
 {
   std::cout << "TEST CASE 3. Threads: " << N << std::endl;
@@ -178,12 +112,10 @@ int main(int argc, char *argv[])
 {
 
   TestCase1<1>();
-  TestCase2<1>();
   TestCase3<1>();
   // TestCase4<1>(); // fails
 
   TestCase1<10>();
-  TestCase2<10>();
   TestCase3<10>();
   // TestCase4<10>();
 

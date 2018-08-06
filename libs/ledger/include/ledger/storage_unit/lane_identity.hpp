@@ -1,4 +1,6 @@
 #pragma once
+#include <utility>
+
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/service/client.hpp"
@@ -22,8 +24,8 @@ public:
     PING_MAGIC = 1337
   };
 
-  LaneIdentity(client_register_type reg, network_manager_type nm, crypto::Identity identity)
-      : identity_(identity), register_(reg), manager_(nm)
+  LaneIdentity(client_register_type reg, network_manager_type const &nm, crypto::Identity identity)
+    : identity_(identity), register_(std::move(reg)), manager_(nm)
   {
     lane_        = uint32_t(-1);
     total_lanes_ = 0;
@@ -81,8 +83,9 @@ public:
 
   void SetTotalLanes(lane_type const &t) { total_lanes_ = t; }
   /// @}
-  typedef std::function<byte_array::ConstByteArray(byte_array::ConstByteArray const &)>
-       callable_sign_message_type;
+  using callable_sign_message_type =
+      std::function<byte_array::ConstByteArray(byte_array::ConstByteArray const &)>;
+
   void OnSignMessage(callable_sign_message_type const &fnc) { on_sign_message_ = fnc; }
 
 private:

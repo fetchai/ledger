@@ -20,7 +20,7 @@ public:
     using timepoint_type = clock_type::time_point;
 
     HistoryElement(tx_digest_type const &h, std::size_t s, lane_set_type l)
-        : hash(h), slice(s), lanes(std::move(l))
+      : hash(h), slice(s), lanes(std::move(l))
     {}
     HistoryElement(HistoryElement const &) = default;
 

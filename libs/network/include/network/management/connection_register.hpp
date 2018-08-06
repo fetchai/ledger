@@ -14,14 +14,15 @@ template <typename G>
 class ConnectionRegisterImpl final : public AbstractConnectionRegister
 {
 public:
-  typedef typename AbstractConnection::connection_handle_type connection_handle_type;
-  typedef std::weak_ptr<AbstractConnection>                   weak_connection_type;
-  typedef std::shared_ptr<AbstractConnection>                 shared_connection_type;
-  typedef service::ServiceClient                              service_client_type;
-  typedef std::shared_ptr<service::ServiceClient>             shared_service_client_type;
-  typedef std::weak_ptr<service::ServiceClient>               weak_service_client_type;
-  typedef G                                                   details_type;
-  typedef mutex::Mutex                                        mutex_type;
+  struct LockableDetails final : public details_type, public mutex_type
+  using connection_handle_type     = typename AbstractConnection::connection_handle_type;
+  using weak_connection_type       = std::weak_ptr<AbstractConnection>;
+  using shared_connection_type     = std::shared_ptr<AbstractConnection>;
+  using service_client_type        = service::ServiceClient;
+  using shared_service_client_type = std::shared_ptr<service::ServiceClient>;
+  using weak_service_client_type   = std::weak_ptr<service::ServiceClient>;
+  using details_type               = G;
+  using mutex_type = mutex::Mutex;
 
   struct LockableDetails final : public details_type, public mutex_type
   {
@@ -30,12 +31,11 @@ public:
     {
     }
   };
-
-  typedef std::unordered_map<connection_handle_type, std::shared_ptr<LockableDetails>>
-                                                      details_map_type;
-  typedef std::function<void(connection_handle_type)> callback_client_enter_type;
-  typedef std::function<void(connection_handle_type)> callback_client_leave_type;
-  typedef std::unordered_map<connection_handle_type, weak_connection_type> connection_map_type;
+  using details_map_type =
+      std::unordered_map<connection_handle_type, std::shared_ptr<LockableDetails>>;
+  using callback_client_enter_type = std::function<void(connection_handle_type)>;
+  using callback_client_leave_type = std::function<void(connection_handle_type)>;
+  using connection_map_type = std::unordered_map<connection_handle_type, weak_connection_type>;
 
   ConnectionRegisterImpl()                                    = default;
   ConnectionRegisterImpl(ConnectionRegisterImpl const &other) = delete;
@@ -182,18 +182,18 @@ template <typename G>
 class ConnectionRegister
 {
 public:
-  typedef typename AbstractConnection::connection_handle_type  connection_handle_type;
-  typedef std::weak_ptr<AbstractConnection>                    weak_connection_type;
-  typedef std::shared_ptr<AbstractConnection>                  shared_connection_type;
-  typedef std::shared_ptr<ConnectionRegisterImpl<G>>           shared_implementation_pointer_type;
-  typedef typename ConnectionRegisterImpl<G>::LockableDetails  lockable_details_type;
-  typedef std::shared_ptr<service::ServiceClient>              shared_service_client_type;
-  typedef std::weak_ptr<service::ServiceClient>                weak_service_client_type;
-  typedef AbstractConnectionRegister::service_map_type         service_map_type;
-  typedef typename ConnectionRegisterImpl<G>::details_map_type details_map_type;
-  typedef std::function<void(connection_handle_type)>          callback_client_enter_type;
-  typedef std::function<void(connection_handle_type)>          callback_client_leave_type;
-  typedef std::unordered_map<connection_handle_type, weak_connection_type> connection_map_type;
+  using connection_handle_type             = typename AbstractConnection::connection_handle_type;
+  using weak_connection_type               = std::weak_ptr<AbstractConnection>;
+  using shared_connection_type             = std::shared_ptr<AbstractConnection>;
+  using shared_implementation_pointer_type = std::shared_ptr<ConnectionRegisterImpl<G>>;
+  using lockable_details_type              = typename ConnectionRegisterImpl<G>::LockableDetails;
+  using shared_service_client_type         = std::shared_ptr<service::ServiceClient>;
+  using weak_service_client_type           = std::weak_ptr<service::ServiceClient>;
+  using service_map_type                   = AbstractConnectionRegister::service_map_type;
+  using details_map_type                   = typename ConnectionRegisterImpl<G>::details_map_type;
+  using callback_client_enter_type         = std::function<void(connection_handle_type)>;
+  using callback_client_leave_type         = std::function<void(connection_handle_type)>;
+  using connection_map_type = std::unordered_map<connection_handle_type, weak_connection_type>;
   ConnectionRegister() { ptr_ = std::make_shared<ConnectionRegisterImpl<G>>(); }
 
   template <typename T, typename... Args>

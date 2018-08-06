@@ -4,6 +4,8 @@
 #include "network/service/function.hpp"
 #include "network/generics/subscriptions_container.hpp"
 #include "network/generics/work_items_queue.hpp"
+#include <utility>
+
 #include <vector>
 
 namespace fetch {
@@ -28,11 +30,15 @@ public:
     BLOCK_PUBLISH      = 3,
   };
 
-  MainChainProtocol(protocol_handler_type const &p, register_type const &r,
-                    thread_pool_type const &nm, chain::MainChain *chain,
-                    const std::string &identifier)
-    : Protocol(), protocol_(p), register_(r), thread_pool_(nm), chain_(chain), running_(false),
-      identifier_(identifier)
+  MainChainProtocol(protocol_handler_type const &p, register_type r, thread_pool_type nm,
+                    chain::MainChain *node)
+    : Protocol()
+    , protocol_(p)
+    , register_(std::move(r))
+    , thread_pool_(std::move(nm))
+    , chain_(node)
+    , running_(false)
+    , identifier_(identifier)$
   {
     this->Expose(GET_HEADER, this, &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this, &self_type::GetHeaviestChain);

@@ -19,7 +19,7 @@ class NetworkBenchmarkService : public service::ServiceServer<fetch::network::TC
 {
 public:
   NetworkBenchmarkService(fetch::network::NetworkManager tm, uint16_t tcpPort, uint16_t httpPort)
-      : ServiceServer(tcpPort, tm), HTTPServer(httpPort, tm)
+    : ServiceServer(tcpPort, tm), HTTPServer(httpPort, tm)
   {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("Constructing test node service with TCP port: ", tcpPort,

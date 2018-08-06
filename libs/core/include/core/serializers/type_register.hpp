@@ -10,7 +10,7 @@ namespace serializers {
 template <typename T>
 struct TypeRegister
 {
-  typedef uint8_t              value_type;
+  using value_type = uint8_t;
   static constexpr char const *name() { return typeid(T).name(); };
   enum
   {

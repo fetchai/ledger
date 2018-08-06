@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <time.h>
+#include <utility>
 
 #include "swarm_peer_location.hpp"
 
@@ -13,21 +14,21 @@ class SwarmKarmaPeer
 public:
   friend class SwarmKarmaPeers;
   SwarmKarmaPeer(const SwarmKarmaPeer &rhs)
-      : location_(rhs.location_), karma_(rhs.karma_), karmaTime_(rhs.karmaTime_)
+    : location_(rhs.location_), karma_(rhs.karma_), karmaTime_(rhs.karmaTime_)
   {}
 
-  explicit SwarmKarmaPeer(const SwarmPeerLocation &loc, double karma = 0.0)
-      : location_(loc), karma_(karma), karmaTime_(GetCurrentTime())
+  explicit SwarmKarmaPeer(SwarmPeerLocation loc, double karma = 0.0)
+    : location_(std::move(loc)), karma_(karma), karmaTime_(GetCurrentTime())
   {}
 
   explicit SwarmKarmaPeer(const std::string &loc, double karma = 0.0)
-      : location_(loc), karma_(karma), karmaTime_(GetCurrentTime())
+    : location_(loc), karma_(karma), karmaTime_(GetCurrentTime())
   {}
 
   SwarmKarmaPeer(SwarmKarmaPeer &&rhs)
-      : location_(std::move(rhs.location_))
-      , karma_(std::move(rhs.karma_))
-      , karmaTime_(std::move(rhs.karmaTime_))
+    : location_(std::move(rhs.location_))
+    , karma_(std::move(rhs.karma_))
+    , karmaTime_(std::move(rhs.karmaTime_))
   {}
 
   virtual ~SwarmKarmaPeer() {}

@@ -34,7 +34,7 @@ public:
    * a service.
    */
   FeedSubscriptionManager(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
-      : subscribe_mutex_(__LINE__, __FILE__), feed_(feed), publisher_(publisher)
+    : subscribe_mutex_(__LINE__, __FILE__), feed_(feed), publisher_(publisher)
   {}
 
   /* Attaches a feed to a given service.
