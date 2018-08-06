@@ -21,6 +21,7 @@ struct CommandLineArguments
   using adapter_list_type = fetch::network::Adapter::adapter_list_type;
 
   static const std::size_t DEFAULT_NUM_LANES     = 4;
+  static const std::size_t DEFAULT_NUM_SLICES    = 4;
   static const std::size_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
   static const uint16_t    DEFAULT_PORT          = 8000;
 
@@ -28,6 +29,7 @@ struct CommandLineArguments
   peer_list_type peers;
   std::size_t    num_executors;
   std::size_t    num_lanes;
+  std::size_t    num_slices;
   std::string    interface;
   std::string    dbdir;
 
@@ -43,6 +45,7 @@ struct CommandLineArguments
     parameters.add(args.num_executors, "executors", "The number of executors to configure",
                    DEFAULT_NUM_EXECUTORS);
     parameters.add(args.num_lanes, "lanes", "The number of lanes to be used", DEFAULT_NUM_LANES);
+    parameters.add(args.num_lanes, "slices", "The number of slices to be used", DEFAULT_NUM_SLICES);
     parameters.add(raw_peers, "peers",
                    "The comma separated list of addresses to initially connect to", std::string{});
     parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage",
@@ -159,7 +162,7 @@ int main(int argc, char **argv)
     // create and run the constellation
     auto constellation =
         fetch::Constellation::Create(args.port, args.num_executors, args.num_lanes,
-                                     fetch::Constellation::DEFAULT_NUM_SLICES, args.dbdir);
+                                     args.num_slices, args.dbdir);
     constellation->Run(args.peers);
 
     exit_code = EXIT_SUCCESS;
