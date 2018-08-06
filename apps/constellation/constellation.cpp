@@ -2,6 +2,7 @@
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "network/p2pservice/explore_http_interface.hpp"
+#include "network/p2pservice/p2p_http_interface.hpp"
 
 namespace fetch {
 
@@ -69,7 +70,13 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
 
   // Main chain
   main_chain_service_.reset(
-      new chain::MainChainService(db_prefix, main_chain_port_, *network_manager_.get()));
+      new chain::MainChainService(
+          db_prefix,
+          main_chain_port_,
+          *network_manager_.get(),
+          "node-" + std::to_string(main_chain_port_)
+      )
+  );
 
   // Mainchain remote
   main_chain_remote_.reset(new chain::MainChainRemoteControl());
@@ -99,6 +106,8 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
 
   // define the list of HTTP modules to be used
   http_modules_ = {
+    std::make_shared<p2p::P2PHttpInterface>(main_chain_service_->mainchain(),
+                                            main_chain_service_->mainchainprotocol()),
       std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
       std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_),
       std::make_shared<p2p::ExploreHttpInterface>(p2p_.get(), main_chain_service_->mainchain())};

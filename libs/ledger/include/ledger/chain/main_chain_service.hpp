@@ -54,6 +54,7 @@ public:
   };
 
   MainChainService(std::string const &db_dir, uint16_t port, fetch::network::NetworkManager tm,
+                   const std::string &identifier,
                    bool start_sync = true)
       : super_type(port, tm)
   {
@@ -78,7 +79,11 @@ public:
 
     mainchain_.reset(new mainchain_type());
     mainchain_protocol_.reset(
-      new mainchain_protocol_type(CHAIN, register_, thread_pool_, mainchain_.get()));
+        new mainchain_protocol_type(
+            CHAIN, register_, thread_pool_,
+            mainchain_.get(), identifier
+        )
+    );
     this->Add(CHAIN, mainchain_protocol_.get());
 
     controller_.reset(new controller_type(IDENTITY, identity_, register_, tm));
@@ -108,6 +113,7 @@ public:
   }
 
   mainchain_type *mainchain() { return mainchain_.get(); }
+  mainchain_protocol_type *mainchainprotocol() { return mainchain_protocol_.get(); }
 
 private:
   client_register_type register_;

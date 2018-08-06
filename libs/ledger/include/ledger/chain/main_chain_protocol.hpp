@@ -29,8 +29,10 @@ public:
   };
 
   MainChainProtocol(protocol_handler_type const &p, register_type const &r,
-                    thread_pool_type const &nm, chain::MainChain *chain)
-      : Protocol(), protocol_(p), register_(r), thread_pool_(nm), chain_(chain), running_(false)
+                    thread_pool_type const &nm, chain::MainChain *chain,
+                    const std::string &identifier)
+    : Protocol(), protocol_(p), register_(r), thread_pool_(nm), chain_(chain), running_(false),
+      identifier_(identifier)
   {
     this->Expose(GET_HEADER, this, &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this, &self_type::GetHeaviestChain);
@@ -51,8 +53,8 @@ public:
 
   void PublishBlock(const chain::MainChain::block_type &blk)
   {
-       LOG_STACK_TRACE_POINT;
-   fetch::logger.Warn("MINED A BLOCK:" + blk.summarise());
+    LOG_STACK_TRACE_POINT;
+    fetch::logger.Warn("MINED A BLOCK:" + blk.summarise());
     Publish(BLOCK_PUBLISH, blk);
   }
 
@@ -62,6 +64,17 @@ public:
     std::lock_guard<mutex::Mutex> lock(mutex_);
     blockPublishSubscriptions_.ConnectionDropped(connection_handle);
   }
+
+  std::vector<std::string> GetCurrentSubscriptions()
+  {
+    return blockPublishSubscriptions_ . GetAllSubscriptions(protocol_, BLOCK_PUBLISH);
+  }
+
+  const std::string &GetIdentity()
+  {
+    return identifier_;
+  }
+
 private:
   protocol_handler_type  protocol_;
   register_type          register_;
@@ -70,7 +83,6 @@ private:
 
   /// Protocol logic
   /// @{
-
 
   void IdleUntilPeers()
   {
@@ -105,8 +117,11 @@ private:
           return;
         }
 
-        auto peer = p.second;
-        auto ptr  = peer.lock();
+        auto peer    = p.second;
+        auto ptr     = peer.lock();
+        auto details = register_.GetDetails(ptr -> handle());
+
+        
 
         auto foo = new service::Function<void(chain::MainChain::block_type)>(
           [this](chain::MainChain::block_type block){
@@ -118,6 +133,7 @@ private:
           ptr,
           protocol_,
           BLOCK_PUBLISH,
+          "", // TODO(kll) make a connection name here.
           foo);
 
         auto prom = ptr->Call(protocol_, GET_HEAVIEST_CHAIN, ms);
@@ -244,6 +260,7 @@ private:
 
   std::atomic<bool>     running_;
   std::atomic<uint32_t> max_size_;
+  std::string            identifier_;
 };
 
 }  // namespace chain
