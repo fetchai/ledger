@@ -11,6 +11,12 @@ The Fetch ledger only depends on CMake, OpenSSL and ASIO. Optionally, it depends
 
 	$ sudo brew install cmake openssl
 
+Alternativly if you are using MacPorts:
+
+.. code:: bash
+
+	$ sudo port install cmake openssl
+
 On Ubuntu / Debian:
 
 .. code:: bash
