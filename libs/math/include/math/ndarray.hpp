@@ -143,7 +143,7 @@ public:
  **/
  void Reshape(std::vector<std::size_t> const &shape)
   {
-    assert(CanReshape());
+    assert(CanReshape(shape));
 
     shape_.clear();
     shape_.reserve(shape.size());
