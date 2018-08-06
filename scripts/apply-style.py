@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+
+#
+# CODE STYLE SCRIPT
+#
+# This script is used to run the clang-format based code style checks on the project.
+#
+# It can be run simply with the following command:
+#
+# ./scripts/apply-style.py
+#
+# By default the script will "fix" all style issues that it finds. However, if the user
+# only requires warning of the style issues then it is recommended to use the `-w` and
+# `-a` options.
+#
+
 import os
 import sys
 import argparse

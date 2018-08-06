@@ -1,4 +1,22 @@
 #!/usr/bin/env python3
+
+#
+# CODE STATIC ANALYSIS CHECKER
+#
+# This script is used to run the clang-tidy based static analysis checks on the project
+# code base. 
+#
+# Due to the way that the clang-tidy works. It is required that the project has been
+# completely built beforehand. After this has been completed the user can simply run
+#
+# ./scripts/run-static-analysis.py build/
+#
+# (Assuming that the users output build directory is present at `build/`)
+#
+# By default the script will only warn the user about issues. In order for the script to
+# apply the changes, the user must specify the `--fix` option.
+#
+
 import os
 import sys
 import fnmatch
