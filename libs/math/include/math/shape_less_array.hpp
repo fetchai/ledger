@@ -1577,6 +1577,12 @@ public:
     return copy;
   }
 
+  void Copy(self_type const &x)
+  {
+    this->data_ = x.data_.Copy();
+    this->size_ = x.size_;
+  }
+
   // TODO: Make referenced copy
 
   container_type const &data() const { return data_; }

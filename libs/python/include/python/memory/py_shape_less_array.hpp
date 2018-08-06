@@ -17,8 +17,21 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
       .def(py::init<const ShapeLessArray<T> &>())
       //    .def(py::self = py::self )
       .def("size", &ShapeLessArray<T>::size)
-      .def("Copy", &ShapeLessArray<T>::Copy)
-
+//      .def("Copy", &ShapeLessArray<T>::Copy)
+      .def("Copy",
+           []()
+           {
+               ShapeLessArray<T> a;
+               return a.Copy();
+           })
+      .def("Copy",
+           [](ShapeLessArray<T> &b)
+           {
+               ShapeLessArray<T> a;
+               a.LazyResize(b.size());
+               a.Copy(b);
+               return a;
+           })
       .def("InlineAdd", (ShapeLessArray<T> &
                          (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, memory::Range const &)) &
                             ShapeLessArray<T>::InlineAdd)

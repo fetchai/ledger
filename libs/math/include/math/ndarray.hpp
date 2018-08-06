@@ -22,13 +22,23 @@ public:
   NDArray(super_type const &arr) : super_type(arr) {}
 
   /*
-   * Returns a copy of the object
+   * Copies x into current object
+   */
+  void Copy(self_type const &x)
+  {
+    this->super_type::Copy(x);
+
+    this->LazyReshape(x.shape());
+  }
+  /*
+   * returns a copy of this object
    */
   self_type Copy()
   {
-      self_type copy = self_type(super_type::Copy());
-      copy.LazyReshape(this->shape());
-      return copy;
+    self_type copy = self_type(this->super_type::Copy());
+
+    copy.LazyReshape(this->shape());
+    return copy;
   }
 
   /*
