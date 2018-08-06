@@ -131,7 +131,7 @@ public:
       total *= s;
     }
     bool success = false;
-    (total == this->size()) ? success = false : sucess = true;
+    (total == this->size()) ? success = false : success = true;
     return success;
   }
 
