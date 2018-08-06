@@ -67,13 +67,14 @@ void Deserialize(T &serializer, ResourceID &b)
 class ResourceAddress : public ResourceID
 {
 public:
-  ResourceAddress(byte_array::ConstByteArray const &address)
+  explicit ResourceAddress(byte_array::ConstByteArray const &address)
     : ResourceID(crypto::Hash<crypto::SHA256>(address))
   {
     address_ = address;
   }
 
   byte_array::ConstByteArray address() const { return address_; }
+  ResourceID const &as_resource_id() const { return *this; }
 
 private:
   byte_array::ByteArray address_;

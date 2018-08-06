@@ -44,7 +44,7 @@ public:
 
     std::string const prefix = identifier.name_space() + ".state.";
 
-    return storage::ResourceID{prefix + static_cast<std::string>(resource)}.lane(log2_num_lanes);
+    return storage::ResourceAddress{prefix + static_cast<std::string>(resource)}.lane(log2_num_lanes);
   }
 
   /* Pushes a transaction into the queue of transactions that needs to

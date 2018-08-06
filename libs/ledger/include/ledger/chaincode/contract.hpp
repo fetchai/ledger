@@ -118,11 +118,11 @@ public:
 
   transaction_handler_map_type const &transaction_handlers() const { return transaction_handlers_; }
 
-  byte_array::ByteArray CreateStateIndex(byte_array::ByteArray const &suffix) const
+  storage::ResourceAddress CreateStateIndex(byte_array::ByteArray const &suffix) const
   {
     byte_array::ByteArray index(contract_identifier_.name_space());
     index = index + ".state." + suffix;
-    return index;
+    return storage::ResourceAddress{index};
   }
 
 protected:
