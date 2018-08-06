@@ -32,7 +32,7 @@ public:
   };
 
   using history_cache_type = std::vector<HistoryElement>;
-  using state_type         = fetch::ledger::StateInterface;
+  using storage_type       = fetch::ledger::StorageInterface;
 
   Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) override
   {
@@ -55,11 +55,11 @@ public:
     history.insert(history.end(), history_.begin(), history_.end());
   }
 
-  void SetStateInterface(state_type &state) { state_ = &state; }
+  void SetStorageInterface(storage_type &state) { state_ = &state; }
 
-  void ClearStateInterface() { state_ = nullptr; }
+  void ClearStorageInterface() { state_ = nullptr; }
 
 private:
-  state_type *       state_ = nullptr;
+  storage_type *     state_ = nullptr;
   history_cache_type history_;
 };

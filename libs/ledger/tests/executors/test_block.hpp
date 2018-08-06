@@ -115,15 +115,15 @@ struct TestBlock
 
   resource_id_map_type BuildResourceMap(uint32_t log2_num_lanes)
   {
-//#define PROFILE_GENERATION_TIME
+    //#define PROFILE_GENERATION_TIME
 
 #ifdef PROFILE_GENERATION_TIME
-    using Clock = std::chrono::high_resolution_clock;
+    using Clock     = std::chrono::high_resolution_clock;
     using Timepoint = Clock::time_point;
-    using Duration = Clock::duration;
+    using Duration  = Clock::duration;
 
     Timepoint const start = Clock::now();
-#endif // PROFILE_GENERATION_TIME
+#endif  // PROFILE_GENERATION_TIME
 
     uint32_t const num_lanes = 1u << log2_num_lanes;
 
@@ -145,7 +145,8 @@ struct TestBlock
       std::string const value  = oss.str();
 
       // create the resource
-      uint32_t const resource = fetch::storage::ResourceAddress{prefix + value}.lane(log2_num_lanes);
+      uint32_t const resource =
+          fetch::storage::ResourceAddress{prefix + value}.lane(log2_num_lanes);
 
       // locate the resource
       auto it = set.find(resource);
@@ -159,8 +160,10 @@ struct TestBlock
 #ifdef PROFILE_GENERATION_TIME
     Duration const elapsed_time = Clock::now() - start;
 
-    std::cerr << "Generation Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() << "ms" << std::endl;
-#endif // PROFILE_GENERATION_TIME
+    std::cerr << "Generation Time: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() << "ms"
+              << std::endl;
+#endif  // PROFILE_GENERATION_TIME
 
     return values;
   }

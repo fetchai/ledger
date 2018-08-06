@@ -8,7 +8,7 @@
 namespace fetch {
 namespace ledger {
 
-class StateInterface
+class StorageInterface
 {
 public:
   using Document        = storage::Document;
@@ -25,7 +25,7 @@ public:
   /// @}
 };
 
-class StorageUnitInterface : public StateInterface
+class StorageUnitInterface : public StorageInterface
 {
 public:
   using hash_type     = byte_array::ConstByteArray;
