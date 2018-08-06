@@ -9,22 +9,20 @@ pipeline {
   stages {
 
     stage('Builds') {
-      steps {
-        parallel {
+      parallel {
 
-          stage('Debug Build') {
-            steps {
-              sh './scripts/ci-tool.py -B Debug'
-            }
+        stage('Debug Build') {
+          steps {
+            sh './scripts/ci-tool.py -B Debug'
           }
-
-          stage('Release Build') {
-            steps {
-              sh './scripts/ci-tool.py -B Release'
-            }
-          }
-
         }
+
+        stage('Release Build') {
+          steps {
+            sh './scripts/ci-tool.py -B Release'
+          }
+        }
+
       }
     }
 
@@ -35,22 +33,20 @@ pipeline {
     }
 
     stage('Static Analysis') {
-      steps {
-        parallel {
+      parallel {
 
-          stage('Clang Tidy Checks') {
-              steps {
-                  sh './scripts/run-static-analysis.py build-release/'
-              }
-          }
-
-          stage('Clang Format Checks') {
-              steps {
-                  sh './scripts/apply-style.py -w -a'
-              }
-          }
-
+        stage('Clang Tidy Checks') {
+            steps {
+                sh './scripts/run-static-analysis.py build-release/'
+            }
         }
+
+        stage('Clang Format Checks') {
+            steps {
+                sh './scripts/apply-style.py -w -a'
+            }
+        }
+
       }
     }
 
