@@ -13,7 +13,7 @@ namespace linalg
 
 
 template<>
-class Blas< double, Computes( _C <= _alpha * _A * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL>
+class Blas< double, Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL>
 {
 public:
   using vector_register_type = typename Matrix< double >::vector_register_type;
@@ -30,10 +30,10 @@ public:
     std::size_t nrowa;
     std::size_t nrowb;
 
-    nrowa = c.height();
-    ncola = a.width();
+    nrowa = a.height();
+    ncola = c.height();
     nrowb = c.width();
-    if( (c.height() == 0) || ((c.width() == 0) || (((alpha == zero) || (a.width() == 0)) && (beta == one))) ) 
+    if( (c.height() == 0) || ((c.width() == 0) || (((alpha == zero) || (a.height() == 0)) && (beta == one))) ) 
     {
       return;
     } // endif
@@ -70,32 +70,24 @@ public:
     
     
     for(j = 0 ; j < c.width(); ++j )
-    {  if( beta == zero ) 
+    {  
+      for(i = 0 ; i < c.height(); ++i )
       {
+        temp = zero;
         
-        for(i = 0 ; i < c.height(); ++i )
+        for(l = 0 ; l < a.height(); ++l )
         {
-          c(i, j) = zero;
+          temp = temp + a(l, i) * b(j, l);
         }
-      }
-      else if ( beta != one )
-      {
         
-        for(i = 0 ; i < c.height(); ++i )
+        if( beta == zero ) 
         {
-          c(i, j) = beta * c(i, j);
+          c(i, j) = alpha * temp;
         }
-      } // endif
-      
-      
-      for(l = 0 ; l < a.width(); ++l )
-      {
-        temp = alpha * b(j, l);
-        
-        for(i = 0 ; i < c.height(); ++i )
+        else 
         {
-          c(i, j) = c(i, j) + temp * a(i, l);
-        }
+          c(i, j) = alpha * temp + beta * c(i, j);
+        } // endif
       }  
       }
     

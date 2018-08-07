@@ -23,8 +23,8 @@ namespace math {
  * according to the platform standard by using either
  * <fetch::memory::SharedArray> or <fetch::memory::Array>.
  */
-template <typename T, typename C = memory::SharedArray<T>, bool PAD_HEIGHT = false,
-          bool PAD_WIDTH = true>
+template <typename T, typename C = memory::SharedArray<T>, bool PAD_HEIGHT = true,
+          bool PAD_WIDTH = false>
 class RectangularArray : public math::ShapeLessArray<T, C>
 {
 public:
@@ -596,10 +596,10 @@ public:
   size_type width() const { return width_; }
 
   /* Returns the padded height of the array. */
-  size_type padded_height() const { return padded_width_; }
+  size_type padded_height() const { return padded_height_; }
 
   /* Returns the padded width of the array. */
-  size_type padded_width() const { return padded_height_; }
+  size_type padded_width() const { return padded_width_; }
 
   /* Returns the size of the array. */
   size_type size() const { return height_ * width_; }
@@ -616,18 +616,20 @@ private:
     padded_width_ = w;
     padded_height_  = h;
 
-    if (PAD_HEIGHT)
+    if (PAD_WIDTH)
     {
       padded_width_ =
           size_type(w / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
       if (padded_width_ < w) padded_width_ += vector_register_type::E_BLOCK_COUNT;
+      
     }
 
-    if (PAD_WIDTH)
+    if (PAD_HEIGHT)
     {
       padded_height_ =
           size_type(h / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
       if (padded_height_ < h) padded_height_ += vector_register_type::E_BLOCK_COUNT;
+      
     }
   }
 };

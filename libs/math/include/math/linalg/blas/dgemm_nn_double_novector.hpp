@@ -16,6 +16,8 @@ template<>
 class Blas< double, Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL>
 {
 public:
+  using vector_register_type = typename Matrix< double >::vector_register_type;
+
   void operator()(double const &alpha, Matrix< double > const &a, Matrix< double > const &b, double const &beta, Matrix< double > &c ) 
   {
     constexpr double one = 1.0;
@@ -40,9 +42,10 @@ public:
     {
       if( beta == zero ) 
       {
+        
         for(j = 0 ; j < c.width(); ++j )
         {
-          /* TODO: Vectorise loop */
+          
           for(i = 0 ; i < c.height(); ++i )
           {
             c(i, j) = zero;
@@ -51,9 +54,10 @@ public:
       }
       else 
       {
+        
         for(j = 0 ; j < c.width(); ++j )
         {
-          /* TODO: Vectorise loop */
+          
           for(i = 0 ; i < c.height(); ++i )
           {
             c(i, j) = beta * c(i, j);
@@ -64,12 +68,11 @@ public:
       return;
     } // endif
     
-    /* TODO: parallelise over threads */
+    
     for(j = 0 ; j < c.width(); ++j )
-    {
-      if( beta == zero ) 
+    {  if( beta == zero ) 
       {
-        /* TODO: Vectorise loop */
+        
         for(i = 0 ; i < c.height(); ++i )
         {
           c(i, j) = zero;
@@ -77,23 +80,25 @@ public:
       }
       else if ( beta != one )
       {
-        /* TODO: Vectorise loop */
+        
         for(i = 0 ; i < c.height(); ++i )
         {
           c(i, j) = beta * c(i, j);
         }
       } // endif
       
+      
       for(l = 0 ; l < a.width(); ++l )
       {
         temp = alpha * b(l, j);
-        /* TODO: Vectorise loop */
+        
         for(i = 0 ; i < c.height(); ++i )
         {
           c(i, j) = c(i, j) + temp * a(i, l);
         }
+      }  
       }
-    }
+    
     return;
     
   }

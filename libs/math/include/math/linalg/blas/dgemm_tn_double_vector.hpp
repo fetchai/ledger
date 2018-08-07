@@ -13,7 +13,7 @@ namespace linalg
 
 
 template<>
-class Blas< double, Computes( _C <= _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL>
+class Blas< double, Computes( _C <= _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE>
 {
 public:
   using vector_register_type = typename Matrix< double >::vector_register_type;
@@ -25,7 +25,6 @@ public:
     double temp;
     std::size_t i;
     std::size_t j;
-    std::size_t l;
     std::size_t ncola;
     std::size_t nrowa;
     std::size_t nrowb;
@@ -46,10 +45,14 @@ public:
         for(j = 0 ; j < c.width(); ++j )
         {
           
-          for(i = 0 ; i < c.height(); ++i )
-          {
-            c(i, j) = zero;
-          }
+          
+          vector_register_type vec_zero(zero);
+          
+          auto ret_slice = c.data().slice( c.padded_height() * j, c.height());
+          ret_slice.in_parallel().Apply([vec_zero](vector_register_type &vw_c ){
+            
+            vw_c = vec_zero;  
+          });
         }
       }
       else 
@@ -58,10 +61,15 @@ public:
         for(j = 0 ; j < c.width(); ++j )
         {
           
-          for(i = 0 ; i < c.height(); ++i )
-          {
-            c(i, j) = beta * c(i, j);
-          }
+          
+          vector_register_type vec_beta(beta);
+          
+          auto ret_slice = c.data().slice( c.padded_height() * j, c.height());
+          auto slice_c = c.data().slice( c.padded_height() * j, c.height());
+          ret_slice.in_parallel().Apply([vec_beta](vector_register_type const &vr_c, vector_register_type &vw_c ){
+            
+            vw_c = vec_beta * vr_c;  
+          }, slice_c);
         }
       } // endif
       
@@ -75,11 +83,12 @@ public:
       {
         temp = zero;
         
-        for(l = 0 ; l < a.height(); ++l )
-        {
-          temp = temp + a(l, i) * b(l, j);
-        }
         
+        auto slice_a = a.data().slice( a.padded_height() * i, a.height());
+        auto slice_b = b.data().slice( b.padded_height() * j, a.height());
+        temp = slice_a.in_parallel().SumReduce([](vector_register_type const &vr_a , vector_register_type const &vr_b ) {
+          return vr_a * vr_b;  
+        }, slice_b );
         if( beta == zero ) 
         {
           c(i, j) = alpha * temp;

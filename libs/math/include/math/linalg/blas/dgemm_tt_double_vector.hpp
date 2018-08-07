@@ -13,7 +13,7 @@ namespace linalg
 
 
 template<>
-class Blas< double, Computes( _C <= _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL>
+class Blas< double, Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::VECTORISE>
 {
 public:
   using vector_register_type = typename Matrix< double >::vector_register_type;
@@ -32,7 +32,7 @@ public:
 
     nrowa = a.height();
     ncola = c.height();
-    nrowb = a.height();
+    nrowb = c.width();
     if( (c.height() == 0) || ((c.width() == 0) || (((alpha == zero) || (a.height() == 0)) && (beta == one))) ) 
     {
       return;
@@ -46,10 +46,14 @@ public:
         for(j = 0 ; j < c.width(); ++j )
         {
           
-          for(i = 0 ; i < c.height(); ++i )
-          {
-            c(i, j) = zero;
-          }
+          
+          vector_register_type vec_zero(zero);
+          
+          auto ret_slice = c.data().slice( c.padded_height() * j, c.height());
+          ret_slice.in_parallel().Apply([vec_zero](vector_register_type &vw_c ){
+            
+            vw_c = vec_zero;  
+          });
         }
       }
       else 
@@ -58,10 +62,15 @@ public:
         for(j = 0 ; j < c.width(); ++j )
         {
           
-          for(i = 0 ; i < c.height(); ++i )
-          {
-            c(i, j) = beta * c(i, j);
-          }
+          
+          vector_register_type vec_beta(beta);
+          
+          auto ret_slice = c.data().slice( c.padded_height() * j, c.height());
+          auto slice_c = c.data().slice( c.padded_height() * j, c.height());
+          ret_slice.in_parallel().Apply([vec_beta](vector_register_type const &vr_c, vector_register_type &vw_c ){
+            
+            vw_c = vec_beta * vr_c;  
+          }, slice_c);
         }
       } // endif
       
@@ -77,7 +86,7 @@ public:
         
         for(l = 0 ; l < a.height(); ++l )
         {
-          temp = temp + a(l, i) * b(l, j);
+          temp = temp + a(l, i) * b(j, l);
         }
         
         if( beta == zero ) 
