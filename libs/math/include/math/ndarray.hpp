@@ -161,6 +161,9 @@ public:
    **/
   std::vector<std::size_t> const &shape() const { return shape_; }
 
+
+
+
 private:
   template <typename... Indices>
   void ComputeIndex(std::size_t const &N, std::size_t &index, std::size_t &shift,

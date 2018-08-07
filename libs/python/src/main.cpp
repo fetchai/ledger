@@ -27,6 +27,8 @@
 #include "python/math/correlation/py_jaccard.hpp"
 #include "python/math/correlation/py_pearson.hpp"
 
+#include "python/math/statistics/py_min.hpp"
+#include "python/math/statistics/py_max.hpp"
 #include "python/math/statistics/py_geometric_mean.hpp"
 #include "python/math/statistics/py_mean.hpp"
 #include "python/math/statistics/py_standard_deviation.hpp"
@@ -203,6 +205,9 @@ PYBIND11_MODULE(fetch, module)
 
   ////////////
   // Statisticsfetch_math_statistics);
+  fetch::math::statistics::BuildMinStatistics("Min", ns_fetch_math_statistics);
+  fetch::math::statistics::BuildMaxStatistics("Max", ns_fetch_math_statistics);
+  fetch::math::statistics::BuildMeanStatistics("Mean", ns_fetch_math_statistics);
   fetch::math::statistics::BuildGeometricMeanStatistics("GeometricMean", ns_fetch_math_statistics);
   fetch::math::statistics::BuildVarianceStatistics("Variance", ns_fetch_math_statistics);
   fetch::math::statistics::BuildStandardDeviationStatistics("StandardDeviation",
