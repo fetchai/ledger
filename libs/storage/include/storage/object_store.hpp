@@ -32,21 +32,23 @@ public:
   class iterator;
 
   /**
-   * Create a new file(s) with these args
+   * Create a new file for the object store with the filename parameters for the document,
+   * and the index to it.
+   *
+   * If these arguments correspond to existing files, it will overwrite them
    */
-  template <typename... Args>
-  void New(Args &&... args)
+  void New(std::string const &doc_file, std::string const &index_file)
   {
-    store_.New(std::forward<Args>(args)...);
+    store_.New(doc_file, index_file);
   }
 
   /**
-   * Load a file(s) with these args
+   * Load a file into the document store with the filename parameters for the document,
+   * and the index to it
    */
-  template <typename... Args>
-  void Load(Args &&... args)
+  void Load(std::string const &doc_file, std::string const &index_file)
   {
-    store_.Load(std::forward<Args>(args)...);
+    store_.New(doc_file, index_file);
   }
 
   /**

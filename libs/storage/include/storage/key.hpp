@@ -26,7 +26,7 @@ struct Key
     BYTES  = S / 8
   };
 
-  Key() { memset(&key_, 0, BYTES); }
+  Key() { memset(key_, 0, BYTES); }
 
   Key(byte_array::ConstByteArray const &key)
   {
@@ -95,7 +95,7 @@ struct Key
     byte_array::ByteArray ret;
     ret.Resize(BYTES);
 
-    memcpy(ret.pointer(), &key_, BYTES);
+    memcpy(ret.pointer(), key_, BYTES);
 
     return ret;
   }
