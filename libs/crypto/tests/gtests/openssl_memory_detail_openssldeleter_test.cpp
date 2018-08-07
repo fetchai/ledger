@@ -58,7 +58,7 @@ using OpenSSLDeleter_forTesting = OpenSSLDeleter<
 class OpenSSLDeleterTest : public testing::Test
 {
 protected:
-  MockDeleterPrimitive::SharedPtr &mock = MockDeleterPrimitive::value;
+  MockDeleterPrimitive::SharedPtr &mock_ = MockDeleterPrimitive::value;
 
   void SetUp() override { mock = std::make_shared<MockDeleterPrimitive::Type>(); }
 

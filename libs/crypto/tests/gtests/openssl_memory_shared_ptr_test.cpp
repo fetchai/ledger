@@ -42,7 +42,7 @@ protected:
   template <const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
   using ossl_shared_ptr__for_Testing = ossl_shared_ptr<TestType, P_DeleteStrategy, Deleter>;
 
-  MockDeleterPrimitive::SharedPtr &mock = MockDeleterPrimitive::value;
+  MockDeleterPrimitive::SharedPtr &mock_ = MockDeleterPrimitive::value;
 
   void SetUp() override { mock = std::make_shared<MockDeleterPrimitive::Type>(); }
 

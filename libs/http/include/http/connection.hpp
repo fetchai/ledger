@@ -25,7 +25,7 @@ public:
   using shared_request_type = std::shared_ptr<HTTPRequest>;
   using buffer_ptr_type     = std::shared_ptr<asio::streambuf>;
 
-  HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
+  HTTPConnection(asio::ip::tcp::tcp::socket socket_, HTTPConnectionManager &manager)
     : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
@@ -37,15 +37,15 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    manager_.Leave(handle_);
+    manager_.Leave(handle);
   }
 
   void Start()
   {
     LOG_STACK_TRACE_POINT;
 
-    is_open_ = true;
-    handle_  = manager_.Join(shared_from_this());
+    is_open = true;
+    handle  = manager_.Join(shared_from_this());
     if (is_open_) ReadHeader();
   }
 
@@ -66,7 +66,7 @@ public:
 
   std::string Address() override { return socket_.remote_endpoint().address().to_string(); }
 
-  asio::ip::tcp::tcp::socket &socket() { return socket_; }
+  asio::ip::tcp::tcp::socket &socket() { return socket_(); }
 
 public:
   void ReadHeader(buffer_ptr_type buffer_ptr = nullptr)
@@ -110,7 +110,7 @@ public:
     {
       HTTPRequest::SetBody(*request, *buffer_ptr);
 
-      manager_.PushRequest(handle_, *request);
+      manager_.PushRequest(handle, *request);
 
       if (is_open_) ReadHeader(buffer_ptr);
       return;
@@ -172,7 +172,7 @@ public:
       }
       else
       {
-        manager_.Leave(handle_);
+        manager_.Leave(handle);
       }
     };
 
@@ -183,17 +183,18 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    is_open_ = false;
-    manager_.Leave(handle_);
+    is_open = false;
+    manager_.Leave(handle);
   }
 
+private:
   asio::ip::tcp::tcp::socket socket_;
   HTTPConnectionManager &    manager_;
   response_queue_type        write_queue_;
   fetch::mutex::Mutex        write_mutex_;
 
-  handle_type handle_;
-  bool        is_open_ = false;
+  handle_type handle;
+  bool        is_open = false;
 };
 }  // namespace http
 }  // namespace fetch

@@ -22,15 +22,6 @@ public:
   SwarmAgentNaive operator=(SwarmAgentNaive &rhs) = delete;
   SwarmAgentNaive operator=(SwarmAgentNaive &&rhs) = delete;
 
-  std::set<std::string> onceAndFuturePeers_;
-  std::set<std::string> initialPeers_;
-
-  std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
-  std::string                                identifier_;
-  uint32_t                                   maxpeers_;
-  uint32_t                                   blockCounter_;
-  int                                        id_;
-
   virtual ~SwarmAgentNaive() {}
 
   void addInitialPeer(const std::string &host)
@@ -40,10 +31,10 @@ public:
   }
 
   SwarmAgentNaive(std::shared_ptr<SwarmAgentApi> api, const std::string &identifier, int id,
-                  std::shared_ptr<fetch::swarm::SwarmRandom> rnd, uint32_t maxpeers)
-    : rnd_(std::move(rnd)), identifier_(identifier), maxpeers_(maxpeers), blockCounter_(0), id_(id)
+                  std::shared_ptr<fetch::swarm::SwarmRandom> rnd)
+    : rnd_(std::move(rnd)), id(id)
   {
-    api->OnIdle([this, api, identifier] {
+    api->OnIdle([this, api, identifier_] {
       auto goodPeers = api->GetPeers(10, -0.5);
       if (goodPeers.empty())
       {
@@ -111,6 +102,10 @@ public:
           api->AddKarmaMax(host, 2.0, 10.0);
         });
   }
+
+private:
+  std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
+
 };
 
 }  // namespace swarm

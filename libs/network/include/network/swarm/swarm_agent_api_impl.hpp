@@ -18,10 +18,6 @@ public:
   SwarmAgentApiImpl operator=(SwarmAgentApiImpl &rhs) = delete;
   SwarmAgentApiImpl operator=(SwarmAgentApiImpl &&rhs) = delete;
 
-  std::shared_ptr<threading_system_type> threadingSystem_;
-  std::string                            identifier_;
-  uint32_t                               idlespeed_;
-
   explicit SwarmAgentApiImpl(std::string identifier, uint32_t idlespeed)
     : identifier_(std::move(identifier)), idlespeed_(idlespeed)
   {
@@ -57,7 +53,7 @@ public:
     threadingSystem_->Post(lambd);
   }
 
-  int idleCount = 0;
+  int idle_count = 0;
 
   void DoIdle()
   {
@@ -374,6 +370,10 @@ public:
   virtual double GetCost(const std::string &host) { return 1.0; }
 
 protected:
+  std::shared_ptr<threading_system_type> threading_system_;
+  std::string                            identifier_;
+  uint32_t                               idlespeed_;
+
   std::function<void()> onIdle_;
   std::function<void()> onPeerless_;
 

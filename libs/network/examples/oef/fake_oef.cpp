@@ -19,10 +19,10 @@ using namespace fetch::commandline;
 struct Transaction
 {
   int64_t               amount;
-  byte_array::ByteArray fromAddress;
+  byte_array::ByteArray from_address;
   byte_array::ByteArray notes;
   uint64_t              time;
-  byte_array::ByteArray toAddress;
+  byte_array::ByteArray to_address;
   byte_array::ByteArray json;
 };
 
@@ -242,11 +242,11 @@ public:
   }
 
 public:
-  std::vector<Transaction>                             transactions_;
-  std::map<fetch::byte_array::ConstByteArray, Account> accounts_;
-  std::set<fetch::byte_array::ConstByteArray>          users_;
-  fetch::random::LaggedFibonacciGenerator<>            lfg_;
-  fetch::mutex::Mutex                                  mutex_;
+  std::vector<Transaction>                             transactions;
+  std::map<fetch::byte_array::ConstByteArray, Account> accounts;
+  std::set<fetch::byte_array::ConstByteArray>          users;
+  fetch::random::LaggedFibonacciGenerator<>            lfg;
+  fetch::mutex::Mutex                                  mutex;
 };
 
 int main(int argc, char const **argv)

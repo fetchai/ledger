@@ -130,7 +130,7 @@ bool ExecutionManager::PlanExecution(block_type const &block)
     for (auto const &tx : slice.transactions)
     {
       Identifier id;
-      id.Parse(tx.contract_name_);
+      id.Parse(tx.contract_name);
       auto contract = contracts_.Lookup(id.name_space());
 
       if (contract)

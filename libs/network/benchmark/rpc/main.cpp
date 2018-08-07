@@ -86,7 +86,7 @@ public:
   }
 
 private:
-  ServiceProtocol serviceProtocol;
+  ServiceProtocol serviceProtocol_;
 };
 
 std::ostringstream finalResult;

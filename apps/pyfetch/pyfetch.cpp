@@ -51,7 +51,7 @@ public:
   using LOCALS_P = std::shared_ptr<LOCALS>;
 
   LOCALS_P locals;
-  SWARM_P  pySwarm;
+  SWARM_P  py_swarm;
   INTERP_P interpreter;
 
   PythonContext() {}

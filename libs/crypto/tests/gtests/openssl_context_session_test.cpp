@@ -55,7 +55,7 @@ protected:
   using Session__for_Testing =
       Session<TestType, StaticMockContextPrimitive<TestType>, ossl_shared_ptr__for_Testing<>>;
 
-  MockContextPrimitive::SharedPtr &contextMock = MockContextPrimitive::value;
+  MockContextPrimitive::SharedPtr &contextMock_ = MockContextPrimitive::value;
 
   void SetUp() { contextMock = std::make_shared<MockContextPrimitive::Type>(); }
 
