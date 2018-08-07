@@ -52,7 +52,6 @@ class SwarmAgentBayesian(object):
             'connection_problem': self.ts.Rating(mu=50, sigma=100/2),
             'bad_block': self.ts.Rating(mu=0, sigma=100/24),
         }
-        self.log('Ranking initialization.')
 
         self.swarm.OnPingFailed(self.onPingFailed)
         self.swarm.OnPingSucceeded(self.onPingSucceeded)
@@ -71,12 +70,6 @@ class SwarmAgentBayesian(object):
 
         self.inflight = set()
         self.subs = []
-
-    def log(self, s):  # TODO: remove it
-        """Log something to special file."""
-        with open('/tmp/swarm_agent_naive.log', 'a') as log:
-            log.write('{}: {}\n'.format(self.idnum, s))
-            log.write('{}: {}\n'.format(self.idnum, self.most_honest()))
 
     def update_believe(self, host, action):
         """Update honesty believe."""
@@ -117,16 +110,6 @@ class SwarmAgentBayesian(object):
         self.believe[host] = new_believe
 
         return (self.believe[host].mu - 2*self.believe[host].sigma)/10
-
-    def most_honest(self):  # TODO: remove it
-        """Pick the most honest nodes."""
-        def rank(believe):
-            """Calculate rank."""
-            return believe.mu - 2*believe.sigma
-
-        ranked = {host: rank(believe) for host, believe in self.believe.items()}
-        ranked = sorted(ranked.items(), key=lambda item: item[1], reverse=True)
-        return ranked
 
     def onPingFailed(self, host):
         say("PYCHAINNODE===> Ping failed to:", host)
@@ -233,7 +216,6 @@ class SwarmAgentBayesian(object):
         for introListMember in self.introductions:
             karma = self.update_believe(introListMember, action='peerless_intro')
             self.swarm.SetKarma(introListMember, karma)
-        self.log('peerless')
 
     def onNewPeerDiscovered(self, host):
         if host == self.swarm.queryOwnLocation():
@@ -241,40 +223,34 @@ class SwarmAgentBayesian(object):
         #say("AGENT_API PYCHAIN NEW PEER ", host);
         karma = self.update_believe(host, action='new_peer_discovered')
         self.swarm.SetKarma(host, karma)
-        self.log('new_peer_discovered')
 
     def onNewBlockIdFound(self, host, blockid):
         say("AGENT_API PYCHAIN NEWBLOCK ", blockid)
         karma = self.update_believe(host, action='new_block_id_found')
         self.swarm.SetKarma(host, karma)
         self.timeOfLastRemoteNewBlock = datetime.datetime.now()
-        self.log('new_block_id_found')
 
     def onBlockIdRepeated(self, host, blockid):
         # Awwww, we know about this.
         karma = self.update_believe(host, action='block_id_repeated')
         self.swarm.SetKarma(host, karma)
-        self.log('block_id_repeated')
 
     def onLooseBlock(self, host, blockid):
         say("AGENT_API PYCHAIN LOOSE ", host, ' ', blockid)
         karma = self.update_believe(host, action='loose_block')
         self.swarm.SetKarma(host, karma)
         self.swarm.DoGetBlock(host, blockid)
-        self.log('loose_block')
 
     def onBlockSupplied(self, host, blockid):
         say("AGENT_API PYCHAIN DELIVERED ", host, ' ', blockid)
         karma = self.update_believe(host, action='block_supplied')
         self.swarm.SetKarma(host, karma)
         self.timeOfLastRemoteNewBlock = datetime.datetime.now()
-        self.log('block_supplied')
 
     def onBlockNotSupplied(self, host, blockid):
         say("AGENT_API PYCHAIN FAILED  ", host, ' ', blockid)
         karma = self.update_believe(host, action='block_not_supplied')
         self.swarm.SetKarma(host, karma)
-        self.log('block_not_supplied')
 
 
 def run(config):
