@@ -287,6 +287,7 @@ public:
   template <typename... Args>
   void Debug(Args... args)
   {
+#ifndef FETCH_DISABLE_DEBUG_LOGGING
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
@@ -294,10 +295,12 @@ public:
       Unroll<Args...>::Append(this, args...);
       this->log_->CloseEntry(DefaultLogger::DEBUG);
     }
+#endif // !FETCH_DISABLE_DEBUG_LOGGING
   }
 
   void Debug(const std::vector<std::string> &items)
   {
+#ifndef FETCH_DISABLE_DEBUG_LOGGING
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
@@ -308,6 +311,7 @@ public:
       }
       this->log_->CloseEntry(DefaultLogger::DEBUG);
     }
+#endif // !FETCH_DISABLE_DEBUG_LOGGING
   }
 
   void SetContext(shared_context_type ctx)
