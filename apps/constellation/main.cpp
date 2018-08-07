@@ -2,15 +2,21 @@
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
 #include "core/macros.hpp"
+#include "core/script/variant.hpp"
+#include "core/json/document.hpp"
 #include "network/adapters.hpp"
 #include "network/management/network_manager.hpp"
+#include "network/fetch_asio.hpp"
 
 #include "constellation.hpp"
 
 #include <iostream>
+#include <iomanip>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <array>
+#include <system_error>
 
 namespace {
 
@@ -23,8 +29,10 @@ struct CommandLineArguments
   static const std::size_t DEFAULT_NUM_LANES     = 4;
   static const std::size_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
   static const uint16_t    DEFAULT_PORT          = 8000;
+  static const uint32_t    DEFAULT_NETWORK_ID    = 0x10;
 
   uint16_t       port{0};
+  uint32_t       network_id;
   peer_list_type peers;
   std::size_t    num_executors;
   std::size_t    num_lanes;
@@ -37,6 +45,7 @@ struct CommandLineArguments
 
     // define the parameters
     std::string raw_peers;
+    bool bootstrap;
 
     fetch::commandline::Params parameters;
     parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
@@ -47,6 +56,8 @@ struct CommandLineArguments
                    "The comma separated list of addresses to initially connect to", std::string{});
     parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage",
                    std::string{"node_storage"});
+    parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
+    parameters.add(bootstrap, "bootstrap", "Enable bootstrap network support", false);
 
     std::size_t const num_adapters = adapters.size();
     if (num_adapters == 0)
@@ -69,6 +80,12 @@ struct CommandLineArguments
     // update the peers
     args.SetPeers(raw_peers);
 
+    // if we have been configured to do so then bootstrap
+    if (bootstrap)
+    {
+      args.Bootstrap();
+    }
+
     // validate the interface
     bool valid_adapter = false;
     for (auto const &adapter : adapters)
@@ -89,9 +106,120 @@ struct CommandLineArguments
     return args;
   }
 
+  void Bootstrap()
+  {
+    static constexpr std::size_t BUFFER_SIZE = 1024;
+
+    using IoService = asio::io_service;
+    using Resolver = asio::ip::tcp::resolver;
+    using Socket = asio::ip::tcp::socket;
+
+    IoService io_service{};
+    Resolver resolver(io_service);
+
+    Resolver::query query("localhost", std::to_string(10000));
+
+    Resolver::iterator endpoint = resolver.resolve(query);
+
+    std::error_code ec{};
+    Socket socket(io_service);
+    if (endpoint != Resolver::iterator{}) {
+      socket.connect(*endpoint, ec);
+
+      if (ec)
+      {
+        std::cerr << "Failed to connect to boostrap node: " << ec.message() << std::endl;
+        return;
+      }
+
+      // create the request
+      fetch::script::Variant variant;
+      variant.MakeObject();
+      variant["port"] = port + fetch::Constellation::P2P_PORT_OFFSET;
+      variant["network-id"] = network_id;
+
+      // format the request
+      std::string request;
+      {
+        std::ostringstream oss;
+        oss << variant;
+        request = oss.str();
+      }
+
+      socket.write_some(asio::buffer(request), ec);
+
+      if (ec)
+      {
+        std::cerr << "Failed to send boostrap request: " << ec.message() << std::endl;
+        return;
+      }
+
+      fetch::byte_array::ByteArray buffer;
+      buffer.Resize(BUFFER_SIZE);
+
+      std::size_t const num_bytes = socket.read_some(asio::buffer(buffer.pointer(), buffer.size()), ec);
+
+      if (ec)
+      {
+        std::cerr << "Failed to recv the response from the server: " << ec.message() << std::endl;
+        return;
+      }
+
+      if (num_bytes > 0)
+      {
+        buffer.Resize(num_bytes);
+
+        std::cout << buffer << std::endl;
+      }
+      else
+      {
+        std::cerr << "Didn't recv any more data" << std::endl;
+        return;
+      }
+
+      // try and parse the json documnet
+      fetch::json::JSONDocument doc;
+      doc.Parse(buffer);
+
+      // check the formatting of the response
+      auto const &root = doc.root();
+      if (!root.is_object())
+      {
+        std::cerr << "Incorrect formatting (object)" << std::endl;
+        return;
+      }
+
+      auto const &peer_list = root["peers"];
+      if (peer_list.is_undefined())
+      {
+        std::cerr << "Incorrect formatting (undefined)" << std::endl;
+        return;
+      }
+
+      if (!peer_list.is_array())
+      {
+        std::cerr << "Incorrect formatting (array)" << std::endl;
+        return;
+      }
+
+      fetch::network::Peer peer;
+      for (std::size_t i = 0; i < peer_list.size(); ++i)
+      {
+        std::string const peer_address = peer_list[i].As<std::string>();
+        if (peer.Parse(peer_address))
+        {
+          peers.push_back(peer);
+        }
+        else
+        {
+          std::cerr << "Failed to parse address: " << peer_address << std::endl;
+        }
+      }
+    }
+  }
+
   void SetPeers(std::string const &raw_peers)
   {
-
     // split the peers
     std::size_t          position = 0;
     fetch::network::Peer peer;
@@ -127,9 +255,13 @@ struct CommandLineArguments
   friend std::ostream &operator<<(std::ostream &              s,
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
-    s << "db-prefix: " << args.dbdir << std::endl;
-    s << "port.....: " << args.port << std::endl;
-    s << "peers....: ";
+    s << "port...........: " << args.port << std::endl;
+    s << "network id.....: 0x" << std::hex << args.network_id << std::dec << std::endl;
+    s << "num executors..: " << args.num_executors << std::endl;
+    s << "num lanes......: " << args.num_lanes << std::endl;
+    s << "interface......: " << args.interface << std::endl;
+    s << "db-prefix......: " << args.dbdir << std::endl;
+    s << "peers..........: ";
     for (auto const &peer : args.peers)
     {
       s << peer << ' ';
