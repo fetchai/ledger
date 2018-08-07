@@ -57,9 +57,9 @@ protected:
 
   MockContextPrimitive::SharedPtr &contextMock_ = MockContextPrimitive::value;
 
-  void SetUp() { contextMock = std::make_shared<MockContextPrimitive::Type>(); }
+  void SetUp() { contextMock_ = std::make_shared<MockContextPrimitive::Type>(); }
 
-  void TearDown() { contextMock = MockContextPrimitive::SharedPtr(); }
+  void TearDown() { contextMock_ = MockContextPrimitive::SharedPtr(); }
 
   // static void SetUpTestCase() {
   //}
@@ -73,8 +73,8 @@ TEST_F(OpenSSLContextSessionTest, test_Session_basic_scenario_constructro_and_de
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*contextMock, start(&testValue)).WillOnce(Return());
-  EXPECT_CALL(*contextMock, end(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -89,8 +89,8 @@ TEST_F(OpenSSLContextSessionTest, test_Session_constructor_and_end)
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*contextMock, start(&testValue)).WillOnce(Return());
-  EXPECT_CALL(*contextMock, end(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -106,7 +106,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_started_and_destructor)
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*contextMock, end(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -121,7 +121,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_started_and_end)
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*contextMock, end(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -137,8 +137,8 @@ TEST_F(OpenSSLContextSessionTest, test_Session_constructor_and_start_and_destruc
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*contextMock, start(&testValue)).WillOnce(Return());
-  EXPECT_CALL(*contextMock, end(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
     //* Production code
