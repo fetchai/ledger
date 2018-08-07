@@ -39,7 +39,7 @@ public:
     }
     else
     {
-      fetch::logger.Info("Consumed milliseconds: ", duration.count(), " at ", name_);
+      fetch::logger.Debug("Consumed milliseconds: ", duration.count(), " at ", name_);
     }
   }
 private:
