@@ -109,15 +109,19 @@ struct CommandLineArguments
   void Bootstrap()
   {
     static constexpr std::size_t BUFFER_SIZE = 1024;
+    static constexpr char const *BOOTSTRAP_HOST = "35.188.32.73";
+    static constexpr uint16_t BOOTSTRAP_PORT  = 10000;
 
     using IoService = asio::io_service;
     using Resolver = asio::ip::tcp::resolver;
     using Socket = asio::ip::tcp::socket;
 
+    fetch::logger.Info("Bootstrapping network node ", BOOTSTRAP_HOST, ':', BOOTSTRAP_PORT);
+
     IoService io_service{};
     Resolver resolver(io_service);
 
-    Resolver::query query("35.188.32.73", std::to_string(10000));
+    Resolver::query query(BOOTSTRAP_HOST, std::to_string(BOOTSTRAP_PORT));
 
     Resolver::iterator endpoint = resolver.resolve(query);
 
@@ -128,7 +132,7 @@ struct CommandLineArguments
 
       if (ec)
       {
-        std::cerr << "Failed to connect to boostrap node: " << ec.message() << std::endl;
+        fetch::logger.Warn("Failed to connect to boostrap node: ", ec.message());
         return;
       }
 
@@ -150,7 +154,7 @@ struct CommandLineArguments
 
       if (ec)
       {
-        std::cerr << "Failed to send boostrap request: " << ec.message() << std::endl;
+        fetch::logger.Warn("Failed to send boostrap request: ", ec.message());
         return;
       }
 
@@ -161,19 +165,17 @@ struct CommandLineArguments
 
       if (ec)
       {
-        std::cerr << "Failed to recv the response from the server: " << ec.message() << std::endl;
+        fetch::logger.Warn("Failed to recv the response from the server: ", ec.message());
         return;
       }
 
       if (num_bytes > 0)
       {
         buffer.Resize(num_bytes);
-
-        std::cout << buffer << std::endl;
       }
       else
       {
-        std::cerr << "Didn't recv any more data" << std::endl;
+        fetch::logger.Warn("Didn't recv any more data");
         return;
       }
 
@@ -185,20 +187,20 @@ struct CommandLineArguments
       auto const &root = doc.root();
       if (!root.is_object())
       {
-        std::cerr << "Incorrect formatting (object)" << std::endl;
+        fetch::logger.Warn("Incorrect formatting (object)");
         return;
       }
 
       auto const &peer_list = root["peers"];
       if (peer_list.is_undefined())
       {
-        std::cerr << "Incorrect formatting (undefined)" << std::endl;
+        fetch::logger.Warn("Incorrect formatting (undefined)");
         return;
       }
 
       if (!peer_list.is_array())
       {
-        std::cerr << "Incorrect formatting (array)" << std::endl;
+        fetch::logger.Warn("Incorrect formatting (array)");
         return;
       }
 
@@ -212,9 +214,11 @@ struct CommandLineArguments
         }
         else
         {
-          std::cerr << "Failed to parse address: " << peer_address << std::endl;
+          fetch::logger.Warn("Failed to parse address: ", peer_address);
         }
       }
+
+      fetch::logger.Info("Bootstrapping network node...complete");
     }
   }
 
