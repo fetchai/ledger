@@ -1,7 +1,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/kernels/sum_of_squares.hpp"
+#include "math/kernels/L2Norm.hpp"
 #include "math/shape_less_array.hpp"
 #include <gtest/gtest.h>
 
@@ -34,7 +34,7 @@ TEST(ndarray, zeros_out)
   //  }
 
   // check that sign(0) = 0
-  test_array_2.L2Loss(test_array);
+  test_array_2.L2Norm(test_array);
   //  std::cout << test_array_2[0] << std::endl;
 
   //  data_type test_sum = 0;
