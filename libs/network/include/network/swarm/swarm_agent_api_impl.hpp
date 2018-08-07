@@ -21,43 +21,43 @@ public:
   explicit SwarmAgentApiImpl(std::string identifier, uint32_t idlespeed)
     : identifier_(std::move(identifier)), idlespeed_(idlespeed)
   {
-    threadingSystem_ = std::make_shared<threading_system_type>(10);
+    threading_system_ = std::make_shared<threading_system_type>(10);
   }
 
   explicit SwarmAgentApiImpl(std::shared_ptr<threading_system_type> threadingSystem,
                              std::string identifier, uint32_t idlespeed)
     : identifier_(std::move(identifier)), idlespeed_(idlespeed)
   {
-    threadingSystem_ = threadingSystem;
+    threading_system_ = threadingSystem;
   }
 
   virtual std::string queryOwnLocation() { return identifier_; }
 
   void Start()
   {
-    threadingSystem_->Start();
+    threading_system_->Start();
     startIdle();
   }
 
-  void Stop() { threadingSystem_->Stop(); }
+  void Stop() { threading_system_->Stop(); }
 
   virtual ~SwarmAgentApiImpl()
   {
-    threadingSystem_->Stop();
-    threadingSystem_.reset();
+    threading_system_->Stop();
+    threading_system_.reset();
   }
 
   void startIdle()
   {
     auto lambd = [this] { this->DoIdle(); };
-    threadingSystem_->Post(lambd);
+    threading_system_->Post(lambd);
   }
 
   int idle_count = 0;
 
   void DoIdle()
   {
-    idleCount++;
+    idle_count++;
     if (this->onIdle_)
     {
       try
@@ -74,7 +74,7 @@ public:
       }
     }
     auto lambd = [this] { this->DoIdle(); };
-    threadingSystem_->Post(lambd, idlespeed_);
+    threading_system_->Post(lambd, idlespeed_);
   }
 
   virtual void OnIdle(std::function<void()> cb) { onIdle_ = cb; }
@@ -83,7 +83,7 @@ public:
 
   virtual void DoPing(const std::string &host)
   {
-    threadingSystem_->Post([this, host] {
+    threading_system_->Post([this, host] {
       if (this->toPing_)
       {
         this->toPing_(*this, host);
@@ -93,7 +93,7 @@ public:
 
   virtual void DoPeerless()
   {
-    threadingSystem_->Post([this] {
+    threading_system_->Post([this] {
       if (this->onPeerless_)
       {
         this->onPeerless_();
@@ -115,7 +115,7 @@ public:
 
   virtual void DoPingSucceeded(const std::string &host)
   {
-    threadingSystem_->Post([this, host] {
+    threading_system_->Post([this, host] {
       if (this->onPingSucceeded_)
       {
         this->onPingSucceeded_(host);
@@ -125,7 +125,7 @@ public:
 
   virtual void DoPingFailed(const std::string &host)
   {
-    threadingSystem_->Post([this, host] {
+    threading_system_->Post([this, host] {
       if (this->onPingFailed_)
       {
         this->onPingFailed_(host);
@@ -135,7 +135,7 @@ public:
 
   virtual void DoDiscoverPeers(const std::string &host, uint32_t count)
   {
-    threadingSystem_->Post([this, host, count] {
+    threading_system_->Post([this, host, count] {
       if (this->toDiscoverPeers_)
       {
         this->toDiscoverPeers_(*this, host, count);
@@ -156,7 +156,7 @@ public:
 
   virtual void DoNewPeerDiscovered(const std::string &host)
   {
-    threadingSystem_->Post([this, host] {
+    threading_system_->Post([this, host] {
       if (this->onNewPeerDiscovered_)
       {
         this->onNewPeerDiscovered_(host);
@@ -199,7 +199,7 @@ public:
 
   virtual void DoNewBlockIdFound(const std::string &host, const std::string &blockid)
   {
-    threadingSystem_->Post([this, host, blockid] {
+    threading_system_->Post([this, host, blockid] {
       if (this->onNewBlockIdFound_)
       {
         this->onNewBlockIdFound_(host, blockid);
@@ -221,7 +221,7 @@ public:
 
   virtual void DoBlockIdRepeated(const std::string &host, const std::string &blockid)
   {
-    threadingSystem_->Post([this, host, blockid] {
+    threading_system_->Post([this, host, blockid] {
       if (this->onBlockIdRepeated_)
       {
         this->onBlockIdRepeated_(host, blockid);
@@ -260,7 +260,7 @@ public:
 
   virtual void DoNewBlockAvailable(const std::string &host, const std::string &blockid)
   {
-    threadingSystem_->Post([this, host, blockid] {
+    threading_system_->Post([this, host, blockid] {
       if (this->onNewBlockAvailable_)
       {
         this->onNewBlockAvailable_(host, blockid);

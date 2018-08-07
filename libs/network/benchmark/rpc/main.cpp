@@ -82,7 +82,7 @@ class BenchmarkService : public ServiceServer<fetch::network::TCPServer>
 public:
   BenchmarkService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
   {
-    this->Add(SERVICE, &serviceProtocol);
+    this->Add(SERVICE, &serviceProtocol_);
   }
 
 private:

@@ -174,7 +174,7 @@ private:
 
     for (std::size_t i = 0; i < 8; ++i)
     {
-      header[i] = uint8_t((networkMagic >> i * 8) & 0xff);
+      header[i] = uint8_t((networkMagic_ >> i * 8) & 0xff);
     }
 
     for (std::size_t i = 0; i < 8; ++i)

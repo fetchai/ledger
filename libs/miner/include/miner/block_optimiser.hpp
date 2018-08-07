@@ -277,7 +277,7 @@ private:
       penalty = std::max(1 + unspent_[i]->summary().fee, penalty);
     }
 
-    // Computing collissions
+    // Computing collisions
     std::vector<std::vector<std::size_t>> lane_collisions;
     lane_collisions.resize(lane_count_);
 
@@ -362,25 +362,25 @@ private:
   }
 
   block_index_map_type block_;
-  block_fees_list_type block_fees;
+  block_fees_list_type block_fees_;
 
-  double      occupancy            = 0.0;
-  std::size_t lane_count           = 0;
-  uint32_t    log2_lane_count      = 0;
-  std::size_t batch_size           = 0;
-  double      best_solution_energy = 0;
-  double      state_energy         = 0;
+  double      occupancy_            = 0.0;
+  std::size_t lane_count_           = 0;
+  uint32_t    log2_lane_count_      = 0;
+  std::size_t batch_size_           = 0;
+  double      best_solution_energy_ = 0;
+  double      state_energy_         = 0;
 
-  state_type    state;
-  state_type    best_solution;
-  annealer_type annealer;
+  state_type    state_;
+  state_type    best_solution_;
+  annealer_type annealer_;
 
   // TODO: Switch to block
   //  std::shared_ptr<block_type> current_block_;
 
-  transaction_map_type    all;
-  transaction_list_type   unspent;
-  transaction_matrix_type staged;
+  transaction_map_type    all_;
+  transaction_list_type   unspent_;
+  transaction_matrix_type staged_;
 };
 
 }  // namespace chain

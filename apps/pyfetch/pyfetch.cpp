@@ -58,9 +58,9 @@ public:
 
   virtual ~PythonContext()
   {
-    if (pySwarm)
+    if (py_swarm)
     {
-      pySwarm->Stop();
+      py_swarm->Stop();
     }
     locals.reset();
     interpreter.reset();

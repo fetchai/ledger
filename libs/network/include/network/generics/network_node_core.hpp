@@ -28,9 +28,9 @@ public:
   using protocol_number_type = uint32_t;
 
 protected:
-  const uint32_t MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION_ = 100;
-  const uint32_t MICROSECONDS_PER_MILLISECOND_              = 1000;
-  const uint32_t NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION_  = 100;
+  const uint32_t MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION = 100;
+  const uint32_t MICROSECONDS_PER_MILLISECOND              = 1000;
+  const uint32_t NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION  = 100;
 
 public:
   NetworkNodeCore(const NetworkNodeCore &rhs) = delete;
@@ -69,8 +69,6 @@ public:
   using remote_host_identifier_type = std::pair<std::string, int>;
   using client_ptr                  = std::shared_ptr<client_type>;
   using cache_type                  = std::map<remote_host_identifier_type, client_ptr>;
-
-  cache_type cache;
 
   using protocol_ptr        = std::shared_ptr<fetch::service::Protocol>;
   using protocol_cache_type = std::map<uint32_t, protocol_ptr>;
@@ -188,9 +186,12 @@ protected:
     return client;
   }
 
-  fetch::network::NetworkManager nm_;
-  uint16_t                       rpcPort_;
-  mutex_type                     mutex_;
+private:
+  cache_type                               cache_;
+
+  fetch::network::NetworkManager           nm_;
+  uint16_t                                 rpcPort_;
+  mutex_type                               mutex_;
 
   std::shared_ptr<fetch::http::HTTPServer> httpServer_;
   std::shared_ptr<rpc_server_type>         rpcServer_;

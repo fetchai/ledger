@@ -26,15 +26,15 @@ public:
 
   void addInitialPeer(const std::string &host)
   {
-    initialPeers_.insert(host);
-    onceAndFuturePeers_.insert(host);
+    initial_peers_.insert(host);
+    once_and_future_peers_.insert(host);
   }
 
   SwarmAgentNaive(std::shared_ptr<SwarmAgentApi> api, const std::string &identifier, int id,
                   std::shared_ptr<fetch::swarm::SwarmRandom> rnd)
-    : rnd_(std::move(rnd)), id(id)
+    : rnd_(std::move(rnd))
   {
-    api->OnIdle([this, api, identifier_] {
+    api->OnIdle([this, api, identifier] {
       auto goodPeers = api->GetPeers(10, -0.5);
       if (goodPeers.empty())
       {
@@ -53,14 +53,14 @@ public:
     });
 
     api->OnPeerless([this, api]() {
-      for (auto peer : this->initialPeers_)
+      for (auto peer : this->initial_peers_)
       {
         if (api->queryOwnLocation() != peer)
         {
           api->DoPing(peer);
         }
       }
-      for (auto peer : this->onceAndFuturePeers_)
+      for (auto peer : this->once_and_future_peers_)
       {
         if (api->queryOwnLocation() != peer)
         {
@@ -71,10 +71,10 @@ public:
 
     api->OnNewPeerDiscovered([this, api, identifier](const std::string &host) {
       if (api->queryOwnLocation() != host)
-        if (std::find(this->onceAndFuturePeers_.begin(), this->onceAndFuturePeers_.end(), host) ==
-            this->onceAndFuturePeers_.end())
+        if (std::find(this->once_and_future_peers_.begin(), this->once_and_future_peers_.end(), host) ==
+            this->once_and_future_peers_.end())
         {
-          this->onceAndFuturePeers_.insert(host);
+          this->once_and_future_peers_.insert(host);
           api->DoPing(host);
         }
     });
@@ -82,7 +82,7 @@ public:
     api->OnPingSucceeded([this, identifier, api](const std::string &host) {
       if (api->queryOwnLocation() != host)
       {
-        this->onceAndFuturePeers_.insert(host);
+        this->once_and_future_peers_.insert(host);
         api->AddKarmaMax(host, 1.0, 3.0);
       }
     });
@@ -105,6 +105,8 @@ public:
 
 private:
   std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
+  std::set<std::string>                      initial_peers_;
+  std::set<std::string>                      once_and_future_peers_;
 
 };
 
