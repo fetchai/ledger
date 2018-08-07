@@ -117,7 +117,7 @@ struct CommandLineArguments
     IoService io_service{};
     Resolver resolver(io_service);
 
-    Resolver::query query("localhost", std::to_string(10000));
+    Resolver::query query("35.188.32.73", std::to_string(10000));
 
     Resolver::iterator endpoint = resolver.resolve(query);
 
