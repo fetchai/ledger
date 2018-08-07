@@ -28,7 +28,7 @@ void Baz()
   
   thread.reset( new std::thread([=]() {
         LOG_LAMBDA_STACK_TRACE_POINT;
-        ERROR_BACKTRACE;
+
         Foo();
 
       }));

@@ -438,7 +438,8 @@ public:
                  Args...>::signature_type &&apply,
              Args &&... args)
   {
-
+    std::cout << "Was here?? " << std::endl;
+    
     vector_register_type          regs[sizeof...(args)], c;
     vector_register_iterator_type iters[sizeof...(args)];
     ConstParallelDispatcher<T>::InitializeVectorIterators(0, this->size(), iters,
@@ -587,14 +588,14 @@ public:
     ConstParallelDispatcher<T>::InitializeVectorIterators(0, N, iters, std::forward<Args>(args)...);
     for (std::size_t i = 0; i < N; i += vector_register_type::E_BLOCK_COUNT)
     {
-      assert(i < N);
+//      assert(i < N);
       details::UnrollNext<sizeof...(args), vector_register_type,
                           vector_register_iterator_type>::Apply(regs, iters);
       details::MatrixApplyClassMember<C, vector_register_type,
                                       void>::template Unroll<Args...>::Apply(regs, cls,
-                                                                             std::move(fnc), c);
+                                        std::move(fnc), c);
 
-      c.Store(this->pointer() + i);
+      c.Stream(this->pointer() + i);
     }
   }
 

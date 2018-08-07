@@ -20,11 +20,11 @@ public:
 
   void operator()(double const &alpha, Matrix< double > const &a, Matrix< double > const &b, double const &beta, Matrix< double > &c ) 
   {
-    constexpr double one = 1.0;
-    constexpr double zero = 0.0;
-    double temp;
+//    constexpr double one = 1.0;
+//    constexpr double zero = 0.0;
     std::size_t j;
-    std::size_t l;
+
+    /*
     std::size_t ncola;
     std::size_t nrowa;
     std::size_t nrowb;
@@ -75,12 +75,16 @@ public:
       
       return;
     } // endif
-    
+    */
     
     for(j = 0 ; j < c.width(); ++j )
     {
-      pool_.Dispatch([this, j, zero, one, alpha, a, b, beta, &c]() {
-    
+//      pool_.Dispatch([j,  zero, alpha, a, b, beta, &c]() {
+
+      
+        double temp;
+        std::size_t l;
+/*
         if( beta == zero ) 
         {
           
@@ -100,32 +104,33 @@ public:
           vector_register_type vec_beta(beta);
           
           auto ret_slice = c.data().slice( c.padded_height() * j, c.height());
-          auto slice_c = c.data().slice( c.padded_height() * j, c.height());
-          ret_slice.in_parallel().Apply([vec_beta](vector_register_type const &vr_c, vector_register_type &vw_c ){
-            
+          //auto slice_c = c.data().slice( c.padded_height() * j, c.height());          
+          ret_slice.in_parallel().Apply([vec_beta](vector_register_type const &vr_c, vector_register_type &vw_c ){ 
             vw_c = vec_beta * vr_c;  
-          }, slice_c);
+          }, ret_slice);
+          
         } // endif
         
-        
+*/
         for(l = 0 ; l < a.width(); ++l )
         {
+          
           temp = alpha * b(l, j);
           
           
           vector_register_type vec_temp(temp);
-          
           auto ret_slice = c.data().slice( c.padded_height() * j, c.height());
-          auto slice_c = c.data().slice( c.padded_height() * j, c.height());
           auto slice_a = a.data().slice( a.padded_height() * l, c.height());
           ret_slice.in_parallel().Apply([vec_temp](vector_register_type const &vr_c, vector_register_type const &vr_a, vector_register_type &vw_c ){
-            
             vw_c = vr_c + vec_temp * vr_a;  
-          }, slice_c, slice_a);
+          }, ret_slice, slice_a);
+          
         }
-      });
+        
+//      });
     
-      pool_.Wait();}
+//      pool_.Wait();
+    }
     
     return;
     

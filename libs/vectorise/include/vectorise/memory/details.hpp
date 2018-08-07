@@ -76,16 +76,16 @@ struct MatrixApplyClassMember
   {
     typedef typename MatrixApplyClassMember<C, B, R, Args..., B const &>::template Unroll<
         Remaining...>::signature_type signature_type;
-    static R Apply(B const *regs, C const &cls, signature_type &&fnc, B &ret, Args... args)
+    static R Apply(B const *regs, C const &cls, signature_type &&fnc, B &ret, Args &&...args)
     {
       return MatrixApplyClassMember<C, B, R, Args..., B const &>::template Unroll<
-          Remaining...>::Apply(regs + 1, cls, std::move(fnc), ret, args..., *regs);
+        Remaining...>::Apply(regs + 1, cls, std::move(fnc), ret, std::forward<Args>(args)..., *regs);
     }
 
-    static R Apply(B const **regs, C const &cls, signature_type &&fnc, B &ret, Args... args)
+    static R Apply(B const **regs, C const &cls, signature_type &&fnc, B &ret, Args &&...args)
     {
       return MatrixApplyClassMember<C, B, R, Args..., B const &>::template Unroll<
-          Remaining...>::Apply(regs + 1, cls, std::move(fnc), ret, args..., **regs);
+        Remaining...>::Apply(regs + 1, cls, std::move(fnc), ret, std::forward<Args>(args)..., **regs);
     }
   };
 
@@ -93,14 +93,14 @@ struct MatrixApplyClassMember
   struct Unroll<T>
   {
     typedef R (C::*signature_type)(Args..., B const &, B &) const;
-    static R Apply(B const *regs, C const &cls, signature_type &&fnc, B &ret, Args... args)
+    static R Apply(B const *regs, C const &cls, signature_type &&fnc, B &ret, Args &&... args)
     {
-      return (cls.*fnc)(args..., *regs, ret);
+      return (cls.*fnc)(std::forward<Args>(args)..., *regs, ret);
     }
 
-    static R Apply(B const **regs, C const &cls, signature_type &&fnc, B &ret, Args... args)
+    static R Apply(B const **regs, C const &cls, signature_type &&fnc, B &ret, Args &&... args)
     {
-      return (cls.*fnc)(args..., **regs, ret);
+      return (cls.*fnc)(std::forward<Args>(args)..., **regs, ret);
     }
   };
 };
