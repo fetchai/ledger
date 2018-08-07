@@ -745,14 +745,6 @@ public:
     //    kernel( this->data_, x.data());
   }
 
-  //  void L2Loss(self_type const &x)
-  //  {
-  //
-  ////    kernels::L2Loss<type, container_type> l2loss;
-  //    kernels::L2Loss l2loss;
-  //    data_.in_parallel().Apply(l2loss, x.data_);
-  //  }
-
   /**
    * calculates the l2loss of data in the array
    *
