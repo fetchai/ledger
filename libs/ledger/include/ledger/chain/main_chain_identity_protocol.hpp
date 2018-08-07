@@ -10,15 +10,16 @@ public:
   {
     PING = 1,
     HELLO,
-    AUTHENTICATE_CONTROLLER
-
+    AUTHENTICATE_CONTROLLER,
+    EXCHANGE_DETAILS
   };
 
   MainChainIdentityProtocol(MainChainIdentity *ctrl)
   {
     this->Expose(PING, ctrl, &MainChainIdentity::Ping);
-    this->Expose(HELLO, ctrl, &MainChainIdentity::Hello);
-    this->Expose(AUTHENTICATE_CONTROLLER, ctrl, &MainChainIdentity::AuthenticateController);
+    this->ExposeWithClientArg(HELLO, ctrl, &MainChainIdentity::Hello);
+    this->ExposeWithClientArg(AUTHENTICATE_CONTROLLER, ctrl, &MainChainIdentity::AuthenticateController);
+    this->ExposeWithClientArg(EXCHANGE_DETAILS, ctrl, &MainChainIdentity::ExchangeDetails);
   }
 };
 

@@ -25,10 +25,8 @@ public:
       NONE, SUCCESS, FAIL
     }
     Conclusion;
-=======
   using promise_counter_type = uint64_t;
   using byte_array_type      = byte_array::ConstByteArray;
->>>>>>> develop
 
   PromiseImplementation()
   {
@@ -171,6 +169,54 @@ public:
   bool Wait(bool const &throw_exception)
   {
     return Wait(std::numeric_limits<double>::infinity(), throw_exception);
+  }
+
+  typedef enum
+    {
+      OK = 0,
+      FAILED = 1,
+      CLOSED = 2,
+      WAITING = 4,
+    }
+  Status;
+
+  Status GetStatus()
+  {
+    return Status(
+                  ( has_failed() ? 1 : 0 ) +
+                  ( is_connection_closed() ? 2 : 0 ) +
+                  ( !is_fulfilled() ? 4 : 0 )
+                  );
+  }
+
+  static std::string DescribeStatus(Status s)
+  {
+    const char *states[8] = {
+      "OK.",
+      "Failed.",
+      "Closed.",
+      "Failed.",
+      "Timeout.",
+      "Failed.",
+      "Closed.",
+      "Failed."
+    };
+    return states[ int(s) & 0x07 ];
+  }
+
+  Status WaitLoop(int milliseconds, int cycles)
+  {
+    auto s = GetStatus();
+    while(cycles>0 && s == WAITING)
+    {
+      cycles-=1;
+      s = GetStatus();
+      if (s != WAITING) return s;
+      Wait(milliseconds, false);
+      s = GetStatus();
+      if (s != WAITING) return s;
+    }
+    return WAITING;
   }
 
   bool Wait(int const &time) { return Wait(double(time)); }

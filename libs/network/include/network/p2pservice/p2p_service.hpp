@@ -77,13 +77,13 @@ public:
       my_details_->details.identity = certificate_->identity();
 
       my_details_->details.Sign(certificate_.get());
-      /*
-        TODO: ECDSA verifier broke
-      crypto::ECDSAVerifier verifier(certificate->identity());
-      if(!my_details_->details.Verify(&verifier) ) {
-        TODO_FAIL("Could not verify own identity");
-      }
-      */
+
+      //TODO: ECDSA verifier broke
+      //crypto::ECDSAVerifier verifier(certificate->identity());
+      //if(!my_details_->details.Verify(&verifier) ) {
+      //  TODO_FAIL("Could not verify own identity");
+      //}
+
     }
 
     // P2P Peer Directory

@@ -31,6 +31,9 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
   // Creating P2P instance
   p2p_ = std::make_unique<p2p::P2PService>(p2p_port_, *network_manager_);
 
+  auto profile = p2p_->Profile();
+  auto my_name = std::string(byte_array::ToBase64(profile.identity.identifier()));
+
   // Adding handle for the orchestration
   p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
     std::cout << "MAKING CALL ::: " << std::endl;
@@ -72,10 +75,14 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
   execution_manager_->Start();
 
   // Main chain
-  main_chain_service_ = std::make_unique<chain::MainChainService>(db_prefix, main_chain_port_,
-                                                                  *network_manager_.get(),
-          "node-" + std::to_string(main_chain_port_)
-	      )
+  main_chain_service_ = std::make_unique<chain::MainChainService>(
+      db_prefix,
+      main_chain_port_,
+      *network_manager_.get(),
+      my_name
+  );
+
+  main_chain_service_ -> SetOwnerIdentity(profile.identity);
 
   // Mainchain remote
   main_chain_remote_ = std::make_unique<chain::MainChainRemoteControl>();

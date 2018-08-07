@@ -14,7 +14,6 @@ template <typename G>
 class ConnectionRegisterImpl final : public AbstractConnectionRegister
 {
 public:
-  struct LockableDetails final : public details_type, public mutex_type
   using connection_handle_type     = typename AbstractConnection::connection_handle_type;
   using weak_connection_type       = std::weak_ptr<AbstractConnection>;
   using shared_connection_type     = std::shared_ptr<AbstractConnection>;
@@ -22,7 +21,7 @@ public:
   using shared_service_client_type = std::shared_ptr<service::ServiceClient>;
   using weak_service_client_type   = std::weak_ptr<service::ServiceClient>;
   using details_type               = G;
-  using mutex_type = mutex::Mutex;
+  using mutex_type                 = mutex::Mutex;
 
   struct LockableDetails final : public details_type, public mutex_type
   {

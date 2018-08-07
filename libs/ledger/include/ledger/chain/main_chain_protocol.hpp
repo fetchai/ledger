@@ -31,6 +31,7 @@ public:
   };
 
   MainChainProtocol(protocol_handler_type const &p, register_type r, thread_pool_type nm,
+		    const std::string &identifier,
                     chain::MainChain *node)
     : Protocol()
     , protocol_(p)
@@ -38,7 +39,7 @@ public:
     , thread_pool_(std::move(nm))
     , chain_(node)
     , running_(false)
-    , identifier_(identifier)$
+    , identifier_(identifier)
   {
     this->Expose(GET_HEADER, this, &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this, &self_type::GetHeaviestChain);
@@ -116,6 +117,7 @@ private:
     uint32_t                      ms = max_size_;
     using service_map_type           = typename R::service_map_type;
     register_.WithServices([this, ms](service_map_type const &map) {
+        // entries in a map of connection_handle to  service_object.
       for (auto const &p : map)
       {
         if (!running_)
@@ -127,7 +129,15 @@ private:
         auto ptr     = peer.lock();
         auto details = register_.GetDetails(ptr -> handle());
 
-        
+
+        //std::cout << std::string(byte_array::ToBase64(details.identity.identifier())) << std::endl;
+
+        //if (!details -> IsAnyMainChain())
+        //{
+        //  continue;
+        //}
+
+        auto name    = ""; //std::string(byte_array::ToBase64(details->identity.identifier()));
 
         auto foo = new service::Function<void(chain::MainChain::block_type)>(
           [this](chain::MainChain::block_type block){
@@ -139,7 +149,7 @@ private:
           ptr,
           protocol_,
           BLOCK_PUBLISH,
-          "", // TODO(kll) make a connection name here.
+          name, // TODO(kll) make a connection name here.
           foo);
 
         auto prom = ptr->Call(protocol_, GET_HEAVIEST_CHAIN, ms);

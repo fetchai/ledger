@@ -26,12 +26,16 @@ public:
 
   MainChainController(protocol_handler_type const &    identity_protocol,
                       std::weak_ptr<MainChainIdentity> identity, client_register_type reg,
-                      network_manager_type const &nm)
+                      network_manager_type const &nm,
+                      generics::SharedWithLock<MainChainDetails> my_details
+                      )
     : identity_protocol_(identity_protocol)
-    , identity_(std::move(identity))
     , register_(std::move(reg))
     , manager_(nm)
-  {}
+    , my_details_(my_details)
+  {
+    
+  }
 
   /// External controls
   /// @{
@@ -102,12 +106,7 @@ public:
     shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
 
-    auto ident = identity_.lock();
-    if (!ident)
-    {
-      // TODO : Throw exception
-      TODO_FAIL("Identity lost");
-    }
+    logger.Warn("CONNECT ", std::string(host), ":", port);
 
     // Waiting for connection to be open
     std::size_t n = 0;
@@ -139,22 +138,48 @@ public:
       services_[client->handle()] = client;
     }
 
+    MainChainDetails copy_of_my_details;
+    my_details_.CopyOut(copy_of_my_details);
+
+    auto remote_details_promise = client->Call(identity_protocol_, MainChainIdentityProtocol::EXCHANGE_DETAILS, copy_of_my_details);
+    auto status = remote_details_promise.WaitLoop(100, 10);
+
+    switch(status)
+    {
+    case service::Promise::OK:
+      break;
+    default:
+      logger.Warn("While exchanging IDENTITY DETAILS:", service::Promise::DescribeStatus(status));
+      client->Close();
+      client.reset();
+      return nullptr;
+    }
+
+    auto details_supplied_by_remote = remote_details_promise.As<MainChainDetails>();
+
+    auto local_name  = std::string(byte_array::ToBase64(my_details_.Lock()->owning_discovery_service_identity.identifier()));
+    auto remote_name = std::string(byte_array::ToBase64(details_supplied_by_remote.owning_discovery_service_identity.identifier()));
+
+    logger.Warn("OMG LOCAL  NAME IS:", local_name);
+    logger.Warn("OMG REMOTE NAME IS:", remote_name);
+
     // Setting up details such that the rest of the mainchain what kind of
     // connection we are dealing with.
-    auto details = register_.GetDetails(client->handle());
-
-    details->is_outgoing = true;
-    details->is_peer     = true;
+    auto remote_details = register_.GetDetails(client -> handle());
+    //remote_details.
+    remote_details -> is_outgoing = true;
+    remote_details -> is_peer     = true;
 
     return client;
   }
 
   /// @}
 private:
+
   protocol_handler_type            identity_protocol_;
-  std::weak_ptr<MainChainIdentity> identity_;
   client_register_type             register_;
   network_manager_type             manager_;
+  generics::SharedWithLock<MainChainDetails> my_details_;
 
   mutex::Mutex                                                           services_mutex_{ __LINE__, __FILE__ };
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
