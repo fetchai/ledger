@@ -22,6 +22,8 @@ ShapeLessArray<data_type, container_type> RandomArray(std::size_t n, data_type a
 
 TEST(ndarray, l2_basic)
 {
+  double epsilon = 1e-12;
+
   std::size_t                               n                = 10000;
   ShapeLessArray<data_type, container_type> test_array       = RandomArray(n, -0.5);
   double                                    test_loss        = 0;
@@ -36,5 +38,5 @@ TEST(ndarray, l2_basic)
   }
   manual_test_loss /= 2;
 
-  ASSERT_TRUE(manual_test_loss == test_loss);
+  ASSERT_TRUE(manual_test_loss - test_loss < epsilon);
 }

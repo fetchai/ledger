@@ -10,7 +10,6 @@
 #include "math/kernels/sign.hpp"
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
-#include "math/kernels/L2Norm.hpp"
 #include "math/kernels/variance.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
@@ -746,19 +745,24 @@ public:
     //    kernel( this->data_, x.data());
   }
 
-  void L2Norm(self_type const &x)
-  {
-    // just write it without vectorising for now!
+  //  void L2Loss(self_type const &x)
+  //  {
+  //
+  ////    kernels::L2Loss<type, container_type> l2loss;
+  //    kernels::L2Loss l2loss;
+  //    data_.in_parallel().Apply(l2loss, x.data_);
+  //  }
 
-//    double sum = 0;
-//    for (std::size_t i = 0; i < this->size(); ++i)
-//    {
-//      sum += std::pow(this->At(i), 2);
-//    }
-//    return sum / 2;
-    //
-    kernels::L2Norm<type, vector_register_type> l2norm;
-    data_.in_parallel().Apply(l2norm, x.data_);
+  /**
+   * calculates the l2loss of data in the array
+   *
+   * @return       returns single value as type
+   *
+   **/
+  type L2Loss()
+  {
+    type sum = data_.in_parallel().SumReduce([](vector_register_type const &v) { return v * v; });
+    return sum * 0.5;
   }
 
   void Fmod(self_type const &x)
