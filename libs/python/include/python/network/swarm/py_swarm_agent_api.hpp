@@ -54,6 +54,7 @@ void BuildSwarmAgentApi(pybind11::module &module) {
     .def("SetSitrep", &PySwarm::SetSitrep)
     .def("AddKarma", &PySwarm::AddKarma)
     .def("AddKarmaMax", &PySwarm::AddKarmaMax)
+    .def("SetKarma", &PySwarm::SetKarma)
     .def("GetKarma", &PySwarm::GetKarma)
     .def("GetCost", &PySwarm::GetCost)
     .def("GetPeers", &PySwarm::GetPeers)

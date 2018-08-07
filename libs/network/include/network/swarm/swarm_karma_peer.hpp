@@ -89,6 +89,11 @@ public:
     karma_ += karmaChange;
   }
 
+  void SetKarma(double karma)
+  {
+    karma_ = karma;
+  }
+
   static std::function<time_t()> &getCurrentTimeCBRef()
   {
     static std::function<time_t()> cb;

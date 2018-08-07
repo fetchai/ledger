@@ -150,6 +150,36 @@ public:
     Sort();
   }
 
+  void SetKarma(const SwarmPeerLocation peer, double karma)
+  {
+    lock_type mlock(mutex_);
+    peers_list_type::iterator it = Find(peer);
+    if (it == peers.end())
+      {
+        peers.push_back(SwarmKarmaPeer(peer, karma));
+      }
+    else
+      {
+        it -> SetKarma(karma);
+      }
+    Sort();
+  }
+
+  void SetKarma(const std::string &host, double karma)
+  {
+    lock_type mlock(mutex_);
+    peers_list_type::iterator it = Find(host);
+    if (it == peers.end())
+      {
+        peers.push_back(SwarmKarmaPeer(host, karma));
+      }
+    else
+      {
+        it -> SetKarma(karma);
+      }
+    Sort();
+  }
+
   SwarmKarmaPeer GetNthKarmicPeer(uint32_t n) const
   {
     lock_type mlock(mutex_);

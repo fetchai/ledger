@@ -166,6 +166,10 @@ public:
   {
     karmaPeerList_.AddOrUpdate(host, karma);
   }
+  void SetKarma(const std::string &host, double karma)
+  {
+    karmaPeerList_.SetKarma(host, karma);
+  }
   double GetKarma(const std::string &host)
   {
     return karmaPeerList_.GetKarma(host);

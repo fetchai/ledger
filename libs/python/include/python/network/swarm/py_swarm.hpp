@@ -390,6 +390,10 @@ public:
                                          swarmNode -> AddOrUpdate(host, amount);
                                        }
                                    });
+    swarmAgentApi -> ToSetKarma([swarmNode](const std::string &host, double karma)
+                                {
+                                  swarmNode -> SetKarma(host, karma);
+                                });
     swarmAgentApi -> ToGetPeers([swarmAgentApi, swarmNode](uint32_t count, double minKarma)
                                 {
                                   auto karmaPeers = swarmNode -> GetBestPeers(count, minKarma);
@@ -447,6 +451,7 @@ virtual std::string GetTxnList (const std::string &txnlistid) { return DELEGATE 
 virtual void AddKarma (const std::string &host, double karma) {  DELEGATE AddKarma ( host,karma ); }
 virtual void SetSitrep (const std::string &sitrep) {  DELEGATE SetSitrep ( sitrep ); }
 virtual void AddKarmaMax (const std::string &host, double karma, double limit) {  DELEGATE AddKarmaMax ( host,karma,limit ); }
+virtual void SetKarma (const std::string &host, double karma) {  DELEGATE SetKarma ( host,karma ); }
 virtual double GetKarma (const std::string &host) { return DELEGATE GetKarma ( host ); }
 virtual double GetCost (const std::string &host) { return DELEGATE GetCost ( host ); }
 virtual std::list<std::string> GetPeers (uint32_t count, double minKarma) { return DELEGATE GetPeers ( count,minKarma ); }

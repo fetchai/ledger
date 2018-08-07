@@ -482,6 +482,18 @@ public:
         }
     }
 
+    virtual void ToSetKarma(
+        std::function<void (const std::string &host, double karma)> action)
+    {
+        this->toSetKarma_ = action;
+    }
+    virtual void SetKarma(const std::string &host, double karma)
+    {
+        if (this->toSetKarma_)
+        {
+            toSetKarma_(host, karma);
+        }
+    }
 
     virtual double GetCost             (const std::string &host)
     {
@@ -515,8 +527,9 @@ protected:
     std::function<void (const std::string &sitrep)>                            toSetSitrep_;
     std::function<double (const std::string &host)>                            toGetKarma_;
     std::function<void (const std::string &host, double amount)>               toAddKarma_;
-    std::function<std::list<std::string>(uint32_t count, double minKarma)> toGetPeers_;
+    std::function<std::list<std::string>(uint32_t count, double minKarma)>     toGetPeers_;
     std::function<void(const std::string &host, double karma, double limit)>   toAddKarmaMax_;
+    std::function<void (const std::string &host, double karma)>                toSetKarma_;
     std::function<void (const std::string &blockid, bool validity)> toVerifyBlock_;
 };
 }

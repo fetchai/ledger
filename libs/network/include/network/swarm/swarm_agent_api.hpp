@@ -56,6 +56,7 @@ public:
   virtual void SetSitrep                 (const std::string &setrep) = 0;
   virtual void AddKarma                  (const std::string &host, double karma) = 0;
   virtual void AddKarmaMax               (const std::string &host, double karma, double limit) = 0;
+  virtual void SetKarma                  (const std::string &host, double karma) = 0;
   virtual double GetKarma                (const std::string &host) = 0;
   virtual double GetCost                 (const std::string &host) = 0;
   virtual std::list<std::string> GetPeers(uint32_t count, double minKarma) = 0;
