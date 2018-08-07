@@ -37,7 +37,7 @@ public:
    *
    * If these arguments correspond to existing files, it will overwrite them
    */
-  void New(std::string const &doc_file, std::string const &index_file)
+  void New(std::string const &doc_file, std::string const &index_file, bool const &create = true)
   {
     store_.New(doc_file, index_file);
   }
@@ -46,7 +46,7 @@ public:
    * Load a file into the document store with the filename parameters for the document,
    * and the index to it
    */
-  void Load(std::string const &doc_file, std::string const &index_file)
+  void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
   {
     store_.New(doc_file, index_file);
   }
