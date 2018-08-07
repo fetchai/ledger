@@ -7,6 +7,7 @@
 #include "math/kernels/approx_soft_max.hpp"
 #include "math/kernels/basic_arithmetics.hpp"
 #include "math/kernels/relu.hpp"
+#include "math/kernels/sign.hpp"
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
 #include "math/kernels/variance.hpp"
@@ -1334,6 +1335,14 @@ public:
 
     kernels::Relu<vector_register_type> relu;
     data_.in_parallel().Apply(relu, x.data_);
+  }
+
+  void Sign(self_type const &x)
+  {
+    LazyResize(x.size());
+
+    kernels::Sign<vector_register_type> sign;
+    data_.in_parallel().Apply(sign, x.data_);
   }
 
   /* Equality operator.
