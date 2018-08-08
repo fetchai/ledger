@@ -1,5 +1,4 @@
-#ifndef VECTORIZE_INFO_HPP
-#define VECTORIZE_INFO_HPP
+#pragma once
 #include <cstddef>
 #include <cstdint>
 
@@ -7,11 +6,10 @@ namespace fetch {
 namespace vectorize {
 
 template <typename T, std::size_t>
-struct VectorInfo {
-  typedef T naitve_type;
-  typedef T register_type;
+struct VectorInfo
+{
+  using naitve_type   = T;
+  using register_type = T;
 };
-}
-}
-
-#endif
+}  // namespace vectorize
+}  // namespace fetch

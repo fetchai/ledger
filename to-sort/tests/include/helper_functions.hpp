@@ -1,5 +1,4 @@
-#ifndef HELPER_FUNCTIONS_HPP
-#define HELPER_FUNCTIONS_HPP
+#pragma once
 
 #include<memory>
 #include<limits>
@@ -94,12 +93,6 @@ T NextTransaction(std::size_t bytesToAdd = 0)
   return trans;
 }
 
-template<typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args)
-{
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
 std::size_t Hash(fetch::byte_array::ConstByteArray const &arr)
 {
     std::size_t hash = 2166136261;
@@ -139,4 +132,3 @@ typedef std::pair<block_hash, block_type> network_block;
 
 }
 
-#endif

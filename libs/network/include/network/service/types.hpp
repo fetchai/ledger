@@ -1,22 +1,20 @@
-#ifndef SERVICE_TYPES_HPP
-#define SERVICE_TYPES_HPP
-#include "core/serializers/byte_array_buffer.hpp"
+#pragma once
 #include "core/serializers/byte_array.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
 
 namespace fetch {
 namespace service {
 
-typedef serializers::TypedByte_ArrayBuffer serializer_type;
+using serializer_type = serializers::TypedByteArrayBuffer;
 
-// typedef serializers::ByteArrayBuffer serializer_type;
+// using serializer_type = serializers::ByteArrayBuffer;
 
-typedef uint64_t protocol_handler_type;
-typedef uint64_t function_handler_type;
-typedef uint8_t feed_handler_type;
-typedef uint8_t subscription_handler_type;
-typedef uint64_t service_classification_type;
-}
-}
-#endif
+using protocol_handler_type       = uint64_t;
+using function_handler_type       = uint64_t;
+using feed_handler_type           = uint8_t;
+using subscription_handler_type   = uint8_t;
+using service_classification_type = uint64_t;
+}  // namespace service
+}  // namespace fetch

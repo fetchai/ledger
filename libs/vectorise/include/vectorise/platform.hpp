@@ -1,13 +1,14 @@
-#ifndef PLATFORM_HPP
-#define PLATFORM_HPP
+#pragma once
 #include "vectorise/vectorise.hpp"
 
 namespace fetch {
 namespace platform {
 
 template <typename T>
-struct VectorRegisterSize {
-  enum {
+struct VectorRegisterSize
+{
+  enum
+  {
 #ifdef __AVX__
     value = 256
 #elif defined __SSE__
@@ -20,8 +21,12 @@ struct VectorRegisterSize {
 
 #define ADD_REGISTER_SIZE(type, size) \
   template <>                         \
-  struct VectorRegisterSize<type> {   \
-    enum { value = size };            \
+  struct VectorRegisterSize<type>     \
+  {                                   \
+    enum                              \
+    {                                 \
+      value = (size)                  \
+    };                                \
   }
 
 #ifdef __AVX2__
@@ -53,7 +58,8 @@ ADD_REGISTER_SIZE(int, sizeof(int));
 #endif
 #undef ADD_REGISTER_SIZE
 
-constexpr bool has_avx() {
+constexpr bool has_avx()
+{
 #ifdef __AVX__
   return true;
 #else
@@ -61,7 +67,8 @@ constexpr bool has_avx() {
 #endif
 }
 
-constexpr bool has_avx2() {
+constexpr bool has_avx2()
+{
 #ifdef __AVX2__
   return true;
 #else
@@ -69,7 +76,8 @@ constexpr bool has_avx2() {
 #endif
 }
 
-constexpr bool has_sse() {
+constexpr bool has_sse()
+{
 #ifdef __SSE__
   return true;
 #else
@@ -77,7 +85,8 @@ constexpr bool has_sse() {
 #endif
 }
 
-constexpr bool has_sse2() {
+constexpr bool has_sse2()
+{
 #ifdef __SSE2__
   return true;
 #else
@@ -85,7 +94,8 @@ constexpr bool has_sse2() {
 #endif
 }
 
-constexpr bool has_sse3() {
+constexpr bool has_sse3()
+{
 #ifdef __SSE3__
   return true;
 #else
@@ -93,7 +103,8 @@ constexpr bool has_sse3() {
 #endif
 }
 
-constexpr bool has_sse41() {
+constexpr bool has_sse41()
+{
 #ifdef __SSE4_1__
   return true;
 #else
@@ -101,14 +112,13 @@ constexpr bool has_sse41() {
 #endif
 }
 
-constexpr bool has_sse42() {
+constexpr bool has_sse42()
+{
 #ifdef __SSE4_2__
   return true;
 #else
   return false;
 #endif
 }
-}
-}
-
-#endif
+}  // namespace platform
+}  // namespace fetch

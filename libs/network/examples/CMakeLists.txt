@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   N E T W O R K   E X A M P L E S
 ################################################################################
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 project(fetch-network)
 
 # CMake configuration

@@ -18,6 +18,7 @@ PORT_BASE = 9000
 class RunSwarmArgs(object):
     def __init__(self):
         self.parser = argparse.ArgumentParser()
+        self.parser.add_argument("--nodetype", help="PyfetchNode or ConstellationNode", type=str, default="ConstellationNode")
         self.parser.add_argument("--members", help="number of swarmers", type=int, default=7)
         self.parser.add_argument("--binary", help="swarm node binary", type=str, default="build/apps/pyfetch/pyfetch apps/pyfetch/pychainnode.py")
         self.parser.add_argument("--initialpeers", help="number of seed peers", type=int, default=2)
@@ -34,29 +35,6 @@ class RunSwarmArgs(object):
     def get(self):
         return self.data
 
-class Swarm(object):
-    def __init__(self, args):
-        chainident = int(time.time())
-        self.nodes = dict([ (x, Node(x, args, chainident)) for x in range(0, args.members)])
-
-    def close(self):
-        for node in self.nodes.values():
-            node.close()
-
-
-@contextmanager
-def createSwarm(args):
-    swarm = Swarm(args)
-    yield swarm
-    swarm.close()
-
-@contextmanager
-def createSwarmWatcher(*args, **kwargs):
-    x = SwarmWatcher(*args, **kwargs)
-    yield x
-    x.close()
-
-
 class SwarmWatcher(object):
     def __init__(self, args):
         self.binary = args.binary.split(' ')[0]
@@ -64,7 +42,7 @@ class SwarmWatcher(object):
 
     def watch(self):
         p = subprocess.Popen(
-            "ps -ef | grep {} | grep -- \"-id\" | grep -v bin/sh | grep -v python | grep -v grep | wc -l".format(self.binary),
+            "ps -ef | grep {} | grep -v -- \"--binary\" | grep -v \"bin/sh\" | grep -v python | grep -v grep | wc -l""".format(self.binary),
             shell=True,
             stdout=subprocess.PIPE
             )
@@ -87,7 +65,68 @@ def killall():
     )
     out, err = p.communicate()
 
-class Node(object):
+class ConstellationNode(object):
+    def __init__(self, index, args, chainident):
+        self.peercount = args.initialpeers
+        self.maxpeers = args.maxpeers
+        self.myport = PORT_BASE + index * 20
+        self.logdir = args.logdir
+        self.index = index
+
+        peers = set()
+        while len(peers)<args.initialpeers:
+            rnd = (index + random.randint(0, args.members)) % args.members
+            if rnd == index:
+                continue
+            peers.add(rnd * 20 + PORT_BASE)
+
+        os.makedirs(args.logdir, exist_ok=True)
+        os.makedirs("data-{}/".format(self.index), exist_ok=True)
+
+        self.peers = [
+            "127.0.0.1:{}".format(x) for x in peers
+        ]
+
+        frontargs = re.split(r'\s+', args.binary)
+
+        self.moreargs = frontargs[1:]
+        self.frontargs = frontargs[0]
+
+        self.backargs = {
+            "-port": "{}".format(self.myport),
+            "-peers": ",".join(self.peers),
+            "-db-prefix": "data-{}/".format(self.index),
+        }
+
+        self.debugger = args.debugger
+
+        self.launchRun()
+
+    def launchRun(self):
+
+        cmdstr = ([ self.frontargs ] +
+            self.moreargs +
+            [ " ".join([ x[0], x[1] ]) for x in self.backargs.items() ])
+
+        cmdstr = " ".join(cmdstr)
+
+        cmdstr = "{} >{}".format(
+                cmdstr
+                , os.path.join(self.logdir, str(self.index))
+            )
+
+        print(cmdstr)
+        self.p = subprocess.Popen(
+            cmdstr,
+            shell=True
+        )
+
+    def close(self):
+        self.p.terminate()
+        self.p.kill()
+
+
+class PyfetchNode(object):
     def __init__(self, index, args, chainident):
         self.peercount = args.initialpeers
         self.maxpeers = args.maxpeers
@@ -105,6 +144,8 @@ class Node(object):
         self.peers = [
             "127.0.0.1:{}".format(x) for x in peers
         ]
+
+        os.makedirs(args.logdir, exist_ok=True)
 
         frontargs = re.split(r'\s+', args.binary)
 
@@ -188,6 +229,33 @@ class Node(object):
 
         self.p.terminate()
         self.p.kill()
+
+
+class Swarm(object):
+    def __init__(self, args):
+        chainident = int(time.time())
+        builder = {
+            "ConstellationNode": ConstellationNode,
+            "PyfetchNode": PyfetchNode,
+        }[args.nodetype]
+        self.nodes = dict([ (x, builder(x, args, chainident)) for x in range(0, args.members)])
+
+    def close(self):
+        for node in self.nodes.values():
+            node.close()
+
+
+@contextmanager
+def createSwarm(args):
+    swarm = Swarm(args)
+    yield swarm
+    swarm.close()
+
+@contextmanager
+def createSwarmWatcher(*args, **kwargs):
+    x = SwarmWatcher(*args, **kwargs)
+    yield x
+    x.close()
 
 
 def main():

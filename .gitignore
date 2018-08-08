@@ -1,6 +1,15 @@
+# Build Output
 *build*/
 *.pyc
+*.db
+CMakeCache.txt
+
+# Merge Outputs
+*.orig
+
+# Legacy Editors
 \#*#
+.\#*
 *~
+*.swp
 .idea/
-log

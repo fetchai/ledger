@@ -1,11 +1,9 @@
-#ifndef HTTP_VIEW_PARAMETERS_HPP
-#define HTTP_VIEW_PARAMETERS_HPP
+#pragma once
 #include "http/key_value_set.hpp"
 
 namespace fetch {
 namespace http {
 
-typedef KeyValueSet ViewParameters;
+using ViewParameters = KeyValueSet;
 }
-}
-#endif
+}  // namespace fetch

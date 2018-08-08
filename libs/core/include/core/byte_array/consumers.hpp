@@ -1,5 +1,4 @@
-#ifndef BYTE_ARRAY_CONSUMERS_HPP
-#define BYTE_ARRAY_CONSUMERS_HPP
+#pragma once
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 
@@ -17,7 +16,8 @@ namespace consumers {
  * points.
  */
 template <int NUMBER_INT, int NUMBER_FLOAT = NUMBER_INT>
-int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
+int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
+{
   /* ┌┐ ┌┐
   ** ││                   ┌──────────────────────┐ ││
   ** ││                   │                      │ ││
@@ -43,35 +43,36 @@ int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
   **                                                  └──────┘
   */
   uint64_t oldpos = pos;
-  uint64_t N = pos + 1;
-  if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) &&
-      (str[N] <= '9'))
-    pos += 2;
+  uint64_t N      = pos + 1;
+  if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) && (str[N] <= '9')) pos += 2;
 
   while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
-  if (pos != oldpos) {
+  if (pos != oldpos)
+  {
     int ret = int(NUMBER_INT);
 
-    if ((pos < str.size()) && (str[pos] == '.')) {
+    if ((pos < str.size()) && (str[pos] == '.'))
+    {
       ++pos;
       ret = int(NUMBER_FLOAT);
-      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9'))
-        ++pos;
+      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
     }
 
-    if ((pos < str.size()) && ((str[pos] == 'e') || (str[pos] == 'E'))) {
+    if ((pos < str.size()) && ((str[pos] == 'e') || (str[pos] == 'E')))
+    {
       uint64_t rev = 1;
       ++pos;
 
-      if ((pos < str.size()) && ((str[pos] == '-') || (str[pos] == '+'))) {
+      if ((pos < str.size()) && ((str[pos] == '-') || (str[pos] == '+')))
+      {
         ++pos;
         ++rev;
       }
 
       oldpos = pos;
-      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9'))
-        ++pos;
-      if (oldpos == pos) {
+      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
+      if (oldpos == pos)
+      {
         pos -= rev;
       }
       ret = int(NUMBER_FLOAT);
@@ -92,28 +93,29 @@ int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
  * formatted.
  */
 template <int STRING>
-int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos) {
+int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos)
+{
   if (str[pos] != '"') return -1;
   ++pos;
   if (pos >= str.size()) return -1;
 
-  uint8_t const *ptr = str.pointer() + pos;
+  uint8_t const *     ptr         = str.pointer() + pos;
   alignas(16) uint8_t compare[16] = {'"', '"', '"', '"', '"', '"', '"', '"',
                                      '"', '"', '"', '"', '"', '"', '"', '"'};
 
-  __m128i comp = _mm_load_si128((__m128i *)compare);
-  __m128i mptr =
-      _mm_loadu_si128((__m128i *)ptr);  // TODO: Optimise to follow alignment
-  __m128i mret = _mm_cmpeq_epi8(comp, mptr);
+  __m128i  comp  = _mm_load_si128((__m128i *)compare);
+  __m128i  mptr  = _mm_loadu_si128((__m128i *)ptr);  // TODO: Optimise to follow alignment
+  __m128i  mret  = _mm_cmpeq_epi8(comp, mptr);
   uint16_t found = uint16_t(_mm_movemask_epi8(mret));
 
-  while ((pos < str.size()) && (!found)) {
+  while ((pos < str.size()) && (!found))
+  {
     pos += 16;
     ptr += 16;
     // TODO: Handle \"x
     __m128i mptr = _mm_loadu_si128((__m128i *)ptr);
     __m128i mret = _mm_cmpeq_epi8(comp, mptr);
-    found = uint16_t(_mm_movemask_epi8(mret));
+    found        = uint16_t(_mm_movemask_epi8(mret));
   }
 
   pos += uint64_t(__builtin_ctz(found));
@@ -124,12 +126,14 @@ int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos) {
 }
 
 template <int STRING>
-int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
+int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
+{
   if (str[pos] != '"') return -1;
   ++pos;
   if (pos >= str.size()) return -1;
 
-  while ((pos < str.size()) && (str[pos] != '"')) {
+  while ((pos < str.size()) && (str[pos] != '"'))
+  {
     pos += 1 + (str[pos] == '\\');
   }
 
@@ -139,31 +143,29 @@ int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos) {
 }
 
 template <int TOKEN>
-int Token(byte_array::ConstByteArray const &str, uint64_t &pos) {
+int Token(byte_array::ConstByteArray const &str, uint64_t &pos)
+{
   uint8_t c = str[pos];
-  
-  if (! (('a'<=c &&c <'z') ||
-      ('A'<=c &&c <'Z')) ) return -1;
+
+  if (!(('a' <= c && c < 'z') || ('A' <= c && c < 'Z'))) return -1;
   ++pos;
-  if(pos >= str.size()) return TOKEN;  
-  c = str[pos];  
-  while(('a'<= c && c <='z') ||
-        ('A'<= c && c <='Z') ||
-        ('0'<= c && c <='9')) {
+  if (pos >= str.size()) return TOKEN;
+  c = str[pos];
+  while (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
+  {
     ++pos;
-    if(pos >= str.size()) break;
-    c = str[pos];      
+    if (pos >= str.size()) break;
+    c = str[pos];
   }
-  return TOKEN; 
+  return TOKEN;
 }
 
-
 template <int CATCH_ALL>
-int AnyChar(byte_array::ConstByteArray const &str, uint64_t &pos) {
+int AnyChar(byte_array::ConstByteArray const &str, uint64_t &pos)
+{
   ++pos;
   return CATCH_ALL;
 }
-}
-}
-}
-#endif
+}  // namespace consumers
+}  // namespace byte_array
+}  // namespace fetch

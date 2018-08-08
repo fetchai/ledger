@@ -1,14 +1,11 @@
-#ifndef QUICK_START_NODE_HPP
-#define QUICK_START_NODE_HPP // TODO: (`HUT`) : change headers
+#pragma once
 
 //#include"network/service/client.hpp"
-#include"./protocol.hpp"
-#include"network/service/publication_feed.hpp"
+#include "./protocol.hpp"
+#include "network/service/publication_feed.hpp"
 
-namespace fetch
-{
-namespace subscribe
-{
+namespace fetch {
+namespace subscribe {
 
 class Node : public fetch::service::HasPublicationFeed
 {
@@ -23,6 +20,5 @@ public:
   }
 };
 
-} // namespace quick_start
-} // namespace fetch
-#endif
+}  // namespace subscribe
+}  // namespace fetch

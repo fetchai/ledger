@@ -1,41 +1,34 @@
-#ifndef MAIN_CHAIN_NODE_INTERFACE_HPP
-#define MAIN_CHAIN_NODE_INTERFACE_HPP
+#pragma once
 
-#include "network/protocols/fetch_protocols.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "network/protocols/fetch_protocols.hpp"
 
-
-namespace fetch
-{
-namespace protocols
-{
-  class MainChainProtocol;
+namespace fetch {
+namespace protocols {
+class MainChainProtocol;
 }
 
-namespace ledger
-{
+namespace ledger {
 
 class MainChainNodeInterface
 {
 public:
+  using proof_type = fetch::chain::MainChain::proof_type;
+  using block_type = fetch::chain::MainChain::block_type;
+  using block_hash = fetch::chain::MainChain::block_hash;
 
-  typedef fetch::chain::MainChain::proof_type proof_type;
-  typedef fetch::chain::MainChain::block_type block_type;
-  typedef fetch::chain::MainChain::block_hash block_hash;
-
-  enum {
+  enum
+  {
     protocol_number = fetch::protocols::FetchProtocols::MAIN_CHAIN
   };
-  typedef fetch::protocols::MainChainProtocol protocol_class_type;
+  using protocol_class_type = fetch::protocols::MainChainProtocol;
 
-    MainChainNodeInterface() = default;
-    virtual ~MainChainNodeInterface() = default;
+  MainChainNodeInterface()          = default;
+  virtual ~MainChainNodeInterface() = default;
 
-  virtual std::pair<bool, block_type>  GetHeader(const block_hash &hash) = 0;
-  virtual std::vector<block_type> GetHeaviestChain(uint32_t maxsize) = 0;
+  virtual std::pair<bool, block_type> GetHeader(const block_hash &hash)  = 0;
+  virtual std::vector<block_type>     GetHeaviestChain(uint32_t maxsize) = 0;
 };
 
-}
-}
-
-#endif //MAIN_CHAIN_NODE_INTERFACE_HPP
+}  // namespace ledger
+}  // namespace fetch

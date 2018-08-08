@@ -1,46 +1,41 @@
-#ifndef NETWORK_BENCHMARK_NODE_BASIC_HPP
-#define NETWORK_BENCHMARK_NODE_BASIC_HPP
+#pragma once
 
 // This represents the API to the network test
-#include<stdlib.h>
-#include<random>
-#include<memory>
-#include<utility>
-#include<limits>
-#include<set>
-#include<chrono>
-#include<ctime>
-#include<iostream>
-#include<fstream>
-#include<vector>
+#include <chrono>
+#include <ctime>
+#include <fstream>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <random>
+#include <set>
+#include <stdlib.h>
+#include <utility>
+#include <vector>
 
-#include"core/byte_array/const_byte_array.hpp"
-#include"core/random/lfg.hpp"
-#include"core/logger.hpp"
-#include"ledger/chain/transaction.hpp"
-#include"./network_classes.hpp"
-#include"./node_directory.hpp"
-#include"./transaction_list.hpp"
-#include"../tests/include/helper_functions.hpp"
+#include "../tests/include/helper_functions.hpp"
+#include "./network_classes.hpp"
+#include "./node_directory.hpp"
+#include "./transaction_list.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/logger.hpp"
+#include "core/random/lfg.hpp"
+#include "ledger/chain/transaction.hpp"
 
-namespace fetch
-{
-namespace network_benchmark
-{
+namespace fetch {
+namespace network_benchmark {
 
-typedef std::chrono::high_resolution_clock::time_point time_point;
+using time_point = std::chrono::high_resolution_clock::time_point;
 
 class NodeBasic
 {
 public:
-  explicit NodeBasic(network::NetworkManager tm) :
-    nodeDirectory_{tm}
-  {}
+  explicit NodeBasic(network::NetworkManager tm) : nodeDirectory_{tm} {}
 
-  NodeBasic(NodeBasic &rhs)            = delete;
-  NodeBasic(NodeBasic &&rhs)           = delete;
-  NodeBasic operator=(NodeBasic& rhs)  = delete;
-  NodeBasic operator=(NodeBasic&& rhs) = delete;
+  NodeBasic(NodeBasic &rhs)  = delete;
+  NodeBasic(NodeBasic &&rhs) = delete;
+  NodeBasic operator=(NodeBasic &rhs) = delete;
+  NodeBasic operator=(NodeBasic &&rhs) = delete;
 
   ~NodeBasic()
   {
@@ -91,10 +86,7 @@ public:
     stopCondition_ = stopCondition;
   }
 
-  void isSlave()
-  {
-    slave_ = true;
-  }
+  void isSlave() { slave_ = true; }
 
   void StartTime(uint64_t startTime)
   {
@@ -107,7 +99,7 @@ public:
       thread_.join();
     }
 
-    thread_   = std::thread([this]() { SendTransactions();});
+    thread_ = std::thread([this]() { SendTransactions(); });
   }
 
   // TODO: (`HUT`) : get rid of start in fn names
@@ -118,14 +110,15 @@ public:
       thread_.join();
     }
 
-    thread_   = std::thread([this]() { TestAsMaster();});
+    thread_ = std::thread([this]() { TestAsMaster(); });
   }
 
   double TimeToComplete()
   {
     LOG_STACK_TRACE_POINT;
-    return std::chrono::duration_cast<std::chrono::duration<double>>
-      (finishTimePoint_ - startTimePoint_).count();
+    return std::chrono::duration_cast<std::chrono::duration<double>>(finishTimePoint_ -
+                                                                     startTimePoint_)
+        .count();
   }
 
   void Reset()
@@ -133,15 +126,14 @@ public:
     LOG_STACK_TRACE_POINT;
     transactionList_.reset();
     nodeDirectory_.Reset();
-    finished_ = false;
-    slave_ = false;
+    finished_  = false;
+    slave_     = false;
     sendIndex_ = 0;
   }
 
   bool finished() const
   {
-    std::cerr << "Trans list: " << transactionList_.size()
-      << " of " << stopCondition_ << std::endl;
+    std::cerr << "Trans list: " << transactionList_.size() << " of " << stopCondition_ << std::endl;
     return finished_;
   }
 
@@ -151,8 +143,8 @@ public:
     int32_t     pad        = (int32_t(transactionSize) - int32_t(baseTxSize));
     if (pad < 0)
     {
-      fetch::logger.Info("Failed to set tx size to: ", transactionSize, ". Less than base size: ",
-          baseTxSize);
+      fetch::logger.Info("Failed to set tx size to: ", transactionSize,
+                         ". Less than base size: ", baseTxSize);
       exit(1);
     }
     txPad_ = uint32_t(pad);
@@ -168,17 +160,17 @@ public:
     return !transactionList_.Contains(hash);
   }
 
-  void PushConfident(block_hash const & blockHash, block_type &block)
+  void PushConfident(block_hash const &blockHash, block_type &block)
   {
     transactionList_.Add(blockHash, std::move(block));
-    auto cb = [&]{ nodeDirectory_.InviteAllForw(blockHash, transactionList_.Get(blockHash));};
+    auto cb = [&] { nodeDirectory_.InviteAllForw(blockHash, transactionList_.Get(blockHash)); };
     std::async(std::launch::async, cb);
   }
 
   inline std::size_t GetNextIndex()
   {
     std::unique_lock<std::mutex> lock(forwardQueueMutex_);
-    static std::size_t index= 0;
+    static std::size_t           index = 0;
     return index++;
   }
 
@@ -190,12 +182,12 @@ public:
     forwardQueueCond_.notify_one();
   }
 
-  void Push(block_hash const & blockHash, block_type &block)
+  void Push(block_hash const &blockHash, block_type &block)
   {
     std::size_t thisIndex = GetNextIndex();
 
     forwardQueueHash_[thisIndex] = blockHash;
-    forwardQueue_[thisIndex] = std::move(block);
+    forwardQueue_[thisIndex]     = std::move(block);
 
     IndexIsSafe(thisIndex);
   }
@@ -204,7 +196,7 @@ public:
   {
     std::size_t sendIndex = sendIndex_++;
     std::cerr << "Sending: " << sendIndex << std::endl;
-    if(sendIndex >= premadeTrans_.size())
+    if (sendIndex >= premadeTrans_.size())
     {
       return false;
     }
@@ -214,10 +206,7 @@ public:
     return true;
   }
 
-  int ping()
-  {
-    return 4;
-  }
+  int ping() { return 4; }
 
   ///////////////////////////////////////////////////////////
   // HTTP functions to check that synchronisation was successful
@@ -234,8 +223,8 @@ public:
   }
 
 private:
-  NodeDirectory                           nodeDirectory_;   // Manage connections to other nodes
-  TransactionList<block_hash, block_type> transactionList_; // List of all transactions
+  NodeDirectory                           nodeDirectory_;    // Manage connections to other nodes
+  TransactionList<block_hash, block_type> transactionList_;  // List of all transactions
   fetch::mutex::Mutex                     mutex_;
 
   // Transmitting thread
@@ -245,17 +234,17 @@ private:
   std::vector<network_block> premadeTrans_;
   uint64_t                   stopCondition_{0};
   uint64_t                   startTime_{0};
-  time_point                 startTimePoint_      = std::chrono::high_resolution_clock::now();
-  time_point                 finishTimePoint_     = std::chrono::high_resolution_clock::now();
-  bool                       finished_            = false;
-  bool                       slave_               = false;
-  bool                       destructing_         = false;
+  time_point                 startTimePoint_  = std::chrono::high_resolution_clock::now();
+  time_point                 finishTimePoint_ = std::chrono::high_resolution_clock::now();
+  bool                       finished_        = false;
+  bool                       slave_           = false;
+  bool                       destructing_     = false;
   std::atomic<std::size_t>   sendIndex_{0};
 
   mutable std::condition_variable forwardQueueCond_;
   std::mutex                      forwardQueueMutex_;
   bool                            wakeMe{false};
-  std::thread                     forwardQueueThread_{[this]() { ForwardThread();}};
+  std::thread                     forwardQueueThread_{[this]() { ForwardThread(); }};
   std::array<block_type, 10000>   forwardQueue_;
   std::array<block_hash, 10000>   forwardQueueHash_;
   std::array<int, 10000>          forwardQueueSafe_;
@@ -283,8 +272,8 @@ private:
         transBlock.second[j] = common::NextTransaction<transaction_type>(txPad_);
       }
 
-      // Use the first Tx for the block hash, should be adequate to avoid collisions (sha256)
-      transBlock.second[0].UpdateDigest();
+      // Use the first Tx for the block hash, should be adequate to avoid
+      // collisions (sha256)
       transBlock.first = common::Hash(transBlock.second[0].summary().transaction_hash);
     }
   }
@@ -306,11 +295,11 @@ private:
     common::BlockUntilTime(startTime_);
     startTimePoint_ = std::chrono::high_resolution_clock::now();
 
-    if(!slave_)
+    if (!slave_)
     {
       for (auto &i : premadeTrans_)
       {
-        //transactionList_.Add(i); // No need since this has been done pre-test
+        // transactionList_.Add(i); // No need since this has been done pre-test
         nodeDirectory_.InviteAllDirect(i.first, i.second);
       }
     }
@@ -318,10 +307,13 @@ private:
     transactionList_.WaitFor(stopCondition_);
 
     finishTimePoint_ = std::chrono::high_resolution_clock::now();
-    finished_ = true;
+    finished_        = true;
 
-    std::cerr << "Time: " <<  std::chrono::duration_cast<std::chrono::duration<double>>
-      (finishTimePoint_ - startTimePoint_).count() << std::endl;
+    std::cerr << "Time: "
+              << std::chrono::duration_cast<std::chrono::duration<double>>(finishTimePoint_ -
+                                                                           startTimePoint_)
+                     .count()
+              << std::endl;
   }
 
   // Thread for forwarding incoming transaction blocks
@@ -333,14 +325,14 @@ private:
     while (!destructing_)
     {
       std::unique_lock<std::mutex> lock(forwardQueueMutex_);
-      forwardQueueCond_.wait(lock, [this] {return wakeMe;});
+      forwardQueueCond_.wait(lock, [this] { return wakeMe; });
       wakeMe = false;
       lock.unlock();
 
       while (forwardQueueSafe_[queueIndex] == 5)
       {
-        auto hash             = forwardQueueHash_[queueIndex];
-        auto &netBlock        = forwardQueue_[queueIndex++];
+        auto  hash     = forwardQueueHash_[queueIndex];
+        auto &netBlock = forwardQueue_[queueIndex++];
 
         if (transactionList_.Add(hash, std::move(netBlock)))
         {
@@ -361,13 +353,14 @@ private:
     nodeDirectory_.ControlSlaves();
 
     finishTimePoint_ = std::chrono::high_resolution_clock::now();
-    finished_ = true;
+    finished_        = true;
 
-    std::cerr << "Time: " <<  std::chrono::duration_cast<std::chrono::duration<double>>
-      (finishTimePoint_ - startTimePoint_).count() << std::endl;
+    std::cerr << "Time: "
+              << std::chrono::duration_cast<std::chrono::duration<double>>(finishTimePoint_ -
+                                                                           startTimePoint_)
+                     .count()
+              << std::endl;
   }
-
 };
-} // namespace network_benchmark
-} // namespace fetch
-#endif
+}  // namespace network_benchmark
+}  // namespace fetch

@@ -1,16 +1,19 @@
 #include "math/bignumber.hpp"
-#include <iomanip>
 #include "byte_array/encoders.hpp"
+#include <iomanip>
 
 #include "unittest.hpp"
 using namespace fetch::math;
 using namespace fetch::byte_array;
 
-int main() {
-  SCENARIO("testing shifting") {
+int main()
+{
+  SCENARIO("testing shifting")
+  {
     BigUnsigned n1(0);
     std::cout << "Original: " << ToHex(n1) << std::endl;
-    SECTION("testing elementary left shifting") {
+    SECTION("testing elementary left shifting")
+    {
       n1 = 3;
       EXPECT(n1[0] == 3);
       n1 <<= 8;
@@ -22,19 +25,23 @@ int main() {
       EXPECT(int(n1[2]) == 1);
     };
 
-    SECTION("testing incrementer for a million increments") {
-      for (std::size_t count = 0; count < (1 << 12); ++count) {
-        union {
+    SECTION("testing incrementer for a million increments")
+    {
+      for (std::size_t count = 0; count < (1 << 12); ++count)
+      {
+        union
+        {
           uint32_t value;
-          uint8_t bytes[sizeof(uint32_t)];
+          uint8_t  bytes[sizeof(uint32_t)];
         } c;
 
-        for (std::size_t i = 0; i < sizeof(uint32_t); ++i)
-          c.bytes[i] = n1[i + 1];
+        for (std::size_t i = 0; i < sizeof(uint32_t); ++i) c.bytes[i] = n1[i + 1];
         SILENT_EXPECT(c.value == count);
 
-        for (std::size_t i = 0; i < (1ul << 8); ++i) {
-          DETAILED_EXPECT(i == int(n1[0])) {
+        for (std::size_t i = 0; i < (1ul << 8); ++i)
+        {
+          DETAILED_EXPECT(i == int(n1[0]))
+          {
             CAPTURE(i);
             CAPTURE(count);
           };
@@ -43,30 +50,36 @@ int main() {
       }
     };
 
-    SECTION("testing comparisons") {
+    SECTION("testing comparisons")
+    {
       BigUnsigned a(0), b(0);
 
-      for (std::size_t count = 0; count < (1 << 8); ++count) {
+      for (std::size_t count = 0; count < (1 << 8); ++count)
+      {
         SILENT_EXPECT(a == b);
 
-        for (std::size_t i = 0; i < (1ul << 8) / 2; ++i) {
+        for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+        {
           ++a;
           SILENT_EXPECT(b < a);
         }
 
-        for (std::size_t i = 0; i < (1ul << 8) / 2; ++i) {
+        for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+        {
           SILENT_EXPECT(b < a);
           ++b;
         }
 
         SILENT_EXPECT(a == b);
 
-        for (std::size_t i = 0; i < (1ul << 8) / 2; ++i) {
+        for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+        {
           ++b;
           SILENT_EXPECT(b > a);
         }
 
-        for (std::size_t i = 0; i < (1ul << 8) / 2; ++i) {
+        for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+        {
           SILENT_EXPECT(b > a);
           ++a;
         }

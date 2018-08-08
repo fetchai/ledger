@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   S T O R A G E   L I B R A R Y
 ################################################################################
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 project(fetch-storage)
 
 # CMake Configuration
@@ -29,12 +29,6 @@ if(FETCH_ENABLE_EXAMPLES)
 
   add_executable(example_state_shard_client examples/state_shard_client.cpp)
   target_link_libraries(example_state_shard_client PRIVATE fetch-storage)
-
-  add_executable(example_lane_server examples/lane_server.cpp)
-  target_link_libraries(example_lane_server PRIVATE fetch-storage)
-
-  add_executable(example_lane_client examples/lane_client.cpp)
-  target_link_libraries(example_lane_client PRIVATE fetch-storage)
 
 
 #  add_executable(example_lane_client examples/lane_client.cpp)

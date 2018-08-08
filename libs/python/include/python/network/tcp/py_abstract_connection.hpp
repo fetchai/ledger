@@ -1,21 +1,16 @@
-#ifndef LIBFETCHCORE_NETWORK_TCP_ABSTRACT_CONNECTION_HPP
-#define LIBFETCHCORE_NETWORK_TCP_ABSTRACT_CONNECTION_HPP
+#pragma once
 #include "network/management/abstract_connection.hpp"
 
-#include"fetch_pybind.hpp"
+#include "fetch_pybind.hpp"
 
-namespace fetch
-{
-namespace network
-{
+namespace fetch {
+namespace network {
 
-void BuildAbstractClientConnection(pybind11::module &module) {
+void BuildAbstractClientConnection(pybind11::module &module)
+{
   namespace py = pybind11;
-  py::class_<AbstractClientConnection>(module, "AbstractClientConnection" )
-    .def(py::init<>()) /* No constructors found */;
-
+  py::class_<AbstractClientConnection>(module, "AbstractClientConnection")
+      .def(py::init<>()) /* No constructors found */;
 }
-};
-};
-
-#endif
+};  // namespace network
+};  // namespace fetch

@@ -1,5 +1,4 @@
-#ifndef SERVICE_ABSTRACT_PUBLICATION_FEED_HPP
-#define SERVICE_ABSTRACT_PUBLICATION_FEED_HPP
+#pragma once
 #include "core/assert.hpp"
 #include "network/service/abstract_callable.hpp"
 
@@ -14,15 +13,16 @@ namespace service {
  * define how to manage feed registrations and how to publish for a
  * given feed.
  */
-class AbstractPublicationFeed {
- public:
+class AbstractPublicationFeed
+{
+public:
   /* The function signature used for
    * The reason to use std::function here instead of function pointers
    * is to ensure support for lambda functions with capture and
    * subsequently member functions from classes with (to this
    * implementation) unknown base class.
    */
-  typedef std::function<void(fetch::byte_array::ConstByteArray)> function_type;
+  using function_type = std::function<void(fetch::byte_array::ConstByteArray)>;
 
   virtual ~AbstractPublicationFeed() {}
 
@@ -33,8 +33,7 @@ class AbstractPublicationFeed {
    * This method can be invoked when defining the protocol using either
    * lambda or free functions.
    **/
-  virtual void create_publisher(feed_handler_type feed,
-                                function_type function) = 0;
+  virtual void create_publisher(feed_handler_type feed, function_type function) = 0;
 
   /* Creates publication function.
    * @feed is the feed handler.
@@ -44,17 +43,14 @@ class AbstractPublicationFeed {
    * member functions as publisher.
    **/
   template <typename C>
-  void create_publisher(
-      feed_handler_type feed, C* cls,
-      void (C::*function)(fetch::byte_array::ConstByteArray const&)) {
+  void create_publisher(feed_handler_type feed, C *cls,
+                        void (C::*function)(fetch::byte_array::ConstByteArray const &))
+  {
     LOG_STACK_TRACE_POINT;
 
     this->create_publisher(
-        feed, [=](fetch::byte_array::ConstByteArray const& msg) -> void {
-          (cls->*function)(msg);
-        });
+        feed, [=](fetch::byte_array::ConstByteArray const &msg) -> void { (cls->*function)(msg); });
   }
 };
-}
-}
-#endif
+}  // namespace service
+}  // namespace fetch

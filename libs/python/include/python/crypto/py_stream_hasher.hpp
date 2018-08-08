@@ -1,21 +1,15 @@
-#ifndef LIBFETCHCORE_CRYPTO_STREAM_HASHER_HPP
-#define LIBFETCHCORE_CRYPTO_STREAM_HASHER_HPP
+#pragma once
 #include "crypto/stream_hasher.hpp"
 
-#include"fetch_pybind.hpp"
+#include "fetch_pybind.hpp"
 
-namespace fetch
-{
-namespace crypto
-{
+namespace fetch {
+namespace crypto {
 
-void BuildStreamHasher(pybind11::module &module) {
+void BuildStreamHasher(pybind11::module &module)
+{
   namespace py = pybind11;
-  py::class_<StreamHasher>(module, "StreamHasher" )
-    .def(py::init<>()) /* No constructors found */;
-
+  py::class_<StreamHasher>(module, "StreamHasher").def(py::init<>()) /* No constructors found */;
 }
-};
-};
-
-#endif
+};  // namespace crypto
+};  // namespace fetch

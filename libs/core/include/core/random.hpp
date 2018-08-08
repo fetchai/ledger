@@ -1,19 +1,14 @@
-#ifndef RANDOM_HPP
-#define RANDOM_HPP
-#include"core/random/lcg.hpp"
-#include"core/random/lfg.hpp"
+#pragma once
+#include "core/random/lcg.hpp"
+#include "core/random/lfg.hpp"
 
-namespace fetch
-{
-namespace random
-{
+namespace fetch {
+namespace random {
 
-struct Random 
+struct Random
 {
   static LaggedFibonacciGenerator<> generator;
 };
 
-}
-}
-
-#endif
+}  // namespace random
+}  // namespace fetch

@@ -1,5 +1,4 @@
-#ifndef SERVICE_PY_CLIENT_HPP
-#define SERVICE_PY_CLIENT_HPP
+#pragma once
 #include"serializers/referenced_byte_array.hpp"
 #include"service/client.hpp"
 
@@ -73,4 +72,3 @@ void BuildClient(pybind11::module &m)
 };
 
 
-#endif

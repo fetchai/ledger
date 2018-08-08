@@ -1,23 +1,19 @@
-#ifndef LIBFETCHCORE_MATH_LOG_HPP
-#define LIBFETCHCORE_MATH_LOG_HPP
+#pragma once
 
-#include"math/log.hpp"
-#include"python/fetch_pybind.hpp"
+#include "math/log.hpp"
+#include "python/fetch_pybind.hpp"
 
-namespace fetch
+namespace fetch {
+namespace math {
+
+void BuildLog(pybind11::module &module)
 {
-namespace math
-{
-
-void BuildLog(pybind11::module &module) {
   /*
   namespace py = pybind11;
   py::class_<Log>(module, "Log" )
-    .def(py::init<>()) 
+    .def(py::init<>())
     .def("operator()", &Log::operator());
 */
 }
-};
-};
-
-#endif
+};  // namespace math
+};  // namespace fetch

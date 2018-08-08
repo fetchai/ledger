@@ -1,19 +1,15 @@
-#ifndef HTTP_MIDDLEWARE_ALLOW_ORIGIN_HPP
-#define HTTP_MIDDLEWARE_ALLOW_ORIGIN_HPP
+#pragma once
 #include "http/server.hpp"
 namespace fetch {
 namespace http {
 namespace middleware {
 
-inline typename HTTPServer::response_middleware_type AllowOrigin(
-    std::string const &val) {
-  return [val](fetch::http::HTTPResponse &res,
-               fetch::http::HTTPRequest const &req) {
+inline typename HTTPServer::response_middleware_type AllowOrigin(std::string const &val)
+{
+  return [val](fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
     res.header().Add("Access-Control-Allow-Origin", val);
   };
 }
-}
-}
-}
-
-#endif
+}  // namespace middleware
+}  // namespace http
+}  // namespace fetch

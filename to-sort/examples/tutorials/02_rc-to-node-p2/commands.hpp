@@ -1,5 +1,4 @@
-#ifndef COMMANDS_HPP
-#define COMMANDS_HPP
+#pragma once
 
 enum AEACommands {
   REGISTER  = 1,
@@ -11,4 +10,3 @@ enum FetchProtocols {
   AEA = 1
 };
 
-#endif

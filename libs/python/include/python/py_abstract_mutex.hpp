@@ -1,23 +1,18 @@
-#ifndef LIBFETCHCORE_ABSTRACT_MUTEX_HPP
-#define LIBFETCHCORE_ABSTRACT_MUTEX_HPP
+#pragma once
 #include "abstract_mutex.hpp"
 
-#include"fetch_pybind.hpp"
+#include "fetch_pybind.hpp"
 
-namespace fetch
-{
-namespace mutex
-{
+namespace fetch {
+namespace mutex {
 
-void BuildAbstractMutex(pybind11::module &module) {
+void BuildAbstractMutex(pybind11::module &module)
+{
   namespace py = pybind11;
-  py::class_<AbstractMutex, std::mutex>(module, "AbstractMutex" )
-    .def(py::init<  >())
-    .def("thread_id", &AbstractMutex::thread_id)
-    .def("AsString", &AbstractMutex::AsString);
-
+  py::class_<AbstractMutex, std::mutex>(module, "AbstractMutex")
+      .def(py::init<>())
+      .def("thread_id", &AbstractMutex::thread_id)
+      .def("AsString", &AbstractMutex::AsString);
 }
-};
-};
-
-#endif
+};  // namespace mutex
+};  // namespace fetch

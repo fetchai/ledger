@@ -1,5 +1,4 @@
-#ifndef ABSTRACT_MUTEX_HPP
-#define ABSTRACT_MUTEX_HPP
+#pragma once
 
 #include <mutex>
 #include <string>
@@ -7,15 +6,14 @@
 namespace fetch {
 namespace mutex {
 
-class AbstractMutex : public std::mutex {
- public:
+class AbstractMutex : public std::mutex
+{
+public:
   AbstractMutex() : std::mutex() {}
 
   virtual std::string AsString() { return "(mutex)"; }
 
-  virtual std::thread::id thread_id() const { return std::thread::id(); }
+  virtual std::thread::id thread_id() const { return {}; }
 };
-}
-}
-
-#endif
+}  // namespace mutex
+}  // namespace fetch

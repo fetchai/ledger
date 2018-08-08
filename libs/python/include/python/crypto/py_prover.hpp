@@ -1,21 +1,15 @@
-#ifndef LIBFETCHCORE_CRYPTO_PROVER_HPP
-#define LIBFETCHCORE_CRYPTO_PROVER_HPP
+#pragma once
 #include "crypto/prover.hpp"
 
-#include"fetch_pybind.hpp"
+#include "fetch_pybind.hpp"
 
-namespace fetch
-{
-namespace crypto
-{
+namespace fetch {
+namespace crypto {
 
-void BuildProver(pybind11::module &module) {
+void BuildProver(pybind11::module &module)
+{
   namespace py = pybind11;
-  py::class_<Prover>(module, "Prover" )
-    .def(py::init<>()) /* No constructors found */;
-
+  py::class_<Prover>(module, "Prover").def(py::init<>()) /* No constructors found */;
 }
-};
-};
-
-#endif
+};  // namespace crypto
+};  // namespace fetch

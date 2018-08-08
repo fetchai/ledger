@@ -30,6 +30,14 @@ function(setup_library name)
   endif()
 endfunction()
 
+function(fetch_add_executable name)
+  list(REMOVE_AT ARGV 0)
+
+  # add the executable
+  add_executable(${name} "${ARGV}")
+
+endfunction()
+
 # Function defines additional example target
 function(setup_library_examples library)
 

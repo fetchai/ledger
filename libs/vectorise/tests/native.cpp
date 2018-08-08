@@ -1,6 +1,6 @@
-#include <iostream>
 #include "core/random/lfg.hpp"
 #include "vectorise/register.hpp"
+#include <iostream>
 using namespace fetch::vectorize;
 
 template <typename T>
@@ -10,20 +10,25 @@ fetch::random::LinearCongruentialGenerator lcg;
 
 #define ADD_TEST(OP, NAME)                                     \
   template <typename T, bool integral = true>                  \
-  void test_##NAME() {                                         \
+  void test_##NAME()                                           \
+  {                                                            \
     T a;                                                       \
     T b;                                                       \
-    if (integral) {                                            \
+    if (integral)                                              \
+    {                                                          \
       a = T(lcg());                                            \
       b = T(lcg());                                            \
-    } else {                                                   \
+    }                                                          \
+    else                                                       \
+    {                                                          \
       a = T(lcg.AsDouble());                                   \
       b = T(lcg.AsDouble());                                   \
     }                                                          \
     NativeRegister<T> A(a), B(b);                              \
-    NativeRegister<T> C = A OP B;                              \
-    T c = T(a OP b);                                           \
-    if (T(C) != c) {                                           \
+    NativeRegister<T> C          = A OP B;                     \
+    T                          c = T(a OP b);                  \
+    if (T(C) != c)                                             \
+    {                                                          \
       std::cout << T(C) << " != " << c << std::endl;           \
       std::cout << "for " #NAME << " using " #OP << std::endl; \
       exit(-1);                                                \
@@ -39,8 +44,10 @@ ADD_TEST(|, or)
 ADD_TEST (^, xor)
 #undef ADD_TEST
 
-void test_registers() {
-  for (std::size_t i = 0; i < 10000000; ++i) {
+void test_registers()
+{
+  for (std::size_t i = 0; i < 10000000; ++i)
+  {
     test_multiply<int8_t>();
     test_multiply<int16_t>();
     test_multiply<int32_t>();
@@ -135,20 +142,25 @@ void test_registers() {
 
 #define ADD_TEST(OP, NAME)                                     \
   template <typename T, bool integral = true>                  \
-  void mtest_##NAME() {                                        \
+  void mtest_##NAME()                                          \
+  {                                                            \
     T a;                                                       \
     T b;                                                       \
-    if (integral) {                                            \
+    if (integral)                                              \
+    {                                                          \
       a = lcg();                                               \
       b = lcg();                                               \
-    } else {                                                   \
+    }                                                          \
+    else                                                       \
+    {                                                          \
       a = lcg.AsDouble();                                      \
       b = lcg.AsDouble();                                      \
     }                                                          \
     NativeRegister<T> A(a), B(b);                              \
-    NativeRegister<T> C = A OP B;                              \
-    T c = T(a OP b);                                           \
-    if (T(C) != c) {                                           \
+    NativeRegister<T> C          = A OP B;                     \
+    T                          c = T(a OP b);                  \
+    if (T(C) != c)                                             \
+    {                                                          \
       std::cout << T(C) << " != " << c << std::endl;           \
       std::cout << "for " #NAME << " using " #OP << std::endl; \
       exit(-1);                                                \
@@ -165,7 +177,8 @@ ADD_TEST (^, xor)
 
 #undef ADD_TEST
 
-int main() {
+int main()
+{
   test_registers();
 
   return 0;

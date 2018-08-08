@@ -1,5 +1,4 @@
-#ifndef NODE_PROTOCOL_HPP
-#define NODE_PROTOCOL_HPP
+#pragma once
 #include"vector_serialize.hpp"
 #include"node_functionality.hpp"
 #include"commands.hpp"
@@ -20,4 +19,3 @@ public:
   }
 };
 
-#endif

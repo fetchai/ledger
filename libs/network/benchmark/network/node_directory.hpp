@@ -1,47 +1,41 @@
-#ifndef NODE_DIRECTORY_HPP
-#define NODE_DIRECTORY_HPP
+#pragma once
 
 // This file holds and manages connections to other nodes
 // Not for long-term use
 
-#include "core/logger.hpp"
-#include "network/service/client.hpp"
-#include "network/service/server.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "../tests/include/helper_functions.hpp"
+#include "./network_classes.hpp"
 #include "./protocols/fetch_protocols.hpp"
 #include "./protocols/network_benchmark/commands.hpp"
 #include "./protocols/network_mine_test/commands.hpp"
-#include "./network_classes.hpp"
-#include "../tests/include/helper_functions.hpp"
+#include "core/logger.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "network/service/client.hpp"
+#include "network/service/server.hpp"
 
 #include "core/byte_array/byte_array.hpp"
 
 #include <set>
 #include <utility>
 
-namespace fetch
-{
-namespace network_benchmark
-{
+namespace fetch {
+namespace network_benchmark {
 
 class NodeDirectory
 {
 public:
+  using clientType = service::ServiceClient;
 
-  using clientType = service::ServiceClient<network::TCPClient>;
+  NodeDirectory(network::NetworkManager tm) : tm_{tm} {}
 
-  NodeDirectory(network::NetworkManager tm) :
-  tm_{tm}
-  {}
-
-  NodeDirectory(NodeDirectory &rhs)            = delete;
-  NodeDirectory(NodeDirectory &&rhs)           = delete;
-  NodeDirectory operator=(NodeDirectory& rhs)  = delete;
-  NodeDirectory operator=(NodeDirectory&& rhs) = delete;
+  NodeDirectory(NodeDirectory &rhs)  = delete;
+  NodeDirectory(NodeDirectory &&rhs) = delete;
+  NodeDirectory operator=(NodeDirectory &rhs) = delete;
+  NodeDirectory operator=(NodeDirectory &&rhs) = delete;
 
   ~NodeDirectory()
   {
-    for(auto &i : serviceClients_)
+    for (auto &i : serviceClients_)
     {
       delete i.second;
     }
@@ -53,7 +47,11 @@ public:
     LOG_STACK_TRACE_POINT;
     if (serviceClients_.find(endpoint) == serviceClients_.end())
     {
-      auto client = new clientType {endpoint.IP(), endpoint.TCPPort(), tm_};
+      fetch::network::TCPClient connection(tm_);
+      connection.Connect(endpoint.IP(), endpoint.TCPPort());
+
+      auto client = new clientType(connection, tm_);
+
       serviceClients_[endpoint] = client;
     }
   }
@@ -64,18 +62,18 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    for(auto &i : serviceClients_)
+    for (auto &i : serviceClients_)
     {
       auto client = i.second;
 
-      if(!client->is_alive())
+      if (!client->is_alive())
       {
         std::cerr << "Client has died (pushing)!\n\n" << std::endl;
         fetch::logger.Error("Client has died in node direc");
       }
 
       client->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
-          protocols::NetworkMineTest::PUSH_NEW_HEADER, block);
+                   protocols::NetworkMineTest::PUSH_NEW_HEADER, block);
     }
   }
 
@@ -84,20 +82,20 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    for(auto &i : serviceClients_)
+    for (auto &i : serviceClients_)
     {
       auto client = i.second;
 
-      if(!client->is_alive())
+      if (!client->is_alive())
       {
         std::cerr << "Client has died (pulling)!\n\n" << std::endl;
         fetch::logger.Error("Client has died in node direc");
       }
 
       std::pair<bool, T> result = client->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
-          protocols::NetworkMineTest::PROVIDE_HEADER, hash);
+                                               protocols::NetworkMineTest::PROVIDE_HEADER, hash);
 
-      if(result.first)
+      if (result.first)
       {
         result.second.UpdateDigest();
         block = result.second;
@@ -113,23 +111,23 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    for(auto &i : serviceClients_)
+    for (auto &i : serviceClients_)
     {
       auto client = i.second;
 
-      if(!client->is_alive())
+      if (!client->is_alive())
       {
         std::cerr << "Client has died (forw)!\n\n" << std::endl;
       }
 
       bool clientWants = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-          protocols::NetworkBenchmark::INVITE_PUSH, blockHash);
+                                      protocols::NetworkBenchmark::INVITE_PUSH, blockHash);
 
-      if(clientWants)
+      if (clientWants)
       {
         fetch::logger.Info("Client wants forwarded push");
         client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-          protocols::NetworkBenchmark::PUSH, blockHash, block);
+                     protocols::NetworkBenchmark::PUSH, blockHash, block);
       }
     }
   }
@@ -138,18 +136,18 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    for(auto &i : serviceClients_)
+    for (auto &i : serviceClients_)
     {
       auto client = i.second;
 
-      if(!client->is_alive())
+      if (!client->is_alive())
       {
         std::cerr << "Client has died!\n\n" << std::endl;
         exit(1);
       }
 
       client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-        protocols::NetworkBenchmark::PUSH_CONFIDENT, blockHash, block);
+                   protocols::NetworkBenchmark::PUSH_CONFIDENT, blockHash, block);
     }
   }
 
@@ -157,18 +155,18 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    for(auto &i : serviceClients_)
+    for (auto &i : serviceClients_)
     {
       auto client = i.second;
 
-      if(!client->is_alive())
+      if (!client->is_alive())
       {
         std::cerr << "Client has died!\n\n" << std::endl;
         exit(1);
       }
 
       auto p1 = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-        protocols::NetworkBenchmark::PUSH_CONFIDENT, blockHash, block);
+                             protocols::NetworkBenchmark::PUSH_CONFIDENT, blockHash, block);
       p1.Wait();
     }
   }
@@ -177,24 +175,28 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    for(auto &i : serviceClients_)
+    for (auto &i : serviceClients_)
     {
       auto client = i.second;
 
-      if(!client->is_alive())
+      if (!client->is_alive())
       {
         std::cerr << "Client to slave has died!\n\n" << std::endl;
         exit(1);
       }
 
-      while(client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-        protocols::NetworkBenchmark::SEND_NEXT).As<bool>()) {}
+      while (client
+                 ->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+                        protocols::NetworkBenchmark::SEND_NEXT)
+                 .As<bool>())
+      {
+      }
     }
   }
 
   void Reset()
   {
-    for(auto &i : serviceClients_)
+    for (auto &i : serviceClients_)
     {
       delete i.second;
     }
@@ -202,10 +204,9 @@ public:
   }
 
 private:
-  fetch::network::NetworkManager            tm_;
-  std::map<Endpoint, clientType *>         serviceClients_;
+  fetch::network::NetworkManager   tm_;
+  std::map<Endpoint, clientType *> serviceClients_;
 };
 
-}
-}
-#endif
+}  // namespace network_benchmark
+}  // namespace fetch

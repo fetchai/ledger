@@ -1,7 +1,4 @@
-#ifndef LIBFETCHCORE_COMMANDLINE_VT100_HPP
-#define LIBFETCHCORE_COMMANDLINE_VT100_HPP
+#pragma once
 #include "commandline/vt100.hpp"
 
-#include"fetch_pybind.hpp"
- 
-#endif
+#include "fetch_pybind.hpp"

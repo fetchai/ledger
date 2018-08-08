@@ -1,5 +1,4 @@
-#ifndef SCRIPT_ARRAY_HPP
-#define SCRIPT_ARRAY_HPP
+#pragma once
 #include "byte_array/byte_array.hpp"
 #include "crypto/fnv.hpp"
 #include "memory/shared_hashtable.hpp"
@@ -10,52 +9,55 @@ namespace fetch {
 namespace script {
 
 template <typename T>
-class Array {
- public:
-  typedef T type;
-  typedef std::vector<type> container_type;
-  typedef std::shared_ptr<container_type> shared_container_type;
-  typedef typename container_type::iterator iterator;
-  typedef typename container_type::const_iterator const_iterator;
+class Array
+{
+public:
+  using type                  = T;
+  using container_type        = std::vector<type>;
+  using shared_container_type = std::shared_ptr<container_type>;
+  using iterator              = typename container_type::iterator;
+  using const_iterator        = typename container_type::const_iterator;
 
   Array() { data_ = std::make_shared<container_type>(); }
 
-  Array(Array const& dict) { data_ = dict.data_; }
+  Array(Array const &dict) { data_ = dict.data_; }
 
-  Array(Array&& dict) { std::swap(data_, dict.data_); }
+  Array(Array &&dict) { std::swap(data_, dict.data_); }
 
-  Array const& operator=(Array const& dict) {
+  Array const &operator=(Array const &dict)
+  {
     data_ = dict.data_;
     return *this;
   }
 
-  Array const& operator=(Array&& dict) {
+  Array const &operator=(Array &&dict)
+  {
     std::swap(data_, dict.data_);
     return *this;
   }
 
-  void Reserve(std::size_t const& n) { data_->reserve(n); }
+  void Reserve(std::size_t const &n) { data_->reserve(n); }
 
-  void Resize(std::size_t const& n) { data_->resize(n); }
+  void Resize(std::size_t const &n) { data_->resize(n); }
 
-  Array<T> Copy() const {
-    std::cout << "Was here?" << std::endl;
-
+  Array<T> Copy() const
+  {
     Array<T> ret;
 
     ret.Resize(size());
     std::size_t i = 0;
 
-    for (auto const& a : *data_) {
+    for (auto const &a : *data_)
+    {
       ret[i++] = a;
     }
 
     return ret;
   }
 
-  type& operator[](std::size_t const& key) { return (*data_)[key]; }
+  type &operator[](std::size_t const &key) { return (*data_)[key]; }
 
-  type const& operator[](std::size_t const& key) const { return (*data_)[key]; }
+  type const &operator[](std::size_t const &key) const { return (*data_)[key]; }
 
   iterator begin() { return data_->begin(); }
 
@@ -67,10 +69,8 @@ class Array {
 
   std::size_t size() const { return data_->size(); }
 
- private:
+private:
   shared_container_type data_;
 };
-}
-}
-
-#endif
+}  // namespace script
+}  // namespace fetch

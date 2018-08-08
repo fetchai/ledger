@@ -1,7 +1,4 @@
-#ifndef LIBFETCHCORE_SERVICE_MESSAGE_TYPES_HPP
-#define LIBFETCHCORE_SERVICE_MESSAGE_TYPES_HPP
+#pragma once
 #include "service/message_types.hpp"
 
-#include"fetch_pybind.hpp"
-
-#endif
+#include "fetch_pybind.hpp"

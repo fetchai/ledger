@@ -1,8 +1,4 @@
-#ifndef LIBFETCHCORE_CRYPTO_VERIFIER_HPP
-#define LIBFETCHCORE_CRYPTO_VERIFIER_HPP
+#pragma once
 #include "crypto/verifier.hpp"
 
-#include"fetch_pybind.hpp"
-
-
-#endif
+#include "fetch_pybind.hpp"
