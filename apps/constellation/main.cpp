@@ -8,6 +8,7 @@
 #include "network/management/network_manager.hpp"
 #include "network/fetch_asio.hpp"
 
+#include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
 
 #include <iostream>
@@ -19,6 +20,8 @@
 #include <system_error>
 
 namespace {
+
+using BootstrapPtr = std::unique_ptr<fetch::BootstrapMonitor>;
 
 struct CommandLineArguments
 {
@@ -36,16 +39,16 @@ struct CommandLineArguments
   peer_list_type peers;
   std::size_t    num_executors;
   std::size_t    num_lanes;
-  std::string    interface;
+  bool           bootstrap{false};
   std::string    dbdir;
 
-  static CommandLineArguments Parse(int argc, char **argv, adapter_list_type const &adapters)
+
+  static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap)
   {
     CommandLineArguments args;
 
     // define the parameters
     std::string raw_peers;
-    bool bootstrap;
 
     fetch::commandline::Params parameters;
     parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
@@ -57,22 +60,7 @@ struct CommandLineArguments
     parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage",
                    std::string{"node_storage"});
     parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
-    parameters.add(bootstrap, "bootstrap", "Enable bootstrap network support", false);
-
-    std::size_t const num_adapters = adapters.size();
-    if (num_adapters == 0)
-    {
-      throw std::runtime_error("Unable to detect system network interfaces");
-    }
-    else if (num_adapters == 1)
-    {
-      args.interface = adapters[0].address().to_string();
-    }
-    else
-    {
-      parameters.add(args.interface, "interface",
-                     "The network interface to used for public communication");
-    }
+    parameters.add(args.bootstrap, "bootstrap", "Enable bootstrap network support", false);
 
     // parse the args
     parameters.Parse(argc, const_cast<char const **>(argv));
@@ -80,146 +68,16 @@ struct CommandLineArguments
     // update the peers
     args.SetPeers(raw_peers);
 
-    // if we have been configured to do so then bootstrap
-    if (bootstrap)
+    if (args.bootstrap)
     {
-      args.Bootstrap();
-    }
+      // create the boostrap node
+      bootstrap = std::make_unique<fetch::BootstrapMonitor>(args.port, args.network_id);
 
-    // validate the interface
-    bool valid_adapter = false;
-    for (auto const &adapter : adapters)
-    {
-      if (adapter.address().to_string() == args.interface)
-      {
-        valid_adapter = true;
-        break;
-      }
-    }
-
-    // handle invalid interface address
-    if (!valid_adapter)
-    {
-      throw std::runtime_error("Invalid interface address");
+      // augment the peer list with the bootstrapped version
+      bootstrap->Start(args.peers);
     }
 
     return args;
-  }
-
-  void Bootstrap()
-  {
-    static constexpr std::size_t BUFFER_SIZE = 1024;
-    static constexpr char const *BOOTSTRAP_HOST = "35.188.32.73";
-    static constexpr uint16_t BOOTSTRAP_PORT  = 10000;
-
-    using IoService = asio::io_service;
-    using Resolver = asio::ip::tcp::resolver;
-    using Socket = asio::ip::tcp::socket;
-
-    fetch::logger.Info("Bootstrapping network node ", BOOTSTRAP_HOST, ':', BOOTSTRAP_PORT);
-
-    IoService io_service{};
-    Resolver resolver(io_service);
-
-    Resolver::query query(BOOTSTRAP_HOST, std::to_string(BOOTSTRAP_PORT));
-
-    Resolver::iterator endpoint = resolver.resolve(query);
-
-    std::error_code ec{};
-    Socket socket(io_service);
-    if (endpoint != Resolver::iterator{}) {
-      socket.connect(*endpoint, ec);
-
-      if (ec)
-      {
-        fetch::logger.Warn("Failed to connect to boostrap node: ", ec.message());
-        return;
-      }
-
-      // create the request
-      fetch::script::Variant variant;
-      variant.MakeObject();
-      variant["port"] = port + fetch::Constellation::P2P_PORT_OFFSET;
-      variant["network-id"] = network_id;
-
-      // format the request
-      std::string request;
-      {
-        std::ostringstream oss;
-        oss << variant;
-        request = oss.str();
-      }
-
-      socket.write_some(asio::buffer(request), ec);
-
-      if (ec)
-      {
-        fetch::logger.Warn("Failed to send boostrap request: ", ec.message());
-        return;
-      }
-
-      fetch::byte_array::ByteArray buffer;
-      buffer.Resize(BUFFER_SIZE);
-
-      std::size_t const num_bytes = socket.read_some(asio::buffer(buffer.pointer(), buffer.size()), ec);
-
-      if (ec)
-      {
-        fetch::logger.Warn("Failed to recv the response from the server: ", ec.message());
-        return;
-      }
-
-      if (num_bytes > 0)
-      {
-        buffer.Resize(num_bytes);
-      }
-      else
-      {
-        fetch::logger.Warn("Didn't recv any more data");
-        return;
-      }
-
-      // try and parse the json documnet
-      fetch::json::JSONDocument doc;
-      doc.Parse(buffer);
-
-      // check the formatting of the response
-      auto const &root = doc.root();
-      if (!root.is_object())
-      {
-        fetch::logger.Warn("Incorrect formatting (object)");
-        return;
-      }
-
-      auto const &peer_list = root["peers"];
-      if (peer_list.is_undefined())
-      {
-        fetch::logger.Warn("Incorrect formatting (undefined)");
-        return;
-      }
-
-      if (!peer_list.is_array())
-      {
-        fetch::logger.Warn("Incorrect formatting (array)");
-        return;
-      }
-
-      fetch::network::Peer peer;
-      for (std::size_t i = 0; i < peer_list.size(); ++i)
-      {
-        std::string const peer_address = peer_list[i].As<std::string>();
-        if (peer.Parse(peer_address))
-        {
-          peers.push_back(peer);
-        }
-        else
-        {
-          fetch::logger.Warn("Failed to parse address: ", peer_address);
-        }
-      }
-
-      fetch::logger.Info("Bootstrapping network node...complete");
-    }
   }
 
   void SetPeers(std::string const &raw_peers)
@@ -263,7 +121,7 @@ struct CommandLineArguments
     s << "network id.....: 0x" << std::hex << args.network_id << std::dec << std::endl;
     s << "num executors..: " << args.num_executors << std::endl;
     s << "num lanes......: " << args.num_lanes << std::endl;
-    s << "interface......: " << args.interface << std::endl;
+    s << "bootstrap......: " << args.bootstrap << std::endl;
     s << "db-prefix......: " << args.dbdir << std::endl;
     s << "peers..........: ";
     for (auto const &peer : args.peers)
@@ -285,10 +143,9 @@ int main(int argc, char **argv)
 
   try
   {
+    BootstrapPtr bootstrap_monitor;
 
-    auto const network_adapters = fetch::network::Adapter::GetAdapters();
-
-    auto const args = CommandLineArguments::Parse(argc, argv, network_adapters);
+    auto const args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor);
 
     fetch::logger.Info("Configuration:\n", args);
 
@@ -296,7 +153,15 @@ int main(int argc, char **argv)
     auto constellation =
         fetch::Constellation::Create(args.port, args.num_executors, args.num_lanes,
                                      fetch::Constellation::DEFAULT_NUM_SLICES, args.dbdir);
+
+    // run the application
     constellation->Run(args.peers);
+
+    // stop the bootstrapper if we have one
+    if (bootstrap_monitor)
+    {
+      bootstrap_monitor->Stop();
+    }
 
     exit_code = EXIT_SUCCESS;
   }
