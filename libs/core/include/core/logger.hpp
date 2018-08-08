@@ -521,12 +521,21 @@ private:
   shared_context_type TopContextImpl()
   {
     std::thread::id id = std::this_thread::get_id();
-    if (!context_[id])
+
+    shared_context_type ret;
+
+    auto it = context_.find(id);
+    if (it != context_.end())
     {
-      context_[id] = std::make_shared<ContextDetails>();
+      ret = it->second;
+    }
+    else
+    {
+      ret = std::make_shared<ContextDetails>();
+      context_.emplace(id, ret);
     }
 
-    return context_[id];
+    return ret;
   }
 
   template <typename T, typename... Args>

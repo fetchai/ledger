@@ -25,6 +25,8 @@ enum
   TOKEN_CATCH_ALL = 12
 };
 
+using ResourceAddress = fetch::storage::ResourceAddress;
+
 int main(int argc, char const **argv)
 {
   // Parameters
@@ -121,7 +123,7 @@ int main(int argc, char const **argv)
         {
           if (command.size() == 2)
           {
-            std::cout << client.Get(command[1]).document << std::endl;
+            std::cout << client.Get(ResourceAddress{command[1]}).document << std::endl;
           }
           else
           {
@@ -133,7 +135,7 @@ int main(int argc, char const **argv)
 
           if (command.size() == 2)
           {
-            client.Lock(command[1]);
+            client.Lock(ResourceAddress{command[1]});
           }
           else
           {
@@ -144,7 +146,7 @@ int main(int argc, char const **argv)
         {
           if (command.size() == 2)
           {
-            client.Unlock(command[1]);
+            client.Unlock(ResourceAddress{command[1]});
           }
           else
           {
@@ -155,7 +157,7 @@ int main(int argc, char const **argv)
         {
           if (command.size() == 3)
           {
-            client.Set(command[1], command[2]);
+            client.Set(ResourceAddress{command[1]}, command[2]);
           }
           else
           {
