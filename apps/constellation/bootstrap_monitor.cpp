@@ -6,8 +6,8 @@ namespace fetch {
 namespace {
 
 constexpr std::size_t BUFFER_SIZE = 1024;
-constexpr char const *BOOTSTRAP_HOST = "35.189.67.157";
-//constexpr char const *BOOTSTRAP_HOST = "127.0.0.1";
+//constexpr char const *BOOTSTRAP_HOST = "35.189.67.157";
+constexpr char const *BOOTSTRAP_HOST = "127.0.0.1";
 constexpr uint16_t BOOTSTRAP_PORT  = 10000;
 
 const std::chrono::minutes UPDATE_INTERVAL{10};
@@ -53,6 +53,7 @@ bool BootstrapMonitor::RequestPeerList(BootstrapMonitor::PeerList &peers)
   fetch::script::Variant request;
   request.MakeObject();
   request["type"] = "peer-list";
+  request["host"] = external_address_;
   request["port"] = port_ + fetch::Constellation::P2P_PORT_OFFSET;
   request["network-id"] = network_id_;
 

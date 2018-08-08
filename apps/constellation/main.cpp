@@ -29,18 +29,18 @@ struct CommandLineArguments
   using peer_list_type    = fetch::Constellation::peer_list_type;
   using adapter_list_type = fetch::network::Adapter::adapter_list_type;
 
-  static const std::size_t DEFAULT_NUM_LANES     = 4;
+  static const std::size_t DEFAULT_NUM_LANES = 4;
   static const std::size_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
-  static const uint16_t    DEFAULT_PORT          = 8000;
-  static const uint32_t    DEFAULT_NETWORK_ID    = 0x10;
+  static const uint16_t DEFAULT_PORT = 8000;
+  static const uint32_t DEFAULT_NETWORK_ID = 0x10;
 
-  uint16_t       port{0};
-  uint32_t       network_id;
+  uint16_t port{0};
+  uint32_t network_id;
   peer_list_type peers;
-  std::size_t    num_executors;
-  std::size_t    num_lanes;
-  bool           bootstrap{false};
-  std::string    dbdir;
+  std::size_t num_executors;
+  std::size_t num_lanes;
+  bool bootstrap{false};
+  std::string dbdir;
 
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap)
@@ -51,6 +51,7 @@ struct CommandLineArguments
     std::string raw_peers;
 
     fetch::commandline::Params parameters;
+    std::string external_address;
     parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
     parameters.add(args.num_executors, "executors", "The number of executors to configure",
                    DEFAULT_NUM_EXECUTORS);
@@ -60,7 +61,8 @@ struct CommandLineArguments
     parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage",
                    std::string{"node_storage"});
     parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
-    parameters.add(args.bootstrap, "bootstrap", "Enable bootstrap network support", false);
+    parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
+                   std::string{});
 
     // parse the args
     parameters.Parse(argc, const_cast<char const **>(argv));
@@ -68,10 +70,14 @@ struct CommandLineArguments
     // update the peers
     args.SetPeers(raw_peers);
 
+    args.bootstrap = (!external_address.empty());
     if (args.bootstrap)
     {
       // create the boostrap node
-      bootstrap = std::make_unique<fetch::BootstrapMonitor>(args.port, args.network_id);
+      bootstrap = std::make_unique<fetch::BootstrapMonitor>(
+        args.port,
+        args.network_id,
+        external_address);
 
       // augment the peer list with the bootstrapped version
       bootstrap->Start(args.peers);
@@ -116,7 +122,7 @@ struct CommandLineArguments
     }
   }
 
-  friend std::ostream &operator<<(std::ostream &              s,
+  friend std::ostream &operator<<(std::ostream &s,
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
     s << "port...........: " << args.port << std::endl;
@@ -153,8 +159,8 @@ int main(int argc, char **argv)
 
     // create and run the constellation
     auto constellation =
-        fetch::Constellation::Create(args.port, args.num_executors, args.num_lanes,
-                                     fetch::Constellation::DEFAULT_NUM_SLICES, args.dbdir);
+      fetch::Constellation::Create(args.port, args.num_executors, args.num_lanes,
+                                   fetch::Constellation::DEFAULT_NUM_SLICES, args.dbdir);
 
     // run the application
     constellation->Run(args.peers);

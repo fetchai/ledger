@@ -11,6 +11,7 @@
 #include <memory>
 #include <atomic>
 #include <mutex>
+#include <string>
 
 namespace fetch {
 
@@ -19,9 +20,10 @@ class BootstrapMonitor
 public:
   using PeerList = Constellation::peer_list_type;
 
-  BootstrapMonitor(uint16_t port, uint32_t network_id)
+  BootstrapMonitor(uint16_t port, uint32_t network_id, std::string external_address)
     : network_id_(network_id)
     , port_(port)
+    , external_address_(std::move(external_address))
   {
   }
 
@@ -41,6 +43,7 @@ private:
 
   uint32_t const network_id_;
   uint16_t const port_;
+  std::string const external_address_;
 
   Flag running_{false};
   ThreadPtr monitor_thread_;
