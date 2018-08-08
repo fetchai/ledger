@@ -82,34 +82,36 @@ struct CommandLineArguments
 
   void SetPeers(std::string const &raw_peers)
   {
-    // split the peers
-    std::size_t          position = 0;
-    fetch::network::Peer peer;
-    while (std::string::npos != position)
+    if (!raw_peers.empty())
     {
+      // split the peers
+      std::size_t position = 0;
+      fetch::network::Peer peer;
+      while (std::string::npos != position)
+      {
+        // locate the separator
+        std::size_t const separator_position = raw_peers.find(',', position);
 
-      // locate the separator
-      std::size_t const separator_position = raw_peers.find(',', position);
+        // parse the peer
+        std::string const peer_address = raw_peers.substr(position, separator_position);
+        if (peer.Parse(peer_address))
+        {
+          peers.push_back(peer);
+        }
+        else
+        {
+          fetch::logger.Warn("Failed to parse input peer address: '", peer_address, "'");
+        }
 
-      // parse the peer
-      std::string const peer_address = raw_peers.substr(position, separator_position);
-      if (peer.Parse(peer_address))
-      {
-        peers.push_back(peer);
-      }
-      else
-      {
-        fetch::logger.Warn("Failed to parse input peer address: ", peer_address);
-      }
-
-      // update the position for the next search
-      if (std::string::npos == separator_position)
-      {
-        position = std::string::npos;
-      }
-      else
-      {
-        position = separator_position + 1;  // advance past separator
+        // update the position for the next search
+        if (std::string::npos == separator_position)
+        {
+          position = std::string::npos;
+        }
+        else
+        {
+          position = separator_position + 1;  // advance past separator
+        }
       }
     }
   }

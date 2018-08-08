@@ -1,6 +1,7 @@
 #ifndef FETCH_BOOTSTRAP_MONITOR_HPP
 #define FETCH_BOOTSTRAP_MONITOR_HPP
 
+#include "core/mutex.hpp"
 #include "core/script/variant.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "network/fetch_asio.hpp"
@@ -9,6 +10,7 @@
 #include <thread>
 #include <memory>
 #include <atomic>
+#include <mutex>
 
 namespace fetch {
 
@@ -34,6 +36,8 @@ private:
   using ThreadPtr = std::unique_ptr<std::thread>;
   using Buffer = byte_array::ByteArray;
   using Flag = std::atomic<bool>;
+  using Mutex = mutex::Mutex;
+  using LockGuard = std::lock_guard<Mutex>;
 
   uint32_t const network_id_;
   uint16_t const port_;
@@ -41,6 +45,7 @@ private:
   Flag running_{false};
   ThreadPtr monitor_thread_;
 
+  Mutex io_mutex_{__LINE__, __FILE__};
   IoService io_service_;
   Resolver resolver_{io_service_};
   Socket socket_{io_service_};

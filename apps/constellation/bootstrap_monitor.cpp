@@ -10,7 +10,7 @@ constexpr char const *BOOTSTRAP_HOST = "35.189.67.157";
 //constexpr char const *BOOTSTRAP_HOST = "127.0.0.1";
 constexpr uint16_t BOOTSTRAP_PORT  = 10000;
 
-const std::chrono::seconds UPDATE_INTERVAL{2};
+const std::chrono::minutes UPDATE_INTERVAL{10};
 
 } // namespace
 
@@ -33,8 +33,6 @@ bool BootstrapMonitor::Start(PeerList &peers)
   {
     fetch::logger.Warn("Failed to request the peers from the bootstrap node");
   }
-
-  std::this_thread::sleep_for(UPDATE_INTERVAL);
 
   return success;
 }
@@ -85,13 +83,16 @@ bool BootstrapMonitor::RequestPeerList(BootstrapMonitor::PeerList &peers)
     for (std::size_t i = 0; i < peer_list.size(); ++i)
     {
       std::string const peer_address = peer_list[i].As<std::string>();
-      if (peer.Parse(peer_address))
+      if (!peer_address.empty())
       {
-        peers.push_back(peer);
-      }
-      else
-      {
-        fetch::logger.Warn("Failed to parse address: ", peer_address);
+        if (peer.Parse(peer_address))
+        {
+          peers.push_back(peer);
+        }
+        else
+        {
+          fetch::logger.Warn("Failed to parse address: '", peer_address, "'");
+        }
       }
     }
   }
@@ -101,6 +102,8 @@ bool BootstrapMonitor::RequestPeerList(BootstrapMonitor::PeerList &peers)
 
 bool BootstrapMonitor::MakeRequest(script::Variant const &request, script::Variant &response)
 {
+  LockGuard lock(io_mutex_);
+
   // resolve the address of the bootstrap node
   Resolver::query query(BOOTSTRAP_HOST, std::to_string(BOOTSTRAP_PORT));
   Resolver::iterator endpoint = resolver_.resolve(query);
@@ -152,6 +155,8 @@ bool BootstrapMonitor::MakeRequest(script::Variant const &request, script::Varia
       return false;
     }
 
+    fetch::logger.Info("Raw response: ", buffer_);
+
     // try and parse the json response
     fetch::json::JSONDocument doc;
     try
@@ -165,6 +170,19 @@ bool BootstrapMonitor::MakeRequest(script::Variant const &request, script::Varia
     }
 
     response = doc.root();
+
+    // close
+    socket_.close(ec);
+    if (ec)
+    {
+      fetch::logger.Warn("Failed to close the socket: ", ec.message());
+      return false;
+    }
+  }
+  else
+  {
+    fetch::logger.Warn("Failed to resolve bootstrap address: ", ec.message());
+    return false;
   }
 
   return true;
