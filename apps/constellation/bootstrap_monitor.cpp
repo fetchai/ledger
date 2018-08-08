@@ -6,8 +6,8 @@ namespace fetch {
 namespace {
 
 constexpr std::size_t BUFFER_SIZE = 1024;
-//constexpr char const *BOOTSTRAP_HOST = "35.189.67.157";
-constexpr char const *BOOTSTRAP_HOST = "127.0.0.1";
+constexpr char const *BOOTSTRAP_HOST = "35.189.67.157";
+//constexpr char const *BOOTSTRAP_HOST = "127.0.0.1";
 constexpr uint16_t BOOTSTRAP_PORT  = 10000;
 
 const std::chrono::minutes UPDATE_INTERVAL{10};
