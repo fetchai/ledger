@@ -362,8 +362,8 @@ class BubbleForceGraph
                     return;
                 }
             }
-            node.x = node.ix || ((Math.random() *.7) +.15) * self.width;
-            node.y = node.iy || ((Math.random() *.7) +.15) * self.height;
+            node.x = node.ix || ((Math.random() *.4) +.3) * self.width;
+            node.y = node.iy || ((Math.random() *.4) +.3) * self.height;
         });
 
         debugger;

@@ -22,16 +22,24 @@ def workfunc(ident):
         poll2(ident),
         )
 
-class NodeNumberGenerator(object):
+class PyfetchNodeNumberGenerator(object):
     def __init__(self, limit=25):
         self.limit = limit
 
     def getall(self):
         for x in range(0, self.limit):
-            yield x
+            yield (x, 9000+x)
+
+class ConstellationNodeNumberGenerator(object):
+    def __init__(self, limit=10):
+        self.limit = limit
+
+    def getall(self):
+        for x in range(0, self.limit):
+            yield (x, 9000+x*20)
 
 class Monitoring(object):
-    def __init__(self, nodenumbergenerator=NodeNumberGenerator()):
+    def __init__(self, nodenumbergenerator):
         self.getter = Getter.Getter(
             self,
             nodenumbergenerator,
@@ -55,16 +63,18 @@ class Monitoring(object):
     def newSitrep(self, nodenumber, ident, url, code, data):
         if data == None:
             return
-        progress("SITREP:", data)
         peerlist = data["subscriptions"]
-        self.setPeerList(ident, peerlist)
+        ident = data.get("ident", ident)
+        self.setPeerList(nodenumber, ident, peerlist)
         if self.sitreps:
             self.sitreps.write(json.dumps(data))
             self.sitreps.write("\n\n")
+        if "chain" in data:
+            self.newChainData(nodenumber, ident, url, code, data["chain"])
 
     def newChainData(self, nodenumber, ident, url, code, data):
         blocks = data["blocks"]
-        chainident = data["chainident"]
+        chainident = data.get("chainident", 0)
 
         if self.chain.keys():
             if chainident < max(self.chain.keys()):
@@ -118,14 +128,15 @@ class Monitoring(object):
         self.getter.stop()
         self.sitreps.close()
 
-    def setPeerList(self, ident, peerlist):
+    def setPeerList(self, nodenumber, ident, peerlist):
         self.world.setdefault(ident, {})
         self.world[ident].setdefault("peers", [])
         self.world[ident]["peers"] = peerlist
+        self.world[ident]["label"] = nodenumber
 
     def newData(self, nodenumber, ident, url, code, data):
         peerlist = data["peers"];
-        self.setPeerList(ident, peerlist)
+        self.setPeerList(ident, nodenumber, peerlist)
 
     def badNode(self, ident):
         self.world.pop(ident, None)

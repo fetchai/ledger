@@ -7,13 +7,12 @@ import json
 
 from utils.messages import title, note, text, info, debug, progress, warn, error, fatal
 
-def poll(url, nodenumber):
+def poll(url, nodenumber, portnumber):
     ident = "127.0.0.1:{}".format(nodenumber + 9000)
-    port = nodenumber + 10000
     code = -3
     data = None
     try:
-        fullurl = "http://127.0.0.1:{}{}".format(port, url)
+        fullurl = "http://127.0.0.1:{}{}".format(portnumber, url)
         data = None
         try:
             r = requests.get(fullurl, timeout=100)
@@ -43,7 +42,7 @@ def poll(url, nodenumber):
 
 
 def doTask(task):
-    return poll(task[1], task[0]) 
+    return poll(task[1], task[0][0], task[0][1]) 
 
 class Getter(object):
 

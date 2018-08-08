@@ -17,7 +17,7 @@ import contextlib
 import random
 
 from functools import reduce
-from monitoring.Monitoring import Monitoring, NodeNumberGenerator
+from monitoring.Monitoring import Monitoring, ConstellationNodeNumberGenerator, PyfetchNodeNumberGenerator
 
 from bottle import bottle
 
@@ -71,6 +71,8 @@ def get_data(context, mon):
     allnodenames = set([x for x in mon.world.keys()])
     extranodenames = set()
 
+    print("allnodenames=", allnodenames)
+
     for s in mon.world.keys():
         for link in mon.world[s]["peers"]:
             t = link["peer"]
@@ -91,7 +93,7 @@ def get_data(context, mon):
 
     data["nodes"].extend([{
         "id": x,
-        'label': int(x[-4:]) - 9000,
+        'label': mon.world.get(x, {}).get("label", "?"),
         "group":
         ord(mon.heaviests.get(x, "0")[0]) & 0x0F,
         }
@@ -334,7 +336,7 @@ def get_consensus_data(context, mon):
             'status': "darken",
             'class': "BLOCK",
             'opacity': s[1],
-            'inherit': myChain.get(k, {}).get("prev", "")[0:16],
+            #'inherit': myChain.get(k, {}).get("prev", "")[0:16],
         }
         r['nodes'].append(n)
 
@@ -342,7 +344,7 @@ def get_consensus_data(context, mon):
     r["nodes"].extend([
         {
             'id': k,
-            'label': int(k[-4:]) - 9000,
+            'label': mon.world.get(k, {}).get("label", "?"),
             'group': ord((attracted or "0")[0]) & 0x0F,
             'charge': -300,
             'value': 10,
@@ -383,6 +385,7 @@ flags.Flag(g_port = "port", help = "Which port to run on", required = True, type
 flags.Flag(g_ssl = "ssl", type=bool, help = "Run https", default = False)
 flags.Flag(g_certfile = "cert", help = "Certificate", default = None)
 flags.Flag(g_statics_dir=flags.AUTOFLAG, help="Specify the dir containing static html/css/javascript elements.", default="main/statics/")
+flags.Flag(g_polltype = flags.AUTOFLAG, help = "constellation or pyfetch", default = "constellation")
 
 def main():
     flags.startFlags(sys.argv)
@@ -391,8 +394,11 @@ def main():
 
     context = {}
 
-    nodenumbergenerator = NodeNumberGenerator(g_scan)
-
+    nodenumbergenerator = {
+        "pyfetch": PyfetchNodeNumberGenerator(g_scan),
+        "constellation": ConstellationNodeNumberGenerator(g_scan),
+        }[g_polltype]
+        
     root = bottle.Bottle()
     root.route('/static/<filepath:path>', method='GET', callback=functools.partial(get_static))
     root.route('/data', method='GET', callback=functools.partial(get_data, context))
