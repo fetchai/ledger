@@ -20,6 +20,8 @@ public:
 
   NDArray(std::size_t const &n = 0) : super_type(n) { size_ = 0; }
   NDArray(super_type const &arr) : super_type(arr) {}
+  NDArray &operator=(NDArray const &other) = default;
+  //  NDArray &operator=(NDArray &&other) = default;
 
   /**
    * Copies input data into current array
@@ -160,9 +162,6 @@ public:
    *
    **/
   std::vector<std::size_t> const &shape() const { return shape_; }
-
-
-
 
 private:
   template <typename... Indices>

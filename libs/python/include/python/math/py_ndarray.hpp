@@ -25,6 +25,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.Flatten();
              return a;
            })
+      .def("__eq__",
+           [](NDArray<T> &s, NDArray<T> const &other) {
+             if (other.size() != s.size()) throw py::index_error();
+             s.Copy(other);
+           })
       .def("__add__",
            [](NDArray<T> const &b, NDArray<T> const &c) {
              NDArray<T> a;
@@ -127,17 +132,14 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.Reshape(b);
              return;
            })
-      .def("Max",
-           [](NDArray<T> &a) { return a.Max(); })
-//      .def("min",
-//           [](NDArray<T> &a) { return a.Min(); })
-//      .def("reduce_sum",
-//           [](NDArray<T> &a) { return a.Sum(); })
-//      .def("reduce_product",
-//           [](NDArray<T> &a) { return a.Product(); })
+      .def("Max", [](NDArray<T> &a) { return a.Max(); })
+      //      .def("min",
+      //           [](NDArray<T> &a) { return a.Min(); })
+      //      .def("reduce_sum",
+      //           [](NDArray<T> &a) { return a.Sum(); })
+      //      .def("reduce_product",
+      //           [](NDArray<T> &a) { return a.Product(); })
       .def("shape", [](NDArray<T> &a) { return a.shape(); });
-
-
 
   //             .def("Relu",
   //                  [](NDArray<T> &a, NDArray<T> &b)

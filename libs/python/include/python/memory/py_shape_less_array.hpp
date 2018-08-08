@@ -255,11 +255,11 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
       .def("Sort", (void (ShapeLessArray<T>::*)()) & ShapeLessArray<T>::Sort)
       .def("Max", &ShapeLessArray<T>::Max)
       .def("Min", &ShapeLessArray<T>::Min)
-//      .def("Mean", &ShapeLessArray<T>::Mean)
+      //      .def("Mean", &ShapeLessArray<T>::Mean)
       .def("Product", &ShapeLessArray<T>::Product)
       .def("Sum", &ShapeLessArray<T>::Sum)
-//      .def("StandardDeviation", &ShapeLessArray<T>::StandardDeviation)
-//      .def("Variance", &ShapeLessArray<T>::Variance)
+      //      .def("StandardDeviation", &ShapeLessArray<T>::StandardDeviation)
+      //      .def("Variance", &ShapeLessArray<T>::Variance)
       .def("ApproxExp", &ShapeLessArray<T>::ApproxExp)
       .def("ApproxLog", &ShapeLessArray<T>::ApproxLog)
       .def("ApproxLogistic", &ShapeLessArray<T>::ApproxLogistic)
@@ -287,8 +287,7 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
            })
 
       .def("__eq__",
-           [](ShapeLessArray<T> &s, ShapeLessArray<T> const &other)
-           {
+           [](ShapeLessArray<T> &s, ShapeLessArray<T> const &other) {
              if (other.size() != s.size()) throw py::index_error();
              s.Copy(other);
            })

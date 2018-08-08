@@ -12,8 +12,8 @@
 #include "math/kernels/standard_functions.hpp"
 #include "math/kernels/variance.hpp"
 #include "vectorise/memory/array.hpp"
-#include "vectorise/memory/shared_array.hpp"
 #include "vectorise/memory/range.hpp"
+#include "vectorise/memory/shared_array.hpp"
 
 #include "math/statistics/mean.hpp"
 
@@ -197,6 +197,7 @@ public:
   {
     assert(other.data().size() == this->data().size());
     this->data().in_parallel().Apply(
+        memory::TrivialRange(0, this->data().size()),
         [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
           z = x - y;
         },
@@ -567,7 +568,8 @@ public:
 
   type Max() const
   {
-    return data_.in_parallel().Reduce(memory::TrivialRange(0, size()),
+    return data_.in_parallel().Reduce(
+        memory::TrivialRange(0, size()),
         [](vector_register_type const &a, vector_register_type const &b) -> vector_register_type {
           return max(a, b);
         });
@@ -575,7 +577,8 @@ public:
 
   type Min() const
   {
-    return data_.in_parallel().Reduce(memory::TrivialRange(0, size()),
+    return data_.in_parallel().Reduce(
+        memory::TrivialRange(0, size()),
         [](vector_register_type const &a, vector_register_type const &b) -> vector_register_type {
           return min(a, b);
         });
@@ -583,7 +586,8 @@ public:
 
   type Product() const
   {
-    return data_.in_parallel().Reduce(memory::TrivialRange(0, size()),
+    return data_.in_parallel().Reduce(
+        memory::TrivialRange(0, size()),
         [](vector_register_type const &a, vector_register_type const &b) -> vector_register_type {
           return a * b;
         });
@@ -591,7 +595,8 @@ public:
 
   type Sum() const
   {
-    return data_.in_parallel().Reduce(memory::TrivialRange(0, size()),
+    return data_.in_parallel().Reduce(
+        memory::TrivialRange(0, size()),
         [](vector_register_type const &a, vector_register_type const &b) -> vector_register_type {
           return a + b;
         });
@@ -639,24 +644,24 @@ public:
     // TODO: Same as above
   }
 
-//  type PeakToPeak() const { return Max() - Min(); }
-//
-//  void StandardDeviation(self_type const &x)
-//  {
-//    LazyResize(x.size());
-//
-//    assert(size_ > 1);
-//    kernels::StandardDeviation<type, vector_register_type> kernel(fetch::math::statistics::Mean, type(1) / type(size_));
-//    this->data_.in_parallel().Apply(kernel, x.data());
-//  }
-//
-//  void Variance(self_type const &x)
-//  {
-//    LazyResize(x.size());
-//    assert(size_ > 1);
-//    kernels::Variance<type, vector_register_type> kernel(fetch::math::statistics::Mean, type(1) / type(size_));
-//    this->data_.in_parallel().Apply(kernel, x.data_);
-//  }
+  //  type PeakToPeak() const { return Max() - Min(); }
+  //
+  //  void StandardDeviation(self_type const &x)
+  //  {
+  //    LazyResize(x.size());
+  //
+  //    assert(size_ > 1);
+  //    kernels::StandardDeviation<type, vector_register_type> kernel(fetch::math::statistics::Mean,
+  //    type(1) / type(size_)); this->data_.in_parallel().Apply(kernel, x.data());
+  //  }
+  //
+  //  void Variance(self_type const &x)
+  //  {
+  //    LazyResize(x.size());
+  //    assert(size_ > 1);
+  //    kernels::Variance<type, vector_register_type> kernel(fetch::math::statistics::Mean, type(1)
+  //    / type(size_)); this->data_.in_parallel().Apply(kernel, x.data_);
+  //  }
 
   void Equal(self_type const &a, self_type const &b)
   {

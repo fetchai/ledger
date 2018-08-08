@@ -27,10 +27,10 @@
 #include "python/math/correlation/py_jaccard.hpp"
 #include "python/math/correlation/py_pearson.hpp"
 
-#include "python/math/statistics/py_min.hpp"
-#include "python/math/statistics/py_max.hpp"
 #include "python/math/statistics/py_geometric_mean.hpp"
+#include "python/math/statistics/py_max.hpp"
 #include "python/math/statistics/py_mean.hpp"
+#include "python/math/statistics/py_min.hpp"
 #include "python/math/statistics/py_standard_deviation.hpp"
 #include "python/math/statistics/py_variance.hpp"
 
@@ -166,6 +166,7 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::linalg::BuildMatrix<float>("MatrixFloat", ns_fetch_math_linalg);
   fetch::math::linalg::BuildMatrix<double>("MatrixDouble", ns_fetch_math_linalg);
 
+  fetch::math::BuildNDArray<float>("NDArrayFloat", ns_fetch_math);
   fetch::math::BuildNDArray<double>("NDArrayDouble", ns_fetch_math);
 
   //  fetch::math::BuildSpline(ns_fetch_math_spline);
