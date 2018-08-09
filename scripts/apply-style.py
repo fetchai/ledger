@@ -100,12 +100,10 @@ def compare_against_original(reformated, source_path, rel_path):
 
     success = True
     if len(out) != 0:
-        output_lock.acquire()
         output('Style mismatch in: {}'.format(rel_path))
         output()
         output('\n'.join(out[3:])) # first 3 elements are garbage
         success = False
-        output_lock.release()
 
     return success
 
