@@ -143,8 +143,10 @@ def main():
         return compare_against_original(formatted_output, source_path, rel_path)
 
     if args.fix:
+        handler = apply_style_to_file
         output('Applying style...')
     else:
+        handler = diff_style_to_file
         output('Checking style...')
 
     # process all the files
