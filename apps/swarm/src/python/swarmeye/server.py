@@ -17,10 +17,9 @@ import contextlib
 import random
 
 from functools import reduce
+from monitoring.Monitoring import Monitoring, ConstellationNodeNumberGenerator, PyfetchNodeNumberGenerator
 
-from monitoring.Monitoring import Monitoring
-
-from bottle import route, run, error, template, hook, request, response, static_file, redirect
+from bottle import bottle
 
 SIZE_OPACITY_HISTORY_SCALES = [
     ( 90, 1.0,  1.0, ),
@@ -45,9 +44,11 @@ me = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(me)
 
 from utils import flags
+from utils import resources
 
 def getStaticFilePath(filepath):
     for i in [
+            g_statics_dir,
             './static/',
     ]:
         fn = os.path.join(str(i), str(filepath))
@@ -55,17 +56,12 @@ def getStaticFilePath(filepath):
             return (i, filepath)
 
 def get_static(filepath):
-    x = getStaticFilePath(filepath)
-    return static_file(filepath, root=x[0])
+    return resources.textfile(os.path.join(
+        g_statics_dir,
+        filepath))
 
-def get_data(context):
-    fp = getStaticFilePath("dummydata.json")
-    fp = os.path.join(fp[0], fp[1])
-    with open(fp, "r") as fh:
-        data = json.loads("\n".join(fh.readlines()))
-    return data
 
-def get_data2(context, mon):
+def get_data(context, mon):
 
     data = {
         "nodes": [],
@@ -74,6 +70,8 @@ def get_data2(context, mon):
 
     allnodenames = set([x for x in mon.world.keys()])
     extranodenames = set()
+
+    print("allnodenames=", allnodenames)
 
     for s in mon.world.keys():
         for link in mon.world[s]["peers"]:
@@ -95,7 +93,7 @@ def get_data2(context, mon):
 
     data["nodes"].extend([{
         "id": x,
-        'label': int(x[-4:]) - 9000,
+        'label': mon.world.get(x, {}).get("label", "?"),
         "group":
         ord(mon.heaviests.get(x, "0")[0]) & 0x0F,
         }
@@ -112,7 +110,7 @@ def get_data2(context, mon):
     ]),
     return data;
 
-def get_chain_data2(context, mon):
+def get_chain_data(context, mon):
     r = []
 
     if not mon.chain.keys():
@@ -176,36 +174,6 @@ def get_chain_data2(context, mon):
     return {
         'nodes': r
     }
-
-def get_chain_data(context, mon):
-    r = {
-        'nodes': [],
-        'links': []
-    }
-
-    allblocknames = list(mon.chain.keys())
-
-    for name in allblocknames:
-        b = mon.chain[name]
-        r['nodes'].append({
-            'id': str(b["id"]),
-            'group': 1,
-            'status': 1,
-        })
-
-    for name in allblocknames:
-        b = mon.chain.get(name, {})
-        prevHash = b.get("prev", "")
-        p = mon.chain.get(prevHash, None)
-
-        if p:
-            r['links'].append({
-                'source': str(b['id']),
-                'target': str(p['id']),
-                'value': len(b['nodes']),
-            })
-
-    return r
 
 # Returns list of (depth, name, prev)
 def get_ancestry(chain, blockname, maxdepth, offs=0):
@@ -368,7 +336,7 @@ def get_consensus_data(context, mon):
             'status': "darken",
             'class': "BLOCK",
             'opacity': s[1],
-            'inherit': myChain.get(k, {}).get("prev", "")[0:16],
+            #'inherit': myChain.get(k, {}).get("prev", "")[0:16],
         }
         r['nodes'].append(n)
 
@@ -376,7 +344,7 @@ def get_consensus_data(context, mon):
     r["nodes"].extend([
         {
             'id': k,
-            'label': int(k[-4:]) - 9000,
+            'label': mon.world.get(k, {}).get("label", "?"),
             'group': ord((attracted or "0")[0]) & 0x0F,
             'charge': -300,
             'value': 10,
@@ -412,26 +380,33 @@ def get_consensus_data(context, mon):
 def get_slash():
     redirect("/static/monitor.html")
 
-flags.Flag(g_port = "port", help = "Which port to run on", required = True)
+flags.Flag(g_scan = "scan", help = "Scan nodes zero to..?", default = 25, type=int)
+flags.Flag(g_port = "port", help = "Which port to run on", required = True, type=int)
 flags.Flag(g_ssl = "ssl", type=bool, help = "Run https", default = False)
 flags.Flag(g_certfile = "cert", help = "Certificate", default = None)
+flags.Flag(g_statics_dir=flags.AUTOFLAG, help="Specify the dir containing static html/css/javascript elements.", default="main/statics/")
+flags.Flag(g_polltype = flags.AUTOFLAG, help = "constellation or pyfetch", default = "constellation")
 
 def main():
     flags.startFlags(sys.argv)
-
+    resources.initialise(__package__)
     #bottle.debug(True)
 
     context = {}
 
+    nodenumbergenerator = {
+        "pyfetch": PyfetchNodeNumberGenerator(g_scan),
+        "constellation": ConstellationNodeNumberGenerator(g_scan),
+        }[g_polltype]
+        
     root = bottle.Bottle()
     root.route('/static/<filepath:path>', method='GET', callback=functools.partial(get_static))
     root.route('/data', method='GET', callback=functools.partial(get_data, context))
     root.route('/', method='GET', callback=functools.partial(get_slash))
 
-    with contextlib.closing(Monitoring()) as myMonitoring:
-        root.route('/network', method='GET', callback=functools.partial(get_data2, context, myMonitoring))
+    with contextlib.closing(Monitoring(nodenumbergenerator)) as myMonitoring:
+        root.route('/network', method='GET', callback=functools.partial(get_data, context, myMonitoring))
         root.route('/chain', method='GET', callback=functools.partial(get_chain_data, context, myMonitoring))
-        root.route('/chain2', method='GET', callback=functools.partial(get_chain_data2, context, myMonitoring))
         root.route('/consensus', method='GET', callback=functools.partial(get_consensus_data, context, myMonitoring))
         if g_ssl:
             from utils import SSLWSGIRefServer

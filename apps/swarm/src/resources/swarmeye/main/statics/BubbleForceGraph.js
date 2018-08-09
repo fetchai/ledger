@@ -1,4 +1,4 @@
-class ForceGraph
+class BubbleForceGraph
 {
     dragstarted(d) {
         //console.log("DRAG START", d);
@@ -26,14 +26,13 @@ class ForceGraph
         d.fy = null;
     };
 
-    constructor(targetElement, distance)
+    constructor(targetElementId)
     {
         var self = this;
-        self.distance = distance;
 
         this.highestGroupSeenSoFar = 0;
 
-        this.targetElement = targetElement;
+        this.targetElement = document.getElementById(targetElementId);
         this.graphData = {
             nodes: [
                 // {
@@ -63,12 +62,11 @@ class ForceGraph
             ],
         };
 
+        this.svg = d3.select("#blobs_here");
         this.color = d3.scaleLinear()
             .domain([ 0, 0.165, 0.33, 0.5, 0.665, 0.81, 1.0 ])
             .range(["red", "yellow", "green", "blue", "cyan", "magenta", "red" ]
                   );
-
-        this.svg = d3.select("svg");
 
         this.width = 1000;
         this.height = 1000;
@@ -84,7 +82,8 @@ class ForceGraph
             .attr("markerHeight", 6)
             .attr("orient", "auto")
             .append("svg:path")
-            .attr("d", "M0,-5L10,0L0,5");
+            .attr("d", "M0,-5L10,0L0,5")
+        ;
 
         this.linksG = this.svg.append("g").attr("class", "links")
         this.nodesG = this.svg.append("g").attr("class", "nodes")
@@ -92,14 +91,14 @@ class ForceGraph
         this.simulation = d3.forceSimulation();
 
         this.simulation
-            .force("charge", d3.forceManyBody())
+            .force("charge",d3.forceManyBody().strength(function(d) { return d.charge || -100; }))
+            .force("collide",d3.forceCollide())
             .force("center", d3.forceCenter(this.width / 2, this.height / 2))
-        ;
-
-        this.simulation
             .force("link", d3.forceLink()
                    .id(function(d) { return d.id; })
-                   .distance(self.distance))
+                   .distance(function(d) { return d.distance || 30; })
+                   .strength(2.1)
+                  )
         ;
 
         this.sync();
@@ -107,6 +106,18 @@ class ForceGraph
         this.simulation
             .on("tick", function() {
                 self.dataLinks
+                    .attr("x1", function(d) {
+                        return d.source.x;
+                    })
+                    .attr("x2", function(d) {
+                        return d.target.x;
+                    })
+                    .attr("y1", function(d) {
+                        return d.source.y;
+                    })
+                    .attr("y2", function(d) {
+                        return d.target.y;
+                    })
                     .attr("d", function(d) {
                         var dx = d.target.x - d.source.x;
                         var dy = d.target.y - d.source.y;
@@ -120,13 +131,20 @@ class ForceGraph
                     });
                 self.dataLinks
                     .attr("stroke-width", function(d) {
-                        return Math.sqrt(d.value) || 1.0;
+                        if (
+                            (d.value === 0) ||
+                                (d.value === 0.0) ||
+                                (d.value === "0"))
+                            return 0.0;
+                        if ((!d.value) || (d.value<0.0))
+                            return 1.0;
+                        return Math.sqrt(d.value);
                     });
 
-               self.dataNodes
+                self.dataNodes
                     .attr("transform", function(d){return "translate("+d.x+","+d.y+")"})
                     .selectAll("circle")
-                    .attr("r", function(d) { return 15; })
+                    .attr("r", function(d) { return d.value || 5; })
                     .attr("fill", function(d) {
                         return self.colourForGroupAndStatus(d);
                     })
@@ -134,10 +152,7 @@ class ForceGraph
                 self.dataNodes
                     .selectAll("text")
                     .attr("fill", function(d) {return self.getTextColourForGroup(d); })
-                ;
-            }).on("end", function() {
-                console.log("STATIC");
-            });
+            })
         ;
     }
 
@@ -167,7 +182,6 @@ class ForceGraph
             if (d.status == "darken") {
                 col = d3.hsl(col).darker(1.5).rgb();
             }
-
             return col.toString();
         }
 
@@ -191,15 +205,23 @@ class ForceGraph
             }
         }
 
+        this.getClassForNode = function(d) {
+            if (d.class)
+                return d.class;
+            return "";
+        }
+
         var circles = this.dataNodes
             .enter().append("g");
 
         circles.append("circle")
+            .attr("class", function(d) {
+                return self.getClassForNode(d);
+            })
             .attr("r", 5)
-            .attr("data-name", function(d) { return d.id; })
             .attr("data-creationname", function(d) { return d.id; })
             .attr("fill", function(d) {
-                return self.colourForGroupAndStatus(d.group, d.status, d);
+                return self.colourForGroupAndStatus(d);
             })
             .call(d3.drag()
                   .on("start", self.dragstarted.bind(this))
@@ -209,7 +231,7 @@ class ForceGraph
 
         circles.append("text")
             .text(function(d) { return d.label; })
-            .attr("fill",  function(d) { return self.getTextColourForGroup(d); })
+            .attr("fill", function(d) { return self.getTextColourForGroup(d); })
             .attr("text-anchor", "middle")
             .attr("alignment-baseline", "middle")
         ;
@@ -295,7 +317,7 @@ class ForceGraph
         var addableLinks = g.links
             .filter(link => !oldLinkNames.has(self.getIdForLink(link)))
 
-        console.log(addableNodes);
+        //console.log(addableNodes);
 
         var killNodes = new Set(self.graphData.nodes
             .map(node => node.id)
@@ -328,10 +350,25 @@ class ForceGraph
 
         }
 
-        self.graphData.links.push(...addableLinks);
-        self.graphData.nodes.push(...addableNodes);
+        var preservedNodesByName = self.graphData.nodes
+            .reduce((res, node) => { res[node.id] = node; return res; }, {});
 
-        //self.graphData.links.distance(link => { return 30; });
+        addableNodes.forEach(node => {
+            if (node.inherit) {
+                var n = preservedNodesByName[node.inherit];
+                if (n) {
+                    node.x = n.x;
+                    node.y = n.y;
+                    return;
+                }
+            }
+            node.x = node.ix || ((Math.random() *.4) +.3) * self.width;
+            node.y = node.iy || ((Math.random() *.4) +.3) * self.height;
+        });
+
+        debugger;
+        self.graphData.links.push(...addableLinks);
+        self.graphData.nodes.unshift(...addableNodes);
 
         var updatedNodesByName = self.graphData.nodes
             .reduce((res, node) => { res[node.id] = node; return res; }, {});
@@ -357,7 +394,6 @@ class ForceGraph
                     (k in newLinks) ? newLinks[k][copykey] : updatedLinksByName[k][copykey];
             });
         });
-
 
         self.sync();
     }

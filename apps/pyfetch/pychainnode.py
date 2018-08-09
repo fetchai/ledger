@@ -71,7 +71,7 @@ class SwarmAgentNaive(object):
             self.timeOfLastRemoteNewBlock = datetime.datetime.now()
             self.in_progress = set()
 
-        goodPeers = [ x for x in goodPeers
+        goodPeers = [ x for x in goodPeers 
                           if x not in self.in_progress
                           and x not in self.introductions ]
 
@@ -114,12 +114,12 @@ class SwarmAgentNaive(object):
 
     def onNewBlockIdFound(self, host, blockid):
         say("PYCHAINNODE===> WOW - ", blockid)
-        self.swarm.AddKarmaMax(host, 2.0, 30.0);
+        self.swarm.AddKarmaMax(host, 2.0, 3.0);
         self.timeOfLastRemoteNewBlock = datetime.datetime.now()
 
     def onBlockIdRepeated(self, host, blockid):
         # Awwww, we know about this.
-        self.swarm.AddKarmaMax(host, 1.0, 10.0);
+        self.swarm.AddKarmaMax(host, 1.0, 1.0);
 
     def onLooseBlock(self, host, blockid):
         say("PYCHAINNODE===> LOOSE FOUND: ", host, ' ', blockid)
@@ -130,7 +130,7 @@ class SwarmAgentNaive(object):
 
     def onBlockNotSupplied(self, host, blockid):
         say("PYCHAINNODE===> LOOSE NOT DELIVERED: ", host, ' ', blockid)
-
+        
 
 def run(config):
     agent = SwarmAgentNaive(

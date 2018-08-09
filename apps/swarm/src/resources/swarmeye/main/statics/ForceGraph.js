@@ -26,14 +26,14 @@ class ForceGraph
         d.fy = null;
     };
 
-    constructor(targetElement, distance)
+    constructor(targetElementId, distance)
     {
         var self = this;
         self.distance = distance;
 
         this.highestGroupSeenSoFar = 0;
 
-        this.targetElement = targetElement;
+        this.targetElement = document.getElementById(targetElementId);
         this.graphData = {
             nodes: [
                 // {
@@ -68,7 +68,7 @@ class ForceGraph
             .range(["red", "yellow", "green", "blue", "cyan", "magenta", "red" ]
                   );
 
-        this.svg = d3.select("svg");
+        this.svg = d3.select("#network_here");
 
         this.width = 1000;
         this.height = 1000;
@@ -362,6 +362,5 @@ class ForceGraph
         self.sync();
     }
 };
-
 
 

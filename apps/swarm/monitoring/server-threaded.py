@@ -16,30 +16,9 @@ import sys
 import contextlib
 import random
 
-from functools import reduce
-
 from monitoring.Monitoring import Monitoring
 
 from bottle import route, run, error, template, hook, request, response, static_file, redirect
-
-SIZE_OPACITY_HISTORY_SCALES = [
-    ( 90, 1.0,  1.0, ),
-    ( 78, .80,  .07, ),
-    ( 67, .60,  .07, ),
-    ( 60, .40,  .40, ),
-    ( 45, .20,  .30, ),
-    ( 30, .10,  .15, ),
-    ( 26, .08,  .10, ),
-    ( 20, .05,  .07, ),
-    ( 17, .04,  .05, ),
-    ( 12, .03,  .03, ),
-
-    ( 7,  .02,  .03, ),
-    ( 3,  .015, .02, ),
-    ( 1,  .01,  .01, ),
-]
-
-MAX_DEPTH = len(SIZE_OPACITY_HISTORY_SCALES)-1
 
 me = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(me)
@@ -93,23 +72,22 @@ def get_data2(context, mon):
     allnodenames = list(allnodenames)
     extranodenames = list(extranodenames)
 
-    data["nodes"].extend([{
-        "id": x,
-        'label': int(x[-4:]) - 9000,
-        "group":
-        ord(mon.heaviests.get(x, "0")[0]) & 0x0F,
-        }
-        for x in allnodenames
-    ]),
+    data["nodes"].extend([
+            {
+                "id": x,
+                "label": int(x[-4:]) - 9000,
+                "group": ord(mon.heaviests.get(x,"0")[0]) & 0x0F,
+                "status": "ok",
+            } for x in allnodenames
+        ]),
 
-    data["nodes"].extend([{
-        'label': "X",
-        "id": x,
-        "group": 0,
-        "status": "dead",
-        }
-        for x in extranodenames
-    ]),
+    data["nodes"].extend([
+            {
+                "id": x,
+                "group": 0,
+                "status": "dead",
+            } for x in extranodenames
+        ]),
     return data;
 
 def get_chain_data2(context, mon):
@@ -207,136 +185,23 @@ def get_chain_data(context, mon):
 
     return r
 
-# Returns list of (depth, name, prev)
-def get_ancestry(chain, blockname, maxdepth, offs=0):
-    r = []
 
-    i = 0
-    while (i <= maxdepth) and blockname:
-        b = chain.get(blockname, {})
-        p = b.get("prev", "")
-        r.append(
-            (i+offs, blockname, p,)
-        )
-        blockname = p
-        i += 1
+def walk_backs(chain, inputs):
+
+    r = {}
+    for name in inputs:
+        for step in [ 10, 7, 4, 1 ]:
+            if name:
+                p = chain.get(name, {}).get("prev", "")
+                if p:
+                    r[name] = {
+                        "source": p[0:16],
+                        "target": name[0:16],
+                        "value": step * 1.2,
+                        'distance': 40 * step,
+                    }
+                name = p
     return r
-
-
-class CurrentNodesModel(object):
-    def __init__(self):
-        self.nodes = {}
-        self.oldheads = set()
-        self.nodesizes = {}
-
-
-    def clear(self):
-        self.nodes = {}
-        self.oldheads = set()
-
-    def get(self, name):
-        return self.nodes.get(name, {})
-
-    def add(self, name, newnode):
-        if name in self.nodes:
-            if newnode["depth"] > self.nodes[name]['depth']:
-                return
-        self.nodes[name] = newnode
-
-    def yieldNodes(self):
-        for k,v in self.nodes.items():
-            yield v
-
-    def has(self, name):
-        return name in self.nodes
-
-    def populate(self, chain, currentheads):
-        self.nodes = {}
-
-        currentHeadsWithBlockNumbers = [ ( chain[name]["num"], name )
-                  for name in currentheads
-                  if name in chain
-        ]
-
-        if not currentHeadsWithBlockNumbers:
-            return
-
-        currentHeadsInDecreasingBlockNumber = list(reversed(
-            sorted(
-                currentHeadsWithBlockNumbers,
-                key=lambda x: x[0]
-            )
-        ))
-
-        shallowest_num = currentHeadsInDecreasingBlockNumber[0][0]
-        newoldheads = set()
-
-        def collect(store, value):
-            store.setdefault(value, 0)
-            store[value] += 1
-            return store
-
-        newNodeSizes = reduce(collect, currentheads, {})
-        totalNodeSizes = len(currentheads)
-        newNodeSizes = dict([ (k,v/totalNodeSizes) for k,v in newNodeSizes.items() ])
-
-        for k,v in newNodeSizes.items():
-            self.nodesizes[k] = max(self.nodesizes.get(k, 0), v)
-
-        touched = set()
-        for num, name in currentHeadsInDecreasingBlockNumber:
-            offs=shallowest_num - num
-            ancs = get_ancestry(chain, name, MAX_DEPTH, offs=offs)
-            ancs = list(filter(lambda x: x[0]<=MAX_DEPTH, ancs))
-
-            for foo in ancs:
-                depth= foo[0]
-                name = foo[1]
-                prev = foo[2]
-                touched.add(name)
-                self.add(name, {
-                    'depth': depth,
-                    'name' : name,
-                    'prev' : prev,
-                    'scale': self.nodesizes.get(name, 1),
-                })
-                newoldheads.add(name)
-
-        for headname in self.oldheads:
-            if headname not in chain:
-                continue
-            num = chain[headname]["num"]
-            ancs = get_ancestry(chain, headname, MAX_DEPTH, offs=shallowest_num - num)
-            ancs = list(filter(lambda x: x[0]<=MAX_DEPTH, ancs))
-            if not any([ name in self.nodes for depth, name, prev in ancs]):
-                continue
-            if not ancs:
-                continue
-            newoldheads.add(headname)
-
-            foo = [
-                (name, {
-                    'depth': depth,
-                    'name': name,
-                    'prev': prev,
-                    'scale': self.nodesizes.get(name, 1),
-                })
-                for depth, name, prev
-                in ancs
-            ]
-            for a in foo:
-                touched.add(a[0])
-                self.add(a[0], a[1])
-
-        self.oldheads = newoldheads
-
-        self.nodesizes = dict([
-            (k,v)
-            for k,v in self.nodesizes.items()
-            if k in touched])
-
-
-currentNodesModel = CurrentNodesModel()
 
 
 def get_consensus_data(context, mon):
@@ -346,32 +211,27 @@ def get_consensus_data(context, mon):
     }
 
     myChain = mon.getChain()
-    currentNodesModel.populate(myChain, mon.heaviests.values())
 
-    for node in currentNodesModel.yieldNodes():
-        d = min(node['depth'], MAX_DEPTH)
-        s = SIZE_OPACITY_HISTORY_SCALES[d]
-        k = node['name']
-        name = k
-        step = MAX_DEPTH - d
+    allnodes = walk_backs(myChain, set(mon.heaviests.values()))
+    attractors = dict([ (x, x[0:16]) for x in set(allnodes) ])
 
-        nodesize = s[0] * 0.8
-        if 'scale' in node:
-            nodesize *= math.sqrt(math.sqrt(node['scale']))
+    nodeSize = dict([
+        (k, math.sqrt(10 + 100 * len([ x for x in mon.heaviests.values() if k == x ])))
+        for k in allnodes.keys()
+        ])
 
-        n = {
+    r["nodes"].extend([
+        {
             'id': k[0:16],
             'group': ord((k or "0")[0]) & 0x0F,
+            'value': nodeSize[k],
             'label': '',
-            'value': nodesize,
             'charge': -1500,
             'status': "darken",
-            'class': "BLOCK",
-            'opacity': s[1],
             'inherit': myChain.get(k, {}).get("prev", "")[0:16],
         }
-        r['nodes'].append(n)
-
+        for k in allnodes.keys()
+    ])
 
     r["nodes"].extend([
         {
@@ -384,28 +244,20 @@ def get_consensus_data(context, mon):
     ])
 
 
-    for node in currentNodesModel.yieldNodes():
-        p = node['prev']
-        name = node['name']
-        step = node['depth']
-        s = SIZE_OPACITY_HISTORY_SCALES[step]
-        if currentNodesModel.has(p):
-            r["links"].extend([{
-                    "source": p[0:16],
-                    "target": name[0:16],
-                    "value": s[1] * 3,
-                    'distance': s[0] * 3,
-            }])
+    for k,v in allnodes.items():
+            r["links"].append(v)
 
     r["links"].extend([
         {
             'source': node,
-            'target': heaviest[0:16],
+            'target': attractors[heaviest],
             'value': 0,
             'distance': 0.01,
         }
         for node, heaviest in mon.heaviests.items()
+        if heaviest in 
     ])
+
     return r
 
 
