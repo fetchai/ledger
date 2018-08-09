@@ -3,32 +3,33 @@
 #include "core/byte_array/byte_array.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "storage/document.hpp"
+#include "storage/resource_mapper.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class StateInterface
+class StorageInterface
 {
 public:
-  using document_type = storage::Document;
+  using Document        = storage::Document;
+  using ResourceAddress = storage::ResourceAddress;
+  using StateValue      = byte_array::ConstByteArray;
 
   /// @name State Interface
   /// @{
-  virtual document_type Get(byte_array::ConstByteArray const &key)         = 0;
-  virtual document_type GetOrCreate(byte_array::ConstByteArray const &key) = 0;
-  virtual void          Set(byte_array::ConstByteArray const &key,
-                            byte_array::ConstByteArray const &value)       = 0;
-
-  virtual bool Lock(byte_array::ConstByteArray const &key)   = 0;
-  virtual bool Unlock(byte_array::ConstByteArray const &key) = 0;
+  virtual Document Get(ResourceAddress const &key)                          = 0;
+  virtual Document GetOrCreate(ResourceAddress const &key)                  = 0;
+  virtual void     Set(ResourceAddress const &key, StateValue const &value) = 0;
+  virtual bool     Lock(ResourceAddress const &key)                         = 0;
+  virtual bool     Unlock(ResourceAddress const &key)                       = 0;
   /// @}
 };
 
-class StorageUnitInterface : public StateInterface
+class StorageUnitInterface : public StorageInterface
 {
 public:
   using hash_type     = byte_array::ConstByteArray;
-  using bookmark_type = uint64_t;  // TODO: From keyvalue index
+  using bookmark_type = uint64_t;  // TODO(EJF): From keyvalue index
 
   // Construction / Destruction
   StorageUnitInterface()          = default;
