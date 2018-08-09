@@ -30,8 +30,8 @@ public:
   };
 
   MainChainProtocol(protocol_handler_type const &p, register_type r, thread_pool_type nm,
-                    thread_pool_type const &nm, chain::MainChain *node)
-      : Protocol(), protocol_(p), register_(r), thread_pool_(nm), chain_(node), running_(false)
+                    chain::MainChain *node)
+    : Protocol()
     , protocol_(p)
     , register_(r)
     , thread_pool_(nm)
@@ -80,7 +80,6 @@ private:
 
   void IdleUntilPeers()
   {
-      LOG_STACK_TRACE_POINT;
     if (!running_) return;
 
     if (register_.number_of_services() == 0)

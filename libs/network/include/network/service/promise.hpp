@@ -21,7 +21,6 @@ class PromiseImplementation
 public:
   using promise_counter_type = uint64_t;
   using byte_array_type      = byte_array::ConstByteArray;
-  
   typedef std::function<void (void)> callback_type;
 
   typedef enum
@@ -154,7 +153,7 @@ private:
 class Promise
 {
 public:
-  using promise_type         = typename details::PromiseImplementation;
+  using promise_type         = typename details::PromiseImplementation;
   using promise_counter_type = typename promise_type::promise_counter_type;
   using shared_promise_type  = std::shared_ptr<promise_type>;
 
