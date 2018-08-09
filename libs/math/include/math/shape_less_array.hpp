@@ -758,7 +758,7 @@ public:
   type L2Loss()
   {
     type sum = data_.in_parallel().SumReduce([](vector_register_type const &v) { return v * v; });
-    return sum * 0.5;
+    return sum * type(0.5);
   }
 
   void Fmod(self_type const &x)
