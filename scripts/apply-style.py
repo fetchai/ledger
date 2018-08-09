@@ -120,7 +120,7 @@ def main():
         output('Unable to locate clang-format tool')
         sys.exit(1)
 
-    # generate the 
+    # generate the
     cmd_prefix = [
         clang_format,
         '-style=file',
@@ -143,25 +143,28 @@ def main():
         return compare_against_original(formatted_output, source_path, rel_path)
 
     if args.fix:
-        handler = apply_style_to_file
-        verb = 'Applying'
+        output('Applying style...')
     else:
-        handler = diff_style_to_file
-        verb = 'Checking'
-
-    output('{} style...'.format(verb))
+        output('Checking style...')
 
     # process all the files
     success = False
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+        output('debug 1')
         result = map(handler, project_sources(project_root))
+        output('debug 2')
 
         if args.all:
+            output('debug 3')
             result = list(result)
 
+        output('debug 4')
         success = all(result)
 
-    output('{} style...complete'.format(verb))
+    if args.fix:
+        output('Applying style complete!')
+    else:
+        output('Checking style complete!')
 
     if not success:
         sys.exit(1)
