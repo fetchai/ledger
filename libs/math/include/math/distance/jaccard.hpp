@@ -14,7 +14,7 @@ template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
 inline typename memory::VectorSlice<T, S>::type Jaccard(memory::VectorSlice<T, S> const &a,
                                                         memory::VectorSlice<T, S> const &b)
 {
-  typedef typename memory::VectorSlice<T, S>::type type;
+  using type = typename memory::VectorSlice<T, S>::type;
 
   return type(1) - correlation::Jaccard(a, b);
 }
@@ -30,7 +30,7 @@ template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
 inline typename memory::VectorSlice<T, S>::type GeneralisedJaccard(
     memory::VectorSlice<T, S> const &a, memory::VectorSlice<T, S> const &b)
 {
-  typedef typename memory::VectorSlice<T, S>::type type;
+  using type = typename memory::VectorSlice<T, S>::type;
   return type(1) - correlation::GeneralisedJaccard(a, b);
 }
 

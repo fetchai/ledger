@@ -13,20 +13,18 @@ template <typename T, std::size_t type_size = sizeof(T)>
 class VectorSlice
 {
 public:
-  typedef std::size_t size_type;
-  typedef T *         pointer_type;
-  typedef T const *   const_pointer_type;
-  typedef T           type;
-
-  typedef VectorSlice         vector_slice_type;
-  typedef ForwardIterator<T>  iterator;
-  typedef BackwardIterator<T> reverse_iterator;
-
-  typedef ConstParallelDispatcher<type>                           const_parallel_dispatcher_type;
-  typedef ParallelDispatcher<type>                                parallel_dispatcher_type;
-  typedef typename parallel_dispatcher_type::vector_register_type vector_register_type;
-  typedef typename parallel_dispatcher_type::vector_register_iterator_type
-      vector_register_iterator_type;
+  using size_type                      = std::size_t;
+  using pointer_type                   = T *;
+  using const_pointer_type             = T const *;
+  using type                           = T;
+  using vector_slice_type              = VectorSlice;
+  using iterator                       = ForwardIterator<T>;
+  using reverse_iterator               = BackwardIterator<T>;
+  using const_parallel_dispatcher_type = ConstParallelDispatcher<type>;
+  using parallel_dispatcher_type       = ParallelDispatcher<type>;
+  using vector_register_type           = typename parallel_dispatcher_type::vector_register_type;
+  using vector_register_iterator_type =
+      typename parallel_dispatcher_type::vector_register_iterator_type;
 
   enum
   {
@@ -55,31 +53,30 @@ public:
   reverse_iterator rbegin() { return reverse_iterator(pointer_ + size() - 1, pointer_ - 1); }
   reverse_iterator rend() { return reverse_iterator(pointer_ - 1, pointer_ - 1); }
 
-  void SetAllZero()
+  template <typename R = T>
+  typename std::enable_if<std::is_pod<R>::value>::type SetAllZero()
   {
-#if 0
-        assert(pointer_ != nullptr);
-#else
     if (pointer_)
     {
       std::memset(pointer_, 0, padded_size() * sizeof(type));
     }
-#endif
   }
 
-  void SetPaddedZero()
+  template <typename R = T>
+  typename std::enable_if<std::is_pod<R>::value>::type SetPaddedZero()
   {
     assert(pointer_ != nullptr);
 
     std::memset(pointer_ + size(), 0, (padded_size() - size()) * sizeof(type));
   }
 
-  void SetZeroAfter(std::size_t const &n)
+  template <typename R = T>
+  typename std::enable_if<std::is_pod<R>::value>::type SetZeroAfter(std::size_t const &n)
   {
     std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(type));
   }
 
-  // TODO: THis is ugly. The right way to do this would be to have a separate
+  // TODO(unknown): THis is ugly. The right way to do this would be to have a separate
   // constant class that is return for slice(...) const
   vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const
   {

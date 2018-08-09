@@ -13,7 +13,7 @@ public:
 
   virtual std::string AsString() { return "(mutex)"; }
 
-  virtual std::thread::id thread_id() const { return std::thread::id(); }
+  virtual std::thread::id thread_id() const { return {}; }
 };
 }  // namespace mutex
 }  // namespace fetch

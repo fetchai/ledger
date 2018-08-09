@@ -35,7 +35,7 @@ byte_array::ConstByteArray GetRandomByteArray(std::size_t length)
 }
 
 // Time related functionality
-typedef std::chrono::high_resolution_clock::time_point time_point;
+using time_point = std::chrono::high_resolution_clock::time_point;
 
 time_point TimePoint() { return std::chrono::high_resolution_clock::now(); }
 
@@ -146,10 +146,10 @@ void BlockUntilTime(uint64_t startTime)
 namespace network_benchmark {
 
 // Transactions are packaged up into blocks and referred to using a hash
-typedef fetch::chain::Transaction         transaction_type;
-typedef std::size_t                       block_hash;
-typedef std::vector<transaction_type>     block_type;
-typedef std::pair<block_hash, block_type> network_block;
+using transaction_type = fetch::chain::Transaction;
+using block_hash       = std::size_t;
+using block_type       = std::vector<transaction_type>;
+using network_block    = std::pair<block_hash, block_type>;
 
 }  // namespace network_benchmark
 

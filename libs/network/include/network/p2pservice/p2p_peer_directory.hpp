@@ -1,4 +1,6 @@
 #pragma once
+#include <utility>
+
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "network/management/connection_register.hpp"
@@ -43,7 +45,10 @@ public:
 
   P2PPeerDirectory(uint64_t const &protocol, client_register_type reg, thread_pool_type pool,
                    NodeDetails my_details)
-      : protocol_(protocol), register_(reg), thread_pool_(pool), my_details_(my_details)
+    : protocol_(protocol)
+    , register_(std::move(reg))
+    , thread_pool_(std::move(pool))
+    , my_details_(std::move(my_details))
   {
 
     running_ = false;

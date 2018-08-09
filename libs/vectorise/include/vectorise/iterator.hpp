@@ -11,9 +11,9 @@ template <typename T, std::size_t N = sizeof(T)>
 class VectorRegisterIterator
 {
 public:
-  typedef T                                               type;
-  typedef VectorRegister<T, N>                            vector_register_type;
-  typedef typename vector_register_type::mm_register_type mm_register_type;
+  using type                 = T;
+  using vector_register_type = VectorRegister<T, N>;
+  using mm_register_type     = typename vector_register_type::mm_register_type;
 
   VectorRegisterIterator() : ptr_(nullptr), end_(nullptr) {}
   /*
@@ -26,7 +26,7 @@ public:
       end_((mm_register_type *)(arr.pointer() + arr.size())) {}
   */
   VectorRegisterIterator(type const *d, std::size_t size)
-      : ptr_((mm_register_type *)d), end_((mm_register_type *)(d + size))
+    : ptr_((mm_register_type *)d), end_((mm_register_type *)(d + size))
   {}
 
   void Next(vector_register_type &m)

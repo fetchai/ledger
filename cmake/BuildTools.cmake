@@ -27,14 +27,15 @@ function(setup_library name)
     add_library(${name} ${headers} ${srcs})
     target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-    if(FETCH_CLANG_TIDY_CFG)
-      set_target_properties(
-        ${name} PROPERTIES
-        CXX_CLANG_TIDY "${FETCH_CLANG_TIDY_CFG}"
-      )
-    endif(FETCH_CLANG_TIDY_CFG)
-
   endif()
+endfunction()
+
+function(fetch_add_executable name)
+  list(REMOVE_AT ARGV 0)
+
+  # add the executable
+  add_executable(${name} "${ARGV}")
+
 endfunction()
 
 # Function defines additional example target

@@ -1,5 +1,6 @@
 #pragma once
 #include "network/service/protocol.hpp"
+#include <utility>
 #include "network/service/publication_feed.hpp"
 #include "network/service/function.hpp"
 #include "network/generics/subscriptions_container.hpp"
@@ -28,9 +29,14 @@ public:
     BLOCK_PUBLISH      = 3,
   };
 
-  MainChainProtocol(protocol_handler_type const &p, register_type const &r,
-                    thread_pool_type const &nm, chain::MainChain *chain)
-      : Protocol(), protocol_(p), register_(r), thread_pool_(nm), chain_(chain), running_(false)
+  MainChainProtocol(protocol_handler_type const &p, register_type r, thread_pool_type nm,
+                    thread_pool_type const &nm, chain::MainChain *node)
+      : Protocol(), protocol_(p), register_(r), thread_pool_(nm), chain_(node), running_(false)
+    , protocol_(p)
+    , register_(r)
+    , thread_pool_(nm)
+    , chain_(node)
+    , running_(false)
   {
     this->Expose(GET_HEADER, this, &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this, &self_type::GetHeaviestChain);

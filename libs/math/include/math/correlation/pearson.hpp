@@ -1,4 +1,5 @@
 #pragma once
+
 #include "core/assert.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/range.hpp"
@@ -14,8 +15,8 @@ inline typename memory::VectorSlice<T, S>::type Pearson(memory::VectorSlice<T, S
                                                         memory::VectorSlice<T, S> const &b)
 {
   detailed_assert(a.size() == b.size());
-  typedef typename memory::VectorSlice<T, S>::vector_register_type vector_register_type;
-  typedef typename memory::VectorSlice<T, S>::type                 type;
+  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
+  using type                 = typename memory::VectorSlice<T, S>::type;
 
   type meanA = a.in_parallel().Reduce(
       [](vector_register_type const &x, vector_register_type const &y) { return x + y; });

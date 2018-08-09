@@ -10,7 +10,7 @@ namespace ledger {
  *
  * @param identifier The fully qualified name to parse
  */
-Identifier::Identifier(std::string identifier) : full_{identifier} { Tokenise(); }
+Identifier::Identifier(std::string identifier) : full_{std::move(identifier)} { Tokenise(); }
 
 /**
  * Internal: Break up the fully qualified name into tokens

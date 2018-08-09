@@ -5,6 +5,7 @@
 #include "network/service/client.hpp"
 #include "storage/document_store_protocol.hpp"
 #include <iostream>
+#include <memory>
 
 using namespace fetch::service;
 using namespace fetch::byte_array;
@@ -18,7 +19,7 @@ public:
 
     fetch::network::TCPClient connection(tm);
     connection.Connect(host, port);
-    client_.reset(new ServiceClient(connection, tm));
+    client_ = std::make_unique<ServiceClient>(connection, tm);
 
     id_ = "my-fetch-id";
   }

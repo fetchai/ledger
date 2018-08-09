@@ -16,7 +16,7 @@
 #include "network/swarm/swarm_random.hpp"
 #include "network/swarm/swarm_service.hpp"
 
-typedef unsigned int uint;
+using uint = unsigned int;
 
 int main(int argc, const char *argv[])
 {

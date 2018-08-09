@@ -16,7 +16,7 @@ DummyContract::DummyContract() : Contract("fetch.dummy")
   OnTransaction("run", this, &DummyContract::Run);
 }
 
-DummyContract::Status DummyContract::Wait(transaction_type const &tx)
+DummyContract::Status DummyContract::Wait(transaction_type const &)
 {
   std::random_device rd;
   std::mt19937       rng;

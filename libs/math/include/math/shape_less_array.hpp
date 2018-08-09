@@ -6,6 +6,7 @@
 #include "math/kernels/approx_logistic.hpp"
 #include "math/kernels/approx_soft_max.hpp"
 #include "math/kernels/basic_arithmetics.hpp"
+#include "math/kernels/relu.hpp"
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
 #include "math/kernels/variance.hpp"
@@ -22,16 +23,16 @@ template <typename T, typename C = memory::SharedArray<T>>
 class ShapeLessArray
 {
 public:
-  typedef T                                                      type;
-  typedef C                                                      container_type;
-  typedef std::size_t                                            size_type;
-  typedef typename container_type::vector_slice_type             vector_slice_type;
-  typedef typename container_type::vector_register_type          vector_register_type;
-  typedef typename container_type::vector_register_iterator_type vector_register_iterator_type;
+  using type                          = T;
+  using container_type                = C;
+  using size_type                     = std::size_t;
+  using vector_slice_type             = typename container_type::vector_slice_type;
+  using vector_register_type          = typename container_type::vector_register_type;
+  using vector_register_iterator_type = typename container_type::vector_register_iterator_type;
 
   /* Iterators for accessing and modifying the array */
-  typedef typename container_type::iterator         iterator;
-  typedef typename container_type::reverse_iterator reverse_iterator;
+  using iterator         = typename container_type::iterator;
+  using reverse_iterator = typename container_type::reverse_iterator;
 
   /* Contructs an empty shape-less array. */
   ShapeLessArray(std::size_t const &n) : data_(n), size_(n) {}
@@ -59,7 +60,7 @@ public:
    */
   void SetPaddedZero() { data().SetPaddedZero(); }
 
-  typedef ShapeLessArray<T, C> self_type;
+  using self_type = ShapeLessArray<T, C>;
 
   void Sort() { std::sort(data_.pointer(), data_.pointer() + data_.size()); }
 
@@ -1327,6 +1328,14 @@ public:
     data_.in_parallel().Apply(alog, x.data_);
   }
 
+  void Relu(self_type const &x)
+  {
+    LazyResize(x.size());
+
+    kernels::Relu<vector_register_type> relu;
+    data_.in_parallel().Apply(relu, x.data_);
+  }
+
   /* Equality operator.
    * @other is the array which this instance is compared against.
    *
@@ -1548,12 +1557,12 @@ public:
   reverse_iterator rbegin() { return data_.rbegin(); }
   reverse_iterator rend() { return data_.rend(); }
 
-  template <typename S,
-            typename D = memory::SharedArray<S>>  // TODO deduce D from parent
+  // TODO(TFR): deduce D from parent
+  template <typename S, typename D = memory::SharedArray<S>>
   void As(ShapeLessArray<S, D> &ret) const
   {
     ret.LazyResize(size_);
-    // TODO: Vectorize
+    // TODO(TFR): Vectorize
     for (std::size_t i = 0; i < size_; ++i)
     {
       ret.data_[i] = data_[i];
@@ -1567,6 +1576,12 @@ public:
     copy.size_ = this->size_;
 
     return copy;
+  }
+
+  void Copy(self_type const &x)
+  {
+    this->data_ = x.data_.Copy();
+    this->size_ = x.size_;
   }
 
   // TODO: Make referenced copy

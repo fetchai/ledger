@@ -28,11 +28,11 @@ class FetchChainKeeperService : public fetch::protocols::ChainKeeperProtocol
 public:
   FetchChainKeeperService(uint16_t const &port, uint16_t const &http_port,
                           fetch::network::NetworkManager *tm)
-      : fetch::protocols::ChainKeeperProtocol(tm, fetch::protocols::FetchProtocols::CHAIN_KEEPER,
-                                              details_)
-      , network_manager_(tm)
-      , service_(port, network_manager_)
-      , http_server_(http_port, network_manager_)
+    : fetch::protocols::ChainKeeperProtocol(tm, fetch::protocols::FetchProtocols::CHAIN_KEEPER,
+                                            details_)
+    , network_manager_(tm)
+    , service_(port, network_manager_)
+    , http_server_(http_port, network_manager_)
   {
     LOG_STACK_TRACE_POINT;
     using namespace fetch::protocols;

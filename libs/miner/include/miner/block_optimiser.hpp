@@ -59,7 +59,7 @@ public:
   void PushTransactionSummary(transaction_type const &tx, bool check = true)
   {
 
-    // TODO: (EJF) The size of the `all_` make grows forever!
+    // TODO(EJF):  The size of the `all_` make grows forever!
 
     if (check)
     {
@@ -143,7 +143,7 @@ public:
         ++i;
       }
 
-      // TODO: (EJF) Check that this is actually correct
+      // TODO(EJF):  Check that this is actually correct
       block_fees_.push_back(static_cast<uint64_t>(best_solution_energy_));
 
       // Erasing from unspent pool
@@ -287,7 +287,7 @@ private:
       for (auto &resource : tx->summary().resources)
       {
 
-        // TODO: (EJF) Move to Transaction item?
+        // TODO(EJF):  Move to Transaction item?
         std::size_t const lane_index =
             MapResourceToLane(resource, tx->summary().contract_name_, log2_lane_count_);
 

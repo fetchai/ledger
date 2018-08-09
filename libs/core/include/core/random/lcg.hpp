@@ -8,7 +8,7 @@ namespace random {
 class LinearCongruentialGenerator
 {
 public:
-  typedef uint64_t random_type;
+  using random_type = uint64_t;
 
   random_type Seed() const { return seed_; }
   random_type Seed(random_type const &s) { return x_ = seed_ = s; }

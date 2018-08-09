@@ -17,8 +17,8 @@ fetch::random::LaggedFibonacciGenerator<> lfg;
 template <std::size_t BS>
 bool BasicFileCreation()
 {
-  typedef VersionedRandomAccessStack<FileBlockType<BS>> stack_type;
-  stack_type                                            stack;
+  using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
+  stack_type stack;
   stack.Load("document_data.db", "doc_diff.db", true);
 
   FileObject<stack_type> file_object(stack);
@@ -61,7 +61,7 @@ bool BasicFileCreation()
 template <std::size_t BS>
 bool MultipleFileCreation()
 {
-  typedef VersionedRandomAccessStack<FileBlockType<BS>> stack_type;
+  using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
   {
     stack_type stack;
     stack.New("document_data.db", "doc_diff.db");
@@ -77,8 +77,8 @@ bool MultipleFileCreation()
 template <std::size_t BS>
 bool Overwriting()
 {
-  typedef VersionedRandomAccessStack<FileBlockType<BS>> stack_type;
-  stack_type                                            stack;
+  using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
+  stack_type stack;
   stack.New("document_data.db", "doc_diff.db");
 
   FileObject<stack_type> file_object(stack);
@@ -105,8 +105,8 @@ bool Overwriting()
 template <std::size_t BS>
 bool HashConsistency()
 {
-  typedef VersionedRandomAccessStack<FileBlockType<BS>> stack_type;
-  stack_type                                            stack;
+  using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
+  stack_type stack;
   stack.New("document_data.db", "doc_diff.db");
 
   FileObject<stack_type> file_object(stack);
@@ -131,9 +131,9 @@ bool HashConsistency()
 template <std::size_t BS>
 bool FileLoadValueConsistency()
 {
-  typedef VersionedRandomAccessStack<FileBlockType<BS>> stack_type;
-  std::vector<ByteArray>                                values;
-  std::vector<uint64_t>                                 file_ids;
+  using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
+  std::vector<ByteArray> values;
+  std::vector<uint64_t>  file_ids;
 
   {
     stack_type stack;
@@ -195,9 +195,9 @@ bool FileLoadValueConsistency()
 template <std::size_t BS, std::size_t FS>
 bool FileSaveLoadFixedSize()
 {
-  typedef RandomAccessStack<FileBlockType<BS>> stack_type;
-  std::vector<ByteArray>                       strings;
-  std::vector<uint64_t>                        file_ids;
+  using stack_type = RandomAccessStack<FileBlockType<BS>>;
+  std::vector<ByteArray> strings;
+  std::vector<uint64_t>  file_ids;
 
   {
     stack_type stack;
@@ -237,10 +237,10 @@ bool FileSaveLoadFixedSize()
 template <std::size_t BS>
 bool FileLoadHashConsistency()
 {
-  typedef RandomAccessStack<FileBlockType<BS>> stack_type;
-  std::vector<ByteArray>                       strings;
-  std::vector<ByteArray>                       hashes;
-  std::vector<uint64_t>                        file_ids;
+  using stack_type = RandomAccessStack<FileBlockType<BS>>;
+  std::vector<ByteArray> strings;
+  std::vector<ByteArray> hashes;
+  std::vector<uint64_t>  file_ids;
 
   {
     stack_type stack;

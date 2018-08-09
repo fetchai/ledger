@@ -1,4 +1,6 @@
 #pragma once
+#include <utility>
+
 #include "ledger/chain/main_chain_details.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/service/client.hpp"
@@ -21,8 +23,8 @@ public:
     PING_MAGIC = 1337
   };
 
-  MainChainIdentity(client_register_type reg, network_manager_type nm)
-      : register_(reg), manager_(nm)
+  MainChainIdentity(client_register_type reg, network_manager_type const &nm)
+    : register_(std::move(reg)), manager_(nm)
   {}
 
   /// External controls
