@@ -99,12 +99,12 @@ struct MatrixApplyClassMember
     using signature_type = R (C::*)(Args..., const B &, B &) const;
     static R Apply(B const *regs, C const &cls, signature_type const &fnc, B &ret, Args... args)
     {
-      return (cls.*fnc)(args..., *regs, ret);
+      return (cls.*fnc)(std::forward<Args>(args)..., *regs, ret);
     }
 
     static R Apply(B const **regs, C const &cls, signature_type const &fnc, B &ret, Args... args)
     {
-      return (cls.*fnc)(args..., **regs, ret);
+      return (cls.*fnc)(std::forward<Args>(args)..., **regs, ret);
     }
   };
 };

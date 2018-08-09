@@ -20,4 +20,5 @@ target_link_libraries(fetch-math INTERFACE fetch-core)
 add_test_target()
 
 add_subdirectory(benchmark)
+add_subdirectory(examples)
 

@@ -23,8 +23,8 @@ namespace math {
  * according to the platform standard by using either
  * <fetch::memory::SharedArray> or <fetch::memory::Array>.
  */
-template <typename T, typename C = memory::SharedArray<T>, bool PAD_HEIGHT = false,
-          bool PAD_WIDTH = true>
+template <typename T, typename C = memory::SharedArray<T>, bool PAD_HEIGHT = true,
+          bool PAD_WIDTH = false>
 class RectangularArray : public math::ShapeLessArray<T, C>
 {
 public:
@@ -47,7 +47,7 @@ public:
    * vector size found on the system. Space is allocated, but the
    * contructor of the underlying data structure is not invoked.
    */
-  RectangularArray(std::size_t const &n) { Resize(1, n); }
+  RectangularArray(std::size_t const &n) { Resize(n, 1); }
 
   /* Contructs a rectangular array.
    * @param n is the height of the array.
@@ -70,10 +70,10 @@ public:
   {
     std::size_t offset = 0;
     // TODO: parallelise over cores
-    for (std::size_t i = 0; i < height_; ++i)
+    for (std::size_t i = 0; i < width_; ++i)
     {
-      super_type::Sort(memory::TrivialRange(offset, offset + width_));
-      offset += padded_width_;
+      super_type::Sort(memory::TrivialRange(offset, offset + height_));
+      offset += padded_height_;
     }
   }
 
@@ -191,16 +191,16 @@ public:
     double         ca = cos(radians), sa = -sin(radians);
     container_type n(super_type::data().size());
 
-    for (int i = 0; i < int(height()); ++i)
+    for (int i = 0; i < int(width()); ++i)
     {
-      for (int j = 0; j < int(width()); ++j)
+      for (int j = 0; j < int(height()); ++j)
       {
         size_type v = size_type(ca * (i - ci) - sa * (j - cj) + ci);
         size_type u = size_type(sa * (i - ci) + ca * (j - cj) + cj);
         if ((v < height()) && (u < width()))
-          n[std::size_t(i) * padded_width_ + std::size_t(j)] = At(v, u);
+          n[std::size_t(i) * padded_height_ + std::size_t(j)] = At(v, u);
         else
-          n[std::size_t(i) * padded_width_ + std::size_t(j)] = fill;
+          n[std::size_t(i) * padded_height_ + std::size_t(j)] = fill;
       }
     }
     //    data_ = n;
@@ -263,10 +263,10 @@ public:
    */
   type const &operator()(size_type const &i, size_type const &j) const
   {
-    assert(i < padded_height_);
     assert(j < padded_width_);
+    assert(i < padded_height_);
 
-    return super_type::data()[(i * padded_width_ + j)];
+    return super_type::data()[(j * padded_height_ + i)];
   }
 
   /* Two-dimensional reference index operator.
@@ -278,9 +278,9 @@ public:
    */
   type &operator()(size_type const &i, size_type const &j)
   {
-    assert(i < padded_height_);
     assert(j < padded_width_);
-    return super_type::data()[(i * padded_width_ + j)];
+    assert(i < padded_height_);
+    return super_type::data()[(j * padded_height_ + i)];
   }
 
   /* One-dimensional constant reference access function.
@@ -314,10 +314,10 @@ public:
    */
   type const &At(size_type const &i, size_type const &j) const
   {
-    assert(i < padded_height_);
     assert(j < padded_width_);
+    assert(i < padded_height_);
 
-    return super_type::data()[(i * padded_width_ + j)];
+    return super_type::data()[(j * padded_height_ + i)];
   }
 
   /* Two-dimensional reference access function.
@@ -326,9 +326,9 @@ public:
    */
   type &At(size_type const &i, size_type const &j)
   {
-    assert(i < padded_height_);
     assert(j < padded_width_);
-    return super_type::data()[(i * padded_width_ + j)];
+    assert(i < padded_height_);
+    return super_type::data()[(j * padded_height_ + i)];
   }
 
   /* Sets an element using one coordinatea.
@@ -350,8 +350,8 @@ public:
    */
   type const &Set(size_type const &i, size_type const &j, type const &v)
   {
-    assert((i * padded_width_ + j) < super_type::data().size());
-    super_type::data()[(i * padded_width_ + j)] = v;
+    assert((j * padded_height_ + i) < super_type::data().size());
+    super_type::data()[(j * padded_height_ + i)] = v;
     return v;
   }
 
@@ -410,12 +410,14 @@ public:
    */
   void Reserve(size_type const &h, size_type const &w)
   {
-    std::size_t opw = padded_width_, ow = width_;
+
+    // TODO: Rewrite
+    std::size_t opw = padded_height_, ow = width_;
     std::size_t oh = height_;
 
     SetPaddedSizes(h, w);
 
-    container_type new_arr(padded_height_ * padded_width_);
+    container_type new_arr(padded_width_ * padded_height_);
     new_arr.SetAllZero();
 
     std::size_t I = 0, J = 0;
@@ -423,7 +425,7 @@ public:
     {
       for (std::size_t j = 0; j < w; ++j)
       {
-        new_arr[i * padded_width_ + j] = this->data()[I * opw + J];
+        new_arr[j * padded_height_ + i] = this->data()[J * opw + I];
 
         ++J;
         if (J == ow)
@@ -438,7 +440,7 @@ public:
       }
     }
 
-    super_type::ReplaceData(padded_height_ * padded_width_, new_arr);
+    super_type::ReplaceData(padded_width_ * padded_height_, new_arr);
 
     if (h < height_) height_ = h;
     if (w < width_) width_ = w;
@@ -453,7 +455,7 @@ public:
     width_  = w;
   }
 
-  void Flatten() { Reshape(1, width_ * height_); }
+  void Flatten() { Reshape(width_ * height_,1); }
 
   void Fill(type const &value, memory::Range const &rows, memory::Range const &cols)
   {
@@ -492,9 +494,9 @@ public:
 
     SetPaddedSizes(h, w);
 
-    if ((padded_height_ * padded_width_) < super_type::capacity()) return;
+    if ((padded_width_ * padded_height_) < super_type::capacity()) return;
 
-    super_type::LazyResize(padded_height_ * padded_width_);
+    super_type::LazyResize(padded_width_ * padded_height_);
 
     height_ = h;
     width_  = w;
@@ -603,29 +605,31 @@ public:
   size_type size() const { return height_ * width_; }
 
   /* Returns the size of the array. */
-  size_type padded_size() const { return padded_height_ * padded_width_; }
+  size_type padded_size() const { return padded_width_ * padded_height_; }
 
 private:
   size_type height_ = 0, width_ = 0;
-  size_type padded_height_ = 0, padded_width_ = 0;
+  size_type padded_width_ = 0, padded_height_ = 0;
 
   void SetPaddedSizes(size_type const &h, size_type const &w)
   {
-    padded_height_ = h;
-    padded_width_  = w;
-
-    if (PAD_HEIGHT)
-    {
-      padded_height_ =
-          size_type(h / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
-      if (padded_height_ < h) padded_height_ += vector_register_type::E_BLOCK_COUNT;
-    }
+    padded_width_ = w;
+    padded_height_  = h;
 
     if (PAD_WIDTH)
     {
       padded_width_ =
           size_type(w / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
       if (padded_width_ < w) padded_width_ += vector_register_type::E_BLOCK_COUNT;
+      
+    }
+
+    if (PAD_HEIGHT)
+    {
+      padded_height_ =
+          size_type(h / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
+      if (padded_height_ < h) padded_height_ += vector_register_type::E_BLOCK_COUNT;
+      
     }
   }
 };

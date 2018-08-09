@@ -56,10 +56,9 @@ public:
   template <typename R = T>
   typename std::enable_if<std::is_pod<R>::value>::type SetAllZero()
   {
-    if (pointer_)
-    {
-      std::memset(pointer_, 0, padded_size() * sizeof(type));
-    }
+    assert(pointer_ != nullptr);
+    std::memset(pointer_, 0, padded_size() * sizeof(type));
+
   }
 
   template <typename R = T>
@@ -81,7 +80,8 @@ public:
   vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const
   {
     assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
-    assert(std::size_t(length / E_SIMD_COUNT) * E_SIMD_COUNT == length);
+    // TODO: Assert unneccessary
+    //    assert(std::size_t(length / E_SIMD_COUNT) * E_SIMD_COUNT == length);
     assert((length + offset) <= size_);
     return vector_slice_type(pointer_ + offset, length);
   }

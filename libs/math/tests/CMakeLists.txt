@@ -10,6 +10,10 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
+
+
+add_fetch_gtest(blas fetch-math math/linalg/blas/)
+
 add_fetch_test(exp_test fetch-math math/test_exp.cpp)
 add_fetch_test(spline_test fetch-math math/test_spline.cpp)
 add_fetch_test(rectangular_load_save_test fetch-math math/rectangular_load_save_test.cpp)
@@ -24,6 +28,8 @@ add_fetch_gtest(ndarray_test fetch-math math/ndarray)
 add_fetch_gtest(relu_test fetch-math math/kernels/relu)
 add_fetch_gtest(sign_test fetch-math math/kernels/sign)
 add_fetch_gtest(l2loss_test fetch-math math/shape_less_array/l2loss)
+
+
 
 # disabled / not working tests
 add_fetch_test(load_image_read_exceptions_test fetch-math image/load_image_read_exceptions.cpp DISABLED)
