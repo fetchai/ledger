@@ -15,10 +15,10 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 add_fetch_test(tcp_client_stress_test fetch-network network/tcp_client_stress.cpp)
-add_fetch_test(tcp_client_server_stress_test fetch-network network/tcp_client_server_stress.cpp)
+add_fetch_test(tcp_client_server_stress_test fetch-network network/tcp_client_server_stress.cpp DISABLED)
 
 target_link_libraries(tcp_client_stress_test PRIVATE fetch-ledger)
-target_link_libraries(tcp_client_server_stress_test PRIVATE fetch-ledger)
+#target_link_libraries(tcp_client_server_stress_test PRIVATE fetch-ledger)
 
 add_fetch_test(thread_manager_stress_test fetch-network network/thread_manager_stress.cpp)
 add_fetch_test(dummy_test fetch-network network/dummy_test.cpp)
