@@ -21,7 +21,7 @@ public:
   using shared_service_client_type = std::shared_ptr<service::ServiceClient>;
   using weak_service_client_type   = std::weak_ptr<service::ServiceClient>;
   using details_type               = G;
-  typedef mutex::Mutex                                        mutex_type;
+  using mutex_type                 = mutex::Mutex;
 
   struct LockableDetails final : public details_type, public mutex_type
   {

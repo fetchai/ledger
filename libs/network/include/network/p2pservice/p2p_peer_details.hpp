@@ -139,6 +139,18 @@ struct PeerDetails
     return *this;
   }
 
+  bool IsAnyMainChain() const
+  {
+    for (auto &ep : entry_points)
+    {
+      if (ep.is_mainchain)
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void Update(PeerDetails const &other)
   {
     identity     = other.identity;

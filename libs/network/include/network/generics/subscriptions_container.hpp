@@ -13,13 +13,19 @@ class SubscriptionsContainer
 {
 using mutex_type = std::mutex;
 using lock_type = std::lock_guard<mutex_type>;
-using protocol_number_type = uint32_t;
-using protocol_handler_type = fetch::service::protocol_handler_type;
+using protocol_number_type = fetch::service::protocol_handler_type;
 using feed_handler_type = fetch::service::feed_handler_type;
 using subs_handle_type = uint64_t;
 using client_type = fetch::service::ServiceClient;
 using client_ptr = std::shared_ptr<client_type>;
-using existing_subs_type = std::map<std::tuple<uint64_t, uint64_t, uint64_t> ,subs_handle_type>;
+
+using client_handle_type = uint64_t;
+using verb_type = uint64_t;
+
+using existing_subs_type = std::map<
+  std::tuple<client_handle_type, verb_type, protocol_number_type>,
+  subs_handle_type
+>;
 
 public:
   SubscriptionsContainer(const SubscriptionsContainer &rhs)            = delete;
@@ -40,8 +46,9 @@ public:
   template<class FUNC_CLASS>
   subs_handle_type Subscribe(
     client_ptr client,
-    protocol_handler_type protocol_number,
+    protocol_number_type protocol_number,
     feed_handler_type verb,
+    const std::string &name,
     FUNC_CLASS *func
     )
   {
@@ -57,12 +64,13 @@ public:
 
     auto r = handle_counter++;
     existing_subs[identifier] = r;
-    subs[r] = CreateSubscription(client, protocol_number, verb, func);
+    subs[r] = CreateSubscription(client, protocol_number, verb, name, func);
     return r;
   }
 
   void ConnectionDropped(fetch::network::TCPClient::handle_type connection_handle)
   {
+    lock_type lock(mutex);
     auto item = existing_subs.begin();
     while(item!=existing_subs.end())
     {
@@ -77,6 +85,79 @@ public:
         ++item;
       }
     }
+  }
+
+  void AssociateName(const std::string &name, client_handle_type connection_handle,
+                     protocol_number_type proto=0,
+                     feed_handler_type verb=0)
+  {
+
+    logger.Warn("OMG ASSOCIATE ALL:",
+                name, " => ",
+                connection_handle,
+                ", ",
+                proto,
+                ", ",
+                int(verb));
+
+    lock_type lock(mutex);
+    for(auto &item : existing_subs)
+    {
+      if (
+          (std::get<0>(item.first) == connection_handle)
+          &&
+          (!proto || std::get<2>(item.first) == proto)
+          &&
+          (!verb || std::get<1>(item.first) == verb)
+          )
+      {
+        subs[item.second] -> name_ = name;
+        logger.Warn("OMG ASSOCIATE:",
+                    subs[item.second] -> name_, " => ",
+                    std::get<0>(item.first),
+                    ", ",
+                    std::get<2>(item.first),
+                    ", ",
+                    std::get<1>(item.first)
+                    );
+      }
+    }
+  }
+
+  std::vector<std::string> GetAllSubscriptions(protocol_number_type proto, feed_handler_type verb)
+  {
+    std::vector<std::string> r;
+    for(auto &item : existing_subs)
+    {
+      if (
+          (!proto || std::get<1>(item.first) == proto)
+          &&
+          (!verb || std::get<2>(item.first) == verb)
+          )
+      {
+        logger.Warn("OMG GetAllSubscriptions:",
+                    subs[item.second] -> name_, " => ",
+                    std::get<0>(item.first),
+                    ", ",
+                    std::get<2>(item.first),
+                    ", ",
+                    std::get<1>(item.first)
+                    );
+        r.push_back(subs[item.second] -> getName());
+      }
+      else
+      {
+        logger.Warn("OMG Skip getting:",
+                    subs[item.second] -> name_, " => ",
+                    std::get<0>(item.first),
+                    ", ",
+                    std::get<2>(item.first),
+                    ", ",
+                    std::get<1>(item.first)
+                    );
+      }
+    }
+    return r;
   }
 
   bool RemoveSubscription(subs_handle_type handle)
@@ -95,29 +176,36 @@ private:
   class Subscription
   {
   public:
-    Subscription(client_ptr client, fetch::service::subscription_handler_type handle) :
-      client_(client),
-      handle_(handle)
+    friend class SubscriptionsContainer;
+    Subscription(client_ptr client,
+                 fetch::service::subscription_handler_type handle,
+                 const std::string &name)
+      : client_(client)
+      , handle_(handle)
+      , name_(name)
       {
       }
     virtual ~Subscription()
     {
       client_ -> Unsubscribe( handle_ );
     }
+    const std::string &getName() { return name_; }
   private:
     client_ptr client_;
     fetch::service::subscription_handler_type handle_;
+    std::string name_;
   };
 
   template<class FUNC_CLASS>
   std::shared_ptr<Subscription> CreateSubscription(client_ptr client,
-                                                   protocol_handler_type protocol_number,
+                                                   protocol_number_type protocol_number,
                                                    feed_handler_type verb,
+                                                   const std::string &name,
                                                    FUNC_CLASS *func
                                                    )
   {
     auto handle = client -> Subscribe(protocol_number, verb, func);
-    return std::make_shared<Subscription>(client, handle);
+    return std::make_shared<Subscription>(client, handle, name);
   }
 
   using subs_type = std::map<uint64_t, std::shared_ptr<Subscription>>;

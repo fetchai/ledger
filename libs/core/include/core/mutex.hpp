@@ -94,7 +94,7 @@ class DebugMutex : public AbstractMutex
 
 public:
   DebugMutex(int line, std::string file) : AbstractMutex(), line_(line), file_(std::move(file)) {}
-  //DebugMutex() = default;
+  DebugMutex() = delete;
 
   DebugMutex &operator=(DebugMutex const &other) = delete;
 

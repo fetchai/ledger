@@ -4,6 +4,7 @@
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "network/p2pservice/explore_http_interface.hpp"
+#include "network/p2pservice/p2p_http_interface.hpp"
 
 namespace fetch {
 
@@ -29,6 +30,9 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
 
   // Creating P2P instance
   p2p_ = std::make_unique<p2p::P2PService>(p2p_port_, *network_manager_);
+
+  auto profile = p2p_->Profile();
+  auto my_name = std::string(byte_array::ToBase64(profile.identity.identifier()));
 
   // Adding handle for the orchestration
   p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
@@ -71,8 +75,14 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
   execution_manager_->Start();
 
   // Main chain
-  main_chain_service_ = std::make_unique<chain::MainChainService>(db_prefix, main_chain_port_,
-                                                                  *network_manager_.get());
+  main_chain_service_ = std::make_unique<chain::MainChainService>(
+      db_prefix,
+      main_chain_port_,
+      *network_manager_.get(),
+      my_name
+  );
+
+  main_chain_service_ -> SetOwnerIdentity(profile.identity);
 
   // Mainchain remote
   main_chain_remote_ = std::make_unique<chain::MainChainRemoteControl>();
@@ -102,6 +112,9 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
 
   // define the list of HTTP modules to be used
   http_modules_ = {
+    std::make_shared<p2p::P2PHttpInterface>(main_chain_service_->mainchain(),
+                                            main_chain_service_.get(),
+                                            main_chain_service_->mainchainprotocol()),
       std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
       std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_),
       std::make_shared<p2p::ExploreHttpInterface>(p2p_.get(), main_chain_service_->mainchain())};

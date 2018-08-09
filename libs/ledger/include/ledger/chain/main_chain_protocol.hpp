@@ -1,10 +1,10 @@
 #pragma once
 #include "network/service/protocol.hpp"
-#include <utility>
 #include "network/service/publication_feed.hpp"
 #include "network/service/function.hpp"
 #include "network/generics/subscriptions_container.hpp"
 #include "network/generics/work_items_queue.hpp"
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -17,11 +17,15 @@ class MainChainProtocol : public fetch::service::Protocol
 public:
   using block_type            = chain::MainChain::block_type;
   using block_hash_type       = chain::MainChain::block_hash;
-  using protocol_handler_type = service::protocol_handler_type;
+  using protocol_number_type  = service::protocol_handler_type;
   using thread_pool_type      = network::ThreadPool;
   using register_type         = R;
   using self_type             = MainChainProtocol<R>;
-
+  using connectivity_details_type = MainChainDetails;
+  using client_register_type      = fetch::network::ConnectionRegister<connectivity_details_type>;
+  using client_handle_type     = client_register_type::connection_handle_type;
+  using feed_handler_type = service::feed_handler_type;
+  
   enum
   {
     GET_HEADER         = 1,
@@ -29,7 +33,8 @@ public:
     BLOCK_PUBLISH      = 3,
   };
 
-  MainChainProtocol(protocol_handler_type const &p, register_type r, thread_pool_type nm,
+  MainChainProtocol(protocol_number_type const &p, register_type r, thread_pool_type nm,
+		    const std::string &identifier,
                     chain::MainChain *node)
     : Protocol()
     , protocol_(p)
@@ -37,6 +42,7 @@ public:
     , thread_pool_(nm)
     , chain_(node)
     , running_(false)
+    , identifier_(identifier)
   {
     this->Expose(GET_HEADER, this, &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this, &self_type::GetHeaviestChain);
@@ -57,8 +63,8 @@ public:
 
   void PublishBlock(const chain::MainChain::block_type &blk)
   {
-       LOG_STACK_TRACE_POINT;
-   fetch::logger.Warn("MINED A BLOCK:" + blk.summarise());
+    LOG_STACK_TRACE_POINT;
+    fetch::logger.Warn("MINED A BLOCK:" + blk.summarise());
     Publish(BLOCK_PUBLISH, blk);
   }
 
@@ -68,15 +74,32 @@ public:
     std::lock_guard<mutex::Mutex> lock(mutex_);
     blockPublishSubscriptions_.ConnectionDropped(connection_handle);
   }
+
+  std::vector<std::string> GetCurrentSubscriptions()
+  {
+    return blockPublishSubscriptions_ . GetAllSubscriptions(protocol_, BLOCK_PUBLISH);
+  }
+
+  void AssociateName(const std::string &name, client_handle_type connection_handle,
+                     protocol_number_type proto=0,
+                     feed_handler_type verb=0)
+  {
+    blockPublishSubscriptions_ . AssociateName(name, connection_handle, proto, verb);
+  }
+
+  const std::string &GetIdentity()
+  {
+    return identifier_;
+  }
+
 private:
-  protocol_handler_type  protocol_;
+  protocol_number_type   protocol_;
   register_type          register_;
   thread_pool_type       thread_pool_;
   network::SubscriptionsContainer blockPublishSubscriptions_;
 
   /// Protocol logic
   /// @{
-
 
   void IdleUntilPeers()
   {
@@ -103,6 +126,7 @@ private:
     uint32_t                      ms = max_size_;
     using service_map_type           = typename R::service_map_type;
     register_.WithServices([this, ms](service_map_type const &map) {
+        // entries in a map of connection_handle to  service_object.
       for (auto const &p : map)
       {
         if (!running_)
@@ -110,8 +134,19 @@ private:
           return;
         }
 
-        auto peer = p.second;
-        auto ptr  = peer.lock();
+        auto peer    = p.second;
+        auto ptr     = peer.lock();
+        auto details = register_.GetDetails(ptr -> handle());
+
+
+        //std::cout << std::string(byte_array::ToBase64(details.identity.identifier())) << std::endl;
+
+        //if (!details -> IsAnyMainChain())
+        //{
+        //  continue;
+        //}
+
+        auto name = details -> GetOwnerIdentityString();
 
         auto foo = new service::Function<void(chain::MainChain::block_type)>(
           [this](chain::MainChain::block_type block){
@@ -123,6 +158,7 @@ private:
           ptr,
           protocol_,
           BLOCK_PUBLISH,
+          name, // TODO(kll) make a connection name here.
           foo);
 
         auto prom = ptr->Call(protocol_, GET_HEAVIEST_CHAIN, ms);
@@ -249,6 +285,7 @@ private:
 
   std::atomic<bool>     running_;
   std::atomic<uint32_t> max_size_;
+  std::string            identifier_;
 };
 
 }  // namespace chain

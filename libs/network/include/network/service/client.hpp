@@ -31,8 +31,10 @@ public:
   using network_manager_type = fetch::network::NetworkManager;
 
   ServiceClient(std::shared_ptr<network::AbstractConnection> connection,
-                network_manager_type const &                 network_manager)
-    : connection_(connection), network_manager_(network_manager), message_mutex_(__LINE__, __FILE__)
+      const network_manager_type                         &network_manager)
+      : connection_(connection)
+      , network_manager_(network_manager)
+      , message_mutex_(__LINE__, __FILE__)
       , lifeTracker_(network_manager)
   {
     auto ptr = connection_.lock();
