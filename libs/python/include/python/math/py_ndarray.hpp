@@ -20,7 +20,8 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.Copy(b);
              return a;
            })
-      .def("flatten",
+      .def("L2Loss", [](NDArray<T> &a) { return a.L2Loss(); })
+      .def("Flatten",
            [](NDArray<T> &a) {
              a.Flatten();
              return a;

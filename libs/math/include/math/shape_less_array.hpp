@@ -749,6 +749,18 @@ public:
     //    kernel( this->data_, x.data());
   }
 
+  /**
+   * calculates the l2loss of data in the array
+   *
+   * @return       returns single value as type
+   *
+   **/
+  type L2Loss()
+  {
+    type sum = data_.in_parallel().SumReduce([](vector_register_type const &v) { return v * v; });
+    return sum * type(0.5);
+  }
+
   void Fmod(self_type const &x)
   {
     LazyResize(x.size());
