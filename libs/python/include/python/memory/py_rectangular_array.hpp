@@ -181,8 +181,8 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
                         py::array_t<double> const &arr) { std::cout << "WAS HERE" << std::endl; })
       .def("FromNumpy",
            [](RectangularArray<T> &s, py::array_t<T> arr) {
-             auto                                            buf = arr.request();
-             typedef typename RectangularArray<T>::size_type size_type;
+             auto buf        = arr.request();
+             using size_type = typename RectangularArray<T>::size_type;
              if (buf.ndim != 2) throw std::runtime_error("Dimension must be exactly two.");
 
              T *         ptr = (T *)buf.ptr;

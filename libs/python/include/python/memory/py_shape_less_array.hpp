@@ -17,8 +17,19 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
       .def(py::init<const ShapeLessArray<T> &>())
       //    .def(py::self = py::self )
       .def("size", &ShapeLessArray<T>::size)
-      .def("Copy", &ShapeLessArray<T>::Copy)
-
+      //      .def("Copy", &ShapeLessArray<T>::Copy)
+      .def("Copy",
+           []() {
+             ShapeLessArray<T> a;
+             return a.Copy();
+           })
+      .def("Copy",
+           [](ShapeLessArray<T> &b) {
+             ShapeLessArray<T> a;
+             a.LazyResize(b.size());
+             a.Copy(b);
+             return a;
+           })
       .def("InlineAdd", (ShapeLessArray<T> &
                          (ShapeLessArray<T>::*)(ShapeLessArray<T> const &, memory::Range const &)) &
                             ShapeLessArray<T>::InlineAdd)
@@ -282,8 +293,8 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
 
       .def("FromNumpy",
            [](ShapeLessArray<T> &s, py::array_t<T> arr) {
-             auto                                          buf = arr.request();
-             typedef typename ShapeLessArray<T>::size_type size_type;
+             auto buf        = arr.request();
+             using size_type = typename ShapeLessArray<T>::size_type;
              if (buf.ndim != 1) throw std::runtime_error("Dimension must be exactly one.");
 
              T *         ptr = (T *)buf.ptr;

@@ -14,7 +14,7 @@ struct NodeDetailsImplementation
 
 }  // namespace details
 
-typedef std::shared_ptr<details::NodeDetailsImplementation> NodeDetails;
+using NodeDetails = std::shared_ptr<details::NodeDetailsImplementation>;
 
 inline NodeDetails MakeNodeDetails()
 {

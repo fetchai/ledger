@@ -38,7 +38,7 @@ inline VectorRegister<double, 128> approx_log(VectorRegister<double, 128> const 
 
   __m128i conv = _mm_castpd_si128(x.data());
   conv         = _mm_shuffle_epi32(conv, 1 | (3 << 2) | (0 << 4) | (2 << 6));
-  conv         = _mm_and_si128(conv, *(__m128i *)mask);
+  conv         = _mm_and_si128(conv, *reinterpret_cast<__m128i const *>(mask));
 
   VectorRegister<double, 128> y(_mm_cvtepi32_pd(conv));
 

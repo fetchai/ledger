@@ -162,11 +162,11 @@ int main()
   std::cout << std::setw(width) << "Ser. MBs";
   std::cout << std::setw(width) << "Des. MBs" << std::endl;
 
-  SINGLE_BENCHMARK(TypedByte_ArrayBuffer, std::vector<uint32_t>);
-  SINGLE_BENCHMARK(TypedByte_ArrayBuffer, std::vector<uint64_t>);
-  SINGLE_BENCHMARK(TypedByte_ArrayBuffer, std::vector<ByteArray>);
-  SINGLE_BENCHMARK(TypedByte_ArrayBuffer, std::vector<ConstByteArray>);
-  SINGLE_BENCHMARK(TypedByte_ArrayBuffer, std::vector<std::string>);
+  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<uint32_t>);
+  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<uint64_t>);
+  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<ByteArray>);
+  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<ConstByteArray>);
+  SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<std::string>);
 
   /*
   std::vector< ByteArray > a,b,c;

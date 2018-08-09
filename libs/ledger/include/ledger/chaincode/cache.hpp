@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <chrono>
 #include <unordered_map>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -22,7 +23,7 @@ public:
 
   struct Element
   {
-    Element(chain_code_type c) : chain_code{c} {}
+    Element(chain_code_type c) : chain_code{std::move(c)} {}
 
     chain_code_type chain_code;
     timepoint_type  timestamp{clock_type::now()};

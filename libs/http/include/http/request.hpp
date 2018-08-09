@@ -19,7 +19,7 @@ namespace http {
 class HTTPRequest
 {
 public:
-  typedef byte_array::ConstByteArray byte_array_type;
+  using byte_array_type = byte_array::ConstByteArray;
 
   HTTPRequest() {}
 

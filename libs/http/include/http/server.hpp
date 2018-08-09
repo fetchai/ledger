@@ -9,6 +9,7 @@
 #include <functional>
 #include <map>
 #include <regex>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -17,16 +18,16 @@ namespace http {
 class HTTPServer : public AbstractHTTPServer
 {
 public:
-  typedef uint64_t handle_type;  // TODO: Make global definition
+  using handle_type = uint64_t;
 
-  typedef network::NetworkManager      network_manager_type;
-  typedef asio::ip::tcp::tcp::socket   socket_type;
-  typedef asio::ip::tcp::tcp::acceptor acceptor_type;
-  typedef HTTPConnectionManager        manager_type;
+  using network_manager_type = network::NetworkManager;
+  using socket_type          = asio::ip::tcp::tcp::socket;
+  using acceptor_type        = asio::ip::tcp::tcp::acceptor;
+  using manager_type         = HTTPConnectionManager;
 
-  typedef std::function<void(HTTPRequest &)>                       request_middleware_type;
-  typedef typename HTTPModule::view_type                           view_type;
-  typedef std::function<void(HTTPResponse &, HTTPRequest const &)> response_middleware_type;
+  using request_middleware_type  = std::function<void(HTTPRequest &)>;
+  using view_type                = typename HTTPModule::view_type;
+  using response_middleware_type = std::function<void(HTTPResponse &, HTTPRequest const &)>;
 
   struct MountedView
   {
@@ -36,9 +37,9 @@ public:
   };
 
   HTTPServer(uint16_t const &port, network_manager_type const &network_manager)
-      : eval_mutex_(__LINE__, __FILE__)
-      , networkManager_(network_manager)
-      , request_mutex_(__LINE__, __FILE__)
+    : eval_mutex_(__LINE__, __FILE__)
+    , networkManager_(network_manager)
+    , request_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -96,7 +97,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: (EJF) Need to actually add better support for the options here
+    // TODO(EJF):  Need to actually add better support for the options here
     if (req.method() == Method::OPTIONS)
     {
 

@@ -13,8 +13,8 @@ template <typename A>
 inline typename A::type Chebyshev(A const &a, A const &b)
 {
   detailed_assert(a.size() == b.size());
-  //  typedef typename A::vector_register_type vector_register_type;
-  //  typedef typename A::type type;
+  //  using vector_register_type = typename A::vector_register_type;
+  //  using type = typename A::type;
 
   throw std::runtime_error("not implemented yet due to lacking features in vectorisation unit");
 

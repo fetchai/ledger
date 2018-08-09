@@ -42,9 +42,11 @@ class JSONDocument
   };
 
 public:
-  typedef byte_array::ByteArray      string_type;
-  typedef byte_array::ConstByteArray const_string_type;
-  //  typedef script::Variant variant_type;
+  using string_type       = byte_array::ByteArray;
+  using const_string_type = byte_array::ConstByteArray;
+  using VariantArray      = script::VariantArray;
+
+  //  using variant_type = script::Variant;
 
   JSONDocument()
   {
@@ -58,10 +60,7 @@ public:
 
   script::Variant const &operator[](std::size_t const &i) const { return root()[i]; }
 
-  typename script::Variant::variant_proxy_type operator[](byte_array::ConstByteArray const &key)
-  {
-    return root()[key];
-  }
+  script::VariantProxy operator[](byte_array::ConstByteArray const &key) { return root()[key]; }
 
   script::Variant const &operator[](byte_array::ConstByteArray const &key) const
   {
@@ -74,7 +73,7 @@ public:
   {
     Tokenise(document);
 
-    variants_.LazyResize(objects_ + 1);
+    variants_.Resize(objects_ + 1);
     counters_.clear();
 
     uint32_t   allocation_counter = 1;
@@ -359,7 +358,7 @@ private:
 
   std::vector<JSONToken *> object_stack_;
   std::vector<JSONToken>   tokens_;
-  script::VariantList      variants_;
+  VariantArray             variants_;
   std::size_t              objects_;
 
   std::vector<char> brace_stack_;

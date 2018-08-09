@@ -8,8 +8,8 @@ namespace optimisers {
 class BinaryProblem
 {
 public:
-  typedef double cost_type;
-  void           Reset()
+  using cost_type = double;
+  void Reset()
   {
     for (std::size_t i = 0; i < couplings_.size(); ++i) couplings_[i] = 0.;
     for (std::size_t i = 0; i < coupling_sum_.size(); ++i) coupling_sum_[i] = 0;

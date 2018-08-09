@@ -24,9 +24,9 @@ namespace ledger {
 // std::make_shared<fetch::network::ThreadPool>(num_executors)
 ExecutionManager::ExecutionManager(std::size_t num_executors, storage_unit_type storage,
                                    executor_factory_type const &factory)
-    : storage_(std::move(storage))
-    , idle_executors_(num_executors)
-    , thread_pool_(network::MakeThreadPool(num_executors))
+  : storage_(std::move(storage))
+  , idle_executors_(num_executors)
+  , thread_pool_(network::MakeThreadPool(num_executors))
 {
 
   // setup the executor pool
@@ -84,7 +84,7 @@ ExecutionManager::Status ExecutionManager::Execute(block_type const &block)
     }
   }
 
-  // TODO: (EJF) Detect and handle number of lanes updates
+  // TODO(EJF):  Detect and handle number of lanes updates
 
   // plan the execution for this block
   if (!PlanExecution(block))
@@ -129,8 +129,6 @@ bool ExecutionManager::PlanExecution(block_type const &block)
     // process the transactions
     for (auto const &tx : slice.transactions)
     {
-
-      // TODO: (EJF) Byte array copies
       Identifier id;
       id.Parse(tx.contract_name_);
       auto contract = contracts_.Lookup(id.name_space());
@@ -194,7 +192,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     ++active_count_;
     auto status = item.Execute(*executor);
     (void)status;
-    // TODO: (EJF) Should work out what the status of this is
+    // TODO(EJF):  Should work out what the status of this is
     --active_count_;
     --remaining_executions_;
     ++completed_executions_;
@@ -217,8 +215,7 @@ void ExecutionManager::Start()
   running_ = true;
 
   // create and start the monitor thread
-  monitor_thread_ =
-      std::make_unique<std::thread>(&ExecutionManager::MonitorThreadEntrypoint, this);
+  monitor_thread_ = std::make_unique<std::thread>(&ExecutionManager::MonitorThreadEntrypoint, this);
 
   // wait for the monitor thread to be setup
   for (std::size_t i = 0; i < 20; ++i)
@@ -259,7 +256,7 @@ void ExecutionManager::Stop()
 
 ExecutionManagerInterface::block_digest_type ExecutionManager::LastProcessedBlock()
 {
-  // TODO: (EJF) thread saftey
+  // TODO(EJF):  thread saftey
   return last_block_hash_;
 }
 
@@ -271,8 +268,6 @@ bool ExecutionManager::Abort() { return false; }
 
 void ExecutionManager::MonitorThreadEntrypoint()
 {
-  using namespace std::chrono;
-
   enum class MonitorState
   {
     IDLE,
@@ -354,7 +349,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
       if (remaining_executions_ > 0)
       {
         std::unique_lock<std::mutex> lock(wait_lock);
-        monitor_notify_.wait_for(lock, milliseconds{100});
+        monitor_notify_.wait_for(lock, std::chrono::milliseconds{100});
       }
 
       // determine the next state (provided we have comlete

@@ -13,11 +13,10 @@ namespace byte_array {
 class Tokenizer : public std::vector<Token>
 {
 public:
-  typedef ConstByteArray                                          byte_array_type;
-  typedef std::function<int(byte_array_type const &, uint64_t &)> consumer_function_type;
-
-  typedef std::function<int(byte_array_type const &, uint64_t const &, int const &)>
-      indexer_function_type;
+  using byte_array_type        = ConstByteArray;
+  using consumer_function_type = std::function<int(byte_array_type const &, uint64_t &)>;
+  using indexer_function_type =
+      std::function<int(byte_array_type const &, uint64_t const &, int const &)>;
 
   void SetConsumerIndexer(indexer_function_type function) { indexer_ = function; }
 

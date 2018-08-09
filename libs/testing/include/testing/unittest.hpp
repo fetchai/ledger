@@ -7,6 +7,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -24,16 +25,16 @@ enum class UnitTestOutputFormat
 class TestContext : public std::enable_shared_from_this<TestContext>
 {
 public:
-  typedef std::shared_ptr<TestContext>          self_shared_type;
-  typedef std::function<void(self_shared_type)> function_type;
-  std::vector<TestContext *>                    sections;
+  using self_shared_type = std::shared_ptr<TestContext>;
+  using function_type    = std::function<void(self_shared_type)>;
+  std::vector<TestContext *> sections;
 
-  TestContext(std::string const &explanation) : explanation_(explanation)
+  TestContext(std::string explanation) : explanation_(std::move(explanation))
   {
     TestContext::sections.push_back(this);
   }
 
-  virtual ~TestContext() {}
+  virtual ~TestContext() = default;
 
   function_type operator=(function_type fnc)
   {
@@ -131,7 +132,7 @@ public:
   Expression()                        = default;
   Expression(Expression const &other) = default;
   Expression(Expression &&other)      = default;
-  Expression(std::string const &expr) : expression_(expr) {}
+  Expression(std::string expr) : expression_(std::move(expr)) {}
 
   template <typename T>
   Expression(T const &v)
@@ -141,8 +142,8 @@ public:
     expression_ = s.str();
   }
 
-  Expression(std::string const &expr, Expression const &lhs, Expression const &rhs)
-      : expression_(expr), lhs_(new Expression(lhs)), rhs_(new Expression(rhs))
+  Expression(std::string expr, Expression const &lhs, Expression const &rhs)
+    : expression_(std::move(expr)), lhs_(new Expression(lhs)), rhs_(new Expression(rhs))
   {}
 
 #define ADD_OP(OP)                           \
@@ -186,7 +187,7 @@ public:
   }
 };
 
-std::ostream &operator<<(std::ostream &strm, Expression const &obj)
+inline std::ostream &operator<<(std::ostream &strm, Expression const &obj)
 {
   if (obj.left_hand_side() != nullptr) strm << (*obj.left_hand_side());
   if (obj.expression() != "") strm << obj.expression();
@@ -198,11 +199,11 @@ std::ostream &operator<<(std::ostream &strm, Expression const &obj)
 class ProgramInserter
 {
 public:
-  typedef TestContext::self_shared_type            shared_context_type;
-  typedef std::function<void(shared_context_type)> sub_function_type;
-  typedef std::function<void(sub_function_type)>   main_function_type;
+  using shared_context_type = TestContext::self_shared_type;
+  using sub_function_type   = std::function<void(shared_context_type)>;
+  using main_function_type  = std::function<void(sub_function_type)>;
 
-  ProgramInserter(main_function_type fnc) : main_(fnc) {}
+  ProgramInserter(main_function_type fnc) : main_(std::move(fnc)) {}
 
   void operator()()
   {
@@ -225,8 +226,8 @@ private:
 };
 
 namespace details {
-typedef std::shared_ptr<TestContext> shared_context_type;
-std::vector<shared_context_type>     unit_tests;
+using shared_context_type = std::shared_ptr<TestContext>;
+std::vector<shared_context_type> unit_tests;
 template <typename... A>
 shared_context_type NewTest(A... Args)
 {
@@ -235,8 +236,8 @@ shared_context_type NewTest(A... Args)
   return ret;
 }
 
-typedef std::shared_ptr<ProgramInserter> shared_inserter_type;
-std::vector<shared_inserter_type>        inserted_programs;
+using shared_inserter_type = std::shared_ptr<ProgramInserter>;
+std::vector<shared_inserter_type> inserted_programs;
 template <typename... A>
 shared_inserter_type NewNestedProgram(A... Args)
 {
@@ -244,7 +245,7 @@ shared_inserter_type NewNestedProgram(A... Args)
   inserted_programs.push_back(ret);
   return ret;
 }
-ProgramInserter &last_inserter() { return *inserted_programs.back(); }
+inline ProgramInserter &last_inserter() { return *inserted_programs.back(); }
 }  // namespace details
 
 #define SECTION_REF(EXPLANATION)                                            \

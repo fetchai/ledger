@@ -12,50 +12,50 @@ namespace vectorize {
 template <>
 struct VectorInfo<uint8_t, 128>
 {
-  typedef uint8_t naitve_type;
-  typedef __m128i register_type;
+  using naitve_type   = uint8_t;
+  using register_type = __m128i;
 };
 
 template <>
 struct VectorInfo<uint16_t, 128>
 {
-  typedef uint16_t naitve_type;
-  typedef __m128i  register_type;
+  using naitve_type   = uint16_t;
+  using register_type = __m128i;
 };
 
 template <>
 struct VectorInfo<uint32_t, 128>
 {
-  typedef uint32_t naitve_type;
-  typedef __m128i  register_type;
+  using naitve_type   = uint32_t;
+  using register_type = __m128i;
 };
 
 template <>
 struct VectorInfo<uint64_t, 128>
 {
-  typedef uint64_t naitve_type;
-  typedef __m128i  register_type;
+  using naitve_type   = uint64_t;
+  using register_type = __m128i;
 };
 
 template <>
 struct VectorInfo<int, 128>
 {
-  typedef int     naitve_type;
-  typedef __m128i register_type;
+  using naitve_type   = int;
+  using register_type = __m128i;
 };
 
 template <>
 struct VectorInfo<float, 128>
 {
-  typedef float  naitve_type;
-  typedef __m128 register_type;
+  using naitve_type   = float;
+  using register_type = __m128;
 };
 
 template <>
 struct VectorInfo<double, 128>
 {
-  typedef double  naitve_type;
-  typedef __m128d register_type;
+  using naitve_type   = double;
+  using register_type = __m128d;
 };
 }  // namespace vectorize
 }  // namespace fetch

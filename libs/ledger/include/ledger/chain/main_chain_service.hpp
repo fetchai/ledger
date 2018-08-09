@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "network/service/server.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
@@ -20,10 +22,10 @@ namespace chain {
 class MainChainService : public service::ServiceServer<fetch::network::TCPServer>
 {
 public:
-  typedef fetch::chain::MainChain::proof_type            proof_type;
-  typedef fetch::chain::MainChain::block_type            block_type;
-  typedef fetch::chain::MainChain::block_type::body_type body_type;
-  typedef fetch::chain::MainChain::block_hash            block_hash;
+  using proof_type = fetch::chain::MainChain::proof_type;
+  using block_type = fetch::chain::MainChain::block_type;
+  using body_type  = fetch::chain::MainChain::block_type::body_type;
+  using block_hash = fetch::chain::MainChain::block_hash;
 
   using connectivity_details_type = MainChainDetails;
   using client_register_type      = fetch::network::ConnectionRegister<connectivity_details_type>;
@@ -55,7 +57,7 @@ public:
 
   MainChainService(std::string const &db_dir, uint16_t port, fetch::network::NetworkManager tm,
                    bool start_sync = true)
-      : super_type(port, tm)
+    : super_type(port, tm)
   {
 
     fetch::logger.Warn("Establishing mainchain Service on rpc://127.0.0.1:", port);
@@ -72,17 +74,17 @@ public:
     }
 
     // Main chain Identity
-    identity_ = std::make_shared<identity_type>(register_, tm);
-    identity_protocol_.reset(new identity_protocol_type(identity_.get()));
+    identity_          = std::make_shared<identity_type>(register_, tm);
+    identity_protocol_ = std::make_unique<identity_protocol_type>(identity_.get());
     this->Add(IDENTITY, identity_protocol_.get());
 
-    mainchain_.reset(new mainchain_type());
-    mainchain_protocol_.reset(
-      new mainchain_protocol_type(CHAIN, register_, thread_pool_, mainchain_.get()));
+    mainchain_ = std::make_unique<mainchain_type>();
+    mainchain_protocol_ =
+        std::make_unique<mainchain_protocol_type>(CHAIN, register_, thread_pool_, mainchain_.get());
     this->Add(CHAIN, mainchain_protocol_.get());
 
-    controller_.reset(new controller_type(IDENTITY, identity_, register_, tm));
-    controller_protocol_.reset(new controller_protocol_type(controller_.get()));
+    controller_          = std::make_unique<controller_type>(IDENTITY, identity_, register_, tm);
+    controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     this->Add(CONTROLLER, controller_protocol_.get());
 
     thread_pool_->Start();

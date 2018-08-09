@@ -1,4 +1,5 @@
 #pragma once
+
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/stream_hasher.hpp"
 
@@ -11,7 +12,7 @@ namespace crypto {
 class SHA256 : public StreamHasher
 {
 public:
-  typedef typename StreamHasher::byte_array_type byte_array_type;
+  using byte_array_type = typename StreamHasher::byte_array_type;
 
   void Reset() override
   {

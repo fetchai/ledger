@@ -23,11 +23,11 @@ public:
     // TODO: (`HUT`) : fix after this parsing works
     if (jsonDoc["TCPPort"].is_int())
     {
-      TCPPort_ = uint16_t(jsonDoc["TCPPort"].as_int());
+      TCPPort_ = jsonDoc["TCPPort"].As<uint16_t>();
     }
     else if (jsonDoc["TCPPort"].is_float())
     {
-      float value = static_cast<float>(jsonDoc["TCPPort"].as_double());
+      float value = jsonDoc["TCPPort"].As<float>();
       TCPPort_    = uint16_t(value);
     }
     else
