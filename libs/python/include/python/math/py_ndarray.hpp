@@ -14,74 +14,72 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
   namespace py = pybind11;
   py::class_<NDArray<T>, fetch::math::ShapeLessArray<T>>(module, custom_name.c_str())
       .def(py::init<std::size_t const &>())
-      .def("copy", [](NDArray<T> &a) { return a.Copy(); })
-      .def("copy",
+      .def(py::init<std::vector<std::size_t> const &>())
+      .def("Copy", [](NDArray<T> &a) { return a.Copy(); })
+      .def("Copy",
            [](NDArray<T> &a, NDArray<T> &b) {
+             assert(a.size() = b.size());
+             assert(a.shape() = b.shape());
              a.Copy(b);
              return a;
            })
-      .def("flatten",
+      .def("Flatten",
            [](NDArray<T> &a) {
              a.Flatten();
              return a;
            })
-      .def("__eq__",
-           [](NDArray<T> &s, NDArray<T> const &other) {
-             if (other.size() != s.size()) throw py::index_error();
-             s.Copy(other);
-           })
       .def("__add__",
            [](NDArray<T> const &b, NDArray<T> const &c) {
-             NDArray<T> a;
+             NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
              a.Add(b, c);
              return a;
            })
       .def("__mul__",
            [](NDArray<T> const &b, NDArray<T> const &c) {
-             NDArray<T> a;
+             NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
              a.Multiply(b, c);
              return a;
            })
       .def("__sub__",
            [](NDArray<T> const &b, NDArray<T> const &c) {
-             NDArray<T> a;
+             NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
              a.Subtract(b, c);
              return a;
            })
       .def("__div__",
            [](NDArray<T> const &b, NDArray<T> const &c) {
-             NDArray<T> a;
+             NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
              a.Divide(b, c);
              return a;
            })
       .def("__add__",
            [](NDArray<T> const &b, T const &c) {
-             NDArray<T> a;
+             NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
              a.Add(b, c);
              return a;
            })
       .def("__mul__",
            [](NDArray<T> const &b, T const &c) {
-             NDArray<T> a;
+             NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
              a.Multiply(b, c);
              return a;
            })
       .def("__sub__",
            [](NDArray<T> const &b, T const &c) {
-             NDArray<T> a;
+             NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
              a.Subtract(b, c);
              return a;
            })
       .def("__div__",
            [](NDArray<T> const &b, T const &c) {
-             NDArray<T> a;
+             NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
              a.Divide(b, c);
              return a;
@@ -126,21 +124,46 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.InlineDivide(c);
              return a;
            })
-      .def("reshape",
+      .def("__getitem__", [](NDArray<T> const &s, std::vector<std::tuple<std::size_t, std::size_t>> const &idxs)
+      {
+        NDArrayView arr_view;
+        for (auto item : idxs)
+        {
+          arr_view.from.push_back(std::get<0>(item));
+          arr_view.to.push_back(std::get<1>(item));
+          arr_view.step.push_back(1);
+        }
+        std::cout << "HI THERE!" << std::endl;
+        std::cout << arr_view.from[0] << std::endl;
+        std::cout << s(arr_view)[0] << std::endl;
+        std::cout << s(arr_view)[1] << std::endl;
+        std::cout << s(arr_view)[2] << std::endl;
+        std::cout << s(arr_view)[3] << std::endl;
+
+        return s(arr_view);
+
+      })
+//      {
+//        NDArray<T> a(s.size());
+//        return s.template Get<NDArray<T>>(a, args...);
+//      })
+      //      .def("__getitem__",
+      //        [](const NDArray<T> &s, Args ... args)
+      //        {
+      //          NDArray<T> a(s.size());
+      //          return s.template Get<NDArray<T>>(a, args...);
+      //        })
+      //      .def("__setitem__",
+      //           [](NDArray<T> &s, std::size_t i, T const &v) {
+      //             if (i >= s.size()) throw py::index_error();
+      //             s[i] = v;
+      //           })
+      .def("Reshape",
            [](NDArray<T> &a, std::vector<std::size_t> b) {
-             a.CanReshape(b);
              a.Reshape(b);
              return;
            })
-      .def("Max", [](NDArray<T> &a) { return a.Max(); })
-      //      .def("min",
-      //           [](NDArray<T> &a) { return a.Min(); })
-      //      .def("reduce_sum",
-      //           [](NDArray<T> &a) { return a.Sum(); })
-      //      .def("reduce_product",
-      //           [](NDArray<T> &a) { return a.Product(); })
-      .def("shape", [](NDArray<T> &a) { return a.shape(); });
-
+      .def("Shape", [](NDArray<T> &a) { return a.shape(); });
   //             .def("Relu",
   //                  [](NDArray<T> &a, NDArray<T> &b)
   //                  {

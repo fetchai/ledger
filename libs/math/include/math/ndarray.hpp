@@ -3,6 +3,7 @@
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/array.hpp"
 
+#include <numeric>
 #include <utility>
 #include <vector>
 
@@ -25,9 +26,27 @@ public:
    */
   NDArray(std::size_t const &n = 0) : super_type(n)
   {
-    size_ = n;
-    shape_.push_back(n);
-    for (std::size_t idx = 0; idx < size_; ++idx) { this->operator[](idx) = 0;}
+    this->LazyReshape({n});
+    for (std::size_t idx = 0; idx < this->size(); ++idx)
+    {
+      this->operator[](idx) = 0;
+    }
+  }
+
+  /**
+   * Constructor builds an empty NDArray pre-initialiing with zeros from a vector of dimension
+   * lengths
+   * @param shape   vector of lengths for each dimension
+   */
+  NDArray(std::vector<std::size_t> const &dims = {0})
+    : super_type(std::accumulate(std::begin(dims), std::end(dims), std::size_t(1),
+                                 std::multiplies<std::size_t>()))
+  {
+    this->LazyReshape(dims);
+    for (std::size_t idx = 0; idx < this->size(); ++idx)
+    {
+      this->operator[](idx) = 0;
+    }
   }
 
   /**
@@ -35,12 +54,6 @@ public:
    * @param arr shapelessarray data set by defualt
    */
   NDArray(super_type const &arr) : super_type(arr) {}
-
-  /**
-   * Constructor builds an empty NDArray pre-initialiing with zeros from a vector of dimension lengths
-   * @param shape   vector of lengths for each dimension
-   */
-  NDArray(std::vector<std::size_t> const &shape) : super_type(0) {}
 
   NDArray &operator=(NDArray const &other) = default;
   //  NDArray &operator=(NDArray &&other) = default;
@@ -115,20 +128,42 @@ public:
     return this->operator[](index);
   }
 
-  self_type operator()(NDArrayView array_view)
+  self_type operator()(NDArrayView array_view) const
   {
     std::vector<std::size_t> new_shape;
+
+    // instantiate new array of the right shape!
     for (std::size_t cur_dim = 0; cur_dim < array_view.from.size(); ++cur_dim)
     {
       std::size_t cur_from = array_view.from[cur_dim];
-      std::size_t cur_to = array_view.to[cur_dim];
+      std::size_t cur_to   = array_view.to[cur_dim];
       std::size_t cur_step = array_view.step[cur_dim];
-      std::size_t cur_len = (cur_to - cur_from) / cur_step;
+      std::size_t cur_len  = (cur_to - cur_from) / cur_step;
+      new_shape.push_back(cur_len);
+    }
+    self_type output = self_type(new_shape);
+
+    // populate new array with the correct data
+    for (std::size_t cur_dim = 0; cur_dim < array_view.from.size(); ++cur_dim)
+    {
+      for (std::size_t cur_idx = 0; cur_idx < new_shape[cur_dim].size(); ++cur_idx)
+      {
+        cur_idx = ComputeIndex()
+
+        output[]
+        this->operator[]()
+
+      }
+
+      std::size_t cur_from = array_view.from[cur_dim];
+      std::size_t cur_to   = array_view.to[cur_dim];
+      std::size_t cur_step = array_view.step[cur_dim];
+      std::size_t cur_len  = (cur_to - cur_from) / cur_step;
       new_shape.push_back(cur_len);
     }
 
-    self_type copy = self_type(new_shape);
-    return copy;
+
+    return output;
   }
   /**
    * A getter for accessing data in the array
