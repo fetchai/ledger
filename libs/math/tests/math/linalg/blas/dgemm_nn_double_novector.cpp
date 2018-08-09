@@ -4,6 +4,7 @@
 #include"math/linalg/matrix.hpp"
 #include"math/linalg/blas/base.hpp"
 #include"math/linalg/blas/dgemm_nn_double_novector.hpp"
+#include"math/linalg/blas/dgemm_nn_double_novector_threaded.hpp"
 
 
 using namespace fetch;
@@ -11,8 +12,8 @@ using namespace fetch::math::linalg;
 
 TEST(blas_DGEMM, blas_dgemm_nn_double_novector1) {
 
-	Blas< double, Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
-	// Compuing _C <= _alpha * _A * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
+	// Compuing _C <= _C = _alpha * _A * _B + _beta * _C  
 
   double alpha = 1, beta = 0;
 
@@ -46,8 +47,8 @@ TEST(blas_DGEMM, blas_dgemm_nn_double_novector1) {
 
 TEST(blas_DGEMM, blas_dgemm_nn_double_novector2) {
 
-	Blas< double, Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
-	// Compuing _C <= _alpha * _A * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
+	// Compuing _C <= _C = _alpha * _A * _B + _beta * _C  
 
   double alpha = 0, beta = 1;
 
@@ -81,8 +82,8 @@ TEST(blas_DGEMM, blas_dgemm_nn_double_novector2) {
 
 TEST(blas_DGEMM, blas_dgemm_nn_double_novector3) {
 
-	Blas< double, Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
-	// Compuing _C <= _alpha * _A * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
+	// Compuing _C <= _C = _alpha * _A * _B + _beta * _C  
 
   double alpha = 1, beta = 1;
 
@@ -116,10 +117,10 @@ TEST(blas_DGEMM, blas_dgemm_nn_double_novector3) {
 
 TEST(blas_DGEMM, blas_dgemm_nn_double_novector4) {
 
-	Blas< double, Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
-	// Compuing _C <= _alpha * _A * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
+	// Compuing _C <= _C = _alpha * _A * _B + _beta * _C  
 
-  double alpha = 0.9722947695251661, beta = 0.12671529408385152;
+  double alpha = 0.7475350623987769, beta = 0.8078481391935303;
 
   Matrix< double > A = Matrix< double >(R"(
 	0.3567533266935893 0.28093450968738076;
@@ -139,9 +140,9 @@ TEST(blas_DGEMM, blas_dgemm_nn_double_novector4) {
 	)");
 
   Matrix< double > R = Matrix< double >(R"(
-	0.43620560356016164 0.5883440541091586 0.27138987719487373;
- 0.5669210467541435 0.5338999244195752 0.31107634611672785;
- 0.8491257843796315 0.7033679680053374 0.214283164987302
+	0.8532753300053084 1.0002696365090458 0.2612574260642469;
+ 0.6905321893918799 0.4927976576866203 0.852336790585891;
+ 1.0956448296835568 0.7758526896332598 0.2099020097688406
 	)");
   
 	dgemm_nn_double_novector(alpha, A, B, beta, C);
@@ -151,8 +152,8 @@ TEST(blas_DGEMM, blas_dgemm_nn_double_novector4) {
 
 TEST(blas_DGEMM, blas_dgemm_nn_double_novector5) {
 
-	Blas< double, Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
-	// Compuing _C <= _alpha * _A * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
+	// Compuing _C <= _C = _alpha * _A * _B + _beta * _C  
 
   double alpha = 3.2, beta = 0;
 
@@ -188,8 +189,8 @@ TEST(blas_DGEMM, blas_dgemm_nn_double_novector5) {
 
 TEST(blas_DGEMM, blas_dgemm_nn_double_novector6) {
 
-	Blas< double, Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
-	// Compuing _C <= _alpha * _A * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
+	// Compuing _C <= _C = _alpha * _A * _B + _beta * _C  
 
   double alpha = 0, beta = 1.9;
 
@@ -229,10 +230,10 @@ TEST(blas_DGEMM, blas_dgemm_nn_double_novector6) {
 
 TEST(blas_DGEMM, blas_dgemm_nn_double_novector7) {
 
-	Blas< double, Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
-	// Compuing _C <= _alpha * _A * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_novector;
+	// Compuing _C <= _C = _alpha * _A * _B + _beta * _C  
 
-  double alpha = -2.957912749266721, beta = -2.4810142866857587;
+  double alpha = -2.0067636395469957, beta = 3.773503636155901;
 
   Matrix< double > A = Matrix< double >(R"(
 	0.489452760277563 0.9856504541106007;
@@ -254,10 +255,10 @@ TEST(blas_DGEMM, blas_dgemm_nn_double_novector7) {
 	)");
 
   Matrix< double > R = Matrix< double >(R"(
-	-3.2320348508573757 -1.8117498364654403 -2.5501927596451917 -3.0852370600255012 -5.266988461653881 -1.6127287001683233 -3.9218705133864473 -3.2140870581396097 -4.963937810496268;
- -3.1138660626098877 -1.086611127279398 -1.6326939670136948 -2.740951033096045 -4.114688420535119 -2.147066438894416 -2.348346939604794 -1.6644636843311544 -4.086503016594755;
- -4.126472235370782 -3.639752362654267 -3.5018338265807687 -1.955501274446792 -2.5440246971935863 -1.2462219831625214 -3.135183314548281 -1.868258153799101 -2.012422147765627;
- -2.350841598358687 -3.0288260409664733 -1.7237076463091254 -0.8398493292275073 -3.862522691513467 -2.59725034548722 -2.770936874696611 -1.064962975483735 -4.058751315384398
+	-1.4423254044409084 0.6319419094337781 -1.1109571459862164 2.952649393330208 1.2140649553978045 0.3133772285937726 0.9405983464331973 2.2787910042366457 -0.338153690332367;
+ 0.7775868192293662 0.5825209394792672 -0.5996476105531929 3.036287483132755 2.1217643899199983 1.9980040320545267 0.25678051891150666 0.7763018894444605 1.188893996011396;
+ 2.0957200637200692 2.371232580330298 1.8797820855336098 2.176698874926255 -1.2668375153314029 0.03647704190225187 2.7761283339431095 2.0416146472111016 -1.3151201123788825;
+ -1.0412009691800266 1.5656698597023992 -1.1418110008433051 0.30769800918207013 0.37380064861306406 2.013402692582556 1.6776586136434943 0.5012624728560291 1.1325475538246428
 	)");
   
 	dgemm_nn_double_novector(alpha, A, B, beta, C);

@@ -11,8 +11,8 @@ using namespace fetch::byte_array;
 int main()
 {
   // Client setup
-  fetch::network::NetworkManager                         tm(2);
-  typedef fetch::network::TCPClient                      client_type;
+  fetch::network::NetworkManager tm(2);
+  using client_type = fetch::network::TCPClient;
   fetch::network::ConnectionRegister<fetch::NodeDetails> creg;
 
   tm.Start();

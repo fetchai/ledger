@@ -28,14 +28,14 @@ template <typename T, typename C = memory::SharedArray<T>, bool PAD_HEIGHT = tru
 class RectangularArray : public math::ShapeLessArray<T, C>
 {
 public:
-  typedef math::ShapeLessArray<T, C>          super_type;
-  typedef typename super_type::type           type;
-  typedef typename super_type::container_type container_type;
-  typedef typename super_type::size_type      size_type;
+  using super_type     = math::ShapeLessArray<T, C>;
+  using type           = typename super_type::type;
+  using container_type = typename super_type::container_type;
+  using size_type      = typename super_type::size_type;
 
-  typedef RectangularArray<T, C>                             self_type;
-  typedef typename super_type::vector_register_type          vector_register_type;
-  typedef typename super_type::vector_register_iterator_type vector_register_iterator_type;
+  using self_type                     = RectangularArray<T, C>;
+  using vector_register_type          = typename super_type::vector_register_type;
+  using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
 
   /* Contructs an empty rectangular array. */
   RectangularArray() : super_type() {}

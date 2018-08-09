@@ -27,7 +27,7 @@ protected:
   void SetUp() override
   {
     storage_.reset(new underlying_storage_type);
-    executor_.reset(new underlying_executor_type(storage_));
+    executor_ = std::make_unique<underlying_executor_type>(storage_);
   }
 
   fetch::chain::Transaction CreateDummyTransaction()

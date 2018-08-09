@@ -17,6 +17,7 @@
 #include "network/tcp/tcp_client.hpp"
 
 #include <map>
+#include <utility>
 
 namespace fetch {
 namespace service {
@@ -28,10 +29,8 @@ public:
   using network_manager_type = fetch::network::NetworkManager;
 
   ServiceClient(std::shared_ptr<network::AbstractConnection> connection,
-                network_manager_type                         network_manager)
-      : connection_(connection)
-      , network_manager_(network_manager)
-      , message_mutex_(__LINE__, __FILE__)
+                network_manager_type const &                 network_manager)
+    : connection_(connection), network_manager_(network_manager), message_mutex_(__LINE__, __FILE__)
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -60,7 +59,7 @@ public:
   }
 
   ServiceClient(network::TCPClient &connection, network_manager_type thread_manager)
-      : ServiceClient(connection.connection_pointer().lock(), thread_manager)
+    : ServiceClient(connection.connection_pointer().lock(), thread_manager)
   {}
 
   ~ServiceClient()

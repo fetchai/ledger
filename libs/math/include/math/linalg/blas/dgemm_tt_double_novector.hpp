@@ -13,84 +13,68 @@ namespace linalg
 
 
 template<>
-class Blas< double, Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL>
+class Blas< double, Computes( _C <= _C = _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL>
 {
 public:
   using vector_register_type = typename Matrix< double >::vector_register_type;
 
   void operator()(double const &alpha, Matrix< double > const &a, Matrix< double > const &b, double const &beta, Matrix< double > &c ) 
   {
-    constexpr double one = 1.0;
-    constexpr double zero = 0.0;
-    double temp;
     std::size_t i;
     std::size_t j;
-    std::size_t l;
-    std::size_t ncola;
-    std::size_t nrowa;
-    std::size_t nrowb;
-
-    nrowa = a.height();
-    ncola = c.height();
-    nrowb = c.width();
-    if( (c.height() == 0) || ((c.width() == 0) || (((alpha == zero) || (a.height() == 0)) && (beta == one))) ) 
+    if( (c.height() == 0) || ((c.width() == 0) || (((alpha == 0.0) || (a.height() == 0)) && (beta == 1.0))) ) 
     {
       return;
-    } // endif
+    } 
     
-    if( alpha == zero ) 
+    if( alpha == 0.0 ) 
     {
-      if( beta == zero ) 
+      if( beta == 0.0 ) 
       {
-        
         for(j = 0 ; j < c.width(); ++j )
         {
-          
           for(i = 0 ; i < c.height(); ++i )
           {
-            c(i, j) = zero;
+            c(i, j) = 0.0;
           }
         }
       }
       else 
       {
-        
         for(j = 0 ; j < c.width(); ++j )
         {
-          
           for(i = 0 ; i < c.height(); ++i )
           {
             c(i, j) = beta * c(i, j);
           }
         }
-      } // endif
+      } 
       
       return;
-    } // endif
+    } 
     
     
     for(j = 0 ; j < c.width(); ++j )
-    {  
-      for(i = 0 ; i < c.height(); ++i )
+    {  for(i = 0 ; i < c.height(); ++i )
       {
-        temp = zero;
-        
+        double temp;
+        std::size_t l;
+        temp = 0.0;
         for(l = 0 ; l < a.height(); ++l )
         {
           temp = temp + a(l, i) * b(j, l);
         }
         
-        if( beta == zero ) 
+        if( beta == 0.0 ) 
         {
           c(i, j) = alpha * temp;
         }
         else 
         {
           c(i, j) = alpha * temp + beta * c(i, j);
-        } // endif
+        }
       }  
       }
-    
     return;
     
   }

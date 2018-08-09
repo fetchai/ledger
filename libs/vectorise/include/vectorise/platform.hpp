@@ -33,7 +33,7 @@ struct VectorRegisterSize
   {                                   \
     enum                              \
     {                                 \
-      value = size                    \
+      value = (size)                  \
     };                                \
   }
 

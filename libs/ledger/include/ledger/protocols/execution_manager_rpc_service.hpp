@@ -20,8 +20,8 @@ public:
   ExecutionManagerRpcService(uint16_t port, network_manager_type const &network_manager,
                              std::size_t num_executors, storage_unit_type storage,
                              executor_factory_type const &factory)
-      : ServiceServer(port, network_manager)
-      , manager_(new ExecutionManager(num_executors, storage, factory))
+    : ServiceServer(port, network_manager)
+    , manager_(new ExecutionManager(num_executors, storage, factory))
   {
 
     this->Add(fetch::protocols::FetchProtocols::EXECUTION_MANAGER, &protocol_);

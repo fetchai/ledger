@@ -49,11 +49,11 @@ private:
   };
 
 public:
-  typedef D                     header_extra_type;
-  typedef T                     type;
-  typedef std::function<void()> event_handler_type;
-  event_handler_type            on_file_loaded_;
-  event_handler_type            on_before_flush_;
+  using header_extra_type  = D;
+  using type               = T;
+  using event_handler_type = std::function<void()>;
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
 
   void ClearEventHandlers()
   {
@@ -136,7 +136,7 @@ public:
     SignalFileLoaded();
   }
 
-  // TODO: Protectected functions
+  // TODO: Protected functions
   void Get(std::size_t const &i, type &object) const
   {
     assert(filename_ != "");

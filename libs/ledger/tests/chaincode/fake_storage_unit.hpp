@@ -25,12 +25,12 @@ public:
   using mutex_type      = std::mutex;
   using lock_guard_type = std::lock_guard<mutex_type>;
 
-  document_type GetOrCreate(fetch::byte_array::ConstByteArray const &key) override
+  Document GetOrCreate(ResourceAddress const &key) override
   {
     lock_guard_type lock(mutex_);
-    document_type   doc;
+    Document        doc;
 
-    auto it = state_.find(key);
+    auto it = state_.find(key.id());
     if (it != state_.end())
     {
       doc.document = it->second;
@@ -43,12 +43,12 @@ public:
     return doc;
   }
 
-  document_type Get(fetch::byte_array::ConstByteArray const &key) override
+  Document Get(ResourceAddress const &key) override
   {
     lock_guard_type lock(mutex_);
-    document_type   doc;
+    Document        doc;
 
-    auto it = state_.find(key);
+    auto it = state_.find(key.id());
     if (it != state_.end())
     {
       doc.document = it->second;
@@ -61,37 +61,36 @@ public:
     return doc;
   }
 
-  void Set(fetch::byte_array::ConstByteArray const &key,
-           fetch::byte_array::ConstByteArray const &value) override
+  void Set(ResourceAddress const &key, StateValue const &value) override
   {
     lock_guard_type lock(mutex_);
-    state_[key] = value;
+    state_[key.id()] = value;
   }
 
-  bool Lock(fetch::byte_array::ConstByteArray const &key) override
+  bool Lock(ResourceAddress const &key) override
   {
     lock_guard_type lock(mutex_);
     bool            success = false;
 
-    bool const already_locked = locks_.find(key) != locks_.end();
+    bool const already_locked = locks_.find(key.id()) != locks_.end();
     if (!already_locked)
     {
-      locks_.insert(key);
+      locks_.insert(key.id());
       success = true;
     }
 
     return success;
   }
 
-  bool Unlock(fetch::byte_array::ConstByteArray const &key) override
+  bool Unlock(ResourceAddress const &key) override
   {
     lock_guard_type lock(mutex_);
     bool            success = false;
 
-    bool const already_locked = locks_.find(key) != locks_.end();
+    bool const already_locked = locks_.find(key.id()) != locks_.end();
     if (already_locked)
     {
-      locks_.erase(key);
+      locks_.erase(key.id());
       success = true;
     }
 

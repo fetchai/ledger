@@ -20,6 +20,7 @@
 #include "python/math/py_bignumber.hpp"
 #include "python/math/py_exp.hpp"
 #include "python/math/py_log.hpp"
+#include "python/math/py_ndarray.hpp"
 #include "python/math/spline/py_linear.hpp"
 
 #include "python/math/correlation/py_eisen.hpp"
@@ -41,7 +42,6 @@
 #include "python/byte_array/tokenizer/py_token.hpp"
 #include "python/byte_array/tokenizer/py_tokenizer.hpp"
 
-#include "python/random/py_bitgenerator.hpp"
 #include "python/random/py_bitmask.hpp"
 #include "python/random/py_lcg.hpp"
 #include "python/random/py_lfg.hpp"
@@ -164,6 +164,8 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::linalg::BuildMatrix<float>("MatrixFloat", ns_fetch_math_linalg);
   fetch::math::linalg::BuildMatrix<double>("MatrixDouble", ns_fetch_math_linalg);
 
+  fetch::math::BuildNDArray<double>("NDArrayDouble", ns_fetch_math);
+
   //  fetch::math::BuildSpline(ns_fetch_math_spline);
   //  fetch::image::colors::BuildAbstractColor<uint32_t, 8,
   //  3>("ColorRGB8",ns_fetch_image_colors);
@@ -206,17 +208,13 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::statistics::BuildStandardDeviationStatistics("StandardDeviation",
                                                             ns_fetch_math_statistics);
 
-  fetch::byte_array::BuildConstByteArray(ns_fetch_byte_array);  
+  fetch::byte_array::BuildConstByteArray(ns_fetch_byte_array);
   fetch::byte_array::BuildByteArray(ns_fetch_byte_array);
-
 
   fetch::random::BuildLaggedFibonacciGenerator<418, 1279>("LaggedFibonacciGenerator",
                                                           ns_fetch_random);
   fetch::random::BuildLinearCongruentialGenerator(ns_fetch_random);
   fetch::random::BuildBitMask<uint64_t, 12, true>("BitMask", ns_fetch_random);
-
-  fetch::random::BuildBitGenerator<fetch::random::LaggedFibonacciGenerator<>, 12, true>(
-      "BitGenerator", ns_fetch_random);
 
   // py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
   // fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);

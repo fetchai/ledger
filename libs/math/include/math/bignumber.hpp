@@ -19,7 +19,7 @@ namespace math {
 class BigUnsigned : public byte_array::ConstByteArray
 {
 public:
-  typedef byte_array::ConstByteArray super_type;
+  using super_type = byte_array::ConstByteArray;
 
   BigUnsigned()
   {

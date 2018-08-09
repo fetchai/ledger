@@ -21,10 +21,11 @@ struct Prototype
   
   enum {
     IS_OP = 1ull << (OpSize - 1),
-    EQ   =  1ull | IS_OP,
+    RET   =  1ull | IS_OP,
     MULT =  5ull | IS_OP,
     ADD  =  3ull | IS_OP,
-    SUB  =  4ull | IS_OP,
+    SUB  =  4ull | IS_OP, 
+    EQ   =  5ull | IS_OP,   
 
     TRANSPOSE = 6ull | IS_OP
   };
@@ -57,10 +58,16 @@ struct Prototype
   }
 
   template< typename O >
-  two_op_return_type< O, EQ >
+  two_op_return_type< O, RET >
   constexpr operator<=(O const &other) const {
-    return two_op_return_type< O, EQ >();
+    return two_op_return_type< O, RET >();
   }
+
+  template< typename O >
+  two_op_return_type< O, EQ >
+  constexpr operator=(O const &other) const {
+    return two_op_return_type< O, EQ >();
+  }  
 };
 
 Prototype<4, 0> const _A;
@@ -106,8 +113,8 @@ std::ostream& operator<<(std::ostream& os, Prototype<P, S> const &prototype)
     case Prototype<P,S>::ADD:
       os << "+ ";
       break;
-    case Prototype<P,S>::EQ:
-      os << "= ";
+    case Prototype<P,S>::RET:
+      os << "<= ";
       break;      
     case Prototype<P,S>::TRANSPOSE:
       os << "TRANS ";

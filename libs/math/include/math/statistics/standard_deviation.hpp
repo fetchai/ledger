@@ -13,7 +13,7 @@ namespace statistics {
 template <typename A>
 inline typename A::type StandardDeviation(A const &a)
 {
-  typedef typename A::type type;
+  using type = typename A::type;
 
   type m = Variance(a);
   return std::sqrt(m);

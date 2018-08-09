@@ -5,6 +5,7 @@
 
 #include <exception>
 #include <sstream>
+#include <utility>
 namespace fetch {
 namespace json {
 
@@ -28,7 +29,7 @@ public:
 class JSONParseException : public std::exception
 {
 public:
-  JSONParseException(std::string const &err) : error_(err) {}
+  JSONParseException(std::string err) : error_(std::move(err)) {}
   virtual ~JSONParseException() {}
   virtual char const *what() const throw() { return error_.c_str(); }
 

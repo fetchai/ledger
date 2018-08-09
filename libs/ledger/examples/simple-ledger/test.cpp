@@ -18,7 +18,7 @@ using namespace fetch::protocols;
 using namespace fetch::commandline;
 using namespace fetch::byte_array;
 
-typedef typename ShardManager::transaction_type tx_type;
+using tx_type = typename ShardManager::transaction_type;
 
 std::vector<std::string> words = {
     "squeak",     "fork",        "governor",  "peace",   "courageous", "support",   "tight",

@@ -4,6 +4,7 @@
 #include"math/linalg/matrix.hpp"
 #include"math/linalg/blas/base.hpp"
 #include"math/linalg/blas/dgemm_tt_double_novector.hpp"
+#include"math/linalg/blas/dgemm_tt_double_novector_threaded.hpp"
 
 
 using namespace fetch;
@@ -11,8 +12,8 @@ using namespace fetch::math::linalg;
 
 TEST(blas_DGEMM, blas_dgemm_tt_double_novector1) {
 
-	Blas< double, Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_tt_double_novector;
-	// Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_tt_double_novector;
+	// Compuing _C <= _C = _alpha * T(_A) * T(_B) + _beta * _C  
 
   double alpha = 1, beta = 0;
 
@@ -46,8 +47,8 @@ TEST(blas_DGEMM, blas_dgemm_tt_double_novector1) {
 
 TEST(blas_DGEMM, blas_dgemm_tt_double_novector2) {
 
-	Blas< double, Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_tt_double_novector;
-	// Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_tt_double_novector;
+	// Compuing _C <= _C = _alpha * T(_A) * T(_B) + _beta * _C  
 
   double alpha = 0, beta = 1;
 
@@ -81,8 +82,8 @@ TEST(blas_DGEMM, blas_dgemm_tt_double_novector2) {
 
 TEST(blas_DGEMM, blas_dgemm_tt_double_novector3) {
 
-	Blas< double, Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_tt_double_novector;
-	// Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_tt_double_novector;
+	// Compuing _C <= _C = _alpha * T(_A) * T(_B) + _beta * _C  
 
   double alpha = 1, beta = 1;
 
@@ -116,10 +117,10 @@ TEST(blas_DGEMM, blas_dgemm_tt_double_novector3) {
 
 TEST(blas_DGEMM, blas_dgemm_tt_double_novector4) {
 
-	Blas< double, Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_tt_double_novector;
-	// Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * T(_A) * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL> dgemm_tt_double_novector;
+	// Compuing _C <= _C = _alpha * T(_A) * T(_B) + _beta * _C  
 
-  double alpha = 0.9983232314070672, beta = 0.49663700665456645;
+  double alpha = 0.38480550951520776, beta = 0.30380875873727786;
 
   Matrix< double > A = Matrix< double >(R"(
 	0.3567533266935893 0.28093450968738076 0.5426960831582485;
@@ -139,9 +140,9 @@ TEST(blas_DGEMM, blas_dgemm_tt_double_novector4) {
 	)");
 
   Matrix< double > R = Matrix< double >(R"(
-	0.8221823030733052 0.45459190168275543 0.42665038331131083;
- 1.0732667358642618 0.1176997458981126 1.2234442595703445;
- 0.9017093586029794 0.2724085872488804 0.5259794117523536
+	0.3988368509706529 0.2618979594159305 0.17277424078105613;
+ 0.4539766827478948 0.05838884447115912 0.568573622948902;
+ 0.4176112105677654 0.14218641512117347 0.20988235455330154
 	)");
   
 	dgemm_tt_double_novector(alpha, A, B, beta, C);

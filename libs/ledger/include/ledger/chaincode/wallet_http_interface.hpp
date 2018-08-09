@@ -28,8 +28,8 @@ public:
     PARSE_FAILURE
   };
 
-  WalletHttpInterface(StateInterface &state, TransactionProcessor &processor)
-      : state_{state}, processor_{processor}
+  WalletHttpInterface(StorageInterface &state, TransactionProcessor &processor)
+    : state_{state}, processor_{processor}
   {
 
     // register all the routes
@@ -209,7 +209,7 @@ private:
   }
 
   TokenContract         contract_;
-  StateInterface &      state_;
+  StorageInterface &    state_;
   TransactionProcessor &processor_;
 };
 

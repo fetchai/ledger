@@ -3,6 +3,7 @@
 #include "core/logger.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "storage/resource_mapper.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -20,7 +21,7 @@ public:
     using timepoint_type = clock_type::time_point;
 
     HistoryElement(tx_digest_type const &h, std::size_t s, lane_set_type l)
-        : hash(h), slice(s), lanes(std::move(l))
+      : hash(h), slice(s), lanes(std::move(l))
     {}
     HistoryElement(HistoryElement const &) = default;
 
@@ -31,7 +32,7 @@ public:
   };
 
   using history_cache_type = std::vector<HistoryElement>;
-  using state_type         = fetch::ledger::StateInterface;
+  using storage_type       = fetch::ledger::StorageInterface;
 
   Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) override
   {
@@ -40,7 +41,7 @@ public:
     // if we have a state then make some changes to it
     if (state_)
     {
-      state_->Set(hash, "executed");
+      state_->Set(fetch::storage::ResourceAddress{hash}, "executed");
     }
 
     return Status::SUCCESS;
@@ -54,11 +55,11 @@ public:
     history.insert(history.end(), history_.begin(), history_.end());
   }
 
-  void SetStateInterface(state_type &state) { state_ = &state; }
+  void SetStorageInterface(storage_type &state) { state_ = &state; }
 
-  void ClearStateInterface() { state_ = nullptr; }
+  void ClearStorageInterface() { state_ = nullptr; }
 
 private:
-  state_type *       state_ = nullptr;
+  storage_type *     state_ = nullptr;
   history_cache_type history_;
 };

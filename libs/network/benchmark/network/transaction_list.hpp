@@ -16,7 +16,7 @@ template <typename FirstT, typename SecondT>
 class TransactionList
 {
 
-  typedef crypto::CallableFNV hasher_type;
+  using hasher_type = crypto::CallableFNV;
 
 public:
   TransactionList() { validArray_.fill(0); }

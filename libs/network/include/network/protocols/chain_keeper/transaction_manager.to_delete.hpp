@@ -16,19 +16,19 @@ namespace protocols {
 class TransactionManager
 {
 public:
-  typedef crypto::CallableFNV hasher_type;
+  using hasher_type = crypto::CallableFNV;
 
   // Transaction defs
-  typedef chain::TransactionSummary              transaction_summary_type;
-  typedef chain::Transaction                     transaction_type;
-  typedef std::shared_ptr<transaction_type>      shared_transaction_type;
-  typedef typename transaction_type::digest_type tx_digest_type;
+  using transaction_summary_type = chain::TransactionSummary;
+  using transaction_type         = chain::Transaction;
+  using shared_transaction_type  = std::shared_ptr<transaction_type>;
+  using tx_digest_type           = typename transaction_type::digest_type;
 
-  typedef fetch::chain::consensus::ProofOfWork                        proof_type;
-  typedef fetch::chain::BlockBody                                     block_body_type;
-  typedef typename proof_type::header_type                            block_header_type;
-  typedef fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256> block_type;
-  typedef std::shared_ptr<block_type>                                 shared_block_type;
+  using proof_type        = fetch::chain::consensus::ProofOfWork;
+  using block_body_type   = fetch::chain::BlockBody;
+  using block_header_type = typename proof_type::header_type;
+  using block_type        = fetch::chain::BasicBlock<proof_type, fetch::crypto::SHA256>;
+  using shared_block_type = std::shared_ptr<block_type>;
 
   TransactionManager() { group_ = 0; }
 

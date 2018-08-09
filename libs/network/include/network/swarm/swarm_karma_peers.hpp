@@ -3,6 +3,7 @@
 #include "swarm_karma_peer.hpp"
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -11,11 +12,11 @@ namespace swarm {
 class SwarmKarmaPeers
 {
 public:
-  typedef std::vector<SwarmKarmaPeer> peers_list_type;
-  typedef std::recursive_mutex        mutex_type;
-  typedef std::lock_guard<mutex_type> lock_type;
+  using peers_list_type = std::vector<SwarmKarmaPeer>;
+  using mutex_type      = std::recursive_mutex;
+  using lock_type       = std::lock_guard<mutex_type>;
 
-  SwarmKarmaPeers(const std::string &ident) : ident_(ident) {}
+  SwarmKarmaPeers(std::string ident) : ident_(std::move(ident)) {}
 
   virtual ~SwarmKarmaPeers() {}
 

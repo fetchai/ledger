@@ -3,6 +3,6 @@
 namespace fetch {
 namespace http {
 
-typedef KeyValueSet Header;
+using Header = KeyValueSet;
 }
 }  // namespace fetch

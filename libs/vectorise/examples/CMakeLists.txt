@@ -1,18 +1,14 @@
-add_executable(element_wise_manip_fetch 01_elementwise_manipulation/fetch_solution.cpp)
-add_executable(element_wise_manip_ordinary 01_elementwise_manipulation/ordinary_solution.cpp)
+################################################################################
+# F E T C H   V E C T O R I S A T I O N  E X A M P L E S
+################################################################################
+cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+project(fetch-vectorise)
 
-add_executable(reduction_fetch 02_reduction/fetch_solution.cpp)
-add_executable(reduction_ordinary 02_reduction/ordinary_solution.cpp)
+# CMake configuration
+include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 
-add_executable(sum_reduce_fetch 03_sum_reduce/fetch_solution.cpp)
-add_executable(sum_reduce_ordinary 03_sum_reduce/ordinary_solution.cpp)
+# Compiler Configuration
+setup_compiler()
 
-add_executable(softmax_approx_fetch 05_softmax_approx/fetch_solution.cpp)
-add_executable(softmax_approx_ordinary 05_softmax_approx/ordinary_solution.cpp)
+setup_library_examples(fetch-ledger)
 
-
-add_executable(exponentials_fetch 09_exponentials/fetch_solution.cpp)
-add_executable(exponentials_ordinary 09_exponentials/ordinary_solution.cpp)
-
-
-add_executable(slicing_fetch 10_slicing/fetch_solution.cpp)

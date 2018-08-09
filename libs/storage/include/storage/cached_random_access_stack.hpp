@@ -15,10 +15,10 @@ template <typename T, typename D = uint64_t>
 class CachedRandomAccessStack
 {
 public:
-  typedef std::function<void()>   event_handler_type;
-  typedef RandomAccessStack<T, D> stack_type;
-  typedef D                       header_extra_type;
-  typedef T                       type;
+  using event_handler_type = std::function<void()>;
+  using stack_type         = RandomAccessStack<T, D>;
+  using header_extra_type  = D;
+  using type               = T;
 
   CachedRandomAccessStack()
   {

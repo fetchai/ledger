@@ -3,11 +3,11 @@
 #include "vectorise/info_sse.hpp"
 #include "vectorise/register.hpp"
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <emmintrin.h>
 #include <immintrin.h>
-#include <math.h>
 #include <smmintrin.h>
 
 namespace fetch {
@@ -36,8 +36,8 @@ template <typename T>
 class VectorRegister<T, 128>
 {
 public:
-  typedef T       type;
-  typedef __m128i mm_register_type;
+  using type             = T;
+  using mm_register_type = __m128i;
 
   enum
   {
@@ -76,8 +76,8 @@ template <>
 class VectorRegister<float, 128>
 {
 public:
-  typedef float  type;
-  typedef __m128 mm_register_type;
+  using type             = float;
+  using mm_register_type = __m128;
 
   enum
   {
@@ -111,8 +111,8 @@ template <>
 class VectorRegister<double, 128>
 {
 public:
-  typedef double  type;
-  typedef __m128d mm_register_type;
+  using type             = double;
+  using mm_register_type = __m128d;
 
   enum
   {
@@ -132,7 +132,7 @@ public:
 
   explicit operator mm_register_type() { return data_; }
 
-  void Store(type *ptr) const { _mm_stream_pd(ptr, data_); }
+  void Store(type *ptr) const { _mm_store_pd(ptr, data_); }
   void Stream(type *ptr) const { _mm_stream_pd(ptr, data_); }
 
   mm_register_type const &data() const { return data_; }
@@ -239,7 +239,7 @@ inline VectorRegister<double, 128> vector_zero_below_element(VectorRegister<doub
   alignas(16) uint64_t mask[2] = {uint64_t(-(0 >= n)), uint64_t(-(1 >= n))};
 
   __m128i conv = _mm_castpd_si128(a.data());
-  conv         = _mm_and_si128(conv, *(__m128i *)mask);
+  conv         = _mm_and_si128(conv, *reinterpret_cast<__m128i *>(mask));
 
   return VectorRegister<double, 128>(_mm_castsi128_pd(conv));
 }
@@ -250,7 +250,7 @@ inline VectorRegister<double, 128> vector_zero_above_element(VectorRegister<doub
   alignas(16) uint64_t mask[2] = {uint64_t(-(0 <= n)), uint64_t(-(1 <= n))};
 
   __m128i conv = _mm_castpd_si128(a.data());
-  conv         = _mm_and_si128(conv, *(__m128i *)mask);
+  conv         = _mm_and_si128(conv, *reinterpret_cast<__m128i *>(mask));
 
   return VectorRegister<double, 128>(_mm_castsi128_pd(conv));
 }
@@ -282,7 +282,7 @@ inline VectorRegister<float, 128> vector_zero_below_element(VectorRegister<float
                                         uint32_t(-(2 >= n)), uint32_t(-(3 >= n))};
 
   __m128i conv = _mm_castps_si128(a.data());
-  conv         = _mm_and_si128(conv, *(__m128i *)mask);
+  conv         = _mm_and_si128(conv, *reinterpret_cast<__m128i const *>(mask));
 
   return VectorRegister<float, 128>(_mm_castsi128_ps(conv));
 }
@@ -294,7 +294,7 @@ inline VectorRegister<float, 128> vector_zero_above_element(VectorRegister<float
                                         uint32_t(-(2 <= n)), uint32_t(-(3 <= n))};
 
   __m128i conv = _mm_castps_si128(a.data());
-  conv         = _mm_and_si128(conv, *(__m128i *)mask);
+  conv         = _mm_and_si128(conv, *reinterpret_cast<__m128i const *>(mask));
 
   return VectorRegister<float, 128>(_mm_castsi128_ps(conv));
 }
@@ -315,7 +315,7 @@ inline VectorRegister<float, 128> shift_elements_right(VectorRegister<float, 128
 
 inline float first_element(VectorRegister<float, 128> const &x) { return _mm_cvtss_f32(x.data()); }
 
-// TODO: Rename and move
+// TODO(unknown): Rename and move
 inline double reduce(VectorRegister<double, 128> const &x)
 {
   __m128d r = _mm_hadd_pd(x.data(), _mm_setzero_pd());

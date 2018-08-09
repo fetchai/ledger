@@ -4,6 +4,7 @@
 #include"math/linalg/matrix.hpp"
 #include"math/linalg/blas/base.hpp"
 #include"math/linalg/blas/dgemm_tn_double_vector.hpp"
+#include"math/linalg/blas/dgemm_tn_double_vector_threaded.hpp"
 
 
 using namespace fetch;
@@ -11,8 +12,8 @@ using namespace fetch::math::linalg;
 
 TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector1) {
 
-	Blas< double, Computes( _C <= _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
-	// Compuing _C <= _alpha * T(_A) * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
+	// Compuing _C <= _C = _alpha * T(_A) * _B + _beta * _C  
 
   double alpha = 1, beta = 0;
 
@@ -45,8 +46,8 @@ TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector1) {
 
 TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector2) {
 
-	Blas< double, Computes( _C <= _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
-	// Compuing _C <= _alpha * T(_A) * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
+	// Compuing _C <= _C = _alpha * T(_A) * _B + _beta * _C  
 
   double alpha = 0, beta = 1;
 
@@ -79,8 +80,8 @@ TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector2) {
 
 TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector3) {
 
-	Blas< double, Computes( _C <= _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
-	// Compuing _C <= _alpha * T(_A) * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
+	// Compuing _C <= _C = _alpha * T(_A) * _B + _beta * _C  
 
   double alpha = 1, beta = 1;
 
@@ -113,10 +114,10 @@ TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector3) {
 
 TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector4) {
 
-	Blas< double, Computes( _C <= _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
-	// Compuing _C <= _alpha * T(_A) * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
+	// Compuing _C <= _C = _alpha * T(_A) * _B + _beta * _C  
 
-  double alpha = 0.05842452402118692, beta = 0.20646099966799403;
+  double alpha = 0.3558092054035289, beta = 0.0943926997131952;
 
   Matrix< double > A = Matrix< double >(R"(
 	0.3567533266935893 0.28093450968738076 0.5426960831582485;
@@ -135,9 +136,9 @@ TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector4) {
 	)");
 
   Matrix< double > R = Matrix< double >(R"(
-	0.17112684049334548 0.1820473003985937 0.025249053247125685;
- 0.09046623732138093 0.07481668164696442 0.21458778258128539;
- 0.1600017939994003 0.09635472910562837 0.022501728889542695
+	0.19436144178917858 0.21171702142244148 0.06765680914431983;
+ 0.13406103547639042 0.3208864710046713 0.30309173462289596;
+ 0.24954545011774687 0.20198270736442708 0.06312065987323837
 	)");
   
 	dgemm_tn_double_vector(alpha, A, B, beta, C);
@@ -147,10 +148,10 @@ TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector4) {
 
 TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector5) {
 
-	Blas< double, Computes( _C <= _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
-	// Compuing _C <= _alpha * T(_A) * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
+	// Compuing _C <= _C = _alpha * T(_A) * _B + _beta * _C  
 
-  double alpha = 1.5719875049995164, beta = 2.0291942876949864;
+  double alpha = 1.1511989076573355, beta = -1.8954972484061055;
 
   Matrix< double > A = Matrix< double >(R"(
 	0.3109823217156622 0.32518332202674705 0.7296061783380641;
@@ -169,9 +170,9 @@ TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector5) {
 	)");
 
   Matrix< double > R = Matrix< double >(R"(
-	1.681721534016283 1.9889291406480938 0.918395907288908;
- 1.062873551428288 1.5036335020537805 2.368992075603092;
- 1.1917008272569634 2.4223331100198977 3.080749619872813
+	-0.5360711333225623 0.010796174269712577 0.5866050478032738;
+ 0.4135274317624289 0.9948634989564629 -0.41717152858157247;
+ -0.19029332561599188 0.05418354267132175 -0.8128559229592263
 	)");
   
 	dgemm_tn_double_vector(alpha, A, B, beta, C);
@@ -181,8 +182,8 @@ TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector5) {
 
 TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector6) {
 
-	Blas< double, Computes( _C <= _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
-	// Compuing _C <= _alpha * T(_A) * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
+	// Compuing _C <= _C = _alpha * T(_A) * _B + _beta * _C  
 
   double alpha = 3, beta = 3;
 
@@ -215,10 +216,10 @@ TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector6) {
 
 TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector7) {
 
-	Blas< double, Computes( _C <= _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
-	// Compuing _C <= _alpha * T(_A) * _B + _beta * _C  
+	Blas< double, Computes( _C <= _C = _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE> dgemm_tn_double_vector;
+	// Compuing _C <= _C = _alpha * T(_A) * _B + _beta * _C  
 
-  double alpha = 1.3956272740345375, beta = 1.7719704249740047;
+  double alpha = 2.762025938041017, beta = 2.513137278908209;
 
   Matrix< double > A = Matrix< double >(R"(
 	0.8180147659224931 0.8607305832563434 0.006952130531190703 0.5107473025775657 0.417411003148779;
@@ -239,11 +240,11 @@ TEST(blas_DGEMM_vectorised, blas_dgemm_tn_double_vector7) {
 	)");
 
   Matrix< double > R = Matrix< double >(R"(
-	2.2949605158064763 1.3153885393308236 0.683319084810551 2.1656773059167786 3.0011356640113918 0.7323178274299906 1.8450596969813815;
- 2.0231025200827735 1.313244824751377 1.733361914087231 1.9210353001401432 2.360667635797233 1.433663424456177 1.5933152119463263;
- 0.3067937400329684 1.62116496951184 0.5893215085683554 0.6271516153852584 0.31844535572643673 1.073743770661966 1.3367426229975723;
- 0.7951347341766506 1.7833707037338193 0.7090850707321872 2.638082364662644 1.6565176814409037 1.4715383856478743 1.4064136822062294;
- 2.097796834582087 0.7817101045791502 0.8328306033553671 1.0421402395524044 2.42594743183089 1.7245157716288113 0.8724264335873895
+	3.6393200497935485 2.3651778837242894 1.208346373382347 3.799632966271008 4.959984406237487 1.208770049226004 2.9835817951481207;
+ 3.247018981368996 2.3628475605849415 2.7067984037198074 3.436374772869018 4.043577819278087 2.20776747643035 2.6208659716199874;
+ 0.5174419699980631 2.3783434771199548 0.8475438894910349 1.0558266226147353 0.58970353181493 1.5378338294813745 1.972198751258676;
+ 1.557133755468194 3.0205288953869034 1.1782524650866724 4.579811572124402 3.1050761907997337 2.225678216878836 2.399076567187845;
+ 3.2208372989884935 1.4103952327640306 1.3093039254569778 1.9496970774780307 3.882226497935754 2.541108866249895 1.4702668039185993
 	)");
   
 	dgemm_tn_double_vector(alpha, A, B, beta, C);

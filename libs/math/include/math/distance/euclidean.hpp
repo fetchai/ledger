@@ -14,8 +14,8 @@ inline typename memory::VectorSlice<T, S>::type Euclidean(memory::VectorSlice<T,
                                                           memory::VectorSlice<T, S> const &b)
 {
   detailed_assert(a.size() == b.size());
-  typedef typename memory::VectorSlice<T, S>::vector_register_type vector_register_type;
-  typedef typename memory::VectorSlice<T, S>::type                 type;
+  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
+  using type                 = typename memory::VectorSlice<T, S>::type;
 
   type dist =
       a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),

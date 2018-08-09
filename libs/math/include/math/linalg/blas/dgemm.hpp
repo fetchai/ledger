@@ -1,0 +1,18 @@
+#pragma once
+
+#include"math/linalg/blas/dgemm_tt_double_vector.hpp"
+#include"math/linalg/blas/dgemm_tt_double_novector.hpp"
+#include"math/linalg/blas/dgemm_tn_double_vector.hpp"
+#include"math/linalg/blas/dgemm_nn_double_vector.hpp"
+#include"math/linalg/blas/dgemm_tn_double_novector.hpp"
+#include"math/linalg/blas/dgemm_nn_double_novector.hpp"
+#include"math/linalg/blas/dgemm_nt_double_vector.hpp"
+#include"math/linalg/blas/dgemm_nt_double_novector_threaded.hpp"
+#include"math/linalg/blas/dgemm_tt_double_vector_threaded.hpp"
+#include"math/linalg/blas/dgemm_tt_double_novector_threaded.hpp"
+#include"math/linalg/blas/dgemm_tn_double_vector_threaded.hpp"
+#include"math/linalg/blas/dgemm_nn_double_vector_threaded.hpp"
+#include"math/linalg/blas/dgemm_tn_double_novector_threaded.hpp"
+#include"math/linalg/blas/dgemm_nn_double_novector_threaded.hpp"
+#include"math/linalg/blas/dgemm_nt_double_vector_threaded.hpp"
+#include"math/linalg/blas/dgemm_nt_double_novector_threaded.hpp"

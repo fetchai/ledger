@@ -23,8 +23,8 @@ namespace ledger {
 class ContractHttpInterface : public http::HTTPModule
 {
 public:
-  ContractHttpInterface(StateInterface &storage, TransactionProcessor &processor)
-      : storage_{storage}, processor_{processor}
+  ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor)
+    : storage_{storage}, processor_{processor}
   {
 
     // create all the contracts
@@ -125,7 +125,7 @@ private:
 
   std::size_t transaction_index_{0};
 
-  StateInterface &      storage_;
+  StorageInterface &    storage_;
   TransactionProcessor &processor_;
   ChainCodeCache        contract_cache_;
 };

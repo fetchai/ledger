@@ -1,4 +1,6 @@
 #pragma once
+#include <utility>
+
 #include "network/management/connection_register.hpp"
 #include "network/p2pservice/node_details.hpp"
 #include "network/p2pservice/p2p_peer_details.hpp"
@@ -32,8 +34,8 @@ public:
     PING_MAGIC = 1337
   };
 
-  P2PIdentity(uint64_t const &protocol, client_register_type reg, network_manager_type nm)
-      : register_(reg), manager_(nm)
+  P2PIdentity(uint64_t const &protocol, client_register_type reg, network_manager_type const &nm)
+    : register_(std::move(reg)), manager_(nm)
   {
     protocol_       = protocol;
     my_details_     = MakeNodeDetails();

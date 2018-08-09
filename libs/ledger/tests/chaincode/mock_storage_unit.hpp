@@ -26,12 +26,11 @@ public:
         .WillByDefault(Invoke(&fake_, &FakeStorageUnit::GetTransaction));
   }
 
-  MOCK_METHOD1(Get, document_type(fetch::byte_array::ConstByteArray const &));
-  MOCK_METHOD1(GetOrCreate, document_type(fetch::byte_array::ConstByteArray const &));
-  MOCK_METHOD2(Set, void(fetch::byte_array::ConstByteArray const &,
-                         fetch::byte_array::ConstByteArray const &));
-  MOCK_METHOD1(Lock, bool(fetch::byte_array::ConstByteArray const &));
-  MOCK_METHOD1(Unlock, bool(fetch::byte_array::ConstByteArray const &));
+  MOCK_METHOD1(Get, Document(ResourceAddress const &));
+  MOCK_METHOD1(GetOrCreate, Document(ResourceAddress const &));
+  MOCK_METHOD2(Set, void(ResourceAddress const &, StateValue const &));
+  MOCK_METHOD1(Lock, bool(ResourceAddress const &));
+  MOCK_METHOD1(Unlock, bool(ResourceAddress const &));
   MOCK_METHOD0(Hash, hash_type());
   MOCK_METHOD1(Commit, void(bookmark_type const &));
   MOCK_METHOD1(Revert, void(bookmark_type const &));

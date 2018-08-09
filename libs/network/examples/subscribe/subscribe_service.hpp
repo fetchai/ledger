@@ -9,7 +9,6 @@
 namespace fetch {
 namespace subscribe {
 
-
 /*
  * Class containing one or more protocols, thus defining a service. Inherits
  * from ServiceServer to provide network functionality

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <string>
 #include <time.h>
 #include <unistd.h>
@@ -44,10 +45,10 @@ PYBIND11_EMBEDDED_MODULE(fetchledger, module)
 class PythonContext
 {
 public:
-  typedef std::shared_ptr<fetch::swarm::PySwarm>        SWARM_P;
-  typedef std::unique_ptr<pybind11::scoped_interpreter> INTERP_P;
-  typedef pybind11::dict                                LOCALS;
-  typedef std::shared_ptr<LOCALS>                       LOCALS_P;
+  using SWARM_P  = std::shared_ptr<fetch::swarm::PySwarm>;
+  using INTERP_P = std::unique_ptr<pybind11::scoped_interpreter>;
+  using LOCALS   = pybind11::dict;
+  using LOCALS_P = std::shared_ptr<LOCALS>;
 
   LOCALS_P locals;
   SWARM_P  pySwarm;
@@ -72,7 +73,7 @@ https://github.com/cython/cython/issues/1877
   */
   void runFile(const std::string &fn, int argc, char *argv[])
   {
-    interpreter = INTERP_P(new pybind11::scoped_interpreter());
+    interpreter = std::make_unique<pybind11::scoped_interpreter>();
     locals      = std::make_shared<pybind11::dict>();
 
     pybind11::print("PYCHAIN? STARTING FILE RUN");

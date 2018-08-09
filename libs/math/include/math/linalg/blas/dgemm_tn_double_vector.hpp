@@ -13,40 +13,28 @@ namespace linalg
 
 
 template<>
-class Blas< double, Computes( _C <= _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE>
+class Blas< double, Computes( _C <= _C = _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE>
 {
 public:
   using vector_register_type = typename Matrix< double >::vector_register_type;
 
   void operator()(double const &alpha, Matrix< double > const &a, Matrix< double > const &b, double const &beta, Matrix< double > &c ) 
   {
-    constexpr double one = 1.0;
-    constexpr double zero = 0.0;
-    double temp;
     std::size_t i;
     std::size_t j;
-    std::size_t ncola;
-    std::size_t nrowa;
-    std::size_t nrowb;
-
-    nrowa = a.height();
-    ncola = c.height();
-    nrowb = a.height();
-    if( (c.height() == 0) || ((c.width() == 0) || (((alpha == zero) || (a.height() == 0)) && (beta == one))) ) 
+    if( (c.height() == 0) || ((c.width() == 0) || (((alpha == 0.0) || (a.height() == 0)) && (beta == 1.0))) ) 
     {
       return;
-    } // endif
+    } 
     
-    if( alpha == zero ) 
+    if( alpha == 0.0 ) 
     {
-      if( beta == zero ) 
+      if( beta == 0.0 ) 
       {
-        
         for(j = 0 ; j < c.width(); ++j )
         {
           
-          
-          vector_register_type vec_zero(zero);
+          vector_register_type vec_zero(0.0);
           
           auto ret_slice = c.data().slice( c.padded_height() * j, c.height());
           ret_slice.in_parallel().Apply([vec_zero](vector_register_type &vw_c ){
@@ -57,10 +45,8 @@ public:
       }
       else 
       {
-        
         for(j = 0 ; j < c.width(); ++j )
         {
-          
           
           vector_register_type vec_beta(beta);
           
@@ -71,35 +57,33 @@ public:
             vw_c = vec_beta * vr_c;  
           }, slice_c);
         }
-      } // endif
+      } 
       
       return;
-    } // endif
+    } 
     
     
     for(j = 0 ; j < c.width(); ++j )
-    {  
-      for(i = 0 ; i < c.height(); ++i )
+    {  for(i = 0 ; i < c.height(); ++i )
       {
-        temp = zero;
-        
+        double temp;
+        temp = 0.0;
         
         auto slice_a = a.data().slice( a.padded_height() * i, a.height());
         auto slice_b = b.data().slice( b.padded_height() * j, a.height());
         temp = slice_a.in_parallel().SumReduce([](vector_register_type const &vr_a , vector_register_type const &vr_b ) {
           return vr_a * vr_b;  
         }, slice_b );
-        if( beta == zero ) 
+        if( beta == 0.0 ) 
         {
           c(i, j) = alpha * temp;
         }
         else 
         {
           c(i, j) = alpha * temp + beta * c(i, j);
-        } // endif
+        }
       }  
       }
-    
     return;
     
   }

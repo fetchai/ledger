@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <thread>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -27,19 +28,20 @@ public:
     std::atomic<uint32_t> lane;
   };
 
-  typedef service::ServiceClient               service_client_type;
-  typedef std::shared_ptr<service_client_type> shared_service_client_type;
-  using client_register_type   = fetch::network::ConnectionRegister<ClientDetails>;
-  using connection_handle_type = client_register_type::connection_handle_type;
-  using network_manager_type   = fetch::network::NetworkManager;
-  using lane_type              = LaneIdentity::lane_type;
+  using service_client_type        = service::ServiceClient;
+  using shared_service_client_type = std::shared_ptr<service_client_type>;
+  using client_register_type       = fetch::network::ConnectionRegister<ClientDetails>;
+  using connection_handle_type     = client_register_type::connection_handle_type;
+  using network_manager_type       = fetch::network::NetworkManager;
+  using lane_type                  = LaneIdentity::lane_type;
 
-  // TODO: (EJF) is move?
-  explicit StorageUnitClient(network_manager_type tm) : network_manager_(tm)
+  explicit StorageUnitClient(network_manager_type const &tm) : network_manager_(tm)
   {
     id_ = "my-fetch-id";
-    // libs/ledger/include/ledger/chain/helper_functions.hpp
   }
+
+  StorageUnitClient(StorageUnitClient const &) = default;
+  StorageUnitClient(StorageUnitClient &&)      = default;
 
   void SetNumberOfLanes(lane_type const &count)
   {
@@ -156,56 +158,58 @@ public:
     return true;
   }
 
-  document_type GetOrCreate(byte_array::ConstByteArray const &key) override
+  Document GetOrCreate(ResourceAddress const &key) override
   {
-    auto        res  = fetch::storage::ResourceID(key);
-    std::size_t lane = res.lane(log2_lanes_);
+    std::size_t lane = key.lane(log2_lanes_);
 
     auto promise = lanes_[lane]->Call(
-        LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE, res);
+        LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE,
+        key.as_resource_id());
 
     return promise.As<storage::Document>();
   }
 
-  document_type Get(byte_array::ConstByteArray const &key) override
+  Document Get(ResourceAddress const &key) override
   {
-    auto        res  = fetch::storage::ResourceID(key);
-    std::size_t lane = res.lane(log2_lanes_);
+    std::size_t lane = key.lane(log2_lanes_);
+
+    auto promise =
+        lanes_[lane]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET,
+                           key.as_resource_id());
+
+    return promise.As<storage::Document>();
+  }
+
+  bool Lock(ResourceAddress const &key) override
+  {
+    std::size_t lane = key.lane(log2_lanes_);
 
     auto promise = lanes_[lane]->Call(LaneService::STATE,
-                                      fetch::storage::RevertibleDocumentStoreProtocol::GET, res);
-
-    return promise.As<storage::Document>();
-  }
-
-  bool Lock(byte_array::ConstByteArray const &key) override
-  {
-    auto        res     = fetch::storage::ResourceID(key);
-    std::size_t lane    = res.lane(log2_lanes_);
-    auto        promise = lanes_[lane]->Call(LaneService::STATE,
-                                      fetch::storage::RevertibleDocumentStoreProtocol::LOCK, res);
+                                      fetch::storage::RevertibleDocumentStoreProtocol::LOCK,
+                                      key.as_resource_id());
 
     return promise.As<bool>();
   }
 
-  bool Unlock(byte_array::ConstByteArray const &key) override
+  bool Unlock(ResourceAddress const &key) override
   {
+    std::size_t lane = key.lane(log2_lanes_);
 
-    auto        res     = fetch::storage::ResourceID(key);
-    std::size_t lane    = res.lane(log2_lanes_);
-    auto        promise = lanes_[lane]->Call(LaneService::STATE,
-                                      fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK, res);
+    auto promise = lanes_[lane]->Call(LaneService::STATE,
+                                      fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK,
+                                      key.as_resource_id());
 
     return promise.As<bool>();
   }
 
-  void Set(byte_array::ConstByteArray const &key, byte_array::ConstByteArray const &value) override
+  void Set(ResourceAddress const &key, StateValue const &value) override
   {
-    auto        res  = fetch::storage::ResourceID(key);
-    std::size_t lane = res.lane(log2_lanes_);
+    std::size_t lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(
-        LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET, res, value);
+    auto promise =
+        lanes_[lane]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET,
+                           key.as_resource_id(), value);
+
     promise.Wait(2000);
   }
 
@@ -243,7 +247,7 @@ public:
 
   byte_array::ConstByteArray Hash() override
   {
-    // TODO
+    // TODO(EJF):
     return lanes_[0]
         ->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
         .As<byte_array::ByteArray>();

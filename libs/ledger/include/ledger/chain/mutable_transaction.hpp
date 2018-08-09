@@ -24,7 +24,7 @@ struct TransactionSummary
   digest_type       transaction_hash;
   uint64_t          fee{0};
 
-  // TODO: (EJF) Needs to be replaced with some kind of ID
+  // TODO(EJF):  Needs to be replaced with some kind of ID
   std::string contract_name_;
 };
 
@@ -43,9 +43,15 @@ void Deserialize(T &serializer, TransactionSummary &b)
 class MutableTransaction
 {
 public:
-  typedef crypto::SHA256                        hasher_type;
-  typedef TransactionSummary::digest_type       digest_type;
-  typedef TransactionSummary::resource_set_type resource_set_type;
+  using hasher_type       = crypto::SHA256;
+  using digest_type       = TransactionSummary::digest_type;
+  using resource_set_type = TransactionSummary::resource_set_type;
+
+  MutableTransaction()                              = default;
+  MutableTransaction(MutableTransaction const &rhs) = delete;
+  MutableTransaction &operator=(MutableTransaction const &rhs) = delete;
+  MutableTransaction(MutableTransaction &&rhs)                 = default;
+  MutableTransaction &operator=(MutableTransaction &&rhs) = default;
 
   resource_set_type const &resources() const { return summary_.resources; }
 
@@ -68,12 +74,6 @@ public:
     signature_ = rhs.signature();
   }
 
-  MutableTransaction()                              = default;
-  MutableTransaction(MutableTransaction const &rhs) = delete;
-  MutableTransaction &operator=(MutableTransaction const &rhs) = delete;
-  MutableTransaction(MutableTransaction &&rhs)                 = default;
-  MutableTransaction &operator=(MutableTransaction &&rhs) = default;
-
   enum
   {
     VERSION = 1
@@ -83,7 +83,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: (EJF) This is annoying but we should maintain that the fields are
+    // TODO(EJF):  This is annoying but we should maintain that the fields are
     // kept in order
     std::vector<byte_array::ConstByteArray> resources;
     std::copy(summary().resources.begin(), summary().resources.end(),

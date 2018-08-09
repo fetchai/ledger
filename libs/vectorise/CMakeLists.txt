@@ -16,5 +16,6 @@ setup_compiler()
 
 setup_library(fetch-vectorise)
 
-add_test_target()
 
+add_test_target()
+add_subdirectory(examples)

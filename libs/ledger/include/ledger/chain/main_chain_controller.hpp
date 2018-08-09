@@ -1,4 +1,6 @@
 #pragma once
+#include <utility>
+
 #include "ledger/chain/main_chain_details.hpp"
 #include "ledger/chain/main_chain_identity.hpp"
 #include "ledger/chain/main_chain_identity_protocol.hpp"
@@ -22,10 +24,13 @@ public:
   using connection_handle_type     = client_register_type::connection_handle_type;
   using protocol_handler_type      = service::protocol_handler_type;
 
-  MainChainController(protocol_handler_type const &           identity_protocol,
-                      std::weak_ptr<MainChainIdentity> const &identity, client_register_type reg,
-                      network_manager_type nm)
-      : identity_protocol_(identity_protocol), identity_(identity), register_(reg), manager_(nm)
+  MainChainController(protocol_handler_type const &    identity_protocol,
+                      std::weak_ptr<MainChainIdentity> identity, client_register_type reg,
+                      network_manager_type const &nm)
+    : identity_protocol_(identity_protocol)
+    , identity_(std::move(identity))
+    , register_(std::move(reg))
+    , manager_(nm)
   {}
 
   /// External controls

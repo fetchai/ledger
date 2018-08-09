@@ -13,11 +13,9 @@ template< typename T, uint64_t I, uint64_t V = platform::Parallelisation::VECTOR
 class Blas 
 {
 public:
-	template<typename ...Args >
-  void operator()(Args ...args) 
-  {
-//  	static_assert(true, "BLAS specialisation does not exist.");
-  }
+  template<typename ...Args >
+  void operator()(Args ...args) = delete;
+  
 };
 
 

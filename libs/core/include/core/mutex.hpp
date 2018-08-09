@@ -1,15 +1,21 @@
 #pragma once
 
 #include "core/logger.hpp"
+#include "core/macros.hpp"
 
 #include <iostream>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <utility>
 
 namespace fetch {
 namespace mutex {
+
+/**
+ * The production mutex is wrapper for the default system mutex.
+ */
 class ProductionMutex : public AbstractMutex
 {
 public:
@@ -17,8 +23,16 @@ public:
   ProductionMutex() = default;
 };
 
+/**
+ * The debug mutex acts like a normal mutex but also contains several other checks. This code is
+ * intended to be only used in software development.
+ */
 class DebugMutex : public AbstractMutex
 {
+  using Clock     = std::chrono::high_resolution_clock;
+  using Timepoint = Clock::time_point;
+  using Duration  = Clock::duration;
+
   struct LockInfo
   {
     bool locked = true;
@@ -27,25 +41,28 @@ class DebugMutex : public AbstractMutex
   class MutexTimeout
   {
   public:
-    MutexTimeout(std::string const &filename, int const &line, double const timeout = 300)
-        : filename_(filename), line_(line)
+    static constexpr std::size_t DEFAULT_TIMEOUT_MS = 300;
+
+    MutexTimeout(std::string filename, int const &line, std::size_t timeout_ms = DEFAULT_TIMEOUT_MS)
+      : filename_(std::move(filename)), line_(line)
     {
       LOG_STACK_TRACE_POINT;
 
-      running_ = true;
-      created_ = std::chrono::system_clock::now();
-      thread_  = std::thread([=]() {
-          LOG_LAMBDA_STACK_TRACE_POINT;
+      thread_ = std::thread([=]() {
+        LOG_LAMBDA_STACK_TRACE_POINT;
 
-        double ms = 0;
+        // define the point at which the deadline has been reached
+        Timepoint const deadline = created_ + std::chrono::milliseconds(timeout_ms);
 
-        while ((running_) && (ms < timeout))
+        while (running_)
         {
+          // exit waiting loop when the dead line has been reached
+          if (Clock::now() >= deadline) break;
+
+          // wait
           std::this_thread::sleep_for(std::chrono::milliseconds(1));
-          std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-          ms =
-              double(std::chrono::duration_cast<std::chrono::milliseconds>(end - created_).count());
         }
+
         if (running_)
         {
           this->Eval();
@@ -68,16 +85,15 @@ class DebugMutex : public AbstractMutex
     }
 
   private:
-    std::string filename_;
-    int         line_;
-
-    std::thread                           thread_;
-    std::chrono::system_clock::time_point created_;
-    std::atomic<bool>                     running_;
+    std::string       filename_;
+    int               line_;
+    std::thread       thread_;
+    Timepoint         created_ = Clock::now();
+    std::atomic<bool> running_{true};
   };
 
 public:
-  DebugMutex(int line, std::string file) : AbstractMutex(), line_(line), file_(file) {}
+  DebugMutex(int line, std::string file) : AbstractMutex(), line_(line), file_(std::move(file)) {}
   DebugMutex() = default;
 
   DebugMutex &operator=(DebugMutex const &other) = delete;
@@ -86,12 +102,12 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     lock_mutex_.lock();
-    locked_ = std::chrono::high_resolution_clock::now();
+    locked_ = Clock::now();
     lock_mutex_.unlock();
 
     std::mutex::lock();
 
-    timeout_ = std::unique_ptr<MutexTimeout>(new MutexTimeout(file_, line_));
+    timeout_ = std::make_unique<MutexTimeout>(file_, line_);
     fetch::logger.RegisterLock(this);
     thread_id_ = std::this_thread::get_id();
   }
@@ -101,10 +117,11 @@ public:
     LOG_STACK_TRACE_POINT;
 
     lock_mutex_.lock();
-    std::chrono::high_resolution_clock::time_point end_time =
-        std::chrono::high_resolution_clock::now();
-    double total_time =
-        double(std::chrono::duration_cast<std::chrono::milliseconds>(end_time - locked_).count());
+    Timepoint const end_time   = Clock::now();
+    Duration const  delta_time = end_time - locked_;
+    double          total_time = static_cast<double>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(delta_time).count());
+
     lock_mutex_.unlock();
 
     timeout_.reset(nullptr);
@@ -128,19 +145,19 @@ public:
   std::thread::id thread_id() const override { return thread_id_; }
 
 private:
-  std::mutex                                     lock_mutex_;
-  std::chrono::high_resolution_clock::time_point locked_;
+  std::mutex lock_mutex_;
+  Timepoint locked_ FETCH_GUARDED_BY(lock_mutex_);  ///< The time when the mutex was locked
+  std::thread::id   thread_id_;                     ///< The last thread to lock the mutex
 
-  int                           line_ = 0;
-  std::string                   file_ = "";
-  std::unique_ptr<MutexTimeout> timeout_;
-  std::thread::id               thread_id_;
+  int                           line_ = 0;   ///< The line number of the mutex
+  std::string                   file_ = "";  ///< The filename of the mutex
+  std::unique_ptr<MutexTimeout> timeout_;    ///< The timeout monitor for this mutex
 };
 
 #ifdef NDEBUG
-typedef ProductionMutex Mutex;
+using Mutex = ProductionMutex;
 #else
-typedef DebugMutex Mutex;
+using Mutex = DebugMutex;
 #endif
 }  // namespace mutex
 }  // namespace fetch

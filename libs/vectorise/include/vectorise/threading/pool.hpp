@@ -37,8 +37,8 @@ public:
   template <typename F, typename... Args>
   std::future<typename std::result_of<F(Args...)>::type> Dispatch(F &&f, Args &&... args)
   {
-    typedef typename std::result_of<F(Args...)>::type return_type;
-    typedef std::packaged_task<return_type()>         task_type;
+    using return_type = typename std::result_of<F(Args...)>::type;
+    using task_type   = std::packaged_task<return_type()>;
 
     std::shared_ptr<task_type> task =
         std::make_shared<task_type>(std::bind(f, std::forward<Args>(args)...));
