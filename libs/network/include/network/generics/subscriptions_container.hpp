@@ -70,6 +70,7 @@ public:
 
   void ConnectionDropped(fetch::network::TCPClient::handle_type connection_handle)
   {
+    lock_type lock(mutex);
     auto item = existing_subs.begin();
     while(item!=existing_subs.end())
     {
@@ -86,18 +87,74 @@ public:
     }
   }
 
+  void AssociateName(const std::string &name, client_handle_type connection_handle,
+                     protocol_number_type proto=0,
+                     feed_handler_type verb=0)
+  {
+
+    logger.Warn("OMG ASSOCIATE ALL:",
+                name, " => ",
+                connection_handle,
+                ", ",
+                proto,
+                ", ",
+                int(verb));
+
+    lock_type lock(mutex);
+    for(auto &item : existing_subs)
+    {
+      if (
+          (std::get<0>(item.first) == connection_handle)
+          &&
+          (!proto || std::get<2>(item.first) == proto)
+          &&
+          (!verb || std::get<1>(item.first) == verb)
+          )
+      {
+        subs[item.second] -> name_ = name;
+        logger.Warn("OMG ASSOCIATE:",
+                    subs[item.second] -> name_, " => ",
+                    std::get<0>(item.first),
+                    ", ",
+                    std::get<2>(item.first),
+                    ", ",
+                    std::get<1>(item.first)
+                    );
+      }
+    }
+  }
+
   std::vector<std::string> GetAllSubscriptions(protocol_number_type proto, feed_handler_type verb)
   {
     std::vector<std::string> r;
     for(auto &item : existing_subs)
     {
       if (
-          (std::get<1>(item.first) == proto)
+          (!proto || std::get<1>(item.first) == proto)
           &&
-          (std::get<2>(item.first) == verb)
+          (!verb || std::get<2>(item.first) == verb)
           )
       {
+        logger.Warn("OMG GetAllSubscriptions:",
+                    subs[item.second] -> name_, " => ",
+                    std::get<0>(item.first),
+                    ", ",
+                    std::get<2>(item.first),
+                    ", ",
+                    std::get<1>(item.first)
+                    );
         r.push_back(subs[item.second] -> getName());
+      }
+      else
+      {
+        logger.Warn("OMG Skip getting:",
+                    subs[item.second] -> name_, " => ",
+                    std::get<0>(item.first),
+                    ", ",
+                    std::get<2>(item.first),
+                    ", ",
+                    std::get<1>(item.first)
+                    );
       }
     }
     return r;
@@ -119,6 +176,7 @@ private:
   class Subscription
   {
   public:
+    friend class SubscriptionsContainer;
     Subscription(client_ptr client,
                  fetch::service::subscription_handler_type handle,
                  const std::string &name)

@@ -113,6 +113,7 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
   // define the list of HTTP modules to be used
   http_modules_ = {
     std::make_shared<p2p::P2PHttpInterface>(main_chain_service_->mainchain(),
+                                            main_chain_service_.get(),
                                             main_chain_service_->mainchainprotocol()),
       std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
       std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_),

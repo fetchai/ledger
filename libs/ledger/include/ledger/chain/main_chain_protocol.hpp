@@ -18,11 +18,15 @@ class MainChainProtocol : public fetch::service::Protocol
 public:
   using block_type            = chain::MainChain::block_type;
   using block_hash_type       = chain::MainChain::block_hash;
-  using protocol_handler_type = service::protocol_handler_type;
+  using protocol_number_type  = service::protocol_handler_type;
   using thread_pool_type      = network::ThreadPool;
   using register_type         = R;
   using self_type             = MainChainProtocol<R>;
-
+  using connectivity_details_type = MainChainDetails;
+  using client_register_type      = fetch::network::ConnectionRegister<connectivity_details_type>;
+  using client_handle_type     = client_register_type::connection_handle_type;
+  using feed_handler_type = service::feed_handler_type;
+  
   enum
   {
     GET_HEADER         = 1,
@@ -30,7 +34,7 @@ public:
     BLOCK_PUBLISH      = 3,
   };
 
-  MainChainProtocol(protocol_handler_type const &p, register_type r, thread_pool_type nm,
+  MainChainProtocol(protocol_number_type const &p, register_type r, thread_pool_type nm,
 		    const std::string &identifier,
                     chain::MainChain *node)
     : Protocol()
@@ -77,13 +81,20 @@ public:
     return blockPublishSubscriptions_ . GetAllSubscriptions(protocol_, BLOCK_PUBLISH);
   }
 
+  void AssociateName(const std::string &name, client_handle_type connection_handle,
+                     protocol_number_type proto=0,
+                     feed_handler_type verb=0)
+  {
+    blockPublishSubscriptions_ . AssociateName(name, connection_handle, proto, verb);
+  }
+
   const std::string &GetIdentity()
   {
     return identifier_;
   }
 
 private:
-  protocol_handler_type  protocol_;
+  protocol_number_type   protocol_;
   register_type          register_;
   thread_pool_type       thread_pool_;
   network::SubscriptionsContainer blockPublishSubscriptions_;
@@ -137,7 +148,7 @@ private:
         //  continue;
         //}
 
-        auto name    = ""; //std::string(byte_array::ToBase64(details->identity.identifier()));
+        auto name = details -> GetOwnerIdentityString();
 
         auto foo = new service::Function<void(chain::MainChain::block_type)>(
           [this](chain::MainChain::block_type block){

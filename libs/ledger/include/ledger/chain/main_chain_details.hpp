@@ -59,7 +59,12 @@ struct MainChainDetails
     prov->Sign(buffer.data());
     signature = prov->signature();
   }
-  
+
+  std::string GetOwnerIdentityString()
+  {
+    return std::string(byte_array::ToBase64(owning_discovery_service_identity.identifier()));
+  }
+
   bool Verify(crypto::Verifier *ver)
   {
 

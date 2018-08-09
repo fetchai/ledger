@@ -93,9 +93,7 @@ public:
 
     {
       auto deets = my_details_.Lock();
-      //deets -> entry_points.push_back(discovery_ep);
       deets -> identity = certificate_->identity();
-
       deets -> Sign(certificate_.get());
 
       //TODO: ECDSA verifier broke
@@ -116,7 +114,7 @@ public:
 
     this->Add(CHAIN, mainchain_protocol_.get());
 
-    controller_          = std::make_unique<controller_type>(IDENTITY, identity_controller_, register_, tm, my_details_);
+    controller_          = std::make_unique<controller_type>(IDENTITY, identity_controller_, register_, tm, my_details_, mainchain_protocol_);
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     this->Add(CONTROLLER, controller_protocol_.get());
 
@@ -129,6 +127,11 @@ public:
   {
     auto deets = my_details_.Lock();
     deets -> owning_discovery_service_identity = identity;
+  }
+
+  std::string GetOwnerIdentityString()
+  {
+    return my_details_.Lock()->GetOwnerIdentityString();
   }
 
   ~MainChainService()
@@ -160,7 +163,7 @@ private:
   std::unique_ptr<identity_protocol_type> identity_protocol_;
 
   std::unique_ptr<mainchain_type>          mainchain_;
-  std::unique_ptr<mainchain_protocol_type> mainchain_protocol_;
+  std::shared_ptr<mainchain_protocol_type> mainchain_protocol_;
 
   std::unique_ptr<controller_type>          controller_;
   std::unique_ptr<controller_protocol_type> controller_protocol_;

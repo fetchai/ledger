@@ -22,8 +22,10 @@ class P2PHttpInterface : public http::HTTPModule
 {
 public:
   P2PHttpInterface(chain::MainChain *chain,
+                   chain::MainChainService *main_chain_service,
                    chain::MainChainService::mainchain_protocol_type *protocol)
     : chain_(chain)
+    , main_chain_service_(main_chain_service)
     , protocol_(protocol)
   {
     // register all the routes
@@ -34,6 +36,7 @@ public:
 
 private:
   chain::MainChain *chain_;
+  chain::MainChainService *main_chain_service_;
   chain::MainChainService::mainchain_protocol_type *protocol_;
 
   http::HTTPResponse OnGetSitrep(http::ViewParameters const &params,
@@ -48,11 +51,11 @@ private:
     for (auto &b : blocks)
     {
       script::Variant block  = script::Variant::Object();
-      block["previous_hash"] = byte_array::ToBase64(b.prev());
-      block["hash"]          = byte_array::ToBase64(b.hash());
+      block["hashprev"] = byte_array::ToBase64(b.prev());
+      block["hashcurrent"]          = byte_array::ToBase64(b.hash());
       block["proof"]         = byte_array::ToBase64(b.proof());
-      block["block_number"]  = b.body().block_number;
-      block["miner_number"]  = b.body().miner_number;
+      block["blockNumber"]  = b.body().block_number;
+      block["minerNumber"]  = b.body().miner_number;
       blocklist[i]           = block;
       ++i;
     }
@@ -61,7 +64,7 @@ private:
     chain["blocks"] = blocklist;
     ret["chain"] = chain;
 
-    ret["ident"] = protocol_ -> GetIdentity();
+    ret["ident"] = main_chain_service_ -> GetOwnerIdentityString();
 
     auto subs = protocol_ -> GetCurrentSubscriptions();
     script::Variant subscriptions = script::Variant::Array(subs.size());
