@@ -1,4 +1,5 @@
 #pragma once
+#include "math/ndarray_view.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/array.hpp"
 
@@ -18,8 +19,29 @@ public:
   using super_type           = ShapeLessArray<T, C>;
   using self_type            = NDArray<T, C>;
 
-  NDArray(std::size_t const &n = 0) : super_type(n) { size_ = 0; }
+  /**
+   * Constructor builds an NDArray with n elements initialized to 0
+   * @param n   number of elements in array (no shape specified, assume 1-D)
+   */
+  NDArray(std::size_t const &n = 0) : super_type(n)
+  {
+    size_ = n;
+    shape_.push_back(n);
+    for (std::size_t idx = 0; idx < size_; ++idx) { this->operator[](idx) = 0;}
+  }
+
+  /**
+   * Constructor builds an NDArray pre-initialising from a shapeless array
+   * @param arr shapelessarray data set by defualt
+   */
   NDArray(super_type const &arr) : super_type(arr) {}
+
+  /**
+   * Constructor builds an empty NDArray pre-initialiing with zeros from a vector of dimension lengths
+   * @param shape   vector of lengths for each dimension
+   */
+  NDArray(std::vector<std::size_t> const &shape) : super_type(0) {}
+
   NDArray &operator=(NDArray const &other) = default;
   //  NDArray &operator=(NDArray &&other) = default;
 
@@ -46,6 +68,17 @@ public:
 
     copy.LazyReshape(this->shape());
     return copy;
+  }
+  /**
+   * Provides an NDArray that is a copy of a view of the the current NDArray
+   *
+   * @return       copy is a NDArray with a size and shape equal to or lesser than this array.
+   *
+   **/
+  self_type Copy(NDArrayView arrayView)
+  {
+    self_type copy;
+    return copy(arrayView);
   }
 
   /**
@@ -82,6 +115,21 @@ public:
     return this->operator[](index);
   }
 
+  self_type operator()(NDArrayView array_view)
+  {
+    std::vector<std::size_t> new_shape;
+    for (std::size_t cur_dim = 0; cur_dim < array_view.from.size(); ++cur_dim)
+    {
+      std::size_t cur_from = array_view.from[cur_dim];
+      std::size_t cur_to = array_view.to[cur_dim];
+      std::size_t cur_step = array_view.step[cur_dim];
+      std::size_t cur_len = (cur_to - cur_from) / cur_step;
+      new_shape.push_back(cur_len);
+    }
+
+    self_type copy = self_type(new_shape);
+    return copy;
+  }
   /**
    * A getter for accessing data in the array
    *
