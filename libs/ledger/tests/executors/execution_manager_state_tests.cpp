@@ -98,7 +98,7 @@ protected:
   {
     for (auto &executor : executors_)
     {
-      executor->SetStateInterface(*storage_);
+      executor->SetStorageInterface(*storage_);
     }
   }
 

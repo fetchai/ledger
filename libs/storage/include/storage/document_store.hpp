@@ -1,4 +1,5 @@
 #pragma once
+
 #include "core/byte_array/byte_array.hpp"
 #include "storage/file_object.hpp"
 #include "storage/key_value_index.hpp"
@@ -10,9 +11,17 @@
 #include "core/mutex.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document.hpp"
+
 namespace fetch {
 namespace storage {
 
+/**
+ * DocumentStore maps keys to serialized data (documents) which is stored on your filesystem
+ *
+ * To do this it maintains two files, a file that stores a mapping of the keys to locations
+ * in the document store
+ *
+ */
 template <std::size_t BLOCK_SIZE = 2048, typename A = FileBlockType<BLOCK_SIZE>,
           typename B = KeyValueIndex<>, typename C = VersionedRandomAccessStack<A>,
           typename D = FileObject<C>>
@@ -31,6 +40,9 @@ public:
 
   using index_type = typename key_value_index_type::index_type;
 
+  /**
+   * Implementation of a document file
+   */
   class DocumentFileImplementation : public file_object_type
   {
   public:
@@ -60,6 +72,11 @@ public:
     self_type *                store_;
   };
 
+  /**
+   * Represents an open 'document', effectively just a serialized memory block.
+   * When modifications are finished to it, it will write the state back to the store
+   * on destruction. Has a PIMPL to an implementation
+   */
   class DocumentFile
   {
   public:
@@ -202,7 +219,10 @@ public:
     }
   }
 
-  // STL-like functionality
+  /**
+   * STL-like functionality achieved with an iterator class. This has to wrap an iterator to the
+   * key value store since we need to deserialize at this level to return the object
+   */
   class iterator
   {
   public:
@@ -219,6 +239,7 @@ public:
     void operator++() { ++wrapped_iterator_; }
 
     bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
+
     bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
 
     Document operator*() const
@@ -247,6 +268,15 @@ public:
     return iterator(this, it);
   }
 
+  /**
+   * Get an iterator to the first element of a subtree (the first element of the range that
+   * matches the first bits of rid)
+   *
+   * @param: rid The key
+   * @param: bits The number of bits of rid we want to match against
+   *
+   * @return: an iterator to the first element of that tree
+   */
   self_type::iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
     byte_array::ConstByteArray const &address = rid.id();
@@ -256,9 +286,18 @@ public:
   }
 
   self_type::iterator begin() { return iterator(this, key_index_.begin()); }
+
   self_type::iterator end() { return iterator(this, key_index_.end()); }
 
 protected:
+  /**
+   * Get or create a document file
+   *
+   * @param: rid The key
+   * @param: create Whether to create a new file when it's missing
+   *
+   * @return: Document file, empty when the file doesn't exist
+   */
   DocumentFile GetDocumentFile(ResourceID const &rid, bool const &create = true)
   {
     byte_array::ConstByteArray const &address = rid.id();
@@ -279,10 +318,15 @@ protected:
   }
 
   mutex::Mutex         mutex_{ __LINE__, __FILE__ };
-  key_value_index_type key_index_;   // Document store made up of key_index to locate and
-  file_store_type      file_store_;  // file store to store files
+  key_value_index_type key_index_;
+  file_store_type      file_store_;
 
 private:
+  /**
+   * Write a document file under modification back to the store
+   *
+   * @param: doc The document file implementation
+   */
   void UpdateDocumentFile(DocumentFileImplementation &doc)
   {
     doc.Flush();

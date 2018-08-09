@@ -199,7 +199,13 @@ class PyfetchNode(object):
 
         cmdstr = "screen -S 'lldb-{}' -dm lldb ".format(self.index) + self.frontargs + " -s '/tmp/lldb.run.cmd' -- " + cmdstr
         print(cmdstr)
-        self.p = subprocess.Popen("{} | tee {}".format(cmdstr, os.path.join(self.logdir, str(self.index))),
+
+        if logdir:
+            cmdstr += " | tee {}".format(os.path.join(self.logdir, str(self.index)))
+        else:
+            cmdstr += " >/dev/null"
+
+        self.p = subprocess.Popen("{}".format(cmdstr)),
             shell=True
         )
 

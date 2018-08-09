@@ -1,30 +1,46 @@
 pipeline {
-    agent {
-        docker {
-            image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+
+  agent {
+    docker {
+      image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+    }
+  }
+
+  stages {
+
+
+    stage('Debug Build') {
+      steps {
+        sh './scripts/ci-tool.py -B Debug'
+      }
+    }
+
+    stage('Release Build') {
+      steps {
+        sh './scripts/ci-tool.py -B Release'
+      }
+    }
+
+
+    stage('Unit Tests') {
+      steps {
+        sh 'CTEST_OUTPUT_ON_FAILURE=1 ./scripts/ci-tool.py -T Release'
+      }
+    }
+
+    stage('Clang Tidy Checks') {
+        steps {
+            sh './scripts/run-static-analysis.py build-release/'
         }
     }
-    stages {
-        stage('Build') {
-            steps {
-                sh './develop-image/cmake-make.sh all'
-            }
-        }
-        stage('Static Analysis') {
-            steps {
-                sh './scripts/run-static-analysis.py build/'
-            }
-        }
-        stage('Code Style') {
-            steps {
-                sh './scripts/apply-style.py -w -a'
-            }
-        }
-        stage('Unit Tests') {
-            steps {
-                sh './develop-image/cmake-make.sh CTEST_OUTPUT_ON_FAILURE=1 test'
-            }
+
+    stage('Clang Format Checks') {
+        steps {
+            sh './scripts/apply-style.py -w -a'
         }
     }
+
+
+  }
 }
 

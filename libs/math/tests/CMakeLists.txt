@@ -22,6 +22,7 @@ add_fetch_test(correlation_test fetch-math math/distance/correlation.cpp)
 add_fetch_test(distance_matrix_test fetch-math math/distance/distance_matrix.cpp DISABLED)
 add_fetch_gtest(ndarray_test fetch-math math/ndarray)
 add_fetch_gtest(relu_test fetch-math math/kernels/relu)
+add_fetch_gtest(sign_test fetch-math math/kernels/sign)
 
 # disabled / not working tests
 add_fetch_test(load_image_read_exceptions_test fetch-math image/load_image_read_exceptions.cpp DISABLED)
