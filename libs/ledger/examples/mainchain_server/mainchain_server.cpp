@@ -32,7 +32,7 @@ int main(int argc, char const **argv)
   fetch::network::NetworkManager tm(8);
   tm.Start();
 
-  MainChainService service(dbdir, port, tm);
+  MainChainService service(dbdir, port, tm, "foo");
 
   // Running until enter
   std::cout << "Press ENTER to quit" << std::endl;

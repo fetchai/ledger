@@ -32,10 +32,6 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    connection_closed_ = false;
-    fulfilled_         = false;
-    failed_            = false;
-    conclusion_        = NONE;
     id_                = next_promise_id();
   }
 
@@ -126,12 +122,12 @@ public:
 
 private:
   serializers::SerializableException exception_;
-  std::atomic<bool>                  connection_closed_;
-  std::atomic<bool>                  fulfilled_;
-  std::atomic<bool>                  failed_;
+  std::atomic<bool>                  connection_closed_{false};
+  std::atomic<bool>                  fulfilled_{false};
+  std::atomic<bool>                  failed_{false};
   std::atomic<uint64_t>              id_;
   byte_array_type                    value_;
-  std::atomic<Conclusion>            conclusion_;
+  std::atomic<Conclusion>            conclusion_{NONE};
   callback_type on_success_;
   callback_type on_fail_;
 
@@ -212,6 +208,8 @@ public:
       cycles-=1;
       s = GetStatus();
       if (s != WAITING) return s;
+
+      FETCH_LOG_PROMISE();
       Wait(milliseconds, false);
       s = GetStatus();
       if (s != WAITING) return s;
@@ -247,6 +245,7 @@ public:
     if (has_failed())
     {
       fetch::logger.Warn("Connection failed!");
+
       if (throw_exception)
         throw reference_->exception();
       else
@@ -259,6 +258,8 @@ public:
   T As()
   {
     LOG_STACK_TRACE_POINT;
+
+    FETCH_LOG_PROMISE();
     if (!Wait())
     {
       TODO_FAIL("Timeout or connection lost");
@@ -274,6 +275,8 @@ public:
   void As(T &ret)
   {
     LOG_STACK_TRACE_POINT;
+
+    FETCH_LOG_PROMISE();
     if (!Wait())
     {
       TODO_FAIL("Timeout or connection lost");

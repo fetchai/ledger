@@ -41,6 +41,8 @@ public:
 
     auto p =
         client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::CONNECT, host, port);
+
+    FETCH_LOG_PROMISE();
     p.Wait();
   }
 
@@ -52,6 +54,8 @@ public:
     }
 
     auto p = client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::TRY_CONNECT, ep);
+
+    FETCH_LOG_PROMISE();
     p.Wait();
   }
 
@@ -63,6 +67,8 @@ public:
     }
 
     auto p = client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::SHUTDOWN);
+
+    FETCH_LOG_PROMISE();
     p.Wait();
   }
 

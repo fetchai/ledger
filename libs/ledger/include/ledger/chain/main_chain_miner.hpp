@@ -65,7 +65,7 @@ private:
   timestamp_type CalculateNextBlockTime(T &rng)
   {
     static constexpr uint32_t MAX_BLOCK_JITTER_US = 8000;
-    static constexpr uint32_t BLOCK_PERIOD_MS     = 6000;
+    static constexpr uint32_t BLOCK_PERIOD_MS     = 15000;
 
     timestamp_type block_time = clock_type::now() + std::chrono::milliseconds{BLOCK_PERIOD_MS};
     block_time += std::chrono::microseconds{rng() % MAX_BLOCK_JITTER_US};
@@ -92,6 +92,8 @@ private:
       }
 
       auto &block = mainChain_.HeaviestBlock();
+
+      fetch::logger.Info("===> Heaviest Block: ", block.hashString());
 
       block_type nextBlock;
       body_type  nextBody;

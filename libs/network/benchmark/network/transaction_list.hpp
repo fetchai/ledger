@@ -169,9 +169,9 @@ private:
   std::array<SecondT, 200> blockArray_;
   std::array<int, 200>     validArray_;
   std::size_t              getIndex_{0};
-  fetch::mutex::Mutex      mutex_;
+  fetch::mutex::Mutex      mutex_{__LINE__, __FILE__};
 
-  fetch::mutex::Mutex seenMutex_;
+  fetch::mutex::Mutex seenMutex_{__LINE__, __FILE__};
   std::set<FirstT>    seen_;
 };
 

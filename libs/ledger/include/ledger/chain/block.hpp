@@ -91,54 +91,38 @@ public:
 
   std::string summarise() const
   {
-    char buffer[100];
-
-    char *p = buffer;
+    std::string ret;
 
     if (hash().size()>0)
     {
-      for(size_t i=0;i<16;i++)
-      {
-        sprintf(p, "%02x", hash()[i]);
-        p += 2;
-      }
+      ret += hashString();
     }
     else
     {
-      *p++ = '?';
+      ret += "?";
     }
 
-    *p++ = '-';
-    *p++ = '>';
+    ret += " -> ";
 
     if (body_.block_number == 0)
     {
-      p += sprintf(p, "genesis");
+      ret += "genesis";
     }
     else
     {
       if (body_.previous_hash.size()>0)
       {
-        for(size_t i=0;i<16;i++)
-        {
-          sprintf(p, "%02x", body_.previous_hash[i]);
-          p += 2;
-        }
+        ret += prevString();
       }
       else
       {
-        *p++ = '?';
-        *p++ = '?';
-        *p++ = '?';
+        ret += "???";
       }
     }
 
-    p += sprintf(p, " W=%d (%s)",
-                 int(total_weight_),
-                 is_loose_ ? "loose" : "attached"
-                 );
+    ret += " W=" + std::to_string(total_weight_) + ((is_loose_) ? " loose" : " attached");
 
-    return std::string(buffer);
+    return ret;
   }
 
   body_type const &  body() const { return body_; }
@@ -155,9 +139,9 @@ public:
   fetch::byte_array::ByteArray &root() { return root_; }
 
 #if 1  // TODO: Move to py swarm?
-  std::string hashString() const { return std::string(ToHex(body_.hash)); }
+  std::string hashString() const { return std::string(ToBase64(body_.hash)); }
 
-  std::string prevString() const { return std::string(ToHex(body_.previous_hash)); }
+  std::string prevString() const { return std::string(ToBase64(body_.previous_hash)); }
 #endif
 
 private:

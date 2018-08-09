@@ -627,6 +627,17 @@ extern log::details::LogWrapper logger;
 #define LOG_PRINT_STACK_TRACE(name, custom_name) \
   fetch::logger.StackTrace(name, uint32_t(-1), false, custom_name);
 
+#else
+
+#define LOG_STACK_TRACE_POINT_WITH_INSTANCE
+#define LOG_STACK_TRACE_POINT
+#define LOG_LAMBDA_STACK_TRACE_POINT
+#define LOG_CONTEXT_VARIABLE(name)
+#define LOG_SET_CONTEXT_VARIABLE(name)
+#define LOG_PRINT_STACK_TRACE(name, custom_name)
+
+#endif
+
 #define ERROR_BACKTRACE                                         \
   {                                                             \
     constexpr int            framesMax = 20;                    \
@@ -649,16 +660,11 @@ extern log::details::LogWrapper logger;
     fetch::logger.Info("Trace: \n", trace.str());               \
   }
 
-#else
-
-#define LOG_STACK_TRACE_POINT_WITH_INSTANCE
-#define LOG_STACK_TRACE_POINT
-#define LOG_LAMBDA_STACK_TRACE_POINT
-#define LOG_CONTEXT_VARIABLE(name)
-#define LOG_SET_CONTEXT_VARIABLE(name)
-#define LOG_PRINT_STACK_TRACE(name, custom_name)
-
-#endif
-
 //#define LOG_STACK_TRACE_POINT
 //#define LOG_LAMBDA_STACK_TRACE_POINT
+
+#if 1
+#define FETCH_LOG_PROMISE()
+#else
+#define FETCH_LOG_PROMISE()   fetch::logger.Warn("Promise wait: ", __FILE__, ":", __LINE__)
+#endif

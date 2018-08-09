@@ -1,11 +1,14 @@
 #pragma once
+
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection_register.hpp"
 #include "network/service/client.hpp"
 #include "network/generics/callbacks.hpp"
 
+#include <chrono>
 #include <memory>
 #include <unordered_map>
+#include <thread>
 
 namespace fetch {
 namespace network {
@@ -47,9 +50,23 @@ public:
   template <typename T, typename... Args>
   shared_service_client_type CreateServiceClient(NetworkManager const &tm, Args &&... args)
   {
+    using Clock = std::chrono::high_resolution_clock;
+    using Timepoint = Clock::time_point;
 
     T connection(tm);
     connection.Connect(std::forward<Args>(args)...);
+
+    // wait for the connection to be established
+    Timepoint const start = Clock::now();
+    Timepoint const threshold = start + std::chrono::seconds{10};
+    while (!connection.is_alive())
+    {
+      // termination condition
+      if (Clock::now() >= threshold)
+        break;
+
+      std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    }
 
     shared_service_client_type service =
         std::make_shared<service_client_type>(connection.connection_pointer().lock(), tm);

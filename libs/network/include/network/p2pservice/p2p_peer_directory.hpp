@@ -68,6 +68,7 @@ public:
             auto peer = wptr.lock();
             if (peer)
             {
+              FETCH_LOG_PROMISE();
               if (!peer->Call(protocol_, NEED_CONNECTIONS).Wait(300))
               {
                 fetch::logger.Error("Yikes, NEED_CONNECTIONS failed");
@@ -105,17 +106,24 @@ public:
   /// @{
   void NeedConnections(connection_handle_type const &client_id)
   {
-    auto                          details = register_.GetDetails(client_id);
-    std::lock_guard<mutex::Mutex> lock(*details);
-    AddPeerToSuggested(*details);
+    auto details = register_.GetDetails(client_id);
+
+    {
+      std::lock_guard<mutex::Mutex> lock(*details);
+
+      AddPeerToSuggested(*details);
+    }
   }
 
   void EnoughConnections(connection_handle_type const &client_id)
   {
-    auto                          details = register_.GetDetails(client_id);
-    std::lock_guard<mutex::Mutex> lock(*details);
+    auto details = register_.GetDetails(client_id);
 
-    RemovePeerFromSuggested(details->identity.identifier());
+    {
+      std::lock_guard<mutex::Mutex> lock(*details);
+
+      RemovePeerFromSuggested(details->identity.identifier());
+    }
   }
 
   peer_details_map_type SuggestPeersToConnectTo()

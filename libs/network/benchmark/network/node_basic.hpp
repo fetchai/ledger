@@ -225,7 +225,7 @@ public:
 private:
   NodeDirectory                           nodeDirectory_;    // Manage connections to other nodes
   TransactionList<block_hash, block_type> transactionList_;  // List of all transactions
-  fetch::mutex::Mutex                     mutex_;
+  fetch::mutex::Mutex                     mutex_{__LINE__, __FILE__};
 
   // Transmitting thread
   std::thread                thread_;

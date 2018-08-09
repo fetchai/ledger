@@ -177,7 +177,7 @@ public:
 
 private:
   network_benchmark::NodeDirectory nodeDirectory_;  // Manage connections to other nodes
-  fetch::mutex::Mutex              mutex_;
+  fetch::mutex::Mutex              mutex_{__LINE__, __FILE__};
   bool                             stopped_{false};
   std::size_t                      target_ = 16;  // 16 = roughly one block every 0.18s
   uint64_t                         minerNumber_{1};

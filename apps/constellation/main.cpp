@@ -41,6 +41,7 @@ struct CommandLineArguments
   std::size_t num_executors;
   std::size_t num_lanes;
   std::size_t    num_slices;
+  std::string interface;
   bool bootstrap{false};
   std::string dbdir;
 
@@ -64,6 +65,7 @@ struct CommandLineArguments
     parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage",
                    std::string{"node_storage"});
     parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
+    parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
     parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
                    std::string{});
 
@@ -134,6 +136,7 @@ struct CommandLineArguments
     s << "num lanes......: " << args.num_lanes << std::endl;
     s << "bootstrap......: " << args.bootstrap << std::endl;
     s << "db-prefix......: " << args.dbdir << std::endl;
+    s << "interface......: " << args.interface << std::endl;
     s << "peers..........: ";
     for (auto const &peer : args.peers)
     {
@@ -162,7 +165,7 @@ int main(int argc, char **argv)
 
     // create and run the constellation
     auto constellation = fetch::Constellation::Create(args.port, args.num_executors, args.num_lanes,
-                                                      args.num_slices, args.dbdir);
+                                                      args.num_slices, args.interface, args.dbdir);
 
     // run the application
     constellation->Run(args.peers);

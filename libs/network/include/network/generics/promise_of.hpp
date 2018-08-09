@@ -28,6 +28,7 @@ public:
 
   bool Wait()
   {
+    FETCH_LOG_PROMISE();
     promise_.Wait();
     return promise_.is_fulfilled();
   }

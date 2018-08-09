@@ -153,12 +153,8 @@ TEST_F(ExecutorIntegrationTests, CheckTokenContract)
   // create the dummy contract
   auto tx = CreateWalletTransaction();
 
-  fetch::logger.Info("#### Adding transaction...");
-
   // store the transaction inside the store
   storage_->AddTransaction(tx);
-
-  fetch::logger.Info("#### Executing transaction...");
 
   auto const status = executor_->Execute(tx.digest(), 0, {0});
   EXPECT_EQ(status, fetch::ledger::ExecutorInterface::Status::SUCCESS);

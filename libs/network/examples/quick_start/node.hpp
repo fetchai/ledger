@@ -62,6 +62,7 @@ public:
     auto prom = client.Call(protocols::QuickStartProtocols::QUICK_START,
                             protocols::QuickStart::SEND_DATA, d);
 
+    FETCH_LOG_PROMISE();
     prom.Wait();
   }
 

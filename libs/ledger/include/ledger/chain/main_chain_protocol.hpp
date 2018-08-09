@@ -1,9 +1,15 @@
 #pragma once
+
+#include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/main_chain_details.hpp"
 #include "network/service/protocol.hpp"
 #include "network/service/publication_feed.hpp"
 #include "network/service/function.hpp"
 #include "network/generics/subscriptions_container.hpp"
 #include "network/generics/work_items_queue.hpp"
+#include "network/details/thread_pool.hpp"
+#include "network/management/connection_register.hpp"
+
 #include <utility>
 #include <vector>
 
@@ -150,6 +156,8 @@ private:
 
         auto foo = new service::Function<void(chain::MainChain::block_type)>(
           [this](chain::MainChain::block_type block){
+            fetch::logger.Info("Getting dem blocks: ", block.hashString());
+
             this -> pending_blocks_.Add(block);
             this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
           }
@@ -166,6 +174,9 @@ private:
           std::vector<block_type> incoming;
           incoming.reserve(uint64_t(ms));
           prom.As(incoming);
+
+          fetch::logger.Info("Updating pending blocks: ", incoming.size());
+
           this -> pending_blocks_.Add(incoming.begin(), incoming.end());
           this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
         });
@@ -185,6 +196,8 @@ private:
     {
        for(auto &block: work)
        {
+         fetch::logger.Info("Fowarding block: ", block.hashString());
+
          Publish(BLOCK_PUBLISH, block);
        }
     }
@@ -203,6 +216,9 @@ private:
       for(auto &block: work)
       {
         block.UpdateDigest();
+
+        fetch::logger.Info("Adding the block to the chain: ", block.hashString());
+
         if (chain_->AddBlock(block))
         {
           forward_blocks_.Add(block);

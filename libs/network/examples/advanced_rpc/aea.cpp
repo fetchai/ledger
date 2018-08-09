@@ -98,6 +98,8 @@ int main(int argc, char const **argv)
     std::cout << "Sending 'connect' command with parameters " << h << " " << p << std::endl;
 
     auto prom = client.Call(FetchProtocols::AEA_PROTOCOL, AEACommands::CONNECT, h, p);
+
+    FETCH_LOG_PROMISE();
     prom.Wait();
   }
 
@@ -143,6 +145,7 @@ int main(int argc, char const **argv)
 
     auto prom = client.Call(FetchProtocols::PEER_TO_PEER, PeerToPeerCommands::SEND_MESSAGE, msg);
 
+    FETCH_LOG_PROMISE();
     prom.Wait();
   }
 

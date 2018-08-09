@@ -1,9 +1,12 @@
 #pragma once
 
-#include <atomic>
+#include "core/byte_array/encoders.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
+
+#include <atomic>
 
 namespace fetch {
 namespace chain {

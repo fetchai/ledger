@@ -77,6 +77,7 @@ public:
 
     {
       std::lock_guard<mutex::Mutex> lock(*details);
+
       details->Update(pd);
     }
 
@@ -90,6 +91,7 @@ public:
 
     {
       std::lock_guard<mutex::Mutex> lock(*details);
+
       details->Update(pd);
     }
   }

@@ -109,6 +109,7 @@ public:
       if (!running_) return;
 
       incoming_objects_.clear();
+      FETCH_LOG_PROMISE();
       if (!p.Wait(100, false))
       {
         continue;

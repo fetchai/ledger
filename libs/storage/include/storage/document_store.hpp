@@ -318,6 +318,8 @@ protected:
   }
 
   mutex::Mutex         mutex_{ __LINE__, __FILE__ };
+  key_value_index_type key_index_;
+  file_store_type      file_store_;
 
 private:
   /**

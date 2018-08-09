@@ -6,6 +6,11 @@ namespace byte_array {
 
 ConstByteArray ToBase64(ConstByteArray const &str)
 {
+  if (str.size() == 0)
+  {
+    return {};
+  }
+
   // After
   // https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
   std::size_t    N    = str.size();

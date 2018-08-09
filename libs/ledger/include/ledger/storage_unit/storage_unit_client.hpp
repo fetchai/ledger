@@ -67,6 +67,8 @@ public:
 
         // make the client call
         auto p = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::PING);
+
+        FETCH_LOG_PROMISE();
         if (p.Wait(100, false))
         {
           if (p.As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
@@ -78,7 +80,7 @@ public:
       }
       else
       {
-        std::this_thread::sleep_for(std::chrono::milliseconds{20});
+        std::this_thread::sleep_for(std::chrono::milliseconds{200});
       }
     }
 
@@ -94,6 +96,8 @@ public:
     auto p1 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
     auto p2 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
     auto p3 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
+
+    FETCH_LOG_PROMISE();
     if ((!p1.Wait(1000)) || (!p2.Wait(1000)) || (!p3.Wait(1000)))
     {
       fetch::logger.Warn("Client timeout when trying to get identity details.");
@@ -143,6 +147,8 @@ public:
     auto        res     = fetch::storage::ResourceID(tx.digest());
     std::size_t lane    = res.lane(log2_lanes_);
     auto        promise = lanes_[lane]->Call(LaneService::TX_STORE, protocol::SET, res, tx);
+
+    FETCH_LOG_PROMISE();
     promise.Wait();
   }
 
@@ -210,6 +216,7 @@ public:
         lanes_[lane]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET,
                            key.as_resource_id(), value);
 
+    FETCH_LOG_PROMISE();
     promise.Wait(2000);
   }
 
@@ -225,6 +232,7 @@ public:
 
     for (auto &p : promises)
     {
+      FETCH_LOG_PROMISE();
       p.Wait();
     }
   }
@@ -241,6 +249,7 @@ public:
 
     for (auto &p : promises)
     {
+      FETCH_LOG_PROMISE();
       p.Wait();
     }
   }

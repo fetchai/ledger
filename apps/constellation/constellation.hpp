@@ -81,11 +81,12 @@ public:
                                                std::size_t num_executors = DEFAULT_NUM_EXECUTORS,
                                                std::size_t num_lanes     = DEFAULT_NUM_LANES,
                                                std::size_t num_slices    = DEFAULT_NUM_SLICES,
+                                               std::string const &interface_address = "127.0.0.1",
                                                std::string const &prefix = "node_storage")
   {
 
     std::unique_ptr<Constellation> constellation{
-        new Constellation{port_start, num_executors, num_lanes, num_slices, "127.0.0.1", prefix}};
+        new Constellation{port_start, num_executors, num_lanes, num_slices, interface_address, prefix}};
 
     return constellation;
   }

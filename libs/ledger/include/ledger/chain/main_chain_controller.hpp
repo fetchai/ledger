@@ -44,15 +44,28 @@ public:
 
   /// External controls
   /// @{
-  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port) { Connect(host, port); }
+  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port)
+  {
+    fetch::logger.Info("(RPCConnect) Mainchain trying to connect to ", host, ":", port);
+
+    Connect(host, port);
+  }
 
   void TryConnect(p2p::EntryPoint const &ep)
   {
-
     for (auto &h : ep.host)
     {
-      fetch::logger.Debug("Mainchain trying to connect to ", h, ":", ep.port);
-      if (Connect(h, ep.port)) break;
+      if (h == "127.0.0.1")
+      {
+        fetch::logger.Info("Avoiding overfriendlyness", h, ":", ep.port);
+        continue;
+      }
+
+      fetch::logger.Info("Mainchain trying to connect to ", h, ":", ep.port);
+
+      // only connect one?
+      if (Connect(h, ep.port))
+        break;
     }
   }
 
@@ -111,13 +124,15 @@ public:
     shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
 
-    logger.Warn("CONNECT ", std::string(host), ":", port);
+    logger.Warn("CONNECT (MAIN CHAIN) ", std::string(host), ":", port);
 
     // Waiting for connection to be open
     std::size_t n = 0;
     while (n < 10)
     {
       auto p = client->Call(identity_protocol_, MainChainIdentityProtocol::PING);
+
+      FETCH_LOG_PROMISE();
       if (p.Wait(100, false))
       {
         if (p.As<MainChainIdentity::ping_type>() != MainChainIdentity::PING_MAGIC)
@@ -167,6 +182,15 @@ public:
 
     logger.Warn("OMG LOCAL  NAME IS:", local_name);
     logger.Warn("OMG REMOTE NAME IS:", remote_name);
+
+    // loopback detection
+    if (local_name == remote_name)
+    {
+      logger.Warn("OMG #OverFriendly");
+      client->Close();
+      client.reset();
+      return nullptr;
+    }
 
     // Setting up details such that the rest of the mainchain what kind of
     // connection we are dealing with.

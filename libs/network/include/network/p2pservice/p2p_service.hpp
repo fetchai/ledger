@@ -1,5 +1,5 @@
 #pragma once
-#include <memory>
+
 
 #include "network/details/thread_pool.hpp"
 #include "network/management/connection_register.hpp"
@@ -13,6 +13,11 @@
 #include "crypto/prover.hpp"
 #include "network/p2pservice/p2p_peer_directory.hpp"
 #include "network/p2pservice/p2p_peer_directory_protocol.hpp"
+
+#include <memory>
+#include <unordered_set>
+#include <unordered_map>
+
 namespace fetch {
 namespace p2p {
 
@@ -58,6 +63,8 @@ public:
     certificate->GenerateKeys();
     certificate_.reset(certificate);
 
+    fetch::logger.Warn("P2P Identity: ", byte_array::ToBase64(certificate->identity().identifier()));
+
     // Listening for new connections
     this->SetConnectionRegister(register_);
 
@@ -94,11 +101,12 @@ public:
 
     // Adding hooks for listening to feeds etc
     register_.OnClientEnter([](connection_handle_type const &i) {
-      std::cout << "\rNew connection " << i << std::endl;
+      fetch::logger.Info("Peer joined: ", i);
     });
 
-    register_.OnClientLeave(
-        [](connection_handle_type const &i) { std::cout << "\rPeer left " << i << std::endl; });
+    register_.OnClientLeave([](connection_handle_type const &i) {
+      fetch::logger.Info("Peer left: ", i);
+    });
 
     // TODO: Get from settings
     min_connections_ = 2;
@@ -156,6 +164,7 @@ public:
 
   bool Connect(byte_array::ConstByteArray const &host, uint16_t const &port)
   {
+    fetch::logger.Info("START P2P CONNECT: Host: ", host, " port: ", port);
 
      shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
@@ -165,13 +174,13 @@ public:
     while ((n < 10) && (!client->is_alive()))
     {
       LOG_STACK_TRACE_POINT;
-      std::this_thread::sleep_for(std::chrono::milliseconds(2));
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
       ++n;
     }
 
     if (n >= 10)
     {
-      fetch::logger.Error("Connection never came to live in P2P module");
+      fetch::logger.Error("Connection never came to live in P2P module. Host: ", host, " port: ", port);
       // TODO: throw error?
       client.reset();
       return false;
@@ -190,6 +199,8 @@ public:
     */
     p.As(address);
 
+    fetch::logger.Info("Looks like my address is: ", address);
+
     {  // Exchanging identities including node setup
       LOG_STACK_TRACE_POINT;
 
@@ -207,16 +218,21 @@ public:
       auto        p = client->Call(IDENTITY, P2PIdentityProtocol::HELLO, my_details_->details);
       PeerDetails details = p.As<PeerDetails>();
 
+      fetch::logger.Info("The remove identity is: ", byte_array::ToBase64(details.identity.identifier()));
+
       auto regdetails = register_.GetDetails(client->handle());
+
       {
         std::lock_guard<mutex::Mutex> lock(*regdetails);
+
         regdetails->Update(details);
       }
-    }
 
-    {
-      std::lock_guard<mutex_type> lock_(peers_mutex_);
-      peers_[client->handle()] = client;
+      {
+        std::lock_guard<mutex_type> lock_(peers_mutex_);
+        peers_[client->handle()] = client;
+        peer_identities_.emplace(details.identity.identifier());
+      }
     }
 
     // Setup feeds to listen to
@@ -277,6 +293,11 @@ public:
   }
   /// }
 
+  byte_array::ConstByteArray identity() const
+  {
+    return certificate_->identity().identifier();
+  }
+
 protected:
   callback_peer_update_profile_type callback_peer_update_profile_;
 
@@ -300,7 +321,8 @@ protected:
           auto conn = c.second.lock();
           if (conn)
           {
-            auto                          details = register_.GetDetails(conn->handle());
+            auto details = register_.GetDetails(conn->handle());
+
             std::lock_guard<mutex::Mutex> lock(*details);
 
             switch (conn->Type())
@@ -309,6 +331,28 @@ protected:
               outgoing_.insert(details->identity.identifier());
               for (auto &e : details->entry_points)
               {
+#if 0
+                char const *t = "unknown";
+                if (e.is_lane)
+                {
+                  t = "lane ";
+                }
+                else if (e.is_mainchain)
+                {
+                  t = "disco";
+                }
+                else if (e.is_mainchain)
+                {
+                  t = "chain";
+                }
+
+                fetch::logger.Info(" - type: ", t, " port: ", e.port);
+                for (auto const &h : e.host)
+                {
+                  fetch::logger.Info("   + host: ", h);
+                }
+#endif
+
                 if (!e.was_promoted)
                 {
                   orchestration.push_back(e);
@@ -418,19 +462,36 @@ protected:
 
         if (e.is_discovery)
         {
-          if (outgoing_.find(e.identity.identifier()) == outgoing_.end())
+          bool const is_ourself = e.identity.identifier() == certificate_->identity().identifier();
+
+          if ((!is_ourself) && (outgoing_.find(e.identity.identifier()) == outgoing_.end()))
           {
             endpoints.push_back(e);
           }
         }
       }
     }
+
     std::random_shuffle(endpoints.begin(), endpoints.end());
 
     // Connecting to peers who need connection
-    for (auto e : endpoints)
+    for (auto const &e : endpoints)
     {
       if (create_count == 0) break;
+
+//      // we must be careful not to connect to peers to whom we have already connected
+//      bool already_connected = false;
+//      {
+//        std::lock_guard<mutex::Mutex> lock_peers(peers_mutex_);
+//        already_connected = peer_identities_.find(e.identity.identifier()) != peer_identities_.end();
+//      }
+
+//      if (already_connected)
+//      {
+//        logger.Info("Discarding peer because already connected...");
+//        continue;
+//      }
+
       thread_pool_->Post([this, e]() { this->TryConnect(e); });
       --create_count;
     }
@@ -443,22 +504,27 @@ protected:
 
   void TryConnect(EntryPoint const &e)
   {
+    fetch::logger.Info("#!# Trying to connect to ", byte_array::ToBase64(e.identity.identifier()));
+
     if (e.identity.identifier() == "")
     {
       fetch::logger.Error("Encountered empty identifier");
       return;
     }
 
-    fetch::logger.Debug("Trying to connect to ", byte_array::ToBase64(e.identity.identifier()));
     for (auto &h : e.host)
     {
-      if (Connect(h, e.port)) break;
+      if (Connect(h, e.port))
+        break;
     }
   }
 
   /// @}
 
 private:
+
+  using ConnectedIdentities = std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV>;
+
   network_manager_type manager_;
   client_register_type register_;
   thread_pool_type     thread_pool_;
@@ -473,6 +539,7 @@ private:
 
   mutex::Mutex                                                           peers_mutex_{ __LINE__, __FILE__ };
   std::unordered_map<connection_handle_type, shared_service_client_type> peers_;
+  ConnectedIdentities                                                    peer_identities_;
 
   std::unique_ptr<crypto::Prover> certificate_;
   std::atomic<bool>               running_;

@@ -246,7 +246,7 @@ public:
   std::map<fetch::byte_array::ConstByteArray, Account> accounts_;
   std::set<fetch::byte_array::ConstByteArray>          users_;
   fetch::random::LaggedFibonacciGenerator<>            lfg_;
-  fetch::mutex::Mutex                                  mutex_;
+  fetch::mutex::Mutex                                  mutex_{__LINE__, __FILE__};
 };
 
 int main(int argc, char const **argv)

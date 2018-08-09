@@ -19,6 +19,8 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
 {
+  fetch::logger.Info("Constellation :: ", interface_address, " P ", port_start, " E ", num_executors, " S ", num_lanes, "x", num_slices);
+
   // determine how many threads the network manager will require
   std::size_t const num_network_threads =
       num_lanes * 2 + 10;  // 2 := Lane/Storage Server, Lane/Storage Client 10
@@ -36,13 +38,21 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
 
   // Adding handle for the orchestration
   p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
-    std::cout << "MAKING CALL ::: " << std::endl;
+
+    //std::cout << "MAKING CALL ::: " << std::endl;
+
+    fetch::logger.Info("OnPeerUpdateProfile: ", byte_array::ToBase64(ep.identity.identifier()),
+                        " mainchain?: ", ep.is_mainchain.load(),
+                        " lane:? ", ep.is_lane.load());
+
     if (ep.is_mainchain)
     {
       main_chain_remote_->TryConnect(ep);
     }
     if (ep.is_lane)
     {
+      fetch::logger.Info("Trying to make that connection noow.....");
+
       storage_->TryConnect(ep);
     }
   });
