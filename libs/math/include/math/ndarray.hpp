@@ -128,6 +128,25 @@ public:
     return this->operator[](index);
   }
 
+  /**
+   * Operator for accessing data in the array
+   *
+   * @param[in]     indices specifies the data points to access.
+   * @return        the accessed data.
+   *
+   **/
+  type operator()(std::vector<std::size_t> indices) const
+  {
+    assert(indices.size() == shape_.size());
+//    self_type output = self_type(this->super_type::Copy());
+    std::size_t index = 0, shift = 1;
+    for (auto cur_idx : indices)
+    {
+      ComputeIndex(0, index, shift, cur_idx);
+    }
+    return this->operator[](index);
+  }
+
   self_type operator()(NDArrayView array_view) const
   {
     std::vector<std::size_t> new_shape;
