@@ -45,7 +45,7 @@ public:
 private:
   float_type              range_from_, range_to_, range_span_;
   float_type              range_to_index_;
-  float_type              value_from_, value_to, value_span_;
+  float_type              value_from_, value_to_, value_span_;
   std::vector<float_type> data_;
 };
 }  // namespace spline

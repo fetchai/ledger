@@ -67,8 +67,6 @@ public:
     return root()[key];
   }
 
-  std::vector<uint16_t> counters_;
-
   void Parse(const_string_type const &document)
   {
     Tokenise(document);
@@ -153,6 +151,8 @@ public:
   script::Variant const &root() const { return variants_[0]; }
 
 private:
+  std::vector<uint16_t> counters_;
+
   void Tokenise(const_string_type const &document)
   {
     int      line = 0;

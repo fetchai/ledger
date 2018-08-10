@@ -70,8 +70,6 @@ public:
   using client_ptr                  = std::shared_ptr<client_type>;
   using cache_type                  = std::map<remote_host_identifier_type, client_ptr>;
 
-  cache_type cache_;
-
   using protocol_ptr        = std::shared_ptr<fetch::service::Protocol>;
   using protocol_cache_type = std::map<uint32_t, protocol_ptr>;
 
@@ -187,6 +185,9 @@ protected:
     }
     return client;
   }
+
+private:
+  cache_type cache_;
 
   fetch::network::NetworkManager nm_;
   uint16_t                       rpcPort_;

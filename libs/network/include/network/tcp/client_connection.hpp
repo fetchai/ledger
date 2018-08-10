@@ -134,7 +134,7 @@ private:
 
     byte_array::ByteArray message;
 
-    if (header_.content.magic != networkMagic)
+    if (header_.content.magic != networkMagic_)
     {
       fetch::logger.Debug("Magic incorrect - closing connection.");
       auto ptr = manager_.lock();
@@ -174,7 +174,7 @@ private:
 
     for (std::size_t i = 0; i < 8; ++i)
     {
-      header[i] = uint8_t((networkMagic >> i * 8) & 0xff);
+      header[i] = uint8_t((networkMagic_ >> i * 8) & 0xff);
     }
 
     for (std::size_t i = 0; i < 8; ++i)
@@ -230,7 +230,9 @@ private:
   message_queue_type                        write_queue_;
   fetch::mutex::Mutex                       write_mutex_;
   std::string                               address_;
-  const uint64_t networkMagic = 0xFE7C80A1FE7C80A1;  // TODO: (`HUT`) : put this in shared class
+
+  // TODO: (`HUT`) : put this in shared class
+  static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
 
   // TODO: (`HUT`) : fix this to be self-contained
   union

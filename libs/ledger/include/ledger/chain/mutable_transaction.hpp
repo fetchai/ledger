@@ -25,19 +25,19 @@ struct TransactionSummary
   uint64_t          fee{0};
 
   // TODO(EJF):  Needs to be replaced with some kind of ID
-  std::string contract_name_;
+  std::string contract_name;
 };
 
 template <typename T>
 void Serialize(T &serializer, TransactionSummary const &b)
 {
-  serializer << b.resources << b.fee << b.transaction_hash << b.contract_name_;
+  serializer << b.resources << b.fee << b.transaction_hash << b.contract_name;
 }
 
 template <typename T>
 void Deserialize(T &serializer, TransactionSummary &b)
 {
-  serializer >> b.resources >> b.fee >> b.transaction_hash >> b.contract_name_;
+  serializer >> b.resources >> b.fee >> b.transaction_hash >> b.contract_name;
 }
 
 class MutableTransaction
@@ -61,7 +61,7 @@ public:
 
   byte_array::ConstByteArray const &signature() const { return signature_; }
 
-  std::string const &contract_name() const { return summary_.contract_name_; }
+  std::string const &contract_name() const { return summary_.contract_name; }
 
   digest_type const &digest() const { return summary_.transaction_hash; }
 
@@ -96,7 +96,7 @@ public:
       buf << e;
     }
 
-    buf << summary_.fee << summary_.contract_name_ << data_ << signature_;
+    buf << summary_.fee << summary_.contract_name << data_ << signature_;
 
     hasher_type hash;
     hash.Reset();
@@ -136,7 +136,7 @@ public:
     signature_ = sig;
   }
 
-  void set_contract_name(std::string const &name) { summary_.contract_name_ = name; }
+  void set_contract_name(std::string const &name) { summary_.contract_name = name; }
 
   void set_fee(uint64_t fee) { summary_.fee = fee; }
 
