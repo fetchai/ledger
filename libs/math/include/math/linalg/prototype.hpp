@@ -20,14 +20,16 @@ struct Prototype
   };
   
   enum {
-    IS_OP = 1ull << (OpSize - 1),
-    RET   =  1ull | IS_OP,
-    MULT =  5ull | IS_OP,
-    ADD  =  3ull | IS_OP,
-    SUB  =  4ull | IS_OP, 
-    EQ   =  5ull | IS_OP,   
+    RET   =  0ull,
+    MULT =  1ull,
+    ADD  =  2ull,
+    SUB  =  3ull,
+    EQ   =  4ull,
 
-    TRANSPOSE = 6ull | IS_OP
+    CONCAT = 12ull,    
+    TRANSPOSE = 13ull,
+    UPPER = 14ull,
+    LOWER = 15ull
   };
 
 
@@ -50,7 +52,6 @@ struct Prototype
     return two_op_return_type< O, ADD >();
   }
 
-
   template< typename O >
   two_op_return_type< O, MULT >
   constexpr operator*(O const &other) const {
@@ -63,6 +64,13 @@ struct Prototype
     return two_op_return_type< O, RET >();
   }
 
+  template< typename O >
+  two_op_return_type< O, CONCAT >
+  constexpr operator,(O const &other) const {
+    return two_op_return_type< O, CONCAT >();
+  }
+
+  
   template< typename O >
   two_op_return_type< O, EQ >
   constexpr operator=(O const &other) const {
@@ -80,6 +88,16 @@ Prototype<4, 5> const _gamma;
 template<uint64_t P, uint64_t S>
 constexpr typename Prototype<P, S>::template one_op_return_type< Prototype<P, S>::TRANSPOSE > T(Prototype<P, S> const&) {
   return typename Prototype<P, S>::template one_op_return_type< Prototype<P, S>::TRANSPOSE >();
+}
+
+template<uint64_t P, uint64_t S>
+constexpr typename Prototype<P, S>::template one_op_return_type< Prototype<P, S>::UPPER > U(Prototype<P, S> const&) {
+  return typename Prototype<P, S>::template one_op_return_type< Prototype<P, S>::UPPER >();
+}
+
+template<uint64_t P, uint64_t S>
+constexpr typename Prototype<P, S>::template one_op_return_type< Prototype<P, S>::LOWER > L(Prototype<P, S> const&) {
+  return typename Prototype<P, S>::template one_op_return_type< Prototype<P, S>::LOWER >();
 }
 
 
@@ -142,6 +160,25 @@ template< typename O >
 constexpr uint64_t Computes(O const &) 
 {
   return O::Stack;
+}
+
+template< typename O >
+constexpr uint64_t Signature(O const&) 
+{
+  return O::Stack;
+}
+
+
+template< typename A >
+constexpr uint64_t Signature(A const &a, A const &b) 
+{
+  return Signature( (a,b) );
+}
+
+template< typename A, typename... O >
+constexpr uint64_t Signature(A const &a, A const &b, O const &...objs) 
+{
+  return Signature( (a,b), objs... );
 }
 
 
