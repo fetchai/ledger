@@ -110,7 +110,7 @@ public:
 
       incoming_objects_.clear();
       FETCH_LOG_PROMISE();
-      if (!p.Wait(100, false))
+      if (!p.Wait(1000, false))
       {
         continue;
       }

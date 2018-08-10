@@ -69,7 +69,7 @@ public:
         auto p = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::PING);
 
         FETCH_LOG_PROMISE();
-        if (p.Wait(100, false))
+        if (p.Wait(1000, false))
         {
           if (p.As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
           {
