@@ -130,7 +130,8 @@ public:
       }
 
       // Update heaviest pointer if necessary
-      if (tip->loose == false && tip->total_weight > heaviest_.first)
+      if (tip->loose == false && (tip->total_weight > heaviest_.first ||
+            tip->total_weight == heaviest_.first && block.hash() > heaviest_.second )
       {
         fetch::logger.Info("Mainchain: Updating heaviest with tip");
 
@@ -165,7 +166,8 @@ public:
           danglingRoot_.at(danglingRoot).insert(block.hash());
         }
 
-        if (tip->loose == false && tip->total_weight > heaviest_.first)
+        if (tip->loose == false && (tip->total_weight > heaviest_.first ||
+              tip->total_weight == heaviest_.first && block.hash() > heaviest_.second )
         {
           fetch::logger.Info("Mainchain: creating new tip that is now heaviest! (new fork)");
 
@@ -236,7 +238,8 @@ public:
         // KLL: at this point we need to see if this connection has created a
         // new heaviest tip.
         auto updatedTip = tips_[tipHash];
-        if (!updatedTip->loose && updatedTip->total_weight > heaviest_.first)
+        if (updatedTip->loose == false && (updatedTip->total_weight > heaviest_.first ||
+              updatedTip->total_weight == heaviest_.first && tipHash > heaviest_.second )
         {
           fetch::logger.Info("Mainchain: Updating heaviest with tip");
 
