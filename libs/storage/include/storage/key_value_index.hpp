@@ -504,7 +504,6 @@ public:
   void PrintTree()
   {
     if (this->empty()) return;
-    return;
 
     static int counter = 0;
     if(togglePrints)std::cerr << "digraph BST" << std::to_string(counter++) << " {"              << std::endl;
@@ -529,14 +528,14 @@ public:
     nodeInfo += std::to_string(depth);
     nodeInfo += "\nsplit: ";
     nodeInfo += std::to_string(kv.split);
-    nodeInfo += "\nparent: ";
-    nodeInfo += std::to_string(kv.parent);
-    nodeInfo += "\ntotalS: ";
-    nodeInfo += std::to_string(totalSize);
+    //nodeInfo += "\nparent: ";
+    //nodeInfo += std::to_string(kv.parent);
+    //nodeInfo += "\ntotalS: ";
+    //nodeInfo += std::to_string(totalSize);
     nodeInfo += "\nindex: ";
     nodeInfo += std::to_string(thisIndex);
-    nodeInfo += "\nmessageG: ";
-    nodeInfo += (messageG);
+    //nodeInfo += "\nmessageG: ";
+    //nodeInfo += (messageG);
 
     std::string nodeTag = ToHexString(kv.Hash());
     nodeTag.resize(16);
