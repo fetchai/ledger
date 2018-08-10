@@ -65,6 +65,26 @@ ConstByteArray ToHex(ConstByteArray const &str)
   return ret;
 }
 
+std::string ToHexString(ConstByteArray const &str)
+{
+  uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
+  ByteArray      ret;
+  ret.Resize(str.size() << 1);
+
+  std::size_t j = 0;
+  for (std::size_t i = 0; i < str.size(); ++i)
+  {
+    uint8_t c = data[i];
+    ret[j++]  = uint8_t(details::hexChars[(c >> 4) & 0xF]);
+    ret[j++]  = uint8_t(details::hexChars[c & 0xF]);
+  }
+
+  std::ostringstream stringify;
+  stringify << ret;
+
+  return stringify.str();
+}
+
 // Reverse bits in byte
 uint8_t Reverse(uint8_t c)
 {
@@ -96,23 +116,66 @@ ConstByteArray ToBin(ConstByteArray const &str)
 {
   uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
   ByteArray      ret;
-  ret.Resize(str.size() * 8);
+  ret.Resize((str.size() * 8) + (str.size() * 2) );
 
   std::size_t j = 0;
-  for (std::size_t i = 0; i < str.size(); ++i)
+  //for (std::size_t i = 0; i < str.size(); ++i)
+  for (std::size_t i = 0; i < 8; ++i)
   {
     uint8_t c = data[i];
     ret[j++]  = uint8_t(c & 0x80 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x40 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x20 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x10 ? '1' : '0');
+
+    ret[j++]  = uint8_t(' ');
+
     ret[j++]  = uint8_t(c & 0x08 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x04 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x02 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x01 ? '1' : '0');
+
+    ret[j++]  = uint8_t(' ');
+
+
   }
   return ret;
 }
+
+std::string ToBinString(ConstByteArray const &str)
+{
+  uint8_t const *data = reinterpret_cast<uint8_t const *>(str.pointer());
+  ByteArray      ret;
+  ret.Resize((str.size() * 8) + (str.size() * 2) );
+
+  std::size_t j = 0;
+  //for (std::size_t i = 0; i < str.size(); ++i)
+  for (std::size_t i = 0; i < 8; ++i)
+  {
+    uint8_t c = data[i];
+    ret[j++]  = uint8_t(c & 0x80 ? '1' : '0');
+    ret[j++]  = uint8_t(c & 0x40 ? '1' : '0');
+    ret[j++]  = uint8_t(c & 0x20 ? '1' : '0');
+    ret[j++]  = uint8_t(c & 0x10 ? '1' : '0');
+
+    ret[j++]  = uint8_t(' ');
+
+    ret[j++]  = uint8_t(c & 0x08 ? '1' : '0');
+    ret[j++]  = uint8_t(c & 0x04 ? '1' : '0');
+    ret[j++]  = uint8_t(c & 0x02 ? '1' : '0');
+    ret[j++]  = uint8_t(c & 0x01 ? '1' : '0');
+
+    ret[j++]  = uint8_t(' ');
+
+
+  }
+
+  std::ostringstream stringify;
+  stringify << ret;
+
+  return stringify.str();
+}
+
 
 // To bin, but with the bits in the bytes reversed endianness
 ConstByteArray ToBinReverse(ConstByteArray const &str)

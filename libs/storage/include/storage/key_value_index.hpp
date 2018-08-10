@@ -4,6 +4,7 @@
 #include "storage/key.hpp"
 #include "storage/random_access_stack.hpp"
 #include "storage/versioned_random_access_stack.hpp"
+#include "storage/extern_control.hpp"
 
 #include <cstring>
 #include <deque>
@@ -26,6 +27,8 @@ struct KeyValuePair
   {
     memset(this, 0, sizeof(decltype(*this)));
     parent = uint64_t(-1);
+    //left   = uint64_t(-1);
+    //right  = uint64_t(-1);
   }
 
   using key_type = Key<S>;
@@ -224,6 +227,9 @@ public:
     int            left_right = 0;
     index_type     depth      = 0;
     key_value_pair kv;
+
+    //std::cout << "getting if exists" << std::endl;
+
     FindNearest(key, kv, split, pos, left_right, depth);
 
     if (!split)
@@ -256,8 +262,13 @@ public:
     key_value_pair kv;
     int            left_right;
 
+    //std::cout << "\nSetting " << ToBin(key_str) << std::endl;
+
     index_type depth;
     index_type index = FindNearest(key, kv, split, pos, left_right, depth);
+
+    //std::cout << "pos: "   << pos << std::endl;
+    //std::cout << "depth: " << depth << std::endl;
 
     bool update_parent = false;
 
@@ -268,6 +279,9 @@ public:
       kv.split      = uint16_t(key.size());
       update_parent = kv.UpdateLeaf(args...);
 
+      //std::cout << "Set as root" << std::endl;
+      //std::cout << "key size: " << key.size() << std::endl;
+
       index = stack_.Push(kv);
     }
     else if (split)
@@ -277,9 +291,12 @@ public:
       index_type     rid = 0, lid = 0, pid = 0, cid = 0;
       bool           update_root = (index == root_);
 
+      //std::cout << "updating root" << std::endl;
+
       switch (left_right)
       {
       case -1:
+        //std::cout << "pushing right" << std::endl;
         cid = rid = index;
         right     = kv;
 
@@ -297,6 +314,7 @@ public:
         stack_.Set(rid, right);
         break;
       case 1:
+        //std::cout << "pushing left" << std::endl;
         cid = lid = index;
         left      = kv;
 
@@ -357,6 +375,8 @@ public:
       stack_.Set(uint64_t(index), kv);
     }
 
+    //std::cout << "+++++++++" << std::endl;
+
     if ((kv.parent != index_type(-1)) && (update_parent))
     {
       if (stack_.DirectWrite())
@@ -368,6 +388,8 @@ public:
         schedule_update_[index] = kv;
       }
     }
+
+    PrintTree();
   }
 
   byte_array::ByteArray Hash()
@@ -436,13 +458,40 @@ public:
       }
       else
       {
+
+        //std::cout << "Current ref:" << std::endl;
+
+        std::string nodeInfo = ToBinString(kv_.key.ToByteArray());
+        nodeInfo.resize(16);
+        //std::cout << nodeInfo << std::endl;
+        //std::cout << "" << std::endl;
+
         self_->GetNext(kv_);
+
+        //std::cout << "\t\t\t\t" << "New ref:" << std::endl;
+
+        nodeInfo = ToBinString(kv_.key.ToByteArray());
+        nodeInfo.resize(16);
+        //std::cout << "\t\t\t\t" << nodeInfo << std::endl;
+        //std::cout << "\t\t\t\t" << "is leaf: " << kv_.is_leaf() << std::endl;
+        //std::cout << "" << std::endl;
       }
     }
 
     std::pair<byte_array::ByteArray, uint64_t> operator*() const
     {
-      return std::make_pair(kv_.key.ToByteArray(), kv_.value);
+      messageG = "Before iterate ";
+      self_->PrintTree();
+
+      //std::cout << "*** making pair: " << ToHex(kv_.key.ToByteArray()) << std::endl;
+      //std::cout << "*** making pair: " << kv_.value << std::endl;
+
+      auto pair = std::make_pair(kv_.key.ToByteArray(), kv_.value);
+
+      messageG = "After iterate ";
+      self_->PrintTree();
+
+      return pair;
     }
 
   protected:
@@ -452,15 +501,85 @@ public:
     self_type *    self_;
   };
 
-  self_type::iterator begin()
+  void PrintTree()
   {
-    if (this->empty()) return end();
+    if (this->empty()) return;
+    return;
+
+    static int counter = 0;
+    if(togglePrints)std::cerr << "digraph BST" << std::to_string(counter++) << " {"              << std::endl;
+    if(togglePrints)std::cerr << "node [fontname=\"Arial\"];" << std::endl;
+
     key_value_pair kv;
     stack_.Get(root_, kv);
 
-    GetLeftLeaf(kv);
+    DepthSearchTree(kv, 0, root_);
+    if(togglePrints)std::cerr << "}" << std::endl;
+    if(togglePrints)std::cerr << "" << std::endl;
+  }
+
+  std::string DepthSearchTree(key_value_pair kv, int depth, uint64_t thisIndex)
+  {
+    byte_array::ByteArray shortKey = kv.key.ToByteArray();
+    shortKey.Resize(16);
+
+    std::string nodeInfo = ToBinString(kv.key.ToByteArray());
+    nodeInfo.resize(16);
+    nodeInfo += "\ndepth: ";
+    nodeInfo += std::to_string(depth);
+    nodeInfo += "\nsplit: ";
+    nodeInfo += std::to_string(kv.split);
+    nodeInfo += "\nparent: ";
+    nodeInfo += std::to_string(kv.parent);
+    nodeInfo += "\ntotalS: ";
+    nodeInfo += std::to_string(totalSize);
+    nodeInfo += "\nindex: ";
+    nodeInfo += std::to_string(thisIndex);
+    nodeInfo += "\nmessageG: ";
+    nodeInfo += (messageG);
+
+    std::string nodeTag = ToHexString(kv.Hash());
+    nodeTag.resize(16);
+    nodeTag+= std::to_string(thisIndex);
+
+    if(togglePrints)std::cerr << "l" << nodeTag << " [ label = \"" << nodeInfo << "\" ];" << std::endl;
+
+    if(!kv.is_leaf())
+    {
+      key_value_pair kv_save = kv;
+      std::size_t next = kv_save.left;
+      stack_.Get(next, kv);
+      auto string1 = DepthSearchTree(kv, depth+1, next);
+
+      next = kv_save.right;
+      stack_.Get(next, kv);
+      auto string2 = DepthSearchTree(kv, depth+1, next);
+
+      //l1  -> { l21 l22 };
+      if(togglePrints)std::cerr << "l" << nodeTag << " -> { " << string1 << " " << string2 << " };" << std::endl;
+    }
+
+    return "l" +nodeTag;
+  }
+
+  self_type::iterator begin()
+  {
+    if (this->empty()) return end();
+
+    messageG = "Before begin ";
+    /*if(togglePrints)*/ PrintTree();
+
+    key_value_pair kv;
+    stack_.Get(root_, kv);
+
+    auto ind = GetLeftLeaf(kv, root_);
 
     assert(iterator(this, kv) != end());
+
+    messageG = "after begin ";
+    messageG += std::to_string(ind);
+
+    /*if(togglePrints)*/ PrintTree();
 
     return iterator(this, kv);
   }
@@ -470,6 +589,11 @@ public:
   // STL-like functionality
   self_type::iterator Find(byte_array::ConstByteArray const &key_str)
   {
+    if(togglePrints) PrintTree();
+
+    //if(togglePrints) std::cout << "our key:" << std::endl;
+    //if(togglePrints) std::cout << ToBin(key_str) << std::endl;
+
     key_type       key(key_str);
     bool           split      = true;
     int            pos        = 0;
@@ -501,6 +625,15 @@ public:
 
     pos = 0;
     kv.key.Compare(key_str, pos, 0, 64);
+
+    //togglePrints = true;
+    //PrintTree();
+    //togglePrints = false;
+
+    //std::cout << "Looking for: " << ToBinString(key_str) << std::endl;
+    //std::cout << "Bits: " << bits << std::endl;
+    //std::cout << "NearestKey: " << ToBinString(kv.key.ToByteArray()) << std::endl;
+    //std::cout << "depth: " << depth << std::endl;
 
     if (uint64_t(pos) < bits)
     {
@@ -543,10 +676,9 @@ private:
     }
   }
 
-  index_type FindNearest(key_type const &key  // Find nearest to key
-                         ,
+  index_type FindNearest(key_type const &key,
                          key_value_pair &kv, bool &split, int &pos, int &left_right,
-                         uint64_t &depth, uint64_t max_depth = std::numeric_limits<uint64_t>::max())
+                         uint64_t &depth, uint64_t max_bits = std::numeric_limits<uint64_t>::max())
   {
     depth = 0;
     if (this->empty()) return index_type(-1);
@@ -562,7 +694,18 @@ private:
 
       stack_.Get(next, kv);
 
-      left_right = key.Compare(kv.key, pos, kv.split >> 8, kv.split & 63);
+      left_right = key.Compare(kv.key, pos, kv.split >> 8, kv.split & 63); // TODO: (`HUT`) : should this be 127?
+
+      //std::cout << "Get: " << next << " root is " << root_ << std::endl;
+      //std::cout << "KV split is : " << kv.split << std::endl;
+      //std::cout << "LR is " << left_right << std::endl;
+
+      //if(togglePrints) std::cout << "\ncompare to: " << ToBin(kv.key.ToByteArray()) << std::endl;
+      //if(togglePrints) std::cout << "compare to: " << ToBin(kv.Hash()) << std::endl;
+      //if(togglePrints) std::cout << "pos: " << pos << std::endl;
+      //if(togglePrints) std::cout << "split: " << split << std::endl;
+      std::string thing = left_right == -1 ? "left" : "right";
+      //if(togglePrints) std::cout << "direc: " << thing << std::endl;
 
       switch (left_right)
       {
@@ -574,7 +717,7 @@ private:
         break;
       }
 
-    } while ((left_right != 0) && (pos >= int(kv.split)) && depth < max_depth);
+    } while ((left_right != 0) && (pos >= int(kv.split)) && uint64_t(pos) < max_bits);
 
     split = (left_right != 0) && (pos < int(kv.split));
 
@@ -615,12 +758,15 @@ private:
     return true;
   }
 
-  void GetLeftLeaf(key_value_pair &kv) const
+  index_type GetLeftLeaf(key_value_pair &kv, index_type ret = 0) const
   {
     while (!kv.is_leaf())
     {
       stack_.Get(kv.left, kv);
+      ret = kv.left;
     }
+
+    return ret;
   }
 
   void GetNext(key_value_pair &kv, uint64_t forbidden_parent = uint64_t(-1))
@@ -633,6 +779,7 @@ private:
     if (kv.parent == uint64_t(-1) || kv.parent == forbidden_parent)
     {
       kv = key_value_pair();
+      //std::cout << "end of life" << std::endl;
       return;
     }
 
@@ -650,6 +797,7 @@ private:
     }
     else if (parent.parent == uint64_t(-1))
     {
+      //std::cout << "end of life" << std::endl;
       kv = key_value_pair();
     }
     else
@@ -658,6 +806,7 @@ private:
 
       if (!gotParent)
       {
+        //std::cout << "end of life" << std::endl;
         kv = key_value_pair();
       }
       else
