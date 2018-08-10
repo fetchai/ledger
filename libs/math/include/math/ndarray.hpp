@@ -147,40 +147,45 @@ public:
     return this->operator[](index);
   }
 
-  self_type operator()(NDArrayView array_view) const
+  void Assign(std::vector<std::size_t> indices, type val)
   {
+    assert(indices.size() == shape_.size());
+
+    std::size_t index = 0, shift = 1, next = 0;
+    ComputeColIndex(0, index, shift, next, indices);
+
+    this->AssignVal(index, val);
+    return;
+
+  }
+
+  /**
+   * extract data from NDArray based on the NDArrayView
+   * @param array_view
+   * @return
+   */
+  self_type GetRange(NDArrayView array_view) const
+  {
+
     std::vector<std::size_t> new_shape;
 
-    // instantiate new array of the right shape!
+    // instantiate new array of the right shape
     for (std::size_t cur_dim = 0; cur_dim < array_view.from.size(); ++cur_dim)
     {
       std::size_t cur_from = array_view.from[cur_dim];
       std::size_t cur_to   = array_view.to[cur_dim];
       std::size_t cur_step = array_view.step[cur_dim];
       std::size_t cur_len  = (cur_to - cur_from) / cur_step;
+
       new_shape.push_back(cur_len);
     }
+
+    // define output
     self_type output = self_type(new_shape);
 
-    // populate new array with the correct data
-    for (std::size_t cur_dim = 0; cur_dim < array_view.from.size(); ++cur_dim)
-    {
-      for (std::size_t cur_idx = 0; cur_idx < new_shape[cur_dim].size(); ++cur_idx)
-      {
-        cur_idx = ComputeIndex()
-
-        output[]
-        this->operator[]()
-
-      }
-
-      std::size_t cur_from = array_view.from[cur_dim];
-      std::size_t cur_to   = array_view.to[cur_dim];
-      std::size_t cur_step = array_view.step[cur_dim];
-      std::size_t cur_len  = (cur_to - cur_from) / cur_step;
-      new_shape.push_back(cur_len);
-    }
-
+    // copy all the data
+    std::cout <<"start recursive copy " << std::endl;
+    array_view.recursive_copy(output, *this);
 
     return output;
   }
@@ -300,6 +305,47 @@ private:
   {
     index += std::size_t(next) * shift;
     shift *= shape_[N];
+  }
+
+  void ComputeRowIndex(std::size_t const &N, std::size_t &index, std::size_t &shift,
+                       std::size_t const &next, std::vector<std::size_t> &indices) const
+  {
+    if (N == indices.size() - 1)
+    {
+      index += indices[N] * shift;
+      shift *= shape_[N];
+    }
+    else
+    {
+      ComputeRowIndex(N + 1, index, shift, next, indices);
+
+      assert(N < shape_.size());
+      index += indices[N] * shift;
+      shift *= shape_[N];
+    }
+  }
+  void ComputeColIndex(std::size_t const &N, std::size_t &index, std::size_t &shift,
+                       std::size_t const &next, std::vector<std::size_t> &indices) const
+  {
+    if (N == indices.size() - 1)
+    {
+      index += indices[N] * shift;
+      shift *= shape_[N];
+//      std::cout << "index: " << index << std::endl;
+//      std::cout << "shift: " << shift << std::endl;
+//      std::cout << std::endl;
+    }
+    else
+    {
+      assert(N < shape_.size());
+      index += indices[N] * shift;
+      shift *= shape_[N];
+//      std::cout << "index: " << index << std::endl;
+//      std::cout << "shift: " << shift << std::endl;
+
+      ComputeColIndex(N + 1, index, shift, next, indices);
+
+    }
   }
 
   std::size_t              size_ = 0;

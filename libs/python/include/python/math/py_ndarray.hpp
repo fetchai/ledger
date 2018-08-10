@@ -124,23 +124,20 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.InlineDivide(c);
              return a;
            })
-      .def("__getitem__", [](NDArray<T> const &s, std::vector<std::tuple<std::size_t, std::size_t>> const &idxs)
+      .def("__getitem__", [](NDArray<T> const &s, std::vector<std::vector<std::size_t>> const &idxs)
       {
-        NDArrayView arr_view;
+        assert(idxs.size() > 0);
+        for (auto cur_idx : idxs) {assert(cur_idx.size() == 3);}
+
+        NDArrayView arr_view = NDArrayView();
         for (auto item : idxs)
         {
-          arr_view.from.push_back(std::get<0>(item));
-          arr_view.to.push_back(std::get<1>(item));
-          arr_view.step.push_back(1);
+          arr_view.from.push_back(item[0]);
+          arr_view.to.push_back(item[1]);
+          arr_view.step.push_back(item[2]);
         }
-        std::cout << "HI THERE!" << std::endl;
-        std::cout << arr_view.from[0] << std::endl;
-        std::cout << s(arr_view)[0] << std::endl;
-        std::cout << s(arr_view)[1] << std::endl;
-        std::cout << s(arr_view)[2] << std::endl;
-        std::cout << s(arr_view)[3] << std::endl;
 
-        return s(arr_view);
+        return s.GetRange(arr_view);
 
       })
 //      {
