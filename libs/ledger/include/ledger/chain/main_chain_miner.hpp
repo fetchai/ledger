@@ -85,39 +85,48 @@ private:
 
     while (!stop_)
     {
-      if (clock_type::now() < next_block_time)
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds{10});
-        continue;
-      }
-
+      // determine the heaviest block
       auto &block = mainChain_.HeaviestBlock();
 
-      fetch::logger.Info("===> Heaviest Block: ", block.hashString());
-
-      block_type nextBlock;
-      body_type  nextBody;
-      nextBody.block_number  = block.body().block_number + 1;
-      nextBody.previous_hash = block.hash();
-      nextBody.miner_number  = minerNumber_;
-
-      // Pack the block with transactions
-      miner_.GenerateBlock(nextBody, num_lanes_, num_slices_);
-      nextBlock.SetBody(nextBody);
-      nextBlock.UpdateDigest();
-
-      // Mine the block
-      nextBlock.proof().SetTarget(target_);
-      if (dummy_miner_type::Mine(nextBlock, 100))
+      // if the heaviest block has changed then we need to schedule the next block time
+      if (block.hash() != previous_heaviest)
       {
-        // Add the block
-        blockCoordinator_.AddBlock(nextBlock);
-        if (onBlockComplete_)
-        {
-          onBlockComplete_(nextBlock);
-        }
+        fetch::logger.Info("===> New Heaviest Block: ", block.hashString());
+
+        // new heaviest has been detected
         next_block_time = CalculateNextBlockTime(rng);
+        previous_heaviest = block.hash();
       }
+
+      // if we are ready to generate a new block
+      if (clock_type::now() >= next_block_time)
+      {
+        block_type nextBlock;
+        body_type nextBody;
+        nextBody.block_number = block.body().block_number + 1;
+        nextBody.previous_hash = block.hash();
+        nextBody.miner_number = minerNumber_;
+
+        // Pack the block with transactions
+        miner_.GenerateBlock(nextBody, num_lanes_, num_slices_);
+        nextBlock.SetBody(nextBody);
+        nextBlock.UpdateDigest();
+
+        // Mine the block
+        nextBlock.proof().SetTarget(target_);
+        if (dummy_miner_type::Mine(nextBlock, 100))
+        {
+          // Add the block
+          blockCoordinator_.AddBlock(nextBlock);
+          if (onBlockComplete_)
+          {
+            onBlockComplete_(nextBlock);
+          }
+          next_block_time = CalculateNextBlockTime(rng);
+        }
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
   }
 

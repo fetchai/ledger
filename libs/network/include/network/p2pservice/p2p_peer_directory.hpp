@@ -69,7 +69,7 @@ public:
             if (peer)
             {
               FETCH_LOG_PROMISE();
-              if (!peer->Call(protocol_, NEED_CONNECTIONS).Wait(300))
+              if (!peer->Call(protocol_, NEED_CONNECTIONS).Wait(1000))
               {
                 fetch::logger.Error("Yikes, NEED_CONNECTIONS failed");
               }

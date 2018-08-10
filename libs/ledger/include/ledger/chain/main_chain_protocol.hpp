@@ -217,10 +217,12 @@ private:
       {
         block.UpdateDigest();
 
-        fetch::logger.Info("Adding the block to the chain: ", block.hashString());
+//        fetch::logger.Info("Adding the block to the chain: ", block.summarise());
 
         if (chain_->AddBlock(block))
         {
+          fetch::logger.Info("Adding the block to the chain: ", block.summarise());
+
           forward_blocks_.Add(block);
           this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
           if (block.loose())

@@ -120,7 +120,7 @@ public:
     // TODO: Verify expected identity
 
     assert(lane < lanes_.size());
-    fetch::logger.Debug("Adding lane ", lane);
+    fetch::logger.Info("Adding lane ", lane);
 
     lanes_[lane] = client;
 
