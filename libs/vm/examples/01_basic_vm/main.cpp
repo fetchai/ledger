@@ -4,9 +4,13 @@
 #include <fstream>
 
 
-int main()
+int main(int argc, char **argv)
 {
-
+  if(argc != 2) {
+    std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
+    exit(-9);
+  }
+  
 	// asserts!
 	//fetch::math::linalg::Matrix<float, fetch::memory::Array<float>> a(4, 6);
 	//a *= 2.7f;
@@ -44,7 +48,7 @@ int main()
 	//a /= 2.0;
 
 
-	std::ifstream file("test.txt", std::ios::binary);
+	std::ifstream file(argv[1], std::ios::binary);
 	std::ostringstream ss;
 	ss << file.rdbuf();
 	const std::string source = ss.str();
@@ -67,7 +71,7 @@ int main()
           return -1;
           
         }
-        
+
         if(!script.FindFunction("main")) {
           std::cout << "Function 'main' not found" << std::endl;
           return -2;

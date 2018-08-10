@@ -8,6 +8,15 @@ namespace fetch {
 namespace vm {
 
 
+struct IntPair : public Object
+{
+	int32_t first, second;
+	IntPair(const TypeId type_id, VM* vm, int32_t const &a, int32_t const &b):
+		Object(type_id, vm), first(a), second(b) {}
+	virtual ~IntPair() {}
+};
+
+/////////////// END OF CUSTOM CLASSES
 template <typename T>
 struct Matrix : public Object
 {

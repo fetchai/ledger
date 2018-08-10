@@ -93,6 +93,30 @@ Analyser::Analyser()
 		{numeric_type_}, float32_type_, Opcode::ToFloat32);
 	CreateOpcodeFunction("toFloat64",
 		{numeric_type_}, float64_type_, Opcode::ToFloat64);
+
+
+	CreateOpcodeTypeFunction(matrix_template_type_, CONSTRUCTOR,
+        {int32_type_, int32_type_},
+        template_instantiation_type_, Opcode::CreateMatrix);
+    CreateOpcodeTypeFunction(array_template_type_, CONSTRUCTOR,
+        {int32_type_},
+        template_instantiation_type_, Opcode::CreateArray);
+
+	// Custom functions 
+  TypePtr int32_pair_class_ = CreateClassType("IntPair", TypeId::IntPair);
+
+  CreateOpcodeTypeFunction(int32_pair_class_, CONSTRUCTOR, {int32_type_, int32_type_}, int32_pair_class_, Opcode::CreateIntPair);
+  CreateOpcodeInstanceFunction(int32_pair_class_, "first", {}, int32_type_, Opcode::IntPairFirst);
+  CreateOpcodeInstanceFunction(int32_pair_class_, "second", {}, int32_type_, Opcode::IntPairSecond);  
+
+  CreateOpcodeTypeFunction(int32_pair_class_, "Fib", {int32_pair_class_}, int32_pair_class_, Opcode::Fib);
+
+	CreateOpcodeFunction("print",
+		{int32_type_}, void_type_, Opcode::PrintInt32);	
+	CreateOpcodeFunction("print",
+		{array_byte_type_}, void_type_, Opcode::PrintStr);	
+
+
 }
 
 

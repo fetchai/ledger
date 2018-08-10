@@ -64,7 +64,9 @@ enum class TypeId: uint16_t
 	Array_Matrix_Float32__Float32,
 	Array_Matrix_Float64__Float64,
 	// claases
-	Thing
+
+	// Custom
+	IntPair
 };
 
 

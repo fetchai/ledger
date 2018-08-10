@@ -70,7 +70,15 @@ enum class Opcode: uint16_t
 	IndexedPostfixIncOp,
 	IndexedPostfixDecOp,
 	CreateMatrix,
-	CreateArray
+	CreateArray,
+
+	// Custom opcodes
+	PrintInt32,
+	PrintStr,	
+	CreateIntPair,
+	IntPairFirst,	
+	IntPairSecond,
+	Fib
 };
 
 
