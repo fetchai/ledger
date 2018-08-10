@@ -1,4 +1,3 @@
-#include "storage/extern_control.hpp"
 #include "storage/object_store.hpp"
 #include "core/random/lfg.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
@@ -10,19 +9,6 @@
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;
-
-bool togglePrints = false;
-int totalSize = 0;
-std::string messageG = "";
-
-// Reverse bits in byte
-uint8_t Reverse(uint8_t c)
-{
-  c = uint8_t((c & 0xF0) >> 4) | uint8_t((c & 0x0F) << 4);
-  c = uint8_t((c & 0xCC) >> 2) | uint8_t((c & 0x33) << 2);
-  c = uint8_t((c & 0xAA) >> 1) | uint8_t((c & 0x55) << 1);
-  return c;
-}
 
 struct TestSerDeser
 {
@@ -66,20 +52,13 @@ int main(int argc, char const **argv)
       {
         ObjectStore<std::size_t> testStore;
         testStore.New("testFile.db", "testIndex.db");
-        //std::cout << "testing iterations: " << iterations << std::endl;
 
         for (std::size_t i = 0; i < iterations; ++i)
         {
-          //std::cout << "" << std::endl;
-  //        std::cout << "Setting " << i << std::endl;
           testStore.Set(ResourceAddress(std::to_string(i)), i);
 
           std::size_t result;
 
-          //std::cout << "" << std::endl;
-  //        std::cout << "Getting!" << std::endl;
-          testStore.Get(ResourceAddress(std::to_string(i)), result);
-  //        std::cout << "Getting2!" << std::endl;
           testStore.Get(ResourceAddress(std::to_string(i)), result);
 
           // Suppress most expects to avoid spamming terminal
@@ -94,7 +73,6 @@ int main(int argc, char const **argv)
         {
           std::size_t result;
 
-          testStore.Get(ResourceAddress(std::to_string(i)), result);
           testStore.Get(ResourceAddress(std::to_string(i)), result);
 
           // Suppress most expects to avoid spamming terminal
@@ -130,7 +108,6 @@ int main(int argc, char const **argv)
 
       for (auto const &numberOfKeys : keyTests)
       {
-        //std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
@@ -155,11 +132,6 @@ int main(int argc, char const **argv)
         }
 
         std::sort(objects.begin(), objects.end());
-
-        //togglePrints = true;
-        ////testStore.Set(ResourceAddress("whooo"), testType());
-        //testStore.Find(ResourceAddress("argh"));
-        //togglePrints = false;
 
         // Test successfully finding and testing to find elements
         bool successfullyFound = true;
@@ -201,7 +173,6 @@ int main(int argc, char const **argv)
 
       for (auto const &numberOfKeys : keyTests)
       {
-        //std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
@@ -237,10 +208,9 @@ int main(int argc, char const **argv)
 
     SECTION("Test iterator over basic struct")
     {
-      std::vector<std::size_t> keyTests{4,0,1,2,3,4,5,6,7,8,9,99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100, 11};
+      std::vector<std::size_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99, 100, 1010, 9999};
       for (auto const &numberOfKeys : keyTests)
       {
-        //std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
@@ -249,7 +219,6 @@ int main(int argc, char const **argv)
         std::vector<testType>                     objectsCopy;
         fetch::random::LaggedFibonacciGenerator<> lfg;
 
-        totalSize = int(numberOfKeys);
 
         // Create vector of random numbers
         for (std::size_t i = 0; i < numberOfKeys; ++i)
@@ -265,78 +234,43 @@ int main(int argc, char const **argv)
           testStore.Set(ResourceAddress(test.third), test);
           objects.push_back(test);
 
-          messageG = "Build: ";
-          messageG += std::to_string(i);
-
-          togglePrints = true;
-          testStore.PrintTree();
-          togglePrints = false;
         }
 
         std::sort(objects.begin(), objects.end());
 
-        //std::cout << "~~~~Should now iterate cleanly! " << numberOfKeys << std::endl;
         auto mmm = testStore.begin();
         while (mmm != testStore.end())
         {
           ++mmm;
         }
-        //std::cout << "~~~~" << std::endl;
 
         auto nnn = testStore.begin();
         while (nnn != testStore.end())
         {
           ++nnn;
         }
-        //std::cout << "====" << std::endl;
 
-        int counter = 0;
-        //std::cout << "Iterator as binary" << std::endl;
         auto it = testStore.begin();
-
-        //if(togglePrints) std::cout << "Iterating over " << numberOfKeys << std::endl;
 
         while (it != testStore.end())
         {
-          //std::cerr << "XXX" << ToBin(ResourceAddress((*it).third).id())  << "YYY"<< std::endl;
-          togglePrints = true;
-          //if(togglePrints)std::cout << "XXX" << ToBin(ResourceAddress((*it).third).id())  << "YYY"<< std::endl;
-          togglePrints = false;
           ++it;
-          counter++;
         }
-
-        messageG = "Iterate2";
-
-        //std::cout << "" << std::endl;
-
-        //std::cout << counter << std::endl;
-        counter = 0;
 
         it = testStore.begin();
         while (it != testStore.end())
         {
           objectsCopy.push_back(*it);
           ++it;
-          counter++;
         }
-        //std::cout << counter << std::endl;
-        counter = 0;
 
         for (auto i : testStore)
         {
-          counter++;
         }
-
-        //std::cout << counter << std::endl;
-        counter = 0;
 
         for (auto i : testStore)
         {
-          counter++;
         }
-        //std::cout << counter << std::endl;
-        counter = 0;
 
         std::sort(objectsCopy.begin(), objectsCopy.end());
 
@@ -352,7 +286,6 @@ int main(int argc, char const **argv)
                                         13, 14, 99, 9999, 0, 1, 9, 12, 14, 100, 1000, 10000};
       for (auto const &numberOfKeys : keyTests)
       {
-        std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
@@ -385,34 +318,22 @@ int main(int argc, char const **argv)
           objects.push_back(test);
         }
 
-        testStore.PrintTree();
-
         // Now, aim to split the store up and copy it across perfectly
         for (uint8_t keyBegin = 0; keyBegin < 16; ++keyBegin)
         {
-          array[0] = (Reverse(keyBegin));
+          array[0] = (keyBegin << 4) & 0xFF;
 
           auto rid = ResourceID(array);
 
           testStore.Get(rid, dummy);
 
           auto it = testStore.GetSubtree(rid, uint64_t(4));
-          int counter = 0;
-
-          //std::cout << "Key: " << std::endl;
-          //std::cout << ToBin(rid.id()) << std::endl;
 
           while (it != testStore.end())
           {
             objectsCopy.push_back(*it);
-
-            //std::cout << ToBin(ResourceAddress((*it).third).id()) << std::endl;
             ++it;
-            counter++;
           }
-
-          //std::cout << "Final count: " << counter << std::endl;
-          //std::cout << "" << std::endl;
         }
 
         // expect iterator test to go well
@@ -435,7 +356,6 @@ int main(int argc, char const **argv)
                                         13, 14, 99, 9999, 0, 1, 9, 12, 14, 100, 1000};
       for (auto const &numberOfKeys : keyTests)
       {
-        //std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
@@ -467,14 +387,7 @@ int main(int argc, char const **argv)
 
           testStore.Set(ResourceAddress(test.third), test);
           objects.push_back(test);
-
-          ////std::cout << ToBin(ResourceAddress(test.third).id()) << std::endl;
-          ////std::cout << "" << std::endl;
-          //std::cout << "." << std::endl;
-          //std::cout << "" << std::endl;
         }
-
-        //std::cout << "=====================================" << std::endl;
 
         // Now, aim to split the store up and copy it across perfectly
         for (uint8_t keyBegin = 0; ; ++keyBegin)

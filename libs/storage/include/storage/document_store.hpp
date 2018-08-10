@@ -5,8 +5,6 @@
 #include "storage/key_value_index.hpp"
 #include "storage/resource_mapper.hpp"
 
-#include "core/byte_array/encoders.hpp"
-
 #include <cassert>
 #include <fstream>
 #include <memory>
@@ -61,10 +59,10 @@ public:
 
     ~DocumentFileImplementation() { store_->UpdateDocumentFile(*this); }
 
-    DocumentFileImplementation(DocumentFileImplementation const &other) = delete;
+    DocumentFileImplementation(DocumentFileImplementation const &other)           = delete;
     DocumentFileImplementation operator=(DocumentFileImplementation const &other) = delete;
     DocumentFileImplementation(DocumentFileImplementation &&other)                = default;
-    DocumentFileImplementation &operator=(DocumentFileImplementation &&other) = default;
+    DocumentFileImplementation &operator=(DocumentFileImplementation &&other)     = default;
 
     byte_array::ConstByteArray const &address() const { return address_; }
 
@@ -142,11 +140,6 @@ public:
     key_index_.New(index_file, index_diff);
   }
 
-  void PrintTree()
-  {
-    key_index_.PrintTree();
-  }
-
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
@@ -174,11 +167,9 @@ public:
     }
     else
     {
-
       ret.was_created = doc.was_created();
       if (!doc.was_created())
       {
-
         ret.document.Resize(doc.size());
         doc.Read(ret.document);
       }
@@ -191,14 +182,11 @@ public:
   {
     Document ret;
 
-    //std::cout << "Getting RID: " << ToHex(rid.id()) << std::endl;
-
     std::lock_guard<mutex::Mutex> lock(mutex_);
     DocumentFile                  doc = GetDocumentFile(rid, false);
 
     if (!doc)
     {
-      //std::cout << "failed." << std::endl;
       ret.failed = true;
     }
     else
@@ -206,7 +194,6 @@ public:
       ret.was_created = doc.was_created();
       if (!doc.was_created())
       {
-        //std::cout << "wasn't created!" << std::endl;
         ret.document.Resize(doc.size());
         doc.Read(ret.document);
       }
@@ -258,14 +245,11 @@ public:
     {
       auto kv = *wrapped_iterator_;
 
-      messageG = "After iterate2 ";
       DocumentFile doc(store_, kv.first, store_->file_store_, kv.second);
 
       Document ret;
       ret.document.Resize(doc.size());
       doc.Read(ret.document);
-
-      messageG = "After iterate3 ";
 
       return ret;
     }
@@ -344,23 +328,12 @@ private:
    */
   void UpdateDocumentFile(DocumentFileImplementation &doc)
   {
-    //std::cout << ">1" << std::endl;
     doc.Flush();
-
-    //std::cout << ">2" << std::endl;
-
-    //std::cout << "$$$ " << byte_array::ToHex(doc.address()) << std::endl;
-    //std::cout << "$$$ " << (doc.id()) << std::endl;
-    //std::cout << "$$$ " << byte_array::ToHex(doc.Hash()) << std::endl;
-
-    //std::cout << ">2a" << std::endl;
 
     key_index_.Set(doc.address(), doc.id(), doc.Hash());
 
-    //std::cout << ">3" << std::endl;
     // TODO:    file_store_.Flush();
     key_index_.Flush();
-    //std::cout << ">4" << std::endl;
   }
 };
 

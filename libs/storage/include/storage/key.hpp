@@ -30,31 +30,22 @@ struct Key
 
   Key(byte_array::ConstByteArray const &key)
   {
-    //debugKey = key.Copy();
+    assert(key.size() == BYTES);
 
-    memset(key_, 0, BYTES);
-
-    //std::cout << "Setting key!" << std::endl;
-
-    for (std::size_t i = 0; i < key.size(); ++i)
-    {
-      //std::cout << "write: " << (i >> 3) << std::endl;
-
-      key_[i >> 3] |= uint64_t(key[i]) << (56 - (8 *(i % 8)));
-    }
-
-    //std::cout << "~~" << std::endl;
-    //std::cout << ToHex(key) << std::endl;
-    //std::cout << std::hex;
-
+    // Force the byte array to be packed left to right
     for (std::size_t i = 0; i < BLOCKS; ++i)
     {
-      //std::cout << key_[i] ;
+      uint64_t res = 0;
+      res |= uint64_t(key[(i*8) + 0]) << 56;
+      res |= uint64_t(key[(i*8) + 1]) << 48;
+      res |= uint64_t(key[(i*8) + 2]) << 40;
+      res |= uint64_t(key[(i*8) + 3]) << 32;
+      res |= uint64_t(key[(i*8) + 4]) << 24;
+      res |= uint64_t(key[(i*8) + 5]) << 16;
+      res |= uint64_t(key[(i*8) + 6]) << 8;
+      res |= uint64_t(key[(i*8) + 7]);
+      key_[i] = res;
     }
-    //std::cout << std::dec << std::endl;
-    //std::cout << "##" << std::endl;
-
-    verify();
   }
 
   /**
@@ -71,7 +62,6 @@ struct Key
   int Compare(Key const &other, int &pos, int last_block, int last_bit) const
   {
     int i = 0;
-    //last_bit = 999;
 
     while ((i < last_block) && (other.key_[i] == key_[i])) ++i;
 
@@ -90,17 +80,10 @@ struct Key
       return 0;
     }
 
-    //uint64_t top_bit = uint64_t(1) << 63;
-    uint64_t top_bit = 0x8000000000000000;
-    //std::cout << std::hex << top_bit << std::dec << std::endl;
-    top_bit >>= bit;
-
-    diff = key_[0] & top_bit;
-    //std::cout << std::hex << diff << std::dec << std::endl;
+    diff = key_[0] & (1ull << 63) >> bit;
 
     int result = 1 - int((diff == 0) << 1); // -1 == left, so this puts 'smaller numbers' left
 
-    //std::cout << "RRR: " << result << std::endl;
     return result;
   }
 
@@ -114,62 +97,19 @@ struct Key
     byte_array::ByteArray ret;
     ret.Resize(BYTES);
 
-    for (std::size_t i = 0; i < BYTES;i++)
+    for (std::size_t i = 0; i < BLOCKS; ++i)
     {
-      std::size_t key_index     = i >> 3;
-      std::size_t sub_key_index = i % 8;
-      uint64_t temp = key_[key_index];
-      ret[i] = (temp >> (56 -((sub_key_index) * 8))) & 0xff;
+      ret[0 +(i*8)] = (key_[i] >> 56) & 0xFF;
+      ret[1 +(i*8)] = (key_[i] >> 48) & 0xFF;
+      ret[2 +(i*8)] = (key_[i] >> 40) & 0xFF;
+      ret[3 +(i*8)] = (key_[i] >> 32) & 0xFF;
+      ret[4 +(i*8)] = (key_[i] >> 24) & 0xFF;
+      ret[5 +(i*8)] = (key_[i] >> 16) & 0xFF;
+      ret[6 +(i*8)] = (key_[i] >> 8) & 0xFF;
+      ret[7 +(i*8)] = (key_[i]) & 0xFF;
     }
 
-
     return ret;
-  }
-
-  void verify()
-  {
-
-//    auto ret = ToByteArray();
-//
-//    byte_array::ByteArray alt;
-//    alt.Resize(BYTES);
-//
-//    std::size_t j = 0;
-//    for (std::size_t i = 0; i < BLOCKS;i++)
-//    {
-//      uint64_t temp = key_[i];
-//      alt[j++] = (temp & 0xff00000000000000) >> 56; temp <<= 8;
-//      alt[j++] = (temp & 0xff00000000000000) >> 56; temp <<= 8;
-//      alt[j++] = (temp & 0xff00000000000000) >> 56; temp <<= 8;
-//      alt[j++] = (temp & 0xff00000000000000) >> 56; temp <<= 8;
-//      alt[j++] = (temp & 0xff00000000000000) >> 56; temp <<= 8;
-//      alt[j++] = (temp & 0xff00000000000000) >> 56; temp <<= 8;
-//      alt[j++] = (temp & 0xff00000000000000) >> 56; temp <<= 8;
-//      alt[j++] = (temp & 0xff00000000000000) >> 56; temp <<= 8;
-//    }
-//
-//    //std::cout << "bonus" << std::endl;
-//    //std::cout << ToHex(alt) << std::endl;
-//    //std::cout << ToHex(ret) << std::endl;
-//
-//    if(debugKey != ret)
-//    {
-//      //std::cout << "Keys not the same!" << std::endl;
-//
-//      //std::cout << ToBin(debugKey) << std::endl;
-//      //std::cout << ToBin(ret) << std::endl;
-//      //std::cout << "" << std::endl;
-//      //std::cout << ToHex(debugKey) << std::endl;
-//      //std::cout << ToHex(ret) << std::endl;
-//      //std::cout << std::hex << key_[0] << std::endl;
-//      //std::cout << "" << std::endl;
-//
-//      exit(1);
-//    }
-//    else
-//    {
-//      //std::cout << "keys same" << std::endl;
-//    }
   }
 
   // BLOCKS
@@ -177,7 +117,6 @@ struct Key
 
 private:
   uint64_t                   key_[BLOCKS];
-  //byte_array::ConstByteArray debugKey;
 };
 
 }  // namespace storage
