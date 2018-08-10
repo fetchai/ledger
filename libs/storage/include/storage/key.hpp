@@ -116,7 +116,7 @@ struct Key
   std::size_t size() const { return BYTES << 3; }
 
 private:
-  uint64_t                   key_[BLOCKS];
+  uint64_t key_[BLOCKS];
 };
 
 }  // namespace storage

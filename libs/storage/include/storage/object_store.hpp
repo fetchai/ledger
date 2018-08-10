@@ -152,11 +152,6 @@ public:
     store_.Set(rid, ser.data());
   }
 
-  void PrintTree()
-  {
-    store_.PrintTree();
-  }
-
   /**
    * STL-like functionality achieved with an iterator class. This has to wrap an iterator to the
    * KeyByteArrayStore since we need to deserialize at this level to return the object

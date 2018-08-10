@@ -446,8 +446,7 @@ public:
 
     std::pair<byte_array::ByteArray, uint64_t> operator*() const
     {
-      auto pair = std::make_pair(kv_.key.ToByteArray(), kv_.value);
-      return pair;
+      return std::make_pair(kv_.key.ToByteArray(), kv_.value);
     }
 
   protected:
@@ -574,9 +573,6 @@ private:
       stack_.Get(next, kv);
 
       left_right = key.Compare(kv.key, pos, kv.split >> 8, kv.split & 63); // TODO: (`HUT`) : should this be 127?
-
-
-      std::string thing = left_right == -1 ? "left" : "right";
 
       switch (left_right)
       {

@@ -10,20 +10,43 @@
 using namespace fetch::storage;
 using namespace fetch::byte_array;
 
+/**
+ * Test class used to verify that the object store can ser/deser objects correctly
+ */
 struct TestSerDeser
 {
   int         first;
   uint64_t    second;
   std::string third;
 
+  /**
+   * Comparison operator
+   *
+   * @param: rhs Other test class
+   *
+   * @return: less than
+   */
   bool operator<(TestSerDeser const &rhs) const { return third < rhs.third; }
 
+  /**
+   * Equality operator
+   *
+   * @param: rhs Other test class
+   *
+   * @return: is equal to
+   */
   bool operator==(TestSerDeser const &rhs) const
   {
     return first == rhs.first && second == rhs.second && third == rhs.third;
   }
 };
 
+/**
+ * Serializer for TestSerDeser
+ *
+ * @param: serializer The serializer
+ * @param: b The class to serialize
+ */
 template <typename T>
 inline void Serialize(T &serializer, TestSerDeser const &b)
 {
@@ -32,6 +55,12 @@ inline void Serialize(T &serializer, TestSerDeser const &b)
   serializer << b.third;
 }
 
+/**
+ * Deserializer for TestSerDeser
+ *
+ * @param: serializer The deserializer
+ * @param: b The class to deserialize
+ */
 template <typename T>
 inline void Deserialize(T &serializer, TestSerDeser &b)
 {
@@ -96,7 +125,6 @@ int main(int argc, char const **argv)
           }
         }
       }
-
     };
   };
 
