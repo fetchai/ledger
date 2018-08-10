@@ -325,7 +325,6 @@ private:
   event_handler_type on_file_loaded_;
   event_handler_type on_before_flush_;
 
-
   stack_type stack_;
 
   void RevertBookmark()

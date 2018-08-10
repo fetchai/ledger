@@ -48,7 +48,8 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
   EXPECT_EQ(public_key_data__bin_, x.publicKey().keyAsBin());
 }
 
-// TODO: A bit lame test, needs to be tesetd rather with & against hardcoded DER encoded data
+// TODO: A bit lame test, needs to be tesetd rather with & against hardcoded DER
+// encoded data
 TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key__DER)
 {
   //* Production code:
@@ -67,7 +68,8 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
   ASSERT_EQ(x.key(), x_der.key());
   ASSERT_NE(x.KeyAsBin(), x_der.KeyAsBin());
   ASSERT_EQ(x.publicKey().key(), x_der.publicKey().key());
-  // TODO: Public key does not support `DER` enc. yet so it defaults to `bin` enc. in when set to
+  // TODO: Public key does not support `DER` enc. yet so it defaults to `bin`
+  // enc. in when set to
   // DER. ASSERT_NE(x.publicKey().KeyAsBin(), x_der.publicKey().KeyAsBin());
 
   //* Conv. binary data back from DER to bin encoding
@@ -97,7 +99,8 @@ TEST_F(ECDCSAPrivateKeyTest, test_convert_from_bin_to_canonical)
   //* bin & canonical encodings are the same for PRIVATE Key
   ASSERT_EQ(x.KeyAsBin(), x_can.KeyAsBin());
   ASSERT_EQ(x.publicKey().key(), x_can.publicKey().key());
-  //* bin & canonical encodings DIFFER for PUBLIC Key (0x04 z component at the beginning)
+  //* bin & canonical encodings DIFFER for PUBLIC Key (0x04 z component at the
+  // beginning)
   ASSERT_NE(x.publicKey().keyAsBin(), x_can.publicKey().keyAsBin());
 
   //* Converting back to original bin encoding

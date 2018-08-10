@@ -187,11 +187,11 @@ protected:
   }
 
 private:
-  cache_type                               cache_;
+  cache_type cache_;
 
-  fetch::network::NetworkManager           nm_;
-  uint16_t                                 rpcPort_;
-  mutex_type                               mutex_;
+  fetch::network::NetworkManager nm_;
+  uint16_t                       rpcPort_;
+  mutex_type                     mutex_;
 
   std::shared_ptr<fetch::http::HTTPServer> httpServer_;
   std::shared_ptr<rpc_server_type>         rpcServer_;

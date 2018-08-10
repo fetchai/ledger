@@ -74,7 +74,9 @@ public:
     if (!BN_bn2bin(x, static_cast<unsigned char *>(canonical_data.pointer()) + x_data_start_index))
     {
       throw std::runtime_error(
-          "Convert2Bin<...,eECDSASignatureBinaryDataFormat::canonical,...>(): BN_bn2bin(r, ...) "
+          "Convert2Bin<...,"
+          "eECDSASignatureBinaryDataFormat::canonical,...>"
+          "(): BN_bn2bin(r, ...) "
           "failed.");
     }
 
@@ -88,7 +90,9 @@ public:
     if (!BN_bn2bin(y, static_cast<unsigned char *>(canonical_data.pointer()) + y_data_start_index))
     {
       throw std::runtime_error(
-          "Convert2Bin<...,eECDSASignatureBinaryDataFormat::canonical,...>(): BN_bn2bin(r, ...) "
+          "Convert2Bin<...,"
+          "eECDSASignatureBinaryDataFormat::canonical,...>"
+          "(): BN_bn2bin(r, ...) "
           "failed.");
     }
 

@@ -109,8 +109,10 @@ protected:
     //* Modify the correct signature to invalidate it
     inv_sig_enc[0] += 1;
 
-    //* It is not possible to invalidate (format-wise) canonical or bin encoded signature, since it
-    // does NOT contain any structural/format information exept just pure data (r & s values). Thus
+    //* It is not possible to invalidate (format-wise) canonical or bin encoded
+    // signature, since it
+    // does NOT contain any structural/format information exept just pure data
+    // (r & s values). Thus
     // it is only possible to make such signature not to verify.
     if (ENCODING == eECDSAEncoding::DER)
     {
@@ -227,7 +229,8 @@ TEST_F(ECDCSASignatureTest, test_canonical_signature_binary_representation_has_e
   //* Create signature from Canonical binary from:
   ecdsa_signature_type signature_from_canonical_bin{signature.signature()};
 
-  //* Verify that signature reconstructed from canonical binar data is able to verify:
+  //* Verify that signature reconstructed from canonical binar data is able to
+  // verify:
   ASSERT_TRUE(signature_from_canonical_bin.Verify(priv_key.publicKey(), test_data_));
 
   //* Expectations:

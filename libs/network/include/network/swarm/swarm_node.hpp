@@ -38,7 +38,6 @@ protected:
   using client_type = fetch::network::NetworkNodeCore::client_type;
 
 public:
-
   explicit SwarmNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
                      const std::string &identifier, uint32_t maxpeers,
                      fetch::swarm::SwarmPeerLocation uri)

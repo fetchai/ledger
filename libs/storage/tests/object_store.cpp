@@ -11,7 +11,8 @@ using namespace fetch::storage;
 using namespace fetch::byte_array;
 
 /**
- * Test class used to verify that the object store can ser/deser objects correctly
+ * Test class used to verify that the object store can ser/deser objects
+ * correctly
  */
 struct TestSerDeser
 {
@@ -77,8 +78,10 @@ int main(int argc, char const **argv)
   SCENARIO("Testing object store with classes")
   {
     /**
-     * Test of the iterator functionality of the object store. Iterate over the store and
-     * verify 1 to 1 mapping of the set variables of the store to the iterated variables
+     * Test of the iterator functionality of the object store. Iterate over the
+     * store and
+     * verify 1 to 1 mapping of the set variables of the store to the iterated
+     * variables
      */
     SECTION("Test iterator over basic struct")
     {
@@ -89,7 +92,8 @@ int main(int argc, char const **argv)
         std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
-        testStore.New("testFile.db", "testIndex.db");  // create new file to reset the test
+        testStore.New("testFile.db",
+                      "testIndex.db");  // create new file to reset the test
 
         std::vector<testType>                     objects;
         std::vector<testType>                     objectsCopy;
@@ -143,7 +147,8 @@ int main(int argc, char const **argv)
     };
 
     /**
-     * Test of the find functionality of the object store. Check that we can find objects
+     * Test of the find functionality of the object store. Check that we can
+     * find objects
      * after putting them in the store
      */
     SECTION("Test find over basic struct")
@@ -210,7 +215,8 @@ int main(int argc, char const **argv)
     };
 
     /**
-     * Test of the find functionality of the object store. Check that we can't find objects
+     * Test of the find functionality of the object store. Check that we can't
+     * find objects
      * we haven't put in the store
      */
     SECTION("Test find over basic struct, expect failures")
@@ -254,8 +260,10 @@ int main(int argc, char const **argv)
     };
 
     /**
-     * Test of the subtree iterator functionality. Check that we can specify a root and then
-     * iterate over the returned iterator to get all objects that begin with that key
+     * Test of the subtree iterator functionality. Check that we can specify a
+     * root and then
+     * iterate over the returned iterator to get all objects that begin with
+     * that key
      */
     SECTION("Test subtree iterator over basic struct")
     {
@@ -302,7 +310,8 @@ int main(int argc, char const **argv)
         {
           array[0] = (keyBegin);
 
-          // We want to be able to directly define our own hash so directly use ResourceID here
+          // We want to be able to directly define our own hash so directly use
+          // ResourceID here
           auto rid = ResourceID(array);
 
           testStore.Get(rid, dummy);

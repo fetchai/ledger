@@ -150,15 +150,11 @@ def main():
     # process all the files
     success = False
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        output('debug 1')
         result = map(handler, project_sources(project_root))
-        output('debug 2')
 
         if args.all:
-            output('debug 3')
             result = list(result)
 
-        output('debug 4')
         success = all(result)
 
     if args.fix:

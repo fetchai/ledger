@@ -71,8 +71,8 @@ public:
 
     api->OnNewPeerDiscovered([this, api, identifier](const std::string &host) {
       if (api->queryOwnLocation() != host)
-        if (std::find(this->once_and_future_peers_.begin(), this->once_and_future_peers_.end(), host) ==
-            this->once_and_future_peers_.end())
+        if (std::find(this->once_and_future_peers_.begin(), this->once_and_future_peers_.end(),
+                      host) == this->once_and_future_peers_.end())
         {
           this->once_and_future_peers_.insert(host);
           api->DoPing(host);
@@ -107,7 +107,6 @@ private:
   std::shared_ptr<fetch::swarm::SwarmRandom> rnd_;
   std::set<std::string>                      initial_peers_;
   std::set<std::string>                      once_and_future_peers_;
-
 };
 
 }  // namespace swarm
