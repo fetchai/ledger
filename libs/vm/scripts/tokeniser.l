@@ -1,11 +1,11 @@
 %option noyywrap nodefault reentrant bison-bridge
-%option outfile="tokeniser.cpp"
-%option header-file="tokeniser.hpp"
+%option outfile="../src/tokeniser.cpp"
+%option header-file="../include/vm/tokeniser.hpp"
 %x COMMENT
 
 %{
 
-#include "token.hpp"
+#include "vm/token.hpp"
 #define YY_EXTRA_TYPE fetch::vm::Location*
 #define YYSTYPE fetch::vm::Token
 
@@ -13,7 +13,15 @@
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wdeprecated-register"
+#else
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wunused-function"
+#pragma clang diagnostic ignored "-Wsign-compare"
+#pragma clang diagnostic ignored "-Wdeprecated-register"
 #endif
+
+
 
 int Set(fetch::vm::Token* token, const fetch::vm::Token::Kind kind, const char* text,
 	const uint16_t length, fetch::vm::Location* location)

@@ -4,8 +4,8 @@
 #include <vector>
 #include <unordered_map>
 #include <cmath>
-#include "typeids.hpp"
-#include "opcodes.hpp"
+#include "vm/typeids.hpp"
+#include "vm/opcodes.hpp"
 
 
 namespace fetch {
@@ -282,8 +282,8 @@ struct Script
 
 inline float Tolerance(const float a, const float b)
 {
-	static const float RELATIVE_FLT_TOLERANCE = 1e-5;
-	static const float ABSOLUTE_FLT_TOLERANCE = 1e-5;
+  static const float RELATIVE_FLT_TOLERANCE = 1e-5f;
+	static const float ABSOLUTE_FLT_TOLERANCE = 1e-5f;
 	return std::max(RELATIVE_FLT_TOLERANCE*std::max(fabsf(a), fabsf(b)),
 		ABSOLUTE_FLT_TOLERANCE);
 }

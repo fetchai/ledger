@@ -32,7 +32,7 @@ struct Array : public Object
 	{
 		for (int i=0; i<(int)elements.size(); ++i)
 		{
-			Object* object = elements[i];
+                  Object* object = elements[std::size_t(i)];
 			if (object)
 			{
 				object->Release();
@@ -67,7 +67,7 @@ public:
 
 private:
 
-	friend class Object;
+	friend struct Object;
 	static const int FRAME_STACK_SIZE	= 40;
 	static const int STACK_SIZE			= 5000;
 	static const int MAX_LIVE_OBJECTS	= 200;
@@ -997,7 +997,7 @@ private:
 			RuntimeError("out of bounds");
 			return false;
 		}
-		ptr = &(m->matrix.At(row, column));
+		ptr = &(m->matrix.At(std::size_t(row), std::size_t(column) ));
 		return true;
 	}
 
@@ -1019,7 +1019,7 @@ private:
 			RuntimeError("out of bounds");
 			return false;
 		}
-		ptr = (ElementType*)(&array->elements[position]);
+		ptr = (ElementType*)(&array->elements[std::size_t(position)]);
 		return true;
 	}
 
@@ -1044,12 +1044,12 @@ private:
 		}
 		if (lhs_matrix_is_modifiable)
 		{
-			lhs->matrix += rhs->matrix;
+                        lhs->matrix.InlineAdd(rhs->matrix);
 			return;
 		}
 		if (rhs_matrix_is_modifiable)
 		{
-			rhs->matrix += lhs->matrix;
+                        rhs->matrix.InlineAdd(lhs->matrix);
 			lhsv = std::move(rhsv);
 			return;
 		}
@@ -1067,7 +1067,7 @@ private:
 		const bool lhs_matrix_is_modifiable = lhs->count == 1;
 		if (lhs_matrix_is_modifiable)
 		{
-			lhs->matrix += rhs;
+                        lhs->matrix.InlineAdd( rhs );
 			return;
 		}
 		M* m;
@@ -1093,7 +1093,7 @@ private:
 		}
 		if (lhs_matrix_is_modifiable)
 		{
-			lhs->matrix -= rhs->matrix;
+                        lhs->matrix.InlineSubtract(rhs->matrix);
 			return;
 		}
 		if (rhs_matrix_is_modifiable)
@@ -1116,7 +1116,7 @@ private:
 		const bool lhs_matrix_is_modifiable = lhs->count == 1;
 		if (lhs_matrix_is_modifiable)
 		{
-			lhs->matrix -= rhs;
+                        lhs->matrix.InlineSubtract(rhs);
 			return;
 		}
 		M* m;
@@ -1139,7 +1139,10 @@ private:
 		}
 		M* m;
 		AcquireMatrix(lhs_rows, rhs_columns, m);
-		m->matrix.DotReference(lhs->matrix, rhs->matrix);
+                // TODO(tfr): use blas
+                TODO_FAIL("Use BLAS TODO");
+                
+
 		lhsv.SetObject(m, lhsv.type_id);
 	}
 
@@ -1151,7 +1154,7 @@ private:
 		const bool lhs_matrix_is_modifiable = lhs->count == 1;
 		if (lhs_matrix_is_modifiable)
 		{
-			lhs->matrix *= rhs;
+                  lhs->matrix.InlineMultiply(rhs);
 			return;
 		}
 		M* m;
@@ -1168,7 +1171,7 @@ private:
 		const bool rhs_matrix_is_modifiable = rhs->count == 1;
 		if (rhs_matrix_is_modifiable)
 		{
-			rhs->matrix *= lhs;
+                  rhs->matrix.InlineMultiply(lhs);
 			lhsv = std::move(rhsv);
 			return;
 		}
@@ -1186,7 +1189,7 @@ private:
 		const bool lhs_matrix_is_modifiable = lhs->count == 1;
 		if (lhs_matrix_is_modifiable)
 		{
-			lhs->matrix /= rhs;
+                  lhs->matrix.InlineDivide( rhs );
 			return;
 		}
 		M* m;
@@ -1203,8 +1206,9 @@ private:
 		const bool lhs_matrix_is_modifiable = lhs->count == 1;
 		if (lhs_matrix_is_modifiable)
 		{
+                  // TODO(tfr): implement unary minus
 			// is there an inplace op for this?
-			lhs->matrix *= -1;
+                  lhs->matrix.InlineMultiply( -1 );
 			return;
 		}
 		M* m;
@@ -1227,13 +1231,13 @@ private:
 			RuntimeError("invalid operation");
 			return;
 		}
-		lhs->matrix += rhs->matrix;
+		lhs->matrix.InlineAdd( rhs->matrix );
 	}
 
 	template <typename M, typename T>
 	void MatrixNumberAddAssign(M*& lhs, T& rhs)
 	{
-		lhs->matrix += rhs;
+          lhs->matrix.InlineAdd( rhs );
 	}
 
 	template <typename M>
@@ -1249,13 +1253,13 @@ private:
 			RuntimeError("invalid operation");
 			return;
 		}
-		lhs->matrix -= rhs->matrix;
+		lhs->matrix.InlineSubtract( rhs->matrix );
 	}
 
 	template <typename M, typename T>
 	void MatrixNumberSubtractAssign(M*& lhs, T& rhs)
 	{
-		lhs->matrix -= rhs;
+                lhs->matrix.InlineSubtract( rhs );
 	}
 
 	template <typename M>
@@ -1272,7 +1276,9 @@ private:
 		}
 		M* m;
 		AcquireMatrix(lhs_rows, rhs_columns, m);
-		m->matrix.DotReference(lhs->matrix, rhs->matrix);
+                // TODO(tfr): Use blas
+                TODO_FAIL("Use BLAS");
+
 		lhs->Release();
 		lhs = m;
 	}
@@ -1280,13 +1286,13 @@ private:
 	template <typename M, typename T>
 	void MatrixNumberMultiplyAssign(M*& lhs, T& rhs)
 	{
-		lhs->matrix *= rhs;
+          lhs->matrix.InlineMultiply( rhs );
 	}
 
 	template <typename M, typename T>
 	void MatrixNumberDivideAssign(M*& lhs, T& rhs)
 	{
-		lhs->matrix /= rhs;
+          lhs->matrix.InlineDivide(rhs);
 	}
 
 	//

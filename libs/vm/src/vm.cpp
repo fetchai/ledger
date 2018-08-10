@@ -1,4 +1,4 @@
-#include "vm.hpp"
+#include "vm/vm.hpp"
 #include <sstream>
 
 
@@ -6,7 +6,7 @@ namespace fetch {
 namespace vm {
 
 
-inline void Object::Release()
+void Object::Release()
 {
 	if (--count == 0)
 	{
@@ -71,7 +71,7 @@ void VM::ForRangeIterate()
 {
 	ForRangeLoop& loop = range_loop_stack_[range_loop_sp_];
 	Value& variable = GetVariable(loop.variable_index);
-	bool finished;
+	bool finished = true;
 	if (instruction_->variant.i32 == 2)
 	{
 		switch (variable.type_id)
@@ -218,7 +218,7 @@ void VM::CreateArray()
 	Value& top = stack_[sp_];
 	const uint64_t size = uint64_t(top.variant.ui32);
 	const TypeId type_id = instruction_->type_id;
-	Object* object;
+	Object* object = nullptr;
 	switch (type_id)
 	{
 		case TypeId::Array_Int8:
@@ -307,7 +307,9 @@ bool VM::Execute(const Script& script, const std::string& name)
 
 	do
 	{
-		instruction_ = &function_->instructions[pc_++];
+                instruction_ = &function_->instructions[std::size_t(pc_)];
+                ++pc_;
+                
 		switch (instruction_->opcode)
 		{
 			case Opcode::Jump:

@@ -1,7 +1,7 @@
 #ifndef GENERATOR__HPP
 #define GENERATOR__HPP
-#include "node.hpp"
-#include "defs.hpp"
+#include "vm/node.hpp"
+#include "vm/defs.hpp"
 
 
 namespace fetch {

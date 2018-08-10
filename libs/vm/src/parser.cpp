@@ -1,11 +1,11 @@
-#include "parser.hpp"
+#include "vm/parser.hpp"
 #include <sstream>
 
 
 // Must define YYSTYPE and YY_EXTRA_TYPE *before* including the flex-generated header
 #define YYSTYPE fetch::vm::Token
 #define YY_EXTRA_TYPE fetch::vm::Location*
-#include "tokeniser.hpp"
+#include "vm/tokeniser.hpp"
 
 
 namespace fetch {
@@ -1033,7 +1033,7 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
  	// rpn_ holds the Reverse Polish Notation (aka postfix) expression
  	// Here we convert the RPN to an infix expression tree
 
-	for (int i=0; i<(int)rpn_.size(); ++i)
+	for (std::size_t i=0; i<rpn_.size(); ++i)
 	{
 		Expr& expr = rpn_[i];
 		if ((expr.node->kind == Node::Kind::RoundBracketGroup) ||
@@ -1042,14 +1042,14 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
 			continue;
 		if (expr.is_operator)
 		{
-			const int arity = expr.op_info.arity;
-			const int size = (int)infix_stack_.size();
-			for (int i=size-arity; i<size; ++i)
+                       const std::size_t arity = std::size_t(expr.op_info.arity);
+                       const std::size_t size = infix_stack_.size();
+                       for (std::size_t j=size-arity; j<size; ++j)
 			{
-				Expr& operand = infix_stack_[i];
+				Expr& operand = infix_stack_[j];
 				expr.node->children.push_back(std::move(operand.node));
 			}
-			for (int i=0; i<arity; ++i)
+                       for (std::size_t j=0; j<arity; ++j)
 				infix_stack_.pop_back();
 			infix_stack_.push_back(std::move(expr));
 		}
@@ -1262,7 +1262,7 @@ bool Parser::HandleCloser(const bool is_conditional_expression)
 		return true;
 	}
 
-	const Expr& groupop = operators_[groups_.back()];
+	const Expr& groupop = operators_[std::size_t(groups_.back())];
 	const Node::Kind group_kind = groupop.node->kind;
 	const int group_count = groupop.count;
 
@@ -1356,7 +1356,7 @@ bool Parser::HandleComma()
 		return true;
 	}
 
-	const Expr& groupop = operators_[groups_.back()];
+	const Expr& groupop = operators_[std::size_t(groups_.back())];
 	const Node::Kind group_kind = groupop.node->kind;
 
 	if (group_kind == Node::Kind::RoundBracketGroup)
@@ -1388,7 +1388,7 @@ void Parser::HandleOp(const Node::Kind kind, const OpInfo& op_info)
 	bool check_if_group_opener = false;
 	if (groups_.size())
 	{
-		const Expr& groupop = operators_[groups_.back()];
+          const Expr& groupop = operators_[std::size_t(groups_.back())];
 		group_kind = groupop.node->kind;
 		check_if_group_opener = true;
 	}

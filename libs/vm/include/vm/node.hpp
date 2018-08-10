@@ -5,9 +5,9 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
-#include "token.hpp"
-#include "typeids.hpp"
-#include "opcodes.hpp"
+#include "vm/token.hpp"
+#include "vm/typeids.hpp"
+#include "vm/opcodes.hpp"
 
 
 namespace fetch {

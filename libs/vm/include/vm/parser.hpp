@@ -1,6 +1,6 @@
 #ifndef PARSER__HPP
 #define PARSER__HPP
-#include "node.hpp"
+#include "vm/node.hpp"
 
 
 namespace fetch {
@@ -103,7 +103,7 @@ private:
 	{
 		if (groups_.size())
 		{
-			Expr& group = operators_[groups_.back()];
+                  Expr& group = operators_[std::size_t(groups_.back())];
 			++(group.count);
 		}
 	}
@@ -111,15 +111,15 @@ private:
 	void Next()
 	{
 		if (index_ < (int)tokens_.size() - 1)
-			token_ = &tokens_[++index_];
+                  token_ = &tokens_[std::size_t(++index_)];
 	}
 
 	void Undo()
 	{
-		if (--index_ >= 0)
-			token_ = &tokens_[index_];
-		else
-			token_ = nullptr;
+          if (--index_ >= 0)
+            token_ = &tokens_[std::size_t(index_)];
+          else
+            token_ = nullptr;
 	}
 };
 

@@ -587,6 +587,8 @@ public:
     fclose(fp);
   }
 
+
+
   /* Returns the height of the array. */
   size_type height() const { return height_; }
 

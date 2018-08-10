@@ -1,6 +1,6 @@
 #ifndef ANALYSER__HPP
 #define ANALYSER__HPP
-#include "node.hpp"
+#include "vm/node.hpp"
 
 
 namespace fetch {

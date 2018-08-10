@@ -1,4 +1,4 @@
-#include "analyser.hpp"
+#include "vm/analyser.hpp"
 #include <sstream>
 
 
@@ -198,7 +198,7 @@ void Analyser::BuildFunctionDefinition(const BlockNodePtr& parent_block_node,
 	for (int i=0; i<num_parameters; ++i)
 	{
 		ExpressionNodePtr parameter_node =
-			ConvertToExpressionNodePtr(function_definition_node->children[1+i*2]);
+                  ConvertToExpressionNodePtr(function_definition_node->children[std::size_t(1+i*2)]);
 		const std::string& parameter_name = parameter_node->token.text;
 		SymbolPtr symbol = function_definition_node->symbols->Find(parameter_name);
 		if (symbol)
@@ -210,7 +210,7 @@ void Analyser::BuildFunctionDefinition(const BlockNodePtr& parent_block_node,
 			continue;
 		}
 		ExpressionNodePtr parameter_type_node =
-			ConvertToExpressionNodePtr(function_definition_node->children[2+i*2]);
+                  ConvertToExpressionNodePtr(function_definition_node->children[std::size_t(2+i*2)]);
 		TypePtr parameter_type = FindType(parameter_type_node);
 		if (parameter_type == nullptr)
 		{
@@ -233,7 +233,7 @@ void Analyser::BuildFunctionDefinition(const BlockNodePtr& parent_block_node,
 	if (return_type_supplied)
 	{
 		ExpressionNodePtr return_type_node =
-			ConvertToExpressionNodePtr(function_definition_node->children[count-1]);
+                  ConvertToExpressionNodePtr(function_definition_node->children[std::size_t(count-1)]);
 		return_type = FindType(return_type_node);
 		if (return_type == nullptr)
 		{
@@ -475,7 +475,7 @@ void Analyser::AnnotateForStatement(const BlockNodePtr& for_statement_node)
 	const int count = (int)for_statement_node->children.size() - 1;
 	std::vector<ExpressionNodePtr> nodes;
 	int problems = 0;
-	for (int i=1; i<=count; ++i)
+	for (std::size_t i=1; i<=std::size_t(count); ++i)
 	{
 		const NodePtr& child = for_statement_node->children[i];
 		ExpressionNodePtr child_node = ConvertToExpressionNodePtr(child);
@@ -764,7 +764,7 @@ bool Analyser::AnnotateDivideAssignOp(const ExpressionNodePtr& node)
 	ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
 	if (IsWriteable(lhs) == false)
 		return false;
-	if (IsDivideCompatible(node, lhs, rhs) == false)
+	if (IsDivideCompatible(node, lhs, rhs) == nullptr)
 		return false;
 	SetRV(node, lhs->type);
 	return true;
@@ -1379,7 +1379,7 @@ bool Analyser::AnnotateIndexOp(const ExpressionNodePtr& node)
 
 	for (int i=1; i<=num_supplied_rhs_operands; ++i)
 	{
-		const NodePtr& operand = node->children[i];
+          const NodePtr& operand = node->children[std::size_t(i)];
 		ExpressionNodePtr operand_node = ConvertToExpressionNodePtr(operand);
 		if (AnnotateExpression(operand_node) == false)
 			return false;
@@ -1527,7 +1527,7 @@ bool Analyser::AnnotateInvokeOp(const ExpressionNodePtr& node)
 	std::vector<TypePtr> supplied_parameter_types;
 	for (int i=1; i<(int)node->children.size(); ++i)
 	{
-		const NodePtr& supplied_parameter = node->children[i];
+          const NodePtr& supplied_parameter = node->children[std::size_t(i)];
 		ExpressionNodePtr supplied_parameter_node =
 			ConvertToExpressionNodePtr(supplied_parameter);
 		if (AnnotateExpression(supplied_parameter_node) == false)
@@ -1573,10 +1573,10 @@ bool Analyser::AnnotateInvokeOp(const ExpressionNodePtr& node)
 
 		for (int i=1; i<(int)node->children.size(); ++i)
 		{
-			const NodePtr& supplied_parameter = node->children[i];
+                  const NodePtr& supplied_parameter = node->children[std::size_t(i)];
 			ExpressionNodePtr supplied_parameter_node =
 				ConvertToExpressionNodePtr(supplied_parameter);
-			supplied_parameter_node->type = output_parameter_types[i-1];
+			supplied_parameter_node->type = output_parameter_types[std::size_t(i-1)];
 		}
 
 		TypePtr actual_return_type = ConvertType(f->return_type, lhs->type);
@@ -1618,10 +1618,10 @@ bool Analyser::AnnotateInvokeOp(const ExpressionNodePtr& node)
 
 		for (int i=1; i<(int)node->children.size(); ++i)
 		{
-			const NodePtr& supplied_parameter = node->children[i];
+                  const NodePtr& supplied_parameter = node->children[std::size_t(i)];
 			ExpressionNodePtr supplied_parameter_node =
 				ConvertToExpressionNodePtr(supplied_parameter);
-			supplied_parameter_node->type = output_parameter_types[i-1];
+			supplied_parameter_node->type = output_parameter_types[std::size_t(i-1)];
 		}
 
 		SetRV(node, lhs->type);
@@ -1680,13 +1680,13 @@ FunctionPtr Analyser::FindMatchingFunction(const FunctionGroupPtr& fg, const Typ
 		std::vector<TypePtr> temp_output_types;
 		for (int i=0; i<num_types; ++i)
 		{
-			const TypePtr& input_type = input_types[i];
+                  const TypePtr& input_type = input_types[std::size_t(i)];
 			if (input_type->id == TypeId::Void)
 			{
 				match = false;
 				break;
 			}
-			TypePtr expected_type = ConvertType(function->parameter_types[i], type);
+			TypePtr expected_type = ConvertType(function->parameter_types[std::size_t(i)], type);
 			if (expected_type->id == TypeId::Numeric)
 			{
 				if (IsNumericType(input_type->id) == false)

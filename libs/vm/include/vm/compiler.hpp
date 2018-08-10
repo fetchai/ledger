@@ -1,8 +1,8 @@
 #ifndef COMPILER__HPP
 #define COMPILER__HPP
-#include "parser.hpp"
-#include "analyser.hpp"
-#include "generator.hpp"
+#include "vm/parser.hpp"
+#include "vm/analyser.hpp"
+#include "vm/generator.hpp"
 
 
 namespace fetch {

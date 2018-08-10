@@ -1,0 +1,4 @@
+#!/bin/bash
+flex tokeniser.l
+#mv *.cpp ../src
+#mv *.hpp ../include

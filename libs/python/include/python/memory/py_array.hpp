@@ -11,6 +11,7 @@ void BuildArray(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;
+  /*
   py::class_<Array<T>>(module, custom_name.c_str())
       .def(py::init<const std::size_t &>())
       .def(py::init<>())
@@ -30,6 +31,7 @@ void BuildArray(std::string const &custom_name, pybind11::module &module)
       //    .def(py::self = py::self )
       .def("pointer", &Array<T>::pointer)
       .def("size", &Array<T>::size);
+  */
 }
 };  // namespace memory
 };  // namespace fetch
