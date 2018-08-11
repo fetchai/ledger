@@ -8,7 +8,8 @@ function main()
     str[i] = toByte(65+i);
   endfor
 
-  print(str);
+
+  print(str + str);
 
   for(i in 0:10)
     print(x.first());

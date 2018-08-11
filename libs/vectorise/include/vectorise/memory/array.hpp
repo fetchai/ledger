@@ -35,7 +35,7 @@ public:
   Array(std::size_t const &n)
   {
 
-     this->size_ = n;
+    this->size_ = n;
 
     if (n > 0)
     {
@@ -67,7 +67,8 @@ public:
   }
 
 
-  Array(Array const &other) {
+  Array(Array const &other)
+    : super_type() {
     this->operator=(other);
   }  
   
