@@ -1368,7 +1368,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
 		static void Apply(Value& lhsv, Value& rhsv, T& lhs, T& rhs)
 		{
-			lhs += rhs;
+			lhs = T(lhs + rhs);
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
@@ -1395,7 +1395,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
 		static void Apply(Value& lhsv, Value& rhsv, T& lhs, T& rhs)
 		{
-			lhs -= rhs;
+			lhs = T(lhs - rhs);
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
@@ -1422,7 +1422,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
 		static void Apply(Value& lhsv, Value& rhsv, T& lhs, T& rhs)
 		{
-			lhs *= rhs;
+			lhs = T(lhs * rhs);
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
@@ -1452,7 +1452,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
 		static void Apply(Value& lhsv, Value& rhsv, T& lhs, T& rhs)
 		{
-			lhs /= rhs;
+			lhs = T(lhs / rhs);
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
@@ -1476,7 +1476,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
 		static void Apply(Value& lhsv, Value& rhsv, T& lhs, T& rhs)
 		{
-			lhs = -lhs;
+			lhs = T(-lhs);
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
@@ -1500,7 +1500,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
 		static void Apply(T& lhs, T& rhs)
 		{
-			lhs += rhs;
+			lhs = T(lhs + rhs);
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
@@ -1523,7 +1523,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
 		static void Apply(T& lhs, T& rhs)
 		{
-			lhs -= rhs;
+			lhs = T(lhs - rhs);
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
@@ -1546,7 +1546,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
 		static void Apply(T& lhs, T& rhs)
 		{
-			lhs *= rhs;
+			lhs = T(lhs * rhs);
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
@@ -1569,7 +1569,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
 		static void Apply(T& lhs, T& rhs)
 		{
-			lhs /= rhs;
+			lhs = T(lhs / rhs);
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>

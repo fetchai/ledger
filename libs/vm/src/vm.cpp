@@ -127,7 +127,7 @@ void VM::ForRangeIterate()
 		{
 			case TypeId::Int8: {
 				variable.variant.i8 = loop.current.i8;
-				loop.current.i8 += loop.delta.i8;
+				loop.current.i8 = int8_t(loop.current.i8 + loop.delta.i8);
 				finished = (loop.delta.i8 >= 0) ?
 					variable.variant.i8 > loop.target.i8 :
 					variable.variant.i8 < loop.target.i8;
@@ -135,13 +135,13 @@ void VM::ForRangeIterate()
 			}
 			case TypeId::Byte: {
 				variable.variant.ui8 = loop.current.ui8;
-				loop.current.ui8 += loop.delta.ui8;
+				loop.current.ui8 = uint8_t(loop.current.ui8 + loop.delta.ui8);
 				finished = variable.variant.ui8 > loop.target.ui8;
 				break;
 			}
 			case TypeId::Int16: {
 				variable.variant.i16 = loop.current.i16;
-				loop.current.i16 += loop.delta.i16;
+				loop.current.i16 = int16_t(loop.current.i16 + loop.delta.i16);
 				finished = (loop.delta.i16 >= 0) ?
 					variable.variant.i16 > loop.target.i16 :
 					variable.variant.i16 < loop.target.i16;
@@ -149,7 +149,7 @@ void VM::ForRangeIterate()
 			}
 			case TypeId::UInt16: {
 				variable.variant.ui16 = loop.current.ui16;
-				loop.current.ui16 += loop.delta.ui16;
+				loop.current.ui16 = uint16_t(loop.current.ui16 + loop.delta.ui16);
 				finished = variable.variant.ui16 > loop.target.ui16;
 			}
 			case TypeId::Int32: {
