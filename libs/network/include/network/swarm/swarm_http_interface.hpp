@@ -65,7 +65,7 @@ public:
     }
     catch (...)
     {
-      return fetch::http::HTTPResponse(failureString);
+      return fetch::http::HTTPResponse(failureString_);
     }
   }
 
@@ -75,8 +75,8 @@ public:
 
 private:
   std::shared_ptr<SwarmNode> node_;
-  const std::string          successString{"{\"response\": \"success\" }"};
-  const std::string          failureString{
+  const std::string          successString_{"{\"response\": \"success\" }"};
+  const std::string          failureString_{
       "{\"response\": \"failure\", \"reason\": \"problems with parsing "
       "JSON!\"}"};
 };

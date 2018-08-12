@@ -12,6 +12,14 @@
 namespace fetch {
 namespace storage {
 
+/**
+ * Key value pair for binary trees where the key is a byte array. The tree can
+ * be traversed given
+ * a key by switching on each bit of the key
+ *
+ * The parent of the tree will be identifiable with 0xffffffff
+ *
+ */
 template <std::size_t S = 256, std::size_t N = 64>
 struct KeyValuePair
 {
@@ -26,9 +34,12 @@ struct KeyValuePair
   key_type key;
   uint8_t  hash[N];
 
+  // The location in bits of the distance down the key this node splits on
   uint16_t split;
 
+  // Ref to parent, left and right branches
   uint64_t parent;
+
   union
   {
     uint64_t value;
@@ -38,10 +49,7 @@ struct KeyValuePair
 
   bool operator==(KeyValuePair const &kv) { return Hash() == kv.Hash(); }
 
-  bool operator!=(KeyValuePair const &kv)
-  {
-    return !(kv.parent == parent && kv.right == right && kv.left == left);
-  }
+  bool operator!=(KeyValuePair const &kv) { return Hash() != kv.Hash(); }
 
   bool is_leaf() const { return split == S; }
 
@@ -240,7 +248,7 @@ public:
     return kv.value;
   }
 
-  template <typename... Args>  // index_type const &value,
+  template <typename... Args>
   void Set(byte_array::ConstByteArray const &key_str, Args const &... args)
   {
     key_type       key(key_str);
@@ -655,7 +663,8 @@ private:
       }
       else
       {
-        // Switch to rhs branch since we travelled up to find a node we were the left of
+        // Switch to rhs branch since we travelled up to find a node we were the
+        // left of
         stack_.Get(parent.right, parent);
 
         GetLeftLeaf(parent);

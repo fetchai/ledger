@@ -187,6 +187,7 @@ public:
     manager_.Leave(handle_);
   }
 
+private:
   asio::ip::tcp::tcp::socket socket_;
   HTTPConnectionManager &    manager_;
   response_queue_type        write_queue_;

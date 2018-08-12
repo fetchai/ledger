@@ -55,26 +55,26 @@ class NoCopyClass
 public:
   NoCopyClass() {}
 
-  NoCopyClass(int val) : classValue_{val} {}
+  NoCopyClass(int val) : class_value{val} {}
 
   NoCopyClass(NoCopyClass &rhs) = delete;
   NoCopyClass &operator=(NoCopyClass &rhs) = delete;
   NoCopyClass(NoCopyClass &&rhs)           = delete;
   NoCopyClass &operator=(NoCopyClass &&rhs) = delete;
 
-  int classValue_ = 0;
+  int class_value = 0;
 };
 
 template <typename T>
 inline void Serialize(T &serializer, NoCopyClass const &b)
 {
-  serializer << b.classValue_;
+  serializer << b.class_value;
 }
 
 template <typename T>
 inline void Deserialize(T &serializer, NoCopyClass &b)
 {
-  serializer >> b.classValue_;
+  serializer >> b.class_value;
 }
 
 template <typename T>

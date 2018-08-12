@@ -277,7 +277,7 @@ private:
       penalty = std::max(1 + unspent_[i]->summary().fee, penalty);
     }
 
-    // Computing collissions
+    // Computing collisions
     std::vector<std::vector<std::size_t>> lane_collisions;
     lane_collisions.resize(lane_count_);
 
@@ -290,7 +290,7 @@ private:
 
         // TODO(EJF):  Move to Transaction item?
         std::size_t const lane_index =
-            MapResourceToLane(resource, tx->summary().contract_name_, log2_lane_count_);
+            MapResourceToLane(resource, tx->summary().contract_name, log2_lane_count_);
 
         tx->lanes.insert(lane_index);
 

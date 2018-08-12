@@ -5,10 +5,26 @@
 #include "core/serializers/typed_byte_array_buffer.hpp"
 
 #include "storage/key_byte_array_store.hpp"
-// #include "core/serialize/"
+
 namespace fetch {
 namespace storage {
 
+/**
+ * Stores objects of type T using ResourceID as a key, writing to disk, hence
+ * the New/Load
+ * functions.
+ *
+ * Note that you should be using ResourceAddress to hash to a ResourceID
+ * otherwise you will
+ * get key collisions. See the test object_store.cpp for usage
+ *
+ * Since the objects are stored to disk, you must have defined a serializer and
+ * deserializer for
+ * the type T you want to store. See object_store.cpp for an example
+ *
+ * S is the document store's underlying block size
+ *
+ */
 template <typename T, std::size_t S = 2048>
 class ObjectStore
 {
@@ -18,34 +34,91 @@ public:
   using serializer_type = serializers::TypedByteArrayBuffer;
   class iterator;
 
-  template <typename... Args>
-  void New(Args &&... args)
+  /**
+   * Create a new file for the object store with the filename parameters for the
+   * document,
+   * and the index to it.
+   *
+   * If these arguments correspond to existing files, it will overwrite them
+   */
+  void New(std::string const &doc_file, std::string const &index_file, bool const &create = true)
   {
-    store_.New(std::forward<Args>(args)...);
+    store_.New(doc_file, index_file);
   }
 
-  template <typename... Args>
-  void Load(Args &&... args)
+  /**
+   * Load a file into the document store with the filename parameters for the
+   * document,
+   * and the index to it
+   */
+  void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
   {
-    store_.Load(std::forward<Args>(args)...);
+    store_.New(doc_file, index_file);
   }
 
-  void Clear() { store_.Clear(); }
+  /**
+   * Assign object given a key (ResourceID)
+   *
+   * @param: rid The key
+   * @param: object The object to assign
+   *
+   * @return: whether the operation was successful
+   */
+  bool Get(ResourceID const &rid, type &object)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    return LocklessGet(rid, object);
+  }
 
-  void Flush() { store_.Flush(); }
+  /**
+   * Check whether a key has been set
+   *
+   * @param: rid The key
+   *
+   * @return: whether the key has been set
+   */
+  bool Has(ResourceID const &rid)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    return LocklessHas(rid);
+  }
 
-  bool is_open() const { return store_.is_open(); }
+  /**
+   * Put object into the store using the key
+   *
+   * @param: rid The key
+   * @param: object The object
+   *
+   */
+  void Set(ResourceID const &rid, type const &object)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    return LocklessSet(rid, object);
+  }
 
-  bool empty() const { return store_.empty(); }
-
-  void Close() { store_.Close(); }
-
+  /**
+   * Obtain a lock then execute closure to reduce overhead from requiring
+   * multiple locks to be
+   * acquired
+   *
+   * @param: f The closure
+   */
   void WithLock(std::function<void()> const &f)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     f();
   }
 
+  /**
+   * Do a get without locking the structure, do this when it is guaranteed you
+   * have locked (using
+   * WithLock) or don't need to lock (single threaded scenario)
+   *
+   * @param: rid The key
+   * @param: object The object
+   *
+   * @return whether the get was successful
+   */
   bool LocklessGet(ResourceID const &rid, type &object)
   {
     Document doc = store_.Get(rid);
@@ -56,12 +129,31 @@ public:
     return true;
   }
 
+  /**
+   * Do a has without locking the structure, do this when it is guaranteed you
+   * have locked (using
+   * WithLock) or don't need to lock (single threaded scenario)
+   *
+   * @param: rid The key
+   * @param: object The object
+   *
+   * @return whether the has was successful
+   */
   bool LocklessHas(ResourceID const &rid)
   {
     Document doc = store_.Get(rid);
     return !doc.failed;
   }
 
+  /**
+   * Do a set without locking the structure, do this when it is guaranteed you
+   * have locked (using
+   * WithLock) or don't need to lock (single threaded scenario)
+   *
+   * @param: rid The key
+   * @param: object The object
+   *
+   */
   void LocklessSet(ResourceID const &rid, type const &object)
   {
     serializer_type ser;
@@ -70,44 +162,12 @@ public:
     store_.Set(rid, ser.data());
   }
 
-  bool Get(ResourceID const &rid, type &object)
-  {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
-    return LocklessGet(rid, object);
-  }
-
-  bool Has(ResourceID const &rid)
-  {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
-    return LocklessHas(rid);
-  }
-
-  void Set(ResourceID const &rid, type const &object)
-  {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
-    return LocklessSet(rid, object);
-  }
-
-  // STL-like functionality
-  // template <typename... Args>
-  self_type::iterator Find(ResourceID const &rid)
-  {
-    auto it = store_.Find(rid);
-
-    return iterator(it);
-  }
-
-  template <typename... Args>
-  self_type::iterator GetSubtree(Args &&... args)
-  {
-    auto it = store_.GetSubtree(std::forward<Args>(args)...);
-
-    return iterator(it);
-  }
-
-  self_type::iterator begin() { return iterator(store_.begin()); }
-  self_type::iterator end() { return iterator(store_.end()); }
-
+  /**
+   * STL-like functionality achieved with an iterator class. This has to wrap an
+   * iterator to the
+   * KeyByteArrayStore since we need to deserialize at this level to return the
+   * object
+   */
   class iterator
   {
   public:
@@ -121,8 +181,14 @@ public:
     void operator++() { ++wrapped_iterator_; }
 
     bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
+
     bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
 
+    /**
+     * Dereference operator
+     *
+     * @return: a deserialized object
+     */
     type operator*() const
     {
       Document doc = *wrapped_iterator_;
@@ -137,6 +203,34 @@ public:
   protected:
     typename KeyByteArrayStore<S>::iterator wrapped_iterator_;
   };
+
+  self_type::iterator Find(ResourceID const &rid)
+  {
+    auto it = store_.Find(rid);
+
+    return iterator(it);
+  }
+
+  /**
+   * Get an iterator to the first element of a subtree (the first element of the
+   * range that
+   * matches the first bits of rid)
+   *
+   * @param: rid The key
+   * @param: bits The number of bits of rid we want to match against
+   *
+   * @return: an iterator to the first element of that tree
+   */
+  self_type::iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  {
+    auto it = store_.GetSubtree(rid, bits);
+
+    return iterator(it);
+  }
+
+  self_type::iterator begin() { return iterator(store_.begin()); }
+
+  self_type::iterator end() { return iterator(store_.end()); }
 
 private:
   mutex::Mutex         mutex_;
