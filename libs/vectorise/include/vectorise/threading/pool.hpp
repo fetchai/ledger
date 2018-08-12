@@ -20,9 +20,9 @@ public:
 
   Pool(std::size_t const &n)
   {
-    running_ = true;
+    running_           = true;
     tasks_in_progress_ = 0;
-    
+
     for (std::size_t i = 0; i < n; ++i)
     {
       workers_.emplace_back([this]() { this->Work(); });
@@ -60,7 +60,7 @@ public:
     {
       std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
-    while(tasks_in_progress_!=0)
+    while (tasks_in_progress_ != 0)
     {
       std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
@@ -94,12 +94,12 @@ private:
 
     std::function<void()> task = std::move(tasks_.front());
     ++tasks_in_progress_;
-    
+
     tasks_.pop();
     return task;
   }
 
-  std::atomic< uint32_t >           tasks_in_progress_;
+  std::atomic<uint32_t>             tasks_in_progress_;
   std::atomic<bool>                 running_;
   std::mutex                        mutex_;
   std::vector<std::thread>          workers_;
