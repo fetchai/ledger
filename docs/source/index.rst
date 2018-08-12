@@ -18,6 +18,7 @@ Welcome to Fetch Ledger's developers guide!
    storage/index.rst
    core/index.rst
    vectorise/index.rst
+   development/index.rst
 
 Indices and tables
 ==================

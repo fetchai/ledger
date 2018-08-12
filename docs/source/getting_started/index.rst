@@ -1,7 +1,6 @@
 Getting started
 ===============
 
-
 Installing dependencies
 -----------------------
 
@@ -21,7 +20,7 @@ On Ubuntu / Debian:
 
 .. code:: bash
 
-	$ sudo apt install cmake cmake-curses-gui libssl-dev python3-dev
+	$ sudo apt install cmake cmake-curses-gui libssl-dev python3-dev clang-tidy clang-format
 
 Download
 --------
