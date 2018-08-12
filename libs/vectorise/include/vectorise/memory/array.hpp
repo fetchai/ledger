@@ -55,9 +55,7 @@ public:
 
   Array() : Array(0) {}
 
-  Array(Array const &other) {
-    this->operator=(other);
-  }
+  Array(Array const &other) { this->operator=(other); }
 
   Array(Array &&other)
   {

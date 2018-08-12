@@ -4,12 +4,14 @@
 namespace fetch {
 namespace platform {
 
-struct Parallelisation {
-enum {
-  NOT_PARALLEL = 0,
-  VECTORISE    = 1,
-  THREADING    = 2
-};
+struct Parallelisation
+{
+  enum
+  {
+    NOT_PARALLEL = 0,
+    VECTORISE    = 1,
+    THREADING    = 2
+  };
 };
 
 template <typename T>

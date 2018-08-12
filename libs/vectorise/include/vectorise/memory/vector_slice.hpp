@@ -58,7 +58,6 @@ public:
   {
     assert(pointer_ != nullptr);
     std::memset(pointer_, 0, padded_size() * sizeof(type));
-
   }
 
   template <typename R = T>

@@ -1,68 +1,62 @@
-#include<iostream>
-#include<thread>
-#include<memory>
-#include<atomic>
-#include"core/logger.hpp"
-#include"core/mutex.hpp"
+#include "core/logger.hpp"
+#include "core/mutex.hpp"
+#include <atomic>
+#include <iostream>
+#include <memory>
+#include <thread>
 
-fetch::mutex::Mutex mt;
-std::unique_ptr< std::thread > thread;
-std::atomic<int> n ;
+fetch::mutex::Mutex          mt;
+std::unique_ptr<std::thread> thread;
+std::atomic<int>             n;
 
 void Foo();
 
-
-void Baz() 
+void Baz()
 {
   LOG_STACK_TRACE_POINT;
-  std::cout << "Baz" << std::endl;  
+  std::cout << "Baz" << std::endl;
 
-  if( n >= 2) {
+  if (n >= 2)
+  {
     fetch::logger.Error("XX");
-        
+
     exit(-1);
-            
   }
 
-  std::lock_guard< fetch::mutex::Mutex > lock(mt);
-  
-  thread.reset( new std::thread([=]() {
-        LOG_LAMBDA_STACK_TRACE_POINT;
+  std::lock_guard<fetch::mutex::Mutex> lock(mt);
 
-        Foo();
+  thread.reset(new std::thread([=]() {
+    LOG_LAMBDA_STACK_TRACE_POINT;
 
-      }));
-  thread->join();  
+    Foo();
+  }));
+  thread->join();
 }
 
-
-void Bar() 
+void Bar()
 {
   LOG_STACK_TRACE_POINT;
 
   std::cout << "Bar" << std::endl;
 
   Baz();
-  
 }
 
-
-void Foo() 
+void Foo()
 {
   LOG_STACK_TRACE_POINT;
-  
+
   std::cout << "Foo" << std::endl;
 
-  ++n;  
-  Bar();    
+  ++n;
+  Bar();
 }
 
-
-int main() 
+int main()
 {
   n = 0;
-  
+
   Foo();
-  
-  return 0;  
+
+  return 0;
 }

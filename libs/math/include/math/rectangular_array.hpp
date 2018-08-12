@@ -455,7 +455,7 @@ public:
     width_  = w;
   }
 
-  void Flatten() { Reshape(width_ * height_,1); }
+  void Flatten() { Reshape(width_ * height_, 1); }
 
   void Fill(type const &value, memory::Range const &rows, memory::Range const &cols)
   {
@@ -613,15 +613,14 @@ private:
 
   void SetPaddedSizes(size_type const &h, size_type const &w)
   {
-    padded_width_ = w;
-    padded_height_  = h;
+    padded_width_  = w;
+    padded_height_ = h;
 
     if (PAD_WIDTH)
     {
       padded_width_ =
           size_type(w / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
       if (padded_width_ < w) padded_width_ += vector_register_type::E_BLOCK_COUNT;
-      
     }
 
     if (PAD_HEIGHT)
@@ -629,7 +628,6 @@ private:
       padded_height_ =
           size_type(h / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
       if (padded_height_ < h) padded_height_ += vector_register_type::E_BLOCK_COUNT;
-      
     }
   }
 };
