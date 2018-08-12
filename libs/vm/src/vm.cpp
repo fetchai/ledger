@@ -193,22 +193,27 @@ void VM::ForRangeIterate()
 void VM::CreateMatrix()
 {
 	Value& w = stack_[sp_--];
+	Value& h = stack_[sp_];
+	if ((w.variant.i32 < 0) || (h.variant.i32 < 0))
+	{
+		RuntimeError("negative size");
+		return;
+	}
 	const uint64_t columns = uint64_t(w.variant.i32);
+	const uint64_t rows = uint64_t(h.variant.i32);
 	w.Reset();
-	Value& top = stack_[sp_];
-	const uint64_t rows = uint64_t(top.variant.i32);
 	const TypeId type_id = instruction_->type_id;
 	if (type_id == TypeId::Matrix_Float32)
 	{
 		MatrixFloat32* m;
 		AcquireMatrix(rows, columns, m);
-		top.SetObject(m, type_id);
+		h.SetObject(m, type_id);
 	}
 	else
 	{
 		MatrixFloat64* m;
 		AcquireMatrix(rows, columns, m);
-		top.SetObject(m, type_id);
+		h.SetObject(m, type_id);
 	}
 }
 
@@ -216,7 +221,12 @@ void VM::CreateMatrix()
 void VM::CreateArray()
 {
 	Value& top = stack_[sp_];
-	const uint64_t size = uint64_t(top.variant.ui32);
+	if (top.variant.i32 < 0)
+	{
+		RuntimeError("negative size");
+		return;
+	}
+	const uint64_t size = uint64_t(top.variant.i32);
 	const TypeId type_id = instruction_->type_id;
 	Object* object = nullptr;
 	switch (type_id)

@@ -982,31 +982,90 @@ private:
 	// Indexing helpers
 	//
 
-	template <typename T>
-	bool GetMatrixElement(T*& ptr)
+	bool GetIndex(const Value& value, uint64_t& index)
+	{
+		bool ok = true;
+		switch (value.type_id)
+		{
+			case TypeId::Int8: {
+				index = value.variant.i8;
+				ok = value.variant.i8 >= 0;
+				break;
+			}
+			case TypeId::Byte: {
+				index = value.variant.ui8;
+				break;
+			}
+			case TypeId::Int16: {
+				index = value.variant.i16;
+				ok = value.variant.i16 >= 0;
+				break;
+			}
+			case TypeId::UInt16: {
+				index = value.variant.ui16;
+				break;
+			}
+			case TypeId::Int32: {
+				index = value.variant.i32;
+				ok = value.variant.i32 >= 0;
+				break;
+			}
+			case TypeId::UInt32: {
+				index = value.variant.ui32;
+				break;
+			}
+			case TypeId::Int64: {
+				index = value.variant.i64;
+				ok = value.variant.i64 >= 0;
+				break;
+			}
+			case TypeId::UInt64: {
+				index = value.variant.ui64;
+				break;
+			}
+			default: {
+				ok = false;
+				break;
+			}
+		}
+		return ok;
+	}
+
+	template <typename ElementType>
+	bool GetMatrixElement(ElementType*& ptr)
 	{
 		Value& columnv = stack_[sp_--];
-		const int32_t column = columnv.variant.i32;
+		uint64_t column;
+		if (GetIndex(columnv, column) == false)
+		{
+			RuntimeError("negative index");
+			return false;
+		}
 		columnv.PrimitiveReset();
 		Value& rowv = stack_[sp_--];
-		const int32_t row = rowv.variant.i32;
+		uint64_t row;
+		if (GetIndex(rowv, row) == false)
+		{
+			RuntimeError("negative index");
+			return false;
+		}
 		rowv.PrimitiveReset();
 		Value& matrixv = stack_[sp_];
-		Matrix<T>* m = (Matrix<T>*)(matrixv.variant.object);
+		Matrix<ElementType>* m =
+			static_cast<Matrix<ElementType>*>(matrixv.variant.object);
 		if (m == nullptr)
 		{
 			RuntimeError("null reference");
 			return false;
 		}
-		const int32_t rows = (int32_t)m->matrix.height();
-		const int32_t columns = (int32_t)m->matrix.width();
-		if ((row < 0) || (row >= rows) ||
-			(column < 0) || (column >= columns))
+		const uint64_t rows = m->matrix.height();
+		const uint64_t columns = m->matrix.width();
+		if ((row >= rows) || (column >= columns))
 		{
-			RuntimeError("out of bounds");
+			RuntimeError("index out of bounds");
 			return false;
 		}
-		ptr = &(m->matrix.At(std::size_t(row), std::size_t(column) ));
+		ptr = &(m->matrix.At(row, column));
 		return true;
 	}
 
@@ -1014,21 +1073,27 @@ private:
 	bool GetArrayElement(ElementType*& ptr)
 	{
 		Value& positionv = stack_[sp_--];
-		const int32_t position = positionv.variant.i32;
+		uint64_t position;
+		if (GetIndex(positionv, position) == false)
+		{
+			RuntimeError("negative index");
+			return false;
+		}
 		positionv.PrimitiveReset();
 		Value& arrayv = stack_[sp_];
-		Array<ElementType>* array = (Array<ElementType>*)(arrayv.variant.object);
+		Array<ElementType>* array =
+			static_cast<Array<ElementType>*>(arrayv.variant.object);
 		if (array == nullptr)
 		{
 			RuntimeError("null reference");
 			return false;
 		}
-		if ((position < 0) || (position >= (int32_t)array->elements.size()))
+		if (position >= array->elements.size())
 		{
-			RuntimeError("out of bounds");
+			RuntimeError("index out of bounds");
 			return false;
 		}
-		ptr = (ElementType*)(&array->elements[std::size_t(position)]);
+		ptr = static_cast<ElementType*>(&array->elements[position]);
 		return true;
 	}
 
