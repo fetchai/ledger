@@ -10,12 +10,12 @@
 using namespace fetch;
 using namespace fetch::math::linalg;
 
-TEST(blas_A_withA, blas_syrk_un_novector1) {
+TEST(blas_A_withA, blas_syrk_un_novector_threaded1) {
 
 	Blas< double, 
         Signature( U(_C) <= _alpha, U(_A), _beta, U(_C) ), 
         Computes( _C = _alpha * _A * T(_A) + _beta * _C ), 
-        platform::Parallelisation::NOT_PARALLEL> syrk_un_novector;
+        platform::Parallelisation::THREADING> syrk_un_novector_threaded;
 	// Compuing _C = _alpha * _A * T(_A) + _beta * _C  
 
   double alpha = double(1), beta = double(0);
@@ -40,7 +40,7 @@ Matrix< double > C = Matrix< double >(R"(
  0.20674146233889457 0.20759214270103027 0.04867610654042823
 	)");
   
-	syrk_un_novector(alpha, A, beta, C);
+	syrk_un_novector_threaded(alpha, A, beta, C);
 
 for(std::size_t i=0; i < C.height(); ++i) {
     for(std::size_t j=0; j < i; ++j) {
@@ -52,12 +52,12 @@ for(std::size_t i=0; i < C.height(); ++i) {
    
 }
 
-TEST(blas_A_withA, blas_syrk_un_novector2) {
+TEST(blas_A_withA, blas_syrk_un_novector_threaded2) {
 
 	Blas< double, 
         Signature( U(_C) <= _alpha, U(_A), _beta, U(_C) ), 
         Computes( _C = _alpha * _A * T(_A) + _beta * _C ), 
-        platform::Parallelisation::NOT_PARALLEL> syrk_un_novector;
+        platform::Parallelisation::THREADING> syrk_un_novector_threaded;
 	// Compuing _C = _alpha * _A * T(_A) + _beta * _C  
 
   double alpha = double(0), beta = double(1);
@@ -82,7 +82,7 @@ Matrix< double > C = Matrix< double >(R"(
  0.3663618432936917 0.19967378215835974 0.046450412719997725
 	)");
   
-	syrk_un_novector(alpha, A, beta, C);
+	syrk_un_novector_threaded(alpha, A, beta, C);
 
 for(std::size_t i=0; i < C.height(); ++i) {
     for(std::size_t j=0; j < i; ++j) {
@@ -94,15 +94,15 @@ for(std::size_t i=0; i < C.height(); ++i) {
    
 }
 
-TEST(blas_A_withA, blas_syrk_un_novector3) {
+TEST(blas_A_withA, blas_syrk_un_novector_threaded3) {
 
 	Blas< double, 
         Signature( U(_C) <= _alpha, U(_A), _beta, U(_C) ), 
         Computes( _C = _alpha * _A * T(_A) + _beta * _C ), 
-        platform::Parallelisation::NOT_PARALLEL> syrk_un_novector;
+        platform::Parallelisation::THREADING> syrk_un_novector_threaded;
 	// Compuing _C = _alpha * _A * T(_A) + _beta * _C  
 
-  double alpha = double(0.674982569390964), beta = double(0.06957405129362793);
+  double alpha = double(0.8773361661772978), beta = double(0.06378527588559846);
 
 Matrix< double > A = Matrix< double >(R"(
 	0.6075448519014384 0.17052412368729153;
@@ -119,12 +119,12 @@ Matrix< double > C = Matrix< double >(R"(
 	)");
 
   Matrix< double > R = Matrix< double >(R"(
-	0.2899639994066306 0.14268943909513768 0.5366405483632418;
- 0.14268943909513768 0.6190903703892112 0.594614404642866;
- 0.5366405483632418 0.594614404642866 1.088493987238599
+	0.3687756803545065 0.18286381297497312 0.6792880996029523;
+ 0.18286381297497312 0.8014361130372777 0.7596796597298126;
+ 0.6792880996029523 0.7596796597298126 1.4079189575369677
 	)");
   
-	syrk_un_novector(alpha, A, beta, C);
+	syrk_un_novector_threaded(alpha, A, beta, C);
 
 for(std::size_t i=0; i < C.height(); ++i) {
     for(std::size_t j=0; j < i; ++j) {

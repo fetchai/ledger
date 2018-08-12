@@ -175,8 +175,8 @@ constexpr uint64_t Signature(A const &a, A const &b)
   return Signature( (a,b) );
 }
 
-template< typename A, typename... O >
-constexpr uint64_t Signature(A const &a, A const &b, O const &...objs) 
+template< typename A, typename B, typename... O >
+constexpr uint64_t Signature(A const &a, B const &b, O const &...objs) 
 {
   return Signature( (a,b), objs... );
 }

@@ -3,19 +3,19 @@
 #include"math/linalg/prototype.hpp"
 #include"math/linalg/matrix.hpp"
 #include"math/linalg/blas/base.hpp"
-#include"math/linalg/blas/syrk_un_novector.hpp"
-#include"math/linalg/blas/syrk_un_novector_threaded.hpp"
+#include"math/linalg/blas/syrk_ln_novector.hpp"
+#include"math/linalg/blas/syrk_ln_novector_threaded.hpp"
 
 
 using namespace fetch;
 using namespace fetch::math::linalg;
 
-TEST(blas_A_withA, blas_syrk_un_novector1) {
+TEST(blas_A_withA, blas_syrk_ln_novector_threaded1) {
 
 	Blas< double, 
-        Signature( U(_C) <= _alpha, U(_A), _beta, U(_C) ), 
+        Signature( L(_C) <= _alpha, L(_A), _beta, L(_C) ), 
         Computes( _C = _alpha * _A * T(_A) + _beta * _C ), 
-        platform::Parallelisation::NOT_PARALLEL> syrk_un_novector;
+        platform::Parallelisation::THREADING> syrk_ln_novector_threaded;
 	// Compuing _C = _alpha * _A * T(_A) + _beta * _C  
 
   double alpha = double(1), beta = double(0);
@@ -40,24 +40,26 @@ Matrix< double > C = Matrix< double >(R"(
  0.20674146233889457 0.20759214270103027 0.04867610654042823
 	)");
   
-	syrk_un_novector(alpha, A, beta, C);
+	syrk_ln_novector_threaded(alpha, A, beta, C);
 
-for(std::size_t i=0; i < C.height(); ++i) {
+
+  for(std::size_t i=0; i < C.height(); ++i) {
     for(std::size_t j=0; j < i; ++j) {
-      C(i, j) = C(j, i);
+      C(j, i) = C(i, j);
     }
   }
+
 
 	ASSERT_TRUE( R.AllClose(C) );
    
 }
 
-TEST(blas_A_withA, blas_syrk_un_novector2) {
+TEST(blas_A_withA, blas_syrk_ln_novector_threaded2) {
 
 	Blas< double, 
-        Signature( U(_C) <= _alpha, U(_A), _beta, U(_C) ), 
+        Signature( L(_C) <= _alpha, L(_A), _beta, L(_C) ), 
         Computes( _C = _alpha * _A * T(_A) + _beta * _C ), 
-        platform::Parallelisation::NOT_PARALLEL> syrk_un_novector;
+        platform::Parallelisation::THREADING> syrk_ln_novector_threaded;
 	// Compuing _C = _alpha * _A * T(_A) + _beta * _C  
 
   double alpha = double(0), beta = double(1);
@@ -77,32 +79,34 @@ Matrix< double > C = Matrix< double >(R"(
 	)");
 
   Matrix< double > R = Matrix< double >(R"(
-	0.13949386065204183 0.29214464853521815 0.3663618432936917;
- 0.29214464853521815 0.7851759613930136 0.19967378215835974;
- 0.3663618432936917 0.19967378215835974 0.046450412719997725
+	0.13949386065204183 0.45606998421703593 0.5142344384136116;
+ 0.45606998421703593 0.7851759613930136 0.5924145688620425;
+ 0.5142344384136116 0.5924145688620425 0.046450412719997725
 	)");
   
-	syrk_un_novector(alpha, A, beta, C);
+	syrk_ln_novector_threaded(alpha, A, beta, C);
 
-for(std::size_t i=0; i < C.height(); ++i) {
+
+  for(std::size_t i=0; i < C.height(); ++i) {
     for(std::size_t j=0; j < i; ++j) {
-      C(i, j) = C(j, i);
+      C(j, i) = C(i, j);
     }
   }
+
 
 	ASSERT_TRUE( R.AllClose(C) );
    
 }
 
-TEST(blas_A_withA, blas_syrk_un_novector3) {
+TEST(blas_A_withA, blas_syrk_ln_novector_threaded3) {
 
 	Blas< double, 
-        Signature( U(_C) <= _alpha, U(_A), _beta, U(_C) ), 
+        Signature( L(_C) <= _alpha, L(_A), _beta, L(_C) ), 
         Computes( _C = _alpha * _A * T(_A) + _beta * _C ), 
-        platform::Parallelisation::NOT_PARALLEL> syrk_un_novector;
+        platform::Parallelisation::THREADING> syrk_ln_novector_threaded;
 	// Compuing _C = _alpha * _A * T(_A) + _beta * _C  
 
-  double alpha = double(0.674982569390964), beta = double(0.06957405129362793);
+  double alpha = double(0.17784170654039433), beta = double(0.08437638015891435);
 
 Matrix< double > A = Matrix< double >(R"(
 	0.6075448519014384 0.17052412368729153;
@@ -119,18 +123,20 @@ Matrix< double > C = Matrix< double >(R"(
 	)");
 
   Matrix< double > R = Matrix< double >(R"(
-	0.2899639994066306 0.14268943909513768 0.5366405483632418;
- 0.14268943909513768 0.6190903703892112 0.594614404642866;
- 0.5366405483632418 0.594614404642866 1.088493987238599
+	0.09651685828155834 0.07294328003116213 0.13175074432634803;
+ 0.07294328003116213 0.17117550389982938 0.22431465419121396;
+ 0.13175074432634803 0.22431465419121396 0.3038832385979474
 	)");
   
-	syrk_un_novector(alpha, A, beta, C);
+	syrk_ln_novector_threaded(alpha, A, beta, C);
 
-for(std::size_t i=0; i < C.height(); ++i) {
+
+  for(std::size_t i=0; i < C.height(); ++i) {
     for(std::size_t j=0; j < i; ++j) {
-      C(i, j) = C(j, i);
+      C(j, i) = C(i, j);
     }
   }
+
 
 	ASSERT_TRUE( R.AllClose(C) );
    
