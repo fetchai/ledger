@@ -17,7 +17,7 @@ struct Object
 {
 	Object(const TypeId type_id__, VM* vm__)
 	{
-		count = 0;
+		count = 1;
 		type_id = type_id__;
 		vm = vm__;
 	}
@@ -175,20 +175,20 @@ struct Value
 		if (variant.object)
 			variant.object->Release();
 	}
+	template <typename T>
+	void SetPrimitive(const T primitive, const TypeId type_id__)
+	{
+		if (IsObject())
+			Release();
+		type_id = type_id__;
+		variant.Set(primitive);
+	}
 	void SetObject(Object* object, const TypeId type_id__)
 	{
 		if (IsObject())
 			Release();
 		type_id = type_id__;
-		object->count = 1;
 		variant.object = object;
-	}
-	void SetBool(const bool b)
-	{
-		if (IsObject())
-			Release();
-		type_id = TypeId::Bool;
-		variant.ui8 = (uint8_t)b;
 	}
 	bool IsObject() const
 	{
@@ -280,19 +280,48 @@ struct Script
 };
 
 
+static const float RELATIVE_FLT_TOLERANCE = 1e-5f;
+static const float ABSOLUTE_FLT_TOLERANCE = 1e-5f;
+static const double RELATIVE_DBL_TOLERANCE = 1e-14;
+static const double ABSOLUTE_DBL_TOLERANCE = 1e-14;
+
 inline float Tolerance(const float a, const float b)
 {
-  static const float RELATIVE_FLT_TOLERANCE = 1e-5f;
-	static const float ABSOLUTE_FLT_TOLERANCE = 1e-5f;
 	return std::max(RELATIVE_FLT_TOLERANCE*std::max(fabsf(a), fabsf(b)),
 		ABSOLUTE_FLT_TOLERANCE);
 }
 inline double Tolerance(const double a, const double b)
 {
-	static const double RELATIVE_DBL_TOLERANCE = 1e-14;
-	static const double ABSOLUTE_DBL_TOLERANCE = 1e-14;
 	return std::max(RELATIVE_DBL_TOLERANCE*std::max(fabs(a), fabs(b)),
 		ABSOLUTE_DBL_TOLERANCE);
+}
+
+inline bool IsZero(const float x)
+{
+	return fabsf(x) < ABSOLUTE_FLT_TOLERANCE;
+}
+inline bool IsZero(const double x)
+{
+	return fabs(x) < ABSOLUTE_DBL_TOLERANCE;
+}
+template <typename T>
+bool IsZero(const T x)
+{
+	return x == 0;
+}
+
+inline bool IsNonZero(const float x)
+{
+	return fabsf(x) > ABSOLUTE_FLT_TOLERANCE;
+}
+inline bool IsNonZero(const double x)
+{
+	return fabs(x) > ABSOLUTE_DBL_TOLERANCE;
+}
+template <typename T>
+bool IsNonZero(const T x)
+{
+	return x != 0;
 }
 
 inline bool IsEqual(const float a, const float b)

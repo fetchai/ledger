@@ -63,7 +63,6 @@ enum class TypeId: uint16_t
 	// matrixarray[index] op= number
 	Array_Matrix_Float32__Float32,
 	Array_Matrix_Float64__Float64,
-	// claases
 
 	// Custom
 	IntPair
