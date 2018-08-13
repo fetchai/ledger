@@ -285,11 +285,20 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
              if (i >= s.size()) throw py::index_error();
              s[i] = v;
            })
-
       .def("__eq__",
-           [](ShapeLessArray<T> &s, ShapeLessArray<T> const &other) {
-             if (other.size() != s.size()) throw py::index_error();
-             s.Copy(other);
+           [](ShapeLessArray<T> &s, ShapeLessArray<T> const &other)
+           {
+             if (other.size() != s.size())
+             {
+               for (std::size_t i = 0; i < other.size(); ++i)
+               {
+                 if (other[i] != s[i])
+                   return false;
+               }
+               return true;
+             }
+             else
+               return false;
            })
 
       .def("FromNumpy",
