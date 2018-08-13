@@ -288,7 +288,7 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
       .def("__eq__",
            [](ShapeLessArray<T> &s, ShapeLessArray<T> const &other)
            {
-             if (other.size() != s.size())
+             if (other.size() == s.size())
              {
                for (std::size_t i = 0; i < other.size(); ++i)
                {

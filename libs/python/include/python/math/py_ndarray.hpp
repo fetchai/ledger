@@ -125,6 +125,16 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.InlineDivide(c);
              return a;
            })
+      .def("__eq__",
+           [](NDArray<T> const &s, NDArray<T> const &other)
+           {
+              return s.operator==(other);
+           })
+      .def("__ne__",
+           [](NDArray<T> const &s, NDArray<T> const &other)
+           {
+             return s.operator!=(other);
+           })
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<py::slice> slices) {
              std::vector<size_t> start, stop, step, slicelength;

@@ -69,6 +69,21 @@ public:
     this->super_type::Copy(x);
     this->LazyReshape(x.shape());
   }
+
+  /**
+   * equality operators
+   *
+   * @param other a constant reference to an NDArray to compare against this array
+   * @return
+   */
+  bool operator==(NDArray const &other) const
+  {
+    if (shape() != other.shape())
+      return false;
+    return this->super_type::operator==(static_cast<super_type>(other));
+  }
+  bool operator!=(NDArray const &other) const { return !(this->operator==(other)); }
+
   /**
    * Provides an NDArray that is a copy of the current NDArray
    *
