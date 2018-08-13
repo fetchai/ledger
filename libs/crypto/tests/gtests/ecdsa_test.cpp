@@ -10,7 +10,6 @@ namespace openssl {
 namespace memory {
 
 namespace {
-
 }  // namespace
 
 }  // namespace memory

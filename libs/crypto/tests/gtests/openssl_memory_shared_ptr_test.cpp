@@ -42,11 +42,11 @@ protected:
   template <const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
   using ossl_shared_ptr__for_Testing = ossl_shared_ptr<TestType, P_DeleteStrategy, Deleter>;
 
-  MockDeleterPrimitive::SharedPtr &mock = MockDeleterPrimitive::value;
+  MockDeleterPrimitive::SharedPtr &mock_ = MockDeleterPrimitive::value;
 
-  void SetUp() override { mock = std::make_shared<MockDeleterPrimitive::Type>(); }
+  void SetUp() override { mock_ = std::make_shared<MockDeleterPrimitive::Type>(); }
 
-  void TearDown() override { mock = MockDeleterPrimitive::SharedPtr(); }
+  void TearDown() override { mock_ = MockDeleterPrimitive::SharedPtr(); }
 
   // static void SetUpTestCase() {
   //}
@@ -60,7 +60,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_construction)
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -83,7 +83,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_reset)
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -98,8 +98,8 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_reset_with_specific_point
   TestType testValue2;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
-  EXPECT_CALL(*mock, free_TestType(&testValue2)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_TestType(&testValue2)).WillOnce(Return());
 
   {
     //* Production code
@@ -113,7 +113,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_swap)
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -128,7 +128,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_assign)
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -143,7 +143,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_copy_construct)
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
     //* Production code

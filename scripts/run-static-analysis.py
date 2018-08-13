@@ -4,7 +4,7 @@
 # CODE STATIC ANALYSIS CHECKER
 #
 # This script is used to run the clang-tidy based static analysis checks on the project
-# code base. 
+# code base.
 #
 # Due to the way that the clang-tidy works. It is required that the project has been
 # completely built beforehand. After this has been completed the user can simply run
@@ -85,6 +85,7 @@ def main():
 
     if args.fix:
         cmd += ['-fix']
+        cmd += ['-fix-errors']
         num_workers = 1
     else:
         num_workers = args.jobs

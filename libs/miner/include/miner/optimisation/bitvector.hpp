@@ -173,7 +173,8 @@ public:
 
 private:
   container_type data_;
-  std::size_t    size_, blocks_;
+  std::size_t    size_;
+  std::size_t    blocks_;
 };
 
 template <std::size_t N>
