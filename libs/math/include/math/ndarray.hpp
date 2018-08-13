@@ -82,6 +82,14 @@ public:
     copy.LazyReshape(this->shape());
     return copy;
   }
+  self_type Copy() const
+  {
+    self_type copy = self_type(this->super_type::Copy());
+
+    copy.LazyReshape(this->shape());
+    return copy;
+  }
+
   /**
    * Provides an NDArray that is a copy of a view of the the current NDArray
    *
@@ -164,6 +172,36 @@ public:
 
     // copy all the data
     array_view.recursive_copy(output, *this);
+
+    return output;
+  }
+
+  /**
+   * extract data from NDArray based on the NDArrayView
+   * @param array_view
+   * @return
+   */
+  self_type SetRange(NDArrayView array_view, NDArray new_vals)
+  {
+
+    std::vector<std::size_t> new_shape;
+
+    // instantiate new array of the right shape
+    for (std::size_t cur_dim = 0; cur_dim < array_view.from.size(); ++cur_dim)
+    {
+      std::size_t cur_from = array_view.from[cur_dim];
+      std::size_t cur_to   = array_view.to[cur_dim];
+      std::size_t cur_step = array_view.step[cur_dim];
+      std::size_t cur_len  = (cur_to - cur_from) / cur_step;
+
+      new_shape.push_back(cur_len);
+    }
+
+    // define output
+    self_type output = self_type(new_shape);
+
+    // copy all the data
+    array_view.recursive_copy(*this, new_vals);
 
     return output;
   }
