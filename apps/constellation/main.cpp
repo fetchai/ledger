@@ -7,6 +7,8 @@
 #include "network/adapters.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/fetch_asio.hpp"
+#include "crypto/prover.hpp"
+#include "crypto/ecdsa.hpp"
 
 #include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
@@ -21,13 +23,16 @@
 
 namespace {
 
+using Prover       = fetch::crypto::Prover;
 using BootstrapPtr = std::unique_ptr<fetch::BootstrapMonitor>;
+using ProverPtr    = std::unique_ptr<Prover>;
 
 struct CommandLineArguments
 {
   using string_list_type  = std::vector<std::string>;
   using peer_list_type    = fetch::Constellation::peer_list_type;
   using adapter_list_type = fetch::network::Adapter::adapter_list_type;
+
 
   static const std::size_t DEFAULT_NUM_LANES = 4;
   static const std::size_t DEFAULT_NUM_SLICES    = 4;
@@ -46,7 +51,7 @@ struct CommandLineArguments
   std::string dbdir;
 
 
-  static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap)
+  static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap, Prover const &prover)
   {
     CommandLineArguments args;
 
@@ -70,7 +75,7 @@ struct CommandLineArguments
                    std::string{});
 
     // parse the args
-    parameters.Parse(argc, const_cast<char const **>(argv));
+    parameters.Parse(argc, argv);
 
     // update the peers
     args.SetPeers(raw_peers);
@@ -80,9 +85,10 @@ struct CommandLineArguments
     {
       // create the boostrap node
       bootstrap = std::make_unique<fetch::BootstrapMonitor>(
+        prover.identity(),
         args.port,
-        args.network_id,
-        external_address);
+        args.network_id
+      );
 
       // augment the peer list with the bootstrapped version
       bootstrap->Start(args.peers);
@@ -147,6 +153,14 @@ struct CommandLineArguments
   }
 };
 
+ProverPtr GenereateP2PKey()
+{
+  fetch::crypto::ECDSASigner *certificate = new fetch::crypto::ECDSASigner();
+  certificate->GenerateKeys();
+
+  return ProverPtr{certificate};
+}
+
 }  // namespace
 
 int main(int argc, char **argv)
@@ -157,15 +171,17 @@ int main(int argc, char **argv)
 
   try
   {
-    BootstrapPtr bootstrap_monitor;
+    // create and load the main certificate for the bootstrapper
+    ProverPtr p2p_key = GenereateP2PKey();
 
-    auto const args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor);
+    BootstrapPtr bootstrap_monitor;
+    auto const args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
 
     fetch::logger.Info("Configuration:\n", args);
 
     // create and run the constellation
-    auto constellation = fetch::Constellation::Create(args.port, args.num_executors, args.num_lanes,
-                                                      args.num_slices, args.interface, args.dbdir);
+    auto constellation = std::make_unique<fetch::Constellation>(std::move(p2p_key), args.port, args.num_executors, args.num_lanes,
+                                                                args.num_slices, args.interface, args.dbdir);
 
     // run the application
     constellation->Run(args.peers);

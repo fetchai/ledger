@@ -120,7 +120,7 @@ private:
 
   static http::HTTPResponse JsonBadRequest()
   {
-    return http::CreateJsonResponse("", http::status_code::CLIENT_ERROR_BAD_REQUEST);
+    return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
   }
 
   std::size_t transaction_index_{0};

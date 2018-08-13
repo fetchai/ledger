@@ -17,7 +17,7 @@ enum
   TOKEN_CATCH_ALL = 12
 };
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   // Reading config
   commandline::ParamsParser params;

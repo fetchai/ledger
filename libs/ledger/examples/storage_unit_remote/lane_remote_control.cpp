@@ -17,7 +17,7 @@ using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   using service_type = ServiceClient;
   using client_type  = fetch::network::TCPClient;

@@ -13,7 +13,7 @@
 #include <sstream>
 using namespace fetch;
 using namespace fetch::chain;
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   // Reading config
   commandline::ParamsParser params;
