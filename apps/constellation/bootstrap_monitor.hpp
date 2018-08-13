@@ -33,6 +33,8 @@ public:
   bool Start(PeerList &peers);
   void Stop();
 
+  std::string const &external_address() const { return external_address_; }
+
 private:
 
   using IoService = asio::io_service;

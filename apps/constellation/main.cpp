@@ -91,7 +91,10 @@ struct CommandLineArguments
       );
 
       // augment the peer list with the bootstrapped version
-      bootstrap->Start(args.peers);
+      if (bootstrap->Start(args.peers))
+      {
+        args.interface = bootstrap->external_address();
+      }
     }
 
     return args;
