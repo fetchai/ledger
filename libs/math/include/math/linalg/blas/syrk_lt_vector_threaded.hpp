@@ -63,10 +63,9 @@ public:
     {
       pool_.Dispatch([j, alpha, a, beta, &c]() {
         std::size_t i;
-        for (i = j + 1 - 1; i < c.height(); ++i)
+        for (i = j; i < c.height(); ++i)
         {
-          double temp;
-
+          type temp;
           temp = 0.0;
 
           auto slice_a_i = a.data().slice(a.padded_height() * i, a.height());

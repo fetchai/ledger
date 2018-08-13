@@ -5,8 +5,8 @@
 #include <memory>
 #include <thread>
 
-fetch::mutex::Mutex          mt;
-std::atomic<int>             n;
+fetch::mutex::Mutex mt;
+std::atomic<int>    n;
 
 void Foo();
 
@@ -23,8 +23,8 @@ void Baz()
   }
 
   std::lock_guard<fetch::mutex::Mutex> lock(mt);
-  std::unique_ptr<std::thread> thread;
-  
+  std::unique_ptr<std::thread>         thread;
+
   thread.reset(new std::thread([=]() {
     LOG_LAMBDA_STACK_TRACE_POINT;
 

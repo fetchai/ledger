@@ -88,7 +88,7 @@ public:
       {
         if (a(j, l) != 0.0)
         {
-          double temp;
+          type temp;
           temp = alpha * a(j, l);
 
           vector_register_type vec_temp(temp);

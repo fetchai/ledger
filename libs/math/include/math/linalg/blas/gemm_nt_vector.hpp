@@ -88,7 +88,7 @@ public:
 
       for (l = 0; l < a.width(); ++l)
       {
-        double temp;
+        type temp;
         temp = alpha * b(j, l);
 
         vector_register_type vec_temp(temp);

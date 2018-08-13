@@ -102,7 +102,7 @@ TEST(blas_A_withA_vectorised, blas_syrk_ln_vector_threaded3)
       syrk_ln_vector_threaded;
   // Compuing _C = _alpha * _A * T(_A) + _beta * _C
 
-  double alpha = double(0.31070187089953505), beta = double(0.4833289694100378);
+  double alpha = double(0.7007161905112005), beta = double(0.971962584069123);
 
   Matrix<double> A = Matrix<double>(R"(
 	0.6075448519014384 0.17052412368729153;
@@ -117,9 +117,9 @@ TEST(blas_A_withA_vectorised, blas_syrk_ln_vector_threaded3)
 	)");
 
   Matrix<double> R = Matrix<double>(R"(
-	0.2709467959390784 0.27529194548976027 0.2417294513510915;
- 0.27529194548976027 0.3400503340447305 0.6973500308943841;
- 0.2417294513510915 0.6973500308943841 0.6178339586934642
+	0.5750908222544364 0.5688866901760309 0.5411044612771119;
+ 0.5688866901760309 0.7524953059036258 1.4653444866316585;
+ 0.5411044612771119 1.4653444866316585 1.3628263500527904
 	)");
 
   syrk_ln_vector_threaded(alpha, A, beta, C);

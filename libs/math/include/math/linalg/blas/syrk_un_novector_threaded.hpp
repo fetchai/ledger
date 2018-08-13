@@ -18,8 +18,8 @@ public:
 
   void operator()(type const &alpha, Matrix<type> const &a, type const &beta, Matrix<type> &c)
   {
-    std::size_t i;
     std::size_t j;
+    std::size_t i;
     if ((c.height() == 0) || (((alpha == 0.0) || (a.width() == 0)) && (beta == 1.0)))
     {
       return;
@@ -75,7 +75,7 @@ public:
         {
           if (a(j, l) != 0.0)
           {
-            double temp;
+            type temp;
             temp = alpha * a(j, l);
             for (i = 0; i < j + 1; ++i)
             {

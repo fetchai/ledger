@@ -21,7 +21,6 @@ public:
                   Matrix<type> &c)
   {
     std::size_t j;
-
     if ((c.height() == 0) ||
         ((c.width() == 0) || (((alpha == 0.0) || (a.height() == 0)) && (beta == 1.0))))
     {
@@ -68,7 +67,7 @@ public:
         std::size_t i;
         for (i = 0; i < c.height(); ++i)
         {
-          double temp;
+          type temp;
           temp = 0.0;
 
           auto slice_a_i = a.data().slice(a.padded_height() * i, a.height());
