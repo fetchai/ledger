@@ -98,60 +98,6 @@ constexpr typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>:
   return typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::LOWER>();
 }
 
-template <uint64_t P, uint64_t S>
-std::ostream &operator<<(std::ostream &os, Prototype<P, S> const &prototype)
-{
-  auto PrintSymbol = [&os](uint8_t const &op) {
-    switch (op)
-    {
-    case 0:
-      os << "_A ";
-      break;
-    case 1:
-      os << "_B ";
-      break;
-    case 2:
-      os << "_C ";
-      break;
-    case 3:
-      os << "_alpha ";
-      break;
-    case 4:
-      os << "_beta ";
-      break;
-    case 5:
-      os << "_gamma ";
-      break;
-    case Prototype<P, S>::MULT:
-      os << "* ";
-      break;
-    case Prototype<P, S>::ADD:
-      os << "+ ";
-      break;
-    case Prototype<P, S>::RET:
-      os << "<= ";
-      break;
-    case Prototype<P, S>::TRANSPOSE:
-      os << "TRANS ";
-      break;
-    default:
-      os << "?? " << int(op & 7) << " ";
-    }
-  };
-
-  uint64_t            s = S;
-  std::stack<uint8_t> stack;
-
-  for (std::size_t i = 0; i < P; i += 4)
-  {
-    uint8_t op = s & 15;
-    s >>= 4;
-    PrintSymbol(op);
-  }
-
-  return os;
-}
-
 template <typename O>
 constexpr uint64_t Computes(O const &)
 {
