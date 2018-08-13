@@ -2,7 +2,7 @@
 #define TOKEN__HPP
 #include <cstdint>
 #include <string>
-
+#include <functional>
 
 namespace fetch {
 namespace vm {

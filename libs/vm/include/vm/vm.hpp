@@ -988,34 +988,34 @@ private:
 		switch (value.type_id)
 		{
 			case TypeId::Int8: {
-				index = value.variant.i8;
+    			        index = uint64_t(value.variant.i8);
 				ok = value.variant.i8 >= 0;
 				break;
 			}
 			case TypeId::Byte: {
-				index = value.variant.ui8;
+			        index = uint64_t(value.variant.ui8);
 				break;
 			}
 			case TypeId::Int16: {
-				index = value.variant.i16;
+			        index = uint64_t(value.variant.i16);
 				ok = value.variant.i16 >= 0;
 				break;
 			}
 			case TypeId::UInt16: {
-				index = value.variant.ui16;
+			        index = uint64_t(value.variant.ui16);
 				break;
 			}
 			case TypeId::Int32: {
-				index = value.variant.i32;
+			        index = uint64_t(value.variant.i32);
 				ok = value.variant.i32 >= 0;
 				break;
 			}
 			case TypeId::UInt32: {
-				index = value.variant.ui32;
+			        index = uint64_t(value.variant.ui32);
 				break;
 			}
 			case TypeId::Int64: {
-				index = value.variant.i64;
+			        index = uint64_t(value.variant.i64);
 				ok = value.variant.i64 >= 0;
 				break;
 			}
