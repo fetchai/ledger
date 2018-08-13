@@ -105,7 +105,7 @@ public:
 
     // TODO: Get from settings
     min_connections_ = 2;
-    max_connections_ = 3;
+    max_connections_ = 6;
     tracking_peers_  = false;
 
     // TODO: Remove long term
