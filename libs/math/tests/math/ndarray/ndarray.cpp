@@ -26,12 +26,12 @@ using vector_register_type = typename container_type::vector_register_type;
 NDArray<data_type, container_type> RandomArray(std::size_t n, std::size_t m)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  NDArray<data_type, container_type>                a1(n);
+  NDArray<data_type, container_type>                array1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1(i) = data_type(gen.AsDouble());
+    array1[i] = data_type(gen.AsDouble());
   }
-  return a1;
+  return array1;
 }
 
 template <typename D>

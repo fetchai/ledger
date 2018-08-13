@@ -1,7 +1,9 @@
 #pragma once
+#include "math/ndarray_view.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/array.hpp"
 
+#include <numeric>
 #include <utility>
 #include <vector>
 
@@ -18,8 +20,41 @@ public:
   using super_type           = ShapeLessArray<T, C>;
   using self_type            = NDArray<T, C>;
 
-  NDArray(std::size_t const &n = 0) : super_type(n) { size_ = 0; }
+  /**
+   * Constructor builds an NDArray with n elements initialized to 0
+   * @param n   number of elements in array (no shape specified, assume 1-D)
+   */
+  NDArray(std::size_t const &n = 0) : super_type(n)
+  {
+    this->LazyReshape({n});
+    for (std::size_t idx = 0; idx < this->size(); ++idx)
+    {
+      this->operator[](idx) = 0;
+    }
+  }
+
+  /**
+   * Constructor builds an empty NDArray pre-initialiing with zeros from a vector of dimension
+   * lengths
+   * @param shape   vector of lengths for each dimension
+   */
+  NDArray(std::vector<std::size_t> const &dims = {0})
+    : super_type(std::accumulate(std::begin(dims), std::end(dims), std::size_t(1),
+                                 std::multiplies<std::size_t>()))
+  {
+    this->LazyReshape(dims);
+    for (std::size_t idx = 0; idx < this->size(); ++idx)
+    {
+      this->operator[](idx) = 0;
+    }
+  }
+
+  /**
+   * Constructor builds an NDArray pre-initialising from a shapeless array
+   * @param arr shapelessarray data set by defualt
+   */
   NDArray(super_type const &arr) : super_type(arr) {}
+
   NDArray &operator=(NDArray const &other) = default;
   //  NDArray &operator=(NDArray &&other) = default;
 
@@ -47,6 +82,25 @@ public:
     copy.LazyReshape(this->shape());
     return copy;
   }
+  self_type Copy() const
+  {
+    self_type copy = self_type(this->super_type::Copy());
+
+    copy.LazyReshape(this->shape());
+    return copy;
+  }
+
+  /**
+   * Provides an NDArray that is a copy of a view of the the current NDArray
+   *
+   * @return       copy is a NDArray with a size and shape equal to or lesser than this array.
+   *
+   **/
+  self_type Copy(NDArrayView arrayView)
+  {
+    self_type copy;
+    return copy(arrayView);
+  }
   /**
    * Flattens the array to 1 dimension efficiently
    *
@@ -72,49 +126,83 @@ public:
    * @return        the accessed data.
    *
    **/
-  template <typename... Indices>
-  type &operator()(Indices const &... indices)
+  type operator()(std::vector<std::size_t> indices) const
   {
-    assert(sizeof...(indices) <= shape_.size());
-    std::size_t index = 0, shift = 1;
-    ComputeIndex(0, index, shift, indices...);
+    assert(indices.size() == shape_.size());
+    std::size_t  index = ComputeColIndex(indices);
+    return this->operator[](index);
+  }
+  type operator()(std::size_t index) const
+  {
+    assert(index == size_);
     return this->operator[](index);
   }
 
-  /**
-   * A getter for accessing data in the array
-   *
-   * @param[out]     dest is the destination for the data to be copied.
-   * @param[in]      indices specifies the data points to access.
-   *
-   **/
-  template <typename D, typename... Indices>
-  void Get(D &dest, Indices const &... indices)
+  void Assign(std::vector<std::size_t> indices, type val)
   {
-    std::size_t shift     = 1, size;
-    int         dest_rank = int(shape_.size()) - int(sizeof...(indices));
+    assert(indices.size() == shape_.size());
+    this->AssignVal(ComputeColIndex(indices), val);
+    return;
+  }
 
-    assert(dest_rank > 0);
+  /**
+   * extract data from NDArray based on the NDArrayView
+   * @param array_view
+   * @return
+   */
+  self_type GetRange(NDArrayView array_view) const
+  {
 
-    std::size_t rank_offset = (shape_.size() - std::size_t(dest_rank));
+    std::vector<std::size_t> new_shape;
 
-    for (std::size_t i = rank_offset; i < shape_.size(); ++i)
+    // instantiate new array of the right shape
+    for (std::size_t cur_dim = 0; cur_dim < array_view.from.size(); ++cur_dim)
     {
-      shift *= shape_[i];
+      std::size_t cur_from = array_view.from[cur_dim];
+      std::size_t cur_to   = array_view.to[cur_dim];
+      std::size_t cur_step = array_view.step[cur_dim];
+      std::size_t cur_len  = (cur_to - cur_from) / cur_step;
+
+      new_shape.push_back(cur_len);
     }
 
-    size = shift;
+    // define output
+    self_type output = self_type(new_shape);
 
-    std::size_t offset = 0;
-    ComputeIndex(0, offset, shift, indices...);
+    // copy all the data
+    array_view.recursive_copy(output, *this);
 
-    dest.Resize(shape_, rank_offset);
-    assert(size <= dest.size());
+    return output;
+  }
 
-    for (std::size_t i = 0; i < size; ++i)
+  /**
+   * extract data from NDArray based on the NDArrayView
+   * @param array_view
+   * @return
+   */
+  self_type SetRange(NDArrayView array_view, NDArray new_vals)
+  {
+
+    std::vector<std::size_t> new_shape;
+
+    // instantiate new array of the right shape
+    for (std::size_t cur_dim = 0; cur_dim < array_view.from.size(); ++cur_dim)
     {
-      dest[i] = this->operator[](offset + i);
+      std::size_t cur_from = array_view.from[cur_dim];
+      std::size_t cur_to   = array_view.to[cur_dim];
+      std::size_t cur_step = array_view.step[cur_dim];
+      std::size_t cur_len  = (cur_to - cur_from) / cur_step;
+
+      new_shape.push_back(cur_len);
     }
+
+    // define output
+    self_type output = self_type(new_shape);
+
+    // copy all the data
+    array_view.recursive_copy(*this, new_vals);
+
+    return output;
   }
 
   /**
@@ -205,6 +293,37 @@ private:
   {
     index += std::size_t(next) * shift;
     shift *= shape_[N];
+  }
+
+  std::size_t ComputeRowIndex(std::vector<std::size_t> &indices) const
+  {
+
+    std::size_t index  = 0;
+    std::size_t n_dims = indices.size();
+    std::size_t base   = 1;
+
+    // loop through all dimensions
+    for (std::size_t i = n_dims - 1; i == 0; --i)
+    {
+      index += indices[i] * base;
+      base *= shape_[i];
+    }
+    return index;
+  }
+  std::size_t ComputeColIndex(std::vector<std::size_t> &indices) const
+  {
+
+    std::size_t index  = 0;
+    std::size_t n_dims = indices.size();
+    std::size_t base   = 1;
+
+    // loop through all dimensions
+    for (std::size_t i = 0; i < n_dims; ++i)
+    {
+      index += indices[i] * base;
+      base *= shape_[i];
+    }
+    return index;
   }
 
   std::size_t              size_ = 0;
