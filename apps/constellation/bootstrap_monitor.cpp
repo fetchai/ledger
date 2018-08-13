@@ -10,9 +10,9 @@ namespace {
 using script::Variant;
 using http::JsonHttpClient;
 
-const char *BOOTSTRAP_HOST = "127.0.0.1";
-const uint16_t BOOTSTRAP_PORT = 8000;
-const std::chrono::seconds UPDATE_INTERVAL{10};
+const char *BOOTSTRAP_HOST = "bootstrap.economicagents.com";
+const uint16_t BOOTSTRAP_PORT = 80;
+const std::chrono::seconds UPDATE_INTERVAL{30};
 
 } // namespace
 
