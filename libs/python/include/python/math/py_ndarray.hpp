@@ -126,14 +126,13 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              return a;
            })
       .def("__eq__",
-           [](NDArray<T> const &s, NDArray<T> const &other)
-           {
-              return s.operator==(other);
-           })
+           [](NDArray<T> const &s, NDArray<T> const &other) { return s.operator==(other); })
       .def("__ne__",
-           [](NDArray<T> const &s, NDArray<T> const &other)
-           {
-             return s.operator!=(other);
+           [](NDArray<T> const &s, NDArray<T> const &other) { return s.operator!=(other); })
+      .def("__getitem__",
+           [](NDArray<T> const &s, std::size_t idx) {
+             if (idx >= s.size()) throw py::index_error();
+             return s[idx];
            })
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<py::slice> slices) {
@@ -232,6 +231,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("__setitem__",
            [](NDArray<T> &s, std::size_t idx, std::size_t val) {
+             if (idx >= s.size()) throw py::index_error();
+             s[idx] = val;
+           })
+      .def("__setitem__",
+           [](NDArray<T> &s, std::size_t idx, int val) {
              if (idx >= s.size()) throw py::index_error();
              s[idx] = val;
            })
