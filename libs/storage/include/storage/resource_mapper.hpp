@@ -13,7 +13,8 @@ namespace fetch {
 namespace storage {
 
 /**
- * The Resource ID is a wrapper around the byte array. The implication is that a Resource ID is
+ * The Resource ID is a wrapper around the byte array. The implication is that a
+ * Resource ID is
  * designed to be the hashed version of a `ResourceAddress`
  */
 class ResourceID
@@ -67,9 +68,11 @@ inline ResourceID::Group ResourceID::resource_group() const
 }
 
 /**
- * Translates the resource group value into a lane index, given a specified number of lanes
+ * Translates the resource group value into a lane index, given a specified
+ * number of lanes
  *
- * @param log2_num_lanes The log2 number of lanes, i.e. for 4 lanes this would be 2
+ * @param log2_num_lanes The log2 number of lanes, i.e. for 4 lanes this would
+ * be 2
  * @return The lane index
  */
 inline ResourceID::Group ResourceID::lane(std::size_t log2_num_lanes) const

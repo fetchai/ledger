@@ -27,8 +27,10 @@ public:
   static constexpr eECDSAEncoding          binaryDataFormat = P_ECDSABinaryDataFormat;
   static constexpr point_conversion_form_t conversionForm   = P_ConversionForm;
 
-  // using public_key_type = ECDSAPublicKey<binaryDataFormat, P_ECDSA_Curve_NID, P_ConversionForm>;
-  // TODO: Implement DER encoding. It mis missing now so defaulting to canonical encoding to void
+  // using public_key_type = ECDSAPublicKey<binaryDataFormat, P_ECDSA_Curve_NID,
+  // P_ConversionForm>;
+  // TODO: Implement DER encoding. It mis missing now so defaulting to canonical
+  // encoding to void
   // failures when construcing this class (ECDSAPrivateKey) with DER encoding.
   using public_key_type =
       ECDSAPublicKey<SupportedEncodingForPublicKey<P_ECDSABinaryDataFormat>::value,
@@ -43,7 +45,8 @@ public:
 private:
   // TODO: Keep key encrypted
   shrd_ptr_type<EC_KEY> private_key_;
-  // TODO: Do lazy initilisation of the public key to minimize impact at construction time of this
+  // TODO: Do lazy initilisation of the public key to minimize impact at
+  // construction time of this
   // class
   public_key_type public_key_;
 
@@ -127,8 +130,11 @@ private:
     if (ecdsa_curve_type::privateKeySize != key_data.size())
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::Convert2BIGNUM(const byte_array::ConstByteArray&): Lenght of provided "
-          "byte array does not correspond to expected lenght for selected elliptic curve");
+          "ECDSAPrivateKey::Convert2BIGNUM(const "
+          "byte_array::ConstByteArray&): Lenght of "
+          "provided "
+          "byte array does not correspond to expected "
+          "lenght for selected elliptic curve");
     }
 
     uniq_ptr_type<BIGNUM, del_strat_type::clearing> private_key_as_BN(BN_new());
@@ -138,7 +144,8 @@ private:
     if (!private_key_as_BN)
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::Convert2BIGNUM(const byte_array::ConstByteArray&): BN_bin2bn(...) "
+          "ECDSAPrivateKey::Convert2BIGNUM(const "
+          "byte_array::ConstByteArray&): BN_bin2bn(...) "
           "failed.");
     }
 
@@ -153,7 +160,8 @@ private:
     if (!EC_KEY_set_private_key(private_key.get(), private_key_as_BN))
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::ConvertPrivateKeyBN2ECKEY(...): EC_KEY_set_private_key(...) failed.");
+          "ECDSAPrivateKey::ConvertPrivateKeyBN2ECKEY(...)"
+          ": EC_KEY_set_private_key(...) failed.");
     }
 
     return private_key;
@@ -181,7 +189,8 @@ private:
     if (!public_key)
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::DerivePublicKey(...): EC_POINT_(new/dup)(...) failed.");
+          "ECDSAPrivateKey::DerivePublicKey(...): "
+          "EC_POINT_(new/dup)(...) failed.");
     }
 
     if (!EC_POINT_mul(group, public_key.get(), private_key_as_BN, NULL, NULL,
@@ -190,11 +199,13 @@ private:
       throw std::runtime_error("ECDSAPrivateKey::DerivePublicKey(...): EC_POINT_mul(...) failed.");
     }
 
-    //* The `EC_KEY_set_public_key(...)` creates it's own duplicate of the EC_POINT
+    //* The `EC_KEY_set_public_key(...)` creates it's own duplicate of the
+    // EC_POINT
     if (!EC_KEY_set_public_key(private_key, public_key.get()))
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::DerivePublicKey(...): EC_KEY_set_public_key(...) failed.");
+          "ECDSAPrivateKey::DerivePublicKey(...): "
+          "EC_KEY_set_public_key(...) failed.");
     }
 
     return public_key_type{std::move(public_key), group, session};
@@ -229,13 +240,15 @@ private:
     if (!key_pair)
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::GenerateKeyPair(): EC_KEY_new_by_curve_name(...) failed.");
+          "ECDSAPrivateKey::GenerateKeyPair(): "
+          "EC_KEY_new_by_curve_name(...) failed.");
     }
 
     if (!EC_KEY_generate_key(key_pair.get()))
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::GenerateKeyPair(): EC_KEY_generate_key(...) failed.");
+          "ECDSAPrivateKey::GenerateKeyPair(): "
+          "EC_KEY_generate_key(...) failed.");
     }
 
     return key_pair;
@@ -266,7 +279,8 @@ private:
     if (est_size < 1)
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::Convert2DER(...): i2d_ECPrivateKey(..., nullptr) failed.");
+          "ECDSAPrivateKey::Convert2DER(...): "
+          "i2d_ECPrivateKey(..., nullptr) failed.");
     }
 
     byte_array::ByteArray key_as_bin;
@@ -304,7 +318,8 @@ private:
     if (!d2i_ECPrivateKey(&key_ptr, &key_data_ptr, static_cast<long>(key_data.size())))
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::ConvertFromDER(...): d2i_ECPrivateKey(...) failed.");
+          "ECDSAPrivateKey::ConvertFromDER(...): "
+          "d2i_ECPrivateKey(...) failed.");
     }
 
     BIGNUM const *const private_key_as_BN = EC_KEY_get0_private_key(key_ptr);

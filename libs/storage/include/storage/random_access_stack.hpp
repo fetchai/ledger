@@ -52,8 +52,6 @@ public:
   using header_extra_type  = D;
   using type               = T;
   using event_handler_type = std::function<void()>;
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
 
   void ClearEventHandlers()
   {
@@ -270,6 +268,8 @@ public:
   }
 
 private:
+  event_handler_type   on_file_loaded_;
+  event_handler_type   on_before_flush_;
   mutable std::fstream file_handle_;
   std::string          filename_ = "";
   Header               header_;

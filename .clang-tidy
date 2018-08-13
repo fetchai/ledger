@@ -1,18 +1,28 @@
-Checks: '-*,bugprone-*,modernize-use-using,modernize-make-shared,modernize-make-unique,modernize-pass-by-value'
+Checks: '-*,bugprone-*,modernize-use-using,modernize-make-shared,modernize-make-unique,modernize-pass-by-value,readability-identifier-naming'
+
 FormatStyle: file
+
 HeaderFilterRegex: '(apps|libs)/[a-zA-Z]+/include'
+
 CheckOptions:
-  - key:             readability-identifier-naming.ClassCase
-    value:           CamelCase
-  - key:             readability-identifier-naming.EnumCase
-    value:           CamelCase
   - key:             readability-identifier-naming.FunctionCase
-    value:           CamelCase
+    value:           aNy_CasE
   - key:             readability-identifier-naming.MemberCase
     value:           lower_case
-  - key:             readability-identifier-naming.ParameterCase
-    value:           lower_case
-  - key:             readability-identifier-naming.UnionCase
-    value:           CamelCase
-  - key:             readability-identifier-naming.VariableCase
-    value:           lower_case
+  - key:             readability-identifier-naming.PublicMemberSuffix
+    value:           ''
+  - key:             readability-identifier-naming.ProtectedMemberSuffix
+    value:           '_'
+  - key:             readability-identifier-naming.PrivateMemberSuffix
+    value:           '_'
+
+  #- key:             readability-identifier-naming.ClassCase
+  #  value:           CamelCase
+  #- key:             readability-identifier-naming.EnumCase
+  #  value:           CamelCase
+  #- key:             readability-identifier-naming.ParameterCase
+  #  value:           lower_case
+  #- key:             readability-identifier-naming.UnionCase
+  #  value:           CamelCase
+  #- key:             readability-identifier-naming.VariableCase
+  #  value:           lower_case

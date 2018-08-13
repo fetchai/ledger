@@ -8,12 +8,15 @@ namespace fetch {
 namespace storage {
 
 /**
- * Key used in key value pairs. Comparing keys yields the bit position that they differ.
+ * Key used in key value pairs. Comparing keys yields the bit position that they
+ * differ.
  *
- * Note: this is done in a non standard way: bytes are compared lsb to msb even though
+ * Note: this is done in a non standard way: bytes are compared lsb to msb even
+ * though
  * conceptually this is backwards.
  *
- * So comparing 0xEF... and 0x0F... would return the fourth bit position after it has compared
+ * So comparing 0xEF... and 0x0F... would return the fourth bit position after
+ * it has compared
  * all of 0xF
  *
  */
@@ -46,7 +49,8 @@ struct Key
   }
 
   /**
-   * Compare against another key, returning the position of the first bit difference between the
+   * Compare against another key, returning the position of the first bit
+   * difference between the
    * two, comparing byte by byte, lsb to msb (see Key comment)
    *
    * @param: other The other key to

@@ -11,7 +11,6 @@ Initiate
 ========
 git submodule update --recursive --remote
 
-
 Build
 =====
 
@@ -35,7 +34,6 @@ Test
 ====
 
 ctest
-
 
 Notes
 =====

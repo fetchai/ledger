@@ -38,17 +38,15 @@ protected:
   using client_type = fetch::network::NetworkNodeCore::client_type;
 
 public:
-  std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
-
   explicit SwarmNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
                      const std::string &identifier, uint32_t maxpeers,
                      fetch::swarm::SwarmPeerLocation uri)
-    : nnCore_(std::move(networkNodeCore)), uri_(std::move(uri)), karmaPeerList_(identifier)
+    : nn_core_(std::move(networkNodeCore)), uri_(std::move(uri)), karmaPeerList_(identifier)
   {
     identifier_ = identifier;
     maxpeers_   = maxpeers;
 
-    nnCore_->AddProtocol(this);
+    nn_core_->AddProtocol(this);
   }
 
   explicit SwarmNode(fetch::network::NetworkManager tm, const std::string &identifier,
@@ -156,19 +154,20 @@ public:
     return karmaPeerList_.GetBestPeers(n, minKarma);
   }
 
-  void Post(std::function<void()> workload) { nnCore_->Post(workload); }
+  void Post(std::function<void()> workload) { nn_core_->Post(workload); }
 
 protected:
-  mutable mutex_type             mutex_;
-  int                            maxActivePeers_;
-  int                            maxKnownPeers_;
-  std::string                    identifier_;
-  uint32_t                       maxpeers_;
-  SwarmPeerLocation              uri_;
-  fetch::network::NetworkManager tm_;
-  SwarmKarmaPeers                karmaPeerList_;
-  uint32_t                       protocolNumber_;
-  std::function<int()>           toGetState_;
+  std::shared_ptr<fetch::network::NetworkNodeCore> nn_core_;
+  mutable mutex_type                               mutex_;
+  int                                              maxActivePeers_;
+  int                                              maxKnownPeers_;
+  std::string                                      identifier_;
+  uint32_t                                         maxpeers_;
+  SwarmPeerLocation                                uri_;
+  fetch::network::NetworkManager                   tm_;
+  SwarmKarmaPeers                                  karmaPeerList_;
+  uint32_t                                         protocolNumber_;
+  std::function<int()>                             toGetState_;
 };
 
 }  // namespace swarm
