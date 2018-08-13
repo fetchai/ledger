@@ -50,7 +50,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.Subtract(b, c);
              return a;
            })
-      .def("__div__",
+      .def("__truediv__",
            [](NDArray<T> const &b, NDArray<T> const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
@@ -78,7 +78,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.Subtract(b, c);
              return a;
            })
-      .def("__div__",
+      .def("__truediv__",
            [](NDArray<T> const &b, T const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
@@ -100,7 +100,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.InlineSubtract(c);
              return a;
            })
-      .def("__idiv__",
+      .def("__truediv__",
            [](NDArray<T> &a, NDArray<T> const &c) {
              a.InlineDivide(c);
              return a;
@@ -120,7 +120,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.InlineSubtract(c);
              return a;
            })
-      .def("__idiv__",
+      .def("__truediv__",
            [](NDArray<T> &a, T const &c) {
              a.InlineDivide(c);
              return a;
@@ -181,6 +181,12 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 
              return s.GetRange(arr_view);
            })
+      .def("__getitem__",
+           [](NDArray<T> const &s, std::vector<std::size_t> const &idxs) {
+             assert(idxs.size() == s.Shape().size());
+
+             return s.Get(idxs);
+           })
       .def("__setitem__",
            [](NDArray<T> &s, std::vector<py::slice> slices, NDArray<T> const &t) {
              // manage slice assignment
@@ -230,14 +236,32 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              return s.SetRange(arr_view, t);
            })
       .def("__setitem__",
-           [](NDArray<T> &s, std::size_t idx, std::size_t val) {
+           [](NDArray<T> &s, std::vector<std::size_t> const &idxs, T val) {
+             assert(idxs.size() == s.Shape().size());
+
+             return s.Set(idxs, val);
+           })
+      .def("__setitem__",
+           [](NDArray<T> &s, std::size_t idx, T val) {
              if (idx >= s.size()) throw py::index_error();
              s[idx] = val;
            })
       .def("__setitem__",
-           [](NDArray<T> &s, std::size_t idx, int val) {
+           [](NDArray<T> &s, std::size_t idx, T val) {
              if (idx >= s.size()) throw py::index_error();
              s[idx] = val;
+           })
+      .def("Max", [](NDArray<T> const &a) { return a.Max(); })
+      .def("Max",
+           [](NDArray<T> const &a, std::size_t axis) {
+             if (axis >= a.shape().size()) throw py::index_error();
+             return a.Max(axis);
+           })
+      .def("Min", [](NDArray<T> const &a) { return a.Min(); })
+      .def("Min",
+           [](NDArray<T> const &a, std::size_t axis) {
+             if (axis >= a.shape().size()) throw py::index_error();
+             return a.Min(axis);
            })
       .def("Reshape",
            [](NDArray<T> &a, std::vector<std::size_t> b) {

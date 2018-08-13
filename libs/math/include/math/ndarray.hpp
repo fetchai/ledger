@@ -1,6 +1,8 @@
 #pragma once
 #include "math/ndarray_view.hpp"
 #include "math/shape_less_array.hpp"
+#include "math/statistics/max.hpp"
+#include "math/statistics/min.hpp"
 #include "vectorise/memory/array.hpp"
 
 #include <numeric>
@@ -152,11 +154,15 @@ public:
     return this->operator[](index);
   }
 
-  void Assign(std::vector<std::size_t> indices, type val)
+  void Set(std::vector<std::size_t> indices, type val)
   {
     assert(indices.size() == shape_.size());
     this->AssignVal(ComputeColIndex(indices), val);
-    return;
+  }
+  type Get(std::vector<std::size_t> indices) const
+  {
+    assert(indices.size() == shape_.size());
+    return this->operator[](ComputeColIndex(indices));
   }
 
   /**
@@ -264,51 +270,81 @@ public:
    **/
   std::vector<std::size_t> const &shape() const { return shape_; }
 
-  /**
-   * Provides an interfance to the l2loss function in the shape_less_array
-   *
-   * @return       returns a single value of type indicating the l2loss
-   *
-   **/
-  type L2Loss() { return this->super_type::L2Loss(); }
+  type      Max() const { return this->super_type::Max(); }
+  self_type Max(std::size_t fixed_axis) const
+  {
+    // set up the new output array
+    std::vector<std::size_t> new_shape{shape()};
+    new_shape.erase(new_shape.begin() + int(fixed_axis));
+    NDArray array_out{new_shape};
+
+    for (std::size_t i = 0; i < shape()[fixed_axis]; ++i)
+    {
+
+      // set up the view to extract
+      NDArrayView arr_view;
+
+      for (std::size_t j = 0; j < shape().size(); ++j)
+      {
+        if (j == fixed_axis)
+        {
+          arr_view.from.push_back(i);
+          arr_view.to.push_back(i + 1);
+          arr_view.step.push_back(1);
+        }
+        else
+        {
+          arr_view.from.push_back(0);
+          arr_view.to.push_back(shape()[j]);
+          arr_view.step.push_back(1);
+        }
+      }
+
+      //      TODO: Max needs to operate on every 1d array within this ND view
+      array_out[i] = fetch::math::statistics::Max(GetRange(arr_view));
+    }
+
+    return array_out;
+  }
+
+  type      Min() const { return this->super_type::Min(); }
+  self_type Min(std::size_t fixed_axis) const
+  {
+    // set up the new output array
+    std::vector<std::size_t> new_shape{shape()};
+    new_shape.erase(new_shape.begin() + int(fixed_axis));
+    NDArray array_out{new_shape};
+
+    for (std::size_t i = 0; i < shape()[fixed_axis]; ++i)
+    {
+
+      // set up the view to extract
+      NDArrayView arr_view;
+
+      for (std::size_t j = 0; j < shape().size(); ++j)
+      {
+        if (j == fixed_axis)
+        {
+          arr_view.from.push_back(i);
+          arr_view.to.push_back(i + 1);
+          arr_view.step.push_back(1);
+        }
+        else
+        {
+          arr_view.from.push_back(0);
+          arr_view.to.push_back(shape()[j]);
+          arr_view.step.push_back(1);
+        }
+      }
+
+      //      TODO: Min needs to operate on every 1d array within this ND view
+      array_out[i] = fetch::math::statistics::Min(GetRange(arr_view));
+    }
+
+    return array_out;
+  }
 
 private:
-  template <typename... Indices>
-  void ComputeIndex(std::size_t const &N, std::size_t &index, std::size_t &shift,
-                    std::size_t const &next, Indices const &... indices) const
-  {
-    ComputeIndex(N + 1, index, shift, indices...);
-
-    assert(N < shape_.size());
-    index += next * shift;
-    shift *= shape_[N];
-  }
-
-  template <typename... Indices>
-  void ComputeIndex(std::size_t const &N, std::size_t &index, std::size_t &shift, int const &next,
-                    Indices const &... indices) const
-  {
-    ComputeIndex(N + 1, index, shift, indices...);
-
-    assert(N < shape_.size());
-    index += std::size_t(next) * shift;
-    shift *= shape_[N];
-  }
-
-  void ComputeIndex(std::size_t const &N, std::size_t &index, std::size_t &shift,
-                    std::size_t const &next) const
-  {
-    index += next * shift;
-    shift *= shape_[N];
-  }
-
-  void ComputeIndex(std::size_t const &N, std::size_t &index, std::size_t &shift,
-                    int const &next) const
-  {
-    index += std::size_t(next) * shift;
-    shift *= shape_[N];
-  }
-
   std::size_t ComputeRowIndex(std::vector<std::size_t> &indices) const
   {
 

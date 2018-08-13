@@ -100,7 +100,6 @@ private:
       input_idxs[cur_dim]  = from[cur_dim];
       output_idxs[cur_dim] = 0;
     }
-    return;
   }
 
   /**
@@ -130,7 +129,7 @@ private:
       if (input_idxs[cur_dim] <= to[cur_dim])
       {
         data_type new_val = data_type(source.operator()(input_idxs));
-        dest.Assign(output_idxs, new_val);
+        dest.Set(output_idxs, new_val);
       }
 
       // eith increment index of final dimension or switch to ascending if it would be out of bounds
