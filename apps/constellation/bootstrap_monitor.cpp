@@ -77,8 +77,6 @@ bool BootstrapMonitor::UpdateExternalAddress()
       external_address_ = ip_address.As<std::string>();
       fetch::logger.Info("Detected external address as: ", external_address_);
 
-      external_address_ = "127.0.0.1";
-
       success = true;
     }
     else
