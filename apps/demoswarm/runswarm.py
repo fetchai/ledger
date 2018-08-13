@@ -205,9 +205,7 @@ class PyfetchNode(object):
         else:
             cmdstr += " >/dev/null"
 
-        self.p = subprocess.Popen("{}".format(cmdstr)),
-            shell=True
-        )
+        self.p = subprocess.Popen("{}".format(cmdstr), shell=True)
 
     def launchGDB(self):
         pass

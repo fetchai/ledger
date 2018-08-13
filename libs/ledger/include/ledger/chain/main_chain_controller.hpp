@@ -55,12 +55,6 @@ public:
   {
     for (auto &h : ep.host)
     {
-      if (h == "127.0.0.1")
-      {
-        fetch::logger.Info("Avoiding overfriendlyness", h, ":", ep.port);
-        continue;
-      }
-
       fetch::logger.Info("Mainchain trying to connect to ", h, ":", ep.port);
 
       // only connect one?

@@ -17,7 +17,7 @@ import contextlib
 import random
 
 from functools import reduce
-from monitoring.Monitoring import Monitoring, ConstellationNodeNumberGenerator, PyfetchNodeNumberGenerator
+from monitoring.Monitoring import Monitoring, ConstellationNodeNumberGenerator, NodesFromFileGenerator, PyfetchNodeNumberGenerator
 
 from bottle import bottle
 
@@ -70,8 +70,6 @@ def get_data(context, mon):
 
     allnodenames = set([x for x in mon.world.keys()])
     extranodenames = set()
-
-    print("allnodenames=", allnodenames)
 
     for s in mon.world.keys():
         for link in mon.world[s]["peers"]:
@@ -385,7 +383,8 @@ flags.Flag(g_port = "port", help = "Which port to run on", required = True, type
 flags.Flag(g_ssl = "ssl", type=bool, help = "Run https", default = False)
 flags.Flag(g_certfile = "cert", help = "Certificate", default = None)
 flags.Flag(g_statics_dir=flags.AUTOFLAG, help="Specify the dir containing static html/css/javascript elements.", default="main/statics/")
-flags.Flag(g_polltype = flags.AUTOFLAG, help = "constellation or pyfetch", default = "constellation")
+flags.Flag(g_polltype = flags.AUTOFLAG, help = "constellation, pyfetch or file", default = "constellation")
+flags.Flag(g_pollfile = flags.AUTOFLAG, help = "list of nodes to reach", default = None)
 
 def main():
     flags.startFlags(sys.argv)
@@ -394,17 +393,18 @@ def main():
 
     context = {}
 
-    nodenumbergenerator = {
+    nodelistgenerator = {
         "pyfetch": PyfetchNodeNumberGenerator(g_scan),
         "constellation": ConstellationNodeNumberGenerator(g_scan),
+        "file": NodesFromFileGenerator(g_pollfile),
         }[g_polltype]
-        
+
     root = bottle.Bottle()
     root.route('/static/<filepath:path>', method='GET', callback=functools.partial(get_static))
     root.route('/data', method='GET', callback=functools.partial(get_data, context))
     root.route('/', method='GET', callback=functools.partial(get_slash))
 
-    with contextlib.closing(Monitoring(nodenumbergenerator)) as myMonitoring:
+    with contextlib.closing(Monitoring(nodelistgenerator)) as myMonitoring:
         root.route('/network', method='GET', callback=functools.partial(get_data, context, myMonitoring))
         root.route('/chain', method='GET', callback=functools.partial(get_chain_data, context, myMonitoring))
         root.route('/consensus', method='GET', callback=functools.partial(get_consensus_data, context, myMonitoring))

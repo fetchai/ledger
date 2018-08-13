@@ -257,6 +257,16 @@ public:
   byte_array::ConstByteArray Hash() override
   {
     // TODO(EJF):
+
+    if (lanes_.empty())
+    {
+      TODO_FAIL("Lanes array empty when trying to get a hash from L0");
+    }
+    if (!lanes_[0])
+    {
+      TODO_FAIL("L0 null when trying to get a hash from L0");
+    }
+
     return lanes_[0]
         ->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
         .As<byte_array::ByteArray>();
