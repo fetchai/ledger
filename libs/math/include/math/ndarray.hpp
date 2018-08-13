@@ -112,23 +112,6 @@ public:
    **/
   void LazyReshape(std::vector<std::size_t> const &shape) { shape_ = shape; }
 
-  //  /**
-  //   * Operator for accessing data in the array
-  //   *
-  //   * @param[in]     indices specifies the data points to access.
-  //   * @return        the accessed data.
-  //   *
-  //   **/
-  //  template <typename... Indices>
-  //  type &operator()(Indices const &... indices)
-  //  {
-  //    assert(sizeof...(indices) <= shape_.size());
-  ////    std::size_t index = 0, shift = 1;
-  //    std::size_t index = CopmuteColIndex(indices);
-  ////    ComputeIndex(0, index, shift, indices...);
-  //    return this->operator[](index);
-  //  }
-
   /**
    * Operator for accessing data in the array
    *
@@ -184,41 +167,6 @@ public:
 
     return output;
   }
-  //  /**
-  //   * A getter for accessing data in the array
-  //   *
-  //   * @param[out]     dest is the destination for the data to be copied.
-  //   * @param[in]      indices specifies the data points to access.
-  //   *
-  //   **/
-  //  template <typename D, typename... Indices>
-  //  void Get(D &dest, Indices const &... indices)
-  //  {
-  //    std::size_t shift     = 1, size;
-  //    int         dest_rank = int(shape_.size()) - int(sizeof...(indices));
-  //
-  //    assert(dest_rank > 0);
-  //
-  //    std::size_t rank_offset = (shape_.size() - std::size_t(dest_rank));
-  //
-  //    for (std::size_t i = rank_offset; i < shape_.size(); ++i)
-  //    {
-  //      shift *= shape_[i];
-  //    }
-  //
-  //    size = shift;
-  //
-  //    std::size_t offset = 0;
-  //    ComputeIndex(0, offset, shift, indices...);
-  //
-  //    dest.Resize(shape_, rank_offset);
-  //    assert(size <= dest.size());
-  //
-  //    for (std::size_t i = 0; i < size; ++i)
-  //    {
-  //      dest[i] = this->operator[](offset + i);
-  //    }
-  //  }
 
   /**
    * Tests if it is possible to reshape the array to a newly proposed shape
