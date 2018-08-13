@@ -1,194 +1,181 @@
-#include<gtest/gtest.h>
+#include <gtest/gtest.h>
 
-#include"math/linalg/prototype.hpp"
-#include"math/linalg/matrix.hpp"
-#include"math/linalg/blas/base.hpp"
-#include"math/linalg/blas/gemm_nt_vector.hpp"
-#include"math/linalg/blas/gemm_nt_vector_threaded.hpp"
-
+#include "math/linalg/blas/base.hpp"
+#include "math/linalg/blas/gemm_nt_vector.hpp"
+#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
+#include "math/linalg/matrix.hpp"
+#include "math/linalg/prototype.hpp"
 
 using namespace fetch;
 using namespace fetch::math::linalg;
 
-TEST(blas_gemm_vectorised, blas_gemm_nt_vector1) {
+TEST(blas_gemm_vectorised, blas_gemm_nt_vector1)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
-        platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
+      gemm_nt_vector;
+  // Compuing _C = _alpha * _A * T(_B) + _beta * _C
 
   double alpha = double(1), beta = double(0);
 
-Matrix< double > A = Matrix< double >(R"(
+  Matrix<double> A = Matrix<double>(R"(
 	0.3745401188473625 0.9507143064099162;
  0.7319939418114051 0.5986584841970366;
  0.15601864044243652 0.15599452033620265
 	)");
 
-Matrix< double > B = Matrix< double >(R"(
+  Matrix<double> B = Matrix<double>(R"(
 	0.05808361216819946 0.8661761457749352;
  0.6011150117432088 0.7080725777960455;
  0.020584494295802447 0.9699098521619943
 	)");
 
-Matrix< double > C = Matrix< double >(R"(
+  Matrix<double> C = Matrix<double>(R"(
 	0.8324426408004217 0.21233911067827616 0.18182496720710062;
  0.18340450985343382 0.3042422429595377 0.5247564316322378;
  0.43194501864211576 0.2912291401980419 0.6118528947223795
 	)");
 
-  Matrix< double > R = Matrix< double >(R"(
+  Matrix<double> R = Matrix<double>(R"(
 	0.8452406966637934 0.898316417626484 0.9298168913182975;
  0.5610605507028994 0.8639062030527893 0.5957124870228502;
  0.14418085858929 0.20424058901822734 0.15451218697159372
 	)");
-  
-	gemm_nt_vector(alpha, A, B, beta, C);
 
+  gemm_nt_vector(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_gemm_vectorised, blas_gemm_nt_vector2) {
+TEST(blas_gemm_vectorised, blas_gemm_nt_vector2)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
-        platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
+      gemm_nt_vector;
+  // Compuing _C = _alpha * _A * T(_B) + _beta * _C
 
   double alpha = double(0), beta = double(1);
 
-Matrix< double > A = Matrix< double >(R"(
+  Matrix<double> A = Matrix<double>(R"(
 	0.13949386065204183 0.29214464853521815;
  0.3663618432936917 0.45606998421703593;
  0.7851759613930136 0.19967378215835974
 	)");
 
-Matrix< double > B = Matrix< double >(R"(
+  Matrix<double> B = Matrix<double>(R"(
 	0.5142344384136116 0.5924145688620425;
  0.046450412719997725 0.6075448519014384;
  0.17052412368729153 0.06505159298527952
 	)");
 
-Matrix< double > C = Matrix< double >(R"(
+  Matrix<double> C = Matrix<double>(R"(
 	0.9488855372533332 0.9656320330745594 0.8083973481164611;
  0.3046137691733707 0.09767211400638387 0.6842330265121569;
  0.4401524937396013 0.12203823484477883 0.4951769101112702
 	)");
 
-  Matrix< double > R = Matrix< double >(R"(
+  Matrix<double> R = Matrix<double>(R"(
 	0.9488855372533332 0.9656320330745594 0.8083973481164611;
  0.3046137691733707 0.09767211400638387 0.6842330265121569;
  0.4401524937396013 0.12203823484477883 0.4951769101112702
 	)");
-  
-	gemm_nt_vector(alpha, A, B, beta, C);
 
+  gemm_nt_vector(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_gemm_vectorised, blas_gemm_nt_vector3) {
+TEST(blas_gemm_vectorised, blas_gemm_nt_vector3)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
-        platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
+      gemm_nt_vector;
+  // Compuing _C = _alpha * _A * T(_B) + _beta * _C
 
   double alpha = double(1), beta = double(1);
 
-Matrix< double > A = Matrix< double >(R"(
+  Matrix<double> A = Matrix<double>(R"(
 	0.034388521115218396 0.9093204020787821;
  0.2587799816000169 0.662522284353982;
  0.31171107608941095 0.5200680211778108
 	)");
 
-Matrix< double > B = Matrix< double >(R"(
+  Matrix<double> B = Matrix<double>(R"(
 	0.5467102793432796 0.18485445552552704;
  0.9695846277645586 0.7751328233611146;
  0.9394989415641891 0.8948273504276488
 	)");
 
-Matrix< double > C = Matrix< double >(R"(
+  Matrix<double> C = Matrix<double>(R"(
 	0.5978999788110851 0.9218742350231168 0.0884925020519195;
  0.1959828624191452 0.045227288910538066 0.32533033076326434;
  0.388677289689482 0.2713490317738959 0.8287375091519293
 	)");
 
-  Matrix< double > R = Matrix< double >(R"(
+  Matrix<double> R = Matrix<double>(R"(
 	0.7847924646207151 1.6600609070711796 0.9344852473235857;
  0.45993073459592293 0.809679149854067 1.1612969098822274;
  0.6552298300637807 0.9767010930495218 1.5869608246444562
 	)");
-  
-	gemm_nt_vector(alpha, A, B, beta, C);
 
+  gemm_nt_vector(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_gemm_vectorised, blas_gemm_nt_vector4) {
+TEST(blas_gemm_vectorised, blas_gemm_nt_vector4)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
-        platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
+      gemm_nt_vector;
+  // Compuing _C = _alpha * _A * T(_B) + _beta * _C
 
   double alpha = double(0.03347424258533449), beta = double(0.71371690530505);
 
-Matrix< double > A = Matrix< double >(R"(
+  Matrix<double> A = Matrix<double>(R"(
 	0.3567533266935893 0.28093450968738076;
  0.5426960831582485 0.14092422497476265;
  0.8021969807540397 0.07455064367977082
 	)");
 
-Matrix< double > B = Matrix< double >(R"(
+  Matrix<double> B = Matrix<double>(R"(
 	0.9868869366005173 0.7722447692966574;
  0.1987156815341724 0.005522117123602399;
  0.8154614284548342 0.7068573438476171
 	)");
 
-Matrix< double > C = Matrix< double >(R"(
+  Matrix<double> C = Matrix<double>(R"(
 	0.7290071680409873 0.7712703466859457 0.07404465173409036;
  0.3584657285442726 0.11586905952512971 0.8631034258755935;
  0.6232981268275579 0.3308980248526492 0.06355835028602363
 	)");
 
-  Matrix< double > R = Matrix< double >(R"(
+  Matrix<double> R = Matrix<double>(R"(
 	0.5393524343074868 0.552893687454003 0.06923253461280054;
  0.27741410912462516 0.08633369294419932 0.6341599364662642;
  0.4732863793962484 0.24151739440307352 0.06902418400850363
 	)");
-  
-	gemm_nt_vector(alpha, A, B, beta, C);
 
+  gemm_nt_vector(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_gemm_vectorised, blas_gemm_nt_vector5) {
+TEST(blas_gemm_vectorised, blas_gemm_nt_vector5)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
-        platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
+      gemm_nt_vector;
+  // Compuing _C = _alpha * _A * T(_B) + _beta * _C
 
   double alpha = double(0.9646039861971695), beta = double(0.8634655896955824);
 
-Matrix< double > A = Matrix< double >(R"(
+  Matrix<double> A = Matrix<double>(R"(
 	0.3109823217156622 0.32518332202674705 0.7296061783380641 0.6375574713552131 0.8872127425763265 0.4722149251619493 0.1195942459383017 0.713244787222995 0.7607850486168974 0.5612771975694962 0.770967179954561 0.49379559636439074;
  0.5227328293819941 0.42754101835854963 0.02541912674409519 0.10789142699330445 0.03142918568673425 0.6364104112637804 0.3143559810763267 0.5085706911647028 0.907566473926093 0.24929222914887494 0.41038292303562973 0.7555511385430487;
  0.22879816549162246 0.07697990982879299 0.289751452913768 0.16122128725400442 0.9296976523425731 0.808120379564417 0.6334037565104235 0.8714605901877177 0.8036720768991145 0.18657005888603584 0.8925589984899778 0.5393422419156507;
@@ -200,12 +187,12 @@ Matrix< double > A = Matrix< double >(R"(
  0.3410663510502585 0.11347352124058907 0.9246936182785628 0.877339353380981 0.2579416277151556 0.659984046034179 0.8172222002012158 0.5552008115994623 0.5296505783560065 0.24185229090045168 0.09310276780589921 0.8972157579533268
 	)");
 
-Matrix< double > B = Matrix< double >(R"(
+  Matrix<double> B = Matrix<double>(R"(
 	0.9004180571633305 0.6331014572732679 0.3390297910487007 0.3492095746126609 0.7259556788702394 0.8971102599525771 0.8870864242651173 0.7798755458576239 0.6420316461542878 0.08413996499504883 0.16162871409461377 0.8985541885270792;
  0.6064290596595899 0.009197051616629648 0.1014715428660321 0.6635017691080558 0.005061583846218687 0.16080805141749865 0.5487337893665861 0.6918951976926933 0.6519612595026005 0.22426930946055978 0.7121792213475359 0.23724908749680007
 	)");
 
-Matrix< double > C = Matrix< double >(R"(
+  Matrix<double> C = Matrix<double>(R"(
 	0.3253996981592677 0.7464914051180241;
  0.6496328990472147 0.8492234104941779;
  0.6576128923003434 0.5683086033354716;
@@ -217,7 +204,7 @@ Matrix< double > C = Matrix< double >(R"(
  0.5769038846263591 0.4925176938188639
 	)");
 
-  Matrix< double > R = Matrix< double >(R"(
+  Matrix<double> R = Matrix<double>(R"(
 	3.936736220007523 3.1682398213224325;
  3.8461587303016738 2.798587938103489;
  4.630027984979491 3.085926823846832;
@@ -228,26 +215,23 @@ Matrix< double > C = Matrix< double >(R"(
  3.2720964232876013 2.2287046191155753;
  4.470115789005633 2.8392496983803457
 	)");
-  
-	gemm_nt_vector(alpha, A, B, beta, C);
 
+  gemm_nt_vector(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_gemm_vectorised, blas_gemm_nt_vector6) {
+TEST(blas_gemm_vectorised, blas_gemm_nt_vector6)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
-        platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
+      gemm_nt_vector;
+  // Compuing _C = _alpha * _A * T(_B) + _beta * _C
 
   double alpha = double(0.8288408289301108), beta = double(0.01724733695787506);
 
-Matrix< double > A = Matrix< double >(R"(
+  Matrix<double> A = Matrix<double>(R"(
 	0.1952429877980445 0.7224521152615053 0.2807723624408558 0.02431596643145384 0.6454722959071678 0.17711067940704894 0.9404585843529143 0.9539285770025874;
  0.9148643902204485 0.3701587002554444 0.015456616528867428 0.9283185625877254 0.42818414831731433 0.9666548190436696 0.9636199770892528 0.8530094554673601;
  0.2944488920695857 0.38509772860192526 0.8511366715168569 0.31692200515627766 0.1694927466860925 0.5568012624583502 0.936154774160781 0.696029796674973;
@@ -257,7 +241,7 @@ Matrix< double > A = Matrix< double >(R"(
  0.375582952639944 0.093981939840869 0.578280140996174 0.035942273796742086 0.46559801813246016 0.5426446347075766 0.2865412521282844 0.5908332605690108
 	)");
 
-Matrix< double > B = Matrix< double >(R"(
+  Matrix<double> B = Matrix<double>(R"(
 	0.03050024993904943 0.03734818874921442 0.8226005606596583 0.3601906414112629 0.12706051265188478 0.5222432600548044 0.7699935530986108 0.21582102749684318;
  0.6228904758190003 0.085347464993768 0.0516817211686077 0.531354631568148 0.5406351216101065 0.6374299014982066 0.7260913337226615 0.9758520794625346;
  0.5163003483011953 0.32295647294124596 0.7951861947687037 0.2708322512620742 0.4389714207056361 0.07845638134226596 0.02535074341545751 0.9626484146779251;
@@ -267,7 +251,7 @@ Matrix< double > B = Matrix< double >(R"(
  0.4741738290873252 0.09783416065100148 0.49161587511683236 0.4734717707805657 0.17320186991001518 0.43385164923797304 0.39850473439737344 0.6158500980522165
 	)");
 
-Matrix< double > C = Matrix< double >(R"(
+  Matrix<double> C = Matrix<double>(R"(
 	0.6350936508676438 0.04530400977204452 0.3746126146264712 0.6258599157142364 0.5031362585800877 0.8564898411883223 0.658693631618945;
  0.1629344270814297 0.07056874740042984 0.6424192782063156 0.026511310541621813 0.5857755812734633 0.9402302414249576 0.575474177875879;
  0.3881699262065219 0.6432882184423532 0.45825289049151663 0.5456167893159349 0.9414648087765252 0.38610263780077425 0.9611905638239142;
@@ -277,7 +261,7 @@ Matrix< double > C = Matrix< double >(R"(
  0.7506147516408583 0.806834739267264 0.9905051420006733 0.4126176769114265 0.37201808579278317 0.7764129607419968 0.34080354025301784
 	)");
 
-  Matrix< double > R = Matrix< double >(R"(
+  Matrix<double> R = Matrix<double>(R"(
 	1.1524273924369024 1.8957753318005786 1.5011553018543133 1.7750307469106885 1.429540375009931 1.7856270144063635 1.2245314358353938;
  1.5561635242484524 2.881663499065736 1.6397331637933283 2.186365751927577 2.3737198436182103 1.8378419557646384 1.9328613425888956;
  1.6818102768733667 1.8628698107084536 1.541996831181465 1.7454663402303507 1.9628347223719977 1.4710408682190292 1.5237581616095006;
@@ -286,45 +270,39 @@ Matrix< double > C = Matrix< double >(R"(
  1.825645127597948 2.1747524875102893 1.6357747355401777 1.8816431544977854 2.544282676233753 1.4246113545728634 1.6784695932718674;
  1.002835558061094 1.4007241975356919 1.2742919644209862 1.1760471256464204 1.4234212492750173 0.7774212728730447 1.069047074105717
 	)");
-  
-	gemm_nt_vector(alpha, A, B, beta, C);
 
+  gemm_nt_vector(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_gemm_vectorised, blas_gemm_nt_vector7) {
+TEST(blas_gemm_vectorised, blas_gemm_nt_vector7)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
-        platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
+      gemm_nt_vector;
+  // Compuing _C = _alpha * _A * T(_B) + _beta * _C
 
   double alpha = double(0.4334657256131019), beta = double(0.7740645877426432);
 
-Matrix< double > A = Matrix< double >(R"(
+  Matrix<double> A = Matrix<double>(R"(
 	0.9307573256035647 0.8584127518430118
 	)");
 
-Matrix< double > B = Matrix< double >(R"(
+  Matrix<double> B = Matrix<double>(R"(
 	0.42899402737501835 0.7508710677914974
 	)");
 
-Matrix< double > C = Matrix< double >(R"(
+  Matrix<double> C = Matrix<double>(R"(
 	0.7545428740846823
 	)");
 
-  Matrix< double > R = Matrix< double >(R"(
+  Matrix<double> R = Matrix<double>(R"(
 	1.036536657052066
 	)");
-  
-	gemm_nt_vector(alpha, A, B, beta, C);
 
+  gemm_nt_vector(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
