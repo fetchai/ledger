@@ -1604,7 +1604,7 @@ public:
     return val;
   }
 
-  void AssignVal(std::size_t idx, type val) {data_[idx] = val;}
+  void AssignVal(std::size_t idx, type val) { data_[idx] = val; }
 
   // TODO: Make referenced copy
 

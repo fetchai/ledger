@@ -112,21 +112,22 @@ public:
    **/
   void LazyReshape(std::vector<std::size_t> const &shape) { shape_ = shape; }
 
-  /**
-   * Operator for accessing data in the array
-   *
-   * @param[in]     indices specifies the data points to access.
-   * @return        the accessed data.
-   *
-   **/
-  template <typename... Indices>
-  type &operator()(Indices const &... indices)
-  {
-    assert(sizeof...(indices) <= shape_.size());
-    std::size_t index = 0, shift = 1;
-    ComputeIndex(0, index, shift, indices...);
-    return this->operator[](index);
-  }
+  //  /**
+  //   * Operator for accessing data in the array
+  //   *
+  //   * @param[in]     indices specifies the data points to access.
+  //   * @return        the accessed data.
+  //   *
+  //   **/
+  //  template <typename... Indices>
+  //  type &operator()(Indices const &... indices)
+  //  {
+  //    assert(sizeof...(indices) <= shape_.size());
+  ////    std::size_t index = 0, shift = 1;
+  //    std::size_t index = CopmuteColIndex(indices);
+  ////    ComputeIndex(0, index, shift, indices...);
+  //    return this->operator[](index);
+  //  }
 
   /**
    * Operator for accessing data in the array
@@ -138,25 +139,20 @@ public:
   type operator()(std::vector<std::size_t> indices) const
   {
     assert(indices.size() == shape_.size());
-//    self_type output = self_type(this->super_type::Copy());
-    std::size_t index = 0, shift = 1;
-    for (auto cur_idx : indices)
-    {
-      ComputeIndex(0, index, shift, cur_idx);
-    }
+    std::size_t  index = ComputeColIndex(indices);
+    return this->operator[](index);
+  }
+  type operator()(std::size_t index) const
+  {
+    assert(index == size_);
     return this->operator[](index);
   }
 
   void Assign(std::vector<std::size_t> indices, type val)
   {
     assert(indices.size() == shape_.size());
-
-    std::size_t index = 0, shift = 1, next = 0;
-    ComputeColIndex(0, index, shift, next, indices);
-
-    this->AssignVal(index, val);
+    this->AssignVal(ComputeColIndex(indices), val);
     return;
-
   }
 
   /**
@@ -184,46 +180,45 @@ public:
     self_type output = self_type(new_shape);
 
     // copy all the data
-    std::cout <<"start recursive copy " << std::endl;
     array_view.recursive_copy(output, *this);
 
     return output;
   }
-  /**
-   * A getter for accessing data in the array
-   *
-   * @param[out]     dest is the destination for the data to be copied.
-   * @param[in]      indices specifies the data points to access.
-   *
-   **/
-  template <typename D, typename... Indices>
-  void Get(D &dest, Indices const &... indices)
-  {
-    std::size_t shift     = 1, size;
-    int         dest_rank = int(shape_.size()) - int(sizeof...(indices));
-
-    assert(dest_rank > 0);
-
-    std::size_t rank_offset = (shape_.size() - std::size_t(dest_rank));
-
-    for (std::size_t i = rank_offset; i < shape_.size(); ++i)
-    {
-      shift *= shape_[i];
-    }
-
-    size = shift;
-
-    std::size_t offset = 0;
-    ComputeIndex(0, offset, shift, indices...);
-
-    dest.Resize(shape_, rank_offset);
-    assert(size <= dest.size());
-
-    for (std::size_t i = 0; i < size; ++i)
-    {
-      dest[i] = this->operator[](offset + i);
-    }
-  }
+  //  /**
+  //   * A getter for accessing data in the array
+  //   *
+  //   * @param[out]     dest is the destination for the data to be copied.
+  //   * @param[in]      indices specifies the data points to access.
+  //   *
+  //   **/
+  //  template <typename D, typename... Indices>
+  //  void Get(D &dest, Indices const &... indices)
+  //  {
+  //    std::size_t shift     = 1, size;
+  //    int         dest_rank = int(shape_.size()) - int(sizeof...(indices));
+  //
+  //    assert(dest_rank > 0);
+  //
+  //    std::size_t rank_offset = (shape_.size() - std::size_t(dest_rank));
+  //
+  //    for (std::size_t i = rank_offset; i < shape_.size(); ++i)
+  //    {
+  //      shift *= shape_[i];
+  //    }
+  //
+  //    size = shift;
+  //
+  //    std::size_t offset = 0;
+  //    ComputeIndex(0, offset, shift, indices...);
+  //
+  //    dest.Resize(shape_, rank_offset);
+  //    assert(size <= dest.size());
+  //
+  //    for (std::size_t i = 0; i < size; ++i)
+  //    {
+  //      dest[i] = this->operator[](offset + i);
+  //    }
+  //  }
 
   /**
    * Tests if it is possible to reshape the array to a newly proposed shape
@@ -307,45 +302,35 @@ private:
     shift *= shape_[N];
   }
 
-  void ComputeRowIndex(std::size_t const &N, std::size_t &index, std::size_t &shift,
-                       std::size_t const &next, std::vector<std::size_t> &indices) const
+  std::size_t ComputeRowIndex(std::vector<std::size_t> &indices) const
   {
-    if (N == indices.size() - 1)
-    {
-      index += indices[N] * shift;
-      shift *= shape_[N];
-    }
-    else
-    {
-      ComputeRowIndex(N + 1, index, shift, next, indices);
 
-      assert(N < shape_.size());
-      index += indices[N] * shift;
-      shift *= shape_[N];
+    std::size_t index  = 0;
+    std::size_t n_dims = indices.size();
+    std::size_t base   = 1;
+
+    // loop through all dimensions
+    for (std::size_t i = n_dims - 1; i == 0; --i)
+    {
+      index += indices[i] * base;
+      base *= shape_[i];
     }
+    return index;
   }
-  void ComputeColIndex(std::size_t const &N, std::size_t &index, std::size_t &shift,
-                       std::size_t const &next, std::vector<std::size_t> &indices) const
+  std::size_t ComputeColIndex(std::vector<std::size_t> &indices) const
   {
-    if (N == indices.size() - 1)
-    {
-      index += indices[N] * shift;
-      shift *= shape_[N];
-//      std::cout << "index: " << index << std::endl;
-//      std::cout << "shift: " << shift << std::endl;
-//      std::cout << std::endl;
-    }
-    else
-    {
-      assert(N < shape_.size());
-      index += indices[N] * shift;
-      shift *= shape_[N];
-//      std::cout << "index: " << index << std::endl;
-//      std::cout << "shift: " << shift << std::endl;
 
-      ComputeColIndex(N + 1, index, shift, next, indices);
+    std::size_t index  = 0;
+    std::size_t n_dims = indices.size();
+    std::size_t base   = 1;
 
+    // loop through all dimensions
+    for (std::size_t i = 0; i < n_dims; ++i)
+    {
+      index += indices[i] * base;
+      base *= shape_[i];
     }
+    return index;
   }
 
   std::size_t              size_ = 0;

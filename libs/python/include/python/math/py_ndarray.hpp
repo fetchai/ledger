@@ -18,8 +18,8 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("Copy", [](NDArray<T> &a) { return a.Copy(); })
       .def("Copy",
            [](NDArray<T> &a, NDArray<T> &b) {
-             assert(a.size() = b.size());
-             assert(a.shape() = b.shape());
+             assert(a.size() == b.size());
+             assert(a.shape() == b.shape());
              a.Copy(b);
              return a;
            })
@@ -124,26 +124,29 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.InlineDivide(c);
              return a;
            })
-      .def("__getitem__", [](NDArray<T> const &s, std::vector<std::vector<std::size_t>> const &idxs)
-      {
-        assert(idxs.size() > 0);
-        for (auto cur_idx : idxs) {assert(cur_idx.size() == 3);}
+      .def("__getitem__",
+           [](NDArray<T> const &s, std::vector<std::vector<std::size_t>> const &idxs) {
+             assert(idxs.size() > 0);
+             for (auto cur_idx : idxs)
+             {
+               assert(cur_idx.size() == 3);
+             }
 
-        NDArrayView arr_view = NDArrayView();
-        for (auto item : idxs)
-        {
-          arr_view.from.push_back(item[0]);
-          arr_view.to.push_back(item[1]);
-          arr_view.step.push_back(item[2]);
-        }
+             NDArrayView arr_view = NDArrayView();
+             for (auto item : idxs)
+             {
+               arr_view.from.push_back(item[0]);
+               arr_view.to.push_back(item[1]);
+               arr_view.step.push_back(item[2]);
+             }
 
-        return s.GetRange(arr_view);
-
-      })
-//      {
-//        NDArray<T> a(s.size());
-//        return s.template Get<NDArray<T>>(a, args...);
-//      })
+             std::cout << " calling get range" << std::endl;
+             return s.GetRange(arr_view);
+           })
+      //      {
+      //        NDArray<T> a(s.size());
+      //        return s.template Get<NDArray<T>>(a, args...);
+      //      })
       //      .def("__getitem__",
       //        [](const NDArray<T> &s, Args ... args)
       //        {

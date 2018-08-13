@@ -9,12 +9,12 @@ public:
   std::vector<std::size_t> step;
 
   // variables for copying view
-  std::size_t cur_dim;
+  std::size_t              cur_dim;
   std::vector<std::size_t> input_idxs;
   std::vector<std::size_t> output_idxs;
-  std::size_t output_dims;
+  std::size_t              output_dims;
 
-  NDArrayView(){}
+  NDArrayView() {}
 
   /**
    * iterates through the arrayview copying data from one array to another
@@ -29,17 +29,16 @@ public:
     reset_idxs();
 
     bool still_copying = true;
-    int counter = 0;
+    int  counter       = 0;
     while (still_copying)
     {
       descend_and_incr_idx(dest, source);
-      still_copying = ascend_and_incr_idx();
+      still_copying = ascend_and_increment_index();
       counter += 1;
     }
   }
 
- private:
-
+private:
   /**
    * resets input and output indices and dimensions size
    */
@@ -58,12 +57,12 @@ public:
   /**
    * recursively ascend dimensions until we can find a valid dimension to increment
    *
-   * after finished copying all data by iterating through final dimension, ascend until we find the next dimension to
-   * increment
+   * after finished copying all data by iterating through final dimension, ascend until we find the
+   * next dimension to increment
    *
    * @return still_copying    indicates whether there is more work to do or whether to finish
    */
-  bool ascend_and_incr_idx()
+  bool ascend_and_increment_index()
   {
     bool still_copying = true;
 
@@ -86,7 +85,7 @@ public:
     }
     else
     {
-      return ascend_and_incr_idx();
+      return ascend_and_increment_index();
     }
   }
 
@@ -98,7 +97,7 @@ public:
     while (cur_dim < output_dims - 1)
     {
       cur_dim += 1;
-      input_idxs[cur_dim] = from[cur_dim];
+      input_idxs[cur_dim]  = from[cur_dim];
       output_idxs[cur_dim] = 0;
     }
     return;
@@ -107,8 +106,8 @@ public:
   /**
    * descend towards trailing dimension and reset indices as we go
    *
-   * after ascending completes we'll descend through all the dimensions until we get to the trailing dimension where we
-   * can perform index iterations and copy data
+   * after ascending completes we'll descend through all the dimensions until we get to the trailing
+   * dimension where we can perform index iterations and copy data
    *
    * @tparam ArrayType
    * @param dest
@@ -142,12 +141,10 @@ public:
 
         incrementing = true;
       }
-      else // can't increment this index anymore!
+      else  // can't increment this index anymore!
       {
         incrementing = false;
       }
-
     }
   }
-
 };
