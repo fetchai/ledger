@@ -19,7 +19,7 @@ public:
   {
     OBJECT_COUNT       = 1,
     PULL_OBJECTS       = 2,
-    PULL_OLDER_OBJECTS = 3
+    PULL_SUBTREE       = 3
   };
   using self_type             = ObjectStoreSyncronisationProtocol<R, T, S>;
   using protocol_handler_type = service::protocol_handler_type;
@@ -33,12 +33,11 @@ public:
     , register_(std::move(r))
     , thread_pool_(std::move(nm))
     , store_(store)
-    , running_(false)
-  {  // , register_(reg), manager_(nm)
+  {
 
     this->Expose(OBJECT_COUNT, this, &self_type::ObjectCount);
     this->ExposeWithClientArg(PULL_OBJECTS, this, &self_type::PullObjects);
-    //    this->Expose(PULL_OLDER_OBJECTS, this, &self_type::PullOlderObjects);
+    this->ExposeWithClientArg(PULL_SUBTREE, this, &self_type::PullSubtree);
   }
 
   void Start()
@@ -54,6 +53,9 @@ public:
   /// Methods for pull transactions from peers
   /// @{
 
+  /**
+   * Spin until the connected peers is adequate
+   */
   void IdleUntilPeers()
   {
     if (!running_) return;
@@ -65,7 +67,19 @@ public:
     }
     else
     {
-      thread_pool_->Post([this]() { this->FetchObjectsFromPeers(); });
+      if(needs_sync_)
+      {
+        for (uint8_t i = 0; ; ++i)
+        {
+          roots_to_sync.push(i);
+        }
+
+        thread_pool_->Post([this]() { this->SyncSubtree(); });
+      }
+      else
+      {
+        thread_pool_->Post([this]() { this->FetchObjectsFromPeers(); });
+      }
     }
   }
 
@@ -177,6 +191,37 @@ public:
     cache_.push_back(obj);
   }
 
+  /**
+  * Allow peers to pull large sections of your subtree for synchronisation on entry to the network
+  *
+  * @param: client_handle Handle 
+  *
+  * @return: 
+  */
+  std::vector<S> PullSubtree(uint64_t const &client_handle)
+  {
+    std::vector<S> ret;
+//
+//    if (cache_.begin() == cache_.end())
+//    {
+//      return std::vector<S>();
+//    }
+//
+//    // Creating result
+//
+//    for (auto &c : cache_)
+//    {
+//      if (c.delivered_to.find(client_handle) == c.delivered_to.end())
+//      {
+//        c.delivered_to.insert(client_handle);
+//        ret.push_back(c.data);
+//      }
+//    }
+//    //    std::cout << "Sending " << ret.size() << std::endl;
+
+    return ret;
+  }
+
 private:
   protocol_handler_type protocol_;
   register_type         register_;
@@ -242,6 +287,87 @@ private:
     double                                lifetime = 0;
   };
 
+  // Create a stack of subtrees we want to sync. Push roots back onto this when the promise
+  // fails. Completion when the stack is empty
+  void SyncSubtree()
+  {
+    if (!running_) return;
+
+    using service_map_type = typename R::service_map_type;
+
+    register_.WithServices([this](service_map_type const &map) {
+      for (auto const &p : map)
+      {
+        if (!running_) return;
+
+        auto peer = p.second;
+        auto ptr  = peer.lock();
+
+        if(roots_to_sync.empty())
+        {
+          break;
+        }
+
+        auto root = roots_to_sync.front();
+        roots_to_sync.pop();
+
+        byte_array::ByteArray array;
+        array.Resize(256 / 8);
+        array[0] = root;
+
+        auto promise = ptr->Call(protocol_, PULL_SUBTREE, array, 8);
+        subtree_promises_.push_back(std::make_pair(root, std::move(promise)));
+      }
+    });
+
+    thread_pool_->Post([this]() { this->RealiseSubtreePromises(); }, 500);
+  }
+
+  void RealiseSubtreePromises()
+  {
+    for(auto &promise_pair : subtree_promises_)
+    {
+      auto &root   = promise_pair.first;
+      auto &promise = promise_pair.second;
+
+      // Timeout fail, push this subtree back onto the root for another go
+      incoming_objects_.clear();
+      if (!promise.Wait(100, false))
+      {
+        roots_to_sync.push(root);
+        continue;
+      }
+
+      promise.template As<std::vector<S>>(incoming_objects_);
+
+      store_->WithLock([this]() {
+        for (auto &o : incoming_objects_)
+        {
+          CachedObject obj;
+          obj.data = T::Create(o);
+          ResourceID rid(obj.data.digest());
+
+          if (store_->LocklessHas(rid)) continue;
+          store_->LocklessSet(rid, obj.data);
+
+          cache_.push_back(obj);
+        }
+      });
+    }
+
+    subtree_promises_.clear();
+
+    // Completed syncing
+    if(roots_to_sync.empty())
+    {
+      thread_pool_->Post([this]() { this->IdleUntilPeers(); });
+    }
+    else
+    {
+      thread_pool_->Post([this]() { this->SyncSubtree(); });
+    }
+  }
+
   mutex::Mutex    mutex_;
   ObjectStore<T> *store_;
 
@@ -255,7 +381,12 @@ private:
   std::vector<T>                new_objects_;
   std::vector<S>                incoming_objects_;
 
-  std::atomic<bool> running_;
+  std::atomic<bool> running_{false};
+
+  // Syncing with other peers on startup
+  bool                                              needs_sync_ = true;
+  std::vector<std::pair<uint8_t, service::Promise>> subtree_promises_;
+  std::queue<uint8_t>                               roots_to_sync;
 };
 
 }  // namespace storage
