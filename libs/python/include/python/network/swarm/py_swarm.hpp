@@ -27,21 +27,21 @@ class PySwarm
 public:
   PySwarm(const PySwarm &rhs)
   {
-    nn_core_        = rhs.nn_core_;
-    rnd_           = rhs.rnd_;
+    nn_core_         = rhs.nn_core_;
+    rnd_             = rhs.rnd_;
     swarm_agent_api_ = rhs.swarm_agent_api_;
-    swarm_node_     = rhs.swarm_node_;
-    worker_        = rhs.worker_;
-    chain_node_     = rhs.chain_node_;
+    swarm_node_      = rhs.swarm_node_;
+    worker_          = rhs.worker_;
+    chain_node_      = rhs.chain_node_;
   }
   PySwarm(PySwarm &&rhs)
   {
-    nn_core_        = std::move(rhs.nn_core_);
-    rnd_           = std::move(rhs.rnd_);
+    nn_core_         = std::move(rhs.nn_core_);
+    rnd_             = std::move(rhs.rnd_);
     swarm_agent_api_ = std::move(rhs.swarm_agent_api_);
-    swarm_node_     = std::move(rhs.swarm_node_);
-    worker_        = std::move(rhs.worker_);
-    chain_node_     = std::move(rhs.chain_node_);
+    swarm_node_      = std::move(rhs.swarm_node_);
+    worker_          = std::move(rhs.worker_);
+    chain_node_      = std::move(rhs.chain_node_);
   }
   PySwarm operator=(const PySwarm &rhs) = delete;
   PySwarm operator=(PySwarm &&rhs)             = delete;
@@ -83,16 +83,17 @@ public:
     std::string                     myHost     = "127.0.0.1:" + std::to_string(rpcPort);
     fetch::swarm::SwarmPeerLocation myHostLoc(myHost);
 
-    auto worker = std::make_shared<PythonWorker>();
+    auto worker  = std::make_shared<PythonWorker>();
     auto nn_core = std::make_shared<fetch::network::NetworkNodeCore>(20, httpPort, rpcPort);
-    auto rnd    = std::make_shared<fetch::swarm::SwarmRandom>(id);
+    auto rnd     = std::make_shared<fetch::swarm::SwarmRandom>(id);
     auto swarm_node =
         std::make_shared<fetch::swarm::SwarmNode>(nn_core, identifier, maxpeers, myHost);
 
     auto http_module = std::make_shared<SwarmHttpModule>(swarm_node);
     nn_core->AddModule(http_module);
 
-    auto chain_node = std::make_shared<fetch::ledger::MainChainNode>(nn_core, id, target, chainident);
+    auto chain_node =
+        std::make_shared<fetch::ledger::MainChainNode>(nn_core, id, target, chainident);
     auto swarm_agent_api =
         std::make_shared<fetch::swarm::SwarmAgentApiImpl<PythonWorker>>(worker, myHost, idlespeed);
     worker->UseCore(nn_core);
@@ -110,8 +111,8 @@ public:
     nn_core_->Start();
 
     // TODO(kll) Move this setup code somewhere more sensible.
-    swarm_agent_api->ToPing([swarm_agent_api, nn_core, swarm_node](fetch::swarm::SwarmAgentApi &unused,
-                                                             const std::string &          host) {
+    swarm_agent_api->ToPing([swarm_agent_api, nn_core, swarm_node](
+                                fetch::swarm::SwarmAgentApi &unused, const std::string &host) {
       swarm_node->Post([swarm_agent_api, swarm_node, nn_core, host]() {
         try
         {
@@ -147,7 +148,7 @@ public:
     });
 
     swarm_agent_api->ToDiscoverBlocks([this, swarm_agent_api, swarm_node, chain_node, nn_core](
-                                        const std::string &host, uint32_t count) {
+                                          const std::string &host, uint32_t count) {
       auto pySwarm = this;
       swarm_node->Post([swarm_agent_api, nn_core, chain_node, host, count, pySwarm]() {
         try
@@ -198,7 +199,7 @@ public:
     });
 
     swarm_agent_api->ToGetBlock([this, swarm_agent_api, swarm_node, chain_node, nn_core](
-                                  const std::string &host, const std::string &blockid) {
+                                    const std::string &host, const std::string &blockid) {
       auto hashBytes = this->blockIdToHash(blockid);
       auto pySwarm   = this;
       swarm_node->Post(
@@ -252,12 +253,13 @@ public:
     swarm_agent_api->ToAddKarma([swarm_node](const std::string &host, double amount) {
       swarm_node->AddOrUpdate(host, amount);
     });
-    swarm_agent_api->ToAddKarmaMax([swarm_node](const std::string &host, double amount, double limit) {
-      if (swarm_node->GetKarma(host) < limit)
-      {
-        swarm_node->AddOrUpdate(host, amount);
-      }
-    });
+    swarm_agent_api->ToAddKarmaMax(
+        [swarm_node](const std::string &host, double amount, double limit) {
+          if (swarm_node->GetKarma(host) < limit)
+          {
+            swarm_node->AddOrUpdate(host, amount);
+          }
+        });
     swarm_agent_api->ToGetPeers([swarm_agent_api, swarm_node](uint32_t count, double minKarma) {
       auto                   karmaPeers = swarm_node->GetBestPeers(count, minKarma);
       std::list<std::string> results;
