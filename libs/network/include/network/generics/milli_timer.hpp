@@ -27,6 +27,11 @@ public:
      start_ = std::chrono::steady_clock::now();
      name_ = name;
      threshold_ = threshold;
+
+     if (!threshold)
+     {
+       fetch::logger.Warn("Starting millitimer for ", name_);
+     }
   }
 
   virtual ~MilliTimer()
