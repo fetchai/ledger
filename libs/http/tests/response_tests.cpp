@@ -47,10 +47,7 @@ TEST_F(ResponseTests, HeaderCase1)
   asio::streambuf buffer;
   ConvertToBuffer(raw_header, buffer);
 
-  ASSERT_TRUE(response_->ParseHeader(
-    reinterpret_cast<char const *>(buffer.data().data()),
-    buffer.data().size()
-  ));
+  ASSERT_TRUE(response_->ParseHeader(buffer, buffer.size()));
   ASSERT_EQ(response_->status(), fetch::http::Status::CLIENT_ERROR_NOT_FOUND);
 
   VerifyHeaderValue("content-type", "text/html");
@@ -71,10 +68,7 @@ TEST_F(ResponseTests, HeaderCase2)
   asio::streambuf buffer;
   ConvertToBuffer(raw_header, buffer);
 
-  ASSERT_TRUE(response_->ParseHeader(
-    reinterpret_cast<char const *>(buffer.data().data()),
-    buffer.data().size()
-  ));
+  ASSERT_TRUE(response_->ParseHeader(buffer, buffer.size()));
   ASSERT_EQ(response_->status(), fetch::http::Status::SUCCESS_OK);
 
   VerifyHeaderValue("content-type", "application/json");

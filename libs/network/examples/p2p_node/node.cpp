@@ -3,12 +3,19 @@
 #include "core/commandline/parameter_parser.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/service/server.hpp"
-#include <iostream>
+#include "crypto/prover.hpp"
+#include "crypto/ecdsa.hpp"
 
+#include <iostream>
 #include <sstream>
+
 using namespace fetch;
 using namespace fetch::p2p;
 using namespace fetch::byte_array;
+
+using Prover    = fetch::crypto::Prover;
+using ProverPtr = std::unique_ptr<Prover>;
+
 enum
 {
   TOKEN_NAME      = 1,
@@ -16,6 +23,14 @@ enum
   TOKEN_NUMBER    = 3,
   TOKEN_CATCH_ALL = 12
 };
+
+static ProverPtr GenereateP2PKey()
+{
+  fetch::crypto::ECDSASigner *certificate = new fetch::crypto::ECDSASigner();
+  certificate->GenerateKeys();
+
+  return ProverPtr{certificate};
+}
 
 int main(int argc, char **argv)
 {
@@ -34,7 +49,7 @@ int main(int argc, char **argv)
 
   // Setting up
   fetch::network::NetworkManager tm(8);
-  P2PService                     service(port, tm);
+  P2PService                     service(GenereateP2PKey(), port, tm);
 
   tm.Start();
 
