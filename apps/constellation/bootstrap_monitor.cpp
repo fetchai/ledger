@@ -1,40 +1,54 @@
+#include "core/script/variant.hpp"
 #include "bootstrap_monitor.hpp"
 
 #include <chrono>
+#include <sstream>
 
 namespace fetch {
 namespace {
 
-constexpr std::size_t BUFFER_SIZE = 1024;
-constexpr char const *BOOTSTRAP_HOST = "35.189.67.157";
-//constexpr char const *BOOTSTRAP_HOST = "127.0.0.1";
-constexpr uint16_t BOOTSTRAP_PORT  = 10000;
+using script::Variant;
+using http::JsonHttpClient;
 
-const std::chrono::minutes UPDATE_INTERVAL{10};
+const char *BOOTSTRAP_HOST = "bootstrap.economicagents.com";
+const uint16_t BOOTSTRAP_PORT = 80;
+const std::chrono::seconds UPDATE_INTERVAL{30};
 
 } // namespace
 
 bool BootstrapMonitor::Start(PeerList &peers)
 {
-  bool success = false;
-
   fetch::logger.Info("Bootstrapping network node ", BOOTSTRAP_HOST, ':', BOOTSTRAP_PORT);
 
-  // request the peers list
-  if (RequestPeerList(peers))
+  // query our external address
+  if (!UpdateExternalAddress())
   {
-    running_ = true;
-    monitor_thread_ = std::make_unique<std::thread>(&BootstrapMonitor::ThreadEntryPoint, this);
-    success = true;
-
-    fetch::logger.Info("Bootstrapping network node...complete");
+    fetch::logger.Warn("Failed to determine external address");
+    return false;
   }
-  else
+
+  // register the node with the bootstrapper
+  if (!RegisterNode())
+  {
+    fetch::logger.Warn("Failed to register the bootstrap node");
+    return false;
+  }
+
+  fetch::logger.Info("Registered node with bootstrap network");
+
+  // request the peers list
+  if (!RequestPeerList(peers))
   {
     fetch::logger.Warn("Failed to request the peers from the bootstrap node");
+    return false;
   }
 
-  return success;
+  running_ = true;
+  monitor_thread_ = std::make_unique<std::thread>(&BootstrapMonitor::ThreadEntryPoint, this);
+
+  fetch::logger.Info("Bootstrapping network node...complete");
+
+  return true;
 }
 
 void BootstrapMonitor::Stop()
@@ -47,53 +61,83 @@ void BootstrapMonitor::Stop()
   }
 }
 
+bool BootstrapMonitor::UpdateExternalAddress()
+{
+  bool success = false;
+
+  JsonHttpClient ipify_client("api.ipify.org");
+
+  Variant response;
+  if (ipify_client.Get("/?format=json", response))
+  {
+    auto const &ip_address = response["ip"];
+
+    if (ip_address.is_string())
+    {
+      external_address_ = ip_address.As<std::string>();
+      fetch::logger.Info("Detected external address as: ", external_address_);
+
+      success = true;
+    }
+    else
+    {
+      fetch::logger.Warn("Invalid format of response");
+    }
+  }
+  else
+  {
+    fetch::logger.Warn("Unable to query the IPIFY");
+  }
+
+  return success;
+}
+
 bool BootstrapMonitor::RequestPeerList(BootstrapMonitor::PeerList &peers)
 {
-  // create the request
-  fetch::script::Variant request;
+  // make the response
+  std::ostringstream oss;
+  oss << "/api/networks/" << network_id_ << "/discovery/";
+
+  JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
+
+  Variant request;
   request.MakeObject();
-  request["type"] = "peer-list";
+  request["public_key"] = byte_array::ToBase64(identity_.identifier());
   request["host"] = external_address_;
   request["port"] = port_ + fetch::Constellation::P2P_PORT_OFFSET;
-  request["network-id"] = network_id_;
 
-  // make the response
-  fetch::script::Variant response;
-  if (MakeRequest(request, response))
+  Variant response;
+  if (client.Post(oss.str(), request, response))
   {
-    if (!response.is_object())
-    {
-      fetch::logger.Warn("Incorrect peer-list formatting (object)");
-      return false;
-    }
-
-    auto const &peer_list = response["peers"];
-    if (peer_list.is_undefined())
-    {
-      fetch::logger.Warn("Incorrect peer-list formatting (undefined)");
-      return false;
-    }
-
-    if (!peer_list.is_array())
+    // check the formatting
+    if (!response.is_array())
     {
       fetch::logger.Warn("Incorrect peer-list formatting (array)");
       return false;
     }
 
-    fetch::network::Peer peer;
-    for (std::size_t i = 0; i < peer_list.size(); ++i)
+    // loop through all the array alements
+    for (std::size_t i = 0, size = response.size(); i < size; ++i)
     {
-      std::string const peer_address = peer_list[i].As<std::string>();
-      if (!peer_address.empty())
+      auto const &peer_object = response[i];
+
+      if (!peer_object.is_object())
       {
-        if (peer.Parse(peer_address))
-        {
-          peers.push_back(peer);
-        }
-        else
-        {
-          fetch::logger.Warn("Failed to parse address: '", peer_address, "'");
-        }
+        fetch::logger.Warn("Incorrect peer-list formatting (object)");
+        return false;
+      }
+
+      // extract all the required fields
+      std::string host;
+      uint16_t port = 0;
+      if (script::Extract(peer_object, "host", host) && script::Extract(peer_object, "port", port))
+      {
+        peers.emplace_back(std::move(host), port);
+      }
+      else
+      {
+        fetch::logger.Warn("Failed to extract data from object");
+        return false;
       }
     }
   }
@@ -101,101 +145,61 @@ bool BootstrapMonitor::RequestPeerList(BootstrapMonitor::PeerList &peers)
   return true;
 }
 
-bool BootstrapMonitor::MakeRequest(script::Variant const &request, script::Variant &response)
+bool BootstrapMonitor::RegisterNode()
 {
-  LockGuard lock(io_mutex_);
+  bool success = false;
 
-  // resolve the address of the bootstrap node
-  Resolver::query query(BOOTSTRAP_HOST, std::to_string(BOOTSTRAP_PORT));
-  Resolver::iterator endpoint = resolver_.resolve(query);
+  Variant request;
+  request.MakeObject();
+  request["public_key"] = byte_array::ToBase64(identity_.identifier());
+  request["network"] = network_id_;
+  request["host"] = external_address_;
+  request["port"] = port_ + fetch::Constellation::P2P_PORT_OFFSET;
+  request["client_name"] = "constellation";
+  request["client_version"] = "v0.0.1";
 
-  std::error_code ec{};
-  if (endpoint != Resolver::iterator{}) {
-
-    // connect to the server
-    socket_.connect(*endpoint, ec);
-    if (ec)
-    {
-      fetch::logger.Warn("Failed to connect to boostrap node: ", ec.message());
-      return false;
-    }
-
-    // format the request
-    std::string request_data;
-    {
-      std::ostringstream oss;
-      oss << request;
-      request_data = oss.str();
-    }
-
-    // send the request to the server
-    socket_.write_some(asio::buffer(request_data), ec);
-    if (ec)
-    {
-      fetch::logger.Warn("Failed to send boostrap request: ", ec.message());
-      return false;
-    }
-
-    // resize (if required) the size of the input buffer and await the server response
-    buffer_.Resize(BUFFER_SIZE);
-    std::size_t const num_bytes = socket_.read_some(asio::buffer(buffer_.pointer(), buffer_.size()), ec);
-    if (ec)
-    {
-      fetch::logger.Warn("Failed to recv the response from the server: ", ec.message());
-      return false;
-    }
-
-    // update the size of the buffer
-    if (num_bytes > 0)
-    {
-      buffer_.Resize(num_bytes);
-    }
-    else
-    {
-      fetch::logger.Warn("Didn't recv any more data");
-      return false;
-    }
-
-    fetch::logger.Info("Raw response: ", buffer_);
-
-    // try and parse the json response
-    fetch::json::JSONDocument doc;
-    try
-    {
-      doc.Parse(buffer_);
-    }
-    catch (json::JSONParseException &)
-    {
-      fetch::logger.Warn("JSON parse exception");
-      return false;
-    }
-
-    response = doc.root();
-
-    // close
-    socket_.close(ec);
-    if (ec)
-    {
-      fetch::logger.Warn("Failed to close the socket: ", ec.message());
-      return false;
-    }
+  Variant response;
+  JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
+  if (client.Post("/api/register/", request, response))
+  {
+    success = true;
   }
   else
   {
-    fetch::logger.Warn("Failed to resolve bootstrap address: ", ec.message());
-    return false;
+    fetch::logger.Info("Unable to make register call to bootstrap network");
   }
 
-  return true;
+  return success;
+}
+
+bool BootstrapMonitor::NotifyNode()
+{
+  bool success = false;
+
+  Variant request;
+  request.MakeObject();
+  request["public_key"] = byte_array::ToBase64(identity_.identifier());
+
+  Variant response;
+  JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
+  if (client.Post("/api/notify/", request, response))
+  {
+    success = true;
+  }
+  else
+  {
+    fetch::logger.Info("Unable to make notify call to bootstrap network");
+  }
+
+  return success;
 }
 
 void BootstrapMonitor::ThreadEntryPoint()
 {
-  PeerList peers;
   while (running_)
   {
     // periodically request peers, this allows the bootstrap node to see that we are still alive
-    RequestPeerList(peers);
+    NotifyNode();
 
     std::this_thread::sleep_for(UPDATE_INTERVAL);
   }

@@ -8,7 +8,8 @@
 
 namespace fetch {
 
-Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std::size_t num_lanes,
+Constellation::Constellation(certificate_type &&certificate, uint16_t port_start,
+                             std::size_t num_executors, std::size_t num_lanes,
                              std::size_t num_slices, std::string const &interface_address,
                              std::string const &db_prefix)
   : interface_address_{interface_address}
@@ -31,7 +32,7 @@ Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std
   network_manager_->Start();  // needs to be started
 
   // Creating P2P instance
-  p2p_ = std::make_unique<p2p::P2PService>(p2p_port_, *network_manager_);
+  p2p_ = std::make_unique<p2p::P2PService>(std::move(certificate), p2p_port_, *network_manager_);
 
   auto profile = p2p_->Profile();
   auto my_name = std::string(byte_array::ToBase64(profile.identity.identifier()));

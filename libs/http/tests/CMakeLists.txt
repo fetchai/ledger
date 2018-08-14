@@ -1,8 +1,8 @@
 ################################################################################
-# F E T C H   H T T P   L I B R A R Y
+# F E T C H   H T T P   L I B R A R Y  T E S T S
 ################################################################################
 cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
-project(fetch-http)
+project(fetch-http-tests)
 
 # CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -11,11 +11,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 #-------------------------------------------------------------------------------
-# Main Library Target
+# Test Targets
 #-------------------------------------------------------------------------------
-
-setup_library(fetch-http)
-target_link_libraries(fetch-http PUBLIC fetch-network)
-
-add_subdirectory(examples)
-add_subdirectory(tests)
+add_fetch_gtest(http-tests fetch-http .)

@@ -249,7 +249,7 @@ public:
   fetch::mutex::Mutex                                  mutex_{__LINE__, __FILE__};
 };
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
 
   ParamsParser params;

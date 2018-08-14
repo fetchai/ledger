@@ -7,7 +7,7 @@ namespace middleware {
 inline typename HTTPServer::response_middleware_type AllowOrigin(std::string const &val)
 {
   return [val](fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
-    res.header().Add("Access-Control-Allow-Origin", val);
+    res.AddHeader("Access-Control-Allow-Origin", val);
   };
 }
 }  // namespace middleware

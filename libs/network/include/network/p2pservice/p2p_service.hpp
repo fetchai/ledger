@@ -44,6 +44,7 @@ public:
   using p2p_directory_type                = std::unique_ptr<P2PPeerDirectory>;
   using p2p_directory_protocol_type       = std::unique_ptr<P2PPeerDirectoryProtocol>;
   using callback_peer_update_profile_type = std::function<void(EntryPoint const &)>;
+  using certificate_type = std::unique_ptr<crypto::Prover>;
 
   enum
   {
@@ -51,19 +52,13 @@ public:
     DIRECTORY
   };
 
-  P2PService(uint16_t port, fetch::network::NetworkManager const &tm)
-    : super_type(port, tm), manager_(tm)
+  P2PService(certificate_type &&certificate, uint16_t port, fetch::network::NetworkManager const &tm)
+    : super_type(port, tm), manager_(tm), certificate_(std::move(certificate))
   {
     running_     = false;
     thread_pool_ = network::MakeThreadPool(1);
     fetch::logger.Warn("Establishing P2P Service on rpc://0.0.0.0:", port);
-
-    // TODO: Load from somewhere
-    crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
-    certificate->GenerateKeys();
-    certificate_.reset(certificate);
-
-    fetch::logger.Warn("P2P Identity: ", byte_array::ToBase64(certificate->identity().identifier()));
+    fetch::logger.Warn("P2P Identity: ", byte_array::ToBase64(certificate_->identity().identifier()));
 
     // Listening for new connections
     this->SetConnectionRegister(register_);
@@ -110,7 +105,7 @@ public:
 
     // TODO: Get from settings
     min_connections_ = 2;
-    max_connections_ = 3;
+    max_connections_ = 6;
     tracking_peers_  = false;
 
     // TODO: Remove long term

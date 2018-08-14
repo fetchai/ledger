@@ -64,6 +64,7 @@ public:
   using service_type        = service::ServiceClient;
   using client_type         = fetch::network::TCPClient;
   using shared_service_type = std::shared_ptr<service_type>;
+  using certificate_type    = p2p::P2PService::certificate_type;
 
   static constexpr uint16_t    MAIN_CHAIN_PORT_OFFSET = 2;
   static constexpr uint16_t    P2P_PORT_OFFSET        = 1;
@@ -77,21 +78,8 @@ public:
   static constexpr std::size_t DEFAULT_NUM_EXECUTORS  = DEFAULT_NUM_LANES;
   //  static const std::string DEFAULT_DB_PREFIX =;
 
-  static std::unique_ptr<Constellation> Create(uint16_t    port_start    = DEFAULT_PORT_START,
-                                               std::size_t num_executors = DEFAULT_NUM_EXECUTORS,
-                                               std::size_t num_lanes     = DEFAULT_NUM_LANES,
-                                               std::size_t num_slices    = DEFAULT_NUM_SLICES,
-                                               std::string const &interface_address = "127.0.0.1",
-                                               std::string const &prefix = "node_storage")
-  {
-
-    std::unique_ptr<Constellation> constellation{
-        new Constellation{port_start, num_executors, num_lanes, num_slices, interface_address, prefix}};
-
-    return constellation;
-  }
-
-  explicit Constellation(uint16_t           port_start        = DEFAULT_PORT_START,
+  explicit Constellation(certificate_type &&certificate,
+                         uint16_t           port_start        = DEFAULT_PORT_START,
                          std::size_t        num_executors     = DEFAULT_NUM_EXECUTORS,
                          std::size_t        num_lanes         = DEFAULT_NUM_LANES,
                          std::size_t        num_slices        = DEFAULT_NUM_SLICES,

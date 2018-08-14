@@ -52,7 +52,7 @@ public:
 private:
 };
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   ParamsParser params;
   params.Parse(argc, argv);

@@ -1,6 +1,11 @@
 #pragma once
 
 namespace fetch {
+namespace byte_array {
+
+class ConstByteArray;
+
+} // namespace byte_array
 namespace http {
 
 enum class Method
@@ -12,5 +17,9 @@ enum class Method
   DELETE  = 5,
   OPTIONS = 6
 };
+
+char const *ToString(Method method);
+bool FromString(byte_array::ConstByteArray const &text, Method &method);
+
 }
 }  // namespace fetch

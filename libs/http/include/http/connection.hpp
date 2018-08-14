@@ -92,7 +92,7 @@ public:
       }
       else
       {
-        HTTPRequest::SetHeader(*request, *buffer_ptr, len);
+        request->ParseHeader(*buffer_ptr, len);
         if (is_open_) ReadBody(buffer_ptr, request);
       }
     };
@@ -108,7 +108,7 @@ public:
     // Check if we got all the body
     if (request->content_length() <= buffer_ptr->size())
     {
-      HTTPRequest::SetBody(*request, *buffer_ptr);
+      request->ParseBody(*buffer_ptr);
 
       manager_.PushRequest(handle_, *request);
 
@@ -157,7 +157,7 @@ public:
     write_queue_.pop_front();
     write_mutex_.unlock();
 
-    HTTPResponse::WriteToBuffer(res, *buffer_ptr);
+    res.ToStream(*buffer_ptr);
     auto self = shared_from_this();
     auto cb   = [this, self, buffer_ptr](std::error_code ec, std::size_t) {
       if (!ec)
