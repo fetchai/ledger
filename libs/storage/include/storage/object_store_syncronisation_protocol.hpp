@@ -4,6 +4,7 @@
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/object_store.hpp"
+#include "storage/resource_mapper.hpp"
 
 #include <set>
 #include <utility>
@@ -196,17 +197,22 @@ public:
    *
    * @return: the subtree the client is requesting as a vector (size limited)
    */
+  std::vector<S> PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask)
   {
     std::vector<S> ret;
 
     uint64_t counter = 0;
-    auto     it      = testStore.GetSubtree(rid, mask);
 
-    while (it != testStore.end() && counter++ < PULL_LIMIT_)
-    {
-      rid.push_back(*it);
-      ++it;
-    }
+    store_->WithLock([this, &ret, &counter, &rid, mask]() {
+      // This is effectively saying get all objects whose ID begins rid & mask
+      auto it = store_->GetSubtree(ResourceID(rid), mask);
+
+      while (it != store_->end() && counter++ < PULL_LIMIT_)
+      {
+        ret.push_back(*it);
+        ++it;
+      }
+    });
 
     return ret;
   }
