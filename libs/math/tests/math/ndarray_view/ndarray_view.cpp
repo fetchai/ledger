@@ -30,15 +30,15 @@ using _A = NDArray<D, _S<D>>;
 TEST(ndarray, 2d_view_full)
 {
   // set up a 4d array
-  std::vector<std::size_t> shape      = {5, 5};
+  std::vector<std::size_t> shape      = {3, 3};
   _A<double>               test_array = _A<double>(shape);
-  for (std::size_t i = 0; i < (5 * 5); ++i)
+  for (std::size_t i = 0; i < (3 * 3); ++i)
   {
     test_array[i] = i;
   }
 
   // set up a valid view shape
-  std::vector<std::vector<std::size_t>> view_shape = {{0, 5, 1}, {0, 5, 1}};
+  std::vector<std::vector<std::size_t>> view_shape = {{0, 3, 1}, {0, 3, 1}};
   NDArrayView                           array_view = NDArrayView();
   for (auto item : view_shape)
   {
@@ -48,13 +48,15 @@ TEST(ndarray, 2d_view_full)
   }
 
   // extract the view shape into a new ndarray
-  std::vector<std::size_t> new_shape = {5, 5};
+  std::vector<std::size_t> new_shape = {3, 3};
   _A<double>               new_array = _A<double>(new_shape);
   new_array                          = test_array.GetRange(array_view);
 
+  std::vector<std::size_t> compare_vals = {0, 1, 2, 3, 4, 5, 6, 7, 8};
   for (std::size_t i = 0; i < new_array.data().size(); ++i)
   {
     ASSERT_TRUE(test_array[i] == new_array[i]);
+    ASSERT_TRUE(compare_vals[i] == new_array[i]);
   }
 }
 
