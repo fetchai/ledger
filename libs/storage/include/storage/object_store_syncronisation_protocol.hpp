@@ -190,17 +190,17 @@ public:
   }
 
   /**
-  * Allow peers to pull large sections of your subtree for synchronisation on entry to the network
-  *
-  * @param: client_handle Handle referencing client making the request
-  *
-  * @return: the subtree the client is requesting as a vector (size limited)
-  */
+   * Allow peers to pull large sections of your subtree for synchronisation on entry to the network
+   *
+   * @param: client_handle Handle referencing client making the request
+   *
+   * @return: the subtree the client is requesting as a vector (size limited)
+   */
   {
     std::vector<S> ret;
 
     uint64_t counter = 0;
-    auto it = testStore.GetSubtree(rid, mask);
+    auto     it      = testStore.GetSubtree(rid, mask);
 
     while (it != testStore.end() && counter++ < PULL_LIMIT_)
     {
@@ -215,7 +215,7 @@ private:
   protocol_handler_type protocol_;
   register_type         register_;
   thread_pool_type      thread_pool_;
-  const uint64_t        PULL_LIMIT_ = 100000; // Limit the amount a single rpc call will provide
+  const uint64_t        PULL_LIMIT_ = 100000;  // Limit the amount a single rpc call will provide
 
   uint64_t ObjectCount()
   {
