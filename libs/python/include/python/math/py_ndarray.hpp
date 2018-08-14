@@ -278,6 +278,8 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("Reshape",
            [](NDArray<T> &a, std::vector<std::size_t> b) {
+             auto internal_prod = std::accumulate(begin(b), end(b), 1, std::multiplies<double>());
+             if (internal_prod != a.size()) throw py::index_error();
              a.Reshape(b);
              return;
            })
