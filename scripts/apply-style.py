@@ -100,12 +100,10 @@ def compare_against_original(reformated, source_path, rel_path):
 
     success = True
     if len(out) != 0:
-        output_lock.acquire()
         output('Style mismatch in: {}'.format(rel_path))
         output()
         output('\n'.join(out[3:])) # first 3 elements are garbage
         success = False
-        output_lock.release()
 
     return success
 
@@ -120,7 +118,7 @@ def main():
         output('Unable to locate clang-format tool')
         sys.exit(1)
 
-    # generate the 
+    # generate the
     cmd_prefix = [
         clang_format,
         '-style=file',
@@ -144,12 +142,10 @@ def main():
 
     if args.fix:
         handler = apply_style_to_file
-        verb = 'Applying'
+        output('Applying style...')
     else:
         handler = diff_style_to_file
-        verb = 'Checking'
-
-    output('{} style...'.format(verb))
+        output('Checking style...')
 
     # process all the files
     success = False
@@ -161,7 +157,10 @@ def main():
 
         success = all(result)
 
-    output('{} style...complete'.format(verb))
+    if args.fix:
+        output('Applying style complete!')
+    else:
+        output('Checking style complete!')
 
     if not success:
         sys.exit(1)

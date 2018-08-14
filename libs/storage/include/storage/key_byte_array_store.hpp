@@ -23,7 +23,8 @@ struct ByteArrayMapConfigurator
 
 }  // namespace details
 
-// this is simply a cleaner way of defining the template parameters to DocumentStore
+// this is simply a cleaner way of defining the template parameters to
+// DocumentStore
 template <std::size_t S>
 using KeyByteArrayStore = typename details::ByteArrayMapConfigurator<S>::type;
 

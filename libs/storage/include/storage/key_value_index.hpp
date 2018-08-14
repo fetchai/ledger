@@ -13,7 +13,8 @@ namespace fetch {
 namespace storage {
 
 /**
- * Key value pair for binary trees where the key is a byte array. The tree can be traversed given
+ * Key value pair for binary trees where the key is a byte array. The tree can
+ * be traversed given
  * a key by switching on each bit of the key
  *
  * The parent of the tree will be identifiable with 0xffffffff
@@ -672,7 +673,8 @@ private:
       }
       else
       {
-        // Switch to rhs branch since we travelled up to find a node we were the left of
+        // Switch to rhs branch since we travelled up to find a node we were the
+        // left of
         stack_.Get(parent.right, parent);
 
         GetLeftLeaf(parent);

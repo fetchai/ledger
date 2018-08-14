@@ -51,16 +51,16 @@ public:
   using LOCALS_P = std::shared_ptr<LOCALS>;
 
   LOCALS_P locals;
-  SWARM_P  pySwarm;
+  SWARM_P  py_swarm;
   INTERP_P interpreter;
 
   PythonContext() {}
 
   virtual ~PythonContext()
   {
-    if (pySwarm)
+    if (py_swarm)
     {
-      pySwarm->Stop();
+      py_swarm->Stop();
     }
     locals.reset();
     interpreter.reset();

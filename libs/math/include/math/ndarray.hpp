@@ -20,6 +20,8 @@ public:
 
   NDArray(std::size_t const &n = 0) : super_type(n) { size_ = 0; }
   NDArray(super_type const &arr) : super_type(arr) {}
+  NDArray &operator=(NDArray const &other) = default;
+  //  NDArray &operator=(NDArray &&other) = default;
 
   /**
    * Copies input data into current array
@@ -45,7 +47,6 @@ public:
     copy.LazyReshape(this->shape());
     return copy;
   }
-
   /**
    * Flattens the array to 1 dimension efficiently
    *
@@ -160,6 +161,14 @@ public:
    *
    **/
   std::vector<std::size_t> const &shape() const { return shape_; }
+
+  /**
+   * Provides an interfance to the l2loss function in the shape_less_array
+   *
+   * @return       returns a single value of type indicating the l2loss
+   *
+   **/
+  type L2Loss() { return this->super_type::L2Loss(); }
 
 private:
   template <typename... Indices>

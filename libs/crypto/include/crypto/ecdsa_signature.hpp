@@ -187,7 +187,8 @@ private:
     if (est_size < 1)
     {
       throw std::runtime_error(
-          "Convert2Bin<...,eECDSAEncoding::DER,...>(): i2d_ECDSA_SIG(..., nullptr) failed.");
+          "Convert2Bin<...,eECDSAEncoding::DER,...>(): "
+          "i2d_ECDSA_SIG(..., nullptr) failed.");
     }
 
     unsigned char *   der_sig_ptr = static_cast<unsigned char *>(der_sig.pointer());
@@ -197,12 +198,14 @@ private:
     if (res_size < 1)
     {
       throw std::runtime_error(
-          "Convert2Bin<...,eECDSAEncoding::DER,...(): i2d_ECDSA_SIG(..., &ptr) failed.");
+          "Convert2Bin<...,eECDSAEncoding::DER,...(): "
+          "i2d_ECDSA_SIG(..., &ptr) failed.");
     }
     else if (res_size > est_size)
     {
       throw std::runtime_error(
-          "Convert2Bin<...,eECDSAEncoding::DER,...(): i2d_ECDSA_SIG(..., &ptr) returned bigger DER "
+          "Convert2Bin<...,eECDSAEncoding::DER,...(): i2d_ECDSA_SIG(..., &ptr) "
+          "returned bigger DER "
           "signature size then originally anticipated for allocation.");
     }
 
@@ -220,7 +223,8 @@ private:
     if (!signature)
     {
       throw std::runtime_error(
-          "ConvertDER(const byte_array::ConstByteArray&): d2i_ECDSA_SIG(...) failed.");
+          "ConvertDER(const byte_array::ConstByteArray&): "
+          "d2i_ECDSA_SIG(...) failed.");
     }
 
     return signature;
@@ -246,7 +250,8 @@ private:
     if (!ECDSA_SIG_set0(signature.get(), r.get(), s.get()))
     {
       throw std::runtime_error(
-          "ConvertCanonical<...,eECDSAEncoding::DER,...>(const byte_array::ConstByteArray&): "
+          "ConvertCanonical<...,eECDSAEncoding::DER,...>("
+          "const byte_array::ConstByteArray&): "
           "d2i_ECDSA_SIG(...) failed.");
     }
 

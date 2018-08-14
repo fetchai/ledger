@@ -23,6 +23,7 @@ add_fetch_test(distance_matrix_test fetch-math math/distance/distance_matrix.cpp
 add_fetch_gtest(ndarray_test fetch-math math/ndarray)
 add_fetch_gtest(relu_test fetch-math math/kernels/relu)
 add_fetch_gtest(sign_test fetch-math math/kernels/sign)
+add_fetch_gtest(l2loss_test fetch-math math/shape_less_array/l2loss)
 
 # disabled / not working tests
 add_fetch_test(load_image_read_exceptions_test fetch-math image/load_image_read_exceptions.cpp DISABLED)
