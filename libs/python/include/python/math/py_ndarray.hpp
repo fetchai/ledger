@@ -263,6 +263,19 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (axis >= a.shape().size()) throw py::index_error();
              return a.Min(axis);
            })
+      .def("Relu",
+           [](NDArray<T> const &a, NDArray<T> &b) {
+             return b.Relu(a);
+           })
+      .def("L2Loss",
+           [](NDArray<T> const &a) {
+             return a.L2Loss();
+           })
+      .def("Sign",
+           [](NDArray<T> const &a, NDArray<T> &b) {
+        std::cout << "entering sign binding.." << std::endl;
+             return b.Sign(a);
+           })
       .def("Reshape",
            [](NDArray<T> &a, std::vector<std::size_t> b) {
              a.Reshape(b);
