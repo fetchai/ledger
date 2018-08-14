@@ -15,7 +15,7 @@ def poll(url, path, nodenumber):
         fullurl = url
         data = None
         try:
-            r = requests.get(fullurl, timeout=100)
+            r = requests.get(fullurl, timeout=300)
             code = r.status_code
             if code == 200:
                 if r.content:
@@ -38,7 +38,7 @@ def poll(url, path, nodenumber):
         code = -4
         exit(77)
     time.sleep(0.1)
-    print("GET:", url, code)
+    print("GET:", url, code, data)
     return (nodenumber, ident, path, code, data)
 
 
