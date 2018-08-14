@@ -17,9 +17,9 @@ class ObjectStoreSyncronisationProtocol : public fetch::service::Protocol
 public:
   enum
   {
-    OBJECT_COUNT       = 1,
-    PULL_OBJECTS       = 2,
-    PULL_SUBTREE       = 3
+    OBJECT_COUNT = 1,
+    PULL_OBJECTS = 2,
+    PULL_SUBTREE = 3
   };
   using self_type             = ObjectStoreSyncronisationProtocol<R, T, S>;
   using protocol_handler_type = service::protocol_handler_type;
@@ -64,9 +64,9 @@ public:
     }
     else
     {
-      if(needs_sync_)
+      if (needs_sync_)
       {
-        for (uint8_t i = 0; ; ++i)
+        for (uint8_t i = 0;; ++i)
         {
           roots_to_sync.push(i);
         }
@@ -189,32 +189,32 @@ public:
   }
 
   /**
-  * Allow peers to pull large sections of your subtree for synchronisation on entry to the network
-  *
-  * @param: client_handle Handle 
-  *
-  * @return: 
-  */
+   * Allow peers to pull large sections of your subtree for synchronisation on entry to the network
+   *
+   * @param: client_handle Handle
+   *
+   * @return:
+   */
   std::vector<S> PullSubtree(uint64_t const &client_handle)
   {
     std::vector<S> ret;
-//
-//    if (cache_.begin() == cache_.end())
-//    {
-//      return std::vector<S>();
-//    }
-//
-//    // Creating result
-//
-//    for (auto &c : cache_)
-//    {
-//      if (c.delivered_to.find(client_handle) == c.delivered_to.end())
-//      {
-//        c.delivered_to.insert(client_handle);
-//        ret.push_back(c.data);
-//      }
-//    }
-//    //    std::cout << "Sending " << ret.size() << std::endl;
+    //
+    //    if (cache_.begin() == cache_.end())
+    //    {
+    //      return std::vector<S>();
+    //    }
+    //
+    //    // Creating result
+    //
+    //    for (auto &c : cache_)
+    //    {
+    //      if (c.delivered_to.find(client_handle) == c.delivered_to.end())
+    //      {
+    //        c.delivered_to.insert(client_handle);
+    //        ret.push_back(c.data);
+    //      }
+    //    }
+    //    //    std::cout << "Sending " << ret.size() << std::endl;
 
     return ret;
   }
@@ -300,7 +300,7 @@ private:
         auto peer = p.second;
         auto ptr  = peer.lock();
 
-        if(roots_to_sync.empty())
+        if (roots_to_sync.empty())
         {
           break;
         }
@@ -322,9 +322,9 @@ private:
 
   void RealiseSubtreePromises()
   {
-    for(auto &promise_pair : subtree_promises_)
+    for (auto &promise_pair : subtree_promises_)
     {
-      auto &root   = promise_pair.first;
+      auto &root    = promise_pair.first;
       auto &promise = promise_pair.second;
 
       // Timeout fail, push this subtree back onto the root for another go
@@ -355,7 +355,7 @@ private:
     subtree_promises_.clear();
 
     // Completed syncing
-    if(roots_to_sync.empty())
+    if (roots_to_sync.empty())
     {
       thread_pool_->Post([this]() { this->IdleUntilPeers(); });
     }

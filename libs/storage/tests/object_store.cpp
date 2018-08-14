@@ -91,7 +91,7 @@ int main(int argc, char const **argv)
           testStore.Get(ResourceAddress(std::to_string(i)), result);
 
           // Suppress most expects to avoid spamming terminal
-          if(i != result || i == 0)
+          if (i != result || i == 0)
           {
             EXPECT(i == result);
           }
@@ -105,7 +105,7 @@ int main(int argc, char const **argv)
           testStore.Get(ResourceAddress(std::to_string(i)), result);
 
           // Suppress most expects to avoid spamming terminal
-          if(i != result || i == 0)
+          if (i != result || i == 0)
           {
             EXPECT(i == result);
           }
@@ -116,10 +116,10 @@ int main(int argc, char const **argv)
         {
           std::size_t result = 0;
 
-          testStore.Get(ResourceAddress(std::to_string(i+iterations)), result);
+          testStore.Get(ResourceAddress(std::to_string(i + iterations)), result);
 
           // Suppress most expects to avoid spamming terminal
-          if(0 != result || i == 1)
+          if (0 != result || i == 1)
           {
             EXPECT(0 == result);
           }
@@ -163,7 +163,7 @@ int main(int argc, char const **argv)
 
         // Test successfully finding and testing to find elements
         bool successfullyFound = true;
-        int index = 0;
+        int  index             = 0;
         for (auto const &i : objects)
         {
           auto it = testStore.Find(ResourceAddress(i.third));
@@ -197,7 +197,7 @@ int main(int argc, char const **argv)
 
     SECTION("Test find over basic struct, expect failures")
     {
-      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100 };
+      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
 
       for (auto const &numberOfKeys : keyTests)
       {
@@ -247,7 +247,6 @@ int main(int argc, char const **argv)
         std::vector<testType>                     objectsCopy;
         fetch::random::LaggedFibonacciGenerator<> lfg;
 
-
         // Create vector of random numbers
         for (std::size_t i = 0; i < numberOfKeys; ++i)
         {
@@ -261,7 +260,6 @@ int main(int argc, char const **argv)
 
           testStore.Set(ResourceAddress(test.third), test);
           objects.push_back(test);
-
         }
 
         std::sort(objects.begin(), objects.end());
@@ -310,7 +308,7 @@ int main(int argc, char const **argv)
 
     SECTION("Test subtree iterator over basic struct")
     {
-      std::vector<std::size_t> keyTests{9, 1, 2, 3, 4, 5, 6, 7,  8,  9,   10,   11,   12,
+      std::vector<std::size_t> keyTests{9,  1,  2,  3,    4, 5, 6, 7,  8,  9,   10,   11,   12,
                                         13, 14, 99, 9999, 0, 1, 9, 12, 14, 100, 1000, 10000};
       for (auto const &numberOfKeys : keyTests)
       {
@@ -375,13 +373,13 @@ int main(int argc, char const **argv)
       }
     };
 
-  //SCENARIO("Testing object store basic functionality") // TODO: (`HUT`) : delete
-  //{
+    // SCENARIO("Testing object store basic functionality") // TODO: (`HUT`) : delete
+    //{
 
     SECTION("Test subtree iterator over basic struct - split into 256 to emulate obj. sync")
     {
-      std::vector<std::size_t> keyTests{23, 100, 1, 2, 3,  4, 5, 6, 7, 8, 9, 10, 11, 12,
-                                        13, 14, 99, 9999, 0, 1, 9, 12, 14, 100, 1000};
+      std::vector<std::size_t> keyTests{23, 100, 1,  2,  3,    4, 5, 6, 7,  8,  9,   10,  11,
+                                        12, 13,  14, 99, 9999, 0, 1, 9, 12, 14, 100, 1000};
       for (auto const &numberOfKeys : keyTests)
       {
         using testType = TestSerDeser;
@@ -418,7 +416,7 @@ int main(int argc, char const **argv)
         }
 
         // Now, aim to split the store up and copy it across perfectly
-        for (uint8_t keyBegin = 0; ; ++keyBegin)
+        for (uint8_t keyBegin = 0;; ++keyBegin)
         {
           array[0] = (keyBegin);
 
@@ -434,7 +432,7 @@ int main(int argc, char const **argv)
             ++it;
           }
 
-          if(keyBegin == 0xFF)
+          if (keyBegin == 0xFF)
           {
             break;
           }

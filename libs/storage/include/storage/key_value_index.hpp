@@ -226,7 +226,6 @@ public:
     index_type     depth      = 0;
     key_value_pair kv;
 
-
     FindNearest(key, kv, split, pos, left_right, depth);
 
     if (!split)
@@ -271,7 +270,6 @@ public:
       kv.split      = uint16_t(key.size());
       update_parent = kv.UpdateLeaf(args...);
 
-
       index = stack_.Push(kv);
     }
     else if (split)
@@ -280,7 +278,6 @@ public:
       key_value_pair left, right, parent;
       index_type     rid = 0, lid = 0, pid = 0, cid = 0;
       bool           update_root = (index == root_);
-
 
       switch (left_right)
       {
@@ -423,11 +420,11 @@ public:
       }
     }
 
-    iterator()                               = default;
-    iterator(iterator const &rhs)            = default;
-    iterator(iterator &&rhs)                 = default;
+    iterator()                    = default;
+    iterator(iterator const &rhs) = default;
+    iterator(iterator &&rhs)      = default;
     iterator &operator=(iterator const &rhs) = default;
-    iterator &operator=(iterator &&rhs)      = default;
+    iterator &operator=(iterator &&rhs) = default;
 
     bool operator==(iterator const &rhs) { return kv_ == rhs.kv_; }
 
@@ -468,8 +465,6 @@ public:
 
     assert(iterator(this, kv) != end());
 
-
-
     return iterator(this, kv);
   }
 
@@ -478,7 +473,6 @@ public:
   // STL-like functionality
   self_type::iterator Find(byte_array::ConstByteArray const &key_str)
   {
-
 
     key_type       key(key_str);
     bool           split      = true;
@@ -511,8 +505,6 @@ public:
 
     pos = 0;
     kv.key.Compare(key_str, pos, 0, 64);
-
-
 
     if (uint64_t(pos) < bits)
     {
@@ -555,9 +547,9 @@ private:
     }
   }
 
-  index_type FindNearest(key_type const &key,
-                         key_value_pair &kv, bool &split, int &pos, int &left_right,
-                         uint64_t &depth, uint64_t max_bits = std::numeric_limits<uint64_t>::max())
+  index_type FindNearest(key_type const &key, key_value_pair &kv, bool &split, int &pos,
+                         int &left_right, uint64_t &depth,
+                         uint64_t max_bits = std::numeric_limits<uint64_t>::max())
   {
     depth = 0;
     if (this->empty()) return index_type(-1);
@@ -573,7 +565,8 @@ private:
 
       stack_.Get(next, kv);
 
-      left_right = key.Compare(kv.key, pos, kv.split >> 8, kv.split & 63); // TODO: (`HUT`) : should this be 127?
+      left_right = key.Compare(kv.key, pos, kv.split >> 8,
+                               kv.split & 63);  // TODO: (`HUT`) : should this be 127?
 
       switch (left_right)
       {
