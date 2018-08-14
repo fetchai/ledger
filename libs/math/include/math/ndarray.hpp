@@ -22,6 +22,8 @@ public:
   using super_type           = ShapeLessArray<T, C>;
   using self_type            = NDArray<T, C>;
 
+  NDArray() = default;
+
   /**
    * Constructor builds an NDArray with n elements initialized to 0
    * @param n   number of elements in array (no shape specified, assume 1-D)
@@ -41,8 +43,8 @@ public:
    * @param shape   vector of lengths for each dimension
    */
   NDArray(std::vector<std::size_t> const &dims = {0})
-    : super_type(std::accumulate(std::begin(dims), std::end(dims), std::size_t(1),
-                                 std::multiplies<std::size_t>()))
+    : super_type(
+          std::accumulate(std::begin(dims), std::end(dims), std::size_t(1), std::multiplies<>()))
   {
     this->LazyReshape(dims);
     for (std::size_t idx = 0; idx < this->size(); ++idx)

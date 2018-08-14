@@ -1365,7 +1365,6 @@ public:
     std::cout << "data 0" << data_[0] << std::endl;
     std::cout << "data 1" << data_[1] << std::endl;
     std::cout << "data 2" << data_[2] << std::endl;
-
   }
 
   /* Equality operator.

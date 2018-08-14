@@ -183,7 +183,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<std::size_t> const &idxs) {
-             assert(idxs.size() == s.Shape().size());
+             assert(idxs.size() == s.shape().size());
 
              return s.Get(idxs);
            })
@@ -237,7 +237,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("__setitem__",
            [](NDArray<T> &s, std::vector<std::size_t> const &idxs, T val) {
-             assert(idxs.size() == s.Shape().size());
+             assert(idxs.size() == s.shape().size());
 
              return s.Set(idxs, val);
            })
@@ -263,23 +263,19 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (axis >= a.shape().size()) throw py::index_error();
              return a.Min(axis);
            })
-      .def("Relu",
-           [](NDArray<T> const &a, NDArray<T> &b) {
-             return b.Relu(a);
-           })
-      .def("L2Loss",
-           [](NDArray<T> const &a) {
-             return a.L2Loss();
-           })
+      .def("Relu", [](NDArray<T> const &a, NDArray<T> &b) { return b.Relu(a); })
+      .def("L2Loss", [](NDArray<T> const &a) { return a.L2Loss(); })
       .def("Sign",
            [](NDArray<T> const &a, NDArray<T> &b) {
-        std::cout << "entering sign binding.." << std::endl;
+             std::cout << "entering sign binding.." << std::endl;
              return b.Sign(a);
            })
       .def("Reshape",
            [](NDArray<T> &a, std::vector<std::size_t> b) {
-             auto internal_prod = std::accumulate(begin(b), end(b), 1, std::multiplies<double>());
-             if (internal_prod != a.size()) throw py::index_error();
+             //             std::size_t internal_prod = std::size_t(std::accumulate(begin(b),
+             //             end(b), 1, std::multiplies<>())); if (internal_prod != a.size()) throw
+             //             py::index_error();
+             if (!(a.CanReshape(b))) throw py::index_error();
              a.Reshape(b);
              return;
            })
