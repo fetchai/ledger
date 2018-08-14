@@ -174,13 +174,9 @@ public:
     auto local_name  = std::string(byte_array::ToBase64(my_details_.Lock()->owning_discovery_service_identity.identifier()));
     auto remote_name = std::string(byte_array::ToBase64(details_supplied_by_remote.owning_discovery_service_identity.identifier()));
 
-    logger.Warn("OMG LOCAL  NAME IS:", local_name);
-    logger.Warn("OMG REMOTE NAME IS:", remote_name);
-
     // loopback detection
     if (local_name == remote_name)
     {
-      logger.Warn("OMG #OverFriendly");
       client->Close();
       client.reset();
       return nullptr;

@@ -91,15 +91,6 @@ public:
                      protocol_number_type proto=0,
                      feed_handler_type verb=0)
   {
-
-    logger.Warn("OMG ASSOCIATE ALL:",
-                name, " => ",
-                connection_handle,
-                ", ",
-                proto,
-                ", ",
-                int(verb));
-
     lock_type lock(mutex);
     for(auto &item : existing_subs)
     {
@@ -112,14 +103,6 @@ public:
           )
       {
         subs[item.second] -> name_ = name;
-        logger.Warn("OMG ASSOCIATE:",
-                    subs[item.second] -> name_, " => ",
-                    std::get<0>(item.first),
-                    ", ",
-                    std::get<2>(item.first),
-                    ", ",
-                    std::get<1>(item.first)
-                    );
       }
     }
   }
@@ -135,26 +118,7 @@ public:
           (!verb || std::get<2>(item.first) == verb)
           )
       {
-        logger.Warn("OMG GetAllSubscriptions:",
-                    subs[item.second] -> name_, " => ",
-                    std::get<0>(item.first),
-                    ", ",
-                    std::get<2>(item.first),
-                    ", ",
-                    std::get<1>(item.first)
-                    );
         r.push_back(subs[item.second] -> getName());
-      }
-      else
-      {
-        logger.Warn("OMG Skip getting:",
-                    subs[item.second] -> name_, " => ",
-                    std::get<0>(item.first),
-                    ", ",
-                    std::get<2>(item.first),
-                    ", ",
-                    std::get<1>(item.first)
-                    );
       }
     }
     return r;
