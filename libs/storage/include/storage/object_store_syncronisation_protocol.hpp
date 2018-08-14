@@ -42,16 +42,13 @@ public:
 
   void Start()
   {
-    fetch::logger.Debug("Starting syncronisation of ", typeid(T).name());
+    fetch::logger.Debug("Starting synchronisation of ", typeid(T).name());
     if (running_) return;
     running_ = true;
     thread_pool_->Post([this]() { this->IdleUntilPeers(); });
   }
 
   void Stop() { running_ = false; }
-
-  /// Methods for pull transactions from peers
-  /// @{
 
   /**
    * Spin until the connected peers is adequate
