@@ -407,10 +407,10 @@ public:
 
   uint64_t const &root_element() const { return root_; }
 
-  class iterator
+  class Iterator
   {
   public:
-    iterator(self_type *self, key_value_pair kv, bool node_iterator = false)
+    Iterator(self_type *self, key_value_pair kv, bool node_iterator = false)
       : kv_{kv}, kv_node_{kv}, node_iterator_{node_iterator}, self_{self}
     {
       if (node_iterator)
@@ -419,15 +419,15 @@ public:
       }
     }
 
-    iterator()                    = default;
-    iterator(iterator const &rhs) = default;
-    iterator(iterator &&rhs)      = default;
-    iterator &operator=(iterator const &rhs) = default;
-    iterator &operator=(iterator &&rhs) = default;
+    Iterator()                    = default;
+    Iterator(Iterator const &rhs) = default;
+    Iterator(Iterator &&rhs)      = default;
+    Iterator &operator=(Iterator const &rhs) = default;
+    Iterator &operator=(Iterator &&rhs) = default;
 
-    bool operator==(iterator const &rhs) { return kv_ == rhs.kv_; }
+    bool operator==(Iterator const &rhs) { return kv_ == rhs.kv_; }
 
-    bool operator!=(iterator const &rhs) { return !(kv_ == rhs.kv_); }
+    bool operator!=(Iterator const &rhs) { return !(kv_ == rhs.kv_); }
 
     void operator++()
     {
@@ -453,7 +453,7 @@ public:
     self_type *    self_;
   };
 
-  self_type::iterator begin()
+  self_type::Iterator begin()
   {
     if (this->empty()) return end();
     key_value_pair kv;
@@ -463,13 +463,13 @@ public:
 
     assert(iterator(this, kv) != end());
 
-    return iterator(this, kv);
+    return Iterator(this, kv);
   }
 
-  self_type::iterator end() { return iterator(this, key_value_pair()); }
+  self_type::Iterator end() { return Iterator(this, key_value_pair()); }
 
   // STL-like functionality
-  self_type::iterator Find(byte_array::ConstByteArray const &key_str)
+  self_type::Iterator Find(byte_array::ConstByteArray const &key_str)
   {
     key_type       key(key_str);
     bool           split      = true;
@@ -484,10 +484,10 @@ public:
       return end();
     }
 
-    return iterator(this, kv);
+    return Iterator(this, kv);
   }
 
-  self_type::iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t bits)
+  self_type::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t bits)
   {
     if (this->empty()) return end();
 
@@ -508,7 +508,7 @@ public:
       return end();
     }
 
-    return iterator(this, kv, true);
+    return Iterator(this, kv, true);
   }
 
 private:
