@@ -35,7 +35,7 @@ public:
 
   ConstByteArray(char const *str)
   {
-    if(str == nullptr)
+    if (str == nullptr)
     {
       fetch::logger.Warn("Attempted to assign nullptr to byte array");
       return;
