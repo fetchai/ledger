@@ -17,6 +17,7 @@
 #include <memory>
 #include <unordered_set>
 #include <unordered_map>
+#include "network/p2pservice/p2ptrust.hpp"
 
 namespace fetch {
 namespace p2p {
@@ -45,6 +46,7 @@ public:
   using p2p_directory_protocol_type       = std::unique_ptr<P2PPeerDirectoryProtocol>;
   using callback_peer_update_profile_type = std::function<void(EntryPoint const &)>;
   using certificate_type = std::unique_ptr<crypto::Prover>;
+  using p2p_trust_type                = std::unique_ptr<P2PTrust<byte_array::ConstByteArray>>;
 
   enum
   {
@@ -93,6 +95,10 @@ public:
         std::make_unique<P2PPeerDirectory>(DIRECTORY, register_, thread_pool_, my_details_);
     directory_protocol_ = std::make_unique<P2PPeerDirectoryProtocol>(*directory_);
     this->Add(DIRECTORY, directory_protocol_.get());
+
+    p2p_trust_.reset(new P2PTrust<byte_array::ConstByteArray>());
+    // p2p_trust_protocol_.reset(new TrustModelProtocol(*directory_)); // TODO(kll)
+    // this->Add(DIRECTORY, p2p_trust_protocol_.get()); // TODO(kll)
 
     // Adding hooks for listening to feeds etc
     register_.OnClientEnter([](connection_handle_type const &i) {
@@ -529,6 +535,9 @@ private:
 
   p2p_directory_type          directory_;
   p2p_directory_protocol_type directory_protocol_;
+
+  p2p_trust_type              p2p_trust_;
+  //p2p_trust_protocol_type     p2p_trust_protocol_;  //TODO(kll)
 
   NodeDetails my_details_;
 
