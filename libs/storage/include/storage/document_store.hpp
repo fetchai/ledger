@@ -231,7 +231,7 @@ public:
   class Iterator
   {
   public:
-    Iterator(self_type *store, typename key_value_index_type::iterator it)
+    Iterator(self_type *store, typename key_value_index_type::Iterator it)
       : wrapped_iterator_{it}, store_{store}
     {}
 
@@ -261,7 +261,7 @@ public:
     }
 
   protected:
-    typename key_value_index_type::iterator wrapped_iterator_;
+    typename key_value_index_type::Iterator wrapped_iterator_;
     self_type *                             store_;
   };
 

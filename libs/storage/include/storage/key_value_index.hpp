@@ -461,7 +461,7 @@ public:
 
     GetLeftLeaf(kv);
 
-    assert(iterator(this, kv) != end());
+    assert(Iterator(this, kv) != end());
 
     return Iterator(this, kv);
   }
