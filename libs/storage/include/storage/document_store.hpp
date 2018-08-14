@@ -61,10 +61,10 @@ public:
 
     ~DocumentFileImplementation() { store_->UpdateDocumentFile(*this); }
 
-    DocumentFileImplementation(DocumentFileImplementation const &other)           = delete;
+    DocumentFileImplementation(DocumentFileImplementation const &other) = delete;
     DocumentFileImplementation operator=(DocumentFileImplementation const &other) = delete;
     DocumentFileImplementation(DocumentFileImplementation &&other)                = default;
-    DocumentFileImplementation &operator=(DocumentFileImplementation &&other)     = default;
+    DocumentFileImplementation &operator=(DocumentFileImplementation &&other) = default;
 
     byte_array::ConstByteArray const &address() const { return address_; }
 

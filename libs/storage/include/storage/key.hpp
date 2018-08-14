@@ -80,7 +80,7 @@ struct Key
 
     diff = key_[0] & (1ull << 63) >> bit;
 
-    int result = 1 - int((diff == 0) << 1); // -1 == left, so this puts 'smaller numbers' left
+    int result = 1 - int((diff == 0) << 1);  // -1 == left, so this puts 'smaller numbers' left
 
     return result;
   }

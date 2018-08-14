@@ -17,9 +17,9 @@ class ObjectStoreSyncronisationProtocol : public fetch::service::Protocol
 public:
   enum
   {
-    OBJECT_COUNT       = 1,
-    PULL_OBJECTS       = 2,
-    PULL_SUBTREE       = 3
+    OBJECT_COUNT = 1,
+    PULL_OBJECTS = 2,
+    PULL_SUBTREE = 3
   };
   using self_type             = ObjectStoreSyncronisationProtocol<R, T, S>;
   using protocol_handler_type = service::protocol_handler_type;
@@ -65,9 +65,9 @@ public:
     else
     {
       // If we need to sync our object store (esp. when joining the network)
-      if(needs_sync_)
+      if (needs_sync_)
       {
-        for (uint8_t i = 0; ; ++i)
+        for (uint8_t i = 0;; ++i)
         {
           roots_to_sync.push(i);
         }
@@ -196,7 +196,6 @@ public:
   *
   * @return: the subtree the client is requesting as a vector (size limited)
   */
-  std::vector<S> PullSubtree(ConstByteArray const &rid, uint64_t mask)
   {
     std::vector<S> ret;
 
@@ -292,7 +291,7 @@ private:
         auto peer = p.second;
         auto ptr  = peer.lock();
 
-        if(roots_to_sync.empty())
+        if (roots_to_sync.empty())
         {
           break;
         }
@@ -314,9 +313,9 @@ private:
 
   void RealiseSubtreePromises()
   {
-    for(auto &promise_pair : subtree_promises_)
+    for (auto &promise_pair : subtree_promises_)
     {
-      auto &root   = promise_pair.first;
+      auto &root    = promise_pair.first;
       auto &promise = promise_pair.second;
 
       // Timeout fail, push this subtree back onto the root for another go
@@ -347,7 +346,7 @@ private:
     subtree_promises_.clear();
 
     // Completed syncing
-    if(roots_to_sync.empty())
+    if (roots_to_sync.empty())
     {
       thread_pool_->Post([this]() { this->IdleUntilPeers(); });
     }
