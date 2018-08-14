@@ -8,6 +8,7 @@
 #include "network/service/client.hpp"
 #include "network/service/function.hpp"
 #include "network/service/publication_feed.hpp"
+#include "network/generics/promises.hpp"
 namespace fetch {
 namespace p2p {
 
@@ -59,8 +60,7 @@ public:
   void RequestPeersForThisNode()
   {
     // TODO: (`HUT`) : comment/make this clear
-
-        register_.WithServices(
+    register_.WithServices(
         [this](network::AbstractConnectionRegister::service_map_type const &map) {
           for (auto const &p : map)
           {
@@ -68,11 +68,7 @@ public:
             auto peer = wptr.lock();
             if (peer)
             {
-              FETCH_LOG_PROMISE();
-              if (!peer->Call(protocol_, NEED_CONNECTIONS).Wait(1000))
-              {
-                fetch::logger.Error("Yikes, NEED_CONNECTIONS failed");
-              }
+              peer->Call(protocol_, NEED_CONNECTIONS);
             }
           }
         });
