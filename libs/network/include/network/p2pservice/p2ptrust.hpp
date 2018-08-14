@@ -1,17 +1,17 @@
 #ifndef P2PTRUST_HPP
 #define P2PTRUST_HPP
 
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/mutex.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
+
 #include <iostream>
 #include <string>
 #include <ctime>
 #include <map>
 #include <vector>
 #include <array>
-
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/mutex.hpp"
-
-#include "p2ptrust_interface.hpp"
+#include <cmath>
 
 namespace fetch
 {

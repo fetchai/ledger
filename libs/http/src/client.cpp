@@ -48,12 +48,6 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
   }
 
   // work out the start of the header
-  char const *header_start = reinterpret_cast<char const *>(input_buffer.data().data());
-
-#if 0
-  std::cout << "Header Length: " << header_length << std::endl;
-#endif
-
   response.ParseHeader(input_buffer, header_length); // will consume header_length bytes from the buffer
 
   // determine if any further read is required
@@ -73,24 +67,9 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
   if (input_buffer.size() < content_length)
   {
     std::size_t const remaining_length = content_length - input_buffer.size();
+    asio::read(socket_, input_buffer, asio::transfer_exactly(remaining_length), ec);
 
-#if 0
-    std::cout << " - Header length: " << header_length << std::endl;
-    std::cout << " - Total length: " << total_length << std::endl;
-    std::cout << " - Content Length: " << content_length << std::endl;
-    std::cout << " - Buffer length: " << input_buffer.size() << std::endl;
-    std::cout << " - Buffer length: " << input_buffer.data().size() << std::endl;
-    std::cout << " - Remaining length: " << remaining_length << std::endl;
-#endif
-
-    std::size_t const extra_bytes = asio::read(socket_, input_buffer, asio::transfer_exactly(remaining_length), ec);
-
-#if 0
-    std::cout << " - Buffer length After: " << input_buffer.size() << std::endl;
-    std::cout << " - Extra bytes: " << extra_bytes << std::endl;
-#endif
-
-    if (ec/*  && (ec != asio::error::eof)*/)
+    if (ec)
     {
       fetch::logger.Warn("Failed to recv body: ", ec.message());
       return false;
@@ -104,21 +83,6 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
   }
 
   // process the body
-  char const *body_start = header_start + header_length;
-  std::size_t body_length = total_length - header_length;
-  std::size_t body_length2 = input_buffer.size() - header_length;
-
-#if 0
-  std::cout << "Header Length: " << header_length << std::endl;
-  std::cout << "Content Length: " << content_length << std::endl;
-  std::cout << "Body Length: " << body_length << std::endl;
-  std::cout << "Body Length2: " << body_length2 << std::endl;
-  std::cout << "Buffer Length: " << input_buffer.size() << std::endl;
-//  std::cout << "== BODY START ==" << std::endl;
-//  std::cout.write(body_start, body_length);
-//  std::cout << "\n== BODY END ==" << std::endl;
-#endif
-
   response.ParseBody(input_buffer, content_length);
 
   // check the status code

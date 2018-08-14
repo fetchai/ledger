@@ -5,19 +5,17 @@
 #include "network/management/connection_register.hpp"
 #include "network/p2pservice/p2p_peer_details.hpp"
 #include "network/service/server.hpp"
-
 #include "network/p2pservice/p2p_identity.hpp"
 #include "network/p2pservice/p2p_identity_protocol.hpp"
-
-#include "crypto/ecdsa.hpp"
-#include "crypto/prover.hpp"
 #include "network/p2pservice/p2p_peer_directory.hpp"
 #include "network/p2pservice/p2p_peer_directory_protocol.hpp"
+#include "network/p2pservice/p2ptrust.hpp"
+#include "crypto/ecdsa.hpp"
+#include "crypto/prover.hpp"
 
 #include <memory>
 #include <unordered_set>
 #include <unordered_map>
-#include "network/p2pservice/p2ptrust.hpp"
 
 namespace fetch {
 namespace p2p {
