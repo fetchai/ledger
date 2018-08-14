@@ -19,7 +19,6 @@ cd build
 cmake ..
 make
 
-
 On Ubuntu
 =========
 
