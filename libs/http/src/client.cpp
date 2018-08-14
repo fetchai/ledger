@@ -109,5 +109,6 @@ bool HTTPClient::Connect()
   return true;
 }
 
-}  // namespace http
-}  // namespace fetch
+} // namespace http
+} // namespace fetch
+

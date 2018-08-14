@@ -109,8 +109,8 @@ public:
     auto update = fetch::p2p::trust_modifiers_[subject][quality];
     auto trust  = trust_store_[pos].computeCurrentTrust(currenttime);
 
-    if ((std::isnan(update.max) || trust < update.max) &&
-        (std::isnan(update.min) || trust > update.min))
+    if ((std::isnan(update.max) || (trust < update.max)) &&
+        (std::isnan(update.min) || (trust > update.min)))
     {
       trust += update.delta;
     }
