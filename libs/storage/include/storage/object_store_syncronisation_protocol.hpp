@@ -37,7 +37,7 @@ public:
 
     this->Expose(OBJECT_COUNT, this, &self_type::ObjectCount);
     this->ExposeWithClientArg(PULL_OBJECTS, this, &self_type::PullObjects);
-    this->ExposeWithClientArg(PULL_SUBTREE, this, &self_type::PullSubtree);
+    this->Expose(PULL_SUBTREE, this, &self_type::PullSubtree);
   }
 
   void Start()
@@ -64,6 +64,7 @@ public:
     }
     else
     {
+      // If we need to sync our object store (esp. when joining the network)
       if(needs_sync_)
       {
         for (uint8_t i = 0; ; ++i)
@@ -191,30 +192,22 @@ public:
   /**
   * Allow peers to pull large sections of your subtree for synchronisation on entry to the network
   *
-  * @param: client_handle Handle 
+  * @param: client_handle Handle referencing client making the request
   *
-  * @return: 
+  * @return: the subtree the client is requesting as a vector (size limited)
   */
-  std::vector<S> PullSubtree(uint64_t const &client_handle)
+  std::vector<S> PullSubtree(ConstByteArray const &rid, uint64_t mask)
   {
     std::vector<S> ret;
-//
-//    if (cache_.begin() == cache_.end())
-//    {
-//      return std::vector<S>();
-//    }
-//
-//    // Creating result
-//
-//    for (auto &c : cache_)
-//    {
-//      if (c.delivered_to.find(client_handle) == c.delivered_to.end())
-//      {
-//        c.delivered_to.insert(client_handle);
-//        ret.push_back(c.data);
-//      }
-//    }
-//    //    std::cout << "Sending " << ret.size() << std::endl;
+
+    uint64_t counter = 0;
+    auto it = testStore.GetSubtree(rid, mask);
+
+    while (it != testStore.end() && counter++ < PULL_LIMIT_)
+    {
+      rid.push_back(*it);
+      ++it;
+    }
 
     return ret;
   }
@@ -223,6 +216,7 @@ private:
   protocol_handler_type protocol_;
   register_type         register_;
   thread_pool_type      thread_pool_;
+  const uint64_t        PULL_LIMIT_ = 100000; // Limit the amount a single rpc call will provide
 
   uint64_t ObjectCount()
   {
@@ -263,8 +257,6 @@ private:
     return ret;
   }
 
-  // TODO: (`HUT`) : This is not efficient since it will be copying this map
-  // around
   struct CachedObject
   {
     CachedObject() { created = std::chrono::system_clock::now(); }
