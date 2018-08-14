@@ -1,6 +1,7 @@
 #pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/macros.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -32,19 +33,12 @@ struct Key
   {
     assert(key.size() == BYTES);
 
-    // Force the byte array to be packed left to right
+    const uint64_t *key_reinterpret = reinterpret_cast<const uint64_t *>(key.pointer());
+
+    // Force the byte array to fill the 64 bit key from 'left to right'
     for (std::size_t i = 0; i < BLOCKS; ++i)
     {
-      uint64_t res = 0;
-      res |= uint64_t(key[(i*8) + 0]) << 56;
-      res |= uint64_t(key[(i*8) + 1]) << 48;
-      res |= uint64_t(key[(i*8) + 2]) << 40;
-      res |= uint64_t(key[(i*8) + 3]) << 32;
-      res |= uint64_t(key[(i*8) + 4]) << 24;
-      res |= uint64_t(key[(i*8) + 5]) << 16;
-      res |= uint64_t(key[(i*8) + 6]) << 8;
-      res |= uint64_t(key[(i*8) + 7]);
-      key_[i] = res;
+      key_[i] = BYTE_SWAP_64(key_reinterpret[i]);
     }
   }
 
@@ -66,7 +60,7 @@ struct Key
     while ((i < last_block) && (other.key_[i] == key_[i])) ++i;
 
     uint64_t diff = other.key_[i] ^ key_[i];
-    int      bit  = __builtin_clzl(diff);
+    int      bit  = COUNT_LEADING_ZEROES_64(diff);
     if (diff == 0) bit = 8 * sizeof(uint64_t);
 
     if (i == last_block)
@@ -97,16 +91,12 @@ struct Key
     byte_array::ByteArray ret;
     ret.Resize(BYTES);
 
+    uint64_t *ret_reinterpret = reinterpret_cast<uint64_t *>(ret.pointer());
+
+    // Force the byte array to fill the 64 bit key from 'left to right'
     for (std::size_t i = 0; i < BLOCKS; ++i)
     {
-      ret[0 +(i*8)] = (key_[i] >> 56) & 0xFF;
-      ret[1 +(i*8)] = (key_[i] >> 48) & 0xFF;
-      ret[2 +(i*8)] = (key_[i] >> 40) & 0xFF;
-      ret[3 +(i*8)] = (key_[i] >> 32) & 0xFF;
-      ret[4 +(i*8)] = (key_[i] >> 24) & 0xFF;
-      ret[5 +(i*8)] = (key_[i] >> 16) & 0xFF;
-      ret[6 +(i*8)] = (key_[i] >> 8) & 0xFF;
-      ret[7 +(i*8)] = (key_[i]) & 0xFF;
+      ret_reinterpret[i] = BYTE_SWAP_64(key_[i]);
     }
 
     return ret;
