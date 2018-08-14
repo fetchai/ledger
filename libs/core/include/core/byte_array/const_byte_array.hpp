@@ -35,6 +35,12 @@ public:
 
   ConstByteArray(char const *str)
   {
+    if(str == nullptr)
+    {
+      fetch::logger.Warn("Attempted to assign nullptr to byte array");
+      return;
+    }
+
     std::size_t n = 0;
     while (str[n] != '\0') ++n;
     Reserve(n);
