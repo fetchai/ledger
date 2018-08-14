@@ -251,6 +251,18 @@ private:
     std::vector<block_type> work;
     if (loose_blocks_.Get(work, 16))
     {
+      std::vector<block_hash_type> actually_still_loose;
+      for(auto &blk : work)
+      {
+        block_type tmp;
+        if (chain_ -> Get(blk.hash(), tmp))
+        {
+          if (tmp.loose())
+          {
+            actually_still_loose.push_back(blk.hash());
+          }
+        }
+      }
     }
     if (loose_blocks_.Remaining())
     {

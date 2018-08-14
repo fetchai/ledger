@@ -223,7 +223,7 @@ protected:
   }
 private:
   bool dirty_ = false;
-  mutex_type mutex_;
+  mutex_type mutex_{__LINE__,__FILE__};
 
 
   trust_store_type trust_store_;
