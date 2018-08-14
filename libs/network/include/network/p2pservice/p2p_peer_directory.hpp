@@ -8,7 +8,7 @@
 #include "network/service/client.hpp"
 #include "network/service/function.hpp"
 #include "network/service/publication_feed.hpp"
-#include "network/generics/promises.hpp"
+
 namespace fetch {
 namespace p2p {
 
