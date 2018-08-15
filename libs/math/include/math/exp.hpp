@@ -32,7 +32,7 @@ inline ARRAY_TYPE Exp(ARRAY_TYPE const &array)
 template <typename ARRAY_TYPE>
 inline ARRAY_TYPE Exp(ARRAY_TYPE const &array, memory::Range r)
 {
-//  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
+  //  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
 
   ARRAY_TYPE ret{array.shape()};
 
@@ -42,12 +42,12 @@ inline ARRAY_TYPE Exp(ARRAY_TYPE const &array, memory::Range r)
     {
       ret[i] = std::exp(array[i]);
     }
-//    ret = array.data().in_parallel().Apply(
-//        r,
-//        [](vector_register_type &a) { return std::exp(a); });
+    //    ret = array.data().in_parallel().Apply(
+    //        r,
+    //        [](vector_register_type &a) { return std::exp(a); });
   }
   else
-  { // non-trivial range is not vectorised
+  {  // non-trivial range is not vectorised
     for (std::size_t i = 0; i < array.size(); ++i)
     {
       ret[i] = std::exp(array[i]);
@@ -55,7 +55,6 @@ inline ARRAY_TYPE Exp(ARRAY_TYPE const &array, memory::Range r)
   }
   return ret;
 }
-
 
 }  // namespace math
 }  // namespace fetch

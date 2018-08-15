@@ -1,8 +1,8 @@
 #pragma once
 
-#include "math/ndarray.hpp"
 #include "math/exp.hpp"
 #include "math/log.hpp"
+#include "math/ndarray.hpp"
 #include "python/fetch_pybind.hpp"
 #include <pybind11/stl.h>
 
@@ -254,17 +254,17 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              s[idx] = val;
            })
       .def("Max", [](NDArray<T> const &a) { return fetch::math::statistics::Max(a); })
-//      .def("Max",
-//           [](NDArray<T> const &a, std::size_t axis) {
-//             if (axis >= a.shape().size()) throw py::index_error();
-//             return Max(a);
-//           })
+      //      .def("Max",
+      //           [](NDArray<T> const &a, std::size_t axis) {
+      //             if (axis >= a.shape().size()) throw py::index_error();
+      //             return Max(a);
+      //           })
       .def("Min", [](NDArray<T> const &a) { return fetch::math::statistics::Min(a); })
-//      .def("Min",
-//           [](NDArray<T> const &a, std::size_t axis) {
-//             if (axis >= a.shape().size()) throw py::index_error();
-//             return a.Min(axis);
-//           })
+      //      .def("Min",
+      //           [](NDArray<T> const &a, std::size_t axis) {
+      //             if (axis >= a.shape().size()) throw py::index_error();
+      //             return a.Min(axis);
+      //           })
       .def("Log", [](NDArray<T> &a) { return fetch::math::Log(a); })
       .def("Exp", [](NDArray<T> &a) { return fetch::math::Exp(a); })
       .def("Relu", [](NDArray<T> const &a, NDArray<T> &b) { return b.Relu(a); })

@@ -9,7 +9,7 @@ template <std::size_t N, std::size_t C>
 void test1(double max)
 {
   fetch::math::ApproxExp<N, C> fexp;
-  double                 me = 0;
+  double                       me = 0;
   for (double x = -300; x < 300; x += 0.1)
   {
     double y0 = fexp(x);
@@ -29,7 +29,7 @@ template <std::size_t N, std::size_t C, std::size_t MAX = 100000000>
 double test_timing(double x_value)
 {
   fetch::math::ApproxExp<N, C> fexp;
-  volatile double        x = 1;
+  volatile double              x = 1;
 
   auto t1a = std::chrono::high_resolution_clock::now();
   for (std::size_t i = 0; i < MAX; ++i)

@@ -75,7 +75,7 @@ private:
   {
     if (initialized_) return;
 
-    ApproxExp<0, C>           fexp;
+    ApproxExp<0, C>     fexp;
     std::vector<double> accumulated, frequency;
     accumulated.resize(E_ENTRIES);
     frequency.resize(E_ENTRIES);

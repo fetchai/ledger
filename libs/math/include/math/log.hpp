@@ -12,16 +12,16 @@ namespace math {
 template <typename ARRAY_TYPE>
 inline ARRAY_TYPE Log(ARRAY_TYPE const &array)
 {
-//  using vector_register_type      = typename ARRAY_TYPE::vector_register_type;
+  //  using vector_register_type      = typename ARRAY_TYPE::vector_register_type;
 
   ARRAY_TYPE ret{array.shape()};
   for (std::size_t i = 0; i < array.size(); ++i)
   {
     ret[i] = std::log(array[i]);
   }
-//  ret = array.data().in_parallel().Apply(
-//      memory::TrivialRange(0, array.size()),
-//      [](vector_register_type &a) { return std::log(a); });
+  //  ret = array.data().in_parallel().Apply(
+  //      memory::TrivialRange(0, array.size()),
+  //      [](vector_register_type &a) { return std::log(a); });
 
   return ret;
 }
@@ -36,7 +36,7 @@ inline ARRAY_TYPE Log(ARRAY_TYPE const &array)
 template <typename ARRAY_TYPE>
 inline ARRAY_TYPE Log(ARRAY_TYPE const &array, memory::Range r)
 {
-//  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
+  //  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
 
   ARRAY_TYPE ret{array.shape()};
 
@@ -46,12 +46,12 @@ inline ARRAY_TYPE Log(ARRAY_TYPE const &array, memory::Range r)
     {
       ret[i] = std::log(array[i]);
     }
-//    ret = array.data().in_parallel().Apply(
-//        r,
-//        [](vector_register_type &a) { return std::log(a); });
+    //    ret = array.data().in_parallel().Apply(
+    //        r,
+    //        [](vector_register_type &a) { return std::log(a); });
   }
   else
-  { // non-trivial range is not vectorised
+  {  // non-trivial range is not vectorised
     for (std::size_t i = 0; i < array.size(); ++i)
     {
       ret[i] = std::log(array[i]);
@@ -59,7 +59,6 @@ inline ARRAY_TYPE Log(ARRAY_TYPE const &array, memory::Range r)
   }
   return ret;
 }
-
 
 }  // namespace math
 }  // namespace fetch
