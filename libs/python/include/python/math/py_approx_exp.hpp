@@ -7,7 +7,7 @@ namespace fetch {
 namespace math {
 
 template <uint8_t N, uint64_t C, bool O>
-void BuildExp(std::string const &custom_name, pybind11::module &module)
+void BuildApproxExp(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;
