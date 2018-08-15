@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math/exp.hpp"
+#include "math/approx_exp.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -11,11 +11,11 @@ void BuildExp(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;
-  py::class_<Exp<N, C, O>>(module, custom_name.c_str())
-      .def(py::init<const Exp<N, C, O> &>())
+  py::class_<ApproxExp<N, C, O>>(module, custom_name.c_str())
+      .def(py::init<const ApproxExp<N, C, O> &>())
       .def(py::init<>())
       //    .def(py::self = py::self )
-      .def("SetCoefficient", &Exp<N, C, O>::SetCoefficient);
+      .def("SetCoefficient", &ApproxExp<N, C, O>::SetCoefficient);
 }
 };  // namespace math
 };  // namespace fetch

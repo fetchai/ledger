@@ -1,6 +1,8 @@
 #pragma once
 
 #include "math/ndarray.hpp"
+#include "math/exp.hpp"
+#include "math/log.hpp"
 #include "python/fetch_pybind.hpp"
 #include <pybind11/stl.h>
 
@@ -264,6 +266,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 //             return a.Min(axis);
 //           })
       .def("Log", [](NDArray<T> &a) { return fetch::math::Log(a); })
+      .def("Exp", [](NDArray<T> &a) { return fetch::math::Exp(a); })
       .def("Relu", [](NDArray<T> const &a, NDArray<T> &b) { return b.Relu(a); })
       .def("L2Loss", [](NDArray<T> const &a) { return a.L2Loss(); })
       .def("Sign",

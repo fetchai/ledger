@@ -11,6 +11,12 @@ namespace fetch {
 namespace math {
 namespace statistics {
 
+template <typename T>
+inline T Max(T const &datum1, T const &datum2)
+{
+  return std::max(datum1, datum2);
+}
+
 template <typename ARRAY_TYPE>
 inline typename ARRAY_TYPE::type Max(ARRAY_TYPE const &array)
 {
