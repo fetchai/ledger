@@ -1,6 +1,10 @@
 #pragma once
 #include "math/ndarray.hpp"
 
+#include<vector>
+
+
+
 class NDArrayView
 {
 public:

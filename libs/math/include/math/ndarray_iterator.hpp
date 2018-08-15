@@ -1,68 +1,155 @@
 #pragma once
 #include "math/ndarray.hpp"
 
+#include<vector>
+namespace fetch {
+namespace math {
+
+struct NDIteratorRange 
+{
+  std::size_t index = 0;
+  std::size_t from = 0;
+  std::size_t to = 0;
+  std::size_t step = 1;
+  std::size_t volume = 1;
+  std::size_t total_steps = 1;
+
+  std::size_t step_volume = 1;
+  std::size_t total_volume = 1;
+
+  std::size_t repeat_dimension = 1;
+  std::size_t repetition = 0;
+};
+  
+
+template <typename T, typename C >
 class NDArrayIterator
 {
 public:
+  using type = T;
+  using ndarray_type = NDArray< T, C >;
 
-  NDArrayIterator(NDArray &array,
-    array_(array),    
-    std::vector<std::size_t> const &from,
-    std::vector<std::size_t> const &to,
-    std::vector<std::size_t> const &step)
+
+  NDArrayIterator(ndarray_type &array,
+    std::vector< std::vector< std::size_t > > const &step)
     :
-    from_(from),
-    to_(to),
-    step_(step),
-    index_(from)    
+    array_(array)
   {
-    Initialise();
+    assert( array.shape().size() == step.size());
+    std::size_t volume = 1;
+    size_ = 1;
+    position_ = 0;
+    
+    for(std::size_t i=0; i < step.size(); ++i)
+    {
+      auto const &a = step[i];
+      NDIteratorRange s;
+      s.index = s.from = a[0];
+      s.to = a[1];
+      
+      if(a.size() > 2)
+      {
+        s.step = a[2];        
+      }
+      s.volume = volume;
+      std::size_t diff = (s.to - s.from);      
+      s.total_steps =  diff / s.step;
+      if(s.total_steps * s.step <= diff) ++s.total_steps;
+      s.total_steps *= s.step;      
+
+      
+      s.step_volume = s.step * volume;
+      s.total_volume = s.total_steps * volume;      
+
+      position_ += volume * s.from;      
+      size_ *= s.total_steps;
+        
+      volume *= array.shape(i);
+      ranges_.push_back(s);      
+    }
+  }
+
+  operator bool() 
+  {
+    return is_valid_;
   }
   
-  NDArrayIterator(NDArray &array,
-    std::vector<std::size_t> const &from,
-    std::vector<std::size_t> const &to,
-    std::vector<std::size_t> const &step,
-    std::vector<std::size_t> const &index)
-    :
-    array_(array),
-    from_(from),
-    to_(to),
-    step_(step),
-    index_(index) 
-  {
-    Initialise();
-  }
   
-  bool operator++() 
+  NDArrayIterator& operator++() 
   {
-    std::size_t i = 0;
-    index_[0] += step_[0];
-
-    std::size_t full_step = step_[0];   
-    position_ += full_step;
-
-    while( (i < to_.size()) && (index_[i] >= to_[i] )) {
-      position_ -= (index_[i-1]-from_[i]);
-      index_[i-1] = from_[i];      
+    bool next;
+    std::size_t i = std::size_t(-1);
+    do {
       ++i;
       
-      index_[i] += step_[i];
+      next = false;
+      NDIteratorRange &s = ranges_[i];
+      s.index += s.step;
+      position_ += s.step_volume;
       
-      position_ += full_step;      
-    } 
-  }
-  
-  bool operator==(NDArrayIterator const &other) const
-  {
-    assert(from_.size() == other.from_.size());
-    
-    bool ret = true;
-    for(std::size_t i=0; i <from_.size(); ++i) {
-      ret &= (other.index_[i] == index_[i]);
+      if(s.index > s.to) {
+        ++s.repetition;
+        s.index = s.from;
+        position_ -= s.total_volume;
+        if(s.repetition == s.repeat_dimension)
+        {
+          s.repetition = 0;
+          next = true;
+        }
+        
+      }
+    } while( (i < ranges_.size()) && (next));
+
+
+    if(i == ranges_.size()) {
+      if(total_runs_ <= 1)
+      {        
+        is_valid_ = false;
+        return *this;
+      }
+      else
+      {
+        --total_runs_;
+        position_ = 0;
+        for(auto &r: ranges_)
+        {
+          r.index = r.from;
+          position_ += r.volume * r.index;
+        }
+      }
     }
 
-    return ret;
+#ifndef NDEBUG
+    // Test
+    std::size_t ref = 0;
+    for(auto &s: ranges_) {
+      ref += s.volume*s.index;
+    }
+    assert(ref == position_);
+    if(ref != position_) {
+      std::cout << "Expected " << ref << " but got " << position_ << std::endl;
+      
+      TODO_FAIL("doesn't add up");
+    }
+#endif    
+
+    
+    return *this;
+  }
+
+  void PermuteAxes(std::size_t const &a, std::size_t const &b) 
+  {
+    std::swap(ranges_[a], ranges_[b]);
+  }
+  
+  type& operator*() 
+  {
+    return array_[position_];
+  }
+
+  type const& operator*() const
+  {
+    return array_[position_];
   }
   
   
@@ -70,34 +157,24 @@ public:
   {
     return size_;
   }
+
+
+  template< typename A, typename B>
+  friend bool BroadcastIterator(std::vector< std::size_t > const &, NDArrayIterator< A, B> &) ;    
+protected:
+  std::vector< NDIteratorRange > ranges_;
+  bool is_valid_ = true;
+  std::size_t total_runs_ = 1;
+  
+
   
 private:
-
-  void Initialise() 
-  {
-    size_ = 1;
-    offsets_.resize(from_.size());
-    position_ = 1;
-    
-    for(std::size_t i = 0; i < from_.size(); ++i)
-    {
-      std::size_t elements = (to_[i] - from_[i]) / step_[i] + 1;
-      size_ *= elements;
-      
-      position_ *= array_.shape()[i];
-    }
-  }
-
-  NDArray &array_;
   
-  std::vector<std::size_t> from_;
-  std::vector<std::size_t> to_;
-  std::vector<std::size_t> step_;
-
-  std::vector<std::size_t> index_;
-  std::size_t position_;
+  ndarray_type &array_;  
+  std::size_t position_ = 0;
   
   std::size_t size_ = 0;
-
-  
 };
+
+}
+}

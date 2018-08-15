@@ -55,7 +55,9 @@ public:
    * Constructor builds an NDArray pre-initialising from a shapeless array
    * @param arr shapelessarray data set by defualt
    */
-  NDArray(super_type const &arr) : super_type(arr) {}
+  NDArray(super_type const &arr) : super_type(arr) {
+    this->LazyReshape({ arr.size() });
+  }
 
   NDArray &operator=(NDArray const &other) = default;
   //  NDArray &operator=(NDArray &&other) = default;
@@ -268,7 +270,9 @@ public:
    * @return        shape_ is theshape of the array as a vector of size_t.
    *
    **/
-  std::vector<std::size_t> const &shape() const { return shape_; }
+  std::vector<std::size_t> const &shape() const { return shape_; } 
+
+  std::size_t const &shape(std::size_t const &n) const { return shape_[n]; } 
 
   type      Max() const { return this->super_type::Max(); }
   self_type Max(std::size_t fixed_axis) const
