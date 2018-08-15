@@ -33,7 +33,7 @@ inline typename ARRAY_TYPE::type Max(ARRAY_TYPE const &array)
  * @return
  */
 template <typename ARRAY_TYPE>
-inline typename ARRAY_TYPE::type Max(memory::Range r, ARRAY_TYPE const &a)
+inline typename ARRAY_TYPE::type Max(ARRAY_TYPE const &a, memory::Range r)
 {
   using vector_register_type = typename ARRAY_TYPE::vector_register_type;
   using data_type                 = typename ARRAY_TYPE::type;
@@ -51,7 +51,7 @@ inline typename ARRAY_TYPE::type Max(memory::Range r, ARRAY_TYPE const &a)
     data_type ret = std::numeric_limits<data_type>::min();
     for (auto i : a)
     {
-      std::max(ret, i);
+      ret = std::max(ret, i);
     }
   }
 }

@@ -33,7 +33,7 @@ inline typename ARRAY_TYPE::type Min(ARRAY_TYPE const &array)
  * @return
  */
 template <typename ARRAY_TYPE>
-inline typename ARRAY_TYPE::type Min(memory::Range r, ARRAY_TYPE const &a)
+inline typename ARRAY_TYPE::type Min(ARRAY_TYPE const &a, memory::Range r)
 {
   using vector_register_type = typename ARRAY_TYPE::vector_register_type;
   using data_type                 = typename ARRAY_TYPE::type;
@@ -51,7 +51,7 @@ inline typename ARRAY_TYPE::type Min(memory::Range r, ARRAY_TYPE const &a)
     data_type ret = std::numeric_limits<data_type>::max();
     for (auto i : a)
     {
-      std::min(ret, i);
+      ret = std::min(ret, i);
     }
   }
 }
