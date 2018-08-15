@@ -1,208 +1,195 @@
-#include<gtest/gtest.h>
+#include <gtest/gtest.h>
 
-#include"math/linalg/prototype.hpp"
-#include"math/linalg/matrix.hpp"
-#include"math/linalg/blas/base.hpp"
-#include"math/linalg/blas/gemm_tn_novector.hpp"
-#include"math/linalg/blas/gemm_tn_novector_threaded.hpp"
-
+#include "math/linalg/blas/base.hpp"
+#include "math/linalg/blas/gemm_tn_novector.hpp"
+#include "math/linalg/blas/gemm_tn_novector_threaded.hpp"
+#include "math/linalg/matrix.hpp"
+#include "math/linalg/prototype.hpp"
 
 using namespace fetch;
 using namespace fetch::math::linalg;
 
-TEST(blas_DGEMM, blas_gemm_tn_novector_threaded1) {
+TEST(blas_DGEMM, blas_gemm_tn_novector_threaded1)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * T(_A) * _B + _beta * _C ), 
-        platform::Parallelisation::THREADING> gemm_tn_novector_threaded;
-	// Compuing _C = _alpha * T(_A) * _B + _beta * _C
-  using type = double;  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::THREADING>
+      gemm_tn_novector_threaded;
+  // Compuing _C = _alpha * T(_A) * _B + _beta * _C
+  using type = double;
 
   type alpha = type(1);
-  type beta = type(0);
+  type beta  = type(0);
 
-Matrix< type > A = Matrix< type >(R"(
+  Matrix<type> A = Matrix<type>(R"(
 	0.3745401188473625 0.9507143064099162 0.7319939418114051;
  0.5986584841970366 0.15601864044243652 0.15599452033620265
 	)");
 
-Matrix< type > B = Matrix< type >(R"(
+  Matrix<type> B = Matrix<type>(R"(
 	0.05808361216819946 0.8661761457749352 0.6011150117432088;
  0.7080725777960455 0.020584494295802447 0.9699098521619943
 	)");
 
-Matrix< type > C = Matrix< type >(R"(
+  Matrix<type> C = Matrix<type>(R"(
 	0.8324426408004217 0.21233911067827616 0.18182496720710062;
  0.18340450985343382 0.3042422429595377 0.5247564316322378;
  0.43194501864211576 0.2912291401980419 0.6118528947223795
 	)");
 
-  Matrix< type > R = Matrix< type >(R"(
+  Matrix<type> R = Matrix<type>(R"(
 	0.4456482991294304 0.33674079873438223 0.8057864498423064;
  0.1656934419785827 0.8266976184734581 0.7228126579480724;
  0.15297229436215787 0.6372467595628419 0.591313169085288
 	)");
-  
-	gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
+  gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_DGEMM, blas_gemm_tn_novector_threaded2) {
+TEST(blas_DGEMM, blas_gemm_tn_novector_threaded2)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * T(_A) * _B + _beta * _C ), 
-        platform::Parallelisation::THREADING> gemm_tn_novector_threaded;
-	// Compuing _C = _alpha * T(_A) * _B + _beta * _C
-  using type = double;  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::THREADING>
+      gemm_tn_novector_threaded;
+  // Compuing _C = _alpha * T(_A) * _B + _beta * _C
+  using type = double;
 
   type alpha = type(0);
-  type beta = type(1);
+  type beta  = type(1);
 
-Matrix< type > A = Matrix< type >(R"(
+  Matrix<type> A = Matrix<type>(R"(
 	0.13949386065204183 0.29214464853521815 0.3663618432936917;
  0.45606998421703593 0.7851759613930136 0.19967378215835974
 	)");
 
-Matrix< type > B = Matrix< type >(R"(
+  Matrix<type> B = Matrix<type>(R"(
 	0.5142344384136116 0.5924145688620425 0.046450412719997725;
  0.6075448519014384 0.17052412368729153 0.06505159298527952
 	)");
 
-Matrix< type > C = Matrix< type >(R"(
+  Matrix<type> C = Matrix<type>(R"(
 	0.9488855372533332 0.9656320330745594 0.8083973481164611;
  0.3046137691733707 0.09767211400638387 0.6842330265121569;
  0.4401524937396013 0.12203823484477883 0.4951769101112702
 	)");
 
-  Matrix< type > R = Matrix< type >(R"(
+  Matrix<type> R = Matrix<type>(R"(
 	0.9488855372533332 0.9656320330745594 0.8083973481164611;
  0.3046137691733707 0.09767211400638387 0.6842330265121569;
  0.4401524937396013 0.12203823484477883 0.4951769101112702
 	)");
-  
-	gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
+  gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_DGEMM, blas_gemm_tn_novector_threaded3) {
+TEST(blas_DGEMM, blas_gemm_tn_novector_threaded3)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * T(_A) * _B + _beta * _C ), 
-        platform::Parallelisation::THREADING> gemm_tn_novector_threaded;
-	// Compuing _C = _alpha * T(_A) * _B + _beta * _C
-  using type = double;  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::THREADING>
+      gemm_tn_novector_threaded;
+  // Compuing _C = _alpha * T(_A) * _B + _beta * _C
+  using type = double;
 
   type alpha = type(1);
-  type beta = type(1);
+  type beta  = type(1);
 
-Matrix< type > A = Matrix< type >(R"(
+  Matrix<type> A = Matrix<type>(R"(
 	0.034388521115218396 0.9093204020787821 0.2587799816000169;
  0.662522284353982 0.31171107608941095 0.5200680211778108
 	)");
 
-Matrix< type > B = Matrix< type >(R"(
+  Matrix<type> B = Matrix<type>(R"(
 	0.5467102793432796 0.18485445552552704 0.9695846277645586;
  0.7751328233611146 0.9394989415641891 0.8948273504276488
 	)");
 
-Matrix< type > C = Matrix< type >(R"(
+  Matrix<type> C = Matrix<type>(R"(
 	0.5978999788110851 0.9218742350231168 0.0884925020519195;
  0.1959828624191452 0.045227288910538066 0.32533033076326434;
  0.388677289689482 0.2713490317738959 0.8287375091519293
 	)");
 
-  Matrix< type > R = Matrix< type >(R"(
+  Matrix<type> R = Matrix<type>(R"(
 	1.1302433056071457 1.5506700912834535 0.7146781438045392;
  0.9347351599342958 0.5061714427949007 1.4859210106475778;
  0.9332767593138604 0.8077890198114085 1.545017690717192
 	)");
-  
-	gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
+  gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_DGEMM, blas_gemm_tn_novector_threaded4) {
+TEST(blas_DGEMM, blas_gemm_tn_novector_threaded4)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * T(_A) * _B + _beta * _C ), 
-        platform::Parallelisation::THREADING> gemm_tn_novector_threaded;
-	// Compuing _C = _alpha * T(_A) * _B + _beta * _C
-  using type = double;  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::THREADING>
+      gemm_tn_novector_threaded;
+  // Compuing _C = _alpha * T(_A) * _B + _beta * _C
+  using type = double;
 
   type alpha = type(0.7892178132448091);
-  type beta = type(0.20134057995425791);
+  type beta  = type(0.20134057995425791);
 
-Matrix< type > A = Matrix< type >(R"(
+  Matrix<type> A = Matrix<type>(R"(
 	0.3567533266935893 0.28093450968738076 0.5426960831582485;
  0.14092422497476265 0.8021969807540397 0.07455064367977082
 	)");
 
-Matrix< type > B = Matrix< type >(R"(
+  Matrix<type> B = Matrix<type>(R"(
 	0.9868869366005173 0.7722447692966574 0.1987156815341724;
  0.005522117123602399 0.8154614284548342 0.7068573438476171
 	)");
 
-Matrix< type > C = Matrix< type >(R"(
+  Matrix<type> C = Matrix<type>(R"(
 	0.7290071680409873 0.7712703466859457 0.07404465173409036;
  0.3584657285442726 0.11586905952512971 0.8631034258755935;
  0.6232981268275579 0.3308980248526492 0.06355835028602363
 	)");
 
-  Matrix< type > R = Matrix< type >(R"(
+  Matrix<type> R = Matrix<type>(R"(
 	0.4252569129949664 0.4634137748205257 0.1494744107455612;
  0.29448090541689104 0.710825384378716 0.6653538341336273;
  0.5485091293984743 0.4453588735523167 0.1394970283959259
 	)");
-  
-	gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
+  gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_DGEMM, blas_gemm_tn_novector_threaded5) {
+TEST(blas_DGEMM, blas_gemm_tn_novector_threaded5)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * T(_A) * _B + _beta * _C ), 
-        platform::Parallelisation::THREADING> gemm_tn_novector_threaded;
-	// Compuing _C = _alpha * T(_A) * _B + _beta * _C
-  using type = double;  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::THREADING>
+      gemm_tn_novector_threaded;
+  // Compuing _C = _alpha * T(_A) * _B + _beta * _C
+  using type = double;
 
   type alpha = type(0.8018736130900541);
-  type beta = type(0.20189021981620003);
+  type beta  = type(0.20189021981620003);
 
-Matrix< type > A = Matrix< type >(R"(
+  Matrix<type> A = Matrix<type>(R"(
 	0.3109823217156622 0.32518332202674705 0.7296061783380641 0.6375574713552131 0.8872127425763265;
  0.4722149251619493 0.1195942459383017 0.713244787222995 0.7607850486168974 0.5612771975694962;
  0.770967179954561 0.49379559636439074 0.5227328293819941 0.42754101835854963 0.02541912674409519
 	)");
 
-Matrix< type > B = Matrix< type >(R"(
+  Matrix<type> B = Matrix<type>(R"(
 	0.10789142699330445 0.03142918568673425 0.6364104112637804 0.3143559810763267 0.5085706911647028;
  0.907566473926093 0.24929222914887494 0.41038292303562973 0.7555511385430487 0.22879816549162246;
  0.07697990982879299 0.289751452913768 0.16122128725400442 0.9296976523425731 0.808120379564417
 	)");
 
-Matrix< type > C = Matrix< type >(R"(
+  Matrix<type> C = Matrix<type>(R"(
 	0.6334037565104235 0.8714605901877177 0.8036720768991145 0.18657005888603584 0.8925589984899778;
  0.5393422419156507 0.8074401551640625 0.8960912999234932 0.3180034749718639 0.11005192452767676;
  0.22793516254194168 0.4271077886262563 0.8180147659224931 0.8607305832563434 0.006952130531190703;
@@ -210,77 +197,71 @@ Matrix< type > C = Matrix< type >(R"(
  0.9429097039125192 0.32320293202075523 0.5187906217433661 0.7030189588951778 0.363629602379294
 	)");
 
-  Matrix< type > R = Matrix< type >(R"(
+  Matrix<type> R = Matrix<type>(R"(
 	0.5460292484417699 0.4573026221763177 0.5760184320008415 0.9769076918391761 0.8932511648068275;
  0.2545374893896027 0.30984707547446183 0.450052808428564 0.5867535547912361 0.4967575373958174;
  0.6604737708835863 0.36864869792209576 0.8397719534135228 1.1795090020663381 0.7685371845173777;
  0.7383287371140176 0.35175726744472097 0.6758278166532915 0.9645695773053792 0.7447932837794355;
  0.6771622949310074 0.20571703223195426 0.7454903832790308 0.7245791195233334 0.554674793322504
 	)");
-  
-	gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
+  gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_DGEMM, blas_gemm_tn_novector_threaded6) {
+TEST(blas_DGEMM, blas_gemm_tn_novector_threaded6)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * T(_A) * _B + _beta * _C ), 
-        platform::Parallelisation::THREADING> gemm_tn_novector_threaded;
-	// Compuing _C = _alpha * T(_A) * _B + _beta * _C
-  using type = double;  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::THREADING>
+      gemm_tn_novector_threaded;
+  // Compuing _C = _alpha * T(_A) * _B + _beta * _C
+  using type = double;
 
   type alpha = type(-8.056568992963147);
-  type beta = type(-1.7399753989385962);
+  type beta  = type(-1.7399753989385962);
 
-Matrix< type > A = Matrix< type >(R"(
+  Matrix<type> A = Matrix<type>(R"(
 	0.9717820827209607 0.9624472949421112 0.25178229582536416;
  0.49724850589238545 0.30087830981676966 0.2848404943774676
 	)");
 
-Matrix< type > B = Matrix< type >(R"(
+  Matrix<type> B = Matrix<type>(R"(
 	0.036886947354532795 0.6095643339798968 0.5026790232288615;
  0.05147875124998935 0.27864646423661144 0.9082658859666537
 	)");
 
-Matrix< type > C = Matrix< type >(R"(
+  Matrix<type> C = Matrix<type>(R"(
 	0.23956189066697242 0.1448948720912231 0.489452760277563;
  0.9856504541106007 0.2420552715115004 0.6721355474058786;
  0.7616196153287176 0.23763754399239967 0.7282163486118596
 	)");
 
-  Matrix< type > R = Matrix< type >(R"(
+  Matrix<type> R = Matrix<type>(R"(
 	-0.9118580639082294 -6.140822822890326 -8.425844457374584;
  -2.1258166869411763 -5.823198190979315 -7.2689631122665865;
  -1.5181599677253337 -2.2894338506569127 -4.371085900108739
 	)");
-  
-	gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
+  gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
 
-TEST(blas_DGEMM, blas_gemm_tn_novector_threaded7) {
+TEST(blas_DGEMM, blas_gemm_tn_novector_threaded7)
+{
 
-	Blas< double, 
-        Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * T(_A) * _B + _beta * _C ), 
-        platform::Parallelisation::THREADING> gemm_tn_novector_threaded;
-	// Compuing _C = _alpha * T(_A) * _B + _beta * _C
-  using type = double;  
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::THREADING>
+      gemm_tn_novector_threaded;
+  // Compuing _C = _alpha * T(_A) * _B + _beta * _C
+  using type = double;
 
   type alpha = type(2.6670246104323674);
-  type beta = type(-2.146719568324661);
+  type beta  = type(-2.146719568324661);
 
-Matrix< type > A = Matrix< type >(R"(
+  Matrix<type> A = Matrix<type>(R"(
 	0.3677831327192532 0.6323058305935795 0.6335297107608947 0.5357746840747585 0.0902897700544083 0.835302495589238 0.32078006497173583 0.18651851039985423 0.040775141554763916 0.5908929431882418;
  0.6775643618422824 0.016587828927856152 0.512093058299281 0.22649577519793795 0.6451727904094499 0.17436642900499144 0.690937738102466 0.3867353463005374 0.9367299887367345 0.13752094414599325;
  0.3410663510502585 0.11347352124058907 0.9246936182785628 0.877339353380981 0.2579416277151556 0.659984046034179 0.8172222002012158 0.5552008115994623 0.5296505783560065 0.24185229090045168;
@@ -293,7 +274,7 @@ Matrix< type > A = Matrix< type >(R"(
  0.2944488920695857 0.38509772860192526 0.8511366715168569 0.31692200515627766 0.1694927466860925 0.5568012624583502 0.936154774160781 0.696029796674973 0.570061170089365 0.09717649377076854
 	)");
 
-Matrix< type > B = Matrix< type >(R"(
+  Matrix<type> B = Matrix<type>(R"(
 	0.6150072266991697 0.9900538501042633 0.14008401523652403 0.5183296523637367 0.8773730719279554 0.7407686177542044 0.697015740995268 0.7024840839871093 0.35949115121975517 0.29359184426449336;
  0.8093611554785136 0.8101133946791808 0.8670723185801037 0.9132405525564713 0.5113423988609378 0.5015162946871996 0.7982951789667752 0.6499639307777652 0.7019668772577033 0.795792669436101;
  0.8900053418175663 0.3379951568515358 0.375582952639944 0.093981939840869 0.578280140996174 0.035942273796742086 0.46559801813246016 0.5426446347075766 0.2865412521282844 0.5908332605690108;
@@ -306,7 +287,7 @@ Matrix< type > B = Matrix< type >(R"(
  0.5031362585800877 0.8564898411883223 0.658693631618945 0.1629344270814297 0.07056874740042984 0.6424192782063156 0.026511310541621813 0.5857755812734633 0.9402302414249576 0.575474177875879
 	)");
 
-Matrix< type > C = Matrix< type >(R"(
+  Matrix<type> C = Matrix<type>(R"(
 	0.3881699262065219 0.6432882184423532 0.45825289049151663 0.5456167893159349 0.9414648087765252 0.38610263780077425 0.9611905638239142 0.9053506419560637 0.19579113478929644 0.06936130087516545;
  0.10077800137742665 0.018221825651549728 0.0944429607559284 0.6830067734163568 0.07118864846022899 0.3189756302937613 0.8448753109694546 0.023271935735825866 0.8144684825889358 0.28185477477339993;
  0.11816482762165625 0.6967371653641506 0.628942846779884 0.877472013527053 0.7350710438038858 0.8034809303848486 0.2820345725713065 0.17743954377972282 0.7506147516408583 0.806834739267264;
@@ -319,7 +300,7 @@ Matrix< type > C = Matrix< type >(R"(
  0.7771469159274368 0.558404249735805 0.4242220092469763 0.906354385094736 0.11119748230615134 0.49262510429085915 0.011353644767419069 0.46866064199412627 0.05630327568183735 0.11881791626807192
 	)");
 
-  Matrix< type > R = Matrix< type >(R"(
+  Matrix<type> R = Matrix<type>(R"(
 	6.126670849262222 7.115456758940775 4.369388166854418 5.615833241830652 5.615076902137733 7.085617823718842 6.559586497611759 4.411997612767583 6.625736868949042 5.629347637856157;
  5.097716788805924 6.305287948788628 4.459139004588592 4.109058353763252 6.129290354546089 6.750114126148745 5.880976734898203 4.823718421802354 4.123588177765943 3.520800422385308;
  7.97115632804295 7.016328321266408 5.3544813732403425 4.96172539606045 5.542557659036592 6.393290874771466 8.658035429067377 6.6665497438805925 6.654827489116813 5.110633965833001;
@@ -331,11 +312,8 @@ Matrix< type > C = Matrix< type >(R"(
  7.945276061860768 6.246163540899028 6.947956794275571 6.432168046188158 5.686100685637071 6.190454971697222 7.612460241680784 5.338361045261521 7.352116696842012 6.555731657711705;
  3.5931100414811805 4.219874275951457 3.5534374989055846 4.024861531373469 6.7275176169539295 6.226934060077556 7.205315537257676 3.28623658309584 4.905085642327359 3.7772203790384644
 	)");
-  
-	gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
+  gemm_tn_novector_threaded(alpha, A, B, beta, C);
 
-
-	ASSERT_TRUE( R.AllClose(C) );
-   
+  ASSERT_TRUE(R.AllClose(C));
 }
