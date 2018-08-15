@@ -1,5 +1,7 @@
 #pragma once
 
+#include "math/exp.hpp"
+#include "math/log.hpp"
 #include "math/ndarray.hpp"
 #include "python/fetch_pybind.hpp"
 #include <pybind11/stl.h>
@@ -183,7 +185,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<std::size_t> const &idxs) {
-             assert(idxs.size() == s.Shape().size());
+             assert(idxs.size() == s.shape().size());
 
              return s.Get(idxs);
            })
@@ -237,7 +239,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("__setitem__",
            [](NDArray<T> &s, std::vector<std::size_t> const &idxs, T val) {
-             assert(idxs.size() == s.Shape().size());
+             assert(idxs.size() == s.shape().size());
 
              return s.Set(idxs, val);
            })
@@ -251,20 +253,33 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (idx >= s.size()) throw py::index_error();
              s[idx] = val;
            })
-      .def("Max", [](NDArray<T> const &a) { return a.Max(); })
-      .def("Max",
-           [](NDArray<T> const &a, std::size_t axis) {
-             if (axis >= a.shape().size()) throw py::index_error();
-             return a.Max(axis);
-           })
-      .def("Min", [](NDArray<T> const &a) { return a.Min(); })
-      .def("Min",
-           [](NDArray<T> const &a, std::size_t axis) {
-             if (axis >= a.shape().size()) throw py::index_error();
-             return a.Min(axis);
+      .def("Max", [](NDArray<T> const &a) { return fetch::math::statistics::Max(a); })
+      //      .def("Max",
+      //           [](NDArray<T> const &a, std::size_t axis) {
+      //             if (axis >= a.shape().size()) throw py::index_error();
+      //             return Max(a);
+      //           })
+      .def("Min", [](NDArray<T> const &a) { return fetch::math::statistics::Min(a); })
+      //      .def("Min",
+      //           [](NDArray<T> const &a, std::size_t axis) {
+      //             if (axis >= a.shape().size()) throw py::index_error();
+      //             return a.Min(axis);
+      //           })
+      .def("Log", [](NDArray<T> &a) { return fetch::math::Log(a); })
+      .def("Exp", [](NDArray<T> &a) { return fetch::math::Exp(a); })
+      .def("Relu", [](NDArray<T> const &a, NDArray<T> &b) { return b.Relu(a); })
+      .def("L2Loss", [](NDArray<T> const &a) { return a.L2Loss(); })
+      .def("Sign",
+           [](NDArray<T> const &a, NDArray<T> &b) {
+             std::cout << "entering sign binding.." << std::endl;
+             return b.Sign(a);
            })
       .def("Reshape",
            [](NDArray<T> &a, std::vector<std::size_t> b) {
+             //             std::size_t internal_prod = std::size_t(std::accumulate(begin(b),
+             //             end(b), 1, std::multiplies<>())); if (internal_prod != a.size()) throw
+             //             py::index_error();
+             if (!(a.CanReshape(b))) throw py::index_error();
              a.Reshape(b);
              return;
            })

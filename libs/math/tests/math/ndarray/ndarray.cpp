@@ -5,7 +5,6 @@
 //#include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
 
-#include "math/exp.hpp"
 #include "math/kernels/concurrent_vm.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"

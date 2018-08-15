@@ -4,7 +4,6 @@
 //#include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
 
-#include "math/exp.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "math/ndarray_view.hpp"

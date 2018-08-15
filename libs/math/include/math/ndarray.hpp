@@ -22,6 +22,8 @@ public:
   using super_type           = ShapeLessArray<T, C>;
   using self_type            = NDArray<T, C>;
 
+  NDArray() = default;
+
   /**
    * Constructor builds an NDArray with n elements initialized to 0
    * @param n   number of elements in array (no shape specified, assume 1-D)
@@ -41,8 +43,8 @@ public:
    * @param shape   vector of lengths for each dimension
    */
   NDArray(std::vector<std::size_t> const &dims = {0})
-    : super_type(std::accumulate(std::begin(dims), std::end(dims), std::size_t(1),
-                                 std::multiplies<std::size_t>()))
+    : super_type(
+          std::accumulate(std::begin(dims), std::end(dims), std::size_t(1), std::multiplies<>()))
   {
     this->LazyReshape(dims);
     for (std::size_t idx = 0; idx < this->size(); ++idx)
@@ -274,79 +276,79 @@ public:
 
   std::size_t const &shape(std::size_t const &n) const { return shape_[n]; } 
 
-  type      Max() const { return this->super_type::Max(); }
-  self_type Max(std::size_t fixed_axis) const
-  {
-    // set up the new output array
-    std::vector<std::size_t> new_shape{shape()};
-    new_shape.erase(new_shape.begin() + int(fixed_axis));
-    NDArray array_out{new_shape};
-
-    for (std::size_t i = 0; i < shape()[fixed_axis]; ++i)
-    {
-
-      // set up the view to extract
-      NDArrayView arr_view;
-
-      for (std::size_t j = 0; j < shape().size(); ++j)
-      {
-        if (j == fixed_axis)
-        {
-          arr_view.from.push_back(i);
-          arr_view.to.push_back(i + 1);
-          arr_view.step.push_back(1);
-        }
-        else
-        {
-          arr_view.from.push_back(0);
-          arr_view.to.push_back(shape()[j]);
-          arr_view.step.push_back(1);
-        }
-      }
-
-      //      TODO: Max needs to operate on every 1d array within this ND view
-      array_out[i] = fetch::math::statistics::Max(GetRange(arr_view));
-    }
-
-    return array_out;
-  }
-
-  type      Min() const { return this->super_type::Min(); }
-  self_type Min(std::size_t fixed_axis) const
-  {
-    // set up the new output array
-    std::vector<std::size_t> new_shape{shape()};
-    new_shape.erase(new_shape.begin() + int(fixed_axis));
-    NDArray array_out{new_shape};
-
-    for (std::size_t i = 0; i < shape()[fixed_axis]; ++i)
-    {
-
-      // set up the view to extract
-      NDArrayView arr_view;
-
-      for (std::size_t j = 0; j < shape().size(); ++j)
-      {
-        if (j == fixed_axis)
-        {
-          arr_view.from.push_back(i);
-          arr_view.to.push_back(i + 1);
-          arr_view.step.push_back(1);
-        }
-        else
-        {
-          arr_view.from.push_back(0);
-          arr_view.to.push_back(shape()[j]);
-          arr_view.step.push_back(1);
-        }
-      }
-
-      //      TODO: Min needs to operate on every 1d array within this ND view
-      array_out[i] = fetch::math::statistics::Min(GetRange(arr_view));
-    }
-
-    return array_out;
-  }
+  //  type      Max() const { return this->super_type::Max(); }
+  //  self_type Max(std::size_t fixed_axis) const
+  //  {
+  //    // set up the new output array
+  //    std::vector<std::size_t> new_shape{shape()};
+  //    new_shape.erase(new_shape.begin() + int(fixed_axis));
+  //    NDArray array_out{new_shape};
+  //
+  //    for (std::size_t i = 0; i < shape()[fixed_axis]; ++i)
+  //    {
+  //
+  //      // set up the view to extract
+  //      NDArrayView arr_view;
+  //
+  //      for (std::size_t j = 0; j < shape().size(); ++j)
+  //      {
+  //        if (j == fixed_axis)
+  //        {
+  //          arr_view.from.push_back(i);
+  //          arr_view.to.push_back(i + 1);
+  //          arr_view.step.push_back(1);
+  //        }
+  //        else
+  //        {
+  //          arr_view.from.push_back(0);
+  //          arr_view.to.push_back(shape()[j]);
+  //          arr_view.step.push_back(1);
+  //        }
+  //      }
+  //
+  //      //      TODO: Max needs to operate on every 1d array within this ND view
+  //      array_out[i] = fetch::math::statistics::Max(GetRange(arr_view));
+  //    }
+  //
+  //    return array_out;
+  //  }
+  //
+  //  type      Min() const { return this->super_type::Min(); }
+  //  self_type Min(std::size_t fixed_axis) const
+  //  {
+  //    // set up the new output array
+  //    std::vector<std::size_t> new_shape{shape()};
+  //    new_shape.erase(new_shape.begin() + int(fixed_axis));
+  //    NDArray array_out{new_shape};
+  //
+  //    for (std::size_t i = 0; i < shape()[fixed_axis]; ++i)
+  //    {
+  //
+  //      // set up the view to extract
+  //      NDArrayView arr_view;
+  //
+  //      for (std::size_t j = 0; j < shape().size(); ++j)
+  //      {
+  //        if (j == fixed_axis)
+  //        {
+  //          arr_view.from.push_back(i);
+  //          arr_view.to.push_back(i + 1);
+  //          arr_view.step.push_back(1);
+  //        }
+  //        else
+  //        {
+  //          arr_view.from.push_back(0);
+  //          arr_view.to.push_back(shape()[j]);
+  //          arr_view.step.push_back(1);
+  //        }
+  //      }
+  //
+  //      //      TODO: Min needs to operate on every 1d array within this ND view
+  //      array_out[i] = fetch::math::statistics::Min(GetRange(arr_view));
+  //    }
+  //
+  //    return array_out;
+  //  }
 
 private:
   std::size_t ComputeRowIndex(std::vector<std::size_t> &indices) const

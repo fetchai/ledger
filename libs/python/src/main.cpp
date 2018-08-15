@@ -18,8 +18,8 @@
 #include "python/math/distance/py_pearson.hpp"
 #include "python/math/linalg/py_matrix.hpp"
 #include "python/math/py_bignumber.hpp"
-#include "python/math/py_exp.hpp"
-#include "python/math/py_log.hpp"
+//#include "python/math/py_exp.hpp"
+//#include "python/math/py_log.hpp"
 #include "python/math/py_ndarray.hpp"
 #include "python/math/spline/py_linear.hpp"
 

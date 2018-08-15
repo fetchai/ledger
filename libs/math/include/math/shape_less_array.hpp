@@ -755,7 +755,7 @@ public:
    * @return       returns single value as type
    *
    **/
-  type L2Loss()
+  type L2Loss() const
   {
     type sum = data_.in_parallel().SumReduce([](vector_register_type const &v) { return v * v; });
     return sum * type(0.5);
@@ -1355,10 +1355,16 @@ public:
 
   void Sign(self_type const &x)
   {
+    std::cout << "entering shapeless array sign" << std::endl;
+
     LazyResize(x.size());
 
     kernels::Sign<vector_register_type> sign;
     data_.in_parallel().Apply(sign, x.data_);
+
+    std::cout << "data 0" << data_[0] << std::endl;
+    std::cout << "data 1" << data_[1] << std::endl;
+    std::cout << "data 2" << data_[2] << std::endl;
   }
 
   /* Equality operator.
