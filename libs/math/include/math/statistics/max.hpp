@@ -11,12 +11,25 @@ namespace fetch {
 namespace math {
 namespace statistics {
 
+/**
+ * Max function for two values
+ * @tparam T
+ * @param datum1
+ * @param datum2
+ * @return
+ */
 template <typename T>
 inline T Max(T const &datum1, T const &datum2)
 {
   return std::max(datum1, datum2);
 }
 
+/**
+ * Max function for array
+ * @tparam ARRAY_TYPE
+ * @param array
+ * @return
+ */
 template <typename ARRAY_TYPE>
 inline typename ARRAY_TYPE::type Max(ARRAY_TYPE const &array)
 {
@@ -31,7 +44,7 @@ inline typename ARRAY_TYPE::type Max(ARRAY_TYPE const &array)
 }
 
 /**
- * This version of Max handles ranges and is important for both 1-d and n-dimensional arrays sinces
+ * Max function for applying max to a range within array
  * @tparam A
  * @tparam data_type
  * @param r
