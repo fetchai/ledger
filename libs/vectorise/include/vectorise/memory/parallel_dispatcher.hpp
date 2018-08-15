@@ -522,7 +522,7 @@ protected:
                                         Args &&... remaining)
   {
 
-    assert(next.size() >= offset + size);
+    assert(next.padded_size() >= offset + size);
     (*iters) = vector_register_iterator_type(next.pointer() + offset, size);
     InitializeVectorIterators(offset, size, iters + 1, std::forward<Args>(remaining)...);
   }

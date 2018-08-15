@@ -6,6 +6,14 @@ namespace fetch {
 namespace math {
 namespace linalg {
 
+/*
+ * This class uses the compiler to compile small 64-bit images
+ * of expressions such as C = A * B + C into a rom. This number
+ * can be used as a unique identifier for a given implementation
+ * of various mathematical functions.
+ *
+ * This prototype framework is constant at compile time.
+ */
 template <uint64_t P, uint64_t S1>
 struct Prototype
 {
@@ -70,13 +78,14 @@ struct Prototype
   }
 };
 
-Prototype<4, 0> const _A;
-Prototype<4, 1> const _B;
-Prototype<4, 2> const _C;
-Prototype<4, 3> const _alpha;
-Prototype<4, 4> const _beta;
-Prototype<4, 5> const _gamma;
+Prototype<4, 0> const _A;      //< Represents Matrix 1
+Prototype<4, 1> const _B;      //< Represents Matrix 2
+Prototype<4, 2> const _C;      //< Represents Matrix 3
+Prototype<4, 3> const _alpha;  //< Represents Scalar 1
+Prototype<4, 4> const _beta;   //< Represents Scalar 2
+Prototype<4, 5> const _gamma;  //< Represents Scalar 3
 
+// Operatation representing the transposed of a matrix.
 template <uint64_t P, uint64_t S>
 constexpr typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::TRANSPOSE> T(
     Prototype<P, S> const &)
@@ -84,6 +93,7 @@ constexpr typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>:
   return typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::TRANSPOSE>();
 }
 
+// Operatation defining the property "upper triangular" for a matrix
 template <uint64_t P, uint64_t S>
 constexpr typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::UPPER> U(
     Prototype<P, S> const &)
@@ -91,6 +101,7 @@ constexpr typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>:
   return typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::UPPER>();
 }
 
+// Operatation defining the property "lower triangular" for a matrix
 template <uint64_t P, uint64_t S>
 constexpr typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::LOWER> L(
     Prototype<P, S> const &)
@@ -98,12 +109,14 @@ constexpr typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>:
   return typename Prototype<P, S>::template one_op_return_type<Prototype<P, S>::LOWER>();
 }
 
+// Wrapper function to prettify the representation inside template constants
 template <typename O>
 constexpr uint64_t Computes(O const &)
 {
   return O::Stack;
 }
 
+// Wrapper function to prettify signature representation.
 template <typename O>
 constexpr uint64_t Signature(O const &)
 {
