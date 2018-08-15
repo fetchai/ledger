@@ -14,9 +14,6 @@ setup_compiler()
 # Benchmark Targets
 #-------------------------------------------------------------------------------
 
-add_executable(benchmark_json_document json/document.cpp)
-target_link_libraries(benchmark_json_document PRIVATE fetch-core fetch-testing)
-
 add_executable(serialisation serialisation/main.cpp)
 target_link_libraries(serialisation PRIVATE fetch-core fetch-testing)
 
