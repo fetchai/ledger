@@ -251,18 +251,18 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (idx >= s.size()) throw py::index_error();
              s[idx] = val;
            })
-      .def("Max", [](NDArray<T> const &a) { return a.Max(); })
-      .def("Max",
-           [](NDArray<T> const &a, std::size_t axis) {
-             if (axis >= a.shape().size()) throw py::index_error();
-             return a.Max(axis);
-           })
-      .def("Min", [](NDArray<T> const &a) { return a.Min(); })
-      .def("Min",
-           [](NDArray<T> const &a, std::size_t axis) {
-             if (axis >= a.shape().size()) throw py::index_error();
-             return a.Min(axis);
-           })
+      .def("Max", [](NDArray<T> const &a) { return fetch::math::statistics::Max(a); })
+//      .def("Max",
+//           [](NDArray<T> const &a, std::size_t axis) {
+//             if (axis >= a.shape().size()) throw py::index_error();
+//             return Max(a);
+//           })
+      .def("Min", [](NDArray<T> const &a) { return fetch::math::statistics::Min(a); })
+//      .def("Min",
+//           [](NDArray<T> const &a, std::size_t axis) {
+//             if (axis >= a.shape().size()) throw py::index_error();
+//             return a.Min(axis);
+//           })
       .def("Relu", [](NDArray<T> const &a, NDArray<T> &b) { return b.Relu(a); })
       .def("L2Loss", [](NDArray<T> const &a) { return a.L2Loss(); })
       .def("Sign",
