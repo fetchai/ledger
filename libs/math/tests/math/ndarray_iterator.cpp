@@ -22,12 +22,16 @@ int main()
   NDArray< double > ret = NDArray< double >::Zeros(100);
   ret.Reshape({5, 20});    
  
-  std::cout << "XXX" << std::endl;
+  std::cout << "XXX: " << array.size() << " " << ret.size() <<  std::endl;
   NDArrayIterator< double, NDArray< double >::container_type > it(array, { { 1, 4}, {3, 19, 3} });
   NDArrayIterator< double, NDArray< double >::container_type > it2(ret, { { 1, 4}, {3, 19, 3} });
 
   it2.PermuteAxes(0,1);
-  while(it) {
+  while(it2) {
+
+    assert( bool(it) );
+    assert( bool(it2));
+
     *it2 = *it;
     ++it;
     ++it2;
@@ -46,9 +50,13 @@ int main()
   }
   
 
-  NDArrayIterator< double, NDArray< double >::container_type > it3(array, {{1, 1}, {1, 4} });
-  BroadcastIterator<double, NDArray< double >::container_type>({2, 2, 4, 4}, it3);
-      
+  NDArrayIterator< double, NDArray< double >::container_type > it3(array, {{1, 2}, {1, 4} });
+  if(!BroadcastIterator<double, NDArray< double >::container_type>({2, 2, 4, 3}, it3)) 
+  {
+      std::cout << "Failed in broad casting" << std::endl;
+      return 0;
+  }
+  std::cout << "Broadcast: ";
   while(it3) {
     std::cout << (*it3) << " ";
     ++it3;    

@@ -28,8 +28,9 @@ public:
    * Constructor builds an NDArray with n elements initialized to 0
    * @param n   number of elements in array (no shape specified, assume 1-D)
    */
-  NDArray(std::size_t const &n = 0) : super_type(n)
+  NDArray(std::size_t const &n ) : super_type(n)
   {
+    assert( this->size() == n);
     this->LazyReshape({n});
     for (std::size_t idx = 0; idx < this->size(); ++idx)
     {

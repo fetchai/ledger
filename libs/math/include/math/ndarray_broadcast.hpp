@@ -8,12 +8,15 @@ namespace math {
 bool BroadcastShape( std::vector< std::size_t > const &a, std::vector< std::size_t > const &b, std::vector< std::size_t > &c) 
 {
   c.resize(std::max( a.size(), b.size() ) );
+
   auto it1 = a.rbegin();
   auto it2 = b.rbegin();  
   auto cit = c.rbegin();
   
   while( (it1!=a.rend()) && (it2!=b.rend()) )
   {
+
+    assert( cit != c.rend() );
     if( (*it1) == (*it2) )
     {
       (*cit) = *it1;
@@ -35,13 +38,15 @@ bool BroadcastShape( std::vector< std::size_t > const &a, std::vector< std::size
   
   while( it1!=a.rend() )
   {
+    assert( cit != c.rend() );    
     (*cit) = *it1;
     ++it1;
     ++cit;    
   }
 
-  while( it2!=a.rend() )
+  while( it2!=b.rend() )
   {
+    assert( cit != c.rend() ); 
     (*cit) = *it2;
     ++it2;
     ++cit;    
@@ -96,14 +101,11 @@ bool Broadcast(F function, NDArray< T , C > &a, NDArray< T , C > &b, NDArray< T 
 
   BroadcastShape( a.shape(), b.shape(), cshape);
 
-  for(auto &c : cshape) {
-    std::cout << c << ", ";
-  }
 
-  
   if(!c.CanReshape(cshape)) return false;  
   c.Reshape( cshape );
-  
+
+
   std::vector< std::vector< std::size_t > > rangeA, rangeB, rangeC;
   for(auto &i: a.shape())
   {
@@ -124,8 +126,14 @@ bool Broadcast(F function, NDArray< T , C > &a, NDArray< T , C > &b, NDArray< T 
   NDArrayIterator< T, C> it_b(b, rangeB);
   NDArrayIterator< T, C> it_c(c, rangeC);
 
-  BroadcastIterator(b.shape(), it_a);
-  BroadcastIterator(a.shape(), it_b);
+  if(!BroadcastIterator(cshape, it_a)) {
+    std::cout << "Could not promote iterator A" << std::endl;
+    return false;
+  }
+  if(!BroadcastIterator(cshape, it_b)) {
+    std::cout << "Could not promote iterator B" << std::endl;
+    return false;
+  }
 
   while(it_c) {
     (*it_c) = function(*it_a, *it_b);

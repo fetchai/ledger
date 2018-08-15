@@ -54,12 +54,12 @@ public:
       s.volume = volume;
       std::size_t diff = (s.to - s.from);      
       s.total_steps =  diff / s.step;
-      if(s.total_steps * s.step <= diff) ++s.total_steps;
-      s.total_steps *= s.step;      
+      if(s.total_steps * s.step < diff) ++s.total_steps;
 
-      
+      s.total_steps *= s.step;
       s.step_volume = s.step * volume;
-      s.total_volume = s.total_steps * volume;      
+      s.total_volume = (s.total_steps) * volume;      
+
 
       position_ += volume * s.from;      
       size_ *= s.total_steps;
@@ -78,24 +78,27 @@ public:
   NDArrayIterator& operator++() 
   {
     bool next;
-    std::size_t i = std::size_t(-1);
+    std::size_t i = 0;
     do {
-      ++i;
-      
+
       next = false;
       NDIteratorRange &s = ranges_[i];
       s.index += s.step;
       position_ += s.step_volume;
       
-      if(s.index > s.to) {
+      if(s.index >= s.to) {
+
         ++s.repetition;
         s.index = s.from;
         position_ -= s.total_volume;
+        
         if(s.repetition == s.repeat_dimension)
         {
           s.repetition = 0;
           next = true;
+          ++i;          
         }
+
         
       }
     } while( (i < ranges_.size()) && (next));
@@ -116,21 +119,23 @@ public:
           r.index = r.from;
           position_ += r.volume * r.index;
         }
+
       }
     }
 
 #ifndef NDEBUG
     // Test
+    
     std::size_t ref = 0;
     for(auto &s: ranges_) {
       ref += s.volume*s.index;
     }
-    assert(ref == position_);
+
     if(ref != position_) {
       std::cout << "Expected " << ref << " but got " << position_ << std::endl;
-      
       TODO_FAIL("doesn't add up");
     }
+    assert(ref == position_);
 #endif    
 
     
@@ -144,6 +149,7 @@ public:
   
   type& operator*() 
   {
+    assert(position_ < array_.size());
     return array_[position_];
   }
 
