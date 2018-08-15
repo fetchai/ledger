@@ -81,6 +81,9 @@ def update_source_file(path):
         print('Unable to update file: ', os.path.relpath(path, PROJECT_ROOT))
         return False
 
+    if LICENSE not in contents:
+        print('Unable to apply update to file:', os.path.relpath(path, PROJECT_ROOT))
+
     # update the contents of the file
     with open(path, 'w') as output_file:
         output_file.write(contents)
