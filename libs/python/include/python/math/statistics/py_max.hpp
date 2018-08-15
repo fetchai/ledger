@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math/linalg/matrix.hpp"
+#include "math/ndarray.hpp"
 #include "math/statistics/max.hpp"
 #include "python/fetch_pybind.hpp"
 

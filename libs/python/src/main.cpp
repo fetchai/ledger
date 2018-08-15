@@ -18,8 +18,8 @@
 #include "python/math/distance/py_pearson.hpp"
 #include "python/math/linalg/py_matrix.hpp"
 #include "python/math/py_bignumber.hpp"
-//#include "python/math/py_exp.hpp"
-//#include "python/math/py_log.hpp"
+#include "python/math/py_exp.hpp"
+#include "python/math/py_log.hpp"
 #include "python/math/py_ndarray.hpp"
 #include "python/math/spline/py_linear.hpp"
 
@@ -205,6 +205,10 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::distance::BuildPairWiseDistanceDistance("PairWiseDistance", ns_fetch_math_distance);
 
   ////////////
+
+  fetch::math::BuildExpStatistics("Exp", ns_fetch_math_statistics);
+  fetch::math::BuildLogStatistics("Log", ns_fetch_math_statistics);
+
   // Statisticsfetch_math_statistics);
   fetch::math::statistics::BuildMinStatistics("Min", ns_fetch_math_statistics);
   fetch::math::statistics::BuildMaxStatistics("Max", ns_fetch_math_statistics);
