@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "vectorise/sse.hpp"
 #include "vectorise/register.hpp"
 #include <iostream>

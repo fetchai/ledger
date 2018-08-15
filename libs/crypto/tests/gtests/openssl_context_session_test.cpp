@@ -78,12 +78,6 @@ protected:
   void SetUp() { contextMock_ = std::make_shared<MockContextPrimitive::Type>(); }
 
   void TearDown() { contextMock_ = MockContextPrimitive::SharedPtr(); }
-
-  // static void SetUpTestCase() {
-  //}
-
-  // static void TearDownTestCase() {
-  //}
 };
 
 TEST_F(OpenSSLContextSessionTest, test_Session_basic_scenario_constructro_and_destructor)

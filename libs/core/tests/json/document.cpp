@@ -22,20 +22,6 @@ using namespace fetch::json;
 using namespace fetch::byte_array;
 
 #include "testing/unittest.hpp"
-/*
-struct Blah
-{
-  int i,j;
-  std::string foo;
-};
-
-void Serializer(T &t, Blah const&b)
-{
-  t.WithProperty("i") << i;
-  t.WithProperty("j") << j;
-  t.WithProperty("foo") << foo;
-}
-*/
 
 int main(int argc, char **argv)
 {

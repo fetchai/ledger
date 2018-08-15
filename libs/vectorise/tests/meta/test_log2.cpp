@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "testing/unittest.hpp"
 #include "vectorise/meta/log2.hpp"
 #include <iostream>

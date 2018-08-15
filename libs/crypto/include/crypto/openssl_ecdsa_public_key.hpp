@@ -122,6 +122,8 @@ private:
           "DER encoded data is NOT implemented "
           "yet.");
     }
+
+    return {};
   }
 
   static byte_array::ByteArray Convert(EC_POINT const *const public_key,

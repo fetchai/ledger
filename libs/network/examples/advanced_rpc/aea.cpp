@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 /* Below we illustrate the architecture of the advanced RPC example:
  *       ┌─────────────────┐      ┌─────────────────┐
  *       │    TCP client   │  ... │    TCP client   │

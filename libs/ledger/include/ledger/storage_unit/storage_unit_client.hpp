@@ -65,7 +65,7 @@ public:
   {
     lanes_.resize(count);
     SetLaneLog2(uint32_t(lanes_.size()));
-    assert(count == (1 << log2_lanes_));
+    assert(count == (1u << log2_lanes_));
   }
 
   template <typename T>
@@ -126,7 +126,7 @@ public:
     {
       lanes_.resize(total_lanes);
       SetLaneLog2(uint32_t(lanes_.size()));
-      assert(lanes_.size() == (1 << log2_lanes_));
+      assert(lanes_.size() == (1u << log2_lanes_));
     }
 
     crypto::Identity lane_identity;

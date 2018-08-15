@@ -81,12 +81,6 @@ protected:
   void SetUp() override { mock_ = std::make_shared<MockDeleterPrimitive::Type>(); }
 
   void TearDown() override { mock_ = MockDeleterPrimitive::SharedPtr(); }
-
-  // static void SetUpTestCase() {
-  //}
-
-  // static void TearDownTestCase() {
-  //}
 };
 
 TEST_F(OpenSSLDeleterTest, test_that_DeleterPrimitive_function_is_called_for_CONST_qualified_type)

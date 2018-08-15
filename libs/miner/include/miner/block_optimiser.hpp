@@ -21,7 +21,6 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv.hpp"
-#include "math/rectangular_array.hpp"
 
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"

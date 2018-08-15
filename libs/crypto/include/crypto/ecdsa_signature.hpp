@@ -290,6 +290,8 @@ private:
     case eECDSAEncoding::DER:
       return ConvertDER(std::move(signature));
     }
+
+    return {};
   }
 
   static uniq_ptr_type<ECDSA_SIG> Convert(const byte_array::ConstByteArray &bin_sig,
@@ -304,6 +306,8 @@ private:
     case eECDSAEncoding::DER:
       return ConvertDER(bin_sig);
     }
+
+    return {};
   }
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L

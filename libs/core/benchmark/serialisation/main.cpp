@@ -186,38 +186,5 @@ int main()
   SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<ConstByteArray>);
   SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<std::string>);
 
-  /*
-  std::vector< ByteArray > a,b,c;
-  MakeStringVector(a, 100000);
-
-  ByteArrayBuffer buffer;
-
-  high_resolution_clock::time_point t1 = high_resolution_clock::now();
-  std::sort(a.begin(), a.end());
-
-  SizeCounter< ByteArrayBuffer > counter;
-
-  counter << a;
-  buffer.Reserve( counter.size() );
-  buffer << a;
-
-  high_resolution_clock::time_point t2 = high_resolution_clock::now();
-  buffer.Seek(0);
-  buffer >> b;
-  std::sort(c.begin(), c.end());
-  high_resolution_clock::time_point t3 = high_resolution_clock::now();
-  duration<double> ts1 = duration_cast<duration<double>>(t2 - t1);
-  duration<double> ts2 = duration_cast<duration<double>>(t3 - t2);
-  std::cout << "It took " << ts1.count() << " seconds.";
-  std::cout << std::endl;
-  std::cout << "It took " << ts2.count() << " seconds.";
-  std::cout << std::endl;
-  for(std::size_t i=0; i < b.size(); ++i) {
-    if(a[i] != b[i]) {
-      std::cerr << "Mismatch" << std::endl;
-      exit(-1);
-    }
-  }
-  */
   return 0;
 }

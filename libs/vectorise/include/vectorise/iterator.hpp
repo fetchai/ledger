@@ -33,15 +33,6 @@ public:
   using mm_register_type     = typename vector_register_type::mm_register_type;
 
   VectorRegisterIterator() : ptr_(nullptr), end_(nullptr) {}
-  /*
-  VectorRegisterIterator(memory::Array< type > const &arr)
-    : ptr_((mm_register_type *)arr.pointer()),
-      end_((mm_register_type *)(arr.pointer() + arr.size())) {}
-
-  VectorRegisterIterator(memory::SharedArray< type > const &arr)
-    : ptr_((mm_register_type *)arr.pointer()),
-      end_((mm_register_type *)(arr.pointer() + arr.size())) {}
-  */
   VectorRegisterIterator(type const *d, std::size_t size)
     : ptr_((mm_register_type *)d), end_((mm_register_type *)(d + size))
   {}

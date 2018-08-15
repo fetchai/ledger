@@ -107,7 +107,7 @@ private:
 class Promise
 {
 public:
-  using promise_type         = typename details::PromiseImplementation;
+  using promise_type         = details::PromiseImplementation;
   using promise_counter_type = typename promise_type::promise_counter_type;
   using shared_promise_type  = std::shared_ptr<promise_type>;
 
