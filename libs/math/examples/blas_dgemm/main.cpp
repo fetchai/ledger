@@ -8,29 +8,40 @@ using namespace fetch::math::linalg;
 
 int main(int argc, char **argv)
 {
-  /*
-  Blas< double, Computes( _C <= _C = _alpha * _A * _B + _beta * _C
-),platform::Parallelisation::VECTORISE |  platform::Parallelisation::THREADING  >
-dgemm_nn_double_vector;
-// Blas< double, Computes( _C <= _alpha *  _A * T(_B) + _beta * _C
-),platform::Parallelisation::NOT_PARALLEL> dgemm_nn_double_vector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
 
-  double alpha = 1., beta = 2.;
+  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C = _alpha * _A * _B + _beta * _C),
+       platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+      gemm_nn_vector_threaded;
+  // Compuing _C = _alpha * _A * _B + _beta * _C
+  using type = double;
 
-  Matrix< double > A(1000, 1000);
-  Matrix< double > B(1000, 1000);
-  Matrix< double > C(1000, 1000);
+  type alpha = type(1), beta = type(0);
 
-  for(std::size_t i=0; i < 1000; ++i) {
-  for(std::size_t j=0; j < 1000; ++j) {
-    A(i,j) = B(i,j) = C(i,j) = double(2 * i + j) * 3.2124;
-  }
-  }
+  Matrix<type> A = Matrix<type>(R"(
+  0.3745401188473625 0.9507143064099162;
+ 0.7319939418114051 0.5986584841970366;
+ 0.15601864044243652 0.15599452033620265
+  )");
 
-//  std::cout << "Was here? " << std::endl;
+  Matrix<type> B = Matrix<type>(R"(
+  0.05808361216819946 0.8661761457749352 0.6011150117432088;
+ 0.7080725777960455 0.020584494295802447 0.9699098521619943
+  )");
 
-  dgemm_nn_double_vector(alpha, A, B, beta, C);
-  */
+  Matrix<type> C = Matrix<type>(R"(
+  0.8324426408004217 0.21233911067827616 0.18182496720710062;
+ 0.18340450985343382 0.3042422429595377 0.5247564316322378;
+ 0.43194501864211576 0.2912291401980419 0.6118528947223795
+  )");
+
+  Matrix<type> R = Matrix<type>(R"(
+  0.6949293726918103 0.3439876897985273 1.14724886031757;
+ 0.46641050835051406 0.6463587734018926 1.0206573088309918;
+ 0.11951756833898089 0.1383506929615121 0.24508576903908225
+  )");
+
+  gemm_nn_vector_threaded(alpha, A, B, beta, C);
+
   return 0;
 }
