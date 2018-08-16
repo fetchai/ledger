@@ -35,7 +35,7 @@ const std::size_t ECDSACurve<NID_secp256k1>::signatureSize;
 using del_strat_type = memory::eDeleteStrategy;
 
 template <typename T, del_strat_type P_DeleteStrategy = del_strat_type::canonical>
-using shrd_ptr_type = memory::OsslSharedPtr<T, P_DeleteStrategy>;
+using shrd_ptr_type = memory::ossl_shared_ptr<T, P_DeleteStrategy>;
 
 template <typename T, del_strat_type P_DeleteStrategy = del_strat_type::canonical>
 using uniq_ptr_type = memory::ossl_unique_ptr<T, P_DeleteStrategy>;

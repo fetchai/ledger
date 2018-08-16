@@ -40,7 +40,7 @@ class OpenSSLSharedPtrTest : public testing::Test
 {
 protected:
   template <const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
-  using ossl_shared_ptr__for_Testing = OsslSharedPtr<TestType, P_DeleteStrategy, Deleter>;
+  using ossl_shared_ptr__for_Testing = ossl_shared_ptr<TestType, P_DeleteStrategy, Deleter>;
 
   MockDeleterPrimitive::SharedPtr &mock_ = MockDeleterPrimitive::value;
 

@@ -14,7 +14,7 @@ using ossl_unique_ptr = std::unique_ptr<T, T_Deleter>;
 
 template <typename T, eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical,
           typename T_Deleter = detail::OpenSSLDeleter<T, P_DeleteStrategy>>
-class OsslSharedPtr : public std::shared_ptr<T>
+class ossl_shared_ptr : public std::shared_ptr<T>
 {
 public:
   using Base                                      = std::shared_ptr<T>;
@@ -25,7 +25,7 @@ public:
   using Base::reset;
 
   template <class Y>
-  explicit OsslSharedPtr(Y *ptr = nullptr) : Base(ptr, Deleter())
+  explicit ossl_shared_ptr(Y *ptr = nullptr) : Base(ptr, Deleter())
   {}
 
   template <class Y>

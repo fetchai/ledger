@@ -32,7 +32,7 @@ public:
   using type            = T;
   using self_type       = ObjectStore<T, S>;
   using serializer_type = serializers::TypedByteArrayBuffer;
-  class Iterator;
+  class iterator;
 
   /**
    * Create a new file for the object store with the filename parameters for the
@@ -168,21 +168,21 @@ public:
    * KeyByteArrayStore since we need to deserialize at this level to return the
    * object
    */
-  class Iterator
+  class iterator
   {
   public:
-    Iterator(typename KeyByteArrayStore<S>::Iterator it) : wrapped_iterator_{it} {}
-    Iterator()                    = default;
-    Iterator(Iterator const &rhs) = default;
-    Iterator(Iterator &&rhs)      = default;
-    Iterator &operator=(Iterator const &rhs) = default;
-    Iterator &operator=(Iterator &&rhs) = default;
+    iterator(typename KeyByteArrayStore<S>::iterator it) : wrapped_iterator_{it} {}
+    iterator()                    = default;
+    iterator(iterator const &rhs) = default;
+    iterator(iterator &&rhs)      = default;
+    iterator &operator=(iterator const &rhs) = default;
+    iterator &operator=(iterator &&rhs) = default;
 
     void operator++() { ++wrapped_iterator_; }
 
-    bool operator==(Iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
+    bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
 
-    bool operator!=(Iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
+    bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
 
     /**
      * Dereference operator
@@ -201,14 +201,14 @@ public:
     }
 
   protected:
-    typename KeyByteArrayStore<S>::Iterator wrapped_iterator_;
+    typename KeyByteArrayStore<S>::iterator wrapped_iterator_;
   };
 
-  self_type::Iterator Find(ResourceID const &rid)
+  self_type::iterator Find(ResourceID const &rid)
   {
     auto it = store_.Find(rid);
 
-    return Iterator(it);
+    return iterator(it);
   }
 
   /**
@@ -221,16 +221,16 @@ public:
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  self_type::iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
     auto it = store_.GetSubtree(rid, bits);
 
-    return Iterator(it);
+    return iterator(it);
   }
 
-  self_type::Iterator begin() { return Iterator(store_.begin()); }
+  self_type::iterator begin() { return iterator(store_.begin()); }
 
-  self_type::Iterator end() { return Iterator(store_.end()); }
+  self_type::iterator end() { return iterator(store_.end()); }
 
 private:
   mutex::Mutex         mutex_;

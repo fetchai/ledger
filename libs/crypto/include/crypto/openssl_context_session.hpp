@@ -11,7 +11,7 @@ namespace openssl {
 namespace context {
 
 template <typename T, typename T_SessionPrimitive = detail::SessionPrimitive<T>,
-          typename T_ContextSmartPtr = memory::OsslSharedPtr<T>>
+          typename T_ContextSmartPtr = memory::ossl_shared_ptr<T>>
 class Session
 {
 public:

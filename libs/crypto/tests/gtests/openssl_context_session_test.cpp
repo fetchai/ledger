@@ -51,7 +51,7 @@ class OpenSSLContextSessionTest : public testing::Test
 {
 protected:
   template <const memory::eDeleteStrategy P_DeleteStrategy = memory::eDeleteStrategy::canonical>
-  using ossl_shared_ptr__for_Testing = memory::OsslSharedPtr<TestType, P_DeleteStrategy, Deleter>;
+  using ossl_shared_ptr__for_Testing = memory::ossl_shared_ptr<TestType, P_DeleteStrategy, Deleter>;
   using Session__for_Testing =
       Session<TestType, StaticMockContextPrimitive<TestType>, ossl_shared_ptr__for_Testing<>>;
 

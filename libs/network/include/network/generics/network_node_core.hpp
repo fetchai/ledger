@@ -28,9 +28,9 @@ public:
   using protocol_number_type = uint32_t;
 
 protected:
-  const uint32_t MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION_ = 100;
-  const uint32_t MICROSECONDS_PER_MILLISECOND_              = 1000;
-  const uint32_t NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION_  = 100;
+  const uint32_t MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION = 100;
+  const uint32_t MICROSECONDS_PER_MILLISECOND              = 1000;
+  const uint32_t NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION  = 100;
 
 public:
   NetworkNodeCore(const NetworkNodeCore &rhs) = delete;
@@ -169,9 +169,9 @@ protected:
 
     client_ptr client = std::make_shared<client_type>(connection, nm_);
 
-    auto waits      = NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION_;
-    auto waitTimeUS = MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION_ * MICROSECONDS_PER_MILLISECOND_ /
-                      NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION_;
+    auto waits      = NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION;
+    auto waitTimeUS = MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION * MICROSECONDS_PER_MILLISECOND /
+                      NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION;
     while (!client->is_alive())
     {
       usleep(waitTimeUS);
