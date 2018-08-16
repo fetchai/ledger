@@ -1,6 +1,5 @@
 #pragma once
 #include "math/ndarray.hpp"
-
 #include <vector>
 #include <cassert>
 

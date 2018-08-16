@@ -5,9 +5,9 @@
 #include "math/statistics/min.hpp"
 #include "vectorise/memory/array.hpp"
 
-#include <numeric>
 #include <utility>
 #include <vector>
+#include <numeric>
 
 namespace fetch {
 namespace math {
@@ -175,7 +175,6 @@ public:
    */
   self_type GetRange(NDArrayView array_view) const
   {
-
     std::vector<std::size_t> new_shape;
 
     // instantiate new array of the right shape
@@ -278,7 +277,6 @@ public:
 private:
   std::size_t ComputeRowIndex(std::vector<std::size_t> &indices) const
   {
-
     std::size_t index  = 0;
     std::size_t n_dims = indices.size();
     std::size_t base   = 1;
@@ -293,7 +291,6 @@ private:
   }
   std::size_t ComputeColIndex(std::vector<std::size_t> &indices) const
   {
-
     std::size_t index  = 0;
     std::size_t n_dims = indices.size();
     std::size_t base   = 1;
