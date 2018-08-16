@@ -2,9 +2,9 @@
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/array.hpp"
 
+#include <numeric>
 #include <utility>
 #include <vector>
-#include <numeric>
 
 namespace fetch {
 namespace math {
@@ -30,9 +30,9 @@ public:
    * lengths
    * @param shape   vector of lengths for each dimension
    */
-  NDArray(std::vector<std::size_t> const &dims = {0})
-      : super_type(
-      std::accumulate(std::begin(dims), std::end(dims), std::size_t(1), std::multiplies<>()))
+  NDArray(std::vector<std::size_t> const &dims)
+    : super_type(
+          std::accumulate(std::begin(dims), std::end(dims), std::size_t(1), std::multiplies<>()))
   {
     this->LazyReshape(dims);
     for (std::size_t idx = 0; idx < this->size(); ++idx)

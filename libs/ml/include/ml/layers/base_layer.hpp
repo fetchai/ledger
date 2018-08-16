@@ -5,33 +5,30 @@ namespace ml {
 namespace layers {
 
 template <typename DATA_TYPE>
-class BaseLayer{
+class BaseLayer
+{
 
   using container_type = memory::SharedArray<DATA_TYPE>;
-  using array_type = math::NDArray<DATA_TYPE, container_type>;
+  using array_type     = math::NDArray<DATA_TYPE, container_type>;
 
- public:
-
-  BaseLayer(std::size_t layer_size)
-  {
-    layer_size_ = layer_size;
-  }
+public:
+  BaseLayer() {}
+  BaseLayer(std::size_t layer_size) { layer_size_ = layer_size; }
 
   BaseLayer &operator=(BaseLayer const &other) = default;
 
-  void SetLayerSize(std::size_t layer_size) {layer_size_ = layer_size;}
+  void        SetLayerSize(std::size_t layer_size) { layer_size_ = layer_size; }
   std::size_t LayerSize() { return layer_size_; }
-  void SetWeightsMatrix(array_type new_weights_matrix) {weights_matrix_ = new_weights_matrix;}
-  array_type WeightsMatrix() {return weights_matrix_;}
+  void SetWeightsMatrix(array_type new_weights_matrix) { weights_matrix_ = new_weights_matrix; }
+  array_type WeightsMatrix() { return weights_matrix_; }
 
-
- protected:
+protected:
   std::size_t layer_size_;
-  array_type weights_matrix_;
- private:
+  array_type  weights_matrix_;
 
+private:
 };
 
-} // layers
-} // ml
-} //fetch
+}  // namespace layers
+}  // namespace ml
+}  // namespace fetch
