@@ -24,7 +24,7 @@ class MainChainService : public service::ServiceServer<fetch::network::TCPServer
 public:
   using ProofType = fetch::chain::MainChain::ProofType;
   using BlockType = fetch::chain::MainChain::BlockType;
-  using body_type  = fetch::chain::MainChain::BlockType::body_type;
+  using body_type = fetch::chain::MainChain::BlockType::body_type;
   using BlockHash = fetch::chain::MainChain::BlockHash;
 
   using connectivity_details_type = MainChainDetails;

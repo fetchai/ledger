@@ -21,9 +21,9 @@ class MainChainNode : public MainChainNodeInterface, public fetch::http::HTTPMod
 {
 public:
   using BlockType = fetch::chain::MainChain::BlockType;
-  using body_type  = fetch::chain::MainChain::BlockType::body_type;
+  using body_type = fetch::chain::MainChain::BlockType::body_type;
   using BlockHash = fetch::chain::MainChain::BlockHash;
-  using miner      = fetch::chain::consensus::DummyMiner;
+  using miner     = fetch::chain::consensus::DummyMiner;
 
   MainChainNode(const MainChainNode &rhs) = delete;
   MainChainNode(MainChainNode &&rhs)      = delete;
@@ -166,7 +166,7 @@ public:
 
         // Create another block sequential to previous
         BlockType nextBlock;
-        body_type  nextBody;
+        body_type nextBody;
         nextBody.block_number = block.body().block_number + 1;
 
         nextBody.previous_hash = block.hash();
