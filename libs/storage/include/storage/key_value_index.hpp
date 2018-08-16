@@ -566,7 +566,7 @@ private:
       stack_.Get(next, kv);
 
       left_right = key.Compare(kv.key, pos, kv.split >> 8,
-                               kv.split & 63);  // TODO: (`HUT`) : should this be 127?
+                               kv.split & 63);
 
       switch (left_right)
       {

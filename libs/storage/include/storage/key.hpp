@@ -1,7 +1,7 @@
 #pragma once
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/macros.hpp"
+#include "vectorise/platform.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -41,7 +41,7 @@ struct Key
     // Force the byte array to fill the 64 bit key from 'left to right'
     for (std::size_t i = 0; i < BLOCKS; ++i)
     {
-      key_[i] = BYTE_SWAP_64(key_reinterpret[i]);
+      key_[i] = platform::EndianByteSwap64(key_reinterpret[i]);
     }
   }
 
@@ -64,7 +64,7 @@ struct Key
     while ((i < last_block) && (other.key_[i] == key_[i])) ++i;
 
     uint64_t diff = other.key_[i] ^ key_[i];
-    int      bit  = COUNT_LEADING_ZEROES_64(diff);
+    int      bit  = platform::CountLeadingZeroes64(diff);
     if (diff == 0) bit = 8 * sizeof(uint64_t);
 
     if (i == last_block)
@@ -78,7 +78,7 @@ struct Key
       return 0;
     }
 
-    diff = key_[0] & (1ull << 63) >> bit;
+    diff = key_[i] & (1ull << 63) >> bit;
 
     int result = 1 - int((diff == 0) << 1);  // -1 == left, so this puts 'smaller numbers' left
 
@@ -100,7 +100,7 @@ struct Key
     // Force the byte array to fill the 64 bit key from 'left to right'
     for (std::size_t i = 0; i < BLOCKS; ++i)
     {
-      ret_reinterpret[i] = BYTE_SWAP_64(key_[i]);
+      ret_reinterpret[i] = platform::EndianByteSwap64(key_[i]);
     }
 
     return ret;

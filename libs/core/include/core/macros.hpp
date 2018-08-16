@@ -17,7 +17,3 @@
 #define FETCH_GUARDED_BY(x) FETCH_THREAD_ANNOTATION_ATTRIBUTE__(guarded_by(x))
 
 #define FETCH_PTR_GUARDED_BY(x) FETCH_THREAD_ANNOTATION_ATTRIBUTE__(pt_guarded_by(x))
-
-#define BYTE_SWAP_64(x) __builtin_bswap64(x)
-
-#define COUNT_LEADING_ZEROES_64(x) __builtin_clzl(x)
