@@ -59,3 +59,17 @@ TEST(ndarray, broadcast_3D_test)
     }
   }
 }
+
+TEST(ndarray, broadcast_shape_size_test)
+{
+
+  NDArray<double> a = NDArray<double>::Arange(0, 90, 1);
+  a.Reshape({1, 3, 1, 6, 5});
+  NDArray<double> b = NDArray<double>::Arange(0, 42, 1);
+  b.Reshape({7, 3, 2, 1, 1});
+
+  std::vector<std::size_t> ret_shape = {7, 3, 2, 6, 5};
+  ASSERT_TRUE(GetBroadcastShape(a, b) == ret_shape);
+  ASSERT_TRUE(GetBroadcastSize(a, b) == std::accumulate(std::begin(ret_shape), std::end(ret_shape), std::size_t(1), std::multiplies<>()));
+
+}
