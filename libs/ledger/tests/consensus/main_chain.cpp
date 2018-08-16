@@ -24,6 +24,20 @@ double TimeDifference(time_point t1, time_point t2)
   return std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t2).count();
 }
 
+std::map<std::size_t, std::size_t> GetRandomIndexes(std::size_t size)
+{
+  static fetch::random::LaggedFibonacciGenerator<>    lfg;
+  std::map<std::size_t, std::size_t> ret;
+
+  for (std::size_t i = 0; i < size; ++i)
+  {
+    uint64_t indexRnd = i  | (lfg() & 0xFFFFFFFF00000000);
+    ret[indexRnd] = i;
+  }
+
+  return ret;
+}
+
 using block_type = MainChain::BlockType;
 using body_type  = MainChain::BlockType::body_type;
 using miner      = fetch::chain::consensus::DummyMiner;
@@ -306,12 +320,12 @@ int main(int argc, char const **argv)
 
       auto block = mainChain.HeaviestBlock();
 
-      fetch::byte_array::ByteArray              prevHash       = block.hash();
-      constexpr std::size_t                     blocksToCreate = 100000;
-      std::vector<block_type>                   blocks(blocksToCreate, block);
-      std::list<std::size_t>                    randomIndexes;
-      uint64_t                                  blockNumber = block.body().block_number++;
-      fetch::random::LaggedFibonacciGenerator<> lfg;
+      fetch::byte_array::ByteArray                 prevHash       = block.hash();
+      constexpr std::size_t                        blocksToCreate = 1000000;
+      std::vector<block_type>                      blocks(blocksToCreate, block);
+      std::map<std::size_t, std::size_t>           randomIndexes;
+      uint64_t                                     blockNumber = block.body().block_number++;
+      fetch::random::LaggedFibonacciGenerator<>    lfg;
 
       {
         auto t1 = TimePoint();
@@ -329,24 +343,10 @@ int main(int argc, char const **argv)
 
           blocks[i] = nextBlock;
 
-          // Create random array of indexes
-          if(randomIndexes.size() == 0)
-          {
-            randomIndexes.push_back(i);
-          }
-          else
-          {
-            auto it = randomIndexes.begin();
-            int max = int(lfg()) % int(randomIndexes.size());
-            for (int j = 0; j < max-1; ++j)
-            {
-              it++;
-            }
-            randomIndexes.insert(it, i);
-          }
-
           prevHash = nextBlock.hash();
         }
+
+        randomIndexes = GetRandomIndexes(blocksToCreate);
 
         auto t2 = TimePoint();
         std::cout << "Setup time: " << TimeDifference(t2, t1) << std::endl;
@@ -356,8 +356,7 @@ int main(int argc, char const **argv)
 
       for(auto &i : randomIndexes)
       {
-        //std::cout << "push " << i << " " << ToHex(blocks[i].hash()) << std::endl;
-        mainChain.AddBlock(blocks[i]);
+        mainChain.AddBlock(blocks[i.second]);
       }
 
       auto t2 = TimePoint();
@@ -427,9 +426,9 @@ int main(int argc, char const **argv)
       auto block = mainChain.HeaviestBlock();
 
       fetch::byte_array::ByteArray              prevHash       = block.hash();
-      constexpr std::size_t                     blocksToCreate = 100000;
+      constexpr std::size_t                     blocksToCreate = 1000000;
       std::vector<block_type>                   blocks(blocksToCreate, block);
-      std::list<std::size_t>                    randomIndexes;
+      std::map<std::size_t, std::size_t>        randomIndexes;
       uint64_t                                  blockNumber = block.body().block_number++;
       fetch::random::LaggedFibonacciGenerator<> lfg;
 
@@ -450,24 +449,11 @@ int main(int argc, char const **argv)
 
           blocks[i] = nextBlock;
 
-          // Create random array of indexes
-          if(randomIndexes.size() == 0)
-          {
-            randomIndexes.push_back(i);
-          }
-          else
-          {
-            auto it = randomIndexes.begin();
-            int max = int(lfg()) % int(randomIndexes.size());
-            for (int j = 0; j < max-1; ++j)
-            {
-              it++;
-            }
-            randomIndexes.insert(it, i);
-          }
-
           prevHash = nextBlock.hash();
         }
+
+        randomIndexes = GetRandomIndexes(blocksToCreate);
+
         auto t2 = TimePoint();
         std::cout << "Setup time: " << TimeDifference(t2, t1) << std::endl;
       }
@@ -476,8 +462,7 @@ int main(int argc, char const **argv)
 
       for(auto &i : randomIndexes)
       {
-        //std::cout << "push " << i << " " << ToHex(blocks[i].hash()) << std::endl;
-        mainChain.AddBlock(blocks[i]);
+        mainChain.AddBlock(blocks[i.second]);
       }
 
       auto t2 = TimePoint();
