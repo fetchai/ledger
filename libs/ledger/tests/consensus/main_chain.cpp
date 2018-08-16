@@ -1,5 +1,5 @@
-#include "core/random/lfg.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "core/random/lfg.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "testing/unittest.hpp"
 #include <iostream>
@@ -26,13 +26,13 @@ double TimeDifference(time_point t1, time_point t2)
 
 std::map<std::size_t, std::size_t> GetRandomIndexes(std::size_t size)
 {
-  static fetch::random::LaggedFibonacciGenerator<>    lfg;
-  std::map<std::size_t, std::size_t> ret;
+  static fetch::random::LaggedFibonacciGenerator<> lfg;
+  std::map<std::size_t, std::size_t>               ret;
 
   for (std::size_t i = 0; i < size; ++i)
   {
-    uint64_t indexRnd = i  | (lfg() & 0xFFFFFFFF00000000);
-    ret[indexRnd] = i;
+    uint64_t indexRnd = i | (lfg() & 0xFFFFFFFF00000000);
+    ret[indexRnd]     = i;
   }
 
   return ret;
@@ -320,12 +320,12 @@ int main(int argc, char const **argv)
 
       auto block = mainChain.HeaviestBlock();
 
-      fetch::byte_array::ByteArray                 prevHash       = block.hash();
-      constexpr std::size_t                        blocksToCreate = 1000000;
-      std::vector<block_type>                      blocks(blocksToCreate, block);
-      std::map<std::size_t, std::size_t>           randomIndexes;
-      uint64_t                                     blockNumber = block.body().block_number++;
-      fetch::random::LaggedFibonacciGenerator<>    lfg;
+      fetch::byte_array::ByteArray              prevHash       = block.hash();
+      constexpr std::size_t                     blocksToCreate = 1000000;
+      std::vector<block_type>                   blocks(blocksToCreate, block);
+      std::map<std::size_t, std::size_t>        randomIndexes;
+      uint64_t                                  blockNumber = block.body().block_number++;
+      fetch::random::LaggedFibonacciGenerator<> lfg;
 
       {
         auto t1 = TimePoint();
@@ -354,7 +354,7 @@ int main(int argc, char const **argv)
 
       auto t1 = TimePoint();
 
-      for(auto &i : randomIndexes)
+      for (auto &i : randomIndexes)
       {
         mainChain.AddBlock(blocks[i.second]);
       }
@@ -364,7 +364,7 @@ int main(int argc, char const **argv)
                 << std::endl;
 
       // Last block in vector still heaviest block for main chain
-      EXPECT(mainChain.HeaviestBlock().totalWeight() == blocksToCreate+1);
+      EXPECT(mainChain.HeaviestBlock().totalWeight() == blocksToCreate + 1);
       EXPECT(ToHex(mainChain.HeaviestBlock().hash()) == ToHex(prevHash));
     };
 
@@ -460,7 +460,7 @@ int main(int argc, char const **argv)
 
       auto t1 = TimePoint();
 
-      for(auto &i : randomIndexes)
+      for (auto &i : randomIndexes)
       {
         mainChain.AddBlock(blocks[i.second]);
       }
@@ -470,7 +470,7 @@ int main(int argc, char const **argv)
                 << std::endl;
 
       // Last block in vector still heaviest block for main chain
-      EXPECT(mainChain.HeaviestBlock().totalWeight() == blocksToCreate+1);
+      EXPECT(mainChain.HeaviestBlock().totalWeight() == blocksToCreate + 1);
       EXPECT(ToHex(mainChain.HeaviestBlock().hash()) == ToHex(prevHash));
     };
   };
