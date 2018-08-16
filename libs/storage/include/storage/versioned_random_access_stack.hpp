@@ -126,9 +126,6 @@ public:
 
   using event_handler_type = std::function<void()>;
 
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
-
   VersionedRandomAccessStack()
   {
     stack_.OnFileLoaded([this]() { SignalFileLoaded(); });
@@ -324,6 +321,9 @@ public:
 private:
   VariantStack  history_;
   bookmark_type bookmark_;
+
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
 
   stack_type stack_;
 

@@ -86,7 +86,7 @@ struct TestBlock
             // create the transaction summary
             fetch::chain::TransactionSummary summary;
             summary.transaction_hash = GenerateHash(rng);
-            summary.contract_name_   = "fetch.dummy.run";
+            summary.contract_name    = "fetch.dummy.run";
 
             //            fetch::logger.Info("Generating TX: ",
             //            fetch::byte_array::ToBase64(summary.transaction_hash));

@@ -10,13 +10,16 @@ namespace fetch {
 namespace storage {
 
 /**
- * Stores objects of type T using ResourceID as a key, writing to disk, hence the New/Load
+ * Stores objects of type T using ResourceID as a key, writing to disk, hence
+ * the New/Load
  * functions.
  *
- * Note that you should be using ResourceAddress to hash to a ResourceID otherwise you will
+ * Note that you should be using ResourceAddress to hash to a ResourceID
+ * otherwise you will
  * get key collisions. See the test object_store.cpp for usage
  *
- * Since the objects are stored to disk, you must have defined a serializer and deserializer for
+ * Since the objects are stored to disk, you must have defined a serializer and
+ * deserializer for
  * the type T you want to store. See object_store.cpp for an example
  *
  * S is the document store's underlying block size
@@ -32,7 +35,8 @@ public:
   class iterator;
 
   /**
-   * Create a new file for the object store with the filename parameters for the document,
+   * Create a new file for the object store with the filename parameters for the
+   * document,
    * and the index to it.
    *
    * If these arguments correspond to existing files, it will overwrite them
@@ -43,7 +47,8 @@ public:
   }
 
   /**
-   * Load a file into the document store with the filename parameters for the document,
+   * Load a file into the document store with the filename parameters for the
+   * document,
    * and the index to it
    */
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
@@ -92,7 +97,8 @@ public:
   }
 
   /**
-   * Obtain a lock then execute closure to reduce overhead from requiring multiple locks to be
+   * Obtain a lock then execute closure to reduce overhead from requiring
+   * multiple locks to be
    * acquired
    *
    * @param: f The closure
@@ -104,7 +110,8 @@ public:
   }
 
   /**
-   * Do a get without locking the structure, do this when it is guaranteed you have locked (using
+   * Do a get without locking the structure, do this when it is guaranteed you
+   * have locked (using
    * WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
@@ -123,7 +130,8 @@ public:
   }
 
   /**
-   * Do a has without locking the structure, do this when it is guaranteed you have locked (using
+   * Do a has without locking the structure, do this when it is guaranteed you
+   * have locked (using
    * WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
@@ -138,7 +146,8 @@ public:
   }
 
   /**
-   * Do a set without locking the structure, do this when it is guaranteed you have locked (using
+   * Do a set without locking the structure, do this when it is guaranteed you
+   * have locked (using
    * WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
@@ -154,8 +163,10 @@ public:
   }
 
   /**
-   * STL-like functionality achieved with an iterator class. This has to wrap an iterator to the
-   * KeyByteArrayStore since we need to deserialize at this level to return the object
+   * STL-like functionality achieved with an iterator class. This has to wrap an
+   * iterator to the
+   * KeyByteArrayStore since we need to deserialize at this level to return the
+   * object
    */
   class iterator
   {
@@ -201,7 +212,8 @@ public:
   }
 
   /**
-   * Get an iterator to the first element of a subtree (the first element of the range that
+   * Get an iterator to the first element of a subtree (the first element of the
+   * range that
    * matches the first bits of rid)
    *
    * @param: rid The key

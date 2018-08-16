@@ -16,9 +16,11 @@ namespace fetch {
 namespace storage {
 
 /**
- * DocumentStore maps keys to serialized data (documents) which is stored on your filesystem
+ * DocumentStore maps keys to serialized data (documents) which is stored on
+ * your filesystem
  *
- * To do this it maintains two files, a file that stores a mapping of the keys to locations
+ * To do this it maintains two files, a file that stores a mapping of the keys
+ * to locations
  * in the document store
  *
  */
@@ -74,7 +76,8 @@ public:
 
   /**
    * Represents an open 'document', effectively just a serialized memory block.
-   * When modifications are finished to it, it will write the state back to the store
+   * When modifications are finished to it, it will write the state back to the
+   * store
    * on destruction. Has a PIMPL to an implementation
    */
   class DocumentFile
@@ -220,8 +223,10 @@ public:
   }
 
   /**
-   * STL-like functionality achieved with an iterator class. This has to wrap an iterator to the
-   * key value store since we need to deserialize at this level to return the object
+   * STL-like functionality achieved with an iterator class. This has to wrap an
+   * iterator to the
+   * key value store since we need to deserialize at this level to return the
+   * object
    */
   class iterator
   {
@@ -269,7 +274,8 @@ public:
   }
 
   /**
-   * Get an iterator to the first element of a subtree (the first element of the range that
+   * Get an iterator to the first element of a subtree (the first element of the
+   * range that
    * matches the first bits of rid)
    *
    * @param: rid The key

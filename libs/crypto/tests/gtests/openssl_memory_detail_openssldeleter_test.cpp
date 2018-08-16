@@ -58,11 +58,11 @@ using OpenSSLDeleter_forTesting = OpenSSLDeleter<
 class OpenSSLDeleterTest : public testing::Test
 {
 protected:
-  MockDeleterPrimitive::SharedPtr &mock = MockDeleterPrimitive::value;
+  MockDeleterPrimitive::SharedPtr &mock_ = MockDeleterPrimitive::value;
 
-  void SetUp() override { mock = std::make_shared<MockDeleterPrimitive::Type>(); }
+  void SetUp() override { mock_ = std::make_shared<MockDeleterPrimitive::Type>(); }
 
-  void TearDown() override { mock = MockDeleterPrimitive::SharedPtr(); }
+  void TearDown() override { mock_ = MockDeleterPrimitive::SharedPtr(); }
 
   // static void SetUpTestCase() {
   //}
@@ -77,7 +77,7 @@ TEST_F(OpenSSLDeleterTest, test_that_DeleterPrimitive_function_is_called_for_CON
   const TestType &const_testValue = testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
   OpenSSLDeleter_forTesting<const TestType> openSSLDeleter;
@@ -90,7 +90,7 @@ TEST_F(OpenSSLDeleterTest,
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
   OpenSSLDeleter_forTesting<TestType> openSSLDeleter;
@@ -104,7 +104,7 @@ TEST_F(OpenSSLDeleterTest,
   const TestType &const_testValue = testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_clearing_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_clearing_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
   OpenSSLDeleter_forTesting<const TestType, eDeleteStrategy::clearing> openSSLDeleter;
@@ -117,7 +117,7 @@ TEST_F(OpenSSLDeleterTest,
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_clearing_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_clearing_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
   OpenSSLDeleter_forTesting<TestType, eDeleteStrategy::clearing> openSSLDeleter;
