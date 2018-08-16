@@ -1,6 +1,6 @@
 #pragma once
 #include "math/ndarray.hpp"
-
+#include<assert.h>
 #include<vector>
 
 
