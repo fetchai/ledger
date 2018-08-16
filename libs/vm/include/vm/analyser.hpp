@@ -49,7 +49,8 @@ private:
 	TypePtr IsDivideCompatible(const ExpressionNodePtr& node,
 		const ExpressionNodePtr& lhs, const ExpressionNodePtr& rhs);
 	bool AnnotateExpression(const ExpressionNodePtr& node);
-	bool AnnotateAddSubtractOp(const ExpressionNodePtr& node);
+	bool AnnotateAddOp(const ExpressionNodePtr& node);
+	bool AnnotateSubtractOp(const ExpressionNodePtr& node);
 	bool AnnotateMultiplyOp(const ExpressionNodePtr& node);
 	bool AnnotateDivideOp(const ExpressionNodePtr& node);
 	bool AnnotateUnaryMinusOp(const ExpressionNodePtr& node);
@@ -129,9 +130,9 @@ private:
 	TypePtr						uint64_type_;
 	TypePtr						float32_type_;
 	TypePtr						float64_type_;
+	TypePtr						string_type_;
 	TypePtr						matrix_float32_type_;
 	TypePtr						matrix_float64_type_;
-	TypePtr						string_type_;
 	TypePtr 					array_bool_type_;
 	TypePtr 					array_int8_type_;
 	TypePtr 					array_byte_type_;
@@ -143,9 +144,9 @@ private:
 	TypePtr 					array_uint64_type_;
 	TypePtr 					array_float32_type_;
 	TypePtr 					array_float64_type_;
+	TypePtr 					array_string_type_;
 	TypePtr 					array_matrix_float32_type_;
 	TypePtr 					array_matrix_float64_type_;
-	TypePtr 					array_string_type_;
 
 	BlockNodePtr				root_;
 	std::vector<BlockNodePtr>	blocks_;

@@ -12,6 +12,7 @@ enum class Opcode: uint16_t
 	Unknown,
 	Jump,
 	JumpIfFalse,
+	PushString,
 	PushConstant,
 	PushVariable,
 	VarDeclare,

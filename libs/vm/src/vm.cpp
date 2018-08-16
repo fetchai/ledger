@@ -302,9 +302,17 @@ bool VM::Execute(const Script& script, const std::string& name)
 	const Script::Function* f = script.FindFunction(name);
 	if (f == nullptr)
 		return false;
-
 	script_ = &script;
 	function_ = f;
+	const std::size_t num_strings = script_->strings.size();
+	pool_ = std::vector<String>(num_strings);
+	strings_ = std::vector<String*>(num_strings);
+	for (std::size_t i=0; i<num_strings; ++i)
+	{
+		const std::string& str = script_->strings[i];
+		pool_[i] = String(this, str, true);
+		strings_[i] = &pool_[i];
+	}
 	frame_sp_ = -1;
 	bsp_ = 0;
 	sp_ = function_->num_variables - 1;
@@ -332,6 +340,14 @@ bool VM::Execute(const Script& script, const std::string& name)
 				if (value.variant.ui8 == 0)
 					pc_ = instruction_->index;
 				value.PrimitiveReset();
+				break;
+			}
+			case Opcode::PushString:
+			{
+				Value& value = stack_[++sp_];
+				value.type_id = TypeId::String;
+				value.variant.object = strings_[instruction_->index];
+				value.variant.object->AddRef();
 				break;
 			}
 			case Opcode::PushConstant:
@@ -805,8 +821,7 @@ bool VM::Execute(const Script& script, const std::string& name)
 	}
 	while (stop_ == false);
 
-	if (error_.empty())
-	{
+	if (error_.empty())	{
 		return true;
 	}
 

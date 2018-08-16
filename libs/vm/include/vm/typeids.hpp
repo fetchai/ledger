@@ -35,9 +35,9 @@ enum class TypeId: uint16_t
 
 	PrimitivesObjectsDivider,
 
+	String,
 	Matrix_Float32,
 	Matrix_Float64,
-	String,
 	Array_Bool,
 	Array_Int8,
 	Array_Byte,
@@ -49,9 +49,9 @@ enum class TypeId: uint16_t
 	Array_UInt64,
 	Array_Float32,
 	Array_Float64,
+	Array_String,
 	Array_Matrix_Float32,
 	Array_Matrix_Float64,
-	Array_String,
 	Array,
 	// matrix op number
 	// matrix op= number

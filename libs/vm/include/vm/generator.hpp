@@ -29,10 +29,12 @@ private:
 		std::vector<Index> 	break_pcs;
 	};
 
-	Script					script_;
-	std::vector<Scope>		scopes_;
-	std::vector<Loop>		loops_;
-	Script::Function*		function_;
+	Script									script_;
+	std::vector<Scope>						scopes_;
+	std::vector<Loop>						loops_;
+	std::unordered_map<std::string, Index>	strings_map_;
+	std::vector<std::string>				strings_;
+	Script::Function*						function_;
 
 	void CreateFunctions(const BlockNodePtr& root);
 	void HandleBlock(const BlockNodePtr& node);

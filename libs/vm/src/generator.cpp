@@ -11,11 +11,15 @@ void Generator::Generate(const BlockNodePtr& root, const std::string& name, Scri
 	script_ = Script(name);
 	scopes_.clear();
 	loops_.clear();
+	strings_map_.clear();
+	strings_.clear();
 	function_ = nullptr;
 	CreateFunctions(root);
 	HandleBlock(root);
+	script_.strings = std::move(strings_);
 	script = std::move(script_);
 	function_ = nullptr;
+	strings_map_.clear();
 	loops_.clear();
 	scopes_.clear();
 }
@@ -678,6 +682,23 @@ void Generator::HandleDoublePrecisionNumber(const ExpressionNodePtr& node)
 
 void Generator::HandleString(const ExpressionNodePtr& node)
 {
+	std::string s = node->token.text.substr(1, node->token.text.size()-2);
+	Index index;
+	auto it = strings_map_.find(s);
+	if (it != strings_map_.end())
+	{
+		index = it->second;
+	}
+	else
+	{
+		index = (Index)strings_.size();
+		strings_.push_back(s);
+		strings_map_[s] = index;
+	}
+	Script::Instruction instruction(Opcode::PushString, node->token.line);
+	instruction.index = index;
+	instruction.type_id = TypeId::String;
+	function_->AddInstruction(instruction);
 }
 
 
