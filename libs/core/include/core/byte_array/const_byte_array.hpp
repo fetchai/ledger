@@ -5,8 +5,8 @@
 #include <cassert>
 #include <iostream>
 #include <ostream>
-#include <type_traits>
 #include <string.h>
+#include <type_traits>
 
 namespace fetch {
 namespace byte_array {
