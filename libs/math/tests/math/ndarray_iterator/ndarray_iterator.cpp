@@ -12,7 +12,6 @@
 
 using namespace fetch::math;
 
-
 TEST(ndarray, simple_iterator_permute_test)
 {
 
@@ -21,18 +20,18 @@ TEST(ndarray, simple_iterator_permute_test)
   array.Reshape({7, 11});
 
   NDArray<double> ret{array};
-//  NDArray< double > ret = NDArray< double >::Zeros(25);
-//  ret.Reshape({5, 5});
+  //  NDArray< double > ret = NDArray< double >::Zeros(25);
+  //  ret.Reshape({5, 5});
 
   NDArrayIterator<double, NDArray<double>::container_type> it(array);
   NDArrayIterator<double, NDArray<double>::container_type> it2(ret);
 
-  it2.PermuteAxes(0,1);
-  while(it2)
+  it2.PermuteAxes(0, 1);
+  while (it2)
   {
 
-    assert( bool(it) );
-    assert( bool(it2));
+    assert(bool(it));
+    assert(bool(it2));
 
     *it2 = *it;
     ++it;
@@ -40,16 +39,16 @@ TEST(ndarray, simple_iterator_permute_test)
   }
 
   std::size_t test_val, cur_row;
-  for (std::size_t i=0; i < array.size(); ++i)
+  for (std::size_t i = 0; i < array.size(); ++i)
   {
     ASSERT_TRUE(array[i] == i);
 
-    cur_row = i / 7;
+    cur_row  = i / 7;
     test_val = (11 * i) + cur_row;
 
     std::cout << "cur row: " << cur_row << std::endl;
-    std::cout << "test_val: " << test_val <<std::endl;
-    std::cout << "ret[i]: " << ret[i] <<std::endl;
+    std::cout << "test_val: " << test_val << std::endl;
+    std::cout << "ret[i]: " << ret[i] << std::endl;
 
     ASSERT_TRUE(ret[i] == test_val);
   }
@@ -63,34 +62,35 @@ TEST(ndarray, iterator_4dim_permute_test)
   array.Reshape({4, 6, 7, 6});
   NDArray<double> ret{array};
 
-  NDArrayIterator<double, NDArray<double>::container_type> it(array, {{1, 2, 1}, {2, 3, 1}, {1, 4, 1}, {2, 6, 1}});
-  NDArrayIterator<double, NDArray<double>::container_type> it2(ret, {{1, 2, 1}, {2, 3, 1}, {1, 4, 1}, {2, 6, 1}});
+  NDArrayIterator<double, NDArray<double>::container_type> it(
+      array, {{1, 2, 1}, {2, 3, 1}, {1, 4, 1}, {2, 6, 1}});
+  NDArrayIterator<double, NDArray<double>::container_type> it2(
+      ret, {{1, 2, 1}, {2, 3, 1}, {1, 4, 1}, {2, 6, 1}});
 
-  it2.PermuteAxes(0,1);
-  it2.PermuteAxes(2,3);
-  while(it2)
+  it2.PermuteAxes(0, 1);
+  it2.PermuteAxes(2, 3);
+  while (it2)
   {
 
-    assert( bool(it) );
-    assert( bool(it2));
+    assert(bool(it));
+    assert(bool(it2));
 
     *it2 = *it;
     ++it;
     ++it2;
   }
 
-  for (std::size_t i=0; i < array.size(); ++i)
+  for (std::size_t i = 0; i < array.size(); ++i)
   {
-    for (std::size_t j=0; j < array.size(); ++j)
+    for (std::size_t j = 0; j < array.size(); ++j)
     {
-      for (std::size_t k=0; k < array.size(); ++k)
+      for (std::size_t k = 0; k < array.size(); ++k)
       {
-        for (std::size_t l=0; l < array.size(); ++l)
+        for (std::size_t l = 0; l < array.size(); ++l)
         {
-          ASSERT_TRUE(ret.Get({i,j,k,l}) == array.Get({j,i,l,k}));
+          ASSERT_TRUE(ret.Get({i, j, k, l}) == array.Get({j, i, l, k}));
         }
       }
     }
   }
-
 }

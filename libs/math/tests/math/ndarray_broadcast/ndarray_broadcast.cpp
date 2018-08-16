@@ -12,7 +12,6 @@
 
 using namespace fetch::math;
 
-
 TEST(ndarray, simple_broadcast_test)
 {
   NDArray<double> a = NDArray<double>::Arange(0, 20, 1);
@@ -22,11 +21,11 @@ TEST(ndarray, simple_broadcast_test)
 
   NDArray<double> ret = NDArray<double>::Zeros(GetBroadcastSize(a, b));
 
-  ASSERT_TRUE(Broadcast([](double const &x, double const&y) { return x + y; }, a, b, ret));
+  ASSERT_TRUE(Broadcast([](double const &x, double const &y) { return x + y; }, a, b, ret));
 
-  for(std::size_t i = 0; i < ret.shape(0); ++i)
+  for (std::size_t i = 0; i < ret.shape(0); ++i)
   {
-    for(std::size_t j = 0; j < ret.shape(1); ++j)
+    for (std::size_t j = 0; j < ret.shape(1); ++j)
     {
       ASSERT_TRUE(ret.Get({i, j}) == i + j);
     }
@@ -42,19 +41,30 @@ TEST(ndarray, broadcast_3D_test)
 
   NDArray<double> ret = NDArray<double>::Zeros(GetBroadcastSize(a, b));
 
-  ASSERT_TRUE(Broadcast([](double const &x, double const&y) { return x + y; }, a, b, ret));
+  ASSERT_TRUE(Broadcast([](double const &x, double const &y) { return x + y; }, a, b, ret));
 
-  for(std::size_t i = 0; i < 7; ++i)
+  for (std::size_t i = 0; i < 7; ++i)
   {
-    for(std::size_t j = 0; j < 3; ++j)
+    for (std::size_t j = 0; j < 3; ++j)
     {
-      for(std::size_t k = 0; k < 7; ++k)
+      for (std::size_t k = 0; k < 7; ++k)
       {
-          if ((i == 0) && (k == 0)) {ASSERT_TRUE(ret.Get({i, j, k}) == a.Get({i, j, k}) + b.Get({i, j, k}));}
-          else if ((i > 0) && (k == 0)) {ASSERT_TRUE(ret.Get({i, j, k}) == b.Get({i, j, k}) + a.Get({0, j, k}));}
-          else if ((i == 0) && (k > 0)) {ASSERT_TRUE(ret.Get({i, j, k}) == a.Get({i, j, k}) + b.Get({i, j, 0}));}
-          else {ASSERT_TRUE(ret.Get({i, j, k}) == a.Get({0, j, k}) + b.Get({i, j, 0}));}
-
+        if ((i == 0) && (k == 0))
+        {
+          ASSERT_TRUE(ret.Get({i, j, k}) == a.Get({i, j, k}) + b.Get({i, j, k}));
+        }
+        else if ((i > 0) && (k == 0))
+        {
+          ASSERT_TRUE(ret.Get({i, j, k}) == b.Get({i, j, k}) + a.Get({0, j, k}));
+        }
+        else if ((i == 0) && (k > 0))
+        {
+          ASSERT_TRUE(ret.Get({i, j, k}) == a.Get({i, j, k}) + b.Get({i, j, 0}));
+        }
+        else
+        {
+          ASSERT_TRUE(ret.Get({i, j, k}) == a.Get({0, j, k}) + b.Get({i, j, 0}));
+        }
       }
     }
   }
@@ -70,6 +80,6 @@ TEST(ndarray, broadcast_shape_size_test)
 
   std::vector<std::size_t> ret_shape = {7, 3, 2, 6, 5};
   ASSERT_TRUE(GetBroadcastShape(a, b) == ret_shape);
-  ASSERT_TRUE(GetBroadcastSize(a, b) == std::accumulate(std::begin(ret_shape), std::end(ret_shape), std::size_t(1), std::multiplies<>()));
-
+  ASSERT_TRUE(GetBroadcastSize(a, b) == std::accumulate(std::begin(ret_shape), std::end(ret_shape),
+                                                        std::size_t(1), std::multiplies<>()));
 }
