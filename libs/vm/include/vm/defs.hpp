@@ -15,6 +15,7 @@ namespace vm {
 class VM;
 struct Object
 {
+	Object() {}
 	Object(const TypeId type_id__, VM* vm__)
 	{
 		count = 1;
@@ -261,6 +262,7 @@ struct Script
 	};
 	typedef std::vector<Function> Functions;
 	std::string								name;
+	std::vector<std::string>				strings;
 	Functions								functions;
 	std::unordered_map<std::string, Index>	map;
 	Index AddFunction(Function& function)

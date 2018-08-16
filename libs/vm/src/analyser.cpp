@@ -38,11 +38,11 @@ Analyser::Analyser()
 	uint64_type_ = CreatePrimitiveType("UInt64", TypeId::UInt64);
 	float32_type_ = CreatePrimitiveType("Float32", TypeId::Float32);
 	float64_type_ = CreatePrimitiveType("Float64", TypeId::Float64);
+	string_type_ = CreateClassType("String", TypeId::String);
 	matrix_float32_type_ = CreateTemplateInstantiationType("Matrix<Float32>",
 		TypeId::Matrix_Float32, matrix_template_type_, {float32_type_});
 	matrix_float64_type_ = CreateTemplateInstantiationType("Matrix<Float64>",
 		TypeId::Matrix_Float64, matrix_template_type_, {float64_type_});
-	string_type_ = CreatePrimitiveType("String", TypeId::String);
 	array_bool_type_ = CreateTemplateInstantiationType("Array<Bool>",
 		TypeId::Array_Bool, array_template_type_, {bool_type_});
 	array_int8_type_ = CreateTemplateInstantiationType("Array<Int8>",
@@ -65,12 +65,12 @@ Analyser::Analyser()
 		TypeId::Array_Float32, array_template_type_, {float32_type_});
 	array_float64_type_ = CreateTemplateInstantiationType("Array<Float64>",
 		TypeId::Array_Float64, array_template_type_, {float64_type_});
+	array_string_type_ = CreateTemplateInstantiationType("Array<String>",
+		TypeId::Array_String, array_template_type_, {string_type_});
 	array_matrix_float32_type_ = CreateTemplateInstantiationType("Array<Matrix<Float32>>",
 		TypeId::Array_Matrix_Float32, array_template_type_, {matrix_float32_type_});
 	array_matrix_float64_type_ = CreateTemplateInstantiationType("Array<Matrix<Float64>>",
 		TypeId::Array_Matrix_Float64, array_template_type_, {matrix_float64_type_});
-	array_string_type_ = CreateTemplateInstantiationType("Array<String>",
-		TypeId::Array_String, array_template_type_, {string_type_});
 
 	// Casts
 	CreateOpcodeFunction("toInt8",
@@ -93,7 +93,6 @@ Analyser::Analyser()
 		{numeric_type_}, float32_type_, Opcode::ToFloat32);
 	CreateOpcodeFunction("toFloat64",
 		{numeric_type_}, float64_type_, Opcode::ToFloat64);
-
 
 	CreateOpcodeTypeFunction(matrix_template_type_, CONSTRUCTOR,
         {int32_type_, int32_type_},
@@ -982,7 +981,7 @@ bool Analyser::AnnotateExpression(const ExpressionNodePtr& node)
 			{
 				// type or a function name by itself
 				AddError(node->token, "symbol '" + node->token.text +
-					"' is not a known variable");
+					"' is not a variable");
 				return false;
 			}
 			VariablePtr variable = ConvertToVariablePtr(symbol);
@@ -1042,9 +1041,14 @@ bool Analyser::AnnotateExpression(const ExpressionNodePtr& node)
 			break;
 		}
 		case Node::Kind::AddOp:
+		{
+			if (AnnotateAddOp(node) == false)
+				return false;
+			break;
+		}
 		case Node::Kind::SubtractOp:
 		{
-			if (AnnotateAddSubtractOp(node) == false)
+			if (AnnotateSubtractOp(node) == false)
 				return false;
 			break;
 		}
@@ -1133,7 +1137,33 @@ bool Analyser::AnnotateExpression(const ExpressionNodePtr& node)
 }
 
 
-bool Analyser::AnnotateAddSubtractOp(const ExpressionNodePtr& node)
+bool Analyser::AnnotateAddOp(const ExpressionNodePtr& node)
+{
+	for (const NodePtr& child: node->children)
+	{
+		if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+			return false;
+	}
+	ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
+	ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
+	TypePtr type;
+	if ((lhs->type->id == TypeId::String) &&
+		(rhs->type->id == TypeId::String))
+	{
+		type = lhs->type;
+	}
+	else
+	{
+		type = IsAddSubtractCompatible(node, lhs, rhs);
+		if (type == nullptr)
+			return false;
+	}
+	SetRV(node, type);
+	return true;
+}
+
+
+bool Analyser::AnnotateSubtractOp(const ExpressionNodePtr& node)
 {
 	for (const NodePtr& child: node->children)
 	{

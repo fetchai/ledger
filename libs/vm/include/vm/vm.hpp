@@ -17,6 +17,21 @@ struct IntPair : public Object
 };
 
 /////////////// END OF CUSTOM CLASSES
+
+
+struct String : public Object
+{
+	std::string str;
+	bool is_literal;
+	String() {}
+	String(VM* vm, const std::string& str__, const bool is_literal__):
+		Object(TypeId::String, vm), str(str__), is_literal(is_literal__) {}
+	String(VM* vm, std::string&& str__, const bool is_literal__):
+		Object(TypeId::String, vm), str(str__), is_literal(is_literal__) {}
+	virtual ~String() {}
+};
+
+
 template <typename T>
 struct Matrix : public Object
 {
@@ -106,6 +121,8 @@ private:
 
 	const Script*				script_;
 	const Script::Function*		function_;
+	std::vector<String>			pool_;
+	std::vector<String*>		strings_;
 	Frame						frame_stack_[FRAME_STACK_SIZE];
 	int							frame_sp_;
 	int							bsp_;
@@ -241,51 +258,60 @@ private:
 		switch (type_id)
 		{
 			case TypeId::Bool: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.ui8, rhsv.variant.ui8);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.ui8, rhsv.variant.ui8);
 				break;
 			}
 			case TypeId::Int8: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.i8, rhsv.variant.i8);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.i8, rhsv.variant.i8);
 				break;
 			}
 			case TypeId::Byte: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.ui8, rhsv.variant.ui8);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.ui8, rhsv.variant.ui8);
 				break;
 			}
 			case TypeId::Int16: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.i16, rhsv.variant.i16);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.i16, rhsv.variant.i16);
 				break;
 			}
 			case TypeId::UInt16: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.ui16, rhsv.variant.ui16);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.ui16, rhsv.variant.ui16);
 				break;
 			}
 			case TypeId::Int32: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.i32, rhsv.variant.i32);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.i32, rhsv.variant.i32);
 				break;
 			}
 			case TypeId::UInt32: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.ui32, rhsv.variant.ui32);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.ui32, rhsv.variant.ui32);
 				break;
 			}
 			case TypeId::Int64: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.i64, rhsv.variant.i64);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.i64, rhsv.variant.i64);
 				break;
 			}
 			case TypeId::UInt64: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.ui64, rhsv.variant.ui64);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.ui64, rhsv.variant.ui64);
 				break;
 			}
 			case TypeId::Float32: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.f32, rhsv.variant.f32);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.f32, rhsv.variant.f32);
 				break;
 			}
 			case TypeId::Float64: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.f64, rhsv.variant.f64);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.f64, rhsv.variant.f64);
+				break;
+			}
+			case TypeId::String: {
+				String* lhs = static_cast<String*>(lhsv.variant.object);
+				String* rhs = static_cast<String*>(rhsv.variant.object);
+				if (lhs && rhs)
+					Op::Apply(this, lhsv, rhsv, lhs, rhs);
+				else
+					RuntimeError("null reference");
 				break;
 			}
 			default: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.object, rhsv.variant.object);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.object, rhsv.variant.object);
 				break;
 			}
 		}
@@ -301,49 +327,45 @@ private:
 		switch (type_id)
 		{
 			case TypeId::Int8: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.i8, rhsv.variant.i8);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.i8, rhsv.variant.i8);
 				break;
 			}
 			case TypeId::Byte: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.ui8, rhsv.variant.ui8);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.ui8, rhsv.variant.ui8);
 				break;
 			}
 			case TypeId::Int16: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.i16, rhsv.variant.i16);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.i16, rhsv.variant.i16);
 				break;
 			}
 			case TypeId::UInt16: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.ui16, rhsv.variant.ui16);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.ui16, rhsv.variant.ui16);
 				break;
 			}
 			case TypeId::Int32: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.i32, rhsv.variant.i32);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.i32, rhsv.variant.i32);
 				break;
 			}
 			case TypeId::UInt32: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.ui32, rhsv.variant.ui32);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.ui32, rhsv.variant.ui32);
 				break;
 			}
 			case TypeId::Int64: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.i64, rhsv.variant.i64);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.i64, rhsv.variant.i64);
 				break;
 			}
 			case TypeId::UInt64: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.ui64, rhsv.variant.ui64);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.ui64, rhsv.variant.ui64);
 				break;
 			}
 			case TypeId::Float32: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.f32, rhsv.variant.f32);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.f32, rhsv.variant.f32);
 				break;
 			}
 			case TypeId::Float64: {
-				Op::Apply(lhsv, rhsv, lhsv.variant.f64, rhsv.variant.f64);
+				Op::Apply(this, lhsv, rhsv, lhsv.variant.f64, rhsv.variant.f64);
 				break;
 			}
-			//case TypeId::String: {
-				//Op::Apply(lhsv, rhsv, lhsv.variant.d, rhsv.variant.d);
-				//break;
-			//}
 			default: {
 				break;
 			}
@@ -397,6 +419,15 @@ private:
 			}
 			case TypeId::Float64: {
 				Op::Apply(this, lhsv, rhsv, lhsv.variant.f64, rhsv.variant.f64);
+				break;
+			}
+			case TypeId::String: {
+				String* lhs = static_cast<String*>(lhsv.variant.object);
+				String* rhs = static_cast<String*>(rhsv.variant.object);
+				if (lhs && rhs)
+					Op::Apply(this, lhsv, rhsv, lhs, rhs);
+				else
+					RuntimeError("null reference");
 				break;
 			}
 			case TypeId::Matrix_Float32: {
@@ -603,6 +634,10 @@ private:
 				HandlePrimitiveArrayIndexedAssignment<double>(TypeId::Float64);
 				break;
 			}
+			case TypeId::Array_String: {
+				HandleObjectArrayIndexedAssignment(TypeId::String);
+				break;
+			}
 			case TypeId::Array_Matrix_Float32: {
 				HandleObjectArrayIndexedAssignment(TypeId::Matrix_Float32);
 				break;
@@ -730,6 +765,10 @@ private:
 			}
 			case TypeId::Array_Float64: {
 				HandlePrimitiveArrayIndexOp<double>(TypeId::Float64);
+				break;
+			}
+			case TypeId::Array_String: {
+				HandleObjectArrayIndexOp(TypeId::Array_String);
 				break;
 			}
 			case TypeId::Array_Matrix_Float32: {
@@ -912,7 +951,7 @@ private:
 		Value& rhsv = stack_[sp_--];
 		RHSVariantType xx;
 		rhsv.variant.Get(xx);
-		RHSElementType rhs = (RHSElementType)xx;
+		RHSElementType rhs = static_cast<RHSElementType>(xx);
 		Op::Apply(this, *ptr, rhs);   // what if fails?
 		arrayv.Reset();
 		rhsv.Reset();
@@ -1118,12 +1157,12 @@ private:
 		}
 		if (lhs_matrix_is_modifiable)
 		{
-                        lhs->matrix.InlineAdd(rhs->matrix);
+			lhs->matrix.InlineAdd(rhs->matrix);
 			return;
 		}
 		if (rhs_matrix_is_modifiable)
 		{
-                        rhs->matrix.InlineAdd(lhs->matrix);
+			rhs->matrix.InlineAdd(lhs->matrix);
 			lhsv = std::move(rhsv);
 			return;
 		}
@@ -1141,7 +1180,7 @@ private:
 		const bool lhs_matrix_is_modifiable = lhs->count == 1;
 		if (lhs_matrix_is_modifiable)
 		{
-                        lhs->matrix.InlineAdd( rhs );
+			lhs->matrix.InlineAdd( rhs );
 			return;
 		}
 		M* m;
@@ -1167,7 +1206,7 @@ private:
 		}
 		if (lhs_matrix_is_modifiable)
 		{
-                        lhs->matrix.InlineSubtract(rhs->matrix);
+			lhs->matrix.InlineSubtract(rhs->matrix);
 			return;
 		}
 		if (rhs_matrix_is_modifiable)
@@ -1190,7 +1229,7 @@ private:
 		const bool lhs_matrix_is_modifiable = lhs->count == 1;
 		if (lhs_matrix_is_modifiable)
 		{
-                        lhs->matrix.InlineSubtract(rhs);
+			lhs->matrix.InlineSubtract(rhs);
 			return;
 		}
 		M* m;
@@ -1215,8 +1254,6 @@ private:
 		AcquireMatrix(lhs_rows, rhs_columns, m);
                 // TODO(tfr): use blas
                 TODO_FAIL("Use BLAS TODO");
-                
-
 		lhsv.SetObject(m, lhsv.type_id);
 	}
 
@@ -1228,7 +1265,7 @@ private:
 		const bool lhs_matrix_is_modifiable = lhs->count == 1;
 		if (lhs_matrix_is_modifiable)
 		{
-                  lhs->matrix.InlineMultiply(rhs);
+			lhs->matrix.InlineMultiply(rhs);
 			return;
 		}
 		M* m;
@@ -1245,7 +1282,7 @@ private:
 		const bool rhs_matrix_is_modifiable = rhs->count == 1;
 		if (rhs_matrix_is_modifiable)
 		{
-                  rhs->matrix.InlineMultiply(lhs);
+			rhs->matrix.InlineMultiply(lhs);
 			lhsv = std::move(rhsv);
 			return;
 		}
@@ -1298,7 +1335,7 @@ private:
 	}
 
 	template <typename M>
-	void MatrixMatrixAddAssign(M*& lhs, M*& rhs)
+	void MatrixMatrixAddAssign(M* lhs, M* rhs)
 	{
 		const size_t lhs_rows = lhs->matrix.height();
 		const size_t lhs_columns = lhs->matrix.width();
@@ -1314,13 +1351,13 @@ private:
 	}
 
 	template <typename M, typename T>
-	void MatrixNumberAddAssign(M*& lhs, T& rhs)
+	void MatrixNumberAddAssign(M* lhs, T rhs)
 	{
           lhs->matrix.InlineAdd( rhs );
 	}
 
 	template <typename M>
-	void MatrixMatrixSubtractAssign(M*& lhs, M*& rhs)
+	void MatrixMatrixSubtractAssign(M* lhs, M* rhs)
 	{
 		const size_t lhs_rows = lhs->matrix.height();
 		const size_t lhs_columns = lhs->matrix.width();
@@ -1336,13 +1373,13 @@ private:
 	}
 
 	template <typename M, typename T>
-	void MatrixNumberSubtractAssign(M*& lhs, T& rhs)
+	void MatrixNumberSubtractAssign(M* lhs, T rhs)
 	{
 		lhs->matrix.InlineSubtract(rhs);
 	}
 
 	template <typename M>
-	void MatrixMatrixMultiplyAssign(M*& lhs, M*& rhs)
+	void MatrixMatrixMultiplyAssign(M* lhs, M* rhs)
 	{
 		const size_t lhs_rows = lhs->matrix.height();
 		const size_t lhs_columns = lhs->matrix.width();
@@ -1362,13 +1399,13 @@ private:
 	}
 
 	template <typename M, typename T>
-	void MatrixNumberMultiplyAssign(M*& lhs, T& rhs)
+	void MatrixNumberMultiplyAssign(M* lhs, T rhs)
 	{
 		lhs->matrix.InlineMultiply(rhs);
 	}
 
 	template <typename M, typename T>
-	void MatrixNumberDivideAssign(M*& lhs, T& rhs)
+	void MatrixNumberDivideAssign(M* lhs, T rhs)
 	{
 		if (IsNonZero(rhs))
 		{
@@ -1385,25 +1422,35 @@ private:
 	struct EqualOp
 	{
 		template <typename T>
-		static void Apply(Value& lhsv, Value& rhsv, T& lhs, T& rhs)
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, T& lhs, T& rhs)
 		{
 			lhsv.SetPrimitive(uint8_t(IsEqual(lhs, rhs)), TypeId::Bool);
+		}
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, String* lhs, String* rhs)
+		{
+			const uint8_t value = uint8_t(lhs->str == rhs->str);
+			lhsv.SetPrimitive(value, TypeId::Bool);
 		}
 	};
 
 	struct NotEqualOp
 	{
 		template <typename T>
-		static void Apply(Value& lhsv, Value& rhsv, T& lhs, T& rhs)
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, T& lhs, T& rhs)
 		{
 			lhsv.SetPrimitive(uint8_t(IsNotEqual(lhs, rhs)), TypeId::Bool);
+		}
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, String* lhs, String* rhs)
+		{
+			const uint8_t value = uint8_t(lhs->str != rhs->str);
+			lhsv.SetPrimitive(value, TypeId::Bool);
 		}
 	};
 
 	struct LessThanOp
 	{
 		template <typename T>
-		static void Apply(Value& lhsv, Value& rhsv, T& lhs, T& rhs)
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, T& lhs, T& rhs)
 		{
 			lhsv.SetPrimitive(uint8_t(IsLessThan(lhs, rhs)), TypeId::Bool);
 		}
@@ -1412,7 +1459,7 @@ private:
 	struct LessThanOrEqualOp
 	{
 		template <typename T>
-		static void Apply(Value& lhsv, Value& rhsv, T& lhs, T& rhs)
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, T& lhs, T& rhs)
 		{
 			lhsv.SetPrimitive(uint8_t(IsLessThanOrEqual(lhs, rhs)), TypeId::Bool);
 		}
@@ -1421,7 +1468,7 @@ private:
 	struct GreaterThanOp
 	{
 		template <typename T>
-		static void Apply(Value& lhsv, Value& rhsv, T& lhs, T& rhs)
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, T& lhs, T& rhs)
 		{
 			lhsv.SetPrimitive(uint8_t(IsGreaterThan(lhs, rhs)), TypeId::Bool);
 		}
@@ -1430,7 +1477,7 @@ private:
 	struct GreaterThanOrEqualOp
 	{
 		template <typename T>
-		static void Apply(Value& lhsv, Value& rhsv, T& lhs, T& rhs)
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, T& lhs, T& rhs)
 		{
 			lhsv.SetPrimitive(uint8_t(IsGreaterThanOrEqual(lhs, rhs)), TypeId::Bool);
 		}
@@ -1461,6 +1508,19 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
 		static void Apply(VM* vm, Value& lhsv, Value& rhsv, T& lhs, M* rhs) {}
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, String* lhs, String* rhs)
+		{
+			if (lhs->count == 1)
+			{
+				lhs->str += rhs->str;
+			}
+			else
+			{
+				String* s = new String(vm, lhs->str + rhs->str, false);
+				lhs->Release();
+				lhsv.variant.object = s;
+			}
+		}
 	};
 
 	struct SubtractOp
@@ -1488,6 +1548,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
 		static void Apply(VM* vm, Value& lhsv, Value& rhsv, T& lhs, M* rhs) {}
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, String* lhs, String* rhs) {}
 	};
 
 	struct MultiplyOp
@@ -1518,6 +1579,7 @@ private:
 		{
 			vm->NumberMatrixMultiply(lhsv, rhsv, lhs, rhs);
 		}
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, String* lhs, String* rhs) {}
 	};
 
 	struct DivideOp
@@ -1547,6 +1609,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
 		static void Apply(VM* vm, Value& lhsv, Value& rhsv, T& lhs, M* rhs) {}
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, String* lhs, String* rhs) {}
 	};
 
 	struct UnaryMinusOp
@@ -1571,6 +1634,7 @@ private:
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
 		static void Apply(VM* vm, Value& lhsv, Value& rhsv, T& lhs, M* rhs) {}
+		static void Apply(VM* vm, Value& lhsv, Value& rhsv, String* lhs, String* rhs) {}
 	};
 
 	struct AddAssignOp
@@ -1583,14 +1647,14 @@ private:
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, M*& rhs)
+		static void Apply(VM* vm, M* lhs, M* rhs)
 		{
 			vm->MatrixMatrixAddAssign(lhs, rhs);
 		}
 		template<typename M, typename T,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr,
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, T& rhs)
+		static void Apply(VM* vm, M* lhs, T& rhs)
 		{
 			vm->MatrixNumberAddAssign(lhs, rhs);
 		}
@@ -1606,14 +1670,14 @@ private:
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, M*& rhs)
+		static void Apply(VM* vm, M* lhs, M* rhs)
 		{
 			vm->MatrixMatrixSubtractAssign(lhs, rhs);
 		}
 		template<typename M, typename T,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr,
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, T& rhs)
+		static void Apply(VM* vm, M* lhs, T& rhs)
 		{
 			vm->MatrixNumberSubtractAssign(lhs, rhs);
 		}
@@ -1629,14 +1693,14 @@ private:
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, M*& rhs)
+		static void Apply(VM* vm, M* lhs, M* rhs)
 		{
 			vm->MatrixMatrixMultiplyAssign(lhs, rhs);
 		}
 		template <typename M, typename T,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr,
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, T& rhs)
+		static void Apply(VM* vm, M* lhs, T& rhs)
 		{
 			vm->MatrixNumberMultiplyAssign(lhs, rhs);
 		}
@@ -1657,11 +1721,11 @@ private:
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, M*& rhs) {}
+		static void Apply(VM* vm, M* lhs, M* rhs) {}
 		template <typename M, typename T,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr,
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, T& rhs)
+		static void Apply(VM* vm, M* lhs, T& rhs)
 		{
 			vm->MatrixNumberDivideAssign(lhs, rhs);
 		}
@@ -1677,11 +1741,11 @@ private:
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, M*& rhs) {}
+		static void Apply(VM* vm, M* lhs, M* rhs) {}
 		template <typename M, typename T,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr,
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, T& rhs) {}
+		static void Apply(VM* vm, M* lhs, T& rhs) {}
 	};
 
 	struct PrefixDecOp
@@ -1694,11 +1758,11 @@ private:
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, M*& rhs) {}
+		static void Apply(VM* vm, M* lhs, M* rhs) {}
 		template <typename M, typename T,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr,
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, T& rhs) {}
+		static void Apply(VM* vm, M* lhs, T& rhs) {}
 	};
 
 	struct PostfixIncOp
@@ -1711,11 +1775,11 @@ private:
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, M*& rhs) {}
+		static void Apply(VM* vm, M* lhs, M* rhs) {}
 		template <typename M, typename T,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr,
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, T& rhs) {}
+		static void Apply(VM* vm, M* lhs, T& rhs) {}
 	};
 
 	struct PostfixDecOp
@@ -1728,11 +1792,11 @@ private:
 		}
 		template <typename M,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, M*& rhs) {}
+		static void Apply(VM* vm, M* lhs, M* rhs) {}
 		template <typename M, typename T,
 			typename std::enable_if<is_matrix<M>::value>::type* = nullptr,
 			typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-		static void Apply(VM* vm, M*& lhs, T& rhs) {}
+		static void Apply(VM* vm, M* lhs, T& rhs) {}
 	};
 };
 
