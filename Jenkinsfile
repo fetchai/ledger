@@ -9,10 +9,22 @@ pipeline {
   stages {
 
 
+    stage('Clang Format Checks') {
+        steps {
+            sh './scripts/apply-style.py -w -a'
+        }
+    }
+
     stage('Debug Build') {
       steps {
         sh './scripts/ci-tool.py -B Debug'
       }
+    }
+
+    stage('Clang Tidy Checks') {
+        steps {
+            sh './scripts/run-static-analysis.py build-debug/'
+        }
     }
 
     stage('Release Build') {
@@ -27,19 +39,6 @@ pipeline {
         sh 'CTEST_OUTPUT_ON_FAILURE=1 ./scripts/ci-tool.py -T Release'
       }
     }
-
-    stage('Clang Tidy Checks') {
-        steps {
-            sh './scripts/run-static-analysis.py build-release/'
-        }
-    }
-
-    stage('Clang Format Checks') {
-        steps {
-            sh './scripts/apply-style.py -w -a'
-        }
-    }
-
 
   }
 }
