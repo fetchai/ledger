@@ -57,6 +57,7 @@ public:
   using BlockType = BasicBlock<fetch::chain::consensus::ProofOfWork, fetch::crypto::SHA256>;
   using BlockHash = fetch::byte_array::ByteArray;
   using PrevHash  = fetch::byte_array::ByteArray;
+  using ProofType = BlockType::proof_type;
 
   // Hard code genesis on construction
   MainChain(uint32_t minerNumber = std::numeric_limits<uint32_t>::max()) : minerNumber_{minerNumber}

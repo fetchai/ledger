@@ -28,9 +28,9 @@ class MineNodeBasic
 {
 
   // Main chain
-  using block_type = chain::MainChain::block_type;
-  using block_hash = chain::MainChain::block_hash;
-  using body_type  = chain::MainChain::block_type::body_type;
+  using BlockType = chain::MainChain::BlockType;
+  using BlockHash = chain::MainChain::BlockHash;
+  using body_type  = chain::MainChain::BlockType::body_type;
   using miner      = fetch::chain::consensus::DummyMiner;
 
 public:
@@ -47,7 +47,7 @@ public:
 
   ///////////////////////////////////////////////////////////
   // RPC calls
-  void ReceiveNewHeader(block_type &block)
+  void ReceiveNewHeader(BlockType &block)
   {
     block.UpdateDigest();
 
@@ -67,7 +67,7 @@ public:
       if (block.loose())
       {
         std::thread{[this, block] {
-          block_type copy = block;
+          BlockType copy = block;
           this->SyncBlock(copy);
         }}
             .detach();
@@ -77,10 +77,10 @@ public:
 
   // Called async. when we see a new block that's loose, work to connect it to
   // the main chain
-  void SyncBlock(block_type &block)
+  void SyncBlock(BlockType &block)
   {
-    block_type walkBlock;
-    block_hash hash = block.body().previous_hash;
+    BlockType walkBlock;
+    BlockHash hash = block.body().previous_hash;
 
     do
     {
@@ -94,9 +94,9 @@ public:
   }
 
   // Nodes will provide each other with headers
-  std::pair<bool, block_type> ProvideHeader(block_hash hash)
+  std::pair<bool, BlockType> ProvideHeader(BlockHash hash)
   {
-    block_type block;
+    BlockType block;
     bool       success = mainChain.Get(hash, block);
 
     return std::make_pair(success, block);
@@ -131,7 +131,7 @@ public:
         auto &block = mainChain.HeaviestBlock();
 
         // Create another block sequential to previous
-        block_type nextBlock;
+        BlockType nextBlock;
         body_type  nextBody;
         nextBody.block_number  = block.body().block_number + 1;
         nextBody.previous_hash = block.hash();
@@ -168,12 +168,12 @@ public:
 
   ///////////////////////////////////////////////////////////////
   // HTTP functions to check that synchronisation was successful
-  std::vector<block_type> HeaviestChain() { return mainChain.HeaviestChain(); }
+  std::vector<BlockType> HeaviestChain() { return mainChain.HeaviestChain(); }
 
-  std::pair<block_type, std::vector<std::vector<block_type>>> AllChain()
-  {
-    return mainChain.AllChain();
-  }
+  //std::pair<BlockType, std::vector<std::vector<BlockType>>> AllChain()
+  //{
+  //  return mainChain.AllChain();
+  //}
 
 private:
   network_benchmark::NodeDirectory nodeDirectory_;  // Manage connections to other nodes

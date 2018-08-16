@@ -22,10 +22,10 @@ namespace chain {
 class MainChainService : public service::ServiceServer<fetch::network::TCPServer>
 {
 public:
-  using proof_type = fetch::chain::MainChain::proof_type;
-  using block_type = fetch::chain::MainChain::block_type;
-  using body_type  = fetch::chain::MainChain::block_type::body_type;
-  using block_hash = fetch::chain::MainChain::block_hash;
+  using ProofType = fetch::chain::MainChain::ProofType;
+  using BlockType = fetch::chain::MainChain::BlockType;
+  using body_type  = fetch::chain::MainChain::BlockType::body_type;
+  using BlockHash = fetch::chain::MainChain::BlockHash;
 
   using connectivity_details_type = MainChainDetails;
   using client_register_type      = fetch::network::ConnectionRegister<connectivity_details_type>;
@@ -33,10 +33,10 @@ public:
   using mainchain_type          = fetch::chain::MainChain;
   using mainchain_protocol_type = fetch::chain::MainChainProtocol<client_register_type>;
 
-  using block_store_type          = storage::ObjectStore<block_type>;
-  using block_store_protocol_type = storage::ObjectStoreProtocol<block_type>;
+  using block_store_type          = storage::ObjectStore<BlockType>;
+  using block_store_protocol_type = storage::ObjectStoreProtocol<BlockType>;
   using block_sync_protocol_type =
-      storage::ObjectStoreSyncronisationProtocol<client_register_type, block_type>;
+      storage::ObjectStoreSyncronisationProtocol<client_register_type, BlockType>;
 
   using controller_type          = MainChainController;
   using controller_protocol_type = MainChainControllerProtocol;
