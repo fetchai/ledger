@@ -1506,7 +1506,7 @@ public:
     return ret;
   }
 
-  bool AllClose(ShapeLessArray const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
+  bool AllClose(ShapeLessArray const &other, double const &rtol = 1e-4, double const &atol = 1e-7,
                 bool ignoreNaN = true) const
   {
     std::size_t N = this->size();

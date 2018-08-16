@@ -9,7 +9,7 @@ namespace byte_array {
 void BuildByteArray(pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<ByteArray, fetch::byte_array::ConstByteArray>(module, "ByteArray")
+  py::class_<ByteArray, ConstByteArray>(module, "ByteArray")
       .def(py::init<>())
       .def(py::init<const char *>())
       .def(py::init<const std::string &>())
