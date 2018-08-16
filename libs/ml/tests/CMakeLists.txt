@@ -1,5 +1,5 @@
 ################################################################################
-# F E T C H   M A T H   T E S T S
+# F E T C H   M L   T E S T S
 ################################################################################
 cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 project(fetch-ml)
@@ -10,7 +10,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-#add_fetch_test(exp_test fetch-math math/test_exp.cpp)
 #add_fetch_test(spline_test fetch-math math/test_spline.cpp)
 #add_fetch_test(rectangular_load_save_test fetch-math math/rectangular_load_save_test.cpp)
 #add_fetch_test(shared_rectangular_array_test fetch-math math/shared_rectangular_array_test.cpp)
@@ -24,6 +23,7 @@ setup_compiler()
 #add_fetch_gtest(relu_test fetch-math math/kernels/relu)
 #add_fetch_gtest(sign_test fetch-math math/kernels/sign)
 #add_fetch_gtest(l2loss_test fetch-math math/shape_less_array/l2loss)
+add_fetch_gtest(layer_test fetch-ml ml/layers)
 #
 ## disabled / not working tests
 #add_fetch_test(load_image_read_exceptions_test fetch-math image/load_image_read_exceptions.cpp DISABLED)
