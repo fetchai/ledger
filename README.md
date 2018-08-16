@@ -22,7 +22,6 @@ make
 
 On Ubuntu
 =========
-
 sudo apt-get install libssl-dev cmake
 sudo apt-get install libpng-dev
 sudo apt-get install python-dev

@@ -12,3 +12,4 @@ setup_compiler()
 
 setup_library_examples(fetch-math)
 
+target_link_libraries(example_blas_dgemm PRIVATE pthread)
