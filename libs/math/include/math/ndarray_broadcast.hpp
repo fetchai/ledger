@@ -104,7 +104,6 @@ bool Broadcast(F function, NDArray<T, C> &a, NDArray<T ,C> &b, NDArray<T ,C> &c)
 
   ShapeFromBroadcast(a.shape(), b.shape(), cshape);
 
-  if (!c.CanReshape(cshape)) return false;
   c.ResizeFromShape(cshape);
 
   std::vector<std::vector<std::size_t>> rangeA, rangeB, rangeC;
