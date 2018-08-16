@@ -30,8 +30,8 @@ class MineNodeBasic
   // Main chain
   using BlockType = chain::MainChain::BlockType;
   using BlockHash = chain::MainChain::BlockHash;
-  using body_type  = chain::MainChain::BlockType::body_type;
-  using miner      = fetch::chain::consensus::DummyMiner;
+  using body_type = chain::MainChain::BlockType::body_type;
+  using miner     = fetch::chain::consensus::DummyMiner;
 
 public:
   explicit MineNodeBasic(network::NetworkManager tm, uint64_t minerNumber)
@@ -97,7 +97,7 @@ public:
   std::pair<bool, BlockType> ProvideHeader(BlockHash hash)
   {
     BlockType block;
-    bool       success = mainChain.Get(hash, block);
+    bool      success = mainChain.Get(hash, block);
 
     return std::make_pair(success, block);
   }
@@ -132,7 +132,7 @@ public:
 
         // Create another block sequential to previous
         BlockType nextBlock;
-        body_type  nextBody;
+        body_type nextBody;
         nextBody.block_number  = block.body().block_number + 1;
         nextBody.previous_hash = block.hash();
         nextBody.miner_number  = minerNumber_;
@@ -170,7 +170,7 @@ public:
   // HTTP functions to check that synchronisation was successful
   std::vector<BlockType> HeaviestChain() { return mainChain.HeaviestChain(); }
 
-  //std::pair<BlockType, std::vector<std::vector<BlockType>>> AllChain()
+  // std::pair<BlockType, std::vector<std::vector<BlockType>>> AllChain()
   //{
   //  return mainChain.AllChain();
   //}

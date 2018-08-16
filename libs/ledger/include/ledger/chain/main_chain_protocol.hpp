@@ -183,7 +183,7 @@ private:
 
   mutable mutex::Mutex          block_list_mutex_;
   std::vector<service::Promise> block_list_promises_;
-  std::vector<BlockType>       incoming_objects_;
+  std::vector<BlockType>        incoming_objects_;
 
   std::atomic<bool>     running_;
   std::atomic<uint32_t> max_size_;

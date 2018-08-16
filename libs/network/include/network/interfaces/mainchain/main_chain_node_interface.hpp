@@ -25,7 +25,7 @@ public:
   MainChainNodeInterface()          = default;
   virtual ~MainChainNodeInterface() = default;
 
-  virtual std::pair<bool, BlockType> GetHeader(const BlockHash &hash)  = 0;
+  virtual std::pair<bool, BlockType> GetHeader(const BlockHash &hash)   = 0;
   virtual std::vector<BlockType>     GetHeaviestChain(uint32_t maxsize) = 0;
 };
 

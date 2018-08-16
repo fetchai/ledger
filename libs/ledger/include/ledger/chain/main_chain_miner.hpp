@@ -17,8 +17,8 @@ namespace chain {
 class MainChainMiner
 {
 public:
-  using BlockType       = chain::MainChain::BlockType;
-  using BlockHash       = chain::MainChain::BlockHash;
+  using BlockType        = chain::MainChain::BlockType;
+  using BlockHash        = chain::MainChain::BlockHash;
   using body_type        = chain::MainChain::BlockType::body_type;
   using dummy_miner_type = fetch::chain::consensus::DummyMiner;
   using miner_type       = fetch::miner::MinerInterface;
@@ -98,7 +98,7 @@ private:
 
         // Create another block sequential to previous
         BlockType nextBlock;
-        body_type  nextBody;
+        body_type nextBody;
         nextBody.block_number  = block.body().block_number + 1;
         nextBody.previous_hash = block.hash();
         nextBody.miner_number  = minerNumber_;

@@ -44,7 +44,7 @@ public:
                        return this->Mainchain(params, req);
                      });
 
-    //HTTPModule::Post("/allchain",
+    // HTTPModule::Post("/allchain",
     //                 [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
     //                   return this->AllChain(params, req);
     //                 });
@@ -125,7 +125,7 @@ public:
     return http::HTTPResponse(ret.str());
   }
 
-  //http::HTTPResponse AllChain(http::ViewParameters const &params, http::HTTPRequest const &req)
+  // http::HTTPResponse AllChain(http::ViewParameters const &params, http::HTTPRequest const &req)
   //{
   //  auto chainArray = node_->AllChain();
 
