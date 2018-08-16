@@ -123,10 +123,10 @@ constexpr bool has_sse42()
 
 #if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || defined(__BIG_ENDIAN__)
 
-uint64_t EndianByteSwap64(uint64_t x) { return x; }
+inline uint64_t EndianByteSwap64(uint64_t x) { return x; }
 #elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || defined(__LITTLE_ENDIAN__)
 
-uint64_t EndianByteSwap64(uint64_t x) { return __builtin_bswap64(x); }
+inline uint64_t EndianByteSwap64(uint64_t x) { return __builtin_bswap64(x); }
 #else
 #error "Can't determine machine endianness"
 #endif
