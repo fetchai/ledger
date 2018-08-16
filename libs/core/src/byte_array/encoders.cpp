@@ -68,9 +68,9 @@ ConstByteArray ToHex(ConstByteArray const &str)
 // Reverse bits in byte
 uint8_t Reverse(uint8_t c)
 {
-  c = uint8_t( ((c & 0xF0) >> 4) | ((c & 0x0F) << 4) ) ;
-  c = uint8_t( ((c & 0xCC) >> 2) | ((c & 0x33) << 2) ) ;
-  c = uint8_t( ((c & 0xAA) >> 1) | ((c & 0x55) << 1) ) ;
+  c = uint8_t(((c & 0xF0) >> 4) | ((c & 0x0F) << 4));
+  c = uint8_t(((c & 0xCC) >> 2) | ((c & 0x33) << 2));
+  c = uint8_t(((c & 0xAA) >> 1) | ((c & 0x55) << 1));
   return c;
 }
 

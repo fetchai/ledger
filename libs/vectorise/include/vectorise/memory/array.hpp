@@ -31,7 +31,6 @@ public:
   using self_type  = Array<T, type_size>;
   using type       = T;
 
-  
   Array(std::size_t const &n)
   {
 
@@ -39,17 +38,15 @@ public:
 
     if (n > 0)
     {
-      this->pointer_ =  (type *)_mm_malloc(this->padded_size() * sizeof(type), 16);
+      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 16);
     }
-    
   }
 
-
-  ~Array() 
+  ~Array()
   {
-    if(this->pointer_ != nullptr) _mm_free(this->pointer_);
+    if (this->pointer_ != nullptr) _mm_free(this->pointer_);
   }
-  
+
   Array() = default;
 
   Array(Array &&other)
@@ -66,20 +63,16 @@ public:
     return *this;
   }
 
+  Array(Array const &other) : super_type() { this->operator=(other); }
 
-  Array(Array const &other)
-    : super_type() {
-    this->operator=(other);
-  }  
-  
   self_type &operator=(Array const &other)
   {
-    if(this->pointer_ != nullptr) _mm_free(this->pointer_);    
+    if (this->pointer_ != nullptr) _mm_free(this->pointer_);
     this->size_ = other.size();
 
     if (this->size_ > 0)
     {
-      this->pointer_ =  (type *)_mm_malloc(this->padded_size() * sizeof(type), 16);
+      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 16);
     }
 
     for (std::size_t i = 0; i < this->size_; ++i)
@@ -89,14 +82,11 @@ public:
     return *this;
   }
 
-
   self_type Copy() const
   {
-    self_type ret = *this;   
+    self_type ret = *this;
     return ret;
   }
-
-
 };
 }  // namespace memory
 }  // namespace fetch
