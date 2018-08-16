@@ -4,6 +4,7 @@
 
 #include <utility>
 #include <vector>
+#include <numeric>
 
 namespace fetch {
 namespace math {
@@ -18,11 +19,27 @@ public:
   using super_type           = ShapeLessArray<T, C>;
   using self_type            = NDArray<T, C>;
 
-  NDArray(std::size_t const &n = 0) : super_type(n) { size_ = 0; }
+  NDArray() : super_type(){};
+  NDArray(std::size_t const &n) : super_type(n) { size_ = 0; }
   NDArray(super_type const &arr) : super_type(arr) {}
   NDArray &operator=(NDArray const &other) = default;
   //  NDArray &operator=(NDArray &&other) = default;
 
+  /**
+   * Constructor builds an empty NDArray pre-initialiing with zeros from a vector of dimension
+   * lengths
+   * @param shape   vector of lengths for each dimension
+   */
+  NDArray(std::vector<std::size_t> const &dims = {0})
+      : super_type(
+      std::accumulate(std::begin(dims), std::end(dims), std::size_t(1), std::multiplies<>()))
+  {
+    this->LazyReshape(dims);
+    for (std::size_t idx = 0; idx < this->size(); ++idx)
+    {
+      this->operator[](idx) = 0;
+    }
+  }
   /**
    * Copies input data into current array
    *

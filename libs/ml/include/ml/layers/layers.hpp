@@ -11,17 +11,16 @@ namespace layers {
  * Special layer type that feeds data into the network; it has no weights matrix
  */
 template<typename DATA_TYPE>
-class InputLayer : public BaseLayer<DATA_TYPE, memory::SharedArray<DATA_TYPE>>
+class InputLayer : public BaseLayer<DATA_TYPE>
 {
   using container_type = memory::SharedArray<DATA_TYPE>;
-  using base_type = BaseLayer<DATA_TYPE, container_type>;
+  using base_type = BaseLayer<DATA_TYPE>;
 
  public:
 
-  InputLayer(std::size_t layer_size)
+  InputLayer(std::size_t layer_size) : base_type::BaseLayer(layer_size)
   {
-    // assign known sizes
-    this->layer_size_ = layer_size;
+
   }
 
   void AssignData(std::vector<DATA_TYPE> input_data)
@@ -44,11 +43,11 @@ class InputLayer : public BaseLayer<DATA_TYPE, memory::SharedArray<DATA_TYPE>>
  */
 //template<typename DATA_TYPE, typename CONTAINER_TYPE = memory::SharedArray<DATA_TYPE>>
 template<typename DATA_TYPE>
-class Layer : public BaseLayer<DATA_TYPE, memory::SharedArray<DATA_TYPE>>
+class Layer : public BaseLayer<DATA_TYPE>
 {
   using container_type = memory::SharedArray<DATA_TYPE>;
-  using base_type = BaseLayer<DATA_TYPE, container_type>;
-  using ndarray_type = math::NDArray<DATA_TYPE, container_type>;
+  using base_type = BaseLayer<DATA_TYPE>;
+  using ndarray_type = math::NDArray<DATA_TYPE>;
 
  public:
 
@@ -57,7 +56,7 @@ class Layer : public BaseLayer<DATA_TYPE, memory::SharedArray<DATA_TYPE>>
    * @param input_layer
    */
   Layer &operator=(Layer const &other) = default;
-  Layer(InputLayer<DATA_TYPE> &input_layer, std::size_t layer_size)
+  Layer(InputLayer<DATA_TYPE> &input_layer, std::size_t layer_size) : base_type(layer_size)
   {
     AssignLayerConnection(input_layer, layer_size);
   }
@@ -113,7 +112,7 @@ class Layer : public BaseLayer<DATA_TYPE, memory::SharedArray<DATA_TYPE>>
 
     // instantiate the weights matrix
     this->weights_matrix_ = ndarray_type(WeightsMatrixShape());
-    this->WeightsMatrix() = this->SetWeightsMatrix(this->weights_matrix_);
+    this->SetWeightsMatrix(this->weights_matrix_);
   }
 
   void InitialiseWeightsMatrix()
