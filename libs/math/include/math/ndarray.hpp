@@ -16,7 +16,7 @@ template <typename T, typename C = memory::SharedArray<T>>
 class NDArray : public ShapeLessArray<T, C>
 {
 public:
-  using type                 = T;
+  using data_type            = T;
   using container_type       = C;
   using vector_register_type = typename container_type::vector_register_type;
   using super_type           = ShapeLessArray<T, C>;
@@ -43,15 +43,10 @@ public:
    * lengths
    * @param shape   vector of lengths for each dimension
    */
-  NDArray(std::vector<std::size_t> const &dims = {0})
-    : super_type(
-          std::accumulate(std::begin(dims), std::end(dims), std::size_t(1), std::multiplies<>()))
+  NDArray(std::vector<std::size_t> const &dims)
   {
-    this->LazyReshape(dims);
-    for (std::size_t idx = 0; idx < this->size(); ++idx)
-    {
-      this->operator[](idx) = 0;
-    }
+    ResizeFromShape(dims);
+    this->SetAllZero();
   }
 
   /**
@@ -62,6 +57,17 @@ public:
 
   NDArray &operator=(NDArray const &other) = default;
   //  NDArray &operator=(NDArray &&other) = default;
+
+  static std::size_t SizeFromShape(std::vector<std::size_t> const& shape)
+  {
+    return std::accumulate(std::begin(shape), std::end(shape), std::size_t(1), std::multiplies<>());
+  }  
+
+  void ResizeFromShape(std::vector< std::size_t > const &shape)
+  {
+    this->Resize(self_type::SizeFromShape(shape));
+    this->Reshape(shape);
+  }
 
   /**
    * Copies input data into current array
@@ -145,24 +151,24 @@ public:
    * @return        the accessed data.
    *
    **/
-  type operator()(std::vector<std::size_t> indices) const
+  data_type operator()(std::vector<std::size_t> indices) const
   {
     assert(indices.size() == shape_.size());
     std::size_t  index = ComputeColIndex(indices);
     return this->operator[](index);
   }
-  type operator()(std::size_t index) const
+  data_type operator()(std::size_t index) const
   {
     assert(index == size_);
     return this->operator[](index);
   }
 
-  void Set(std::vector<std::size_t> indices, type val)
+  void Set(std::vector<std::size_t> indices, data_type val)
   {
     assert(indices.size() == shape_.size());
     this->AssignVal(ComputeColIndex(indices), val);
   }
-  type Get(std::vector<std::size_t> indices) const
+  data_type Get(std::vector<std::size_t> indices) const
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
@@ -270,9 +276,30 @@ public:
    * @return        shape_ is theshape of the array as a vector of size_t.
    *
    **/
-  std::vector<std::size_t> const &shape() const { return shape_; }
-
+  std::vector<std::size_t> const &shape() const { return shape_; } 
   std::size_t const &shape(std::size_t const &n) const { return shape_[n]; }
+
+  /**
+   * Returns the single maximum value in the array
+   * @return
+   */
+   data_type Max() const
+  {
+     return fetch::math::statistics::Max(*this);
+  }
+  data_type Max(std::size_t const axis) const
+  {
+    return fetch::math::statistics::Max(*this);
+  }
+
+  /**
+   * Returns the single minimum value in the array
+   * @return
+   */
+  data_type Min() const
+  {
+     return fetch::math::statistics::Min(*this);
+  }
 
 private:
   std::size_t ComputeRowIndex(std::vector<std::size_t> &indices) const

@@ -25,43 +25,34 @@ template <typename T, typename C>
 class NDArrayIterator
 {
 public:
-  using type         = T;
-  using ndarray_type = NDArray<T, C>;
+  using type = T;
+  using ndarray_type = NDArray< T, C >;
 
-  NDArrayIterator(ndarray_type &array, std::vector<std::vector<std::size_t>> const &step)
-    : array_(array)
+  /**
+   * default range assumes step 1 over whole array - useful for trivial cases
+   * @param array
+   */
+  NDArrayIterator(ndarray_type &array) : array_(array)
   {
-    assert(array.shape().size() == step.size());
-    std::size_t volume = 1;
-    size_              = 1;
-    position_          = 0;
-
-    for (std::size_t i = 0; i < step.size(); ++i)
+    std::vector<std::vector<std::size_t>> step{};
+    for (auto i : array.shape())
     {
-      auto const &    a = step[i];
-      NDIteratorRange s;
-      s.index = s.from = a[0];
-      s.to             = a[1];
-
-      if (a.size() > 2)
-      {
-        s.step = a[2];
-      }
-      s.volume         = volume;
-      std::size_t diff = (s.to - s.from);
-      s.total_steps    = diff / s.step;
-      if (s.total_steps * s.step < diff) ++s.total_steps;
-
-      s.total_steps *= s.step;
-      s.step_volume  = s.step * volume;
-      s.total_volume = (s.total_steps) * volume;
-
-      position_ += volume * s.from;
-      size_ *= s.total_steps;
-
-      volume *= array.shape(i);
-      ranges_.push_back(s);
+      step.push_back({0, i, 1});
     }
+    Setup(step);
+  }
+
+  /**
+   * Iterator for more interesting ranges
+   * @param array the NDArray to operate upon
+   * @param step the from,to,and step range objects
+   */
+  NDArrayIterator(ndarray_type &array,
+    std::vector< std::vector< std::size_t > > const &step)
+    :
+    array_(array)
+  {
+    Setup(step);
   }
 
   operator bool() { return is_valid_; }
@@ -158,6 +149,41 @@ protected:
   std::size_t                  total_runs_ = 1;
 
 private:
+  void Setup(std::vector< std::vector< std::size_t > > const &step)
+  {
+    assert(array_.shape().size() == step.size());
+    std::size_t volume = 1;
+    size_              = 1;
+    position_          = 0;
+
+    for (std::size_t i = 0; i < step.size(); ++i)
+    {
+      auto const &    a = step[i];
+      NDIteratorRange s;
+      s.index = s.from = a[0];
+      s.to             = a[1];
+
+      if (a.size() > 2)
+      {
+        s.step = a[2];
+      }
+      s.volume         = volume;
+      std::size_t diff = (s.to - s.from);
+      s.total_steps    = diff / s.step;
+      if (s.total_steps * s.step < diff) ++s.total_steps;
+
+      s.total_steps *= s.step;
+      s.step_volume  = s.step * volume;
+      s.total_volume = (s.total_steps) * volume;
+
+      position_ += volume * s.from;
+      size_ *= s.total_steps;
+
+      volume *= array_.shape(i);
+      ranges_.push_back(s);
+    }    
+  }
+
   ndarray_type &array_;
   std::size_t   position_ = 0;
 

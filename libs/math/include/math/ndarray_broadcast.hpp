@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math/ndarray_iterator.hpp"
+#include <assert.h>
 
 namespace fetch {
 namespace math {
@@ -95,15 +96,16 @@ bool UpgradeIteratorFromBroadcast(std::vector<std::size_t> const &a,
   return true;
 }
 
+
 template <typename F, typename T, typename C>
-bool Broadcast(F function, NDArray<T, C> &a, NDArray<T, C> &b, NDArray<T, C> &c)
+bool Broadcast(F function, NDArray<T, C> &a, NDArray<T ,C> &b, NDArray<T ,C> &c)
 {
   std::vector<std::size_t> cshape;
 
   ShapeFromBroadcast(a.shape(), b.shape(), cshape);
 
   if (!c.CanReshape(cshape)) return false;
-  c.Reshape(cshape);
+  c.ResizeFromShape(cshape);
 
   std::vector<std::vector<std::size_t>> rangeA, rangeB, rangeC;
   for (auto &i : a.shape())
@@ -146,7 +148,9 @@ bool Broadcast(F function, NDArray<T, C> &a, NDArray<T, C> &b, NDArray<T, C> &c)
   }
 
   return true;
+  
 }
+
 
 }  // namespace math
 }  // namespace fetch

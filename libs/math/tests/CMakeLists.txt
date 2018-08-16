@@ -10,8 +10,8 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(ndarray_iterator fetch-math math/ndarray_iterator.cpp)
-add_fetch_test(ndarray_broadcast fetch-math math/ndarray_broadcast.cpp)
+#add_fetch_test(ndarray_iterator fetch-math math/ndarray_iterator.cpp)
+#add_fetch_test(ndarray_broadcast fetch-math math/ndarray_broadcast.cpp)
 
 add_fetch_test(exp_test fetch-math math/test_exp.cpp)
 add_fetch_test(spline_test fetch-math math/test_spline.cpp)
@@ -27,6 +27,8 @@ add_fetch_test(distance_matrix_test fetch-math math/distance/distance_matrix.cpp
 
 add_fetch_gtest(ndarray_test fetch-math math/ndarray)
 add_fetch_gtest(ndarray_view_test fetch-math math/ndarray_view)
+add_fetch_gtest(ndarray_iterator_test fetch-math math/ndarray_iterator)
+add_fetch_gtest(ndarray_broadcast_test fetch-math math/ndarray_broadcast)
 
 add_fetch_gtest(relu_test fetch-math math/kernels/relu)
 add_fetch_gtest(sign_test fetch-math math/kernels/sign)
