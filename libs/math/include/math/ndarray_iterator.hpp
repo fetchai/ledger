@@ -30,6 +30,25 @@ public:
   using ndarray_type = NDArray< T, C >;
 
 
+  /**
+   * default range assumes step 1 over whole array - useful for trivial cases
+   * @param array
+   */
+  NDArrayIterator(ndarray_type &array) : array_(array)
+  {
+    std::vector<std::vector<std::size_t>> step{};
+    for (auto i : array.shape())
+    {
+      step.push_back({0, i, 1});
+    }
+    NDArrayIterator(array, step);
+  }
+
+  /**
+   * Iterator for more interesting ranges
+   * @param array the NDArray to operate upon
+   * @param step the from,to,and step range objects
+   */
   NDArrayIterator(ndarray_type &array,
     std::vector< std::vector< std::size_t > > const &step)
     :
@@ -125,7 +144,7 @@ public:
 
 #ifndef NDEBUG
     // Test
-    
+
     std::size_t ref = 0;
     for(auto &s: ranges_) {
       ref += s.volume*s.index;
@@ -136,7 +155,7 @@ public:
       TODO_FAIL("doesn't add up");
     }
     assert(ref == position_);
-#endif    
+#endif
 
     
     return *this;

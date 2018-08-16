@@ -5,7 +5,7 @@
 namespace fetch {
 namespace math {
 
-bool BroadcastShape( std::vector< std::size_t > const &a, std::vector< std::size_t > const &b, std::vector< std::size_t > &c) 
+bool BroadcastShape( std::vector<std::size_t> const &a, std::vector< std::size_t > const &b, std::vector< std::size_t > &c)
 {
   c.resize(std::max( a.size(), b.size() ) );
 
@@ -94,19 +94,17 @@ bool BroadcastIterator(std::vector< std::size_t > const &a, NDArrayIterator< T, 
 }
 
 
-template <typename F, typename T, typename C >
-bool Broadcast(F function, NDArray< T , C > &a, NDArray< T , C > &b, NDArray< T , C > &c  ) 
+template <typename F, typename T, typename C>
+bool Broadcast(F function, NDArray<T, C> &a, NDArray<T ,C> &b, NDArray<T ,C> &c)
 {
   std::vector< std::size_t > cshape;
 
-  BroadcastShape( a.shape(), b.shape(), cshape);
-
+  BroadcastShape(a.shape(), b.shape(), cshape);
 
   if(!c.CanReshape(cshape)) return false;  
-  c.Reshape( cshape );
+  c.Reshape(cshape);
 
-
-  std::vector< std::vector< std::size_t > > rangeA, rangeB, rangeC;
+  std::vector<std::vector<std::size_t>> rangeA, rangeB, rangeC;
   for(auto &i: a.shape())
   {
     rangeA.push_back({ 0,i});
