@@ -1,9 +1,8 @@
 #pragma once
 #include "math/ndarray.hpp"
 
-#include<vector>
-
-
+#include <vector>
+#include <cassert>
 
 class NDArrayView
 {

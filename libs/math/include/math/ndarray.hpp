@@ -28,9 +28,9 @@ public:
    * Constructor builds an NDArray with n elements initialized to 0
    * @param n   number of elements in array (no shape specified, assume 1-D)
    */
-  NDArray(std::size_t const &n ) : super_type(n)
+  NDArray(std::size_t const &n) : super_type(n)
   {
-    assert( this->size() == n);
+    assert(this->size() == n);
     this->LazyReshape({n});
     for (std::size_t idx = 0; idx < this->size(); ++idx)
     {
@@ -58,9 +58,7 @@ public:
    * Constructor builds an NDArray pre-initialising from a shapeless array
    * @param arr shapelessarray data set by defualt
    */
-  NDArray(super_type const &arr) : super_type(arr) {
-    this->LazyReshape({ arr.size() });
-  }
+  NDArray(super_type const &arr) : super_type(arr) { this->LazyReshape({arr.size()}); }
 
   NDArray &operator=(NDArray const &other) = default;
   //  NDArray &operator=(NDArray &&other) = default;
@@ -273,9 +271,9 @@ public:
    * @return        shape_ is theshape of the array as a vector of size_t.
    *
    **/
-  std::vector<std::size_t> const &shape() const { return shape_; } 
+  std::vector<std::size_t> const &shape() const { return shape_; }
 
-  std::size_t const &shape(std::size_t const &n) const { return shape_[n]; } 
+  std::size_t const &shape(std::size_t const &n) const { return shape_[n]; }
 
 private:
   std::size_t ComputeRowIndex(std::vector<std::size_t> &indices) const
