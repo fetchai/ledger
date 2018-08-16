@@ -78,5 +78,5 @@ void BuildSwarmAgentApi(pybind11::module &module)
       .def("HeaviestBlock", &PySwarm::HeaviestBlock);
 }
 
-};  // namespace swarm
-};  // namespace fetch
+}  // namespace swarm
+}  // namespace fetch

@@ -33,7 +33,7 @@ public:
 
   void SetProbability(float_type const &d)
   {
-    word_type w = word_type(d * word_type(-1));
+    word_type w = static_cast<word_type>(-d);
     if (d < 0) w = 0;
     if (d >= 1) w = word_type(-1);
 

@@ -77,7 +77,7 @@ protected:
     ASSERT_TRUE(inv_sig_enc.size() > 0);
 
     //* Modify the correct signature to invalidate it
-    inv_sig_enc[inv_sig_enc.size() - 1] += 1;
+    ++inv_sig_enc[inv_sig_enc.size() - 1u];
     ecdsa_signature_type wrong_signature{inv_sig_enc};
 
     const auto verification_result = wrong_signature.Verify(priv_key.publicKey(), test_data_);
@@ -125,7 +125,7 @@ protected:
     ASSERT_TRUE(inv_sig_enc.size() > 0);
 
     //* Modify the correct signature to invalidate it
-    inv_sig_enc[0] += 1;
+    ++inv_sig_enc[0];
 
     //* It is not possible to invalidate (format-wise) canonical or bin encoded
     // signature, since it
@@ -159,7 +159,7 @@ protected:
     ASSERT_TRUE(modified_data.size() > 0);
 
     //* Modify original data to make verification fail
-    modified_data[0] += 1;
+    ++modified_data[0];
 
     const auto verification_result = signature.Verify(priv_key.publicKey(), modified_data);
 

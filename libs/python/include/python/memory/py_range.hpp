@@ -34,5 +34,5 @@ void BuildRange(std::string const &custom_name, pybind11::module &module)
       .def("to", &Range::to);
 }
 
-};  // namespace memory
-};  // namespace fetch
+}  // namespace memory
+}  // namespace fetch

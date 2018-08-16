@@ -45,7 +45,7 @@ inline void BuildMeanStatistics(std::string const &custom_name, pybind11::module
       .def(custom_name.c_str(), &WrapperMean<ShapeLessArray<float>>)
       .def(custom_name.c_str(), &WrapperMean<NDArray<double>>)
       .def(custom_name.c_str(), &WrapperMean<NDArray<float>>);
-};
+}
 
 }  // namespace statistics
 }  // namespace math

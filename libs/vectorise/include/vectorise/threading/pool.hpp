@@ -111,5 +111,5 @@ private:
   std::condition_variable           condition_;
 };
 
-};  // namespace threading
-};  // namespace fetch
+}  // namespace threading
+}  // namespace fetch

@@ -45,7 +45,7 @@ inline void BuildMaxStatistics(std::string const &custom_name, pybind11::module 
       .def(custom_name.c_str(), &WrapperMax<ShapeLessArray<float>>)
       .def(custom_name.c_str(), &WrapperMax<NDArray<double>>)
       .def(custom_name.c_str(), &WrapperMax<NDArray<float>>);
-};
+}
 
 }  // namespace statistics
 }  // namespace math

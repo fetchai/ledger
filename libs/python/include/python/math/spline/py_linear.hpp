@@ -34,6 +34,7 @@ void BuildSpline(std::string const &custom_name, pybind11::module &module)
       .def("operator()", &Spline<T>::operator())
       .def("size", &Spline<T>::size);
 }
-};  // namespace spline
-};  // namespace math
-};  // namespace fetch
+
+}  // namespace spline
+}  // namespace math
+}  // namespace fetch

@@ -48,7 +48,7 @@ inline void BuildHammingDistance(std::string const &custom_name, pybind11::modul
       .def(custom_name.c_str(), &WrapperHamming<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperHamming<ShapeLessArray<double>>)
       .def(custom_name.c_str(), &WrapperHamming<ShapeLessArray<float>>);
-};
+}
 
 }  // namespace distance
 }  // namespace math

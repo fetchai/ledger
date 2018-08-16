@@ -36,7 +36,7 @@ inline typename A::type Mean(A const &a)
   type ret = a.data().in_parallel().Reduce(
       memory::TrivialRange(0, a.size()),
       [](vector_register_type const &a, vector_register_type const &b) { return a + b; });
-  ret /= a.size();
+  ret /= static_cast<type>(a.size());
 
   return ret;
 }

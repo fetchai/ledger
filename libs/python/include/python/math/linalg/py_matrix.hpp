@@ -160,6 +160,7 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
         a.Dot(b, c);
       });
 }
-};  // namespace linalg
-};  // namespace math
-};  // namespace fetch
+
+}  // namespace linalg
+}  // namespace math
+}  // namespace fetch

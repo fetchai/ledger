@@ -48,7 +48,7 @@ inline void BuildChebyshevDistance(std::string const &custom_name, pybind11::mod
       .def(custom_name.c_str(), &WrapperChebyshev<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperChebyshev<ShapeLessArray<double>>)
       .def(custom_name.c_str(), &WrapperChebyshev<ShapeLessArray<float>>);
-};
+}
 
 }  // namespace distance
 }  // namespace math

@@ -40,5 +40,6 @@ void BuildToken(pybind11::module &module)
       .def("type", &Token::type)
       .def("SetType", &Token::SetType);
 }
-};  // namespace byte_array
-};  // namespace fetch
+
+}  // namespace byte_array
+}  // namespace fetch

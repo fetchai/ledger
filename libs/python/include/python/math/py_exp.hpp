@@ -34,5 +34,6 @@ void BuildExp(std::string const &custom_name, pybind11::module &module)
       //    .def(py::self = py::self )
       .def("SetCoefficient", &Exp<N, C, O>::SetCoefficient);
 }
-};  // namespace math
-};  // namespace fetch
+
+}  // namespace math
+}  // namespace fetch

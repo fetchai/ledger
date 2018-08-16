@@ -44,7 +44,7 @@ inline void BuildStandardDeviationStatistics(std::string const &custom_name,
       .def(custom_name.c_str(), &WrapperStandardDeviation<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperStandardDeviation<ShapeLessArray<double>>)
       .def(custom_name.c_str(), &WrapperStandardDeviation<ShapeLessArray<float>>);
-};
+}
 
 }  // namespace statistics
 }  // namespace math

@@ -37,5 +37,6 @@ void BuildLinearCongruentialGenerator(pybind11::module &module)
                        LinearCongruentialGenerator::Seed)
       .def("AsDouble", &LinearCongruentialGenerator::AsDouble);
 }
-};  // namespace random
-};  // namespace fetch
+
+}  // namespace random
+}  // namespace fetch

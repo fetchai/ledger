@@ -225,6 +225,7 @@ private:
       {
       case '\n':
         ++line;
+        // Falls through.
       case '\t':
       case ' ':
       case '\r':

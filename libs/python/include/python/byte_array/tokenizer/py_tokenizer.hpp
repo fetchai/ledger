@@ -32,5 +32,6 @@ void BuildTokenizer(pybind11::module &module)
       .def("AddConsumer", &Tokenizer::AddConsumer);
   //    .def("CreateSubspace", &Tokenizer::CreateSubspace);
 }
-};  // namespace byte_array
-};  // namespace fetch
+
+}  // namespace byte_array
+}  // namespace fetch

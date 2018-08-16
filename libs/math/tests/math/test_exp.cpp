@@ -23,7 +23,7 @@
 #include "core/random/lcg.hpp"
 #include "math/exp.hpp"
 
-template <std::size_t N, std::size_t C>
+template <uint8_t N, uint64_t C>
 void test1(double max)
 {
   fetch::math::Exp<N, C> fexp;
@@ -43,7 +43,7 @@ void test1(double max)
   }
 }
 
-template <std::size_t N, std::size_t C, std::size_t MAX = 100000000>
+template <uint8_t N, uint64_t C, std::size_t MAX = 100000000>
 double test_timing(double x_value)
 {
   fetch::math::Exp<N, C> fexp;

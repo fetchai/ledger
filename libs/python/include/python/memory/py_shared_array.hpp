@@ -50,5 +50,6 @@ void BuildSharedArray(std::string const &custom_name, pybind11::module &module)
       .def("Copy", &SharedArray<T>::Copy)
       .def("size", [](SharedArray<T> const &o) { return o.size(); });
 }
-};  // namespace memory
-};  // namespace fetch
+
+}  // namespace memory
+}  // namespace fetch

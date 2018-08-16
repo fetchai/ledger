@@ -40,5 +40,6 @@ void BuildLaggedFibonacciGenerator(std::string const &custom_name, pybind11::mod
                LaggedFibonacciGenerator<P, Q>::Seed)
       .def("AsDouble", &LaggedFibonacciGenerator<P, Q>::AsDouble);
 }
-};  // namespace random
-};  // namespace fetch
+
+}  // namespace random
+}  // namespace fetch

@@ -288,13 +288,13 @@ struct Round
 template <typename type>
 struct Lround
 {
-  void operator()(type const &x, type &y) const { y = std::lround(x); }
+  void operator()(type const &x, type &y) const { y = static_cast<type>(std::lround(x)); }
 };
 
 template <typename type>
 struct Llround
 {
-  void operator()(type const &x, type &y) const { y = std::llround(x); }
+  void operator()(type const &x, type &y) const { y = static_cast<type>(std::llround(x)); }
 };
 
 template <typename type>
@@ -312,13 +312,13 @@ struct Rint
 template <typename type>
 struct Lrint
 {
-  void operator()(type const &x, type &y) const { y = std::lrint(x); }
+  void operator()(type const &x, type &y) const { y = static_cast<type>(std::lrint(x)); }
 };
 
 template <typename type>
 struct Llrint
 {
-  void operator()(type const &x, type &y) const { y = std::llrint(x); }
+  void operator()(type const &x, type &y) const { y = static_cast<type>(std::llrint(x)); }
 };
 
 template <typename type>

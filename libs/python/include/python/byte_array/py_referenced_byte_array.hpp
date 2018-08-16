@@ -54,5 +54,6 @@ void BuildByteArray(pybind11::module &module)
       .def("char_pointer", (char *(ByteArray::*)()) & ByteArray::char_pointer)
       .def("Reserve", &ByteArray::Reserve);
 }
-};  // namespace byte_array
-};  // namespace fetch
+
+}  // namespace byte_array
+}  // namespace fetch

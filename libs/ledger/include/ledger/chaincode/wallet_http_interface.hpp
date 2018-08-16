@@ -141,17 +141,15 @@ private:
 
   http::HTTPResponse OnTransfer(http::HTTPRequest const &request)
   {
-
     try
     {
-
       // parse the json request
       json::JSONDocument doc;
       doc.Parse(request.body());
 
       byte_array::ByteArray from;
       byte_array::ByteArray to;
-      uint64_t              amount;
+      uint64_t              amount = 0;
 
       // extract all the requeset parameters
       if (script::Extract(doc.root(), "from", from) && script::Extract(doc.root(), "to", to) &&

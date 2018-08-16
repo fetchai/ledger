@@ -60,5 +60,6 @@ void BuildConstByteArray(pybind11::module &module)
                ConstByteArray::Match)
       .def("size", &ConstByteArray::size);
 }
-};  // namespace byte_array
-};  // namespace fetch
+
+}  // namespace byte_array
+}  // namespace fetch

@@ -102,7 +102,7 @@ inline void BuildDistanceMatrixDistance(std::string const &custom_name, pybind11
   //    .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapeLessArray< double
   //    > >) .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapeLessArray<
   //    float > >);
-};
+}
 
 }  // namespace distance
 }  // namespace math

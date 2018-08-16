@@ -43,7 +43,7 @@ inline void BuildGeometricMeanStatistics(std::string const &custom_name, pybind1
       .def(custom_name.c_str(), &WrapperGeometricMean<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperGeometricMean<ShapeLessArray<double>>)
       .def(custom_name.c_str(), &WrapperGeometricMean<ShapeLessArray<float>>);
-};
+}
 
 }  // namespace statistics
 }  // namespace math

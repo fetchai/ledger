@@ -141,6 +141,8 @@ private:
     case eECDSAEncoding::DER:
       return Convert(public_key, group.get(), session, binaryDataFormat);
     }
+
+    return {};
   }
 
   static uniq_ptr_type<EC_POINT> Convert(byte_array::ConstByteArray const &key_data,
@@ -159,6 +161,8 @@ private:
           "ECDSAPublicKey::Convert(...): Conversion from "
           "DER encoded data is NOT implemented yet.");
     }
+
+    return {};
   }
 
   static byte_array::ByteArray Convert2Canonical(EC_POINT const *const           public_key,

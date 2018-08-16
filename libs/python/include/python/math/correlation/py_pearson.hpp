@@ -49,7 +49,7 @@ inline void BuildPearsonCorrelation(std::string const &custom_name, pybind11::mo
       .def(custom_name.c_str(), &WrapperPearson<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperPearson<ShapeLessArray<double>>)
       .def(custom_name.c_str(), &WrapperPearson<ShapeLessArray<float>>);
-};
+}
 
 }  // namespace correlation
 }  // namespace math

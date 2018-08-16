@@ -23,7 +23,7 @@
 namespace fetch {
 namespace random {
 
-template <typename W, int B, bool MSBF>
+template <typename W, uint8_t B, bool MSBF>
 void BuildBitMask(std::string const &custom_name, pybind11::module &module)
 {
 
@@ -32,5 +32,6 @@ void BuildBitMask(std::string const &custom_name, pybind11::module &module)
       .def(py::init<>()) /* No constructors found */
       .def("SetProbability", &BitMask<W, B, MSBF>::SetProbability);
 }
-};  // namespace random
-};  // namespace fetch
+
+}  // namespace random
+}  // namespace fetch

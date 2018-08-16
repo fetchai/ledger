@@ -229,7 +229,7 @@ public:
 
   /* Returns the absolute number of
    */
-  double const &block_occupancy() { return occupancy_; }
+  std::size_t const &block_occupancy() { return occupancy_; }
 
   /*
   std::vector< int16_t > const & block() const {
@@ -342,11 +342,12 @@ private:
     annealer_.Reset();
 
     annealer_.Resize(batch_size);
-    double max_fee = 0;
 
+    uint64_t max_fee = 0;
     for (std::size_t i = 0; i < batch_size; ++i)
     {
-      if (unspent_[i]->summary().fee > max_fee) max_fee = unspent_[i]->summary().fee;
+      if (unspent_[i]->summary().fee > max_fee)
+        max_fee = unspent_[i]->summary().fee;
     }
 
     for (std::size_t i = 0; i < batch_size; ++i)
@@ -380,7 +381,7 @@ private:
   block_index_map_type block_;
   block_fees_list_type block_fees_;
 
-  double      occupancy_            = 0.0;
+  std::size_t occupancy_            = 0;
   std::size_t lane_count_           = 0;
   uint32_t    log2_lane_count_      = 0;
   std::size_t batch_size_           = 0;

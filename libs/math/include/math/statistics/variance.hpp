@@ -43,7 +43,7 @@ inline typename A::type Variance(A const &a)
                                                 return d * d;
                                               });
 
-  ret /= a.size();
+  ret /= static_cast<type>(a.size());
 
   return ret;
 }

@@ -226,5 +226,6 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
         return result;
       });
 }
-};  // namespace math
-};  // namespace fetch
+
+}  // namespace math
+}  // namespace fetch

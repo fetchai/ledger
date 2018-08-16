@@ -43,7 +43,7 @@ inline void BuildVarianceStatistics(std::string const &custom_name, pybind11::mo
       .def(custom_name.c_str(), &WrapperVariance<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperVariance<ShapeLessArray<double>>)
       .def(custom_name.c_str(), &WrapperVariance<ShapeLessArray<float>>);
-};
+}
 
 }  // namespace statistics
 }  // namespace math

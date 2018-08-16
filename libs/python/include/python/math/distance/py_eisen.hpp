@@ -48,7 +48,7 @@ inline void BuildEisenDistance(std::string const &custom_name, pybind11::module 
       .def(custom_name.c_str(), &WrapperEisen<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperEisen<ShapeLessArray<double>>)
       .def(custom_name.c_str(), &WrapperEisen<ShapeLessArray<float>>);
-};
+}
 
 }  // namespace distance
 }  // namespace math

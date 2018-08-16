@@ -48,5 +48,6 @@ void BuildArray(std::string const &custom_name, pybind11::module &module)
       .def("pointer", &Array<T>::pointer)
       .def("size", &Array<T>::size);
 }
-};  // namespace memory
-};  // namespace fetch
+
+}  // namespace memory
+}  // namespace fetch

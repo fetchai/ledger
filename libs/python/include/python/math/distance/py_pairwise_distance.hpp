@@ -92,7 +92,7 @@ inline void BuildPairWiseDistanceDistance(std::string const &custom_name, pybind
   //    .def(custom_name.c_str(), &WrapperPairWiseDistance< ShapeLessArray<
   //    double > >) .def(custom_name.c_str(), &WrapperPairWiseDistance<
   //    ShapeLessArray< float > >);
-};
+}
 
 }  // namespace distance
 }  // namespace math

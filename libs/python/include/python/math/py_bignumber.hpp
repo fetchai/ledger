@@ -42,5 +42,6 @@ void BuildBigUnsigned(pybind11::module &module)
       .def("operator[]", &BigUnsigned::operator[])
       .def("operator<<=", &BigUnsigned::operator<<=);
 }
-};  // namespace math
-};  // namespace fetch
+
+}  // namespace math
+}  // namespace fetch

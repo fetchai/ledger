@@ -193,7 +193,7 @@ public:
    */
   void Rotate(double const &radians, type const fill = type())
   {
-    Rotate(radians, 0.5 * height(), 0.5 * width(), fill);
+    Rotate(radians, 0.5 * static_cast<double>(height()), 0.5 * static_cast<double>(width()), fill);
   }
 
   /* Rotates the array around a point.

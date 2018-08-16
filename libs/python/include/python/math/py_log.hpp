@@ -32,5 +32,6 @@ void BuildLog(pybind11::module &module)
     .def("operator()", &Log::operator());
 */
 }
-};  // namespace math
-};  // namespace fetch
+
+}  // namespace math
+}  // namespace fetch

@@ -335,5 +335,6 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
         return result;
       });
 }
-};  // namespace math
-};  // namespace fetch
+
+}  // namespace math
+}  // namespace fetch
