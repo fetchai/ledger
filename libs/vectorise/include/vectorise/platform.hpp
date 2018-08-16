@@ -121,14 +121,24 @@ constexpr bool has_sse42()
 #endif
 }
 
-#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || defined(__BIG_ENDIAN__)
+#if (defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN) || defined(__BIG_ENDIAN__)
 
-inline uint64_t EndianByteSwap64(uint64_t x) { return x; }
-#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || defined(__LITTLE_ENDIAN__)
+#define __MACHINE_IS_BIG_ENDIAN__
 
-inline uint64_t EndianByteSwap64(uint64_t x) { return __builtin_bswap64(x); }
+#elif (defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN) || defined(__LITTLE_ENDIAN__)
+
+#define __MACHINE_IS_NOT_BIG_ENDIAN__
+
 #else
 #error "Can't determine machine endianness"
+#endif
+
+#if defined(__MACHINE_IS_BIG_ENDIAN__)
+inline uint64_t EndianByteSwap64(uint64_t x) { return x; }
+#endif
+
+#if defined(__MACHINE_IS_NOT_BIG_ENDIAN__)
+inline uint64_t EndianByteSwap64(uint64_t x) { return __builtin_bswap64(x); }
 #endif
 
 inline int CountLeadingZeroes64(uint64_t x) { return __builtin_clzl(x); }
