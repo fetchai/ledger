@@ -5,7 +5,7 @@
 namespace fetch {
 namespace math {
 
-bool BroadcastShape( std::vector< std::size_t > const &a, std::vector< std::size_t > const &b, std::vector< std::size_t > &c) 
+bool ShapeFromBroadcast( std::vector< std::size_t > const &a, std::vector< std::size_t > const &b, std::vector< std::size_t > &c) 
 {
   c.resize(std::max( a.size(), b.size() ) );
 
@@ -56,7 +56,7 @@ bool BroadcastShape( std::vector< std::size_t > const &a, std::vector< std::size
 }
 
 template <typename T, typename C >
-bool BroadcastIterator(std::vector< std::size_t > const &a, NDArrayIterator< T, C> &iterator) 
+bool UpgradeIteratorFromBroadcast(std::vector< std::size_t > const &a, NDArrayIterator< T, C> &iterator) 
 {
   iterator.is_valid_ = false;
 
@@ -99,8 +99,7 @@ bool Broadcast(F function, NDArray< T , C > &a, NDArray< T , C > &b, NDArray< T 
 {
   std::vector< std::size_t > cshape;
 
-  BroadcastShape( a.shape(), b.shape(), cshape);
-
+  ShapeFromBroadcast( a.shape(), b.shape(), cshape);
 
   if(!c.CanReshape(cshape)) return false;  
   c.Reshape( cshape );
@@ -126,11 +125,11 @@ bool Broadcast(F function, NDArray< T , C > &a, NDArray< T , C > &b, NDArray< T 
   NDArrayIterator< T, C> it_b(b, rangeB);
   NDArrayIterator< T, C> it_c(c, rangeC);
 
-  if(!BroadcastIterator(cshape, it_a)) {
+  if(!UpgradeIteratorFromBroadcast(cshape, it_a)) {
     std::cout << "Could not promote iterator A" << std::endl;
     return false;
   }
-  if(!BroadcastIterator(cshape, it_b)) {
+  if(!UpgradeIteratorFromBroadcast(cshape, it_b)) {
     std::cout << "Could not promote iterator B" << std::endl;
     return false;
   }

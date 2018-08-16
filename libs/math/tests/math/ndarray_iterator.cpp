@@ -51,7 +51,7 @@ int main()
   
 
   NDArrayIterator< double, NDArray< double >::container_type > it3(array, {{1, 2}, {1, 4} });
-  if(!BroadcastIterator<double, NDArray< double >::container_type>({2, 2, 4, 3}, it3)) 
+  if(!UpgradeIteratorFromBroadcast<double, NDArray< double >::container_type>({2, 2, 4, 3}, it3)) 
   {
       std::cout << "Failed in broad casting" << std::endl;
       return 0;

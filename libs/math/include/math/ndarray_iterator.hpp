@@ -166,7 +166,7 @@ public:
 
 
   template< typename A, typename B>
-  friend bool BroadcastIterator(std::vector< std::size_t > const &, NDArrayIterator< A, B> &) ;    
+  friend bool UpgradeIteratorFromBroadcast(std::vector< std::size_t > const &, NDArrayIterator< A, B> &) ;    
 protected:
   std::vector< NDIteratorRange > ranges_;
   bool is_valid_ = true;
