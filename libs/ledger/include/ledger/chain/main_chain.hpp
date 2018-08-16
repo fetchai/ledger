@@ -20,11 +20,7 @@ struct hash<fetch::byte_array::ByteArray>
 {
   std::size_t operator()(const fetch::byte_array::ByteArray &k) const
   {
-    if (k.size() < 8)
-    {
-      fetch::logger.Warn("Key for byte array less than required: ", k.size());
-    }
-
+    assert(k.size() >= 8)
     return *reinterpret_cast<std::size_t const *>(k.pointer());
   }
 };
@@ -323,7 +319,7 @@ private:
     FlushBlock(block);
   }
 
-  void inline FlushBlock(BlockType const &block)
+  void FlushBlock(BlockType const &block)
   {
     {
       auto it = blockChain_.find(block.hash());
@@ -342,7 +338,7 @@ private:
     }
   }
 
-  inline bool GetPrev(BlockType &block)
+  bool GetPrev(BlockType &block)
   {
 
     if (block.body().previous_hash == block.hash())
@@ -362,7 +358,7 @@ private:
     return true;
   }
 
-  inline bool GetPrevFromStore(BlockType &block)
+  bool GetPrevFromStore(BlockType &block)
   {
     if (block.body().previous_hash == block.hash())
     {
