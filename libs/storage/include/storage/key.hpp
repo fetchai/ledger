@@ -41,7 +41,7 @@ struct Key
     // Force the byte array to fill the 64 bit key from 'left to right'
     for (std::size_t i = 0; i < BLOCKS; ++i)
     {
-      key_[i] = platform::EndianByteSwap64(key_reinterpret[i]);
+      key_[i] = platform::ConvertToBigEndian(key_reinterpret[i]);
     }
   }
 
@@ -100,7 +100,7 @@ struct Key
     // Force the byte array to fill the 64 bit key from 'left to right'
     for (std::size_t i = 0; i < BLOCKS; ++i)
     {
-      ret_reinterpret[i] = platform::EndianByteSwap64(key_[i]);
+      ret_reinterpret[i] = platform::ConvertToBigEndian(key_[i]);
     }
 
     return ret;
