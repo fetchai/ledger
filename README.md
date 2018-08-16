@@ -2,7 +2,7 @@ Configure git<a name="git_configuration"/>
 ==========================================
 It is necessary to configure your local git setup based on [this guide](https://github.com/uvue-git/docker-images/blob/master/README_git_setup.md), otherwise pulling the submodules might not work.
 
-
+  
 Docker - build, develop & run stuff in docker container<a name="docker"/>
 =========================================================================
 This project has full support for Docker - it is dedicated to be used for building whole project, execute resulting binaries and do whole development using docker, please see details in [this guide](https://github.com/uvue-git/docker-images/blob/master/README.md#guick_usage_guide).
@@ -22,7 +22,6 @@ make
 
 On Ubuntu
 =========
-
 sudo apt-get install libssl-dev cmake
 sudo apt-get install libpng-dev
 sudo apt-get install python-dev
