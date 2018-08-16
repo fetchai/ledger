@@ -20,7 +20,7 @@ struct hash<fetch::byte_array::ByteArray>
 {
   std::size_t operator()(const fetch::byte_array::ByteArray &k) const
   {
-    if(k.size() < 8)
+    if (k.size() < 8)
     {
       fetch::logger.Warn("Key for byte array less than required: ", k.size());
     }
@@ -34,21 +34,21 @@ namespace fetch {
 namespace chain {
 
 /**
-* Main chain contains and manages block headers. No verification of headers is
-* done, the structure will purely accept new headers and provide the current
-* heaviest chain. Tie breaks decided on a hash comparison.
-* The only high cost operation O(n) should be when adding
-* blocks that complete a lot of loose blocks.
-*
-* Note:
-*     All blocks added MUST have a valid hash and previous hash
-*
-* Loose blocks are blocks where the previous hash/block isn't found.
-* Tips keep track of all non loose chains.
-**/
+ * Main chain contains and manages block headers. No verification of headers is
+ * done, the structure will purely accept new headers and provide the current
+ * heaviest chain. Tie breaks decided on a hash comparison.
+ * The only high cost operation O(n) should be when adding
+ * blocks that complete a lot of loose blocks.
+ *
+ * Note:
+ *     All blocks added MUST have a valid hash and previous hash
+ *
+ * Loose blocks are blocks where the previous hash/block isn't found.
+ * Tips keep track of all non loose chains.
+ **/
 struct Tip
 {
-  uint64_t                     total_weight;
+  uint64_t total_weight;
 };
 
 class MainChain
@@ -83,10 +83,10 @@ public:
     }
   }
 
-  MainChain(MainChain const &rhs)            = delete;
-  MainChain(MainChain &&rhs)                 = delete;
+  MainChain(MainChain const &rhs) = delete;
+  MainChain(MainChain &&rhs)      = delete;
   MainChain &operator=(MainChain const &rhs) = delete;
-  MainChain &operator=(MainChain &&rhs)      = delete;
+  MainChain &operator=(MainChain &&rhs) = delete;
 
   bool AddBlock(BlockType &block, bool recursive_iteration = false)
   {
@@ -94,7 +94,7 @@ public:
 
     BlockType prev_block;
 
-    if(!recursive_iteration)
+    if (!recursive_iteration)
     {
       // First check if block already exists (not checking in object store)
       if (blockChain_.find(block.hash()) != blockChain_.end())
@@ -118,7 +118,7 @@ public:
       prev_block = (*it_prev).second;
 
       // Also a loose block if it points to a loose block
-      if(prev_block.loose() == true)
+      if (prev_block.loose() == true)
       {
         fetch::logger.Info("Block connects to loose block");
         NewLooseBlock(block);
@@ -131,7 +131,7 @@ public:
     }
 
     // At this point we have a new block with a prev that's known and not loose. Update tips
-    block.loose() = false;
+    block.loose()         = false;
     bool heaviestAdvanced = UpdateTips(block, prev_block);
 
     // Add block
@@ -146,7 +146,7 @@ public:
     // Now we're done, it's possible this added block completed some loose blocks.
     main_mutex_.unlock();
 
-    if(!recursive_iteration)
+    if (!recursive_iteration)
     {
       CompleteLooseBlocks(block);
     }
@@ -158,7 +158,7 @@ public:
   {
     std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
 
-    auto const &                         block = blockChain_.at(heaviest_.second);
+    auto const &block = blockChain_.at(heaviest_.second);
 
     return block;
   }
@@ -250,15 +250,15 @@ public:
 
 private:
   // Long term storage and backup
-  fetch::storage::ObjectStore<BlockType>  blockStore_;
-  const uint32_t                          blockConfirmation_ = 10;
-  const uint32_t                          minerNumber_;
-  bool                                    saving_to_file_ = false;
+  fetch::storage::ObjectStore<BlockType> blockStore_;
+  const uint32_t                         blockConfirmation_ = 10;
+  const uint32_t                         minerNumber_;
+  bool                                   saving_to_file_ = false;
 
-  mutable fetch::mutex::Mutex                          main_mutex_;
-  std::unordered_map<BlockHash, BlockType>             blockChain_;   // all recent blocks are here
-  std::unordered_map<BlockHash, std::shared_ptr<Tip>>  tips_;         // Keep track of the tips
-  std::pair<uint64_t, BlockHash>                       heaviest_;     // Heaviest block/tip
+  mutable fetch::mutex::Mutex                         main_mutex_;
+  std::unordered_map<BlockHash, BlockType>            blockChain_;  // all recent blocks are here
+  std::unordered_map<BlockHash, std::shared_ptr<Tip>> tips_;        // Keep track of the tips
+  std::pair<uint64_t, BlockHash>                      heaviest_;    // Heaviest block/tip
 
   mutable fetch::mutex::Mutex                          loose_mutex_;
   std::unordered_map<PrevHash, std::vector<BlockHash>> looseBlocks_;  // Waiting (loose) blocks
@@ -293,7 +293,7 @@ private:
 
     // Add confirmed blocks to file
     BlockType block  = blockChain_.at(heaviest_.second);
-    bool       failed = false;
+    bool      failed = false;
 
     // Find the block N back from our heaviest
     for (std::size_t i = 0; i < blockConfirmation_; ++i)
@@ -344,7 +344,7 @@ private:
   inline bool GetPrev(BlockType &block)
   {
 
-    if(block.body().previous_hash == block.hash())
+    if (block.body().previous_hash == block.hash())
     {
       return false;
     }
@@ -363,7 +363,7 @@ private:
 
   inline bool GetPrevFromStore(BlockType &block)
   {
-    if(block.body().previous_hash == block.hash())
+    if (block.body().previous_hash == block.hash())
     {
       return false;
     }
@@ -378,7 +378,7 @@ private:
     std::lock_guard<fetch::mutex::Mutex> lock(loose_mutex_);
 
     auto it = looseBlocks_.find(block.hash());
-    if(it == looseBlocks_.end())
+    if (it == looseBlocks_.end())
     {
       return;
     }
@@ -388,13 +388,13 @@ private:
 
     fetch::logger.Info("Found loose blocks completed by addition of block: ", blocks_to_add.size());
 
-    while(blocks_to_add.size() > 0)
+    while (blocks_to_add.size() > 0)
     {
       std::vector<BlockHash> next_blocks_to_add;
 
       // This is the breadth search, for each block to add, add it, next_blocks_to_add will
       // get pushed with the next layer of blocks
-      for(auto const &hash : blocks_to_add)
+      for (auto const &hash : blocks_to_add)
       {
         // This should be guaranteed safe
         BlockType addBlock = blockChain_.at(hash);
@@ -404,11 +404,11 @@ private:
 
         // The added block was not loose. Continue to clear
         auto it = looseBlocks_.find(addBlock.hash());
-        if(it != looseBlocks_.end())
+        if (it != looseBlocks_.end())
         {
           std::vector<BlockHash> const &next_blocks = (*it).second;
 
-          for(auto const &block_hash : next_blocks)
+          for (auto const &block_hash : next_blocks)
           {
             next_blocks_to_add.push_back(block_hash);
           }
@@ -426,7 +426,7 @@ private:
     // Get vector of waiting blocks and push ours on
     auto &waitingBlocks = looseBlocks_[block.body().previous_hash];
     waitingBlocks.push_back(block.hash());
-    block.loose() = true;
+    block.loose()             = true;
     blockChain_[block.hash()] = block;
   }
 
@@ -439,7 +439,7 @@ private:
     BlockType walk_block;
     BlockType prev_block;
 
-    if(!blockStore_.Get(storage::ResourceID(block.body().previous_hash), prev_block))
+    if (!blockStore_.Get(storage::ResourceID(block.body().previous_hash), prev_block))
     {
       std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
       fetch::logger.Info("Didn't find block's previous, adding as loose block");
@@ -448,11 +448,11 @@ private:
     }
 
     // The previous block is in our object store but we don't know its weight, need to recalculate
-    walk_block = prev_block;
+    walk_block            = prev_block;
     uint64_t total_weight = walk_block.totalWeight();
 
     // walk block should reach genesis walking back
-    while(GetPrevFromStore(walk_block))
+    while (GetPrevFromStore(walk_block))
     {
       total_weight += walk_block.weight();
     }
@@ -462,8 +462,8 @@ private:
     fetch::logger.Info("Reviving block from file");
     {
       std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
-      prev_block.totalWeight() = total_weight;
-      prev_block.loose() = false;
+      prev_block.totalWeight()       = total_weight;
+      prev_block.loose()             = false;
       blockChain_[prev_block.hash()] = prev_block;
     }
 
@@ -484,13 +484,13 @@ private:
       tips_.erase(tipRef);
       tip->total_weight += block.weight();
       block.totalWeight() = tip->total_weight;
-      block.loose() = false;
+      block.loose()       = false;
 
       fetch::logger.Info("Mainchain: Pushing block onto already existing tip:");
 
       // Update heaviest pointer if necessary
-      if ((tip->total_weight > heaviest_.first)
-        || ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)))
+      if ((tip->total_weight > heaviest_.first) ||
+          ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)))
       {
         fetch::logger.Info("Mainchain: Updating heaviest with tip");
 
@@ -500,18 +500,18 @@ private:
         heaviestAdvanced = true;
       }
     }
-    else // Didn't find a corresponding tip
+    else  // Didn't find a corresponding tip
     {
       // We are not building on a tip, create a new tip
       fetch::logger.Info("Mainchain: Received new block with no corresponding tip");
 
       block.totalWeight() = block.weight() + prev_block.totalWeight();
-      tip = std::make_shared<Tip>();
-      tip->total_weight = block.totalWeight();
+      tip                 = std::make_shared<Tip>();
+      tip->total_weight   = block.totalWeight();
 
       // Check if this advanced the heaviest tip
-      if ((tip->total_weight > heaviest_.first)
-        || ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)))
+      if ((tip->total_weight > heaviest_.first) ||
+          ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)))
       {
         fetch::logger.Info("Mainchain: creating new tip that is now heaviest! (new fork)");
 
@@ -528,7 +528,6 @@ private:
 
     return heaviestAdvanced;
   }
-
 };
 
 }  // namespace chain
