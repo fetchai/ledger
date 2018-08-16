@@ -115,8 +115,8 @@ int main(int argc, char const **argv)
           }
 
           uint16_t const main_chain_port = static_cast<uint16_t>(port + 1);
-          uint16_t const lane0_port = static_cast<uint16_t>(port + 2u);
-          uint16_t const lane1_port = static_cast<uint16_t>(port + 3u);
+          uint16_t const lane0_port      = static_cast<uint16_t>(port + 2u);
+          uint16_t const lane1_port      = static_cast<uint16_t>(port + 3u);
 
           std::cout << "addmc mainchain " << main_chain_port << std::endl;
           std::cout << "addl 0 lane0 " << lane0_port << std::endl;

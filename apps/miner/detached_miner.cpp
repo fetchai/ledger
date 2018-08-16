@@ -224,7 +224,7 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
 
 static void PrintSummary(std::size_t const &slice_count)
 {
-  uint64_t total_fee = 0;
+  uint64_t    total_fee = 0;
   std::size_t total_txs = 0;
   for (auto const &e : generator.block_fees()) total_fee += e;
   for (auto const &slice : generator.block())
@@ -233,7 +233,8 @@ static void PrintSummary(std::size_t const &slice_count)
   }
 
   std::size_t const capacity = slice_count * generator.lane_count();
-  double const occupancy_pc  = (100. * static_cast<double>(generator.block_occupancy())) / static_cast<double>(capacity);
+  double const      occupancy_pc =
+      (100. * static_cast<double>(generator.block_occupancy())) / static_cast<double>(capacity);
 
   std::cout << "Fee: " << total_fee << " Txs: " << total_txs << " / " << capacity << " ("
             << occupancy_pc << "%)" << std::endl;

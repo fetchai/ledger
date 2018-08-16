@@ -346,8 +346,7 @@ private:
     uint64_t max_fee = 0;
     for (std::size_t i = 0; i < batch_size; ++i)
     {
-      if (unspent_[i]->summary().fee > max_fee)
-        max_fee = unspent_[i]->summary().fee;
+      if (unspent_[i]->summary().fee > max_fee) max_fee = unspent_[i]->summary().fee;
     }
 
     for (std::size_t i = 0; i < batch_size; ++i)
