@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math/ndarray_iterator.hpp"
+#include <assert.h>
 
 namespace fetch {
 namespace math {
@@ -146,6 +147,38 @@ bool Broadcast(F function, NDArray<T, C> &a, NDArray<T ,C> &b, NDArray<T ,C> &c)
   
 }
 
+
+/**
+ * utility function for calculating the shape of a broadcast output
+ * @tparam T
+ * @tparam C
+ * @param a
+ * @param b
+ * @return
+ */
+template <typename T, typename C>
+std::vector<std::size_t> GetBroadcastShape(NDArray<T, C> &a, NDArray<T, C> &b)
+{
+  std::vector<std::size_t> ret_shape;
+  BroadcastShape(a.shape(), b.shape(), ret_shape);
+  return ret_shape;
+}
+
+/**
+ * utility function for calculating the size of a broadcast output
+ * @tparam T
+ * @tparam C
+ * @param a
+ * @param b
+ * @return
+ */
+template <typename T, typename C>
+std::size_t GetBroadcastSize(NDArray<T, C> &a, NDArray<T, C> &b)
+{
+  std::vector<std::size_t> ret_shape = GetBroadcastShape(a, b);
+  return std::accumulate(std::begin(ret_shape), std::end(ret_shape), std::size_t(1), std::multiplies<>());
+
+}
 
 }
 }

@@ -20,7 +20,7 @@ TEST(ndarray, simple_broadcast_test)
   NDArray<double> b{a};
   b.Reshape({b.size(), 1});
 
-  NDArray<double> ret = NDArray<double>::Zeros(a.size() * b.size());
+  NDArray<double> ret = NDArray<double>::Zeros(GetBroadcastSize(a, b));
 
   ASSERT_TRUE(Broadcast([](double const &x, double const&y) { return x + y; }, a, b, ret));
 
@@ -31,7 +31,6 @@ TEST(ndarray, simple_broadcast_test)
       ASSERT_TRUE(ret.Get({i, j}) == i + j);
     }
   }
-
 }
 
 TEST(ndarray, broadcast_3D_test)
@@ -41,7 +40,7 @@ TEST(ndarray, broadcast_3D_test)
   NDArray<double> b = NDArray<double>::Arange(0, 21, 1);
   b.Reshape({7, 3, 1});
 
-  NDArray<double> ret = NDArray<double>::Zeros(a.size() * 7);
+  NDArray<double> ret = NDArray<double>::Zeros(GetBroadcastSize(a, b));
 
   ASSERT_TRUE(Broadcast([](double const &x, double const&y) { return x + y; }, a, b, ret));
 
@@ -59,5 +58,4 @@ TEST(ndarray, broadcast_3D_test)
       }
     }
   }
-
 }
