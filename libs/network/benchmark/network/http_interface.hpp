@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "./network_classes.hpp"
+#include "network_classes.hpp"
 #include "core/logger.hpp"
 #include "core/script/variant.hpp"
 #include "http/middleware/allow_origin.hpp"

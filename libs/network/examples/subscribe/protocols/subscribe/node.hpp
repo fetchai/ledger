@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 //#include"network/service/client.hpp"
-#include "./protocol.hpp"
+#include "protocol.hpp"
 #include "network/service/publication_feed.hpp"
 
 namespace fetch {

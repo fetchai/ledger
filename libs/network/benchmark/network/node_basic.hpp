@@ -30,10 +30,10 @@
 #include <utility>
 #include <vector>
 
-#include "../tests/include/helper_functions.hpp"
-#include "./network_classes.hpp"
-#include "./node_directory.hpp"
-#include "./transaction_list.hpp"
+#include "helper_functions.hpp"
+#include "network_classes.hpp"
+#include "node_directory.hpp"
+#include "transaction_list.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
 #include "core/random/lfg.hpp"

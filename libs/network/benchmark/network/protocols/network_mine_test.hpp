@@ -17,4 +17,4 @@
 //
 //------------------------------------------------------------------------------
 
-#include "./network_mine_test/protocol.hpp"
+#include "network_mine_test/protocol.hpp"

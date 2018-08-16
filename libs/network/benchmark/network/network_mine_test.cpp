@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "../tests/include/helper_functions.hpp"
-#include "./mine_node_basic.hpp"
-#include "./network_mine_test_service.hpp"
+#include "helper_functions.hpp"
+#include "mine_node_basic.hpp"
+#include "network_mine_test_service.hpp"
 #include "network/management/network_manager.hpp"
 
 using namespace fetch;

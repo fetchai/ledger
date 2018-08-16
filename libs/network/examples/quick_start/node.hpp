@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "./protocols/fetch_protocols.hpp"
-#include "./protocols/quick_start/protocol.hpp"  // defines our quick start protocol
+#include "protocols/fetch_protocols.hpp"
+#include "protocols/quick_start/protocol.hpp"  // defines our quick start protocol
 #include "network/service/client.hpp"
 
 namespace fetch {

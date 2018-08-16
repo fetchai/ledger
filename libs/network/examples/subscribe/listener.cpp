@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "./protocols/fetch_protocols.hpp"
-#include "./protocols/subscribe/commands.hpp"
+#include "protocols/fetch_protocols.hpp"
+#include "protocols/subscribe/commands.hpp"
 #include "network/service/client.hpp"
 #include "network/service/function.hpp"
 #include <iostream>

@@ -19,7 +19,7 @@
 
 #include "network/service/protocol.hpp"
 
-#include "./commands.hpp"
+#include "commands.hpp"
 
 namespace fetch {
 namespace protocols {

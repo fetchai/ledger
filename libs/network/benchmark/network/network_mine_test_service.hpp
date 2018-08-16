@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "../tests/include/helper_functions.hpp"
-#include "./mine_test_http_interface.hpp"
-#include "./protocols/fetch_protocols.hpp"
-#include "./protocols/network_mine_test.hpp"
+#include "helper_functions.hpp"
+#include "mine_test_http_interface.hpp"
+#include "protocols/fetch_protocols.hpp"
+#include "protocols/network_mine_test.hpp"
 #include "core/logger.hpp"
 #include "http/server.hpp"
 #include "network/service/server.hpp"

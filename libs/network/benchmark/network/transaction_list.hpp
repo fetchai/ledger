@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "../tests/include/helper_functions.hpp"
+#include "helper_functions.hpp"
 #include "crypto/fnv.hpp"
 #include <set>
 #include <type_traits>

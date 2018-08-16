@@ -18,7 +18,7 @@
 
 #include <iostream>
 
-#include "./subscribe_service.hpp"
+#include "subscribe_service.hpp"
 #include "network/management/network_manager.hpp"
 
 using namespace fetch;

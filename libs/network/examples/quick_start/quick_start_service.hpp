@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "./node.hpp"
-#include "./protocols/fetch_protocols.hpp"  // defines QUICK_START enum
+#include "node.hpp"
+#include "protocols/fetch_protocols.hpp"  // defines QUICK_START enum
 #include "core/logger.hpp"
 #include "network/service/server.hpp"
 #include <memory>

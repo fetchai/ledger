@@ -24,7 +24,7 @@
 #include "network/service/client.hpp"
 #include "network/service/server.hpp"
 
-#include "../tests/include/helper_functions.hpp"
+#include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 
