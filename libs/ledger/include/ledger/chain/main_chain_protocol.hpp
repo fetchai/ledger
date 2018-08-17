@@ -38,6 +38,7 @@ public:
     GET_HEADER         = 1,
     GET_HEAVIEST_CHAIN = 2,
     BLOCK_PUBLISH      = 3,
+    GET_B              = 4,
   };
 
   MainChainProtocol(protocol_number_type const &p, register_type r, thread_pool_type nm,
@@ -53,6 +54,7 @@ public:
   {
     this->Expose(GET_HEADER, this, &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this, &self_type::GetHeaviestChain);
+    this->Expose(GET_B, this, &self_type::GetB);
 
     this->RegisterFeed(BLOCK_PUBLISH, this);
     max_size_ = 100;
@@ -277,15 +279,24 @@ private:
             [this,blkhash](std::shared_ptr<fetch::service::ServiceClient> client){
               LOG_STACK_TRACE_POINT;
 
-              fetch::logger.Warn("ERK hash=", ToHex(blkhash));
+              fetch::logger.Warn("ERK hash=", ToBase64(blkhash));
 
-              auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_HEADER, blkhash, 1);
+              //auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_HEADER, blkhash, uint16_t(77));
+              auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_B, ToBase64(blkhash));
               prom.Then([this, prom](){
                   LOG_STACK_TRACE_POINT;
-                  std::pair<bool, block_type> block;
-                  prom.As(block);
-                  this -> pending_blocks_.Add(block.second);
-                  this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
+                  std::pair<bool, block_type> result;
+                  prom.As(result);
+                  if (result.first)
+                  {
+                    this -> pending_blocks_.Add(result.second);
+                    fetch::logger.Warn("ERK posting catchup block:", ToBase64(result.second.hash()));
+                    this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
+                  }
+                  else
+                  {
+                    fetch::logger.Error("ERK dint have block!");
+                  }
                 });
               prom.Else([blkhash](){
                   fetch::logger.Error("Something went wrong: ", typeid(blkhash).name() );
@@ -318,6 +329,15 @@ private:
       fetch::logger.Debug("GetHeader not found");
       return std::make_pair(false, block);
     }
+  }
+
+  std::pair<bool, block_type> GetB(const std::string &s)
+  {
+    fetch::logger.Debug("ERK! GetB ", s);
+
+    std::pair<bool, block_type> r;
+    r.first = false;
+    return r;
   }
 
   std::vector<block_type> GetHeaviestChain(uint32_t const &maxsize)
