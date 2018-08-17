@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/main_chain_details.hpp"
@@ -114,7 +131,7 @@ private:
     if (register_.number_of_services() == 0)
     {
       thread_pool_->Post([this]() { this->IdleUntilPeers(); },
-                         1000);  // TODO: Make time variable
+                         1000);  // TODO(issue 7): Make time variable
     }
     else
     {
@@ -269,6 +286,56 @@ private:
       this -> thread_pool_ -> Post([this]() { this -> ForwardBlocks(); });
     }
   }
+
+#if 0
+  void RealisePromises()
+  {
+    if (!running_) return;
+    std::lock_guard<mutex::Mutex> lock(block_list_mutex_);
+    incoming_objects_.reserve(uint64_t(max_size_));
+
+    for (auto &p : block_list_promises_)
+    {
+
+      if (!running_) return;
+
+      incoming_objects_.clear();
+      if (!p.Wait(100, false))
+      {
+        continue;
+      }
+
+      p.template As<std::vector<block_type>>(incoming_objects_);
+
+      if (!running_) return;
+      std::lock_guard<mutex::Mutex> lock(mutex_);
+
+      bool                  loose = false;
+      byte_array::ByteArray blockId;
+
+      byte_array::ByteArray prevHash;
+      for (auto &block : incoming_objects_)
+      {
+        block.UpdateDigest();
+        chain_->AddBlock(block);
+        prevHash = block.prev();
+        loose    = block.loose();
+      }
+      if (loose)
+      {
+        fetch::logger.Warn("Loose block");
+        TODO("Make list with missing blocks: ", prevHash);
+      }
+    }
+
+    block_list_promises_.clear();
+    if (running_)
+    {
+      thread_pool_->Post([this]() { this->IdleUntilPeers(); },
+                         5000);  // TODO(issue 7): Set from parameter
+    }
+  }
+#endif
 
   /// @}
 

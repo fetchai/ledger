@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "swarm_karma_peer.hpp"
 #include <iostream>
@@ -20,20 +37,20 @@ public:
 
   virtual ~SwarmKarmaPeers() {}
 
-  bool empty() const { return peers.empty(); }
+  bool empty() const { return peers_.empty(); }
 
   template <class KEY>
   peers_list_type::iterator Find(const KEY &key)
   {
     lock_type mlock(mutex_);
-    return std::find(peers.begin(), peers.end(), key);
+    return std::find(peers_.begin(), peers_.end(), key);
   }
 
   template <class KEY>
   peers_list_type::const_iterator Find(const KEY &key) const
   {
     lock_type mlock(mutex_);
-    return std::find(peers.begin(), peers.end(), key);
+    return std::find(peers_.begin(), peers_.end(), key);
   }
 
   template <class KEY>
@@ -41,7 +58,7 @@ public:
   {
     lock_type                 mlock(mutex_);
     peers_list_type::iterator it = Find(key);
-    if (it != peers.end())
+    if (it != peers_.end())
     {
       it->AddKarma(change);
     }
@@ -52,7 +69,7 @@ public:
   {
     lock_type                 mlock(mutex_);
     peers_list_type::iterator it = Find(key);
-    return it != peers.end();
+    return it != peers_.end();
   }
 
   template <class KEY>
@@ -60,7 +77,7 @@ public:
   {
     lock_type                 mlock(mutex_);
     peers_list_type::iterator it = Find(key);
-    if (it != peers.end())
+    if (it != peers_.end())
     {
       return it->GetCurrentKarma();
     }
@@ -70,7 +87,7 @@ public:
   void Age() const
   {
     lock_type mlock(mutex_);
-    for (auto &peer : peers)
+    for (auto &peer : peers_)
     {
       peer.Age();
     }
@@ -79,7 +96,7 @@ public:
   void Sort() const
   {
     lock_type mlock(mutex_);
-    std::sort(peers.begin(), peers.end());
+    std::sort(peers_.begin(), peers_.end());
   }
 
   std::list<SwarmKarmaPeer> GetBestPeers(uint32_t n, double minKarma = 0.0) const
@@ -89,7 +106,7 @@ public:
     Age();
     Sort();
 
-    for (auto &peer : peers)
+    for (auto &peer : peers_)
     {
       if (results.size() == n)
       {
@@ -109,9 +126,9 @@ public:
   {
     lock_type                 mlock(mutex_);
     peers_list_type::iterator it = Find(peer);
-    if (it == peers.end())
+    if (it == peers_.end())
     {
-      peers.push_back(SwarmKarmaPeer(peer, karma));
+      peers_.push_back(SwarmKarmaPeer(peer, karma));
     }
     else
     {
@@ -123,9 +140,9 @@ public:
   {
     lock_type                 mlock(mutex_);
     peers_list_type::iterator it = Find(host);
-    if (it == peers.end())
+    if (it == peers_.end())
     {
-      peers.push_back(SwarmKarmaPeer(host, karma));
+      peers_.push_back(SwarmKarmaPeer(host, karma));
     }
     else
     {
@@ -140,7 +157,7 @@ public:
     Sort();
 
     uint32_t i = 0;
-    for (auto peer : peers)
+    for (auto peer : peers_)
     {
       if (i == n)
       {
@@ -148,7 +165,7 @@ public:
       }
       i++;
     }
-    return peers.back();
+    return peers_.back();
   }
 
   SwarmKarmaPeers(SwarmKarmaPeers &rhs)  = delete;
@@ -157,7 +174,7 @@ public:
   SwarmKarmaPeers operator=(SwarmKarmaPeers &&rhs) = delete;
 
 protected:
-  mutable peers_list_type peers;
+  mutable peers_list_type peers_;
   std::string             ident_;
   mutable mutex_type      mutex_;
 };

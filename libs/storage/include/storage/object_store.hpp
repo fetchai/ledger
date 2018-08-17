@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
@@ -10,13 +28,16 @@ namespace fetch {
 namespace storage {
 
 /**
- * Stores objects of type T using ResourceID as a key, writing to disk, hence the New/Load
+ * Stores objects of type T using ResourceID as a key, writing to disk, hence
+ * the New/Load
  * functions.
  *
- * Note that you should be using ResourceAddress to hash to a ResourceID otherwise you will
+ * Note that you should be using ResourceAddress to hash to a ResourceID
+ * otherwise you will
  * get key collisions. See the test object_store.cpp for usage
  *
- * Since the objects are stored to disk, you must have defined a serializer and deserializer for
+ * Since the objects are stored to disk, you must have defined a serializer and
+ * deserializer for
  * the type T you want to store. See object_store.cpp for an example
  *
  * S is the document store's underlying block size
@@ -29,10 +50,11 @@ public:
   using type            = T;
   using self_type       = ObjectStore<T, S>;
   using serializer_type = serializers::TypedByteArrayBuffer;
-  class iterator;
+  class Iterator;
 
   /**
-   * Create a new file for the object store with the filename parameters for the document,
+   * Create a new file for the object store with the filename parameters for the
+   * document,
    * and the index to it.
    *
    * If these arguments correspond to existing files, it will overwrite them
@@ -43,7 +65,8 @@ public:
   }
 
   /**
-   * Load a file into the document store with the filename parameters for the document,
+   * Load a file into the document store with the filename parameters for the
+   * document,
    * and the index to it
    */
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
@@ -92,7 +115,8 @@ public:
   }
 
   /**
-   * Obtain a lock then execute closure to reduce overhead from requiring multiple locks to be
+   * Obtain a lock then execute closure to reduce overhead from requiring
+   * multiple locks to be
    * acquired
    *
    * @param: f The closure
@@ -104,7 +128,8 @@ public:
   }
 
   /**
-   * Do a get without locking the structure, do this when it is guaranteed you have locked (using
+   * Do a get without locking the structure, do this when it is guaranteed you
+   * have locked (using
    * WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
@@ -123,7 +148,8 @@ public:
   }
 
   /**
-   * Do a has without locking the structure, do this when it is guaranteed you have locked (using
+   * Do a has without locking the structure, do this when it is guaranteed you
+   * have locked (using
    * WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
@@ -138,7 +164,8 @@ public:
   }
 
   /**
-   * Do a set without locking the structure, do this when it is guaranteed you have locked (using
+   * Do a set without locking the structure, do this when it is guaranteed you
+   * have locked (using
    * WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
@@ -149,29 +176,30 @@ public:
   {
     serializer_type ser;
     ser << object;
-
     store_.Set(rid, ser.data());
   }
 
   /**
-   * STL-like functionality achieved with an iterator class. This has to wrap an iterator to the
-   * KeyByteArrayStore since we need to deserialize at this level to return the object
+   * STL-like functionality achieved with an iterator class. This has to wrap an
+   * iterator to the
+   * KeyByteArrayStore since we need to deserialize at this level to return the
+   * object
    */
-  class iterator
+  class Iterator
   {
   public:
-    iterator(typename KeyByteArrayStore<S>::iterator it) : wrapped_iterator_{it} {}
-    iterator()                    = default;
-    iterator(iterator const &rhs) = default;
-    iterator(iterator &&rhs)      = default;
-    iterator &operator=(iterator const &rhs) = default;
-    iterator &operator=(iterator &&rhs) = default;
+    Iterator(typename KeyByteArrayStore<S>::Iterator it) : wrapped_iterator_{it} {}
+    Iterator()                    = default;
+    Iterator(Iterator const &rhs) = default;
+    Iterator(Iterator &&rhs)      = default;
+    Iterator &operator=(Iterator const &rhs) = default;
+    Iterator &operator=(Iterator &&rhs) = default;
 
     void operator++() { ++wrapped_iterator_; }
 
-    bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
+    bool operator==(Iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
 
-    bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
+    bool operator!=(Iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
 
     /**
      * Dereference operator
@@ -190,18 +218,19 @@ public:
     }
 
   protected:
-    typename KeyByteArrayStore<S>::iterator wrapped_iterator_;
+    typename KeyByteArrayStore<S>::Iterator wrapped_iterator_;
   };
 
-  self_type::iterator Find(ResourceID const &rid)
+  self_type::Iterator Find(ResourceID const &rid)
   {
     auto it = store_.Find(rid);
 
-    return iterator(it);
+    return Iterator(it);
   }
 
   /**
-   * Get an iterator to the first element of a subtree (the first element of the range that
+   * Get an iterator to the first element of a subtree (the first element of the
+   * range that
    * matches the first bits of rid)
    *
    * @param: rid The key
@@ -209,16 +238,16 @@ public:
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
     auto it = store_.GetSubtree(rid, bits);
 
-    return iterator(it);
+    return Iterator(it);
   }
 
-  self_type::iterator begin() { return iterator(store_.begin()); }
+  self_type::Iterator begin() { return Iterator(store_.begin()); }
 
-  self_type::iterator end() { return iterator(store_.end()); }
+  self_type::Iterator end() { return Iterator(store_.end()); }
 
 private:
   mutex::Mutex mutex_{ __LINE__, __FILE__ };

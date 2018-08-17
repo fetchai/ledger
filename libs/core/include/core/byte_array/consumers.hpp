@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 
@@ -104,7 +122,7 @@ int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos)
                                      '"', '"', '"', '"', '"', '"', '"', '"'};
 
   __m128i  comp  = _mm_load_si128((__m128i *)compare);
-  __m128i  mptr  = _mm_loadu_si128((__m128i *)ptr);  // TODO: Optimise to follow alignment
+  __m128i  mptr  = _mm_loadu_si128((__m128i *)ptr);  // TODO(issue 37): Optimise to follow alignment
   __m128i  mret  = _mm_cmpeq_epi8(comp, mptr);
   uint16_t found = uint16_t(_mm_movemask_epi8(mret));
 
@@ -112,7 +130,7 @@ int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos)
   {
     pos += 16;
     ptr += 16;
-    // TODO: Handle \"x
+    // TODO(issue 37): Handle \"x
     __m128i mptr = _mm_loadu_si128((__m128i *)ptr);
     __m128i mret = _mm_cmpeq_epi8(comp, mptr);
     found        = uint16_t(_mm_movemask_epi8(mret));

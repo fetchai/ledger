@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
@@ -140,6 +158,7 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
   case 3:
     M = 1;
     s >> K;
+    break;
   case 2:
     M = 1;
     s >> lanes >> K;
@@ -205,7 +224,8 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
 
 static void PrintSummary(std::size_t const &slice_count)
 {
-  int total_fee = 0, total_txs = 0;
+  uint64_t    total_fee = 0;
+  std::size_t total_txs = 0;
   for (auto const &e : generator.block_fees()) total_fee += e;
   for (auto const &slice : generator.block())
   {
@@ -213,7 +233,8 @@ static void PrintSummary(std::size_t const &slice_count)
   }
 
   std::size_t const capacity = slice_count * generator.lane_count();
-  double const occupancy_pc  = (100. * generator.block_occupancy()) / static_cast<double>(capacity);
+  double const      occupancy_pc =
+      (100. * static_cast<double>(generator.block_occupancy())) / static_cast<double>(capacity);
 
   std::cout << "Fee: " << total_fee << " Txs: " << total_txs << " / " << capacity << " ("
             << occupancy_pc << "%)" << std::endl;
@@ -354,7 +375,7 @@ int main(int argc, char **argv)
   batch_size = std::min(generator.unspent_count(), batch_size);
 
   // Generating solution
-  int best_fee = 0;
+  uint64_t best_fee = 0;
   for (std::size_t i = 0; i < reps; ++i)
   {
     generator.Reset();
@@ -362,7 +383,7 @@ int main(int argc, char **argv)
 
     if (print_solution)
     {
-      int total_fee = 0;
+      uint64_t total_fee = 0;
       for (auto const &e : generator.block_fees()) total_fee += e;
       if (total_fee < best_fee)
       {
@@ -397,7 +418,7 @@ int main(int argc, char **argv)
       }
     }
 
-    // TODO    generator.PrintSolution();
+    // TODO(tfr): generator.PrintSolution();
   }
 
   std::cout << std::endl;

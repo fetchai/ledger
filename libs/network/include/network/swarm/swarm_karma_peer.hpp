@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include <functional>
 #include <time.h>
@@ -84,7 +101,7 @@ public:
 
   static double ComputeKarmaForTime(double karmaValue, time_t timeStart, time_t timeFinish)
   {
-    // TODO(katie) This should probably be some half-life asymptotic function.
+    // TODO(issue 18) This should probably be some half-life asymptotic function.
     // Might be expensive to compute tho. Consider making the internal store
     // mutable so we can compute an uptodate cache inside the < func?
     if (karmaValue == 0.0)

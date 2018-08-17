@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include <functional>
 #include <iostream>
@@ -28,9 +45,9 @@ public:
   using protocol_number_type = uint32_t;
 
 protected:
-  const uint32_t MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION = 100;
-  const uint32_t MICROSECONDS_PER_MILLISECOND              = 1000;
-  const uint32_t NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION  = 100;
+  const uint32_t MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION_ = 100;
+  const uint32_t MICROSECONDS_PER_MILLISECOND_              = 1000;
+  const uint32_t NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION_  = 100;
 
 public:
   NetworkNodeCore(const NetworkNodeCore &rhs) = delete;
@@ -49,8 +66,7 @@ public:
   {
     lock_type mlock(mutex_);
 
-    // TODO(katie) investiaget if this can be moved to Start()
-    // TODO(EJF):  Confusing now network manager is passed in (and is copy)
+    // TODO(issue 24) Mved to Start() method
     nm_.Start();
 
     rpcPort_   = rpcPort;
@@ -69,8 +85,6 @@ public:
   using remote_host_identifier_type = std::pair<std::string, int>;
   using client_ptr                  = std::shared_ptr<client_type>;
   using cache_type                  = std::map<remote_host_identifier_type, client_ptr>;
-
-  cache_type cache_;
 
   using protocol_ptr        = std::shared_ptr<fetch::service::Protocol>;
   using protocol_cache_type = std::map<uint32_t, protocol_ptr>;
@@ -171,22 +185,25 @@ protected:
 
     client_ptr client = std::make_shared<client_type>(connection, nm_);
 
-    auto waits      = NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION;
-    auto waitTimeUS = MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION * MICROSECONDS_PER_MILLISECOND /
-                      NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION;
+    auto waits      = NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION_;
+    auto waitTimeUS = MILLISECONDS_TO_WAIT_FOR_ALIVE_CONNECTION_ * MICROSECONDS_PER_MILLISECOND_ /
+                      NUMBER_OF_TIMES_TO_TEST_ALIVE_CONNECTION_;
     while (!client->is_alive())
     {
       usleep(waitTimeUS);
       waits--;
       if (waits <= 0)
       {
-        // TODO(katie) make this non throwing and return empty sharedp.
+        // TODO(issue 11) make this non throwing and return empty sharedp.
         throw std::invalid_argument(
             std::string("Timeout while connecting " + host + ":" + std::to_string(port)).c_str());
       }
     }
     return client;
   }
+
+private:
+  cache_type cache_;
 
   fetch::network::NetworkManager nm_;
   uint16_t                       rpcPort_;

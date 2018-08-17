@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/key.hpp"
@@ -13,7 +31,8 @@ namespace fetch {
 namespace storage {
 
 /**
- * Key value pair for binary trees where the key is a byte array. The tree can be traversed given
+ * Key value pair for binary trees where the key is a byte array. The tree can
+ * be traversed given
  * a key by switching on each bit of the key
  *
  * The parent of the tree will be identifiable with 0xffffffff
@@ -224,6 +243,7 @@ public:
     int            left_right = 0;
     index_type     depth      = 0;
     key_value_pair kv;
+
     FindNearest(key, kv, split, pos, left_right, depth);
 
     if (!split)
@@ -406,10 +426,10 @@ public:
 
   uint64_t const &root_element() const { return root_; }
 
-  class iterator
+  class Iterator
   {
   public:
-    iterator(self_type *self, key_value_pair kv, bool node_iterator = false)
+    Iterator(self_type *self, key_value_pair kv, bool node_iterator = false)
       : kv_{kv}, kv_node_{kv}, node_iterator_{node_iterator}, self_{self}
     {
       if (node_iterator)
@@ -418,15 +438,15 @@ public:
       }
     }
 
-    iterator()                    = default;
-    iterator(iterator const &rhs) = default;
-    iterator(iterator &&rhs)      = default;
-    iterator &operator=(iterator const &rhs) = default;
-    iterator &operator=(iterator &&rhs) = default;
+    Iterator()                    = default;
+    Iterator(Iterator const &rhs) = default;
+    Iterator(Iterator &&rhs)      = default;
+    Iterator &operator=(Iterator const &rhs) = default;
+    Iterator &operator=(Iterator &&rhs) = default;
 
-    bool operator==(iterator const &rhs) { return kv_ == rhs.kv_; }
+    bool operator==(Iterator const &rhs) { return kv_ == rhs.kv_; }
 
-    bool operator!=(iterator const &rhs) { return !(kv_ == rhs.kv_); }
+    bool operator!=(Iterator const &rhs) { return !(kv_ == rhs.kv_); }
 
     void operator++()
     {
@@ -452,24 +472,26 @@ public:
     self_type *    self_;
   };
 
-  self_type::iterator begin()
+  self_type::Iterator begin()
   {
     if (this->empty()) return end();
+
     key_value_pair kv;
     stack_.Get(root_, kv);
 
     GetLeftLeaf(kv);
 
-    assert(iterator(this, kv) != end());
+    assert(Iterator(this, kv) != end());
 
-    return iterator(this, kv);
+    return Iterator(this, kv);
   }
 
-  self_type::iterator end() { return iterator(this, key_value_pair()); }
+  self_type::Iterator end() { return Iterator(this, key_value_pair()); }
 
   // STL-like functionality
-  self_type::iterator Find(byte_array::ConstByteArray const &key_str)
+  self_type::Iterator Find(byte_array::ConstByteArray const &key_str)
   {
+
     key_type       key(key_str);
     bool           split      = true;
     int            pos        = 0;
@@ -483,10 +505,10 @@ public:
       return end();
     }
 
-    return iterator(this, kv);
+    return Iterator(this, kv);
   }
 
-  self_type::iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t bits)
+  self_type::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t bits)
   {
     if (this->empty()) return end();
 
@@ -507,7 +529,7 @@ public:
       return end();
     }
 
-    return iterator(this, kv, true);
+    return Iterator(this, kv, true);
   }
 
 private:
@@ -543,10 +565,9 @@ private:
     }
   }
 
-  index_type FindNearest(key_type const &key  // Find nearest to key
-                         ,
-                         key_value_pair &kv, bool &split, int &pos, int &left_right,
-                         uint64_t &depth, uint64_t max_depth = std::numeric_limits<uint64_t>::max())
+  index_type FindNearest(key_type const &key, key_value_pair &kv, bool &split, int &pos,
+                         int &left_right, uint64_t &depth,
+                         uint64_t max_bits = std::numeric_limits<uint64_t>::max())
   {
     depth = 0;
     if (this->empty()) return index_type(-1);
@@ -574,7 +595,7 @@ private:
         break;
       }
 
-    } while ((left_right != 0) && (pos >= int(kv.split)) && depth < max_depth);
+    } while ((left_right != 0) && (pos >= int(kv.split)) && uint64_t(pos) < max_bits);
 
     split = (left_right != 0) && (pos < int(kv.split));
 
@@ -662,7 +683,8 @@ private:
       }
       else
       {
-        // Switch to rhs branch since we travelled up to find a node we were the left of
+        // Switch to rhs branch since we travelled up to find a node we were the
+        // left of
         stack_.Get(parent.right, parent);
 
         GetLeftLeaf(parent);

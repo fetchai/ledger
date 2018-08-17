@@ -7,7 +7,7 @@ bool HTTPRequest::ParseBody(asio::streambuf &buffer)
 {
   LOG_STACK_TRACE_POINT;
 
-  // TODO: Handle encoding
+  // TODO(issue 35): Handle encoding
   body_data_ = byte_array::ByteArray();
   body_data_.Resize(content_length());
   if (buffer.size() < body_data_.size())

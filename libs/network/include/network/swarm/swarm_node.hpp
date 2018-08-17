@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include <cstdlib>
 #include <string>
@@ -38,17 +55,15 @@ protected:
   using client_type = fetch::network::NetworkNodeCore::client_type;
 
 public:
-  std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
-
   explicit SwarmNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
                      const std::string &identifier, uint32_t maxpeers,
                      fetch::swarm::SwarmPeerLocation uri)
-    : nnCore_(std::move(networkNodeCore)), uri_(std::move(uri)), karmaPeerList_(identifier)
+    : nn_core_(std::move(networkNodeCore)), uri_(std::move(uri)), karmaPeerList_(identifier)
   {
     identifier_ = identifier;
     maxpeers_   = maxpeers;
 
-    nnCore_->AddProtocol(this);
+    nn_core_->AddProtocol(this);
   }
 
   explicit SwarmNode(fetch::network::NetworkManager tm, const std::string &identifier,
@@ -157,19 +172,20 @@ public:
     return karmaPeerList_.GetBestPeers(n, minKarma);
   }
 
-  void Post(std::function<void()> workload) { nnCore_->Post(workload); }
+  void Post(std::function<void()> workload) { nn_core_->Post(workload); }
 
 protected:
-  mutable mutex_type             mutex_;
-  int                            maxActivePeers_;
-  int                            maxKnownPeers_;
-  std::string                    identifier_;
-  uint32_t                       maxpeers_;
-  SwarmPeerLocation              uri_;
-  fetch::network::NetworkManager tm_;
-  SwarmKarmaPeers                karmaPeerList_;
-  uint32_t                       protocolNumber_;
-  std::function<int()>           toGetState_;
+  std::shared_ptr<fetch::network::NetworkNodeCore> nn_core_;
+  mutable mutex_type                               mutex_;
+  int                                              maxActivePeers_;
+  int                                              maxKnownPeers_;
+  std::string                                      identifier_;
+  uint32_t                                         maxpeers_;
+  SwarmPeerLocation                                uri_;
+  fetch::network::NetworkManager                   tm_;
+  SwarmKarmaPeers                                  karmaPeerList_;
+  uint32_t                                         protocolNumber_;
+  std::function<int()>                             toGetState_;
 };
 
 }  // namespace swarm

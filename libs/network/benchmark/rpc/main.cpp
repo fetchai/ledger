@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/random/lfg.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -6,7 +24,7 @@
 #include "network/service/client.hpp"
 #include "network/service/server.hpp"
 
-#include "../tests/include/helper_functions.hpp"
+#include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 
@@ -82,11 +100,11 @@ class BenchmarkService : public ServiceServer<fetch::network::TCPServer>
 public:
   BenchmarkService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
   {
-    this->Add(SERVICE, &serviceProtocol);
+    this->Add(SERVICE, &serviceProtocol_);
   }
 
 private:
-  ServiceProtocol serviceProtocol;
+  ServiceProtocol serviceProtocol_;
 };
 
 std::ostringstream finalResult;
@@ -235,7 +253,7 @@ int main(int argc, char *argv[])
   {
     std::cout << "Starting server" << std::endl;
 
-    // TODO: (`HUT`) : refactor closures to use explicit copy
+    // TODO(issue 28): refactor closures to use explicit copy
     benchmarkThread = std::thread([=]() {
       fetch::network::NetworkManager networkManager(8);
       BenchmarkService               serv(port, networkManager);

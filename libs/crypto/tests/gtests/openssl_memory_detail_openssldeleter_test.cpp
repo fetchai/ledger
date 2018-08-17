@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "crypto/openssl_memory.hpp"
 
 #include <functional>
@@ -58,17 +76,11 @@ using OpenSSLDeleter_forTesting = OpenSSLDeleter<
 class OpenSSLDeleterTest : public testing::Test
 {
 protected:
-  MockDeleterPrimitive::SharedPtr &mock = MockDeleterPrimitive::value;
+  MockDeleterPrimitive::SharedPtr &mock_ = MockDeleterPrimitive::value;
 
-  void SetUp() override { mock = std::make_shared<MockDeleterPrimitive::Type>(); }
+  void SetUp() override { mock_ = std::make_shared<MockDeleterPrimitive::Type>(); }
 
-  void TearDown() override { mock = MockDeleterPrimitive::SharedPtr(); }
-
-  // static void SetUpTestCase() {
-  //}
-
-  // static void TearDownTestCase() {
-  //}
+  void TearDown() override { mock_ = MockDeleterPrimitive::SharedPtr(); }
 };
 
 TEST_F(OpenSSLDeleterTest, test_that_DeleterPrimitive_function_is_called_for_CONST_qualified_type)
@@ -77,7 +89,7 @@ TEST_F(OpenSSLDeleterTest, test_that_DeleterPrimitive_function_is_called_for_CON
   const TestType &const_testValue = testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
   OpenSSLDeleter_forTesting<const TestType> openSSLDeleter;
@@ -90,7 +102,7 @@ TEST_F(OpenSSLDeleterTest,
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
   OpenSSLDeleter_forTesting<TestType> openSSLDeleter;
@@ -104,7 +116,7 @@ TEST_F(OpenSSLDeleterTest,
   const TestType &const_testValue = testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_clearing_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_clearing_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
   OpenSSLDeleter_forTesting<const TestType, eDeleteStrategy::clearing> openSSLDeleter;
@@ -117,7 +129,7 @@ TEST_F(OpenSSLDeleterTest,
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*mock, free_clearing_TestType(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*mock_, free_clearing_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
   OpenSSLDeleter_forTesting<TestType, eDeleteStrategy::clearing> openSSLDeleter;

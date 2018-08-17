@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "crypto/openssl_common.hpp"
 #include "crypto/openssl_context_session.hpp"
@@ -101,9 +118,12 @@ private:
 
     case eECDSAEncoding::DER:
       throw std::domain_error(
-          "ECDSAPublicKey::Convert(...): Conversion in to DER encoded data is NOT implemented "
+          "ECDSAPublicKey::Convert(...): Conversion in to "
+          "DER encoded data is NOT implemented "
           "yet.");
     }
+
+    return {};
   }
 
   static byte_array::ByteArray Convert(EC_POINT const *const public_key,
@@ -121,6 +141,8 @@ private:
     case eECDSAEncoding::DER:
       return Convert(public_key, group.get(), session, binaryDataFormat);
     }
+
+    return {};
   }
 
   static uniq_ptr_type<EC_POINT> Convert(byte_array::ConstByteArray const &key_data,
@@ -136,8 +158,11 @@ private:
 
     case eECDSAEncoding::DER:
       throw std::domain_error(
-          "ECDSAPublicKey::Convert(...): Conversion from DER encoded data is NOT implemented yet.");
+          "ECDSAPublicKey::Convert(...): Conversion from "
+          "DER encoded data is NOT implemented yet.");
     }
+
+    return {};
   }
 
   static byte_array::ByteArray Convert2Canonical(EC_POINT const *const           public_key,
@@ -160,7 +185,8 @@ private:
                            public_key_as_BN.get(), session.context().get()))
     {
       throw std::runtime_error(
-          "ECDSAPublicKey::Convert(...): `EC_POINT_point2bn(...)` functioni failed.");
+          "ECDSAPublicKey::Convert(...): "
+          "`EC_POINT_point2bn(...)` functioni failed.");
     }
 
     byte_array::ByteArray pub_key_as_bin;
@@ -189,7 +215,8 @@ private:
                                              session.context().get()))
     {
       throw std::runtime_error(
-          "ECDSAPublicKey::ConvertFromCanonical(...): `BN_bn2bin(...)` function failed.");
+          "ECDSAPublicKey::ConvertFromCanonical(...): "
+          "`BN_bn2bin(...)` function failed.");
     }
 
     return public_key;
@@ -212,7 +239,8 @@ private:
                            session.context().get()))
     {
       throw std::runtime_error(
-          "ECDSAPublicKey::ConvertToECPOINT(...): EC_POINT_bn2point(...) failed.");
+          "ECDSAPublicKey::ConvertToECPOINT(...): "
+          "EC_POINT_bn2point(...) failed.");
     }
 
     return public_key;
@@ -221,13 +249,15 @@ private:
   static uniq_ptr_type<EC_KEY> ConvertToECKEY(const EC_POINT *key_EC_POINT)
   {
     uniq_ptr_type<EC_KEY> key{EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)};
-    // TODO: setting conv. form might not be really necessary (stuff works without it)
+    // TODO(issue 36): setting conv. form might not be really necessary (stuff works
+    // without it)
     EC_KEY_set_conv_form(key.get(), conversionForm);
 
     if (!EC_KEY_set_public_key(key.get(), key_EC_POINT))
     {
       throw std::runtime_error(
-          "ECDSAPublicKey::ConvertToECKEY(...): EC_KEY_set_public_key(...) failed.");
+          "ECDSAPublicKey::ConvertToECKEY(...): "
+          "EC_KEY_set_public_key(...) failed.");
     }
 
     return key;

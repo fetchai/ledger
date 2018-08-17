@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "crypto/openssl_context_session.hpp"
 
 #include "gmock/gmock.h"
@@ -51,21 +69,15 @@ class OpenSSLContextSessionTest : public testing::Test
 {
 protected:
   template <const memory::eDeleteStrategy P_DeleteStrategy = memory::eDeleteStrategy::canonical>
-  using ossl_shared_ptr__for_Testing = memory::ossl_shared_ptr<TestType, P_DeleteStrategy, Deleter>;
+  using ossl_shared_ptr__for_Testing = memory::OsslSharedPtr<TestType, P_DeleteStrategy, Deleter>;
   using Session__for_Testing =
       Session<TestType, StaticMockContextPrimitive<TestType>, ossl_shared_ptr__for_Testing<>>;
 
-  MockContextPrimitive::SharedPtr &contextMock = MockContextPrimitive::value;
+  MockContextPrimitive::SharedPtr &contextMock_ = MockContextPrimitive::value;
 
-  void SetUp() { contextMock = std::make_shared<MockContextPrimitive::Type>(); }
+  void SetUp() { contextMock_ = std::make_shared<MockContextPrimitive::Type>(); }
 
-  void TearDown() { contextMock = MockContextPrimitive::SharedPtr(); }
-
-  // static void SetUpTestCase() {
-  //}
-
-  // static void TearDownTestCase() {
-  //}
+  void TearDown() { contextMock_ = MockContextPrimitive::SharedPtr(); }
 };
 
 TEST_F(OpenSSLContextSessionTest, test_Session_basic_scenario_constructro_and_destructor)
@@ -73,8 +85,8 @@ TEST_F(OpenSSLContextSessionTest, test_Session_basic_scenario_constructro_and_de
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*contextMock, start(&testValue)).WillOnce(Return());
-  EXPECT_CALL(*contextMock, end(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -89,8 +101,8 @@ TEST_F(OpenSSLContextSessionTest, test_Session_constructor_and_end)
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*contextMock, start(&testValue)).WillOnce(Return());
-  EXPECT_CALL(*contextMock, end(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -106,7 +118,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_started_and_destructor)
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*contextMock, end(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -121,7 +133,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_started_and_end)
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*contextMock, end(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
     //* Production code
@@ -137,8 +149,8 @@ TEST_F(OpenSSLContextSessionTest, test_Session_constructor_and_start_and_destruc
   TestType testValue;
 
   //* Expctation
-  EXPECT_CALL(*contextMock, start(&testValue)).WillOnce(Return());
-  EXPECT_CALL(*contextMock, end(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
+  EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
     //* Production code

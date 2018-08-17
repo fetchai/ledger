@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #ifdef __AVX__
 #include "vectorise/info.hpp"
 #include "vectorise/info_avx.hpp"
@@ -15,22 +33,7 @@
 
 namespace fetch {
 namespace vectorize {
-/*
-namespace details {
-  template< typename T, std::size_t N >
-  struct UnrollSet {
-    static void Set(T *ptr, T const &c) {
-      (*ptr)  = c;
-      UnrollSet<T, N - 1>::Set(ptr+1, c);
-    }
-  };
 
-  template<typename T >
-  struct UnrollSet<T,0> {
-    static void Set(T *ptr, T const &c) { }
-  };
-};
-*/
 // SSE integers
 template <typename T>
 class VectorRegister<T, 256>
@@ -181,7 +184,7 @@ FETCH_ADD_OPERATOR(+, double, _mm256_add_pd);
 
 #undef FETCH_ADD_OPERATOR
 
-// TODO: Misses alignas
+// TODO(issue 4): Misses alignas
 #define FETCH_ADD_OPERATOR(op, type, fnc)                                                           \
   inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a,                  \
                                                VectorRegister<type, 256> const &b)                  \
@@ -204,7 +207,7 @@ FETCH_ADD_OPERATOR(<, float, _CMP_LT_OQ)
 
 #undef FETCH_ADD_OPERATOR
 
-// TODO: Misses alignas
+// TODO(issue 4): Misses alignas
 #define FETCH_ADD_OPERATOR(op, type, fnc)                                                       \
   inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a,              \
                                                VectorRegister<type, 256> const &b)              \
@@ -355,77 +358,6 @@ inline VectorRegister<double, 256> sqrt(VectorRegister<double, 256> const &a)
 {
   return VectorRegister<double, 256>(_mm256_sqrt_pd(a.data()));
 }
-/*
-inline VectorRegister<double, 256, __m256d> approx_exp( VectorRegister<double,
-256, __m256d> const &x) { enum { mantissa = 20, exponent = 11,
-  };
-
-  alignas(16) static constexpr uint64_t mask[2]= { uint64_t(-1), 0 };
-  static constexpr double multiplier =  double( 1ull << mantissa  );
-  static constexpr double exponent_offset = ( double( ((1ull << (exponent - 1))
-- 1) ) ); static const VectorRegister<double, 256, __m256d> a( double(
-multiplier / M_LN2 ) ); static const VectorRegister<double, 256, __m256d> b(
-double( exponent_offset * multiplier - 60801 ));
-
-  VectorRegister<double, 256, __m256d> y = a*x + b;
-  __m256i  conv = _mm256_cvtpd_epi32(y.data());
-  conv = _mm256_and_si256(conv, *(__m256i*)mask);
-
-  conv = _mm256_shuffle_epi32(conv,  3 | (0 << 2) | (3<<4) | (1 << 6) );
-
-  return VectorRegister<double, 256, __m256d>( _mm256_castsi256_pd(conv) );
-}
-*/
-/*
-inline VectorRegister<double, 256, __m256d> approx_log( VectorRegister<double,
-256, __m256d> const &x) { enum { mantissa = 20, exponent = 11,
-  };
-
-  alignas(16) static constexpr uint64_t mask[2]= { uint64_t(-1), 0 };
-  static constexpr double multiplier =  double( 1ull << mantissa  );
-  static constexpr double exponent_offset = ( double( ((1ull << (exponent - 1))
-- 1) ) ); static const VectorRegister<double, 256, __m256d> a( double( M_LN2 /
-multiplier ) ); static const VectorRegister<double, 256, __m256d> b( double(
-exponent_offset * multiplier - 60801 ));
-
-
-  __m256i conv = _mm256_castpd_si256( x.data() );
-  conv = _mm256_shuffle_epi32(conv,  1 | (3 << 2) | (0<<4) | (2 << 6) );
-  conv = _mm256_and_si256(conv, *(__m256i*)mask);
-
-  VectorRegister<double, 256, __m256d> y( _mm256_cvtepi32_pd(conv) );
-
-  return  a*(y - b);
-}
-*/
-/*
-inline VectorRegister<double, 256, __m256d>
-approx_reciprocal(VectorRegister<double, 256, __m256d> const &x) {
-  // TODO: Test this function
-  return VectorRegister<double, 256, __m256d>(
-_mm256_cvtps_pd(_mm256_rcp_ps(_mm256_cvtpd_ps(x.data()))) );
-}
-*/
-/*
-inline VectorRegister<double, 256, __m256d>
-shift_elements_left(VectorRegister<double, 256, __m256d> const &x) {
-  __m256i n = _mm256_castpd_si256( x.data() );
-  n = _mm256_bslli_si256(n, 8);
-  return VectorRegister<double, 256, __m256d> ( _mm256_castsi256_pd( n ) );
-}
-
-inline VectorRegister<double, 256, __m256d>
-shift_elements_right(VectorRegister<double, 256, __m256d> const &x) {
-  __m256i n = _mm256_castpd_si256( x.data() );
-  n = _mm256_bsrli_si256(n, 8);
-  return VectorRegister<double, 256, __m256d> ( _mm256_castsi256_pd( n ) );
-}
-
-inline double first_element(VectorRegister<double, 256, __m256d> const &x) {
-  return _mm256_cvtsd_f64(x.data());
-}
-
-*/
 
 inline VectorRegister<float, 256> shift_elements_left(VectorRegister<float, 256> const &x)
 {

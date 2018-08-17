@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include <utility>
 
@@ -18,50 +35,46 @@ public:
   SwarmAgentApiImpl operator=(SwarmAgentApiImpl &rhs) = delete;
   SwarmAgentApiImpl operator=(SwarmAgentApiImpl &&rhs) = delete;
 
-  std::shared_ptr<threading_system_type> threadingSystem_;
-  std::string                            identifier_;
-  uint32_t                               idlespeed_;
-
   explicit SwarmAgentApiImpl(std::string identifier, uint32_t idlespeed)
     : identifier_(std::move(identifier)), idlespeed_(idlespeed)
   {
-    threadingSystem_ = std::make_shared<threading_system_type>(10);
+    threading_system_ = std::make_shared<threading_system_type>(10);
   }
 
   explicit SwarmAgentApiImpl(std::shared_ptr<threading_system_type> threadingSystem,
                              std::string identifier, uint32_t idlespeed)
     : identifier_(std::move(identifier)), idlespeed_(idlespeed)
   {
-    threadingSystem_ = threadingSystem;
+    threading_system_ = threadingSystem;
   }
 
   virtual std::string queryOwnLocation() { return identifier_; }
 
   void Start()
   {
-    threadingSystem_->Start();
+    threading_system_->Start();
     startIdle();
   }
 
-  void Stop() { threadingSystem_->Stop(); }
+  void Stop() { threading_system_->Stop(); }
 
   virtual ~SwarmAgentApiImpl()
   {
-    threadingSystem_->Stop();
-    threadingSystem_.reset();
+    threading_system_->Stop();
+    threading_system_.reset();
   }
 
   void startIdle()
   {
     auto lambd = [this] { this->DoIdle(); };
-    threadingSystem_->Post(lambd);
+    threading_system_->Post(lambd);
   }
 
-  int idleCount = 0;
+  int idle_count = 0;
 
   void DoIdle()
   {
-    idleCount++;
+    idle_count++;
     if (this->onIdle_)
     {
       try
@@ -78,7 +91,7 @@ public:
       }
     }
     auto lambd = [this] { this->DoIdle(); };
-    threadingSystem_->Post(lambd, idlespeed_);
+    threading_system_->Post(lambd, idlespeed_);
   }
 
   virtual void OnIdle(std::function<void()> cb) { onIdle_ = cb; }
@@ -87,7 +100,7 @@ public:
 
   virtual void DoPing(const std::string &host)
   {
-    threadingSystem_->Post([this, host] {
+    threading_system_->Post([this, host] {
       if (this->toPing_)
       {
         this->toPing_(*this, host);
@@ -97,7 +110,7 @@ public:
 
   virtual void DoPeerless()
   {
-    threadingSystem_->Post([this] {
+    threading_system_->Post([this] {
       if (this->onPeerless_)
       {
         this->onPeerless_();
@@ -119,7 +132,7 @@ public:
 
   virtual void DoPingSucceeded(const std::string &host)
   {
-    threadingSystem_->Post([this, host] {
+    threading_system_->Post([this, host] {
       if (this->onPingSucceeded_)
       {
         this->onPingSucceeded_(host);
@@ -129,7 +142,7 @@ public:
 
   virtual void DoPingFailed(const std::string &host)
   {
-    threadingSystem_->Post([this, host] {
+    threading_system_->Post([this, host] {
       if (this->onPingFailed_)
       {
         this->onPingFailed_(host);
@@ -139,7 +152,7 @@ public:
 
   virtual void DoDiscoverPeers(const std::string &host, uint32_t count)
   {
-    threadingSystem_->Post([this, host, count] {
+    threading_system_->Post([this, host, count] {
       if (this->toDiscoverPeers_)
       {
         this->toDiscoverPeers_(*this, host, count);
@@ -160,7 +173,7 @@ public:
 
   virtual void DoNewPeerDiscovered(const std::string &host)
   {
-    threadingSystem_->Post([this, host] {
+    threading_system_->Post([this, host] {
       if (this->onNewPeerDiscovered_)
       {
         this->onNewPeerDiscovered_(host);
@@ -203,7 +216,7 @@ public:
 
   virtual void DoNewBlockIdFound(const std::string &host, const std::string &blockid)
   {
-    threadingSystem_->Post([this, host, blockid] {
+    threading_system_->Post([this, host, blockid] {
       if (this->onNewBlockIdFound_)
       {
         this->onNewBlockIdFound_(host, blockid);
@@ -225,7 +238,7 @@ public:
 
   virtual void DoBlockIdRepeated(const std::string &host, const std::string &blockid)
   {
-    threadingSystem_->Post([this, host, blockid] {
+    threading_system_->Post([this, host, blockid] {
       if (this->onBlockIdRepeated_)
       {
         this->onBlockIdRepeated_(host, blockid);
@@ -264,7 +277,7 @@ public:
 
   virtual void DoNewBlockAvailable(const std::string &host, const std::string &blockid)
   {
-    threadingSystem_->Post([this, host, blockid] {
+    threading_system_->Post([this, host, blockid] {
       if (this->onNewBlockAvailable_)
       {
         this->onNewBlockAvailable_(host, blockid);
@@ -299,8 +312,6 @@ public:
   // HANDLE TXN LIST TRANSMISSIONS -------------------------------------xs
 
   virtual void DoTransactionListBuilt(const std::list<std::string> &txnlist) {}
-
-  // TODO(katie) Implement below.
 
   virtual void OnNewTxnListIdFound(
       std::function<void(const std::string &host, const std::string &txnlistid)> cb)
@@ -374,6 +385,10 @@ public:
   virtual double GetCost(const std::string &host) { return 1.0; }
 
 protected:
+  std::shared_ptr<threading_system_type> threading_system_;
+  std::string                            identifier_;
+  uint32_t                               idlespeed_;
+
   std::function<void()> onIdle_;
   std::function<void()> onPeerless_;
 

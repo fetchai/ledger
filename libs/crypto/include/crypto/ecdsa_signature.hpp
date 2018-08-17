@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "crypto/hash.hpp"
 #include "crypto/openssl_ecdsa_private_key.hpp"
@@ -187,7 +204,8 @@ private:
     if (est_size < 1)
     {
       throw std::runtime_error(
-          "Convert2Bin<...,eECDSAEncoding::DER,...>(): i2d_ECDSA_SIG(..., nullptr) failed.");
+          "Convert2Bin<...,eECDSAEncoding::DER,...>(): "
+          "i2d_ECDSA_SIG(..., nullptr) failed.");
     }
 
     unsigned char *   der_sig_ptr = static_cast<unsigned char *>(der_sig.pointer());
@@ -197,12 +215,14 @@ private:
     if (res_size < 1)
     {
       throw std::runtime_error(
-          "Convert2Bin<...,eECDSAEncoding::DER,...(): i2d_ECDSA_SIG(..., &ptr) failed.");
+          "Convert2Bin<...,eECDSAEncoding::DER,...(): "
+          "i2d_ECDSA_SIG(..., &ptr) failed.");
     }
     else if (res_size > est_size)
     {
       throw std::runtime_error(
-          "Convert2Bin<...,eECDSAEncoding::DER,...(): i2d_ECDSA_SIG(..., &ptr) returned bigger DER "
+          "Convert2Bin<...,eECDSAEncoding::DER,...(): i2d_ECDSA_SIG(..., &ptr) "
+          "returned bigger DER "
           "signature size then originally anticipated for allocation.");
     }
 
@@ -220,7 +240,8 @@ private:
     if (!signature)
     {
       throw std::runtime_error(
-          "ConvertDER(const byte_array::ConstByteArray&): d2i_ECDSA_SIG(...) failed.");
+          "ConvertDER(const byte_array::ConstByteArray&): "
+          "d2i_ECDSA_SIG(...) failed.");
     }
 
     return signature;
@@ -246,7 +267,8 @@ private:
     if (!ECDSA_SIG_set0(signature.get(), r.get(), s.get()))
     {
       throw std::runtime_error(
-          "ConvertCanonical<...,eECDSAEncoding::DER,...>(const byte_array::ConstByteArray&): "
+          "ConvertCanonical<...,eECDSAEncoding::DER,...>("
+          "const byte_array::ConstByteArray&): "
           "d2i_ECDSA_SIG(...) failed.");
     }
 
@@ -268,6 +290,8 @@ private:
     case eECDSAEncoding::DER:
       return ConvertDER(std::move(signature));
     }
+
+    return {};
   }
 
   static uniq_ptr_type<ECDSA_SIG> Convert(const byte_array::ConstByteArray &bin_sig,
@@ -282,6 +306,8 @@ private:
     case eECDSAEncoding::DER:
       return ConvertDER(bin_sig);
     }
+
+    return {};
   }
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L

@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/openssl_memory.hpp"
@@ -35,7 +52,7 @@ const std::size_t ECDSACurve<NID_secp256k1>::signatureSize;
 using del_strat_type = memory::eDeleteStrategy;
 
 template <typename T, del_strat_type P_DeleteStrategy = del_strat_type::canonical>
-using shrd_ptr_type = memory::ossl_shared_ptr<T, P_DeleteStrategy>;
+using shrd_ptr_type = memory::OsslSharedPtr<T, P_DeleteStrategy>;
 
 template <typename T, del_strat_type P_DeleteStrategy = del_strat_type::canonical>
 using uniq_ptr_type = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
@@ -74,7 +91,9 @@ public:
     if (!BN_bn2bin(x, static_cast<unsigned char *>(canonical_data.pointer()) + x_data_start_index))
     {
       throw std::runtime_error(
-          "Convert2Bin<...,eECDSASignatureBinaryDataFormat::canonical,...>(): BN_bn2bin(r, ...) "
+          "Convert2Bin<...,"
+          "eECDSASignatureBinaryDataFormat::canonical,...>"
+          "(): BN_bn2bin(r, ...) "
           "failed.");
     }
 
@@ -88,7 +107,9 @@ public:
     if (!BN_bn2bin(y, static_cast<unsigned char *>(canonical_data.pointer()) + y_data_start_index))
     {
       throw std::runtime_error(
-          "Convert2Bin<...,eECDSASignatureBinaryDataFormat::canonical,...>(): BN_bn2bin(r, ...) "
+          "Convert2Bin<...,"
+          "eECDSASignatureBinaryDataFormat::canonical,...>"
+          "(): BN_bn2bin(r, ...) "
           "failed.");
     }
 

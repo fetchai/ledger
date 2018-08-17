@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -54,7 +72,7 @@ public:
     CONTROLLER
   };
 
-  // TODO(tfr): Make config JSON
+  // TODO(issue 7): Make config JSON
   LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &total_lanes,
               uint16_t port, fetch::network::NetworkManager tm, bool start_sync = true)
     : super_type(port, tm)
@@ -65,7 +83,7 @@ public:
     thread_pool_ = network::MakeThreadPool(1);
 
     // Setting lane certificate up
-    // TODO(tfr): Load from somewhere
+    // TODO(issue 24): Load from somewhere
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
     certificate->GenerateKeys();
     certificate_.reset(certificate);
@@ -130,17 +148,17 @@ public:
     identity_protocol_.reset();
     identity_.reset();
 
-    // TODO: Remove protocol
+    // TODO(issue 24): Remove protocol
     state_db_protocol_.reset();
     state_db_.reset();
 
-    // TODO: Remove protocol
+    // TODO(issue 24): Remove protocol
     tx_store_protocol_.reset();
     tx_store_.reset();
 
     tx_sync_protocol_.reset();
 
-    // TODO: Remove protocol
+    // TODO(issue 24): Remove protocol
     controller_protocol_.reset();
     controller_.reset();
   }

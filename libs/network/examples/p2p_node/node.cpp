@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/byte_array/consumers.hpp"
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
@@ -110,13 +128,19 @@ int main(int argc, char **argv)
             std::cout << "usage: test" << std::endl;
             continue;
           }
-          std::cout << "addmc mainchain " << port + 1 << std::endl;
-          std::cout << "addl 0 lane0 " << port + 2 << std::endl;
-          std::cout << "addl 1 lane0 " << port + 3 << std::endl;
+
+          uint16_t const main_chain_port = static_cast<uint16_t>(port + 1u);
+          uint16_t const lane0_port      = static_cast<uint16_t>(port + 2u);
+          uint16_t const lane1_port      = static_cast<uint16_t>(port + 3u);
+
+          std::cout << "addmc mainchain " << main_chain_port << std::endl;
+          std::cout << "addl 0 lane0 " << lane0_port << std::endl;
+          std::cout << "addl 1 lane0 " << lane1_port << std::endl;
           std::cout << "publish_profile " << std::endl;
-          service.AddMainChain("mainchain", port + 1);
-          service.AddLane(0, "lane0", port + 1);
-          service.AddLane(1, "lane1", port + 2);
+
+          service.AddMainChain("mainchain", main_chain_port);
+          service.AddLane(0, "lane0", lane0_port);
+          service.AddLane(1, "lane1", lane1_port);
           service.PublishProfile();
 
           //          service.Connect(command[1], uint16_t(command[2].AsInt()));

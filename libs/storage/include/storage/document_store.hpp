@@ -1,9 +1,27 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
 #include "storage/file_object.hpp"
 #include "storage/key_value_index.hpp"
 #include "storage/resource_mapper.hpp"
+
 #include <cassert>
 #include <fstream>
 #include <memory>
@@ -16,9 +34,11 @@ namespace fetch {
 namespace storage {
 
 /**
- * DocumentStore maps keys to serialized data (documents) which is stored on your filesystem
+ * DocumentStore maps keys to serialized data (documents) which is stored on
+ * your filesystem
  *
- * To do this it maintains two files, a file that stores a mapping of the keys to locations
+ * To do this it maintains two files, a file that stores a mapping of the keys
+ * to locations
  * in the document store
  *
  */
@@ -74,7 +94,8 @@ public:
 
   /**
    * Represents an open 'document', effectively just a serialized memory block.
-   * When modifications are finished to it, it will write the state back to the store
+   * When modifications are finished to it, it will write the state back to the
+   * store
    * on destruction. Has a PIMPL to an implementation
    */
   class DocumentFile
@@ -166,11 +187,9 @@ public:
     }
     else
     {
-
       ret.was_created = doc.was_created();
       if (!doc.was_created())
       {
-
         ret.document.Resize(doc.size());
         doc.Read(ret.document);
       }
@@ -220,27 +239,29 @@ public:
   }
 
   /**
-   * STL-like functionality achieved with an iterator class. This has to wrap an iterator to the
-   * key value store since we need to deserialize at this level to return the object
+   * STL-like functionality achieved with an iterator class. This has to wrap an
+   * iterator to the
+   * key value store since we need to deserialize at this level to return the
+   * object
    */
-  class iterator
+  class Iterator
   {
   public:
-    iterator(self_type *store, typename key_value_index_type::iterator it)
+    Iterator(self_type *store, typename key_value_index_type::Iterator it)
       : wrapped_iterator_{it}, store_{store}
     {}
 
-    iterator()                    = default;
-    iterator(iterator const &rhs) = default;
-    iterator(iterator &&rhs)      = default;
-    iterator &operator=(iterator const &rhs) = default;
-    iterator &operator=(iterator &&rhs) = default;
+    Iterator()                    = default;
+    Iterator(Iterator const &rhs) = default;
+    Iterator(Iterator &&rhs)      = default;
+    Iterator &operator=(Iterator const &rhs) = default;
+    Iterator &operator=(Iterator &&rhs) = default;
 
     void operator++() { ++wrapped_iterator_; }
 
-    bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
+    bool operator==(Iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
 
-    bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
+    bool operator!=(Iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
 
     Document operator*() const
     {
@@ -256,20 +277,21 @@ public:
     }
 
   protected:
-    typename key_value_index_type::iterator wrapped_iterator_;
+    typename key_value_index_type::Iterator wrapped_iterator_;
     self_type *                             store_;
   };
 
-  self_type::iterator Find(ResourceID const &rid)
+  self_type::Iterator Find(ResourceID const &rid)
   {
     byte_array::ConstByteArray const &address = rid.id();
     auto                              it      = key_index_.Find(address);
 
-    return iterator(this, it);
+    return Iterator(this, it);
   }
 
   /**
-   * Get an iterator to the first element of a subtree (the first element of the range that
+   * Get an iterator to the first element of a subtree (the first element of the
+   * range that
    * matches the first bits of rid)
    *
    * @param: rid The key
@@ -277,17 +299,17 @@ public:
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
     byte_array::ConstByteArray const &address = rid.id();
     auto                              it      = key_index_.GetSubtree(address, bits);
 
-    return iterator(this, it);
+    return Iterator(this, it);
   }
 
-  self_type::iterator begin() { return iterator(this, key_index_.begin()); }
+  self_type::Iterator begin() { return Iterator(this, key_index_.begin()); }
 
-  self_type::iterator end() { return iterator(this, key_index_.end()); }
+  self_type::Iterator end() { return Iterator(this, key_index_.end()); }
 
 protected:
   /**
@@ -330,9 +352,10 @@ private:
   void UpdateDocumentFile(DocumentFileImplementation &doc)
   {
     doc.Flush();
+
     key_index_.Set(doc.address(), doc.id(), doc.Hash());
 
-    // TODO:    file_store_.Flush();
+    // TODO(issue 10):    file_store_.Flush();
     key_index_.Flush();
   }
 };

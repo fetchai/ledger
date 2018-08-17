@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
 #include "core/logger.hpp"
@@ -134,7 +151,7 @@ private:
 
     byte_array::ByteArray message;
 
-    if (header_.content.magic != networkMagic)
+    if (header_.content.magic != networkMagic_)
     {
       fetch::logger.Debug("Magic incorrect - closing connection.");
       auto ptr = manager_.lock();
@@ -174,7 +191,7 @@ private:
 
     for (std::size_t i = 0; i < 8; ++i)
     {
-      header[i] = uint8_t((networkMagic >> i * 8) & 0xff);
+      header[i] = uint8_t((networkMagic_ >> i * 8) & 0xff);
     }
 
     for (std::size_t i = 0; i < 8; ++i)
@@ -230,9 +247,11 @@ private:
   message_queue_type                        write_queue_;
   fetch::mutex::Mutex                       write_mutex_;
   std::string                               address_;
-  const uint64_t networkMagic = 0xFE7C80A1FE7C80A1;  // TODO: (`HUT`) : put this in shared class
 
-  // TODO: (`HUT`) : fix this to be self-contained
+  // TODO(issue 17): put this in shared class
+  static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
+
+  // TODO(issue 17): fix this to be self-contained
   union
   {
     char bytes[2 * sizeof(uint64_t)];

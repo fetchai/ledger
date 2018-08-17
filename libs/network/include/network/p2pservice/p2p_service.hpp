@@ -1,5 +1,23 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
+#include <memory>
 
 #include "network/details/thread_pool.hpp"
 #include "network/management/connection_register.hpp"
@@ -79,13 +97,13 @@ public:
       my_details_->details.identity = certificate_->identity();
 
       my_details_->details.Sign(certificate_.get());
-
-      //TODO: ECDSA verifier broke
-      //crypto::ECDSAVerifier verifier(certificate->identity());
-      //if(!my_details_->details.Verify(&verifier) ) {
-      //  TODO_FAIL("Could not verify own identity");
-      //}
-
+#if 0
+      // TODO(issue 24): ECDSA verifier broke
+      crypto::ECDSAVerifier verifier(certificate->identity());
+      if(!my_details_->details.Verify(&verifier) ) {
+        TODO_FAIL("Could not verify own identity");
+      }
+#endif
     }
 
     // P2P Peer Directory
@@ -107,12 +125,12 @@ public:
       fetch::logger.Info("Peer left: ", i);
     });
 
-    // TODO: Get from settings
+    // TODO(issue 7): Get from settings
     min_connections_ = 2;
     max_connections_ = 6;
     tracking_peers_  = false;
 
-    // TODO: Remove long term
+    // TODO(issue 24): Remove long term
     Start();
   }
 
@@ -180,7 +198,7 @@ public:
     if (n >= 10)
     {
       fetch::logger.Error("Connection never came to live in P2P module. Host: ", host, " port: ", port);
-      // TODO: throw error?
+      // TODO(issue 11): throw error?
       client.reset();
       return false;
     }
@@ -208,7 +226,7 @@ public:
       {
         if (e.is_discovery)
         {
-          // TODO: Make mechanim for verifying address
+          // TODO(issue 25): Make mechanim for verifying address
           std::lock_guard<mutex::Mutex> lock(my_details_->mutex);
           e.host.insert(address);
         }
@@ -246,7 +264,7 @@ public:
   void AddLane(uint32_t const &lane, byte_array::ConstByteArray const &host, uint16_t const &port,
                crypto::Identity const &identity = crypto::Identity())
   {
-    // TODO: connect
+    // TODO(issue 24): connect
 
     {
       std::lock_guard<mutex::Mutex> lock(my_details_->mutex);
@@ -265,7 +283,7 @@ public:
   void AddMainChain(byte_array::ConstByteArray const &host, uint16_t const &port)
   {
 
-    // TODO: connect
+    // TODO(issue 24): connect
     {
       std::lock_guard<mutex::Mutex> lock(my_details_->mutex);
       EntryPoint                    mainchain_details;
@@ -383,7 +401,7 @@ protected:
     }
 
     thread_pool_->Post([this]() { this->ManageIncomingConnections(); },
-                       1000);  // TODO: add to config
+                       1000);  // TODO(issue 7): add to config
   }
 
   void ManageIncomingConnections()
@@ -391,7 +409,7 @@ protected:
     std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
 
     // Timeout to send out a new tracking signal if needed
-    // TODO: Pull from settings
+    // TODO(issue 7): Pull from settings
     {
       std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
       double                                ms =
@@ -422,7 +440,7 @@ protected:
     if (incoming_.size() > max_connections_)
     {
       std::cout << "Too many incoming connections" << std::endl;
-      // TODO:
+      // TODO(issue 24):
     }
 
     thread_pool_->Post([this]() { this->ConnectToNewPeers(); });
@@ -496,7 +514,7 @@ protected:
     }
 
     // Connecting to other peers if needed
-    // TODO
+    // TODO(issue 24):
 
     thread_pool_->Post([this]() { this->NextServiceCycle(); });
   }

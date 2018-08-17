@@ -1,10 +1,26 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv.hpp"
-#include "math/rectangular_array.hpp"
 
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
@@ -59,9 +75,7 @@ public:
    */
   void PushTransactionSummary(transaction_type const &tx, bool check = true)
   {
-
-    // TODO(EJF):  The size of the `all_` make grows forever!
-
+    // TODO(issue 30):  The size of the `all_` make grows forever!
     if (check)
     {
       if (all_.find(tx->summary().transaction_hash) != all_.end()) return;
@@ -104,7 +118,7 @@ public:
    * the time sub optimal ones will be found) and populates the block
    * slice by slice.
    *
-   * The resulting block is garantueed (TODO) to be valid.
+   * The resulting block is garantueed (issue 30) to be valid.
    */
   void GenerateBlock(std::size_t const &lane_count, std::size_t const &slice_count,
                      int const &strategy = 0, std::size_t batch_size = 1, std::size_t explore = 10)
@@ -130,7 +144,7 @@ public:
 
       std::vector<std::size_t> used;
 
-      // TODO: Correct incorrect states
+      // TODO(issue 30): Correct incorrect states
       std::size_t i = 0;
       for (auto &s : best_solution_)
       {
@@ -144,7 +158,7 @@ public:
         ++i;
       }
 
-      // TODO(EJF):  Check that this is actually correct
+      // TODO(issue 30):  Check that this is actually correct
       block_fees_.push_back(static_cast<uint64_t>(best_solution_energy_));
 
       // Erasing from unspent pool
@@ -202,7 +216,7 @@ public:
 
   /* Returns a constant reference to the last generated block.
    *
-   * TODO: change to system block
+   * TODO(issue 30): change to system block
    */
   block_index_map_type const &block() const { return block_; }
 
@@ -213,7 +227,7 @@ public:
 
   /* Returns the absolute number of
    */
-  double const &block_occupancy() { return occupancy_; }
+  std::size_t const &block_occupancy() { return occupancy_; }
 
   /*
   std::vector< int16_t > const & block() const {
@@ -277,7 +291,7 @@ private:
       penalty = std::max(1 + unspent_[i]->summary().fee, penalty);
     }
 
-    // Computing collissions
+    // Computing collisions
     std::vector<std::vector<std::size_t>> lane_collisions;
     lane_collisions.resize(lane_count_);
 
@@ -288,9 +302,9 @@ private:
       for (auto &resource : tx->summary().resources)
       {
 
-        // TODO(EJF):  Move to Transaction item?
+        // TODO(issue 30):  Move to Transaction item?
         std::size_t const lane_index =
-            MapResourceToLane(resource, tx->summary().contract_name_, log2_lane_count_);
+            MapResourceToLane(resource, tx->summary().contract_name, log2_lane_count_);
 
         tx->lanes.insert(lane_index);
 
@@ -326,8 +340,8 @@ private:
     annealer_.Reset();
 
     annealer_.Resize(batch_size);
-    double max_fee = 0;
 
+    uint64_t max_fee = 0;
     for (std::size_t i = 0; i < batch_size; ++i)
     {
       if (unspent_[i]->summary().fee > max_fee) max_fee = unspent_[i]->summary().fee;
@@ -364,7 +378,7 @@ private:
   block_index_map_type block_;
   block_fees_list_type block_fees_;
 
-  double      occupancy_            = 0.0;
+  std::size_t occupancy_            = 0;
   std::size_t lane_count_           = 0;
   uint32_t    log2_lane_count_      = 0;
   std::size_t batch_size_           = 0;
@@ -374,9 +388,6 @@ private:
   state_type    state_;
   state_type    best_solution_;
   annealer_type annealer_;
-
-  // TODO: Switch to block
-  //  std::shared_ptr<block_type> current_block_;
 
   transaction_map_type    all_;
   transaction_list_type   unspent_;

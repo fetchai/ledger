@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "http/connection.hpp"
 #include "http/http_connection_manager.hpp"
@@ -51,7 +68,7 @@ public:
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
       fetch::logger.Info("Starting HTTPServer on http://127.0.0.1:", port);
 
-      // TODO: (`HUT`) : fix this hack
+      // TODO(issue 28) : fix this hack
       network_manager_type tm  = threadMan;
       auto                 soc = threadMan.CreateIO<socket_type>();
 
@@ -97,7 +114,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO(EJF):  Need to actually add better support for the options here
+    // TODO(issue 35): Need to actually add better support for the options here
     if (req.method() == Method::OPTIONS)
     {
 
@@ -112,7 +129,7 @@ public:
       return;
     }
 
-    // TODO: improve such that it works for multiple threads.
+    // TODO(issue 28): improve such that it works for multiple threads.
     eval_mutex_.lock();
     for (auto &m : pre_view_middleware_)
     {
@@ -149,7 +166,7 @@ public:
     LOG_STACK_TRACE_POINT;
 
     auto cb = [soc, accep, manager](std::error_code ec) {
-      // LOG_LAMBDA_STACK_TRACE_POINT; // TODO: (`HUT`) : sort this
+      // LOG_LAMBDA_STACK_TRACE_POINT; // TODO(issue 28) : sort this
 
       if (!ec)
       {

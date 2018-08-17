@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
@@ -24,20 +41,20 @@ struct TransactionSummary
   digest_type       transaction_hash;
   uint64_t          fee{0};
 
-  // TODO(EJF):  Needs to be replaced with some kind of ID
-  std::string contract_name_;
+  // TODO(issue 33): Needs to be replaced with some kind of ID
+  std::string contract_name;
 };
 
 template <typename T>
 void Serialize(T &serializer, TransactionSummary const &b)
 {
-  serializer << b.resources << b.fee << b.transaction_hash << b.contract_name_;
+  serializer << b.resources << b.fee << b.transaction_hash << b.contract_name;
 }
 
 template <typename T>
 void Deserialize(T &serializer, TransactionSummary &b)
 {
-  serializer >> b.resources >> b.fee >> b.transaction_hash >> b.contract_name_;
+  serializer >> b.resources >> b.fee >> b.transaction_hash >> b.contract_name;
 }
 
 class MutableTransaction
@@ -61,7 +78,7 @@ public:
 
   byte_array::ConstByteArray const &signature() const { return signature_; }
 
-  std::string const &contract_name() const { return summary_.contract_name_; }
+  std::string const &contract_name() const { return summary_.contract_name; }
 
   digest_type const &digest() const { return summary_.transaction_hash; }
 
@@ -83,7 +100,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO(EJF):  This is annoying but we should maintain that the fields are
+    // This is annoying but we should maintain that the fields are
     // kept in order
     std::vector<byte_array::ConstByteArray> resources;
     std::copy(summary().resources.begin(), summary().resources.end(),
@@ -96,7 +113,7 @@ public:
       buf << e;
     }
 
-    buf << summary_.fee << summary_.contract_name_ << data_ << signature_;
+    buf << summary_.fee << summary_.contract_name << data_ << signature_;
 
     hasher_type hash;
     hash.Reset();
@@ -107,8 +124,8 @@ public:
 
   bool Verify()
   {
+    // TODO(issue 24): Needs implementing
     return true;
-    // TODO_FAIL("Needs implementing");
   }
 
   void PushResource(byte_array::ConstByteArray const &res)
@@ -136,7 +153,7 @@ public:
     signature_ = sig;
   }
 
-  void set_contract_name(std::string const &name) { summary_.contract_name_ = name; }
+  void set_contract_name(std::string const &name) { summary_.contract_name = name; }
 
   void set_fee(uint64_t fee) { summary_.fee = fee; }
 

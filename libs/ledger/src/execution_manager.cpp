@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "ledger/execution_manager.hpp"
 #include "core/assert.hpp"
 #include "core/logger.hpp"
@@ -84,7 +102,7 @@ ExecutionManager::Status ExecutionManager::Execute(block_type const &block)
     }
   }
 
-  // TODO(EJF):  Detect and handle number of lanes updates
+  // TODO(issue 33): Detect and handle number of lanes updates
 
   // plan the execution for this block
   if (!PlanExecution(block))
@@ -130,7 +148,7 @@ bool ExecutionManager::PlanExecution(block_type const &block)
     for (auto const &tx : slice.transactions)
     {
       Identifier id;
-      id.Parse(tx.contract_name_);
+      id.Parse(tx.contract_name);
       auto contract = contracts_.Lookup(id.name_space());
 
       if (contract)
@@ -192,7 +210,8 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     ++active_count_;
     auto status = item.Execute(*executor);
     (void)status;
-    // TODO(EJF):  Should work out what the status of this is
+    // TODO(issue 33):  Should check the status of the execution
+
     --active_count_;
     --remaining_executions_;
     ++completed_executions_;
@@ -256,7 +275,7 @@ void ExecutionManager::Stop()
 
 ExecutionManagerInterface::block_digest_type ExecutionManager::LastProcessedBlock()
 {
-  // TODO(EJF):  thread saftey
+  // TODO(issue 33): thread saftey
   return last_block_hash_;
 }
 

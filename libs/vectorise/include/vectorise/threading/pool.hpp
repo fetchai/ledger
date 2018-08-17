@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
 
@@ -20,7 +37,9 @@ public:
 
   Pool(std::size_t const &n)
   {
-    running_ = true;
+    running_           = true;
+    tasks_in_progress_ = 0;
+
     for (std::size_t i = 0; i < n; ++i)
     {
       workers_.emplace_back([this]() { this->Work(); });
@@ -58,6 +77,10 @@ public:
     {
       std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
+    while (tasks_in_progress_ != 0)
+    {
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
   }
 
   bool Empty()
@@ -72,7 +95,11 @@ private:
     while (running_)
     {
       std::function<void()> task = NextTask();
-      if (task) task();
+      if (task)
+      {
+        task();
+        --tasks_in_progress_;
+      }
     }
   }
 
@@ -83,10 +110,13 @@ private:
     if (!bool(running_)) return std::function<void()>();
 
     std::function<void()> task = std::move(tasks_.front());
+    ++tasks_in_progress_;
+
     tasks_.pop();
     return task;
   }
 
+  std::atomic<uint32_t>             tasks_in_progress_;
   std::atomic<bool>                 running_;
   std::mutex                        mutex_;
   std::vector<std::thread>          workers_;
@@ -94,5 +124,5 @@ private:
   std::condition_variable           condition_;
 };
 
-};  // namespace threading
-};  // namespace fetch
+}  // namespace threading
+}  // namespace fetch

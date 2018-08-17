@@ -18,7 +18,6 @@ setup_library_examples(fetch-network)
 
 if(FETCH_ENABLE_EXAMPLES)
 
-  target_link_libraries(example-network-oef PRIVATE fetch-http)
 
   add_executable(example-network-subscribe subscribe/subscribe.cpp)
   target_link_libraries(example-network-subscribe PRIVATE fetch-network)

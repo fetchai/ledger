@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include <utility>
 
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
@@ -107,7 +125,7 @@ public:
     auto ident = lane_identity_.lock();
     if (!ident)
     {
-      // TODO : Throw exception
+      // TODO(issue 7): Throw exception
       TODO_FAIL("Identity lost");
     }
 
@@ -153,7 +171,7 @@ public:
       auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::HELLO, ptr->Identity());
 
       FETCH_LOG_PROMISE();
-      if (!p.Wait(1000))  // TODO: Make timeout configurable
+      if (!p.Wait(1000))  // TODO(issue 7): Make timeout configurable
       {
         logger.Warn("Connection timed out - closing");
         client->Close();
@@ -168,14 +186,14 @@ public:
     auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::GET_LANE_NUMBER);
 
     FETCH_LOG_PROMISE();
-    p.Wait(1000);  // TODO: Make timeout configurable
+    p.Wait(1000);  // TODO(issue 7): Make timeout configurable
     if (p.As<LaneIdentity::lane_type>() != ident->GetLaneNumber())
     {
       logger.Error("Could not connect to lane with different lane number: ",
                    p.As<LaneIdentity::lane_type>(), " vs ", ident->GetLaneNumber());
       client->Close();
       client.reset();
-      // TODO : Throw exception
+      // TODO(issue 11): Throw exception
       return nullptr;
     }
 
