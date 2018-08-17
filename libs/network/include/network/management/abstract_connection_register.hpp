@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <functional>
+#include <list>
 #include <memory>
 #include <unordered_map>
 
@@ -46,6 +47,56 @@ public:
   {
     std::lock_guard<mutex::Mutex> lock(service_lock_);
     f(services_);
+  }
+
+  void VisitServices(std::function<void(service_map_type::value_type const &)> f) const
+  {
+    std::list<service_map_type::value_type> keys;
+
+    {
+      std::lock_guard<mutex::Mutex> lock(service_lock_);
+      for(auto &item : services_)
+      {
+        keys.push_back(item);
+      }
+    }
+
+    for(auto &item : keys)
+    {
+      auto k = item.first;
+      std::lock_guard<mutex::Mutex> lock(service_lock_);
+      if (services_.find(k) != services_.end())
+      {
+        f(item);
+      }
+    }
+  }
+
+  void VisitServices(std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
+  {
+    std::list<service_map_type::value_type> keys;
+
+    {
+      std::lock_guard<mutex::Mutex> lock(service_lock_);
+      for(auto &item : services_)
+      {
+        keys.push_back(item);
+      }
+    }
+
+    for(auto &item : keys)
+    {
+      auto v = item.second.lock();
+      if (v)
+      {
+        auto k = item.first;
+        std::lock_guard<mutex::Mutex> lock(service_lock_);
+        if (services_.find(k) != services_.end())
+        {
+          f(k,v);
+        }
+      }
+    }
   }
 
   uint64_t number_of_services() const { return number_of_services_; }

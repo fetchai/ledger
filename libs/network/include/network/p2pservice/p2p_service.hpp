@@ -224,6 +224,7 @@ public:
       auto regdetails = register_.GetDetails(client->handle());
 
       {
+        LOG_STACK_TRACE_POINT;
         std::lock_guard<mutex::Mutex> lock(*regdetails);
 
         regdetails->Update(details);
@@ -306,22 +307,25 @@ protected:
   /// @{
   void NextServiceCycle()
   {
+      connected_identities_type new_incoming;
+      connected_identities_type new_outgoing;
+
     std::vector<EntryPoint> orchestration;
     {
-      std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
+      LOG_STACK_TRACE_POINT;
       if (!running_) return;
 
       // Updating lists of incoming and outgoing
       using map_type = client_register_type::connection_map_type;
-      incoming_.clear();
-      outgoing_.clear();
 
-      register_.WithConnections([this, &orchestration](map_type const &map) {
-        for (auto &c : map)
-        {
+//      register_.WithConnections([this, &orchestration](map_type const &map) {
+//        for (auto &c : map)
+
+      register_.VisitConnections([this, &orchestration, &new_incoming, &new_outgoing](map_type::value_type const &c){
           auto conn = c.second.lock();
           if (conn)
           {
+            LOG_STACK_TRACE_POINT
             auto details = register_.GetDetails(conn->handle());
 
             std::lock_guard<mutex::Mutex> lock(*details);
@@ -329,9 +333,13 @@ protected:
             switch (conn->Type())
             {
             case network::AbstractConnection::TYPE_OUTGOING:
-              outgoing_.insert(details->identity.identifier());
+              {
+                LOG_STACK_TRACE_POINT;
+                generics::MilliTimer mt("network::AbstractConnection::TYPE_OUTGOING", 0);
+              new_outgoing.insert(details->identity.identifier());
               for (auto &e : details->entry_points)
               {
+                LOG_STACK_TRACE_POINT
 #if 0
                 char const *t = "unknown";
                 if (e.is_lane)
@@ -360,15 +368,25 @@ protected:
                   e.was_promoted = true;
                 }
               }
-
+              }
               break;
             case network::AbstractConnection::TYPE_INCOMING:
-              incoming_.insert(details->identity.identifier());
+              new_incoming.insert(details->identity.identifier());
               break;
             }
           }
-        }
       });
+    }
+
+    {
+LOG_STACK_TRACE_POINT
+
+ std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
+      incoming_.clear();
+      outgoing_.clear();
+
+      incoming_ = new_incoming;
+      outgoing_ = new_outgoing;
     }
 
     for (auto &e : orchestration)
@@ -524,7 +542,8 @@ protected:
 
 private:
 
-  using ConnectedIdentities = std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV>;
+  using connected_identity_type = byte_array::ConstByteArray;
+  using connected_identities_type = std::unordered_set<connected_identity_type, crypto::CallableFNV>;
 
   network_manager_type manager_;
   client_register_type register_;
@@ -543,7 +562,7 @@ private:
 
   mutex::Mutex                                                           peers_mutex_{ __LINE__, __FILE__ };
   std::unordered_map<connection_handle_type, shared_service_client_type> peers_;
-  ConnectedIdentities                                                    peer_identities_;
+  connected_identities_type                                                    peer_identities_;
 
   std::unique_ptr<crypto::Prover> certificate_;
   std::atomic<bool>               running_;
@@ -554,8 +573,9 @@ private:
   std::atomic<bool>                     tracking_peers_;
   std::chrono::system_clock::time_point track_start_;
 
-  std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> incoming_;
-  std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> outgoing_;
+  
+  connected_identities_type incoming_;
+  connected_identities_type outgoing_;
   std::vector<connection_handle_type>                                 incoming_handles_;
   std::vector<connection_handle_type>                                 outgoing_handles_;
 };

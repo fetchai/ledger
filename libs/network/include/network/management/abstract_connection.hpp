@@ -102,23 +102,44 @@ protected:
 
   void SignalLeave()
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    std::function<void (void)> cb;
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      cb = on_leave_;
+    }
     fetch::logger.Debug("Connection terminated");
 
-    if (on_leave_) on_leave_();
+    if (cb)
+    {
+      cb();
+    }
     DeactivateSelfManage();
   }
 
   void SignalMessage(network::message_type const &msg)
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
-    if (on_message_) on_message_(msg);
+    std::function<void (network::message_type const &)> cb;
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      cb = on_message_;
+    }
+    if (cb)
+    {
+      cb(msg);
+    }
   }
 
   void SignalConnectionFailed()
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
-    if (on_connection_failed_) on_connection_failed_();
+    std::function<void (void)> cb;
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      cb = on_leave_;
+    }
+    if (cb)
+    {
+      cb();
+    }
 
     DeactivateSelfManage();
   }

@@ -100,6 +100,8 @@ class Monitoring(object):
                 self.chain = {}
 
         for i, block in enumerate(blocks):
+            if i>10:
+                break;
             if not i:
                 self.heaviests[ident] = block["hashcurrent"]
             self.chain.setdefault(chainident, {})

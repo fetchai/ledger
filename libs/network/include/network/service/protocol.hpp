@@ -16,6 +16,10 @@
 
 namespace fetch {
 namespace service {
+
+  class FeedSubscriptionManager;
+
+  
 /* A class that defines a generic protocol.
  *
  * This class is used for defining a general protocol with

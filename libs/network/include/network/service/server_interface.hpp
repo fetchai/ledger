@@ -65,7 +65,7 @@ protected:
       }
       catch (serializers::SerializableException const &e)
       {
-        fetch::logger.Error("Serialization error: ", e.what());
+        fetch::logger.Error("Serialization error (Function Call): ", e.what());
         result = serializer_type();
         result << SERVICE_ERROR << id << e;
       }
@@ -89,16 +89,12 @@ protected:
       }
       catch (serializers::SerializableException const &e)
       {
-        fetch::logger.Error("Serialization error: ", e.what());
-        // FIX Serialization of errors such that this also works
-
-        //          serializer_type result;
-        //          result = serializer_type();
-        //          result << SERVICE_ERROR << id << e;
-        //          Send(client, result.data());
-
-        throw e;
+        fetch::logger.Error("Serialization error (Subscribe): ", e.what());
+        //result = serializer_type();
+        //result << SERVICE_ERROR << id << e;
+        throw e; // TODO: propagate error other other size
       }
+      //DeliverResponse(client, result.data());
     }
     else if (type == SERVICE_UNSUBSCRIBE)
     {
@@ -116,16 +112,12 @@ protected:
       }
       catch (serializers::SerializableException const &e)
       {
-        fetch::logger.Error("Serialization error: ", e.what());
-        // FIX Serialization of errors such that this also works
-
-        //          serializer_type result;
-        //          result = serializer_type();
-        //          result << SERVICE_ERROR << id << e;
-        //          Send(client, result.data());
-
-        throw e;
+        fetch::logger.Error("Serialization error (Unsubscribe): ", e.what());
+        //result = serializer_type();
+        //result << SERVICE_ERROR << id << e;
+        throw e; // TODO: propagate error other other size
       }
+      //DeliverResponse(client, result.data());
     }
 
     return ret;

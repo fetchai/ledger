@@ -24,7 +24,7 @@ class ServiceClientInterface
   typedef fetch::mutex::Mutex subscription_mutex_type;
   typedef std::lock_guard<subscription_mutex_type> subscription_mutex_lock_type;
   class Subscription;
-  typedef std::map<subscription_handler_type, Subscription> subscriptions_type;
+  typedef std::unordered_map<subscription_handler_type, Subscription> subscriptions_type;
 public:
   ServiceClientInterface()
     : subscription_mutex_(__LINE__, __FILE__), promises_mutex_(__LINE__, __FILE__)
@@ -315,7 +315,7 @@ private:
         subscription_mutex_.unlock();
         return subscription_handler_type(subscription_index_counter);
     }
-    
+
     class Subscription
     {
     public:
@@ -350,7 +350,7 @@ private:
         feed_handler_type feed = 0;
         AbstractCallable* callback = nullptr;
     };
-    
+
   subscriptions_type subscriptions_;
   std::list<subscription_handler_type> cancelled_subscriptions_;
   subscription_mutex_type subscription_mutex_;

@@ -107,7 +107,10 @@ public:
     fetch::logger.Debug("Publishing data for feed ", feed);
 
     if (publisher_[feed])
-      publisher_[feed](params.data());
+    {
+      LOG_STACK_TRACE_POINT
+        publisher_[feed](params.data());
+    }
     else
     {
       fetch::logger.Warn("Could not find publisher for ", feed);
