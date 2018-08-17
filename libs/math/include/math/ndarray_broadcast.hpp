@@ -6,6 +6,10 @@
 namespace fetch {
 namespace math {
 
+// need to forward declare
+template <typename T, typename C>
+class NDArray;
+
 bool ShapeFromBroadcast(std::vector<std::size_t> const &a, std::vector<std::size_t> const &b,
                         std::vector<std::size_t> &c)
 {
@@ -96,9 +100,8 @@ bool UpgradeIteratorFromBroadcast(std::vector<std::size_t> const &a,
   return true;
 }
 
-
 template <typename F, typename T, typename C>
-bool Broadcast(F function, NDArray<T, C> &a, NDArray<T ,C> &b, NDArray<T ,C> &c)
+bool Broadcast(F function, NDArray<T, C> &a, NDArray<T, C> &b, NDArray<T, C> &c)
 {
   std::vector<std::size_t> cshape;
 
@@ -147,9 +150,7 @@ bool Broadcast(F function, NDArray<T, C> &a, NDArray<T ,C> &b, NDArray<T ,C> &c)
   }
 
   return true;
-  
 }
-
 
 }  // namespace math
 }  // namespace fetch

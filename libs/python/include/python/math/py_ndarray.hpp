@@ -32,81 +32,91 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              return a;
            })
       .def("__add__",
-           [](NDArray<T> const &b, NDArray<T> const &c) {
-             NDArray<T> a(b.size());
-             a.LazyReshape(b.shape());
-             a.Add(b, c);
+           [](NDArray<T> &b, NDArray<T> &c) {
+             NDArray<T>               a;
+             std::vector<std::size_t> new_shape;
+             if (!(ShapeFromBroadcast(b.shape(), c.shape(), new_shape))) throw py::index_error();
+             a = NDArray<T>::Add(b, c);
              return a;
            })
       .def("__mul__",
-           [](NDArray<T> const &b, NDArray<T> const &c) {
-             NDArray<T> a(b.size());
-             a.LazyReshape(b.shape());
-             a.Multiply(b, c);
+           [](NDArray<T> &b, NDArray<T> &c) {
+             NDArray<T>               a;
+             std::vector<std::size_t> new_shape;
+             if (!(ShapeFromBroadcast(b.shape(), c.shape(), new_shape))) throw py::index_error();
+             a = NDArray<T>::Multiply(b, c);
              return a;
            })
       .def("__sub__",
-           [](NDArray<T> const &b, NDArray<T> const &c) {
-             NDArray<T> a(b.size());
-             a.LazyReshape(b.shape());
-             a.Subtract(b, c);
+           [](NDArray<T> &b, NDArray<T> &c) {
+             NDArray<T>               a;
+             std::vector<std::size_t> new_shape;
+             if (!(ShapeFromBroadcast(b.shape(), c.shape(), new_shape))) throw py::index_error();
+             a = NDArray<T>::Subtract(b, c);
              return a;
            })
       .def("__truediv__",
-           [](NDArray<T> const &b, NDArray<T> const &c) {
-             NDArray<T> a(b.size());
-             a.LazyReshape(b.shape());
-             a.Divide(b, c);
+           [](NDArray<T> &b, NDArray<T> &c) {
+             NDArray<T>               a;
+             std::vector<std::size_t> new_shape;
+             if (!(ShapeFromBroadcast(b.shape(), c.shape(), new_shape))) throw py::index_error();
+             a = NDArray<T>::Divide(b, c);
              return a;
            })
       .def("__add__",
-           [](NDArray<T> const &b, T const &c) {
+           [](NDArray<T> &b, T const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
-             a.Add(b, c);
+             a = b.Add(b, c);
              return a;
            })
       .def("__mul__",
-           [](NDArray<T> const &b, T const &c) {
+           [](NDArray<T> &b, T const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
-             a.Multiply(b, c);
+             a = b.Multiply(b, c);
              return a;
            })
       .def("__sub__",
-           [](NDArray<T> const &b, T const &c) {
+           [](NDArray<T> &b, T const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
-             a.Subtract(b, c);
+             a = b.Subtract(b, c);
              return a;
            })
       .def("__truediv__",
-           [](NDArray<T> const &b, T const &c) {
+           [](NDArray<T> &b, T const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
-             a.Divide(b, c);
+             a = b.Divide(b, c);
              return a;
            })
       .def("__iadd__",
-           [](NDArray<T> &a, NDArray<T> const &c) {
+           [](NDArray<T> &a, NDArray<T> &c) {
+             std::vector<std::size_t> new_shape;
+             if (!(ShapeFromBroadcast(a.shape(), c.shape(), new_shape))) throw py::index_error();
              a.InlineAdd(c);
              return a;
            })
       .def("__imul__",
-           [](NDArray<T> &a, NDArray<T> const &c) {
+           [](NDArray<T> &a, NDArray<T> &c) {
+             std::vector<std::size_t> new_shape;
+             if (!(ShapeFromBroadcast(a.shape(), c.shape(), new_shape))) throw py::index_error();
              a.InlineMultiply(c);
              return a;
            })
       .def("__isub__",
-           [](NDArray<T> &a, NDArray<T> const &c) {
+           [](NDArray<T> &a, NDArray<T> &c) {
+             std::vector<std::size_t> new_shape;
+             if (!(ShapeFromBroadcast(a.shape(), c.shape(), new_shape))) throw py::index_error();
              a.InlineSubtract(c);
              return a;
            })
-      .def("__truediv__",
-           [](NDArray<T> &a, NDArray<T> const &c) {
-             a.InlineDivide(c);
-             return a;
-           })
+      //      .def("__truediv__",
+      //           [](NDArray<T> &a, NDArray<T> &c) {
+      //             a.InlineDivide(c);
+      //             return a;
+      //           })
       .def("__iadd__",
            [](NDArray<T> &a, T const &c) {
              a.InlineAdd(c);
@@ -122,11 +132,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.InlineSubtract(c);
              return a;
            })
-      .def("__truediv__",
-           [](NDArray<T> &a, T const &c) {
-             a.InlineDivide(c);
-             return a;
-           })
+      //      .def("__truediv__",
+      //           [](NDArray<T> &a, T const &c) {
+      //             a.InlineDivide(c);
+      //             return a;
+      //           })
       .def("__eq__",
            [](NDArray<T> const &s, NDArray<T> const &other) { return s.operator==(other); })
       .def("__ne__",

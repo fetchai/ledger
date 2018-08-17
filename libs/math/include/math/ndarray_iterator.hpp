@@ -1,9 +1,18 @@
 #pragma once
 #include "math/ndarray.hpp"
-
 #include <vector>
+
+//
+////// need to forward declare
+////class NDArray;
+
 namespace fetch {
 namespace math {
+
+template <typename T, typename C>
+class ShapeLessArray;
+template <typename T, typename C>
+class NDArray;
 
 struct NDIteratorRange
 {
@@ -25,8 +34,8 @@ template <typename T, typename C>
 class NDArrayIterator
 {
 public:
-  using type = T;
-  using ndarray_type = NDArray< T, C >;
+  using type         = T;
+  using ndarray_type = NDArray<T, C>;
 
   /**
    * default range assumes step 1 over whole array - useful for trivial cases
@@ -47,10 +56,8 @@ public:
    * @param array the NDArray to operate upon
    * @param step the from,to,and step range objects
    */
-  NDArrayIterator(ndarray_type &array,
-    std::vector< std::vector< std::size_t > > const &step)
-    :
-    array_(array)
+  NDArrayIterator(ndarray_type &array, std::vector<std::vector<std::size_t>> const &step)
+    : array_(array)
   {
     Setup(step);
   }
@@ -149,7 +156,7 @@ protected:
   std::size_t                  total_runs_ = 1;
 
 private:
-  void Setup(std::vector< std::vector< std::size_t > > const &step)
+  void Setup(std::vector<std::vector<std::size_t>> const &step)
   {
     assert(array_.shape().size() == step.size());
     std::size_t volume = 1;
@@ -181,7 +188,7 @@ private:
 
       volume *= array_.shape(i);
       ranges_.push_back(s);
-    }    
+    }
   }
 
   ndarray_type &array_;
