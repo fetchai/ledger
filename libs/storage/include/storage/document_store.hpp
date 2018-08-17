@@ -4,6 +4,7 @@
 #include "storage/file_object.hpp"
 #include "storage/key_value_index.hpp"
 #include "storage/resource_mapper.hpp"
+
 #include <cassert>
 #include <fstream>
 #include <memory>
@@ -169,11 +170,9 @@ public:
     }
     else
     {
-
       ret.was_created = doc.was_created();
       if (!doc.was_created())
       {
-
         ret.document.Resize(doc.size());
         doc.Read(ret.document);
       }
@@ -336,6 +335,7 @@ private:
   void UpdateDocumentFile(DocumentFileImplementation &doc)
   {
     doc.Flush();
+
     key_index_.Set(doc.address(), doc.id(), doc.Hash());
 
     // TODO:    file_store_.Flush();
