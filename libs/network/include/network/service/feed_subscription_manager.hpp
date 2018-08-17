@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/mutex.hpp"
 #include "network/service/abstract_publication_feed.hpp"
 #include "network/service/message_types.hpp"
@@ -91,7 +109,6 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: change uint64_t to global client id.
     subscribe_mutex_.lock();
     subscribers_.push_back({client, id});
     subscribe_mutex_.unlock();
@@ -108,7 +125,6 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: change uint64_t to global client id.
     subscribe_mutex_.lock();
     std::vector<std::size_t> ids;
     for (std::size_t i = 0; i < subscribers_.size(); ++i)
@@ -134,7 +150,7 @@ public:
 private:
   struct ClientSubscription
   {
-    uint64_t                  client;
+    uint64_t                  client;  // TODO(issue 21): change uint64_t to global client id.
     subscription_handler_type id;
   };
 

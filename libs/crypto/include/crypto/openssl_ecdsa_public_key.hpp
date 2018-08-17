@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "crypto/openssl_common.hpp"
 #include "crypto/openssl_context_session.hpp"
@@ -105,6 +122,8 @@ private:
           "DER encoded data is NOT implemented "
           "yet.");
     }
+
+    return {};
   }
 
   static byte_array::ByteArray Convert(EC_POINT const *const public_key,
@@ -122,6 +141,8 @@ private:
     case eECDSAEncoding::DER:
       return Convert(public_key, group.get(), session, binaryDataFormat);
     }
+
+    return {};
   }
 
   static uniq_ptr_type<EC_POINT> Convert(byte_array::ConstByteArray const &key_data,
@@ -140,6 +161,8 @@ private:
           "ECDSAPublicKey::Convert(...): Conversion from "
           "DER encoded data is NOT implemented yet.");
     }
+
+    return {};
   }
 
   static byte_array::ByteArray Convert2Canonical(EC_POINT const *const           public_key,
@@ -226,7 +249,7 @@ private:
   static uniq_ptr_type<EC_KEY> ConvertToECKEY(const EC_POINT *key_EC_POINT)
   {
     uniq_ptr_type<EC_KEY> key{EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)};
-    // TODO: setting conv. form might not be really necessary (stuff works
+    // TODO(issue 36): setting conv. form might not be really necessary (stuff works
     // without it)
     EC_KEY_set_conv_form(key.get(), conversionForm);
 

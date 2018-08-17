@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
@@ -15,7 +32,7 @@ class RevertibleDocumentStoreProtocol : public fetch::service::Protocol
 {
 public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
-  using lane_type              = uint32_t;  // TODO: Fetch from some other palce
+  using lane_type              = uint32_t;  // TODO(issue 12): Fetch from some other palce
 
   enum
   {
@@ -121,7 +138,7 @@ private:
       logger.Warn("Lane assignment is ", lane_assignment_, " vs ", rid.lane(log2_lanes_));
       logger.Debug("Address:", byte_array::ToHex(rid.id()));
 
-      throw serializers::SerializableException(  // TODO: set exception number
+      throw serializers::SerializableException(  // TODO(issue 11): set exception number
           0, byte_array_type("Get: Resource located on other lane. TODO, set error number"));
     }
 
@@ -135,7 +152,7 @@ private:
       logger.Warn("Lane assignment is ", lane_assignment_, " vs ", rid.lane(log2_lanes_));
       logger.Debug("Address:", byte_array::ToHex(rid.id()));
 
-      throw serializers::SerializableException(  // TODO: set exception number
+      throw serializers::SerializableException(  // TODO(issue 11): set exception number
           0, byte_array_type("GetOrCreate: Resource located on other lane. "
                              "TODO, set error number"));
     }
@@ -148,7 +165,7 @@ private:
   {
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
-      throw serializers::SerializableException(  // TODO: set exception number
+      throw serializers::SerializableException(  // TODO(issue 11): set exception number
           0, byte_array_type("Set: Resource located on other lane. TODO: Set error number."));
     }
     {
@@ -156,7 +173,7 @@ private:
       auto                          it = locks_.find(rid.id());
       if ((it == locks_.end()) || (it->second != client_id))
       {
-        throw serializers::SerializableException(  // TODO: set exception number
+        throw serializers::SerializableException(  // TODO(issue 11): set exception number
             0, byte_array_type("Client does not have a lock for the resource"));
       }
     }

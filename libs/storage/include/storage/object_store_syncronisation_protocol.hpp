@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/logger.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/service/promise.hpp"
@@ -61,7 +79,7 @@ public:
     if (register_.number_of_services() == 0)
     {
       thread_pool_->Post([this]() { this->IdleUntilPeers(); },
-                         1000);  // TODO: Make time variable
+                         1000);  // TODO(issue 9): Make time variable
     }
     else
     {
@@ -70,7 +88,7 @@ public:
       {
         for (uint8_t i = 0;; ++i)
         {
-          roots_to_sync.push(i);
+          roots_to_sync_.push(i);
         }
 
         thread_pool_->Post([this]() { this->SyncSubtree(); });
@@ -175,7 +193,7 @@ public:
 
     if (running_)
     {
-      // TODO: Make time parameter
+      // TODO(issue 9): Make time parameter
       thread_pool_->Post([this]() { this->IdleUntilPeers(); }, 5000);
     }
   }
@@ -226,7 +244,7 @@ private:
   uint64_t ObjectCount()
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    return cache_.size();  // TODO: Return store size
+    return cache_.size();  // TODO(issue 9): Return store size
   }
 
   std::vector<S> PullObjects(uint64_t const &client_handle)
@@ -297,13 +315,13 @@ private:
         auto peer = p.second;
         auto ptr  = peer.lock();
 
-        if (roots_to_sync.empty())
+        if (roots_to_sync_.empty())
         {
           break;
         }
 
-        auto root = roots_to_sync.front();
-        roots_to_sync.pop();
+        auto root = roots_to_sync_.front();
+        roots_to_sync_.pop();
 
         byte_array::ByteArray array;
         array.Resize(256 / 8);
@@ -328,7 +346,7 @@ private:
       incoming_objects_.clear();
       if (!promise.Wait(100, false))
       {
-        roots_to_sync.push(root);
+        roots_to_sync_.push(root);
         continue;
       }
 
@@ -352,7 +370,7 @@ private:
     subtree_promises_.clear();
 
     // Completed syncing
-    if (roots_to_sync.empty())
+    if (roots_to_sync_.empty())
     {
       thread_pool_->Post([this]() { this->IdleUntilPeers(); });
     }
@@ -368,7 +386,7 @@ private:
   std::vector<CachedObject> cache_;
 
   uint64_t max_cache_           = 2000;
-  double   max_cache_life_time_ = 20000;  // TODO: Make cache configurable
+  double   max_cache_life_time_ = 20000;  // TODO(issue 7): Make cache configurable
 
   mutable mutex::Mutex          object_list_mutex_;
   std::vector<service::Promise> object_list_promises_;
@@ -380,7 +398,7 @@ private:
   // Syncing with other peers on startup
   bool                                              needs_sync_ = true;
   std::vector<std::pair<uint8_t, service::Promise>> subtree_promises_;
-  std::queue<uint8_t>                               roots_to_sync;
+  std::queue<uint8_t>                               roots_to_sync_;
 };
 
 }  // namespace storage

@@ -1,23 +1,27 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/json/document.hpp"
 #include <iostream>
 using namespace fetch::json;
 using namespace fetch::byte_array;
 
 #include "testing/unittest.hpp"
-/*
-struct Blah
-{
-  int i,j;
-  std::string foo;
-};
-
-void Serializer(T &t, Blah const&b)
-{
-  t.WithProperty("i") << i;
-  t.WithProperty("j") << j;
-  t.WithProperty("foo") << foo;
-}
-*/
 
 int main(int argc, char **argv)
 {
@@ -116,8 +120,6 @@ int main(int argc, char **argv)
 
       EXPECT_EXCEPTION(doc.Parse(R"(["a":"b"])"), fetch::json::JSONParseException);
       EXPECT_EXCEPTION(doc.Parse(R"({"a": 2.fs})"), fetch::json::JSONParseException);
-      // TODO      EXPECT_EXCEPTION(doc.Parse(R"({"a":})"),
-      // fetch::json::JSONParseException);
     };
 
     return 0;

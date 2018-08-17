@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/assert.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/array.hpp"
@@ -69,7 +87,7 @@ public:
   void Sort()
   {
     std::size_t offset = 0;
-    // TODO: parallelise over cores
+    // TODO(tfr): parallelise over cores
     for (std::size_t i = 0; i < width_; ++i)
     {
       super_type::Sort(memory::TrivialRange(offset, offset + height_));
@@ -175,7 +193,7 @@ public:
    */
   void Rotate(double const &radians, type const fill = type())
   {
-    Rotate(radians, 0.5 * height(), 0.5 * width(), fill);
+    Rotate(radians, 0.5 * static_cast<double>(height()), 0.5 * static_cast<double>(width()), fill);
   }
 
   /* Rotates the array around a point.
@@ -187,7 +205,7 @@ public:
   void Rotate(double const &radians, double const &ci, double const &cj, type const fill = type())
   {
     assert(false);
-    // TODO: FIXME, make new implementation
+    // TODO(tfr): FIXME, make new implementation
     double         ca = cos(radians), sa = -sin(radians);
     container_type n(super_type::data().size());
 
@@ -411,7 +429,7 @@ public:
   void Reserve(size_type const &h, size_type const &w)
   {
 
-    // TODO: Rewrite
+    // TODO(unknown): Rewrite
     std::size_t opw = padded_height_, ow = width_;
     std::size_t oh = height_;
 
@@ -462,7 +480,7 @@ public:
     std::size_t height = (rows.to() - rows.from()) / rows.step();
     std::size_t width  = (cols.to() - cols.from()) / cols.step();
     LazyResize(height, width);
-    // TODO: Implement
+    // TODO(tfr): Implement
   }
 
   void Fill(type const &value, memory::TrivialRange const &rows, memory::TrivialRange const &cols)
@@ -470,7 +488,7 @@ public:
     std::size_t height = (rows.to() - rows.from());
     std::size_t width  = (cols.to() - cols.from());
     LazyResize(height, width);
-    // TODO: Implement
+    // TODO(tfr): Implement
   }
 
   /* Resizes the array into a square array in a lazy manner.
@@ -501,7 +519,7 @@ public:
     height_ = h;
     width_  = w;
 
-    // TODO: Take care of padded bytes
+    // TODO(tfr): Take care of padded bytes
   }
 
   /* Saves the array into a file.

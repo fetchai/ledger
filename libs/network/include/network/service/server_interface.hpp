@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/byte_array/byte_array.hpp"
 #include "network/message.hpp"
 #include "network/service/callable_class_member.hpp"
@@ -19,11 +37,11 @@ public:
   virtual ~ServiceServerInterface() {}
 
   void Add(protocol_handler_type const &name,
-           Protocol *                   protocol)  // TODO: Rename to AddProtocol
+           Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: (`HUT`) : better reporting of errors
+    // TODO(issue 19): better reporting of errors
     if (members_[name] != nullptr)
     {
       throw serializers::SerializableException(error::PROTOCOL_EXISTS,
@@ -50,7 +68,7 @@ protected:
     service_classification_type type;
     params >> type;
 
-    if (type == SERVICE_FUNCTION_CALL)  // TODO: change to switch
+    if (type == SERVICE_FUNCTION_CALL)  // TODO(issue 19): change to switch
     {
       ret = true;
       serializer_type               result;
@@ -166,7 +184,7 @@ private:
     return fnc(result, params);
   }
 
-  Protocol *members_[256] = {nullptr};  // TODO: Not thread-safe
+  Protocol *members_[256] = {nullptr};  // TODO(issue 19): Not thread-safe
   friend class FeedSubscriptionManager;
 };
 }  // namespace service

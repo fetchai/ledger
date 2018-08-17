@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/assert.hpp"
 #include "core/random.hpp"
 #include "math/kernels/approx_exp.hpp"
@@ -635,13 +653,13 @@ public:
 
   void CumlativeProduct()
   {
-    // TODO: This one is easy to if done in parallel
+    // TODO(tfr): This one is easy to if done in parallel
     // but next to no speedup on a single row
   }
 
   void CumulativeSum()
   {
-    // TODO: Same as above
+    // TODO(tfr): Same as above
   }
 
   //  type PeakToPeak() const { return Max() - Min(); }
@@ -744,7 +762,7 @@ public:
 
   void ApproxSoftMax(self_type const &x)
   {
-    // TODO: Update vector library
+    // TODO(tfr): Update vector library
     //    kernels::ApproxSoftMax< type, vector_register_type > kernel;
     //    kernel( this->data_, x.data());
   }
@@ -1374,7 +1392,7 @@ public:
     }
     bool ret = true;
 
-    // TODO: Vectorize
+    // TODO(tfr): Vectorize
     for (size_type i = 0; i < data().size(); ++i)
     {
       ret &= (data()[i] == other.data()[i]);
@@ -1437,12 +1455,12 @@ public:
 
   ShapeLessArray &FillArange(type from, type const &to)
   {
-    // TODO: vectorise
+    // TODO(tfr): vectorise
     assert(from < to);
 
     std::size_t N     = this->size();
     type        d     = from;
-    type        delta = (to - from) / (N - 1);
+    type        delta = (to - from) / static_cast<type>(N - 1);
 
     for (std::size_t i = 0; i < N; ++i)
     {
@@ -1454,7 +1472,7 @@ public:
 
   static ShapeLessArray UniformRandom(std::size_t const &N)
   {
-    // TODO: vectorise
+    // TODO(tfr): vectorise
 
     ShapeLessArray ret;
     ret.LazyResize(N);
@@ -1609,7 +1627,7 @@ public:
     this->size_ = x.size_;
   }
 
-  // TODO: Make referenced copy
+  // TODO(tfr): Make referenced copy
 
   container_type const &data() const { return data_; }
   container_type &      data() { return data_; }

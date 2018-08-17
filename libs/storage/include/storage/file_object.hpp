@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
@@ -43,7 +61,7 @@ template <typename S = VersionedRandomAccessStack<FileBlockType<>>>
 class FileObject
 {
 public:
-  // TODO(unknown): make pluggable
+  // TODO(issue 10): make pluggable
   using stack_type  = S;
   using block_type  = typename stack_type::type;
   using hasher_type = crypto::SHA256;
@@ -100,7 +118,7 @@ public:
     memcpy(first.data + sizeof(uint64_t), reinterpret_cast<uint8_t const *>(&length_),
            sizeof(uint64_t));
     stack_.Set(id_, first);
-    // TODO: Flush    stack_.Flush();
+    // TODO(issue 10): Flush    stack_.Flush();
   }
 
   void Seek(uint64_t n)
@@ -171,7 +189,7 @@ public:
     last_position_ = block_index_;
     block_count_   = block_number_;
 
-    // TODO: Delete whatever comes after
+    // TODO(issue 10): Delete whatever comes after
   }
 
   void Grow(uint64_t size)
@@ -179,9 +197,6 @@ public:
     Seek(0);
     size += HEADER_SIZE;
     TODO_FAIL("Grow is not implemented yet");
-
-    //    std::size_t actual_size = 0;
-    // TODO
   }
 
   void Write(byte_array::ConstByteArray const &arr) { Write(arr.pointer(), arr.size()); }
