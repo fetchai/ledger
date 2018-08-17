@@ -255,17 +255,16 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("Max", [](NDArray<T> const &a) { return a.Max(); })
       .def("Max",
-           [](NDArray<T> const &a, std::size_t const axis)
-           {
+           [](NDArray<T> const &a, std::size_t const axis) {
              if (axis >= a.shape().size()) throw py::index_error();
              return a.Max(axis);
            })
       .def("Min", [](NDArray<T> const &a) { return a.Min(); })
-//      .def("Min",
-//           [](NDArray<T> const &a, std::size_t axis) {
-//             if (axis >= a.shape().size()) throw py::index_error();
-//             return a.Min(axis);
-//           })
+      //      .def("Min",
+      //           [](NDArray<T> const &a, std::size_t axis) {
+      //             if (axis >= a.shape().size()) throw py::index_error();
+      //             return a.Min(axis);
+      //           })
       .def("Log", [](NDArray<T> &a) { return fetch::math::Log(a); })
       .def("Exp", [](NDArray<T> &a) { return fetch::math::Exp(a); })
       .def("Relu", [](NDArray<T> const &a, NDArray<T> &b) { return b.Relu(a); })

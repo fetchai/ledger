@@ -37,24 +37,23 @@ TEST(ndarray, layer_shapes_test)
   InputLayer<data_type> layer1(5);
   ASSERT_TRUE(layer1.LayerSize() == 5);
 
-  Layer<data_type>      layer2(layer1, 100);
+  Layer<data_type> layer2(layer1, 100);
   ASSERT_TRUE(layer2.InputLayerSize() == 5);
   ASSERT_TRUE(layer2.LayerSize() == 100);
   std::vector<std::size_t> test_shape{5, 100};
   ASSERT_TRUE(layer2.WeightsMatrixShape() == test_shape);
 
-  Layer<data_type>      layer3(layer2, 10);
+  Layer<data_type> layer3(layer2, 10);
   ASSERT_TRUE(layer3.InputLayerSize() == 100);
   ASSERT_TRUE(layer3.LayerSize() == 10);
   test_shape = {100, 10};
   ASSERT_TRUE(layer3.WeightsMatrixShape() == test_shape);
 
-  Layer<data_type>      layer4(layer3, 1);
+  Layer<data_type> layer4(layer3, 1);
   ASSERT_TRUE(layer4.InputLayerSize() == 10);
   ASSERT_TRUE(layer4.LayerSize() == 1);
   test_shape = {10, 1};
   ASSERT_TRUE(layer4.WeightsMatrixShape() == test_shape);
-
 }
 
 // TEST(ndarray, faulty_reshape)
