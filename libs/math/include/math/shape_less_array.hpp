@@ -653,13 +653,13 @@ public:
 
   void CumlativeProduct()
   {
-    // TODO: This one is easy to if done in parallel
+    // TODO(tfr): This one is easy to if done in parallel
     // but next to no speedup on a single row
   }
 
   void CumulativeSum()
   {
-    // TODO: Same as above
+    // TODO(tfr): Same as above
   }
 
   //  type PeakToPeak() const { return Max() - Min(); }
@@ -762,7 +762,7 @@ public:
 
   void ApproxSoftMax(self_type const &x)
   {
-    // TODO: Update vector library
+    // TODO(tfr): Update vector library
     //    kernels::ApproxSoftMax< type, vector_register_type > kernel;
     //    kernel( this->data_, x.data());
   }
@@ -1392,7 +1392,7 @@ public:
     }
     bool ret = true;
 
-    // TODO: Vectorize
+    // TODO(tfr): Vectorize
     for (size_type i = 0; i < data().size(); ++i)
     {
       ret &= (data()[i] == other.data()[i]);
@@ -1455,7 +1455,7 @@ public:
 
   ShapeLessArray &FillArange(type from, type const &to)
   {
-    // TODO: vectorise
+    // TODO(tfr): vectorise
     assert(from < to);
 
     std::size_t N     = this->size();
@@ -1472,7 +1472,7 @@ public:
 
   static ShapeLessArray UniformRandom(std::size_t const &N)
   {
-    // TODO: vectorise
+    // TODO(tfr): vectorise
 
     ShapeLessArray ret;
     ret.LazyResize(N);
@@ -1627,7 +1627,7 @@ public:
     this->size_ = x.size_;
   }
 
-  // TODO: Make referenced copy
+  // TODO(tfr): Make referenced copy
 
   container_type const &data() const { return data_; }
   container_type &      data() { return data_; }

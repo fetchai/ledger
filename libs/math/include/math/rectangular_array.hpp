@@ -87,7 +87,7 @@ public:
   void Sort()
   {
     std::size_t offset = 0;
-    // TODO: parallelise over cores
+    // TODO(tfr): parallelise over cores
     for (std::size_t i = 0; i < height_; ++i)
     {
       super_type::Sort(memory::TrivialRange(offset, offset + width_));
@@ -205,7 +205,7 @@ public:
   void Rotate(double const &radians, double const &ci, double const &cj, type const fill = type())
   {
     assert(false);
-    // TODO: FIXME, make new implementation
+    // TODO(tfr): FIXME, make new implementation
     double         ca = cos(radians), sa = -sin(radians);
     container_type n(super_type::data().size());
 
@@ -478,7 +478,7 @@ public:
     std::size_t height = (rows.to() - rows.from()) / rows.step();
     std::size_t width  = (cols.to() - cols.from()) / cols.step();
     LazyResize(height, width);
-    // TODO: Implement
+    // TODO(tfr): Implement
   }
 
   void Fill(type const &value, memory::TrivialRange const &rows, memory::TrivialRange const &cols)
@@ -486,7 +486,7 @@ public:
     std::size_t height = (rows.to() - rows.from());
     std::size_t width  = (cols.to() - cols.from());
     LazyResize(height, width);
-    // TODO: Implement
+    // TODO(tfr): Implement
   }
 
   /* Resizes the array into a square array in a lazy manner.
@@ -517,7 +517,7 @@ public:
     height_ = h;
     width_  = w;
 
-    // TODO: Take care of padded bytes
+    // TODO(tfr): Take care of padded bytes
   }
 
   /* Saves the array into a file.

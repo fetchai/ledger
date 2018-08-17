@@ -22,7 +22,7 @@
 namespace fetch {
 namespace math {
 
-// TODO: place holder for more efficient implementation.
+// TODO(tfr): place holder for more efficient implementation.
 class Log
 {
 public:
