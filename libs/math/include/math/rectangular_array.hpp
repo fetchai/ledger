@@ -429,7 +429,7 @@ public:
   void Reserve(size_type const &h, size_type const &w)
   {
 
-    // TODO: Rewrite
+    // TODO(unknown): Rewrite
     std::size_t opw = padded_height_, ow = width_;
     std::size_t oh = height_;
 
