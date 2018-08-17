@@ -279,7 +279,7 @@ private:
 
               fetch::logger.Warn("ERK hash=", ToHex(blkhash));
 
-              auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_HEADER, blkhash);
+              auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_HEADER, blkhash, 1);
               prom.Then([this, prom](){
                   LOG_STACK_TRACE_POINT;
                   std::pair<bool, block_type> block;
