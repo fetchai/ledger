@@ -365,7 +365,7 @@ int main(int argc, char const **argv)
         // Now, aim to split the store up and copy it across perfectly
         for (uint8_t keyBegin = 0; keyBegin < 16; ++keyBegin)
         {
-          array[0] = (keyBegin << 4) & 0xFF;
+          array[0] = static_cast<uint8_t>((keyBegin << 4u) & 0xFF);
 
           auto rid = ResourceID(array);
 
