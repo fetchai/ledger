@@ -88,7 +88,7 @@ public:
       {
         for (uint8_t i = 0;; ++i)
         {
-          roots_to_sync.push(i);
+          roots_to_sync_.push(i);
         }
 
         thread_pool_->Post([this]() { this->SyncSubtree(); });
@@ -315,13 +315,13 @@ private:
         auto peer = p.second;
         auto ptr  = peer.lock();
 
-        if (roots_to_sync.empty())
+        if (roots_to_sync_.empty())
         {
           break;
         }
 
-        auto root = roots_to_sync.front();
-        roots_to_sync.pop();
+        auto root = roots_to_sync_.front();
+        roots_to_sync_.pop();
 
         byte_array::ByteArray array;
         array.Resize(256 / 8);
@@ -346,7 +346,7 @@ private:
       incoming_objects_.clear();
       if (!promise.Wait(100, false))
       {
-        roots_to_sync.push(root);
+        roots_to_sync_.push(root);
         continue;
       }
 
@@ -370,7 +370,7 @@ private:
     subtree_promises_.clear();
 
     // Completed syncing
-    if (roots_to_sync.empty())
+    if (roots_to_sync_.empty())
     {
       thread_pool_->Post([this]() { this->IdleUntilPeers(); });
     }
@@ -398,7 +398,7 @@ private:
   // Syncing with other peers on startup
   bool                                              needs_sync_ = true;
   std::vector<std::pair<uint8_t, service::Promise>> subtree_promises_;
-  std::queue<uint8_t>                               roots_to_sync;
+  std::queue<uint8_t>                               roots_to_sync_;
 };
 
 }  // namespace storage
