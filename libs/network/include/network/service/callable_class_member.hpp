@@ -214,7 +214,7 @@ public:
 
     class_    = cls;
     function_ = function;
-    this->SetSignature(details::SignatureToString<R, Args...>::Signature());
+    this->SetSignature(details::SignatureToString<C, R, Args...>::Signature());
   }
 
   CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value)
@@ -224,7 +224,7 @@ public:
 
     class_    = cls;
     function_ = value;
-    this->SetSignature(details::SignatureToString<R, Args...>::Signature());
+    this->SetSignature(details::SignatureToString<C, R, Args...>::Signature());
   }
 
   /* Operator to invoke the function.

@@ -32,13 +32,15 @@ struct ArgsToString<R, void>
   static std::string Value() { return ""; }
 };
 
-template <typename R, typename... Args>
+template <typename C, typename R, typename... Args>
 struct SignatureToString
 {
   static std::string Signature()
   {
-    return std::string(serializers::TypeRegister<base_type<R>>::name()) + std::string(" <= ") +
-           ArgsToString<R, Args...>::Value();
+    return  std::string(serializers::TypeRegister<base_type<R>>::name()) + std::string(" ") +
+            std::string(serializers::TypeRegister<base_type<C>>::name())  + 
+            std::string("::function_pointer") +  
+            std::string("(") + ArgsToString<R, Args...>::Value() + std::string(")");
   }
 };
 
