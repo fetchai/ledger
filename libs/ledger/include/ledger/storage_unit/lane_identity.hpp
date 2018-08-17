@@ -63,7 +63,7 @@ public:
       assert(details);
     }
     else
-    // TODO: Verify identity if already exists
+    // TODO(issue 24): Verify identity if already exists
     {
       std::lock_guard<mutex::Mutex> lock(*details);
       details->identity = iden;

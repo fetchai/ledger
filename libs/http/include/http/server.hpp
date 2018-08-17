@@ -69,7 +69,7 @@ public:
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
       fetch::logger.Info("Starting HTTPServer on http://127.0.0.1:", port);
 
-      // TODO: (`HUT`) : fix this hack
+      // TODO(issue 28) : fix this hack
       network_manager_type tm  = threadMan;
       auto                 soc = threadMan.CreateIO<socket_type>();
 
@@ -115,7 +115,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO(EJF):  Need to actually add better support for the options here
+    // TODO(issue 35): Need to actually add better support for the options here
     if (req.method() == Method::OPTIONS)
     {
 
@@ -130,7 +130,7 @@ public:
       return;
     }
 
-    // TODO: improve such that it works for multiple threads.
+    // TODO(issue 28): improve such that it works for multiple threads.
     eval_mutex_.lock();
     for (auto &m : pre_view_middleware_)
     {
@@ -167,7 +167,7 @@ public:
     LOG_STACK_TRACE_POINT;
 
     auto cb = [soc, accep, manager](std::error_code ec) {
-      // LOG_LAMBDA_STACK_TRACE_POINT; // TODO: (`HUT`) : sort this
+      // LOG_LAMBDA_STACK_TRACE_POINT; // TODO(issue 28) : sort this
 
       if (!ec)
       {

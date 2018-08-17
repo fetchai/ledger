@@ -36,7 +36,7 @@ public:
 
   ~StateShardService()
   {
-    // TODO: Remove protocol
+    // TODO(issue 14): Remove protocol
     delete store_protocol_;
     delete store_;
   }

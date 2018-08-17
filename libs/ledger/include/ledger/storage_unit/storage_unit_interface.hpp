@@ -46,7 +46,7 @@ class StorageUnitInterface : public StorageInterface
 {
 public:
   using hash_type     = byte_array::ConstByteArray;
-  using bookmark_type = uint64_t;  // TODO(EJF): From keyvalue index
+  using bookmark_type = uint64_t;  // TODO(issue 33): From keyvalue index
 
   // Construction / Destruction
   StorageUnitInterface()          = default;

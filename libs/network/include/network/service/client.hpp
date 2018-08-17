@@ -67,12 +67,6 @@ public:
         network_manager_.Post([this]() { ProcessMessages(); });
       });
     }
-
-    /*
-    ptr->OnConnectionFailed([this]() {
-        // TODO: Clear closures?
-      });
-    */
   }
 
   ServiceClient(network::TCPClient &connection, network_manager_type thread_manager)
@@ -201,7 +195,7 @@ private:
 
       if (has_messages)
       {
-        // TODO: Post
+        // TODO(issue 22): Post
         if (!ProcessServerMessage(msg))
         {
           fetch::logger.Debug("Looking for RPC functionality");

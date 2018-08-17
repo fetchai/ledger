@@ -46,7 +46,9 @@ namespace service {
  * A current limitation of the implementation is that there is only
  * support for 256 SERVICE functions. It the next version of this class,
  * this should be changed to be variable and allocated at construction
- * time (TODO).
+ * time.
+ *
+ * TODO(issue 21):
  */
 class Protocol
 {
@@ -109,7 +111,8 @@ public:
    * In the next implementation of this, one should use unique_ptr
    * rather than a raw pointer. This will have no impact on the rest of
    * the code as it is always a reference return and not the raw pointer
-   * (TODO).
+   *
+   * TODO(issue 21):
    */
   template <typename C, typename R, typename... Args>
   void Expose(function_handler_type const &n, C *instance, R (C::*function)(Args...))
@@ -156,7 +159,7 @@ public:
    * This function is intended to be used by the service to subscribe
    * its clients to the feed.
    */
-  void Subscribe(uint64_t const &         client,  // TODO: Standardize client type over the code.
+  void Subscribe(uint64_t const &         client,  // TODO(issue 21): Standardize client type over the code.
                  feed_handler_type const &feed, subscription_handler_type const &id)
   {
     LOG_STACK_TRACE_POINT;
@@ -187,7 +190,7 @@ public:
    * This function is intended to be used by the service to unsubscribe
    * its clients to the feed.
    */
-  void Unsubscribe(uint64_t const &         client,  // TODO: Standardize client type over the code.
+  void Unsubscribe(uint64_t const &         client,  // TODO(issue 21): Standardize client type over the code.
                    feed_handler_type const &feed, subscription_handler_type const &id)
   {
     LOG_STACK_TRACE_POINT;

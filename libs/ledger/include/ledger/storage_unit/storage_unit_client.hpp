@@ -131,7 +131,7 @@ public:
 
     crypto::Identity lane_identity;
     p3.As(lane_identity);
-    // TODO: Verify expected identity
+    // TODO(issue 24: Verify expected identity
 
     assert(lane < lanes_.size());
     fetch::logger.Debug("Adding lane ", lane);
@@ -265,7 +265,7 @@ public:
 
   byte_array::ConstByteArray Hash() override
   {
-    // TODO(EJF):
+    // TODO(issue 33): Which lane?
     return lanes_[0]
         ->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
         .As<byte_array::ByteArray>();

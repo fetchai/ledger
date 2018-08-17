@@ -51,7 +51,7 @@ public:
   using network_manager_type = typename super_type::network_manager_type;
   using handle_type          = typename T::connection_handle_type;
 
-  // TODO Rename and move
+  // TODO(issue 20): Rename and move
   class ClientRPCInterface : public ServiceClientInterface
   {
   public:
@@ -75,7 +75,7 @@ public:
     }
 
   private:
-    self_type *server_;  // TODO: Change to shared ptr and add
+    self_type *server_;  // TODO(issue 20): Change to shared ptr and add
                          // enable_shared_from_this on service
     handle_type client_;
   };
@@ -116,7 +116,7 @@ public:
 
     if (client_rpcs_.find(i) == client_rpcs_.end())
     {
-      // TODO: Make sure to delete this on disconnect after all promises has
+      // TODO(issue 20): Make sure to delete this on disconnect after all promises has
       // been fulfilled
       client_rpcs_.emplace(std::make_pair(i, new ClientRPCInterface(this, i)));
     }
@@ -140,7 +140,7 @@ private:
     PendingMessage pm = {client, msg};
     messages_.push_back(pm);
 
-    // TODO: (`HUT`) : look at this
+    // TODO(issue 20): look at this
     network_manager_.Post([this]() { this->ProcessMessages(); });
   }
 
@@ -185,7 +185,7 @@ private:
 
             if (!processed)
             {
-              // TODO: Lookup client RPC handler
+              // TODO(issue 20): Lookup client RPC handler
               fetch::logger.Error("Possibly a response to a client?");
 
               throw serializers::SerializableException(

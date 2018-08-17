@@ -58,7 +58,7 @@ public:
 
   void OnBeforeFlush(event_handler_type const &f) { on_before_flush_ = f; }
 
-  // TODO: Move private or protected
+  // TODO(issue 13): Move private or protected
   void SignalFileLoaded()
   {
     if (on_file_loaded_) on_file_loaded_();
@@ -208,7 +208,7 @@ public:
       item.second.updated = false;
     }
     total_access_ = 0;
-    // TODO: Clear thos not needed
+    // TODO(issue 10): Clear those not needed
   }
 
   bool is_open() const { return stack_.is_open(); }

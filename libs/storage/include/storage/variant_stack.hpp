@@ -23,11 +23,10 @@
 #include <fstream>
 #include <string>
 
-// TODO: Make variant stack as a circular buffer!
-
 namespace fetch {
 namespace storage {
 
+// TODO(issue 5): Make variant stack as a circular buffer!
 class VariantStack
 {
 public:

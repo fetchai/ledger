@@ -138,7 +138,7 @@ public:
       TODO_FAIL("Expected more stack objects.");
     }
 
-    // TODO: Check magic
+    // TODO(issue 6): Check magic
 
     SignalFileLoaded();
   }

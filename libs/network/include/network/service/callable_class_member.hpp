@@ -156,7 +156,7 @@ struct UnrollPointers
 
       if (typeid(T) != arg.type.get())
       {
-        // TODO: Make serializable
+        // TODO(issue 11): Make serializable
         throw std::runtime_error(
             "argument type mismatch for Callabale. TODO: Make custom "
             "exception");
@@ -197,7 +197,9 @@ struct UnrollPointers<0, class_type, member_function_pointer, return_type, used_
  * This module should be benchmarked against the more general class
  * <Function>. If there is no notable perfomance difference this
  * implementation should be dropped to keep the code base small and
- * simple (TODO).
+ * simple.
+ *
+ * TODO(issue 23):
  */
 template <typename C, typename F, std::size_t N = 0>
 class CallableClassMember;

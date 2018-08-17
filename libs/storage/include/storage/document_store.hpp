@@ -355,7 +355,7 @@ private:
     doc.Flush();
     key_index_.Set(doc.address(), doc.id(), doc.Hash());
 
-    // TODO:    file_store_.Flush();
+    // TODO(issue 10):    file_store_.Flush();
     key_index_.Flush();
   }
 };

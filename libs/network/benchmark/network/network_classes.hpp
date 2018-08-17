@@ -37,7 +37,7 @@ public:
 
     IP_ = std::string(jsonDoc["IP"].as_byte_array());
 
-    // TODO: (`HUT`) : fix after this parsing works
+    // TODO(issue 24): fix after this parsing works
     if (jsonDoc["TCPPort"].is_int())
     {
       TCPPort_ = jsonDoc["TCPPort"].As<uint16_t>();

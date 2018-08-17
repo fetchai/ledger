@@ -326,7 +326,7 @@ public:
       b = vector_reduction(a, b);
     }
 
-    // TODO(unknown): Make reduction tree / Wallace tree
+    // TODO(issue 1): Make reduction tree / Wallace tree
     type ret = 0;
     for (std::size_t i = 0; i < vector_register_type::E_BLOCK_COUNT; ++i)
     {

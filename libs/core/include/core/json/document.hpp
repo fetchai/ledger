@@ -251,7 +251,7 @@ private:
           ++element_counter;
           continue;
         case 0x6C6C756E:  // null
-          ++objects_;     // TODO: Move
+          ++objects_;     // TODO(issue 35): Move
           tokens_.push_back({pos, pos + 4, KEYWORD_NULL});
           pos += 4;
           ++element_counter;

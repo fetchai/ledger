@@ -109,7 +109,6 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: change uint64_t to global client id.
     subscribe_mutex_.lock();
     subscribers_.push_back({client, id});
     subscribe_mutex_.unlock();
@@ -126,7 +125,6 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: change uint64_t to global client id.
     subscribe_mutex_.lock();
     std::vector<std::size_t> ids;
     for (std::size_t i = 0; i < subscribers_.size(); ++i)
@@ -152,7 +150,7 @@ public:
 private:
   struct ClientSubscription
   {
-    uint64_t                  client;
+    uint64_t                  client; // TODO(issue 21): change uint64_t to global client id.
     subscription_handler_type id;
   };
 

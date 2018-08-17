@@ -102,7 +102,7 @@ ExecutionManager::Status ExecutionManager::Execute(block_type const &block)
     }
   }
 
-  // TODO(EJF):  Detect and handle number of lanes updates
+  // TODO(issue 33): Detect and handle number of lanes updates
 
   // plan the execution for this block
   if (!PlanExecution(block))
@@ -210,7 +210,8 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     ++active_count_;
     auto status = item.Execute(*executor);
     (void)status;
-    // TODO(EJF):  Should work out what the status of this is
+    // TODO(issue 33):  Should check the status of the execution
+
     --active_count_;
     --remaining_executions_;
     ++completed_executions_;
@@ -274,7 +275,7 @@ void ExecutionManager::Stop()
 
 ExecutionManagerInterface::block_digest_type ExecutionManager::LastProcessedBlock()
 {
-  // TODO(EJF):  thread saftey
+  // TODO(issue 33): thread saftey
   return last_block_hash_;
 }
 

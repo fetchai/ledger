@@ -80,7 +80,7 @@ private:
     if (register_.number_of_services() == 0)
     {
       thread_pool_->Post([this]() { this->IdleUntilPeers(); },
-                         1000);  // TODO: Make time variable
+                         1000);  // TODO(issue 7): Make time variable
     }
     else
     {
@@ -158,7 +158,7 @@ private:
     if (running_)
     {
       thread_pool_->Post([this]() { this->IdleUntilPeers(); },
-                         5000);  /// TODO: Set from parameter
+                         5000);  // TODO(issue 7): Set from parameter
     }
   }
   /// @}

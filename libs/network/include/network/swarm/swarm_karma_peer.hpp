@@ -101,7 +101,7 @@ public:
 
   static double ComputeKarmaForTime(double karmaValue, time_t timeStart, time_t timeFinish)
   {
-    // TODO(katie) This should probably be some half-life asymptotic function.
+    // TODO(issue 18) This should probably be some half-life asymptotic function.
     // Might be expensive to compute tho. Consider making the internal store
     // mutable so we can compute an uptodate cache inside the < func?
     if (karmaValue == 0.0)

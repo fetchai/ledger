@@ -75,9 +75,7 @@ public:
    */
   void PushTransactionSummary(transaction_type const &tx, bool check = true)
   {
-
-    // TODO(EJF):  The size of the `all_` make grows forever!
-
+    // TODO(issue 30):  The size of the `all_` make grows forever!
     if (check)
     {
       if (all_.find(tx->summary().transaction_hash) != all_.end()) return;
@@ -120,7 +118,7 @@ public:
    * the time sub optimal ones will be found) and populates the block
    * slice by slice.
    *
-   * The resulting block is garantueed (TODO) to be valid.
+   * The resulting block is garantueed (issue 30) to be valid.
    */
   void GenerateBlock(std::size_t const &lane_count, std::size_t const &slice_count,
                      int const &strategy = 0, std::size_t batch_size = 1, std::size_t explore = 10)
@@ -146,7 +144,7 @@ public:
 
       std::vector<std::size_t> used;
 
-      // TODO: Correct incorrect states
+      // TODO(issue 30): Correct incorrect states
       std::size_t i = 0;
       for (auto &s : best_solution_)
       {
@@ -160,7 +158,7 @@ public:
         ++i;
       }
 
-      // TODO(EJF):  Check that this is actually correct
+      // TODO(issue 30):  Check that this is actually correct
       block_fees_.push_back(static_cast<uint64_t>(best_solution_energy_));
 
       // Erasing from unspent pool
@@ -218,7 +216,7 @@ public:
 
   /* Returns a constant reference to the last generated block.
    *
-   * TODO: change to system block
+   * TODO(issue 30): change to system block
    */
   block_index_map_type const &block() const { return block_; }
 
@@ -304,7 +302,7 @@ private:
       for (auto &resource : tx->summary().resources)
       {
 
-        // TODO(EJF):  Move to Transaction item?
+        // TODO(issue 30):  Move to Transaction item?
         std::size_t const lane_index =
             MapResourceToLane(resource, tx->summary().contract_name, log2_lane_count_);
 
@@ -390,9 +388,6 @@ private:
   state_type    state_;
   state_type    best_solution_;
   annealer_type annealer_;
-
-  // TODO: Switch to block
-  //  std::shared_ptr<block_type> current_block_;
 
   transaction_map_type    all_;
   transaction_list_type   unspent_;

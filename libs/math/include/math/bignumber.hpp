@@ -118,7 +118,7 @@ public:
 
   BigUnsigned &operator++()
   {
-    // TODO: Propagation of carry bits this way is slow.
+    // TODO(issue 32): Propagation of carry bits this way is slow.
     // If we instead make sure that the size is always a multiple of 8
     // We can do the logic in uint64_t
     // In fact, we should re implement this using vector registers.
@@ -253,7 +253,7 @@ inline double ToDouble(BigUnsigned const &x)
 
   assert(fraction.value != 0);
   uint16_t tz = uint16_t(
-      __builtin_ctz(fraction.value));  // TODO: Wrap in function for cross compiler portability
+      __builtin_ctz(fraction.value));  // TODO(issue 31): Wrap in function for cross compiler portability
   uint16_t exponent = uint16_t((last_byte << 3) - tz);
 
   assert(exponent < 1023);

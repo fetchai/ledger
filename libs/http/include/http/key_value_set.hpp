@@ -51,7 +51,7 @@ public:
                                                                       T const &              n)
   {
     LOG_STACK_TRACE_POINT;
-    // TODO: Can be improved.
+    // TODO(issue 35): Can be improved.
     byte_array_type value(std::to_string(n));
     insert({name, value});
   }

@@ -33,7 +33,7 @@ using namespace fetch::ledger;
 class DummyContractTests : public ::testing::Test
 {
 protected:
-  using contract_type = std::unique_ptr<DummyContract>;  // TODO: EJF Rename this class
+  using contract_type = std::unique_ptr<DummyContract>;
   using storage_type  = std::unique_ptr<MockStorageUnit>;
 
   void SetUp() override

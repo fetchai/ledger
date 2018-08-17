@@ -119,7 +119,7 @@ public:
     thread_ = std::thread([this]() { SendTransactions(); });
   }
 
-  // TODO: (`HUT`) : get rid of start in fn names
+  // TODO(issue 28): get rid of start in fn names
   void StartTestAsMaster(uint64_t startTime)
   {
     if (thread_.joinable())

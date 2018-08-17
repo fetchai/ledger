@@ -66,7 +66,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
   EXPECT_EQ(public_key_data__bin_, x.publicKey().keyAsBin());
 }
 
-// TODO: A bit lame test, needs to be tesetd rather with & against hardcoded DER
+// TODO(issue 36): A bit lame test, needs to be tesetd rather with & against hardcoded DER
 // encoded data
 TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key__DER)
 {
@@ -86,7 +86,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
   ASSERT_EQ(x.key(), x_der.key());
   ASSERT_NE(x.KeyAsBin(), x_der.KeyAsBin());
   ASSERT_EQ(x.publicKey().key(), x_der.publicKey().key());
-  // TODO: Public key does not support `DER` enc. yet so it defaults to `bin`
+  // TODO(issue 36): Public key does not support `DER` enc. yet so it defaults to `bin`
   // enc. in when set to
   // DER. ASSERT_NE(x.publicKey().KeyAsBin(), x_der.publicKey().KeyAsBin());
 
@@ -161,7 +161,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_key_conversion_to_byte_array)
   EXPECT_EQ(priv_key_data__bin_, x.KeyAsBin());
 }
 
-// TODO: Add more tests
+// TODO(issue 36): Add more tests
 
 }  // namespace
 

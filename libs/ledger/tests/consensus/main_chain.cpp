@@ -25,7 +25,7 @@
 using namespace fetch::chain;
 using namespace fetch::byte_array;
 
-// TODO: (`HUT`) : get these from helper_functions when it's sorted
+// TODO(issue 33): get these from helper_functions when it's sorted
 // Time related functionality
 using time_point = std::chrono::high_resolution_clock::time_point;
 

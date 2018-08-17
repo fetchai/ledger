@@ -608,8 +608,6 @@ private:
 extern log::details::LogWrapper logger;
 }  // namespace fetch
 
-// TODO(EJF): Move somewhere else
-
 #ifndef __FUNCTION_NAME__
 #ifdef WIN32  // WINDOWS
 #define __FUNCTION_NAME__ __FUNCTION__

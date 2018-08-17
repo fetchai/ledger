@@ -37,11 +37,11 @@ public:
   virtual ~ServiceServerInterface() {}
 
   void Add(protocol_handler_type const &name,
-           Protocol *                   protocol)  // TODO: Rename to AddProtocol
+           Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: (`HUT`) : better reporting of errors
+    // TODO(issue 19): better reporting of errors
     if (members_[name] != nullptr)
     {
       throw serializers::SerializableException(error::PROTOCOL_EXISTS,
@@ -68,7 +68,7 @@ protected:
     service_classification_type type;
     params >> type;
 
-    if (type == SERVICE_FUNCTION_CALL)  // TODO: change to switch
+    if (type == SERVICE_FUNCTION_CALL)  // TODO(issue 19): change to switch
     {
       ret = true;
       serializer_type               result;
@@ -184,7 +184,7 @@ private:
     return fnc(result, params);
   }
 
-  Protocol *members_[256] = {nullptr};  // TODO: Not thread-safe
+  Protocol *members_[256] = {nullptr};  // TODO(issue 19): Not thread-safe
   friend class FeedSubscriptionManager;
 };
 }  // namespace service

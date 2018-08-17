@@ -123,7 +123,7 @@ public:
     auto ident = identity_.lock();
     if (!ident)
     {
-      // TODO : Throw exception
+      // TODO(issue 11): Throw exception
       TODO_FAIL("Identity lost");
     }
 

@@ -29,7 +29,7 @@ namespace byte_array {
 class ConstByteArray;
 }  // namespace byte_array
 
-namespace serializers {  // TODO(unknown): refactor
+namespace serializers {
 template <typename T>
 inline void Deserialize(T &, byte_array::ConstByteArray &);
 }  // namespace serializers
@@ -72,7 +72,6 @@ public:
     }
   }
 
-  // TODO(unknown): make explicit
   ConstByteArray(std::string const &s) : ConstByteArray(s.c_str()) {}
   ConstByteArray(self_type const &other) = default;
   ConstByteArray(self_type const &other, std::size_t const &start, std::size_t const &length)

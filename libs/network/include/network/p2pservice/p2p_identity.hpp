@@ -68,13 +68,13 @@ public:
                                              byte_array::ByteArray const & address)
   {
     {
-      // TODO: (`HUT`) : try not to lock mutexes that belong to other classes
+      // TODO(issue 24): try not to lock mutexes that belong to other classes
       std::lock_guard<mutex::Mutex> lock(my_details_->mutex);
       for (auto &e : my_details_->details.entry_points)
       {
         if (e.is_discovery)
         {
-          // TODO: Make mechanim for verifying address
+          // TODO(issue 24): Make mechanim for verifying address
           e.host.insert(address);
         }
       }

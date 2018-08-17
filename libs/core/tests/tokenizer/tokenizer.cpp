@@ -100,5 +100,5 @@ int main(int argc, char **argv)
     };
   };
 
-  // TODO: Add more tests
+  // TODO(issue 37): Add more tests
 }

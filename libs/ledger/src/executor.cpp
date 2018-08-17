@@ -64,7 +64,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
 
   fetch::logger.Info("Executing tx ", byte_array::ToBase64(hash));
 
-  // TODO(EJF): Add code to validate / check lane resources
+  // TODO(issue 33): Add code to validate / check lane resources
   FETCH_UNUSED(slice);
   FETCH_UNUSED(lanes);
 

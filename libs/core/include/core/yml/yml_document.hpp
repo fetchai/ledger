@@ -98,7 +98,7 @@ private:
 
       if (document[pos] == '-')
       {
-        PushArray();  // TODO:
+        PushArray();  // TODO(issue 38):
         ++pos;
         indent_size = 1 + ConsumeWhitespaces(const_string_type const &document, uint64_t &pos);
         mod         = HandleIndent(indent_size);

@@ -309,7 +309,7 @@ private:
     fetch::mutex::Mutex   mutex;
   };
 
-  Subscription        subscriptions_[256];  // TODO: make centrally configurable;
+  Subscription        subscriptions_[256];  // TODO(issue 7): make centrally configurable;
   fetch::mutex::Mutex subscription_mutex_;
 
   std::map<Promise::promise_counter_type, Promise::shared_promise_type> promises_;

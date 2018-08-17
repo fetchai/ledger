@@ -103,7 +103,7 @@ public:
 
   self_type Copy() const
   {
-    // TODO(unknown): Use memcopy
+    // TODO(issue 2): Use memcopy
     self_type ret(this->size_);
     for (std::size_t i = 0; i < this->size_; ++i)
     {

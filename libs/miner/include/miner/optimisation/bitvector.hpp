@@ -78,8 +78,9 @@ public:
     blocks_ = q;
     size_   = n;
 
-    SetAllZero();  // TODO: Only  set those
-    // TODO: Copy data;
+    SetAllZero();  // TODO(issue 29): Only set those
+
+    // TODO(issue 29): Copy data;
   }
 
   void SetAllZero() { data_.SetAllZero(); }

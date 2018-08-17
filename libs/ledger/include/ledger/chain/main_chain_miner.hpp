@@ -29,7 +29,7 @@
 namespace fetch {
 namespace chain {
 
-// TODO: (`HUT`) : fine for now, but it would be more efficient if the block
+// TODO(issue 33): fine for now, but it would be more efficient if the block
 // coordinator launched mining tasks
 class MainChainMiner
 {

@@ -184,7 +184,7 @@ FETCH_ADD_OPERATOR(+, double, _mm256_add_pd);
 
 #undef FETCH_ADD_OPERATOR
 
-// TODO: Misses alignas
+// TODO(issue 4): Misses alignas
 #define FETCH_ADD_OPERATOR(op, type, fnc)                                                           \
   inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a,                  \
                                                VectorRegister<type, 256> const &b)                  \
@@ -207,7 +207,7 @@ FETCH_ADD_OPERATOR(<, float, _CMP_LT_OQ)
 
 #undef FETCH_ADD_OPERATOR
 
-// TODO: Misses alignas
+// TODO(issue 4): Misses alignas
 #define FETCH_ADD_OPERATOR(op, type, fnc)                                                       \
   inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a,              \
                                                VectorRegister<type, 256> const &b)              \

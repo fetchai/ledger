@@ -38,7 +38,7 @@ template <typename T>
 inline void Deserialize(T &serializer, UnverifiedTransaction &b)
 {
   uint16_t version;
-  serializer >> version;  // TODO: (`HUT`) : set version
+  serializer >> version;  // TODO(issue 34): set version
 
   char c;
   serializer >> c;
@@ -75,7 +75,7 @@ template <typename T>
 inline void Deserialize(T &serializer, VerifiedTransaction &b)
 {
   uint16_t version;
-  serializer >> version;  // TODO: (`HUT`) : set version
+  serializer >> version;  // TODO(issue 34): set version
   assert(version == b.VERSION);
 
   char c;

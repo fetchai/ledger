@@ -45,7 +45,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO: Handle encoding
+    // TODO(issue 35): Handle encoding
     req.body_data_ = byte_array::ByteArray();
     req.body_data_.Resize(req.content_length());
     if (buffer.size() < req.body_data_.size())

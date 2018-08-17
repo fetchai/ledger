@@ -128,7 +128,6 @@ public:
 
   ByteArray Hash()
   {
-    // TODO
     return lanes_[0]
         ->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
         .As<ByteArray>();
@@ -244,7 +243,6 @@ int main(int argc, char const **argv)
           if (command.size() == 1)
           {
             AddTransactionDialog();
-            // TODO add
           }
           else
           {

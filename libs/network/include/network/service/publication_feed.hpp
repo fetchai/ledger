@@ -119,7 +119,7 @@ public:
 
     serializer_type params;
 
-    // TODO: (`HUT`) : we should benchmark subscription too
+    // TODO(issue 21): we should benchmark subscription too
     PackArgs(params, std::forward<Args>(args)...);
 
     fetch::logger.Debug("Publishing data for feed ", feed);

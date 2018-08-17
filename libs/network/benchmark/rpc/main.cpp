@@ -247,7 +247,7 @@ int main(int argc, char *argv[])
   {
     std::cout << "Starting server" << std::endl;
 
-    // TODO: (`HUT`) : refactor closures to use explicit copy
+    // TODO(issue 28): refactor closures to use explicit copy
     benchmarkThread = std::thread([=]() {
       fetch::network::NetworkManager networkManager(8);
       BenchmarkService               serv(port, networkManager);

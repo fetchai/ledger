@@ -56,7 +56,7 @@ public:
     if (clients_.find(handle) != clients_.end())
     {
       fetch::logger.Debug("Client ", handle, " is leaving");
-      // TODO: Close socket!
+      // TODO(issue 35): Close socket!
       clients_.erase(handle);
     }
     fetch::logger.Debug("Client ", handle, " is leaving");

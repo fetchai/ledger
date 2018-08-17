@@ -79,7 +79,7 @@ public:
     if (register_.number_of_services() == 0)
     {
       thread_pool_->Post([this]() { this->IdleUntilPeers(); },
-                         1000);  // TODO: Make time variable
+                         1000);  // TODO(issue 9): Make time variable
     }
     else
     {
@@ -180,7 +180,7 @@ public:
 
     if (running_)
     {
-      // TODO: Make time parameter
+      // TODO(issue 9): Make time parameter
       thread_pool_->Post([this]() { this->IdleUntilPeers(); }, 5000);
     }
   }
@@ -203,7 +203,7 @@ private:
   uint64_t ObjectCount()
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    return cache_.size();  // TODO: Return store size
+    return cache_.size();  // TODO(issue 9): Return store size
   }
 
   std::vector<S> PullObjects(uint64_t const &client_handle)
@@ -239,7 +239,7 @@ private:
     return ret;
   }
 
-  // TODO: (`HUT`) : This is not efficient since it will be copying this map
+  // TODO(issue 8) : This is not efficient since it will be copying this map
   // around
   struct CachedObject
   {
@@ -266,7 +266,7 @@ private:
   std::vector<CachedObject> cache_;
 
   uint64_t max_cache_           = 2000;
-  double   max_cache_life_time_ = 20000;  // TODO: Make cache configurable
+  double   max_cache_life_time_ = 20000;  // TODO(issue 7): Make cache configurable
 
   mutable mutex::Mutex          object_list_mutex_;
   std::vector<service::Promise> object_list_promises_;

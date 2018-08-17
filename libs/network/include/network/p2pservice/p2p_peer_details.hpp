@@ -174,7 +174,7 @@ struct PeerDetails
   void Sign(crypto::Prover *prov)
   {
     serializers::ByteArrayBuffer buffer;
-    // TODO: Count count first
+    // TODO(issue 24): Count count first
     buffer << identity << entry_points;
     prov->Sign(buffer.data());
     signature = prov->signature();
@@ -184,7 +184,7 @@ struct PeerDetails
   {
 
     serializers::ByteArrayBuffer buffer;
-    // TODO: Count count first
+    // TODO(issue 24): Count count first
     buffer << identity << entry_points;
     return ver->Verify(buffer.data(), signature);
   }

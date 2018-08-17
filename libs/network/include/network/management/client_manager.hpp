@@ -56,7 +56,7 @@ public:
     return handle;
   }
 
-  // TODO: (`HUT`) : may be risky if handle type is made small
+  // TODO(issue 28): may be risky if handle type is made small
   void Leave(connection_handle_type handle)
   {
     LOG_STACK_TRACE_POINT;

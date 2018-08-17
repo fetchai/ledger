@@ -117,7 +117,7 @@ private:
     // configure the solver
     generator_.ConfigureAnnealer(100, 0.1, 3.0);
 
-    // TODO(EJF):  Move to configuration variables
+    // TODO(issue 7):  Move to configuration variables
     std::size_t const batch_size  = generator_.unspent_count();
     std::size_t const repetitions = 1000u;
     std::size_t const explore     = 10;

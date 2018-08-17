@@ -46,7 +46,7 @@ public:
 
   // using public_key_type = ECDSAPublicKey<binaryDataFormat, P_ECDSA_Curve_NID,
   // P_ConversionForm>;
-  // TODO: Implement DER encoding. It mis missing now so defaulting to canonical
+  // TODO(issue 36): Implement DER encoding. It mis missing now so defaulting to canonical
   // encoding to void
   // failures when construcing this class (ECDSAPrivateKey) with DER encoding.
   using public_key_type =
@@ -60,9 +60,9 @@ public:
   friend class ECDSAPrivateKey;
 
 private:
-  // TODO: Keep key encrypted
+  // TODO(issue 36): Keep key encrypted
   shrd_ptr_type<EC_KEY> private_key_;
-  // TODO: Do lazy initilisation of the public key to minimize impact at
+  // TODO(issue 36): Do lazy initilisation of the public key to minimize impact at
   // construction time of this
   // class
   public_key_type public_key_;

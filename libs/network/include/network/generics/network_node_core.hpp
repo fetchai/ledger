@@ -66,8 +66,7 @@ public:
   {
     lock_type mlock(mutex_);
 
-    // TODO(katie) investiaget if this can be moved to Start()
-    // TODO(EJF):  Confusing now network manager is passed in (and is copy)
+    // TODO(issue 24) Mved to Start() method
     nm_.Start();
 
     rpcPort_   = rpcPort;
@@ -195,7 +194,7 @@ protected:
       waits--;
       if (waits <= 0)
       {
-        // TODO(katie) make this non throwing and return empty sharedp.
+        // TODO(issue 11) make this non throwing and return empty sharedp.
         throw std::invalid_argument(
             std::string("Timeout while connecting " + host + ":" + std::to_string(port)).c_str());
       }

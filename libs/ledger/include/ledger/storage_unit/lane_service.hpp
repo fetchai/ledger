@@ -72,7 +72,7 @@ public:
     CONTROLLER
   };
 
-  // TODO(tfr): Make config JSON
+  // TODO(issue 7): Make config JSON
   LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &total_lanes,
               uint16_t port, fetch::network::NetworkManager tm, bool start_sync = true)
     : super_type(port, tm)
@@ -84,7 +84,7 @@ public:
     thread_pool_ = network::MakeThreadPool(1);
 
     // Setting lane certificate up
-    // TODO(tfr): Load from somewhere
+    // TODO(issue 24): Load from somewhere
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
     certificate->GenerateKeys();
     certificate_.reset(certificate);
@@ -147,17 +147,17 @@ public:
     identity_protocol_.reset();
     identity_.reset();
 
-    // TODO: Remove protocol
+    // TODO(issue 24): Remove protocol
     state_db_protocol_.reset();
     state_db_.reset();
 
-    // TODO: Remove protocol
+    // TODO(issue 24): Remove protocol
     tx_store_protocol_.reset();
     tx_store_.reset();
 
     tx_sync_protocol_.reset();
 
-    // TODO: Remove protocol
+    // TODO(issue 24): Remove protocol
     controller_protocol_.reset();
     controller_.reset();
   }

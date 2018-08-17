@@ -76,7 +76,7 @@ public:
   /// @{
   void RequestPeersForThisNode()
   {
-    // TODO: (`HUT`) : comment/make this clear
+    // TODO(issue 26): comment/make this clear
     register_.WithServices(
         [this](network::AbstractConnectionRegister::service_map_type const &map) {
           for (auto const &p : map)
@@ -145,7 +145,7 @@ public:
   /// @{
   void ListenTo(std::shared_ptr<service::ServiceClient> const &client)
   {
-    // TODO: Refactor subscribe such that there is no memory leak
+    // TODO(issue 24): Refactor subscribe such that there is no memory leak
 
     client->Subscribe(protocol_, FEED_REQUEST_CONNECTIONS,
                       new service::Function<void(PeerDetails)>([this](PeerDetails const &details) {
@@ -159,7 +159,7 @@ public:
                           }));
 
     /*
-    // TODO: Work out whether we want this
+    // TODO(issue 24): Work out whether we want this
     ptr->Subscribe(protocol_, FEED_ANNOUNCE_PEER,
     new service::Function<void(PeerDetails)>(
     [this](PeerDetails const &details) {
@@ -183,7 +183,7 @@ public:
     if (!running_) return;
 
     thread_pool_->Post([this]() { this->PruneSuggestions(); },
-                       1000);  // TODO: add to config
+                       1000);  // TODO(issue 7): add to config
   }
 
   void PruneSuggestions()
@@ -199,7 +199,7 @@ public:
         auto ms = suggestion.second.MillisecondsSinceUpdate();
 
         if (ms > 30000)
-        {  // TODO: Make variable, add to config
+        {  // TODO(issue 7): Make variable, add to config
           to_delete.insert(suggestion.first);
         }
       }
@@ -234,7 +234,7 @@ private:
 
       // We do not allow conseq updates unless separated by substatial tume
       if (it->second.MillisecondsSinceUpdate() > 5000)
-      {  // TODO: Config variable
+      {  // TODO(issue 7): Config variable
         suggested_peers_[details.identity.identifier()] = details;
         if (propagate) this->Publish(FEED_REQUEST_CONNECTIONS, details);
         ret = true;

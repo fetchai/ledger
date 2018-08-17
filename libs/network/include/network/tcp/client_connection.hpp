@@ -248,10 +248,10 @@ private:
   fetch::mutex::Mutex                       write_mutex_;
   std::string                               address_;
 
-  // TODO: (`HUT`) : put this in shared class
+  // TODO(issue 17): put this in shared class
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
 
-  // TODO: (`HUT`) : fix this to be self-contained
+  // TODO(issue 17): fix this to be self-contained
   union
   {
     char bytes[2 * sizeof(uint64_t)];

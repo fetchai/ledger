@@ -313,8 +313,6 @@ public:
 
   virtual void DoTransactionListBuilt(const std::list<std::string> &txnlist) {}
 
-  // TODO(katie) Implement below.
-
   virtual void OnNewTxnListIdFound(
       std::function<void(const std::string &host, const std::string &txnlistid)> cb)
   {

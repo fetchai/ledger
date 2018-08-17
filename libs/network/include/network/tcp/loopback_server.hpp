@@ -63,15 +63,6 @@ private:
   {
     auto self = shared_from_this();
     asio::async_write(socket_, asio::buffer(message_.pointer(), length),
-                      // TODO: couple of thigs worth to check here: 1) It does not make sense
-                      // to pass both - `this` raw pointer and shared_ptr<...> for the same
-                      // instance, 2) depending on how `asio::async_write(...)` uses instance
-                      // of passed lambda (who will control lifecycle of lambda instance), it
-                      // may be necessary to pass here `weak_ptr<>` instead of shared_ptr if
-                      // lambda nstance is set to `socket_` insatnce (and thus `socket_` would
-                      // take control over lyfecycle of lambda instace => it would create
-                      // cyclic reference to `this` instance if we pass here shared_ptr
-                      // instead of weak)
                       [this, self](std::error_code ec, std::size_t) {
                         if (!ec)
                         {

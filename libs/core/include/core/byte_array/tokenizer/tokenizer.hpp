@@ -54,7 +54,7 @@ public:
 
     // Counting tokens
     if (contents.size() > 100000)
-    {  // TODO: Optimise this parameter
+    {  // TODO(issue 37): Optimise this parameter
 
       std::size_t n = 0;
       while (pos < contents.size())

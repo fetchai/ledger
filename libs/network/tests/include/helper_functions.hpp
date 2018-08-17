@@ -66,7 +66,6 @@ double TimeDifference(time_point t1, time_point t2)
   return std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t2).count();
 }
 
-//  TODO: (`HUT`) : seperate helper functions by submodule
 class NoCopyClass
 {
 public:

@@ -64,7 +64,7 @@ private:
   {
     auto profile = p2p_->Profile();
 
-    // TODO(Troels): Note to self - nested accessors does not work:
+    // TODO(issue 27): Note to self - nested accessors does not work:
     // ret["identity"]["xx"] = 2
     script::Variant ident = script::Variant::Object();
     ident["identifier"]   = byte_array::ToBase64(profile.identity.identifier());
@@ -72,9 +72,8 @@ private:
 
     script::Variant ret = script::Variant::Object();
     ret["identity"]     = ident;
-    // TODO: This does not work: ret["identity"]["test"] = "blah";
-
     ret["entry_points"] = script::Variant::Array(profile.entry_points.size());
+
     for (std::size_t i = 0; i < profile.entry_points.size(); ++i)
     {
       auto            ep  = profile.entry_points[i];

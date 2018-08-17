@@ -142,7 +142,8 @@ public:
   {
     Anneal();
     cost_type ret = Energy();
-    // TODO: Optimise
+
+    // TODO(issue 30): Optimise
 
     state.clear();
 
