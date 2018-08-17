@@ -22,6 +22,16 @@
 namespace fetch {
 namespace platform {
 
+struct Parallelisation
+{
+  enum
+  {
+    NOT_PARALLEL = 0,
+    VECTORISE    = 1,
+    THREADING    = 2
+  };
+};
+
 template <typename T>
 struct VectorRegisterSize
 {
@@ -138,5 +148,34 @@ constexpr bool has_sse42()
   return false;
 #endif
 }
+
+// Allow the option of specifying our platform endianness
+#if defined(FETCH_PLATFORM_BIG_ENDIAN) || defined(FETCH_PLATFORM_LITTLE_ENDIAN)
+#else
+
+#if (defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN) || defined(__BIG_ENDIAN__)
+
+#define FETCH_PLATFORM_BIG_ENDIAN
+
+#elif (defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN) || defined(__LITTLE_ENDIAN__)
+
+#define FETCH_PLATFORM_LITTLE_ENDIAN
+
+#else
+#error "Can't determine machine endianness"
+#endif
+
+#endif
+
+#if defined(FETCH_PLATFORM_BIG_ENDIAN)
+inline uint64_t ConvertToBigEndian(uint64_t x) { return x; }
+#endif
+
+#if defined(FETCH_PLATFORM_LITTLE_ENDIAN)
+inline uint64_t ConvertToBigEndian(uint64_t x) { return __builtin_bswap64(x); }
+#endif
+
+inline int CountLeadingZeroes64(uint64_t x) { return __builtin_clzl(x); }
+
 }  // namespace platform
 }  // namespace fetch

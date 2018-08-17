@@ -150,7 +150,7 @@ public:
 
   explicit operator mm_register_type() { return data_; }
 
-  void Store(type *ptr) const { _mm_stream_pd(ptr, data_); }
+  void Store(type *ptr) const { _mm_store_pd(ptr, data_); }
   void Stream(type *ptr) const { _mm_stream_pd(ptr, data_); }
 
   mm_register_type const &data() const { return data_; }

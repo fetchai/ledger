@@ -23,7 +23,9 @@
 #include <cassert>
 #include <iostream>
 #include <ostream>
+#include <string.h>
 #include <type_traits>
+
 namespace fetch {
 namespace byte_array {
 class ConstByteArray;
@@ -53,13 +55,13 @@ public:
 
   ConstByteArray(char const *str)
   {
-    std::size_t n = 0;
-    while (str[n] != '\0') ++n;
+    assert(str != nullptr);
+
+    std::size_t n = strlen(str);
     Reserve(n);
     Resize(n);
     uint8_t const *up = reinterpret_cast<uint8_t const *>(str);
     for (std::size_t i = 0; i < n; ++i) data_[i] = up[i];
-    //    data_[n] = '\0';
   }
 
   ConstByteArray(std::initializer_list<container_type> l)

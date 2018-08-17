@@ -176,7 +176,6 @@ public:
   {
     serializer_type ser;
     ser << object;
-
     store_.Set(rid, ser.data());
   }
 
