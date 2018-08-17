@@ -20,19 +20,20 @@ TEST(ndarray, simple_iterator_permute_test)
   NDArray<double> array{NDArray<double>::Arange(0, 77, 1)};
   array.Reshape({7, 11});
 
-  NDArray<double> ret{array};
+  NDArray<double> ret;
+  ret.ResizeFromShape(array.shape());
 //  NDArray< double > ret = NDArray< double >::Zeros(25);
 //  ret.Reshape({5, 5});
-
+  ASSERT_TRUE( ret.size() == array.size() );
+  ASSERT_TRUE( ret.shape() == array.shape() );  
   NDArrayIterator<double, NDArray<double>::container_type> it(array);
   NDArrayIterator<double, NDArray<double>::container_type> it2(ret);
 
   it2.PermuteAxes(0,1);
   while(it2)
   {
-
-    assert( bool(it) );
-    assert( bool(it2));
+    ASSERT_TRUE( bool(it) );
+    ASSERT_TRUE( bool(it2));
 
     *it2 = *it;
     ++it;
@@ -45,11 +46,7 @@ TEST(ndarray, simple_iterator_permute_test)
     ASSERT_TRUE(array[i] == i);
 
     cur_row = i / 7;
-    test_val = (11 * i) + cur_row;
-
-    std::cout << "cur row: " << cur_row << std::endl;
-    std::cout << "test_val: " << test_val <<std::endl;
-    std::cout << "ret[i]: " << ret[i] <<std::endl;
+    test_val = (11 * (i%7)) + cur_row;
 
     ASSERT_TRUE(ret[i] == test_val);
   }
@@ -61,7 +58,7 @@ TEST(ndarray, iterator_4dim_permute_test)
   // set up an initial array
   NDArray<double> array{NDArray<double>::Arange(0, 1008, 1)};
   array.Reshape({4, 6, 7, 6});
-  NDArray<double> ret{array};
+  NDArray<double> ret = array.Copy();
 
   NDArrayIterator<double, NDArray<double>::container_type> it(array, {{1, 2, 1}, {2, 3, 1}, {1, 4, 1}, {2, 6, 1}});
   NDArrayIterator<double, NDArray<double>::container_type> it2(ret, {{1, 2, 1}, {2, 3, 1}, {1, 4, 1}, {2, 6, 1}});
@@ -78,6 +75,7 @@ TEST(ndarray, iterator_4dim_permute_test)
     ++it;
     ++it2;
   }
+  
 
   for (std::size_t i=0; i < array.size(); ++i)
   {

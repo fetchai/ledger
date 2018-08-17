@@ -53,7 +53,15 @@ public:
    * Constructor builds an NDArray pre-initialising from a shapeless array
    * @param arr shapelessarray data set by defualt
    */
-  NDArray(super_type const &arr) : super_type(arr) { this->LazyReshape({arr.size()}); }
+  NDArray(super_type const &arr) : super_type(arr) { 
+    this->LazyReshape({arr.size()}); 
+  }
+
+  NDArray(self_type const &arr) : super_type(arr) { 
+    std::cout << "Was here ?? " << std::endl;
+    this->LazyReshape(arr.shape()); 
+  }
+
 
   NDArray &operator=(NDArray const &other) = default;
   //  NDArray &operator=(NDArray &&other) = default;
