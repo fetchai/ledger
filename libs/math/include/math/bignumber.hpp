@@ -252,8 +252,8 @@ inline double ToDouble(BigUnsigned const &x)
   fraction.bytes[3] = x[j + 3];
 
   assert(fraction.value != 0);
-  uint16_t tz = uint16_t(
-      __builtin_ctz(fraction.value));  // TODO(issue 31): Wrap in function for cross compiler portability
+  uint16_t tz       = uint16_t(__builtin_ctz(
+      fraction.value));  // TODO(issue 31): Wrap in function for cross compiler portability
   uint16_t exponent = uint16_t((last_byte << 3) - tz);
 
   assert(exponent < 1023);

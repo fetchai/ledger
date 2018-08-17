@@ -159,7 +159,7 @@ public:
    * This function is intended to be used by the service to subscribe
    * its clients to the feed.
    */
-  void Subscribe(uint64_t const &         client,  // TODO(issue 21): Standardize client type over the code.
+  void Subscribe(uint64_t const &client,  // TODO(issue 21): Standardize client type over the code.
                  feed_handler_type const &feed, subscription_handler_type const &id)
   {
     LOG_STACK_TRACE_POINT;
@@ -190,8 +190,9 @@ public:
    * This function is intended to be used by the service to unsubscribe
    * its clients to the feed.
    */
-  void Unsubscribe(uint64_t const &         client,  // TODO(issue 21): Standardize client type over the code.
-                   feed_handler_type const &feed, subscription_handler_type const &id)
+  void Unsubscribe(
+      uint64_t const &         client,  // TODO(issue 21): Standardize client type over the code.
+      feed_handler_type const &feed, subscription_handler_type const &id)
   {
     LOG_STACK_TRACE_POINT;
 

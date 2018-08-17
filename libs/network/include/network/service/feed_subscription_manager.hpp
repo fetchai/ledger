@@ -150,7 +150,7 @@ public:
 private:
   struct ClientSubscription
   {
-    uint64_t                  client; // TODO(issue 21): change uint64_t to global client id.
+    uint64_t                  client;  // TODO(issue 21): change uint64_t to global client id.
     subscription_handler_type id;
   };
 
