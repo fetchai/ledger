@@ -131,7 +131,7 @@ public:
 
     crypto::Identity lane_identity;
     p3.As(lane_identity);
-    // TODO(issue 24: Verify expected identity
+    // TODO(issue 24): Verify expected identity
 
     assert(lane < lanes_.size());
     fetch::logger.Debug("Adding lane ", lane);

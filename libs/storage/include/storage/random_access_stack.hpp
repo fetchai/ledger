@@ -152,7 +152,7 @@ public:
     SignalFileLoaded();
   }
 
-  // TODO: Protected functions
+  // TODO(issue 6): Protected functions
   void Get(std::size_t const &i, type &object) const
   {
     assert(filename_ != "");
