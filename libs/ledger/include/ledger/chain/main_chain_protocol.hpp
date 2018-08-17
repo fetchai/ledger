@@ -135,47 +135,43 @@ private:
     uint32_t                      ms = max_size_;
     using service_map_type           = typename R::service_map_type;
     using service_map_items          = typename service_map_type::value_type;
-    register_.VisitServices([this, ms](service_map_items const &p) {
-        LOG_STACK_TRACE_POINT
-  if (!running_)
+    register_.VisitServiceClients([this, ms](service_map_items const &p) {
+        LOG_STACK_TRACE_POINT;
+        if (!running_)
         {
           return;
         }
 
-        auto peer    = p.second;
-        auto ptr     = peer.lock();
-        auto details = register_.GetDetails(ptr -> handle());
-
-
-        //std::cout << std::string(byte_array::ToBase64(details.identity.identifier())) << std::endl;
-
-        //if (!details -> IsAnyMainChain())
-        //{
-        //  continue;
-        //}
+        auto service_client = p.second.lock();
+        auto details = register_.GetDetails(service_client -> handle());
+        if ((!details -> is_outgoing) || (!details -> is_peer))
+        {
+          return;
+        }
 
         auto name = details -> GetOwnerIdentityString();
 
-        auto foo = new service::Function<void(chain::MainChain::block_type)>(
-          [this](chain::MainChain::block_type block){
-            this -> pending_blocks_.Add(block);
-            this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
-          }
-        );
+        auto subscription_handler_function =
+          new service::Function<void(chain::MainChain::block_type)>(
+            [this](chain::MainChain::block_type block){
+              this -> pending_blocks_.Add(block);
+              this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
+            }
+          );
         {
           LOG_STACK_TRACE_POINT
-        blockPublishSubscriptions_.Subscribe(
-          ptr,
-          protocol_,
-          BLOCK_PUBLISH,
-          name, // TODO(kll) make a connection name here.
-          foo);
+            blockPublishSubscriptions_.Subscribe(
+                                                 service_client,
+                                                 protocol_,
+                                                 BLOCK_PUBLISH,
+                                                 name, // TODO(kll) make a connection name here.
+                                                 subscription_handler_function);
         }
 
         if (0)
         {
           LOG_STACK_TRACE_POINT;
-          auto prom = ptr->Call(protocol_, GET_HEAVIEST_CHAIN, ms);
+          auto prom = service_client->Call(protocol_, GET_HEAVIEST_CHAIN, ms);
           prom.Then([prom, ms, this](){
               std::vector<block_type> incoming;
               incoming.reserve(uint64_t(ms));
@@ -281,8 +277,8 @@ private:
 
               fetch::logger.Warn("ERK hash=", ToBase64(blkhash));
 
-              //auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_HEADER, blkhash, uint16_t(77));
-              auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_B, ToBase64(blkhash));
+              auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_HEADER, blkhash);
+              //auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_B, ToBase64(blkhash));
               prom.Then([this, prom](){
                   LOG_STACK_TRACE_POINT;
                   std::pair<bool, block_type> result;

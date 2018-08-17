@@ -297,14 +297,14 @@ public:
     ptr_->WithServices(f);
   }
 
-  void VisitServices(std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
+  void VisitServiceClients(std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
   {
-    ptr_->VisitServices(f);
+    ptr_->VisitServiceClients(f);
   }
 
-  void VisitServices(std::function<void(service_map_type::value_type const &)> f) const
+  void VisitServiceClients(std::function<void(service_map_type::value_type const &)> f) const
   {
-    ptr_->VisitServices(f);
+    ptr_->VisitServiceClients(f);
   }
 
   void VisitConnections(std::function<void(connection_handle_type const &, shared_connection_type)> f) const
