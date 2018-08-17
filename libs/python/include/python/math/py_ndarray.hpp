@@ -264,11 +264,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              s[idx] = val;
            })
       .def("Max", [](NDArray<T> const &a) { return a.Max(); })
-      .def("Max",
-           [](NDArray<T> const &a, std::size_t const axis) {
-             if (axis >= a.shape().size()) throw py::index_error();
-             return a.Max(axis);
-           })
+      //      .def("Max",
+      //           [](NDArray<T> const &a, std::size_t const axis) {
+      //             if (axis >= a.shape().size()) throw py::index_error();
+      //             return a.Max(axis);
+      //           })
       .def("Min", [](NDArray<T> const &a) { return a.Min(); })
       //      .def("Min",
       //           [](NDArray<T> const &a, std::size_t axis) {

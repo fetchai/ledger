@@ -59,3 +59,19 @@ TEST(ndarray, faulty_reshape)
 
   ASSERT_FALSE(a.CanReshape({2, 4}));
 }
+
+TEST(ndarray, max_axis)
+{
+  _A<double> a = NDArray<double>(27);
+  a.Reshape({3, 3, 3});
+
+  for (std::size_t i = 0; i < 27; ++i)
+  {
+    a[i] = double(i);
+  }
+
+  _A<double> b{{3, 3}};
+  b = a.Max(1);
+
+  //  ASSERT_FALSE(a.CanReshape({2, 4}));
+}

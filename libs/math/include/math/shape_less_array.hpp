@@ -1448,7 +1448,7 @@ public:
 
     std::size_t N     = this->size();
     type        d     = from;
-    type        delta = (to - from) / N;
+    type        delta = (to - from) / type(N);
 
     for (std::size_t i = 0; i < N; ++i)
     {

@@ -21,8 +21,7 @@ TEST(ndarray, simple_iterator_permute_test)
 
   NDArray<double> ret;
   ret.ResizeFromShape(array.shape());
-  //  NDArray< double > ret = NDArray< double >::Zeros(25);
-  //  ret.Reshape({5, 5});
+
   ASSERT_TRUE(ret.size() == array.size());
   ASSERT_TRUE(ret.shape() == array.shape());
   NDArrayIterator<double, NDArray<double>::container_type> it(array);
@@ -42,12 +41,12 @@ TEST(ndarray, simple_iterator_permute_test)
   std::size_t test_val, cur_row;
   for (std::size_t i = 0; i < array.size(); ++i)
   {
-    ASSERT_TRUE(array[i] == i);
+    ASSERT_TRUE(array[i] == double(i));
 
     cur_row  = i / 7;
     test_val = (11 * (i % 7)) + cur_row;
 
-    ASSERT_TRUE(ret[i] == test_val);
+    ASSERT_TRUE(ret[i] == double(test_val));
   }
 }
 

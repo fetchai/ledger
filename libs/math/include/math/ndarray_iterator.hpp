@@ -28,6 +28,8 @@ struct NDIteratorRange
 
   std::size_t repeat_dimension = 1;
   std::size_t repetition       = 0;
+
+  std::size_t current_n_dim_position = 0;
 };
 
 template <typename T, typename C>
@@ -62,8 +64,17 @@ public:
     Setup(step);
   }
 
+  /**
+   * identifies whether the iterator is still valid or has finished iterating
+   * @return boolean indicating validity
+   */
   operator bool() { return is_valid_; }
 
+  /**
+   * incrementer, i.e. increment through the memory by 1 position making n-dim adjustments as
+   * necessary
+   * @return
+   */
   NDArrayIterator &operator++()
   {
     bool        next;
@@ -78,6 +89,7 @@ public:
 
       if (s.index >= s.to)
       {
+        ++s.current_n_dim_position;
 
         ++s.repetition;
         s.index = s.from;
@@ -92,6 +104,7 @@ public:
       }
     } while ((i < ranges_.size()) && (next));
 
+    // check if iteration is complete
     if (i == ranges_.size())
     {
       if (total_runs_ <= 1)
@@ -136,6 +149,10 @@ public:
     std::swap(ranges_[a], ranges_[b]);
   }
 
+  /**
+   * dereference, i.e. give the value at the current position of the iterator
+   * @return
+   */
   type &operator*()
   {
     assert(position_ < array_.size());
@@ -149,6 +166,52 @@ public:
   template <typename A, typename B>
   friend bool UpgradeIteratorFromBroadcast(std::vector<std::size_t> const &,
                                            NDArrayIterator<A, B> &);
+
+  std::vector<std::size_t> GetNDimIndex()
+  {
+    std::vector<std::size_t> cur_index;
+    for (std::size_t j = 0; j < ranges_.size(); ++j)
+    {
+      cur_index.push_back(ranges_[j].current_n_dim_position);
+    }
+
+    //    // TODO: ranges_ needs to convert current position in terms of n-dim
+    //    std::size_t cur_volume, prev_volume = 1;
+    ////    for (std::size_t i = ranges_.size() - 1; i >= 0; --i)
+    //    for (std::size_t i = 0; i < ranges_.size(); ++i)
+    //    {
+    //      cur_volume *= ranges_[i].total_steps;
+    //      if (position_ > cur_volume)
+    //      {
+    //        // pass
+    //      }
+    //      else
+    //      {
+    //        for (std::size_t j = 0; j < i; ++j)
+    //        {
+    //          cur_index.push_back(ranges_[j].current_n_dim_position);
+    //        }
+    //      }
+    //      prev_volume = cur_volume;
+    //      cur_index.push_back(ranges_.current_n_dim_position);
+    //    }
+    //
+    //
+    //
+    //    std::size_t index  = 0;
+    //    std::size_t n_dims = indices.size();
+    //    std::size_t base   = 1;
+    //
+    //    // loop through all dimensions
+    //    for (std::size_t i = 0; i < n_dims; ++i)
+    //    {
+    //      index += indices[i] * base;
+    //      base *= shape_[i];
+    //    }
+    //    return index
+
+    return cur_index;
+  }
 
 protected:
   std::vector<NDIteratorRange> ranges_;
