@@ -21,8 +21,8 @@
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/vt100.hpp"
 
-#include "quick_start_service.hpp"
 #include "network/management/network_manager.hpp"
+#include "quick_start_service.hpp"
 
 using namespace fetch;
 using namespace fetch::commandline;

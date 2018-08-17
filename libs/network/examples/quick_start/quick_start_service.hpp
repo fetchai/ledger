@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "node.hpp"
-#include "protocols/fetch_protocols.hpp"  // defines QUICK_START enum
 #include "core/logger.hpp"
 #include "network/service/server.hpp"
+#include "node.hpp"
+#include "protocols/fetch_protocols.hpp"  // defines QUICK_START enum
 #include <memory>
 
 namespace fetch {

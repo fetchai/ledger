@@ -30,14 +30,14 @@
 #include <utility>
 #include <vector>
 
-#include "helper_functions.hpp"
-#include "network_classes.hpp"
-#include "node_directory.hpp"
-#include "transaction_list.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
 #include "core/random/lfg.hpp"
+#include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "network_classes.hpp"
+#include "node_directory.hpp"
+#include "transaction_list.hpp"
 
 namespace fetch {
 namespace network_benchmark {

@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "helper_functions.hpp"
+#include "network/management/network_manager.hpp"
 #include "network_benchmark_service.hpp"
 #include "node_basic.hpp"
-#include "network/management/network_manager.hpp"
 
 using namespace fetch;
 using namespace fetch::network_benchmark;

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "helper_functions.hpp"
 #include "crypto/fnv.hpp"
+#include "helper_functions.hpp"
 #include <set>
 #include <type_traits>
 #include <unordered_map>

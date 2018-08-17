@@ -20,15 +20,15 @@
 // This file holds and manages connections to other nodes
 // Not for long-term use
 
+#include "core/logger.hpp"
 #include "helper_functions.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "network/service/client.hpp"
+#include "network/service/server.hpp"
 #include "network_classes.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/network_benchmark/commands.hpp"
 #include "protocols/network_mine_test/commands.hpp"
-#include "core/logger.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "network/service/client.hpp"
-#include "network/service/server.hpp"
 
 #include "core/byte_array/byte_array.hpp"
 

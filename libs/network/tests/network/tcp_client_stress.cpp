@@ -21,8 +21,8 @@
 #include <iostream>
 #include <memory>
 
-#include "helper_functions.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "helper_functions.hpp"
 #include "network/tcp/loopback_server.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"

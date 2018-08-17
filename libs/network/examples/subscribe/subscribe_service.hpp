@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "protocols/fetch_protocols.hpp"  // defines enum
-#include "protocols/subscribe/protocol.hpp"
 #include "core/logger.hpp"
 #include "network/service/server.hpp"
+#include "protocols/fetch_protocols.hpp"  // defines enum
+#include "protocols/subscribe/protocol.hpp"
 #include <memory>
 
 namespace fetch {

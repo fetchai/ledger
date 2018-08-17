@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 //#include"network/service/client.hpp"
-#include "protocol.hpp"
 #include "network/service/publication_feed.hpp"
+#include "protocol.hpp"
 
 namespace fetch {
 namespace subscribe {

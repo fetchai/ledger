@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logger.hpp"
 #include "helper_functions.hpp"
+#include "http/server.hpp"
 #include "mine_test_http_interface.hpp"
+#include "network/service/server.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/network_mine_test.hpp"
-#include "core/logger.hpp"
-#include "http/server.hpp"
-#include "network/service/server.hpp"
 #include <memory>
 
 namespace fetch {

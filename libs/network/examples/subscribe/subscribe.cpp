@@ -18,8 +18,8 @@
 
 #include <iostream>
 
-#include "subscribe_service.hpp"
 #include "network/management/network_manager.hpp"
+#include "subscribe_service.hpp"
 
 using namespace fetch;
 using namespace fetch::subscribe;

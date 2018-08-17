@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network_classes.hpp"
 #include "core/logger.hpp"
 #include "core/script/variant.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/color_log.hpp"
 #include "http/server.hpp"
+#include "network_classes.hpp"
 
 namespace fetch {
 namespace network_benchmark {

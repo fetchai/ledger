@@ -18,8 +18,8 @@
 
 #include "helper_functions.hpp"
 #include "mine_node_basic.hpp"
-#include "network_mine_test_service.hpp"
 #include "network/management/network_manager.hpp"
+#include "network_mine_test_service.hpp"
 
 using namespace fetch;
 using namespace fetch::network_mine_test;
