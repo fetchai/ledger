@@ -59,7 +59,7 @@ public:
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation &&rhs) = delete;
 
-  ~TCPClientImplementation() { }
+  ~TCPClientImplementation() {}
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {

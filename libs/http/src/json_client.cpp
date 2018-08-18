@@ -1,5 +1,5 @@
-#include "core/json/document.hpp"
 #include "http/json_client.hpp"
+#include "core/json/document.hpp"
 
 #include <sstream>
 #include <utility>
@@ -7,38 +7,33 @@
 namespace fetch {
 namespace http {
 
-JsonHttpClient::JsonHttpClient(std::string host, uint16_t port)
-  : client_(std::move(host), port)
-{
-}
+JsonHttpClient::JsonHttpClient(std::string host, uint16_t port) : client_(std::move(host), port) {}
 
-bool JsonHttpClient::Get(ConstByteArray const &endpoint,
-                         Variant const &request, Variant &response)
+bool JsonHttpClient::Get(ConstByteArray const &endpoint, Variant const &request, Variant &response)
 {
   return Request(Method::GET, endpoint, &request, response);
 }
 
 bool JsonHttpClient::Get(JsonHttpClient::ConstByteArray const &endpoint,
-                         JsonHttpClient::Variant &response)
+                         JsonHttpClient::Variant &             response)
 {
   return Request(Method::GET, endpoint, nullptr, response);
 }
 
-bool JsonHttpClient::Post(ConstByteArray const &endpoint,
-                          Variant const &request, Variant &response)
+bool JsonHttpClient::Post(ConstByteArray const &endpoint, Variant const &request, Variant &response)
 {
   return Request(Method::POST, endpoint, &request, response);
 }
 
 bool JsonHttpClient::Post(JsonHttpClient::ConstByteArray const &endpoint,
-                          JsonHttpClient::Variant &response)
+                          JsonHttpClient::Variant &             response)
 {
   return Request(Method::POST, endpoint, nullptr, response);
 }
 
 bool JsonHttpClient::Request(Method method, JsonHttpClient::ConstByteArray const &endpoint,
                              JsonHttpClient::Variant const *request,
-                             JsonHttpClient::Variant &response)
+                             JsonHttpClient::Variant &      response)
 {
   bool success = false;
 
@@ -66,5 +61,5 @@ bool JsonHttpClient::Request(Method method, JsonHttpClient::ConstByteArray const
   return success;
 }
 
-} // namespace http
-} // namespace fetch
+}  // namespace http
+}  // namespace fetch

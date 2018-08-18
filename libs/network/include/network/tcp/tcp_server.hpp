@@ -70,7 +70,7 @@ public:
         std::shared_ptr<acceptor_type> acceptor;
 
         try
-        {// KLL this also appears to generate a data race.
+        {  // KLL this also appears to generate a data race.
           // This might throw if the port is not free
           acceptor = network_manager_.CreateIO<acceptor_type>(
               asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));

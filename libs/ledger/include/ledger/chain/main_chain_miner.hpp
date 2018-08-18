@@ -67,16 +67,13 @@ public:
     }
   }
 
-  void onBlockComplete(std::function<void (const block_type)> func)
-  {
-    onBlockComplete_ = func;
-  }
+  void onBlockComplete(std::function<void(const block_type)> func) { onBlockComplete_ = func; }
 
 private:
   using clock_type     = std::chrono::high_resolution_clock;
   using timestamp_type = clock_type::time_point;
 
-  std::function<void (const block_type)> onBlockComplete_;
+  std::function<void(const block_type)> onBlockComplete_;
 
   template <typename T>
   timestamp_type CalculateNextBlockTime(T &rng)
@@ -111,7 +108,7 @@ private:
         fetch::logger.Info("===> New Heaviest Block: ", block.hashString());
 
         // new heaviest has been detected
-        next_block_time = CalculateNextBlockTime(rng);
+        next_block_time   = CalculateNextBlockTime(rng);
         previous_heaviest = block.hash();
       }
 
@@ -119,10 +116,10 @@ private:
       if (clock_type::now() >= next_block_time)
       {
         block_type nextBlock;
-        body_type nextBody;
-        nextBody.block_number = block.body().block_number + 1;
+        body_type  nextBody;
+        nextBody.block_number  = block.body().block_number + 1;
         nextBody.previous_hash = block.hash();
-        nextBody.miner_number = minerNumber_;
+        nextBody.miner_number  = minerNumber_;
 
         // Pack the block with transactions
         miner_.GenerateBlock(nextBody, num_lanes_, num_slices_);

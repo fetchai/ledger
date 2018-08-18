@@ -97,7 +97,7 @@ protected:
   }
 
 private:
-  mutable mutex::Mutex  service_lock_{ __LINE__, __FILE__ };
+  mutable mutex::Mutex  service_lock_{__LINE__, __FILE__};
   service_map_type      services_;
   std::atomic<uint64_t> number_of_services_;
 };

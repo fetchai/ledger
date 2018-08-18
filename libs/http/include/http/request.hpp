@@ -76,7 +76,6 @@ public:
   bool ToStream(asio::streambuf &buffer, std::string const &host, uint16_t port) const;
 
 private:
-
   void ParseStartLine(byte_array::ByteArray &line);
 
   byte_array::ByteArray header_data_;

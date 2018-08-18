@@ -157,8 +157,8 @@ private:
     staged.clear();
   }
 
-  mutex_type pending_queue_lock_{ __LINE__, __FILE__ };  ///< Protects both `pending_queue_` and
-                                   ///< `transaction_index_`
+  mutex_type pending_queue_lock_{__LINE__, __FILE__};  ///< Protects both `pending_queue_` and
+                                                       ///< `transaction_index_`
   transaction_queue_type pending_queue_;
   std::size_t            transaction_index_{0};
 

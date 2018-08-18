@@ -1,19 +1,15 @@
 #include "http/client.hpp"
 
-#include <system_error>
 #include <stdexcept>
+#include <system_error>
 
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
 namespace fetch {
 namespace http {
 
-HTTPClient::HTTPClient(std::string host, uint16_t port)
-  : host_(std::move(host))
-  , port_(port)
-{
-}
+HTTPClient::HTTPClient(std::string host, uint16_t port) : host_(std::move(host)), port_(port) {}
 
 bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
 {
@@ -40,7 +36,7 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
   }
 
   asio::streambuf input_buffer;
-  std::size_t header_length = asio::read_until(socket_, input_buffer, "\r\n\r\n", ec);
+  std::size_t     header_length = asio::read_until(socket_, input_buffer, "\r\n\r\n", ec);
   if (ec)
   {
     fetch::logger.Warn("Failed to recv response header: ", ec.message());
@@ -48,17 +44,14 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
   }
 
   // work out the start of the header
-  response.ParseHeader(input_buffer, header_length); // will consume header_length bytes from the buffer
+  response.ParseHeader(input_buffer,
+                       header_length);  // will consume header_length bytes from the buffer
 
   // determine if any further read is required
   std::size_t content_length = 0;
   if (response.header().Has("content-length"))
   {
-    content_length = std::stoul(
-      static_cast<std::string>(
-        response.header()["content-length"]
-      )
-    );
+    content_length = std::stoul(static_cast<std::string>(response.header()["content-length"]));
   }
 
   std::size_t const total_length = content_length + header_length;
@@ -96,7 +89,7 @@ bool HTTPClient::Connect()
   using Resolver = Socket::protocol_type::resolver;
 
   std::error_code ec{};
-  Resolver resolver{io_service_};
+  Resolver        resolver{io_service_};
 
   // resolve the endpoint
   Resolver::iterator endpoint = resolver.resolve(host_, std::to_string(port_), ec);
@@ -118,5 +111,5 @@ bool HTTPClient::Connect()
   return true;
 }
 
-} // namespace http
-} // namespace fetch
+}  // namespace http
+}  // namespace fetch

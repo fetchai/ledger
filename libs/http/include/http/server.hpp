@@ -55,15 +55,16 @@ public:
   };
 
   HTTPServer(uint16_t const &port, network_manager_type const &network_manager)
-    : eval_mutex_(__LINE__, __FILE__), networkManager_(network_manager),
-      request_mutex_(__LINE__, __FILE__)
+    : eval_mutex_(__LINE__, __FILE__)
+    , networkManager_(network_manager)
+    , request_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
 
-    std::shared_ptr<manager_type> manager = manager_;
-    std::weak_ptr<socket_type> &socRef = socket_;
-    std::weak_ptr<acceptor_type> &accepRef = acceptor_;
-    network_manager_type &threadMan = networkManager_;
+    std::shared_ptr<manager_type> manager   = manager_;
+    std::weak_ptr<socket_type> &  socRef    = socket_;
+    std::weak_ptr<acceptor_type> &accepRef  = acceptor_;
+    network_manager_type &        threadMan = networkManager_;
 
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
       fetch::logger.Info("Starting HTTPServer on http://127.0.0.1:", port);
@@ -73,7 +74,7 @@ public:
       auto                 soc = threadMan.CreateIO<socket_type>();
 
       auto accep =
-             threadMan.CreateIO<acceptor_type>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+          threadMan.CreateIO<acceptor_type>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
 
       // allow initiating class to post closes to these
       socRef   = soc;
@@ -123,7 +124,7 @@ public:
       res.AddHeader("Access-Control-Allow-Origin", "*");
       res.AddHeader("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
       res.AddHeader("Access-Control-Allow-Headers",
-                       "Content-Type, Authorization, Content-Length, X-Requested-With");
+                    "Content-Type, Authorization, Content-Length, X-Requested-With");
 
       manager_->Send(client, res);
       return;
@@ -137,7 +138,7 @@ public:
     }
 
     HTTPResponse   res("page not found", mime_types::GetMimeTypeFromExtension(".html"),
-                       Status::CLIENT_ERROR_NOT_FOUND);
+                     Status::CLIENT_ERROR_NOT_FOUND);
     ViewParameters params;
 
     for (auto &v : views_)

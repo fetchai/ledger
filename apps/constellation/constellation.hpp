@@ -95,8 +95,7 @@ public:
   static constexpr std::size_t DEFAULT_NUM_EXECUTORS  = DEFAULT_NUM_LANES;
   //  static const std::string DEFAULT_DB_PREFIX =;
 
-  explicit Constellation(certificate_type &&certificate,
-                         uint16_t           port_start        = DEFAULT_PORT_START,
+  explicit Constellation(certificate_type &&certificate, uint16_t port_start = DEFAULT_PORT_START,
                          std::size_t        num_executors     = DEFAULT_NUM_EXECUTORS,
                          std::size_t        num_lanes         = DEFAULT_NUM_LANES,
                          std::size_t        num_slices        = DEFAULT_NUM_SLICES,

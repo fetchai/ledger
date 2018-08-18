@@ -111,7 +111,7 @@ public:
   {
     std::string ret;
 
-    if (hash().size()>0)
+    if (hash().size() > 0)
     {
       ret += hashString();
     }
@@ -128,7 +128,7 @@ public:
     }
     else
     {
-      if (body_.previous_hash.size()>0)
+      if (body_.previous_hash.size() > 0)
       {
         ret += prevString();
       }

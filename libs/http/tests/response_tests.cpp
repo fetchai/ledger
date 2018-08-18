@@ -1,6 +1,6 @@
 #include "core/byte_array/const_byte_array.hpp"
-#include "network/fetch_asio.hpp"
 #include "http/response.hpp"
+#include "network/fetch_asio.hpp"
 
 #include <gtest/gtest.h>
 #include <iostream>
@@ -10,13 +10,10 @@ class ResponseTests : public ::testing::Test
 {
 protected:
   using ConstByteArray = fetch::byte_array::ConstByteArray;
-  using Response = fetch::http::HTTPResponse;
-  using ResponsePtr = std::unique_ptr<Response>;
+  using Response       = fetch::http::HTTPResponse;
+  using ResponsePtr    = std::unique_ptr<Response>;
 
-  void SetUp() override
-  {
-    response_ = std::make_unique<Response>();
-  }
+  void SetUp() override { response_ = std::make_unique<Response>(); }
 
   void ConvertToBuffer(char const *text, asio::streambuf &buffer)
   {
@@ -36,12 +33,12 @@ protected:
 TEST_F(ResponseTests, HeaderCase1)
 {
   static const char *raw_header =
-                      "HTTP/1.0 404 NOT FOUND\r\n"
-                      "Content-Type : text/html\r\n"
-                      "Content-Length: 233\r\n"
-                      "Server : Werkzeug/0.14.1 Python/3.6.5\r\n"
-                      "Date: Sat, 11 Aug 2018 09:55:11 GMT\r\n"
-                      "\r\n";
+      "HTTP/1.0 404 NOT FOUND\r\n"
+      "Content-Type : text/html\r\n"
+      "Content-Length: 233\r\n"
+      "Server : Werkzeug/0.14.1 Python/3.6.5\r\n"
+      "Date: Sat, 11 Aug 2018 09:55:11 GMT\r\n"
+      "\r\n";
 
   // convert the raw request into a network buffer like object
   asio::streambuf buffer;
@@ -59,10 +56,10 @@ TEST_F(ResponseTests, HeaderCase1)
 TEST_F(ResponseTests, HeaderCase2)
 {
   static const char *raw_header =
-                      "HTTP/1.0 200 NOT FOUND\r\n"
-                      "Content-Type : application/json\r\n"
-                      "Content-Length: 10\r\n"
-                      "\r\n";
+      "HTTP/1.0 200 NOT FOUND\r\n"
+      "Content-Type : application/json\r\n"
+      "Content-Length: 10\r\n"
+      "\r\n";
 
   // convert the raw request into a network buffer like object
   asio::streambuf buffer;

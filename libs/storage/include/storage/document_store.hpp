@@ -339,7 +339,7 @@ protected:
     return doc;
   }
 
-  mutex::Mutex         mutex_{ __LINE__, __FILE__ };
+  mutex::Mutex         mutex_{__LINE__, __FILE__};
   key_value_index_type key_index_;
   file_store_type      file_store_;
 

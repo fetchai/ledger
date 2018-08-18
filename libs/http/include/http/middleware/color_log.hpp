@@ -50,8 +50,7 @@ inline void ColorLog(fetch::http::HTTPResponse &res, fetch::http::HTTPRequest co
     break;
   };
 
-  std::cout << "[ " << color << ToString(res.status()) << DefaultAttributes() << " ] "
-            << req.uri();
+  std::cout << "[ " << color << ToString(res.status()) << DefaultAttributes() << " ] " << req.uri();
   std::cout << ", " << GetColor(5, 9) << res.mime_type().type << DefaultAttributes() << std::endl;
 }
 }  // namespace middleware

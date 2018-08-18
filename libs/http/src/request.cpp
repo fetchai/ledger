@@ -56,55 +56,55 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
 
     switch (c)
     {
-      case ':':
-        if (split_key_at == 0)
+    case ':':
+      if (split_key_at == 0)
+      {
+        split_val_at = split_key_at = i;
+        ++split_val_at;
+        while ((i + 1 < end) && (*cit) == ' ')
         {
-          split_val_at = split_key_at = i;
           ++split_val_at;
-          while ((i + 1 < end) && (*cit) == ' ')
-          {
-            ++split_val_at;
-            ++i;
-            ++cit;
-          }
+          ++i;
+          ++cit;
         }
-        break;
-      case '\n':
-        last_pos     = i + 1;
-        split_key_at = 0;
-        break;
-      case '\r':
-        if (last_pos != i)
+      }
+      break;
+    case '\n':
+      last_pos     = i + 1;
+      split_key_at = 0;
+      break;
+    case '\r':
+      if (last_pos != i)
+      {
+        if (line > 0)
         {
-          if (line > 0)
+          key = header_data_.SubArray(last_pos, split_key_at - last_pos);
+
+          for (std::size_t t = 0; t < key.size(); ++t)
           {
-            key = header_data_.SubArray(last_pos, split_key_at - last_pos);
-
-            for (std::size_t t = 0; t < key.size(); ++t)
-            {
-              char &cc = reinterpret_cast<char &>(key[t]);
-              if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
-            }
-
-            ++split_key_at;
-            value = header_data_.SubArray(split_val_at, i - split_val_at);
-
-            if (key == "content-length")
-            {
-              content_length_ = uint64_t(value.AsInt());
-            }
-
-            header_.Add(key, value);
-          }
-          else
-          {
-            start_line = header_data_.SubArray(0, i);
+            char &cc = reinterpret_cast<char &>(key[t]);
+            if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
           }
 
-          ++line;
+          ++split_key_at;
+          value = header_data_.SubArray(split_val_at, i - split_val_at);
+
+          if (key == "content-length")
+          {
+            content_length_ = uint64_t(value.AsInt());
+          }
+
+          header_.Add(key, value);
+        }
+        else
+        {
+          start_line = header_data_.SubArray(0, i);
         }
 
-        break;
+        ++line;
+      }
+
+      break;
     }
   }
 
@@ -115,12 +115,11 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
 
 bool HTTPRequest::ToStream(asio::streambuf &buffer, std::string const &host, uint16_t port) const
 {
-  static char const *NEW_LINE =  "\r\n";
+  static char const *NEW_LINE = "\r\n";
 
   std::ostream stream(&buffer);
 
-  stream << ToString(method_) << ' ' << uri_ << " HTTP/1.1" << NEW_LINE
-         << "Host: " << host;
+  stream << ToString(method_) << ' ' << uri_ << " HTTP/1.1" << NEW_LINE << "Host: " << host;
 
   if (port != 80)
   {
@@ -203,19 +202,19 @@ void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
   {
     switch (line[k])
     {
-      case '=':
-        equal = k;
-        break;
-      case '&':
-        equal = std::min(k, equal);
-        key   = line.SubArray(last, equal - last);
-        equal += (equal < k);
-        value = line.SubArray(equal, k - equal);
+    case '=':
+      equal = k;
+      break;
+    case '&':
+      equal = std::min(k, equal);
+      key   = line.SubArray(last, equal - last);
+      equal += (equal < k);
+      value = line.SubArray(equal, k - equal);
 
-        query_.Add(key, value);
-        equal = std::size_t(-1);
-        last  = k + 1;
-        break;
+      query_.Add(key, value);
+      equal = std::size_t(-1);
+      last  = k + 1;
+      break;
     }
     ++k;
   }
@@ -243,5 +242,5 @@ void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
   }
 }
 
-} // namespace http
-} // namespace fetch
+}  // namespace http
+}  // namespace fetch

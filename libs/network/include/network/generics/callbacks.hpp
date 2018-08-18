@@ -4,21 +4,19 @@
 #include <iostream>
 #include <string>
 
-namespace fetch
-{
-namespace generics
-{
+namespace fetch {
+namespace generics {
 
-template<typename FUNC>
+template <typename FUNC>
 class Callbacks
 {
 public:
-  Callbacks(const Callbacks &rhs)            = delete;
-  Callbacks(Callbacks &&rhs)                 = delete;
-  Callbacks &operator=(const Callbacks &rhs)  = delete;
-  Callbacks &operator=(Callbacks &&rhs)       = delete;
-  bool operator==(const Callbacks &rhs) const = delete;
-  bool operator<(const Callbacks &rhs) const  = delete;
+  Callbacks(const Callbacks &rhs) = delete;
+  Callbacks(Callbacks &&rhs)      = delete;
+  Callbacks &operator=(const Callbacks &rhs) = delete;
+  Callbacks &operator=(Callbacks &&rhs)             = delete;
+  bool       operator==(const Callbacks &rhs) const = delete;
+  bool       operator<(const Callbacks &rhs) const  = delete;
 
   Callbacks &operator=(FUNC func)
   {
@@ -26,38 +24,28 @@ public:
     return *this;
   }
 
-  operator bool() const
-  {
-    return !callbacks_.empty();
-  }
+  operator bool() const { return !callbacks_.empty(); }
 
-  template<class... U>
-  void operator()(U&&... u)
+  template <class... U>
+  void operator()(U &&... u)
   {
-    for(auto func : callbacks_)
+    for (auto func : callbacks_)
     {
       func(std::forward<U>(u)...);
     }
   }
 
-  void clear(void)
-  {
-    callbacks_.clear();
-  }
+  void clear(void) { callbacks_.clear(); }
 
-  explicit Callbacks()
-  {
-  }
+  explicit Callbacks() {}
 
-  virtual ~Callbacks()
-  {
-  }
+  virtual ~Callbacks() {}
 
 private:
   std::vector<FUNC> callbacks_;
 };
 
-}
-}
+}  // namespace generics
+}  // namespace fetch
 
-#endif //CALLBACKS_HPP
+#endif  // CALLBACKS_HPP

@@ -192,7 +192,7 @@ public:
 
   virtual thread_state_type TryIdleWork()
   {
-    thread_state_type            r = THREAD_IDLE;
+    thread_state_type r = THREAD_IDLE;
     LOG_STACK_TRACE_POINT;
     std::unique_lock<std::mutex> lock(futureWorkProtector_, std::try_to_lock);
     if (lock)
@@ -337,7 +337,7 @@ private:
   work_queue_type queue_;
   idle_work_type  idleWork_;
 
-  mutable fetch::mutex::Mutex     futureWorkProtector_{ __LINE__, __FILE__ };
+  mutable fetch::mutex::Mutex     futureWorkProtector_{__LINE__, __FILE__};
   mutable fetch::mutex::Mutex     thread_mutex_{__LINE__, __FILE__};
   mutable std::condition_variable cv_;
   mutable mutex_type              mutex_;

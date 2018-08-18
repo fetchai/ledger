@@ -38,7 +38,8 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
 {
-  fetch::logger.Info("Constellation :: ", interface_address, " P ", port_start, " E ", num_executors, " S ", num_lanes, "x", num_slices);
+  fetch::logger.Info("Constellation :: ", interface_address, " P ", port_start, " E ",
+                     num_executors, " S ", num_lanes, "x", num_slices);
 
   // determine how many threads the network manager will require
   std::size_t const num_network_threads =
@@ -57,12 +58,10 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
 
   // Adding handle for the orchestration
   p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
-
-    //std::cout << "MAKING CALL ::: " << std::endl;
+    // std::cout << "MAKING CALL ::: " << std::endl;
 
     fetch::logger.Info("OnPeerUpdateProfile: ", byte_array::ToBase64(ep.identity.identifier()),
-                        " mainchain?: ", ep.is_mainchain.load(),
-                        " lane:? ", ep.is_lane.load());
+                       " mainchain?: ", ep.is_mainchain.load(), " lane:? ", ep.is_lane.load());
 
     if (ep.is_mainchain)
     {
@@ -104,14 +103,10 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
   execution_manager_->Start();
 
   // Main chain
-  main_chain_service_ = std::make_unique<chain::MainChainService>(
-      db_prefix,
-      main_chain_port_,
-      *network_manager_.get(),
-      my_name
-  );
+  main_chain_service_ = std::make_unique<chain::MainChainService>(db_prefix, main_chain_port_,
+                                                                  *network_manager_.get(), my_name);
 
-  main_chain_service_ -> SetOwnerIdentity(profile.identity);
+  main_chain_service_->SetOwnerIdentity(profile.identity);
 
   // Mainchain remote
   main_chain_remote_ = std::make_unique<chain::MainChainRemoteControl>();
@@ -128,9 +123,9 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
       num_lanes_, num_slices_, *main_chain_service_->mainchain(), *block_coordinator_,
       *transaction_packer_, main_chain_port_);
 
-  main_chain_miner_ -> onBlockComplete([this](const chain::MainChain::block_type blk){
-      this -> main_chain_service_ -> PublishBlock(blk);
-    });
+  main_chain_miner_->onBlockComplete([this](const chain::MainChain::block_type blk) {
+    this->main_chain_service_->PublishBlock(blk);
+  });
 
   tx_processor_ = std::make_unique<ledger::TransactionProcessor>(*storage_, *transaction_packer_);
 
@@ -141,9 +136,9 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
 
   // define the list of HTTP modules to be used
   http_modules_ = {
-    std::make_shared<p2p::P2PHttpInterface>(main_chain_service_->mainchain(),
-                                            main_chain_service_.get(),
-                                            main_chain_service_->mainchainprotocol()),
+      std::make_shared<p2p::P2PHttpInterface>(main_chain_service_->mainchain(),
+                                              main_chain_service_.get(),
+                                              main_chain_service_->mainchainprotocol()),
       std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
       std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_),
       std::make_shared<p2p::ExploreHttpInterface>(p2p_.get(), main_chain_service_->mainchain())};
@@ -180,7 +175,7 @@ void Constellation::Run(peer_list_type const &initial_peers)
     logger.Debug("Still alive...");
     std::this_thread::sleep_for(std::chrono::seconds{5});
   }
-  
+
   logger.Debug("Exiting...");
 }
 

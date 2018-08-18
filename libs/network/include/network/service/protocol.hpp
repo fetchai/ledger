@@ -233,7 +233,7 @@ private:
 
   callable_type *                                       members_[256] = {nullptr};
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
-  fetch::mutex::Mutex                                   feeds_mutex_{ __LINE__, __FILE__ };
+  fetch::mutex::Mutex                                   feeds_mutex_{__LINE__, __FILE__};
 };
 }  // namespace service
 }  // namespace fetch

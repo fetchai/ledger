@@ -18,14 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "network/generics/callbacks.hpp"
 #include "network/management/abstract_connection_register.hpp"
 #include "network/service/client.hpp"
-#include "network/generics/callbacks.hpp"
 
 #include <chrono>
 #include <memory>
-#include <unordered_map>
 #include <thread>
+#include <unordered_map>
 
 namespace fetch {
 namespace network {
@@ -45,10 +45,7 @@ public:
 
   struct LockableDetails final : public details_type, public mutex_type
   {
-    LockableDetails() : details_type()
-                      , mutex_type( __LINE__, __FILE__ )
-    {
-    }
+    LockableDetails() : details_type(), mutex_type(__LINE__, __FILE__) {}
   };
   using details_map_type =
       std::unordered_map<connection_handle_type, std::shared_ptr<LockableDetails>>;
@@ -67,20 +64,19 @@ public:
   template <typename T, typename... Args>
   shared_service_client_type CreateServiceClient(NetworkManager const &tm, Args &&... args)
   {
-    using Clock = std::chrono::high_resolution_clock;
+    using Clock     = std::chrono::high_resolution_clock;
     using Timepoint = Clock::time_point;
 
     T connection(tm);
     connection.Connect(std::forward<Args>(args)...);
 
     // wait for the connection to be established
-    Timepoint const start = Clock::now();
+    Timepoint const start     = Clock::now();
     Timepoint const threshold = start + std::chrono::seconds{10};
     while (!connection.is_alive())
     {
       // termination condition
-      if (Clock::now() >= threshold)
-        break;
+      if (Clock::now() >= threshold) break;
 
       std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
@@ -191,10 +187,10 @@ public:
   }
 
 private:
-  mutable mutex::Mutex connections_lock_{ __LINE__, __FILE__ };
+  mutable mutex::Mutex connections_lock_{__LINE__, __FILE__};
   connection_map_type  connections_;
 
-  mutable mutex::Mutex details_lock_{ __LINE__, __FILE__ };
+  mutable mutex::Mutex details_lock_{__LINE__, __FILE__};
   details_map_type     details_;
 
   void SignalClientLeave(connection_handle_type const &handle)

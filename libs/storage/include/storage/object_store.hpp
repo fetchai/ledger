@@ -250,7 +250,7 @@ public:
   self_type::Iterator end() { return Iterator(store_.end()); }
 
 private:
-  mutex::Mutex mutex_{ __LINE__, __FILE__ };
+  mutex::Mutex         mutex_{__LINE__, __FILE__};
   KeyByteArrayStore<S> store_;
 };
 

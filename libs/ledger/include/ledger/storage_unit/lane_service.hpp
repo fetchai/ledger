@@ -88,7 +88,8 @@ public:
     certificate->GenerateKeys();
     certificate_.reset(certificate);
 
-    fetch::logger.Info("Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port, " ID: ", byte_array::ToBase64(certificate_->identity().identifier()));
+    fetch::logger.Info("Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port,
+                       " ID: ", byte_array::ToBase64(certificate_->identity().identifier()));
 
     // format and generate the prefix
     std::string prefix;
@@ -181,7 +182,7 @@ private:
   std::unique_ptr<tx_sync_protocol_type> tx_sync_protocol_;
   thread_pool_type                       thread_pool_;
 
-  mutex::Mutex                    certificate_lock_{ __LINE__, __FILE__ };
+  mutex::Mutex                    certificate_lock_{__LINE__, __FILE__};
   std::unique_ptr<crypto::Prover> certificate_;
 };
 

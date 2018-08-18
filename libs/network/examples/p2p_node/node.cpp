@@ -19,10 +19,10 @@
 #include "core/byte_array/consumers.hpp"
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
+#include "crypto/ecdsa.hpp"
+#include "crypto/prover.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/service/server.hpp"
-#include "crypto/prover.hpp"
-#include "crypto/ecdsa.hpp"
 
 #include <iostream>
 #include <sstream>

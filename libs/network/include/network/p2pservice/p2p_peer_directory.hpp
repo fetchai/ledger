@@ -271,7 +271,7 @@ private:
 
   std::atomic<uint64_t> protocol_;
 
-  mutable mutex::Mutex  suggest_mutex_{ __LINE__, __FILE__ };
+  mutable mutex::Mutex  suggest_mutex_{__LINE__, __FILE__};
   peer_details_map_type suggested_peers_;
 
   std::atomic<bool>    running_;

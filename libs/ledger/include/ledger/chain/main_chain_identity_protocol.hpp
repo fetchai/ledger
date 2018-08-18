@@ -35,7 +35,8 @@ public:
   {
     this->Expose(PING, ctrl, &MainChainIdentity::Ping);
     this->ExposeWithClientArg(HELLO, ctrl, &MainChainIdentity::Hello);
-    this->ExposeWithClientArg(AUTHENTICATE_CONTROLLER, ctrl, &MainChainIdentity::AuthenticateController);
+    this->ExposeWithClientArg(AUTHENTICATE_CONTROLLER, ctrl,
+                              &MainChainIdentity::AuthenticateController);
     this->ExposeWithClientArg(EXCHANGE_DETAILS, ctrl, &MainChainIdentity::ExchangeDetails);
   }
 };

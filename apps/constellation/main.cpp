@@ -19,25 +19,25 @@
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
+#include "core/json/document.hpp"
 #include "core/macros.hpp"
 #include "core/script/variant.hpp"
-#include "core/json/document.hpp"
-#include "network/adapters.hpp"
-#include "network/management/network_manager.hpp"
-#include "network/fetch_asio.hpp"
-#include "crypto/prover.hpp"
 #include "crypto/ecdsa.hpp"
+#include "crypto/prover.hpp"
+#include "network/adapters.hpp"
+#include "network/fetch_asio.hpp"
+#include "network/management/network_manager.hpp"
 
 #include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
 
-#include <iostream>
+#include <array>
 #include <iomanip>
+#include <iostream>
 #include <stdexcept>
 #include <string>
-#include <vector>
-#include <array>
 #include <system_error>
+#include <vector>
 
 namespace {
 
@@ -51,25 +51,24 @@ struct CommandLineArguments
   using peer_list_type    = fetch::Constellation::peer_list_type;
   using adapter_list_type = fetch::network::Adapter::adapter_list_type;
 
-
-  static const std::size_t DEFAULT_NUM_LANES = 4;
+  static const std::size_t DEFAULT_NUM_LANES     = 4;
   static const std::size_t DEFAULT_NUM_SLICES    = 4;
   static const std::size_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
-  static const uint16_t DEFAULT_PORT = 8000;
-  static const uint32_t DEFAULT_NETWORK_ID = 0x10;
+  static const uint16_t    DEFAULT_PORT          = 8000;
+  static const uint32_t    DEFAULT_NETWORK_ID    = 0x10;
 
-  uint16_t port{0};
-  uint32_t network_id;
+  uint16_t       port{0};
+  uint32_t       network_id;
   peer_list_type peers;
-  std::size_t num_executors;
-  std::size_t num_lanes;
+  std::size_t    num_executors;
+  std::size_t    num_lanes;
   std::size_t    num_slices;
-  std::string interface;
-  bool bootstrap{false};
-  std::string dbdir;
+  std::string    interface;
+  bool           bootstrap{false};
+  std::string    dbdir;
 
-
-  static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap, Prover const &prover)
+  static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
+                                    Prover const &prover)
   {
     CommandLineArguments args;
 
@@ -77,7 +76,7 @@ struct CommandLineArguments
     std::string raw_peers;
 
     fetch::commandline::Params parameters;
-    std::string external_address;
+    std::string                external_address;
     parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
     parameters.add(args.num_executors, "executors", "The number of executors to configure",
                    DEFAULT_NUM_EXECUTORS);
@@ -102,11 +101,8 @@ struct CommandLineArguments
     if (args.bootstrap)
     {
       // create the boostrap node
-      bootstrap = std::make_unique<fetch::BootstrapMonitor>(
-        prover.identity(),
-        args.port,
-        args.network_id
-      );
+      bootstrap =
+          std::make_unique<fetch::BootstrapMonitor>(prover.identity(), args.port, args.network_id);
 
       // augment the peer list with the bootstrapped version
       if (bootstrap->Start(args.peers))
@@ -123,7 +119,7 @@ struct CommandLineArguments
     if (!raw_peers.empty())
     {
       // split the peers
-      std::size_t position = 0;
+      std::size_t          position = 0;
       fetch::network::Peer peer;
       while (std::string::npos != position)
       {
@@ -154,7 +150,7 @@ struct CommandLineArguments
     }
   }
 
-  friend std::ostream &operator<<(std::ostream &s,
+  friend std::ostream &operator<<(std::ostream &              s,
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
     s << "port...........: " << args.port << std::endl;
@@ -196,13 +192,14 @@ int main(int argc, char **argv)
     ProverPtr p2p_key = GenereateP2PKey();
 
     BootstrapPtr bootstrap_monitor;
-    auto const args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
+    auto const   args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
 
     fetch::logger.Info("Configuration:\n", args);
 
     // create and run the constellation
-    auto constellation = std::make_unique<fetch::Constellation>(std::move(p2p_key), args.port, args.num_executors, args.num_lanes,
-                                                                args.num_slices, args.interface, args.dbdir);
+    auto constellation = std::make_unique<fetch::Constellation>(
+        std::move(p2p_key), args.port, args.num_executors, args.num_lanes, args.num_slices,
+        args.interface, args.dbdir);
 
     // run the application
     constellation->Run(args.peers);

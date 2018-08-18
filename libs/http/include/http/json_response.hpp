@@ -33,7 +33,7 @@ inline http::HTTPResponse CreateJsonResponse(byte_array::ConstByteArray const &b
 }
 
 inline http::HTTPResponse CreateJsonResponse(script::Variant const &doc,
-                                             Status status = Status::SUCCESS_OK)
+                                             Status                 status = Status::SUCCESS_OK)
 {
   static const auto jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
   std::stringstream body;

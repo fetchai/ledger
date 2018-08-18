@@ -1,5 +1,5 @@
-#include "core/script/variant.hpp"
 #include "bootstrap_monitor.hpp"
+#include "core/script/variant.hpp"
 
 #include <chrono>
 #include <sstream>
@@ -10,11 +10,11 @@ namespace {
 using script::Variant;
 using http::JsonHttpClient;
 
-const char *BOOTSTRAP_HOST = "bootstrap.economicagents.com";
-const uint16_t BOOTSTRAP_PORT = 80;
+const char *               BOOTSTRAP_HOST = "bootstrap.economicagents.com";
+const uint16_t             BOOTSTRAP_PORT = 80;
 const std::chrono::seconds UPDATE_INTERVAL{30};
 
-} // namespace
+}  // namespace
 
 bool BootstrapMonitor::Start(PeerList &peers)
 {
@@ -43,7 +43,7 @@ bool BootstrapMonitor::Start(PeerList &peers)
     return false;
   }
 
-  running_ = true;
+  running_        = true;
   monitor_thread_ = std::make_unique<std::thread>(&BootstrapMonitor::ThreadEntryPoint, this);
 
   fetch::logger.Info("Bootstrapping network node...complete");
@@ -103,8 +103,8 @@ bool BootstrapMonitor::RequestPeerList(BootstrapMonitor::PeerList &peers)
   Variant request;
   request.MakeObject();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
-  request["host"] = external_address_;
-  request["port"] = port_ + fetch::Constellation::P2P_PORT_OFFSET;
+  request["host"]       = external_address_;
+  request["port"]       = port_ + fetch::Constellation::P2P_PORT_OFFSET;
 
   Variant response;
   if (client.Post(oss.str(), request, response))
@@ -129,7 +129,7 @@ bool BootstrapMonitor::RequestPeerList(BootstrapMonitor::PeerList &peers)
 
       // extract all the required fields
       std::string host;
-      uint16_t port = 0;
+      uint16_t    port = 0;
       if (script::Extract(peer_object, "host", host) && script::Extract(peer_object, "port", port))
       {
         peers.emplace_back(std::move(host), port);
@@ -151,14 +151,14 @@ bool BootstrapMonitor::RegisterNode()
 
   Variant request;
   request.MakeObject();
-  request["public_key"] = byte_array::ToBase64(identity_.identifier());
-  request["network"] = network_id_;
-  request["host"] = external_address_;
-  request["port"] = port_ + fetch::Constellation::P2P_PORT_OFFSET;
-  request["client_name"] = "constellation";
+  request["public_key"]     = byte_array::ToBase64(identity_.identifier());
+  request["network"]        = network_id_;
+  request["host"]           = external_address_;
+  request["port"]           = port_ + fetch::Constellation::P2P_PORT_OFFSET;
+  request["client_name"]    = "constellation";
   request["client_version"] = "v0.0.1";
 
-  Variant response;
+  Variant        response;
   JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
   if (client.Post("/api/register/", request, response))
   {
@@ -180,7 +180,7 @@ bool BootstrapMonitor::NotifyNode()
   request.MakeObject();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
 
-  Variant response;
+  Variant        response;
   JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
   if (client.Post("/api/notify/", request, response))
   {
@@ -205,5 +205,4 @@ void BootstrapMonitor::ThreadEntryPoint()
   }
 }
 
-} // namespace fetch
-
+}  // namespace fetch

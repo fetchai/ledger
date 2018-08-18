@@ -3,29 +3,23 @@
 namespace fetch {
 namespace generics {
 
-template<class T>
+template <class T>
 class SharedWithLock
 {
 public:
   using mutex_type = std::mutex;
-  using lock_type = std::unique_lock<mutex_type>;
+  using lock_type  = std::unique_lock<mutex_type>;
 
-  SharedWithLock()
-  {
-  }
+  SharedWithLock() {}
 
-  SharedWithLock(const SharedWithLock &other)
-    : mutex_p(other.mutex_p)
-    , data_p(other.data_p)
-  {
-  }
+  SharedWithLock(const SharedWithLock &other) : mutex_p(other.mutex_p), data_p(other.data_p) {}
 
   SharedWithLock &operator=(const SharedWithLock &other)
   {
     if (&other != this)
     {
       mutex_p = other.mutex_p;
-      data_p = other.data_p;
+      data_p  = other.data_p;
     }
     return *this;
   }
@@ -36,62 +30,38 @@ public:
     return bool(data_p);
   }
 
-  virtual ~SharedWithLock()
-  {
-  }
+  virtual ~SharedWithLock() {}
 
   class Locked
   {
     friend class SharedWithLock;
+
   private:
-    lock_type lock_;
+    lock_type          lock_;
     std::shared_ptr<T> ptr_;
 
-    Locked(std::shared_ptr<T> ptr, mutex_type &m)
-      : lock_(m)
-      , ptr_(ptr)
-    {
-    }
-  public:
-    Locked(Locked &&other)
-      : lock_(std::move(other.lock_))
-      , ptr_(other.ptr_)
-    {
-    }
+    Locked(std::shared_ptr<T> ptr, mutex_type &m) : lock_(m), ptr_(ptr) {}
 
-    ~Locked()
-    {
-    }
   public:
-    T *operator->()
-    {
-      return ptr_.get();
-    }
-    const T *operator->() const
-    {
-      return ptr_.get();
-    }
-    T &operator*()
-    {
-      return *ptr_;
-    }
-    const T &operator*() const
-    {
-      return *ptr_;
-    }
+    Locked(Locked &&other) : lock_(std::move(other.lock_)), ptr_(other.ptr_) {}
+
+    ~Locked() {}
+
+  public:
+    T *      operator->() { return ptr_.get(); }
+    const T *operator->() const { return ptr_.get(); }
+    T &      operator*() { return *ptr_; }
+    const T &operator*() const { return *ptr_; }
   };
 
-  template<typename... Args>
+  template <typename... Args>
   void Make(Args &&... args)
   {
     mutex_p = std::make_shared<mutex_type>();
-    data_p = std::make_shared<T>(std::forward<Args>(args)...);
+    data_p  = std::make_shared<T>(std::forward<Args>(args)...);
   }
 
-  Locked Lock()
-  {
-    return Locked(data_p, *mutex_p);
-  }
+  Locked Lock() { return Locked(data_p, *mutex_p); }
 
   void CopyOut(T &target)
   {
@@ -101,8 +71,8 @@ public:
 
 public:
   std::shared_ptr<mutex_type> mutex_p;
-  std::shared_ptr<T> data_p;
+  std::shared_ptr<T>          data_p;
 };
 
-}
-}
+}  // namespace generics
+}  // namespace fetch

@@ -23,9 +23,9 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
-#include "network/generics/milli_timer.hpp"
 #include <map>
 #include <memory>
 #include <set>
@@ -36,12 +36,12 @@ namespace std {
 template <>
 struct hash<fetch::byte_array::ByteArray>
 {
- std::size_t operator()(const fetch::byte_array::ByteArray &k) const
- {
-   std::size_t hash = *reinterpret_cast<const std::size_t *>(k.pointer());
+  std::size_t operator()(const fetch::byte_array::ByteArray &k) const
+  {
+    std::size_t hash = *reinterpret_cast<const std::size_t *>(k.pointer());
 
-   return hash;
- }
+    return hash;
+  }
 };
 }  // namespace std
 
@@ -102,7 +102,7 @@ public:
 
   bool AddBlock(block_type &block)
   {
-    fetch::generics::MilliTimer myTimer("MainChain::AddBlock");
+    fetch::generics::MilliTimer          myTimer("MainChain::AddBlock");
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
     if (block.hash().size() == 0)
@@ -147,16 +147,9 @@ public:
       }
 
       // Update heaviest pointer if necessary
-      if ( (tip->loose == false)
-           &&
-           (
-              (tip->total_weight > heaviest_.first)
-              ||
-              (
-                  (tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)
-              )
-           )
-      )
+      if ((tip->loose == false) &&
+          ((tip->total_weight > heaviest_.first) ||
+           ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second))))
       {
         fetch::logger.Info("Mainchain: Updating heaviest with tip");
 
@@ -191,16 +184,9 @@ public:
           danglingRoot_.at(danglingRoot).insert(block.hash());
         }
 
-        if ( (tip->loose == false)
-             &&
-             (
-                     (tip->total_weight > heaviest_.first)
-                     ||
-                     (
-                             (tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)
-                     )
-             )
-        )
+        if ((tip->loose == false) &&
+            ((tip->total_weight > heaviest_.first) ||
+             ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second))))
         {
           fetch::logger.Info("Mainchain: creating new tip that is now heaviest! (new fork)");
 
@@ -272,16 +258,9 @@ public:
         // new heaviest tip.
         auto updatedTip = tips_[tipHash];
 
-        if ( (updatedTip->loose == false)
-             &&
-             (
-                     (updatedTip->total_weight > heaviest_.first)
-                     ||
-                     (
-                             (updatedTip->total_weight == heaviest_.first) && (tipHash > heaviest_.second)
-                     )
-             )
-        )
+        if ((updatedTip->loose == false) &&
+            ((updatedTip->total_weight > heaviest_.first) ||
+             ((updatedTip->total_weight == heaviest_.first) && (tipHash > heaviest_.second))))
         {
           fetch::logger.Info("Mainchain: Updating heaviest with tip");
 
@@ -333,7 +312,7 @@ public:
   std::vector<block_type> HeaviestChain(
       uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
-    fetch::generics::MilliTimer myTimer("MainChain::HeaviestChain");
+    fetch::generics::MilliTimer          myTimer("MainChain::HeaviestChain");
     std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
 
     std::vector<block_type> result;
@@ -484,7 +463,7 @@ private:
   std::unordered_map<block_hash, std::shared_ptr<Tip>> tips_;          // Keep track of the tips
   std::unordered_map<block_hash, std::set<block_hash>> danglingRoot_;  // Waiting (loose) tips
   std::pair<uint64_t, block_hash>                      heaviest_;      // Heaviest block/tip
-  mutable fetch::mutex::Mutex                          mutex_{ __LINE__, __FILE__ };
+  mutable fetch::mutex::Mutex                          mutex_{__LINE__, __FILE__};
 
   void RecoverFromFile()
   {
@@ -513,7 +492,7 @@ private:
   void WriteToFile()
   {
     fetch::generics::MilliTimer myTimer("MainChain::WriteToFile");
-    return; // TODO(remove before flight)
+    return;  // TODO(remove before flight)
     if (constructing_ || minerNumber_ == std::numeric_limits<uint32_t>::max()) return;
 
     // Add confirmed blocks to file

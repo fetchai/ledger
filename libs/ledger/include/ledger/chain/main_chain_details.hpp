@@ -30,44 +30,35 @@ namespace chain {
 
 struct MainChainDetails
 {
-  MainChainDetails()
-    : is_controller(false)
-    , is_peer(false)
-    , is_miner(false)
-    , is_outgoing(false)
-  {
-  }
+  MainChainDetails() : is_controller(false), is_peer(false), is_miner(false), is_outgoing(false) {}
 
   MainChainDetails &operator=(const MainChainDetails &other)
   {
-    identity = other.identity;
+    identity                          = other.identity;
     owning_discovery_service_identity = other.owning_discovery_service_identity;
 
     is_controller = false;
-    is_peer = false;
-    is_miner = false;
-    is_outgoing = false;
+    is_peer       = false;
+    is_miner      = false;
+    is_outgoing   = false;
 
     return *this;
   }
 
   MainChainDetails(const MainChainDetails &other)
-    : is_controller(false)
-    , is_peer(false)
-    , is_miner(false)
-    , is_outgoing(false)
+    : is_controller(false), is_peer(false), is_miner(false), is_outgoing(false)
   {
-    identity = other.identity;
+    identity                          = other.identity;
     owning_discovery_service_identity = other.owning_discovery_service_identity;
   }
 
   void CopyFromRemotePeer(const MainChainDetails &incoming_details)
   {
     is_controller = false;
-    is_peer = true;
-    is_miner = false;
+    is_peer       = true;
+    is_miner      = false;
 
-    identity = incoming_details.identity;
+    identity                          = incoming_details.identity;
     owning_discovery_service_identity = incoming_details.owning_discovery_service_identity;
   }
 
@@ -96,15 +87,15 @@ struct MainChainDetails
 
   /// Serializable fields
   /// @{
-  crypto::Identity      identity;
-  crypto::Identity      owning_discovery_service_identity;
+  crypto::Identity           identity;
+  crypto::Identity           owning_discovery_service_identity;
   byte_array::ConstByteArray signature;
   /// @}
 
   std::atomic<bool> is_controller;
   std::atomic<bool> is_peer;
   std::atomic<bool> is_miner;
-  std::atomic<bool> is_outgoing; // TODO(TR) Consider if this should be removed.
+  std::atomic<bool> is_outgoing;  // TODO(TR) Consider if this should be removed.
 };
 
 template <typename T>
@@ -123,6 +114,5 @@ T &Deserialize(T &serializer, MainChainDetails &data)
   return serializer;
 }
 
-  
 }  // namespace chain
 }  // namespace fetch

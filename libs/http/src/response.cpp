@@ -1,11 +1,11 @@
-#include "core/byte_array/byte_array.hpp"
-#include "core/string/trim.hpp"
-#include "core/string/to_lower.hpp"
 #include "http/response.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "core/string/to_lower.hpp"
+#include "core/string/trim.hpp"
 
-#include <iostream>
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
+#include <iostream>
 
 namespace fetch {
 namespace http {
@@ -27,7 +27,7 @@ byte_array::ByteArray CopyBuffer(asio::streambuf &buffer, std::size_t length)
   return data;
 }
 
-}
+}  // namespace
 
 bool HTTPResponse::ToStream(asio::streambuf &buffer) const
 {
@@ -64,10 +64,10 @@ bool HTTPResponse::ParseHeader(asio::streambuf &buffer, std::size_t length)
 
   auto linear_buffer = CopyBuffer(buffer, length);
 
-  char const *current = reinterpret_cast<char const *>(linear_buffer.pointer());
+  char const *current    = reinterpret_cast<char const *>(linear_buffer.pointer());
   char const *line_start = current;
 
-  std::size_t line_idx = 0;
+  std::size_t       line_idx              = 0;
   std::size_t const last_buffer_entry_idx = (length >= 1) ? length - 1 : 0;
 
   // iterate through all of the characters in the buffer with the intension to break
@@ -115,9 +115,9 @@ bool HTTPResponse::ParseBody(asio::streambuf &buffer, std::size_t length)
 
 bool HTTPResponse::ParseFirstLine(char const *begin, char const *end)
 {
-  std::size_t token_idx = 0;
-  char const *token_start = begin;
-  bool token_all_digets = true;
+  std::size_t token_idx        = 0;
+  char const *token_start      = begin;
+  bool        token_all_digets = true;
 
   for (char const *current = begin; current <= end; ++current)
   {
@@ -126,15 +126,14 @@ bool HTTPResponse::ParseFirstLine(char const *begin, char const *end)
       // find the status code
       if ((token_idx == 1) && token_all_digets)
       {
-        std::size_t const error_code = std::stoul(
-          std::string(token_start, static_cast<std::size_t>(current - token_start))
-        );
+        std::size_t const error_code =
+            std::stoul(std::string(token_start, static_cast<std::size_t>(current - token_start)));
 
         status_ = FromCode(error_code);
         break;
       }
 
-      token_start = current + 1;
+      token_start      = current + 1;
       token_all_digets = true;
       ++token_idx;
     }
@@ -162,10 +161,10 @@ bool HTTPResponse::ParseHeaderLine(std::size_t line_idx, char const *begin, char
   }
 
   // pointers which point to be begining and end characters of the
-  char const *key_start = begin;
-  char const *key_end = nullptr;
+  char const *key_start   = begin;
+  char const *key_end     = nullptr;
   char const *value_start = nullptr;
-  char const *value_end = end - 1; // safe because we have already checked for null size
+  char const *value_end   = end - 1;  // safe because we have already checked for null size
 
   // iterator through to find the first instance of ':'
   for (char const *current = begin; current < end; ++current)
@@ -173,15 +172,15 @@ bool HTTPResponse::ParseHeaderLine(std::size_t line_idx, char const *begin, char
     if (*current == ':')
     {
       // located our seperator (saftey checks done afterwards)
-      key_end = current - 1;
+      key_end     = current - 1;
       value_start = current + 1;
       break;
     }
   }
 
   // validate the pointers
-  bool const have_nullptrs = (key_end == nullptr) || (value_start == nullptr);
-  bool const invalid_key_start = (key_end < key_start);
+  bool const have_nullptrs       = (key_end == nullptr) || (value_start == nullptr);
+  bool const invalid_key_start   = (key_end < key_start);
   bool const invalid_value_start = (value_start >= value_end);
 
   if (have_nullptrs || invalid_key_start || invalid_value_start)
@@ -205,5 +204,5 @@ bool HTTPResponse::ParseHeaderLine(std::size_t line_idx, char const *begin, char
   return true;
 }
 
-} // namespace http
-} // namespace fetch
+}  // namespace http
+}  // namespace fetch

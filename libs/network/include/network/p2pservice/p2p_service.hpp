@@ -19,21 +19,21 @@
 
 #include <memory>
 
+#include "crypto/ecdsa.hpp"
+#include "crypto/prover.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/p2pservice/p2p_peer_details.hpp"
-#include "network/service/server.hpp"
 #include "network/p2pservice/p2p_identity.hpp"
 #include "network/p2pservice/p2p_identity_protocol.hpp"
+#include "network/p2pservice/p2p_peer_details.hpp"
 #include "network/p2pservice/p2p_peer_directory.hpp"
 #include "network/p2pservice/p2p_peer_directory_protocol.hpp"
 #include "network/p2pservice/p2ptrust.hpp"
-#include "crypto/ecdsa.hpp"
-#include "crypto/prover.hpp"
+#include "network/service/server.hpp"
 
 #include <memory>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace fetch {
 namespace p2p {
@@ -61,8 +61,8 @@ public:
   using p2p_directory_type                = std::unique_ptr<P2PPeerDirectory>;
   using p2p_directory_protocol_type       = std::unique_ptr<P2PPeerDirectoryProtocol>;
   using callback_peer_update_profile_type = std::function<void(EntryPoint const &)>;
-  using certificate_type = std::unique_ptr<crypto::Prover>;
-  using p2p_trust_type                = std::unique_ptr<P2PTrust<byte_array::ConstByteArray>>;
+  using certificate_type                  = std::unique_ptr<crypto::Prover>;
+  using p2p_trust_type                    = std::unique_ptr<P2PTrust<byte_array::ConstByteArray>>;
 
   enum
   {
@@ -70,13 +70,15 @@ public:
     DIRECTORY
   };
 
-  P2PService(certificate_type &&certificate, uint16_t port, fetch::network::NetworkManager const &tm)
+  P2PService(certificate_type &&certificate, uint16_t port,
+             fetch::network::NetworkManager const &tm)
     : super_type(port, tm), manager_(tm), certificate_(std::move(certificate))
   {
     running_     = false;
     thread_pool_ = network::MakeThreadPool(1);
     fetch::logger.Warn("Establishing P2P Service on rpc://0.0.0.0:", port);
-    fetch::logger.Warn("P2P Identity: ", byte_array::ToBase64(certificate_->identity().identifier()));
+    fetch::logger.Warn("P2P Identity: ",
+                       byte_array::ToBase64(certificate_->identity().identifier()));
 
     // Listening for new connections
     this->SetConnectionRegister(register_);
@@ -117,13 +119,11 @@ public:
     // this->Add(DIRECTORY, p2p_trust_protocol_.get()); // TODO(kll)
 
     // Adding hooks for listening to feeds etc
-    register_.OnClientEnter([](connection_handle_type const &i) {
-      fetch::logger.Info("Peer joined: ", i);
-    });
+    register_.OnClientEnter(
+        [](connection_handle_type const &i) { fetch::logger.Info("Peer joined: ", i); });
 
-    register_.OnClientLeave([](connection_handle_type const &i) {
-      fetch::logger.Info("Peer left: ", i);
-    });
+    register_.OnClientLeave(
+        [](connection_handle_type const &i) { fetch::logger.Info("Peer left: ", i); });
 
     // TODO(issue 7): Get from settings
     min_connections_ = 2;
@@ -183,10 +183,10 @@ public:
   {
     fetch::logger.Info("START P2P CONNECT: Host: ", host, " port: ", port);
 
-     shared_service_client_type client =
+    shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
-     
-     LOG_STACK_TRACE_POINT;
+
+    LOG_STACK_TRACE_POINT;
     std::size_t n = 0;
     while ((n < 10) && (!client->is_alive()))
     {
@@ -197,7 +197,8 @@ public:
 
     if (n >= 10)
     {
-      fetch::logger.Error("Connection never came to live in P2P module. Host: ", host, " port: ", port);
+      fetch::logger.Error("Connection never came to live in P2P module. Host: ", host,
+                          " port: ", port);
       // TODO(issue 11): throw error?
       client.reset();
       return false;
@@ -205,7 +206,7 @@ public:
 
     // Getting own IP seen externally
     byte_array::ByteArray address;
-    auto p = client->Call(IDENTITY, P2PIdentityProtocol::EXCHANGE_ADDRESS, host);
+    auto                  p = client->Call(IDENTITY, P2PIdentityProtocol::EXCHANGE_ADDRESS, host);
     /*
       if (!p.Wait(20))
     {
@@ -235,7 +236,8 @@ public:
       auto        p = client->Call(IDENTITY, P2PIdentityProtocol::HELLO, my_details_->details);
       PeerDetails details = p.As<PeerDetails>();
 
-      fetch::logger.Info("The remove identity is: ", byte_array::ToBase64(details.identity.identifier()));
+      fetch::logger.Info("The remove identity is: ",
+                         byte_array::ToBase64(details.identity.identifier()));
 
       auto regdetails = register_.GetDetails(client->handle());
 
@@ -310,10 +312,7 @@ public:
   }
   /// }
 
-  byte_array::ConstByteArray identity() const
-  {
-    return certificate_->identity().identifier();
-  }
+  byte_array::ConstByteArray identity() const { return certificate_->identity().identifier(); }
 
 protected:
   callback_peer_update_profile_type callback_peer_update_profile_;
@@ -496,18 +495,19 @@ protected:
     {
       if (create_count == 0) break;
 
-//      // we must be careful not to connect to peers to whom we have already connected
-//      bool already_connected = false;
-//      {
-//        std::lock_guard<mutex::Mutex> lock_peers(peers_mutex_);
-//        already_connected = peer_identities_.find(e.identity.identifier()) != peer_identities_.end();
-//      }
+      //      // we must be careful not to connect to peers to whom we have already connected
+      //      bool already_connected = false;
+      //      {
+      //        std::lock_guard<mutex::Mutex> lock_peers(peers_mutex_);
+      //        already_connected = peer_identities_.find(e.identity.identifier()) !=
+      //        peer_identities_.end();
+      //      }
 
-//      if (already_connected)
-//      {
-//        logger.Info("Discarding peer because already connected...");
-//        continue;
-//      }
+      //      if (already_connected)
+      //      {
+      //        logger.Info("Discarding peer because already connected...");
+      //        continue;
+      //      }
 
       thread_pool_->Post([this, e]() { this->TryConnect(e); });
       --create_count;
@@ -531,15 +531,13 @@ protected:
 
     for (auto &h : e.host)
     {
-      if (Connect(h, e.port))
-        break;
+      if (Connect(h, e.port)) break;
     }
   }
 
   /// @}
 
 private:
-
   using ConnectedIdentities = std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV>;
 
   network_manager_type manager_;
@@ -552,19 +550,19 @@ private:
   p2p_directory_type          directory_;
   p2p_directory_protocol_type directory_protocol_;
 
-  p2p_trust_type              p2p_trust_;
-  //p2p_trust_protocol_type     p2p_trust_protocol_;  //TODO(kll)
+  p2p_trust_type p2p_trust_;
+  // p2p_trust_protocol_type     p2p_trust_protocol_;  //TODO(kll)
 
   NodeDetails my_details_;
 
-  mutex::Mutex                                                           peers_mutex_{ __LINE__, __FILE__ };
+  mutex::Mutex peers_mutex_{__LINE__, __FILE__};
   std::unordered_map<connection_handle_type, shared_service_client_type> peers_;
   ConnectedIdentities                                                    peer_identities_;
 
   std::unique_ptr<crypto::Prover> certificate_;
   std::atomic<bool>               running_;
 
-  mutex::Mutex                          maintainance_mutex_{ __LINE__, __FILE__ };
+  mutex::Mutex                          maintainance_mutex_{__LINE__, __FILE__};
   std::atomic<uint64_t>                 min_connections_;
   std::atomic<uint64_t>                 max_connections_;
   std::atomic<bool>                     tracking_peers_;

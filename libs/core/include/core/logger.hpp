@@ -318,7 +318,7 @@ public:
       Unroll<Args...>::Append(this, args...);
       this->log_->CloseEntry(DefaultLogger::DEBUG);
     }
-#endif // !FETCH_DISABLE_DEBUG_LOGGING
+#endif  // !FETCH_DISABLE_DEBUG_LOGGING
   }
 
   void Debug(const std::vector<std::string> &items)
@@ -334,7 +334,7 @@ public:
       }
       this->log_->CloseEntry(DefaultLogger::DEBUG);
     }
-#endif // !FETCH_DISABLE_DEBUG_LOGGING
+#endif  // !FETCH_DISABLE_DEBUG_LOGGING
   }
 
   void SetContext(shared_context_type ctx)
@@ -682,5 +682,5 @@ extern log::details::LogWrapper logger;
 #if 1
 #define FETCH_LOG_PROMISE()
 #else
-#define FETCH_LOG_PROMISE()   fetch::logger.Warn("Promise wait: ", __FILE__, ":", __LINE__)
+#define FETCH_LOG_PROMISE() fetch::logger.Warn("Promise wait: ", __FILE__, ":", __LINE__)
 #endif

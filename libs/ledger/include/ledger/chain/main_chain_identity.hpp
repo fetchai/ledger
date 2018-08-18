@@ -20,9 +20,9 @@
 #include <utility>
 
 #include "ledger/chain/main_chain_details.hpp"
+#include "network/generics/shared_with_lock.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/service/client.hpp"
-#include "network/generics/shared_with_lock.hpp"
 
 namespace fetch {
 namespace chain {
@@ -44,9 +44,7 @@ public:
 
   MainChainIdentity(client_register_type reg, network_manager_type const &nm,
                     generics::SharedWithLock<MainChainDetails> my_details)
-    : register_(std::move(reg))
-    , manager_(nm)
-    , my_details_(my_details)
+    : register_(std::move(reg)), manager_(nm), my_details_(my_details)
   {
     fetch::logger.Debug("MainChainIdentity::MainChainIdentity ", bool(my_details_));
   }
@@ -71,13 +69,13 @@ public:
   }
 
   MainChainDetails ExchangeDetails(connection_handle_type const &client,
-                                   MainChainDetails remote_details)
+                                   MainChainDetails              remote_details)
   {
     auto details = register_.GetDetails(client);
     if (details)
     {
       std::lock_guard<mutex_type> lock(*details);
-      details -> CopyFromRemotePeer(remote_details);
+      details->CopyFromRemotePeer(remote_details);
     }
     else
     {
@@ -92,8 +90,8 @@ public:
   /// @}
 
 private:
-  client_register_type register_;
-  network_manager_type manager_;
+  client_register_type                       register_;
+  network_manager_type                       manager_;
   generics::SharedWithLock<MainChainDetails> my_details_;
 };
 

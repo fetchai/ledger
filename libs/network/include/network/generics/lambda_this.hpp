@@ -4,58 +4,47 @@
 #include <iostream>
 #include <string>
 
-template<class TARGET>
+template <class TARGET>
 class LambdaThis
 {
   using mutex_type = std::mutex;
-  using lock_type = std::unique_lock<std::mutex>;
-public:
-  LambdaThis(TARGET *target)
-    : original_(true)
-    , master_(new MasterRecord(target))
-  {
-  }
+  using lock_type  = std::unique_lock<std::mutex>;
 
-  LambdaThis(const LambdaThis &other)
-    : original_(false)
+public:
+  LambdaThis(TARGET *target) : original_(true), master_(new MasterRecord(target)) {}
+
+  LambdaThis(const LambdaThis &other) : original_(false)
   {
     master_ = other.master_;
-    master_ -> count.fetch++;
+    master_->count.fetch++;
   }
 
   ~LambdaThis()
   {
     if (original)
     {
-      lock_type lock(master_ -> mutex_);
-      master_ -> target_ = 0;
+      lock_type lock(master_->mutex_);
+      master_->target_ = 0;
     }
-    master_ -> count--;
-    if (!master -> count)
+    master_->count--;
+    if (!master->count)
     {
-      lock_type lock(master_ -> mutex_);
+      lock_type lock(master_->mutex_);
       delete master;
     }
   }
 
-  Locked lock()
-  {
-    return Locked(master);
-  }
+  Locked lock() { return Locked(master); }
 
   class Locked
   {
     friend class LambdaThis;
+
   protected:
-    Locked(MasterRecord *master)
-      : target_(master -> target)
-      , lock_(master -> mutex)
-    {
-    }
+    Locked(MasterRecord *master) : target_(master->target), lock_(master->mutex) {}
+
   public:
-    ~Locked()
-    {
-    }
+    ~Locked() {}
 
     Locked(Locked &&other)
       : target_(other.target_)
@@ -78,24 +67,18 @@ public:
   };
 
 private:
-
   class MasterRecord
   {
   public:
-    MasterRecord(TARGET *target)
-      : target_(target)
-      , count(0)
-    {
-    }
-    ~MasterRecord()
-    {
-    }
+    MasterRecord(TARGET *target) : target_(target), count(0) {}
+    ~MasterRecord() {}
+
   protected:
-    TARGET *target_;
+    TARGET *                  target_;
     std::atomic<unsigned int> count;
-    mutex_type mutex_;
+    mutex_type                mutex_;
   }
 
-  bool original_;
+  bool         original_;
   MasterRecord master_;
 }

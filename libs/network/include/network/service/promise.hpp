@@ -38,18 +38,19 @@ class PromiseImplementation
 public:
   using promise_counter_type = uint64_t;
   using byte_array_type      = byte_array::ConstByteArray;
-  typedef std::function<void (void)> callback_type;
+  typedef std::function<void(void)> callback_type;
   typedef enum
-    {
-      NONE, SUCCESS, FAIL
-    }
-    Conclusion;
+  {
+    NONE,
+    SUCCESS,
+    FAIL
+  } Conclusion;
 
   PromiseImplementation()
   {
     LOG_STACK_TRACE_POINT;
 
-    id_                = next_promise_id();
+    id_ = next_promise_id();
   }
 
   void ConcludeSuccess(void)
@@ -92,7 +93,7 @@ public:
     {
       if (!failed_)
       {
-        ConcludeSuccess(); // if this is called >1, it will protect itself.
+        ConcludeSuccess();  // if this is called >1, it will protect itself.
       }
     }
     return *this;
@@ -104,7 +105,7 @@ public:
     {
       if (failed_ || connection_closed_)
       {
-        ConcludeFail(); // if this is called >1, it will protect itself.
+        ConcludeFail();  // if this is called >1, it will protect itself.
       }
     }
     return *this;
@@ -125,7 +126,7 @@ public:
     LOG_STACK_TRACE_POINT;
 
     connection_closed_ = true;
-    fulfilled_         = true; // Note that order matters here due to threading!
+    fulfilled_         = true;  // Note that order matters here due to threading!
     ConcludeFail();
   }
 
@@ -145,8 +146,8 @@ private:
   std::atomic<uint64_t>              id_;
   byte_array_type                    value_;
   std::atomic<Conclusion>            conclusion_{NONE};
-  callback_type on_success_;
-  callback_type on_fail_;
+  callback_type                      on_success_;
+  callback_type                      on_fail_;
 
   static uint64_t next_promise_id()
   {
@@ -185,44 +186,32 @@ public:
   }
 
   typedef enum
-    {
-      OK = 0,
-      FAILED = 1,
-      CLOSED = 2,
-      WAITING = 4,
-    }
-  Status;
+  {
+    OK      = 0,
+    FAILED  = 1,
+    CLOSED  = 2,
+    WAITING = 4,
+  } Status;
 
   Status GetStatus()
   {
-    return Status(
-                  ( has_failed() ? 1 : 0 ) +
-                  ( is_connection_closed() ? 2 : 0 ) +
-                  ( !is_fulfilled() ? 4 : 0 )
-                  );
+    return Status((has_failed() ? 1 : 0) + (is_connection_closed() ? 2 : 0) +
+                  (!is_fulfilled() ? 4 : 0));
   }
 
   static std::string DescribeStatus(Status s)
   {
-    const char *states[8] = {
-      "OK.",
-      "Failed.",
-      "Closed.",
-      "Failed.",
-      "Timeout.",
-      "Failed.",
-      "Closed.",
-      "Failed."
-    };
-    return states[ int(s) & 0x07 ];
+    const char *states[8] = {"OK.",      "Failed.", "Closed.", "Failed.",
+                             "Timeout.", "Failed.", "Closed.", "Failed."};
+    return states[int(s) & 0x07];
   }
 
   Status WaitLoop(int milliseconds, int cycles)
   {
     auto s = GetStatus();
-    while(cycles>0 && s == WAITING)
+    while (cycles > 0 && s == WAITING)
     {
-      cycles-=1;
+      cycles -= 1;
       s = GetStatus();
       if (s != WAITING) return s;
 
@@ -323,11 +312,19 @@ public:
     return As<T>();
   }
 
-  bool is_fulfilled() const { return reference_->is_fulfilled(); }
-  bool has_failed() const { return reference_->has_failed(); }
-  bool is_connection_closed() const { return reference_->is_connection_closed(); }
-  Promise &Then(callback_type func) { reference_ -> Then(func); return *this; }
-  Promise &Else(callback_type func) { reference_ -> Else(func); return *this; }
+  bool     is_fulfilled() const { return reference_->is_fulfilled(); }
+  bool     has_failed() const { return reference_->has_failed(); }
+  bool     is_connection_closed() const { return reference_->is_connection_closed(); }
+  Promise &Then(callback_type func)
+  {
+    reference_->Then(func);
+    return *this;
+  }
+  Promise &Else(callback_type func)
+  {
+    reference_->Else(func);
+    return *this;
+  }
 
   shared_promise_type  reference() { return reference_; }
   promise_counter_type id() const { return reference_->id(); }

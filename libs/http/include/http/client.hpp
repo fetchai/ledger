@@ -2,12 +2,12 @@
 #define FETCH_CLIENT_HPP
 
 #include "core/byte_array/byte_array.hpp"
-#include "network/fetch_asio.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
+#include "network/fetch_asio.hpp"
 
-#include <string>
 #include <cstdint>
+#include <string>
 
 namespace fetch {
 namespace http {
@@ -18,7 +18,6 @@ namespace http {
 class HTTPClient
 {
 public:
-
   // Construction / Destruction
   explicit HTTPClient(std::string host, uint16_t port = 80);
   ~HTTPClient() = default;
@@ -26,9 +25,8 @@ public:
   bool Request(HTTPRequest const &request, HTTPResponse &response);
 
 private:
-
   using IoService = asio::io_service;
-  using Socket = asio::ip::tcp::socket;
+  using Socket    = asio::ip::tcp::socket;
 
   bool Connect();
 
@@ -38,7 +36,7 @@ private:
   Socket      socket_{io_service_};
 };
 
-} // namespace http
-} // namespace fetch
+}  // namespace http
+}  // namespace fetch
 
-#endif //FETCH_CLIENT_HPP
+#endif  // FETCH_CLIENT_HPP

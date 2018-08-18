@@ -48,11 +48,11 @@ public:
   using network_manager_type = fetch::network::NetworkManager;
 
   ServiceClient(std::shared_ptr<network::AbstractConnection> connection,
-      const network_manager_type                         &network_manager)
-      : connection_(connection)
-      , network_manager_(network_manager)
-      , message_mutex_(__LINE__, __FILE__)
-      , lifeTracker_(network_manager)
+                const network_manager_type &                 network_manager)
+    : connection_(connection)
+    , network_manager_(network_manager)
+    , message_mutex_(__LINE__, __FILE__)
+    , lifeTracker_(network_manager)
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -69,9 +69,7 @@ public:
 
         // Since this class isn't shared_from_this, try to ensure safety when
         // destructing
-          lifeTracker_.Post([this](){
-              this -> ProcessMessages();
-            });
+        lifeTracker_.Post([this]() { this->ProcessMessages(); });
       });
     }
   }
@@ -220,9 +218,9 @@ private:
     }
   }
 
-  network_manager_type              network_manager_;
-  std::deque<network::message_type> messages_;
-  mutable fetch::mutex::Mutex       message_mutex_;
+  network_manager_type                        network_manager_;
+  std::deque<network::message_type>           messages_;
+  mutable fetch::mutex::Mutex                 message_mutex_;
   generics::LifeTracker<network_manager_type> lifeTracker_;
 };
 }  // namespace service
