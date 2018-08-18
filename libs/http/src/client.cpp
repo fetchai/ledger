@@ -54,8 +54,6 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
     content_length = std::stoul(static_cast<std::string>(response.header()["content-length"]));
   }
 
-  std::size_t const total_length = content_length + header_length;
-
   // calculate if any remaining data needs to be read
   if (input_buffer.size() < content_length)
   {
