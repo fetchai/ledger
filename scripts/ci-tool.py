@@ -54,7 +54,7 @@ def test_project(build_root):
     if not os.path.isdir(build_root):
         raise RuntimeError('Build Root doesn\'t exist, unable to test project')
 
-    subprocess.check_call(['ctest'], cwd=build_root)
+    subprocess.check_call(['ctest', '--no-compress-output', '-T', 'Test'], cwd=build_root)
 
 
 def main():
