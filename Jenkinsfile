@@ -41,13 +41,5 @@ pipeline {
     }
 
   }
-
-  post {
-    always {
-       step([$class: 'XUnitBuilder',
-            thresholds: [[$class: 'FailedThreshold', unstableThreshold: '1']],
-            tools: [[$class: 'CTestType', pattern: 'build-release/Teseting/**/*.xml']]])
-    }
-  }
 }
 
