@@ -37,8 +37,8 @@ template <typename R>
 class MainChainProtocol : public fetch::service::Protocol, public fetch::service::HasPublicationFeed
 {
 public:
-  using BlockType             = chain::MainChain::BlockType;
-  using block_hash_type       = chain::MainChain::BlockHash;
+  using BlockType                 = chain::MainChain::BlockType;
+  using block_hash_type           = chain::MainChain::BlockHash;
   using protocol_number_type      = service::protocol_handler_type;
   using thread_pool_type          = network::ThreadPool;
   using register_type             = R;
@@ -165,13 +165,12 @@ private:
 
         auto name = details->GetOwnerIdentityString();
 
-        auto foo = new service::Function<void(BlockType)>(
-            [this](BlockType block) {
-              fetch::logger.Info("Getting dem blocks: ", block.hashString());
+        auto foo = new service::Function<void(BlockType)>([this](BlockType block) {
+          fetch::logger.Info("Getting dem blocks: ", block.hashString());
 
-              this->pending_blocks_.Add(block);
-              this->thread_pool_->Post([this]() { this->AddPendingBlocks(); });
-            });
+          this->pending_blocks_.Add(block);
+          this->thread_pool_->Post([this]() { this->AddPendingBlocks(); });
+        });
         blockPublishSubscriptions_.Subscribe(ptr, protocol_, BLOCK_PUBLISH,
                                              name,  // TODO(kll) make a connection name here.
                                              foo);

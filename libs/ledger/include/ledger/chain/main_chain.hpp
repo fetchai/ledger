@@ -104,7 +104,7 @@ public:
 
   bool AddBlock(BlockType &block, bool recursive_iteration = false)
   {
-    fetch::generics::MilliTimer          myTimer("MainChain::AddBlock");
+    fetch::generics::MilliTimer           myTimer("MainChain::AddBlock");
     std::unique_lock<fetch::mutex::Mutex> lock(main_mutex_);
 
     if (block.hash().size() == 0)
@@ -218,7 +218,6 @@ public:
     result.push_back(topBlock);  // this should be genesis
     return result;
   }
-
 
   void reset()
   {
