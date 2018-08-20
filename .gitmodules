@@ -1,0 +1,6 @@
+[submodule "vendor/asio"]
+	path = vendor/asio
+	url = ../../chriskohlhoff/asio.git
+[submodule "vendor/googletest"]
+	path = vendor/googletest
+	url = ../../google/googletest.git
