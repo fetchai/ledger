@@ -191,8 +191,8 @@ public:
    */
   void Set(std::vector<std::size_t> indices, data_type val)
   {
-    assert(indices.size() == shape_.size()); // dimensionality check not in parent
-    this->AssignVal(ComputeColIndex(indices), val); // call parent
+    assert(indices.size() == shape_.size());         // dimensionality check not in parent
+    this->AssignVal(ComputeColIndex(indices), val);  // call parent
   }
   /**
    * Gets a value from the array by N-dim index
