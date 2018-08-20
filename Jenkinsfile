@@ -41,5 +41,11 @@ pipeline {
     }
 
   }
+
+  post {
+    always {
+      junit 'build-release/TestResults.xml'
+    }
+  }
 }
 
