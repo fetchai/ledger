@@ -11,6 +11,25 @@ namespace fetch {
 namespace math {
 namespace statistics {
 
+/**
+ * Min function for two values
+ * @tparam T
+ * @param datum1
+ * @param datum2
+ * @return
+ */
+template <typename T>
+inline T Min(T const &datum1, T const &datum2)
+{
+  return std::min(datum1, datum2);
+}
+
+/**
+ * Min function for array
+ * @tparam ARRAY_TYPE
+ * @param array
+ * @return
+ */
 template <typename ARRAY_TYPE>
 inline typename ARRAY_TYPE::type Min(ARRAY_TYPE const &array)
 {
@@ -25,7 +44,7 @@ inline typename ARRAY_TYPE::type Min(ARRAY_TYPE const &array)
 }
 
 /**
- * This version of Min handles ranges and is important for both 1-d and n-dimensional arrays sinces
+ * Min function for applying max to a range within array
  * @tparam A
  * @tparam data_type
  * @param r

@@ -45,7 +45,7 @@ public:
    * lengths
    * @param shape   vector of lengths for each dimension
    */
-  NDArray(std::vector<std::size_t> const &dims)
+  NDArray(std::vector<std::size_t> const &dims)  // : super_type()
   {
     ResizeFromShape(dims);
     this->SetAllZero();
@@ -297,11 +297,11 @@ public:
 
     // iterate through the return array (i.e. the array of Max vals)
     //    data_type cur_val;
-    std::vector<std::size_t>              cur_index;
-    std::vector<std::vector<std::size_t>> cur_step;
+    std::vector<std::size_t> cur_index;
     while (return_iterator)
     {
-      // TODO: need a helper function in iterator to extract current n-dimensional position
+      std::vector<std::vector<std::size_t>> cur_step;
+
       cur_index = return_iterator.GetNDimIndex();
 
       // calculate step from cur_index and axis
@@ -315,6 +315,7 @@ public:
         else
         {
           cur_step.push_back({cur_index[index_counter], cur_index[index_counter] + 1});
+          ++index_counter;
         }
       }
 
@@ -322,10 +323,12 @@ public:
       NDArrayIterator<data_type, container_type> array_iterator(*this, cur_step);
 
       // loops through the 1d array calculating the max val
-      data_type cur_max = std::numeric_limits<data_type>::min();
+      data_type cur_max = -std::numeric_limits<data_type>::max();
+      data_type cur_val;
       while (array_iterator)
       {
-        cur_max = fetch::math::statistics::Max(cur_max, *array_iterator);
+        cur_val = *array_iterator;
+        cur_max = fetch::math::statistics::Max(cur_max, cur_val);
         ++array_iterator;
       }
 
@@ -341,7 +344,56 @@ public:
    * @return
    */
   data_type Min() const { return fetch::math::statistics::Min(*this); }
+  self_type Min(std::size_t const axis)
+  {
+    std::vector<std::size_t> return_shape{shape()};
+    return_shape.erase(return_shape.begin() + int(axis), return_shape.begin() + int(axis) + 1);
+    self_type                                  ret{return_shape};
+    NDArrayIterator<data_type, container_type> return_iterator{ret};
 
+    // iterate through the return array (i.e. the array of Max vals)
+    //    data_type cur_val;
+    std::vector<std::size_t> cur_index;
+    while (return_iterator)
+    {
+      std::vector<std::vector<std::size_t>> cur_step;
+
+      cur_index = return_iterator.GetNDimIndex();
+
+      // calculate step from cur_index and axis
+      std::size_t index_counter = 0;
+      for (std::size_t i = 0; i < shape().size(); ++i)
+      {
+        if (i == axis)
+        {
+          cur_step.push_back({0, shape()[i]});
+        }
+        else
+        {
+          cur_step.push_back({cur_index[index_counter], cur_index[index_counter] + 1});
+          ++index_counter;
+        }
+      }
+
+      // get an iterator to iterate over the 1-d slice of the array to calculate max over
+      NDArrayIterator<data_type, container_type> array_iterator(*this, cur_step);
+
+      // loops through the 1d array calculating the max val
+      data_type cur_max = std::numeric_limits<data_type>::max();
+      data_type cur_val;
+      while (array_iterator)
+      {
+        cur_val = *array_iterator;
+        cur_max = fetch::math::statistics::Min(cur_max, cur_val);
+        ++array_iterator;
+      }
+
+      *return_iterator = cur_max;
+      ++return_iterator;
+    }
+
+    return ret;
+  }
   /**
    * adds two ndarrays together and supports broadcasting
    * @param other

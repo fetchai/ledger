@@ -86,13 +86,14 @@ public:
       NDIteratorRange &s = ranges_[i];
       s.index += s.step;
       position_ += s.step_volume;
+      ++s.current_n_dim_position;
 
       if (s.index >= s.to)
       {
-        ++s.current_n_dim_position;
 
         ++s.repetition;
-        s.index = s.from;
+        s.index                  = s.from;
+        s.current_n_dim_position = s.from;
         position_ -= s.total_volume;
 
         if (s.repetition == s.repeat_dimension)
@@ -230,8 +231,8 @@ private:
     {
       auto const &    a = step[i];
       NDIteratorRange s;
-      s.index = s.from = a[0];
-      s.to             = a[1];
+      s.index = s.from = s.current_n_dim_position = a[0];
+      s.to                                        = a[1];
 
       if (a.size() > 2)
       {
