@@ -83,13 +83,13 @@ public:
     }
     else
     {
-#if 0
+#if 1
       // If we need to sync our object store (esp. when joining the network)
       if (needs_sync_)
       {
-        for (uint8_t i = 0;; ++i)
+        for (uint16_t i = 0; i < 0x100; ++i)
         {
-          roots_to_sync_.push(i);
+          roots_to_sync_.push(static_cast<uint8_t>(i));
         }
 
         thread_pool_->Post([this]() { this->SyncSubtree(); });
