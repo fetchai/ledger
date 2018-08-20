@@ -136,8 +136,6 @@ char const *ToString(Status status)
 {
   switch (status)
   {
-  case Status::UNKNOWN:
-    return "0 Unknown";
   case Status::INFORMATION_CONTINUE:
     return "100 Continue";
   case Status::INFORMATION_SWITCHING_PROTOCOLS:
@@ -258,8 +256,13 @@ char const *ToString(Status status)
     return "510 Not Extended";
   case Status::SERVER_ERROR_NETWORK_AUTHENTICATION_REQUIRED:
     return "511 Network Authentication Required";
+
+  case Status::UNKNOWN:
+  default:
+    return "0 Unknown";
   }
 }
 
 }  // namespace http
 }  // namespace fetch
+
