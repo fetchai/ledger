@@ -651,13 +651,32 @@ public:
     this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
   }
 
-  void CumlativeProduct()
+  /**
+   * calculates the product of all values in data
+   * @return ret is a value of type giving the product
+   */
+  type &CumulativeProduct()
   {
-    // but next to no speedup on a single row
+    type ret = 1;
+    for (auto cur_val : data())
+    {
+      ret *= cur_val;
+    }
+    return ret;
   }
 
+  /**
+   * calculates the sum of all values in data
+   * @return ret is a value of type giving the sum
+   */
   void CumulativeSum()
   {
+    type ret = 0;
+    for (auto cur_val : data())
+    {
+      ret += cur_val;
+    }
+    return ret;
   }
 
   //  type PeakToPeak() const { return Max() - Min(); }
