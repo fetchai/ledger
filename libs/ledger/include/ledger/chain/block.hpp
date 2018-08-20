@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -97,12 +115,12 @@ public:
   proof_type const &proof() const { return proof_; }
   proof_type &      proof() { return proof_; }
 
-  uint64_t &                    weight() { return weight_; }
-  uint64_t &                    totalWeight() { return total_weight_; }
-  bool &                        loose() { return is_loose_; }
-  fetch::byte_array::ByteArray &root() { return root_; }
+  uint64_t &      weight() { return weight_; }
+  uint64_t &      totalWeight() { return total_weight_; }
+  uint64_t const &totalWeight() const { return total_weight_; }
+  bool &          loose() { return is_loose_; }
 
-#if 1  // TODO: Move to py swarm?
+#if 1  // TODO(issue 33): Move to py swarm?
   std::string hashString() const { return std::string(ToHex(body_.hash)); }
 
   std::string prevString() const { return std::string(ToHex(body_.previous_hash)); }
@@ -115,10 +133,7 @@ private:
   // META data to help with block management
   uint64_t weight_       = 1;
   uint64_t total_weight_ = 1;
-  bool     is_loose_     = false;
-
-  // root refers to the previous_hash of the bottom block of a chain
-  fetch::byte_array::ByteArray root_;
+  bool     is_loose_     = true;
 
   template <typename AT, typename AP, typename AH>
   friend inline void Serialize(AT &serializer, BasicBlock<AP, AH> const &);

@@ -16,6 +16,7 @@ target_link_libraries(fetch-core PUBLIC fetch-vectorise)
 add_test_target()
 
 add_subdirectory(benchmark)
+add_subdirectory(examples)
 
 #if(FETCH_CLANG_TIDY_CFG)
 #  message(STATUS "Whoop whoop")

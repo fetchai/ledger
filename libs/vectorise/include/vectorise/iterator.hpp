@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "vectorise/register.hpp"
 
@@ -16,15 +33,6 @@ public:
   using mm_register_type     = typename vector_register_type::mm_register_type;
 
   VectorRegisterIterator() : ptr_(nullptr), end_(nullptr) {}
-  /*
-  VectorRegisterIterator(memory::Array< type > const &arr)
-    : ptr_((mm_register_type *)arr.pointer()),
-      end_((mm_register_type *)(arr.pointer() + arr.size())) {}
-
-  VectorRegisterIterator(memory::SharedArray< type > const &arr)
-    : ptr_((mm_register_type *)arr.pointer()),
-      end_((mm_register_type *)(arr.pointer() + arr.size())) {}
-  */
   VectorRegisterIterator(type const *d, std::size_t size)
     : ptr_((mm_register_type *)d), end_((mm_register_type *)(d + size))
   {}

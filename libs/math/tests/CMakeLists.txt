@@ -10,8 +10,9 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-#add_fetch_test(ndarray_iterator fetch-math math/ndarray_iterator.cpp)
-#add_fetch_test(ndarray_broadcast fetch-math math/ndarray_broadcast.cpp)
+
+
+add_fetch_gtest(blas fetch-math math/linalg/blas/)
 
 add_fetch_test(exp_test fetch-math math/test_exp.cpp)
 add_fetch_test(spline_test fetch-math math/test_spline.cpp)

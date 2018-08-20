@@ -80,7 +80,7 @@ def main():
     cmd = [
         clang_tidy,
         '-p', args.build_path,
-        '-warnings-as-errors=.*'
+        '-warnings-as-errors=*'
     ]
 
     if args.fix:

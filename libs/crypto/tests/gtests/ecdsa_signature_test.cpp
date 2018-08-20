@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "crypto/ecdsa_signature.hpp"
 
 #include "gmock/gmock.h"
@@ -59,7 +77,7 @@ protected:
     ASSERT_TRUE(inv_sig_enc.size() > 0);
 
     //* Modify the correct signature to invalidate it
-    inv_sig_enc[inv_sig_enc.size() - 1] += 1;
+    ++inv_sig_enc[inv_sig_enc.size() - 1u];
     ecdsa_signature_type wrong_signature{inv_sig_enc};
 
     const auto verification_result = wrong_signature.Verify(priv_key.publicKey(), test_data_);
@@ -107,7 +125,7 @@ protected:
     ASSERT_TRUE(inv_sig_enc.size() > 0);
 
     //* Modify the correct signature to invalidate it
-    inv_sig_enc[0] += 1;
+    ++inv_sig_enc[0];
 
     //* It is not possible to invalidate (format-wise) canonical or bin encoded
     // signature, since it
@@ -141,7 +159,7 @@ protected:
     ASSERT_TRUE(modified_data.size() > 0);
 
     //* Modify original data to make verification fail
-    modified_data[0] += 1;
+    ++modified_data[0];
 
     const auto verification_result = signature.Verify(priv_key.publicKey(), modified_data);
 
