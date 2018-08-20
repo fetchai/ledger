@@ -32,11 +32,8 @@ namespace swarm {
 class PythonWorker
 {
 public:
-  fetch::network::ThreadPool tm_;
   using mutex_type = std::recursive_mutex;
   using lock_type  = std::lock_guard<std::recursive_mutex>;
-  mutex_type                                       mutex_;
-  std::shared_ptr<fetch::network::NetworkNodeCore> nnCore_;
 
   virtual void Start()
   {
@@ -50,7 +47,7 @@ public:
     tm_->Stop();
   }
 
-  void UseCore(std::shared_ptr<fetch::network::NetworkNodeCore> nnCore) { nnCore_ = nnCore; }
+  void UseCore(std::shared_ptr<fetch::network::NetworkNodeCore> nn_core) { nn_core_ = nn_core; }
 
   template <typename F>
   void Post(F &&f)
@@ -66,6 +63,11 @@ public:
   PythonWorker() { tm_ = fetch::network::MakeThreadPool(1); }
 
   virtual ~PythonWorker() { Stop(); }
+
+private:
+  mutex_type                                       mutex_;
+  fetch::network::ThreadPool                       tm_;
+  std::shared_ptr<fetch::network::NetworkNodeCore> nn_core_;
 };
 
 }  // namespace swarm

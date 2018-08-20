@@ -244,24 +244,24 @@ public:
    * key value store since we need to deserialize at this level to return the
    * object
    */
-  class iterator
+  class Iterator
   {
   public:
-    iterator(self_type *store, typename key_value_index_type::iterator it)
+    Iterator(self_type *store, typename key_value_index_type::Iterator it)
       : wrapped_iterator_{it}, store_{store}
     {}
 
-    iterator()                    = default;
-    iterator(iterator const &rhs) = default;
-    iterator(iterator &&rhs)      = default;
-    iterator &operator=(iterator const &rhs) = default;
-    iterator &operator=(iterator &&rhs) = default;
+    Iterator()                    = default;
+    Iterator(Iterator const &rhs) = default;
+    Iterator(Iterator &&rhs)      = default;
+    Iterator &operator=(Iterator const &rhs) = default;
+    Iterator &operator=(Iterator &&rhs) = default;
 
     void operator++() { ++wrapped_iterator_; }
 
-    bool operator==(iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
+    bool operator==(Iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
 
-    bool operator!=(iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
+    bool operator!=(Iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
 
     Document operator*() const
     {
@@ -277,16 +277,16 @@ public:
     }
 
   protected:
-    typename key_value_index_type::iterator wrapped_iterator_;
+    typename key_value_index_type::Iterator wrapped_iterator_;
     self_type *                             store_;
   };
 
-  self_type::iterator Find(ResourceID const &rid)
+  self_type::Iterator Find(ResourceID const &rid)
   {
     byte_array::ConstByteArray const &address = rid.id();
     auto                              it      = key_index_.Find(address);
 
-    return iterator(this, it);
+    return Iterator(this, it);
   }
 
   /**
@@ -299,17 +299,17 @@ public:
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
     byte_array::ConstByteArray const &address = rid.id();
     auto                              it      = key_index_.GetSubtree(address, bits);
 
-    return iterator(this, it);
+    return Iterator(this, it);
   }
 
-  self_type::iterator begin() { return iterator(this, key_index_.begin()); }
+  self_type::Iterator begin() { return Iterator(this, key_index_.begin()); }
 
-  self_type::iterator end() { return iterator(this, key_index_.end()); }
+  self_type::Iterator end() { return Iterator(this, key_index_.end()); }
 
 protected:
   /**
