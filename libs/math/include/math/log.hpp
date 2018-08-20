@@ -22,7 +22,6 @@
 
 #include <cmath>
 
-// TODO: implement vectorisation for log
 namespace fetch {
 namespace math {
 

@@ -22,7 +22,6 @@
 
 #include <cmath>
 
-// TODO: implement vectorisation for exp
 namespace fetch {
 namespace math {
 

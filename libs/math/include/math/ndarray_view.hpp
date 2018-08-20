@@ -117,7 +117,7 @@ private:
   template <typename ArrayType>
   void descend_and_incr_idx(ArrayType &dest, ArrayType const &source)
   {
-    typedef decltype(source[0]) data_type;
+    using data_type = decltype(source[0]);
 
     // descending dims and reset idxs
     descend_and_reset();
