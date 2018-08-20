@@ -37,11 +37,10 @@ namespace ledger {
 class MainChainNode : public MainChainNodeInterface, public fetch::http::HTTPModule
 {
 public:
-  using proof_type = fetch::chain::MainChain::proof_type;
-  using block_type = fetch::chain::MainChain::block_type;
-  using body_type  = fetch::chain::MainChain::block_type::body_type;
-  using block_hash = fetch::chain::MainChain::block_hash;
-  using miner      = fetch::chain::consensus::DummyMiner;
+  using BlockType = fetch::chain::MainChain::BlockType;
+  using body_type = fetch::chain::MainChain::BlockType::body_type;
+  using BlockHash = fetch::chain::MainChain::BlockHash;
+  using miner     = fetch::chain::consensus::DummyMiner;
 
   MainChainNode(const MainChainNode &rhs) = delete;
   MainChainNode(MainChainNode &&rhs)      = delete;
@@ -102,26 +101,26 @@ public:
 
   // *********** These are RPC calling methods returning a typed promise.
 
-  virtual fetch::network::PromiseOf<std::pair<bool, block_type>> RemoteGetHeader(
-      const block_hash &hash, std::shared_ptr<network::NetworkNodeCore::client_type> client)
+  virtual fetch::network::PromiseOf<std::pair<bool, BlockType>> RemoteGetHeader(
+      const BlockHash &hash, std::shared_ptr<network::NetworkNodeCore::client_type> client)
   {
     auto promise = client->Call(protocol_number, MainChain::GET_HEADER, hash);
-    return network::PromiseOf<std::pair<bool, block_type>>(promise);
+    return network::PromiseOf<std::pair<bool, BlockType>>(promise);
   }
 
-  virtual fetch::network::PromiseOf<std::vector<block_type>> RemoteGetHeaviestChain(
+  virtual fetch::network::PromiseOf<std::vector<BlockType>> RemoteGetHeaviestChain(
       uint32_t maxsize, std::shared_ptr<network::NetworkNodeCore::client_type> client)
   {
     auto promise = client->Call(protocol_number, MainChain::GET_HEAVIEST_CHAIN, maxsize);
-    return network::PromiseOf<std::vector<block_type>>(promise);
+    return network::PromiseOf<std::vector<BlockType>>(promise);
   }
 
   // *********** These are RPC handlers returning serialisable data.
 
-  virtual std::pair<bool, block_type> GetHeader(const block_hash &hash)
+  virtual std::pair<bool, BlockType> GetHeader(const BlockHash &hash)
   {
     fetch::logger.Debug("GetHeader starting work");
-    block_type block;
+    BlockType block;
     if (chain_->Get(hash, block))
     {
       fetch::logger.Debug("GetHeader done");
@@ -134,16 +133,16 @@ public:
     }
   }
 
-  virtual std::vector<block_type> GetHeaviestChain(uint32_t maxsize)
+  virtual std::vector<BlockType> GetHeaviestChain(uint32_t maxsize)
   {
-    std::vector<block_type> results;
+    std::vector<BlockType> results;
 
     fetch::logger.Debug("GetHeaviestChain starting work ", maxsize);
     auto currentHash = chain_->HeaviestBlock().hash();
 
     while (results.size() < maxsize)
     {
-      block_type block;
+      BlockType block;
       if (chain_->Get(currentHash, block))
       {
         results.push_back(block);
@@ -162,13 +161,13 @@ public:
 
   // *********** These utility methods for node owners.
 
-  bool AddBlock(block_type &block)
+  bool AddBlock(BlockType &block)
   {
     chain_->AddBlock(block);
     return block.loose();
   }
 
-  block_type const &HeaviestBlock() const { return chain_->HeaviestBlock(); }
+  BlockType const &HeaviestBlock() const { return chain_->HeaviestBlock(); }
 
   void StartMining()
   {
@@ -183,8 +182,8 @@ public:
         // block.summarise());
 
         // Create another block sequential to previous
-        block_type nextBlock;
-        body_type  nextBody;
+        BlockType nextBlock;
+        body_type nextBody;
         nextBody.block_number = block.body().block_number + 1;
 
         nextBody.previous_hash = block.hash();

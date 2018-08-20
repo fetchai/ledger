@@ -115,10 +115,10 @@ public:
   proof_type const &proof() const { return proof_; }
   proof_type &      proof() { return proof_; }
 
-  uint64_t &                    weight() { return weight_; }
-  uint64_t &                    totalWeight() { return total_weight_; }
-  bool &                        loose() { return is_loose_; }
-  fetch::byte_array::ByteArray &root() { return root_; }
+  uint64_t &      weight() { return weight_; }
+  uint64_t &      totalWeight() { return total_weight_; }
+  uint64_t const &totalWeight() const { return total_weight_; }
+  bool &          loose() { return is_loose_; }
 
 #if 1  // TODO(issue 33): Move to py swarm?
   std::string hashString() const { return std::string(ToHex(body_.hash)); }
@@ -133,10 +133,7 @@ private:
   // META data to help with block management
   uint64_t weight_       = 1;
   uint64_t total_weight_ = 1;
-  bool     is_loose_     = false;
-
-  // root refers to the previous_hash of the bottom block of a chain
-  fetch::byte_array::ByteArray root_;
+  bool     is_loose_     = true;
 
   template <typename AT, typename AP, typename AH>
   friend inline void Serialize(AT &serializer, BasicBlock<AP, AH> const &);

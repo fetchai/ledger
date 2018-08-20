@@ -83,12 +83,12 @@ public:
     swarm_agent_api_->Stop();
   }
 
-  fetch::chain::MainChain::block_hash blockIdToHash(const std::string &id) const
+  fetch::chain::MainChain::BlockHash blockIdToHash(const std::string &id) const
   {
     return fetch::byte_array::FromHex(id.c_str());
   }
 
-  std::string hashToBlockId(const fetch::chain::MainChain::block_hash &hash) const
+  std::string hashToBlockId(const fetch::chain::MainChain::BlockHash &hash) const
   {
     return std::string(fetch::byte_array::ToHex(hash));
   }
