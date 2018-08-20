@@ -89,7 +89,6 @@ public:
     tips_[genesis.hash()] = tip;
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
 
-    // TODO: (`HUT`) : make sure all main chains are unique for constellation
     if (minerNumber_ != std::numeric_limits<uint32_t>::max())
     {
       RecoverFromFile();
@@ -288,16 +287,16 @@ private:
     blockStore_.Load(fileMain.str(), fileIndex.str());
 
     BlockType block;
-    if (blockStore_.Get(storage::ResourceID("head"), block))
+    if (blockStore_.Get(storage::ResourceAddress("head"), block))
     {
       block.UpdateDigest();
       AddBlock(block);
-    }
 
-    while (blockStore_.Get(storage::ResourceID(block.body().previous_hash), block))
-    {
-      block.UpdateDigest();
-      AddBlock(block);
+      while (blockStore_.Get(storage::ResourceID(block.body().previous_hash), block))
+      {
+        block.UpdateDigest();
+        AddBlock(block);
+      }
     }
   }
 
@@ -322,7 +321,7 @@ private:
     // This block is now the head in our file
     if (!failed)
     {
-      blockStore_.Set(storage::ResourceID("head"), block);
+      blockStore_.Set(storage::ResourceAddress("head"), block);
       blockStore_.Set(storage::ResourceID(block.hash()), block);
     }
 
