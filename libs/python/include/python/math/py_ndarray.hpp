@@ -292,8 +292,18 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (axis >= a.shape().size()) throw py::index_error();
              return a.Min(axis);
            })
-      .def("Log", [](NDArray<T> &a) { return fetch::math::Log(a); })
-      .def("Exp", [](NDArray<T> &a) { return fetch::math::Exp(a); })
+      .def("Log",
+           [](NDArray<T> const &a) {
+             NDArray<T> ret;
+             ret = fetch::math::Log(a);
+             return ret;
+           })
+      .def("Exp",
+           [](NDArray<T> const &a) {
+             NDArray<T> ret;
+             ret = fetch::math::Exp(a);
+             return ret;
+           })
       .def("Relu", [](NDArray<T> const &a, NDArray<T> &b) { return b.Relu(a); })
       .def("L2Loss", [](NDArray<T> const &a) { return a.L2Loss(); })
       .def("Sign",

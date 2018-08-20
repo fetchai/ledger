@@ -29,7 +29,8 @@ template <typename ARRAY_TYPE>
 inline ARRAY_TYPE Exp(ARRAY_TYPE const &array)
 {
 
-  ARRAY_TYPE ret{array};
+  ARRAY_TYPE ret;
+  ret.ResizeFromShape(array.shape());
   for (std::size_t i = 0; i < array.size(); ++i)
   {
     ret[i] = std::exp(array[i]);
@@ -50,7 +51,8 @@ inline ARRAY_TYPE Exp(ARRAY_TYPE const &array, memory::Range r)
 {
   //  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
 
-  ARRAY_TYPE ret{array};
+  ARRAY_TYPE ret;
+  ret.Reshape(array.shape());
 
   if (r.is_trivial())
   {

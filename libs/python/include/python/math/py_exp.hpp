@@ -40,8 +40,6 @@ inline void BuildExpStatistics(std::string const &custom_name, pybind11::module 
       .def(custom_name.c_str(), &WrapperExp<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperExp<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperExp<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperExp<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperExp<ShapeLessArray<float>>)
       .def(custom_name.c_str(), &WrapperExp<NDArray<double>>)
       .def(custom_name.c_str(), &WrapperExp<NDArray<float>>);
 }

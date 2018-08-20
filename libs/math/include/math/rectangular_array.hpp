@@ -400,6 +400,7 @@ public:
 
     height_ = h;
     width_  = w;
+    shape_  = {h, w};
   }
 
   void Resize(std::vector<std::size_t> const &shape, std::size_t const &offset = 0)
@@ -417,6 +418,13 @@ public:
       assert(false);
       break;
     }
+  }
+
+  /* resizes based on the shape */
+  void ResizeFromShape(std::vector<std::size_t> const &shape)
+  {
+    this->Resize(shape[0], shape[1]);
+    this->Reshape(shape);
   }
 
   /* Allocates memory for the array without resizing.
@@ -460,10 +468,16 @@ public:
 
     super_type::ReplaceData(padded_width_ * padded_height_, new_arr);
 
-    if (h < height_) height_ = h;
-    if (w < width_) width_ = w;
+    if (h < height_)
+      if (w < width_) width_ = w;
+    shape_ = {height_, width_};
   }
 
+  /**
+   * reshapes the array with height and width specified separately
+   * @param h array height
+   * @param w array width
+   */
   void Reshape(size_type const &h, size_type const &w)
   {
     assert((height_ * width_) == (h * w));
@@ -471,6 +485,23 @@ public:
 
     height_ = h;
     width_  = w;
+    shape_  = {h, w};
+  }
+
+  /**
+   * reshapes the array with height and width specified as a vector (for compatibility with NDArray
+   * methods)
+   * @param shape is a vector of length 2 with height and then width.
+   */
+  void Reshape(std::vector<std::size_t> const &shape)
+  {
+    assert(shape.size() == 2);
+    assert((shape[0] * shape[1]) == (height_ * width));
+
+    Reserve(shape[0], shape[1]);
+
+    height_ = shape[0];
+    width_  = shape[1];
   }
 
   void Flatten() { Reshape(width_ * height_, 1); }
@@ -518,6 +549,7 @@ public:
 
     height_ = h;
     width_  = w;
+    shape_  = {h, w};
 
     // TODO(tfr): Take care of padded bytes
   }
@@ -581,7 +613,8 @@ public:
       TODO_FAIL("Endianess failure");
     }
 
-    size_type height = 0, width = 0;
+    size_type              height = 0, width = 0;
+    std::vector<size_type> shape{0, 0};
     if (fread(&height, sizeof(height), 1, fp) != 1)
     {
       TODO_FAIL(
@@ -613,6 +646,9 @@ public:
   /* Returns the width of the array. */
   size_type width() const { return width_; }
 
+  /* Returns height, width of array */
+  std::vector<size_type> const &shape() const { return shape_; }
+
   /* Returns the padded height of the array. */
   size_type padded_height() const { return padded_height_; }
 
@@ -626,8 +662,9 @@ public:
   size_type padded_size() const { return padded_width_ * padded_height_; }
 
 private:
-  size_type height_ = 0, width_ = 0;
-  size_type padded_width_ = 0, padded_height_ = 0;
+  size_type              height_ = 0, width_ = 0;
+  std::vector<size_type> shape_{0, 0};
+  size_type              padded_width_ = 0, padded_height_ = 0;
 
   void SetPaddedSizes(size_type const &h, size_type const &w)
   {
