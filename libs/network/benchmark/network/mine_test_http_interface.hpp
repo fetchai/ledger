@@ -61,10 +61,10 @@ public:
                        return this->Mainchain(params, req);
                      });
 
-    HTTPModule::Post("/allchain",
-                     [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
-                       return this->AllChain(params, req);
-                     });
+    // HTTPModule::Post("/allchain",
+    //                 [this](http::ViewParameters const &params, http::HTTPRequest const &req) {
+    //                   return this->AllChain(params, req);
+    //                 });
   }
 
   HttpInterface(HttpInterface &&rhs)
@@ -142,56 +142,56 @@ public:
     return http::HTTPResponse(ret.str());
   }
 
-  http::HTTPResponse AllChain(http::ViewParameters const &params, http::HTTPRequest const &req)
-  {
-    auto chainArray = node_->AllChain();
+  // http::HTTPResponse AllChain(http::ViewParameters const &params, http::HTTPRequest const &req)
+  //{
+  //  auto chainArray = node_->AllChain();
 
-    auto heaviestBlock = chainArray.first;
-    auto chainArrays   = chainArray.second;
+  //  auto heaviestBlock = chainArray.first;
+  //  auto chainArrays   = chainArray.second;
 
-    script::Variant result = script::Variant::Object();
+  //  script::Variant result = script::Variant::Object();
 
-    {
-      script::Variant temp = script::Variant::Object();
-      temp["minerNumber"]  = heaviestBlock.body().miner_number;
-      temp["blockNumber"]  = heaviestBlock.body().block_number;
-      temp["hashcurrent"]  = ToHex(heaviestBlock.hash());
-      temp["hashprev"]     = ToHex(heaviestBlock.body().previous_hash);
+  //  {
+  //    script::Variant temp = script::Variant::Object();
+  //    temp["minerNumber"]  = heaviestBlock.body().miner_number;
+  //    temp["blockNumber"]  = heaviestBlock.body().block_number;
+  //    temp["hashcurrent"]  = ToHex(heaviestBlock.hash());
+  //    temp["hashprev"]     = ToHex(heaviestBlock.body().previous_hash);
 
-      result["heaviest"] = temp;
-    }
+  //    result["heaviest"] = temp;
+  //  }
 
-    // We now have an array of arrays
-    script::Variant arrays = script::Variant::Array(chainArray.second.size());
+  //  // We now have an array of arrays
+  //  script::Variant arrays = script::Variant::Array(chainArray.second.size());
 
-    std::size_t i = 0;
-    std::size_t j = 0;
-    for (auto &chain : chainArray.second)
-    {
-      script::Variant chainVar = script::Variant::Array(chain.size());
+  //  std::size_t i = 0;
+  //  std::size_t j = 0;
+  //  for (auto &chain : chainArray.second)
+  //  {
+  //    script::Variant chainVar = script::Variant::Array(chain.size());
 
-      for (auto &block : chain)
-      {
-        script::Variant temp = script::Variant::Object();
-        temp["minerNumber"]  = block.body().miner_number;
-        temp["blockNumber"]  = block.body().block_number;
-        temp["hashcurrent"]  = ToHex(block.hash());
-        temp["hashprev"]     = ToHex(block.body().previous_hash);
+  //    for (auto &block : chain)
+  //    {
+  //      script::Variant temp = script::Variant::Object();
+  //      temp["minerNumber"]  = block.body().miner_number;
+  //      temp["blockNumber"]  = block.body().block_number;
+  //      temp["hashcurrent"]  = ToHex(block.hash());
+  //      temp["hashprev"]     = ToHex(block.body().previous_hash);
 
-        chainVar[j++] = temp;
-      }
+  //      chainVar[j++] = temp;
+  //    }
 
-      arrays[i++] = chainVar;
-      j           = 0;
-    }
+  //    arrays[i++] = chainVar;
+  //    j           = 0;
+  //  }
 
-    result["chains"] = arrays;
+  //  result["chains"] = arrays;
 
-    std::ostringstream ret;
-    ret << result;
+  //  std::ostringstream ret;
+  //  ret << result;
 
-    return http::HTTPResponse(ret.str());
-  }
+  //  return http::HTTPResponse(ret.str());
+  //}
 
   const std::shared_ptr<T> &node() const { return node_; };
 

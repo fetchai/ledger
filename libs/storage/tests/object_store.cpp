@@ -391,9 +391,6 @@ int main(int argc, char const **argv)
       }
     };
 
-    // SCENARIO("Testing object store basic functionality") // TODO: (`HUT`) : delete
-    //{
-
     SECTION("Test subtree iterator over basic struct - split into 256 to emulate obj. sync")
     {
       std::vector<std::size_t> keyTests{23, 100, 1,  2,  3,    4, 5, 6, 7,  8,  9,   10,  11,

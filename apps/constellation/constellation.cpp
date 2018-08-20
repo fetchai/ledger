@@ -123,7 +123,7 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
       num_lanes_, num_slices_, *main_chain_service_->mainchain(), *block_coordinator_,
       *transaction_packer_, main_chain_port_);
 
-  main_chain_miner_->onBlockComplete([this](const chain::MainChain::block_type blk) {
+  main_chain_miner_->onBlockComplete([this](const chain::MainChain::BlockType blk) {
     this->main_chain_service_->PublishBlock(blk);
   });
 

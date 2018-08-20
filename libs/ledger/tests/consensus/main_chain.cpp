@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/main_chain.hpp"
+#include "core/random/lfg.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "testing/unittest.hpp"
 #include <iostream>
@@ -41,13 +42,26 @@ double TimeDifference(time_point t1, time_point t2)
   return std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t2).count();
 }
 
-using block_type = MainChain::block_type;
-using body_type  = MainChain::block_type::body_type;
+std::map<std::size_t, std::size_t> GetRandomIndexes(std::size_t size)
+{
+  static fetch::random::LaggedFibonacciGenerator<> lfg;
+  std::map<std::size_t, std::size_t>               ret;
+
+  for (std::size_t i = 0; i < size; ++i)
+  {
+    uint64_t indexRnd = i | (lfg() & 0xFFFFFFFF00000000);
+    ret[indexRnd]     = i;
+  }
+
+  return ret;
+}
+
+using block_type = MainChain::BlockType;
+using body_type  = MainChain::BlockType::body_type;
 using miner      = fetch::chain::consensus::DummyMiner;
 
 int main(int argc, char const **argv)
 {
-
   SCENARIO("testing main chain")
   {
     SECTION("building on main chain")
@@ -61,12 +75,13 @@ int main(int argc, char const **argv)
 
       EXPECT(genesis.body().block_number == 0);
 
-      // Try adding a non-sequential block (prev hash missing)
+      // Try adding a non-sequential block (prev hash is itself)
       block_type dummy;
       body_type  dummy_body;
       dummy_body.block_number = 1;
       dummy.SetBody(dummy_body);
       dummy.UpdateDigest();
+      dummy.body().previous_hash = dummy.hash();
 
       mainChain.AddBlock(dummy);
 
@@ -77,6 +92,8 @@ int main(int argc, char const **argv)
       // Add another 3 blocks in order
       for (std::size_t i = 0; i < 3; ++i)
       {
+        fetch::logger.Info("Test: Adding blocks in order");
+
         // Create another block sequential to previous
         block_type nextBlock;
         body_type  nextBody;
@@ -101,12 +118,13 @@ int main(int argc, char const **argv)
 
       auto block = mainChain.HeaviestBlock();
 
-      // Try adding a non-sequential block (prev hash missing)
+      // Try adding a non-sequential block (prev hash is itself)
       block_type dummy;
       body_type  dummy_body;
       dummy_body.block_number = 2;
       dummy.SetBody(dummy_body);
       dummy.UpdateDigest();
+      dummy.body().previous_hash = dummy.hash();
 
       mainChain.AddBlock(dummy);
 
@@ -275,21 +293,28 @@ int main(int argc, char const **argv)
       std::vector<block_type>      blocks(blocksToCreate, block);
       uint64_t                     blockNumber = block.body().block_number++;
 
-      // Precreate since UpdateDigest not part of test
-      for (std::size_t i = 0; i < blocksToCreate; ++i)
       {
-        // Create another block sequential to previous
-        block_type nextBlock;
-        body_type  nextBody;
-        nextBody.block_number  = blockNumber++;
-        nextBody.previous_hash = prevHash;
+        auto t1 = TimePoint();
 
-        nextBlock.SetBody(nextBody);
-        nextBlock.UpdateDigest();
+        // Precreate since UpdateDigest not part of test
+        for (std::size_t i = 0; i < blocksToCreate; ++i)
+        {
+          // Create another block sequential to previous
+          block_type nextBlock;
+          body_type  nextBody;
+          nextBody.block_number  = blockNumber++;
+          nextBody.previous_hash = prevHash;
 
-        blocks[i] = nextBlock;
+          nextBlock.SetBody(nextBody);
+          nextBlock.UpdateDigest();
 
-        prevHash = nextBlock.hash();
+          blocks[i] = nextBlock;
+
+          prevHash = nextBlock.hash();
+        }
+
+        auto t2 = TimePoint();
+        std::cout << "Setup time: " << TimeDifference(t2, t1) << std::endl;
       }
 
       auto t1 = TimePoint();
@@ -304,6 +329,167 @@ int main(int argc, char const **argv)
                 << std::endl;
 
       EXPECT(mainChain.HeaviestBlock().hash() == prevHash);
+    };
+
+    SECTION("Testing time to add blocks out of order")
+    {
+      MainChain mainChain{};
+      mainChain.reset();
+
+      auto block = mainChain.HeaviestBlock();
+
+      fetch::byte_array::ByteArray              prevHash       = block.hash();
+      constexpr std::size_t                     blocksToCreate = 1000000;
+      std::vector<block_type>                   blocks(blocksToCreate, block);
+      std::map<std::size_t, std::size_t>        randomIndexes;
+      uint64_t                                  blockNumber = block.body().block_number++;
+      fetch::random::LaggedFibonacciGenerator<> lfg;
+
+      {
+        auto t1 = TimePoint();
+        // Precreate since UpdateDigest not part of test
+        for (std::size_t i = 0; i < blocksToCreate; ++i)
+        {
+          // Create another block sequential to previous
+          block_type nextBlock;
+          body_type  nextBody;
+          nextBody.block_number  = blockNumber++;
+          nextBody.previous_hash = prevHash;
+
+          nextBlock.SetBody(nextBody);
+          nextBlock.UpdateDigest();
+
+          blocks[i] = nextBlock;
+
+          prevHash = nextBlock.hash();
+        }
+
+        randomIndexes = GetRandomIndexes(blocksToCreate);
+
+        auto t2 = TimePoint();
+        std::cout << "Setup time: " << TimeDifference(t2, t1) << std::endl;
+      }
+
+      auto t1 = TimePoint();
+
+      for (auto &i : randomIndexes)
+      {
+        mainChain.AddBlock(blocks[i.second]);
+      }
+
+      auto t2 = TimePoint();
+      std::cout << "Blocks: " << blocksToCreate << ". Time: " << TimeDifference(t2, t1)
+                << std::endl;
+
+      // Last block in vector still heaviest block for main chain
+      EXPECT(mainChain.HeaviestBlock().totalWeight() == blocksToCreate + 1);
+      EXPECT(ToHex(mainChain.HeaviestBlock().hash()) == ToHex(prevHash));
+    };
+
+    SECTION("Testing time to add blocks sequentially - with file storage")
+    {
+      MainChain mainChain{0};
+      mainChain.reset();
+
+      auto block = mainChain.HeaviestBlock();
+
+      fetch::byte_array::ByteArray prevHash       = block.hash();
+      constexpr std::size_t        blocksToCreate = 1000000;
+      std::vector<block_type>      blocks(blocksToCreate, block);
+      uint64_t                     blockNumber = block.body().block_number++;
+
+      {
+        auto t1 = TimePoint();
+
+        // Precreate since UpdateDigest not part of test
+        for (std::size_t i = 0; i < blocksToCreate; ++i)
+        {
+          // Create another block sequential to previous
+          block_type nextBlock;
+          body_type  nextBody;
+          nextBody.block_number  = blockNumber++;
+          nextBody.previous_hash = prevHash;
+
+          nextBlock.SetBody(nextBody);
+          nextBlock.UpdateDigest();
+
+          blocks[i] = nextBlock;
+
+          prevHash = nextBlock.hash();
+        }
+
+        auto t2 = TimePoint();
+        std::cout << "Setup time: " << TimeDifference(t2, t1) << std::endl;
+      }
+
+      auto t1 = TimePoint();
+
+      for (std::size_t i = 0; i < blocksToCreate; ++i)
+      {
+        mainChain.AddBlock(blocks[i]);
+      }
+
+      auto t2 = TimePoint();
+      std::cout << "Blocks: " << blocksToCreate << ". Time: " << TimeDifference(t2, t1)
+                << std::endl;
+
+      EXPECT(mainChain.HeaviestBlock().hash() == prevHash);
+    };
+
+    SECTION("Testing time to add blocks out of order - with file storage")
+    {
+      MainChain mainChain{0};
+      mainChain.reset();
+
+      auto block = mainChain.HeaviestBlock();
+
+      fetch::byte_array::ByteArray              prevHash       = block.hash();
+      constexpr std::size_t                     blocksToCreate = 1000000;
+      std::vector<block_type>                   blocks(blocksToCreate, block);
+      std::map<std::size_t, std::size_t>        randomIndexes;
+      uint64_t                                  blockNumber = block.body().block_number++;
+      fetch::random::LaggedFibonacciGenerator<> lfg;
+
+      {
+        auto t1 = TimePoint();
+
+        // Precreate since UpdateDigest not part of test
+        for (std::size_t i = 0; i < blocksToCreate; ++i)
+        {
+          // Create another block sequential to previous
+          block_type nextBlock;
+          body_type  nextBody;
+          nextBody.block_number  = blockNumber++;
+          nextBody.previous_hash = prevHash;
+
+          nextBlock.SetBody(nextBody);
+          nextBlock.UpdateDigest();
+
+          blocks[i] = nextBlock;
+
+          prevHash = nextBlock.hash();
+        }
+
+        randomIndexes = GetRandomIndexes(blocksToCreate);
+
+        auto t2 = TimePoint();
+        std::cout << "Setup time: " << TimeDifference(t2, t1) << std::endl;
+      }
+
+      auto t1 = TimePoint();
+
+      for (auto &i : randomIndexes)
+      {
+        mainChain.AddBlock(blocks[i.second]);
+      }
+
+      auto t2 = TimePoint();
+      std::cout << "Blocks: " << blocksToCreate << ". Time: " << TimeDifference(t2, t1)
+                << std::endl;
+
+      // Last block in vector still heaviest block for main chain
+      EXPECT(mainChain.HeaviestBlock().totalWeight() == blocksToCreate + 1);
+      EXPECT(ToHex(mainChain.HeaviestBlock().hash()) == ToHex(prevHash));
     };
   };
 

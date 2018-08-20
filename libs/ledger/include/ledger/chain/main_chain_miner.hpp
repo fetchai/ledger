@@ -34,9 +34,9 @@ namespace chain {
 class MainChainMiner
 {
 public:
-  using block_type       = chain::MainChain::block_type;
-  using block_hash       = chain::MainChain::block_hash;
-  using body_type        = chain::MainChain::block_type::body_type;
+  using BlockType        = chain::MainChain::BlockType;
+  using BlockHash        = chain::MainChain::BlockHash;
+  using body_type        = chain::MainChain::BlockType::body_type;
   using dummy_miner_type = fetch::chain::consensus::DummyMiner;
   using miner_type       = fetch::miner::MinerInterface;
 
@@ -67,13 +67,13 @@ public:
     }
   }
 
-  void onBlockComplete(std::function<void(const block_type)> func) { onBlockComplete_ = func; }
+  void onBlockComplete(std::function<void(const BlockType)> func) { onBlockComplete_ = func; }
 
 private:
   using clock_type     = std::chrono::high_resolution_clock;
   using timestamp_type = clock_type::time_point;
 
-  std::function<void(const block_type)> onBlockComplete_;
+  std::function<void(const BlockType)> onBlockComplete_;
 
   template <typename T>
   timestamp_type CalculateNextBlockTime(T &rng)
@@ -95,7 +95,7 @@ private:
     // schedule the next block time
     timestamp_type next_block_time = CalculateNextBlockTime(rng);
 
-    block_hash previous_heaviest;
+    BlockHash previous_heaviest;
 
     while (!stop_)
     {
@@ -105,18 +105,19 @@ private:
       // if the heaviest block has changed then we need to schedule the next block time
       if (block.hash() != previous_heaviest)
       {
-        fetch::logger.Info("===> New Heaviest Block: ", block.hashString());
+        fetch::logger.Info("==> New heaviest block: ", byte_array::ToBase64(block.hash()),
+                           " from: ", minerNumber_);
 
         // new heaviest has been detected
         next_block_time   = CalculateNextBlockTime(rng);
-        previous_heaviest = block.hash();
+        previous_heaviest = block.hash().Copy();
       }
 
       // if we are ready to generate a new block
       if (clock_type::now() >= next_block_time)
       {
-        block_type nextBlock;
-        body_type  nextBody;
+        BlockType nextBlock;
+        body_type nextBody;
         nextBody.block_number  = block.body().block_number + 1;
         nextBody.previous_hash = block.hash();
         nextBody.miner_number  = minerNumber_;

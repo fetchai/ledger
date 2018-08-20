@@ -37,8 +37,8 @@ template <typename R>
 class MainChainProtocol : public fetch::service::Protocol, public fetch::service::HasPublicationFeed
 {
 public:
-  using block_type                = chain::MainChain::block_type;
-  using block_hash_type           = chain::MainChain::block_hash;
+  using BlockType             = chain::MainChain::BlockType;
+  using block_hash_type       = chain::MainChain::BlockHash;
   using protocol_number_type      = service::protocol_handler_type;
   using thread_pool_type          = network::ThreadPool;
   using register_type             = R;
@@ -82,7 +82,7 @@ public:
 
   void Stop() { running_ = false; }
 
-  void PublishBlock(const chain::MainChain::block_type &blk)
+  void PublishBlock(BlockType const &blk)
   {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Warn("MINED A BLOCK:" + blk.summarise());
@@ -165,8 +165,8 @@ private:
 
         auto name = details->GetOwnerIdentityString();
 
-        auto foo = new service::Function<void(chain::MainChain::block_type)>(
-            [this](chain::MainChain::block_type block) {
+        auto foo = new service::Function<void(BlockType)>(
+            [this](BlockType block) {
               fetch::logger.Info("Getting dem blocks: ", block.hashString());
 
               this->pending_blocks_.Add(block);
@@ -178,7 +178,7 @@ private:
 
         auto prom = ptr->Call(protocol_, GET_HEAVIEST_CHAIN, ms);
         prom.Then([prom, ms, this]() {
-          std::vector<block_type> incoming;
+          std::vector<BlockType> incoming;
           incoming.reserve(uint64_t(ms));
           prom.As(incoming);
 
@@ -198,7 +198,7 @@ private:
 
   void ForwardBlocks()
   {
-    std::vector<block_type> work;
+    std::vector<BlockType> work;
     if (forward_blocks_.Get(work, 16))
     {
       for (auto &block : work)
@@ -216,7 +216,7 @@ private:
 
   void AddPendingBlocks()
   {
-    std::vector<block_type> work;
+    std::vector<BlockType> work;
 
     if (pending_blocks_.Get(work, 16))
     {
@@ -255,13 +255,13 @@ private:
 
   void QueryLooseBlocks()
   {
-    std::vector<block_type> work;
+    std::vector<BlockType> work;
     if (loose_blocks_.Get(work, 16))
     {
       std::vector<block_hash_type> actually_still_loose;
       for (auto &blk : work)
       {
-        block_type tmp;
+        BlockType tmp;
         if (chain_->Get(blk.hash(), tmp))
         {
           if (tmp.loose())
@@ -295,7 +295,7 @@ private:
         continue;
       }
 
-      p.template As<std::vector<block_type>>(incoming_objects_);
+      p.template As<std::vector<BlockType>>(incoming_objects_);
 
       if (!running_) return;
       std::lock_guard<mutex::Mutex> lock(mutex_);
@@ -331,11 +331,11 @@ private:
 
   /// RPC
   /// @{
-  std::pair<bool, block_type> GetHeader(block_hash_type const &hash)
+  std::pair<bool, BlockType> GetHeader(block_hash_type const &hash)
   {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Debug("GetHeader starting work");
-    block_type block;
+    BlockType block;
     if (chain_->Get(hash, block))
     {
       fetch::logger.Debug("GetHeader done");
@@ -348,10 +348,10 @@ private:
     }
   }
 
-  std::vector<block_type> GetHeaviestChain(uint32_t const &maxsize)
+  std::vector<BlockType> GetHeaviestChain(uint32_t const &maxsize)
   {
     LOG_STACK_TRACE_POINT;
-    std::vector<block_type> results;
+    std::vector<BlockType> results;
 
     fetch::logger.Debug("GetHeaviestChain starting work ", maxsize);
 
@@ -366,9 +366,9 @@ private:
   chain::MainChain *chain_;
   mutex::Mutex      mutex_{__LINE__, __FILE__};
 
-  generics::WorkItemsQueue<block_type> pending_blocks_;
-  generics::WorkItemsQueue<block_type> loose_blocks_;
-  generics::WorkItemsQueue<block_type> forward_blocks_;
+  generics::WorkItemsQueue<BlockType> pending_blocks_;
+  generics::WorkItemsQueue<BlockType> loose_blocks_;
+  generics::WorkItemsQueue<BlockType> forward_blocks_;
 
   std::atomic<bool>     running_;
   std::atomic<uint32_t> max_size_;
