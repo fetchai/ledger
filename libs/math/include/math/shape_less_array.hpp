@@ -1646,14 +1646,7 @@ public:
     this->size_ = x.size_;
   }
 
-  type CopyVal(std::size_t idx)
-  {
-    type val;
-    val = data_[idx];
-    return val;
-  }
-
-  void AssignVal(std::size_t idx, type val) { data_[idx] = val; }
+  void AssignVal(std::size_t const &idx, type const &val) { data_[idx] = val; }
 
   container_type const &data() const { return data_; }
   container_type &      data() { return data_; }

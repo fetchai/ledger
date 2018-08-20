@@ -184,11 +184,20 @@ public:
     return this->operator[](index);
   }
 
+  /**
+   * Sets a single value in the array using an n-dimensional index
+   * @param indices     index position in array
+   * @param val         value to write
+   */
   void Set(std::vector<std::size_t> indices, data_type val)
   {
-    assert(indices.size() == shape_.size());
-    this->AssignVal(ComputeColIndex(indices), val);
+    assert(indices.size() == shape_.size()); // dimensionality check not in parent
+    this->AssignVal(ComputeColIndex(indices), val); // call parent
   }
+  /**
+   * Gets a value from the array by N-dim index
+   * @param indices index to access
+   */
   data_type Get(std::vector<std::size_t> indices) const
   {
     assert(indices.size() == shape_.size());
