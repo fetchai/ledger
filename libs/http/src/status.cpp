@@ -265,4 +265,3 @@ char const *ToString(Status status)
 
 }  // namespace http
 }  // namespace fetch
-
