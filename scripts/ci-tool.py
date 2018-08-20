@@ -137,8 +137,7 @@ def build_project(project_root, build_root, options):
         sys.exit(exit_code)
 
     # make the project
-    #exit_code = subprocess.call(['make', '-j'], cwd=build_root)
-    exit_code = subprocess.call(['ninja'], cwd=build_root)
+    exit_code = subprocess.call(['make', '-j'], cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
         sys.exit(exit_code)
