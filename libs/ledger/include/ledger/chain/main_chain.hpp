@@ -89,7 +89,6 @@ public:
     tips_[genesis.hash()] = tip;
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
 
-    // TODO: (`HUT`) : make sure all main chains are unique for constellation
     if (minerNumber_ != std::numeric_limits<uint32_t>::max())
     {
       RecoverFromFile();
