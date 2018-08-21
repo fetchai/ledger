@@ -58,7 +58,7 @@ public:
   FeedSubscriptionManager(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
     : subscribe_mutex_(__LINE__, __FILE__), feed_(feed), publisher_(publisher)
   {
-    workers_ = network::MakeThreadPool(20);
+    workers_ = network::MakeThreadPool(3);
     workers_ -> Start(this, &FeedSubscriptionManager::PublishToAllWorker);
 
   }
@@ -116,7 +116,10 @@ public:
       if ((subscribers_[i].client == client) && (subscribers_[i].id == id)) ids.push_back(i);
 
     std::reverse(ids.begin(), ids.end());
-    for (auto &i : ids) subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
+    for (auto &i : ids)
+    {
+      subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
+    }
     subscribe_mutex_.unlock();
   }
 

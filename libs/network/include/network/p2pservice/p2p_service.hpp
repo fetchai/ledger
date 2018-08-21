@@ -379,9 +379,8 @@ protected:
     }
 
     {
-LOG_STACK_TRACE_POINT
-
- std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
+      LOG_STACK_TRACE_POINT
+        std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
       incoming_.clear();
       outgoing_.clear();
 
@@ -408,6 +407,7 @@ LOG_STACK_TRACE_POINT
 
   void ManageIncomingConnections()
   {
+      LOG_STACK_TRACE_POINT
     std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
 
     // Timeout to send out a new tracking signal if needed
@@ -450,6 +450,7 @@ LOG_STACK_TRACE_POINT
 
   void ConnectToNewPeers()
   {
+      LOG_STACK_TRACE_POINT
     std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
 
     if (!running_) return;

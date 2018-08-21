@@ -118,7 +118,6 @@ private:
       }
       else
       {
-
         ptr->Leave(this->handle());
       }
     };

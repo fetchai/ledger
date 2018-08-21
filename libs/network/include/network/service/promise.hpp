@@ -107,6 +107,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
+    fetch::logger.Warn("ConnectionFailed being signalled.");
+
     connection_closed_ = true;
     fulfilled_         = true; // Note that order matters here due to threading!
     ConcludeFail();

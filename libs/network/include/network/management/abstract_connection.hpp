@@ -29,6 +29,8 @@ public:
   // Interface
   virtual ~AbstractConnection()
   {
+    auto h = handle_.load();
+    fetch::logger.Warn("Connection destruction in progress for handle ", h);
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       on_message_ = nullptr;
@@ -39,7 +41,7 @@ public:
     {
       ptr->Leave(handle_);
     }
-    fetch::logger.Debug("Connection destroyed");
+    fetch::logger.Warn("Connection destroyed for handle ", h);
   }
 
   virtual void     Send(message_type const &) = 0;
@@ -90,7 +92,6 @@ public:
   void ActivateSelfManage() { self_ = shared_from_this(); }
 
   void DeactivateSelfManage() { self_.reset(); }
-
 protected:
   void SetAddress(std::string const &addr)
   {
@@ -102,12 +103,12 @@ protected:
 
   void SignalLeave()
   {
+    fetch::logger.Warn("Connection terminated for handle ", handle_.load(), ", SignalLeave called.");
     std::function<void (void)> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       cb = on_leave_;
     }
-    fetch::logger.Debug("Connection terminated");
 
     if (cb)
     {

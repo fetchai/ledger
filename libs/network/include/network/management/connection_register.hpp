@@ -142,7 +142,7 @@ public:
   //void GetDetails(connection_handle_type const &i)
   {
     fetch::logger.Info("GetDetails for =======================================> ", i);
-      LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<mutex::Mutex> lock(details_lock_);
     if (details_.find(i) == details_.end())
     {
@@ -200,6 +200,7 @@ public:
 
   void VisitConnections(std::function<void(connection_handle_type const &, shared_connection_type)> f) const
   {
+    fetch::logger.Warn("About to visit ", connections_.size(), " connections");
     std::list<connection_map_type::value_type> keys;
     {
       std::lock_guard<mutex::Mutex> lock(connections_lock_);

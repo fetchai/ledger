@@ -86,7 +86,7 @@ public:
 
     if (connection_timeout)
     {
-      logger.Warn("Connection timed out - closing");
+      logger.Warn("Connection timed out - closing in StorageUnitClient::AddLaneConnection:1:");
       client->Close();
       client.reset();
       return crypto::InvalidIdentity();

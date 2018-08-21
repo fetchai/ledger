@@ -75,6 +75,7 @@ public:
 
   void VisitServiceClients(std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
   {
+    fetch::logger.Warn("About to visit ", services_.size(), " service clients");
     std::list<service_map_type::value_type> keys;
 
     {

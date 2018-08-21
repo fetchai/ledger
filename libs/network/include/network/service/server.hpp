@@ -153,7 +153,7 @@ private:
       if (has_messages)
       {
         network_manager_.Post([this, pm]() {
-          fetch::logger.Debug("Processing message call");
+            fetch::logger.Debug("Processing message call", pm.client, ":", pm.message);
           if (!this->PushProtocolRequest(pm.client, pm.message))
           {
             bool processed = false;

@@ -140,7 +140,7 @@ public:
 
     if (n >= 10)
     {
-      logger.Warn("Connection timed out - closing");
+      logger.Warn("Connection timed out - closing in MainChainController::Connect");
       client->Close();
       client.reset();
       return nullptr;

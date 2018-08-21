@@ -114,7 +114,8 @@ public:
     {
       return ptr->handle();
     }
-    TODO_FAIL("connection is dead");
+    LOG_STACK_TRACE_POINT;
+    TODO_FAIL("connection is dead in ServiceClient::handle");
   }
 
   bool is_alive() const

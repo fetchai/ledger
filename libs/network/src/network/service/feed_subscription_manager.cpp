@@ -7,12 +7,14 @@ namespace service {
   
 void FeedSubscriptionManager::PublishToAllWorker()
 {
-    fetch::logger.Warn("OMG PublishToAllWorker STARTUP************************************************************************************");
+  fetch::logger.Warn("OMG PublishToAllWorker STARTUP************************************************************************************");
   while(publishing_workload_.Wait())
   {
     fetch::logger.Warn("OMG PublishToAllWorker");
     std::vector<publishing_workload_type> my_work;
     publishing_workload_.Get(my_work, 16);
+
+    std::list<std::tuple<service_type*, connection_handle_type>> dead_connections;
 
     for(auto &w : my_work)
     {
@@ -21,10 +23,21 @@ void FeedSubscriptionManager::PublishToAllWorker()
       network::message_type msg = std::get<2>(w);
       if (!service->DeliverResponse(client_number, msg.Copy()))
       {
-        // TODO(kll) handle dead connections here.
+        dead_connections.push_back(std::make_tuple(service, client_number));
       }
     }
+    if (!dead_connections.empty())
+    {
+      for(auto &w : dead_connections)
+      {
+        service_type *service = std::get<0>(w);
+        connection_handle_type client_number = std::get<1>(w);
+        service -> ConnectionDropped(client_number);
+      }
+    }
+    fetch::logger.Warn("OMG PublishToAllWorker done!");
   }
+
 }
 
 
