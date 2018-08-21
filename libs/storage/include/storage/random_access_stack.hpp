@@ -17,6 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+//  ┌──────┬───────────┬───────────┬───────────┬───────────┐
+//  │      │           │           │           │           │
+//  │HEADER│  OBJECT   │  OBJECT   │  OBJECT   │  OBJECT   │
+//  │      │           │           │           │           │......
+//  │      │           │           │           │           │
+//  └──────┴───────────┴───────────┴───────────┴───────────┘
+
 #include <cassert>
 #include <fstream>
 #include <functional>
@@ -28,15 +35,28 @@ namespace fetch {
 namespace platform {
 enum
 {
-  LITTLE_ENDIAN_MAGIC = 1337
+  LITTLE_ENDIAN_MAGIC = 2337
 };
 }
 namespace storage {
 
+/**
+ * The RandomAccessStack maintains a stack of type T, writing to disk. Since elements on the stack
+ * are uniform size, they can be easily addressed using simple arithmetic.
+ *
+ * The header for the stack optionally allows arbitrary data to be stored, which can be useful to
+ * the user
+ */
 template <typename T, typename D = uint64_t>
 class RandomAccessStack
 {
 private:
+
+  /**
+   * Header holding information for the structure. Magic is used to determine the endianness of the
+   * platform, extra allows the user to write metadata for the structure. This is used for example
+   * in key value store to store the head of the trie
+   */
   struct Header
   {
     uint16_t magic   = platform::LITTLE_ENDIAN_MAGIC;
@@ -125,8 +145,11 @@ public:
       }
     }
 
+    // Get length of file
     file_handle_.seekg(0, file_handle_.end);
     int64_t length = file_handle_.tellg();
+
+    // Read the beginning of the file into our header
     file_handle_.seekg(0, file_handle_.beg);
     header_.Read(file_handle_);
 
@@ -153,6 +176,13 @@ public:
   }
 
   // TODO(issue 6): Protected functions
+  /**
+   * Get object on the stack at index i, not safe when i > objects.
+   *
+   * @param: i The Ith object, indexed from 0
+   * @param: object The object reference to fill
+   *
+   */
   void Get(std::size_t const &i, type &object) const
   {
     assert(filename_ != "");
@@ -164,6 +194,13 @@ public:
     file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
   }
 
+  /**
+   * Set object on the stack at index i, not safe when i > objects.
+   *
+   * @param: i The Ith object, indexed from 0
+   * @param: object The object to copy to the stack
+   *
+   */
   void Set(std::size_t const &i, type const &object)
   {
     assert(filename_ != "");
@@ -184,6 +221,15 @@ public:
 
   header_extra_type const &header_extra() const { return header_.extra; }
 
+  /**
+   * Push a new object onto the stack, increasing its size by one.
+   *
+   * Note: also writes the header to disk, increasing access time. Alternatively use LazyPush
+   *
+   * @param: object The object to push
+   *
+   * @return: the number of objects on the stack
+   */
   uint64_t Push(type const &object)
   {
     uint64_t ret = header_.objects;
@@ -197,12 +243,20 @@ public:
     return ret;
   }
 
+  /**
+   * Remove the top element of the stack. Not safe when the stack has no objects.
+   */
   void Pop()
   {
     --header_.objects;
     StoreHeader();
   }
 
+  /**
+   * Return the object at the top of the stack. Not safe when the stack has no objects.
+   *
+   * @return: the object at the top of the stack.
+   */
   type Top() const
   {
     assert(header_.objects > 0);
@@ -216,6 +270,13 @@ public:
     return object;
   }
 
+  /**
+   * Swap the objects at two locations on the stack. Must be valid locations.
+   *
+   * @param: i Location of the first object
+   * @param: j Location of the second object
+   *
+   */
   void Swap(std::size_t const &i, std::size_t const &j)
   {
     if (i == j) return;
@@ -240,6 +301,9 @@ public:
 
   std::size_t empty() const { return header_.objects == 0; }
 
+  /**
+   * Clear the file and write an 'empty' header to the file
+   */
   void Clear()
   {
     assert(filename_ != "");
@@ -254,6 +318,12 @@ public:
     fin.close();
   }
 
+  /**
+   * Flushing writes the header to disk - there isn't necessarily any need to keep writing to disk
+   * with every push etc.
+   *
+   * @param: lazy Whether to execute user defined callbacks
+   */
   void Flush(bool const &lazy = false)
   {
     if (!lazy) SignalBeforeFlush();
@@ -273,6 +343,12 @@ public:
     }
   }
 
+  /**
+   * Push only the object to disk, this requires the user to flush the header before file closure
+   * to avoid corrupting the file
+   *
+   * @param: object The object to write
+   */
   uint64_t LazyPush(type const &object)
   {
     uint64_t ret = header_.objects;

@@ -16,6 +16,24 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+//
+//
+
+//     ┌────────────────────────────────────────────────────────────────────────┐
+//     │                                                                        │
+//     │                                                                        ▼
+//  ┌──────┐      ┌──────────────┬──────┬──────────────┬──────┬──────────────┬──────┐
+//  │      │      │              │      │              │      │              │      │
+//  │      │      │              │      │              │      │              │      │
+//  │      │      │              │      │              │      │              │      │
+//  │HEADER│......│    OBJECT    │SEPER.│    OBJECT    │SEPER.│    OBJECT    │SEPER.│
+//  │      │      │              │      │              │      │              │      │
+//  │      │      │              │      │              │      │              │      │
+//  │      │      │              │      │              │      │              │      │
+//  └──────┘      └──────────────┴──────┴──────────────┴──────┴──────────────┴──────┘
+//                                  ▲                     │                     │
+//                                  │                     │                     │
+//                                  └─────────────────────┴─────────────────────┘
 
 #include "core/assert.hpp"
 #include <cassert>
@@ -27,9 +45,27 @@ namespace fetch {
 namespace storage {
 
 // TODO(issue 5): Make variant stack as a circular buffer!
+// TODO: (issue 39) : add exceptions (HUT)
+// TODO: (issue 40) : use serializer for objects (HUT)
+
+/**
+ * Variant stack manages a stack of arbitrary objects (variant). The basic structure can be seen
+ * in the header of this file. The structure is written to and read from disk.
+ *
+ * The structure is composed of a header and N object-separator pairs. The header points to the
+ * last pair, and each separator object refers to its previous.
+ *
+ * The user must assign and maintain their own enums for the types of the objects in the stack, so
+ * that when popping them they can be correctly cast.
+ *
+ */
 class VariantStack
 {
 public:
+
+  /**
+   * Seperator holding information about previous object.
+   */
   struct Separator
   {
     uint64_t type;
@@ -45,6 +81,9 @@ public:
     }
   };
 
+  /**
+   * Header holding information about the stack
+   */
   struct Header
   {
     uint64_t object_count;
@@ -113,6 +152,15 @@ public:
     HEADER_OBJECT = uint64_t(-2)
   };
 
+  /**
+   * Push a T object onto the stack, optionally specifying its type. This will simply reinterpret
+   * cast the object as a char * for the write. Then write the separator information and update the
+   * header
+   *
+   * @param: object The object to write
+   * @param: type Optionally specify a type to differentiate objects
+   *
+   */
   template <typename T>
   void Push(T const &object, uint64_t const &type = uint64_t(-1))
   {
@@ -127,8 +175,12 @@ public:
     //    WriteHeader();
   }
 
+  /**
+   * Pop the topmost object off the stack. Unsafe if there are no objects on the stack.
+   */
   void Pop()
   {
+    assert(header_.object_count != 0);
     file_.seekg(header_.end - int64_t(sizeof(Separator)), file_.beg);
     Separator separator;
 
@@ -139,6 +191,13 @@ public:
     //    WriteHeader();
   }
 
+  /**
+   * Fill the provided object with the object provided
+   *
+   * @param: object The reference to fill
+   *
+   * @return: The type of the object as specified during its initial write onto the stack
+   */
   template <typename T>
   uint64_t Top(T &object)
   {
@@ -162,6 +221,11 @@ public:
     return separator.type;
   }
 
+  /**
+   * Return the type of the object on the top of the stack
+   *
+   * @return: The type of the object
+   */
   uint64_t Type()
   {
     file_.seekg(header_.end - int64_t(sizeof(Separator)), file_.beg);
@@ -172,9 +236,13 @@ public:
     return separator.type;
   }
 
+  /**
+   * Reset the state of the file handle to starting conditions. This consists of a header and a
+   * separator (it is convenient to have a starting invalid separator).
+   *
+   */
   void Clear()
   {
-
     assert(filename_ != "");
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
     fin.seekg(0, fin.beg);
