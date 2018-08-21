@@ -37,7 +37,7 @@ class Layer : public BaseLayer<DATA_TYPE>
 {
   using container_type = memory::SharedArray<DATA_TYPE>;
   using base_type      = BaseLayer<DATA_TYPE>;
-  using ndarray_type   = math::NDArray<DATA_TYPE>;
+  using array_type   =  math::NDArray<DATA_TYPE, container_type>;
 
 public:
   /**
@@ -53,24 +53,6 @@ public:
   {
     AssignLayerConnection(input_layer, layer_size);
   }
-
-  //  /**
-  //   * Constructor that accepts multiple previous layers as the inputs to this layer, and the
-  //   layer size
-  //   * @param input_layers
-  //   */
-  //  Layer(std::vector<Layer &> input_layers, std::size_t layer_size)
-  //  {
-  //    this->SetLayerSize(layer_size);
-  //    input_layer_size_ = 0;
-  //    for (Layer &cur_layer : input_layers)
-  //    {
-  //      input_layer_size_ += cur_layer.LayerSize();
-  //    }
-  //    weights_matrix_shape_ = {InputLayerSize(), this->LayerSize()};
-  //    this->weights_matrix_ = math::NDArray<DATA_TYPE, CONTAINER_TYPE>(weights_matrix_shape_);
-  //
-  //  }
 
   /**
    * helper function - returns the size of the inputs to this layer
@@ -106,21 +88,14 @@ private:
 
   void InitialiseWeightsMatrix()
   {
-    // TODO: I image there's a great deal of room for optimisation here
+    array_type arr{this->Size()};
 
     for (std::size_t i = 0; i < this->Size(); ++i)
     {
+      arr[i] = 0;
     }
   }
 };
-
-//  static fetch::random::LinearCongruentialGenerator gen;
-//  NDArray<data_type, container_type>                a1(n);
-//  for (std::size_t i = 0; i < n; ++i)
-//  {
-//    a1(i) = data_type(gen.AsDouble());
-//  }
-//  return a1;
 
 }  // namespace layers
 }  // namespace ml

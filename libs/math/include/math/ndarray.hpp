@@ -172,13 +172,13 @@ public:
    * @return        the accessed data.
    *
    **/
-  data_type operator()(std::vector<std::size_t> indices) const
+  data_type operator()(std::vector<std::size_t> const &indices) const
   {
     assert(indices.size() == shape_.size());
     std::size_t  index = ComputeColIndex(indices);
     return this->operator[](index);
   }
-  data_type operator()(std::size_t index) const
+  data_type operator()(std::size_t const &index) const
   {
     assert(index == size_);
     return this->operator[](index);
@@ -189,7 +189,7 @@ public:
    * @param indices     index position in array
    * @param val         value to write
    */
-  void Set(std::vector<std::size_t> indices, data_type val)
+  void Set(std::vector<std::size_t> const &indices, data_type const &val)
   {
     assert(indices.size() == shape_.size());               // dimensionality check not in parent
     this->super_type::Set(ComputeColIndex(indices), val);  // call parent
@@ -198,7 +198,7 @@ public:
    * Gets a value from the array by N-dim index
    * @param indices index to access
    */
-  data_type Get(std::vector<std::size_t> indices) const
+  data_type Get(std::vector<std::size_t> const &indices) const
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
@@ -439,7 +439,7 @@ public:
    * @param scalar to add
    * @return new array output
    */
-  NDArray Add(self_type const &obj1, data_type const &scalar)
+  self_type Add(self_type const &obj1, data_type const &scalar)
   {
     return self_type(super_type::Add(obj1, scalar));
   }
@@ -448,18 +448,17 @@ public:
    * @param other
    * @return
    */
-  NDArray InlineAdd(NDArray &other)
+  self_type InlineAdd(NDArray &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x + y; }, *this, other, ret);
-    return ret;
+    Broadcast([](data_type x, data_type y) { return x + y; }, *this, other, *this);
+    return *this;
   }
   /**
    * adds a scalar to every element in the array and returns the new output
    * @param scalar to add
    * @return new array output
    */
-  NDArray InlineAdd(data_type const &scalar) { return self_type(super_type::InlineAdd(scalar)); }
+  self_type InlineAdd(data_type const &scalar) { return self_type(super_type::InlineAdd(scalar)); }
 
   /**
    * Subtract one ndarray from another and support broadcasting
@@ -477,7 +476,7 @@ public:
    * @param other
    * @return
    */
-  NDArray Subtract(self_type &obj1, data_type const &scalar)
+  self_type Subtract(self_type &obj1, data_type const &scalar)
   {
     return self_type(super_type::Subtract(obj1, scalar));
   }
@@ -486,19 +485,17 @@ public:
    * @param other
    * @return
    */
-  NDArray InlineSubtract(NDArray &other)
+  self_type InlineSubtract(NDArray &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x - y; }, *this, other, ret);
-
-    return ret;
+    Broadcast([](data_type x, data_type y) { return x - y; }, *this, other, *this);
+    return *this;
   }
   /**
    * subtract a scalar from every element in the array and return the new output
    * @param scalar to subtract
    * @return new array output
    */
-  NDArray InlineSubtract(data_type const &scalar)
+  self_type InlineSubtract(data_type const &scalar)
   {
     return self_type(super_type::InlineSubtract(scalar));
   }
@@ -519,7 +516,7 @@ public:
    * @param other
    * @return
    */
-  NDArray Multiply(self_type &obj1, data_type const &scalar)
+  self_type Multiply(self_type &obj1, data_type const &scalar)
   {
     return self_type(super_type::Multiply(obj1, scalar));
   }
@@ -528,19 +525,17 @@ public:
    * @param other
    * @return
    */
-  NDArray InlineMultiply(NDArray &other)
+  self_type InlineMultiply(NDArray &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x * y; }, *this, other, ret);
-
-    return ret;
+    Broadcast([](data_type x, data_type y) { return x * y; }, *this, other, *this);
+    return *this;
   }
   /**
    * multiplies array by a scalar element wise
    * @param scalar to add
    * @return new array output
    */
-  NDArray InlineMultiply(data_type const &scalar)
+  self_type InlineMultiply(data_type const &scalar)
   {
     return self_type(super_type::InlineMultiply(scalar));
   }
@@ -561,7 +556,7 @@ public:
    * @param other
    * @return
    */
-  NDArray Divide(self_type &obj1, data_type const &scalar)
+  self_type Divide(self_type &obj1, data_type const &scalar)
   {
     return self_type(super_type::Divide(obj1, scalar));
   }
@@ -570,10 +565,9 @@ public:
    * @param other
    * @return
    */
-  NDArray InlineDivide(NDArray &other)
+  self_type InlineDivide(NDArray &other)
   {
     Broadcast([](data_type x, data_type y) { return x / y; }, *this, other, *this);
-
     return *this;
   }
   /**
@@ -581,13 +575,13 @@ public:
    * @param scalar to subtract
    * @return new array output
    */
-  NDArray InlineDivide(data_type const &scalar)
+  self_type InlineDivide(data_type const &scalar)
   {
     return self_type(super_type::InlineDivide(scalar));
   }
 
 private:
-  std::size_t ComputeRowIndex(std::vector<std::size_t> &indices) const
+  std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const
   {
     std::size_t index  = 0;
     std::size_t n_dims = indices.size();
@@ -602,7 +596,7 @@ private:
     return index;
   }
 
-  std::size_t ComputeColIndex(std::vector<std::size_t> &indices) const
+  std::size_t ComputeColIndex(std::vector<std::size_t> const &indices) const
   {
     std::size_t index  = 0;
     std::size_t n_dims = indices.size();

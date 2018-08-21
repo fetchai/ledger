@@ -25,41 +25,59 @@
 namespace fetch {
 namespace math {
 
+namespace details {
 template <typename T>
 inline void LogImplementation(T const &array, T &ret)
 {
-  //  using vector_register_type      = typename ARRAY_TYPE::vector_register_type;
-
   ret.ResizeFromShape(array.shape());
 
   for (std::size_t i = 0; i < array.size(); ++i)
   {
     ret[i] = std::log(array[i]);
   }
-  //  ret = array.data().in_parallel().Apply(
-  //      memory::TrivialRange(0, array.size()),
-  //      [](vector_register_type &a) { return std::log(a); });
 }
+template <typename T>
+inline void LogImplementation(T const &array, memory::Range r, T &ret)
+{
+  ret.Reshape(array.shape());
+
+  if (r.is_trivial())
+  {
+    for (std::size_t i = 0; i < array.size(); ++i)
+    {
+      ret[i] = std::log(array[i]);
+    }
+  }
+  else
+  {  // non-trivial range is not vectorised
+    for (std::size_t i = 0; i < array.size(); i += r.step())
+    {
+      ret[i] = std::log(array[i]);
+    }
+  }
+}
+}
+
 template <typename T, typename C = memory::SharedArray<T>>
 inline NDArray<T, C> Log(NDArray<T, C> const &array)
 {
-  NDArray<T, C> ret;
-  LogImplementation<NDArray<T, C>>(array, ret);
-  return ret;
+NDArray<T, C> ret;
+details::LogImplementation<NDArray<T, C>>(array, ret);
+return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline linalg::Matrix<T, C> Log(linalg::Matrix<T, C> const &array)
 {
-  linalg::Matrix<T, C> ret;
-  LogImplementation<linalg::Matrix<T, C>>(array, ret);
-  return ret;
+linalg::Matrix<T, C> ret;
+details::LogImplementation<linalg::Matrix<T, C>>(array, ret);
+return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline RectangularArray<T, C> Log(RectangularArray<T, C> const &array)
 {
-  RectangularArray<T, C> ret;
-  LogImplementation<RectangularArray<T, C>>(array, ret);
-  return ret;
+RectangularArray<T, C> ret;
+details::LogImplementation<RectangularArray<T, C>>(array, ret);
+return ret;
 }
 
 /**
@@ -69,51 +87,27 @@ inline RectangularArray<T, C> Log(RectangularArray<T, C> const &array)
  * @param array         the specified array
  * @return
  */
-template <typename T>
-inline void LogImplementation(T const &array, memory::Range r, T &ret)
-{
-  //  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
 
-  ret.Reshape(array.shape());
-
-  if (r.is_trivial())
-  {
-    for (std::size_t i = 0; i < array.size(); ++i)
-    {
-      ret[i] = std::log(array[i]);
-    }
-    //    ret = array.data().in_parallel().Apply(
-    //        r,
-    //        [](vector_register_type &a) { return std::log(a); });
-  }
-  else
-  {  // non-trivial range is not vectorised
-    for (std::size_t i = 0; i < array.size(); ++i)
-    {
-      ret[i] = std::log(array[i]);
-    }
-  }
-}
 template <typename T, typename C = memory::SharedArray<T>>
 inline NDArray<T, C> Log(NDArray<T, C> const &array, memory::Range r)
 {
-  NDArray<T, C> ret;
-  LogImplementation<NDArray<T, C>>(array, r, ret);
-  return ret;
+NDArray<T, C> ret;
+details::LogImplementation<NDArray<T, C>>(array, r, ret);
+return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline linalg::Matrix<T, C> Log(linalg::Matrix<T, C> const &array, memory::Range r)
 {
-  linalg::Matrix<T, C> ret;
-  LogImplementation<linalg::Matrix<T, C>>(array, r, ret);
-  return ret;
+linalg::Matrix<T, C> ret;
+details::LogImplementation<linalg::Matrix<T, C>>(array, r, ret);
+return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline RectangularArray<T, C> Log(RectangularArray<T, C> const &array, memory::Range r)
 {
-  RectangularArray<T, C> ret;
-  LogImplementation<RectangularArray<T, C>>(array, r, ret);
-  return ret;
+RectangularArray<T, C> ret;
+details::LogImplementation<RectangularArray<T, C>>(array, r, ret);
+return ret;
 }
 
 }  // namespace math

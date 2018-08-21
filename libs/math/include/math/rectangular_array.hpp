@@ -469,12 +469,10 @@ public:
 
     super_type::ReplaceData(padded_width_ * padded_height_, new_arr);
 
-    if (h < height_)
-      if (w < width_)
-      {
-        width_ = w;
-        shape_ = {height_, width_};
-      }
+    if (h < height_) height_ = h;
+    if (w < width_) width_ = w;
+    shape_ = {height_, width_};
+
   }
 
   /**
