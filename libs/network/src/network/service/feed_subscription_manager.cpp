@@ -48,9 +48,11 @@ void FeedSubscriptionManager::PublishToAllWorker()
     auto feed = feed_;
     fetch::logger.Warn("OMG AttachToService", feed);
     publisher_->create_publisher(feed_, [service,feed,this](fetch::byte_array::ConstByteArray const &msg) {
+
       serializer_type params;
       fetch::logger.Warn("OMG SERVICE_FEED", feed);
       params << SERVICE_FEED << feed;
+
       uint64_t p = params.Tell();
       params << subscription_handler_type(0);  // placeholder
 

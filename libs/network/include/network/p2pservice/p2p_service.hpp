@@ -208,6 +208,7 @@ public:
 
     // Getting own IP seen externally
     byte_array::ByteArray address;
+
     auto                  p = client->Call(IDENTITY, P2PIdentityProtocol::EXCHANGE_ADDRESS, host);
     /*
       if (!p.Wait(20))
@@ -482,6 +483,7 @@ protected:
       create_count = 1;
     }
 
+    // TODO(EJF): This seems like the check should be done via the certificate
     byte_array::ConstByteArray my_pk;
     {
       std::lock_guard<mutex::Mutex> lock(my_details_->mutex);
@@ -495,10 +497,12 @@ protected:
     {
       for (auto &e : s.second.entry_points)
       {
+        // TODO(EJF): Check performed here (see above comment)
         if (e.identity.identifier() == my_pk) continue;
 
         if (e.is_discovery)
         {
+          // TODO(EJF): Debugging
           crypto::Prover const *cert  = certificate_.get();
 
           bool const is_ourself = e.identity.identifier() == cert->identity().identifier();

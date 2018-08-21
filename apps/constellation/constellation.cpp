@@ -152,6 +152,10 @@ void Constellation::Run(peer_list_type const &initial_peers)
       {
         main_chain_remote_->TryConnect(ep);
       }
+      else
+      {
+        fetch::logger.Warn("Main chain remote is invalid, unable to dispatch this request");
+      }
     }
     if (ep.is_lane)
     {
@@ -160,6 +164,10 @@ void Constellation::Run(peer_list_type const &initial_peers)
       if (storage_)
       {
         storage_->TryConnect(ep);
+      }
+      else
+      {
+        fetch::logger.Warn("Storage is not currently available");
       }
     }
   });
