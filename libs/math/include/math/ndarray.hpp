@@ -191,8 +191,8 @@ public:
    */
   void Set(std::vector<std::size_t> indices, data_type val)
   {
-    assert(indices.size() == shape_.size());         // dimensionality check not in parent
-    this->AssignVal(ComputeColIndex(indices), val);  // call parent
+    assert(indices.size() == shape_.size());               // dimensionality check not in parent
+    this->super_type::Set(ComputeColIndex(indices), val);  // call parent
   }
   /**
    * Gets a value from the array by N-dim index
@@ -374,6 +374,9 @@ public:
   {
     std::vector<std::size_t> return_shape{shape()};
     return_shape.erase(return_shape.begin() + int(axis), return_shape.begin() + int(axis) + 1);
+
+    assert(axis < return_shape.size());
+
     self_type                                  ret{return_shape};
     NDArrayIterator<data_type, container_type> return_iterator{ret};
 
@@ -569,10 +572,9 @@ public:
    */
   NDArray InlineDivide(NDArray &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x / y; }, *this, other, ret);
+    Broadcast([](data_type x, data_type y) { return x / y; }, *this, other, *this);
 
-    return ret;
+    return *this;
   }
   /**
    * Divide array by a scalar elementwise
@@ -592,10 +594,10 @@ private:
     std::size_t base   = 1;
 
     // loop through all dimensions
-    for (std::size_t i = n_dims - 1; i == 0; --i)
+    for (std::size_t i = n_dims; i == 0; --i)
     {
-      index += indices[i] * base;
-      base *= shape_[i];
+      index += indices[i - 1] * base;
+      base *= shape_[i - 1];
     }
     return index;
   }

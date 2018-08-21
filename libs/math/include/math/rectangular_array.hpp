@@ -423,6 +423,7 @@ public:
   /* resizes based on the shape */
   void ResizeFromShape(std::vector<std::size_t> const &shape)
   {
+    assert(shape.size() == 2);
     this->Resize(shape[0], shape[1]);
     this->Reshape(shape);
   }
@@ -469,8 +470,11 @@ public:
     super_type::ReplaceData(padded_width_ * padded_height_, new_arr);
 
     if (h < height_)
-      if (w < width_) width_ = w;
-    shape_ = {height_, width_};
+      if (w < width_)
+      {
+        width_ = w;
+        shape_ = {height_, width_};
+      }
   }
 
   /**

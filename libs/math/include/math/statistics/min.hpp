@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/linalg/matrix.hpp"
+#include "math/ndarray.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/range.hpp"
 
@@ -27,7 +29,45 @@
 
 namespace fetch {
 namespace math {
+
+template <typename T, typename C>
+class NDArray;
+
 namespace statistics {
+
+namespace details {
+
+template <typename T>
+inline void MinImplementation(T const &array, typename T::type &ret)
+{
+  using vector_register_type = typename T::vector_register_type;
+
+  ret = array.data().in_parallel().Reduce(
+      memory::TrivialRange(0, array.size()),
+      [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
+}
+
+template <typename T>
+inline void MinImplementation(T const &array, memory::Range r, typename T::type &ret)
+{
+  using vector_register_type = typename T::vector_register_type;
+
+  if (r.is_trivial())
+  {
+    ret = array.data().in_parallel().Reduce(
+        r, [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
+  }
+  else
+  {  // non-trivial range is not vectorised
+    typename T::type ret = std::numeric_limits<typename T::type>::max();
+    for (auto i : array)
+    {
+      ret = std::min(ret, i);
+    }
+  }
+}
+
+}  // namespace details
 
 /**
  * Min function for two values
@@ -48,16 +88,25 @@ inline T Min(T const &datum1, T const &datum2)
  * @param array
  * @return
  */
-template <typename ARRAY_TYPE>
-inline typename ARRAY_TYPE::type Min(ARRAY_TYPE const &array)
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Min(NDArray<T, C> const &array)
 {
-  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
-  using data_type            = typename ARRAY_TYPE::type;
-
-  data_type ret = array.data().in_parallel().Reduce(
-      memory::TrivialRange(0, array.size()),
-      [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
-
+  T ret;
+  details::MinImplementation<NDArray<T, C>>(array, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Min(linalg::Matrix<T, C> const &array)
+{
+  T ret;
+  details::MinImplementation<linalg::Matrix<T, C>>(array, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Min(RectangularArray<T, C> const &array)
+{
+  T ret;
+  details::MinImplementation<RectangularArray<T, C>>(array, ret);
   return ret;
 }
 
@@ -69,29 +118,29 @@ inline typename ARRAY_TYPE::type Min(ARRAY_TYPE const &array)
  * @param a
  * @return
  */
-template <typename ARRAY_TYPE>
-inline typename ARRAY_TYPE::type Min(ARRAY_TYPE const &a, memory::Range r)
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Min(NDArray<T, C> const &array, memory::Range r)
 {
-  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
-  using data_type            = typename ARRAY_TYPE::type;
-
-  if (r.is_trivial())
-  {
-    data_type ret = a.data().in_parallel().Reduce(
-        r, [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
-
-    return ret;
-  }
-  else
-  {  // non-trivial range is not vectorised
-    data_type ret = std::numeric_limits<data_type>::max();
-    for (auto i : a)
-    {
-      ret = std::min(ret, i);
-    }
-  }
+  T ret;
+  details::MinImplementation<NDArray<T, C>>(array, r, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Min(linalg::Matrix<T, C> const &array, memory::Range r)
+{
+  T ret;
+  details::MinImplementation<linalg::Matrix<T, C>>(array, r, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Min(RectangularArray<T, C> const &array, memory::Range r)
+{
+  T ret;
+  details::MinImplementation<RectangularArray<T, C>>(array, r, ret);
+  return ret;
 }
 
 }  // namespace statistics
+
 }  // namespace math
 }  // namespace fetch

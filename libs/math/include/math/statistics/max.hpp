@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/linalg/matrix.hpp"
+#include "math/ndarray.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/range.hpp"
 
@@ -27,7 +29,45 @@
 
 namespace fetch {
 namespace math {
+
+template <typename T, typename C>
+class NDArray;
+
 namespace statistics {
+
+namespace details {
+
+template <typename T>
+inline void MaxImplementation(T const &array, typename T::type &ret)
+{
+  using vector_register_type = typename T::vector_register_type;
+
+  ret = array.data().in_parallel().Reduce(
+      memory::TrivialRange(0, array.size()),
+      [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
+}
+
+template <typename T>
+inline void MaxImplementation(T const &array, memory::Range r, typename T::type &ret)
+{
+  using vector_register_type = typename T::vector_register_type;
+
+  if (r.is_trivial())
+  {
+    ret = array.data().in_parallel().Reduce(
+        r, [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
+  }
+  else
+  {  // non-trivial range is not vectorised
+    typename T::type ret = -std::numeric_limits<typename T::type>::max();
+    for (auto i : array)
+    {
+      ret = std::max(ret, i);
+    }
+  }
+}
+
+}  // namespace details
 
 /**
  * Max function for two values
@@ -44,20 +84,30 @@ inline T Max(T const &datum1, T const &datum2)
 
 /**
  * Max function for array
- * @tparam ARRAY_TYPE
+ * @tparam T        data type
+ * @tparam C        container type
  * @param array
  * @return
  */
-template <typename ARRAY_TYPE>
-inline typename ARRAY_TYPE::type Max(ARRAY_TYPE const &array)
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(NDArray<T, C> const &array)
 {
-  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
-  using data_type            = typename ARRAY_TYPE::type;
-
-  data_type ret = array.data().in_parallel().Reduce(
-      memory::TrivialRange(0, array.size()),
-      [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
-
+  T ret;
+  details::MaxImplementation<NDArray<T, C>>(array, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(linalg::Matrix<T, C> const &array)
+{
+  T ret;
+  details::MaxImplementation<linalg::Matrix<T, C>>(array, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(RectangularArray<T, C> const &array)
+{
+  T ret;
+  details::MaxImplementation<RectangularArray<T, C>>(array, ret);
   return ret;
 }
 
@@ -69,27 +119,26 @@ inline typename ARRAY_TYPE::type Max(ARRAY_TYPE const &array)
  * @param a
  * @return
  */
-template <typename ARRAY_TYPE>
-inline typename ARRAY_TYPE::type Max(ARRAY_TYPE const &a, memory::Range r)
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(NDArray<T, C> const &array, memory::Range r)
 {
-  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
-  using data_type            = typename ARRAY_TYPE::type;
-
-  if (r.is_trivial())
-  {
-    data_type ret = a.data().in_parallel().Reduce(
-        r, [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
-
-    return ret;
-  }
-  else
-  {  // non-trivial range is not vectorised
-    data_type ret = std::numeric_limits<data_type>::min();
-    for (auto i : a)
-    {
-      ret = std::max(ret, i);
-    }
-  }
+  T ret;
+  details::MaxImplementation<NDArray<T, C>>(array, r, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(linalg::Matrix<T, C> const &array, memory::Range r)
+{
+  T ret;
+  details::MaxImplementation<linalg::Matrix<T, C>>(array, r, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(RectangularArray<T, C> const &array, memory::Range r)
+{
+  T ret;
+  details::MaxImplementation<RectangularArray<T, C>>(array, r, ret);
+  return ret;
 }
 
 }  // namespace statistics

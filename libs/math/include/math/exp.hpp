@@ -20,23 +20,44 @@
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/range.hpp"
 
+#include "math/linalg/matrix.hpp"
+#include "math/ndarray.hpp"
+
 #include <cmath>
 
 namespace fetch {
 namespace math {
 
-template <typename ARRAY_TYPE>
-inline ARRAY_TYPE Exp(ARRAY_TYPE const &array)
+// template <typename ARRAY_TYPE>
+// inline ARRAY_TYPE Exp(ARRAY_TYPE const &array)
+template <typename T>
+inline T ExpImplementation(T const &array)
 {
-
-  ARRAY_TYPE ret;
+  T ret;
   ret.ResizeFromShape(array.shape());
   for (std::size_t i = 0; i < array.size(); ++i)
   {
     ret[i] = std::exp(array[i]);
   }
-
   return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline NDArray<T, C> Exp(NDArray<T, C> const &array)
+{
+  NDArray<T, C> ret;
+  return ExpImplementation<NDArray<T, C>>(ret);
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline linalg::Matrix<T, C> Exp(linalg::Matrix<T, C> const &array)
+{
+  linalg::Matrix<T, C> ret;
+  return ExpImplementation<linalg::Matrix<T, C>>(ret);
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline RectangularArray<T, C> Exp(RectangularArray<T, C> const &array)
+{
+  RectangularArray<T, C> ret;
+  return ExpImplementation<RectangularArray<T, C>>(ret);
 }
 
 /**
@@ -46,13 +67,12 @@ inline ARRAY_TYPE Exp(ARRAY_TYPE const &array)
  * @param array         the specified array
  * @return
  */
-template <typename ARRAY_TYPE>
-inline ARRAY_TYPE Exp(ARRAY_TYPE const &array, memory::Range r)
+template <typename T>
+inline T ExpImplementation(T const &array, memory::Range r)
 {
-  //  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
-
-  ARRAY_TYPE ret;
+  T ret;
   ret.Reshape(array.shape());
+  //  using vector_register_type = typename ARRAY_TYPE::vector_register_type;
 
   if (r.is_trivial())
   {
@@ -72,6 +92,24 @@ inline ARRAY_TYPE Exp(ARRAY_TYPE const &array, memory::Range r)
     }
   }
   return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline NDArray<T, C> Exp(NDArray<T, C> const &array, memory::Range r)
+{
+  NDArray<T, C> ret;
+  return ExpImplementation<NDArray<T, C>>(ret);
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline linalg::Matrix<T, C> Exp(linalg::Matrix<T, C> const &array, memory::Range r)
+{
+  linalg::Matrix<T, C> ret;
+  return ExpImplementation<linalg::Matrix<T, C>>(ret);
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline RectangularArray<T, C> Exp(RectangularArray<T, C> const &array, memory::Range r)
+{
+  RectangularArray<T, C> ret;
+  return ExpImplementation<RectangularArray<T, C>>(ret);
 }
 
 }  // namespace math

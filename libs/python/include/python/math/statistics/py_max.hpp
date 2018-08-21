@@ -16,7 +16,6 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "math/statistics/max.hpp"
@@ -42,8 +41,6 @@ inline void BuildMaxStatistics(std::string const &custom_name, pybind11::module 
       .def(custom_name.c_str(), &WrapperMax<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperMax<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperMax<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperMax<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperMax<ShapeLessArray<float>>)
       .def(custom_name.c_str(), &WrapperMax<NDArray<double>>)
       .def(custom_name.c_str(), &WrapperMax<NDArray<float>>);
 }

@@ -237,7 +237,7 @@ TEST(ndarray, 6d_irregular_view)
   }
 
   // extract the view shape into a new ndarray
-  std::vector<std::size_t> new_shape = {0, 1, 2, 3, 4, 5, 6};
+  std::vector<std::size_t> new_shape = {1, 2, 3, 4, 5, 6};
   _A<double>               new_array = _A<double>(new_shape);
   new_array                          = test_array.GetRange(array_view);
 

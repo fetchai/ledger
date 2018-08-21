@@ -168,6 +168,10 @@ public:
   friend bool UpgradeIteratorFromBroadcast(std::vector<std::size_t> const &,
                                            NDArrayIterator<A, B> &);
 
+  /**
+   * returns the n-dimensional index of the current position
+   * @return
+   */
   std::vector<std::size_t> GetNDimIndex()
   {
     std::vector<std::size_t> cur_index;
@@ -175,41 +179,6 @@ public:
     {
       cur_index.push_back(ranges_[j].current_n_dim_position);
     }
-
-    //    // TODO: ranges_ needs to convert current position in terms of n-dim
-    //    std::size_t cur_volume, prev_volume = 1;
-    ////    for (std::size_t i = ranges_.size() - 1; i >= 0; --i)
-    //    for (std::size_t i = 0; i < ranges_.size(); ++i)
-    //    {
-    //      cur_volume *= ranges_[i].total_steps;
-    //      if (position_ > cur_volume)
-    //      {
-    //        // pass
-    //      }
-    //      else
-    //      {
-    //        for (std::size_t j = 0; j < i; ++j)
-    //        {
-    //          cur_index.push_back(ranges_[j].current_n_dim_position);
-    //        }
-    //      }
-    //      prev_volume = cur_volume;
-    //      cur_index.push_back(ranges_.current_n_dim_position);
-    //    }
-    //
-    //
-    //
-    //    std::size_t index  = 0;
-    //    std::size_t n_dims = indices.size();
-    //    std::size_t base   = 1;
-    //
-    //    // loop through all dimensions
-    //    for (std::size_t i = 0; i < n_dims; ++i)
-    //    {
-    //      index += indices[i] * base;
-    //      base *= shape_[i];
-    //    }
-    //    return index
 
     return cur_index;
   }
