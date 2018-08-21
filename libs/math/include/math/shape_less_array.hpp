@@ -1707,7 +1707,7 @@ public:
 
   /* Returns the capacity of the array. */
   size_type capacity() const { return data_.padded_size(); }
-
+  size_type padded_size() const { return data_.padded_size(); }
 private:
   container_type data_;
   std::size_t    size_ = 0;

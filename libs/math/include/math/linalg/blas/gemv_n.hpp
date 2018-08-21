@@ -6,23 +6,19 @@
  * import numpy as np
  * import copy
  *
- * def swap_all(n, x, m, y, p):
- *   A = copy.copy(x)    
- *   if p >= 0 and m >= 0:
- *     x[:(m * n):m] = y[:(p * n):p]
- *     y[:(p * n):p] = A[:(m * n):m]    
- *   elif p >= 0 and m < 0:        
- *     x[:(m * n + m):m] = y[:(p * n):p]
- *     y[:(p * n):p] = A[:(m * n + m):m] 
- *   elif p < 0 and m >= 0:
- *     x[:(m * n):m] = y[:(p * n + p):p]
- *     y[:(p * n + p):p] = A[:(m * n):m]
+ * def gemv_n(alpha, A, x, n, beta, y, m):
+ *   leny = A.shape[0]
+ *   lenx = A.shape[1]      
+ *   if m >= 0 and n >= 0:
+ *     y[::m] = alpha * np.dot(A, x[::n]) + beta * y[::m]
+ *   elif m < 0 and n >= 0:
+ *     y[-(leny -1)*m::m] = alpha * np.dot(A, x[::n]) + beta * y[-(leny -1)*m::m]
+ *   elif m >= 0 and n < 0:
+ *     y[::m] = alpha * np.dot(A, x[-(lenx -1)*n::n]) + beta * y[::m]
  *   else:
- *     print("negative")
- *     x[m *(-n + 1)::m] = y[p *(-n + 1)::p]
- *     y[p *(-n + 1)::p] = A[m *(-n + 1)::m]    
+ *     y[-(leny -1)*m::m] = alpha * np.dot(A, x[-(lenx -1)*n::n]) + beta * y[-(leny -1)*m::m]
  *   
- *   return x, y
+ *   return y
  *
  * Authors:
  *  - Fetch.AI Limited             (C++ version)
@@ -45,15 +41,15 @@ namespace linalg
 
 template<typename S, uint64_t V>
 class Blas< S, 
-            Signature( _x, _y <= _n, _x, _m, _y, _p ),
-            Computes( _x, _y = _y, _x ), 
+            Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ),
+            Computes( _y = _alpha * _A * _x + _beta * _y ), 
             V>
 {
 public:
   using type = S;
   using vector_register_type = typename Matrix< type >::vector_register_type;
   
-  void operator()(int const &n, ShapeLessArray< type > &dx, int const &incx, ShapeLessArray< type > &dy, int const &incy ) const;
+  void operator()(type const &alpha, Matrix< type > const &a, ShapeLessArray< type > const &x, int const &incx, type const &beta, ShapeLessArray< type > &y, int const &incy ) const;
 };
 
 } // namespace linalg

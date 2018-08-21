@@ -46,7 +46,7 @@ inline A &PairWiseDistance(A &r, A const &a, F &&metric)
     {
       typename A::vector_slice_type slice2 = a.data().slice(offset2, a.width());
       offset2 += a.padded_width();
-      r(0, k++) = metric(slice1, slice2);
+      r(std::size_t(0), k++) = metric(slice1, slice2);
     }
   }
 

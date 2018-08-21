@@ -92,14 +92,10 @@ public:
     std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(type));
   }
 
-  // TODO(unknown): THis is ugly. The right way to do this would be to have a separate
-  // constant class that is return for slice(...) const
   vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const
   {
     assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
-    // TODO(unknown): Assert unneccessary
-    //    assert(std::size_t(length / E_SIMD_COUNT) * E_SIMD_COUNT == length);
-    assert((length + offset) <= size_);
+    assert((length + offset) <= padded_size());
     return vector_slice_type(pointer_ + offset, length);
   }
 
@@ -118,7 +114,7 @@ public:
   {
     assert(pointer_ != nullptr);
 
-    assert(n < padded_size());
+    assert(std::size_t(n) < padded_size());
     return pointer_[n];
   }
 
