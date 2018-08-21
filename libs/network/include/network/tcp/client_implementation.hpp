@@ -109,7 +109,7 @@ public:
           if (!selfLock) return;
 
           LOG_STACK_TRACE_POINT;
-          FETCH_LOG_INFO(LOGGING_NAME,"Finished connecting.");
+          FETCH_LOG_DEBUG(LOGGING_NAME,"Finished connecting.");
           if (!ec)
           {
             FETCH_LOG_DEBUG(LOGGING_NAME,"Connection established!");

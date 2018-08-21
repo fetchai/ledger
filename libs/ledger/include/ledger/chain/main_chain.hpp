@@ -158,7 +158,7 @@ public:
     bool heaviestAdvanced = UpdateTips(block, prev_block);
 
     // Add block
-    FETCH_LOG_INFO(LOGGING_NAME,"Adding block to chain: ", ToHex(block.hash()));
+    FETCH_LOG_INFO(LOGGING_NAME,"Adding block to chain: ", ToBase64(block.hash()));
     blockChain_[block.hash()] = block;
 
     if (heaviestAdvanced)

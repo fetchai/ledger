@@ -108,7 +108,7 @@ public:
 
   executor_type CreateExecutor()
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Creating local executor...");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Creating local executor...");
     return executor_type{new ledger::Executor(storage_)};
   }
 

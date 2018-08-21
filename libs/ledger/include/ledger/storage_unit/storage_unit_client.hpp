@@ -140,7 +140,7 @@ public:
     // TODO(issue 24): Verify expected identity
 
     assert(lane < lanes_.size());
-    FETCH_LOG_INFO(LOGGING_NAME,"Adding lane ", lane);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Adding lane ", lane);
 
     lanes_[lane] = client;
 

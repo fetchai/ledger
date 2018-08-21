@@ -187,8 +187,12 @@ public:
     Start(cb);
   }
 
+  // TODO(EJF): Protected?
   virtual void Start(std::function<void (void)> function )
   {
+    // TODO(EJF): Should monitor the number of threads that are being created
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Starting thread manager: ", number_of_threads_);
+
     if (threads_.size() == 0)
     {
       for (std::size_t i = 0; i < number_of_threads_; ++i)
@@ -203,7 +207,6 @@ public:
     std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
     if (threads_.size() == 0)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"Starting thread manager");
       shared_ptr_type self = shared_from_this();
       auto cb = [self]() { self->ProcessLoop(); };
       Start(cb);

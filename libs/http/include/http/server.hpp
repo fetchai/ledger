@@ -82,7 +82,7 @@ public:
       socRef   = soc;
       accepRef = accep;
 
-      FETCH_LOG_INFO(LOGGING_NAME,"Starting HTTPServer Accept");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Starting HTTPServer Accept");
       HTTPServer::Accept(soc, accep, manager);
     });
   }
@@ -188,7 +188,7 @@ public:
       HTTPServer::Accept(s, a, m);
     };
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Starting HTTPServer async accept");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Starting HTTPServer async accept");
     accep->async_accept(*soc, cb);
   }
 

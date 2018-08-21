@@ -178,8 +178,6 @@ private:
       auto subscription_handler_function = new service::Function<void(block_type)>(subscription_handler_cb);
 
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"### Subscribing to the protocol...");
-
         LOG_STACK_TRACE_POINT;
         blockPublishSubscriptions_.Subscribe(service_client, protocol_, BLOCK_PUBLISH,
                                              name, // TODO(kll) make a connection name here.
@@ -236,11 +234,11 @@ private:
       {
         block.UpdateDigest();
 
-        FETCH_LOG_WARN(LOGGING_NAME,"OMG Adding? the block to the chain: ", block.summarise());
+        FETCH_LOG_DEBUG(LOGGING_NAME,"OMG Adding? the block to the chain: ", block.summarise());
 
         if (chain_->AddBlock(block))
         {
-          FETCH_LOG_WARN(LOGGING_NAME,"OMG Adding the block to the chain: ", block.summarise());
+          FETCH_LOG_DEBUG(LOGGING_NAME,"OMG Adding the block to the chain: ", block.summarise());
 
           forward_blocks_.Add(block);
           this->thread_pool_->Post([this]() { this->AddPendingBlocks(); });
@@ -277,7 +275,7 @@ private:
         BlockType tmp;
         if (chain_->Get(blk.hash(), tmp))
         {
-          FETCH_LOG_WARN(LOGGING_NAME,"OMG LOOOSE?:", tmp.hashString());
+          FETCH_LOG_DEBUG(LOGGING_NAME,"OMG LOOOSE?:", tmp.hashString());
           if (tmp.loose())
           {
             actually_still_loose.push_back(blk.hash());
@@ -288,7 +286,7 @@ private:
       {
         block_type tmp;
         chain_ -> Get(blkhash, tmp);
-        FETCH_LOG_WARN(LOGGING_NAME,"OMG LOOOSE:", tmp.hashString());
+        FETCH_LOG_DEBUG(LOGGING_NAME,"OMG LOOOSE:", tmp.hashString());
 
         blockPublishSubscriptions_.VisitSubscriptions(
             [this,blkhash](std::shared_ptr<fetch::service::ServiceClient> client){

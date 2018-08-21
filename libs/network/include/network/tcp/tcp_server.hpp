@@ -59,7 +59,9 @@ public:
     : network_manager_{network_manager}, port_{port}, request_mutex_{}
   {
     LOG_STACK_TRACE_POINT;
-    FETCH_LOG_INFO(LOGGING_NAME,"Creating TCP server");
+
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Creating TCP server");
+
     manager_ = std::make_shared<ClientManager>(*this);
 
     std::shared_ptr<int> destruct_guard = destruct_guard_;
@@ -79,14 +81,14 @@ public:
 
           acceptor_ = acceptor;
 
-          FETCH_LOG_INFO(LOGGING_NAME,"Starting TCP server acceptor loop");
+          FETCH_LOG_DEBUG(LOGGING_NAME,"Starting TCP server acceptor loop");
           acceptor_ = acceptor;
 
           if (acceptor)
           {
             running_ = true;
             Accept(acceptor);
-            FETCH_LOG_INFO(LOGGING_NAME,"Accepting TCP server connections");
+            FETCH_LOG_DEBUG(LOGGING_NAME,"Accepting TCP server connections");
           }
         }
         catch (std::exception &e)

@@ -155,6 +155,7 @@ struct CommandLineArguments
   friend std::ostream &operator<<(std::ostream &              s,
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
+    s << '\n';
     s << "port...........: " << args.port << std::endl;
     s << "network id.....: 0x" << std::hex << args.network_id << std::dec << std::endl;
     s << "num executors..: " << args.num_executors << std::endl;

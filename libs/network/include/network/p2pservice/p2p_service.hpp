@@ -76,8 +76,6 @@ public:
              fetch::network::NetworkManager const &tm)
     : super_type(port, tm), manager_(tm), certificate_(std::move(certificate))
   {
-    FETCH_LOG_INFO(LOGGING_NAME,"Cerfitcation address: ", certificate_.get());
-
     running_     = false;
     thread_pool_ = network::MakeThreadPool(1);
     FETCH_LOG_WARN(LOGGING_NAME,"Establishing P2P Service on rpc://0.0.0.0:", port);

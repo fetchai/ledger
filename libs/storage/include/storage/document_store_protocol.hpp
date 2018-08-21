@@ -76,7 +76,8 @@ public:
 
     SetLaneLog2(maxlanes);
     assert(maxlanes == (1u << log2_lanes_));
-    FETCH_LOG_INFO(LOGGING_NAME,"Spinning up lane ", lane_assignment_);
+
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Spinning up lane ", lane_assignment_);
 
     this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
     this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetOrCreateLaneChecked);
