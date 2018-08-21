@@ -66,6 +66,8 @@ public:
 
   using thread_pool_type = network::ThreadPool;
 
+  static constexpr char const *LOGGING_NAME = "MainChainService";
+
   enum
   {
     IDENTITY = 1,
@@ -78,7 +80,7 @@ public:
     : super_type(port, tm)
   {
 
-    fetch::logger.Warn("Establishing mainchain Service on rpc://127.0.0.1:", port);
+    FETCH_LOG_WARN(LOGGING_NAME,"Establishing mainchain Service on rpc://127.0.0.1:", port);
 
     my_details_.Make();
 

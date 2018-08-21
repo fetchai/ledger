@@ -53,6 +53,8 @@ public:
   using network_manager_type       = fetch::network::NetworkManager;
   using lane_type                  = LaneIdentity::lane_type;
 
+  static constexpr char const *LOGGING_NAME = "StorageUnitClient";
+
   explicit StorageUnitClient(network_manager_type const &tm) : network_manager_(tm)
   {
     id_ = "my-fetch-id";
@@ -104,7 +106,7 @@ public:
 
     if (connection_timeout)
     {
-      logger.Warn("Connection timed out - closing in StorageUnitClient::AddLaneConnection:1:");
+      FETCH_LOG_WARN(LOGGING_NAME,"Connection timed out - closing in StorageUnitClient::AddLaneConnection:1:");
       client->Close();
       client.reset();
       return crypto::InvalidIdentity();
@@ -118,7 +120,7 @@ public:
     FETCH_LOG_PROMISE();
     if ((!p1.Wait(1000)) || (!p2.Wait(1000)) || (!p3.Wait(1000)))
     {
-      fetch::logger.Warn("Client timeout when trying to get identity details.");
+      FETCH_LOG_WARN(LOGGING_NAME,"Client timeout when trying to get identity details.");
       client->Close();
       client.reset();
       return crypto::InvalidIdentity();
@@ -138,7 +140,7 @@ public:
     // TODO(issue 24): Verify expected identity
 
     assert(lane < lanes_.size());
-    fetch::logger.Info("Adding lane ", lane);
+    FETCH_LOG_INFO(LOGGING_NAME,"Adding lane ", lane);
 
     lanes_[lane] = client;
 

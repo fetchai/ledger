@@ -24,6 +24,7 @@
 #include "network/p2pservice/explore_http_interface.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 
+
 namespace fetch {
 
 Constellation::Constellation(certificate_type &&certificate, uint16_t port_start,
@@ -38,7 +39,7 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
 {
-  fetch::logger.Info("Constellation :: ", interface_address, " P ", port_start, " E ",
+  FETCH_LOG_INFO(LOGGING_NAME,"Constellation :: ", interface_address, " P ", port_start, " E ",
                      num_executors, " S ", num_lanes, "x", num_slices);
 
   // determine how many threads the network manager will require
@@ -143,7 +144,7 @@ void Constellation::Run(peer_list_type const &initial_peers)
   p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
     // std::cout << "MAKING CALL ::: " << std::endl;
 
-    fetch::logger.Info("OnPeerUpdateProfile: ", byte_array::ToBase64(ep.identity.identifier()),
+    FETCH_LOG_INFO(LOGGING_NAME,"OnPeerUpdateProfile: ", byte_array::ToBase64(ep.identity.identifier()),
                        " mainchain?: ", ep.is_mainchain.load(), " lane:? ", ep.is_lane.load());
 
     if (ep.is_mainchain)
@@ -154,12 +155,12 @@ void Constellation::Run(peer_list_type const &initial_peers)
       }
       else
       {
-        fetch::logger.Warn("Main chain remote is invalid, unable to dispatch this request");
+        FETCH_LOG_WARN(LOGGING_NAME,"Main chain remote is invalid, unable to dispatch this request");
       }
     }
     if (ep.is_lane)
     {
-      fetch::logger.Info("Trying to make that connection noow.....");
+      FETCH_LOG_INFO(LOGGING_NAME,"Trying to make that connection noow.....");
 
       if (storage_)
       {
@@ -167,7 +168,7 @@ void Constellation::Run(peer_list_type const &initial_peers)
       }
       else
       {
-        fetch::logger.Warn("Storage is not currently available");
+        FETCH_LOG_WARN(LOGGING_NAME,"Storage is not currently available");
       }
     }
   });
@@ -179,7 +180,7 @@ void Constellation::Run(peer_list_type const &initial_peers)
   // will be too fast in trying to set up lane connections.
   for (auto const &peer : initial_peers)
   {
-    fetch::logger.Warn("Connecting to ", peer.address(), ":", peer.port());
+    FETCH_LOG_WARN(LOGGING_NAME,"Connecting to ", peer.address(), ":", peer.port());
 
     LOG_STACK_TRACE_POINT;
 
@@ -189,11 +190,11 @@ void Constellation::Run(peer_list_type const &initial_peers)
   // monitor loop
   while (active_)
   {
-    logger.Debug("Still alive...");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
     std::this_thread::sleep_for(std::chrono::seconds{5});
   }
 
-  logger.Debug("Exiting...");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Exiting...");
 }
 
 }  // namespace fetch

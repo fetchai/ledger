@@ -33,6 +33,8 @@ using namespace fetch::network;
 using namespace fetch::common;
 using namespace fetch::byte_array;
 
+static constexpr char const *LOGGING_NAME = "TcpClientServerStressTests";
+
 std::atomic<std::size_t> clientReceivedCount_{0};
 std::atomic<std::size_t> serverReceivedCount{0};
 
@@ -244,7 +246,7 @@ int main(int argc, char *argv[])
     s >> iterations;
   }
 
-  fetch::logger.Info("Running test iterations: ", iterations);
+  FETCH_LOG_INFO(LOGGING_NAME,"Running test iterations: ", iterations);
 
   for (std::size_t i = 0; i < iterations; ++i)
   {

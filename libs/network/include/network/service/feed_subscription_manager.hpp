@@ -60,6 +60,8 @@ public:
   using connection_handle_type     = uint64_t;
   using publishing_workload_type = std::tuple<service_type*, connection_handle_type, network::message_type const>;
 
+  static constexpr char const *LOGGING_NAME = "FeedSubscriptionManager";
+
   /* A feed that services can subscribe to.
    * @feed is the feed number defined in the protocol.
    * @publisher is an implementation class that subclasses

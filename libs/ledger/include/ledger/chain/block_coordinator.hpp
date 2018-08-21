@@ -36,6 +36,8 @@ public:
   using block_body_type = std::shared_ptr<BlockBody>;
   using status_type     = ledger::ExecutionManagerInterface::Status;
 
+  static constexpr char const *LOGGING_NAME = "BlockCoordinator";
+
   BlockCoordinator(chain::MainChain &mainChain, ledger::ExecutionManagerInterface &executionManager)
     : mainChain_{mainChain}, executionManager_{executionManager}
   {}
@@ -50,7 +52,7 @@ public:
 
     if (block.hash() == heaviestHash)
     {
-      fetch::logger.Info("New block: ", ToBase64(block.hash()), " from: ", ToBase64(block.prev()));
+      FETCH_LOG_INFO(LOGGING_NAME,"New block: ", ToBase64(block.hash()), " from: ", ToBase64(block.prev()));
 
       {
         std::lock_guard<mutex_type> lock(mutex_);
@@ -78,7 +80,7 @@ public:
         // debug
         if (!executing_block && block)
         {
-          fetch::logger.Warn("Block Completed: ", ToBase64(block->hash));
+          FETCH_LOG_WARN(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
           block.reset();
         }
 
@@ -108,18 +110,18 @@ public:
 
         if (schedule_block && block)
         {
-          fetch::logger.Warn("Attempting exec on block: ", ToBase64(block->hash));
+          FETCH_LOG_WARN(LOGGING_NAME,"Attempting exec on block: ", ToBase64(block->hash));
 
           // execute the block
           status_type const status = executionManager_.Execute(*block);
 
           if (status == status_type::COMPLETE)
           {
-            fetch::logger.Warn("Block Completed: ", ToBase64(block->hash));
+            FETCH_LOG_WARN(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
           }
           else if (status == status_type::SCHEDULED)
           {
-            fetch::logger.Warn("Block Scheduled: ", ToBase64(block->hash));
+            FETCH_LOG_WARN(LOGGING_NAME,"Block Scheduled: ", ToBase64(block->hash));
           }
           else if (status == status_type::NO_PARENT_BLOCK)
           {
@@ -135,11 +137,11 @@ public:
               block = std::make_shared<BlockBody>(full_block.body());
               pending_stack.push_back(block);
 
-              fetch::logger.Warn("Retrieved parent block: ", ToBase64(block->hash));
+              FETCH_LOG_WARN(LOGGING_NAME,"Retrieved parent block: ", ToBase64(block->hash));
             }
             else
             {
-              fetch::logger.Warn("Unable to retreive parent block: ",
+              FETCH_LOG_WARN(LOGGING_NAME,"Unable to retreive parent block: ",
                                  ToBase64(block->previous_hash));
             }
 
@@ -173,7 +175,7 @@ public:
               break;
             }
 
-            fetch::logger.Warn("Unable to execute block: ", ToBase64(block->hash),
+            FETCH_LOG_WARN(LOGGING_NAME,"Unable to execute block: ", ToBase64(block->hash),
                                " Reason: ", reason);
             block.reset();  // mostly for debug
           }

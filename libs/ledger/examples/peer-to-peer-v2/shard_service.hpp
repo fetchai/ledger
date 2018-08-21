@@ -43,6 +43,9 @@
 class FetchChainKeeperService : public fetch::protocols::ChainKeeperProtocol
 {
 public:
+
+  static constexpr char const *LOGGING_NAME = "FetchChainKeeperService";
+
   FetchChainKeeperService(uint16_t const &port, uint16_t const &http_port,
                           fetch::network::NetworkManager *tm)
     : fetch::protocols::ChainKeeperProtocol(tm, fetch::protocols::FetchProtocols::CHAIN_KEEPER,
@@ -226,7 +229,7 @@ transaction count: " << this->applied_transaction_count() << std::endl;
     int diff = difficulty_;
     difficulty_mutex_.unlock();
     if(diff == 0) {
-      fetch::logger.Debug("Exiting mining because diff = 0");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Exiting mining because diff = 0");
       if(running_) {
         network_manager_->Post([this]() {
             this->SyncTransactions();

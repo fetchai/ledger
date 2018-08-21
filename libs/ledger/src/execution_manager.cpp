@@ -31,6 +31,8 @@
 
 #include <iostream>
 
+static constexpr char const *LOGGING_NAME = "ExecutionManager";
+
 namespace fetch {
 namespace ledger {
 
@@ -135,14 +137,14 @@ bool ExecutionManager::PlanExecution(block_type const &block)
   execution_plan_.clear();
   execution_plan_.resize(block.slices.size());
 
-  //  fetch::logger.Info("Planning ", block.slices.size(), " slices...");
+  //  FETCH_LOG_INFO(LOGGING_NAME,"Planning ", block.slices.size(), " slices...");
 
   std::size_t slice_index = 0;
   for (auto const &slice : block.slices)
   {
     auto &slice_plan = execution_plan_[slice_index];
 
-    //    fetch::logger.Info("Planning slice ", slice_index, "...");
+    //    FETCH_LOG_INFO(LOGGING_NAME,"Planning slice ", slice_index, "...");
 
     // process the transactions
     for (auto const &tx : slice.transactions)
@@ -167,7 +169,7 @@ bool ExecutionManager::PlanExecution(block_type const &block)
       }
       else
       {
-        fetch::logger.Warn("Unable to plan execution of tx: ",
+        FETCH_LOG_WARN(LOGGING_NAME,"Unable to plan execution of tx: ",
                            byte_array::ToBase64(tx.transaction_hash));
         return false;
       }
@@ -397,7 +399,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
       }
       else
       {
-        logger.Warn("Unable to request state hash");
+        FETCH_LOG_WARN(LOGGING_NAME,"Unable to request state hash");
       }
 
       // only need to commit the new bookmark if there is actually a change in
@@ -412,7 +414,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         }
         catch (std::exception &ex)
         {
-          logger.Warn("Unable to commit state. Error: ", ex.what());
+          FETCH_LOG_WARN(LOGGING_NAME,"Unable to commit state. Error: ", ex.what());
         }
 
         // update the state archives
@@ -420,7 +422,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
           std::lock_guard<mutex_type> lock(state_archive_lock_);
           if (!state_archive_.ConfirmBookmark(state_hash, bookmark))
           {
-            logger.Warn("Unable to confirm bookmark: ", bookmark);
+            FETCH_LOG_WARN(LOGGING_NAME,"Unable to confirm bookmark: ", bookmark);
           }
 
           // update the block state cache

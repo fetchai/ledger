@@ -34,6 +34,8 @@ public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
   using byte_array_type        = byte_array::ConstByteArray;
 
+  static constexpr char const *LOGGING_NAME = "ServiceServerInterface";
+
   virtual ~ServiceServerInterface() {}
 
   void Add(protocol_handler_type const &name,
@@ -97,12 +99,12 @@ protected:
     catch (serializers::SerializableException const &e)
     {
       LOG_STACK_TRACE_POINT;
-      fetch::logger.Error("Serialization error (Function Call): ", e.what());
+      FETCH_LOG_ERROR(LOGGING_NAME,"Serialization error (Function Call): ", e.what());
       result = serializer_type();
       result << SERVICE_ERROR << id << e;
     }
 
-    fetch::logger.Debug("Service Server responding to call from ", client);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Service Server responding to call from ", client);
     {
       LOG_STACK_TRACE_POINT;
       DeliverResponse(client, result.data());
@@ -128,7 +130,7 @@ protected:
     catch (serializers::SerializableException const &e)
     {
       LOG_STACK_TRACE_POINT;
-      fetch::logger.Error("Serialization error (Subscribe): ", e.what());
+      FETCH_LOG_ERROR(LOGGING_NAME,"Serialization error (Subscribe): ", e.what());
       // result = serializer_type();
       // result << SERVICE_ERROR << id << e;
       throw e;  // TODO: propagate error other other size
@@ -156,7 +158,7 @@ protected:
     catch (serializers::SerializableException const &e)
     {
       LOG_STACK_TRACE_POINT;
-      fetch::logger.Error("Serialization error (Unsubscribe): ", e.what());
+      FETCH_LOG_ERROR(LOGGING_NAME,"Serialization error (Unsubscribe): ", e.what());
       // result = serializer_type();
       // result << SERVICE_ERROR << id << e;
       throw e;  // TODO: propagate error other other size
@@ -168,12 +170,12 @@ protected:
 
   virtual void ConnectionDropped(connection_handle_type connection_handle)
   {
-    fetch::logger.Warn("ConnectionDropped: ", connection_handle);
+    FETCH_LOG_WARN(LOGGING_NAME,"ConnectionDropped: ", connection_handle);
     for(int protocol_number = 0; protocol_number < 256; protocol_number++)
     {
       if (members_[protocol_number])
       {
-        fetch::logger.Warn("ConnectionDropped removing handler for protocol " , protocol_number, " from connection handle ", connection_handle);
+        FETCH_LOG_WARN(LOGGING_NAME,"ConnectionDropped removing handler for protocol " , protocol_number, " from connection handle ", connection_handle);
         members_[protocol_number] -> ConnectionDropped(connection_handle);
         members_[protocol_number] = 0;
       }
@@ -197,7 +199,7 @@ private:
       + std::to_string(connection_handle)
       ;
 
-    fetch::logger.Debug("ServerInterface::ExecuteCall " + identifier);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"ServerInterface::ExecuteCall " + identifier);
 
     auto protocol_pointer = members_[protocol_number];
     if (protocol_pointer == nullptr)
@@ -212,7 +214,7 @@ private:
 
     auto &function = (*protocol_pointer)[function_number];
 
-    fetch::logger.Debug(std::string("ServerInterface::ExecuteCall: ")
+    FETCH_LOG_DEBUG(LOGGING_NAME,std::string("ServerInterface::ExecuteCall: ")
                         + identifier
                         + " expecting following signature "
                         + function.signature()
@@ -223,7 +225,7 @@ private:
     {
       if (function.meta_data() & Callable::CLIENT_ID_ARG)
       {
-        fetch::logger.Debug("Adding connection_handle ID meta data to ", identifier);
+        FETCH_LOG_DEBUG(LOGGING_NAME,"Adding connection_handle ID meta data to ", identifier);
         CallableArgumentList extra_args;
         extra_args.PushArgument(&connection_handle);
         function(result, extra_args, params);
@@ -245,7 +247,7 @@ private:
     }
     catch (std::exception &ex)
     {
-      fetch::logger.Error("ServerInterface::ExecuteCall - ", ex.what(), " - ", identifier);
+      FETCH_LOG_ERROR(LOGGING_NAME,"ServerInterface::ExecuteCall - ", ex.what(), " - ", identifier);
     }
   }
 

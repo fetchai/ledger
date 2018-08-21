@@ -155,7 +155,7 @@ public:
   DefaultLogger()          = default;
   virtual ~DefaultLogger() = default;
 
-  enum
+  enum class Level
   {
     ERROR     = 0,
     WARNING   = 1,
@@ -164,45 +164,67 @@ public:
     HIGHLIGHT = 4
   };
 
-  virtual void StartEntry(int type, shared_context_type ctx)
+  virtual void StartEntry(Level level, char const *name, shared_context_type ctx)
   {
+    using Clock = std::chrono::system_clock;
+    using Timepoint = Clock::time_point;
+    using Duration = Clock::duration;
+
 #ifndef FETCH_DISABLE_COUT_LOGGING
     using namespace fetch::commandline::VT100;
     int color = 9, bg_color = 9;
-    switch (type)
+    switch (level)
     {
-    case INFO:
+    case Level::INFO:
       color = 3;
       break;
-    case WARNING:
+    case Level::WARNING:
       color = 6;
       break;
-    case ERROR:
+    case Level::ERROR:
       color = 1;
       break;
-    case DEBUG:
+    case Level::DEBUG:
       color = 7;
       break;
-    case HIGHLIGHT:
+    case Level::HIGHLIGHT:
       bg_color = 4;
       color    = 7;
       break;
     }
 
-    int thread_number = ReadableThread::GetThreadID(std::this_thread::get_id());
+    int const       thread_number = ReadableThread::GetThreadID(std::this_thread::get_id());
+    Timepoint const now           = Clock::now();
+    Duration const  duration      = now.time_since_epoch();
 
-    std::chrono::system_clock::time_point now      = std::chrono::system_clock::now();
-    auto                                  duration = now.time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() % 1000;
 
+    // format and generate the time
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
     std::cout << "[ " << GetColor(color, bg_color)
-              << std::put_time(std::localtime(&now_c), "%F %T");
+              << std::put_time(std::localtime(&now_c), "%F %T")
+              << "." << std::setw(3) << millis << DefaultAttributes();
 
-    std::cout << "." << std::setw(3) << millis << DefaultAttributes() << ", #" << std::setw(2)
-              << thread_number;
-    std::cout << ": " << std::setw(15) << ctx->instance() << std::setw(20) << ctx->context(18)
-              << " ] ";
+    // thread information
+    std::cout << ", #" << std::setw(2) << thread_number;
+
+    // determine which of the two logging formats we should use
+    bool use_name = name != nullptr;
+    if (use_name && ctx->instance())
+    {
+      // in the case where we actually context information we should use this variant
+      use_name = false;
+    }
+
+    if (use_name)
+    {
+      std::cout << ": " << std::setw(35) << name << " ] ";
+    }
+    else
+    {
+      std::cout << ": " << std::setw(15) << ctx->instance() << std::setw(20) << ctx->context(18)
+                << " ] ";
+    }
     std::cout << GetColor(color, bg_color);
 
 #endif
@@ -223,7 +245,7 @@ public:
 #endif
   }
 
-  virtual void CloseEntry(int type)
+  virtual void CloseEntry(Level)
   {
 #ifndef FETCH_DISABLE_COUT_LOGGING
     using namespace fetch::commandline::VT100;
@@ -261,9 +283,21 @@ public:
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
-      this->log_->StartEntry(DefaultLogger::INFO, TopContextImpl());
+      this->log_->StartEntry(DefaultLogger::Level::INFO, nullptr, TopContextImpl());
       Unroll<Args...>::Append(this, args...);
-      this->log_->CloseEntry(DefaultLogger::INFO);
+      this->log_->CloseEntry(DefaultLogger::Level::INFO);
+    }
+  }
+
+  template <typename... Args>
+  void InfoWithName(char const *name, Args... args)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (this->log_ != nullptr)
+    {
+      this->log_->StartEntry(DefaultLogger::Level::INFO, name, TopContextImpl());
+      Unroll<Args...>::Append(this, args...);
+      this->log_->CloseEntry(DefaultLogger::Level::INFO);
     }
   }
 
@@ -273,9 +307,21 @@ public:
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
-      this->log_->StartEntry(DefaultLogger::WARNING, TopContextImpl());
+      this->log_->StartEntry(DefaultLogger::Level::WARNING, nullptr, TopContextImpl());
       Unroll<Args...>::Append(this, args...);
-      this->log_->CloseEntry(DefaultLogger::WARNING);
+      this->log_->CloseEntry(DefaultLogger::Level::WARNING);
+    }
+  }
+
+  template <typename... Args>
+  void WarnWithName(char const *name, Args... args)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (this->log_ != nullptr)
+    {
+      this->log_->StartEntry(DefaultLogger::Level::WARNING, name, TopContextImpl());
+      Unroll<Args...>::Append(this, args...);
+      this->log_->CloseEntry(DefaultLogger::Level::WARNING);
     }
   }
 
@@ -285,9 +331,21 @@ public:
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
-      this->log_->StartEntry(DefaultLogger::HIGHLIGHT, TopContextImpl());
+      this->log_->StartEntry(DefaultLogger::Level::HIGHLIGHT, nullptr, TopContextImpl());
       Unroll<Args...>::Append(this, args...);
-      this->log_->CloseEntry(DefaultLogger::HIGHLIGHT);
+      this->log_->CloseEntry(DefaultLogger::Level::HIGHLIGHT);
+    }
+  }
+
+  template <typename... Args>
+  void HighlightWithName(char const *name, Args... args)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (this->log_ != nullptr)
+    {
+      this->log_->StartEntry(DefaultLogger::Level::HIGHLIGHT, name, TopContextImpl());
+      Unroll<Args...>::Append(this, args...);
+      this->log_->CloseEntry(DefaultLogger::Level::HIGHLIGHT);
     }
   }
 
@@ -297,9 +355,9 @@ public:
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
-      this->log_->StartEntry(DefaultLogger::ERROR, TopContextImpl());
+      this->log_->StartEntry(DefaultLogger::Level::ERROR, nullptr, TopContextImpl());
       Unroll<Args...>::Append(this, args...);
-      this->log_->CloseEntry(DefaultLogger::ERROR);
+      this->log_->CloseEntry(DefaultLogger::Level::ERROR);
 
       StackTrace();
     }
@@ -308,15 +366,46 @@ public:
   }
 
   template <typename... Args>
+  void ErrorWithName(char const *name, Args... args)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (this->log_ != nullptr)
+    {
+      this->log_->StartEntry(DefaultLogger::Level::ERROR, name, TopContextImpl());
+      Unroll<Args...>::Append(this, args...);
+      this->log_->CloseEntry(DefaultLogger::Level::ERROR);
+
+      StackTrace();
+    }
+
+    //    exit(-1);
+  }
+
+
+  template <typename... Args>
   void Debug(Args... args)
   {
 #ifndef FETCH_DISABLE_DEBUG_LOGGING
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
-      this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl());
+      this->log_->StartEntry(DefaultLogger::Level::DEBUG, nullptr, TopContextImpl());
       Unroll<Args...>::Append(this, args...);
-      this->log_->CloseEntry(DefaultLogger::DEBUG);
+      this->log_->CloseEntry(DefaultLogger::Level::DEBUG);
+    }
+#endif  // !FETCH_DISABLE_DEBUG_LOGGING
+  }
+
+  template <typename... Args>
+  void DebugWithName(char const *name, Args... args)
+  {
+#ifndef FETCH_DISABLE_DEBUG_LOGGING
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (this->log_ != nullptr)
+    {
+      this->log_->StartEntry(DefaultLogger::Level::DEBUG, name, TopContextImpl());
+      Unroll<Args...>::Append(this, args...);
+      this->log_->CloseEntry(DefaultLogger::Level::DEBUG);
     }
 #endif  // !FETCH_DISABLE_DEBUG_LOGGING
   }
@@ -327,12 +416,12 @@ public:
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
-      this->log_->StartEntry(DefaultLogger::DEBUG, TopContextImpl());
+      this->log_->StartEntry(DefaultLogger::Level::DEBUG, nullptr, TopContextImpl());
       for (auto &item : items)
       {
         this->log_->Append(item);
       }
-      this->log_->CloseEntry(DefaultLogger::DEBUG);
+      this->log_->CloseEntry(DefaultLogger::Level::DEBUG);
     }
 #endif  // !FETCH_DISABLE_DEBUG_LOGGING
   }
@@ -673,7 +762,7 @@ extern log::details::LogWrapper logger;
     }                                                           \
     free(frameStrings);                                         \
                                                                 \
-    fetch::logger.Info("Trace: \n", trace.str());               \
+    FETCH_LOG_INFO(LOGGING_NAME,"Trace: \n", trace.str());               \
   }
 
 //#define LOG_STACK_TRACE_POINT
@@ -682,5 +771,13 @@ extern log::details::LogWrapper logger;
 #if 1
 #define FETCH_LOG_PROMISE()
 #else
-#define FETCH_LOG_PROMISE() fetch::logger.Warn("Promise wait: ", __FILE__, ":", __LINE__)
+#define FETCH_LOG_PROMISE() FETCH_LOG_WARN(LOGGING_NAME,"Promise wait: ", __FILE__, ":", __LINE__)
 #endif
+
+
+// Logging macros
+//#define FETCH_LOG_DEBUG(name, ...)      fetch::logger.DebugWithName(name, __VA_ARGS__)
+#define FETCH_LOG_DEBUG(name, ...)
+#define FETCH_LOG_INFO(name, ...)       fetch::logger.InfoWithName(name, __VA_ARGS__)
+#define FETCH_LOG_WARN(name, ...)       fetch::logger.WarnWithName(name, __VA_ARGS__)
+#define FETCH_LOG_ERROR(name, ...)      fetch::logger.ErrorWithName(name, __VA_ARGS__)

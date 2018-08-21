@@ -40,10 +40,13 @@ public:
     PULL_OBJECTS = 2,
     PULL_SUBTREE = 3
   };
+
   using self_type             = ObjectStoreSyncronisationProtocol<R, T, S>;
   using protocol_handler_type = service::protocol_handler_type;
   using register_type         = R;
   using thread_pool_type      = network::ThreadPool;
+
+  static constexpr char const *LOGGING_NAME = "ObjectStoreSyncProtocol";
 
   ObjectStoreSyncronisationProtocol(protocol_handler_type const &p, register_type r,
                                     thread_pool_type nm, ObjectStore<T> *store)
@@ -61,7 +64,7 @@ public:
 
   void Start()
   {
-    fetch::logger.Debug("Starting synchronisation of ", typeid(T).name());
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Starting synchronisation of ", typeid(T).name());
     if (running_) return;
     running_ = true;
     thread_pool_->Post([this]() { this->IdleUntilPeers(); });
@@ -104,7 +107,7 @@ public:
 
   void FetchObjectsFromPeers()
   {
-    fetch::logger.Debug("Fetching objects ", typeid(T).name(), " from peer");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Fetching objects ", typeid(T).name(), " from peer");
 
     if (!running_) return;
 

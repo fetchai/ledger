@@ -46,6 +46,9 @@ class Exp
   static constexpr double exponent_offset_ = ((1ull << (E_EXPONENT - 1)) - 1);
 
 public:
+
+  static constexpr char const *LOGGING_NAME = "Exp";
+
   Exp(Exp const &other) = delete;
   Exp operator=(Exp const &other) = delete;
 

@@ -37,6 +37,9 @@ template <typename T, typename D = uint64_t>
 class RandomAccessStack
 {
 private:
+
+  static constexpr char const *LOGGING_NAME = "RandomAccessStack";
+
   struct Header
   {
     uint16_t magic   = platform::LITTLE_ENDIAN_MAGIC;

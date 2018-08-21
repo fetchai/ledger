@@ -40,6 +40,8 @@ public:
   using dummy_miner_type = fetch::chain::consensus::DummyMiner;
   using miner_type       = fetch::miner::MinerInterface;
 
+  static constexpr char const *LOGGING_NAME = "MainChainMiner";
+
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
                  chain::BlockCoordinator &blockCoordinator, miner_type &miner, uint64_t minerNumber)
     : num_lanes_{num_lanes}
@@ -105,7 +107,7 @@ private:
       // if the heaviest block has changed then we need to schedule the next block time
       if (block.hash() != previous_heaviest)
       {
-        fetch::logger.Info("==> New heaviest block: ", byte_array::ToBase64(block.hash()),
+        FETCH_LOG_INFO(LOGGING_NAME,"==> New heaviest block: ", byte_array::ToBase64(block.hash()),
                            " from: ", minerNumber_);
 
         // new heaviest has been detected

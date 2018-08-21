@@ -35,6 +35,8 @@
 #include <pybind11/embed.h>
 #include <pybind11/iostream.h>
 
+static constexpr char const *LOGGING_NAME = "pyfetch";
+
 void say(pybind11::args args)
 {
   std::vector<std::string> converted;
@@ -43,7 +45,7 @@ void say(pybind11::args args)
   {
     converted.push_back(pybind11::str(args[i]));
   }
-  fetch::logger.Debug(converted);
+  FETCH_LOG_DEBUG(LOGGING_NAME,converted);
 }
 
 PYBIND11_EMBEDDED_MODULE(fetchnetwork, module)

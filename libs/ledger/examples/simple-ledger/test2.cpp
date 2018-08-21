@@ -47,6 +47,8 @@ using namespace fetch::byte_array;
 
 using tx_type = typename ShardManager::transaction_type;
 
+static constexpr char const *LOGGING_NAME = "node";
+
 enum FetchProtocols
 {
   SHARD = 2
@@ -142,7 +144,7 @@ int main(int argc, char const **argv)
   auto ping_promise = client->Call(FetchProtocols::SHARD, ShardRPC::PING);
   if (!ping_promise.Wait(2000))
   {
-    fetch::logger.Error("Client not repsonding - hanging up!");
+    FETCH_LOG_ERROR(LOGGING_NAME,"Client not repsonding - hanging up!");
     exit(-1);
   }
 

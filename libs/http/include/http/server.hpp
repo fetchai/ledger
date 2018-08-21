@@ -47,6 +47,8 @@ public:
   using view_type                = typename HTTPModule::view_type;
   using response_middleware_type = std::function<void(HTTPResponse &, HTTPRequest const &)>;
 
+  static constexpr char const *LOGGING_NAME = "HTTPServer";
+
   struct MountedView
   {
     Method    method;
@@ -67,7 +69,7 @@ public:
     network_manager_type &        threadMan = networkManager_;
 
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
-      fetch::logger.Info("Starting HTTPServer on http://127.0.0.1:", port);
+      FETCH_LOG_INFO(LOGGING_NAME,"Starting HTTPServer on http://127.0.0.1:", port);
 
       // TODO(issue 28) : fix this hack
       network_manager_type tm  = threadMan;
@@ -80,7 +82,7 @@ public:
       socRef   = soc;
       accepRef = accep;
 
-      fetch::logger.Info("Starting HTTPServer Accept");
+      FETCH_LOG_INFO(LOGGING_NAME,"Starting HTTPServer Accept");
       HTTPServer::Accept(soc, accep, manager);
     });
   }
@@ -175,7 +177,7 @@ public:
       }
       else
       {
-        fetch::logger.Info("HTTP server terminated with ec: ", ec.message());
+        FETCH_LOG_INFO(LOGGING_NAME,"HTTP server terminated with ec: ", ec.message());
         return;
       }
 
@@ -186,7 +188,7 @@ public:
       HTTPServer::Accept(s, a, m);
     };
 
-    fetch::logger.Info("Starting HTTPServer async accept");
+    FETCH_LOG_INFO(LOGGING_NAME,"Starting HTTPServer async accept");
     accep->async_accept(*soc, cb);
   }
 

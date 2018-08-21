@@ -39,6 +39,9 @@ public:
   using promise_counter_type = uint64_t;
   using byte_array_type      = byte_array::ConstByteArray;
   typedef std::function<void(void)> callback_type;
+
+  static constexpr char const *LOGGING_NAME = "PromiseImpl";
+
   typedef enum
   {
     NONE,
@@ -125,7 +128,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    fetch::logger.Warn("ConnectionFailed being signalled.");
+    FETCH_LOG_WARN(LOGGING_NAME,"ConnectionFailed being signalled.");
 
     connection_closed_ = true;
     fulfilled_         = true;  // Note that order matters here due to threading!
@@ -171,8 +174,9 @@ public:
   using promise_type         = details::PromiseImplementation;
   using promise_counter_type = typename promise_type::promise_counter_type;
   using shared_promise_type  = std::shared_ptr<promise_type>;
-
   using callback_type = details::PromiseImplementation::callback_type;
+
+  static constexpr char const *LOGGING_NAME = "Promise";
 
   Promise()
   {
@@ -240,7 +244,7 @@ public:
           double(std::chrono::duration_cast<std::chrono::milliseconds>(end - created_).count());
       if ((ms > timeout) && (!is_fulfilled()))
       {
-        fetch::logger.Warn("Connection timed out! ", ms, " vs. ", timeout);
+        FETCH_LOG_WARN(LOGGING_NAME,"Connection timed out! ", ms, " vs. ", timeout);
         return false;
       }
     }
@@ -252,7 +256,7 @@ public:
 
     if (has_failed())
     {
-      fetch::logger.Warn("Connection failed!");
+      FETCH_LOG_WARN(LOGGING_NAME,"Connection failed!");
 
       if (throw_exception)
         throw reference_->exception();

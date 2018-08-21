@@ -29,6 +29,8 @@ struct TestBlock
   using block_type           = fetch::ledger::ExecutionManager::block_type;
   using block_digest_type    = fetch::ledger::ExecutionManager::block_digest_type;
 
+  static constexpr char const *LOGGING_NAME = "TestBlock";
+
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;
 
@@ -58,7 +60,7 @@ struct TestBlock
     resource_id_map_type resources = BuildResourceMap(log2_num_lanes);
     std::size_t const    num_lanes = 1u << log2_num_lanes;
 
-    fetch::logger.Info("Generating block: ", num_lanes, " x ", num_slices);
+    FETCH_LOG_INFO(LOGGING_NAME,"Generating block: ", num_lanes, " x ", num_slices);
 
     // generate the block hash and assign the previous hash
     fetch::byte_array::ByteArray digest;
@@ -105,7 +107,7 @@ struct TestBlock
             summary.transaction_hash = GenerateHash(rng);
             summary.contract_name    = "fetch.dummy.run";
 
-            //            fetch::logger.Info("Generating TX: ",
+            //            FETCH_LOG_INFO(LOGGING_NAME,"Generating TX: ",
             //            fetch::byte_array::ToBase64(summary.transaction_hash));
 
             // update the groups
@@ -113,7 +115,7 @@ struct TestBlock
             {
               std::size_t const index = (i + lane_offset);
 
-              //              fetch::logger.Info(" - Resource: ", index);
+              //              FETCH_LOG_INFO(LOGGING_NAME," - Resource: ", index);
 
               summary.resources.insert(resources.at(index));
             }

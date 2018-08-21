@@ -40,6 +40,8 @@ class Function;
 template <typename R, typename... Args>
 class Function<R(Args...)> : public AbstractCallable
 {
+  static constexpr char const *LOGGING_NAME = "Function<R(Args...)>";
+
 private:
   using return_type   = R;
   using function_type = std::function<R(Args...)>;
@@ -161,6 +163,9 @@ private:
   using function_type = std::function<R()>;
 
 public:
+
+  static constexpr char const *LOGGING_NAME = "Function<R()>";
+
   Function(function_type value)
   {
     LOG_STACK_TRACE_POINT;
@@ -194,6 +199,9 @@ private:
   using function_type = std::function<void()>;
 
 public:
+
+  static constexpr char const *LOGGING_NAME = "Function<void()>";
+
   Function(function_type value)
   {
     LOG_STACK_TRACE_POINT;

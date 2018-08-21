@@ -5,6 +5,8 @@
 #include <memory>
 #include <thread>
 
+static constexpr char const *LOGGING_NAME = "main";
+
 fetch::mutex::Mutex mt;
 std::atomic<int>    n;
 
@@ -17,7 +19,7 @@ void Baz()
 
   if (n >= 2)
   {
-    fetch::logger.Error("XX");
+    FETCH_LOG_ERROR(LOGGING_NAME,"XX");
 
     exit(-1);
   }

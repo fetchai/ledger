@@ -13,6 +13,9 @@ namespace generics {
 class MilliTimer
 {
 public:
+
+  static constexpr char const *LOGGING_NAME = "MilliTimer";
+
   MilliTimer(const MilliTimer &rhs) = delete;
   MilliTimer(MilliTimer &&rhs)      = delete;
   MilliTimer &operator=(const MilliTimer &rhs) = delete;
@@ -28,7 +31,7 @@ public:
 
     if (!threshold)
     {
-      //fetch::logger.Warn("Starting millitimer for ", name_);
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Starting millitimer for ", name_);
     }
   }
 
@@ -38,11 +41,11 @@ public:
         std::chrono::steady_clock::now() - start_);
     if (duration.count() > threshold_)
     {
-      fetch::logger.Warn("Too many milliseconds: ", duration.count(), " at ", name_);
+      FETCH_LOG_WARN(LOGGING_NAME,"Too many milliseconds: ", duration.count(), " at ", name_);
     }
     else
     {
-      fetch::logger.Debug("Consumed milliseconds: ", duration.count(), " at ", name_);
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Consumed milliseconds: ", duration.count(), " at ", name_);
     }
   }
 

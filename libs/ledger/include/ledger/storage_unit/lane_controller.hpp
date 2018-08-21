@@ -42,6 +42,8 @@ public:
   using connection_handle_type     = client_register_type::connection_handle_type;
   using protocol_handler_type      = service::protocol_handler_type;
 
+  static constexpr char const *LOGGING_NAME = "LaneController";
+
   LaneController(protocol_handler_type const &lane_identity_protocol,
                  std::weak_ptr<LaneIdentity> identity, client_register_type reg,
                  network_manager_type const &nm)
@@ -59,7 +61,7 @@ public:
   {
     for (auto &h : ep.host)
     {
-      fetch::logger.Info("Lane trying to connect to ", h, ":", ep.port);
+      FETCH_LOG_INFO(LOGGING_NAME,"Lane trying to connect to ", h, ":", ep.port);
 
       if (Connect(h, ep.port)) break;
     }
@@ -117,7 +119,7 @@ public:
 
   shared_service_client_type Connect(byte_array::ByteArray const &host, uint16_t const &port)
   {
-    fetch::logger.Info("Connecting to lane ", host, ":", port);
+    FETCH_LOG_INFO(LOGGING_NAME,"Connecting to lane ", host, ":", port);
 
     shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
@@ -133,7 +135,7 @@ public:
     std::size_t n = 0;
     while (n < 10)
     {
-      fetch::logger.Info("Trying to ping lane service");
+      FETCH_LOG_INFO(LOGGING_NAME,"Trying to ping lane service");
 
       auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
 
@@ -151,7 +153,7 @@ public:
 
     if (n >= 10)
     {
-      logger.Warn("Connection timed out - closing in LaneController::Connect:1:");
+      FETCH_LOG_WARN(LOGGING_NAME,"Connection timed out - closing in LaneController::Connect:1:");
       client->Close();
       client.reset();
       return nullptr;
@@ -162,7 +164,7 @@ public:
       auto ptr = lane_identity_.lock();
       if (!ptr)
       {
-        logger.Warn("Lane identity not valid!");
+        FETCH_LOG_WARN(LOGGING_NAME,"Lane identity not valid!");
         client->Close();
         client.reset();
         return nullptr;
@@ -173,7 +175,7 @@ public:
       FETCH_LOG_PROMISE();
       if (!p.Wait(1000))  // TODO(issue 7): Make timeout configurable
       {
-        logger.Warn("Connection timed out - closing in LaneController::Connect:2:");
+        FETCH_LOG_WARN(LOGGING_NAME,"Connection timed out - closing in LaneController::Connect:2:");
         client->Close();
         client.reset();
         return nullptr;
@@ -189,7 +191,7 @@ public:
     p.Wait(1000);  // TODO(issue 7): Make timeout configurable
     if (p.As<LaneIdentity::lane_type>() != ident->GetLaneNumber())
     {
-      logger.Error("Could not connect to lane with different lane number: ",
+      FETCH_LOG_ERROR(LOGGING_NAME,"Could not connect to lane with different lane number: ",
                    p.As<LaneIdentity::lane_type>(), " vs ", ident->GetLaneNumber());
       client->Close();
       client.reset();
@@ -210,7 +212,7 @@ public:
     details->is_peer     = true;
     details->identity    = peer_identity;
 
-    fetch::logger.Info("Remote identity: ", byte_array::ToBase64(peer_identity.identifier()));
+    FETCH_LOG_INFO(LOGGING_NAME,"Remote identity: ", byte_array::ToBase64(peer_identity.identifier()));
 
     return client;
   }

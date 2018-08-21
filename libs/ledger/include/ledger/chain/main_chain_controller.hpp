@@ -45,6 +45,8 @@ public:
   using feed_handler_type          = fetch::service::feed_handler_type;
   using mainchain_protocol_type    = fetch::chain::MainChainProtocol<client_register_type>;
 
+  static constexpr char const *LOGGING_NAME = "MainChainController";
+
   MainChainController(protocol_handler_type const &    identity_protocol,
                       std::weak_ptr<MainChainIdentity> identity, client_register_type reg,
                       network_manager_type const &               nm,
@@ -61,7 +63,7 @@ public:
   /// @{
   void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port)
   {
-    fetch::logger.Info("(RPCConnect) Mainchain trying to connect to ", host, ":", port);
+    FETCH_LOG_INFO(LOGGING_NAME,"(RPCConnect) Mainchain trying to connect to ", host, ":", port);
 
     Connect(host, port);
   }
@@ -70,7 +72,7 @@ public:
   {
     for (auto &h : ep.host)
     {
-      fetch::logger.Info("Mainchain trying to connect to ", h, ":", ep.port);
+      FETCH_LOG_INFO(LOGGING_NAME,"Mainchain trying to connect to ", h, ":", ep.port);
 
       // only connect one?
       if (Connect(h, ep.port)) break;
@@ -132,7 +134,7 @@ public:
     shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
 
-    logger.Warn("CONNECT (MAIN CHAIN) ", std::string(host), ":", port);
+    FETCH_LOG_WARN(LOGGING_NAME,"CONNECT (MAIN CHAIN) ", std::string(host), ":", port);
 
     // Waiting for connection to be open
     std::size_t n = 0;
@@ -154,7 +156,7 @@ public:
 
     if (n >= 10)
     {
-      logger.Warn("Connection timed out - closing in MainChainController::Connect");
+      FETCH_LOG_WARN(LOGGING_NAME,"Connection timed out - closing in MainChainController::Connect");
       client->Close();
       client.reset();
       return nullptr;
@@ -178,7 +180,7 @@ public:
     case service::Promise::OK:
       break;
     default:
-      logger.Warn("While exchanging IDENTITY DETAILS:", service::Promise::DescribeStatus(status));
+      FETCH_LOG_WARN(LOGGING_NAME,"While exchanging IDENTITY DETAILS:", service::Promise::DescribeStatus(status));
       client->Close();
       client.reset();
       return nullptr;

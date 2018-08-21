@@ -52,6 +52,8 @@ class DebugMutex : public AbstractMutex
   using Timepoint = Clock::time_point;
   using Duration  = Clock::duration;
 
+  static constexpr char const *LOGGING_NAME = "DebugMutex";
+
   struct LockInfo
   {
     bool locked = true;
@@ -98,7 +100,7 @@ class DebugMutex : public AbstractMutex
     void Eval()
     {
       LOG_STACK_TRACE_POINT;
-      fetch::logger.Error("Mutex timed out: ", filename_, " ", line_);
+      FETCH_LOG_ERROR(LOGGING_NAME,"Mutex timed out: ", filename_, " ", line_);
 
       exit(-1);
     }

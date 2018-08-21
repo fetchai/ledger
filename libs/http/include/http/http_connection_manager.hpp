@@ -31,6 +31,8 @@ public:
   using connection_type = typename AbstractHTTPConnection::shared_type;
   using handle_type     = uint64_t;
 
+  static constexpr char const *LOGGING_NAME = "HTTPConnectionManager";
+
   HTTPConnectionManager(AbstractHTTPServer &server)
     : server_(server), clients_mutex_(__LINE__, __FILE__)
   {}
@@ -40,7 +42,7 @@ public:
     LOG_STACK_TRACE_POINT;
 
     handle_type handle = server_.next_handle();
-    fetch::logger.Debug("Client joining with handle ", handle);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Client joining with handle ", handle);
 
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
     clients_[handle] = client;
@@ -55,11 +57,11 @@ public:
 
     if (clients_.find(handle) != clients_.end())
     {
-      fetch::logger.Debug("Client ", handle, " is leaving");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Client ", handle, " is leaving");
       // TODO(issue 35): Close socket!
       clients_.erase(handle);
     }
-    fetch::logger.Debug("Client ", handle, " is leaving");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Client ", handle, " is leaving");
   }
 
   bool Send(handle_type client, HTTPResponse const &res)
@@ -74,12 +76,12 @@ public:
       auto c = clients_[client];
       clients_mutex_.unlock();
       c->Send(res);
-      fetch::logger.Debug("Client manager did send message to ", client);
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Client manager did send message to ", client);
       clients_mutex_.lock();
     }
     else
     {
-      fetch::logger.Debug("Client not found.");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Client not found.");
       ret = false;
     }
     clients_mutex_.unlock();

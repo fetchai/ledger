@@ -47,6 +47,8 @@ class ServiceClient : public ServiceClientInterface, public ServiceServerInterfa
 public:
   using network_manager_type = fetch::network::NetworkManager;
 
+  static constexpr char const *LOGGING_NAME = "ServiceClient";
+
   ServiceClient(std::shared_ptr<network::AbstractConnection> connection,
                 const network_manager_type &                 network_manager)
     : connection_(connection)
@@ -207,7 +209,7 @@ private:
         // TODO(issue 22): Post
         if (!ProcessServerMessage(msg))
         {
-          fetch::logger.Debug("Looking for RPC functionality");
+          FETCH_LOG_DEBUG(LOGGING_NAME,"Looking for RPC functionality");
 
           if (!PushProtocolRequest(connection_handle_type(-1), msg))
           {

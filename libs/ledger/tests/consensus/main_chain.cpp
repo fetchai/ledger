@@ -23,6 +23,8 @@
 #include <iostream>
 #include <list>
 
+static constexpr char const *LOGGING_NAME = "MainChainTests";
+
 using namespace fetch::chain;
 using namespace fetch::byte_array;
 
@@ -92,7 +94,7 @@ int main(int argc, char const **argv)
       // Add another 3 blocks in order
       for (std::size_t i = 0; i < 3; ++i)
       {
-        fetch::logger.Info("Test: Adding blocks in order");
+        FETCH_LOG_INFO(LOGGING_NAME,"Test: Adding blocks in order");
 
         // Create another block sequential to previous
         block_type nextBlock;

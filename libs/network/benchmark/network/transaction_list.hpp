@@ -37,6 +37,9 @@ class TransactionList
   using hasher_type = crypto::CallableFNV;
 
 public:
+
+  static constexpr char const *LOGGING_NAME = "TransactionList";
+
   TransactionList() { validArray_.fill(0); }
 
   TransactionList(TransactionList &rhs)  = delete;
@@ -63,7 +66,7 @@ public:
 
     if (!GetWriteIndex(index, hash))
     {
-      fetch::logger.Info("Failed to add hash", hash);
+      FETCH_LOG_INFO(LOGGING_NAME,"Failed to add hash", hash);
       return false;
     }
 
@@ -85,7 +88,7 @@ public:
         return ref;
       }
     }
-    fetch::logger.Error("Warning: block not found for hash: ", hash);
+    FETCH_LOG_ERROR(LOGGING_NAME,"Warning: block not found for hash: ", hash);
     exit(1);
     auto &ref = blockArray_[0];
     return ref;
@@ -177,7 +180,7 @@ public:
       hash = hash ^ static_cast<uint32_t>(hashStruct(i.summary().transaction_hash));
     }
 
-    fetch::logger.Info("Hash is now::", hash);
+    FETCH_LOG_INFO(LOGGING_NAME,"Hash is now::", hash);
     return std::pair<uint64_t, uint64_t>(size(), hash);
   }
 

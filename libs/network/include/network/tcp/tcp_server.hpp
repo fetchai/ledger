@@ -47,6 +47,8 @@ public:
   using acceptor_type          = asio::ip::tcp::tcp::acceptor;
   using mutex_type             = std::mutex;
 
+  static constexpr char const *LOGGING_NAME = "TCPServer";
+
   struct Request
   {
     connection_handle_type handle;
@@ -57,7 +59,7 @@ public:
     : network_manager_{network_manager}, port_{port}, request_mutex_{}
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Info("Creating TCP server");
+    FETCH_LOG_INFO(LOGGING_NAME,"Creating TCP server");
     manager_ = std::make_shared<ClientManager>(*this);
 
     std::shared_ptr<int> destruct_guard = destruct_guard_;
@@ -77,19 +79,19 @@ public:
 
           acceptor_ = acceptor;
 
-          fetch::logger.Info("Starting TCP server acceptor loop");
+          FETCH_LOG_INFO(LOGGING_NAME,"Starting TCP server acceptor loop");
           acceptor_ = acceptor;
 
           if (acceptor)
           {
             running_ = true;
             Accept(acceptor);
-            fetch::logger.Info("Accepting TCP server connections");
+            FETCH_LOG_INFO(LOGGING_NAME,"Accepting TCP server connections");
           }
         }
         catch (std::exception &e)
         {
-          fetch::logger.Info("Failed to open socket: ", port_, " with error: ", e.what());
+          FETCH_LOG_INFO(LOGGING_NAME,"Failed to open socket: ", port_, " with error: ", e.what());
         }
       }
     };
@@ -114,32 +116,32 @@ public:
       {
         std::error_code dummy;
         acceptorStrong->close(dummy);
-        fetch::logger.Info("closed TCP server server acceptor: ");
+        FETCH_LOG_INFO(LOGGING_NAME,"closed TCP server server acceptor: ");
       }
       else
       {
-        fetch::logger.Info("failed to close acceptor: ");
+        FETCH_LOG_INFO(LOGGING_NAME,"failed to close acceptor: ");
       }
     });
 
     while (destruct_guard_.use_count() > 1)
     {
-      fetch::logger.Info("Waiting for TCP server ", this, " start closure to clear");
+      FETCH_LOG_INFO(LOGGING_NAME,"Waiting for TCP server ", this, " start closure to clear");
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
     while (!acceptor_.expired() && running_)
     {
-      fetch::logger.Info("Waiting for TCP server ", this, " to destruct");
+      FETCH_LOG_INFO(LOGGING_NAME,"Waiting for TCP server ", this, " to destruct");
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
-    fetch::logger.Info("Destructing TCP server ", this);
+    FETCH_LOG_INFO(LOGGING_NAME,"Destructing TCP server ", this);
   }
 
   void PushRequest(connection_handle_type client, message_type const &msg) override
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Debug("Got request from ", client);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Got request from ", client);
 
     std::lock_guard<mutex_type> lock(request_mutex_);
     requests_.push_back({client, msg});
@@ -228,7 +230,7 @@ private:
       }
       else
       {
-        fetch::logger.Info("Acceptor in TCP server received EC");
+        FETCH_LOG_INFO(LOGGING_NAME,"Acceptor in TCP server received EC");
       }
     };
 

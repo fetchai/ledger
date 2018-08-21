@@ -42,6 +42,8 @@ public:
   using BlockHash = fetch::chain::MainChain::BlockHash;
   using miner     = fetch::chain::consensus::DummyMiner;
 
+  static constexpr char const *LOGGING_NAME = "MainChainNode";
+
   MainChainNode(const MainChainNode &rhs) = delete;
   MainChainNode(MainChainNode &&rhs)      = delete;
   MainChainNode &operator=(const MainChainNode &rhs) = delete;
@@ -119,16 +121,16 @@ public:
 
   virtual std::pair<bool, BlockType> GetHeader(const BlockHash &hash)
   {
-    fetch::logger.Debug("GetHeader starting work");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader starting work");
     BlockType block;
     if (chain_->Get(hash, block))
     {
-      fetch::logger.Debug("GetHeader done");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader done");
       return std::make_pair(true, block);
     }
     else
     {
-      fetch::logger.Debug("GetHeader not found");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader not found");
       return std::make_pair(false, block);
     }
   }
@@ -137,7 +139,7 @@ public:
   {
     std::vector<BlockType> results;
 
-    fetch::logger.Debug("GetHeaviestChain starting work ", maxsize);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeaviestChain starting work ", maxsize);
     auto currentHash = chain_->HeaviestBlock().hash();
 
     while (results.size() < maxsize)
@@ -154,7 +156,7 @@ public:
       }
     }
 
-    fetch::logger.Debug("GetHeaviestChain returning ", results.size(), " of req ", maxsize);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeaviestChain returning ", results.size(), " of req ", maxsize);
 
     return results;
   }
@@ -178,7 +180,7 @@ public:
         // Get heaviest block
         auto block = chain_->HeaviestBlock();
 
-        // fetch::logger.Info("MINER: Determining heaviest chain as:",
+        // FETCH_LOG_INFO(LOGGING_NAME,"MINER: Determining heaviest chain as:",
         // block.summarise());
 
         // Create another block sequential to previous
@@ -196,7 +198,7 @@ public:
         nextBlock.proof().SetTarget(target_);
         miner::Mine(nextBlock);
 
-        // fetch::logger.Info("MINER: Mined block:", nextBlock.summarise());
+        // FETCH_LOG_INFO(LOGGING_NAME,"MINER: Mined block:", nextBlock.summarise());
 
         if (stopped_)
         {
@@ -205,7 +207,7 @@ public:
 
         // Add the block
         chain_->AddBlock(nextBlock);
-        fetch::logger.Debug("Main Chain Node: Mined: ", ToHex(block.hash()));
+        FETCH_LOG_DEBUG(LOGGING_NAME,"Main Chain Node: Mined: ", ToHex(block.hash()));
       }
     };
 
