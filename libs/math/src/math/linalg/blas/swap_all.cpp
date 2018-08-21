@@ -10,14 +10,14 @@ namespace linalg
 {
 
 template< typename S, uint64_t V >
-void Blas< S, Signature( _X, _Y <= _n, _X, _m, _Y, _p ), Computes( _X, _Y = _Y, _X ),V >::operator()(int const &n, ShapeLessArray< type > &dx, int const &incx, ShapeLessArray< type > &dy, int const &incy ) const
+void Blas< S, Signature( _x, _y <= _n, _x, _m, _y, _p ), Computes( _x, _y = _y, _x ),V >::operator()(int const &n, ShapeLessArray< type > &dx, int const &incx, ShapeLessArray< type > &dy, int const &incy ) const
 {
-  type dtemp;
   int i;
+  type dtemp;
   if( (incx == 1) && (incy == 1) ) 
   {
-    int m;
     int mp1;
+    int m;
     m = n % 3;
     if( m != 0 ) 
     {
@@ -50,8 +50,8 @@ void Blas< S, Signature( _X, _Y <= _n, _X, _m, _Y, _p ), Computes( _X, _Y = _Y, 
   }
   else 
   {
-    int iy;
     int ix;
+    int iy;
     ix = 0;
     iy = 0;
     if( incx < 0 ) 
@@ -80,21 +80,21 @@ void Blas< S, Signature( _X, _Y <= _n, _X, _m, _Y, _p ), Computes( _X, _Y = _Y, 
 
 
 template class
-Blas< double , Signature( _X, _Y <= _n, _X, _m, _Y, _p ), Computes( _X, _Y = _Y, _X ), platform::Parallelisation::NOT_PARALLEL >;
+Blas< double , Signature( _x, _y <= _n, _x, _m, _y, _p ), Computes( _x, _y = _y, _x ), platform::Parallelisation::NOT_PARALLEL >;
 template class
-Blas< float , Signature( _X, _Y <= _n, _X, _m, _Y, _p ), Computes( _X, _Y = _Y, _X ), platform::Parallelisation::NOT_PARALLEL >;
+Blas< float , Signature( _x, _y <= _n, _x, _m, _y, _p ), Computes( _x, _y = _y, _x ), platform::Parallelisation::NOT_PARALLEL >;
 template class
-Blas< double , Signature( _X, _Y <= _n, _X, _m, _Y, _p ), Computes( _X, _Y = _Y, _X ), platform::Parallelisation::THREADING >;
+Blas< double , Signature( _x, _y <= _n, _x, _m, _y, _p ), Computes( _x, _y = _y, _x ), platform::Parallelisation::THREADING >;
 template class
-Blas< float , Signature( _X, _Y <= _n, _X, _m, _Y, _p ), Computes( _X, _Y = _Y, _X ), platform::Parallelisation::THREADING >;
+Blas< float , Signature( _x, _y <= _n, _x, _m, _y, _p ), Computes( _x, _y = _y, _x ), platform::Parallelisation::THREADING >;
 template class
-Blas< double , Signature( _X, _Y <= _n, _X, _m, _Y, _p ), Computes( _X, _Y = _Y, _X ), platform::Parallelisation::VECTORISE >;
+Blas< double , Signature( _x, _y <= _n, _x, _m, _y, _p ), Computes( _x, _y = _y, _x ), platform::Parallelisation::VECTORISE >;
 template class
-Blas< float , Signature( _X, _Y <= _n, _X, _m, _Y, _p ), Computes( _X, _Y = _Y, _X ), platform::Parallelisation::VECTORISE >;
+Blas< float , Signature( _x, _y <= _n, _x, _m, _y, _p ), Computes( _x, _y = _y, _x ), platform::Parallelisation::VECTORISE >;
 template class
-Blas< double , Signature( _X, _Y <= _n, _X, _m, _Y, _p ), Computes( _X, _Y = _Y, _X ), platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING >;
+Blas< double , Signature( _x, _y <= _n, _x, _m, _y, _p ), Computes( _x, _y = _y, _x ), platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING >;
 template class
-Blas< float , Signature( _X, _Y <= _n, _X, _m, _Y, _p ), Computes( _X, _Y = _Y, _X ), platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING >;
+Blas< float , Signature( _x, _y <= _n, _x, _m, _y, _p ), Computes( _x, _y = _y, _x ), platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING >;
 
 } // namespace linalg
 } // namespace math

@@ -84,9 +84,9 @@ Prototype<4, 2> const _C;      //< Represents Matrix 3
 Prototype<4, 3> const _alpha;  //< Represents Scalar 1
 Prototype<4, 4> const _beta;   //< Represents Scalar 2
 Prototype<4, 5> const _gamma;  //< Represents Scalar 3
-Prototype<4, 6> const _X;      //< Represents vector 1
-Prototype<4, 7> const _Y;      //< Represents vector 2
-Prototype<4, 8> const _Z;      //< Represents vector 3
+Prototype<4, 6> const _x;      //< Represents vector 1
+Prototype<4, 7> const _y;      //< Represents vector 2
+Prototype<4, 8> const _z;      //< Represents vector 3
 Prototype<4, 9> const _m;      //< Represents integral 1
 Prototype<4, 10> const _n;     //< Represents integral 2
 Prototype<4, 11> const _p;     //< Represents integral 3
