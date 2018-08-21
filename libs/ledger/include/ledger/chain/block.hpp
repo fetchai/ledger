@@ -107,6 +107,42 @@ public:
     proof_.SetHeader(body_.hash);
   }
 
+  std::string summarise() const
+  {
+    std::string ret;
+
+    if (hash().size() > 0)
+    {
+      ret += hashString();
+    }
+    else
+    {
+      ret += "?";
+    }
+
+    ret += " -> ";
+
+    if (body_.block_number == 0)
+    {
+      ret += "genesis";
+    }
+    else
+    {
+      if (body_.previous_hash.size() > 0)
+      {
+        ret += prevString();
+      }
+      else
+      {
+        ret += "???";
+      }
+    }
+
+    ret += " W=" + std::to_string(total_weight_) + ((is_loose_) ? " loose" : " attached");
+
+    return ret;
+  }
+
   body_type const &  body() const { return body_; }
   body_type &        body() { return body_; }
   digest_type const &hash() const { return body_.hash; }
@@ -121,9 +157,9 @@ public:
   bool &          loose() { return is_loose_; }
 
 #if 1  // TODO(issue 33): Move to py swarm?
-  std::string hashString() const { return std::string(ToHex(body_.hash)); }
+  std::string hashString() const { return std::string(ToBase64(body_.hash)); }
 
-  std::string prevString() const { return std::string(ToHex(body_.previous_hash)); }
+  std::string prevString() const { return std::string(ToBase64(body_.previous_hash)); }
 #endif
 
 private:

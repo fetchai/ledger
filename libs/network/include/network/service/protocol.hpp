@@ -33,6 +33,10 @@
 
 namespace fetch {
 namespace service {
+
+  class FeedSubscriptionManager;
+
+  
 /* A class that defines a generic protocol.
  *
  * This class is used for defining a general protocol with
@@ -139,6 +143,10 @@ public:
     members_[n] = fnc;
   }
 
+  virtual void ConnectionDropped(connection_handle_type connection_handle)
+  {
+  }
+
   /* Registers a feed from an implementation.
    * @feed is the unique feed identifier.
    * @publisher is a class that subclasses <AbstractPublicationFeed>.
@@ -233,7 +241,7 @@ private:
 
   callable_type *                                       members_[256] = {nullptr};
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
-  fetch::mutex::Mutex                                   feeds_mutex_;
+  fetch::mutex::Mutex                                   feeds_mutex_{__LINE__, __FILE__};
 };
 }  // namespace service
 }  // namespace fetch

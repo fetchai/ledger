@@ -65,7 +65,7 @@ public:
 private:
   ServiceServer<fetch::network::TCPServer> *service_ = nullptr;
   std::set<uint64_t>                        registered_aeas_;
-  fetch::mutex::Mutex                       mutex_;
+  fetch::mutex::Mutex                       mutex_{__LINE__, __FILE__};
 };
 
 // Next we make a protocol for the implementation

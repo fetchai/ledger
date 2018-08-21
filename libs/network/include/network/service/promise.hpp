@@ -38,15 +38,43 @@ class PromiseImplementation
 public:
   using promise_counter_type = uint64_t;
   using byte_array_type      = byte_array::ConstByteArray;
+  typedef std::function<void(void)> callback_type;
+  typedef enum
+  {
+    NONE,
+    SUCCESS,
+    FAIL
+  } Conclusion;
 
   PromiseImplementation()
   {
     LOG_STACK_TRACE_POINT;
 
-    connection_closed_ = false;
-    fulfilled_         = false;
-    failed_            = false;
-    id_                = next_promise_id();
+    id_ = next_promise_id();
+  }
+
+  void ConcludeSuccess(void)
+  {
+    if (conclusion_.exchange(SUCCESS) == NONE)
+    {
+      auto func = on_success_;
+      if (func)
+      {
+        func();
+      }
+    }
+  }
+
+  void ConcludeFail(void)
+  {
+    if (conclusion_.exchange(FAIL) == NONE)
+    {
+      auto func = on_fail_;
+      if (func)
+      {
+        func();
+      }
+    }
   }
 
   void Fulfill(byte_array_type const &value)
@@ -55,6 +83,32 @@ public:
 
     value_     = value;
     fulfilled_ = true;
+    ConcludeSuccess();
+  }
+
+  PromiseImplementation &Then(callback_type func)
+  {
+    on_success_ = func;
+    if (fulfilled_)
+    {
+      if (!failed_)
+      {
+        ConcludeSuccess();  // if this is called >1, it will protect itself.
+      }
+    }
+    return *this;
+  }
+  PromiseImplementation &Else(callback_type func)
+  {
+    on_fail_ = func;
+    if (fulfilled_)
+    {
+      if (failed_ || connection_closed_)
+      {
+        ConcludeFail();  // if this is called >1, it will protect itself.
+      }
+    }
+    return *this;
   }
 
   void Fail(serializers::SerializableException const &excp)
@@ -64,14 +118,18 @@ public:
     exception_ = excp;
     failed_    = true;  // Note that order matters here due to threading!
     fulfilled_ = true;
+    ConcludeFail();
   }
 
   void ConnectionFailed()
   {
     LOG_STACK_TRACE_POINT;
 
+    fetch::logger.Warn("ConnectionFailed being signalled.");
+
     connection_closed_ = true;
-    fulfilled_         = true;
+    fulfilled_         = true;  // Note that order matters here due to threading!
+    ConcludeFail();
   }
 
   serializers::SerializableException exception() const { return exception_; }
@@ -84,11 +142,14 @@ public:
 
 private:
   serializers::SerializableException exception_;
-  std::atomic<bool>                  connection_closed_;
-  std::atomic<bool>                  fulfilled_;
-  std::atomic<bool>                  failed_;
+  std::atomic<bool>                  connection_closed_{false};
+  std::atomic<bool>                  fulfilled_{false};
+  std::atomic<bool>                  failed_{false};
   std::atomic<uint64_t>              id_;
   byte_array_type                    value_;
+  std::atomic<Conclusion>            conclusion_{NONE};
+  callback_type                      on_success_;
+  callback_type                      on_fail_;
 
   static uint64_t next_promise_id()
   {
@@ -111,6 +172,8 @@ public:
   using promise_counter_type = typename promise_type::promise_counter_type;
   using shared_promise_type  = std::shared_ptr<promise_type>;
 
+  using callback_type = details::PromiseImplementation::callback_type;
+
   Promise()
   {
     LOG_STACK_TRACE_POINT;
@@ -122,6 +185,44 @@ public:
   bool Wait(bool const &throw_exception)
   {
     return Wait(std::numeric_limits<double>::infinity(), throw_exception);
+  }
+
+  typedef enum
+  {
+    OK      = 0,
+    FAILED  = 1,
+    CLOSED  = 2,
+    WAITING = 4,
+  } Status;
+
+  Status GetStatus()
+  {
+    return Status((has_failed() ? 1 : 0) + (is_connection_closed() ? 2 : 0) +
+                  (!is_fulfilled() ? 4 : 0));
+  }
+
+  static std::string DescribeStatus(Status s)
+  {
+    const char *states[8] = {"OK.",      "Failed.", "Closed.", "Failed.",
+                             "Timeout.", "Failed.", "Closed.", "Failed."};
+    return states[int(s) & 0x07];
+  }
+
+  Status WaitLoop(int milliseconds, int cycles)
+  {
+    auto s = GetStatus();
+    while (cycles > 0 && s == WAITING)
+    {
+      cycles -= 1;
+      s = GetStatus();
+      if (s != WAITING) return s;
+
+      FETCH_LOG_PROMISE();
+      Wait(milliseconds, false);
+      s = GetStatus();
+      if (s != WAITING) return s;
+    }
+    return WAITING;
   }
 
   bool Wait(int const &time) { return Wait(double(time)); }
@@ -152,6 +253,7 @@ public:
     if (has_failed())
     {
       fetch::logger.Warn("Connection failed!");
+
       if (throw_exception)
         throw reference_->exception();
       else
@@ -164,6 +266,8 @@ public:
   T As()
   {
     LOG_STACK_TRACE_POINT;
+
+    FETCH_LOG_PROMISE();
     if (!Wait())
     {
       TODO_FAIL("Timeout or connection lost");
@@ -179,9 +283,24 @@ public:
   void As(T &ret)
   {
     LOG_STACK_TRACE_POINT;
+
+    FETCH_LOG_PROMISE();
     if (!Wait())
     {
       TODO_FAIL("Timeout or connection lost");
+    }
+
+    serializer_type ser(reference_->value());
+    ser >> ret;
+  }
+
+  template <typename T>
+  void As(T &ret) const
+  {
+    LOG_STACK_TRACE_POINT;
+    if (!is_fulfilled())
+    {
+      TODO_FAIL("Don't call non-waity As until promise filled");
     }
 
     serializer_type ser(reference_->value());
@@ -195,9 +314,19 @@ public:
     return As<T>();
   }
 
-  bool is_fulfilled() const { return reference_->is_fulfilled(); }
-  bool has_failed() const { return reference_->has_failed(); }
-  bool is_connection_closed() const { return reference_->is_connection_closed(); }
+  bool     is_fulfilled() const { return reference_->is_fulfilled(); }
+  bool     has_failed() const { return reference_->has_failed(); }
+  bool     is_connection_closed() const { return reference_->is_connection_closed(); }
+  Promise &Then(callback_type func)
+  {
+    reference_->Then(func);
+    return *this;
+  }
+  Promise &Else(callback_type func)
+  {
+    reference_->Else(func);
+    return *this;
+  }
 
   shared_promise_type  reference() { return reference_; }
   promise_counter_type id() const { return reference_->id(); }

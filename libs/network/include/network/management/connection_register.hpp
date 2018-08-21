@@ -18,10 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "network/generics/callbacks.hpp"
 #include "network/management/abstract_connection_register.hpp"
 #include "network/service/client.hpp"
 
+#include <chrono>
 #include <memory>
+#include <thread>
 #include <unordered_map>
 
 namespace fetch {
@@ -38,8 +41,11 @@ public:
   using shared_service_client_type = std::shared_ptr<service::ServiceClient>;
   using weak_service_client_type   = std::weak_ptr<service::ServiceClient>;
   using details_type               = G;
-  struct LockableDetails final : public details_type, public mutex::Mutex
+  using mutex_type                 = mutex::Mutex;
+
+  struct LockableDetails final : public details_type, public mutex_type
   {
+    LockableDetails() : details_type(), mutex_type(__LINE__, __FILE__) {}
   };
   using details_map_type =
       std::unordered_map<connection_handle_type, std::shared_ptr<LockableDetails>>;
@@ -58,9 +64,22 @@ public:
   template <typename T, typename... Args>
   shared_service_client_type CreateServiceClient(NetworkManager const &tm, Args &&... args)
   {
+    using Clock     = std::chrono::high_resolution_clock;
+    using Timepoint = Clock::time_point;
 
     T connection(tm);
     connection.Connect(std::forward<Args>(args)...);
+
+    // wait for the connection to be established
+    Timepoint const start     = Clock::now();
+    Timepoint const threshold = start + std::chrono::seconds{10};
+    while (!connection.is_alive())
+    {
+      // termination condition
+      if (Clock::now() >= threshold) break;
+
+      std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    }
 
     shared_service_client_type service =
         std::make_shared<service_client_type>(connection.connection_pointer().lock(), tm);
@@ -87,7 +106,6 @@ public:
   }
 
   void OnClientEnter(callback_client_enter_type const &f) { on_client_enter_ = f; }
-
   void OnClientLeave(callback_client_enter_type const &f) { on_client_leave_ = f; }
 
   void Leave(connection_handle_type const &id) override
@@ -134,7 +152,10 @@ public:
   }
 
   std::shared_ptr<LockableDetails> GetDetails(connection_handle_type const &i)
+  //void GetDetails(connection_handle_type const &i)
   {
+    //fetch::logger.Info("GetDetails for =======================================> ", i);
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<mutex::Mutex> lock(details_lock_);
     if (details_.find(i) == details_.end())
     {
@@ -168,11 +189,60 @@ public:
     fnc(connections_);
   }
 
+  void VisitConnections(std::function<void(connection_map_type::value_type const &)> f) const
+  {
+    std::list<connection_map_type::value_type> keys;
+    {
+      std::lock_guard<mutex::Mutex> lock(connections_lock_);
+      for(auto &item : connections_)
+      {
+        keys.push_back(item);
+      }
+    }
+
+    for(auto &item : keys)
+    {
+      auto k = item.first;
+      std::lock_guard<mutex::Mutex> lock(connections_lock_);
+      if (connections_.find(k) != connections_.end())
+      {
+        f(item);
+      }
+    }
+  }
+
+  void VisitConnections(std::function<void(connection_handle_type const &, shared_connection_type)> f) const
+  {
+    fetch::logger.Warn("About to visit ", connections_.size(), " connections");
+    std::list<connection_map_type::value_type> keys;
+    {
+      std::lock_guard<mutex::Mutex> lock(connections_lock_);
+      for(auto &item : connections_)
+      {
+        keys.push_back(item);
+      }
+    }
+
+    for(auto &item : keys)
+    {
+      auto v = item.second.lock();
+      if (v)
+      {
+        auto k = item.first;
+        std::lock_guard<mutex::Mutex> lock(connections_lock_);
+        if (connections_.find(k) != connections_.end())
+        {
+          f(k,v);
+        }
+      }
+    }
+  }
+
 private:
-  mutable mutex::Mutex connections_lock_;
+  mutable mutex::Mutex connections_lock_{__LINE__, __FILE__};
   connection_map_type  connections_;
 
-  mutable mutex::Mutex details_lock_;
+  mutable mutex::Mutex details_lock_{__LINE__, __FILE__};
   details_map_type     details_;
 
   void SignalClientLeave(connection_handle_type const &handle)
@@ -185,8 +255,8 @@ private:
     if (on_client_enter_) on_client_enter_(handle);
   }
 
-  callback_client_enter_type on_client_leave_;
-  callback_client_enter_type on_client_enter_;
+  generics::Callbacks<callback_client_enter_type> on_client_leave_;
+  generics::Callbacks<callback_client_enter_type> on_client_enter_;
 };
 
 template <typename G>
@@ -239,6 +309,26 @@ public:
   void WithServices(std::function<void(service_map_type const &)> const &f) const
   {
     ptr_->WithServices(f);
+  }
+
+  void VisitServiceClients(std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
+  {
+    ptr_->VisitServiceClients(f);
+  }
+
+  void VisitServiceClients(std::function<void(service_map_type::value_type const &)> f) const
+  {
+    ptr_->VisitServiceClients(f);
+  }
+
+  void VisitConnections(std::function<void(connection_handle_type const &, shared_connection_type)> f) const
+  {
+    ptr_->VisitConnections(f);
+  }
+
+  void VisitConnections(std::function<void(connection_map_type::value_type const &)> f) const
+  {
+    ptr_->VisitConnections(f);
   }
 
   void WithClientDetails(std::function<void(details_map_type const &)> fnc) const

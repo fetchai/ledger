@@ -78,7 +78,7 @@ class ConstellationNode(object):
             rnd = (index + random.randint(0, args.members)) % args.members
             if rnd == index:
                 continue
-            peers.add(rnd * 20 + PORT_BASE)
+            peers.add(rnd * 20 + PORT_BASE + 1)
 
         os.makedirs(args.logdir, exist_ok=True)
         os.makedirs("data-{}/".format(self.index), exist_ok=True)
@@ -100,7 +100,27 @@ class ConstellationNode(object):
 
         self.debugger = args.debugger
 
-        self.launchRun()
+        {
+            "": self.launchRun,
+            "gdb": self.launchGDB,
+            "lldb": self.launchLLDB,
+        }[args.debugger]()
+
+    def launchGDB(self):
+        pass
+
+    def launchLLDB(self):
+        cmdstr = (self.moreargs +
+            [ " ".join([ x[0], x[1] ]) for x in self.backargs.items() ])
+
+        cmdstr = " ".join(cmdstr)
+
+        cmdstr = "screen -S 'lldb-{}' -dm lldb ".format(self.index) + self.frontargs + " -s '/tmp/lldb.run.cmd' -- " + cmdstr
+        print(cmdstr)
+        self.p = subprocess.Popen("{} | tee {}".format(cmdstr, os.path.join(self.logdir, str(self.index))),
+            shell=True
+        )
+
 
     def launchRun(self):
 
@@ -110,7 +130,7 @@ class ConstellationNode(object):
 
         cmdstr = " ".join(cmdstr)
 
-        cmdstr = "{} >{}".format(
+        cmdstr = "{} >{} 2>&1".format(
                 cmdstr
                 , os.path.join(self.logdir, str(self.index))
             )
@@ -185,9 +205,7 @@ class PyfetchNode(object):
         else:
             cmdstr += " >/dev/null"
 
-        self.p = subprocess.Popen("{}".format(cmdstr)),
-            shell=True
-        )
+        self.p = subprocess.Popen("{}".format(cmdstr), shell=True)
 
     def launchGDB(self):
         pass
@@ -263,6 +281,9 @@ def main():
     args = swarmArgs.get()
 
     with open("/tmp/lldb.run.cmd", "w") as fn:
+        fn.write("settings set thread-format thread #${thread.index}: tid = ${thread.id}{, name = ${thread.name}}{, function: ${function.name}} {, stop reason = ${thread.stop-reason}}{, return = ${thread.return-value}}\\n\n")
+        fn.write("breakpoint set --name abort\n")
+        fn.write("breakpoint set --name exit\n")
         fn.write("run\n");
 
     if args.clean:

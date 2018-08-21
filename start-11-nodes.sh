@@ -1,0 +1,1 @@
+ps -ef | grep 9000 | grep -v sh | grep constell | sed "s@  *@ @g" | cut -d' ' -f 3 | xargs kill ; rm -v data-0/*.db; clear; ./build/apps/constellation/constellation -port 9000 -peers 127.0.0.1:9081,127.0.0.1:9021 -db-prefix data-0/ 2>&1 | tee build/swarmlog/0

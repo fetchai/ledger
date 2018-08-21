@@ -27,6 +27,8 @@
 #include <thread>
 #include <utility>
 
+#include "debugging/exception_catching.hpp"
+
 namespace fetch {
 namespace mutex {
 
@@ -58,7 +60,7 @@ class DebugMutex : public AbstractMutex
   class MutexTimeout
   {
   public:
-    static constexpr std::size_t DEFAULT_TIMEOUT_MS = 300;
+    static constexpr std::size_t DEFAULT_TIMEOUT_MS = 300000;
 
     MutexTimeout(std::string filename, int const &line, std::size_t timeout_ms = DEFAULT_TIMEOUT_MS)
       : filename_(std::move(filename)), line_(line)
@@ -111,7 +113,7 @@ class DebugMutex : public AbstractMutex
 
 public:
   DebugMutex(int line, std::string file) : AbstractMutex(), line_(line), file_(std::move(file)) {}
-  DebugMutex() = default;
+  DebugMutex() = delete;
 
   DebugMutex &operator=(DebugMutex const &other) = delete;
 
@@ -122,7 +124,10 @@ public:
     locked_ = Clock::now();
     lock_mutex_.unlock();
 
-    std::mutex::lock();
+
+    LOG_EX(__FILE__, __LINE__)
+      std::mutex::lock();
+    END_LOG_EX
 
     timeout_ = std::make_unique<MutexTimeout>(file_, line_);
     fetch::logger.RegisterLock(this);

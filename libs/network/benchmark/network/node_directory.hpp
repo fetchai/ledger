@@ -184,6 +184,8 @@ public:
 
       auto p1 = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
                              protocols::NetworkBenchmark::PUSH_CONFIDENT, blockHash, block);
+
+      FETCH_LOG_PROMISE();
       p1.Wait();
     }
   }

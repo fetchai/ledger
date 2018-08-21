@@ -19,18 +19,31 @@
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
+#include "core/json/document.hpp"
 #include "core/macros.hpp"
+#include "core/script/variant.hpp"
+#include "crypto/ecdsa.hpp"
+#include "crypto/prover.hpp"
 #include "network/adapters.hpp"
+#include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 
+#include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
 
+#include <array>
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <vector>
 
 namespace {
+
+using Prover       = fetch::crypto::Prover;
+using BootstrapPtr = std::unique_ptr<fetch::BootstrapMonitor>;
+using ProverPtr    = std::unique_ptr<Prover>;
 
 struct CommandLineArguments
 {
@@ -42,16 +55,20 @@ struct CommandLineArguments
   static const std::size_t DEFAULT_NUM_SLICES    = 4;
   static const std::size_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
   static const uint16_t    DEFAULT_PORT          = 8000;
+  static const uint32_t    DEFAULT_NETWORK_ID    = 0x10;
 
   uint16_t       port{0};
+  uint32_t       network_id;
   peer_list_type peers;
   std::size_t    num_executors;
   std::size_t    num_lanes;
   std::size_t    num_slices;
   std::string    interface;
+  bool           bootstrap{false};
   std::string    dbdir;
 
-  static CommandLineArguments Parse(int argc, char **argv, adapter_list_type const &adapters)
+  static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
+                                    Prover const &prover)
   {
     CommandLineArguments args;
 
@@ -59,6 +76,7 @@ struct CommandLineArguments
     std::string raw_peers;
 
     fetch::commandline::Params parameters;
+    std::string                external_address;
     parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
     parameters.add(args.num_executors, "executors", "The number of executors to configure",
                    DEFAULT_NUM_EXECUTORS);
@@ -68,43 +86,29 @@ struct CommandLineArguments
                    "The comma separated list of addresses to initially connect to", std::string{});
     parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage",
                    std::string{"node_storage"});
-
-    std::size_t const num_adapters = adapters.size();
-    if (num_adapters == 0)
-    {
-      throw std::runtime_error("Unable to detect system network interfaces");
-    }
-    else if (num_adapters == 1)
-    {
-      args.interface = adapters[0].address().to_string();
-    }
-    else
-    {
-      parameters.add(args.interface, "interface",
-                     "The network interface to used for public communication");
-    }
+    parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
+    parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
+    parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
+                   std::string{});
 
     // parse the args
-    parameters.Parse(argc, const_cast<char const **>(argv));
+    parameters.Parse(argc, argv);
 
     // update the peers
     args.SetPeers(raw_peers);
 
-    // validate the interface
-    bool valid_adapter = false;
-    for (auto const &adapter : adapters)
+    args.bootstrap = (!external_address.empty());
+    if (args.bootstrap)
     {
-      if (adapter.address().to_string() == args.interface)
-      {
-        valid_adapter = true;
-        break;
-      }
-    }
+      // create the boostrap node
+      bootstrap =
+          std::make_unique<fetch::BootstrapMonitor>(prover.identity(), args.port, args.network_id);
 
-    // handle invalid interface address
-    if (!valid_adapter)
-    {
-      throw std::runtime_error("Invalid interface address");
+      // augment the peer list with the bootstrapped version
+      if (bootstrap->Start(args.peers))
+      {
+        args.interface = bootstrap->external_address();
+      }
     }
 
     return args;
@@ -112,35 +116,36 @@ struct CommandLineArguments
 
   void SetPeers(std::string const &raw_peers)
   {
-
-    // split the peers
-    std::size_t          position = 0;
-    fetch::network::Peer peer;
-    while (std::string::npos != position)
+    if (!raw_peers.empty())
     {
+      // split the peers
+      std::size_t          position = 0;
+      fetch::network::Peer peer;
+      while (std::string::npos != position)
+      {
+        // locate the separator
+        std::size_t const separator_position = raw_peers.find(',', position);
 
-      // locate the separator
-      std::size_t const separator_position = raw_peers.find(',', position);
+        // parse the peer
+        std::string const peer_address = raw_peers.substr(position, separator_position);
+        if (peer.Parse(peer_address))
+        {
+          peers.push_back(peer);
+        }
+        else
+        {
+          fetch::logger.Warn("Failed to parse input peer address: '", peer_address, "'");
+        }
 
-      // parse the peer
-      std::string const peer_address = raw_peers.substr(position, separator_position);
-      if (peer.Parse(peer_address))
-      {
-        peers.push_back(peer);
-      }
-      else
-      {
-        fetch::logger.Warn("Failed to parse input peer address: ", peer_address);
-      }
-
-      // update the position for the next search
-      if (std::string::npos == separator_position)
-      {
-        position = std::string::npos;
-      }
-      else
-      {
-        position = separator_position + 1;  // advance past separator
+        // update the position for the next search
+        if (std::string::npos == separator_position)
+        {
+          position = std::string::npos;
+        }
+        else
+        {
+          position = separator_position + 1;  // advance past separator
+        }
       }
     }
   }
@@ -148,9 +153,14 @@ struct CommandLineArguments
   friend std::ostream &operator<<(std::ostream &              s,
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
-    s << "db-prefix: " << args.dbdir << std::endl;
-    s << "port.....: " << args.port << std::endl;
-    s << "peers....: ";
+    s << "port...........: " << args.port << std::endl;
+    s << "network id.....: 0x" << std::hex << args.network_id << std::dec << std::endl;
+    s << "num executors..: " << args.num_executors << std::endl;
+    s << "num lanes......: " << args.num_lanes << std::endl;
+    s << "bootstrap......: " << args.bootstrap << std::endl;
+    s << "db-prefix......: " << args.dbdir << std::endl;
+    s << "interface......: " << args.interface << std::endl;
+    s << "peers..........: ";
     for (auto const &peer : args.peers)
     {
       s << peer << ' ';
@@ -159,6 +169,14 @@ struct CommandLineArguments
     return s;
   }
 };
+
+ProverPtr GenereateP2PKey()
+{
+  fetch::crypto::ECDSASigner *certificate = new fetch::crypto::ECDSASigner();
+  certificate->GenerateKeys();
+
+  return ProverPtr{certificate};
+}
 
 }  // namespace
 
@@ -170,17 +188,27 @@ int main(int argc, char **argv)
 
   try
   {
+    // create and load the main certificate for the bootstrapper
+    ProverPtr p2p_key = GenereateP2PKey();
 
-    auto const network_adapters = fetch::network::Adapter::GetAdapters();
-
-    auto const args = CommandLineArguments::Parse(argc, argv, network_adapters);
+    BootstrapPtr bootstrap_monitor;
+    auto const   args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
 
     fetch::logger.Info("Configuration:\n", args);
 
     // create and run the constellation
-    auto constellation = fetch::Constellation::Create(args.port, args.num_executors, args.num_lanes,
-                                                      args.num_slices, args.dbdir);
+    auto constellation = std::make_unique<fetch::Constellation>(
+        std::move(p2p_key), args.port, args.num_executors, args.num_lanes, args.num_slices,
+        args.interface, args.dbdir);
+
+    // run the application
     constellation->Run(args.peers);
+
+    // stop the bootstrapper if we have one
+    if (bootstrap_monitor)
+    {
+      bootstrap_monitor->Stop();
+    }
 
     exit_code = EXIT_SUCCESS;
   }

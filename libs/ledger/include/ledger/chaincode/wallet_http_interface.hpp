@@ -108,15 +108,13 @@ private:
 
     std::ostringstream oss;
     oss << data;
-    return http::CreateJsonResponse(oss.str(), http::status_code::SUCCESS_OK);
+    return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
   }
 
   http::HTTPResponse OnBalance(http::HTTPRequest const &request)
   {
-
     try
     {
-
       // parse the json request
       json::JSONDocument doc;
       doc.Parse(request.body());
@@ -129,7 +127,7 @@ private:
       std::ostringstream oss;
       oss << response;
 
-      return http::CreateJsonResponse(oss.str(), http::status_code::SUCCESS_OK);
+      return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
     }
     catch (json::JSONParseException const &ex)
     {
@@ -179,7 +177,7 @@ private:
         // dispatch to the wider system
         processor_.AddTransaction(tx);
 
-        return http::CreateJsonResponse(R"({"success": true})", http::status_code::SUCCESS_OK);
+        return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
       }
     }
     catch (json::JSONParseException const &ex)
@@ -203,7 +201,7 @@ private:
         << R"("error_code": )" << static_cast<int>(error_code) << ',' << R"("message": )"
         << ToString(error_code) << '}';
 
-    return http::CreateJsonResponse(oss.str(), http::status_code::CLIENT_ERROR_BAD_REQUEST);
+    return http::CreateJsonResponse(oss.str(), http::Status::CLIENT_ERROR_BAD_REQUEST);
   }
 
   static const char *ToString(ErrorCode error_code)

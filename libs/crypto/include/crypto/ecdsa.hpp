@@ -65,14 +65,14 @@ public:
     return true;
   }
 
-  Identity identity() final override
+  Identity identity() const final override
   {
     return Identity(PrivateKey::ecdsa_curve_type::sn, public_key());
   }
 
   byte_array_type document_hash() final override { return signature_.hash(); }
   byte_array_type signature() final override { return signature_.signature(); }
-  byte_array_type public_key() { return private_key_.publicKey().keyAsBin(); }
+  byte_array_type public_key() const { return private_key_.publicKey().keyAsBin(); }
   byte_array_type private_key() { return private_key_.KeyAsBin(); }
 
 private:

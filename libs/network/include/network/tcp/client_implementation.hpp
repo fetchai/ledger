@@ -59,7 +59,7 @@ public:
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation &&rhs) = delete;
 
-  ~TCPClientImplementation() { destructing_ = true; }
+  ~TCPClientImplementation() {}
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {
@@ -211,7 +211,6 @@ public:
 
 private:
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
-  bool                  destructing_  = false;
 
   network_manager_type networkManager_;
   // IO objects should be guaranteed to have lifetime less than the

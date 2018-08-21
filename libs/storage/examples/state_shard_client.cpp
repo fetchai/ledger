@@ -61,6 +61,8 @@ public:
   {
     auto promise =
         client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
+
+    FETCH_LOG_PROMISE();
     promise.Wait(2000);
   }
 
@@ -68,6 +70,8 @@ public:
   {
     auto promise =
         client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
+
+    FETCH_LOG_PROMISE();
     promise.Wait(2000);
   }
 

@@ -53,15 +53,24 @@ int main()
   // Promises
   auto p1 = client.Call(MYPROTO, SLOWFUNCTION, 2, 7);
   auto p2 = client.Call(MYPROTO, SLOWFUNCTION, 4, 3);
-
+  auto p3 = client.Call(MYPROTO, SLOWFUNCTION);
   //  client.WithDecorators(aes, ... ).Call( MYPROTO,SLOWFUNCTION, 4, 3 );
 
   if (!p1.is_fulfilled()) std::cout << "p1 is not yet fulfilled" << std::endl;
 
+  FETCH_LOG_PROMISE();
   p1.Wait();
 
   // Converting to a type implicitly invokes Wait (as is the case for p2)
   std::cout << "Result is: " << int(p1) << " " << int(p2) << std::endl;
+  try
+  {
+    p3.Wait();
+  }
+  catch (fetch::serializers::SerializableException const &e)
+  {
+    std::cout << "Exception caught: " << e.what() << std::endl;
+  }
 
   try
   {
@@ -86,6 +95,8 @@ int main()
   fetch::logger.Highlight("DONE!");
 
   std::cout << "Waiting for last promise: " << promises.back().id() << std::endl;
+
+  FETCH_LOG_PROMISE();
   promises.back().Wait(false);
 
   std::size_t failed = 0, not_fulfilled = 0;
@@ -132,6 +143,7 @@ int xmain()
 
   auto promise = client.Call(MYPROTO, SLOWFUNCTION, 2, 7);
 
+  FETCH_LOG_PROMISE();
   if (!promise.Wait(500))
   {  // wait 500 ms for a response
     std::cout << "no response from node: " << client.is_alive() << std::endl;

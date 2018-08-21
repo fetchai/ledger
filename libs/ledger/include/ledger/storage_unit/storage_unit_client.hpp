@@ -85,7 +85,9 @@ public:
 
         // make the client call
         auto p = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::PING);
-        if (p.Wait(100, false))
+
+        FETCH_LOG_PROMISE();
+        if (p.Wait(1000, false))
         {
           if (p.As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
           {
@@ -96,13 +98,13 @@ public:
       }
       else
       {
-        std::this_thread::sleep_for(std::chrono::milliseconds{20});
+        std::this_thread::sleep_for(std::chrono::milliseconds{200});
       }
     }
 
     if (connection_timeout)
     {
-      logger.Warn("Connection timed out - closing");
+      logger.Warn("Connection timed out - closing in StorageUnitClient::AddLaneConnection:1:");
       client->Close();
       client.reset();
       return crypto::InvalidIdentity();
@@ -112,6 +114,8 @@ public:
     auto p1 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
     auto p2 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
     auto p3 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
+
+    FETCH_LOG_PROMISE();
     if ((!p1.Wait(1000)) || (!p2.Wait(1000)) || (!p3.Wait(1000)))
     {
       fetch::logger.Warn("Client timeout when trying to get identity details.");
@@ -134,7 +138,7 @@ public:
     // TODO(issue 24): Verify expected identity
 
     assert(lane < lanes_.size());
-    fetch::logger.Debug("Adding lane ", lane);
+    fetch::logger.Info("Adding lane ", lane);
 
     lanes_[lane] = client;
 
@@ -161,6 +165,8 @@ public:
     auto        res     = fetch::storage::ResourceID(tx.digest());
     std::size_t lane    = res.lane(log2_lanes_);
     auto        promise = lanes_[lane]->Call(LaneService::TX_STORE, protocol::SET, res, tx);
+
+    FETCH_LOG_PROMISE();
     promise.Wait();
   }
 
@@ -228,6 +234,7 @@ public:
         lanes_[lane]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET,
                            key.as_resource_id(), value);
 
+    FETCH_LOG_PROMISE();
     promise.Wait(2000);
   }
 
@@ -243,6 +250,7 @@ public:
 
     for (auto &p : promises)
     {
+      FETCH_LOG_PROMISE();
       p.Wait();
     }
   }
@@ -259,6 +267,7 @@ public:
 
     for (auto &p : promises)
     {
+      FETCH_LOG_PROMISE();
       p.Wait();
     }
   }
@@ -266,6 +275,16 @@ public:
   byte_array::ConstByteArray Hash() override
   {
     // TODO(issue 33): Which lane?
+
+    if (lanes_.empty())
+    {
+      TODO_FAIL("Lanes array empty when trying to get a hash from L0");
+    }
+    if (!lanes_[0])
+    {
+      TODO_FAIL("L0 null when trying to get a hash from L0");
+    }
+
     return lanes_[0]
         ->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
         .As<byte_array::ByteArray>();

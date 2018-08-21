@@ -33,7 +33,7 @@ private:
   int                                arg_count_;
 
 public:
-  void Parse(int argc, char const **argv)
+  void Parse(int argc, char **argv)
   {
     arg_count_        = argc;
     std::size_t sargs = std::size_t(argc);

@@ -28,7 +28,10 @@ class PyfetchNodeNumberGenerator(object):
 
     def getall(self):
         for x in range(0, self.limit):
-            yield (x, 9000+x)
+            yield {
+                "ident": x,
+                "port": 9000+x,
+            }
 
 class ConstellationNodeNumberGenerator(object):
     def __init__(self, limit=10):
@@ -36,7 +39,22 @@ class ConstellationNodeNumberGenerator(object):
 
     def getall(self):
         for x in range(0, self.limit):
-            yield (x, 9000+x*20)
+            yield {
+                "ident": x,
+                "port": 9000+x*20,
+            }
+
+class NodesFromFileGenerator(object):
+    def __init__(self, fn):
+        self.fn = fn
+
+    def getall(self):
+        with open(self.fn, "r") as fh:
+            for id,line in enumerate(fh.readlines()):
+                yield {
+                    "ident": id,
+                    "url": line.rstrip(),
+                }
 
 class Monitoring(object):
     def __init__(self, nodenumbergenerator):
@@ -44,7 +62,6 @@ class Monitoring(object):
             self,
             nodenumbergenerator,
             {
-                #'/peers': self.newData,
                 '/mainchain': self.newChainData,
                 '/sitrep': self.newSitrep,
                 200: self.okPeer,
@@ -83,6 +100,8 @@ class Monitoring(object):
                 self.chain = {}
 
         for i, block in enumerate(blocks):
+            if i>10:
+                break;
             if not i:
                 self.heaviests[ident] = block["hashcurrent"]
             self.chain.setdefault(chainident, {})
@@ -126,7 +145,8 @@ class Monitoring(object):
 
     def close(self):
         self.getter.stop()
-        self.sitreps.close()
+        if self.sitreps:
+            self.sitreps.cloxse()
 
     def setPeerList(self, nodenumber, ident, peerlist):
         self.world.setdefault(ident, {})

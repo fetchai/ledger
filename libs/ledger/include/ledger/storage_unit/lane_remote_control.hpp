@@ -62,7 +62,10 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
+      fetch::logger.Info("Remote lane call to: ", host, ":", port);
       auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::CONNECT, host, port);
+
+      FETCH_LOG_PROMISE();
       p.Wait();
     }
   }
@@ -73,6 +76,8 @@ public:
     if (ptr)
     {
       auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::TRY_CONNECT, ep);
+
+      FETCH_LOG_PROMISE();
       p.Wait();
     }
   }
@@ -88,6 +93,8 @@ public:
     if (ptr)
     {
       auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::SHUTDOWN);
+
+      FETCH_LOG_PROMISE();
       p.Wait();
     }
   }

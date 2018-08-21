@@ -33,6 +33,8 @@
 #include "core/mutex.hpp"
 #include "network/tcp/tcp_client.hpp"
 
+#include "network/generics/life_tracker.hpp"
+
 #include <map>
 #include <utility>
 
@@ -46,8 +48,11 @@ public:
   using network_manager_type = fetch::network::NetworkManager;
 
   ServiceClient(std::shared_ptr<network::AbstractConnection> connection,
-                network_manager_type const &                 network_manager)
-    : connection_(connection), network_manager_(network_manager), message_mutex_(__LINE__, __FILE__)
+                const network_manager_type &                 network_manager)
+    : connection_(connection)
+    , network_manager_(network_manager)
+    , message_mutex_(__LINE__, __FILE__)
+    , lifeTracker_(network_manager)
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -64,7 +69,7 @@ public:
 
         // Since this class isn't shared_from_this, try to ensure safety when
         // destructing
-        network_manager_.Post([this]() { ProcessMessages(); });
+        lifeTracker_.Post([this]() { this->ProcessMessages(); });
       });
     }
   }
@@ -75,6 +80,8 @@ public:
 
   ~ServiceClient()
   {
+    lifeTracker_.reset();
+
     LOG_STACK_TRACE_POINT;
     auto ptr = connection_.lock();
     if (ptr)
@@ -116,7 +123,8 @@ public:
     {
       return ptr->handle();
     }
-    TODO_FAIL("connection is dead");
+    LOG_STACK_TRACE_POINT;
+    TODO_FAIL("connection is dead in ServiceClient::handle");
   }
 
   bool is_alive() const
@@ -172,7 +180,8 @@ protected:
 
 private:
   std::weak_ptr<network::AbstractConnection> connection_;
-  void                                       ProcessMessages()
+
+  void ProcessMessages()
   {
     LOG_STACK_TRACE_POINT;
 
@@ -210,9 +219,10 @@ private:
     }
   }
 
-  network_manager_type              network_manager_;
-  std::deque<network::message_type> messages_;
-  mutable fetch::mutex::Mutex       message_mutex_;
+  network_manager_type                        network_manager_;
+  std::deque<network::message_type>           messages_;
+  mutable fetch::mutex::Mutex                 message_mutex_;
+  generics::LifeTracker<network_manager_type> lifeTracker_;
 };
 }  // namespace service
 }  // namespace fetch

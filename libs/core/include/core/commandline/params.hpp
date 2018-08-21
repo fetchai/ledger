@@ -48,7 +48,7 @@ public:
 
   Params() : paramsParser_() {}
 
-  void Parse(int argc, const char *argv[])
+  void Parse(int argc, char **argv)
   {
     paramsParser_.Parse(argc, argv);
 

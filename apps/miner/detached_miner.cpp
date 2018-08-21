@@ -240,7 +240,7 @@ static void PrintSummary(std::size_t const &slice_count)
             << occupancy_pc << "%)" << std::endl;
 }
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   commandline::ParamsParser params;
   params.Parse(argc, argv);

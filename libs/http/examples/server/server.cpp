@@ -29,7 +29,7 @@ int main()
   server.AddMiddleware([](HTTPRequest &req) { std::cout << "Middleware 1" << std::endl; });
 
   server.AddMiddleware([](HTTPResponse &res, HTTPRequest const &req) {
-    std::cout << res.status().code << " " << req.uri() << std::endl;
+    std::cout << static_cast<uint16_t>(res.status()) << " " << req.uri() << std::endl;
   });
 
   server.AddView(Method::GET, "/", [](ViewParameters const &params, HTTPRequest const &req) {
@@ -105,6 +105,7 @@ int main()
 
   tm.Start();
 
+  std::cout << "HTTP server on port 8080" << std::endl;
   std::cout << "Ctrl-C to stop" << std::endl;
   while (true)
   {

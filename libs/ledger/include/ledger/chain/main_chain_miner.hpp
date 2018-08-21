@@ -67,15 +67,19 @@ public:
     }
   }
 
+  void onBlockComplete(std::function<void(const BlockType)> func) { onBlockComplete_ = func; }
+
 private:
   using clock_type     = std::chrono::high_resolution_clock;
   using timestamp_type = clock_type::time_point;
 
+  std::function<void(const BlockType)> onBlockComplete_;
+
   template <typename T>
   timestamp_type CalculateNextBlockTime(T &rng)
   {
-    static constexpr uint32_t MAX_BLOCK_JITTER_US = 5000;
-    static constexpr uint32_t BLOCK_PERIOD_MS     = 4000;
+    static constexpr uint32_t MAX_BLOCK_JITTER_US = 8000;
+    static constexpr uint32_t BLOCK_PERIOD_MS     = 15000;
 
     timestamp_type block_time = clock_type::now() + std::chrono::milliseconds{BLOCK_PERIOD_MS};
     block_time += std::chrono::microseconds{rng() % MAX_BLOCK_JITTER_US};
@@ -95,25 +99,23 @@ private:
 
     while (!stop_)
     {
-      // Get heaviest block
+      // determine the heaviest block
       auto &block = mainChain_.HeaviestBlock();
 
-      // Handle case for network updates to heaviest block
+      // if the heaviest block has changed then we need to schedule the next block time
       if (block.hash() != previous_heaviest)
       {
         fetch::logger.Info("==> New heaviest block: ", byte_array::ToBase64(block.hash()),
                            " from: ", minerNumber_);
 
-        // schedule the next block
-        next_block_time = CalculateNextBlockTime(rng);
-
+        // new heaviest has been detected
+        next_block_time   = CalculateNextBlockTime(rng);
         previous_heaviest = block.hash().Copy();
       }
-      else if (clock_type::now() >= next_block_time)
-      {
-        fetch::logger.Info("==> Creating new block from: ", byte_array::ToBase64(block.hash()));
 
-        // Create another block sequential to previous
+      // if we are ready to generate a new block
+      if (clock_type::now() >= next_block_time)
+      {
         BlockType nextBlock;
         body_type nextBody;
         nextBody.block_number  = block.body().block_number + 1;
@@ -127,15 +129,19 @@ private:
 
         // Mine the block
         nextBlock.proof().SetTarget(target_);
-        dummy_miner_type::Mine(nextBlock);
+        if (dummy_miner_type::Mine(nextBlock, 100))
+        {
+          // Add the block
+          blockCoordinator_.AddBlock(nextBlock);
+          if (onBlockComplete_)
+          {
+            onBlockComplete_(nextBlock);
+          }
+          next_block_time = CalculateNextBlockTime(rng);
+        }
+      }
 
-        // Add the block
-        blockCoordinator_.AddBlock(nextBlock);
-      }
-      else
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds{10});
-      }
+      std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
   }
 

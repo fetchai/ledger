@@ -83,12 +83,13 @@ public:
     }
     else
     {
+#if 1
       // If we need to sync our object store (esp. when joining the network)
       if (needs_sync_)
       {
-        for (uint8_t i = 0;; ++i)
+        for (uint16_t i = 0; i < 0x100; ++i)
         {
-          roots_to_sync_.push(i);
+          roots_to_sync_.push(static_cast<uint8_t>(i));
         }
 
         thread_pool_->Post([this]() { this->SyncSubtree(); });
@@ -97,6 +98,7 @@ public:
       {
         thread_pool_->Post([this]() { this->FetchObjectsFromPeers(); });
       }
+#endif
     }
   }
 
@@ -140,7 +142,8 @@ public:
       if (!running_) return;
 
       incoming_objects_.clear();
-      if (!p.Wait(100, false))
+      FETCH_LOG_PROMISE();
+      if (!p.Wait(1000, false))
       {
         continue;
       }
@@ -380,7 +383,7 @@ private:
     }
   }
 
-  mutex::Mutex    mutex_;
+  mutex::Mutex    mutex_{__LINE__, __FILE__};
   ObjectStore<T> *store_;
 
   std::vector<CachedObject> cache_;
@@ -388,7 +391,7 @@ private:
   uint64_t max_cache_           = 2000;
   double   max_cache_life_time_ = 20000;  // TODO(issue 7): Make cache configurable
 
-  mutable mutex::Mutex          object_list_mutex_;
+  mutable mutex::Mutex          object_list_mutex_{__LINE__, __FILE__};
   std::vector<service::Promise> object_list_promises_;
   std::vector<T>                new_objects_;
   std::vector<S>                incoming_objects_;

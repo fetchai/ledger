@@ -120,11 +120,11 @@ public:
     {
 
       HTTPResponse res("", fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
-                       status_code::SUCCESS_OK);
-      res.header().Add("Access-Control-Allow-Origin", "*");
-      res.header().Add("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
-      res.header().Add("Access-Control-Allow-Headers",
-                       "Content-Type, Authorization, Content-Length, X-Requested-With");
+                       Status::SUCCESS_OK);
+      res.AddHeader("Access-Control-Allow-Origin", "*");
+      res.AddHeader("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
+      res.AddHeader("Access-Control-Allow-Headers",
+                    "Content-Type, Authorization, Content-Length, X-Requested-With");
 
       manager_->Send(client, res);
       return;
@@ -137,8 +137,8 @@ public:
       m(req);
     }
 
-    HTTPResponse   res("page not found", fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
-                     http::status_code::CLIENT_ERROR_NOT_FOUND);
+    HTTPResponse   res("page not found", mime_types::GetMimeTypeFromExtension(".html"),
+                     Status::CLIENT_ERROR_NOT_FOUND);
     ViewParameters params;
 
     for (auto &v : views_)

@@ -59,7 +59,8 @@ public:
   {
     for (auto &h : ep.host)
     {
-      fetch::logger.Debug("Lane trying to connect to ", h, ":", ep.port);
+      fetch::logger.Info("Lane trying to connect to ", h, ":", ep.port);
+
       if (Connect(h, ep.port)) break;
     }
   }
@@ -116,6 +117,8 @@ public:
 
   shared_service_client_type Connect(byte_array::ByteArray const &host, uint16_t const &port)
   {
+    fetch::logger.Info("Connecting to lane ", host, ":", port);
+
     shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
 
@@ -130,8 +133,12 @@ public:
     std::size_t n = 0;
     while (n < 10)
     {
+      fetch::logger.Info("Trying to ping lane service");
+
       auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
-      if (p.Wait(100, false))
+
+      FETCH_LOG_PROMISE();
+      if (p.Wait(1000, false))
       {
         if (p.As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
         {
@@ -144,7 +151,7 @@ public:
 
     if (n >= 10)
     {
-      logger.Warn("Connection timed out - closing");
+      logger.Warn("Connection timed out - closing in LaneController::Connect:1:");
       client->Close();
       client.reset();
       return nullptr;
@@ -162,9 +169,11 @@ public:
       }
 
       auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::HELLO, ptr->Identity());
+
+      FETCH_LOG_PROMISE();
       if (!p.Wait(1000))  // TODO(issue 7): Make timeout configurable
       {
-        logger.Warn("Connection timed out - closing");
+        logger.Warn("Connection timed out - closing in LaneController::Connect:2:");
         client->Close();
         client.reset();
         return nullptr;
@@ -175,6 +184,8 @@ public:
 
     // Exchaning info
     auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::GET_LANE_NUMBER);
+
+    FETCH_LOG_PROMISE();
     p.Wait(1000);  // TODO(issue 7): Make timeout configurable
     if (p.As<LaneIdentity::lane_type>() != ident->GetLaneNumber())
     {
@@ -199,6 +210,8 @@ public:
     details->is_peer     = true;
     details->identity    = peer_identity;
 
+    fetch::logger.Info("Remote identity: ", byte_array::ToBase64(peer_identity.identifier()));
+
     return client;
   }
 
@@ -209,7 +222,7 @@ private:
   client_register_type        register_;
   network_manager_type        manager_;
 
-  mutex::Mutex                                                           services_mutex_;
+  mutex::Mutex services_mutex_{__LINE__, __FILE__};
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
   std::vector<connection_handle_type>                                    inactive_services_;
 };

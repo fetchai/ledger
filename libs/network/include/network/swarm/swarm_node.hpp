@@ -103,6 +103,7 @@ public:
     fetch::logger.Debug("AskPeerForPeers starts work");
 
     auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
+    FETCH_LOG_PROMISE();
     if (promise.Wait(2500, false))
     {
       auto result = promise.As<std::string>();

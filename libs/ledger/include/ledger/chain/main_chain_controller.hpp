@@ -22,6 +22,7 @@
 #include "ledger/chain/main_chain_details.hpp"
 #include "ledger/chain/main_chain_identity.hpp"
 #include "ledger/chain/main_chain_identity_protocol.hpp"
+#include "ledger/chain/main_chain_protocol.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/p2pservice/p2p_peer_details.hpp"
 #include "network/service/client.hpp"
@@ -41,26 +42,37 @@ public:
   using mutex_type                 = fetch::mutex::Mutex;
   using connection_handle_type     = client_register_type::connection_handle_type;
   using protocol_handler_type      = service::protocol_handler_type;
+  using feed_handler_type          = fetch::service::feed_handler_type;
+  using mainchain_protocol_type    = fetch::chain::MainChainProtocol<client_register_type>;
 
   MainChainController(protocol_handler_type const &    identity_protocol,
                       std::weak_ptr<MainChainIdentity> identity, client_register_type reg,
-                      network_manager_type const &nm)
+                      network_manager_type const &               nm,
+                      generics::SharedWithLock<MainChainDetails> my_details,
+                      std::shared_ptr<mainchain_protocol_type>   mainchain_protocol)
     : identity_protocol_(identity_protocol)
-    , identity_(std::move(identity))
     , register_(std::move(reg))
     , manager_(nm)
+    , my_details_(my_details)
+    , mainchain_protocol_(mainchain_protocol)
   {}
 
   /// External controls
   /// @{
-  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port) { Connect(host, port); }
+  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port)
+  {
+    fetch::logger.Info("(RPCConnect) Mainchain trying to connect to ", host, ":", port);
+
+    Connect(host, port);
+  }
 
   void TryConnect(p2p::EntryPoint const &ep)
   {
-
     for (auto &h : ep.host)
     {
-      fetch::logger.Debug("Mainchain trying to connect to ", h, ":", ep.port);
+      fetch::logger.Info("Mainchain trying to connect to ", h, ":", ep.port);
+
+      // only connect one?
       if (Connect(h, ep.port)) break;
     }
   }
@@ -120,19 +132,16 @@ public:
     shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
 
-    auto ident = identity_.lock();
-    if (!ident)
-    {
-      // TODO(issue 11): Throw exception
-      TODO_FAIL("Identity lost");
-    }
+    logger.Warn("CONNECT (MAIN CHAIN) ", std::string(host), ":", port);
 
     // Waiting for connection to be open
     std::size_t n = 0;
     while (n < 10)
     {
       auto p = client->Call(identity_protocol_, MainChainIdentityProtocol::PING);
-      if (p.Wait(100, false))
+
+      FETCH_LOG_PROMISE();
+      if (p.Wait(1000, false))
       {
         if (p.As<MainChainIdentity::ping_type>() != MainChainIdentity::PING_MAGIC)
         {
@@ -145,7 +154,7 @@ public:
 
     if (n >= 10)
     {
-      logger.Warn("Connection timed out - closing");
+      logger.Warn("Connection timed out - closing in MainChainController::Connect");
       client->Close();
       client.reset();
       return nullptr;
@@ -157,26 +166,72 @@ public:
       services_[client->handle()] = client;
     }
 
+    MainChainDetails copy_of_my_details;
+    my_details_.CopyOut(copy_of_my_details);
+
+    auto remote_details_promise = client->Call(
+        identity_protocol_, MainChainIdentityProtocol::EXCHANGE_DETAILS, copy_of_my_details);
+    auto status = remote_details_promise.WaitLoop(1000, 10);
+
+    switch (status)
+    {
+    case service::Promise::OK:
+      break;
+    default:
+      logger.Warn("While exchanging IDENTITY DETAILS:", service::Promise::DescribeStatus(status));
+      client->Close();
+      client.reset();
+      return nullptr;
+    }
+
+    auto details_supplied_by_remote = remote_details_promise.As<MainChainDetails>();
+
+    auto local_name = std::string(
+        byte_array::ToBase64(my_details_.Lock()->owning_discovery_service_identity.identifier()));
+    auto remote_name = std::string(byte_array::ToBase64(
+        details_supplied_by_remote.owning_discovery_service_identity.identifier()));
+
+    // loopback detection
+    if (local_name == remote_name)
+    {
+      client->Close();
+      client.reset();
+      return nullptr;
+    }
+
     // Setting up details such that the rest of the mainchain what kind of
     // connection we are dealing with.
-    auto details = register_.GetDetails(client->handle());
 
-    details->is_outgoing = true;
-    details->is_peer     = true;
+    auto remote_details = register_.GetDetails(client->handle());
+    remote_details->CopyFromRemotePeer(details_supplied_by_remote);
+
+    if (mainchain_protocol_)
+    {
+      mainchain_protocol_->AssociateName(remote_name, client->handle());
+    }
+
+    remote_details->is_outgoing = true;
 
     return client;
   }
 
+  std::string GetIdentityName()
+  {
+    return std::string(
+        byte_array::ToBase64(my_details_.Lock()->owning_discovery_service_identity.identifier()));
+  }
+
   /// @}
 private:
-  protocol_handler_type            identity_protocol_;
-  std::weak_ptr<MainChainIdentity> identity_;
-  client_register_type             register_;
-  network_manager_type             manager_;
+  protocol_handler_type                      identity_protocol_;
+  client_register_type                       register_;
+  network_manager_type                       manager_;
+  generics::SharedWithLock<MainChainDetails> my_details_;
 
-  mutex::Mutex                                                           services_mutex_;
+  mutex::Mutex services_mutex_{__LINE__, __FILE__};
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
   std::vector<connection_handle_type>                                    inactive_services_;
+  std::shared_ptr<mainchain_protocol_type>                               mainchain_protocol_;
 };
 
 }  // namespace chain

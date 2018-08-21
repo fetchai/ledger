@@ -30,6 +30,7 @@
 #include "core/mutex.hpp"
 
 #include "network/details/future_work_store.hpp"
+#include "network/generics/milli_timer.hpp"
 
 namespace fetch {
 namespace network {
@@ -112,6 +113,7 @@ public:
       // THREAD_IDLE:
       {
         // snooze for a while or until more work arrives
+        LOG_STACK_TRACE_POINT;
         lock_type lock(mutex_);
         cv_.wait_for(
             lock,
@@ -124,6 +126,7 @@ public:
   virtual thread_state_type Poll()
   {
     {
+      LOG_STACK_TRACE_POINT;
       lock_type lock(mutex_);
       if (shutdown_)
       {
@@ -139,6 +142,8 @@ public:
         auto workload = queue_.front();
         queue_.pop();
         lock.unlock();
+        fetch::generics::MilliTimer myTimer("MainChainThreadPool::Poll/ExecuteWorkload");
+        LOG_STACK_TRACE_POINT;
         r = std::max(r, ExecuteWorkload(workload));
       }
     }
@@ -171,6 +176,24 @@ public:
     return r;
   }
 
+  template<class WORKER_TARGET>
+  void Start(WORKER_TARGET *owner, void (WORKER_TARGET::*memberfunc)(void))
+  {
+    auto cb = [owner,memberfunc](){ (owner->*memberfunc)(); };
+    Start(cb);
+  }
+
+  virtual void Start(std::function<void (void)> function )
+  {
+    if (threads_.size() == 0)
+    {
+      for (std::size_t i = 0; i < number_of_threads_; ++i)
+      {
+        threads_.push_back(new std::thread(function));
+      }
+    }
+  }
+
   virtual void Start()
   {
     std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
@@ -178,16 +201,15 @@ public:
     {
       fetch::logger.Info("Starting thread manager");
       shared_ptr_type self = shared_from_this();
-      for (std::size_t i = 0; i < number_of_threads_; ++i)
-      {
-        threads_.push_back(new std::thread([self]() { self->ProcessLoop(); }));
-      }
+      auto cb = [self]() { self->ProcessLoop(); };
+      Start(cb);
     }
   }
 
   virtual thread_state_type TryIdleWork()
   {
-    thread_state_type            r = THREAD_IDLE;
+    thread_state_type r = THREAD_IDLE;
+    LOG_STACK_TRACE_POINT;
     std::unique_lock<std::mutex> lock(futureWorkProtector_, std::try_to_lock);
     if (lock)
     {
@@ -307,8 +329,13 @@ private:
     thread_state_type r = THREAD_IDLE;
     try
     {
+      LOG_STACK_TRACE_POINT;
       workload();
       r = std::max(r, THREAD_WORKED);
+    }
+    catch (std::exception &ex)
+    {
+      fetch::logger.Error("Caught exception in ThreadPool::ExecuteWorkload - ", ex.what());
     }
     catch (...)
     {
@@ -330,7 +357,7 @@ private:
   work_queue_type queue_;
   idle_work_type  idleWork_;
 
-  mutable fetch::mutex::Mutex     futureWorkProtector_;
+  mutable fetch::mutex::Mutex     futureWorkProtector_{__LINE__, __FILE__};
   mutable fetch::mutex::Mutex     thread_mutex_{__LINE__, __FILE__};
   mutable std::condition_variable cv_;
   mutable mutex_type              mutex_;

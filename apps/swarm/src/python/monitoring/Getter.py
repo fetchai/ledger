@@ -7,15 +7,15 @@ import json
 
 from utils.messages import title, note, text, info, debug, progress, warn, error, fatal
 
-def poll(url, nodenumber, portnumber):
-    ident = "127.0.0.1:{}".format(nodenumber + 9000)
+def poll(url, path, nodenumber):
+    ident = nodenumber
     code = -3
     data = None
     try:
-        fullurl = "http://127.0.0.1:{}{}".format(portnumber, url)
+        fullurl = url
         data = None
         try:
-            r = requests.get(fullurl, timeout=100)
+            r = requests.get(fullurl, timeout=300)
             code = r.status_code
             if code == 200:
                 if r.content:
@@ -38,11 +38,16 @@ def poll(url, nodenumber, portnumber):
         code = -4
         exit(77)
     time.sleep(0.1)
-    return (nodenumber, ident, url, code, data)
+    print("GET:", url, code, data)
+    return (nodenumber, ident, path, code, data)
 
 
 def doTask(task):
-    return poll(task[1], task[0][0], task[0][1]) 
+    url = task.get("url")
+    path = task.get("path")
+    ident = task.get("ident")
+    return poll(url, path, ident)
+
 
 class Getter(object):
 
@@ -75,14 +80,26 @@ class Getter(object):
             self.done = True
 
         def run(self):
+
+            idents = list(self.owner.nodeRangeGenerator.getall())
+            paths = [ x for x in self.owner.actions.keys() if isinstance(x, str) ]
+            items = list(itertools.product(idents, paths))
+            tasks = []
+            for i,p in items:
+                t = {}
+                t.update(i)
+                t["path"] = p
+                if "port" not in t:
+                    t["port"] = 8000
+                if "url" not in t:
+                    t["url"] = "127.0.0.1:{}".format(t["port"])
+                t["url"] = t["url"] + p
+                tasks.append(t)
+
             print("MONITORING START")
 
             while not self.done:
                 time.sleep(.25)
-                idents = list(self.owner.nodeRangeGenerator.getall())
-                urls = [ x for x in self.owner.actions.keys() if isinstance(x, str) ]
-
-                tasks = itertools.product(idents, urls)
                 newdata = self.myPool.map(doTask, tasks)
 
                 for newstuff in newdata:

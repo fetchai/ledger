@@ -29,7 +29,7 @@ namespace p2p {
 
 struct EntryPoint
 {
-  mutable mutex::Mutex lock;
+  mutable mutex::Mutex lock{__LINE__, __FILE__};
 
   EntryPoint()
   {
@@ -155,6 +155,18 @@ struct PeerDetails
     is_authenticated = bool(other.is_authenticated);
     last_updated     = std::chrono::system_clock::now();
     return *this;
+  }
+
+  bool IsAnyMainChain() const
+  {
+    for (auto &ep : entry_points)
+    {
+      if (ep.is_mainchain)
+      {
+        return true;
+      }
+    }
+    return false;
   }
 
   void Update(PeerDetails const &other)

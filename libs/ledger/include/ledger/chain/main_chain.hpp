@@ -18,11 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
 #include <map>
@@ -77,7 +79,7 @@ public:
   {
     BlockType genesis;
     genesis.UpdateDigest();
-    genesis.body().previous_hash = genesis.hash();
+    //genesis.body().previous_hash = genesis.hash();
 
     // Add genesis to block chain
     genesis.loose()             = false;
@@ -103,7 +105,13 @@ public:
 
   bool AddBlock(BlockType &block, bool recursive_iteration = false)
   {
+    fetch::generics::MilliTimer           myTimer("MainChain::AddBlock");
     std::unique_lock<fetch::mutex::Mutex> lock(main_mutex_);
+
+    if (block.hash().size() == 0)
+    {
+      fetch::logger.Info("Erk! You called AddBlock with no UpdateDigest");
+    }
 
     BlockType prev_block;
 
@@ -183,6 +191,7 @@ public:
   std::vector<BlockType> HeaviestChain(
       uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
+    fetch::generics::MilliTimer          myTimer("MainChain::HeaviestChain");
     std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
 
     std::vector<BlockType> result;
@@ -233,7 +242,8 @@ public:
     // recreate genesis
     BlockType genesis;
     genesis.UpdateDigest();
-    genesis.body().previous_hash = genesis.hash();
+    //genesis.body().hash = byte_array::FromBase64("+++++++++++++++++Genesis+++++++++++++++++++=");
+    //genesis.body().previous_ha
 
     // Add genesis to block chain
     genesis.loose()             = false;
@@ -268,12 +278,12 @@ private:
   const uint32_t                         minerNumber_;
   bool                                   saving_to_file_ = false;
 
-  mutable fetch::mutex::Mutex                         main_mutex_;
+  mutable fetch::mutex::Mutex                         main_mutex_{__LINE__, __FILE__};
   std::unordered_map<BlockHash, BlockType>            blockChain_;  // all recent blocks are here
   std::unordered_map<BlockHash, std::shared_ptr<Tip>> tips_;        // Keep track of the tips
   std::pair<uint64_t, BlockHash>                      heaviest_;    // Heaviest block/tip
 
-  mutable fetch::mutex::Mutex                          loose_mutex_;
+  mutable fetch::mutex::Mutex                          loose_mutex_{__LINE__, __FILE__};
   std::unordered_map<PrevHash, std::vector<BlockHash>> looseBlocks_;  // Waiting (loose) blocks
 
   void RecoverFromFile()
@@ -302,6 +312,8 @@ private:
 
   void WriteToFile()
   {
+    fetch::generics::MilliTimer myTimer("MainChain::WriteToFile");
+    return;  // TODO(remove before flight)
     if (!saving_to_file_) return;
 
     // Add confirmed blocks to file

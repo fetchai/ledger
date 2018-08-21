@@ -18,39 +18,38 @@ setup_library_examples(fetch-network)
 
 if(FETCH_ENABLE_EXAMPLES)
 
-  target_link_libraries(example_http_server PRIVATE fetch-http)
 
-  add_executable(example_subscribe subscribe/subscribe.cpp)
-  target_link_libraries(example_subscribe PRIVATE fetch-network)
-  target_include_directories(example_subscribe PRIVATE subscribe)
+  add_executable(example-network-subscribe subscribe/subscribe.cpp)
+  target_link_libraries(example-network-subscribe PRIVATE fetch-network)
+  target_include_directories(example-network-subscribe PRIVATE subscribe)
 
-  add_executable(example_listener subscribe/listener.cpp)
-  target_link_libraries(example_listener PRIVATE fetch-network)
-  target_include_directories(example_listener PRIVATE subscribe)
+  add_executable(example-network-listener subscribe/listener.cpp)
+  target_link_libraries(example-network-listener PRIVATE fetch-network)
+  target_include_directories(example-network-listener PRIVATE subscribe)
 
-  add_executable(example_rpc_server rpc/server.cpp)
-  target_link_libraries(example_rpc_server PRIVATE fetch-network)
+  add_executable(example-network-rpc-server rpc/server.cpp)
+  target_link_libraries(example-network-rpc-server PRIVATE fetch-network)
 
-  add_executable(example_rpc_client rpc/client.cpp)
-  target_link_libraries(example_rpc_client PRIVATE fetch-network)
+  add_executable(example-network-rpc-client rpc/client.cpp)
+  target_link_libraries(example-network-rpc-client PRIVATE fetch-network)
 
-  add_executable(example_authentication_protocol_client authentication_protocol/client.cpp)
-  target_link_libraries(example_authentication_protocol_client PRIVATE fetch-network)
+  add_executable(example-network-authentication-protocol-client authentication_protocol/client.cpp)
+  target_link_libraries(example-network-authentication-protocol-client PRIVATE fetch-network)
 
-  add_executable(example_authentication_protocol_server authentication_protocol/server.cpp)
-  target_link_libraries(example_authentication_protocol_server PRIVATE fetch-network)
+  add_executable(example-network-authentication-protocol-server authentication_protocol/server.cpp)
+  target_link_libraries(example-network-authentication-protocol-server PRIVATE fetch-network)
 
-  add_executable(example_adv_rpc_aea advanced_rpc/aea.cpp)
-  target_link_libraries(example_adv_rpc_aea PRIVATE fetch-network)
+  add_executable(example-network-adv-rpc-aea advanced_rpc/aea.cpp)
+  target_link_libraries(example-network-adv-rpc-aea PRIVATE fetch-network)
 
-  add_executable(example_adv_rpc_node advanced_rpc/node.cpp)
-  target_link_libraries(example_adv_rpc_node PRIVATE fetch-network)
+  add_executable(example-network-adv-rpc-node advanced_rpc/node.cpp)
+  target_link_libraries(example-network-adv-rpc-node PRIVATE fetch-network)
 
-  add_executable(example_rrpc_client reverse_rpc/client.cpp)
-  target_link_libraries(example_rrpc_client PRIVATE fetch-network)
+  add_executable(example-network-rrpc-client reverse_rpc/client.cpp)
+  target_link_libraries(example-network-rrpc-client PRIVATE fetch-network)
 
-  add_executable(example_rrpc_server reverse_rpc/server.cpp)
-  target_link_libraries(example_rrpc_server PRIVATE fetch-network)
+  add_executable(example-network-rrpc-server reverse_rpc/server.cpp)
+  target_link_libraries(example-network-rrpc-server PRIVATE fetch-network)
 
 endif(FETCH_ENABLE_EXAMPLES)
 
