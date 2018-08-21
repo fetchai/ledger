@@ -1,6 +1,6 @@
 #pragma once
 
-/* The class defined in this file implements the equivalent of 
+/* The class defined in this file implements the equivalent of
  * following Python code:
  *
  * import numpy as np
@@ -8,7 +8,7 @@
  *
  * def gemv_n(alpha, A, x, n, beta, y, m):
  *   leny = A.shape[0]
- *   lenx = A.shape[1]      
+ *   lenx = A.shape[1]
  *   if m >= 0 and n >= 0:
  *     y[::m] = alpha * np.dot(A, x[::n]) + beta * y[::m]
  *   elif m < 0 and n >= 0:
@@ -17,7 +17,7 @@
  *     y[::m] = alpha * np.dot(A, x[-(lenx -1)*n::n]) + beta * y[::m]
  *   else:
  *     y[-(leny -1)*m::m] = alpha * np.dot(A, x[-(lenx -1)*n::n]) + beta * y[-(leny -1)*m::m]
- *   
+ *
  *   return y
  *
  * Authors:
@@ -28,30 +28,27 @@
  *  - NAG Ltd.                     (Fortran version)
  */
 
-#include"math/linalg/prototype.hpp"
-#include"math/linalg/matrix.hpp"
-#include"math/linalg/blas/base.hpp"
+#include "math/linalg/blas/base.hpp"
+#include "math/linalg/matrix.hpp"
+#include "math/linalg/prototype.hpp"
 
-namespace fetch
-{
-namespace math
-{
-namespace linalg 
-{
+namespace fetch {
+namespace math {
+namespace linalg {
 
-template<typename S, uint64_t V>
-class Blas< S, 
-            Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ),
-            Computes( _y = _alpha * _A * _x + _beta * _y ), 
-            V>
+template <typename S, uint64_t V>
+class Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+           Computes(_y = _alpha * _A * _x + _beta * _y), V>
 {
 public:
-  using type = S;
-  using vector_register_type = typename Matrix< type >::vector_register_type;
-  
-  void operator()(type const &alpha, Matrix< type > const &a, ShapeLessArray< type > const &x, int const &incx, type const &beta, ShapeLessArray< type > &y, int const &incy ) const;
+  using type                 = S;
+  using vector_register_type = typename Matrix<type>::vector_register_type;
+
+  void operator()(type const &alpha, Matrix<type> const &a, ShapeLessArray<type> const &x,
+                  int const &incx, type const &beta, ShapeLessArray<type> &y,
+                  int const &incy) const;
 };
 
-} // namespace linalg
-} // namespace math
-} // namepsace fetch
+}  // namespace linalg
+}  // namespace math
+}  // namespace fetch

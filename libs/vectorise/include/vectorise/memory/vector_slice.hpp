@@ -99,18 +99,16 @@ public:
     return vector_slice_type(pointer_ + offset, length);
   }
 
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, T>::type
-  &operator[](S const &n)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type &operator[](S const &n)
   {
     assert(pointer_ != nullptr);
     assert(std::size_t(n) < padded_size());
     return pointer_[n];
   }
 
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, T>::type
-  const &operator[](S const &n) const
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type const &operator[](S const &n) const
   {
     assert(pointer_ != nullptr);
 
@@ -118,28 +116,24 @@ public:
     return pointer_[n];
   }
 
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, T>::type
-  &At(S const &n)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type &At(S const &n)
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
     return pointer_[n];
   }
 
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, T>::type
-  const &At(S const &n) const
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type const &At(S const &n) const
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
     return pointer_[n];
   }
 
-
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, T>::type
-  const &Set(S const &n, T const &v)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type const &Set(S const &n, T const &v)
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());

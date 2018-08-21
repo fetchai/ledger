@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/random.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
+#include "core/random.hpp"
 #include "math/kernels/approx_exp.hpp"
 #include "math/kernels/approx_log.hpp"
 #include "math/kernels/approx_logistic.hpp"
@@ -67,7 +67,7 @@ public:
   ShapeLessArray(ShapeLessArray const &other) = default;
   ShapeLessArray &operator=(ShapeLessArray const &other) = default;
   ShapeLessArray &operator=(ShapeLessArray &&other) = default;
-  ShapeLessArray(byte_array::ConstByteArray const &c)  :  data_(), size_(0)
+  ShapeLessArray(byte_array::ConstByteArray const &c) : data_(), size_(0)
   {
     std::vector<type> elems;
     elems.reserve(1024);
@@ -99,7 +99,7 @@ public:
         break;
       }
     }
-    
+
     std::size_t m = elems.size();
     this->Resize(m);
     this->SetAllZero();
@@ -109,8 +109,6 @@ public:
       this->Set(i, elems[i]);
     }
   }
-
-
 
   ~ShapeLessArray() {}
 
@@ -1462,9 +1460,11 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, type>::type        
-  &operator[](S const &i) { return data_[i]; }  
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, type>::type &operator[](S const &i)
+  {
+    return data_[i];
+  }
 
   /* One-dimensional constant reference index operator.
    * @param n is the index which is being accessed.
@@ -1474,10 +1474,12 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, type>::type      
-  const &operator[](S const &i) const { return data_[i]; }
-
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, type>::type const &operator[](
+      S const &i) const
+  {
+    return data_[i];
+  }
 
   /* One-dimensional constant reference access function.
    * @param i is the index which is being accessed.
@@ -1485,22 +1487,27 @@ public:
    * Note this accessor is "slow" as it takes care that the developer
    * does not accidently enter the padded area of the memory.
    */
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, type>::type  
-  const &At(S const &i) const { return data_[i]; }
-
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, type>::type const &At(S const &i) const
+  {
+    return data_[i];
+  }
 
   /* One-dimensional reference access function.
    * @param i is the index which is being accessed.
    */
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, type>::type    
-  &At(S const &i) { return data_[i]; }
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, type>::type &At(S const &i)
+  {
+    return data_[i];
+  }
 
-
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, type>::type    
-  const &Set(S const &i, type const &t) { return data_[i] = t; }
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, type>::type const &Set(S const &   i,
+                                                                             type const &t)
+  {
+    return data_[i] = t;
+  }
 
   static ShapeLessArray Arange(type const &from, type const &to, type const &delta)
   {
@@ -1607,7 +1614,8 @@ public:
     }
     if (!ret)
     {
-      for (std::size_t i = 0; i < N; ++i) {
+      for (std::size_t i = 0; i < N; ++i)
+      {
         double va = this->At(i);
         if (ignoreNaN && std::isnan(va)) continue;
         double vb = other[i];
@@ -1617,7 +1625,8 @@ public:
         if (va < 0) va = -va;
         if (vb < 0) vb = -vb;
         double M = std::max(va, vb);
-        std::cout << this->At(i) << " " << other[i] << " " << ((vA < std::max(atol, M * rtol)) ? " ": "*") << std::endl;
+        std::cout << this->At(i) << " " << other[i] << " "
+                  << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
       }
     }
 
@@ -1708,6 +1717,7 @@ public:
   /* Returns the capacity of the array. */
   size_type capacity() const { return data_.padded_size(); }
   size_type padded_size() const { return data_.padded_size(); }
+
 private:
   container_type data_;
   std::size_t    size_ = 0;

@@ -279,9 +279,9 @@ public:
    * This operator acts as a two-dimensional array accessor that can be
    * used for constant object instances.
    */
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, T>::type
-  const &operator()(S const &i, S const &j) const
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type const &operator()(S const &i,
+                                                                                 S const &j) const
   {
     assert(std::size_t(j) < padded_width_);
     assert(std::size_t(i) < padded_height_);
@@ -296,9 +296,8 @@ public:
    * This operator acts as a twoxs-dimensional array accessor that is
    * meant for non-constant object instances.
    */
-  template< typename S >
-  typename std::enable_if< std::is_integral< S >::value, T>::type  
-  &operator()(S const &i, S const &j)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type &operator()(S const &i, S const &j)
   {
     assert(std::size_t(j) < padded_width_);
     assert(std::size_t(i) < padded_height_);
