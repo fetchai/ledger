@@ -176,6 +176,24 @@ public:
     return r;
   }
 
+  template<class WORKER_TARGET>
+  void Start(WORKER_TARGET *owner, void (WORKER_TARGET::*memberfunc)(void))
+  {
+    auto cb = [owner,memberfunc](){ (owner->*memberfunc)(); };
+    Start(cb);
+  }
+
+  virtual void Start(std::function<void (void)> function )
+  {
+    if (threads_.size() == 0)
+    {
+      for (std::size_t i = 0; i < number_of_threads_; ++i)
+      {
+        threads_.push_back(new std::thread(function));
+      }
+    }
+  }
+
   virtual void Start()
   {
     std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
@@ -183,10 +201,8 @@ public:
     {
       fetch::logger.Info("Starting thread manager");
       shared_ptr_type self = shared_from_this();
-      for (std::size_t i = 0; i < number_of_threads_; ++i)
-      {
-        threads_.push_back(new std::thread([self]() { self->ProcessLoop(); }));
-      }
+      auto cb = [self]() { self->ProcessLoop(); };
+      Start(cb);
     }
   }
 
@@ -316,6 +332,10 @@ private:
       LOG_STACK_TRACE_POINT;
       workload();
       r = std::max(r, THREAD_WORKED);
+    }
+    catch (std::exception &ex)
+    {
+      fetch::logger.Error("Caught exception in ThreadPool::ExecuteWorkload - ", ex.what());
     }
     catch (...)
     {

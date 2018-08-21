@@ -62,127 +62,191 @@ protected:
   bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg)
   {
     LOG_STACK_TRACE_POINT;
-    bool            ret = false;
     serializer_type params(msg);
-
     service_classification_type type;
     params >> type;
 
-    if (type == SERVICE_FUNCTION_CALL)  // TODO(issue 19): change to switch
+    switch(type)
     {
-      ret = true;
-      serializer_type               result;
-      Promise::promise_counter_type id;
+    case SERVICE_FUNCTION_CALL:
+      return HandleRPCCallRequest(client, params);
+    case SERVICE_SUBSCRIBE:
+      return HandleSubscribeRequest(client, params);
+    case SERVICE_UNSUBSCRIBE:
+      return HandleUnsubscribeRequest(client, params);
+    default:
+      return false;
+    }
+  }
 
-      try
-      {
-        params >> id;
-        result << SERVICE_RESULT << id;
+  bool HandleRPCCallRequest(connection_handle_type client, serializer_type params)
+  {
+    LOG_STACK_TRACE_POINT;
+    bool ret = true;
+    serializer_type               result;
+    Promise::promise_counter_type id;
 
-        ExecuteCall(result, client, params);
-      }
-      catch (serializers::SerializableException const &e)
-      {
-        fetch::logger.Error("Serialization error: ", e.what());
-        result = serializer_type();
-        result << SERVICE_ERROR << id << e;
-      }
+    try
+    {
+      LOG_STACK_TRACE_POINT;
+      params >> id;
+      result << SERVICE_RESULT << id;
 
-      fetch::logger.Debug("Service Server responding to call from ", client);
+      ExecuteCall(result, client, params);
+    }
+    catch (serializers::SerializableException const &e)
+    {
+      LOG_STACK_TRACE_POINT;
+      fetch::logger.Error("Serialization error (Function Call): ", e.what());
+      result = serializer_type();
+      result << SERVICE_ERROR << id << e;
+    }
+
+    fetch::logger.Debug("Service Server responding to call from ", client);
+    {
+      LOG_STACK_TRACE_POINT;
       DeliverResponse(client, result.data());
     }
-    else if (type == SERVICE_SUBSCRIBE)
+    return ret;
+  }
+  bool HandleSubscribeRequest(connection_handle_type client, serializer_type params)
+  {
+    LOG_STACK_TRACE_POINT;
+    bool ret = true;
+    protocol_handler_type     protocol;
+    feed_handler_type         feed;
+    subscription_handler_type subid;
+
+    try
     {
-      ret = true;
-      protocol_handler_type     protocol;
-      feed_handler_type         feed;
-      subscription_handler_type subid;
+      LOG_STACK_TRACE_POINT;
+      params >> protocol >> feed >> subid;
+      auto &mod = *members_[protocol];
 
-      try
-      {
-        params >> protocol >> feed >> subid;
-        auto &mod = *members_[protocol];
-
-        mod.Subscribe(client, feed, subid);
-      }
-      catch (serializers::SerializableException const &e)
-      {
-        fetch::logger.Error("Serialization error: ", e.what());
-        // FIX Serialization of errors such that this also works
-
-        //          serializer_type result;
-        //          result = serializer_type();
-        //          result << SERVICE_ERROR << id << e;
-        //          Send(client, result.data());
-
-        throw e;
-      }
+      mod.Subscribe(client, feed, subid);
     }
-    else if (type == SERVICE_UNSUBSCRIBE)
+    catch (serializers::SerializableException const &e)
     {
-      ret = true;
-      protocol_handler_type     protocol;
-      feed_handler_type         feed;
-      subscription_handler_type subid;
-
-      try
-      {
-        params >> protocol >> feed >> subid;
-        auto &mod = *members_[protocol];
-
-        mod.Unsubscribe(client, feed, subid);
-      }
-      catch (serializers::SerializableException const &e)
-      {
-        fetch::logger.Error("Serialization error: ", e.what());
-        // FIX Serialization of errors such that this also works
-
-        //          serializer_type result;
-        //          result = serializer_type();
-        //          result << SERVICE_ERROR << id << e;
-        //          Send(client, result.data());
-
-        throw e;
-      }
+      LOG_STACK_TRACE_POINT;
+      fetch::logger.Error("Serialization error (Subscribe): ", e.what());
+      // result = serializer_type();
+      // result << SERVICE_ERROR << id << e;
+      throw e;  // TODO: propagate error other other size
     }
-
+    // DeliverResponse(client, result.data());
     return ret;
   }
 
+  bool HandleUnsubscribeRequest(connection_handle_type client, serializer_type params)
+  {
+    LOG_STACK_TRACE_POINT;
+    bool ret = true;
+    protocol_handler_type     protocol;
+    feed_handler_type         feed;
+    subscription_handler_type subid;
+
+    try
+    {
+      LOG_STACK_TRACE_POINT;
+      params >> protocol >> feed >> subid;
+      auto &mod = *members_[protocol];
+
+      mod.Unsubscribe(client, feed, subid);
+    }
+    catch (serializers::SerializableException const &e)
+    {
+      LOG_STACK_TRACE_POINT;
+      fetch::logger.Error("Serialization error (Unsubscribe): ", e.what());
+      // result = serializer_type();
+      // result << SERVICE_ERROR << id << e;
+      throw e;  // TODO: propagate error other other size
+    }
+    // DeliverResponse(client, result.data());
+    return ret;
+  }
+
+
+  virtual void ConnectionDropped(connection_handle_type connection_handle)
+  {
+    fetch::logger.Warn("ConnectionDropped: ", connection_handle);
+    for(int protocol_number = 0; protocol_number < 256; protocol_number++)
+    {
+      if (members_[protocol_number])
+      {
+        fetch::logger.Warn("ConnectionDropped removing handler for protocol " , protocol_number, " from connection handle ", connection_handle);
+        members_[protocol_number] -> ConnectionDropped(connection_handle);
+        members_[protocol_number] = 0;
+      }
+    }
+  }
+
 private:
-  void ExecuteCall(serializer_type &result, connection_handle_type const &client,
+  void ExecuteCall(serializer_type &result, connection_handle_type const &connection_handle,
                    serializer_type params)
   {
-    //    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT;
 
-    protocol_handler_type protocol;
-    function_handler_type function;
-    params >> protocol >> function;
-    fetch::logger.Debug("Service Server processing call ", protocol, ":", function, " from ",
-                        client);
+    protocol_handler_type protocol_number;
+    function_handler_type function_number;
+    params >> protocol_number >> function_number;
 
-    if (members_[protocol] == nullptr)
+    auto identifier = std::to_string(protocol_number)
+      + ":"
+      + std::to_string(function_number)
+      + "@"
+      + std::to_string(connection_handle)
+      ;
+
+    fetch::logger.Debug("ServerInterface::ExecuteCall " + identifier);
+
+    auto protocol_pointer = members_[protocol_number];
+    if (protocol_pointer == nullptr)
     {
       throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND,
-                                               byte_array_type("Could not find protocol: "));
+                                               std::string("ServerInterface::ExecuteCall: Could not find protocol ")
+                                               + identifier
+                                               );
     }
 
-    auto &mod = *members_[protocol];
+    protocol_pointer -> ApplyMiddleware(connection_handle, params.data());
 
-    mod.ApplyMiddleware(client, params.data());
+    auto &function = (*protocol_pointer)[function_number];
 
-    auto &fnc = mod[function];
+    fetch::logger.Debug(std::string("ServerInterface::ExecuteCall: ")
+                        + identifier
+                        + " expecting following signature "
+                        + function.signature()
+                        );
 
     // If we need to add client id to function arguments
-    if (fnc.meta_data() & Callable::CLIENT_ID_ARG)
+    try
     {
-      fetch::logger.Debug("Adding client ID meta data to ", protocol, ":", function);
-      CallableArgumentList extra_args;
-      extra_args.PushArgument(&client);
-      return fnc(result, extra_args, params);
+      if (function.meta_data() & Callable::CLIENT_ID_ARG)
+      {
+        fetch::logger.Debug("Adding connection_handle ID meta data to ", identifier);
+        CallableArgumentList extra_args;
+        extra_args.PushArgument(&connection_handle);
+        function(result, extra_args, params);
+      }
+      else
+      {
+        function(result, params);
+      }
     }
-
-    return fnc(result, params);
+    catch (serializers::SerializableException const &e)
+    {
+      std::string new_explanation = e.explanation()
+        + std::string(" (Function signature: ")
+        + function.signature()
+        + std::string(") (Identification: ")
+        + identifier;
+      serializers::SerializableException e2(e.error_code(), new_explanation);
+      throw e2;
+    }
+    catch (std::exception &ex)
+    {
+      fetch::logger.Error("ServerInterface::ExecuteCall - ", ex.what(), " - ", identifier);
+    }
   }
 
   Protocol *members_[256] = {nullptr};  // TODO(issue 19): Not thread-safe

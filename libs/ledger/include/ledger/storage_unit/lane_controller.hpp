@@ -151,7 +151,7 @@ public:
 
     if (n >= 10)
     {
-      logger.Warn("Connection timed out - closing");
+      logger.Warn("Connection timed out - closing in LaneController::Connect:1:");
       client->Close();
       client.reset();
       return nullptr;
@@ -173,7 +173,7 @@ public:
       FETCH_LOG_PROMISE();
       if (!p.Wait(1000))  // TODO(issue 7): Make timeout configurable
       {
-        logger.Warn("Connection timed out - closing");
+        logger.Warn("Connection timed out - closing in LaneController::Connect:2:");
         client->Close();
         client.reset();
         return nullptr;

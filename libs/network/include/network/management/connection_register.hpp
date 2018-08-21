@@ -152,7 +152,10 @@ public:
   }
 
   std::shared_ptr<LockableDetails> GetDetails(connection_handle_type const &i)
+  //void GetDetails(connection_handle_type const &i)
   {
+    fetch::logger.Info("GetDetails for =======================================> ", i);
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<mutex::Mutex> lock(details_lock_);
     if (details_.find(i) == details_.end())
     {
@@ -184,6 +187,55 @@ public:
   {
     std::lock_guard<mutex::Mutex> lock(connections_lock_);
     fnc(connections_);
+  }
+
+  void VisitConnections(std::function<void(connection_map_type::value_type const &)> f) const
+  {
+    std::list<connection_map_type::value_type> keys;
+    {
+      std::lock_guard<mutex::Mutex> lock(connections_lock_);
+      for(auto &item : connections_)
+      {
+        keys.push_back(item);
+      }
+    }
+
+    for(auto &item : keys)
+    {
+      auto k = item.first;
+      std::lock_guard<mutex::Mutex> lock(connections_lock_);
+      if (connections_.find(k) != connections_.end())
+      {
+        f(item);
+      }
+    }
+  }
+
+  void VisitConnections(std::function<void(connection_handle_type const &, shared_connection_type)> f) const
+  {
+    fetch::logger.Warn("About to visit ", connections_.size(), " connections");
+    std::list<connection_map_type::value_type> keys;
+    {
+      std::lock_guard<mutex::Mutex> lock(connections_lock_);
+      for(auto &item : connections_)
+      {
+        keys.push_back(item);
+      }
+    }
+
+    for(auto &item : keys)
+    {
+      auto v = item.second.lock();
+      if (v)
+      {
+        auto k = item.first;
+        std::lock_guard<mutex::Mutex> lock(connections_lock_);
+        if (connections_.find(k) != connections_.end())
+        {
+          f(k,v);
+        }
+      }
+    }
   }
 
 private:
@@ -257,6 +309,26 @@ public:
   void WithServices(std::function<void(service_map_type const &)> const &f) const
   {
     ptr_->WithServices(f);
+  }
+
+  void VisitServiceClients(std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
+  {
+    ptr_->VisitServiceClients(f);
+  }
+
+  void VisitServiceClients(std::function<void(service_map_type::value_type const &)> f) const
+  {
+    ptr_->VisitServiceClients(f);
+  }
+
+  void VisitConnections(std::function<void(connection_handle_type const &, shared_connection_type)> f) const
+  {
+    ptr_->VisitConnections(f);
+  }
+
+  void VisitConnections(std::function<void(connection_map_type::value_type const &)> f) const
+  {
+    ptr_->VisitConnections(f);
   }
 
   void WithClientDetails(std::function<void(details_map_type const &)> fnc) const

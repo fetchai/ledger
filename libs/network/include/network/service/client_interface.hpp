@@ -41,7 +41,7 @@ class ServiceClientInterface
   typedef fetch::mutex::Mutex                      subscription_mutex_type;
   typedef std::lock_guard<subscription_mutex_type> subscription_mutex_lock_type;
   class Subscription;
-  typedef std::map<subscription_handler_type, Subscription> subscriptions_type;
+  typedef std::unordered_map<subscription_handler_type, Subscription> subscriptions_type;
 
 public:
   ServiceClientInterface()
@@ -98,6 +98,7 @@ public:
     Promise         prom;
     serializer_type params;
 
+    // We're doing the serialise work TWICE to avoid some memory allocations??!?!?
     serializers::SizeCounter<serializer_type> counter;
     counter << SERVICE_FUNCTION_CALL << prom.id();
     PackCallWithPackedArguments(counter, protocol, function, args);
@@ -114,6 +115,7 @@ public:
 
     if (!DeliverRequest(params.data()))
     {
+      // HMM(KLL) - I suspect we should kill all the other promises as well here.
       fetch::logger.Debug("Call failed!");
       prom.reference()->Fail(serializers::SerializableException(
           error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
@@ -187,6 +189,7 @@ public:
 protected:
   virtual bool DeliverRequest(network::message_type const &) = 0;
 
+  // TODO(?) This isn't connected to anything. This might be why things are exploding.
   void ClearPromises()
   {
     promises_mutex_.lock();

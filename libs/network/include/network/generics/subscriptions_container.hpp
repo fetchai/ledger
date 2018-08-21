@@ -89,15 +89,37 @@ public:
     }
   }
 
+  void VisitSubscriptions(std::function<void (client_ptr)> func)
+  {
+    std::list<std::shared_ptr<Subscription>> subscriptions_local;
+
+    {
+      lock_type lock(mutex);
+      for(auto &subscription : subs)
+      {
+        subscriptions_local.push_back(subscription.second);
+      }
+    }
+
+    for(auto subscription : subscriptions_local)
+    {
+      func(subscription->GetClient());
+    }
+  }
+
   std::vector<std::string> GetAllSubscriptions(protocol_number_type proto, feed_handler_type verb)
   {
+    lock_type lock(mutex);
     std::vector<std::string> r;
-    for (auto &item : existing_subs)
+    for(auto &item : existing_subs)
     {
-      if ((!proto || std::get<1>(item.first) == proto) &&
-          (!verb || std::get<2>(item.first) == verb))
+      if (
+          (!proto || std::get<1>(item.first) == proto)
+          &&
+          (!verb || std::get<2>(item.first) == verb)
+          )
       {
-        r.push_back(subs[item.second]->getName());
+        r.push_back(subs[item.second] -> getName());
       }
     }
     return r;
@@ -127,6 +149,7 @@ private:
     virtual ~Subscription() { client_->Unsubscribe(handle_); }
     const std::string &getName() { return name_; }
 
+    client_ptr GetClient() { return client_; }
   private:
     client_ptr                                client_;
     fetch::service::subscription_handler_type handle_;

@@ -33,6 +33,10 @@
 
 namespace fetch {
 namespace service {
+
+  class FeedSubscriptionManager;
+
+  
 /* A class that defines a generic protocol.
  *
  * This class is used for defining a general protocol with
@@ -137,6 +141,10 @@ public:
           error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
 
     members_[n] = fnc;
+  }
+
+  virtual void ConnectionDropped(connection_handle_type connection_handle)
+  {
   }
 
   /* Registers a feed from an implementation.
