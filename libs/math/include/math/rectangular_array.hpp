@@ -496,7 +496,7 @@ public:
   void Reshape(std::vector<std::size_t> const &shape)
   {
     assert(shape.size() == 2);
-    assert((shape[0] * shape[1]) == (height_ * width));
+    assert((shape[0] * shape[1]) == (height_ * width_));
 
     Reserve(shape[0], shape[1]);
 
