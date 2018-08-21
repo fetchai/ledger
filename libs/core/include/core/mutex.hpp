@@ -62,7 +62,7 @@ class DebugMutex : public AbstractMutex
   class MutexTimeout
   {
   public:
-    static constexpr std::size_t DEFAULT_TIMEOUT_MS = 300000;
+    static constexpr std::size_t DEFAULT_TIMEOUT_MS = 5000;
 
     MutexTimeout(std::string filename, int const &line, std::size_t timeout_ms = DEFAULT_TIMEOUT_MS)
       : filename_(std::move(filename)), line_(line)
