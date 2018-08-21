@@ -62,7 +62,7 @@ inline T ExpImplementation(T const &array, memory::Range r)
   }
   return ret;
 }
-}
+}  // namespace details
 
 template <typename T, typename C = memory::SharedArray<T>>
 inline NDArray<T, C> Exp(NDArray<T, C> const &array)

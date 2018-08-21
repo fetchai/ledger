@@ -472,7 +472,6 @@ public:
     if (h < height_) height_ = h;
     if (w < width_) width_ = w;
     shape_ = {height_, width_};
-
   }
 
   /**

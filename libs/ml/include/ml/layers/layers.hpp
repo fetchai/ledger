@@ -37,7 +37,7 @@ class Layer : public BaseLayer<DATA_TYPE>
 {
   using container_type = memory::SharedArray<DATA_TYPE>;
   using base_type      = BaseLayer<DATA_TYPE>;
-  using array_type   =  math::NDArray<DATA_TYPE, container_type>;
+  using array_type     = math::NDArray<DATA_TYPE, container_type>;
 
 public:
   /**

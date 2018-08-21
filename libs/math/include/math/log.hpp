@@ -56,28 +56,28 @@ inline void LogImplementation(T const &array, memory::Range r, T &ret)
     }
   }
 }
-}
+}  // namespace details
 
 template <typename T, typename C = memory::SharedArray<T>>
 inline NDArray<T, C> Log(NDArray<T, C> const &array)
 {
-NDArray<T, C> ret;
-details::LogImplementation<NDArray<T, C>>(array, ret);
-return ret;
+  NDArray<T, C> ret;
+  details::LogImplementation<NDArray<T, C>>(array, ret);
+  return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline linalg::Matrix<T, C> Log(linalg::Matrix<T, C> const &array)
 {
-linalg::Matrix<T, C> ret;
-details::LogImplementation<linalg::Matrix<T, C>>(array, ret);
-return ret;
+  linalg::Matrix<T, C> ret;
+  details::LogImplementation<linalg::Matrix<T, C>>(array, ret);
+  return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline RectangularArray<T, C> Log(RectangularArray<T, C> const &array)
 {
-RectangularArray<T, C> ret;
-details::LogImplementation<RectangularArray<T, C>>(array, ret);
-return ret;
+  RectangularArray<T, C> ret;
+  details::LogImplementation<RectangularArray<T, C>>(array, ret);
+  return ret;
 }
 
 /**
@@ -91,23 +91,23 @@ return ret;
 template <typename T, typename C = memory::SharedArray<T>>
 inline NDArray<T, C> Log(NDArray<T, C> const &array, memory::Range r)
 {
-NDArray<T, C> ret;
-details::LogImplementation<NDArray<T, C>>(array, r, ret);
-return ret;
+  NDArray<T, C> ret;
+  details::LogImplementation<NDArray<T, C>>(array, r, ret);
+  return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline linalg::Matrix<T, C> Log(linalg::Matrix<T, C> const &array, memory::Range r)
 {
-linalg::Matrix<T, C> ret;
-details::LogImplementation<linalg::Matrix<T, C>>(array, r, ret);
-return ret;
+  linalg::Matrix<T, C> ret;
+  details::LogImplementation<linalg::Matrix<T, C>>(array, r, ret);
+  return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline RectangularArray<T, C> Log(RectangularArray<T, C> const &array, memory::Range r)
 {
-RectangularArray<T, C> ret;
-details::LogImplementation<RectangularArray<T, C>>(array, r, ret);
-return ret;
+  RectangularArray<T, C> ret;
+  details::LogImplementation<RectangularArray<T, C>>(array, r, ret);
+  return ret;
 }
 
 }  // namespace math
