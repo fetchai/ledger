@@ -46,7 +46,7 @@ TEST(ndarray, simple_iterator_permute_test)
     cur_row  = i / 7;
     test_val = (11 * (i % 7)) + cur_row;
 
-    ASSERT_TRUE(ret[i] == double(test_val));
+    ASSERT_TRUE(double(ret[i]) == double(test_val));
   }
 }
 
@@ -82,12 +82,7 @@ TEST(ndarray, iterator_4dim_permute_test)
       {
         for (std::size_t l = 0; l < 6; ++l)
         {
-          std::cout << "ret.Get(): " << ret.Get({i, j, k, l}) << std::endl;
-          std::cout << "array.Get(): " << ret.Get({i, j, k, l}) << std::endl;
-          std::cout << "assertiong statement:"
-                    << (int(ret.Get({i, j, k, l})) == int(array.Get({i, j, k, l}))) << std::endl;
-
-          //          ASSERT_TRUE(ret.Get({i,j,k,l}) == array.Get({i,j,k,l}));
+          ASSERT_TRUE(int(ret.Get({i, j, k, l})) == int(array.Get({i, j, k, l})));
         }
       }
     }

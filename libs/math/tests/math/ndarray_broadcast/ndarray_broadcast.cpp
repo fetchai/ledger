@@ -36,7 +36,6 @@ TEST(ndarray, simple_broadcast_test)
 TEST(ndarray, broadcast_3D_test)
 {
   NDArray<double> a = NDArray<double>::Arange(0, 21, 1);
-  std::cout << a.size() << std::endl;
   ASSERT_TRUE(a.size() == 21);
   a.Reshape({1, 3, 7});
   NDArray<double> b = NDArray<double>::Arange(0, 21, 1);
