@@ -39,6 +39,7 @@ class MainChainProtocol : public fetch::service::Protocol, public fetch::service
 {
 public:
   using BlockType                 = chain::MainChain::BlockType;
+  using block_type                = chain::MainChain::BlockType;
   using block_hash_type           = chain::MainChain::BlockHash;
   using protocol_number_type      = service::protocol_handler_type;
   using thread_pool_type          = network::ThreadPool;
@@ -146,52 +147,55 @@ private:
     uint32_t ms            = max_size_;
     using service_map_type = typename R::service_map_type;
     using service_map_items          = typename service_map_type::value_type;
-    register_.VisitServiceClients([this, ms](service_map_items const &p) {
-        LOG_STACK_TRACE_POINT;
-        if (!running_)
-        {
-          return;
-        }
+    register_.VisitServiceClients([this, ms](service_map_items const &p)
+    {
+      LOG_STACK_TRACE_POINT;
+      if (!running_)
+      {
+        return;
+      }
 
-        auto service_client = p.second.lock();
-        auto details = register_.GetDetails(service_client -> handle());
-        if ((!details -> is_outgoing) || (!details -> is_peer))
-        {
+      auto service_client = p.second.lock();
+      auto details = register_.GetDetails(service_client -> handle());
+      if ((!details -> is_outgoing) || (!details -> is_peer))
+      {
         //std::cout << std::string(byte_array::ToBase64(details.identity.identifier())) << std::endl;
         // std::endl;
-          return;
+        return;
         //if (!details -> IsAnyMainChain())
-        }
+      }
 
-        auto name = details->GetOwnerIdentityString();
+      auto name = details->GetOwnerIdentityString();
 
-        auto subscription_handler_function =
-        auto foo = new service::Function<void(chain::MainChain::block_type)>(
-            this -> pending_blocks_.Add(block);
-            this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
-        });
+      auto subscription_handler_cb = [this](block_type block)
         {
-          LOG_STACK_TRACE_POINT
-        blockPublishSubscriptions_.Subscribe(ptr, protocol_, BLOCK_PUBLISH,
-          ptr,
-          name, // TODO(kll) make a connection name here.
-                                                 subscription_handler_function);
-        }
-
-        if (0)
-        {
-          LOG_STACK_TRACE_POINT;
-          auto prom = service_client->Call(protocol_, GET_HEAVIEST_CHAIN, ms);
-        prom.Then([prom, ms, this](){
-          std::vector<BlockType> incoming;
-              incoming.reserve(uint64_t(ms));
-              prom.As(incoming);
-              fetch::logger.Info("Updating pending blocks: ", incoming.size());
-          this -> pending_blocks_.Add(incoming.begin(), incoming.end());
+          this -> pending_blocks_.Add(block);
           this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
-            });
-        }
-      });
+        };
+
+      auto subscription_handler_function = new service::Function<void(block_type)>(subscription_handler_cb);
+
+      {
+        LOG_STACK_TRACE_POINT;
+        blockPublishSubscriptions_.Subscribe(service_client, protocol_, BLOCK_PUBLISH,
+                                             name, // TODO(kll) make a connection name here.
+                                             subscription_handler_function);
+      }
+
+      if (0)
+      {
+        LOG_STACK_TRACE_POINT;
+        auto prom = service_client->Call(protocol_, GET_HEAVIEST_CHAIN, ms);
+        prom.Then([prom, ms, this](){
+            std::vector<BlockType> incoming;
+            incoming.reserve(uint64_t(ms));
+            prom.As(incoming);
+            fetch::logger.Info("Updating pending blocks: ", incoming.size());
+            this -> pending_blocks_.Add(incoming.begin(), incoming.end());
+            this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
+          });
+      }
+    });
 
     if (running_)
     {

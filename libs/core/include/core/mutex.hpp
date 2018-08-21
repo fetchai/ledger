@@ -27,7 +27,7 @@
 #include <thread>
 #include <utility>
 
-#include "network/generics/exception_catching.hpp"
+#include "debugging/exception_catching.hpp"
 
 namespace fetch {
 namespace mutex {

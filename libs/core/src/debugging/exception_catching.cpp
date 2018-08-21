@@ -1,4 +1,4 @@
-#include "network/generics/exception_catching.hpp"
+#include "debugging/exception_catching.hpp"
 
 #include "core/logger.hpp"
 
