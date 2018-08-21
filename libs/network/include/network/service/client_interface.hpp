@@ -276,7 +276,7 @@ protected:
           if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), sub) ==
               cancelled_subscriptions_.end())
           {
-            TODO_FAIL("PubSub: We were sent a subscription ID we never allocated:", int(sub));
+            fetch::logger.Error("PubSub:  We were sent a subscription ID we never allocated: ", int(sub));
             return false;
           }
           else
@@ -288,7 +288,7 @@ protected:
 
         if ((*subscr).second.feed != feed)
         {
-          TODO_FAIL("PubSub: Subscription's feed ID is different from message feed ID.");
+          fetch::logger.Error("PubSub: Subscription's feed ID is different from message feed ID.");
           return false;
         }
 

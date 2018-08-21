@@ -154,7 +154,7 @@ public:
   std::shared_ptr<LockableDetails> GetDetails(connection_handle_type const &i)
   //void GetDetails(connection_handle_type const &i)
   {
-    fetch::logger.Info("GetDetails for =======================================> ", i);
+    //fetch::logger.Info("GetDetails for =======================================> ", i);
     LOG_STACK_TRACE_POINT;
     std::lock_guard<mutex::Mutex> lock(details_lock_);
     if (details_.find(i) == details_.end())

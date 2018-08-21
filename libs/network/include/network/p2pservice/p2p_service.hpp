@@ -74,6 +74,8 @@ public:
              fetch::network::NetworkManager const &tm)
     : super_type(port, tm), manager_(tm), certificate_(std::move(certificate))
   {
+    fetch::logger.Info("Cerfitcation address: ", certificate_.get());
+
     running_     = false;
     thread_pool_ = network::MakeThreadPool(1);
     fetch::logger.Warn("Establishing P2P Service on rpc://0.0.0.0:", port);
@@ -497,7 +499,9 @@ protected:
 
         if (e.is_discovery)
         {
-          bool const is_ourself = e.identity.identifier() == certificate_->identity().identifier();
+          crypto::Prover const *cert  = certificate_.get();
+
+          bool const is_ourself = e.identity.identifier() == cert->identity().identifier();
 
           if ((!is_ourself) && (outgoing_.find(e.identity.identifier()) == outgoing_.end()))
           {

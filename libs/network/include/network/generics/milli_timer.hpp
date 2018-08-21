@@ -28,7 +28,7 @@ public:
 
     if (!threshold)
     {
-      fetch::logger.Warn("Starting millitimer for ", name_);
+      //fetch::logger.Warn("Starting millitimer for ", name_);
     }
   }
 

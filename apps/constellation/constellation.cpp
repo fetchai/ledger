@@ -56,24 +56,7 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
   auto profile = p2p_->Profile();
   auto my_name = std::string(byte_array::ToBase64(profile.identity.identifier()));
 
-  // Adding handle for the orchestration
-  p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
-    // std::cout << "MAKING CALL ::: " << std::endl;
 
-    fetch::logger.Info("OnPeerUpdateProfile: ", byte_array::ToBase64(ep.identity.identifier()),
-                       " mainchain?: ", ep.is_mainchain.load(), " lane:? ", ep.is_lane.load());
-
-    if (ep.is_mainchain)
-    {
-      main_chain_remote_->TryConnect(ep);
-    }
-    if (ep.is_lane)
-    {
-      fetch::logger.Info("Trying to make that connection noow.....");
-
-      storage_->TryConnect(ep);
-    }
-  });
 
   // setup the storage service
   storage_service_.Setup(db_prefix, num_lanes, lane_port_start_, *network_manager_, false);
@@ -155,6 +138,32 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
 void Constellation::Run(peer_list_type const &initial_peers)
 {
   p2p_->AddMainChain(interface_address_, static_cast<uint16_t>(main_chain_port_));
+
+  // Adding handle for the orchestration
+  p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
+    // std::cout << "MAKING CALL ::: " << std::endl;
+
+    fetch::logger.Info("OnPeerUpdateProfile: ", byte_array::ToBase64(ep.identity.identifier()),
+                       " mainchain?: ", ep.is_mainchain.load(), " lane:? ", ep.is_lane.load());
+
+    if (ep.is_mainchain)
+    {
+      if (main_chain_remote_)
+      {
+        main_chain_remote_->TryConnect(ep);
+      }
+    }
+    if (ep.is_lane)
+    {
+      fetch::logger.Info("Trying to make that connection noow.....");
+
+      if (storage_)
+      {
+        storage_->TryConnect(ep);
+      }
+    }
+  });
+
   p2p_->Start();
 
   // Make the initial p2p connections

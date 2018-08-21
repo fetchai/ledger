@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
@@ -78,7 +79,7 @@ public:
   {
     BlockType genesis;
     genesis.UpdateDigest();
-    genesis.body().previous_hash = genesis.hash();
+    //genesis.body().previous_hash = genesis.hash();
 
     // Add genesis to block chain
     genesis.loose()             = false;
@@ -241,7 +242,8 @@ public:
     // recreate genesis
     BlockType genesis;
     genesis.UpdateDigest();
-    genesis.body().previous_hash = genesis.hash();
+    //genesis.body().hash = byte_array::FromBase64("+++++++++++++++++Genesis+++++++++++++++++++=");
+    //genesis.body().previous_ha
 
     // Add genesis to block chain
     genesis.loose()             = false;
