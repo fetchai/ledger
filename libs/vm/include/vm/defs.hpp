@@ -1,5 +1,5 @@
-#ifndef DEFS__HPP
-#define DEFS__HPP
+#pragma once
+
 #include "vm/opcodes.hpp"
 #include "vm/typeids.hpp"
 #include <cmath>
@@ -192,7 +192,7 @@ struct Script
     TypeId   type_id;
     Variant  variant;
   };
-  typedef std::vector<Instruction> Instructions;
+  using Instructions = std::vector<Instruction>;
   struct Variable
   {
     Variable(const std::string &name__, const TypeId type_id__)
@@ -229,7 +229,7 @@ struct Script
     std::vector<Variable> variables;  // parameters + locals
     Instructions          instructions;
   };
-  typedef std::vector<Function>          Functions;
+  using Functions = std::vector<Function>;
   std::string                            name;
   std::vector<std::string>               strings;
   Functions                              functions;
@@ -329,5 +329,3 @@ bool IsGreaterThanOrEqual(const T a, const T b)
 
 }  // namespace vm
 }  // namespace fetch
-
-#endif

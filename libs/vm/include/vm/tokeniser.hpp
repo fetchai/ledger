@@ -1,5 +1,4 @@
-#ifndef yyHEADER_H
-#define yyHEADER_H 1
+#pragma once
 #define yyIN_HEADER 1
 
 #line 6 "../include/vm/tokeniser.hpp"
@@ -52,12 +51,12 @@ typedef uint16_t flex_uint16_t;
 typedef int32_t  flex_int32_t;
 typedef uint32_t flex_uint32_t;
 #else
-typedef signed char        flex_int8_t;
-typedef short int          flex_int16_t;
-typedef int                flex_int32_t;
-typedef unsigned char      flex_uint8_t;
-typedef unsigned short int flex_uint16_t;
-typedef unsigned int       flex_uint32_t;
+using flex_int8_t   = signed char;
+using flex_int16_t  = short;
+using flex_int32_t  = int;
+using flex_uint8_t  = unsigned char;
+using flex_uint16_t = unsigned short;
+using flex_uint32_t = unsigned int;
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -116,7 +115,7 @@ typedef unsigned int       flex_uint32_t;
 /* An opaque pointer. */
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
-typedef void *yyscan_t;
+using yyscan_t = void *;
 #endif
 
 /* For convenience, these vars (plus the bison vars far below)
@@ -145,12 +144,12 @@ typedef void *yyscan_t;
 
 #ifndef YY_TYPEDEF_YY_BUFFER_STATE
 #define YY_TYPEDEF_YY_BUFFER_STATE
-typedef struct yy_buffer_state *YY_BUFFER_STATE;
+using YY_BUFFER_STATE = struct yy_buffer_state *;
 #endif
 
 #ifndef YY_TYPEDEF_YY_SIZE_T
 #define YY_TYPEDEF_YY_SIZE_T
-typedef size_t yy_size_t;
+using yy_size_t = size_t;
 #endif
 
 #ifndef YY_STRUCT_YY_BUFFER_STATE
@@ -353,4 +352,3 @@ extern int yylex(YYSTYPE *yylval_param, yyscan_t yyscanner);
 
 #line 359 "../include/vm/tokeniser.hpp"
 #undef yyIN_HEADER
-#endif /* yyHEADER_H */

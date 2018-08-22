@@ -1,5 +1,5 @@
-#ifndef OPCODES__HPP
-#define OPCODES__HPP
+#pragma once
+
 #include <cstdint>
 
 namespace fetch {
@@ -82,5 +82,3 @@ enum class Opcode : uint16_t
 
 }  // namespace vm
 }  // namespace fetch
-
-#endif

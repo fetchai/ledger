@@ -1,5 +1,5 @@
-#ifndef TOKEN__HPP
-#define TOKEN__HPP
+#pragma once
+
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -94,5 +94,3 @@ struct Location
 
 }  // namespace vm
 }  // namespace fetch
-
-#endif

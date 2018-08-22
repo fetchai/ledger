@@ -1,5 +1,4 @@
-#ifndef COMPILER__HPP
-#define COMPILER__HPP
+#pragma once
 #include "vm/analyser.hpp"
 #include "vm/generator.hpp"
 #include "vm/parser.hpp"
@@ -17,11 +16,9 @@ public:
 
 private:
   Parser    parser_;
-  Analyser  analyser;
+  Analyser  analyser_;
   Generator generator_;
 };
 
 }  // namespace vm
 }  // namespace fetch
-
-#endif

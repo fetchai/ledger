@@ -1,5 +1,5 @@
-#ifndef NODE__HPP
-#define NODE__HPP
+#pragma once
+
 #include "vm/opcodes.hpp"
 #include "vm/token.hpp"
 #include "vm/typeids.hpp"
@@ -32,7 +32,7 @@ struct Symbol
   Kind        kind;
   std::string name;
 };
-typedef std::shared_ptr<Symbol> SymbolPtr;
+using SymbolPtr = std::shared_ptr<Symbol>;
 
 struct SymbolTable
 {
@@ -48,11 +48,11 @@ struct SymbolTable
   }
   std::unordered_map<std::string, SymbolPtr> map;
 };
-typedef std::shared_ptr<SymbolTable> SymbolTablePtr;
+using SymbolTablePtr = std::shared_ptr<SymbolTable>;
 inline SymbolTablePtr CreateSymbolTable() { return std::make_shared<SymbolTable>(SymbolTable()); }
 
 struct Type;
-typedef std::shared_ptr<Type> TypePtr;
+using TypePtr = std::shared_ptr<Type>;
 struct Type : public Symbol
 {
   enum class Category : uint16_t
@@ -103,7 +103,7 @@ struct Variable : public Symbol
   TypePtr  type;
   Index    index;
 };
-typedef std::shared_ptr<Variable> VariablePtr;
+using VariablePtr = std::shared_ptr<Variable>;
 inline VariablePtr CreateVariable(const std::string &name, const Variable::Category category)
 {
   return std::make_shared<Variable>(Variable(name, category));
@@ -137,8 +137,8 @@ struct Function
   Opcode                   opcode;
   Index                    index;
 };
-typedef std::shared_ptr<Function> FunctionPtr;
-inline FunctionPtr                CreateFunction(const Function::Kind kind, const std::string &name)
+using FunctionPtr = std::shared_ptr<Function>;
+inline FunctionPtr CreateFunction(const Function::Kind kind, const std::string &name)
 {
   return std::make_shared<Function>(Function(kind, name));
 }
@@ -149,8 +149,8 @@ struct FunctionGroup : public Symbol
   virtual ~FunctionGroup() {}
   std::vector<FunctionPtr> functions;
 };
-typedef std::shared_ptr<FunctionGroup> FunctionGroupPtr;
-inline FunctionGroupPtr                CreateFunctionGroup(const std::string &name)
+using FunctionGroupPtr = std::shared_ptr<FunctionGroup>;
+inline FunctionGroupPtr CreateFunctionGroup(const std::string &name)
 {
   return std::make_shared<FunctionGroup>(FunctionGroup(name));
 }
@@ -160,7 +160,7 @@ inline FunctionGroupPtr ConvertToFunctionGroupPtr(const SymbolPtr &symbol)
 }
 
 struct Node;
-typedef std::shared_ptr<Node> NodePtr;
+using NodePtr = std::shared_ptr<Node>;
 struct Node
 {
   enum class Kind : uint16_t
@@ -244,7 +244,7 @@ struct BlockNode : public Node
   std::vector<NodePtr> block_children;
   SymbolTablePtr       symbols;
 };
-typedef std::shared_ptr<BlockNode> BlockNodePtr;
+using BlockNodePtr = std::shared_ptr<BlockNode>;
 
 struct ExpressionNode : public Node
 {
@@ -270,7 +270,7 @@ struct ExpressionNode : public Node
   bool             function_invoked_on_instance;
   FunctionPtr      function;
 };
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 inline BlockNodePtr ConvertToBlockNodePtr(const NodePtr &node)
 {
@@ -284,5 +284,3 @@ inline ExpressionNodePtr ConvertToExpressionNodePtr(const NodePtr &node)
 
 }  // namespace vm
 }  // namespace fetch
-
-#endif

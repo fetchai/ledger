@@ -1,5 +1,5 @@
-#ifndef PARSER__HPP
-#define PARSER__HPP
+#pragma once
+
 #include "vm/node.hpp"
 
 namespace fetch {
@@ -121,5 +121,3 @@ private:
 
 }  // namespace vm
 }  // namespace fetch
-
-#endif

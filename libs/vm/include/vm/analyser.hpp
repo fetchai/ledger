@@ -1,5 +1,4 @@
-#ifndef ANALYSER__HPP
-#define ANALYSER__HPP
+#pragma once
 #include "vm/node.hpp"
 
 namespace fetch {
@@ -147,5 +146,3 @@ private:
 
 }  // namespace vm
 }  // namespace fetch
-
-#endif

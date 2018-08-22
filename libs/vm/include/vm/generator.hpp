@@ -1,5 +1,5 @@
-#ifndef GENERATOR__HPP
-#define GENERATOR__HPP
+#pragma once
+
 #include "vm/defs.hpp"
 #include "vm/node.hpp"
 
@@ -70,5 +70,3 @@ private:
 
 }  // namespace vm
 }  // namespace fetch
-
-#endif

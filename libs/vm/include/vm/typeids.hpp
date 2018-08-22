@@ -1,11 +1,11 @@
-#ifndef TYPEIDS__HPP
-#define TYPEIDS__HPP
+#pragma once
+
 #include <cstdint>
 
 namespace fetch {
 namespace vm {
 
-typedef uint16_t Index;
+using Index = uint16_t;
 
 enum class TypeId : uint16_t
 {
@@ -102,5 +102,3 @@ inline bool IsRelationalType(const TypeId id)
 
 }  // namespace vm
 }  // namespace fetch
-
-#endif
