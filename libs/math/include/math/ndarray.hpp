@@ -91,11 +91,11 @@ public:
    * @param shape : a vector representing the shape of the NDArray
    * @return NDArray with all zeroes
    */
-  static self_type Zeros(std::vector<std::size_t> const &shape )
+  static self_type Zeroes(std::vector<std::size_t> const &shape )
   {
     std::size_t n = std::accumulate(std::begin(shape), std::end(shape), std::size_t(1),
                                     std::multiplies<std::size_t>());
-    self_type output{super_type::Zeros(n)};
+    self_type output{super_type::Zeroes(n)};
     output.LazyReshape(shape);
     return output;
   }

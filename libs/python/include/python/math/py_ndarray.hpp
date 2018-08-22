@@ -52,7 +52,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> &a, std::vector<std::size_t> shape)
            {
              NDArray<T> ret{shape};
-             ret = a.Zeros(shape);
+             ret = a.Zeroes(shape);
              return ret;
            }
       )
