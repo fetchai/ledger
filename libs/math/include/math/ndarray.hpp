@@ -612,6 +612,428 @@ public:
     return *this;
   }
 
+  /**
+   * assigns the absolute of x to this array
+   * @param x
+   */
+  void Abs(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Abs(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void Exp2(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Exp2(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void Expm1(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Expm1(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void Log10(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Log10(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void Log2(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Log2(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void Log1p(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Log1p(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void Sqrt(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Sqrt(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void cbrt(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Cbrt(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void sin(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::sin(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void cos(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::cos(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void tan(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::tan(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void asin(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::asin(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void acos(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::acos(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void atan(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::atan(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void sinh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::sinh(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void cosh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::cosh(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void tanh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::tanh(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void asinh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Asinh(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void acosh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Acosh(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void atanh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Atanh(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void erf(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Erf(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void erfc(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Erfc(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void tgamma(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Tgamma(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void lgamma(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Lgamma(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void ceil(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Ceil(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void floor(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Floor(x);
+  }
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void trunc(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Trunc(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void round(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Round(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void lround(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Lround(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void llround(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Llround(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void nearbyint(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Nearbyint(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void rint(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Rint(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void lrint(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Lrint(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void llrint(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Llrint(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void isfinite(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Isfinite(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void isinf(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Isinf(x);
+  }
+
+  /**
+   * assigns 2 to the raised power
+   * @param x
+   */
+  void isnan(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::isNan(x);
+  }
+
 private:
   std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const
   {
