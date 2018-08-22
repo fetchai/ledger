@@ -17,7 +17,12 @@ setup_compiler()
 setup_library(fetch-network)
 target_link_libraries(fetch-network PUBLIC fetch-core fetch-crypto vendor-asio pthread)
 
+# Test targets
 add_test_target()
+
+# Example targets
 add_subdirectory(examples)
+
+# Benchmark targets
 add_subdirectory(benchmark)
 

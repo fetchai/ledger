@@ -18,6 +18,7 @@
 #
 
 import os
+import re
 import sys
 import fnmatch
 import argparse
@@ -80,7 +81,7 @@ def main():
     cmd = [
         clang_tidy,
         '-p', args.build_path,
-        '-warnings-as-errors=.*'
+        '-warnings-as-errors=*'
     ]
 
     if args.fix:
@@ -92,8 +93,23 @@ def main():
 
     def analyse_file(source_path):
         output('Analysing {} ...'.format(os.path.relpath(source_path, project_root)))
-        exit_code = subprocess.call(cmd + [source_path])
-        return exit_code != 0
+
+        proc = subprocess.Popen(cmd + [source_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        while True:
+            line = proc.stdout.readline().decode()
+            if line == '':
+                break
+            elif line.startswith('Use -header-filter=.* to display errors'):
+                continue
+            elif re.match(r'\d+ warnings generated\.', line):
+                continue
+            elif re.match(r'Suppressed \d+ warnings \(\d+ in non-user code(, \d+ NOLINT)?\)\.', line):
+                continue
+
+            output(line.rstrip())
+
+        return proc.wait() != 0
+
 
     def project_source_files():
         for folder in PROJECT_FOLDERS:

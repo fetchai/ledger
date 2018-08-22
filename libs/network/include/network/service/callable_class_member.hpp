@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -138,7 +156,7 @@ struct UnrollPointers
 
       if (typeid(T) != arg.type.get())
       {
-        // TODO: Make serializable
+        // TODO(issue 11): Make serializable
         throw std::runtime_error(
             "argument type mismatch for Callabale. TODO: Make custom "
             "exception");
@@ -179,7 +197,9 @@ struct UnrollPointers<0, class_type, member_function_pointer, return_type, used_
  * This module should be benchmarked against the more general class
  * <Function>. If there is no notable perfomance difference this
  * implementation should be dropped to keep the code base small and
- * simple (TODO).
+ * simple.
+ *
+ * TODO(issue 23):
  */
 template <typename C, typename F, std::size_t N = 0>
 class CallableClassMember;

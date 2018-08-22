@@ -87,7 +87,7 @@ void Blas<S, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
     pool_.Wait();
   }
   return;
-};
+}
 
 template class Blas<double, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
                     Computes(_C = _alpha * T(_A) * _A + _beta * _C),
