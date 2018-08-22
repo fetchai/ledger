@@ -112,6 +112,23 @@ public:
     return pointer_->connection_pointer();
   }
 
+  // Blocking function to wait until connection is alive
+  bool WaitForAlive(std::size_t milliseconds) const
+  {
+    for (std::size_t i = 0; i < milliseconds;)
+    {
+      if(pointer_->is_alive())
+      {
+        return true;
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      i += 10;
+    }
+
+    return false;
+  }
+
 protected:
   pointer_type pointer_;
 };

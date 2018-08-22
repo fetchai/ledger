@@ -36,9 +36,11 @@ class ObjectStoreSyncronisationProtocol : public fetch::service::Protocol
 public:
   enum
   {
-    OBJECT_COUNT = 1,
-    PULL_OBJECTS = 2,
-    PULL_SUBTREE = 3
+    OBJECT_COUNT  = 1,
+    PULL_OBJECTS  = 2,
+    PULL_SUBTREE  = 3,
+    START_SYNC    = 4,
+    FINISHED_SYNC = 5
   };
   using self_type             = ObjectStoreSyncronisationProtocol<R, T, S>;
   using protocol_handler_type = service::protocol_handler_type;
@@ -46,17 +48,19 @@ public:
   using thread_pool_type      = network::ThreadPool;
 
   ObjectStoreSyncronisationProtocol(protocol_handler_type const &p, register_type r,
-                                    thread_pool_type nm, ObjectStore<T> *store)
+                                    thread_pool_type tp, ObjectStore<T> *store)
     : fetch::service::Protocol()
     , protocol_(p)
     , register_(std::move(r))
-    , thread_pool_(std::move(nm))
+    , thread_pool_(std::move(tp))
     , store_(store)
   {
 
     this->Expose(OBJECT_COUNT, this, &self_type::ObjectCount);
     this->ExposeWithClientArg(PULL_OBJECTS, this, &self_type::PullObjects);
     this->Expose(PULL_SUBTREE, this, &self_type::PullSubtree);
+    this->Expose(START_SYNC, this, &self_type::StartSync);
+    this->Expose(FINISHED_SYNC, this, &self_type::FinishedSync);
   }
 
   void Start()
@@ -86,9 +90,9 @@ public:
       // If we need to sync our object store (esp. when joining the network)
       if (needs_sync_)
       {
-        for (uint8_t i = 0;; ++i)
+        for (uint16_t i = 0; i < 0x100; ++i)
         {
-          roots_to_sync_.push(i);
+          roots_to_sync_.push(static_cast<uint8_t>(i));
         }
 
         thread_pool_->Post([this]() { this->SyncSubtree(); });
@@ -110,6 +114,7 @@ public:
 
     using service_map_type = typename R::service_map_type;
     register_.WithServices([this](service_map_type const &map) {
+
       for (auto const &p : map)
       {
         if (!running_) return;
@@ -186,7 +191,6 @@ public:
            ((cache_.size() > max_cache_) || (cache_.back().lifetime > max_cache_life_time_)))
     {
       auto back = cache_.back();
-      //      std::cout << "DELETEING Object with " << back.lifetime << " ms
       //      lifetime" << std::endl;
       cache_.pop_back();
     }
@@ -235,6 +239,16 @@ public:
     return ret;
   }
 
+  void StartSync()
+  {
+    needs_sync_ = true;
+  }
+
+  bool FinishedSync()
+  {
+    return !needs_sync_;
+  }
+
 private:
   protocol_handler_type protocol_;
   register_type         register_;
@@ -252,13 +266,6 @@ private:
 
     std::lock_guard<mutex::Mutex> lock(mutex_);
 
-    /*
-    for(auto &c: cache_) {
-      std::cout << "--- " << byte_array::ToBase64( c.data.digest()) <<
-    std::endl;
-    }
-    */
-
     if (cache_.begin() == cache_.end())
     {
       return std::vector<S>();
@@ -275,7 +282,6 @@ private:
         ret.push_back(c.data);
       }
     }
-    //    std::cout << "Sending " << ret.size() << std::endl;
 
     return ret;
   }
@@ -327,12 +333,12 @@ private:
         array.Resize(256 / 8);
         array[0] = root;
 
-        auto promise = ptr->Call(protocol_, PULL_SUBTREE, array, 8);
+        auto promise = ptr->Call(protocol_, PULL_SUBTREE, array, uint64_t(8));
         subtree_promises_.push_back(std::make_pair(root, std::move(promise)));
       }
     });
 
-    thread_pool_->Post([this]() { this->RealiseSubtreePromises(); }, 500);
+    thread_pool_->Post([this]() { this->RealiseSubtreePromises(); }, 200);
   }
 
   void RealiseSubtreePromises()
@@ -372,6 +378,7 @@ private:
     // Completed syncing
     if (roots_to_sync_.empty())
     {
+      needs_sync_ = false;
       thread_pool_->Post([this]() { this->IdleUntilPeers(); });
     }
     else
@@ -396,7 +403,7 @@ private:
   std::atomic<bool> running_{false};
 
   // Syncing with other peers on startup
-  bool                                              needs_sync_ = true;
+  bool                                              needs_sync_ = false;
   std::vector<std::pair<uint8_t, service::Promise>> subtree_promises_;
   std::queue<uint8_t>                               roots_to_sync_;
 };
