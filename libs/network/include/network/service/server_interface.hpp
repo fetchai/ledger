@@ -19,7 +19,7 @@ public:
   virtual ~ServiceServerInterface() {}
 
   void Add(protocol_handler_type const &name,
-           Protocol *                   protocol)  // TODO: Rename to AddProtocol
+           Protocol *                   protocol)  // TODO(unknown): Rename to AddProtocol
   {
     LOG_STACK_TRACE_POINT;
 
@@ -50,7 +50,7 @@ protected:
     service_classification_type type;
     params >> type;
 
-    if (type == SERVICE_FUNCTION_CALL)  // TODO: change to switch
+    if (type == SERVICE_FUNCTION_CALL)  // TODO(unknown): change to switch
     {
       ret = true;
       serializer_type               result;
@@ -92,7 +92,7 @@ protected:
         fetch::logger.Error("Serialization error (Subscribe): ", e.what());
         // result = serializer_type();
         // result << SERVICE_ERROR << id << e;
-        throw e;  // TODO: propagate error other other size
+        throw e;  // TODO(tfr): propagate error other other size
       }
       // DeliverResponse(client, result.data());
     }
@@ -115,7 +115,7 @@ protected:
         fetch::logger.Error("Serialization error (Unsubscribe): ", e.what());
         // result = serializer_type();
         // result << SERVICE_ERROR << id << e;
-        throw e;  // TODO: propagate error other other size
+        throw e;  // TODO(tfr): propagate error other other size
       }
       // DeliverResponse(client, result.data());
     }
@@ -172,7 +172,7 @@ private:
     }
   }
 
-  Protocol *members_[256] = {nullptr};  // TODO: Not thread-safe
+  Protocol *members_[256] = {nullptr};  // TODO(unknown): Not thread-safe
   friend class FeedSubscriptionManager;
 };
 }  // namespace service
