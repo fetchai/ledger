@@ -4,7 +4,7 @@
 namespace fetch {
 namespace vm {
 
-void Generator::Generate(const BlockNodePtr &root, const std::string &name, Script &script)
+void Generator::Generate(BlockNodePtr const &root, std::string const &name, Script &script)
 {
   script_ = Script(name);
   scopes_.clear();
@@ -22,7 +22,7 @@ void Generator::Generate(const BlockNodePtr &root, const std::string &name, Scri
   scopes_.clear();
 }
 
-void Generator::CreateFunctions(const BlockNodePtr &root)
+void Generator::CreateFunctions(BlockNodePtr const &root)
 {
   for (const NodePtr &child : root->block_children)
   {
@@ -33,12 +33,18 @@ void Generator::CreateFunctions(const BlockNodePtr &root)
       BlockNodePtr      function_definition_node = ConvertToBlockNodePtr(child);
       ExpressionNodePtr identifier_node =
           ConvertToExpressionNodePtr(function_definition_node->children[0]);
+
       FunctionPtr        f              = identifier_node->function;
       const std::string &name           = f->name;
       const int          num_parameters = (int)f->parameter_variables.size();
-      Script::Function   function(name, num_parameters);
+
+      Script::Function function(name, num_parameters);
+
       for (const VariablePtr &v : f->parameter_variables)
+      {
         v->index = function.AddVariable(v->name, v->type->id);
+      }
+
       f->index = script_.AddFunction(function);
       break;
     }
@@ -48,10 +54,11 @@ void Generator::CreateFunctions(const BlockNodePtr &root)
   }
 }
 
-void Generator::HandleBlock(const BlockNodePtr &block)
+void Generator::HandleBlock(BlockNodePtr const &block)
 {
-  for (const NodePtr &child : block->block_children)
+  for (NodePtr const &child : block->block_children)
   {
+
     switch (child->kind)
     {
     case Node::Kind::FunctionDefinitionStatement:
@@ -119,18 +126,20 @@ void Generator::HandleBlock(const BlockNodePtr &block)
       }
       break;
     }
-    }
+    }  // end switch
   }
 }
 
-void Generator::HandleFunctionDefinitionStatement(const BlockNodePtr &node)
+void Generator::HandleFunctionDefinitionStatement(BlockNodePtr const &node)
 {
   ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[0]);
   FunctionPtr       f               = identifier_node->function;
   function_                         = &(script_.functions[f->index]);
+
   ScopeEnter();
   HandleBlock(node);
   ScopeLeave(node);
+
   if (f->return_type->id == TypeId::Void)
   {
     // 0 is not correct line number, it should be the line number of the endfunction token
@@ -139,125 +148,185 @@ void Generator::HandleFunctionDefinitionStatement(const BlockNodePtr &node)
     instruction.variant.i32 = 0;  // scope number
     function_->AddInstruction(instruction);
   }
+
   function_ = nullptr;
 }
 
-void Generator::HandleWhileStatement(const BlockNodePtr &node)
+void Generator::HandleWhileStatement(BlockNodePtr const &node)
 {
-  const Index       continue_pc = (Index)function_->instructions.size();
+  Index const       continue_pc = (Index)function_->instructions.size();
   ExpressionNodePtr condition   = ConvertToExpressionNodePtr(node->children[0]);
+
   HandleExpression(condition);
-  const Index         jf_pc = (Index)function_->instructions.size();
+
+  Index const         jf_pc = (Index)function_->instructions.size();
   Script::Instruction jf_instruction(Opcode::JumpIfFalse, node->token.line);
   jf_instruction.index = 0;  // pc placeholder
+
   function_->AddInstruction(jf_instruction);
   ScopeEnter();
-  const int scope_number = (int)scopes_.size() - 1;
+
+  int const scope_number = static_cast<int>(scopes_.size()) - 1;
+
   loops_.push_back(Loop());
   loops_.back().scope_number = scope_number;
+
   HandleBlock(node);
   ScopeLeave(node);
+
   // 0 is not correct line number, it should be the line number of the endwhile token
   Script::Instruction jump_instruction(Opcode::Jump, 0);
+
   jump_instruction.index = continue_pc;
   function_->AddInstruction(jump_instruction);
-  const Index endwhile_pc              = (Index)function_->instructions.size();
+
+  Index const endwhile_pc              = (Index)function_->instructions.size();
   function_->instructions[jf_pc].index = endwhile_pc;
   Loop &loop                           = loops_.back();
-  for (auto jump_pc : loop.continue_pcs) function_->instructions[jump_pc].index = continue_pc;
-  for (auto jump_pc : loop.break_pcs) function_->instructions[jump_pc].index = endwhile_pc;
+
+  for (auto const &jump_pc : loop.continue_pcs)
+  {
+    function_->instructions[jump_pc].index = continue_pc;
+  }
+
+  for (auto const &jump_pc : loop.break_pcs)
+  {
+    function_->instructions[jump_pc].index = endwhile_pc;
+  }
+
   loops_.pop_back();
 }
 
-void Generator::HandleForStatement(const BlockNodePtr &node)
+void Generator::HandleForStatement(BlockNodePtr const &node)
 {
   ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[0]);
   VariablePtr       v               = identifier_node->variable;
-  const int         arity           = (int)node->children.size() - 1;
+  int const         arity           = static_cast<int>(node->children.size()) - 1;
+
   for (int i = 1; i <= arity; ++i)
+  {
     HandleExpression(ConvertToExpressionNodePtr(node->children[std::size_t(i)]));
+  }
+
   // Add the for-loop variable
   v->index = function_->AddVariable(v->name, v->type->id);
+
   Script::Instruction init_instruction(Opcode::ForRangeInit, node->token.line);
   init_instruction.index       = v->index;  // frame-relative index of the for-loop variable
   init_instruction.type_id     = v->type->id;
   init_instruction.variant.i32 = arity;  // 2 or 3 range elements
+
   function_->AddInstruction(init_instruction);
   Script::Instruction iterate_instruction(Opcode::ForRangeIterate, node->token.line);
   iterate_instruction.index       = 0;      // pc placeholder
   iterate_instruction.variant.i32 = arity;  // 2 or 3 range elements
-  const Index iterate_pc          = function_->AddInstruction(iterate_instruction);
+
+  Index const iterate_pc = function_->AddInstruction(iterate_instruction);
+
   ScopeEnter();
-  const int scope_number = (int)scopes_.size() - 1;
+
+  int const scope_number = static_cast<int>(scopes_.size()) - 1;
+
   loops_.push_back(Loop());
   loops_.back().scope_number = scope_number;
+
   HandleBlock(node);
   ScopeLeave(node);
+
   // 0 is not correct line number, it should be the line number of the endfor token
   Script::Instruction jump_instruction(Opcode::Jump, 0);
   jump_instruction.index = iterate_pc;
   function_->AddInstruction(jump_instruction);
+
   // 0 is not correct line number, it should be the line number of the endfor token
   Script::Instruction terminate_instruction(Opcode::ForRangeTerminate, 0);
+
   terminate_instruction.index   = v->index;
   terminate_instruction.type_id = v->type->id;
-  const Index terminate_pc      = function_->AddInstruction(terminate_instruction);
+  Index const terminate_pc      = function_->AddInstruction(terminate_instruction);
   Loop &      loop              = loops_.back();
-  for (auto jump_pc : loop.continue_pcs) function_->instructions[jump_pc].index = iterate_pc;
-  for (auto jump_pc : loop.break_pcs) function_->instructions[jump_pc].index = terminate_pc;
+
+  for (auto jump_pc : loop.continue_pcs)
+  {
+    function_->instructions[jump_pc].index = iterate_pc;
+  }
+
+  for (auto jump_pc : loop.break_pcs)
+  {
+    function_->instructions[jump_pc].index = terminate_pc;
+  }
+
   function_->instructions[iterate_pc].index = terminate_pc;
+
   loops_.pop_back();
 }
 
-void Generator::HandleIfStatement(const NodePtr &node)
+void Generator::HandleIfStatement(NodePtr const &node)
 {
   Index              jf_pc = Index(-1);
   std::vector<Index> jump_pcs;
-  const int          last_index = (int)node->children.size() - 1;
+  int const          last_index = static_cast<int>(node->children.size()) - 1;
+
   for (int i = 0; i <= last_index; ++i)
   {
     BlockNodePtr block = ConvertToBlockNodePtr(node->children[std::size_t(i)]);
     if (block->kind != Node::Kind::Else)
     {
       // block is the if block or one of the elseif blocks
-      const Index condition_pc = (Index)function_->instructions.size();
+      Index const condition_pc = (Index)function_->instructions.size();
+
       if (jf_pc != Index(-1))
       {
         // Previous block, if there is one, jumps to here
         function_->instructions[jf_pc].index = condition_pc;
       }
+
       ExpressionNodePtr condition_expression = ConvertToExpressionNodePtr(block->children[0]);
       HandleExpression(condition_expression);
+
       Script::Instruction jf_instruction(Opcode::JumpIfFalse, condition_expression->token.line);
       jf_instruction.index = 0;  // pc placeholder
       jf_pc                = function_->AddInstruction(jf_instruction);
+
       ScopeEnter();
       HandleBlock(block);
       ScopeLeave(block);
+
       if (i < last_index)
       {
         // Only arrange jump to the endif if not the last block
         // 0 is not correct line number!
         Script::Instruction jump_instruction(Opcode::Jump, 0);
         jump_instruction.index = 0;  // pc placeholder
-        const Index jump_pc    = function_->AddInstruction(jump_instruction);
+        Index const jump_pc    = function_->AddInstruction(jump_instruction);
         jump_pcs.push_back(jump_pc);
       }
     }
     else
     {
       // block is the else block
-      const Index else_block_start_pc      = (Index)function_->instructions.size();
+      Index const else_block_start_pc = static_cast<Index>(function_->instructions.size());
+
       function_->instructions[jf_pc].index = else_block_start_pc;
       jf_pc                                = Index(-1);
+
       ScopeEnter();
       HandleBlock(block);
       ScopeLeave(block);
     }
   }
-  const Index endif_pc = (Index)function_->instructions.size();
-  if (jf_pc != Index(-1)) function_->instructions[jf_pc].index = endif_pc;
-  for (auto jump_pc : jump_pcs) function_->instructions[jump_pc].index = endif_pc;
+
+  Index const endif_pc = (Index)function_->instructions.size();
+
+  if (jf_pc != Index(-1))
+  {
+    function_->instructions[jf_pc].index = endif_pc;
+  }
+
+  for (auto jump_pc : jump_pcs)
+  {
+    function_->instructions[jump_pc].index = endif_pc;
+  }
 }
 
 void Generator::HandleVarStatement(const NodePtr &node)
@@ -265,11 +334,12 @@ void Generator::HandleVarStatement(const NodePtr &node)
   ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[0]);
   VariablePtr       v               = identifier_node->variable;
   v->index                          = function_->AddVariable(v->name, v->type->id);
-  const bool is_object              = v->type->IsPrimitiveType() == false;
+  bool const is_object              = v->type->IsPrimitiveType() == false;
   int        scope_number;
+
   if (is_object)
   {
-    scope_number = (int)scopes_.size() - 1;
+    scope_number = static_cast<int>(scopes_.size()) - 1;
     Scope &scope = scopes_[std::size_t(scope_number)];
     scope.objects.push_back(v->index);
   }
@@ -278,6 +348,7 @@ void Generator::HandleVarStatement(const NodePtr &node)
     // Primitives don't need to be destructed on scope exit
     scope_number = -1;
   }
+
   if (node->kind == Node::Kind::VarDeclarationStatement)
   {
     Script::Instruction instruction(Opcode::VarDeclare, node->token.line);
@@ -290,19 +361,26 @@ void Generator::HandleVarStatement(const NodePtr &node)
   {
     ExpressionNodePtr rhs;
     if (node->kind == Node::Kind::VarDeclarationTypedAssignmentStatement)
+    {
       rhs = ConvertToExpressionNodePtr(node->children[2]);
+    }
     else
+    {
       rhs = ConvertToExpressionNodePtr(node->children[1]);
+    }
+
     HandleExpression(rhs);
     Script::Instruction instruction(Opcode::VarDeclareAssign, node->token.line);
+
     instruction.index       = v->index;
     instruction.variant.i32 = scope_number;
     instruction.type_id     = v->type->id;
+
     function_->AddInstruction(instruction);
   }
 }
 
-void Generator::HandleReturnStatement(const NodePtr &node)
+void Generator::HandleReturnStatement(NodePtr const &node)
 {
   if (node->children.size() == 0)
   {
@@ -312,45 +390,55 @@ void Generator::HandleReturnStatement(const NodePtr &node)
     function_->AddInstruction(instruction);
     return;
   }
+
   ExpressionNodePtr expression = ConvertToExpressionNodePtr(node->children[0]);
   HandleExpression(expression);
+
   Script::Instruction instruction(Opcode::ReturnValue, node->token.line);
   instruction.type_id     = expression->type->id;
   instruction.variant.i32 = 0;  // scope number
+
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleBreakStatement(const NodePtr &node)
+void Generator::HandleBreakStatement(NodePtr const &node)
 {
-  Loop &              loop = loops_.back();
+  Loop &loop = loops_.back();
+
   Script::Instruction instruction(Opcode::Break, node->token.line);
   instruction.index       = 0;  // pc placeholder
   instruction.variant.i32 = loop.scope_number;
-  const Index break_pc    = function_->AddInstruction(instruction);
+  Index const break_pc    = function_->AddInstruction(instruction);
+
   loop.break_pcs.push_back(break_pc);
 }
 
-void Generator::HandleContinueStatement(const NodePtr &node)
+void Generator::HandleContinueStatement(NodePtr const &node)
 {
   Loop &              loop = loops_.back();
   Script::Instruction instruction(Opcode::Continue, node->token.line);
   instruction.index       = 0;  // pc placeholder
   instruction.variant.i32 = loop.scope_number;
-  const Index continue_pc = function_->AddInstruction(instruction);
+  Index const continue_pc = function_->AddInstruction(instruction);
+
   loop.continue_pcs.push_back(continue_pc);
 }
 
-void Generator::HandleAssignmentStatement(const ExpressionNodePtr &node)
+void Generator::HandleAssignmentStatement(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
   HandleExpression(rhs);
-  const bool assigning_to_variable      = lhs->category == ExpressionNode::Category::Variable;
-  const bool assigning_to_indexed_value = lhs->kind == Node::Kind::IndexOp;
-  const bool is_compound_assignment     = node->kind != Node::Kind::AssignOp;
-  Opcode     opcode_override            = Opcode::Unknown;
+
+  bool const assigning_to_variable      = lhs->category == ExpressionNode::Category::Variable;
+  bool const assigning_to_indexed_value = lhs->kind == Node::Kind::IndexOp;
+  bool const is_compound_assignment     = node->kind != Node::Kind::AssignOp;
+
+  Opcode opcode_override = Opcode::Unknown;
+
   if (assigning_to_variable)
   {
+
     if (is_compound_assignment == false)
     {
       opcode_override = Opcode::Assign;
@@ -383,6 +471,7 @@ void Generator::HandleAssignmentStatement(const ExpressionNodePtr &node)
         break;
       }
     }
+
     HandleLHSExpression(lhs, opcode_override, rhs);
   }
   else if (assigning_to_indexed_value)
@@ -419,18 +508,20 @@ void Generator::HandleAssignmentStatement(const ExpressionNodePtr &node)
         break;
       }
     }
+
     HandleLHSExpression(lhs, opcode_override, rhs);
   }
 }
 
-void Generator::HandleLHSExpression(const ExpressionNodePtr &lhs, const Opcode override_opcode,
-                                    const ExpressionNodePtr &rhs)
+void Generator::HandleLHSExpression(ExpressionNodePtr const &lhs, Opcode const &override_opcode,
+                                    ExpressionNodePtr const &rhs)
 {
   if (lhs->category == ExpressionNode::Category::Variable)
   {
     VariablePtr v = lhs->variable;
     Opcode      opcode;
     TypeId      type_id;
+
     if (override_opcode == Opcode::Unknown)
     {
       opcode  = Opcode::PushVariable;
@@ -450,18 +541,25 @@ void Generator::HandleLHSExpression(const ExpressionNodePtr &lhs, const Opcode o
           type_id = TypeId::Matrix_Float64__Float64;
       }
     }
+
     Script::Instruction instruction(opcode, lhs->token.line);
     instruction.index   = v->index;
     instruction.type_id = type_id;
+
     function_->AddInstruction(instruction);
   }
   else  // if (lhs->kind == Node::Kind::IndexOp)
   {
-    const int         num_rhs_operands = (int)lhs->children.size() - 1;
+    int const         num_rhs_operands = (int)lhs->children.size() - 1;
     ExpressionNodePtr indexed_node     = ConvertToExpressionNodePtr(lhs->children[0]);
+
     HandleLHSExpression(indexed_node, Opcode::Unknown, nullptr);
+
     for (int i = 1; i <= num_rhs_operands; ++i)
+    {
       HandleExpression(ConvertToExpressionNodePtr(lhs->children[std::size_t(i)]));
+    }
+
     Opcode opcode;
     TypeId type_id;
     if (override_opcode == Opcode::Unknown)
@@ -486,14 +584,16 @@ void Generator::HandleLHSExpression(const ExpressionNodePtr &lhs, const Opcode o
           type_id = TypeId::Array_Matrix_Float64__Float64;
       }
     }
+
     Script::Instruction instruction(opcode, lhs->token.line);
     instruction.type_id     = type_id;
     instruction.variant.i32 = num_rhs_operands;
+
     function_->AddInstruction(instruction);
   }
 }
 
-void Generator::HandleExpression(const ExpressionNodePtr &node)
+void Generator::HandleExpression(ExpressionNodePtr const &node)
 {
   switch (node->kind)
   {
@@ -593,7 +693,7 @@ void Generator::HandleExpression(const ExpressionNodePtr &node)
   }
 }
 
-void Generator::HandleIdentifier(const ExpressionNodePtr &node)
+void Generator::HandleIdentifier(ExpressionNodePtr const &node)
 {
   VariablePtr         v = node->variable;
   Script::Instruction instruction(Opcode::PushVariable, node->token.line);
@@ -602,7 +702,7 @@ void Generator::HandleIdentifier(const ExpressionNodePtr &node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleInteger32(const ExpressionNodePtr &node)
+void Generator::HandleInteger32(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcode::PushConstant, node->token.line);
   instruction.type_id     = TypeId::Int32;
@@ -610,7 +710,7 @@ void Generator::HandleInteger32(const ExpressionNodePtr &node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleUnsignedInteger32(const ExpressionNodePtr &node)
+void Generator::HandleUnsignedInteger32(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcode::PushConstant, node->token.line);
   instruction.type_id      = TypeId::UInt32;
@@ -618,7 +718,7 @@ void Generator::HandleUnsignedInteger32(const ExpressionNodePtr &node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleInteger64(const ExpressionNodePtr &node)
+void Generator::HandleInteger64(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcode::PushConstant, node->token.line);
   instruction.type_id     = TypeId::Int64;
@@ -626,7 +726,7 @@ void Generator::HandleInteger64(const ExpressionNodePtr &node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleUnsignedInteger64(const ExpressionNodePtr &node)
+void Generator::HandleUnsignedInteger64(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcode::PushConstant, node->token.line);
   instruction.type_id      = TypeId::UInt64;
@@ -634,7 +734,7 @@ void Generator::HandleUnsignedInteger64(const ExpressionNodePtr &node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleSinglePrecisionNumber(const ExpressionNodePtr &node)
+void Generator::HandleSinglePrecisionNumber(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcode::PushConstant, node->token.line);
   instruction.type_id     = TypeId::Float32;
@@ -642,7 +742,7 @@ void Generator::HandleSinglePrecisionNumber(const ExpressionNodePtr &node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleDoublePrecisionNumber(const ExpressionNodePtr &node)
+void Generator::HandleDoublePrecisionNumber(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcode::PushConstant, node->token.line);
   instruction.type_id     = TypeId::Float64;
@@ -650,7 +750,7 @@ void Generator::HandleDoublePrecisionNumber(const ExpressionNodePtr &node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleString(const ExpressionNodePtr &node)
+void Generator::HandleString(ExpressionNodePtr const &node)
 {
   std::string s = node->token.text.substr(1, node->token.text.size() - 2);
   Index       index;
@@ -665,32 +765,37 @@ void Generator::HandleString(const ExpressionNodePtr &node)
     strings_.push_back(s);
     strings_map_[s] = index;
   }
+
   Script::Instruction instruction(Opcode::PushString, node->token.line);
   instruction.index   = index;
   instruction.type_id = TypeId::String;
+
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleTrue(const ExpressionNodePtr &node)
+void Generator::HandleTrue(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcode::PushConstant, node->token.line);
   instruction.type_id     = TypeId::Bool;
   instruction.variant.ui8 = 1;
+
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleFalse(const ExpressionNodePtr &node)
+void Generator::HandleFalse(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcode::PushConstant, node->token.line);
   instruction.type_id     = TypeId::Bool;
   instruction.variant.ui8 = 0;
+
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleNull(const ExpressionNodePtr &node)
+void Generator::HandleNull(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcode::PushConstant, node->token.line);
   instruction.type_id = node->type->id;
+
   if (node->type->id == TypeId::Null)
   {
     // Unresolved null type...
@@ -699,6 +804,7 @@ void Generator::HandleNull(const ExpressionNodePtr &node)
     // expression "null == null" -- turn any unconverted nulls into an integral zero
     instruction.type_id = TypeId::UInt64;
   }
+
   instruction.variant.Zero();
   function_->AddInstruction(instruction);
 }
@@ -709,6 +815,7 @@ void Generator::HandleIncDecOp(const ExpressionNodePtr &node)
   const bool        assigning_to_variable = operand->category == ExpressionNode::Category::Variable;
   // const bool assigning_to_indexed_value = operand->kind == Node::Kind::IndexOp;
   Opcode opcode_override = Opcode::Unknown;
+
   if (node->kind == Node::Kind::PrefixIncOp)
   {
     opcode_override = assigning_to_variable ? Opcode::PrefixIncOp : Opcode::IndexedPrefixIncOp;
@@ -725,14 +832,16 @@ void Generator::HandleIncDecOp(const ExpressionNodePtr &node)
   {
     opcode_override = assigning_to_variable ? Opcode::PostfixDecOp : Opcode::IndexedPostfixDecOp;
   }
+
   HandleLHSExpression(operand, opcode_override, nullptr);
 }
 
-void Generator::HandleOp(const ExpressionNodePtr &node)
+void Generator::HandleOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr lhs     = ConvertToExpressionNodePtr(node->children[0]);
   Opcode            opcode  = Opcode::Unknown;
   TypeId            type_id = TypeId::Unknown;
+
   switch (node->kind)
   {
   case Node::Kind::AddOp:
@@ -825,21 +934,27 @@ void Generator::HandleOp(const ExpressionNodePtr &node)
   default:
     break;
   }
+
   for (int i = 0; i < (int)node->children.size(); ++i)
+  {
     HandleExpression(ConvertToExpressionNodePtr(node->children[std::size_t(i)]));
+  }
+
   Script::Instruction instruction(opcode, node->token.line);
   instruction.type_id = type_id;
+
   function_->AddInstruction(instruction);
 }
 
-TypeId Generator::TestArithmeticTypes(const ExpressionNodePtr &node)
+TypeId Generator::TestArithmeticTypes(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr lhs         = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs         = ConvertToExpressionNodePtr(node->children[1]);
-  const bool        lhs_numeric = IsNumericType(lhs->type->id);
-  const bool        rhs_numeric = IsNumericType(rhs->type->id);
-  const bool        lhs_matrix  = IsMatrixType(lhs->type->id);
-  const bool        rhs_matrix  = IsMatrixType(rhs->type->id);
+  bool const        lhs_numeric = IsNumericType(lhs->type->id);
+  bool const        rhs_numeric = IsNumericType(rhs->type->id);
+  bool const        lhs_matrix  = IsMatrixType(lhs->type->id);
+  bool const        rhs_matrix  = IsMatrixType(rhs->type->id);
+
   if (lhs_numeric && rhs_matrix)
   {
     // Handle e.g. 100.0 * matrix
