@@ -279,12 +279,14 @@ public:
    * This operator acts as a two-dimensional array accessor that can be
    * used for constant object instances.
    */
-  type const &operator()(size_type const &i, size_type const &j) const
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type const &operator()(S const &i,
+                                                                                 S const &j) const
   {
-    assert(j < padded_width_);
-    assert(i < padded_height_);
+    assert(std::size_t(j) < padded_width_);
+    assert(std::size_t(i) < padded_height_);
 
-    return super_type::data()[(j * padded_height_ + i)];
+    return super_type::data()[(std::size_t(j) * padded_height_ + std::size_t(i))];
   }
 
   /* Two-dimensional reference index operator.
@@ -294,11 +296,12 @@ public:
    * This operator acts as a twoxs-dimensional array accessor that is
    * meant for non-constant object instances.
    */
-  type &operator()(size_type const &i, size_type const &j)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type &operator()(S const &i, S const &j)
   {
-    assert(j < padded_width_);
-    assert(i < padded_height_);
-    return super_type::data()[(j * padded_height_ + i)];
+    assert(std::size_t(j) < padded_width_);
+    assert(std::size_t(i) < padded_height_);
+    return super_type::data()[(std::size_t(j) * padded_height_ + std::size_t(i))];
   }
 
   /* One-dimensional constant reference access function.
