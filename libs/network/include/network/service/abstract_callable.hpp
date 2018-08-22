@@ -37,10 +37,10 @@ struct SignatureToString
 {
   static std::string Signature()
   {
-    return  std::string(serializers::TypeRegister<base_type<R>>::name()) + std::string(" ") +
-            std::string(serializers::TypeRegister<base_type<C>>::name())  + 
-            std::string("::function_pointer") +  
-            std::string("(") + ArgsToString<R, Args...>::Value() + std::string(")");
+    return std::string(serializers::TypeRegister<base_type<R>>::name()) + std::string(" ") +
+           std::string(serializers::TypeRegister<base_type<C>>::name()) +
+           std::string("::function_pointer") + std::string("(") +
+           ArgsToString<R, Args...>::Value() + std::string(")");
   }
 };
 
