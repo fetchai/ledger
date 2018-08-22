@@ -28,6 +28,7 @@
 #include "testing/unittest.hpp"
 #include <algorithm>
 #include <iostream>
+#include <utility>
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;
@@ -60,7 +61,7 @@ public:
     CONNECT = 1
   };
 
-  ControllerProtocol(ClientRegister reg, NetworkManager nm) : register_{reg}, nm_{nm}
+  ControllerProtocol(ClientRegister reg, NetworkManager nm) : register_{std::move(reg)}, nm_{nm}
   {
     this->Expose(CONNECT, this, &ControllerProtocol::Connect);
   }
@@ -95,7 +96,6 @@ private:
   ClientRegister register_;
   NetworkManager nm_;
 
-  // TODO: (HUT) : determine what this is for
   mutex_type                                                             services_mutex_;
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
 };
@@ -145,14 +145,14 @@ public:
 
   ~TestService() {}
 
-  ThreadPool     thread_pool_;
-  ClientRegister register_;
+  ThreadPool thread_pool;
+  ClientRegister register;
 
-  std::unique_ptr<TransactionStore>         tx_store_ = std::make_unique<TransactionStore>();
-  std::unique_ptr<TransactionStoreProtocol> tx_store_protocol_;
-  std::unique_ptr<TxSyncProtocol>           tx_sync_protocol_;
+  std::unique_ptr<TransactionStore>         tx_store = std::make_unique<TransactionStore>();
+  std::unique_ptr<TransactionStoreProtocol> tx_store_protocol;
+  std::unique_ptr<TxSyncProtocol>           tx_sync_protocol;
 
-  std::unique_ptr<ControllerProtocol> controller_protocol_;
+  std::unique_ptr<ControllerProtocol> controller_protocol;
 };
 
 int main(int argc, char const **argv)
