@@ -58,7 +58,7 @@ void Parser::Tokenise(const std::string &source)
   do
   {
     yylex(&token, scanner);
-    tokens_.push_back(std::move(token));
+    tokens_.push_back(token);
   } while (token.kind != Token::Kind::EndOfInput);
   yy_delete_buffer(bp, scanner);
   yylex_destroy(scanner);
