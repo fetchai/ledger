@@ -49,9 +49,9 @@ public:
   {
     if (int64_t(size) > bytes_left())
     {
-      throw std::runtime_error(
-          "Typed serializer error: Not enough bytes - TODO, make error "
-          "serializable");
+      throw SerializableException(
+          error::TYPE_ERROR, "Typed serializer error (ReadBytes): Not enough bytes " +
+                                 std::to_string(bytes_left()) + " not  " + std::to_string(size));
     }
 
     for (std::size_t i = 0; i < size; ++i) arr[i] = data_[pos_++];
@@ -61,9 +61,9 @@ public:
   {
     if (int64_t(size) > bytes_left())
     {
-      throw std::runtime_error(
-          "Typed serializer error 2: Not enough bytes - TODO, make error "
-          "serializable");
+      throw SerializableException(
+          error::TYPE_ERROR, "Typed serializer error (ReadByteArray): Not enough bytes " +
+                                 std::to_string(bytes_left()) + " not  " + std::to_string(size));
     }
 
     b = data_.SubArray(pos_, size);
