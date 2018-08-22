@@ -396,7 +396,7 @@ private:
   std::atomic<bool> running_{false};
 
   // Syncing with other peers on startup
-  bool                                              needs_sync_ = false;
+  bool                                              needs_sync_ = true;
   std::vector<std::pair<uint8_t, service::Promise>> subtree_promises_;
   std::queue<uint8_t>                               roots_to_sync_;
 };
