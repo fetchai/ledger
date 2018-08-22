@@ -624,7 +624,7 @@ public:
     this->super_type::Abs(x);
   }
   /**
-   * assigns 2 to the raised power
+   * raise 2 to power input values of x
    * @param x
    */
   void Exp2(self_type const &x)
@@ -635,7 +635,7 @@ public:
     this->super_type::Exp2(x);
   }
   /**
-   * assigns 2 to the raised power
+   * exp(x) - 1
    * @param x
    */
   void Expm1(self_type const &x)
@@ -646,7 +646,7 @@ public:
     this->super_type::Expm1(x);
   }
   /**
-   * assigns 2 to the raised power
+   * log base 10
    * @param x
    */
   void Log10(self_type const &x)
@@ -657,7 +657,7 @@ public:
     this->super_type::Log10(x);
   }
   /**
-   * assigns 2 to the raised power
+   * log base 2
    * @param x
    */
   void Log2(self_type const &x)
@@ -668,7 +668,7 @@ public:
     this->super_type::Log2(x);
   }
   /**
-   * assigns 2 to the raised power
+   * natural log 1 + x
    * @param x
    */
   void Log1p(self_type const &x)
@@ -679,7 +679,7 @@ public:
     this->super_type::Log1p(x);
   }
   /**
-   * assigns 2 to the raised power
+   * square root
    * @param x
    */
   void Sqrt(self_type const &x)
@@ -691,10 +691,10 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * cubic root x
    * @param x
    */
-  void cbrt(self_type const &x)
+  void Cbrt(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -703,7 +703,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * sine of x
    * @param x
    */
   void sin(self_type const &x)
@@ -714,7 +714,7 @@ public:
     this->super_type::sin(x);
   }
   /**
-   * assigns 2 to the raised power
+   * cosine of x
    * @param x
    */
   void cos(self_type const &x)
@@ -725,7 +725,7 @@ public:
     this->super_type::cos(x);
   }
   /**
-   * assigns 2 to the raised power
+   * tangent of x
    * @param x
    */
   void tan(self_type const &x)
@@ -736,7 +736,7 @@ public:
     this->super_type::tan(x);
   }
   /**
-   * assigns 2 to the raised power
+   * arc sine of x
    * @param x
    */
   void asin(self_type const &x)
@@ -747,7 +747,7 @@ public:
     this->super_type::asin(x);
   }
   /**
-   * assigns 2 to the raised power
+   * arc cosine of x
    * @param x
    */
   void acos(self_type const &x)
@@ -758,7 +758,7 @@ public:
     this->super_type::acos(x);
   }
   /**
-   * assigns 2 to the raised power
+   * arc tangent of x
    * @param x
    */
   void atan(self_type const &x)
@@ -770,7 +770,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * hyperbolic sine of x
    * @param x
    */
   void sinh(self_type const &x)
@@ -781,7 +781,7 @@ public:
     this->super_type::sinh(x);
   }
   /**
-   * assigns 2 to the raised power
+   * hyperbolic cosine of x
    * @param x
    */
   void cosh(self_type const &x)
@@ -792,7 +792,7 @@ public:
     this->super_type::cosh(x);
   }
   /**
-   * assigns 2 to the raised power
+   * hyperbolic tangent of x
    * @param x
    */
   void tanh(self_type const &x)
@@ -803,7 +803,7 @@ public:
     this->super_type::tanh(x);
   }
   /**
-   * assigns 2 to the raised power
+   * hyperbolic arc sine of x
    * @param x
    */
   void asinh(self_type const &x)
@@ -814,7 +814,7 @@ public:
     this->super_type::Asinh(x);
   }
   /**
-   * assigns 2 to the raised power
+   * hyperbolic arc cosine of x
    * @param x
    */
   void acosh(self_type const &x)
@@ -825,7 +825,7 @@ public:
     this->super_type::Acosh(x);
   }
   /**
-   * assigns 2 to the raised power
+   * hyperbolic arc tangent of x
    * @param x
    */
   void atanh(self_type const &x)
@@ -837,7 +837,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * error function of x
    * @param x
    */
   void erf(self_type const &x)
@@ -848,7 +848,7 @@ public:
     this->super_type::Erf(x);
   }
   /**
-   * assigns 2 to the raised power
+   * complementary error function of x
    * @param x
    */
   void erfc(self_type const &x)
@@ -859,7 +859,7 @@ public:
     this->super_type::Erfc(x);
   }
   /**
-   * assigns 2 to the raised power
+   * factorial of x-1
    * @param x
    */
   void tgamma(self_type const &x)
@@ -870,7 +870,7 @@ public:
     this->super_type::Tgamma(x);
   }
   /**
-   * assigns 2 to the raised power
+   * log of factorial of x-1
    * @param x
    */
   void lgamma(self_type const &x)
@@ -881,7 +881,7 @@ public:
     this->super_type::Lgamma(x);
   }
   /**
-   * assigns 2 to the raised power
+   * ceiling round
    * @param x
    */
   void ceil(self_type const &x)
@@ -892,7 +892,7 @@ public:
     this->super_type::Ceil(x);
   }
   /**
-   * assigns 2 to the raised power
+   * floor rounding
    * @param x
    */
   void floor(self_type const &x)
@@ -903,7 +903,7 @@ public:
     this->super_type::Floor(x);
   }
   /**
-   * assigns 2 to the raised power
+   * round towards 0
    * @param x
    */
   void trunc(self_type const &x)
@@ -915,7 +915,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * round to nearest int in int format
    * @param x
    */
   void round(self_type const &x)
@@ -927,7 +927,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * round to nearest int in float format
    * @param x
    */
   void lround(self_type const &x)
@@ -939,7 +939,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * round to nearest int in float format with long long return
    * @param x
    */
   void llround(self_type const &x)
@@ -951,7 +951,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * round to nearest int in float format
    * @param x
    */
   void nearbyint(self_type const &x)
@@ -963,7 +963,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * round to nearest int
    * @param x
    */
   void rint(self_type const &x)
@@ -975,7 +975,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   *
    * @param x
    */
   void lrint(self_type const &x)
@@ -987,7 +987,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   *
    * @param x
    */
   void llrint(self_type const &x)
@@ -999,7 +999,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * finite check
    * @param x
    */
   void isfinite(self_type const &x)
@@ -1011,7 +1011,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * checks for inf values
    * @param x
    */
   void isinf(self_type const &x)
@@ -1023,7 +1023,7 @@ public:
   }
 
   /**
-   * assigns 2 to the raised power
+   * checks for nans
    * @param x
    */
   void isnan(self_type const &x)
