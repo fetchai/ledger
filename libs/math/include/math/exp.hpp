@@ -30,20 +30,17 @@ namespace math {
 
 namespace details {
 template <typename T>
-inline T ExpImplementation(T const &array)
+inline void ExpImplementation(T const &array, T &ret)
 {
-  T ret;
   ret.ResizeFromShape(array.shape());
   for (std::size_t i = 0; i < array.size(); ++i)
   {
     ret[i] = std::exp(array[i]);
   }
-  return ret;
 }
 template <typename T>
-inline T ExpImplementation(T const &array, memory::Range r)
+inline T ExpImplementation(T const &array, memory::Range r, T &ret)
 {
-  T ret;
   ret.Reshape(array.shape());
 
   if (r.is_trivial())
@@ -60,7 +57,6 @@ inline T ExpImplementation(T const &array, memory::Range r)
       ret[i] = std::exp(array[i]);
     }
   }
-  return ret;
 }
 }  // namespace details
 
@@ -68,19 +64,22 @@ template <typename T, typename C = memory::SharedArray<T>>
 inline NDArray<T, C> Exp(NDArray<T, C> const &array)
 {
   NDArray<T, C> ret;
-  return details::ExpImplementation<NDArray<T, C>>(ret);
+  details::ExpImplementation<NDArray<T, C>>(array, ret);
+  return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline linalg::Matrix<T, C> Exp(linalg::Matrix<T, C> const &array)
 {
   linalg::Matrix<T, C> ret;
-  return details::ExpImplementation<linalg::Matrix<T, C>>(ret);
+  details::ExpImplementation<linalg::Matrix<T, C>>(array, ret);
+  return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline RectangularArray<T, C> Exp(RectangularArray<T, C> const &array)
 {
   RectangularArray<T, C> ret;
-  return details::ExpImplementation<RectangularArray<T, C>>(ret);
+  details::ExpImplementation<RectangularArray<T, C>>(array, ret);
+  return ret;
 }
 
 /**
@@ -95,19 +94,22 @@ template <typename T, typename C = memory::SharedArray<T>>
 inline NDArray<T, C> Exp(NDArray<T, C> const &array, memory::Range r)
 {
   NDArray<T, C> ret;
-  return details::ExpImplementation<NDArray<T, C>>(ret);
+  details::ExpImplementation<NDArray<T, C>>(array, r, ret);
+  return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline linalg::Matrix<T, C> Exp(linalg::Matrix<T, C> const &array, memory::Range r)
 {
   linalg::Matrix<T, C> ret;
-  return details::ExpImplementation<linalg::Matrix<T, C>>(ret);
+  details::ExpImplementation<linalg::Matrix<T, C>>(array, r, ret);
+  return ret;
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline RectangularArray<T, C> Exp(RectangularArray<T, C> const &array, memory::Range r)
 {
   RectangularArray<T, C> ret;
-  return details::ExpImplementation<RectangularArray<T, C>>(ret);
+  details::ExpImplementation<RectangularArray<T, C>>(array, r, ret);
+  return ret;
 }
 
 }  // namespace math
