@@ -84,18 +84,17 @@ public:
     return std::accumulate(std::begin(shape), std::end(shape), std::size_t(1), std::multiplies<>());
   }
 
-
   /**
    * Method returning an NDArray of zeroes
    *
    * @param shape : a vector representing the shape of the NDArray
    * @return NDArray with all zeroes
    */
-  static self_type Zeroes(std::vector<std::size_t> const &shape )
+  static self_type Zeroes(std::vector<std::size_t> const &shape)
   {
     std::size_t n = std::accumulate(std::begin(shape), std::end(shape), std::size_t(1),
                                     std::multiplies<std::size_t>());
-    self_type output{super_type::Zeroes(n)};
+    self_type   output{super_type::Zeroes(n)};
     output.LazyReshape(shape);
     return output;
   }
@@ -106,17 +105,14 @@ public:
    * @param shape : a vector representing the shape of the NDArray
    * @return NDArray with all ones
    */
-  static self_type Ones(std::vector<std::size_t> const &shape )
+  static self_type Ones(std::vector<std::size_t> const &shape)
   {
     std::size_t n = std::accumulate(std::begin(shape), std::end(shape), std::size_t(1),
                                     std::multiplies<std::size_t>());
-    self_type output{super_type::Ones(n)};
+    self_type   output{super_type::Ones(n)};
     output.LazyReshape(shape);
     return output;
-
   }
-
-
 
   void ResizeFromShape(std::vector<std::size_t> const &shape)
   {
@@ -462,11 +458,10 @@ public:
    * @param other
    * @return
    */
-  static NDArray Add(self_type &obj1, self_type &other)
+  NDArray Add(self_type &obj1, self_type &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x + y; }, obj1, other, ret);
-    return ret;
+    Broadcast([](data_type x, data_type y) { return x + y; }, obj1, other, *this);
+    return *this;
   }
   /**
    * adds a scalar to every element in the array and returns the new output
@@ -475,7 +470,8 @@ public:
    */
   self_type Add(self_type const &obj1, data_type const &scalar)
   {
-    return self_type(super_type::Add(obj1, scalar));
+    this->super_type::Add(obj1, scalar);
+    return *this;
   }
   /**
    * adds two ndarrays together and supports broadcasting
@@ -499,11 +495,10 @@ public:
    * @param other
    * @return
    */
-  static NDArray Subtract(self_type &obj1, self_type &other)
+  NDArray Subtract(self_type &obj1, self_type &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x - y; }, obj1, other, ret);
-    return ret;
+    Broadcast([](data_type x, data_type y) { return x - y; }, obj1, other, *this);
+    return *this;
   }
   /**
    * subtract a scalar from every element in the array and return the new output
@@ -512,7 +507,8 @@ public:
    */
   self_type Subtract(self_type &obj1, data_type const &scalar)
   {
-    return self_type(super_type::Subtract(obj1, scalar));
+    this->super_type::Subtract(obj1, scalar);
+    return *this;
   }
   /**
    * Subtract one ndarray from another and support broadcasting
@@ -539,11 +535,10 @@ public:
    * @param other
    * @return
    */
-  static NDArray Multiply(self_type &obj1, self_type &other)
+  NDArray Multiply(self_type &obj1, self_type &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x * y; }, obj1, other, ret);
-    return ret;
+    Broadcast([](data_type x, data_type y) { return x * y; }, obj1, other, *this);
+    return *this;
   }
   /**
    * multiplies array by a scalar element wise
@@ -552,7 +547,8 @@ public:
    */
   self_type Multiply(self_type &obj1, data_type const &scalar)
   {
-    return self_type(super_type::Multiply(obj1, scalar));
+    this->super_type::Multiply(obj1, scalar);
+    return *this;
   }
   /**
    * multiplies two ndarrays together and supports broadcasting
@@ -571,7 +567,8 @@ public:
    */
   self_type InlineMultiply(data_type const &scalar)
   {
-    return self_type(super_type::InlineMultiply(scalar));
+    this->super_type::InlineMultiply(scalar);
+    return *this;
   }
 
   /**
@@ -579,11 +576,10 @@ public:
    * @param other
    * @return
    */
-  static NDArray Divide(self_type &obj1, self_type &other)
+  NDArray Divide(self_type &obj1, self_type &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x / y; }, obj1, other, ret);
-    return ret;
+    Broadcast([](data_type x, data_type y) { return x / y; }, obj1, other, *this);
+    return *this;
   }
   /**
    * Divide array by a scalar elementwise
@@ -592,7 +588,8 @@ public:
    */
   self_type Divide(self_type &obj1, data_type const &scalar)
   {
-    return self_type(super_type::Divide(obj1, scalar));
+    this->super_type::Divide(obj1, scalar);
+    return *this;
   }
   /**
    * Divide ndarray by another ndarray from another and support broadcasting
@@ -611,7 +608,8 @@ public:
    */
   self_type InlineDivide(data_type const &scalar)
   {
-    return self_type(super_type::InlineDivide(scalar));
+    this->super_type::InlineDivide(scalar);
+    return *this;
   }
 
 private:

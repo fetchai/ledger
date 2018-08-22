@@ -75,16 +75,16 @@ public:
   void SetAllZero() { data().SetAllZero(); }
 
   /**
-   * Inefficient implementation of set all one. A low level method in memory::SharedArray would be preferable
+   * Inefficient implementation of set all one. A low level method in memory::SharedArray would be
+   * preferable
    */
   void SetAllOne()
   {
-    for(std::size_t i = 0; i < data().size(); i++)
+    for (std::size_t i = 0; i < data().size(); i++)
     {
       data()[i] = 1;
     }
   }
-
 
   /* Set all padded bytes to zero.
    *
@@ -1539,18 +1539,17 @@ public:
   }
 
   /**
- * Method returning a shapeless array of ones
- *
- * @param shape : a vector representing the shape of the NDArray
- * @return NDArray with all ones
- */
-  static ShapeLessArray Ones(std::size_t const &n )
+   * Method returning a shapeless array of ones
+   *
+   * @param shape : a vector representing the shape of the NDArray
+   * @return NDArray with all ones
+   */
+  static ShapeLessArray Ones(std::size_t const &n)
   {
     ShapeLessArray ret;
     ret.Resize(n);
     ret.SetAllOne();
     return ret;
-
   }
 
   bool AllClose(ShapeLessArray const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
