@@ -111,6 +111,11 @@ public:
     if (on_before_flush_) on_before_flush_();
   }
 
+  /**
+   * Indicate whether the stack is writing directly to disk or caching writes.
+   *
+   * @return: Whether the stack is written straight to disk.
+   */
   static constexpr bool DirectWrite() { return true; }
 
   ~RandomAccessStack()
@@ -333,16 +338,6 @@ public:
 
   bool is_open() const { return bool(file_handle_) && (file_handle_.is_open()); }
 
-  void StoreHeader()
-  {
-    assert(filename_ != "");
-
-    if (!header_.Write(file_handle_))
-    {
-      TODO_FAIL("Error could not write header - todo throw error");
-    }
-  }
-
   /**
    * Push only the object to disk, this requires the user to flush the header before file closure
    * to avoid corrupting the file
@@ -367,6 +362,24 @@ private:
   mutable std::fstream file_handle_;
   std::string          filename_ = "";
   Header               header_;
+
+  /**
+   * Write the header to disk. Not usually necessary since we can just refer to our local one
+   *
+   * @param: 
+   *
+   * @return: 
+   */
+  void StoreHeader()
+  {
+    assert(filename_ != "");
+
+    if (!header_.Write(file_handle_))
+    {
+      TODO_FAIL("Error could not write header - todo throw error");
+    }
+  }
+
 };
 }  // namespace storage
 }  // namespace fetch
