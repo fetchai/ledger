@@ -25,7 +25,7 @@ struct Symbol
     kind = kind__;
     name = name__;
   }
-  virtual ~Symbol() {}
+  virtual ~Symbol() = default;
   bool        IsType() const { return (kind == Kind::Type); }
   bool        IsVariable() const { return (kind == Kind::Variable); }
   bool        IsFunctionGroup() const { return (kind == Kind::FunctionGroup); }
@@ -68,7 +68,7 @@ struct Type : public Symbol
     category = category__;
     id       = id__;
   }
-  virtual ~Type() {}
+  virtual ~Type() = default;
   bool                 IsPrimitiveType() const { return (category == Category::Primitive); }
   Category             category;
   TypeId               id;
@@ -98,7 +98,7 @@ struct Variable : public Symbol
     category = category__;
     index    = 0;
   }
-  virtual ~Variable() {}
+  virtual ~Variable() = default;
   Category category;
   TypePtr  type;
   Index    index;
@@ -146,7 +146,7 @@ inline FunctionPtr CreateFunction(const Function::Kind kind, const std::string &
 struct FunctionGroup : public Symbol
 {
   FunctionGroup(const std::string &name) : Symbol(Kind::FunctionGroup, name) {}
-  virtual ~FunctionGroup() {}
+  virtual ~FunctionGroup() = default;
   std::vector<FunctionPtr> functions;
 };
 using FunctionGroupPtr = std::shared_ptr<FunctionGroup>;
@@ -231,7 +231,7 @@ struct Node
     kind  = kind__;
     token = *token__;
   }
-  virtual ~Node() {}
+  virtual ~Node() = default;
   Kind                 kind;
   Token                token;
   std::vector<NodePtr> children;
@@ -240,7 +240,7 @@ struct Node
 struct BlockNode : public Node
 {
   BlockNode(Kind kind__, Token *token__) : Node(kind__, token__) {}
-  virtual ~BlockNode() {}
+  virtual ~BlockNode() = default;
   std::vector<NodePtr> block_children;
   SymbolTablePtr       symbols;
 };
@@ -262,7 +262,7 @@ struct ExpressionNode : public Node
     category                     = Category::Unknown;
     function_invoked_on_instance = false;
   }
-  virtual ~ExpressionNode() {}
+  virtual ~ExpressionNode() = default;
   Category         category;
   VariablePtr      variable;
   TypePtr          type;
