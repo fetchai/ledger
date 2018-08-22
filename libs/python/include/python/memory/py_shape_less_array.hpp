@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "math/rectangular_array.hpp"
 #include "python/fetch_pybind.hpp"
@@ -285,11 +302,18 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
              if (i >= s.size()) throw py::index_error();
              s[i] = v;
            })
-
       .def("__eq__",
            [](ShapeLessArray<T> &s, ShapeLessArray<T> const &other) {
-             if (other.size() != s.size()) throw py::index_error();
-             s.Copy(other);
+             if (other.size() == s.size())
+             {
+               for (std::size_t i = 0; i < other.size(); ++i)
+               {
+                 if (other[i] != s[i]) return false;
+               }
+               return true;
+             }
+             else
+               return false;
            })
 
       .def("FromNumpy",
@@ -318,5 +342,6 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
         return result;
       });
 }
-};  // namespace math
-};  // namespace fetch
+
+}  // namespace math
+}  // namespace fetch

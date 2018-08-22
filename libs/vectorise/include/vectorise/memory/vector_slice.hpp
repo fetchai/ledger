@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/meta/log2.hpp"
@@ -79,7 +97,7 @@ public:
   vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const
   {
     assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
-    // TODO: Assert unneccessary
+    // TODO(unknown): Assert unneccessary
     //    assert(std::size_t(length / E_SIMD_COUNT) * E_SIMD_COUNT == length);
     assert((length + offset) <= size_);
     return vector_slice_type(pointer_ + offset, length);

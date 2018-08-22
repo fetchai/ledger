@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 // This represents the API to the network test
 #include <chrono>
@@ -13,14 +30,14 @@
 #include <utility>
 #include <vector>
 
-#include "../tests/include/helper_functions.hpp"
-#include "./network_classes.hpp"
-#include "./node_directory.hpp"
-#include "./transaction_list.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
 #include "core/random/lfg.hpp"
+#include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "network_classes.hpp"
+#include "node_directory.hpp"
+#include "transaction_list.hpp"
 
 namespace fetch {
 namespace network_benchmark {
@@ -102,7 +119,7 @@ public:
     thread_ = std::thread([this]() { SendTransactions(); });
   }
 
-  // TODO: (`HUT`) : get rid of start in fn names
+  // TODO(issue 28): get rid of start in fn names
   void StartTestAsMaster(uint64_t startTime)
   {
     if (thread_.joinable())

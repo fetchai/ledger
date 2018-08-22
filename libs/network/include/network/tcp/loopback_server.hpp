@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "network/fetch_asio.hpp"  // required to avoid failing build due to -Werror
 #include "network/management/network_manager.hpp"
@@ -46,15 +63,6 @@ private:
   {
     auto self = shared_from_this();
     asio::async_write(socket_, asio::buffer(message_.pointer(), length),
-                      // TODO: couple of thigs worth to check here: 1) It does not make sense
-                      // to pass both - `this` raw pointer and shared_ptr<...> for the same
-                      // instance, 2) depending on how `asio::async_write(...)` uses instance
-                      // of passed lambda (who will control lifecycle of lambda instance), it
-                      // may be necessary to pass here `weak_ptr<>` instead of shared_ptr if
-                      // lambda nstance is set to `socket_` insatnce (and thus `socket_` would
-                      // take control over lyfecycle of lambda instace => it would create
-                      // cyclic reference to `this` instance if we pass here shared_ptr
-                      // instead of weak)
                       [this, self](std::error_code ec, std::size_t) {
                         if (!ec)
                         {

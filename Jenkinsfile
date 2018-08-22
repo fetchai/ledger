@@ -9,10 +9,22 @@ pipeline {
   stages {
 
 
+    stage('Clang Format Checks') {
+        steps {
+            sh './scripts/apply-style.py -w -a'
+        }
+    }
+
     stage('Debug Build') {
       steps {
         sh './scripts/ci-tool.py -B Debug'
       }
+    }
+
+    stage('Clang Tidy Checks') {
+        steps {
+            sh './scripts/run-static-analysis.py build-debug/'
+        }
     }
 
     stage('Release Build') {
@@ -28,19 +40,12 @@ pipeline {
       }
     }
 
-    stage('Clang Tidy Checks') {
-        steps {
-            sh './scripts/run-static-analysis.py build-release/'
-        }
+  }
+
+  post {
+    always {
+      junit 'build-release/TestResults.xml'
     }
-
-    stage('Clang Format Checks') {
-        steps {
-            sh './scripts/apply-style.py -w -a'
-        }
-    }
-
-
   }
 }
 

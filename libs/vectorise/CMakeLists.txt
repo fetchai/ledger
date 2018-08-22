@@ -13,9 +13,10 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 # Main Library Target
 #-------------------------------------------------------------------------------
-
 setup_library(fetch-vectorise)
 
-
+# Define all the test targets
 add_test_target()
+
+# Define all the example targets
 add_subdirectory(examples)

@@ -1,7 +1,25 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include <core/random/lcg.hpp>
 #include <core/random/lfg.hpp>
-#include <math/exp.hpp>
+#include <math/approx_exp.hpp>
 #include <miner/optimisation/bitvector.hpp>
 
 namespace fetch {
@@ -13,7 +31,7 @@ public:
   using spin_type  = int16_t;
   using state_type = std::vector<spin_type>;
 
-  using exp_type        = math::Exp<0>;
+  using exp_type        = math::ApproxExp<0>;
   using bit_data_type   = uint64_t;
   using bit_vector_type = bitmanip::BitVector;
   using cost_type       = double;
@@ -124,7 +142,8 @@ public:
   {
     Anneal();
     cost_type ret = Energy();
-    // TODO: Optimise
+
+    // TODO(issue 30): Optimise
 
     state.clear();
 

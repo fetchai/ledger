@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/logger.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
@@ -47,7 +65,7 @@ public:
   {
     lanes_.resize(count);
     SetLaneLog2(uint32_t(lanes_.size()));
-    assert(count == (1 << log2_lanes_));
+    assert(count == (1u << log2_lanes_));
   }
 
   template <typename T>
@@ -108,12 +126,12 @@ public:
     {
       lanes_.resize(total_lanes);
       SetLaneLog2(uint32_t(lanes_.size()));
-      assert(lanes_.size() == (1 << log2_lanes_));
+      assert(lanes_.size() == (1u << log2_lanes_));
     }
 
     crypto::Identity lane_identity;
     p3.As(lane_identity);
-    // TODO: Verify expected identity
+    // TODO(issue 24): Verify expected identity
 
     assert(lane < lanes_.size());
     fetch::logger.Debug("Adding lane ", lane);
@@ -247,7 +265,7 @@ public:
 
   byte_array::ConstByteArray Hash() override
   {
-    // TODO(EJF):
+    // TODO(issue 33): Which lane?
     return lanes_[0]
         ->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
         .As<byte_array::ByteArray>();

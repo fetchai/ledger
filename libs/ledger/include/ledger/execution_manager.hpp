@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
 #include "ledger/chaincode/cache.hpp"
@@ -102,7 +119,7 @@ private:
   mutex_type state_archive_lock_;  ///< guards both the state_archive_ and the
                                    ///< block_state_cache_
   StateSummaryArchive    state_archive_;
-  block_state_cache_type block_state_cache_;  // TODO(EJF): Both these caches require
+  block_state_cache_type block_state_cache_;  // TODO(issue 33): Both these caches require
                                               // maintenance to stop them growing forever
 
   void MonitorThreadEntrypoint();

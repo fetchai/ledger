@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/random/lfg.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -168,38 +186,5 @@ int main()
   SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<ConstByteArray>);
   SINGLE_BENCHMARK(TypedByteArrayBuffer, std::vector<std::string>);
 
-  /*
-  std::vector< ByteArray > a,b,c;
-  MakeStringVector(a, 100000);
-
-  ByteArrayBuffer buffer;
-
-  high_resolution_clock::time_point t1 = high_resolution_clock::now();
-  std::sort(a.begin(), a.end());
-
-  SizeCounter< ByteArrayBuffer > counter;
-
-  counter << a;
-  buffer.Reserve( counter.size() );
-  buffer << a;
-
-  high_resolution_clock::time_point t2 = high_resolution_clock::now();
-  buffer.Seek(0);
-  buffer >> b;
-  std::sort(c.begin(), c.end());
-  high_resolution_clock::time_point t3 = high_resolution_clock::now();
-  duration<double> ts1 = duration_cast<duration<double>>(t2 - t1);
-  duration<double> ts2 = duration_cast<duration<double>>(t3 - t2);
-  std::cout << "It took " << ts1.count() << " seconds.";
-  std::cout << std::endl;
-  std::cout << "It took " << ts2.count() << " seconds.";
-  std::cout << std::endl;
-  for(std::size_t i=0; i < b.size(); ++i) {
-    if(a[i] != b[i]) {
-      std::cerr << "Mismatch" << std::endl;
-      exit(-1);
-    }
-  }
-  */
   return 0;
 }

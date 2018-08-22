@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -100,7 +118,7 @@ public:
 
   BigUnsigned &operator++()
   {
-    // TODO: Propagation of carry bits this way is slow.
+    // TODO(issue 32): Propagation of carry bits this way is slow.
     // If we instead make sure that the size is always a multiple of 8
     // We can do the logic in uint64_t
     // In fact, we should re implement this using vector registers.
@@ -234,8 +252,8 @@ inline double ToDouble(BigUnsigned const &x)
   fraction.bytes[3] = x[j + 3];
 
   assert(fraction.value != 0);
-  uint16_t tz = uint16_t(
-      __builtin_ctz(fraction.value));  // TODO: Wrap in function for cross compiler portability
+  uint16_t tz       = uint16_t(__builtin_ctz(
+      fraction.value));  // TODO(issue 31): Wrap in function for cross compiler portability
   uint16_t exponent = uint16_t((last_byte << 3) - tz);
 
   assert(exponent < 1023);
