@@ -362,17 +362,6 @@ public:
     this->data().in_parallel().Apply(
         [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
           z = x + y;
-          /*
-          alignas(16) type q[4] = {0
-          };
-
-          x.Store(q);
-          std::cout << "Was here? " << q[0] << " " << q[1] << std::endl;
-          y.Store(q);
-          std::cout << "        + " << q[0] << " " << q[1] << std::endl;
-          z.Store(q);
-          std::cout << "        = " << q[0] << " " << q[1] << std::endl;
-          */
         },
         obj1.data(), obj2.data());
     //    kernels::basic_aritmetics::Add<vector_register_type> kernel;
@@ -651,15 +640,32 @@ public:
     this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
   }
 
-  void CumlativeProduct()
+  /**
+   * calculates the product of all values in data
+   * @return ret is a value of type giving the product
+   */
+  type &CumulativeProduct()
   {
-    // TODO(tfr): This one is easy to if done in parallel
-    // but next to no speedup on a single row
+    type ret = 1;
+    for (auto cur_val : data())
+    {
+      ret *= cur_val;
+    }
+    return ret;
   }
 
+  /**
+   * calculates the sum of all values in data
+   * @return ret is a value of type giving the sum
+   */
   void CumulativeSum()
   {
-    // TODO(tfr): Same as above
+    type ret = 0;
+    for (auto cur_val : data())
+    {
+      ret += cur_val;
+    }
+    return ret;
   }
 
   //  type PeakToPeak() const { return Max() - Min(); }
@@ -762,7 +768,6 @@ public:
 
   void ApproxSoftMax(self_type const &x)
   {
-    // TODO(tfr): Update vector library
     //    kernels::ApproxSoftMax< type, vector_register_type > kernel;
     //    kernel( this->data_, x.data());
   }
@@ -773,7 +778,7 @@ public:
    * @return       returns single value as type
    *
    **/
-  type L2Loss()
+  type L2Loss() const
   {
     type sum = data_.in_parallel().SumReduce([](vector_register_type const &v) { return v * v; });
     return sum * type(0.5);
@@ -1392,7 +1397,6 @@ public:
     }
     bool ret = true;
 
-    // TODO(tfr): Vectorize
     for (size_type i = 0; i < data().size(); ++i)
     {
       ret &= (data()[i] == other.data()[i]);
@@ -1455,12 +1459,11 @@ public:
 
   ShapeLessArray &FillArange(type from, type const &to)
   {
-    // TODO(tfr): vectorise
     assert(from < to);
 
     std::size_t N     = this->size();
     type        d     = from;
-    type        delta = (to - from) / static_cast<type>(N - 1);
+    type        delta = (to - from) / static_cast<type>(N);
 
     for (std::size_t i = 0; i < N; ++i)
     {
@@ -1472,7 +1475,6 @@ public:
 
   static ShapeLessArray UniformRandom(std::size_t const &N)
   {
-    // TODO(tfr): vectorise
 
     ShapeLessArray ret;
     ret.LazyResize(N);
@@ -1524,7 +1526,7 @@ public:
     return ret;
   }
 
-  bool AllClose(ShapeLessArray const &other, double const &rtol = 1e-4, double const &atol = 1e-7,
+  bool AllClose(ShapeLessArray const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
                 bool ignoreNaN = true) const
   {
     std::size_t N = this->size();
@@ -1627,7 +1629,7 @@ public:
     this->size_ = x.size_;
   }
 
-  // TODO(tfr): Make referenced copy
+  void Set(std::size_t const &idx, type const &val) { data_[idx] = val; }
 
   container_type const &data() const { return data_; }
   container_type &      data() { return data_; }

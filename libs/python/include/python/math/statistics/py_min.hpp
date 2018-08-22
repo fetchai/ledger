@@ -41,8 +41,6 @@ inline void BuildMinStatistics(std::string const &custom_name, pybind11::module 
       .def(custom_name.c_str(), &WrapperMin<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperMin<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperMin<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperMin<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperMin<ShapeLessArray<float>>)
       .def(custom_name.c_str(), &WrapperMin<NDArray<double>>)
       .def(custom_name.c_str(), &WrapperMin<NDArray<float>>);
 }

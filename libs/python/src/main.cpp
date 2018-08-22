@@ -222,6 +222,10 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::distance::BuildPairWiseDistanceDistance("PairWiseDistance", ns_fetch_math_distance);
 
   ////////////
+
+  fetch::math::BuildExpStatistics("Exp", ns_fetch_math_statistics);
+  fetch::math::BuildLogStatistics("Log", ns_fetch_math_statistics);
+
   // Statisticsfetch_math_statistics);
   fetch::math::statistics::BuildMinStatistics("Min", ns_fetch_math_statistics);
   fetch::math::statistics::BuildMaxStatistics("Max", ns_fetch_math_statistics);

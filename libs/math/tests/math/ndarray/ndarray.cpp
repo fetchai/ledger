@@ -15,15 +15,13 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
-//#include <cmath>
+// #include <algorithm>
 #include <iomanip>
 #include <iostream>
 
 //#include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
 
-#include "math/exp.hpp"
 #include "math/kernels/concurrent_vm.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
@@ -44,12 +42,12 @@ using vector_register_type = typename container_type::vector_register_type;
 NDArray<data_type, container_type> RandomArray(std::size_t n, std::size_t m)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  NDArray<data_type, container_type>                a1(n);
+  NDArray<data_type, container_type>                array1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1(i) = data_type(gen.AsDouble());
+    array1[i] = data_type(gen.AsDouble());
   }
-  return a1;
+  return array1;
 }
 
 template <typename D>
@@ -77,4 +75,41 @@ TEST(ndarray, faulty_reshape)
   _A<double> a = NDArray<double>(49);
 
   ASSERT_FALSE(a.CanReshape({2, 4}));
+}
+
+TEST(ndarray, max_axis_tests)
+{
+  // test parameters
+  std::vector<std::size_t> orig_shape{7, 4, 6, 9};
+  int                      axis      = 2;
+  std::size_t              data_size = 7 * 4 * 6 * 9;
+
+  // set up the original array and the return array
+  std::vector<std::size_t> new_shape{orig_shape};
+  new_shape.erase(new_shape.begin() + axis);
+  _A<double> a = NDArray<double>(orig_shape);
+  for (std::size_t i = 0; i < data_size; ++i)
+  {
+    a[i] = double(i);
+  }
+  _A<double> b{new_shape};
+  b = a.Max(std::size_t(axis));
+
+  std::vector<double> temp_vector;
+  for (std::size_t i = 0; i < new_shape[0]; ++i)
+  {
+    for (std::size_t j = 0; j < new_shape[1]; ++j)
+    {
+      for (std::size_t k = 0; k < new_shape[3]; ++k)
+      {
+        for (std::size_t l = 0; l < orig_shape[2]; ++l)
+        {
+          temp_vector.push_back(a.Get({i, j, l, k}));
+        }
+
+        ASSERT_TRUE(b.Get({i, j, k}) == *std::max_element(temp_vector.begin(), temp_vector.end()));
+        temp_vector.clear();
+      }
+    }
+  }
 }

@@ -18,25 +18,126 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/linalg/matrix.hpp"
+#include "math/ndarray.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/range.hpp"
+
+#include <limits>
 
 #include <cmath>
 
 namespace fetch {
 namespace math {
+
+template <typename T, typename C>
+class NDArray;
+
 namespace statistics {
 
-template <typename A>
-inline typename A::type Max(A const &a)
+namespace details {
+
+template <typename T>
+inline void MaxImplementation(T const &array, typename T::type &ret)
 {
-  using vector_register_type = typename A::vector_register_type;
-  using type                 = typename A::type;
+  using vector_register_type = typename T::vector_register_type;
 
-  type ret = a.data().in_parallel().Reduce(
-      memory::TrivialRange(0, a.size()),
+  ret = array.data().in_parallel().Reduce(
+      memory::TrivialRange(0, array.size()),
       [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
+}
 
+template <typename T>
+inline void MaxImplementation(T const &array, memory::Range r, typename T::type &ret)
+{
+  using vector_register_type = typename T::vector_register_type;
+
+  if (r.is_trivial())
+  {
+    ret = array.data().in_parallel().Reduce(
+        r, [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
+  }
+  else
+  {  // non-trivial range is not vectorised
+    typename T::type ret = -std::numeric_limits<typename T::type>::max();
+    for (auto i : array)
+    {
+      ret = std::max(ret, i);
+    }
+  }
+}
+
+}  // namespace details
+
+/**
+ * Max function for two values
+ * @tparam T
+ * @param datum1
+ * @param datum2
+ * @return
+ */
+template <typename T>
+inline T Max(T const &datum1, T const &datum2)
+{
+  return std::max(datum1, datum2);
+}
+
+/**
+ * Max function for array
+ * @tparam T        data type
+ * @tparam C        container type
+ * @param array
+ * @return
+ */
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(NDArray<T, C> const &array)
+{
+  T ret;
+  details::MaxImplementation<NDArray<T, C>>(array, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(linalg::Matrix<T, C> const &array)
+{
+  T ret;
+  details::MaxImplementation<linalg::Matrix<T, C>>(array, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(RectangularArray<T, C> const &array)
+{
+  T ret;
+  details::MaxImplementation<RectangularArray<T, C>>(array, ret);
+  return ret;
+}
+
+/**
+ * Max function for applying max to a range within array
+ * @tparam A
+ * @tparam data_type
+ * @param r
+ * @param a
+ * @return
+ */
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(NDArray<T, C> const &array, memory::Range r)
+{
+  T ret;
+  details::MaxImplementation<NDArray<T, C>>(array, r, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(linalg::Matrix<T, C> const &array, memory::Range r)
+{
+  T ret;
+  details::MaxImplementation<linalg::Matrix<T, C>>(array, r, ret);
+  return ret;
+}
+template <typename T, typename C = memory::SharedArray<T>>
+inline T Max(RectangularArray<T, C> const &array, memory::Range r)
+{
+  T ret;
+  details::MaxImplementation<RectangularArray<T, C>>(array, r, ret);
   return ret;
 }
 
