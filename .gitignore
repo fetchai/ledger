@@ -7,6 +7,8 @@ CMakeCache.txt
 # Merge Outputs
 *.orig
 
+nodes/
+
 # Legacy Editors
 \#*#
 .\#*

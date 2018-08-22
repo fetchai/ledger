@@ -28,6 +28,8 @@
 #include <random>
 #include <thread>
 
+static constexpr char const *LOGGING_NAME = "Executor";
+
 namespace fetch {
 namespace ledger {
 
@@ -62,7 +64,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
                                    lane_set_type const &lanes)
 {
 
-  fetch::logger.Info("Executing tx ", byte_array::ToBase64(hash));
+  FETCH_LOG_INFO(LOGGING_NAME,"Executing tx ", byte_array::ToBase64(hash));
 
   // TODO(issue 33): Add code to validate / check lane resources
   FETCH_UNUSED(slice);
@@ -100,7 +102,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   // detach the chain code from the current context
   chain_code->Detach();
 
-  fetch::logger.Info("Executing tx ", byte_array::ToBase64(hash), " (success)");
+  FETCH_LOG_INFO(LOGGING_NAME,"Executing tx ", byte_array::ToBase64(hash), " (success)");
 
   return Status::SUCCESS;
 }

@@ -35,6 +35,8 @@ public:
   using weak_ptr_type          = std::weak_ptr<AbstractConnection>;
   using weak_register_type     = std::weak_ptr<AbstractConnectionRegister>;
 
+  static constexpr char const *LOGGING_NAME = "AbstractConnection";
+
   enum
   {
     TYPE_UNDEFINED = 0,
@@ -48,7 +50,7 @@ public:
   virtual ~AbstractConnection()
   {
     auto h = handle_.load();
-    fetch::logger.Warn("Connection destruction in progress for handle ", h);
+    FETCH_LOG_WARN(LOGGING_NAME,"Connection destruction in progress for handle ", h);
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       on_message_ = nullptr;
@@ -59,7 +61,7 @@ public:
     {
       ptr->Leave(handle_);
     }
-    fetch::logger.Warn("Connection destroyed for handle ", h);
+    FETCH_LOG_WARN(LOGGING_NAME,"Connection destroyed for handle ", h);
   }
 
   virtual void     Send(message_type const &) = 0;
@@ -121,7 +123,7 @@ protected:
 
   void SignalLeave()
   {
-    fetch::logger.Warn("Connection terminated for handle ", handle_.load(), ", SignalLeave called.");
+    FETCH_LOG_WARN(LOGGING_NAME,"Connection terminated for handle ", handle_.load(), ", SignalLeave called.");
     std::function<void (void)> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);

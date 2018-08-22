@@ -34,6 +34,8 @@ public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
   using lane_type              = uint32_t;  // TODO(issue 12): Fetch from some other palce
 
+  static constexpr char const *LOGGING_NAME = "RevertibleDocumentStoreProtocol";
+
   enum
   {
     GET = 0,
@@ -74,7 +76,8 @@ public:
 
     SetLaneLog2(maxlanes);
     assert(maxlanes == (1u << log2_lanes_));
-    logger.Info("Spinning up lane ", lane_assignment_);
+
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Spinning up lane ", lane_assignment_);
 
     this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
     this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetOrCreateLaneChecked);
@@ -135,8 +138,8 @@ private:
   {
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
-      logger.Warn("Lane assignment is ", lane_assignment_, " vs ", rid.lane(log2_lanes_));
-      logger.Debug("Address:", byte_array::ToHex(rid.id()));
+      FETCH_LOG_WARN(LOGGING_NAME,"Lane assignment is ", lane_assignment_, " vs ", rid.lane(log2_lanes_));
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Address:", byte_array::ToHex(rid.id()));
 
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
           0, byte_array_type("Get: Resource located on other lane. TODO, set error number"));
@@ -149,8 +152,8 @@ private:
   {
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
-      logger.Warn("Lane assignment is ", lane_assignment_, " vs ", rid.lane(log2_lanes_));
-      logger.Debug("Address:", byte_array::ToHex(rid.id()));
+      FETCH_LOG_WARN(LOGGING_NAME,"Lane assignment is ", lane_assignment_, " vs ", rid.lane(log2_lanes_));
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Address:", byte_array::ToHex(rid.id()));
 
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
           0, byte_array_type("GetOrCreate: Resource located on other lane. "

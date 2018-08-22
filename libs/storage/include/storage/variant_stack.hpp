@@ -30,6 +30,9 @@ namespace storage {
 class VariantStack
 {
 public:
+
+  static constexpr char const *LOGGING_NAME = "VariantStack";
+
   struct Separator
   {
     uint64_t type;

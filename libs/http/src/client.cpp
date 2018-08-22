@@ -18,7 +18,7 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
   {
     if (!Connect())
     {
-      fetch::logger.Warn("Failed to connect to server");
+      FETCH_LOG_WARN(LOGGING_NAME,"Failed to connect to server");
       return false;
     }
   }
@@ -31,7 +31,7 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
   socket_.write_some(buffer.data(), ec);
   if (ec)
   {
-    fetch::logger.Warn("Failed to send boostrap request: ", ec.message());
+    FETCH_LOG_WARN(LOGGING_NAME,"Failed to send boostrap request: ", ec.message());
     return false;
   }
 
@@ -39,7 +39,7 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
   std::size_t     header_length = asio::read_until(socket_, input_buffer, "\r\n\r\n", ec);
   if (ec)
   {
-    fetch::logger.Warn("Failed to recv response header: ", ec.message());
+    FETCH_LOG_WARN(LOGGING_NAME,"Failed to recv response header: ", ec.message());
     return false;
   }
 
@@ -62,7 +62,7 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
 
     if (ec)
     {
-      fetch::logger.Warn("Failed to recv body: ", ec.message());
+      FETCH_LOG_WARN(LOGGING_NAME,"Failed to recv body: ", ec.message());
       return false;
     }
   }
@@ -93,7 +93,7 @@ bool HTTPClient::Connect()
   Resolver::iterator endpoint = resolver.resolve(host_, std::to_string(port_), ec);
   if (ec)
   {
-    fetch::logger.Warn("Unable to resolve host: ", ec.message());
+    FETCH_LOG_WARN(LOGGING_NAME,"Unable to resolve host: ", ec.message());
     return false;
   }
 
@@ -102,7 +102,7 @@ bool HTTPClient::Connect()
   if (ec)
   {
 
-    fetch::logger.Warn("Unable to establish a connection: ", ec.message());
+    FETCH_LOG_WARN(LOGGING_NAME,"Unable to establish a connection: ", ec.message());
     return false;
   }
 

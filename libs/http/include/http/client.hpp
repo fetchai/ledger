@@ -18,6 +18,9 @@ namespace http {
 class HTTPClient
 {
 public:
+
+  static constexpr char const *LOGGING_NAME = "HTTPClient";
+
   // Construction / Destruction
   explicit HTTPClient(std::string host, uint16_t port = 80);
   ~HTTPClient() = default;

@@ -2,10 +2,11 @@
 
 #include "core/logger.hpp"
 
-namespace fetch
-{
-namespace debugging
-{
+// TODO(EJF): ???
+static constexpr char const *LOGGING_NAME = "???";
+
+namespace fetch {
+namespace debugging {
 
   void withExceptionCatching(const char *fn, unsigned int ln, std::function<void (void)> func)
   {
@@ -15,13 +16,10 @@ namespace debugging
     }
     catch(std::exception &ex)
     {
-      fetch::logger.Error("While at ", fn, ":", ln, " - ", ex.what());
+      FETCH_LOG_ERROR(LOGGING_NAME,"While at ", fn, ":", ln, " - ", ex.what());
       throw;
     }
   }
 
-
-
-
-}
-}
+} // namespace debugging
+} // namespace fetch

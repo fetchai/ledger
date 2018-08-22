@@ -23,6 +23,8 @@
 
 #include <stdexcept>
 
+static constexpr char const *LOGGING_NAME = "TokenContract";
+
 namespace fetch {
 namespace ledger {
 namespace {
@@ -147,7 +149,7 @@ Contract::Status TokenContract::Balance(query_type const &query, query_type &res
   }
   else
   {
-    logger.Warn("Incorrect parameters to balance query");
+    FETCH_LOG_WARN(LOGGING_NAME,"Incorrect parameters to balance query");
   }
 
   return status;

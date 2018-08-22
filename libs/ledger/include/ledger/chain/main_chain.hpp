@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
@@ -73,12 +74,14 @@ public:
   using PrevHash  = fetch::byte_array::ByteArray;
   using ProofType = BlockType::proof_type;
 
+  static constexpr char const *LOGGING_NAME = "MainChain";
+
   // Hard code genesis on construction
   MainChain(uint32_t minerNumber = std::numeric_limits<uint32_t>::max()) : minerNumber_{minerNumber}
   {
     BlockType genesis;
     genesis.UpdateDigest();
-    genesis.body().previous_hash = genesis.hash();
+    //genesis.body().previous_hash = genesis.hash();
 
     // Add genesis to block chain
     genesis.loose()             = false;
@@ -109,7 +112,7 @@ public:
 
     if (block.hash().size() == 0)
     {
-      fetch::logger.Info("Erk! You called AddBlock with no UpdateDigest");
+      FETCH_LOG_INFO(LOGGING_NAME,"Erk! You called AddBlock with no UpdateDigest");
     }
 
     BlockType prev_block;
@@ -119,7 +122,7 @@ public:
       // First check if block already exists (not checking in object store)
       if (blockChain_.find(block.hash()) != blockChain_.end())
       {
-        fetch::logger.Info("Attempting to add already seen block");
+        FETCH_LOG_INFO(LOGGING_NAME,"Attempting to add already seen block");
         return false;
       }
 
@@ -129,7 +132,7 @@ public:
       if (it_prev == blockChain_.end())
       {
         // Note: think about rolling back into FS
-        fetch::logger.Info("Block prev not found");
+        FETCH_LOG_INFO(LOGGING_NAME,"Block prev not found");
         // We can't find the prev, this is probably a loose block.
         lock.unlock();
         return CheckDiskForBlock(block);
@@ -140,7 +143,7 @@ public:
       // Also a loose block if it points to a loose block
       if (prev_block.loose() == true)
       {
-        fetch::logger.Info("Block connects to loose block");
+        FETCH_LOG_INFO(LOGGING_NAME,"Block connects to loose block");
         NewLooseBlock(block);
         return true;
       }
@@ -155,7 +158,7 @@ public:
     bool heaviestAdvanced = UpdateTips(block, prev_block);
 
     // Add block
-    fetch::logger.Info("Adding block to chain: ", ToHex(block.hash()));
+    FETCH_LOG_INFO(LOGGING_NAME,"Adding block to chain: ", ToBase64(block.hash()));
     blockChain_[block.hash()] = block;
 
     if (heaviestAdvanced)
@@ -206,7 +209,7 @@ public:
       auto it = blockChain_.find(hash);
       if (it == blockChain_.end())
       {
-        fetch::logger.Info(
+        FETCH_LOG_INFO(LOGGING_NAME,
             "Mainchain: Failed while walking down\
             from top block to find genesis!");
         break;
@@ -241,7 +244,8 @@ public:
     // recreate genesis
     BlockType genesis;
     genesis.UpdateDigest();
-    genesis.body().previous_hash = genesis.hash();
+    //genesis.body().hash = byte_array::FromBase64("+++++++++++++++++Genesis+++++++++++++++++++=");
+    //genesis.body().previous_ha
 
     // Add genesis to block chain
     genesis.loose()             = false;
@@ -409,7 +413,7 @@ private:
     std::vector<BlockHash> blocks_to_add = (*it).second;
     looseBlocks_.erase(it);
 
-    fetch::logger.Info("Found loose blocks completed by addition of block: ", blocks_to_add.size());
+    FETCH_LOG_INFO(LOGGING_NAME,"Found loose blocks completed by addition of block: ", blocks_to_add.size());
 
     while (blocks_to_add.size() > 0)
     {
@@ -465,7 +469,7 @@ private:
     if (!blockStore_.Get(storage::ResourceID(block.body().previous_hash), prev_block))
     {
       std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
-      fetch::logger.Info("Didn't find block's previous, adding as loose block");
+      FETCH_LOG_INFO(LOGGING_NAME,"Didn't find block's previous, adding as loose block");
       NewLooseBlock(block);
       return false;
     }
@@ -482,7 +486,7 @@ private:
 
     // We should now have an up to date prev block from file, put it in our cached blockchain and
     // re-add
-    fetch::logger.Info("Reviving block from file");
+    FETCH_LOG_INFO(LOGGING_NAME,"Reviving block from file");
     {
       std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
       prev_block.totalWeight()       = total_weight;
@@ -509,13 +513,13 @@ private:
       block.totalWeight() = tip->total_weight;
       block.loose()       = false;
 
-      fetch::logger.Info("Mainchain: Pushing block onto already existing tip:");
+      FETCH_LOG_INFO(LOGGING_NAME,"Mainchain: Pushing block onto already existing tip:");
 
       // Update heaviest pointer if necessary
       if ((tip->total_weight > heaviest_.first) ||
           ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)))
       {
-        fetch::logger.Info("Mainchain: Updating heaviest with tip");
+        FETCH_LOG_INFO(LOGGING_NAME,"Mainchain: Updating heaviest with tip");
 
         heaviest_.first  = tip->total_weight;
         heaviest_.second = block.hash();
@@ -526,7 +530,7 @@ private:
     else  // Didn't find a corresponding tip
     {
       // We are not building on a tip, create a new tip
-      fetch::logger.Info("Mainchain: Received new block with no corresponding tip");
+      FETCH_LOG_INFO(LOGGING_NAME,"Mainchain: Received new block with no corresponding tip");
 
       block.totalWeight() = block.weight() + prev_block.totalWeight();
       tip                 = std::make_shared<Tip>();
@@ -536,7 +540,7 @@ private:
       if ((tip->total_weight > heaviest_.first) ||
           ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)))
       {
-        fetch::logger.Info("Mainchain: creating new tip that is now heaviest! (new fork)");
+        FETCH_LOG_INFO(LOGGING_NAME,"Mainchain: creating new tip that is now heaviest! (new fork)");
 
         heaviest_.first  = tip->total_weight;
         heaviest_.second = block.hash();

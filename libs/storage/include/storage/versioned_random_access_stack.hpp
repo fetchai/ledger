@@ -40,6 +40,8 @@ private:
   using header_extra_type = B;
   using header_type       = BookmarkHeader<B>;
 
+  static constexpr char const *LOGGING_NAME = "VersionedRandomAccessStack";
+
   struct HistoryBookmark
   {
     HistoryBookmark() { memset(this, 0, sizeof(decltype(*this))); }

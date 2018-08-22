@@ -7,10 +7,10 @@ namespace service {
 
 void FeedSubscriptionManager::PublishToAllWorker()
 {
-  fetch::logger.Warn("OMG PublishToAllWorker STARTUP************************************************************************************");
+  FETCH_LOG_DEBUG(LOGGING_NAME,"OMG PublishToAllWorker STARTUP************************************************************************************");
   while(publishing_workload_.Wait())
   {
-    fetch::logger.Warn("OMG PublishToAllWorker");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"OMG PublishToAllWorker");
     std::vector<publishing_workload_type> my_work;
     publishing_workload_.Get(my_work, 16);
 
@@ -35,7 +35,7 @@ void FeedSubscriptionManager::PublishToAllWorker()
         service -> ConnectionDropped(client_number);
       }
     }
-    fetch::logger.Warn("OMG PublishToAllWorker done!");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"OMG PublishToAllWorker done!");
   }
 
 }
@@ -46,11 +46,13 @@ void FeedSubscriptionManager::PublishToAllWorker()
     LOG_STACK_TRACE_POINT;
 
     auto feed = feed_;
-    fetch::logger.Warn("OMG AttachToService", feed);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"OMG AttachToService", feed);
     publisher_->create_publisher(feed_, [service,feed,this](fetch::byte_array::ConstByteArray const &msg) {
+
       serializer_type params;
-      fetch::logger.Warn("OMG SERVICE_FEED", feed);
+      FETCH_LOG_DEBUG(LOGGING_NAME,"OMG SERVICE_FEED", feed);
       params << SERVICE_FEED << feed;
+
       uint64_t p = params.Tell();
       params << subscription_handler_type(0);  // placeholder
 
@@ -63,7 +65,7 @@ void FeedSubscriptionManager::PublishToAllWorker()
       notifications_to_send.reserve(16);
       std::size_t i=0;
 
-      fetch::logger.Warn("OMG sending to subscribers numbering:", subscribers_.size());
+      FETCH_LOG_DEBUG(LOGGING_NAME,"OMG sending to subscribers numbering:", subscribers_.size());
 
       while(i<subscribers_.size())
       {
@@ -75,14 +77,14 @@ void FeedSubscriptionManager::PublishToAllWorker()
         notifications_to_send.push_back(new_notification);
 
         i++;
-        fetch::logger.Warn("OMG PublishToAll AttachToService send ", s.id);
+        FETCH_LOG_DEBUG(LOGGING_NAME,"OMG PublishToAll AttachToService send ", s.id);
         if ((i&0xF) == 0)
         {
           PublishAll(notifications_to_send);
         }
       }
       PublishAll(notifications_to_send);
-    fetch::logger.Warn("OMG publish backlog = ", publishing_workload_.size());
+      FETCH_LOG_DEBUG(LOGGING_NAME,"OMG publish backlog = ", publishing_workload_.size());
     });
 
   }

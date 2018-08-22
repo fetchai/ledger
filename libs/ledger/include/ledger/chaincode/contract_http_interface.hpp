@@ -40,6 +40,8 @@ namespace ledger {
 class ContractHttpInterface : public http::HTTPModule
 {
 public:
+  static constexpr char const *LOGGING_NAME = "ContractHttpInterface";
+
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor)
     : storage_{storage}, processor_{processor}
   {
@@ -63,7 +65,7 @@ public:
         std::string const &query_name = handler.first;
         std::string const  api_path   = api_prefix + query_name;
 
-        fetch::logger.Info("API: ", api_path);
+        FETCH_LOG_INFO(LOGGING_NAME,"API: ", api_path);
 
         Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
                                                          http::HTTPRequest const &request) {
@@ -124,12 +126,12 @@ private:
       }
       else
       {
-        fetch::logger.Warn("Error running query. status = ", static_cast<int>(status));
+        FETCH_LOG_WARN(LOGGING_NAME,"Error running query. status = ", static_cast<int>(status));
       }
     }
     catch (std::exception &ex)
     {
-      fetch::logger.Warn("Query error: ", ex.what());
+      FETCH_LOG_WARN(LOGGING_NAME,"Query error: ", ex.what());
     }
 
     return JsonBadRequest();

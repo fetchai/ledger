@@ -63,6 +63,8 @@ public:
   using middleware_type =
       std::function<void(connection_handle_type const &, byte_array::ByteArray const &)>;
 
+  static constexpr char const *LOGGING_NAME = "Protocol";
+
   Protocol()
   {
     for (std::size_t i = 0; i < 256; ++i)
@@ -172,7 +174,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    fetch::logger.Debug("Making subscription for ", client, " ", feed, " ", id);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Making subscription for ", client, " ", feed, " ", id);
 
     feeds_mutex_.lock();
     std::size_t i = 0;

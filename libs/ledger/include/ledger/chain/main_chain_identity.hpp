@@ -37,6 +37,8 @@ public:
   using connection_handle_type    = client_register_type::connection_handle_type;
   using ping_type                 = uint32_t;
 
+  static constexpr char const *LOGGING_NAME = "MainChainIdentity";
+
   enum
   {
     PING_MAGIC = 1337
@@ -46,7 +48,7 @@ public:
                     generics::SharedWithLock<MainChainDetails> my_details)
     : register_(std::move(reg)), manager_(nm), my_details_(my_details)
   {
-    fetch::logger.Debug("MainChainIdentity::MainChainIdentity ", bool(my_details_));
+    FETCH_LOG_DEBUG(LOGGING_NAME,"MainChainIdentity::MainChainIdentity ", bool(my_details_));
   }
 
   /// External controls
@@ -79,7 +81,7 @@ public:
     }
     else
     {
-      fetch::logger.Debug("MainChainIdentity::ExchangeDetails: NO LOCAL DETAILS HELD!");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"MainChainIdentity::ExchangeDetails: NO LOCAL DETAILS HELD!");
     }
 
     MainChainDetails my_details_copy;

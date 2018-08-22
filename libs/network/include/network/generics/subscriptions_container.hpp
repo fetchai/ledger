@@ -1,6 +1,8 @@
 #ifndef SUBSCRIPTIONS_CONTAINER_HPP
 #define SUBSCRIPTIONS_CONTAINER_HPP
 
+#include "core/logger.hpp"
+
 #include <iostream>
 #include <string>
 
@@ -19,6 +21,8 @@ class SubscriptionsContainer
 
   using client_handle_type = uint64_t;
   using verb_type          = uint64_t;
+
+  static constexpr char const *LOGGING_NAME = "SubscriptionsContainer";
 
   using existing_subs_type =
       std::map<std::tuple<client_handle_type, verb_type, protocol_number_type>, subs_handle_type>;
@@ -48,6 +52,8 @@ public:
     {
       return search_result->second;
     }
+
+    FETCH_LOG_INFO(LOGGING_NAME,"### Subscribing to the protocol...");
 
     auto r                    = handle_counter++;
     existing_subs[identifier] = r;

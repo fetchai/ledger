@@ -40,6 +40,9 @@ namespace network {
 class ClientConnection : public AbstractConnection
 {
 public:
+
+  static constexpr char const *LOGGING_NAME = "ClientConnection";
+
   using connection_type = typename AbstractConnection::shared_type;
 
   using handle_type = typename AbstractConnection::connection_handle_type;
@@ -61,12 +64,12 @@ public:
       {
         this->SetAddress(endpoint.address().to_string());
 
-        fetch::logger.Debug("Server: Connection from ",
+        FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Connection from ",
                             socket_ptr->remote_endpoint().address().to_string());
       }
       else
       {
-        fetch::logger.Warn("Server: Failed to get endpoint for socket!");
+        FETCH_LOG_WARN(LOGGING_NAME,"Server: Failed to get endpoint for socket!");
       }
     }
   }
@@ -119,7 +122,7 @@ private:
     auto socket_ptr = socket_.lock();
     if (!socket_ptr) return;
 
-    fetch::logger.Debug("Server: Waiting for next header.");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Waiting for next header.");
     auto self(shared_from_this());
     auto cb = [this, socket_ptr, self](std::error_code ec, std::size_t len) {
       auto ptr = manager_.lock();
@@ -130,7 +133,7 @@ private:
 
       if (!ec)
       {
-        fetch::logger.Debug("Server: Read header.");
+        FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Read header.");
         ReadBody();
       }
       else
@@ -152,7 +155,7 @@ private:
 
     if (header_.content.magic != networkMagic_)
     {
-      fetch::logger.Debug("Magic incorrect - closing connection.");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Magic incorrect - closing connection.");
       auto ptr = manager_.lock();
       if (!ptr) return;
       ptr->Leave(this->handle());
@@ -170,7 +173,7 @@ private:
 
       if (!ec)
       {
-        fetch::logger.Debug("Server: Read body.");
+        FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Read body.");
         ptr->PushRequest(this->handle(), message);
         ReadHeader();
       }
@@ -226,7 +229,7 @@ private:
 
       if (!ec)
       {
-        fetch::logger.Debug("Server: Wrote message.");
+        FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Wrote message.");
         Write();
       }
       else

@@ -43,6 +43,8 @@ public:
   using details_type               = G;
   using mutex_type                 = mutex::Mutex;
 
+  static constexpr char const *LOGGING_NAME = "ConnectionRegisterImpl";
+
   struct LockableDetails final : public details_type, public mutex_type
   {
     LockableDetails() : details_type(), mutex_type(__LINE__, __FILE__) {}
@@ -154,7 +156,7 @@ public:
   std::shared_ptr<LockableDetails> GetDetails(connection_handle_type const &i)
   //void GetDetails(connection_handle_type const &i)
   {
-    fetch::logger.Info("GetDetails for =======================================> ", i);
+    //FETCH_LOG_INFO(LOGGING_NAME,"GetDetails for =======================================> ", i);
     LOG_STACK_TRACE_POINT;
     std::lock_guard<mutex::Mutex> lock(details_lock_);
     if (details_.find(i) == details_.end())
@@ -213,7 +215,7 @@ public:
 
   void VisitConnections(std::function<void(connection_handle_type const &, shared_connection_type)> f) const
   {
-    fetch::logger.Warn("About to visit ", connections_.size(), " connections");
+    FETCH_LOG_WARN(LOGGING_NAME,"About to visit ", connections_.size(), " connections");
     std::list<connection_map_type::value_type> keys;
     {
       std::lock_guard<mutex::Mutex> lock(connections_lock_);

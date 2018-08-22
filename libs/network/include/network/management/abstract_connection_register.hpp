@@ -41,6 +41,8 @@ public:
   using shared_service_client_type = std::shared_ptr<service::ServiceClient>;
   using service_map_type = std::unordered_map<connection_handle_type, weak_service_client_type>;
 
+  static constexpr char const *LOGGING_NAME = "AbstractConnectionRegister";
+
   AbstractConnectionRegister() { number_of_services_ = 0; }
 
   AbstractConnectionRegister(AbstractConnectionRegister const &other) = delete;
@@ -92,7 +94,7 @@ public:
 
   void VisitServiceClients(std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
   {
-    fetch::logger.Warn("About to visit ", services_.size(), " service clients");
+    FETCH_LOG_WARN(LOGGING_NAME,"About to visit ", services_.size(), " service clients");
     std::list<service_map_type::value_type> keys;
 
     {

@@ -56,6 +56,10 @@ protected:
   using idle_work_type = std::list<event_function_type>;
 
 public:
+
+  static constexpr char const *LOGGING_NAME = "ThreadPoolImpl";
+
+
   static std::shared_ptr<ThreadPoolImplementation> Create(std::size_t threads)
   {
     return std::make_shared<ThreadPoolImplementation>(threads);
@@ -64,7 +68,7 @@ public:
   ThreadPoolImplementation(std::size_t threads) : number_of_threads_(threads)
   {
 
-    fetch::logger.Debug("Creating thread manager");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Creating thread manager");
     shutdown_ = false;
   }
 
@@ -75,7 +79,7 @@ public:
   virtual ~ThreadPoolImplementation()
   {
     Stop();
-    fetch::logger.Debug("Destroying thread manager");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Destroying thread manager");
   }
 
   virtual void Post(event_function_type item)
@@ -183,8 +187,12 @@ public:
     Start(cb);
   }
 
+  // TODO(EJF): Protected?
   virtual void Start(std::function<void (void)> function )
   {
+    // TODO(EJF): Should monitor the number of threads that are being created
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Starting thread manager: ", number_of_threads_);
+
     if (threads_.size() == 0)
     {
       for (std::size_t i = 0; i < number_of_threads_; ++i)
@@ -199,7 +207,6 @@ public:
     std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
     if (threads_.size() == 0)
     {
-      fetch::logger.Info("Starting thread manager");
       shared_ptr_type self = shared_from_this();
       auto cb = [self]() { self->ProcessLoop(); };
       Start(cb);
@@ -265,13 +272,13 @@ public:
 
     if (tryingToKillFromThreadWeOwn)
     {
-      fetch::logger.Error("Thread pools must not be killed by a thread they own.");
+      FETCH_LOG_ERROR(LOGGING_NAME,"Thread pools must not be killed by a thread they own.");
     }
 
     if (threads_.size() != 0)
     {
 
-      fetch::logger.Info("Stopping thread pool");
+      FETCH_LOG_INFO(LOGGING_NAME,"Stopping thread pool");
 
       {
         lock_type lock(mutex_);
@@ -295,7 +302,7 @@ public:
         }
         else
         {
-          fetch::logger.Error(
+          FETCH_LOG_ERROR(LOGGING_NAME,
               "Thread pools must not be killed by a thread they own"
               "so I'm not going to try joining myself.");
           thread->detach();
@@ -335,11 +342,11 @@ private:
     }
     catch (std::exception &ex)
     {
-      fetch::logger.Error("Caught exception in ThreadPool::ExecuteWorkload - ", ex.what());
+      FETCH_LOG_ERROR(LOGGING_NAME,"Caught exception in ThreadPool::ExecuteWorkload - ", ex.what());
     }
     catch (...)
     {
-      fetch::logger.Error("Caught exception in ThreadPool::ExecuteWorkload");
+      FETCH_LOG_ERROR(LOGGING_NAME,"Caught exception in ThreadPool::ExecuteWorkload");
     }
 
     if (shutdown_)

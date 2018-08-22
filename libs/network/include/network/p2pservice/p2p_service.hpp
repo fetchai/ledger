@@ -64,6 +64,8 @@ public:
   using certificate_type                  = std::unique_ptr<crypto::Prover>;
   using p2p_trust_type                    = std::unique_ptr<P2PTrust<byte_array::ConstByteArray>>;
 
+  static constexpr char const *LOGGING_NAME = "P2PService";
+
   enum
   {
     IDENTITY = 1,
@@ -76,8 +78,8 @@ public:
   {
     running_     = false;
     thread_pool_ = network::MakeThreadPool(1);
-    fetch::logger.Warn("Establishing P2P Service on rpc://0.0.0.0:", port);
-    fetch::logger.Warn("P2P Identity: ",
+    FETCH_LOG_WARN(LOGGING_NAME,"Establishing P2P Service on rpc://0.0.0.0:", port);
+    FETCH_LOG_WARN(LOGGING_NAME,"P2P Identity: ",
                        byte_array::ToBase64(certificate_->identity().identifier()));
 
     // Identity
@@ -118,10 +120,10 @@ public:
 
     // Adding hooks for listening to feeds etc
     register_.OnClientEnter(
-        [](connection_handle_type const &i) { fetch::logger.Info("Peer joined: ", i); });
+        [](connection_handle_type const &i) { FETCH_LOG_INFO(LOGGING_NAME,"Peer joined: ", i); });
 
     register_.OnClientLeave(
-        [](connection_handle_type const &i) { fetch::logger.Info("Peer left: ", i); });
+        [](connection_handle_type const &i) { FETCH_LOG_INFO(LOGGING_NAME,"Peer left: ", i); });
 
     // TODO(issue 7): Get from settings
     min_connections_ = 2;
@@ -182,7 +184,7 @@ public:
 
   bool Connect(byte_array::ConstByteArray const &host, uint16_t const &port)
   {
-    fetch::logger.Info("START P2P CONNECT: Host: ", host, " port: ", port);
+    FETCH_LOG_INFO(LOGGING_NAME,"START P2P CONNECT: Host: ", host, " port: ", port);
 
     shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
@@ -198,7 +200,7 @@ public:
 
     if (n >= 10)
     {
-      fetch::logger.Error("Connection never came to live in P2P module. Host: ", host,
+      FETCH_LOG_ERROR(LOGGING_NAME,"Connection never came to live in P2P module. Host: ", host,
                           " port: ", port);
       // TODO(issue 11): throw error?
       client.reset();
@@ -207,18 +209,19 @@ public:
 
     // Getting own IP seen externally
     byte_array::ByteArray address;
+
     auto                  p = client->Call(IDENTITY, P2PIdentityProtocol::EXCHANGE_ADDRESS, host);
     /*
       if (!p.Wait(20))
     {
-      fetch::logger.Error("Connection doesn't seem to do IDENTITY");
+      FETCH_LOG_ERROR(LOGGING_NAME,"Connection doesn't seem to do IDENTITY");
       client.reset();
       return false;
     }
     */
     p.As(address);
 
-    fetch::logger.Info("Looks like my address is: ", address);
+    FETCH_LOG_INFO(LOGGING_NAME,"Looks like my address is: ", address);
 
     {  // Exchanging identities including node setup
       LOG_STACK_TRACE_POINT;
@@ -237,7 +240,7 @@ public:
       auto        p = client->Call(IDENTITY, P2PIdentityProtocol::HELLO, my_details_->details);
       PeerDetails details = p.As<PeerDetails>();
 
-      fetch::logger.Info("The remove identity is: ",
+      FETCH_LOG_INFO(LOGGING_NAME,"The remove identity is: ",
                          byte_array::ToBase64(details.identity.identifier()));
 
       auto regdetails = register_.GetDetails(client->handle());
@@ -371,10 +374,10 @@ protected:
                   t = "chain";
                 }
 
-                fetch::logger.Info(" - type: ", t, " port: ", e.port);
+                FETCH_LOG_INFO(LOGGING_NAME," - type: ", t, " port: ", e.port);
                 for (auto const &h : e.host)
                 {
-                  fetch::logger.Info("   + host: ", h);
+                  FETCH_LOG_INFO(LOGGING_NAME,"   + host: ", h);
                 }
 #endif
 
@@ -481,6 +484,7 @@ protected:
       create_count = 1;
     }
 
+    // TODO(EJF): This seems like the check should be done via the certificate
     byte_array::ConstByteArray my_pk;
     {
       std::lock_guard<mutex::Mutex> lock(my_details_->mutex);
@@ -494,11 +498,15 @@ protected:
     {
       for (auto &e : s.second.entry_points)
       {
+        // TODO(EJF): Check performed here (see above comment)
         if (e.identity.identifier() == my_pk) continue;
 
         if (e.is_discovery)
         {
-          bool const is_ourself = e.identity.identifier() == certificate_->identity().identifier();
+          // TODO(EJF): Debugging
+          crypto::Prover const *cert  = certificate_.get();
+
+          bool const is_ourself = e.identity.identifier() == cert->identity().identifier();
 
           if ((!is_ourself) && (outgoing_.find(e.identity.identifier()) == outgoing_.end()))
           {
@@ -525,7 +533,7 @@ protected:
 
       //      if (already_connected)
       //      {
-      //        logger.Info("Discarding peer because already connected...");
+      //        FETCH_LOG_INFO(LOGGING_NAME,"Discarding peer because already connected...");
       //        continue;
       //      }
 
@@ -541,11 +549,11 @@ protected:
 
   void TryConnect(EntryPoint const &e)
   {
-    fetch::logger.Info("#!# Trying to connect to ", byte_array::ToBase64(e.identity.identifier()));
+    FETCH_LOG_INFO(LOGGING_NAME,"#!# Trying to connect to ", byte_array::ToBase64(e.identity.identifier()));
 
     if (e.identity.identifier() == "")
     {
-      fetch::logger.Error("Encountered empty identifier");
+      FETCH_LOG_ERROR(LOGGING_NAME,"Encountered empty identifier");
       return;
     }
 

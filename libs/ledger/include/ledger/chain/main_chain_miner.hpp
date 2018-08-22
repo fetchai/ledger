@@ -34,14 +34,16 @@ namespace chain {
 class MainChainMiner
 {
 public:
-  using BlockType        = chain::MainChain::BlockType;
-  using BlockHash        = chain::MainChain::BlockHash;
-  using body_type        = chain::MainChain::BlockType::body_type;
-  using dummy_miner_type = fetch::chain::consensus::DummyMiner;
-  using miner_type       = fetch::miner::MinerInterface;
+  using BlockType      = chain::MainChain::BlockType;
+  using BlockHash      = chain::MainChain::BlockHash;
+  using BodyType       = chain::MainChain::BlockType::body_type;
+  using Miner          = fetch::chain::consensus::DummyMiner;
+  using MinerInterface = fetch::miner::MinerInterface;
+
+  static constexpr char const *LOGGING_NAME = "MainChainMiner";
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
-                 chain::BlockCoordinator &blockCoordinator, miner_type &miner, uint64_t minerNumber)
+                 chain::BlockCoordinator &blockCoordinator, MinerInterface &miner, uint64_t minerNumber)
     : num_lanes_{num_lanes}
     , num_slices_{num_slices}
     , mainChain_{mainChain}
@@ -97,6 +99,11 @@ private:
 
     BlockHash previous_heaviest;
 
+    BlockType next_block;
+    BodyType next_block_body;
+
+    bool searching_for_hash = false;
+
     while (!stop_)
     {
       // determine the heaviest block
@@ -105,40 +112,48 @@ private:
       // if the heaviest block has changed then we need to schedule the next block time
       if (block.hash() != previous_heaviest)
       {
-        fetch::logger.Info("==> New heaviest block: ", byte_array::ToBase64(block.hash()),
-                           " from: ", minerNumber_);
+        FETCH_LOG_INFO(LOGGING_NAME,"==> New heaviest block: ", byte_array::ToBase64(block.hash()),
+                       " from: ", byte_array::ToBase64(block.prev()));
 
         // new heaviest has been detected
-        next_block_time   = CalculateNextBlockTime(rng);
-        previous_heaviest = block.hash().Copy();
+        next_block_time    = CalculateNextBlockTime(rng);
+        previous_heaviest  = block.hash().Copy();
+        searching_for_hash = false;
       }
 
-      // if we are ready to generate a new block
-      if (clock_type::now() >= next_block_time)
+      if (searching_for_hash)
       {
-        BlockType nextBlock;
-        body_type nextBody;
-        nextBody.block_number  = block.body().block_number + 1;
-        nextBody.previous_hash = block.hash();
-        nextBody.miner_number  = minerNumber_;
-
-        // Pack the block with transactions
-        miner_.GenerateBlock(nextBody, num_lanes_, num_slices_);
-        nextBlock.SetBody(nextBody);
-        nextBlock.UpdateDigest();
-
-        // Mine the block
-        nextBlock.proof().SetTarget(target_);
-        if (dummy_miner_type::Mine(nextBlock, 100))
+        if (Miner::Mine(next_block, 100))
         {
           // Add the block
-          blockCoordinator_.AddBlock(nextBlock);
+          blockCoordinator_.AddBlock(next_block);
+
+          // TODO(EJF): Feels like this needs to be reworked into the block coordinator
           if (onBlockComplete_)
           {
-            onBlockComplete_(nextBlock);
+            onBlockComplete_(next_block);
           }
+
+          // stop searching for the hash and schedule the next time to generate a block
           next_block_time = CalculateNextBlockTime(rng);
+          searching_for_hash = false;
         }
+      }
+      else if (clock_type::now() >= next_block_time) // if we are ready to generate a new block
+      {
+        // update the metadata for the block
+        next_block_body.block_number  = block.body().block_number + 1;
+        next_block_body.previous_hash = block.hash();
+        next_block_body.miner_number  = minerNumber_;
+
+        // Pack the block with transactions
+        miner_.GenerateBlock(next_block_body, num_lanes_, num_slices_);
+        next_block.SetBody(next_block_body);
+        next_block.UpdateDigest();
+
+        // Mine the block
+        next_block.proof().SetTarget(target_);
+        searching_for_hash = true;
       }
 
       std::this_thread::sleep_for(std::chrono::milliseconds{10});
@@ -150,9 +165,9 @@ private:
   std::size_t       num_lanes_;
   std::size_t       num_slices_;
 
-  chain::MainChain &       mainChain_;
+  chain::MainChain        &mainChain_;
   chain::BlockCoordinator &blockCoordinator_;
-  miner_type &             miner_;
+  MinerInterface          &miner_;
   std::thread              thread_;
   uint64_t                 minerNumber_{0};
 };

@@ -56,6 +56,8 @@ public:
   using iterator         = typename container_type::iterator;
   using reverse_iterator = typename container_type::reverse_iterator;
 
+  static constexpr char const *LOGGING_NAME = "ShapeLessArray";
+
   /* Contructs an empty shape-less array. */
   ShapeLessArray(std::size_t const &n) : data_(n), size_(n) {}
 

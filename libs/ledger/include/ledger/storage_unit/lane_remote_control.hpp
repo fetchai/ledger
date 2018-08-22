@@ -33,6 +33,8 @@ public:
   using weak_service_type   = std::weak_ptr<service_type>;
   using lane_index_type     = uint32_t;
 
+  static constexpr char const *LOGGING_NAME = "LaneRemoteControl";
+
   enum
   {
     CONTROLLER_PROTOCOL_ID = LaneService::CONTROLLER,
@@ -62,7 +64,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      fetch::logger.Info("Remote lane call to: ", host, ":", port);
+      FETCH_LOG_INFO(LOGGING_NAME,"Remote lane call to: ", host, ":", port);
       auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::CONNECT, host, port);
 
       FETCH_LOG_PROMISE();

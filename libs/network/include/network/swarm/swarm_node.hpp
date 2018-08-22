@@ -55,6 +55,9 @@ protected:
   using client_type = fetch::network::NetworkNodeCore::client_type;
 
 public:
+
+  static constexpr char const *LOGGING_NAME = "SwarmNode";
+
   explicit SwarmNode(std::shared_ptr<fetch::network::NetworkNodeCore> networkNodeCore,
                      const std::string &identifier, uint32_t maxpeers,
                      fetch::swarm::SwarmPeerLocation uri)
@@ -100,7 +103,7 @@ public:
   virtual std::string AskPeerForPeers(const SwarmPeerLocation &    peer,
                                       std::shared_ptr<client_type> client)
   {
-    fetch::logger.Debug("AskPeerForPeers starts work");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"AskPeerForPeers starts work");
 
     auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     FETCH_LOG_PROMISE();
@@ -113,15 +116,15 @@ public:
     {
       if (promise.has_failed())
       {
-        fetch::logger.Debug("AskPeerForPeers has_failed");
+        FETCH_LOG_DEBUG(LOGGING_NAME,"AskPeerForPeers has_failed");
       }
       else if (promise.is_connection_closed())
       {
-        fetch::logger.Debug("AskPeerForPeers is_connection_closed");
+        FETCH_LOG_DEBUG(LOGGING_NAME,"AskPeerForPeers is_connection_closed");
       }
       else
       {
-        fetch::logger.Debug("AskPeerForPeers failed ???");
+        FETCH_LOG_DEBUG(LOGGING_NAME,"AskPeerForPeers failed ???");
       }
       return "";
     }
@@ -143,15 +146,15 @@ public:
 
   virtual std::string ClientNeedsPeer()
   {
-    fetch::logger.Debug("ClientNeedsPeer starts work");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"ClientNeedsPeer starts work");
     if (!karmaPeerList_.empty())
     {
       auto p = karmaPeerList_.GetNthKarmicPeer(0);
-      fetch::logger.Debug("ClientNeedsPeer sorted & found");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"ClientNeedsPeer sorted & found");
       auto s = p.GetLocation().AsString();
       return s;
     }
-    fetch::logger.Debug("ClientNeedsPeer no peers");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"ClientNeedsPeer no peers");
     return std::string("");
   }
 

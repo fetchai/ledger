@@ -50,6 +50,8 @@ public:
   using client_handle_type        = client_register_type::connection_handle_type;
   using feed_handler_type         = service::feed_handler_type;
 
+  static constexpr char const *LOGGING_NAME = "MainChainProtocol";
+
   enum
   {
     GET_HEADER         = 1,
@@ -78,7 +80,7 @@ public:
 
   void Start()
   {
-    fetch::logger.Debug("Starting syncronisation of blocks");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Starting syncronisation of blocks");
     if (running_) return;
     running_ = true;
     thread_pool_->Post([this]() { this->IdleUntilPeers(); });
@@ -89,7 +91,7 @@ public:
   void PublishBlock(BlockType const &blk)
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Warn("MINED A BLOCK:" + blk.summarise());
+    FETCH_LOG_WARN(LOGGING_NAME,"MINED A BLOCK:" + blk.summarise());
     Publish(BLOCK_PUBLISH, blk);
   }
 
@@ -140,7 +142,7 @@ private:
   void FetchHeaviestFromPeers()
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Debug("Fetching blocks from peer");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Fetching blocks from peer");
 
     if (!running_) return;
 
@@ -182,6 +184,7 @@ private:
                                              subscription_handler_function);
       }
 
+      // TODO(EJF): ?????
       if (0)
       {
         LOG_STACK_TRACE_POINT;
@@ -190,7 +193,7 @@ private:
             std::vector<BlockType> incoming;
             incoming.reserve(uint64_t(ms));
             prom.As(incoming);
-            fetch::logger.Info("Updating pending blocks: ", incoming.size());
+            FETCH_LOG_INFO(LOGGING_NAME,"Updating pending blocks: ", incoming.size());
             this -> pending_blocks_.Add(incoming.begin(), incoming.end());
             this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
           });
@@ -210,7 +213,7 @@ private:
     {
       for (auto &block : work)
       {
-        fetch::logger.Info("Fowarding block: ", block.hashString());
+        FETCH_LOG_INFO(LOGGING_NAME,"Fowarding block: ", block.hashString());
 
         Publish(BLOCK_PUBLISH, block);
       }
@@ -231,11 +234,11 @@ private:
       {
         block.UpdateDigest();
 
-        fetch::logger.Warn("OMG Adding? the block to the chain: ", block.summarise());
+        FETCH_LOG_DEBUG(LOGGING_NAME,"OMG Adding? the block to the chain: ", block.summarise());
 
         if (chain_->AddBlock(block))
         {
-          fetch::logger.Warn("OMG Adding the block to the chain: ", block.summarise());
+          FETCH_LOG_DEBUG(LOGGING_NAME,"OMG Adding the block to the chain: ", block.summarise());
 
           forward_blocks_.Add(block);
           this->thread_pool_->Post([this]() { this->AddPendingBlocks(); });
@@ -272,7 +275,7 @@ private:
         BlockType tmp;
         if (chain_->Get(blk.hash(), tmp))
         {
-          fetch::logger.Warn("OMG LOOOSE?:", tmp.hashString());
+          FETCH_LOG_DEBUG(LOGGING_NAME,"OMG LOOOSE?:", tmp.hashString());
           if (tmp.loose())
           {
             actually_still_loose.push_back(blk.hash());
@@ -283,13 +286,13 @@ private:
       {
         block_type tmp;
         chain_ -> Get(blkhash, tmp);
-        fetch::logger.Warn("OMG LOOOSE:", tmp.hashString());
+        FETCH_LOG_DEBUG(LOGGING_NAME,"OMG LOOOSE:", tmp.hashString());
 
         blockPublishSubscriptions_.VisitSubscriptions(
             [this,blkhash](std::shared_ptr<fetch::service::ServiceClient> client){
               LOG_STACK_TRACE_POINT;
 
-              fetch::logger.Warn("ERK hash=", ToBase64(blkhash));
+              FETCH_LOG_WARN(LOGGING_NAME,"ERK hash=", ToBase64(blkhash));
 
               auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_HEADER, blkhash);
               //auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_B, ToBase64(blkhash));
@@ -300,16 +303,16 @@ private:
                   if (result.first)
                   {
                     this -> pending_blocks_.Add(result.second);
-                    fetch::logger.Warn("ERK posting catchup block:", ToBase64(result.second.hash()));
+                    FETCH_LOG_WARN(LOGGING_NAME,"ERK posting catchup block:", ToBase64(result.second.hash()));
                     this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
                   }
                   else
                   {
-                    fetch::logger.Error("ERK dint have block!");
+                    FETCH_LOG_ERROR(LOGGING_NAME,"ERK dint have block!");
                   }
                 });
               prom.Else([blkhash](){
-                  fetch::logger.Error("Something went wrong: ", typeid(blkhash).name() );
+                  FETCH_LOG_ERROR(LOGGING_NAME,"Something went wrong: ", typeid(blkhash).name() );
                 });
             });
       }
@@ -356,7 +359,7 @@ private:
       }
       if (loose)
       {
-        fetch::logger.Warn("Loose block");
+        FETCH_LOG_WARN(LOGGING_NAME,"Loose block");
         TODO("Make list with missing blocks: ", prevHash);
       }
     }
@@ -377,23 +380,23 @@ private:
   std::pair<bool, BlockType> GetHeader(block_hash_type const &hash)
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Debug("GetHeader starting work");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader starting work");
     BlockType block;
     if (chain_->Get(hash, block))
     {
-      fetch::logger.Debug("GetHeader done");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader done");
       return std::make_pair(true, block);
     }
     else
     {
-      fetch::logger.Debug("GetHeader not found");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader not found");
       return std::make_pair(false, block);
     }
   }
 
   std::pair<bool, block_type> GetB(const std::string &s)
   {
-    fetch::logger.Debug("ERK! GetB ", s);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"ERK! GetB ", s);
 
     std::pair<bool, block_type> r;
     r.first = false;
@@ -405,11 +408,11 @@ private:
     LOG_STACK_TRACE_POINT;
     std::vector<BlockType> results;
 
-    fetch::logger.Debug("GetHeaviestChain starting work ", maxsize);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeaviestChain starting work ", maxsize);
 
     results = chain_->HeaviestChain(maxsize);
 
-    fetch::logger.Debug("GetHeaviestChain returning ", results.size(), " of req ", maxsize);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeaviestChain returning ", results.size(), " of req ", maxsize);
 
     return results;
   }

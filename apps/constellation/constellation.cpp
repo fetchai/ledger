@@ -24,6 +24,7 @@
 #include "network/p2pservice/explore_http_interface.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 
+
 namespace fetch {
 
 Constellation::Constellation(certificate_type &&certificate, uint16_t port_start,
@@ -38,7 +39,7 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
 {
-  fetch::logger.Info("Constellation :: ", interface_address, " P ", port_start, " E ",
+  FETCH_LOG_INFO(LOGGING_NAME,"Constellation :: ", interface_address, " P ", port_start, " E ",
                      num_executors, " S ", num_lanes, "x", num_slices);
 
   // determine how many threads the network manager will require
@@ -56,24 +57,7 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
   auto profile = p2p_->Profile();
   auto my_name = std::string(byte_array::ToBase64(profile.identity.identifier()));
 
-  // Adding handle for the orchestration
-  p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
-    // std::cout << "MAKING CALL ::: " << std::endl;
 
-    fetch::logger.Info("OnPeerUpdateProfile: ", byte_array::ToBase64(ep.identity.identifier()),
-                       " mainchain?: ", ep.is_mainchain.load(), " lane:? ", ep.is_lane.load());
-
-    if (ep.is_mainchain)
-    {
-      main_chain_remote_->TryConnect(ep);
-    }
-    if (ep.is_lane)
-    {
-      fetch::logger.Info("Trying to make that connection noow.....");
-
-      storage_->TryConnect(ep);
-    }
-  });
 
   // setup the storage service
   storage_service_.Setup(db_prefix, num_lanes, lane_port_start_, *network_manager_, false);
@@ -155,6 +139,40 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
 void Constellation::Run(peer_list_type const &initial_peers)
 {
   p2p_->AddMainChain(interface_address_, static_cast<uint16_t>(main_chain_port_));
+
+  // Adding handle for the orchestration
+  p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
+    // std::cout << "MAKING CALL ::: " << std::endl;
+
+    FETCH_LOG_INFO(LOGGING_NAME,"OnPeerUpdateProfile: ", byte_array::ToBase64(ep.identity.identifier()),
+                       " mainchain?: ", ep.is_mainchain.load(), " lane:? ", ep.is_lane.load());
+
+    if (ep.is_mainchain)
+    {
+      if (main_chain_remote_)
+      {
+        main_chain_remote_->TryConnect(ep);
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,"Main chain remote is invalid, unable to dispatch this request");
+      }
+    }
+    if (ep.is_lane)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME,"Trying to make that connection noow.....");
+
+      if (storage_)
+      {
+        storage_->TryConnect(ep);
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,"Storage is not currently available");
+      }
+    }
+  });
+
   p2p_->Start();
 
   // Make the initial p2p connections
@@ -162,7 +180,7 @@ void Constellation::Run(peer_list_type const &initial_peers)
   // will be too fast in trying to set up lane connections.
   for (auto const &peer : initial_peers)
   {
-    fetch::logger.Warn("Connecting to ", peer.address(), ":", peer.port());
+    FETCH_LOG_WARN(LOGGING_NAME,"Connecting to ", peer.address(), ":", peer.port());
 
     LOG_STACK_TRACE_POINT;
 
@@ -172,11 +190,11 @@ void Constellation::Run(peer_list_type const &initial_peers)
   // monitor loop
   while (active_)
   {
-    logger.Debug("Still alive...");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
     std::this_thread::sleep_for(std::chrono::seconds{5});
   }
 
-  logger.Debug("Exiting...");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Exiting...");
 }
 
 }  // namespace fetch

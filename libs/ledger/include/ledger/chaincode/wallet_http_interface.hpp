@@ -39,6 +39,8 @@ namespace ledger {
 class WalletHttpInterface : public http::HTTPModule
 {
 public:
+  static constexpr char const *LOGGING_NAME = "WalletHttpInterface";
+
   enum class ErrorCode
   {
     NOT_IMPLEMENTED = 1000,
@@ -131,7 +133,7 @@ private:
     }
     catch (json::JSONParseException const &ex)
     {
-      fetch::logger.Warn("Failed to parse input balance request: ", ex.what());
+      FETCH_LOG_WARN(LOGGING_NAME,"Failed to parse input balance request: ", ex.what());
     }
 
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);
@@ -182,7 +184,7 @@ private:
     }
     catch (json::JSONParseException const &ex)
     {
-      fetch::logger.Warn("Failed to parse input transfer request: ", ex.what());
+      FETCH_LOG_WARN(LOGGING_NAME,"Failed to parse input transfer request: ", ex.what());
     }
 
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);

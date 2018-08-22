@@ -94,6 +94,8 @@ public:
   static constexpr std::size_t DEFAULT_NUM_SLICES     = 4;
   static constexpr std::size_t DEFAULT_NUM_EXECUTORS  = DEFAULT_NUM_LANES;
   //  static const std::string DEFAULT_DB_PREFIX =;
+  static constexpr char const *LOGGING_NAME = "constellation";
+
 
   explicit Constellation(certificate_type &&certificate, uint16_t port_start = DEFAULT_PORT_START,
                          std::size_t        num_executors     = DEFAULT_NUM_EXECUTORS,
@@ -106,7 +108,7 @@ public:
 
   executor_type CreateExecutor()
   {
-    logger.Warn("Creating local executor...");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Creating local executor...");
     return executor_type{new ledger::Executor(storage_)};
   }
 

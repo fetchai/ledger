@@ -44,6 +44,9 @@ class ServiceClientInterface
   typedef std::unordered_map<subscription_handler_type, Subscription> subscriptions_type;
 
 public:
+
+  static constexpr char const *LOGGING_NAME = "ServiceClientInterface";
+
   ServiceClientInterface()
     : subscription_mutex_(__LINE__, __FILE__), promises_mutex_(__LINE__, __FILE__)
   {}
@@ -55,7 +58,7 @@ public:
                arguments &&... args)
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Debug("Service Client Calling ", protocol, ":", function);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Service Client Calling ", protocol, ":", function);
 
     Promise         prom;
     serializer_type params;
@@ -77,7 +80,7 @@ public:
 
     if (!DeliverRequest(params.data()))
     {
-      fetch::logger.Debug("Call failed!");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Call failed!");
       prom.reference()->Fail(serializers::SerializableException(
           error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
       promises_mutex_.lock();
@@ -93,7 +96,7 @@ public:
                                   byte_array::ByteArray const &args)
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Debug("Service Client Calling (2) ", protocol, ":", function);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Service Client Calling (2) ", protocol, ":", function);
 
     Promise         prom;
     serializer_type params;
@@ -116,7 +119,7 @@ public:
     if (!DeliverRequest(params.data()))
     {
       // HMM(KLL) - I suspect we should kill all the other promises as well here.
-      fetch::logger.Debug("Call failed!");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Call failed!");
       prom.reference()->Fail(serializers::SerializableException(
           error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
     }
@@ -128,7 +131,7 @@ public:
                                       feed_handler_type const &feed, AbstractCallable *callback)
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Info("PubSub: SUBSCRIBE ", int(protocol), ":", int(feed));
+    FETCH_LOG_INFO(LOGGING_NAME,"PubSub: SUBSCRIBE ", int(protocol), ":", int(feed));
 
     subscription_handler_type subid = CreateSubscription(protocol, feed, callback);
     serializer_type           params;
@@ -144,7 +147,7 @@ public:
 
   void Unsubscribe(subscription_handler_type id)
   {
-    fetch::logger.Info("PubSub: Unsub ", int(id));
+    FETCH_LOG_INFO(LOGGING_NAME,"PubSub: Unsub ", int(id));
     LOG_STACK_TRACE_POINT;
     Subscription sub;
     {
@@ -155,11 +158,11 @@ public:
         if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), id) !=
             cancelled_subscriptions_.end())
         {
-          fetch::logger.Error("PubSub: Trying to unsubscribe previously cancelled ID ", id);
+          FETCH_LOG_ERROR(LOGGING_NAME,"PubSub: Trying to unsubscribe previously cancelled ID ", id);
         }
         else
         {
-          fetch::logger.Error("PubSub: Trying to unsubscribe unknown ID ", id);
+          FETCH_LOG_ERROR(LOGGING_NAME,"PubSub: Trying to unsubscribe unknown ID ", id);
         }
         return;
       }
@@ -280,9 +283,9 @@ protected:
     subscription_handler_type sub;
     params >> feed >> sub;
 
-    fetch::logger.Info("PubSub: message ", int(feed), ":", int(sub));
+      FETCH_LOG_INFO(LOGGING_NAME,"PubSub: message ", int(feed), ":", int(sub));
 
-    AbstractCallable *cb = 0;
+      AbstractCallable *cb = nullptr;
     {
       subscription_mutex_lock_type lock(subscription_mutex_);
       auto                         subscr = subscriptions_.find(sub);
@@ -291,19 +294,19 @@ protected:
         if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), sub) ==
             cancelled_subscriptions_.end())
         {
-          fetch::logger.Error("PubSub: We were sent a subscription ID we never allocated:", int(sub));
+            FETCH_LOG_ERROR(LOGGING_NAME, "PubSub: We were sent a subscription ID we never allocated:", int(sub));
           return false;
         }
         else
         {
-          fetch::logger.Info("PubSub: Ignoring message for old subscription.", int(sub));
+            FETCH_LOG_INFO(LOGGING_NAME,"PubSub: Ignoring message for old subscription.", int(sub));
           return true;
         }
       }
 
       if ((*subscr).second.feed != feed)
       {
-        fetch::logger.Error("PubSub: Subscription's feed ID is different from message feed ID.");
+          FETCH_LOG_ERROR(LOGGING_NAME, "PubSub: Subscription's feed ID is different from message feed ID.");
         return false;
       }
 
@@ -320,13 +323,13 @@ protected:
       catch (serializers::SerializableException const &e)
       {
         e.StackTrace();
-        fetch::logger.Error("PubSub: Serialization error: ", e.what());
+          FETCH_LOG_ERROR(LOGGING_NAME,"PubSub: Serialization error: ", e.what());
         throw e;
       }
     }
     else
     {
-      fetch::logger.Error("PubSub: Callback is null for feed ", feed, " in subscription ",
+        FETCH_LOG_ERROR(LOGGING_NAME,"PubSub: Callback is null for feed ", feed, " in subscription ",
                           int(sub));
     }
     return true;

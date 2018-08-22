@@ -39,6 +39,8 @@ class HTTPRequest
 public:
   using byte_array_type = byte_array::ConstByteArray;
 
+  static constexpr char const *LOGGING_NAME = "HTTPRequest";
+
   HTTPRequest() = default;
 
   bool ParseBody(asio::streambuf &buffer);

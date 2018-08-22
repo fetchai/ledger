@@ -41,6 +41,8 @@
 
 namespace {
 
+static constexpr char const *LOGGING_NAME = "main";
+
 using Prover       = fetch::crypto::Prover;
 using BootstrapPtr = std::unique_ptr<fetch::BootstrapMonitor>;
 using ProverPtr    = std::unique_ptr<Prover>;
@@ -134,7 +136,7 @@ struct CommandLineArguments
         }
         else
         {
-          fetch::logger.Warn("Failed to parse input peer address: '", peer_address, "'");
+          FETCH_LOG_WARN(LOGGING_NAME,"Failed to parse input peer address: '", peer_address, "'");
         }
 
         // update the position for the next search
@@ -153,6 +155,7 @@ struct CommandLineArguments
   friend std::ostream &operator<<(std::ostream &              s,
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
+    s << '\n';
     s << "port...........: " << args.port << std::endl;
     s << "network id.....: 0x" << std::hex << args.network_id << std::dec << std::endl;
     s << "num executors..: " << args.num_executors << std::endl;
@@ -194,7 +197,7 @@ int main(int argc, char **argv)
     BootstrapPtr bootstrap_monitor;
     auto const   args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
 
-    fetch::logger.Info("Configuration:\n", args);
+    FETCH_LOG_INFO(LOGGING_NAME,"Configuration:\n", args);
 
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(

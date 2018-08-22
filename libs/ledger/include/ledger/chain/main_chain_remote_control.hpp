@@ -33,6 +33,8 @@ public:
   using shared_service_type  = std::shared_ptr<service_type>;
   using mainchain_index_type = uint32_t;
 
+  static constexpr char const *LOGGING_NAME = "MainChainRemoteControl";
+
   enum
   {
     CONTROLLER_PROTOCOL_ID = MainChainService::CONTROLLER,

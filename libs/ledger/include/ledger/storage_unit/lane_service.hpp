@@ -61,6 +61,8 @@ public:
       client_register_type, fetch::chain::VerifiedTransaction, fetch::chain::UnverifiedTransaction>;
   using thread_pool_type = network::ThreadPool;
 
+  static constexpr char const *LOGGING_NAME = "LaneService";
+
   enum
   {
     IDENTITY = 1,
@@ -87,7 +89,7 @@ public:
     certificate->GenerateKeys();
     certificate_.reset(certificate);
 
-    fetch::logger.Info("Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port,
+    FETCH_LOG_INFO(LOGGING_NAME,"Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port,
                        " ID: ", byte_array::ToBase64(certificate_->identity().identifier()));
 
     // format and generate the prefix
