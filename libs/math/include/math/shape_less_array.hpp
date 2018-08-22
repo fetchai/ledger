@@ -74,6 +74,9 @@ public:
    */
   void SetAllZero() { data().SetAllZero(); }
 
+  void SetAllOne() { data().SetAllOne(); }
+
+
   /* Set all padded bytes to zero.
    *
    * This method sets the padded bytes to zero. Padded bytes are those
@@ -1524,6 +1527,21 @@ public:
     ret.Resize(n);
     ret.SetAllZero();
     return ret;
+  }
+
+  /**
+ * Method returning a shapeless array of ones
+ *
+ * @param shape : a vector representing the shape of the NDArray
+ * @return NDArray with all ones
+ */
+  static ShapeLessArray Ones(std::size_t const &n )
+  {
+    ShapeLessArray ret;
+    ret.Resize(n);
+    ret.SetAllOne();
+    return ret;
+
   }
 
   bool AllClose(ShapeLessArray const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
