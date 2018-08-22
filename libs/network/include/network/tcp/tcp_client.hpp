@@ -117,7 +117,7 @@ public:
   {
     for (std::size_t i = 0; i < milliseconds;)
     {
-      if(pointer_->is_alive())
+      if (pointer_->is_alive())
       {
         return true;
       }

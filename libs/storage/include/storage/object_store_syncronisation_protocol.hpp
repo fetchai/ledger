@@ -114,7 +114,6 @@ public:
 
     using service_map_type = typename R::service_map_type;
     register_.WithServices([this](service_map_type const &map) {
-
       for (auto const &p : map)
       {
         if (!running_) return;
@@ -239,15 +238,9 @@ public:
     return ret;
   }
 
-  void StartSync()
-  {
-    needs_sync_ = true;
-  }
+  void StartSync() { needs_sync_ = true; }
 
-  bool FinishedSync()
-  {
-    return !needs_sync_;
-  }
+  bool FinishedSync() { return !needs_sync_; }
 
 private:
   protocol_handler_type protocol_;

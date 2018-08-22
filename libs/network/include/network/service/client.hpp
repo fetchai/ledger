@@ -137,7 +137,7 @@ public:
     {
       for (std::size_t i = 0; i < milliseconds;)
       {
-        if(ptr->is_alive())
+        if (ptr->is_alive())
         {
           return true;
         }
