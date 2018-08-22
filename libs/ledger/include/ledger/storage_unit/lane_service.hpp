@@ -78,7 +78,6 @@ public:
     : super_type(port, tm)
   {
 
-    this->SetConnectionRegister(register_);
 
     thread_pool_ = network::MakeThreadPool(1);
 
@@ -136,6 +135,7 @@ public:
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     this->Add(CONTROLLER, controller_protocol_.get());
 
+    this->SetConnectionRegister(register_);
     thread_pool_->Start();
 
     if (start_sync)

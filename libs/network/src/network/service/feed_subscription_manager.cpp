@@ -4,7 +4,7 @@
 
 namespace fetch {
 namespace service {
-  
+
 void FeedSubscriptionManager::PublishToAllWorker()
 {
   fetch::logger.Warn("OMG PublishToAllWorker STARTUP************************************************************************************");

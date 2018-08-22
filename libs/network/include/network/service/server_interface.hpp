@@ -16,7 +16,6 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
 #include "core/byte_array/byte_array.hpp"
 #include "network/message.hpp"
 #include "network/service/callable_class_member.hpp"
@@ -24,6 +23,7 @@
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
 #include "network/service/types.hpp"
+#include "network/generics/atomic_state_machine.hpp"
 
 namespace fetch {
 namespace service {
@@ -34,19 +34,46 @@ public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
   using byte_array_type        = byte_array::ConstByteArray;
 
+  enum {
+    EMPTY,
+    ADDED,
+    MESSAGES,
+  };
+  network::AtomicStateMachine protocol_states_;
+
+  ServiceServerInterface()
+  {
+    protocol_states_
+      .Allow(EMPTY, ADDED)
+      .Allow(ADDED, MESSAGES)
+      ;
+  }
+
   virtual ~ServiceServerInterface() {}
 
   void Add(protocol_handler_type const &name,
-           Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
+           Protocol *                   protocol)  // TODO: Rename to AddProtocol
   {
     LOG_STACK_TRACE_POINT;
 
-    // TODO(issue 19): better reporting of errors
+    // TODO: (`HUT`) : better reporting of errors
     if (members_[name] != nullptr)
     {
       throw serializers::SerializableException(error::PROTOCOL_EXISTS,
                                                byte_array_type("Protocol already exists. "));
     }
+
+    fetch::logger.Warn("Assigning protocol ", int(name));
+
+    try
+    {
+      protocol_states_.Set(ADDED);
+    }
+    catch(...)
+    {
+      fetch::logger.Error("ServerInterface::ExecuteCall BAD_STATE_TRANSITION: ADDED after MESSAGES.");
+    }
+
 
     members_[name] = protocol;
 
@@ -78,7 +105,7 @@ protected:
       return false;
     }
   }
-
+  
   bool HandleRPCCallRequest(connection_handle_type client, serializer_type params)
   {
     LOG_STACK_TRACE_POINT;
@@ -91,8 +118,6 @@ protected:
       LOG_STACK_TRACE_POINT;
       params >> id;
       result << SERVICE_RESULT << id;
-
-      ExecuteCall(result, client, params);
     }
     catch (serializers::SerializableException const &e)
     {
@@ -100,6 +125,22 @@ protected:
       fetch::logger.Error("Serialization error (Function Call): ", e.what());
       result = serializer_type();
       result << SERVICE_ERROR << id << e;
+    }
+
+    try
+    {
+      ExecuteCall(result, client, params);
+    }
+    catch (serializers::SerializableException const &e)
+    {
+      LOG_STACK_TRACE_POINT;
+      fetch::logger.Error("Serialization error (Function Call2): ", e.what());
+      result = serializer_type();
+      result << SERVICE_ERROR << id << e;
+    }
+    catch (std::exception const &e)
+    {
+      fetch::logger.Error("Serialization error (Function Call3): ", e.what());
     }
 
     fetch::logger.Debug("Service Server responding to call from ", client);
@@ -180,6 +221,32 @@ protected:
     }
   }
 
+  virtual std::string DescribeProtocolSystem()
+  {
+    std::string r;
+    
+    int count = 0;
+    r += "Protocols: [ ";
+    for(int i=0;i<10;i++)
+    {
+      if (members_[i] != nullptr)
+      {
+        if (count)
+        {
+          r += ", ";
+        }
+        r += std::to_string(i);
+        count++;
+      }
+    }
+    if (!count)
+    {
+      r+= "none ";
+    }
+    r += "]";
+    return r;
+  }
+
 private:
   void ExecuteCall(serializer_type &result, connection_handle_type const &connection_handle,
                    serializer_type params)
@@ -199,12 +266,21 @@ private:
 
     fetch::logger.Debug("ServerInterface::ExecuteCall " + identifier);
 
+    try
+    {
+      protocol_states_.Set(MESSAGES);
+    }
+    catch(...)
+    {
+      fetch::logger.Error("ServerInterface::ExecuteCall BAD_STATE_TRANSITION: MESSAGES before protocols ADDED.");
+    }
+
     auto protocol_pointer = members_[protocol_number];
     if (protocol_pointer == nullptr)
     {
       throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND,
                                                std::string("ServerInterface::ExecuteCall: Could not find protocol ")
-                                               + identifier
+                                               + identifier + "   " + DescribeProtocolSystem()
                                                );
     }
 
@@ -248,8 +324,8 @@ private:
       fetch::logger.Error("ServerInterface::ExecuteCall - ", ex.what(), " - ", identifier);
     }
   }
-
-  Protocol *members_[256] = {nullptr};  // TODO(issue 19): Not thread-safe
+  
+  Protocol *members_[256] = {nullptr};  // TODO: Not thread-safe
   friend class FeedSubscriptionManager;
 };
 }  // namespace service

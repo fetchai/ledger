@@ -80,9 +80,6 @@ public:
     fetch::logger.Warn("P2P Identity: ",
                        byte_array::ToBase64(certificate_->identity().identifier()));
 
-    // Listening for new connections
-    this->SetConnectionRegister(register_);
-
     // Identity
     identity_          = std::make_unique<P2PIdentity>(IDENTITY, register_, tm);
     my_details_        = identity_->my_details();
@@ -102,7 +99,8 @@ public:
 #if 0
       // TODO(issue 24): ECDSA verifier broke
       crypto::ECDSAVerifier verifier(certificate->identity());
-      if(!my_details_->details.Verify(&verifier) ) {
+      if(!my_details_->details.Verify(&verifier) )
+      {
         TODO_FAIL("Could not verify own identity");
       }
 #endif
@@ -129,6 +127,9 @@ public:
     min_connections_ = 2;
     max_connections_ = 6;
     tracking_peers_  = false;
+
+    // Listening for new connections
+    this->SetConnectionRegister(register_);
 
     // TODO(issue 24): Remove long term
     Start();

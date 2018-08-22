@@ -204,123 +204,132 @@ protected:
   bool ProcessServerMessage(network::message_type const &msg)
   {
     LOG_STACK_TRACE_POINT;
-    bool ret = true;
 
     serializer_type params(msg);
-
     service_classification_type type;
     params >> type;
 
-    if (type == SERVICE_RESULT)
+    switch(type)
     {
-      Promise::promise_counter_type id;
-      params >> id;
-
-      promises_mutex_.lock();
-      auto it = promises_.find(id);
-      if (it == promises_.end())
-      {
-        promises_mutex_.unlock();
-
-        throw serializers::SerializableException(
-            error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
-      }
-      promises_mutex_.unlock();
-
-      auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
-      it->second->Fulfill(ret);
-
-      promises_mutex_.lock();
-      promises_.erase(it);
-      promises_mutex_.unlock();
+    case SERVICE_RESULT:
+      return ProcessServerResultMessage(msg, params);
+    case SERVICE_ERROR:
+      return ProcessServerErrorMessage (msg, params);
+    case SERVICE_FEED:
+      return ProcessServerFeedMessage  (msg, params);
+    default:
+      return false;
     }
-    else if (type == SERVICE_ERROR)
+  }
+
+  bool ProcessServerResultMessage(network::message_type const &msg, serializer_type &params)
+  {
+    Promise::promise_counter_type id;
+    params >> id;
+
+    promises_mutex_.lock();
+    auto it = promises_.find(id);
+    if (it == promises_.end())
     {
-      Promise::promise_counter_type id;
-      params >> id;
-
-      serializers::SerializableException e;
-      params >> e;
-
-      promises_mutex_.lock();
-      auto it = promises_.find(id);
-      if (it == promises_.end())
-      {
-        promises_mutex_.unlock();
-        throw serializers::SerializableException(
-            error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
-      }
-
       promises_mutex_.unlock();
 
-      it->second->Fail(e);
-
-      promises_mutex_.lock();
-      promises_.erase(it);
-      promises_mutex_.unlock();
+      throw serializers::SerializableException(
+                                               error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
     }
-    else if (type == SERVICE_FEED)
+    promises_mutex_.unlock();
+
+    auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
+    it->second->Fulfill(ret);
+
+    promises_mutex_.lock();
+    promises_.erase(it);
+    promises_mutex_.unlock();
+    return true;
+  }
+  
+  bool ProcessServerErrorMessage(network::message_type const &msg, serializer_type &params)
+  {
+    Promise::promise_counter_type id;
+    params >> id;
+
+    serializers::SerializableException e;
+    params >> e;
+
+    promises_mutex_.lock();
+    auto it = promises_.find(id);
+    if (it == promises_.end())
     {
-      feed_handler_type         feed;
-      subscription_handler_type sub;
-      params >> feed >> sub;
+      promises_mutex_.unlock();
+      throw serializers::SerializableException(
+        error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
+    }
 
-      fetch::logger.Info("PubSub: message ", int(feed), ":", int(sub));
+    promises_mutex_.unlock();
 
-      AbstractCallable *cb = 0;
+    it->second->Fail(e);
+
+    promises_mutex_.lock();
+    promises_.erase(it);
+    promises_mutex_.unlock();
+    return true;
+  }
+  
+  bool ProcessServerFeedMessage(network::message_type const &msg, serializer_type &params)
+  {
+    feed_handler_type         feed;
+    subscription_handler_type sub;
+    params >> feed >> sub;
+
+    fetch::logger.Info("PubSub: message ", int(feed), ":", int(sub));
+
+    AbstractCallable *cb = 0;
+    {
+      subscription_mutex_lock_type lock(subscription_mutex_);
+      auto                         subscr = subscriptions_.find(sub);
+      if (subscr == subscriptions_.end())
       {
-        subscription_mutex_lock_type lock(subscription_mutex_);
-        auto                         subscr = subscriptions_.find(sub);
-        if (subscr == subscriptions_.end())
+        if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), sub) ==
+            cancelled_subscriptions_.end())
         {
-          if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), sub) ==
-              cancelled_subscriptions_.end())
-          {
-            TODO_FAIL("PubSub: We were sent a subscription ID we never allocated:", int(sub));
-            return false;
-          }
-          else
-          {
-            fetch::logger.Info("PubSub: Ignoring message for old subscription.", int(sub));
-            return true;
-          }
-        }
-
-        if ((*subscr).second.feed != feed)
-        {
-          TODO_FAIL("PubSub: Subscription's feed ID is different from message feed ID.");
+          fetch::logger.Error("PubSub: We were sent a subscription ID we never allocated:", int(sub));
           return false;
         }
-
-        cb = (*subscr).second.callback;
-      }
-
-      if (cb)
-      {
-        serializer_type result;
-        try
+        else
         {
-          (*cb)(result, params);
-        }
-        catch (serializers::SerializableException const &e)
-        {
-          e.StackTrace();
-          fetch::logger.Error("PubSub: Serialization error: ", e.what());
-          throw e;
+          fetch::logger.Info("PubSub: Ignoring message for old subscription.", int(sub));
+          return true;
         }
       }
-      else
+
+      if ((*subscr).second.feed != feed)
       {
-        fetch::logger.Error("PubSub: Callback is null for feed ", feed, " in subscription ",
-                            int(sub));
+        fetch::logger.Error("PubSub: Subscription's feed ID is different from message feed ID.");
+        return false;
+      }
+
+      cb = (*subscr).second.callback;
+    }
+
+    if (cb)
+    {
+      serializer_type result;
+      try
+      {
+        (*cb)(result, params);
+      }
+      catch (serializers::SerializableException const &e)
+      {
+        e.StackTrace();
+        fetch::logger.Error("PubSub: Serialization error: ", e.what());
+        throw e;
       }
     }
     else
     {
-      ret = false;
+      fetch::logger.Error("PubSub: Callback is null for feed ", feed, " in subscription ",
+                          int(sub));
     }
-
-    return ret;
+    return true;
   }
 
 private:
