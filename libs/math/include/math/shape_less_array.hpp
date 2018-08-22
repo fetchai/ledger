@@ -1518,7 +1518,7 @@ public:
     return *this;
   }
 
-  static ShapeLessArray Zeros(std::size_t const &n)
+  static ShapeLessArray Zeroes(std::size_t const &n)
   {
     ShapeLessArray ret;
     ret.Resize(n);

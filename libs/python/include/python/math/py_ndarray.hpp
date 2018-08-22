@@ -320,7 +320,51 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.Reshape(b);
              return;
            })
-      .def("Shape", [](NDArray<T> &a) { return a.shape(); });
+      .def("Shape", [](NDArray<T> &a) { return a.shape(); })
+      .def_static("Zeros", &NDArray<T>::Zeroes)
+      .def("FromNumpy",
+       [](NDArray<T> &s, py::array_t<T> arr) {
+         auto buf        = arr.request();
+         using size_type = typename NDArray<T>::size_type;
+
+         // copy the data
+         T *         ptr = (T *)buf.ptr;
+         std::size_t idx = 0;
+         s.Resize(size_type(buf.shape[0]));
+         for (std::size_t i = 0; i < std::size_t(buf.shape[0]); ++i)
+         {
+           s[idx] = ptr[idx];
+         }
+
+         // reshape the array
+         std::vector<std::size_t> new_shape;
+         for (std::size_t i = 0; i < buf.shape.size(); ++i) {new_shape.push_back(size_type(buf.shape[i]));}
+
+         std::cout << "new_shape: " << new_shape[0] << std::endl;
+         std::cout << "new_shape: " << new_shape[1] << std::endl;
+         std::cout << "new_shape: " << new_shape[2] << std::endl;
+         std::cout << "new_shape: " << new_shape[3] << std::endl;
+         std::cout << "new_shape: " << new_shape[4] << std::endl;
+         s.CanReshape(new_shape);
+         s.Reshape(new_shape);
+       })
+      .def("ToNumpy", [](NDArray<T> &s) {
+        auto result = py::array_t<T>({s.size()});
+        auto buf    = result.request();
+
+        std::vector<std::size_t> new_shape = s.shape();
+        result.resize(new_shape);
+
+        // copy the data
+        T *ptr = (T *)buf.ptr;
+        for (size_t i = 0; i < s.size(); ++i)
+        {
+          ptr[i] = s[i];
+        }
+
+        // reshape the array
+        return result;
+      });
   //                  [](NDArray<T> &a, NDArray<T> &b)
   //                  {
   //                    a.Relu(b);

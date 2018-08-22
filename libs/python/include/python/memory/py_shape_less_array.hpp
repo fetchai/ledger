@@ -219,7 +219,7 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
              return a;
            })
 
-      .def_static("Zeros", &ShapeLessArray<T>::Zeros)
+      .def_static("Zeros", &ShapeLessArray<T>::Zeroes)
       .def_static("Arange", (ShapeLessArray<T>(*)(T const &, T const &, T const &)) &
                                 ShapeLessArray<T>::Arange)
       .def_static("UniformRandom",

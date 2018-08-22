@@ -84,6 +84,16 @@ public:
     return std::accumulate(std::begin(shape), std::end(shape), std::size_t(1), std::multiplies<>());
   }
 
+  static self_type Zeroes(std::vector<size_t> const &n)
+  {
+    self_type ret;
+    ret.Reshape(n);
+    ret.SetAllZero();
+    return ret;
+  }
+
+
+
   void ResizeFromShape(std::vector<std::size_t> const &shape)
   {
     this->Resize(self_type::SizeFromShape(shape));
