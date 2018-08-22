@@ -135,7 +135,7 @@ public:
 
     if (ptr)
     {
-      for (std::size_t i = 0; i < milliseconds;)
+      for (std::size_t i = 0; i < milliseconds; i += 10)
       {
         if (ptr->is_alive())
         {
@@ -143,7 +143,6 @@ public:
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        i += 10;
       }
     }
     return false;
