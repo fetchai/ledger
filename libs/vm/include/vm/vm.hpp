@@ -4,6 +4,7 @@
 
 #include "defs.hpp"
 #include "math/linalg/matrix.hpp"
+#include "math/arithmetic/comparison.hpp"
 
 namespace fetch {
 namespace vm {
@@ -1409,7 +1410,7 @@ private:
   template <typename M, typename T>
   void MatrixNumberDivide(Value &lhsv, M *lhs, T rhs)
   {
-    if (IsZero(rhs))
+    if (math::IsZero(rhs))
     {
       RuntimeError("division by zero");
       return;
@@ -1519,7 +1520,7 @@ private:
   template <typename M, typename T>
   void MatrixNumberDivideAssign(M *lhs, T rhs)
   {
-    if (IsNonZero(rhs))
+    if (math::IsNonZero(rhs))
     {
       lhs->matrix.InlineDivide(rhs);
       return;
@@ -1536,7 +1537,7 @@ private:
     template <typename T>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
     {
-      lhsv.SetPrimitive(uint8_t(IsEqual(lhs, rhs)), TypeId::Bool);
+      lhsv.SetPrimitive(uint8_t(math::IsEqual(lhs, rhs)), TypeId::Bool);
     }
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
     {
@@ -1550,7 +1551,7 @@ private:
     template <typename T>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
     {
-      lhsv.SetPrimitive(uint8_t(IsNotEqual(lhs, rhs)), TypeId::Bool);
+      lhsv.SetPrimitive(uint8_t(math::IsNotEqual(lhs, rhs)), TypeId::Bool);
     }
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
     {
@@ -1564,7 +1565,7 @@ private:
     template <typename T>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
     {
-      lhsv.SetPrimitive(uint8_t(IsLessThan(lhs, rhs)), TypeId::Bool);
+      lhsv.SetPrimitive(uint8_t(math::IsLessThan(lhs, rhs)), TypeId::Bool);
     }
   };
 
@@ -1573,7 +1574,7 @@ private:
     template <typename T>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
     {
-      lhsv.SetPrimitive(uint8_t(IsLessThanOrEqual(lhs, rhs)), TypeId::Bool);
+      lhsv.SetPrimitive(uint8_t(math::IsLessThanOrEqual(lhs, rhs)), TypeId::Bool);
     }
   };
 
@@ -1582,7 +1583,7 @@ private:
     template <typename T>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
     {
-      lhsv.SetPrimitive(uint8_t(IsGreaterThan(lhs, rhs)), TypeId::Bool);
+      lhsv.SetPrimitive(uint8_t(math::IsGreaterThan(lhs, rhs)), TypeId::Bool);
     }
   };
 
@@ -1591,7 +1592,7 @@ private:
     template <typename T>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
     {
-      lhsv.SetPrimitive(uint8_t(IsGreaterThanOrEqual(lhs, rhs)), TypeId::Bool);
+      lhsv.SetPrimitive(uint8_t(math::IsGreaterThanOrEqual(lhs, rhs)), TypeId::Bool);
     }
   };
 
@@ -1692,7 +1693,7 @@ private:
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
     {
-      if (IsNonZero(rhs))
+      if (math::IsNonZero(rhs))
       {
         lhs = T(lhs / rhs);
         return;
@@ -1805,7 +1806,7 @@ private:
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
     static void Apply(VM *vm, T &lhs, T &rhs)
     {
-      if (IsNonZero(rhs))
+      if (math::IsNonZero(rhs))
       {
         lhs = T(lhs / rhs);
         return;
