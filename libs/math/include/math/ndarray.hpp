@@ -84,12 +84,36 @@ public:
     return std::accumulate(std::begin(shape), std::end(shape), std::size_t(1), std::multiplies<>());
   }
 
-  static self_type Zeroes(std::vector<size_t> const &n)
+
+  /**
+   * Method returning an NDArray of zeroes
+   *
+   * @param shape : a vector representing the shape of the NDArray
+   * @return NDArray with all zeroes
+   */
+  static self_type Zeros(std::vector<std::size_t> const &shape )
   {
-    self_type ret;
-    ret.Reshape(n);
-    ret.SetAllZero();
-    return ret;
+    std::size_t n = std::accumulate(std::begin(shape), std::end(shape), std::size_t(1),
+                                    std::multiplies<std::size_t>());
+    self_type output{super_type::Zeros(n)};
+    output.LazyReshape(shape);
+    return output;
+  }
+
+  /**
+   * Method returning an NDArray of ones
+   *
+   * @param shape : a vector representing the shape of the NDArray
+   * @return NDArray with all ones
+   */
+  static self_type Ones(std::vector<std::size_t> const &shape )
+  {
+    std::size_t n = std::accumulate(std::begin(shape), std::end(shape), std::size_t(1),
+                                    std::multiplies<std::size_t>());
+    self_type output{super_type::Ones(n)};
+    output.LazyReshape(shape);
+    return output;
+
   }
 
 
