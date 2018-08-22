@@ -38,15 +38,24 @@ public:
     EMPTY,
     ADDED,
     MESSAGES,
+    DEAD,
   };
   network::AtomicStateMachine protocol_states_;
   static constexpr char const *LOGGING_NAME = "ServiceServerInterface";
   ServiceServerInterface()
   {
     protocol_states_
-      .Allow(EMPTY, ADDED)
-      .Allow(ADDED, MESSAGES)
+      .Allow(ADDED, EMPTY)
+      .Allow(MESSAGES, ADDED)
+      .Allow(DEAD, ADDED)
+      .Allow(DEAD, MESSAGES)
       ;
+
+    auto msg = std::string("ServerInterface::ServiceServerInterface START ")
+      + "   "
+      + DescribeProtocolSystem();
+
+    FETCH_LOG_WARN(LOGGING_NAME, msg);
   }
 
   virtual ~ServiceServerInterface() {}
@@ -64,23 +73,31 @@ public:
     }
 
     fetch::logger.Warn("Assigning protocol ", int(name));
-
-    try
-    {
-      protocol_states_.Set(ADDED);
-    }
-    catch(...)
-    {
-      fetch::logger.Error("ServerInterface::ExecuteCall BAD_STATE_TRANSITION: ADDED after MESSAGES.");
-    }
-
+    int foo;
 
     members_[name] = protocol;
-
     for (auto &feed : protocol->feeds())
     {
       feed->AttachToService(this);
     }
+
+    try
+    {
+      foo = protocol_states_.Get();
+      protocol_states_.Set(ADDED);
+    }
+    catch(std::exception &ex)
+    {
+      fetch::logger.Error("ServerInterface::Add BAD_STATE_TRANSITION: ", ex.what());
+      throw;
+    }
+
+    auto msg = std::string("ServerInterface::Add: Add protocol ")
+      + std::to_string(int(name))
+      + "   "
+      + DescribeProtocolSystem();
+
+    FETCH_LOG_WARN(LOGGING_NAME, msg);
   }
 
 protected:
@@ -88,6 +105,21 @@ protected:
 
   bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg)
   {
+    try
+    {
+      protocol_states_.Set(MESSAGES);
+    }
+    catch(std::exception &ex)
+    {
+      fetch::logger.Error("ServerInterface::PushProtocolRequest BAD_STATE_TRANSITION: ",
+                          ex.what(),
+                          " client=",
+                          client,
+                          "  ",
+                          IdentifyProtocolSystem());
+      return false;
+    }
+
     LOG_STACK_TRACE_POINT;
     serializer_type params(msg);
     service_classification_type type;
@@ -105,13 +137,28 @@ protected:
       return false;
     }
   }
-  
+
   bool HandleRPCCallRequest(connection_handle_type client, serializer_type params)
   {
     LOG_STACK_TRACE_POINT;
     bool ret = true;
     serializer_type               result;
     Promise::promise_counter_type id;
+
+    try
+    {
+      protocol_states_.Set(MESSAGES);
+    }
+    catch(std::exception &ex)
+    {
+      fetch::logger.Error("ServerInterface::ExecuteCallHandleRPCCallRequest BAD_STATE_TRANSITION: ",
+                          ex.what(),
+                          " client=",
+                          client,
+                          "  ",
+                          IdentifyProtocolSystem());
+      throw;
+    }
 
     try
     {
@@ -209,7 +256,6 @@ protected:
 
   virtual void ConnectionDropped(connection_handle_type connection_handle)
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"ConnectionDropped: ", connection_handle);
     for(int protocol_number = 0; protocol_number < 256; protocol_number++)
     {
       if (members_[protocol_number])
@@ -219,21 +265,49 @@ protected:
         members_[protocol_number] = 0;
       }
     }
+
+    int foo;
+    try
+    {
+      foo = protocol_states_.Get();
+      protocol_states_.Set(DEAD);
+    }
+    catch(std::exception &ex)
+    {
+      fetch::logger.Error("ServerInterface::ExecuteCall BAD_STATE_TRANSITION: ", ex.what());
+      throw;
+    }
+
+    auto msg = std::string("ServerInterface::ConnectionDropped ")
+      + "   "
+      + DescribeProtocolSystem();
+    FETCH_LOG_WARN(LOGGING_NAME,msg);
+  }
+
+  virtual std::string IdentifyProtocolSystem()
+  {
+    std::string r;
+
+    r += "Protocols: <";
+    r += std::to_string((unsigned long)(&members_));
+    r += ">";
+
+    return r;
   }
 
   virtual std::string DescribeProtocolSystem()
   {
-    std::string r;
-    
+    std::string r = IdentifyProtocolSystem();
+
+    r += " [ ";
     int count = 0;
-    r += "Protocols: [ ";
-    for(int i=0;i<10;i++)
+    for(int i=0;i<256;i++)
     {
       if (members_[i] != nullptr)
       {
         if (count)
         {
-          r += ", ";
+          r+= ", ";
         }
         r += std::to_string(i);
         count++;
@@ -241,9 +315,9 @@ protected:
     }
     if (!count)
     {
-      r+= "none ";
+      r+= "none";
     }
-    r += "]";
+    r += " ]";
     return r;
   }
 
@@ -257,6 +331,16 @@ private:
     function_handler_type function_number;
     params >> protocol_number >> function_number;
 
+    try
+    {
+      protocol_states_.Set(MESSAGES);
+    }
+    catch(std::exception &ex)
+    {
+      fetch::logger.Error("ServerInterface::ExecuteCall ", ex.what(), " client=", connection_handle, "  ", IdentifyProtocolSystem());
+      throw;
+    }
+
     auto identifier = std::to_string(protocol_number)
       + ":"
       + std::to_string(function_number)
@@ -266,22 +350,16 @@ private:
 
     FETCH_LOG_DEBUG(LOGGING_NAME,"ServerInterface::ExecuteCall " + identifier);
 
-    try
-    {
-      protocol_states_.Set(MESSAGES);
-    }
-    catch(...)
-    {
-      fetch::logger.Error("ServerInterface::ExecuteCall BAD_STATE_TRANSITION: MESSAGES before protocols ADDED.");
-    }
-
     auto protocol_pointer = members_[protocol_number];
     if (protocol_pointer == nullptr)
     {
-      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND,
-                                               std::string("ServerInterface::ExecuteCall: Could not find protocol ")
-                                               + identifier + "   " + DescribeProtocolSystem()
-                                               );
+      auto msg = std::string("ServerInterface::ExecuteCall: Could not find protocol ")
+        + identifier
+        + "   "
+        + DescribeProtocolSystem();
+
+      FETCH_LOG_ERROR(LOGGING_NAME, msg);
+      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND, msg);
     }
 
     protocol_pointer -> ApplyMiddleware(connection_handle, params.data());

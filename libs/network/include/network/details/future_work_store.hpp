@@ -27,13 +27,14 @@ namespace details {
 
 class FutureWorkStore
 {
+public:
+  using work_item_type    = std::function<void()>;
 protected:
-  using work_func_type    = std::function<void()>;
   using due_date_type     = std::chrono::time_point<std::chrono::system_clock>;
-  using work_item_type    = std::pair<due_date_type, work_func_type>;
-  using heap_storage_type = std::vector<work_item_type>;
-  using mutex_type        = std::recursive_mutex;
-  using lock_type         = std::lock_guard<mutex_type>;
+  using stored_work_item_type    = std::pair<due_date_type, work_item_type>;
+  using store_type        = std::vector<stored_work_item_type>;
+  using mutex_type        = std::mutex;
+  using lock_type         = std::unique_lock<mutex_type>;
 
 public:
   FutureWorkStore(const FutureWorkStore &rhs) = delete;
@@ -43,30 +44,95 @@ public:
   bool            operator==(const FutureWorkStore &rhs) const = delete;
   bool            operator<(const FutureWorkStore &rhs) const  = delete;
 
-  class WorkItemSorting
+  class StoredWorkItemSorting
   {
   public:
-    WorkItemSorting() {}
-    virtual ~WorkItemSorting() {}
+    StoredWorkItemSorting() {}
+    virtual ~StoredWorkItemSorting() {}
 
-    bool operator()(const work_item_type &a, const work_item_type &b) const
+    bool operator()(const stored_work_item_type &a, const stored_work_item_type &b) const
     {
       return a.first > b.first;
     }
   };
 
-  FutureWorkStore() { std::make_heap(workStore_.begin(), workStore_.end(), sorter_); }
+  FutureWorkStore() { std::make_heap(store_.begin(), store_.end(), sorter_); }
 
-  virtual ~FutureWorkStore() {}
+  virtual ~FutureWorkStore()
+  {
+    shutdown_.store(true);
+    lock_type mlock(mutex_); // wait in case anyone is in here.
+    store_.clear(); // remove any pending things
+  }
+
+  virtual void clear()
+  {
+    lock_type mlock(mutex_);
+    store_.clear();
+  }
 
   virtual bool IsDue()
   {
     lock_type mlock(mutex_);
-    if (workStore_.empty())
+    return IsDueActual();
+  }
+
+  virtual int Visit(std::function<void (work_item_type)> visitor, int maxprocesses)
+  {
+    lock_type mlock(mutex_, std::try_to_lock);
+    if (!mlock)
+    {
+      return -1;
+    }
+    int processed = 0;
+    while(IsDueActual())
+    {
+      if (shutdown_.load()) break;
+      if (processed >= maxprocesses) break;
+      auto work = GetNextActual();
+      visitor(work);
+      processed++;
+    }
+    return processed;
+  }
+
+  virtual work_item_type GetNext()
+  {
+    lock_type mlock(mutex_);
+    return GetNextActual();
+  }
+
+  template <typename F>
+  void Post(F &&f, uint32_t milliseconds)
+  {
+    if (shutdown_.load()) return;
+    lock_type mlock(mutex_);
+    auto      dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(milliseconds);
+    store_.push_back(stored_work_item_type(dueTime, f));
+    std::push_heap(store_.begin(), store_.end(), sorter_);
+  }
+
+private:
+
+  virtual work_item_type GetNextActual()
+  {
+    std::pop_heap(store_.begin(), store_.end(), sorter_);
+    auto nextDue = store_.back();
+    store_.pop_back();
+    return nextDue.second;
+  }
+
+  bool IsDueActual()
+  {
+    if (shutdown_.load())
     {
       return false;
     }
-    auto nextDue = workStore_.back();
+    if (store_.empty())
+    {
+      return false;
+    }
+    auto nextDue = store_.back();
 
     auto tp     = std::chrono::system_clock::now();
     auto due    = nextDue.first;
@@ -82,28 +148,10 @@ public:
     }
   }
 
-  virtual work_func_type GetNext()
-  {
-    lock_type mlock(mutex_);
-    std::pop_heap(workStore_.begin(), workStore_.end(), sorter_);
-    auto nextDue = workStore_.back();
-    workStore_.pop_back();
-    return nextDue.second;
-  }
-
-  template <typename F>
-  void Post(F &&f, uint32_t milliseconds)
-  {
-    lock_type mlock(mutex_);
-    auto      dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(milliseconds);
-    workStore_.push_back(work_item_type(dueTime, f));
-    std::push_heap(workStore_.begin(), workStore_.end(), sorter_);
-  }
-
-private:
-  WorkItemSorting    sorter_;
-  heap_storage_type  workStore_;
+  StoredWorkItemSorting    sorter_;
+  store_type         store_;
   mutable mutex_type mutex_;
+  std::atomic<bool> shutdown_{false};
 };
 
 }  // namespace details

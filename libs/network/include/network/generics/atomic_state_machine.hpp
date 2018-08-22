@@ -57,7 +57,7 @@ public:
     auto txn = std::make_pair(new_state, old_state);
     if (allowed_.find(txn) == allowed_.end())
     {
-      throw std::range_error(std::to_string(old_state) + " -> " + std::to_string(new_state) + " not allowed.");
+      throw std::range_error(std::to_string(old_state) + " -> " + std::to_string(new_state));
     }
     return true;
   }

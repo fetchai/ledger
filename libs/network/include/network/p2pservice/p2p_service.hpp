@@ -137,6 +137,12 @@ public:
     Start();
   }
 
+  ~P2PService()
+  {
+    thread_pool_ -> Stop();
+    FETCH_LOG_WARN(LOGGING_NAME, "P2PService DELETED!!!!!!!!!!!!!!!!!!!!!!!!!");
+  }
+
   /// Events for new peer discovery
   /// @{
   void OnPeerUpdateProfile(callback_peer_update_profile_type const &f)
@@ -161,6 +167,7 @@ public:
 
   void Stop()
   {
+    std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
     if (!running_) return;
     running_ = false;
 
