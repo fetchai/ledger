@@ -127,7 +127,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> &a, NDArray<T> &c) {
              std::vector<std::size_t> new_shape;
              if (!(ShapeFromBroadcast(a.shape(), c.shape(), new_shape))) throw py::index_error();
-
+             if (new_shape != a.shape())
+             {
+               py::print("broadcast shape (", new_shape, ") does not match shape of output array (", a.shape() ,")");
+               throw py::value_error();
+             }
              a.InlineAdd(c);
              return a;
            })
@@ -135,6 +139,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> &a, NDArray<T> &c) {
              std::vector<std::size_t> new_shape;
              if (!(ShapeFromBroadcast(a.shape(), c.shape(), new_shape))) throw py::index_error();
+             if (new_shape != a.shape())
+             {
+               py::print("broadcast shape (", new_shape, ") does not match shape of output array (", a.shape() ,")");
+               throw py::value_error();
+             }
 
              a.InlineMultiply(c);
              return a;
@@ -143,12 +152,26 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> &a, NDArray<T> &c) {
              std::vector<std::size_t> new_shape;
              if (!(ShapeFromBroadcast(a.shape(), c.shape(), new_shape))) throw py::index_error();
+             if (new_shape != a.shape())
+             {
+               py::print("broadcast shape (", new_shape, ") does not match shape of output array (", a.shape() ,")");
+               throw py::value_error();
+             }
 
              a.InlineSubtract(c);
              return a;
            })
-      .def("__truediv__",
-           [](NDArray<T> &a, NDArray<T> &c) {
+      .def("__itruediv__",
+           [](NDArray<T> &a, NDArray<T> &c)
+           {
+             std::vector<std::size_t> new_shape;
+             if (!(ShapeFromBroadcast(a.shape(), c.shape(), new_shape))) throw py::index_error();
+             if (new_shape != a.shape())
+             {
+               py::print("broadcast shape (", new_shape, ") does not match shape of output array (", a.shape() ,")");
+               throw py::value_error();
+             }
+
              a.InlineDivide(c);
              return a;
            })
@@ -167,8 +190,10 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.InlineSubtract(c);
              return a;
            })
-      .def("__truediv__",
+      .def("__itruediv__",
            [](NDArray<T> &a, T const &c) {
+             py::print("hi4");
+
              a.InlineDivide(c);
              return a;
            })
