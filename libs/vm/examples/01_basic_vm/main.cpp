@@ -11,41 +11,6 @@ int main(int argc, char **argv)
     exit(-9);
   }
 
-  // asserts!
-  // fetch::math::linalg::Matrix<float, fetch::memory::Array<float>> a(4, 6);
-  // a *= 2.7f;
-
-  // this works
-  // fetch::math::linalg::Matrix<float, fetch::memory::Array<float>> a(2, 4);
-  // a *= 2.7f;
-
-  // this works
-  // fetch::math::linalg::Matrix<float, fetch::memory::Array<float>> a(4, 8);
-  // a *= 2.7f;
-
-  // this works
-  // fetch::math::linalg::Matrix<float, fetch::memory::Array<float>> a(6, 12);
-  // a *= 2.7f;
-
-  // odd columns assert!
-  //
-  // not ok
-  // fetch::math::linalg::Matrix<double, fetch::memory::Array<double>> a(2, 3);
-  // ok
-  // fetch::math::linalg::Matrix<double, fetch::memory::Array<double>> a(2, 4);
-  // ok
-  // fetch::math::linalg::Matrix<double, fetch::memory::Array<double>> a(9, 6);
-  // ok
-  // fetch::math::linalg::Matrix<double, fetch::memory::Array<double>> a(11, 6);
-  // not ok
-  // fetch::math::linalg::Matrix<double, fetch::memory::Array<double>> a(11, 7);
-  // ok
-  // fetch::math::linalg::Matrix<double, fetch::memory::Array<double>> a(11, 8);
-  // a += 2.0;
-  // a -= 2.0;
-  // a *= 2.0;
-  // a /= 2.0;
-
   std::ifstream      file(argv[1], std::ios::binary);
   std::ostringstream ss;
   ss << file.rdbuf();
@@ -76,5 +41,6 @@ int main(int argc, char **argv)
   }
 
   vm.Execute(script, "main");
+  delete compiler;
   return 0;
 }
