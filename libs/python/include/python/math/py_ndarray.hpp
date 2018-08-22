@@ -48,6 +48,21 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.Flatten();
              return a;
            })
+      .def("Zeros",
+           [](NDArray<T> &a, std::vector<std::size_t> shape)
+           {
+             NDArray<T> ret{shape};
+             ret = a.Zeros(shape);
+             return ret;
+           }
+      )
+      .def("Ones", [](NDArray<T> &a, std::vector<std::size_t> shape)
+           {
+             NDArray<T> ret{shape};
+             ret = a.Ones(shape);
+             return ret;
+           }
+      )
       .def("__add__",
            [](NDArray<T> &b, NDArray<T> &c) {
              NDArray<T>               a;
