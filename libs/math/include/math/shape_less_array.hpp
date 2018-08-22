@@ -74,7 +74,16 @@ public:
    */
   void SetAllZero() { data().SetAllZero(); }
 
-  void SetAllOne() { data().SetAllOne(); }
+  /**
+   * Inefficient implementation of set all one. A low level method in memory::SharedArray would be preferable
+   */
+  void SetAllOne()
+  {
+    for(std::size_t i = 0; i < data().size(); i++)
+    {
+      data()[i] = 1;
+    }
+  }
 
 
   /* Set all padded bytes to zero.
