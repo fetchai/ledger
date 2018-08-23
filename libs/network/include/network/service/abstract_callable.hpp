@@ -24,6 +24,44 @@ namespace fetch {
 namespace service {
 
 namespace details {
+
+template <typename T>
+using base_type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+
+template <typename R, typename F, typename... Args>
+struct ArgsToString
+{
+  static std::string Value()
+  {
+    return serializers::TypeRegister<base_type<F>>::name() + std::string(", ") +
+           ArgsToString<R, Args...>::Value();
+  }
+};
+
+template <typename R, typename F>
+struct ArgsToString<R, F>
+{
+  static std::string Value() { return serializers::TypeRegister<base_type<F>>::name(); }
+};
+
+template <typename R>
+struct ArgsToString<R, void>
+{
+  static std::string Value() { return ""; }
+};
+
+template <typename C, typename R, typename... Args>
+struct SignatureToString
+{
+  static std::string Signature()
+  {
+    return std::string(serializers::TypeRegister<base_type<R>>::name()) + std::string(" ") +
+           std::string(serializers::TypeRegister<base_type<C>>::name()) +
+           std::string("::function_pointer") + std::string("(") +
+           ArgsToString<R, Args...>::Value() + std::string(")");
+  }
+};
+
 /* Argument packing routines for callables.
  * @T is the type of the argument that will be packed next.
  * @arguments are the arguments that remains to be pack
@@ -217,10 +255,15 @@ public:
   virtual void operator()(serializer_type &result, CallableArgumentList const &additional_args,
                           serializer_type &params)                          = 0;
 
-  uint64_t const &meta_data() const { return meta_data_; }
+  uint64_t const &   meta_data() const { return meta_data_; }
+  std::string const &signature() const { return signature_; }
+
+protected:
+  void SetSignature(std::string const &signature) { signature_ = signature; }
 
 private:
-  uint64_t meta_data_ = 0;
+  uint64_t    meta_data_ = 0;
+  std::string signature_;
 };
 }  // namespace service
 }  // namespace fetch
