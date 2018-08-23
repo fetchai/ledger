@@ -47,7 +47,7 @@ def project_source_files():
 
 
 def read_file(path):
-    with open(path, 'r') as input_file:
+    with open(path, 'r', encoding='utf-8') as input_file:
         return input_file.read()
 
 
@@ -85,7 +85,7 @@ def update_source_file(path):
         print('Unable to apply update to file:', os.path.relpath(path, PROJECT_ROOT))
 
     # update the contents of the file
-    with open(path, 'w') as output_file:
+    with open(path, 'w', encoding='utf-8') as output_file:
         output_file.write(contents)
 
     return True
