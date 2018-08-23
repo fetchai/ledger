@@ -8,7 +8,7 @@ pipeline {
 
   stages {
 
-    stage('License Chesks') {
+    stage('License Checks') {
         steps {
             sh './scripts/check-license-header.py'
         }
