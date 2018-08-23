@@ -415,56 +415,111 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              using size_type = typename NDArray<T>::size_type;
 
              // get shape of the numpy array
-             std::vector<std::size_t> new_shape;
+             std::vector<std::size_t> shape;
+             std::vector<std::size_t> stride;
+             std::vector<std::size_t> index;
              for (std::size_t i = 0; i < buf.shape.size(); ++i)
              {
-               new_shape.push_back(size_type(buf.shape[i]));
+               shape.push_back(size_type(buf.shape[i]));
+               stride.push_back(std::size_t(buf.strides[i]) / sizeof(T));
+               index.push_back(0);
              }
-             std::reverse(new_shape.begin(), new_shape.end());
-             std::size_t total_size = NDArray<T>::SizeFromShape(new_shape);
+
+             std::size_t total_size = NDArray<T>::SizeFromShape(shape);
 
              // copy the data
              T *ptr = (T *)buf.ptr;
              s.Resize(total_size);
-             if (s.CanReshape(new_shape))
+             if (s.CanReshape(shape))
              {
-               s.Reshape(new_shape);
+               s.Reshape(shape);
              }
              else
              {
                throw py::index_error();
              }
-             NDArrayIterator<T, typename NDArray<T>::container_type> it(s);
-             // TODO(tfr): check if row major.
-             it.ReverseAxes();
 
-             for (std::size_t i = 0; i < total_size; ++i)
+             NDArrayIterator<T, typename NDArray<T>::container_type> it(s);
+
+             for (std::size_t j = 0; j < total_size; ++j)
              {
-               *it = ptr[i];
+               // Computing numpy index
+               std::size_t i   = 0;
+               std::size_t pos = 0;
+               for (i = 0; i < shape.size(); ++i)
+               {
+                 pos += stride[i] * index[i];
+               }
+               if ((pos >= total_size))
+               {
+                 throw py::index_error();
+               }
+
+               // Updating
+               *it = ptr[pos];
                ++it;
+
+               // Increamenting Numpy
+               i = 0;
+               ++index[i];
+               while (index[i] >= shape[i])
+               {
+                 index[i] = 0;
+                 ++i;
+                 if (i >= shape.size())
+                 {
+                   break;
+                 }
+                 ++index[i];
+               }
              }
            })
       .def("ToNumpy", [](NDArray<T> &s) {
-        auto                     result = py::array_t<T>({s.size()});
-        auto                     buf    = result.request();
         std::vector<std::size_t> shape  = s.shape();
-        std::reverse(shape.begin(), shape.end());
+        auto                     result = py::array_t<T>(shape);
+        auto                     buf    = result.request();
 
-        result.resize(shape);
+        std::vector<std::size_t> stride;
+        std::vector<std::size_t> index;
+        for (std::size_t i = 0; i < buf.shape.size(); ++i)
+        {
+          stride.push_back(std::size_t(buf.strides[i]) / sizeof(T));
+          index.push_back(0);
+        }
 
         // copy the data
         T *                                                     ptr = (T *)buf.ptr;
         NDArrayIterator<T, typename NDArray<T>::container_type> it(s);
-        // TODO(tfr): check if row major.
-        it.ReverseAxes();
 
-        for (size_t i = 0; i < s.size(); ++i)
+        for (std::size_t j = 0; j < s.size(); ++j)
         {
-          ptr[i] = *it;
+          // Computing numpy index
+          std::size_t i   = 0;
+          std::size_t pos = 0;
+          for (i = 0; i < shape.size(); ++i)
+          {
+            pos += stride[i] * index[i];
+          }
+
+          // Updating
+          ptr[pos] = *it;
           ++it;
+
+          // Increamenting Numpy
+          i = 0;
+          ++index[i];
+          while (index[i] >= shape[i])
+          {
+            index[i] = 0;
+            ++i;
+            if (i >= shape.size())
+            {
+              break;
+            }
+            ++index[i];
+          }
         }
 
-        // reshape the array
         return result;
       });
   //                  [](NDArray<T> &a, NDArray<T> &b)
