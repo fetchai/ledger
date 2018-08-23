@@ -11,6 +11,11 @@ namespace math {
 template <typename T, typename C>
 class NDArray;
 
+/* Computes the shape resulting from squeezing.
+ * @param a is the input shape.
+ * @param b is the output shape.
+ * @param axis is the axis to squeeze.
+ */
 bool ShapeFromSqueeze(std::vector<std::size_t> const &a, std::vector<std::size_t> &b,
                       uint64_t const &axis = uint64_t(-1))
 {
@@ -42,6 +47,11 @@ bool ShapeFromSqueeze(std::vector<std::size_t> const &a, std::vector<std::size_t
   return b.size() != a.size();
 }
 
+/* Computes the shape resulting from squeezing.
+ * @param a is the input shape.
+ * @param b is the output shape.
+ * @param axes are the axes to squeeze.
+ */
 bool ShapeFromSqueeze(std::vector<std::size_t> const &a, std::vector<std::size_t> &b,
                       std::unordered_set<uint64_t> const &axes)
 {
@@ -59,14 +69,22 @@ bool ShapeFromSqueeze(std::vector<std::size_t> const &a, std::vector<std::size_t
   return b.size() != a.size();
 }
 
+/* Squeeze an NDArray.
+ * @param arr is the array.
+ * @param axis is the axes to squeeze.
+ */
 template <typename T, typename C>
 void Squeeze(NDArray<T, C> &arr, uint64_t const &axis = uint64_t(-1))
 {
   std::vector<std::size_t> newshape;
   ShapeFromSqueeze(arr.shape(), newshape, axis);
-  arr.Reshape(newshape);
+  arr.LazyReshape(newshape);
 }
 
+/* Squeeze an NDArray.
+ * @param arr is the array.
+ * @param axes are the axes to squeeze.
+ */
 template <typename T, typename C>
 void Squeeze(NDArray<T, C> &arr, std::unordered_set<uint64_t> const &axes)
 {
@@ -75,9 +93,14 @@ void Squeeze(NDArray<T, C> &arr, std::unordered_set<uint64_t> const &axes)
   arr.Reshape(newshape);
 }
 
+/* Reduce an NDArray by one dimension.
+ * @param fnc is the reduction function.
+ * @param input is the array the input array.
+ * @param output is the array the output array.
+ * @param axis are the axis along which the reduction happens.
+ */
 template <typename F, typename T, typename C>
-void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, T const &def_value = 0,
-            uint64_t const &axis = 0)
+void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, uint64_t const &axis = 0)
 {
   std::size_t N;
 
@@ -99,8 +122,9 @@ void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, T const &def_val
 
   if (axis != 0)
   {
-    it_a.PermuteAxes(0, axis);
-    it_b.PermuteAxes(0, axis);
+    // Move the axis we want to reduce to the front
+    // to make it iterable in the inner most loop.
+    it_a.MoveAxesToFront(axis);
   }
 
   N = it_a.range(0).total_steps;
@@ -108,8 +132,10 @@ void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, T const &def_val
   while (bool(it_a) && bool(it_b))
   {
 
-    *it_b = def_value;
-    for (std::size_t i = 0; i < N; ++i)
+    *it_b = *it_a;
+    ++it_a;
+
+    for (std::size_t i = 0; i < N - 1; ++i)
     {
       *it_b = fnc(*it_b, *it_a);
       ++it_a;
