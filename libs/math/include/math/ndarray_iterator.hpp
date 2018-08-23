@@ -183,10 +183,7 @@ public:
     return cur_index;
   }
 
-  NDIteratorRange const &range(std::size_t const &i)
-  {
-    return ranges_[i];
-  }
+  NDIteratorRange const &range(std::size_t const &i) { return ranges_[i]; }
 
 protected:
   std::vector<NDIteratorRange> ranges_;

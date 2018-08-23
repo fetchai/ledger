@@ -92,7 +92,6 @@ TEST(ndarray, iterator_4dim_copy_test)
   }
 }
 
-
 TEST(ndarray, iterator_4dim_permute_test)
 {
 
@@ -105,8 +104,8 @@ TEST(ndarray, iterator_4dim_permute_test)
       array, {{1, 2, 1}, {0, 6, 1}, {1, 4, 1}, {0, 6, 1}});
   NDArrayIterator<double, NDArray<double>::container_type> it2(
       ret, {{1, 2, 1}, {0, 6, 1}, {1, 4, 1}, {0, 6, 1}});
-  
-  it.PermuteAxes(1,3);
+
+  it.PermuteAxes(1, 3);
   while (it2)
   {
 

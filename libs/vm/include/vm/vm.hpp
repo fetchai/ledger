@@ -3,8 +3,8 @@
 #include <utility>
 
 #include "defs.hpp"
-#include "math/linalg/matrix.hpp"
 #include "math/arithmetic/comparison.hpp"
+#include "math/linalg/matrix.hpp"
 
 namespace fetch {
 namespace vm {

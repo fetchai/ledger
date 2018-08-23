@@ -21,9 +21,9 @@ TEST(ndarray, )
   for (std::size_t j = 0; j < ret.shape(1); ++j)
   {
     for (std::size_t i = 0; i < ret.shape(0); ++i)
-  {
+    {
       double ref = 0.0;
-      for(std::size_t k= 3 * m; k < (m+1) *3; ++k)
+      for (std::size_t k = 3 * m; k < (m + 1) * 3; ++k)
       {
         ref += double(k);
       }
