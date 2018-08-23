@@ -8,6 +8,11 @@ pipeline {
 
   stages {
 
+    stage('License Chesks') {
+        steps {
+            sh './scripts/check-license-header.py'
+        }
+    }
 
     stage('Clang Format Checks') {
         steps {
