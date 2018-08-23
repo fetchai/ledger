@@ -92,47 +92,48 @@ public:
     std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(type));
   }
 
-  // TODO(unknown): THis is ugly. The right way to do this would be to have a separate
-  // constant class that is return for slice(...) const
   vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const
   {
     assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
-    // TODO(unknown): Assert unneccessary
-    //    assert(std::size_t(length / E_SIMD_COUNT) * E_SIMD_COUNT == length);
-    assert((length + offset) <= size_);
+    assert((length + offset) <= padded_size());
     return vector_slice_type(pointer_ + offset, length);
   }
 
-  T &operator[](std::size_t const &n)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type &operator[](S const &n)
+  {
+    assert(pointer_ != nullptr);
+    assert(std::size_t(n) < padded_size());
+    return pointer_[n];
+  }
+
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type const &operator[](S const &n) const
+  {
+    assert(pointer_ != nullptr);
+
+    assert(std::size_t(n) < padded_size());
+    return pointer_[n];
+  }
+
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type &At(S const &n)
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
     return pointer_[n];
   }
 
-  T const &operator[](std::size_t const &n) const
-  {
-    assert(pointer_ != nullptr);
-
-    assert(n < padded_size());
-    return pointer_[n];
-  }
-
-  T &At(std::size_t const &n)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type const &At(S const &n) const
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
     return pointer_[n];
   }
 
-  T const &At(std::size_t const &n) const
-  {
-    assert(pointer_ != nullptr);
-    assert(n < padded_size());
-    return pointer_[n];
-  }
-
-  T const &Set(std::size_t const &n, T const &v)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type const &Set(S const &n, T const &v)
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
