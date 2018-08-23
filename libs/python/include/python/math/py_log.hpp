@@ -16,6 +16,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
 #include "math/linalg/matrix.hpp"
 #include "math/log.hpp"
 #include "math/ndarray.hpp"
