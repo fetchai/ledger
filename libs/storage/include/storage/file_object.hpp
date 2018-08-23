@@ -20,8 +20,8 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
-#include "storage/versioned_random_access_stack.hpp"
 #include "storage/storage_exception.hpp"
+#include "storage/versioned_random_access_stack.hpp"
 
 #include <cstdint>
 
