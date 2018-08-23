@@ -86,7 +86,7 @@ public:
         ptr->ClearClosures();
         ptr->Close();
 
-        int timeout = 100;
+        int timeout = 5000;
 
         // Can only guarantee we are not being called when socket is closed
         while (!ptr->Closed())
@@ -125,6 +125,25 @@ public:
     if (ptr)
     {
       return ptr->is_alive();
+    }
+    return false;
+  }
+
+  bool WaitForAlive(std::size_t milliseconds) const
+  {
+    auto ptr = connection_.lock();
+
+    if (ptr)
+    {
+      for (std::size_t i = 0; i < milliseconds; i += 10)
+      {
+        if (ptr->is_alive())
+        {
+          return true;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
     }
     return false;
   }
