@@ -32,6 +32,19 @@
 namespace fetch {
 namespace math {
 
+struct SimpleComparator
+{
+  const std::vector<std::size_t> & value_vector;
+
+  SimpleComparator(const std::vector<std::size_t> & val_vec):
+      value_vector(val_vec) {}
+
+  bool operator()(std::size_t i1, std::size_t i2)
+  {
+    return value_vector[i1] < value_vector[i2];
+  }
+};
+
 template <typename T, typename C = memory::SharedArray<T>>
 class NDArray : public ShapeLessArray<T, C>
 {
@@ -1070,6 +1083,48 @@ public:
     this->super_type::Relu(x);
   }
 
+  /**
+   * Copies the values of updates into the specified indices of the first dimension of data in this object
+   */
+  void Scatter(std::vector<data_type> &updates, std::vector<std::size_t> &indices)
+  {
+    // check indices is integer only
+
+    // check
+
+
+    // sort indices and updates into ascending order
+    std::sort(updates.begin(), updates.end(), fetch::math::SimpleComparator(indices));
+    std::sort(indices.begin(), indices.end());
+
+    // set up an iterator
+    NDArrayIterator<data_type, container_type> arr_iterator{*this};
+
+    std::size_t cur_idx, arr_count = 0;
+
+    for (std::size_t count = 0; count < indices.size(); ++count)
+    {
+      cur_idx = indices[count];
+
+      while (arr_count < cur_idx)
+      {
+        ++arr_iterator;
+        ++arr_count;
+      }
+
+      *arr_iterator = updates[count];
+
+    }
+  }
+
+  /**
+   *
+   */
+   void Gather(self_type const&x)
+  {
+
+  }
+
 private:
   std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const
   {
@@ -1104,5 +1159,7 @@ private:
   std::size_t              size_ = 0;
   std::vector<std::size_t> shape_;
 };
+
+
 }  // namespace math
 }  // namespace fetch
