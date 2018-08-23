@@ -68,7 +68,7 @@ public:
     {
       step.push_back({0, i, 1});
     }
-    Setup(step);
+    Setup(step, array_.shape());
   }
 
   /**
@@ -79,7 +79,18 @@ public:
   NDArrayIterator(ndarray_type &array, std::vector<std::vector<std::size_t>> const &step)
     : array_(array)
   {
-    Setup(step);
+    Setup(step, array_.shape());
+  }
+
+  NDArrayIterator(ndarray_type &array, std::vector<std::size_t> const &shape) : array_(array)
+  {
+    std::vector<std::vector<std::size_t>> step{};
+    for (auto i : array.shape())
+    {
+      step.push_back({0, i, 1});
+    }
+
+    Setup(step, shape);
   }
 
   /**
@@ -223,7 +234,8 @@ protected:
   std::size_t                  size_       = 0;
 
 private:
-  void Setup(std::vector<std::vector<std::size_t>> const &step)
+  void Setup(std::vector<std::vector<std::size_t>> const &step,
+             std::vector<std::size_t> const &             shape)
   {
     assert(array_.shape().size() == step.size());
     std::size_t volume = 1;
@@ -253,7 +265,7 @@ private:
       position_ += volume * s.from;
       size_ *= s.total_steps;
 
-      volume *= array_.shape(i);
+      volume *= shape[i];
       ranges_.push_back(s);
     }
   }

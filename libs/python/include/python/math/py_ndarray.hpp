@@ -20,6 +20,7 @@
 #include "math/exp.hpp"
 #include "math/log.hpp"
 #include "math/ndarray.hpp"
+#include "math/ndarray_squeeze.hpp"
 #include "python/fetch_pybind.hpp"
 #include <pybind11/stl.h>
 
@@ -33,6 +34,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
   namespace py = pybind11;
   //             .def("Relu",
   py::class_<NDArray<T>, fetch::math::ShapeLessArray<T>>(module, custom_name.c_str())
+      .def(py::init<>())
       .def(py::init<std::size_t const &>())
       .def(py::init<std::vector<std::size_t> const &>())
       .def("Copy", [](NDArray<T> &a) { return a.Copy(); })
@@ -50,6 +52,68 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def_static("Zeros", &NDArray<T>::Zeroes)
       .def_static("Ones", &NDArray<T>::Ones)
+
+      // TODO(tfr): Move implementation of these functions to ndarray.
+      .def("reduce_sum",
+           [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
+             if (axis >= x.shape().size())
+             {
+               throw py::index_error();
+             }
+             Reduce([](T const &a, T const &b) { return a + b; }, y, x, axis);
+           })
+      .def("reduce_mean",
+           [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
+             if (axis >= x.shape().size())
+             {
+               throw py::index_error();
+             }
+             Reduce([](T const &a, T const &b) { return a + b; }, y, x, axis);
+
+             T d = T(1.) / T(x.shape(axis));
+             for (std::size_t i = 0; i < x.size(); ++i)
+             {
+               x[i] *= d;
+             }
+           })
+      .def("transpose",
+           [](NDArray<T> &x, NDArray<T> &y, std::vector<uint64_t> const &perm) {
+             if (perm.size() != y.shape().size())
+             {
+               throw py::index_error();
+             }
+             std::vector<std::size_t> newshape;
+             newshape.reserve(y.shape().size());
+
+             for (std::size_t i = 0; i < perm.size(); ++i)
+             {
+               newshape.push_back(y.shape(perm[i]));
+             }
+
+             x.ResizeFromShape(newshape);
+
+             NDArrayIterator<T, typename NDArray<T>::container_type> it(x);
+             NDArrayIterator<T, typename NDArray<T>::container_type> it2(y);
+             it.ReverseAxes();
+             while (bool(it) && bool(it2))
+             {
+               *it = *it2;
+               ++it;
+               ++it2;
+             }
+           })
+      .def("reduce_any",
+           [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
+             Reduce(
+                 [](T const &a, T const &b) {
+                   if (a != 0) return 1;
+                   if (b != 0) return 1;
+                   return 0;
+                 },
+                 y, x, axis);
+           })
+      //      .def("expand_dims",[](NDArray<T> &x, NDArray<T> &y, uint64_t const& axis) {
+      //      })
       .def("__add__",
            [](NDArray<T> &b, NDArray<T> &c) {
              // identify the correct output shape
@@ -200,11 +264,13 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> const &s, NDArray<T> const &other) { return s.operator!=(other); })
       .def("__getitem__",
            [](NDArray<T> const &s, std::size_t idx) {
+             std::cout << "GET 4" << std::endl;
              if (idx >= s.size()) throw py::index_error();
              return s[idx];
            })
       .def("__getitem__",
            [](NDArray<T> &a, std::vector<py::slice> slices) {
+             std::cout << "GET 3" << std::endl;
              // std::vector<size_t> start, stop, step, slicelength;
              std::vector<std::vector<std::size_t>> range;
              range.resize(slices.size());
@@ -236,21 +302,10 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
                ++it2;
              }
              return ret;
-             /*
-                          // set up the view to extract
-                          NDArrayView arr_view = NDArrayView();
-                          for (std::size_t i = 0; i < start.size(); ++i)
-                          {
-                            arr_view.from.push_back(start[i]);
-                            arr_view.to.push_back(stop[i]);
-                            arr_view.step.push_back(step[i]);
-                          }
-
-                          return s.GetRange(arr_view);
-             */
            })
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<std::vector<std::size_t>> const &idxs) {
+             std::cout << "GET 2" << std::endl;
              assert(idxs.size() > 0);
              for (auto cur_idx : idxs)
              {
@@ -270,6 +325,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<std::size_t> const &idxs) {
+             std::cout << "GET 1" << std::endl;
              assert(idxs.size() == s.shape().size());
              return s.Get(idxs);
            })
