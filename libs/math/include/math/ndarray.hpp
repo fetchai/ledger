@@ -16,6 +16,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
 #include "math/ndarray_view.hpp"
 #include "math/shape_less_array.hpp"
 #include "math/statistics/max.hpp"
