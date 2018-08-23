@@ -32,15 +32,15 @@
 namespace fetch {
 namespace math {
 
-struct SimpleComparator
-{
+namespace details {
+struct SimpleComparator {
   const std::vector<std::size_t> &value_vector;
 
   SimpleComparator(const std::vector<std::size_t> &val_vec) : value_vector(val_vec) {}
 
   bool operator()(std::size_t i1, std::size_t i2) { return value_vector[i1] < value_vector[i2]; }
 };
-
+}
 template <typename T, typename C = memory::SharedArray<T>>
 class NDArray : public ShapeLessArray<T, C>
 {
