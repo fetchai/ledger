@@ -253,9 +253,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<std::size_t> const &idxs) {
              assert(idxs.size() == s.shape().size());
-
-             py::print("entered this getitem");
-
              return s.Get(idxs);
            })
       .def("__setitem__",
