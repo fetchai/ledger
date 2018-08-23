@@ -9,7 +9,7 @@
 
 using namespace fetch::math;
 
-TEST(ndarray, ndarray_reduce_test)
+TEST(ndarray, dimension_trivial_reduction)
 {
   NDArray<double> a = NDArray<double>::Arange(0, 3 * 4 * 5, 1);
   a.Reshape({3, 4, 5});
