@@ -39,7 +39,7 @@ inline void ExpImplementation(T const &array, T &ret)
   }
 }
 template <typename T>
-inline T ExpImplementation(T const &array, memory::Range r, T &ret)
+inline T ExpImplementation(T const &array, memory::Range const &r, T &ret)
 {
   ret.Reshape(array.shape());
 

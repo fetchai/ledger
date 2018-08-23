@@ -92,8 +92,7 @@ public:
    */
   static self_type Zeroes(std::vector<std::size_t> const &shape)
   {
-    std::size_t n = std::accumulate(std::begin(shape), std::end(shape), std::size_t(1),
-                                    std::multiplies<std::size_t>());
+    std::size_t n = SizeFromShape(shape);
     self_type   output{super_type::Zeroes(n)};
     output.LazyReshape(shape);
     return output;
@@ -706,107 +705,107 @@ public:
    * sine of x
    * @param x
    */
-  void sin(self_type const &x)
+  void Sin(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
 
-    this->super_type::sin(x);
+    this->super_type::Sin(x);
   }
   /**
    * cosine of x
    * @param x
    */
-  void cos(self_type const &x)
+  void Cos(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
 
-    this->super_type::cos(x);
+    this->super_type::Cos(x);
   }
   /**
    * tangent of x
    * @param x
    */
-  void tan(self_type const &x)
+  void Tan(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
 
-    this->super_type::tan(x);
+    this->super_type::Tan(x);
   }
   /**
    * arc sine of x
    * @param x
    */
-  void asin(self_type const &x)
+  void Asin(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
 
-    this->super_type::asin(x);
+    this->super_type::Asin(x);
   }
   /**
    * arc cosine of x
    * @param x
    */
-  void acos(self_type const &x)
+  void Acos(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
 
-    this->super_type::acos(x);
+    this->super_type::Acos(x);
   }
   /**
    * arc tangent of x
    * @param x
    */
-  void atan(self_type const &x)
+  void Atan(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
 
-    this->super_type::atan(x);
+    this->super_type::Atan(x);
   }
 
   /**
    * hyperbolic sine of x
    * @param x
    */
-  void sinh(self_type const &x)
+  void Sinh(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
 
-    this->super_type::sinh(x);
+    this->super_type::Sinh(x);
   }
   /**
    * hyperbolic cosine of x
    * @param x
    */
-  void cosh(self_type const &x)
+  void Cosh(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
 
-    this->super_type::cosh(x);
+    this->super_type::Cosh(x);
   }
   /**
    * hyperbolic tangent of x
    * @param x
    */
-  void tanh(self_type const &x)
+  void Tanh(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
 
-    this->super_type::tanh(x);
+    this->super_type::Tanh(x);
   }
   /**
    * hyperbolic arc sine of x
    * @param x
    */
-  void asinh(self_type const &x)
+  void Asinh(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -817,7 +816,7 @@ public:
    * hyperbolic arc cosine of x
    * @param x
    */
-  void acosh(self_type const &x)
+  void Acosh(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -828,7 +827,7 @@ public:
    * hyperbolic arc tangent of x
    * @param x
    */
-  void atanh(self_type const &x)
+  void Atanh(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -840,7 +839,7 @@ public:
    * error function of x
    * @param x
    */
-  void erf(self_type const &x)
+  void Erf(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -851,7 +850,7 @@ public:
    * complementary error function of x
    * @param x
    */
-  void erfc(self_type const &x)
+  void Erfc(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -862,7 +861,7 @@ public:
    * factorial of x-1
    * @param x
    */
-  void tgamma(self_type const &x)
+  void Tgamma(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -873,7 +872,7 @@ public:
    * log of factorial of x-1
    * @param x
    */
-  void lgamma(self_type const &x)
+  void Lgamma(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -884,7 +883,7 @@ public:
    * ceiling round
    * @param x
    */
-  void ceil(self_type const &x)
+  void Ceil(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -895,7 +894,7 @@ public:
    * floor rounding
    * @param x
    */
-  void floor(self_type const &x)
+  void Floor(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -906,7 +905,7 @@ public:
    * round towards 0
    * @param x
    */
-  void trunc(self_type const &x)
+  void Trunc(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -918,7 +917,7 @@ public:
    * round to nearest int in int format
    * @param x
    */
-  void round(self_type const &x)
+  void Round(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -930,7 +929,7 @@ public:
    * round to nearest int in float format
    * @param x
    */
-  void lround(self_type const &x)
+  void Lround(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -942,7 +941,7 @@ public:
    * round to nearest int in float format with long long return
    * @param x
    */
-  void llround(self_type const &x)
+  void Llround(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -954,7 +953,7 @@ public:
    * round to nearest int in float format
    * @param x
    */
-  void nearbyint(self_type const &x)
+  void Nearbyint(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -966,7 +965,7 @@ public:
    * round to nearest int
    * @param x
    */
-  void rint(self_type const &x)
+  void Rint(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -978,7 +977,7 @@ public:
    *
    * @param x
    */
-  void lrint(self_type const &x)
+  void Lrint(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -990,7 +989,7 @@ public:
    *
    * @param x
    */
-  void llrint(self_type const &x)
+  void Llrint(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -1002,7 +1001,7 @@ public:
    * finite check
    * @param x
    */
-  void isfinite(self_type const &x)
+  void Isfinite(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -1014,7 +1013,7 @@ public:
    * checks for inf values
    * @param x
    */
-  void isinf(self_type const &x)
+  void Isinf(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
@@ -1026,12 +1025,12 @@ public:
    * checks for nans
    * @param x
    */
-  void isnan(self_type const &x)
+  void Isnan(self_type const &x)
   {
     assert(this->size() == x.size());
     this->LazyReshape(x.shape());
 
-    this->super_type::isNan(x);
+    this->super_type::Isnan(x);
   }
 
 private:
