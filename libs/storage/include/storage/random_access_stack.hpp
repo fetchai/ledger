@@ -51,7 +51,6 @@ template <typename T, typename D = uint64_t>
 class RandomAccessStack
 {
 private:
-
   /**
    * Header holding information for the structure. Magic is used to determine the endianness of the
    * platform, extra allows the user to write metadata for the structure. This is used for example
@@ -366,9 +365,9 @@ private:
   /**
    * Write the header to disk. Not usually necessary since we can just refer to our local one
    *
-   * @param: 
+   * @param:
    *
-   * @return: 
+   * @return:
    */
   void StoreHeader()
   {
@@ -379,7 +378,6 @@ private:
       throw StorageException("Error could not write header - todo throw error");
     }
   }
-
 };
 }  // namespace storage
 }  // namespace fetch

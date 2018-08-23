@@ -60,8 +60,8 @@
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/key.hpp"
 #include "storage/random_access_stack.hpp"
-#include "storage/versioned_random_access_stack.hpp"
 #include "storage/storage_exception.hpp"
+#include "storage/versioned_random_access_stack.hpp"
 
 #include <cstring>
 #include <deque>
@@ -692,7 +692,7 @@ private:
    *
    * Optionally specify a forbidden parent
    *
-   * @param: kv The key value to set. If the operation fails, no guarantees are made about its 
+   * @param: kv The key value to set. If the operation fails, no guarantees are made about its
    *            value. Otherwise, it will be set to the nearest left parent.
    *
    * @param: forbidden_parent Optional value to prevent iterations past a certain node

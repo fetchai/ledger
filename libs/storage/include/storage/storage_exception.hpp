@@ -98,5 +98,5 @@ private:
 
   LOG_CONTEXT_VARIABLE(stack_trace_)
 };
-}  // namespace serializers
+}  // namespace storage
 }  // namespace fetch

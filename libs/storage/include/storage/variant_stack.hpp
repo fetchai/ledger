@@ -62,7 +62,6 @@ namespace storage {
 class VariantStack
 {
 public:
-
   /**
    * Seperator holding information about previous object.
    */
