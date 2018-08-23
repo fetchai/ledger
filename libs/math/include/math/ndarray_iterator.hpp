@@ -86,7 +86,7 @@ public:
    * identifies whether the iterator is still valid or has finished iterating
    * @return boolean indicating validity
    */
-  operator bool() { return is_valid_; }
+  operator bool() { return counter_ < size_; }
 
   /**
    * incrementer, i.e. increment through the memory by 1 position making n-dim adjustments as
@@ -97,6 +97,7 @@ public:
   {
     bool        next;
     std::size_t i = 0;
+    ++counter_;
     do
     {
 
@@ -126,12 +127,7 @@ public:
     // check if iteration is complete
     if (i == ranges_.size())
     {
-      if (total_runs_ <= 1)
-      {
-        is_valid_ = false;
-        return *this;
-      }
-      else
+      if (counter_ < size_)
       {
         --total_runs_;
         position_ = 0;
@@ -168,6 +164,21 @@ public:
     std::swap(ranges_[a], ranges_[b]);
   }
 
+  void MoveAxesToFront(std::size_t const &a)
+  {
+    std::vector<NDIteratorRange> new_ranges;
+    new_ranges.reserve(ranges_.size());
+    new_ranges.push_back(ranges_[a]);
+    for (std::size_t i = 0; i < ranges_.size(); ++i)
+    {
+      if (i != a)
+      {
+        new_ranges.push_back(ranges_[i]);
+      }
+    }
+    std::swap(new_ranges, ranges_);
+  }
+
   /**
    * dereference, i.e. give the value at the current position of the iterator
    * @return
@@ -175,6 +186,7 @@ public:
   type &operator*()
   {
     assert(position_ < array_.size());
+
     return array_[position_];
   }
 
@@ -201,10 +213,12 @@ public:
     return cur_index;
   }
 
+  NDIteratorRange const &range(std::size_t const &i) { return ranges_[i]; }
+
 protected:
   std::vector<NDIteratorRange> ranges_;
-  bool                         is_valid_   = true;
   std::size_t                  total_runs_ = 1;
+  std::size_t                  size_       = 0;
 
 private:
   void Setup(std::vector<std::vector<std::size_t>> const &step)
@@ -245,7 +259,7 @@ private:
   ndarray_type &array_;
   std::size_t   position_ = 0;
 
-  std::size_t size_ = 0;
+  std::size_t counter_ = 0;
 };
 
 }  // namespace math

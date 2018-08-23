@@ -82,7 +82,8 @@ template <typename T, typename C>
 bool UpgradeIteratorFromBroadcast(std::vector<std::size_t> const &a,
                                   NDArrayIterator<T, C> &         iterator)
 {
-  iterator.is_valid_ = false;
+  assert(iterator.counter_ == 0);    // Only upgrade untouched iterators.
+  iterator.counter_ = uint64_t(-1);  // Invalidating the iterator
 
   auto &b   = iterator.ranges_;
   auto  it1 = a.rbegin();
@@ -93,6 +94,7 @@ bool UpgradeIteratorFromBroadcast(std::vector<std::size_t> const &a,
     if ((it2->total_steps) == 1)
     {
       it2->repeat_dimension = *it1;
+      iterator.size_ *= *it1;
     }
     else if ((*it1) != (it2->total_steps))
     {
@@ -112,7 +114,7 @@ bool UpgradeIteratorFromBroadcast(std::vector<std::size_t> const &a,
 
   iterator.total_runs_ = total_repeats;
 
-  iterator.is_valid_ = true;
+  iterator.counter_ = 0;
 
   return true;
 }

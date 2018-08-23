@@ -56,6 +56,9 @@ TEST(ndarray, simple_iterator_permute_test)
     ++it2;
   }
 
+  ASSERT_FALSE(bool(it));
+  ASSERT_FALSE(bool(it2));
+
   std::size_t test_val, cur_row;
   for (std::size_t i = 0; i < array.size(); ++i)
   {
@@ -68,7 +71,7 @@ TEST(ndarray, simple_iterator_permute_test)
   }
 }
 
-TEST(ndarray, iterator_4dim_permute_test)
+TEST(ndarray, iterator_4dim_copy_test)
 {
 
   // set up an initial array
@@ -101,6 +104,46 @@ TEST(ndarray, iterator_4dim_permute_test)
         for (std::size_t l = 0; l < 6; ++l)
         {
           ASSERT_TRUE(int(ret.Get({i, j, k, l})) == int(array.Get({i, j, k, l})));
+        }
+      }
+    }
+  }
+}
+
+TEST(ndarray, iterator_4dim_permute_test)
+{
+
+  // set up an initial array
+  NDArray<double> array{NDArray<double>::Arange(0, 1008, 1)};
+  array.Reshape({4, 6, 7, 6});
+  NDArray<double> ret = array.Copy();
+
+  NDArrayIterator<double, NDArray<double>::container_type> it(
+      array, {{1, 2, 1}, {0, 6, 1}, {1, 4, 1}, {0, 6, 1}});
+  NDArrayIterator<double, NDArray<double>::container_type> it2(
+      ret, {{1, 2, 1}, {0, 6, 1}, {1, 4, 1}, {0, 6, 1}});
+
+  it.PermuteAxes(1, 3);
+  while (it2)
+  {
+
+    assert(bool(it));
+    assert(bool(it2));
+
+    *it2 = *it;
+    ++it;
+    ++it2;
+  }
+
+  for (std::size_t i = 1; i < 2; ++i)
+  {
+    for (std::size_t j = 0; j < 6; ++j)
+    {
+      for (std::size_t k = 1; k < 4; ++k)
+      {
+        for (std::size_t l = 0; l < 6; ++l)
+        {
+          ASSERT_TRUE(int(ret.Get({i, j, k, l})) == int(array.Get({i, l, k, j})));
         }
       }
     }

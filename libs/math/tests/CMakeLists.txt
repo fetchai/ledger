@@ -30,6 +30,7 @@ add_fetch_gtest(ndarray_test fetch-math math/ndarray)
 add_fetch_gtest(ndarray_view_test fetch-math math/ndarray_view)
 add_fetch_gtest(ndarray_iterator_test fetch-math math/ndarray_iterator)
 add_fetch_gtest(ndarray_broadcast_test fetch-math math/ndarray_broadcast)
+add_fetch_gtest(ndarray_squeeze_test fetch-math math/ndarray_squeeze)
 
 add_fetch_gtest(relu_test fetch-math math/kernels/relu)
 add_fetch_gtest(sign_test fetch-math math/kernels/sign)
