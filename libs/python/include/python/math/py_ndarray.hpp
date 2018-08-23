@@ -270,7 +270,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("__getitem__",
            [](NDArray<T> &a, std::vector<py::slice> slices) {
-             std::cout << "GET 3" << std::endl;
              // std::vector<size_t> start, stop, step, slicelength;
              std::vector<std::vector<std::size_t>> range;
              range.resize(slices.size());
@@ -302,6 +301,18 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
                ++it2;
              }
              return ret;
+             /*
+                          // set up the view to extract
+                          NDArrayView arr_view = NDArrayView();
+                          for (std::size_t i = 0; i < start.size(); ++i)
+                          {
+                            arr_view.from.push_back(start[i]);
+                            arr_view.to.push_back(stop[i]);
+                            arr_view.step.push_back(step[i]);
+                          }
+
+                          return s.GetRange(arr_view);
+             */
            })
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<std::vector<std::size_t>> const &idxs) {
