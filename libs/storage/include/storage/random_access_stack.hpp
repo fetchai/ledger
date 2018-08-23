@@ -30,6 +30,7 @@
 #include <string>
 
 #include "core/assert.hpp"
+#include "storage/storage_exception.hpp"
 
 namespace fetch {
 namespace platform {

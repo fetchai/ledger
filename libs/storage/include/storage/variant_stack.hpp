@@ -34,6 +34,7 @@
 //                                  └─────────────────────┴─────────────────────┘
 
 #include "core/assert.hpp"
+#include "storage/storage_exception.hpp"
 #include <cassert>
 #include <cstring>
 #include <fstream>
