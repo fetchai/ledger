@@ -33,14 +33,15 @@ namespace fetch {
 namespace math {
 
 namespace details {
-struct SimpleComparator {
+struct SimpleComparator
+{
   const std::vector<std::size_t> &value_vector;
 
   SimpleComparator(const std::vector<std::size_t> &val_vec) : value_vector(val_vec) {}
 
   bool operator()(std::size_t i1, std::size_t i2) { return value_vector[i1] < value_vector[i2]; }
 };
-}
+}  // namespace details
 template <typename T, typename C = memory::SharedArray<T>>
 class NDArray : public ShapeLessArray<T, C>
 {
@@ -1083,14 +1084,15 @@ public:
    * Copies the values of updates into the specified indices of the first dimension of data in this
    * object
    */
-  void Scatter(std::vector<data_type> &updates, std::vector<std::size_t> &indices)
+  void Scatter(std::vector<data_type> &updates, std::vector<std::uint64_t> &indices)
   {
-    // check indices is integer only
-    // check largest value in indices < shape()[0]
 
     // sort indices and updates into ascending order
-    std::sort(updates.begin(), updates.end(), fetch::math::SimpleComparator(indices));
+    std::sort(updates.begin(), updates.end(), fetch::math::details::SimpleComparator(indices));
     std::sort(indices.begin(), indices.end());
+
+    // check largest value in indices < shape()[0]
+    assert(indices.back() <= this->shape()[0]);
 
     // set up an iterator
     NDArrayIterator<data_type, container_type> arr_iterator{*this};
@@ -1111,12 +1113,11 @@ public:
   }
 
   /**
-   *
+   * gathers data from first dimension of this object according to indices and returns a new
+   * self_type
    */
-  self_type Gather(std::vector<std::size_t> &indices)
+  self_type Gather(std::vector<std::uint64_t> &indices)
   {
-    // check indices is integer only
-    // check largest value in indices < shape()[0]
 
     self_type ret{this->size()};
     ret.LazyReshape(this->shape());
@@ -1124,6 +1125,9 @@ public:
 
     // sort indices and updates into ascending order
     std::sort(indices.begin(), indices.end());
+
+    // check largest value in indices < shape()[0]
+    assert(indices.back() <= this->shape()[0]);
 
     // set up an iterator
     NDArrayIterator<data_type, container_type> arr_iterator{*this};
