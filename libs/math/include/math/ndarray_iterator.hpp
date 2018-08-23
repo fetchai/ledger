@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/ndarray.hpp"
+#include <algorithm>
 #include <vector>
-
 //
 ////// need to forward declare
 ////class NDArray;
@@ -178,6 +178,8 @@ public:
     }
     std::swap(new_ranges, ranges_);
   }
+
+  void ReverseAxes() { std::reverse(ranges_.begin(), ranges_.end()); }
 
   /**
    * dereference, i.e. give the value at the current position of the iterator
