@@ -118,6 +118,18 @@ public:
    */
   void SetAllZero() { data().SetAllZero(); }
 
+  /**
+   * Inefficient implementation of set all one. A low level method in memory::SharedArray would be
+   * preferable
+   */
+  void SetAllOne()
+  {
+    for (std::size_t i = 0; i < data().size(); i++)
+    {
+      data()[i] = 1;
+    }
+  }
+
   /* Set all padded bytes to zero.
    *
    * This method sets the padded bytes to zero. Padded bytes are those
@@ -137,7 +149,7 @@ public:
 
   ShapeLessArray &InlineAdd(ShapeLessArray const &other, memory::Range const &range)
   {
-    assert(other.data().size() == this->data().size());
+    assert(other.size() == this->size());
 
     if (range.is_undefined())
     {
@@ -162,14 +174,8 @@ public:
 
   ShapeLessArray &InlineAdd(ShapeLessArray const &other)
   {
-    assert(other.data().size() == this->data().size());
-
-    this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
-          z = x + y;
-        },
-        this->data(), other.data());
-    return *this;
+    memory::Range range{0, other.data().size(), 1};
+    return InlineAdd(other, range);
   }
 
   ShapeLessArray &InlineAdd(type const &scalar)
@@ -185,8 +191,7 @@ public:
 
   ShapeLessArray &InlineMultiply(ShapeLessArray const &other, memory::Range const &range)
   {
-    assert(other.data().size() == this->data().size());
-
+    assert(other.size() == this->size());
     if (range.is_undefined())
     {
       InlineMultiply(other);
@@ -210,13 +215,8 @@ public:
 
   ShapeLessArray &InlineMultiply(ShapeLessArray const &other)
   {
-    assert(other.data().size() == this->data().size());
-    this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
-          z = x * y;
-        },
-        this->data(), other.data());
-    return *this;
+    memory::Range range{0, other.data().size(), 1};
+    return InlineMultiply(other, range);
   }
 
   ShapeLessArray &InlineMultiply(type const &scalar)
@@ -232,7 +232,7 @@ public:
 
   ShapeLessArray &InlineSubtract(ShapeLessArray const &other, memory::Range const &range)
   {
-    assert(other.data().size() == this->data().size());
+    assert(other.size() == this->size());
 
     if (range.is_undefined())
     {
@@ -257,25 +257,39 @@ public:
 
   ShapeLessArray &InlineSubtract(ShapeLessArray const &other)
   {
-    assert(other.data().size() == this->data().size());
-    this->data().in_parallel().Apply(
-        memory::TrivialRange(0, this->data().size()),
-        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
-          z = x - y;
-        },
-        this->data(), other.data());
+    memory::Range range{0, other.data().size(), 1};
+    return InlineSubtract(other, range);
+  }
+
+  ShapeLessArray &InlineReverseSubtract(ShapeLessArray const &other, memory::Range const &range)
+  {
+    assert(other.size() == this->size());
+
+    if (range.is_undefined())
+    {
+      InlineSubtract(other);
+    }
+    else if (range.is_trivial())
+    {
+      auto r = range.ToTrivialRange(this->data().size());
+      this->data().in_parallel().Apply(
+          r,
+          [](vector_register_type const &x, vector_register_type const &y,
+             vector_register_type &z) { z = y - x; },
+          this->data(), other.data());
+    }
+    else
+    {
+      TODO_FAIL("Non-trivial ranges not implemented");
+    }
+
     return *this;
   }
 
   ShapeLessArray &InlineReverseSubtract(ShapeLessArray const &other)
   {
-    assert(other.data().size() == this->data().size());
-    this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
-          z = y - x;
-        },
-        this->data(), other.data());
-    return *this;
+    memory::Range range{0, other.data().size(), 1};
+    return InlineReverseSubtract(other, range);
   }
 
   ShapeLessArray &InlineSubtract(type const &scalar)
@@ -291,7 +305,7 @@ public:
 
   ShapeLessArray &InlineDivide(ShapeLessArray const &other, memory::Range const &range)
   {
-    assert(other.data().size() == this->data().size());
+    assert(other.size() == this->size());
 
     if (range.is_undefined())
     {
@@ -316,13 +330,8 @@ public:
 
   ShapeLessArray &InlineDivide(ShapeLessArray const &other)
   {
-    assert(other.data().size() == this->data().size());
-    this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
-          z = x / y;
-        },
-        this->data(), other.data());
-    return *this;
+    memory::Range range{0, other.data().size(), 1};
+    return InlineDivide(other, range);
   }
 
   ShapeLessArray &InlineDivide(type const &scalar)
@@ -347,16 +356,35 @@ public:
     return *this;
   }
 
+  ShapeLessArray &InlineReverseDivide(ShapeLessArray const &other, memory::Range const &range)
+  {
+    assert(other.size() == this->size());
+
+    if (range.is_undefined())
+    {
+      InlineDivide(other);
+    }
+    else if (range.is_trivial())
+    {
+      auto r = range.ToTrivialRange(this->data().size());
+      this->data().in_parallel().Apply(
+          r,
+          [](vector_register_type const &x, vector_register_type const &y,
+             vector_register_type &z) { z = y / x; },
+          this->data(), other.data());
+    }
+    else
+    {
+      TODO_FAIL("Non-trivial ranges not implemented");
+    }
+
+    return *this;
+  }
+
   ShapeLessArray &InlineReverseDivide(ShapeLessArray const &other)
   {
-    assert(other.data().size() == this->data().size());
-
-    this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
-          z = y / x;
-        },
-        this->data(), other.data());
-    return *this;
+    memory::Range range{0, other.data().size(), 1};
+    return InlineReverseDivide(other, range);
   }
 
   ShapeLessArray &InlineReverseDivide(type const &scalar)
@@ -373,8 +401,8 @@ public:
   ShapeLessArray &Add(ShapeLessArray const &obj1, ShapeLessArray const &obj2,
                       memory::Range const &range)
   {
-    assert(obj1.data().size() == obj2.data().size());
-    assert(obj1.data().size() == this->data().size());
+    assert(obj1.size() == obj2.size());
+    assert(obj1.size() == this->size());
 
     if (range.is_undefined())
     {
@@ -400,23 +428,13 @@ public:
 
   ShapeLessArray &Add(ShapeLessArray const &obj1, ShapeLessArray const &obj2)
   {
-    assert(obj1.data().size() == obj2.data().size());
-    assert(obj1.data().size() == this->data().size());
-
-    this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
-          z = x + y;
-        },
-        obj1.data(), obj2.data());
-    //    kernels::basic_aritmetics::Add<vector_register_type> kernel;
-    //    this->data().in_parallel().Apply(kernel,  obj1.data(), obj2.data());
-
-    return *this;
+    memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
+    return Add(obj1, obj2, range);
   }
 
   ShapeLessArray &Add(ShapeLessArray const &obj1, type const &scalar)
   {
-    assert(obj1.data().size() == this->data().size());
+    assert(obj1.size() == this->size());
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
@@ -429,8 +447,8 @@ public:
   ShapeLessArray &Multiply(ShapeLessArray const &obj1, ShapeLessArray const &obj2,
                            memory::Range const &range)
   {
-    assert(obj1.data().size() == obj2.data().size());
-    assert(obj1.data().size() == this->data().size());
+    assert(obj1.size() == obj2.size());
+    assert(obj1.size() == this->size());
 
     if (range.is_undefined())
     {
@@ -456,22 +474,13 @@ public:
 
   ShapeLessArray &Multiply(ShapeLessArray const &obj1, ShapeLessArray const &obj2)
   {
-    assert(obj1.data().size() == obj2.data().size());
-    assert(obj1.data().size() == this->data().size());
-
-    this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
-          z = x * y;
-        },
-        obj1.data(), obj2.data());
-
-    return *this;
+    memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
+    return Multiply(obj1, obj2, range);
   }
 
   ShapeLessArray &Multiply(ShapeLessArray const &obj1, type const &scalar)
   {
-    assert(obj1.data().size() == this->data().size());
-
+    assert(obj1.size() == this->size());
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
@@ -484,8 +493,8 @@ public:
   ShapeLessArray &Subtract(ShapeLessArray const &obj1, ShapeLessArray const &obj2,
                            memory::Range const &range)
   {
-    assert(obj1.data().size() == obj2.data().size());
-    assert(obj1.data().size() == this->data().size());
+    assert(obj1.size() == obj2.size());
+    assert(obj1.size() == this->size());
 
     if (range.is_undefined())
     {
@@ -511,20 +520,13 @@ public:
 
   ShapeLessArray &Subtract(ShapeLessArray const &obj1, ShapeLessArray const &obj2)
   {
-    assert(obj1.data().size() == obj2.data().size());
-    assert(obj1.data().size() == this->data().size());
-
-    this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
-          z = x - y;
-        },
-        obj1.data(), obj2.data());
-
-    return *this;
+    memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
+    return Subtract(obj1, obj2, range);
   }
 
   ShapeLessArray &Subtract(ShapeLessArray const &obj1, type const &scalar)
   {
+    assert(obj1.size() == this->size());
     assert(obj1.data().size() == this->data().size());
 
     vector_register_type val(scalar);
@@ -538,13 +540,11 @@ public:
 
   ShapeLessArray &Subtract(type const &scalar, ShapeLessArray const &obj1)
   {
-    assert(obj1.data().size() == this->data().size());
-
-    vector_register_type val(scalar);
-
-    this->data().in_parallel().Apply(
-        [val](vector_register_type const &x, vector_register_type &z) { z = val - x; },
-        obj1.data());
+    assert(obj1.size() == this->size());
+    for (std::size_t i = 0; i < this->size(); ++i)
+    {
+      this->operator[](i) = scalar - obj1[i];
+    }
 
     return *this;
   }
@@ -579,16 +579,8 @@ public:
 
   ShapeLessArray &Divide(ShapeLessArray const &obj1, ShapeLessArray const &obj2)
   {
-    assert(obj1.data().size() == obj2.data().size());
-    assert(obj1.data().size() == this->data().size());
-
-    this->data().in_parallel().Apply(
-        [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
-          z = x / y;
-        },
-        obj1.data(), obj2.data());
-
-    return *this;
+    memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
+    return Divide(obj1, obj2, range);
   }
 
   ShapeLessArray &Divide(ShapeLessArray const &obj1, type const &scalar)
@@ -606,7 +598,7 @@ public:
 
   ShapeLessArray &Divide(type const &scalar, ShapeLessArray const &obj1)
   {
-    assert(obj1.data().size() == this->data().size());
+    assert(obj1.size() == this->size());
 
     vector_register_type val(scalar);
 
@@ -1586,11 +1578,25 @@ public:
     return *this;
   }
 
-  static ShapeLessArray Zeros(std::size_t const &n)
+  static ShapeLessArray Zeroes(std::size_t const &n)
   {
     ShapeLessArray ret;
     ret.Resize(n);
     ret.SetAllZero();
+    return ret;
+  }
+
+  /**
+   * Method returning a shapeless array of ones
+   *
+   * @param shape : a vector representing the shape of the NDArray
+   * @return NDArray with all ones
+   */
+  static ShapeLessArray Ones(std::size_t const &n)
+  {
+    ShapeLessArray ret;
+    ret.Resize(n);
+    ret.SetAllOne();
     return ret;
   }
 

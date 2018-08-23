@@ -43,75 +43,92 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.Copy(b);
              return a;
            })
-      .def("Flatten",
+      .def("flatten",
            [](NDArray<T> &a) {
              a.Flatten();
              return a;
            })
+      .def_static("Zeros", &NDArray<T>::Zeroes)
+      .def_static("Ones", &NDArray<T>::Ones)
       .def("__add__",
            [](NDArray<T> &b, NDArray<T> &c) {
-             NDArray<T>               a;
+             // identify the correct output shape
              std::vector<std::size_t> new_shape;
              if (!(ShapeFromBroadcast(b.shape(), c.shape(), new_shape))) throw py::index_error();
-             a = NDArray<T>::Add(b, c);
+
+             // put result of addition into new output array
+             NDArray<T> a{new_shape};
+             a.Add(b, c);
              return a;
            })
       .def("__mul__",
            [](NDArray<T> &b, NDArray<T> &c) {
-             NDArray<T>               a;
              std::vector<std::size_t> new_shape;
              if (!(ShapeFromBroadcast(b.shape(), c.shape(), new_shape))) throw py::index_error();
-             a = NDArray<T>::Multiply(b, c);
+             NDArray<T> a{new_shape};
+             a.Multiply(b, c);
              return a;
            })
       .def("__sub__",
            [](NDArray<T> &b, NDArray<T> &c) {
-             NDArray<T>               a;
              std::vector<std::size_t> new_shape;
              if (!(ShapeFromBroadcast(b.shape(), c.shape(), new_shape))) throw py::index_error();
-             a = NDArray<T>::Subtract(b, c);
+
+             NDArray<T> a{new_shape};
+             a.Subtract(b, c);
              return a;
            })
       .def("__truediv__",
            [](NDArray<T> &b, NDArray<T> &c) {
-             NDArray<T>               a;
              std::vector<std::size_t> new_shape;
              if (!(ShapeFromBroadcast(b.shape(), c.shape(), new_shape))) throw py::index_error();
-             a = NDArray<T>::Divide(b, c);
+
+             NDArray<T> a{new_shape};
+             a.Divide(b, c);
              return a;
            })
       .def("__add__",
            [](NDArray<T> &b, T const &c) {
-             NDArray<T> a(b.size());
+             NDArray<T> a{b.size()};
+             //             if (a.CanReshape(b))
+             //             {
+             //
+             //             }
              a.LazyReshape(b.shape());
-             a = b.Add(b, c);
+             a.Add(b, c);
              return a;
            })
       .def("__mul__",
            [](NDArray<T> &b, T const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
-             a = b.Multiply(b, c);
+             a.Multiply(b, c);
              return a;
            })
       .def("__sub__",
            [](NDArray<T> &b, T const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
-             a = b.Subtract(b, c);
+             a.Subtract(b, c);
              return a;
            })
       .def("__truediv__",
            [](NDArray<T> &b, T const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
-             a = b.Divide(b, c);
+             a.Divide(b, c);
              return a;
            })
       .def("__iadd__",
            [](NDArray<T> &a, NDArray<T> &c) {
              std::vector<std::size_t> new_shape;
              if (!(ShapeFromBroadcast(a.shape(), c.shape(), new_shape))) throw py::index_error();
+             if (new_shape != a.shape())
+             {
+               py::print("broadcast shape (", new_shape, ") does not match shape of output array (",
+                         a.shape(), ")");
+               throw py::value_error();
+             }
              a.InlineAdd(c);
              return a;
            })
@@ -119,6 +136,13 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> &a, NDArray<T> &c) {
              std::vector<std::size_t> new_shape;
              if (!(ShapeFromBroadcast(a.shape(), c.shape(), new_shape))) throw py::index_error();
+             if (new_shape != a.shape())
+             {
+               py::print("broadcast shape (", new_shape, ") does not match shape of output array (",
+                         a.shape(), ")");
+               throw py::value_error();
+             }
+
              a.InlineMultiply(c);
              return a;
            })
@@ -126,14 +150,30 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> &a, NDArray<T> &c) {
              std::vector<std::size_t> new_shape;
              if (!(ShapeFromBroadcast(a.shape(), c.shape(), new_shape))) throw py::index_error();
+             if (new_shape != a.shape())
+             {
+               py::print("broadcast shape (", new_shape, ") does not match shape of output array (",
+                         a.shape(), ")");
+               throw py::value_error();
+             }
+
              a.InlineSubtract(c);
              return a;
            })
-      //      .def("__truediv__",
-      //           [](NDArray<T> &a, NDArray<T> &c) {
-      //             a.InlineDivide(c);
-      //             return a;
-      //           })
+      .def("__itruediv__",
+           [](NDArray<T> &a, NDArray<T> &c) {
+             std::vector<std::size_t> new_shape;
+             if (!(ShapeFromBroadcast(a.shape(), c.shape(), new_shape))) throw py::index_error();
+             if (new_shape != a.shape())
+             {
+               py::print("broadcast shape (", new_shape, ") does not match shape of output array (",
+                         a.shape(), ")");
+               throw py::value_error();
+             }
+
+             a.InlineDivide(c);
+             return a;
+           })
       .def("__iadd__",
            [](NDArray<T> &a, T const &c) {
              a.InlineAdd(c);
@@ -149,11 +189,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.InlineSubtract(c);
              return a;
            })
-      //      .def("__truediv__",
-      //           [](NDArray<T> &a, T const &c) {
-      //             a.InlineDivide(c);
-      //             return a;
-      //           })
+      .def("__itruediv__",
+           [](NDArray<T> &a, T const &c) {
+             a.InlineDivide(c);
+             return a;
+           })
       .def("__eq__",
            [](NDArray<T> const &s, NDArray<T> const &other) { return s.operator==(other); })
       .def("__ne__",
@@ -213,7 +253,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<std::size_t> const &idxs) {
              assert(idxs.size() == s.shape().size());
-
              return s.Get(idxs);
            })
       .def("__setitem__",
@@ -280,47 +319,124 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (idx >= s.size()) throw py::index_error();
              s[idx] = val;
            })
-      .def("Max", [](NDArray<T> &a) { return a.Max(); })
-      .def("Max",
+      .def("max", [](NDArray<T> &a) { return a.Max(); })
+      .def("max",
            [](NDArray<T> &a, std::size_t const axis) {
              if (axis >= a.shape().size()) throw py::index_error();
              return a.Max(axis);
            })
-      .def("Min", [](NDArray<T> const &a) { return a.Min(); })
-      .def("Min",
+      .def("min", [](NDArray<T> const &a) { return a.Min(); })
+      .def("min",
            [](NDArray<T> &a, std::size_t const axis) {
              if (axis >= a.shape().size()) throw py::index_error();
              return a.Min(axis);
            })
-      .def("Log",
-           [](NDArray<T> const &a) {
-             NDArray<T> ret;
-             ret = fetch::math::Log(a);
-             return ret;
-           })
-      .def("Exp",
-           [](NDArray<T> const &a) {
-             NDArray<T> ret;
-             ret = fetch::math::Exp(a);
-             return ret;
-           })
-      .def("Relu", [](NDArray<T> const &a, NDArray<T> &b) { return b.Relu(a); })
-      .def("L2Loss", [](NDArray<T> const &a) { return a.L2Loss(); })
-      .def("Sign",
-           [](NDArray<T> const &a, NDArray<T> &b) {
-             std::cout << "entering sign binding.." << std::endl;
-             return b.Sign(a);
-           })
-      .def("Reshape",
+      .def("relu", [](NDArray<T> const &a, NDArray<T> &b) { return b.Relu(a); })
+      .def("l2loss", [](NDArray<T> const &a) { return a.L2Loss(); })
+      .def("sign", [](NDArray<T> const &a, NDArray<T> &b) { return b.Sign(a); })
+      .def("reshape",
            [](NDArray<T> &a, std::vector<std::size_t> b) {
-             //             std::size_t internal_prod = std::size_t(std::accumulate(begin(b),
-             //             end(b), 1, std::multiplies<>())); if (internal_prod != a.size()) throw
-             //             py::index_error();
-             if (!(a.CanReshape(b))) throw py::index_error();
+             if (!(a.CanReshape(b)))
+             {
+               py::print("cannot reshape array of size (", a.size(), ") into shape of(", a.shape(),
+                         ")");
+               throw py::value_error();
+             }
              a.Reshape(b);
              return;
            })
-      .def("Shape", [](NDArray<T> &a) { return a.shape(); });
+      .def("shape", [](NDArray<T> &a) { return a.shape(); })
+      .def_static("Zeros", &NDArray<T>::Zeroes)
+      .def("abs", &NDArray<T>::Abs)
+      .def("exp", &NDArray<T>::Exp)
+      .def("exp2", &NDArray<T>::Exp2)
+      .def("expm1", &NDArray<T>::Expm1)
+      .def("log", &NDArray<T>::Log)
+      .def("log10", &NDArray<T>::Log10)
+      .def("log2", &NDArray<T>::Log2)
+      .def("log1p", &NDArray<T>::Log1p)
+      .def("sqrt", &NDArray<T>::Sqrt)
+      .def("cbrt", &NDArray<T>::Cbrt)
+      .def("sin", &NDArray<T>::Sin)
+      .def("cos", &NDArray<T>::Cos)
+      .def("tan", &NDArray<T>::Tan)
+      .def("asin", &NDArray<T>::Asin)
+      .def("acos", &NDArray<T>::Acos)
+      .def("atan", &NDArray<T>::Atan)
+      .def("sinh", &NDArray<T>::Sinh)
+      .def("cosh", &NDArray<T>::Cosh)
+      .def("tanh", &NDArray<T>::Tanh)
+      .def("asinh", &NDArray<T>::Asinh)
+      .def("acosh", &NDArray<T>::Acosh)
+      .def("atanh", &NDArray<T>::Atanh)
+      .def("ceil", &NDArray<T>::Ceil)
+      .def("floor", &NDArray<T>::Floor)
+      .def("trunc", &NDArray<T>::Trunc)
+      .def("round", &NDArray<T>::Round)
+      .def("rint", &NDArray<T>::Rint)
+      .def("isfinite", &NDArray<T>::Isfinite)
+      .def("isinf", &NDArray<T>::Isinf)
+      .def("isnan", &NDArray<T>::Isnan)
+
+      // functions not implemented in numpy:
+      //      .def("erf", &NDArray<T>::Erf)
+      //      .def("erfc", &NDArray<T>::Erfc)
+      //      .def("tgamma", &NDArray<T>::Tgamma)
+      //      .def("lgamma", &NDArray<T>::Lgamma)
+
+      // functions with different return types (seems obsolete for python):
+      //      .def("lround", &NDArray<T>::Lround)
+      //      .def("llround", &NDArray<T>::Llround)
+      //      .def("nearbyint", &NDArray<T>::Nearbyint)
+      //      .def("lrint", &NDArray<T>::Lrint)
+      //      .def("llrint", &NDArray<T>::Llrint)
+
+      .def("FromNumpy",
+           [](NDArray<T> &s, py::array_t<T> arr) {
+             auto buf        = arr.request();
+             using size_type = typename NDArray<T>::size_type;
+
+             // get shape of the numpy array
+             std::vector<std::size_t> new_shape;
+             for (std::size_t i = 0; i < buf.shape.size(); ++i)
+             {
+               new_shape.push_back(size_type(buf.shape[i]));
+             }
+             std::size_t total_size = NDArray<T>::SizeFromShape(new_shape);
+
+             // copy the data
+             T *ptr = (T *)buf.ptr;
+             s.Resize(total_size);
+             for (std::size_t i = 0; i < total_size; ++i)
+             {
+               s[i] = ptr[i];
+             }
+             if (s.CanReshape(new_shape))
+             {
+               s.Reshape(new_shape);
+             }
+             else
+             {
+               throw py::index_error();
+             }
+           })
+      .def("ToNumpy", [](NDArray<T> &s) {
+        auto result = py::array_t<T>({s.size()});
+        auto buf    = result.request();
+
+        std::vector<std::size_t> new_shape = s.shape();
+        result.resize(new_shape);
+
+        // copy the data
+        T *ptr = (T *)buf.ptr;
+        for (size_t i = 0; i < s.size(); ++i)
+        {
+          ptr[i] = s[i];
+        }
+
+        // reshape the array
+        return result;
+      });
   //                  [](NDArray<T> &a, NDArray<T> &b)
   //                  {
   //                    a.Relu(b);

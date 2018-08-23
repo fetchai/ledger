@@ -85,6 +85,35 @@ public:
     return std::accumulate(std::begin(shape), std::end(shape), std::size_t(1), std::multiplies<>());
   }
 
+  /**
+   * Method returning an NDArray of zeroes
+   *
+   * @param shape : a vector representing the shape of the NDArray
+   * @return NDArray with all zeroes
+   */
+  static self_type Zeroes(std::vector<std::size_t> const &shape)
+  {
+    std::size_t n = SizeFromShape(shape);
+    self_type   output{super_type::Zeroes(n)};
+    output.LazyReshape(shape);
+    return output;
+  }
+
+  /**
+   * Method returning an NDArray of ones
+   *
+   * @param shape : a vector representing the shape of the NDArray
+   * @return NDArray with all ones
+   */
+  static self_type Ones(std::vector<std::size_t> const &shape)
+  {
+    std::size_t n = std::accumulate(std::begin(shape), std::end(shape), std::size_t(1),
+                                    std::multiplies<std::size_t>());
+    self_type   output{super_type::Ones(n)};
+    output.LazyReshape(shape);
+    return output;
+  }
+
   void ResizeFromShape(std::vector<std::size_t> const &shape)
   {
     this->Resize(self_type::SizeFromShape(shape));
@@ -202,7 +231,9 @@ public:
   data_type Get(std::vector<std::size_t> const &indices) const
   {
     assert(indices.size() == shape_.size());
-    return this->operator[](ComputeColIndex(indices));
+    std::cout << "col idx val: " << this->operator[](ComputeColIndex(indices)) << std::endl;
+    std::cout << "row idx val: " << this->operator[](ComputeRowIndex(indices)) << std::endl;
+    return this->                         operator[](ComputeColIndex(indices));
   }
 
   /**
@@ -429,11 +460,10 @@ public:
    * @param other
    * @return
    */
-  static NDArray Add(self_type &obj1, self_type &other)
+  NDArray Add(self_type &obj1, self_type &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x + y; }, obj1, other, ret);
-    return ret;
+    Broadcast([](data_type x, data_type y) { return x + y; }, obj1, other, *this);
+    return *this;
   }
   /**
    * adds a scalar to every element in the array and returns the new output
@@ -442,7 +472,8 @@ public:
    */
   self_type Add(self_type const &obj1, data_type const &scalar)
   {
-    return self_type(super_type::Add(obj1, scalar));
+    this->super_type::Add(obj1, scalar);
+    return *this;
   }
   /**
    * adds two ndarrays together and supports broadcasting
@@ -466,11 +497,10 @@ public:
    * @param other
    * @return
    */
-  static NDArray Subtract(self_type &obj1, self_type &other)
+  NDArray Subtract(self_type &obj1, self_type &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x - y; }, obj1, other, ret);
-    return ret;
+    Broadcast([](data_type x, data_type y) { return x - y; }, obj1, other, *this);
+    return *this;
   }
   /**
    * subtract a scalar from every element in the array and return the new output
@@ -479,7 +509,8 @@ public:
    */
   self_type Subtract(self_type &obj1, data_type const &scalar)
   {
-    return self_type(super_type::Subtract(obj1, scalar));
+    this->super_type::Subtract(obj1, scalar);
+    return *this;
   }
   /**
    * Subtract one ndarray from another and support broadcasting
@@ -506,11 +537,10 @@ public:
    * @param other
    * @return
    */
-  static NDArray Multiply(self_type &obj1, self_type &other)
+  NDArray Multiply(self_type &obj1, self_type &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x * y; }, obj1, other, ret);
-    return ret;
+    Broadcast([](data_type x, data_type y) { return x * y; }, obj1, other, *this);
+    return *this;
   }
   /**
    * multiplies array by a scalar element wise
@@ -519,7 +549,8 @@ public:
    */
   self_type Multiply(self_type &obj1, data_type const &scalar)
   {
-    return self_type(super_type::Multiply(obj1, scalar));
+    this->super_type::Multiply(obj1, scalar);
+    return *this;
   }
   /**
    * multiplies two ndarrays together and supports broadcasting
@@ -538,7 +569,8 @@ public:
    */
   self_type InlineMultiply(data_type const &scalar)
   {
-    return self_type(super_type::InlineMultiply(scalar));
+    this->super_type::InlineMultiply(scalar);
+    return *this;
   }
 
   /**
@@ -546,11 +578,10 @@ public:
    * @param other
    * @return
    */
-  static NDArray Divide(self_type &obj1, self_type &other)
+  NDArray Divide(self_type &obj1, self_type &other)
   {
-    self_type ret;
-    Broadcast([](data_type x, data_type y) { return x / y; }, obj1, other, ret);
-    return ret;
+    Broadcast([](data_type x, data_type y) { return x / y; }, obj1, other, *this);
+    return *this;
   }
   /**
    * Divide array by a scalar elementwise
@@ -559,7 +590,8 @@ public:
    */
   self_type Divide(self_type &obj1, data_type const &scalar)
   {
-    return self_type(super_type::Divide(obj1, scalar));
+    this->super_type::Divide(obj1, scalar);
+    return *this;
   }
   /**
    * Divide ndarray by another ndarray from another and support broadcasting
@@ -578,7 +610,464 @@ public:
    */
   self_type InlineDivide(data_type const &scalar)
   {
-    return self_type(super_type::InlineDivide(scalar));
+    this->super_type::InlineDivide(scalar);
+    return *this;
+  }
+
+  /**
+   * assigns the absolute of x to this array
+   * @param x
+   */
+  void Abs(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Abs(x);
+  }
+  /**
+   * e^x
+   * @param x
+   */
+  void Exp(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Exp(x);
+  }
+  /**
+   * raise 2 to power input values of x
+   * @param x
+   */
+  void Exp2(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Exp2(x);
+  }
+  /**
+   * exp(x) - 1
+   * @param x
+   */
+  void Expm1(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Expm1(x);
+  }
+  /**
+   * natural logarithm of x
+   * @param x
+   */
+  void log(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Log(x);
+  }
+  /**
+   * log base 10
+   * @param x
+   */
+  void Log10(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Log10(x);
+  }
+  /**
+   * log base 2
+   * @param x
+   */
+  void Log2(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Log2(x);
+  }
+  /**
+   * natural log 1 + x
+   * @param x
+   */
+  void Log1p(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Log1p(x);
+  }
+  /**
+   * square root
+   * @param x
+   */
+  void Sqrt(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Sqrt(x);
+  }
+
+  /**
+   * cubic root x
+   * @param x
+   */
+  void Cbrt(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Cbrt(x);
+  }
+
+  /**
+   * sine of x
+   * @param x
+   */
+  void Sin(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Sin(x);
+  }
+  /**
+   * cosine of x
+   * @param x
+   */
+  void Cos(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Cos(x);
+  }
+  /**
+   * tangent of x
+   * @param x
+   */
+  void Tan(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Tan(x);
+  }
+  /**
+   * arc sine of x
+   * @param x
+   */
+  void Asin(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Asin(x);
+  }
+  /**
+   * arc cosine of x
+   * @param x
+   */
+  void Acos(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Acos(x);
+  }
+  /**
+   * arc tangent of x
+   * @param x
+   */
+  void Atan(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Atan(x);
+  }
+
+  /**
+   * hyperbolic sine of x
+   * @param x
+   */
+  void Sinh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Sinh(x);
+  }
+  /**
+   * hyperbolic cosine of x
+   * @param x
+   */
+  void Cosh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Cosh(x);
+  }
+  /**
+   * hyperbolic tangent of x
+   * @param x
+   */
+  void Tanh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Tanh(x);
+  }
+  /**
+   * hyperbolic arc sine of x
+   * @param x
+   */
+  void Asinh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Asinh(x);
+  }
+  /**
+   * hyperbolic arc cosine of x
+   * @param x
+   */
+  void Acosh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Acosh(x);
+  }
+  /**
+   * hyperbolic arc tangent of x
+   * @param x
+   */
+  void Atanh(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Atanh(x);
+  }
+
+  /**
+   * error function of x
+   * @param x
+   */
+  void Erf(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Erf(x);
+  }
+  /**
+   * complementary error function of x
+   * @param x
+   */
+  void Erfc(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Erfc(x);
+  }
+  /**
+   * factorial of x-1
+   * @param x
+   */
+  void Tgamma(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Tgamma(x);
+  }
+  /**
+   * log of factorial of x-1
+   * @param x
+   */
+  void Lgamma(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Lgamma(x);
+  }
+  /**
+   * ceiling round
+   * @param x
+   */
+  void Ceil(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Ceil(x);
+  }
+  /**
+   * floor rounding
+   * @param x
+   */
+  void Floor(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Floor(x);
+  }
+  /**
+   * round towards 0
+   * @param x
+   */
+  void Trunc(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Trunc(x);
+  }
+
+  /**
+   * round to nearest int in int format
+   * @param x
+   */
+  void Round(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Round(x);
+  }
+
+  /**
+   * round to nearest int in float format
+   * @param x
+   */
+  void Lround(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Lround(x);
+  }
+
+  /**
+   * round to nearest int in float format with long long return
+   * @param x
+   */
+  void Llround(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Llround(x);
+  }
+
+  /**
+   * round to nearest int in float format
+   * @param x
+   */
+  void Nearbyint(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Nearbyint(x);
+  }
+
+  /**
+   * round to nearest int
+   * @param x
+   */
+  void Rint(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Rint(x);
+  }
+
+  /**
+   *
+   * @param x
+   */
+  void Lrint(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Lrint(x);
+  }
+
+  /**
+   *
+   * @param x
+   */
+  void Llrint(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Llrint(x);
+  }
+
+  /**
+   * finite check
+   * @param x
+   */
+  void Isfinite(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Isfinite(x);
+  }
+
+  /**
+   * checks for inf values
+   * @param x
+   */
+  void Isinf(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Isinf(x);
+  }
+
+  /**
+   * checks for nans
+   * @param x
+   */
+  void Isnan(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Isnan(x);
+  }
+
+  /**
+   * rectified linear activation function
+   * @param x
+   */
+  void Relu(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Relu(x);
   }
 
 private:

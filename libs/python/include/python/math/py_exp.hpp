@@ -26,9 +26,10 @@ namespace fetch {
 namespace math {
 
 template <typename A>
-inline A WrapperExp(A const &a)
+inline A WrapperExp(A const &a, A &b)
 {
-  return Exp(a);
+  Exp(a, b);
+  return b;
 }
 
 inline void BuildExpStatistics(std::string const &custom_name, pybind11::module &module)
