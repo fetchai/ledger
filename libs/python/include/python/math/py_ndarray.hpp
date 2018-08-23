@@ -89,7 +89,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("__add__",
            [](NDArray<T> &b, T const &c) {
-             NDArray<T> a(b.size());
+             NDArray<T> a{b.size()};
+             //             if (a.CanReshape(b))
+             //             {
+             //
+             //             }
              a.LazyReshape(b.shape());
              a.Add(b, c);
              return a;
@@ -250,6 +254,8 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> const &s, std::vector<std::size_t> const &idxs) {
              assert(idxs.size() == s.shape().size());
 
+             py::print("entered this getitem");
+
              return s.Get(idxs);
            })
       .def("__setitem__",
@@ -402,7 +408,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              std::size_t total_size = NDArray<T>::SizeFromShape(new_shape);
 
              // copy the data
-             T *         ptr = (T *)buf.ptr;
+             T *ptr = (T *)buf.ptr;
              s.Resize(total_size);
              for (std::size_t i = 0; i < total_size; ++i)
              {

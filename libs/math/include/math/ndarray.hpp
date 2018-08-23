@@ -230,7 +230,9 @@ public:
   data_type Get(std::vector<std::size_t> const &indices) const
   {
     assert(indices.size() == shape_.size());
-    return this->operator[](ComputeColIndex(indices));
+    std::cout << "col idx val: " << this->operator[](ComputeColIndex(indices)) << std::endl;
+    std::cout << "row idx val: " << this->operator[](ComputeRowIndex(indices)) << std::endl;
+    return this->                         operator[](ComputeColIndex(indices));
   }
 
   /**
@@ -1065,7 +1067,6 @@ public:
     this->LazyReshape(x.shape());
 
     this->super_type::Relu(x);
-
   }
 
 private:
