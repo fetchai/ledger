@@ -146,7 +146,7 @@ public:
       }
       else
       {
-        TODO_FAIL("Could not load file");
+        throw StorageException("Could not load file");
       }
     }
 
@@ -163,7 +163,7 @@ public:
 
     if (std::size_t(capacity) < header_.objects)
     {
-      TODO_FAIL("Expected more stack objects.");
+      throw StorageException("Expected more stack objects.");
     }
 
     // TODO(issue 6): Check magic
@@ -317,7 +317,7 @@ public:
 
     if (!header_.Write(fin))
     {
-      TODO_FAIL("Error could not write header - todo throw error");
+      throw StorageException("Error could not write header - todo throw error");
     }
 
     fin.close();
@@ -376,7 +376,7 @@ private:
 
     if (!header_.Write(file_handle_))
     {
-      TODO_FAIL("Error could not write header - todo throw error");
+      throw StorageException("Error could not write header - todo throw error");
     }
   }
 

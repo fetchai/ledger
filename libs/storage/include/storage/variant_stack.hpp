@@ -119,7 +119,7 @@ public:
       }
       else
       {
-        TODO_FAIL("Could not load file");
+        throw StorageException("Could not load file");
       }
     }
 
@@ -213,7 +213,7 @@ public:
     {
       std::cout << offset << " " << separator.object_size << " " << sizeof(T) << std::endl;
 
-      TODO_FAIL("TODO: Throw error, size mismatch in variantstack");
+      throw StorageException("TODO: Throw error, size mismatch in variantstack");
     }
 
     file_.seekg(header_.end - offset, file_.beg);
