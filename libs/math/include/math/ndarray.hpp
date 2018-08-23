@@ -623,6 +623,17 @@ public:
     this->super_type::Abs(x);
   }
   /**
+   * e^x
+   * @param x
+   */
+  void Exp(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Exp(x);
+  }
+  /**
    * raise 2 to power input values of x
    * @param x
    */
@@ -643,6 +654,17 @@ public:
     this->LazyReshape(x.shape());
 
     this->super_type::Expm1(x);
+  }
+  /**
+   * natural logarithm of x
+   * @param x
+   */
+  void log(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Log(x);
   }
   /**
    * log base 10

@@ -50,12 +50,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def_static("Zeros", &NDArray<T>::Zeroes)
       .def_static("Ones", &NDArray<T>::Ones)
-      //      .def("Ones",
-      //           [](NDArray<T> &a, std::vector<std::size_t> shape) {
-      //             NDArray<T> ret{shape};
-      //             ret = a.Ones(shape);
-      //             return ret;
-      //           })
       .def("__add__",
            [](NDArray<T> &b, NDArray<T> &c) {
              // identify the correct output shape
@@ -334,18 +328,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (axis >= a.shape().size()) throw py::index_error();
              return a.Min(axis);
            })
-      .def("log",
-           [](NDArray<T> const &a) {
-             NDArray<T> ret;
-             ret = fetch::math::Log(a);
-             return ret;
-           })
-      .def("exp",
-           [](NDArray<T> const &a) {
-             NDArray<T> ret;
-             ret = fetch::math::Exp(a);
-             return ret;
-           })
       .def("relu", [](NDArray<T> const &a, NDArray<T> &b) { return b.Relu(a); })
       .def("l2loss", [](NDArray<T> const &a) { return a.L2Loss(); })
       .def("sign", [](NDArray<T> const &a, NDArray<T> &b) { return b.Sign(a); })
@@ -363,8 +345,10 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("shape", [](NDArray<T> &a) { return a.shape(); })
       .def_static("Zeros", &NDArray<T>::Zeroes)
       .def("abs", &NDArray<T>::Abs)
+      .def("exp", &NDArray<T>::Exp)
       .def("exp2", &NDArray<T>::Exp2)
       .def("expm1", &NDArray<T>::Expm1)
+      .def("log", &NDArray<T>::Log)
       .def("log10", &NDArray<T>::Log10)
       .def("log2", &NDArray<T>::Log2)
       .def("log1p", &NDArray<T>::Log1p)
@@ -382,32 +366,28 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("asinh", &NDArray<T>::Asinh)
       .def("acosh", &NDArray<T>::Acosh)
       .def("atanh", &NDArray<T>::Atanh)
-      .def("erf", &NDArray<T>::Erf)
-      .def("erfc", &NDArray<T>::Erfc)
-      .def("tgamma", &NDArray<T>::Tgamma)
-      .def("lgamma", &NDArray<T>::Lgamma)
       .def("ceil", &NDArray<T>::Ceil)
       .def("floor", &NDArray<T>::Floor)
       .def("trunc", &NDArray<T>::Trunc)
       .def("round", &NDArray<T>::Round)
-      //      .def("lround", &NDArray<T>::Lround)
-      //      .def("llround", &NDArray<T>::Llround)
-      //      .def("nearbyint", &NDArray<T>::Nearbyint)
       .def("rint", &NDArray<T>::Rint)
-      //      .def("lrint", &NDArray<T>::Lrint)
-      //      .def("llrint", &NDArray<T>::Llrint)
       .def("isfinite", &NDArray<T>::Isfinite)
       .def("isinf", &NDArray<T>::Isinf)
       .def("isnan", &NDArray<T>::Isnan)
 
-      //      .def("abs", [](NDArray<T> &a)
-      //      {
-      //        a.Abs(a);
-      //        return a;
-      //      })
-      //      .def("abs", &NDArray<T>::Abs)
-      //      .def("abs", &NDArray<T>::Abs)
-      //      .def("abs", &NDArray<T>::Abs)
+      // functions not implemented in numpy:
+      //      .def("erf", &NDArray<T>::Erf)
+      //      .def("erfc", &NDArray<T>::Erfc)
+      //      .def("tgamma", &NDArray<T>::Tgamma)
+      //      .def("lgamma", &NDArray<T>::Lgamma)
+
+      // functions with different return types (seems obsolete for python):
+      //      .def("lround", &NDArray<T>::Lround)
+      //      .def("llround", &NDArray<T>::Llround)
+      //      .def("nearbyint", &NDArray<T>::Nearbyint)
+      //      .def("lrint", &NDArray<T>::Lrint)
+      //      .def("llrint", &NDArray<T>::Llrint)
+
       .def("FromNumpy",
            [](NDArray<T> &s, py::array_t<T> arr) {
              auto buf        = arr.request();

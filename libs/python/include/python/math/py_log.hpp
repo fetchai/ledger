@@ -25,9 +25,10 @@ namespace fetch {
 namespace math {
 
 template <typename A>
-inline A WrapperLog(A const &a)
+inline A WrapperLog(A const &a, A &b)
 {
-  return Log(a);
+  Log(a, b);
+  return b;
 }
 
 inline void BuildLogStatistics(std::string const &custom_name, pybind11::module &module)
