@@ -204,32 +204,50 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              return s[idx];
            })
       .def("__getitem__",
-           [](NDArray<T> const &s, std::vector<py::slice> slices) {
-             std::vector<size_t> start, stop, step, slicelength;
-             for (std::size_t i = 0; i < slices.size(); ++i)
-             {
-               start.push_back(0);
-               stop.push_back(0);
-               step.push_back(0);
-               slicelength.push_back(0);
-             }
+           [](NDArray<T> &a, std::vector<py::slice> slices) {
+             // std::vector<size_t> start, stop, step, slicelength;
+             std::vector<std::vector<std::size_t>> range;
+             range.resize(slices.size());
 
              for (std::size_t i = 0; i < slices.size(); ++i)
              {
-               if (!slices[i].compute(s.shape()[i], &start[i], &stop[i], &step[i], &slicelength[i]))
+               range[i].resize(3);
+               //               slicelength.push_back(0);
+             }
+             std::vector<std::size_t> newshape;
+
+             for (std::size_t i = 0; i < slices.size(); ++i)
+             {
+               std::size_t s;
+               if (!slices[i].compute(a.shape()[i], &range[i][0], &range[i][1], &range[i][2], &s))
+               {
                  throw py::error_already_set();
+               }
+               newshape.push_back(s);
              }
 
-             // set up the view to extract
-             NDArrayView arr_view = NDArrayView();
-             for (std::size_t i = 0; i < start.size(); ++i)
+             NDArray<T>                                              ret(newshape);
+             NDArrayIterator<T, typename NDArray<T>::container_type> it(a, range);
+             NDArrayIterator<T, typename NDArray<T>::container_type> it2(ret);
+             while (bool(it) && bool(it2))
              {
-               arr_view.from.push_back(start[i]);
-               arr_view.to.push_back(stop[i]);
-               arr_view.step.push_back(step[i]);
+               *it2 = *it;
+               ++it;
+               ++it2;
              }
+             return ret;
+             /*
+                          // set up the view to extract
+                          NDArrayView arr_view = NDArrayView();
+                          for (std::size_t i = 0; i < start.size(); ++i)
+                          {
+                            arr_view.from.push_back(start[i]);
+                            arr_view.to.push_back(stop[i]);
+                            arr_view.step.push_back(step[i]);
+                          }
 
-             return s.GetRange(arr_view);
+                          return s.GetRange(arr_view);
+             */
            })
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<std::vector<std::size_t>> const &idxs) {
@@ -399,44 +417,111 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              using size_type = typename NDArray<T>::size_type;
 
              // get shape of the numpy array
-             std::vector<std::size_t> new_shape;
+             std::vector<std::size_t> shape;
+             std::vector<std::size_t> stride;
+             std::vector<std::size_t> index;
              for (std::size_t i = 0; i < buf.shape.size(); ++i)
              {
-               new_shape.push_back(size_type(buf.shape[i]));
+               shape.push_back(size_type(buf.shape[i]));
+               stride.push_back(std::size_t(buf.strides[i]) / sizeof(T));
+               index.push_back(0);
              }
-             std::size_t total_size = NDArray<T>::SizeFromShape(new_shape);
+
+             std::size_t total_size = NDArray<T>::SizeFromShape(shape);
 
              // copy the data
              T *ptr = (T *)buf.ptr;
              s.Resize(total_size);
-             for (std::size_t i = 0; i < total_size; ++i)
+             if (s.CanReshape(shape))
              {
-               s[i] = ptr[i];
-             }
-             if (s.CanReshape(new_shape))
-             {
-               s.Reshape(new_shape);
+               s.Reshape(shape);
              }
              else
              {
                throw py::index_error();
              }
+
+             NDArrayIterator<T, typename NDArray<T>::container_type> it(s);
+
+             for (std::size_t j = 0; j < total_size; ++j)
+             {
+               // Computing numpy index
+               std::size_t i   = 0;
+               std::size_t pos = 0;
+               for (i = 0; i < shape.size(); ++i)
+               {
+                 pos += stride[i] * index[i];
+               }
+               if ((pos >= total_size))
+               {
+                 throw py::index_error();
+               }
+
+               // Updating
+               *it = ptr[pos];
+               ++it;
+
+               // Increamenting Numpy
+               i = 0;
+               ++index[i];
+               while (index[i] >= shape[i])
+               {
+                 index[i] = 0;
+                 ++i;
+                 if (i >= shape.size())
+                 {
+                   break;
+                 }
+                 ++index[i];
+               }
+             }
            })
       .def("ToNumpy", [](NDArray<T> &s) {
-        auto result = py::array_t<T>({s.size()});
-        auto buf    = result.request();
+        std::vector<std::size_t> shape  = s.shape();
+        auto                     result = py::array_t<T>(shape);
+        auto                     buf    = result.request();
 
-        std::vector<std::size_t> new_shape = s.shape();
-        result.resize(new_shape);
-
-        // copy the data
-        T *ptr = (T *)buf.ptr;
-        for (size_t i = 0; i < s.size(); ++i)
+        std::vector<std::size_t> stride;
+        std::vector<std::size_t> index;
+        for (std::size_t i = 0; i < buf.shape.size(); ++i)
         {
-          ptr[i] = s[i];
+          stride.push_back(std::size_t(buf.strides[i]) / sizeof(T));
+          index.push_back(0);
         }
 
-        // reshape the array
+        // copy the data
+        T *                                                     ptr = (T *)buf.ptr;
+        NDArrayIterator<T, typename NDArray<T>::container_type> it(s);
+
+        for (std::size_t j = 0; j < s.size(); ++j)
+        {
+          // Computing numpy index
+          std::size_t i   = 0;
+          std::size_t pos = 0;
+          for (i = 0; i < shape.size(); ++i)
+          {
+            pos += stride[i] * index[i];
+          }
+
+          // Updating
+          ptr[pos] = *it;
+          ++it;
+
+          // Increamenting Numpy
+          i = 0;
+          ++index[i];
+          while (index[i] >= shape[i])
+          {
+            index[i] = 0;
+            ++i;
+            if (i >= shape.size())
+            {
+              break;
+            }
+            ++index[i];
+          }
+        }
+
         return result;
       });
   //                  [](NDArray<T> &a, NDArray<T> &b)
