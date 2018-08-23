@@ -1055,6 +1055,19 @@ public:
     this->super_type::Isnan(x);
   }
 
+  /**
+   * rectified linear activation function
+   * @param x
+   */
+  void Relu(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Relu(x);
+
+  }
+
 private:
   std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const
   {

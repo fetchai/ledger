@@ -403,11 +403,10 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 
              // copy the data
              T *         ptr = (T *)buf.ptr;
-             std::size_t idx = 0;
              s.Resize(total_size);
              for (std::size_t i = 0; i < total_size; ++i)
              {
-               s[idx] = ptr[idx];
+               s[i] = ptr[i];
              }
              if (s.CanReshape(new_shape))
              {
