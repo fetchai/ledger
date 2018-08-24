@@ -474,6 +474,8 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       //      .def("lrint", &NDArray<T>::Lrint)
       //      .def("llrint", &NDArray<T>::Llrint)
 
+      .def("scatter", &NDArray<T>::Scatter)
+      .def("gather", &NDArray<T>::Gather)
       .def("FromNumpy",
            [](NDArray<T> &s, py::array_t<T> arr) {
              auto buf        = arr.request();
