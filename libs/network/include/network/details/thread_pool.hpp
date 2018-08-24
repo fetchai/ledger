@@ -58,6 +58,15 @@ protected:
     THREAD_SHOULD_QUIT = 0x02,
   };
 
+  enum thread_activity
+  {
+    Starting = 0,
+    Running = 1,
+    Sleeping = 2,
+    Working = 3,
+    Joinable = 4,
+  };
+
 public:
 
   static constexpr char const *LOGGING_NAME = "ThreadPoolImpl";
@@ -83,10 +92,22 @@ public:
     FETCH_LOG_DEBUG(LOGGING_NAME,"Destroying thread manager");
   }
 
+  template <typename F>
+  void Post(F &&f, uint32_t milliseconds)
+  {
+    if (!shutdown_.load())
+    {
+      StartOneThread();
+      future_work_.Post(f, milliseconds);
+      cv_.notify_one();
+    }
+  }
+
   virtual void Post(event_function_type item)
   {
     if (!shutdown_.load())
     {
+      StartOneThread();
       work_.Post(item);
       cv_.notify_one();
     }
@@ -94,9 +115,81 @@ public:
 
   virtual void SetIdleWork(event_function_type idle_work)
   {
-    lock_type lock(mutex_);
     idle_work_.Post(idle_work);
   }
+
+  bool StartOneThread()
+  {
+    if (tc_.load() < number_of_threads_)
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
+      if (threads_.size() < number_of_threads_)
+      {
+        auto x = new std::thread([this](){
+            this -> ProcessLoop();
+          });
+        threads_.push_back(x);
+        tc_++;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  virtual void Start()
+  {
+    // Done by magic now.
+  }
+
+  void Stop()
+  {
+    std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
+    shutdown_.store(true);
+    future_work_.Abort();
+    idle_work_.Abort();
+    work_.Abort();
+
+    cv_.notify_all();
+
+    for (auto &thread : threads_)
+    {
+      if (std::this_thread::get_id() == thread->get_id())
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,"Thread pools must not be killed by a thread they own.");
+        return;
+      }
+    }
+
+    cv_.notify_all();
+
+    FETCH_LOG_INFO(LOGGING_NAME,"Removing work");
+    {
+      future_work_.clear();
+      idle_work_.clear();
+      work_.clear();
+    }
+
+    cv_.notify_all();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    FETCH_LOG_INFO(LOGGING_NAME,"Kill threads");
+    for (auto &thread : threads_)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Kill threads: Collect ",
+                     thread->get_id()
+                     );
+      thread -> join();
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME,"Delete threads");
+    for (auto &thread : threads_)
+    {
+      delete thread;
+    }
+    threads_.clear();
+  }
+private:
 
   virtual void ProcessLoop()
   {
@@ -129,7 +222,6 @@ public:
   {
     {
       LOG_STACK_TRACE_POINT;
-      lock_type lock(mutex_);
       if (shutdown_.load())
       {
         return THREAD_SHOULD_QUIT;
@@ -173,39 +265,6 @@ public:
     return r;
   }
 
-  template<class WORKER_TARGET>
-  void Start(WORKER_TARGET *owner, void (WORKER_TARGET::*memberfunc)(void))
-  {
-    auto cb = [owner,memberfunc](){ (owner->*memberfunc)(); };
-    Start(cb);
-  }
-
-  // TODO(EJF): Protected?
-  virtual void Start(std::function<void (void)> function )
-  {
-    // TODO(EJF): Should monitor the number of threads that are being created
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Starting thread manager: ", number_of_threads_);
-
-    if (threads_.size() == 0)
-    {
-      for (std::size_t i = 0; i < number_of_threads_; ++i)
-      {
-        threads_.push_back(new std::thread(function));
-      }
-    }
-  }
-
-  virtual void Start()
-  {
-    std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
-    if (threads_.size() == 0)
-    {
-      shared_ptr_type self = shared_from_this();
-      auto cb = [self]() { self->ProcessLoop(); };
-      Start(cb);
-    }
-  }
-
   virtual thread_state_type TryIdleWork()
   {
     thread_state_type r = THREAD_IDLE;
@@ -234,75 +293,6 @@ public:
     return r;
   }
 
-  void Stop()
-  {
-    std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
-
-    bool tryingToKillFromThreadWeOwn = false;
-    shutdown_.store(true);
-    for (auto &thread : threads_)
-    {
-      if (std::this_thread::get_id() == thread->get_id())
-      {
-        tryingToKillFromThreadWeOwn = true;
-      }
-    }
-
-    if (tryingToKillFromThreadWeOwn)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME,"Thread pools must not be killed by a thread they own.");
-    }
-
-    FETCH_LOG_INFO(LOGGING_NAME,"Removing work");
-    {
-      future_work_.clear();
-      idle_work_.clear();
-      work_.clear();
-    }
-
-
-    FETCH_LOG_INFO(LOGGING_NAME,"Kill threads");
-    if (threads_.size() != 0)
-      {
-
-      {
-        lock_type lock(mutex_);
-        cv_.notify_all();
-      }
-
-      for (auto &thread : threads_)
-      {
-        if (std::this_thread::get_id() != thread->get_id())
-        {
-          thread->join();
-          delete thread;
-        }
-        else
-        {
-          FETCH_LOG_ERROR(LOGGING_NAME,
-              "Thread pools must not be killed by a thread they own"
-              "so I'm not going to try joining myself.");
-          thread->detach();
-          delete thread;
-        }
-      }
-
-      threads_.clear();
-    }
-  }
-
-  template <typename F>
-  void Post(F &&f, uint32_t milliseconds)
-  {
-    if (!shutdown_.load())
-    {
-      future_work_.Post(f, milliseconds);
-      lock_type lock(mutex_);
-      cv_.notify_one();
-    }
-  }
-
-private:
   virtual thread_state_type ExecuteWorkload(event_function_type workload)
   {
     if (shutdown_.load())
@@ -346,6 +336,7 @@ private:
   mutable std::condition_variable cv_;
   mutable mutex_type              mutex_;
   std::atomic<bool>               shutdown_{false};
+  std::atomic<unsigned long>                tc_{0};
 };
 
 }  // namespace details

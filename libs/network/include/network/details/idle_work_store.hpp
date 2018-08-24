@@ -57,6 +57,11 @@ public:
     store_.clear();
   }
 
+  virtual void Abort()
+  {
+    shutdown_.store(true);
+  }
+
   virtual int Visit(std::function<void (work_item_type)> visitor)
   {
     lock_type mlock(mutex_, std::try_to_lock);

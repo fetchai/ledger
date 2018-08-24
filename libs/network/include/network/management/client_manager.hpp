@@ -39,6 +39,9 @@ class ClientManager
 public:
   using connection_type        = typename AbstractConnection::shared_type;
   using connection_handle_type = typename AbstractConnection::connection_handle_type;
+  using mutex_type = fetch::mutex::Mutex;
+  using lock_type = std::lock_guard<mutex_type>;
+  using connection_store_type = std::map<connection_handle_type, connection_type>;
 
   static constexpr char const *LOGGING_NAME = "ClientManager";
 
@@ -74,24 +77,26 @@ public:
   bool Send(connection_handle_type client, message_type const &msg)
   {
     LOG_STACK_TRACE_POINT;
-    bool ret = true;
-    clients_mutex_.lock();
+    connection_store_type::iterator iter;
+    connection_type c;
 
-    if (clients_.find(client) != clients_.end())
     {
-      auto c = clients_[client];
-      clients_mutex_.unlock();
+      lock_type lock(clients_mutex_);
+      iter = clients_.find(client);
+      if (iter == clients_.end())
+      {
+        FETCH_LOG_DEBUG(LOGGING_NAME,"Client not found.");
+        return false;
+      }
+      c = iter->second;
+    }
+
+    {
+      LOG_STACK_TRACE_POINT;
       c->Send(msg);
       FETCH_LOG_DEBUG(LOGGING_NAME,"Client manager did send message to ", client);
-      clients_mutex_.lock();
     }
-    else
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"Client not found.");
-      ret = false;
-    }
-    clients_mutex_.unlock();
-    return ret;
+    return true;
   }
 
   void Broadcast(message_type const &msg)
@@ -127,8 +132,8 @@ public:
 
 private:
   AbstractNetworkServer &                           server_;
-  std::map<connection_handle_type, connection_type> clients_;
-  fetch::mutex::Mutex                               clients_mutex_;
+  connection_store_type clients_;
+  mutex_type                               clients_mutex_;
 };
 }  // namespace network
 }  // namespace fetch

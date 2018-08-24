@@ -38,6 +38,7 @@ public:
     EMPTY,
     ADDED,
     MESSAGES,
+    SUBSCRIBED,
     DEAD,
   };
   network::AtomicStateMachine protocol_states_;
@@ -47,8 +48,14 @@ public:
     protocol_states_
       .Allow(ADDED, EMPTY)
       .Allow(MESSAGES, ADDED)
+      .Allow(SUBSCRIBED, ADDED)
+
+      .Allow(SUBSCRIBED, MESSAGES)
+      .Allow(MESSAGES, SUBSCRIBED)
+
       .Allow(DEAD, ADDED)
       .Allow(DEAD, MESSAGES)
+      .Allow(DEAD, SUBSCRIBED)
       ;
 
     auto msg = std::string("ServerInterface::ServiceServerInterface START ")
@@ -117,7 +124,7 @@ protected:
                           client,
                           "  ",
                           IdentifyProtocolSystem());
-      return false;
+      return true;
     }
 
     LOG_STACK_TRACE_POINT;
@@ -134,6 +141,7 @@ protected:
     case SERVICE_UNSUBSCRIBE:
       return HandleUnsubscribeRequest(client, params);
     default:
+      FETCH_LOG_ERROR(LOGGING_NAME,"PushProtocolRequest BAD TYPE:", type);
       return false;
     }
   }
@@ -207,10 +215,24 @@ protected:
 
     try
     {
+      protocol_states_.Set(SUBSCRIBED);
+    }
+    catch(std::exception &ex)
+    {
+      fetch::logger.Error("ServerInterface::HandleSubscribeRequest BAD_STATE_TRANSITION: ",
+                          ex.what(),
+                          " client=",
+                          client,
+                          "  ",
+                          IdentifyProtocolSystem());
+      return true;
+    }
+
+    try
+    {
       LOG_STACK_TRACE_POINT;
       params >> protocol >> feed >> subid;
       auto &mod = *members_[protocol];
-
       mod.Subscribe(client, feed, subid);
     }
     catch (serializers::SerializableException const &e)
@@ -235,6 +257,21 @@ protected:
 
     try
     {
+      protocol_states_.Set(SUBSCRIBED);
+    }
+    catch(std::exception &ex)
+    {
+      fetch::logger.Error("ServerInterface::HandleUnsubscribeRequest BAD_STATE_TRANSITION: ",
+                          ex.what(),
+                          " client=",
+                          client,
+                          "  ",
+                          IdentifyProtocolSystem());
+      return true;
+    }
+
+    try
+    {
       LOG_STACK_TRACE_POINT;
       params >> protocol >> feed >> subid;
       auto &mod = *members_[protocol];
@@ -256,6 +293,16 @@ protected:
 
   virtual void ConnectionDropped(connection_handle_type connection_handle)
   {
+    try
+    {
+      protocol_states_.Set(DEAD);
+    }
+    catch(std::exception &ex)
+    {
+      fetch::logger.Error("ServerInterface::ExecuteCall BAD_STATE_TRANSITION: ", ex.what());
+      throw;
+    }
+
     for(int protocol_number = 0; protocol_number < 256; protocol_number++)
     {
       if (members_[protocol_number])
@@ -264,18 +311,6 @@ protected:
         members_[protocol_number] -> ConnectionDropped(connection_handle);
         members_[protocol_number] = 0;
       }
-    }
-
-    int foo;
-    try
-    {
-      foo = protocol_states_.Get();
-      protocol_states_.Set(DEAD);
-    }
-    catch(std::exception &ex)
-    {
-      fetch::logger.Error("ServerInterface::ExecuteCall BAD_STATE_TRANSITION: ", ex.what());
-      throw;
     }
 
     auto msg = std::string("ServerInterface::ConnectionDropped ")
@@ -358,8 +393,15 @@ private:
         + "   "
         + DescribeProtocolSystem();
 
-      FETCH_LOG_ERROR(LOGGING_NAME, msg);
-      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND, msg);
+      if (protocol_states_.Get() == MESSAGES)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, msg);
+        throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND, msg);
+      }
+      else
+      {
+        return;
+      }
     }
 
     protocol_pointer -> ApplyMiddleware(connection_handle, params.data());

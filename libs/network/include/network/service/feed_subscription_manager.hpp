@@ -59,6 +59,7 @@ public:
   using service_type = fetch::service::ServiceServerInterface;
   using connection_handle_type     = uint64_t;
   using publishing_workload_type = std::tuple<service_type*, connection_handle_type, network::message_type const>;
+  using publishing_workload_queue_type = generics::WorkItemsQueue<publishing_workload_type>;
 
   static constexpr char const *LOGGING_NAME = "FeedSubscriptionManager";
 
@@ -78,8 +79,11 @@ public:
     : subscribe_mutex_(__LINE__, __FILE__), feed_(feed), publisher_(publisher)
   {
     workers_ = network::MakeThreadPool(3);
-    workers_ -> Start(this, &FeedSubscriptionManager::PublishToAllWorker);
+  }
 
+  ~FeedSubscriptionManager()
+  {
+    workers_ -> Stop();
   }
 
   /* Attaches a feed to a given service.
@@ -96,9 +100,10 @@ public:
   {
     publishing_workload_.Add(workload.begin(), workload.end());
     workload.clear();
+    workers_ -> Post( [this](){ this-> PublishingProcessor(); } );
   }
 
-  void PublishToAllWorker();
+  void PublishingProcessor();
 
   /* Subscribe client to feed.
    * @client is the client id.
@@ -165,7 +170,7 @@ private:
 
   fetch::service::AbstractPublicationFeed *publisher_ = nullptr;
 
-  generics::WorkItemsQueue<publishing_workload_type> publishing_workload_;
+  publishing_workload_queue_type publishing_workload_;
   network::ThreadPool workers_;
 };
 }  // namespace service

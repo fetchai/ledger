@@ -69,13 +69,18 @@ public:
     return store_.empty();
   }
 
+  virtual void Abort()
+  {
+    shutdown_.store(true);
+  }
+
   virtual work_item_type GetNext()
   {
     lock_type mlock(mutex_);
     return GetNextActual();
   }
 
-  virtual int Visit(std::function<void (work_item_type)> visitor, int maxprocess=100000)
+  virtual int Visit(std::function<void (work_item_type)> visitor, int maxprocess=1)
   {
     int processed = 0;
     while(true)

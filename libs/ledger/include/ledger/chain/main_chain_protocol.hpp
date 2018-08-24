@@ -78,6 +78,11 @@ public:
     max_size_ = 100;
   }
 
+  ~MainChainProtocol()
+  {
+    thread_pool_ -> Stop();
+  }
+
   void Start()
   {
     FETCH_LOG_DEBUG(LOGGING_NAME,"Starting syncronisation of blocks");
@@ -86,13 +91,17 @@ public:
     thread_pool_->Post([this]() { this->IdleUntilPeers(); });
   }
 
-  void Stop() { running_ = false; }
+  void Stop()
+  {
+    running_ = false;
+  }
 
-  void PublishBlock(BlockType const &blk)
+  void PublishBlock(BlockType const &block)
   {
     LOG_STACK_TRACE_POINT;
-    FETCH_LOG_WARN(LOGGING_NAME,"MINED A BLOCK:" + blk.summarise());
-    Publish(BLOCK_PUBLISH, blk);
+    FETCH_LOG_WARN(LOGGING_NAME,"MINED A BLOCK:" + block.summarise());
+    forward_blocks_.Add(block);
+    this->thread_pool_->Post([this]() { this->ForwardBlocks(); });
   }
 
   void ConnectionDropped(fetch::network::TCPClient::handle_type connection_handle)
@@ -146,10 +155,9 @@ private:
 
     if (!running_) return;
 
-    uint32_t ms            = max_size_;
     using service_map_type = typename R::service_map_type;
     using service_map_items          = typename service_map_type::value_type;
-    register_.VisitServiceClients([this, ms](service_map_items const &p)
+    register_.VisitServiceClients([this](service_map_items const &p)
     {
       LOG_STACK_TRACE_POINT;
       if (!running_)
@@ -158,7 +166,20 @@ private:
       }
 
       auto service_client = p.second.lock();
-      auto details = register_.GetDetails(service_client -> handle());
+
+      if (!service_client)
+      {
+        return;
+      }
+
+      auto h = service_client -> handle();
+
+      if (!h)
+      {
+        return;
+      }
+
+      auto details = register_.GetDetails(h);
       if ((!details -> is_outgoing) || (!details -> is_peer))
       {
         //std::cout << std::string(byte_array::ToBase64(details.identity.identifier())) << std::endl;
@@ -171,6 +192,7 @@ private:
 
       auto subscription_handler_cb = [this](block_type block)
         {
+          FETCH_LOG_WARN(LOGGING_NAME,"INCOMING BLOCK FROM PEERS");
           this -> pending_blocks_.Add(block);
           this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
         };
@@ -182,21 +204,6 @@ private:
         blockPublishSubscriptions_.Subscribe(service_client, protocol_, BLOCK_PUBLISH,
                                              name, // TODO(kll) make a connection name here.
                                              subscription_handler_function);
-      }
-
-      // TODO(EJF): ?????
-      if (0)
-      {
-        LOG_STACK_TRACE_POINT;
-        auto prom = service_client->Call(protocol_, GET_HEAVIEST_CHAIN, ms);
-        prom.Then([prom, ms, this](){
-            std::vector<BlockType> incoming;
-            incoming.reserve(uint64_t(ms));
-            prom.As(incoming);
-            FETCH_LOG_INFO(LOGGING_NAME,"Updating pending blocks: ", incoming.size());
-            this -> pending_blocks_.Add(incoming.begin(), incoming.end());
-            this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
-          });
       }
     });
 
@@ -213,7 +220,7 @@ private:
     {
       for (auto &block : work)
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"Fowarding block: ", block.hashString());
+        FETCH_LOG_WARN(LOGGING_NAME,"Fowarding block: ", block.hashString());
 
         Publish(BLOCK_PUBLISH, block);
       }
@@ -234,11 +241,11 @@ private:
       {
         block.UpdateDigest();
 
-        FETCH_LOG_DEBUG(LOGGING_NAME,"OMG Adding? the block to the chain: ", block.summarise());
+        FETCH_LOG_WARN(LOGGING_NAME,"OMG Adding? the block to the chain: ", block.summarise());
 
         if (chain_->AddBlock(block))
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME,"OMG Adding the block to the chain: ", block.summarise());
+          FETCH_LOG_WARN(LOGGING_NAME,"OMG Adding the block to the chain: ", block.summarise());
 
           forward_blocks_.Add(block);
           this->thread_pool_->Post([this]() { this->AddPendingBlocks(); });
@@ -322,56 +329,6 @@ private:
       this -> thread_pool_ -> Post([this]() { this -> QueryLooseBlocks(); });
     }
   }
-
-#if 0
-  void RealisePromises()
-  {
-    if (!running_) return;
-    std::lock_guard<mutex::Mutex> lock(block_list_mutex_);
-    incoming_objects_.reserve(uint64_t(max_size_));
-
-    for (auto &p : block_list_promises_)
-    {
-
-      if (!running_) return;
-
-      incoming_objects_.clear();
-      if (!p.Wait(100, false))
-      {
-        continue;
-      }
-
-      p.template As<std::vector<BlockType>>(incoming_objects_);
-
-      if (!running_) return;
-      std::lock_guard<mutex::Mutex> lock(mutex_);
-
-      bool                  loose = false;
-      byte_array::ByteArray blockId;
-
-      byte_array::ByteArray prevHash;
-      for (auto &block : incoming_objects_)
-      {
-        block.UpdateDigest();
-        chain_->AddBlock(block);
-        prevHash = block.prev();
-        loose    = block.loose();
-      }
-      if (loose)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME,"Loose block");
-        TODO("Make list with missing blocks: ", prevHash);
-      }
-    }
-
-    block_list_promises_.clear();
-    if (running_)
-    {
-      thread_pool_->Post([this]() { this->IdleUntilPeers(); },
-                         5000);  // TODO(issue 7): Set from parameter
-    }
-  }
-#endif
 
   /// @}
 

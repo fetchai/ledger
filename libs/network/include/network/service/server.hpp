@@ -102,6 +102,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
+    FETCH_LOG_WARN(LOGGING_NAME,"~ServiceServer", this);
+
     client_rpcs_mutex_.lock();
 
     for (auto &c : client_rpcs_)
@@ -143,6 +145,7 @@ private:
     messages_.push_back(pm);
 
     // TODO(issue 20): look at this
+    // this task can outlive the THIS object's lifespan. 
     network_manager_.Post([this]() { this->ProcessMessages(); });
   }
 

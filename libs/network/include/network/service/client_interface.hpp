@@ -42,7 +42,7 @@ class ServiceClientInterface
   typedef std::lock_guard<subscription_mutex_type> subscription_mutex_lock_type;
   class Subscription;
   typedef std::unordered_map<subscription_handler_type, Subscription> subscriptions_type;
-
+  using promises_type = std::map<Promise::promise_counter_type, Promise::shared_promise_type>;
 public:
 
   static constexpr char const *LOGGING_NAME = "ServiceClientInterface";
@@ -221,17 +221,31 @@ protected:
     case SERVICE_FEED:
       return ProcessServerFeedMessage  (msg, params);
     default:
+      FETCH_LOG_ERROR(LOGGING_NAME,"ProcessServerMessage BAD TYPE:", type);
       return false;
     }
   }
 
   bool ProcessServerResultMessage(network::message_type const &msg, serializer_type &params)
   {
+    LOG_STACK_TRACE_POINT;
     Promise::promise_counter_type id;
-    params >> id;
+    promises_type::iterator it;
 
-    promises_mutex_.lock();
-    auto it = promises_.find(id);
+    {
+      LOG_STACK_TRACE_POINT;
+      params >> id;
+    }
+
+    {
+      LOG_STACK_TRACE_POINT;
+      promises_mutex_.lock();
+    }
+
+    {
+      LOG_STACK_TRACE_POINT;
+      it = promises_.find(id);
+    }
     if (it == promises_.end())
     {
       promises_mutex_.unlock();
@@ -252,6 +266,8 @@ protected:
   
   bool ProcessServerErrorMessage(network::message_type const &msg, serializer_type &params)
   {
+    LOG_STACK_TRACE_POINT;
+
     Promise::promise_counter_type id;
     params >> id;
 
@@ -279,6 +295,8 @@ protected:
   
   bool ProcessServerFeedMessage(network::message_type const &msg, serializer_type &params)
   {
+    LOG_STACK_TRACE_POINT;
+
     feed_handler_type         feed;
     subscription_handler_type sub;
     params >> feed >> sub;
@@ -388,7 +406,7 @@ private:
   subscription_mutex_type              subscription_mutex_;
   subscription_handler_type            subscription_index_counter;
 
-  std::map<Promise::promise_counter_type, Promise::shared_promise_type> promises_;
+  promises_type promises_;
   fetch::mutex::Mutex                                                   promises_mutex_;
 };
 }  // namespace service

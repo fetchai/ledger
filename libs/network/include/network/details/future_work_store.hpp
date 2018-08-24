@@ -65,6 +65,11 @@ public:
     store_.clear(); // remove any pending things
   }
 
+  virtual void Abort()
+  {
+    shutdown_.store(true);
+  }
+
   virtual void clear()
   {
     lock_type mlock(mutex_);
@@ -77,7 +82,7 @@ public:
     return IsDueActual();
   }
 
-  virtual int Visit(std::function<void (work_item_type)> visitor, int maxprocesses)
+  virtual int Visit(std::function<void (work_item_type)> visitor, int maxprocesses=1)
   {
     lock_type mlock(mutex_, std::try_to_lock);
     if (!mlock)

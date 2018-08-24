@@ -5,39 +5,35 @@
 namespace fetch {
 namespace service {
 
-void FeedSubscriptionManager::PublishToAllWorker()
+void FeedSubscriptionManager::PublishingProcessor()
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME,"OMG PublishToAllWorker STARTUP************************************************************************************");
-  while(publishing_workload_.Wait())
+  std::vector<publishing_workload_type> my_work;
+  publishing_workload_.Get(my_work, 16);
+  std::list<std::tuple<service_type*, connection_handle_type>> dead_connections;
+  for(auto &w : my_work)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"OMG PublishToAllWorker");
-    std::vector<publishing_workload_type> my_work;
-    publishing_workload_.Get(my_work, 16);
-
-    std::list<std::tuple<service_type*, connection_handle_type>> dead_connections;
-
-    for(auto &w : my_work)
+    service_type *service = std::get<0>(w);
+    connection_handle_type client_number = std::get<1>(w);
+    network::message_type msg = std::get<2>(w);
+    if (!service->DeliverResponse(client_number, msg.Copy()))
+    {
+      dead_connections.push_back(std::make_tuple(service, client_number));
+    }
+  }
+  if (!dead_connections.empty())
+  {
+    for(auto &w : dead_connections)
     {
       service_type *service = std::get<0>(w);
       connection_handle_type client_number = std::get<1>(w);
-      network::message_type msg = std::get<2>(w);
-      if (!service->DeliverResponse(client_number, msg.Copy()))
-      {
-        dead_connections.push_back(std::make_tuple(service, client_number));
-      }
+      service -> ConnectionDropped(client_number);
     }
-    if (!dead_connections.empty())
-    {
-      for(auto &w : dead_connections)
-      {
-        service_type *service = std::get<0>(w);
-        connection_handle_type client_number = std::get<1>(w);
-        service -> ConnectionDropped(client_number);
-      }
-    }
-    FETCH_LOG_DEBUG(LOGGING_NAME,"OMG PublishToAllWorker done!");
   }
 
+  if (publishing_workload_.Remaining())
+  {
+    workers_ -> Post( [this](){ this-> PublishingProcessor(); } );
+  }
 }
 
 
