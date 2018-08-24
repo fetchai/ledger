@@ -334,7 +334,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<std::size_t> const &idxs) {
-             std::cout << "GET 1" << std::endl;
              assert(idxs.size() == s.shape().size());
              return s.Get(idxs);
            })
@@ -421,8 +420,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> &a, std::vector<std::size_t> b) {
              if (!(a.CanReshape(b)))
              {
-               py::print("cannot reshape array of size (", a.size(), ") into shape of(", a.shape(),
-                         ")");
+               py::print("cannot reshape array of size (", a.size(), ") into shape of(", b, ")");
                throw py::value_error();
              }
              a.Reshape(b);
@@ -476,6 +474,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 
       .def("scatter", &NDArray<T>::Scatter)
       .def("gather", &NDArray<T>::Gather)
+      .def("softmax", &NDArray<T>::Softmax)
       .def("FromNumpy",
            [](NDArray<T> &s, py::array_t<T> arr) {
              auto buf        = arr.request();
