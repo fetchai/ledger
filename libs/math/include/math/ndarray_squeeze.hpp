@@ -187,7 +187,7 @@ void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, std::vector<uint
   output.Resize(k);
   output.Reshape(out_shape);
 
-  NDArrayIterator<T, C> it_a(input);  // TODO(tfr): Make const iterator
+  NDArrayIterator<T, C> it_a(input);  // TODO(private issue 187): Make const iterator
   NDArrayIterator<T, C> it_b(output);
 
   // Move the axis we want to reduce to the front
