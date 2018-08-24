@@ -264,7 +264,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> const &s, NDArray<T> const &other) { return s.operator!=(other); })
       .def("__getitem__",
            [](NDArray<T> const &s, std::size_t idx) {
-             std::cout << "GET 4" << std::endl;
              if (idx >= s.size()) throw py::index_error();
              return s[idx];
            })
@@ -316,7 +315,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<std::vector<std::size_t>> const &idxs) {
-             std::cout << "GET 2" << std::endl;
              assert(idxs.size() > 0);
              for (auto cur_idx : idxs)
              {
