@@ -24,6 +24,7 @@
 #include "network/service/protocol.hpp"
 #include "network/service/types.hpp"
 #include "network/generics/atomic_state_machine.hpp"
+#include "core/mutex.hpp"
 
 namespace fetch {
 namespace service {
@@ -33,6 +34,8 @@ class ServiceServerInterface
 public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
   using byte_array_type        = byte_array::ConstByteArray;
+  using mutex_type = fetch::mutex::Mutex;
+  using lock_type = std::lock_guard<mutex_type>;
 
   enum {
     EMPTY,
@@ -53,6 +56,7 @@ public:
       .Allow(SUBSCRIBED, MESSAGES)
       .Allow(MESSAGES, SUBSCRIBED)
 
+      .Allow(DEAD, EMPTY)
       .Allow(DEAD, ADDED)
       .Allow(DEAD, MESSAGES)
       .Allow(DEAD, SUBSCRIBED)
@@ -65,7 +69,11 @@ public:
     FETCH_LOG_WARN(LOGGING_NAME, msg);
   }
 
-  virtual ~ServiceServerInterface() {}
+  virtual ~ServiceServerInterface()
+  {
+    protocol_states_.Set(DEAD);
+    RemoveAllProtocols(0);
+  }
 
   void Add(protocol_handler_type const &name,
            Protocol *                   protocol)  // TODO: Rename to AddProtocol
@@ -213,6 +221,7 @@ protected:
     feed_handler_type         feed;
     subscription_handler_type subid;
 
+    lock_type lock(mutex_);
     try
     {
       protocol_states_.Set(SUBSCRIBED);
@@ -255,6 +264,7 @@ protected:
     feed_handler_type         feed;
     subscription_handler_type subid;
 
+    lock_type lock(mutex_);
     try
     {
       protocol_states_.Set(SUBSCRIBED);
@@ -296,13 +306,18 @@ protected:
     try
     {
       protocol_states_.Set(DEAD);
+      RemoveAllProtocols(connection_handle);
     }
     catch(std::exception &ex)
     {
       fetch::logger.Error("ServerInterface::ExecuteCall BAD_STATE_TRANSITION: ", ex.what());
       throw;
     }
+  }
 
+  virtual void RemoveAllProtocols(connection_handle_type connection_handle)
+  {
+    lock_type lock(mutex_);
     for(int protocol_number = 0; protocol_number < 256; protocol_number++)
     {
       if (members_[protocol_number])
@@ -370,7 +385,7 @@ private:
     {
       protocol_states_.Set(MESSAGES);
     }
-    catch(std::exception &ex)
+    catch(std::range_error &ex)
     {
       fetch::logger.Error("ServerInterface::ExecuteCall ", ex.what(), " client=", connection_handle, "  ", IdentifyProtocolSystem());
       throw;
@@ -395,8 +410,9 @@ private:
 
       if (protocol_states_.Get() == MESSAGES)
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, msg);
-        throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND, msg);
+        FETCH_LOG_WARN(LOGGING_NAME, msg);
+        return;
+        //throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND, msg);
       }
       else
       {
@@ -441,10 +457,11 @@ private:
     }
     catch (std::exception &ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME,"ServerInterface::ExecuteCall - ", ex.what(), " - ", identifier);
+      //FETCH_LOG_ERROR(LOGGING_NAME,"ServerInterface::ExecuteCall - ", ex.what(), " - ", identifier);
     }
   }
-  
+
+  mutex_type mutex_{__LINE__, __FILE__};
   Protocol *members_[256] = {nullptr};  // TODO: Not thread-safe
   friend class FeedSubscriptionManager;
 };

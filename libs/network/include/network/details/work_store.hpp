@@ -74,10 +74,19 @@ public:
     shutdown_.store(true);
   }
 
-  virtual work_item_type GetNext()
+  virtual bool GetNext(work_item_type &output)
   {
     lock_type mlock(mutex_);
-    return GetNextActual();
+    if (shutdown_.load())
+    {
+      return false;
+    }
+    if (store_.empty())
+    {
+      return false;
+    }
+    output = GetNextActual();
+    return true;
   }
 
   virtual int Visit(std::function<void (work_item_type)> visitor, int maxprocess=1)
@@ -85,10 +94,9 @@ public:
     int processed = 0;
     while(true)
     {
-      if (shutdown_.load()) break;
+      work_item_type work;
       if (processed >= maxprocess) break;
-      if (empty()) break;
-      auto work = GetNext();
+      if (!GetNext(work)) break;
       visitor(work);
       processed++;
     }

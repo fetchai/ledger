@@ -52,11 +52,13 @@ public:
     auto old_state = state_.exchange(new_state);
     if (old_state == new_state)
     {
-      return false;
+      return true;
     }
     auto txn = std::make_pair(new_state, old_state);
     if (allowed_.find(txn) == allowed_.end())
     {
+      state_.compare_exchange_strong(old_state, new_state);
+      // if it's not the same, someone else changed it...
       throw std::range_error(std::to_string(old_state) + " -> " + std::to_string(new_state));
     }
     return true;

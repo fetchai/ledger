@@ -51,7 +51,9 @@ public:
     : subscription_mutex_(__LINE__, __FILE__), promises_mutex_(__LINE__, __FILE__)
   {}
 
-  virtual ~ServiceClientInterface() {}
+  virtual ~ServiceClientInterface() {
+    ClearPromises();
+  }
 
   template <typename... arguments>
   Promise Call(protocol_handler_type const &protocol, function_handler_type const &function,
@@ -193,7 +195,7 @@ protected:
   virtual bool DeliverRequest(network::message_type const &) = 0;
 
   // TODO(?) This isn't connected to anything. This might be why things are exploding.
-  void ClearPromises()
+  virtual void ClearPromises()
   {
     promises_mutex_.lock();
     for (auto &p : promises_)
@@ -204,7 +206,7 @@ protected:
     promises_mutex_.unlock();
   }
 
-  bool ProcessServerMessage(network::message_type const &msg)
+  virtual bool ProcessServerMessage(network::message_type const &msg)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -226,7 +228,7 @@ protected:
     }
   }
 
-  bool ProcessServerResultMessage(network::message_type const &msg, serializer_type &params)
+  virtual bool ProcessServerResultMessage(network::message_type const &msg, serializer_type &params)
   {
     LOG_STACK_TRACE_POINT;
     Promise::promise_counter_type id;
@@ -253,18 +255,20 @@ protected:
       throw serializers::SerializableException(
                                                error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
     }
-    promises_mutex_.unlock();
 
     auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
     it->second->Fulfill(ret);
+    promises_mutex_.unlock();
+
+    // "it" may no longer be valid by this time.
 
     promises_mutex_.lock();
-    promises_.erase(it);
+    promises_.erase(id);
     promises_mutex_.unlock();
     return true;
   }
-  
-  bool ProcessServerErrorMessage(network::message_type const &msg, serializer_type &params)
+
+  virtual bool ProcessServerErrorMessage(network::message_type const &msg, serializer_type &params)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -292,8 +296,8 @@ protected:
     promises_mutex_.unlock();
     return true;
   }
-  
-  bool ProcessServerFeedMessage(network::message_type const &msg, serializer_type &params)
+
+  virtual bool ProcessServerFeedMessage(network::message_type const &msg, serializer_type &params)
   {
     LOG_STACK_TRACE_POINT;
 
