@@ -124,7 +124,6 @@ public:
     return output;
   }
 
-
   /**
    * Copies input data into current array
    *
@@ -1188,7 +1187,7 @@ public:
   }
 
   /**
-  * calculates bit mask on this
+   * calculates bit mask on this
    * @param x
    */
   void BooleanMask(self_type const &mask)
@@ -1209,7 +1208,6 @@ public:
     new_shape.push_back(this->size());
 
     this->ResizeFromShape(new_shape);
-
   }
 
 private:

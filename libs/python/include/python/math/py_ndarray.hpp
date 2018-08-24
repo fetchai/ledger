@@ -440,11 +440,9 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              return;
            })
       .def("boolean_mask",
-           [](NDArray<T> &a, NDArray<T> &mask)
-           {
+           [](NDArray<T> &a, NDArray<T> &mask) {
              a.BooleanMask(mask);
              return a;
-
            })
       .def("shape", [](NDArray<T> &a) { return a.shape(); })
       .def_static("Zeros", &NDArray<T>::Zeroes)

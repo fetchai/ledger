@@ -1458,7 +1458,6 @@ public:
     return *this;
   }
 
-
   /**
    * calculates bit mask on this
    * @param x
@@ -1481,7 +1480,6 @@ public:
 
     LazyResize(counter);
   }
-
 
   /* Equality operator.
    * @other is the array which this instance is compared against.
