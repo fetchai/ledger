@@ -529,9 +529,6 @@ public:
     assert(obj1.size() == this->size());
     assert(obj1.data().size() == this->data().size());
 
-    std::cout << "sub: x[0]: " << obj1[0] << std::endl;
-    std::cout << "sub: xmax:" << scalar << std::endl;
-
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
