@@ -21,6 +21,13 @@ pipeline {
       } // steps
 
     } // stage
+
+    stage ('Debug') {
+      steps {
+        sh 'env'
+        sh 'ls -l'
+      }
+    }
   } // stages
 } // pipeline
 
