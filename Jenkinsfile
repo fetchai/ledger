@@ -11,8 +11,7 @@ pipeline {
 
       when {
         expression {
-          GIT_BRANCH = sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
-          return GIT_BRANCH == 'PR-191-head'
+          return env.GIT_BRANCH == 'PR-191-head'
         } // expression
       } // when
 
