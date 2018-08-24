@@ -1420,6 +1420,14 @@ public:
     data_.in_parallel().Apply(sign, x.data_);
   }
 
+  void Softmax(self_type const &x)
+  {
+    LazyResize(x.size());
+
+    kernels::Sign<vector_register_type> approx_soft_max;
+    data_.in_parallel().Apply(approx_soft_max, x.data_);
+  }
+
   /* Equality operator.
    * @other is the array which this instance is compared against.
    *

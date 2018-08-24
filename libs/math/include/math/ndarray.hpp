@@ -240,9 +240,7 @@ public:
   data_type Get(std::vector<std::size_t> const &indices) const
   {
     assert(indices.size() == shape_.size());
-    std::cout << "col idx val: " << this->operator[](ComputeColIndex(indices)) << std::endl;
-    std::cout << "row idx val: " << this->operator[](ComputeRowIndex(indices)) << std::endl;
-    return this->                         operator[](ComputeColIndex(indices));
+    return this->operator[](ComputeColIndex(indices));
   }
 
   /**
@@ -362,6 +360,8 @@ public:
     self_type                                  ret{return_shape};
     NDArrayIterator<data_type, container_type> return_iterator{ret};
 
+    assert(axis < this->shape().size());
+
     // iterate through the return array (i.e. the array of Max vals)
     //    data_type cur_val;
     std::vector<std::size_t> cur_index;
@@ -416,7 +416,7 @@ public:
     std::vector<std::size_t> return_shape{shape()};
     return_shape.erase(return_shape.begin() + int(axis), return_shape.begin() + int(axis) + 1);
 
-    assert(axis < return_shape.size());
+    assert(axis < this->shape().size());
 
     self_type                                  ret{return_shape};
     NDArrayIterator<data_type, container_type> return_iterator{ret};
@@ -1146,7 +1146,20 @@ public:
     return ret;
   }
 
+  /**
+   * calculates soft max of x and applies to this
+   * @param x
+   */
+  void Softmax(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Softmax(x);
+  }
+
 private:
+  // TODO(tfr): replace with strides
   std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const
   {
     std::size_t index  = 0;

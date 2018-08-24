@@ -20,6 +20,7 @@
 #include "math/exp.hpp"
 #include "math/log.hpp"
 #include "math/ndarray.hpp"
+#include "math/ndarray_squeeze.hpp"
 #include "python/fetch_pybind.hpp"
 #include <pybind11/stl.h>
 
@@ -33,6 +34,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
   namespace py = pybind11;
   //             .def("Relu",
   py::class_<NDArray<T>, fetch::math::ShapeLessArray<T>>(module, custom_name.c_str())
+      .def(py::init<>())
       .def(py::init<std::size_t const &>())
       .def(py::init<std::vector<std::size_t> const &>())
       .def("Copy", [](NDArray<T> &a) { return a.Copy(); })
@@ -50,6 +52,68 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def_static("Zeros", &NDArray<T>::Zeroes)
       .def_static("Ones", &NDArray<T>::Ones)
+
+      // TODO(private issue 188): Move implementation of these functions to ndarray.
+      .def("reduce_sum",
+           [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
+             if (axis >= x.shape().size())
+             {
+               throw py::index_error();
+             }
+             Reduce([](T const &a, T const &b) { return a + b; }, y, x, axis);
+           })
+      .def("reduce_mean",
+           [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
+             if (axis >= x.shape().size())
+             {
+               throw py::index_error();
+             }
+             Reduce([](T const &a, T const &b) { return a + b; }, y, x, axis);
+
+             T d = T(1.) / T(x.shape(axis));
+             for (std::size_t i = 0; i < x.size(); ++i)
+             {
+               x[i] *= d;
+             }
+           })
+      .def("transpose",
+           [](NDArray<T> &x, NDArray<T> &y, std::vector<uint64_t> const &perm) {
+             if (perm.size() != y.shape().size())
+             {
+               throw py::index_error();
+             }
+             std::vector<std::size_t> newshape;
+             newshape.reserve(y.shape().size());
+
+             for (std::size_t i = 0; i < perm.size(); ++i)
+             {
+               newshape.push_back(y.shape(perm[i]));
+             }
+
+             x.ResizeFromShape(newshape);
+
+             NDArrayIterator<T, typename NDArray<T>::container_type> it(x);
+             NDArrayIterator<T, typename NDArray<T>::container_type> it2(y);
+             it.ReverseAxes();
+             while (bool(it) && bool(it2))
+             {
+               *it = *it2;
+               ++it;
+               ++it2;
+             }
+           })
+      .def("reduce_any",
+           [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
+             Reduce(
+                 [](T const &a, T const &b) {
+                   if (a != 0) return 1;
+                   if (b != 0) return 1;
+                   return 0;
+                 },
+                 y, x, axis);
+           })
+      //      .def("expand_dims",[](NDArray<T> &x, NDArray<T> &y, uint64_t const& axis) {
+      //      })
       .def("__add__",
            [](NDArray<T> &b, NDArray<T> &c) {
              // identify the correct output shape
@@ -270,6 +334,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("__getitem__",
            [](NDArray<T> const &s, std::vector<std::size_t> const &idxs) {
+             std::cout << "GET 1" << std::endl;
              assert(idxs.size() == s.shape().size());
              return s.Get(idxs);
            })
@@ -356,8 +421,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> &a, std::vector<std::size_t> b) {
              if (!(a.CanReshape(b)))
              {
-               py::print("cannot reshape array of size (", a.size(), ") into shape of(", a.shape(),
-                         ")");
+               py::print("cannot reshape array of size (", a.size(), ") into shape of(", b, ")");
                throw py::value_error();
              }
              a.Reshape(b);
@@ -411,6 +475,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 
       .def("scatter", &NDArray<T>::Scatter)
       .def("gather", &NDArray<T>::Gather)
+      .def("softmax", &NDArray<T>::Softmax)
       .def("FromNumpy",
            [](NDArray<T> &s, py::array_t<T> arr) {
              auto buf        = arr.request();
