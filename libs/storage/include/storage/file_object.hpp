@@ -20,6 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
+#include "storage/storage_exception.hpp"
 #include "storage/versioned_random_access_stack.hpp"
 
 #include <cstdint>
@@ -136,7 +137,7 @@ public:
 
       if (block_number_ >= block_count_)
       {
-        TODO_FAIL("Seek is out of bounds");
+        throw StorageException("Seek is out of bounds");
       }
     }
 
@@ -149,7 +150,7 @@ public:
 
       if (block_number_ >= block_count_)
       {
-        TODO_FAIL("Seek is out of bounds");
+        throw StorageException("Seek is out of bounds");
       }
     }
 
@@ -182,7 +183,7 @@ public:
 
       if (block_number_ >= block_count_)
       {
-        TODO_FAIL("Seek is out of bounds");
+        throw StorageException("Seek is out of bounds");
       }
     }
 
@@ -196,7 +197,7 @@ public:
   {
     Seek(0);
     size += HEADER_SIZE;
-    TODO_FAIL("Grow is not implemented yet");
+    throw StorageException("Grow is not implemented yet");
   }
 
   void Write(byte_array::ConstByteArray const &arr) { Write(arr.pointer(), arr.size()); }
@@ -321,7 +322,7 @@ public:
 
     if ((last_block != 0) && (block.next == block_type::UNDEFINED))
     {
-      TODO_FAIL("Could not read block");
+      throw StorageException("Could not read block");
     }
 
     memcpy(bytes, block.data + byte_index_, first_bytes);
@@ -343,7 +344,7 @@ public:
 
         if (block.next == block_type::UNDEFINED)
         {
-          TODO_FAIL("Could not read block");
+          throw StorageException("Could not read block");
         }
 
         memcpy(bytes + offset, block.data, block_type::BYTES);
@@ -395,7 +396,7 @@ public:
       bi = block.next;
       if (bi == block_type::UNDEFINED)
       {
-        TODO_FAIL("File corrupted");
+        throw StorageException("File corrupted");
       }
 
       stack_.Get(bi, block);
