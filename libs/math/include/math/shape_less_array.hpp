@@ -1420,12 +1420,23 @@ public:
     data_.in_parallel().Apply(sign, x.data_);
   }
 
-  void Softmax(self_type const &x)
+  /**
+   * trivial implementation of softmax
+   * @param x
+   * @return
+   */
+  self_type Softmax(self_type const &x)
   {
     LazyResize(x.size());
 
-    kernels::Sign<vector_register_type> approx_soft_max;
-    data_.in_parallel().Apply(approx_soft_max, x.data_);
+    assert(x.size() == this->size());
+
+    // by subtracting the max we improve numerical stability, and the result will be identical
+    this->Subtract(x, x.Max());
+    this->Exp(*this);
+    this->Divide(*this, this->Sum());
+
+    return *this;
   }
 
   /* Equality operator.
