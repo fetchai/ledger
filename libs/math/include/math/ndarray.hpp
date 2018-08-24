@@ -408,6 +408,20 @@ public:
   }
 
   /**
+   * Returns an ndarray containing the elementwise maximum of two other ndarrays
+   * @param x ndarray input 1
+   * @param y ndarray input 2
+   * @return the combined array
+   */
+  self_type Maximum(self_type const &x, self_type const &y)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+    this->super_type::Maximum(x, y);
+    return *this;
+  }
+
+  /**
    * Returns the single minimum value in the array
    * @return
    */

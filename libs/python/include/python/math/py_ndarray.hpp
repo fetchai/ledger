@@ -64,13 +64,13 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("reduce_mean",
            [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
-             if (axis >= x.shape().size())
+             if (axis >= y.shape().size())
              {
                throw py::index_error();
              }
              Reduce([](T const &a, T const &b) { return a + b; }, y, x, axis);
 
-             T d = T(1.) / T(x.shape(axis));
+             T d = T(1.) / T(y.shape(axis));
              for (std::size_t i = 0; i < x.size(); ++i)
              {
                x[i] *= d;
@@ -407,15 +407,28 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (axis >= a.shape().size()) throw py::index_error();
              return a.Max(axis);
            })
+      //      .def("maximum", [](NDArray<T> &a, NDArray<T> const &b, NDArray<T> const &c)
+      //      {
+      //        return a.Maximum(b, c);
+      //      })
+      .def("maximum", &NDArray<T>::Maximum)
       .def("min", [](NDArray<T> const &a) { return a.Min(); })
       .def("min",
            [](NDArray<T> &a, std::size_t const axis) {
              if (axis >= a.shape().size()) throw py::index_error();
              return a.Min(axis);
            })
-      .def("relu", [](NDArray<T> const &a, NDArray<T> &b) { return b.Relu(a); })
+      .def("relu",
+           [](NDArray<T> &a, NDArray<T> const &b) {
+             a.Relu(b);
+             return a;
+           })
       .def("l2loss", [](NDArray<T> const &a) { return a.L2Loss(); })
-      .def("sign", [](NDArray<T> const &a, NDArray<T> &b) { return b.Sign(a); })
+      .def("sign",
+           [](NDArray<T> &a, NDArray<T> const &b) {
+             a.Sign(b);
+             return a;
+           })
       .def("reshape",
            [](NDArray<T> &a, std::vector<std::size_t> b) {
              if (!(a.CanReshape(b)))
