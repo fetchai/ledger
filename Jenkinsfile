@@ -11,8 +11,8 @@ pipeline {
 
       when {
         expression {
-          GIT_BRANCH = 'origin/' + sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
-          return GIT_BRANCH == 'origin/develop'
+          GIT_BRANCH = sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
+          return GIT_BRANCH == 'PR-191-head'
         } // expression
       } // when
 
