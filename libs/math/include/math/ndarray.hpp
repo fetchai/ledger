@@ -241,9 +241,7 @@ public:
   data_type Get(std::vector<std::size_t> const &indices) const
   {
     assert(indices.size() == shape_.size());
-    std::cout << "col idx val: " << this->operator[](ComputeColIndex(indices)) << std::endl;
-    std::cout << "row idx val: " << this->operator[](ComputeRowIndex(indices)) << std::endl;
-    return this->                         operator[](ComputeColIndex(indices));
+    return this->operator[](ComputeColIndex(indices));
   }
 
   /**
@@ -1151,6 +1149,7 @@ public:
   }
 
 private:
+  // TODO(tfr): replace with strides
   std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const
   {
     std::size_t index  = 0;
