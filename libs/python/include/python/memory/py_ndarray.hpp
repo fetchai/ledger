@@ -21,11 +21,11 @@
 //#include "python/fetch_pybind.hpp"
 //#include "math/free_functions/free_functions.hpp"
 //
-//namespace fetch {
-//namespace math {
+// namespace fetch {
+// namespace math {
 //
-//template <typename T>
-//void BuildRectangularArray(std::string const &custom_name, pybind11::module &module)
+// template <typename T>
+// void BuildRectangularArray(std::string const &custom_name, pybind11::module &module)
 //{
 //
 //  namespace py = pybind11;
@@ -51,7 +51,8 @@
 //      .def("Rotate", (void (RectangularArray<T>::*)(const double &,
 //                                                    const typename RectangularArray<T>::type)) &
 //                         RectangularArray<T>::Rotate)
-//      .def("Rotate", (void (RectangularArray<T>::*)(const double &, const double &, const double &,
+//      .def("Rotate", (void (RectangularArray<T>::*)(const double &, const double &, const double
+//      &,
 //                                                    const typename RectangularArray<T>::type)) &
 //                         RectangularArray<T>::Rotate)
 //      //    .def(py::self != py::self )
@@ -59,7 +60,8 @@
 //      .def("data", (typename RectangularArray<T>::container_type & (RectangularArray<T>::*)()) &
 //                       RectangularArray<T>::data)
 //      .def("data",
-//           (const typename RectangularArray<T>::container_type &(RectangularArray<T>::*)() const) &
+//           (const typename RectangularArray<T>::container_type &(RectangularArray<T>::*)() const)
+//           &
 //               RectangularArray<T>::data)
 //      .def("Load", &RectangularArray<T>::Load)
 //      .def("Set",

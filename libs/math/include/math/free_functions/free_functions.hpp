@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/memory/array.hpp"
-#include "math/kernels/standard_functions.hpp"
-#include "math/kernels/relu.hpp"
 #include "math/kernels/approx_exp.hpp"
 #include "math/kernels/approx_log.hpp"
 #include "math/kernels/approx_logistic.hpp"
 #include "math/kernels/approx_soft_max.hpp"
 #include "math/kernels/basic_arithmetics.hpp"
+#include "math/kernels/relu.hpp"
 #include "math/kernels/sign.hpp"
+#include "math/kernels/standard_functions.hpp"
+#include "vectorise/memory/array.hpp"
 
 namespace fetch {
 namespace math {
@@ -90,9 +90,87 @@ struct Scatter
 };
 
 /**
-* assigns the absolute of x to this array
-* @param x
-*/
+ * interleave data from multiple sources
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void DynamicStitch(ARRAY_TYPE &input_array, std::vector<std::vector<std::size_t>> const &indices,
+                   std::vector<ARRAY_TYPE> const &data)
+{
+  // identify the new size of this
+  std::size_t new_size = 0;
+  for (std::size_t l = 0; l < indices.size(); ++l)
+  {
+    new_size += indices[l].size();
+  }
+
+  input_array.LazyResize(new_size);
+
+  // loop through all output data locations identifying the next data point to copy into it
+  for (std::size_t i = 0; i < indices.size(); ++i)  // iterate through lists of indices
+  {
+    for (std::size_t k = 0; k < indices[i].size(); ++k)  // iterate through index within this list
+    {
+      assert(indices[i][k] <= input_array.size());
+      input_array[indices[i][k]] = data[i][k];
+    }
+  }
+}
+
+/**
+ * calculates bit mask on this
+ * @param x
+ */
+
+template <typename ARRAY_TYPE>
+void BooleanMaskImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE const &mask)
+{
+  assert(input_array.size() == mask.size());
+
+  std::size_t counter = 0;
+  for (std::size_t i = 0; i < input_array.size(); ++i)
+  {
+    assert((mask[i] == 1) || (mask[i] == 0));
+    // TODO(private issue 193): implement boolean only ndarray to avoid cast
+    if (bool(mask[i]))
+    {
+      input_array[counter] = input_array[i];
+      ++counter;
+    }
+  }
+
+  input_array.LazyResize(counter);
+}
+template <typename ARRAY_TYPE>
+void BooleanMask(ARRAY_TYPE &input_array, ARRAY_TYPE const &mask)
+{
+  BooleanMaskImplementation(input_array, mask);
+}
+template <typename T, typename C>
+void BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> const &mask)
+{
+  assert(input_array.shape() >= mask.shape());
+
+  BooleanMaskImplementation(input_array, mask);
+
+  // figure out the output shape
+  std::vector<std::size_t> new_shape;
+  for (std::size_t i = 0; i < input_array.shape().size(); ++i)
+  {
+    if (!(mask.shape()[i] == input_array.shape()[i]))
+    {
+      new_shape.push_back(mask.shape()[i]);
+    }
+  }
+  new_shape.push_back(input_array.size());
+
+  input_array.ResizeFromShape(new_shape);
+}
+
+/**
+ * assigns the absolute of x to this array
+ * @param x
+ */
 template <typename T, typename C>
 void Abs(NDArray<T, C> &x)
 {
@@ -105,7 +183,6 @@ void Abs(ShapeLessArray<T, C> &x)
   kernels::stdlib::Abs<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * e^x
@@ -124,8 +201,6 @@ void Exp(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
-
 /**
  * raise 2 to power input values of x
  * @param x
@@ -142,7 +217,6 @@ void Exp2(ShapeLessArray<T, C> &x)
   kernels::stdlib::Exp2<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * exp(x) - 1
@@ -161,7 +235,6 @@ void Expm1(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * natural logarithm of x
  * @param x
@@ -178,7 +251,6 @@ void Log(ShapeLessArray<T, C> &x)
   kernels::stdlib::Log<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * natural logarithm of x
@@ -197,7 +269,6 @@ void Log10(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * log base 2
  * @param x
@@ -214,7 +285,6 @@ void Log2(ShapeLessArray<T, C> &x)
   kernels::stdlib::Log2<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * natural log 1 + x
@@ -233,7 +303,6 @@ void Log1p(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * square root
  * @param x
@@ -250,7 +319,6 @@ void Sqrt(ShapeLessArray<T, C> &x)
   kernels::stdlib::Sqrt<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * cubic root x
@@ -269,7 +337,6 @@ void Cbrt(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * raise to power
  * @param x
@@ -286,7 +353,6 @@ void Pow(ShapeLessArray<T, C> &x)
   kernels::stdlib::Pow<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * sine of x
@@ -305,7 +371,6 @@ void Sin(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * cosine of x
  * @param x
@@ -322,7 +387,6 @@ void Cos(ShapeLessArray<T, C> &x)
   kernels::stdlib::Cos<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * tangent of x
@@ -341,7 +405,6 @@ void Tan(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * arc sine of x
  * @param x
@@ -358,7 +421,6 @@ void Asin(ShapeLessArray<T, C> &x)
   kernels::stdlib::Asin<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * arc cosine of x
@@ -377,7 +439,6 @@ void Acos(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * arc tangent of x
  * @param x
@@ -394,7 +455,6 @@ void Atan(ShapeLessArray<T, C> &x)
   kernels::stdlib::Atan<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * arc tangent of x
@@ -413,7 +473,6 @@ void Atan2(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * hyperbolic sine of x
  * @param x
@@ -430,7 +489,6 @@ void Sinh(ShapeLessArray<T, C> &x)
   kernels::stdlib::Sinh<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * hyperbolic cosine of x
@@ -449,7 +507,6 @@ void Cosh(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * hyperbolic tangent of x
  * @param x
@@ -466,7 +523,6 @@ void Tanh(ShapeLessArray<T, C> &x)
   kernels::stdlib::Tanh<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * hyperbolic arc sine of x
@@ -485,7 +541,6 @@ void Asinh(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * hyperbolic arc cosine of x
  * @param x
@@ -502,7 +557,6 @@ void Acosh(ShapeLessArray<T, C> &x)
   kernels::stdlib::Acosh<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * hyperbolic arc tangent of x
@@ -521,7 +575,6 @@ void Atanh(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * error function of x
  * @param x
@@ -538,7 +591,6 @@ void Erf(ShapeLessArray<T, C> &x)
   kernels::stdlib::Erf<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * complementary error function of x
@@ -557,7 +609,6 @@ void Erfc(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * factorial of x-1
  * @param x
@@ -574,7 +625,6 @@ void Tgamma(ShapeLessArray<T, C> &x)
   kernels::stdlib::Tgamma<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * log of factorial of x-1
@@ -593,7 +643,6 @@ void Lgamma(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * ceiling round
  * @param x
@@ -611,7 +660,6 @@ void Ceil(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * floor rounding
  * @param x
@@ -628,7 +676,6 @@ void Floor(ShapeLessArray<T, C> &x)
   kernels::stdlib::Floor<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * round towards 0
@@ -663,7 +710,6 @@ void Round(ShapeLessArray<T, C> &x)
   kernels::stdlib::Round<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * round to nearest int in float format
@@ -750,7 +796,6 @@ void Lrint(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  *
  * @param x
@@ -785,7 +830,6 @@ void Isfinite(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * checks for inf values
  * @param x
@@ -802,7 +846,6 @@ void Isinf(ShapeLessArray<T, C> &x)
   kernels::stdlib::Isinf<T> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
 
 /**
  * checks for nans
@@ -821,7 +864,6 @@ void Isnan(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-
 /**
  * rectified linear activation function
  * @param x
@@ -838,7 +880,6 @@ void Relu(ShapeLessArray<T, C> &x)
   kernels::Relu<typename ShapeLessArray<T, C>::vector_register_type> relu;
   x.data().in_parallel().Apply(relu, x.data());
 }
-
 
 /**
  * replaces data with the sign (1 or -1)
@@ -857,7 +898,6 @@ void Sign(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
 /**
  *
  * @param x
@@ -874,7 +914,6 @@ void Hypot(ShapeLessArray<T, C> &x)
   kernels::stdlib::Hypot<T> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
 
 /**
  *
@@ -893,7 +932,6 @@ void Frexp(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
 /**
  *
  * @param x
@@ -910,7 +948,6 @@ void Ldexp(ShapeLessArray<T, C> &x)
   kernels::stdlib::Ldexp<T> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
 
 /**
  *
@@ -929,7 +966,6 @@ void Modf(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
 /**
  *
  * @param x
@@ -946,7 +982,6 @@ void Scalbn(ShapeLessArray<T, C> &x)
   kernels::stdlib::Scalbn<T> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
 
 /**
  *
@@ -965,7 +1000,6 @@ void Scalbln(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
 /**
  *
  * @param x
@@ -982,7 +1016,6 @@ void Ilogb(ShapeLessArray<T, C> &x)
   kernels::stdlib::Ilogb<T> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
 
 /**
  *
@@ -1001,7 +1034,6 @@ void Logb(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
 /**
  *
  * @param x
@@ -1018,7 +1050,6 @@ void Nextafter(ShapeLessArray<T, C> &x)
   kernels::stdlib::Nextafter<T> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
 
 /**
  *
@@ -1037,7 +1068,6 @@ void Nexttoward(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
 /**
  *
  * @param x
@@ -1054,7 +1084,6 @@ void Copysign(ShapeLessArray<T, C> &x)
   kernels::stdlib::Copysign<T> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
 
 /**
  *
@@ -1073,8 +1102,6 @@ void Fpclassify(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
-
 /**
  *
  * @param x
@@ -1091,7 +1118,6 @@ void Isnormal(ShapeLessArray<T, C> &x)
   kernels::stdlib::Isnormal<T> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
 
 /**
  *
@@ -1110,7 +1136,6 @@ void Signbit(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
 /**
  *
  * @param x
@@ -1127,7 +1152,6 @@ void Isgreater(ShapeLessArray<T, C> &x)
   kernels::stdlib::Isgreater<T> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
 
 /**
  *
@@ -1146,7 +1170,6 @@ void Isgreaterequal(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
 /**
  *
  * @param x
@@ -1163,7 +1186,6 @@ void Isless(ShapeLessArray<T, C> &x)
   kernels::stdlib::Isless<T> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
 
 /**
  *
@@ -1182,7 +1204,6 @@ void Islessequal(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
 /**
  *
  * @param x
@@ -1199,7 +1220,6 @@ void Islessgreater(ShapeLessArray<T, C> &x)
   kernels::stdlib::Islessgreater<T> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
 
 /**
  *
@@ -1218,8 +1238,6 @@ void Isunordered(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
-
 /**
  *
  * @param x
@@ -1236,7 +1254,6 @@ void ApproxExp(ShapeLessArray<T, C> &x)
   kernels::ApproxExp<typename ShapeLessArray<T, C>::vector_register_type> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
 
 /**
  *
@@ -1255,9 +1272,6 @@ void ApproxLog(ShapeLessArray<T, C> &x)
   x.data().in_parallel().Apply(sign, x.data());
 }
 
-
-
-
 /**
  *
  * @param x
@@ -1274,36 +1288,6 @@ void ApproxLogistic(ShapeLessArray<T, C> &x)
   kernels::ApproxLogistic<typename ShapeLessArray<T, C>::vector_register_type> sign;
   x.data().in_parallel().Apply(sign, x.data());
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }  // namespace math
 }  // namespace fetch

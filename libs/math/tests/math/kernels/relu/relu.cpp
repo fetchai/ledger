@@ -19,9 +19,9 @@
 #include <iomanip>
 #include <iostream>
 
+#include "math/free_functions/free_functions.hpp"
 #include "math/kernels/relu.hpp"
 #include "math/shape_less_array.hpp"
-#include "math/free_functions/free_functions.hpp"
 #include <gtest/gtest.h>
 
 using namespace fetch::math;

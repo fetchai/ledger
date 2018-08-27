@@ -635,16 +635,6 @@ public:
     return *this;
   }
 
-
-
-
-
-
-
-
-
-
-
   /**
    * gathers data from first dimension of this object according to indices and returns a new
    * self_type
@@ -694,37 +684,6 @@ public:
 
     this->super_type::Softmax(x);
   }
-
-  /**
-   * calculates bit mask on this
-   * @param x
-   */
-  void BooleanMask(self_type const &mask)
-  {
-    assert(this->shape() >= mask.shape());
-
-    this->super_type::BooleanMask(mask);
-
-    // figure out the output shape
-    std::vector<std::size_t> new_shape;
-    for (std::size_t i = 0; i < this->shape().size(); ++i)
-    {
-      if (!(mask.shape()[i] == this->shape()[i]))
-      {
-        new_shape.push_back(mask.shape()[i]);
-      }
-    }
-    new_shape.push_back(this->size());
-
-    this->ResizeFromShape(new_shape);
-  }
-
-  //  void DynamicStitch(std::vector<std::vector<std::size_t>> const &indices,
-  //  std::vector<self_type> const &data)
-  //  {
-  //    this->super_type::DynamicStitch(indices, data);
-  //    this->LazyReshape({this->size()});
-  //  }
 
 private:
   // TODO(tfr): replace with strides

@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/free_functions.hpp"
 #include "math/rectangular_array.hpp"
 #include "python/fetch_pybind.hpp"
-#include "math/free_functions/free_functions.hpp"
 
 namespace fetch {
 namespace math {
@@ -231,52 +231,49 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
 
       .def("AllClose", &ShapeLessArray<T>::AllClose)
 
-
       // various free functions
-      .def("Abs", [](ShapeLessArray<T> &a) { fetch::math::Abs(a);})
-      .def("Exp", [](ShapeLessArray<T> &a) { fetch::math::Exp(a);})
-      .def("Exp2", [](ShapeLessArray<T> &a) { fetch::math::Exp2(a);})
-      .def("Expm1", [](ShapeLessArray<T> &a) { fetch::math::Expm1(a);})
-      .def("Log", [](ShapeLessArray<T> &a) { fetch::math::Log(a);})
-      .def("Log10", [](ShapeLessArray<T> &a) { fetch::math::Log10(a);})
-      .def("Log2", [](ShapeLessArray<T> &a) { fetch::math::Log2(a);})
-      .def("Log1p", [](ShapeLessArray<T> &a) { fetch::math::Log1p(a);})
-      .def("Sqrt", [](ShapeLessArray<T> &a) { fetch::math::Sqrt(a);})
-      .def("Cbrt", [](ShapeLessArray<T> &a) { fetch::math::Cbrt(a);})
-      .def("Sin", [](ShapeLessArray<T> &a) { fetch::math::Sin(a);})
-      .def("Cos", [](ShapeLessArray<T> &a) { fetch::math::Cos(a);})
-      .def("Tan", [](ShapeLessArray<T> &a) { fetch::math::Tan(a);})
-      .def("Asin", [](ShapeLessArray<T> &a) { fetch::math::Asin(a);})
-      .def("Acos", [](ShapeLessArray<T> &a) { fetch::math::Acos(a);})
-      .def("Atan", [](ShapeLessArray<T> &a) { fetch::math::Atan(a);})
-      .def("Sinh", [](ShapeLessArray<T> &a) { fetch::math::Sinh(a);})
-      .def("Cosh", [](ShapeLessArray<T> &a) { fetch::math::Cosh(a);})
-      .def("Tanh", [](ShapeLessArray<T> &a) { fetch::math::Tanh(a);})
-      .def("Asinh", [](ShapeLessArray<T> &a) { fetch::math::Asinh(a);})
-      .def("Acosh", [](ShapeLessArray<T> &a) { fetch::math::Acosh(a);})
-      .def("Atanh", [](ShapeLessArray<T> &a) { fetch::math::Atanh(a);})
-      .def("Erf", [](ShapeLessArray<T> &a) { fetch::math::Erf(a);})
-      .def("Erfc", [](ShapeLessArray<T> &a) { fetch::math::Erfc(a);})
-      .def("Tgamma", [](ShapeLessArray<T> &a) { fetch::math::Tgamma(a);})
-      .def("Lgamma", [](ShapeLessArray<T> &a) { fetch::math::Lgamma(a);})
-      .def("Ceil", [](ShapeLessArray<T> &a) { fetch::math::Ceil(a);})
-      .def("Floor", [](ShapeLessArray<T> &a) { fetch::math::Floor(a);})
-      .def("Trunc", [](ShapeLessArray<T> &a) { fetch::math::Trunc(a);})
-      .def("Round", [](ShapeLessArray<T> &a) { fetch::math::Round(a);})
-      .def("Lround", [](ShapeLessArray<T> &a) { fetch::math::Lround(a);})
-      .def("Llround", [](ShapeLessArray<T> &a) { fetch::math::Llround(a);})
-      .def("Nearbyint", [](ShapeLessArray<T> &a) { fetch::math::Nearbyint(a);})
-      .def("Rint", [](ShapeLessArray<T> &a) { fetch::math::Rint(a);})
-      .def("Lrint", [](ShapeLessArray<T> &a) { fetch::math::Lrint(a);})
-      .def("Llrint", [](ShapeLessArray<T> &a) { fetch::math::Llrint(a);})
-      .def("Isfinite", [](ShapeLessArray<T> &a) { fetch::math::Isfinite(a);})
-      .def("Isinf", [](ShapeLessArray<T> &a) { fetch::math::Isinf(a);})
-      .def("Isnan", [](ShapeLessArray<T> &a) { fetch::math::Isnan(a);})
-      .def("ApproxExp", [](ShapeLessArray<T> &a) { fetch::math::ApproxExp(a);})
-      .def("ApproxLog", [](ShapeLessArray<T> &a) { fetch::math::ApproxLog(a);})
-      .def("ApproxLogistic", [](ShapeLessArray<T> &a) { fetch::math::ApproxLogistic(a);})
-
-
+      .def("Abs", [](ShapeLessArray<T> &a) { fetch::math::Abs(a); })
+      .def("Exp", [](ShapeLessArray<T> &a) { fetch::math::Exp(a); })
+      .def("Exp2", [](ShapeLessArray<T> &a) { fetch::math::Exp2(a); })
+      .def("Expm1", [](ShapeLessArray<T> &a) { fetch::math::Expm1(a); })
+      .def("Log", [](ShapeLessArray<T> &a) { fetch::math::Log(a); })
+      .def("Log10", [](ShapeLessArray<T> &a) { fetch::math::Log10(a); })
+      .def("Log2", [](ShapeLessArray<T> &a) { fetch::math::Log2(a); })
+      .def("Log1p", [](ShapeLessArray<T> &a) { fetch::math::Log1p(a); })
+      .def("Sqrt", [](ShapeLessArray<T> &a) { fetch::math::Sqrt(a); })
+      .def("Cbrt", [](ShapeLessArray<T> &a) { fetch::math::Cbrt(a); })
+      .def("Sin", [](ShapeLessArray<T> &a) { fetch::math::Sin(a); })
+      .def("Cos", [](ShapeLessArray<T> &a) { fetch::math::Cos(a); })
+      .def("Tan", [](ShapeLessArray<T> &a) { fetch::math::Tan(a); })
+      .def("Asin", [](ShapeLessArray<T> &a) { fetch::math::Asin(a); })
+      .def("Acos", [](ShapeLessArray<T> &a) { fetch::math::Acos(a); })
+      .def("Atan", [](ShapeLessArray<T> &a) { fetch::math::Atan(a); })
+      .def("Sinh", [](ShapeLessArray<T> &a) { fetch::math::Sinh(a); })
+      .def("Cosh", [](ShapeLessArray<T> &a) { fetch::math::Cosh(a); })
+      .def("Tanh", [](ShapeLessArray<T> &a) { fetch::math::Tanh(a); })
+      .def("Asinh", [](ShapeLessArray<T> &a) { fetch::math::Asinh(a); })
+      .def("Acosh", [](ShapeLessArray<T> &a) { fetch::math::Acosh(a); })
+      .def("Atanh", [](ShapeLessArray<T> &a) { fetch::math::Atanh(a); })
+      .def("Erf", [](ShapeLessArray<T> &a) { fetch::math::Erf(a); })
+      .def("Erfc", [](ShapeLessArray<T> &a) { fetch::math::Erfc(a); })
+      .def("Tgamma", [](ShapeLessArray<T> &a) { fetch::math::Tgamma(a); })
+      .def("Lgamma", [](ShapeLessArray<T> &a) { fetch::math::Lgamma(a); })
+      .def("Ceil", [](ShapeLessArray<T> &a) { fetch::math::Ceil(a); })
+      .def("Floor", [](ShapeLessArray<T> &a) { fetch::math::Floor(a); })
+      .def("Trunc", [](ShapeLessArray<T> &a) { fetch::math::Trunc(a); })
+      .def("Round", [](ShapeLessArray<T> &a) { fetch::math::Round(a); })
+      .def("Lround", [](ShapeLessArray<T> &a) { fetch::math::Lround(a); })
+      .def("Llround", [](ShapeLessArray<T> &a) { fetch::math::Llround(a); })
+      .def("Nearbyint", [](ShapeLessArray<T> &a) { fetch::math::Nearbyint(a); })
+      .def("Rint", [](ShapeLessArray<T> &a) { fetch::math::Rint(a); })
+      .def("Lrint", [](ShapeLessArray<T> &a) { fetch::math::Lrint(a); })
+      .def("Llrint", [](ShapeLessArray<T> &a) { fetch::math::Llrint(a); })
+      .def("Isfinite", [](ShapeLessArray<T> &a) { fetch::math::Isfinite(a); })
+      .def("Isinf", [](ShapeLessArray<T> &a) { fetch::math::Isinf(a); })
+      .def("Isnan", [](ShapeLessArray<T> &a) { fetch::math::Isnan(a); })
+      .def("ApproxExp", [](ShapeLessArray<T> &a) { fetch::math::ApproxExp(a); })
+      .def("ApproxLog", [](ShapeLessArray<T> &a) { fetch::math::ApproxLog(a); })
+      .def("ApproxLogistic", [](ShapeLessArray<T> &a) { fetch::math::ApproxLogistic(a); })
 
       .def("Sort", (void (ShapeLessArray<T>::*)()) & ShapeLessArray<T>::Sort)
       .def("Max", &ShapeLessArray<T>::Max)
@@ -296,7 +293,17 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
       .def("Resize", &ShapeLessArray<T>::Resize)
       .def("capacity", &ShapeLessArray<T>::capacity)
       .def("size", &ShapeLessArray<T>::size)
-      .def("DynamicStitch", &ShapeLessArray<T>::DynamicStitch)
+      .def("BooleanMask",
+           [](ShapeLessArray<T> &a, ShapeLessArray<T> &mask) {
+             fetch::math::BooleanMask(a, mask);
+             return a;
+           })
+      .def("dynamic_stitch",
+           [](ShapeLessArray<T> &a, std::vector<std::vector<std::size_t>> const &indices,
+              std::vector<ShapeLessArray<T>> const &data) {
+             fetch::math::DynamicStitch(a, indices, data);
+             return a;
+           })
       .def("__len__", [](const ShapeLessArray<T> &a) { return a.size(); })
       .def("__getitem__",
            [](const ShapeLessArray<T> &s, std::size_t i) {
