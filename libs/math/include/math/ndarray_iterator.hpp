@@ -21,8 +21,6 @@
 #include <algorithm>
 #include <vector>
 //
-////// need to forward declare
-////class NDArray;
 
 namespace fetch {
 namespace math {

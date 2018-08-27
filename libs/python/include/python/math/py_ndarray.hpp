@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "math/exp.hpp"
+#include "math/free_functions/free_functions.hpp"
 #include "math/log.hpp"
 #include "math/ndarray.hpp"
 #include "math/ndarray_squeeze.hpp"
 #include "python/fetch_pybind.hpp"
-#include "math/free_functions/scatter.hpp"
 #include <pybind11/stl.h>
 
 namespace fetch {
@@ -420,14 +420,17 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              return a.Min(axis);
            })
       .def("relu",
-           [](NDArray<T> &a, NDArray<T> const &b) {
-             a.Relu(b);
+           [](NDArray<T> &a, NDArray<T> const &b)
+           {
+             a = b;
+             Relu(a);
              return a;
            })
       .def("l2loss", [](NDArray<T> const &a) { return a.L2Loss(); })
       .def("sign",
            [](NDArray<T> &a, NDArray<T> const &b) {
-             a.Sign(b);
+             a = b;
+             Sign(a);
              return a;
            })
       .def("reshape",
@@ -448,38 +451,57 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("dynamic_stitch", &NDArray<T>::DynamicStitch)
       .def("shape", [](NDArray<T> &a) { return a.shape(); })
       .def_static("Zeros", &NDArray<T>::Zeroes)
-      .def("abs", &NDArray<T>::Abs)
-      .def("exp", &NDArray<T>::Exp)
-      .def("exp2", &NDArray<T>::Exp2)
-      .def("expm1", &NDArray<T>::Expm1)
-      .def("log", &NDArray<T>::Log)
-      .def("log10", &NDArray<T>::Log10)
-      .def("log2", &NDArray<T>::Log2)
-      .def("log1p", &NDArray<T>::Log1p)
-      .def("sqrt", &NDArray<T>::Sqrt)
-      .def("cbrt", &NDArray<T>::Cbrt)
-      .def("sin", &NDArray<T>::Sin)
-      .def("cos", &NDArray<T>::Cos)
-      .def("tan", &NDArray<T>::Tan)
-      .def("asin", &NDArray<T>::Asin)
-      .def("acos", &NDArray<T>::Acos)
-      .def("atan", &NDArray<T>::Atan)
-      .def("sinh", &NDArray<T>::Sinh)
-      .def("cosh", &NDArray<T>::Cosh)
-      .def("tanh", &NDArray<T>::Tanh)
-      .def("asinh", &NDArray<T>::Asinh)
-      .def("acosh", &NDArray<T>::Acosh)
-      .def("atanh", &NDArray<T>::Atanh)
-      .def("ceil", &NDArray<T>::Ceil)
-      .def("floor", &NDArray<T>::Floor)
-      .def("trunc", &NDArray<T>::Trunc)
-      .def("round", &NDArray<T>::Round)
-      .def("rint", &NDArray<T>::Rint)
-      .def("isfinite", &NDArray<T>::Isfinite)
-      .def("isinf", &NDArray<T>::Isinf)
-      .def("isnan", &NDArray<T>::Isnan)
 
-      // functions not implemented in numpy:
+
+          // various free functions
+      .def("abs", [](NDArray<T> &a) { fetch::math::Abs(a);})
+      .def("exp", [](NDArray<T> &a) { fetch::math::Exp(a);})
+      .def("exp2", [](NDArray<T> &a) { fetch::math::Exp2(a);})
+      .def("expm1", [](NDArray<T> &a) { fetch::math::Expm1(a);})
+      .def("log", [](NDArray<T> &a) { fetch::math::Log(a);})
+      .def("log10", [](NDArray<T> &a) { fetch::math::Log10(a);})
+      .def("log2", [](NDArray<T> &a) { fetch::math::Log2(a);})
+      .def("log1p", [](NDArray<T> &a) { fetch::math::Log1p(a);})
+      .def("sqrt", [](NDArray<T> &a) { fetch::math::Sqrt(a);})
+      .def("cbrt", [](NDArray<T> &a) { fetch::math::Cbrt(a);})
+      .def("sin", [](NDArray<T> &a) { fetch::math::Sin(a);})
+      .def("cos", [](NDArray<T> &a) { fetch::math::Cos(a);})
+      .def("tan", [](NDArray<T> &a) { fetch::math::Tan(a);})
+      .def("asin", [](NDArray<T> &a) { fetch::math::Asin(a);})
+      .def("acos", [](NDArray<T> &a) { fetch::math::Acos(a);})
+      .def("atan", [](NDArray<T> &a) { fetch::math::Atan(a);})
+      .def("sinh", [](NDArray<T> &a) { fetch::math::Sinh(a);})
+      .def("cosh", [](NDArray<T> &a) { fetch::math::Cosh(a);})
+      .def("tanh", [](NDArray<T> &a) { fetch::math::Tanh(a);})
+      .def("asinh", [](NDArray<T> &a) { fetch::math::Asinh(a);})
+      .def("acosh", [](NDArray<T> &a) { fetch::math::Acosh(a);})
+      .def("atanh", [](NDArray<T> &a) { fetch::math::Atanh(a);})
+      .def("erf", [](NDArray<T> &a) { fetch::math::Erf(a);})
+      .def("erfc", [](NDArray<T> &a) { fetch::math::Erfc(a);})
+      .def("tgamma", [](NDArray<T> &a) { fetch::math::Tgamma(a);})
+      .def("lgamma", [](NDArray<T> &a) { fetch::math::Lgamma(a);})
+      .def("ceil", [](NDArray<T> &a) { fetch::math::Ceil(a);})
+      .def("floor", [](NDArray<T> &a) { fetch::math::Floor(a);})
+      .def("trunc", [](NDArray<T> &a) { fetch::math::Trunc(a);})
+      .def("round", [](NDArray<T> &a) { fetch::math::Round(a);})
+      .def("lround", [](NDArray<T> &a) { fetch::math::Lround(a);})
+      .def("llround", [](NDArray<T> &a) { fetch::math::Llround(a);})
+      .def("nearbyint", [](NDArray<T> &a) { fetch::math::Nearbyint(a);})
+      .def("rint", [](NDArray<T> &a) { fetch::math::Rint(a);})
+      .def("lrint", [](NDArray<T> &a) { fetch::math::Lrint(a);})
+      .def("llrint", [](NDArray<T> &a) { fetch::math::Llrint(a);})
+      .def("isfinite", [](NDArray<T> &a) { fetch::math::Isfinite(a);})
+      .def("isinf", [](NDArray<T> &a) { fetch::math::Isinf(a);})
+      .def("isnan", [](NDArray<T> &a) { fetch::math::Isnan(a);})
+      .def("approx_exp", [](NDArray<T> &a) { fetch::math::ApproxExp(a);})
+      .def("approx_log", [](NDArray<T> &a) { fetch::math::ApproxLog(a);})
+      .def("approx_logistic", [](NDArray<T> &a) { fetch::math::ApproxLogistic(a);})
+
+
+
+
+
+          // functions not implemented in numpy:
       //      .def("erf", &NDArray<T>::Erf)
       //      .def("erfc", &NDArray<T>::Erfc)
       //      .def("tgamma", &NDArray<T>::Tgamma)
@@ -493,9 +515,9 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       //      .def("llrint", &NDArray<T>::Llrint)
 
       .def("scatter",
-           [](NDArray<T> &input_array, std::vector<T> &updates, std::vector<std::uint64_t> &indices)
-           {
-             fetch::math::free_functions::Scatter<T, typename NDArray<T>::container_type> s;
+           [](NDArray<T> &input_array, std::vector<T> &updates,
+              std::vector<std::uint64_t> &indices) {
+             fetch::math::Scatter<T, typename NDArray<T>::container_type> s;
              s(input_array, updates, indices);
            })
       .def("gather", &NDArray<T>::Gather)
