@@ -27,6 +27,8 @@
 #include "math/kernels/standard_functions.hpp"
 #include "vectorise/memory/array.hpp"
 
+#include <vector>
+
 namespace fetch {
 namespace math {
 
@@ -42,52 +44,87 @@ class NDArrayIterator;
  * object
  */
 template <typename T, typename C>
-struct Scatter
+void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates,
+             std::vector<std::uint64_t> &indices)
 {
-  void operator()(NDArray<T, C> &input_array, std::vector<T> &updates,
-                  std::vector<std::uint64_t> &indices) const
+  // sort indices and updates into ascending order
+
+  std::vector<std::pair<std::uint64_t, T>> AB;
+
+  // copy into pairs
+  // Note that A values are put in "first" this is very important
+  for (std::size_t i = 0; i < updates.size(); ++i)
   {
-    // sort indices and updates into ascending order
-
-    std::vector<std::pair<std::uint64_t, T>> AB;
-
-    // copy into pairs
-    // Note that A values are put in "first" this is very important
-    for (std::size_t i = 0; i < updates.size(); ++i)
-    {
-      AB.push_back(std::make_pair(indices[i], updates[i]));
-    }
-
-    std::sort(AB.begin(), AB.end());
-
-    // Place back into arrays
-    for (size_t i = 0; i < updates.size(); ++i)
-    {
-      updates[i] = AB[i].second;  //<- This is actually optional
-      indices[i] = AB[i].first;
-    }
-
-    assert(indices.back() <= input_array.shape()[0]);
-
-    // set up an iterator
-    NDArrayIterator<T, typename NDArray<T, C>::container_type> arr_iterator{input_array};
-
-    // scatter
-    std::size_t cur_idx, arr_count = 0;
-    for (std::size_t count = 0; count < indices.size(); ++count)
-    {
-      cur_idx = indices[count];
-
-      while (arr_count < cur_idx)
-      {
-        ++arr_iterator;
-        ++arr_count;
-      }
-
-      *arr_iterator = updates[count];
-    }
+    AB.push_back(std::make_pair(indices[i], updates[i]));
   }
-};
+
+  std::sort(AB.begin(), AB.end());
+
+  // Place back into arrays
+  for (size_t i = 0; i < updates.size(); ++i)
+  {
+    updates[i] = AB[i].second;  //<- This is actually optional
+    indices[i] = AB[i].first;
+  }
+
+  assert(indices.back() <= input_array.shape()[0]);
+
+  // set up an iterator
+  NDArrayIterator<T, typename NDArray<T, C>::container_type> arr_iterator{input_array};
+
+  // scatter
+  std::size_t cur_idx, arr_count = 0;
+  for (std::size_t count = 0; count < indices.size(); ++count)
+  {
+    cur_idx = indices[count];
+
+    while (arr_count < cur_idx)
+    {
+      ++arr_iterator;
+      ++arr_count;
+    }
+
+    *arr_iterator = updates[count];
+  }
+}
+
+/**
+ * gathers data from first dimension of data, according to indices, and puts them into input array
+ * self_type
+ */
+template <typename ARRAY_TYPE>
+void Gather(ARRAY_TYPE &input_array, std::vector<std::uint64_t> &indices, ARRAY_TYPE &data)
+{
+
+  assert(input_array.size() == data.size());
+  input_array.LazyReshape(data.shape());
+
+  // sort indices
+  std::sort(indices.begin(), indices.end());
+
+  // check largest value in indices < shape()[0]
+  assert(indices.back() <= data.shape()[0]);
+
+  // set up an iterator
+  NDArrayIterator<typename ARRAY_TYPE::data_type, typename ARRAY_TYPE::container_type> arr_iterator{
+      data};
+  NDArrayIterator<typename ARRAY_TYPE::data_type, typename ARRAY_TYPE::container_type> ret_iterator{
+      input_array};
+
+  std::size_t cur_idx, arr_count = 0;
+  for (std::size_t count = 0; count < indices.size(); ++count)
+  {
+    cur_idx = indices[count];
+
+    while (arr_count < cur_idx)
+    {
+      ++arr_iterator;
+      ++arr_count;
+    }
+
+    *ret_iterator = *arr_iterator;
+  }
+}
 
 /**
  * interleave data from multiple sources

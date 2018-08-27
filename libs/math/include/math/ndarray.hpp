@@ -636,44 +636,6 @@ public:
   }
 
   /**
-   * gathers data from first dimension of this object according to indices and returns a new
-   * self_type
-   */
-  self_type Gather(std::vector<std::uint64_t> &indices)
-  {
-
-    self_type ret{this->size()};
-    ret.LazyReshape(this->shape());
-    ret.Copy(*this);
-
-    // sort indices and updates into ascending order
-    std::sort(indices.begin(), indices.end());
-
-    // check largest value in indices < shape()[0]
-    assert(indices.back() <= this->shape()[0]);
-
-    // set up an iterator
-    NDArrayIterator<data_type, container_type> arr_iterator{*this};
-    NDArrayIterator<data_type, container_type> ret_iterator{ret};
-
-    std::size_t cur_idx, arr_count = 0;
-    for (std::size_t count = 0; count < indices.size(); ++count)
-    {
-      cur_idx = indices[count];
-
-      while (arr_count < cur_idx)
-      {
-        ++arr_iterator;
-        ++arr_count;
-      }
-
-      *ret_iterator = *arr_iterator;
-    }
-
-    return ret;
-  }
-
-  /**
    * calculates soft max of x and applies to this
    * @param x
    */

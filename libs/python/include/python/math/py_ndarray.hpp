@@ -503,26 +503,13 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("relu", [](NDArray<T> &a) { fetch::math::Relu(a); })
       .def("sign", [](NDArray<T> &a) { fetch::math::Sign(a); })
 
-      // functions not implemented in numpy:
-      //      .def("erf", &NDArray<T>::Erf)
-      //      .def("erfc", &NDArray<T>::Erfc)
-      //      .def("tgamma", &NDArray<T>::Tgamma)
-      //      .def("lgamma", &NDArray<T>::Lgamma)
-
-      // functions with different return types (seems obsolete for python):
-      //      .def("lround", &NDArray<T>::Lround)
-      //      .def("llround", &NDArray<T>::Llround)
-      //      .def("nearbyint", &NDArray<T>::Nearbyint)
-      //      .def("lrint", &NDArray<T>::Lrint)
-      //      .def("llrint", &NDArray<T>::Llrint)
-
       .def("scatter",
            [](NDArray<T> &input_array, std::vector<T> &updates,
               std::vector<std::uint64_t> &indices) {
-             fetch::math::Scatter<T, typename NDArray<T>::container_type> s;
-             s(input_array, updates, indices);
+             fetch::math::Scatter(input_array, updates, indices);
            })
-      .def("gather", &NDArray<T>::Gather)
+      .def("gather", [](NDArray<T> &input_array, std::vector<std::uint64_t> &indices,
+                        NDArray<T> &data) { fetch::math::Gather(input_array, indices, data); })
       .def("softmax", &NDArray<T>::Softmax)
       .def("FromNumpy",
            [](NDArray<T> &s, py::array_t<T> arr) {
