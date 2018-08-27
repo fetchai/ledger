@@ -292,9 +292,6 @@ public:
   void ResizeFromShape(std::vector<std::size_t> const &shape)
   {
     this->Resize(self_type::SizeFromShape(shape));
-
-    std::cout << "do reshape" << std::endl;
-
     this->Reshape(shape);
   }
 
@@ -1209,6 +1206,12 @@ public:
 
     this->ResizeFromShape(new_shape);
   }
+
+//  void DynamicStitch(std::vector<std::vector<std::size_t>> const &indices, std::vector<self_type> const &data)
+//  {
+//    this->super_type::DynamicStitch(indices, data);
+//    this->LazyReshape({this->size()});
+//  }
 
 private:
   // TODO(tfr): replace with strides

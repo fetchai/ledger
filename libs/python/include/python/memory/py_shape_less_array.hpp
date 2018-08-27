@@ -290,7 +290,7 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
       .def("Resize", &ShapeLessArray<T>::Resize)
       .def("capacity", &ShapeLessArray<T>::capacity)
       .def("size", &ShapeLessArray<T>::size)
-
+      .def("DynamicStitch", &ShapeLessArray<T>::DynamicStitch)
       .def("__len__", [](const ShapeLessArray<T> &a) { return a.size(); })
       .def("__getitem__",
            [](const ShapeLessArray<T> &s, std::size_t i) {

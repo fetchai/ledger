@@ -444,6 +444,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.BooleanMask(mask);
              return a;
            })
+      .def("dynamic_stitch", &NDArray<T>::DynamicStitch)
       .def("shape", [](NDArray<T> &a) { return a.shape(); })
       .def_static("Zeros", &NDArray<T>::Zeroes)
       .def("abs", &NDArray<T>::Abs)

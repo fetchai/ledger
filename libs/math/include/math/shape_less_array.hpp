@@ -1481,6 +1481,38 @@ public:
     LazyResize(counter);
   }
 
+  /**
+   * interleave data from multiple sources
+   * @param x
+   */
+  void DynamicStitch(std::vector<std::vector<std::size_t>> const &indices, std::vector<self_type> const &data)
+  {
+    // identify the new size of this
+    std::size_t new_size = 0;
+    for (std::size_t l = 0; l < indices.size(); ++l)
+    {
+      new_size += indices[l].size();
+    }
+    std::cout << "new size: " << new_size << std::endl;
+    LazyResize(new_size);
+
+    // loop through all output data locations identifying the next data point to copy into it
+    for (std::size_t i = 0; i < indices.size(); ++i) // iterate through lists of indices
+    {
+      std::cout << "i: " << i << std::endl;
+      for (std::size_t k = 0; k < indices[i].size(); ++k) // iterate through index within this list
+      {
+        std::cout << "k: " << k << std::endl;
+
+        std::cout << " indices[i][k]: " << indices[i][k] << std::endl;
+        std::cout << " data[i][k]: " << data[i][k] << std::endl;
+
+        assert(indices[i][k] <= this->size());
+        this->operator[](indices[i][k]) = data[i][k];
+      }
+    }
+  }
+
   /* Equality operator.
    * @other is the array which this instance is compared against.
    *
