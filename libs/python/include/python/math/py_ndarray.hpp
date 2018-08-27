@@ -408,10 +408,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (axis >= a.shape().size()) throw py::index_error();
              return a.Max(axis);
            })
-      //      .def("maximum", [](NDArray<T> &a, NDArray<T> const &b, NDArray<T> const &c)
-      //      {
-      //        return a.Maximum(b, c);
-      //      })
       .def("maximum", &NDArray<T>::Maximum)
       .def("min", [](NDArray<T> const &a) { return a.Min(); })
       .def("min",
