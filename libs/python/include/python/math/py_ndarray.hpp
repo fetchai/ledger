@@ -22,6 +22,7 @@
 #include "math/ndarray.hpp"
 #include "math/ndarray_squeeze.hpp"
 #include "python/fetch_pybind.hpp"
+#include "math/free_functions/scatter.hpp"
 #include <pybind11/stl.h>
 
 namespace fetch {
@@ -491,7 +492,12 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       //      .def("lrint", &NDArray<T>::Lrint)
       //      .def("llrint", &NDArray<T>::Llrint)
 
-      .def("scatter", &NDArray<T>::Scatter)
+      .def("scatter",
+           [](NDArray<T> &input_array, std::vector<T> &updates, std::vector<std::uint64_t> &indices)
+           {
+             fetch::math::free_functions::Scatter<T, typename NDArray<T>::container_type> s;
+             s(input_array, updates, indices);
+           })
       .def("gather", &NDArray<T>::Gather)
       .def("softmax", &NDArray<T>::Softmax)
       .def("FromNumpy",
