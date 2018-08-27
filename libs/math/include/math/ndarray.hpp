@@ -1098,7 +1098,7 @@ public:
    * Copies the values of updates into the specified indices of the first dimension of data in this
    * object
    */
-  void Scatter(std::vector<data_type> &updates, std::vector<std::uint64_t> &indices)
+  void Scatter(std::vector<data_type> &updates, std::vector<std::size_t> &indices)
   {
 
     // sort indices and updates into ascending order
@@ -1130,7 +1130,7 @@ public:
    * gathers data from first dimension of this object according to indices and returns a new
    * self_type
    */
-  self_type Gather(std::vector<std::uint64_t> &indices)
+  self_type Gather(std::vector<std::size_t> &indices)
   {
 
     self_type ret{this->size()};
