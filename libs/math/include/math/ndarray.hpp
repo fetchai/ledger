@@ -124,12 +124,6 @@ public:
     return output;
   }
 
-  void ResizeFromShape(std::vector<std::size_t> const &shape)
-  {
-    this->Resize(self_type::SizeFromShape(shape));
-    this->Reshape(shape);
-  }
-
   /**
    * Copies input data into current array
    *
@@ -196,14 +190,6 @@ public:
     shape_.clear();
     shape_.push_back(super_type::size());
   }
-
-  /**
-   * Directly copies shape variable without checking anything
-   *
-   * @param[in]     shape specifies the new shape.
-   *
-   **/
-  void LazyReshape(std::vector<std::size_t> const &shape) { shape_ = shape; }
 
   /**
    * Operator for accessing data in the array
@@ -303,6 +289,23 @@ public:
     return output;
   }
 
+  void ResizeFromShape(std::vector<std::size_t> const &shape)
+  {
+    this->Resize(self_type::SizeFromShape(shape));
+
+    std::cout << "do reshape" << std::endl;
+
+    this->Reshape(shape);
+  }
+
+  /**
+   * Directly copies shape variable without checking anything
+   *
+   * @param[in]     shape specifies the new shape.
+   *
+   **/
+  void LazyReshape(std::vector<std::size_t> const &shape) { shape_ = shape; }
+
   /**
    * Tests if it is possible to reshape the array to a newly proposed shape
    *
@@ -323,15 +326,22 @@ public:
   }
 
   /**
-   * Reshapes the array to the shape specified.
-   *
+   * Reshapes after checking the total size is the same
    * @param[in]     shape specified for the new array as a vector of size_t.
    *
    **/
   void Reshape(std::vector<std::size_t> const &shape)
   {
     assert(CanReshape(shape));
+    this->ReshapeForce(shape);
+  }
 
+  /**
+   * Executes a reshape (with no memory checks)
+   * @param shape
+   */
+  void ReshapeForce(std::vector<std::size_t> const &shape)
+  {
     shape_.clear();
     shape_.reserve(shape.size());
     for (auto const &s : shape)
@@ -1174,6 +1184,30 @@ public:
     this->LazyReshape(x.shape());
 
     this->super_type::Softmax(x);
+  }
+
+  /**
+   * calculates bit mask on this
+   * @param x
+   */
+  void BooleanMask(self_type const &mask)
+  {
+    assert(this->shape() >= mask.shape());
+
+    this->super_type::BooleanMask(mask);
+
+    // figure out the output shape
+    std::vector<std::size_t> new_shape;
+    for (std::size_t i = 0; i < this->shape().size(); ++i)
+    {
+      if (!(mask.shape()[i] == this->shape()[i]))
+      {
+        new_shape.push_back(mask.shape()[i]);
+      }
+    }
+    new_shape.push_back(this->size());
+
+    this->ResizeFromShape(new_shape);
   }
 
 private:

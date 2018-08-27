@@ -1458,6 +1458,29 @@ public:
     return *this;
   }
 
+  /**
+   * calculates bit mask on this
+   * @param x
+   */
+  void BooleanMask(self_type const &mask)
+  {
+    assert(this->size() == mask.size());
+
+    std::size_t counter = 0;
+    for (std::size_t i = 0; i < this->size(); ++i)
+    {
+      assert((mask[i] == 1) || (mask[i] == 0));
+      // TODO(private issue 193): implement boolean only ndarray to avoid cast
+      if (bool(mask[i]))
+      {
+        this->operator[](counter) = this->operator[](i);
+        ++counter;
+      }
+    }
+
+    LazyResize(counter);
+  }
+
   /* Equality operator.
    * @other is the array which this instance is compared against.
    *
