@@ -49,12 +49,15 @@ public:
   // Interface
   virtual ~AbstractConnection()
   {
-    auto h = handle_.load();
-    FETCH_LOG_WARN(LOGGING_NAME,"Connection destruction in progress for handle ", h);
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       on_message_ = nullptr;
+      on_leave_ = nullptr;
+      on_connection_failed_ = nullptr;
     }
+
+    auto h = handle_.load();
+    FETCH_LOG_WARN(LOGGING_NAME,"Connection destruction in progress for handle ", h);
 
     auto ptr = connection_register_.lock();
     if (ptr)

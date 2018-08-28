@@ -61,7 +61,8 @@ public:
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation &&rhs) = delete;
 
-  ~TCPClientImplementation() {}
+  ~TCPClientImplementation() {
+  }
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {
@@ -120,8 +121,8 @@ public:
 
             if (!ec2)
             {
-              this->SetAddress(endpoint.address().to_string());
-              this->SetPort(uint16_t(port.AsInt()));
+              SetAddress(endpoint.address().to_string());
+              SetPort(uint16_t(port.AsInt()));
               ReadHeader();
             }
             else

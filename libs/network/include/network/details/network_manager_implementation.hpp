@@ -67,7 +67,15 @@ public:
     }
   }
 
-  void Work() { io_service_->run(); }
+  void Work()
+  {
+    std::shared_ptr<asio::io_service> service_local;
+    {
+      std::lock_guard<std::mutex> lock(thread_mutex_);
+      service_local = io_service_;
+    }
+    service_local -> run();
+  }
 
   void Stop()
   {
@@ -114,8 +122,8 @@ private:
   std::thread::id                   owning_thread_;
   std::size_t                       number_of_threads_ = 1;
   std::vector<std::thread *>        threads_;
-  std::unique_ptr<asio::io_service> io_service_{new asio::io_service};
 
+  std::shared_ptr<asio::io_service> io_service_{new asio::io_service};
   std::shared_ptr<asio::io_service::work> shared_work_;
 
   mutable std::mutex thread_mutex_{};

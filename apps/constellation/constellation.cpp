@@ -26,7 +26,10 @@
 
 
 namespace fetch {
-
+  Constellation::~Constellation()
+  {
+    FETCH_LOG_INFO(LOGGING_NAME,"~Constellation");
+  }
 Constellation::Constellation(certificate_type &&certificate, uint16_t port_start,
                              std::size_t num_executors, std::size_t num_lanes,
                              std::size_t num_slices, std::string const &interface_address,

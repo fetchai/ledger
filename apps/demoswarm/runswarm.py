@@ -8,6 +8,7 @@ from contextlib import contextmanager
 import subprocess
 import time
 import random
+import functools
 
 PORT_BASE = 9000
 
@@ -30,6 +31,7 @@ class RunSwarmArgs(object):
         self.parser.add_argument("--clean", help="Name of debugger", default=False, action='store_true')
         self.parser.add_argument("--target", help="mining target", type=int, default=16)
         self.parser.add_argument("--lo", help="start at this member number", type=int, default=0)
+        self.parser.add_argument("--debugfirst", help="run the first N in the debugger", type=int, default=0)
 
         self.data =  self.parser.parse_args()
 
@@ -73,6 +75,7 @@ class ConstellationNode(object):
         self.myport = PORT_BASE + index * 20
         self.logdir = args.logdir
         self.index = index
+        self.debugger = args.debugger
 
         peers = set()
         while len(peers)<args.initialpeers:
@@ -99,13 +102,12 @@ class ConstellationNode(object):
             "-db-prefix": "data-{}/".format(self.index),
         }
 
-        self.debugger = args.debugger
-
+    def Run(self):
         {
             "": self.launchRun,
             "gdb": self.launchGDB,
             "lldb": self.launchLLDB,
-        }[args.debugger]()
+        }[self.debugger]()
 
     def launchGDB(self):
         pass
@@ -185,11 +187,12 @@ class PyfetchNode(object):
 
         self.debugger = args.debugger
 
+    def Run(self):
         {
             "": self.launchRun,
             "gdb": self.launchGDB,
             "lldb": self.launchLLDB,
-        }[args.debugger]()
+        }[self.debugger]()
 
 
     def launchLLDB(self):
@@ -259,10 +262,21 @@ class Swarm(object):
         }[args.nodetype]
         self.nodes = dict([ (x, builder(x, args, chainident)) for x in range(args.lo, args.members)])
 
+    def Run(self):
+        for node in self.nodes.values():
+            node.Run()
+
+    def VisitNodes(self, visitor):
+        for node in self.nodes.values():
+            visitor(node)
+
     def close(self):
         for node in self.nodes.values():
             node.close()
 
+def ClearDebuggerFromNode(args, node):
+    if node.index > args.debugfirst:
+        node.debugger = ""
 
 @contextmanager
 def createSwarm(args):
@@ -281,11 +295,13 @@ def main():
     swarmArgs = RunSwarmArgs()
     args = swarmArgs.get()
 
+    if args.debugger:
+        if not args.debugfirst:
+            args.debugfirst = args.members
+
     with open("/tmp/lldb.run.cmd", "w") as fn:
         fn.write("br s -M bad_weak_ptr\n")
         fn.write("br s -M system_error\n")
-        fn.write("br s -M runtime_error\n")
-        fn.write("br s -M SSL_library_init\n")
         fn.write("br s -n exit\n")
         fn.write("br s -n abort\n")
         fn.write("run\n")
@@ -294,6 +310,8 @@ def main():
         killall()
 
     with createSwarm(args) as swarm:
+        swarm.VisitNodes( functools.partial(ClearDebuggerFromNode, args) )
+        swarm.Run()
         with createSwarmWatcher(args) as watcher:
             while watcher.watch():
                 time.sleep(2)

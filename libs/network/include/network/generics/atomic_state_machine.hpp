@@ -57,7 +57,8 @@ public:
     auto txn = std::make_pair(new_state, old_state);
     if (allowed_.find(txn) == allowed_.end())
     {
-      state_.compare_exchange_strong(old_state, new_state);
+      // TODO(KLL) this is a race hazard because someone may have correctly set it to something else. Resolve this problem.
+      state_.store(old_state);
       // if it's not the same, someone else changed it... leave it be!
       throw std::range_error(std::to_string(old_state) + " -> " + std::to_string(new_state));
     }

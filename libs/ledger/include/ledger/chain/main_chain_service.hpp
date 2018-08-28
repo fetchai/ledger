@@ -97,8 +97,8 @@ public:
 
     // Main chain Identity
     identity_controller_ = std::make_shared<identity_controller_type>(register_, tm, my_details_);
-    identity_protocol_   = std::make_unique<identity_protocol_type>(identity_controller_.get());
-    this->Add(IDENTITY, identity_protocol_.get());
+    identity_protocol_   = std::make_shared<identity_protocol_type>(identity_controller_.get());
+    this->Add(IDENTITY, identity_protocol_);
 
     // Setting mainchain certificate up
     // TODO(tfr): Load from somewhere
@@ -119,15 +119,15 @@ public:
     }
 
     mainchain_          = std::make_unique<mainchain_type>();
-    mainchain_protocol_ = std::make_unique<mainchain_protocol_type>(CHAIN, register_, thread_pool_,
+    mainchain_protocol_ = std::make_shared<mainchain_protocol_type>(CHAIN, register_, thread_pool_,
                                                                     identifier, mainchain_.get());
 
-    this->Add(CHAIN, mainchain_protocol_.get());
+    this->Add(CHAIN, mainchain_protocol_);
 
     controller_ = std::make_unique<controller_type>(IDENTITY, identity_controller_, register_, tm,
                                                     my_details_, mainchain_protocol_);
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
-    this->Add(CONTROLLER, controller_protocol_.get());
+    this->Add(CONTROLLER, controller_protocol_);
 
     thread_pool_->Start();
 
@@ -167,13 +167,13 @@ private:
   thread_pool_type     thread_pool_;
 
   std::shared_ptr<identity_controller_type> identity_controller_;
-  std::unique_ptr<identity_protocol_type>   identity_protocol_;
+  std::shared_ptr<identity_protocol_type>   identity_protocol_;
 
   std::unique_ptr<mainchain_type>          mainchain_;
   std::shared_ptr<mainchain_protocol_type> mainchain_protocol_;
 
   std::unique_ptr<controller_type>          controller_;
-  std::unique_ptr<controller_protocol_type> controller_protocol_;
+  std::shared_ptr<controller_protocol_type> controller_protocol_;
 
   std::unique_ptr<crypto::Prover>            certificate_;
   generics::SharedWithLock<MainChainDetails> my_details_;

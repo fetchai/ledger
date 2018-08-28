@@ -105,23 +105,23 @@ public:
     identity_ = std::make_shared<identity_type>(register_, tm, certificate_->identity());
     identity_->SetLaneNumber(lane);
     identity_->SetTotalLanes(total_lanes);
-    identity_protocol_ = std::make_unique<identity_protocol_type>(identity_.get());
-    this->Add(IDENTITY, identity_protocol_.get());
+    identity_protocol_ = std::make_shared<identity_protocol_type>(identity_.get());
+    this->Add(IDENTITY, identity_protocol_);
 
     // TX Store
     tx_store_ = std::make_unique<transaction_store_type>();
     tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
 
-    tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(TX_STORE_SYNC, register_,
+    tx_sync_protocol_  = std::make_shared<tx_sync_protocol_type>(TX_STORE_SYNC, register_,
                                                                 thread_pool_, tx_store_.get());
-    tx_store_protocol_ = std::make_unique<transaction_store_protocol_type>(tx_store_.get());
+    tx_store_protocol_ = std::make_shared<transaction_store_protocol_type>(tx_store_.get());
     tx_store_protocol_->OnSetObject(
         [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->AddToCache(tx); });
 
-    this->Add(TX_STORE, tx_store_protocol_.get());
+    this->Add(TX_STORE, tx_store_protocol_);
 
     // TX Sync
-    this->Add(TX_STORE_SYNC, tx_sync_protocol_.get());
+    this->Add(TX_STORE_SYNC, tx_sync_protocol_);
 
     // State DB
     state_db_ = std::make_unique<document_store_type>();
@@ -129,13 +129,13 @@ public:
                     prefix + "state_index_deltas.db", true);
 
     state_db_protocol_ =
-        std::make_unique<document_store_protocol_type>(state_db_.get(), lane, total_lanes);
-    this->Add(STATE, state_db_protocol_.get());
+        std::make_shared<document_store_protocol_type>(state_db_.get(), lane, total_lanes);
+    this->Add(STATE, state_db_protocol_);
 
     // Controller
     controller_          = std::make_unique<controller_type>(IDENTITY, identity_, register_, tm);
-    controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
-    this->Add(CONTROLLER, controller_protocol_.get());
+    controller_protocol_ = std::make_shared<controller_protocol_type>(controller_.get());
+    this->Add(CONTROLLER, controller_protocol_);
 
     this->SetConnectionRegister(register_);
     thread_pool_->Start();
@@ -170,18 +170,18 @@ private:
   client_register_type register_;
 
   std::shared_ptr<identity_type>          identity_;
-  std::unique_ptr<identity_protocol_type> identity_protocol_;
+  std::shared_ptr<identity_protocol_type> identity_protocol_;
 
   std::unique_ptr<controller_type>          controller_;
-  std::unique_ptr<controller_protocol_type> controller_protocol_;
+  std::shared_ptr<controller_protocol_type> controller_protocol_;
 
   std::unique_ptr<document_store_type>          state_db_;
-  std::unique_ptr<document_store_protocol_type> state_db_protocol_;
+  std::shared_ptr<document_store_protocol_type> state_db_protocol_;
 
   std::unique_ptr<transaction_store_type>          tx_store_;
-  std::unique_ptr<transaction_store_protocol_type> tx_store_protocol_;
+  std::shared_ptr<transaction_store_protocol_type> tx_store_protocol_;
 
-  std::unique_ptr<tx_sync_protocol_type> tx_sync_protocol_;
+  std::shared_ptr<tx_sync_protocol_type> tx_sync_protocol_;
   thread_pool_type                       thread_pool_;
 
   mutex::Mutex                    certificate_lock_{__LINE__, __FILE__};

@@ -96,7 +96,7 @@ public:
   //  static const std::string DEFAULT_DB_PREFIX =;
   static constexpr char const *LOGGING_NAME = "constellation";
 
-
+  ~Constellation();
   explicit Constellation(certificate_type &&certificate, uint16_t port_start = DEFAULT_PORT_START,
                          std::size_t        num_executors     = DEFAULT_NUM_EXECUTORS,
                          std::size_t        num_lanes         = DEFAULT_NUM_LANES,

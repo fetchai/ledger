@@ -129,10 +129,11 @@ struct CommandLineArguments
         std::size_t const separator_position = raw_peers.find(',', position);
 
         // parse the peer
-        std::string const peer_address = raw_peers.substr(position, separator_position);
+        std::string const peer_address = raw_peers.substr(position, separator_position-position);
         if (peer.Parse(peer_address))
         {
           peers.push_back(peer);
+          FETCH_LOG_WARN(LOGGING_NAME, "INITIAL PEER:", peer_address);
         }
         else
         {

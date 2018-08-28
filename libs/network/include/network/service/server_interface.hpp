@@ -36,6 +36,7 @@ public:
   using byte_array_type        = byte_array::ConstByteArray;
   using mutex_type = fetch::mutex::Mutex;
   using lock_type = std::lock_guard<mutex_type>;
+  using protocol_ptr_type = std::shared_ptr<Protocol>;
 
   enum {
     EMPTY,
@@ -76,7 +77,7 @@ public:
   }
 
   void Add(protocol_handler_type const &name,
-           Protocol *                   protocol)  // TODO: Rename to AddProtocol
+           protocol_ptr_type protocol)  // TODO: Rename to AddProtocol
   {
     LOG_STACK_TRACE_POINT;
 
@@ -322,9 +323,9 @@ protected:
     {
       if (members_[protocol_number])
       {
-        FETCH_LOG_WARN(LOGGING_NAME,"ConnectionDropped removing handler for protocol " , protocol_number, " from connection handle ", connection_handle);
+        //FETCH_LOG_WARN(LOGGING_NAME,"ConnectionDropped removing handler for protocol " , protocol_number, " from connection handle ", connection_handle);
         members_[protocol_number] -> ConnectionDropped(connection_handle);
-        members_[protocol_number] = 0;
+        members_[protocol_number].reset();
       }
     }
 
@@ -462,7 +463,7 @@ private:
   }
 
   mutex_type mutex_{__LINE__, __FILE__};
-  Protocol *members_[256] = {nullptr};  // TODO: Not thread-safe
+  protocol_ptr_type members_[256] = {nullptr};  // TODO: Not thread-safe
   friend class FeedSubscriptionManager;
 };
 }  // namespace service

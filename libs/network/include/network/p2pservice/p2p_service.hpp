@@ -57,9 +57,9 @@ public:
   using mutex_type                 = fetch::mutex::Mutex;
 
   using p2p_identity_type                 = std::unique_ptr<P2PIdentity>;
-  using p2p_identity_protocol_type        = std::unique_ptr<P2PIdentityProtocol>;
+  using p2p_identity_protocol_type        = std::shared_ptr<P2PIdentityProtocol>;
   using p2p_directory_type                = std::unique_ptr<P2PPeerDirectory>;
-  using p2p_directory_protocol_type       = std::unique_ptr<P2PPeerDirectoryProtocol>;
+  using p2p_directory_protocol_type       = std::shared_ptr<P2PPeerDirectoryProtocol>;
   using callback_peer_update_profile_type = std::function<void(EntryPoint const &)>;
   using certificate_type                  = std::unique_ptr<crypto::Prover>;
   using p2p_trust_type                    = std::unique_ptr<P2PTrust<byte_array::ConstByteArray>>;
@@ -85,8 +85,8 @@ public:
     // Identity
     identity_          = std::make_unique<P2PIdentity>(IDENTITY, register_, tm);
     my_details_        = identity_->my_details();
-    identity_protocol_ = std::make_unique<P2PIdentityProtocol>(identity_.get());
-    this->Add(IDENTITY, identity_protocol_.get());
+    identity_protocol_ = std::make_shared<P2PIdentityProtocol>(identity_.get());
+    this->Add(IDENTITY, identity_protocol_);
 
     {
       EntryPoint discovery_ep;
@@ -112,7 +112,7 @@ public:
     directory_ =
         std::make_unique<P2PPeerDirectory>(DIRECTORY, register_, thread_pool_, my_details_);
     directory_protocol_ = std::make_unique<P2PPeerDirectoryProtocol>(*directory_);
-    this->Add(DIRECTORY, directory_protocol_.get());
+    this->Add(DIRECTORY, directory_protocol_);
 
     p2p_trust_.reset(new P2PTrust<byte_array::ConstByteArray>());
     // p2p_trust_protocol_.reset(new TrustModelProtocol(*directory_)); // TODO(kll)
