@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/quick_start/protocol.hpp"  // defines our quick start protocol
 

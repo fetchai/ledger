@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/execution_manager_interface.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 #include <memory>
 

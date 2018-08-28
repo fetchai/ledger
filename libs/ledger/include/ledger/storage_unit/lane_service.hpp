@@ -144,6 +144,8 @@ public:
 
   ~LaneService()
   {
+    thread_pool_->Stop();
+
     identity_protocol_.reset();
     identity_.reset();
 

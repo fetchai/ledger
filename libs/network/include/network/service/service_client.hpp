@@ -47,7 +47,9 @@ public:
 
   ServiceClient(std::shared_ptr<network::AbstractConnection> connection,
                 network_manager_type const &                 network_manager)
-    : connection_(connection), network_manager_(network_manager), message_mutex_(__LINE__, __FILE__)
+    : connection_(connection)
+    , network_manager_(network_manager)
+    , message_mutex_(__LINE__, __FILE__)
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -62,9 +64,7 @@ public:
           messages_.push_back(msg);
         }
 
-        // Since this class isn't shared_from_this, try to ensure safety when
-        // destructing
-        network_manager_.Post([this]() { ProcessMessages(); });
+        ProcessMessages();
       });
     }
   }
@@ -76,27 +76,13 @@ public:
   ~ServiceClient()
   {
     LOG_STACK_TRACE_POINT;
+
     auto ptr = connection_.lock();
+
     if (ptr)
     {
-
-      // Disconnect callbacks
-      if (ptr->Closed())
-      {
-        ptr->ClearClosures();
-        ptr->Close();
-
-        int timeout = 5000;
-
-        // Can only guarantee we are not being called when socket is closed
-        while (!ptr->Closed())
-        {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-          timeout--;
-
-          if (timeout == 0) break;
-        }
-      }
+      ptr->ClearClosures();
+      ptr->Close();
     }
   }
 

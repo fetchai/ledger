@@ -174,7 +174,8 @@ private:
 #ifdef NDEBUG
 using Mutex = ProductionMutex;
 #else
-using Mutex = DebugMutex;
+using Mutex = ProductionMutex;
+//using Mutex = DebugMutex;
 #endif
 }  // namespace mutex
 }  // namespace fetch

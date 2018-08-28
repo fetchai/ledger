@@ -177,5 +177,22 @@ inline uint64_t ConvertToBigEndian(uint64_t x) { return __builtin_bswap64(x); }
 
 inline int CountLeadingZeroes64(uint64_t x) { return __builtin_clzl(x); }
 
+// Return the minimum number of bits required to represent x
+inline uint64_t Log2Ceil(uint64_t x)
+{
+  uint64_t count = 0;
+  while(x >>= 1)
+  {
+    count++;
+  }
+
+  if(1 << count == x)
+  {
+    return count;
+  }
+
+  return count+1;
+}
+
 }  // namespace platform
 }  // namespace fetch

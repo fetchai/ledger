@@ -24,7 +24,7 @@
 #include "core/serializers/counter.hpp"
 #include "core/serializers/stl_types.hpp"
 
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "network/service/server.hpp"
 #include <chrono>
 #include <vector>

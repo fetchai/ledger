@@ -20,7 +20,7 @@
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include "core/commandline/cli_header.hpp"
 #include "core/logger.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
 #include <iostream>
 #include <memory>

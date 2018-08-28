@@ -23,7 +23,7 @@
 #include "core/commandline/parameter_parser.hpp"
 
 #include "network/protocols.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "network/service/server.hpp"
 #include "network/tcp/tcp_server.hpp"
 

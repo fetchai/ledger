@@ -24,7 +24,7 @@
 
 #include "network/tcp_server.hpp"
 #include "protocols/shard.hpp"
-#include "service/client.hpp"
+#include "service/service_client.hpp"
 #include "service/server.hpp"
 
 #include "http/middleware/allow_origin.hpp"

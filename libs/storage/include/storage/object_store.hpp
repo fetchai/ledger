@@ -179,6 +179,11 @@ public:
     store_.Set(rid, ser.data());
   }
 
+  std::size_t size() const
+  {
+    return store_.size();
+  }
+
   /**
    * STL-like functionality achieved with an iterator class. This has to wrap an
    * iterator to the

@@ -93,7 +93,7 @@ public:
 
         {
           std::lock_guard<mutex_type> lock(io_creation_mutex_);
-          if (!postedClose_)
+          if (!posted_close_)
           {
             socket_ = socket;
           }
@@ -188,7 +188,7 @@ public:
   void Close() override
   {
     std::lock_guard<mutex_type> lock(io_creation_mutex_);
-    postedClose_                          = true;
+    posted_close_                          = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
     std::weak_ptr<strand_type> strandWeak = strand_;
 
@@ -225,7 +225,7 @@ private:
 
   mutable mutex_type can_write_mutex_;
   bool               can_write_{true};
-  bool               postedClose_ = false;
+  bool               posted_close_ = false;
 
   mutable mutex_type callback_mutex_;
   std::atomic<bool>  connected_{false};
@@ -415,13 +415,6 @@ private:
     }
   }
 
-  /*
-  void PushMessage(message_type message)
-  {
-    std::lock_guard< mutex_type > lock(callback_mutex_);
-    if(on_push_message_) on_push_message_(message);
-  }
-  */
 };
 
 }  // namespace network
