@@ -25,8 +25,8 @@
 #include "math/kernels/relu.hpp"
 #include "math/kernels/sign.hpp"
 #include "math/kernels/standard_functions.hpp"
-#include "vectorise/memory/array.hpp"
 
+#include "math/free_functions/free_functions_details.hpp"
 #include <vector>
 
 namespace fetch {
@@ -43,117 +43,38 @@ class NDArrayIterator;
  * Copies the values of updates into the specified indices of the first dimension of data in this
  * object
  */
-// template <typename T, typename C>
-template <typename ARRAY_TYPE>
-void Scatter(ARRAY_TYPE &input_array, std::vector<typename ARRAY_TYPE::type> &updates,
-             std::vector<std::uint64_t> &indices)
+template <typename T, typename C>
+void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates, std::vector<std::size_t> &indices)
 {
-  // sort indices and updates into ascending order
-
-  std::vector<std::pair<std::uint64_t, typename ARRAY_TYPE::type>> AB;
-
-  // copy into pairs
-  // Note that A values are put in "first" this is very important
-  for (std::size_t i = 0; i < updates.size(); ++i)
-  {
-    AB.push_back(std::make_pair(indices[i], updates[i]));
-  }
-
-  std::sort(AB.begin(), AB.end());
-
-  // Place back into arrays
-  for (size_t i = 0; i < updates.size(); ++i)
-  {
-    updates[i] = AB[i].second;  //<- This is actually optional
-    indices[i] = AB[i].first;
-  }
-
-  assert(indices.back() <= input_array.shape()[0]);
-
-  // set up an iterator
-  NDArrayIterator<typename ARRAY_TYPE::type, typename ARRAY_TYPE::container_type> arr_iterator{
-      input_array};
-
-  // scatter
-  std::size_t cur_idx, arr_count = 0;
-  for (std::size_t count = 0; count < indices.size(); ++count)
-  {
-    cur_idx = indices[count];
-
-    while (arr_count < cur_idx)
-    {
-      ++arr_iterator;
-      ++arr_count;
-    }
-
-    *arr_iterator = updates[count];
-  }
+  details::ScatterImplementation(input_array, updates, indices);
 }
 
 /**
  * gathers data from first dimension of data, according to indices, and puts them into input array
  * self_type
  */
-template <typename ARRAY_TYPE>
-void Gather(ARRAY_TYPE &input_array, std::vector<std::uint64_t> &indices, ARRAY_TYPE &data)
+template <typename T, typename C>
+void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std::size_t> &indices)
 {
-
-  assert(input_array.size() == data.size());
-  input_array.LazyReshape(data.shape());
-
-  // sort indices
-  std::sort(indices.begin(), indices.end());
-
-  // check largest value in indices < shape()[0]
-  assert(indices.back() <= data.shape()[0]);
-
-  // set up an iterator
-  NDArrayIterator<typename ARRAY_TYPE::type, typename ARRAY_TYPE::container_type> arr_iterator{
-      data};
-  NDArrayIterator<typename ARRAY_TYPE::type, typename ARRAY_TYPE::container_type> ret_iterator{
-      input_array};
-
-  std::size_t cur_idx, arr_count = 0;
-  for (std::size_t count = 0; count < indices.size(); ++count)
-  {
-    cur_idx = indices[count];
-
-    while (arr_count < cur_idx)
-    {
-      ++arr_iterator;
-      ++arr_count;
-    }
-
-    *ret_iterator = *arr_iterator;
-  }
+  details::GatherImplementation(input_array, updates, indices);
 }
 
 /**
  * interleave data from multiple sources
  * @param x
  */
-template <typename ARRAY_TYPE>
-void DynamicStitch(ARRAY_TYPE &input_array, std::vector<std::vector<std::size_t>> const &indices,
-                   std::vector<ARRAY_TYPE> const &data)
+template <typename T, typename C>
+void DynamicStitch(ShapeLessArray<T, C> &                       input_array,
+                   std::vector<std::vector<std::size_t>> const &indices,
+                   std::vector<ShapeLessArray<T, C>> const &    data)
 {
-  // identify the new size of this
-  std::size_t new_size = 0;
-  for (std::size_t l = 0; l < indices.size(); ++l)
-  {
-    new_size += indices[l].size();
-  }
-
-  input_array.LazyResize(new_size);
-
-  // loop through all output data locations identifying the next data point to copy into it
-  for (std::size_t i = 0; i < indices.size(); ++i)  // iterate through lists of indices
-  {
-    for (std::size_t k = 0; k < indices[i].size(); ++k)  // iterate through index within this list
-    {
-      assert(indices[i][k] <= input_array.size());
-      input_array[indices[i][k]] = data[i][k];
-    }
-  }
+  details::DynamicStitch(input_array, indices, data);
+}
+template <typename T, typename C>
+void DynamicStitch(NDArray<T, C> &input_array, std::vector<std::vector<std::size_t>> const &indices,
+                   std::vector<NDArray<T, C>> const &data)
+{
+  details::DynamicStitch(input_array, indices, data);
 }
 
 /**
@@ -180,8 +101,8 @@ void BooleanMaskImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE const &mask)
 
   input_array.LazyResize(counter);
 }
-template <typename ARRAY_TYPE>
-void BooleanMask(ARRAY_TYPE &input_array, ARRAY_TYPE const &mask)
+template <typename T, typename C>
+void BooleanMask(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &mask)
 {
   BooleanMaskImplementation(input_array, mask);
 }
