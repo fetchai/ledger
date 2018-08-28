@@ -82,36 +82,17 @@ void DynamicStitch(NDArray<T, C> &input_array, std::vector<std::vector<std::size
  * @param x
  */
 
-template <typename ARRAY_TYPE>
-void BooleanMaskImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE const &mask)
-{
-  assert(input_array.size() == mask.size());
-
-  std::size_t counter = 0;
-  for (std::size_t i = 0; i < input_array.size(); ++i)
-  {
-    assert((mask[i] == 1) || (mask[i] == 0));
-    // TODO(private issue 193): implement boolean only ndarray to avoid cast
-    if (bool(mask[i]))
-    {
-      input_array[counter] = input_array[i];
-      ++counter;
-    }
-  }
-
-  input_array.LazyResize(counter);
-}
 template <typename T, typename C>
 void BooleanMask(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &mask)
 {
-  BooleanMaskImplementation(input_array, mask);
+  details::BooleanMaskImplementation(input_array, mask);
 }
 template <typename T, typename C>
 void BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> const &mask)
 {
   assert(input_array.shape() >= mask.shape());
 
-  BooleanMaskImplementation(input_array, mask);
+  details::BooleanMaskImplementation(input_array, mask);
 
   // figure out the output shape
   std::vector<std::size_t> new_shape;
@@ -852,5 +833,103 @@ void Sign(ARRAY_TYPE &x)
   kernels::Sign<typename ARRAY_TYPE::vector_register_type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
+
+/**
+ * Max function for two values
+ * @tparam T
+ * @param datum1
+ * @param datum2
+ * @return
+ */
+template <typename T>
+inline void Max(T const &datum1, T const &datum2, T &ret)
+{
+  details::MaxImplementation<T>(datum1, datum2, ret);
+}
+
+/**
+ * Finds the maximum value in an array
+ * @tparam T data type
+ * @tparam C container type
+ * @param array array to search for maximum value
+ * @return
+ */
+template <typename T, typename C>
+inline void Max(ShapeLessArray<T, C> const &array, T &ret)
+{
+  details::MaxImplementation<T, C>(array, ret);
+}
+
+/**
+ * Finds the maximum value in a range of the array
+ * @tparam T
+ * @tparam C
+ * @param array
+ * @param r
+ * @return
+ */
+template <typename T, typename C>
+inline void Max(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
+{
+  details::MaxImplementation<T, C>(array, r, ret);
+}
+
+/**
+ * find the maximum of the 1-D projections through the array
+ */
+template <typename T, typename C>
+void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
+{
+  details::MaxImplementation<T, C>(array, axis, ret);
+}
+
+/**
+ * Min function for two values
+ * @tparam T
+ * @param datum1
+ * @param datum2
+ * @return
+ */
+template <typename T>
+inline void Min(T const &datum1, T const &datum2, T &ret)
+{
+  details::MinImplementation<T>(datum1, datum2, ret);
+}
+
+/**
+ * Min function for returning the smallest value in an array
+ * @tparam ARRAY_TYPE
+ * @param array
+ * @return
+ */
+template <typename T, typename C>
+inline void Min(ShapeLessArray<T, C> const &array, T &ret)
+{
+  details::MinImplementation<T, C>(array, ret);
+}
+
+/**
+ * Finds the minimum value in a range of the array
+ * @tparam T
+ * @tparam C
+ * @param array
+ * @param r
+ * @return
+ */
+template <typename T, typename C>
+inline void Min(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
+{
+  details::MinImplementation<T, C>(array, r, ret);
+}
+
+/**
+ * find the minimum of the 1-D projections through the array
+ */
+template <typename T, typename C>
+void Min(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
+{
+  details::MinImplementation<T, C>(array, axis, ret);
+}
+
 }  // namespace math
 }  // namespace fetch

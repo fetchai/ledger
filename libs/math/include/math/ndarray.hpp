@@ -19,8 +19,6 @@
 
 #include "math/ndarray_view.hpp"
 #include "math/shape_less_array.hpp"
-#include "math/statistics/max.hpp"
-#include "math/statistics/min.hpp"
 #include "vectorise/memory/array.hpp"
 
 #include "math/ndarray_broadcast.hpp"
@@ -347,64 +345,6 @@ public:
   std::size_t const &             shape(std::size_t const &n) const { return shape_[n]; }
 
   /**
-   * Returns the single maximum value in the array
-   * @return
-   */
-  type      Max() const { return fetch::math::statistics::Max(*this); }
-  self_type Max(std::size_t const axis)
-  {
-    std::vector<std::size_t> return_shape{shape()};
-    return_shape.erase(return_shape.begin() + int(axis), return_shape.begin() + int(axis) + 1);
-    self_type                             ret{return_shape};
-    NDArrayIterator<type, container_type> return_iterator{ret};
-
-    assert(axis < this->shape().size());
-
-    // iterate through the return array (i.e. the array of Max vals)
-    //    type cur_val;
-    std::vector<std::size_t> cur_index;
-    while (return_iterator)
-    {
-      std::vector<std::vector<std::size_t>> cur_step;
-
-      cur_index = return_iterator.GetNDimIndex();
-
-      // calculate step from cur_index and axis
-      std::size_t index_counter = 0;
-      for (std::size_t i = 0; i < shape().size(); ++i)
-      {
-        if (i == axis)
-        {
-          cur_step.push_back({0, shape()[i]});
-        }
-        else
-        {
-          cur_step.push_back({cur_index[index_counter], cur_index[index_counter] + 1});
-          ++index_counter;
-        }
-      }
-
-      // get an iterator to iterate over the 1-d slice of the array to calculate max over
-      NDArrayIterator<type, container_type> array_iterator(*this, cur_step);
-
-      // loops through the 1d array calculating the max val
-      type cur_max = -std::numeric_limits<type>::max();
-      type cur_val;
-      while (array_iterator)
-      {
-        cur_val = *array_iterator;
-        cur_max = fetch::math::statistics::Max(cur_max, cur_val);
-        ++array_iterator;
-      }
-
-      *return_iterator = cur_max;
-      ++return_iterator;
-    }
-
-    return ret;
-  }
-
-  /**
    * Returns an ndarray containing the elementwise maximum of two other ndarrays
    * @param x ndarray input 1
    * @param y ndarray input 2
@@ -418,64 +358,6 @@ public:
     return *this;
   }
 
-  /**
-   * Returns the single minimum value in the array
-   * @return
-   */
-  type      Min() const { return fetch::math::statistics::Min(*this); }
-  self_type Min(std::size_t const axis)
-  {
-    std::vector<std::size_t> return_shape{shape()};
-    return_shape.erase(return_shape.begin() + int(axis), return_shape.begin() + int(axis) + 1);
-
-    assert(axis < this->shape().size());
-
-    self_type                             ret{return_shape};
-    NDArrayIterator<type, container_type> return_iterator{ret};
-
-    // iterate through the return array (i.e. the array of Max vals)
-    //    type cur_val;
-    std::vector<std::size_t> cur_index;
-    while (return_iterator)
-    {
-      std::vector<std::vector<std::size_t>> cur_step;
-
-      cur_index = return_iterator.GetNDimIndex();
-
-      // calculate step from cur_index and axis
-      std::size_t index_counter = 0;
-      for (std::size_t i = 0; i < shape().size(); ++i)
-      {
-        if (i == axis)
-        {
-          cur_step.push_back({0, shape()[i]});
-        }
-        else
-        {
-          cur_step.push_back({cur_index[index_counter], cur_index[index_counter] + 1});
-          ++index_counter;
-        }
-      }
-
-      // get an iterator to iterate over the 1-d slice of the array to calculate max over
-      NDArrayIterator<type, container_type> array_iterator(*this, cur_step);
-
-      // loops through the 1d array calculating the max val
-      type cur_max = std::numeric_limits<type>::max();
-      type cur_val;
-      while (array_iterator)
-      {
-        cur_val = *array_iterator;
-        cur_max = fetch::math::statistics::Min(cur_max, cur_val);
-        ++array_iterator;
-      }
-
-      *return_iterator = cur_max;
-      ++return_iterator;
-    }
-
-    return ret;
-  }
   /**
    * adds two ndarrays together and supports broadcasting
    * @param other

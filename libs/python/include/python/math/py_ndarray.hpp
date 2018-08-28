@@ -402,18 +402,42 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (idx >= s.size()) throw py::index_error();
              s[idx] = val;
            })
-      .def("max", [](NDArray<T> &a) { return a.Max(); })
+      .def("max",
+           [](NDArray<T> &a) {
+             typename NDArray<T>::type ret = -std::numeric_limits<typename NDArray<T>::type>::max();
+             Max(a, ret);
+             return a;
+           })
       .def("max",
            [](NDArray<T> &a, std::size_t const axis) {
              if (axis >= a.shape().size()) throw py::index_error();
-             return a.Max(axis);
+
+             std::vector<std::size_t> return_shape{a.shape()};
+             return_shape.erase(return_shape.begin() + int(axis),
+                                return_shape.begin() + int(axis) + 1);
+             NDArray<T> ret{return_shape};
+
+             Max(a, axis, ret);
+             return ret;
            })
       .def("maximum", &NDArray<T>::Maximum)
-      .def("min", [](NDArray<T> const &a) { return a.Min(); })
+      .def("min",
+           [](NDArray<T> const &a) {
+             typename NDArray<T>::type ret = std::numeric_limits<typename NDArray<T>::type>::max();
+             Min(a, ret);
+             return a;
+           })
       .def("min",
            [](NDArray<T> &a, std::size_t const axis) {
              if (axis >= a.shape().size()) throw py::index_error();
-             return a.Min(axis);
+
+             std::vector<std::size_t> return_shape{a.shape()};
+             return_shape.erase(return_shape.begin() + int(axis),
+                                return_shape.begin() + int(axis) + 1);
+             NDArray<T> ret{return_shape};
+
+             Min(a, axis, ret);
+             return ret;
            })
       .def("relu",
            [](NDArray<T> &a, NDArray<T> const &b) {
