@@ -131,7 +131,7 @@ public:
     {
       root_mask_ = platform::Log2Ceil(((obj_size / (PULL_LIMIT_ / 2)) + 1)) + 1;
 
-      for (uint16_t i = 0, end = (1 << (root_mask_ + 1)); i < end; ++i)
+      for (uint64_t i = 0, end = (1 << (root_mask_ + 1)); i < end; ++i)
       {
         roots_to_sync_.push(Reverse(static_cast<uint8_t>(i)));
       }
