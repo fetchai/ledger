@@ -20,7 +20,7 @@
 #include "ledger/chain/main_chain_controller_protocol.hpp"
 #include "ledger/chain/main_chain_service.hpp"
 #include "network/p2pservice/p2p_peer_details.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 #include <unordered_map>
 namespace fetch {
