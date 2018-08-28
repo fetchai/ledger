@@ -29,6 +29,7 @@ class RunSwarmArgs(object):
         self.parser.add_argument("--debugger", help="Name of debugger", type=str, default="")
         self.parser.add_argument("--clean", help="Name of debugger", default=False, action='store_true')
         self.parser.add_argument("--target", help="mining target", type=int, default=16)
+        self.parser.add_argument("--lo", help="start at this member number", type=int, default=0)
 
         self.data =  self.parser.parse_args()
 
@@ -256,7 +257,7 @@ class Swarm(object):
             "ConstellationNode": ConstellationNode,
             "PyfetchNode": PyfetchNode,
         }[args.nodetype]
-        self.nodes = dict([ (x, builder(x, args, chainident)) for x in range(0, args.members)])
+        self.nodes = dict([ (x, builder(x, args, chainident)) for x in range(args.lo, args.members)])
 
     def close(self):
         for node in self.nodes.values():
@@ -281,10 +282,13 @@ def main():
     args = swarmArgs.get()
 
     with open("/tmp/lldb.run.cmd", "w") as fn:
-        fn.write("settings set thread-format thread #${thread.index}: tid = ${thread.id}{, name = ${thread.name}}{, function: ${function.name}} {, stop reason = ${thread.stop-reason}}{, return = ${thread.return-value}}\\n\n")
-        fn.write("breakpoint set --name abort\n")
-        fn.write("breakpoint set --name exit\n")
-        fn.write("run\n");
+        fn.write("br s -M bad_weak_ptr\n")
+        fn.write("br s -M system_error\n")
+        fn.write("br s -M runtime_error\n")
+        fn.write("br s -M SSL_library_init\n")
+        fn.write("br s -n exit\n")
+        fn.write("br s -n abort\n")
+        fn.write("run\n")
 
     if args.clean:
         killall()
