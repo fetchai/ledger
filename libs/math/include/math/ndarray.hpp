@@ -36,7 +36,7 @@ template <typename T, typename C = memory::SharedArray<T>>
 class NDArray : public ShapeLessArray<T, C>
 {
 public:
-  using data_type            = T;
+  using type            = T;
   using container_type       = C;
   using vector_register_type = typename container_type::vector_register_type;
   using super_type           = ShapeLessArray<T, C>;
@@ -188,13 +188,13 @@ public:
    * @return        the accessed data.
    *
    **/
-  data_type operator()(std::vector<std::size_t> const &indices) const
+  type operator()(std::vector<std::size_t> const &indices) const
   {
     assert(indices.size() == shape_.size());
     std::size_t  index = ComputeColIndex(indices);
     return this->operator[](index);
   }
-  data_type operator()(std::size_t const &index) const
+  type operator()(std::size_t const &index) const
   {
     assert(index == size_);
     return this->operator[](index);
@@ -205,7 +205,7 @@ public:
    * @param indices     index position in array
    * @param val         value to write
    */
-  void Set(std::vector<std::size_t> const &indices, data_type const &val)
+  void Set(std::vector<std::size_t> const &indices, type const &val)
   {
     assert(indices.size() == shape_.size());               // dimensionality check not in parent
     this->super_type::Set(ComputeColIndex(indices), val);  // call parent
@@ -214,7 +214,7 @@ public:
    * Gets a value from the array by N-dim index
    * @param indices index to access
    */
-  data_type Get(std::vector<std::size_t> const &indices) const
+  type Get(std::vector<std::size_t> const &indices) const
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
@@ -350,18 +350,18 @@ public:
    * Returns the single maximum value in the array
    * @return
    */
-  data_type Max() const { return fetch::math::statistics::Max(*this); }
+  type Max() const { return fetch::math::statistics::Max(*this); }
   self_type Max(std::size_t const axis)
   {
     std::vector<std::size_t> return_shape{shape()};
     return_shape.erase(return_shape.begin() + int(axis), return_shape.begin() + int(axis) + 1);
     self_type                                  ret{return_shape};
-    NDArrayIterator<data_type, container_type> return_iterator{ret};
+    NDArrayIterator<type, container_type> return_iterator{ret};
 
     assert(axis < this->shape().size());
 
     // iterate through the return array (i.e. the array of Max vals)
-    //    data_type cur_val;
+    //    type cur_val;
     std::vector<std::size_t> cur_index;
     while (return_iterator)
     {
@@ -385,11 +385,11 @@ public:
       }
 
       // get an iterator to iterate over the 1-d slice of the array to calculate max over
-      NDArrayIterator<data_type, container_type> array_iterator(*this, cur_step);
+      NDArrayIterator<type, container_type> array_iterator(*this, cur_step);
 
       // loops through the 1d array calculating the max val
-      data_type cur_max = -std::numeric_limits<data_type>::max();
-      data_type cur_val;
+      type cur_max = -std::numeric_limits<type>::max();
+      type cur_val;
       while (array_iterator)
       {
         cur_val = *array_iterator;
@@ -422,7 +422,7 @@ public:
    * Returns the single minimum value in the array
    * @return
    */
-  data_type Min() const { return fetch::math::statistics::Min(*this); }
+  type Min() const { return fetch::math::statistics::Min(*this); }
   self_type Min(std::size_t const axis)
   {
     std::vector<std::size_t> return_shape{shape()};
@@ -431,10 +431,10 @@ public:
     assert(axis < this->shape().size());
 
     self_type                                  ret{return_shape};
-    NDArrayIterator<data_type, container_type> return_iterator{ret};
+    NDArrayIterator<type, container_type> return_iterator{ret};
 
     // iterate through the return array (i.e. the array of Max vals)
-    //    data_type cur_val;
+    //    type cur_val;
     std::vector<std::size_t> cur_index;
     while (return_iterator)
     {
@@ -458,11 +458,11 @@ public:
       }
 
       // get an iterator to iterate over the 1-d slice of the array to calculate max over
-      NDArrayIterator<data_type, container_type> array_iterator(*this, cur_step);
+      NDArrayIterator<type, container_type> array_iterator(*this, cur_step);
 
       // loops through the 1d array calculating the max val
-      data_type cur_max = std::numeric_limits<data_type>::max();
-      data_type cur_val;
+      type cur_max = std::numeric_limits<type>::max();
+      type cur_val;
       while (array_iterator)
       {
         cur_val = *array_iterator;
@@ -483,7 +483,7 @@ public:
    */
   NDArray Add(self_type &obj1, self_type &other)
   {
-    Broadcast([](data_type x, data_type y) { return x + y; }, obj1, other, *this);
+    Broadcast([](type x, type y) { return x + y; }, obj1, other, *this);
     return *this;
   }
   /**
@@ -491,7 +491,7 @@ public:
    * @param scalar to add
    * @return new array output
    */
-  self_type Add(self_type const &obj1, data_type const &scalar)
+  self_type Add(self_type const &obj1, type const &scalar)
   {
     this->super_type::Add(obj1, scalar);
     return *this;
@@ -503,7 +503,7 @@ public:
    */
   self_type InlineAdd(NDArray &other)
   {
-    Broadcast([](data_type x, data_type y) { return x + y; }, *this, other, *this);
+    Broadcast([](type x, type y) { return x + y; }, *this, other, *this);
     return *this;
   }
   /**
@@ -511,7 +511,7 @@ public:
    * @param scalar to add
    * @return new array output
    */
-  self_type InlineAdd(data_type const &scalar) { return self_type(super_type::InlineAdd(scalar)); }
+  self_type InlineAdd(type const &scalar) { return self_type(super_type::InlineAdd(scalar)); }
 
   /**
    * Subtract one ndarray from another and support broadcasting
@@ -520,7 +520,7 @@ public:
    */
   NDArray Subtract(self_type &obj1, self_type &other)
   {
-    Broadcast([](data_type x, data_type y) { return x - y; }, obj1, other, *this);
+    Broadcast([](type x, type y) { return x - y; }, obj1, other, *this);
     return *this;
   }
   /**
@@ -528,7 +528,7 @@ public:
    * @param other
    * @return
    */
-  self_type Subtract(self_type &obj1, data_type const &scalar)
+  self_type Subtract(self_type &obj1, type const &scalar)
   {
     this->super_type::Subtract(obj1, scalar);
     return *this;
@@ -540,7 +540,7 @@ public:
    */
   self_type InlineSubtract(NDArray &other)
   {
-    Broadcast([](data_type x, data_type y) { return x - y; }, *this, other, *this);
+    Broadcast([](type x, type y) { return x - y; }, *this, other, *this);
     return *this;
   }
   /**
@@ -548,7 +548,7 @@ public:
    * @param scalar to subtract
    * @return new array output
    */
-  self_type InlineSubtract(data_type const &scalar)
+  self_type InlineSubtract(type const &scalar)
   {
     return self_type(super_type::InlineSubtract(scalar));
   }
@@ -560,7 +560,7 @@ public:
    */
   NDArray Multiply(self_type &obj1, self_type &other)
   {
-    Broadcast([](data_type x, data_type y) { return x * y; }, obj1, other, *this);
+    Broadcast([](type x, type y) { return x * y; }, obj1, other, *this);
     return *this;
   }
   /**
@@ -568,7 +568,7 @@ public:
    * @param other
    * @return
    */
-  self_type Multiply(self_type &obj1, data_type const &scalar)
+  self_type Multiply(self_type &obj1, type const &scalar)
   {
     this->super_type::Multiply(obj1, scalar);
     return *this;
@@ -580,7 +580,7 @@ public:
    */
   self_type InlineMultiply(NDArray &other)
   {
-    Broadcast([](data_type x, data_type y) { return x * y; }, *this, other, *this);
+    Broadcast([](type x, type y) { return x * y; }, *this, other, *this);
     return *this;
   }
   /**
@@ -588,7 +588,7 @@ public:
    * @param scalar to add
    * @return new array output
    */
-  self_type InlineMultiply(data_type const &scalar)
+  self_type InlineMultiply(type const &scalar)
   {
     this->super_type::InlineMultiply(scalar);
     return *this;
@@ -601,7 +601,7 @@ public:
    */
   NDArray Divide(self_type &obj1, self_type &other)
   {
-    Broadcast([](data_type x, data_type y) { return x / y; }, obj1, other, *this);
+    Broadcast([](type x, type y) { return x / y; }, obj1, other, *this);
     return *this;
   }
   /**
@@ -609,7 +609,7 @@ public:
    * @param other
    * @return
    */
-  self_type Divide(self_type &obj1, data_type const &scalar)
+  self_type Divide(self_type &obj1, type const &scalar)
   {
     this->super_type::Divide(obj1, scalar);
     return *this;
@@ -621,7 +621,7 @@ public:
    */
   self_type InlineDivide(NDArray &other)
   {
-    Broadcast([](data_type x, data_type y) { return x / y; }, *this, other, *this);
+    Broadcast([](type x, type y) { return x / y; }, *this, other, *this);
     return *this;
   }
   /**
@@ -629,7 +629,7 @@ public:
    * @param scalar to subtract
    * @return new array output
    */
-  self_type InlineDivide(data_type const &scalar)
+  self_type InlineDivide(type const &scalar)
   {
     this->super_type::InlineDivide(scalar);
     return *this;

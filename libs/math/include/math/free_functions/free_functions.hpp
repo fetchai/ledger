@@ -43,13 +43,14 @@ class NDArrayIterator;
  * Copies the values of updates into the specified indices of the first dimension of data in this
  * object
  */
-template <typename T, typename C>
-void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates,
+//template <typename T, typename C>
+template <typename ARRAY_TYPE>
+void Scatter(ARRAY_TYPE &input_array, std::vector<typename ARRAY_TYPE::type> &updates,
              std::vector<std::uint64_t> &indices)
 {
   // sort indices and updates into ascending order
 
-  std::vector<std::pair<std::uint64_t, T>> AB;
+  std::vector<std::pair<std::uint64_t, typename ARRAY_TYPE::type>> AB;
 
   // copy into pairs
   // Note that A values are put in "first" this is very important
@@ -70,7 +71,7 @@ void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates,
   assert(indices.back() <= input_array.shape()[0]);
 
   // set up an iterator
-  NDArrayIterator<T, typename NDArray<T, C>::container_type> arr_iterator{input_array};
+  NDArrayIterator<typename ARRAY_TYPE::type, typename ARRAY_TYPE::container_type> arr_iterator{input_array};
 
   // scatter
   std::size_t cur_idx, arr_count = 0;
@@ -106,9 +107,9 @@ void Gather(ARRAY_TYPE &input_array, std::vector<std::uint64_t> &indices, ARRAY_
   assert(indices.back() <= data.shape()[0]);
 
   // set up an iterator
-  NDArrayIterator<typename ARRAY_TYPE::data_type, typename ARRAY_TYPE::container_type> arr_iterator{
+  NDArrayIterator<typename ARRAY_TYPE::type, typename ARRAY_TYPE::container_type> arr_iterator{
       data};
-  NDArrayIterator<typename ARRAY_TYPE::data_type, typename ARRAY_TYPE::container_type> ret_iterator{
+  NDArrayIterator<typename ARRAY_TYPE::type, typename ARRAY_TYPE::container_type> ret_iterator{
       input_array};
 
   std::size_t cur_idx, arr_count = 0;
@@ -208,16 +209,10 @@ void BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> const &mask)
  * assigns the absolute of x to this array
  * @param x
  */
-template <typename T, typename C>
-void Abs(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Abs(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Abs<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Abs(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Abs<T> kernel;
+  kernels::stdlib::Abs<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -225,16 +220,10 @@ void Abs(ShapeLessArray<T, C> &x)
  * e^x
  * @param x
  */
-template <typename T, typename C>
-void Exp(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Exp(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Exp<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Exp(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Exp<T> kernel;
+  kernels::stdlib::Exp<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -242,16 +231,10 @@ void Exp(ShapeLessArray<T, C> &x)
  * raise 2 to power input values of x
  * @param x
  */
-template <typename T, typename C>
-void Exp2(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Exp2(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Exp<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Exp2(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Exp2<T> kernel;
+  kernels::stdlib::Exp2<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -259,16 +242,10 @@ void Exp2(ShapeLessArray<T, C> &x)
  * exp(x) - 1
  * @param x
  */
-template <typename T, typename C>
-void Expm1(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Expm1(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Expm1<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Expm1(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Expm1<T> kernel;
+  kernels::stdlib::Expm1<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -276,16 +253,10 @@ void Expm1(ShapeLessArray<T, C> &x)
  * natural logarithm of x
  * @param x
  */
-template <typename T, typename C>
-void Log(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Log(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Log<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Log(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Log<T> kernel;
+  kernels::stdlib::Log<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -293,16 +264,10 @@ void Log(ShapeLessArray<T, C> &x)
  * natural logarithm of x
  * @param x
  */
-template <typename T, typename C>
-void Log10(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Log10(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Log10<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Log10(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Log10<T> kernel;
+  kernels::stdlib::Log10<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -310,16 +275,10 @@ void Log10(ShapeLessArray<T, C> &x)
  * log base 2
  * @param x
  */
-template <typename T, typename C>
-void Log2(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Log2(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Log2<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Log2(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Log2<T> kernel;
+  kernels::stdlib::Log2<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -327,16 +286,10 @@ void Log2(ShapeLessArray<T, C> &x)
  * natural log 1 + x
  * @param x
  */
-template <typename T, typename C>
-void Log1p(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Log1p(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Log1p<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Log1p(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Log1p<T> kernel;
+  kernels::stdlib::Log1p<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -344,16 +297,10 @@ void Log1p(ShapeLessArray<T, C> &x)
  * square root
  * @param x
  */
-template <typename T, typename C>
-void Sqrt(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Sqrt(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Sqrt<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Sqrt(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Sqrt<T> kernel;
+  kernels::stdlib::Sqrt<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -361,16 +308,10 @@ void Sqrt(ShapeLessArray<T, C> &x)
  * cubic root x
  * @param x
  */
-template <typename T, typename C>
-void Cbrt(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Cbrt(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Cbrt<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Cbrt(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Cbrt<T> kernel;
+  kernels::stdlib::Cbrt<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -378,16 +319,10 @@ void Cbrt(ShapeLessArray<T, C> &x)
  * raise to power
  * @param x
  */
-template <typename T, typename C>
-void Pow(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Pow(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Pow<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Pow(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Pow<T> kernel;
+  kernels::stdlib::Pow<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -395,16 +330,10 @@ void Pow(ShapeLessArray<T, C> &x)
  * sine of x
  * @param x
  */
-template <typename T, typename C>
-void Sin(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Sin(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Sin<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Sin(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Sin<T> kernel;
+  kernels::stdlib::Sin<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -412,16 +341,10 @@ void Sin(ShapeLessArray<T, C> &x)
  * cosine of x
  * @param x
  */
-template <typename T, typename C>
-void Cos(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Cos(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Cos<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Cos(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Cos<T> kernel;
+  kernels::stdlib::Cos<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -429,16 +352,10 @@ void Cos(ShapeLessArray<T, C> &x)
  * tangent of x
  * @param x
  */
-template <typename T, typename C>
-void Tan(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Tan(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Tan<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Tan(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Tan<T> kernel;
+  kernels::stdlib::Tan<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -446,16 +363,10 @@ void Tan(ShapeLessArray<T, C> &x)
  * arc sine of x
  * @param x
  */
-template <typename T, typename C>
-void Asin(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Asin(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Asin<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Asin(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Asin<T> kernel;
+  kernels::stdlib::Asin<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -463,16 +374,10 @@ void Asin(ShapeLessArray<T, C> &x)
  * arc cosine of x
  * @param x
  */
-template <typename T, typename C>
-void Acos(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Acos(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Acos<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Acos(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Acos<T> kernel;
+  kernels::stdlib::Acos<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -480,16 +385,10 @@ void Acos(ShapeLessArray<T, C> &x)
  * arc tangent of x
  * @param x
  */
-template <typename T, typename C>
-void Atan(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Atan(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Atan<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Atan(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Atan<T> kernel;
+  kernels::stdlib::Atan<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -497,16 +396,10 @@ void Atan(ShapeLessArray<T, C> &x)
  * arc tangent of x
  * @param x
  */
-template <typename T, typename C>
-void Atan2(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Atan2(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Atan2<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Atan2(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Atan2<T> kernel;
+  kernels::stdlib::Atan2<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -514,16 +407,10 @@ void Atan2(ShapeLessArray<T, C> &x)
  * hyperbolic sine of x
  * @param x
  */
-template <typename T, typename C>
-void Sinh(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Sinh(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Sinh<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Sinh(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Sinh<T> kernel;
+  kernels::stdlib::Sinh<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -531,16 +418,10 @@ void Sinh(ShapeLessArray<T, C> &x)
  * hyperbolic cosine of x
  * @param x
  */
-template <typename T, typename C>
-void Cosh(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Cosh(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Cosh<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Cosh(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Cosh<T> kernel;
+  kernels::stdlib::Cosh<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -548,16 +429,10 @@ void Cosh(ShapeLessArray<T, C> &x)
  * hyperbolic tangent of x
  * @param x
  */
-template <typename T, typename C>
-void Tanh(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Tanh(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Tanh<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Tanh(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Tanh<T> kernel;
+  kernels::stdlib::Tanh<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -565,16 +440,10 @@ void Tanh(ShapeLessArray<T, C> &x)
  * hyperbolic arc sine of x
  * @param x
  */
-template <typename T, typename C>
-void Asinh(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Asinh(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Asinh<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Asinh(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Asinh<T> kernel;
+  kernels::stdlib::Asinh<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -582,16 +451,10 @@ void Asinh(ShapeLessArray<T, C> &x)
  * hyperbolic arc cosine of x
  * @param x
  */
-template <typename T, typename C>
-void Acosh(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Acosh(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Acosh<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Acosh(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Acosh<T> kernel;
+  kernels::stdlib::Acosh<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -599,16 +462,10 @@ void Acosh(ShapeLessArray<T, C> &x)
  * hyperbolic arc tangent of x
  * @param x
  */
-template <typename T, typename C>
-void Atanh(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Atanh(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Atanh<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Atanh(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Atanh<T> kernel;
+  kernels::stdlib::Atanh<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -616,16 +473,10 @@ void Atanh(ShapeLessArray<T, C> &x)
  * error function of x
  * @param x
  */
-template <typename T, typename C>
-void Erf(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Erf(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Erf<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Erf(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Erf<T> kernel;
+  kernels::stdlib::Erf<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -633,16 +484,10 @@ void Erf(ShapeLessArray<T, C> &x)
  * complementary error function of x
  * @param x
  */
-template <typename T, typename C>
-void Erfc(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Erfc(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Erfc<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Erfc(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Erfc<T> kernel;
+  kernels::stdlib::Erfc<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -650,16 +495,10 @@ void Erfc(ShapeLessArray<T, C> &x)
  * factorial of x-1
  * @param x
  */
-template <typename T, typename C>
-void Tgamma(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Tgamma(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Tgamma<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Tgamma(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Tgamma<T> kernel;
+  kernels::stdlib::Tgamma<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -667,16 +506,10 @@ void Tgamma(ShapeLessArray<T, C> &x)
  * log of factorial of x-1
  * @param x
  */
-template <typename T, typename C>
-void Lgamma(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Lgamma(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Lgamma<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Lgamma(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Lgamma<T> kernel;
+  kernels::stdlib::Lgamma<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -684,16 +517,10 @@ void Lgamma(ShapeLessArray<T, C> &x)
  * ceiling round
  * @param x
  */
-template <typename T, typename C>
-void Ceil(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Ceil(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Ceil<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Ceil(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Ceil<T> kernel;
+  kernels::stdlib::Ceil<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -701,16 +528,10 @@ void Ceil(ShapeLessArray<T, C> &x)
  * floor rounding
  * @param x
  */
-template <typename T, typename C>
-void Floor(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Floor(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Floor<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Floor(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Floor<T> kernel;
+  kernels::stdlib::Floor<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -718,16 +539,10 @@ void Floor(ShapeLessArray<T, C> &x)
  * round towards 0
  * @param x
  */
-template <typename T, typename C>
-void Trunc(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Trunc(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Trunc<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Trunc(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Trunc<T> kernel;
+  kernels::stdlib::Trunc<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -735,16 +550,10 @@ void Trunc(ShapeLessArray<T, C> &x)
  * round to nearest int in int format
  * @param x
  */
-template <typename T, typename C>
-void Round(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Round(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Round<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Round(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Round<T> kernel;
+  kernels::stdlib::Round<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -752,16 +561,10 @@ void Round(ShapeLessArray<T, C> &x)
  * round to nearest int in float format
  * @param x
  */
-template <typename T, typename C>
-void Lround(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Lround(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Lround<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Lround(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Lround<T> kernel;
+  kernels::stdlib::Lround<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -769,16 +572,10 @@ void Lround(ShapeLessArray<T, C> &x)
  * round to nearest int in float format with long long return
  * @param x
  */
-template <typename T, typename C>
-void Llround(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Llround(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Llround<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Llround(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Llround<T> kernel;
+  kernels::stdlib::Llround<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -786,16 +583,10 @@ void Llround(ShapeLessArray<T, C> &x)
  * round to nearest int in float format
  * @param x
  */
-template <typename T, typename C>
-void Nearbyint(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Nearbyint(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Nearbyint<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Nearbyint(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Nearbyint<T> kernel;
+  kernels::stdlib::Nearbyint<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -803,16 +594,10 @@ void Nearbyint(ShapeLessArray<T, C> &x)
  * round to nearest int
  * @param x
  */
-template <typename T, typename C>
-void Rint(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Rint(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Rint<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Rint(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Rint<T> kernel;
+  kernels::stdlib::Rint<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -820,16 +605,10 @@ void Rint(ShapeLessArray<T, C> &x)
  *
  * @param x
  */
-template <typename T, typename C>
-void Lrint(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Lrint(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Lrint<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Lrint(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Lrint<T> kernel;
+  kernels::stdlib::Lrint<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -837,16 +616,10 @@ void Lrint(ShapeLessArray<T, C> &x)
  *
  * @param x
  */
-template <typename T, typename C>
-void Llrint(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Llrint(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Llrint<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Llrint(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Llrint<T> kernel;
+  kernels::stdlib::Llrint<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -854,16 +627,10 @@ void Llrint(ShapeLessArray<T, C> &x)
  * finite check
  * @param x
  */
-template <typename T, typename C>
-void Isfinite(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Isfinite(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Isfinite<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Isfinite(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Isfinite<T> kernel;
+  kernels::stdlib::Isfinite<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -871,16 +638,10 @@ void Isfinite(ShapeLessArray<T, C> &x)
  * checks for inf values
  * @param x
  */
-template <typename T, typename C>
-void Isinf(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Isinf(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Isinf<T> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename T, typename C>
-void Isinf(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Isinf<T> kernel;
+  kernels::stdlib::Isinf<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -888,16 +649,263 @@ void Isinf(ShapeLessArray<T, C> &x)
  * checks for nans
  * @param x
  */
-template <typename T, typename C>
-void Isnan(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Isnan(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Isnan<T> kernel;
+  kernels::stdlib::Isnan<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-template <typename T, typename C>
-void Isnan(ShapeLessArray<T, C> &x)
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Hypot(ARRAY_TYPE &x)
 {
-  kernels::stdlib::Isnan<T> kernel;
+  kernels::stdlib::Hypot<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Frexp(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Frexp<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Ldexp(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Ldexp<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Modf(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Modf<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Scalbn(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Scalbn<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Scalbln(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Scalbln<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Ilogb(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Ilogb<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Logb(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Logb<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Nextafter(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Nextafter<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Nexttoward(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Nexttoward<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Copysign(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Copysign<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Fpclassify(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Fpclassify<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Isnormal(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Isnormal<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Signbit(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Signbit<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Isgreater(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Isgreater<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Isgreaterequal(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Isgreaterequal<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Isless(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Isless<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Islessequal(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Islessequal<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Islessgreater(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Islessgreater<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Isunordered(ARRAY_TYPE &x)
+{
+  kernels::stdlib::Isunordered<typename ARRAY_TYPE::type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void ApproxExp(ARRAY_TYPE &x)
+{
+  kernels::ApproxExp<typename ARRAY_TYPE::vector_register_type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void ApproxLog(ARRAY_TYPE &x)
+{
+  kernels::ApproxLog<typename ARRAY_TYPE::vector_register_type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ *
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void ApproxLogistic(ARRAY_TYPE &x)
+{
+  kernels::ApproxLogistic<typename ARRAY_TYPE::vector_register_type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -905,426 +913,22 @@ void Isnan(ShapeLessArray<T, C> &x)
  * rectified linear activation function
  * @param x
  */
-template <typename T, typename C>
-void Relu(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Relu(ARRAY_TYPE &x)
 {
-  kernels::Relu<typename NDArray<T, C>::vector_register_type> relu;
-  x.data().in_parallel().Apply(relu, x.data());
-}
-template <typename T, typename C>
-void Relu(ShapeLessArray<T, C> &x)
-{
-  kernels::Relu<typename ShapeLessArray<T, C>::vector_register_type> relu;
-  x.data().in_parallel().Apply(relu, x.data());
+  kernels::Relu<typename ARRAY_TYPE::vector_register_type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
  * replaces data with the sign (1 or -1)
  * @param x
  */
-template <typename T, typename C>
-void Sign(NDArray<T, C> &x)
+template <typename ARRAY_TYPE>
+void Sign(ARRAY_TYPE &x)
 {
-  kernels::Sign<typename NDArray<T, C>::vector_register_type> sign;
-  x.data().in_parallel().Apply(sign, x.data());
+  kernels::Sign<typename ARRAY_TYPE::vector_register_type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
 }
-template <typename T, typename C>
-void Sign(ShapeLessArray<T, C> &x)
-{
-  kernels::Sign<typename ShapeLessArray<T, C>::vector_register_type> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Hypot(NDArray<T, C> &x)
-{
-  kernels::stdlib::Hypot<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Hypot(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Hypot<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Frexp(NDArray<T, C> &x)
-{
-  kernels::stdlib::Frexp<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Frexp(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Frexp<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Ldexp(NDArray<T, C> &x)
-{
-  kernels::stdlib::Ldexp<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Ldexp(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Ldexp<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Modf(NDArray<T, C> &x)
-{
-  kernels::stdlib::Modf<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Modf(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Modf<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Scalbn(NDArray<T, C> &x)
-{
-  kernels::stdlib::Scalbn<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Scalbn(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Scalbn<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Scalbln(NDArray<T, C> &x)
-{
-  kernels::stdlib::Scalbln<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Scalbln(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Scalbln<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Ilogb(NDArray<T, C> &x)
-{
-  kernels::stdlib::Ilogb<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Ilogb(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Ilogb<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Logb(NDArray<T, C> &x)
-{
-  kernels::stdlib::Logb<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Logb(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Logb<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Nextafter(NDArray<T, C> &x)
-{
-  kernels::stdlib::Nextafter<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Nextafter(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Nextafter<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Nexttoward(NDArray<T, C> &x)
-{
-  kernels::stdlib::Nexttoward<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Nexttoward(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Nexttoward<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Copysign(NDArray<T, C> &x)
-{
-  kernels::stdlib::Copysign<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Copysign(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Copysign<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Fpclassify(NDArray<T, C> &x)
-{
-  kernels::stdlib::Fpclassify<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Fpclassify(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Fpclassify<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Isnormal(NDArray<T, C> &x)
-{
-  kernels::stdlib::Isnormal<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Isnormal(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Isnormal<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Signbit(NDArray<T, C> &x)
-{
-  kernels::stdlib::Signbit<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Signbit(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Signbit<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Isgreater(NDArray<T, C> &x)
-{
-  kernels::stdlib::Isgreater<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Isgreater(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Isgreater<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Isgreaterequal(NDArray<T, C> &x)
-{
-  kernels::stdlib::Isgreaterequal<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Isgreaterequal(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Isgreaterequal<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Isless(NDArray<T, C> &x)
-{
-  kernels::stdlib::Isless<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Isless(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Isless<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Islessequal(NDArray<T, C> &x)
-{
-  kernels::stdlib::Islessequal<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Islessequal(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Islessequal<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Islessgreater(NDArray<T, C> &x)
-{
-  kernels::stdlib::Islessgreater<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Islessgreater(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Islessgreater<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void Isunordered(NDArray<T, C> &x)
-{
-  kernels::stdlib::Isunordered<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void Isunordered(ShapeLessArray<T, C> &x)
-{
-  kernels::stdlib::Isunordered<T> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void ApproxExp(NDArray<T, C> &x)
-{
-  kernels::ApproxExp<typename NDArray<T, C>::vector_register_type> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void ApproxExp(ShapeLessArray<T, C> &x)
-{
-  kernels::ApproxExp<typename ShapeLessArray<T, C>::vector_register_type> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void ApproxLog(NDArray<T, C> &x)
-{
-  kernels::ApproxLog<typename NDArray<T, C>::vector_register_type> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void ApproxLog(ShapeLessArray<T, C> &x)
-{
-  kernels::ApproxLog<typename ShapeLessArray<T, C>::vector_register_type> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename T, typename C>
-void ApproxLogistic(NDArray<T, C> &x)
-{
-  kernels::ApproxLogistic<typename NDArray<T, C>::vector_register_type> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-template <typename T, typename C>
-void ApproxLogistic(ShapeLessArray<T, C> &x)
-{
-  kernels::ApproxLogistic<typename ShapeLessArray<T, C>::vector_register_type> sign;
-  x.data().in_parallel().Apply(sign, x.data());
-}
-
 }  // namespace math
 }  // namespace fetch
