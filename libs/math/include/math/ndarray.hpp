@@ -36,7 +36,7 @@ template <typename T, typename C = memory::SharedArray<T>>
 class NDArray : public ShapeLessArray<T, C>
 {
 public:
-  using type            = T;
+  using type                 = T;
   using container_type       = C;
   using vector_register_type = typename container_type::vector_register_type;
   using super_type           = ShapeLessArray<T, C>;
@@ -350,12 +350,12 @@ public:
    * Returns the single maximum value in the array
    * @return
    */
-  type Max() const { return fetch::math::statistics::Max(*this); }
+  type      Max() const { return fetch::math::statistics::Max(*this); }
   self_type Max(std::size_t const axis)
   {
     std::vector<std::size_t> return_shape{shape()};
     return_shape.erase(return_shape.begin() + int(axis), return_shape.begin() + int(axis) + 1);
-    self_type                                  ret{return_shape};
+    self_type                             ret{return_shape};
     NDArrayIterator<type, container_type> return_iterator{ret};
 
     assert(axis < this->shape().size());
@@ -422,7 +422,7 @@ public:
    * Returns the single minimum value in the array
    * @return
    */
-  type Min() const { return fetch::math::statistics::Min(*this); }
+  type      Min() const { return fetch::math::statistics::Min(*this); }
   self_type Min(std::size_t const axis)
   {
     std::vector<std::size_t> return_shape{shape()};
@@ -430,7 +430,7 @@ public:
 
     assert(axis < this->shape().size());
 
-    self_type                                  ret{return_shape};
+    self_type                             ret{return_shape};
     NDArrayIterator<type, container_type> return_iterator{ret};
 
     // iterate through the return array (i.e. the array of Max vals)

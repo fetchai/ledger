@@ -43,7 +43,7 @@ class NDArrayIterator;
  * Copies the values of updates into the specified indices of the first dimension of data in this
  * object
  */
-//template <typename T, typename C>
+// template <typename T, typename C>
 template <typename ARRAY_TYPE>
 void Scatter(ARRAY_TYPE &input_array, std::vector<typename ARRAY_TYPE::type> &updates,
              std::vector<std::uint64_t> &indices)
@@ -71,7 +71,8 @@ void Scatter(ARRAY_TYPE &input_array, std::vector<typename ARRAY_TYPE::type> &up
   assert(indices.back() <= input_array.shape()[0]);
 
   // set up an iterator
-  NDArrayIterator<typename ARRAY_TYPE::type, typename ARRAY_TYPE::container_type> arr_iterator{input_array};
+  NDArrayIterator<typename ARRAY_TYPE::type, typename ARRAY_TYPE::container_type> arr_iterator{
+      input_array};
 
   // scatter
   std::size_t cur_idx, arr_count = 0;
