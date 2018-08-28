@@ -181,17 +181,17 @@ inline int CountLeadingZeroes64(uint64_t x) { return __builtin_clzl(x); }
 inline uint64_t Log2Ceil(uint64_t x)
 {
   uint64_t count = 0;
-  while(x >>= 1)
+  while (x >>= 1)
   {
     count++;
   }
 
-  if(1 << count == x)
+  if (1 << count == x)
   {
     return count;
   }
 
-  return count+1;
+  return count + 1;
 }
 
 }  // namespace platform

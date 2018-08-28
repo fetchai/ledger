@@ -23,8 +23,8 @@
 #include "core/commandline/parameter_parser.hpp"
 
 #include "network/protocols.hpp"
-#include "network/service/service_client.hpp"
 #include "network/service/server.hpp"
+#include "network/service/service_client.hpp"
 #include "network/tcp/tcp_server.hpp"
 
 #include "http/middleware/allow_origin.hpp"

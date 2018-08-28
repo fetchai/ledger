@@ -238,10 +238,7 @@ public:
     }
   }
 
-  std::size_t size() const
-  {
-    return file_store_.size();
-  }
+  std::size_t size() const { return file_store_.size(); }
 
   /**
    * STL-like functionality achieved with an iterator class. This has to wrap an

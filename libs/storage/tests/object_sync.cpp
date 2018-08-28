@@ -41,7 +41,7 @@ using namespace fetch::ledger;
 
 template <typename... Args>
 fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_t port,
-    Args &&... args)
+                                 Args &&... args)
 {
   TCPClient client(nm);
   client.Connect(address, port);
@@ -56,7 +56,7 @@ fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_
 
   fetch::service::Promise prom = s_client.Call(std::forward<Args>(args)...);
 
-  if(!prom.Wait(2000))
+  if (!prom.Wait(2000))
   {
     std::cout << "Failed to make call to client" << std::endl;
     exit(1);
@@ -70,12 +70,12 @@ void BlockUntilConnect(std::string host, uint16_t port)
   NetworkManager nm{1};
   nm.Start();
 
-  while(true)
+  while (true)
   {
     TCPClient client(nm);
     client.Connect(host, port);
 
-    for (std::size_t i = 0;i < 10; ++i)
+    for (std::size_t i = 0; i < 10; ++i)
     {
       if (client.is_alive())
       {
@@ -88,10 +88,7 @@ void BlockUntilConnect(std::string host, uint16_t port)
   }
 }
 
-void BlockUntilConnect(uint16_t port)
-{
-  BlockUntilConnect("localhost", port);
-}
+void BlockUntilConnect(uint16_t port) { BlockUntilConnect("localhost", port); }
 
 VerifiedTransaction GetRandomTx(uint64_t seed)
 {
@@ -161,9 +158,9 @@ private:
 class TestService : public ServiceServer<TCPServer>
 {
 public:
-  using ClientRegister           = ConnectionRegister<LaneConnectivityDetails>;
-  using TransactionStore         = ObjectStore<VerifiedTransaction>;
-  using TxSyncProtocol           = ObjectStoreSyncronisationProtocol<ClientRegister, VerifiedTransaction>;
+  using ClientRegister   = ConnectionRegister<LaneConnectivityDetails>;
+  using TransactionStore = ObjectStore<VerifiedTransaction>;
+  using TxSyncProtocol   = ObjectStoreSyncronisationProtocol<ClientRegister, VerifiedTransaction>;
   using TransactionStoreProtocol = ObjectStoreProtocol<VerifiedTransaction>;
   using Super                    = ServiceServer<TCPServer>;
 
@@ -201,10 +198,7 @@ public:
     tx_sync_protocol_->Start();
   }
 
-  ~TestService()
-  {
-    thread_pool_->Stop();
-  }
+  ~TestService() { thread_pool_->Stop(); }
 
 private:
   ThreadPool     thread_pool_;
@@ -237,9 +231,9 @@ int main(int argc, char const **argv)
       {
         VerifiedTransaction tx = GetRandomTx(i);
 
-        auto promise = CallPeer(nm, "localhost", initial_port,
-                               TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
-                               ResourceID(tx.digest()), tx);
+        auto promise =
+            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
+                     ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
 
         sent.push_back(tx);
       }
@@ -248,9 +242,8 @@ int main(int argc, char const **argv)
       for (auto const &tx : sent)
       {
         auto promise =
-            CallPeer(nm, "localhost", initial_port,
-                     TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
-                     ResourceID(tx.digest()));
+            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
+                     ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
         uint64_t fee = promise.As<VerifiedTransaction>().summary().fee;
 
@@ -279,9 +272,9 @@ int main(int argc, char const **argv)
       {
         VerifiedTransaction tx = GetRandomTx(i);
 
-        auto promise = CallPeer(nm, "localhost", initial_port,
-                               TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
-                               ResourceID(tx.digest()), tx);
+        auto promise =
+            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
+                     ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
 
         sent.push_back(tx);
       }
@@ -290,9 +283,8 @@ int main(int argc, char const **argv)
       for (auto const &tx : sent)
       {
         auto promise =
-            CallPeer(nm, "localhost", initial_port,
-                     TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
-                     ResourceID(tx.digest()));
+            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
+                     ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
         uint64_t fee = promise.As<VerifiedTransaction>().summary().fee;
 
@@ -324,7 +316,7 @@ int main(int argc, char const **argv)
       // make sure they are all online
       for (uint16_t i = 0; i < number_of_services; ++i)
       {
-        BlockUntilConnect(initial_port+i);
+        BlockUntilConnect(initial_port + i);
       }
 
       // Connect our services to each other
@@ -334,9 +326,9 @@ int main(int argc, char const **argv)
         {
           if (i != j)
           {
-            CallPeer(nm, "localhost", uint16_t(initial_port + i),
-                           TestService::CONTROLLER, ControllerProtocol::CONNECT,
-                           ByteArray{"localhost"}, uint16_t(initial_port + j));
+            CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::CONTROLLER,
+                     ControllerProtocol::CONNECT, ByteArray{"localhost"},
+                     uint16_t(initial_port + j));
           }
         }
       }
@@ -350,9 +342,8 @@ int main(int argc, char const **argv)
       {
         VerifiedTransaction tx = GetRandomTx(i);
 
-        CallPeer(nm, "localhost", uint16_t(initial_port),
-                         TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
-                         ResourceID(tx.digest()), tx);
+        CallPeer(nm, "localhost", uint16_t(initial_port), TestService::TX_STORE,
+                 ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
 
         sent.push_back(tx);
       }
@@ -370,10 +361,9 @@ int main(int argc, char const **argv)
       {
         for (auto const &tx : sent)
         {
-          auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + i),
-                           TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
-                           ResourceID(tx.digest()));
-
+          auto promise =
+              CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::TX_STORE,
+                       ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
           VerifiedTransaction tx_rec = promise.As<VerifiedTransaction>();
 
@@ -399,19 +389,20 @@ int main(int argc, char const **argv)
       for (uint16_t i = 0; i < number_of_services; ++i)
       {
         CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
-                 TestService::CONTROLLER, ControllerProtocol::CONNECT,
-                 ByteArray{"localhost"}, uint16_t(initial_port + i));
+                 TestService::CONTROLLER, ControllerProtocol::CONNECT, ByteArray{"localhost"},
+                 uint16_t(initial_port + i));
       }
 
       // Wait until the sync is done
-      while(true)
+      while (true)
       {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
-                            TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
+        auto promise =
+            CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
+                     TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
 
-        if(promise.As<bool>())
+        if (promise.As<bool>())
         {
           break;
         }
@@ -426,10 +417,9 @@ int main(int argc, char const **argv)
       // Verify the new joiner
       for (auto const &tx : sent)
       {
-        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
-                            TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
-                            ResourceID(tx.digest()));
-
+        auto promise = CallPeer(
+            nm, "localhost", uint16_t(initial_port + number_of_services), TestService::TX_STORE,
+            ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
         if (promise.As<VerifiedTransaction>().summary().fee != tx.summary().fee)
         {

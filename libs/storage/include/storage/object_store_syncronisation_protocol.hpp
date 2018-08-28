@@ -111,8 +111,8 @@ public:
       {
         if (!running_) return;
 
-        auto peer = p.second;
-        auto ptr  = peer.lock();
+        auto                    peer    = p.second;
+        auto                    ptr     = peer.lock();
         fetch::service::Promise promise = ptr->Call(protocol_, OBJECT_COUNT);
 
         uint64_t remote_size = promise.As<uint64_t>();
@@ -123,9 +123,9 @@ public:
 
     fetch::logger.Info("Expected tx size: ", obj_size);
 
-    if(obj_size != 0)
+    if (obj_size != 0)
     {
-      root_mask_ = platform::Log2Ceil(((obj_size / (PULL_LIMIT_/2)) + 1)) + 1;
+      root_mask_ = platform::Log2Ceil(((obj_size / (PULL_LIMIT_ / 2)) + 1)) + 1;
 
       for (uint16_t i = 0; i < 1 << (root_mask_ + 1); ++i)
       {

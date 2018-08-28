@@ -188,7 +188,7 @@ public:
   void Close() override
   {
     std::lock_guard<mutex_type> lock(io_creation_mutex_);
-    posted_close_                          = true;
+    posted_close_                         = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
     std::weak_ptr<strand_type> strandWeak = strand_;
 
@@ -414,7 +414,6 @@ private:
       SignalLeave();
     }
   }
-
 };
 
 }  // namespace network

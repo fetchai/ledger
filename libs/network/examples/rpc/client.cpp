@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/service_client.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "network/service/service_client.hpp"
 #include "service_consts.hpp"
 #include <iostream>
 using namespace fetch::service;
