@@ -157,11 +157,6 @@ public:
       ref += s.volume * s.index;
     }
 
-    //    if (ref != position_)
-    //    {
-    //      std::cout << "Expected " << ref << " but got " << position_ << std::endl;
-    //      TODO_FAIL("doesn't add up");
-    //    }
     assert(ref == position_);
 #endif
 
