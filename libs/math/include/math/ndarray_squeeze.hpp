@@ -161,5 +161,59 @@ void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, uint64_t const &
   }
 }
 
+/* Reduce an NDArray by one dimension.
+ * @param fnc is the reduction function.
+ * @param input is the array the input array.
+ * @param output is the array the output array.
+ * @param axes are the axes along which the reduction happens.
+ */
+template <typename F, typename T, typename C>
+void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, std::vector<uint64_t> const &axes)
+{
+  std::size_t N;
+
+  std::size_t                  k = 1;
+  std::vector<std::size_t>     out_shape;
+  std::unordered_set<uint64_t> axes_set(axes.begin(), axes.end());
+
+  for (std::size_t i = 0; i < input.shape().size(); ++i)
+  {
+    if (axes_set.find(i) != axes_set.end())
+    {
+      out_shape.push_back(input.shape(i));
+      k *= input.shape(i);
+    }
+  }
+  output.Resize(k);
+  output.Reshape(out_shape);
+
+  NDArrayIterator<T, C> it_a(input);  // TODO(private issue 187): Make const iterator
+  NDArrayIterator<T, C> it_b(output);
+
+  // Move the axis we want to reduce to the front
+  // to make it iterable in the inner most loop.
+  it_a.MoveAxesToFront(axes);
+
+  N = 1;
+  for (std::size_t i = 0; i < axes.size(); ++i)
+  {
+    N *= it_a.range(i).total_steps;
+  }
+
+  while (bool(it_a) && bool(it_b))
+  {
+
+    *it_b = *it_a;
+    ++it_a;
+
+    for (std::size_t i = 0; i < N - 1; ++i)
+    {
+      *it_b = fnc(*it_b, *it_a);
+      ++it_a;
+    }
+    ++it_b;
+  }
+}
+
 }  // namespace math
 }  // namespace fetch

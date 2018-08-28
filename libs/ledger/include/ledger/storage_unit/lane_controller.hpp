@@ -25,6 +25,7 @@
 #include "network/management/connection_register.hpp"
 #include "network/p2pservice/p2p_peer_details.hpp"
 #include "network/service/service_client.hpp"
+
 namespace fetch {
 namespace ledger {
 

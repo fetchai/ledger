@@ -32,6 +32,16 @@
 namespace fetch {
 namespace math {
 
+namespace details {
+struct SimpleComparator
+{
+  const std::vector<std::size_t> &value_vector;
+
+  SimpleComparator(const std::vector<std::size_t> &val_vec) : value_vector(val_vec) {}
+
+  bool operator()(std::size_t i1, std::size_t i2) { return value_vector[i1] < value_vector[i2]; }
+};
+}  // namespace details
 template <typename T, typename C = memory::SharedArray<T>>
 class NDArray : public ShapeLessArray<T, C>
 {
@@ -231,9 +241,7 @@ public:
   data_type Get(std::vector<std::size_t> const &indices) const
   {
     assert(indices.size() == shape_.size());
-    std::cout << "col idx val: " << this->operator[](ComputeColIndex(indices)) << std::endl;
-    std::cout << "row idx val: " << this->operator[](ComputeRowIndex(indices)) << std::endl;
-    return this->                         operator[](ComputeColIndex(indices));
+    return this->operator[](ComputeColIndex(indices));
   }
 
   /**
@@ -353,6 +361,8 @@ public:
     self_type                                  ret{return_shape};
     NDArrayIterator<data_type, container_type> return_iterator{ret};
 
+    assert(axis < this->shape().size());
+
     // iterate through the return array (i.e. the array of Max vals)
     //    data_type cur_val;
     std::vector<std::size_t> cur_index;
@@ -398,6 +408,20 @@ public:
   }
 
   /**
+   * Returns an ndarray containing the elementwise maximum of two other ndarrays
+   * @param x ndarray input 1
+   * @param y ndarray input 2
+   * @return the combined array
+   */
+  self_type Maximum(self_type const &x, self_type const &y)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+    this->super_type::Maximum(x, y);
+    return *this;
+  }
+
+  /**
    * Returns the single minimum value in the array
    * @return
    */
@@ -407,7 +431,7 @@ public:
     std::vector<std::size_t> return_shape{shape()};
     return_shape.erase(return_shape.begin() + int(axis), return_shape.begin() + int(axis) + 1);
 
-    assert(axis < return_shape.size());
+    assert(axis < this->shape().size());
 
     self_type                                  ret{return_shape};
     NDArrayIterator<data_type, container_type> return_iterator{ret};
@@ -1070,7 +1094,90 @@ public:
     this->super_type::Relu(x);
   }
 
+  /**
+   * Copies the values of updates into the specified indices of the first dimension of data in this
+   * object
+   */
+  void Scatter(std::vector<data_type> &updates, std::vector<std::size_t> &indices)
+  {
+
+    // sort indices and updates into ascending order
+    std::sort(updates.begin(), updates.end(), fetch::math::details::SimpleComparator(indices));
+    std::sort(indices.begin(), indices.end());
+
+    // check largest value in indices < shape()[0]
+    assert(indices.back() <= this->shape()[0]);
+
+    // set up an iterator
+    NDArrayIterator<data_type, container_type> arr_iterator{*this};
+
+    std::size_t cur_idx, arr_count = 0;
+    for (std::size_t count = 0; count < indices.size(); ++count)
+    {
+      cur_idx = indices[count];
+
+      while (arr_count < cur_idx)
+      {
+        ++arr_iterator;
+        ++arr_count;
+      }
+
+      *arr_iterator = updates[count];
+    }
+  }
+
+  /**
+   * gathers data from first dimension of this object according to indices and returns a new
+   * self_type
+   */
+  self_type Gather(std::vector<std::size_t> &indices)
+  {
+
+    self_type ret{this->size()};
+    ret.LazyReshape(this->shape());
+    ret.Copy(*this);
+
+    // sort indices and updates into ascending order
+    std::sort(indices.begin(), indices.end());
+
+    // check largest value in indices < shape()[0]
+    assert(indices.back() <= this->shape()[0]);
+
+    // set up an iterator
+    NDArrayIterator<data_type, container_type> arr_iterator{*this};
+    NDArrayIterator<data_type, container_type> ret_iterator{ret};
+
+    std::size_t cur_idx, arr_count = 0;
+    for (std::size_t count = 0; count < indices.size(); ++count)
+    {
+      cur_idx = indices[count];
+
+      while (arr_count < cur_idx)
+      {
+        ++arr_iterator;
+        ++arr_count;
+      }
+
+      *ret_iterator = *arr_iterator;
+    }
+
+    return ret;
+  }
+
+  /**
+   * calculates soft max of x and applies to this
+   * @param x
+   */
+  void Softmax(self_type const &x)
+  {
+    assert(this->size() == x.size());
+    this->LazyReshape(x.shape());
+
+    this->super_type::Softmax(x);
+  }
+
 private:
+  // TODO(tfr): replace with strides
   std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const
   {
     std::size_t index  = 0;
@@ -1104,5 +1211,6 @@ private:
   std::size_t              size_ = 0;
   std::vector<std::size_t> shape_;
 };
+
 }  // namespace math
 }  // namespace fetch

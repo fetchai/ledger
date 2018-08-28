@@ -1420,6 +1420,44 @@ public:
     data_.in_parallel().Apply(sign, x.data_);
   }
 
+  /**
+   * trivial implementation of softmax
+   * @param x
+   * @return
+   */
+  self_type Softmax(self_type const &x)
+  {
+    LazyResize(x.size());
+
+    assert(x.size() == this->size());
+
+    // by subtracting the max we improve numerical stability, and the result will be identical
+    this->Subtract(x, x.Max());
+    this->Exp(*this);
+    this->Divide(*this, this->Sum());
+
+    return *this;
+  }
+
+  /**
+   * trivial implementation of maximum - return array with elementwise max applied
+   * @param x
+   * @return
+   */
+  self_type Maximum(self_type const &x, self_type const &y)
+  {
+    LazyResize(x.size());
+    assert(x.size() == this->size());
+    assert(x.size() == y.size());
+
+    for (std::size_t i = 0; i < size(); ++i)
+    {
+      this->operator[](i) = std::max(x[i], y[i]);
+    }
+
+    return *this;
+  }
+
   /* Equality operator.
    * @other is the array which this instance is compared against.
    *

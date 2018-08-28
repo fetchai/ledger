@@ -92,11 +92,7 @@ struct Nanl
 template <typename type>
 struct Exp
 {
-  void operator()(type const &x, type &y) const
-  {
-    y = std::exp(x);
-    std::cout << "exp( " << x << ") = " << y << std::endl;
-  }
+  void operator()(type const &x, type &y) const { y = std::exp(x); }
 };
 
 template <typename type>
