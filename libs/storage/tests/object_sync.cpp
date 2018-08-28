@@ -31,6 +31,8 @@
 #include <utility>
 
 // Test of the object sync protocol in the style of the transaction sync in the lane service.
+// A service, TestService here, owns an object store, and the protocols ensure that new objects
+// (Using transactions here) will be synchronized with connected peers.
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;
@@ -166,8 +168,7 @@ public:
 
   enum
   {
-    IDENTITY = 1,
-    TX_STORE,
+    TX_STORE = 1,
     TX_STORE_SYNC,
     CONTROLLER
   };
@@ -299,7 +300,7 @@ int main(int argc, char const **argv)
 
     SECTION("Test transaction store sync protocol (caching, then new joiner, threads 50) ")
     {
-      // TODO: (HUT) : make this work with 1 - find the post blocking the NM.
+      // TODO(unknown): (HUT) : make this work with 1 - find the post blocking the NM.
       NetworkManager nm{50};
       nm.Start();
 
