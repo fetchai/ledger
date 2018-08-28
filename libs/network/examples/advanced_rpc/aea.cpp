@@ -51,8 +51,8 @@
 #include "commands.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/vt100.hpp"
-#include "network/service/service_client.hpp"
 #include "network/service/function.hpp"
+#include "network/service/service_client.hpp"
 #include "vector_serialize.hpp"
 #include <iostream>
 
