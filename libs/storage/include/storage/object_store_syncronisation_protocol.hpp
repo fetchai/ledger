@@ -123,11 +123,15 @@ public:
 
     fetch::logger.Info("Expected tx size: ", obj_size);
 
+    // If there are objects to sync from the network, fetch N roots from each of the peers in
+    // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and
+    // the roots to sync 00, 10, 01 and 11...
+    // where roots to sync are all objects with the key starting with those bits
     if (obj_size != 0)
     {
       root_mask_ = platform::Log2Ceil(((obj_size / (PULL_LIMIT_ / 2)) + 1)) + 1;
 
-      for (uint16_t i = 0; i < 1 << (root_mask_ + 1); ++i)
+      for (uint16_t i = 0, end = (1 << (root_mask_ + 1)); i < end; ++i)
       {
         roots_to_sync_.push(Reverse(static_cast<uint8_t>(i)));
       }
