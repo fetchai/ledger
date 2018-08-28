@@ -29,7 +29,7 @@
 #include "network/protocols/fetch_protocols.hpp"
 #include "network/protocols/swarm/commands.hpp"
 #include "network/protocols/swarm/swarm_protocol.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "network/service/server.hpp"
 #include "swarm_karma_peers.hpp"
 #include "swarm_peer_location.hpp"

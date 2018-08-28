@@ -23,7 +23,7 @@
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
 #include "ledger/chain/main_chain_remote_control.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
 #include <iostream>
 

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "service/client.hpp"
+#include "service/service_client.hpp"
 
 #include "fetch_pybind.hpp"
 

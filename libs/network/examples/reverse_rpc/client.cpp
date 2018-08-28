@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #define FETCH_DISABLE_LOGGING
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"

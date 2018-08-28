@@ -19,7 +19,7 @@
 
 #include "commands.hpp"
 #include "core/assert.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "network/service/publication_feed.hpp"
 
 #include <iostream>

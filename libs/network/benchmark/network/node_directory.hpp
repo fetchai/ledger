@@ -23,7 +23,7 @@
 #include "core/logger.hpp"
 #include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "network/service/server.hpp"
 #include "network_classes.hpp"
 #include "protocols/fetch_protocols.hpp"
