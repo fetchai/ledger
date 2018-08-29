@@ -226,8 +226,8 @@ ShapeLessArray<T, C> BooleanMask(ShapeLessArray<T, C> &      input_array,
 template <typename T, typename C>
 void BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask, NDArray<T, C> &ret)
 {
-  assert(input_array.shape() >= mask.shape());
-  assert(mask.shape() > 0);
+  assert(input_array.shape().size() >= mask.shape().size());
+  assert(mask.shape().size() > 0);
 
   if (mask.shape() == input_array.shape())
   {
