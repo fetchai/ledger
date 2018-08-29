@@ -22,6 +22,7 @@
 #include "core/random/lcg.hpp"
 #include "testing/unittest.hpp"
 #include <math/linalg/matrix.hpp>
+#include "math/free_functions/free_functions.hpp"
 
 using namespace fetch::math::linalg;
 
@@ -275,8 +276,7 @@ void Test1()
 -1.31483743793 1.60204652379 -0.953273472793 2.21745246853 -2.87753237106 -0.00830728214452 -2.75965931159 ;
 -1.54572312788 -1.99332448938 -0.869694813898 1.42776104792 0.13788880157 -0.928521794504 2.02053837568
 )");
-
-    EXPECT(R.Add(A, B).AllClose(C));
+    EXPECT(Add(A, B, R).AllClose(C));
     EXPECT((R = A, R.InlineAdd(B)).AllClose(C));
   };
 
@@ -313,7 +313,7 @@ void Test1()
 0.117756665616 -0.747437973767 -0.361251560327 -0.172434904876 0.658904510775 -0.957744633955 0.184311509935
 )");
 
-    EXPECT(R.Multiply(A, B).AllClose(C));
+    EXPECT(Multiply(A, B, R).AllClose(C));
     EXPECT((R = A, R.InlineMultiply(B)).AllClose(C));
   };
 
@@ -350,7 +350,7 @@ void Test1()
 -0.63093783333 1.17350287798 -1.83966507669 0.23313974512 1.25100777305 2.15330803444 1.16782485123
 )");
 
-    EXPECT(R.Subtract(A, B).AllClose(C));
+    EXPECT(Subtract(A, B, R).AllClose(C));
     EXPECT((R.Copy(A), R.InlineSubtract(B)).AllClose(C));
     EXPECT((R.Copy(B), R.InlineReverseSubtract(A)).AllClose(C));
   };
@@ -425,7 +425,7 @@ void Test1()
 -0.301701072834 0.537852652581 -0.486363693173 1.02684439421 -0.420710151958 -0.675974819917 4.60841365759
 )");
 
-    EXPECT(R.Divide(A, B).AllClose(C));
+    EXPECT(Divide(A, B, R).AllClose(C));
     EXPECT((R.Copy(A), R.InlineDivide(B)).AllClose(C));
     EXPECT((R.Copy(B), R.InlineReverseDivide(A)).AllClose(C));
   };
@@ -465,7 +465,7 @@ void Test1()
 
     std::cout << "Check: " << A[0] << " " << B[0] << std::endl;
 
-    EXPECT(R.Add(A, B).AllClose(C));
+    EXPECT(Add(A, B, R).AllClose(C));
     EXPECT((R.Copy(A), R.InlineAdd(B)).AllClose(C));
   };
 
@@ -502,7 +502,7 @@ void Test1()
 -0.469564098927 0.0197877165536 0.0201410497925 -0.33891701198 0.457386994351 0.0948893363251 -0.557813225293
 )");
 
-    EXPECT(R.Multiply(A, B).AllClose(C));
+    EXPECT(Multiply(A, B, R).AllClose(C));
     EXPECT((R.Copy(A), R.InlineMultiply(B)).AllClose(C));
   };
 
@@ -539,7 +539,7 @@ void Test1()
 -0.572600899585 -2.71080436818 0.334474275731 -0.0354129366011 0.644551284848 -1.90713533176 0.0612756064181
 )");
 
-    EXPECT(R.Subtract(A, B).AllClose(C));
+    EXPECT(Subtract(A, B, R).AllClose(C));
     EXPECT((R.Copy(A), R.InlineSubtract(B)).AllClose(C));
     EXPECT((R.Copy(B), R.InlineReverseSubtract(A)).AllClose(C));
   };
@@ -614,7 +614,7 @@ void Test1()
 -4.88644462695 0.884678244246 0.720662350267 -2.37052045049 0.588507045528 -2.18765832918 -0.995224672165
 )");
 
-    EXPECT(R.Divide(A, B).AllClose(C));
+    EXPECT(Divide(A, B, R).AllClose(C));
     EXPECT((R.Copy(A), R.InlineDivide(B)).AllClose(C));
     EXPECT((R.Copy(B), R.InlineReverseDivide(A)).AllClose(C));
   };

@@ -54,7 +54,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def_static("Zeros", &NDArray<T>::Zeroes)
       .def_static("Ones", &NDArray<T>::Ones)
 
-      // TODO(private issue 188): Move implementation of these functions to ndarray.
+          // TODO(private issue 188): Move implementation of these functions to ndarray.
       .def("reduce_sum",
            [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
              if (axis >= x.shape().size())
@@ -113,8 +113,8 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
                  },
                  y, x, axis);
            })
-      //      .def("expand_dims",[](NDArray<T> &x, NDArray<T> &y, uint64_t const& axis) {
-      //      })
+          //      .def("expand_dims",[](NDArray<T> &x, NDArray<T> &y, uint64_t const& axis) {
+          //      })
       .def("__add__",
            [](NDArray<T> &b, NDArray<T> &c) {
              // identify the correct output shape
@@ -123,7 +123,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 
              // put result of addition into new output array
              NDArray<T> a{new_shape};
-             a.Add(b, c);
+             Add(b, c, a);
              return a;
            })
       .def("__mul__",
@@ -131,7 +131,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              std::vector<std::size_t> new_shape;
              if (!(ShapeFromBroadcast(b.shape(), c.shape(), new_shape))) throw py::index_error();
              NDArray<T> a{new_shape};
-             a.Multiply(b, c);
+             Multiply(b, c, a);
              return a;
            })
       .def("__sub__",
@@ -140,7 +140,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (!(ShapeFromBroadcast(b.shape(), c.shape(), new_shape))) throw py::index_error();
 
              NDArray<T> a{new_shape};
-             a.Subtract(b, c);
+             Subtract(b, c, a);
              return a;
            })
       .def("__truediv__",
@@ -149,7 +149,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (!(ShapeFromBroadcast(b.shape(), c.shape(), new_shape))) throw py::index_error();
 
              NDArray<T> a{new_shape};
-             a.Divide(b, c);
+             Divide(b, c, a);
              return a;
            })
       .def("__add__",
@@ -160,28 +160,28 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              //
              //             }
              a.LazyReshape(b.shape());
-             a.Add(b, c);
+             Add(b, c, a);
              return a;
            })
       .def("__mul__",
            [](NDArray<T> &b, T const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
-             a.Multiply(b, c);
+             Multiply(b, c, a);
              return a;
            })
       .def("__sub__",
            [](NDArray<T> &b, T const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
-             a.Subtract(b, c);
+             Subtract(b, c, a);
              return a;
            })
       .def("__truediv__",
            [](NDArray<T> &b, T const &c) {
              NDArray<T> a(b.size());
              a.LazyReshape(b.shape());
-             a.Divide(b, c);
+             Divide(b, c, a);
              return a;
            })
       .def("__iadd__",
@@ -420,7 +420,10 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              Max(a, axis, ret);
              return ret;
            })
-      .def("maximum", &NDArray<T>::Maximum)
+      .def("maximum", [](NDArray<T> const &array1, NDArray<T> const &array2, NDArray<T> &ret)
+      {
+        return Maximum(array1, array2, ret);
+      })
       .def("min",
            [](NDArray<T> const &a) {
              typename NDArray<T>::type ret = std::numeric_limits<typename NDArray<T>::type>::max();
@@ -470,13 +473,13 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("dynamic_stitch",
            [](NDArray<T> &a, std::vector<std::vector<std::size_t>> const &indices,
               std::vector<NDArray<T>> const &data) {
-             fetch::math::DynamicStitch(a, indices, data);
+             DynamicStitch(a, indices, data);
              return a;
            })
       .def("shape", [](NDArray<T> &a) { return a.shape(); })
       .def_static("Zeros", &NDArray<T>::Zeroes)
 
-      // various free functions
+          // various free functions
       .def("abs", [](NDArray<T> &a) { fetch::math::Abs(a); })
       .def("exp", [](NDArray<T> &a) { fetch::math::Exp(a); })
       .def("exp2", [](NDArray<T> &a) { fetch::math::Exp2(a); })

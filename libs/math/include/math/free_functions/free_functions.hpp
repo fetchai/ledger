@@ -26,7 +26,16 @@
 #include "math/kernels/sign.hpp"
 #include "math/kernels/standard_functions.hpp"
 
-#include "math/free_functions/free_functions_details.hpp"
+#include <cassert>
+#include "core/assert.hpp"
+//#include "math/linalg/matrix.hpp"
+//#include "math/ndarray.hpp"
+//#include "math/ndarray_iterator.hpp"
+//#include "math/shape_less_array.hpp"
+#include "vectorise/memory/range.hpp"
+#include "math/ndarray_broadcast.hpp"
+
+#include <algorithm>
 #include <vector>
 
 namespace fetch {
@@ -46,7 +55,46 @@ class NDArrayIterator;
 template <typename T, typename C>
 void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates, std::vector<std::size_t> &indices)
 {
-  details::ScatterImplementation(input_array, updates, indices);
+  // sort indices and updates into ascending order
+
+  std::vector<std::pair<std::size_t, T>> AB;
+
+  // copy into pairs
+  // Note that A values are put in "first" this is very important
+  for (std::size_t i = 0; i < updates.size(); ++i)
+  {
+    AB.push_back(std::make_pair(indices[i], updates[i]));
+  }
+
+  std::sort(AB.begin(), AB.end());
+
+  // Place back into arrays
+  for (size_t i = 0; i < updates.size(); ++i)
+  {
+    updates[i] = AB[i].second;  //<- This is actually optional
+    indices[i] = AB[i].first;
+  }
+
+  //  assert(indices.back() <= input_array.shape()[0]);
+
+  // set up an iterator
+  NDArrayIterator<T, C> arr_iterator{
+      input_array};
+
+  // scatter
+  std::size_t cur_idx, arr_count = 0;
+  for (std::size_t count = 0; count < indices.size(); ++count)
+  {
+    cur_idx = indices[count];
+
+    while (arr_count < cur_idx)
+    {
+      ++arr_iterator;
+      ++arr_count;
+    }
+
+    *arr_iterator = updates[count];
+  }
 }
 
 /**
@@ -56,7 +104,35 @@ void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates, std::vector<st
 template <typename T, typename C>
 void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std::size_t> &indices)
 {
-  details::GatherImplementation(input_array, updates, indices);
+
+  assert(input_array.size() == updates.size());
+  input_array.LazyReshape(updates.shape());
+
+  // sort indices
+  std::sort(indices.begin(), indices.end());
+
+  // check largest value in indices < shape()[0]
+  assert(indices.back() <= updates.shape()[0]);
+
+  // set up an iterator
+  NDArrayIterator<T, C> arr_iterator{
+      updates};
+  NDArrayIterator<T, C> ret_iterator{
+      input_array};
+
+  std::size_t cur_idx, arr_count = 0;
+  for (std::size_t count = 0; count < indices.size(); ++count)
+  {
+    cur_idx = indices[count];
+
+    while (arr_count < cur_idx)
+    {
+      ++arr_iterator;
+      ++arr_count;
+    }
+
+    *ret_iterator = *arr_iterator;
+  }
 }
 
 /**
@@ -68,13 +144,48 @@ void DynamicStitch(ShapeLessArray<T, C> &                       input_array,
                    std::vector<std::vector<std::size_t>> const &indices,
                    std::vector<ShapeLessArray<T, C>> const &    data)
 {
-  details::DynamicStitch(input_array, indices, data);
+  // identify the new size of this
+  std::size_t new_size = 0;
+  for (std::size_t l = 0; l < indices.size(); ++l)
+  {
+    new_size += indices[l].size();
+  }
+
+  input_array.LazyResize(new_size);
+
+  // loop through all output data locations identifying the next data point to copy into it
+  for (std::size_t i = 0; i < indices.size(); ++i)  // iterate through lists of indices
+  {
+    for (std::size_t k = 0; k < indices[i].size(); ++k)  // iterate through index within this list
+    {
+      assert(indices[i][k] <= input_array.size());
+      input_array[indices[i][k]] = data[i][k];
+    }
+  }
 }
 template <typename T, typename C>
-void DynamicStitch(NDArray<T, C> &input_array, std::vector<std::vector<std::size_t>> const &indices,
-                   std::vector<NDArray<T, C>> const &data)
+void DynamicStitch(NDArray<T, C> &                       input_array,
+                   std::vector<std::vector<std::size_t>> const &indices,
+                   std::vector<NDArray<T, C>> const &    data)
 {
-  details::DynamicStitch(input_array, indices, data);
+  // identify the new size of this
+  std::size_t new_size = 0;
+  for (std::size_t l = 0; l < indices.size(); ++l)
+  {
+    new_size += indices[l].size();
+  }
+
+  input_array.LazyResize(new_size);
+
+  // loop through all output data locations identifying the next data point to copy into it
+  for (std::size_t i = 0; i < indices.size(); ++i)  // iterate through lists of indices
+  {
+    for (std::size_t k = 0; k < indices[i].size(); ++k)  // iterate through index within this list
+    {
+      assert(indices[i][k] <= input_array.size());
+      input_array[indices[i][k]] = data[i][k];
+    }
+  }
 }
 
 /**
@@ -85,14 +196,28 @@ void DynamicStitch(NDArray<T, C> &input_array, std::vector<std::vector<std::size
 template <typename T, typename C>
 void BooleanMask(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &mask)
 {
-  details::BooleanMaskImplementation(input_array, mask);
+  assert(input_array.size() == mask.size());
+
+  std::size_t counter = 0;
+  for (std::size_t i = 0; i < input_array.size(); ++i)
+  {
+    assert((mask[i] == 1) || (mask[i] == 0));
+    // TODO(private issue 193): implement boolean only ndarray to avoid cast
+    if (bool(mask[i]))
+    {
+      input_array[counter] = input_array[i];
+      ++counter;
+    }
+  }
+
+  input_array.LazyResize(counter);
 }
 template <typename T, typename C>
 void BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> const &mask)
 {
   assert(input_array.shape() >= mask.shape());
 
-  details::BooleanMaskImplementation(input_array, mask);
+  BooleanMask(input_array, mask);
 
   // figure out the output shape
   std::vector<std::size_t> new_shape;
@@ -834,6 +959,16 @@ void Sign(ARRAY_TYPE &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
+
+
+
+
+
+
+
+
+
+
 /**
  * Max function for two values
  * @tparam T
@@ -842,9 +977,10 @@ void Sign(ARRAY_TYPE &x)
  * @return
  */
 template <typename T>
-inline void Max(T const &datum1, T const &datum2, T &ret)
+T &Max(T const &datum1, T const &datum2, T &ret)
 {
-  details::MaxImplementation<T>(datum1, datum2, ret);
+  ret = std::max(datum1, datum2);
+  return ret;
 }
 
 /**
@@ -855,9 +991,14 @@ inline void Max(T const &datum1, T const &datum2, T &ret)
  * @return
  */
 template <typename T, typename C>
-inline void Max(ShapeLessArray<T, C> const &array, T &ret)
+T &Max(ShapeLessArray<T, C> const &array, T &ret)
 {
-  details::MaxImplementation<T, C>(array, ret);
+  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+
+  ret = array.data().in_parallel().Reduce(
+      memory::TrivialRange(0, array.size()),
+      [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
+  return ret;
 }
 
 /**
@@ -871,16 +1012,83 @@ inline void Max(ShapeLessArray<T, C> const &array, T &ret)
 template <typename T, typename C>
 inline void Max(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
 {
-  details::MaxImplementation<T, C>(array, r, ret);
+  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+
+  if (r.is_trivial())
+  {
+    ret = array.data().in_parallel().Reduce(
+        r, [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
+  }
+  else
+  {  // non-trivial range is not vectorised
+    typename ShapeLessArray<T, C>::type ret =
+        -std::numeric_limits<typename ShapeLessArray<T, C>::type>::max();
+    for (auto i : array)
+    {
+      ret = std::max(ret, i);
+    }
+  }
 }
 
 /**
- * find the maximum of the 1-D projections through the array
+ * Implementation of Max that returns the n-1 dim array by finding the max of all 1-d vectors within
+ * the array
+ * @tparam T
+ * @tparam C
+ * @param array
+ * @param axis
+ * @param ret
  */
 template <typename T, typename C>
 void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
 {
-  details::MaxImplementation<T, C>(array, axis, ret);
+  assert(axis < array.shape().size());
+
+  NDArrayIterator<typename NDArray<T, C>::type, typename NDArray<T, C>::container_type>
+      return_iterator{ret};
+
+  // iterate through the return array (i.e. the array of Max vals)
+  std::vector<std::size_t> cur_index;
+  while (return_iterator)
+  {
+    std::vector<std::vector<std::size_t>> cur_step;
+
+    cur_index = return_iterator.GetNDimIndex();
+
+    // calculate which part of the array we should iterate over (i.e. identify the 1-d vectors
+    // within the array)
+    std::size_t index_counter = 0;
+    for (std::size_t i = 0; i < array.shape().size(); ++i)
+    {
+      if (i == axis)
+      {
+        cur_step.push_back({0, array.shape()[i]});
+      }
+      else
+      {
+        cur_step.push_back({cur_index[index_counter], cur_index[index_counter] + 1});
+        ++index_counter;
+      }
+    }
+
+    // get an iterator to iterate over the 1-d slice of the array to calculate max over
+    NDArrayIterator<typename NDArray<T, C>::type, typename NDArray<T, C>::container_type>
+        array_iterator(array, cur_step);
+
+    // loops through the 1d array calculating the max val
+    typename NDArray<T, C>::type cur_max =
+        -std::numeric_limits<typename NDArray<T, C>::type>::max();
+    typename NDArray<T, C>::type cur_val;
+    while (array_iterator)
+    {
+      cur_val = *array_iterator;
+      Max(cur_max, cur_val, cur_max);
+      ++array_iterator;
+    }
+
+    *return_iterator = cur_max;
+    ++return_iterator;
+  }
 }
 
 /**
@@ -893,7 +1101,7 @@ void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
 template <typename T>
 inline void Min(T const &datum1, T const &datum2, T &ret)
 {
-  details::MinImplementation<T>(datum1, datum2, ret);
+  ret = std::min(datum1, datum2);
 }
 
 /**
@@ -905,7 +1113,11 @@ inline void Min(T const &datum1, T const &datum2, T &ret)
 template <typename T, typename C>
 inline void Min(ShapeLessArray<T, C> const &array, T &ret)
 {
-  details::MinImplementation<T, C>(array, ret);
+  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+
+  ret = array.data().in_parallel().Reduce(
+      memory::TrivialRange(0, array.size()),
+      [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
 }
 
 /**
@@ -919,7 +1131,21 @@ inline void Min(ShapeLessArray<T, C> const &array, T &ret)
 template <typename T, typename C>
 inline void Min(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
 {
-  details::MinImplementation<T, C>(array, r, ret);
+  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+
+  if (r.is_trivial())
+  {
+    ret = array.data().in_parallel().Reduce(
+        r, [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
+  }
+  else
+  {  // non-trivial range is not vectorised
+    typename T::type ret = std::numeric_limits<typename T::type>::max();
+    for (auto i : array)
+    {
+      ret = std::min(ret, i);
+    }
+  }
 }
 
 /**
@@ -928,7 +1154,50 @@ inline void Min(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
 template <typename T, typename C>
 void Min(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
 {
-  details::MinImplementation<T, C>(array, axis, ret);
+  assert(axis < array.shape().size());
+
+  NDArrayIterator<T, C> return_iterator{ret};
+
+  // iterate through the return array (i.e. the array of Max vals)
+  //    type cur_val;
+  std::vector<std::size_t> cur_index;
+  while (return_iterator)
+  {
+    std::vector<std::vector<std::size_t>> cur_step;
+
+    cur_index = return_iterator.GetNDimIndex();
+
+    // calculate step from cur_index and axis
+    std::size_t index_counter = 0;
+    for (std::size_t i = 0; i < array.shape().size(); ++i)
+    {
+      if (i == axis)
+      {
+        cur_step.push_back({0, array.shape()[i]});
+      }
+      else
+      {
+        cur_step.push_back({cur_index[index_counter], cur_index[index_counter] + 1});
+        ++index_counter;
+      }
+    }
+
+    // get an iterator to iterate over the 1-d slice of the array to calculate max over
+    NDArrayIterator<T, C> array_iterator(array, cur_step);
+
+    // loops through the 1d array calculating the max val
+    T cur_max = std::numeric_limits<T>::max();
+    T cur_val;
+    while (array_iterator)
+    {
+      cur_val = *array_iterator;
+      Min(cur_max, cur_val, cur_max);
+      ++array_iterator;
+    }
+
+    *return_iterator = cur_max;
+    ++return_iterator;
+  }
 }
 
 
@@ -942,7 +1211,12 @@ void Min(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
 template <typename T, typename C>
 void Softmax(ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
 {
-  details::SoftmaxImplementation<T, C>(array, ret);
+  ret.LazyResize(array.size());
+
+  // by subtracting the max we improve numerical stability, and the result will be identical
+  ret.Subtract(array, array.Max());
+  Exp(ret);
+  ret.Divide(ret, Sum(ret));
 }
 template <typename T, typename C>
 void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
@@ -950,8 +1224,476 @@ void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
   assert(ret.size() == array.size());
   ret.LazyReshape(array.shape());
 
-  details::SoftmaxImplementation<T, C>(array, ret);
+  Softmax<T, C>(array, ret);
 }
+
+/**
+ * Returns an array containing the elementwise maximum of two other ndarrays
+ * @param x array input 1
+ * @param y array input 2
+ * @return the combined array
+ */
+template <typename T, typename C>
+NDArray<T, C> &Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2, NDArray<T, C> &ret)
+{
+  assert(ret.shape() == array1.shape());
+  assert(array1.shape() == array2.shape());
+
+  Maximum<T, C>(array1, array2, ret);
+  return ret;
+
+}
+template <typename T, typename C>
+ShapeLessArray<T, C> &Maximum(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2, ShapeLessArray<T, C> &ret)
+{
+  assert(array1.size() == array2.size());
+  ret.Resize(array1.size());
+
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = std::max(array1[i], array2[i]);
+  }
+  return ret;
+}
+
+
+
+
+/**
+ * add a scalar to every value in the array
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Add(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
+{
+  assert(array.size() == ret.size());
+  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename ShapeLessArray<T, C>::vector_register_type const &x, typename ShapeLessArray<T, C>::vector_register_type &z) { z = x + val; },
+      array.data());
+  return ret;
+}
+template <typename T, typename C>
+ShapeLessArray<T, C> &Add(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+{
+  ret = Add(array, scalar, ret);
+  return ret;
+}
+
+/**
+ * Adds two arrays together
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param array2
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2, ShapeLessArray<T, C> &ret)
+{
+  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
+  ret = Add(array1, array2, range, ret);
+  return ret;
+}
+template <typename T, typename C>
+ShapeLessArray<T, C> &Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2, memory::Range const &range, ShapeLessArray<T, C> &ret)
+{
+  assert(array1.size() == array2.size());
+  ret.LazyResize(array1.size());
+
+
+  if (range.is_undefined())
+  {
+    ret = Add(array1, array2, ret);
+  }
+  else if (range.is_trivial())
+  {
+    auto r = range.ToTrivialRange(ret.data().size());
+
+    ret.data().in_parallel().Apply(
+        r,
+        [](typename ShapeLessArray<T, C>::vector_register_type const &x, typename ShapeLessArray<T, C>::vector_register_type const &y,
+           typename ShapeLessArray<T, C>::vector_register_type &z) { z = x + y; },
+        array1.data(), array2.data());
+  }
+  else
+  {
+    TODO_FAIL("Non-trivial ranges not implemented");
+  }
+  return ret;
+}
+
+/**
+ * Adds two ndarrays together with broadcasting
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param array2
+ * @param range
+ * @param ret
+ */
+template <typename T, typename C>
+NDArray<T, C> &Add(NDArray<T, C> &array1, NDArray<T, C> &array2, NDArray<T, C> &ret)
+{
+  Broadcast([](T x, T y) { return x + y; }, array1, array2, ret);
+  return ret;
+}
+
+
+
+
+
+
+
+/**
+ * subtract a scalar from every value in the array
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Subtract(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
+{
+  assert(array.size() == ret.size());
+  assert(array.data().size() == ret.data().size());
+
+  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename ShapeLessArray<T, C>::vector_register_type const &x, typename ShapeLessArray<T, C>::vector_register_type &z) { z = x - val;},
+      array.data());
+  return ret;
+}
+/**
+ * subtract a every value in array from scalar
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Subtract(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+{
+  assert(array.size() == ret.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = scalar - array[i];
+  }
+  return ret;
+}
+/**
+ * subtract array from another array within a range
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2, memory::Range const &range, ShapeLessArray<T, C> &ret)
+{
+  assert(obj1.size() == obj2.size());
+  assert(obj1.size() == ret.size());
+
+  if (range.is_undefined())
+  {
+    ret = Subtract(obj1, obj2, ret);
+  }
+  else if (range.is_trivial())
+  {
+    auto r = range.ToTrivialRange(ret.data().size());
+
+    ret.data().in_parallel().Apply(
+        r,
+        [](typename ShapeLessArray<T, C>::vector_register_type const &x, typename ShapeLessArray<T, C>::vector_register_type const &y,
+           typename ShapeLessArray<T, C>::vector_register_type &z) { z = x - y; },
+        obj1.data(), obj2.data());
+  }
+  else
+  {
+    TODO_FAIL("Non-trivial ranges not implemented");
+  }
+
+  return ret;
+}
+/**
+ * subtract array from another array
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2, ShapeLessArray<T, C> &ret)
+{
+  memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
+  ret = Subtract(obj1, obj2, range, ret);
+  return ret;
+}
+
+
+/**
+ * subtract array from another array with broadcasting
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+NDArray<T, C> &Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
+{
+  Broadcast([](T x, T y) { return x - y; }, obj1, obj2, ret);
+  return ret;
+}
+
+
+
+/**
+ * multiply a scalar by every value in the array
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Multiply(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
+{
+  assert(array.size() == ret.size());
+  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename ShapeLessArray<T, C>::vector_register_type const &x, typename ShapeLessArray<T, C>::vector_register_type &z) { z = x * val;},
+      array.data());
+  return ret;
+}
+template <typename T, typename C>
+ShapeLessArray<T, C> &Multiply(T const &scalar, ShapeLessArray<T, C> const &array,  ShapeLessArray<T, C> &ret)
+{
+  ret = Multiply(array, scalar, ret);
+  return ret;
+}
+
+/**
+ * Multiply array by another array within a range
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2, memory::Range const &range, ShapeLessArray<T, C> &ret)
+{
+  assert(obj1.size() == obj2.size());
+  assert(obj1.size() == ret.size());
+
+  if (range.is_undefined())
+  {
+    ret = Multiply(obj1, obj2, ret);
+  }
+  else if (range.is_trivial())
+  {
+    auto r = range.ToTrivialRange(ret.data().size());
+
+    ret.data().in_parallel().Apply(
+        r,
+        [](typename ShapeLessArray<T, C>::vector_register_type const &x, typename ShapeLessArray<T, C>::vector_register_type const &y,
+           typename ShapeLessArray<T, C>::vector_register_type &z) { z = x * y; },
+        obj1.data(), obj2.data());
+  }
+  else
+  {
+    TODO_FAIL("Non-trivial ranges not implemented");
+  }
+  return ret;
+}
+/**
+ * subtract array from another array
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2, ShapeLessArray<T, C> &ret)
+{
+  memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
+  ret = Multiply(obj1, obj2, range, ret);
+  return ret;
+}
+
+
+/**
+ * subtract array from another array with broadcasting
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+NDArray<T, C> &Multiply(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
+{
+  Broadcast([](T x, T y) { return x * y; }, obj1, obj2, ret);
+  return ret;
+}
+
+
+
+/**
+ * divide array by a scalar
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Divide(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
+{
+  assert(array.size() == ret.size());
+  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename ShapeLessArray<T, C>::vector_register_type const &x, typename ShapeLessArray<T, C>::vector_register_type &z) { z = x / val;},
+      array.data());
+  return ret;
+}
+/**
+ * elementwise divide scalar by array element
+ * @tparam T
+ * @tparam C
+ * @param scalar
+ * @param array
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Divide(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+{
+  assert(array.size() == ret.size());
+  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename ShapeLessArray<T, C>::vector_register_type const &x, typename ShapeLessArray<T, C>::vector_register_type &z) { z = val / x;},
+      array.data());
+  return ret;
+}
+
+/**
+ * Divide array by another array within a range
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2, memory::Range const &range, ShapeLessArray<T, C> &ret)
+{
+  assert(obj1.size() == obj2.size());
+  assert(obj1.size() == ret.size());
+
+  if (range.is_undefined())
+  {
+    ret = Divide(obj1, obj2, ret);
+  }
+  else if (range.is_trivial())
+  {
+    auto r = range.ToTrivialRange(ret.data().size());
+
+    ret.data().in_parallel().Apply(
+        r,
+        [](typename ShapeLessArray<T, C>::vector_register_type const &x, typename ShapeLessArray<T, C>::vector_register_type const &y,
+           typename ShapeLessArray<T, C>::vector_register_type &z) { z = x / y; },
+        obj1.data(), obj2.data());
+  }
+  else
+  {
+    TODO_FAIL("Non-trivial ranges not implemented");
+  }
+  return ret;
+}
+/**
+ * subtract array from another array
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2, ShapeLessArray<T, C> &ret)
+{
+  memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
+  ret = Divide(obj1, obj2, range, ret);
+  return ret;
+}
+
+
+/**
+ * subtract array from another array with broadcasting
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename T, typename C>
+ShapeLessArray<T, C> &Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
+{
+  Broadcast([](T x, T y) { return x / y; }, obj1, obj2, ret);
+  return ret;
+}
+
+/**
+ * return the product of all elements in the array
+ * @tparam T
+ * @tparam C
+ * @param obj1
+ * @param ret
+ */
+template <typename T, typename C>
+T &Product(ShapeLessArray<T, C> const &obj1, T &ret)
+{
+  ret = obj1.data().in_parallel().Reduce(
+      memory::TrivialRange(0, obj1.size()),
+      [](typename ShapeLessArray<T, C>::vector_register_type const &a, typename ShapeLessArray<T, C>::vector_register_type const &b) -> typename ShapeLessArray<T, C>::vector_register_type {
+        return a * b;
+      });
+  return ret;
+}
+
+/**
+ * return the product of all elements in the array
+ * @tparam T
+ * @tparam C
+ * @param obj1
+ * @param ret
+ */
+template <typename T, typename C>
+T &Sum(ShapeLessArray<T, C> const &obj1, T &ret)
+{
+  ret = obj1.data().in_parallel().Reduce(
+      memory::TrivialRange(0, obj1.size()),
+      [](typename ShapeLessArray<T, C>::vector_register_type const &a, typename ShapeLessArray<T, C>::vector_register_type const &b) -> typename ShapeLessArray<T, C>::vector_register_type {
+        return a + b;
+      });
+  return ret;
+}
+
+
 
 }  // namespace math
 }  // namespace fetch

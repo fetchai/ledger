@@ -21,7 +21,6 @@
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/array.hpp"
 
-#include "math/ndarray_broadcast.hpp"
 
 #include <numeric>
 #include <utility>
@@ -344,180 +343,93 @@ public:
   std::vector<std::size_t> const &shape() const { return shape_; }
   std::size_t const &             shape(std::size_t const &n) const { return shape_[n]; }
 
-  /**
-   * Returns an ndarray containing the elementwise maximum of two other ndarrays
-   * @param x ndarray input 1
-   * @param y ndarray input 2
-   * @return the combined array
-   */
-  self_type Maximum(self_type const &x, self_type const &y)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-    this->super_type::Maximum(x, y);
-    return *this;
-  }
+
 
   /**
-   * adds two ndarrays together and supports broadcasting
-   * @param other
-   * @return
-   */
-  NDArray Add(self_type &obj1, self_type &other)
+ * adds two ndarrays together and supports broadcasting
+ * @param other
+ * @return
+ */
+  self_type InlineAdd(NDArray const &other)
   {
-    Broadcast([](type x, type y) { return x + y; }, obj1, other, *this);
-    return *this;
+    return Add(*this, other, *this);
   }
-  /**
-   * adds a scalar to every element in the array and returns the new output
-   * @param scalar to add
-   * @return new array output
-   */
-  self_type Add(self_type const &obj1, type const &scalar)
+/**
+ * adds a scalar to every element in the array and returns the new output
+ * @param scalar to add
+ * @return new array output
+ */
+  self_type InlineAdd(type const &scalar)
   {
-    this->super_type::Add(obj1, scalar);
-    return *this;
+    return Add(*this, scalar, *this);
   }
-  /**
-   * adds two ndarrays together and supports broadcasting
-   * @param other
-   * @return
-   */
-  self_type InlineAdd(NDArray &other)
-  {
-    Broadcast([](type x, type y) { return x + y; }, *this, other, *this);
-    return *this;
-  }
-  /**
-   * adds a scalar to every element in the array and returns the new output
-   * @param scalar to add
-   * @return new array output
-   */
-  self_type InlineAdd(type const &scalar) { return self_type(super_type::InlineAdd(scalar)); }
 
-  /**
-   * Subtract one ndarray from another and support broadcasting
-   * @param other
-   * @return
-   */
-  NDArray Subtract(self_type &obj1, self_type &other)
-  {
-    Broadcast([](type x, type y) { return x - y; }, obj1, other, *this);
-    return *this;
-  }
-  /**
-   * subtract a scalar from every element in the array and return the new output
-   * @param other
-   * @return
-   */
-  self_type Subtract(self_type &obj1, type const &scalar)
-  {
-    this->super_type::Subtract(obj1, scalar);
-    return *this;
-  }
-  /**
-   * Subtract one ndarray from another and support broadcasting
-   * @param other
-   * @return
-   */
+
+/**
+ * Subtract one ndarray from another and support broadcasting
+ * @param other
+ * @return
+ */
   self_type InlineSubtract(NDArray &other)
   {
-    Broadcast([](type x, type y) { return x - y; }, *this, other, *this);
-    return *this;
+    return Subtract(*this, other, *this);
   }
-  /**
-   * subtract a scalar from every element in the array and return the new output
-   * @param scalar to subtract
-   * @return new array output
-   */
+/**
+ * subtract a scalar from every element in the array and return the new output
+ * @param scalar to subtract
+ * @return new array output
+ */
   self_type InlineSubtract(type const &scalar)
   {
-    return self_type(super_type::InlineSubtract(scalar));
+    return Subtract(*this, scalar, *this);
   }
 
+
+
   /**
-   * multiplies two ndarrays together and supports broadcasting
-   * @param other
-   * @return
-   */
-  NDArray Multiply(self_type &obj1, self_type &other)
-  {
-    Broadcast([](type x, type y) { return x * y; }, obj1, other, *this);
-    return *this;
-  }
-  /**
-   * multiplies array by a scalar element wise
-   * @param other
-   * @return
-   */
-  self_type Multiply(self_type &obj1, type const &scalar)
-  {
-    this->super_type::Multiply(obj1, scalar);
-    return *this;
-  }
-  /**
-   * multiplies two ndarrays together and supports broadcasting
+   * multiply other by this array and returns this
    * @param other
    * @return
    */
   self_type InlineMultiply(NDArray &other)
   {
-    Broadcast([](type x, type y) { return x * y; }, *this, other, *this);
-    return *this;
+    return Multiply(*this, other, *this);
   }
-  /**
-   * multiplies array by a scalar element wise
-   * @param scalar to add
-   * @return new array output
-   */
+/**
+ * multiplies array by a scalar element wise
+ * @param scalar to add
+ * @return new array output
+ */
   self_type InlineMultiply(type const &scalar)
   {
-    this->super_type::InlineMultiply(scalar);
-    return *this;
+    return Multiply(*this, scalar, *this);
   }
 
   /**
-   * Divide ndarray by another ndarray from another and support broadcasting
-   * @param other
-   * @return
-   */
-  NDArray Divide(self_type &obj1, self_type &other)
-  {
-    Broadcast([](type x, type y) { return x / y; }, obj1, other, *this);
-    return *this;
-  }
-  /**
-   * Divide array by a scalar elementwise
-   * @param other
-   * @return
-   */
-  self_type Divide(self_type &obj1, type const &scalar)
-  {
-    this->super_type::Divide(obj1, scalar);
-    return *this;
-  }
-  /**
-   * Divide ndarray by another ndarray from another and support broadcasting
-   * @param other
-   * @return
-   */
+ * Divide ndarray by another ndarray from another and support broadcasting
+ * @param other
+ * @return
+ */
   self_type InlineDivide(NDArray &other)
   {
-    Broadcast([](type x, type y) { return x / y; }, *this, other, *this);
-    return *this;
+    return Multiply(*this, other, *this);
   }
-  /**
-   * Divide array by a scalar elementwise
-   * @param scalar to subtract
-   * @return new array output
-   */
+/**
+ * Divide array by a scalar elementwise
+ * @param scalar to subtract
+ * @return new array output
+ */
   self_type InlineDivide(type const &scalar)
   {
-    this->super_type::InlineDivide(scalar);
-    return *this;
+    return Multiply(*this, scalar, *this);
   }
 
-private:
+
+
+
+
+
+ private:
   // TODO(tfr): replace with strides
   std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const
   {
