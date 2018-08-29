@@ -30,7 +30,7 @@ inline void Serialize(T &serializer, UnverifiedTransaction const &b)
   serializer << ' ';
   serializer << b.summary();
   serializer << b.data();
-  serializer << b.signature();
+  serializer << b.signatures();
   serializer << b.contract_name();
 }
 
@@ -43,9 +43,10 @@ inline void Deserialize(T &serializer, UnverifiedTransaction &b)
   char c;
   serializer >> c;
 
-  TransactionSummary    summary;
-  byte_array::ByteArray data, signature;
-  std::string           contract_name;
+  TransactionSummary                  summary;
+  std::string                         contract_name;
+  byte_array::ByteArray               data;
+  MutableTransaction::signatures_type signatures;
 
   serializer >> summary;
   b.set_summary(summary);
@@ -53,8 +54,8 @@ inline void Deserialize(T &serializer, UnverifiedTransaction &b)
   serializer >> data;
   b.set_data(data);
 
-  serializer >> signature;
-  b.set_signature(signature);
+  serializer >> signatures;
+  b.set_signatures(signatures);
 
   serializer >> contract_name;
   b.set_contract_name(contract_name);
@@ -67,7 +68,7 @@ inline void Serialize(T &serializer, VerifiedTransaction const &b)
   serializer << 'V';
   serializer << b.summary();
   serializer << b.data();
-  serializer << b.signature();
+  serializer << b.signatures();
   serializer << b.contract_name();
 }
 
@@ -82,9 +83,10 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   serializer >> c;
   assert(c == 'V');
 
-  TransactionSummary    summary;
-  byte_array::ByteArray data, signature;
-  std::string           contract_name;
+  TransactionSummary                  summary;
+  std::string                         contract_name;
+  byte_array::ByteArray               data;
+  MutableTransaction::signatures_type signatures;
 
   serializer >> summary;
   b.set_summary(summary);
@@ -92,8 +94,8 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   serializer >> data;
   b.set_data(data);
 
-  serializer >> signature;
-  b.set_signature(signature);
+  serializer >> signatures;
+  b.set_signatures(signatures);
 
   serializer >> contract_name;
   b.set_contract_name(contract_name);

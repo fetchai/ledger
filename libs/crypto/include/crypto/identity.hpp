@@ -17,48 +17,88 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "core/byte_array/byte_array.hpp"
+#include "crypto/fnv.hpp"
+#include "crypto/openssl_common.hpp"
+
 namespace fetch {
 namespace crypto {
 
 class Identity
 {
+  using edcsa_curve_type = crypto::openssl::ECDSACurve<NID_secp256k1>;
+
 public:
   Identity() {}
 
-  Identity(byte_array::ConstByteArray identity_paramters, byte_array::ConstByteArray identifier)
-    : identity_paramters_(identity_paramters.Copy()), identifier_(identifier.Copy())
+  Identity(Identity const &other) = default;
+  Identity &operator=(Identity const &other) = default;
+  Identity(Identity &&other)                 = default;
+  Identity &operator=(Identity &&other) = default;
+
+  // Fully relying on caller that it will bahve = will NOT modify value passed (Const)ByteArray(s)
+  Identity(byte_array::ConstByteArray identity_parameters, byte_array::ConstByteArray identifier)
+    : identity_parameters_{std::move(identity_parameters)}, identifier_{std::move(identifier)}
   {}
 
-  Identity(Identity const &other)
-    : identity_paramters_(other.identity_paramters_), identifier_(other.identifier_)
-  {}
-
-  byte_array::ConstByteArray const &parameters() const { return identity_paramters_; }
+  byte_array::ConstByteArray const &parameters() const { return identity_parameters_; }
 
   byte_array::ConstByteArray const &identifier() const { return identifier_; }
 
-  void SetIdentifier(byte_array::ConstByteArray const &ident) { identifier_ = ident.Copy(); }
+  void SetIdentifier(byte_array::ConstByteArray const &ident) { identifier_ = ident; }
 
-  void SetParameters(byte_array::ConstByteArray const &params)
+  void SetParameters(byte_array::ConstByteArray const &params) { identity_parameters_ = params; }
+
+  operator bool() const
   {
-    identity_paramters_ = params.Copy();
+    return identity_parameters_ == edcsa_curve_type::sn &&
+           identity_parameters_.size() == edcsa_curve_type::publicKeySize;
   }
-
-  bool is_valid() const { return is_valid_; }
-
-  operator bool() { return is_valid(); }
 
   static Identity CreateInvalid()
   {
     Identity id;
-    id.is_valid_ = false;
     return id;
   }
 
+  bool operator==(Identity const &right) const
+  {
+    return identity_parameters_ == right.identity_parameters_ && identifier_ == right.identifier_;
+  }
+
+  bool operator<(Identity const &right) const
+  {
+    if (identifier_ < right.identifier_)
+    {
+      return true;
+    }
+    else if (identifier_ == right.identifier_)
+    {
+      return identity_parameters_ < right.identity_parameters_;
+    }
+
+    return false;
+  }
+
+  std::size_t hash() const
+  {
+    crypto::FNV hashStream;
+    hashStream.Update(identifier_);
+    hashStream.Update(identity_parameters_);
+    hashStream.Final();
+    return static_cast<std::size_t>(hashStream.uint_digest());
+  }
+
+  void Clone()
+  {
+    identifier_          = identifier_.Copy();
+    identity_parameters_ = identity_parameters_.Copy();
+  }
+
 private:
-  bool                       is_valid_ = true;
-  byte_array::ConstByteArray identity_paramters_;
+  byte_array::ConstByteArray identity_parameters_;
   byte_array::ConstByteArray identifier_;
 };
 
@@ -67,9 +107,8 @@ static inline Identity InvalidIdentity() { return Identity::CreateInvalid(); }
 template <typename T>
 T &Serialize(T &serializer, Identity const &data)
 {
-  serializer << data.is_valid();
-  serializer << data.parameters();
   serializer << data.identifier();
+  serializer << data.parameters();
 
   return serializer;
 }
@@ -78,16 +117,12 @@ template <typename T>
 T &Deserialize(T &serializer, Identity &data)
 {
   byte_array::ByteArray params, id;
-  bool                  valid;
-  serializer >> valid;
-  serializer >> params;
   serializer >> id;
-  if (valid)
-  {
-    data.SetParameters(params);
-    data.SetIdentifier(id);
-  }
-  else
+  serializer >> params;
+
+  data.SetParameters(params);
+  data.SetIdentifier(id);
+  if (!data)
   {
     data = InvalidIdentity();
   }
@@ -97,3 +132,11 @@ T &Deserialize(T &serializer, Identity &data)
 
 }  // namespace crypto
 }  // namespace fetch
+
+namespace std {
+template <>
+struct hash<fetch::crypto::Identity>
+{
+  std::size_t operator()(fetch::crypto::Identity const &value) const { return value.hash(); }
+};
+}  // namespace std

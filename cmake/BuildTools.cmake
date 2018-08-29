@@ -46,8 +46,9 @@ function(setup_library_examples library)
 
     # examples
     set(examples_root ${CMAKE_CURRENT_SOURCE_DIR})
-    if(IS_DIRECTORY ${examples_root})
 
+    if(IS_DIRECTORY ${examples_root})
+      include_directories(${examples_root})
       file(GLOB children RELATIVE ${examples_root} ${examples_root}/*)
       set(dirlist "")
       foreach(child ${children})

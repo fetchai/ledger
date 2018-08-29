@@ -32,7 +32,8 @@ class ECDSAVerifier : public Verifier
   using Signature = openssl::ECDSASignature<>;
 
 public:
-  ECDSAVerifier(Identity const &ident) : identity_{ident}, public_key_{identity_.identifier()} {}
+  ECDSAVerifier(Identity ident) : identity_{std::move(ident)}, public_key_{identity_.identifier()}
+  {}
 
   bool Verify(byte_array_type const &data, byte_array_type const &signature) override
   {
