@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/exp.hpp"
+#include "math/free_functions/free_functions.hpp"
 #include "math/log.hpp"
 #include "math/ndarray.hpp"
 #include "math/ndarray_squeeze.hpp"
@@ -401,32 +402,54 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              if (idx >= s.size()) throw py::index_error();
              s[idx] = val;
            })
-      .def("max", [](NDArray<T> &a) { return a.Max(); })
+      .def("max",
+           [](NDArray<T> &a) {
+             typename NDArray<T>::type ret = -std::numeric_limits<typename NDArray<T>::type>::max();
+             Max(a, ret);
+             return a;
+           })
       .def("max",
            [](NDArray<T> &a, std::size_t const axis) {
              if (axis >= a.shape().size()) throw py::index_error();
-             return a.Max(axis);
+
+             std::vector<std::size_t> return_shape{a.shape()};
+             return_shape.erase(return_shape.begin() + int(axis),
+                                return_shape.begin() + int(axis) + 1);
+             NDArray<T> ret{return_shape};
+
+             Max(a, axis, ret);
+             return ret;
            })
-      //      .def("maximum", [](NDArray<T> &a, NDArray<T> const &b, NDArray<T> const &c)
-      //      {
-      //        return a.Maximum(b, c);
-      //      })
       .def("maximum", &NDArray<T>::Maximum)
-      .def("min", [](NDArray<T> const &a) { return a.Min(); })
+      .def("min",
+           [](NDArray<T> const &a) {
+             typename NDArray<T>::type ret = std::numeric_limits<typename NDArray<T>::type>::max();
+             Min(a, ret);
+             return a;
+           })
       .def("min",
            [](NDArray<T> &a, std::size_t const axis) {
              if (axis >= a.shape().size()) throw py::index_error();
-             return a.Min(axis);
+
+             std::vector<std::size_t> return_shape{a.shape()};
+             return_shape.erase(return_shape.begin() + int(axis),
+                                return_shape.begin() + int(axis) + 1);
+             NDArray<T> ret{return_shape};
+
+             Min(a, axis, ret);
+             return ret;
            })
       .def("relu",
            [](NDArray<T> &a, NDArray<T> const &b) {
-             a.Relu(b);
+             a = b;
+             Relu(a);
              return a;
            })
       .def("l2loss", [](NDArray<T> const &a) { return a.L2Loss(); })
       .def("sign",
            [](NDArray<T> &a, NDArray<T> const &b) {
-             a.Sign(b);
+             a = b;
+             Sign(a);
              return a;
            })
       .def("reshape",
@@ -439,55 +462,81 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              a.Reshape(b);
              return;
            })
+      .def("boolean_mask",
+           [](NDArray<T> &a, NDArray<T> &mask) {
+             fetch::math::BooleanMask(a, mask);
+             return a;
+           })
+      .def("dynamic_stitch",
+           [](NDArray<T> &a, std::vector<std::vector<std::size_t>> const &indices,
+              std::vector<NDArray<T>> const &data) {
+             fetch::math::DynamicStitch(a, indices, data);
+             return a;
+           })
       .def("shape", [](NDArray<T> &a) { return a.shape(); })
       .def_static("Zeros", &NDArray<T>::Zeroes)
-      .def("abs", &NDArray<T>::Abs)
-      .def("exp", &NDArray<T>::Exp)
-      .def("exp2", &NDArray<T>::Exp2)
-      .def("expm1", &NDArray<T>::Expm1)
-      .def("log", &NDArray<T>::Log)
-      .def("log10", &NDArray<T>::Log10)
-      .def("log2", &NDArray<T>::Log2)
-      .def("log1p", &NDArray<T>::Log1p)
-      .def("sqrt", &NDArray<T>::Sqrt)
-      .def("cbrt", &NDArray<T>::Cbrt)
-      .def("sin", &NDArray<T>::Sin)
-      .def("cos", &NDArray<T>::Cos)
-      .def("tan", &NDArray<T>::Tan)
-      .def("asin", &NDArray<T>::Asin)
-      .def("acos", &NDArray<T>::Acos)
-      .def("atan", &NDArray<T>::Atan)
-      .def("sinh", &NDArray<T>::Sinh)
-      .def("cosh", &NDArray<T>::Cosh)
-      .def("tanh", &NDArray<T>::Tanh)
-      .def("asinh", &NDArray<T>::Asinh)
-      .def("acosh", &NDArray<T>::Acosh)
-      .def("atanh", &NDArray<T>::Atanh)
-      .def("ceil", &NDArray<T>::Ceil)
-      .def("floor", &NDArray<T>::Floor)
-      .def("trunc", &NDArray<T>::Trunc)
-      .def("round", &NDArray<T>::Round)
-      .def("rint", &NDArray<T>::Rint)
-      .def("isfinite", &NDArray<T>::Isfinite)
-      .def("isinf", &NDArray<T>::Isinf)
-      .def("isnan", &NDArray<T>::Isnan)
 
-      // functions not implemented in numpy:
-      //      .def("erf", &NDArray<T>::Erf)
-      //      .def("erfc", &NDArray<T>::Erfc)
-      //      .def("tgamma", &NDArray<T>::Tgamma)
-      //      .def("lgamma", &NDArray<T>::Lgamma)
+      // various free functions
+      .def("abs", [](NDArray<T> &a) { fetch::math::Abs(a); })
+      .def("exp", [](NDArray<T> &a) { fetch::math::Exp(a); })
+      .def("exp2", [](NDArray<T> &a) { fetch::math::Exp2(a); })
+      .def("expm1", [](NDArray<T> &a) { fetch::math::Expm1(a); })
+      .def("log", [](NDArray<T> &a) { fetch::math::Log(a); })
+      .def("log10", [](NDArray<T> &a) { fetch::math::Log10(a); })
+      .def("log2", [](NDArray<T> &a) { fetch::math::Log2(a); })
+      .def("log1p", [](NDArray<T> &a) { fetch::math::Log1p(a); })
+      .def("sqrt", [](NDArray<T> &a) { fetch::math::Sqrt(a); })
+      .def("cbrt", [](NDArray<T> &a) { fetch::math::Cbrt(a); })
+      .def("sin", [](NDArray<T> &a) { fetch::math::Sin(a); })
+      .def("cos", [](NDArray<T> &a) { fetch::math::Cos(a); })
+      .def("tan", [](NDArray<T> &a) { fetch::math::Tan(a); })
+      .def("asin", [](NDArray<T> &a) { fetch::math::Asin(a); })
+      .def("acos", [](NDArray<T> &a) { fetch::math::Acos(a); })
+      .def("atan", [](NDArray<T> &a) { fetch::math::Atan(a); })
+      .def("sinh", [](NDArray<T> &a) { fetch::math::Sinh(a); })
+      .def("cosh", [](NDArray<T> &a) { fetch::math::Cosh(a); })
+      .def("tanh", [](NDArray<T> &a) { fetch::math::Tanh(a); })
+      .def("asinh", [](NDArray<T> &a) { fetch::math::Asinh(a); })
+      .def("acosh", [](NDArray<T> &a) { fetch::math::Acosh(a); })
+      .def("atanh", [](NDArray<T> &a) { fetch::math::Atanh(a); })
+      .def("erf", [](NDArray<T> &a) { fetch::math::Erf(a); })
+      .def("erfc", [](NDArray<T> &a) { fetch::math::Erfc(a); })
+      .def("tgamma", [](NDArray<T> &a) { fetch::math::Tgamma(a); })
+      .def("lgamma", [](NDArray<T> &a) { fetch::math::Lgamma(a); })
+      .def("ceil", [](NDArray<T> &a) { fetch::math::Ceil(a); })
+      .def("floor", [](NDArray<T> &a) { fetch::math::Floor(a); })
+      .def("trunc", [](NDArray<T> &a) { fetch::math::Trunc(a); })
+      .def("round", [](NDArray<T> &a) { fetch::math::Round(a); })
+      .def("lround", [](NDArray<T> &a) { fetch::math::Lround(a); })
+      .def("llround", [](NDArray<T> &a) { fetch::math::Llround(a); })
+      .def("nearbyint", [](NDArray<T> &a) { fetch::math::Nearbyint(a); })
+      .def("rint", [](NDArray<T> &a) { fetch::math::Rint(a); })
+      .def("lrint", [](NDArray<T> &a) { fetch::math::Lrint(a); })
+      .def("llrint", [](NDArray<T> &a) { fetch::math::Llrint(a); })
+      .def("isfinite", [](NDArray<T> &a) { fetch::math::Isfinite(a); })
+      .def("isinf", [](NDArray<T> &a) { fetch::math::Isinf(a); })
+      .def("isnan", [](NDArray<T> &a) { fetch::math::Isnan(a); })
+      .def("approx_exp", [](NDArray<T> &a) { fetch::math::ApproxExp(a); })
+      .def("approx_log", [](NDArray<T> &a) { fetch::math::ApproxLog(a); })
+      .def("approx_logistic", [](NDArray<T> &a) { fetch::math::ApproxLogistic(a); })
 
-      // functions with different return types (seems obsolete for python):
-      //      .def("lround", &NDArray<T>::Lround)
-      //      .def("llround", &NDArray<T>::Llround)
-      //      .def("nearbyint", &NDArray<T>::Nearbyint)
-      //      .def("lrint", &NDArray<T>::Lrint)
-      //      .def("llrint", &NDArray<T>::Llrint)
+      .def("relu", [](NDArray<T> &a) { fetch::math::Relu(a); })
+      .def("sign", [](NDArray<T> &a) { fetch::math::Sign(a); })
 
-      .def("scatter", &NDArray<T>::Scatter)
-      .def("gather", &NDArray<T>::Gather)
-      .def("softmax", &NDArray<T>::Softmax)
+      .def("scatter",
+           [](NDArray<T> &input_array, std::vector<T> &updates,
+              std::vector<std::uint64_t> &indices) {
+             fetch::math::Scatter(input_array, updates, indices);
+           })
+      .def("gather",
+           [](NDArray<T> &input_array, NDArray<T> &updates, std::vector<std::size_t> &indices) {
+             fetch::math::Gather(input_array, updates, indices);
+           })
+      .def("softmax",
+           [](NDArray<T> const &array, NDArray<T> &ret){
+             Softmax(array, ret);
+             return ret;
+           })
       .def("FromNumpy",
            [](NDArray<T> &s, py::array_t<T> arr) {
              auto buf        = arr.request();
@@ -601,11 +650,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 
         return result;
       });
-  //                  [](NDArray<T> &a, NDArray<T> &b)
-  //                  {
-  //                    a.Relu(b);
-  //                    return a;
-  //                  });
 }
 
 }  // namespace math

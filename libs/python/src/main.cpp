@@ -19,7 +19,7 @@
 #include "python/fetch_pybind.hpp"
 #include "python/memory/py_array.hpp"
 #include "python/memory/py_range.hpp"
-#include "python/memory/py_shape_less_array.hpp"
+#include "python/math/py_shape_less_array.hpp"
 #include "python/memory/py_shared_array.hpp"
 //#include "python/memory/py_ndarray.hpp"
 #include "python/memory/py_rectangular_array.hpp"
@@ -227,8 +227,8 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::BuildLogStatistics("Log", ns_fetch_math_statistics);
 
   // Statisticsfetch_math_statistics);
-  fetch::math::statistics::BuildMinStatistics("Min", ns_fetch_math_statistics);
-  fetch::math::statistics::BuildMaxStatistics("Max", ns_fetch_math_statistics);
+  fetch::math::BuildMinStatistics("Min", ns_fetch_math_statistics);
+  fetch::math::BuildMaxStatistics("Max", ns_fetch_math_statistics);
   fetch::math::statistics::BuildMeanStatistics("Mean", ns_fetch_math_statistics);
   fetch::math::statistics::BuildGeometricMeanStatistics("GeometricMean", ns_fetch_math_statistics);
   fetch::math::statistics::BuildVarianceStatistics("Variance", ns_fetch_math_statistics);

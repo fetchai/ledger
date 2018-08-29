@@ -19,6 +19,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "math/free_functions/free_functions.hpp"
 #include "math/kernels/relu.hpp"
 #include "math/shape_less_array.hpp"
 #include <gtest/gtest.h>
@@ -63,12 +64,12 @@ TEST(ndarray, zeros_out)
   }
 
   //
-  test_array_2.Relu(test_array);
+  fetch::math::Relu(test_array);
 
   // sanity check that all values less than 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_TRUE(test_array_2[i] == 0);
+    ASSERT_TRUE(test_array[i] == 0);
   }
 }
 
@@ -85,8 +86,8 @@ TEST(ndarray, linear_response)
     ASSERT_TRUE(test_array[i] >= 0);
   }
 
-  //
-  test_array_2.Relu(test_array);
+  test_array_2 = test_array;
+  fetch::math::Relu(test_array_2);
 
   // sanity check that all values less than 0
   for (std::size_t i = 0; i < n; ++i)
