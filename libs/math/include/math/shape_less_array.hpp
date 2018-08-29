@@ -39,7 +39,7 @@ namespace math {
 template <typename T, typename C = memory::SharedArray<T>>
 class ShapeLessArray
 {
- public:
+public:
   using type                          = T;
   using container_type                = C;
   using size_type                     = std::size_t;
@@ -71,25 +71,25 @@ class ShapeLessArray
       uint64_t last = i;
       switch (c[i])
       {
-        case ',':
-        case ' ':
-        case '\n':
-        case '\t':
-        case '\r':
-          ++i;
-          break;
-        default:
-          if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
-          {
-            failed = true;
-          }
-          else
-          {
-            // FIXME(tfr) : This is potentially wrong! Error also there in matrix
-            // problem is that the pointer is not necessarily null-terminated.
-            elems.push_back(type(atof(c.char_pointer() + last)));
-          }
-          break;
+      case ',':
+      case ' ':
+      case '\n':
+      case '\t':
+      case '\r':
+        ++i;
+        break;
+      default:
+        if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
+        {
+          failed = true;
+        }
+        else
+        {
+          // FIXME(tfr) : This is potentially wrong! Error also there in matrix
+          // problem is that the pointer is not necessarily null-terminated.
+          elems.push_back(type(atof(c.char_pointer() + last)));
+        }
+        break;
       }
     }
 
@@ -140,7 +140,6 @@ class ShapeLessArray
     std::sort(data_.pointer() + range.from(), data_.pointer() + range.to());
   }
 
-
   void Fill(type const &value, memory::Range const &range)
   {
 
@@ -171,7 +170,6 @@ class ShapeLessArray
 
     this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
   }
-
 
   //  type PeakToPeak() const { return Max() - Min(); }
   //
@@ -358,7 +356,6 @@ class ShapeLessArray
     kernels::stdlib::Nanl<type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
   }
-
 
   /* Equality operator.
    * @other is the array which this instance is compared against.
@@ -666,10 +663,6 @@ class ShapeLessArray
   size_type capacity() const { return data_.padded_size(); }
   size_type padded_size() const { return data_.padded_size(); }
 
-
-
-
-
   ShapeLessArray &InlineAdd(ShapeLessArray const &other, memory::Range const &range)
   {
     assert(other.size() == this->size());
@@ -921,7 +914,7 @@ class ShapeLessArray
     return *this;
   }
 
- private:
+private:
   container_type data_;
   std::size_t    size_ = 0;
 };

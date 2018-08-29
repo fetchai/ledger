@@ -21,8 +21,8 @@
 
 #include "defs.hpp"
 #include "math/arithmetic/comparison.hpp"
-#include "math/linalg/matrix.hpp"
 #include "math/free_functions/free_functions.hpp"
+#include "math/linalg/matrix.hpp"
 
 namespace fetch {
 namespace vm {
@@ -1744,8 +1744,7 @@ private:
     }
     template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-    {
-    }
+    {}
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)

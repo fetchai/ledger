@@ -21,7 +21,6 @@
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/array.hpp"
 
-
 #include <numeric>
 #include <utility>
 #include <vector>
@@ -343,93 +342,59 @@ public:
   std::vector<std::size_t> const &shape() const { return shape_; }
   std::size_t const &             shape(std::size_t const &n) const { return shape_[n]; }
 
-
+  /**
+   * adds two ndarrays together and supports broadcasting
+   * @param other
+   * @return
+   */
+  self_type InlineAdd(NDArray const &other) { return Add(*this, other, *this); }
+  /**
+   * adds a scalar to every element in the array and returns the new output
+   * @param scalar to add
+   * @return new array output
+   */
+  self_type InlineAdd(type const &scalar) { return Add(*this, scalar, *this); }
 
   /**
- * adds two ndarrays together and supports broadcasting
- * @param other
- * @return
- */
-  self_type InlineAdd(NDArray const &other)
-  {
-    return Add(*this, other, *this);
-  }
-/**
- * adds a scalar to every element in the array and returns the new output
- * @param scalar to add
- * @return new array output
- */
-  self_type InlineAdd(type const &scalar)
-  {
-    return Add(*this, scalar, *this);
-  }
-
-
-/**
- * Subtract one ndarray from another and support broadcasting
- * @param other
- * @return
- */
-  self_type InlineSubtract(NDArray &other)
-  {
-    return Subtract(*this, other, *this);
-  }
-/**
- * subtract a scalar from every element in the array and return the new output
- * @param scalar to subtract
- * @return new array output
- */
-  self_type InlineSubtract(type const &scalar)
-  {
-    return Subtract(*this, scalar, *this);
-  }
-
-
+   * Subtract one ndarray from another and support broadcasting
+   * @param other
+   * @return
+   */
+  self_type InlineSubtract(NDArray &other) { return Subtract(*this, other, *this); }
+  /**
+   * subtract a scalar from every element in the array and return the new output
+   * @param scalar to subtract
+   * @return new array output
+   */
+  self_type InlineSubtract(type const &scalar) { return Subtract(*this, scalar, *this); }
 
   /**
    * multiply other by this array and returns this
    * @param other
    * @return
    */
-  self_type InlineMultiply(NDArray &other)
-  {
-    return Multiply(*this, other, *this);
-  }
-/**
- * multiplies array by a scalar element wise
- * @param scalar to add
- * @return new array output
- */
-  self_type InlineMultiply(type const &scalar)
-  {
-    return Multiply(*this, scalar, *this);
-  }
+  self_type InlineMultiply(NDArray &other) { return Multiply(*this, other, *this); }
+  /**
+   * multiplies array by a scalar element wise
+   * @param scalar to add
+   * @return new array output
+   */
+  self_type InlineMultiply(type const &scalar) { return Multiply(*this, scalar, *this); }
 
   /**
- * Divide ndarray by another ndarray from another and support broadcasting
- * @param other
- * @return
- */
-  self_type InlineDivide(NDArray &other)
-  {
-    return Multiply(*this, other, *this);
-  }
-/**
- * Divide array by a scalar elementwise
- * @param scalar to subtract
- * @return new array output
- */
-  self_type InlineDivide(type const &scalar)
-  {
-    return Multiply(*this, scalar, *this);
-  }
+   * Divide ndarray by another ndarray from another and support broadcasting
+   * @param other
+   * @return
+   */
+  self_type InlineDivide(NDArray &other) { return Multiply(*this, other, *this); }
+  /**
+   * Divide array by a scalar elementwise
+   * @param scalar to subtract
+   * @return new array output
+   */
+  self_type InlineDivide(type const &scalar) { return Multiply(*this, scalar, *this); }
 
-
-
-
-
-
- private:
+private:
   // TODO(tfr): replace with strides
   std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const
   {

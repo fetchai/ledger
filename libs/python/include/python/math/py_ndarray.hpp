@@ -54,7 +54,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def_static("Zeros", &NDArray<T>::Zeroes)
       .def_static("Ones", &NDArray<T>::Ones)
 
-          // TODO(private issue 188): Move implementation of these functions to ndarray.
+      // TODO(private issue 188): Move implementation of these functions to ndarray.
       .def("reduce_sum",
            [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
              if (axis >= x.shape().size())
@@ -113,8 +113,8 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
                  },
                  y, x, axis);
            })
-          //      .def("expand_dims",[](NDArray<T> &x, NDArray<T> &y, uint64_t const& axis) {
-          //      })
+      //      .def("expand_dims",[](NDArray<T> &x, NDArray<T> &y, uint64_t const& axis) {
+      //      })
       .def("__add__",
            [](NDArray<T> &b, NDArray<T> &c) {
              // identify the correct output shape
@@ -420,10 +420,8 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              Max(a, axis, ret);
              return ret;
            })
-      .def("maximum", [](NDArray<T> const &array1, NDArray<T> const &array2, NDArray<T> &ret)
-      {
-        return Maximum(array1, array2, ret);
-      })
+      .def("maximum", [](NDArray<T> const &array1, NDArray<T> const &array2,
+                         NDArray<T> &ret) { return Maximum(array1, array2, ret); })
       .def("min",
            [](NDArray<T> const &a) {
              typename NDArray<T>::type ret = std::numeric_limits<typename NDArray<T>::type>::max();
@@ -479,7 +477,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("shape", [](NDArray<T> &a) { return a.shape(); })
       .def_static("Zeros", &NDArray<T>::Zeroes)
 
-          // various free functions
+      // various free functions
       .def("abs", [](NDArray<T> &a) { fetch::math::Abs(a); })
       .def("exp", [](NDArray<T> &a) { fetch::math::Exp(a); })
       .def("exp2", [](NDArray<T> &a) { fetch::math::Exp2(a); })
@@ -536,7 +534,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              fetch::math::Gather(input_array, updates, indices);
            })
       .def("softmax",
-           [](NDArray<T> const &array, NDArray<T> &ret){
+           [](NDArray<T> const &array, NDArray<T> &ret) {
              Softmax(array, ret);
              return ret;
            })
