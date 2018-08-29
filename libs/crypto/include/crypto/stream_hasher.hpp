@@ -21,17 +21,30 @@
 
 namespace fetch {
 namespace crypto {
-class StreamHasher
+
+class StreamHasherLowLevel
+{
+public:
+  virtual ~StreamHasherLowLevel() {}
+
+  virtual std::size_t hashSize() const                                             = 0;
+  virtual void        Reset()                                                      = 0;
+  virtual bool        Update(uint8_t const *data_to_hash, std::size_t const &size) = 0;
+  virtual void        Final(uint8_t *hash, std::size_t const &size)                = 0;
+};
+
+class StreamHasher : public virtual StreamHasherLowLevel
 {
 public:
   using byte_array_type = byte_array::ByteArray;
 
-  virtual void            Reset()                                           = 0;
-  virtual bool            Update(byte_array_type const &data)               = 0;
-  virtual bool            Update(uint8_t const *p, std::size_t const &size) = 0;
-  virtual void            Final()                                           = 0;
-  virtual void            Final(uint8_t *p)                                 = 0;
-  virtual byte_array_type digest()                                          = 0;
+  using StreamHasherLowLevel::Update;
+  using StreamHasherLowLevel::Final;
+
+  virtual bool            Update(byte_array_type const &data) = 0;
+  virtual void            Final()                             = 0;
+  virtual byte_array_type digest() const                      = 0;
 };
+
 }  // namespace crypto
 }  // namespace fetch
