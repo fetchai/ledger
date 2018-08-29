@@ -329,8 +329,9 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
       .def("size", &ShapeLessArray<T>::size)
       .def("BooleanMask",
            [](ShapeLessArray<T> &a, ShapeLessArray<T> &mask) {
-             fetch::math::BooleanMask(a, mask);
-             return a;
+             ShapeLessArray<T> ret{std::size_t(Sum(mask))};
+             fetch::math::BooleanMask(a, mask, ret);
+             return ret;
            })
       .def("dynamic_stitch",
            [](ShapeLessArray<T> &a, std::vector<std::vector<std::size_t>> const &indices,

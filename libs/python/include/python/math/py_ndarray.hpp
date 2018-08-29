@@ -468,8 +468,9 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("boolean_mask",
            [](NDArray<T> &a, NDArray<T> &mask) {
-             fetch::math::BooleanMask(a, mask);
-             return a;
+             NDArray<T> ret{std::size_t(Sum(mask))};
+             fetch::math::BooleanMask(a, mask, ret);
+             return ret;
            })
       .def("dynamic_stitch",
            [](NDArray<T> &a, std::vector<std::vector<std::size_t>> const &indices,
