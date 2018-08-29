@@ -19,7 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection_register.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 #include <memory>
 #include <unordered_map>
