@@ -17,14 +17,17 @@
 //------------------------------------------------------------------------------
 
 #include "vm/analyser.hpp"
+#include "vm/module.hpp"
 #include <sstream>
 
-namespace fetch {
-namespace vm {
+namespace fetch 
+{
+namespace vm 
+{
 
 std::string Analyser::CONSTRUCTOR = "$constructor$";
 
-Analyser::Analyser()
+Analyser::Analyser(Module *module)
 {
   symbols_ = CreateSymbolTable();
 
@@ -40,18 +43,32 @@ Analyser::Analyser()
   array_template_type_  = CreateTemplateType("Array", TypeId::ArrayTemplate);
 
   void_type_           = CreateType("Void", Type::Category::Primitive, TypeId::Void);
+  RegisterType<void>(void_type_);
   null_type_           = CreateType("Null", Type::Category::Primitive, TypeId::Null);
+//  RegisterType<nullptr_t>(null_type_);  
   bool_type_           = CreatePrimitiveType("Bool", TypeId::Bool);
+  RegisterType<bool>(bool_type_);
   int8_type_           = CreatePrimitiveType("Int8", TypeId::Int8);
+  RegisterType<int8_t>(int8_type_);   
   byte_type_           = CreatePrimitiveType("Byte", TypeId::Byte);
+  RegisterType<uint8_t>(byte_type_);   
   int16_type_          = CreatePrimitiveType("Int16", TypeId::Int16);
+  RegisterType<int16_t>(int16_type_);   
   uint16_type_         = CreatePrimitiveType("UInt16", TypeId::UInt16);
+  RegisterType<uint16_t>(uint16_type_);
   int32_type_          = CreatePrimitiveType("Int32", TypeId::Int32);
+  RegisterType<int32_t>(int32_type_);
   uint32_type_         = CreatePrimitiveType("UInt32", TypeId::UInt32);
+  RegisterType<uint32_t>(uint32_type_);
   int64_type_          = CreatePrimitiveType("Int64", TypeId::Int64);
+  RegisterType<int64_t>(int64_type_);  
   uint64_type_         = CreatePrimitiveType("UInt64", TypeId::UInt64);
+  RegisterType<uint64_t>(uint64_type_);
   float32_type_        = CreatePrimitiveType("Float32", TypeId::Float32);
+  RegisterType<float>(float32_type_);      
   float64_type_        = CreatePrimitiveType("Float64", TypeId::Float64);
+  RegisterType<double>(float64_type_);      
+
   string_type_         = CreateClassType("String", TypeId::String);
   matrix_float32_type_ = CreateTemplateInstantiationType("Matrix<Float32>", TypeId::Matrix_Float32,
                                                          matrix_template_type_, {float32_type_});
@@ -106,12 +123,25 @@ Analyser::Analyser()
                            template_instantiation_type_, Opcode::CreateArray);
 
   // Custom functions
+  /*
+
+*/
+
+  if(module!=nullptr) 
+  {
+    module->Setup(this);
+    std::cout << "SETUP DONE!" << std::endl;
+  }
+
+  // OLD GARBAGE
+
   TypePtr int32_pair_class_ = CreateClassType("IntPair", TypeId::IntPair);
+
+  CreateOpcodeInstanceFunction(int32_pair_class_, "first", {}, int32_type_, Opcode::IntPairFirst);
+  CreateOpcodeInstanceFunction(int32_pair_class_, "second", {}, int32_type_, Opcode::IntPairSecond);
 
   CreateOpcodeTypeFunction(int32_pair_class_, CONSTRUCTOR, {int32_type_, int32_type_},
                            int32_pair_class_, Opcode::CreateIntPair);
-  CreateOpcodeInstanceFunction(int32_pair_class_, "first", {}, int32_type_, Opcode::IntPairFirst);
-  CreateOpcodeInstanceFunction(int32_pair_class_, "second", {}, int32_type_, Opcode::IntPairSecond);
 
   CreateOpcodeTypeFunction(int32_pair_class_, "Fib", {int32_pair_class_}, int32_pair_class_,
                            Opcode::Fib);

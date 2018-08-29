@@ -20,11 +20,23 @@
 #include <utility>
 
 #include "defs.hpp"
+
 #include "math/arithmetic/comparison.hpp"
 #include "math/linalg/matrix.hpp"
 
 namespace fetch {
 namespace vm {
+
+
+struct TestClass2 {
+  void Foo() {
+    std::cout << "FOO" << std::endl;
+  }
+
+  void Bar(int const &x) { // TOODO: Add support for const
+    std::cout << "BAR: "<< x << std::endl;
+  }
+};
 
 struct IntPair : public Object
 {
@@ -100,15 +112,53 @@ struct IsMatrix<MatrixFloat64> : public std::true_type
 {
 };
 
+
+/// Forward declaration for class and function export
+/// @{
+class Module;
+
+namespace details {
+template<typename T>  
+struct LoaderClass;
+
+template<typename T, int N>  
+struct StorerClass;
+
+template< int N >
+struct Resetter;
+}
+/// }
+
+
 class VM
 {
 public:
-  VM() {}
+  VM(Module *module = nullptr) : module_(module) { }
   ~VM() {}
   bool Execute(const Script &script, const std::string &name);
 
 private:
   friend struct Object;
+
+  /// Friends and objects that allow dynamic module export
+  /// @{
+  Module * module_ = nullptr;
+
+  template < typename T >
+  friend class ClassInterface;  
+  friend class Module;
+  friend class BaseModule;  
+
+  template< int N >
+  friend struct details::Resetter;
+  template< typename T >  
+  friend struct details::LoaderClass;
+
+  template< typename T, int N >  
+  friend struct details::StorerClass;  
+  /// }
+
+
   static const int FRAME_STACK_SIZE = 40;
   static const int STACK_SIZE       = 5000;
   static const int MAX_LIVE_OBJECTS = 200;
@@ -1043,7 +1093,7 @@ private:
     Value &     rhsv    = stack_[sp_--];
     ElementType rhs;
     rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);  // what if fails?
+    Op::Apply(this, *ptr, rhs);  // TODO(robert) what if fails?
     matrixv.Reset();
     rhsv.Reset();
   }
@@ -1057,7 +1107,7 @@ private:
     Value &     rhsv   = stack_[sp_--];
     ElementType rhs;
     rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);  // what if fails?
+    Op::Apply(this, *ptr, rhs);  // TODO(robert)  what if fails?
     arrayv.Reset();
     rhsv.Reset();
   }
@@ -1072,7 +1122,7 @@ private:
     RHSVariantType xx;
     rhsv.variant.Get(xx);
     RHSElementType rhs = static_cast<RHSElementType>(xx);
-    Op::Apply(this, *ptr, rhs);  // what if fails?
+    Op::Apply(this, *ptr, rhs);  //  TODO(robert) what if fails?
     arrayv.Reset();
     rhsv.Reset();
   }

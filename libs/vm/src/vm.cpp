@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/vm.hpp"
+#include "vm/module.hpp"
 #include <sstream>
 
 namespace fetch {
@@ -347,6 +348,7 @@ bool VM::Execute(const Script &script, const std::string &name)
   {
     instruction_ = &function_->instructions[std::size_t(pc_)];
     ++pc_;
+
     switch (instruction_->opcode)
     {
     case Opcode::Jump:
@@ -831,7 +833,15 @@ bool VM::Execute(const Script &script, const std::string &name)
     }
     default:
     {
-      RuntimeError("unknown opcode");
+      if(module_ != nullptr)
+      {
+        if(!module_->ExecuteUserOpcode( this, instruction_->opcode ) )
+        {
+          RuntimeError("unknown opcode");
+        }
+      } else {
+        RuntimeError("unknown opcode");
+      }
       break;
     }
     }

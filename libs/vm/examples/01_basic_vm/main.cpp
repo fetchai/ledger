@@ -16,10 +16,62 @@
 //
 //------------------------------------------------------------------------------
 
+
+#include "vm/typeids.hpp"
+#include "vm/analyser.hpp"
+
+
+
 #include "vm/compiler.hpp"
 #include "vm/vm.hpp"
+#include "vm/module.hpp"
 #include <fstream>
 #include <sstream>
+
+
+struct TestClass {
+  TestClass(int const&x) : x_(x) {  }
+
+  void Foo() {
+    std::cout << "FOO: " << x_ << std::endl;
+  }
+
+  void Bar(int const &x) { // TOODO: Add support for const
+    std::cout << "BAR: "<< x <<  " / " << x_ << std::endl;
+  }
+
+  int Baz(int x)
+  {
+    std::cout << "Baz" << x << " / " << x_ << std::endl;
+    return x + x_;
+  }
+
+  static int32_t Blah(double x) {
+    std::cout << "Hello: " << x << std::endl;
+    return int(x);
+  }
+
+  static double Blah(int32_t x) {
+    std::cout << "Hello 2: " << x << std::endl;
+    return double(x);
+  }  
+private:
+  int x_;
+};
+
+double TestFunction(int const &x, int const &y) 
+{
+  std::cout << "Add:" << x + y << std::endl;
+  return double(x) + double(y);
+}
+
+int TestFunction(double const &x, double const &y) 
+{
+  std::cout << "Add 2:" <<  x + y << std::endl;
+  return int(x) + int(y);
+}
+
+
 
 int main(int argc, char **argv)
 {
@@ -29,19 +81,37 @@ int main(int argc, char **argv)
     exit(-9);
   }
 
+  // Reading file
   std::ifstream      file(argv[1], std::ios::binary);
   std::ostringstream ss;
   ss << file.rdbuf();
   const std::string source = ss.str();
   file.close();
 
-  fetch::vm::Compiler *compiler = new fetch::vm::Compiler();
+  fetch::vm::Module module;
 
+
+  // Creating new VM module
+  module.ExportClass< TestClass >("TestClass")
+    .Constructor<int>()
+    .Export("Foo", &TestClass::Foo)
+    .Export("Bar", &TestClass::Bar)
+    .Export("Baz", &TestClass::Baz)    
+    .ExportStaticFunction("Blah", (int32_t (*)(double) )&TestClass::Blah)
+    .ExportStaticFunction("Blah", (double (*)(int32_t) )&TestClass::Blah);    
+
+  module.ExportFunction("AddNumbers", (double(*)(int const&, int const&)) TestFunction);
+  module.ExportFunction("AddNumbers", (int(*)(double const&, double const&)) TestFunction);  
+
+  // Setting compiler up
+  fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);
   fetch::vm::Script        script;
   std::vector<std::string> errors;
+
+  // Compiling
+  std::cout << "Compiling" << std::endl;
   bool                     compiled = compiler->Compile(source, "myscript", script, errors);
 
-  fetch::vm::VM vm;
   if (!compiled)
   {
     std::cout << "Failed to compile" << std::endl;
@@ -58,7 +128,12 @@ int main(int argc, char **argv)
     return -2;
   }
 
-  vm.Execute(script, "main");
+  // Setting VM up and running
+  fetch::vm::VM vm(&module);
+  if(!vm.Execute(script, "main"))
+  {
+    std::cout << "Runtime error" << std::endl;
+  }
   delete compiler;
   return 0;
 }

@@ -94,7 +94,11 @@ enum class Opcode : uint16_t
   CreateIntPair,
   IntPairFirst,
   IntPairSecond,
-  Fib
+  Fib,
+
+  CreateWrappedTestClass, // Ref implementation
+
+  StartOfUserOpcodes = 16000 // This OP code always need to have the highest value - preferably constant.
 };
 
 }  // namespace vm

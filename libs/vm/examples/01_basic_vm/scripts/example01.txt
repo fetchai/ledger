@@ -9,8 +9,6 @@ function main()
   endfor
 
 
-  print(str + str);
-
   for(i in 0:10)
     print(x.first());
     x = IntPair.Fib(x);
