@@ -23,57 +23,42 @@
 namespace fetch {
 namespace crypto {
 
-class FNV : public StreamHasher
+class FNVLL : public virtual StreamHasherLowLevel
 {
+  uint32_t context_;
+
+protected:
+  using context_type = uint32_t;
+  static const std::size_t hash_size;
+
+public:
+  std::size_t hashSize() const override;
+  void        Reset() override;
+  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
+  void        Final(uint8_t *hash, std::size_t const &size) override;
+  uint32_t    uint_digest() const;
+};
+
+class FNV : public FNVLL, public virtual StreamHasher
+{
+  byte_array_type digest_;
+
 public:
   using byte_array_type = typename StreamHasher::byte_array_type;
 
-  FNV() { digest_.Resize(4); }
+  using FNVLL::Update;
+  using FNVLL::Final;
 
-  void Reset() override { context_ = 2166136261; }
-
-  bool Update(byte_array_type const &s) override
-  {
-    for (std::size_t i = 0; i < s.size(); ++i)
-    {
-      context_ = (context_ * 16777619) ^ s[i];
-    }
-    return true;
-  }
-
-  void Final() override
-  {
-    digest_[0] = uint8_t(context_);
-    digest_[1] = uint8_t(context_ >> 8);
-    digest_[2] = uint8_t(context_ >> 16);
-    digest_[3] = uint8_t(context_ >> 24);
-  }
-
-  byte_array_type digest() override
-  {
-    assert(digest_.size() == 4);
-    return digest_;
-  }
-
-  uint32_t uint_digest() { return context_; }
-
-private:
-  uint32_t        context_;
-  byte_array_type digest_;
+  FNV();
+  bool            Update(byte_array_type const &s) override;
+  void            Final() override;
+  byte_array_type digest() const override;
 };
 
 struct CallableFNV
 {
-  std::size_t operator()(fetch::byte_array::ConstByteArray const &key) const
-  {
-    uint32_t hash = 2166136261;
-    for (std::size_t i = 0; i < key.size(); ++i)
-    {
-      hash = (hash * 16777619) ^ key[i];
-    }
-
-    return hash;
-  }
+  std::size_t operator()(fetch::byte_array::ConstByteArray const &key) const;
 };
+
 }  // namespace crypto
 }  // namespace fetch

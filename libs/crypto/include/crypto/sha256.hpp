@@ -19,52 +19,43 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/stream_hasher.hpp"
-
 #include <openssl/sha.h>
-#include <stdexcept>
 
 namespace fetch {
 namespace crypto {
 
-class SHA256 : public StreamHasher
+class SHA256LL : public virtual StreamHasherLowLevel
+{
+protected:
+  static const std::size_t hash_size;
+
+public:
+  std::size_t hashSize() const override;
+  void        Reset() override;
+  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
+  void        Final(uint8_t *hash, std::size_t const &size) override;
+
+private:
+  SHA256_CTX context_;
+};
+
+class SHA256 : public SHA256LL, public virtual StreamHasher
 {
 public:
+  using base_type       = SHA256LL;
   using byte_array_type = typename StreamHasher::byte_array_type;
 
-  void Reset() override
-  {
-    digest_.Resize(0);
-    if (!SHA256_Init(&data_)) throw std::runtime_error("could not intialialise SHA256.");
-  }
+  using SHA256LL::Update;
+  using SHA256LL::Final;
 
-  bool Update(byte_array_type const &s) override { return Update(s.pointer(), s.size()); }
-
-  void Final() override
-  {
-    digest_.Resize(SHA256_DIGEST_LENGTH);
-    Final(reinterpret_cast<uint8_t *>(digest_.pointer()));
-  }
-
-  bool Update(uint8_t const *p, std::size_t const &size) override
-  {
-    if (!SHA256_Update(&data_, p, size)) return false;
-    return true;
-  }
-
-  void Final(uint8_t *p) override
-  {
-    if (!SHA256_Final(p, &data_)) throw std::runtime_error("could not finalize SHA256.");
-  }
-
-  byte_array_type digest() override
-  {
-    assert(digest_.size() == SHA256_DIGEST_LENGTH);
-    return digest_;
-  }
+  void            Reset() override;
+  bool            Update(byte_array_type const &s) override;
+  void            Final() override;
+  byte_array_type digest() const override;
 
 private:
   byte_array_type digest_;
-  SHA256_CTX      data_;
 };
+
 }  // namespace crypto
 }  // namespace fetch
