@@ -25,6 +25,7 @@
 
 #include <limits>
 #include <type_traits>
+#include <utility>
 
 namespace fetch {
 namespace storage {
@@ -41,7 +42,7 @@ public:
 
   // Construction
   ResourceID() = default;
-  explicit ResourceID(byte_array::ConstByteArray const &id);
+  explicit ResourceID(byte_array::ConstByteArray id);
 
   // Accessors
   byte_array::ConstByteArray id() const;
@@ -62,7 +63,7 @@ private:
  *
  * @param id The hashed array
  */
-inline ResourceID::ResourceID(byte_array::ConstByteArray const &id) : id_(id) {}
+inline ResourceID::ResourceID(byte_array::ConstByteArray id) : id_(std::move(id)) {}
 
 /**
  * Gets the current id (hashed) value
