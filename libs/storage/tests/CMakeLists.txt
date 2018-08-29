@@ -24,5 +24,3 @@ add_fetch_test(versioned_kvi_test fetch-storage versioned_kvi.cpp)
 
 add_fetch_test(object_store_test fetch-storage object_store.cpp)
 add_fetch_test(object_sync_test fetch-storage object_sync.cpp)
-
-add_fetch_gtest(object_sync_test fetch-storage basic)
