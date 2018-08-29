@@ -347,52 +347,84 @@ public:
    * @param other
    * @return
    */
-  self_type InlineAdd(NDArray const &other) { return Add(*this, other, *this); }
+  self_type InlineAdd(NDArray const &other)
+  {
+    Add(*this, other, *this);
+    return *this;
+  }
   /**
    * adds a scalar to every element in the array and returns the new output
    * @param scalar to add
    * @return new array output
    */
-  self_type InlineAdd(type const &scalar) { return Add(*this, scalar, *this); }
+  self_type InlineAdd(type const &scalar)
+  {
+    Add(*this, scalar, *this);
+    return *this;
+  }
 
   /**
    * Subtract one ndarray from another and support broadcasting
    * @param other
    * @return
    */
-  self_type InlineSubtract(NDArray &other) { return Subtract(*this, other, *this); }
+  self_type InlineSubtract(NDArray &other)
+  {
+    Subtract(*this, other, *this);
+    return *this;
+  }
   /**
    * subtract a scalar from every element in the array and return the new output
    * @param scalar to subtract
    * @return new array output
    */
-  self_type InlineSubtract(type const &scalar) { return Subtract(*this, scalar, *this); }
+  self_type InlineSubtract(type const &scalar)
+  {
+    Subtract(*this, scalar, *this);
+    return *this;
+  }
 
   /**
    * multiply other by this array and returns this
    * @param other
    * @return
    */
-  self_type InlineMultiply(NDArray &other) { return Multiply(*this, other, *this); }
+  self_type InlineMultiply(NDArray &other)
+  {
+    Multiply(*this, other, *this);
+    return *this;
+  }
   /**
    * multiplies array by a scalar element wise
    * @param scalar to add
    * @return new array output
    */
-  self_type InlineMultiply(type const &scalar) { return Multiply(*this, scalar, *this); }
+  self_type InlineMultiply(type const &scalar)
+  {
+    Multiply(*this, scalar, *this);
+    return *this;
+  }
 
   /**
    * Divide ndarray by another ndarray from another and support broadcasting
    * @param other
    * @return
    */
-  self_type InlineDivide(NDArray &other) { return Multiply(*this, other, *this); }
+  self_type InlineDivide(NDArray &other)
+  {
+    Divide(*this, other, *this);
+    return *this;
+  }
   /**
    * Divide array by a scalar elementwise
    * @param scalar to subtract
    * @return new array output
    */
-  self_type InlineDivide(type const &scalar) { return Multiply(*this, scalar, *this); }
+  self_type InlineDivide(type const &scalar)
+  {
+    Divide(*this, scalar, *this);
+    return *this;
+  }
 
 private:
   // TODO(tfr): replace with strides
