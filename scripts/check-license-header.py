@@ -22,7 +22,9 @@ LICENSE = """//-----------------------------------------------------------------
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+"""
 
+LICENSE_SEPARATOR = """
 """
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -54,7 +56,7 @@ def read_file(path):
 def check_source_file(path):
     contents = read_file(path)
 
-    if LICENSE not in contents:
+    if (LICENSE + LICENSE_SEPARATOR) not in contents:
         print('License missing from:', os.path.relpath(path, PROJECT_ROOT))
         return False
 
@@ -66,22 +68,29 @@ def update_source_file(path):
     contents = read_file(path)
 
     # do not bother processing files which have the license
-    if LICENSE in contents:
+    if (LICENSE + LICENSE_SEPARATOR) in contents:
         return
 
     # update the contents of the file
     if path.endswith('.cpp'):
-        contents = LICENSE + contents
+        if LICENSE in contents:
+            contents = contents.replace(LICENSE, LICENSE + LICENSE_SEPARATOR)
+        else:
+            contents = LICENSE + LICENSE_SEPARATOR + contents
 
     elif path.endswith('.hpp'):
-        contents = re.sub(r'#pragma once\s+', '#pragma once\n' + LICENSE, contents)
+        if LICENSE in contents:
+            contents = re.sub(r'#pragma once\s+' + LICENSE, '#pragma once\n' + LICENSE + LICENSE_SEPARATOR, contents)
+        else:
+            contents = re.sub(r'#pragma once\s+', '#pragma once\n' + LICENSE + LICENSE_SEPARATOR, contents)
+
         #contents = contents.replace('#pragma once\n', '#pragma once\n' + LICENSE)
 
     else:
         print('Unable to update file: ', os.path.relpath(path, PROJECT_ROOT))
         return False
 
-    if LICENSE not in contents:
+    if (LICENSE + LICENSE_SEPARATOR) not in contents:
         print('Unable to apply update to file:', os.path.relpath(path, PROJECT_ROOT))
 
     # update the contents of the file
