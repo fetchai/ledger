@@ -532,7 +532,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> &input_array, NDArray<T> &updates, std::vector<std::size_t> &indices) {
              fetch::math::Gather(input_array, updates, indices);
            })
-      .def("softmax", &NDArray<T>::Softmax)
+      .def("softmax",
+           [](NDArray<T> const &array, NDArray<T> &ret){
+             Softmax(array, ret);
+             return ret;
+           })
       .def("FromNumpy",
            [](NDArray<T> &s, py::array_t<T> arr) {
              auto buf        = arr.request();

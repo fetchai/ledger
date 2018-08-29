@@ -386,6 +386,17 @@ void MinImplementation(NDArray<T, C> &array, std::size_t const axis, NDArray<T, 
   }
 }
 
+template <typename T, typename C>
+void SoftmaxImplementation(ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+{
+  ret.LazyResize(array.size());
+
+  // by subtracting the max we improve numerical stability, and the result will be identical
+  ret.Subtract(array, array.Max());
+  Exp(ret);
+  ret.Divide(ret, ret.Sum());
+}
+
 }  // namespace details
 }  // namespace math
 }  // namespace fetch

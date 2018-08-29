@@ -517,18 +517,6 @@ public:
     return *this;
   }
 
-  /**
-   * calculates soft max of x and applies to this
-   * @param x
-   */
-  void Softmax(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Softmax(x);
-  }
-
 private:
   // TODO(tfr): replace with strides
   std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const

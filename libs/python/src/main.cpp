@@ -19,7 +19,7 @@
 #include "python/fetch_pybind.hpp"
 #include "python/memory/py_array.hpp"
 #include "python/memory/py_range.hpp"
-#include "python/memory/py_shape_less_array.hpp"
+#include "python/math/py_shape_less_array.hpp"
 #include "python/memory/py_shared_array.hpp"
 //#include "python/memory/py_ndarray.hpp"
 #include "python/memory/py_rectangular_array.hpp"

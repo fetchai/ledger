@@ -931,5 +931,27 @@ void Min(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
   details::MinImplementation<T, C>(array, axis, ret);
 }
 
+
+/**
+ * softmax over all data in shapelessarray
+ * @tparam T type
+ * @tparam C container_type
+ * @param array original data upon which to call softmax
+ * @param ret new data with softmax applied
+ */
+template <typename T, typename C>
+void Softmax(ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+{
+  details::SoftmaxImplementation<T, C>(array, ret);
+}
+template <typename T, typename C>
+void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
+{
+  assert(ret.size() == array.size());
+  ret.LazyReshape(array.shape());
+
+  details::SoftmaxImplementation<T, C>(array, ret);
+}
+
 }  // namespace math
 }  // namespace fetch

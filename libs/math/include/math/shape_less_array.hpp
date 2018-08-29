@@ -884,25 +884,6 @@ public:
   }
 
   /**
-   * trivial implementation of softmax
-   * @param x
-   * @return
-   */
-  self_type Softmax(self_type const &x)
-  {
-    LazyResize(x.size());
-
-    assert(x.size() == this->size());
-
-    // by subtracting the max we improve numerical stability, and the result will be identical
-    this->Subtract(x, x.Max());
-    Exp(*this);
-    this->Divide(*this, this->Sum());
-
-    return *this;
-  }
-
-  /**
    * trivial implementation of maximum - return array with elementwise max applied
    * @param x
    * @return
