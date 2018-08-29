@@ -1193,23 +1193,34 @@ void Min(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
  * @param array original data upon which to call softmax
  * @param ret new data with softmax applied
  */
-template <typename T, typename C>
-void Softmax(ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+namespace details {
+template <typename ARRAY_TYPE>
+ARRAY_TYPE &SoftmaxImplementation(ARRAY_TYPE const &array, ARRAY_TYPE &ret)
 {
   ret.LazyResize(array.size());
 
   // by subtracting the max we improve numerical stability, and the result will be identical
-  ret.Subtract(array, array.Max());
+  typename ARRAY_TYPE::type array_max, array_sum;
+  array_max = Max(array, array_max);
+  Subtract(array, array_max, ret);
   Exp(ret);
-  ret.Divide(ret, Sum(ret));
+  array_sum = Sum(ret, array_sum);
+  Divide(ret, array_sum, ret);
+  return ret;
+}
+}  // namespace details
+template <typename T, typename C>
+ShapeLessArray<T, C> &Softmax(ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+{
+  return details::SoftmaxImplementation(array, ret);
 }
 template <typename T, typename C>
-void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
+NDArray<T, C> &Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
 {
   assert(ret.size() == array.size());
   ret.LazyReshape(array.shape());
 
-  Softmax<T, C>(array, ret);
+  return details::SoftmaxImplementation(array, ret);
 }
 
 /**
@@ -1218,18 +1229,10 @@ void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
  * @param y array input 2
  * @return the combined array
  */
-template <typename T, typename C>
-NDArray<T, C> &Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2, NDArray<T, C> &ret)
-{
-  assert(ret.shape() == array1.shape());
-  assert(array1.shape() == array2.shape());
-
-  Maximum<T, C>(array1, array2, ret);
-  return ret;
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> &Maximum(ShapeLessArray<T, C> const &array1,
-                              ShapeLessArray<T, C> const &array2, ShapeLessArray<T, C> &ret)
+namespace details {
+template <typename ARRAY_TYPE>
+ARRAY_TYPE &MaximumImplementation(ARRAY_TYPE const &array1, ARRAY_TYPE const &array2,
+                                  ARRAY_TYPE &ret)
 {
   assert(array1.size() == array2.size());
   ret.Resize(array1.size());
@@ -1239,6 +1242,20 @@ ShapeLessArray<T, C> &Maximum(ShapeLessArray<T, C> const &array1,
     ret[i] = std::max(array1[i], array2[i]);
   }
   return ret;
+}
+}  // namespace details
+template <typename T, typename C>
+NDArray<T, C> &Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2, NDArray<T, C> &ret)
+{
+  assert(ret.shape() == array1.shape());
+  assert(array1.shape() == array2.shape());
+  return details::MaximumImplementation(array1, array2, ret);
+}
+template <typename T, typename C>
+ShapeLessArray<T, C> &Maximum(ShapeLessArray<T, C> const &array1,
+                              ShapeLessArray<T, C> const &array2, ShapeLessArray<T, C> &ret)
+{
+  return details::MaximumImplementation(array1, array2, ret);
 }
 
 /**
@@ -1508,7 +1525,7 @@ ShapeLessArray<T, C> &Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<
   return ret;
 }
 /**
- * subtract array from another array
+ * Multiply array from another array
  * @tparam T
  * @tparam C
  * @param array1
@@ -1525,7 +1542,7 @@ ShapeLessArray<T, C> &Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<
 }
 
 /**
- * subtract array from another array with broadcasting
+ * Multiply array by another array with broadcasting
  * @tparam T
  * @tparam C
  * @param array1

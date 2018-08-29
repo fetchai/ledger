@@ -420,8 +420,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              Max(a, axis, ret);
              return ret;
            })
-      .def("maximum", [](NDArray<T> const &array1, NDArray<T> const &array2,
-                         NDArray<T> &ret) { return Maximum(array1, array2, ret); })
+      .def("maximum",
+           [](NDArray<T> &ret, NDArray<T> const &array1, NDArray<T> const &array2) {
+             Maximum(array1, array2, ret);
+             return ret;
+           })
       .def("min",
            [](NDArray<T> const &a) {
              typename NDArray<T>::type ret = std::numeric_limits<typename NDArray<T>::type>::max();
