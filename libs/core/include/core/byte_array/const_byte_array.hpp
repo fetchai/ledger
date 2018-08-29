@@ -57,7 +57,7 @@ public:
   {
     assert(str != nullptr);
 
-    std::size_t n = strlen(str);
+    std::size_t const n = strlen(str);
     Reserve(n);
     Resize(n);
     uint8_t const *up = reinterpret_cast<uint8_t const *>(str);
@@ -76,12 +76,15 @@ public:
 
   ConstByteArray(std::string const &s) : ConstByteArray(s.c_str()) {}
   ConstByteArray(self_type const &other) = default;
+  ConstByteArray(self_type &&other)      = default;
   ConstByteArray(self_type const &other, std::size_t const &start, std::size_t const &length)
-    : data_(other.data_), start_(start), length_(length)
+    : data_(other.data_), start_(start), length_(length), arr_pointer_(data_.pointer() + start_)
   {
     assert(start_ + length_ <= data_.size());
-    arr_pointer_ = data_.pointer() + start_;
   }
+
+  ConstByteArray &operator=(ConstByteArray const &) = default;
+  ConstByteArray &operator=(ConstByteArray &&other) = default;
 
   ConstByteArray Copy() const
   {
@@ -138,11 +141,10 @@ public:
 
   bool operator!=(char const *str) const { return !(*this == str); }
 
+public:
   self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
-    length = std::min(length, length_ - start);
-    assert(start + length <= start_ + length_);
-    return self_type(*this, start + start_, length);
+    return SubArrayEx<self_type>(start, length);
   }
 
   bool Match(self_type const &str, std::size_t pos = 0) const
@@ -196,7 +198,19 @@ public:
     arr_pointer_ = data_.pointer() + start_;
   }
 
+  long IsUnique() const noexcept { return data_.IsUnique(); }
+
+  long UseCount() const noexcept { return data_.UseCount(); }
+
 protected:
+  template <typename RETURN_TYPE = self_type>
+  RETURN_TYPE SubArrayEx(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  {
+    length = std::min(length, length_ - start);
+    assert(start + length <= start_ + length_);
+    return RETURN_TYPE(*this, start + start_, length);
+  }
+
   container_type &operator[](std::size_t const &n)
   {
     assert(n < length_);
@@ -237,8 +251,8 @@ protected:
 
 private:
   shared_array_type data_;
-  container_type *  arr_pointer_ = nullptr;
   std::size_t       start_ = 0, length_ = 0;
+  container_type *  arr_pointer_ = nullptr;
 };
 
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)

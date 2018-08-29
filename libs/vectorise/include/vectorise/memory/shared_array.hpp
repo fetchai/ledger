@@ -113,6 +113,10 @@ public:
     return ret;
   }
 
+  long IsUnique() const noexcept { return data_.use_count() < 2; }
+
+  long UseCount() const noexcept { return data_.use_count(); }
+
 private:
   data_type data_ = nullptr;
 };
