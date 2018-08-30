@@ -570,7 +570,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
                shape.push_back(size_type(buf.shape[i]));
                stride.push_back(std::size_t(buf.strides[i]) / sizeof(T));
                index.push_back(0);
-               std::cout << stride[i] << std::endl;
              }
 
              s.CopyFromNumpy(ptr, shape, stride, index);

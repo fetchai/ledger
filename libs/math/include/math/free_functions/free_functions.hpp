@@ -77,24 +77,16 @@ void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates, std::vector<st
     indices[i] = AB[i].first;
   }
 
-  //  assert(indices.back() <= input_array.shape()[0]);
-
-  // set up an iterator
-  NDArrayIterator<T, C> arr_iterator{input_array};
-
   // scatter
-  std::size_t cur_idx, arr_count = 0;
+  std::size_t arr_count = 0;
   for (std::size_t count = 0; count < indices.size(); ++count)
   {
-    cur_idx = indices[count];
-
-    while (arr_count < cur_idx)
+    while (arr_count < indices[count])
     {
-      ++arr_iterator;
       ++arr_count;
     }
 
-    *arr_iterator = updates[count];
+    input_array[arr_count] = updates[count];
   }
 }
 
