@@ -101,8 +101,7 @@ public:
     hasher_type hash;
     hash.Reset();
     hash.Update(buf.data());
-    hash.Final();
-    body_.hash = hash.digest();
+    body_.hash = hash.Final();
 
     proof_.SetHeader(body_.hash);
   }

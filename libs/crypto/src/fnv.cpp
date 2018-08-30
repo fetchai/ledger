@@ -21,11 +21,17 @@
 namespace fetch {
 namespace crypto {
 
-std::size_t FNVLL::hashSize() const { return hash_size; }
+const std::size_t FNV::hash_size_ { sizeof(context_type) };
 
-void FNVLL::Reset() { context_ = 2166136261; }
+FNV::FNV() { reset(); }
 
-bool FNVLL::Update(uint8_t const *data_to_hash, std::size_t const &size)
+std::size_t FNV::hashSize() const { return hash_size_; }
+
+inline void FNV::reset() { context_ = 2166136261; }
+
+void FNV::Reset() { reset(); }
+
+bool FNV::Update(uint8_t const *data_to_hash, std::size_t const &size)
 {
   for (std::size_t i = 0; i < size; ++i)
   {
@@ -34,29 +40,13 @@ bool FNVLL::Update(uint8_t const *data_to_hash, std::size_t const &size)
   return true;
 }
 
-void FNVLL::Final(uint8_t *hash, std::size_t const &size)
+void FNV::Final(uint8_t *hash, std::size_t const &size)
 {
-  if (size < hash_size) throw std::runtime_error("size of input buffer is smaller than hash size.");
+  if (size < hash_size_) throw std::runtime_error("size of input buffer is smaller than hash size.");
   hash[0] = uint8_t(context_);
   hash[1] = uint8_t(context_ >> 8);
   hash[2] = uint8_t(context_ >> 16);
   hash[3] = uint8_t(context_ >> 24);
-}
-
-uint32_t FNVLL::uint_digest() const { return context_; }
-
-const std::size_t FNVLL::hash_size{sizeof(context_type)};
-
-FNV::FNV() : digest_(hash_size) {}
-
-bool FNV::Update(byte_array_type const &s) { return Update(s.pointer(), s.size()); }
-
-void FNV::Final() { Final(digest_.pointer(), digest_.size()); }
-
-FNV::byte_array_type FNV::digest() const
-{
-  assert(digest_.size() == hash_size);
-  return digest_;
 }
 
 std::size_t CallableFNV::operator()(fetch::byte_array::ConstByteArray const &key) const

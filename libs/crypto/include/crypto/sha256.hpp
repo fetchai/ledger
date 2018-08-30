@@ -24,37 +24,20 @@
 namespace fetch {
 namespace crypto {
 
-class SHA256LL : public virtual StreamHasherLowLevel
+class SHA256 : public StreamHasher
 {
-protected:
-  static const std::size_t hash_size;
-
-public:
-  std::size_t hashSize() const override;
-  void        Reset() override;
-  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
-  void        Final(uint8_t *hash, std::size_t const &size) override;
-
-private:
+  static const std::size_t hash_size_;
   SHA256_CTX context_;
-};
 
-class SHA256 : public SHA256LL, public virtual StreamHasher
-{
 public:
-  using base_type       = SHA256LL;
-  using byte_array_type = typename StreamHasher::byte_array_type;
 
-  using SHA256LL::Update;
-  using SHA256LL::Final;
+  using StreamHasher::Update;
+  using StreamHasher::Final;
 
   void            Reset() override;
-  bool            Update(byte_array_type const &s) override;
-  void            Final() override;
-  byte_array_type digest() const override;
-
-private:
-  byte_array_type digest_;
+  bool            Update(uint8_t const *data_to_hash, std::size_t const &size) override;
+  void            Final(uint8_t *hash, std::size_t const &size) override;
+  std::size_t     hashSize() const override;
 };
 
 }  // namespace crypto

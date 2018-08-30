@@ -23,36 +23,25 @@
 namespace fetch {
 namespace crypto {
 
-class FNVLL : public virtual StreamHasherLowLevel
+class FNV : public StreamHasher
 {
+  using context_type = uint32_t;
+
+  static const std::size_t hash_size_;
   uint32_t context_;
 
-protected:
-  using context_type = uint32_t;
-  static const std::size_t hash_size;
+  inline void reset();
 
 public:
-  std::size_t hashSize() const override;
-  void        Reset() override;
-  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
-  void        Final(uint8_t *hash, std::size_t const &size) override;
-  uint32_t    uint_digest() const;
-};
 
-class FNV : public FNVLL, public virtual StreamHasher
-{
-  byte_array_type digest_;
-
-public:
-  using byte_array_type = typename StreamHasher::byte_array_type;
-
-  using FNVLL::Update;
-  using FNVLL::Final;
+  using StreamHasher::Update;
+  using StreamHasher::Final;
 
   FNV();
-  bool            Update(byte_array_type const &s) override;
-  void            Final() override;
-  byte_array_type digest() const override;
+  void            Reset() override;
+  bool            Update(uint8_t const *data_to_hash, std::size_t const &size) override;
+  void            Final(uint8_t *hash, std::size_t const &size) override;
+  std::size_t     hashSize() const override;
 };
 
 struct CallableFNV

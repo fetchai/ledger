@@ -152,12 +152,11 @@ public:
     hasher.Reset();
     for (auto const &key : keys)
     {
-      hasher.Update(key);
-      hasher.Update(state_[key]);
+        hasher.Update(key);
+        hasher.Update(state_[key]);
     }
-    hasher.Final();
 
-    return hasher.digest();
+    return hasher.Final();
   }
 
   void Commit(bookmark_type const &bookmark) override
