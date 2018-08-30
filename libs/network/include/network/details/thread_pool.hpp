@@ -44,7 +44,7 @@ protected:
   using event_function_type = std::function<void()>;
   using event_handle_type   = uint64_t;
   using shared_ptr_type     = std::shared_ptr<ThreadPoolImplementation>;
-  using mutex_type          = std::mutex;
+  using mutex_type          = fetch::mutex::Mutex;
   using lock_type           = std::unique_lock<mutex_type>;
 
   using work_queue_type     = WorkStore;
@@ -193,28 +193,37 @@ private:
 
   virtual void ProcessLoop()
   {
-    while (!shutdown_.load())
+    try
     {
-      thread_state_type state = Poll();
-      if (state & THREAD_SHOULD_QUIT)
+      while (!shutdown_.load())
       {
-        return;  // we're done -- return & become joinable.
+        thread_state_type state = Poll();
+        if (state & THREAD_SHOULD_QUIT)
+        {
+          return;  // we're done -- return & become joinable.
+        }
+        if (state & THREAD_WORKED)
+        {
+          // no delay, go do more.
+          continue;
+        }
+        // THREAD_IDLE:
+        {
+          // snooze for a while or until more work arrives
+          LOG_STACK_TRACE_POINT;
+
+          std::unique_lock<std::mutex> lock(mutex_);
+          cv_.wait_for(
+                       lock,
+                       std::chrono::milliseconds(100));  // so the future work will get serviced eventually.
+          // go round again.
+        }
       }
-      if (state & THREAD_WORKED)
-      {
-        // no delay, go do more.
-        continue;
-      }
-      // THREAD_IDLE:
-      {
-        // snooze for a while or until more work arrives
-        LOG_STACK_TRACE_POINT;
-        lock_type lock(mutex_);
-        cv_.wait_for(
-            lock,
-            std::chrono::milliseconds(100));  // so the future work will get serviced eventually.
-        // go round again.
-      }
+    }
+    catch (...)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in thread_pool");
+      throw;
     }
   }
 
@@ -334,7 +343,7 @@ private:
   mutable fetch::mutex::Mutex     thread_mutex_{__LINE__, __FILE__};
 
   mutable std::condition_variable cv_;
-  mutable mutex_type              mutex_;
+  mutable mutex_type              mutex_{__LINE__, __FILE__};
   std::atomic<bool>               shutdown_{false};
   std::atomic<unsigned long>                tc_{0};
 };

@@ -31,7 +31,7 @@ public:
   using work_item_type    = std::function<void()>;
 protected:
   using store_type        = std::vector<work_item_type>;
-  using mutex_type        = std::mutex;
+  using mutex_type        = fetch::mutex::Mutex;
   using lock_type         = std::unique_lock<mutex_type>;
 
 public:
@@ -89,7 +89,7 @@ public:
 
 private:
   store_type      store_;
-  mutable mutex_type mutex_;
+  mutable mutex_type mutex_{__LINE__, __FILE__};
   std::atomic<bool> shutdown_{false};
 };
 

@@ -7,7 +7,7 @@ template <class T>
 class SharedWithLock
 {
 public:
-  using mutex_type = std::mutex;
+  using mutex_type = fetch::mutex::Mutex;
   using lock_type  = std::unique_lock<mutex_type>;
 
   SharedWithLock() {}
@@ -57,7 +57,7 @@ public:
   template <typename... Args>
   void Make(Args &&... args)
   {
-    mutex_p = std::make_shared<mutex_type>();
+    mutex_p = std::make_shared<mutex_type>(__LINE__, __FILE__);
     data_p  = std::make_shared<T>(std::forward<Args>(args)...);
   }
 

@@ -275,7 +275,7 @@ class Swarm(object):
             node.close()
 
 def ClearDebuggerFromNode(args, node):
-    if node.index > args.debugfirst:
+    if node.index >= args.debugfirst:
         node.debugger = ""
 
 @contextmanager

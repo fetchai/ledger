@@ -50,8 +50,8 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, storage_unit_type 
 {
 
   // setup the executor pool
-  {
-    std::lock_guard<mutex_type> lock(idle_executors_lock_);
+  try {
+    lock_type lock(idle_executors_lock_);
 
     // ensure lists are reserved
     idle_executors_.reserve(num_executors);
@@ -62,6 +62,10 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, storage_unit_type 
       idle_executors_.emplace_back(factory());
     }
   }
+      catch (...)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in const");
+      }
 }
 
 /**
@@ -131,7 +135,8 @@ ExecutionManager::Status ExecutionManager::Execute(block_type const &block)
  */
 bool ExecutionManager::PlanExecution(block_type const &block)
 {
-  std::lock_guard<mutex_type> lock(execution_plan_lock_);
+  try
+  {std::lock_guard<mutex_type> lock(execution_plan_lock_);
 
   // clear and resize the execution plan
   execution_plan_.clear();
@@ -179,6 +184,12 @@ bool ExecutionManager::PlanExecution(block_type const &block)
   }
 
   return true;
+  }
+        catch (...)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in PlanExec");
+        throw ;
+      }
 }
 
 /**
@@ -193,14 +204,17 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
   shared_executor_type executor;
 
   // lookup a free executor
-  {
-    std::lock_guard<mutex_type> lock(idle_executors_lock_);
+  try {
+    lock_type lock(idle_executors_lock_);
     if (!idle_executors_.empty())
     {
       executor = idle_executors_.back();
       idle_executors_.pop_back();
     }
-  }
+  }       catch (...)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in DispExec");
+      }
 
   // We must have a executor present for this to work. This should always
   // be the case provided num_executors == num_threads (in thread pool)
@@ -218,11 +232,14 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     --remaining_executions_;
     ++completed_executions_;
 
-    {
-      std::lock_guard<mutex_type> lock(idle_executors_lock_);
+    try {
+      lock_type lock(idle_executors_lock_);
       idle_executors_.push_back(executor);
     }
-
+      catch (...)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in DispExec2");
+      }
     // trigger the monitor thread to process the next slice if needed
     monitor_notify_.notify_one();
   }
@@ -300,7 +317,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
   MonitorState state = MonitorState::IDLE;
 
   std::size_t       next_slice = 0;
-  std::mutex        wait_lock;
+  mutex_type        wait_lock;
   block_digest_type current_block;
 
   while (running_)
@@ -314,9 +331,13 @@ void ExecutionManager::MonitorThreadEntrypoint()
       active_ = false;
 
       // enter the idle state where we wait for the next block to be posted
-      {
-        std::unique_lock<std::mutex> lock(wait_lock);
+      try {
+        uniqlock_type lock(wait_lock);
         monitor_wake_.wait(lock);
+      }
+      catch (...)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in MonitorThreadEntrypoint");
       }
 
       active_       = true;
@@ -334,7 +355,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::SCHEDULE_NEXT_SLICE:
     {
-      std::lock_guard<mutex_type> lock(execution_plan_lock_);
+      lock_type lock(execution_plan_lock_);
 
       if (execution_plan_.empty())
       {
@@ -369,7 +390,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
       // wait for the execution to complete
       if (remaining_executions_ > 0)
       {
-        std::unique_lock<std::mutex> lock(wait_lock);
+        uniqlock_type lock(wait_lock);
         monitor_notify_.wait_for(lock, std::chrono::milliseconds{100});
       }
 
@@ -394,7 +415,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
       bool          new_bookmark = false;
       if (state_hash.size())
       {
-        std::lock_guard<mutex_type> lock(state_archive_lock_);
+        lock_type lock(state_archive_lock_);
         new_bookmark = state_archive_.RecordBookmark(state_hash, bookmark);
       }
       else
@@ -418,8 +439,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
         }
 
         // update the state archives
+        try
         {
-          std::lock_guard<mutex_type> lock(state_archive_lock_);
+          lock_type lock(state_archive_lock_);
           if (!state_archive_.ConfirmBookmark(state_hash, bookmark))
           {
             FETCH_LOG_WARN(LOGGING_NAME,"Unable to confirm bookmark: ", bookmark);
@@ -428,6 +450,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
           // update the block state cache
           block_state_cache_.emplace(current_block, state_hash);
         }
+        catch (...)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock 1");
+      }
       }
 
       // finished processing the block
@@ -441,7 +467,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
 bool ExecutionManager::AttemptRestoreToBlock(block_digest_type const &digest)
 {
-  std::lock_guard<mutex_type> lock(state_archive_lock_);
+  try
+  {
+    uniqlock_type lock(state_archive_lock_);
 
   // need to load the state from a previous application, so lookup the
   // corresponding state hash
@@ -462,6 +490,11 @@ bool ExecutionManager::AttemptRestoreToBlock(block_digest_type const &digest)
   storage_->Revert(bookmark);
 
   return true;
+  } catch (...)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in restore");
+        throw;
+      }
 }
 
 }  // namespace ledger

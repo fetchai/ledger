@@ -141,60 +141,67 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
 
 void Constellation::Run(peer_list_type const &initial_peers)
 {
-  p2p_->AddMainChain(interface_address_, static_cast<uint16_t>(main_chain_port_));
+  try
+  {
+    p2p_->AddMainChain(interface_address_, static_cast<uint16_t>(main_chain_port_));
 
-  // Adding handle for the orchestration
-  p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
-    // std::cout << "MAKING CALL ::: " << std::endl;
+    // Adding handle for the orchestration
+    p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
+        // std::cout << "MAKING CALL ::: " << std::endl;
 
-    FETCH_LOG_INFO(LOGGING_NAME,"OnPeerUpdateProfile: ", byte_array::ToBase64(ep.identity.identifier()),
+        FETCH_LOG_INFO(LOGGING_NAME,"OnPeerUpdateProfile: ", byte_array::ToBase64(ep.identity.identifier()),
                        " mainchain?: ", ep.is_mainchain.load(), " lane:? ", ep.is_lane.load());
 
-    if (ep.is_mainchain)
+        if (ep.is_mainchain)
+        {
+          if (main_chain_remote_)
+          {
+            main_chain_remote_->TryConnect(ep);
+          }
+          else
+          {
+            FETCH_LOG_WARN(LOGGING_NAME,"Main chain remote is invalid, unable to dispatch this request");
+          }
+        }
+        if (ep.is_lane)
+        {
+          FETCH_LOG_INFO(LOGGING_NAME,"Trying to make that connection noow.....");
+
+          if (storage_)
+          {
+            storage_->TryConnect(ep);
+          }
+          else
+          {
+            FETCH_LOG_WARN(LOGGING_NAME,"Storage is not currently available");
+          }
+        }
+      });
+
+    p2p_->Start();
+
+    // Make the initial p2p connections
+    // Note that we first connect after setting up the lanes to prevent that nodes
+    // will be too fast in trying to set up lane connections.
+    for (auto const &peer : initial_peers)
     {
-      if (main_chain_remote_)
-      {
-        main_chain_remote_->TryConnect(ep);
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME,"Main chain remote is invalid, unable to dispatch this request");
-      }
+      FETCH_LOG_WARN(LOGGING_NAME,"Connecting to ", peer.address(), ":", peer.port());
+
+      LOG_STACK_TRACE_POINT;
+
+      p2p_->Connect(peer.address(), peer.port());
     }
-    if (ep.is_lane)
+
+    // monitor loop
+    while (active_)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"Trying to make that connection noow.....");
-
-      if (storage_)
-      {
-        storage_->TryConnect(ep);
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME,"Storage is not currently available");
-      }
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
+      std::this_thread::sleep_for(std::chrono::seconds{5});
     }
-  });
-
-  p2p_->Start();
-
-  // Make the initial p2p connections
-  // Note that we first connect after setting up the lanes to prevent that nodes
-  // will be too fast in trying to set up lane connections.
-  for (auto const &peer : initial_peers)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME,"Connecting to ", peer.address(), ":", peer.port());
-
-    LOG_STACK_TRACE_POINT;
-
-    p2p_->Connect(peer.address(), peer.port());
   }
-
-  // monitor loop
-  while (active_)
-  {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
-    std::this_thread::sleep_for(std::chrono::seconds{5});
+  catch (...) {
+    FETCH_LOG_ERROR(LOGGING_NAME,"Exception locking mutex: Const::Run");
+    throw;
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Exiting...");

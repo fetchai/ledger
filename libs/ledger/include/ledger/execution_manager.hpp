@@ -59,7 +59,6 @@ public:
   using execution_plan_type = std::vector<execution_list_type>;
 
   using thread_pool_type      = fetch::network::ThreadPool;
-  using mutex_type            = std::mutex;
   using counter_type          = std::atomic<std::size_t>;
   using flag_type             = std::atomic<bool>;
   using thread_type           = std::unique_ptr<std::thread>;
@@ -69,6 +68,10 @@ public:
   using hash_type             = StorageUnitInterface::hash_type;
   using block_state_cache_type =
       std::unordered_map<block_digest_type, hash_type, crypto::CallableFNV>;
+
+  using mutex_type = std::mutex;
+  using lock_type = std::lock_guard<mutex_type>;
+  using uniqlock_type = std::unique_lock<mutex_type>;
 
   // Construction / Destruction
   explicit ExecutionManager(std::size_t num_executors, storage_unit_type storage,

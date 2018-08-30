@@ -33,8 +33,6 @@
 #include "core/mutex.hpp"
 #include "network/tcp/tcp_client.hpp"
 
-#include "network/generics/life_tracker.hpp"
-
 #include <map>
 #include <utility>
 
@@ -42,11 +40,16 @@ namespace fetch {
 namespace service {
 
 // template <typename T>
-class ServiceClient : public ServiceClientInterface, public ServiceServerInterface
+class ServiceClient
+    : public ServiceClientInterface
+    , public ServiceServerInterface
+    , public std::enable_shared_from_this<ServiceClient>
 {
 public:
   using network_manager_type = fetch::network::NetworkManager;
-
+  using mutex_type = fetch::mutex::Mutex;
+  using lock_type = std::lock_guard<mutex_type>;
+  
   static constexpr char const *LOGGING_NAME = "ServiceClient";
 
   ServiceClient(std::shared_ptr<network::AbstractConnection> connection,
@@ -55,21 +58,45 @@ public:
     , network_manager_(network_manager)
     , message_mutex_(__LINE__, __FILE__)
   {
-    auto ptr = connection_.lock();
-    if (ptr)
+    auto connection_strong = connection_.lock();
+    if (connection_strong)
     {
-      ptr->ActivateSelfManage();
+      connection_strong -> ActivateSelfManage();
+    }
+  }
 
-      ptr->OnMessage([this](network::message_type const &msg) {
-        LOG_STACK_TRACE_POINT;
-
+  void Setup()
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Client::Setup() ",this," About to create a weak THIS");
+    std::weak_ptr<ServiceClient> weakself;
+    std::shared_ptr<ServiceClient> strongself;
+    auto connection_strong = connection_.lock();
+    if (connection_strong)
+    {
+      try {
+        strongself = shared_from_this();
+        if (strongself)
         {
-          std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
-          messages_.push_back(msg);
+          FETCH_LOG_WARN(LOGGING_NAME, "Client::Setup() ",this," strong seems OK");
         }
+        weakself = std::weak_ptr<ServiceClient>(strongself);
+        FETCH_LOG_WARN(LOGGING_NAME, "Client::Setup() ",this," created a weak THIS");
+        connection_strong -> OnMessage([weakself](network::message_type const &msg) {
+            LOG_STACK_TRACE_POINT;
 
-        this->ProcessMessages();
-      });
+            if (auto strongself = weakself.lock())
+            {
+              {
+                std::lock_guard<fetch::mutex::Mutex> lock(strongself -> message_mutex_);
+                strongself -> messages_.push_back(msg);
+              }
+              strongself -> ProcessMessages();
+            }
+          });
+      }
+      catch (const std::bad_weak_ptr& e) {
+        FETCH_LOG_WARN(LOGGING_NAME, "Client::Setup() ",this," failed to create weak THIS -- suspect deleted somewhere?");
+      }
     }
   }
 
@@ -79,31 +106,33 @@ public:
 
   ~ServiceClient()
   {
-
+    FETCH_LOG_WARN(LOGGING_NAME, "Client::~Client", this);
+    lock_type lock(deletion_safety_mutex_);
     LOG_STACK_TRACE_POINT;
-    auto ptr = connection_.lock();
-    if (ptr)
+    auto connection_strong = connection_.lock();
+    if (connection_strong)
     {
-        ptr->Close();
-        ptr->ClearClosures();
+      connection_strong -> OnMessage(nullptr);
+      connection_strong -> Close();
+      connection_strong -> ClearClosures();
     }
   }
 
   void Close()
   {
-    auto ptr = connection_.lock();
-    if (ptr)
+    auto connection_strong = connection_.lock();
+    if (connection_strong)
     {
-      ptr->Close();
+      connection_strong -> Close();
     }
   }
 
   connection_handle_type handle() const
   {
-    auto ptr = connection_.lock();
-    if (ptr)
+    auto connection_strong = connection_.lock();
+    if (connection_strong)
     {
-      return ptr->handle();
+      return connection_strong -> handle();
     }
     LOG_STACK_TRACE_POINT;
     TODO_FAIL("connection is dead in ServiceClient::handle");
@@ -111,20 +140,20 @@ public:
 
   bool is_alive() const
   {
-    auto ptr = connection_.lock();
-    if (ptr)
+    auto connection_strong = connection_.lock();
+    if (connection_strong)
     {
-      return ptr->is_alive();
+      return connection_strong -> is_alive();
     }
     return false;
   }
 
   uint16_t Type() const
   {
-    auto ptr = connection_.lock();
-    if (ptr)
+    auto connection_strong = connection_.lock();
+    if (connection_strong)
     {
-      return ptr->Type();
+      return connection_strong -> Type();
     }
     return uint16_t(-1);
   }
@@ -134,12 +163,12 @@ public:
 protected:
   bool DeliverRequest(network::message_type const &msg) override
   {
-    auto ptr = connection_.lock();
-    if (ptr)
+    auto connection_strong = connection_.lock();
+    if (connection_strong)
     {
-      if (ptr->Closed()) return false;
+      if (connection_strong -> Closed()) return false;
 
-      ptr->Send(msg);
+      connection_strong -> Send(msg);
       return true;
     }
 
@@ -148,12 +177,12 @@ protected:
 
   bool DeliverResponse(connection_handle_type, network::message_type const &msg) override
   {
-    auto ptr = connection_.lock();
-    if (ptr)
+    auto connection_strong = connection_.lock();
+    if (connection_strong)
     {
-      if (ptr->Closed()) return false;
+      if (connection_strong -> Closed()) return false;
 
-      ptr->Send(msg);
+      connection_strong -> Send(msg);
       return true;
     }
 
@@ -165,45 +194,55 @@ private:
 
   void ProcessMessages()
   {
-    LOG_STACK_TRACE_POINT;
-
-    message_mutex_.lock();
-    bool has_messages = (!messages_.empty());
-    message_mutex_.unlock();
-
-    while (has_messages)
+    FETCH_LOG_WARN("Client::ProcessMessages", this);
+    try
     {
-      message_mutex_.lock();
+      lock_type lock(deletion_safety_mutex_);
+      LOG_STACK_TRACE_POINT;
 
-      network::message_type msg;
-      has_messages = (!messages_.empty());
-      if (has_messages)
-      {
-        msg = messages_.front();
-        messages_.pop_front();
-      };
+      message_mutex_.lock();
+      bool has_messages = (!messages_.empty());
       message_mutex_.unlock();
 
-      if (has_messages)
+      while (has_messages)
       {
-        // TODO(issue 22): Post
-        if (!ProcessServerMessage(msg))
-        {
-          FETCH_LOG_DEBUG(LOGGING_NAME,"Looking for RPC functionality");
+        message_mutex_.lock();
 
-          if (!PushProtocolRequest(connection_handle_type(-1), msg))
+        network::message_type msg;
+        has_messages = (!messages_.empty());
+        if (has_messages)
+        {
+          msg = messages_.front();
+          messages_.pop_front();
+        };
+        message_mutex_.unlock();
+
+        if (has_messages)
+        {
+          // TODO(issue 22): Post
+          if (!ProcessServerMessage(msg))
           {
-            throw serializers::SerializableException(error::UNKNOWN_MESSAGE,
-                                                     byte_array::ConstByteArray("Unknown message"));
+            FETCH_LOG_DEBUG(LOGGING_NAME,"Looking for RPC functionality");
+
+            if (!PushProtocolRequest(connection_handle_type(-1), msg))
+            {
+              throw serializers::SerializableException(error::UNKNOWN_MESSAGE,
+                                                       byte_array::ConstByteArray("Unknown message"));
+            }
           }
         }
       }
+    }
+    catch (...)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in ProcessMessages", this);
     }
   }
 
   network_manager_type                        network_manager_;
   std::deque<network::message_type>           messages_;
   mutable fetch::mutex::Mutex                 message_mutex_;
+  mutable mutex_type deletion_safety_mutex_{__LINE__, __FILE__};
 };
 }  // namespace service
 }  // namespace fetch

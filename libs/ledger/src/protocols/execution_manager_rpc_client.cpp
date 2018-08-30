@@ -34,7 +34,7 @@ ExecutionManagerRpcClient::ExecutionManagerRpcClient(byte_array::ConstByteArray 
   network::TCPClient connection(network_manager);
   connection.Connect(host, port);
 
-  service_ = std::make_unique<fetch::service::ServiceClient>(connection, network_manager);
+  service_ = std::make_shared<fetch::service::ServiceClient>(connection, network_manager);
 }
 
 ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(block_type const &block)

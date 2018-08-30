@@ -176,9 +176,15 @@ public:
       if (!p.Wait(1000))  // TODO(issue 7): Make timeout configurable
       {
         FETCH_LOG_WARN(LOGGING_NAME,"Connection timed out - closing in LaneController::Connect:2:");
-        client->Close();
+        try {
+          client->Close();
         client.reset();
         return nullptr;
+        } catch (...)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in LaneController::Connect:2");
+        throw;
+      }
       }
 
       p.As(peer_identity);

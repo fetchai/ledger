@@ -35,6 +35,9 @@ class NetworkManagerImplementation
 {
 public:
 
+  using mutex_type = fetch::mutex::Mutex;
+  using lock_type = std::lock_guard<mutex_type>;
+
   static constexpr char const *LOGGING_NAME = "NetworkManagerImpl";
 
   NetworkManagerImplementation(std::size_t threads = 1) : number_of_threads_(threads)
@@ -53,7 +56,7 @@ public:
 
   void Start()
   {
-    std::lock_guard<std::mutex> lock(thread_mutex_);
+    lock_type lock(thread_mutex_);
 
     if (threads_.size() == 0)
     {
@@ -69,17 +72,24 @@ public:
 
   void Work()
   {
-    std::shared_ptr<asio::io_service> service_local;
+    try
     {
-      std::lock_guard<std::mutex> lock(thread_mutex_);
-      service_local = io_service_;
+      std::shared_ptr<asio::io_service> service_local;
+      {
+        lock_type lock(thread_mutex_);
+        service_local = io_service_;
+      }
+      service_local -> run();
+    } catch (...)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in NetworkManagerImplementation::Work");
+      throw;
     }
-    service_local -> run();
   }
 
   void Stop()
   {
-    std::lock_guard<std::mutex> lock(thread_mutex_);
+    lock_type lock(thread_mutex_);
     if (std::this_thread::get_id() != owning_thread_)
     {
       FETCH_LOG_WARN(LOGGING_NAME,"Same thread must start and stop NetworkManager.");
@@ -126,7 +136,7 @@ private:
   std::shared_ptr<asio::io_service> io_service_{new asio::io_service};
   std::shared_ptr<asio::io_service::work> shared_work_;
 
-  mutable std::mutex thread_mutex_{};
+  mutable mutex_type thread_mutex_{__LINE__, __FILE__};
 };
 
 }  // namespace details

@@ -47,7 +47,8 @@ public:
   using socket_type          = asio::ip::tcp::tcp::socket;
   using strand_type          = asio::io_service::strand;
   using resolver_type        = asio::ip::tcp::resolver;
-  using mutex_type           = std::mutex;
+  using mutex_type           = fetch::mutex::Mutex;
+  using lock_type = std::lock_guard<mutex_type>;
 
   static constexpr char const *LOGGING_NAME = "TCPClientImpl";
 
@@ -84,7 +85,7 @@ public:
       auto strand = networkManager_.CreateIO<strand_type>();
       if (!strand) return;
       {
-        std::lock_guard<mutex_type> lock(io_creation_mutex_);
+        lock_type lock(io_creation_mutex_);
         strand_ = strand;
       }
 
@@ -95,7 +96,7 @@ public:
         std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
 
         {
-          std::lock_guard<mutex_type> lock(io_creation_mutex_);
+          lock_type lock(io_creation_mutex_);
           if (!postedClose_)
           {
             socket_ = socket;
@@ -155,7 +156,7 @@ public:
 
   bool is_alive() const override
   {
-    std::lock_guard<mutex_type> lock(io_creation_mutex_);
+    lock_type lock(io_creation_mutex_);
     return !socket_.expired() && connected_;
   }
 
@@ -170,7 +171,7 @@ public:
     //    std::endl;
 
     {
-      std::lock_guard<mutex_type> lock(queue_mutex_);
+      lock_type lock(queue_mutex_);
       write_queue_.push_back(msg);
     }
 
@@ -190,7 +191,7 @@ public:
 
   void Close() override
   {
-    std::lock_guard<mutex_type> lock(io_creation_mutex_);
+    lock_type lock(io_creation_mutex_);
     postedClose_                          = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
     std::weak_ptr<strand_type> strandWeak = strand_;
@@ -222,109 +223,124 @@ private:
   std::weak_ptr<strand_type> strand_;
 
   message_queue_type write_queue_;
-  mutable mutex_type queue_mutex_;
-  mutable mutex_type io_creation_mutex_;
+  mutable mutex_type queue_mutex_{__LINE__, __FILE__};
+  mutable mutex_type io_creation_mutex_{__LINE__, __FILE__};
 
-  mutable mutex_type can_write_mutex_;
+  mutable mutex_type can_write_mutex_{__LINE__, __FILE__};
   bool               can_write_{true};
   bool               postedClose_ = false;
 
-  mutable mutex_type callback_mutex_;
+  mutable mutex_type callback_mutex_{__LINE__, __FILE__};
   std::atomic<bool>  connected_{false};
 
   void ReadHeader() noexcept
   {
-    LOG_STACK_TRACE_POINT;
-    auto strand = strand_.lock();
-    if (!strand)
+    try
     {
-      return;
-    }
-    assert(strand->running_in_this_thread());
-
-    self_type             self   = shared_from_this();
-    auto                  socket = socket_.lock();
-    byte_array::ByteArray header;
-    header.Resize(2 * sizeof(uint64_t));
-
-    auto cb = [this, self, socket, header, strand](std::error_code ec, std::size_t) {
-      shared_self_type selfLock = self.lock();
-      if (!selfLock) return;
-
-      if (!ec)
+      LOG_STACK_TRACE_POINT;
+      auto strand = strand_.lock();
+      if (!strand)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME,"Read message header.");
-        ReadBody(header);
+        return;
+      }
+      assert(strand->running_in_this_thread());
+
+      self_type             self   = shared_from_this();
+      auto                  socket = socket_.lock();
+      byte_array::ByteArray header;
+      header.Resize(2 * sizeof(uint64_t));
+
+      auto cb = [this, self, socket, header, strand](std::error_code ec, std::size_t) {
+        shared_self_type selfLock = self.lock();
+        if (!selfLock) return;
+
+        if (!ec)
+        {
+          FETCH_LOG_DEBUG(LOGGING_NAME,"Read message header.");
+          ReadBody(header);
+        }
+        else
+        {
+          // We expect to get an ec here when the socked is closed via a post
+          SignalLeave();
+        }
+      };
+
+      if (socket)
+      {
+        assert(strand->running_in_this_thread());
+        asio::async_read(*socket, asio::buffer(header.pointer(), header.size()), strand->wrap(cb));
+        connected_ = true;
       }
       else
       {
-        // We expect to get an ec here when the socked is closed via a post
+        connected_ = false;
         SignalLeave();
       }
-    };
-
-    if (socket)
+    } catch (...)
     {
-      assert(strand->running_in_this_thread());
-      asio::async_read(*socket, asio::buffer(header.pointer(), header.size()), strand->wrap(cb));
-      connected_ = true;
-    }
-    else
-    {
-      connected_ = false;
-      SignalLeave();
+      FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in readheader");
+      throw;
     }
   }
 
   void ReadBody(byte_array::ByteArray const &header) noexcept
   {
-    auto strand = strand_.lock();
-    assert(strand->running_in_this_thread());
-
-    assert(header.size() >= sizeof(networkMagic_));
-    uint64_t magic = *reinterpret_cast<const uint64_t *>(header.pointer());
-    uint64_t size  = *reinterpret_cast<const uint64_t *>(header.pointer() + sizeof(uint64_t));
-
-    if (magic != networkMagic_)
+    try
     {
-      byte_array::ByteArray dummy;
-      SetHeader(dummy, 0);
-      dummy.Resize(16);
+      auto strand = strand_.lock();
+      assert(strand->running_in_this_thread());
 
-      FETCH_LOG_ERROR(LOGGING_NAME,"Magic incorrect during network read:\ngot:      ", ToHex(header),
-                          "\nExpected: ", ToHex(byte_array::ByteArray(dummy)));
-      return;
-    }
+      assert(header.size() >= sizeof(networkMagic_));
+      uint64_t magic = *reinterpret_cast<const uint64_t *>(header.pointer());
+      uint64_t size  = *reinterpret_cast<const uint64_t *>(header.pointer() + sizeof(uint64_t));
 
-    byte_array::ByteArray message;
-    message.Resize(size);
-
-    self_type self   = shared_from_this();
-    auto      socket = socket_.lock();
-    auto      cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
-      shared_self_type selfLock = self.lock();
-      if (!selfLock) return;
-
-      if (!ec)
+      if (magic != networkMagic_)
       {
-        SignalMessage(message);
-        ReadHeader();
+        byte_array::ByteArray dummy;
+        SetHeader(dummy, 0);
+        dummy.Resize(16);
+
+        FETCH_LOG_ERROR(LOGGING_NAME,"Magic incorrect during network read:\ngot:      ", ToHex(header),
+                        "\nExpected: ", ToHex(byte_array::ByteArray(dummy)));
+        return;
+      }
+
+      byte_array::ByteArray message;
+      message.Resize(size);
+
+      self_type self   = shared_from_this();
+      auto      socket = socket_.lock();
+      auto      cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
+        shared_self_type selfLock = self.lock();
+        if (!selfLock) return;
+
+        if (!ec)
+        {
+          SignalMessage(message);
+          ReadHeader();
+        }
+        else
+        {
+          FETCH_LOG_ERROR(LOGGING_NAME,"Reading body failed, dying: ", ec);
+          SignalLeave();
+        }
+      };
+
+      if (socket)
+      {
+        assert(strand->running_in_this_thread());
+        asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), strand->wrap(cb));
       }
       else
       {
-        FETCH_LOG_ERROR(LOGGING_NAME,"Reading body failed, dying: ", ec);
         SignalLeave();
       }
-    };
-
-    if (socket)
-    {
-      assert(strand->running_in_this_thread());
-      asio::async_read(*socket, asio::buffer(message.pointer(), message.size()), strand->wrap(cb));
     }
-    else
+    catch (...)
     {
-      SignalLeave();
+      FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in readbody");
+      throw;
     }
   }
 
@@ -349,7 +365,7 @@ private:
     // Only one thread can get past here at a time. Effectively a try_lock
     // except that we can't unlock a mutex in the callback (undefined behaviour)
     {
-      std::lock_guard<mutex_type> lock(can_write_mutex_);
+      lock_type lock(can_write_mutex_);
       if (can_write_)
       {
         can_write_ = false;
@@ -362,10 +378,10 @@ private:
 
     message_type buffer;
     {
-      std::lock_guard<mutex_type> lock(queue_mutex_);
+      lock_type lock(queue_mutex_);
       if (write_queue_.empty())
       {
-        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        lock_type lock(can_write_mutex_);
         can_write_ = true;
         return;
       }
@@ -383,7 +399,7 @@ private:
 
     auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len) {
       {
-        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        lock_type lock(can_write_mutex_);
         can_write_ = true;
       }
 

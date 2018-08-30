@@ -31,7 +31,7 @@ public:
   using work_item_type    = std::function<void()>;
 protected:
   using storage_type      = std::queue<work_item_type>;
-  using mutex_type        = std::mutex;
+  using mutex_type        = fetch::mutex::Mutex;
   using lock_type         = std::lock_guard<mutex_type>;
 
 public:
@@ -113,7 +113,7 @@ public:
 
 private:
   storage_type store_;
-  mutable mutex_type mutex_;
+  mutable mutex_type mutex_{__LINE__, __FILE__};
   std::atomic<bool> shutdown_{false};
 
   virtual work_item_type GetNextActual()

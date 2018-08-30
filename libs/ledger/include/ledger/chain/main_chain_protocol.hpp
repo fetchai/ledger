@@ -184,8 +184,8 @@ private:
       {
         //std::cout << std::string(byte_array::ToBase64(details.identity.identifier())) << std::endl;
         // std::endl;
-        return;
         //if (!details -> IsAnyMainChain())
+        return;
       }
 
       auto name = details->GetOwnerIdentityString();

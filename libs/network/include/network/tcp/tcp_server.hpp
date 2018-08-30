@@ -45,7 +45,8 @@ public:
   using connection_handle_type = typename AbstractConnection::connection_handle_type;
   using network_manager_type   = NetworkManager;
   using acceptor_type          = asio::ip::tcp::tcp::acceptor;
-  using mutex_type             = std::mutex;
+  using mutex_type             = fetch::mutex::Mutex;
+  using lock_type = std::lock_guard<mutex_type>;
 
   static constexpr char const *LOGGING_NAME = "TCPServer";
 
@@ -56,7 +57,7 @@ public:
   };
 
   TCPServer(uint16_t const &port, network_manager_type network_manager)
-    : network_manager_{network_manager}, port_{port}, request_mutex_{}
+    : network_manager_{network_manager}, port_{port}
   {
     LOG_STACK_TRACE_POINT;
 
@@ -67,7 +68,7 @@ public:
     std::shared_ptr<int> destruct_guard = destruct_guard_;
 
     auto closure = [this, destruct_guard] {
-      std::lock_guard<std::mutex> lock(startMutex_);
+      lock_type lock(startMutex_);
 
       if (!stopping_)
       {
@@ -106,7 +107,7 @@ public:
     LOG_STACK_TRACE_POINT;
 
     {
-      std::lock_guard<std::mutex> lock(startMutex_);
+      lock_type lock(startMutex_);
       stopping_ = true;
     }
 
@@ -145,7 +146,7 @@ public:
     LOG_STACK_TRACE_POINT;
     FETCH_LOG_DEBUG(LOGGING_NAME,"Got request from ", client);
 
-    std::lock_guard<mutex_type> lock(request_mutex_);
+    lock_type lock(request_mutex_);
     requests_.push_back({client, msg});
   }
 
@@ -164,7 +165,7 @@ public:
   bool has_requests()
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<mutex_type> lock(request_mutex_);
+    lock_type lock(request_mutex_);
     bool                        ret = (requests_.size() != 0);
     return ret;
   }
@@ -175,7 +176,7 @@ public:
   Request Top()
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<mutex_type> lock(request_mutex_);
+    lock_type lock(request_mutex_);
     Request                     top = requests_.front();
     return top;
   }
@@ -183,7 +184,7 @@ public:
   void Pop()
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<mutex_type> lock(request_mutex_);
+    lock_type lock(request_mutex_);
     requests_.pop_front();
   }
 
@@ -203,7 +204,7 @@ private:
   network_manager_type network_manager_;
   uint16_t             port_;
   std::deque<Request>  requests_;
-  mutex_type           request_mutex_;
+  mutex_type           request_mutex_{__LINE__, __FILE__};
 
   void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
   {
@@ -243,7 +244,7 @@ private:
   std::weak_ptr<AbstractConnectionRegister> connection_register_;
   std::shared_ptr<ClientManager>            manager_;
   std::weak_ptr<acceptor_type>              acceptor_;
-  std::mutex                                startMutex_;
+  mutex_type                                startMutex_{__LINE__, __FILE__};
   bool                                      stopping_ = false;
   bool                                      running_  = false;
 };

@@ -33,8 +33,8 @@ protected:
   using due_date_type     = std::chrono::time_point<std::chrono::system_clock>;
   using stored_work_item_type    = std::pair<due_date_type, work_item_type>;
   using store_type        = std::vector<stored_work_item_type>;
-  using mutex_type        = std::mutex;
-  using lock_type         = std::unique_lock<mutex_type>;
+  using mutex_type          = fetch::mutex::Mutex;
+  using lock_type           = std::unique_lock<mutex_type>;
 
 public:
   FutureWorkStore(const FutureWorkStore &rhs) = delete;
@@ -155,7 +155,7 @@ private:
 
   StoredWorkItemSorting    sorter_;
   store_type         store_;
-  mutable mutex_type mutex_;
+  mutable mutex_type mutex_{__LINE__, __FILE__};
   std::atomic<bool> shutdown_{false};
 };
 

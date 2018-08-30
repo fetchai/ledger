@@ -118,6 +118,8 @@ public:
 private:
   void ReadHeader()
   {
+    try{
+      
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (!socket_ptr) return;
@@ -143,11 +145,19 @@ private:
     };
 
     asio::async_read(*socket_ptr, asio::buffer(header_.bytes, 2 * sizeof(uint64_t)), cb);
-  }
+ 
+     } catch (...)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in readheader2");
+        throw;
+      }
+}
 
   void ReadBody()
   {
-    LOG_STACK_TRACE_POINT;
+    try
+    {
+      LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (!socket_ptr) return;
 
@@ -185,6 +195,11 @@ private:
     };
 
     asio::async_read(*socket_ptr, asio::buffer(message.pointer(), message.size()), cb);
+  } catch (...)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in readbody2");
+        throw;
+      }
   }
 
   void SetHeader(byte_array::ByteArray &header, uint64_t bufSize)

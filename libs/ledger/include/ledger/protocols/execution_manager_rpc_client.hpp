@@ -28,7 +28,7 @@ namespace ledger {
 class ExecutionManagerRpcClient : public ExecutionManagerInterface
 {
 public:
-  using service_type = std::unique_ptr<fetch::service::ServiceClient>;
+  using service_type = std::shared_ptr<fetch::service::ServiceClient>;
 
   // Construction / Destruction
   ExecutionManagerRpcClient(byte_array::ConstByteArray const &host, uint16_t const &port,

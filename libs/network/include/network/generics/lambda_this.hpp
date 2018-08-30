@@ -7,8 +7,8 @@
 template <class TARGET>
 class LambdaThis
 {
-  using mutex_type = std::mutex;
-  using lock_type  = std::unique_lock<std::mutex>;
+  using mutex_type = fetch::mutex::Mutex;
+  using lock_type  = std::unique_lock<mutex_type>;
 
 public:
   LambdaThis(TARGET *target) : original_(true), master_(new MasterRecord(target)) {}

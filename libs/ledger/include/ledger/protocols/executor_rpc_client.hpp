@@ -42,7 +42,7 @@ public:
 
     // create the connection
     connection_type connection{network_manager};
-    service_ = std::make_unique<service::ServiceClient>(connection, network_manager);
+    service_ = std::make_shared<service::ServiceClient>(connection, network_manager);
 
     connection.Connect(host, port);
   }

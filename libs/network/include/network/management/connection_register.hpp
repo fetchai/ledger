@@ -85,6 +85,7 @@ public:
 
     shared_service_client_type service =
         std::make_shared<service_client_type>(connection.connection_pointer().lock(), tm);
+    service -> Setup();
 
     auto wptr = connection.connection_pointer();
     auto ptr  = wptr.lock();

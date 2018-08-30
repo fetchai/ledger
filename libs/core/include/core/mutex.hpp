@@ -122,13 +122,25 @@ public:
   void lock()
   {
     LOG_STACK_TRACE_POINT;
-    lock_mutex_.lock();
-    locked_ = Clock::now();
-    lock_mutex_.unlock();
+    try
+    {
+      lock_mutex_.lock();
+      locked_ = Clock::now();
+      lock_mutex_.unlock();
+    }
+    catch (...) {
+      FETCH_LOG_ERROR(LOGGING_NAME,"Exception locking mutex1:", file_, " ", line_);
+      throw;
+    }
 
 
     LOG_EX(__FILE__, __LINE__)
-      std::mutex::lock();
+      try {
+        std::mutex::lock();
+      } catch (...) {
+        FETCH_LOG_ERROR(LOGGING_NAME,"Exception locking mutex:", file_, " ", line_);
+        throw;
+      }
     END_LOG_EX
 
     timeout_ = std::make_unique<MutexTimeout>(file_, line_);

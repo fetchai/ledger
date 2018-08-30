@@ -37,7 +37,7 @@ public:
 
     fetch::network::TCPClient connection(tm);
     connection.Connect(host, port);
-    client_ = std::make_unique<ServiceClient>(connection, tm);
+    client_ = std::make_shared<ServiceClient>(connection, tm);
 
     id_ = "my-fetch-id";
   }
