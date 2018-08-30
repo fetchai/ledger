@@ -27,16 +27,18 @@
 #include "math/kernels/standard_functions.hpp"
 
 #include "core/assert.hpp"
+#include "math/ndarray_broadcast.hpp"
+#include "vectorise/memory/range.hpp"
+#include <algorithm>
 #include <cassert>
+#include <numeric>
+#include <vector>
+
 //#include "math/linalg/matrix.hpp"
 //#include "math/ndarray.hpp"
 //#include "math/ndarray_iterator.hpp"
 //#include "math/shape_less_array.hpp"
-#include "math/ndarray_broadcast.hpp"
-#include "vectorise/memory/range.hpp"
-
-#include <algorithm>
-#include <vector>
+//#include <utility>
 
 namespace fetch {
 namespace math {
@@ -229,6 +231,12 @@ void BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask, NDArray<T, C> 
   assert(input_array.shape().size() >= mask.shape().size());
   assert(mask.shape().size() > 0);
 
+  // because tensorflow is row major by default - we have to flip the mask and array to get the same
+  // answer
+  // TODO(private issue 208)
+  input_array.MajorOrderFlip();
+  mask.MajorOrderFlip();
+
   if (mask.shape() == input_array.shape())
   {
     details::BooleanMaskImplementation(input_array, mask, ret);
@@ -244,7 +252,8 @@ void BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask, NDArray<T, C> 
     std::vector<std::size_t> new_shape;
     NDArray<T, C>            ret{new_shape};
 
-    // need to use broadcasting here.
+    // TODO(private issue 207): perhaps a little bit hacky to implement boolean mask as a
+    // multiplication
     Broadcast([](T x, T y) { return x * y; }, input_array, mask, ret);
   }
 }
@@ -1843,7 +1852,25 @@ void Product(ShapeLessArray<T, C> const &obj1, T &ret)
       typename ShapeLessArray<T, C>::vector_register_type { return a * b; });
 }
 template <typename T, typename C>
-void Product(ShapeLessArray<T, C> const &obj1)
+T Product(ShapeLessArray<T, C> const &obj1)
+{
+  T ret;
+  Product(obj1, ret);
+  return ret;
+}
+/**
+ * return the product of all elements in the vector
+ * @tparam T
+ * @param obj1
+ * @param ret
+ */
+template <typename T>
+void Product(std::vector<T> const &obj1, T &ret)
+{
+  ret = std::accumulate(std::begin(obj1), std::end(obj1), std::size_t(1), std::multiplies<>());
+}
+template <typename T>
+T Product(std::vector<T> const &obj1)
 {
   T ret;
   Product(obj1, ret);

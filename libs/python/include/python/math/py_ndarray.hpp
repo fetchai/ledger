@@ -542,10 +542,24 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              Softmax(array, ret);
              return ret;
            })
+      .def("major_order_flip", [](NDArray<T> &array) { array.MajorOrderFlip(); })
+      .def("major_order",
+           [](NDArray<T> &array) {
+             if (array.MajorOrder() == MAJOR_ORDER::column)
+             {
+               return "column";
+             }
+             else
+             {
+               return "row";
+             }
+           })
       .def("FromNumpy",
            [](NDArray<T> &s, py::array_t<T> arr) {
-             auto buf        = arr.request();
              using size_type = typename NDArray<T>::size_type;
+             auto buf        = arr.request();
+
+             T *ptr = (T *)buf.ptr;
 
              // get shape of the numpy array
              std::vector<std::size_t> shape;
@@ -556,56 +570,10 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
                shape.push_back(size_type(buf.shape[i]));
                stride.push_back(std::size_t(buf.strides[i]) / sizeof(T));
                index.push_back(0);
+               std::cout << stride[i] << std::endl;
              }
 
-             std::size_t total_size = NDArray<T>::SizeFromShape(shape);
-
-             // copy the data
-             T *ptr = (T *)buf.ptr;
-             s.Resize(total_size);
-             if (s.CanReshape(shape))
-             {
-               s.Reshape(shape);
-             }
-             else
-             {
-               throw py::index_error();
-             }
-
-             NDArrayIterator<T, typename NDArray<T>::container_type> it(s);
-
-             for (std::size_t j = 0; j < total_size; ++j)
-             {
-               // Computing numpy index
-               std::size_t i   = 0;
-               std::size_t pos = 0;
-               for (i = 0; i < shape.size(); ++i)
-               {
-                 pos += stride[i] * index[i];
-               }
-               if ((pos >= total_size))
-               {
-                 throw py::index_error();
-               }
-
-               // Updating
-               *it = ptr[pos];
-               ++it;
-
-               // Increamenting Numpy
-               i = 0;
-               ++index[i];
-               while (index[i] >= shape[i])
-               {
-                 index[i] = 0;
-                 ++i;
-                 if (i >= shape.size())
-                 {
-                   break;
-                 }
-                 ++index[i];
-               }
-             }
+             s.CopyFromNumpy(ptr, shape, stride, index);
            })
       .def("ToNumpy", [](NDArray<T> &s) {
         std::vector<std::size_t> shape  = s.shape();
@@ -620,38 +588,9 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
           index.push_back(0);
         }
 
-        // copy the data
-        T *                                                     ptr = (T *)buf.ptr;
-        NDArrayIterator<T, typename NDArray<T>::container_type> it(s);
+        T *ptr = (T *)buf.ptr;
 
-        for (std::size_t j = 0; j < s.size(); ++j)
-        {
-          // Computing numpy index
-          std::size_t i   = 0;
-          std::size_t pos = 0;
-          for (i = 0; i < shape.size(); ++i)
-          {
-            pos += stride[i] * index[i];
-          }
-
-          // Updating
-          ptr[pos] = *it;
-          ++it;
-
-          // Increamenting Numpy
-          i = 0;
-          ++index[i];
-          while (index[i] >= shape[i])
-          {
-            index[i] = 0;
-            ++i;
-            if (i >= shape.size())
-            {
-              break;
-            }
-            ++index[i];
-          }
-        }
+        s.CopyToNumpy(ptr, shape, stride, index);
 
         return result;
       });

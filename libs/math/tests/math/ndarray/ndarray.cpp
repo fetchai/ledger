@@ -116,3 +116,45 @@ TEST(ndarray, max_axis_tests)
     }
   }
 }
+
+TEST(ndarray, col_row_major_tets)
+{
+  // Nothing interesting happens in a 1D major order flip
+  std::vector<std::size_t> shape{10};
+  _A<double>               array1{shape};
+  for (std::size_t i = 0; i < array1.size(); ++i)
+  {
+    array1[i] = i;
+  }
+  array1.MajorOrderFlip();
+  for (std::size_t i = 0; i < array1.size(); ++i)
+  {
+    ASSERT_TRUE(array1[i] == i);
+  }
+  array1.MajorOrderFlip();
+  for (std::size_t i = 0; i < array1.size(); ++i)
+  {
+    ASSERT_TRUE(array1[i] == i);
+  }
+  array1.MajorOrderFlip();
+  for (std::size_t i = 0; i < array1.size(); ++i)
+  {
+    ASSERT_TRUE(array1[i] == i);
+  }
+
+  // major order is actually flipped for 2D and up - lets try a few flips
+  shape = {3, 4, 7, 6};
+  _A<double> array2{shape};
+  for (std::size_t i = 0; i < array2.size(); ++i)
+  {
+    array2[i] = i;
+  }
+
+  array1.Resize(array2.size());
+  array1.Reshape(array2.shape());
+  array1.Copy(array2);
+
+  array2.MajorOrderFlip();
+  array2.MajorOrderFlip();
+  ASSERT_TRUE(array1 == array2);
+}

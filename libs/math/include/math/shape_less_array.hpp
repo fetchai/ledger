@@ -914,7 +914,7 @@ public:
     return *this;
   }
 
-private:
+protected:
   container_type data_;
   std::size_t    size_ = 0;
 };

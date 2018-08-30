@@ -19,6 +19,7 @@
 
 //#include "math/ndarray.hpp"
 #include <algorithm>
+#include <cassert>
 #include <vector>
 //
 
