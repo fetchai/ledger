@@ -25,18 +25,19 @@ namespace crypto {
 
 class FNV : public StreamHasher
 {
-  using context_type = uint32_t;
+public:
+  using context_type = std::size_t;
 
-  static const std::size_t hash_size_;
-  uint32_t                 context_;
-
-  inline void reset();
+private:
+  context_type                 context_;
 
 public:
+
   using StreamHasher::Update;
   using StreamHasher::Final;
 
   FNV();
+
   void        Reset() override;
   bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
   void        Final(uint8_t *hash, std::size_t const &size) override;

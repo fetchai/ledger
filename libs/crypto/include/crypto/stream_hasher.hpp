@@ -33,6 +33,18 @@ public:
 
   bool                  Update(byte_array::ConstByteArray const &data);
   byte_array::ByteArray Final();
+  //template<typename T>
+  //void Final(meta::IfIsPodLike<T> &pod)
+  //{
+  //  Final(reinterpret_cast<uint8_t *>(&pod), sizeof(pod));
+  //}
+  template<typename T>
+  meta::IfIsPodLike<T> Final()
+  {
+    typename std::remove_const<T>::type pod;
+    Final(reinterpret_cast<uint8_t *>(&pod), sizeof(pod));
+    return pod;
+  }
 
   bool Update(std::string const &str)
   {
