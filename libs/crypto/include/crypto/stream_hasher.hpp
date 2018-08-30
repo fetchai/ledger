@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/meta/type_traits.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -32,6 +33,23 @@ public:
 
   bool                  Update(byte_array::ConstByteArray const &data);
   byte_array::ByteArray Final();
+
+  bool Update(std::string const &str)
+  {
+    return Update(reinterpret_cast<uint8_t const *>(str.data()), str.size());
+  }
+
+  template <typename T>
+  meta::IfIsPodLike<T, bool> Update(T const &pod)
+  {
+    return Update(reinterpret_cast<uint8_t const *>(&pod), sizeof(pod));
+  }
+
+  template <typename T>
+  meta::IfIsPodLike<T, bool> Update(std::vector<T> const &vect)
+  {
+    return Update(reinterpret_cast<uint8_t const *>(vect.data()), vect.size() * sizeof(T));
+  }
 
   virtual ~StreamHasher() = default;
 };

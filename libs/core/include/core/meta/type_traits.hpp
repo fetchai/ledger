@@ -40,5 +40,8 @@ using IfIsByteArrayLike = EnableIf<std::is_same<T, byte_array::ByteArray>::value
 template <typename T, typename R = T>
 using IfIsStdStringLike = EnableIf<std::is_same<T, std::string>::value, R>;
 
+template <typename T, typename R = T>
+using IfIsPodLike = EnableIf<std::is_pod<T>::value, R>;
+
 }  // namespace meta
 }  // namespace fetch
