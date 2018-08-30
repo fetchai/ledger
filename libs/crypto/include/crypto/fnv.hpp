@@ -28,20 +28,19 @@ class FNV : public StreamHasher
   using context_type = uint32_t;
 
   static const std::size_t hash_size_;
-  uint32_t context_;
+  uint32_t                 context_;
 
   inline void reset();
 
 public:
-
   using StreamHasher::Update;
   using StreamHasher::Final;
 
   FNV();
-  void            Reset() override;
-  bool            Update(uint8_t const *data_to_hash, std::size_t const &size) override;
-  void            Final(uint8_t *hash, std::size_t const &size) override;
-  std::size_t     hashSize() const override;
+  void        Reset() override;
+  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
+  void        Final(uint8_t *hash, std::size_t const &size) override;
+  std::size_t hashSize() const override;
 };
 
 struct CallableFNV

@@ -152,8 +152,8 @@ public:
     hasher.Reset();
     for (auto const &key : keys)
     {
-        hasher.Update(key);
-        hasher.Update(state_[key]);
+      hasher.Update(key);
+      hasher.Update(state_[key]);
     }
 
     return hasher.Final();

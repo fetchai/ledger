@@ -118,7 +118,7 @@ struct KeyValuePair
   {
     crypto::SHA256 hasher;
     hasher.Reset();
-      hasher.Update(data);
+    hasher.Update(data);
     hasher.Final(hash, N);
     value = val;
 

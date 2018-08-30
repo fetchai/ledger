@@ -117,7 +117,7 @@ public:
 
     hasher_type hash;
     hash.Reset();
-      hash.Update(buf.data());
+    hash.Update(buf.data());
     summary_.transaction_hash = hash.Final();
   }
 

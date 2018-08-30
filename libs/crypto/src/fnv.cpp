@@ -21,7 +21,7 @@
 namespace fetch {
 namespace crypto {
 
-const std::size_t FNV::hash_size_ { sizeof(context_type) };
+const std::size_t FNV::hash_size_{sizeof(context_type)};
 
 FNV::FNV() { reset(); }
 
@@ -42,7 +42,8 @@ bool FNV::Update(uint8_t const *data_to_hash, std::size_t const &size)
 
 void FNV::Final(uint8_t *hash, std::size_t const &size)
 {
-  if (size < hash_size_) throw std::runtime_error("size of input buffer is smaller than hash size.");
+  if (size < hash_size_)
+    throw std::runtime_error("size of input buffer is smaller than hash size.");
   hash[0] = uint8_t(context_);
   hash[1] = uint8_t(context_ >> 8);
   hash[2] = uint8_t(context_ >> 16);

@@ -37,11 +37,11 @@ public:
   {
     crypto::SHA256 hasher;
     hasher.Reset();
-      hasher.Update(header_);
-      hasher.Update(*this);
+    hasher.Update(header_);
+    hasher.Update(*this);
     digest_ = hasher.Final();
     hasher.Reset();
-      hasher.Update(digest_);
+    hasher.Update(digest_);
     digest_ = hasher.Final();
 
     return digest_ < target_;

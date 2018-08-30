@@ -39,7 +39,8 @@ bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
 
 void SHA256::Final(uint8_t *hash, std::size_t const &size)
 {
-  if (size < hash_size_) throw std::runtime_error("size of input buffer is smaller than hash size.");
+  if (size < hash_size_)
+    throw std::runtime_error("size of input buffer is smaller than hash size.");
   if (!SHA256_Final(hash, &context_)) throw std::runtime_error("could not finalize SHA256.");
 }
 
