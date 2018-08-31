@@ -68,7 +68,7 @@ TEST_F(SubscriptionManagerTests, SingleHandler)
   // register the message handler for the subscription
   uint32_t dispatches = 0;
   subscription->SetMessageHandler(
-    [&dispatches](Address const &, uint16_t, uint16_t, Packet::Payload const &) {
+    [&dispatches](Address const &, uint16_t, uint16_t, uint16_t, Packet::Payload const &) {
       ++dispatches;
     }
   );
@@ -97,12 +97,12 @@ TEST_F(SubscriptionManagerTests, MultipleHandlers)
   // register the message handler for the subscription
   uint32_t dispatches = 0;
   subscription1->SetMessageHandler(
-    [&dispatches](Address const &, uint16_t, uint16_t, Packet::Payload const &) {
+    [&dispatches](Address const &, uint16_t, uint16_t, uint16_t, Packet::Payload const &) {
       ++dispatches;
     }
   );
   subscription2->SetMessageHandler(
-    [&dispatches](Address const &, uint16_t, uint16_t, Packet::Payload const &) {
+    [&dispatches](Address const &, uint16_t, uint16_t, uint16_t, Packet::Payload const &) {
       ++dispatches;
     }
   );
@@ -139,12 +139,12 @@ TEST_F(SubscriptionManagerTests, MultipleDifferentHandlers)
   // register the message handler for the subscription
   uint32_t dispatches = 0;
   subscription1->SetMessageHandler(
-    [&dispatches](Address const &, uint16_t, uint16_t, Packet::Payload const &) {
+    [&dispatches](Address const &, uint16_t, uint16_t, uint16_t , Packet::Payload const &) {
       ++dispatches;
     }
   );
   subscription2->SetMessageHandler(
-    [&dispatches](Address const &, uint16_t, uint16_t, Packet::Payload const &) {
+    [&dispatches](Address const &, uint16_t, uint16_t, uint16_t , Packet::Payload const &) {
       ++dispatches;
     }
   );

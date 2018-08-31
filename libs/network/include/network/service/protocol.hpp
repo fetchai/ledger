@@ -73,7 +73,7 @@ public:
     }
   }
 
-  ~Protocol()
+  virtual ~Protocol()
   {
     for (std::size_t i = 0; i < 256; ++i)
     {
