@@ -27,8 +27,8 @@ namespace math {
 template <typename T, typename C>
 class NDArray;
 
-bool ShapeFromBroadcast(std::vector<std::size_t> const &a, std::vector<std::size_t> const &b,
-                        std::vector<std::size_t> &c)
+inline bool ShapeFromBroadcast(std::vector<std::size_t> const &a, std::vector<std::size_t> const &b,
+                               std::vector<std::size_t> &c)
 {
   c.resize(std::max(a.size(), b.size()));
 

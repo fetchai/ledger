@@ -22,11 +22,12 @@
 //#include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
 
-#include "math/kernels/concurrent_vm.hpp"
+#include "math/free_functions/free_functions.hpp"
+//#include "math/kernels/concurrent_vm.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "math/rectangular_array.hpp"
-#include "vectorise/threading/pool.hpp"
+//#include "vectorise/threading/pool.hpp"
 
 // using namespace fetch::memory;
 // using namespace fetch::threading;
@@ -87,13 +88,14 @@ TEST(ndarray, max_axis_tests)
   // set up the original array and the return array
   std::vector<std::size_t> new_shape{orig_shape};
   new_shape.erase(new_shape.begin() + axis);
-  _A<double> a = NDArray<double>(orig_shape);
+  _A<double> a{orig_shape};
+
   for (std::size_t i = 0; i < data_size; ++i)
   {
     a[i] = double(i);
   }
   _A<double> b{new_shape};
-  b = a.Max(std::size_t(axis));
+  Max<double, typename NDArray<double>::container_type>(a, std::size_t(axis), b);
 
   std::vector<double> temp_vector;
   for (std::size_t i = 0; i < new_shape[0]; ++i)

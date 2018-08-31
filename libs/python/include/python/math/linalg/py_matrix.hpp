@@ -53,56 +53,56 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
            [](Matrix<T> const &b, Matrix<T> const &c) {
              Matrix<T> a;
              a.LazyResize(b.height(), b.width());
-             a.Add(b, c);
+             Add(b, c, a);
              return a;
            })
       .def("__mul__",
            [](Matrix<T> const &b, Matrix<T> const &c) {
              Matrix<T> a;
              a.LazyResize(b.height(), b.width());
-             a.Multiply(b, c);
+             Multiply(b, c, a);
              return a;
            })
       .def("__sub__",
            [](Matrix<T> const &b, Matrix<T> const &c) {
              Matrix<T> a;
              a.LazyResize(b.height(), b.width());
-             a.Subtract(b, c);
+             Subtract(b, c, a);
              return a;
            })
       .def("__div__",
            [](Matrix<T> const &b, Matrix<T> const &c) {
              Matrix<T> a;
              a.LazyResize(b.height(), b.width());
-             a.Divide(b, c);
+             Divide(b, c, a);
              return a;
            })
       .def("__add__",
            [](Matrix<T> const &b, T const &c) {
              Matrix<T> a;
              a.LazyResize(b.height(), b.width());
-             a.Add(b, c);
+             Add(b, c, a);
              return a;
            })
       .def("__mul__",
            [](Matrix<T> const &b, T const &c) {
              Matrix<T> a;
              a.LazyResize(b.height(), b.width());
-             a.Multiply(b, c);
+             Multiply(b, c, a);
              return a;
            })
       .def("__sub__",
            [](Matrix<T> const &b, T const &c) {
              Matrix<T> a;
              a.LazyResize(b.height(), b.width());
-             a.Subtract(b, c);
+             Subtract(b, c, a);
              return a;
            })
       .def("__div__",
            [](Matrix<T> const &b, T const &c) {
              Matrix<T> a;
              a.LazyResize(b.height(), b.width());
-             a.Divide(b, c);
+             Divide(b, c, a);
              return a;
            })
       .def("__iadd__",
