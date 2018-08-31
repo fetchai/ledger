@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
 #include "storage/random_access_stack.hpp"
+#include "core/random/lfg.hpp"
 
 #include <gtest/gtest.h>
 #include <stack>
@@ -27,19 +27,15 @@ using namespace fetch::storage;
 class TestClass
 {
 public:
-  uint64_t    value1_ = 0;
-  uint8_t     value2_ = 0;
+  uint64_t value1_ = 0;
+  uint8_t  value2_ = 0;
 
-  bool operator==(TestClass const &rhs)
-  {
-    return value1_ == rhs.value1_ &&
-    value2_ == rhs.value2_;
-  }
+  bool operator==(TestClass const &rhs) { return value1_ == rhs.value1_ && value2_ == rhs.value2_; }
 };
 
 TEST(random_access_stack, basic_functionality)
 {
-  constexpr uint64_t testSize = 10000;
+  constexpr uint64_t                        testSize = 10000;
   fetch::random::LaggedFibonacciGenerator<> lfg;
   RandomAccessStack<TestClass>              stack;
   std::vector<TestClass>                    reference;
@@ -53,7 +49,7 @@ TEST(random_access_stack, basic_functionality)
   for (uint64_t i = 0; i < testSize; ++i)
   {
     {
-      uint64_t random = lfg();
+      uint64_t  random = lfg();
       TestClass temp;
       temp.value1_ = random;
       temp.value2_ = random & 0xFF;
@@ -62,8 +58,8 @@ TEST(random_access_stack, basic_functionality)
       reference.push_back(temp);
     }
 
-    ASSERT_TRUE(stack.Top() == reference[i]) <<
-      "Stack did not match reference stack at index " << i;
+    ASSERT_TRUE(stack.Top() == reference[i])
+        << "Stack did not match reference stack at index " << i;
   }
 
   // Test index
@@ -81,7 +77,7 @@ TEST(random_access_stack, basic_functionality)
   // Test setting
   for (uint64_t i = 0; i < testSize; ++i)
   {
-    uint64_t random = lfg();
+    uint64_t  random = lfg();
     TestClass temp;
     temp.value1_ = random;
     temp.value2_ = random & 0xFF;
@@ -131,19 +127,19 @@ TEST(random_access_stack, basic_functionality)
 
 TEST(random_access_stack, file_writing_and_recovery)
 {
-  constexpr uint64_t testSize = 10000;
+  constexpr uint64_t                        testSize = 10000;
   fetch::random::LaggedFibonacciGenerator<> lfg;
   std::vector<TestClass>                    reference;
 
   {
-    RandomAccessStack<TestClass>              stack;
+    RandomAccessStack<TestClass> stack;
 
     // Testing closures
     bool file_loaded  = false;
     bool file_flushed = false;
 
-    stack.OnFileLoaded([&file_loaded]{file_loaded = true;});
-    stack.OnBeforeFlush([&file_flushed]{file_flushed = true;});
+    stack.OnFileLoaded([&file_loaded] { file_loaded = true; });
+    stack.OnBeforeFlush([&file_flushed] { file_flushed = true; });
 
     stack.New("RAS_test_2.db");
 
@@ -155,7 +151,7 @@ TEST(random_access_stack, file_writing_and_recovery)
     // Fill with random numbers
     for (uint64_t i = 0; i < testSize; ++i)
     {
-      uint64_t random = lfg();
+      uint64_t  random = lfg();
       TestClass temp;
       temp.value1_ = random;
       temp.value2_ = random & 0xFF;
@@ -168,10 +164,9 @@ TEST(random_access_stack, file_writing_and_recovery)
     EXPECT_TRUE(file_flushed == true);
   }
 
-
   // Check values against loaded file
   {
-    RandomAccessStack<TestClass>              stack;
+    RandomAccessStack<TestClass> stack;
 
     stack.Load("RAS_test_2.db");
 

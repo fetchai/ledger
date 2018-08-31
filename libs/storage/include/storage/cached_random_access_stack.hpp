@@ -245,11 +245,11 @@ public:
 
 private:
   static constexpr std::size_t MAX_SIZE_BYTES = 10000;
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
+  event_handler_type           on_file_loaded_;
+  event_handler_type           on_before_flush_;
 
   // Underlying stack
-  stack_type       stack_;
+  stack_type stack_;
 
   // Cached items
   struct CachedDataItem
@@ -260,7 +260,7 @@ private:
     type     data;
   };
 
-  //TODO: (HUT) : not mutable
+  // TODO: (HUT) : not mutable
   mutable std::map<uint64_t, CachedDataItem> data_;
   uint64_t                                   objects_ = 0;
 
