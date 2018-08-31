@@ -49,6 +49,10 @@ public:
 
   operator bool() { return is_valid(); }
 
+  bool operator<(Identity const &other) const {
+    return identifier_ < other.identifier_;
+  }
+
   static Identity CreateInvalid()
   {
     Identity id;
