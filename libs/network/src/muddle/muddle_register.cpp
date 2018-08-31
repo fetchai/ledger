@@ -16,6 +16,28 @@ void MuddleRegister::VisitConnectionMap(MuddleRegister::ConnectionMapCallback co
   cb(connection_map_);
 }
 
+/**
+ * Broadcast data to all active connections
+ *
+ * @param data The data to be broadcast
+ */
+void MuddleRegister::Broadcast(ConstByteArray const &data) const
+{
+  FETCH_LOCK(connection_map_lock_);
+
+  // loop through all of our current connections
+  for (auto const &elem : connection_map_)
+  {
+    // ensure the connection is valid
+    auto connection = elem.second.lock();
+    if (connection)
+    {
+      // schedule sending of the data
+      connection->Send(data);
+    }
+  }
+}
+
 MuddleRegister::ConnectionPtr MuddleRegister::LookupConnection(ConnectionHandle handle) const
 {
   ConnectionPtr conn;

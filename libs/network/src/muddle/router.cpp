@@ -14,6 +14,25 @@ namespace muddle {
 
 namespace {
 
+/**
+ * Combine service, channel and counter into a single incde
+ *
+ * @param service The service id
+ * @param channel The channel id
+ * @param counter The message counter id
+ * @return The aggregated counter
+ */
+uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
+{
+  uint64_t id = 0;
+
+  id |= static_cast<uint64_t>(service) << 32u;
+  id |= static_cast<uint64_t>(channel) << 16u;
+  id |= static_cast<uint64_t>(counter);
+
+  return id;
+}
+
 bool CompareAddress(uint8_t const *a, uint8_t const *b)
 {
   bool equal = true;
@@ -238,6 +257,31 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
 }
 
 /**
+ * Subscribes to messages from network with a given service and channel
+ *
+ * @param service The identifier for the service
+ * @param channel The identifier for the channel
+ * @return A valid pointer if the successful, otherwise an invalid pointer
+ */
+MuddleEndpoint::SubscriptionPtr Router::Subscribe(uint16_t service, uint16_t channel)
+{
+  return registrar_.Register(service, channel);
+}
+
+/**
+ * Subscribes to messages from network with a given service and channel
+ *
+ * @param address The reference to the address
+ * @param service The identifier for the service
+ * @param channel The identifier for the channel
+ * @return A valid pointer if the successful, otherwise an invalid pointer
+ */
+MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16_t service, uint16_t channel)
+{
+  return registrar_.Register(address, service, channel);
+}
+
+/**
  * Internal: Add an entry into the routing table for the given address and handle
  *
  * @param handle The handle to the connection
@@ -332,6 +376,7 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
  */
 void Router::RoutePacket(PacketPtr packet, bool external)
 {
+  /// Step 1. Determine if we should drop this packet (for whatever reason)
   if (external)
   {
     // Handle TTL based routing timeout
@@ -347,13 +392,23 @@ void Router::RoutePacket(PacketPtr packet, bool external)
       FETCH_LOG_INFO(LOGGING_NAME, "Message has timed out");
       return;
     }
+
+    // if this packet is a broadcast echo we should no longer route this packet
+    if (packet->IsBroadcast() && IsEcho(*packet))
+      return;
   }
+
+  /// Step 2. Route and dispatch the packet
 
   // broadcast packet
   if (packet->IsBroadcast())
   {
-    // TODO(EJF): Implement replay cache
-    FETCH_LOG_WARN(LOGGING_NAME, "!!! Unable to route broadcast packet yet need to implement replay cache");
+    // serialize the packet to the buffer
+    serializers::ByteArrayBuffer buffer;
+    buffer << *packet;
+
+    // broadcast the data across the network
+    register_.Broadcast(buffer.data());
   }
   else
   {
@@ -429,28 +484,38 @@ void Router::DispatchPacket(PacketPtr packet)
 }
 
 /**
- * Subscribes to messages from network with a given service and channel
+ * Check to see if the packet packet is an echo
  *
- * @param service The identifier for the service
- * @param channel The identifier for the channel
- * @return A valid pointer if the successful, otherwise an invalid pointer
+ * @param packet The reference to the packet
+ * @param register_echo Signal if the echo should be registered (if not already in cache)
+ * @return true if the packet is an echo, otherwise false
  */
-MuddleEndpoint::SubscriptionPtr Router::Subscribe(uint16_t service, uint16_t channel)
+bool Router::IsEcho(Packet const &packet, bool register_echo)
 {
-  return registrar_.Register(service, channel);
-}
+  bool is_echo = true;
 
-/**
- * Subscribes to messages from network with a given service and channel
- *
- * @param address The reference to the address
- * @param service The identifier for the service
- * @param channel The identifier for the channel
- * @return A valid pointer if the successful, otherwise an invalid pointer
- */
-MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16_t service, uint16_t channel)
-{
-  return registrar_.Register(address, service, channel);
+  // combine the 3 fields together into a single index
+  uint64_t const index = Combine(packet.GetService(), packet.GetProtocol(), packet.GetMessageNum());
+
+  {
+    FETCH_LOCK(echo_cache_lock_);
+
+    // lookup if the echo is in the cache
+    auto it = echo_cache_.find(index);
+    if (it == echo_cache_.end())
+    {
+      // register the echo (in needed)
+      if (register_echo)
+      {
+        echo_cache_[index] = Clock::now();
+      }
+
+      is_echo = false;
+    }
+
+  }
+
+  return is_echo;
 }
 
 } // namespace p2p

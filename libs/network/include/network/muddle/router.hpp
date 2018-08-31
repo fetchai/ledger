@@ -8,6 +8,7 @@
 #include "network/muddle/subscription_registrar.hpp"
 
 #include <memory>
+#include <chrono>
 
 namespace fetch {
 namespace muddle {
@@ -74,6 +75,9 @@ private:
   using RoutingTable = std::unordered_map<Packet::RawAddress, AddressData>;
   using HandleMap = std::unordered_map<Handle, Packet::RawAddress>;
   using Mutex = mutex::Mutex;
+  using Clock = std::chrono::steady_clock;
+  using Timepoint = Clock::time_point;
+  using EchoCache = std::unordered_map<uint64_t, Timepoint>;
 
   void AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address);
 
@@ -85,6 +89,8 @@ private:
 
   void DispatchPacket(PacketPtr packet);
 
+  bool IsEcho(Packet const &packet, bool register_echo = true);
+
   Address const        address_;
   MuddleRegister const &register_;
   Dispatcher           &dispatcher_;
@@ -93,6 +99,9 @@ private:
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   RoutingTable  routing_table_;           ///< The map routing table from address to handle (Protected by routing_table_lock_)
   HandleMap     routing_table_handles_;   ///< The map of handles to address (Protected by routing_table_lock_)
+
+  mutable Mutex echo_cache_lock_{__LINE__, __FILE__};
+  EchoCache echo_cache_;
 };
 
 } // namespace p2p

@@ -2,6 +2,7 @@
 #define FETCH_P2P_MUDDLE_REGISTER_HPP
 
 #include "core/mutex.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "network/management/abstract_connection_register.hpp"
 
 #include <thread>
@@ -24,6 +25,8 @@ public:
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
   using ConnectionMap = std::unordered_map<ConnectionHandle, ConnectionPtr>;
   using ConnectionMapCallback = std::function<void(ConnectionMap const &)>;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using Mutex = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "MuddleReg";
 
@@ -42,20 +45,18 @@ public:
   void VisitConnectionMap(ConnectionMapCallback const &cb);
   /// @}
 
+  void Broadcast(ConstByteArray const &data) const;
   ConnectionPtr LookupConnection(ConnectionHandle handle) const;
 
 protected:
 
   /// @name Connection Event Handlers
   /// @{
-  void Enter(std::weak_ptr<network::AbstractConnection> const &ptr) override;
+  void Enter(ConnectionPtr const &ptr) override;
   void Leave(connection_handle_type id) override;
   /// @}
 
 private:
-
-  using Mutex = mutex::Mutex;
-  using Lock = std::lock_guard<Mutex>;
 
   mutable Mutex connection_map_lock_{__LINE__, __FILE__};
   ConnectionMap connection_map_;
