@@ -14,21 +14,21 @@ class MilliTimer
 {
 public:
 
+  using Clock = std::chrono::steady_clock;
+  using Timepoint = Clock::time_point;
+
   static constexpr char const *LOGGING_NAME = "MilliTimer";
 
-  MilliTimer(const MilliTimer &rhs) = delete;
+  MilliTimer(MilliTimer const &rhs) = delete;
   MilliTimer(MilliTimer &&rhs)      = delete;
-  MilliTimer &operator=(const MilliTimer &rhs) = delete;
+  MilliTimer &operator=(MilliTimer const &rhs) = delete;
   MilliTimer &operator=(MilliTimer &&rhs)             = delete;
-  bool        operator==(const MilliTimer &rhs) const = delete;
-  bool        operator<(const MilliTimer &rhs) const  = delete;
 
-  explicit MilliTimer(const char *name, int64_t threshold = 100)
+  explicit MilliTimer(std::string name, int64_t threshold = 100)
+    : start_(Clock::now())
+    , name_(std::move(name))
+    , threshold_(threshold)
   {
-    start_     = std::chrono::steady_clock::now();
-    name_      = name;
-    threshold_ = threshold;
-
     if (!threshold)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME,"Starting millitimer for ", name_);
@@ -37,8 +37,10 @@ public:
 
   virtual ~MilliTimer()
   {
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::steady_clock::now() - start_);
+    auto const duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        Clock::now() - start_
+    );
+
     if (duration.count() > threshold_)
     {
       FETCH_LOG_WARN(LOGGING_NAME,"Too many milliseconds: ", duration.count(), " at ", name_);
@@ -52,9 +54,9 @@ public:
 private:
   // members here.
 
-  std::chrono::steady_clock::time_point start_;
-  std::string                           name_;
-  int64_t                               threshold_;
+  Timepoint   start_;
+  std::string name_;
+  int64_t     threshold_;
 };
 
 }  // namespace generics

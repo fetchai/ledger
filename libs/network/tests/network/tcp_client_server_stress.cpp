@@ -47,9 +47,11 @@ fetch::mutex::Mutex       mutexToServer_;
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t port, NetworkManager nmanager) : TCPServer(port, nmanager) {}
-
-  ~Server() {}
+  Server(uint16_t port, NetworkManager nmanager) : TCPServer(port, nmanager)
+  {
+    Start();
+  }
+  ~Server() = default;
 
   void PushRequest(connection_handle_type client, message_type const &msg) override
   {
@@ -99,7 +101,7 @@ void TestCase0(std::string host, uint16_t port)
   for (std::size_t index = 0; index < 20; ++index)
   {
     NetworkManager nmanager(N);
-    Server         server(port, nmanager);
+    Server server(port, nmanager);
     nmanager.Start();
   }
 
@@ -135,7 +137,6 @@ void TestCase2(std::string host, uint16_t port)
     NetworkManager nmanager(N);
     nmanager.Start();
     Server server(port, nmanager);
-
     waitUntilConnected(host, port);
 
     Client client(host, port, nmanager);

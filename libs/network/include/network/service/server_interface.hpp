@@ -36,9 +36,9 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ServiceServerInterface";
 
-  virtual ~ServiceServerInterface() {}
+  virtual ~ServiceServerInterface() = default;
 
-  void Add(protocol_handler_type const &name,
+  virtual void Add(protocol_handler_type const &name,
            Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
   {
     LOG_STACK_TRACE_POINT;
@@ -85,8 +85,8 @@ protected:
   {
     LOG_STACK_TRACE_POINT;
     bool ret = true;
-    serializer_type               result;
-    Promise::promise_counter_type id;
+    serializer_type result;
+    PromiseCounter  id;
 
     try
     {
@@ -199,7 +199,7 @@ private:
       + std::to_string(connection_handle)
       ;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"ServerInterface::ExecuteCall " + identifier);
+    FETCH_LOG_INFO(LOGGING_NAME,"ServerInterface::ExecuteCall " + identifier);
 
     auto protocol_pointer = members_[protocol_number];
     if (protocol_pointer == nullptr)

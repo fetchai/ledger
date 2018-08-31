@@ -34,6 +34,7 @@ namespace fetch {
 
 namespace network {
 
+// TODO(EJF): TCPServer updates
 class NetworkNodeCore
 {
 public:
@@ -72,7 +73,8 @@ public:
     rpcPort_   = rpcPort;
     rpcServer_ = std::make_shared<rpc_server_type>(rpcPort, nm_);
 
-    httpServer_ = std::make_shared<fetch::http::HTTPServer>(httpPort, nm_);
+    httpServer_ = std::make_shared<fetch::http::HTTPServer>(nm_);
+    httpServer_->Start(httpPort);
 
     // Add middleware to the HTTP server - allow requests from any address,
     // and print requests to the terminal in colour

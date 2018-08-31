@@ -51,7 +51,7 @@ public:
   {
     auto result = service_->Call(protocols::FetchProtocols::EXECUTOR, ExecutorRpcProtocol::EXECUTE,
                                  hash, slice, lanes);
-    return result.As<Status>();
+    return result->As<Status>();
   }
 
   bool is_alive() const { return service_->is_alive(); }

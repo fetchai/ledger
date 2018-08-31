@@ -52,7 +52,7 @@ public:
 
   virtual ~AbstractConnectionRegister() = default;
 
-  virtual void Leave(connection_handle_type const &id)          = 0;
+  virtual void Leave(connection_handle_type id)                 = 0;
   virtual void Enter(std::weak_ptr<AbstractConnection> const &) = 0;
 
   shared_service_client_type GetService(connection_handle_type const &i)

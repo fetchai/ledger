@@ -42,7 +42,9 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ClientManager";
 
-  ClientManager(AbstractNetworkServer &server) : server_(server), clients_mutex_(__LINE__, __FILE__)
+  ClientManager(AbstractNetworkServer &server)
+    : server_(server)
+    , clients_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
   }

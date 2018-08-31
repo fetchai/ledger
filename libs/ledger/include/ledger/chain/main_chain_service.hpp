@@ -129,9 +129,20 @@ public:
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     this->Add(CONTROLLER, controller_protocol_.get());
 
-    thread_pool_->Start();
+  }
 
+  void Start()
+  {
+    TCPServer::Start();
+    thread_pool_->Start();
     mainchain_protocol_->Start();
+  }
+
+  void Stop()
+  {
+    thread_pool_->Stop();
+    mainchain_protocol_->Stop();
+    TCPServer::Stop();
   }
 
   void SetOwnerIdentity(const crypto::Identity &identity)

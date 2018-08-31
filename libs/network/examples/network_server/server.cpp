@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
 
     Server s(uint16_t(std::atoi(argv[1])), tmanager);
     tmanager.Start();
+    s.Start();
 
     std::cout << "Press Ctrl+C to quit" << std::endl;
 
@@ -56,6 +57,8 @@ int main(int argc, char *argv[])
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+
+    s.Stop();
     tmanager.Stop();
   }
   catch (std::exception &e)

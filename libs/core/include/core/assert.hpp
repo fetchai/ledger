@@ -17,8 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logger.hpp"
+
 #include <iostream>
 #include <stdexcept>
+
 namespace fetch {
 namespace assert {
 namespace details {

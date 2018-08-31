@@ -70,7 +70,7 @@ public:
     }
 
   protected:
-    bool DeliverRequest(network::message_type const &msg) override
+    bool DeliverRequest(network::message_type const &msg, protocol_handler_type, function_handler_type) override
     {
       server_->Send(client_, msg);
       return true;

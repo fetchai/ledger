@@ -148,8 +148,8 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
     auto p = client.Call(SERVICE, SETUP, payload, txPerCall, isMaster);
 
     FETCH_LOG_PROMISE();
-    p.Wait();
-    p.As(setupPayload);
+    p->Wait();
+    p->As(setupPayload);
   }
 
   if (0 == setupPayload)
@@ -173,8 +173,8 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
       auto p1 = client.Call(SERVICE, PULL);
 
       FETCH_LOG_PROMISE();
-      p1.Wait();
-      p1.As(data);
+      p1->Wait();
+      p1->As(data);
       txData += txPerCall;
       rpcCalls++;
     }
@@ -190,7 +190,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
       auto p1 = client.Call(SERVICE, PUSH, TestData);
 
       FETCH_LOG_PROMISE();
-      p1.Wait();
+      p1->Wait();
       txData += txPerCall;
       rpcCalls++;
     }

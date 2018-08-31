@@ -33,4 +33,5 @@ add_fetch_test(peer_test fetch-network peer_test.cpp)
 target_link_libraries(peer_test PRIVATE gtest gtest_main)
 
 add_fetch_gtest(p2ptrust_test fetch-network p2ptrust)
+add_fetch_gtest(muddle_test fetch-network muddle)
 

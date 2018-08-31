@@ -56,35 +56,12 @@ public:
     view_type view;
   };
 
-  HTTPServer(uint16_t const &port, network_manager_type const &network_manager)
+  explicit HTTPServer(network_manager_type const &network_manager)
     : eval_mutex_(__LINE__, __FILE__)
     , networkManager_(network_manager)
     , request_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
-
-    std::shared_ptr<manager_type> manager   = manager_;
-    std::weak_ptr<socket_type> &  socRef    = socket_;
-    std::weak_ptr<acceptor_type> &accepRef  = acceptor_;
-    network_manager_type &        threadMan = networkManager_;
-
-    networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
-      FETCH_LOG_INFO(LOGGING_NAME,"Starting HTTPServer on http://127.0.0.1:", port);
-
-      // TODO(issue 28) : fix this hack
-      network_manager_type tm  = threadMan;
-      auto                 soc = threadMan.CreateIO<socket_type>();
-
-      auto accep =
-          threadMan.CreateIO<acceptor_type>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
-
-      // allow initiating class to post closes to these
-      socRef   = soc;
-      accepRef = accep;
-
-      FETCH_LOG_DEBUG(LOGGING_NAME,"Starting HTTPServer Accept");
-      HTTPServer::Accept(soc, accep, manager);
-    });
   }
 
   virtual ~HTTPServer()
@@ -111,6 +88,37 @@ public:
     });
 
     manager_.reset();
+  }
+
+  void Start(uint16_t port)
+  {
+    std::shared_ptr<manager_type> manager   = manager_;
+    std::weak_ptr<socket_type> &  socRef    = socket_;
+    std::weak_ptr<acceptor_type> &accepRef  = acceptor_;
+    network_manager_type &        threadMan = networkManager_;
+
+    networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
+      FETCH_LOG_INFO(LOGGING_NAME,"Starting HTTPServer on http://127.0.0.1:", port);
+
+      // TODO(issue 28) : fix this hack
+      network_manager_type tm  = threadMan;
+      auto                 soc = threadMan.CreateIO<socket_type>();
+
+      auto accep =
+             threadMan.CreateIO<acceptor_type>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+
+      // allow initiating class to post closes to these
+      socRef   = soc;
+      accepRef = accep;
+
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Starting HTTPServer Accept");
+      HTTPServer::Accept(soc, accep, manager);
+    });
+  }
+
+  void Stop()
+  {
+
   }
 
   void PushRequest(handle_type client, HTTPRequest req) override

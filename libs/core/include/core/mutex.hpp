@@ -62,7 +62,7 @@ class DebugMutex : public AbstractMutex
   class MutexTimeout
   {
   public:
-    static constexpr std::size_t DEFAULT_TIMEOUT_MS = 5000;
+    static constexpr std::size_t DEFAULT_TIMEOUT_MS = 500000000;
 
     MutexTimeout(std::string filename, int const &line, std::size_t timeout_ms = DEFAULT_TIMEOUT_MS)
       : filename_(std::move(filename)), line_(line)
@@ -183,5 +183,11 @@ using Mutex = ProductionMutex;
 #else
 using Mutex = DebugMutex;
 #endif
+
+#define FETCH_JOIN_IMPL(x, y) x ## y
+#define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
+
+#define FETCH_LOCK(lockable) std::lock_guard<fetch::mutex::Mutex> FETCH_JOIN(mutex_locked_on_line, __LINE__) (lockable)
+
 }  // namespace mutex
 }  // namespace fetch

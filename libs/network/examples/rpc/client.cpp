@@ -46,7 +46,7 @@ int main()
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  std::cout << client.Call(MYPROTO, GREET, "Fetch").As<std::string>() << std::endl;
+  std::cout << client.Call(MYPROTO, GREET, "Fetch")->As<std::string>() << std::endl;
 
   auto px = client.Call(MYPROTO, SLOWFUNCTION, "Greet");
 
@@ -56,16 +56,16 @@ int main()
   auto p3 = client.Call(MYPROTO, SLOWFUNCTION);
   //  client.WithDecorators(aes, ... ).Call( MYPROTO,SLOWFUNCTION, 4, 3 );
 
-  if (!p1.is_fulfilled()) std::cout << "p1 is not yet fulfilled" << std::endl;
+  if (p1->IsWaiting()) std::cout << "p1 is not yet fulfilled" << std::endl;
 
   FETCH_LOG_PROMISE();
-  p1.Wait();
+  p1->Wait();
 
   // Converting to a type implicitly invokes Wait (as is the case for p2)
-  std::cout << "Result is: " << int(p1) << " " << int(p2) << std::endl;
+  std::cout << "Result is: " << p1->As<int>() << " " << p2->As<int>() << std::endl;
   try
   {
-    p3.Wait();
+    p3->Wait();
   }
   catch (fetch::serializers::SerializableException const &e)
   {
@@ -76,7 +76,7 @@ int main()
   {
     // We called SlowFunction with wrong parameters
     // It will throw an exception
-    std::cout << "Second result: " << int(px) << std::endl;
+    std::cout << "Second result: " << px->As<int>() << std::endl;
   }
   catch (fetch::serializers::SerializableException const &e)
   {
@@ -94,19 +94,19 @@ int main()
   }
   fetch::logger.Highlight("DONE!");
 
-  std::cout << "Waiting for last promise: " << promises.back().id() << std::endl;
+  std::cout << "Waiting for last promise: " << promises.back()->id() << std::endl;
 
   FETCH_LOG_PROMISE();
-  promises.back().Wait(false);
+  promises.back()->Wait(false);
 
   std::size_t failed = 0, not_fulfilled = 0;
   for (auto &p : promises)
   {
-    if ((p.has_failed()) || (p.is_connection_closed()))
+    if (p->IsFailed())
     {
       ++failed;
     }
-    if (!p.is_fulfilled())
+    if (p->IsWaiting())
     {
       ++not_fulfilled;
     }
@@ -144,7 +144,7 @@ int xmain()
   auto promise = client.Call(MYPROTO, SLOWFUNCTION, 2, 7);
 
   FETCH_LOG_PROMISE();
-  if (!promise.Wait(500))
+  if (!promise->Wait(500, true))
   {  // wait 500 ms for a response
     std::cout << "no response from node: " << client.is_alive() << std::endl;
     promise = client.Call(MYPROTO, SLOWFUNCTION, 2, 7);

@@ -84,9 +84,26 @@ public:
     if (running_) return;
     running_ = true;
     thread_pool_->Post([this]() { this->IdleUntilPeers(); });
+
+#if 0
+    for (auto &feed : feeds_)
+    {
+      feed->Start();
+    }
+#endif
   }
 
-  void Stop() { running_ = false; }
+  void Stop()
+  {
+    running_ = false;
+
+#if 0
+    for (auto &feed : feeds_)
+    {
+      feed->Stop();
+    }
+#endif
+  }
 
   void PublishBlock(BlockType const &blk)
   {
@@ -184,6 +201,7 @@ private:
                                              subscription_handler_function);
       }
 
+#if 0
       // TODO(EJF): ?????
       if (0)
       {
@@ -198,6 +216,7 @@ private:
             this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
           });
       }
+#endif
     });
 
     if (running_)
@@ -296,10 +315,11 @@ private:
 
               auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_HEADER, blkhash);
               //auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_B, ToBase64(blkhash));
-              prom.Then([this, prom](){
+              prom->WithHandlers()
+                .Then([this, prom](){
                   LOG_STACK_TRACE_POINT;
                   std::pair<bool, block_type> result;
-                  prom.As(result);
+                  prom->As(result);
                   if (result.first)
                   {
                     this -> pending_blocks_.Add(result.second);
@@ -310,8 +330,8 @@ private:
                   {
                     FETCH_LOG_ERROR(LOGGING_NAME,"ERK dint have block!");
                   }
-                });
-              prom.Else([blkhash](){
+                })
+                .Catch([blkhash](){
                   FETCH_LOG_ERROR(LOGGING_NAME,"Something went wrong: ", typeid(blkhash).name() );
                 });
             });

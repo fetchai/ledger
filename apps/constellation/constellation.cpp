@@ -16,14 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
 
 #include "constellation.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "network/p2pservice/explore_http_interface.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 
+#include <memory>
 
 namespace fetch {
 
@@ -49,32 +51,22 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
 
   // create the network manager
   network_manager_ = std::make_unique<fetch::network::NetworkManager>(num_network_threads);
-  network_manager_->Start();  // needs to be started
+
+  auto const p2p_identity = certificate->identity();
 
   // Creating P2P instance
-  p2p_ = std::make_unique<p2p::P2PService>(std::move(certificate), p2p_port_, *network_manager_);
+  p2p_ = std::make_unique<muddle::Muddle>(std::move(certificate), *network_manager_);
 
-  auto profile = p2p_->Profile();
-  auto my_name = std::string(byte_array::ToBase64(profile.identity.identifier()));
+//  auto profile = p2p_->Profile();
+//  auto my_name = std::string(byte_array::ToBase64(profile.identity.identifier()));
 
-
-
+#if 0
   // setup the storage service
-  storage_service_.Setup(db_prefix, num_lanes, lane_port_start_, *network_manager_, false);
+  storage_service_.Setup(db_prefix, num_lanes, lane_port_start_, *network_manager_);
 
   // create the aggregate storage client
   storage_ = std::make_shared<ledger::StorageUnitClient>(*network_manager_);
-  for (std::size_t i = 0; i < num_lanes; ++i)
-  {
-    // We connect to the lanes
-    crypto::Identity ident = storage_->AddLaneConnection<connection_type>(
-        interface_address, static_cast<uint16_t>(lane_port_start_ + i));
 
-    // ... and make the lane details available for the P2P module
-    // to promote
-    p2p_->AddLane(static_cast<uint32_t>(i), interface_address,
-                  static_cast<uint16_t>(lane_port_start_ + i), ident);
-  }
 
   // create the execution manager (and its executors)
   execution_manager_ =
@@ -84,20 +76,16 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
         return executor;
       });
 
-  execution_manager_->Start();
-
   // Main chain
-  main_chain_service_ = std::make_unique<chain::MainChainService>(db_prefix, main_chain_port_,
-                                                                  *network_manager_.get(), my_name);
-
-  main_chain_service_->SetOwnerIdentity(profile.identity);
+  main_chain_service_ = std::make_unique<chain::MainChainService>(
+    db_prefix,
+    main_chain_port_,
+    *network_manager_.get(),
+    static_cast<std::string>(p2p_identity.identifier()));
+  main_chain_service_->SetOwnerIdentity(p2p_identity);
 
   // Mainchain remote
   main_chain_remote_ = std::make_unique<chain::MainChainRemoteControl>();
-  client_type client(*network_manager_.get());
-  client.Connect(interface_address, main_chain_port_);
-  shared_service_type service = std::make_shared<service_type>(client, *network_manager_.get());
-  main_chain_remote_->SetClient(service);
 
   // Mining and block coordination
   block_coordinator_  = std::make_unique<chain::BlockCoordinator>(*main_chain_service_->mainchain(),
@@ -113,31 +101,27 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
 
   tx_processor_ = std::make_unique<ledger::TransactionProcessor>(*storage_, *transaction_packer_);
 
-  // Now that the execution manager is created, can start components that need
-  // it to exist
-  block_coordinator_->start();
-  main_chain_miner_->start();
-
   // define the list of HTTP modules to be used
   http_modules_ = {
       std::make_shared<p2p::P2PHttpInterface>(main_chain_service_->mainchain(),
                                               main_chain_service_.get(),
                                               main_chain_service_->mainchainprotocol()),
       std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
-      std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_),
-      std::make_shared<p2p::ExploreHttpInterface>(p2p_.get(), main_chain_service_->mainchain())};
+      std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_)//,
+      //std::make_shared<p2p::ExploreHttpInterface>(p2p_.get(), main_chain_service_->mainchain())
+  };
 
   // create and register the HTTP modules
-  http_ = std::make_unique<http::HTTPServer>(http_port_, *network_manager_);
+  http_ = std::make_unique<http::HTTPServer>(*network_manager_);
   http_->AddMiddleware(http::middleware::AllowOrigin("*"));
   for (auto const &module : http_modules_)
   {
     http_->AddModule(*module);
   }
-}
 
-void Constellation::Run(peer_list_type const &initial_peers)
-{
+#endif
+
+#if 0
   p2p_->AddMainChain(interface_address_, static_cast<uint16_t>(main_chain_port_));
 
   // Adding handle for the orchestration
@@ -145,8 +129,9 @@ void Constellation::Run(peer_list_type const &initial_peers)
     // std::cout << "MAKING CALL ::: " << std::endl;
 
     FETCH_LOG_INFO(LOGGING_NAME,"OnPeerUpdateProfile: ", byte_array::ToBase64(ep.identity.identifier()),
-                       " mainchain?: ", ep.is_mainchain.load(), " lane:? ", ep.is_lane.load());
+                   " mainchain?: ", ep.is_mainchain.load(), " lane:? ", ep.is_lane.load());
 
+#if 0
     if (ep.is_mainchain)
     {
       if (main_chain_remote_)
@@ -171,21 +156,71 @@ void Constellation::Run(peer_list_type const &initial_peers)
         FETCH_LOG_WARN(LOGGING_NAME,"Storage is not currently available");
       }
     }
+#endif
   });
 
-  p2p_->Start();
+#endif
 
-  // Make the initial p2p connections
-  // Note that we first connect after setting up the lanes to prevent that nodes
-  // will be too fast in trying to set up lane connections.
-  for (auto const &peer : initial_peers)
+}
+
+void Constellation::Run(peer_list_type const &initial_peers)
+{
+  network_manager_->Start();
+
+#if 0
+  // start the storage servers
+  storage_service_.Start();
+
+  // start the connection to the main chain
+  client_type client(*network_manager_.get());
+  client.Connect(interface_address_, main_chain_port_);
+  shared_service_type service = std::make_shared<service_type>(client, *network_manager_.get());
+  main_chain_remote_->SetClient(service);
+
+  execution_manager_->Start();
+
+  // Now that the execution manager is created, can start components that need
+  // it to exist
+  block_coordinator_->Start();
+  main_chain_miner_->Start();
+
+  for (std::size_t i = 0; i < num_lanes_; ++i)
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Connecting to ", peer.address(), ":", peer.port());
+    // We connect to the lanes
+    crypto::Identity ident = storage_->AddLaneConnection<connection_type>(
+      interface_address_, static_cast<uint16_t>(lane_port_start_ + i));
 
-    LOG_STACK_TRACE_POINT;
-
-    p2p_->Connect(peer.address(), peer.port());
+    // ... and make the lane details available for the P2P module
+    // to promote
+    p2p_->AddLane(static_cast<uint32_t>(i), interface_address_,
+                  static_cast<uint16_t>(lane_port_start_ + i), ident);
   }
+
+#endif
+
+  // lastly fire up the P2P server
+  p2p_->Start({p2p_port_}, initial_peers);
+
+#if 0
+  // lastly start accepting HTTP connections
+  http_->Start(http_port_);
+#endif
+
+#if 0
+//  muddle::rpc::Server server{p2p_->AsEndpoint()};
+//
+  if (http_port_ == 8000)
+  {
+    std::this_thread::sleep_for(std::chrono::seconds{5});
+
+    auto addr = byte_array::FromBase64(
+      "NHvP8gCFp/ARywR/+HwWdVH8qbXRDqKrbh1pCe2xDjAOM4u2gqcNn3IseHgmRu7pBrSm1sN5N99WAxo+9KnvNw==");
+
+
+
+  }
+
+#endif
 
   // monitor loop
   while (active_)
@@ -193,6 +228,9 @@ void Constellation::Run(peer_list_type const &initial_peers)
     FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
     std::this_thread::sleep_for(std::chrono::seconds{5});
   }
+
+  // tear down all the instances
+
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Exiting...");
 }

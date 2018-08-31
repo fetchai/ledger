@@ -48,7 +48,7 @@ public:
       auto &rpc = service_->ServiceInterfaceOf(id);
 
       std::string s =
-          rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val).As<std::string>();
+          rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val)->As<std::string>();
       if (s != "")
       {
         ret.push_back(s);

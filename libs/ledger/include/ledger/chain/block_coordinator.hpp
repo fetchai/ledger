@@ -61,7 +61,7 @@ public:
     }
   }
 
-  void start()
+  void Start()
   {
     stop_ = false;
 

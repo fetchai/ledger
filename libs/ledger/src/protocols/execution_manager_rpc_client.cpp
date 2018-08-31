@@ -42,7 +42,7 @@ ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(block_type 
   auto result = service_->Call(fetch::protocols::FetchProtocols::EXECUTION_MANAGER,
                                ExecutionManagerRpcProtocol::EXECUTE, block);
 
-  return result.As<Status>();
+  return result->As<Status>();
 }
 
 ExecutionManagerInterface::block_digest_type ExecutionManagerRpcClient::LastProcessedBlock()
@@ -50,7 +50,7 @@ ExecutionManagerInterface::block_digest_type ExecutionManagerRpcClient::LastProc
   auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
                                ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
 
-  return result.As<block_digest_type>();
+  return result->As<block_digest_type>();
 }
 
 bool ExecutionManagerRpcClient::IsActive()
@@ -58,7 +58,7 @@ bool ExecutionManagerRpcClient::IsActive()
   auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
                                ExecutionManagerRpcProtocol::IS_ACTIVE);
 
-  return result.As<bool>();
+  return result->As<bool>();
 }
 
 bool ExecutionManagerRpcClient::IsIdle()
@@ -66,7 +66,7 @@ bool ExecutionManagerRpcClient::IsIdle()
   auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
                                ExecutionManagerRpcProtocol::IS_IDLE);
 
-  return result.As<bool>();
+  return result->As<bool>();
 }
 
 bool ExecutionManagerRpcClient::Abort()
@@ -74,7 +74,7 @@ bool ExecutionManagerRpcClient::Abort()
   auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
                                ExecutionManagerRpcProtocol::ABORT);
 
-  return result.As<bool>();
+  return result->As<bool>();
 }
 
 }  // namespace ledger

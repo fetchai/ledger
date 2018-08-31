@@ -89,9 +89,9 @@ public:
         auto p = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::PING);
 
         FETCH_LOG_PROMISE();
-        if (p.Wait(1000, false))
+        if (p->Wait(1000, false))
         {
-          if (p.As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
+          if (p->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
           {
             connection_timeout = true;
           }
@@ -118,7 +118,7 @@ public:
     auto p3 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
 
     FETCH_LOG_PROMISE();
-    if ((!p1.Wait(1000)) || (!p2.Wait(1000)) || (!p3.Wait(1000)))
+    if ((!p1->Wait(1000, true)) || (!p2->Wait(1000, true)) || (!p3->Wait(1000, true)))
     {
       FETCH_LOG_WARN(LOGGING_NAME,"Client timeout when trying to get identity details.");
       client->Close();
@@ -126,8 +126,8 @@ public:
       return crypto::InvalidIdentity();
     }
 
-    lane_type lane        = p1.As<lane_type>();
-    lane_type total_lanes = p2.As<lane_type>();
+    lane_type lane        = p1->As<lane_type>();
+    lane_type total_lanes = p2->As<lane_type>();
     if (total_lanes > lanes_.size())
     {
       lanes_.resize(total_lanes);
@@ -136,7 +136,7 @@ public:
     }
 
     crypto::Identity lane_identity;
-    p3.As(lane_identity);
+    p3->As(lane_identity);
     // TODO(issue 24): Verify expected identity
 
     assert(lane < lanes_.size());
@@ -169,7 +169,7 @@ public:
     auto        promise = lanes_[lane]->Call(LaneService::TX_STORE, protocol::SET, res, tx);
 
     FETCH_LOG_PROMISE();
-    promise.Wait();
+    promise->Wait();
   }
 
   bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) override
@@ -179,7 +179,7 @@ public:
     auto        res     = fetch::storage::ResourceID(digest);
     std::size_t lane    = res.lane(log2_lanes_);
     auto        promise = lanes_[lane]->Call(LaneService::TX_STORE, protocol::GET, res);
-    tx                  = promise.As<chain::VerifiedTransaction>();
+    tx                  = promise->As<chain::VerifiedTransaction>();
 
     return true;
   }
@@ -192,7 +192,7 @@ public:
         LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE,
         key.as_resource_id());
 
-    return promise.As<storage::Document>();
+    return promise->As<storage::Document>();
   }
 
   Document Get(ResourceAddress const &key) override
@@ -203,7 +203,7 @@ public:
         lanes_[lane]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET,
                            key.as_resource_id());
 
-    return promise.As<storage::Document>();
+    return promise->As<storage::Document>();
   }
 
   bool Lock(ResourceAddress const &key) override
@@ -214,7 +214,7 @@ public:
                                       fetch::storage::RevertibleDocumentStoreProtocol::LOCK,
                                       key.as_resource_id());
 
-    return promise.As<bool>();
+    return promise->As<bool>();
   }
 
   bool Unlock(ResourceAddress const &key) override
@@ -225,7 +225,7 @@ public:
                                       fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK,
                                       key.as_resource_id());
 
-    return promise.As<bool>();
+    return promise->As<bool>();
   }
 
   void Set(ResourceAddress const &key, StateValue const &value) override
@@ -237,7 +237,7 @@ public:
                            key.as_resource_id(), value);
 
     FETCH_LOG_PROMISE();
-    promise.Wait(2000);
+    promise->Wait(2000, true);
   }
 
   void Commit(bookmark_type const &bookmark) override
@@ -253,7 +253,7 @@ public:
     for (auto &p : promises)
     {
       FETCH_LOG_PROMISE();
-      p.Wait();
+      p->Wait();
     }
   }
 
@@ -270,7 +270,7 @@ public:
     for (auto &p : promises)
     {
       FETCH_LOG_PROMISE();
-      p.Wait();
+      p->Wait();
     }
   }
 
@@ -289,7 +289,7 @@ public:
 
     return lanes_[0]
         ->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
-        .As<byte_array::ByteArray>();
+        ->As<byte_array::ByteArray>();
   }
 
   void SetID(byte_array::ByteArray const &id) { id_ = id; }

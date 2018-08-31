@@ -38,6 +38,7 @@
 #include <string>
 #include <system_error>
 #include <vector>
+#include <fstream>
 
 namespace {
 
@@ -129,7 +130,7 @@ struct CommandLineArguments
         std::size_t const separator_position = raw_peers.find(',', position);
 
         // parse the peer
-        std::string const peer_address = raw_peers.substr(position, separator_position);
+        std::string const peer_address = raw_peers.substr(position, (separator_position - position));
         if (peer.Parse(peer_address))
         {
           peers.push_back(peer);
@@ -175,10 +176,60 @@ struct CommandLineArguments
 
 ProverPtr GenereateP2PKey()
 {
-  fetch::crypto::ECDSASigner *certificate = new fetch::crypto::ECDSASigner();
-  certificate->GenerateKeys();
+  static constexpr char const *KEY_FILENAME = "p2p.key";
 
-  return ProverPtr{certificate};
+  using Signer = fetch::crypto::ECDSASigner;
+  using SignerPtr = std::unique_ptr<Signer>;
+
+  SignerPtr certificate = std::make_unique<Signer>();
+  bool certificate_loaded = false;
+
+  // Step 1. Attempt to load the existing key
+  {
+    std::ifstream input_file(KEY_FILENAME, std::ios::in | std::ios::binary);
+
+    if (input_file.is_open())
+    {
+      fetch::byte_array::ByteArray private_key_data;
+      private_key_data.Resize(Signer::PRIVATE_KEY_SIZE);
+
+      // attempt to read in the private key
+      input_file.read(
+        private_key_data.char_pointer(),
+        static_cast<std::streamsize>(private_key_data.size())
+      );
+
+      if (!(input_file.fail() || input_file.eof()))
+      {
+        certificate->Load(private_key_data);
+        certificate_loaded = true;
+      }
+    }
+  }
+
+  // Generate a key if the load failed
+  if (!certificate_loaded)
+  {
+    certificate->GenerateKeys();
+
+    std::ofstream output_file(KEY_FILENAME, std::ios::out | std::ios::binary);
+
+    if (output_file.is_open())
+    {
+      auto private_key_data = certificate->private_key();
+
+      output_file.write(
+        private_key_data.char_pointer(),
+        static_cast<std::streamsize>(private_key_data.size())
+      );
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to save P2P key");
+    }
+  }
+
+  return certificate;
 }
 
 }  // namespace

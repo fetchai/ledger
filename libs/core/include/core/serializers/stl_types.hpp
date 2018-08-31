@@ -25,6 +25,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <array>
 
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
@@ -96,6 +97,28 @@ template <typename T>
 inline void Serialize(T &serializer, char const *s)
 {
   return Serialize<T>(serializer, std::string(s));
+}
+
+
+template <typename T, typename U, std::size_t N>
+inline typename std::enable_if<std::is_integral<U>::value>::type Serialize(T &serializer,
+                                                                           std::array<U, N> const &val)
+{
+  static constexpr std::size_t BINARY_SIZE = sizeof(U) * N;
+  assert(N == val.size());
+
+  serializer.Allocate(BINARY_SIZE);
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(val.data()), BINARY_SIZE);
+}
+
+template <typename T, typename U, std::size_t N>
+inline typename std::enable_if<std::is_integral<U>::value>::type Deserialize(T &serializer,
+                                                                             std::array<U, N> &val)
+{
+  static constexpr std::size_t BINARY_SIZE = sizeof(U) * N;
+  assert(N == val.size());
+
+  serializer.ReadBytes(reinterpret_cast<uint8_t *>(val.data()), BINARY_SIZE);
 }
 
 template <typename T, typename U>

@@ -44,7 +44,12 @@ public:
     TYPE_OUTGOING  = 2
   };
 
-  AbstractConnection() { handle_ = AbstractConnection::next_handle(); }
+  AbstractConnection()
+  {
+    handle_ = AbstractConnection::next_handle();
+
+    FETCH_LOG_WARN(LOGGING_NAME,"Connetion created with handle", handle_.load());
+  }
 
   // Interface
   virtual ~AbstractConnection()
@@ -90,6 +95,12 @@ public:
     on_message_ = f;
   }
 
+  void OnConnectionSuccess(std::function<void()> const &fnc)
+  {
+    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    on_connection_success_ = fnc;
+  }
+
   void OnConnectionFailed(std::function<void()> const &fnc)
   {
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
@@ -105,8 +116,9 @@ public:
   void ClearClosures() noexcept
   {
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
-    on_connection_failed_ = nullptr;
-    on_message_           = nullptr;
+    on_connection_failed_  = nullptr;
+    on_connection_success_ = nullptr;
+    on_message_            = nullptr;
   }
 
   void ActivateSelfManage() { self_ = shared_from_this(); }
@@ -152,7 +164,8 @@ protected:
 
   void SignalConnectionFailed()
   {
-    std::function<void (void)> cb;
+    FETCH_LOG_INFO(LOGGING_NAME, "SignalConnectionFailed");
+    std::function<void ()> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       cb = on_leave_;
@@ -165,8 +178,26 @@ protected:
     DeactivateSelfManage();
   }
 
+  void SignalConnectionSuccess()
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "SignalConnectionSuccess");
+    std::function<void ()> cb;
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      cb = on_connection_success_;
+    }
+
+    if (cb)
+    {
+      cb();
+    }
+
+    DeactivateSelfManage();
+  }
+
 private:
   std::function<void(network::message_type const &msg)> on_message_;
+  std::function<void()>                                 on_connection_success_;
   std::function<void()>                                 on_connection_failed_;
   std::function<void()>                                 on_leave_;
 
@@ -177,9 +208,18 @@ private:
 
   static connection_handle_type next_handle()
   {
-    std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
-    connection_handle_type               ret = global_handle_counter_;
-    ++global_handle_counter_;
+    connection_handle_type ret = 0;
+
+    {
+      std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
+
+      // TODO(EJF): Not really sure what the "correct" thing should be to do in this wrap around case
+      while (ret == 0)
+      {
+        ret = global_handle_counter_++;
+      }
+    }
+
     return ret;
   }
 

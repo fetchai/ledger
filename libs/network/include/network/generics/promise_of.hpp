@@ -20,39 +20,94 @@
 #include "network/service/promise.hpp"
 
 namespace fetch {
-
 namespace network {
 
+/**
+ * Simple wrapper around the service promise which mandates the return time from the underlying
+ * promise.
+ *
+ * @tparam TYPE The expected return type of the promise
+ */
 template <class TYPE>
 class PromiseOf
 {
 public:
-  using promise_type = fetch::service::Promise;
+  using Promise = fetch::service::Promise;
+  using PromiseBuilder = fetch::service::details::PromiseBuilder;
 
-  PromiseOf(promise_type &promise) { this->promise_ = promise; }
+  // Construction / Destruction
+  explicit PromiseOf(Promise promise);
+  PromiseOf(PromiseOf const &rhs) = default;
+  ~PromiseOf() = default;
 
-  PromiseOf(const PromiseOf &rhs) { promise_ = rhs.promise_; }
+  // Operators
+  PromiseOf &operator=(PromiseOf const &rhs) = default;
+  PromiseOf &operator=(PromiseOf &&rhs) noexcept = default;
+  explicit operator bool() const;
 
-  PromiseOf operator=(const PromiseOf &rhs) { promise_ = rhs.promise_; }
+  // Promise Accessors
+  TYPE Get() const;
+  bool Wait(uint32_t timeout_ms = std::numeric_limits<uint32_t>::max(),
+            bool throw_exception = true) const;
 
-  PromiseOf operator=(PromiseOf &&rhs) { promise_ = std::move(rhs.promise_); }
-
-  TYPE Get() { return promise_.As<TYPE>(); }
-
-  TYPE get() { return promise_.As<TYPE>(); }
-
-  operator bool() const { return promise_.is_fulfilled(); }
-
-  bool Wait()
-  {
-    FETCH_LOG_PROMISE();
-    promise_.Wait();
-    return promise_.is_fulfilled();
-  }
+  Promise const &GetInnerPromise() const { return promise_; }
+  PromiseBuilder WithHandlers() { return promise_->WithHandlers(); }
 
 private:
-  promise_type promise_;
+  Promise promise_;
 };
+
+/**
+ * Construct a PromiseOf from and specified Promise
+ *
+ * @tparam TYPE The expected return type of the promise
+ * @param promise The promise value
+ */
+template <typename TYPE>
+inline PromiseOf<TYPE>::PromiseOf(Promise promise)
+  : promise_(std::move(promise))
+{
+}
+
+/**
+ * Gets the value of the promise
+ *
+ * @tparam TYPE The expected return type of the promise
+ * @return Return the value from the promise, or throw an exception if not possible
+ */
+template <typename TYPE>
+inline TYPE PromiseOf<TYPE>::Get() const
+{
+  return promise_->As<TYPE>();
+}
+
+/**
+ * Checks to see if the promise has been fulfilled
+ *
+ * @tparam TYPE The expected return type of the promise
+ * @return true if the promise has been fulfilled, otherwise false
+ */
+template <typename TYPE>
+inline PromiseOf<TYPE>::operator bool() const
+{
+  return promise_->IsSuccessful();
+}
+
+/**
+ * Waits for the promise to complete
+ *
+ * @tparam TYPE The expected return type of the promise
+ * @param timeout_ms The timeout in milliseconds to wait for this promise to conclude
+ * @param throw_exception Signal if the function should throw an exception in the case of an error
+ * @return true if the promise has been fulfilled (given the constraints), otherwise false
+ */
+template <typename TYPE>
+inline bool PromiseOf<TYPE>::Wait(uint32_t timeout_ms, bool throw_exception) const
+{
+  FETCH_LOG_PROMISE();
+  promise_->Wait(timeout_ms, throw_exception);
+  return promise_->IsSuccessful();
+}
 
 }  // namespace network
 }  // namespace fetch

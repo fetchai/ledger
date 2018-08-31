@@ -107,20 +107,16 @@ public:
 
     auto promise = client->Call(protocol_number, protocols::Swarm::CLIENT_NEEDS_PEER);
     FETCH_LOG_PROMISE();
-    if (promise.Wait(2500, false))
+    if (promise->Wait(2500, false))
     {
-      auto result = promise.As<std::string>();
+      auto result = promise->As<std::string>();
       return result;
     }
     else
     {
-      if (promise.has_failed())
+      if (promise->IsFailed())
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME,"AskPeerForPeers has_failed");
-      }
-      else if (promise.is_connection_closed())
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME,"AskPeerForPeers is_connection_closed");
+        FETCH_LOG_DEBUG(LOGGING_NAME,"AskPeerForPeers has_failed or is_connection_closed");
       }
       else
       {

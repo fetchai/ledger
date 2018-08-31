@@ -36,6 +36,8 @@
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/peer.hpp"
 
+#include "network/muddle/muddle.hpp"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -67,7 +69,7 @@ public:
   using clock_type        = std::chrono::high_resolution_clock;
   using timepoint_type    = clock_type::time_point;
   using string_list_type  = std::vector<std::string>;
-  using p2p_service_type  = std::unique_ptr<p2p::P2PService>;
+  using p2p_service_type  = std::unique_ptr<muddle::Muddle>;
   using http_server_type  = std::unique_ptr<http::HTTPServer>;
   using peer_list_type    = std::vector<network::Peer>;
   using http_module_type  = std::shared_ptr<http::HTTPModule>;

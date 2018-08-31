@@ -69,7 +69,7 @@ public:
     int result = client
                      .Call(protocols::QuickStartProtocols::QUICK_START,
                            protocols::QuickStart::SEND_MESSAGE, msg)
-                     .As<int>();
+                     ->As<int>();
 
     std::cout << "Remote responded: " << result << std::endl;
 
@@ -80,7 +80,7 @@ public:
                             protocols::QuickStart::SEND_DATA, d);
 
     FETCH_LOG_PROMISE();
-    prom.Wait();
+    prom->Wait();
   }
 
   ////////////////////////////////////////////

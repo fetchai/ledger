@@ -64,7 +64,8 @@ protected:
     network_manager_->Start();
 
     storage_service_ = std::make_unique<underlying_storage_service_type>();
-    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, false);
+    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_);
+    storage_service_->Start(false);
 
     storage_.reset(new underlying_storage_type{*network_manager_});
     for (std::size_t i = 0; i < NUM_LANES; ++i)

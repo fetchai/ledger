@@ -24,7 +24,9 @@ using namespace fetch::http;
 int main()
 {
   fetch::network::NetworkManager tm(1);
-  HTTPServer                     server(8080, tm);
+
+  HTTPServer server(tm);
+  server.Start(8080);
 
   server.AddMiddleware([](HTTPRequest &req) { std::cout << "Middleware 1" << std::endl; });
 

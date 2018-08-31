@@ -43,9 +43,9 @@ int main()
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     FETCH_LOG_PROMISE();
-    client->Call(AUTH, HELLO).Wait();
+    client->Call(AUTH, HELLO)->Wait();
 
-    std::cout << client->Call(TEST, GREET, "Fetch").As<std::string>() << std::endl;
+    std::cout << client->Call(TEST, GREET, "Fetch")->As<std::string>() << std::endl;
   }
 
   // Without
@@ -53,7 +53,7 @@ int main()
       creg.CreateServiceClient<client_type>(tm, "localhost", uint16_t(8080));
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  std::cout << client->Call(TEST, GREET, "Fetch").As<std::string>() << std::endl;
+  std::cout << client->Call(TEST, GREET, "Fetch")->As<std::string>() << std::endl;
   auto px = client->Call(TEST, ADD, int(2), int(3));
 
   tm.Stop();

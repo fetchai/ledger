@@ -146,12 +146,12 @@ public:
 
       incoming_objects_.clear();
       FETCH_LOG_PROMISE();
-      if (!p.Wait(1000, false))
+      if (!p->Wait(1000, false))
       {
         continue;
       }
 
-      p.template As<std::vector<S>>(incoming_objects_);
+      p->template As<std::vector<S>>(incoming_objects_);
 
       if (!running_) return;
       std::lock_guard<mutex::Mutex> lock(mutex_);
@@ -350,13 +350,13 @@ private:
 
       // Timeout fail, push this subtree back onto the root for another go
       incoming_objects_.clear();
-      if (!promise.Wait(100, false))
+      if (!promise->Wait(100, false))
       {
         roots_to_sync_.push(root);
         continue;
       }
 
-      promise.template As<std::vector<S>>(incoming_objects_);
+      promise->template As<std::vector<S>>(incoming_objects_);
 
       store_->WithLock([this]() {
         for (auto &o : incoming_objects_)

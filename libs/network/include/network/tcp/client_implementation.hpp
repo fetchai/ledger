@@ -61,7 +61,27 @@ public:
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation &&rhs) = delete;
 
-  ~TCPClientImplementation() {}
+  ~TCPClientImplementation()
+  {
+#if 1
+    if (!Closed() && !postedClose_)
+    {
+      Close();
+    }
+#else
+    auto socket = socket_.lock();
+    if (socket)
+    {
+      std::error_code ec;
+      socket->close(ec);
+
+      if (ec)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Error closing socket: ", ec.message());
+      }
+    }
+#endif
+  }
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {
@@ -72,7 +92,7 @@ public:
   {
     self_type self = shared_from_this();
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Client posting connect");
+    FETCH_LOG_INFO(LOGGING_NAME,"Client posting connect");
 
     networkManager_.Post([this, self, host, port] {
       shared_self_type selfLock = self.lock();
@@ -109,10 +129,11 @@ public:
           if (!selfLock) return;
 
           LOG_STACK_TRACE_POINT;
-          FETCH_LOG_DEBUG(LOGGING_NAME,"Finished connecting.");
+
+          FETCH_LOG_INFO(LOGGING_NAME,"Finished connecting.");
           if (!ec)
           {
-            FETCH_LOG_DEBUG(LOGGING_NAME,"Connection established!");
+            FETCH_LOG_INFO(LOGGING_NAME,"Connection established!");
 
             // Prevent this from throwing
             std::error_code         ec2;
@@ -126,12 +147,12 @@ public:
             }
             else
             {
-              FETCH_LOG_WARN(LOGGING_NAME,"Failed to get endpoint of socket after connection");
+              FETCH_LOG_INFO(LOGGING_NAME,"Failed to get endpoint of socket after connection");
             }
           }
           else
           {
-            FETCH_LOG_DEBUG(LOGGING_NAME,"Client failed to connect");
+            FETCH_LOG_INFO(LOGGING_NAME,"Client failed to connect: ", ec.message());
             SignalLeave();
           }
         };
@@ -145,8 +166,8 @@ public:
         }
         else
         {
-          SignalLeave();
           FETCH_LOG_ERROR(LOGGING_NAME,"Failed to create valid socket");
+          SignalLeave();
         }
       });  // end strand post
     });    // end NM post
@@ -258,6 +279,7 @@ private:
       else
       {
         // We expect to get an ec here when the socked is closed via a post
+        FETCH_LOG_INFO(LOGGING_NAME,"Socket closed inside ReadHeader: ", ec.message());
         SignalLeave();
       }
     };
@@ -266,10 +288,18 @@ private:
     {
       assert(strand->running_in_this_thread());
       asio::async_read(*socket, asio::buffer(header.pointer(), header.size()), strand->wrap(cb));
-      connected_ = true;
+
+      bool const previously_connected = connected_.exchange(true);
+
+      // TODO(EJF): Sort of a weird place for this but you know...
+      if (!previously_connected)
+      {
+        SignalConnectionSuccess();
+      }
     }
     else
     {
+      FETCH_LOG_INFO(LOGGING_NAME,"Socket no longer valid in ReadHeader");
       connected_ = false;
       SignalLeave();
     }
@@ -323,6 +353,7 @@ private:
     }
     else
     {
+      FETCH_LOG_ERROR(LOGGING_NAME,"Invalid socket when attempting to read body");
       SignalLeave();
     }
   }

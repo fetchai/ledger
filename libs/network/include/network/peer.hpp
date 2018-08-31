@@ -43,22 +43,48 @@ public:
   }
 
   std::string const &address() const { return address_; }
-
   uint16_t port() const { return port_; }
+
+  std::string ToString() const;
 
   Peer &operator=(Peer const &) = default;
   Peer &operator=(Peer &&) = default;
 
-  friend std::ostream &operator<<(std::ostream &s, Peer const &peer)
-  {
-    s << peer.address_ << ':' << peer.port_;
-    return s;
-  }
+  bool operator==(Peer const &other) const;
 
 private:
   std::string address_{"localhost"};
   uint16_t    port_{0};
 };
 
+inline std::string Peer::ToString() const
+{
+  return address_ + ':' + std::to_string(port_);
+}
+
+inline bool Peer::operator==(Peer const &other) const
+{
+  return ((address_ == other.address_) && (port_ == other.port_));
+}
+
+inline std::ostream &operator<<(std::ostream &s, Peer const &peer)
+{
+  s << peer.ToString();
+  return s;
+}
+
 }  // namespace network
 }  // namespace fetch
+
+namespace std {
+
+template<>
+struct hash<fetch::network::Peer>
+{
+  std::size_t operator()(fetch::network::Peer const& peer) const noexcept
+  {
+    return std::hash<std::string>{}(peer.ToString());
+  }
+};
+
+} // namespace std

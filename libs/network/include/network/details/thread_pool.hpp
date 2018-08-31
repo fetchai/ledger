@@ -65,6 +65,13 @@ public:
     return std::make_shared<ThreadPoolImplementation>(threads);
   }
 
+  static std::shared_ptr<ThreadPoolImplementation> Create(std::size_t threads, std::string name)
+  {
+    auto thread_pool = std::make_shared<ThreadPoolImplementation>(threads);
+    thread_pool->name_ = std::move(name);
+    return thread_pool;
+  }
+
   ThreadPoolImplementation(std::size_t threads) : number_of_threads_(threads)
   {
 
@@ -146,7 +153,12 @@ public:
         auto workload = queue_.front();
         queue_.pop();
         lock.unlock();
-        fetch::generics::MilliTimer myTimer("MainChainThreadPool::Poll/ExecuteWorkload");
+
+        // customise name
+        std::string timer_name = ((name_.empty()) ? "ThreadPool" : name_);
+        timer_name += "::Poll/ExecuteWorkload";
+
+        fetch::generics::MilliTimer myTimer(std::move(timer_name));
         LOG_STACK_TRACE_POINT;
         r = std::max(r, ExecuteWorkload(workload));
       }
@@ -357,6 +369,7 @@ private:
     return r;
   }
 
+  std::string                name_;
   std::size_t                number_of_threads_ = 1;
   std::vector<std::thread *> threads_;
 
@@ -378,6 +391,11 @@ using ThreadPool = typename std::shared_ptr<details::ThreadPoolImplementation>;
 inline ThreadPool MakeThreadPool(std::size_t threads = 1)
 {
   return details::ThreadPoolImplementation::Create(threads);
+}
+
+inline ThreadPool MakeThreadPool(std::size_t threads, std::string name)
+{
+  return details::ThreadPoolImplementation::Create(threads, std::move(name));
 }
 
 }  // namespace network

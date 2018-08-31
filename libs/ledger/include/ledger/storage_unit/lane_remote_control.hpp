@@ -68,7 +68,7 @@ public:
       auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::CONNECT, host, port);
 
       FETCH_LOG_PROMISE();
-      p.Wait();
+      p->Wait();
     }
   }
 
@@ -80,7 +80,7 @@ public:
       auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::TRY_CONNECT, ep);
 
       FETCH_LOG_PROMISE();
-      p.Wait();
+      p->Wait();
     }
   }
 
@@ -97,7 +97,7 @@ public:
       auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::SHUTDOWN);
 
       FETCH_LOG_PROMISE();
-      p.Wait();
+      p->Wait();
     }
   }
 
@@ -112,7 +112,7 @@ public:
     if (ptr)
     {
       auto p = ptr->Call(IDENTITY_PROTOCOL_ID, LaneIdentityProtocol::GET_LANE_NUMBER);
-      return p.As<uint32_t>();
+      return p->As<uint32_t>();
     }
 
     TODO_FAIL("client connection has died");
@@ -131,7 +131,7 @@ public:
     if (ptr)
     {
       auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::INCOMING_PEERS);
-      return p.As<int>();
+      return p->As<int>();
     }
 
     TODO_FAIL("client connection has died");
@@ -150,7 +150,7 @@ public:
     if (ptr)
     {
       auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::OUTGOING_PEERS);
-      return p.As<int>();
+      return p->As<int>();
     }
 
     TODO_FAIL("client connection has died");

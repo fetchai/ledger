@@ -143,9 +143,9 @@ public:
       auto p = client->Call(identity_protocol_, MainChainIdentityProtocol::PING);
 
       FETCH_LOG_PROMISE();
-      if (p.Wait(1000, false))
+      if (p->Wait(1000, false))
       {
-        if (p.As<MainChainIdentity::ping_type>() != MainChainIdentity::PING_MAGIC)
+        if (p->As<MainChainIdentity::ping_type>() != MainChainIdentity::PING_MAGIC)
         {
           n = 10;
         }
@@ -173,20 +173,21 @@ public:
 
     auto remote_details_promise = client->Call(
         identity_protocol_, MainChainIdentityProtocol::EXCHANGE_DETAILS, copy_of_my_details);
-    auto status = remote_details_promise.WaitLoop(1000, 10);
+    remote_details_promise->Wait(10000, false);
 
+    auto const status = remote_details_promise->state();
     switch (status)
     {
-    case service::Promise::OK:
+    case service::PromiseState::SUCCESS:
       break;
     default:
-      FETCH_LOG_WARN(LOGGING_NAME,"While exchanging IDENTITY DETAILS:", service::Promise::DescribeStatus(status));
+      FETCH_LOG_WARN(LOGGING_NAME,"While exchanging IDENTITY DETAILS:", service::ToString(status));
       client->Close();
       client.reset();
       return nullptr;
     }
 
-    auto details_supplied_by_remote = remote_details_promise.As<MainChainDetails>();
+    auto details_supplied_by_remote = remote_details_promise->As<MainChainDetails>();
 
     auto local_name = std::string(
         byte_array::ToBase64(my_details_.Lock()->owning_discovery_service_identity.identifier()));

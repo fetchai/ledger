@@ -110,8 +110,15 @@ public:
   void OnClientEnter(callback_client_enter_type const &f) { on_client_enter_ = f; }
   void OnClientLeave(callback_client_enter_type const &f) { on_client_leave_ = f; }
 
-  void Leave(connection_handle_type const &id) override
+  void Leave(connection_handle_type id) override
   {
+    auto const timestamp = Clock::now().time_since_epoch().count();
+
+    {
+      std::lock_guard<mutex::Mutex> lock(trace_file_lock_);
+      trace_file_ << timestamp << ' ' << id << " LEAVE " << std::endl;
+    }
+
     {
       RemoveService(id);
 

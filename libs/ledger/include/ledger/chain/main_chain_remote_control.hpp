@@ -55,40 +55,40 @@ public:
   {
     if (!client_)
     {
-      TODO_FAIL("Not connected or bad pointer");
+      TODO_FAIL("Not connected or bad pointer 1");
     }
 
     auto p =
         client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::CONNECT, host, port);
 
     FETCH_LOG_PROMISE();
-    p.Wait();
+    p->Wait();
   }
 
   void TryConnect(p2p::EntryPoint const &ep)
   {
     if (!client_)
     {
-      TODO_FAIL("Not connected or bad pointer");
+      TODO_FAIL("Not connected or bad pointer 2");
     }
 
     auto p = client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::TRY_CONNECT, ep);
 
     FETCH_LOG_PROMISE();
-    p.Wait();
+    p->Wait();
   }
 
   void Shutdown()
   {
     if (!client_)
     {
-      TODO_FAIL("Not connected or bad pointer");
+      TODO_FAIL("Not connected or bad pointer 3");
     }
 
     auto p = client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::SHUTDOWN);
 
     FETCH_LOG_PROMISE();
-    p.Wait();
+    p->Wait();
   }
 
   int IncomingPeers(mainchain_index_type const &mainchain)
@@ -96,13 +96,11 @@ public:
 
     if (!client_)
     {
-      TODO_FAIL("Not connected or bad pointer");
+      TODO_FAIL("Not connected or bad pointer 4");
     }
 
     auto p = client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::INCOMING_PEERS);
-    return p.As<int>();
-
-    return 0;
+    return p->As<int>();
   }
 
   int OutgoingPeers(mainchain_index_type const &mainchain)
@@ -110,13 +108,11 @@ public:
 
     if (!client_)
     {
-      TODO_FAIL("Not connected or bad pointer");
+      TODO_FAIL("Not connected or bad pointer 5");
     }
 
     auto p = client_->Call(CONTROLLER_PROTOCOL_ID, MainChainControllerProtocol::OUTGOING_PEERS);
-    return p.As<int>();
-
-    return 0;
+    return p->As<int>();
   }
 
   bool IsAlive(mainchain_index_type const &mainchain) { return bool(client_); }

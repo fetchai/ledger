@@ -76,7 +76,7 @@ public:
 
   // TODO(issue 7): Make config JSON
   LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &total_lanes,
-              uint16_t port, fetch::network::NetworkManager tm, bool start_sync = true)
+              uint16_t port, fetch::network::NetworkManager tm)
     : super_type(port, tm)
   {
 
@@ -137,13 +137,6 @@ public:
     controller_          = std::make_unique<controller_type>(IDENTITY, identity_, register_, tm);
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     this->Add(CONTROLLER, controller_protocol_.get());
-
-    thread_pool_->Start();
-
-    if (start_sync)
-    {
-      tx_sync_protocol_->Start();
-    }
   }
 
   ~LaneService()
@@ -164,6 +157,23 @@ public:
     // TODO(issue 24): Remove protocol
     controller_protocol_.reset();
     controller_.reset();
+  }
+
+  void Start(bool start_sync = true)
+  {
+    TCPServer::Start();
+
+    thread_pool_->Start();
+
+    if (start_sync)
+    {
+      tx_sync_protocol_->Start();
+    }
+  }
+
+  void Stop()
+  {
+    TCPServer::Stop();
   }
 
 private:

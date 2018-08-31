@@ -112,7 +112,8 @@ public:
       }
 
       std::pair<bool, T> result = client->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
-                                               protocols::NetworkMineTest::PROVIDE_HEADER, hash);
+                                               protocols::NetworkMineTest::PROVIDE_HEADER, hash)
+                                                 ->template As<std::pair<bool, T>>();
 
       if (result.first)
       {
@@ -140,7 +141,7 @@ public:
       }
 
       bool clientWants = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-                                      protocols::NetworkBenchmark::INVITE_PUSH, blockHash);
+                                      protocols::NetworkBenchmark::INVITE_PUSH, blockHash)->As<bool>();
 
       if (clientWants)
       {
@@ -188,7 +189,7 @@ public:
                              protocols::NetworkBenchmark::PUSH_CONFIDENT, blockHash, block);
 
       FETCH_LOG_PROMISE();
-      p1.Wait();
+      p1->Wait();
     }
   }
 
@@ -209,7 +210,7 @@ public:
       while (client
                  ->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
                         protocols::NetworkBenchmark::SEND_NEXT)
-                 .As<bool>())
+                 ->As<bool>())
       {
       }
     }

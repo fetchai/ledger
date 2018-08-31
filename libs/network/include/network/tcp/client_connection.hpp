@@ -28,6 +28,7 @@
 #include "network/fetch_asio.hpp"
 #include <atomic>
 #include <utility>
+
 namespace fetch {
 namespace network {
 
@@ -36,7 +37,6 @@ namespace network {
  * The class will generically push data to its manager, and also allow pushing
  * data to the connected client.
  */
-
 class ClientConnection : public AbstractConnection
 {
 public:
@@ -96,10 +96,16 @@ public:
   void Send(message_type const &msg) override
   {
     LOG_STACK_TRACE_POINT;
+
+    if (shutting_down_)
+      return;
+
     write_mutex_.lock();
     bool write_in_progress = !write_queue_.empty();
     write_queue_.push_back(msg);
     write_mutex_.unlock();
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Sending Message");
 
     if (!write_in_progress)
     {
@@ -109,15 +115,28 @@ public:
 
   uint16_t Type() const override { return AbstractConnection::TYPE_INCOMING; }
 
-  void Close() override { TODO_FAIL("not implemented"); }
+  void Close() override {
+    shutting_down_ = true;
+    auto socket = socket_.lock();
+    if (socket)
+    {
+      std::error_code ec;
+      socket->close(ec);
+    }
+  }
 
-  bool Closed() override { TODO_FAIL("not implemented"); }
+  bool Closed() override {
+    return static_cast<bool>(socket_.lock());
+  }
 
-  bool is_alive() const override { TODO_FAIL("not implemented"); }
+  bool is_alive() const override { return !static_cast<bool>(socket_.lock()); }
 
 private:
   void ReadHeader()
   {
+    if (shutting_down_)
+      return;
+
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (!socket_ptr) return;
@@ -148,6 +167,10 @@ private:
   void ReadBody()
   {
     LOG_STACK_TRACE_POINT;
+
+    if (shutting_down_)
+      return;
+
     auto socket_ptr = socket_.lock();
     if (!socket_ptr) return;
 
@@ -173,13 +196,16 @@ private:
 
       if (!ec)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Read body.");
+        FETCH_LOG_INFO(LOGGING_NAME,"Server: Recv message");
+
+        // TODO(EJF): Needs a conditional compilation flag
+        SignalRead();
+
         ptr->PushRequest(this->handle(), message);
         ReadHeader();
       }
       else
       {
-
         ptr->Leave(this->handle());
       }
     };
@@ -204,6 +230,9 @@ private:
 
   void Write()
   {
+    if (shutting_down_)
+      return;
+
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (!socket_ptr) return;
@@ -215,6 +244,8 @@ private:
       write_mutex_.unlock();
       return;
     }
+
+    SignalSend();
 
     auto                  buffer = write_queue_.front();
     byte_array::ByteArray header;
@@ -244,6 +275,7 @@ private:
     asio::async_write(*socket_ptr, buffers, cb);
   }
 
+  std::atomic<bool>                         shutting_down_{false};
   std::weak_ptr<asio::ip::tcp::tcp::socket> socket_;
   std::weak_ptr<ClientManager>              manager_;
   message_queue_type                        write_queue_;

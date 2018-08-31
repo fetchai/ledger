@@ -40,12 +40,10 @@ public:
     : ServiceServer(port, network_manager)
     , manager_(new ExecutionManager(num_executors, storage, factory))
   {
-
     this->Add(fetch::protocols::FetchProtocols::EXECUTION_MANAGER, &protocol_);
-    manager_->Start();
   }
 
-  ~ExecutionManagerRpcService() override { manager_->Stop(); }
+  ~ExecutionManagerRpcService() override = default;
 
   // helpful statistics
   std::size_t completed_executions() const { return manager_->completed_executions(); }

@@ -173,21 +173,28 @@ public:
 #ifndef FETCH_DISABLE_COUT_LOGGING
     using namespace fetch::commandline::VT100;
     int color = 9, bg_color = 9;
+
+    char const *level_name = "UNKNWN";
     switch (level)
     {
     case Level::INFO:
       color = 3;
+      level_name = "INFO  ";
       break;
     case Level::WARNING:
       color = 6;
+      level_name = "WARN  ";
       break;
     case Level::ERROR:
       color = 1;
+      level_name = "ERROR ";
       break;
     case Level::DEBUG:
+      level_name = "DEBUG ";
       color = 7;
       break;
     case Level::HIGHLIGHT:
+      level_name = "HLIGHT";
       bg_color = 4;
       color    = 7;
       break;
@@ -206,7 +213,7 @@ public:
               << "." << std::setw(3) << millis << DefaultAttributes();
 
     // thread information
-    std::cout << ", #" << std::setw(2) << thread_number;
+    std::cout << ", #" << std::setw(2) << thread_number << ' ' << level_name;
 
     // determine which of the two logging formats we should use
     bool use_name = name != nullptr;

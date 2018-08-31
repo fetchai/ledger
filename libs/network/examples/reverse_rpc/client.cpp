@@ -96,13 +96,11 @@ int main(int argc, char **argv)
   auto p = client.Call(FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
 
   FETCH_LOG_PROMISE();
-  if (p.Wait())
+  if (p->Wait())
   {
     std::cout << "Node registered" << std::endl;
 
-    while (true)
-    {
-    }
+    for (;;) {}
   }
 
   tm.Stop();

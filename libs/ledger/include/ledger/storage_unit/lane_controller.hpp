@@ -140,9 +140,9 @@ public:
       auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
 
       FETCH_LOG_PROMISE();
-      if (p.Wait(1000, false))
+      if (p->Wait(1000, false))
       {
-        if (p.As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
+        if (p->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
         {
           n = 10;
         }
@@ -173,7 +173,7 @@ public:
       auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::HELLO, ptr->Identity());
 
       FETCH_LOG_PROMISE();
-      if (!p.Wait(1000))  // TODO(issue 7): Make timeout configurable
+      if (!p->Wait(1000, true))  // TODO(issue 7): Make timeout configurable
       {
         FETCH_LOG_WARN(LOGGING_NAME,"Connection timed out - closing in LaneController::Connect:2:");
         client->Close();
@@ -181,18 +181,18 @@ public:
         return nullptr;
       }
 
-      p.As(peer_identity);
+      p->As(peer_identity);
     }
 
     // Exchaning info
     auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::GET_LANE_NUMBER);
 
     FETCH_LOG_PROMISE();
-    p.Wait(1000);  // TODO(issue 7): Make timeout configurable
-    if (p.As<LaneIdentity::lane_type>() != ident->GetLaneNumber())
+    p->Wait(1000, true);  // TODO(issue 7): Make timeout configurable
+    if (p->As<LaneIdentity::lane_type>() != ident->GetLaneNumber())
     {
       FETCH_LOG_ERROR(LOGGING_NAME,"Could not connect to lane with different lane number: ",
-                   p.As<LaneIdentity::lane_type>(), " vs ", ident->GetLaneNumber());
+                   p->As<LaneIdentity::lane_type>(), " vs ", ident->GetLaneNumber());
       client->Close();
       client.reset();
       // TODO(issue 11): Throw exception

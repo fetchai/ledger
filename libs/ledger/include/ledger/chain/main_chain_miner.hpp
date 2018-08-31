@@ -54,7 +54,7 @@ public:
 
   ~MainChainMiner() { Stop(); }
 
-  void start()
+  void Start()
   {
     stop_   = false;
     thread_ = std::thread{&MainChainMiner::MinerThreadEntrypoint, this};
