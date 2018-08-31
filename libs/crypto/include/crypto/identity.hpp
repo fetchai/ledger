@@ -87,8 +87,7 @@ public:
     crypto::FNV hashStream;
     hashStream.Update(identifier_);
     hashStream.Update(identity_parameters_);
-    hashStream.Final();
-    return static_cast<std::size_t>(hashStream.uint_digest());
+    return hashStream.Final<>();
   }
 
   void Clone()
