@@ -42,7 +42,7 @@ public:
   void Route(Handle handle, PacketPtr packet);
   void SendDirect(Handle handle, uint16_t service_num, uint16_t proto_num, Payload const &payload);
 
-  /// @name Endpoint Methods (Publically visible)
+  /// @name Endpoint Methods (Publicly visible)
   /// @{
   void Send(Address const &address,
             uint16_t service,
