@@ -242,8 +242,8 @@ private:
       return;
     }
 
+    auto buffer = write_queue_.front();
 
-    auto                  buffer = write_queue_.front();
     byte_array::ByteArray header;
     SetHeader(header, buffer.size());
     write_queue_.pop_front();

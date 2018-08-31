@@ -55,7 +55,7 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
   auto const p2p_identity = certificate->identity();
 
   // Creating P2P instance
-  p2p_ = std::make_unique<muddle::Muddle>(std::move(certificate), *network_manager_);
+  p2p_ = std::make_unique<p2p::P2PService2>(std::move(certificate), *network_manager_);
 
 //  auto profile = p2p_->Profile();
 //  auto my_name = std::string(byte_array::ToBase64(profile.identity.identifier()));

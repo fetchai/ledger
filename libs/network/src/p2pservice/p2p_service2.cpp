@@ -6,6 +6,13 @@
 namespace fetch {
 namespace p2p {
 
+P2PService2::P2PService2(Muddle::CertificatePtr &&certificate, Muddle::NetworkManager const &nm)
+  : muddle_(std::move(certificate), nm)
+{
+  // register the services with the rpc server
+  rpc_server_.Add(1, &resolver_proto_);
+}
+
 
 void P2PService2::Start(P2PService2::PortList const &ports,
                         P2PService2::PeerList const &initial_peer_list)

@@ -33,7 +33,7 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "miner/annealer_miner.hpp"
-#include "network/p2pservice/p2p_service.hpp"
+#include "network/p2pservice/p2p_service2.hpp"
 #include "network/peer.hpp"
 
 #include "network/muddle/muddle.hpp"
@@ -69,7 +69,7 @@ public:
   using clock_type        = std::chrono::high_resolution_clock;
   using timepoint_type    = clock_type::time_point;
   using string_list_type  = std::vector<std::string>;
-  using p2p_service_type  = std::unique_ptr<muddle::Muddle>;
+  using p2p_service_type  = std::unique_ptr<p2p::P2PService2>;
   using http_server_type  = std::unique_ptr<http::HTTPServer>;
   using peer_list_type    = std::vector<network::Peer>;
   using http_module_type  = std::shared_ptr<http::HTTPModule>;
@@ -83,7 +83,7 @@ public:
   using service_type        = service::ServiceClient;
   using client_type         = fetch::network::TCPClient;
   using shared_service_type = std::shared_ptr<service_type>;
-  using certificate_type    = p2p::P2PService::certificate_type;
+  using certificate_type    = muddle::Muddle::CertificatePtr;
 
   static constexpr uint16_t    MAIN_CHAIN_PORT_OFFSET = 2;
   static constexpr uint16_t    P2P_PORT_OFFSET        = 1;

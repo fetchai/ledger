@@ -19,9 +19,8 @@ public:
   using ThreadPool = network::ThreadPool;
 
   // Construction / Destruction
-  P2PService2(Muddle::CertificatePtr &&certificate, Muddle::NetworkManager const &nm)
-    : muddle_(std::move(certificate), nm)
-  {}
+  P2PService2(Muddle::CertificatePtr &&certificate, Muddle::NetworkManager const &nm);
+  ~P2PService2() = default;
 
   void Start(PortList const &ports, PeerList const & initial_peer_list = PeerList{});
   void Stop();
