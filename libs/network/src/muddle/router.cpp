@@ -33,6 +33,13 @@ uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
   return id;
 }
 
+/**
+ * Internal; Function used to compare two fixed size addresses
+ *
+ * @param a The pointer to the start of one of the addresses
+ * @param b The pointer to the start of the other address
+ * @return true if the two sequences are the same length, otherwise false
+ */
 bool CompareAddress(uint8_t const *a, uint8_t const *b)
 {
   bool equal = true;
@@ -49,18 +56,24 @@ bool CompareAddress(uint8_t const *a, uint8_t const *b)
   return equal;
 }
 
+/**
+ * Comparison operation
+ *
+ * @param lhs Reference initial address to compare
+ * @param rhs Reference to the other address to compare
+ * @return true if the addresses are the same, otherwise false
+ */
 bool operator==(Packet::RawAddress const &lhs, Packet::Address const &rhs)
 {
   return CompareAddress(lhs.data(), rhs.pointer());
 }
 
-#if 0
-bool operator==(Packet::Address const &lhs, Packet::RawAddress const &rhs)
-{
-  return CompareAddress(lhs.pointer(), rhs.data());
-}
-#endif
-
+/**
+ * Convert a raw address into a byte array
+ *
+ * @param addr The reference to the address to convert
+ * @return The converted (output) byte array
+ */
 byte_array::ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
 {
   byte_array::ByteArray buffer;
@@ -512,7 +525,6 @@ bool Router::IsEcho(Packet const &packet, bool register_echo)
 
       is_echo = false;
     }
-
   }
 
   return is_echo;
