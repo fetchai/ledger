@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/meta/type_traits.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "math/ndarray_iterator.hpp"
 #include "math/ndarray_view.hpp"
@@ -211,19 +212,31 @@ public:
    * @param indices     index position in array
    * @param val         value to write
    */
-  void Set(std::vector<std::size_t> const &indices, type const &val)
+   template <typename S>
+   meta::IfIsUnsignedLike<S, void> Set(std::vector<S> const &indices, type const& val)
   {
     assert(indices.size() == shape_.size());               // dimensionality check not in parent
     this->super_type::Set(ComputeColIndex(indices), val);  // call parent
   }
+
   /**
    * Gets a value from the array by N-dim index
    * @param indices index to access
    */
-  type Get(std::vector<std::size_t> const &indices) const
+  template <typename S>
+  meta::IfIsUnsignedLike<S, T> Get(std::vector<S> const &indices)
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
+  }
+  /**
+   * Get that expects the single index of the data point (convenience function)
+   * @param index to access
+   */
+  type Get(std::size_t const &index) const
+  {
+    assert(index < this->size());
+    return this->operator[](index);
   }
 
   /**

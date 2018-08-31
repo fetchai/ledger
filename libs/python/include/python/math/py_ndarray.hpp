@@ -473,10 +473,10 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              return ret;
            })
       .def("dynamic_stitch",
-           [](NDArray<T> &a, std::vector<std::vector<std::size_t>> const &indices,
+           [](NDArray<T> &input_array, std::vector<NDArray<std::size_t>> const &indices,
               std::vector<NDArray<T>> const &data) {
-             DynamicStitch(a, indices, data);
-             return a;
+             DynamicStitch(input_array, indices, data);
+             return input_array;
            })
       .def("shape", [](NDArray<T> &a) { return a.shape(); })
       .def_static("Zeros", &NDArray<T>::Zeroes)

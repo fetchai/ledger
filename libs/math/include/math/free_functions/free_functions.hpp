@@ -50,15 +50,12 @@ class NDArray;
 template <typename T, typename C>
 class NDArrayIterator;
 
-/**
- * Copies the values of updates into the specified indices of the first dimension of data in this
- * object
- */
-template <typename T, typename C>
-void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates, std::vector<std::size_t> &indices)
+namespace details {
+template <typename T, typename ARRAY_TYPE>
+void ScatterImplementation(ARRAY_TYPE &input_array, std::vector<T> &updates,
+                           std::vector<std::size_t> &indices)
 {
   // sort indices and updates into ascending order
-
   std::vector<std::pair<std::size_t, T>> AB;
 
   // copy into pairs
@@ -73,7 +70,7 @@ void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates, std::vector<st
   // Place back into arrays
   for (size_t i = 0; i < updates.size(); ++i)
   {
-    updates[i] = AB[i].second;  //<- This is actually optional
+    updates[i] = AB[i].second;
     indices[i] = AB[i].first;
   }
 
@@ -89,6 +86,54 @@ void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates, std::vector<st
     input_array[arr_count] = updates[count];
   }
 }
+}  // namespace details
+
+/**
+ * Copies the values of updates into the specified indices of the first dimension of data in this
+ * object
+ */
+template <typename T, typename C>
+void Scatter(ShapeLessArray<T, C> &input_array, std::vector<T> &updates,
+             std::vector<std::size_t> &indices)
+{
+  details::ScatterImplementation<T, ShapeLessArray<T, C>>(input_array, updates, indices);
+}
+
+template <typename T, typename C>
+void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std::size_t> &indices)
+{
+
+  assert(input_array.shape().size() >= updates.shape().size());
+  assert(updates.shape().size() > 0);
+  assert(input_array.size() >= updates.size());
+
+
+  // because tensorflow is row major by default - we have to flip the mask and array to get the same
+  // answer
+  // TODO(private issue 208)
+  input_array.MajorOrderFlip();
+  updates.MajorOrderFlip();
+
+  if (updates.shape() == input_array.shape())
+  {
+    details::ScatterImplementation<T, ShapeLessArray<T, C>>(input_array, updates, indices);
+  }
+  else
+  {
+    for (std::size_t j = 0; j < updates.shape().size(); ++j)
+    {
+      assert(updates.shape()[j] == input_array.shape()[j]);
+    }
+
+    // new shape should be n-k+1 dimensions
+    //    std::vector<std::size_t> new_shape;
+    //    NDArray<T, C>            ret{new_shape};
+
+    // TODO(private issue 207): perhaps a little bit hacky to implement boolean mask as a
+    // multiplication
+    //    Broadcast([](T x, T y) { return x = y; }, input_array, updates, ret);
+  }
+}
 
 /**
  * gathers data from first dimension of data, according to indices, and puts them into input array
@@ -98,7 +143,9 @@ template <typename T, typename C>
 void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std::size_t> &indices)
 {
 
-  assert(input_array.size() == updates.size());
+  assert(input_array.shape().size() >= updates.shape().size());
+  assert(updates.shape().size() > 0);
+  assert(input_array.size() >= updates.size());
   input_array.LazyReshape(updates.shape());
 
   // sort indices
@@ -130,52 +177,43 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std:
  * interleave data from multiple sources
  * @param x
  */
-template <typename T, typename C>
-void DynamicStitch(ShapeLessArray<T, C> &                       input_array,
-                   std::vector<std::vector<std::size_t>> const &indices,
-                   std::vector<ShapeLessArray<T, C>> const &    data)
+namespace details {
+template <typename ARRAY_TYPE, typename INT_ARRAY_TYPE>
+void DynamicStitchImplementation(ARRAY_TYPE &                       input_array,
+                                 std::vector<INT_ARRAY_TYPE> const &indices,
+                                 std::vector<ARRAY_TYPE> const &    data)
 {
-  // identify the new size of this
+  // set the size of output stitched array
   std::size_t new_size = 0;
   for (std::size_t l = 0; l < indices.size(); ++l)
   {
     new_size += indices[l].size();
   }
-
   input_array.LazyResize(new_size);
 
   // loop through all output data locations identifying the next data point to copy into it
   for (std::size_t i = 0; i < indices.size(); ++i)  // iterate through lists of indices
   {
-    for (std::size_t k = 0; k < indices[i].size(); ++k)  // iterate through index within this list
+    for (std::size_t j = 0; j < indices[i].size(); ++j)
     {
-      assert(indices[i][k] <= input_array.size());
-      input_array[indices[i][k]] = data[i][k];
+      assert(indices[i][j] <= input_array.size());
+      input_array.Set(indices[i].Get[j], data[i][j]);
     }
   }
 }
-template <typename T, typename C>
-void DynamicStitch(NDArray<T, C> &input_array, std::vector<std::vector<std::size_t>> const &indices,
+}  // namespace details
+template <typename T, typename C, typename D>
+void DynamicStitch(ShapeLessArray<T, C> &                             input_array,
+                   std::vector<ShapeLessArray<std::size_t, D>> const &indices,
+                   std::vector<ShapeLessArray<T, C>> const &          data)
+{
+  details::DynamicStitchImplementation(input_array, indices, data);
+}
+template <typename T, typename C, typename D>
+void DynamicStitch(NDArray<T, C> &input_array, std::vector<NDArray<std::size_t, D>> const &indices,
                    std::vector<NDArray<T, C>> const &data)
 {
-  // identify the new size of this
-  std::size_t new_size = 0;
-  for (std::size_t l = 0; l < indices.size(); ++l)
-  {
-    new_size += indices[l].size();
-  }
-
-  input_array.LazyResize(new_size);
-
-  // loop through all output data locations identifying the next data point to copy into it
-  for (std::size_t i = 0; i < indices.size(); ++i)  // iterate through lists of indices
-  {
-    for (std::size_t k = 0; k < indices[i].size(); ++k)  // iterate through index within this list
-    {
-      assert(indices[i][k] <= input_array.size());
-      input_array[indices[i][k]] = data[i][k];
-    }
-  }
+  details::DynamicStitchImplementation(input_array, indices, data);
 }
 
 /**

@@ -655,6 +655,8 @@ public:
 
   void Set(std::size_t const &idx, type const &val) { data_[idx] = val; }
 
+  T Get(std::size_t const &idx) { return data_[idx]; }
+
   container_type const &data() const { return data_; }
   container_type &      data() { return data_; }
   std::size_t           size() const { return size_; }
