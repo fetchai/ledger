@@ -52,6 +52,8 @@ public:
 private:
   void Set(ResourceID const &rid, T const &object)
   {
+    fetch::logger.Info("Setting object in object store protocol");
+
     if (on_set_)
     {
       on_set_(object);
