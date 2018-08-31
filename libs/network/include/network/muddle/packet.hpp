@@ -33,7 +33,8 @@ public:
     uint64_t    version   : 4;     ///< Flag to signal the current version of the muddle protocol
     uint64_t    direct    : 1;     ///< Flag to signal that a direct message is being sent (no routing)
     uint64_t    broadcast : 1;     ///< Flag to signal that the packet is a broadcast packet
-    uint64_t    reserved  : 2;
+    uint64_t    exchange  : 1;     ///< Flag to signal that this is an exchange packet i.e. we are expecting a response
+    uint64_t    reserved  : 1;
     uint64_t    ttl       : 8;     ///< The time to live counter which ensures messages do not propagate further than desired
     uint64_t    service   : 16;    ///< The service number (helpful for RPC compatibility)
     uint64_t    proto     : 16;    ///< The protocol number (helpful for RPC compatibility)
@@ -62,6 +63,7 @@ public:
   uint8_t GetVersion() const;
   bool IsDirect() const;
   bool IsBroadcast() const;
+  bool IsExchange() const;
   uint8_t GetTTL() const;
   uint16_t  GetService() const;
   uint16_t GetProtocol() const;
@@ -75,6 +77,7 @@ public:
   // Setters
   void SetDirect(bool set = true);
   void SetBroadcast(bool set = true);
+  void SetExchange(bool set = true);
   void SetTTL(uint8_t ttl);
   void SetService(uint16_t service_num);
   void SetProtocol(uint16_t protocol_num);
@@ -129,6 +132,11 @@ inline bool Packet::IsDirect() const
 inline bool Packet::IsBroadcast() const
 {
   return header_.broadcast > 0;
+}
+
+inline bool Packet::IsExchange() const
+{
+  return header_.exchange > 0;
 }
 
 inline uint8_t Packet::GetTTL() const
@@ -202,6 +210,11 @@ inline void Packet::SetDirect(bool set)
 inline void Packet::SetBroadcast(bool set)
 {
   header_.broadcast = (set) ? 1 : 0;
+}
+
+inline void Packet::SetExchange(bool set)
+{
+  header_.exchange = (set) ? 1 : 0;
 }
 
 inline void Packet::SetTTL(uint8_t ttl)

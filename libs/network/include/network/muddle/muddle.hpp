@@ -14,6 +14,7 @@
 #include "network/management/connection_register.hpp"
 
 #include <memory>
+#include <chrono>
 
 namespace fetch {
 
@@ -40,7 +41,6 @@ namespace muddle {
   class Muddle
   {
   public:
-
     using CertificatePtr  = std::unique_ptr<crypto::Prover>;
     using PeerList        = std::vector<network::Peer>;
     using NetworkManager  = network::NetworkManager;
@@ -78,6 +78,9 @@ namespace muddle {
     using Register    = std::shared_ptr<MuddleRegister>;
     using Mutex       = mutex::Mutex;
     using Lock        = std::lock_guard<Mutex>;
+    using Clock       = std::chrono::system_clock;
+    using Timepoint   = Clock::time_point;
+    using Duration    = Clock::duration;
 
     void RunPeriodicMaintenance();
 
@@ -94,6 +97,7 @@ namespace muddle {
     Mutex                 servers_lock_{__LINE__, __FILE__};
     ServerList            servers_; ///< The list of listening servers
     ClientList            clients_; ///< The list of active and possible inactive connections
+    Timepoint             last_cleanup_ = Clock::now();
   };
 
 } // namespace p2p

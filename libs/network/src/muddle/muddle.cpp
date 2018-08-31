@@ -14,6 +14,7 @@
 namespace fetch {
 namespace muddle {
 
+static const auto CLEANUP_INTERVAL = std::chrono::seconds{10};
 static const auto CONNECTION_TIMEOUT = std::chrono::seconds{5};
 static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
 
@@ -136,6 +137,14 @@ void Muddle::RunPeriodicMaintenance()
   }
 #endif
 #endif
+
+  // run periodic cleanup
+  Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
+  if (time_since_last_cleanup >= CLEANUP_INTERVAL)
+  {
+    dispatcher_.Cleanup();
+    last_cleanup_ = Clock::now();;
+  }
 
   // schedule the main
   thread_pool_->Post([this]() { RunPeriodicMaintenance(); }, MAINTENANCE_INTERVAL_MS);

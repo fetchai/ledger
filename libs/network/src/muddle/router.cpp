@@ -230,6 +230,7 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
   // format the packet and route the packet
   auto packet = FormatPacket(address_, service, channel, counter, 10, request);
   packet->SetTarget(address);
+  packet->SetExchange();
   RoutePacket(packet, false);
 
   // return the response
@@ -300,11 +301,15 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
-    // notify the dispatcher about the message so that it can associate the connection handle
-    // with any pending promises. This is required to ensure clean handling of promises which
-    // fail due to connection loss.
-    dispatcher_.NotifyMessage(handle, packet->GetService(),
-                              packet->GetProtocol(), packet->GetMessageNum());
+    // determine if this packet originated from this node and that we are expecting an exchange
+    if (packet->IsExchange() && (address_ == packet->GetSender()))
+    {
+      // notify the dispatcher about the message so that it can associate the connection handle
+      // with any pending promises. This is required to ensure clean handling of promises which
+      // fail due to connection loss.
+      dispatcher_.NotifyMessage(handle, packet->GetService(),
+                                packet->GetProtocol(), packet->GetMessageNum());
+    }
 
     // serialize the packet to the buffer
     serializers::ByteArrayBuffer buffer;
