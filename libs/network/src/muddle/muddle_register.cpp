@@ -5,14 +5,24 @@
 namespace fetch {
 namespace muddle {
 
+/**
+ * Construct the connection register
+ *
+ * @param dispatcher The reference to the dispatcher
+ */
 MuddleRegister::MuddleRegister(Dispatcher &dispatcher)
   : dispatcher_(dispatcher)
 {
 }
 
+/**
+ * Execute a specified callback over all elements of the connection map
+ *
+ * @param cb The specified callback to execute
+ */
 void MuddleRegister::VisitConnectionMap(MuddleRegister::ConnectionMapCallback const &cb)
 {
-  Lock lock(connection_map_lock_);
+  FETCH_LOCK(connection_map_lock_);
   cb(connection_map_);
 }
 
@@ -38,12 +48,18 @@ void MuddleRegister::Broadcast(ConstByteArray const &data) const
   }
 }
 
+/**
+ * Lookup a connection given a specified handle
+ *
+ * @param handle The handle of the requested connection
+ * @return A valid connection if successful, otherwise an invalid one
+ */
 MuddleRegister::ConnectionPtr MuddleRegister::LookupConnection(ConnectionHandle handle) const
 {
   ConnectionPtr conn;
 
   {
-    Lock lock(connection_map_lock_);
+    FETCH_LOCK(connection_map_lock_);
 
     auto it = connection_map_.find(handle);
     if (it != connection_map_.end())
@@ -55,9 +71,14 @@ MuddleRegister::ConnectionPtr MuddleRegister::LookupConnection(ConnectionHandle 
   return conn;
 }
 
-void MuddleRegister::Enter(std::weak_ptr<network::AbstractConnection> const &ptr)
+/**
+ * Callback triggered when a new connection is established
+ *
+ * @param ptr The new connection pointer
+ */
+void MuddleRegister::Enter(ConnectionPtr const &ptr)
 {
-  Lock lock(connection_map_lock_);
+  FETCH_LOCK(connection_map_lock_);
 
   auto strong_conn = ptr.lock();
 
@@ -76,10 +97,15 @@ void MuddleRegister::Enter(std::weak_ptr<network::AbstractConnection> const &ptr
   connection_map_[strong_conn->handle()] = ptr;
 }
 
+/**
+ * Callback triggered when a connection is destroyed
+ *
+ * @param id The handle of the dying connection
+ */
 void MuddleRegister::Leave(connection_handle_type id)
 {
   {
-    Lock lock(connection_map_lock_);
+    FETCH_LOCK(connection_map_lock_);
 
     FETCH_LOG_INFO(LOGGING_NAME, "### Connection ", id, " ended");
 

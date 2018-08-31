@@ -6,6 +6,14 @@ namespace {
 
 const std::chrono::seconds PROMISE_TIMEOUT{30};
 
+/**
+ * Combine service, channel and counter into a single incde
+ *
+ * @param service The service id
+ * @param channel The channel id
+ * @param counter The message counter id
+ * @return The aggregated counter
+ */
 uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
 {
   uint64_t id = 0;
@@ -19,6 +27,14 @@ uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
 
 } // namespace
 
+/**
+ * Register that a exchange is scheduled to take place and create a promise to track the response
+ *
+ * @param service The service id
+ * @param channel The channel id
+ * @param counter The message id
+ * @return The created promise for this exchange
+ */
 Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t channel, uint16_t counter)
 {
   FETCH_LOCK(promises_lock_);
@@ -35,6 +51,12 @@ Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t chan
   return promises_[id].promise;
 }
 
+/**
+ * Attempt to match an incoming packet against a pending promise
+ *
+ * @param packet The input packet
+ * @return true if the match was found (and the packet was handled), otherwise false
+ */
 bool Dispatcher::Dispatch(PacketPtr packet)
 {
   bool success = false;
@@ -53,6 +75,14 @@ bool Dispatcher::Dispatch(PacketPtr packet)
   return success;
 }
 
+/**
+ * Notify the dispatcher that an exchange is taking place
+ *
+ * @param handle The handle to connection
+ * @param service The service id
+ * @param channel The channel id
+ * @param counter The message number id
+ */
 void Dispatcher::NotifyMessage(Handle handle, uint16_t service, uint16_t channel, uint16_t counter)
 {
   FETCH_LOCK(handles_lock_);
@@ -61,6 +91,12 @@ void Dispatcher::NotifyMessage(Handle handle, uint16_t service, uint16_t channel
   handles_[handle].insert(id);
 }
 
+/**
+ * Notify that a connection failure has occured and that existing pending promises should be
+ * cancelled
+ *
+ * @param handle The conenction handle
+ */
 void Dispatcher::NotifyConnectionFailure(Handle handle)
 {
   PromiseSet affected_promises{};
@@ -92,6 +128,11 @@ void Dispatcher::NotifyConnectionFailure(Handle handle)
   }
 }
 
+/**
+ * Run the cleanup routing
+ *
+ * @param now The reference time out (by default the current time)
+ */
 void Dispatcher::Cleanup(Timepoint const &now)
 {
   FETCH_LOCK(promises_lock_);
@@ -143,7 +184,6 @@ void Dispatcher::Cleanup(Timepoint const &now)
     }
   }
 }
-
 
 } // namespace muddle
 } // namespace fetch

@@ -18,6 +18,12 @@ static const auto CLEANUP_INTERVAL = std::chrono::seconds{10};
 static const auto CONNECTION_TIMEOUT = std::chrono::seconds{5};
 static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
 
+/**
+ * Convert an `AbstractConnection` type to a string
+ *
+ * @param type The connection type
+ * @return The string value
+ */
 static char const *ConnTypeToString(uint16_t type) noexcept
 {
   char const *name = "unknown";
@@ -176,6 +182,11 @@ void Muddle::CreateTcpServer(uint16_t port)
   servers_.emplace_back(std::static_pointer_cast<network::AbstractNetworkServer>(server));
 }
 
+/**
+ * Create a new TCP client connection to the specified peer
+ *
+ * @param peer The peer to connect to
+ */
 void Muddle::CreateTcpClient(network::Peer const &peer)
 {
   using ClientImpl = network::TCPClient;
@@ -236,36 +247,34 @@ void Muddle::CreateTcpClient(network::Peer const &peer)
 
   client.Connect(peer.address(), peer.port());
 
-//#if 1
-//  // wait for the connection to be established
-//  thread_pool_->Post([strong_conn]() {
-//    using Clock = std::chrono::high_resolution_clock;
-//
-//    // connection loop
-//    auto const start = Clock::now();
-//    for (;;)
-//    {
-//      if (strong_conn->is_alive())
-//      {
-//        break;
-//      }
-//
-//      auto const delta = Clock::now() - start;
-//      if (delta > CONNECTION_TIMEOUT)
-//      {
-//        FETCH_LOG_INFO(LOGGING_NAME, "Timed out waiting for socket to connect to remote host");
-//        break;
-//      }
-//
-//      std::this_thread::sleep_for(std::chrono::milliseconds{10});
-//    }
-//
-//    // ensure
-//  });
-//#endif
+#if 0
+  // wait for the connection to be established
+  thread_pool_->Post([strong_conn]() {
+    using Clock = std::chrono::high_resolution_clock;
+
+    // connection loop
+    auto const start = Clock::now();
+    for (;;)
+    {
+      if (strong_conn->is_alive())
+      {
+        break;
+      }
+
+      auto const delta = Clock::now() - start;
+      if (delta > CONNECTION_TIMEOUT)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Timed out waiting for socket to connect to remote host");
+        break;
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    }
+
+    // ensure
+  });
+#endif
 }
-
-
 
 } // namespace p2p
 } // namespace fetch
