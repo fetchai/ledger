@@ -29,10 +29,9 @@ public:
   using context_type = std::size_t;
 
 private:
-  context_type                 context_;
+  context_type context_;
 
 public:
-
   using StreamHasher::Update;
   using StreamHasher::Final;
 

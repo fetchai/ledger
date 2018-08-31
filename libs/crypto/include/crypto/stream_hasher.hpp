@@ -34,7 +34,7 @@ public:
   bool                  Update(byte_array::ConstByteArray const &data);
   byte_array::ByteArray Final();
 
-  template<typename T>
+  template <typename T>
   meta::IfIsPodLike<T> Final()
   {
     typename std::remove_const<T>::type pod;

@@ -64,7 +64,7 @@ public:
     for (std::size_t i = 0; i < n; ++i) data_[i] = up[i];
   }
 
-  ConstByteArray(container_type const * const data, std::size_t const& size)
+  ConstByteArray(container_type const *const data, std::size_t const &size)
   {
     assert(data != nullptr);
     Reserve(size);
