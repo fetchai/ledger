@@ -27,6 +27,7 @@ class FNV : public StreamHasher
 {
 public:
   using context_type = std::size_t;
+  using base_type    = StreamHasher;
 
 private:
   context_type context_;
@@ -41,6 +42,12 @@ public:
   bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
   void        Final(uint8_t *hash, std::size_t const &size) override;
   std::size_t hashSize() const override;
+
+  template <typename T = context_type>
+  auto Final() -> decltype(base_type::Final<T>())
+  {
+    return base_type::Final<T>();
+  }
 };
 
 struct CallableFNV

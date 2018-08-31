@@ -54,7 +54,7 @@ protected:
     x.Reset();
     bool const retval = x.Update(data_to_hash);
     ASSERT_TRUE(retval);
-    auto hash = x.Final<FNV::context_type>();
+    auto hash = x.Final<>();
 
     EXPECT_EQ(expected_hash, hash);
   }
