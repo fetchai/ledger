@@ -198,9 +198,6 @@ private:
       {
         FETCH_LOG_INFO(LOGGING_NAME,"Server: Recv message");
 
-        // TODO(EJF): Needs a conditional compilation flag
-        SignalRead();
-
         ptr->PushRequest(this->handle(), message);
         ReadHeader();
       }
@@ -245,7 +242,6 @@ private:
       return;
     }
 
-    SignalSend();
 
     auto                  buffer = write_queue_.front();
     byte_array::ByteArray header;

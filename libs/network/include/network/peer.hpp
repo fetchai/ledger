@@ -52,6 +52,18 @@ public:
 
   bool operator==(Peer const &other) const;
 
+  template <typename T>
+  friend void Serialize(T &serializer, Peer const &peer)
+  {
+    serializer << peer.address_ << peer.port_;
+  }
+
+  template <typename T>
+  friend void Deserialize(T &serializer, Peer &peer)
+  {
+    serializer >> peer.address_ >> peer.port_;
+  }
+
 private:
   std::string address_{"localhost"};
   uint16_t    port_{0};

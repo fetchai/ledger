@@ -61,13 +61,5 @@ void MuddleRegister::Leave(connection_handle_type id)
   }
 }
 
-void MuddleRegister::SignalRead(connection_handle_type id)
-{
-}
-
-void MuddleRegister::SignalSend(connection_handle_type id)
-{
-}
-
 } // namespace p2p
 } // namespace fetch

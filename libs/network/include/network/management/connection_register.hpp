@@ -112,13 +112,6 @@ public:
 
   void Leave(connection_handle_type id) override
   {
-    auto const timestamp = Clock::now().time_since_epoch().count();
-
-    {
-      std::lock_guard<mutex::Mutex> lock(trace_file_lock_);
-      trace_file_ << timestamp << ' ' << id << " LEAVE " << std::endl;
-    }
-
     {
       RemoveService(id);
 

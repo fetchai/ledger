@@ -48,9 +48,6 @@ protected:
   /// @{
   void Enter(std::weak_ptr<network::AbstractConnection> const &ptr) override;
   void Leave(connection_handle_type id) override;
-
-  void SignalRead(connection_handle_type id) override;
-  void SignalSend(connection_handle_type id) override;
   /// @}
 
 private:
