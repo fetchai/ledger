@@ -64,6 +64,14 @@ public:
     for (std::size_t i = 0; i < n; ++i) data_[i] = up[i];
   }
 
+  ConstByteArray(container_type const * const data, std::size_t const& size)
+  {
+    assert(data != nullptr);
+    Reserve(size);
+    Resize(size);
+    std::memcpy(data_.pointer(), data, size);
+  }
+
   ConstByteArray(std::initializer_list<container_type> l)
   {
     Resize(l.size());
@@ -144,7 +152,7 @@ public:
 public:
   self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
-    return SubArrayEx<self_type>(start, length);
+    return SubArray<self_type>(start, length);
   }
 
   bool Match(self_type const &str, std::size_t pos = 0) const
@@ -204,7 +212,7 @@ public:
 
 protected:
   template <typename RETURN_TYPE = self_type>
-  RETURN_TYPE SubArrayEx(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  RETURN_TYPE SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
     length = std::min(length, length_ - start);
     assert(start + length <= start_ + length_);

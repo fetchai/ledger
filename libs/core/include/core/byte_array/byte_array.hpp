@@ -40,13 +40,14 @@ public:
   using super_type::operator[];
   using super_type::pointer;
   using super_type::char_pointer;
+  using super_type::SubArray;
 
   ByteArray(super_type const &other) : super_type(other.Copy()) {}
   ByteArray(super_type &&other) : super_type(other.IsUnique() ? std::move(other) : other.Copy()) {}
 
   self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
-    return SubArrayEx<self_type>(start, length);
+    return SubArray<self_type>(start, length);
   }
 };
 

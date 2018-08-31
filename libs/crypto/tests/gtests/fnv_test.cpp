@@ -61,8 +61,11 @@ protected:
 
 TEST_F(FVNTest, test_basic)
 {
-    test_basic_hash("abcdefg", {0x40, 0x6e, 0x47, 0x50, 0x17, 0xaa, 0x77, 0x37});
-    test_basic_hash_value("abcdefg", 0x406e475017aa7737);
+    FNV::context_type const expected_hash = 0x406e475017aa7737;
+    byte_array::ConstByteArray const expected_hash_array (reinterpret_cast<byte_array::ConstByteArray::container_type const*>(&expected_hash),
+                                                          sizeof(expected_hash));
+    test_basic_hash("abcdefg", expected_hash_array);
+    test_basic_hash_value("abcdefg", expected_hash);
 }
 
 }  // namespace
