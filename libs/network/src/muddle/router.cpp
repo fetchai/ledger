@@ -300,6 +300,12 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
+    // notify the dispatcher about the message so that it can associate the connection handle
+    // with any pending promises. This is required to ensure clean handling of promises which
+    // fail due to connection loss.
+    dispatcher_.NotifyMessage(handle, packet->GetService(),
+                              packet->GetProtocol(), packet->GetMessageNum());
+
     // serialize the packet to the buffer
     serializers::ByteArrayBuffer buffer;
     buffer << *packet;

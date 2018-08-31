@@ -1,8 +1,14 @@
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/muddle_register.hpp"
+#include "network/muddle/dispatcher.hpp"
 
 namespace fetch {
 namespace muddle {
+
+MuddleRegister::MuddleRegister(Dispatcher &dispatcher)
+  : dispatcher_(dispatcher)
+{
+}
 
 void MuddleRegister::VisitConnectionMap(MuddleRegister::ConnectionMapCallback const &cb)
 {
@@ -50,15 +56,20 @@ void MuddleRegister::Enter(std::weak_ptr<network::AbstractConnection> const &ptr
 
 void MuddleRegister::Leave(connection_handle_type id)
 {
-  Lock lock(connection_map_lock_);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "### Connection ", id, " ended");
-
-  auto it = connection_map_.find(id);
-  if (it != connection_map_.end())
   {
-    connection_map_.erase(it);
+    Lock lock(connection_map_lock_);
+
+    FETCH_LOG_INFO(LOGGING_NAME, "### Connection ", id, " ended");
+
+    auto it = connection_map_.find(id);
+    if (it != connection_map_.end())
+    {
+      connection_map_.erase(it);
+    }
   }
+
+  // inform the dispatcher that the connection has failed (this can clear up all of the pending promises)
+  dispatcher_.NotifyConnectionFailure(id);
 }
 
 } // namespace p2p

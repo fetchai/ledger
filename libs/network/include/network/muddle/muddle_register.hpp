@@ -11,6 +11,8 @@
 namespace fetch {
 namespace muddle {
 
+class Dispatcher;
+
 /**
  * The Muddle registers monitors all incoming and outgoing connections maintained in a given muddle.
  */
@@ -26,7 +28,7 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleReg";
 
   // Construction / Destruction
-  MuddleRegister() = default;
+  MuddleRegister(Dispatcher &dispatcher);
   MuddleRegister(MuddleRegister const &) = delete;
   MuddleRegister(MuddleRegister &&) = delete;
   ~MuddleRegister() = default;
@@ -57,7 +59,7 @@ private:
 
   mutable Mutex connection_map_lock_{__LINE__, __FILE__};
   ConnectionMap connection_map_;
-
+  Dispatcher   &dispatcher_;
 };
 
 } // namespace p2p

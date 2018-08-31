@@ -41,6 +41,7 @@ public:
 
   void Route(Handle handle, PacketPtr packet);
   void SendDirect(Handle handle, uint16_t service_num, uint16_t proto_num, Payload const &payload);
+  void NotifyConnectionFailure(Handle handle);
 
   /// @name Endpoint Methods (Publicly visible)
   /// @{
