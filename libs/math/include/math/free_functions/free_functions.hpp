@@ -51,12 +51,12 @@ template <typename T, typename C>
 class NDArrayIterator;
 
 namespace details {
-template <typename T, typename ARRAY_TYPE>
-void ScatterImplementation(ARRAY_TYPE &input_array, std::vector<T> &updates,
+template <typename ARRAY_TYPE>
+void ScatterImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE &updates,
                            std::vector<std::size_t> &indices)
 {
   // sort indices and updates into ascending order
-  std::vector<std::pair<std::size_t, T>> AB;
+  std::vector<std::pair<std::size_t, typename ARRAY_TYPE::type>> AB;
 
   // copy into pairs
   // Note that A values are put in "first" this is very important
@@ -93,10 +93,10 @@ void ScatterImplementation(ARRAY_TYPE &input_array, std::vector<T> &updates,
  * object
  */
 template <typename T, typename C>
-void Scatter(ShapeLessArray<T, C> &input_array, std::vector<T> &updates,
+void Scatter(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> &updates,
              std::vector<std::size_t> &indices)
 {
-  details::ScatterImplementation<T, ShapeLessArray<T, C>>(input_array, updates, indices);
+  details::ScatterImplementation(input_array, updates, indices);
 }
 
 template <typename T, typename C>
@@ -107,22 +107,21 @@ void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std
   assert(updates.shape().size() > 0);
   assert(input_array.size() >= updates.size());
 
-
   // because tensorflow is row major by default - we have to flip the mask and array to get the same
   // answer
   // TODO(private issue 208)
   input_array.MajorOrderFlip();
   updates.MajorOrderFlip();
 
-  if (updates.shape() == input_array.shape())
+  if (updates.shape().size() == input_array.shape().size())
   {
-    details::ScatterImplementation<T, ShapeLessArray<T, C>>(input_array, updates, indices);
+    details::ScatterImplementation(input_array, updates, indices);
   }
   else
   {
     for (std::size_t j = 0; j < updates.shape().size(); ++j)
     {
-      assert(updates.shape()[j] == input_array.shape()[j]);
+      assert(updates.shape()[j] <= input_array.shape()[j]);
     }
 
     // new shape should be n-k+1 dimensions
@@ -178,42 +177,51 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std:
  * @param x
  */
 namespace details {
-template <typename ARRAY_TYPE, typename INT_ARRAY_TYPE>
-void DynamicStitchImplementation(ARRAY_TYPE &                       input_array,
-                                 std::vector<INT_ARRAY_TYPE> const &indices,
-                                 std::vector<ARRAY_TYPE> const &    data)
+template <typename ARRAY_TYPE>
+void DynamicStitchImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE const &indices,
+                                 ARRAY_TYPE const &data)
 {
   // set the size of output stitched array
-  std::size_t new_size = 0;
-  for (std::size_t l = 0; l < indices.size(); ++l)
-  {
-    new_size += indices[l].size();
-  }
-  input_array.LazyResize(new_size);
+  //  std::size_t new_size = 0;
+  //  for (std::size_t l = 0; l < indices.size(); ++l)
+  //  {
+  //    new_size += indices[l].size();
+  //  }
+  //  input_array.LazyResize(new_size);
+  input_array.LazyResize(indices.size());
 
   // loop through all output data locations identifying the next data point to copy into it
   for (std::size_t i = 0; i < indices.size(); ++i)  // iterate through lists of indices
   {
-    for (std::size_t j = 0; j < indices[i].size(); ++j)
-    {
-      assert(indices[i][j] <= input_array.size());
-      input_array.Set(indices[i].Get[j], data[i][j]);
-    }
+    input_array.Set(std::size_t(indices[i]), data[i]);
+
+    //    for (std::size_t j = 0; j < indices[i].size(); ++j)
+    //    {
+    //      assert(indices[i][j] <= input_array.size());
+    //      input_array.Set(std::size_t(indices[i].Get(j)), data[i][j]);
+    //    }
   }
 }
 }  // namespace details
-template <typename T, typename C, typename D>
-void DynamicStitch(ShapeLessArray<T, C> &                             input_array,
-                   std::vector<ShapeLessArray<std::size_t, D>> const &indices,
-                   std::vector<ShapeLessArray<T, C>> const &          data)
+template <typename T, typename C>
+void DynamicStitch(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &indices,
+                   ShapeLessArray<T, C> const &data)
 {
   details::DynamicStitchImplementation(input_array, indices, data);
 }
-template <typename T, typename C, typename D>
-void DynamicStitch(NDArray<T, C> &input_array, std::vector<NDArray<std::size_t, D>> const &indices,
-                   std::vector<NDArray<T, C>> const &data)
+template <typename T, typename C>
+void DynamicStitch(NDArray<T, C> &input_array, NDArray<T, C> &indices, NDArray<T, C> &data)
 {
+  //  input_array.MajorOrderFlip();
+  indices.MajorOrderFlip();
+  data.MajorOrderFlip();
+
   details::DynamicStitchImplementation(input_array, indices, data);
+
+  input_array.MajorOrderFlip();
+
+  // ND dynamic stitch - not entirely clear this needs implementing, lets check with 7lytix
+  // tf.dynamic_stitch returns a flattened array
 }
 
 /**

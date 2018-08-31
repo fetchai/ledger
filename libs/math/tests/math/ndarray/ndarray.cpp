@@ -107,10 +107,11 @@ TEST(ndarray, max_axis_tests)
       {
         for (std::size_t l = 0; l < orig_shape[2]; ++l)
         {
-          temp_vector.push_back(a.Get({i, j, l, k}));
+          std::vector<std::size_t> const idxs = {i, j, k, l};
+          temp_vector.push_back(a.Get(idxs));
         }
-
-        ASSERT_TRUE(b.Get({i, j, k}) == *std::max_element(temp_vector.begin(), temp_vector.end()));
+        std::vector<std::size_t> const idxs2 = {i, j, k};
+        ASSERT_TRUE(b.Get(idxs2) == *std::max_element(temp_vector.begin(), temp_vector.end()));
         temp_vector.clear();
       }
     }

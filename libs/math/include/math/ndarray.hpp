@@ -212,11 +212,18 @@ public:
    * @param indices     index position in array
    * @param val         value to write
    */
-   template <typename S>
-   meta::IfIsUnsignedLike<S, void> Set(std::vector<S> const &indices, type const& val)
+  // TODO(private issue 123)
+  template <typename S>
+  meta::IfIsArithmetic<S, void> Set(std::vector<S> const &indices, type const &val)
   {
     assert(indices.size() == shape_.size());               // dimensionality check not in parent
     this->super_type::Set(ComputeColIndex(indices), val);  // call parent
+  }
+  template <typename S>
+  meta::IfIsArithmetic<S, void> Set(S const &index, type const &val)
+  {
+    assert(index < this->size());       // dimensionality check not in parent
+    this->super_type::Set(index, val);  // call parent
   }
 
   /**
@@ -224,7 +231,7 @@ public:
    * @param indices index to access
    */
   template <typename S>
-  meta::IfIsUnsignedLike<S, T> Get(std::vector<S> const &indices)
+  meta::IfIsArithmetic<S, T> Get(std::vector<S> const &indices) const
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
@@ -233,7 +240,8 @@ public:
    * Get that expects the single index of the data point (convenience function)
    * @param index to access
    */
-  type Get(std::size_t const &index) const
+  template <typename S>
+  meta::IfIsArithmetic<S, T> Get(S const &index) const
   {
     assert(index < this->size());
     return this->operator[](index);

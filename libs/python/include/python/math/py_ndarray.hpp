@@ -107,9 +107,9 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
              Reduce(
                  [](T const &a, T const &b) {
-                   if (a != 0) return 1;
-                   if (b != 0) return 1;
-                   return 0;
+                   if (a != T(0)) return T(1);
+                   if (b != T(0)) return T(1);
+                   return T(0);
                  },
                  y, x, axis);
            })
@@ -473,8 +473,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              return ret;
            })
       .def("dynamic_stitch",
-           [](NDArray<T> &input_array, std::vector<NDArray<std::size_t>> const &indices,
-              std::vector<NDArray<T>> const &data) {
+           [](NDArray<T> &input_array, NDArray<T> &indices, NDArray<T> const &data) {
              DynamicStitch(input_array, indices, data);
              return input_array;
            })
@@ -529,8 +528,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("sign", [](NDArray<T> &a) { fetch::math::Sign(a); })
 
       .def("scatter",
-           [](NDArray<T> &input_array, std::vector<T> &updates,
-              std::vector<std::uint64_t> &indices) {
+           [](NDArray<T> &input_array, NDArray<T> &updates, std::vector<std::size_t> &indices) {
              fetch::math::Scatter(input_array, updates, indices);
            })
       .def("gather",

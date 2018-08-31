@@ -17,18 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
 #include <type_traits>
 
 namespace fetch {
 namespace meta {
 
-
 template <typename T>
-constexpr bool IsUnsignedInteger = std::is_unsigned<T>::value && std::is_integral<T>::value && (!std::is_same<T, bool>::value);
-
+constexpr bool IsUnsignedInteger = std::is_unsigned<T>::value &&std::is_integral<T>::value &&
+                                   (!std::is_same<T, bool>::value);
 
 template <bool C, typename R = void>
 using EnableIf = typename std::enable_if<C, R>::type;
+
+template <typename T, typename R = T>
+using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
 
 template <typename T, typename R = T>
 using IfIsIntegerLike = EnableIf<(!std::is_same<T, bool>::value) && std::is_integral<T>::value, R>;
