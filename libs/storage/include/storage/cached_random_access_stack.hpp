@@ -260,7 +260,6 @@ private:
     type     data;
   };
 
-  // TODO: (HUT) : not mutable
   mutable std::map<uint64_t, CachedDataItem> data_;
   uint64_t                                   objects_ = 0;
 
