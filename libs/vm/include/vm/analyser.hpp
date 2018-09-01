@@ -19,8 +19,8 @@
 
 #include "vm/node.hpp"
 
-#include <typeinfo>
 #include <typeindex>
+#include <typeinfo>
 #include <unordered_map>
 
 namespace fetch {
@@ -34,44 +34,42 @@ public:
   ~Analyser() {}
   bool Analyse(const BlockNodePtr &root, std::vector<std::string> &errors);
 
-  template < typename T >
-  friend class ClassInterface;  
+  template <typename T>
+  friend class ClassInterface;
   friend class Module;
-  friend class BaseModule;  
+  friend class BaseModule;
 
 private:
-  template< typename T >
-  void RegisterType(TypePtr const& ptr)
+  template <typename T>
+  void RegisterType(TypePtr const &ptr)
   {
-    if(type_register_.find( std::type_index(typeid(T)) ) != type_register_.end())
+    if (type_register_.find(std::type_index(typeid(T))) != type_register_.end())
     {
       throw std::runtime_error("Type already registered.");
-    }    
-    type_register_[ std::type_index(typeid(T)) ] = ptr;
+    }
+    type_register_[std::type_index(typeid(T))] = ptr;
   }
 
-  template< typename T >
+  template <typename T>
   TypePtr GetType()
   {
-    if(type_register_.find( std::type_index(typeid(T)) ) == type_register_.end())
+    if (type_register_.find(std::type_index(typeid(T))) == type_register_.end())
     {
       throw std::runtime_error("Could not find type.");
     }
-    return type_register_[ std::type_index(typeid(T)) ];
+    return type_register_[std::type_index(typeid(T))];
   }
 
   TypePtr GetType(std::type_index const &idx)
   {
-    if(type_register_.find( idx ) == type_register_.end())
+    if (type_register_.find(idx) == type_register_.end())
     {
       throw std::runtime_error("Could not find type.");
     }
-    return type_register_[ idx ];
+    return type_register_[idx];
   }
 
-
-
-  std::unordered_map< std::type_index, TypePtr > type_register_;
+  std::unordered_map<std::type_index, TypePtr> type_register_;
 
   void    AddError(const Token &token, const std::string &message);
   void    BuildBlock(const BlockNodePtr &block_node);

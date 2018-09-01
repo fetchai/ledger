@@ -33,7 +33,7 @@ struct Object
   Object() {}
   Object(TypeId const &type_id__, VM *vm__)
   {
-    count   = 10; // TODO(tfr): Ref counter 1 segfaults
+    count   = 10;  // TODO(tfr): Ref counter 1 segfaults
     type_id = type_id__;
     vm      = vm__;
   }

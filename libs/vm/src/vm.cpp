@@ -35,9 +35,9 @@ void VM::RuntimeError(const std::string &message)
 {
   std::stringstream stream;
   stream << "runtime error: " << message;
-  error_ = stream.str();
+  error_      = stream.str();
   error_line_ = std::size_t(this->instruction_->line);
-  stop_  = true;
+  stop_       = true;
 }
 
 void VM::AcquireMatrix(const size_t rows, const size_t columns, MatrixFloat32 *&m)
@@ -834,13 +834,15 @@ bool VM::Execute(const Script &script, const std::string &name)
     }
     default:
     {
-      if(module_ != nullptr)
+      if (module_ != nullptr)
       {
-        if(!module_->ExecuteUserOpcode( this, instruction_->opcode ) )
+        if (!module_->ExecuteUserOpcode(this, instruction_->opcode))
         {
           RuntimeError("unknown opcode");
         }
-      } else {
+      }
+      else
+      {
         RuntimeError("unknown opcode");
       }
       break;

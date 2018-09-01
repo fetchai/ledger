@@ -27,14 +27,13 @@
 namespace fetch {
 namespace vm {
 
+struct TestClass2
+{
+  void Foo() { std::cout << "FOO" << std::endl; }
 
-struct TestClass2 {
-  void Foo() {
-    std::cout << "FOO" << std::endl;
-  }
-
-  void Bar(int const &x) { // TOODO: Add support for const
-    std::cout << "BAR: "<< x << std::endl;
+  void Bar(int const &x)
+  {  // TOODO: Add support for const
+    std::cout << "BAR: " << x << std::endl;
   }
 };
 
@@ -112,53 +111,51 @@ struct IsMatrix<MatrixFloat64> : public std::true_type
 {
 };
 
-
 /// Forward declaration for class and function export
 /// @{
 class Module;
 
 namespace details {
-template<typename T>  
+template <typename T>
 struct LoaderClass;
 
-template<typename T, int N>  
+template <typename T, int N>
 struct StorerClass;
 
-template< int N >
+template <int N>
 struct Resetter;
-}
+}  // namespace details
 /// }
-
 
 class VM
 {
 public:
-  VM(Module *module = nullptr) : module_(module) { }
+  VM(Module *module = nullptr) : module_(module) {}
   ~VM() {}
-  bool Execute(const Script &script, const std::string &name);
-  std::string                error() const { return error_; }
-  std::size_t               error_line() const { return error_line_; }  
+  bool        Execute(const Script &script, const std::string &name);
+  std::string error() const { return error_; }
+  std::size_t error_line() const { return error_line_; }
+
 private:
   friend struct Object;
 
   /// Friends and objects that allow dynamic module export
   /// @{
-  Module * module_ = nullptr;
+  Module *module_ = nullptr;
 
-  template < typename T >
-  friend class ClassInterface;  
+  template <typename T>
+  friend class ClassInterface;
   friend class Module;
-  friend class BaseModule;  
+  friend class BaseModule;
 
-  template< int N >
+  template <int N>
   friend struct details::Resetter;
-  template< typename T >  
+  template <typename T>
   friend struct details::LoaderClass;
 
-  template< typename T, int N >  
-  friend struct details::StorerClass;  
+  template <typename T, int N>
+  friend struct details::StorerClass;
   /// }
-
 
   static const int FRAME_STACK_SIZE = 40;
   static const int STACK_SIZE       = 5000;
@@ -204,8 +201,8 @@ private:
   const Script::Instruction *instruction_;
   bool                       stop_;
   std::string                error_;
-  std::size_t error_line_;
-  
+  std::size_t                error_line_;
+
   Value &GetVariable(const Index variable_index) { return stack_[bsp_ + variable_index]; }
 
   void Destruct(const int scope_number)
