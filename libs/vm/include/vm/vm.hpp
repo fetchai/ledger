@@ -136,7 +136,8 @@ public:
   VM(Module *module = nullptr) : module_(module) { }
   ~VM() {}
   bool Execute(const Script &script, const std::string &name);
-
+  std::string                error() const { return error_; }
+  std::size_t               error_line() const { return error_line_; }  
 private:
   friend struct Object;
 
@@ -203,7 +204,8 @@ private:
   const Script::Instruction *instruction_;
   bool                       stop_;
   std::string                error_;
-
+  std::size_t error_line_;
+  
   Value &GetVariable(const Index variable_index) { return stack_[bsp_ + variable_index]; }
 
   void Destruct(const int scope_number)

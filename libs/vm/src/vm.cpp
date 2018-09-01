@@ -36,6 +36,7 @@ void VM::RuntimeError(const std::string &message)
   std::stringstream stream;
   stream << "runtime error: " << message;
   error_ = stream.str();
+  error_line_ = std::size_t(this->instruction_->line);
   stop_  = true;
 }
 

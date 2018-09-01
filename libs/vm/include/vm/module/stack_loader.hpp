@@ -23,7 +23,7 @@ template< int N >
 struct Resetter {
   static void Reset(VM *vm)
   {
-     Value& element = vm->stack_[vm->sp_ - N];
+     Value& element = vm->stack_[vm->sp_ - N + 1];
      element.Reset();
      Resetter<N-1>::Reset(vm);
   }
@@ -37,12 +37,21 @@ struct Resetter<0> {
   }
 };
 
+
+// In case we are adding to the stack there is nothing to reset
+template< > 
+struct Resetter<-1> {
+  static void Reset(VM *vm)
+  {
+
+  }
+};
+
 template<typename T, int N>
 struct StorerClass {
 
   static void StoreArgument(VM *vm, T &&val)
   {
-   
     WrapperClass< T >  *obj  = new WrapperClass< T >( vm->instruction_->type_id , vm, std::move(val) );
     Value &value  = vm->stack_[ vm->sp_ - N ];
 
@@ -51,6 +60,37 @@ struct StorerClass {
 
   }
 };
+
+template<typename T>
+struct LoaderClass {
+
+  static T LoadArgument(int const &N, VM *vm)
+  {
+     Value& element = vm->stack_[vm->sp_ - N ];
+     WrapperClass< T > *p = static_cast<WrapperClass< T > *>(element.variant.object);
+
+     return p->object;
+  }
+};
+
+
+template<int N>
+struct StorerClass<bool, N> {
+
+  static void StoreArgument(VM *vm, bool &&val)
+  {
+    assert( N <= vm->sp_ );
+    assert( vm->instruction_->type_id == TypeId::Bool );
+
+    Value &value  = vm->stack_[ vm->sp_ - N ];
+
+    value.Reset();    
+    value.variant.ui8 = val ? uint8_t(-1) : 0;
+    value.type_id = vm->instruction_->type_id;
+
+  }
+};
+
 
 template<int N>
 struct StorerClass<int32_t, N> {
@@ -62,7 +102,7 @@ struct StorerClass<int32_t, N> {
 
     Value &value  = vm->stack_[ vm->sp_ - N ];
 
-    value.Reset();    
+    value.Reset();
     value.variant.i32 = val;
     value.type_id = vm->instruction_->type_id;
 
@@ -70,12 +110,28 @@ struct StorerClass<int32_t, N> {
 };
 
 
+
+template<int N>
+struct StorerClass<fetch::math::linalg::Matrix< double, fetch::memory::Array<double> >, N> {
+
+  static void StoreArgument(VM *vm, fetch::math::linalg::Matrix<double, fetch::memory::Array<double>>  &&val)
+  {
+    assert( N <= vm->sp_ );
+    assert( vm->instruction_->type_id == TypeId::Matrix_Float64 );
+
+    MatrixFloat64 *m = new MatrixFloat64(TypeId::Matrix_Float64, vm, std::move(val));
+
+    Value &value  = vm->stack_[ vm->sp_ - N ];
+    value.Reset();
+    value.SetObject(m, vm->instruction_->type_id);
+  }
+};
+
 template<int N>
 struct StorerClass<double, N> {
 
   static void StoreArgument(VM *vm, double &&val)
   {
-    std::cout << N  << " " << vm->sp_ << std::endl;
     assert( N <= vm->sp_ );
     assert( vm->instruction_->type_id == TypeId::Float64 );
 
@@ -90,15 +146,16 @@ struct StorerClass<double, N> {
 
 // TODO: Add storers for all the other basic types
 
-template<typename T>
-struct LoaderClass {
 
-  static T LoadArgument(int const &N, VM *vm)
+template<>
+struct LoaderClass< fetch::math::linalg::Matrix< double, fetch::memory::Array<double> > > {
+
+  static fetch::math::linalg::Matrix< double, fetch::memory::Array<double> > LoadArgument(int const &N, VM *vm)
   {
-     Value& element = vm->stack_[vm->sp_ - N];
-     WrapperClass< T > *p = static_cast<WrapperClass< T > *>(element.variant.object);
 
-     return *p->object;
+    Value& element = vm->stack_[vm->sp_ - N];
+    MatrixFloat64  *p = static_cast<MatrixFloat64  *>(element.variant.object);
+    return p->matrix;
   }
 };
 
@@ -124,6 +181,7 @@ template<>
 struct LoaderClass<int32_t> {
   static int32_t LoadArgument(int const &N, VM *vm)
   {
+     std::cout << "Popping (2) " << (vm->sp_ - N ) << std::endl;    
      Value& element = vm->stack_[vm->sp_ - N];
      return element.variant.i32;
   }

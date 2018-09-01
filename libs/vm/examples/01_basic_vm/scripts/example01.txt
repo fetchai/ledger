@@ -1,4 +1,5 @@
 function main()
+<<<<<<< Updated upstream
   var a = 1;
   var b = 1;
   var x = IntPair(a,b);
@@ -14,4 +15,11 @@ function main()
     x = IntPair.Fib(x);
   endfor
 
+=======
+//    var c = WTC(2);
+//   var ip = IntPair(1,1);
+  var a = LoadMaze();
+//    var x = Matrix< Float64 >(20,20);
+  PrintMaze(a);
+>>>>>>> Stashed changes
 endfunction
