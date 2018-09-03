@@ -50,10 +50,12 @@ class NDArray;
 template <typename T, typename C>
 class NDArrayIterator;
 
+template <typename T, typename C>
+T Max(ShapeLessArray<T, C> const &array);
+
 namespace details {
 template <typename ARRAY_TYPE>
-void ScatterImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE &updates,
-                           std::vector<std::size_t> &indices)
+void ScatterImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE &updates, ARRAY_TYPE &indices)
 {
   // sort indices and updates into ascending order
   std::vector<std::pair<std::size_t, typename ARRAY_TYPE::type>> AB;
@@ -94,16 +96,18 @@ void ScatterImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE &updates,
  */
 template <typename T, typename C>
 void Scatter(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> &updates,
-             std::vector<std::size_t> &indices)
+             ShapeLessArray<T, C> &indices)
 {
   details::ScatterImplementation(input_array, updates, indices);
 }
 
 template <typename T, typename C>
-void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std::size_t> &indices)
+// void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std::size_t>
+// &indices)
+void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &indices)
 {
 
-  assert(input_array.shape().size() >= updates.shape().size());
+  assert(input_array.size() >= updates.size());
   assert(updates.shape().size() > 0);
   assert(input_array.size() >= updates.size());
 
@@ -113,25 +117,7 @@ void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std
   input_array.MajorOrderFlip();
   updates.MajorOrderFlip();
 
-  if (updates.shape().size() == input_array.shape().size())
-  {
-    details::ScatterImplementation(input_array, updates, indices);
-  }
-  else
-  {
-    for (std::size_t j = 0; j < updates.shape().size(); ++j)
-    {
-      assert(updates.shape()[j] <= input_array.shape()[j]);
-    }
-
-    // new shape should be n-k+1 dimensions
-    //    std::vector<std::size_t> new_shape;
-    //    NDArray<T, C>            ret{new_shape};
-
-    // TODO(private issue 207): perhaps a little bit hacky to implement boolean mask as a
-    // multiplication
-    //    Broadcast([](T x, T y) { return x = y; }, input_array, updates, ret);
-  }
+  details::ScatterImplementation(input_array, updates, indices);
 }
 
 /**
@@ -139,19 +125,31 @@ void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std
  * self_type
  */
 template <typename T, typename C>
-void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std::size_t> &indices)
+void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &indices)
 {
-
-  assert(input_array.shape().size() >= updates.shape().size());
-  assert(updates.shape().size() > 0);
   assert(input_array.size() >= updates.size());
+  assert(updates.size() > 0);
   input_array.LazyReshape(updates.shape());
 
-  // sort indices
-  std::sort(indices.begin(), indices.end());
+  if (input_array.shape().size() > 1)
+  {
+    input_array.MajorOrderFlip();
+  }
+  if (input_array.shape().size() > 1)
+  {
+    updates.MajorOrderFlip();
+  }
 
-  // check largest value in indices < shape()[0]
-  assert(indices.back() <= updates.shape()[0]);
+  input_array.LazyResize(indices.size());
+  input_array.LazyReshape(indices.shape());
+
+  // sort indices
+  indices.Sort();
+  //  std::sort(indices.begin(), indices.end());
+
+  //  // check largest value in indices < shape()[0]
+  //  std::cout << "MAX(indices)" << Max(indices) << ", updates shape[0]: " << updates.shape()[0] <<
+  //  std::endl; assert(Max(indices) <= updates.shape()[0]);
 
   // set up an iterator
   NDArrayIterator<T, C> arr_iterator{updates};
@@ -160,7 +158,7 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std:
   std::size_t cur_idx, arr_count = 0;
   for (std::size_t count = 0; count < indices.size(); ++count)
   {
-    cur_idx = indices[count];
+    cur_idx = std::size_t(indices[count]);
 
     while (arr_count < cur_idx)
     {
@@ -169,6 +167,7 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std:
     }
 
     *ret_iterator = *arr_iterator;
+    ++ret_iterator;
   }
 }
 
@@ -1058,6 +1057,13 @@ T &Max(ShapeLessArray<T, C> const &array, T &ret)
   ret = array.data().in_parallel().Reduce(
       memory::TrivialRange(0, array.size()),
       [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
+  return ret;
+}
+template <typename T, typename C>
+T Max(ShapeLessArray<T, C> const &array)
+{
+  T ret;
+  Max(array, ret);
   return ret;
 }
 

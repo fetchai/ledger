@@ -528,12 +528,14 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("sign", [](NDArray<T> &a) { fetch::math::Sign(a); })
 
       .def("scatter",
-           [](NDArray<T> &input_array, NDArray<T> &updates, std::vector<std::size_t> &indices) {
+           [](NDArray<T> &input_array, NDArray<T> &updates, NDArray<T> &indices) {
              fetch::math::Scatter(input_array, updates, indices);
+             return input_array;
            })
       .def("gather",
-           [](NDArray<T> &input_array, NDArray<T> &updates, std::vector<std::size_t> &indices) {
+           [](NDArray<T> &input_array, NDArray<T> &updates, NDArray<T> &indices) {
              fetch::math::Gather(input_array, updates, indices);
+             return input_array;
            })
       .def("softmax",
            [](NDArray<T> const &array, NDArray<T> &ret) {
