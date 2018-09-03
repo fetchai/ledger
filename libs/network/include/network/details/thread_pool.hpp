@@ -92,6 +92,10 @@ public:
     FETCH_LOG_DEBUG(LOGGING_NAME,"Destroying thread manager");
   }
 
+  virtual void SetIdleInterval()
+  {
+  }
+
   template <typename F>
   void Post(F &&f, uint32_t milliseconds)
   {
@@ -113,9 +117,14 @@ public:
     }
   }
 
-  virtual void SetIdleWork(event_function_type idle_work)
+  virtual void PostIdle(event_function_type idle_work)
   {
-    idle_work_.Post(idle_work);
+    if (!shutdown_.load())
+    {
+      StartOneThread();
+      idle_work_.Post(idle_work);
+      cv_.notify_one();
+    }
   }
 
   bool StartOneThread()
@@ -134,6 +143,13 @@ public:
       return true;
     }
     return false;
+  }
+
+  virtual void clear(void)
+  {
+    future_work_.clear();
+    idle_work_.clear();
+    work_.clear();
   }
 
   virtual void Start()
@@ -213,9 +229,17 @@ private:
           LOG_STACK_TRACE_POINT;
 
           std::unique_lock<std::mutex> lock(mutex_);
-          cv_.wait_for(
-                       lock,
-                       std::chrono::milliseconds(100));  // so the future work will get serviced eventually.
+
+          auto wait_duration = future_work_ . DueIn();
+          if (wait_duration < idle_work_ . DueIn())
+          {
+            wait_duration = idle_work_ . DueIn();
+          }
+          if (wait_duration < std::chrono::milliseconds(0))
+          {
+            wait_duration = std::chrono::milliseconds(0);
+          }
+          cv_.wait_for(lock, wait_duration);
           // go round again.
         }
       }
@@ -278,9 +302,13 @@ private:
   {
     thread_state_type r = THREAD_IDLE;
     LOG_STACK_TRACE_POINT;
-    if (work_.Visit([this](IdleWorkStore::work_item_type work){ this->ExecuteWorkload(work); }) > 0)
+
+    if (idle_work_.IsDue())
     {
-      r = THREAD_WORKED;
+      if (idle_work_.Visit([this](IdleWorkStore::work_item_type work){ this->ExecuteWorkload(work); }) > 0)
+      {
+        r = THREAD_WORKED;
+      }
     }
     // if we didn't get the lock, one thread is already doing future work --
     // leave it be.
@@ -292,11 +320,14 @@ private:
     thread_state_type            r = THREAD_IDLE;
     auto cb = [this](FutureWorkStore::work_item_type work){ this->Post(work); };
 
-    if (future_work_.Visit(cb, 1) > 0)
+    if (idle_work_.IsDue())
     {
-      r = THREAD_WORKED;                      // We did something.
+      if (future_work_.Visit(cb, 1) > 0)
+      {
+        r = THREAD_WORKED;                      // We did something.
+      }
     }
-
+    
     // if we didn't get the lock, one thread is already
     // doing future work -- leave it be.
     return r;
@@ -346,6 +377,8 @@ private:
   mutable mutex_type              mutex_{__LINE__, __FILE__};
   std::atomic<bool>               shutdown_{false};
   std::atomic<unsigned long>                tc_{0};
+
+  
 };
 
 }  // namespace details

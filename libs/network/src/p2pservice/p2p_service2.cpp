@@ -4,30 +4,28 @@
 namespace fetch {
 namespace p2p {
 
-P2PService2::P2PService2(Muddle::CertificatePtr &&certificate, Muddle::NetworkManager const &nm)
-  : muddle_(std::move(certificate), nm)
+P2PService2::P2PService2(muddle_service_type muddle)
+  : muddle_(muddle)
 {
   // register the services with the rpc server
   rpc_server_.Add(PROTOCOL_RESOLVER, &resolver_proto_);
   trustSystem = std::make_shared<P2PTrust<Identity>>();
 }
 
-
-void P2PService2::Start(P2PService2::PortList const &ports,
-                        P2PService2::PeerList const &initial_peer_list)
+void P2PService2::Start(P2PService2::PeerList const &initial_peer_list)
 {
-  // start the muddle server up
-  muddle_.Start(ports); //, initial_peer_list);
-
   for(auto &peer : initial_peer_list)
   {
     possibles_.push_back(peer);
   }
+
+  thread_pool_ -> PostIdle([this](){ this -> WorkCycle(); });
 }
 
 void P2PService2::Stop()
 {
-  muddle_.Stop();
+  thread_pool_ -> clear();
+  thread_pool_ -> Stop();
 }
 
 void P2PService2::WorkCycle()
