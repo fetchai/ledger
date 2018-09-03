@@ -87,27 +87,26 @@ public:
     });
 
     // Logic for executing opcodes
-    using function_pointer = R (*)(Args...);
+    using FunctionPointer = R (*)(Args...);
     AddOpcode(opcode, [name, function](VM *vm) {
-      function_pointer fnc = function;  // Copy to drop const qualifier
-      using return_type    = R;
+      FunctionPointer fnc = function;  // Copy to drop const qualifier
+      using ReturnType    = R;
 
-      // TODO( tfr ): ask Robert if void results are populated on the stack.
-      constexpr int result_position        = int(sizeof...(Args)) - details::HasResult<R>::value;
-      constexpr int last_argument_position = int(sizeof...(Args)) - 1;
+      constexpr int RESULT_POSITION        = int(sizeof...(Args)) - details::HasResult<R>::value;
+      constexpr int LAST_ARGUMENT_POSITION = int(sizeof...(Args)) - 1;
 
       // resetter that resets all elements until (but not including) the result position
-      using stack_resetter   = typename details::Resetter<result_position>;
-      using function_invoker = typename details::StaticOrFreeFunctionMagic<
-          function_pointer, return_type, result_position>::template LoopOver<last_argument_position,
+      using StackResetter   = typename details::Resetter<RESULT_POSITION>;
+      using FunctionInvoker = typename details::StaticOrFreeFunctionMagic<
+          FunctionPointer, ReturnType, RESULT_POSITION>::template LoopOver<LAST_ARGUMENT_POSITION,
                                                                              Args...>;
 
-      assert((vm->sp_ - result_position) >= 0);
+      assert((vm->sp_ - RESULT_POSITION) >= 0);
 
-      function_invoker::Apply(vm, fnc);
-      stack_resetter::Reset(vm);
+      FunctionInvoker::Apply(vm, fnc);
+      StackResetter::Reset(vm);
 
-      vm->sp_ -= result_position;
+      vm->sp_ -= RESULT_POSITION;
     });
 
     return *this;
@@ -220,35 +219,35 @@ public:
     });
 
     // Logic for executing opcodes
-    using member_function_pointer = R (T::*)(Args...);
+    using member_FunctionPointer = R (T::*)(Args...);
     module_.AddOpcode(opcode, [name, function](VM *vm) {
-      member_function_pointer fnc = function;  // Copy to drop const qualifier
+      member_FunctionPointer fnc = function;  // Copy to drop const qualifier
 
-      using return_type = R;
+      using ReturnType = R;
       using class_type  = T;
-      // TODO( tfr ): ask Robert if void results are populated on the stack.
-      constexpr int result_position =
+
+      constexpr int RESULT_POSITION =
           int(sizeof...(Args)) + 1 - details::HasResult<R>::value;  // +1 is to override this
-      constexpr int last_argument_position = int(sizeof...(Args)) - 1;
-      constexpr int this_position          = int(sizeof...(Args));
+      constexpr int LAST_ARGUMENT_POSITION = int(sizeof...(Args)) - 1;
+      constexpr int THIS_POSITION          = int(sizeof...(Args));
 
       // resetter that resets all elements until (but not including) the result position
-      using stack_resetter   = typename details::Resetter<result_position>;
-      using function_invoker = typename details::MemberFunctionMagic<
-          class_type, member_function_pointer, return_type,
-          result_position>::template LoopOver<last_argument_position, Args...>;
+      using StackResetter   = typename details::Resetter<RESULT_POSITION>;
+      using FunctionInvoker = typename details::MemberFunctionMagic<
+          class_type, member_FunctionPointer, ReturnType,
+          RESULT_POSITION>::template LoopOver<LAST_ARGUMENT_POSITION, Args...>;
 
-      assert((vm->sp_ - result_position) >= 0);
-      assert((vm->sp_ - this_position) >= 0);
+      assert((vm->sp_ - RESULT_POSITION) >= 0);
+      assert((vm->sp_ - THIS_POSITION) >= 0);
 
-      Value &this_element  = vm->stack_[vm->sp_ - this_position];
+      Value &this_element  = vm->stack_[vm->sp_ - THIS_POSITION];
       auto   class_wrapper = static_cast<WrapperClass<class_type> *>(this_element.variant.object);
       class_type &class_from_stack = class_wrapper->object;
 
-      function_invoker::Apply(vm, class_from_stack, fnc);
-      stack_resetter::Reset(vm);
+      FunctionInvoker::Apply(vm, class_from_stack, fnc);
+      StackResetter::Reset(vm);
 
-      vm->sp_ -= result_position;
+      vm->sp_ -= RESULT_POSITION;
     });
 
     return *this;
@@ -275,27 +274,26 @@ public:
     });
 
     // Logic for executing opcodes
-    using function_pointer = R (*)(Args...);
+    using FunctionPointer = R (*)(Args...);
     module_.AddOpcode(opcode, [name, function](VM *vm) {
-      function_pointer fnc = function;  // Copy to drop const qualifier
-      using return_type    = R;
+      FunctionPointer fnc = function;  // Copy to drop const qualifier
+      using ReturnType    = R;
 
-      // TODO( tfr ): ask Robert if void results are populated on the stack.
-      constexpr int result_position        = int(sizeof...(Args)) - details::HasResult<R>::value;
-      constexpr int last_argument_position = int(sizeof...(Args)) - 1;
+      constexpr int RESULT_POSITION        = int(sizeof...(Args)) - details::HasResult<R>::value;
+      constexpr int LAST_ARGUMENT_POSITION = int(sizeof...(Args)) - 1;
 
       // resetter that resets all elements until (but not including) the result position
-      using stack_resetter   = typename details::Resetter<result_position>;
-      using function_invoker = typename details::StaticOrFreeFunctionMagic<
-          function_pointer, return_type, result_position>::template LoopOver<last_argument_position,
+      using StackResetter   = typename details::Resetter<RESULT_POSITION>;
+      using FunctionInvoker = typename details::StaticOrFreeFunctionMagic<
+          FunctionPointer, ReturnType, RESULT_POSITION>::template LoopOver<LAST_ARGUMENT_POSITION,
                                                                              Args...>;
 
-      assert((vm->sp_ - result_position) >= 0);
+      assert((vm->sp_ - RESULT_POSITION) >= 0);
 
-      function_invoker::Apply(vm, fnc);
-      stack_resetter::Reset(vm);
+      FunctionInvoker::Apply(vm, fnc);
+      StackResetter::Reset(vm);
 
-      vm->sp_ -= result_position;
+      vm->sp_ -= RESULT_POSITION;
     });
 
     return *this;
