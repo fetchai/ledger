@@ -7,10 +7,11 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_resolver.hpp"
 #include "network/p2pservice/p2p_resolver_protocol.hpp"
+#include "network/p2pservice/p2p_lane_management.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-#include "network/p2pservice/manifest.hpp"
 
 namespace fetch {
+namespace ledger { class LaneRemoteControl; }
 namespace p2p {
 
 class P2PService2
@@ -18,7 +19,6 @@ class P2PService2
 public:
   using NetworkManager = network::NetworkManager;
   using Muddle = muddle::Muddle;
-  using muddle_service_type  = muddle::Muddle&;
   using PortList = Muddle::PortList;
   using PeerList = Muddle::PeerList;
   using RpcServer = muddle::rpc::Server;
@@ -28,7 +28,9 @@ public:
   using Identity = crypto::Identity;
   using Peer   = network::Peer;
   using TrustInterface = P2PTrustInterface<Identity>;
-  using Manifest = network::Manifest;
+  using LaneRemoteControl = ledger::LaneRemoteControl;
+  using LaneRemoteControlPtr = std::shared_ptr<LaneRemoteControl>;
+  using LaneRemoteControls = std::vector<LaneRemoteControlPtr>;
 
   enum
   {
@@ -36,7 +38,7 @@ public:
   };
 
   // Construction / Destruction
-  P2PService2(Muddle &muddle);
+  P2PService2(Muddle &muddle, LaneManagement &lane_management);
   ~P2PService2() = default;
 
   void Start(PeerList const & initial_peer_list = PeerList{});
@@ -51,18 +53,20 @@ public:
                       , P2PTrustFeedbackSubject subject
                       , P2PTrustFeedbackQuality quality);
   void WorkCycle();
+
 private:
 
-  muddle_service_type muddle_;
+  Muddle  &muddle_;
   ThreadPool  thread_pool_ = network::MakeThreadPool(1);
   RpcServer rpc_server_{muddle_.AsEndpoint(), SERVICE_P2P, CHANNEL_RPC};
+
+  LaneManagement &lane_management_;
 
   // address resolution service
   Resolver resolver_;
   ResolverProtocol resolver_proto_{resolver_};
 
   std::shared_ptr<TrustInterface> trustSystem;
-  std::map<Identity, Manifest> discoveredPeers;
 
   //std::set
   PeerList possibles_; // addresses we might use in the future.

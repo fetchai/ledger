@@ -22,6 +22,7 @@
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
+#include "ledger/storage_unit/lane_remote_control.hpp"
 #include "miner/annealer_miner.hpp"
 #include "network/p2pservice/p2p_service2.hpp"
 #include "network/muddle/muddle.hpp"
@@ -124,6 +125,7 @@ private:
   using Flag = std::atomic<bool>;
   using ExecutionManager = ledger::ExecutionManager;
   using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
+  using LaneRemoteControl = ledger::LaneRemoteControl;
 
 
   /// @name Configuration
@@ -141,13 +143,15 @@ private:
   /// @name Network Orchestration
   /// @{
   NetworkManager    network_manager_;       ///< Top level network coordinator
-  MuddleService  muddle_;                   ///
+  MuddleService     muddle_;                   ///
+  LaneRemoteControl lane_control_;
   Peer2PeerService  p2p_;                   ///< The main p2p networking
   /// @}
 
   /// @name Transaction and State Database shards
   /// @{
   LaneServices             lane_services_;
+
   StorageUnitClientPtr     storage_;
   /// @}
 

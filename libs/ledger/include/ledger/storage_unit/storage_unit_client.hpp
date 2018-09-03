@@ -46,34 +46,38 @@ public:
     std::atomic<uint32_t> lane;
   };
 
-  using service_client_type        = service::ServiceClient;
-  using shared_service_client_type = std::shared_ptr<service_client_type>;
-  using client_register_type       = fetch::network::ConnectionRegister<ClientDetails>;
-  using connection_handle_type     = client_register_type::connection_handle_type;
-  using network_manager_type       = fetch::network::NetworkManager;
-  using lane_type                  = LaneIdentity::lane_type;
+  using ServiceClient       = service::ServiceClient;
+  using SharedServiceClient = std::shared_ptr<ServiceClient>;
+  using WeakServiceClient   = std::weak_ptr<ServiceClient>;
+  using SharedServiceClients = std::vector<SharedServiceClient>;
+  using ClientRegister      = fetch::network::ConnectionRegister<ClientDetails>;
+  using Handle              = ClientRegister::connection_handle_type;
+  using NetworkManager      = fetch::network::NetworkManager;
+  using LaneIndex           = LaneIdentity::lane_type;
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
-  explicit StorageUnitClient(network_manager_type const &tm) : network_manager_(tm)
+  explicit StorageUnitClient(NetworkManager const &tm) : network_manager_(tm)
   {
-    id_ = "my-fetch-id";
   }
 
-  StorageUnitClient(StorageUnitClient const &) = default;
-  StorageUnitClient(StorageUnitClient &&)      = default;
+  StorageUnitClient(StorageUnitClient const &) = delete;
+  StorageUnitClient(StorageUnitClient &&)      = delete;
 
-  void SetNumberOfLanes(lane_type const &count)
+  StorageUnitClient &operator=(StorageUnitClient const &) = delete;
+  StorageUnitClient &operator=(StorageUnitClient &&) = delete;
+
+  void SetNumberOfLanes(LaneIndex count)
   {
     lanes_.resize(count);
-    SetLaneLog2(uint32_t(lanes_.size()));
+    SetLaneLog2(count);
     assert(count == (1u << log2_lanes_));
   }
 
   template <typename T>
-  crypto::Identity AddLaneConnection(byte_array::ByteArray const &host, uint16_t const &port)
+  WeakServiceClient AddLaneConnection(byte_array::ByteArray const &host, uint16_t const &port)
   {
-    shared_service_client_type client =
+    SharedServiceClient client =
         register_.template CreateServiceClient<T>(network_manager_, host, port);
 
     // Waiting for connection to be open
@@ -84,7 +88,6 @@ public:
       // ensure the connection is live
       if (client->is_alive())
       {
-
         // make the client call
         auto p = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
 
@@ -109,7 +112,7 @@ public:
       FETCH_LOG_WARN(LOGGING_NAME,"Connection timed out - closing in StorageUnitClient::AddLaneConnection:1:");
       client->Close();
       client.reset();
-      return crypto::InvalidIdentity();
+      return {};
     }
 
     // Exchaning info
@@ -123,11 +126,11 @@ public:
       FETCH_LOG_WARN(LOGGING_NAME,"Client timeout when trying to get identity details.");
       client->Close();
       client.reset();
-      return crypto::InvalidIdentity();
+      return {};
     }
 
-    lane_type lane        = p1->As<lane_type>();
-    lane_type total_lanes = p2->As<lane_type>();
+    LaneIndex lane        = p1->As<LaneIndex>();
+    LaneIndex total_lanes = p2->As<LaneIndex>();
     if (total_lanes > lanes_.size())
     {
       lanes_.resize(total_lanes);
@@ -149,7 +152,7 @@ public:
       details->identity = lane_identity;
     }
 
-    return lane_identity;
+    return client;
   }
 
   void TryConnect(p2p::EntryPoint const &ep)
@@ -292,13 +295,9 @@ public:
         ->As<byte_array::ByteArray>();
   }
 
-  void SetID(byte_array::ByteArray const &id) { id_ = id; }
-
-  byte_array::ByteArray const &id() { return id_; }
-
   std::size_t lanes() const { return lanes_.size(); }
 
-  bool is_alive() const
+  bool IsAlive() const
   {
     bool alive = true;
     for (auto &lane : lanes_)
@@ -313,17 +312,16 @@ public:
   }
 
 private:
-  network_manager_type network_manager_;
-  uint32_t             log2_lanes_ = 0;
 
-  void SetLaneLog2(lane_type const &count)
+  void SetLaneLog2(LaneIndex count)
   {
     log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
-  client_register_type                    register_;
-  byte_array::ByteArray                   id_;
-  std::vector<shared_service_client_type> lanes_;
+  NetworkManager        network_manager_;
+  uint32_t              log2_lanes_ = 0;
+  ClientRegister        register_;
+  SharedServiceClients  lanes_;
 };
 
 }  // namespace ledger

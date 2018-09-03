@@ -177,31 +177,32 @@ public:
     cv_.notify_all();
 
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"Removing work");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Removing work");
       future_work_.clear();
       idle_work_.clear();
       work_.clear();
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Removed work");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Removed work");
     cv_.notify_all();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // TODO(EJF): Is this needed since the next operation if to wait for the threads to complete?
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Kill threads");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Kill threads");
     for (auto &thread : threads_)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
+      FETCH_LOG_DEBUG(LOGGING_NAME,
                      "Kill threads: Collect ",
                      thread->get_id()
                      );
       thread -> join();
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Delete threads");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Delete threads");
     for (auto &thread : threads_)
     {
-      delete thread;
+      delete thread; // TODO(EJF): Should use smart pointers here
     }
+
     threads_.clear();
   }
 private:

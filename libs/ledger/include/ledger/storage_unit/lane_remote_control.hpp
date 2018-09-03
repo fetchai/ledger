@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
+#include "network/p2pservice/p2p_lane_management.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "network/service/client.hpp"
@@ -25,37 +27,33 @@
 namespace fetch {
 namespace ledger {
 
-class LaneRemoteControl
+class LaneRemoteControl : public p2p::LaneManagement
 {
 public:
-  using service_type        = service::ServiceClient;
-  using shared_service_type = std::shared_ptr<service_type>;
-  using weak_service_type   = std::weak_ptr<service_type>;
-  using lane_index_type     = uint32_t;
-
   static constexpr char const *LOGGING_NAME = "LaneRemoteControl";
 
-  LaneRemoteControl() = default;
+  using Mutex = mutex::Mutex;
+  using Promise = service::Promise;
+
+  explicit LaneRemoteControl(std::size_t num_lanes)
+    : clients_{num_lanes}
+  {}
+
   LaneRemoteControl(LaneRemoteControl const &other) = default;
   LaneRemoteControl(LaneRemoteControl &&other)      = default;
   LaneRemoteControl &operator=(LaneRemoteControl const &other) = default;
   LaneRemoteControl &operator=(LaneRemoteControl &&other) = default;
+  ~LaneRemoteControl() override = default;
 
-  ~LaneRemoteControl() = default;
-
-  void AddClient(lane_index_type const &lane, weak_service_type const &client)
+  void AddClient(LaneIndex lane, WeakService const &client)
   {
-    clients_[lane] = client;
+    FETCH_LOCK(mutex_);
+    clients_.at(lane) = client;
   }
 
-  void Connect(lane_index_type const &lane, byte_array::ByteArray const &host, uint16_t const &port)
+  void Connect(LaneIndex lane, ConstByteArray const &host, uint16_t port) override
   {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
-
-    auto ptr = clients_[lane].lock();
+    auto ptr = LookupLane(lane);
     if (ptr)
     {
       FETCH_LOG_INFO(LOGGING_NAME,"Remote lane call to: ", host, ":", port);
@@ -66,9 +64,9 @@ public:
     }
   }
 
-  void TryConnect(lane_index_type const &lane, p2p::EntryPoint const &ep)
+  void TryConnect(LaneIndex lane, p2p::EntryPoint const &ep)
   {
-    auto ptr = clients_[lane].lock();
+    auto ptr = LookupLane(lane);
     if (ptr)
     {
       auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::TRY_CONNECT, ep);
@@ -78,14 +76,9 @@ public:
     }
   }
 
-  void Shutdown(lane_index_type const &lane)
+  void Shutdown(LaneIndex lane) override
   {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
-
-    auto ptr = clients_[lane].lock();
+    auto ptr = LookupLane(lane);
     if (ptr)
     {
       auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
@@ -95,14 +88,9 @@ public:
     }
   }
 
-  uint32_t GetLaneNumber(lane_index_type const &lane)
+  uint32_t GetLaneNumber(LaneIndex lane) override
   {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
-
-    auto ptr = clients_[lane].lock();
+    auto ptr = LookupLane(lane);
     if (ptr)
     {
       auto p = ptr->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
@@ -114,14 +102,9 @@ public:
     return 0;
   }
 
-  int IncomingPeers(lane_index_type const &lane)
+  int IncomingPeers(LaneIndex lane) override
   {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
-
-    auto ptr = clients_[lane].lock();
+    auto ptr = LookupLane(lane);
     if (ptr)
     {
       auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::INCOMING_PEERS);
@@ -133,14 +116,10 @@ public:
     return 0;
   }
 
-  int OutgoingPeers(lane_index_type const &lane)
+  int OutgoingPeers(LaneIndex lane) override
   {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
+    auto ptr = LookupLane(lane);
 
-    auto ptr = clients_[lane].lock();
     if (ptr)
     {
       auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::OUTGOING_PEERS);
@@ -152,19 +131,29 @@ public:
     return 0;
   }
 
-  bool IsAlive(lane_index_type const &lane)
+  bool IsAlive(LaneIndex lane) override
   {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
-
-    auto ptr = clients_[lane].lock();
-    return bool(ptr);
+    return static_cast<bool>(LookupLane(lane));
   }
 
 private:
-  std::unordered_map<lane_index_type, weak_service_type> clients_;
+
+
+  SharedService LookupLane(LaneIndex lane) const
+  {
+    FETCH_LOCK(mutex_);
+
+#ifdef NDEBUG
+    WeakService service = clients_[lane];
+#else
+    WeakService service = clients_.at(lane);
+#endif
+
+    return service.lock();
+  }
+
+  mutable Mutex mutex_{__LINE__, __FILE__};
+  std::vector<WeakService> clients_;
 };
 
 }  // namespace ledger

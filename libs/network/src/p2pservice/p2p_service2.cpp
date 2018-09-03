@@ -4,12 +4,15 @@
 namespace fetch {
 namespace p2p {
 
-P2PService2::P2PService2(muddle_service_type muddle)
+P2PService2::P2PService2(Muddle &muddle, LaneManagement &lane_management)
   : muddle_(muddle)
+  , lane_management_{lane_management}
 {
   // register the services with the rpc server
   rpc_server_.Add(PROTOCOL_RESOLVER, &resolver_proto_);
   trustSystem = std::make_shared<P2PTrust<Identity>>();
+
+  // create all the remote control instances
 }
 
 void P2PService2::Start(P2PService2::PeerList const &initial_peer_list)

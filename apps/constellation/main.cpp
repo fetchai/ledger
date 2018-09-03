@@ -170,6 +170,7 @@ struct CommandLineArguments
     s << "bootstrap......: " << args.bootstrap << std::endl;
     s << "db-prefix......: " << args.dbdir << std::endl;
     s << "interface......: " << args.interface << std::endl;
+    s << "mining.........: " << args.mine << std::endl;
     s << "peers..........: ";
     for (auto const &peer : args.peers)
     {

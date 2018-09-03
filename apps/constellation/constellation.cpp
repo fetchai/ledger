@@ -74,7 +74,8 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
   , network_manager_{CalcNetworkManagerThreads(num_lanes)}
   , muddle_{std::move(certificate), network_manager_}
-  , p2p_{muddle_}
+  , lane_control_(num_lanes)
+  , p2p_{muddle_, lane_control_}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , execution_manager_{
@@ -115,17 +116,21 @@ void Constellation::Run(PeerList const &initial_peers, bool mining)
 {
   // start all the services
   network_manager_.Start();
-  muddle_ . Start({p2p_port_});
-  p2p_ . Start(initial_peers);
+  muddle_.Start({p2p_port_});
+  p2p_.Start(initial_peers);
   lane_services_.Start();
 
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
-  for (std::size_t i = 0; i < num_lanes_; ++i)
+  for (uint32_t i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
 
-    storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
+    // establish the connection to the lane
+    auto client = storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
+
+    // allow the remote control to use connection
+    lane_control_.AddClient(i, client);
   }
 
   execution_manager_->Start();
@@ -138,7 +143,7 @@ void Constellation::Run(PeerList const &initial_peers, bool mining)
   while (active_)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
-    std::this_thread::sleep_for(std::chrono::seconds{5});
+    std::this_thread::sleep_for(std::chrono::milliseconds{500});
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...");
