@@ -21,6 +21,7 @@
 
 #include "defs.hpp"
 #include "math/arithmetic/comparison.hpp"
+#include "math/free_functions/free_functions.hpp"
 #include "math/linalg/matrix.hpp"
 
 namespace fetch {
@@ -1301,7 +1302,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Add(lhs->matrix, rhs->matrix);
+    Add(lhs->matrix, rhs->matrix, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1318,7 +1319,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Add(lhs->matrix, rhs);
+    Add(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1349,7 +1350,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Subtract(lhs->matrix, rhs->matrix);
+    Subtract(lhs->matrix, rhs->matrix, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1366,7 +1367,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Subtract(lhs->matrix, rhs);
+    Subtract(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1402,7 +1403,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Multiply(lhs->matrix, rhs);
+    Multiply(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1420,7 +1421,7 @@ private:
     }
     M *m;
     AcquireMatrix(rhs_rows, rhs_columns, m);
-    m->matrix.Multiply(rhs->matrix, lhs);
+    Multiply(rhs->matrix, lhs, m->matrix);
     lhsv.SetObject(m, rhsv.type_id);
   }
 
@@ -1442,11 +1443,11 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Divide(lhs->matrix, rhs);
+    Divide(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
-  template <typename M>
+  template <typename M, typename T>
   void MatrixUnaryMinus(Value &lhsv, M *lhs)
   {
     const size_t lhs_rows                 = lhs->matrix.height();
@@ -1456,13 +1457,13 @@ private:
     {
       // TODO(tfr): implement unary minus
       // is there an inplace op for this?
-      lhs->matrix.InlineMultiply(-1);
+      lhs->matrix.InlineMultiply(T(-1));
       return;
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
     // is there a call for this?
-    m->matrix.Multiply(lhs->matrix, -1);
+    Multiply(lhs->matrix, T(-1), m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1743,13 +1744,13 @@ private:
     }
     template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-    {
-      vm->MatrixUnaryMinus(lhsv, lhs);
-    }
+    {}
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
-    {}
+    {
+      vm->MatrixUnaryMinus<M, T>(lhsv, lhs);
+    }
     template <typename T, typename M,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>

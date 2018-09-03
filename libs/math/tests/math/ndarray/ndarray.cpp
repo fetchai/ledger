@@ -16,35 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
-// #include <algorithm>
 #include <iomanip>
 #include <iostream>
 
 //#include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
 
-#include "math/kernels/concurrent_vm.hpp"
+#include "math/free_functions/free_functions.hpp"
+//#include "math/kernels/concurrent_vm.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "math/rectangular_array.hpp"
-#include "vectorise/threading/pool.hpp"
+//#include "vectorise/threading/pool.hpp"
 
 // using namespace fetch::memory;
 // using namespace fetch::threading;
@@ -105,13 +88,14 @@ TEST(ndarray, max_axis_tests)
   // set up the original array and the return array
   std::vector<std::size_t> new_shape{orig_shape};
   new_shape.erase(new_shape.begin() + axis);
-  _A<double> a = NDArray<double>(orig_shape);
+  _A<double> a{orig_shape};
+
   for (std::size_t i = 0; i < data_size; ++i)
   {
     a[i] = double(i);
   }
   _A<double> b{new_shape};
-  b = a.Max(std::size_t(axis));
+  Max<double, typename NDArray<double>::container_type>(a, std::size_t(axis), b);
 
   std::vector<double> temp_vector;
   for (std::size_t i = 0; i < new_shape[0]; ++i)

@@ -23,6 +23,7 @@
 #include "network/service/protocol.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
+#include "vectorise/platform.hpp"
 
 #include <set>
 #include <utility>
@@ -90,18 +91,53 @@ public:
       // If we need to sync our object store (esp. when joining the network)
       if (needs_sync_)
       {
-        for (uint16_t i = 0; i < 0x100; ++i)
-        {
-          roots_to_sync_.push(static_cast<uint8_t>(i));
-        }
-
-        thread_pool_->Post([this]() { this->SyncSubtree(); });
+        thread_pool_->Post([this]() { this->SetupSync(); });
       }
       else
       {
         thread_pool_->Post([this]() { this->FetchObjectsFromPeers(); });
       }
     }
+  }
+
+  void SetupSync()
+  {
+    uint64_t obj_size = 0;
+
+    // Determine the expected size of the obj store as the max of all peers
+    using service_map_type = typename R::service_map_type;
+    register_.WithServices([this, &obj_size](service_map_type const &map) {
+      for (auto const &p : map)
+      {
+        if (!running_) return;
+
+        auto                    peer    = p.second;
+        auto                    ptr     = peer.lock();
+        fetch::service::Promise promise = ptr->Call(protocol_, OBJECT_COUNT);
+
+        uint64_t remote_size = promise.As<uint64_t>();
+
+        obj_size = std::max(obj_size, remote_size);
+      }
+    });
+
+    fetch::logger.Info("Expected tx size: ", obj_size);
+
+    // If there are objects to sync from the network, fetch N roots from each of the peers in
+    // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and
+    // the roots to sync 00, 10, 01 and 11...
+    // where roots to sync are all objects with the key starting with those bits
+    if (obj_size != 0)
+    {
+      root_mask_ = platform::Log2Ceil(((obj_size / (PULL_LIMIT_ / 2)) + 1)) + 1;
+
+      for (uint64_t i = 0, end = (1 << (root_mask_ + 1)); i < end; ++i)
+      {
+        roots_to_sync_.push(Reverse(static_cast<uint8_t>(i)));
+      }
+    }
+
+    thread_pool_->Post([this]() { this->SyncSubtree(); });
   }
 
   void FetchObjectsFromPeers()
@@ -246,17 +282,65 @@ private:
   protocol_handler_type protocol_;
   register_type         register_;
   thread_pool_type      thread_pool_;
-  const uint64_t        PULL_LIMIT_ = 100000;  // Limit the amount a single rpc call will provide
+  const uint64_t        PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
+
+  mutex::Mutex    mutex_;
+  ObjectStore<T> *store_;
+
+  struct CachedObject
+  {
+    CachedObject() { created = std::chrono::system_clock::now(); }
+
+    void UpdateLifetime()
+    {
+      std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+      lifetime =
+          double(std::chrono::duration_cast<std::chrono::milliseconds>(end - created).count());
+    }
+
+    bool operator<(CachedObject const &other) const { return lifetime < other.lifetime; }
+
+    T                                     data;
+    std::unordered_set<uint64_t>          delivered_to;
+    std::chrono::system_clock::time_point created;
+    double                                lifetime = 0;
+  };
+
+  std::vector<CachedObject> cache_;
+
+  uint64_t max_cache_           = 2000;
+  double   max_cache_life_time_ = 20000;  // TODO(issue 7): Make cache configurable
+
+  mutable mutex::Mutex          object_list_mutex_;
+  std::vector<service::Promise> object_list_promises_;
+  std::vector<T>                new_objects_;
+  std::vector<S>                incoming_objects_;
+
+  std::atomic<bool> running_{false};
+
+  // Syncing with other peers on startup
+  bool                                              needs_sync_ = true;
+  std::vector<std::pair<uint8_t, service::Promise>> subtree_promises_;
+  std::queue<uint8_t>                               roots_to_sync_;
+  uint64_t                                          root_mask_ = 0;
+
+  // Reverse bits in byte
+  uint8_t Reverse(uint8_t c)
+  {
+    c = uint8_t(((c & 0xF0) >> 4) | ((c & 0x0F) << 4));
+    c = uint8_t(((c & 0xCC) >> 2) | ((c & 0x33) << 2));
+    c = uint8_t(((c & 0xAA) >> 1) | ((c & 0x55) << 1));
+    return c;
+  }
 
   uint64_t ObjectCount()
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    return cache_.size();  // TODO(issue 9): Return store size
+    return store_->size();
   }
 
   std::vector<S> PullObjects(uint64_t const &client_handle)
   {
-
     std::lock_guard<mutex::Mutex> lock(mutex_);
 
     if (cache_.begin() == cache_.end())
@@ -278,25 +362,6 @@ private:
 
     return ret;
   }
-
-  struct CachedObject
-  {
-    CachedObject() { created = std::chrono::system_clock::now(); }
-
-    void UpdateLifetime()
-    {
-      std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-      lifetime =
-          double(std::chrono::duration_cast<std::chrono::milliseconds>(end - created).count());
-    }
-
-    bool operator<(CachedObject const &other) const { return lifetime < other.lifetime; }
-
-    T                                     data;
-    std::unordered_set<uint64_t>          delivered_to;
-    std::chrono::system_clock::time_point created;
-    double                                lifetime = 0;
-  };
 
   // Create a stack of subtrees we want to sync. Push roots back onto this when the promise
   // fails. Completion when the stack is empty
@@ -326,7 +391,7 @@ private:
         array.Resize(256 / 8);
         array[0] = root;
 
-        auto promise = ptr->Call(protocol_, PULL_SUBTREE, array, uint64_t(8));
+        auto promise = ptr->Call(protocol_, PULL_SUBTREE, array, root_mask_);
         subtree_promises_.push_back(std::make_pair(root, std::move(promise)));
       }
     });
@@ -379,26 +444,6 @@ private:
       thread_pool_->Post([this]() { this->SyncSubtree(); });
     }
   }
-
-  mutex::Mutex    mutex_;
-  ObjectStore<T> *store_;
-
-  std::vector<CachedObject> cache_;
-
-  uint64_t max_cache_           = 2000;
-  double   max_cache_life_time_ = 20000;  // TODO(issue 7): Make cache configurable
-
-  mutable mutex::Mutex          object_list_mutex_;
-  std::vector<service::Promise> object_list_promises_;
-  std::vector<T>                new_objects_;
-  std::vector<S>                incoming_objects_;
-
-  std::atomic<bool> running_{false};
-
-  // Syncing with other peers on startup
-  bool                                              needs_sync_ = true;
-  std::vector<std::pair<uint8_t, service::Promise>> subtree_promises_;
-  std::queue<uint8_t>                               roots_to_sync_;
 };
 
 }  // namespace storage
