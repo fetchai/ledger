@@ -88,13 +88,8 @@ enum class Opcode : uint16_t
   CreateMatrix,
   CreateArray,
 
-  // Custom opcodes
-  PrintInt32,
-  PrintStr,
-  CreateIntPair,
-  IntPairFirst,
-  IntPairSecond,
-  Fib
+  StartOfUserOpcodes =
+      16000  // This OP code always need to have the highest value - preferably constant.
 };
 
 }  // namespace vm
