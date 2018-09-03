@@ -17,9 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
+
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <deque>
 
 namespace fetch {
 namespace network {
@@ -28,55 +31,40 @@ namespace details {
 class WorkStore
 {
 public:
-  using work_item_type    = std::function<void()>;
-protected:
-  using storage_type      = std::queue<work_item_type>;
-  using mutex_type        = fetch::mutex::Mutex;
-  using lock_type         = std::lock_guard<mutex_type>;
+  using WorkItem = std::function<void()>;
 
-public:
+  WorkStore() = default;
   WorkStore(const WorkStore &rhs) = delete;
   WorkStore(WorkStore &&rhs)      = delete;
-  WorkStore operator=(const WorkStore &rhs) = delete;
-  WorkStore operator=(WorkStore &&rhs)             = delete;
-  bool            operator==(const WorkStore &rhs) const = delete;
-  bool            operator<(const WorkStore &rhs) const  = delete;
-
-  WorkStore() { }
-
-  virtual ~WorkStore()
+  ~WorkStore()
   {
     shutdown_.store(true);
-    lock_type mlock(mutex_); // wait in case anyone is in here.
-    while(!store_.empty())
-    {
-      store_.pop();
-    }
+    clear();
   }
 
-  virtual void clear()
+  WorkStore operator=(const WorkStore &rhs) = delete;
+  WorkStore operator=(WorkStore &&rhs)      = delete;
+
+  void clear()
   {
-    lock_type mlock(mutex_);
-    while(!store_.empty())
-    {
-      store_.pop();
-    }
+    FETCH_LOCK(mutex_);
+    store_.clear();
   }
 
-  virtual bool empty()
+  bool empty()
   {
-    lock_type mlock(mutex_);
+    FETCH_LOCK(mutex_);
     return store_.empty();
   }
 
-  virtual void Abort()
+  void Abort()
   {
     shutdown_.store(true);
   }
 
-  virtual bool GetNext(work_item_type &output)
+  bool GetNext(WorkItem &output)
   {
-    lock_type mlock(mutex_);
+    FETCH_LOCK(mutex_);
     if (shutdown_.load())
     {
       return false;
@@ -89,12 +77,12 @@ public:
     return true;
   }
 
-  virtual int Visit(std::function<void (work_item_type)> visitor, int maxprocess=1)
+  int Visit(std::function<void (WorkItem)> const &visitor, int maxprocess=1)
   {
     int processed = 0;
     while(true)
     {
-      work_item_type work;
+      WorkItem work;
       if (processed >= maxprocess) break;
       if (!GetNext(work)) break;
       visitor(work);
@@ -107,20 +95,24 @@ public:
   void Post(F &&f)
   {
     if (shutdown_.load()) return;
-    lock_type mlock(mutex_);
-    store_.push(f);
+    FETCH_LOCK(mutex_);
+    store_.push_back(f);
   }
 
 private:
-  storage_type store_;
-  mutable mutex_type mutex_{__LINE__, __FILE__};
+
+  using Queue    = std::deque<WorkItem>;
+  using Mutex    = mutex::Mutex;
+
+  Queue store_;
+  mutable Mutex mutex_{__LINE__, __FILE__};
   std::atomic<bool> shutdown_{false};
 
-  virtual work_item_type GetNextActual()
+  WorkItem GetNextActual()
   {
-    auto nextDue = store_.front();
-    store_.pop();
-    return nextDue;
+    auto next_due = store_.front();
+    store_.pop_front();
+    return next_due;
   }
 };
 
