@@ -45,7 +45,7 @@ public:
 
     auto stx = std::make_shared<TransactionItem>(tx, transaction_index_++);
 
-    FETCH_LOG_INFO(LOGGING_NAME,"EnqueueTransaction: ", byte_array::ToBase64(tx.transaction_hash));
+    FETCH_LOG_DEBUG(LOGGING_NAME,"EnqueueTransaction: ", byte_array::ToBase64(tx.transaction_hash));
     pending_queue_.push_back(stx);
   }
 
@@ -59,7 +59,7 @@ public:
 
       for (auto &tx : pending_queue_)
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"Pushing Transaction: ", byte_array::ToBase64(tx->summary().transaction_hash));
+        FETCH_LOG_DEBUG(LOGGING_NAME,"Pushing Transaction: ", byte_array::ToBase64(tx->summary().transaction_hash));
         generator_.PushTransactionSummary(tx);
       }
       pending_queue_.clear();
@@ -67,7 +67,7 @@ public:
 
     std::size_t const num_transactions = generator_.unspent_count();
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Transaction Backlog: ", num_transactions);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Transaction Backlog: ", num_transactions);
 
     if (num_transactions == 1)
     {
@@ -78,6 +78,7 @@ public:
       PopulateBlock(block, num_lanes, num_slices);
     }
 
+#if 0
     // debugging interface
     if (num_transactions > 0)
     {
@@ -95,6 +96,7 @@ public:
         ++slice_index;
       }
     }
+#endif
   }
 
 private:

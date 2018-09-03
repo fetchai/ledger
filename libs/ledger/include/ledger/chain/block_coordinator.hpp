@@ -39,16 +39,24 @@ public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
   BlockCoordinator(chain::MainChain &mainChain, ledger::ExecutionManagerInterface &executionManager)
-    : mainChain_{mainChain}, executionManager_{executionManager}
+    : chain_{mainChain}, execution_manager_{executionManager}
   {}
 
   ~BlockCoordinator() { Stop(); }
 
+  /**
+   * Called whenever a new block has been generated from the miner
+   *
+   * @param block Reference to the new block
+   */
   void AddBlock(BlockType &block)
   {
-    mainChain_.AddBlock(block);
+    // add the block to the chain data structure
+    chain_.AddBlock(block);
 
-    auto heaviestHash = mainChain_.HeaviestBlock().hash();
+    // TODO(EJF): This logic is somewhat flawed, this means that the execution manager does not fire
+    // all of the time.
+    auto heaviestHash = chain_.HeaviestBlock().hash();
 
     if (block.hash() == heaviestHash)
     {
@@ -56,7 +64,7 @@ public:
 
       {
         std::lock_guard<mutex_type> lock(mutex_);
-        blocksToProcess_.push_front(std::make_shared<BlockBody>(block.body()));
+        pending_blocks_.push_front(std::make_shared<BlockBody>(block.body()));
       }
     }
   }
@@ -75,12 +83,12 @@ public:
       while (!stop_)
       {
         // update the status
-        executing_block = executionManager_.IsActive();
+        executing_block = execution_manager_.IsActive();
 
         // debug
         if (!executing_block && block)
         {
-          FETCH_LOG_WARN(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
+          FETCH_LOG_DEBUG(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
           block.reset();
         }
 
@@ -99,10 +107,10 @@ public:
           {
             // get the next block from the queue (if there is one)
             std::lock_guard<mutex_type> lock(mutex_);
-            if (!blocksToProcess_.empty())
+            if (!pending_blocks_.empty())
             {
-              block = blocksToProcess_.back();
-              blocksToProcess_.pop_back();
+              block = pending_blocks_.back();
+              pending_blocks_.pop_back();
               schedule_block = true;
             }
           }
@@ -110,24 +118,24 @@ public:
 
         if (schedule_block && block)
         {
-          FETCH_LOG_WARN(LOGGING_NAME,"Attempting exec on block: ", ToBase64(block->hash));
+          FETCH_LOG_DEBUG(LOGGING_NAME,"Attempting exec on block: ", ToBase64(block->hash));
 
           // execute the block
-          status_type const status = executionManager_.Execute(*block);
+          status_type const status = execution_manager_.Execute(*block);
 
           if (status == status_type::COMPLETE)
           {
-            FETCH_LOG_WARN(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
+            FETCH_LOG_DEBUG(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
           }
           else if (status == status_type::SCHEDULED)
           {
-            FETCH_LOG_WARN(LOGGING_NAME,"Block Scheduled: ", ToBase64(block->hash));
+            FETCH_LOG_DEBUG(LOGGING_NAME,"Block Scheduled: ", ToBase64(block->hash));
           }
           else if (status == status_type::NO_PARENT_BLOCK)
           {
             BlockType full_block;
 
-            if (mainChain_.Get(block->previous_hash, full_block))
+            if (chain_.Get(block->previous_hash, full_block))
             {
 
               // add the current block to the stack
@@ -137,11 +145,11 @@ public:
               block = std::make_shared<BlockBody>(full_block.body());
               pending_stack.push_back(block);
 
-              FETCH_LOG_WARN(LOGGING_NAME,"Retrieved parent block: ", ToBase64(block->hash));
+              FETCH_LOG_DEBUG(LOGGING_NAME,"Retrieved parent block: ", ToBase64(block->hash));
             }
             else
             {
-              FETCH_LOG_WARN(LOGGING_NAME,"Unable to retreive parent block: ",
+              FETCH_LOG_DEBUG(LOGGING_NAME,"Unable to retreive parent block: ",
                                  ToBase64(block->previous_hash));
             }
 
@@ -203,9 +211,9 @@ public:
   }
 
 private:
-  chain::MainChain &                 mainChain_;
-  ledger::ExecutionManagerInterface &executionManager_;
-  std::deque<block_body_type>        blocksToProcess_;
+  chain::MainChain &                 chain_;
+  ledger::ExecutionManagerInterface &execution_manager_;
+  std::deque<block_body_type>        pending_blocks_;
   mutex_type                         mutex_{__LINE__, __FILE__};
   bool                               stop_ = false;
   std::thread                        thread_;

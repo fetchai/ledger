@@ -69,7 +69,7 @@ public:
     }
   }
 
-  void onBlockComplete(std::function<void(const BlockType)> func) { onBlockComplete_ = func; }
+  void OnBlockComplete(std::function<void(const BlockType)> func) { onBlockComplete_ = func; }
 
 private:
   using clock_type     = std::chrono::high_resolution_clock;

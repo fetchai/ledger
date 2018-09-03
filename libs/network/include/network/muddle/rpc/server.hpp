@@ -26,33 +26,26 @@ public:
 
   static constexpr char const *LOGGING_NAME = "RpcServer";
 
-  explicit Server(MuddleEndpoint &endpoint, uint16_t service)
+  explicit Server(MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
     : endpoint_(endpoint)
-    , service_num_(service)
+    , service_(service)
+    , channel_(channel)
+    , subscription_(endpoint_.Subscribe(service, channel))
   {
-  }
-
-  void Add(ProtocolId const &name, Protocol *protocol)  override// TODO(issue 19): Rename to AddProtocol
-  {
-    auto subscription = endpoint_.Subscribe(service_num_, static_cast<uint16_t>(name));
-
-    if (subscription)
+    if (subscription_)
     {
-      FETCH_LOCK(subscriptions_lock_);
-
       // register the subscription with our handler
-      subscription->SetMessageHandler(
+      subscription_->SetMessageHandler(
         [this](Address const &from, uint16_t service, uint16_t channel, uint16_t counter, Packet::Payload const &payload)
         {
           OnMessage(from, service, channel, counter, payload);
         }
       );
-
-      subscriptions_[name] = subscription;
     }
-
-    // add the service
-    service::ServiceServerInterface::Add(name, protocol);
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to configure data subscription");
+    }
   }
 
 protected:
@@ -114,9 +107,9 @@ private:
   }
 
   MuddleEndpoint &endpoint_;
-  uint16_t        service_num_;
-  Mutex           subscriptions_lock_{__LINE__, __FILE__};
-  SubscriptionMap subscriptions_;
+  uint16_t const  service_;
+  uint16_t const  channel_;
+  SubscriptionPtr subscription_;
 
   // begin annoying emulation layer
   using Metadata = std::tuple<Address, uint16_t, uint16_t, uint16_t>;
@@ -125,7 +118,6 @@ private:
   Mutex           metadata_lock_{__LINE__, __FILE__};
   uint64_t        metadata_index_ = 0;
   MetadataMap     metadata_;
-
 };
 
 } // namespace rpc

@@ -10,7 +10,7 @@ P2PService2::P2PService2(Muddle::CertificatePtr &&certificate, Muddle::NetworkMa
   : muddle_(std::move(certificate), nm)
 {
   // register the services with the rpc server
-  rpc_server_.Add(1, &resolver_proto_);
+  rpc_server_.Add(PROTOCOL_RESOLVER, &resolver_proto_);
 }
 
 

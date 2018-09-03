@@ -27,10 +27,7 @@ public:
   static constexpr char const *LOGGING_NAME = "Subscription";
 
   // Construction / Destruction
-  Subscription()
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Creating subscription");
-  }
+  Subscription() = default;
   Subscription(Subscription const &) = delete;
   Subscription(Subscription &&) = delete;
   ~Subscription();
@@ -63,7 +60,7 @@ private:
  */
 inline Subscription::~Subscription()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Destructing subscription");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Destructing subscription");
 
   // this is needed to ensure that no curious object
   SetMessageHandler(MessageCallback{});
@@ -76,8 +73,6 @@ inline Subscription::~Subscription()
  */
 inline void Subscription::SetMessageHandler(MessageCallback const &cb)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Setting message handler...");
-
   FETCH_LOCK(callback_lock_);
   callback_ = cb;
 }
@@ -91,7 +86,7 @@ inline void Subscription::SetMessageHandler(MessageCallback const &cb)
  */
 inline void Subscription::Dispatch(Address const &address, uint16_t service, uint16_t channel, uint16_t counter, Payload const &payload) const
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Dispatching subscription");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatching subscription");
 
   FETCH_LOCK(callback_lock_);
   if (callback_)

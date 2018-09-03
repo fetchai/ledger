@@ -1,3 +1,4 @@
+#include "core/service_ids.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/muddle/peer_list.hpp"
 #include "network/muddle/packet.hpp"
@@ -57,7 +58,7 @@ void PeerConnectionList::OnConnectionEstablished(PeerConnectionList::Peer const 
   // send an identity message
   if (connection_handle)
   {
-    router_.SendDirect(connection_handle, SERVICE_MUDDLE, PROTO_MUDDLE_ROUTING_REQUEST, Packet::Payload{});
+    router_.AddConnection(connection_handle);
   }
 }
 

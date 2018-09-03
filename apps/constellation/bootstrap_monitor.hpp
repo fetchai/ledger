@@ -20,7 +20,7 @@ namespace fetch {
 class BootstrapMonitor
 {
 public:
-  using PeerList = Constellation::peer_list_type;
+  using PeerList = Constellation::PeerList;
   using Identity = crypto::Identity;
 
   BootstrapMonitor(Identity const &identity, uint16_t port, uint32_t network_id)

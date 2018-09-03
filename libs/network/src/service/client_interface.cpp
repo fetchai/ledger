@@ -32,7 +32,7 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
 
   PackCallWithPackedArguments(params, protocol, function, args);
 
-  if (!DeliverRequest(params.data(), protocol, function))
+  if (!DeliverRequest(params.data()))
   {
     // HMM(KLL) - I suspect we should kill all the other promises as    well here.
     FETCH_LOG_DEBUG(LOGGING_NAME, "Call failed!");
@@ -58,7 +58,7 @@ subscription_handler_type ServiceClientInterface::Subscribe(protocol_handler_typ
   params.Reserve(counter.size());
 
   params << SERVICE_SUBSCRIBE << protocol << feed << subid;
-  DeliverRequest(params.data(), 0, 0);
+  DeliverRequest(params.data());
   return subid;
 }
 
@@ -102,7 +102,7 @@ void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
     params.Reserve(counter.size());
 
     params << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
-    DeliverRequest(params.data(), 0, 0);
+    DeliverRequest(params.data());
   }
 }
 

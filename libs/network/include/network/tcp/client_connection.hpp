@@ -105,7 +105,7 @@ public:
     write_queue_.push_back(msg);
     write_mutex_.unlock();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Sending Message");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Sendin g Message");
 
     if (!write_in_progress)
     {
@@ -196,7 +196,7 @@ private:
 
       if (!ec)
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"Server: Recv message");
+        FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Recv message");
 
         ptr->PushRequest(this->handle(), message);
         ReadHeader();

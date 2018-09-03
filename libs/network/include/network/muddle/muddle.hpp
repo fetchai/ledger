@@ -46,6 +46,7 @@ namespace muddle {
     using NetworkManager  = network::NetworkManager;
     using Promise         = service::Promise;
     using PortList        = std::vector<uint16_t>;
+    using Identity       = crypto::Identity;
 
     static constexpr char const *LOGGING_NAME = "Muddle";
 
@@ -65,6 +66,8 @@ namespace muddle {
     void Stop();
     /// @}
 
+    Identity const &identity() const { return identity_; }
+
     MuddleEndpoint &AsEndpoint() { return router_; }
 
   private:
@@ -73,7 +76,6 @@ namespace muddle {
     using ServerList  = std::vector<Server>;
     using Client      = std::shared_ptr<network::AbstractConnection>;
     using ClientList  = PeerConnectionList;
-    using Identity    = crypto::Identity;
     using ThreadPool  = network::ThreadPool;
     using Register    = std::shared_ptr<MuddleRegister>;
     using Mutex       = mutex::Mutex;

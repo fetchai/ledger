@@ -163,8 +163,6 @@ void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
 
       if (ptr)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Just setting that connection register now");
-
         ptr->Enter(conn->connection_pointer());
         conn->SetConnectionManager(ptr);
       }

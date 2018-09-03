@@ -39,6 +39,7 @@
 #include <system_error>
 #include <vector>
 #include <fstream>
+#include <csignal>
 
 namespace {
 
@@ -48,10 +49,13 @@ using Prover       = fetch::crypto::Prover;
 using BootstrapPtr = std::unique_ptr<fetch::BootstrapMonitor>;
 using ProverPtr    = std::unique_ptr<Prover>;
 
+std::atomic<fetch::Constellation*> gConstellationInstance{nullptr};
+std::atomic<std::size_t> gInterruptCount{0};
+
 struct CommandLineArguments
 {
   using string_list_type  = std::vector<std::string>;
-  using peer_list_type    = fetch::Constellation::peer_list_type;
+  using peer_list_type    = fetch::Constellation::PeerList;
   using adapter_list_type = fetch::network::Adapter::adapter_list_type;
 
   static const std::size_t DEFAULT_NUM_LANES     = 4;
@@ -232,6 +236,30 @@ ProverPtr GenereateP2PKey()
   return certificate;
 }
 
+void InterruptHandler(int /*signal*/)
+{
+  std::size_t const interrupt_count = ++gInterruptCount;
+
+  if (interrupt_count > 1)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "User requests stop of service (count: ", interrupt_count, ")");
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "User requests stop of service");
+  }
+
+  if (gConstellationInstance)
+  {
+    gConstellationInstance.load()->SignalStop();
+  }
+
+  if (interrupt_count >= 3)
+  {
+    std::exit(1);
+  }
+}
+
 }  // namespace
 
 int main(int argc, char **argv)
@@ -254,6 +282,12 @@ int main(int argc, char **argv)
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), args.port, args.num_executors, args.num_lanes, args.num_slices,
         args.interface, args.dbdir);
+
+    // update the instance pointer
+    gConstellationInstance = constellation.get();
+
+    // register the signal handler
+    std::signal(SIGINT, InterruptHandler);
 
     // run the application
     constellation->Run(args.peers);
