@@ -88,7 +88,7 @@ public:
         // debug
         if (!executing_block && block)
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
+          FETCH_LOG_INFO(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
           block.reset();
         }
 
@@ -118,18 +118,18 @@ public:
 
         if (schedule_block && block)
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME,"Attempting exec on block: ", ToBase64(block->hash));
+          FETCH_LOG_INFO(LOGGING_NAME,"Attempting exec on block: ", ToBase64(block->hash));
 
           // execute the block
           status_type const status = execution_manager_.Execute(*block);
 
           if (status == status_type::COMPLETE)
           {
-            FETCH_LOG_DEBUG(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
+            FETCH_LOG_INFO(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
           }
           else if (status == status_type::SCHEDULED)
           {
-            FETCH_LOG_DEBUG(LOGGING_NAME,"Block Scheduled: ", ToBase64(block->hash));
+            FETCH_LOG_INFO(LOGGING_NAME,"Block Scheduled: ", ToBase64(block->hash));
           }
           else if (status == status_type::NO_PARENT_BLOCK)
           {
@@ -149,7 +149,7 @@ public:
             }
             else
             {
-              FETCH_LOG_DEBUG(LOGGING_NAME,"Unable to retreive parent block: ",
+              FETCH_LOG_WARN(LOGGING_NAME,"Unable to retreive parent block: ",
                                  ToBase64(block->previous_hash));
             }
 

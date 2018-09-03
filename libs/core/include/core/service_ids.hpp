@@ -41,5 +41,13 @@ static constexpr uint16_t CHANNEL_BLOCKS = 2;
 // RPC Protocol identifiers
 static constexpr uint64_t RPC_MAIN_CHAIN = 128;
 
+static constexpr uint64_t RPC_IDENTITY = 200;
+static constexpr uint64_t RPC_STATE = 201;
+static constexpr uint64_t RPC_TX_STORE = 202;
+static constexpr uint64_t RPC_TX_STORE_SYNC = 203;
+static constexpr uint64_t RPC_SLICE_STORE = 204;
+static constexpr uint64_t RPC_SLICE_STORE_SYNC = 205;
+static constexpr uint64_t RPC_CONTROLLER = 206;
+
 
 } // namespace fetch

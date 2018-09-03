@@ -72,6 +72,7 @@ struct CommandLineArguments
   std::size_t    num_slices;
   std::string    interface;
   bool           bootstrap{false};
+  bool           mine{false};
   std::string    dbdir;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
@@ -97,6 +98,7 @@ struct CommandLineArguments
     parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
     parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
                    std::string{});
+    parameters.add(args.mine, "mine", "Enable mining on this node", false);
 
     // parse the args
     parameters.Parse(argc, argv);
@@ -290,7 +292,7 @@ int main(int argc, char **argv)
     std::signal(SIGINT, InterruptHandler);
 
     // run the application
-    constellation->Run(args.peers);
+    constellation->Run(args.peers, args.mine);
 
     // stop the bootstrapper if we have one
     if (bootstrap_monitor)
