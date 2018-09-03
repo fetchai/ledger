@@ -68,9 +68,7 @@ protected:
   };
 
 public:
-
   static constexpr char const *LOGGING_NAME = "ThreadPoolImpl";
-
 
   static std::shared_ptr<ThreadPoolImplementation> Create(std::size_t threads)
   {
@@ -178,13 +176,14 @@ public:
 
     cv_.notify_all();
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Removing work");
     {
+      FETCH_LOG_INFO(LOGGING_NAME,"Removing work");
       future_work_.clear();
       idle_work_.clear();
       work_.clear();
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME,"Removed work");
     cv_.notify_all();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

@@ -43,6 +43,7 @@ public:
   FutureWorkStore operator=(FutureWorkStore &&rhs)             = delete;
   bool            operator==(const FutureWorkStore &rhs) const = delete;
   bool            operator<(const FutureWorkStore &rhs) const  = delete;
+  static constexpr char const *LOGGING_NAME = "FutureWorkStore";
 
   class StoredWorkItemSorting
   {
@@ -61,8 +62,7 @@ public:
   virtual ~FutureWorkStore()
   {
     shutdown_.store(true);
-    lock_type mlock(mutex_); // wait in case anyone is in here.
-    store_.clear(); // remove any pending things
+    clear(); // remove any pending things
   }
 
   virtual void Abort()
@@ -70,13 +70,13 @@ public:
     shutdown_.store(true);
   }
 
-  virtual void clear()
+  void clear()
   {
     lock_type mlock(mutex_);
     store_.clear();
   }
 
-  virtual bool IsDue()
+  bool IsDue()
   {
     lock_type mlock(mutex_);
     return IsDueActual();
@@ -85,16 +85,7 @@ public:
   std::chrono::duration<long long, std::__1::ratio<1, 1000000>> DueIn()
   {
     lock_type mlock(mutex_);
-    if (store_.empty())
-    {
-      return std::chrono::milliseconds(1000);
-    }
-    auto nextDue = store_.back();
-
-    auto tp     = std::chrono::system_clock::now();
-    auto due    = nextDue.first;
-    auto wayoff = (due - tp);
-    return wayoff;
+    return DueInActual();
   }
 
   virtual int Visit(std::function<void (work_item_type)> visitor, int maxprocesses=1)
@@ -125,7 +116,10 @@ public:
   template <typename F>
   void Post(F &&f, uint32_t milliseconds)
   {
-    if (shutdown_.load()) return;
+    if (shutdown_.load())
+    {
+      return;
+    }
     lock_type mlock(mutex_);
     auto      dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(milliseconds);
     store_.push_back(stored_work_item_type(dueTime, f));
@@ -142,7 +136,19 @@ private:
     return nextDue.second;
   }
 
+  std::chrono::duration<long long, std::__1::ratio<1, 1000000>> DueInActual()
+  {
+    if (store_.empty())
+    {
+      return std::chrono::milliseconds(1000);
+    }
+    auto nextDue = store_.back();
 
+    auto tp     = std::chrono::system_clock::now();
+    auto due    = nextDue.first;
+    auto wayoff = (due - tp);
+    return wayoff;
+  }
 
   bool IsDueActual()
   {
@@ -155,7 +161,7 @@ private:
       return false;
     }
 
-    if (DueIn().count() <= 0)
+    if (DueInActual().count() <= 0)
     {
       return true;
     }

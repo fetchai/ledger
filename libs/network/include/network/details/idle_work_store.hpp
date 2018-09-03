@@ -48,6 +48,11 @@ public:
   {
   }
 
+  void Start()
+  {
+    shutdown_.store(false);
+  }
+
   virtual ~IdleWorkStore()
   {
     shutdown_.store(true);
