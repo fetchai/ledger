@@ -11,7 +11,7 @@ namespace network {
 
 class SubscriptionsContainer
 {
-  using mutex_type           = std::mutex;
+  using mutex_type = fetch::mutex::Mutex;
   using lock_type            = std::lock_guard<mutex_type>;
   using protocol_number_type = fetch::service::protocol_handler_type;
   using feed_handler_type    = fetch::service::feed_handler_type;
@@ -174,7 +174,7 @@ private:
 
   using subs_type                   = std::map<uint64_t, std::shared_ptr<Subscription>>;
   subs_handle_type   handle_counter = 0;
-  mutex_type         mutex;
+  mutex_type         mutex{__LINE__, __FILE__};
   existing_subs_type existing_subs;
   subs_type          subs;
 };

@@ -78,8 +78,6 @@ public:
     : subscribe_mutex_(__LINE__, __FILE__), feed_(feed), publisher_(publisher)
   {
     workers_ = network::MakeThreadPool(3);
-    workers_ -> Start(this, &FeedSubscriptionManager::PublishToAllWorker);
-
   }
 
   /* Attaches a feed to a given service.
@@ -96,9 +94,10 @@ public:
   {
     publishing_workload_.Add(workload.begin(), workload.end());
     workload.clear();
+    workers_ -> Post( [this](){ this-> PublishingProcessor(); } );
   }
 
-  void PublishToAllWorker();
+  void PublishingProcessor();
 
   /* Subscribe client to feed.
    * @client is the client id.
