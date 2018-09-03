@@ -530,7 +530,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 
       .def("scatter",
            [](NDArray<T> &input_array, std::vector<T> &updates,
-              std::vector<std::uint64_t> &indices) {
+              std::vector<std::size_t> &indices) {
              fetch::math::Scatter(input_array, updates, indices);
            })
       .def("gather",
