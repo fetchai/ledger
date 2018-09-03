@@ -353,15 +353,11 @@ public:
 
     // Logic for executing opcodes
     module_.AddOpcode(opcode, [](VM *vm) {
-      std::cout << "Creating: " << int(vm->instruction_->type_id) << std::endl;
-
       Value &value = vm->stack_[++vm->sp_];
 
       WrapperClass<T> *obj = new WrapperClass<T>(vm->instruction_->type_id, vm, T());
       value.Reset();
       value.SetObject(obj, vm->instruction_->type_id);
-
-      std::cout << "DONE!" << std::endl;
     });
 
     return *this;
@@ -385,7 +381,7 @@ ClassInterface<T> &Module::ExportClass(std::string name)
 
   this->AddSetupFunction([ret, name](Analyser *a) {
     TypePtr ptr = a->CreateClassType(name, ret->type());
-    std::cout << "TYPE POINTER: " << ptr << std::endl;
+
     ret->SetTypePointer(ptr);
     a->RegisterType<T>(ptr);
   });
