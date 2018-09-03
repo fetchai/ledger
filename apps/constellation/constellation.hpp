@@ -42,6 +42,7 @@ class Constellation
 public:
   using NetworkManager = network::NetworkManager;
   using Peer2PeerService  = p2p::P2PService2;
+  using MuddleService  = muddle::Muddle;
   using CertificatePtr    = Peer2PeerService::CertificatePtr;
   using PeerList    = std::vector<network::Peer>;
   using BlockPackingAlgorithm = miner::AnnealerMiner;
@@ -139,6 +140,7 @@ private:
   /// @name Network Orchestration
   /// @{
   NetworkManager    network_manager_;       ///< Top level network coordinator
+  MuddleService  muddle_;                   ///
   Peer2PeerService  p2p_;                   ///< The main p2p networking
   /// @}
 
@@ -185,6 +187,7 @@ private:
   /// @name P2P Networking Components
   /// @{
   p2p_service_type p2p_;  ///< The P2P networking component
+  muddle_service_type muddle_;  ///< The muddle networking component
   /// @}
 
   /// @name Muddle Networking Components

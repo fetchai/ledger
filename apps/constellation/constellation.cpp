@@ -132,7 +132,8 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
   , network_manager_{CalcNetworkManagerThreads(num_lanes)}
-  , p2p_{std::move(certificate), network_manager_}
+  , muddle_{std::move(certificate), network_manager_}
+  , p2p_{muddle_}
   , execution_manager_{
     std::make_shared<ExecutionManager>(
       0 /*num_executors*/,
@@ -169,7 +170,8 @@ void Constellation::Run(PeerList const &initial_peers)
 {
   // start all the services
   network_manager_.Start();
-  p2p_.Start({p2p_port_}, initial_peers);
+  muddle_ . Start({p2p_port_});
+  p2p_ . Start(initial_peers);
   execution_manager_->Start();
   block_coordinator_.Start();
 
@@ -193,7 +195,8 @@ void Constellation::Run(PeerList const &initial_peers)
 
   block_coordinator_.Stop();
   execution_manager_->Stop();
-  p2p_.Stop();
+  p2p_ . Stop();
+  muddle_ . Stop();
   network_manager_.Stop();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
