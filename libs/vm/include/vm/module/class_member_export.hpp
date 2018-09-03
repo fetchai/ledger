@@ -21,12 +21,11 @@ namespace fetch {
 namespace vm {
 namespace details {
 
-template <typename ClassType, typename MemberFunctionPointer, typename ReturnType,
-          int RESULT_TYPE, typename... used_args>
+template <typename ClassType, typename MemberFunctionPointer, typename ReturnType, int RESULT_TYPE,
+          typename... used_args>
 struct InvokeClassMemberFunction
 {
-  static void MemberFunction(VM *vm, ClassType &cls, MemberFunctionPointer &m,
-                             used_args &... args)
+  static void MemberFunction(VM *vm, ClassType &cls, MemberFunctionPointer &m, used_args &... args)
   {
     auto ret = (cls.*m)(args...);
     StorerClass<ReturnType, RESULT_TYPE>::StoreArgument(vm, std::move(ret));
@@ -35,18 +34,16 @@ struct InvokeClassMemberFunction
 
 template <typename ClassType, typename MemberFunctionPointer, int RESULT_TYPE,
           typename... used_args>
-struct InvokeClassMemberFunction<ClassType, MemberFunctionPointer, void, RESULT_TYPE,
-                                 used_args...>
+struct InvokeClassMemberFunction<ClassType, MemberFunctionPointer, void, RESULT_TYPE, used_args...>
 {
-  static void MemberFunction(VM *vm, ClassType &cls, MemberFunctionPointer &m,
-                             used_args &... args)
+  static void MemberFunction(VM *vm, ClassType &cls, MemberFunctionPointer &m, used_args &... args)
   {
     (cls.*m)(args...);
   };
 };
 
-template <typename ClassType, typename MemberFunctionPointer, typename ReturnType,
-          int RESULT_TYPE, typename... used_args>
+template <typename ClassType, typename MemberFunctionPointer, typename ReturnType, int RESULT_TYPE,
+          typename... used_args>
 struct MemberFunctionMagic
 {
   template <int R, typename... remaining_args>
@@ -60,8 +57,7 @@ struct MemberFunctionMagic
       typename std::decay<T>::type l =
           LoaderClass<typename std::decay<T>::type>::LoadArgument(R, vm);
 
-      MemberFunctionMagic<ClassType, MemberFunctionPointer, ReturnType, RESULT_TYPE,
-                          used_args...,
+      MemberFunctionMagic<ClassType, MemberFunctionPointer, ReturnType, RESULT_TYPE, used_args...,
                           T>::template LoopOver<R - 1, remaining_args...>::Apply(vm, cls, m,
                                                                                  used..., l);
     }

@@ -64,10 +64,10 @@ struct Resetter<-1>
   static void Reset(VM *vm) {}
 };
 
-/* 
+/*
  * Storing and loading of objects.
  *
- * The default implementation wraps any type of C++ class. Subsequent code 
+ * The default implementation wraps any type of C++ class. Subsequent code
  * specialises for builtin types both primitive and advanced types.
  */
 template <typename T, int N>
@@ -97,7 +97,7 @@ struct LoaderClass
   }
 };
 
-/* 
+/*
  * Storing of primitive builtins.
  */
 template <int N>
@@ -147,10 +147,9 @@ struct StorerClass<int8_t, N>
 
     value.Reset();
     value.variant.i8 = val;
-    value.type_id     = vm->instruction_->type_id;
+    value.type_id    = vm->instruction_->type_id;
   }
 };
-
 
 template <int N>
 struct StorerClass<uint16_t, N>
@@ -165,7 +164,7 @@ struct StorerClass<uint16_t, N>
 
     value.Reset();
     value.variant.ui16 = val;
-    value.type_id     = vm->instruction_->type_id;
+    value.type_id      = vm->instruction_->type_id;
   }
 };
 
@@ -186,8 +185,6 @@ struct StorerClass<int16_t, N>
   }
 };
 
-
-
 template <int N>
 struct StorerClass<uint32_t, N>
 {
@@ -201,7 +198,7 @@ struct StorerClass<uint32_t, N>
 
     value.Reset();
     value.variant.ui32 = val;
-    value.type_id     = vm->instruction_->type_id;
+    value.type_id      = vm->instruction_->type_id;
   }
 };
 
@@ -222,8 +219,6 @@ struct StorerClass<int32_t, N>
   }
 };
 
-
-
 template <int N>
 struct StorerClass<uint64_t, N>
 {
@@ -237,7 +232,7 @@ struct StorerClass<uint64_t, N>
 
     value.Reset();
     value.variant.ui64 = val;
-    value.type_id     = vm->instruction_->type_id;
+    value.type_id      = vm->instruction_->type_id;
   }
 };
 
@@ -258,7 +253,6 @@ struct StorerClass<int64_t, N>
   }
 };
 
-
 template <int N>
 struct StorerClass<float, N>
 {
@@ -275,7 +269,6 @@ struct StorerClass<float, N>
     value.type_id     = vm->instruction_->type_id;
   }
 };
-
 
 template <int N>
 struct StorerClass<double, N>
@@ -294,8 +287,7 @@ struct StorerClass<double, N>
   }
 };
 
-
-/* 
+/*
  * Storing of advanced builtin objects
  */
 template <int N>
@@ -316,8 +308,23 @@ struct StorerClass<fetch::math::linalg::Matrix<double, fetch::memory::Array<doub
   }
 };
 
+template <int N>
+struct StorerClass<std::string, N>
+{
 
-/* 
+  static void StoreArgument(VM *vm, std::string &&val)
+  {
+    assert(N <= vm->sp_);
+    assert(vm->instruction_->type_id == TypeId::String);
+
+    String *m = new String(vm, std::move(val), false);
+
+    Value &value = vm->stack_[vm->sp_ - N];
+    value.Reset();
+    value.SetObject(m, vm->instruction_->type_id);
+  }
+};
+/*
  * Loading of primitive builtins.
  */
 template <>
@@ -420,8 +427,7 @@ struct LoaderClass<float>
   }
 };
 
-
-/* 
+/*
  * Loading of advanced builtins.
  */
 template <>
@@ -438,6 +444,18 @@ struct LoaderClass<fetch::math::linalg::Matrix<double, fetch::memory::Array<doub
   }
 };
 
+template <>
+struct LoaderClass<std::string>
+{
+
+  static std::string LoadArgument(int const &N, VM *vm)
+  {
+
+    Value & element = vm->stack_[vm->sp_ - N];
+    String *p       = static_cast<String *>(element.variant.object);
+    return p->str;
+  }
+};
 
 }  // namespace details
 }  // namespace vm

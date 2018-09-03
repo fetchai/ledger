@@ -88,7 +88,6 @@ enum class Opcode : uint16_t
   CreateMatrix,
   CreateArray,
 
-
   StartOfUserOpcodes =
       16000  // This OP code always need to have the highest value - preferably constant.
 };

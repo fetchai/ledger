@@ -40,7 +40,7 @@ Analyser::Analyser(Module *module)
   matrix_template_type_ = CreateTemplateType("Matrix", TypeId::MatrixTemplate);
   array_template_type_  = CreateTemplateType("Array", TypeId::ArrayTemplate);
 
-  // Defines a new type 
+  // Defines a new type
   void_type_ = CreateType("Void", Type::Category::Primitive, TypeId::Void);
   // ... and make a mapping to its corresponding C++ type
   RegisterType<void>(void_type_);
@@ -81,11 +81,12 @@ Analyser::Analyser(Module *module)
   float64_type_ = CreatePrimitiveType("Float64", TypeId::Float64);
   RegisterType<double>(float64_type_);
 
-
   // Non-primitive builtin types
-  // Note these are not registered yet, as custom modules do not have support for 
+  string_type_ = CreateClassType("String", TypeId::String);
+  RegisterType<std::string>(string_type_);
+
+  // The types are not registered yet, as custom modules do not have support for
   // templating just yet.
-  string_type_         = CreateClassType("String", TypeId::String);
   matrix_float32_type_ = CreateTemplateInstantiationType("Matrix<Float32>", TypeId::Matrix_Float32,
                                                          matrix_template_type_, {float32_type_});
   matrix_float64_type_ = CreateTemplateInstantiationType("Matrix<Float64>", TypeId::Matrix_Float64,
@@ -139,7 +140,6 @@ Analyser::Analyser(Module *module)
                            template_instantiation_type_, Opcode::CreateArray);
 
   // Custom functions
-
 
   // If new additional functionality is defined in the module
   // we set the appropriate opcodes up here.

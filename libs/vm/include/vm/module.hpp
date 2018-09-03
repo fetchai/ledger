@@ -99,7 +99,7 @@ public:
       using StackResetter   = typename details::Resetter<RESULT_POSITION>;
       using FunctionInvoker = typename details::StaticOrFreeFunctionMagic<
           FunctionPointer, ReturnType, RESULT_POSITION>::template LoopOver<LAST_ARGUMENT_POSITION,
-                                                                             Args...>;
+                                                                           Args...>;
 
       assert((vm->sp_ - RESULT_POSITION) >= 0);
 
@@ -224,7 +224,7 @@ public:
       member_FunctionPointer fnc = function;  // Copy to drop const qualifier
 
       using ReturnType = R;
-      using class_type  = T;
+      using class_type = T;
 
       constexpr int RESULT_POSITION =
           int(sizeof...(Args)) + 1 - details::HasResult<R>::value;  // +1 is to override this
@@ -286,7 +286,7 @@ public:
       using StackResetter   = typename details::Resetter<RESULT_POSITION>;
       using FunctionInvoker = typename details::StaticOrFreeFunctionMagic<
           FunctionPointer, ReturnType, RESULT_POSITION>::template LoopOver<LAST_ARGUMENT_POSITION,
-                                                                             Args...>;
+                                                                           Args...>;
 
       assert((vm->sp_ - RESULT_POSITION) >= 0);
 

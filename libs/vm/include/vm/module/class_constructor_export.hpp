@@ -36,8 +36,7 @@ struct ConstructorMagic
           LoaderClass<typename std::decay<T>::type>::LoadArgument(R, vm);
 
       return ConstructorMagic<ClassType, UsedArgs...,
-                              T>::template LoopOver<R - 1, RemainingArgs...>::Build(vm, used...,
-                                                                                     l);
+                              T>::template LoopOver<R - 1, RemainingArgs...>::Build(vm, used..., l);
     }
   };
 

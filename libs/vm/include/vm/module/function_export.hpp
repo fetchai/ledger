@@ -23,8 +23,7 @@ namespace fetch {
 namespace vm {
 namespace details {
 
-template <typename FunctionPointer, typename ReturnType, int RESULT_POSITION,
-          typename... UsedArgs>
+template <typename FunctionPointer, typename ReturnType, int RESULT_POSITION, typename... UsedArgs>
 struct InvokeStaticOrFreeFunction
 {
   static void StaticOrFreeFunction(VM *vm, FunctionPointer &m, UsedArgs &... args)
@@ -43,8 +42,7 @@ struct InvokeStaticOrFreeFunction<FunctionPointer, void, RESULT_POSITION, UsedAr
   };
 };
 
-template <typename FunctionPointer, typename ReturnType, std::size_t RESULT_POSITION,
-          typename... UsedArgs>
+template <typename FunctionPointer, typename ReturnType, int RESULT_POSITION, typename... UsedArgs>
 struct StaticOrFreeFunctionMagic
 {
   template <int R, typename... RemainingArgs>
@@ -60,7 +58,7 @@ struct StaticOrFreeFunctionMagic
 
       StaticOrFreeFunctionMagic<FunctionPointer, ReturnType, RESULT_POSITION, UsedArgs...,
                                 T>::template LoopOver<R - 1, RemainingArgs...>::Apply(vm, m,
-                                                                                       used..., l);
+                                                                                      used..., l);
     }
   };
 
