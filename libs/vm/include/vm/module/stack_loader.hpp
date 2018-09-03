@@ -64,6 +64,12 @@ struct Resetter<-1>
   static void Reset(VM *vm) {}
 };
 
+/* 
+ * Storing and loading of objects.
+ *
+ * The default implementation wraps any type of C++ class. Subsequent code 
+ * specialises for builtin types both primitive and advanced types.
+ */
 template <typename T, int N>
 struct StorerClass
 {
@@ -91,6 +97,9 @@ struct LoaderClass
   }
 };
 
+/* 
+ * Storing of primitive builtins.
+ */
 template <int N>
 struct StorerClass<bool, N>
 {
@@ -104,6 +113,94 @@ struct StorerClass<bool, N>
 
     value.Reset();
     value.variant.ui8 = val ? uint8_t(-1) : 0;
+    value.type_id     = vm->instruction_->type_id;
+  }
+};
+
+template <int N>
+struct StorerClass<uint8_t, N>
+{
+
+  static void StoreArgument(VM *vm, uint8_t &&val)
+  {
+    assert(N <= vm->sp_);
+    assert(vm->instruction_->type_id == TypeId::Byte);
+
+    Value &value = vm->stack_[vm->sp_ - N];
+
+    value.Reset();
+    value.variant.ui8 = val;
+    value.type_id     = vm->instruction_->type_id;
+  }
+};
+
+template <int N>
+struct StorerClass<int8_t, N>
+{
+
+  static void StoreArgument(VM *vm, int8_t &&val)
+  {
+    assert(N <= vm->sp_);
+    assert(vm->instruction_->type_id == TypeId::Int8);
+
+    Value &value = vm->stack_[vm->sp_ - N];
+
+    value.Reset();
+    value.variant.i8 = val;
+    value.type_id     = vm->instruction_->type_id;
+  }
+};
+
+
+template <int N>
+struct StorerClass<uint16_t, N>
+{
+
+  static void StoreArgument(VM *vm, uint16_t &&val)
+  {
+    assert(N <= vm->sp_);
+    assert(vm->instruction_->type_id == TypeId::UInt16);
+
+    Value &value = vm->stack_[vm->sp_ - N];
+
+    value.Reset();
+    value.variant.ui16 = val;
+    value.type_id     = vm->instruction_->type_id;
+  }
+};
+
+template <int N>
+struct StorerClass<int16_t, N>
+{
+
+  static void StoreArgument(VM *vm, int16_t &&val)
+  {
+    assert(N <= vm->sp_);
+    assert(vm->instruction_->type_id == TypeId::Int16);
+
+    Value &value = vm->stack_[vm->sp_ - N];
+
+    value.Reset();
+    value.variant.i16 = val;
+    value.type_id     = vm->instruction_->type_id;
+  }
+};
+
+
+
+template <int N>
+struct StorerClass<uint32_t, N>
+{
+
+  static void StoreArgument(VM *vm, uint32_t &&val)
+  {
+    assert(N <= vm->sp_);
+    assert(vm->instruction_->type_id == TypeId::UInt32);
+
+    Value &value = vm->stack_[vm->sp_ - N];
+
+    value.Reset();
+    value.variant.ui32 = val;
     value.type_id     = vm->instruction_->type_id;
   }
 };
@@ -125,23 +222,60 @@ struct StorerClass<int32_t, N>
   }
 };
 
+
+
 template <int N>
-struct StorerClass<fetch::math::linalg::Matrix<double, fetch::memory::Array<double>>, N>
+struct StorerClass<uint64_t, N>
 {
 
-  static void StoreArgument(VM *                                                                vm,
-                            fetch::math::linalg::Matrix<double, fetch::memory::Array<double>> &&val)
+  static void StoreArgument(VM *vm, uint64_t &&val)
   {
     assert(N <= vm->sp_);
-    assert(vm->instruction_->type_id == TypeId::Matrix_Float64);
-
-    MatrixFloat64 *m = new MatrixFloat64(TypeId::Matrix_Float64, vm, std::move(val));
+    assert(vm->instruction_->type_id == TypeId::UInt64);
 
     Value &value = vm->stack_[vm->sp_ - N];
+
     value.Reset();
-    value.SetObject(m, vm->instruction_->type_id);
+    value.variant.ui64 = val;
+    value.type_id     = vm->instruction_->type_id;
   }
 };
+
+template <int N>
+struct StorerClass<int64_t, N>
+{
+
+  static void StoreArgument(VM *vm, int64_t &&val)
+  {
+    assert(N <= vm->sp_);
+    assert(vm->instruction_->type_id == TypeId::Int64);
+
+    Value &value = vm->stack_[vm->sp_ - N];
+
+    value.Reset();
+    value.variant.i64 = val;
+    value.type_id     = vm->instruction_->type_id;
+  }
+};
+
+
+template <int N>
+struct StorerClass<float, N>
+{
+
+  static void StoreArgument(VM *vm, float &&val)
+  {
+    assert(N <= vm->sp_);
+    assert(vm->instruction_->type_id == TypeId::Float32);
+
+    Value &value = vm->stack_[vm->sp_ - N];
+
+    value.Reset();
+    value.variant.f32 = val;
+    value.type_id     = vm->instruction_->type_id;
+  }
+};
+
 
 template <int N>
 struct StorerClass<double, N>
@@ -160,22 +294,32 @@ struct StorerClass<double, N>
   }
 };
 
-// TODO(private issue 212): Add storers for all the other basic types
 
-template <>
-struct LoaderClass<fetch::math::linalg::Matrix<double, fetch::memory::Array<double>>>
+/* 
+ * Storing of advanced builtin objects
+ */
+template <int N>
+struct StorerClass<fetch::math::linalg::Matrix<double, fetch::memory::Array<double>>, N>
 {
 
-  static fetch::math::linalg::Matrix<double, fetch::memory::Array<double>> LoadArgument(
-      int const &N, VM *vm)
+  static void StoreArgument(VM *                                                                vm,
+                            fetch::math::linalg::Matrix<double, fetch::memory::Array<double>> &&val)
   {
+    assert(N <= vm->sp_);
+    assert(vm->instruction_->type_id == TypeId::Matrix_Float64);
 
-    Value &        element = vm->stack_[vm->sp_ - N];
-    MatrixFloat64 *p       = static_cast<MatrixFloat64 *>(element.variant.object);
-    return p->matrix;
+    MatrixFloat64 *m = new MatrixFloat64(TypeId::Matrix_Float64, vm, std::move(val));
+
+    Value &value = vm->stack_[vm->sp_ - N];
+    value.Reset();
+    value.SetObject(m, vm->instruction_->type_id);
   }
 };
 
+
+/* 
+ * Loading of primitive builtins.
+ */
 template <>
 struct LoaderClass<int8_t>
 {
@@ -201,7 +345,6 @@ struct LoaderClass<int32_t>
 {
   static int32_t LoadArgument(int const &N, VM *vm)
   {
-    std::cout << "Popping (2) " << (vm->sp_ - N) << std::endl;
     Value &element = vm->stack_[vm->sp_ - N];
     return element.variant.i32;
   }
@@ -276,6 +419,25 @@ struct LoaderClass<float>
     return element.variant.f32;
   }
 };
+
+
+/* 
+ * Loading of advanced builtins.
+ */
+template <>
+struct LoaderClass<fetch::math::linalg::Matrix<double, fetch::memory::Array<double>>>
+{
+
+  static fetch::math::linalg::Matrix<double, fetch::memory::Array<double>> LoadArgument(
+      int const &N, VM *vm)
+  {
+
+    Value &        element = vm->stack_[vm->sp_ - N];
+    MatrixFloat64 *p       = static_cast<MatrixFloat64 *>(element.variant.object);
+    return p->matrix;
+  }
+};
+
 
 }  // namespace details
 }  // namespace vm
