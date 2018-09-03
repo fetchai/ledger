@@ -9,7 +9,7 @@ P2PService2::P2PService2(muddle_service_type muddle)
 {
   // register the services with the rpc server
   rpc_server_.Add(PROTOCOL_RESOLVER, &resolver_proto_);
-  trustSystem = std::make_shared<P2PTrust<Identity>>();
+  trust_system = std::make_shared<P2PTrust<Identity>>();
 }
 
 void P2PService2::Start(P2PService2::PeerList const &initial_peer_list)
@@ -51,6 +51,39 @@ void P2PService2::PeerTrustEvent(const Identity &          identity
                                  , P2PTrustFeedbackQuality quality)
 {
 }
+
+
+void P2PService2::SetLocalManifest(const Manifest &manifest)
+{
+  manifest_ = manifest;
+
+  for(auto &manifest_entry : manifest_)
+  {
+    auto service_id = manifest_entry.first;
+    auto uri = manifest_entry.second;
+
+    if (local_services_.find(service_id) != local_services_.end())
+    {
+      continue;
+    }
+
+    local_services_[service_id] = std::make_shared<P2PManagedLocalService>(uri, service_id);
+  }
+
+  for(auto local_service_entry : local_services_)
+  {
+    auto service_id = local_service_entry.first;
+    auto uri = local_service_entry.second;
+
+    if (!manifest_.ContainsService(service_id))
+    {
+      local_services_.erase(service_id);
+    }
+
+    
+  }
+}
+
 
 
 } // namespace p2p

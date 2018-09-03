@@ -9,6 +9,8 @@
 #include "network/p2pservice/p2p_resolver_protocol.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "network/p2pservice/manifest.hpp"
+#include "network/p2pservice/p2p_managed_local_service.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
 
 namespace fetch {
 namespace p2p {
@@ -30,6 +32,10 @@ public:
   using TrustInterface = P2PTrustInterface<Identity>;
   using Manifest = network::Manifest;
 
+  using Uri = network::Uri;
+  using ServiceType = network::ServiceType;
+  using ServiceIdentifier = network::ServiceIdentifier;
+  
   enum
   {
     PROTOCOL_RESOLVER = 1
@@ -51,6 +57,9 @@ public:
   void PeerTrustEvent(const Identity &          identity
                       , P2PTrustFeedbackSubject subject
                       , P2PTrustFeedbackQuality quality);
+
+  void SetLocalManifest(const Manifest &manifest);
+
   void WorkCycle();
 private:
 
@@ -62,8 +71,11 @@ private:
   Resolver resolver_;
   ResolverProtocol resolver_proto_{resolver_};
 
-  std::shared_ptr<TrustInterface> trustSystem;
-  std::map<Identity, Manifest> discoveredPeers;
+  std::shared_ptr<TrustInterface> trust_system;
+
+  Manifest manifest_;
+  std::map<Identity, Manifest> discovered_peers_;
+  std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>> local_services_;
 
   //std::set
   PeerList possibles_; // addresses we might use in the future.
