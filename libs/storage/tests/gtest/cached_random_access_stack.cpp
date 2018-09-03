@@ -27,10 +27,10 @@ using namespace fetch::storage;
 class TestClass
 {
 public:
-  uint64_t value1_ = 0;
-  uint8_t  value2_ = 0;
+  uint64_t value1 = 0;
+  uint8_t  value2 = 0;
 
-  bool operator==(TestClass const &rhs) { return value1_ == rhs.value1_ && value2_ == rhs.value2_; }
+  bool operator==(TestClass const &rhs) { return value1 == rhs.value1 && value2 == rhs.value2; }
 };
 
 TEST(cached_random_access_stack, basic_functionality)
@@ -51,8 +51,8 @@ TEST(cached_random_access_stack, basic_functionality)
     {
       uint64_t  random = lfg();
       TestClass temp;
-      temp.value1_ = random;
-      temp.value2_ = random & 0xFF;
+      temp.value1 = random;
+      temp.value2 = random & 0xFF;
 
       stack.Push(temp);
       reference.push_back(temp);
@@ -81,8 +81,8 @@ TEST(cached_random_access_stack, basic_functionality)
   {
     uint64_t  random = lfg();
     TestClass temp;
-    temp.value1_ = random;
-    temp.value2_ = random & 0xFF;
+    temp.value1 = random;
+    temp.value2 = random & 0xFF;
 
     stack.Set(i, temp);
     reference[i] = temp;
@@ -155,8 +155,8 @@ TEST(cached_random_access_stack, file_writing_and_recovery)
     {
       uint64_t  random = lfg();
       TestClass temp;
-      temp.value1_ = random;
-      temp.value2_ = random & 0xFF;
+      temp.value1 = random;
+      temp.value2 = random & 0xFF;
 
       stack.Push(temp);
       reference.push_back(temp);
@@ -202,8 +202,8 @@ TEST(cached_random_access_stack, file_writing_and_recovery)
       for (uint64_t i = 0; i < testSize; ++i)
       {
         TestClass temp;
-        temp.value1_ = i;
-        temp.value2_ = i & 0xFF;
+        temp.value1 = i;
+        temp.value2 = i & 0xFF;
 
         stack.Set(i, temp);
         reference[i] = temp;
