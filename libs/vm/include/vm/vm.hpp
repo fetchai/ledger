@@ -69,6 +69,10 @@ struct Matrix : public Object
   Matrix(const TypeId type_id, VM *vm, const size_t rows, const size_t columns)
     : Object(type_id, vm), matrix(rows, columns)
   {}
+  Matrix(const TypeId type_id, VM *vm,
+         fetch::math::linalg::Matrix<T, fetch::memory::Array<T>> &&matrix__)
+    : Object(type_id, vm), matrix(matrix__)
+  {}
   virtual ~Matrix() {}
 };
 using MatrixFloat32 = Matrix<float>;
