@@ -19,6 +19,7 @@ void P2PService2::Start(P2PService2::PeerList const &initial_peer_list)
     possibles_.push_back(peer);
   }
 
+  thread_pool_ -> SetInterval(1000);
   thread_pool_ -> Start();
   thread_pool_ -> PostIdle([this](){ this -> WorkCycle(); });
 }
@@ -31,6 +32,7 @@ void P2PService2::Stop()
 
 void P2PService2::WorkCycle()
 {
+  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle");
   // see how many peers we have.
   // not enough, schedule some connects.
   // too many? schedule some kickoffs.

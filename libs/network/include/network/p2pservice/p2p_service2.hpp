@@ -34,6 +34,7 @@ public:
   {
     PROTOCOL_RESOLVER = 1
   };
+    static constexpr char const *LOGGING_NAME = "P2PService2";
 
   // Construction / Destruction
   P2PService2(Muddle &muddle);
