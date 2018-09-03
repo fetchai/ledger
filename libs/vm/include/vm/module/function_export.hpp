@@ -23,43 +23,43 @@ namespace fetch {
 namespace vm {
 namespace details {
 
-template <typename function_pointer, typename return_type, int result_position,
-          typename... used_args>
+template <typename FunctionPointer, typename ReturnType, int RESULT_POSITION,
+          typename... UsedArgs>
 struct InvokeStaticOrFreeFunction
 {
-  static void StaticOrFreeFunction(VM *vm, function_pointer &m, used_args &... args)
+  static void StaticOrFreeFunction(VM *vm, FunctionPointer &m, UsedArgs &... args)
   {
-    return_type ret = (*m)(args...);
-    StorerClass<return_type, result_position>::StoreArgument(vm, std::move(ret));
+    ReturnType ret = (*m)(args...);
+    StorerClass<ReturnType, RESULT_POSITION>::StoreArgument(vm, std::move(ret));
   };
 };
 
-template <typename function_pointer, int result_position, typename... used_args>
-struct InvokeStaticOrFreeFunction<function_pointer, void, result_position, used_args...>
+template <typename FunctionPointer, int RESULT_POSITION, typename... UsedArgs>
+struct InvokeStaticOrFreeFunction<FunctionPointer, void, RESULT_POSITION, UsedArgs...>
 {
-  static void StaticOrFreeFunction(VM *vm, function_pointer &m, used_args &... args)
+  static void StaticOrFreeFunction(VM *vm, FunctionPointer &m, UsedArgs &... args)
   {
     (*m)(args...);
   };
 };
 
-template <typename function_pointer, typename return_type, std::size_t result_position,
-          typename... used_args>
+template <typename FunctionPointer, typename ReturnType, std::size_t RESULT_POSITION,
+          typename... UsedArgs>
 struct StaticOrFreeFunctionMagic
 {
-  template <int R, typename... remaining_args>
+  template <int R, typename... RemainingArgs>
   struct LoopOver;
 
-  template <int R, typename T, typename... remaining_args>
-  struct LoopOver<R, T, remaining_args...>
+  template <int R, typename T, typename... RemainingArgs>
+  struct LoopOver<R, T, RemainingArgs...>
   {
-    static void Apply(VM *vm, function_pointer &m, used_args &... used)
+    static void Apply(VM *vm, FunctionPointer &m, UsedArgs &... used)
     {
       typename std::decay<T>::type l =
           LoaderClass<typename std::decay<T>::type>::LoadArgument(R, vm);
 
-      StaticOrFreeFunctionMagic<function_pointer, return_type, result_position, used_args...,
-                                T>::template LoopOver<R - 1, remaining_args...>::Apply(vm, m,
+      StaticOrFreeFunctionMagic<FunctionPointer, ReturnType, RESULT_POSITION, UsedArgs...,
+                                T>::template LoopOver<R - 1, RemainingArgs...>::Apply(vm, m,
                                                                                        used..., l);
     }
   };
@@ -67,12 +67,12 @@ struct StaticOrFreeFunctionMagic
   template <int R, typename T>
   struct LoopOver<R, T>
   {
-    static void Apply(VM *vm, function_pointer &m, used_args &... used)
+    static void Apply(VM *vm, FunctionPointer &m, UsedArgs &... used)
     {
       typename std::decay<T>::type l =
           LoaderClass<typename std::decay<T>::type>::LoadArgument(R, vm);
 
-      InvokeStaticOrFreeFunction<function_pointer, return_type, result_position, used_args...,
+      InvokeStaticOrFreeFunction<FunctionPointer, ReturnType, RESULT_POSITION, UsedArgs...,
                                  T>::StaticOrFreeFunction(vm, m, used..., l);
     }
   };
@@ -80,10 +80,10 @@ struct StaticOrFreeFunctionMagic
   template <int R>
   struct LoopOver<R>
   {
-    static void Apply(VM *vm, function_pointer &m)
+    static void Apply(VM *vm, FunctionPointer &m)
     {
-      InvokeStaticOrFreeFunction<function_pointer, return_type,
-                                 result_position>::StaticOrFreeFunction(vm, m);
+      InvokeStaticOrFreeFunction<FunctionPointer, ReturnType,
+                                 RESULT_POSITION>::StaticOrFreeFunction(vm, m);
     }
   };
 };

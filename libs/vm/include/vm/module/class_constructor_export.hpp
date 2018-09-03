@@ -21,22 +21,22 @@ namespace fetch {
 namespace vm {
 namespace details {
 
-template <typename class_type, typename... used_args>
+template <typename ClassType, typename... UsedArgs>
 struct ConstructorMagic
 {
-  template <int R, typename... remaining_args>
+  template <int R, typename... RemainingArgs>
   struct LoopOver;
 
-  template <int R, typename T, typename... remaining_args>
-  struct LoopOver<R, T, remaining_args...>
+  template <int R, typename T, typename... RemainingArgs>
+  struct LoopOver<R, T, RemainingArgs...>
   {
-    static class_type Build(VM *vm, used_args &... used)
+    static ClassType Build(VM *vm, UsedArgs &... used)
     {
       typename std::decay<T>::type l =
           LoaderClass<typename std::decay<T>::type>::LoadArgument(R, vm);
 
-      return ConstructorMagic<class_type, used_args...,
-                              T>::template LoopOver<R - 1, remaining_args...>::Build(vm, used...,
+      return ConstructorMagic<ClassType, UsedArgs...,
+                              T>::template LoopOver<R - 1, RemainingArgs...>::Build(vm, used...,
                                                                                      l);
     }
   };
@@ -44,19 +44,19 @@ struct ConstructorMagic
   template <int R, typename T>
   struct LoopOver<R, T>
   {
-    static class_type Build(VM *vm, used_args &... used)
+    static ClassType Build(VM *vm, UsedArgs &... used)
     {
       typename std::decay<T>::type l =
           LoaderClass<typename std::decay<T>::type>::LoadArgument(R, vm);
 
-      return class_type(used..., l);
+      return ClassType(used..., l);
     }
   };
 
   template <int R>
   struct LoopOver<R>
   {
-    static class_type Build(VM *vm, class_type &cls) { return class_type(); }
+    static ClassType Build(VM *vm, ClassType &cls) { return ClassType(); }
   };
 };
 
