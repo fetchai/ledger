@@ -160,7 +160,7 @@ struct StorerClass<double, N>
   }
 };
 
-// TODO: Add storers for all the other basic types
+// TODO(private issue 212): Add storers for all the other basic types
 
 template <>
 struct LoaderClass<fetch::math::linalg::Matrix<double, fetch::memory::Array<double>>>
