@@ -778,62 +778,10 @@ bool VM::Execute(const Script &script, const std::string &name)
       break;
     }
 
-    case Opcode::PrintInt32:
-    {
-      Value &value = stack_[sp_--];
-      std::cout << value.variant.i32 << std::endl;
-      break;
-    }
-    case Opcode::PrintStr:
-    {
-      Value &         obj = stack_[sp_--];
-      Array<uint8_t> *o   = static_cast<Array<uint8_t> *>(obj.variant.object);
-      for (auto &c : o->elements)
-      {
-        std::cout << char(c);
-      }
-      obj.Reset();
-      std::cout << std::endl;
-      break;
-    }
-
-    case Opcode::CreateIntPair:
-    {
-      Value &      secondv = stack_[sp_--];
-      Value &      firstv  = stack_[sp_];
-      const TypeId type_id = instruction_->type_id;
-      IntPair *    pair    = new IntPair(type_id, this, firstv.variant.i32, secondv.variant.i32);
-      secondv.Reset();
-      firstv.SetObject(pair, type_id);
-      break;
-    }
-    case Opcode::IntPairFirst:
-    {
-      Value & top = stack_[sp_];
-      auto    p   = static_cast<IntPair *>(top.variant.object);
-      int32_t ret = p->first;
-      top.SetPrimitive(ret, TypeId::Int32);
-      break;
-    }
-    case Opcode::IntPairSecond:
-    {
-      Value & top = stack_[sp_];
-      auto    p   = static_cast<IntPair *>(top.variant.object);
-      int32_t ret = p->second;
-      top.SetPrimitive(ret, TypeId::Int32);
-      break;
-    }
-    case Opcode::Fib:
-    {
-      Value &      top     = stack_[sp_];
-      auto         p       = static_cast<IntPair *>(top.variant.object);
-      const TypeId type_id = instruction_->type_id;
-      IntPair *    pair    = new IntPair(type_id, this, p->second, p->first + p->second);
-      top.SetObject(pair, type_id);
-      break;
-    }
     default:
     {
+      // If the operation does not match any of the builtin operations
+      // try to match them against operations defined in the module
       if (module_ != nullptr)
       {
         if (!module_->ExecuteUserOpcode(this, instruction_->opcode))

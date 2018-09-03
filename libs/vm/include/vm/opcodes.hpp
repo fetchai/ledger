@@ -88,15 +88,6 @@ enum class Opcode : uint16_t
   CreateMatrix,
   CreateArray,
 
-  // Custom opcodes
-  PrintInt32,
-  PrintStr,
-  CreateIntPair,
-  IntPairFirst,
-  IntPairSecond,
-  Fib,
-
-  CreateWrappedTestClass,  // Ref implementation
 
   StartOfUserOpcodes =
       16000  // This OP code always need to have the highest value - preferably constant.

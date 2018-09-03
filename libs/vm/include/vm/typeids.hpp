@@ -79,10 +79,6 @@ enum class TypeId : uint16_t
   Array_Matrix_Float64__Float64,
 
   // Custom
-  IntPair,
-
-  WrappedTestClass,
-
   StartOfUserTypes =
       32000  // This Type code always need to have the highest value - preferably constant.
 };

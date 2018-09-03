@@ -27,27 +27,6 @@
 namespace fetch {
 namespace vm {
 
-struct TestClass2
-{
-  void Foo() { std::cout << "FOO" << std::endl; }
-
-  void Bar(int const &x)
-  {  // TOODO: Add support for const
-    std::cout << "BAR: " << x << std::endl;
-  }
-};
-
-struct IntPair : public Object
-{
-  int32_t first, second;
-  IntPair(const TypeId type_id, VM *vm, int32_t const &a, int32_t const &b)
-    : Object(type_id, vm), first(a), second(b)
-  {}
-  virtual ~IntPair() {}
-};
-
-/////////////// END OF CUSTOM CLASSES
-
 struct String : public Object
 {
   std::string str;
