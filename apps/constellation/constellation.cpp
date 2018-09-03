@@ -54,8 +54,10 @@ Constellation::Constellation(certificate_type &&certificate, uint16_t port_start
 
   auto const p2p_identity = certificate->identity();
 
+  muddle_ = std::make_shared<muddle::Muddle>(std::move(certificate), *network_manager_);
+
   // Creating P2P instance
-  p2p_ = std::make_unique<p2p::P2PService2>(std::move(certificate), *network_manager_);
+  p2p_ = std::make_unique<p2p::P2PService2>(muddle_);
 
 //  auto profile = p2p_->Profile();
 //  auto my_name = std::string(byte_array::ToBase64(profile.identity.identifier()));
@@ -198,8 +200,11 @@ void Constellation::Run(peer_list_type const &initial_peers)
 
 #endif
 
+  // Start the networking
+  muddle_ -> Start({p2p_port_});
+
   // lastly fire up the P2P server
-  p2p_->Start({p2p_port_}, initial_peers);
+  p2p_ -> Start(initial_peers);
 
 #if 0
   // lastly start accepting HTTP connections
@@ -231,6 +236,11 @@ void Constellation::Run(peer_list_type const &initial_peers)
 
   // tear down all the instances
 
+  p2p_ -> Stop();
+  muddle_ -> Stop();
+
+  p2p_ . reset();
+  muddle_ . reset();
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Exiting...");
 }

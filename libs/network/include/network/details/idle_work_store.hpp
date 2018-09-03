@@ -42,13 +42,22 @@ public:
   bool            operator==(const IdleWorkStore &rhs) const = delete;
   bool            operator<(const IdleWorkStore &rhs) const  = delete;
 
-  IdleWorkStore() { }
+  IdleWorkStore()
+    : interval_{0}
+    , lastrun_{ std::chrono::system_clock::now() }
+  {
+  }
 
   virtual ~IdleWorkStore()
   {
     shutdown_.store(true);
     lock_type mlock(mutex_); // wait in case anyone is in here.
     store_.clear(); // remove any pending things
+  }
+
+  virtual void SetInterval(int milliseconds)
+  {
+    interval_ = std::chrono::milliseconds(milliseconds);
   }
 
   virtual void clear()
@@ -62,6 +71,32 @@ public:
     shutdown_.store(true);
   }
 
+  bool IsDue() const
+  {
+    lock_type mlock(mutex_, std::try_to_lock);
+    if (!mlock)
+    {
+      return false; // someone's already doing this.
+    }
+    auto nextDue = lastrun_ + interval_;
+    auto tp     = std::chrono::system_clock::now();
+    auto wayoff = (nextDue - tp);
+    return wayoff.count() <= 0;
+  }
+
+  std::chrono::duration<long long, std::__1::ratio<1, 1000000>> DueIn()
+  {
+    lock_type mlock(mutex_);
+    if (store_.empty())
+    {
+      return std::chrono::milliseconds(1000);
+    }
+    auto nextDue = lastrun_ + interval_;
+    auto tp     = std::chrono::system_clock::now();
+    auto wayoff = (nextDue - tp);
+    return wayoff;
+  }
+
   virtual int Visit(std::function<void (work_item_type)> visitor)
   {
     lock_type mlock(mutex_, std::try_to_lock);
@@ -69,6 +104,7 @@ public:
     {
       return -1;
     }
+    lastrun_ = std::chrono::system_clock::now();
     int processed = 0;
     for(auto &work : store_)
     {
@@ -91,6 +127,8 @@ private:
   store_type      store_;
   mutable mutex_type mutex_{__LINE__, __FILE__};
   std::atomic<bool> shutdown_{false};
+  std::chrono::duration<long long, std::__1::ratio<1, 1000000>> interval_;
+  std::chrono::system_clock::time_point lastrun_;
 };
 
 }  // namespace details

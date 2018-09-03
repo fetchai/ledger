@@ -70,6 +70,7 @@ public:
   using timepoint_type    = clock_type::time_point;
   using string_list_type  = std::vector<std::string>;
   using p2p_service_type  = std::unique_ptr<p2p::P2PService2>;
+  using muddle_service_type  = std::shared_ptr<muddle::Muddle>;
   using http_server_type  = std::unique_ptr<http::HTTPServer>;
   using peer_list_type    = std::vector<network::Peer>;
   using http_module_type  = std::shared_ptr<http::HTTPModule>;
@@ -158,6 +159,11 @@ private:
   /// @name P2P Networking Components
   /// @{
   p2p_service_type p2p_;  ///< The P2P networking component
+  /// @}
+
+  /// @name Muddle Networking Components
+  /// @{
+  muddle_service_type muddle_;  ///< The muddle networking component
   /// @}
 
   /// @name API Components

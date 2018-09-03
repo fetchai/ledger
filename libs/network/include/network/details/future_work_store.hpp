@@ -82,6 +82,21 @@ public:
     return IsDueActual();
   }
 
+  std::chrono::duration<long long, std::__1::ratio<1, 1000000>> DueIn()
+  {
+    lock_type mlock(mutex_);
+    if (store_.empty())
+    {
+      return std::chrono::milliseconds(1000);
+    }
+    auto nextDue = store_.back();
+
+    auto tp     = std::chrono::system_clock::now();
+    auto due    = nextDue.first;
+    auto wayoff = (due - tp);
+    return wayoff;
+  }
+
   virtual int Visit(std::function<void (work_item_type)> visitor, int maxprocesses=1)
   {
     lock_type mlock(mutex_, std::try_to_lock);
@@ -127,6 +142,8 @@ private:
     return nextDue.second;
   }
 
+
+
   bool IsDueActual()
   {
     if (shutdown_.load())
@@ -137,13 +154,8 @@ private:
     {
       return false;
     }
-    auto nextDue = store_.back();
 
-    auto tp     = std::chrono::system_clock::now();
-    auto due    = nextDue.first;
-    auto wayoff = (due - tp).count();
-
-    if (wayoff < 0)
+    if (DueIn().count() <= 0)
     {
       return true;
     }
