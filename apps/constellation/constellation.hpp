@@ -20,6 +20,8 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/main_chain_miner.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
+#include "ledger/storage_unit/storage_unit_bundled_service.hpp"
+#include "ledger/storage_unit/storage_unit_client.hpp"
 #include "miner/annealer_miner.hpp"
 #include "network/p2pservice/p2p_service2.hpp"
 #include "network/muddle/muddle.hpp"
@@ -35,25 +37,19 @@
 #include <tuple>
 #include <unordered_set>
 
+#include "ledger/execution_manager.hpp"
+
 namespace fetch {
+//namespace ledger { class ExecutionManager; }
 
 class Constellation
 {
 public:
-  using NetworkManager = network::NetworkManager;
   using Peer2PeerService  = p2p::P2PService2;
   using MuddleService  = muddle::Muddle;
   using CertificatePtr    = Peer2PeerService::CertificatePtr;
   using PeerList    = std::vector<network::Peer>;
-  using BlockPackingAlgorithm = miner::AnnealerMiner;
-  using Miner = chain::MainChainMiner;
-  using BlockCoordinator = chain::BlockCoordinator;
-  using MainChain = chain::MainChain;
-  using ExecutionManager = ledger::ExecutionManager;
-  using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
 
-  using MainChainRpcService = ledger::MainChainRpcService;
-  using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
 
 #if 0
 
@@ -96,7 +92,7 @@ public:
   static constexpr std::size_t DEFAULT_NUM_LANES      = 8;
   static constexpr std::size_t DEFAULT_NUM_SLICES     = 4;
   static constexpr std::size_t DEFAULT_NUM_EXECUTORS  = DEFAULT_NUM_LANES;
-  //  static const std::string DEFAULT_DB_PREFIX =;
+
   static constexpr char const *LOGGING_NAME = "constellation";
 
 
@@ -107,23 +103,28 @@ public:
                          std::string const &interface_address = "127.0.0.1",
                          std::string const &prefix            = "node_storage");
 
-  void Run(PeerList const &initial_peers = PeerList{});
+  void Run(PeerList const &initial_peers, bool mining);
   void SignalStop()
   {
     active_ = false;
   }
 
-#if 0
-  executor_type CreateExecutor()
-  {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Creating local executor...");
-    return executor_type{new ledger::Executor(storage_)};
-  }
-#endif
-
 private:
 
+  using NetworkManager = network::NetworkManager;
+  using BlockPackingAlgorithm = miner::AnnealerMiner;
+  using Miner = chain::MainChainMiner;
+  using BlockCoordinator = chain::BlockCoordinator;
+  using MainChain = chain::MainChain;
+  using MainChainRpcService = ledger::MainChainRpcService;
+  using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
+  using LaneServices   = ledger::StorageUnitBundledService;
+  using StorageUnitClient = ledger::StorageUnitClient;
+  using StorageUnitClientPtr = std::shared_ptr<StorageUnitClient>;
   using Flag = std::atomic<bool>;
+  using ExecutionManager = ledger::ExecutionManager;
+  using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
+
 
   /// @name Configuration
   /// @{
@@ -144,8 +145,16 @@ private:
   Peer2PeerService  p2p_;                   ///< The main p2p networking
   /// @}
 
-  /// @name Block processing
+  /// @name Transaction and State Database shards
+  /// @{
+  LaneServices             lane_services_;
+  StorageUnitClientPtr     storage_;
+  /// @}
+
+  /// @name Block Processing
+  /// @{
   ExecutionManagerPtr execution_manager_;
+  /// @}
 
   /// @name Blockchain and Mining
   /// @[
@@ -158,7 +167,10 @@ private:
   /// @name Top Level Services
   /// @{
   MainChainRpcServicePtr   main_chain_service_;
+
+
   /// @}
+
 
 #if 0
   /// @name Lane Storage Components

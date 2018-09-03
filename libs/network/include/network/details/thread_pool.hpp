@@ -267,7 +267,7 @@ private:
 
     thread_state_type r = THREAD_IDLE;
     {
-      auto workdone = work_.Visit([this](WorkStore::work_item_type work){ this->ExecuteWorkload(work); }, 1);
+      auto workdone = work_.Visit([this](WorkStore::WorkItem work){ this->ExecuteWorkload(work); }, 1);
       if (workdone > 0)
       {
         r = std::max(r, THREAD_WORKED);

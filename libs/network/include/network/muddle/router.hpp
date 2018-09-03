@@ -51,10 +51,6 @@ public:
   void AddConnection(Handle handle);
   void RemoveConnection(Handle handle);
 
-#if 0
-  void SendDirect(Handle handle, uint16_t service_num, uint16_t proto_num, Payload const &payload);
-#endif
-
   /// @name Endpoint Methods (Publicly visible)
   /// @{
   void Send(Address const &address,

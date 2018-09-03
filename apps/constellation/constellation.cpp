@@ -20,8 +20,10 @@
 #include "constellation.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
+#include "ledger/execution_manager.hpp"
 #include "network/p2pservice/explore_http_interface.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
+#include "ledger/storage_unit/lane_remote_control.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 
@@ -29,6 +31,10 @@
 #include <random>
 
 using fetch::byte_array::ToBase64;
+using fetch::ledger::Executor;
+using fetch::network::TCPClient;
+
+using ExecutorPtr = std::shared_ptr<Executor>;
 
 namespace fetch {
 namespace {
@@ -40,71 +46,6 @@ namespace {
 
     return (num_lanes * THREADS_PER_LANE) + OTHER_THREADS;
   }
-
-  // TODO(EJF): Remove once the storage unit is in the game
-  struct TestingStorageUnit : public ledger::StorageUnitInterface
-  {
-    Document Get(ResourceAddress const &key) override
-    {
-      return fetch::ledger::StorageInterface::Document();
-    }
-
-    Document GetOrCreate(ResourceAddress const &key) override
-    {
-      return fetch::ledger::StorageInterface::Document();
-    }
-
-    void Set(ResourceAddress const &key, StateValue const &value) override
-    {
-    }
-
-    bool Lock(ResourceAddress const &key) override
-    {
-      return true;
-    }
-
-    bool Unlock(ResourceAddress const &key) override
-    {
-      return true;
-    }
-
-    void AddTransaction(chain::Transaction const &tx) override
-    {
-
-    }
-
-    bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) override
-    {
-      return false;
-    }
-
-    hash_type Hash() override
-    {
-      std::random_device rd;
-      std::mt19937_64 rng(rd());
-
-      byte_array::ByteArray buf;
-      buf.Resize(32);
-
-      auto *data = reinterpret_cast<uint64_t *>(buf.pointer());
-      data[0] = rng();
-      data[1] = rng();
-      data[2] = rng();
-      data[3] = rng();
-
-      return buf;
-    }
-
-    void Commit(bookmark_type const &bookmark) override
-    {
-
-    }
-
-    void Revert(bookmark_type const &bookmark) override
-    {
-
-    }
-  };
 
 } // namespace
 
@@ -134,13 +75,14 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , network_manager_{CalcNetworkManagerThreads(num_lanes)}
   , muddle_{std::move(certificate), network_manager_}
   , p2p_{muddle_}
+  , lane_services_()
+  , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , execution_manager_{
     std::make_shared<ExecutionManager>(
-      0 /*num_executors*/,
-      std::make_shared<TestingStorageUnit>(),
-      []
-      {
-        return std::shared_ptr<ledger::ExecutorInterface>{};
+      num_executors,
+      storage_,
+      [this] {
+        return std::make_shared<Executor>(storage_);
       }
     )
   }
@@ -159,6 +101,9 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   miner_.OnBlockComplete([this](auto const &block) {
     main_chain_service_->BroadcastBlock(block);
   });
+
+  // configure all the lane services
+  lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_);
 }
 
 /**
@@ -166,16 +111,25 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
  *
  * @param initial_peers The peers that should be initially connected to
  */
-void Constellation::Run(PeerList const &initial_peers)
+void Constellation::Run(PeerList const &initial_peers, bool mining)
 {
   // start all the services
   network_manager_.Start();
   muddle_ . Start({p2p_port_});
   p2p_ . Start(initial_peers);
+  lane_services_.Start();
+
+  // add the lane connections
+  storage_->SetNumberOfLanes(num_lanes_);
+  for (std::size_t i = 0; i < num_lanes_; ++i)
+  {
+    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
+
+    storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
+  }
+
   execution_manager_->Start();
   block_coordinator_.Start();
-
-  bool const mining = true;
 
   if (mining)
     miner_.Start();
@@ -195,6 +149,7 @@ void Constellation::Run(PeerList const &initial_peers)
 
   block_coordinator_.Stop();
   execution_manager_->Stop();
+  lane_services_.Stop();
   p2p_ . Stop();
   muddle_ . Stop();
   network_manager_.Stop();

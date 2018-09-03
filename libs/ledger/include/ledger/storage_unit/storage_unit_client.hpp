@@ -86,7 +86,7 @@ public:
       {
 
         // make the client call
-        auto p = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::PING);
+        auto p = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
 
         FETCH_LOG_PROMISE();
         if (p->Wait(1000, false))
@@ -113,9 +113,9 @@ public:
     }
 
     // Exchaning info
-    auto p1 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
-    auto p2 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
-    auto p3 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
+    auto p1 = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+    auto p2 = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
+    auto p3 = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
 
     FETCH_LOG_PROMISE();
     if ((!p1->Wait(1000, true)) || (!p2->Wait(1000, true)) || (!p3->Wait(1000, true)))
@@ -156,7 +156,7 @@ public:
   {
     if (ep.lane_id < lanes_.size())
     {
-      lanes_[ep.lane_id]->Call(LaneService::CONTROLLER, LaneControllerProtocol::TRY_CONNECT, ep);
+      lanes_[ep.lane_id]->Call(RPC_CONTROLLER, LaneControllerProtocol::TRY_CONNECT, ep);
     }
   }
 
@@ -166,7 +166,7 @@ public:
 
     auto        res     = fetch::storage::ResourceID(tx.digest());
     std::size_t lane    = res.lane(log2_lanes_);
-    auto        promise = lanes_[lane]->Call(LaneService::TX_STORE, protocol::SET, res, tx);
+    auto        promise = lanes_[lane]->Call(RPC_TX_STORE, protocol::SET, res, tx);
 
     FETCH_LOG_PROMISE();
     promise->Wait();
@@ -178,7 +178,7 @@ public:
 
     auto        res     = fetch::storage::ResourceID(digest);
     std::size_t lane    = res.lane(log2_lanes_);
-    auto        promise = lanes_[lane]->Call(LaneService::TX_STORE, protocol::GET, res);
+    auto        promise = lanes_[lane]->Call(RPC_TX_STORE, protocol::GET, res);
     tx                  = promise->As<chain::VerifiedTransaction>();
 
     return true;
@@ -189,7 +189,7 @@ public:
     std::size_t lane = key.lane(log2_lanes_);
 
     auto promise = lanes_[lane]->Call(
-        LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE,
+        RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE,
         key.as_resource_id());
 
     return promise->As<storage::Document>();
@@ -200,7 +200,7 @@ public:
     std::size_t lane = key.lane(log2_lanes_);
 
     auto promise =
-        lanes_[lane]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET,
+        lanes_[lane]->Call(RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET,
                            key.as_resource_id());
 
     return promise->As<storage::Document>();
@@ -210,7 +210,7 @@ public:
   {
     std::size_t lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(LaneService::STATE,
+    auto promise = lanes_[lane]->Call(RPC_STATE,
                                       fetch::storage::RevertibleDocumentStoreProtocol::LOCK,
                                       key.as_resource_id());
 
@@ -221,7 +221,7 @@ public:
   {
     std::size_t lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(LaneService::STATE,
+    auto promise = lanes_[lane]->Call(RPC_STATE,
                                       fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK,
                                       key.as_resource_id());
 
@@ -233,7 +233,7 @@ public:
     std::size_t lane = key.lane(log2_lanes_);
 
     auto promise =
-        lanes_[lane]->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET,
+        lanes_[lane]->Call(RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET,
                            key.as_resource_id(), value);
 
     FETCH_LOG_PROMISE();
@@ -246,7 +246,7 @@ public:
     for (std::size_t i = 0; i < lanes_.size(); ++i)
     {
       auto promise = lanes_[i]->Call(
-          LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
+          RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
       promises.push_back(promise);
     }
 
@@ -263,7 +263,7 @@ public:
     for (std::size_t i = 0; i < lanes_.size(); ++i)
     {
       auto promise = lanes_[i]->Call(
-          LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
+          RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
       promises.push_back(promise);
     }
 
@@ -288,7 +288,7 @@ public:
     }
 
     return lanes_[0]
-        ->Call(LaneService::STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
+        ->Call(RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
         ->As<byte_array::ByteArray>();
   }
 

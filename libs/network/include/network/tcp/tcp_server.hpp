@@ -58,8 +58,8 @@ public:
   TCPServer(uint16_t const &port, network_manager_type const &network_manager);
   ~TCPServer() override;
 
-  void Start();
-  void Stop();
+  virtual void Start();
+  virtual void Stop();
 
   void PushRequest(connection_handle_type client, message_type const &msg) override;
 

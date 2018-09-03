@@ -35,13 +35,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "LaneRemoteControl";
 
-  enum
-  {
-    CONTROLLER_PROTOCOL_ID = LaneService::CONTROLLER,
-    IDENTITY_PROTOCOL_ID   = LaneService::IDENTITY
-  };
-
-  LaneRemoteControl() {}
+  LaneRemoteControl() = default;
   LaneRemoteControl(LaneRemoteControl const &other) = default;
   LaneRemoteControl(LaneRemoteControl &&other)      = default;
   LaneRemoteControl &operator=(LaneRemoteControl const &other) = default;
@@ -65,7 +59,7 @@ public:
     if (ptr)
     {
       FETCH_LOG_INFO(LOGGING_NAME,"Remote lane call to: ", host, ":", port);
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::CONNECT, host, port);
+      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::CONNECT, host, port);
 
       FETCH_LOG_PROMISE();
       p->Wait();
@@ -77,7 +71,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::TRY_CONNECT, ep);
+      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::TRY_CONNECT, ep);
 
       FETCH_LOG_PROMISE();
       p->Wait();
@@ -94,7 +88,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::SHUTDOWN);
+      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
 
       FETCH_LOG_PROMISE();
       p->Wait();
@@ -111,7 +105,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p = ptr->Call(IDENTITY_PROTOCOL_ID, LaneIdentityProtocol::GET_LANE_NUMBER);
+      auto p = ptr->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
       return p->As<uint32_t>();
     }
 
@@ -130,7 +124,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::INCOMING_PEERS);
+      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::INCOMING_PEERS);
       return p->As<int>();
     }
 
@@ -149,7 +143,7 @@ public:
     auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::OUTGOING_PEERS);
+      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::OUTGOING_PEERS);
       return p->As<int>();
     }
 

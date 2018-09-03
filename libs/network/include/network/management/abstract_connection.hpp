@@ -53,7 +53,10 @@ public:
   virtual ~AbstractConnection()
   {
     auto h = handle_.load();
+
     FETCH_LOG_DEBUG(LOGGING_NAME,"Connection destruction in progress for handle ", h);
+    FETCH_LOG_VARIABLE(h);
+
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       on_message_ = nullptr;

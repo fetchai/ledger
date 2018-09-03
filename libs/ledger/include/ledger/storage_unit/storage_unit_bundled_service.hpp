@@ -32,8 +32,16 @@ namespace ledger {
 class StorageUnitBundledService
 {
 public:
+
+  // Construction / Destruction
   StorageUnitBundledService()  = default;
+  StorageUnitBundledService(StorageUnitBundledService const &) = delete;
+  StorageUnitBundledService(StorageUnitBundledService &&) = delete;
   ~StorageUnitBundledService() = default;
+
+  // Operators
+  StorageUnitBundledService &operator=(StorageUnitBundledService const &) = delete;
+  StorageUnitBundledService &operator=(StorageUnitBundledService &&) = delete;
 
   void Setup(std::string const &dbdir, std::size_t const &lanes, uint16_t const &port,
              fetch::network::NetworkManager const &tm)
@@ -45,16 +53,28 @@ public:
     }
   }
 
-  void Start(bool start_sync = true)
+  void Start()
   {
     for (auto &lane : lanes_)
     {
-      lane->Start(start_sync);
+      lane->Start();
+    }
+  }
+
+  void Stop()
+  {
+    for (auto &lane : lanes_)
+    {
+      lane->Stop();
     }
   }
 
 private:
-  std::vector<std::shared_ptr<LaneService>> lanes_;
+
+  using LaneServicePtr = std::shared_ptr<LaneService>;
+  using LaneServiceList = std::vector<LaneServicePtr>;
+
+  LaneServiceList lanes_;
 };
 
 }  // namespace ledger
