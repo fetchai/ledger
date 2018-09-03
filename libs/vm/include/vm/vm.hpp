@@ -1075,7 +1075,7 @@ private:
     Value &     rhsv    = stack_[sp_--];
     ElementType rhs;
     rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);  // TODO(robert) what if fails?
+    Op::Apply(this, *ptr, rhs);  // TODO(private issue 214): what if fails?
     matrixv.Reset();
     rhsv.Reset();
   }
@@ -1089,7 +1089,7 @@ private:
     Value &     rhsv   = stack_[sp_--];
     ElementType rhs;
     rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);  // TODO(robert)  what if fails?
+    Op::Apply(this, *ptr, rhs);  // TODO(private issue 214):  what if fails?
     arrayv.Reset();
     rhsv.Reset();
   }
@@ -1104,7 +1104,7 @@ private:
     RHSVariantType xx;
     rhsv.variant.Get(xx);
     RHSElementType rhs = static_cast<RHSElementType>(xx);
-    Op::Apply(this, *ptr, rhs);  //  TODO(robert) what if fails?
+    Op::Apply(this, *ptr, rhs);  //  TODO(private issue 214): what if fails?
     arrayv.Reset();
     rhsv.Reset();
   }
