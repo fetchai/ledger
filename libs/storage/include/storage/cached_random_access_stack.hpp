@@ -17,6 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+//  ┌──────┬───────────┬───────────┬───────────┬───────────┐
+//  │      │           │           │           │           │
+//  │HEADER│  OBJECT   │  OBJECT   │  OBJECT   │  OBJECT   │
+//  │      │           │           │           │           │......
+//  │      │           │           │           │           │
+//  └──────┴───────────┴───────────┴───────────┴───────────┘
+
 #include "core/assert.hpp"
 #include "storage/random_access_stack.hpp"
 
@@ -28,6 +35,10 @@
 namespace fetch {
 namespace storage {
 
+/**
+ * The CachedRandomAccessStack owns a stack of type T (RandomAccessStack), and provides caching.
+ *
+ */
 template <typename T, typename D = uint64_t>
 class CachedRandomAccessStack
 {
@@ -58,17 +69,11 @@ public:
 
   void OnBeforeFlush(event_handler_type const &f) { on_before_flush_ = f; }
 
-  // TODO(issue 13): Move private or protected
-  void SignalFileLoaded()
-  {
-    if (on_file_loaded_) on_file_loaded_();
-  }
-
-  void SignalBeforeFlush()
-  {
-    if (on_before_flush_) on_before_flush_();
-  }
-
+  /**
+   * Indicate whether the stack is writing directly to disk or caching writes.
+   *
+   * @return: Whether the stack is written straight to disk.
+   */
   static constexpr bool DirectWrite() { return false; }
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
@@ -229,6 +234,20 @@ private:
 
   mutable std::map<uint64_t, CachedDataItem> data_;
   uint64_t                                   objects_ = 0;
+
+  // TODO(issue 13): Move private or protected
+  void SignalFileLoaded()
+  {
+    if (on_file_loaded_) on_file_loaded_();
+  }
+
+  /**
+   * Call the closure before any flush
+   */
+  void SignalBeforeFlush()
+  {
+    if (on_before_flush_) on_before_flush_();
+  }
 };
 }  // namespace storage
 }  // namespace fetch

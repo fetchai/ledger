@@ -24,7 +24,7 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 #include "ledger/chain/transaction.hpp"
 #include "storage/document_store_protocol.hpp"

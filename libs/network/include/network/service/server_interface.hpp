@@ -146,6 +146,7 @@ private:
                    serializer_type params)
   {
     //    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT;
 
     protocol_handler_type protocol;
     function_handler_type function;
