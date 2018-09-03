@@ -19,6 +19,7 @@ void P2PService2::Start(P2PService2::PeerList const &initial_peer_list)
     possibles_.push_back(peer);
   }
 
+  thread_pool_ -> Start();
   thread_pool_ -> PostIdle([this](){ this -> WorkCycle(); });
 }
 
