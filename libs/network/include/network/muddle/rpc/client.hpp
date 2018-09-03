@@ -27,10 +27,11 @@ public:
 
   static constexpr char const *LOGGING_NAME = "RpcClient";
 
-  Client(MuddleEndpoint &endpoint, Address const &address, uint16_t service)
+  Client(MuddleEndpoint &endpoint, Address const &address, uint16_t service, uint16_t channel)
     : endpoint_(endpoint)
     , address_(address)
     , service_(service)
+    , channel_(channel)
   {
     handler_ = std::make_shared<Handler>([this](Promise promise) {
       ProcessServerMessage(promise->value());
@@ -39,7 +40,7 @@ public:
     thread_pool_->Start();
   }
 
-  ~Client()
+  ~Client() override
   {
     // clear that handler
     handler_.reset();
@@ -47,14 +48,19 @@ public:
     thread_pool_->Stop();
   }
 
+  void SetAddress(Address const &address)
+  {
+    address_ = address;
+  }
+
 protected:
 
-  bool DeliverRequest(network::message_type const &data, ProtocolId proto_id, FunctionId func_id) override
+  bool DeliverRequest(network::message_type const &data) override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Please send this packet to the server");
 
     // signal to the networking that an exchange is requested
-    auto promise = endpoint_.Exchange(address_, service_, static_cast<uint16_t>(proto_id), data);
+    auto promise = endpoint_.Exchange(address_, service_, channel_, data);
 
     // establish the correct course of action when
     WeakHandler handler = handler_;
@@ -82,8 +88,9 @@ protected:
 private:
 
   MuddleEndpoint &endpoint_;
-  Address const address_;
+  Address address_;
   uint16_t const service_;
+  uint16_t const channel_;
   ThreadPool thread_pool_ = network::MakeThreadPool(1);
   SharedHandler handler_;
 };

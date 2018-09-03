@@ -152,7 +152,7 @@ public:
   std::shared_ptr<network::AbstractConnection> connection() { return connection_.lock(); }
 
 protected:
-  bool DeliverRequest(network::message_type const &msg, protocol_handler_type, function_handler_type) override
+  bool DeliverRequest(network::message_type const &msg) override
   {
     auto ptr = connection_.lock();
     if (ptr)

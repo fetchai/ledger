@@ -12,11 +12,6 @@
 namespace fetch {
 namespace muddle {
 
-static constexpr uint16_t SERVICE_MUDDLE = 0;
-
-static constexpr uint16_t PROTO_MUDDLE_ROUTING_REQUEST = 0;
-static constexpr uint16_t PROTO_MUDDLE_ROUTING_REPLY = 1;
-
 class Packet
 {
 public:

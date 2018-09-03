@@ -53,7 +53,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     connection_handle_type handle = client->handle();
-    FETCH_LOG_INFO(LOGGING_NAME,"Client joining with handle ", handle);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Client joining with handle ", handle);
 
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
     clients_[handle] = client;

@@ -1,4 +1,3 @@
-#include <network/p2pservice/p2p_service2.hpp>
 #include "network/p2pservice/p2p_service2.hpp"
 #include "network/p2pservice/p2ptrust.hpp"
 
@@ -9,7 +8,7 @@ P2PService2::P2PService2(muddle_service_type muddle)
   : muddle_(muddle)
 {
   // register the services with the rpc server
-  rpc_server_.Add(1, &resolver_proto_);
+  rpc_server_.Add(PROTOCOL_RESOLVER, &resolver_proto_);
   trustSystem = std::make_shared<P2PTrust<Identity>>();
 }
 

@@ -92,7 +92,7 @@ public:
   {
     self_type self = shared_from_this();
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Client posting connect");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Client posting connect");
 
     networkManager_.Post([this, self, host, port] {
       shared_self_type selfLock = self.lock();
@@ -130,10 +130,10 @@ public:
 
           LOG_STACK_TRACE_POINT;
 
-          FETCH_LOG_INFO(LOGGING_NAME,"Finished connecting.");
+          FETCH_LOG_DEBUG(LOGGING_NAME,"Finished connecting.");
           if (!ec)
           {
-            FETCH_LOG_INFO(LOGGING_NAME,"Connection established!");
+            FETCH_LOG_DEBUG(LOGGING_NAME,"Connection established!");
 
             // Prevent this from throwing
             std::error_code         ec2;

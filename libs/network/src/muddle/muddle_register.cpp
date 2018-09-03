@@ -91,7 +91,7 @@ void MuddleRegister::Enter(ConnectionPtr const &ptr)
   }
 #endif // !NDEBUG
 
-  FETCH_LOG_INFO(LOGGING_NAME, "### Connection ", strong_conn->handle(), " started type: ", strong_conn->Type());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "### Connection ", strong_conn->handle(), " started type: ", strong_conn->Type());
 
   // update
   connection_map_[strong_conn->handle()] = ptr;
@@ -107,7 +107,7 @@ void MuddleRegister::Leave(connection_handle_type id)
   {
     FETCH_LOCK(connection_map_lock_);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "### Connection ", id, " ended");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "### Connection ", id, " ended");
 
     auto it = connection_map_.find(id);
     if (it != connection_map_.end())

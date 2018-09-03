@@ -166,6 +166,7 @@ private:
     uint32_t ms            = max_size_;
     using service_map_type = typename R::service_map_type;
     using service_map_items          = typename service_map_type::value_type;
+
     register_.VisitServiceClients([this, ms](service_map_items const &p)
     {
       LOG_STACK_TRACE_POINT;

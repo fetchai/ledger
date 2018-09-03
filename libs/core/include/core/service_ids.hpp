@@ -1,0 +1,45 @@
+#pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
+#include <cstdint>
+
+namespace fetch {
+
+// TODO(EJF): Make to enums probably (global register of services IDs)
+
+static constexpr uint16_t SERVICE_MUDDLE = 0;  // reserved
+static constexpr uint16_t SERVICE_P2P = 1;
+static constexpr uint16_t SERVICE_MAIN_CHAIN = 2;
+
+// Common Service Channels
+static constexpr uint16_t CHANNEL_RPC = 1; // for convience we essentially reserve channel 1 of any service to be allocated to any potential RPC interface
+
+// Muddle Service Channels
+static constexpr uint16_t CHANNEL_ROUTING = 1;
+
+// P2P Service Channels
+
+// Main Chain Service Channels
+static constexpr uint16_t CHANNEL_BLOCKS = 2;
+
+// RPC Protocol identifiers
+static constexpr uint64_t RPC_MAIN_CHAIN = 128;
+
+
+} // namespace fetch

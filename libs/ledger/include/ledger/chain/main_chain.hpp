@@ -158,7 +158,7 @@ public:
     bool heaviestAdvanced = UpdateTips(block, prev_block);
 
     // Add block
-    FETCH_LOG_INFO(LOGGING_NAME,"Adding block to chain: ", ToBase64(block.hash()));
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Adding block to chain: ", ToBase64(block.hash()));
     blockChain_[block.hash()] = block;
 
     if (heaviestAdvanced)
@@ -413,7 +413,7 @@ private:
     std::vector<BlockHash> blocks_to_add = (*it).second;
     looseBlocks_.erase(it);
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Found loose blocks completed by addition of block: ", blocks_to_add.size());
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Found loose blocks completed by addition of block: ", blocks_to_add.size());
 
     while (blocks_to_add.size() > 0)
     {
@@ -469,7 +469,7 @@ private:
     if (!blockStore_.Get(storage::ResourceID(block.body().previous_hash), prev_block))
     {
       std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
-      FETCH_LOG_INFO(LOGGING_NAME,"Didn't find block's previous, adding as loose block");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Didn't find block's previous, adding as loose block");
       NewLooseBlock(block);
       return false;
     }
@@ -486,7 +486,7 @@ private:
 
     // We should now have an up to date prev block from file, put it in our cached blockchain and
     // re-add
-    FETCH_LOG_INFO(LOGGING_NAME,"Reviving block from file");
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Reviving block from file");
     {
       std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
       prev_block.totalWeight()       = total_weight;
@@ -513,13 +513,13 @@ private:
       block.totalWeight() = tip->total_weight;
       block.loose()       = false;
 
-      FETCH_LOG_INFO(LOGGING_NAME,"Mainchain: Pushing block onto already existing tip:");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Pushing block onto already existing tip:");
 
       // Update heaviest pointer if necessary
       if ((tip->total_weight > heaviest_.first) ||
           ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)))
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"Mainchain: Updating heaviest with tip");
+        FETCH_LOG_DEBUG(LOGGING_NAME,"Updating heaviest with tip");
 
         heaviest_.first  = tip->total_weight;
         heaviest_.second = block.hash();
@@ -530,7 +530,7 @@ private:
     else  // Didn't find a corresponding tip
     {
       // We are not building on a tip, create a new tip
-      FETCH_LOG_INFO(LOGGING_NAME,"Mainchain: Received new block with no corresponding tip");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Received new block with no corresponding tip");
 
       block.totalWeight() = block.weight() + prev_block.totalWeight();
       tip                 = std::make_shared<Tip>();
@@ -540,7 +540,7 @@ private:
       if ((tip->total_weight > heaviest_.first) ||
           ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)))
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"Mainchain: creating new tip that is now heaviest! (new fork)");
+        FETCH_LOG_DEBUG(LOGGING_NAME,"creating new tip that is now heaviest! (new fork)");
 
         heaviest_.first  = tip->total_weight;
         heaviest_.second = block.hash();

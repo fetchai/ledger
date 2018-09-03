@@ -48,7 +48,6 @@ public:
     : NETWORK_SERVER(args...)
     , router_(router)
   {
-      FETCH_LOG_INFO(LOGGING_NAME, "Alive and well...");
   }
   MuddleServer(MuddleServer const &) = delete;
   MuddleServer(MuddleServer &&) = delete;

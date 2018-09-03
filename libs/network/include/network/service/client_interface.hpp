@@ -76,7 +76,7 @@ public:
 
     PackCall(params, protocol, function, std::forward<arguments>(args)...);
 
-    if (!DeliverRequest(params.data(), protocol, function))
+    if (!DeliverRequest(params.data()))
     {
       FETCH_LOG_DEBUG(LOGGING_NAME,"Call failed!");
       prom->Fail(serializers::SerializableException(
@@ -102,7 +102,7 @@ public:
 
 protected:
 
-  virtual bool DeliverRequest(network::message_type const &request, protocol_handler_type proto, function_handler_type func) = 0;
+  virtual bool DeliverRequest(network::message_type const &request) = 0;
 
   void ClearPromises();
   bool ProcessServerMessage(network::message_type const &msg);

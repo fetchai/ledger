@@ -2,6 +2,7 @@
 #define FETCH_P2P_ROUTER_HPP
 
 #include "core/mutex.hpp"
+#include "network/details/thread_pool.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/management/abstract_connection.hpp"
@@ -27,6 +28,7 @@ public:
   using Payload       = Packet::Payload;
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
+  using ThreadPool    = network::ThreadPool;
 
   static constexpr char const *LOGGING_NAME = "MuddleRoute";
 
@@ -36,12 +38,22 @@ public:
   Router(Router &&) = delete;
   ~Router() override = default;
 
+  // Start / Stop
+  void Start();
+  void Stop();
+
   // Operators
   Router &operator=(Router const &) = delete;
   Router &operator=(Router &&) = delete;
 
   void Route(Handle handle, PacketPtr packet);
+
+  void AddConnection(Handle handle);
+  void RemoveConnection(Handle handle);
+
+#if 0
   void SendDirect(Handle handle, uint16_t service_num, uint16_t proto_num, Payload const &payload);
+#endif
 
   /// @name Endpoint Methods (Publicly visible)
   /// @{
@@ -64,21 +76,20 @@ public:
 
 private:
 
-  struct HandleMetadata
+  struct RoutingData
   {
-    bool secured  = false;   ///< Flag to signal that this channel is secured i.e. SSL
-    bool reliable = false;   ///< Flag to signal that this channel is reliable i.e. TCP
+    bool   direct = false;
+    Handle handle = 0;
   };
 
-  using AddressData = std::unordered_map<Handle, HandleMetadata>;
-  using RoutingTable = std::unordered_map<Packet::RawAddress, AddressData>;
-  using HandleMap = std::unordered_map<Handle, Packet::RawAddress>;
+  using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
+  using HandleMap = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex = mutex::Mutex;
   using Clock = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
   using EchoCache = std::unordered_map<uint64_t, Timepoint>;
 
-  void AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address);
+  bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
   Handle LookupHandle(Packet::RawAddress const &address) const;
 
@@ -101,6 +112,8 @@ private:
 
   mutable Mutex echo_cache_lock_{__LINE__, __FILE__};
   EchoCache echo_cache_;
+
+  ThreadPool            dispatch_thread_pool_;
 };
 
 } // namespace p2p

@@ -34,6 +34,8 @@
 #include "storage/object_store_protocol.hpp"
 #include "storage/object_store_syncronisation_protocol.hpp"
 
+#include "network/muddle/rpc/server.hpp"
+
 namespace fetch {
 namespace chain {
 

@@ -38,8 +38,7 @@ public:
 
   virtual ~ServiceServerInterface() = default;
 
-  virtual void Add(protocol_handler_type const &name,
-           Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
+  void Add(protocol_handler_type const &name, Protocol *protocol)  // TODO(issue 19): Rename to AddProtocol
   {
     LOG_STACK_TRACE_POINT;
 

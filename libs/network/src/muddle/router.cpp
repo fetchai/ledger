@@ -8,6 +8,14 @@
 #include "network/muddle/dispatcher.hpp"
 
 #include <memory>
+#include <sstream>
+#include <core/service_ids.hpp>
+
+static constexpr uint8_t DEFAULT_TTL = 40;
+
+using fetch::byte_array::ToBase64;
+using fetch::byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
 
 namespace fetch {
 namespace muddle {
@@ -74,12 +82,30 @@ bool operator==(Packet::RawAddress const &lhs, Packet::Address const &rhs)
  * @param addr The reference to the address to convert
  * @return The converted (output) byte array
  */
-byte_array::ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
+ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
 {
-  byte_array::ByteArray buffer;
+  ByteArray buffer;
   buffer.Resize(addr.size());
   std::memcpy(buffer.pointer(), addr.data(), addr.size());
   return buffer;
+}
+
+/**
+ * Generate a direct packet
+ *
+ * @param from The address of the sender
+ * @param service The service identifier
+ * @param channel The channel identifier
+ * @return The packet
+ */
+Router::PacketPtr FormatDirect(Packet::Address const &from, uint16_t service, uint16_t channel)
+{
+  auto packet = std::make_shared<Packet>(from);
+  packet->SetService(service);
+  packet->SetProtocol(channel);
+  packet->SetDirect(true);
+
+  return packet;
 }
 
 /**
@@ -110,6 +136,22 @@ Router::PacketPtr FormatPacket(Packet::Address const &from,
   return packet;
 }
 
+std::string DescribePacket(Packet const &packet)
+{
+  std::ostringstream oss;
+
+  oss << "To: " << ToBase64(packet.GetTarget())
+      << " From: " << ToBase64(packet.GetSender())
+      << " Route: " << packet.GetService() << ':' << packet.GetProtocol() << ':' << packet.GetMessageNum()
+      << " Type: "
+      << (packet.IsDirect() ? 'D' : 'R')
+      << (packet.IsBroadcast() ? 'B' : 'T')
+      << (packet.IsExchange() ? 'X' : 'F')
+      << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
+
+  return oss.str();
+}
+
 } // namespace
 
 /**
@@ -122,7 +164,24 @@ Router::Router(Router::Address const &address, MuddleRegister const &reg, Dispat
   : address_(address)
   , register_(reg)
   , dispatcher_(dispatcher)
+  , dispatch_thread_pool_(network::MakeThreadPool(1))
 {
+}
+
+/**
+ * Starts the routers internal dispatch thread pool
+ */
+void Router::Start()
+{
+  dispatch_thread_pool_->Start();
+}
+
+/**
+ * Stops the routers internal dispatch thread pool
+ */
+void Router::Stop()
+{
+  dispatch_thread_pool_->Stop();
 }
 
 /**
@@ -134,15 +193,11 @@ Router::Router(Router::Address const &address, MuddleRegister const &reg, Dispat
 void Router::Route(Handle handle, PacketPtr packet)
 {
 #if 1
-  FETCH_LOG_INFO(LOGGING_NAME,
-    "Routing packet: To: ", byte_array::ToBase64(packet->GetTarget()),
-    " From: ", byte_array::ToBase64(packet->GetSender()),
-    " Service: ", packet->GetService(), ':', packet->GetProtocol(),
-    " Direct: ", packet->IsDirect(),
-    " Bcast: ", packet->IsBroadcast(),
-    " TTL: ", packet->GetTTL()
-  );
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
 #endif
+
+  // update the routing table if required
+  AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
 
   if (packet->IsDirect())
   {
@@ -161,6 +216,32 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
 }
 
+/**
+ * Tells the router that it should add a connection. In practise this means that it should
+ * begin identity exchange with the node and update the routing table accordingly.
+ *
+ * Before calling this function, the handle must be registered with the connection register. If
+ * it isn't then the router will be unable to lookup the pointer to the `AbstractConnection` and
+ * will not send the message.
+ *
+ * @param handle The handle to the connection
+ */
+void Router::AddConnection(Handle handle)
+{
+  // create and format the packet
+  auto packet = FormatDirect(address_, SERVICE_MUDDLE, CHANNEL_ROUTING);
+  packet->SetExchange(true); // signal that this is the request half of a direct message
+
+  // send the
+  SendToConnection(handle, packet);
+}
+
+void Router::RemoveConnection(Handle handle)
+{
+  // TODO(EJF): Need to tear down handle routes etc. Also in more complicated scenario implement alternative routing
+}
+
+#if 0
 /**
  * Sends a payload directly to the connection specified from the handle.
  *
@@ -183,6 +264,7 @@ void Router::SendDirect(Handle handle, uint16_t service_num, uint16_t proto_num,
 
   SendToConnection(handle, pkt);
 }
+#endif
 
 /**
  * Send an message to a target address
@@ -199,7 +281,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
   uint16_t const counter = dispatcher_.GetNextCounter();
 
   // format the packet
-  auto packet = FormatPacket(address_, service, channel, counter, 10, message);
+  auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, message);
   packet->SetTarget(address);
 
   RoutePacket(packet, false);
@@ -218,7 +300,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
                   uint16_t message_num, Payload const &payload)
 {
   // format the packet
-  auto packet = FormatPacket(address_, service, channel, message_num, 10, payload);
+  auto packet = FormatPacket(address_, service, channel, message_num, DEFAULT_TTL, payload);
   packet->SetTarget(address);
 
   RoutePacket(packet, false);
@@ -236,7 +318,7 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
   // get the next counter for this message
   uint16_t const counter = dispatcher_.GetNextCounter();
 
-  auto packet = FormatPacket(address_, service, channel, counter, 10, payload);
+  auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, payload);
   packet->SetBroadcast(true);
 
   RoutePacket(packet, false);
@@ -260,7 +342,7 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
   auto promise = dispatcher_.RegisterExchange(service, channel, counter);
 
   // format the packet and route the packet
-  auto packet = FormatPacket(address_, service, channel, counter, 10, request);
+  auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, request);
   packet->SetTarget(address);
   packet->SetExchange();
   RoutePacket(packet, false);
@@ -295,24 +377,70 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
 }
 
 /**
- * Internal: Add an entry into the routing table for the given address and handle
+ * Internal: Add an entry into the routing table for the given address and handle.
+ *
+ * This call might override an existing routing table entry in the case that the connection
+ * becomes direct, or is updated to an alternate direct connection.
  *
  * @param handle The handle to the connection
  * @param address The address associated with that handle
+ * @param direct Signal that this connection is a direct connection
+ * @return true if an update was performed, otherwise false
  */
-void Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address)
+bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct)
 {
+  bool update_complete = false;
+
+  // TODO(EJF): At the moment these updates (and by extension the routing logic) works on a first come
+  // first served basis. This is not reliable longer term and will need tweaking
+
+  // sanity check
+  assert(handle);
+
   {
     FETCH_LOCK(routing_table_lock_);
 
-    // TODO(EJF): We are just blindly updating this datastructure at the moment might need some alternative
-    // update logic in the future.
-    routing_table_handles_[handle] = address;
-    auto &metadata = routing_table_[address][handle];
-    metadata.reliable = true; // TODO(EJF): This is always true at the moment but doesn't need to be
+    // lookup (or create) the routing table entry
+    auto &routing_data = routing_table_[address];
+
+    bool const is_empty = (routing_data.handle == 0);
+
+    // an update is only valid when the connection is direct.
+    bool const is_different = (routing_data.handle != handle) || (routing_data.direct != direct);
+    bool const is_update = (routing_data.handle && direct && is_different);
+
+    // update the routing table if required
+    if (is_empty || is_update)
+    {
+      // replacing an existing entry
+      Handle prev_handle = routing_data.handle;
+
+      // update the table
+      routing_data.handle = handle;
+      routing_data.direct = direct;
+
+      // remove association of the previous handle with the address (if required)
+      if (prev_handle)
+      {
+        routing_table_handles_[prev_handle].erase(address);
+      }
+
+      // associate the new handle with the address
+      routing_table_handles_[handle].insert(address);
+
+      // signal an update was made to the table
+      update_complete = true;
+    }
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Associating handle: ", handle, " with ", byte_array::ToBase64(ToConstByteArray(address)));
+  if (update_complete)
+  {
+    char const *route_type = (direct) ? "direct" : "normal";
+
+    FETCH_LOG_INFO(LOGGING_NAME, "==> Adding ", route_type, " route for: ", ToBase64(ToConstByteArray(address)));
+  }
+
+  return update_complete;
 }
 
 /**
@@ -331,12 +459,9 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
     auto address_it = routing_table_.find(address);
     if (address_it != routing_table_.end())
     {
-      auto const &handle_map = address_it->second;
+      auto const &routing_data = address_it->second;
 
-      if (!handle_map.empty())
-      {
-        handle = handle_map.begin()->first;
-      }
+      handle = routing_data.handle;
     }
   }
 
@@ -396,13 +521,14 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     bool message_time_expired = true;
     if (packet->GetTTL() > 2u)
     {
+      // decrement the TTL
       packet->SetTTL(static_cast<uint8_t>(packet->GetTTL() - 1u));
       message_time_expired = false;
     }
 
     if (message_time_expired)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Message has timed out");
+      FETCH_LOG_INFO(LOGGING_NAME, "Message has timed out (TTL): ", DescribePacket(*packet));
       return;
     }
 
@@ -416,6 +542,11 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   // broadcast packet
   if (packet->IsBroadcast())
   {
+    if (packet->GetSender() != address_)
+    {
+      DispatchPacket(packet);
+    }
+
     // serialize the packet to the buffer
     serializers::ByteArrayBuffer buffer;
     buffer << *packet;
@@ -447,20 +578,19 @@ void Router::RoutePacket(PacketPtr packet, bool external)
  */
 void Router::DispatchDirect(Handle handle, PacketPtr packet)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "==> Direct message sent to router");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "==> Direct message sent to router");
 
-  if (packet->GetService() == SERVICE_MUDDLE)
+  if (SERVICE_MUDDLE == packet->GetService())
   {
-    if ((PROTO_MUDDLE_ROUTING_REQUEST == packet->GetProtocol()) ||
-        (PROTO_MUDDLE_ROUTING_REPLY == packet->GetProtocol()))
+    if (CHANNEL_ROUTING == packet->GetProtocol())
     {
       // make the association with
-      AssociateHandleWithAddress(handle, packet->GetSenderRaw());
+      AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
 
       // send back a direct response if that is required
-      if (PROTO_MUDDLE_ROUTING_REQUEST == packet->GetProtocol())
+      if (packet->IsExchange())
       {
-        SendDirect(handle, SERVICE_MUDDLE, PROTO_MUDDLE_ROUTING_REPLY, Packet::Payload{});
+        SendToConnection(handle, FormatDirect(address_, SERVICE_MUDDLE, CHANNEL_ROUTING));
       }
     }
   }
@@ -473,27 +603,30 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
  */
 void Router::DispatchPacket(PacketPtr packet)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "==> Message routed to this node");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "==> Message routed to this node");
 
-  // determine if this was an exchange based node
-  if (dispatcher_.Dispatch(packet))
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "==> Succesfully dispatched message to pending promise");
+  dispatch_thread_pool_->Post([this, packet]() {
 
-    // the dispatcher has "claimed" this packet as there was an outstanding promise waiting for it
-    return;
-  }
+    // determine if this was an exchange based node
+    if (dispatcher_.Dispatch(packet))
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "==> Succesfully dispatched message to pending promise");
 
-  // If no exchange message has claimed this then attempt to dispatch it through our normal system
-  // of message subscriptions.
-  if (registrar_.Dispatch(packet))
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "==> Succesfully dispatched message to subscription");
-    return;
-  }
+      // the dispatcher has "claimed" this packet as there was an outstanding promise waiting for it
+      return;
+    }
 
-  // TODO(EJF): Implement simple dispatch routines
-  FETCH_LOG_WARN(LOGGING_NAME, "Routed packet has no home, how sad");
+    // If no exchange message has claimed this then attempt to dispatch it through our normal system
+    // of message subscriptions.
+    if (registrar_.Dispatch(packet))
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "==> Succesfully dispatched message to subscription");
+      return;
+    }
+
+    // TODO(EJF): Implement simple dispatch routines
+    FETCH_LOG_WARN(LOGGING_NAME, "Routed packet has no home, how sad");
+  });
 }
 
 /**

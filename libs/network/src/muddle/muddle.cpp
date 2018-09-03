@@ -71,6 +71,7 @@ void Muddle::Start(PortList const &ports, Muddle::PeerList const &initial_peer_l
 {
   // start the thread pool
   thread_pool_->Start();
+  router_.Start();
 
   // create all the muddle servers
   for (uint16_t port : ports)
@@ -95,6 +96,7 @@ void Muddle::Start(PortList const &ports, Muddle::PeerList const &initial_peer_l
 void Muddle::Stop()
 {
   thread_pool_->Stop();
+  router_.Stop();
 
   // tear down all the servers
   servers_.clear();
@@ -109,7 +111,7 @@ void Muddle::Stop()
  */
 void Muddle::RunPeriodicMaintenance()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Running periodic maintenance");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Running periodic maintenance");
 
   // connect to all the required peers
   for (auto const &peer : clients_.GetPeersToConnectTo())
@@ -127,7 +129,7 @@ void Muddle::RunPeriodicMaintenance()
     map = m;
   });
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Current Map Size: ", map.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Current Map Size: ", map.size());
 
 #if 0
   for (auto const &element : map)
@@ -216,18 +218,16 @@ void Muddle::CreateTcpClient(network::Peer const &peer)
   });
 
   strong_conn->OnConnectionFailed([this, peer]() {
-    FETCH_LOG_INFO(LOGGING_NAME, "Connection failed...");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
     clients_.RemoveConnection(peer);
   });
 
   strong_conn->OnLeave([this, peer]() {
-    FETCH_LOG_INFO(LOGGING_NAME, "Connection left...to go where?");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
     clients_.RemoveConnection(peer);
   });
 
   strong_conn->OnMessage([this, conn_handle](network::message_type const &msg) {
-    FETCH_LOG_INFO(LOGGING_NAME, "Got Message");
-
     try
     {
       // un-marshall the data

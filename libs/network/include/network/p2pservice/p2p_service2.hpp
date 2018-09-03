@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/service_ids.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/peer.hpp"
@@ -15,23 +16,34 @@ namespace p2p {
 class P2PService2
 {
 public:
+  using NetworkManager = network::NetworkManager;
   using Muddle = muddle::Muddle;
   using muddle_service_type  = std::shared_ptr<muddle::Muddle>;
   using PortList = Muddle::PortList;
   using PeerList = Muddle::PeerList;
   using RpcServer = muddle::rpc::Server;
   using ThreadPool = network::ThreadPool;
-  using Identity    = crypto::Identity;
+  using CertificatePtr = Muddle::CertificatePtr;
+  using MuddleEndpoint = muddle::MuddleEndpoint;
+  using Identity = crypto::Identity;
   using Peer   = network::Peer;
   using TrustInterface = P2PTrustInterface<Identity>;
   using Manifest = network::Manifest;
 
+  enum
+  {
+    PROTOCOL_RESOLVER = 1
+  };
+
   // Construction / Destruction
-  P2PService2(muddle_service_type muddle);
+  P2PService2(Muddle::CertificatePtr &&certificate, Muddle::NetworkManager const &nm);
   ~P2PService2() = default;
 
   void Start(PeerList const & initial_peer_list = PeerList{});
   void Stop();
+
+  Identity const &identity() const { return muddle_.identity(); }
+  MuddleEndpoint& AsEndpoint() { return muddle_.AsEndpoint(); }
 
   void PeerIdentificationSucceeded(const Peer &peer, const Identity &identity);
   void PeerIdentificationFailed   (const Peer &peer);
@@ -42,8 +54,8 @@ public:
 private:
 
   muddle_service_type muddle_;
-  ThreadPool thread_pool_ = network::MakeThreadPool(1);
-  RpcServer rpc_server_{muddle_ -> AsEndpoint(), 1};
+  ThreadPool  thread_pool_ = network::MakeThreadPool(1);
+  RpcServer rpc_server_{muddle_.AsEndpoint(), 1};
 
   // address resolution service
   Resolver resolver_;
@@ -53,7 +65,6 @@ private:
   std::map<Identity, Manifest> discoveredPeers;
 
   std::set
-
   PeerList possibles_; // addresses we might use in the future.
   PeerList currently_trying_; // addresses we think we have inflight at the moment.
 };

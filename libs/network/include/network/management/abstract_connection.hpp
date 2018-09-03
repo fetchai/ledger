@@ -47,15 +47,13 @@ public:
   AbstractConnection()
   {
     handle_ = AbstractConnection::next_handle();
-
-    FETCH_LOG_WARN(LOGGING_NAME,"Connetion created with handle", handle_.load());
   }
 
   // Interface
   virtual ~AbstractConnection()
   {
     auto h = handle_.load();
-    FETCH_LOG_WARN(LOGGING_NAME,"Connection destruction in progress for handle ", h);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Connection destruction in progress for handle ", h);
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       on_message_ = nullptr;
@@ -66,7 +64,7 @@ public:
     {
       ptr->Leave(handle_);
     }
-    FETCH_LOG_WARN(LOGGING_NAME,"Connection destroyed for handle ", h);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"Connection destroyed for handle ", h);
   }
 
   virtual void     Send(message_type const &) = 0;
@@ -164,7 +162,6 @@ protected:
 
   void SignalConnectionFailed()
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "SignalConnectionFailed");
     std::function<void ()> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
@@ -180,7 +177,6 @@ protected:
 
   void SignalConnectionSuccess()
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "SignalConnectionSuccess");
     std::function<void ()> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
