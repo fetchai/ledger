@@ -26,8 +26,8 @@
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/color_log.hpp"
 #include "http/server.hpp"
-#include "network/service/client.hpp"
 #include "network/service/server.hpp"
+#include "network/service/service_client.hpp"
 #include "network/swarm/swarm_peer_location.hpp"
 
 namespace fetch {

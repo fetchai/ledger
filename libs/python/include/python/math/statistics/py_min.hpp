@@ -17,18 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/free_functions.hpp"
 #include "math/linalg/matrix.hpp"
-#include "math/statistics/min.hpp"
+#include "math/ndarray.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
 namespace math {
-namespace statistics {
 
 template <typename A>
-inline typename A::type WrapperMin(A const &a)
+inline void WrapperMin(A const &a, typename A::type &ret)
 {
-  return Min(a);
+  Min<typename A::type, typename A::container_type>(a, ret);
 }
 
 inline void BuildMinStatistics(std::string const &custom_name, pybind11::module &module)
@@ -37,7 +37,9 @@ inline void BuildMinStatistics(std::string const &custom_name, pybind11::module 
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperMin<Matrix<double>>)
+  module.def(custom_name.c_str(), &WrapperMin<ShapeLessArray<double>>)
+      .def(custom_name.c_str(), &WrapperMin<ShapeLessArray<float>>)
+      .def(custom_name.c_str(), &WrapperMin<Matrix<double>>)
       .def(custom_name.c_str(), &WrapperMin<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperMin<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperMin<RectangularArray<float>>)
@@ -45,6 +47,5 @@ inline void BuildMinStatistics(std::string const &custom_name, pybind11::module 
       .def(custom_name.c_str(), &WrapperMin<NDArray<float>>);
 }
 
-}  // namespace statistics
 }  // namespace math
 }  // namespace fetch

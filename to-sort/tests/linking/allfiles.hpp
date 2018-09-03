@@ -89,7 +89,7 @@
 #include "service/abstract_callable.hpp"
 #include "service/abstract_publication_feed.hpp"
 #include "service/callable_class_member.hpp"
-#include "service/client.hpp"
+#include "service/service_client.hpp"
 #include "service/client_interface.hpp"
 #include "service/error_codes.hpp"
 #include "service/feed_subscription_manager.hpp"

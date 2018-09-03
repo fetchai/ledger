@@ -27,7 +27,7 @@
 #include "ledger/chain/helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
 #include <iostream>
 using namespace fetch;
