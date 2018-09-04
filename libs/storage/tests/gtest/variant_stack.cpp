@@ -45,9 +45,6 @@ TEST(variant_stack, basic_functionality)
 
   stack.New("VS_test.db");
 
-  EXPECT_TRUE(stack.is_open());
-  EXPECT_TRUE(stack.DirectWrite() == true) << "Expected variant stack to be direct write";
-
   // Test push/top
   for (uint64_t i = 0; i < testSize; ++i)
   {
