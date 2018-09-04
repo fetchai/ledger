@@ -28,7 +28,8 @@ namespace swarm {
 class SwarmException : public std::exception
 {
 public:
-  SwarmException(std::string explanation) : explanation_(std::move(explanation))
+  SwarmException(std::string explanation)
+    : explanation_(std::move(explanation))
   {
     LOG_STACK_TRACE_POINT;
     LOG_SET_CONTEXT_VARIABLE(stack_trace_);

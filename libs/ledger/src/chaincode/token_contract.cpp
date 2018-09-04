@@ -46,7 +46,8 @@ struct WalletRecord
 
 }  // namespace
 
-TokenContract::TokenContract() : Contract("fetch.token")
+TokenContract::TokenContract()
+  : Contract("fetch.token")
 {
   OnTransaction("wealth", this, &TokenContract::CreateWealth);
   OnTransaction("transfer", this, &TokenContract::Transfer);

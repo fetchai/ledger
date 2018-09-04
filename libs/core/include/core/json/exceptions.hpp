@@ -49,7 +49,8 @@ public:
 class JSONParseException : public std::exception
 {
 public:
-  JSONParseException(std::string err) : error_(std::move(err))
+  JSONParseException(std::string err)
+    : error_(std::move(err))
   {}
   virtual ~JSONParseException()
   {}

@@ -43,7 +43,9 @@ public:
   };
 
   LaneIdentity(client_register_type reg, network_manager_type const &nm, crypto::Identity identity)
-    : identity_(identity), register_(std::move(reg)), manager_(nm)
+    : identity_(identity)
+    , register_(std::move(reg))
+    , manager_(nm)
   {
     lane_        = uint32_t(-1);
     total_lanes_ = 0;

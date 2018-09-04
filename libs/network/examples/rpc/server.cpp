@@ -47,7 +47,8 @@ public:
 class ServiceProtocol : public Protocol
 {
 public:
-  ServiceProtocol() : Protocol()
+  ServiceProtocol()
+    : Protocol()
   {
 
     this->Expose(SLOWFUNCTION, &impl_, &Implementation::SlowFunction);
@@ -63,7 +64,8 @@ private:
 class MyCoolService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  MyCoolService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
+  MyCoolService(uint16_t port, fetch::network::NetworkManager tm)
+    : ServiceServer(port, tm)
   {
     this->Add(MYPROTO, new ServiceProtocol());
   }

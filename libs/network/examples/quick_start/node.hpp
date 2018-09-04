@@ -36,7 +36,8 @@ public:
 class Node
 {
 public:
-  Node(fetch::network::NetworkManager tm) : tm_{tm}
+  Node(fetch::network::NetworkManager tm)
+    : tm_{tm}
   {}
   ~Node()
   {}

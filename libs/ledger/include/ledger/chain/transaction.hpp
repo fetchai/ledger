@@ -40,7 +40,8 @@ public:
   UnverifiedTransaction(UnverifiedTransaction &&other) = default;
   UnverifiedTransaction &operator=(UnverifiedTransaction &&other) = default;
 
-  UnverifiedTransaction(UnverifiedTransaction const &other) : MutableTransaction()
+  UnverifiedTransaction(UnverifiedTransaction const &other)
+    : MutableTransaction()
   {
     this->Copy(other);
   }
@@ -96,7 +97,8 @@ public:
   VerifiedTransaction(VerifiedTransaction &&other) = default;
   VerifiedTransaction &operator=(VerifiedTransaction &&other) = default;
 
-  VerifiedTransaction(VerifiedTransaction const &other) : UnverifiedTransaction(other)
+  VerifiedTransaction(VerifiedTransaction const &other)
+    : UnverifiedTransaction(other)
   {
     this->Copy(other);
   }

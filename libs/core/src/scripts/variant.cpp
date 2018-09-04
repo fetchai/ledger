@@ -142,7 +142,9 @@ VariantArray::VariantArray(std::size_t const &size)
 }
 
 VariantArray::VariantArray(VariantArray const &other, std::size_t offset, std::size_t size)
-  : size_(size), offset_(offset), data_(other.data_)
+  : size_(size)
+  , offset_(offset)
+  , data_(other.data_)
 {
   pointer_ = data_->data() + offset_;
 }

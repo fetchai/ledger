@@ -36,14 +36,16 @@ public:
   SwarmAgentApiImpl operator=(SwarmAgentApiImpl &&rhs) = delete;
 
   explicit SwarmAgentApiImpl(std::string identifier, uint32_t idlespeed)
-    : identifier_(std::move(identifier)), idlespeed_(idlespeed)
+    : identifier_(std::move(identifier))
+    , idlespeed_(idlespeed)
   {
     threading_system_ = std::make_shared<threading_system_type>(10);
   }
 
   explicit SwarmAgentApiImpl(std::shared_ptr<threading_system_type> threadingSystem,
                              std::string identifier, uint32_t idlespeed)
-    : identifier_(std::move(identifier)), idlespeed_(idlespeed)
+    : identifier_(std::move(identifier))
+    , idlespeed_(idlespeed)
   {
     threading_system_ = threadingSystem;
   }

@@ -57,7 +57,8 @@ public:
   YMLDocument()
   {}
 
-  YMLDocument(const_string_type const &document) : YMLDocument()
+  YMLDocument(const_string_type const &document)
+    : YMLDocument()
   {
     Parse(document);
   }

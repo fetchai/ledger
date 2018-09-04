@@ -32,7 +32,8 @@ class AuthenticationLogic
 public:
   using node_details_type = D;
 
-  AuthenticationLogic(fetch::network::ConnectionRegister<D> reg) : register_(std::move(reg))
+  AuthenticationLogic(fetch::network::ConnectionRegister<D> reg)
+    : register_(std::move(reg))
   {}
 
   uint64_t Ping()
@@ -69,7 +70,8 @@ template <typename D>
 class AuthenticationProtocol : public Protocol
 {
 public:
-  AuthenticationProtocol(AuthenticationLogic<D> *auth_logic) : Protocol()
+  AuthenticationProtocol(AuthenticationLogic<D> *auth_logic)
+    : Protocol()
   {
     this->Expose(PING, auth_logic, &AuthenticationLogic<D>::Ping);
     this->ExposeWithClientArg(HELLO, auth_logic, &AuthenticationLogic<D>::Hello);
@@ -96,7 +98,8 @@ public:
 class TestProtocol : public Protocol
 {
 public:
-  TestProtocol() : Protocol()
+  TestProtocol()
+    : Protocol()
   {
     this->Expose(GREET, &test_, &TestLogic::Greet);
     this->Expose(ADD, &test_, &TestLogic::Add);
@@ -109,7 +112,8 @@ private:
 class ProtectedService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  ProtectedService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
+  ProtectedService(uint16_t port, fetch::network::NetworkManager tm)
+    : ServiceServer(port, tm)
   {
     this->SetConnectionRegister(register_);
 

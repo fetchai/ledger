@@ -48,9 +48,11 @@ public:
     }
   }
 
-  BigUnsigned(BigUnsigned const &other) : super_type(other.Copy())
+  BigUnsigned(BigUnsigned const &other)
+    : super_type(other.Copy())
   {}
-  BigUnsigned(super_type const &other) : super_type(other.Copy())
+  BigUnsigned(super_type const &other)
+    : super_type(other.Copy())
   {}
 
   BigUnsigned(uint64_t const &number, std::size_t size = 256)

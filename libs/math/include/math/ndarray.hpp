@@ -44,7 +44,8 @@ public:
    * Constructor builds an NDArray with n elements initialized to 0
    * @param n   number of elements in array (no shape specified, assume 1-D)
    */
-  NDArray(std::size_t const &n) : super_type(n)
+  NDArray(std::size_t const &n)
+    : super_type(n)
   {
     assert(this->size() == n);
     this->LazyReshape({n});
@@ -69,12 +70,14 @@ public:
    * Constructor builds an NDArray pre-initialising from a shapeless array
    * @param arr shapelessarray data set by defualt
    */
-  NDArray(super_type const &arr) : super_type(arr)
+  NDArray(super_type const &arr)
+    : super_type(arr)
   {
     this->LazyReshape({arr.size()});
   }
 
-  NDArray(self_type const &arr) : super_type(arr)
+  NDArray(self_type const &arr)
+    : super_type(arr)
   {
     this->LazyReshape(arr.shape());
   }

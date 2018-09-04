@@ -28,7 +28,8 @@ namespace ledger {
  *
  * @param identifier The fully qualified name to parse
  */
-Identifier::Identifier(std::string identifier) : full_{std::move(identifier)}
+Identifier::Identifier(std::string identifier)
+  : full_{std::move(identifier)}
 {
   Tokenise();
 }

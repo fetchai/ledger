@@ -59,7 +59,8 @@ public:
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
    */
-  NDArrayIterator(ndarray_type &array) : array_(array)
+  NDArrayIterator(ndarray_type &array)
+    : array_(array)
   {
     std::vector<std::vector<std::size_t>> step{};
     for (auto i : array.shape())
@@ -80,7 +81,8 @@ public:
     Setup(step, array_.shape());
   }
 
-  NDArrayIterator(ndarray_type &array, std::vector<std::size_t> const &shape) : array_(array)
+  NDArrayIterator(ndarray_type &array, std::vector<std::size_t> const &shape)
+    : array_(array)
   {
     std::vector<std::vector<std::size_t>> step{};
     for (auto i : array.shape())

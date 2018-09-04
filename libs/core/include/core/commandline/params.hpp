@@ -46,7 +46,8 @@ public:
   using assigners_type  = std::map<std::string, action_func_type>;
   using help_texts_type = std::list<help_text_type>;
 
-  Params() : paramsParser_()
+  Params()
+    : paramsParser_()
   {}
 
   void Parse(int argc, const char *argv[])

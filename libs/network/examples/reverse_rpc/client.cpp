@@ -63,7 +63,9 @@ private:
 class AEAProtocol : public AEA, public Protocol
 {
 public:
-  AEAProtocol() : AEA(), Protocol()
+  AEAProtocol()
+    : AEA()
+    , Protocol()
   {
     AEA *controller = (AEA *)this;
 

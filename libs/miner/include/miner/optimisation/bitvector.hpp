@@ -51,7 +51,9 @@ public:
   }
 
   BitVectorImplementation(BitVectorImplementation const &other)
-    : data_(other.data_.Copy()), size_(other.size_), blocks_(other.blocks_)
+    : data_(other.data_.Copy())
+    , size_(other.size_)
+    , blocks_(other.blocks_)
   {}
 
   BitVectorImplementation(std::size_t const &size, std::initializer_list<uint64_t> const &data)

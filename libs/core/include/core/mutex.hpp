@@ -62,7 +62,8 @@ class DebugMutex : public AbstractMutex
     static constexpr std::size_t DEFAULT_TIMEOUT_MS = 300;
 
     MutexTimeout(std::string filename, int const &line, std::size_t timeout_ms = DEFAULT_TIMEOUT_MS)
-      : filename_(std::move(filename)), line_(line)
+      : filename_(std::move(filename))
+      , line_(line)
     {
       LOG_STACK_TRACE_POINT;
 
@@ -114,7 +115,10 @@ class DebugMutex : public AbstractMutex
   };
 
 public:
-  DebugMutex(int line, std::string file) : AbstractMutex(), line_(line), file_(std::move(file))
+  DebugMutex(int line, std::string file)
+    : AbstractMutex()
+    , line_(line)
+    , file_(std::move(file))
   {}
   DebugMutex() = default;
 

@@ -83,7 +83,8 @@ public:
     return *this;
   }
 
-  Array(Array const &other) : super_type()
+  Array(Array const &other)
+    : super_type()
   {
     this->operator=(other);
   }

@@ -50,7 +50,8 @@ public:
   };
 
   explicit RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store)
-    : fetch::service::Protocol(), doc_store_(doc_store)
+    : fetch::service::Protocol()
+    , doc_store_(doc_store)
   {
     this->Expose(GET, (RevertibleDocumentStore::super_type *)doc_store,
                  &RevertibleDocumentStore::super_type::Get);
@@ -69,7 +70,9 @@ public:
 
   RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store, lane_type const &lane,
                                   lane_type const &maxlanes)
-    : fetch::service::Protocol(), doc_store_(doc_store), lane_assignment_(lane)
+    : fetch::service::Protocol()
+    , doc_store_(doc_store)
+    , lane_assignment_(lane)
   {
 
     SetLaneLog2(maxlanes);

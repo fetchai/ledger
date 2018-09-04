@@ -54,7 +54,9 @@ public:
   };
 
   TCPServer(uint16_t const &port, network_manager_type network_manager)
-    : network_manager_{network_manager}, port_{port}, request_mutex_{}
+    : network_manager_{network_manager}
+    , port_{port}
+    , request_mutex_{}
   {
     LOG_STACK_TRACE_POINT;
     fetch::logger.Info("Creating TCP server");

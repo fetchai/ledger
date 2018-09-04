@@ -35,10 +35,14 @@ struct String : public Object
   String()
   {}
   String(VM *vm, std::string const &str__, const bool is_literal__)
-    : Object(TypeId::String, vm), str(std::move(str__)), is_literal(is_literal__)
+    : Object(TypeId::String, vm)
+    , str(std::move(str__))
+    , is_literal(is_literal__)
   {}
   String(VM *vm, std::string &&str__, const bool is_literal__)
-    : Object(TypeId::String, vm), str(str__), is_literal(is_literal__)
+    : Object(TypeId::String, vm)
+    , str(str__)
+    , is_literal(is_literal__)
   {}
   virtual ~String()
   {}
@@ -49,11 +53,13 @@ struct Matrix : public Object
 {
   fetch::math::linalg::Matrix<T, fetch::memory::Array<T>> matrix;
   Matrix(const TypeId type_id, VM *vm, const size_t rows, const size_t columns)
-    : Object(type_id, vm), matrix(rows, columns)
+    : Object(type_id, vm)
+    , matrix(rows, columns)
   {}
   Matrix(const TypeId type_id, VM *vm,
          fetch::math::linalg::Matrix<T, fetch::memory::Array<T>> &&matrix__)
-    : Object(type_id, vm), matrix(matrix__)
+    : Object(type_id, vm)
+    , matrix(matrix__)
   {}
   virtual ~Matrix()
   {}
@@ -65,7 +71,9 @@ template <typename T>
 struct Array : public Object
 {
   std::vector<T> elements;
-  Array(const TypeId type_id, VM *vm, const size_t size) : Object(type_id, vm), elements(size, T(0))
+  Array(const TypeId type_id, VM *vm, const size_t size)
+    : Object(type_id, vm)
+    , elements(size, T(0))
   {}
   template <typename U, typename std::enable_if<std::is_pointer<U>::value>::type * = nullptr>
   void Release()
@@ -120,7 +128,8 @@ struct Resetter;
 class VM
 {
 public:
-  VM(Module *module = nullptr) : module_(module)
+  VM(Module *module = nullptr)
+    : module_(module)
   {}
   ~VM()
   {}

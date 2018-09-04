@@ -26,7 +26,8 @@
 class AEAFunctionality
 {
 public:
-  AEAFunctionality(std::string node_info) : node_info_(node_info)
+  AEAFunctionality(std::string node_info)
+    : node_info_(node_info)
   {}
 
   void Connect(std::string address, uint16_t port)

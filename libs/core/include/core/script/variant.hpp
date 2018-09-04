@@ -196,11 +196,16 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
 
   VariantProxy(ConstByteArray const &key, Variant *parent)
-    : key_(key), parent_(parent), child_(nullptr)
+    : key_(key)
+    , parent_(parent)
+    , child_(nullptr)
   {}
 
   VariantProxy(ConstByteArray const &key, Variant *parent, Variant *child)
-    : Variant(*child), key_(key), parent_(parent), child_(child)
+    : Variant(*child)
+    , key_(key)
+    , parent_(parent)
+    , child_(child)
   {}
 
   ~VariantProxy()
@@ -266,7 +271,8 @@ private:
   Variant *    pointer_ = nullptr;
 };
 
-inline Variant::Variant() : type_(UNDEFINED)
+inline Variant::Variant()
+  : type_(UNDEFINED)
 {}
 inline Variant::Variant(int64_t const &i)
 {

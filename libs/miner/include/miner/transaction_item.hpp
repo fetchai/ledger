@@ -28,7 +28,9 @@ class TransactionItem
 {
 public:
   // Construction / Destruction
-  TransactionItem(chain::TransactionSummary tx, std::size_t id) : summary_(std::move(tx)), id_(id)
+  TransactionItem(chain::TransactionSummary tx, std::size_t id)
+    : summary_(std::move(tx))
+    , id_(id)
   {}
   ~TransactionItem() = default;
 

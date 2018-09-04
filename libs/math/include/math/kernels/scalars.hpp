@@ -25,7 +25,8 @@ namespace kernels {
 template <typename type, typename vector_register_type>
 struct MultiplyScalar
 {
-  MultiplyScalar(type const &val) : scalar(val)
+  MultiplyScalar(type const &val)
+    : scalar(val)
   {}
 
   void operator()(vector_register_type const &x, vector_register_type &y)
@@ -39,7 +40,8 @@ struct MultiplyScalar
 template <typename type, typename vector_register_type>
 struct AddScalar
 {
-  AddScalar(type const &val) : scalar(val)
+  AddScalar(type const &val)
+    : scalar(val)
   {}
 
   void operator()(vector_register_type const &x, vector_register_type &y)
@@ -53,7 +55,8 @@ struct AddScalar
 template <typename type, typename vector_register_type>
 struct SubtractScalar
 {
-  SubtractScalar(type const &val) : scalar(val)
+  SubtractScalar(type const &val)
+    : scalar(val)
   {}
 
   void operator()(vector_register_type const &x, vector_register_type &y)
@@ -67,7 +70,8 @@ struct SubtractScalar
 template <typename type, typename vector_register_type>
 struct DivideScalar
 {
-  DivideScalar(type const &val) : scalar(val)
+  DivideScalar(type const &val)
+    : scalar(val)
   {}
 
   void operator()(vector_register_type const &x, vector_register_type &y)
@@ -81,7 +85,8 @@ struct DivideScalar
 template <typename type, typename vector_register_type>
 struct ScalarSubtract
 {
-  ScalarSubtract(type const &val) : scalar(val)
+  ScalarSubtract(type const &val)
+    : scalar(val)
   {}
 
   void operator()(vector_register_type const &x, vector_register_type &y)
@@ -95,7 +100,8 @@ struct ScalarSubtract
 template <typename type, typename vector_register_type>
 struct DivideScalar
 {
-  ScalarDivide(type const &val) : scalar(val)
+  ScalarDivide(type const &val)
+    : scalar(val)
   {}
 
   void operator()(vector_register_type const &x, vector_register_type &y)

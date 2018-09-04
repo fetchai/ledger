@@ -32,7 +32,8 @@ std::atomic<std::size_t> openSessions{0};
 class BasicLoopback : public std::enable_shared_from_this<BasicLoopback>
 {
 public:
-  BasicLoopback(asio::ip::tcp::tcp::socket socket) : socket_(std::move(socket))
+  BasicLoopback(asio::ip::tcp::tcp::socket socket)
+    : socket_(std::move(socket))
   {
     openSessions++;
   }
@@ -84,7 +85,8 @@ public:
   static constexpr std::size_t DEFAULT_NUM_THREADS = 4;
 
   explicit LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS)
-    : port_{port}, networkManager_{num_threads}
+    : port_{port}
+    , networkManager_{num_threads}
   {
     networkManager_.Start();
     networkManager_.Post([this] {

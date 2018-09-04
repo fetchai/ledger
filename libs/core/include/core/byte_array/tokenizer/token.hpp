@@ -25,18 +25,23 @@ namespace byte_array {
 class Token : public ConstByteArray
 {
 public:
-  Token() : ConstByteArray()
+  Token()
+    : ConstByteArray()
   {}
 
-  Token(char const *str) : ConstByteArray(str)
+  Token(char const *str)
+    : ConstByteArray(str)
   {}
 
-  Token(std::string const &str) : ConstByteArray(str.c_str())
+  Token(std::string const &str)
+    : ConstByteArray(str.c_str())
   {}
 
-  Token(ConstByteArray const &other) : ConstByteArray(other)
+  Token(ConstByteArray const &other)
+    : ConstByteArray(other)
   {}
-  Token(ConstByteArray &&other) : ConstByteArray(other)
+  Token(ConstByteArray &&other)
+    : ConstByteArray(other)
   {}
 
   Token(ConstByteArray const &other, std::size_t const &start, std::size_t const &length)

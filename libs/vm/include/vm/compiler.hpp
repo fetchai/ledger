@@ -27,7 +27,8 @@ namespace vm {
 class Compiler
 {
 public:
-  Compiler(Module *module = nullptr) : analyser_(module)
+  Compiler(Module *module = nullptr)
+    : analyser_(module)
   {}
   ~Compiler()
   {}

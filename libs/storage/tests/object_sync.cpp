@@ -129,7 +129,9 @@ public:
     CONNECT = 1
   };
 
-  ControllerProtocol(ClientRegister reg, NetworkManager nm) : register_{std::move(reg)}, nm_{nm}
+  ControllerProtocol(ClientRegister reg, NetworkManager nm)
+    : register_{std::move(reg)}
+    , nm_{nm}
   {
     this->Expose(CONNECT, this, &ControllerProtocol::Connect);
   }
@@ -176,7 +178,8 @@ public:
     CONTROLLER
   };
 
-  TestService(uint16_t const &port, NetworkManager nm) : Super(port, nm)
+  TestService(uint16_t const &port, NetworkManager nm)
+    : Super(port, nm)
   {
     thread_pool_ = MakeThreadPool(1);
     this->SetConnectionRegister(register_);

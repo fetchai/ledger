@@ -75,7 +75,8 @@ public:
   NoCopyClass()
   {}
 
-  NoCopyClass(int val) : class_value{val}
+  NoCopyClass(int val)
+    : class_value{val}
   {}
 
   NoCopyClass(NoCopyClass &rhs) = delete;

@@ -33,7 +33,8 @@ public:
   using mutex_type      = std::recursive_mutex;
   using lock_type       = std::lock_guard<mutex_type>;
 
-  SwarmKarmaPeers(std::string ident) : ident_(std::move(ident))
+  SwarmKarmaPeers(std::string ident)
+    : ident_(std::move(ident))
   {}
 
   virtual ~SwarmKarmaPeers()

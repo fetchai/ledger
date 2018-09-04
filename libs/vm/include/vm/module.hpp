@@ -197,7 +197,9 @@ template <typename T>
 class ClassInterface : public BaseClassInterface
 {
 public:
-  ClassInterface(std::string name, Module &module) : module_(module), type_(module.next_type_id())
+  ClassInterface(std::string name, Module &module)
+    : module_(module)
+    , type_(module.next_type_id())
   {}
 
   template <typename R, typename... Args>

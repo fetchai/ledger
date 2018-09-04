@@ -249,7 +249,8 @@ public:
 class AbstractCallable
 {
 public:
-  AbstractCallable(uint64_t meta_data = 0) : meta_data_(meta_data)
+  AbstractCallable(uint64_t meta_data = 0)
+    : meta_data_(meta_data)
   {}
 
   virtual ~AbstractCallable(){};

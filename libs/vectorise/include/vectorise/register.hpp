@@ -53,11 +53,14 @@ public:
 
   VectorRegister()
   {}
-  VectorRegister(type const *d) : data_(*d)
+  VectorRegister(type const *d)
+    : data_(*d)
   {}
-  VectorRegister(type const &d) : data_(d)
+  VectorRegister(type const &d)
+    : data_(d)
   {}
-  VectorRegister(type &&d) : data_(d)
+  VectorRegister(type &&d)
+    : data_(d)
   {}
 
   explicit operator T()

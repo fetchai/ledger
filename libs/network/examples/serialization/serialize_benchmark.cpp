@@ -63,7 +63,9 @@ public:
 class ServiceProtocol : public Implementation, public Protocol
 {
 public:
-  ServiceProtocol() : Implementation(), Protocol()
+  ServiceProtocol()
+    : Implementation()
+    , Protocol()
   {
 
     this->Expose(GET, new CallableClassMember<Implementation, std::vector<ByteArray>()>(
@@ -77,7 +79,8 @@ public:
 class MyCoolService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  MyCoolService(uint16_t port, fetch::network::NetworkManager *tm) : ServiceServer(port, tm)
+  MyCoolService(uint16_t port, fetch::network::NetworkManager *tm)
+    : ServiceServer(port, tm)
   {
     this->Add(SERVICE, new ServiceProtocol());
   }

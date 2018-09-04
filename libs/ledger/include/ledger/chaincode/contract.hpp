@@ -158,7 +158,8 @@ public:
   }
 
 protected:
-  explicit Contract(std::string const &identifer) : contract_identifier_{identifer}
+  explicit Contract(std::string const &identifer)
+    : contract_identifier_{identifer}
   {}
 
   template <typename C>

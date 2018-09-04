@@ -80,11 +80,14 @@ public:
     }
   }
 
-  ConstByteArray(std::string const &s) : ConstByteArray(s.c_str())
+  ConstByteArray(std::string const &s)
+    : ConstByteArray(s.c_str())
   {}
   ConstByteArray(self_type const &other) = default;
   ConstByteArray(self_type const &other, std::size_t const &start, std::size_t const &length)
-    : data_(other.data_), start_(start), length_(length)
+    : data_(other.data_)
+    , start_(start)
+    , length_(length)
   {
     assert(start_ + length_ <= data_.size());
     arr_pointer_ = data_.pointer() + start_;

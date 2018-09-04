@@ -90,7 +90,8 @@ public:
 class ServiceProtocol : public Implementation, public Protocol
 {
 public:
-  ServiceProtocol() : Protocol()
+  ServiceProtocol()
+    : Protocol()
   {
     this->Expose(PULL, (Implementation *)this, &Implementation::PullData);
     this->Expose(PUSH, (Implementation *)this, &Implementation::PushData);
@@ -101,7 +102,8 @@ public:
 class BenchmarkService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  BenchmarkService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
+  BenchmarkService(uint16_t port, fetch::network::NetworkManager tm)
+    : ServiceServer(port, tm)
   {
     this->Add(SERVICE, &serviceProtocol_);
   }

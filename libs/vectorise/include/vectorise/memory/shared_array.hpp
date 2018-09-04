@@ -47,7 +47,8 @@ public:
   using self_type  = SharedArray<T, type_size>;
   using type       = T;
 
-  SharedArray(std::size_t const &n) : super_type()
+  SharedArray(std::size_t const &n)
+    : super_type()
   {
     this->size_ = n;
 
@@ -62,7 +63,8 @@ public:
 
   SharedArray() = default;
   SharedArray(SharedArray const &other)
-    : super_type(other.data_.get(), other.size()), data_(other.data_)
+    : super_type(other.data_.get(), other.size())
+    , data_(other.data_)
   {}
 
   SharedArray(SharedArray &&other)

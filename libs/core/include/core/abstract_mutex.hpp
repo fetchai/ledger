@@ -26,7 +26,8 @@ namespace mutex {
 class AbstractMutex : public std::mutex
 {
 public:
-  AbstractMutex() : std::mutex()
+  AbstractMutex()
+    : std::mutex()
   {}
 
   virtual std::string AsString()

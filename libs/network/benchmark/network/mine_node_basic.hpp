@@ -52,7 +52,8 @@ class MineNodeBasic
 
 public:
   explicit MineNodeBasic(network::NetworkManager tm, uint64_t minerNumber)
-    : nodeDirectory_{tm}, minerNumber_{minerNumber}
+    : nodeDirectory_{tm}
+    , minerNumber_{minerNumber}
   {}
 
   MineNodeBasic(MineNodeBasic &rhs)  = delete;

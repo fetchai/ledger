@@ -58,7 +58,9 @@ public:
 
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT), "type does not fit in SIMD");
 
-  VectorSlice(pointer_type ptr = nullptr, std::size_t const &n = 0) : pointer_(ptr), size_(n)
+  VectorSlice(pointer_type ptr = nullptr, std::size_t const &n = 0)
+    : pointer_(ptr)
+    , size_(n)
   {}
 
   ConstParallelDispatcher<type> in_parallel() const

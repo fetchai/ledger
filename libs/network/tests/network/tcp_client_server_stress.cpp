@@ -45,7 +45,8 @@ fetch::mutex::Mutex       mutexToServer_;
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t port, NetworkManager nmanager) : TCPServer(port, nmanager)
+  Server(uint16_t port, NetworkManager nmanager)
+    : TCPServer(port, nmanager)
   {}
 
   ~Server()
@@ -61,7 +62,8 @@ public:
 class Client : public TCPClient
 {
 public:
-  Client(std::string const &host, uint16_t &port, NetworkManager &nmanager) : TCPClient(nmanager)
+  Client(std::string const &host, uint16_t &port, NetworkManager &nmanager)
+    : TCPClient(nmanager)
   {
     Connect(host, port);
   }

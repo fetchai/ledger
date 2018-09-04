@@ -39,7 +39,8 @@ public:
     HAS
   };
 
-  ObjectStoreProtocol(ObjectStore<T> *obj_store) : fetch::service::Protocol()
+  ObjectStoreProtocol(ObjectStore<T> *obj_store)
+    : fetch::service::Protocol()
   {
     obj_store_ = obj_store;
     this->Expose(GET, this, &self_type::Get);

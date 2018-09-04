@@ -23,7 +23,9 @@ namespace kernels {
 template <typename type, typename vector_register_type>
 struct Variance
 {
-  Variance(type const &m, type const &r) : mean(m), rec(r)
+  Variance(type const &m, type const &r)
+    : mean(m)
+    , rec(r)
   {}
   void operator()(vector_register_type const &a, vector_register_type &c) const
   {

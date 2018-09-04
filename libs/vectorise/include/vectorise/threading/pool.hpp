@@ -33,7 +33,8 @@ namespace threading {
 class Pool
 {
 public:
-  Pool() : Pool(2 * std::thread::hardware_concurrency())
+  Pool()
+    : Pool(2 * std::thread::hardware_concurrency())
   {}
 
   Pool(std::size_t const &n)

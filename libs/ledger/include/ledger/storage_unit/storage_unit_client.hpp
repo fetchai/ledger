@@ -53,7 +53,8 @@ public:
   using network_manager_type       = fetch::network::NetworkManager;
   using lane_type                  = LaneIdentity::lane_type;
 
-  explicit StorageUnitClient(network_manager_type const &tm) : network_manager_(tm)
+  explicit StorageUnitClient(network_manager_type const &tm)
+    : network_manager_(tm)
   {
     id_ = "my-fetch-id";
   }

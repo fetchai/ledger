@@ -128,7 +128,8 @@ struct Variable : public Symbol
     For,
     Local
   };
-  Variable(const std::string &name, const Category category__) : Symbol(Kind::Variable, name)
+  Variable(const std::string &name, const Category category__)
+    : Symbol(Kind::Variable, name)
   {
     category = category__;
     index    = 0;
@@ -180,7 +181,8 @@ inline FunctionPtr CreateFunction(const Function::Kind kind, const std::string &
 
 struct FunctionGroup : public Symbol
 {
-  FunctionGroup(const std::string &name) : Symbol(Kind::FunctionGroup, name)
+  FunctionGroup(const std::string &name)
+    : Symbol(Kind::FunctionGroup, name)
   {}
   virtual ~FunctionGroup() = default;
   std::vector<FunctionPtr> functions;
@@ -278,7 +280,8 @@ struct Node
 
 struct BlockNode : public Node
 {
-  BlockNode(Kind kind__, Token *token__) : Node(kind__, token__)
+  BlockNode(Kind kind__, Token *token__)
+    : Node(kind__, token__)
   {}
   virtual ~BlockNode() = default;
   std::vector<NodePtr> block_children;
@@ -297,7 +300,8 @@ struct ExpressionNode : public Node
     Type,
     Function
   };
-  ExpressionNode(Kind kind__, Token *token__) : Node(kind__, token__)
+  ExpressionNode(Kind kind__, Token *token__)
+    : Node(kind__, token__)
   {
     category                     = Category::Unknown;
     function_invoked_on_instance = false;

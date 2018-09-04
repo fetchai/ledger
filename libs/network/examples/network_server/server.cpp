@@ -24,7 +24,8 @@ using namespace fetch::network;
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t p, NetworkManager tmanager) : TCPServer(p, tmanager)
+  Server(uint16_t p, NetworkManager tmanager)
+    : TCPServer(p, tmanager)
   {}
 
   void PushRequest(connection_handle_type client, message_type const &msg) override

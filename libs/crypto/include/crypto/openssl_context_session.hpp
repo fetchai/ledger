@@ -42,12 +42,14 @@ private:
 
 public:
   explicit Session(context_smart_ptr context, const bool is_already_started = false)
-    : context_(std::move(context)), is_started_(is_already_started)
+    : context_(std::move(context))
+    , is_started_(is_already_started)
   {
     start();
   }
 
-  explicit Session() : Session(context_smart_ptr(BN_CTX_new()))
+  explicit Session()
+    : Session(context_smart_ptr(BN_CTX_new()))
   {}
 
   ~Session()

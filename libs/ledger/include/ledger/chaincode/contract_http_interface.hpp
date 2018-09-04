@@ -41,7 +41,8 @@ class ContractHttpInterface : public http::HTTPModule
 {
 public:
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor)
-    : storage_{storage}, processor_{processor}
+    : storage_{storage}
+    , processor_{processor}
   {
 
     // create all the contracts

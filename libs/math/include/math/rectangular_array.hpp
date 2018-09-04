@@ -56,7 +56,8 @@ public:
   using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
 
   /* Contructs an empty rectangular array. */
-  RectangularArray() : super_type()
+  RectangularArray()
+    : super_type()
   {}
 
   /* Contructs a rectangular array with height one.

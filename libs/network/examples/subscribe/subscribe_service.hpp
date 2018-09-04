@@ -37,7 +37,8 @@ public:
    * Constructor for SubscribeService, will create a server to respond to rpc
    * calls
    */
-  SubscribeService(fetch::network::NetworkManager tm, uint16_t tcpPort) : ServiceServer(tcpPort, tm)
+  SubscribeService(fetch::network::NetworkManager tm, uint16_t tcpPort)
+    : ServiceServer(tcpPort, tm)
   {
     // Macro used for debugging
     LOG_STACK_TRACE_POINT;

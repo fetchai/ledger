@@ -33,9 +33,12 @@ public:
   ForwardIterator &operator=(ForwardIterator const &other) = default;
   ForwardIterator &operator=(ForwardIterator &&other) = default;
 
-  ForwardIterator(T *pos) : pos_(pos)
+  ForwardIterator(T *pos)
+    : pos_(pos)
   {}
-  ForwardIterator(T *pos, T *end) : pos_(pos), end_(end)
+  ForwardIterator(T *pos, T *end)
+    : pos_(pos)
+    , end_(end)
   {}
 
   ForwardIterator &operator++()
@@ -76,9 +79,12 @@ public:
   BackwardIterator &operator=(BackwardIterator const &other) = default;
   BackwardIterator &operator=(BackwardIterator &&other) = default;
 
-  BackwardIterator(T *pos) : pos_(pos)
+  BackwardIterator(T *pos)
+    : pos_(pos)
   {}
-  BackwardIterator(T *pos, T *begin) : pos_(pos), begin_(begin)
+  BackwardIterator(T *pos, T *begin)
+    : pos_(pos)
+    , begin_(begin)
   {}
 
   BackwardIterator &operator++()

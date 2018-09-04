@@ -40,7 +40,8 @@ public:
 
   struct Element
   {
-    Element(chain_code_type c) : chain_code{std::move(c)}
+    Element(chain_code_type c)
+      : chain_code{std::move(c)}
     {}
 
     chain_code_type chain_code;

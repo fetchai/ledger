@@ -64,9 +64,11 @@ public:
     details::UnrollSet<type, E_BLOCK_COUNT>::Set(constant, c);
     data_ = _mm256_load_si256((mm_register_type *)constant);
   }
-  VectorRegister(mm_register_type const &d) : data_(d)
+  VectorRegister(mm_register_type const &d)
+    : data_(d)
   {}
-  VectorRegister(mm_register_type &&d) : data_(d)
+  VectorRegister(mm_register_type &&d)
+    : data_(d)
   {}
 
   explicit operator mm_register_type()
@@ -119,9 +121,11 @@ public:
   {
     data_ = _mm256_load_ps(d);
   }
-  VectorRegister(mm_register_type const &d) : data_(d)
+  VectorRegister(mm_register_type const &d)
+    : data_(d)
   {}
-  VectorRegister(mm_register_type &&d) : data_(d)
+  VectorRegister(mm_register_type &&d)
+    : data_(d)
   {}
   VectorRegister(type const &c)
   {
@@ -180,9 +184,11 @@ public:
   {
     data_ = _mm256_load_pd(d);
   }
-  VectorRegister(mm_register_type const &d) : data_(d)
+  VectorRegister(mm_register_type const &d)
+    : data_(d)
   {}
-  VectorRegister(mm_register_type &&d) : data_(d)
+  VectorRegister(mm_register_type &&d)
+    : data_(d)
   {}
   VectorRegister(type const &c)
   {

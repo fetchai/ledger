@@ -62,7 +62,8 @@ private:
  *
  * @param id The hashed array
  */
-inline ResourceID::ResourceID(byte_array::ConstByteArray const &id) : id_(id)
+inline ResourceID::ResourceID(byte_array::ConstByteArray const &id)
+  : id_(id)
 {}
 
 /**

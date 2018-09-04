@@ -36,7 +36,8 @@ public:
 
   struct Element
   {
-    Element(bookmark_type b) : bookmark{b}
+    Element(bookmark_type b)
+      : bookmark{b}
     {}
 
     bookmark_type  bookmark;

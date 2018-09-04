@@ -43,7 +43,8 @@ public:
     pointer_ = std::make_shared<implementation_type>(threads);
   }
 
-  NetworkManager(NetworkManager const &other) : is_copy_(true)
+  NetworkManager(NetworkManager const &other)
+    : is_copy_(true)
   {
     if (other.is_copy_)
     {

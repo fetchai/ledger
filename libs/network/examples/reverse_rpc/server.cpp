@@ -75,7 +75,9 @@ private:
 class AEAToNodeProtocol : public ClientRegister, public Protocol
 {
 public:
-  AEAToNodeProtocol() : ClientRegister(), Protocol()
+  AEAToNodeProtocol()
+    : ClientRegister()
+    , Protocol()
   {
     this->ExposeWithClientArg(AEAToNode::REGISTER, (ClientRegister *)this,
                               &ClientRegister::Register);
@@ -88,7 +90,8 @@ private:
 class OEFService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  OEFService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
+  OEFService(uint16_t port, fetch::network::NetworkManager tm)
+    : ServiceServer(port, tm)
   {
     this->Add(FetchProtocols::AEA_TO_NODE, &aea_to_node_);
     aea_to_node_.register_service_instance(this);

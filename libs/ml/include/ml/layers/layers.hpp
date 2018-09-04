@@ -34,7 +34,8 @@ class InputLayer : public BaseLayer<DATA_TYPE>
   using base_type      = BaseLayer<DATA_TYPE>;
 
 public:
-  InputLayer(std::size_t layer_size) : base_type::BaseLayer(layer_size)
+  InputLayer(std::size_t layer_size)
+    : base_type::BaseLayer(layer_size)
   {}
 
   void AssignData(std::vector<DATA_TYPE> input_data)
@@ -67,7 +68,8 @@ public:
    * @param input_layer
    */
   Layer &operator=(Layer const &other) = default;
-  Layer(InputLayer<DATA_TYPE> &input_layer, std::size_t layer_size) : base_type(layer_size)
+  Layer(InputLayer<DATA_TYPE> &input_layer, std::size_t layer_size)
+    : base_type(layer_size)
   {
     AssignLayerConnection(input_layer, layer_size);
   }

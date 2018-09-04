@@ -47,7 +47,8 @@ using time_point = std::chrono::high_resolution_clock::time_point;
 class NodeBasic
 {
 public:
-  explicit NodeBasic(network::NetworkManager tm) : nodeDirectory_{tm}
+  explicit NodeBasic(network::NetworkManager tm)
+    : nodeDirectory_{tm}
   {}
 
   NodeBasic(NodeBasic &rhs)  = delete;

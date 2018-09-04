@@ -46,7 +46,8 @@ public:
   using function_type    = std::function<void(self_shared_type)>;
   std::vector<TestContext *> sections;
 
-  TestContext(std::string explanation) : explanation_(std::move(explanation))
+  TestContext(std::string explanation)
+    : explanation_(std::move(explanation))
   {
     TestContext::sections.push_back(this);
   }
@@ -155,7 +156,8 @@ public:
   Expression()                        = default;
   Expression(Expression const &other) = default;
   Expression(Expression &&other)      = default;
-  Expression(std::string expr) : expression_(std::move(expr))
+  Expression(std::string expr)
+    : expression_(std::move(expr))
   {}
 
   template <typename T>
@@ -167,7 +169,9 @@ public:
   }
 
   Expression(std::string expr, Expression const &lhs, Expression const &rhs)
-    : expression_(std::move(expr)), lhs_(new Expression(lhs)), rhs_(new Expression(rhs))
+    : expression_(std::move(expr))
+    , lhs_(new Expression(lhs))
+    , rhs_(new Expression(rhs))
   {}
 
 #define ADD_OP(OP)                           \
@@ -245,7 +249,8 @@ public:
   using sub_function_type   = std::function<void(shared_context_type)>;
   using main_function_type  = std::function<void(sub_function_type)>;
 
-  ProgramInserter(main_function_type fnc) : main_(std::move(fnc))
+  ProgramInserter(main_function_type fnc)
+    : main_(std::move(fnc))
   {}
 
   void operator()()

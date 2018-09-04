@@ -52,17 +52,23 @@ public:
   using reverse_iterator = typename container_type::reverse_iterator;
 
   /* Contructs an empty shape-less array. */
-  ShapeLessArray(std::size_t const &n) : data_(n), size_(n)
+  ShapeLessArray(std::size_t const &n)
+    : data_(n)
+    , size_(n)
   {}
 
-  ShapeLessArray() : data_(), size_(0)
+  ShapeLessArray()
+    : data_()
+    , size_(0)
   {}
 
   ShapeLessArray(ShapeLessArray &&other)      = default;
   ShapeLessArray(ShapeLessArray const &other) = default;
   ShapeLessArray &operator=(ShapeLessArray const &other) = default;
   ShapeLessArray &operator=(ShapeLessArray &&other) = default;
-  ShapeLessArray(byte_array::ConstByteArray const &c) : data_(), size_(0)
+  ShapeLessArray(byte_array::ConstByteArray const &c)
+    : data_()
+    , size_(0)
   {
     std::vector<type> elems;
     elems.reserve(1024);

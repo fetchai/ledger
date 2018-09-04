@@ -54,9 +54,11 @@ public:
   Matrix &operator=(Matrix const &other) = default;
   Matrix &operator=(Matrix &&other) = default;
 
-  Matrix(super_type const &other) : super_type(other)
+  Matrix(super_type const &other)
+    : super_type(other)
   {}
-  Matrix(super_type &&other) : super_type(std::move(other))
+  Matrix(super_type &&other)
+    : super_type(std::move(other))
   {}
   Matrix(byte_array::ConstByteArray const &c)
   {
@@ -116,7 +118,8 @@ public:
     }
   }
 
-  Matrix(std::size_t const &h, std::size_t const &w) : super_type(h, w)
+  Matrix(std::size_t const &h, std::size_t const &w)
+    : super_type(h, w)
   {}
 
   static Matrix Zeros(std::size_t const &n, std::size_t const &m)

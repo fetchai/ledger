@@ -42,7 +42,8 @@ public:
   };
 
   MainChainIdentity(client_register_type reg, network_manager_type const &nm)
-    : register_(std::move(reg)), manager_(nm)
+    : register_(std::move(reg))
+    , manager_(nm)
   {}
 
   /// External controls

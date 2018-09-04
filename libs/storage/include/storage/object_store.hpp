@@ -196,7 +196,8 @@ public:
   class Iterator
   {
   public:
-    Iterator(typename KeyByteArrayStore<S>::Iterator it) : wrapped_iterator_{it}
+    Iterator(typename KeyByteArrayStore<S>::Iterator it)
+      : wrapped_iterator_{it}
     {}
     Iterator()                    = default;
     Iterator(Iterator const &rhs) = default;

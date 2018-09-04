@@ -73,7 +73,8 @@ public:
   using ProofType = BlockType::proof_type;
 
   // Hard code genesis on construction
-  MainChain(uint32_t minerNumber = std::numeric_limits<uint32_t>::max()) : minerNumber_{minerNumber}
+  MainChain(uint32_t minerNumber = std::numeric_limits<uint32_t>::max())
+    : minerNumber_{minerNumber}
   {
     BlockType genesis;
     genesis.UpdateDigest();

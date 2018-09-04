@@ -40,7 +40,8 @@ public:
   static adapter_list_type GetAdapters();
 
   Adapter(address_type address, address_type network_mask)
-    : address_{std::move(address)}, network_mask_{std::move(network_mask)}
+    : address_{std::move(address)}
+    , network_mask_{std::move(network_mask)}
   {}
   Adapter(Adapter const &) = default;
   ~Adapter()               = default;

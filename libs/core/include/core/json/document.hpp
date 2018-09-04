@@ -71,7 +71,8 @@ public:
     variants_.Reserve(1024);
   }
 
-  JSONDocument(const_string_type const &document) : JSONDocument()
+  JSONDocument(const_string_type const &document)
+    : JSONDocument()
   {
     Parse(document);
   }

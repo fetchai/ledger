@@ -64,7 +64,8 @@ class ContextDetails
 public:
   using shared_type = std::shared_ptr<ContextDetails>;
 
-  ContextDetails(void *instance = nullptr) : instance_(instance)
+  ContextDetails(void *instance = nullptr)
+    : instance_(instance)
   {
     id_ = std::this_thread::get_id();
   }

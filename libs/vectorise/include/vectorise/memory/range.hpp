@@ -25,7 +25,9 @@ class TrivialRange
 public:
   using size_type = std::size_t;
 
-  TrivialRange(size_type const &from, size_type const &to) : from_(from), to_(to)
+  TrivialRange(size_type const &from, size_type const &to)
+    : from_(from)
+    , to_(to)
   {}
 
   size_type const &from() const
@@ -87,7 +89,9 @@ public:
   using size_type = std::size_t;
 
   Range(size_type const &from = 0, size_type const &to = size_type(-1), size_type const &step = 1)
-    : from_(from), to_(to), step_(step)
+    : from_(from)
+    , to_(to)
+    , step_(step)
   {}
 
   size_type const &from() const
