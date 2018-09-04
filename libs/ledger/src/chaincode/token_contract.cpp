@@ -27,6 +27,7 @@ namespace fetch {
 namespace ledger {
 namespace {
 
+/* Implements a record to store wallet contents. */
 struct WalletRecord
 {
   uint64_t balance{0};
@@ -48,6 +49,7 @@ struct WalletRecord
 
 TokenContract::TokenContract() : Contract("fetch.token")
 {
+  // TODO(tfr): I think the function CreateWealth should be OnInit?
   OnTransaction("wealth", this, &TokenContract::CreateWealth);
   OnTransaction("transfer", this, &TokenContract::Transfer);
   OnQuery("balance", this, &TokenContract::Balance);

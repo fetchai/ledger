@@ -25,65 +25,21 @@
 #include <fstream>
 #include <sstream>
 
-/*
-struct TestClass
+
+struct IntPair
 {
-  TestClass(int const &x) : x_(x) {}
+  IntPair(int const &i, int const &j) 
+    : first_(i), second_(j)
+  { }
 
-  void Foo() { std::cout << "FOO: " << x_ << std::endl; }
-
-  void Bar(int const &x)
-  {  // TOODO: Add support for const
-    std::cout << "BAR: " << x << " / " << x_ << std::endl;
-  }
-
-  int Baz(int x)
-  {
-    std::cout << "Baz" << x << " / " << x_ << std::endl;
-    return x + x_;
-  }
-
-  static int32_t Blah(double x)
-  {
-    std::cout << "Hello: " << x << std::endl;
-    return int(x);
-  }
-
-  static double Blah(int32_t x)
-  {
-    std::cout << "Hello 2: " << x << std::endl;
-    return double(x);
-  }
-
+  int first() { return first_; }
+  int second() { return second_; }  
 private:
-  int x_;
+  int first_;
+  int second_;
 };
-
-double TestFunction(int const &x, int const &y)
-{
-  std::cout << "Add:" << x + y << std::endl;
-  return double(x) + double(y);
-}
-
-int TestFunction(double const &x, double const &y)
-{
-  std::cout << "Add 2:" << x + y << std::endl;
-  return int(x) + int(y);
-}
-*/
 
 void Print(std::string const &s) { std::cout << s << std::endl; }
-
-struct System
-{
-  static int32_t Argc() { return int32_t(System::args.size()); }
-
-  static std::string Argv(int32_t const &a) { return System::args[std::size_t(a)]; }
-
-  static std::vector<std::string> args;
-};
-
-std::vector<std::string> System::args;
 
 std::string toString(int32_t const &a) { return std::to_string(a); }
 
@@ -95,11 +51,6 @@ int main(int argc, char **argv)
     exit(-9);
   }
 
-  for (int i = 1; i < argc; ++i)
-  {
-    System::args.push_back(std::string(argv[i]));
-  }
-
   // Reading file
   std::ifstream      file(argv[1], std::ios::binary);
   std::ostringstream ss;
@@ -107,25 +58,15 @@ int main(int argc, char **argv)
   const std::string source = ss.str();
   file.close();
 
-  fetch::vm::Module module;
+  fetch::vm::Module module;  
+  module.ExportClass<IntPair>("IntPair")
+      .Constructor<int, int>()
+      .Export("first", &IntPair::first)
+      .Export("second", &IntPair::second);      
+
   module.ExportFunction("Print", &Print);
   module.ExportFunction("toString", &toString);
 
-  module.ExportClass<System>("System")
-      .ExportStaticFunction("Argc", System::Argc)
-      .ExportStaticFunction("Argv", System::Argv);
-
-  // Creating new VM module
-  /*
-  module.ExportClass<TestClass>("TestClass")
-      .Constructor<int>()
-      .Export("Foo", &TestClass::Foo)
-      .Export("Bar", &TestClass::Bar)
-      .Export("Baz", &TestClass::Baz)
-
-  module.ExportFunction("AddNumbers", (double (*)(int const &, int const &))TestFunction);
-  module.ExportFunction("AddNumbers", (int (*)(double const &, double const &))TestFunction);
-*/
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
   fetch::vm::Script        script;
