@@ -27,5 +27,19 @@ struct ServiceIdentifier
 
 using Uri = std::string;
 
+template <typename T>
+void Serialize(T &serializer, ServiceIdentifier const &x)
+{
+  serializer << int(x.service_type) << x.instance_number;
+}
+
+template <typename T>
+void Deserialize(T &serializer, ServiceIdentifier &x)
+{
+  int foo;
+  serializer >> foo >> x.instance_number;
+  x.service_type  = ServiceType(foo);
+}
+
 }
 }

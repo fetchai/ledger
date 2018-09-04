@@ -39,7 +39,7 @@ public:
   using Uri = network::Uri;
   using ServiceType = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
-  
+
   enum
   {
     PROTOCOL_RESOLVER = 1
@@ -63,6 +63,7 @@ public:
                       , P2PTrustFeedbackQuality quality);
 
   void SetLocalManifest(const Manifest &manifest);
+  const Manifest &GetLocalManifest();
 
   void WorkCycle();
 
@@ -76,7 +77,7 @@ private:
 
   // address resolution service
   Resolver resolver_;
-  ResolverProtocol resolver_proto_{resolver_};
+  ResolverProtocol resolver_proto_;
 
   std::shared_ptr<TrustInterface> trust_system;
 
