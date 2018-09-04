@@ -47,6 +47,7 @@ namespace muddle {
     using Promise         = service::Promise;
     using PortList        = std::vector<uint16_t>;
     using Identity       = crypto::Identity;
+    using Address       = Router::Address;
 
     static constexpr char const *LOGGING_NAME = "Muddle";
 
@@ -70,6 +71,10 @@ namespace muddle {
 
     MuddleEndpoint &AsEndpoint() { return router_; }
 
+    std::list<std::pair<Address, network::Peer>> GetConnections();
+
+    void AddPeer(const network::Peer &peer);
+    void DropPeer(const network::Peer &peer);
   private:
 
     using Server      = std::shared_ptr<network::AbstractNetworkServer>;

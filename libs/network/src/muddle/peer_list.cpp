@@ -36,6 +36,19 @@ void PeerConnectionList::AddConnection(Peer const &peer, ConnectionPtr const &co
   ++metadata.attempts;
 }
 
+std::list<std::pair<network::AbstractConnection::connection_handle_type, network::Peer>> PeerConnectionList::GetCurrentPeers() const
+{
+  std::list<std::pair<network::AbstractConnection::connection_handle_type, Peer>> res;
+  Lock lock(lock_);
+  for(auto& peer_connection : peer_connections_)
+  {
+    std::pair<network::AbstractConnection::connection_handle_type, Peer> p(peer_connection.second->handle(),
+                                                                           peer_connection.first);
+    res.push_back(p);
+  }
+  return res;
+}
+
 void PeerConnectionList::OnConnectionEstablished(PeerConnectionList::Peer const &peer)
 {
   Handle connection_handle = 0;

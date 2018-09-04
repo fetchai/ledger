@@ -106,6 +106,53 @@ void Muddle::Stop()
   //clients_.clear();
 }
 
+std::list<std::pair<Muddle::Address, network::Peer>> Muddle::GetConnections()
+{
+  using ResType = std::pair<Address, network::Peer>;
+  std::list<ResType> res;
+  auto idents2handles = router_ . GetPeerIdentities();
+  auto handles2peers = clients_ . GetCurrentPeers();
+
+  using Foo = decltype(handles2peers);
+
+  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle:", idents2handles.size(), "  ", handles2peers.size());
+
+  std::map<
+    Foo::value_type::first_type,
+    Foo::value_type::second_type
+    > h2p;
+
+  for(auto& handle2peer : handles2peers)
+  {
+    h2p[handle2peer.first] = handle2peer.second;
+  }
+
+  for (auto& ident2handle : idents2handles)
+  {
+    auto ident = ident2handle.first;
+    auto handle = ident2handle.second;
+    auto r = h2p.find(handle);
+    if (r != h2p.end())
+    {
+      ResType r2(ident, r->second);
+      res.push_back(r2);
+    }
+  }
+
+  return res;
+}
+
+void Muddle::AddPeer(const network::Peer &peer)
+{
+  clients_.AddPersistentPeer(peer);
+}
+
+void Muddle::DropPeer(const network::Peer &peer)
+{
+  clients_.RemovePersistentPeer(peer);
+}
+
+
 /**
  * Called periodically internally in order to co-ordinate network connections and clean up
  */

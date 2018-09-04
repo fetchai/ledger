@@ -49,6 +49,7 @@ public:
 
   PeerList GetPeersToConnectTo() const;
 
+  std::list<std::pair<network::AbstractConnection::connection_handle_type, Peer>> GetCurrentPeers() const;
 private:
 
   using Clock = std::chrono::steady_clock;

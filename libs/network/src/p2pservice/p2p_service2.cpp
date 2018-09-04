@@ -35,6 +35,21 @@ void P2PService2::WorkCycle()
 {
   FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle");
   // see how many peers we have.
+
+  auto foo = muddle_ . GetConnections();
+//  for(auto fooo: foo)
+//  {
+//    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle:", fooo.first, "->", fooo.second);
+//  }
+
+  while((foo.size() < 1000) && (possibles_.size() > 0))
+  {
+    auto next = possibles_ . front();
+    possibles_.pop_front();
+    muddle_ . AddPeer(next);
+    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: AddPeer  ", next.ToString());
+  }
+
   // not enough, schedule some connects.
   // too many? schedule some kickoffs.
 }

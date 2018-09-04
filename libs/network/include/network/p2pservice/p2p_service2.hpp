@@ -79,8 +79,8 @@ private:
   std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>> local_services_;
 
   //std::set
-  PeerList possibles_; // addresses we might use in the future.
-  PeerList currently_trying_; // addresses we think we have inflight at the moment.
+  std::list<Peer> possibles_; // addresses we might use in the future.
+  std::set<Peer> currently_trying_; // addresses we think we have inflight at the moment.
 };
 
 } // namespace p2p
