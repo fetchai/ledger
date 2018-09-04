@@ -1080,8 +1080,7 @@ void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
 {
   assert(axis < array.shape().size());
 
-  NDArrayIterator<typename NDArray<T, C>::type, typename NDArray<T, C>::container_type>
-      return_iterator{ret};
+  NDArrayIterator<T, C> return_iterator{ret};
 
   // iterate through the return array (i.e. the array of Max vals)
   std::vector<std::size_t> cur_index;
@@ -1108,8 +1107,7 @@ void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
     }
 
     // get an iterator to iterate over the 1-d slice of the array to calculate max over
-    NDArrayIterator<typename NDArray<T, C>::type, typename NDArray<T, C>::container_type>
-        array_iterator(array, cur_step);
+    NDArrayIterator<T, C> array_iterator(array, cur_step);
 
     // loops through the 1d array calculating the max val
     typename NDArray<T, C>::type cur_max =
