@@ -1,0 +1,5 @@
+MAINCHAIN       0       tcp://localhost:9000
+LANE            0       tcp://localhost:9002
+LANE            1       tcp://localhost:9003
+LANE            2       tcp://localhost:9004
+LANE            2       tcp://localhost:9005

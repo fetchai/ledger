@@ -115,6 +115,11 @@ public:
     }
   }
 
+  virtual void SetInterval(int milliseconds)
+  {
+    idle_work_.SetInterval(milliseconds);
+  }
+
   virtual void PostIdle(event_function_type idle_work)
   {
     if (!shutdown_.load())

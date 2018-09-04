@@ -9,6 +9,9 @@
 #include "network/p2pservice/p2p_resolver_protocol.hpp"
 #include "network/p2pservice/p2p_lane_management.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
+#include "network/p2pservice/manifest.hpp"
+#include "network/p2pservice/p2p_managed_local_service.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
 
 namespace fetch {
 namespace ledger { class LaneRemoteControl; }
@@ -31,11 +34,17 @@ public:
   using LaneRemoteControl = ledger::LaneRemoteControl;
   using LaneRemoteControlPtr = std::shared_ptr<LaneRemoteControl>;
   using LaneRemoteControls = std::vector<LaneRemoteControlPtr>;
+  using Manifest = network::Manifest;
 
+  using Uri = network::Uri;
+  using ServiceType = network::ServiceType;
+  using ServiceIdentifier = network::ServiceIdentifier;
+  
   enum
   {
     PROTOCOL_RESOLVER = 1
   };
+    static constexpr char const *LOGGING_NAME = "P2PService2";
 
   // Construction / Destruction
   P2PService2(Muddle &muddle, LaneManagement &lane_management);
@@ -52,6 +61,9 @@ public:
   void PeerTrustEvent(const Identity &          identity
                       , P2PTrustFeedbackSubject subject
                       , P2PTrustFeedbackQuality quality);
+
+  void SetLocalManifest(const Manifest &manifest);
+
   void WorkCycle();
 
 private:
@@ -66,7 +78,11 @@ private:
   Resolver resolver_;
   ResolverProtocol resolver_proto_{resolver_};
 
-  std::shared_ptr<TrustInterface> trustSystem;
+  std::shared_ptr<TrustInterface> trust_system;
+
+  Manifest manifest_;
+  std::map<Identity, Manifest> discovered_peers_;
+  std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>> local_services_;
 
   //std::set
   PeerList possibles_; // addresses we might use in the future.
