@@ -174,6 +174,29 @@ private:
 
     return std::tuple<ServiceType, uint32_t, std::string>(service_type, instance, uri);
   }
+
+  template <typename T>
+  friend void Serialize(T &serializer, Manifest const &x)
+  {
+    std::vector<std::pair<ServiceIdentifier, Uri>> elementlist;
+    for(auto item : x.data_)
+    {
+      elementlist.push_back(item);
+    }
+    serializer << elementlist;
+  }
+
+  template <typename T>
+  friend void Deserialize(T &serializer, Manifest &x)
+  {
+    std::vector<std::pair<ServiceIdentifier, Uri>> elementlist;
+    serializer >> elementlist;
+
+    for(auto element: elementlist)
+    {
+      x.data_[element.first] = element.second;
+    }
+  }
 };
 
 }

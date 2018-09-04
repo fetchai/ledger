@@ -6,6 +6,7 @@ namespace p2p {
 
 P2PService2::P2PService2(muddle_service_type muddle)
   : muddle_(muddle)
+  , resolver_proto_{resolver_, *this}
 {
   // register the services with the rpc server
   rpc_server_.Add(PROTOCOL_RESOLVER, &resolver_proto_);
@@ -36,6 +37,11 @@ void P2PService2::WorkCycle()
   // see how many peers we have.
   // not enough, schedule some connects.
   // too many? schedule some kickoffs.
+}
+
+const network::Manifest &P2PService2::GetLocalManifest()
+{
+  return manifest_;
 }
 
 void P2PService2::PeerIdentificationSucceeded(const P2PService2::Peer &peer, const P2PService2::Identity &identity)

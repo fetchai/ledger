@@ -23,6 +23,8 @@
 namespace fetch {
 namespace p2p {
 
+  class P2PService2;
+
 /**
  * Protocol for the P2P address resolution protocol
  */
@@ -32,13 +34,11 @@ public:
 
   enum
   {
-    QUERY = 1
+    QUERY = 1,
+    GET_MANIFEST = 2,
   };
 
-  explicit ResolverProtocol(Resolver &resolver)
-  {
-    Expose(QUERY, &resolver, &Resolver::Query);
-  }
+  explicit ResolverProtocol(Resolver &resolver, P2PService2 &p2p_service);
 };
 
 } // namespace p2p

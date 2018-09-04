@@ -59,6 +59,7 @@ public:
                       , P2PTrustFeedbackQuality quality);
 
   void SetLocalManifest(const Manifest &manifest);
+  const Manifest &GetLocalManifest();
 
   void WorkCycle();
 private:
@@ -69,7 +70,7 @@ private:
 
   // address resolution service
   Resolver resolver_;
-  ResolverProtocol resolver_proto_{resolver_};
+  ResolverProtocol resolver_proto_;
 
   std::shared_ptr<TrustInterface> trust_system;
 
