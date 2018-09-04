@@ -144,7 +144,7 @@ TEST(ndarray, iterator_4dim_permute_test)
       {
         for (std::size_t l = 0; l < 6; ++l)
         {
-          std::vector<std::size_t> idxs = {i, j, k, l};
+          std::vector<std::size_t> idxs  = {i, j, k, l};
           std::vector<std::size_t> idxs2 = {i, l, k, j};
           ASSERT_TRUE(int(ret.Get(idxs)) == int(array.Get(idxs2)));
         }
