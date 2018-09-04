@@ -108,9 +108,13 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              Reduce(
                  [](T const &a, T const &b) {
                    if (a != T(0))
+                   {
                      return T(1);
+                   }
                    if (b != T(0))
+                   {
                      return T(1);
+                   }
                    return T(0);
                  },
                  y, x, axis);
