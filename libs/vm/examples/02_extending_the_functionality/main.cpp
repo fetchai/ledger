@@ -25,15 +25,13 @@
 #include <fstream>
 #include <sstream>
 
-
 struct IntPair
 {
-  IntPair(int const &i, int const &j) 
-    : first_(i), second_(j)
-  { }
+  IntPair(int const &i, int const &j) : first_(i), second_(j) {}
 
   int first() { return first_; }
-  int second() { return second_; }  
+  int second() { return second_; }
+
 private:
   int first_;
   int second_;
@@ -58,11 +56,11 @@ int main(int argc, char **argv)
   const std::string source = ss.str();
   file.close();
 
-  fetch::vm::Module module;  
+  fetch::vm::Module module;
   module.ExportClass<IntPair>("IntPair")
       .Constructor<int, int>()
       .Export("first", &IntPair::first)
-      .Export("second", &IntPair::second);      
+      .Export("second", &IntPair::second);
 
   module.ExportFunction("Print", &Print);
   module.ExportFunction("toString", &toString);

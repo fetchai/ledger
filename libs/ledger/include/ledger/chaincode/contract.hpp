@@ -21,6 +21,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "vm/module.hpp"
 
 #include <atomic>
 #include <functional>
@@ -33,6 +34,10 @@ namespace script {
 class Variant;
 }
 namespace ledger {
+
+template <typename S>
+std::unique_ptr<vm::Module> CreateVMDefinition(S *sc = nullptr);
+
 
 class Contract
 {
@@ -161,6 +166,10 @@ public:
     index = index + ".state." + suffix;
     return storage::ResourceAddress{index};
   }
+
+
+  template <typename S>
+  friend  std::unique_ptr<vm::Module> CreateVMDefinition(S *);
 
 protected:
   explicit Contract(std::string const &identifer) : contract_identifier_{identifer} {}
@@ -301,6 +310,11 @@ private:
     return *state_;
   }
 
+  /* Locks resources needed by a contract.
+   * 
+   * This method is used to ensure that no other contract will have access to the resource
+   * for the duration of the contract execution.
+   */
   bool LockResources(resource_set_type const &resources)
   {
     bool success = true;
@@ -318,6 +332,10 @@ private:
     return success;
   }
 
+  /* Releases the lock on a given set of resources.
+   * 
+   * This method is used to release the locks after contract execution.
+   */
   bool UnlockResources(resource_set_type const &resources)
   {
     bool success = true;

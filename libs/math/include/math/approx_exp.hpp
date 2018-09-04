@@ -29,7 +29,7 @@ namespace fetch {
 namespace math {
 
 template <uint8_t N, uint64_t C = 60801, bool O = false>
-class ApproxExp
+class ApproxExpImplementation
 {
   // Only using the upper part of a double.
   enum
@@ -46,10 +46,10 @@ class ApproxExp
   static constexpr double exponent_offset_ = ((1ull << (E_EXPONENT - 1)) - 1);
 
 public:
-  ApproxExp(ApproxExp const &other) = delete;
-  ApproxExp operator=(ApproxExp const &other) = delete;
+  ApproxExpImplementation(ApproxExpImplementation const &other) = delete;
+  ApproxExpImplementation operator=(ApproxExpImplementation const &other) = delete;
 
-  ApproxExp() { CreateCorrectionTable(); }
+  ApproxExpImplementation() { CreateCorrectionTable(); }
 
   template <typename T>
   double operator()(T const &x) const
@@ -92,7 +92,7 @@ private:
   {
     if (initialized_) return;
 
-    ApproxExp<0, C>     fexp;
+    ApproxExpImplementation<0, C>     fexp;
     std::vector<double> accumulated, frequency;
     accumulated.resize(E_ENTRIES);
     frequency.resize(E_ENTRIES);
@@ -123,7 +123,7 @@ private:
 };
 
 template <uint64_t C, bool OF>
-class ApproxExp<0, C, OF>
+class ApproxExpImplementation<0, C, OF>
 {
   enum
   {
@@ -140,9 +140,9 @@ class ApproxExp<0, C, OF>
   double                  b_               = exponent_offset_ * multiplier_pow2_ - C;
 
 public:
-  ApproxExp() {}
-  ApproxExp(ApproxExp const &other) = delete;
-  ApproxExp operator=(ApproxExp const &other) = delete;
+  ApproxExpImplementation() {}
+  ApproxExpImplementation(ApproxExpImplementation const &other) = delete;
+  ApproxExpImplementation operator=(ApproxExpImplementation const &other) = delete;
 
   template <typename T>
   double operator()(T const &x) const
@@ -162,9 +162,9 @@ public:
 };
 
 template <uint8_t N, uint64_t C, bool OF>
-bool ApproxExp<N, C, OF>::initialized_ = false;
+bool ApproxExpImplementation<N, C, OF>::initialized_ = false;
 
 template <uint8_t N, uint64_t C, bool OF>
-double ApproxExp<N, C, OF>::corrections_[E_ENTRIES] = {0};
+double ApproxExpImplementation<N, C, OF>::corrections_[E_ENTRIES] = {0};
 }  // namespace math
 }  // namespace fetch

@@ -51,6 +51,7 @@ class Variant
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
+  using ByteArray = byte_array::ByteArray;
 
   // Construction / Destruction
   Variant();
