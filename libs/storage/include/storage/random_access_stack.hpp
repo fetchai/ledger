@@ -45,6 +45,9 @@ namespace storage {
  * The RandomAccessStack maintains a stack of type T, writing to disk. Since elements on the stack
  * are uniform size, they can be easily addressed using simple arithmetic.
  *
+ * Note that objects are required to be the same size. This means you should not store classes with
+ * dynamically allocated memory.
+ *
  * The header for the stack optionally allows arbitrary data to be stored, which can be useful to
  * the user
  */
@@ -125,7 +128,8 @@ public:
   }
 
   /**
-   * Indicate whether the stack is writing directly to disk or caching writes.
+   * Indicate whether the stack is writing directly to disk or caching writes. Note the stack
+   * will not flush on destruction.
    *
    * @return: Whether the stack is written straight to disk.
    */
@@ -257,13 +261,8 @@ public:
    */
   uint64_t Push(type const &object)
   {
-    uint64_t ret = header_.objects;
-    int64_t  n   = int64_t(ret * sizeof(type) + header_.size());
+    uint64_t ret = LazyPush(object);
 
-    file_handle_.seekg(n, file_handle_.beg);
-    file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
-
-    ++header_.objects;
     StoreHeader();
     return ret;
   }
