@@ -55,7 +55,10 @@ public:
     this->AddModule(*httpInterface_);
   }
 
-  void Start() { node_->Start(); }
+  void Start()
+  {
+    node_->Start();
+  }
 
 private:
   std::shared_ptr<T>                                      node_;

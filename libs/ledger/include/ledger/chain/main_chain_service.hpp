@@ -116,7 +116,10 @@ public:
     identity_.reset();
   }
 
-  mainchain_type *mainchain() { return mainchain_.get(); }
+  mainchain_type *mainchain()
+  {
+    return mainchain_.get();
+  }
 
 private:
   client_register_type register_;

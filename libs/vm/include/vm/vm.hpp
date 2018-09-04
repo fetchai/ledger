@@ -32,14 +32,16 @@ struct String : public Object
 {
   std::string str;
   bool        is_literal;
-  String() {}
+  String()
+  {}
   String(VM *vm, std::string const &str__, const bool is_literal__)
     : Object(TypeId::String, vm), str(std::move(str__)), is_literal(is_literal__)
   {}
   String(VM *vm, std::string &&str__, const bool is_literal__)
     : Object(TypeId::String, vm), str(str__), is_literal(is_literal__)
   {}
-  virtual ~String() {}
+  virtual ~String()
+  {}
 };
 
 template <typename T>
@@ -53,7 +55,8 @@ struct Matrix : public Object
          fetch::math::linalg::Matrix<T, fetch::memory::Array<T>> &&matrix__)
     : Object(type_id, vm), matrix(matrix__)
   {}
-  virtual ~Matrix() {}
+  virtual ~Matrix()
+  {}
 };
 using MatrixFloat32 = Matrix<float>;
 using MatrixFloat64 = Matrix<double>;
@@ -79,7 +82,10 @@ struct Array : public Object
   template <typename U, typename std::enable_if<!std::is_pointer<U>::value>::type * = nullptr>
   void Release()
   {}
-  virtual ~Array() { Release<T>(); }
+  virtual ~Array()
+  {
+    Release<T>();
+  }
 };
 
 template <typename T>
@@ -114,11 +120,19 @@ struct Resetter;
 class VM
 {
 public:
-  VM(Module *module = nullptr) : module_(module) {}
-  ~VM() {}
+  VM(Module *module = nullptr) : module_(module)
+  {}
+  ~VM()
+  {}
   bool        Execute(const Script &script, const std::string &name);
-  std::string error() const { return error_; }
-  std::size_t error_line() const { return error_line_; }
+  std::string error() const
+  {
+    return error_;
+  }
+  std::size_t error_line() const
+  {
+    return error_line_;
+  }
 
 private:
   friend struct Object;
@@ -187,7 +201,10 @@ private:
   std::string                error_;
   std::size_t                error_line_;
 
-  Value &GetVariable(const Index variable_index) { return stack_[bsp_ + variable_index]; }
+  Value &GetVariable(const Index variable_index)
+  {
+    return stack_[bsp_ + variable_index];
+  }
 
   void Destruct(const int scope_number)
   {
@@ -195,7 +212,8 @@ private:
     while (live_object_sp_ >= 0)
     {
       const LiveObjectInfo &info = live_object_stack_[live_object_sp_];
-      if ((info.frame_sp != frame_sp_) || (info.scope_number < scope_number)) break;
+      if ((info.frame_sp != frame_sp_) || (info.scope_number < scope_number))
+        break;
       Value &variable = GetVariable(info.variable_index);
       variable.Release();
       --live_object_sp_;
@@ -218,7 +236,10 @@ private:
     sp_ += num_locals;
   }
 
-  void ReleaseObject(Object *object, const TypeId type_id) { delete object; }
+  void ReleaseObject(Object *object, const TypeId type_id)
+  {
+    delete object;
+  }
 
   void RuntimeError(const std::string &message);
   void AcquireMatrix(const size_t rows, const size_t columns, MatrixFloat32 *&m);
@@ -788,7 +809,8 @@ private:
   void HandleMatrixIndexedAssignment(const TypeId type_id)
   {
     ElementType *ptr;
-    if (GetMatrixElement(ptr) == false) return;
+    if (GetMatrixElement(ptr) == false)
+      return;
     Value &matrixv = stack_[sp_--];
     Value &rhsv    = stack_[sp_--];
     rhsv.variant.Get(*ptr);
@@ -800,7 +822,8 @@ private:
   void HandlePrimitiveArrayIndexedAssignment(const TypeId type_id)
   {
     ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false) return;
+    if (GetArrayElement<ElementType>(ptr) == false)
+      return;
     Value &arrayv = stack_[sp_--];
     Value &rhsv   = stack_[sp_--];
     rhsv.variant.Get(*ptr);
@@ -813,7 +836,8 @@ private:
   {
     if (lhs != rhs)
     {
-      if (lhs) lhs->Release();
+      if (lhs)
+        lhs->Release();
       lhs = rhs;
     }
   }
@@ -821,7 +845,8 @@ private:
   void HandleObjectArrayIndexedAssignment(const TypeId type_id)
   {
     Object **ptr;
-    if (GetArrayElement<Object *>(ptr) == false) return;
+    if (GetArrayElement<Object *>(ptr) == false)
+      return;
     Value & arrayv = stack_[sp_--];
     Value & rhsv   = stack_[sp_--];
     Object *rhs;
@@ -935,7 +960,8 @@ private:
   void HandleMatrixIndexOp(const TypeId type_id)
   {
     ElementType *ptr;
-    if (GetMatrixElement(ptr) == false) return;
+    if (GetMatrixElement(ptr) == false)
+      return;
     ElementType element = *ptr;
     Value &     matrixv = stack_[sp_];
     matrixv.Release();
@@ -947,7 +973,8 @@ private:
   void HandlePrimitiveArrayIndexOp(const TypeId type_id)
   {
     ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false) return;
+    if (GetArrayElement<ElementType>(ptr) == false)
+      return;
     ElementType element = *ptr;
     Value &     arrayv  = stack_[sp_];
     arrayv.Release();
@@ -958,9 +985,11 @@ private:
   void HandleObjectArrayIndexOp(const TypeId type_id)
   {
     Object **ptr;
-    if (GetArrayElement<Object *>(ptr) == false) return;
+    if (GetArrayElement<Object *>(ptr) == false)
+      return;
     Object *object = *ptr;
-    if (object) object->AddRef();
+    if (object)
+      object->AddRef();
     Value &arrayv = stack_[sp_];
     arrayv.Release();
     arrayv.type_id        = type_id;
@@ -1071,7 +1100,8 @@ private:
   void HandleMatrixIndexedArithmeticAssignmentOp()
   {
     ElementType *ptr;
-    if (GetMatrixElement(ptr) == false) return;
+    if (GetMatrixElement(ptr) == false)
+      return;
     Value &     matrixv = stack_[sp_--];
     Value &     rhsv    = stack_[sp_--];
     ElementType rhs;
@@ -1085,7 +1115,8 @@ private:
   void HandlePrimitiveArrayIndexedArithmeticAssignmentOp()
   {
     ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false) return;
+    if (GetArrayElement<ElementType>(ptr) == false)
+      return;
     Value &     arrayv = stack_[sp_--];
     Value &     rhsv   = stack_[sp_--];
     ElementType rhs;
@@ -1099,7 +1130,8 @@ private:
   void HandleObjectArrayIndexedArithmeticAssignmentOp()
   {
     ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false) return;
+    if (GetArrayElement<ElementType>(ptr) == false)
+      return;
     Value &        arrayv = stack_[sp_--];
     Value &        rhsv   = stack_[sp_--];
     RHSVariantType xx;
@@ -1168,7 +1200,8 @@ private:
   void HandleIndexedPrefixPostfixOpHelper(const TypeId type_id)
   {
     ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false) return;
+    if (GetArrayElement<ElementType>(ptr) == false)
+      return;
     ElementType element;
     Op::Apply(this, element, *ptr);  // what if fails?
     Value &arrayv = stack_[sp_];
@@ -1707,7 +1740,8 @@ private:
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
     {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs) {}
+    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    {}
   };
 
   struct MultiplyOp
@@ -1735,7 +1769,8 @@ private:
     {
       vm->NumberMatrixMultiply(lhsv, rhsv, lhs, rhs);
     }
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs) {}
+    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    {}
   };
 
   struct DivideOp
@@ -1764,7 +1799,8 @@ private:
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
     {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs) {}
+    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    {}
   };
 
   struct UnaryMinusOp
@@ -1788,7 +1824,8 @@ private:
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
     {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs) {}
+    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    {}
   };
 
   struct AddAssignOp

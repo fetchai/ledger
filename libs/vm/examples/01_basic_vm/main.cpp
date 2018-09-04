@@ -25,15 +25,27 @@
 #include <fstream>
 #include <sstream>
 
-void Print(std::string const &s) { std::cout << s << std::endl; }
+void Print(std::string const &s)
+{
+  std::cout << s << std::endl;
+}
 
-std::string toString(int32_t const &a) { return std::to_string(a); }
+std::string toString(int32_t const &a)
+{
+  return std::to_string(a);
+}
 
 struct System
 {
-  static int32_t Argc() { return int32_t(System::args.size()); }
+  static int32_t Argc()
+  {
+    return int32_t(System::args.size());
+  }
 
-  static std::string Argv(int32_t const &a) { return System::args[std::size_t(a)]; }
+  static std::string Argv(int32_t const &a)
+  {
+    return System::args[std::size_t(a)];
+  }
 
   static std::vector<std::string> args;
 };

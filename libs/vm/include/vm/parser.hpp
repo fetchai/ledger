@@ -25,8 +25,10 @@ namespace vm {
 class Parser
 {
 public:
-  Parser() {}
-  ~Parser() {}
+  Parser()
+  {}
+  ~Parser()
+  {}
   BlockNodePtr Parse(const std::string &source, std::vector<std::string> &errors);
 
 private:
@@ -46,7 +48,8 @@ private:
 
   struct OpInfo
   {
-    OpInfo() {}
+    OpInfo()
+    {}
     OpInfo(int precedence__, Association association__, int arity__)
     {
       precedence  = precedence__;
@@ -124,7 +127,8 @@ private:
 
   void Next()
   {
-    if (index_ < (int)tokens_.size() - 1) token_ = &tokens_[std::size_t(++index_)];
+    if (index_ < (int)tokens_.size() - 1)
+      token_ = &tokens_[std::size_t(++index_)];
   }
 
   void Undo()

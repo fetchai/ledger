@@ -32,7 +32,10 @@ public:
   DummyContract();
   ~DummyContract() = default;
 
-  std::size_t counter() const { return counter_; }
+  std::size_t counter() const
+  {
+    return counter_;
+  }
 
 private:
   Status Wait(transaction_type const &tx);

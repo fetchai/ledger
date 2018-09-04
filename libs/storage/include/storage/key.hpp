@@ -48,7 +48,10 @@ struct Key
     BYTES  = S / 8
   };
 
-  Key() { memset(key_, 0, BYTES); }
+  Key()
+  {
+    memset(key_, 0, BYTES);
+  }
 
   Key(byte_array::ConstByteArray const &key)
   {
@@ -79,11 +82,13 @@ struct Key
   {
     int i = 0;
 
-    while ((i < last_block) && (other.key_[i] == key_[i])) ++i;
+    while ((i < last_block) && (other.key_[i] == key_[i]))
+      ++i;
 
     uint64_t diff = other.key_[i] ^ key_[i];
     int      bit  = platform::CountLeadingZeroes64(diff);
-    if (diff == 0) bit = 8 * sizeof(uint64_t);
+    if (diff == 0)
+      bit = 8 * sizeof(uint64_t);
 
     if (i == last_block)
     {
@@ -125,7 +130,10 @@ struct Key
   }
 
   // BLOCKS
-  std::size_t size() const { return BYTES << 3; }
+  std::size_t size() const
+  {
+    return BYTES << 3;
+  }
 
 private:
   uint64_t key_[BLOCKS];

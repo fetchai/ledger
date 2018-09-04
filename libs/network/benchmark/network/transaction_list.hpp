@@ -37,7 +37,10 @@ class TransactionList
   using hasher_type = crypto::CallableFNV;
 
 public:
-  TransactionList() { validArray_.fill(0); }
+  TransactionList()
+  {
+    validArray_.fill(0);
+  }
 
   TransactionList(TransactionList &rhs)  = delete;
   TransactionList(TransactionList &&rhs) = delete;

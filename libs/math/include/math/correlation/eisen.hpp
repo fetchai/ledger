@@ -47,7 +47,8 @@ inline typename memory::VectorSlice<T, S>::type Eisen(memory::VectorSlice<T, S> 
 
   type denom = type(sqrt(innerA * innerB));
 
-  if (top < 0) top = -top;
+  if (top < 0)
+    top = -top;
   return type(top / denom);
 }
 

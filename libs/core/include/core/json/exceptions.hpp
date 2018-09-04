@@ -40,15 +40,23 @@ public:
     str_ = msg.str();
   }
 
-  virtual const char *what() const throw() { return str_.c_str(); }
+  virtual const char *what() const throw()
+  {
+    return str_.c_str();
+  }
 };
 
 class JSONParseException : public std::exception
 {
 public:
-  JSONParseException(std::string err) : error_(std::move(err)) {}
-  virtual ~JSONParseException() {}
-  virtual char const *what() const throw() { return error_.c_str(); }
+  JSONParseException(std::string err) : error_(std::move(err))
+  {}
+  virtual ~JSONParseException()
+  {}
+  virtual char const *what() const throw()
+  {
+    return error_.c_str();
+  }
 
 private:
   std::string error_;

@@ -90,7 +90,10 @@ void BlockUntilConnect(std::string host, uint16_t port)
   }
 }
 
-void BlockUntilConnect(uint16_t port) { BlockUntilConnect("localhost", port); }
+void BlockUntilConnect(uint16_t port)
+{
+  BlockUntilConnect("localhost", port);
+}
 
 VerifiedTransaction GetRandomTx(uint64_t seed)
 {
@@ -199,7 +202,10 @@ public:
     tx_sync_protocol_->Start();
   }
 
-  ~TestService() { thread_pool_->Stop(); }
+  ~TestService()
+  {
+    thread_pool_->Stop();
+  }
 
 private:
   ThreadPool     thread_pool_;

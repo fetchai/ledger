@@ -58,12 +58,16 @@ public:
   void Start()
   {
     fetch::logger.Debug("Starting syncronisation of blocks");
-    if (running_) return;
+    if (running_)
+      return;
     running_ = true;
     thread_pool_->Post([this]() { this->IdleUntilPeers(); });
   }
 
-  void Stop() { running_ = false; }
+  void Stop()
+  {
+    running_ = false;
+  }
 
 private:
   protocol_handler_type protocol_;
@@ -75,7 +79,8 @@ private:
 
   void IdleUntilPeers()
   {
-    if (!running_) return;
+    if (!running_)
+      return;
 
     if (register_.number_of_services() == 0)
     {
@@ -92,7 +97,8 @@ private:
   {
     fetch::logger.Debug("Fetching blocks from peer");
 
-    if (!running_) return;
+    if (!running_)
+      return;
 
     std::lock_guard<mutex::Mutex> lock(block_list_mutex_);
     uint32_t                      ms = max_size_;
@@ -100,7 +106,8 @@ private:
     register_.WithServices([this, ms](service_map_type const &map) {
       for (auto const &p : map)
       {
-        if (!running_) return;
+        if (!running_)
+          return;
 
         auto peer = p.second;
         auto ptr  = peer.lock();
@@ -116,14 +123,16 @@ private:
 
   void RealisePromises()
   {
-    if (!running_) return;
+    if (!running_)
+      return;
     std::lock_guard<mutex::Mutex> lock(block_list_mutex_);
     incoming_objects_.reserve(uint64_t(max_size_));
 
     for (auto &p : block_list_promises_)
     {
 
-      if (!running_) return;
+      if (!running_)
+        return;
 
       incoming_objects_.clear();
       if (!p.Wait(100, false))
@@ -133,7 +142,8 @@ private:
 
       p.template As<std::vector<BlockType>>(incoming_objects_);
 
-      if (!running_) return;
+      if (!running_)
+        return;
       std::lock_guard<mutex::Mutex> lock(mutex_);
 
       bool                  loose = false;

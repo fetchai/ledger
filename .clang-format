@@ -1,7 +1,9 @@
 ---
 BasedOnStyle: Google
-AllowShortIfStatementsOnASingleLine: true
-AllowShortLoopsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
 IndentWidth: 2
 AccessModifierOffset: -2
 ConstructorInitializerIndentWidth: 2

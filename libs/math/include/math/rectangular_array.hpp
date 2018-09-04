@@ -56,7 +56,8 @@ public:
   using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
 
   /* Contructs an empty rectangular array. */
-  RectangularArray() : super_type() {}
+  RectangularArray() : super_type()
+  {}
 
   /* Contructs a rectangular array with height one.
    * @param n is the width of the array.
@@ -65,7 +66,10 @@ public:
    * vector size found on the system. Space is allocated, but the
    * contructor of the underlying data structure is not invoked.
    */
-  RectangularArray(std::size_t const &n) { Resize(n, 1); }
+  RectangularArray(std::size_t const &n)
+  {
+    Resize(n, 1);
+  }
 
   /* Contructs a rectangular array.
    * @param n is the height of the array.
@@ -75,14 +79,18 @@ public:
    * vector size found on the system. Space is allocated, but the
    * contructor of the underlying data structure is not invoked.
    */
-  RectangularArray(std::size_t const &n, std::size_t const &m) { Resize(n, m); }
+  RectangularArray(std::size_t const &n, std::size_t const &m)
+  {
+    Resize(n, m);
+  }
 
   RectangularArray(RectangularArray &&other)      = default;
   RectangularArray(RectangularArray const &other) = default;
   RectangularArray &operator=(RectangularArray const &other) = default;
   RectangularArray &operator=(RectangularArray &&other) = default;
 
-  ~RectangularArray() {}
+  ~RectangularArray()
+  {}
 
   void Sort()
   {
@@ -250,7 +258,10 @@ public:
    *
    * This method is sensitive to height and width.
    */
-  bool operator!=(RectangularArray const &other) const { return !(this->operator==(other)); }
+  bool operator!=(RectangularArray const &other) const
+  {
+    return !(this->operator==(other));
+  }
 
   /* One-dimensional reference index operator.
    * @param n is the index which is being accessed.
@@ -260,7 +271,10 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  type &operator[](std::size_t const &i) { return At(i); }
+  type &operator[](std::size_t const &i)
+  {
+    return At(i);
+  }
 
   /* One-dimensional constant reference index operator.
    * @param n is the index which is being accessed.
@@ -270,7 +284,10 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  type const &operator[](std::size_t const &i) const { return At(i); }
+  type const &operator[](std::size_t const &i) const
+  {
+    return At(i);
+  }
 
   /* Two-dimensional constant reference index operator.
    * @param i is the index along the height direction.
@@ -384,12 +401,18 @@ public:
    * This function is here to satisfy the requirement for an
    * optimisation problem container.
    */
-  type const &Insert(size_type const &i, size_type const &j, type const &v) { return Set(i, j, v); }
+  type const &Insert(size_type const &i, size_type const &j, type const &v)
+  {
+    return Set(i, j, v);
+  }
 
   /* Resizes the array into a square array.
    * @param hw is the new height and the width of the array.
    */
-  void Resize(size_type const &hw) { Resize(hw, hw); }
+  void Resize(size_type const &hw)
+  {
+    Resize(hw, hw);
+  }
 
   /* Resizes the array..
    * @param h is new the height of the array.
@@ -397,7 +420,8 @@ public:
    */
   void Resize(size_type const &h, size_type const &w)
   {
-    if ((h == height_) && (w == width_)) return;
+    if ((h == height_) && (w == width_))
+      return;
 
     Reserve(h, w);
 
@@ -472,8 +496,10 @@ public:
 
     super_type::ReplaceData(padded_width_ * padded_height_, new_arr);
 
-    if (h < height_) height_ = h;
-    if (w < width_) width_ = w;
+    if (h < height_)
+      height_ = h;
+    if (w < width_)
+      width_ = w;
     shape_ = {height_, width_};
   }
 
@@ -508,7 +534,10 @@ public:
     width_  = shape[1];
   }
 
-  void Flatten() { Reshape(width_ * height_, 1); }
+  void Flatten()
+  {
+    Reshape(width_ * height_, 1);
+  }
 
   void Fill(type const &value, memory::Range const &rows, memory::Range const &cols)
   {
@@ -532,7 +561,10 @@ public:
    * This function expects that the user will take care of memory
    * initialization.
    */
-  void LazyResize(size_type const &hw) { LazyResize(hw, hw); }
+  void LazyResize(size_type const &hw)
+  {
+    LazyResize(hw, hw);
+  }
 
   /* Resizes the array in a lazy manner.
    * @param h is new the height of the array.
@@ -543,11 +575,13 @@ public:
    */
   void LazyResize(size_type const &h, size_type const &w)
   {
-    if ((h == height_) && (w == width_)) return;
+    if ((h == height_) && (w == width_))
+      return;
 
     SetPaddedSizes(h, w);
 
-    if ((padded_width_ * padded_height_) < super_type::capacity()) return;
+    if ((padded_width_ * padded_height_) < super_type::capacity())
+      return;
 
     super_type::LazyResize(padded_width_ * padded_height_);
 
@@ -645,25 +679,46 @@ public:
   }
 
   /* Returns the height of the array. */
-  size_type height() const { return height_; }
+  size_type height() const
+  {
+    return height_;
+  }
 
   /* Returns the width of the array. */
-  size_type width() const { return width_; }
+  size_type width() const
+  {
+    return width_;
+  }
 
   /* Returns height, width of array */
-  std::vector<size_type> const &shape() const { return shape_; }
+  std::vector<size_type> const &shape() const
+  {
+    return shape_;
+  }
 
   /* Returns the padded height of the array. */
-  size_type padded_height() const { return padded_height_; }
+  size_type padded_height() const
+  {
+    return padded_height_;
+  }
 
   /* Returns the padded width of the array. */
-  size_type padded_width() const { return padded_width_; }
+  size_type padded_width() const
+  {
+    return padded_width_;
+  }
 
   /* Returns the size of the array. */
-  size_type size() const { return height_ * width_; }
+  size_type size() const
+  {
+    return height_ * width_;
+  }
 
   /* Returns the size of the array. */
-  size_type padded_size() const { return padded_width_ * padded_height_; }
+  size_type padded_size() const
+  {
+    return padded_width_ * padded_height_;
+  }
 
 private:
   size_type              height_ = 0, width_ = 0;
@@ -679,14 +734,16 @@ private:
     {
       padded_width_ =
           size_type(w / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
-      if (padded_width_ < w) padded_width_ += vector_register_type::E_BLOCK_COUNT;
+      if (padded_width_ < w)
+        padded_width_ += vector_register_type::E_BLOCK_COUNT;
     }
 
     if (PAD_HEIGHT)
     {
       padded_height_ =
           size_type(h / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
-      if (padded_height_ < h) padded_height_ += vector_register_type::E_BLOCK_COUNT;
+      if (padded_height_ < h)
+        padded_height_ += vector_register_type::E_BLOCK_COUNT;
     }
   }
 };

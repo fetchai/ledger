@@ -271,11 +271,20 @@ public:
         .As<byte_array::ByteArray>();
   }
 
-  void SetID(byte_array::ByteArray const &id) { id_ = id; }
+  void SetID(byte_array::ByteArray const &id)
+  {
+    id_ = id;
+  }
 
-  byte_array::ByteArray const &id() { return id_; }
+  byte_array::ByteArray const &id()
+  {
+    return id_;
+  }
 
-  std::size_t lanes() const { return lanes_.size(); }
+  std::size_t lanes() const
+  {
+    return lanes_.size();
+  }
 
   bool is_alive() const
   {

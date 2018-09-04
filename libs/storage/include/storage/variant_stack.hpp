@@ -69,7 +69,10 @@ public:
     uint64_t type;
     uint64_t object_size;
     int64_t  previous;
-    Separator() { memset(this, 0, sizeof(decltype(*this))); }
+    Separator()
+    {
+      memset(this, 0, sizeof(decltype(*this)));
+    }
     Separator(uint64_t const &t, uint64_t const &o, int64_t const &p)
     {
       memset(this, 0, sizeof(decltype(*this)));
@@ -101,7 +104,10 @@ public:
     }
   };
 
-  ~VariantStack() { Close(); }
+  ~VariantStack()
+  {
+    Close();
+  }
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
@@ -254,8 +260,14 @@ public:
     fin.close();
   }
 
-  bool    empty() const { return header_.object_count == 0; }
-  int64_t size() const { return int64_t(header_.object_count); }
+  bool empty() const
+  {
+    return header_.object_count == 0;
+  }
+  int64_t size() const
+  {
+    return int64_t(header_.object_count);
+  }
 
 protected:
   void ReadHeader()

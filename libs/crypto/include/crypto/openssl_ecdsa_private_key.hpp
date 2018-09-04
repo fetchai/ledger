@@ -68,7 +68,8 @@ private:
   public_key_type public_key_;
 
 public:
-  ECDSAPrivateKey() : ECDSAPrivateKey(Generate()) {}
+  ECDSAPrivateKey() : ECDSAPrivateKey(Generate())
+  {}
 
   ECDSAPrivateKey(const byte_array::ConstByteArray &key_data) : ECDSAPrivateKey(Convert(key_data))
   {}
@@ -106,7 +107,10 @@ public:
     return *this;
   }
 
-  shrd_ptr_type<const EC_KEY> key() const { return private_key_; }
+  shrd_ptr_type<const EC_KEY> key() const
+  {
+    return private_key_;
+  }
 
   byte_array::ByteArray KeyAsBin() const
   {
@@ -121,7 +125,10 @@ public:
     }
   }
 
-  const public_key_type &publicKey() const { return public_key_; }
+  const public_key_type &publicKey() const
+  {
+    return public_key_;
+  }
 
 private:
   ECDSAPrivateKey(shrd_ptr_type<EC_KEY> &&key, public_key_type &&public_key)

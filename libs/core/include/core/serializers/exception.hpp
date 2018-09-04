@@ -72,13 +72,28 @@ public:
     LOG_SET_CONTEXT_VARIABLE(stack_trace_)
   }
 
-  virtual ~SerializableException() { LOG_STACK_TRACE_POINT; }
+  virtual ~SerializableException()
+  {
+    LOG_STACK_TRACE_POINT;
+  }
 
-  char const *what() const noexcept override { return explanation_.c_str(); }
-  uint64_t    error_code() const { return error_code_; }
-  std::string explanation() const { return explanation_; }
+  char const *what() const noexcept override
+  {
+    return explanation_.c_str();
+  }
+  uint64_t error_code() const
+  {
+    return error_code_;
+  }
+  std::string explanation() const
+  {
+    return explanation_;
+  }
 
-  void StackTrace() const { LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception") }
+  void StackTrace() const
+  {
+    LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception")
+  }
 
 private:
   uint64_t    error_code_;

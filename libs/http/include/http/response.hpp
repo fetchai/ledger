@@ -60,19 +60,40 @@ public:
               static_cast<int>(res.body_.size()));
   }
 
-  byte_array::ConstByteArray const &body() const { return body_; }
+  byte_array::ConstByteArray const &body() const
+  {
+    return body_;
+  }
 
-  Status const &status() const { return status_; }
+  Status const &status() const
+  {
+    return status_;
+  }
 
-  Status &status() { return status_; }
+  Status &status()
+  {
+    return status_;
+  }
 
-  MimeType const &mime_type() const { return mime_; }
+  MimeType const &mime_type() const
+  {
+    return mime_;
+  }
 
-  MimeType &mime_type() { return mime_; }
+  MimeType &mime_type()
+  {
+    return mime_;
+  }
 
-  Header const &header() const { return header_; }
+  Header const &header() const
+  {
+    return header_;
+  }
 
-  Header &header() { return header_; }
+  Header &header()
+  {
+    return header_;
+  }
 
 private:
   byte_array::ConstByteArray body_;

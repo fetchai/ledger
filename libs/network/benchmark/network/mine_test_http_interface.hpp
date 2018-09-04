@@ -31,7 +31,10 @@ template <typename T>
 class HttpInterface : public fetch::http::HTTPModule
 {
 public:
-  explicit HttpInterface(std::shared_ptr<T> node) : node_{node} { AttachPages(); }
+  explicit HttpInterface(std::shared_ptr<T> node) : node_{node}
+  {
+    AttachPages();
+  }
 
   void AttachPages()
   {
@@ -193,7 +196,10 @@ public:
   //  return http::HTTPResponse(ret.str());
   //}
 
-  const std::shared_ptr<T> &node() const { return node_; };
+  const std::shared_ptr<T> &node() const
+  {
+    return node_;
+  };
 
 private:
   std::shared_ptr<T> node_;

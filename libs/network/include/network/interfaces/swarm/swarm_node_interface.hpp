@@ -33,9 +33,11 @@ public:
   static const uint32_t protocol_number = fetch::protocols::FetchProtocols::SWARM;
   using protocol_class_type             = SwarmProtocol;
 
-  SwarmNodeInterface() {}
+  SwarmNodeInterface()
+  {}
 
-  virtual ~SwarmNodeInterface() {}
+  virtual ~SwarmNodeInterface()
+  {}
 
   virtual std::string ClientNeedsPeer() = 0;
 };

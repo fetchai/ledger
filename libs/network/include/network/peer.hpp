@@ -30,7 +30,8 @@ public:
   // Construction / Destruction
   Peer() = default;
   Peer(std::string const &address);
-  Peer(std::string address, uint16_t port) : address_{std::move(address)}, port_{port} {}
+  Peer(std::string address, uint16_t port) : address_{std::move(address)}, port_{port}
+  {}
   Peer(Peer const &) = default;
   Peer(Peer &&)      = default;
   ~Peer()            = default;
@@ -42,9 +43,15 @@ public:
     port_    = port;
   }
 
-  std::string const &address() const { return address_; }
+  std::string const &address() const
+  {
+    return address_;
+  }
 
-  uint16_t port() const { return port_; }
+  uint16_t port() const
+  {
+    return port_;
+  }
 
   Peer &operator=(Peer const &) = default;
   Peer &operator=(Peer &&) = default;

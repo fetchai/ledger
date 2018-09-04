@@ -39,7 +39,8 @@ public:
   SwarmAgentNaive operator=(SwarmAgentNaive &rhs) = delete;
   SwarmAgentNaive operator=(SwarmAgentNaive &&rhs) = delete;
 
-  virtual ~SwarmAgentNaive() {}
+  virtual ~SwarmAgentNaive()
+  {}
 
   void addInitialPeer(const std::string &host)
   {

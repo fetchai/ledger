@@ -59,9 +59,15 @@ public:
     discovery_->Bootstrap(address, port);
   }
 
-  void Start() { network_manager_->Start(); }
+  void Start()
+  {
+    network_manager_->Start();
+  }
 
-  void Stop() { network_manager_->Stop(); }
+  void Stop()
+  {
+    network_manager_->Stop();
+  }
 
 private:
   fetch::network::NetworkManager *                         network_manager_;

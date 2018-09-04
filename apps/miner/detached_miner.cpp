@@ -83,7 +83,8 @@ static void load_format_a(std::string const &input_file, std::size_t &N, std::si
   while (std::getline(f, line))
   {
     fetch::string::Trim(line);
-    if (line.size() == 0) continue;
+    if (line.size() == 0)
+      continue;
     std::stringstream s(line);
 
     fetch::chain::TransactionSummary summary;
@@ -96,7 +97,8 @@ static void load_format_a(std::string const &input_file, std::size_t &N, std::si
 
       auto group = CreateResource(C);
 
-      if (C == -1) break;
+      if (C == -1)
+        break;
       if (V == -1)
       {
         std::cerr << "malformed input" << std::endl;
@@ -124,7 +126,8 @@ static void load_format_a(std::string const &input_file, std::size_t &N, std::si
     std::size_t resource_index = 0;
     for (auto const &resource : summary.resources)
     {
-      if (resource_index) std::cout << ", ";
+      if (resource_index)
+        std::cout << ", ";
       std::cout << static_cast<std::string>(resource);
       ++resource_index;
     }
@@ -168,7 +171,8 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
     break;
   }
 
-  if (N == 0) N = lanes;
+  if (N == 0)
+    N = lanes;
 
   std::size_t id = 0;
 
@@ -176,7 +180,8 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
   while (std::getline(f, line))
   {
     fetch::string::Trim(line);
-    if (line.size() == 0) continue;
+    if (line.size() == 0)
+      continue;
     std::stringstream s(line);
 
     fetch::chain::TransactionSummary summary;
@@ -198,7 +203,8 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
     {
       int C = -1;
       s >> C;
-      if (C == -1) break;
+      if (C == -1)
+        break;
 
       summary.resources.insert(CreateResource(C % int(N)));
     }
@@ -210,7 +216,8 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
     std::size_t resource_index = 0;
     for (auto const &resource : summary.resources)
     {
-      if (resource_index) std::cout << ", ";
+      if (resource_index)
+        std::cout << ", ";
       std::cout << static_cast<std::string>(resource);
       ++resource_index;
     }
@@ -226,7 +233,8 @@ static void PrintSummary(std::size_t const &slice_count)
 {
   uint64_t    total_fee = 0;
   std::size_t total_txs = 0;
-  for (auto const &e : generator.block_fees()) total_fee += e;
+  for (auto const &e : generator.block_fees())
+    total_fee += e;
   for (auto const &slice : generator.block())
   {
     total_txs += slice.size();
@@ -384,7 +392,8 @@ int main(int argc, char const **argv)
     if (print_solution)
     {
       uint64_t total_fee = 0;
-      for (auto const &e : generator.block_fees()) total_fee += e;
+      for (auto const &e : generator.block_fees())
+        total_fee += e;
       if (total_fee < best_fee)
       {
         best_fee = total_fee;

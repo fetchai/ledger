@@ -104,7 +104,8 @@ void benchmark()
 
 int main(int argc, char **argv)
 {
-  if ((argc == 2) && (std::string(argv[1]) == "benchmark")) benchmark();
+  if ((argc == 2) && (std::string(argv[1]) == "benchmark"))
+    benchmark();
 
   test1<0, 0>(7);
   test1<0, 60801>(5);

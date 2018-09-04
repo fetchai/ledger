@@ -686,29 +686,32 @@ static int input(yyscan_t yyscanner);
  * is returned in "result".
  */
 #ifndef YY_INPUT
-#define YY_INPUT(buf, result, max_size)                                                      \
-  if (YY_CURRENT_BUFFER_LVALUE->yy_is_interactive)                                           \
-  {                                                                                          \
-    int    c = '*';                                                                          \
-    size_t n;                                                                                \
-    for (n = 0; n < max_size && (c = getc(yyin)) != EOF && c != '\n'; ++n) buf[n] = (char)c; \
-    if (c == '\n') buf[n++] = (char)c;                                                       \
-    if (c == EOF && ferror(yyin)) YY_FATAL_ERROR("input in flex scanner failed");            \
-    result = n;                                                                              \
-  }                                                                                          \
-  else                                                                                       \
-  {                                                                                          \
-    errno = 0;                                                                               \
-    while ((result = fread(buf, 1, max_size, yyin)) == 0 && ferror(yyin))                    \
-    {                                                                                        \
-      if (errno != EINTR)                                                                    \
-      {                                                                                      \
-        YY_FATAL_ERROR("input in flex scanner failed");                                      \
-        break;                                                                               \
-      }                                                                                      \
-      errno = 0;                                                                             \
-      clearerr(yyin);                                                                        \
-    }                                                                                        \
+#define YY_INPUT(buf, result, max_size)                                    \
+  if (YY_CURRENT_BUFFER_LVALUE->yy_is_interactive)                         \
+  {                                                                        \
+    int    c = '*';                                                        \
+    size_t n;                                                              \
+    for (n = 0; n < max_size && (c = getc(yyin)) != EOF && c != '\n'; ++n) \
+      buf[n] = (char)c;                                                    \
+    if (c == '\n')                                                         \
+      buf[n++] = (char)c;                                                  \
+    if (c == EOF && ferror(yyin))                                          \
+      YY_FATAL_ERROR("input in flex scanner failed");                      \
+    result = n;                                                            \
+  }                                                                        \
+  else                                                                     \
+  {                                                                        \
+    errno = 0;                                                             \
+    while ((result = fread(buf, 1, max_size, yyin)) == 0 && ferror(yyin))  \
+    {                                                                      \
+      if (errno != EINTR)                                                  \
+      {                                                                    \
+        YY_FATAL_ERROR("input in flex scanner failed");                    \
+        break;                                                             \
+      }                                                                    \
+      errno = 0;                                                           \
+      clearerr(yyin);                                                      \
+    }                                                                      \
   }
 
 #endif
@@ -777,11 +780,14 @@ YY_DECL
     YY_USER_INIT;
 #endif
 
-    if (!yyg->yy_start) yyg->yy_start = 1; /* first start state */
+    if (!yyg->yy_start)
+      yyg->yy_start = 1; /* first start state */
 
-    if (!yyin) yyin = stdin;
+    if (!yyin)
+      yyin = stdin;
 
-    if (!yyout) yyout = stdout;
+    if (!yyout)
+      yyout = stdout;
 
     if (!YY_CURRENT_BUFFER)
     {
@@ -823,7 +829,8 @@ YY_DECL
         while (yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state)
         {
           yy_current_state = (int)yy_def[yy_current_state];
-          if (yy_current_state >= 152) yy_c = yy_meta[(unsigned int)yy_c];
+          if (yy_current_state >= 152)
+            yy_c = yy_meta[(unsigned int)yy_c];
         }
         yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int)yy_c];
         ++yy_cp;
@@ -1432,7 +1439,8 @@ YY_DECL
 
             else
             {
-              if (!yyg->yy_did_buffer_switch_on_eof) YY_NEW_FILE;
+              if (!yyg->yy_did_buffer_switch_on_eof)
+                YY_NEW_FILE;
             }
             break;
           }
@@ -1507,7 +1515,8 @@ static int yy_get_next_buffer(yyscan_t yyscanner)
   /* First move last chars to start of buffer. */
   number_to_move = (yy_size_t)(yyg->yy_c_buf_p - yyg->yytext_ptr) - 1;
 
-  for (i = 0; i < number_to_move; ++i) *(dest++) = *(source++);
+  for (i = 0; i < number_to_move; ++i)
+    *(dest++) = *(source++);
 
   if (YY_CURRENT_BUFFER_LVALUE->yy_buffer_status == YY_BUFFER_EOF_PENDING)
     /* don't do the read, it's not guaranteed to return an EOF,
@@ -1544,14 +1553,16 @@ static int yy_get_next_buffer(yyscan_t yyscanner)
         /* Can't grow it, we don't own it. */
         b->yy_ch_buf = 0;
 
-      if (!b->yy_ch_buf) YY_FATAL_ERROR("fatal error - scanner input buffer overflow");
+      if (!b->yy_ch_buf)
+        YY_FATAL_ERROR("fatal error - scanner input buffer overflow");
 
       yyg->yy_c_buf_p = &b->yy_ch_buf[yy_c_buf_p_offset];
 
       num_to_read = YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
     }
 
-    if (num_to_read > YY_READ_BUF_SIZE) num_to_read = YY_READ_BUF_SIZE;
+    if (num_to_read > YY_READ_BUF_SIZE)
+      num_to_read = YY_READ_BUF_SIZE;
 
     /* Read in more data. */
     YY_INPUT((&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]), yyg->yy_n_chars, num_to_read);
@@ -1617,7 +1628,8 @@ static yy_state_type yy_get_previous_state(yyscan_t yyscanner)
     while (yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state)
     {
       yy_current_state = (int)yy_def[yy_current_state];
-      if (yy_current_state >= 152) yy_c = yy_meta[(unsigned int)yy_c];
+      if (yy_current_state >= 152)
+        yy_c = yy_meta[(unsigned int)yy_c];
     }
     yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int)yy_c];
   }
@@ -1646,7 +1658,8 @@ static yy_state_type yy_try_NUL_trans(yy_state_type yy_current_state, yyscan_t y
   while (yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state)
   {
     yy_current_state = (int)yy_def[yy_current_state];
-    if (yy_current_state >= 152) yy_c = yy_meta[(unsigned int)yy_c];
+    if (yy_current_state >= 152)
+      yy_c = yy_meta[(unsigned int)yy_c];
   }
   yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int)yy_c];
   yy_is_jam        = (yy_current_state == 151);
@@ -1674,7 +1687,8 @@ static void yyunput(int c, char *yy_bp, yyscan_t yyscanner)
     char *dest   = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
     char *source = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move];
 
-    while (source > YY_CURRENT_BUFFER_LVALUE->yy_ch_buf) *--dest = *--source;
+    while (source > YY_CURRENT_BUFFER_LVALUE->yy_ch_buf)
+      *--dest = *--source;
 
     yy_cp += (int)(dest - source);
     yy_bp += (int)(dest - source);
@@ -1741,9 +1755,11 @@ static int input(yyscan_t yyscanner)
 
       case EOB_ACT_END_OF_FILE:
       {
-        if (yywrap(yyscanner)) return EOF;
+        if (yywrap(yyscanner))
+          return EOF;
 
-        if (!yyg->yy_did_buffer_switch_on_eof) YY_NEW_FILE;
+        if (!yyg->yy_did_buffer_switch_on_eof)
+          YY_NEW_FILE;
 #ifdef __cplusplus
         return yyinput(yyscanner);
 #else
@@ -1799,7 +1815,8 @@ void yy_switch_to_buffer(YY_BUFFER_STATE new_buffer, yyscan_t yyscanner)
    *		yypush_buffer_state(new_buffer);
    */
   yyensure_buffer_stack(yyscanner);
-  if (YY_CURRENT_BUFFER == new_buffer) return;
+  if (YY_CURRENT_BUFFER == new_buffer)
+    return;
 
   if (YY_CURRENT_BUFFER)
   {
@@ -1840,7 +1857,8 @@ YY_BUFFER_STATE yy_create_buffer(FILE *file, int size, yyscan_t yyscanner)
   YY_BUFFER_STATE b;
 
   b = (YY_BUFFER_STATE)yyalloc(sizeof(struct yy_buffer_state), yyscanner);
-  if (!b) YY_FATAL_ERROR("out of dynamic memory in yy_create_buffer()");
+  if (!b)
+    YY_FATAL_ERROR("out of dynamic memory in yy_create_buffer()");
 
   b->yy_buf_size = (yy_size_t)size;
 
@@ -1848,7 +1866,8 @@ YY_BUFFER_STATE yy_create_buffer(FILE *file, int size, yyscan_t yyscanner)
    * we need to put in 2 end-of-buffer characters.
    */
   b->yy_ch_buf = (char *)yyalloc(b->yy_buf_size + 2, yyscanner);
-  if (!b->yy_ch_buf) YY_FATAL_ERROR("out of dynamic memory in yy_create_buffer()");
+  if (!b->yy_ch_buf)
+    YY_FATAL_ERROR("out of dynamic memory in yy_create_buffer()");
 
   b->yy_is_our_buffer = 1;
 
@@ -1865,12 +1884,14 @@ void yy_delete_buffer(YY_BUFFER_STATE b, yyscan_t yyscanner)
 {
   struct YygutsT *yyg = (struct YygutsT *)yyscanner;
 
-  if (!b) return;
+  if (!b)
+    return;
 
   if (b == YY_CURRENT_BUFFER) /* Not sure if we should pop here. */
     YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE)0;
 
-  if (b->yy_is_our_buffer) yyfree((void *)b->yy_ch_buf, yyscanner);
+  if (b->yy_is_our_buffer)
+    yyfree((void *)b->yy_ch_buf, yyscanner);
 
   yyfree((void *)b, yyscanner);
 }
@@ -1912,7 +1933,8 @@ static void yy_init_buffer(YY_BUFFER_STATE b, FILE *file, yyscan_t yyscanner)
 void yy_flush_buffer(YY_BUFFER_STATE b, yyscan_t yyscanner)
 {
   struct YygutsT *yyg = (struct YygutsT *)yyscanner;
-  if (!b) return;
+  if (!b)
+    return;
 
   b->yy_n_chars = 0;
 
@@ -1928,7 +1950,8 @@ void yy_flush_buffer(YY_BUFFER_STATE b, yyscan_t yyscanner)
   b->yy_at_bol        = 1;
   b->yy_buffer_status = YY_BUFFER_NEW;
 
-  if (b == YY_CURRENT_BUFFER) yy_load_buffer_state(yyscanner);
+  if (b == YY_CURRENT_BUFFER)
+    yy_load_buffer_state(yyscanner);
 }
 
 /** Pushes the new state onto the stack. The new state becomes
@@ -1940,7 +1963,8 @@ void yy_flush_buffer(YY_BUFFER_STATE b, yyscan_t yyscanner)
 void yypush_buffer_state(YY_BUFFER_STATE new_buffer, yyscan_t yyscanner)
 {
   struct YygutsT *yyg = (struct YygutsT *)yyscanner;
-  if (new_buffer == NULL) return;
+  if (new_buffer == NULL)
+    return;
 
   yyensure_buffer_stack(yyscanner);
 
@@ -1954,7 +1978,8 @@ void yypush_buffer_state(YY_BUFFER_STATE new_buffer, yyscan_t yyscanner)
   }
 
   /* Only push if top exists. Otherwise, replace top. */
-  if (YY_CURRENT_BUFFER) yyg->yy_buffer_stack_top++;
+  if (YY_CURRENT_BUFFER)
+    yyg->yy_buffer_stack_top++;
   YY_CURRENT_BUFFER_LVALUE = new_buffer;
 
   /* copied from yy_switch_to_buffer. */
@@ -1969,11 +1994,13 @@ void yypush_buffer_state(YY_BUFFER_STATE new_buffer, yyscan_t yyscanner)
 void yypop_buffer_state(yyscan_t yyscanner)
 {
   struct YygutsT *yyg = (struct YygutsT *)yyscanner;
-  if (!YY_CURRENT_BUFFER) return;
+  if (!YY_CURRENT_BUFFER)
+    return;
 
   yy_delete_buffer(YY_CURRENT_BUFFER, yyscanner);
   YY_CURRENT_BUFFER_LVALUE = NULL;
-  if (yyg->yy_buffer_stack_top > 0) --yyg->yy_buffer_stack_top;
+  if (yyg->yy_buffer_stack_top > 0)
+    --yyg->yy_buffer_stack_top;
 
   if (YY_CURRENT_BUFFER)
   {
@@ -2000,7 +2027,8 @@ static void yyensure_buffer_stack(yyscan_t yyscanner)
     num_to_alloc         = 1; /* After all that talk, this was set to 1 anyways... */
     yyg->yy_buffer_stack = (struct yy_buffer_state **)yyalloc(
         num_to_alloc * sizeof(struct yy_buffer_state *), yyscanner);
-    if (!yyg->yy_buffer_stack) YY_FATAL_ERROR("out of dynamic memory in yyensure_buffer_stack()");
+    if (!yyg->yy_buffer_stack)
+      YY_FATAL_ERROR("out of dynamic memory in yyensure_buffer_stack()");
 
     memset(yyg->yy_buffer_stack, 0, num_to_alloc * sizeof(struct yy_buffer_state *));
 
@@ -2018,7 +2046,8 @@ static void yyensure_buffer_stack(yyscan_t yyscanner)
     num_to_alloc         = yyg->yy_buffer_stack_max + grow_size;
     yyg->yy_buffer_stack = (struct yy_buffer_state **)yyrealloc(
         yyg->yy_buffer_stack, num_to_alloc * sizeof(struct yy_buffer_state *), yyscanner);
-    if (!yyg->yy_buffer_stack) YY_FATAL_ERROR("out of dynamic memory in yyensure_buffer_stack()");
+    if (!yyg->yy_buffer_stack)
+      YY_FATAL_ERROR("out of dynamic memory in yyensure_buffer_stack()");
 
     /* zero only the new slots.*/
     memset(yyg->yy_buffer_stack + yyg->yy_buffer_stack_max, 0,
@@ -2043,7 +2072,8 @@ YY_BUFFER_STATE yy_scan_buffer(char *base, yy_size_t size, yyscan_t yyscanner)
     return 0;
 
   b = (YY_BUFFER_STATE)yyalloc(sizeof(struct yy_buffer_state), yyscanner);
-  if (!b) YY_FATAL_ERROR("out of dynamic memory in yy_scan_buffer()");
+  if (!b)
+    YY_FATAL_ERROR("out of dynamic memory in yy_scan_buffer()");
 
   b->yy_buf_size = size - 2; /* "- 2" to take care of EOB's */
   b->yy_buf_pos = b->yy_ch_buf = base;
@@ -2091,14 +2121,17 @@ YY_BUFFER_STATE yy_scan_bytes(yyconst char *yybytes, yy_size_t _yybytes_len, yys
   /* Get memory for full buffer, including space for trailing EOB's. */
   n   = _yybytes_len + 2;
   buf = (char *)yyalloc(n, yyscanner);
-  if (!buf) YY_FATAL_ERROR("out of dynamic memory in yy_scan_bytes()");
+  if (!buf)
+    YY_FATAL_ERROR("out of dynamic memory in yy_scan_bytes()");
 
-  for (i = 0; i < _yybytes_len; ++i) buf[i] = yybytes[i];
+  for (i = 0; i < _yybytes_len; ++i)
+    buf[i] = yybytes[i];
 
   buf[_yybytes_len] = buf[_yybytes_len + 1] = YY_END_OF_BUFFER_CHAR;
 
   b = yy_scan_buffer(buf, n, yyscanner);
-  if (!b) YY_FATAL_ERROR("bad buffer in yy_scan_bytes()");
+  if (!b)
+    YY_FATAL_ERROR("bad buffer in yy_scan_bytes()");
 
   /* It's okay to grow etc. this buffer, and we should throw it
    * away when we're done.
@@ -2154,7 +2187,8 @@ int yyget_lineno(yyscan_t yyscanner)
 {
   struct YygutsT *yyg = (struct YygutsT *)yyscanner;
 
-  if (!YY_CURRENT_BUFFER) return 0;
+  if (!YY_CURRENT_BUFFER)
+    return 0;
 
   return yylineno;
 }
@@ -2166,7 +2200,8 @@ int yyget_column(yyscan_t yyscanner)
 {
   struct YygutsT *yyg = (struct YygutsT *)yyscanner;
 
-  if (!YY_CURRENT_BUFFER) return 0;
+  if (!YY_CURRENT_BUFFER)
+    return 0;
 
   return yycolumn;
 }
@@ -2227,7 +2262,8 @@ void yyset_lineno(int _line_number, yyscan_t yyscanner)
   struct YygutsT *yyg = (struct YygutsT *)yyscanner;
 
   /* lineno is only valid if an input buffer exists. */
-  if (!YY_CURRENT_BUFFER) YY_FATAL_ERROR("yyset_lineno called with no buffer");
+  if (!YY_CURRENT_BUFFER)
+    YY_FATAL_ERROR("yyset_lineno called with no buffer");
 
   yylineno = _line_number;
 }
@@ -2241,7 +2277,8 @@ void yyset_column(int _column_no, yyscan_t yyscanner)
   struct YygutsT *yyg = (struct YygutsT *)yyscanner;
 
   /* column is only valid if an input buffer exists. */
-  if (!YY_CURRENT_BUFFER) YY_FATAL_ERROR("yyset_column called with no buffer");
+  if (!YY_CURRENT_BUFFER)
+    YY_FATAL_ERROR("yyset_column called with no buffer");
 
   yycolumn = _column_no;
 }
@@ -2433,7 +2470,8 @@ static void yy_flex_strncpy(char *s1, yyconst char *s2, int n, yyscan_t yyscanne
   (void)yyg;
 
   int i;
-  for (i = 0; i < n; ++i) s1[i] = s2[i];
+  for (i = 0; i < n; ++i)
+    s1[i] = s2[i];
 }
 #endif
 

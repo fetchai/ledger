@@ -54,8 +54,10 @@ public:
   Matrix &operator=(Matrix const &other) = default;
   Matrix &operator=(Matrix &&other) = default;
 
-  Matrix(super_type const &other) : super_type(other) {}
-  Matrix(super_type &&other) : super_type(std::move(other)) {}
+  Matrix(super_type const &other) : super_type(other)
+  {}
+  Matrix(super_type &&other) : super_type(std::move(other))
+  {}
   Matrix(byte_array::ConstByteArray const &c)
   {
     std::size_t       n = 1;
@@ -114,7 +116,8 @@ public:
     }
   }
 
-  Matrix(std::size_t const &h, std::size_t const &w) : super_type(h, w) {}
+  Matrix(std::size_t const &h, std::size_t const &w) : super_type(h, w)
+  {}
 
   static Matrix Zeros(std::size_t const &n, std::size_t const &m)
   {
@@ -142,7 +145,8 @@ public:
     this->LazyResize(other.width(), other.height());
 
     for (std::size_t i = 0; i < other.height(); ++i)
-      for (std::size_t j = 0; j < other.width(); ++j) this->At(j, i) = other.At(i, j);
+      for (std::size_t j = 0; j < other.width(); ++j)
+        this->At(j, i) = other.At(i, j);
 
     return *this;
   }
@@ -193,7 +197,8 @@ public:
     tmpA.Copy(A);
 
     for (std::size_t i = 0; i < B.height(); ++i)
-      for (std::size_t j = 0; j < B.width(); ++j) tmpB.At(j, i) = B.At(i, j);
+      for (std::size_t j = 0; j < B.width(); ++j)
+        tmpB.At(j, i) = B.At(i, j);
 
     tmpA.SetPaddedZero();
     tmpB.SetPaddedZero();

@@ -34,7 +34,8 @@ public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
   using byte_array_type        = byte_array::ConstByteArray;
 
-  virtual ~ServiceServerInterface() {}
+  virtual ~ServiceServerInterface()
+  {}
 
   void Add(protocol_handler_type const &name,
            Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol

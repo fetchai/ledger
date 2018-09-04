@@ -35,7 +35,10 @@ public:
   using indexer_function_type =
       std::function<int(byte_array_type const &, uint64_t const &, int const &)>;
 
-  void SetConsumerIndexer(indexer_function_type function) { indexer_ = function; }
+  void SetConsumerIndexer(indexer_function_type function)
+  {
+    indexer_ = function;
+  }
 
   std::size_t AddConsumer(consumer_function_type function)
   {
@@ -50,7 +53,8 @@ public:
     int                                    line       = 0;
     uint64_t                               char_index = 0;
     byte_array_type::container_type const *str        = contents.pointer();
-    if (clear) this->clear();
+    if (clear)
+      this->clear();
 
     // Counting tokens
     if (contents.size() > 100000)
@@ -74,7 +78,8 @@ public:
 
             pos        = oldpos;
             token_type = c(contents, pos);
-            if (token_type > -1) break;
+            if (token_type > -1)
+              break;
 
             check      = (index != prev_index);
             prev_index = index;
@@ -86,7 +91,8 @@ public:
           {
             pos        = oldpos;
             token_type = c(contents, pos);
-            if (token_type > -1) break;
+            if (token_type > -1)
+              break;
           }
         }
         if (pos == oldpos)
@@ -119,7 +125,8 @@ public:
 
           pos        = oldpos;
           token_type = c(contents, pos);
-          if (token_type > -1) break;
+          if (token_type > -1)
+            break;
 
           check      = (index != prev_index);
           prev_index = index;
@@ -131,7 +138,8 @@ public:
         {
           pos        = oldpos;
           token_type = c(contents, pos);
-          if (token_type > -1) break;
+          if (token_type > -1)
+            break;
         }
       }
 

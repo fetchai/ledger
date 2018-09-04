@@ -62,7 +62,10 @@ public:
 
   /// External RPC callable
   /// @{
-  ping_type Ping() { return PING_MAGIC; }
+  ping_type Ping()
+  {
+    return PING_MAGIC;
+  }
 
   byte_array::ConstByteArray ExchangeAddress(connection_handle_type const &cid,
                                              byte_array::ByteArray const & address)
@@ -133,7 +136,10 @@ public:
     profile_update_ = false;
   }
 
-  void MarkProfileAsUpdated() { profile_update_ = true; }
+  void MarkProfileAsUpdated()
+  {
+    profile_update_ = true;
+  }
   /// @}
 
   void WithOwnDetails(std::function<void(PeerDetails const &)> const &f)
@@ -142,7 +148,10 @@ public:
     f(my_details_->details);
   }
 
-  NodeDetails my_details() const { return my_details_; }
+  NodeDetails my_details() const
+  {
+    return my_details_;
+  }
 
 private:
   std::atomic<uint64_t> protocol_;

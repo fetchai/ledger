@@ -76,16 +76,25 @@ public:
       : file_object_type(store, pos), address_(address), store_(s)
     {}
 
-    ~DocumentFileImplementation() { store_->UpdateDocumentFile(*this); }
+    ~DocumentFileImplementation()
+    {
+      store_->UpdateDocumentFile(*this);
+    }
 
     DocumentFileImplementation(DocumentFileImplementation const &other) = delete;
     DocumentFileImplementation operator=(DocumentFileImplementation const &other) = delete;
     DocumentFileImplementation(DocumentFileImplementation &&other)                = default;
     DocumentFileImplementation &operator=(DocumentFileImplementation &&other) = default;
 
-    byte_array::ConstByteArray const &address() const { return address_; }
+    byte_array::ConstByteArray const &address() const
+    {
+      return address_;
+    }
 
-    self_type const *store() const { return store_; }
+    self_type const *store() const
+    {
+      return store_;
+    }
 
   private:
     byte_array::ConstByteArray address_;
@@ -101,9 +110,13 @@ public:
   class DocumentFile
   {
   public:
-    operator bool() const { return static_cast<bool>(pointer_); }
+    operator bool() const
+    {
+      return static_cast<bool>(pointer_);
+    }
 
-    DocumentFile() : pointer_(nullptr) {}
+    DocumentFile() : pointer_(nullptr)
+    {}
 
     DocumentFile(self_type *s, byte_array::ConstByteArray const &address, file_store_type &store)
     {
@@ -117,27 +130,60 @@ public:
       pointer_ = std::make_shared<DocumentFileImplementation>(s, address, store, pos);
     }
 
-    uint64_t Tell() { return pointer_->Tell(); }
+    uint64_t Tell()
+    {
+      return pointer_->Tell();
+    }
 
-    void Seek(uint64_t const &n) { pointer_->Seek(n); }
+    void Seek(uint64_t const &n)
+    {
+      pointer_->Seek(n);
+    }
 
-    void Read(byte_array::ByteArray &arr) { pointer_->Read(arr); }
+    void Read(byte_array::ByteArray &arr)
+    {
+      pointer_->Read(arr);
+    }
 
-    void Read(uint8_t *bytes, uint64_t const &m) { pointer_->Read(bytes, m); }
+    void Read(uint8_t *bytes, uint64_t const &m)
+    {
+      pointer_->Read(bytes, m);
+    }
 
-    void Shrink(uint64_t const &m) { pointer_->Shrink(m); }
+    void Shrink(uint64_t const &m)
+    {
+      pointer_->Shrink(m);
+    }
 
-    void Write(byte_array::ConstByteArray const &arr) { pointer_->Write(arr); }
+    void Write(byte_array::ConstByteArray const &arr)
+    {
+      pointer_->Write(arr);
+    }
 
-    void Write(uint8_t const *bytes, uint64_t const &m) { pointer_->Write(bytes, m); }
+    void Write(uint8_t const *bytes, uint64_t const &m)
+    {
+      pointer_->Write(bytes, m);
+    }
 
-    std::size_t id() const { return pointer_->id(); }
+    std::size_t id() const
+    {
+      return pointer_->id();
+    }
 
-    std::size_t size() const { return pointer_->size(); }
+    std::size_t size() const
+    {
+      return pointer_->size();
+    }
 
-    byte_array::ConstByteArray const &address() const { return pointer_->address(); }
+    byte_array::ConstByteArray const &address() const
+    {
+      return pointer_->address();
+    }
 
-    bool was_created() const { return was_created_; }
+    bool was_created() const
+    {
+      return was_created_;
+    }
 
   private:
     std::shared_ptr<DocumentFileImplementation> pointer_;
@@ -238,7 +284,10 @@ public:
     }
   }
 
-  std::size_t size() const { return file_store_.size(); }
+  std::size_t size() const
+  {
+    return file_store_.size();
+  }
 
   /**
    * STL-like functionality achieved with an iterator class. This has to wrap an
@@ -259,11 +308,20 @@ public:
     Iterator &operator=(Iterator const &rhs) = default;
     Iterator &operator=(Iterator &&rhs) = default;
 
-    void operator++() { ++wrapped_iterator_; }
+    void operator++()
+    {
+      ++wrapped_iterator_;
+    }
 
-    bool operator==(Iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
+    bool operator==(Iterator const &rhs)
+    {
+      return wrapped_iterator_ == rhs.wrapped_iterator_;
+    }
 
-    bool operator!=(Iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
+    bool operator!=(Iterator const &rhs)
+    {
+      return !(wrapped_iterator_ == rhs.wrapped_iterator_);
+    }
 
     Document operator*() const
     {
@@ -309,9 +367,15 @@ public:
     return Iterator(this, it);
   }
 
-  self_type::Iterator begin() { return Iterator(this, key_index_.begin()); }
+  self_type::Iterator begin()
+  {
+    return Iterator(this, key_index_.begin());
+  }
 
-  self_type::Iterator end() { return Iterator(this, key_index_.end()); }
+  self_type::Iterator end()
+  {
+    return Iterator(this, key_index_.end());
+  }
 
 protected:
   /**

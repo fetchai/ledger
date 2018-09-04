@@ -71,7 +71,10 @@ enum
 class Implementation
 {
 public:
-  const std::vector<transaction_type> &PullData() { return TestData; }
+  const std::vector<transaction_type> &PullData()
+  {
+    return TestData;
+  }
 
   void PushData(std::vector<transaction_type> &data)
   {

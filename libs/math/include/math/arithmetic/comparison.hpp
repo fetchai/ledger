@@ -76,9 +76,15 @@ bool IsNonZero(T const &x)
   return x != 0;
 }
 
-inline bool IsEqual(float const &a, float const &b) { return fabsf(a - b) < Tolerance(a, b); }
+inline bool IsEqual(float const &a, float const &b)
+{
+  return fabsf(a - b) < Tolerance(a, b);
+}
 
-inline bool IsEqual(double const &a, double const &b) { return fabs(a - b) < Tolerance(a, b); }
+inline bool IsEqual(double const &a, double const &b)
+{
+  return fabs(a - b) < Tolerance(a, b);
+}
 
 template <typename T>
 bool IsEqual(T const &a, T const &b)
@@ -86,9 +92,15 @@ bool IsEqual(T const &a, T const &b)
   return a == b;
 }
 
-inline bool IsNotEqual(float const &a, float const &b) { return fabsf(a - b) > Tolerance(a, b); }
+inline bool IsNotEqual(float const &a, float const &b)
+{
+  return fabsf(a - b) > Tolerance(a, b);
+}
 
-inline bool IsNotEqual(double const &a, double const &b) { return fabs(a - b) > Tolerance(a, b); }
+inline bool IsNotEqual(double const &a, double const &b)
+{
+  return fabs(a - b) > Tolerance(a, b);
+}
 
 template <typename T>
 bool IsNotEqual(T const &a, T const &b)
@@ -96,9 +108,15 @@ bool IsNotEqual(T const &a, T const &b)
   return a != b;
 }
 
-inline bool IsLessThan(float const &a, float const &b) { return a < b - Tolerance(a, b); }
+inline bool IsLessThan(float const &a, float const &b)
+{
+  return a < b - Tolerance(a, b);
+}
 
-inline bool IsLessThan(double const &a, double const &b) { return a < b - Tolerance(a, b); }
+inline bool IsLessThan(double const &a, double const &b)
+{
+  return a < b - Tolerance(a, b);
+}
 
 template <typename T>
 bool IsLessThan(const T a, const T b)
@@ -106,9 +124,15 @@ bool IsLessThan(const T a, const T b)
   return a < b;
 }
 
-inline bool IsLessThanOrEqual(float const &a, float const &b) { return a < b + Tolerance(a, b); }
+inline bool IsLessThanOrEqual(float const &a, float const &b)
+{
+  return a < b + Tolerance(a, b);
+}
 
-inline bool IsLessThanOrEqual(double const &a, double const &b) { return a < b + Tolerance(a, b); }
+inline bool IsLessThanOrEqual(double const &a, double const &b)
+{
+  return a < b + Tolerance(a, b);
+}
 
 template <typename T>
 bool IsLessThanOrEqual(const T a, const T b)
@@ -116,9 +140,15 @@ bool IsLessThanOrEqual(const T a, const T b)
   return a <= b;
 }
 
-inline bool IsGreaterThan(float const &a, const float b) { return a > b + Tolerance(a, b); }
+inline bool IsGreaterThan(float const &a, const float b)
+{
+  return a > b + Tolerance(a, b);
+}
 
-inline bool IsGreaterThan(double const &a, const double b) { return a > b + Tolerance(a, b); }
+inline bool IsGreaterThan(double const &a, const double b)
+{
+  return a > b + Tolerance(a, b);
+}
 
 template <typename T>
 bool IsGreaterThan(const T a, const T b)
@@ -126,7 +156,10 @@ bool IsGreaterThan(const T a, const T b)
   return a > b;
 }
 
-inline bool IsGreaterThanOrEqual(float const &a, float const &b) { return a > b - Tolerance(a, b); }
+inline bool IsGreaterThanOrEqual(float const &a, float const &b)
+{
+  return a > b - Tolerance(a, b);
+}
 
 inline bool IsGreaterThanOrEqual(double const &a, double const &b)
 {

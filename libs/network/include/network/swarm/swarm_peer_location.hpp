@@ -40,18 +40,28 @@ public:
       {
         results.push_back(SwarmPeerLocation(subs));
       }
-      if (np == std::string::npos) break;
+      if (np == std::string::npos)
+        break;
       p = np + 1;  // skip the bit we used AND the comma.
     }
 
     return results;
   }
 
-  SwarmPeerLocation(const std::string &locn) { locn_ = locn; }
+  SwarmPeerLocation(const std::string &locn)
+  {
+    locn_ = locn;
+  }
 
-  SwarmPeerLocation(const SwarmPeerLocation &rhs) { locn_ = rhs.locn_; }
+  SwarmPeerLocation(const SwarmPeerLocation &rhs)
+  {
+    locn_ = rhs.locn_;
+  }
 
-  SwarmPeerLocation(SwarmPeerLocation &&rhs) { locn_ = std::move(rhs.locn_); }
+  SwarmPeerLocation(SwarmPeerLocation &&rhs)
+  {
+    locn_ = std::move(rhs.locn_);
+  }
 
   SwarmPeerLocation &operator=(const SwarmPeerLocation &rhs)
   {
@@ -65,13 +75,23 @@ public:
     return *this;
   }
 
-  bool operator==(const SwarmPeerLocation &other) const { return this->locn_ == other.locn_; }
+  bool operator==(const SwarmPeerLocation &other) const
+  {
+    return this->locn_ == other.locn_;
+  }
 
-  bool operator!=(const SwarmPeerLocation &other) const { return this->locn_ != other.locn_; }
+  bool operator!=(const SwarmPeerLocation &other) const
+  {
+    return this->locn_ != other.locn_;
+  }
 
-  bool operator<(const SwarmPeerLocation &other) const { return this->locn_ < other.locn_; }
+  bool operator<(const SwarmPeerLocation &other) const
+  {
+    return this->locn_ < other.locn_;
+  }
 
-  virtual ~SwarmPeerLocation() {}
+  virtual ~SwarmPeerLocation()
+  {}
 
   std::string GetHost() const
   {
@@ -93,7 +113,10 @@ public:
     return uint16_t(std::stoi(locn_.substr(colon_pos + 1)));
   }
 
-  const std::string &AsString() const { return locn_; }
+  const std::string &AsString() const
+  {
+    return locn_;
+  }
 
 private:
   std::string locn_;

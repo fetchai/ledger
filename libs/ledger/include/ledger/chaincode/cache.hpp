@@ -40,7 +40,8 @@ public:
 
   struct Element
   {
-    Element(chain_code_type c) : chain_code{std::move(c)} {}
+    Element(chain_code_type c) : chain_code{std::move(c)}
+    {}
 
     chain_code_type chain_code;
     timepoint_type  timestamp{clock_type::now()};
@@ -70,7 +71,10 @@ public:
     return contract;
   }
 
-  ChainCodeFactory const &factory() const { return factory_; }
+  ChainCodeFactory const &factory() const
+  {
+    return factory_;
+  }
 
 private:
   chain_code_type FindInCache(std::string const &name)

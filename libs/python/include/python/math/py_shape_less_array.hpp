@@ -342,12 +342,14 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
       .def("__len__", [](const ShapeLessArray<T> &a) { return a.size(); })
       .def("__getitem__",
            [](const ShapeLessArray<T> &s, std::size_t i) {
-             if (i >= s.size()) throw py::index_error();
+             if (i >= s.size())
+               throw py::index_error();
              return s[i];
            })
       .def("__setitem__",
            [](ShapeLessArray<T> &s, std::size_t i, T const &v) {
-             if (i >= s.size()) throw py::index_error();
+             if (i >= s.size())
+               throw py::index_error();
              s[i] = v;
            })
       .def("__eq__",
@@ -356,7 +358,8 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
              {
                for (std::size_t i = 0; i < other.size(); ++i)
                {
-                 if (other[i] != s[i]) return false;
+                 if (other[i] != s[i])
+                   return false;
                }
                return true;
              }
@@ -368,7 +371,8 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
            [](ShapeLessArray<T> &s, py::array_t<T> arr) {
              auto buf        = arr.request();
              using size_type = typename ShapeLessArray<T>::size_type;
-             if (buf.ndim != 1) throw std::runtime_error("Dimension must be exactly one.");
+             if (buf.ndim != 1)
+               throw std::runtime_error("Dimension must be exactly one.");
 
              T *         ptr = (T *)buf.ptr;
              std::size_t idx = 0;

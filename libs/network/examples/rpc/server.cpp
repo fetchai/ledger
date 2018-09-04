@@ -32,9 +32,15 @@ public:
     return a + b;
   }
 
-  int Add(int a, int b) { return a + b; }
+  int Add(int a, int b)
+  {
+    return a + b;
+  }
 
-  std::string Greet(std::string name) { return "Hello, " + name; }
+  std::string Greet(std::string name)
+  {
+    return "Hello, " + name;
+  }
 };
 
 // Next we make a protocol for the implementation

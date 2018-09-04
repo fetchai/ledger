@@ -48,7 +48,8 @@ public:
     , karmaTime_(std::move(rhs.karmaTime_))
   {}
 
-  virtual ~SwarmKarmaPeer() {}
+  virtual ~SwarmKarmaPeer()
+  {}
 
   SwarmKarmaPeer operator=(const SwarmKarmaPeer &rhs)
   {
@@ -58,13 +59,25 @@ public:
     return *this;
   }
 
-  bool operator==(SwarmKarmaPeer &rhs) const { return location_ == rhs.location_; }
+  bool operator==(SwarmKarmaPeer &rhs) const
+  {
+    return location_ == rhs.location_;
+  }
 
-  bool operator==(const SwarmPeerLocation &rhs) const { return location_ == rhs; }
+  bool operator==(const SwarmPeerLocation &rhs) const
+  {
+    return location_ == rhs;
+  }
 
-  bool operator==(const std::string &host) const { return location_ == host; }
+  bool operator==(const std::string &host) const
+  {
+    return location_ == host;
+  }
 
-  const SwarmPeerLocation &GetHost() const { return location_; }
+  const SwarmPeerLocation &GetHost() const
+  {
+    return location_;
+  }
 
   SwarmKarmaPeer operator=(SwarmKarmaPeer &&rhs)
   {
@@ -86,7 +99,10 @@ public:
     return cb;
   }
 
-  static void ToGetCurrentTime(std::function<time_t()> cb) { getCurrentTimeCBRef() = cb; }
+  static void ToGetCurrentTime(std::function<time_t()> cb)
+  {
+    getCurrentTimeCBRef() = cb;
+  }
 
   static time_t GetCurrentTime()
   {
@@ -97,7 +113,10 @@ public:
     return 0;
   }
 
-  const SwarmPeerLocation GetLocation(void) const { return location_; }
+  const SwarmPeerLocation GetLocation(void) const
+  {
+    return location_;
+  }
 
   static double ComputeKarmaForTime(double karmaValue, time_t timeStart, time_t timeFinish)
   {
@@ -112,14 +131,16 @@ public:
     {
       double ageings = double(timeFinish - timeStart) / 5.0;
       double k       = (1.0 - ageings) * karmaValue;
-      if (k < 0.0) return 0.0;
+      if (k < 0.0)
+        return 0.0;
       return k;
     }
     else
     {
       double ageings = double(timeFinish - timeStart) / 10.0;
       double k       = (1.0 - ageings) * karmaValue;
-      if (k > 0.0) return 0.0;
+      if (k > 0.0)
+        return 0.0;
       return k;
     }
   }
@@ -131,7 +152,10 @@ public:
     karmaTime_ = now;
   }
 
-  double GetKarma() { return karma_; }
+  double GetKarma()
+  {
+    return karma_;
+  }
 
   double GetCurrentKarma() const
   {

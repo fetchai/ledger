@@ -60,7 +60,8 @@ public:
   MineNodeBasic operator=(MineNodeBasic &rhs) = delete;
   MineNodeBasic operator=(MineNodeBasic &&rhs) = delete;
 
-  ~MineNodeBasic() {}
+  ~MineNodeBasic()
+  {}
 
   ///////////////////////////////////////////////////////////
   // RPC calls
@@ -102,7 +103,8 @@ public:
     do
     {
       bool success = nodeDirectory_.GetHeader(hash, walkBlock);
-      if (!success) break;
+      if (!success)
+        break;
 
       walkBlock.UpdateDigest();  // critical we update the hash after transmission
       hash = walkBlock.body().previous_hash;
@@ -185,7 +187,10 @@ public:
 
   ///////////////////////////////////////////////////////////////
   // HTTP functions to check that synchronisation was successful
-  std::vector<BlockType> HeaviestChain() { return mainChain.HeaviestChain(); }
+  std::vector<BlockType> HeaviestChain()
+  {
+    return mainChain.HeaviestChain();
+  }
 
   // std::pair<BlockType, std::vector<std::vector<BlockType>>> AllChain()
   //{

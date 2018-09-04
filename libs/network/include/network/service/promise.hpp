@@ -74,13 +74,31 @@ public:
     fulfilled_         = true;
   }
 
-  serializers::SerializableException exception() const { return exception_; }
-  bool                               is_fulfilled() const { return fulfilled_; }
-  bool                               has_failed() const { return failed_; }
-  bool                               is_connection_closed() const { return connection_closed_; }
+  serializers::SerializableException exception() const
+  {
+    return exception_;
+  }
+  bool is_fulfilled() const
+  {
+    return fulfilled_;
+  }
+  bool has_failed() const
+  {
+    return failed_;
+  }
+  bool is_connection_closed() const
+  {
+    return connection_closed_;
+  }
 
-  byte_array_type value() const { return value_; }
-  uint64_t        id() const { return id_; }
+  byte_array_type value() const
+  {
+    return value_;
+  }
+  uint64_t id() const
+  {
+    return id_;
+  }
 
 private:
   serializers::SerializableException exception_;
@@ -124,7 +142,10 @@ public:
     return Wait(std::numeric_limits<double>::infinity(), throw_exception);
   }
 
-  bool Wait(int const &time) { return Wait(double(time)); }
+  bool Wait(int const &time)
+  {
+    return Wait(double(time));
+  }
 
   bool Wait(double const timeout         = std::numeric_limits<double>::infinity(),
             bool const & throw_exception = true)
@@ -195,12 +216,27 @@ public:
     return As<T>();
   }
 
-  bool is_fulfilled() const { return reference_->is_fulfilled(); }
-  bool has_failed() const { return reference_->has_failed(); }
-  bool is_connection_closed() const { return reference_->is_connection_closed(); }
+  bool is_fulfilled() const
+  {
+    return reference_->is_fulfilled();
+  }
+  bool has_failed() const
+  {
+    return reference_->has_failed();
+  }
+  bool is_connection_closed() const
+  {
+    return reference_->is_connection_closed();
+  }
 
-  shared_promise_type  reference() { return reference_; }
-  promise_counter_type id() const { return reference_->id(); }
+  shared_promise_type reference()
+  {
+    return reference_;
+  }
+  promise_counter_type id() const
+  {
+    return reference_->id();
+  }
 
 private:
   shared_promise_type                   reference_;

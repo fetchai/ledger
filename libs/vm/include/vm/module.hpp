@@ -134,7 +134,10 @@ protected:
     return ret;
   }
 
-  void AddSetupFunction(std::function<void(Analyser *)> fnc) { setup_.push_back(fnc); }
+  void AddSetupFunction(std::function<void(Analyser *)> fnc)
+  {
+    setup_.push_back(fnc);
+  }
 
   void Setup(Analyser *a)
   {
@@ -363,10 +366,19 @@ public:
     return *this;
   }
 
-  void SetTypePointer(TypePtr ptr) { type_pointer_ = ptr; }
+  void SetTypePointer(TypePtr ptr)
+  {
+    type_pointer_ = ptr;
+  }
 
-  TypeId  type() const { return type_; }
-  TypePtr type_pointer() { return type_pointer_; }
+  TypeId type() const
+  {
+    return type_;
+  }
+  TypePtr type_pointer()
+  {
+    return type_pointer_;
+  }
 
 private:
   Module &module_;

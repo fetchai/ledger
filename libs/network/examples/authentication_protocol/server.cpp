@@ -32,9 +32,13 @@ class AuthenticationLogic
 public:
   using node_details_type = D;
 
-  AuthenticationLogic(fetch::network::ConnectionRegister<D> reg) : register_(std::move(reg)) {}
+  AuthenticationLogic(fetch::network::ConnectionRegister<D> reg) : register_(std::move(reg))
+  {}
 
-  uint64_t Ping() { return 1337; }
+  uint64_t Ping()
+  {
+    return 1337;
+  }
 
   byte_array::ByteArray Hello(network::AbstractConnection::connection_handle_type const &client)
   {
@@ -78,9 +82,15 @@ public:
 class TestLogic
 {
 public:
-  std::string Greet(std::string const &name) { return "Hello, " + name; }
+  std::string Greet(std::string const &name)
+  {
+    return "Hello, " + name;
+  }
 
-  int Add(int a, int b) { return a + b; }
+  int Add(int a, int b)
+  {
+    return a + b;
+  }
 };
 
 class TestProtocol : public Protocol

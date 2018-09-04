@@ -34,7 +34,10 @@ uint64_t GetRandom()
   return dis(gen);
 }
 
-byte_array::ConstByteArray GetRandomByteArray() { return {std::to_string(GetRandom())}; }
+byte_array::ConstByteArray GetRandomByteArray()
+{
+  return {std::to_string(GetRandom())};
+}
 
 MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
 {

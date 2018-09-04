@@ -61,7 +61,8 @@ public:
 
   ~Array()
   {
-    if (this->pointer_ != nullptr) _mm_free(this->pointer_);
+    if (this->pointer_ != nullptr)
+      _mm_free(this->pointer_);
   }
 
   Array() = default;
@@ -80,11 +81,15 @@ public:
     return *this;
   }
 
-  Array(Array const &other) : super_type() { this->operator=(other); }
+  Array(Array const &other) : super_type()
+  {
+    this->operator=(other);
+  }
 
   self_type &operator=(Array const &other)
   {
-    if (this->pointer_ != nullptr) _mm_free(this->pointer_);
+    if (this->pointer_ != nullptr)
+      _mm_free(this->pointer_);
     this->size_ = other.size();
 
     if (this->size_ > 0)

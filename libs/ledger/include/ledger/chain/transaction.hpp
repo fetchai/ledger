@@ -51,7 +51,10 @@ public:
     return *this;
   }
 
-  bool operator<(UnverifiedTransaction const &other) const { return digest() < other.digest(); }
+  bool operator<(UnverifiedTransaction const &other) const
+  {
+    return digest() < other.digest();
+  }
 
   MutableTransaction GetMutable()
   {
@@ -71,7 +74,10 @@ protected:
 
   using super_type::Copy;
 
-  void Copy(UnverifiedTransaction const &tx) { super_type::Copy(tx); }
+  void Copy(UnverifiedTransaction const &tx)
+  {
+    super_type::Copy(tx);
+  }
 
   template <typename T>
   friend void Serialize(T &serializer, UnverifiedTransaction const &b);
@@ -130,7 +136,10 @@ public:
   }
 
 protected:
-  void Copy(VerifiedTransaction const &tx) { super_type::Copy(tx); }
+  void Copy(VerifiedTransaction const &tx)
+  {
+    super_type::Copy(tx);
+  }
 
   bool Finalise(fetch::chain::MutableTransaction &base)
   {

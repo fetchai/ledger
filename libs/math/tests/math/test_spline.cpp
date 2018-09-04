@@ -24,10 +24,22 @@
 #include "math/spline/linear.hpp"
 
 // This is to avoid ambiguity in instantation
-double dsin(double x) { return sin(x); }
-double dcos(double x) { return cos(x); }
-double dtan(double x) { return tan(x); }
-double dexp(double x) { return exp(x); }
+double dsin(double x)
+{
+  return sin(x);
+}
+double dcos(double x)
+{
+  return cos(x);
+}
+double dtan(double x)
+{
+  return tan(x);
+}
+double dexp(double x)
+{
+  return exp(x);
+}
 
 template <std::size_t N, typename F>
 void test1(F &f, double from, double to, double max)
@@ -119,7 +131,8 @@ void benchmark()
 
 int main(int argc, char **argv)
 {
-  if ((argc == 2) && (std::string(argv[1]) == "benchmark")) benchmark();
+  if ((argc == 2) && (std::string(argv[1]) == "benchmark"))
+    benchmark();
 
   std::cout << "Testing Sin ... " << std::endl;
   test1<8>(dsin, 0, 2 * 3.14, 2);

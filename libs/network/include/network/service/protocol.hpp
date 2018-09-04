@@ -170,7 +170,8 @@ public:
     std::size_t i = 0;
     for (; i < feeds_.size(); ++i)
     {
-      if (feeds_[i]->feed() == feed) break;
+      if (feeds_[i]->feed() == feed)
+        break;
     }
     if (i == feeds_.size())
     {
@@ -200,7 +201,8 @@ public:
     std::size_t i = 0;
     for (; i < feeds_.size(); ++i)
     {
-      if (feeds_[i]->feed() == feed) break;
+      if (feeds_[i]->feed() == feed)
+        break;
     }
     if (i == feeds_.size())
     {
@@ -216,9 +218,15 @@ public:
    *
    * @return a reference to the feeds.
    */
-  std::vector<std::shared_ptr<FeedSubscriptionManager>> &feeds() { return feeds_; }
+  std::vector<std::shared_ptr<FeedSubscriptionManager>> &feeds()
+  {
+    return feeds_;
+  }
 
-  void AddMiddleware(middleware_type const &m) { middleware_.push_back(m); }
+  void AddMiddleware(middleware_type const &m)
+  {
+    middleware_.push_back(m);
+  }
 
   void ApplyMiddleware(connection_handle_type const &id, byte_array::ByteArray const &msg)
   {

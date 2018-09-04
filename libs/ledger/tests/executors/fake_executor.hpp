@@ -64,7 +64,10 @@ public:
     return Status::SUCCESS;
   }
 
-  std::size_t GetNumExecutions() const { return history_.size(); }
+  std::size_t GetNumExecutions() const
+  {
+    return history_.size();
+  }
 
   void CollectHistory(history_cache_type &history)
   {
@@ -72,9 +75,15 @@ public:
     history.insert(history.end(), history_.begin(), history_.end());
   }
 
-  void SetStorageInterface(storage_type &state) { state_ = &state; }
+  void SetStorageInterface(storage_type &state)
+  {
+    state_ = &state;
+  }
 
-  void ClearStorageInterface() { state_ = nullptr; }
+  void ClearStorageInterface()
+  {
+    state_ = nullptr;
+  }
 
 private:
   storage_type *     state_ = nullptr;

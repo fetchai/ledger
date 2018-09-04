@@ -71,13 +71,25 @@ public:
     variants_.Reserve(1024);
   }
 
-  JSONDocument(const_string_type const &document) : JSONDocument() { Parse(document); }
+  JSONDocument(const_string_type const &document) : JSONDocument()
+  {
+    Parse(document);
+  }
 
-  script::Variant &operator[](std::size_t const &i) { return root()[i]; }
+  script::Variant &operator[](std::size_t const &i)
+  {
+    return root()[i];
+  }
 
-  script::Variant const &operator[](std::size_t const &i) const { return root()[i]; }
+  script::Variant const &operator[](std::size_t const &i) const
+  {
+    return root()[i];
+  }
 
-  script::VariantProxy operator[](byte_array::ConstByteArray const &key) { return root()[key]; }
+  script::VariantProxy operator[](byte_array::ConstByteArray const &key)
+  {
+    return root()[key];
+  }
 
   script::Variant const &operator[](byte_array::ConstByteArray const &key) const
   {
@@ -164,8 +176,14 @@ public:
     }
   }
 
-  script::Variant &      root() { return variants_[0]; }
-  script::Variant const &root() const { return variants_[0]; }
+  script::Variant &root()
+  {
+    return variants_[0];
+  }
+  script::Variant const &root() const
+  {
+    return variants_[0];
+  }
 
 private:
   std::vector<uint16_t> counters_;

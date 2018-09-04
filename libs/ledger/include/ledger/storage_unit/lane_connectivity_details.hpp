@@ -29,7 +29,8 @@ namespace ledger {
 
 struct LaneConnectivityDetails
 {
-  LaneConnectivityDetails() : is_controller(false), is_peer(false), is_outgoing(false) {}
+  LaneConnectivityDetails() : is_controller(false), is_peer(false), is_outgoing(false)
+  {}
 
   crypto::Identity  identity;
   std::atomic<bool> is_controller;

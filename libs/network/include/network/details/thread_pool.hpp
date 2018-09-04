@@ -87,7 +87,10 @@ public:
     }
   }
 
-  virtual void Sleep() { lock_type lock(mutex_); }
+  virtual void Sleep()
+  {
+    lock_type lock(mutex_);
+  }
 
   virtual void SetIdleWork(event_function_type idle_work)
   {

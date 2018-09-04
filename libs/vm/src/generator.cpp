@@ -1056,7 +1056,10 @@ void Generator::HandleInvokeOp(const ExpressionNodePtr &node)
   }
 }
 
-void Generator::ScopeEnter() { scopes_.push_back(Scope()); }
+void Generator::ScopeEnter()
+{
+  scopes_.push_back(Scope());
+}
 
 void Generator::ScopeLeave(BlockNodePtr block_node)
 {

@@ -40,7 +40,8 @@ public:
     : subscription_mutex_(__LINE__, __FILE__), promises_mutex_(__LINE__, __FILE__)
   {}
 
-  virtual ~ServiceClientInterface() {}
+  virtual ~ServiceClientInterface()
+  {}
 
   template <typename... arguments>
   Promise Call(protocol_handler_type const &protocol, function_handler_type const &function,
@@ -285,7 +286,8 @@ private:
     std::size_t i = 0;
     for (; i < 256; ++i)
     {
-      if (subscriptions_[i].callback == nullptr) break;
+      if (subscriptions_[i].callback == nullptr)
+        break;
     }
 
     if (i >= 256)

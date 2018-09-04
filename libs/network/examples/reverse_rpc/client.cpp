@@ -49,7 +49,10 @@ public:
     return ret;
   }
 
-  void AddString(std::string const &s) { strings_.push_back(s); }
+  void AddString(std::string const &s)
+  {
+    strings_.push_back(s);
+  }
 
 private:
   std::vector<std::string> strings_;

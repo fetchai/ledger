@@ -142,7 +142,10 @@ public:
     return uint16_t(-1);
   }
 
-  std::shared_ptr<network::AbstractConnection> connection() { return connection_.lock(); }
+  std::shared_ptr<network::AbstractConnection> connection()
+  {
+    return connection_.lock();
+  }
 
 protected:
   bool DeliverRequest(network::message_type const &msg) override
@@ -150,7 +153,8 @@ protected:
     auto ptr = connection_.lock();
     if (ptr)
     {
-      if (ptr->Closed()) return false;
+      if (ptr->Closed())
+        return false;
 
       ptr->Send(msg);
       return true;
@@ -164,7 +168,8 @@ protected:
     auto ptr = connection_.lock();
     if (ptr)
     {
-      if (ptr->Closed()) return false;
+      if (ptr->Closed())
+        return false;
 
       ptr->Send(msg);
       return true;

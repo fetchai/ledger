@@ -33,11 +33,16 @@ public:
   using mutex_type      = std::recursive_mutex;
   using lock_type       = std::lock_guard<mutex_type>;
 
-  SwarmKarmaPeers(std::string ident) : ident_(std::move(ident)) {}
+  SwarmKarmaPeers(std::string ident) : ident_(std::move(ident))
+  {}
 
-  virtual ~SwarmKarmaPeers() {}
+  virtual ~SwarmKarmaPeers()
+  {}
 
-  bool empty() const { return peers_.empty(); }
+  bool empty() const
+  {
+    return peers_.empty();
+  }
 
   template <class KEY>
   peers_list_type::iterator Find(const KEY &key)

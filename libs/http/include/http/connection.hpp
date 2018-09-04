@@ -64,7 +64,8 @@ public:
 
     is_open_ = true;
     handle_  = manager_.Join(shared_from_this());
-    if (is_open_) ReadHeader();
+    if (is_open_)
+      ReadHeader();
   }
 
   void Send(HTTPResponse const &response) override
@@ -82,9 +83,15 @@ public:
     }
   }
 
-  std::string Address() override { return socket_.remote_endpoint().address().to_string(); }
+  std::string Address() override
+  {
+    return socket_.remote_endpoint().address().to_string();
+  }
 
-  asio::ip::tcp::tcp::socket &socket() { return socket_; }
+  asio::ip::tcp::tcp::socket &socket()
+  {
+    return socket_;
+  }
 
 public:
   void ReadHeader(buffer_ptr_type buffer_ptr = nullptr)
@@ -111,7 +118,8 @@ public:
       else
       {
         HTTPRequest::SetHeader(*request, *buffer_ptr, len);
-        if (is_open_) ReadBody(buffer_ptr, request);
+        if (is_open_)
+          ReadBody(buffer_ptr, request);
       }
     };
 
@@ -130,7 +138,8 @@ public:
 
       manager_.PushRequest(handle_, *request);
 
-      if (is_open_) ReadHeader(buffer_ptr);
+      if (is_open_)
+        ReadHeader(buffer_ptr);
       return;
     }
 
@@ -145,7 +154,8 @@ public:
       }
       else
       {
-        if (is_open_) ReadBody(buffer_ptr, request);
+        if (is_open_)
+          ReadBody(buffer_ptr, request);
       }
     };
 

@@ -44,7 +44,8 @@ public:
   using contract_cache_type = std::unordered_map<std::string, chain_code_type>;
 
   // Construction / Destruction
-  explicit Executor(resources_type resources) : resources_{std::move(resources)} {}
+  explicit Executor(resources_type resources) : resources_{std::move(resources)}
+  {}
   ~Executor() override = default;
 
   /// @name Executor Interface

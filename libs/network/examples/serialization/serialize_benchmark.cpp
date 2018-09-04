@@ -49,9 +49,15 @@ std::vector<ByteArray> TestData;
 class Implementation
 {
 public:
-  std::vector<ByteArray> GetData() { return TestData; }
+  std::vector<ByteArray> GetData()
+  {
+    return TestData;
+  }
 
-  ByteArray GetData2() { return TestString; }
+  ByteArray GetData2()
+  {
+    return TestString;
+  }
 };
 
 class ServiceProtocol : public Implementation, public Protocol

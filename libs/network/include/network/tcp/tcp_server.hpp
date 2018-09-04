@@ -210,7 +210,8 @@ private:
 
     auto cb = [this, man, acceptor, strongSocket](std::error_code ec) {
       auto lock_ptr = man.lock();
-      if (!lock_ptr) return;
+      if (!lock_ptr)
+        return;
 
       if (!ec)
       {

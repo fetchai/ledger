@@ -74,7 +74,8 @@ public:
     maxpeers_   = maxpeers;
   }
 
-  virtual ~SwarmNode() {}
+  virtual ~SwarmNode()
+  {}
 
   SwarmNode(SwarmNode &rhs)  = delete;
   SwarmNode(SwarmNode &&rhs) = delete;
@@ -86,16 +87,25 @@ public:
     return karmaPeerList_.GetNthKarmicPeer(maxpeers_).GetLocation();
   }
 
-  virtual bool HasPeers() { return !karmaPeerList_.empty(); }
+  virtual bool HasPeers()
+  {
+    return !karmaPeerList_.empty();
+  }
 
-  virtual bool IsOwnLocation(const SwarmPeerLocation &loc) const { return loc == uri_; }
+  virtual bool IsOwnLocation(const SwarmPeerLocation &loc) const
+  {
+    return loc == uri_;
+  }
 
   std::list<SwarmKarmaPeer> HttpWantsPeerList() const
   {
     return karmaPeerList_.GetBestPeers(10000, 0.0);
   }
 
-  void ToGetState(std::function<int()> cb) { toGetState_ = cb; }
+  void ToGetState(std::function<int()> cb)
+  {
+    toGetState_ = cb;
+  }
 
   virtual std::string AskPeerForPeers(const SwarmPeerLocation &    peer,
                                       std::shared_ptr<client_type> client)
@@ -138,7 +148,10 @@ public:
     }
   }
 
-  virtual bool IsExistingPeer(const std::string &host) { return karmaPeerList_.Has(host); }
+  virtual bool IsExistingPeer(const std::string &host)
+  {
+    return karmaPeerList_.Has(host);
+  }
 
   virtual std::string ClientNeedsPeer()
   {
@@ -154,7 +167,10 @@ public:
     return std::string("");
   }
 
-  const std::string &GetId() { return identifier_; }
+  const std::string &GetId()
+  {
+    return identifier_;
+  }
 
   void AddOrUpdate(const std::string &host, double karma)
   {
@@ -164,14 +180,20 @@ public:
   {
     karmaPeerList_.AddOrUpdate(host, karma);
   }
-  double GetKarma(const std::string &host) { return karmaPeerList_.GetKarma(host); }
+  double GetKarma(const std::string &host)
+  {
+    return karmaPeerList_.GetKarma(host);
+  }
 
   std::list<SwarmKarmaPeer> GetBestPeers(uint32_t n, double minKarma = 0.0) const
   {
     return karmaPeerList_.GetBestPeers(n, minKarma);
   }
 
-  void Post(std::function<void()> workload) { nn_core_->Post(workload); }
+  void Post(std::function<void()> workload)
+  {
+    nn_core_->Post(workload);
+  }
 
 protected:
   std::shared_ptr<fetch::network::NetworkNodeCore> nn_core_;

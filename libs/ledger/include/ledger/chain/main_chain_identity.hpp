@@ -47,7 +47,10 @@ public:
 
   /// External controls
   /// @{
-  ping_type Ping() { return PING_MAGIC; }
+  ping_type Ping()
+  {
+    return PING_MAGIC;
+  }
 
   void Hello(connection_handle_type const &client)
   {

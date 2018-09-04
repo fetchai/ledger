@@ -40,7 +40,10 @@ public:
     : mainChain_{mainChain}, executionManager_{executionManager}
   {}
 
-  ~BlockCoordinator() { Stop(); }
+  ~BlockCoordinator()
+  {
+    Stop();
+  }
 
   void AddBlock(BlockType &block)
   {

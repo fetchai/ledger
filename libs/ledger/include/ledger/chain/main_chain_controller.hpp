@@ -53,7 +53,10 @@ public:
 
   /// External controls
   /// @{
-  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port) { Connect(host, port); }
+  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port)
+  {
+    Connect(host, port);
+  }
 
   void TryConnect(p2p::EntryPoint const &ep)
   {
@@ -61,15 +64,25 @@ public:
     for (auto &h : ep.host)
     {
       fetch::logger.Debug("Mainchain trying to connect to ", h, ":", ep.port);
-      if (Connect(h, ep.port)) break;
+      if (Connect(h, ep.port))
+        break;
     }
   }
 
-  void Shutdown() { TODO_FAIL("Needs to be implemented"); }
+  void Shutdown()
+  {
+    TODO_FAIL("Needs to be implemented");
+  }
 
-  void StartSync() { TODO_FAIL("Needs to be implemented"); }
+  void StartSync()
+  {
+    TODO_FAIL("Needs to be implemented");
+  }
 
-  void StopSync() { TODO_FAIL("Needs to be implemented"); }
+  void StopSync()
+  {
+    TODO_FAIL("Needs to be implemented");
+  }
 
   int IncomingPeers()
   {

@@ -45,9 +45,15 @@ public:
   Adapter(Adapter const &) = default;
   ~Adapter()               = default;
 
-  address_type const &address() const { return address_; }
+  address_type const &address() const
+  {
+    return address_;
+  }
 
-  address_type const &network_mask() const { return network_mask_; }
+  address_type const &network_mask() const
+  {
+    return network_mask_;
+  }
 
 private:
   address_type address_;
