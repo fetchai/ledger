@@ -107,23 +107,59 @@ public:
     proof_.SetHeader(body_.hash);
   }
 
-  body_type const &  body() const { return body_; }
-  body_type &        body() { return body_; }
-  digest_type const &hash() const { return body_.hash; }
-  digest_type const &prev() const { return body_.previous_hash; }
+  body_type const &body() const
+  {
+    return body_;
+  }
+  body_type &body()
+  {
+    return body_;
+  }
+  digest_type const &hash() const
+  {
+    return body_.hash;
+  }
+  digest_type const &prev() const
+  {
+    return body_.previous_hash;
+  }
 
-  proof_type const &proof() const { return proof_; }
-  proof_type &      proof() { return proof_; }
+  proof_type const &proof() const
+  {
+    return proof_;
+  }
+  proof_type &proof()
+  {
+    return proof_;
+  }
 
-  uint64_t &      weight() { return weight_; }
-  uint64_t &      totalWeight() { return total_weight_; }
-  uint64_t const &totalWeight() const { return total_weight_; }
-  bool &          loose() { return is_loose_; }
+  uint64_t &weight()
+  {
+    return weight_;
+  }
+  uint64_t &totalWeight()
+  {
+    return total_weight_;
+  }
+  uint64_t const &totalWeight() const
+  {
+    return total_weight_;
+  }
+  bool &loose()
+  {
+    return is_loose_;
+  }
 
 #if 1  // TODO(issue 33): Move to py swarm?
-  std::string hashString() const { return std::string(ToHex(body_.hash)); }
+  std::string hashString() const
+  {
+    return std::string(ToHex(body_.hash));
+  }
 
-  std::string prevString() const { return std::string(ToHex(body_.previous_hash)); }
+  std::string prevString() const
+  {
+    return std::string(ToHex(body_.previous_hash));
+  }
 #endif
 
 private:

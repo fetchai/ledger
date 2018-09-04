@@ -53,15 +53,23 @@ public:
   using reverse_iterator = typename container_type::reverse_iterator;
 
   /* Contructs an empty shape-less array. */
-  ShapeLessArray(std::size_t const &n) : data_(n), size_(n) {}
+  ShapeLessArray(std::size_t const &n)
+    : data_(n)
+    , size_(n)
+  {}
 
-  ShapeLessArray() : data_(), size_(0) {}
+  ShapeLessArray()
+    : data_()
+    , size_(0)
+  {}
 
   ShapeLessArray(ShapeLessArray &&other)      = default;
   ShapeLessArray(ShapeLessArray const &other) = default;
   ShapeLessArray &operator=(ShapeLessArray const &other) = default;
   ShapeLessArray &operator=(ShapeLessArray &&other) = default;
-  ShapeLessArray(byte_array::ConstByteArray const &c) : data_(), size_(0)
+  ShapeLessArray(byte_array::ConstByteArray const &c)
+    : data_()
+    , size_(0)
   {
     std::vector<type> elems;
     elems.reserve(1024);
@@ -104,13 +112,17 @@ public:
     }
   }
 
-  ~ShapeLessArray() {}
+  ~ShapeLessArray()
+  {}
 
   /* Set all elements to zero.
    *
    * This method will initialise all memory with zero.
    */
-  void SetAllZero() { data().SetAllZero(); }
+  void SetAllZero()
+  {
+    data().SetAllZero();
+  }
 
   /**
    * Inefficient implementation of set all one. A low level method in memory::SharedArray would be
@@ -130,11 +142,17 @@ public:
    * which are added to ensure that the arrays true size is a multiple
    * of the vector unit.
    */
-  void SetPaddedZero() { data().SetPaddedZero(); }
+  void SetPaddedZero()
+  {
+    data().SetPaddedZero();
+  }
 
   using self_type = ShapeLessArray<T, C>;
 
-  void Sort() { std::sort(data_.pointer(), data_.pointer() + data_.size()); }
+  void Sort()
+  {
+    std::sort(data_.pointer(), data_.pointer() + data_.size());
+  }
 
   void Sort(memory::TrivialRange const &range)
   {
@@ -384,7 +402,10 @@ public:
    *
    * This method is sensitive to height and width.
    */
-  bool operator!=(ShapeLessArray const &other) const { return !(this->operator==(other)); }
+  bool operator!=(ShapeLessArray const &other) const
+  {
+    return !(this->operator==(other));
+  }
 
   /* One-dimensional reference index operator.
    * @param n is the index which is being accessed.
@@ -542,18 +563,36 @@ public:
                 bool ignoreNaN = true) const
   {
     std::size_t N = this->size();
-    if (other.size() != N) return false;
+    if (other.size() != N)
+    {
+      return false;
+    }
     bool ret = true;
     for (std::size_t i = 0; i < N; ++i)
     {
       double va = this->At(i);
-      if (ignoreNaN && std::isnan(va)) continue;
+      if (ignoreNaN && std::isnan(va))
+      {
+        continue;
+      }
       double vb = other[i];
-      if (ignoreNaN && std::isnan(vb)) continue;
+      if (ignoreNaN && std::isnan(vb))
+      {
+        continue;
+      }
       double vA = (va - vb);
-      if (vA < 0) vA = -vA;
-      if (va < 0) va = -va;
-      if (vb < 0) vb = -vb;
+      if (vA < 0)
+      {
+        vA = -vA;
+      }
+      if (va < 0)
+      {
+        va = -va;
+      }
+      if (vb < 0)
+      {
+        vb = -vb;
+      }
       double M = std::max(va, vb);
 
       ret &= (vA < std::max(atol, M * rtol));
@@ -563,13 +602,28 @@ public:
       for (std::size_t i = 0; i < N; ++i)
       {
         double va = this->At(i);
-        if (ignoreNaN && std::isnan(va)) continue;
+        if (ignoreNaN && std::isnan(va))
+        {
+          continue;
+        }
         double vb = other[i];
-        if (ignoreNaN && std::isnan(vb)) continue;
+        if (ignoreNaN && std::isnan(vb))
+        {
+          continue;
+        }
         double vA = (va - vb);
-        if (vA < 0) vA = -vA;
-        if (va < 0) va = -va;
-        if (vb < 0) vb = -vb;
+        if (vA < 0)
+        {
+          vA = -vA;
+        }
+        if (va < 0)
+        {
+          va = -va;
+        }
+        if (vb < 0)
+        {
+          vb = -vb;
+        }
         double M = std::max(va, vb);
         std::cout << this->At(i) << " " << other[i] << " "
                   << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
@@ -622,10 +676,22 @@ public:
     size_ = n;
   }
 
-  iterator         begin() { return data_.begin(); }
-  iterator         end() { return data_.end(); }
-  reverse_iterator rbegin() { return data_.rbegin(); }
-  reverse_iterator rend() { return data_.rend(); }
+  iterator begin()
+  {
+    return data_.begin();
+  }
+  iterator end()
+  {
+    return data_.end();
+  }
+  reverse_iterator rbegin()
+  {
+    return data_.rbegin();
+  }
+  reverse_iterator rend()
+  {
+    return data_.rend();
+  }
 
   // TODO(TFR): deduce D from parent
   template <typename S, typename D = memory::SharedArray<S>>
@@ -654,7 +720,10 @@ public:
     this->size_ = x.size_;
   }
 
-  void Set(std::size_t const &idx, type const &val) { data_[idx] = val; }
+  void Set(std::size_t const &idx, type const &val)
+  {
+    data_[idx] = val;
+  }
 
   template <typename S>
   meta::IfIsUnsignedLike<S, type> Get(S const &indices) const
@@ -668,8 +737,14 @@ public:
   std::size_t           size() const { return size_; }
 
   /* Returns the capacity of the array. */
-  size_type capacity() const { return data_.padded_size(); }
-  size_type padded_size() const { return data_.padded_size(); }
+  size_type capacity() const
+  {
+    return data_.padded_size();
+  }
+  size_type padded_size() const
+  {
+    return data_.padded_size();
+  }
 
   ShapeLessArray &InlineAdd(ShapeLessArray const &other, memory::Range const &range)
   {

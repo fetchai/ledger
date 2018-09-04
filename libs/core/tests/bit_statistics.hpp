@@ -40,18 +40,21 @@ public:
   void operator()()
   {
     uint64_t s = generator_();
-    for (std::size_t i = 0; i < E_BIT_COUNT; ++i) stats_[i] += uint32_t((s >> i) & 1);
+    for (std::size_t i = 0; i < E_BIT_COUNT; ++i)
+      stats_[i] += uint32_t((s >> i) & 1);
     ++counter_;
   }
 
   void Repeat(std::size_t const &N)
   {
-    for (std::size_t i = 0; i < N; ++i) this->operator()();
+    for (std::size_t i = 0; i < N; ++i)
+      this->operator()();
   }
 
   void Reset()
   {
-    for (auto &a : stats_) a = 0;
+    for (auto &a : stats_)
+      a = 0;
     counter_ = 0;
   }
 
@@ -60,7 +63,8 @@ public:
     std::vector<double> ret;
     ret.resize(E_BIT_COUNT);
     double rec = 1. / double(counter_);
-    for (std::size_t i = 0; i < E_BIT_COUNT; ++i) ret[i] = stats_[i] * rec;
+    for (std::size_t i = 0; i < E_BIT_COUNT; ++i)
+      ret[i] = stats_[i] * rec;
     return ret;
   }
 
@@ -79,7 +83,10 @@ public:
     return true;
   }
 
-  std::vector<uint32_t> const &stats() const { return stats_; }
+  std::vector<uint32_t> const &stats() const
+  {
+    return stats_;
+  }
 
 private:
   std::vector<uint32_t> stats_;

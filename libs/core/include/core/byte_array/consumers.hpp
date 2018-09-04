@@ -62,9 +62,15 @@ int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
   */
   uint64_t oldpos = pos;
   uint64_t N      = pos + 1;
-  if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) && (str[N] <= '9')) pos += 2;
+  if ((N < str.size()) && (str[pos] == '-') && ('0' <= str[N]) && (str[N] <= '9'))
+  {
+    pos += 2;
+  }
 
-  while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
+  while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9'))
+  {
+    ++pos;
+  }
   if (pos != oldpos)
   {
     int ret = int(NUMBER_INT);
@@ -73,7 +79,10 @@ int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
     {
       ++pos;
       ret = int(NUMBER_FLOAT);
-      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
+      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9'))
+      {
+        ++pos;
+      }
     }
 
     if ((pos < str.size()) && ((str[pos] == 'e') || (str[pos] == 'E')))
@@ -88,7 +97,10 @@ int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
       }
 
       oldpos = pos;
-      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9')) ++pos;
+      while ((pos < str.size()) && ('0' <= str[pos]) && (str[pos] <= '9'))
+      {
+        ++pos;
+      }
       if (oldpos == pos)
       {
         pos -= rev;
@@ -113,9 +125,15 @@ int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
 template <int STRING>
 int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos)
 {
-  if (str[pos] != '"') return -1;
+  if (str[pos] != '"')
+  {
+    return -1;
+  }
   ++pos;
-  if (pos >= str.size()) return -1;
+  if (pos >= str.size())
+  {
+    return -1;
+  }
 
   uint8_t const *     ptr         = str.pointer() + pos;
   alignas(16) uint8_t compare[16] = {'"', '"', '"', '"', '"', '"', '"', '"',
@@ -138,7 +156,10 @@ int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos)
 
   pos += uint64_t(__builtin_ctz(found));
 
-  if (pos >= str.size()) return -1;
+  if (pos >= str.size())
+  {
+    return -1;
+  }
   ++pos;
   return STRING;
 }
@@ -146,16 +167,25 @@ int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos)
 template <int STRING>
 int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
 {
-  if (str[pos] != '"') return -1;
+  if (str[pos] != '"')
+  {
+    return -1;
+  }
   ++pos;
-  if (pos >= str.size()) return -1;
+  if (pos >= str.size())
+  {
+    return -1;
+  }
 
   while ((pos < str.size()) && (str[pos] != '"'))
   {
     pos += 1 + (str[pos] == '\\');
   }
 
-  if (pos >= str.size()) return -1;
+  if (pos >= str.size())
+  {
+    return -1;
+  }
   ++pos;
   return STRING;
 }
@@ -165,14 +195,23 @@ int Token(byte_array::ConstByteArray const &str, uint64_t &pos)
 {
   uint8_t c = str[pos];
 
-  if (!(('a' <= c && c < 'z') || ('A' <= c && c < 'Z'))) return -1;
+  if (!(('a' <= c && c < 'z') || ('A' <= c && c < 'Z')))
+  {
+    return -1;
+  }
   ++pos;
-  if (pos >= str.size()) return TOKEN;
+  if (pos >= str.size())
+  {
+    return TOKEN;
+  }
   c = str[pos];
   while (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
   {
     ++pos;
-    if (pos >= str.size()) break;
+    if (pos >= str.size())
+    {
+      break;
+    }
     c = str[pos];
   }
   return TOKEN;

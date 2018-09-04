@@ -29,7 +29,10 @@ struct BlockConfig
   std::size_t log2_lanes;
   std::size_t slices;
 
-  std::size_t lanes() const { return 1u << log2_lanes; }
+  std::size_t lanes() const
+  {
+    return 1u << log2_lanes;
+  }
 
   static config_array_type const MAIN_SET;
   static config_array_type const REDUCED_SET;

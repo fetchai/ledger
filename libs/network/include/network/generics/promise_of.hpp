@@ -29,19 +29,40 @@ class PromiseOf
 public:
   using promise_type = fetch::service::Promise;
 
-  PromiseOf(promise_type &promise) { this->promise_ = promise; }
+  PromiseOf(promise_type &promise)
+  {
+    this->promise_ = promise;
+  }
 
-  PromiseOf(const PromiseOf &rhs) { promise_ = rhs.promise_; }
+  PromiseOf(const PromiseOf &rhs)
+  {
+    promise_ = rhs.promise_;
+  }
 
-  PromiseOf operator=(const PromiseOf &rhs) { promise_ = rhs.promise_; }
+  PromiseOf operator=(const PromiseOf &rhs)
+  {
+    promise_ = rhs.promise_;
+  }
 
-  PromiseOf operator=(PromiseOf &&rhs) { promise_ = std::move(rhs.promise_); }
+  PromiseOf operator=(PromiseOf &&rhs)
+  {
+    promise_ = std::move(rhs.promise_);
+  }
 
-  TYPE Get() { return promise_.As<TYPE>(); }
+  TYPE Get()
+  {
+    return promise_.As<TYPE>();
+  }
 
-  TYPE get() { return promise_.As<TYPE>(); }
+  TYPE get()
+  {
+    return promise_.As<TYPE>();
+  }
 
-  operator bool() const { return promise_.is_fulfilled(); }
+  operator bool() const
+  {
+    return promise_.is_fulfilled();
+  }
 
   bool Wait()
   {

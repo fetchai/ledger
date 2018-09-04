@@ -31,7 +31,8 @@ class Analyser
 {
 public:
   Analyser(Module *module = nullptr);
-  ~Analyser() {}
+  ~Analyser()
+  {}
   bool Analyse(const BlockNodePtr &root, std::vector<std::string> &errors);
 
   template <typename T>

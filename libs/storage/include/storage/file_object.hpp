@@ -78,7 +78,10 @@ public:
   FileObject &operator=(FileObject &&other) = default;
 
   FileObject(stack_type &stack)
-    : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE), length_(HEADER_SIZE)
+    : stack_(stack)
+    , block_number_(0)
+    , byte_index_(HEADER_SIZE)
+    , length_(HEADER_SIZE)
   {
     block_type block;
     last_position_ = stack_.size();
@@ -90,11 +93,16 @@ public:
     block_index_ = id_ = stack_.Push(block);
 
     block_count_ = length_ / block_type::BYTES;
-    if (block_count_ * block_type::BYTES < length_) ++block_count_;
+    if (block_count_ * block_type::BYTES < length_)
+    {
+      ++block_count_;
+    }
   }
 
   FileObject(stack_type &stack, std::size_t const &position)
-    : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE)
+    : stack_(stack)
+    , block_number_(0)
+    , byte_index_(HEADER_SIZE)
   {
     block_type first;
     assert(position < stack_.size());
@@ -106,10 +114,16 @@ public:
     memcpy(reinterpret_cast<uint8_t *>(&length_), first.data + sizeof(uint64_t), sizeof(uint64_t));
 
     block_count_ = length_ / block_type::BYTES;
-    if (block_count_ * block_type::BYTES < length_) ++block_count_;
+    if (block_count_ * block_type::BYTES < length_)
+    {
+      ++block_count_;
+    }
   }
 
-  ~FileObject() { Flush(); }
+  ~FileObject()
+  {
+    Flush();
+  }
 
   void Flush()
   {
@@ -160,7 +174,10 @@ public:
 
   uint64_t Tell()
   {
-    if ((block_index_ == 0) && (byte_index_ < HEADER_SIZE)) return 0;
+    if ((block_index_ == 0) && (byte_index_ < HEADER_SIZE))
+    {
+      return 0;
+    }
     return block_index_ * block_type::BYTES + byte_index_ - HEADER_SIZE;
   }
 
@@ -200,14 +217,20 @@ public:
     throw StorageException("Grow is not implemented yet");
   }
 
-  void Write(byte_array::ConstByteArray const &arr) { Write(arr.pointer(), arr.size()); }
+  void Write(byte_array::ConstByteArray const &arr)
+  {
+    Write(arr.pointer(), arr.size());
+  }
 
   void Write(uint8_t const *bytes, uint64_t const &m)
   {
     uint64_t n = m + byte_index_ + block_number_ * block_type::BYTES;
 
     uint64_t last_block = (n) / block_type::BYTES;
-    if (last_block * block_type::BYTES < n) ++last_block;
+    if (last_block * block_type::BYTES < n)
+    {
+      ++last_block;
+    }
     --last_block;
 
     uint64_t first_bytes = block_type::BYTES - byte_index_;
@@ -296,14 +319,20 @@ public:
     Flush();
   }
 
-  void Read(byte_array::ByteArray &arr) { Read(arr.pointer(), arr.size()); }
+  void Read(byte_array::ByteArray &arr)
+  {
+    Read(arr.pointer(), arr.size());
+  }
 
   void Read(uint8_t *bytes, uint64_t const &m)
   {
     uint64_t n = m + byte_index_ + block_number_ * block_type::BYTES;
 
     uint64_t last_block = (n) / block_type::BYTES;
-    if (last_block * block_type::BYTES < n) ++last_block;
+    if (last_block * block_type::BYTES < n)
+    {
+      ++last_block;
+    }
     --last_block;
 
     uint64_t first_bytes = block_type::BYTES - byte_index_;
@@ -365,9 +394,15 @@ public:
     }
   }
 
-  uint64_t const &id() const { return id_; }
+  uint64_t const &id() const
+  {
+    return id_;
+  }
 
-  uint64_t size() const { return length_ - HEADER_SIZE; }
+  uint64_t size() const
+  {
+    return length_ - HEADER_SIZE;
+  }
 
   byte_array::ConstByteArray Hash()
   {

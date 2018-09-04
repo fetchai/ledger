@@ -34,7 +34,8 @@ public:
   // Construction / Destruction
   ExecutorRpcService(uint16_t port, network_manager_type const &network_manager,
                      resources_type resources)
-    : ServiceServer(port, network_manager), executor_(std::move(resources))
+    : ServiceServer(port, network_manager)
+    , executor_(std::move(resources))
   {
     this->Add(protocols::FetchProtocols::EXECUTOR, &protocol_);
   }

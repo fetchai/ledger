@@ -39,7 +39,8 @@ public:
   SwarmAgentNaive operator=(SwarmAgentNaive &rhs) = delete;
   SwarmAgentNaive operator=(SwarmAgentNaive &&rhs) = delete;
 
-  virtual ~SwarmAgentNaive() {}
+  virtual ~SwarmAgentNaive()
+  {}
 
   void addInitialPeer(const std::string &host)
   {
@@ -88,12 +89,14 @@ public:
 
     api->OnNewPeerDiscovered([this, api, identifier](const std::string &host) {
       if (api->queryOwnLocation() != host)
+      {
         if (std::find(this->once_and_future_peers_.begin(), this->once_and_future_peers_.end(),
                       host) == this->once_and_future_peers_.end())
         {
           this->once_and_future_peers_.insert(host);
           api->DoPing(host);
         }
+      }
     });
 
     api->OnPingSucceeded([this, identifier, api](const std::string &host) {

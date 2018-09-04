@@ -39,7 +39,8 @@ class HTTPRequest
 public:
   using byte_array_type = byte_array::ConstByteArray;
 
-  HTTPRequest() {}
+  HTTPRequest()
+  {}
 
   static bool SetBody(HTTPRequest &req, asio::streambuf &buffer)
   {
@@ -121,7 +122,10 @@ public:
             for (std::size_t t = 0; t < key.size(); ++t)
             {
               char &cc = reinterpret_cast<char &>(key[t]);
-              if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
+              if (('A' <= cc) && (cc <= 'Z'))
+              {
+                cc = char(cc + 'a' - 'A');
+              }
             }
 
             ++split_key_at;
@@ -151,23 +155,50 @@ public:
     return true;
   }
 
-  Method const &method() const { return method_; }
+  Method const &method() const
+  {
+    return method_;
+  }
 
-  byte_array_type const &uri() const { return uri_; }
+  byte_array_type const &uri() const
+  {
+    return uri_;
+  }
 
-  byte_array_type const &protocol() const { return protocol_; }
+  byte_array_type const &protocol() const
+  {
+    return protocol_;
+  }
 
-  Header const &header() const { return header_; }
+  Header const &header() const
+  {
+    return header_;
+  }
 
-  bool is_valid() const { return is_valid_; }
+  bool is_valid() const
+  {
+    return is_valid_;
+  }
 
-  QuerySet const &query() const { return query_; }
+  QuerySet const &query() const
+  {
+    return query_;
+  }
 
-  std::size_t const &header_length() const { return header_data_.size(); }
+  std::size_t const &header_length() const
+  {
+    return header_data_.size();
+  }
 
-  std::size_t const &content_length() const { return content_length_; }
+  std::size_t const &content_length() const
+  {
+    return content_length_;
+  }
 
-  byte_array::ConstByteArray body() const { return body_data_; }
+  byte_array::ConstByteArray body() const
+  {
+    return body_data_;
+  }
 
   json::JSONDocument JSON() const
   {
@@ -191,7 +222,10 @@ private:
       }
 
       char &cc = reinterpret_cast<char &>(line[i]);
-      if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
+      if (('A' <= cc) && (cc <= 'Z'))
+      {
+        cc = char(cc + 'a' - 'A');
+      }
       ++i;
     }
 
@@ -293,7 +327,10 @@ private:
     for (std::size_t t = i; t < line.size(); ++t)
     {
       char &cc = reinterpret_cast<char &>(line[t]);
-      if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
+      if (('A' <= cc) && (cc <= 'Z'))
+      {
+        cc = char(cc + 'a' - 'A');
+      }
     }
   }
 

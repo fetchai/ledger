@@ -27,8 +27,10 @@ namespace subscribe {
 class Node : public fetch::service::HasPublicationFeed
 {
 public:
-  Node() {}
-  ~Node() {}
+  Node()
+  {}
+  ~Node()
+  {}
 
   void SendMessage(std::string const &mess)
   {

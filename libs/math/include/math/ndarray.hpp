@@ -53,7 +53,8 @@ public:
    * Constructor builds an NDArray with n elements initialized to 0
    * @param n   number of elements in array (no shape specified, assume 1-D)
    */
-  NDArray(std::size_t const &n) : super_type(n)
+  NDArray(std::size_t const &n)
+    : super_type(n)
   {
     assert(this->size() == n);
     this->LazyReshape({n});
@@ -78,9 +79,17 @@ public:
    * Constructor builds an NDArray pre-initialising from a shapeless array
    * @param arr shapelessarray data set by defualt
    */
-  NDArray(super_type const &arr) : super_type(arr) { this->LazyReshape({arr.size()}); }
+  NDArray(super_type const &arr)
+    : super_type(arr)
+  {
+    this->LazyReshape({arr.size()});
+  }
 
-  NDArray(self_type const &arr) : super_type(arr) { this->LazyReshape(arr.shape()); }
+  NDArray(self_type const &arr)
+    : super_type(arr)
+  {
+    this->LazyReshape(arr.shape());
+  }
 
   NDArray &operator=(NDArray const &other) = default;
   //  NDArray &operator=(NDArray &&other) = default;
@@ -141,10 +150,16 @@ public:
    */
   bool operator==(NDArray const &other) const
   {
-    if (shape() != other.shape()) return false;
+    if (shape() != other.shape())
+    {
+      return false;
+    }
     return this->super_type::operator==(static_cast<super_type>(other));
   }
-  bool operator!=(NDArray const &other) const { return !(this->operator==(other)); }
+  bool operator!=(NDArray const &other) const
+  {
+    return !(this->operator==(other));
+  }
 
   /**
    * Provides an NDArray that is a copy of the current NDArray
@@ -307,7 +322,10 @@ public:
    * @param[in]     shape specifies the new shape.
    *
    **/
-  void LazyReshape(std::vector<std::size_t> const &shape) { shape_ = shape; }
+  void LazyReshape(std::vector<std::size_t> const &shape)
+  {
+    shape_ = shape;
+  }
 
   /**
    * Tests if it is possible to reshape the array to a newly proposed shape
@@ -359,8 +377,14 @@ public:
    * @return        shape_ is theshape of the array as a vector of size_t.
    *
    **/
-  std::vector<std::size_t> const &shape() const { return shape_; }
-  std::size_t const &             shape(std::size_t const &n) const { return shape_[n]; }
+  std::vector<std::size_t> const &shape() const
+  {
+    return shape_;
+  }
+  std::size_t const &shape(std::size_t const &n) const
+  {
+    return shape_[n];
+  }
 
   /**
    * adds two ndarrays together and supports broadcasting

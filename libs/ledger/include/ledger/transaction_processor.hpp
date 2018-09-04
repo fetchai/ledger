@@ -28,7 +28,8 @@ class TransactionProcessor
 {
 public:
   TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner)
-    : storage_{storage}, miner_{miner}
+    : storage_{storage}
+    , miner_{miner}
   {}
 
   void AddTransaction(chain::Transaction const &tx)

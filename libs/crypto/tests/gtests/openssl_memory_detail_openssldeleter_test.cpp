@@ -59,13 +59,19 @@ struct StaticMockDeleterPrimitive;
 template <>
 struct StaticMockDeleterPrimitive<TestType>
 {
-  static void function(TestType *ptr) { MockDeleterPrimitive::value->free_TestType(ptr); }
+  static void function(TestType *ptr)
+  {
+    MockDeleterPrimitive::value->free_TestType(ptr);
+  }
 };
 
 template <>
 struct StaticMockDeleterPrimitive<TestType, eDeleteStrategy::clearing>
 {
-  static void function(TestType *ptr) { MockDeleterPrimitive::value->free_clearing_TestType(ptr); }
+  static void function(TestType *ptr)
+  {
+    MockDeleterPrimitive::value->free_clearing_TestType(ptr);
+  }
 };
 
 template <typename T, const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
@@ -78,9 +84,15 @@ class OpenSSLDeleterTest : public testing::Test
 protected:
   MockDeleterPrimitive::SharedPtr &mock_ = MockDeleterPrimitive::value;
 
-  void SetUp() override { mock_ = std::make_shared<MockDeleterPrimitive::Type>(); }
+  void SetUp() override
+  {
+    mock_ = std::make_shared<MockDeleterPrimitive::Type>();
+  }
 
-  void TearDown() override { mock_ = MockDeleterPrimitive::SharedPtr(); }
+  void TearDown() override
+  {
+    mock_ = MockDeleterPrimitive::SharedPtr();
+  }
 };
 
 TEST_F(OpenSSLDeleterTest, test_that_DeleterPrimitive_function_is_called_for_CONST_qualified_type)

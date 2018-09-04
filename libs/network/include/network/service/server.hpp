@@ -60,7 +60,10 @@ public:
     ClientRPCInterface(ClientRPCInterface const &) = delete;
     ClientRPCInterface const &operator=(ClientRPCInterface const &) = delete;
 
-    ClientRPCInterface(self_type *server, handle_type client) : server_(server), client_(client) {}
+    ClientRPCInterface(self_type *server, handle_type client)
+      : server_(server)
+      , client_(client)
+    {}
 
     bool ProcessMessage(network::message_type const &msg)
     {
