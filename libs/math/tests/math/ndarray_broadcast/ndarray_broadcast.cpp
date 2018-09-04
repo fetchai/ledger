@@ -45,8 +45,8 @@ TEST(ndarray, simple_broadcast_test)
   {
     for (std::size_t j = 0; j < ret.shape(1); ++j)
     {
-
-      ASSERT_TRUE(ret.Get({i, j}) == i + j);
+      std::vector<std::size_t> idxs = {i, j};
+      ASSERT_TRUE(ret.Get(idxs) == i + j);
     }
   }
 }
@@ -70,21 +70,24 @@ TEST(ndarray, broadcast_3D_test)
     {
       for (std::size_t k = 0; k < 7; ++k)
       {
+        std::vector<std::size_t> idxs  = {i, j, k};
+        std::vector<std::size_t> idxs2 = {0, j, k};
+        std::vector<std::size_t> idxs3 = {i, j, 0};
         if ((i == 0) && (k == 0))
         {
-          ASSERT_TRUE(ret.Get({i, j, k}) == a.Get({i, j, k}) + b.Get({i, j, k}));
+          ASSERT_TRUE(ret.Get(idxs) == a.Get(idxs) + b.Get(idxs));
         }
         else if ((i > 0) && (k == 0))
         {
-          ASSERT_TRUE(ret.Get({i, j, k}) == b.Get({i, j, k}) + a.Get({0, j, k}));
+          ASSERT_TRUE(ret.Get(idxs) == b.Get(idxs) + a.Get(idxs2));
         }
         else if ((i == 0) && (k > 0))
         {
-          ASSERT_TRUE(ret.Get({i, j, k}) == a.Get({i, j, k}) + b.Get({i, j, 0}));
+          ASSERT_TRUE(ret.Get(idxs) == a.Get(idxs) + b.Get(idxs3));
         }
         else
         {
-          ASSERT_TRUE(ret.Get({i, j, k}) == a.Get({0, j, k}) + b.Get({i, j, 0}));
+          ASSERT_TRUE(ret.Get(idxs) == a.Get(idxs2) + b.Get(idxs3));
         }
       }
     }

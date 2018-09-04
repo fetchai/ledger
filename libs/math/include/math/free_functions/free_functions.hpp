@@ -27,15 +27,11 @@
 #include "math/kernels/standard_functions.hpp"
 
 #include "core/assert.hpp"
-#include <cassert>
-//#include "math/linalg/matrix.hpp"
-//#include "math/ndarray.hpp"
-//#include "math/ndarray_iterator.hpp"
-//#include "math/shape_less_array.hpp"
 #include "math/ndarray_broadcast.hpp"
 #include "vectorise/memory/range.hpp"
-
 #include <algorithm>
+#include <cassert>
+#include <numeric>
 #include <vector>
 
 namespace fetch {
@@ -48,16 +44,15 @@ class NDArray;
 template <typename T, typename C>
 class NDArrayIterator;
 
-/**
- * Copies the values of updates into the specified indices of the first dimension of data in this
- * object
- */
 template <typename T, typename C>
-void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates, std::vector<std::size_t> &indices)
+T Max(ShapeLessArray<T, C> const &array);
+
+namespace details {
+template <typename ARRAY_TYPE>
+void ScatterImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE &updates, ARRAY_TYPE &indices)
 {
   // sort indices and updates into ascending order
-
-  std::vector<std::pair<std::size_t, T>> AB;
+  std::vector<std::pair<std::size_t, typename ARRAY_TYPE::type>> AB;
 
   // copy into pairs
   // Note that A values are put in "first" this is very important
@@ -71,29 +66,49 @@ void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates, std::vector<st
   // Place back into arrays
   for (size_t i = 0; i < updates.size(); ++i)
   {
-    updates[i] = AB[i].second;  //<- This is actually optional
+    updates[i] = AB[i].second;
     indices[i] = AB[i].first;
   }
 
-  //  assert(indices.back() <= input_array.shape()[0]);
-
-  // set up an iterator
-  NDArrayIterator<T, C> arr_iterator{input_array};
-
   // scatter
-  std::size_t cur_idx, arr_count = 0;
+  std::size_t arr_count = 0;
   for (std::size_t count = 0; count < indices.size(); ++count)
   {
-    cur_idx = indices[count];
-
-    while (arr_count < cur_idx)
+    while (arr_count < indices[count])
     {
-      ++arr_iterator;
       ++arr_count;
     }
 
-    *arr_iterator = updates[count];
+    input_array[arr_count] = updates[count];
   }
+}
+}  // namespace details
+
+/**
+ * Copies the values of updates into the specified indices of the first dimension of data in this
+ * object
+ */
+template <typename T, typename C>
+void Scatter(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &updates,
+             ShapeLessArray<T, C> const &indices)
+{
+  details::ScatterImplementation(input_array, updates, indices);
+}
+
+template <typename T, typename C>
+void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &indices)
+{
+
+  assert(input_array.size() >= updates.size());
+  assert(updates.shape().size() > 0);
+  assert(input_array.size() >= updates.size());
+
+  // because tensorflow is row major by default we have to flip to get the same answer
+  // TODO(private issue 208)
+  input_array.MajorOrderFlip();
+  updates.MajorOrderFlip();
+
+  details::ScatterImplementation(input_array, updates, indices);
 }
 
 /**
@@ -101,17 +116,26 @@ void Scatter(NDArray<T, C> &input_array, std::vector<T> &updates, std::vector<st
  * self_type
  */
 template <typename T, typename C>
-void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std::size_t> &indices)
+void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &indices)
 {
-
-  assert(input_array.size() == updates.size());
+  assert(input_array.size() >= updates.size());
+  assert(updates.size() > 0);
   input_array.LazyReshape(updates.shape());
 
-  // sort indices
-  std::sort(indices.begin(), indices.end());
+  if (input_array.shape().size() > 1)
+  {
+    input_array.MajorOrderFlip();
+  }
+  if (input_array.shape().size() > 1)
+  {
+    updates.MajorOrderFlip();
+  }
 
-  // check largest value in indices < shape()[0]
-  assert(indices.back() <= updates.shape()[0]);
+  input_array.LazyResize(indices.size());
+  input_array.LazyReshape(indices.shape());
+
+  // sort indices
+  indices.Sort();
 
   // set up an iterator
   NDArrayIterator<T, C> arr_iterator{updates};
@@ -120,7 +144,7 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std:
   std::size_t cur_idx, arr_count = 0;
   for (std::size_t count = 0; count < indices.size(); ++count)
   {
-    cur_idx = indices[count];
+    cur_idx = std::size_t(indices[count]);
 
     while (arr_count < cur_idx)
     {
@@ -129,6 +153,7 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std:
     }
 
     *ret_iterator = *arr_iterator;
+    ++ret_iterator;
   }
 }
 
@@ -136,52 +161,36 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std:
  * interleave data from multiple sources
  * @param x
  */
-template <typename T, typename C>
-void DynamicStitch(ShapeLessArray<T, C> &                       input_array,
-                   std::vector<std::vector<std::size_t>> const &indices,
-                   std::vector<ShapeLessArray<T, C>> const &    data)
+namespace details {
+template <typename ARRAY_TYPE>
+void DynamicStitchImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE const &indices,
+                                 ARRAY_TYPE const &data)
 {
-  // identify the new size of this
-  std::size_t new_size = 0;
-  for (std::size_t l = 0; l < indices.size(); ++l)
-  {
-    new_size += indices[l].size();
-  }
-
-  input_array.LazyResize(new_size);
+  input_array.LazyResize(indices.size());
 
   // loop through all output data locations identifying the next data point to copy into it
   for (std::size_t i = 0; i < indices.size(); ++i)  // iterate through lists of indices
   {
-    for (std::size_t k = 0; k < indices[i].size(); ++k)  // iterate through index within this list
-    {
-      assert(indices[i][k] <= input_array.size());
-      input_array[indices[i][k]] = data[i][k];
-    }
+    input_array.Set(std::size_t(indices[i]), data[i]);
   }
 }
+}  // namespace details
 template <typename T, typename C>
-void DynamicStitch(NDArray<T, C> &input_array, std::vector<std::vector<std::size_t>> const &indices,
-                   std::vector<NDArray<T, C>> const &data)
+void DynamicStitch(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &indices,
+                   ShapeLessArray<T, C> const &data)
 {
-  // identify the new size of this
-  std::size_t new_size = 0;
-  for (std::size_t l = 0; l < indices.size(); ++l)
-  {
-    new_size += indices[l].size();
-  }
+  details::DynamicStitchImplementation(input_array, indices, data);
+}
+template <typename T, typename C>
+void DynamicStitch(NDArray<T, C> &input_array, NDArray<T, C> &indices, NDArray<T, C> &data)
+{
+  //  input_array.MajorOrderFlip();
+  indices.MajorOrderFlip();
+  data.MajorOrderFlip();
 
-  input_array.LazyResize(new_size);
+  details::DynamicStitchImplementation(input_array, indices, data);
 
-  // loop through all output data locations identifying the next data point to copy into it
-  for (std::size_t i = 0; i < indices.size(); ++i)  // iterate through lists of indices
-  {
-    for (std::size_t k = 0; k < indices[i].size(); ++k)  // iterate through index within this list
-    {
-      assert(indices[i][k] <= input_array.size());
-      input_array[indices[i][k]] = data[i][k];
-    }
-  }
+  input_array.MajorOrderFlip();
 }
 
 /**
@@ -229,6 +238,12 @@ void BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask, NDArray<T, C> 
   assert(input_array.shape().size() >= mask.shape().size());
   assert(mask.shape().size() > 0);
 
+  // because tensorflow is row major by default - we have to flip the mask and array to get the same
+  // answer
+  // TODO(private issue 208)
+  input_array.MajorOrderFlip();
+  mask.MajorOrderFlip();
+
   if (mask.shape() == input_array.shape())
   {
     details::BooleanMaskImplementation(input_array, mask, ret);
@@ -244,7 +259,8 @@ void BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask, NDArray<T, C> 
     std::vector<std::size_t> new_shape;
     NDArray<T, C>            ret{new_shape};
 
-    // need to use broadcasting here.
+    // TODO(private issue 207): perhaps a little bit hacky to implement boolean mask as a
+    // multiplication
     Broadcast([](T x, T y) { return x * y; }, input_array, mask, ret);
   }
 }
@@ -1013,6 +1029,13 @@ T &Max(ShapeLessArray<T, C> const &array, T &ret)
       [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
   return ret;
 }
+template <typename T, typename C>
+T Max(ShapeLessArray<T, C> const &array)
+{
+  T ret;
+  Max(array, ret);
+  return ret;
+}
 
 /**
  * Finds the maximum value in a range of the array
@@ -1057,8 +1080,7 @@ void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
 {
   assert(axis < array.shape().size());
 
-  NDArrayIterator<typename NDArray<T, C>::type, typename NDArray<T, C>::container_type>
-      return_iterator{ret};
+  NDArrayIterator<T, C> return_iterator{ret};
 
   // iterate through the return array (i.e. the array of Max vals)
   std::vector<std::size_t> cur_index;
@@ -1085,8 +1107,7 @@ void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
     }
 
     // get an iterator to iterate over the 1-d slice of the array to calculate max over
-    NDArrayIterator<typename NDArray<T, C>::type, typename NDArray<T, C>::container_type>
-        array_iterator(array, cur_step);
+    NDArrayIterator<T, C> array_iterator(array, cur_step);
 
     // loops through the 1d array calculating the max val
     typename NDArray<T, C>::type cur_max =
@@ -1843,7 +1864,25 @@ void Product(ShapeLessArray<T, C> const &obj1, T &ret)
       typename ShapeLessArray<T, C>::vector_register_type { return a * b; });
 }
 template <typename T, typename C>
-void Product(ShapeLessArray<T, C> const &obj1)
+T Product(ShapeLessArray<T, C> const &obj1)
+{
+  T ret;
+  Product(obj1, ret);
+  return ret;
+}
+/**
+ * return the product of all elements in the vector
+ * @tparam T
+ * @param obj1
+ * @param ret
+ */
+template <typename T>
+void Product(std::vector<T> const &obj1, T &ret)
+{
+  ret = std::accumulate(std::begin(obj1), std::end(obj1), std::size_t(1), std::multiplies<>());
+}
+template <typename T>
+T Product(std::vector<T> const &obj1)
 {
   T ret;
   Product(obj1, ret);
