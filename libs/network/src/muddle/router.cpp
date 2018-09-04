@@ -324,7 +324,32 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
   RoutePacket(packet, false);
 }
 
-/**
+  /**
+ * Get all the IDs we're currently connected to.
+ *
+ * @return List of IDs from the routing table.
+ */
+std::list<std::pair<Packet::Address, Router::Handle>> Router::GetPeerIdentities()
+{
+  using RET_PAIR = std::pair<Packet::Address, Router::Handle>;
+
+  std::list<RET_PAIR> res;
+  FETCH_LOCK(routing_table_lock_);
+  for(auto &val : routing_table_)
+  {
+    Packet::RawAddress raw = val.first;
+
+    byte_array::ByteArray cooked;
+    cooked.Resize(std::size_t{Packet::ADDRESS_SIZE});
+    std::memcpy(cooked.pointer(), raw.data(), Packet::ADDRESS_SIZE);
+
+    RET_PAIR new_res = RET_PAIR(cooked, val.second.handle);
+    res.push_back(new_res);
+  }
+  return res;
+}
+
+  /**
  * Send a request and expect a response back from the target address
  *
  * @param request The request to be sent
