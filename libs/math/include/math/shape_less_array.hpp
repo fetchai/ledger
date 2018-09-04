@@ -557,23 +557,35 @@ public:
   {
     std::size_t N = this->size();
     if (other.size() != N)
+    {
       return false;
+    }
     bool ret = true;
     for (std::size_t i = 0; i < N; ++i)
     {
       double va = this->At(i);
       if (ignoreNaN && std::isnan(va))
+      {
         continue;
+      }
       double vb = other[i];
       if (ignoreNaN && std::isnan(vb))
+      {
         continue;
+      }
       double vA = (va - vb);
       if (vA < 0)
+      {
         vA = -vA;
+      }
       if (va < 0)
+      {
         va = -va;
+      }
       if (vb < 0)
+      {
         vb = -vb;
+      }
       double M = std::max(va, vb);
 
       ret &= (vA < std::max(atol, M * rtol));
@@ -584,17 +596,27 @@ public:
       {
         double va = this->At(i);
         if (ignoreNaN && std::isnan(va))
+        {
           continue;
+        }
         double vb = other[i];
         if (ignoreNaN && std::isnan(vb))
+        {
           continue;
+        }
         double vA = (va - vb);
         if (vA < 0)
+        {
           vA = -vA;
+        }
         if (va < 0)
+        {
           va = -va;
+        }
         if (vb < 0)
+        {
           vb = -vb;
+        }
         double M = std::max(va, vb);
         std::cout << this->At(i) << " " << other[i] << " "
                   << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;

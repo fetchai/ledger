@@ -109,7 +109,9 @@ public:
         }
 
         if (update)
+        {
           state_.conditional_flip(block, bit, update);
+        }
         ++bit;
         block += (bit >= 8 * sizeof(bit_data_type));
         bit &= (8 * sizeof(bit_data_type) - 1);
@@ -122,9 +124,13 @@ public:
   void Normalise()
   {
     if (coupling_magnitude_ == 1.0)
+    {
       return;
+    }
     if (coupling_magnitude_ == 0.0)
+    {
       return;
+    }
 
     for (std::size_t i = 0; i < size_; ++i)
     {

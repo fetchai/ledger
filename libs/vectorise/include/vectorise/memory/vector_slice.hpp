@@ -170,7 +170,9 @@ public:
   {
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT) << E_LOG_SIMD_COUNT;
     if (padded < size_)
+    {
       padded += E_SIMD_COUNT;
+    }
     return padded;
   }
 

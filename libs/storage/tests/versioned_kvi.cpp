@@ -58,7 +58,9 @@ int main()
     }
 
     if (reference.find(key) != reference.end())
+    {
       continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});

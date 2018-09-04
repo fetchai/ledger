@@ -49,13 +49,17 @@ public:
   void WriteBytes(uint8_t const *arr, std::size_t const &size)
   {
     for (std::size_t i = 0; i < size; ++i)
+    {
       data_[pos_++] = arr[i];
+    }
   }
 
   void ReadBytes(uint8_t *arr, std::size_t const &size)
   {
     for (std::size_t i = 0; i < size; ++i)
+    {
       arr[i] = data_[pos_++];
+    }
   }
 
   void ReadByteArray(byte_array::ConstByteArray &b, std::size_t const &size)

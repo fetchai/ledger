@@ -145,8 +145,12 @@ public:
     this->LazyResize(other.width(), other.height());
 
     for (std::size_t i = 0; i < other.height(); ++i)
+    {
       for (std::size_t j = 0; j < other.width(); ++j)
+      {
         this->At(j, i) = other.At(i, j);
+      }
+    }
 
     return *this;
   }
@@ -197,8 +201,12 @@ public:
     tmpA.Copy(A);
 
     for (std::size_t i = 0; i < B.height(); ++i)
+    {
       for (std::size_t j = 0; j < B.width(); ++j)
+      {
         tmpB.At(j, i) = B.At(i, j);
+      }
+    }
 
     tmpA.SetPaddedZero();
     tmpB.SetPaddedZero();

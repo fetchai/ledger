@@ -188,7 +188,9 @@ public:
       return s1 < s2;
     }
     if (s1 == 0)
+    {
       return false;
+    }
 
     --s1;
     while ((s1 != 0) && (super_type::operator[](s1) == other[s1]))

@@ -43,7 +43,9 @@ public:
     random_type ret = lcg_.Seed(s);
 
     for (std::size_t i = 0; i < Q; ++i)
+    {
       buffer_[i] = lcg_();
+    }
 
     FillBuffer();
     FillBuffer();
@@ -60,7 +62,9 @@ public:
   random_type operator()()
   {
     if (index_ == (Q - 1))
+    {
       FillBuffer();
+    }
     return buffer_[++index_];
   }
 
@@ -75,11 +79,15 @@ private:
     std::size_t j = Q - P;
     std::size_t i = 0;
     for (; i < P; ++i, ++j)
+    {
       buffer_[i] += buffer_[j];
+    }
 
     j = 0;
     for (; i < Q; ++i, ++j)
+    {
       buffer_[i] += buffer_[j];
+    }
 
     index_ = 0;
   }

@@ -68,7 +68,9 @@ public:
   {
     fetch::logger.Debug("Starting synchronisation of ", typeid(T).name());
     if (running_)
+    {
       return;
+    }
     running_ = true;
     thread_pool_->Post([this]() { this->IdleUntilPeers(); });
   }
@@ -84,7 +86,9 @@ public:
   void IdleUntilPeers()
   {
     if (!running_)
+    {
       return;
+    }
 
     if (register_.number_of_services() == 0)
     {
@@ -115,7 +119,9 @@ public:
       for (auto const &p : map)
       {
         if (!running_)
+        {
           return;
+        }
 
         auto                    peer    = p.second;
         auto                    ptr     = peer.lock();
@@ -151,7 +157,9 @@ public:
     fetch::logger.Debug("Fetching objects ", typeid(T).name(), " from peer");
 
     if (!running_)
+    {
       return;
+    }
 
     std::lock_guard<mutex::Mutex> lock(object_list_mutex_);
 
@@ -160,7 +168,9 @@ public:
       for (auto const &p : map)
       {
         if (!running_)
+        {
           return;
+        }
 
         auto peer = p.second;
         auto ptr  = peer.lock();
@@ -177,7 +187,9 @@ public:
   void RealisePromises()
   {
     if (!running_)
+    {
       return;
+    }
     std::lock_guard<mutex::Mutex> lock(object_list_mutex_);
     incoming_objects_.reserve(uint64_t(max_cache_));
 
@@ -187,7 +199,9 @@ public:
     {
 
       if (!running_)
+      {
         return;
+      }
 
       incoming_objects_.clear();
       if (!p.Wait(100, false))
@@ -198,7 +212,9 @@ public:
       p.template As<std::vector<S>>(incoming_objects_);
 
       if (!running_)
+      {
         return;
+      }
       std::lock_guard<mutex::Mutex> lock(mutex_);
 
       store_->WithLock([this]() {
@@ -209,7 +225,9 @@ public:
           ResourceID rid(obj.data.digest());
 
           if (store_->LocklessHas(rid))
+          {
             continue;
+          }
           store_->LocklessSet(rid, obj.data);
 
           cache_.push_back(obj);
@@ -392,7 +410,9 @@ private:
   void SyncSubtree()
   {
     if (!running_)
+    {
       return;
+    }
 
     using service_map_type = typename R::service_map_type;
 
@@ -400,7 +420,9 @@ private:
       for (auto const &p : map)
       {
         if (!running_)
+        {
           return;
+        }
 
         auto peer = p.second;
         auto ptr  = peer.lock();
@@ -450,7 +472,9 @@ private:
           ResourceID rid(obj.data.digest());
 
           if (store_->LocklessHas(rid))
+          {
             continue;
+          }
           store_->LocklessSet(rid, obj.data);
 
           cache_.push_back(obj);

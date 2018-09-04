@@ -240,7 +240,9 @@ void ExecutionManager::Start()
   for (std::size_t i = 0; i < 20; ++i)
   {
     if (monitor_ready_)
+    {
       break;
+    }
 
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
   }

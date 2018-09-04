@@ -91,7 +91,9 @@ public:
 
     block_count_ = length_ / block_type::BYTES;
     if (block_count_ * block_type::BYTES < length_)
+    {
       ++block_count_;
+    }
   }
 
   FileObject(stack_type &stack, std::size_t const &position)
@@ -108,7 +110,9 @@ public:
 
     block_count_ = length_ / block_type::BYTES;
     if (block_count_ * block_type::BYTES < length_)
+    {
       ++block_count_;
+    }
   }
 
   ~FileObject()
@@ -166,7 +170,9 @@ public:
   uint64_t Tell()
   {
     if ((block_index_ == 0) && (byte_index_ < HEADER_SIZE))
+    {
       return 0;
+    }
     return block_index_ * block_type::BYTES + byte_index_ - HEADER_SIZE;
   }
 
@@ -217,7 +223,9 @@ public:
 
     uint64_t last_block = (n) / block_type::BYTES;
     if (last_block * block_type::BYTES < n)
+    {
       ++last_block;
+    }
     --last_block;
 
     uint64_t first_bytes = block_type::BYTES - byte_index_;
@@ -317,7 +325,9 @@ public:
 
     uint64_t last_block = (n) / block_type::BYTES;
     if (last_block * block_type::BYTES < n)
+    {
       ++last_block;
+    }
     --last_block;
 
     uint64_t first_bytes = block_type::BYTES - byte_index_;

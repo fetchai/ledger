@@ -53,7 +53,9 @@ public:
   {
     size_type G = from_ / S;
     if (G * S < from_)
+    {
       ++G;
+    }
     return G * S;
   }
 
@@ -69,7 +71,9 @@ public:
   {
     size_type G = to_ / S;
     if (G * S < to_)
+    {
       ++G;
+    }
     return G * S;
   }
 

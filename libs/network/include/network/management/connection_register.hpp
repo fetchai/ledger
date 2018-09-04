@@ -184,13 +184,17 @@ private:
   void SignalClientLeave(connection_handle_type const &handle)
   {
     if (on_client_leave_)
+    {
       on_client_leave_(handle);
+    }
   }
 
   void SignalClientEnter(connection_handle_type const &handle)
   {
     if (on_client_enter_)
+    {
       on_client_enter_(handle);
+    }
   }
 
   callback_client_enter_type on_client_leave_;

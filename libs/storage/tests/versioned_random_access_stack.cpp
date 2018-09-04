@@ -150,7 +150,9 @@ int main()
     for (std::size_t i = 1; i < 20; ++i)
     {
       if ((i % 4) == 0)
+      {
         stack.Commit();
+      }
       newElement();
       all_equal &= (stack.Top() == reference.back());
     }

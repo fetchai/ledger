@@ -76,7 +76,9 @@ public:
     LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
     if (!ptr)
+    {
       return;
+    }
 
     ptr->Leave(this->handle());
   }
@@ -86,7 +88,9 @@ public:
     LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
     if (!ptr)
+    {
       return;
+    }
 
     ptr->Join(shared_from_this());
     ReadHeader();
@@ -132,7 +136,9 @@ private:
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (!socket_ptr)
+    {
       return;
+    }
 
     fetch::logger.Debug("Server: Waiting for next header.");
     auto self(shared_from_this());
@@ -163,7 +169,9 @@ private:
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (!socket_ptr)
+    {
       return;
+    }
 
     byte_array::ByteArray message;
 
@@ -172,7 +180,9 @@ private:
       fetch::logger.Debug("Magic incorrect - closing connection.");
       auto ptr = manager_.lock();
       if (!ptr)
+      {
         return;
+      }
       ptr->Leave(this->handle());
       return;
     }
@@ -222,7 +232,9 @@ private:
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (!socket_ptr)
+    {
       return;
+    }
 
     write_mutex_.lock();
 
@@ -242,7 +254,9 @@ private:
     auto cb   = [this, buffer, socket_ptr, header, self](std::error_code ec, std::size_t) {
       auto ptr = manager_.lock();
       if (!ptr)
+      {
         return;
+      }
 
       if (!ec)
       {

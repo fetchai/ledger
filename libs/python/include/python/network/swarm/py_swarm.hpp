@@ -439,7 +439,9 @@ public:
   {
     worker_->Post([this, host, blockid] {
       if (on_new_remote_heaviest_block)
+      {
         on_new_remote_heaviest_block(host, blockid);
+      }
     });
   }
   virtual void pyOnNewRemoteHeaviestBlock(pybind11::object func)
@@ -459,7 +461,9 @@ public:
   {
     worker_->Post([this, host, blockid] {
       if (on_loose_block)
+      {
         on_loose_block(host, blockid);
+      }
     });
   }
   virtual void PyOnLooseBlock(pybind11::object func)
@@ -479,7 +483,9 @@ public:
   {
     worker_->Post([this, host, blockid] {
       if (on_block_not_supplied)
+      {
         on_block_not_supplied(host, blockid);
+      }
     });
   }
   virtual void PyOnBlockNotSupplied(pybind11::object func)
@@ -499,7 +505,9 @@ public:
   {
     worker_->Post([this, host, blockid] {
       if (on_block_supplied)
+      {
         on_block_supplied(host, blockid);
+      }
     });
   }
   virtual void PyOnBlockSupplied(pybind11::object func)

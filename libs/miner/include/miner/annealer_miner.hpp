@@ -134,7 +134,9 @@ private:
 
     uint64_t total_fee = 0;
     for (auto const &e : generator_.block_fees())
+    {
       total_fee += e;
+    }
 
     std::cout << "Fee: " << total_fee << std::endl;
     std::cout << "Num Staged: " << generator_.staged().size() << std::endl;

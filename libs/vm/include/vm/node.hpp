@@ -70,7 +70,9 @@ struct SymbolTable
   {
     auto it = map.find(name);
     if (it != map.end())
+    {
       return it->second;
+    }
     return nullptr;
   }
   std::unordered_map<std::string, SymbolPtr> map;

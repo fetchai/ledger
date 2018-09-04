@@ -88,7 +88,9 @@ bool MultipleFileCreation()
   for (std::size_t i = 0; i < 10; ++i)
   {
     if (!BasicFileCreation<BS>())
+    {
       return false;
+    }
   }
   return true;
 }
@@ -188,7 +190,9 @@ bool FileLoadValueConsistency()
       file_object.Read(test.pointer(), test.size());
 
       if (test != values[n])
+      {
         return false;
+      }
     }
   }
 
@@ -206,7 +210,9 @@ bool FileLoadValueConsistency()
       file_object.Read(test.pointer(), test.size());
 
       if (test != values[n])
+      {
         return false;
+      }
     }
   }
 
@@ -250,7 +256,9 @@ bool FileSaveLoadFixedSize()
     arr.Resize(file_object.size());
     file_object.Read(arr.pointer(), arr.size());
     if (arr != strings[0])
+    {
       return false;
+    }
   }
 
   return true;
@@ -307,7 +315,9 @@ bool FileLoadHashConsistency()
       file_object.Seek(0);
 
       if (file_object.Hash() != hashes[n])
+      {
         return false;
+      }
     }
   }
 

@@ -66,7 +66,9 @@ public:
     data_         = container_type(data.size());
     std::size_t i = 0;
     for (auto const &a : data)
+    {
       data_[i++] = a;
+    }
     blocks_ = data.size();
     size_   = 8 * sizeof(data_type) * blocks_;
   }
@@ -99,9 +101,13 @@ public:
   {
     bool ret = this->size_ == other.size_;
     if (!ret)
+    {
       return ret;
+    }
     for (std::size_t i = 0; i < blocks_; ++i)
+    {
       ret &= (this->operator()(i) == other(i));
+    }
     return ret;
   }
 
@@ -114,7 +120,9 @@ public:
   {
     assert(size_ == other.size_);
     for (std::size_t i = 0; i < blocks_; ++i)
+    {
       data_[i] ^= other.data_[i];
+    }
 
     return *this;
   }
@@ -131,7 +139,9 @@ public:
   {
     assert(size_ == other.size_);
     for (std::size_t i = 0; i < blocks_; ++i)
+    {
       data_[i] &= other.data_[i];
+    }
 
     return *this;
   }
@@ -147,14 +157,18 @@ public:
   void InlineAndAssign(BitVectorImplementation const &a, BitVectorImplementation const &b)
   {
     for (std::size_t i = 0; i < blocks_; ++i)
+    {
       data_[i] = a.data_[i] & b.data_[i];
+    }
   }
 
   BitVectorImplementation &operator|=(BitVectorImplementation const &other)
   {
     assert(size_ == other.size_);
     for (std::size_t i = 0; i < blocks_; ++i)
+    {
       data_[i] |= other.data_[i];
+    }
 
     return *this;
   }
@@ -259,7 +273,9 @@ std::ostream &operator<<(std::ostream &s, BitVectorImplementation<N> const &b)
   for (std::size_t i = 0; i < b.blocks(); ++i)
   {
     if (i != 0)
+    {
       s << " ";
+    }
     s << std::hex << b(i);
   }
 

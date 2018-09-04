@@ -132,7 +132,9 @@ public:
       double ageings = double(timeFinish - timeStart) / 5.0;
       double k       = (1.0 - ageings) * karmaValue;
       if (k < 0.0)
+      {
         return 0.0;
+      }
       return k;
     }
     else
@@ -140,7 +142,9 @@ public:
       double ageings = double(timeFinish - timeStart) / 10.0;
       double k       = (1.0 - ageings) * karmaValue;
       if (k > 0.0)
+      {
         return 0.0;
+      }
       return k;
     }
   }

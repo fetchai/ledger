@@ -83,12 +83,16 @@ struct Key
     int i = 0;
 
     while ((i < last_block) && (other.key_[i] == key_[i]))
+    {
       ++i;
+    }
 
     uint64_t diff = other.key_[i] ^ key_[i];
     int      bit  = platform::CountLeadingZeroes64(diff);
     if (diff == 0)
+    {
       bit = 8 * sizeof(uint64_t);
+    }
 
     if (i == last_block)
     {

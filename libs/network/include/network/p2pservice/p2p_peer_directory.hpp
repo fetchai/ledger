@@ -171,7 +171,9 @@ public:
   void Start()
   {
     if (running_)
+    {
       return;
+    }
 
     running_ = true;
     NextMaintainanceCycle();
@@ -185,7 +187,9 @@ public:
   void NextMaintainanceCycle()
   {
     if (!running_)
+    {
       return;
+    }
 
     thread_pool_->Post([this]() { this->PruneSuggestions(); },
                        1000);  // TODO(issue 7): add to config
@@ -194,7 +198,9 @@ public:
   void PruneSuggestions()
   {
     if (!running_)
+    {
       return;
+    }
 
     std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> to_delete;
 
@@ -233,7 +239,9 @@ private:
     {
       suggested_peers_[details.identity.identifier()] = details;
       if (propagate)
+      {
         this->Publish(FEED_REQUEST_CONNECTIONS, details);
+      }
       ret = true;
     }
     else
@@ -244,7 +252,9 @@ private:
       {  // TODO(issue 7): Config variable
         suggested_peers_[details.identity.identifier()] = details;
         if (propagate)
+        {
           this->Publish(FEED_REQUEST_CONNECTIONS, details);
+        }
         ret = true;
       }
     }
@@ -263,7 +273,9 @@ private:
     {
       suggested_peers_.erase(it);
       if (propagate)
+      {
         this->Publish(FEED_ENOUGH_CONNECTIONS, public_key);
+      }
       ret = true;
     }
 

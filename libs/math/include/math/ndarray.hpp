@@ -137,7 +137,9 @@ public:
   bool operator==(NDArray const &other) const
   {
     if (shape() != other.shape())
+    {
       return false;
+    }
     return this->super_type::operator==(static_cast<super_type>(other));
   }
   bool operator!=(NDArray const &other) const

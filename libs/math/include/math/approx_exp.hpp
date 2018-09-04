@@ -58,7 +58,9 @@ public:
   double operator()(T const &x) const
   {
     if (N > E_MANTISSA)
+    {
       return exp(x);
+    }
     double in = x * a_ + b_;
 
     if (O)
@@ -98,7 +100,9 @@ private:
   void CreateCorrectionTable()
   {
     if (initialized_)
+    {
       return;
+    }
 
     ApproxExp<0, C>     fexp;
     std::vector<double> accumulated, frequency;
@@ -106,9 +110,13 @@ private:
     frequency.resize(E_ENTRIES);
 
     for (auto &a : accumulated)
+    {
       a = 0;
+    }
     for (auto &a : frequency)
+    {
       a = 0;
+    }
     for (double l = 0.; l < 5; l += 0.0000001)
     {  // FIXME: set limit
       double r1 = exp(l);
@@ -127,7 +135,9 @@ private:
     }
 
     for (std::size_t i = 0; i < E_ENTRIES; ++i)
+    {
       corrections_[i] = accumulated[i] / frequency[i];
+    }
 
     initialized_ = true;
   }

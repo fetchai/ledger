@@ -70,7 +70,9 @@ public:
   void Start()
   {
     if (is_copy_)
+    {
       return;
+    }
     auto ptr = lock();
     if (ptr)
     {

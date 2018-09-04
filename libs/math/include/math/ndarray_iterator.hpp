@@ -265,7 +265,9 @@ private:
       std::size_t diff = (s.to - s.from);
       s.total_steps    = diff / s.step;
       if (s.total_steps * s.step < diff)
+      {
         ++s.total_steps;
+      }
 
       s.total_steps *= s.step;
       s.step_volume  = s.step * volume;

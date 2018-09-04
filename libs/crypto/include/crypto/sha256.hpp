@@ -35,7 +35,9 @@ public:
   {
     digest_.Resize(0);
     if (!SHA256_Init(&data_))
+    {
       throw std::runtime_error("could not intialialise SHA256.");
+    }
   }
 
   bool Update(byte_array_type const &s) override
@@ -52,14 +54,18 @@ public:
   bool Update(uint8_t const *p, std::size_t const &size) override
   {
     if (!SHA256_Update(&data_, p, size))
+    {
       return false;
+    }
     return true;
   }
 
   void Final(uint8_t *p) override
   {
     if (!SHA256_Final(p, &data_))
+    {
       throw std::runtime_error("could not finalize SHA256.");
+    }
   }
 
   byte_array_type digest() override

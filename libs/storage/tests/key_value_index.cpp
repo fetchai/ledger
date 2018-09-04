@@ -55,7 +55,9 @@ bool ValueConsistency()
     }
 
     if (reference.find(key) != reference.end())
+    {
       continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});
@@ -100,7 +102,9 @@ bool LoadSaveValueConsistency()
     }
 
     if (reference.find(key) != reference.end())
+    {
       continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});
@@ -164,7 +168,9 @@ bool RandomInsertHashConsistency()
     }
 
     if (reference.find(key) != reference.end())
+    {
       continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});
@@ -216,7 +222,9 @@ bool IntermediateFlushHashConsistency()
     }
 
     if (reference.find(key) != reference.end())
+    {
       continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});
@@ -281,7 +289,9 @@ bool DoubleInsertionhConsistency()
     }
 
     if (reference.find(key) != reference.end())
+    {
       continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});
@@ -331,7 +341,9 @@ bool LoadSaveVsBulk()
     }
 
     if (reference.find(key) != reference.end())
+    {
       continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});

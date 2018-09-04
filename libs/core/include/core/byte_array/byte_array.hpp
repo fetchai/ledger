@@ -71,7 +71,9 @@ inline std::ostream &operator<<(std::ostream &os, ByteArray const &str)
 {
   char const *arr = reinterpret_cast<char const *>(str.pointer());
   for (std::size_t i = 0; i < str.size(); ++i)
+  {
     os << arr[i];
+  }
   return os;
 }
 

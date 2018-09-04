@@ -78,13 +78,17 @@ public:
     networkManager_.Post([this, self, host, port] {
       shared_self_type selfLock = self.lock();
       if (!selfLock)
+      {
         return;
+      }
 
       // We get IO objects from the network manager, they will only be strong
       // while in the post
       auto strand = networkManager_.CreateIO<strand_type>();
       if (!strand)
+      {
         return;
+      }
       {
         std::lock_guard<mutex_type> lock(io_creation_mutex_);
         strand_ = strand;
@@ -93,7 +97,9 @@ public:
       strand->post([this, self, host, port, strand] {
         shared_self_type selfLock = self.lock();
         if (!selfLock)
+        {
           return;
+        }
 
         std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
 
@@ -111,7 +117,9 @@ public:
                                                           resolver_type::iterator) {
           shared_self_type selfLock = self.lock();
           if (!selfLock)
+          {
             return;
+          }
 
           LOG_STACK_TRACE_POINT;
           fetch::logger.Info("Finished connecting.");
@@ -185,7 +193,9 @@ public:
       shared_self_type selfLock   = self.lock();
       auto             strandLock = strand_.lock();
       if (!selfLock || !strandLock)
+      {
         return;
+      }
 
       strandLock->post([this, selfLock] { WriteNext(selfLock); });
     });
@@ -262,7 +272,9 @@ private:
     auto cb = [this, self, socket, header, strand](std::error_code ec, std::size_t) {
       shared_self_type selfLock = self.lock();
       if (!selfLock)
+      {
         return;
+      }
 
       if (!ec)
       {
@@ -317,7 +329,9 @@ private:
     auto      cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
       shared_self_type selfLock = self.lock();
       if (!selfLock)
+      {
         return;
+      }
 
       if (!ec)
       {

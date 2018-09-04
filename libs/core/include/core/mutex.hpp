@@ -76,7 +76,9 @@ class DebugMutex : public AbstractMutex
         {
           // exit waiting loop when the dead line has been reached
           if (Clock::now() >= deadline)
+          {
             break;
+          }
 
           // wait
           std::this_thread::sleep_for(std::chrono::milliseconds(1));

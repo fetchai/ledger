@@ -27,11 +27,15 @@ bool Compiler::Compile(const std::string &source, const std::string &name, Scrip
 {
   BlockNodePtr root = parser_.Parse(source, errors);
   if (root == nullptr)
+  {
     return false;
+  }
 
   bool analysed = analyser_.Analyse(root, errors);
   if (analysed == false)
+  {
     return false;
+  }
 
   generator_.Generate(root, name, script);
 

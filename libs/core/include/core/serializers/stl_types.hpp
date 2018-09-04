@@ -89,7 +89,9 @@ inline void Deserialize(T &serializer, std::string &s)
   char *buffer = new char[size];
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(buffer), s.size());
   for (std::size_t i = 0; i < size; ++i)
+  {
     s[i] = buffer[i];
+  }
   delete[] buffer;
 }
 
@@ -110,7 +112,9 @@ inline void Serialize(T &serializer, std::vector<U> const &vec)
   serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
 
   for (auto const &a : vec)
+  {
     serializer << a;
+  }
 }
 
 template <typename T, typename U>
@@ -125,7 +129,9 @@ inline void Deserialize(T &serializer, std::vector<U> &vec)
   vec.resize(size);
 
   for (auto &a : vec)
+  {
     serializer >> a;
+  }
 }
 
 template <typename T, typename fir, typename sec>

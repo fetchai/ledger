@@ -83,7 +83,9 @@ public:
   self_type &operator=(SharedArray const &other)
   {
     if (&other == this)
+    {
       return *this;
+    }
 
     this->size_ = other.size_;
 

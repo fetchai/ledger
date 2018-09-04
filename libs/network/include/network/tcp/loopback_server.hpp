@@ -126,7 +126,9 @@ private:
   {
     auto strongAccep = acceptor_.lock();
     if (!strongAccep)
+    {
       return;
+    }
     strongAccep->async_accept(
         [this, strongAccep](std::error_code ec, asio::ip::tcp::tcp::socket socket) {
           if (!ec)

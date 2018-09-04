@@ -123,7 +123,9 @@ public:
             {
               char &cc = reinterpret_cast<char &>(key[t]);
               if (('A' <= cc) && (cc <= 'Z'))
+              {
                 cc = char(cc + 'a' - 'A');
+              }
             }
 
             ++split_key_at;
@@ -221,7 +223,9 @@ private:
 
       char &cc = reinterpret_cast<char &>(line[i]);
       if (('A' <= cc) && (cc <= 'Z'))
+      {
         cc = char(cc + 'a' - 'A');
+      }
       ++i;
     }
 
@@ -324,7 +328,9 @@ private:
     {
       char &cc = reinterpret_cast<char &>(line[t]);
       if (('A' <= cc) && (cc <= 'Z'))
+      {
         cc = char(cc + 'a' - 'A');
+      }
     }
   }
 

@@ -309,7 +309,9 @@ private:
   void WriteToFile()
   {
     if (!saving_to_file_)
+    {
       return;
+    }
 
     // Add confirmed blocks to file
     BlockType block  = blockChain_.at(heaviest_.second);

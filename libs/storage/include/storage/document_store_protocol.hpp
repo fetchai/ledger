@@ -94,7 +94,9 @@ public:
     std::lock_guard<mutex::Mutex> lock(lock_mutex_);
     auto                          it = locks_.find(rid.id());
     if (it == locks_.end())
+    {
       return false;
+    }
 
     return (it->second == client_id);
   }

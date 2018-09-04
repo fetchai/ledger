@@ -35,7 +35,9 @@ uint16_t ColorFromString(std::string name)
   std::transform(name.begin(), name.end(), name.begin(),
                  [](char c) { return static_cast<char>(std::tolower(c)); });
   if (color_map.find(name) == color_map.end())
+  {
     return 9;
+  }
   return color_map.find(name)->second;
 }
 

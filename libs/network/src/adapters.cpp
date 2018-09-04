@@ -43,12 +43,16 @@ Adapter::adapter_list_type Adapter::GetAdapters()
 
     // discard all interfaces which are down or are just loopback
     if (is_down || is_loopback)
+    {
       continue;
+    }
 
     // discard all interfaces which are not INET based
     bool const is_inet = (curr->ifa_addr && curr->ifa_addr->sa_family == AF_INET);
     if (!is_inet)
+    {
       continue;
+    }
 
     auto *inet_addr     = reinterpret_cast<struct sockaddr_in *>(curr->ifa_addr);
     auto *net_mask_addr = reinterpret_cast<struct sockaddr_in *>(curr->ifa_netmask);

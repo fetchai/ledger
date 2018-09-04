@@ -65,7 +65,9 @@ public:
     Resize(n);
     uint8_t const *up = reinterpret_cast<uint8_t const *>(str);
     for (std::size_t i = 0; i < n; ++i)
+    {
       data_[i] = up[i];
+    }
   }
 
   ConstByteArray(std::initializer_list<container_type> l)
@@ -93,7 +95,9 @@ public:
     ConstByteArray ret;
     ret.Resize(size());
     for (std::size_t i = 0; i < size(); ++i)
+    {
       ret[i] = this->operator[](i);
+    }
     return ret;
   }
 
@@ -117,10 +121,14 @@ public:
     for (; i < n; ++i)
     {
       if (arr_pointer_[i] != other.arr_pointer_[i])
+      {
         break;
+      }
     }
     if (i < n)
+    {
       return arr_pointer_[i] < other.arr_pointer_[i];
+    }
     return length_ < other.length_;
   }
 
@@ -132,10 +140,14 @@ public:
   bool operator==(self_type const &other) const
   {
     if (other.size() != size())
+    {
       return false;
+    }
     bool ret = true;
     for (std::size_t i = 0; i < length_; ++i)
+    {
       ret &= (arr_pointer_[i] == other.arr_pointer_[i]);
+    }
     return ret;
   }
 
@@ -153,7 +165,9 @@ public:
   {
     std::size_t i = 0;
     while ((str[i] != '\0') && (i < length_) && (str[i] == arr_pointer_[i]))
+    {
       ++i;
+    }
     return (str[i] == '\0') && (i == length_);
   }
 
@@ -178,7 +192,9 @@ public:
   {
     std::size_t p = 0;
     while ((pos < length_) && (p < str.size()) && (str[p] == arr_pointer_[pos]))
+    {
       ++pos, ++p;
+    }
     return (p == str.size());
   }
 
@@ -186,16 +202,22 @@ public:
   {
     std::size_t p = 0;
     while ((pos < length_) && (str[p] != '\0') && (str[p] == arr_pointer_[pos]))
+    {
       ++pos, ++p;
+    }
     return (str[p] == '\0');
   }
 
   std::size_t Find(char const &c, std::size_t pos) const
   {
     while ((pos < length_) && (c != arr_pointer_[pos]))
+    {
       ++pos;
+    }
     if (pos >= length_)
+    {
       return NPOS;
+    }
     return pos;
   }
 
@@ -220,9 +242,13 @@ public:
     std::size_t n = 0, i = 0;
     ret.Resize(size() + other.size());
     for (; n < size(); ++n)
+    {
       ret[n] = this->operator[](n);
+    }
     for (; n < ret.size(); ++n, ++i)
+    {
       ret[n] = other[i];
+    }
 
     return ret;
   }
@@ -256,7 +282,9 @@ protected:
   void Resize(std::size_t const &n)
   {
     if (data_.size() < n)
+    {
       Reserve(n);
+    }
     length_ = n;
   }
 
@@ -302,7 +330,9 @@ inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
 {
   char const *arr = reinterpret_cast<char const *>(str.pointer());
   for (std::size_t i = 0; i < str.size(); ++i)
+  {
     os << arr[i];
+  }
   return os;
 }
 

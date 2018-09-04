@@ -94,7 +94,9 @@ public:
 
       std::reverse(remove.begin(), remove.end());
       for (auto &i : remove)
+      {
         subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
+      }
       subscribe_mutex_.unlock();
     });
   }
@@ -129,12 +131,18 @@ public:
     subscribe_mutex_.lock();
     std::vector<std::size_t> ids;
     for (std::size_t i = 0; i < subscribers_.size(); ++i)
+    {
       if ((subscribers_[i].client == client) && (subscribers_[i].id == id))
+      {
         ids.push_back(i);
+      }
+    }
 
     std::reverse(ids.begin(), ids.end());
     for (auto &i : ids)
+    {
       subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
+    }
     subscribe_mutex_.unlock();
   }
 

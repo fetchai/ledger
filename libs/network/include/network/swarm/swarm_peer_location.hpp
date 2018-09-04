@@ -41,7 +41,9 @@ public:
         results.push_back(SwarmPeerLocation(subs));
       }
       if (np == std::string::npos)
+      {
         break;
+      }
       p = np + 1;  // skip the bit we used AND the comma.
     }
 

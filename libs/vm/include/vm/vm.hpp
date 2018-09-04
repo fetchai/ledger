@@ -213,7 +213,9 @@ private:
     {
       const LiveObjectInfo &info = live_object_stack_[live_object_sp_];
       if ((info.frame_sp != frame_sp_) || (info.scope_number < scope_number))
+      {
         break;
+      }
       Value &variable = GetVariable(info.variable_index);
       variable.Release();
       --live_object_sp_;
@@ -392,9 +394,13 @@ private:
       String *lhs = static_cast<String *>(lhsv.variant.object);
       String *rhs = static_cast<String *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     default:
@@ -535,9 +541,13 @@ private:
       String *lhs = static_cast<String *>(lhsv.variant.object);
       String *rhs = static_cast<String *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float32:
@@ -545,9 +555,13 @@ private:
       MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
       MatrixFloat32 *rhs = static_cast<MatrixFloat32 *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float64:
@@ -555,45 +569,65 @@ private:
       MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
       MatrixFloat64 *rhs = static_cast<MatrixFloat64 *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float32__Float32:
     {
       MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
       if (lhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhsv.variant.f32);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float64__Float64:
     {
       MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
       if (lhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhsv.variant.f64);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Float32__Matrix_Float32:
     {
       MatrixFloat32 *rhs = static_cast<MatrixFloat32 *>(rhsv.variant.object);
       if (rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhsv.variant.f32, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Float64__Matrix_Float64:
     {
       MatrixFloat64 *rhs = static_cast<MatrixFloat64 *>(rhsv.variant.object);
       if (rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhsv.variant.f64, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     default:
@@ -667,9 +701,13 @@ private:
       MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
       MatrixFloat32 *rhs = static_cast<MatrixFloat32 *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float64:
@@ -677,27 +715,39 @@ private:
       MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
       MatrixFloat64 *rhs = static_cast<MatrixFloat64 *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float32__Float32:
     {
       MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
       if (lhs)
+      {
         Op::Apply(this, lhs, rhsv.variant.f32);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float64__Float64:
     {
       MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
       if (lhs)
+      {
         Op::Apply(this, lhs, rhsv.variant.f64);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     default:
@@ -810,7 +860,9 @@ private:
   {
     ElementType *ptr;
     if (GetMatrixElement(ptr) == false)
+    {
       return;
+    }
     Value &matrixv = stack_[sp_--];
     Value &rhsv    = stack_[sp_--];
     rhsv.variant.Get(*ptr);
@@ -823,7 +875,9 @@ private:
   {
     ElementType *ptr;
     if (GetArrayElement<ElementType>(ptr) == false)
+    {
       return;
+    }
     Value &arrayv = stack_[sp_--];
     Value &rhsv   = stack_[sp_--];
     rhsv.variant.Get(*ptr);
@@ -837,7 +891,9 @@ private:
     if (lhs != rhs)
     {
       if (lhs)
+      {
         lhs->Release();
+      }
       lhs = rhs;
     }
   }
@@ -846,7 +902,9 @@ private:
   {
     Object **ptr;
     if (GetArrayElement<Object *>(ptr) == false)
+    {
       return;
+    }
     Value & arrayv = stack_[sp_--];
     Value & rhsv   = stack_[sp_--];
     Object *rhs;
@@ -961,7 +1019,9 @@ private:
   {
     ElementType *ptr;
     if (GetMatrixElement(ptr) == false)
+    {
       return;
+    }
     ElementType element = *ptr;
     Value &     matrixv = stack_[sp_];
     matrixv.Release();
@@ -974,7 +1034,9 @@ private:
   {
     ElementType *ptr;
     if (GetArrayElement<ElementType>(ptr) == false)
+    {
       return;
+    }
     ElementType element = *ptr;
     Value &     arrayv  = stack_[sp_];
     arrayv.Release();
@@ -986,10 +1048,14 @@ private:
   {
     Object **ptr;
     if (GetArrayElement<Object *>(ptr) == false)
+    {
       return;
+    }
     Object *object = *ptr;
     if (object)
+    {
       object->AddRef();
+    }
     Value &arrayv = stack_[sp_];
     arrayv.Release();
     arrayv.type_id        = type_id;
@@ -1101,7 +1167,9 @@ private:
   {
     ElementType *ptr;
     if (GetMatrixElement(ptr) == false)
+    {
       return;
+    }
     Value &     matrixv = stack_[sp_--];
     Value &     rhsv    = stack_[sp_--];
     ElementType rhs;
@@ -1116,7 +1184,9 @@ private:
   {
     ElementType *ptr;
     if (GetArrayElement<ElementType>(ptr) == false)
+    {
       return;
+    }
     Value &     arrayv = stack_[sp_--];
     Value &     rhsv   = stack_[sp_--];
     ElementType rhs;
@@ -1131,7 +1201,9 @@ private:
   {
     ElementType *ptr;
     if (GetArrayElement<ElementType>(ptr) == false)
+    {
       return;
+    }
     Value &        arrayv = stack_[sp_--];
     Value &        rhsv   = stack_[sp_--];
     RHSVariantType xx;
@@ -1201,7 +1273,9 @@ private:
   {
     ElementType *ptr;
     if (GetArrayElement<ElementType>(ptr) == false)
+    {
       return;
+    }
     ElementType element;
     Op::Apply(this, element, *ptr);  // what if fails?
     Value &arrayv = stack_[sp_];

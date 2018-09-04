@@ -59,7 +59,9 @@ public:
   {
     std::lock_guard<mutex::Mutex> lock(service_lock_);
     if (services_.find(i) == services_.end())
+    {
       return nullptr;
+    }
     return services_[i].lock();
   }
 
@@ -81,7 +83,9 @@ protected:
     std::lock_guard<mutex::Mutex> lock(service_lock_);
     auto                          it = services_.find(n);
     if (it != services_.end())
+    {
       services_.erase(it);
+    }
   }
 
   void AddService(connection_handle_type const &n, weak_service_client_type const &ptr)

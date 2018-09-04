@@ -19,6 +19,7 @@ AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AlignTrailingComments: true
 MaxEmptyLinesToKeep: 1
+BreakConstructorInitializersBeforeComma: true
 BreakConstructorInitializers: BeforeComma
 PointerAlignment: Right
 SortUsingDeclarations: false

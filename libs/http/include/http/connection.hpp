@@ -65,7 +65,9 @@ public:
     is_open_ = true;
     handle_  = manager_.Join(shared_from_this());
     if (is_open_)
+    {
       ReadHeader();
+    }
   }
 
   void Send(HTTPResponse const &response) override
@@ -102,7 +104,9 @@ public:
 
     shared_request_type request = std::make_shared<HTTPRequest>();
     if (!buffer_ptr)
+    {
       buffer_ptr = std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
+    }
 
     auto self = shared_from_this();
 
@@ -119,7 +123,9 @@ public:
       {
         HTTPRequest::SetHeader(*request, *buffer_ptr, len);
         if (is_open_)
+        {
           ReadBody(buffer_ptr, request);
+        }
       }
     };
 
@@ -139,7 +145,9 @@ public:
       manager_.PushRequest(handle_, *request);
 
       if (is_open_)
+      {
         ReadHeader(buffer_ptr);
+      }
       return;
     }
 
@@ -155,7 +163,9 @@ public:
       else
       {
         if (is_open_)
+        {
           ReadBody(buffer_ptr, request);
+        }
       }
     };
 

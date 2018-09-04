@@ -93,7 +93,9 @@ inline bool IsIntegralType(const TypeId id)
 inline bool IsNumericType(const TypeId id)
 {
   if (IsIntegralType(id))
+  {
     return true;
+  }
   return ((id == TypeId::Float32) || (id == TypeId::Float64));
 }
 

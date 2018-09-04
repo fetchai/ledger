@@ -58,7 +58,9 @@ public:
   void start()
   {
     if (is_started_)
+    {
       return;
+    }
 
     session_primitive_type::start(context_.get());
     is_started_ = true;
@@ -67,7 +69,9 @@ public:
   void end()
   {
     if (!is_started_)
+    {
       return;
+    }
 
     is_started_ = false;
     session_primitive_type::end(context_.get());

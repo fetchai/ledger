@@ -144,7 +144,9 @@ public:
     directory_->Start();
 
     if (running_)
+    {
       return;
+    }
     running_ = true;
 
     NextServiceCycle();
@@ -153,7 +155,9 @@ public:
   void Stop()
   {
     if (!running_)
+    {
       return;
+    }
     running_ = false;
 
     directory_->Stop();
@@ -309,7 +313,9 @@ protected:
     {
       std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
       if (!running_)
+      {
         return;
+      }
 
       // Updating lists of incoming and outgoing
       using map_type = client_register_type::connection_map_type;
@@ -376,7 +382,9 @@ protected:
       double                                ms =
           double(std::chrono::duration_cast<std::chrono::milliseconds>(end - track_start_).count());
       if (ms > 5000)
+      {
         tracking_peers_ = false;
+      }
     }
 
     // Requesting new connections as needed
@@ -413,7 +421,9 @@ protected:
     std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
 
     if (!running_)
+    {
       return;
+    }
     uint64_t create_count = 0;
 
     if (outgoing_.size() < min_connections_)
@@ -439,7 +449,9 @@ protected:
       for (auto &e : s.second.entry_points)
       {
         if (e.identity.identifier() == my_pk)
+        {
           continue;
+        }
 
         if (e.is_discovery)
         {
@@ -456,7 +468,9 @@ protected:
     for (auto e : endpoints)
     {
       if (create_count == 0)
+      {
         break;
+      }
       thread_pool_->Post([this, e]() { this->TryConnect(e); });
       --create_count;
     }
@@ -479,7 +493,9 @@ protected:
     for (auto &h : e.host)
     {
       if (Connect(h, e.port))
+      {
         break;
+      }
     }
   }
 

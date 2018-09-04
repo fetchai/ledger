@@ -257,10 +257,14 @@ void TestCase3(std::string host, std::string port)
   {
     NetworkManager nmanager(N);
     if (index % 2 == 0)
+    {
       nmanager.Start();
+    }
     Client client(host, std::to_string(emptyPort), nmanager);
     if (index % 3 == 0)
+    {
       nmanager.Stop();
+    }
   }
   std::cerr << "Success." << std::endl;
 }
@@ -280,10 +284,14 @@ void TestCase4(std::string host, std::string port)
   {
     NetworkManager nmanager(N);
     if (index % 2 == 0)
+    {
       nmanager.Start();
+    }
     Client client(host, std::to_string(emptyPort), nmanager);
     if (index % 3 == 0)
+    {
       nmanager.Stop();
+    }
   }
   std::cerr << "Success." << std::endl;
 }
@@ -343,10 +351,14 @@ void TestCase7(std::string host, std::string port)
   {
     NetworkManager nmanager(N);
     if (index % 2 == 0)
+    {
       nmanager.Start();
+    }
     Client client(host, port, nmanager);
     if (index % 3 == 0)
+    {
       nmanager.Stop();
+    }
   }
   std::cerr << "Success." << std::endl;
 }
@@ -404,7 +416,9 @@ void TestCase9(std::string host, std::string port)
           .detach();
     }
     if (index % 2 == 0)
+    {
       nmanager.Stop();
+    }
 
     while (threadCount != iterations)
     {
@@ -441,11 +455,17 @@ void TestCase10(std::string host, std::string port)
     }
     nmanager.Start();
     if (index % 2)
+    {
       nmanager.Stop();
+    }
     if (index % 3)
+    {
       nmanager.Stop();
+    }
     if (index % 5)
+    {
       nmanager.Stop();
+    }
     std::this_thread::sleep_for(std::chrono::microseconds(1000));
   }
   std::cerr << "success" << std::endl;
@@ -800,7 +820,9 @@ void TestCase15(std::string host, std::string const &port)
       }
     }
     if (i % 2)
+    {
       nmanager.Stop();
+    }
   }
   std::cerr << "Success." << std::endl;
 }

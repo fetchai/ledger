@@ -224,9 +224,13 @@ public:
         size_type v = size_type(ca * (i - ci) - sa * (j - cj) + ci);
         size_type u = size_type(sa * (i - ci) + ca * (j - cj) + cj);
         if ((v < height()) && (u < width()))
+        {
           n[std::size_t(i) * padded_height_ + std::size_t(j)] = At(v, u);
+        }
         else
+        {
           n[std::size_t(i) * padded_height_ + std::size_t(j)] = fill;
+        }
       }
     }
     //    data_ = n;
@@ -421,7 +425,9 @@ public:
   void Resize(size_type const &h, size_type const &w)
   {
     if ((h == height_) && (w == width_))
+    {
       return;
+    }
 
     Reserve(h, w);
 
@@ -497,9 +503,13 @@ public:
     super_type::ReplaceData(padded_width_ * padded_height_, new_arr);
 
     if (h < height_)
+    {
       height_ = h;
+    }
     if (w < width_)
+    {
       width_ = w;
+    }
     shape_ = {height_, width_};
   }
 
@@ -576,12 +586,16 @@ public:
   void LazyResize(size_type const &h, size_type const &w)
   {
     if ((h == height_) && (w == width_))
+    {
       return;
+    }
 
     SetPaddedSizes(h, w);
 
     if ((padded_width_ * padded_height_) < super_type::capacity())
+    {
       return;
+    }
 
     super_type::LazyResize(padded_width_ * padded_height_);
 
@@ -735,7 +749,9 @@ private:
       padded_width_ =
           size_type(w / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
       if (padded_width_ < w)
+      {
         padded_width_ += vector_register_type::E_BLOCK_COUNT;
+      }
     }
 
     if (PAD_HEIGHT)
@@ -743,7 +759,9 @@ private:
       padded_height_ =
           size_type(h / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
       if (padded_height_ < h)
+      {
         padded_height_ += vector_register_type::E_BLOCK_COUNT;
+      }
     }
   }
 };

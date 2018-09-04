@@ -221,7 +221,9 @@ public:
   void BeforeFlushHandler()
   {
     if (!this->is_open())
+    {
       return;
+    }
 
     stack_.SetExtraHeader(root_);
 
@@ -262,7 +264,9 @@ public:
       while (parents.find(last) != parents.end())
       {
         if (depths.find(last) != depths.end())
+        {
           break;
+        }
         depths[last] = depth;
         q.push({depth, last});
         --depth;
@@ -586,7 +590,9 @@ public:
   self_type::Iterator begin()
   {
     if (this->empty())
+    {
       return end();
+    }
 
     key_value_pair kv;
     stack_.Get(root_, kv);
@@ -625,7 +631,9 @@ public:
   self_type::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t bits)
   {
     if (this->empty())
+    {
       return end();
+    }
 
     key_type       key(key_str);
     bool           split      = true;
@@ -707,7 +715,9 @@ private:
   {
     depth = 0;
     if (this->empty())
+    {
       return index_type(-1);
+    }
 
     std::size_t next = root_;
     std::size_t index;

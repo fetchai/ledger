@@ -141,7 +141,9 @@ public:
   {
     Document doc = store_.Get(rid);
     if (doc.failed)
+    {
       return false;
+    }
 
     serializer_type ser(doc.document);
     ser >> object;

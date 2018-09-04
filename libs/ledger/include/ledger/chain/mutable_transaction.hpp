@@ -150,28 +150,36 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     if (copy_on_write_)
+    {
       Clone();
+    }
     summary_.resources.insert(res);
   }
 
   void set_summary(TransactionSummary const &summary)
   {
     if (copy_on_write_)
+    {
       Clone();
+    }
     summary_ = summary;
   }
 
   void set_data(byte_array::ConstByteArray const &data)
   {
     if (copy_on_write_)
+    {
       Clone();
+    }
     data_ = data;
   }
 
   void set_signature(byte_array::ConstByteArray const &sig)
   {
     if (copy_on_write_)
+    {
       Clone();
+    }
     signature_ = sig;
   }
 

@@ -65,7 +65,9 @@ public:
     {
       fetch::logger.Debug("Mainchain trying to connect to ", h, ":", ep.port);
       if (Connect(h, ep.port))
+      {
         break;
+      }
     }
   }
 

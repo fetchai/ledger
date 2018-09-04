@@ -287,7 +287,9 @@ private:
     for (; i < 256; ++i)
     {
       if (subscriptions_[i].callback == nullptr)
+      {
         break;
+      }
     }
 
     if (i >= 256)

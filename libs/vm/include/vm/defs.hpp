@@ -171,7 +171,9 @@ struct Value
   ~Value()
   {
     if (IsObject())
+    {
       Release();
+    }
   }
 
   Value(Value const &other)
@@ -179,7 +181,9 @@ struct Value
     type_id = other.type_id;
     variant = other.variant;
     if (IsObject())
+    {
       AddRef();
+    }
   }
 
   Value &operator=(Value const &other)
@@ -198,11 +202,15 @@ struct Value
       return *this;
     }
     if (is_object)
+    {
       Release();
+    }
     type_id = other.type_id;
     variant = other.variant;
     if (other_is_object)
+    {
       AddRef();
+    }
     return *this;
   }
 
@@ -231,7 +239,9 @@ struct Value
     }
 
     if (is_object)
+    {
       Release();
+    }
     type_id       = other.type_id;
     variant       = other.variant;
     other.type_id = TypeId::Unknown;
@@ -243,13 +253,17 @@ struct Value
     type_id = other.type_id;
     variant = other.variant;
     if (IsObject())
+    {
       AddRef();
+    }
   }
 
   void Reset()
   {
     if (IsObject())
+    {
       Release();
+    }
     type_id = TypeId::Unknown;
   }
 
@@ -261,20 +275,26 @@ struct Value
   void AddRef()
   {
     if (variant.object)
+    {
       variant.object->AddRef();
+    }
   }
 
   void Release()
   {
     if (variant.object)
+    {
       variant.object->Release();
+    }
   }
 
   template <typename T>
   void SetPrimitive(T const &primitive, TypeId const &type_id__)
   {
     if (IsObject())
+    {
       Release();
+    }
     type_id = type_id__;
     variant.Set(primitive);
   }
@@ -282,7 +302,9 @@ struct Value
   void SetObject(Object *object, TypeId const &type_id__)
   {
     if (IsObject())
+    {
       Release();
+    }
     type_id        = type_id__;
     variant.object = object;
   }
@@ -378,7 +400,9 @@ struct Script
   {
     auto it = map.find(name);
     if (it != map.end())
+    {
       return &(functions[it->second]);
+    }
     return nullptr;
   }
 };

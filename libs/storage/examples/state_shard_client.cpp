@@ -135,7 +135,9 @@ int main()
     for (auto &t : tokenizer)
     {
       if (t.type() != TOKEN_CATCH_ALL)
+      {
         command.push_back(t);
+      }
     }
 
     if (command.size() > 0)

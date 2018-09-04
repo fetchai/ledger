@@ -107,7 +107,9 @@ public:
   std::string context(std::size_t const &n = std::size_t(-1)) const
   {
     if (context_.size() > n)
+    {
       return context_.substr(0, n);
+    }
     return context_;
   }
   std::string filename() const
@@ -272,13 +274,17 @@ public:
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (log_ != nullptr)
+    {
       delete log_;
+    }
   }
 
   void DisableLogger()
   {
     if (log_ != nullptr)
+    {
       delete log_;
+    }
     log_ = nullptr;
   }
 
@@ -407,7 +413,9 @@ public:
       auto &t = mutex_timings_[s];
       t.total += spent_time;
       if (t.peak < spent_time)
+      {
         t.peak = spent_time;
+      }
 
       ++t.calls;
 
@@ -480,7 +488,9 @@ public:
     auto &t = timings_[s];
     t.total += spent_time;
     if (t.peak < spent_time)
+    {
       t.peak = spent_time;
+    }
 
     ++t.calls;
   }
@@ -627,7 +637,9 @@ private:
       }
       ++i;
       if (i >= max)
+      {
         break;
+      }
     }
   }
 

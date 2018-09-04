@@ -95,8 +95,10 @@ public:
     LOG_STACK_TRACE_POINT;
 
     if ((n >= 256) || (members_[n] == nullptr))
+    {
       throw serializers::SerializableException(
           error::MEMBER_NOT_FOUND, byte_array_type("Could not find protocol member function"));
+    }
     return *members_[n];
   }
 
@@ -120,8 +122,10 @@ public:
     callable_type *fnc = new service::CallableClassMember<C, R(Args...)>(instance, function);
 
     if (members_[n] != nullptr)
+    {
       throw serializers::SerializableException(
           error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+    }
 
     members_[n] = fnc;
   }
@@ -133,8 +137,10 @@ public:
                                                                             instance, function);
 
     if (members_[n] != nullptr)
+    {
       throw serializers::SerializableException(
           error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+    }
 
     members_[n] = fnc;
   }
@@ -171,7 +177,9 @@ public:
     for (; i < feeds_.size(); ++i)
     {
       if (feeds_[i]->feed() == feed)
+      {
         break;
+      }
     }
     if (i == feeds_.size())
     {
@@ -202,7 +210,9 @@ public:
     for (; i < feeds_.size(); ++i)
     {
       if (feeds_[i]->feed() == feed)
+      {
         break;
+      }
     }
     if (i == feeds_.size())
     {

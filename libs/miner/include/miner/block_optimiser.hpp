@@ -79,7 +79,9 @@ public:
     if (check)
     {
       if (all_.find(tx->summary().transaction_hash) != all_.end())
+      {
         return;
+      }
     }
 
     all_[tx->summary().transaction_hash] = tx;
@@ -346,7 +348,9 @@ private:
     std::vector<int> group_matrix;
     group_matrix.resize(batch_size * batch_size);
     for (auto &b : group_matrix)
+    {
       b = 0;
+    }
 
     for (std::size_t i = 0; i < lane_count_; ++i)
     {
@@ -377,7 +381,9 @@ private:
     for (std::size_t i = 0; i < batch_size; ++i)
     {
       if (unspent_[i]->summary().fee > max_fee)
+      {
         max_fee = unspent_[i]->summary().fee;
+      }
     }
 
     for (std::size_t i = 0; i < batch_size; ++i)

@@ -87,25 +87,35 @@ void benchmark()
   static fetch::random::LinearCongruentialGenerator gen;
   std::cout << "Test time 1: ";
   for (std::size_t i = 0; i < 10; ++i)
+  {
     std::cout << test_timing<0, 0>(gen.AsDouble() * 100) << " " << std::flush;
+  }
 
   std::cout << "Test time 2: ";
   for (std::size_t i = 0; i < 10; ++i)
+  {
     std::cout << test_timing<8, 60801>(gen.AsDouble() * 100) << " " << std::flush;
+  }
 
   std::cout << "Test time 3: ";
   for (std::size_t i = 0; i < 10; ++i)
+  {
     std::cout << test_timing<12, 60801>(gen.AsDouble() * 100) << " " << std::flush;
+  }
 
   std::cout << "Test time 4: ";
   for (std::size_t i = 0; i < 16; ++i)
+  {
     std::cout << test_timing<12, 60801>(gen.AsDouble() * 100) << " " << std::flush;
+  }
 }
 
 int main(int argc, char **argv)
 {
   if ((argc == 2) && (std::string(argv[1]) == "benchmark"))
+  {
     benchmark();
+  }
 
   test1<0, 0>(7);
   test1<0, 60801>(5);

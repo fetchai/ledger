@@ -27,7 +27,9 @@ Variant::Variant(std::initializer_list<Variant> const &lst)
   VariantArray data(lst.size());
   std::size_t  i = 0;
   for (auto const &a : lst)
+  {
     data[i++] = a;
+  }
 
   *array_ = data;
 }
@@ -35,7 +37,9 @@ Variant::Variant(std::initializer_list<Variant> const &lst)
 Variant &Variant::operator=(char const *data)
 {
   if (data == nullptr)
+  {
     type_ = NULL_VALUE;
+  }
   else
   {
     type_   = STRING;
@@ -54,7 +58,9 @@ VariantProxy Variant::operator[](ConstByteArray const &key)
   for (; i < array_->size(); i += 2)
   {
     if (key == (*array_)[i].as_byte_array())
+    {
       break;
+    }
   }
 
   // new entry
@@ -112,7 +118,9 @@ std::size_t Variant::FindKeyIndex(ConstByteArray const &key) const
   for (; i < array_->size(); i += 2)
   {
     if (key == (*array_)[i].as_byte_array())
+    {
       break;
+    }
   }
   return i;
 }
@@ -152,7 +160,9 @@ Variant &VariantArray::operator[](std::size_t const &i)
 void VariantArray::Resize(std::size_t const &n)
 {
   if (size_ == n)
+  {
     return;
+  }
   Reserve(n);
   size_ = n;
 }
@@ -162,7 +172,9 @@ void VariantArray::Reserve(std::size_t const &n)
   std::size_t const data_size = (data_) ? data_->size() : 0;
 
   if (offset_ + n < data_size)
+  {
     return;
+  }
 
   ContainerPtr new_data = std::make_shared<Container>(n);
 
@@ -199,9 +211,13 @@ Variant const &Variant::operator[](std::size_t const &i) const
 std::size_t Variant::size() const
 {
   if (type_ == ARRAY)
+  {
     return array_->size();
+  }
   if (type_ == STRING)
+  {
     return string_.size();
+  }
   return 0;
 }
 

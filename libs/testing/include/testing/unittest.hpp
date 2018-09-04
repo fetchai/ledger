@@ -87,7 +87,9 @@ public:
       if (format_ == UnitTestOutputFormat::FORMAT_HEADING)
       {
         for (std::size_t i = 0; i < explanation_.size(); ++i)
+        {
           std::cout << "=";
+        }
         std::cout << std::endl;
       }
 
@@ -221,11 +223,17 @@ public:
 inline std::ostream &operator<<(std::ostream &strm, Expression const &obj)
 {
   if (obj.left_hand_side() != nullptr)
+  {
     strm << (*obj.left_hand_side());
+  }
   if (obj.expression() != "")
+  {
     strm << obj.expression();
+  }
   if (obj.right_hand_side() != nullptr)
+  {
     strm << (*obj.right_hand_side());
+  }
 
   return strm;
 }
@@ -244,10 +252,14 @@ public:
   {
     sub_function_type subber = [this](shared_context_type self) {
       if (this->sub_)
+      {
         this->sub_(self);
+      }
     };
     if (main_)
+    {
       main_(subber);
+    }
   }
 
   sub_function_type operator=(sub_function_type sub)

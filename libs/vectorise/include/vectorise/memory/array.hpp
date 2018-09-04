@@ -62,7 +62,9 @@ public:
   ~Array()
   {
     if (this->pointer_ != nullptr)
+    {
       _mm_free(this->pointer_);
+    }
   }
 
   Array() = default;
@@ -89,7 +91,9 @@ public:
   self_type &operator=(Array const &other)
   {
     if (this->pointer_ != nullptr)
+    {
       _mm_free(this->pointer_);
+    }
     this->size_ = other.size();
 
     if (this->size_ > 0)

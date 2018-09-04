@@ -69,7 +69,9 @@ private:
     bool Write(std::fstream &stream) const
     {
       if ((!stream) || (!stream.is_open()))
+      {
         return false;
+      }
       stream.seekg(0, stream.beg);
       stream.write(reinterpret_cast<char const *>(&magic), sizeof(magic));
       stream.write(reinterpret_cast<char const *>(&objects), sizeof(objects));
@@ -80,7 +82,9 @@ private:
     bool Read(std::fstream &stream)
     {
       if ((!stream) || (!stream.is_open()))
+      {
         return false;
+      }
       stream.seekg(0, stream.beg);
       stream.read(reinterpret_cast<char *>(&magic), sizeof(magic));
       stream.read(reinterpret_cast<char *>(&objects), sizeof(objects));
@@ -118,13 +122,17 @@ public:
   void SignalFileLoaded()
   {
     if (on_file_loaded_)
+    {
       on_file_loaded_();
+    }
   }
 
   void SignalBeforeFlush()
   {
     if (on_before_flush_)
+    {
       on_before_flush_();
+    }
   }
 
   /**
@@ -149,7 +157,9 @@ public:
   void Close(bool const &lazy = false)
   {
     if (!lazy)
+    {
       Flush();
+    }
     file_handle_.close();
   }
 
@@ -304,7 +314,9 @@ public:
   void Swap(std::size_t const &i, std::size_t const &j)
   {
     if (i == j)
+    {
       return;
+    }
     type a, b;
     assert(filename_ != "");
 
@@ -358,7 +370,9 @@ public:
   void Flush(bool const &lazy = false)
   {
     if (!lazy)
+    {
       SignalBeforeFlush();
+    }
     StoreHeader();
     file_handle_.flush();
   }

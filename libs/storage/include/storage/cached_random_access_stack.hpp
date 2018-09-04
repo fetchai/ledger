@@ -299,7 +299,9 @@ private:
   void SignalFileLoaded()
   {
     if (on_file_loaded_)
+    {
       on_file_loaded_();
+    }
   }
 
   /**
@@ -308,7 +310,9 @@ private:
   void SignalBeforeFlush()
   {
     if (on_before_flush_)
+    {
       on_before_flush_();
+    }
   }
 };
 }  // namespace storage

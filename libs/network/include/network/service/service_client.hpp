@@ -154,7 +154,9 @@ protected:
     if (ptr)
     {
       if (ptr->Closed())
+      {
         return false;
+      }
 
       ptr->Send(msg);
       return true;
@@ -169,7 +171,9 @@ protected:
     if (ptr)
     {
       if (ptr->Closed())
+      {
         return false;
+      }
 
       ptr->Send(msg);
       return true;
