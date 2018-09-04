@@ -4,6 +4,7 @@
 #include "core/mutex.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/muddle/packet.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/subscription_registrar.hpp"
@@ -23,7 +24,7 @@ class MuddleRegister;
 class Router : public MuddleEndpoint
 {
 public:
-  using Address       = Packet::Address;
+  using Address       = Packet::Address; // == a crypto::Identity.identifier_
   using PacketPtr     = std::shared_ptr<Packet>;
   using Payload       = Packet::Payload;
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
@@ -68,6 +69,8 @@ public:
 
   SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override;
   SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) override;
+
+  std::list<std::pair<Packet::Address, Handle>> GetPeerIdentities();
   /// @}
 
 private:
