@@ -732,9 +732,18 @@ public:
   }
   //  T Get(std::size_t const &idx) { return data_[idx]; } const
 
-  container_type const &data() const { return data_; }
-  container_type &      data() { return data_; }
-  std::size_t           size() const { return size_; }
+  container_type const &data() const
+  {
+    return data_;
+  }
+  container_type &data()
+  {
+    return data_;
+  }
+  std::size_t size() const
+  {
+    return size_;
+  }
 
   /* Returns the capacity of the array. */
   size_type capacity() const

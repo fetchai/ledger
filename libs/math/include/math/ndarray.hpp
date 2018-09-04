@@ -31,12 +31,6 @@
 namespace fetch {
 namespace math {
 
-enum MAJOR_ORDER
-{
-  column,
-  row
-};
-
 template <typename T, typename C = memory::SharedArray<T>>
 class NDArray : public ShapeLessArray<T, C>
 {
@@ -46,6 +40,12 @@ public:
   using vector_register_type = typename container_type::vector_register_type;
   using super_type           = ShapeLessArray<T, C>;
   using self_type            = NDArray<T, C>;
+
+  enum MAJOR_ORDER
+  {
+    COLUMN,
+    ROW
+  };
 
   NDArray() = default;
 
@@ -476,18 +476,18 @@ public:
     // do is changed the label)
     if (this->shape().size() > 1)
     {
-      if (MajorOrder() == MAJOR_ORDER::column)
+      if (MajorOrder() == MAJOR_ORDER::COLUMN)
       {
-        FlipMajorOrder(MAJOR_ORDER::row);
-        major_order_ = MAJOR_ORDER::row;
+        FlipMajorOrder(MAJOR_ORDER::ROW);
+        major_order_ = MAJOR_ORDER::ROW;
       }
       else
       {
-        FlipMajorOrder(MAJOR_ORDER::column);
-        major_order_ = MAJOR_ORDER::column;
+        FlipMajorOrder(MAJOR_ORDER::COLUMN);
+        major_order_ = MAJOR_ORDER::COLUMN;
       }
     }
-    //    if (MajorOrder() == MAJOR_ORDER::column) {major_order_ = row;}
+    //    if (MajorOrder() == MAJOR_ORDER::COLUMN) {major_order_ = row;}
     //    else {{major_order_ = column;}}
   }
 
@@ -516,7 +516,7 @@ public:
     }
 
     // numpy arrays are row major - we should be column major by default
-    FlipMajorOrder(MAJOR_ORDER::column);
+    FlipMajorOrder(MAJOR_ORDER::COLUMN);
   }
 
   void CopyToNumpy(T *ptr, std::vector<std::size_t> &shape, std::vector<std::size_t> &stride,
@@ -560,7 +560,10 @@ public:
    * returns the current major order of the array
    * @return
    */
-  MAJOR_ORDER MajorOrder() { return major_order_; }
+  MAJOR_ORDER MajorOrder()
+  {
+    return major_order_;
+  }
 
 private:
   // TODO(tfr): replace with strides
@@ -625,7 +628,7 @@ private:
     std::size_t cur_dim;
     std::size_t pos;
 
-    if (major_order == MAJOR_ORDER::column)
+    if (major_order == MAJOR_ORDER::COLUMN)
     {
       new_array.Copy(*this);
     }
@@ -641,7 +644,7 @@ private:
       assert(pos < total_size);
 
       // copy the data
-      if (major_order == MAJOR_ORDER::row)
+      if (major_order == MAJOR_ORDER::ROW)
       {
         new_array[pos] = *it_this;
       }
@@ -667,18 +670,18 @@ private:
       }
     }
 
-    if (major_order == MAJOR_ORDER::row)
+    if (major_order == MAJOR_ORDER::ROW)
     {
       this->Copy(new_array);
     }
 
-    if (major_order == MAJOR_ORDER::column)
+    if (major_order == MAJOR_ORDER::COLUMN)
     {
-      major_order_ = MAJOR_ORDER::column;
+      major_order_ = MAJOR_ORDER::COLUMN;
     }
     else
     {
-      major_order_ = MAJOR_ORDER::row;
+      major_order_ = MAJOR_ORDER::ROW;
     }
   }
 };
