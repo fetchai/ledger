@@ -15,7 +15,9 @@ public:
   using ServiceType = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
 
-  static Manifest fromText(const std::string &inputlines)
+  static constexpr char const *LOGGING_NAME = "Manifest";
+
+  static Manifest FromText(const std::string &inputlines)
   {
     std::map<ServiceIdentifier, Uri> temp;
 
@@ -41,10 +43,10 @@ public:
         }
       }
     }
-    return fromMap(temp);
+    return FromMap(temp);
   }
 
-  static Manifest fromMap( std::map<ServiceIdentifier, Uri> manifestData )
+  static Manifest FromMap( std::map<ServiceIdentifier, Uri> manifestData )
   {
     Manifest m;
     for(auto &item : manifestData)
@@ -126,9 +128,9 @@ private:
   static std::tuple<ServiceType, uint32_t, std::string> ParseLine(const std::string &str)
   {
     std::vector<std::string> store;
-    store[0]="";
-    store[1]="";
-    store[2]="";
+    store.push_back("");
+    store.push_back("");
+    store.push_back("");
 
     int part = -1;
     bool inword = false;
@@ -145,6 +147,7 @@ private:
       if (!inword)
       {
         part++;
+        FETCH_LOG_INFO(LOGGING_NAME, "PART=", part);
         inword = true;
       }
       store[uint32_t(part)] += *it;

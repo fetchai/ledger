@@ -35,7 +35,7 @@ public:
   using Uri = network::Uri;
   using ServiceType = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
-  
+
   enum
   {
     PROTOCOL_RESOLVER = 1
