@@ -588,7 +588,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("major_order_flip", [](NDArray<T> &array) { array.MajorOrderFlip(); })
       .def("major_order",
            [](NDArray<T> &array) {
-             if (array.MajorOrder() == MAJOR_ORDER::column)
+             if (array.MajorOrder() == NDArray<T>::MAJOR_ORDER::COLUMN)
              {
                return "column";
              }

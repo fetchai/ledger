@@ -488,7 +488,7 @@ public:
       }
     }
     //    if (MajorOrder() == MAJOR_ORDER::COLUMN) {major_order_ = row;}
-    //    else {{major_order_ = column;}}
+    //    else {{major_order_ = COLUMN;}}
   }
 
   /**
@@ -600,7 +600,7 @@ private:
   std::size_t              size_ = 0;
   std::vector<std::size_t> shape_;
 
-  MAJOR_ORDER major_order_ = column;
+  MAJOR_ORDER major_order_ = COLUMN;
 
   /**
    * rearranges data storage in the array. Slow because it copies data instead of pointers
