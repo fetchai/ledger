@@ -67,7 +67,10 @@ public:
     uint64_t type;
     uint64_t object_size;
     int64_t  previous;
-    Separator() { memset(this, 0, sizeof(decltype(*this))); }
+    Separator()
+    {
+      memset(this, 0, sizeof(decltype(*this)));
+    }
     Separator(uint64_t const &t, uint64_t const &o, int64_t const &p)
     {
       memset(this, 0, sizeof(decltype(*this)));
@@ -99,12 +102,15 @@ public:
     }
   };
 
-  ~VariantStack() { Close(); }
+  ~VariantStack()
+  {
+    Close();
+  }
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
-    filename_ = filename;
-    file_handle_     = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
+    filename_    = filename;
+    file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
     if (!file_handle_)
     {
       if (create_if_not_exists)
@@ -255,11 +261,14 @@ public:
     fin.close();
   }
 
-  bool    empty() const { return header_.object_count == 0; }
-  std::size_t size() const { return std::size_t(header_.object_count); }
-
-  bool is_open() const { return bool(file_handle_) && (file_handle_.is_open()); }
-  static constexpr bool DirectWrite() { return true; }
+  bool empty() const
+  {
+    return header_.object_count == 0;
+  }
+  std::size_t size() const
+  {
+    return std::size_t(header_.object_count);
+  }
 
 protected:
   void ReadHeader()

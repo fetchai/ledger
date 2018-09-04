@@ -73,7 +73,8 @@ public:
   using ProofType = BlockType::proof_type;
 
   // Hard code genesis on construction
-  MainChain(uint32_t minerNumber = std::numeric_limits<uint32_t>::max()) : minerNumber_{minerNumber}
+  MainChain(uint32_t minerNumber = std::numeric_limits<uint32_t>::max())
+    : minerNumber_{minerNumber}
   {
     BlockType genesis;
     genesis.UpdateDigest();
@@ -176,9 +177,15 @@ public:
     return block;
   }
 
-  uint64_t weight() const { return heaviest_.first; }
+  uint64_t weight() const
+  {
+    return heaviest_.first;
+  }
 
-  std::size_t totalBlocks() const { return blockChain_.size(); }
+  std::size_t totalBlocks() const
+  {
+    return blockChain_.size();
+  }
 
   std::vector<BlockType> HeaviestChain(
       uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
@@ -302,7 +309,10 @@ private:
 
   void WriteToFile()
   {
-    if (!saving_to_file_) return;
+    if (!saving_to_file_)
+    {
+      return;
+    }
 
     // Add confirmed blocks to file
     BlockType block  = blockChain_.at(heaviest_.second);

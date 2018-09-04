@@ -50,7 +50,8 @@ public:
   };
 
   explicit RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store)
-    : fetch::service::Protocol(), doc_store_(doc_store)
+    : fetch::service::Protocol()
+    , doc_store_(doc_store)
   {
     this->Expose(GET, (RevertibleDocumentStore::super_type *)doc_store,
                  &RevertibleDocumentStore::super_type::Get);
@@ -69,7 +70,9 @@ public:
 
   RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store, lane_type const &lane,
                                   lane_type const &maxlanes)
-    : fetch::service::Protocol(), doc_store_(doc_store), lane_assignment_(lane)
+    : fetch::service::Protocol()
+    , doc_store_(doc_store)
+    , lane_assignment_(lane)
   {
 
     SetLaneLog2(maxlanes);
@@ -93,7 +96,10 @@ public:
   {
     std::lock_guard<mutex::Mutex> lock(lock_mutex_);
     auto                          it = locks_.find(rid.id());
-    if (it == locks_.end()) return false;
+    if (it == locks_.end())
+    {
+      return false;
+    }
 
     return (it->second == client_id);
   }

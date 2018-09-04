@@ -27,8 +27,11 @@ namespace vm {
 class Compiler
 {
 public:
-  Compiler() {}
-  ~Compiler() {}
+  Compiler(Module *module = nullptr)
+    : analyser_(module)
+  {}
+  ~Compiler()
+  {}
   bool Compile(const std::string &source, const std::string &name, Script &script,
                std::vector<std::string> &errors);
 

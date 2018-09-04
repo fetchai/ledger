@@ -133,7 +133,10 @@ public:
         .As<ByteArray>();
   }
 
-  void SetID(ByteArray const &id) { id_ = id; }
+  void SetID(ByteArray const &id)
+  {
+    id_ = id;
+  }
 
   void AddTransaction(ConstByteArray const &tx_data)
   {
@@ -146,7 +149,10 @@ public:
     //    tx.UpdateDigests();
   }
 
-  ByteArray const &id() { return id_; }
+  ByteArray const &id()
+  {
+    return id_;
+  }
 
 private:
   ByteArray                       id_;
@@ -233,7 +239,8 @@ int main(int argc, char const **argv)
 
       for (auto &t : tokenizer)
       {
-        if (t.type() != TOKEN_CATCH_ALL) command.push_back(t);
+        if (t.type() != TOKEN_CATCH_ALL)
+          command.push_back(t);
       }
 
       if (command.size() > 0)

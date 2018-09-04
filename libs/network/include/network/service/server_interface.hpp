@@ -34,7 +34,8 @@ public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
   using byte_array_type        = byte_array::ConstByteArray;
 
-  virtual ~ServiceServerInterface() {}
+  virtual ~ServiceServerInterface()
+  {}
 
   void Add(protocol_handler_type const &name,
            Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
@@ -146,6 +147,7 @@ private:
                    serializer_type params)
   {
     //    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT;
 
     protocol_handler_type protocol;
     function_handler_type function;

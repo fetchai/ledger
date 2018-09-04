@@ -36,9 +36,15 @@ public:
     : network_manager_(network_manager)
   {}
 
-  void Tick() { this->Publish(PeerToPeerFeed::NEW_MESSAGE, "tick"); }
+  void Tick()
+  {
+    this->Publish(PeerToPeerFeed::NEW_MESSAGE, "tick");
+  }
 
-  void Tock() { this->Publish(PeerToPeerFeed::NEW_MESSAGE, "tock"); }
+  void Tock()
+  {
+    this->Publish(PeerToPeerFeed::NEW_MESSAGE, "tock");
+  }
 
   void SendMessage(std::string message)
   {
@@ -46,7 +52,10 @@ public:
     messages_.push_back(message);
   }
 
-  std::vector<std::string> messages() { return messages_; }
+  std::vector<std::string> messages()
+  {
+    return messages_;
+  }
 
   void Connect(std::string host, uint16_t port)
   {

@@ -39,7 +39,8 @@ public:
     IDENTITY_PROTOCOL_ID   = LaneService::IDENTITY
   };
 
-  LaneRemoteControl() {}
+  LaneRemoteControl()
+  {}
   LaneRemoteControl(LaneRemoteControl const &other) = default;
   LaneRemoteControl(LaneRemoteControl &&other)      = default;
   LaneRemoteControl &operator=(LaneRemoteControl const &other) = default;

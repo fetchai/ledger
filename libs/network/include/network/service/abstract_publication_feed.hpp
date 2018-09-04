@@ -42,7 +42,8 @@ public:
    */
   using function_type = std::function<void(fetch::byte_array::ConstByteArray)>;
 
-  virtual ~AbstractPublicationFeed() {}
+  virtual ~AbstractPublicationFeed()
+  {}
 
   /* Creates publication function.
    * @feed is the feed handler.

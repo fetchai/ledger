@@ -34,7 +34,8 @@ Matrix<data_type, container_type> RandomMatrix(std::size_t n, std::size_t m)
   static fetch::random::LinearCongruentialGenerator gen;
   Matrix<data_type, container_type>                 m1(n, m);
   for (std::size_t i = 0; i < n; ++i)
-    for (std::size_t j = 0; j < m; ++j) m1(i, j) = data_type(gen.AsDouble());
+    for (std::size_t j = 0; j < m; ++j)
+      m1(i, j) = data_type(gen.AsDouble());
   return m1;
 }
 
@@ -289,7 +290,8 @@ void Test1()
 -1.54572312788 -1.99332448938 -0.869694813898 1.42776104792 0.13788880157 -0.928521794504 2.02053837568
 )");
 
-    EXPECT(R.Add(A, B).AllClose(C));
+    Add(A, B, R);
+    EXPECT(R.AllClose(C));
     EXPECT((R = A, R.InlineAdd(B)).AllClose(C));
     EXPECT((R = A, R += B).AllClose(C));
     EXPECT((A + B).AllClose(C));
@@ -327,8 +329,8 @@ void Test1()
 0.177002994977 -0.81580643049 0.0749087792137 0.0442457386455 0.00296819934184 0.15376284353 -0.0944026502689 ;
 0.117756665616 -0.747437973767 -0.361251560327 -0.172434904876 0.658904510775 -0.957744633955 0.184311509935
 )");
-
-    EXPECT(R.Multiply(A, B).AllClose(C));
+    Multiply(A, B, R);
+    EXPECT(R.AllClose(C));
     EXPECT((R = A, R.InlineMultiply(B)).AllClose(C));
     EXPECT((R = A, R *= B).AllClose(C));
     EXPECT((A * B).AllClose(C));
@@ -367,7 +369,8 @@ void Test1()
 -0.63093783333 1.17350287798 -1.83966507669 0.23313974512 1.25100777305 2.15330803444 1.16782485123
 )");
 
-    EXPECT(R.Subtract(A, B).AllClose(C));
+    Subtract(A, B, R);
+    EXPECT(R.AllClose(C));
     EXPECT((R = A, R.InlineSubtract(B)).AllClose(C));
     EXPECT((R = B, R.InlineReverseSubtract(A)).AllClose(C));
     EXPECT((R = A, R -= B).AllClose(C));
@@ -443,8 +446,8 @@ void Test1()
 -4.48586575565 0.988771243638 1.41810966859 -2.21931140674 5.60698887067 0.496783747938 2.11726556968 ;
 -0.301701072834 0.537852652581 -0.486363693173 1.02684439421 -0.420710151958 -0.675974819917 4.60841365759
 )");
-
-    EXPECT(R.Divide(A, B).AllClose(C));
+    Divide(A, B, R);
+    EXPECT(R.AllClose(C));
     EXPECT((R = A, R.InlineDivide(B)).AllClose(C));
     EXPECT((R = B, R.InlineReverseDivide(A)).AllClose(C));
     EXPECT((R = A, R /= B).AllClose(C));
@@ -483,8 +486,8 @@ void Test1()
 0.439460742211 -1.28982122345 0.794482394507 -0.446620920903 -1.28819997857 1.4381369699 -2.17319577026 ;
 -1.25002660266 0.0999749154649 0.254945525747 -2.45446422185 -1.33244081708 -0.00783165681988 -0.985654932354
 )");
-
-    EXPECT(R.Add(A, B).AllClose(C));
+    Add(A, B, R);
+    EXPECT(R.AllClose(C));
     EXPECT((R = A, R.InlineAdd(B)).AllClose(C));
     EXPECT((R = A, R += B).AllClose(C));
     EXPECT((A + B).AllClose(C));
@@ -523,7 +526,8 @@ void Test1()
 -0.469564098927 0.0197877165536 0.0201410497925 -0.33891701198 0.457386994351 0.0948893363251 -0.557813225293
 )");
 
-    EXPECT(R.Multiply(A, B).AllClose(C));
+    Multiply(A, B, R);
+    EXPECT(R.AllClose(C));
     EXPECT((R = A, R.InlineMultiply(B)).AllClose(C));
     EXPECT((R = A, R *= B).AllClose(C));
     EXPECT((A * B).AllClose(C));
@@ -561,8 +565,8 @@ void Test1()
 0.947003796445 0.527396746077 -0.601623232408 -1.63844028296 -0.530844087008 0.455544778553 -0.299434185057 ;
 -0.572600899585 -2.71080436818 0.334474275731 -0.0354129366011 0.644551284848 -1.90713533176 0.0612756064181
 )");
-
-    EXPECT(R.Subtract(A, B).AllClose(C));
+    Subtract(A, B, R);
+    EXPECT(R.AllClose(C));
     EXPECT((R = A, R.InlineSubtract(B)).AllClose(C));
     EXPECT((R = B, R.InlineReverseSubtract(A)).AllClose(C));
     EXPECT((R = A, R -= B).AllClose(C));
@@ -638,8 +642,8 @@ void Test1()
 -3.86124012309 1.03650113852 -0.143304922103 -0.387987609583 0.889594541859 0.178942524059 -0.968811011084 ;
 -4.88644462695 0.884678244246 0.720662350267 -2.37052045049 0.588507045528 -2.18765832918 -0.995224672165
 )");
-
-    EXPECT(R.Divide(A, B).AllClose(C));
+    Divide(A, B, R);
+    EXPECT(R.AllClose(C));
     EXPECT((R = A, R.InlineDivide(B)).AllClose(C));
     EXPECT((R = B, R.InlineReverseDivide(A)).AllClose(C));
     EXPECT((R = A, R /= B).AllClose(C));

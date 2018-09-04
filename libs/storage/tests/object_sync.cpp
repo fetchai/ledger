@@ -30,6 +30,10 @@
 #include <iostream>
 #include <utility>
 
+// Test of the object sync protocol in the style of the transaction sync in the lane service.
+// A service, TestService here, owns an object store, and the protocols ensure that new objects
+// (Using transactions here) will be synchronized with connected peers.
+
 using namespace fetch::storage;
 using namespace fetch::byte_array;
 using namespace fetch::network;
@@ -37,10 +41,74 @@ using namespace fetch::chain;
 using namespace fetch::service;
 using namespace fetch::ledger;
 
-VerifiedTransaction GetVerifiedTx(uint64_t seed)
+template <typename... Args>
+fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_t port,
+                                 Args &&... args)
+{
+  TCPClient client(nm);
+  client.Connect(address, port);
+
+  if (!client.WaitForAlive(2000))
+  {
+    std::cout << "Failed to connect to client at " << address << " " << port << std::endl;
+    exit(1);
+  }
+
+  ServiceClient s_client(client, nm);
+
+  fetch::service::Promise prom = s_client.Call(std::forward<Args>(args)...);
+
+  if (!prom.Wait(2000))
+  {
+    std::cout << "Failed to make call to client" << std::endl;
+    exit(1);
+  }
+
+  return prom;
+}
+
+void BlockUntilConnect(std::string host, uint16_t port)
+{
+  NetworkManager nm{1};
+  nm.Start();
+
+  while (true)
+  {
+    TCPClient client(nm);
+    client.Connect(host, port);
+
+    for (std::size_t i = 0; i < 10; ++i)
+    {
+      if (client.is_alive())
+      {
+        nm.Stop();
+        return;
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+  }
+}
+
+void BlockUntilConnect(uint16_t port)
+{
+  BlockUntilConnect("localhost", port);
+}
+
+VerifiedTransaction GetRandomTx(uint64_t seed)
 {
   MutableTransaction tx;
+  // Fill the body of the TX with incrementing sequence so we can see it in wireshark etc.
+  ByteArray marker;
+  marker.Resize(5);
+
+  for (std::size_t i = 0; i < 5; ++i)
+  {
+    marker[i] = uint8_t(i);
+  }
+
   tx.set_fee(seed);  // easiest way to create random tx.
+  tx.set_data(marker);
   return VerifiedTransaction::Create(tx);
 }
 
@@ -61,21 +129,22 @@ public:
     CONNECT = 1
   };
 
-  ControllerProtocol(ClientRegister reg, NetworkManager nm) : register_{std::move(reg)}, nm_{nm}
+  ControllerProtocol(ClientRegister reg, NetworkManager nm)
+    : register_{std::move(reg)}
+    , nm_{nm}
   {
     this->Expose(CONNECT, this, &ControllerProtocol::Connect);
   }
 
   void Connect(std::string const &host, uint16_t const &port)
   {
-
     std::shared_ptr<ServiceClient> client =
         register_.CreateServiceClient<TCPClient>(nm_, host, port);
 
     // Wait for connection to be open
-    if (!client->WaitForAlive(500))
+    if (!client->WaitForAlive(1000))
     {
-      std::cout << "Failed to connect client " << __LINE__ << std::endl;
+      std::cout << "+++ Failed to connect client " << __LINE__ << std::endl;
       exit(1);
     }
 
@@ -83,13 +152,6 @@ public:
       std::lock_guard<mutex_type> lock_(services_mutex_);
       services_[client->handle()] = client;
     }
-
-    // Setting up details such that the rest of the lane what kind of
-    // connection we are dealing with.
-    auto details = register_.GetDetails(client->handle());
-
-    details->is_outgoing = true;
-    details->is_peer     = true;
   }
 
 private:
@@ -107,17 +169,17 @@ public:
   using TransactionStore = ObjectStore<VerifiedTransaction>;
   using TxSyncProtocol   = ObjectStoreSyncronisationProtocol<ClientRegister, VerifiedTransaction>;
   using TransactionStoreProtocol = ObjectStoreProtocol<VerifiedTransaction>;
-  using SuperType                = ServiceServer<TCPServer>;
+  using Super                    = ServiceServer<TCPServer>;
 
   enum
   {
-    IDENTITY = 1,
-    TX_STORE,
+    TX_STORE = 1,
     TX_STORE_SYNC,
     CONTROLLER
   };
 
-  TestService(uint16_t const &port, NetworkManager nm) : SuperType(port, nm)
+  TestService(uint16_t const &port, NetworkManager nm)
+    : Super(port, nm)
   {
     thread_pool_ = MakeThreadPool(1);
     this->SetConnectionRegister(register_);
@@ -143,7 +205,10 @@ public:
     tx_sync_protocol_->Start();
   }
 
-  ~TestService() {}
+  ~TestService()
+  {
+    thread_pool_->Stop();
+  }
 
 private:
   ThreadPool     thread_pool_;
@@ -160,9 +225,9 @@ int main(int argc, char const **argv)
 {
   SCENARIO("Testing object store sync")
   {
-    SECTION("Test transaction store protocol (local) ")
+    SECTION("Test transaction store protocol local, threads = 1")
     {
-      NetworkManager nm{10};
+      NetworkManager nm{1};
       nm.Start();
 
       uint16_t                         initial_port = 8080;
@@ -170,68 +235,25 @@ int main(int argc, char const **argv)
 
       TestService test_service(initial_port, nm);
 
+      BlockUntilConnect("localhost", initial_port);
+
       for (std::size_t i = 0; i < 100; ++i)
       {
-        VerifiedTransaction tx = GetVerifiedTx(i);
-
-        TCPClient client(nm);
-        client.Connect("localhost", initial_port);
-
-        for (std::size_t i = 0;; ++i)
-        {
-          if (client.is_alive())
-          {
-            break;
-          }
-
-          if (i == 100)
-          {
-            std::cout << "Failed to connect to server" << std::endl;
-            EXPECT(client.is_alive() == true);
-            exit(1);
-          }
-
-          std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
-
-        ServiceClient s_client(client, nm);
+        VerifiedTransaction tx = GetRandomTx(i);
 
         auto promise =
-            s_client.Call(TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
-                          ResourceID(tx.digest()), tx);
+            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
+                     ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
 
-        promise.Wait(1000);
         sent.push_back(tx);
       }
 
       // Now verify we can get the tx from the store
       for (auto const &tx : sent)
       {
-        TCPClient client(nm);
-        client.Connect("localhost", initial_port);
-
-        for (std::size_t i = 0;; ++i)
-        {
-          if (client.is_alive())
-          {
-            break;
-          }
-
-          if (i == 100)
-          {
-            std::cout << "Failed to connect to server" << std::endl;
-            EXPECT(client.is_alive() == true);
-            exit(1);
-          }
-
-          std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
-
-        ServiceClient s_client(client, nm);
-
         auto promise =
-            s_client.Call(TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
-                          ResourceID(tx.digest()));
+            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
+                     ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
         uint64_t fee = promise.As<VerifiedTransaction>().summary().fee;
 
@@ -244,10 +266,51 @@ int main(int argc, char const **argv)
       nm.Stop();
     };
 
-    /*
-    SECTION("Test transaction store sync protocol (caching, then new joiner) ")
+    SECTION("Test transaction store protocol local, threads = 50")
     {
-      NetworkManager nm{40};
+      NetworkManager nm{50};
+      nm.Start();
+
+      uint16_t                         initial_port = 8080;
+      std::vector<VerifiedTransaction> sent;
+
+      TestService test_service(initial_port, nm);
+
+      BlockUntilConnect("localhost", initial_port);
+
+      for (std::size_t i = 0; i < 100; ++i)
+      {
+        VerifiedTransaction tx = GetRandomTx(i);
+
+        auto promise =
+            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
+                     ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
+
+        sent.push_back(tx);
+      }
+
+      // Now verify we can get the tx from the store
+      for (auto const &tx : sent)
+      {
+        auto promise =
+            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
+                     ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
+
+        uint64_t fee = promise.As<VerifiedTransaction>().summary().fee;
+
+        if (fee != tx.summary().fee || tx.summary().fee == 0)
+        {
+          EXPECT(fee == tx.summary().fee);
+        }
+      }
+
+      nm.Stop();
+    };
+
+    SECTION("Test transaction store sync protocol (caching, then new joiner, threads 50) ")
+    {
+      // TODO(unknown): (HUT) : make this work with 1 - find the post blocking the NM.
+      NetworkManager nm{50};
       nm.Start();
 
       uint16_t                                  initial_port       = 8080;
@@ -260,6 +323,12 @@ int main(int argc, char const **argv)
         services.push_back(std::make_shared<TestService>(initial_port + i, nm));
       }
 
+      // make sure they are all online
+      for (uint16_t i = 0; i < number_of_services; ++i)
+      {
+        BlockUntilConnect(initial_port + i);
+      }
+
       // Connect our services to each other
       for (uint16_t i = 0; i < number_of_services; ++i)
       {
@@ -267,254 +336,106 @@ int main(int argc, char const **argv)
         {
           if (i != j)
           {
-
-            TCPClient client(nm);
-            client.Connect("localhost", initial_port + i);  // Connect to i
-
-            if (!client.WaitForAlive(500))
-            {
-              std::cout << "Failed to connect client " << __LINE__ << std::endl;
-              exit(1);
-            }
-
-            ServiceClient s_client(client, nm);
-
-            auto promise = s_client.Call(TestService::CONTROLLER, ControllerProtocol::CONNECT,
-                                         ByteArray{"localhost"}, uint16_t(initial_port + j));
-
-            // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            // std::cout << "Waiting" << std::endl;
-
-            if (!promise.Wait(500))
-            {
-              std::cout << "Fail" << std::endl;
-              exit(1);
-            }
-
-            // std::cout << "win" << std::endl;
+            CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::CONTROLLER,
+                     ControllerProtocol::CONNECT, ByteArray{"localhost"},
+                     uint16_t(initial_port + j));
           }
         }
       }
-
-      std::cout << "Successfully connected peers together" << std::endl;
-      // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
-      std::cout << "Testing sync." << std::endl;
 
       // Now send all the TX to one of the clients
       std::vector<VerifiedTransaction> sent;
 
+      std::cout << "Sending txes to clients" << std::endl;
+
       for (std::size_t i = 0; i < 500; ++i)
       {
-        VerifiedTransaction tx = GetVerifiedTx(i);
+        VerifiedTransaction tx = GetRandomTx(i);
 
-        TCPClient client(nm);
-        client.Connect("localhost", initial_port);
-
-        for (std::size_t i = 0;; ++i)
-        {
-          if (client.is_alive())
-          {
-            break;
-          }
-
-          if (i == 100)
-          {
-            std::cout << "Failed to connect to server" << std::endl;
-            EXPECT(client.is_alive() == true);
-            exit(1);
-          }
-
-          std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
-
-        ServiceClient s_client(client, nm);
-
-        auto promise =
-            s_client.Call(TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
-                          ResourceID(tx.digest()), tx);
-
-        if (!promise.Wait(1000))
-        {
-          std::cout << "Failed to make call!" << std::endl;
-        }
+        CallPeer(nm, "localhost", uint16_t(initial_port), TestService::TX_STORE,
+                 ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
 
         sent.push_back(tx);
       }
 
+      // Check all peers have identical transaction stores
       bool failed_to_sync = false;
+
+      // wait as long as is reasonable
+      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+
+      std::cout << "Verifying peers synced" << std::endl;
 
       // Now verify we can get the tx from the each client
       for (uint16_t i = 0; i < number_of_services; ++i)
       {
         for (auto const &tx : sent)
         {
-          TCPClient client(nm);
-          client.Connect("localhost", initial_port + i);
-
-          for (std::size_t i = 0;; ++i)
-          {
-            if (client.is_alive())
-            {
-              break;
-            }
-
-            if (i == 500)
-            {
-              std::cout << "Failed to connect to server" << std::endl;
-              EXPECT(client.is_alive() == true);
-              exit(1);
-            }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
-          }
-
-          ServiceClient s_client(client, nm);
-
           auto promise =
-              s_client.Call(TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
-                            ResourceID(tx.digest()));
+              CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::TX_STORE,
+                       ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
-          if (promise.As<VerifiedTransaction>().summary().fee != tx.summary().fee)
+          VerifiedTransaction tx_rec = promise.As<VerifiedTransaction>();
+
+          if (tx_rec.summary().fee != tx.summary().fee)
           {
-            failed_to_sync = true;
-            EXPECT("Fees are the same " == "x");
+            std::cout << "Client " << i << std::endl;
+            std::cout << ToHex(tx_rec.data()) << std::endl;
+            EXPECT(tx_rec.summary().fee == tx.summary().fee);
           }
         }
+
+        EXPECT(i == i);
       }
 
-      EXPECT(failed_to_sync == false);
+      std::cout << "Test new joiner case" << std::endl;
 
-      // Now test new joiner case
+      // Now test new joiner case, add new joiner
       services.push_back(std::make_shared<TestService>(initial_port + number_of_services, nm));
 
+      BlockUntilConnect(initial_port + number_of_services);
+
+      // Connect to peers
       for (uint16_t i = 0; i < number_of_services; ++i)
       {
-        // Connect to newest peer
-        TCPClient client(nm);
-        client.Connect("localhost", uint16_t(initial_port + number_of_services));
-
-        if (!client.WaitForAlive(500))
-        {
-          std::cout << "Failed to connect client " << __LINE__ << std::endl;
-          exit(1);
-        }
-
-        ServiceClient s_client(client, nm);
-
-        // Make peer connect to peer 'i'
-        auto promise = s_client.Call(TestService::CONTROLLER, ControllerProtocol::CONNECT,
-                                     ByteArray{"localhost"}, uint16_t(initial_port + i));
-
-        if (!promise.Wait(500))
-        {
-          std::cout << "Fail" << std::endl;
-          exit(1);
-        }
-      }
-
-      {
-        TCPClient client(nm);
-        client.Connect("localhost", initial_port + number_of_services);
-
-        if (!client.WaitForAlive(500))
-        {
-          std::cout << "Failed to connect client " << __LINE__ << std::endl;
-          exit(1);
-        }
-
-        ServiceClient s_client(client, nm);
-
-        auto promise =
-            s_client.Call(TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::START_SYNC);
-
-        if (!promise.Wait(500))
-        {
-          std::cout << "Fail" << std::endl;
-          exit(1);
-        }
+        CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
+                 TestService::CONTROLLER, ControllerProtocol::CONNECT, ByteArray{"localhost"},
+                 uint16_t(initial_port + i));
       }
 
       // Wait until the sync is done
+      while (true)
       {
-        TCPClient client(nm);
-        client.Connect("localhost", initial_port + number_of_services);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        for (std::size_t i = 0;; ++i)
+        auto promise =
+            CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
+                     TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
+
+        if (promise.As<bool>())
         {
-          if (client.is_alive())
-          {
-            break;
-          }
-
-          if (i == 500)
-          {
-            std::cout << "Failed to connect to server" << std::endl;
-            EXPECT(client.is_alive() == true);
-            exit(1);
-          }
-
-          std::this_thread::sleep_for(std::chrono::milliseconds(5));
+          break;
         }
 
-        ServiceClient s_client(client, nm);
-
-        // Wait for sync
-        for (std::size_t i = 0;; ++i)
-        {
-          bool result =
-              s_client.Call(TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
-
-          if (result)
-          {
-            break;
-          }
-
-          if (i == 1000)
-          {
-            std::cout << "sync timed out" << std::endl;
-            exit(1);
-          }
-
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
+        std::cout << "Waiting for new joiner to sync." << std::endl;
       }
 
-      std::cout << "Verifying" << std::endl;
+      std::cout << "Verifying new joiner sync." << std::endl;
+
       failed_to_sync = false;
+
       // Verify the new joiner
       for (auto const &tx : sent)
       {
-        TCPClient client(nm);
-        client.Connect("localhost", initial_port + number_of_services);
-
-        for (std::size_t i = 0;; ++i)
-        {
-          if (client.is_alive())
-          {
-            break;
-          }
-
-          if (i == 500)
-          {
-            std::cout << "Failed to connect to server" << std::endl;
-            EXPECT(client.is_alive() == true);
-            exit(1);
-          }
-
-          std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
-
-        ServiceClient s_client(client, nm);
-
-        auto promise =
-            s_client.Call(TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
-                          ResourceID(tx.digest()));
+        auto promise = CallPeer(
+            nm, "localhost", uint16_t(initial_port + number_of_services), TestService::TX_STORE,
+            ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
         if (promise.As<VerifiedTransaction>().summary().fee != tx.summary().fee)
         {
           failed_to_sync = true;
-          EXPECT("Fees are the same " == "x" && tx.summary().fee == tx.summary().fee);
+          std::cout << "Expecting: " << tx.summary().fee << std::endl;
+          EXPECT("Fees are the same " == "x");
         }
       }
 
@@ -522,7 +443,146 @@ int main(int argc, char const **argv)
 
       nm.Stop();
     };
-    */
+
+    /*
+    SECTION("Test transaction store sync protocol (caching, then new joiner, threads 1) ")
+    {
+      // TODO: (HUT) : make this work with 1 - find the post blocking the NM.
+      NetworkManager nm{1};
+      nm.Start();
+
+      uint16_t                                  initial_port       = 8080;
+      uint16_t                                  number_of_services = 5;
+      std::vector<std::shared_ptr<TestService>> services;
+
+      // Start up our services
+      for (uint16_t i = 0; i < number_of_services; ++i)
+      {
+        services.push_back(std::make_shared<TestService>(initial_port + i, nm));
+      }
+
+      // make sure they are all online
+      for (uint16_t i = 0; i < number_of_services; ++i)
+      {
+        BlockUntilConnect(initial_port+i);
+      }
+
+      // Connect our services to each other
+      for (uint16_t i = 0; i < number_of_services; ++i)
+      {
+        for (uint16_t j = 0; j < number_of_services; ++j)
+        {
+          if (i != j)
+          {
+            CallPeer(nm, "localhost", uint16_t(initial_port + i),
+                           TestService::CONTROLLER, ControllerProtocol::CONNECT,
+                           ByteArray{"localhost"}, uint16_t(initial_port + j));
+          }
+        }
+      }
+
+      // Now send all the TX to one of the clients
+      std::vector<VerifiedTransaction> sent;
+
+      std::cout << "Sending txes to clients" << std::endl;
+
+      for (std::size_t i = 0; i < 500; ++i)
+      {
+        VerifiedTransaction tx = GetRandomTx(i);
+
+        CallPeer(nm, "localhost", uint16_t(initial_port),
+                         TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
+                         ResourceID(tx.digest()), tx);
+
+        sent.push_back(tx);
+      }
+
+      // Check all peers have identical transaction stores
+      bool failed_to_sync = false;
+
+      // wait as long as is reasonable
+      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+
+      std::cout << "Verifying peers synced" << std::endl;
+
+      // Now verify we can get the tx from the each client
+      for (uint16_t i = 0; i < number_of_services; ++i)
+      {
+        for (auto const &tx : sent)
+        {
+          auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + i),
+                           TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
+                           ResourceID(tx.digest()));
+
+
+          VerifiedTransaction tx_rec = promise.As<VerifiedTransaction>();
+
+          if (tx_rec.summary().fee != tx.summary().fee)
+          {
+            std::cout << "Client " << i << std::endl;
+            std::cout << ToHex(tx_rec.data()) << std::endl;
+            EXPECT(tx_rec.summary().fee == tx.summary().fee);
+          }
+        }
+
+        EXPECT(i == i);
+      }
+
+      std::cout << "Test new joiner case" << std::endl;
+
+      // Now test new joiner case, add new joiner
+      services.push_back(std::make_shared<TestService>(initial_port + number_of_services, nm));
+
+      BlockUntilConnect(initial_port + number_of_services);
+
+      // Connect to peers
+      for (uint16_t i = 0; i < number_of_services; ++i)
+      {
+        CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
+                 TestService::CONTROLLER, ControllerProtocol::CONNECT,
+                 ByteArray{"localhost"}, uint16_t(initial_port + i));
+      }
+
+      // Wait until the sync is done
+      while(true)
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
+                            TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
+
+        if(promise.As<bool>())
+        {
+          break;
+        }
+
+        std::cout << "Waiting for new joiner to sync." << std::endl;
+      }
+
+      std::cout << "Verifying new joiner sync." << std::endl;
+
+      failed_to_sync = false;
+
+      // Verify the new joiner
+      for (auto const &tx : sent)
+      {
+        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
+                            TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
+                            ResourceID(tx.digest()));
+
+
+        if (promise.As<VerifiedTransaction>().summary().fee != tx.summary().fee)
+        {
+          failed_to_sync = true;
+          std::cout << "Expecting: " << tx.summary().fee << std::endl;
+          EXPECT("Fees are the same " == "x");
+        }
+      }
+
+      EXPECT(failed_to_sync == false);
+
+      nm.Stop();
+    }; */
   };
 
   return 0;

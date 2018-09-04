@@ -43,9 +43,18 @@ struct Symbol
     name = name__;
   }
   virtual ~Symbol() = default;
-  bool        IsType() const { return (kind == Kind::Type); }
-  bool        IsVariable() const { return (kind == Kind::Variable); }
-  bool        IsFunctionGroup() const { return (kind == Kind::FunctionGroup); }
+  bool IsType() const
+  {
+    return (kind == Kind::Type);
+  }
+  bool IsVariable() const
+  {
+    return (kind == Kind::Variable);
+  }
+  bool IsFunctionGroup() const
+  {
+    return (kind == Kind::FunctionGroup);
+  }
   Kind        kind;
   std::string name;
 };
@@ -60,13 +69,19 @@ struct SymbolTable
   SymbolPtr Find(const std::string &name)
   {
     auto it = map.find(name);
-    if (it != map.end()) return it->second;
+    if (it != map.end())
+    {
+      return it->second;
+    }
     return nullptr;
   }
   std::unordered_map<std::string, SymbolPtr> map;
 };
 using SymbolTablePtr = std::shared_ptr<SymbolTable>;
-inline SymbolTablePtr CreateSymbolTable() { return std::make_shared<SymbolTable>(SymbolTable()); }
+inline SymbolTablePtr CreateSymbolTable()
+{
+  return std::make_shared<SymbolTable>(SymbolTable());
+}
 
 struct Type;
 using TypePtr = std::shared_ptr<Type>;
@@ -86,7 +101,10 @@ struct Type : public Symbol
     id       = id__;
   }
   virtual ~Type() = default;
-  bool                 IsPrimitiveType() const { return (category == Category::Primitive); }
+  bool IsPrimitiveType() const
+  {
+    return (category == Category::Primitive);
+  }
   Category             category;
   TypeId               id;
   SymbolTablePtr       symbols;
@@ -110,7 +128,8 @@ struct Variable : public Symbol
     For,
     Local
   };
-  Variable(const std::string &name, const Category category__) : Symbol(Kind::Variable, name)
+  Variable(const std::string &name, const Category category__)
+    : Symbol(Kind::Variable, name)
   {
     category = category__;
     index    = 0;
@@ -162,7 +181,9 @@ inline FunctionPtr CreateFunction(const Function::Kind kind, const std::string &
 
 struct FunctionGroup : public Symbol
 {
-  FunctionGroup(const std::string &name) : Symbol(Kind::FunctionGroup, name) {}
+  FunctionGroup(const std::string &name)
+    : Symbol(Kind::FunctionGroup, name)
+  {}
   virtual ~FunctionGroup() = default;
   std::vector<FunctionPtr> functions;
 };
@@ -241,7 +262,10 @@ struct Node
   class Hasher
   {
   public:
-    size_t operator()(const Kind &key) const { return std::hash<uint16_t>{}((uint16_t)key); }
+    size_t operator()(const Kind &key) const
+    {
+      return std::hash<uint16_t>{}((uint16_t)key);
+    }
   };
   Node(Kind kind__, Token *token__)
   {
@@ -256,7 +280,9 @@ struct Node
 
 struct BlockNode : public Node
 {
-  BlockNode(Kind kind__, Token *token__) : Node(kind__, token__) {}
+  BlockNode(Kind kind__, Token *token__)
+    : Node(kind__, token__)
+  {}
   virtual ~BlockNode() = default;
   std::vector<NodePtr> block_children;
   SymbolTablePtr       symbols;
@@ -274,7 +300,8 @@ struct ExpressionNode : public Node
     Type,
     Function
   };
-  ExpressionNode(Kind kind__, Token *token__) : Node(kind__, token__)
+  ExpressionNode(Kind kind__, Token *token__)
+    : Node(kind__, token__)
   {
     category                     = Category::Unknown;
     function_invoked_on_instance = false;

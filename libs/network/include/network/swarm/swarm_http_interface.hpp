@@ -28,7 +28,8 @@ namespace swarm {
 class SwarmHttpModule : public fetch::http::HTTPModule
 {
 public:
-  explicit SwarmHttpModule(std::shared_ptr<SwarmNode> node) : node_{std::move(node)}
+  explicit SwarmHttpModule(std::shared_ptr<SwarmNode> node)
+    : node_{std::move(node)}
   {
     AttachPages();
   }

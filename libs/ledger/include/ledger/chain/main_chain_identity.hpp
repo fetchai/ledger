@@ -42,12 +42,16 @@ public:
   };
 
   MainChainIdentity(client_register_type reg, network_manager_type const &nm)
-    : register_(std::move(reg)), manager_(nm)
+    : register_(std::move(reg))
+    , manager_(nm)
   {}
 
   /// External controls
   /// @{
-  ping_type Ping() { return PING_MAGIC; }
+  ping_type Ping()
+  {
+    return PING_MAGIC;
+  }
 
   void Hello(connection_handle_type const &client)
   {

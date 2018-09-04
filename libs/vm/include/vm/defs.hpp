@@ -30,15 +30,20 @@ namespace vm {
 class VM;
 struct Object
 {
-  Object() {}
+  Object()
+  {}
   Object(TypeId const &type_id__, VM *vm__)
   {
-    count   = 1;
+    count   = 10;  // TODO(private issue 213): Ref counter 1 segfaults
     type_id = type_id__;
     vm      = vm__;
   }
-  virtual ~Object() {}
-  void     AddRef() { ++count; }
+  virtual ~Object()
+  {}
+  void AddRef()
+  {
+    ++count;
+  }
   void     Release();
   uint32_t count;
   TypeId   type_id;
@@ -59,31 +64,100 @@ union Variant
   double   f64;
   Object * object;
 
-  void Zero() { ui64 = 0; }
+  void Zero()
+  {
+    ui64 = 0;
+  }
 
-  void Get(int8_t &value) { value = i8; }
-  void Get(uint8_t &value) { value = ui8; }
-  void Get(int16_t &value) { value = i16; }
-  void Get(uint16_t &value) { value = ui16; }
-  void Get(int32_t &value) { value = i32; }
-  void Get(uint32_t &value) { value = ui32; }
-  void Get(int64_t &value) { value = i64; }
-  void Get(uint64_t &value) { value = ui64; }
-  void Get(float &value) { value = f32; }
-  void Get(double &value) { value = f64; }
-  void Get(Object *&value) { value = object; }
+  void Get(int8_t &value)
+  {
+    value = i8;
+  }
+  void Get(uint8_t &value)
+  {
+    value = ui8;
+  }
+  void Get(int16_t &value)
+  {
+    value = i16;
+  }
+  void Get(uint16_t &value)
+  {
+    value = ui16;
+  }
+  void Get(int32_t &value)
+  {
+    value = i32;
+  }
+  void Get(uint32_t &value)
+  {
+    value = ui32;
+  }
+  void Get(int64_t &value)
+  {
+    value = i64;
+  }
+  void Get(uint64_t &value)
+  {
+    value = ui64;
+  }
+  void Get(float &value)
+  {
+    value = f32;
+  }
+  void Get(double &value)
+  {
+    value = f64;
+  }
+  void Get(Object *&value)
+  {
+    value = object;
+  }
 
-  void Set(int8_t value) { i8 = value; }
-  void Set(uint8_t value) { ui8 = value; }
-  void Set(int16_t value) { i16 = value; }
-  void Set(uint16_t value) { ui16 = value; }
-  void Set(int32_t value) { i32 = value; }
-  void Set(uint32_t value) { ui32 = value; }
-  void Set(int64_t value) { i64 = value; }
-  void Set(uint64_t value) { ui64 = value; }
-  void Set(float value) { f32 = value; }
-  void Set(double value) { f64 = value; }
-  void Set(Object *value) { object = value; }
+  void Set(int8_t value)
+  {
+    i8 = value;
+  }
+  void Set(uint8_t value)
+  {
+    ui8 = value;
+  }
+  void Set(int16_t value)
+  {
+    i16 = value;
+  }
+  void Set(uint16_t value)
+  {
+    ui16 = value;
+  }
+  void Set(int32_t value)
+  {
+    i32 = value;
+  }
+  void Set(uint32_t value)
+  {
+    ui32 = value;
+  }
+  void Set(int64_t value)
+  {
+    i64 = value;
+  }
+  void Set(uint64_t value)
+  {
+    ui64 = value;
+  }
+  void Set(float value)
+  {
+    f32 = value;
+  }
+  void Set(double value)
+  {
+    f64 = value;
+  }
+  void Set(Object *value)
+  {
+    object = value;
+  }
 };
 
 struct Value
@@ -96,14 +170,20 @@ struct Value
 
   ~Value()
   {
-    if (IsObject()) Release();
+    if (IsObject())
+    {
+      Release();
+    }
   }
 
   Value(Value const &other)
   {
     type_id = other.type_id;
     variant = other.variant;
-    if (IsObject()) AddRef();
+    if (IsObject())
+    {
+      AddRef();
+    }
   }
 
   Value &operator=(Value const &other)
@@ -121,10 +201,16 @@ struct Value
       type_id = other.type_id;
       return *this;
     }
-    if (is_object) Release();
+    if (is_object)
+    {
+      Release();
+    }
     type_id = other.type_id;
     variant = other.variant;
-    if (other_is_object) AddRef();
+    if (other_is_object)
+    {
+      AddRef();
+    }
     return *this;
   }
 
@@ -152,7 +238,10 @@ struct Value
       return *this;
     }
 
-    if (is_object) Release();
+    if (is_object)
+    {
+      Release();
+    }
     type_id       = other.type_id;
     variant       = other.variant;
     other.type_id = TypeId::Unknown;
@@ -163,51 +252,79 @@ struct Value
   {
     type_id = other.type_id;
     variant = other.variant;
-    if (IsObject()) AddRef();
+    if (IsObject())
+    {
+      AddRef();
+    }
   }
 
   void Reset()
   {
-    if (IsObject()) Release();
+    if (IsObject())
+    {
+      Release();
+    }
     type_id = TypeId::Unknown;
   }
 
-  void PrimitiveReset() { type_id = TypeId::Unknown; }
+  void PrimitiveReset()
+  {
+    type_id = TypeId::Unknown;
+  }
 
   void AddRef()
   {
-    if (variant.object) variant.object->AddRef();
+    if (variant.object)
+    {
+      variant.object->AddRef();
+    }
   }
 
   void Release()
   {
-    if (variant.object) variant.object->Release();
+    if (variant.object)
+    {
+      variant.object->Release();
+    }
   }
 
   template <typename T>
   void SetPrimitive(T const &primitive, TypeId const &type_id__)
   {
-    if (IsObject()) Release();
+    if (IsObject())
+    {
+      Release();
+    }
     type_id = type_id__;
     variant.Set(primitive);
   }
 
   void SetObject(Object *object, TypeId const &type_id__)
   {
-    if (IsObject()) Release();
+    if (IsObject())
+    {
+      Release();
+    }
     type_id        = type_id__;
     variant.object = object;
   }
 
-  bool    IsObject() const { return type_id > TypeId::PrimitivesObjectsDivider; }
+  bool IsObject() const
+  {
+    return type_id > TypeId::PrimitivesObjectsDivider;
+  }
   TypeId  type_id;
   Variant variant;
 };
 
 struct Script
 {
-  Script() {}
-  Script(const std::string &name__) { name = name__; }
+  Script()
+  {}
+  Script(const std::string &name__)
+  {
+    name = name__;
+  }
   struct Instruction
   {
     Instruction(Opcode const &opcode__, uint16_t const &line__)
@@ -282,7 +399,10 @@ struct Script
   Function const *FindFunction(std::string const &name) const
   {
     auto it = map.find(name);
-    if (it != map.end()) return &(functions[it->second]);
+    if (it != map.end())
+    {
+      return &(functions[it->second]);
+    }
     return nullptr;
   }
 };

@@ -26,10 +26,17 @@ namespace network_benchmark {
 class Endpoint
 {
 public:
-  Endpoint() {}
+  Endpoint()
+  {}
 
-  Endpoint(const std::string &IP, const int TCPPort) : IP_{IP}, TCPPort_{uint16_t(TCPPort)} {}
-  Endpoint(const std::string &IP, const uint16_t TCPPort) : IP_{IP}, TCPPort_{TCPPort} {}
+  Endpoint(const std::string &IP, const int TCPPort)
+    : IP_{IP}
+    , TCPPort_{uint16_t(TCPPort)}
+  {}
+  Endpoint(const std::string &IP, const uint16_t TCPPort)
+    : IP_{IP}
+    , TCPPort_{TCPPort}
+  {}
 
   Endpoint(const json::JSONDocument &jsonDoc)
   {
@@ -75,10 +82,22 @@ public:
     return result;
   }
 
-  const std::string &IP() const { return IP_; }
-  std::string &      IP() { return IP_; }
-  const uint16_t &   TCPPort() const { return TCPPort_; }
-  uint16_t &         TCPPort() { return TCPPort_; }
+  const std::string &IP() const
+  {
+    return IP_;
+  }
+  std::string &IP()
+  {
+    return IP_;
+  }
+  const uint16_t &TCPPort() const
+  {
+    return TCPPort_;
+  }
+  uint16_t &TCPPort()
+  {
+    return TCPPort_;
+  }
 
 private:
   std::string IP_;

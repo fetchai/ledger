@@ -20,35 +20,32 @@
 #include <utility>
 
 #include "defs.hpp"
+
 #include "math/arithmetic/comparison.hpp"
+#include "math/free_functions/free_functions.hpp"
 #include "math/linalg/matrix.hpp"
 
 namespace fetch {
 namespace vm {
 
-struct IntPair : public Object
-{
-  int32_t first, second;
-  IntPair(const TypeId type_id, VM *vm, int32_t const &a, int32_t const &b)
-    : Object(type_id, vm), first(a), second(b)
-  {}
-  virtual ~IntPair() {}
-};
-
-/////////////// END OF CUSTOM CLASSES
-
 struct String : public Object
 {
   std::string str;
   bool        is_literal;
-  String() {}
+  String()
+  {}
   String(VM *vm, std::string const &str__, const bool is_literal__)
-    : Object(TypeId::String, vm), str(std::move(str__)), is_literal(is_literal__)
+    : Object(TypeId::String, vm)
+    , str(std::move(str__))
+    , is_literal(is_literal__)
   {}
   String(VM *vm, std::string &&str__, const bool is_literal__)
-    : Object(TypeId::String, vm), str(str__), is_literal(is_literal__)
+    : Object(TypeId::String, vm)
+    , str(str__)
+    , is_literal(is_literal__)
   {}
-  virtual ~String() {}
+  virtual ~String()
+  {}
 };
 
 template <typename T>
@@ -56,9 +53,16 @@ struct Matrix : public Object
 {
   fetch::math::linalg::Matrix<T, fetch::memory::Array<T>> matrix;
   Matrix(const TypeId type_id, VM *vm, const size_t rows, const size_t columns)
-    : Object(type_id, vm), matrix(rows, columns)
+    : Object(type_id, vm)
+    , matrix(rows, columns)
   {}
-  virtual ~Matrix() {}
+  Matrix(const TypeId type_id, VM *vm,
+         fetch::math::linalg::Matrix<T, fetch::memory::Array<T>> &&matrix__)
+    : Object(type_id, vm)
+    , matrix(matrix__)
+  {}
+  virtual ~Matrix()
+  {}
 };
 using MatrixFloat32 = Matrix<float>;
 using MatrixFloat64 = Matrix<double>;
@@ -67,7 +71,9 @@ template <typename T>
 struct Array : public Object
 {
   std::vector<T> elements;
-  Array(const TypeId type_id, VM *vm, const size_t size) : Object(type_id, vm), elements(size, T(0))
+  Array(const TypeId type_id, VM *vm, const size_t size)
+    : Object(type_id, vm)
+    , elements(size, T(0))
   {}
   template <typename U, typename std::enable_if<std::is_pointer<U>::value>::type * = nullptr>
   void Release()
@@ -84,7 +90,10 @@ struct Array : public Object
   template <typename U, typename std::enable_if<!std::is_pointer<U>::value>::type * = nullptr>
   void Release()
   {}
-  virtual ~Array() { Release<T>(); }
+  virtual ~Array()
+  {
+    Release<T>();
+  }
 };
 
 template <typename T>
@@ -100,15 +109,61 @@ struct IsMatrix<MatrixFloat64> : public std::true_type
 {
 };
 
+/// Forward declaration for class and function export
+/// @{
+class Module;
+
+namespace details {
+template <typename T>
+struct LoaderClass;
+
+template <typename T, int N>
+struct StorerClass;
+
+template <int N>
+struct Resetter;
+}  // namespace details
+/// }
+
 class VM
 {
 public:
-  VM() {}
-  ~VM() {}
-  bool Execute(const Script &script, const std::string &name);
+  VM(Module *module = nullptr)
+    : module_(module)
+  {}
+  ~VM()
+  {}
+  bool        Execute(const Script &script, const std::string &name);
+  std::string error() const
+  {
+    return error_;
+  }
+  std::size_t error_line() const
+  {
+    return error_line_;
+  }
 
 private:
   friend struct Object;
+
+  /// Friends and objects that allow dynamic module export
+  /// @{
+  Module *module_ = nullptr;
+
+  template <typename T>
+  friend class ClassInterface;
+  friend class Module;
+  friend class BaseModule;
+
+  template <int N>
+  friend struct details::Resetter;
+  template <typename T>
+  friend struct details::LoaderClass;
+
+  template <typename T, int N>
+  friend struct details::StorerClass;
+  /// }
+
   static const int FRAME_STACK_SIZE = 40;
   static const int STACK_SIZE       = 5000;
   static const int MAX_LIVE_OBJECTS = 200;
@@ -153,8 +208,12 @@ private:
   const Script::Instruction *instruction_;
   bool                       stop_;
   std::string                error_;
+  std::size_t                error_line_;
 
-  Value &GetVariable(const Index variable_index) { return stack_[bsp_ + variable_index]; }
+  Value &GetVariable(const Index variable_index)
+  {
+    return stack_[bsp_ + variable_index];
+  }
 
   void Destruct(const int scope_number)
   {
@@ -162,7 +221,10 @@ private:
     while (live_object_sp_ >= 0)
     {
       const LiveObjectInfo &info = live_object_stack_[live_object_sp_];
-      if ((info.frame_sp != frame_sp_) || (info.scope_number < scope_number)) break;
+      if ((info.frame_sp != frame_sp_) || (info.scope_number < scope_number))
+      {
+        break;
+      }
       Value &variable = GetVariable(info.variable_index);
       variable.Release();
       --live_object_sp_;
@@ -185,7 +247,10 @@ private:
     sp_ += num_locals;
   }
 
-  void ReleaseObject(Object *object, const TypeId type_id) { delete object; }
+  void ReleaseObject(Object *object, const TypeId type_id)
+  {
+    delete object;
+  }
 
   void RuntimeError(const std::string &message);
   void AcquireMatrix(const size_t rows, const size_t columns, MatrixFloat32 *&m);
@@ -338,9 +403,13 @@ private:
       String *lhs = static_cast<String *>(lhsv.variant.object);
       String *rhs = static_cast<String *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     default:
@@ -481,9 +550,13 @@ private:
       String *lhs = static_cast<String *>(lhsv.variant.object);
       String *rhs = static_cast<String *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float32:
@@ -491,9 +564,13 @@ private:
       MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
       MatrixFloat32 *rhs = static_cast<MatrixFloat32 *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float64:
@@ -501,45 +578,65 @@ private:
       MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
       MatrixFloat64 *rhs = static_cast<MatrixFloat64 *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float32__Float32:
     {
       MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
       if (lhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhsv.variant.f32);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float64__Float64:
     {
       MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
       if (lhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhs, rhsv.variant.f64);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Float32__Matrix_Float32:
     {
       MatrixFloat32 *rhs = static_cast<MatrixFloat32 *>(rhsv.variant.object);
       if (rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhsv.variant.f32, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Float64__Matrix_Float64:
     {
       MatrixFloat64 *rhs = static_cast<MatrixFloat64 *>(rhsv.variant.object);
       if (rhs)
+      {
         Op::Apply(this, lhsv, rhsv, lhsv.variant.f64, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     default:
@@ -613,9 +710,13 @@ private:
       MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
       MatrixFloat32 *rhs = static_cast<MatrixFloat32 *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float64:
@@ -623,27 +724,39 @@ private:
       MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
       MatrixFloat64 *rhs = static_cast<MatrixFloat64 *>(rhsv.variant.object);
       if (lhs && rhs)
+      {
         Op::Apply(this, lhs, rhs);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float32__Float32:
     {
       MatrixFloat32 *lhs = static_cast<MatrixFloat32 *>(lhsv.variant.object);
       if (lhs)
+      {
         Op::Apply(this, lhs, rhsv.variant.f32);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     case TypeId::Matrix_Float64__Float64:
     {
       MatrixFloat64 *lhs = static_cast<MatrixFloat64 *>(lhsv.variant.object);
       if (lhs)
+      {
         Op::Apply(this, lhs, rhsv.variant.f64);
+      }
       else
+      {
         RuntimeError("null reference");
+      }
       break;
     }
     default:
@@ -755,7 +868,10 @@ private:
   void HandleMatrixIndexedAssignment(const TypeId type_id)
   {
     ElementType *ptr;
-    if (GetMatrixElement(ptr) == false) return;
+    if (GetMatrixElement(ptr) == false)
+    {
+      return;
+    }
     Value &matrixv = stack_[sp_--];
     Value &rhsv    = stack_[sp_--];
     rhsv.variant.Get(*ptr);
@@ -767,7 +883,10 @@ private:
   void HandlePrimitiveArrayIndexedAssignment(const TypeId type_id)
   {
     ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false) return;
+    if (GetArrayElement<ElementType>(ptr) == false)
+    {
+      return;
+    }
     Value &arrayv = stack_[sp_--];
     Value &rhsv   = stack_[sp_--];
     rhsv.variant.Get(*ptr);
@@ -780,7 +899,10 @@ private:
   {
     if (lhs != rhs)
     {
-      if (lhs) lhs->Release();
+      if (lhs)
+      {
+        lhs->Release();
+      }
       lhs = rhs;
     }
   }
@@ -788,7 +910,10 @@ private:
   void HandleObjectArrayIndexedAssignment(const TypeId type_id)
   {
     Object **ptr;
-    if (GetArrayElement<Object *>(ptr) == false) return;
+    if (GetArrayElement<Object *>(ptr) == false)
+    {
+      return;
+    }
     Value & arrayv = stack_[sp_--];
     Value & rhsv   = stack_[sp_--];
     Object *rhs;
@@ -902,7 +1027,10 @@ private:
   void HandleMatrixIndexOp(const TypeId type_id)
   {
     ElementType *ptr;
-    if (GetMatrixElement(ptr) == false) return;
+    if (GetMatrixElement(ptr) == false)
+    {
+      return;
+    }
     ElementType element = *ptr;
     Value &     matrixv = stack_[sp_];
     matrixv.Release();
@@ -914,7 +1042,10 @@ private:
   void HandlePrimitiveArrayIndexOp(const TypeId type_id)
   {
     ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false) return;
+    if (GetArrayElement<ElementType>(ptr) == false)
+    {
+      return;
+    }
     ElementType element = *ptr;
     Value &     arrayv  = stack_[sp_];
     arrayv.Release();
@@ -925,9 +1056,15 @@ private:
   void HandleObjectArrayIndexOp(const TypeId type_id)
   {
     Object **ptr;
-    if (GetArrayElement<Object *>(ptr) == false) return;
+    if (GetArrayElement<Object *>(ptr) == false)
+    {
+      return;
+    }
     Object *object = *ptr;
-    if (object) object->AddRef();
+    if (object)
+    {
+      object->AddRef();
+    }
     Value &arrayv = stack_[sp_];
     arrayv.Release();
     arrayv.type_id        = type_id;
@@ -1038,12 +1175,15 @@ private:
   void HandleMatrixIndexedArithmeticAssignmentOp()
   {
     ElementType *ptr;
-    if (GetMatrixElement(ptr) == false) return;
+    if (GetMatrixElement(ptr) == false)
+    {
+      return;
+    }
     Value &     matrixv = stack_[sp_--];
     Value &     rhsv    = stack_[sp_--];
     ElementType rhs;
     rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);  // what if fails?
+    Op::Apply(this, *ptr, rhs);  // TODO(private issue 214): what if fails?
     matrixv.Reset();
     rhsv.Reset();
   }
@@ -1052,12 +1192,15 @@ private:
   void HandlePrimitiveArrayIndexedArithmeticAssignmentOp()
   {
     ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false) return;
+    if (GetArrayElement<ElementType>(ptr) == false)
+    {
+      return;
+    }
     Value &     arrayv = stack_[sp_--];
     Value &     rhsv   = stack_[sp_--];
     ElementType rhs;
     rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);  // what if fails?
+    Op::Apply(this, *ptr, rhs);  // TODO(private issue 214):  what if fails?
     arrayv.Reset();
     rhsv.Reset();
   }
@@ -1066,13 +1209,16 @@ private:
   void HandleObjectArrayIndexedArithmeticAssignmentOp()
   {
     ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false) return;
+    if (GetArrayElement<ElementType>(ptr) == false)
+    {
+      return;
+    }
     Value &        arrayv = stack_[sp_--];
     Value &        rhsv   = stack_[sp_--];
     RHSVariantType xx;
     rhsv.variant.Get(xx);
     RHSElementType rhs = static_cast<RHSElementType>(xx);
-    Op::Apply(this, *ptr, rhs);  // what if fails?
+    Op::Apply(this, *ptr, rhs);  //  TODO(private issue 214): what if fails?
     arrayv.Reset();
     rhsv.Reset();
   }
@@ -1135,7 +1281,10 @@ private:
   void HandleIndexedPrefixPostfixOpHelper(const TypeId type_id)
   {
     ElementType *ptr;
-    if (GetArrayElement<ElementType>(ptr) == false) return;
+    if (GetArrayElement<ElementType>(ptr) == false)
+    {
+      return;
+    }
     ElementType element;
     Op::Apply(this, element, *ptr);  // what if fails?
     Value &arrayv = stack_[sp_];
@@ -1301,7 +1450,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Add(lhs->matrix, rhs->matrix);
+    Add(lhs->matrix, rhs->matrix, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1318,7 +1467,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Add(lhs->matrix, rhs);
+    Add(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1349,7 +1498,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Subtract(lhs->matrix, rhs->matrix);
+    Subtract(lhs->matrix, rhs->matrix, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1366,7 +1515,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Subtract(lhs->matrix, rhs);
+    Subtract(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1402,7 +1551,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Multiply(lhs->matrix, rhs);
+    Multiply(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1420,7 +1569,7 @@ private:
     }
     M *m;
     AcquireMatrix(rhs_rows, rhs_columns, m);
-    m->matrix.Multiply(rhs->matrix, lhs);
+    Multiply(rhs->matrix, lhs, m->matrix);
     lhsv.SetObject(m, rhsv.type_id);
   }
 
@@ -1442,11 +1591,11 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Divide(lhs->matrix, rhs);
+    Divide(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
-  template <typename M>
+  template <typename M, typename T>
   void MatrixUnaryMinus(Value &lhsv, M *lhs)
   {
     const size_t lhs_rows                 = lhs->matrix.height();
@@ -1456,13 +1605,13 @@ private:
     {
       // TODO(tfr): implement unary minus
       // is there an inplace op for this?
-      lhs->matrix.InlineMultiply(-1);
+      lhs->matrix.InlineMultiply(T(-1));
       return;
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
     // is there a call for this?
-    m->matrix.Multiply(lhs->matrix, -1);
+    Multiply(lhs->matrix, T(-1), m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1674,7 +1823,8 @@ private:
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
     {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs) {}
+    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    {}
   };
 
   struct MultiplyOp
@@ -1702,7 +1852,8 @@ private:
     {
       vm->NumberMatrixMultiply(lhsv, rhsv, lhs, rhs);
     }
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs) {}
+    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    {}
   };
 
   struct DivideOp
@@ -1731,7 +1882,8 @@ private:
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
     {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs) {}
+    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    {}
   };
 
   struct UnaryMinusOp
@@ -1743,19 +1895,20 @@ private:
     }
     template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-    {
-      vm->MatrixUnaryMinus(lhsv, lhs);
-    }
+    {}
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
-    {}
+    {
+      vm->MatrixUnaryMinus<M, T>(lhsv, lhs);
+    }
     template <typename T, typename M,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
     {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs) {}
+    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    {}
   };
 
   struct AddAssignOp

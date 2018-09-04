@@ -47,7 +47,10 @@ public:
     tm_->Stop();
   }
 
-  void UseCore(std::shared_ptr<fetch::network::NetworkNodeCore> nn_core) { nn_core_ = nn_core; }
+  void UseCore(std::shared_ptr<fetch::network::NetworkNodeCore> nn_core)
+  {
+    nn_core_ = nn_core;
+  }
 
   template <typename F>
   void Post(F &&f)
@@ -60,9 +63,15 @@ public:
     tm_->Post(f, milliseconds);
   }
 
-  PythonWorker() { tm_ = fetch::network::MakeThreadPool(1); }
+  PythonWorker()
+  {
+    tm_ = fetch::network::MakeThreadPool(1);
+  }
 
-  virtual ~PythonWorker() { Stop(); }
+  virtual ~PythonWorker()
+  {
+    Stop();
+  }
 
 private:
   mutex_type                                       mutex_;

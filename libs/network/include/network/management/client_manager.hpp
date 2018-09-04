@@ -40,7 +40,9 @@ public:
   using connection_type        = typename AbstractConnection::shared_type;
   using connection_handle_type = typename AbstractConnection::connection_handle_type;
 
-  ClientManager(AbstractNetworkServer &server) : server_(server), clients_mutex_(__LINE__, __FILE__)
+  ClientManager(AbstractNetworkServer &server)
+    : server_(server)
+    , clients_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
   }

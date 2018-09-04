@@ -56,7 +56,10 @@ int main()
   auto p3 = client.Call(MYPROTO, SLOWFUNCTION);
   //  client.WithDecorators(aes, ... ).Call( MYPROTO,SLOWFUNCTION, 4, 3 );
 
-  if (!p1.is_fulfilled()) std::cout << "p1 is not yet fulfilled" << std::endl;
+  if (!p1.is_fulfilled())
+  {
+    std::cout << "p1 is not yet fulfilled" << std::endl;
+  }
 
   p1.Wait();
 

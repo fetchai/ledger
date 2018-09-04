@@ -58,17 +58,24 @@ public:
           --i;
         }
         else
+        {
           params_[name] = value;
+        }
       }
       else
+      {
         args_.push_back(name);
+      }
     }
   }
 
   template <typename T>
   T GetArg(std::size_t const &i, T const &default_value) const
   {
-    if (i >= args_.size()) return default_value;
+    if (i >= args_.size())
+    {
+      return default_value;
+    }
 
     std::stringstream s(args_[i]);
     T                 ret;
@@ -79,7 +86,10 @@ public:
   template <typename T>
   T GetArg(std::size_t const &i) const
   {
-    if (i >= args_.size()) throw std::runtime_error("parameter does not exist");
+    if (i >= args_.size())
+    {
+      throw std::runtime_error("parameter does not exist");
+    }
 
     std::stringstream s(args_[i]);
     T                 ret;
@@ -89,21 +99,30 @@ public:
 
   std::string GetArg(std::size_t const &i) const
   {
-    if (i >= args_.size()) throw std::runtime_error("parameter does not exist");
+    if (i >= args_.size())
+    {
+      throw std::runtime_error("parameter does not exist");
+    }
 
     return args_[i];
   }
 
   std::string GetArg(std::size_t const &i, std::string const &default_value) const
   {
-    if (i >= args_.size()) return default_value;
+    if (i >= args_.size())
+    {
+      return default_value;
+    }
 
     return args_[i];
   }
 
   std::string GetParam(std::string const &key, std::string const &default_value) const
   {
-    if (params_.find(key) == params_.end()) return default_value;
+    if (params_.find(key) == params_.end())
+    {
+      return default_value;
+    }
 
     return params_.find(key)->second;
   }
@@ -111,7 +130,10 @@ public:
   template <typename T>
   T GetParam(std::string const &key, T const &default_value) const
   {
-    if (params_.find(key) == params_.end()) return default_value;
+    if (params_.find(key) == params_.end())
+    {
+      return default_value;
+    }
 
     std::stringstream s(params_.find(key)->second);
     T                 ret;
@@ -119,7 +141,10 @@ public:
     return ret;
   }
 
-  std::size_t arg_size() const { return args_.size(); }
+  std::size_t arg_size() const
+  {
+    return args_.size();
+  }
 };
 }  // namespace commandline
 }  // namespace fetch

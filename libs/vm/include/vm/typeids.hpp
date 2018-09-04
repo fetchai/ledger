@@ -79,7 +79,8 @@ enum class TypeId : uint16_t
   Array_Matrix_Float64__Float64,
 
   // Custom
-  IntPair
+  StartOfUserTypes =
+      32000  // This Type code always need to have the highest value - preferably constant.
 };
 
 inline bool IsIntegralType(const TypeId id)
@@ -91,7 +92,10 @@ inline bool IsIntegralType(const TypeId id)
 
 inline bool IsNumericType(const TypeId id)
 {
-  if (IsIntegralType(id)) return true;
+  if (IsIntegralType(id))
+  {
+    return true;
+  }
   return ((id == TypeId::Float32) || (id == TypeId::Float64));
 }
 

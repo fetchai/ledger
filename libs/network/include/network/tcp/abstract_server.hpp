@@ -30,7 +30,8 @@ public:
 
   virtual void PushRequest(connection_handle_type client, message_type const &msg) = 0;
 
-  virtual ~AbstractNetworkServer() {}
+  virtual ~AbstractNetworkServer()
+  {}
 };
 
 }  // namespace network

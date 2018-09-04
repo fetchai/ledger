@@ -36,7 +36,8 @@ public:
    *
    * @node is an instance of the object we want to expose the interface of
    */
-  QuickStartProtocol(std::shared_ptr<T> node) : Protocol()
+  QuickStartProtocol(std::shared_ptr<T> node)
+    : Protocol()
   {
     // Here we expose the functions in our class (ping, receiveMessage etc.)
     // using our protocol enums

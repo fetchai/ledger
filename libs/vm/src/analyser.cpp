@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/analyser.hpp"
+#include "vm/module.hpp"
 #include <sstream>
 
 namespace fetch {
@@ -24,7 +25,7 @@ namespace vm {
 
 std::string Analyser::CONSTRUCTOR = "$constructor$";
 
-Analyser::Analyser()
+Analyser::Analyser(Module *module)
 {
   symbols_ = CreateSymbolTable();
 
@@ -39,20 +40,53 @@ Analyser::Analyser()
   matrix_template_type_ = CreateTemplateType("Matrix", TypeId::MatrixTemplate);
   array_template_type_  = CreateTemplateType("Array", TypeId::ArrayTemplate);
 
-  void_type_           = CreateType("Void", Type::Category::Primitive, TypeId::Void);
-  null_type_           = CreateType("Null", Type::Category::Primitive, TypeId::Null);
-  bool_type_           = CreatePrimitiveType("Bool", TypeId::Bool);
-  int8_type_           = CreatePrimitiveType("Int8", TypeId::Int8);
-  byte_type_           = CreatePrimitiveType("Byte", TypeId::Byte);
-  int16_type_          = CreatePrimitiveType("Int16", TypeId::Int16);
-  uint16_type_         = CreatePrimitiveType("UInt16", TypeId::UInt16);
-  int32_type_          = CreatePrimitiveType("Int32", TypeId::Int32);
-  uint32_type_         = CreatePrimitiveType("UInt32", TypeId::UInt32);
-  int64_type_          = CreatePrimitiveType("Int64", TypeId::Int64);
-  uint64_type_         = CreatePrimitiveType("UInt64", TypeId::UInt64);
-  float32_type_        = CreatePrimitiveType("Float32", TypeId::Float32);
-  float64_type_        = CreatePrimitiveType("Float64", TypeId::Float64);
-  string_type_         = CreateClassType("String", TypeId::String);
+  // Defines a new type
+  void_type_ = CreateType("Void", Type::Category::Primitive, TypeId::Void);
+  // ... and make a mapping to its corresponding C++ type
+  RegisterType<void>(void_type_);
+
+  null_type_ = CreateType("Null", Type::Category::Primitive, TypeId::Null);
+  RegisterType<std::nullptr_t>(null_type_);
+
+  bool_type_ = CreatePrimitiveType("Bool", TypeId::Bool);
+  RegisterType<bool>(bool_type_);
+
+  int8_type_ = CreatePrimitiveType("Int8", TypeId::Int8);
+  RegisterType<int8_t>(int8_type_);
+
+  byte_type_ = CreatePrimitiveType("Byte", TypeId::Byte);
+  RegisterType<uint8_t>(byte_type_);
+
+  int16_type_ = CreatePrimitiveType("Int16", TypeId::Int16);
+  RegisterType<int16_t>(int16_type_);
+
+  uint16_type_ = CreatePrimitiveType("UInt16", TypeId::UInt16);
+  RegisterType<uint16_t>(uint16_type_);
+
+  int32_type_ = CreatePrimitiveType("Int32", TypeId::Int32);
+  RegisterType<int32_t>(int32_type_);
+
+  uint32_type_ = CreatePrimitiveType("UInt32", TypeId::UInt32);
+  RegisterType<uint32_t>(uint32_type_);
+
+  int64_type_ = CreatePrimitiveType("Int64", TypeId::Int64);
+  RegisterType<int64_t>(int64_type_);
+
+  uint64_type_ = CreatePrimitiveType("UInt64", TypeId::UInt64);
+  RegisterType<uint64_t>(uint64_type_);
+
+  float32_type_ = CreatePrimitiveType("Float32", TypeId::Float32);
+  RegisterType<float>(float32_type_);
+
+  float64_type_ = CreatePrimitiveType("Float64", TypeId::Float64);
+  RegisterType<double>(float64_type_);
+
+  // Non-primitive builtin types
+  string_type_ = CreateClassType("String", TypeId::String);
+  RegisterType<std::string>(string_type_);
+
+  // The types are not registered yet, as custom modules do not have support for
+  // templating just yet.
   matrix_float32_type_ = CreateTemplateInstantiationType("Matrix<Float32>", TypeId::Matrix_Float32,
                                                          matrix_template_type_, {float32_type_});
   matrix_float64_type_ = CreateTemplateInstantiationType("Matrix<Float64>", TypeId::Matrix_Float64,
@@ -106,18 +140,13 @@ Analyser::Analyser()
                            template_instantiation_type_, Opcode::CreateArray);
 
   // Custom functions
-  TypePtr int32_pair_class_ = CreateClassType("IntPair", TypeId::IntPair);
 
-  CreateOpcodeTypeFunction(int32_pair_class_, CONSTRUCTOR, {int32_type_, int32_type_},
-                           int32_pair_class_, Opcode::CreateIntPair);
-  CreateOpcodeInstanceFunction(int32_pair_class_, "first", {}, int32_type_, Opcode::IntPairFirst);
-  CreateOpcodeInstanceFunction(int32_pair_class_, "second", {}, int32_type_, Opcode::IntPairSecond);
-
-  CreateOpcodeTypeFunction(int32_pair_class_, "Fib", {int32_pair_class_}, int32_pair_class_,
-                           Opcode::Fib);
-
-  CreateOpcodeFunction("print", {int32_type_}, void_type_, Opcode::PrintInt32);
-  CreateOpcodeFunction("print", {array_byte_type_}, void_type_, Opcode::PrintStr);
+  // If new additional functionality is defined in the module
+  // we set the appropriate opcodes up here.
+  if (module != nullptr)
+  {
+    module->Setup(this);
+  }
 }
 
 bool Analyser::Analyse(const BlockNodePtr &root, std::vector<std::string> &errors)
@@ -265,7 +294,10 @@ void Analyser::BuildFunctionDefinition(const BlockNodePtr &parent_block_node,
   {
     return_type = void_type_;
   }
-  if (problems) return;
+  if (problems)
+  {
+    return;
+  }
   FunctionGroupPtr fg;
   SymbolPtr        symbol = parent_block_node->symbols->Find(name);
   if (symbol)
@@ -321,7 +353,10 @@ void Analyser::AnnotateBlock(const BlockNodePtr &block_node)
   blocks_.push_back(block_node);
   const bool is_loop = ((block_node->kind == Node::Kind::WhileStatement) ||
                         (block_node->kind == Node::Kind::ForStatement));
-  if (is_loop) loops_.push_back(block_node);
+  if (is_loop)
+  {
+    loops_.push_back(block_node);
+  }
   for (const NodePtr &child : block_node->block_children)
   {
     switch (child->kind)
@@ -361,13 +396,17 @@ void Analyser::AnnotateBlock(const BlockNodePtr &block_node)
     case Node::Kind::BreakStatement:
     {
       if (loops_.size() == 0)
+      {
         AddError(child->token, "break statement is not inside a while or for loop");
+      }
       break;
     }
     case Node::Kind::ContinueStatement:
     {
       if (loops_.size() == 0)
+      {
         AddError(child->token, "continue statement is not inside a while or for loop");
+      }
       break;
     }
     case Node::Kind::AssignOp:
@@ -398,7 +437,10 @@ void Analyser::AnnotateBlock(const BlockNodePtr &block_node)
     }
     }
   }
-  if (is_loop) loops_.pop_back();
+  if (is_loop)
+  {
+    loops_.pop_back();
+  }
   blocks_.pop_back();
 }
 
@@ -447,7 +489,10 @@ bool Analyser::TestBlock(const BlockNodePtr &block_node)
           const bool   able_to_reach_reach_end_of_block = TestBlock(node);
           able_to_reach_end_of_if_statement |= able_to_reach_reach_end_of_block;
         }
-        if (able_to_reach_end_of_if_statement == false) return false;
+        if (able_to_reach_end_of_if_statement == false)
+        {
+          return false;
+        }
       }
       break;
     }
@@ -558,15 +603,24 @@ void Analyser::AnnotateVarStatement(const BlockNodePtr &parent_block_node,
   if (var_statement_node->kind == Node::Kind::VarDeclarationStatement)
   {
     ExpressionNodePtr type_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
-    if (AnnotateTypeExpression(type_node) == false) return;
+    if (AnnotateTypeExpression(type_node) == false)
+    {
+      return;
+    }
     variable->type = type_node->type;
   }
   else if (var_statement_node->kind == Node::Kind::VarDeclarationTypedAssignmentStatement)
   {
     ExpressionNodePtr type_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
-    if (AnnotateTypeExpression(type_node) == false) return;
+    if (AnnotateTypeExpression(type_node) == false)
+    {
+      return;
+    }
     ExpressionNodePtr expression_node = ConvertToExpressionNodePtr(var_statement_node->children[2]);
-    if (AnnotateExpression(expression_node) == false) return;
+    if (AnnotateExpression(expression_node) == false)
+    {
+      return;
+    }
     if (expression_node->type->id != TypeId::Null)
     {
       if (type_node->type != expression_node->type)
@@ -591,7 +645,10 @@ void Analyser::AnnotateVarStatement(const BlockNodePtr &parent_block_node,
   else
   {
     ExpressionNodePtr expression_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
-    if (AnnotateExpression(expression_node) == false) return;
+    if (AnnotateExpression(expression_node) == false)
+    {
+      return;
+    }
     if ((expression_node->type->id == TypeId::Void) || (expression_node->type->id == TypeId::Null))
     {
       AddError(expression_node->token, "unable to infer type");
@@ -607,7 +664,10 @@ void Analyser::AnnotateReturnStatement(const NodePtr &return_statement_node)
   {
     ExpressionNodePtr expression_node =
         ConvertToExpressionNodePtr(return_statement_node->children[0]);
-    if (AnnotateExpression(expression_node) == false) return;
+    if (AnnotateExpression(expression_node) == false)
+    {
+      return;
+    }
     if (expression_node->type->id != TypeId::Null)
     {
       if (expression_node->type != function_->return_type)
@@ -666,11 +726,17 @@ bool Analyser::AnnotateAssignOp(const ExpressionNodePtr &node)
 {
   for (const NodePtr &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false) return false;
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (IsWriteable(lhs) == false) return false;
+  if (IsWriteable(lhs) == false)
+  {
+    return false;
+  }
   if (rhs->type->id == TypeId::Void)
   {
     // can't assign from a Void-returning function
@@ -704,13 +770,22 @@ bool Analyser::AnnotateAddSubtractAssignOp(const ExpressionNodePtr &node)
 {
   for (const NodePtr &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false) return false;
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (IsWriteable(lhs) == false) return false;
+  if (IsWriteable(lhs) == false)
+  {
+    return false;
+  }
   TypePtr type = IsAddSubtractCompatible(node, lhs, rhs);
-  if (type == nullptr) return false;
+  if (type == nullptr)
+  {
+    return false;
+  }
   SetRV(node, type);
   return true;
 }
@@ -719,13 +794,22 @@ bool Analyser::AnnotateMultiplyAssignOp(const ExpressionNodePtr &node)
 {
   for (const NodePtr &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false) return false;
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (IsWriteable(lhs) == false) return false;
+  if (IsWriteable(lhs) == false)
+  {
+    return false;
+  }
   TypePtr type = IsMultiplyCompatible(node, lhs, rhs);
-  if (type == nullptr) return false;
+  if (type == nullptr)
+  {
+    return false;
+  }
   SetRV(node, type);
   return true;
 }
@@ -734,12 +818,21 @@ bool Analyser::AnnotateDivideAssignOp(const ExpressionNodePtr &node)
 {
   for (const NodePtr &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false) return false;
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (IsWriteable(lhs) == false) return false;
-  if (IsDivideCompatible(node, lhs, rhs) == nullptr) return false;
+  if (IsWriteable(lhs) == false)
+  {
+    return false;
+  }
+  if (IsDivideCompatible(node, lhs, rhs) == nullptr)
+  {
+    return false;
+  }
   SetRV(node, lhs->type);
   return true;
 }
@@ -987,33 +1080,51 @@ bool Analyser::AnnotateExpression(const ExpressionNodePtr &node)
   }
   case Node::Kind::AddOp:
   {
-    if (AnnotateAddOp(node) == false) return false;
+    if (AnnotateAddOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   case Node::Kind::SubtractOp:
   {
-    if (AnnotateSubtractOp(node) == false) return false;
+    if (AnnotateSubtractOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   case Node::Kind::MultiplyOp:
   {
-    if (AnnotateMultiplyOp(node) == false) return false;
+    if (AnnotateMultiplyOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   case Node::Kind::DivideOp:
   {
-    if (AnnotateDivideOp(node) == false) return false;
+    if (AnnotateDivideOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   case Node::Kind::UnaryMinusOp:
   {
-    if (AnnotateUnaryMinusOp(node) == false) return false;
+    if (AnnotateUnaryMinusOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   case Node::Kind::EqualOp:
   case Node::Kind::NotEqualOp:
   {
-    if (AnnotateEqualityOp(node) == false) return false;
+    if (AnnotateEqualityOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   case Node::Kind::LessThanOp:
@@ -1021,18 +1132,27 @@ bool Analyser::AnnotateExpression(const ExpressionNodePtr &node)
   case Node::Kind::GreaterThanOp:
   case Node::Kind::GreaterThanOrEqualOp:
   {
-    if (AnnotateRelationalOp(node) == false) return false;
+    if (AnnotateRelationalOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   case Node::Kind::AndOp:
   case Node::Kind::OrOp:
   {
-    if (AnnotateBinaryLogicalOp(node) == false) return false;
+    if (AnnotateBinaryLogicalOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   case Node::Kind::NotOp:
   {
-    if (AnnotateUnaryLogicalOp(node) == false) return false;
+    if (AnnotateUnaryLogicalOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   case Node::Kind::PrefixIncOp:
@@ -1040,23 +1160,35 @@ bool Analyser::AnnotateExpression(const ExpressionNodePtr &node)
   case Node::Kind::PostfixIncOp:
   case Node::Kind::PostfixDecOp:
   {
-    if (AnnotateIncDecOp(node) == false) return false;
+    if (AnnotateIncDecOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   // case Node::Kind::SquareBracketGroup:
   case Node::Kind::IndexOp:
   {
-    if (AnnotateIndexOp(node) == false) return false;
+    if (AnnotateIndexOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   case Node::Kind::DotOp:
   {
-    if (AnnotateDotOp(node) == false) return false;
+    if (AnnotateDotOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   case Node::Kind::InvokeOp:
   {
-    if (AnnotateInvokeOp(node) == false) return false;
+    if (AnnotateInvokeOp(node) == false)
+    {
+      return false;
+    }
     break;
   }
   default:
@@ -1072,7 +1204,10 @@ bool Analyser::AnnotateAddOp(const ExpressionNodePtr &node)
 {
   for (const NodePtr &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false) return false;
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
@@ -1084,7 +1219,10 @@ bool Analyser::AnnotateAddOp(const ExpressionNodePtr &node)
   else
   {
     type = IsAddSubtractCompatible(node, lhs, rhs);
-    if (type == nullptr) return false;
+    if (type == nullptr)
+    {
+      return false;
+    }
   }
   SetRV(node, type);
   return true;
@@ -1094,12 +1232,18 @@ bool Analyser::AnnotateSubtractOp(const ExpressionNodePtr &node)
 {
   for (const NodePtr &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false) return false;
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
   }
   ExpressionNodePtr lhs  = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs  = ConvertToExpressionNodePtr(node->children[1]);
   TypePtr           type = IsAddSubtractCompatible(node, lhs, rhs);
-  if (type == nullptr) return false;
+  if (type == nullptr)
+  {
+    return false;
+  }
   SetRV(node, type);
   return true;
 }
@@ -1108,12 +1252,18 @@ bool Analyser::AnnotateMultiplyOp(const ExpressionNodePtr &node)
 {
   for (const NodePtr &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false) return false;
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
   }
   ExpressionNodePtr lhs  = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs  = ConvertToExpressionNodePtr(node->children[1]);
   TypePtr           type = IsMultiplyCompatible(node, lhs, rhs);
-  if (type == nullptr) return false;
+  if (type == nullptr)
+  {
+    return false;
+  }
   SetRV(node, type);
   return true;
 }
@@ -1122,12 +1272,18 @@ bool Analyser::AnnotateDivideOp(const ExpressionNodePtr &node)
 {
   for (const NodePtr &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false) return false;
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
   }
   ExpressionNodePtr lhs  = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs  = ConvertToExpressionNodePtr(node->children[1]);
   TypePtr           type = IsDivideCompatible(node, lhs, rhs);
-  if (type == nullptr) return false;
+  if (type == nullptr)
+  {
+    return false;
+  }
   SetRV(node, type);
   return true;
 }
@@ -1135,7 +1291,10 @@ bool Analyser::AnnotateDivideOp(const ExpressionNodePtr &node)
 bool Analyser::AnnotateUnaryMinusOp(const ExpressionNodePtr &node)
 {
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
-  if (AnnotateExpression(operand) == false) return false;
+  if (AnnotateExpression(operand) == false)
+  {
+    return false;
+  }
   if ((IsNumericType(operand->type->id) == false) && (IsMatrixType(operand->type->id) == false))
   {
     AddError(node->token, "operand must be numeric or matrix type");
@@ -1149,7 +1308,10 @@ bool Analyser::AnnotateEqualityOp(const ExpressionNodePtr &node)
 {
   for (const NodePtr &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false) return false;
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
@@ -1208,7 +1370,10 @@ bool Analyser::AnnotateRelationalOp(const ExpressionNodePtr &node)
 {
   for (const NodePtr &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false) return false;
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
@@ -1230,7 +1395,10 @@ bool Analyser::AnnotateBinaryLogicalOp(const ExpressionNodePtr &node)
 {
   for (const NodePtr &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false) return false;
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
@@ -1246,7 +1414,10 @@ bool Analyser::AnnotateBinaryLogicalOp(const ExpressionNodePtr &node)
 bool Analyser::AnnotateUnaryLogicalOp(const ExpressionNodePtr &node)
 {
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
-  if (AnnotateExpression(operand) == false) return false;
+  if (AnnotateExpression(operand) == false)
+  {
+    return false;
+  }
   if (operand->type->id != TypeId::Bool)
   {
     AddError(node->token, "boolean operand expected");
@@ -1259,8 +1430,14 @@ bool Analyser::AnnotateUnaryLogicalOp(const ExpressionNodePtr &node)
 bool Analyser::AnnotateIncDecOp(const ExpressionNodePtr &node)
 {
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
-  if (AnnotateExpression(operand) == false) return false;
-  if (IsWriteable(operand) == false) return false;
+  if (AnnotateExpression(operand) == false)
+  {
+    return false;
+  }
+  if (IsWriteable(operand) == false)
+  {
+    return false;
+  }
   if (IsIntegralType(operand->type->id) == false)
   {
     AddError(node->token, "integral type expected");
@@ -1296,7 +1473,10 @@ bool Analyser::AnnotateIndexOp(const ExpressionNodePtr &node)
   }
   else
   {
-    if (AnnotateExpression(lhs) == false) return false;
+    if (AnnotateExpression(lhs) == false)
+    {
+      return false;
+    }
   }
 
   if ((lhs->category == ExpressionNode::Category::Type) ||
@@ -1335,7 +1515,10 @@ bool Analyser::AnnotateIndexOp(const ExpressionNodePtr &node)
   {
     const NodePtr &   operand      = node->children[std::size_t(i)];
     ExpressionNodePtr operand_node = ConvertToExpressionNodePtr(operand);
-    if (AnnotateExpression(operand_node) == false) return false;
+    if (AnnotateExpression(operand_node) == false)
+    {
+      return false;
+    }
     if (IsIntegralType(operand_node->type->id) == false)
     {
       AddError(operand_node->token, "integral subscript expected");
@@ -1384,7 +1567,10 @@ bool Analyser::AnnotateDotOp(const ExpressionNodePtr &node)
   }
   else
   {
-    if (AnnotateExpression(lhs) == false) return false;
+    if (AnnotateExpression(lhs) == false)
+    {
+      return false;
+    }
   }
 
   if (lhs->category == ExpressionNode::Category::Function)
@@ -1405,9 +1591,13 @@ bool Analyser::AnnotateDotOp(const ExpressionNodePtr &node)
   }
   SymbolPtr symbol;
   if (lhs->type->category == Type::Category::TemplateInstantiation)
+  {
     symbol = lhs->type->template_type->symbols->Find(member_name);
+  }
   else
+  {
     symbol = lhs->type->symbols->Find(member_name);
+  }
   if (symbol == nullptr)
   {
     AddError(lhs->token,
@@ -1467,7 +1657,10 @@ bool Analyser::AnnotateInvokeOp(const ExpressionNodePtr &node)
   }
   else
   {
-    if (AnnotateExpression(lhs) == false) return false;
+    if (AnnotateExpression(lhs) == false)
+    {
+      return false;
+    }
   }
 
   std::vector<TypePtr> supplied_parameter_types;
@@ -1475,7 +1668,10 @@ bool Analyser::AnnotateInvokeOp(const ExpressionNodePtr &node)
   {
     const NodePtr &   supplied_parameter      = node->children[std::size_t(i)];
     ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
-    if (AnnotateExpression(supplied_parameter_node) == false) return false;
+    if (AnnotateExpression(supplied_parameter_node) == false)
+    {
+      return false;
+    }
     supplied_parameter_types.push_back(supplied_parameter_node->type);
   }
 
@@ -1536,9 +1732,13 @@ bool Analyser::AnnotateInvokeOp(const ExpressionNodePtr &node)
     }
     SymbolPtr symbol;
     if (lhs->type->category == Type::Category::TemplateInstantiation)
+    {
       symbol = lhs->type->template_type->symbols->Find(CONSTRUCTOR);
+    }
     else
+    {
       symbol = lhs->type->symbols->Find(CONSTRUCTOR);
+    }
     if (symbol == nullptr)
     {
       AddError(lhs->token,
@@ -1594,7 +1794,9 @@ TypePtr Analyser::ConvertType(TypePtr type, TypePtr instantiated_template_type)
     converted_type = instantiated_template_type->template_parameter_types[1];
   }
   else
+  {
     converted_type = type;
+  }
   return converted_type;
 }
 
@@ -1607,7 +1809,10 @@ FunctionPtr Analyser::FindMatchingFunction(const FunctionGroupPtr &fg, const Typ
   for (const FunctionPtr &function : fg->functions)
   {
     const int num_types = (int)function->parameter_types.size();
-    if ((int)input_types.size() != num_types) continue;
+    if ((int)input_types.size() != num_types)
+    {
+      continue;
+    }
     if (num_types == 0)
     {
       output_types.clear();
@@ -1670,8 +1875,14 @@ FunctionPtr Analyser::FindMatchingFunction(const FunctionGroupPtr &fg, const Typ
 TypePtr Analyser::FindType(const ExpressionNodePtr &node)
 {
   SymbolPtr symbol = FindSymbol(node);
-  if (symbol == nullptr) return nullptr;
-  if (symbol->IsType() == false) return nullptr;
+  if (symbol == nullptr)
+  {
+    return nullptr;
+  }
+  if (symbol->IsType() == false)
+  {
+    return nullptr;
+  }
   return ConvertToTypePtr(symbol);
 }
 
@@ -1689,12 +1900,19 @@ SymbolPtr Analyser::FindSymbol(const ExpressionNodePtr &node)
         return nullptr;
       }
       ExpressionNodePtr subtype_node = ConvertToExpressionNodePtr(node->children[1]);
-      if (subtype_node->kind != Node::Kind::Identifier) return nullptr;
+      if (subtype_node->kind != Node::Kind::Identifier)
+      {
+        return nullptr;
+      }
       const std::string &subtype_name = subtype_node->token.text;
       if (subtype_name == "Float64")
+      {
         return matrix_float64_type_;
+      }
       else if (subtype_name == "Float32")
+      {
         return matrix_float32_type_;
+      }
       return nullptr;
     }
     else if (name == "Array")
@@ -1706,11 +1924,16 @@ SymbolPtr Analyser::FindSymbol(const ExpressionNodePtr &node)
       }
       ExpressionNodePtr subtype_node = ConvertToExpressionNodePtr(node->children[1]);
       TypePtr           subtype      = FindType(subtype_node);
-      if (subtype == nullptr) return nullptr;
+      if (subtype == nullptr)
+      {
+        return nullptr;
+      }
       std::string template_name = name + "<" + subtype->name + ">";
       SymbolPtr   symbol        = SearchSymbolTables(template_name);
       if (symbol)
+      {
         return ConvertToTypePtr(symbol);
+      }
       else
       {
         // Not seen this template instantation before, so instantiate it now
@@ -1730,7 +1953,10 @@ SymbolPtr Analyser::FindSymbol(const ExpressionNodePtr &node)
     if (name != "Matrix")
     {
       SymbolPtr symbol = SearchSymbolTables(name);
-      if (symbol) return symbol;
+      if (symbol)
+      {
+        return symbol;
+      }
       return nullptr;
     }
     else
@@ -1743,14 +1969,20 @@ SymbolPtr Analyser::FindSymbol(const ExpressionNodePtr &node)
 SymbolPtr Analyser::SearchSymbolTables(const std::string &name)
 {
   SymbolPtr symbol = symbols_->Find(name);
-  if (symbol) return symbol;
+  if (symbol)
+  {
+    return symbol;
+  }
   auto it  = blocks_.rbegin();
   auto end = blocks_.rend();
   while (it != end)
   {
     const BlockNodePtr &block_node = *it;
     symbol                         = block_node->symbols->Find(name);
-    if (symbol) return symbol;
+    if (symbol)
+    {
+      return symbol;
+    }
     ++it;
   }
   return nullptr;

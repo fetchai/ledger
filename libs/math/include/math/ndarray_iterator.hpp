@@ -17,12 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ndarray.hpp"
+//#include "math/ndarray.hpp"
 #include <algorithm>
 #include <vector>
 //
-////// need to forward declare
-////class NDArray;
 
 namespace fetch {
 namespace math {
@@ -61,7 +59,8 @@ public:
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
    */
-  NDArrayIterator(ndarray_type &array) : array_(array)
+  NDArrayIterator(ndarray_type &array)
+    : array_(array)
   {
     std::vector<std::vector<std::size_t>> step{};
     for (auto i : array.shape())
@@ -82,7 +81,8 @@ public:
     Setup(step, array_.shape());
   }
 
-  NDArrayIterator(ndarray_type &array, std::vector<std::size_t> const &shape) : array_(array)
+  NDArrayIterator(ndarray_type &array, std::vector<std::size_t> const &shape)
+    : array_(array)
   {
     std::vector<std::vector<std::size_t>> step{};
     for (auto i : array.shape())
@@ -97,7 +97,10 @@ public:
    * identifies whether the iterator is still valid or has finished iterating
    * @return boolean indicating validity
    */
-  operator bool() { return counter_ < size_; }
+  operator bool()
+  {
+    return counter_ < size_;
+  }
 
   /**
    * incrementer, i.e. increment through the memory by 1 position making n-dim adjustments as
@@ -159,11 +162,6 @@ public:
       ref += s.volume * s.index;
     }
 
-    if (ref != position_)
-    {
-      std::cout << "Expected " << ref << " but got " << position_ << std::endl;
-      TODO_FAIL("doesn't add up");
-    }
     assert(ref == position_);
 #endif
 
@@ -190,7 +188,10 @@ public:
     std::swap(new_ranges, ranges_);
   }
 
-  void ReverseAxes() { std::reverse(ranges_.begin(), ranges_.end()); }
+  void ReverseAxes()
+  {
+    std::reverse(ranges_.begin(), ranges_.end());
+  }
 
   /**
    * dereference, i.e. give the value at the current position of the iterator
@@ -203,9 +204,15 @@ public:
     return array_[position_];
   }
 
-  type const &operator*() const { return array_[position_]; }
+  type const &operator*() const
+  {
+    return array_[position_];
+  }
 
-  std::size_t size() const { return size_; }
+  std::size_t size() const
+  {
+    return size_;
+  }
 
   template <typename A, typename B>
   friend bool UpgradeIteratorFromBroadcast(std::vector<std::size_t> const &,
@@ -226,7 +233,10 @@ public:
     return cur_index;
   }
 
-  NDIteratorRange const &range(std::size_t const &i) { return ranges_[i]; }
+  NDIteratorRange const &range(std::size_t const &i)
+  {
+    return ranges_[i];
+  }
 
 protected:
   std::vector<NDIteratorRange> ranges_;
@@ -256,7 +266,10 @@ private:
       s.volume         = volume;
       std::size_t diff = (s.to - s.from);
       s.total_steps    = diff / s.step;
-      if (s.total_steps * s.step < diff) ++s.total_steps;
+      if (s.total_steps * s.step < diff)
+      {
+        ++s.total_steps;
+      }
 
       s.total_steps *= s.step;
       s.step_volume  = s.step * volume;
