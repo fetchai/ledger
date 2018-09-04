@@ -49,12 +49,18 @@ public:
   ApproxExp(ApproxExp const &other) = delete;
   ApproxExp operator=(ApproxExp const &other) = delete;
 
-  ApproxExp() { CreateCorrectionTable(); }
+  ApproxExp()
+  {
+    CreateCorrectionTable();
+  }
 
   template <typename T>
   double operator()(T const &x) const
   {
-    if (N > E_MANTISSA) return exp(x);
+    if (N > E_MANTISSA)
+    {
+      return exp(x);
+    }
     double in = x * a_ + b_;
 
     if (O)
@@ -79,7 +85,10 @@ public:
     return conv.d * corrections_[c];
   }
 
-  void SetCoefficient(double const &c) { a_ = c * multiplier_pow2_ / M_LN2; }
+  void SetCoefficient(double const &c)
+  {
+    a_ = c * multiplier_pow2_ / M_LN2;
+  }
 
 private:
   double a_ = multiplier_pow2_ / M_LN2;
@@ -90,15 +99,24 @@ private:
 
   void CreateCorrectionTable()
   {
-    if (initialized_) return;
+    if (initialized_)
+    {
+      return;
+    }
 
     ApproxExp<0, C>     fexp;
     std::vector<double> accumulated, frequency;
     accumulated.resize(E_ENTRIES);
     frequency.resize(E_ENTRIES);
 
-    for (auto &a : accumulated) a = 0;
-    for (auto &a : frequency) a = 0;
+    for (auto &a : accumulated)
+    {
+      a = 0;
+    }
+    for (auto &a : frequency)
+    {
+      a = 0;
+    }
     for (double l = 0.; l < 5; l += 0.0000001)
     {  // FIXME: set limit
       double r1 = exp(l);
@@ -116,7 +134,10 @@ private:
       }
     }
 
-    for (std::size_t i = 0; i < E_ENTRIES; ++i) corrections_[i] = accumulated[i] / frequency[i];
+    for (std::size_t i = 0; i < E_ENTRIES; ++i)
+    {
+      corrections_[i] = accumulated[i] / frequency[i];
+    }
 
     initialized_ = true;
   }
@@ -140,7 +161,8 @@ class ApproxExp<0, C, OF>
   double                  b_               = exponent_offset_ * multiplier_pow2_ - C;
 
 public:
-  ApproxExp() {}
+  ApproxExp()
+  {}
   ApproxExp(ApproxExp const &other) = delete;
   ApproxExp operator=(ApproxExp const &other) = delete;
 
@@ -158,7 +180,10 @@ public:
     return conv.d;
   }
 
-  void SetCoefficient(double const &c) { a_ = c * multiplier_pow2_ / M_LN2; }
+  void SetCoefficient(double const &c)
+  {
+    a_ = c * multiplier_pow2_ / M_LN2;
+  }
 };
 
 template <uint8_t N, uint64_t C, bool OF>

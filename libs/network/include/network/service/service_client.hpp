@@ -47,7 +47,9 @@ public:
 
   ServiceClient(std::shared_ptr<network::AbstractConnection> connection,
                 network_manager_type const &                 network_manager)
-    : connection_(connection), network_manager_(network_manager), message_mutex_(__LINE__, __FILE__)
+    : connection_(connection)
+    , network_manager_(network_manager)
+    , message_mutex_(__LINE__, __FILE__)
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -142,7 +144,10 @@ public:
     return uint16_t(-1);
   }
 
-  std::shared_ptr<network::AbstractConnection> connection() { return connection_.lock(); }
+  std::shared_ptr<network::AbstractConnection> connection()
+  {
+    return connection_.lock();
+  }
 
 protected:
   bool DeliverRequest(network::message_type const &msg) override
@@ -150,7 +155,10 @@ protected:
     auto ptr = connection_.lock();
     if (ptr)
     {
-      if (ptr->Closed()) return false;
+      if (ptr->Closed())
+      {
+        return false;
+      }
 
       ptr->Send(msg);
       return true;
@@ -164,7 +172,10 @@ protected:
     auto ptr = connection_.lock();
     if (ptr)
     {
-      if (ptr->Closed()) return false;
+      if (ptr->Closed())
+      {
+        return false;
+      }
 
       ptr->Send(msg);
       return true;

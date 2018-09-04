@@ -80,7 +80,8 @@ public:
     httpServer_->AddMiddleware(fetch::http::middleware::ColorLog);
   }
 
-  virtual ~NetworkNodeCore() {}
+  virtual ~NetworkNodeCore()
+  {}
 
   using remote_host_identifier_type = std::pair<std::string, int>;
   using client_ptr                  = std::shared_ptr<client_type>;
@@ -129,9 +130,15 @@ public:
     // for symmetry with the Stop().
   }
 
-  void Stop() { nm_.Stop(); }
+  void Stop()
+  {
+    nm_.Stop();
+  }
 
-  void AddModule(fetch::http::HTTPModule *handler) { httpServer_->AddModule(*handler); }
+  void AddModule(fetch::http::HTTPModule *handler)
+  {
+    httpServer_->AddModule(*handler);
+  }
 
   template <class MODULE>
   void AddModule(std::shared_ptr<MODULE> module_p)
@@ -175,7 +182,10 @@ public:
     AddProtocol<INTERFACE_CLASS>(interface, protocolNumber);
   }
 
-  virtual void Post(std::function<void()> workload) { nm_.Post(workload); }
+  virtual void Post(std::function<void()> workload)
+  {
+    nm_.Post(workload);
+  }
 
 protected:
   virtual client_ptr ActuallyConnectTo(const std::string &host, unsigned short port)

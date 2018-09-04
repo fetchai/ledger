@@ -37,7 +37,9 @@ namespace p2p {
 class ExploreHttpInterface : public http::HTTPModule
 {
 public:
-  ExploreHttpInterface(p2p::P2PService *p2p, chain::MainChain *chain) : p2p_(p2p), chain_(chain)
+  ExploreHttpInterface(p2p::P2PService *p2p, chain::MainChain *chain)
+    : p2p_(p2p)
+    , chain_(chain)
   {
     // register all the routes
     Get("/node-entry-points",

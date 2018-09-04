@@ -25,8 +25,12 @@ using namespace fetch::service;
 class Foo
 {
 public:
-  void Test(int a, int b, int c) { std::cout << a << " " << b << " " << c << std::endl; }
-  void Blah(int n) {}
+  void Test(int a, int b, int c)
+  {
+    std::cout << a << " " << b << " " << c << std::endl;
+  }
+  void Blah(int n)
+  {}
 };
 
 int main()

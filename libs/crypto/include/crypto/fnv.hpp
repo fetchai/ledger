@@ -28,9 +28,15 @@ class FNV : public StreamHasher
 public:
   using byte_array_type = typename StreamHasher::byte_array_type;
 
-  FNV() { digest_.Resize(4); }
+  FNV()
+  {
+    digest_.Resize(4);
+  }
 
-  void Reset() override { context_ = 2166136261; }
+  void Reset() override
+  {
+    context_ = 2166136261;
+  }
 
   bool Update(byte_array_type const &s) override
   {
@@ -55,7 +61,10 @@ public:
     return digest_;
   }
 
-  uint32_t uint_digest() { return context_; }
+  uint32_t uint_digest()
+  {
+    return context_;
+  }
 
 private:
   uint32_t        context_;

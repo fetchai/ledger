@@ -94,11 +94,20 @@ public:
     return *this;
   }
 
-  shrd_ptr_type<const EC_POINT> keyAsEC_POINT() const { return key_EC_POINT_; }
+  shrd_ptr_type<const EC_POINT> keyAsEC_POINT() const
+  {
+    return key_EC_POINT_;
+  }
 
-  shrd_ptr_type<const EC_KEY> key() const { return key_EC_KEY_; }
+  shrd_ptr_type<const EC_KEY> key() const
+  {
+    return key_EC_KEY_;
+  }
 
-  const byte_array::ConstByteArray &keyAsBin() const { return key_binary_; }
+  const byte_array::ConstByteArray &keyAsBin() const
+  {
+    return key_binary_;
+  }
 
 private:
   using affine_coord_conversion_type = ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>;

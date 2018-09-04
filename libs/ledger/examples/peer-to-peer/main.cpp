@@ -36,7 +36,8 @@ class FetchService
 {
 public:
   FetchService(uint16_t port, std::string const &pk)
-    : network_manager_(new fetch::network::NetworkManager(8)), service_(port, network_manager_)
+    : network_manager_(new fetch::network::NetworkManager(8))
+    , service_(port, network_manager_)
   {
     details_.public_key = pk;
     discovery_ = new DiscoveryProtocol(network_manager_, FetchProtocols::DISCOVERY, details_);
@@ -59,9 +60,15 @@ public:
     discovery_->Bootstrap(address, port);
   }
 
-  void Start() { network_manager_->Start(); }
+  void Start()
+  {
+    network_manager_->Start();
+  }
 
-  void Stop() { network_manager_->Stop(); }
+  void Stop()
+  {
+    network_manager_->Stop();
+  }
 
 private:
   fetch::network::NetworkManager *                         network_manager_;
