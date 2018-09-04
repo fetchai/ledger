@@ -89,15 +89,13 @@ void ScatterImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE &updates, ARRAY_T
  * object
  */
 template <typename T, typename C>
-void Scatter(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> &updates,
-             ShapeLessArray<T, C> &indices)
+void Scatter(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &updates,
+             ShapeLessArray<T, C> const &indices)
 {
   details::ScatterImplementation(input_array, updates, indices);
 }
 
 template <typename T, typename C>
-// void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, std::vector<std::size_t>
-// &indices)
 void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &indices)
 {
 
@@ -105,8 +103,7 @@ void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &
   assert(updates.shape().size() > 0);
   assert(input_array.size() >= updates.size());
 
-  // because tensorflow is row major by default - we have to flip the mask and array to get the same
-  // answer
+  // because tensorflow is row major by default we have to flip to get the same answer
   // TODO(private issue 208)
   input_array.MajorOrderFlip();
   updates.MajorOrderFlip();

@@ -493,63 +493,11 @@ public:
 
     // numpy arrays are row major - we should be column major by default
     FlipMajorOrder(MAJOR_ORDER::column);
-
-    //    std::size_t cur_dim;
-    //    std::size_t pos;
-    //    for (std::size_t j = 0; j < total_size; ++j)
-    //    {
-    //      // Compute current row major index
-    //      pos = 0;
-    //      for (cur_dim = 0; cur_dim < shape.size(); ++cur_dim)
-    //      {
-    //        pos += stride[cur_dim] * index[cur_dim];
-    //      }
-    //      assert(pos < total_size);
-    //
-    //      // copy data across
-    //      std::cout << "j: " << j <<std::endl;
-    //      std::cout << "pos: " << pos << std::endl;
-    //      *it = ptr[pos];
-    //      ++it;
-    //
-    //      // Incrementing dim and index as necessary
-    //      cur_dim = 0;
-    //      ++index[cur_dim];
-    //      while (index[cur_dim] >= shape[cur_dim])
-    //      {
-    //        index[cur_dim] = 0;
-    //        ++cur_dim;
-    //        if (cur_dim >= shape.size())
-    //        {
-    //          break;
-    //        }
-    //        ++index[cur_dim];
-    //      }
-    //    }
   }
 
   void CopyToNumpy(T *ptr, std::vector<std::size_t> &shape, std::vector<std::size_t> &stride,
                    std::vector<std::size_t> &index)
   {
-    //    std::size_t total_size = NDArray<T>::SizeFromShape(shape);
-    //
-    //    NDArray<T, C> new_array{total_size};
-    //
-    //    NDArrayIterator<T, C> it_new(new_array);
-    //    NDArrayIterator<T, C> it_this(*this);
-    //    for (std::size_t i = 0; i < this->size(); ++i)
-    //    {
-    //      *it_new = *it_this;
-    //      ++it_new; ++it_this;
-    //    }
-    //
-    //    new_array.FlipMajorOrder(MAJOR_ORDER::row);
-    //
-    //    // copy all the data initially
-    //    for (std::size_t i = 0; i < new_array.size(); ++i)
-    //    {
-    //      ptr[i] = new_array[i];
-    //    }
 
     // copy the data
     NDArrayIterator<T, C> it(*this);
