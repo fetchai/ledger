@@ -24,8 +24,7 @@ namespace fetch {
 namespace meta {
 
 template <typename T>
-constexpr bool IsUnsignedInteger = std::is_unsigned<T>::value &&std::is_integral<T>::value &&
-                                   (!std::is_same<T, bool>::value);
+constexpr bool IsUnsignedInteger = std::is_unsigned<T>::value && (!std::is_same<T, bool>::value);
 
 template <bool C, typename R = void>
 using EnableIf = typename std::enable_if<C, R>::type;

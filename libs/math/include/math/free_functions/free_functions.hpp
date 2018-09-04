@@ -34,12 +34,6 @@
 #include <numeric>
 #include <vector>
 
-//#include "math/linalg/matrix.hpp"
-//#include "math/ndarray.hpp"
-//#include "math/ndarray_iterator.hpp"
-//#include "math/shape_less_array.hpp"
-//#include <utility>
-
 namespace fetch {
 namespace math {
 
@@ -145,11 +139,6 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &i
 
   // sort indices
   indices.Sort();
-  //  std::sort(indices.begin(), indices.end());
-
-  //  // check largest value in indices < shape()[0]
-  //  std::cout << "MAX(indices)" << Max(indices) << ", updates shape[0]: " << updates.shape()[0] <<
-  //  std::endl; assert(Max(indices) <= updates.shape()[0]);
 
   // set up an iterator
   NDArrayIterator<T, C> arr_iterator{updates};
@@ -180,25 +169,12 @@ template <typename ARRAY_TYPE>
 void DynamicStitchImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE const &indices,
                                  ARRAY_TYPE const &data)
 {
-  // set the size of output stitched array
-  //  std::size_t new_size = 0;
-  //  for (std::size_t l = 0; l < indices.size(); ++l)
-  //  {
-  //    new_size += indices[l].size();
-  //  }
-  //  input_array.LazyResize(new_size);
   input_array.LazyResize(indices.size());
 
   // loop through all output data locations identifying the next data point to copy into it
   for (std::size_t i = 0; i < indices.size(); ++i)  // iterate through lists of indices
   {
     input_array.Set(std::size_t(indices[i]), data[i]);
-
-    //    for (std::size_t j = 0; j < indices[i].size(); ++j)
-    //    {
-    //      assert(indices[i][j] <= input_array.size());
-    //      input_array.Set(std::size_t(indices[i].Get(j)), data[i][j]);
-    //    }
   }
 }
 }  // namespace details
@@ -218,9 +194,6 @@ void DynamicStitch(NDArray<T, C> &input_array, NDArray<T, C> &indices, NDArray<T
   details::DynamicStitchImplementation(input_array, indices, data);
 
   input_array.MajorOrderFlip();
-
-  // ND dynamic stitch - not entirely clear this needs implementing, lets check with 7lytix
-  // tf.dynamic_stitch returns a flattened array
 }
 
 /**
