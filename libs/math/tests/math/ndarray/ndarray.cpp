@@ -107,7 +107,7 @@ TEST(ndarray, max_axis_tests)
       {
         for (std::size_t l = 0; l < orig_shape[2]; ++l)
         {
-          std::vector<std::size_t> const idxs = {i, j, k, l};
+          std::vector<std::size_t> const idxs = {i, j, l, k};
           temp_vector.push_back(a.Get(idxs));
         }
         std::vector<std::size_t> const idxs2 = {i, j, k};

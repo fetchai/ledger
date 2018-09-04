@@ -236,7 +236,6 @@ public:
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
   }
-
   /**
    * extract data from NDArray based on the NDArrayView
    * @param array_view

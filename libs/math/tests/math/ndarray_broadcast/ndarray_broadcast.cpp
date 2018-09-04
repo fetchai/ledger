@@ -72,6 +72,7 @@ TEST(ndarray, broadcast_3D_test)
       {
         std::vector<std::size_t> idxs  = {i, j, k};
         std::vector<std::size_t> idxs2 = {0, j, k};
+        std::vector<std::size_t> idxs3 = {i, j, 0};
         if ((i == 0) && (k == 0))
         {
           ASSERT_TRUE(ret.Get(idxs) == a.Get(idxs) + b.Get(idxs));
@@ -82,11 +83,11 @@ TEST(ndarray, broadcast_3D_test)
         }
         else if ((i == 0) && (k > 0))
         {
-          ASSERT_TRUE(ret.Get(idxs) == a.Get(idxs) + b.Get(idxs2));
+          ASSERT_TRUE(ret.Get(idxs) == a.Get(idxs) + b.Get(idxs3));
         }
         else
         {
-          ASSERT_TRUE(ret.Get(idxs) == a.Get(idxs2) + b.Get(idxs2));
+          ASSERT_TRUE(ret.Get(idxs) == a.Get(idxs2) + b.Get(idxs3));
         }
       }
     }
