@@ -50,7 +50,10 @@ public:
     , minerNumber_{minerNumber}
   {}
 
-  ~MainChainMiner() { Stop(); }
+  ~MainChainMiner()
+  {
+    Stop();
+  }
 
   void start()
   {

@@ -39,7 +39,8 @@ public:
     HAS
   };
 
-  ObjectStoreProtocol(ObjectStore<T> *obj_store) : fetch::service::Protocol()
+  ObjectStoreProtocol(ObjectStore<T> *obj_store)
+    : fetch::service::Protocol()
   {
     obj_store_ = obj_store;
     this->Expose(GET, this, &self_type::Get);
@@ -47,7 +48,10 @@ public:
     this->Expose(HAS, obj_store, &ObjectStore<T>::Has);
   }
 
-  void OnSetObject(event_set_object_type const &f) { on_set_ = f; }
+  void OnSetObject(event_set_object_type const &f)
+  {
+    on_set_ = f;
+  }
 
 private:
   void Set(ResourceID const &rid, T const &object)

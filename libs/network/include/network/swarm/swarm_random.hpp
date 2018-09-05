@@ -43,7 +43,10 @@ public:
     srand(uint(seed));
   }
 
-  int r(int lo, int hi) { return rand() % (hi - lo) + lo; }
+  int r(int lo, int hi)
+  {
+    return rand() % (hi - lo) + lo;
+  }
 
   template <class T>
   T r(const T &hi)

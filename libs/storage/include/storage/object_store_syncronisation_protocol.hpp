@@ -67,19 +67,28 @@ public:
   void Start()
   {
     fetch::logger.Debug("Starting synchronisation of ", typeid(T).name());
-    if (running_) return;
+    if (running_)
+    {
+      return;
+    }
     running_ = true;
     thread_pool_->Post([this]() { this->IdleUntilPeers(); });
   }
 
-  void Stop() { running_ = false; }
+  void Stop()
+  {
+    running_ = false;
+  }
 
   /**
    * Spin until the connected peers is adequate
    */
   void IdleUntilPeers()
   {
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
 
     if (register_.number_of_services() == 0)
     {
@@ -109,7 +118,10 @@ public:
     register_.WithServices([this, &obj_size](service_map_type const &map) {
       for (auto const &p : map)
       {
-        if (!running_) return;
+        if (!running_)
+        {
+          return;
+        }
 
         auto                    peer    = p.second;
         auto                    ptr     = peer.lock();
@@ -144,7 +156,10 @@ public:
   {
     fetch::logger.Debug("Fetching objects ", typeid(T).name(), " from peer");
 
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
 
     std::lock_guard<mutex::Mutex> lock(object_list_mutex_);
 
@@ -152,7 +167,10 @@ public:
     register_.WithServices([this](service_map_type const &map) {
       for (auto const &p : map)
       {
-        if (!running_) return;
+        if (!running_)
+        {
+          return;
+        }
 
         auto peer = p.second;
         auto ptr  = peer.lock();
@@ -168,7 +186,10 @@ public:
 
   void RealisePromises()
   {
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
     std::lock_guard<mutex::Mutex> lock(object_list_mutex_);
     incoming_objects_.reserve(uint64_t(max_cache_));
 
@@ -177,7 +198,10 @@ public:
     for (auto &p : object_list_promises_)
     {
 
-      if (!running_) return;
+      if (!running_)
+      {
+        return;
+      }
 
       incoming_objects_.clear();
       if (!p.Wait(100, false))
@@ -187,7 +211,10 @@ public:
 
       p.template As<std::vector<S>>(incoming_objects_);
 
-      if (!running_) return;
+      if (!running_)
+      {
+        return;
+      }
       std::lock_guard<mutex::Mutex> lock(mutex_);
 
       store_->WithLock([this]() {
@@ -197,7 +224,10 @@ public:
           obj.data = T::Create(o);
           ResourceID rid(obj.data.digest());
 
-          if (store_->LocklessHas(rid)) continue;
+          if (store_->LocklessHas(rid))
+          {
+            continue;
+          }
           store_->LocklessSet(rid, obj.data);
 
           cache_.push_back(obj);
@@ -274,9 +304,15 @@ public:
     return ret;
   }
 
-  void StartSync() { needs_sync_ = true; }
+  void StartSync()
+  {
+    needs_sync_ = true;
+  }
 
-  bool FinishedSync() { return !needs_sync_; }
+  bool FinishedSync()
+  {
+    return !needs_sync_;
+  }
 
 private:
   protocol_handler_type protocol_;
@@ -289,7 +325,10 @@ private:
 
   struct CachedObject
   {
-    CachedObject() { created = std::chrono::system_clock::now(); }
+    CachedObject()
+    {
+      created = std::chrono::system_clock::now();
+    }
 
     void UpdateLifetime()
     {
@@ -298,7 +337,10 @@ private:
           double(std::chrono::duration_cast<std::chrono::milliseconds>(end - created).count());
     }
 
-    bool operator<(CachedObject const &other) const { return lifetime < other.lifetime; }
+    bool operator<(CachedObject const &other) const
+    {
+      return lifetime < other.lifetime;
+    }
 
     T                                     data;
     std::unordered_set<uint64_t>          delivered_to;
@@ -367,14 +409,20 @@ private:
   // fails. Completion when the stack is empty
   void SyncSubtree()
   {
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
 
     using service_map_type = typename R::service_map_type;
 
     register_.WithServices([this](service_map_type const &map) {
       for (auto const &p : map)
       {
-        if (!running_) return;
+        if (!running_)
+        {
+          return;
+        }
 
         auto peer = p.second;
         auto ptr  = peer.lock();
@@ -423,7 +471,10 @@ private:
           obj.data = T::Create(o);
           ResourceID rid(obj.data.digest());
 
-          if (store_->LocklessHas(rid)) continue;
+          if (store_->LocklessHas(rid))
+          {
+            continue;
+          }
           store_->LocklessSet(rid, obj.data);
 
           cache_.push_back(obj);

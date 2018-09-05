@@ -44,7 +44,10 @@ public:
   bool              Abort() override;
   /// @}
 
-  bool is_alive() const { return service_->is_alive(); }
+  bool is_alive() const
+  {
+    return service_->is_alive();
+  }
 
 private:
   service_type service_;

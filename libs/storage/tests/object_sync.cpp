@@ -90,7 +90,10 @@ void BlockUntilConnect(std::string host, uint16_t port)
   }
 }
 
-void BlockUntilConnect(uint16_t port) { BlockUntilConnect("localhost", port); }
+void BlockUntilConnect(uint16_t port)
+{
+  BlockUntilConnect("localhost", port);
+}
 
 VerifiedTransaction GetRandomTx(uint64_t seed)
 {
@@ -126,7 +129,9 @@ public:
     CONNECT = 1
   };
 
-  ControllerProtocol(ClientRegister reg, NetworkManager nm) : register_{std::move(reg)}, nm_{nm}
+  ControllerProtocol(ClientRegister reg, NetworkManager nm)
+    : register_{std::move(reg)}
+    , nm_{nm}
   {
     this->Expose(CONNECT, this, &ControllerProtocol::Connect);
   }
@@ -173,7 +178,8 @@ public:
     CONTROLLER
   };
 
-  TestService(uint16_t const &port, NetworkManager nm) : Super(port, nm)
+  TestService(uint16_t const &port, NetworkManager nm)
+    : Super(port, nm)
   {
     thread_pool_ = MakeThreadPool(1);
     this->SetConnectionRegister(register_);
@@ -199,7 +205,10 @@ public:
     tx_sync_protocol_->Start();
   }
 
-  ~TestService() { thread_pool_->Stop(); }
+  ~TestService()
+  {
+    thread_pool_->Stop();
+  }
 
 private:
   ThreadPool     thread_pool_;

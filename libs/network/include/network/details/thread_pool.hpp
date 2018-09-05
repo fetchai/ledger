@@ -60,7 +60,8 @@ public:
     return std::make_shared<ThreadPoolImplementation>(threads);
   }
 
-  ThreadPoolImplementation(std::size_t threads) : number_of_threads_(threads)
+  ThreadPoolImplementation(std::size_t threads)
+    : number_of_threads_(threads)
   {
 
     fetch::logger.Debug("Creating thread manager");
@@ -87,7 +88,10 @@ public:
     }
   }
 
-  virtual void Sleep() { lock_type lock(mutex_); }
+  virtual void Sleep()
+  {
+    lock_type lock(mutex_);
+  }
 
   virtual void SetIdleWork(event_function_type idle_work)
   {

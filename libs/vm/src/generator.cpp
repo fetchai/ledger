@@ -554,9 +554,13 @@ void Generator::HandleLHSExpression(ExpressionNodePtr const &lhs, Opcode const &
         // Handle cases where the RHS type is not the same as the LHS type
         // e.g. matrix *= 100.0
         if (rhs->type->id == TypeId::Float32)
+        {
           type_id = TypeId::Matrix_Float32__Float32;
+        }
         else if (rhs->type->id == TypeId::Float64)
+        {
           type_id = TypeId::Matrix_Float64__Float64;
+        }
       }
     }
 
@@ -597,9 +601,13 @@ void Generator::HandleLHSExpression(ExpressionNodePtr const &lhs, Opcode const &
         // type of the array being indexed e.g.
         // arrayofmatrices[index] *= 100.0
         if (rhs->type->id == TypeId::Float32)
+        {
           type_id = TypeId::Array_Matrix_Float32__Float32;
+        }
         else if (rhs->type->id == TypeId::Float64)
+        {
           type_id = TypeId::Array_Matrix_Float64__Float64;
+        }
       }
     }
 
@@ -977,17 +985,25 @@ TypeId Generator::TestArithmeticTypes(ExpressionNodePtr const &node)
   {
     // Handle e.g. 100.0 * matrix
     if (lhs->type->id == TypeId::Float32)
+    {
       return TypeId::Float32__Matrix_Float32;
+    }
     else
+    {
       return TypeId::Float64__Matrix_Float64;
+    }
   }
   else if (lhs_matrix && rhs_numeric)
   {
     // Handle e.g. matrix * 100.0
     if (rhs->type->id == TypeId::Float32)
+    {
       return TypeId::Matrix_Float32__Float32;
+    }
     else
+    {
       return TypeId::Matrix_Float64__Float64;
+    }
   }
   else
   {
@@ -999,7 +1015,9 @@ void Generator::HandleIndexOp(const ExpressionNodePtr &node)
 {
   const int num_rhs_operands = (int)node->children.size() - 1;
   for (int i = 0; i <= num_rhs_operands; ++i)
+  {
     HandleExpression(ConvertToExpressionNodePtr(node->children[std::size_t(i)]));
+  }
   Script::Instruction instruction(Opcode::IndexOp, node->token.line);
   ExpressionNodePtr   indexed_node = ConvertToExpressionNodePtr(node->children[0]);
   // This is the type of the matrix or array being indexed
@@ -1033,7 +1051,9 @@ void Generator::HandleInvokeOp(const ExpressionNodePtr &node)
   }
 
   for (int i = 1; i < (int)node->children.size(); ++i)
+  {
     HandleExpression(ConvertToExpressionNodePtr(node->children[std::size_t(i)]));
+  }
 
   if (f->kind == Function::Kind::UserFunction)
   {
@@ -1056,7 +1076,10 @@ void Generator::HandleInvokeOp(const ExpressionNodePtr &node)
   }
 }
 
-void Generator::ScopeEnter() { scopes_.push_back(Scope()); }
+void Generator::ScopeEnter()
+{
+  scopes_.push_back(Scope());
+}
 
 void Generator::ScopeLeave(BlockNodePtr block_node)
 {

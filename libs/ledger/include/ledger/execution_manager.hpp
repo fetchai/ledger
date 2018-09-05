@@ -88,7 +88,10 @@ public:
   void Stop();
 
   // statistics
-  std::size_t completed_executions() const { return completed_executions_; }
+  std::size_t completed_executions() const
+  {
+    return completed_executions_;
+  }
 
 private:
   flag_type running_{false};

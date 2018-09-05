@@ -56,7 +56,10 @@ public:
   TCPClient &operator=(TCPClient const &rhs) = delete;
   TCPClient &operator=(TCPClient &&rhs) = delete;
 
-  ~TCPClient() noexcept { LOG_STACK_TRACE_POINT; }
+  ~TCPClient() noexcept
+  {
+    LOG_STACK_TRACE_POINT;
+  }
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {
@@ -95,17 +98,35 @@ public:
     }
   }
 
-  void Close() const noexcept { pointer_->Close(); }
+  void Close() const noexcept
+  {
+    pointer_->Close();
+  }
 
-  bool Closed() const noexcept { return pointer_->Closed(); }
+  bool Closed() const noexcept
+  {
+    return pointer_->Closed();
+  }
 
-  void Send(message_type const &msg) noexcept { pointer_->Send(msg); }
+  void Send(message_type const &msg) noexcept
+  {
+    pointer_->Send(msg);
+  }
 
-  handle_type handle() const noexcept { return pointer_->handle(); }
+  handle_type handle() const noexcept
+  {
+    return pointer_->handle();
+  }
 
-  std::string Address() const noexcept { return pointer_->Address(); }
+  std::string Address() const noexcept
+  {
+    return pointer_->Address();
+  }
 
-  bool is_alive() const noexcept { return pointer_->is_alive(); }
+  bool is_alive() const noexcept
+  {
+    return pointer_->is_alive();
+  }
 
   typename implementation_type::weak_ptr_type connection_pointer()
   {

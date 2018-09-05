@@ -31,9 +31,11 @@ namespace {
 class FVNTest : public testing::Test
 {
 protected:
-  void SetUp() {}
+  void SetUp()
+  {}
 
-  void TearDown() {}
+  void TearDown()
+  {}
 
   void test_basic_hash(byte_array::ConstByteArray const &data_to_hash,
                        byte_array::ConstByteArray const &expected_hash)

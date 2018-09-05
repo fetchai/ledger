@@ -80,7 +80,8 @@ public:
     http_server_.AddModule(*this);
   }
 
-  ~FetchSwarmService() {}
+  ~FetchSwarmService()
+  {}
   /*
    *  Connectivity maintenance
    *  ═══════════════════════════════════════════

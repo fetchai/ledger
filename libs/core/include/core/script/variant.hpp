@@ -62,7 +62,10 @@ public:
   Variant(uint16_t const &i);
   Variant(float const &f);
   Variant(double const &f);
-  explicit Variant(ConstByteArray const &o) { *this = o; }
+  explicit Variant(ConstByteArray const &o)
+  {
+    *this = o;
+  }
   Variant(std::initializer_list<Variant> const &lst);
   ~Variant() = default;
 
@@ -121,18 +124,48 @@ public:
   template <typename T>
   meta::IfIsStdStringLike<T, T> As() const;
 
-  bool is_int() const { return type_ == INTEGER; }
-  bool is_float() const { return type_ == FLOATING_POINT; }
-  bool is_bool() const { return type_ == BOOLEAN; }
-  bool is_array() const { return type_ == ARRAY; }
-  bool is_object() const { return type_ == OBJECT; }
-  bool is_string() const { return type_ == STRING; }
-  bool is_byte_array() const { return type_ == STRING; }
-  bool is_undefined() const { return type_ == UNDEFINED; }
+  bool is_int() const
+  {
+    return type_ == INTEGER;
+  }
+  bool is_float() const
+  {
+    return type_ == FLOATING_POINT;
+  }
+  bool is_bool() const
+  {
+    return type_ == BOOLEAN;
+  }
+  bool is_array() const
+  {
+    return type_ == ARRAY;
+  }
+  bool is_object() const
+  {
+    return type_ == OBJECT;
+  }
+  bool is_string() const
+  {
+    return type_ == STRING;
+  }
+  bool is_byte_array() const
+  {
+    return type_ == STRING;
+  }
+  bool is_undefined() const
+  {
+    return type_ == UNDEFINED;
+  }
 
-  ConstByteArray const &as_byte_array() const { return string_; }
+  ConstByteArray const &as_byte_array() const
+  {
+    return string_;
+  }
 
-  VariantType type() const { return type_; }
+  VariantType type() const
+  {
+    return type_;
+  }
 
   friend std::ostream &operator<<(std::ostream &os, Variant const &v);
 
@@ -163,11 +196,16 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
 
   VariantProxy(ConstByteArray key, Variant *parent)
-    : key_(std::move(key)), parent_(parent), child_(nullptr)
+    : key_(std::move(key))
+    , parent_(parent)
+    , child_(nullptr)
   {}
 
   VariantProxy(ConstByteArray key, Variant *parent, Variant *child)
-    : Variant(*child), key_(std::move(key)), parent_(parent), child_(child)
+    : Variant(*child)
+    , key_(std::move(key))
+    , parent_(parent)
+    , child_(child)
   {}
 
   ~VariantProxy()
@@ -216,7 +254,10 @@ public:
   Variant &      operator[](std::size_t const &i);
   void           Resize(std::size_t const &n);
   void           Reserve(std::size_t const &n);
-  std::size_t    size() const { return size_; }
+  std::size_t    size() const
+  {
+    return size_;
+  }
 
   void SetData(VariantArray const &other, std::size_t offset, std::size_t size);
 
@@ -230,18 +271,50 @@ private:
   Variant *    pointer_ = nullptr;
 };
 
-inline Variant::Variant() : type_(UNDEFINED) {}
-inline Variant::Variant(int64_t const &i) { *this = i; }
-inline Variant::Variant(int32_t const &i) { *this = i; }
-inline Variant::Variant(int16_t const &i) { *this = i; }
-inline Variant::Variant(uint64_t const &i) { *this = i; }
-inline Variant::Variant(uint32_t const &i) { *this = i; }
-inline Variant::Variant(uint16_t const &i) { *this = i; }
-inline Variant::Variant(float const &f) { *this = f; }
-inline Variant::Variant(double const &f) { *this = f; }
+inline Variant::Variant()
+  : type_(UNDEFINED)
+{}
+inline Variant::Variant(int64_t const &i)
+{
+  *this = i;
+}
+inline Variant::Variant(int32_t const &i)
+{
+  *this = i;
+}
+inline Variant::Variant(int16_t const &i)
+{
+  *this = i;
+}
+inline Variant::Variant(uint64_t const &i)
+{
+  *this = i;
+}
+inline Variant::Variant(uint32_t const &i)
+{
+  *this = i;
+}
+inline Variant::Variant(uint16_t const &i)
+{
+  *this = i;
+}
+inline Variant::Variant(float const &f)
+{
+  *this = f;
+}
+inline Variant::Variant(double const &f)
+{
+  *this = f;
+}
 
-inline void Variant::MakeNull() { type_ = NULL_VALUE; }
-inline void Variant::MakeUndefined() { type_ = UNDEFINED; }
+inline void Variant::MakeNull()
+{
+  type_ = NULL_VALUE;
+}
+inline void Variant::MakeUndefined()
+{
+  type_ = UNDEFINED;
+}
 
 inline void Variant::MakeArray(std::size_t n)
 {

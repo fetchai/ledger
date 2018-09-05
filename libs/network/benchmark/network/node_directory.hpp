@@ -43,7 +43,9 @@ class NodeDirectory
 public:
   using clientType = service::ServiceClient;
 
-  NodeDirectory(network::NetworkManager tm) : tm_{tm} {}
+  NodeDirectory(network::NetworkManager tm)
+    : tm_{tm}
+  {}
 
   NodeDirectory(NodeDirectory &rhs)  = delete;
   NodeDirectory(NodeDirectory &&rhs) = delete;

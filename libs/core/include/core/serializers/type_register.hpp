@@ -28,7 +28,10 @@ template <typename T>
 struct TypeRegister
 {
   using value_type = uint8_t;
-  static constexpr char const *name() { return typeid(T).name(); };
+  static constexpr char const *name()
+  {
+    return typeid(T).name();
+  };
   enum
   {
     value = 0
@@ -38,43 +41,55 @@ struct TypeRegister
 template <std::size_t E>
 struct TypeErrorRegister
 {
-  static constexpr char const *name() { return "unknown"; };
+  static constexpr char const *name()
+  {
+    return "unknown";
+  };
   enum
   {
     value = 0
   };
 };
 
-#define REGISTER_SERIALIZE_SYMBOL_TYPE(symbol, type, val)   \
-  template <>                                               \
-  struct TypeRegister<type>                                 \
-  {                                                         \
-    static constexpr char const *name() { return symbol; }; \
-    enum                                                    \
-    {                                                       \
-      value = uint8_t(val)                                  \
-    };                                                      \
+#define REGISTER_SERIALIZE_SYMBOL_TYPE(symbol, type, val) \
+  template <>                                             \
+  struct TypeRegister<type>                               \
+  {                                                       \
+    static constexpr char const *name()                   \
+    {                                                     \
+      return symbol;                                      \
+    };                                                    \
+    enum                                                  \
+    {                                                     \
+      value = uint8_t(val)                                \
+    };                                                    \
   }
 
-#define REGISTER_SERIALIZE_TYPE(symbol, type, val)          \
-  template <>                                               \
-  struct TypeRegister<type>                                 \
-  {                                                         \
-    static constexpr char const *name() { return symbol; }; \
-    enum                                                    \
-    {                                                       \
-      value = uint8_t(val)                                  \
-    };                                                      \
-  };                                                        \
-                                                            \
-  template <>                                               \
-  struct TypeErrorRegister<val>                             \
-  {                                                         \
-    static constexpr char const *name() { return symbol; }; \
-    enum                                                    \
-    {                                                       \
-      value = uint8_t(val)                                  \
-    };                                                      \
+#define REGISTER_SERIALIZE_TYPE(symbol, type, val) \
+  template <>                                      \
+  struct TypeRegister<type>                        \
+  {                                                \
+    static constexpr char const *name()            \
+    {                                              \
+      return symbol;                               \
+    };                                             \
+    enum                                           \
+    {                                              \
+      value = uint8_t(val)                         \
+    };                                             \
+  };                                               \
+                                                   \
+  template <>                                      \
+  struct TypeErrorRegister<val>                    \
+  {                                                \
+    static constexpr char const *name()            \
+    {                                              \
+      return symbol;                               \
+    };                                             \
+    enum                                           \
+    {                                              \
+      value = uint8_t(val)                         \
+    };                                             \
   }
 
 REGISTER_SERIALIZE_TYPE("double", double, 1);

@@ -89,7 +89,10 @@ struct Token
   class Hasher
   {
   public:
-    size_t operator()(const Kind &key) const { return std::hash<uint16_t>{}((uint16_t)key); }
+    size_t operator()(const Kind &key) const
+    {
+      return std::hash<uint16_t>{}((uint16_t)key);
+    }
   };
   Kind        kind;
   uint32_t    offset;
