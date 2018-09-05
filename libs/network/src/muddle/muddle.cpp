@@ -106,20 +106,19 @@ void Muddle::Stop()
   //clients_.clear();
 }
 
-std::list<std::pair<Muddle::Address, network::Peer>> Muddle::GetConnections()
+std::list<Muddle::ConnectionData> Muddle::GetConnections()
 {
-  using ResType = std::pair<Address, network::Peer>;
-  std::list<ResType> res;
+  std::list<Muddle::ConnectionData> res;
   auto idents2handles = router_ . GetPeerIdentities();
   auto handles2peers = clients_ . GetCurrentPeers();
 
-  using Foo = decltype(handles2peers);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Muddle::GetConnections: i2h=",idents2handles.size(), " h2p=",  handles2peers.size());
 
-  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle:", idents2handles.size(), "  ", handles2peers.size());
+  using handles_2_peers_type = decltype(handles2peers);
 
   std::map<
-    Foo::value_type::first_type,
-    Foo::value_type::second_type
+    handles_2_peers_type::value_type::first_type,
+    handles_2_peers_type::value_type::second_type
     > h2p;
 
   for(auto& handle2peer : handles2peers)
@@ -131,12 +130,25 @@ std::list<std::pair<Muddle::Address, network::Peer>> Muddle::GetConnections()
   {
     auto ident = ident2handle.first;
     auto handle = ident2handle.second;
-    auto r = h2p.find(handle);
-    if (r != h2p.end())
+    auto peer_result = h2p.find(handle);
+
+    PeerConnectionList::ConnectionState st = PeerConnectionList::UNKNOWN;
+
+    std::string uri = "";
+
+    if (peer_result != h2p.end())
     {
-      ResType r2(ident, r->second);
-      res.push_back(r2);
+      uri = peer_result -> second.ToString();
+      st = clients_ . GetStateForPeer(uri);
     }
+    else
+    {
+      if (ident.size() > 0)
+      {
+        st = PeerConnectionList::INCOMING;
+      }
+    }
+    res.push_back(std::make_tuple(ident, uri, st));
   }
 
   return res;

@@ -33,6 +33,7 @@ void PeerConnectionList::AddConnection(Peer const &peer, ConnectionPtr const &co
 
   // update the metadata
   auto &metadata = peer_metadata_[peer];
+  metadata.connected = false;
   ++metadata.attempts;
 }
 
@@ -47,6 +48,29 @@ std::list<std::pair<network::AbstractConnection::connection_handle_type, network
     res.push_back(p);
   }
   return res;
+}
+
+PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(const Peer &peer)
+{
+  Lock lock(lock_);
+  auto metadataiter = peer_metadata_.find(peer);
+  if (metadataiter == peer_metadata_.end())
+  {
+    return UNKNOWN;
+  }
+  auto &metadata = metadataiter->second;
+  if (metadata.connected)
+  {
+    return CONNECTED;
+  }
+  if (ReadyForRetry(metadata))
+  {
+    return TRYING;
+  }
+  else
+  {
+    return ConnectionState(int(BACKOFF) + metadata.consecutive_failures);
+  }
 }
 
 void PeerConnectionList::OnConnectionEstablished(PeerConnectionList::Peer const &peer)
@@ -65,6 +89,7 @@ void PeerConnectionList::OnConnectionEstablished(PeerConnectionList::Peer const 
 
     auto &metadata = peer_metadata_[peer];
     ++metadata.successes;
+    metadata.connected = true;
     metadata.consecutive_failures = 0;
   }
 
@@ -93,6 +118,7 @@ void PeerConnectionList::RemoveConnection(Peer const &peer)
   auto &metadata = peer_metadata_[peer];
   ++metadata.consecutive_failures;
   ++metadata.total_failures;
+  metadata.connected = false;
 
   FETCH_LOG_INFO(LOGGING_NAME, "Failed time before: ", metadata.last_failed_connection.time_since_epoch().count());
 
@@ -102,6 +128,13 @@ void PeerConnectionList::RemoveConnection(Peer const &peer)
 
 
   FETCH_LOG_INFO(LOGGING_NAME, "I do dismay, it appears we have lost a connection");
+}
+
+bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const
+{
+  std::size_t const log2_backoff = std::min(metadata.consecutive_failures, MAX_LOG2_BACKOFF);
+  Timepoint const backoff_deadline = metadata.last_failed_connection + std::chrono::seconds{1 << log2_backoff};
+  return (Clock::now() >= backoff_deadline);
 }
 
 PeerConnectionList::PeerList PeerConnectionList::GetPeersToConnectTo() const
@@ -132,14 +165,8 @@ PeerConnectionList::PeerList PeerConnectionList::GetPeersToConnectTo() const
       else
       {
         auto const &metadata = it->second;
-
-        // since we have metadata, this is not the initial connection
-        std::size_t const log2_backoff = std::min(metadata.consecutive_failures, MAX_LOG2_BACKOFF);
-        Timepoint const backoff_deadline = metadata.last_failed_connection + std::chrono::seconds{1 << log2_backoff};
-
-        FETCH_LOG_INFO(LOGGING_NAME, "Curiously determining if I need to back off ", 1 << log2_backoff);
-
-        if (Clock::now() >= backoff_deadline)
+        FETCH_LOG_INFO(LOGGING_NAME, "Determining if I need to back off ");
+        if (ReadyForRetry(metadata))
         {
           peers.push_back(peer);
 

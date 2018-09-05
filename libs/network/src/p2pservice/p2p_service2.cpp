@@ -17,7 +17,7 @@ void P2PService2::Start(P2PService2::PeerList const &initial_peer_list)
 {
   for(auto &peer : initial_peer_list)
   {
-    possibles_.push_back(peer);
+    possibles_.push_back(peer . ToUri());
   }
 
   thread_pool_ -> SetInterval(1000);
@@ -36,21 +36,61 @@ void P2PService2::WorkCycle()
   FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle");
   // see how many peers we have.
 
-  auto foo = muddle_ . GetConnections();
-//  for(auto fooo: foo)
-//  {
-//    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle:", fooo.first, "->", fooo.second);
-//  }
+  using first_t  = typename std::tuple_element<0, Muddle::ConnectionData>::type;
+  using second_t = typename std::tuple_element<1, Muddle::ConnectionData>::type;
+  using third_t  = typename std::tuple_element<2, Muddle::ConnectionData>::type;
 
-  while((foo.size() < 1000) && (possibles_.size() > 0))
+  std::set<Uri> used;
+
+  auto connections = muddle_ . GetConnections(); // address/uri/state tuples.
+  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Conncount = ", connections.size());
+  for(auto connection : connections)
   {
-    auto next = possibles_ . front();
-    possibles_.pop_front();
-    muddle_ . AddPeer(next);
-    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: AddPeer  ", next.ToString());
+
+    auto addr  = std::get<0>(connection);
+    network::Uri uri   = std::get<1>(connection);
+    auto state = std::get<2>(connection);
+
+    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Conn:", ToHex(addr), " / ", uri.ToString(), " / ", state);
+    used.insert(uri);
   }
 
   // not enough, schedule some connects.
+  while((connections.size() < 1000) && (possibles_.size() > 0))
+  {
+    auto next = possibles_ . front();
+    possibles_.pop_front();
+    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: PULLED ", next.ToString());
+
+    if (next.GetProtocol() == "tcp")
+    {
+      auto s = next.GetRemainder();
+      FETCH_LOG_WARN(LOGGING_NAME,"Converting: ", next.ToString(), " -> ", s);
+      auto nextp = next.AsPeer();
+      switch (muddle_.useClients().GetStateForPeer(nextp))
+      {
+      case muddle::PeerConnectionList::UNKNOWN:
+        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: AddPeer  ", nextp.ToString());
+        muddle_ . AddPeer(nextp);
+        break;
+      case muddle::PeerConnectionList::CONNECTED:
+        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but in use:  ", next.ToString());
+        break;
+      case muddle::PeerConnectionList::TRYING:
+        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but being tried:  ", next.ToString());
+        break;
+      case muddle::PeerConnectionList::BACKOFF:
+      default:
+        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but in backoff:  ", next.ToString());
+        break;
+      }
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: No Go on ", next.ToString(), ">>", next.GetProtocol());
+    }
+  }
+
   // too many? schedule some kickoffs.
 }
 
@@ -72,7 +112,6 @@ void P2PService2::PeerTrustEvent(const Identity &          identity
                                  , P2PTrustFeedbackQuality quality)
 {
 }
-
 
 void P2PService2::SetLocalManifest(const Manifest &manifest)
 {
@@ -101,7 +140,6 @@ void P2PService2::SetLocalManifest(const Manifest &manifest)
       local_services_.erase(service_id);
     }
 
-    
   }
 }
 

@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include "network/uri.hpp"
+
 namespace fetch {
 
 namespace network {
@@ -9,6 +11,8 @@ namespace network {
 enum ServiceType {
   MAINCHAIN = 0,
   LANE = 1,
+  P2P = 2,
+  HTTP = 3,
 };
 
 struct ServiceIdentifier
@@ -24,8 +28,6 @@ struct ServiceIdentifier
     return false;
   }
 };
-
-using Uri = std::string;
 
 template <typename T>
 void Serialize(T &serializer, ServiceIdentifier const &x)

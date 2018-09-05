@@ -61,12 +61,12 @@ public:
     return data_;
   }
 
-  std::string GetUri(ServiceIdentifier service_id)
+  network::Uri GetUri(ServiceIdentifier service_id)
   {
     auto res = data_.find(service_id);
     if (res == data_.end())
     {
-      return "";
+      return network::Uri();
     }
     else
     {
@@ -160,6 +160,16 @@ private:
     if (store[0] == "MAINCHAIN")
     {
       service_type = ServiceType::MAINCHAIN;
+      instance = 0;
+    }
+    else if (store[0] == "P2P")
+    {
+      service_type = ServiceType::P2P;
+      instance = 0;
+    }
+    else if (store[0] == "HTTP")
+    {
+      service_type = ServiceType::HTTP;
       instance = 0;
     }
     else if (store[0] == "LANE")

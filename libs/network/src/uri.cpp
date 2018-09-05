@@ -16,53 +16,38 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/peer.hpp"
+#include "network/uri.hpp"
 
 #include <regex>
 #include <stdexcept>
 
-#include <iostream>
-
-static const std::regex ADDRESS_FORMAT("^(.*):(\\d+)$");
-static const std::regex URI_ADDRESS_FORMAT("^tcp://(.*):(\\d+)$");
 
 namespace fetch {
 namespace network {
 
-Peer::Peer(std::string const &address)
-{
-  if (!Parse(address))
-  {
-    throw std::runtime_error(std::string("Unable to parse input address:'") + address + "'");
-  }
-}
+  static const std::regex URI_FORMAT("^([^:]*)://(.*)$");
 
-bool Peer::Parse(std::string const &address)
+std::string Uri::GetProtocol() const
 {
   std::smatch matches;
-
-  if (address == "")
-  {
-    Update("", 0);
-    return true;
-  }
-
-  std::regex_match(address, matches, URI_ADDRESS_FORMAT);
+  std::regex_match(data_, matches, URI_FORMAT);
   if (matches.size() == 3)
   {
-    Update(matches[1], static_cast<uint16_t>(stol(matches[2])));
-    return true;
+    return std::string(matches[1]);
   }
-
-  std::regex_match(address, matches, ADDRESS_FORMAT);
-  if (matches.size() == 3)
-  {
-    Update(matches[1], static_cast<uint16_t>(stol(matches[2])));
-    return true;
-  }
-
-  return false;
+  throw std::invalid_argument(std::string("'") + data_ + "' is not a valid uri.");
 }
 
-}  // namespace network
-}  // namespace fetch
+std::string Uri::GetRemainder() const
+{
+  std::smatch matches;
+  std::regex_match(data_, matches, URI_FORMAT);
+  if (matches.size() == 3)
+  {
+    return std::string(matches[2]);
+  }
+  throw std::invalid_argument(std::string("'") + data_ + "' is not a valid uri.");
+}
+
+}
+}
