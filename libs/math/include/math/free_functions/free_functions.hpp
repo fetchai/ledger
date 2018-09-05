@@ -157,6 +157,38 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &i
   }
 }
 
+template <typename T, typename C>
+void Transpose(NDArray<T, C> &input_array, std::vector<std::size_t> &perm)
+{
+  assert(perm.size() == input_array.shape().size());
+
+  // set up an initial array
+  NDArray<T, C> ret = input_array.Copy();
+
+  NDArrayIterator<T, typename NDArray<T, C>::container_type> it_input(input_array);
+  NDArrayIterator<T, typename NDArray<T, C>::container_type> it_ret(ret);
+
+  it_ret.Transpose(perm);
+  while (it_ret)
+  {
+    *it_input = *it_ret;
+    ++it_input;
+    ++it_ret;
+  }
+
+  std::vector<std::size_t> new_shape;
+  for (std::size_t i = 0; i < perm.size(); ++i)
+  {
+    new_shape.push_back(input_array.shape()[perm[i]]);
+  }
+  input_array.Reshape(new_shape);
+}
+template <typename T, typename C>
+void Transpose(NDArray<T, C> &input_array, NDArray<T, C> const &perm)
+{
+  assert(perm.size() == input_array.shape().size());
+}
+
 /**
  * interleave data from multiple sources
  * @param x
