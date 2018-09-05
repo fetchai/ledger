@@ -504,13 +504,23 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              return a;
            })
       .def("reshape",
-           [](NDArray<T> &a, std::vector<std::size_t> b) {
+           [](NDArray<T> &a, std::vector<std::size_t> b, bool flip_order) {
              if (!(a.CanReshape(b)))
              {
                py::print("cannot reshape array of size (", a.size(), ") into shape of(", b, ")");
                throw py::value_error();
              }
-             a.Reshape(b);
+
+             if (flip_order)
+             {
+               a.MajorOrderFlip();
+               a.Reshape(b);
+               a.MajorOrderFlip();
+             }
+             else
+             {
+               a.Reshape(b);
+             }
              return;
            })
       .def("boolean_mask",
