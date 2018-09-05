@@ -162,7 +162,7 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &i
  */
 namespace details {
 template <typename ARRAY_TYPE>
-void ConcatImplementation(std::vector<ARRAY_TYPE> input_arrays, ARRAY_TYPE &ret)
+void ConcatImplementation(std::vector<ARRAY_TYPE> const &input_arrays, ARRAY_TYPE &ret)
 {
   assert(input_arrays.size() > 0);
 
@@ -175,7 +175,7 @@ void ConcatImplementation(std::vector<ARRAY_TYPE> input_arrays, ARRAY_TYPE &ret)
 
   if (input_arrays.size() == 1)
   {
-    ret = input_arrays[0];
+    ret.Copy(input_arrays[0]);
   }
   else
   {
@@ -191,12 +191,12 @@ void ConcatImplementation(std::vector<ARRAY_TYPE> input_arrays, ARRAY_TYPE &ret)
 }
 }  // namespace details
 template <typename T, typename C>
-void Concat(ShapeLessArray<T, C> &ret, std::vector<ShapeLessArray<T, C>> input_arrays)
+void Concat(ShapeLessArray<T, C> &ret, std::vector<ShapeLessArray<T, C>> const &input_arrays)
 {
   details::ConcatImplementation(input_arrays, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Concat(std::vector<ShapeLessArray<T, C>> input_arrays)
+ShapeLessArray<T, C> Concat(std::vector<ShapeLessArray<T, C>> const &input_arrays)
 {
   ShapeLessArray<T, C> ret;
   Concat(ret, input_arrays);
@@ -212,7 +212,7 @@ void Concat(NDArray<T, C> &ret, std::vector<NDArray<T, C>> input_arrays, std::si
   if (input_arrays.size() == 1)
   {
     ret.ResizeFromShape(input_arrays[0].shape());
-    ret = input_arrays[0];
+    ret.Copy(input_arrays[0]);
   }
   else
   {
