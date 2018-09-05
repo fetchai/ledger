@@ -165,7 +165,7 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &i
  * @param axis
  */
 template <typename T, typename C>
-void ExpandDims(NDArray<T, C> &input_array, std::size_t &axis)
+void ExpandDimensions(NDArray<T, C> &input_array, std::size_t const &axis)
 {
   assert(axis <= input_array.shape().size());
 
@@ -196,7 +196,7 @@ void ExpandDims(NDArray<T, C> &input_array, std::size_t &axis)
  * @param axis
  */
 template <typename T, typename C>
-void ExpandDims(NDArray<T, C> &input_array, int const &axis)
+void ExpandDimensions(NDArray<T, C> &input_array, int const &axis)
 {
   assert(axis <= static_cast<int>(input_array.size()));
   std::size_t new_axis;
@@ -209,7 +209,7 @@ void ExpandDims(NDArray<T, C> &input_array, int const &axis)
   {
     new_axis = static_cast<std::size_t>(axis);
   }
-  ExpandDims(input_array, new_axis);
+  ExpandDimensions(input_array, new_axis);
 }
 /**
  * method for concatenating arrays

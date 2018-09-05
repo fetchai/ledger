@@ -600,8 +600,8 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              return input_array;
            })
       .def("expand_dims",
-           [](NDArray<T> &input_array, int axis) {
-             fetch::math::ExpandDims(input_array, axis);
+           [](NDArray<T> &input_array, int const &axis) {
+             fetch::math::ExpandDimensions(input_array, axis);
              return input_array;
            })
       .def("softmax",
