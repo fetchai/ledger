@@ -195,15 +195,15 @@ class VariantProxy : public Variant
 public:
   using ConstByteArray = byte_array::ConstByteArray;
 
-  VariantProxy(ConstByteArray const &key, Variant *parent)
-    : key_(key)
+  VariantProxy(ConstByteArray key, Variant *parent)
+    : key_(std::move(key))
     , parent_(parent)
     , child_(nullptr)
   {}
 
-  VariantProxy(ConstByteArray const &key, Variant *parent, Variant *child)
+  VariantProxy(ConstByteArray key, Variant *parent, Variant *child)
     : Variant(*child)
-    , key_(key)
+    , key_(std::move(key))
     , parent_(parent)
     , child_(child)
   {}

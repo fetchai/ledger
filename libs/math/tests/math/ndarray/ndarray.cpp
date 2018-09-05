@@ -210,26 +210,3 @@ TEST(ndarray, concat_test)
     }
   }
 }
-
-TEST(ndarray, expand_dim_test)
-{
-  // A trivial concat
-  std::vector<std::size_t> shape{2, 4, 4};
-  _A<double>               array1{shape};
-  array1.FillArange(0, 32);
-
-  int new_dim = -1;
-  fetch::math::ExpandDimensions(array1, new_dim);
-  std::vector<std::size_t> test_shape{2, 4, 4, 1};
-  ASSERT_TRUE(array1.shape() == test_shape);
-
-  new_dim = 0;
-  fetch::math::ExpandDimensions(array1, new_dim);
-  test_shape = {1, 2, 4, 4, 1};
-  ASSERT_TRUE(array1.shape() == test_shape);
-
-  new_dim = 3;
-  fetch::math::ExpandDimensions(array1, new_dim);
-  test_shape = {1, 2, 4, 1, 4, 1};
-  ASSERT_TRUE(array1.shape() == test_shape);
-}
