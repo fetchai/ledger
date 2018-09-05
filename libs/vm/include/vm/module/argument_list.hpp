@@ -17,26 +17,44 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/analyser.hpp"
-#include "vm/generator.hpp"
-#include "vm/parser.hpp"
+#include <typeinfo>
+#include <vector>
 
 namespace fetch {
 namespace vm {
 
-class Compiler
-{
-public:
-  Compiler(Module *module = nullptr) : analyser_(module) {}
-  ~Compiler() {}
-  bool Compile(const std::string &source, const std::string &name, Script &script,
-               std::vector<std::string> &errors);
+namespace details {
 
-private:
-  Parser    parser_;
-  Analyser  analyser_;
-  Generator generator_;
+template <typename... Args>
+struct ArgumentsToList;
+
+template <typename T, typename... Args>
+struct ArgumentsToList<T, Args...>
+{
+
+  static void AppendTo(std::vector<std::type_index> &list)
+  {
+    list.push_back(std::type_index(typeid(std::declval<T>())));
+    ArgumentsToList<Args...>::AppendTo(list);
+  }
 };
 
+template <typename T>
+struct ArgumentsToList<T>
+{
+
+  static void AppendTo(std::vector<std::type_index> &list)
+  {
+    list.push_back(std::type_index(typeid(std::declval<T>())));
+  }
+};
+
+template <>
+struct ArgumentsToList<>
+{
+  static void AppendTo(std::vector<std::type_index> &list) {}
+};
+
+}  // namespace details
 }  // namespace vm
 }  // namespace fetch

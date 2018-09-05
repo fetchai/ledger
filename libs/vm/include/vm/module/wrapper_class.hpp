@@ -17,25 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/analyser.hpp"
-#include "vm/generator.hpp"
-#include "vm/parser.hpp"
-
 namespace fetch {
 namespace vm {
 
-class Compiler
+template <typename T>
+struct WrapperClass : public Object
 {
-public:
-  Compiler(Module *module = nullptr) : analyser_(module) {}
-  ~Compiler() {}
-  bool Compile(const std::string &source, const std::string &name, Script &script,
-               std::vector<std::string> &errors);
+  using Object::Object;
+  WrapperClass(TypeId type_id, VM *vm, T &&o) : Object(std::move(type_id), vm), object(std::move(o))
+  {}
+  T object;
 
-private:
-  Parser    parser_;
-  Analyser  analyser_;
-  Generator generator_;
+  virtual ~WrapperClass() = default;
 };
 
 }  // namespace vm

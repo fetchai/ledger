@@ -25,9 +25,54 @@
 #include <fstream>
 #include <sstream>
 
-void Print(std::string const &s) { std::cout << s << std::endl; }
+/*
+struct TestClass
+{
+  TestClass(int const &x) : x_(x) {}
 
-std::string toString(int32_t const &a) { return std::to_string(a); }
+  void Foo() { std::cout << "FOO: " << x_ << std::endl; }
+
+  void Bar(int const &x)
+  {  // TOODO: Add support for const
+    std::cout << "BAR: " << x << " / " << x_ << std::endl;
+  }
+
+  int Baz(int x)
+  {
+    std::cout << "Baz" << x << " / " << x_ << std::endl;
+    return x + x_;
+  }
+
+  static int32_t Blah(double x)
+  {
+    std::cout << "Hello: " << x << std::endl;
+    return int(x);
+  }
+
+  static double Blah(int32_t x)
+  {
+    std::cout << "Hello 2: " << x << std::endl;
+    return double(x);
+  }
+
+private:
+  int x_;
+};
+
+double TestFunction(int const &x, int const &y)
+{
+  std::cout << "Add:" << x + y << std::endl;
+  return double(x) + double(y);
+}
+
+int TestFunction(double const &x, double const &y)
+{
+  std::cout << "Add 2:" << x + y << std::endl;
+  return int(x) + int(y);
+}
+*/
+
+void Print(std::string const &s) { std::cout << s << std::endl; }
 
 struct System
 {
@@ -39,6 +84,8 @@ struct System
 };
 
 std::vector<std::string> System::args;
+
+std::string toString(int32_t const &a) { return std::to_string(a); }
 
 int main(int argc, char **argv)
 {
@@ -60,7 +107,6 @@ int main(int argc, char **argv)
   const std::string source = ss.str();
   file.close();
 
-  // Creating new VM module
   fetch::vm::Module module;
   module.ExportFunction("Print", &Print);
   module.ExportFunction("toString", &toString);
@@ -69,10 +115,19 @@ int main(int argc, char **argv)
       .ExportStaticFunction("Argc", System::Argc)
       .ExportStaticFunction("Argv", System::Argv);
 
-  // Setting compiler up
-  fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);
-  fetch::vm::VM        vm(&module);
+  // Creating new VM module
+  /*
+  module.ExportClass<TestClass>("TestClass")
+      .Constructor<int>()
+      .Export("Foo", &TestClass::Foo)
+      .Export("Bar", &TestClass::Bar)
+      .Export("Baz", &TestClass::Baz)
 
+  module.ExportFunction("AddNumbers", (double (*)(int const &, int const &))TestFunction);
+  module.ExportFunction("AddNumbers", (int (*)(double const &, double const &))TestFunction);
+*/
+  // Setting compiler up
+  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
   fetch::vm::Script        script;
   std::vector<std::string> errors;
 
@@ -96,6 +151,7 @@ int main(int argc, char **argv)
   }
 
   // Setting VM up and running
+  fetch::vm::VM vm(&module);
   if (!vm.Execute(script, "main"))
   {
     std::cout << "Runtime error on line " << vm.error_line() << ": " << vm.error() << std::endl;
