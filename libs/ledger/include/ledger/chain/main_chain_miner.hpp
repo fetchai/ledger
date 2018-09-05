@@ -50,7 +50,8 @@ public:
     , blockCoordinator_{blockCoordinator}
     , miner_{miner}
     , minerNumber_{minerNumber}
-  {}
+  {
+  }
 
   ~MainChainMiner() { Stop(); }
 
@@ -81,7 +82,7 @@ private:
   timestamp_type CalculateNextBlockTime(T &rng)
   {
     static constexpr uint32_t MAX_BLOCK_JITTER_US = 8000;
-    static constexpr uint32_t BLOCK_PERIOD_MS     = 15000;
+    static constexpr uint32_t BLOCK_PERIOD_MS     = 5000;
 
     timestamp_type block_time = clock_type::now() + std::chrono::milliseconds{BLOCK_PERIOD_MS};
     block_time += std::chrono::microseconds{rng() % MAX_BLOCK_JITTER_US};
@@ -145,6 +146,8 @@ private:
         next_block_body.block_number  = block.body().block_number + 1;
         next_block_body.previous_hash = block.hash();
         next_block_body.miner_number  = minerNumber_;
+
+        FETCH_LOG_INFO(LOGGING_NAME, "Generate new block: ", num_lanes_, " x ", num_slices_);
 
         // Pack the block with transactions
         miner_.GenerateBlock(next_block_body, num_lanes_, num_slices_);

@@ -32,19 +32,22 @@ namespace ledger {
 class ExecutorRpcClient : public ExecutorInterface
 {
 public:
-  using connection_type      = network::TCPClient;
-  using service_type         = std::unique_ptr<service::ServiceClient>;
-  using network_manager_type = service::ServiceClient::network_manager_type;
+  using NetworkClient      = network::TCPClient;
+  using NetworkClientPtr = std::shared_ptr<NetworkClient>;
+  using ServicePtr         = std::unique_ptr<service::ServiceClient>;
+  using NetworkManager =  fetch::network::NetworkManager;
+  using ConstByteArray = byte_array::ConstByteArray;
 
-  ExecutorRpcClient(byte_array::ConstByteArray const &host, uint16_t const &port,
-                    network_manager_type const &network_manager)
+  ExecutorRpcClient(ConstByteArray const &host, uint16_t const &port,
+                    NetworkManager const &network_manager)
   {
 
     // create the connection
-    connection_type connection{network_manager};
-    service_ = std::make_unique<service::ServiceClient>(connection, network_manager);
+    connection_ = std::make_shared<NetworkClient>(network_manager);
 
-    connection.Connect(host, port);
+    service_ = std::make_unique<service::ServiceClient>(*connection_, network_manager);
+
+    connection_->Connect(host, port);
   }
 
   Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) override
@@ -57,7 +60,8 @@ public:
   bool is_alive() const { return service_->is_alive(); }
 
 private:
-  service_type service_;
+  NetworkClientPtr connection_;
+  ServicePtr service_;
 };
 
 }  // namespace ledger

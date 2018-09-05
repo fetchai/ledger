@@ -19,6 +19,7 @@
 
 #include "ledger/execution_manager_interface.hpp"
 #include "network/service/client.hpp"
+#include "network/tcp/tcp_client.hpp"
 
 #include <memory>
 
@@ -28,11 +29,15 @@ namespace ledger {
 class ExecutionManagerRpcClient : public ExecutionManagerInterface
 {
 public:
-  using service_type = std::unique_ptr<fetch::service::ServiceClient>;
+  using NetworkClient = network::TCPClient;
+  using NetworkClientPtr = std::shared_ptr<NetworkClient>;
+  using ServicePtr = std::unique_ptr<fetch::service::ServiceClient>;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using NetworkManager = network::NetworkManager;
 
   // Construction / Destruction
-  ExecutionManagerRpcClient(byte_array::ConstByteArray const &host, uint16_t const &port,
-                            network::NetworkManager const &network_manager);
+  ExecutionManagerRpcClient(ConstByteArray const &host, uint16_t const &port,
+                            NetworkManager const &network_manager);
   ~ExecutionManagerRpcClient() override = default;
 
   /// @name Execution Manager Interface
@@ -47,7 +52,8 @@ public:
   bool is_alive() const { return service_->is_alive(); }
 
 private:
-  service_type service_;
+  NetworkClientPtr connection_;
+  ServicePtr service_;
 };
 
 }  // namespace ledger

@@ -23,18 +23,34 @@
 #include "ledger/protocols/execution_manager_rpc_protocol.hpp"
 #include "network/protocols/fetch_protocols.hpp"
 
+using fetch::service::ServiceClient;
+using fetch::byte_array::ConstByteArray;
+using fetch::network::NetworkManager;
+
 namespace fetch {
 namespace ledger {
+namespace {
 
-ExecutionManagerRpcClient::ExecutionManagerRpcClient(byte_array::ConstByteArray const &host,
-                                                     uint16_t const &                  port,
-                                                     network::NetworkManager const &network_manager)
+using NetworkClientPtr = ExecutionManagerRpcClient::NetworkClientPtr;
+using NetworkClient = ExecutionManagerRpcClient::NetworkClient;
 
+NetworkClientPtr CreateConnection (ConstByteArray const &host, uint16_t port, NetworkManager const &network_manager)
 {
-  network::TCPClient connection(network_manager);
-  connection.Connect(host, port);
+  // create and connect service client
+  NetworkClientPtr connection = std::make_shared<NetworkClient>(network_manager);
+  connection->Connect(host, port);
 
-  service_ = std::make_unique<fetch::service::ServiceClient>(connection, network_manager);
+  return connection;
+}
+
+} // namespace
+
+ExecutionManagerRpcClient::ExecutionManagerRpcClient(ConstByteArray const &host,
+                                                     uint16_t const &                  port,
+                                                     NetworkManager const &network_manager)
+  : connection_(CreateConnection(host, port, network_manager))
+  , service_(std::make_unique<ServiceClient>(*connection_, network_manager))
+{
 }
 
 ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(block_type const &block)

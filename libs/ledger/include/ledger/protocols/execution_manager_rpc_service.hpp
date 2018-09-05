@@ -42,8 +42,21 @@ public:
   {
     this->Add(fetch::protocols::FetchProtocols::EXECUTION_MANAGER, &protocol_);
   }
-
   ~ExecutionManagerRpcService() override = default;
+
+  void Start() override
+  {
+    TCPServer::Start();
+
+    manager_->Start();
+  }
+
+  void Stop() override
+  {
+    manager_->Stop();
+
+    TCPServer::Stop();
+  }
 
   // helpful statistics
   std::size_t completed_executions() const { return manager_->completed_executions(); }

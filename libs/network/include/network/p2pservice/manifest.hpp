@@ -1,7 +1,11 @@
 #pragma once
 
+#include "core/logger.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
+
 #include <memory>
-#include <network/p2pservice/p2p_service_defs.hpp>
+#include <map>
+#include <vector>
 
 namespace fetch {
 
@@ -147,7 +151,7 @@ private:
       if (!inword)
       {
         part++;
-        FETCH_LOG_INFO(LOGGING_NAME, "PART=", part);
+        FETCH_LOG_DEBUG(LOGGING_NAME, "PART=", part);
         inword = true;
       }
       store[uint32_t(part)] += *it;

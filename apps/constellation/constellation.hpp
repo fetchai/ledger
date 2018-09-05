@@ -23,9 +23,12 @@
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
+#include "ledger/transaction_processor.hpp"
 #include "miner/annealer_miner.hpp"
 #include "network/p2pservice/p2p_service2.hpp"
 #include "network/muddle/muddle.hpp"
+#include "http/server.hpp"
+#include "http/module.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -126,7 +129,11 @@ private:
   using ExecutionManager = ledger::ExecutionManager;
   using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
   using LaneRemoteControl = ledger::LaneRemoteControl;
-
+  using HttpServer  = http::HTTPServer;
+  using HttpModule  = http::HTTPModule;
+  using HttpModulePtr = std::shared_ptr<HttpModule>;
+  using HttpModules = std::vector<HttpModulePtr>;
+  using TransactionProcessor = ledger::TransactionProcessor;
 
   /// @name Configuration
   /// @{
@@ -171,10 +178,14 @@ private:
   /// @name Top Level Services
   /// @{
   MainChainRpcServicePtr   main_chain_service_;
-
-
   /// @}
 
+  /// @name HTTP Server
+  /// @{
+  TransactionProcessor tx_processor_;
+  HttpServer http_;
+  HttpModules http_modules_;
+  /// @}
 
 #if 0
   /// @name Lane Storage Components

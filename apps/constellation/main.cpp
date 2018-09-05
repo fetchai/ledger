@@ -52,24 +52,36 @@ using ProverPtr    = std::unique_ptr<Prover>;
 std::atomic<fetch::Constellation*> gConstellationInstance{nullptr};
 std::atomic<std::size_t> gInterruptCount{0};
 
+uint32_t Log2(uint32_t value)
+{
+  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  return static_cast<uint32_t>(VALUE_SIZE_IN_BITS - static_cast<uint32_t>(__builtin_clz(value) + 1));
+}
+
+bool EnsureLog2(uint32_t value)
+{
+  uint32_t const log2_value = Log2(value);
+  return value == (1 << log2_value);
+}
+
 struct CommandLineArguments
 {
   using string_list_type  = std::vector<std::string>;
   using peer_list_type    = fetch::Constellation::PeerList;
   using adapter_list_type = fetch::network::Adapter::adapter_list_type;
 
-  static const std::size_t DEFAULT_NUM_LANES     = 4;
-  static const std::size_t DEFAULT_NUM_SLICES    = 4;
-  static const std::size_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
-  static const uint16_t    DEFAULT_PORT          = 8000;
-  static const uint32_t    DEFAULT_NETWORK_ID    = 0x10;
+  static const uint32_t DEFAULT_NUM_LANES     = 4;
+  static const uint32_t DEFAULT_NUM_SLICES    = 4;
+  static const uint32_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
+  static const uint16_t DEFAULT_PORT          = 8000;
+  static const uint32_t DEFAULT_NETWORK_ID    = 0x10;
 
   uint16_t       port{0};
   uint32_t       network_id;
   peer_list_type peers;
-  std::size_t    num_executors;
-  std::size_t    num_lanes;
-  std::size_t    num_slices;
+  uint32_t       num_executors;
+  uint32_t       num_lanes;
+  uint32_t       num_slices;
   std::string    interface;
   bool           bootstrap{false};
   bool           mine{false};
@@ -89,7 +101,7 @@ struct CommandLineArguments
     parameters.add(args.num_executors, "executors", "The number of executors to configure",
                    DEFAULT_NUM_EXECUTORS);
     parameters.add(args.num_lanes, "lanes", "The number of lanes to be used", DEFAULT_NUM_LANES);
-    parameters.add(args.num_lanes, "slices", "The number of slices to be used", DEFAULT_NUM_SLICES);
+    parameters.add(args.num_slices, "slices", "The number of slices to be used", DEFAULT_NUM_SLICES);
     parameters.add(raw_peers, "peers",
                    "The comma separated list of addresses to initially connect to", std::string{});
     parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage",
@@ -105,6 +117,13 @@ struct CommandLineArguments
 
     // update the peers
     args.SetPeers(raw_peers);
+
+    // ensure that the number lanes is a valid power of 2
+    if (!EnsureLog2(args.num_lanes))
+    {
+      std::cout << "Number of lanes is not a valid log2 number" << std::endl;
+      std::exit(1);
+    }
 
     args.bootstrap = (!external_address.empty());
     if (args.bootstrap)
@@ -167,6 +186,7 @@ struct CommandLineArguments
     s << "network id.....: 0x" << std::hex << args.network_id << std::dec << std::endl;
     s << "num executors..: " << args.num_executors << std::endl;
     s << "num lanes......: " << args.num_lanes << std::endl;
+    s << "num slices.....: " << args.num_slices << std::endl;
     s << "bootstrap......: " << args.bootstrap << std::endl;
     s << "db-prefix......: " << args.dbdir << std::endl;
     s << "interface......: " << args.interface << std::endl;

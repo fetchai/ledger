@@ -64,11 +64,16 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
                                    lane_set_type const &lanes)
 {
 
-  FETCH_LOG_INFO(LOGGING_NAME,"Executing tx ", byte_array::ToBase64(hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME,"Executing tx ", byte_array::ToBase64(hash));
 
   // TODO(issue 33): Add code to validate / check lane resources
   FETCH_UNUSED(slice);
   FETCH_UNUSED(lanes);
+
+#if 0
+  return Status::SUCCESS;
+#endif
+
 
   // Get the transaction from the store (we should be able to take the
   // transaction from any of the lanes, for simplicity, however, just pick the
@@ -102,7 +107,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   // detach the chain code from the current context
   chain_code->Detach();
 
-  FETCH_LOG_INFO(LOGGING_NAME,"Executing tx ", byte_array::ToBase64(hash), " (success)");
+  FETCH_LOG_DEBUG(LOGGING_NAME,"Executing tx ", byte_array::ToBase64(hash), " (success)");
 
   return Status::SUCCESS;
 }

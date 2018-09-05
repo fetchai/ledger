@@ -26,9 +26,9 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
 
   params << SERVICE_FUNCTION_CALL << prom->id();
 
-  promises_mutex_.lock();
-  promises_[prom->id()] = prom;
-  promises_mutex_.unlock();
+  FETCH_LOG_INFO(LOGGING_NAME, "Registering promise ",  prom->id(), " with ", protocol, ':', function, " (packed)", &promises_);
+
+  AddPromise(prom);
 
   PackCallWithPackedArguments(params, protocol, function, args);
 
@@ -136,23 +136,12 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
     PromiseCounter id;
     params >> id;
 
-    promises_mutex_.lock();
-    auto it = promises_.find(id);
-    if (it == promises_.end())
-    {
-      promises_mutex_.unlock();
-
-      throw serializers::SerializableException(
-        error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
-    }
-    promises_mutex_.unlock();
+    Promise p = ExtractPromise(id);
 
     auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
-    it->second->Fulfill(ret);
+    p->Fulfill(ret);
 
-    promises_mutex_.lock();
-    promises_.erase(it);
-    promises_mutex_.unlock();
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id, " due to finishing delivering the response");
   }
   else if (type == SERVICE_ERROR)
   {
@@ -162,22 +151,11 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
     serializers::SerializableException e;
     params >> e;
 
-    promises_mutex_.lock();
-    auto it = promises_.find(id);
-    if (it == promises_.end())
-    {
-      promises_mutex_.unlock();
-      throw serializers::SerializableException(
-        error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
-    }
+    // lookup the promise and fail it
+    Promise p = ExtractPromise(id);
+    p->Fail(e);
 
-    promises_mutex_.unlock();
-
-    it->second->Fail(e);
-
-    promises_mutex_.lock();
-    promises_.erase(it);
-    promises_mutex_.unlock();
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id, " due to finishing delivering the response (error)");
   }
   else if (type == SERVICE_FEED)
   {
@@ -243,6 +221,53 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
   }
 
   return ret;
+}
+
+void ServiceClientInterface::AddPromise(Promise const &promise)
+{
+  FETCH_LOCK(promises_mutex_);
+  promises_[promise->id()] = promise;
+}
+
+Promise ServiceClientInterface::LookupPromise(PromiseCounter id)
+{
+  FETCH_LOCK(promises_mutex_);
+
+  auto it = promises_.find(id);
+  if (it == promises_.end())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to locate promise with ID: ", id);
+
+    throw serializers::SerializableException(
+      error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
+  }
+
+  return it->second;
+}
+
+Promise ServiceClientInterface::ExtractPromise(PromiseCounter id)
+{
+  FETCH_LOCK(promises_mutex_);
+
+  auto it = promises_.find(id);
+  if (it == promises_.end())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to locate promise with ID: ", id);
+
+    throw serializers::SerializableException(
+      error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
+  }
+
+  Promise promise = it->second;
+  promises_.erase(it);
+
+  return promise;
+}
+
+void ServiceClientInterface::RemovePromise(PromiseCounter id)
+{
+  FETCH_LOCK(promises_mutex_);
+  promises_.erase(id);
 }
 
 subscription_handler_type

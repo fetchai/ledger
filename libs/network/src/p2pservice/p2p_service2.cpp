@@ -36,7 +36,8 @@ void P2PService2::Stop()
 
 void P2PService2::WorkCycle()
 {
-  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle");
+  FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle");
+
   // see how many peers we have.
   // not enough, schedule some connects.
   // too many? schedule some kickoffs.

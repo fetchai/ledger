@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <core/random/lcg.hpp>
-#include <core/random/lfg.hpp>
-#include <math/exp.hpp>
-#include <miner/optimisation/bitvector.hpp>
+#include "core/logger.hpp"
+#include "core/random/lcg.hpp"
+#include "core/random/lfg.hpp"
+#include "math/exp.hpp"
+#include "miner/optimisation/bitvector.hpp"
 
 namespace fetch {
 namespace optimisers {
@@ -28,6 +29,9 @@ namespace optimisers {
 class BinaryAnnealer
 {
 public:
+
+  static constexpr char const *LOGGING_NAME = "BinaryAnnealer";
+
   using spin_type  = int16_t;
   using state_type = std::vector<spin_type>;
 
@@ -59,6 +63,8 @@ public:
       for (std::size_t i = 0; i < size_; ++i)
       {
         //        assert( i ==( block * 8*sizeof(bit_data_type) + bit ));
+        assert(i < sites_.size());
+
 
         Site const &s         = sites_[i];
         uint64_t    state_bit = state_.bit(block, bit);
@@ -125,6 +131,8 @@ public:
 
     for (std::size_t i = 0; i < size_; ++i)
     {
+      assert(i < sites_.size());
+
       sites_[i].local_field /= coupling_magnitude_;
     }
 
@@ -199,11 +207,16 @@ public:
   {
     if (i == j)
     {
+      assert(j < sites_.size());
+
       sites_[j].local_field = val;
     }
     else
     {
       assert((coupling_magnitude_ == 0) || (coupling_magnitude_ == val));
+      assert(i < sites_.size());
+      assert(j < sites_.size());
+
       sites_[i].couplings.set(j, 1);
       sites_[j].couplings.set(i, 1);
       coupling_magnitude_ = val;

@@ -37,7 +37,7 @@ class ExecutorRpcTests : public ::testing::Test
 protected:
   using underlying_client_type          = fetch::ledger::ExecutorRpcClient;
   using underlying_service_type         = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type = underlying_client_type::network_manager_type;
+  using underlying_network_manager_type = underlying_client_type::NetworkManager ;
   using client_type                     = std::unique_ptr<underlying_client_type>;
   using service_type                    = std::unique_ptr<underlying_service_type>;
   using network_manager_type            = std::unique_ptr<underlying_network_manager_type>;
@@ -61,6 +61,8 @@ protected:
     service_ =
         std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
 
+    service_->Start();
+
     // create the executor client
     executor_ =
         std::make_unique<underlying_client_type>("127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_);
@@ -74,6 +76,7 @@ protected:
 
   void TearDown() override
   {
+    service_->Stop();
     network_manager_->Stop();
 
     executor_.reset();

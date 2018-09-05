@@ -64,7 +64,7 @@ public:
   };
 
   ConstByteArray const &value() const { return value_; }
-  Counter id() const { return counter_; }
+  Counter id() const { return id_; }
   State state() const { return state_; }
   SerializableException const &exception() const { return (*exception_); }
 

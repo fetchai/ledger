@@ -69,8 +69,11 @@ protected:
     service_ = std::make_unique<underlying_service_type>(
         PORT, *network_manager_, config.executors, storage_, [this]() { return CreateExecutor(); });
 
+    service_->Start();
+
     // client
     manager_ = std::make_unique<underlying_client_type>("127.0.0.1", PORT, *network_manager_);
+
 
     // wait for the client to connect before proceeding
     FETCH_LOG_INFO(LOGGING_NAME,"Connecting client to service...");
@@ -83,6 +86,7 @@ protected:
 
   void TearDown() override
   {
+    service_->Stop();
     network_manager_->Stop();
 
     manager_.reset();

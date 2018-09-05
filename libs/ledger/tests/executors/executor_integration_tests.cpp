@@ -39,7 +39,7 @@ class ExecutorIntegrationTests : public ::testing::Test
 protected:
   using underlying_client_type          = fetch::ledger::ExecutorRpcClient;
   using underlying_service_type         = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type = underlying_client_type::network_manager_type;
+  using underlying_network_manager_type = underlying_client_type::NetworkManager ;
   using underlying_storage_type         = fetch::ledger::StorageUnitClient;
   using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
 
@@ -65,7 +65,7 @@ protected:
 
     storage_service_ = std::make_unique<underlying_storage_service_type>();
     storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_);
-    storage_service_->Start(false);
+    storage_service_->Start();
 
     storage_.reset(new underlying_storage_type{*network_manager_});
     for (std::size_t i = 0; i < NUM_LANES; ++i)
@@ -78,15 +78,18 @@ protected:
     service_ =
         std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
 
+    service_->Start();
+
     // create the executor client
     executor_ =
         std::make_unique<underlying_client_type>("127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_);
+
 
     for (;;)
     {
 
       // wait for the all the clients to connect to everything
-      if (executor_->is_alive() && storage_->is_alive()) break;
+      if (executor_->is_alive() && storage_->IsAlive()) break;
 
       std::this_thread::sleep_for(std::chrono::milliseconds{100});
     }
@@ -94,6 +97,8 @@ protected:
 
   void TearDown() override
   {
+    service_->Stop();
+    storage_service_->Stop();
     network_manager_->Stop();
 
     executor_.reset();

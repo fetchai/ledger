@@ -132,7 +132,12 @@ public:
 
   void InlineAndAssign(BitVectorImplementation const &a, BitVectorImplementation const &b)
   {
-    for (std::size_t i = 0; i < blocks_; ++i) data_[i] = a.data_[i] & b.data_[i];
+    for (std::size_t i = 0; i < blocks_; ++i)
+    {
+      assert(i < data_.size());
+
+      data_[i] = a.data_[i] & b.data_[i];
+    }
   }
 
   BitVectorImplementation &operator|=(BitVectorImplementation const &other)
@@ -168,6 +173,7 @@ public:
 
   data_type bit(std::size_t const &block, std::size_t const &b) const
   {
+    assert(block < data_.size());
     return (data_[block] >> b) & 1;
   }
 

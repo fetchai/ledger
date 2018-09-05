@@ -26,6 +26,7 @@
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
+#include "ledger/chaincode/wallet_http_interface.hpp"
 
 #include <memory>
 #include <random>
@@ -92,6 +93,11 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , block_coordinator_{chain_, *execution_manager_}
   , miner_{num_lanes, num_slices, chain_, block_coordinator_, block_packer_, p2p_port_} // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_)}
+  , tx_processor_{*storage_, block_packer_}
+  , http_{network_manager_}
+  , http_modules_{
+    std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_)
+  }
 {
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME,"Constellation :: ", interface_address, " P ", port_start, " E ",
@@ -105,6 +111,12 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
 
   // configure all the lane services
   lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_);
+
+  // attach all the modules to the http server
+  for (auto const &module : http_modules_)
+  {
+    http_.AddModule(*module);
+  }
 }
 
 /**
@@ -114,6 +126,10 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
  */
 void Constellation::Run(PeerList const &initial_peers, bool mining)
 {
+  //---------------------------------------------------------------
+  // Step 1. Start all the components
+  //---------------------------------------------------------------
+
   // start all the services
   network_manager_.Start();
   muddle_.Start({p2p_port_});
@@ -144,6 +160,12 @@ void Constellation::Run(PeerList const &initial_peers, bool mining)
   if (mining)
     miner_.Start();
 
+  http_.Start(http_port_);
+
+  //---------------------------------------------------------------
+  // Step 2. Main monitor loop
+  //---------------------------------------------------------------
+
   // monitor loop
   while (active_)
   {
@@ -151,7 +173,13 @@ void Constellation::Run(PeerList const &initial_peers, bool mining)
     std::this_thread::sleep_for(std::chrono::milliseconds{500});
   }
 
+  //---------------------------------------------------------------
+  // Step 3. Tear down
+  //---------------------------------------------------------------
+
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...");
+
+  http_.Stop();
 
   // tear down all the services
   if (mining)

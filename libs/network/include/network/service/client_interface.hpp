@@ -70,9 +70,9 @@ public:
 
     params << SERVICE_FUNCTION_CALL << prom->id();
 
-    promises_mutex_.lock();
-    promises_[prom->id()] = prom;
-    promises_mutex_.unlock();
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':', function, " (call)", &promises_);
+
+    AddPromise(prom);
 
     PackCall(params, protocol, function, std::forward<arguments>(args)...);
 
@@ -81,9 +81,10 @@ public:
       FETCH_LOG_DEBUG(LOGGING_NAME,"Call failed!");
       prom->Fail(serializers::SerializableException(
           error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
-      promises_mutex_.lock();
-      promises_.erase(prom->id());
-      promises_mutex_.unlock();
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Binning promise ", prom->id(), " due to inability to deliver request");
+
+      RemovePromise(prom->id());
     }
 
     return prom;
@@ -146,6 +147,11 @@ private:
     feed_handler_type     feed     = 0;
     AbstractCallable *    callback = nullptr;
   };
+
+  void AddPromise(Promise const &promise);
+  Promise LookupPromise(PromiseCounter id);
+  Promise ExtractPromise(PromiseCounter id);
+  void RemovePromise(PromiseCounter id);
 
   subscriptions_type                   subscriptions_;
   std::list<subscription_handler_type> cancelled_subscriptions_;

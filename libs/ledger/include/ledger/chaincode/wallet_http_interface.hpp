@@ -102,7 +102,10 @@ private:
       chain::MutableTransaction mtx;
       mtx.set_contract_name("fetch.token.wealth");
       mtx.set_data(oss.str());
+      mtx.set_fee(rng() & 0x1FF);
       mtx.PushResource(address);
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting register transaction");
 
       // dispatch the transaction
       processor_.AddTransaction(chain::VerifiedTransaction::Create(std::move(mtx)));
