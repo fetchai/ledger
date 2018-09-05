@@ -32,7 +32,7 @@ class HTTPResponse : public std::enable_shared_from_this<HTTPResponse>
 public:
   HTTPResponse(byte_array::ConstByteArray body, MimeType mime = {".html", "text/html"},
                Status status = status_code::SUCCESS_OK)
-    : body_(body)
+    : body_(std::move(body))
     , mime_(std::move(mime))
     , status_(std::move(status))
   {

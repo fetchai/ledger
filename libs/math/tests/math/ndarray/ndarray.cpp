@@ -159,3 +159,54 @@ TEST(ndarray, col_row_major_tets)
   array2.MajorOrderFlip();
   ASSERT_TRUE(array1 == array2);
 }
+
+TEST(ndarray, concat_test)
+{
+  // A trivial concat
+  std::vector<std::size_t> shape{10};
+  _A<double>               array1{shape};
+  array1.FillArange(0, 10);
+  _A<double> array2{shape};
+  array2.FillArange(0, 10);
+  _A<double> ret_array{20};
+
+  fetch::math::Concat(ret_array, {array1, array2});
+
+  for (std::size_t j = 0; j < 10; ++j)
+  {
+    ASSERT_TRUE(array1[j] == ret_array[j]);
+  }
+  for (std::size_t j = 0; j < 10; ++j)
+  {
+    ASSERT_TRUE(array2[j] == ret_array[j + 10]);
+  }
+
+  // A more interesting concat
+  shape = {2, 10};
+  _A<double> array3{shape};
+  array1.FillArange(0, 20);
+  _A<double> array4{shape};
+  array2.FillArange(0, 20);
+  _A<double> ret_array2{40};
+
+  fetch::math::Concat(ret_array2, {array3, array4}, 1);
+  std::vector<std::size_t> new_shape{2, 20};
+  ASSERT_TRUE(ret_array2.shape() == new_shape);
+  for (std::size_t i = 0; i < 2; ++i)
+  {
+    for (std::size_t j = 0; j < 10; ++j)
+    {
+      std::vector<std::size_t> idx = {i, j};
+      ASSERT_TRUE(array3.Get(idx) == ret_array2.Get(idx));
+    }
+  }
+  for (std::size_t i = 0; i < 2; ++i)
+  {
+    for (std::size_t j = 0; j < 10; ++j)
+    {
+      std::vector<std::size_t> idx  = {i, j};
+      std::vector<std::size_t> idx2 = {i, j + 10};
+      ASSERT_TRUE(array4.Get(idx) == ret_array2.Get(idx));
+    }
+  }
+}
