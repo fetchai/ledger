@@ -47,8 +47,29 @@ public:
   void RemoveConnection(Peer const &peer);
   /// @}
 
+  enum ConnectionState
+    {
+      UNKNOWN       = 0,
+      TRYING        = 0x20,
+
+      CONNECTED     = 0x100,
+
+      REMOTE        = 0x200,
+
+      INCOMING      = 0x300,
+
+      BACKOFF       = 0x10,
+      BACKOFF_2     = 0x11,
+      BACKOFF_3     = 0x12,
+      BACKOFF_4     = 0x13,
+      BACKOFF_5     = 0x14,
+    };
+
+  ConnectionState GetStateForPeer(const Peer &peer);
+
   PeerList GetPeersToConnectTo() const;
 
+  std::list<std::pair<network::AbstractConnection::connection_handle_type, Peer>> GetCurrentPeers() const;
 private:
 
   using Clock = std::chrono::steady_clock;
@@ -61,6 +82,7 @@ private:
     std::size_t successes = 0;            ///< The total number of successful connections
     std::size_t consecutive_failures = 0;
     std::size_t total_failures = 0;       ///< The total number of connection failures
+    bool        connected = false;        ///< Whether the last/current attempt has succeeded.
   };
 
   using Mutex        = mutex::Mutex;
@@ -76,6 +98,8 @@ private:
   PeerSet       persistent_peers_;
   PeerMap       peer_connections_;
   MetadataMap   peer_metadata_;
+
+  bool ReadyForRetry(const PeerMetadata &metadata) const;
 };
 
 } // namespace p2p

@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include "core/logger.hpp"
 
 namespace fetch {
 namespace network {
@@ -46,11 +47,13 @@ public:
   uint16_t port() const { return port_; }
 
   std::string ToString() const;
+  std::string ToUri() const;
 
   Peer &operator=(Peer const &) = default;
   Peer &operator=(Peer &&) = default;
 
   bool operator==(Peer const &other) const;
+  bool operator<(Peer const &other) const;
 
   template <typename T>
   friend void Serialize(T &serializer, Peer const &peer)
@@ -74,9 +77,32 @@ inline std::string Peer::ToString() const
   return address_ + ':' + std::to_string(port_);
 }
 
+inline std::string Peer::ToUri() const
+{
+  return "tcp://" + address_ + ':' + std::to_string(port_);
+}
+
 inline bool Peer::operator==(Peer const &other) const
 {
   return ((address_ == other.address_) && (port_ == other.port_));
+}
+
+inline bool Peer::operator<(Peer const &other) const
+{
+  bool r = false;
+  if (address_ < other.address_)
+  {
+    r = true;
+  }
+  else if (address_ > other.address_)
+  {
+    r = false;
+  }
+  else if (port_ < other.port_)
+  {
+    r = true;
+  }
+  return r;
 }
 
 inline std::ostream &operator<<(std::ostream &s, Peer const &peer)

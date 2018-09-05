@@ -106,6 +106,65 @@ void Muddle::Stop()
   //clients_.clear();
 }
 
+std::list<Muddle::ConnectionData> Muddle::GetConnections()
+{
+  std::list<Muddle::ConnectionData> res;
+  auto idents2handles = router_ . GetPeerIdentities();
+  auto handles2peers = clients_ . GetCurrentPeers();
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Muddle::GetConnections: i2h=",idents2handles.size(), " h2p=",  handles2peers.size());
+
+  using handles_2_peers_type = decltype(handles2peers);
+
+  std::map<
+    handles_2_peers_type::value_type::first_type,
+    handles_2_peers_type::value_type::second_type
+    > h2p;
+
+  for(auto& handle2peer : handles2peers)
+  {
+    h2p[handle2peer.first] = handle2peer.second;
+  }
+
+  for (auto& ident2handle : idents2handles)
+  {
+    auto ident = ident2handle.first;
+    auto handle = ident2handle.second;
+    auto peer_result = h2p.find(handle);
+
+    PeerConnectionList::ConnectionState st = PeerConnectionList::UNKNOWN;
+
+    std::string uri = "";
+
+    if (peer_result != h2p.end())
+    {
+      uri = peer_result -> second.ToString();
+      st = clients_ . GetStateForPeer(uri);
+    }
+    else
+    {
+      if (ident.size() > 0)
+      {
+        st = PeerConnectionList::INCOMING;
+      }
+    }
+    res.push_back(std::make_tuple(ident, uri, st));
+  }
+
+  return res;
+}
+
+void Muddle::AddPeer(const network::Peer &peer)
+{
+  clients_.AddPersistentPeer(peer);
+}
+
+void Muddle::DropPeer(const network::Peer &peer)
+{
+  clients_.RemovePersistentPeer(peer);
+}
+
+
 /**
  * Called periodically internally in order to co-ordinate network connections and clean up
  */
