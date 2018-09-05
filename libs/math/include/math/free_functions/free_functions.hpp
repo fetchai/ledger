@@ -158,7 +158,7 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &i
 }
 
 template <typename T, typename C>
-void Transpose(NDArray<T, C> &input_array, std::vector<std::size_t> &perm)
+void Transpose(NDArray<T, C> &input_array, std::vector<std::size_t> const &perm)
 {
   assert(perm.size() == input_array.shape().size());
 

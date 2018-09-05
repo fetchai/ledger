@@ -175,10 +175,6 @@ public:
    */
   void Transpose(std::vector<std::size_t> const &perm)
   {
-    //    bool not_complete = true;
-    //    std::size_t cur_idx = 0, complete_counter;
-    //    std::vector<std::size_t> perm_tracker{perm};
-
     std::vector<NDIteratorRange> new_ranges;
     new_ranges.reserve(ranges_.size());
     for (std::size_t i = 0; i < ranges_.size(); ++i)
@@ -186,35 +182,6 @@ public:
       new_ranges.push_back(ranges_[perm[i]]);
     }
     std::swap(new_ranges, ranges_);
-    //
-    //
-    //
-    //
-    //    while(not_complete)
-    //    {
-    //      for (std::size_t j = 0; j < perm_tracker.size(); ++j)
-    //      {
-    //        if (perm_tracker[j] == cur_idx)
-    //        {
-    //          std::swap(ranges_[j], ranges_[cur_idx]);
-    //          std::swap(perm_tracker[j], perm_tracker[cur_idx]);
-    //        }
-    //      }
-    //
-    //      complete_counter = 0;
-    //      for (std::size_t i = 0; i < perm_tracker.size(); ++i)
-    //      {
-    //        if (i == perm_tracker[i])
-    //        {
-    //          ++complete_counter;
-    //        }
-    //      }
-    //      if (complete_counter == perm.size()) {not_complete = false;}
-    //
-    //      // permute next index and repeat until complete
-    //      cur_idx += 1;
-    //      cur_idx %= perm_tracker.size();
-    //    }
   }
 
   void PermuteAxes(std::size_t const &a, std::size_t const &b)
