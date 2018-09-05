@@ -198,7 +198,7 @@ void ExpandDims(NDArray<T, C> &input_array, std::size_t &axis)
 template <typename T, typename C>
 void ExpandDims(NDArray<T, C> &input_array, int const &axis)
 {
-  assert(axis <= input_array.size());
+  assert(axis <= static_cast<int>(input_array.size()));
   std::size_t new_axis;
   if (axis < 0)
   {
