@@ -25,6 +25,7 @@
 #include <cassert>
 #include <fstream>
 #include <memory>
+#include <utility>
 
 #include "core/mutex.hpp"
 #include "network/service/protocol.hpp"
@@ -66,17 +67,17 @@ public:
   class DocumentFileImplementation : public file_object_type
   {
   public:
-    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
+    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray address,
                                file_store_type &store)
       : file_object_type(store)
-      , address_(address)
+      , address_(std::move(address))
       , store_(s)
     {}
 
-    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
+    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray address,
                                file_store_type &store, std::size_t const &pos)
       : file_object_type(store, pos)
-      , address_(address)
+      , address_(std::move(address))
       , store_(s)
     {}
 
