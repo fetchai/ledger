@@ -20,6 +20,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
+#include "core/meta/type_traits.hpp"
 #include "core/random.hpp"
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
@@ -724,6 +725,13 @@ public:
     data_[idx] = val;
   }
 
+  template <typename S>
+  meta::IfIsUnsignedLike<S, type> Get(S const &indices) const
+  {
+    return data_[indices];
+  }
+  //  T Get(std::size_t const &idx) { return data_[idx]; } const
+
   container_type const &data() const
   {
     return data_;
@@ -998,7 +1006,7 @@ public:
     return *this;
   }
 
-private:
+protected:
   container_type data_;
   std::size_t    size_ = 0;
 };
