@@ -185,6 +185,7 @@ PYBIND11_MODULE(fetch, module)
 
   fetch::math::BuildNDArray<float>("NDArrayFloat", ns_fetch_math);
   fetch::math::BuildNDArray<double>("NDArrayDouble", ns_fetch_math);
+  //  fetch::math::BuildNDArray<std::size_t>("NDArrayUInt", ns_fetch_math);
 
   //  fetch::math::BuildSpline(ns_fetch_math_spline);
   //  fetch::image::colors::BuildAbstractColor<uint32_t, 8,
