@@ -292,7 +292,10 @@ public:
     });
   }
 
-  virtual ~PySwarm() { Stop(); }
+  virtual ~PySwarm()
+  {
+    Stop();
+  }
 
 #define DELEGATE_CAPTURED , this
 #define DELEGATE_WRAPPER                                    \
@@ -309,7 +312,10 @@ public:
   {
     DELEGATE OnPeerless([func DELEGATE_CAPTURED]() { DELEGATE_WRAPPER func(); });
   }
-  virtual void DoPing(const std::string &host) { DELEGATE DoPing(host); }
+  virtual void DoPing(const std::string &host)
+  {
+    DELEGATE DoPing(host);
+  }
   virtual void OnPingSucceeded(pybind11::object func)
   {
     DELEGATE OnPingSucceeded(
@@ -334,7 +340,10 @@ public:
     DELEGATE OnPeerDiscoverFail(
         [func DELEGATE_CAPTURED](const std::string &host) { DELEGATE_WRAPPER func(host); });
   }
-  virtual void DoBlockSolved(const std::string &blockdata) { DELEGATE DoBlockSolved(blockdata); }
+  virtual void DoBlockSolved(const std::string &blockdata)
+  {
+    DELEGATE DoBlockSolved(blockdata);
+  }
   virtual void DoTransactionListBuilt(const std::list<std::string> &txnlist)
   {
     DELEGATE DoTransactionListBuilt(txnlist);
@@ -368,8 +377,11 @@ public:
           DELEGATE_WRAPPER func(host, blockid);
         });
   }
-  virtual std::string GetBlock(const std::string &blockid) { return DELEGATE GetBlock(blockid); }
-  virtual void        VerifyBlock(const std::string &blockid, bool validity)
+  virtual std::string GetBlock(const std::string &blockid)
+  {
+    return DELEGATE GetBlock(blockid);
+  }
+  virtual void VerifyBlock(const std::string &blockid, bool validity)
   {
     DELEGATE VerifyBlock(blockid, validity);
   }
@@ -395,18 +407,30 @@ public:
   {
     return DELEGATE GetTxnList(txnlistid);
   }
-  virtual void AddKarma(const std::string &host, double karma) { DELEGATE AddKarma(host, karma); }
+  virtual void AddKarma(const std::string &host, double karma)
+  {
+    DELEGATE AddKarma(host, karma);
+  }
   virtual void AddKarmaMax(const std::string &host, double karma, double limit)
   {
     DELEGATE AddKarmaMax(host, karma, limit);
   }
-  virtual double GetKarma(const std::string &host) { return DELEGATE GetKarma(host); }
-  virtual double GetCost(const std::string &host) { return DELEGATE GetCost(host); }
+  virtual double GetKarma(const std::string &host)
+  {
+    return DELEGATE GetKarma(host);
+  }
+  virtual double GetCost(const std::string &host)
+  {
+    return DELEGATE GetCost(host);
+  }
   virtual std::list<std::string> GetPeers(uint32_t count, double minKarma)
   {
     return DELEGATE GetPeers(count, minKarma);
   }
-  virtual std::string queryOwnLocation() { return DELEGATE queryOwnLocation(); }
+  virtual std::string queryOwnLocation()
+  {
+    return DELEGATE queryOwnLocation();
+  }
   /*-------------- MACHINE GENERATED CODE END -------------*/
 
   std::function<void(const std::string &host, const std::string &blockid)>
@@ -414,7 +438,10 @@ public:
   virtual void DoNewRemoteHeaviestBlock(const std::string &host, const std::string &blockid)
   {
     worker_->Post([this, host, blockid] {
-      if (on_new_remote_heaviest_block) on_new_remote_heaviest_block(host, blockid);
+      if (on_new_remote_heaviest_block)
+      {
+        on_new_remote_heaviest_block(host, blockid);
+      }
     });
   }
   virtual void pyOnNewRemoteHeaviestBlock(pybind11::object func)
@@ -433,7 +460,10 @@ public:
   virtual void DoLooseBlock(const std::string &host, const std::string &blockid)
   {
     worker_->Post([this, host, blockid] {
-      if (on_loose_block) on_loose_block(host, blockid);
+      if (on_loose_block)
+      {
+        on_loose_block(host, blockid);
+      }
     });
   }
   virtual void PyOnLooseBlock(pybind11::object func)
@@ -452,7 +482,10 @@ public:
   virtual void DoBlockNotSupplied(const std::string &host, const std::string &blockid)
   {
     worker_->Post([this, host, blockid] {
-      if (on_block_not_supplied) on_block_not_supplied(host, blockid);
+      if (on_block_not_supplied)
+      {
+        on_block_not_supplied(host, blockid);
+      }
     });
   }
   virtual void PyOnBlockNotSupplied(pybind11::object func)
@@ -471,7 +504,10 @@ public:
   virtual void DoBlockSupplied(const std::string &host, const std::string &blockid)
   {
     worker_->Post([this, host, blockid] {
-      if (on_block_supplied) on_block_supplied(host, blockid);
+      if (on_block_supplied)
+      {
+        on_block_supplied(host, blockid);
+      }
     });
   }
   virtual void PyOnBlockSupplied(pybind11::object func)
@@ -486,7 +522,10 @@ public:
     on_block_supplied = cb;
   }
 
-  std::string HeaviestBlock() const { return hashToBlockId(chain_node_->HeaviestBlock().hash()); }
+  std::string HeaviestBlock() const
+  {
+    return hashToBlockId(chain_node_->HeaviestBlock().hash());
+  }
 
 private:
   std::shared_ptr<PythonWorker>                                  worker_;

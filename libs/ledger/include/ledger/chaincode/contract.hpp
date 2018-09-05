@@ -97,9 +97,15 @@ public:
     return status;
   }
 
-  void Attach(storage_type &state) { state_ = &state; }
+  void Attach(storage_type &state)
+  {
+    state_ = &state;
+  }
 
-  void Detach() { state_ = nullptr; }
+  void Detach()
+  {
+    state_ = nullptr;
+  }
 
   std::size_t GetQueryCounter(std::string const &name)
   {
@@ -129,11 +135,20 @@ public:
 
   bool ParseAsJson(transaction_type const &tx, script::Variant &output);
 
-  Identifier const &identifier() const { return contract_identifier_; }
+  Identifier const &identifier() const
+  {
+    return contract_identifier_;
+  }
 
-  query_handler_map_type const &query_handlers() const { return query_handlers_; }
+  query_handler_map_type const &query_handlers() const
+  {
+    return query_handlers_;
+  }
 
-  transaction_handler_map_type const &transaction_handlers() const { return transaction_handlers_; }
+  transaction_handler_map_type const &transaction_handlers() const
+  {
+    return transaction_handlers_;
+  }
 
   storage::ResourceAddress CreateStateIndex(byte_array::ByteArray const &suffix) const
   {
@@ -143,7 +158,9 @@ public:
   }
 
 protected:
-  explicit Contract(std::string const &identifer) : contract_identifier_{identifer} {}
+  explicit Contract(std::string const &identifer)
+    : contract_identifier_{identifer}
+  {}
 
   template <typename C>
   void OnTransaction(std::string const &name, C *instance,

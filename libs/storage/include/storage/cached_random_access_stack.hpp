@@ -64,7 +64,10 @@ public:
     stack_.OnBeforeFlush([this]() { SignalBeforeFlush(); });
   }
 
-  ~CachedRandomAccessStack() { stack_.ClearEventHandlers(); }
+  ~CachedRandomAccessStack()
+  {
+    stack_.ClearEventHandlers();
+  }
 
   void ClearEventHandlers()
   {
@@ -72,16 +75,25 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f) { on_file_loaded_ = f; }
+  void OnFileLoaded(event_handler_type const &f)
+  {
+    on_file_loaded_ = f;
+  }
 
-  void OnBeforeFlush(event_handler_type const &f) { on_before_flush_ = f; }
+  void OnBeforeFlush(event_handler_type const &f)
+  {
+    on_before_flush_ = f;
+  }
 
   /**
    * Indicate whether the stack is writing directly to disk or caching writes.
    *
    * @return: Whether the stack is written straight to disk.
    */
-  static constexpr bool DirectWrite() { return false; }
+  static constexpr bool DirectWrite()
+  {
+    return false;
+  }
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
@@ -153,9 +165,15 @@ public:
     stack_.Close(true);
   }
 
-  void SetExtraHeader(header_extra_type const &he) { stack_.SetExtraHeader(he); }
+  void SetExtraHeader(header_extra_type const &he)
+  {
+    stack_.SetExtraHeader(he);
+  }
 
-  header_extra_type const &header_extra() const { return stack_.header_extra(); }
+  header_extra_type const &header_extra() const
+  {
+    return stack_.header_extra();
+  }
 
   uint64_t Push(type const &object)
   {
@@ -184,14 +202,23 @@ public:
 
   void Swap(uint64_t const &i, uint64_t const &j)
   {
-    if (i == j) return;
+    if (i == j)
+    {
+      return;
+    }
     data_.find(i)->second.updated = true;
     data_.find(j)->second.updated = true;
     std::swap(data_[i], data_[j]);
   }
 
-  std::size_t size() const { return objects_; }
-  std::size_t empty() const { return objects_ == 0; }
+  std::size_t size() const
+  {
+    return objects_;
+  }
+  std::size_t empty() const
+  {
+    return objects_ == 0;
+  }
 
   void Clear()
   {
@@ -241,7 +268,10 @@ public:
     // TODO(issue 10): Manage cache size
   }
 
-  bool is_open() const { return stack_.is_open(); }
+  bool is_open() const
+  {
+    return stack_.is_open();
+  }
 
 private:
   static constexpr std::size_t MAX_SIZE_BYTES = 10000;
@@ -266,7 +296,10 @@ private:
   // TODO(issue 13): Move private or protected
   void SignalFileLoaded()
   {
-    if (on_file_loaded_) on_file_loaded_();
+    if (on_file_loaded_)
+    {
+      on_file_loaded_();
+    }
   }
 
   /**
@@ -274,7 +307,10 @@ private:
    */
   void SignalBeforeFlush()
   {
-    if (on_before_flush_) on_before_flush_();
+    if (on_before_flush_)
+    {
+      on_before_flush_();
+    }
   }
 };
 }  // namespace storage

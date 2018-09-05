@@ -30,7 +30,10 @@ public:
   uint64_t value1 = 0;
   uint8_t  value2 = 0;
 
-  bool operator==(TestClass const &rhs) { return value1 == rhs.value1 && value2 == rhs.value2; }
+  bool operator==(TestClass const &rhs)
+  {
+    return value1 == rhs.value1 && value2 == rhs.value2;
+  }
 };
 
 TEST(random_access_stack, basic_functionality)

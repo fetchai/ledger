@@ -63,14 +63,19 @@ private:
  *
  * @param id The hashed array
  */
-inline ResourceID::ResourceID(byte_array::ConstByteArray id) : id_(std::move(id)) {}
+inline ResourceID::ResourceID(byte_array::ConstByteArray id)
+  : id_(std::move(id))
+{}
 
 /**
  * Gets the current id (hashed) value
  *
  * @return The id value
  */
-inline byte_array::ConstByteArray ResourceID::id() const { return id_; }
+inline byte_array::ConstByteArray ResourceID::id() const
+{
+  return id_;
+}
 
 /**
  * Gets the resource group value.
@@ -144,14 +149,20 @@ public:
    *
    * @return The byte array containing the address
    */
-  byte_array::ConstByteArray address() const { return address_; }
+  byte_array::ConstByteArray address() const
+  {
+    return address_;
+  }
 
   /**
    * Helper method to down cast this object as a resource ID
    *
    * @return The reference to the resource id of this instance
    */
-  ResourceID const &as_resource_id() const { return *this; }
+  ResourceID const &as_resource_id() const
+  {
+    return *this;
+  }
 
 private:
   byte_array::ByteArray address_;  ///< The canonical resource address

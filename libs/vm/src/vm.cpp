@@ -212,7 +212,10 @@ void VM::ForRangeIterate()
     }
     }
   }
-  if (finished) pc_ = instruction_->index;
+  if (finished)
+  {
+    pc_ = instruction_->index;
+  }
 }
 
 void VM::CreateMatrix()
@@ -323,7 +326,10 @@ void VM::CreateArray()
 bool VM::Execute(const Script &script, const std::string &name)
 {
   const Script::Function *f = script.FindFunction(name);
-  if (f == nullptr) return false;
+  if (f == nullptr)
+  {
+    return false;
+  }
   script_                       = &script;
   function_                     = f;
   const std::size_t num_strings = script_->strings.size();
@@ -360,7 +366,10 @@ bool VM::Execute(const Script &script, const std::string &name)
     case Opcode::JumpIfFalse:
     {
       Value &value = stack_[sp_--];
-      if (value.variant.ui8 == 0) pc_ = instruction_->index;
+      if (value.variant.ui8 == 0)
+      {
+        pc_ = instruction_->index;
+      }
       value.PrimitiveReset();
       break;
     }
@@ -461,13 +470,22 @@ bool VM::Execute(const Script &script, const std::string &name)
       Destruct(instruction_->variant.i32);
       if (instruction_->opcode == Opcode::ReturnValue)
       {
-        for (int i = bsp_ + 1; i < bsp_ + function_->num_parameters; ++i) stack_[i].Reset();
-        if (sp_ != bsp_) stack_[bsp_] = std::move(stack_[sp_]);
+        for (int i = bsp_ + 1; i < bsp_ + function_->num_parameters; ++i)
+        {
+          stack_[i].Reset();
+        }
+        if (sp_ != bsp_)
+        {
+          stack_[bsp_] = std::move(stack_[sp_]);
+        }
         sp_ = bsp_;
       }
       else
       {
-        for (int i = bsp_; i < bsp_ + function_->num_parameters; ++i) stack_[i].Reset();
+        for (int i = bsp_; i < bsp_ + function_->num_parameters; ++i)
+        {
+          stack_[i].Reset();
+        }
         sp_ = bsp_ - 1;
       }
       if (frame_sp_ != -1)
@@ -805,7 +823,10 @@ bool VM::Execute(const Script &script, const std::string &name)
 
   // We've got a runtime error
   // Reset all variables on the current stack
-  for (int i = 0; i <= sp_; ++i) stack_[i].Reset();
+  for (int i = 0; i <= sp_; ++i)
+  {
+    stack_[i].Reset();
+  }
   return false;
 }
 

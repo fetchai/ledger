@@ -46,8 +46,10 @@ public:
   class WorkItemSorting
   {
   public:
-    WorkItemSorting() {}
-    virtual ~WorkItemSorting() {}
+    WorkItemSorting()
+    {}
+    virtual ~WorkItemSorting()
+    {}
 
     bool operator()(const work_item_type &a, const work_item_type &b) const
     {
@@ -55,9 +57,13 @@ public:
     }
   };
 
-  FutureWorkStore() { std::make_heap(workStore_.begin(), workStore_.end(), sorter_); }
+  FutureWorkStore()
+  {
+    std::make_heap(workStore_.begin(), workStore_.end(), sorter_);
+  }
 
-  virtual ~FutureWorkStore() {}
+  virtual ~FutureWorkStore()
+  {}
 
   virtual bool IsDue()
   {

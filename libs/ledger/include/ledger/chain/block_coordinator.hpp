@@ -37,10 +37,14 @@ public:
   using status_type     = ledger::ExecutionManagerInterface::Status;
 
   BlockCoordinator(chain::MainChain &mainChain, ledger::ExecutionManagerInterface &executionManager)
-    : mainChain_{mainChain}, executionManager_{executionManager}
+    : mainChain_{mainChain}
+    , executionManager_{executionManager}
   {}
 
-  ~BlockCoordinator() { Stop(); }
+  ~BlockCoordinator()
+  {
+    Stop();
+  }
 
   void AddBlock(BlockType &block)
   {

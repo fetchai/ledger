@@ -57,7 +57,10 @@ int main()
       key[j] = uint8_t(lfg() >> 9);
     }
 
-    if (reference.find(key) != reference.end()) continue;
+    if (reference.find(key) != reference.end())
+    {
+      continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});

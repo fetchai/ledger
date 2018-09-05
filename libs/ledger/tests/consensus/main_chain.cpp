@@ -30,7 +30,10 @@ using namespace fetch::byte_array;
 // Time related functionality
 using time_point = std::chrono::high_resolution_clock::time_point;
 
-time_point TimePoint() { return std::chrono::high_resolution_clock::now(); }
+time_point TimePoint()
+{
+  return std::chrono::high_resolution_clock::now();
+}
 
 double TimeDifference(time_point t1, time_point t2)
 {

@@ -101,7 +101,8 @@ int main(int argc, char const **argv)
 
       // Proof of work search
       INFO("Finding proof");
-      while (!p()) ++p;
+      while (!p())
+        ++p;
       ++p2, p2();
 
       EXPECT(p.digest() < p.target());
@@ -146,7 +147,8 @@ int main(int argc, char const **argv)
           auto &p = block.proof();
 
           p.SetTarget(lfg() % 5);
-          while (!p()) ++p;
+          while (!p())
+            ++p;
 
           manager.PushBlock(block);
         }

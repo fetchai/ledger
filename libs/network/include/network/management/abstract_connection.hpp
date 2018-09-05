@@ -42,7 +42,10 @@ public:
     TYPE_OUTGOING  = 2
   };
 
-  AbstractConnection() { handle_ = AbstractConnection::next_handle(); }
+  AbstractConnection()
+  {
+    handle_ = AbstractConnection::next_handle();
+  }
 
   // Interface
   virtual ~AbstractConnection()
@@ -73,12 +76,24 @@ public:
     return address_;
   }
 
-  uint16_t port() const { return port_; }
+  uint16_t port() const
+  {
+    return port_;
+  }
 
-  connection_handle_type handle() const noexcept { return handle_; }
-  void SetConnectionManager(weak_register_type const &reg) { connection_register_ = reg; }
+  connection_handle_type handle() const noexcept
+  {
+    return handle_;
+  }
+  void SetConnectionManager(weak_register_type const &reg)
+  {
+    connection_register_ = reg;
+  }
 
-  weak_ptr_type connection_pointer() { return shared_from_this(); }
+  weak_ptr_type connection_pointer()
+  {
+    return shared_from_this();
+  }
 
   void OnMessage(std::function<void(network::message_type const &msg)> const &f)
   {
@@ -99,9 +114,15 @@ public:
     on_message_           = nullptr;
   }
 
-  void ActivateSelfManage() { self_ = shared_from_this(); }
+  void ActivateSelfManage()
+  {
+    self_ = shared_from_this();
+  }
 
-  void DeactivateSelfManage() { self_.reset(); }
+  void DeactivateSelfManage()
+  {
+    self_.reset();
+  }
 
 protected:
   void SetAddress(std::string const &addr)
@@ -110,7 +131,10 @@ protected:
     address_ = addr;
   }
 
-  void SetPort(uint16_t const &p) { port_ = p; }
+  void SetPort(uint16_t const &p)
+  {
+    port_ = p;
+  }
 
   void SignalLeave()
   {
@@ -123,13 +147,19 @@ protected:
   void SignalMessage(network::message_type const &msg)
   {
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
-    if (on_message_) on_message_(msg);
+    if (on_message_)
+    {
+      on_message_(msg);
+    }
   }
 
   void SignalConnectionFailed()
   {
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
-    if (on_connection_failed_) on_connection_failed_();
+    if (on_connection_failed_)
+    {
+      on_connection_failed_();
+    }
 
     DeactivateSelfManage();
   }

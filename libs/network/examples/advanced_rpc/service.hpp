@@ -24,7 +24,8 @@ class FetchService
 {
 public:
   FetchService(uint16_t port, std::string const &info)
-    : network_manager_(8), service_(port, network_manager_)
+    : network_manager_(8)
+    , service_(port, network_manager_)
   {
 
     aea_  = new AEAProtocol(info);
@@ -42,13 +43,25 @@ public:
     delete node_;
   }
 
-  void Tick() { node_->Tick(); }
+  void Tick()
+  {
+    node_->Tick();
+  }
 
-  void Tock() { node_->Tock(); }
+  void Tock()
+  {
+    node_->Tock();
+  }
 
-  void Start() { network_manager_.Start(); }
+  void Start()
+  {
+    network_manager_.Start();
+  }
 
-  void Stop() { network_manager_.Stop(); }
+  void Stop()
+  {
+    network_manager_.Stop();
+  }
 
 private:
   fetch::network::NetworkManager network_manager_;

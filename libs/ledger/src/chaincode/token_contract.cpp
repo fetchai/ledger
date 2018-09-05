@@ -46,7 +46,8 @@ struct WalletRecord
 
 }  // namespace
 
-TokenContract::TokenContract() : Contract("fetch.token")
+TokenContract::TokenContract()
+  : Contract("fetch.token")
 {
   OnTransaction("wealth", this, &TokenContract::CreateWealth);
   OnTransaction("transfer", this, &TokenContract::Transfer);
@@ -107,12 +108,21 @@ Contract::Status TokenContract::Transfer(transaction_type const &tx)
     WalletRecord to_record{};
     WalletRecord from_record{};
 
-    if (!GetStateRecord(from_record, from_address)) return Status::FAILED;
+    if (!GetStateRecord(from_record, from_address))
+    {
+      return Status::FAILED;
+    }
 
     // check the balance here to limit further reads if required
-    if (from_record.balance < amount) return Status::FAILED;
+    if (from_record.balance < amount)
+    {
+      return Status::FAILED;
+    }
 
-    if (!GetOrCreateStateRecord(to_record, to_address)) return Status::FAILED;
+    if (!GetOrCreateStateRecord(to_record, to_address))
+    {
+      return Status::FAILED;
+    }
 
     // update the records
     from_record.balance -= amount;

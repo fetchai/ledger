@@ -70,17 +70,35 @@ public:
   MutableTransaction(MutableTransaction &&rhs)                 = default;
   MutableTransaction &operator=(MutableTransaction &&rhs) = default;
 
-  resource_set_type const &resources() const { return summary_.resources; }
+  resource_set_type const &resources() const
+  {
+    return summary_.resources;
+  }
 
-  TransactionSummary const &summary() const { return summary_; }
+  TransactionSummary const &summary() const
+  {
+    return summary_;
+  }
 
-  byte_array::ConstByteArray const &data() const { return data_; }
+  byte_array::ConstByteArray const &data() const
+  {
+    return data_;
+  }
 
-  byte_array::ConstByteArray const &signature() const { return signature_; }
+  byte_array::ConstByteArray const &signature() const
+  {
+    return signature_;
+  }
 
-  std::string const &contract_name() const { return summary_.contract_name; }
+  std::string const &contract_name() const
+  {
+    return summary_.contract_name;
+  }
 
-  digest_type const &digest() const { return summary_.transaction_hash; }
+  digest_type const &digest() const
+  {
+    return summary_.transaction_hash;
+  }
 
   void Copy(MutableTransaction const &rhs)
   {
@@ -131,31 +149,49 @@ public:
   void PushResource(byte_array::ConstByteArray const &res)
   {
     LOG_STACK_TRACE_POINT;
-    if (copy_on_write_) Clone();
+    if (copy_on_write_)
+    {
+      Clone();
+    }
     summary_.resources.insert(res);
   }
 
   void set_summary(TransactionSummary const &summary)
   {
-    if (copy_on_write_) Clone();
+    if (copy_on_write_)
+    {
+      Clone();
+    }
     summary_ = summary;
   }
 
   void set_data(byte_array::ConstByteArray const &data)
   {
-    if (copy_on_write_) Clone();
+    if (copy_on_write_)
+    {
+      Clone();
+    }
     data_ = data;
   }
 
   void set_signature(byte_array::ConstByteArray const &sig)
   {
-    if (copy_on_write_) Clone();
+    if (copy_on_write_)
+    {
+      Clone();
+    }
     signature_ = sig;
   }
 
-  void set_contract_name(std::string const &name) { summary_.contract_name = name; }
+  void set_contract_name(std::string const &name)
+  {
+    summary_.contract_name = name;
+  }
 
-  void set_fee(uint64_t fee) { summary_.fee = fee; }
+  void set_fee(uint64_t fee)
+  {
+    summary_.fee = fee;
+  }
 
 protected:
   mutable bool copy_on_write_ = false;

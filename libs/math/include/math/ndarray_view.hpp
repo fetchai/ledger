@@ -34,7 +34,8 @@ public:
   std::vector<std::size_t> output_idxs;
   std::size_t              output_dims;
 
-  NDArrayView() {}
+  NDArrayView()
+  {}
 
   /**
    * iterates through the arrayview copying data from one array to another
