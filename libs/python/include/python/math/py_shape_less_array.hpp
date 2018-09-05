@@ -339,6 +339,11 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
              fetch::math::DynamicStitch(a, indices, data);
              return a;
            })
+      .def("concat",
+           [](ShapeLessArray<T> &input_array, std::vector<ShapeLessArray<T>> concat_arrays) {
+             fetch::math::Concat(input_array, concat_arrays);
+             return input_array;
+           })
       .def("__len__", [](const ShapeLessArray<T> &a) { return a.size(); })
       .def("__getitem__",
            [](const ShapeLessArray<T> &s, std::size_t i) {

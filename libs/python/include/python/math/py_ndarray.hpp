@@ -584,6 +584,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              fetch::math::Gather(input_array, updates, indices);
              return input_array;
            })
+      .def("concat",
+           [](NDArray<T> &input_array, std::vector<NDArray<T>> concat_arrays, std::size_t axis) {
+             fetch::math::Concat(input_array, concat_arrays, axis);
+             return input_array;
+           })
       .def("softmax",
            [](NDArray<T> const &array, NDArray<T> &ret) {
              Softmax(array, ret);
