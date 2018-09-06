@@ -53,6 +53,10 @@ public:
 
     // register all the routes
     Post("/register", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+      for (std::size_t i = 0; i < 50000; ++i) {
+        OnRegister(request);
+      }
+
       return OnRegister(request);
     });
 
