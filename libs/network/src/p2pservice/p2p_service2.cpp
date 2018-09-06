@@ -47,7 +47,7 @@ void P2PService2::WorkCycle()
   std::set<Uri> used;
 
   auto connections = muddle_ . GetConnections(); // address/uri/state tuples.
-  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Conncount = ", connections.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Conncount = ", connections.size());
   for(auto connection : connections)
   {
 
@@ -55,7 +55,7 @@ void P2PService2::WorkCycle()
     network::Uri uri   = std::get<1>(connection);
     auto state = std::get<2>(connection);
 
-    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Conn:", ToHex(addr), " / ", uri.ToString(), " / ", state);
+    FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Conn:", ToHex(addr), " / ", uri.ToString(), " / ", state);
     used.insert(uri);
   }
 
@@ -64,28 +64,28 @@ void P2PService2::WorkCycle()
   {
     auto next = possibles_ . front();
     possibles_.pop_front();
-    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: PULLED ", next.ToString());
+    FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: PULLED ", next.ToString());
 
     if (next.GetProtocol() == "tcp")
     {
       auto s = next.GetRemainder();
-      FETCH_LOG_WARN(LOGGING_NAME,"Converting: ", next.ToString(), " -> ", s);
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Converting: ", next.ToString(), " -> ", s);
       auto nextp = next.AsPeer();
       switch (muddle_.useClients().GetStateForPeer(nextp))
       {
       case muddle::PeerConnectionList::UNKNOWN:
-        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: AddPeer  ", nextp.ToString());
+        FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: AddPeer  ", nextp.ToString());
         muddle_ . AddPeer(nextp);
         break;
       case muddle::PeerConnectionList::CONNECTED:
-        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but in use:  ", next.ToString());
+        FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but in use:  ", next.ToString());
         break;
       case muddle::PeerConnectionList::TRYING:
-        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but being tried:  ", next.ToString());
+        FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but being tried:  ", next.ToString());
         break;
       case muddle::PeerConnectionList::BACKOFF:
       default:
-        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but in backoff:  ", next.ToString());
+        FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but in backoff:  ", next.ToString());
         break;
       }
     }
