@@ -12,6 +12,7 @@
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_managed_local_service.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
+#include "network/p2pservice/p2p_remote_manifest_cache.hpp"
 
 namespace fetch {
 namespace ledger { class LaneRemoteControl; }
@@ -70,6 +71,8 @@ public:
 private:
 
   Muddle  &muddle_;
+
+  MuddleEndpoint &muddle_ep_;
   ThreadPool  thread_pool_ = network::MakeThreadPool(1);
   RpcServer rpc_server_{muddle_.AsEndpoint(), SERVICE_P2P, CHANNEL_RPC};
 
@@ -84,6 +87,8 @@ private:
   Manifest manifest_;
   std::map<Identity, Manifest> discovered_peers_;
   std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>> local_services_;
+
+  P2PRemoteManifestCache manifest_cache_;
 
   //std::set
   std::list<network::Uri> possibles_; // addresses we might use in the future.

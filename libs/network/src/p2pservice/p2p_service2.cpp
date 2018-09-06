@@ -6,6 +6,7 @@ namespace p2p {
 
 P2PService2::P2PService2(Muddle &muddle, LaneManagement &lane_management)
   : muddle_(muddle)
+  , muddle_ep_(muddle . AsEndpoint())
   , lane_management_{lane_management}
   , resolver_proto_{resolver_, *this}
 {
