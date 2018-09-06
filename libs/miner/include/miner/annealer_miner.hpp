@@ -129,8 +129,8 @@ private:
     generator_.ConfigureAnnealer(100, 0.1, 3.0);
 
     // TODO(issue 7):  Move to configuration variables
-    std::size_t const batch_size  = generator_.unspent_count();
-    std::size_t const explore     = 10;
+    std::size_t const batch_size  = std::min<std::size_t>(std::min(generator_.unspent_count(), num_lanes * num_slices), 2000); // magic number based on single threaded performance
+    std::size_t const explore     = 1;
     Strategy const strategy       = Strategy::FEE_OCCUPANCY;
 
     generator_.Reset();
