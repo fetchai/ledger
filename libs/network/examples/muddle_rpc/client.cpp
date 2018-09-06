@@ -30,7 +30,7 @@ int main()
 
   auto const server_key = fetch::byte_array::FromBase64(SERVER_PUBLIC_KEY);
 
-  auto client = std::make_shared<Client>(muddle.AsEndpoint(), server_key, 1);
+  auto client = std::make_shared<Client>(muddle.AsEndpoint(), server_key, 1, 1);
 
   using Clock = std::chrono::high_resolution_clock;
 

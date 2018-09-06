@@ -23,7 +23,7 @@ int main()
   Sample sample;
   SampleProtocol sample_protocol(sample);
 
-  Server server{muddle.AsEndpoint(), 1};
+  Server server{muddle.AsEndpoint(), 1, 1};
   server.Add(1, &sample_protocol);
 
   for (;;)
