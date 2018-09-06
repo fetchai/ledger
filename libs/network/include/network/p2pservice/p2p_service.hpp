@@ -527,8 +527,8 @@ private:
   std::atomic<bool>                     tracking_peers_;
   std::chrono::system_clock::time_point track_start_;
 
-  std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> incoming_;
-  std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> outgoing_;
+  std::unordered_set<byte_array::ConstByteArray> incoming_;
+  std::unordered_set<byte_array::ConstByteArray> outgoing_;
   std::vector<connection_handle_type>                                 incoming_handles_;
   std::vector<connection_handle_type>                                 outgoing_handles_;
 };

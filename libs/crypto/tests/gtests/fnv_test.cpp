@@ -60,6 +60,20 @@ protected:
 
     EXPECT_EQ(expected_hash, hash);
   }
+
+  template<typename T, detail::eFnvAlgorithm ALGORITHM, std::size_t SIZE_IN_BYTES>
+  void testFnvHash(
+      detail::FNV<T, ALGORITHM, SIZE_IN_BYTES>& fnv,
+      byte_array::ConstByteArray const &data_to_hash,
+      T const &expected_hash)
+  {
+    fnv.reset();
+    fnv.update(data_to_hash.pointer(), data_to_hash.size());
+    T const resulting_hash = fnv.context();
+    EXPECT_EQ(expected_hash, resulting_hash);
+  }
+
+  byte_array::ConstByteArray const data_to_hash {"asdfghjkl"};
 };
 
 TEST_F(FVNTest, test_basic)
@@ -70,6 +84,49 @@ TEST_F(FVNTest, test_basic)
       sizeof(expected_hash));
   test_basic_hash("abcdefg", expected_hash_array);
   test_basic_hash_value("abcdefg", expected_hash);
+}
+
+TEST_F(FVNTest, test_default_FNV_uses_std_size_t_and_fnv1a)
+{
+  using default_fnv = detail::FNV<>;
+  EXPECT_EQ(detail::eFnvAlgorithm::fnv1a, default_fnv::algorithm);
+  EXPECT_EQ(typeid(std::size_t), typeid(default_fnv::number_type));
+}
+
+TEST_F(FVNTest, test_FNV0_32bit)
+{
+  detail::FNV<uint32_t, detail::eFnvAlgorithm::fnv0_deprecated> fnv;
+  testFnvHash(fnv, data_to_hash, 0xf78f889au);
+}
+
+TEST_F(FVNTest, test_FNV1_32bit)
+{
+  detail::FNV<uint32_t, detail::eFnvAlgorithm::fnv1> fnv;
+  testFnvHash(fnv, data_to_hash, 0xc92ce8a9u);
+}
+
+TEST_F(FVNTest, test_FNV1a_32bit)
+{
+  detail::FNV<uint32_t, detail::eFnvAlgorithm::fnv1a> fnv;
+  testFnvHash(fnv, data_to_hash, 0x2781041u);
+}
+
+TEST_F(FVNTest, test_FNV0_64bit)
+{
+  detail::FNV<uint64_t, detail::eFnvAlgorithm::fnv0_deprecated> fnv;
+  testFnvHash(fnv, data_to_hash, 0xfef2bfb7764f7b1au);
+}
+
+TEST_F(FVNTest, test_FNV1_64bit)
+{
+  detail::FNV<uint64_t, detail::eFnvAlgorithm::fnv1> fnv;
+  testFnvHash(fnv, data_to_hash, 0xc9cf9eecfdbf6de9u);
+}
+
+TEST_F(FVNTest, test_FNV1a_64bit)
+{
+  detail::FNV<uint64_t, detail::eFnvAlgorithm::fnv1a> fnv;
+  testFnvHash(fnv, data_to_hash, 0xd16864d71e708e01u);
 }
 
 }  // namespace

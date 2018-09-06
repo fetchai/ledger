@@ -31,14 +31,12 @@ class FakeStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
   using transaction_store_type =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::chain::Transaction,
-                         fetch::crypto::CallableFNV>;
+      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::chain::Transaction>;
   using state_store_type =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray,
-                         fetch::crypto::CallableFNV>;
+      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
   using state_archive_type = std::unordered_map<bookmark_type, state_store_type>;
   using lock_store_type =
-      std::unordered_set<fetch::byte_array::ConstByteArray, fetch::crypto::CallableFNV>;
+      std::unordered_set<fetch::byte_array::ConstByteArray>;
   using mutex_type      = std::mutex;
   using lock_guard_type = std::lock_guard<mutex_type>;
 

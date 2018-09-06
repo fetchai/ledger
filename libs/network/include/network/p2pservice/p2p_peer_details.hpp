@@ -75,7 +75,7 @@ struct EntryPoint
 
   /// Serializable fields
   /// @{
-  std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> host;
+  std::unordered_set<byte_array::ConstByteArray> host;
   uint16_t                                                            port = 0;
 
   crypto::Identity      identity;

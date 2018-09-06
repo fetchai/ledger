@@ -68,7 +68,7 @@ public:
   using bookmark_type         = StorageUnitInterface::bookmark_type;
   using hash_type             = StorageUnitInterface::hash_type;
   using block_state_cache_type =
-      std::unordered_map<block_digest_type, hash_type, crypto::CallableFNV>;
+      std::unordered_map<block_digest_type, hash_type>;
 
   // Construction / Destruction
   explicit ExecutionManager(std::size_t num_executors, storage_unit_type storage,

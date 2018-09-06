@@ -120,7 +120,7 @@ public:
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     using namespace fetch::protocols;
 
-    std::unordered_map<tx_digest_type, transaction_type, fetch::crypto::CallableFNV>
+    std::unordered_map<tx_digest_type, transaction_type>
         incoming_transactions;
     // Get missing transactions
 

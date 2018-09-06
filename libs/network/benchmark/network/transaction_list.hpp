@@ -34,7 +34,7 @@ template <typename FirstT, typename SecondT>
 class TransactionList
 {
 
-  using hasher_type = crypto::CallableFNV;
+  using hasher_type = std::hash<byte_array::ConstByteArray>;
 
 public:
   TransactionList()
