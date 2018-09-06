@@ -8,13 +8,14 @@ project (fetch)
 # Configuration Options
 #-------------------------------------------------------------------------------
 
-option(FETCH_ENABLE_TESTS           "Enable test targets"         ON)
-option(FETCH_ENABLE_EXAMPLES        "Enable example targets"      ON)
-option(FETCH_ENABLE_BENCHMARKS      "Enable benchmark targets"    ON)
-option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"       ON)
-option(FETCH_WARNINGS_AS_ERRORS     "Enable warnings as errors"   ON)
-option(FETCH_VERBOSE_CMAKE          "Enable verbose cmake output" OFF)
-option(FETCH_ENABLE_CLANG_TIDY      "Enable clang tidy checking"  OFF)
+option(FETCH_ENABLE_TESTS           "Enable test targets"               ON)
+option(FETCH_ENABLE_EXAMPLES        "Enable example targets"            ON)
+option(FETCH_ENABLE_BENCHMARKS      "Enable benchmark targets"          ON)
+option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"             ON)
+option(FETCH_WARNINGS_AS_ERRORS     "Enable warnings as errors"         ON)
+option(FETCH_VERBOSE_CMAKE          "Enable verbose cmake output"       OFF)
+option(FETCH_ENABLE_CLANG_TIDY      "Enable clang tidy checking"        OFF)
+option(FETCH_ENABLE_METRICS         "Enable the collection of metrics"  OFF)
 
 # custom string options
 set(FETCH_DEBUG_SANITIZER "" CACHE STRING "The clang based sanitizer to be enabled")

@@ -93,6 +93,11 @@ macro(setup_compiler)
     endif()
   endif()
 
+  # add a metric flag if needed
+  if (FETCH_ENABLE_METRICS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_METRICS")
+  endif (FETCH_ENABLE_METRICS)
+
 endmacro(setup_compiler)
 
 function(configure_vendor_targets)

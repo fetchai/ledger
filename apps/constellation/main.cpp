@@ -27,6 +27,7 @@
 #include "network/adapters.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
+#include "ledger/metrics/metrics.hpp"
 
 #include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
@@ -293,6 +294,10 @@ int main(int argc, char **argv)
 
   try
   {
+#ifdef FETCH_ENABLE_METRICS
+    fetch::ledger::Metrics::Instance().ConfigureFileHandler("metrics.csv");
+#endif // FETCH_ENABLE_METRICS
+
     // create and load the main certificate for the bootstrapper
     ProverPtr p2p_key = GenereateP2PKey();
 
