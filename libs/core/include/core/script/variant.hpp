@@ -137,6 +137,20 @@ public:
 
   friend std::ostream &operator<<(std::ostream &os, Variant const &v);
 
+  template <typename T>
+  inline void Serialize(T &serializer, Variant const &s)
+  {
+    assert( bool(array_) );
+    serializer << s.type() << data_ << string_ << (*array_);    
+  }
+
+  template <typename T>
+  inline void Deserialize(T &serializer, Variant &s)
+  {
+    assert( bool(array_) );
+    serializer >> s.type() >> data_ >> string_ >> (*array_); 
+  }
+
 private:
   using VariantArrayPtr = std::shared_ptr<VariantArray>;
 

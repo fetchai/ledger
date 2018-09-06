@@ -96,18 +96,18 @@ struct Prototype
   }
 };
 
-Prototype<4, 0> const  _A;      //< Represents Matrix 1
-Prototype<4, 1> const  _B;      //< Represents Matrix 2
-Prototype<4, 2> const  _C;      //< Represents Matrix 3
-Prototype<4, 3> const  _alpha;  //< Represents Scalar 1
-Prototype<4, 4> const  _beta;   //< Represents Scalar 2
-Prototype<4, 5> const  _gamma;  //< Represents Scalar 3
-Prototype<4, 6> const  _x;      //< Represents vector 1
-Prototype<4, 7> const  _y;      //< Represents vector 2
-Prototype<4, 8> const  _z;      //< Represents vector 3
-Prototype<4, 9> const  _m;      //< Represents integral 1
-Prototype<4, 10> const _n;      //< Represents integral 2
-Prototype<4, 11> const _p;      //< Represents integral 3
+constexpr Prototype<4, 0> _A{};      //< Represents Matrix 1
+constexpr Prototype<4, 1> _B{};      //< Represents Matrix 2
+constexpr Prototype<4, 2> _C{};      //< Represents Matrix 3
+constexpr Prototype<4, 3> _alpha{};  //< Represents Scalar 1
+constexpr Prototype<4, 4> _beta{};   //< Represents Scalar 2
+constexpr Prototype<4, 5> _gamma{};  //< Represents Scalar 3
+constexpr Prototype<4, 6> _x{};      //< Represents vector 1
+constexpr Prototype<4, 7> _y{};      //< Represents vector 2
+constexpr Prototype<4, 8> _z{};      //< Represents vector 3
+constexpr Prototype<4, 9> _m{};      //< Represents integral 1
+constexpr Prototype<4, 10> _n{};      //< Represents integral 2
+constexpr Prototype<4, 11> _p{};      //< Represents integral 3
 
 // Operatation representing the transposed of a matrix.
 template <uint64_t P, uint64_t S>

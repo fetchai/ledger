@@ -87,6 +87,21 @@ public:
 
   std::size_t size() const { return data_->size(); }
 
+  template <typename T>
+  inline void Serialize(T &serializer, Variant const &s)
+  {
+    assert( bool(data_) );
+    serializer << (*data_);    
+  }
+
+  template <typename T>
+  inline void Deserialize(T &serializer, Variant &s)
+  {
+    assert( bool(data_) );
+    serializer >> (*data_);
+  }
+
+
 private:
   shared_container_type data_;
 };

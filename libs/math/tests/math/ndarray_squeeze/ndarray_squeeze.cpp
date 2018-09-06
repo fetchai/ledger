@@ -34,7 +34,7 @@ TEST(ndarray, ndarray_reduce_test)
 
   NDArray<double> ret;
 
-  Reduce([](double &x, double y) { return x + y; }, a, ret);
+  Reduce([](double const &x, double const &z) { return x + z; }, a, ret);
   std::size_t m = 0;
   for (std::size_t j = 0; j < ret.shape(1); ++j)
   {
@@ -59,7 +59,7 @@ TEST(ndarray, dimension_reduction)
 
   NDArray<double> ret;
 
-  Reduce([](double &x, double y) { return std::max(x, y); }, a, ret, 2);
+  Reduce([](double const &x, double const &z) { return std::max(x, z); }, a, ret, 2);
   std::size_t m = 0;
   for (std::size_t j = 0; j < ret.shape(1); ++j)
   {

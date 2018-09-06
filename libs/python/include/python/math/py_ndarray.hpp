@@ -106,10 +106,10 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("reduce_any",
            [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
              Reduce(
-                 [](T const &a, T const &b) {
-                   if (a != 0) return 1;
-                   if (b != 0) return 1;
-                   return 0;
+                 [](T const &a, T const &b) -> T {
+                   if (a != 0) return T(1);
+                   if (b != 0) return T(1);
+                   return T(0);
                  },
                  y, x, axis);
            })

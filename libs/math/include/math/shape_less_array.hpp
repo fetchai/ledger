@@ -62,9 +62,9 @@ public:
   ShapeLessArray &operator=(ShapeLessArray &&other) = default;
   ShapeLessArray(byte_array::ConstByteArray const &c) : data_(), size_(0)
   {
+    // TODO(private issue 226): Make this a static function and add failure mechanism
     std::vector<type> elems;
     elems.reserve(1024);
-    bool failed = false;
 
     for (uint64_t i = 0; i < c.size();)
     {
@@ -81,7 +81,7 @@ public:
       default:
         if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
         {
-          failed = true;
+	  // TODO(private issue 226): failed
         }
         else
         {

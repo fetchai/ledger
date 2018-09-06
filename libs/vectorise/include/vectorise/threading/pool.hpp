@@ -109,7 +109,7 @@ private:
     condition_.wait(lock, [this] { return (!bool(running_)) || (!tasks_.empty()); });
     if (!bool(running_)) return std::function<void()>();
 
-    std::function<void()> task = std::move(tasks_.front());
+    std::function<void()> task = tasks_.front();
     ++tasks_in_progress_;
 
     tasks_.pop();
