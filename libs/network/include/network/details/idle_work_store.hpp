@@ -89,7 +89,7 @@ public:
     return wayoff.count() <= 0;
   }
 
-  std::chrono::duration<long long, std::__1::ratio<1, 1000000>> DueIn()
+  std::chrono::milliseconds DueIn()
   {
     lock_type mlock(mutex_);
     if (store_.empty())
@@ -99,7 +99,7 @@ public:
     auto nextDue = lastrun_ + interval_;
     auto tp     = std::chrono::system_clock::now();
     auto wayoff = (nextDue - tp);
-    return wayoff;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(wayoff);
   }
 
   virtual int Visit(std::function<void (work_item_type)> visitor)
@@ -132,7 +132,7 @@ private:
   store_type      store_;
   mutable mutex_type mutex_{__LINE__, __FILE__};
   std::atomic<bool> shutdown_{false};
-  std::chrono::duration<long long, std::__1::ratio<1, 1000000>> interval_;
+  std::chrono::milliseconds interval_;
   std::chrono::system_clock::time_point lastrun_;
 };
 

@@ -82,7 +82,7 @@ public:
     return IsDueActual();
   }
 
-  std::chrono::duration<long long, std::__1::ratio<1, 1000000>> DueIn()
+  std::chrono::milliseconds DueIn()
   {
     lock_type mlock(mutex_);
     return DueInActual();
@@ -136,7 +136,7 @@ private:
     return nextDue.second;
   }
 
-  std::chrono::duration<long long, std::__1::ratio<1, 1000000>> DueInActual()
+  std::chrono::milliseconds DueInActual()
   {
     if (store_.empty())
     {
@@ -147,7 +147,7 @@ private:
     auto tp     = std::chrono::system_clock::now();
     auto due    = nextDue.first;
     auto wayoff = (due - tp);
-    return wayoff;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(wayoff);
   }
 
   bool IsDueActual()

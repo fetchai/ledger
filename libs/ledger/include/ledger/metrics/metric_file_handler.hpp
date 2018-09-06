@@ -24,6 +24,7 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include <condition_variable>
 
 namespace fetch {
 namespace ledger {
