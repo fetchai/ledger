@@ -169,6 +169,21 @@ public:
     return *this;
   }
 
+  /**
+   * transpose axes according to the new order specified in perm
+   * @param perm
+   */
+  void Transpose(std::vector<std::size_t> const &perm)
+  {
+    std::vector<NDIteratorRange> new_ranges;
+    new_ranges.reserve(ranges_.size());
+    for (std::size_t i = 0; i < ranges_.size(); ++i)
+    {
+      new_ranges.push_back(ranges_[perm[i]]);
+    }
+    std::swap(new_ranges, ranges_);
+  }
+
   void PermuteAxes(std::size_t const &a, std::size_t const &b)
   {
     std::swap(ranges_[a], ranges_[b]);

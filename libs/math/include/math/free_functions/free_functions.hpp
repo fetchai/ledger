@@ -157,6 +157,204 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &i
   }
 }
 
+template <typename T, typename C>
+void Transpose(NDArray<T, C> &input_array, std::vector<std::size_t> const &perm)
+{
+  assert(perm.size() == input_array.shape().size());
+
+  // set up an initial array
+  NDArray<T, C> ret = input_array.Copy();
+
+  NDArrayIterator<T, typename NDArray<T, C>::container_type> it_input(input_array);
+  NDArrayIterator<T, typename NDArray<T, C>::container_type> it_ret(ret);
+
+  it_ret.Transpose(perm);
+  while (it_ret)
+  {
+    *it_input = *it_ret;
+    ++it_input;
+    ++it_ret;
+  }
+
+  std::vector<std::size_t> new_shape;
+  for (std::size_t i = 0; i < perm.size(); ++i)
+  {
+    new_shape.push_back(input_array.shape()[perm[i]]);
+  }
+  input_array.Reshape(new_shape);
+}
+template <typename T, typename C>
+void Transpose(NDArray<T, C> &input_array, NDArray<T, C> const &perm)
+{
+  assert(perm.size() == input_array.shape().size());
+}
+
+/**
+ * Adds a new dimension at a specified axis
+ * @tparam T
+ * @tparam C
+ * @param input_array
+ * @param axis
+ */
+template <typename T, typename C>
+void ExpandDimensions(NDArray<T, C> &input_array, std::size_t const &axis)
+{
+  assert(axis <= input_array.shape().size());
+
+  std::vector<std::size_t> new_shape;
+  for (std::size_t i = 0; i <= input_array.shape().size(); ++i)
+  {
+    if (i < axis)
+    {
+      new_shape.push_back(input_array.shape()[i]);
+    }
+    else if (i == axis)
+    {
+      new_shape.push_back(1);
+    }
+    else
+    {
+      new_shape.push_back(input_array.shape()[i - 1]);
+    }
+  }
+
+  input_array.Reshape(new_shape);
+}
+/**
+ * The special case of axis = -1 is permissible, so we declare this function signature to capture it
+ * @tparam T
+ * @tparam C
+ * @param input_array
+ * @param axis
+ */
+template <typename T, typename C>
+void ExpandDimensions(NDArray<T, C> &input_array, int const &axis)
+{
+  assert(axis <= static_cast<int>(input_array.size()));
+  std::size_t new_axis;
+  if (axis < 0)
+  {
+    assert(axis == -1);
+    new_axis = input_array.shape().size();
+  }
+  else
+  {
+    new_axis = static_cast<std::size_t>(axis);
+  }
+  ExpandDimensions(input_array, new_axis);
+}
+/**
+ * method for concatenating arrays
+ */
+namespace details {
+template <typename ARRAY_TYPE>
+void ConcatImplementation(std::vector<ARRAY_TYPE> const &input_arrays, ARRAY_TYPE &ret)
+{
+  assert(input_arrays.size() > 0);
+
+  std::size_t new_size = 0;
+  for (std::size_t i = 0; i < input_arrays.size(); ++i)
+  {
+    new_size += input_arrays[i].size();
+  }
+  ret.Resize(new_size);
+
+  if (input_arrays.size() == 1)
+  {
+    ret.Copy(input_arrays[0]);
+  }
+  else
+  {
+    std::size_t count = 0;
+    for (std::size_t j = 0; j < input_arrays.size(); ++j)
+    {
+      for (std::size_t i = 0; i < input_arrays[j].size(); ++i, ++count)
+      {
+        ret[count] = input_arrays[j][i];
+      }
+    }
+  }
+}
+}  // namespace details
+template <typename T, typename C>
+void Concat(ShapeLessArray<T, C> &ret, std::vector<ShapeLessArray<T, C>> const &input_arrays)
+{
+  details::ConcatImplementation(input_arrays, ret);
+}
+template <typename T, typename C>
+ShapeLessArray<T, C> Concat(std::vector<ShapeLessArray<T, C>> const &input_arrays)
+{
+  ShapeLessArray<T, C> ret;
+  Concat(ret, input_arrays);
+  return ret;
+}
+
+template <typename T, typename C>
+void Concat(NDArray<T, C> &ret, std::vector<NDArray<T, C>> input_arrays, std::size_t const &axis)
+{
+  assert(input_arrays.size() > 0);
+  assert(input_arrays[0].shape().size() > 0);
+
+  if (input_arrays.size() == 1)
+  {
+    ret.ResizeFromShape(input_arrays[0].shape());
+    ret.Copy(input_arrays[0]);
+  }
+  else
+  {
+    // figure out the size of the axis dim after concatenation
+    std::size_t new_axis_dim = input_arrays[0].shape()[axis];
+    assert(axis < input_arrays[0].shape().size());
+    for (std::size_t i = 0; i < (input_arrays.size() - 1); ++i)
+    {
+      assert(input_arrays[i].shape() == input_arrays[i + 1].shape());
+      new_axis_dim += input_arrays[i + 1].shape()[axis];
+    }
+
+    // figure out the size and shape of the output array
+    std::vector<std::size_t> new_shape = {input_arrays[0].shape()};
+    new_shape[axis]                    = new_axis_dim;
+    ret.ResizeFromShape(new_shape);
+
+    // identify the axis based stride
+    std::size_t stride = input_arrays[0].shape()[axis];
+
+    for (std::size_t j = 0; j < input_arrays.size(); ++j)
+    {
+      // figure out the part of the return array to fill with this input array
+      std::vector<std::vector<std::size_t>> step{};
+      for (std::size_t i = 0; i < ret.shape().size(); ++i)
+      {
+        if (i == axis)
+        {
+          step.push_back({j * stride, (j + 1) * stride, 1});
+        }
+        else
+        {
+          step.push_back({0, ret.shape()[i], 1});
+        }
+      }
+
+      // copy the data across
+      NDArrayIterator<T, C> ret_iterator{ret, step};
+      NDArrayIterator<T, C> arr_iterator{input_arrays[j]};
+      for (std::size_t k = 0; k < input_arrays[j].size(); ++k)
+      {
+        *ret_iterator = *arr_iterator;
+        ++ret_iterator;
+        ++arr_iterator;
+      }
+    }
+  }
+}
+template <typename T, typename C>
+NDArray<T, C> Concat(std::vector<NDArray<T, C>> input_arrays, std::size_t const &axis)
+{
+  NDArray<T, C> ret;
+  Concat(ret, input_arrays);
+  return ret;
+}
+
 /**
  * interleave data from multiple sources
  * @param x
