@@ -76,7 +76,7 @@ struct EntryPoint
   /// Serializable fields
   /// @{
   std::unordered_set<byte_array::ConstByteArray> host;
-  uint16_t                                                            port = 0;
+  uint16_t                                       port = 0;
 
   crypto::Identity      identity;
   std::atomic<uint32_t> lane_id;

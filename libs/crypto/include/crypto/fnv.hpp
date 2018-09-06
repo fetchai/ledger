@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "crypto/stream_hasher.hpp"
 #include "crypto/fnv_detail.hpp"
+#include "crypto/stream_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -27,9 +27,9 @@ namespace crypto {
 class FNV : public StreamHasher, protected detail::FNV1a
 {
 public:
-  using base_type    = StreamHasher;
+  using base_type      = StreamHasher;
   using base_impl_type = detail::FNV1a;
-  using context_type = typename base_impl_type::number_type;
+  using context_type   = typename base_impl_type::number_type;
 
   using StreamHasher::Update;
   using StreamHasher::Final;
@@ -62,4 +62,4 @@ struct hash<fetch::byte_array::ConstByteArray>
   }
 };
 
-} //namespace std
+}  // namespace std

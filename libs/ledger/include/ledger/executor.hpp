@@ -35,9 +35,9 @@ namespace ledger {
 class Executor : public ExecutorInterface
 {
 public:
-  using shared_tx_type    = std::shared_ptr<chain::Transaction>;
-  using tx_store_type     = std::unordered_map<tx_digest_type, shared_tx_type>;
-  using block_digest_type = fetch::byte_array::ConstByteArray;
+  using shared_tx_type      = std::shared_ptr<chain::Transaction>;
+  using tx_store_type       = std::unordered_map<tx_digest_type, shared_tx_type>;
+  using block_digest_type   = fetch::byte_array::ConstByteArray;
   using tx_digest_list_type = std::vector<tx_digest_type>;
   using resources_type      = std::shared_ptr<StorageUnitInterface>;
   using chain_code_type     = ChainCodeFactory::chain_code_type;
