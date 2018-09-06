@@ -190,6 +190,60 @@ void Transpose(NDArray<T, C> &input_array, NDArray<T, C> const &perm)
 }
 
 /**
+ * Adds a new dimension at a specified axis
+ * @tparam T
+ * @tparam C
+ * @param input_array
+ * @param axis
+ */
+template <typename T, typename C>
+void ExpandDimensions(NDArray<T, C> &input_array, std::size_t const &axis)
+{
+  assert(axis <= input_array.shape().size());
+
+  std::vector<std::size_t> new_shape;
+  for (std::size_t i = 0; i <= input_array.shape().size(); ++i)
+  {
+    if (i < axis)
+    {
+      new_shape.push_back(input_array.shape()[i]);
+    }
+    else if (i == axis)
+    {
+      new_shape.push_back(1);
+    }
+    else
+    {
+      new_shape.push_back(input_array.shape()[i - 1]);
+    }
+  }
+
+  input_array.Reshape(new_shape);
+}
+/**
+ * The special case of axis = -1 is permissible, so we declare this function signature to capture it
+ * @tparam T
+ * @tparam C
+ * @param input_array
+ * @param axis
+ */
+template <typename T, typename C>
+void ExpandDimensions(NDArray<T, C> &input_array, int const &axis)
+{
+  assert(axis <= static_cast<int>(input_array.size()));
+  std::size_t new_axis;
+  if (axis < 0)
+  {
+    assert(axis == -1);
+    new_axis = input_array.shape().size();
+  }
+  else
+  {
+    new_axis = static_cast<std::size_t>(axis);
+  }
+  ExpandDimensions(input_array, new_axis);
+}
+/**
  * method for concatenating arrays
  */
 namespace details {
