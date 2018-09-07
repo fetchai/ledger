@@ -123,6 +123,25 @@ void Variant::LazyAppend(ConstByteArray const &key, Variant const &val)
   (*array_)[array_->size() - 1] = val;
 }
 
+
+
+Variant &Variant::operator[](std::size_t const &i)
+{
+  assert(type_ == ARRAY);
+  assert(i < size());
+  return (*array_)[i];
+}
+
+Variant const &Variant::operator[](std::size_t const &i) const { return (*array_)[i]; }
+
+std::size_t Variant::size() const
+{
+  if (type_ == ARRAY) return array_->size();
+  if (type_ == STRING) return string_.size();
+  return 0;
+}
+
+
 // Variant Array
 
 VariantArray::VariantArray(std::size_t const &size) { Resize(size); }
@@ -154,7 +173,7 @@ void VariantArray::Reserve(std::size_t const &n)
 
   for (std::size_t i = 0; i < size_; ++i)
   {
-    (*new_data)[i] = (*data_)[i];
+    (*new_data)[i] = (*data_)[i]; // TODO(tfr): implementation incorrect.
   }
 
   data_    = new_data;
@@ -168,22 +187,6 @@ void VariantArray::SetData(VariantArray const &other, std::size_t offset, std::s
   size_    = size;
   offset_  = offset;
   pointer_ = data_->data() + offset;
-}
-
-Variant &Variant::operator[](std::size_t const &i)
-{
-  assert(type_ == ARRAY);
-  assert(i < size());
-  return (*array_)[i];
-}
-
-Variant const &Variant::operator[](std::size_t const &i) const { return (*array_)[i]; }
-
-std::size_t Variant::size() const
-{
-  if (type_ == ARRAY) return array_->size();
-  if (type_ == STRING) return string_.size();
-  return 0;
 }
 
 }  // namespace script

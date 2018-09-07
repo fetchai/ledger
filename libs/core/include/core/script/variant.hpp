@@ -138,19 +138,9 @@ public:
   friend std::ostream &operator<<(std::ostream &os, Variant const &v);
 
   template <typename T>
-  inline void Serialize(T &serializer, Variant const &s)
-  {
-    assert( bool(array_) );
-    serializer << s.type() << data_ << string_ << (*array_);    
-  }
-
+  friend inline void Serialize(T &serializer, Variant const &s);
   template <typename T>
-  inline void Deserialize(T &serializer, Variant &s)
-  {
-    assert( bool(array_) );
-    serializer >> s.type() >> data_ >> string_ >> (*array_); 
-  }
-
+  friend inline void Deserialize(T &serializer, Variant &s);
 private:
   using VariantArrayPtr = std::shared_ptr<VariantArray>;
 
@@ -244,6 +234,33 @@ private:
   ContainerPtr data_;
   Variant *    pointer_ = nullptr;
 };
+
+
+template <typename T>
+inline void Serialize(T &serializer, VariantArray const &s)
+{
+  /*
+  assert( bool(s.data_) );
+  serializer << s.size_; 
+  std::size_t N = s.size_ + s.offset_;
+  for(std::size_t i=offset_; i < N; ++i)
+  {
+    serializer << s.data_[i];
+  }
+  // TODO(tfr): FIX THIS
+  */
+}
+
+template <typename T>
+inline void Deserialize(T &serializer, VariantArray &s)
+{
+  /*
+  assert( bool(s.data_) );
+  serializer >> *s.data_;
+  */
+}
+
+
 
 inline Variant::Variant() : type_(UNDEFINED) {}
 inline Variant::Variant(int64_t const &i) { *this = i; }
@@ -434,6 +451,24 @@ inline std::ostream &operator<<(std::ostream &os, VariantArray const &v)
 
   return os;
 }
+
+
+template <typename T>
+inline void Serialize(T &serializer, Variant const &s)
+{
+  assert( bool(s.array_) );
+  serializer << int32_t(s.type()) << s.data_.integer << s.string_ << *s.array_;    
+}
+
+template <typename T>
+inline void Deserialize(T &serializer, Variant &s)
+{
+  assert( bool(s.array_) );
+  int32_t n;
+  serializer >> n >> s.data_.integer >> s.string_ >> *s.array_; 
+  s.type_ = VariantType(n);
+}
+
 
 template <typename T>
 inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const &name, T &value)

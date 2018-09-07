@@ -101,9 +101,14 @@ public:
     serializer >> (*data_);
   }
 
-
+  template <typename T>
+  friend inline void Serialize(T &serializer, Array const &s);
+  template <typename T>
+  friend inline void Deserialize(T &serializer, Array &s);
 private:
   shared_container_type data_;
 };
+
+
 }  // namespace script
 }  // namespace fetch
