@@ -96,14 +96,6 @@ public:
     return false;
   }
 
-  std::size_t hash() const
-  {
-    crypto::FNV hashStream;
-    hashStream.Update(identifier_);
-    hashStream.Update(identity_parameters_);
-    return hashStream.Final<>();
-  }
-
   void Clone()
   {
     identifier_          = identifier_.Copy();
@@ -150,12 +142,18 @@ T &Deserialize(T &serializer, Identity &data)
 }  // namespace fetch
 
 namespace std {
+
 template <>
 struct hash<fetch::crypto::Identity>
 {
   std::size_t operator()(fetch::crypto::Identity const &value) const
   {
-    return value.hash();
+    fetch::crypto::FNV hashStream;
+    hashStream.Update(value.identifier());
+    hashStream.Update(value.parameters());
+    return hashStream.Final<>();
   }
 };
+
 }  // namespace std
+

@@ -66,7 +66,7 @@ struct TransactionSummary
 {
   using resource_type     = byte_array::ConstByteArray;
   using digest_type       = byte_array::ConstByteArray;
-  using contracti_id_type = std::string;
+  using contract_id_type = std::string;
   using resource_set_type = std::set<resource_type>;
 
   resource_set_type resources;
@@ -74,7 +74,7 @@ struct TransactionSummary
   uint64_t          fee{0};
 
   // TODO(issue 33): Needs to be replaced with some kind of ID
-  contracti_id_type contract_name;
+  contract_id_type contract_name;
 
   void Clone()
   {
@@ -125,7 +125,7 @@ public:
   {
     return signatures_;
   }
-  TransactionSummary::contracti_id_type const &contract_name() const
+  TransactionSummary::contract_id_type const &contract_name() const
   {
     return summary_.contract_name;
   }
@@ -147,7 +147,6 @@ public:
     // kept in order
 
     hasher_type hash;
-    hash.Reset();
 
     std::vector<std::pair<crypto::Identity, Signature> /*typename signatures_type::value_type*/>
         signatures;
@@ -177,9 +176,7 @@ public:
       hash.Update(e);
     }
 
-    hash.Update(reinterpret_cast<uint8_t const *>(&summary_.fee), sizeof(summary_.fee));
-    hash.Update(reinterpret_cast<uint8_t const *>(summary_.contract_name.data()),
-                summary_.contract_name.size());
+    hash.Update(summary_.fee);
     hash.Update(data_);
     summary_.transaction_hash = hash.Final();
   }
@@ -211,7 +208,7 @@ public:
     signatures_ = sig;
   }
 
-  void set_contract_name(TransactionSummary::contracti_id_type const &name)
+  void set_contract_name(TransactionSummary::contract_id_type const &name)
   {
     summary_.contract_name = name;
   }

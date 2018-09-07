@@ -26,13 +26,13 @@ namespace crypto {
 
 class SHA256 : public StreamHasher
 {
-  static const std::size_t hash_size_;
   SHA256_CTX               context_;
 
 public:
   using StreamHasher::Update;
   using StreamHasher::Final;
 
+  SHA256();
   void        Reset() override;
   bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
   void        Final(uint8_t *hash, std::size_t const &size) override;

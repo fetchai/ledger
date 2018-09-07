@@ -63,3 +63,4 @@ struct hash<fetch::byte_array::ConstByteArray>
 };
 
 }  // namespace std
+

@@ -178,7 +178,7 @@ int main(int argc, char const **argv)
             std::cout << std::endl;
 
             std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
-            ledger::examples::common::toBase64(std::cout, tx.signatures());
+            ledger::examples::common::ToBase64(std::cout, tx.signatures());
             std::cout << "Fee: " << tx.summary().fee << std::endl;
             std::cout << std::endl;
           }
@@ -190,7 +190,7 @@ int main(int argc, char const **argv)
             chain::Transaction tx = chain::VerifiedTransaction::Create(chain::RandomTransaction());
             std::cout << std::endl;
             std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
-            ledger::examples::common::toBase64(std::cout, tx.signatures());
+            ledger::examples::common::ToBase64(std::cout, tx.signatures());
             std::cout << "Fee: " << tx.summary().fee << std::endl;
             std::cout << std::endl;
 
