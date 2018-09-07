@@ -118,14 +118,15 @@ public:
     return ret;
   }
 
-  long IsUnique() const noexcept
+  bool IsUnique() const noexcept
   {
     return data_.use_count() < 2;
   }
 
-  long UseCount() const noexcept
+  uint64_t UseCount() const noexcept
   {
-    return data_.use_count();
+    long const use_count = data_.use_count();
+    return use_count < 0 ? 0 : static_cast<uint64_t>(use_count);
   }
 
 private:

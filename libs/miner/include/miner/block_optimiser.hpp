@@ -42,12 +42,11 @@ namespace chain {
 class BlockGenerator
 {
 public:
-  using transaction_type     = std::shared_ptr<miner::TransactionItem>;
-  using block_index_map_type = std::vector<std::vector<uint64_t>>;
-  using block_fees_list_type = std::vector<uint64_t>;
-  using digest_type          = TransactionSummary::digest_type;
-  using transaction_map_type =
-      std::unordered_map<digest_type, transaction_type, crypto::CallableFNV>;
+  using transaction_type        = std::shared_ptr<miner::TransactionItem>;
+  using block_index_map_type    = std::vector<std::vector<uint64_t>>;
+  using block_fees_list_type    = std::vector<uint64_t>;
+  using digest_type             = TransactionSummary::digest_type;
+  using transaction_map_type    = std::unordered_map<digest_type, transaction_type>;
   using transaction_list_type   = std::vector<transaction_type>;
   using transaction_matrix_type = std::vector<transaction_list_type>;
   using annealer_type           = fetch::optimisers::BinaryAnnealer;

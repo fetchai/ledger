@@ -16,37 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/fnv.hpp"
+#include "crypto/fnv_detail.hpp"
 
 namespace fetch {
 namespace crypto {
+namespace detail {
 
-std::size_t FNV::hashSize() const
-{
-  return base_impl_type::size_in_bytes;
-}
+template <>
+FNVConfig<uint32_t>::number_type const FNVConfig<uint32_t>::prime = (1ull << 24) + (1ull << 8) +
+                                                                    0x93ull;
+template <>
+FNVConfig<uint32_t>::number_type const FNVConfig<uint32_t>::offset = 0x811c9dc5;
 
-void FNV::Reset()
-{
-  reset();
-}
+template <>
+FNVConfig<uint64_t>::number_type const FNVConfig<uint64_t>::prime = (1ull << 40) + (1ull << 8) +
+                                                                    0xb3ull;
+template <>
+FNVConfig<uint64_t>::number_type const FNVConfig<uint64_t>::offset = 0xcbf29ce484222325;
 
-bool FNV::Update(uint8_t const *data_to_hash, std::size_t const &size)
-{
-  update(data_to_hash, size);
-  return true;
-}
-
-void FNV::Final(uint8_t *hash, std::size_t const &size)
-{
-  if (size < base_impl_type::size_in_bytes)
-  {
-    throw std::runtime_error("size of input buffer is smaller than hash size.");
-  }
-
-  auto hash_ptr = reinterpret_cast<context_type *>(hash);
-  *hash_ptr     = context();
-}
-
+}  // namespace detail
 }  // namespace crypto
 }  // namespace fetch

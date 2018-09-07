@@ -334,10 +334,15 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
              return ret;
            })
       .def("dynamic_stitch",
-           [](ShapeLessArray<T> &a, std::vector<std::vector<std::size_t>> const &indices,
-              std::vector<ShapeLessArray<T>> const &data) {
+           [](ShapeLessArray<T> &a, ShapeLessArray<T> const &indices,
+              ShapeLessArray<T> const &data) {
              fetch::math::DynamicStitch(a, indices, data);
              return a;
+           })
+      .def("concat",
+           [](ShapeLessArray<T> &input_array, std::vector<ShapeLessArray<T>> concat_arrays) {
+             fetch::math::Concat(input_array, concat_arrays);
+             return input_array;
            })
       .def("__len__", [](const ShapeLessArray<T> &a) { return a.size(); })
       .def("__getitem__",

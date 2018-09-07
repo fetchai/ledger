@@ -18,25 +18,21 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "crypto/fnv_detail.hpp"
 #include "crypto/stream_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
 
-class FNV : public StreamHasher
+class FNV : public StreamHasher, protected detail::FNV1a
 {
 public:
-  using context_type = std::size_t;
-  using base_type    = StreamHasher;
+  using base_type      = StreamHasher;
+  using base_impl_type = detail::FNV1a;
+  using context_type   = typename base_impl_type::number_type;
 
-private:
-  context_type context_;
-
-public:
   using StreamHasher::Update;
   using StreamHasher::Final;
-
-  FNV();
 
   void        Reset() override;
   bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
@@ -50,10 +46,20 @@ public:
   }
 };
 
-struct CallableFNV
-{
-  std::size_t operator()(fetch::byte_array::ConstByteArray const &key) const;
-};
-
 }  // namespace crypto
 }  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::byte_array::ConstByteArray>
+{
+  std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const
+  {
+    fetch::crypto::detail::FNV1a hash;
+    hash.update(value.pointer(), value.size());
+    return hash.context();
+  }
+};
+
+}  // namespace std

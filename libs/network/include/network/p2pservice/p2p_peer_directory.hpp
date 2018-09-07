@@ -43,9 +43,9 @@ public:
   using connection_handle_type     = client_register_type::connection_handle_type;
   using protocol_handler_type      = service::protocol_handler_type;
 
-  using peer_details_map_type = std::unordered_map<byte_array::ConstByteArray,
-                                                   connectivity_details_type, crypto::CallableFNV>;
-  using thread_pool_type      = network::ThreadPool;
+  using peer_details_map_type =
+      std::unordered_map<byte_array::ConstByteArray, connectivity_details_type>;
+  using thread_pool_type = network::ThreadPool;
 
   enum
   {
@@ -202,7 +202,7 @@ public:
       return;
     }
 
-    std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> to_delete;
+    std::unordered_set<byte_array::ConstByteArray> to_delete;
 
     {
       std::lock_guard<mutex::Mutex> lock(suggest_mutex_);

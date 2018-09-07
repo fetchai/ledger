@@ -199,7 +199,7 @@ public:
 public:
   self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
-    return SubArrayEx<self_type>(start, length);
+    return SubArray<self_type>(start, length);
   }
 
   bool Match(self_type const &str, std::size_t pos = 0) const
@@ -286,19 +286,19 @@ public:
     arr_pointer_ = data_.pointer() + start_;
   }
 
-  long IsUnique() const noexcept
+  bool IsUnique() const noexcept
   {
     return data_.IsUnique();
   }
 
-  long UseCount() const noexcept
+  uint64_t UseCount() const noexcept
   {
     return data_.UseCount();
   }
 
 protected:
   template <typename RETURN_TYPE = self_type>
-  RETURN_TYPE SubArrayEx(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  RETURN_TYPE SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
     length = std::min(length, length_ - start);
     assert(start + length <= start_ + length_);
