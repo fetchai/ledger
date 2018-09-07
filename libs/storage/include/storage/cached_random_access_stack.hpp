@@ -202,10 +202,12 @@ public:
 
   void Swap(uint64_t const &i, uint64_t const &j)
   {
+
     if (i == j)
     {
       return;
     }
+
     data_.find(i)->second.updated = true;
     data_.find(j)->second.updated = true;
     std::swap(data_[i], data_[j]);
