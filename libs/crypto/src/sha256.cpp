@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,19 +16,46 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
+#include "crypto/sha256.hpp"
+#include <stdexcept>
 
 namespace fetch {
 namespace crypto {
 
-template <typename T>
-byte_array::ByteArray Hash(byte_array::ConstByteArray const &str)
-{
-  T hasher;
+const std::size_t SHA256::hash_size_{SHA256_DIGEST_LENGTH};
 
-  hasher.Reset();
-  hasher.Update(str);
-  return hasher.Final();
+std::size_t SHA256::hashSize() const
+{
+  return hash_size_;
+}
+
+void SHA256::Reset()
+{
+  if (!SHA256_Init(&context_))
+  {
+    throw std::runtime_error("could not intialialise SHA256.");
+  }
+}
+
+bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
+{
+  if (!SHA256_Update(&context_, data_to_hash, size))
+  {
+    return false;
+  }
+  return true;
+}
+
+void SHA256::Final(uint8_t *hash, std::size_t const &size)
+{
+  if (size < hash_size_)
+  {
+    throw std::runtime_error("size of input buffer is smaller than hash size.");
+  }
+  if (!SHA256_Final(hash, &context_))
+  {
+    throw std::runtime_error("could not finalize SHA256.");
+  }
 }
 
 }  // namespace crypto

@@ -45,7 +45,7 @@ public:
     timepoint_type timestamp{clock_type::now()};
   };
 
-  using archive_type = std::unordered_map<hash_type, Element, crypto::CallableFNV>;
+  using archive_type = std::unordered_map<hash_type, Element>;
 
   bool LookupBookmark(hash_type const &state_hash, bookmark_type &bookmark)
   {

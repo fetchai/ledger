@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,20 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
+#include "crypto/fnv_detail.hpp"
 
 namespace fetch {
 namespace crypto {
+namespace detail {
 
-template <typename T>
-byte_array::ByteArray Hash(byte_array::ConstByteArray const &str)
-{
-  T hasher;
+template <>
+FNVConfig<uint32_t>::number_type const FNVConfig<uint32_t>::prime = (1ull << 24) + (1ull << 8) +
+                                                                    0x93ull;
+template <>
+FNVConfig<uint32_t>::number_type const FNVConfig<uint32_t>::offset = 0x811c9dc5;
 
-  hasher.Reset();
-  hasher.Update(str);
-  return hasher.Final();
-}
+template <>
+FNVConfig<uint64_t>::number_type const FNVConfig<uint64_t>::prime = (1ull << 40) + (1ull << 8) +
+                                                                    0xb3ull;
+template <>
+FNVConfig<uint64_t>::number_type const FNVConfig<uint64_t>::offset = 0xcbf29ce484222325;
 
+}  // namespace detail
 }  // namespace crypto
 }  // namespace fetch

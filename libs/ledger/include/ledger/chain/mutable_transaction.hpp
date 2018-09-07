@@ -136,8 +136,7 @@ public:
     hasher_type hash;
     hash.Reset();
     hash.Update(buf.data());
-    hash.Final();
-    summary_.transaction_hash = hash.digest();
+    summary_.transaction_hash = hash.Final();
   }
 
   bool Verify()

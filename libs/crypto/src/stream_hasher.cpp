@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,19 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
+#include "crypto/stream_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
 
-template <typename T>
-byte_array::ByteArray Hash(byte_array::ConstByteArray const &str)
+bool StreamHasher::Update(byte_array::ConstByteArray const &s)
 {
-  T hasher;
+  return Update(s.pointer(), s.size());
+}
 
-  hasher.Reset();
-  hasher.Update(str);
-  return hasher.Final();
+byte_array::ByteArray StreamHasher::Final()
+{
+  byte_array::ByteArray digest;
+  digest.Resize(hashSize());
+  Final(digest.pointer(), digest.size());
+  return digest;
 }
 
 }  // namespace crypto

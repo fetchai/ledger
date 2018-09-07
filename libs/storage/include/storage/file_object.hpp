@@ -409,8 +409,7 @@ public:
     hasher_type hasher;
     hasher.Reset();
     UpdateHash(hasher);
-    hasher.Final();
-    return hasher.digest();
+    return hasher.Final();
   }
 
   void UpdateHash(crypto::StreamHasher &hasher)

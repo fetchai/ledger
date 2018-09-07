@@ -42,13 +42,10 @@ public:
     hasher.Reset();
     hasher.Update(header_);
     hasher.Update(*this);
-    hasher.Final();
-    digest_ = hasher.digest();
+    digest_ = hasher.Final();
     hasher.Reset();
     hasher.Update(digest_);
-    hasher.Final();
-
-    digest_ = hasher.digest();
+    digest_ = hasher.Final();
 
     return digest_ < target_;
   }

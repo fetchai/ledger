@@ -70,6 +70,14 @@ public:
     }
   }
 
+  ConstByteArray(container_type const *const data, std::size_t const &size)
+  {
+    assert(data != nullptr);
+    Reserve(size);
+    Resize(size);
+    std::memcpy(data_.pointer(), data, size);
+  }
+
   ConstByteArray(std::initializer_list<container_type> l)
   {
     Resize(l.size());
