@@ -24,27 +24,27 @@ namespace fetch {
 namespace crypto {
 namespace detail {
 
-
 struct FNVConfigInvalid
 {
   static constexpr std::size_t size_in_bytes = 0;
 };
 
-
-template <typename NUMBER_TYPE, std::size_t SIZE_IN_BYTES = sizeof(NUMBER_TYPE), typename FROM = FNVConfigInvalid>
+template <typename NUMBER_TYPE, std::size_t SIZE_IN_BYTES = sizeof(NUMBER_TYPE),
+          typename FROM = FNVConfigInvalid>
 struct FNVConfig
 {
   static_assert(std::is_integral<NUMBER_TYPE>::value && sizeof(NUMBER_TYPE) >= SIZE_IN_BYTES,
                 "Provided SIZE_IN_BYTES parameter value must be smaller or equal to `sizeof(...)` "
                 "of provided integral type NUMBER_TYPE type parameter.");
 
-  static_assert(std::is_same<FNVConfigInvalid, FROM>::value || FROM::size_in_bytes == SIZE_IN_BYTES, "");
+  static_assert(std::is_same<FNVConfigInvalid, FROM>::value || FROM::size_in_bytes == SIZE_IN_BYTES,
+                "");
 
-  using number_type = NUMBER_TYPE;
-  using from_type   = FROM;
+  using number_type                          = NUMBER_TYPE;
+  using from_type                            = FROM;
   static constexpr std::size_t size_in_bytes = SIZE_IN_BYTES;
-  static number_type const prime;
-  static number_type const offset;
+  static number_type const     prime;
+  static number_type const     offset;
 };
 
 template <typename NUMBER_TYPE, std::size_t SIZE_IN_BYTES, typename FROM>
@@ -61,11 +61,12 @@ template <>
 FNVConfig<uint64_t>::number_type const FNVConfig<uint64_t>::offset;
 
 template <typename NUMBER_TYPE, std::size_t SIZE_IN_BYTES, typename FROM>
-typename FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::number_type const FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::prime = FROM::prime;
+typename FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::number_type const
+    FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::prime = FROM::prime;
 
 template <typename NUMBER_TYPE, std::size_t SIZE_IN_BYTES, typename FROM>
-typename FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::number_type const FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::offset = FROM::offset;
-
+typename FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::number_type const
+    FNVConfig<NUMBER_TYPE, SIZE_IN_BYTES, FROM>::offset = FROM::offset;
 
 enum class eFnvAlgorithm : uint8_t
 {
@@ -74,12 +75,12 @@ enum class eFnvAlgorithm : uint8_t
   fnv0_deprecated
 };
 
+using FNVConfig_size_t =
+    FNVConfig<std::size_t, sizeof(std::size_t),
+              std::conditional<sizeof(std::size_t) == FNVConfig<uint64_t>::size_in_bytes,
+                               FNVConfig<uint64_t>, FNVConfig<uint32_t>>::type>;
 
-using FNVConfig_size_t = FNVConfig<std::size_t, sizeof(std::size_t), std::conditional<sizeof(std::size_t)==FNVConfig<uint64_t>::size_in_bytes, FNVConfig<uint64_t>, FNVConfig<uint32_t>>::type>;
-
-
-template <typename FNV_CONFIG     = FNVConfig_size_t,
-          eFnvAlgorithm ALGORITHM = eFnvAlgorithm::fnv1a>
+template <typename FNV_CONFIG = FNVConfig_size_t, eFnvAlgorithm ALGORITHM = eFnvAlgorithm::fnv1a>
 struct FNVAlgorithm
 {
   static void update(typename FNV_CONFIG::number_type &context, uint8_t const *data_to_hash,
@@ -176,10 +177,8 @@ public:
 template <typename FNV_CONFIG, eFnvAlgorithm ALGORITHM>
 constexpr eFnvAlgorithm FNV<FNV_CONFIG, ALGORITHM>::algorithm;
 
-
 using FNV1a = FNV<FNVConfig_size_t, detail::eFnvAlgorithm::fnv1a>;
 using FNV1  = FNV<FNVConfig_size_t, detail::eFnvAlgorithm::fnv1>;
-
 
 }  // namespace detail
 }  // namespace crypto

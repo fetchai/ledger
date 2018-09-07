@@ -62,8 +62,9 @@ protected:
   }
 
   template <typename FNV_CONFIG, detail::eFnvAlgorithm ALGORITHM>
-  void testFnvHash(detail::FNV<FNV_CONFIG, ALGORITHM> &fnv,
-                   byte_array::ConstByteArray const &data_to_hash, typename FNV_CONFIG::number_type const &expected_hash)
+  void testFnvHash(detail::FNV<FNV_CONFIG, ALGORITHM> &    fnv,
+                   byte_array::ConstByteArray const &      data_to_hash,
+                   typename FNV_CONFIG::number_type const &expected_hash)
   {
     fnv.reset();
     fnv.update(data_to_hash.pointer(), data_to_hash.size());
