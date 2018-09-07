@@ -109,15 +109,30 @@ public:
   using resource_set_type = TransactionSummary::resource_set_type;
   using signatures_type   = std::unordered_map<crypto::Identity, Signature>;
 
-  resource_set_type const &                    resources() const { return summary_.resources; }
-  TransactionSummary const &                   summary() const { return summary_; }
-  byte_array::ConstByteArray const &           data() const { return data_; }
-  signatures_type const &                      signatures() const { return signatures_; }
+  resource_set_type const &resources() const
+  {
+    return summary_.resources;
+  }
+  TransactionSummary const &summary() const
+  {
+    return summary_;
+  }
+  byte_array::ConstByteArray const &data() const
+  {
+    return data_;
+  }
+  signatures_type const &signatures() const
+  {
+    return signatures_;
+  }
   TransactionSummary::contracti_id_type const &contract_name() const
   {
     return summary_.contract_name;
   }
-  digest_type const &digest() const { return summary_.transaction_hash; }
+  digest_type const &digest() const
+  {
+    return summary_.transaction_hash;
+  }
 
   enum
   {
@@ -181,18 +196,30 @@ public:
     summary_.resources.insert(res);
   }
 
-  void set_summary(TransactionSummary const &summary) { summary_ = summary; }
+  void set_summary(TransactionSummary const &summary)
+  {
+    summary_ = summary;
+  }
 
-  void set_data(byte_array::ConstByteArray const &data) { data_ = data; }
+  void set_data(byte_array::ConstByteArray const &data)
+  {
+    data_ = data;
+  }
 
-  void set_signatures(signatures_type const &sig) { signatures_ = sig; }
+  void set_signatures(signatures_type const &sig)
+  {
+    signatures_ = sig;
+  }
 
   void set_contract_name(TransactionSummary::contracti_id_type const &name)
   {
     summary_.contract_name = name;
   }
 
-  void set_fee(uint64_t fee) { summary_.fee = fee; }
+  void set_fee(uint64_t fee)
+  {
+    summary_.fee = fee;
+  }
 
 protected:
   void Clone()

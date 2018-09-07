@@ -45,9 +45,12 @@ fetch::mutex::Mutex       mutexToServer_;
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t port, NetworkManager nmanager) : TCPServer(port, nmanager) {}
+  Server(uint16_t port, NetworkManager nmanager)
+    : TCPServer(port, nmanager)
+  {}
 
-  ~Server() {}
+  ~Server()
+  {}
 
   void PushRequest(connection_handle_type client, message_type const &msg) override
   {
@@ -59,12 +62,16 @@ public:
 class Client : public TCPClient
 {
 public:
-  Client(std::string const &host, uint16_t &port, NetworkManager &nmanager) : TCPClient(nmanager)
+  Client(std::string const &host, uint16_t &port, NetworkManager &nmanager)
+    : TCPClient(nmanager)
   {
     Connect(host, port);
   }
 
-  ~Client() { TCPClient::Cleanup(); }
+  ~Client()
+  {
+    TCPClient::Cleanup();
+  }
 };
 
 void waitUntilConnected(std::string const &host, uint16_t port)
@@ -113,9 +120,11 @@ void TestCase1(std::string host, uint16_t port)
   for (std::size_t index = 0; index < 20; ++index)
   {
     NetworkManager nmanager(N);
-    if (index % 2) nmanager.Start();
+    if (index % 2)
+      nmanager.Start();
     Server server(port, nmanager);
-    if (index % 3) nmanager.Stop();
+    if (index % 3)
+      nmanager.Stop();
     nmanager.Start();
   }
 
@@ -143,7 +152,8 @@ void TestCase2(std::string host, uint16_t port)
       std::this_thread::sleep_for(std::chrono::milliseconds(4));
     }
     client.Send("test this");
-    if (index % 3) nmanager.Stop();
+    if (index % 3)
+      nmanager.Stop();
   }
 
   std::cerr << "Success." << std::endl;
@@ -183,7 +193,8 @@ void TestCase3(std::string host, uint16_t port)
       std::this_thread::sleep_for(std::chrono::milliseconds(4));
     }
 
-    if (index % 3) nmanager.Stop();
+    if (index % 3)
+      nmanager.Stop();
   }
 
   std::cerr << "Success." << std::endl;
@@ -217,7 +228,8 @@ void TestCase4(std::string host, uint16_t port)
           .detach();
     }
 
-    if (index % 2) server.reset();
+    if (index % 2)
+      server.reset();
 
     while (threadCount != iterations)
     {

@@ -43,15 +43,18 @@ void test1()
     exit(-1);
   }
   for (std::size_t i = 0; i < N; ++i)
+  {
     for (std::size_t j = 0; j < M; ++j)
     {
       data_type d = gen.AsDouble();
       mem(i, j)   = d;
       dataset.push_back(d);
     }
+  }
 
   std::size_t k = 0;
   for (std::size_t i = 0; i < N; ++i)
+  {
     for (std::size_t j = 0; j < M; ++j)
     {
       if (mem(i, j) != dataset[k])
@@ -61,13 +64,16 @@ void test1()
       }
       ++k;
     }
+  }
 
   for (std::size_t i = 0; i < N * M; ++i)
+  {
     if (mem[i] != dataset[i])
     {
       std::cout << "Data differs II!" << std::endl;
       exit(-1);
     }
+  }
 
   array_type mem2(mem);
   if ((mem2.height() != mem.height()) || (mem2.width() != mem.width()))
@@ -77,6 +83,7 @@ void test1()
   }
   k = 0;
   for (std::size_t i = 0; i < N; ++i)
+  {
     for (std::size_t j = 0; j < M; ++j)
     {
       if (mem2(i, j) != dataset[k])
@@ -86,13 +93,16 @@ void test1()
       }
       ++k;
     }
+  }
 
   for (std::size_t i = 0; i < N * M; ++i)
+  {
     if (mem2[i] != dataset[i])
     {
       std::cout << "Data differs IV!" << std::endl;
       exit(-1);
     }
+  }
 
   array_type mem3;
   mem3 = mem;
@@ -103,6 +113,7 @@ void test1()
   }
   k = 0;
   for (std::size_t i = 0; i < N; ++i)
+  {
     for (std::size_t j = 0; j < M; ++j)
     {
       if (mem3(i, j) != dataset[k])
@@ -112,13 +123,16 @@ void test1()
       }
       ++k;
     }
+  }
 
   for (std::size_t i = 0; i < N * M; ++i)
+  {
     if (mem3[i] != dataset[i])
     {
       std::cout << "Data differs VI!" << std::endl;
       exit(-1);
     }
+  }
 }
 
 int main()

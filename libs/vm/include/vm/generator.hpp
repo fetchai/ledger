@@ -26,8 +26,10 @@ namespace vm {
 class Generator
 {
 public:
-  Generator() {}
-  ~Generator() {}
+  Generator()
+  {}
+  ~Generator()
+  {}
   void Generate(const BlockNodePtr &root, const std::string &name, Script &script);
 
 private:

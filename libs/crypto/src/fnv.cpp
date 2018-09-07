@@ -39,15 +39,27 @@ void update(FNV::context_type &context, uint8_t const *data_to_hash, std::size_t
   }
 }
 
-void reset(FNV::context_type &context) { context = fnv_offset_basis; }
+void reset(FNV::context_type &context)
+{
+  context = fnv_offset_basis;
+}
 
 }  // namespace
 
-FNV::FNV() { reset(context_); }
+FNV::FNV()
+{
+  reset(context_);
+}
 
-std::size_t FNV::hashSize() const { return hash_size; }
+std::size_t FNV::hashSize() const
+{
+  return hash_size;
+}
 
-void FNV::Reset() { reset(context_); }
+void FNV::Reset()
+{
+  reset(context_);
+}
 
 bool FNV::Update(uint8_t const *data_to_hash, std::size_t const &size)
 {

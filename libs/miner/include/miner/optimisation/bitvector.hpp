@@ -40,12 +40,20 @@ public:
     SIMD_SIZE = container_type::E_SIMD_COUNT
   };
 
-  BitVectorImplementation() { Resize(0); }
+  BitVectorImplementation()
+  {
+    Resize(0);
+  }
 
-  explicit BitVectorImplementation(std::size_t const &n) { Resize(n); }
+  explicit BitVectorImplementation(std::size_t const &n)
+  {
+    Resize(n);
+  }
 
   BitVectorImplementation(BitVectorImplementation const &other)
-    : data_(other.data_.Copy()), size_(other.size_), blocks_(other.blocks_)
+    : data_(other.data_.Copy())
+    , size_(other.size_)
+    , blocks_(other.blocks_)
   {}
 
   BitVectorImplementation(std::size_t const &size, std::initializer_list<uint64_t> const &data)
@@ -59,7 +67,10 @@ public:
   {
     data_         = container_type(data.size());
     std::size_t i = 0;
-    for (auto const &a : data) data_[i++] = a;
+    for (auto const &a : data)
+    {
+      data_[i++] = a;
+    }
     blocks_ = data.size();
     size_   = 8 * sizeof(data_type) * blocks_;
   }
@@ -83,22 +94,37 @@ public:
     // TODO(issue 29): Copy data;
   }
 
-  void SetAllZero() { data_.SetAllZero(); }
+  void SetAllZero()
+  {
+    data_.SetAllZero();
+  }
 
   bool operator==(BitVectorImplementation const &other)
   {
     bool ret = this->size_ == other.size_;
-    if (!ret) return ret;
-    for (std::size_t i = 0; i < blocks_; ++i) ret &= (this->operator()(i) == other(i));
+    if (!ret)
+    {
+      return ret;
+    }
+    for (std::size_t i = 0; i < blocks_; ++i)
+    {
+      ret &= (this->operator()(i) == other(i));
+    }
     return ret;
   }
 
-  bool operator!=(BitVectorImplementation const &other) { return !(this->operator==(other)); }
+  bool operator!=(BitVectorImplementation const &other)
+  {
+    return !(this->operator==(other));
+  }
 
   BitVectorImplementation &operator^=(BitVectorImplementation const &other)
   {
     assert(size_ == other.size_);
-    for (std::size_t i = 0; i < blocks_; ++i) data_[i] ^= other.data_[i];
+    for (std::size_t i = 0; i < blocks_; ++i)
+    {
+      data_[i] ^= other.data_[i];
+    }
 
     return *this;
   }
@@ -114,7 +140,10 @@ public:
   BitVectorImplementation &operator&=(BitVectorImplementation const &other)
   {
     assert(size_ == other.size_);
-    for (std::size_t i = 0; i < blocks_; ++i) data_[i] &= other.data_[i];
+    for (std::size_t i = 0; i < blocks_; ++i)
+    {
+      data_[i] &= other.data_[i];
+    }
 
     return *this;
   }
@@ -129,13 +158,19 @@ public:
 
   void InlineAndAssign(BitVectorImplementation const &a, BitVectorImplementation const &b)
   {
-    for (std::size_t i = 0; i < blocks_; ++i) data_[i] = a.data_[i] & b.data_[i];
+    for (std::size_t i = 0; i < blocks_; ++i)
+    {
+      data_[i] = a.data_[i] & b.data_[i];
+    }
   }
 
   BitVectorImplementation &operator|=(BitVectorImplementation const &other)
   {
     assert(size_ == other.size_);
-    for (std::size_t i = 0; i < blocks_; ++i) data_[i] |= other.data_[i];
+    for (std::size_t i = 0; i < blocks_; ++i)
+    {
+      data_[i] |= other.data_[i];
+    }
 
     return *this;
   }
@@ -159,16 +194,25 @@ public:
     conditional_flip(bit >> LOG_BITS, bit & BIT_MASK, base);
   }
 
-  void flip(std::size_t const &block, std::size_t const &bit) { data_[block] ^= 1ull << bit; }
+  void flip(std::size_t const &block, std::size_t const &bit)
+  {
+    data_[block] ^= 1ull << bit;
+  }
 
-  void flip(std::size_t const &bit) { flip(bit >> LOG_BITS, bit & BIT_MASK); }
+  void flip(std::size_t const &bit)
+  {
+    flip(bit >> LOG_BITS, bit & BIT_MASK);
+  }
 
   data_type bit(std::size_t const &block, std::size_t const &b) const
   {
     return (data_[block] >> b) & 1;
   }
 
-  data_type bit(std::size_t const &b) const { return bit(b >> LOG_BITS, b & BIT_MASK); }
+  data_type bit(std::size_t const &b) const
+  {
+    return bit(b >> LOG_BITS, b & BIT_MASK);
+  }
 
   void set(std::size_t const &block, std::size_t const &bit, uint64_t const &val)
   {
@@ -182,13 +226,31 @@ public:
     set(bit >> LOG_BITS, bit & BIT_MASK, val);
   }
 
-  data_type &      operator()(std::size_t const &n) { return data_.At(n); }
-  data_type const &operator()(std::size_t const &n) const { return data_.At(n); }
+  data_type &operator()(std::size_t const &n)
+  {
+    return data_.At(n);
+  }
+  data_type const &operator()(std::size_t const &n) const
+  {
+    return data_.At(n);
+  }
 
-  std::size_t const &   size() const { return size_; }
-  std::size_t const &   blocks() const { return blocks_; }
-  container_type const &data() const { return data_; }
-  container_type &      data() { return data_; }
+  std::size_t const &size() const
+  {
+    return size_;
+  }
+  std::size_t const &blocks() const
+  {
+    return blocks_;
+  }
+  container_type const &data() const
+  {
+    return data_;
+  }
+  container_type &data()
+  {
+    return data_;
+  }
 
 private:
   container_type data_;
@@ -212,7 +274,10 @@ std::ostream &operator<<(std::ostream &s, BitVectorImplementation<N> const &b)
 {
   for (std::size_t i = 0; i < b.blocks(); ++i)
   {
-    if (i != 0) s << " ";
+    if (i != 0)
+    {
+      s << " ";
+    }
     s << std::hex << b(i);
   }
 

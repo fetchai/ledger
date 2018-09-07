@@ -54,7 +54,10 @@ byte_array::ConstByteArray GetRandomByteArray(std::size_t length)
 // Time related functionality
 using time_point = std::chrono::high_resolution_clock::time_point;
 
-time_point TimePoint() { return std::chrono::high_resolution_clock::now(); }
+time_point TimePoint()
+{
+  return std::chrono::high_resolution_clock::now();
+}
 
 double TimeDifference(time_point t1, time_point t2)
 {
@@ -69,9 +72,12 @@ double TimeDifference(time_point t1, time_point t2)
 class NoCopyClass
 {
 public:
-  NoCopyClass() {}
+  NoCopyClass()
+  {}
 
-  NoCopyClass(int val) : class_value{val} {}
+  NoCopyClass(int val)
+    : class_value{val}
+  {}
 
   NoCopyClass(NoCopyClass &rhs) = delete;
   NoCopyClass &operator=(NoCopyClass &rhs) = delete;

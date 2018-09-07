@@ -65,7 +65,8 @@ public:
   };
 
   P2PService(uint16_t port, fetch::network::NetworkManager const &tm)
-    : super_type(port, tm), manager_(tm)
+    : super_type(port, tm)
+    , manager_(tm)
   {
     running_     = false;
     thread_pool_ = network::MakeThreadPool(1);
@@ -143,7 +144,10 @@ public:
     thread_pool_->Start();
     directory_->Start();
 
-    if (running_) return;
+    if (running_)
+    {
+      return;
+    }
     running_ = true;
 
     NextServiceCycle();
@@ -151,20 +155,32 @@ public:
 
   void Stop()
   {
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
     running_ = false;
 
     directory_->Stop();
     thread_pool_->Stop();
   }
 
-  client_register_type connection_register() { return register_; };
+  client_register_type connection_register()
+  {
+    return register_;
+  };
 
   ///
   /// @{
-  void RequestPeers() { directory_->RequestPeersForThisNode(); }
+  void RequestPeers()
+  {
+    directory_->RequestPeersForThisNode();
+  }
 
-  void EnoughPeers() { directory_->EnoughPeersForThisNode(); }
+  void EnoughPeers()
+  {
+    directory_->EnoughPeersForThisNode();
+  }
 
   P2PPeerDirectory::peer_details_map_type SuggestPeersToConnectTo()
   {
@@ -271,7 +287,10 @@ public:
     identity_->MarkProfileAsUpdated();
   }
 
-  void PublishProfile() { identity_->PublishProfile(); }
+  void PublishProfile()
+  {
+    identity_->PublishProfile();
+  }
   /// @}
 
   /// Methods to get profile information
@@ -294,7 +313,10 @@ protected:
 
     {
       std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
-      if (!running_) return;
+      if (!running_)
+      {
+        return;
+      }
 
       // Updating lists of incoming and outgoing
       using map_type = client_register_type::connection_map_type;
@@ -360,7 +382,10 @@ protected:
       std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
       double                                ms =
           double(std::chrono::duration_cast<std::chrono::milliseconds>(end - track_start_).count());
-      if (ms > 5000) tracking_peers_ = false;
+      if (ms > 5000)
+      {
+        tracking_peers_ = false;
+      }
     }
 
     // Requesting new connections as needed
@@ -396,7 +421,10 @@ protected:
   {
     std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
 
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
     uint64_t create_count = 0;
 
     if (outgoing_.size() < min_connections_)
@@ -421,7 +449,10 @@ protected:
     {
       for (auto &e : s.second.entry_points)
       {
-        if (e.identity.identifier() == my_pk) continue;
+        if (e.identity.identifier() == my_pk)
+        {
+          continue;
+        }
 
         if (e.is_discovery)
         {
@@ -437,7 +468,10 @@ protected:
     // Connecting to peers who need connection
     for (auto e : endpoints)
     {
-      if (create_count == 0) break;
+      if (create_count == 0)
+      {
+        break;
+      }
       thread_pool_->Post([this, e]() { this->TryConnect(e); });
       --create_count;
     }
@@ -459,7 +493,10 @@ protected:
     fetch::logger.Debug("Trying to connect to ", byte_array::ToBase64(e.identity.identifier()));
     for (auto &h : e.host)
     {
-      if (Connect(h, e.port)) break;
+      if (Connect(h, e.port))
+      {
+        break;
+      }
     }
   }
 

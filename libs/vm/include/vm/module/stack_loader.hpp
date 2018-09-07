@@ -54,14 +54,16 @@ struct Resetter
 template <>
 struct Resetter<0>
 {
-  static void Reset(VM *vm) {}
+  static void Reset(VM *vm)
+  {}
 };
 
 // In case we are adding to the stack there is nothing to reset
 template <>
 struct Resetter<-1>
 {
-  static void Reset(VM *vm) {}
+  static void Reset(VM *vm)
+  {}
 };
 
 /*

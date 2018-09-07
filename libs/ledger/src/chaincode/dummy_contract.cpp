@@ -28,7 +28,8 @@ static constexpr std::size_t DELTA_TIME   = MAXIMUM_TIME - MINIMUM_TIME;
 namespace fetch {
 namespace ledger {
 
-DummyContract::DummyContract() : Contract("fetch.dummy")
+DummyContract::DummyContract()
+  : Contract("fetch.dummy")
 {
   OnTransaction("wait", this, &DummyContract::Wait);
   OnTransaction("run", this, &DummyContract::Run);

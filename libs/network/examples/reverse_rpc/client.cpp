@@ -49,7 +49,10 @@ public:
     return ret;
   }
 
-  void AddString(std::string const &s) { strings_.push_back(s); }
+  void AddString(std::string const &s)
+  {
+    strings_.push_back(s);
+  }
 
 private:
   std::vector<std::string> strings_;
@@ -60,7 +63,9 @@ private:
 class AEAProtocol : public AEA, public Protocol
 {
 public:
-  AEAProtocol() : AEA(), Protocol()
+  AEAProtocol()
+    : AEA()
+    , Protocol()
   {
     AEA *controller = (AEA *)this;
 

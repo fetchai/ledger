@@ -27,7 +27,8 @@ class NodeToNodeProtocol : public NodeToNodeFunctionality, public fetch::service
 {
 public:
   NodeToNodeProtocol(fetch::network::NetworkManager network_manager)
-    : NodeToNodeFunctionality(network_manager), fetch::service::Protocol()
+    : NodeToNodeFunctionality(network_manager)
+    , fetch::service::Protocol()
   {
 
     using namespace fetch::service;

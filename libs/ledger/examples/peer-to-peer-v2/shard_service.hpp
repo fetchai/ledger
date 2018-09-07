@@ -285,7 +285,10 @@ std::chrono::system_clock::now();
     }
   }
 
-  uint16_t port() const { return details_.port; }
+  uint16_t port() const
+  {
+    return details_.port;
+  }
 
 private:
   int                         difficulty_ = 1;

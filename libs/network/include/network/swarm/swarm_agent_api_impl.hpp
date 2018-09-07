@@ -36,19 +36,24 @@ public:
   SwarmAgentApiImpl operator=(SwarmAgentApiImpl &&rhs) = delete;
 
   explicit SwarmAgentApiImpl(std::string identifier, uint32_t idlespeed)
-    : identifier_(std::move(identifier)), idlespeed_(idlespeed)
+    : identifier_(std::move(identifier))
+    , idlespeed_(idlespeed)
   {
     threading_system_ = std::make_shared<threading_system_type>(10);
   }
 
   explicit SwarmAgentApiImpl(std::shared_ptr<threading_system_type> threadingSystem,
                              std::string identifier, uint32_t idlespeed)
-    : identifier_(std::move(identifier)), idlespeed_(idlespeed)
+    : identifier_(std::move(identifier))
+    , idlespeed_(idlespeed)
   {
     threading_system_ = threadingSystem;
   }
 
-  virtual std::string queryOwnLocation() { return identifier_; }
+  virtual std::string queryOwnLocation()
+  {
+    return identifier_;
+  }
 
   void Start()
   {
@@ -56,7 +61,10 @@ public:
     startIdle();
   }
 
-  void Stop() { threading_system_->Stop(); }
+  void Stop()
+  {
+    threading_system_->Stop();
+  }
 
   virtual ~SwarmAgentApiImpl()
   {
@@ -94,9 +102,15 @@ public:
     threading_system_->Post(lambd, idlespeed_);
   }
 
-  virtual void OnIdle(std::function<void()> cb) { onIdle_ = cb; }
+  virtual void OnIdle(std::function<void()> cb)
+  {
+    onIdle_ = cb;
+  }
 
-  virtual void OnPeerless(std::function<void()> cb) { onPeerless_ = cb; }
+  virtual void OnPeerless(std::function<void()> cb)
+  {
+    onPeerless_ = cb;
+  }
 
   virtual void DoPing(const std::string &host)
   {
@@ -128,7 +142,10 @@ public:
     onPingSucceeded_ = cb;
   }
 
-  virtual void OnPingFailed(std::function<void(const std::string &host)> cb) { onPingFailed_ = cb; }
+  virtual void OnPingFailed(std::function<void(const std::string &host)> cb)
+  {
+    onPingFailed_ = cb;
+  }
 
   virtual void DoPingSucceeded(const std::string &host)
   {
@@ -311,7 +328,8 @@ public:
 
   // HANDLE TXN LIST TRANSMISSIONS -------------------------------------xs
 
-  virtual void DoTransactionListBuilt(const std::list<std::string> &txnlist) {}
+  virtual void DoTransactionListBuilt(const std::list<std::string> &txnlist)
+  {}
 
   virtual void OnNewTxnListIdFound(
       std::function<void(const std::string &host, const std::string &txnlistid)> cb)
@@ -319,7 +337,8 @@ public:
     onNewTxnListIdFound_ = cb;
   }
 
-  virtual void DoGetTxnList(const std::string &host, const std::string &txnlistid) {}
+  virtual void DoGetTxnList(const std::string &host, const std::string &txnlistid)
+  {}
 
   virtual void OnNewTxnListAvailable(
       std::function<void(const std::string &host, const std::string &blockid)> cb)
@@ -327,7 +346,10 @@ public:
     onNewTxnListAvailable_ = cb;
   }
 
-  virtual std::string GetTxnList(const std::string &txnlistid) { return "[]"; }
+  virtual std::string GetTxnList(const std::string &txnlistid)
+  {
+    return "[]";
+  }
 
   virtual void ToGetKarma(std::function<double(const std::string &host)> query)
   {
@@ -382,7 +404,10 @@ public:
     }
   }
 
-  virtual double GetCost(const std::string &host) { return 1.0; }
+  virtual double GetCost(const std::string &host)
+  {
+    return 1.0;
+  }
 
 protected:
   std::shared_ptr<threading_system_type> threading_system_;

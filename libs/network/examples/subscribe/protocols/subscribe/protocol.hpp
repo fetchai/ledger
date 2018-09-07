@@ -36,7 +36,9 @@ public:
    * Constructor for subscribe protocol attaches the functions to the protocol
    * enums
    */
-  SubscribeProtocol() : Protocol(), Node()
+  SubscribeProtocol()
+    : Protocol()
+    , Node()
   {
     // We are allowing 'this' Node to register the feed new_message on the
     // protocol

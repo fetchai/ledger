@@ -24,24 +24,38 @@ namespace crypto {
 
 const std::size_t SHA256::hash_size_{SHA256_DIGEST_LENGTH};
 
-std::size_t SHA256::hashSize() const { return hash_size_; }
+std::size_t SHA256::hashSize() const
+{
+  return hash_size_;
+}
 
 void SHA256::Reset()
 {
-  if (!SHA256_Init(&context_)) throw std::runtime_error("could not intialialise SHA256.");
+  if (!SHA256_Init(&context_))
+  {
+    throw std::runtime_error("could not intialialise SHA256.");
+  }
 }
 
 bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
 {
-  if (!SHA256_Update(&context_, data_to_hash, size)) return false;
+  if (!SHA256_Update(&context_, data_to_hash, size))
+  {
+    return false;
+  }
   return true;
 }
 
 void SHA256::Final(uint8_t *hash, std::size_t const &size)
 {
   if (size < hash_size_)
+  {
     throw std::runtime_error("size of input buffer is smaller than hash size.");
-  if (!SHA256_Final(hash, &context_)) throw std::runtime_error("could not finalize SHA256.");
+  }
+  if (!SHA256_Final(hash, &context_))
+  {
+    throw std::runtime_error("could not finalize SHA256.");
+  }
 }
 
 }  // namespace crypto

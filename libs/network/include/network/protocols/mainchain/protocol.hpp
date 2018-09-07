@@ -30,7 +30,8 @@ namespace protocols {
 class MainChainProtocol : public fetch::service::Protocol
 {
 public:
-  MainChainProtocol(ledger::MainChainNodeInterface *node) : Protocol()
+  MainChainProtocol(ledger::MainChainNodeInterface *node)
+    : Protocol()
   {
     this->Expose(ledger::MainChain::GET_HEADER, node, &ledger::MainChainNodeInterface::GetHeader);
     this->Expose(ledger::MainChain::GET_HEAVIEST_CHAIN, node,

@@ -20,4 +20,7 @@
 #include <iostream>
 using namespace fetch::rpc;
 
-int main() { return 0; }
+int main()
+{
+  return 0;
+}

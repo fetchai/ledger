@@ -40,9 +40,15 @@ public:
 
   using super_type::operator=;
 
-  bool operator<(UnverifiedTransaction const &other) const { return digest() < other.digest(); }
+  bool operator<(UnverifiedTransaction const &other) const
+  {
+    return digest() < other.digest();
+  }
 
-  MutableTransaction GetMutable() const { return MutableTransaction{*this}; }
+  MutableTransaction GetMutable() const
+  {
+    return MutableTransaction{*this};
+  }
 
 protected:
   using super_type::set_summary;

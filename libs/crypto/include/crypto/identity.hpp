@@ -31,7 +31,8 @@ class Identity
   using edcsa_curve_type = crypto::openssl::ECDSACurve<NID_secp256k1>;
 
 public:
-  Identity() {}
+  Identity()
+  {}
 
   Identity(Identity const &other) = default;
   Identity &operator=(Identity const &other) = default;
@@ -40,16 +41,29 @@ public:
 
   // Fully relying on caller that it will bahve = will NOT modify value passed (Const)ByteArray(s)
   Identity(byte_array::ConstByteArray identity_parameters, byte_array::ConstByteArray identifier)
-    : identity_parameters_{std::move(identity_parameters)}, identifier_{std::move(identifier)}
+    : identity_parameters_{std::move(identity_parameters)}
+    , identifier_{std::move(identifier)}
   {}
 
-  byte_array::ConstByteArray const &parameters() const { return identity_parameters_; }
+  byte_array::ConstByteArray const &parameters() const
+  {
+    return identity_parameters_;
+  }
 
-  byte_array::ConstByteArray const &identifier() const { return identifier_; }
+  byte_array::ConstByteArray const &identifier() const
+  {
+    return identifier_;
+  }
 
-  void SetIdentifier(byte_array::ConstByteArray const &ident) { identifier_ = ident; }
+  void SetIdentifier(byte_array::ConstByteArray const &ident)
+  {
+    identifier_ = ident;
+  }
 
-  void SetParameters(byte_array::ConstByteArray const &params) { identity_parameters_ = params; }
+  void SetParameters(byte_array::ConstByteArray const &params)
+  {
+    identity_parameters_ = params;
+  }
 
   operator bool() const
   {
@@ -101,7 +115,10 @@ private:
   byte_array::ConstByteArray identifier_;
 };
 
-static inline Identity InvalidIdentity() { return Identity::CreateInvalid(); }
+static inline Identity InvalidIdentity()
+{
+  return Identity::CreateInvalid();
+}
 
 template <typename T>
 T &Serialize(T &serializer, Identity const &data)
@@ -136,6 +153,9 @@ namespace std {
 template <>
 struct hash<fetch::crypto::Identity>
 {
-  std::size_t operator()(fetch::crypto::Identity const &value) const { return value.hash(); }
+  std::size_t operator()(fetch::crypto::Identity const &value) const
+  {
+    return value.hash();
+  }
 };
 }  // namespace std
