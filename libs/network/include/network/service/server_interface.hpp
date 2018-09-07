@@ -92,7 +92,6 @@ protected:
       LOG_STACK_TRACE_POINT;
       params >> id;
       result << SERVICE_RESULT << id;
-
       ExecuteCall(result, client, params);
     }
     catch (serializers::SerializableException const &e)

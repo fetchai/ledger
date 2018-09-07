@@ -9,10 +9,12 @@ P2PService2::P2PService2(Muddle &muddle, LaneManagement &lane_management)
   , muddle_ep_(muddle . AsEndpoint())
   , lane_management_{lane_management}
   , resolver_proto_{resolver_, *this}
+  , client_(muddle_ep_, Muddle::Address(), SERVICE_P2P, CHANNEL_RPC)
 {
   // register the services with the rpc server
   rpc_server_.Add(PROTOCOL_RESOLVER, &resolver_proto_);
   trust_system = std::make_shared<P2PTrust<Identity>>();
+
 
   // create all the remote control instances
 }
@@ -46,18 +48,21 @@ void P2PService2::WorkCycle()
   using third_t  = typename std::tuple_element<2, Muddle::ConnectionData>::type;
 
   std::set<Uri> used;
+  std::list<Identity> connected_peers;
 
   auto connections = muddle_ . GetConnections(); // address/uri/state tuples.
   FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Conncount = ", connections.size());
   for(auto connection : connections)
   {
 
-    auto addr  = std::get<0>(connection);
+    auto address = std::get<0>(connection);
+    Identity identity(byte_array::ConstByteArray(), address);
     network::Uri uri   = std::get<1>(connection);
     auto state = std::get<2>(connection);
 
-    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Conn:", ToHex(addr), " / ", uri.ToString(), " / ", state);
+    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Conn:", ToHex(identity.identifier()), " / ", uri.ToString(), " / ", state);
     used.insert(uri);
+    connected_peers.push_back(identity);
   }
 
   // not enough, schedule some connects.
@@ -97,10 +102,63 @@ void P2PService2::WorkCycle()
   }
 
   // too many? schedule some kickoffs.
+
+  // handle manifest updates.
+
+  auto manifest_update_needed_from = manifest_cache_ . GetUpdatesNeeded( connected_peers );
+  for( auto& identity : manifest_update_needed_from)
+  {
+    if (promised_manifests_ . find(identity) == promised_manifests_.end() && promised_manifests_ . size() <1)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2:: Would get manifest from ", ToHex(identity.identifier()));
+      client_ . SetAddress(identity.identifier());
+
+      auto prom = network::PromiseOf<network::Manifest>(
+            client_ . Call(PROTOCOL_RESOLVER, ResolverProtocol::GET_MANIFEST)
+                                                        );
+
+      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2:: Promise", prom.id() );
+
+      promised_manifests_.insert(
+        std::make_pair(
+          identity,
+          prom
+        )
+      );
+    }
+  }
+
+  PromisedManifests::iterator it = promised_manifests_.begin();
+  while(it != promised_manifests_.end())
+  {
+    auto status = it -> second.GetState();
+    if (status !=  network::PromiseOf<network::Manifest>::State::WAITING)
+    {
+      if (status == network::PromiseOf<network::Manifest>::State::SUCCESS)
+      {
+        auto new_manifest = it->second.Get();
+        auto identity = it->first;
+
+        manifest_cache_ . ProvideUpdate(identity, new_manifest, 10);
+        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: NEW MANIFEST ", new_manifest.ToString());
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: NEW MANIFEST FAILED*****************");
+      }
+      it = promised_manifests_ . erase(it);
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2:: waiting for ", it -> second.id() );
+      ++it;
+    }
+  }
 }
 
 const network::Manifest &P2PService2::GetLocalManifest()
 {
+  //FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::GetLocalManifest", manifest_ . ToString());
   return manifest_;
 }
 

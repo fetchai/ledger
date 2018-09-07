@@ -13,6 +13,7 @@
 #include "network/p2pservice/p2p_managed_local_service.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/p2pservice/p2p_remote_manifest_cache.hpp"
+#include "network/muddle/rpc/client.hpp"
 
 namespace fetch {
 namespace ledger { class LaneRemoteControl; }
@@ -36,6 +37,8 @@ public:
   using LaneRemoteControlPtr = std::shared_ptr<LaneRemoteControl>;
   using LaneRemoteControls = std::vector<LaneRemoteControlPtr>;
   using Manifest = network::Manifest;
+  using Client = muddle::rpc::Client;
+  using PromisedManifests = std::map<Identity, network::PromiseOf<network::Manifest>>;
 
   using Uri = network::Uri;
   using ServiceType = network::ServiceType;
@@ -71,7 +74,6 @@ public:
 private:
 
   Muddle  &muddle_;
-
   MuddleEndpoint &muddle_ep_;
   ThreadPool  thread_pool_ = network::MakeThreadPool(1);
   RpcServer rpc_server_{muddle_.AsEndpoint(), SERVICE_P2P, CHANNEL_RPC};
@@ -84,9 +86,12 @@ private:
 
   std::shared_ptr<TrustInterface> trust_system;
 
+  Client client_;
   Manifest manifest_;
   std::map<Identity, Manifest> discovered_peers_;
   std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>> local_services_;
+
+  PromisedManifests promised_manifests_;
 
   P2PRemoteManifestCache manifest_cache_;
 

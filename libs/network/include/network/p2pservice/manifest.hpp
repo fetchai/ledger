@@ -123,11 +123,29 @@ public:
     return *this;
   }
 
+  std::string ToString()
+  {
+    std::string result;
+    for(auto &data : data_)
+    {
+      std::string line = std::string(service_type_names[data.first.service_type])
+        + "  "
+        + std::to_string(data.first.instance_number)
+        + "  "
+        + data.second.ToString()
+        + "\n";
+      result += line;
+    }
+    return result;
+  }
+
   Manifest()
   {
   }
 private:
   std::map<ServiceIdentifier, Uri> data_;
+
+  static const char *service_type_names[];
 
   static std::tuple<ServiceType, uint32_t, std::string> ParseLine(const std::string &str)
   {

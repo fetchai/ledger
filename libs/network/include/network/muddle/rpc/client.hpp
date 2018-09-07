@@ -91,7 +91,7 @@ private:
   Address address_;
   uint16_t const service_;
   uint16_t const channel_;
-  ThreadPool thread_pool_ = network::MakeThreadPool(1);
+  ThreadPool thread_pool_ = network::MakeThreadPool(10);
   SharedHandler handler_;
 };
 

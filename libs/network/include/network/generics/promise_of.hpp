@@ -34,6 +34,7 @@ class PromiseOf
 public:
   using Promise = fetch::service::Promise;
   using PromiseBuilder = fetch::service::details::PromiseBuilder;
+  using PromiseCounter = fetch::service::PromiseCounter;
 
   // Construction / Destruction
   explicit PromiseOf(Promise promise);
@@ -53,6 +54,20 @@ public:
   Promise const &GetInnerPromise() const { return promise_; }
   PromiseBuilder WithHandlers() { return promise_->WithHandlers(); }
 
+  using State = fetch::service::PromiseState;
+
+  State GetState()
+  {
+    return promise_ -> GetState();
+  }
+
+  PromiseCounter id() const { return promise_ -> id(); }
+
+  static std::string DescribeState(State s)
+  {
+    const char *states[4] = {"Waiting", "Succeeded", "Failed", "???"};
+    return states[int(s) & 0x03];
+  }
 private:
   Promise promise_;
 };

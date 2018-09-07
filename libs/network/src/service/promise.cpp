@@ -82,6 +82,7 @@ void PromiseImplementation::UpdateState(State state)
 
   if (state_.exchange(state) == State::WAITING)
   {
+    FETCH_LOG_WARN(LOGGING_NAME,"Promise ",int(id_), " -> ", int(state));
     DispatchCallbacks();
   }
 }
