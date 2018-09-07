@@ -17,12 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ndarray.hpp"
+//#include "math/ndarray.hpp"
 #include <algorithm>
 #include <vector>
 //
-////// need to forward declare
-////class NDArray;
 
 namespace fetch {
 namespace math {
@@ -159,11 +157,6 @@ public:
       ref += s.volume * s.index;
     }
 
-    if (ref != position_)
-    {
-      std::cout << "Expected " << ref << " but got " << position_ << std::endl;
-      TODO_FAIL("doesn't add up");
-    }
     assert(ref == position_);
 #endif
 

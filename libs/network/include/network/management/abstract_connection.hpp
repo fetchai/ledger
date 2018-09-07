@@ -92,12 +92,6 @@ public:
     on_connection_failed_ = fnc;
   }
 
-  void OnLeave(std::function<void()> const &fnc)
-  {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
-    on_leave_ = fnc;
-  }
-
   void ClearClosures() noexcept
   {
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
@@ -123,7 +117,6 @@ protected:
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     fetch::logger.Debug("Connection terminated");
 
-    if (on_leave_) on_leave_();
     DeactivateSelfManage();
   }
 
@@ -144,7 +137,6 @@ protected:
 private:
   std::function<void(network::message_type const &msg)> on_message_;
   std::function<void()>                                 on_connection_failed_;
-  std::function<void()>                                 on_leave_;
 
   std::string           address_;
   std::atomic<uint16_t> port_;

@@ -44,8 +44,6 @@ namespace fetch {
 namespace storage {
 
 // TODO(issue 5): Make variant stack as a circular buffer!
-// TODO(issue 39) : add exceptions (HUT)
-// TODO(issue 40) : use serializer for objects (HUT)
 
 /**
  * Variant stack manages a stack of arbitrary objects (variant). The basic structure can be seen

@@ -20,22 +20,13 @@
 #include <utility>
 
 #include "defs.hpp"
+
 #include "math/arithmetic/comparison.hpp"
+#include "math/free_functions/free_functions.hpp"
 #include "math/linalg/matrix.hpp"
 
 namespace fetch {
 namespace vm {
-
-struct IntPair : public Object
-{
-  int32_t first, second;
-  IntPair(const TypeId type_id, VM *vm, int32_t const &a, int32_t const &b)
-    : Object(type_id, vm), first(a), second(b)
-  {}
-  virtual ~IntPair() {}
-};
-
-/////////////// END OF CUSTOM CLASSES
 
 struct String : public Object
 {
@@ -57,6 +48,10 @@ struct Matrix : public Object
   fetch::math::linalg::Matrix<T, fetch::memory::Array<T>> matrix;
   Matrix(const TypeId type_id, VM *vm, const size_t rows, const size_t columns)
     : Object(type_id, vm), matrix(rows, columns)
+  {}
+  Matrix(const TypeId type_id, VM *vm,
+         fetch::math::linalg::Matrix<T, fetch::memory::Array<T>> &&matrix__)
+    : Object(type_id, vm), matrix(matrix__)
   {}
   virtual ~Matrix() {}
 };
@@ -100,15 +95,52 @@ struct IsMatrix<MatrixFloat64> : public std::true_type
 {
 };
 
+/// Forward declaration for class and function export
+/// @{
+class Module;
+
+namespace details {
+template <typename T>
+struct LoaderClass;
+
+template <typename T, int N>
+struct StorerClass;
+
+template <int N>
+struct Resetter;
+}  // namespace details
+/// }
+
 class VM
 {
 public:
-  VM() {}
+  VM(Module *module = nullptr) : module_(module) {}
   ~VM() {}
-  bool Execute(const Script &script, const std::string &name);
+  bool        Execute(const Script &script, const std::string &name);
+  std::string error() const { return error_; }
+  std::size_t error_line() const { return error_line_; }
 
 private:
   friend struct Object;
+
+  /// Friends and objects that allow dynamic module export
+  /// @{
+  Module *module_ = nullptr;
+
+  template <typename T>
+  friend class ClassInterface;
+  friend class Module;
+  friend class BaseModule;
+
+  template <int N>
+  friend struct details::Resetter;
+  template <typename T>
+  friend struct details::LoaderClass;
+
+  template <typename T, int N>
+  friend struct details::StorerClass;
+  /// }
+
   static const int FRAME_STACK_SIZE = 40;
   static const int STACK_SIZE       = 5000;
   static const int MAX_LIVE_OBJECTS = 200;
@@ -153,6 +185,7 @@ private:
   const Script::Instruction *instruction_;
   bool                       stop_;
   std::string                error_;
+  std::size_t                error_line_;
 
   Value &GetVariable(const Index variable_index) { return stack_[bsp_ + variable_index]; }
 
@@ -1043,7 +1076,7 @@ private:
     Value &     rhsv    = stack_[sp_--];
     ElementType rhs;
     rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);  // what if fails?
+    Op::Apply(this, *ptr, rhs);  // TODO(private issue 214): what if fails?
     matrixv.Reset();
     rhsv.Reset();
   }
@@ -1057,7 +1090,7 @@ private:
     Value &     rhsv   = stack_[sp_--];
     ElementType rhs;
     rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);  // what if fails?
+    Op::Apply(this, *ptr, rhs);  // TODO(private issue 214):  what if fails?
     arrayv.Reset();
     rhsv.Reset();
   }
@@ -1072,7 +1105,7 @@ private:
     RHSVariantType xx;
     rhsv.variant.Get(xx);
     RHSElementType rhs = static_cast<RHSElementType>(xx);
-    Op::Apply(this, *ptr, rhs);  // what if fails?
+    Op::Apply(this, *ptr, rhs);  //  TODO(private issue 214): what if fails?
     arrayv.Reset();
     rhsv.Reset();
   }
@@ -1301,7 +1334,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Add(lhs->matrix, rhs->matrix);
+    Add(lhs->matrix, rhs->matrix, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1318,7 +1351,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Add(lhs->matrix, rhs);
+    Add(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1349,7 +1382,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Subtract(lhs->matrix, rhs->matrix);
+    Subtract(lhs->matrix, rhs->matrix, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1366,7 +1399,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Subtract(lhs->matrix, rhs);
+    Subtract(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1402,7 +1435,7 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Multiply(lhs->matrix, rhs);
+    Multiply(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1420,7 +1453,7 @@ private:
     }
     M *m;
     AcquireMatrix(rhs_rows, rhs_columns, m);
-    m->matrix.Multiply(rhs->matrix, lhs);
+    Multiply(rhs->matrix, lhs, m->matrix);
     lhsv.SetObject(m, rhsv.type_id);
   }
 
@@ -1442,11 +1475,11 @@ private:
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
-    m->matrix.Divide(lhs->matrix, rhs);
+    Divide(lhs->matrix, rhs, m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
-  template <typename M>
+  template <typename M, typename T>
   void MatrixUnaryMinus(Value &lhsv, M *lhs)
   {
     const size_t lhs_rows                 = lhs->matrix.height();
@@ -1456,13 +1489,13 @@ private:
     {
       // TODO(tfr): implement unary minus
       // is there an inplace op for this?
-      lhs->matrix.InlineMultiply(-1);
+      lhs->matrix.InlineMultiply(T(-1));
       return;
     }
     M *m;
     AcquireMatrix(lhs_rows, lhs_columns, m);
     // is there a call for this?
-    m->matrix.Multiply(lhs->matrix, -1);
+    Multiply(lhs->matrix, T(-1), m->matrix);
     lhsv.SetObject(m, lhsv.type_id);
   }
 
@@ -1743,13 +1776,13 @@ private:
     }
     template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, M *rhs)
-    {
-      vm->MatrixUnaryMinus(lhsv, lhs);
-    }
+    {}
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
     static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
-    {}
+    {
+      vm->MatrixUnaryMinus<M, T>(lhsv, lhs);
+    }
     template <typename T, typename M,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>

@@ -19,11 +19,7 @@
 
 #include "math/ndarray_view.hpp"
 #include "math/shape_less_array.hpp"
-#include "math/statistics/max.hpp"
-#include "math/statistics/min.hpp"
 #include "vectorise/memory/array.hpp"
-
-#include "math/ndarray_broadcast.hpp"
 
 #include <numeric>
 #include <utility>
@@ -32,21 +28,11 @@
 namespace fetch {
 namespace math {
 
-namespace details {
-struct SimpleComparator
-{
-  const std::vector<std::size_t> &value_vector;
-
-  SimpleComparator(const std::vector<std::size_t> &val_vec) : value_vector(val_vec) {}
-
-  bool operator()(std::size_t i1, std::size_t i2) { return value_vector[i1] < value_vector[i2]; }
-};
-}  // namespace details
 template <typename T, typename C = memory::SharedArray<T>>
 class NDArray : public ShapeLessArray<T, C>
 {
 public:
-  using data_type            = T;
+  using type                 = T;
   using container_type       = C;
   using vector_register_type = typename container_type::vector_register_type;
   using super_type           = ShapeLessArray<T, C>;
@@ -124,12 +110,6 @@ public:
     return output;
   }
 
-  void ResizeFromShape(std::vector<std::size_t> const &shape)
-  {
-    this->Resize(self_type::SizeFromShape(shape));
-    this->Reshape(shape);
-  }
-
   /**
    * Copies input data into current array
    *
@@ -198,27 +178,19 @@ public:
   }
 
   /**
-   * Directly copies shape variable without checking anything
-   *
-   * @param[in]     shape specifies the new shape.
-   *
-   **/
-  void LazyReshape(std::vector<std::size_t> const &shape) { shape_ = shape; }
-
-  /**
    * Operator for accessing data in the array
    *
    * @param[in]     indices specifies the data points to access.
    * @return        the accessed data.
    *
    **/
-  data_type operator()(std::vector<std::size_t> const &indices) const
+  type operator()(std::vector<std::size_t> const &indices) const
   {
     assert(indices.size() == shape_.size());
     std::size_t  index = ComputeColIndex(indices);
     return this->operator[](index);
   }
-  data_type operator()(std::size_t const &index) const
+  type operator()(std::size_t const &index) const
   {
     assert(index == size_);
     return this->operator[](index);
@@ -229,7 +201,7 @@ public:
    * @param indices     index position in array
    * @param val         value to write
    */
-  void Set(std::vector<std::size_t> const &indices, data_type const &val)
+  void Set(std::vector<std::size_t> const &indices, type const &val)
   {
     assert(indices.size() == shape_.size());               // dimensionality check not in parent
     this->super_type::Set(ComputeColIndex(indices), val);  // call parent
@@ -238,7 +210,7 @@ public:
    * Gets a value from the array by N-dim index
    * @param indices index to access
    */
-  data_type Get(std::vector<std::size_t> const &indices) const
+  type Get(std::vector<std::size_t> const &indices) const
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
@@ -303,6 +275,20 @@ public:
     return output;
   }
 
+  void ResizeFromShape(std::vector<std::size_t> const &shape)
+  {
+    this->Resize(self_type::SizeFromShape(shape));
+    this->Reshape(shape);
+  }
+
+  /**
+   * Directly copies shape variable without checking anything
+   *
+   * @param[in]     shape specifies the new shape.
+   *
+   **/
+  void LazyReshape(std::vector<std::size_t> const &shape) { shape_ = shape; }
+
   /**
    * Tests if it is possible to reshape the array to a newly proposed shape
    *
@@ -323,15 +309,22 @@ public:
   }
 
   /**
-   * Reshapes the array to the shape specified.
-   *
+   * Reshapes after checking the total size is the same
    * @param[in]     shape specified for the new array as a vector of size_t.
    *
    **/
   void Reshape(std::vector<std::size_t> const &shape)
   {
     assert(CanReshape(shape));
+    this->ReshapeForce(shape);
+  }
 
+  /**
+   * Executes a reshape (with no memory checks)
+   * @param shape
+   */
+  void ReshapeForce(std::vector<std::size_t> const &shape)
+  {
     shape_.clear();
     shape_.reserve(shape.size());
     for (auto const &s : shape)
@@ -350,143 +343,13 @@ public:
   std::size_t const &             shape(std::size_t const &n) const { return shape_[n]; }
 
   /**
-   * Returns the single maximum value in the array
-   * @return
-   */
-  data_type Max() const { return fetch::math::statistics::Max(*this); }
-  self_type Max(std::size_t const axis)
-  {
-    std::vector<std::size_t> return_shape{shape()};
-    return_shape.erase(return_shape.begin() + int(axis), return_shape.begin() + int(axis) + 1);
-    self_type                                  ret{return_shape};
-    NDArrayIterator<data_type, container_type> return_iterator{ret};
-
-    assert(axis < this->shape().size());
-
-    // iterate through the return array (i.e. the array of Max vals)
-    //    data_type cur_val;
-    std::vector<std::size_t> cur_index;
-    while (return_iterator)
-    {
-      std::vector<std::vector<std::size_t>> cur_step;
-
-      cur_index = return_iterator.GetNDimIndex();
-
-      // calculate step from cur_index and axis
-      std::size_t index_counter = 0;
-      for (std::size_t i = 0; i < shape().size(); ++i)
-      {
-        if (i == axis)
-        {
-          cur_step.push_back({0, shape()[i]});
-        }
-        else
-        {
-          cur_step.push_back({cur_index[index_counter], cur_index[index_counter] + 1});
-          ++index_counter;
-        }
-      }
-
-      // get an iterator to iterate over the 1-d slice of the array to calculate max over
-      NDArrayIterator<data_type, container_type> array_iterator(*this, cur_step);
-
-      // loops through the 1d array calculating the max val
-      data_type cur_max = -std::numeric_limits<data_type>::max();
-      data_type cur_val;
-      while (array_iterator)
-      {
-        cur_val = *array_iterator;
-        cur_max = fetch::math::statistics::Max(cur_max, cur_val);
-        ++array_iterator;
-      }
-
-      *return_iterator = cur_max;
-      ++return_iterator;
-    }
-
-    return ret;
-  }
-
-  /**
-   * Returns an ndarray containing the elementwise maximum of two other ndarrays
-   * @param x ndarray input 1
-   * @param y ndarray input 2
-   * @return the combined array
-   */
-  self_type Maximum(self_type const &x, self_type const &y)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-    this->super_type::Maximum(x, y);
-    return *this;
-  }
-
-  /**
-   * Returns the single minimum value in the array
-   * @return
-   */
-  data_type Min() const { return fetch::math::statistics::Min(*this); }
-  self_type Min(std::size_t const axis)
-  {
-    std::vector<std::size_t> return_shape{shape()};
-    return_shape.erase(return_shape.begin() + int(axis), return_shape.begin() + int(axis) + 1);
-
-    assert(axis < this->shape().size());
-
-    self_type                                  ret{return_shape};
-    NDArrayIterator<data_type, container_type> return_iterator{ret};
-
-    // iterate through the return array (i.e. the array of Max vals)
-    //    data_type cur_val;
-    std::vector<std::size_t> cur_index;
-    while (return_iterator)
-    {
-      std::vector<std::vector<std::size_t>> cur_step;
-
-      cur_index = return_iterator.GetNDimIndex();
-
-      // calculate step from cur_index and axis
-      std::size_t index_counter = 0;
-      for (std::size_t i = 0; i < shape().size(); ++i)
-      {
-        if (i == axis)
-        {
-          cur_step.push_back({0, shape()[i]});
-        }
-        else
-        {
-          cur_step.push_back({cur_index[index_counter], cur_index[index_counter] + 1});
-          ++index_counter;
-        }
-      }
-
-      // get an iterator to iterate over the 1-d slice of the array to calculate max over
-      NDArrayIterator<data_type, container_type> array_iterator(*this, cur_step);
-
-      // loops through the 1d array calculating the max val
-      data_type cur_max = std::numeric_limits<data_type>::max();
-      data_type cur_val;
-      while (array_iterator)
-      {
-        cur_val = *array_iterator;
-        cur_max = fetch::math::statistics::Min(cur_max, cur_val);
-        ++array_iterator;
-      }
-
-      *return_iterator = cur_max;
-      ++return_iterator;
-    }
-
-    return ret;
-  }
-  /**
    * adds two ndarrays together and supports broadcasting
    * @param other
    * @return
    */
-  NDArray Add(self_type &obj1, self_type &other)
+  self_type InlineAdd(NDArray const &other)
   {
-    Broadcast([](data_type x, data_type y) { return x + y; }, obj1, other, *this);
+    Add(*this, other, *this);
     return *this;
   }
   /**
@@ -494,48 +357,12 @@ public:
    * @param scalar to add
    * @return new array output
    */
-  self_type Add(self_type const &obj1, data_type const &scalar)
+  self_type InlineAdd(type const &scalar)
   {
-    this->super_type::Add(obj1, scalar);
+    Add(*this, scalar, *this);
     return *this;
   }
-  /**
-   * adds two ndarrays together and supports broadcasting
-   * @param other
-   * @return
-   */
-  self_type InlineAdd(NDArray &other)
-  {
-    Broadcast([](data_type x, data_type y) { return x + y; }, *this, other, *this);
-    return *this;
-  }
-  /**
-   * adds a scalar to every element in the array and returns the new output
-   * @param scalar to add
-   * @return new array output
-   */
-  self_type InlineAdd(data_type const &scalar) { return self_type(super_type::InlineAdd(scalar)); }
 
-  /**
-   * Subtract one ndarray from another and support broadcasting
-   * @param other
-   * @return
-   */
-  NDArray Subtract(self_type &obj1, self_type &other)
-  {
-    Broadcast([](data_type x, data_type y) { return x - y; }, obj1, other, *this);
-    return *this;
-  }
-  /**
-   * subtract a scalar from every element in the array and return the new output
-   * @param other
-   * @return
-   */
-  self_type Subtract(self_type &obj1, data_type const &scalar)
-  {
-    this->super_type::Subtract(obj1, scalar);
-    return *this;
-  }
   /**
    * Subtract one ndarray from another and support broadcasting
    * @param other
@@ -543,7 +370,7 @@ public:
    */
   self_type InlineSubtract(NDArray &other)
   {
-    Broadcast([](data_type x, data_type y) { return x - y; }, *this, other, *this);
+    Subtract(*this, other, *this);
     return *this;
   }
   /**
@@ -551,39 +378,20 @@ public:
    * @param scalar to subtract
    * @return new array output
    */
-  self_type InlineSubtract(data_type const &scalar)
+  self_type InlineSubtract(type const &scalar)
   {
-    return self_type(super_type::InlineSubtract(scalar));
+    Subtract(*this, scalar, *this);
+    return *this;
   }
 
   /**
-   * multiplies two ndarrays together and supports broadcasting
-   * @param other
-   * @return
-   */
-  NDArray Multiply(self_type &obj1, self_type &other)
-  {
-    Broadcast([](data_type x, data_type y) { return x * y; }, obj1, other, *this);
-    return *this;
-  }
-  /**
-   * multiplies array by a scalar element wise
-   * @param other
-   * @return
-   */
-  self_type Multiply(self_type &obj1, data_type const &scalar)
-  {
-    this->super_type::Multiply(obj1, scalar);
-    return *this;
-  }
-  /**
-   * multiplies two ndarrays together and supports broadcasting
+   * multiply other by this array and returns this
    * @param other
    * @return
    */
   self_type InlineMultiply(NDArray &other)
   {
-    Broadcast([](data_type x, data_type y) { return x * y; }, *this, other, *this);
+    Multiply(*this, other, *this);
     return *this;
   }
   /**
@@ -591,32 +399,12 @@ public:
    * @param scalar to add
    * @return new array output
    */
-  self_type InlineMultiply(data_type const &scalar)
+  self_type InlineMultiply(type const &scalar)
   {
-    this->super_type::InlineMultiply(scalar);
+    Multiply(*this, scalar, *this);
     return *this;
   }
 
-  /**
-   * Divide ndarray by another ndarray from another and support broadcasting
-   * @param other
-   * @return
-   */
-  NDArray Divide(self_type &obj1, self_type &other)
-  {
-    Broadcast([](data_type x, data_type y) { return x / y; }, obj1, other, *this);
-    return *this;
-  }
-  /**
-   * Divide array by a scalar elementwise
-   * @param other
-   * @return
-   */
-  self_type Divide(self_type &obj1, data_type const &scalar)
-  {
-    this->super_type::Divide(obj1, scalar);
-    return *this;
-  }
   /**
    * Divide ndarray by another ndarray from another and support broadcasting
    * @param other
@@ -624,7 +412,7 @@ public:
    */
   self_type InlineDivide(NDArray &other)
   {
-    Broadcast([](data_type x, data_type y) { return x / y; }, *this, other, *this);
+    Divide(*this, other, *this);
     return *this;
   }
   /**
@@ -632,548 +420,10 @@ public:
    * @param scalar to subtract
    * @return new array output
    */
-  self_type InlineDivide(data_type const &scalar)
+  self_type InlineDivide(type const &scalar)
   {
-    this->super_type::InlineDivide(scalar);
+    Divide(*this, scalar, *this);
     return *this;
-  }
-
-  /**
-   * assigns the absolute of x to this array
-   * @param x
-   */
-  void Abs(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Abs(x);
-  }
-  /**
-   * e^x
-   * @param x
-   */
-  void Exp(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Exp(x);
-  }
-  /**
-   * raise 2 to power input values of x
-   * @param x
-   */
-  void Exp2(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Exp2(x);
-  }
-  /**
-   * exp(x) - 1
-   * @param x
-   */
-  void Expm1(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Expm1(x);
-  }
-  /**
-   * natural logarithm of x
-   * @param x
-   */
-  void log(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Log(x);
-  }
-  /**
-   * log base 10
-   * @param x
-   */
-  void Log10(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Log10(x);
-  }
-  /**
-   * log base 2
-   * @param x
-   */
-  void Log2(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Log2(x);
-  }
-  /**
-   * natural log 1 + x
-   * @param x
-   */
-  void Log1p(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Log1p(x);
-  }
-  /**
-   * square root
-   * @param x
-   */
-  void Sqrt(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Sqrt(x);
-  }
-
-  /**
-   * cubic root x
-   * @param x
-   */
-  void Cbrt(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Cbrt(x);
-  }
-
-  /**
-   * sine of x
-   * @param x
-   */
-  void Sin(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Sin(x);
-  }
-  /**
-   * cosine of x
-   * @param x
-   */
-  void Cos(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Cos(x);
-  }
-  /**
-   * tangent of x
-   * @param x
-   */
-  void Tan(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Tan(x);
-  }
-  /**
-   * arc sine of x
-   * @param x
-   */
-  void Asin(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Asin(x);
-  }
-  /**
-   * arc cosine of x
-   * @param x
-   */
-  void Acos(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Acos(x);
-  }
-  /**
-   * arc tangent of x
-   * @param x
-   */
-  void Atan(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Atan(x);
-  }
-
-  /**
-   * hyperbolic sine of x
-   * @param x
-   */
-  void Sinh(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Sinh(x);
-  }
-  /**
-   * hyperbolic cosine of x
-   * @param x
-   */
-  void Cosh(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Cosh(x);
-  }
-  /**
-   * hyperbolic tangent of x
-   * @param x
-   */
-  void Tanh(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Tanh(x);
-  }
-  /**
-   * hyperbolic arc sine of x
-   * @param x
-   */
-  void Asinh(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Asinh(x);
-  }
-  /**
-   * hyperbolic arc cosine of x
-   * @param x
-   */
-  void Acosh(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Acosh(x);
-  }
-  /**
-   * hyperbolic arc tangent of x
-   * @param x
-   */
-  void Atanh(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Atanh(x);
-  }
-
-  /**
-   * error function of x
-   * @param x
-   */
-  void Erf(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Erf(x);
-  }
-  /**
-   * complementary error function of x
-   * @param x
-   */
-  void Erfc(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Erfc(x);
-  }
-  /**
-   * factorial of x-1
-   * @param x
-   */
-  void Tgamma(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Tgamma(x);
-  }
-  /**
-   * log of factorial of x-1
-   * @param x
-   */
-  void Lgamma(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Lgamma(x);
-  }
-  /**
-   * ceiling round
-   * @param x
-   */
-  void Ceil(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Ceil(x);
-  }
-  /**
-   * floor rounding
-   * @param x
-   */
-  void Floor(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Floor(x);
-  }
-  /**
-   * round towards 0
-   * @param x
-   */
-  void Trunc(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Trunc(x);
-  }
-
-  /**
-   * round to nearest int in int format
-   * @param x
-   */
-  void Round(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Round(x);
-  }
-
-  /**
-   * round to nearest int in float format
-   * @param x
-   */
-  void Lround(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Lround(x);
-  }
-
-  /**
-   * round to nearest int in float format with long long return
-   * @param x
-   */
-  void Llround(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Llround(x);
-  }
-
-  /**
-   * round to nearest int in float format
-   * @param x
-   */
-  void Nearbyint(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Nearbyint(x);
-  }
-
-  /**
-   * round to nearest int
-   * @param x
-   */
-  void Rint(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Rint(x);
-  }
-
-  /**
-   *
-   * @param x
-   */
-  void Lrint(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Lrint(x);
-  }
-
-  /**
-   *
-   * @param x
-   */
-  void Llrint(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Llrint(x);
-  }
-
-  /**
-   * finite check
-   * @param x
-   */
-  void Isfinite(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Isfinite(x);
-  }
-
-  /**
-   * checks for inf values
-   * @param x
-   */
-  void Isinf(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Isinf(x);
-  }
-
-  /**
-   * checks for nans
-   * @param x
-   */
-  void Isnan(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Isnan(x);
-  }
-
-  /**
-   * rectified linear activation function
-   * @param x
-   */
-  void Relu(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Relu(x);
-  }
-
-  /**
-   * Copies the values of updates into the specified indices of the first dimension of data in this
-   * object
-   */
-  void Scatter(std::vector<data_type> &updates, std::vector<std::size_t> &indices)
-  {
-
-    // sort indices and updates into ascending order
-    std::sort(updates.begin(), updates.end(), fetch::math::details::SimpleComparator(indices));
-    std::sort(indices.begin(), indices.end());
-
-    // check largest value in indices < shape()[0]
-    assert(indices.back() <= this->shape()[0]);
-
-    // set up an iterator
-    NDArrayIterator<data_type, container_type> arr_iterator{*this};
-
-    std::size_t cur_idx, arr_count = 0;
-    for (std::size_t count = 0; count < indices.size(); ++count)
-    {
-      cur_idx = indices[count];
-
-      while (arr_count < cur_idx)
-      {
-        ++arr_iterator;
-        ++arr_count;
-      }
-
-      *arr_iterator = updates[count];
-    }
-  }
-
-  /**
-   * gathers data from first dimension of this object according to indices and returns a new
-   * self_type
-   */
-  self_type Gather(std::vector<std::size_t> &indices)
-  {
-
-    self_type ret{this->size()};
-    ret.LazyReshape(this->shape());
-    ret.Copy(*this);
-
-    // sort indices and updates into ascending order
-    std::sort(indices.begin(), indices.end());
-
-    // check largest value in indices < shape()[0]
-    assert(indices.back() <= this->shape()[0]);
-
-    // set up an iterator
-    NDArrayIterator<data_type, container_type> arr_iterator{*this};
-    NDArrayIterator<data_type, container_type> ret_iterator{ret};
-
-    std::size_t cur_idx, arr_count = 0;
-    for (std::size_t count = 0; count < indices.size(); ++count)
-    {
-      cur_idx = indices[count];
-
-      while (arr_count < cur_idx)
-      {
-        ++arr_iterator;
-        ++arr_count;
-      }
-
-      *ret_iterator = *arr_iterator;
-    }
-
-    return ret;
-  }
-
-  /**
-   * calculates soft max of x and applies to this
-   * @param x
-   */
-  void Softmax(self_type const &x)
-  {
-    assert(this->size() == x.size());
-    this->LazyReshape(x.shape());
-
-    this->super_type::Softmax(x);
   }
 
 private:
