@@ -26,7 +26,7 @@ namespace crypto {
 
 class SHA256 : public StreamHasher
 {
-  SHA256_CTX               context_;
+  SHA256_CTX context_;
 
 public:
   using StreamHasher::Update;

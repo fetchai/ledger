@@ -23,17 +23,16 @@ namespace fetch {
 namespace crypto {
 
 namespace {
-  constexpr std::size_t hash_size{SHA256_DIGEST_LENGTH};
+constexpr std::size_t hash_size{SHA256_DIGEST_LENGTH};
 
-  void reset(SHA256_CTX& context)
+void reset(SHA256_CTX &context)
+{
+  if (!SHA256_Init(&context))
   {
-    if (!SHA256_Init(&context))
-    {
-      throw std::runtime_error("could not intialialise SHA256.");
-    }
-  
+    throw std::runtime_error("could not intialialise SHA256.");
   }
 }
+}  // namespace
 
 SHA256::SHA256()
 {
