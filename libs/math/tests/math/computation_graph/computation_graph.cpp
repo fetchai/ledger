@@ -31,8 +31,8 @@ TEST(computation_graph, arithmetic_parse)
 //  ComputationGraph<double> computation_graph;
   ComputationGraph computation_graph;
   computation_graph.ParseExpression("2 + 1 - (3 * 4)");
+  double result;
+  computation_graph.Run(result);
 
-  computation_graph.Run();
-
-  //  ASSERT_TRUE(double(result) == double(-9));
+  ASSERT_TRUE(result == double(-9));
 }

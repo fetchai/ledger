@@ -90,22 +90,30 @@ static OPERATOR_PRECEDENCE GetPrecedence(char &c)
  public:
 
   std::string name;
-  char c; // if this is a leaf node c will be a number, otherwise it will be the operation to apply
+
+  // if this is a leaf node VAL will be a number, otherwise it will be the operation to apply on the child nodes
+  // when we compute the graph VAL will again be replaced by the result of the operation
+  union VAL
+   {
+    char c;             // occupies 1 byte
+    double val;         // occupies 8 bytes
+   };                      // the whole union occupies 4 bytes
 
   std::shared_ptr<ExpressionNode> left_node_ptr = nullptr;
   std::shared_ptr<ExpressionNode> right_node_ptr = nullptr;
   std::shared_ptr<ExpressionNode> parent_node_ptr = nullptr;
   bool evaluated = false;
+  VAL val;
 
   ExpressionNode()                    = default;
   ExpressionNode(ExpressionNode &&other)      = default;
-  ExpressionNode(char &num)
+  ExpressionNode(double num)
   {
-    c = num;
+    val.val = num;
   }
   ExpressionNode(char num, std::shared_ptr<ExpressionNode> left_node, std::shared_ptr<ExpressionNode> right_node)
   {
-    c = num;
+    val.c = num;
     left_node_ptr = std::move(left_node);
     right_node_ptr = std::move(right_node);
   }
@@ -161,7 +169,7 @@ class ComputationGraph
       }
       else if (isdigit(c))
       {
-        expression_graph.emplace_back(std::make_unique<ExpressionNode>(c));
+        expression_graph.emplace_back(std::make_unique<ExpressionNode>(double(c - '0')));
       }
       else if (helper_funcs::IsOperator(c))
       {
@@ -207,7 +215,47 @@ class ComputationGraph
       }
     }
 
+    while (!(operator_stack.empty()))
+    {
+      std::shared_ptr<ExpressionNode> e2 = std::move(expression_graph.back());
+      expression_graph.pop_back();
+      std::shared_ptr<ExpressionNode> e1 = std::move(expression_graph.back());
+      expression_graph.pop_back();
+
+      expression_graph.emplace_back(std::make_unique<ExpressionNode>(operator_stack.top(), std::move(e1), std::move(e2)));
+      operator_stack.pop();
+
+      // instruct the child nodes about their parentage for later traversal
+      expression_graph.back()->SetChildNodesParent();
+    }
+
     return;
+
+  }
+
+  /**
+   * compute a single op on the graph
+   * @param l
+   * @param r
+   * @param op
+   * @return
+   */
+  double compute_op(double l, double r, char op)
+  {
+    switch (op)
+    {
+      case '+':
+        return l + r;
+      case '-':
+        return l - r;
+      case '*':
+        return l * r;
+      case '/':
+        return l / r;
+      default:
+        std::cout << "should never occur error!!" << std::endl;
+        return 0;
+    }
 
   }
 
@@ -215,43 +263,46 @@ class ComputationGraph
    * Runs the computation graph generated from parsing the input string
    */
 //  void Run(std::vector<>)
-  void Run()
+  void Run(double &ret)
   {
-
     bool unfinished = true;
 
     std::shared_ptr<ExpressionNode> cur_node_ptr = expression_graph.front();
 
     while (unfinished)
     {
-      if (cur_node_ptr == nullptr) // check if final node
+      if (cur_node_ptr->left_node_ptr == nullptr && cur_node_ptr->right_node_ptr == nullptr) // ascend - nothing below
       {
-        unfinished = false;
-      }
-      else if (cur_node_ptr->left_node_ptr->evaluated && cur_node_ptr->right_node_ptr->evaluated) // ascend
-      {
-        std::cout << "c: " << cur_node_ptr->c << std::endl;
+//        std::cout << "c: " << cur_node_ptr->val.val << std::endl;
+        cur_node_ptr->evaluated = true;
         cur_node_ptr = cur_node_ptr->parent_node_ptr;
       }
-      else if (!(cur_node_ptr->left_node_ptr->evaluated)) // check left node
+      else if (cur_node_ptr->left_node_ptr->evaluated && cur_node_ptr->right_node_ptr->evaluated) // compute and ascend - both evaluated
       {
-        std::cout << "c: " << cur_node_ptr->left_node_ptr->c << std::endl;
-        cur_node_ptr->left_node_ptr->evaluated = true;
+        // compute the op
+        cur_node_ptr->val.val = compute_op(cur_node_ptr->left_node_ptr->val.val, cur_node_ptr->right_node_ptr->val.val, cur_node_ptr->val.c);
+        cur_node_ptr->evaluated = true;
+
+        // ascend if not root node
+        if (!(cur_node_ptr->parent_node_ptr == nullptr))
+        {
+          cur_node_ptr = cur_node_ptr->parent_node_ptr;
+        }
+        else
+        {
+          unfinished = false;
+        }
       }
-      else if (!(cur_node_ptr->right_node_ptr->evaluated)) // check right node
+      else if ((cur_node_ptr->left_node_ptr == nullptr) || (cur_node_ptr->left_node_ptr->evaluated)) // descend right
       {
-        std::cout << "c: " << cur_node_ptr->right_node_ptr->c << std::endl;
-        cur_node_ptr->right_node_ptr->evaluated = true;
+        cur_node_ptr = cur_node_ptr->right_node_ptr;
       }
-      else
+      else // descend left
       {
-        std::cout<< "how did this happen? " << std::endl;
+        cur_node_ptr = cur_node_ptr->left_node_ptr;
       }
     }
 
-//    expression_stack.top();
-    operator_stack.top();
-    // do some stuff
   }
 };
 
