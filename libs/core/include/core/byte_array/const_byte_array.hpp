@@ -107,12 +107,8 @@ public:
 
   ConstByteArray Copy() const
   {
-    ConstByteArray ret;
-    ret.Resize(size());
-    for (std::size_t i = 0; i < size(); ++i)
-    {
-      ret[i] = this->operator[](i);
-    }
+    ConstByteArray ret{ size() };
+    std::memcpy(ret.pointer(), pointer(), size());
     return ret;
   }
 
@@ -173,7 +169,9 @@ public:
 
   std::size_t capacity() const
   {
-    return data_.size() == 0 ? 0 : data_.size() - 1;
+    //TODO(private issue #228)
+    //return data_.size() == 0 ? 0 : data_.size() - 1;
+    return data_.size();
   }
 
   bool operator==(char const *str) const
@@ -251,19 +249,9 @@ public:
 
   self_type operator+(self_type const &other) const
   {
-    self_type ret;
-
-    std::size_t n = 0, i = 0;
-    ret.Resize(size() + other.size());
-    for (; n < size(); ++n)
-    {
-      ret[n] = this->operator[](n);
-    }
-    for (; n < ret.size(); ++n, ++i)
-    {
-      ret[n] = other[i];
-    }
-
+    self_type ret{ size() + other.size() };
+    std::memcpy(ret.pointer(), pointer(), size());
+    std::memcpy(ret.pointer()+size(), other.pointer(), other.size());
     return ret;
   }
 
@@ -330,10 +318,8 @@ protected:
     assert(n != 0);
 
     shared_array_type newdata(n);
-    newdata.SetAllZero();
-
-    std::size_t M = std::min(n, data_.size());
-    std::memcpy(newdata.pointer(), data_.pointer(), M);
+    std::memcpy(newdata.pointer(), data_.pointer(), data_.size());
+    newdata.SetZeroAfter(data_.size());
 
     data_        = newdata;
     arr_pointer_ = data_.pointer() + start_;
@@ -347,6 +333,16 @@ protected:
   char *char_pointer()
   {
     return reinterpret_cast<char *>(data_.pointer());
+  }
+
+  self_type & append(self_type const& other)
+  {
+    std::size_t const new_size = size() + other.size();
+    std::size_t const amortized_capacity = capacity() - static_cast<std::size_t>(pointer() - data_.pointer());
+    if (new_size < capacity()
+    {
+
+    }
   }
 
   template <typename T>
