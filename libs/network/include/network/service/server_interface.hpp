@@ -66,6 +66,7 @@ protected:
     serializer_type params(msg);
     service_classification_type type;
     params >> type;
+    FETCH_LOG_WARN(LOGGING_NAME, "PushProtocolRequest type=", type);
 
     switch(type)
     {
@@ -76,6 +77,7 @@ protected:
     case SERVICE_UNSUBSCRIBE:
       return HandleUnsubscribeRequest(client, params);
     default:
+      FETCH_LOG_WARN(LOGGING_NAME, "PushProtocolRequest type not recognised ", type);
       return false;
     }
   }
@@ -91,8 +93,10 @@ protected:
     {
       LOG_STACK_TRACE_POINT;
       params >> id;
+      FETCH_LOG_WARN(LOGGING_NAME, "HandleRPCCallRequest prom =", id);
       result << SERVICE_RESULT << id;
       ExecuteCall(result, client, params);
+      FETCH_LOG_WARN(LOGGING_NAME, "HandleRPCCallRequest result type=", SERVICE_RESULT, " prom=",id,"  DATA=", result.data().Printable());
     }
     catch (serializers::SerializableException const &e)
     {
@@ -102,7 +106,8 @@ protected:
       result << SERVICE_ERROR << id << e;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Service Server responding to call from ", client);
+
+    FETCH_LOG_INFO(LOGGING_NAME,"Service Server responding to call from ", client);
     {
       LOG_STACK_TRACE_POINT;
       DeliverResponse(client, result.data());
@@ -197,22 +202,21 @@ private:
       + std::to_string(connection_handle)
       ;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"ServerInterface::ExecuteCall " + identifier);
+    FETCH_LOG_INFO(LOGGING_NAME,"ServerInterface::ExecuteCall " + identifier);
 
     auto protocol_pointer = members_[protocol_number];
     if (protocol_pointer == nullptr)
     {
-      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND,
-                                               std::string("ServerInterface::ExecuteCall: Could not find protocol ")
-                                               + identifier
-                                               );
+      auto err = std::string("ServerInterface::ExecuteCall: Could not find protocol ") + identifier;
+      FETCH_LOG_WARN(LOGGING_NAME, err);
+      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND,err);
     }
 
     protocol_pointer -> ApplyMiddleware(connection_handle, params.data());
 
     auto &function = (*protocol_pointer)[function_number];
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,std::string("ServerInterface::ExecuteCall: ")
+    FETCH_LOG_INFO(LOGGING_NAME,std::string("ServerInterface::ExecuteCall: ")
                         + identifier
                         + " expecting following signature "
                         + function.signature()
@@ -240,6 +244,7 @@ private:
         + function.signature()
         + std::string(") (Identification: ")
         + identifier;
+      FETCH_LOG_INFO(LOGGING_NAME,"EXCEPTION:", e.error_code(), new_explanation);
       serializers::SerializableException e2(e.error_code(), new_explanation);
       throw e2;
     }

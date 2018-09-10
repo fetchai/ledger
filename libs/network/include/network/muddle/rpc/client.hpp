@@ -34,7 +34,13 @@ public:
     , channel_(channel)
   {
     handler_ = std::make_shared<Handler>([this](Promise promise) {
-      ProcessServerMessage(promise->value());
+    LOG_STACK_TRACE_POINT;
+        ProcessServerMessage(promise->value());
+        //network::message_type msg = promise->value();
+        //service::serializer_type params(msg);
+        //service::service_classification_type type;
+        //params >> type;
+        //ProcessRPCResult(msg, params);
     });
 
     thread_pool_->Start();
@@ -57,16 +63,21 @@ protected:
 
   bool DeliverRequest(network::message_type const &data) override
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Please send this packet to the server");
+    FETCH_LOG_INFO(LOGGING_NAME, "Please send this packet to the server  ", service_, ",", channel_);
+
+    try {
 
     // signal to the networking that an exchange is requested
     auto promise = endpoint_.Exchange(address_, service_, channel_, data);
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Sent this packet to the server  ", service_, ",", channel_);
     // establish the correct course of action when
     WeakHandler handler = handler_;
     promise.WithHandlers()
       .Then([handler, promise]() {
-        FETCH_LOG_INFO(LOGGING_NAME, "Got the response to our question...");
+              LOG_STACK_TRACE_POINT;
+
+          FETCH_LOG_INFO(LOGGING_NAME, "Got the response to our question...", promise.id());
         auto callback = handler.lock();
         if (callback)
         {
@@ -74,15 +85,26 @@ protected:
         }
       })
       .Catch([]() {
+    LOG_STACK_TRACE_POINT;
 
         // TODO(EJF): This is actually a bug since the RPC promise implementation doesn't have a callback process
         FETCH_LOG_INFO(LOGGING_NAME, "Exchange promise failed");
       });
 
     // TODO(EJF): Chained promises would remove the requirement for this
-    thread_pool_->Post([promise]() { promise.Wait(); });
+    thread_pool_->Post([promise]() {
+        LOG_STACK_TRACE_POINT;
+        promise.Wait();
+      });
 
     return true; //?
+
+    }
+    catch(std::exception &e)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Erk! Exception in endpoint_.Exchange", e.what());
+      throw e;
+    }
   }
 
 private:

@@ -108,23 +108,29 @@ void P2PService2::WorkCycle()
   auto manifest_update_needed_from = manifest_cache_ . GetUpdatesNeeded( connected_peers );
   for( auto& identity : manifest_update_needed_from)
   {
-    if (promised_manifests_ . find(identity) == promised_manifests_.end() && promised_manifests_ . size() <1)
+    if (
+        (promised_manifests_ . find(identity) == promised_manifests_.end())
+        &&
+        (promised_manifests_ . size() < 1)
+      )
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2:: Would get manifest from ", ToHex(identity.identifier()));
+      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: get manifest from ", ToHex(identity.identifier()));
+      //FETCH_LOG_WARN(LOGGING_NAME,"P2PService2:: Would get manifest from ", ToHex(identity.identifier()));
       client_ . SetAddress(identity.identifier());
 
       auto prom = network::PromiseOf<network::Manifest>(
-            client_ . Call(PROTOCOL_RESOLVER, ResolverProtocol::GET_MANIFEST)
-                                                        );
-
-      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2:: Promise", prom.id() );
-
+        client_ . Call(PROTOCOL_RESOLVER, ResolverProtocol::GET_MANIFEST)
+      );
       promised_manifests_.insert(
         std::make_pair(
           identity,
           prom
         )
       );
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: INFLIGHT get manifest from ", ToHex(identity.identifier()));
     }
   }
 
@@ -136,11 +142,24 @@ void P2PService2::WorkCycle()
     {
       if (status == network::PromiseOf<network::Manifest>::State::SUCCESS)
       {
-        auto new_manifest = it->second.Get();
-        auto identity = it->first;
+        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Reading promised manifest from ",
+                       it -> second.id(),".",
+                       it -> second.GetInnerPromise() -> protocol(),".",
+                       it -> second.GetInnerPromise() -> function()
+                       );
+        try
+        {
+          FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Reading promised manifest from ", it->second.GetInnerPromise() -> Schmoo());
+          auto new_manifest = it->second.Get();
+          auto identity = it->first;
 
-        manifest_cache_ . ProvideUpdate(identity, new_manifest, 10);
-        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: NEW MANIFEST ", new_manifest.ToString());
+          manifest_cache_ . ProvideUpdate(identity, new_manifest, 10);
+        }
+        catch(...)
+        {
+          it = promised_manifests_ . erase(it);
+          throw;
+        }
       }
       else
       {
@@ -150,7 +169,6 @@ void P2PService2::WorkCycle()
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2:: waiting for ", it -> second.id() );
       ++it;
     }
   }
@@ -158,7 +176,7 @@ void P2PService2::WorkCycle()
 
 const network::Manifest &P2PService2::GetLocalManifest()
 {
-  //FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::GetLocalManifest", manifest_ . ToString());
+  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::GetLocalManifest", manifest_ . ToString());
   return manifest_;
 }
 

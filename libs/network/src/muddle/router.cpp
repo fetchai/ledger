@@ -164,7 +164,7 @@ Router::Router(Router::Address const &address, MuddleRegister const &reg, Dispat
   : address_(address)
   , register_(reg)
   , dispatcher_(dispatcher)
-  , dispatch_thread_pool_(network::MakeThreadPool(1))
+  , dispatch_thread_pool_(network::MakeThreadPool(10))
 {
 }
 

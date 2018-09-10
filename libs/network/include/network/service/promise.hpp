@@ -44,6 +44,16 @@ class PromiseImplementation
 
 public:
 
+  PromiseImplementation(uint64_t pro, uint64_t func)
+  {
+    this -> protocol_ = pro;
+    this -> function_ = func;
+  }
+
+  PromiseImplementation()
+  {
+  }
+
   using Counter               = uint64_t;
   using ConstByteArray        = byte_array::ConstByteArray;
   using SerializableException = serializers::SerializableException;
@@ -64,6 +74,8 @@ public:
 
   ConstByteArray const &value() const { return value_; }
   Counter id() const { return id_; }
+  uint64_t protocol() const { return protocol_; }
+  uint64_t function() const { return function_; }  
   State state() const { return state_; }
   SerializableException const &exception() const { return (*exception_); }
 
@@ -80,6 +92,9 @@ private:
   void SetFailureCallback(Callback const &cb) { callback_failure_ = cb; }
   void SetCompletionCallback(Callback const &cb) { callback_completion_ = cb; }
   /// @}
+
+  uint64_t protocol_=uint64_t(-1);
+  uint64_t function_=uint64_t(-1);
 public:
   
   PromiseBuilder WithHandlers();
@@ -90,9 +105,21 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
+    if (id_ == 17)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME,"P2PService2::Where is this?");
+    }
+
     value_ = value;
 
+    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Promise ", id_," fulfilled with ",  Schmoo());
+
     UpdateState(State::SUCCESS);
+  }
+
+  std::string Schmoo() const
+  {
+    return value_.Printable();
   }
 
   void Fail(SerializableException const &exception)
@@ -228,13 +255,19 @@ private:
 
 } // namespace details
 
-using PromiseCounter = details::PromiseImplementation::Counter;
+using PromiseCounter
+= details::PromiseImplementation::Counter;
 using PromiseState = details::PromiseImplementation::State;
 using Promise = std::shared_ptr<details::PromiseImplementation>;
 
 inline Promise MakePromise()
 {
   return std::make_shared<details::PromiseImplementation>();
+}
+
+inline Promise MakePromise(uint64_t pro, uint64_t func)
+{
+  return std::make_shared<details::PromiseImplementation>(pro, func);
 }
 
 char const *ToString(PromiseState state);

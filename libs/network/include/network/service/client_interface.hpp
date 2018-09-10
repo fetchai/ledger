@@ -58,7 +58,7 @@ public:
     LOG_STACK_TRACE_POINT;
     FETCH_LOG_DEBUG(LOGGING_NAME,"Service Client Calling ", protocol, ":", function);
 
-    Promise         prom = MakePromise();
+    Promise         prom = MakePromise(protocol, function);
     serializer_type params;
 
     serializers::SizeCounter<serializer_type> counter;
@@ -87,6 +87,7 @@ public:
       RemovePromise(prom->id());
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Return promise ", prom->id(), " as CALL");
     return prom;
   }
 
@@ -107,6 +108,7 @@ protected:
 
   void ClearPromises();
   bool ProcessServerMessage(network::message_type const &msg);
+  void ProcessRPCResult(network::message_type const &msg, service::serializer_type &params);
 
 private:
 

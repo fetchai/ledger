@@ -75,7 +75,7 @@ private:
 
   Muddle  &muddle_;
   MuddleEndpoint &muddle_ep_;
-  ThreadPool  thread_pool_ = network::MakeThreadPool(1);
+  ThreadPool  thread_pool_ = network::MakeThreadPool(10);
   RpcServer rpc_server_{muddle_.AsEndpoint(), SERVICE_P2P, CHANNEL_RPC};
 
   LaneManagement &lane_management_;

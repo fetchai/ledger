@@ -156,6 +156,7 @@ private:
 
     while (has_messages)
     {
+      FETCH_LOG_INFO(LOGGING_NAME,"MESSAGES!!!!");
       message_mutex_.lock();
 
       PendingMessage pm;
@@ -172,7 +173,7 @@ private:
       if (has_messages)
       {
         network_manager_.Post([this, pm]() {
-            FETCH_LOG_DEBUG(LOGGING_NAME,"Processing message call", pm.client, ":", pm.message);
+            FETCH_LOG_INFO(LOGGING_NAME,"Processing message call", pm.client, ":", pm.message);
           if (!this->PushProtocolRequest(pm.client, pm.message))
           {
             bool processed = false;
@@ -194,6 +195,10 @@ private:
                   error::UNKNOWN_MESSAGE, byte_array::ConstByteArray("Unknown message"));
               TODO_FAIL("call type not implemented yet");
             }
+          }
+          else
+          {
+            FETCH_LOG_INFO(LOGGING_NAME,"PushProtocolRequest returned FALSE!");
           }
         });
       }

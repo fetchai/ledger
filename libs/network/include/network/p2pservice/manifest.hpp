@@ -123,7 +123,7 @@ public:
     return *this;
   }
 
-  std::string ToString()
+  std::string ToString() const
   {
     std::string result;
     for(auto &data : data_)
@@ -210,6 +210,7 @@ private:
   template <typename T>
   friend void Serialize(T &serializer, Manifest const &x)
   {
+    FETCH_LOG_WARN(LOGGING_NAME,"Serialise:", x.ToString());
     std::vector<std::pair<ServiceIdentifier, Uri>> elementlist;
     for(auto item : x.data_)
     {
@@ -221,6 +222,7 @@ private:
   template <typename T>
   friend void Deserialize(T &serializer, Manifest &x)
   {
+    FETCH_LOG_WARN(LOGGING_NAME,"Deserialise:", x.ToString());
     std::vector<std::pair<ServiceIdentifier, Uri>> elementlist;
     serializer >> elementlist;
 

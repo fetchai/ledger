@@ -121,6 +121,20 @@ void ServiceClientInterface::ClearPromises()
 #endif
 }
 
+void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg, service::serializer_type &params)
+{
+  LOG_STACK_TRACE_POINT;
+  PromiseCounter id;
+  params >> id;
+
+  Promise p = ExtractPromise(id);
+
+  auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
+  p->Fulfill(ret);
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "ProcessRPCResult: Binning promise ", id, " due to finishing delivering the response");
+}
+
 bool ServiceClientInterface::ProcessServerMessage(network::message_type const &msg)
 {
   LOG_STACK_TRACE_POINT;
@@ -131,19 +145,20 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
   service_classification_type type;
   params >> type;
 
-  if (type == SERVICE_RESULT)
+  if ((type == SERVICE_RESULT) || (type == 0))
   {
-    PromiseCounter id;
-    params >> id;
+    ProcessRPCResult(msg, params);
+    //PromiseCounter id;
+    //params >> id;
 
-    Promise p = ExtractPromise(id);
+    //Promise p = ExtractPromise(id);
 
-    auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
-    p->Fulfill(ret);
+    //auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
+    //p->Fulfill(ret);
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id, " due to finishing delivering the response");
+    //FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id, " due to finishing delivering the response");
   }
-  else if (type == SERVICE_ERROR)
+  else if (type == SERVICE_ERROR) 
   {
     PromiseCounter id;
     params >> id;
@@ -217,6 +232,9 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
   }
   else
   {
+    PromiseCounter id;
+    params >> id;
+    FETCH_LOG_WARN(LOGGING_NAME, " type not recognised ", type, "  promise=", id);
     ret = false;
   }
 
