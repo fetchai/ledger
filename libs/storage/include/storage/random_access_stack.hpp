@@ -420,7 +420,7 @@ private:
 
     if (!header_.Write(file_handle_))
     {
-      throw StorageException("Error could not write header - todo throw error");
+      throw StorageException("Error: could not write header in random access stack.");
     }
   }
 };

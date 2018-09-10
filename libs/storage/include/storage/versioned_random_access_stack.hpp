@@ -362,7 +362,6 @@ public:
     {
       if (!history_.empty())
       {
-
         uint64_t t = history_.Type();
 
         switch (t)
