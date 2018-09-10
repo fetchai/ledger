@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/script/variant.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"

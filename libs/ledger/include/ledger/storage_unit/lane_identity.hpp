@@ -43,7 +43,7 @@ public:
   };
 
   LaneIdentity(client_register_type reg, network_manager_type const &nm, crypto::Identity identity)
-    : identity_(identity)
+    : identity_(std::move(identity))
     , register_(std::move(reg))
     , manager_(nm)
   {

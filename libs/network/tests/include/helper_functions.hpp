@@ -128,12 +128,14 @@ T NextTransaction(std::size_t bytesToAdd = 0)
 
   trans.PushResource(GetRandomByteArray(64));
 
-  byte_array::ByteArray sig1, contract_name, data;
-  MakeString(sig1);
+  chain::signatures_type signatures;
+  signatures[fetch::crypto::Identity{"identity_params", "identity"}] =
+      fetch::chain::Signature{"sig_data", "sig_type"};
+  byte_array::ByteArray contract_name, data;
   MakeString(contract_name);
   MakeString(data, 1 + bytesToAdd);
 
-  trans.set_signature(sig1);
+  trans.set_signatures(signatures);
   trans.set_contract_name(std::string{contract_name.char_pointer(), contract_name.size()});
   trans.set_data(data);
 
