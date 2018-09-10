@@ -107,7 +107,7 @@ protected:
     }
 
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Service Server responding to call from ", client);
+    FETCH_LOG_INFO(LOGGING_NAME,"Service Server responding to call from ", client, " data size=", result.Tell());
     {
       LOG_STACK_TRACE_POINT;
       DeliverResponse(client, result.data());

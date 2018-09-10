@@ -36,6 +36,7 @@ public:
     handler_ = std::make_shared<Handler>([this](Promise promise) {
       LOG_STACK_TRACE_POINT;
 
+      FETCH_LOG_INFO(LOGGING_NAME, "Handling an inner promise ", promise->id());
       ProcessServerMessage(promise->value());
 
         //network::message_type msg = promise->value();
@@ -72,7 +73,7 @@ protected:
     // signal to the networking that an exchange is requested
     auto promise = endpoint_.Exchange(address_, service_, channel_, data);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Sent this packet to the server  ", service_, ",", channel_, "@", promise.id());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sent this packet to the server  ", service_, ",", channel_, "@prom=", promise.id(), " response size=", data.size());
 
     // establish the correct course of action when
     WeakHandler handler = handler_;

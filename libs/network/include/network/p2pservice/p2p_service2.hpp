@@ -54,7 +54,7 @@ public:
   P2PService2(Muddle &muddle, LaneManagement &lane_management);
   ~P2PService2() = default;
 
-  void Start(PeerList const & initial_peer_list = PeerList{});
+  void Start(PeerList const & initial_peer_list = PeerList{}, int port_number=10000);
   void Stop();
 
   Identity const &identity() const { return muddle_ . identity(); }
@@ -94,7 +94,7 @@ private:
   PromisedManifests promised_manifests_;
 
   P2PRemoteManifestCache manifest_cache_;
-
+  int port_number; // for debugging.
   //std::set
   std::list<network::Uri> possibles_; // addresses we might use in the future.
 };

@@ -19,7 +19,7 @@ P2PService2::P2PService2(Muddle &muddle, LaneManagement &lane_management)
   // create all the remote control instances
 }
 
-void P2PService2::Start(P2PService2::PeerList const &initial_peer_list)
+void P2PService2::Start(P2PService2::PeerList const &initial_peer_list, int my_port_number)
 {
   for(auto &peer : initial_peer_list)
   {
@@ -28,6 +28,8 @@ void P2PService2::Start(P2PService2::PeerList const &initial_peer_list)
 
   thread_pool_ -> SetInterval(1000);
   thread_pool_ -> Start();
+
+  port_number = my_port_number;
   thread_pool_ -> PostIdle([this](){ this -> WorkCycle(); });
 }
 
@@ -64,6 +66,7 @@ void P2PService2::WorkCycle()
     used.insert(uri);
     connected_peers.push_back(Identity{"", address});
   }
+  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: port_number ", port_number);
 
   // not enough, schedule some connects.
   while((connections.size() < 1000) && (possibles_.size() > 0))
@@ -102,6 +105,10 @@ void P2PService2::WorkCycle()
     }
   }
 
+  if (port_number > 8019)
+  {
+    return;
+  }
   // too many? schedule some kickoffs.
 
   // handle manifest updates.
@@ -156,9 +163,12 @@ void P2PService2::WorkCycle()
           auto identity = it->first;
 
           manifest_cache_ . ProvideUpdate(identity, new_manifest, 10);
+          it = promised_manifests_ . erase(it);
+          FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Success");
         }
         catch(...)
         {
+          FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: ERK! whole reading/updating");
           it = promised_manifests_ . erase(it);
           throw;
         }
@@ -166,14 +176,16 @@ void P2PService2::WorkCycle()
       else
       {
         FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: NEW MANIFEST FAILED*****************");
+        it = promised_manifests_ . erase(it);
       }
-      it = promised_manifests_ . erase(it);
     }
     else
     {
       ++it;
     }
   }
+
+  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: COMPLETE.");
 }
 
 network::Manifest P2PService2::GetLocalManifest()
