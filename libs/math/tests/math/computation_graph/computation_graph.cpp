@@ -33,6 +33,34 @@ TEST(computation_graph, arithmetic_parse)
   computation_graph.ParseExpression("2 + 1 - (3 * 4)");
   double result;
   computation_graph.Run(result);
+  std::cout << "result: " << result << std::endl;
 
   ASSERT_TRUE(result == double(-9));
 }
+
+TEST(computation_graph, arithmetic_parse_2)
+{
+
+//  ComputationGraph<double> computation_graph;
+  ComputationGraph computation_graph;
+  computation_graph.ParseExpression("1 + 1 + 1 + 1");
+  double result;
+  computation_graph.Run(result);
+  std::cout << "result: " << result << std::endl;
+
+  ASSERT_TRUE(result == double(4));
+}
+
+TEST(computation_graph, arithmetic_parse_3)
+{
+
+//  ComputationGraph<double> computation_graph;
+  ComputationGraph computation_graph;
+  computation_graph.ParseExpression("1 + 2  - ((3 * 20) / 4)");
+  double result;
+  computation_graph.Run(result);
+  std::cout << "result: " << result << std::endl;
+
+  ASSERT_TRUE(result == double(1.5));
+}
+

@@ -153,6 +153,10 @@ class ComputationGraph
    */
   void ParseExpression(std::string input)
   {
+
+    // TODO: split input string on spaces
+    // iterate through characters
+
     char c;
 
     for (std::size_t i = 0; i < input.size(); ++i)
@@ -169,6 +173,7 @@ class ComputationGraph
       }
       else if (isdigit(c))
       {
+
         expression_graph.emplace_back(std::make_unique<ExpressionNode>(double(c - '0')));
       }
       else if (helper_funcs::IsOperator(c))
@@ -302,6 +307,8 @@ class ComputationGraph
         cur_node_ptr = cur_node_ptr->left_node_ptr;
       }
     }
+
+    ret = cur_node_ptr->val.val;
 
   }
 };
