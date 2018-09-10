@@ -206,6 +206,46 @@ inline void Deserialize(T &serializer, std::unordered_map<K, V, H> &map)
   }
 }
 
+template <typename T, typename K, typename V>
+inline void Serialize(T &serializer, std::map<K, V> const &map)
+{
+  // Allocating memory for the size
+  serializer.Allocate(sizeof(uint64_t));
+
+  uint64_t size = map.size();
+
+  // Writing the size to the byte array
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
+
+  for (auto const &element : map)
+  {
+    serializer << element.first << element.second;
+  }
+}
+
+template <typename T, typename K, typename V>
+inline void Deserialize(T &serializer, std::map<K, V> &map)
+{
+
+  // Read the number of items in the map
+  uint64_t size{0};
+  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
+
+  // Reset the map
+  map.clear();
+
+  // Update the map
+  K key{};
+  V value{};
+  for (uint64_t i = 0; i < size; ++i)
+  {
+    serializer >> key;
+    serializer >> value;
+
+    map[key] = value;
+  }
+}
+
 template <typename T, typename K, typename H>
 inline void Serialize(T &serializer, std::unordered_set<K, H> const &set)
 {

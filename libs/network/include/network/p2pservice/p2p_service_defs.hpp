@@ -8,7 +8,7 @@ namespace fetch {
 
 namespace network {
 
-enum ServiceType {
+enum ServiceType : uint16_t {
   MAINCHAIN = 0,
   LANE = 1,
   P2P = 2,
@@ -32,15 +32,16 @@ struct ServiceIdentifier
 template <typename T>
 void Serialize(T &serializer, ServiceIdentifier const &x)
 {
-  serializer << int(x.service_type) << x.instance_number;
+  serializer << static_cast<uint16_t>(x.service_type) << x.instance_number;
 }
 
 template <typename T>
 void Deserialize(T &serializer, ServiceIdentifier &x)
 {
-  int foo;
+  uint16_t foo;
   serializer >> foo >> x.instance_number;
-  x.service_type  = ServiceType(foo);
+  x.service_type  = static_cast<ServiceType>(foo);
+  // TODO(EJF): This still needs validation
 }
 
 }

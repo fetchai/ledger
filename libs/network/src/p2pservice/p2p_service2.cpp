@@ -50,19 +50,19 @@ void P2PService2::WorkCycle()
   std::set<Uri> used;
   std::list<Identity> connected_peers;
 
-  auto connections = muddle_ . GetConnections(); // address/uri/state tuples.
+  auto connections = muddle_.GetConnections(); // address/uri/state tuples.
   FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Conncount = ", connections.size());
-  for(auto connection : connections)
+  for(auto const &connection : connections)
   {
+    // decompose the tuple
+    auto const &address = std::get<0>(connection);
+    auto const &uri     = std::get<1>(connection);
+    auto const &state   = std::get<2>(connection);
 
-    auto address = std::get<0>(connection);
-    Identity identity(byte_array::ConstByteArray(), address);
-    network::Uri uri   = std::get<1>(connection);
-    auto state = std::get<2>(connection);
+    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Conn:", ToBase64(address), " / ", uri.ToString(), " / ", state);
 
-    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Conn:", ToHex(identity.identifier()), " / ", uri.ToString(), " / ", state);
     used.insert(uri);
-    connected_peers.push_back(identity);
+    connected_peers.push_back(Identity{"", address});
   }
 
   // not enough, schedule some connects.
@@ -76,6 +76,7 @@ void P2PService2::WorkCycle()
     {
       auto s = next.GetRemainder();
       FETCH_LOG_WARN(LOGGING_NAME,"Converting: ", next.ToString(), " -> ", s);
+
       auto nextp = next.AsPeer();
       switch (muddle_.useClients().GetStateForPeer(nextp))
       {
@@ -105,7 +106,7 @@ void P2PService2::WorkCycle()
 
   // handle manifest updates.
 
-  auto manifest_update_needed_from = manifest_cache_ . GetUpdatesNeeded( connected_peers );
+  auto manifest_update_needed_from = manifest_cache_.GetUpdatesNeeded( connected_peers );
   for( auto& identity : manifest_update_needed_from)
   {
     if (
@@ -130,7 +131,7 @@ void P2PService2::WorkCycle()
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: INFLIGHT get manifest from ", ToHex(identity.identifier()));
+      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: INFLIGHT get manifest from ", ToBase64(identity.identifier()));
     }
   }
 
@@ -150,6 +151,7 @@ void P2PService2::WorkCycle()
         try
         {
           FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Reading promised manifest from ", it->second.GetInnerPromise() -> Schmoo());
+
           auto new_manifest = it->second.Get();
           auto identity = it->first;
 
@@ -174,7 +176,7 @@ void P2PService2::WorkCycle()
   }
 }
 
-const network::Manifest &P2PService2::GetLocalManifest()
+network::Manifest P2PService2::GetLocalManifest()
 {
   FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::GetLocalManifest", manifest_ . ToString());
   return manifest_;

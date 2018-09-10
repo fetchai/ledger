@@ -72,6 +72,21 @@ public:
     FAILED
   };
 
+  static char const *ToString(State state)
+  {
+    switch (state)
+    {
+      case State::WAITING:
+        return "Waiting";
+      case State::SUCCESS:
+        return "Success";
+      case State::FAILED:
+        return "Failed";
+      default:
+        return "Unknown";
+    }
+  }
+
   ConstByteArray const &value() const { return value_; }
   Counter id() const { return id_; }
   uint64_t protocol() const { return protocol_; }

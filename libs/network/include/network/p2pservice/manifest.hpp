@@ -2,6 +2,7 @@
 
 #include "core/logger.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
+#include "core/serializers/stl_types.hpp"
 
 #include <memory>
 #include <map>
@@ -210,26 +211,13 @@ private:
   template <typename T>
   friend void Serialize(T &serializer, Manifest const &x)
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Serialise:", x.ToString());
-    std::vector<std::pair<ServiceIdentifier, Uri>> elementlist;
-    for(auto item : x.data_)
-    {
-      elementlist.push_back(item);
-    }
-    serializer << elementlist;
+    serializer << x.data_;
   }
 
   template <typename T>
   friend void Deserialize(T &serializer, Manifest &x)
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Deserialise:", x.ToString());
-    std::vector<std::pair<ServiceIdentifier, Uri>> elementlist;
-    serializer >> elementlist;
-
-    for(auto element: elementlist)
-    {
-      x.data_[element.first] = element.second;
-    }
+    serializer >> x.data_;
   }
 };
 

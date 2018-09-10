@@ -34,8 +34,10 @@ public:
     , channel_(channel)
   {
     handler_ = std::make_shared<Handler>([this](Promise promise) {
-    LOG_STACK_TRACE_POINT;
-        ProcessServerMessage(promise->value());
+      LOG_STACK_TRACE_POINT;
+
+      ProcessServerMessage(promise->value());
+
         //network::message_type msg = promise->value();
         //service::serializer_type params(msg);
         //service::service_classification_type type;
@@ -70,7 +72,8 @@ protected:
     // signal to the networking that an exchange is requested
     auto promise = endpoint_.Exchange(address_, service_, channel_, data);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Sent this packet to the server  ", service_, ",", channel_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Sent this packet to the server  ", service_, ",", channel_, "@", promise.id());
+
     // establish the correct course of action when
     WeakHandler handler = handler_;
     promise.WithHandlers()

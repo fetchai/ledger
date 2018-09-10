@@ -132,7 +132,7 @@ void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg, 
   auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
   p->Fulfill(ret);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "ProcessRPCResult: Binning promise ", id, " due to finishing delivering the response");
+  FETCH_LOG_INFO(LOGGING_NAME, "ProcessRPCResult: Binning promise ", id, " due to finishing delivering the response");
 }
 
 bool ServiceClientInterface::ProcessServerMessage(network::message_type const &msg)
