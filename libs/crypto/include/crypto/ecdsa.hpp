@@ -32,8 +32,8 @@ class ECDSAVerifier : public Verifier
   using Signature = openssl::ECDSASignature<>;
 
 public:
-  ECDSAVerifier(Identity const &ident)
-    : identity_{ident}
+  ECDSAVerifier(Identity ident)
+    : identity_{std::move(ident)}
     , public_key_{identity_.identifier()}
   {}
 
