@@ -50,6 +50,8 @@ public:
   }
 };
 
+using signatures_type = std::unordered_map<crypto::Identity, Signature>;
+
 template <typename T>
 void Serialize(T &serializer, Signature const &b)
 {
@@ -107,7 +109,7 @@ public:
   using hasher_type       = crypto::SHA256;
   using digest_type       = TransactionSummary::digest_type;
   using resource_set_type = TransactionSummary::resource_set_type;
-  using signatures_type   = std::unordered_map<crypto::Identity, Signature>;
+  using signatures_type   = signatures_type;
 
   resource_set_type const &resources() const
   {

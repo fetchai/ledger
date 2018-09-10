@@ -52,8 +52,8 @@ MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
   summary.fee = GetRandom();
   trans.set_summary(summary);
 
-  MutableTransaction::signatures_type signatures;
-  uint8_t const                       size = static_cast<uint8_t>(GetRandom() % 4);
+  signatures_type signatures;
+  uint8_t const   size = static_cast<uint8_t>(GetRandom() % 4);
   for (uint8_t i = 0; i < size; ++i)
   {
     signatures[fetch::crypto::Identity{GetRandomByteArray(), GetRandomByteArray()}] =

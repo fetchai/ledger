@@ -43,10 +43,10 @@ inline void Deserialize(T &serializer, UnverifiedTransaction &b)
   char c;
   serializer >> c;
 
-  TransactionSummary                  summary;
-  std::string                         contract_name;
-  byte_array::ByteArray               data;
-  MutableTransaction::signatures_type signatures;
+  TransactionSummary    summary;
+  std::string           contract_name;
+  byte_array::ByteArray data;
+  signatures_type       signatures;
 
   serializer >> summary;
   b.set_summary(summary);
@@ -83,10 +83,10 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   serializer >> c;
   assert(c == 'V');
 
-  TransactionSummary                  summary;
-  std::string                         contract_name;
-  byte_array::ByteArray               data;
-  MutableTransaction::signatures_type signatures;
+  TransactionSummary    summary;
+  std::string           contract_name;
+  byte_array::ByteArray data;
+  signatures_type       signatures;
 
   serializer >> summary;
   b.set_summary(summary);

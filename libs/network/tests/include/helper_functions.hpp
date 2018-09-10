@@ -128,7 +128,7 @@ T NextTransaction(std::size_t bytesToAdd = 0)
 
   trans.PushResource(GetRandomByteArray(64));
 
-  fetch::chain::MutableTransaction::signatures_type signatures;
+  chain::signatures_type signatures;
   signatures[fetch::crypto::Identity{"identity_params", "identity"}] =
       fetch::chain::Signature{"sig_data", "sig_type"};
   byte_array::ByteArray contract_name, data;
