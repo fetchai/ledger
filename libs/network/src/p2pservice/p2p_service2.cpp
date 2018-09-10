@@ -15,6 +15,7 @@ P2PService2::P2PService2(Muddle &muddle, LaneManagement &lane_management)
   rpc_server_.Add(PROTOCOL_RESOLVER, &resolver_proto_);
   trust_system = std::make_shared<P2PTrust<Identity>>();
 
+  counter = 0;
 
   // create all the remote control instances
 }
@@ -107,7 +108,12 @@ void P2PService2::WorkCycle()
 
   if (port_number > 8019)
   {
-    return;
+    counter ++;
+
+    //if (counter<10)
+    //{
+    //  return;
+    //}
   }
   // too many? schedule some kickoffs.
 

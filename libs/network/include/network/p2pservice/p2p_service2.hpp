@@ -95,6 +95,7 @@ private:
 
   P2PRemoteManifestCache manifest_cache_;
   int port_number; // for debugging.
+  int counter; // for debugging.
   //std::set
   std::list<network::Uri> possibles_; // addresses we might use in the future.
 };
