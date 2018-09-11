@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
-#include <gtest/gtest.h>
 
 #include "math/computation_graph/computation_graph.hpp"
 
@@ -26,7 +26,7 @@ using namespace fetch::math::computation_graph;
 
 TEST(computation_graph, simple_arithmetic)
 {
-  double result;
+  double           result;
   ComputationGraph computation_graph;
 
   computation_graph.ParseExpression("1 + 2");
@@ -51,12 +51,11 @@ TEST(computation_graph, simple_arithmetic)
   computation_graph.Run(result);
   std::cout << "result: " << result << std::endl;
   ASSERT_TRUE(result == double(0.5));
-
 }
 
 TEST(computation_graph, multi_parenthesis_test)
 {
-  double result;
+  double           result;
   ComputationGraph computation_graph;
 
   computation_graph.ParseExpression("(((1 + 2)))");
@@ -69,12 +68,11 @@ TEST(computation_graph, multi_parenthesis_test)
   computation_graph.Run(result);
   std::cout << "result: " << result << std::endl;
   ASSERT_TRUE(result == double(-0.75));
-
 }
 
 TEST(computation_graph, odd_num_nodes)
 {
-  double result;
+  double           result;
   ComputationGraph computation_graph;
 
   computation_graph.ParseExpression("4 * 6 / 3");
@@ -85,7 +83,7 @@ TEST(computation_graph, odd_num_nodes)
 
 TEST(computation_graph, multi_digit_nums)
 {
-  double result;
+  double           result;
   ComputationGraph computation_graph;
 
   computation_graph.ParseExpression("100 * 62 / 31");
@@ -96,7 +94,7 @@ TEST(computation_graph, multi_digit_nums)
 
 TEST(computation_graph, decimal_place_nums)
 {
-  double result;
+  double           result;
   ComputationGraph computation_graph;
 
   computation_graph.ParseExpression("10.0 * 62.5 / 31.25");
