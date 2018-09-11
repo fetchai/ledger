@@ -53,7 +53,11 @@ T Clip3(T value, T min_value, T max_value)
  */
 uint32_t CalculateMaxNumThreads(uint32_t num_slices)
 {
+#if 1
+  return 32;
+#else
   return Clip3(num_slices / 128u, 1u, std::thread::hardware_concurrency());
+#endif
 }
 
 } // namespace
