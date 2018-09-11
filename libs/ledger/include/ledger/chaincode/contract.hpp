@@ -45,14 +45,15 @@ public:
     NOT_FOUND,
   };
 
+  using contract_name_type           = byte_array::ConstByteArray;
   using transaction_type             = chain::Transaction;
   using query_type                   = script::Variant;
   using transaction_handler_type     = std::function<Status(transaction_type const &)>;
-  using transaction_handler_map_type = std::unordered_map<std::string, transaction_handler_type>;
+  using transaction_handler_map_type = std::unordered_map<contract_name_type, transaction_handler_type>;
   using query_handler_type           = std::function<Status(query_type const &, query_type &)>;
-  using query_handler_map_type       = std::unordered_map<std::string, query_handler_type>;
+  using query_handler_map_type       = std::unordered_map<contract_name_type, query_handler_type>;
   using counter_type                 = std::atomic<std::size_t>;
-  using counter_map_type             = std::unordered_map<std::string, counter_type>;
+  using counter_map_type             = std::unordered_map<contract_name_type, counter_type>;
   using storage_type                 = ledger::StorageInterface;
   using resource_set_type            = chain::TransactionSummary::resource_set_type;
 
@@ -61,7 +62,7 @@ public:
   Contract &operator=(Contract const &) = delete;
   Contract &operator=(Contract &&) = delete;
 
-  Status DispatchQuery(std::string const &name, query_type const &query, query_type &response)
+  Status DispatchQuery(contract_name_type const &name, query_type const &query, query_type &response)
   {
     Status status{Status::NOT_FOUND};
 
@@ -75,7 +76,7 @@ public:
     return status;
   }
 
-  Status DispatchTransaction(std::string const &name, transaction_type const &tx)
+  Status DispatchTransaction(byte_array::ConstByteArray const &name, transaction_type const &tx)
   {
     Status status{Status::NOT_FOUND};
 
@@ -154,12 +155,12 @@ public:
   storage::ResourceAddress CreateStateIndex(byte_array::ByteArray const &suffix) const
   {
     byte_array::ByteArray index(contract_identifier_.name_space());
-    index = index + ".state." + suffix;
+    index.append(".state.", suffix);
     return storage::ResourceAddress{index};
   }
 
 protected:
-  explicit Contract(std::string const &identifer)
+  explicit Contract(byte_array::ConstByteArray const &identifer)
     : contract_identifier_{identifer}
   {}
 

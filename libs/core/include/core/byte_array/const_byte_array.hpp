@@ -107,7 +107,7 @@ public:
 
   ConstByteArray Copy() const
   {
-    ConstByteArray ret{ size() };
+    ConstByteArray ret(size());
     std::memcpy(ret.pointer(), pointer(), size());
     return ret;
   }
@@ -249,9 +249,8 @@ public:
 
   self_type operator+(self_type const &other) const
   {
-    self_type ret{ size() + other.size() };
-    std::memcpy(ret.pointer(), pointer(), size());
-    std::memcpy(ret.pointer()+size(), other.pointer(), other.size());
+    self_type ret;
+    ret.append(*this, other);
     return ret;
   }
 
@@ -299,13 +298,16 @@ protected:
     return arr_pointer_[n];
   }
 
-  void Resize(std::size_t const &n)
+  void Resize(std::size_t const &n, bool const relative=true)
   {
-    if (data_.size() < n)
+    auto const orig_size = relative ? data_.size() - start_ : data_.size();
+    auto const size_for_reserve = relative ? start_ + n : n;
+    auto const length = relative ? n : n - start_;
+    if (orig_size < n)
     {
-      Reserve(n);
+      Reserve(size_for_reserve);
     }
-    length_ = n;
+    length_ = length;
   }
 
   void Reserve(std::size_t const &n)
@@ -319,6 +321,7 @@ protected:
 
     shared_array_type newdata(n);
     std::memcpy(newdata.pointer(), data_.pointer(), data_.size());
+    //TODO(pbukva) (private issue: is this really necessary? It feels like waste of time)
     newdata.SetZeroAfter(data_.size());
 
     data_        = newdata;
@@ -335,24 +338,42 @@ protected:
     return reinterpret_cast<char *>(data_.pointer());
   }
 
-  self_type & append(self_type const& other)
-  {
-    std::size_t const new_size = size() + other.size();
-    std::size_t const amortized_capacity = capacity() - static_cast<std::size_t>(pointer() - data_.pointer());
-    if (new_size < capacity()
-    {
-
-    }
-  }
-
   template <typename T>
   friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
 
 private:
+  void append_(std::size_t const acc_size, self_type const& other)
+  {
+    std::size_t const size = acc_size + other.size();
+    Resize(size);
+    std::memcpy(pointer() + acc_size, other.pointer(), other.size());
+  }
+
+  template<typename ...Arg>
+  void append_(std::size_t const acc_size, self_type const& other, Arg const&... others)
+  {
+    append_(acc_size + other.size(), others...);
+    std::memcpy(pointer() + acc_size, other.pointer(), other.size());
+  }
+
   shared_array_type data_;
   std::size_t       start_ = 0, length_ = 0;
   container_type *  arr_pointer_ = nullptr;
-};
+
+protected:
+  template<typename ...Arg>
+  self_type & append(self_type const& other, Arg const&... others)
+  {
+    append_(size() + other.size(), others...);
+    return *this;
+  }
+
+  template<typename ...Arg>
+  self_type & append(self_type const& other)
+  {
+    append_(size() + other.size(), other);
+    return *this;
+  }};
 
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
 {

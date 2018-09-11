@@ -42,6 +42,7 @@ namespace chain {
 class BlockGenerator
 {
 public:
+  using contract_id_type        = ledger::Identifier::string_type;
   using transaction_type        = std::shared_ptr<miner::TransactionItem>;
   using block_index_map_type    = std::vector<std::vector<uint64_t>>;
   using block_fees_list_type    = std::vector<uint64_t>;
@@ -53,13 +54,12 @@ public:
   using state_type              = annealer_type::state_type;
 
   static uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
-                                    std::string const &contract, uint32_t log2_num_lanes)
+                                    contract_id_type const &contract, uint32_t log2_num_lanes)
   {
     ledger::Identifier identifier(contract);
-
-    std::string const prefix = identifier.name_space() + ".state.";
-
-    return storage::ResourceAddress{prefix + static_cast<std::string>(resource)}.lane(
+    byte_array::ByteArray address;
+    address.append(identifier.name_space(), byte_array::ConstByteArray(".state."), resource);
+    return storage::ResourceAddress{address}.lane(
         log2_num_lanes);
   }
 

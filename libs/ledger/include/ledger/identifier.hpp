@@ -38,6 +38,7 @@ public:
   using tokens_type = std::vector<byte_array::ByteArray>;
 
   static constexpr char SEPERATOR = '.';
+  static byte_array::ConstByteArray const separator_;
 
   // Construction / Destruction
   Identifier() = default;
@@ -189,10 +190,7 @@ inline bool Identifier::operator!=(Identifier const &other) const
  */
 inline void Identifier::Append(string_type const &element)
 {
-  byte_array::ByteArray new_full{ full_.size() + element.size() + 1 };
-
-  full_.push_back(SEPERATOR);
-  full_.append(element);
+  full_.append(separator_, element);
   tokens_.push_back(element);
 }
 

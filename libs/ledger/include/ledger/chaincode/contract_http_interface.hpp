@@ -31,8 +31,8 @@
 #include "ledger/chain/transaction.hpp"
 
 #include <sstream>
-
 #include <iostream>
+#include <algorithm>
 
 namespace fetch {
 namespace ledger {
@@ -53,16 +53,18 @@ public:
       // create the contract
       auto contract = contract_cache_.factory().Create(contract_name);
 
+      byte_array::ByteArray api_path{ contract_name };
+      std::replace(api_path.pointer(), api_path.pointer() + api_path.size(), '.', '/');
       // define the api prefix
-      std::string const api_prefix =
-          "/api/contract/" + string::Replace(contract_name, '.', '/') + '/';
+      //std::string const api_prefix_ =
+      //    "/api/contract/" + string::Replace(contract_name, '.', '/') + '/';
 
       // enumerate all of the contract query handlers
       auto const &query_handlers = contract->query_handlers();
       for (auto const &handler : query_handlers)
       {
-        std::string const &query_name = handler.first;
-        std::string const  api_path   = api_prefix + query_name;
+        byte_array::ConstByteArray const &query_name = handler.first;
+        api_path.append(query_name);
 
         fetch::logger.Info("API: ", api_path);
 
@@ -95,7 +97,7 @@ public:
   }
 
 private:
-  http::HTTPResponse OnQuery(std::string const &contract_name, std::string const &query,
+  http::HTTPResponse OnQuery(byte_array::ConstByteArray const &contract_name, byte_array::ConstByteArray const &query,
                              http::HTTPRequest const &request)
   {
     try
