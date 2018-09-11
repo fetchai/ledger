@@ -29,6 +29,8 @@
 #include <memory>
 #include <sstream>  // std::istringstream
 
+#include "math/free_functions/free_functions.hpp"
+
 namespace fetch {
 namespace math {
 namespace computation_graph {
@@ -57,7 +59,6 @@ static bool IsOperator(char &c)
 
 enum OPERATOR_PRECEDENCE
 {
-  //  PARENTHESIS = 10,
   MODULO   = 10,
   POWER    = 9,
   DIVIDE   = 8,
@@ -83,16 +84,16 @@ static OPERATOR_PRECEDENCE GetPrecedence(char &c)
     return OPERATOR_PRECEDENCE::MODULO;
   case '^':
     return OPERATOR_PRECEDENCE::POWER;
-    //    case '(':
-    //      return OPERATOR_PRECEDENCE::PARENTHESIS;
-    //    case ')':
-    //      return OPERATOR_PRECEDENCE::PARENTHESIS;
   default:
     return OPERATOR_PRECEDENCE::DEFAULT;
   }
 }
 }  // namespace helper_funcs
 
+/**
+ * An ExpressionNode is a node in the computation graph. Since the computation graph is always a binary tree, it will
+ * hold some value (or operation), two pointers to it's two children (if any) and one for its parent (if any).
+ */
 class ExpressionNode : public std::enable_shared_from_this<ExpressionNode>
 {
 public:
@@ -176,6 +177,10 @@ private:
     return change_type;
   }
 
+  /**
+   * takes the two most recent numerics from the expression graph and replaces them with one expression combining them
+   * together with the most recent operation on the operator stack
+   */
   void AssignBinaryTree()
   {
     std::shared_ptr<ExpressionNode> e2 = std::move(expression_graph.back());
@@ -204,6 +209,9 @@ public:
   ComputationGraph()
   {}
 
+  /**
+   * Allows reuse of a computation graph by resetting the expression and operator storage
+   */
   void Reset()
   {
     EXPRESSION_NODE_GRAPH empty_graph;
@@ -213,6 +221,12 @@ public:
     std::swap(operator_stack, empty_operator_stack);
   }
 
+  /**
+   * A method for extracting tokens from an input string
+   * @param input
+   * @param ret
+   * @param token_types
+   */
   void Tokenize(std::string &input, std::vector<std::string> &ret,
                 std::vector<TOKEN_TYPE> &token_types)
   {
@@ -325,12 +339,9 @@ public:
         // TODO(private issue 231)
         break;
       case TOKEN_TYPE::NUMERIC:
-        std::cout << "numeric: " << std::stod(tokens[i]) << std::endl;
         expression_graph.emplace_back(std::make_unique<ExpressionNode>(std::stod(tokens[i])));
         break;
       case TOKEN_TYPE::OPERATOR:
-        std::cout << "op: " << tokens[i][0] << std::endl;
-
         assert(helper_funcs::IsOperator(tokens[i][0]));
 
         // we now have enough information to combined two numerics and one operator into a sub-tree
@@ -391,25 +402,25 @@ public:
    * @param op
    * @return
    */
-  double compute_op(double l, double r, char op)
+  template <typename T>
+  double compute_op(T l, T r, char op)
   {
     switch (op)
     {
     case '+':
-      return l + r;
+      return fetch::math::Add(l, r);
     case '-':
-      return l - r;
+      return fetch::math::Subtract(l, r);
     case '*':
-      return l * r;
+      return fetch::math::Multiply(l, r);
     case '/':
-      return l / r;
+      return fetch::math::Divide(l, r);
       //      case '%':
       //        return (l % r);
       //      case '^':
       //        return (l ^ r);
     default:
-      std::cout << "should never occur error!!" << std::endl;
-      return 0;
+      throw;
     }
   }
 
@@ -428,7 +439,6 @@ public:
       if (cur_node_ptr->left_node_ptr == nullptr &&
           cur_node_ptr->right_node_ptr == nullptr)  // ascend - nothing below
       {
-        //        std::cout << "c: " << cur_node_ptr->val.val << std::endl;
         cur_node_ptr->evaluated = true;
         cur_node_ptr            = cur_node_ptr->parent_node_ptr;
       }
@@ -436,11 +446,6 @@ public:
                cur_node_ptr->right_node_ptr->evaluated)  // compute and ascend - both evaluated
       {
         // compute the op
-        std::cout << "compute: " << std::endl;
-        std::cout << "left: " << cur_node_ptr->left_node_ptr->val.val << std::endl;
-        std::cout << "op: " << cur_node_ptr->val.c << std::endl;
-        std::cout << "right: " << cur_node_ptr->right_node_ptr->val.val << std::endl;
-
         cur_node_ptr->val.val =
             compute_op(cur_node_ptr->left_node_ptr->val.val, cur_node_ptr->right_node_ptr->val.val,
                        cur_node_ptr->val.c);

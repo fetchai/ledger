@@ -31,25 +31,21 @@ TEST(computation_graph, simple_arithmetic)
 
   computation_graph.ParseExpression("1 + 2");
   computation_graph.Run(result);
-  std::cout << "result: " << result << std::endl;
   ASSERT_TRUE(result == double(3));
 
   computation_graph.Reset();
   computation_graph.ParseExpression("1 - 2");
   computation_graph.Run(result);
-  std::cout << "result: " << result << std::endl;
   ASSERT_TRUE(result == double(-1));
 
   computation_graph.Reset();
   computation_graph.ParseExpression("1 * 2");
   computation_graph.Run(result);
-  std::cout << "result: " << result << std::endl;
   ASSERT_TRUE(result == double(2));
 
   computation_graph.Reset();
   computation_graph.ParseExpression("1 / 2");
   computation_graph.Run(result);
-  std::cout << "result: " << result << std::endl;
   ASSERT_TRUE(result == double(0.5));
 }
 
@@ -60,13 +56,11 @@ TEST(computation_graph, multi_parenthesis_test)
 
   computation_graph.ParseExpression("(((1 + 2)))");
   computation_graph.Run(result);
-  std::cout << "result: " << result << std::endl;
   ASSERT_TRUE(result == double(3));
 
   computation_graph.Reset();
   computation_graph.ParseExpression("((1 - 2) * (3 / 4))");
   computation_graph.Run(result);
-  std::cout << "result: " << result << std::endl;
   ASSERT_TRUE(result == double(-0.75));
 }
 
@@ -77,7 +71,6 @@ TEST(computation_graph, odd_num_nodes)
 
   computation_graph.ParseExpression("4 * 6 / 3");
   computation_graph.Run(result);
-  std::cout << "result: " << result << std::endl;
   ASSERT_TRUE(result == double(8));
 }
 
@@ -88,7 +81,6 @@ TEST(computation_graph, multi_digit_nums)
 
   computation_graph.ParseExpression("100 * 62 / 31");
   computation_graph.Run(result);
-  std::cout << "result: " << result << std::endl;
   ASSERT_TRUE(result == double(200));
 }
 
@@ -99,6 +91,5 @@ TEST(computation_graph, decimal_place_nums)
 
   computation_graph.ParseExpression("10.0 * 62.5 / 31.25");
   computation_graph.Run(result);
-  std::cout << "result: " << result << std::endl;
   ASSERT_TRUE(result == double(20));
 }

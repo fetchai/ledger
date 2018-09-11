@@ -27,6 +27,7 @@
 #include "math/kernels/standard_functions.hpp"
 
 #include "core/assert.hpp"
+#include "core/meta/type_traits.hpp"
 #include "math/ndarray_broadcast.hpp"
 #include "vectorise/memory/range.hpp"
 #include <algorithm>
@@ -1568,6 +1569,28 @@ ShapeLessArray<T, C> Add(T const &scalar, ShapeLessArray<T, C> const &array)
   Add(scalar, array, ret);
   return ret;
 }
+
+/**
+ * Implementation for scalar addition. Implementing this helps keeps a uniform interface
+ * @tparam T
+ * @param scalar1
+ * @param scalar2
+ * @param ret
+ */
+template <typename S>
+meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
+{
+  ret = scalar1 + scalar2;
+}
+template <typename S>
+meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Add(scalar1, scalar2, ret);
+  return ret;
+}
+
+
 /**
  * Adds two arrays together
  * @tparam T
@@ -1784,6 +1807,26 @@ NDArray<T, C> Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
   return ret;
 }
 /**
+ * Implementation for scalar subtraction. Implementing this helps keeps a uniform interface
+ * @tparam T
+ * @param scalar1
+ * @param scalar2
+ * @param ret
+ */
+template <typename S>
+meta::IfIsArithmetic<S, void> Subtract(S const &scalar1, S const &scalar2, S &ret)
+{
+  ret = scalar1 - scalar2;
+}
+template <typename S>
+meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Subtract(scalar1, scalar2, ret);
+  return ret;
+}
+
+/**
  * multiply a scalar by every value in the array
  * @tparam T
  * @tparam C
@@ -1907,6 +1950,27 @@ NDArray<T, C> Multiply(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
   Multiply(obj1, obj2, ret);
   return ret;
 }
+/**
+ * Implementation for scalar multiplication. Implementing this helps keeps a uniform interface
+ * @tparam T
+ * @param scalar1
+ * @param scalar2
+ * @param ret
+ */
+template <typename S>
+meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &ret)
+{
+  ret = scalar1 * scalar2;
+}
+template <typename S>
+meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Multiply(scalar1, scalar2, ret);
+  return ret;
+}
+
+
 /**
  * divide array by a scalar
  * @tparam T
@@ -2044,6 +2108,26 @@ NDArray<T, C> Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
   Divide(obj1, obj2, ret);
   return ret;
 }
+/**
+ * Implementation for scalar division. Implementing this helps keeps a uniform interface
+ * @tparam T
+ * @param scalar1
+ * @param scalar2
+ * @param ret
+ */
+template <typename S>
+meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
+{
+  ret = scalar1 / scalar2;
+}
+template <typename S>
+meta::IfIsArithmetic<S, S> Divide(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Divide(scalar1, scalar2, ret);
+  return ret;
+}
+
 
 /**
  * return the product of all elements in the array
