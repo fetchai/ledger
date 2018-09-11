@@ -15,7 +15,7 @@
 
 #include <memory>
 #include <chrono>
-#include <initializer_list>
+#include <vector>
 
 namespace fetch {
 
@@ -43,7 +43,7 @@ namespace muddle {
   {
   public:
     using CertificatePtr  = std::unique_ptr<crypto::Prover>;
-    using PeerList        = std::initializer_list<network::Peer>;
+    using PeerList        = std::vector<network::Peer>;
     using NetworkManager  = network::NetworkManager;
     using Promise         = service::Promise;
     using PortList        = std::vector<uint16_t>;
