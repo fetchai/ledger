@@ -25,16 +25,34 @@
 namespace fetch {
 namespace miner {
 
+/**
+ * Interface that generalises all mining / block packing algorithms in the system
+ */
 class MinerInterface
 {
 public:
+
   // Construction / Destruction
   MinerInterface()          = default;
   virtual ~MinerInterface() = default;
 
   /// @name Miner Interface
   /// @{
+
+  /**
+   * Add the specified transaction (summary) to the internal queue
+   *
+   * @param tx The reference to the transaction
+   */
   virtual void EnqueueTransaction(chain::TransactionSummary const &tx) = 0;
+
+  /**
+   * Generate a new block based on the current queue of transactions
+   *
+   * @param block The reference to the output block to generate
+   * @param num_lanes The number of lanes for the block
+   * @param num_slices The number of slices for the block
+   */
   virtual void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
                              std::size_t num_slices)                   = 0;
   /// @}

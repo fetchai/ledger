@@ -28,7 +28,8 @@ namespace fetch {
 namespace miner {
 
 /**
- * Simplistic greedy search for generating blocks
+ * Simplistic greedy search algorithm for generating / packing blocks. Has rudimentary support to
+ * parallelise the packing over a number of threads.
  */
 class BasicMiner : public MinerInterface
 {
