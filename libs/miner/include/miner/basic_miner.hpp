@@ -30,6 +30,11 @@ namespace miner {
 /**
  * Simplistic greedy search algorithm for generating / packing blocks. Has rudimentary support to
  * parallelise the packing over a number of threads.
+ *
+ * Internally the miner maintains 2 queues. One which is the pending queue which is populated when
+ * a new transaction is added to the miner. When block generation begins, this pending queue is
+ * transferred to the main queue when it is evaluated in order to generate new blocks. During this
+ * operation the main queue is locked.
  */
 class BasicMiner : public MinerInterface
 {
@@ -77,21 +82,18 @@ private:
 
   static bool SortByFee(TransactionEntry const &a, TransactionEntry const &b);
 
-  uint32_t const log2_num_lanes_;
-  uint32_t const num_slices_;
-  uint32_t const max_num_threads_;
+  uint32_t const  log2_num_lanes_;                      ///< The log2 of the number of lanes
+  uint32_t const  max_num_threads_;                     ///< The configured maximum number of threads
+  ThreadPool      thread_pool_;                         ///< The thread pool used to dispatch work
+  Mutex           pending_lock_{__LINE__, __FILE__};    ///< The lock for the pending transaction queue
+  TransactionList pending_;                             ///< The pending transaction queue
+  Mutex           main_queue_lock_{__LINE__, __FILE__}; ///< The lock for the main transaction queue
+  TransactionList main_queue_;                          ///< The main transaction queue
 
 #if 1
   std::size_t txs_per_thread_{0};
 #endif
 
-  ThreadPool thread_pool_;
-
-  Mutex pending_lock_{__LINE__, __FILE__};
-  TransactionList pending_;
-
-  Mutex main_queue_lock_{__LINE__, __FILE__};
-  TransactionList main_queue_;
 };
 
 } // namespace miner
