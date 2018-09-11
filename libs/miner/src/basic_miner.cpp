@@ -97,6 +97,10 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
   // determine how many of the threads should be used in this block generation
   std::size_t num_threads = Clip3<std::size_t>(main_queue_.size() / txs_per_thread_, 1u, max_num_threads_);
 
+  if (txs_per_thread_)
+  {
+    num_threads = std::min<std::size_t>(txs_per_thread_, max_num_threads_);
+  }
 
   // prepare the basic formatting for the block
   block.slices.resize(num_slices);

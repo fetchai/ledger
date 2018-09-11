@@ -146,6 +146,30 @@ TEST_P(BasicMinerTests, Sample)
 
     ++i;
   }
+
+#if 1
+
+  using std::chrono::duration_cast;
+  using std::chrono::nanoseconds;
+
+  std::ofstream statistics_file("stats.csv", std::ios::out | std::ios::app);
+
+  if (statistics_file.tellp() == 0)
+  {
+    statistics_file << "Threads,GenTime,PopTime,NumTx,Fee,Occupancy,Slices,Lanes" << std::endl;
+  }
+  std::cout << "File Position:" << statistics_file.tellp() << std::endl;
+
+  statistics_file << txs_per_thread
+                  << ',' << duration_cast<nanoseconds>(stop - start).count()
+                  << ',' << duration_cast<nanoseconds>(start - pop).count()
+                  << ',' << num_tx
+                  << ',' << total_fee
+                  << ',' << occupancy
+                  << ',' << NUM_SLICES
+                  << ',' << NUM_LANES
+                  << std::endl;
+#endif
 }
 
 INSTANTIATE_TEST_CASE_P(ParamBased,
