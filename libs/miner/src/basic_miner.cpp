@@ -167,7 +167,7 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
 
       auto start = main_queue_.begin();
       auto end   = start;
-      std::advance(end, std::min(num_tx_per_thread, main_queue_.size()));
+      std::advance(end, static_cast<int32_t>(std::min(num_tx_per_thread, main_queue_.size())));
 
       // splice in the contents of the array
       txs.splice(txs.end(), main_queue_, start, end);
