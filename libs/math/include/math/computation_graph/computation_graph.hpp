@@ -176,6 +176,21 @@ private:
     return change_type;
   }
 
+  void AssignBinaryTree()
+  {
+    std::shared_ptr<ExpressionNode> e2 = std::move(expression_graph.back());
+    expression_graph.pop_back();
+    std::shared_ptr<ExpressionNode> e1 = std::move(expression_graph.back());
+    expression_graph.pop_back();
+
+    expression_graph.emplace_back(
+        std::make_unique<ExpressionNode>(operator_stack.top(), std::move(e1), std::move(e2)));
+    operator_stack.pop();
+
+    // instruct the child nodes about their parentage for later traversal
+    expression_graph.back()->SetChildNodesParent();
+  }
+
 public:
   using EXPRESSION_NODE_TYPE  = typename fetch::math::computation_graph::ExpressionNode;
   using EXPRESSION_NODE_GRAPH = std::deque<std::shared_ptr<EXPRESSION_NODE_TYPE>>;
@@ -307,13 +322,9 @@ public:
         operator_stack.push('(');
         break;
       case TOKEN_TYPE::ALPHA:
+        // TODO(private issue 231)
         break;
-        //        expression_graph.emplace_back(std::make_unique<ExpressionNode>(double(cur_token -
-        //        '0')));
-        //          expression_graph.emplace_back(std::make_unique<ExpressionNode>(std::stod(tokens[i])));
       case TOKEN_TYPE::NUMERIC:
-        //        expression_graph.emplace_back(std::make_unique<ExpressionNode>(double(cur_token -
-        //        '0')));
         std::cout << "numeric: " << std::stod(tokens[i]) << std::endl;
         expression_graph.emplace_back(std::make_unique<ExpressionNode>(std::stod(tokens[i])));
         break;
@@ -322,20 +333,11 @@ public:
 
         assert(helper_funcs::IsOperator(tokens[i][0]));
 
+        // we now have enough information to combined two numerics and one operator into a sub-tree
         while (!(operator_stack.empty()) && (helper_funcs::GetPrecedence(operator_stack.top()) >=
                                              helper_funcs::GetPrecedence(tokens[i][0])))
         {
-          std::shared_ptr<ExpressionNode> e2 = std::move(expression_graph.back());
-          expression_graph.pop_back();
-          std::shared_ptr<ExpressionNode> e1 = std::move(expression_graph.back());
-          expression_graph.pop_back();
-
-          expression_graph.emplace_back(
-              std::make_unique<ExpressionNode>(operator_stack.top(), std::move(e1), std::move(e2)));
-          operator_stack.pop();
-
-          // instruct the child nodes about their parentage for later traversal
-          expression_graph.back()->SetChildNodesParent();
+          AssignBinaryTree();
         }
 
         operator_stack.push(tokens[i][0]);
@@ -343,19 +345,10 @@ public:
 
       case TOKEN_TYPE::CLOSE_PAREN:
 
+        // since its a close parenthesis we should set up the sub-tree for operations inside
         while (operator_stack.top() != '(')
         {
-          std::shared_ptr<ExpressionNode> e2 = std::move(expression_graph.back());
-          expression_graph.pop_back();
-          std::shared_ptr<ExpressionNode> e1 = std::move(expression_graph.back());
-          expression_graph.pop_back();
-
-          expression_graph.emplace_back(
-              std::make_unique<ExpressionNode>(operator_stack.top(), std::move(e1), std::move(e2)));
-          operator_stack.pop();
-
-          // instruct the child nodes about their parentage for later traversal
-          expression_graph.back()->SetChildNodesParent();
+          AssignBinaryTree();
         }
 
         // pop the ( off the operator stack
@@ -370,21 +363,12 @@ public:
       }
     }
 
+    // combine dangling binary trees together
     while (!(operator_stack.empty()))
     {
       if (operator_stack.top() != '(')
       {
-        std::shared_ptr<ExpressionNode> e2 = std::move(expression_graph.back());
-        expression_graph.pop_back();
-        std::shared_ptr<ExpressionNode> e1 = std::move(expression_graph.back());
-        expression_graph.pop_back();
-
-        expression_graph.emplace_back(
-            std::make_unique<ExpressionNode>(operator_stack.top(), std::move(e1), std::move(e2)));
-        operator_stack.pop();
-
-        // instruct the child nodes about their parentage for later traversal
-        expression_graph.back()->SetChildNodesParent();
+        AssignBinaryTree();
       }
 
       // pop the ( off the operator stack
