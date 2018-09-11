@@ -91,8 +91,9 @@ static OPERATOR_PRECEDENCE GetPrecedence(char &c)
 }  // namespace helper_funcs
 
 /**
- * An ExpressionNode is a node in the computation graph. Since the computation graph is always a binary tree, it will
- * hold some value (or operation), two pointers to it's two children (if any) and one for its parent (if any).
+ * An ExpressionNode is a node in the computation graph. Since the computation graph is always a
+ * binary tree, it will hold some value (or operation), two pointers to it's two children (if any)
+ * and one for its parent (if any).
  */
 class ExpressionNode : public std::enable_shared_from_this<ExpressionNode>
 {
@@ -178,8 +179,8 @@ private:
   }
 
   /**
-   * takes the two most recent numerics from the expression graph and replaces them with one expression combining them
-   * together with the most recent operation on the operator stack
+   * takes the two most recent numerics from the expression graph and replaces them with one
+   * expression combining them together with the most recent operation on the operator stack
    */
   void AssignBinaryTree()
   {

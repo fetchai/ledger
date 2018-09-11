@@ -1590,7 +1590,6 @@ meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
   return ret;
 }
 
-
 /**
  * Adds two arrays together
  * @tparam T
@@ -1970,7 +1969,6 @@ meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
   return ret;
 }
 
-
 /**
  * divide array by a scalar
  * @tparam T
@@ -2127,7 +2125,6 @@ meta::IfIsArithmetic<S, S> Divide(S const &scalar1, S const &scalar2)
   Divide(scalar1, scalar2, ret);
   return ret;
 }
-
 
 /**
  * return the product of all elements in the array
