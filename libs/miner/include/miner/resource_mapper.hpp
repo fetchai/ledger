@@ -17,28 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "ledger/identifier.hpp"
+#include "storage/resource_mapper.hpp"
 
-#include <cstddef>
+#include <cstdint>
+#include <string>
 
 namespace fetch {
 namespace miner {
 
-class MinerInterface
+inline uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
+                                  std::string const &contract, uint32_t log2_num_lanes)
 {
-public:
-  // Construction / Destruction
-  MinerInterface()          = default;
-  virtual ~MinerInterface() = default;
+  ledger::Identifier identifier(contract);
 
-  /// @name Miner Interface
-  /// @{
-  virtual void EnqueueTransaction(chain::TransactionSummary const &tx) = 0;
-  virtual void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
-                             std::size_t num_slices)                   = 0;
-  /// @}
-};
+  std::string const prefix = identifier.name_space() + ".state.";
 
-}  // namespace miner
-}  // namespace fetch
+  return storage::ResourceAddress{prefix + static_cast<std::string>(resource)}.lane(
+    log2_num_lanes);
+}
+
+} // namespace miner
+} // namespace fetch

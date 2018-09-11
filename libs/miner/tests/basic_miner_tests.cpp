@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,28 +16,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
+#include "miner/basic_miner.hpp"
 
-#include <cstddef>
+#include <random>
+#include <memory>
+#include <gtest/gtest.h>
 
-namespace fetch {
-namespace miner {
-
-class MinerInterface
+class BasicMinerTests : public ::testing::Test
 {
-public:
-  // Construction / Destruction
-  MinerInterface()          = default;
-  virtual ~MinerInterface() = default;
+protected:
 
-  /// @name Miner Interface
-  /// @{
-  virtual void EnqueueTransaction(chain::TransactionSummary const &tx) = 0;
-  virtual void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
-                             std::size_t num_slices)                   = 0;
-  /// @}
+  static constexpr std::size_t RANDOM_SEED = 42;
+
+  using Rng = std::mt19937_64;
+  using BasicMiner = fetch::miner::BasicMiner;
+  using BasicMinerPtr = std::unique_ptr<BasicMiner>;
+
+  void SetUp() override
+  {
+    rng_.seed(RANDOM_SEED);
+    miner_ = std::make_unique<BasicMiner>();
+  }
+
+  void TearDown() override
+  {
+    miner_.reset();
+  }
+
+  Rng rng_;
+  BasicMinerPtr miner_;
 };
 
-}  // namespace miner
-}  // namespace fetch
+TEST_F(BasicMinerTests, Sample)
+{
+}
