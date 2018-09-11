@@ -60,7 +60,8 @@ private:
   using PromiseSet = std::unordered_set<uint64_t>;
   using HandleMap = std::unordered_map<Handle, PromiseSet>;
 
-  std::atomic<uint16_t> counter_{1};
+  Mutex counter_lock_{__LINE__, __FILE__};
+  uint16_t counter_{1};
 
   Mutex promises_lock_{__LINE__, __FILE__};
   PromiseMap promises_;
@@ -71,6 +72,7 @@ private:
 
 inline uint16_t Dispatcher::GetNextCounter()
 {
+  FETCH_LOCK(counter_lock_);
   return counter_++;
 }
 
