@@ -93,6 +93,8 @@ public:
   {}
   ConstByteArray(self_type const &other) = default;
   ConstByteArray(self_type &&other)      = default;
+  // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
+  // details - absolute vs relative[against `other.start_`] size)
   ConstByteArray(self_type const &other, std::size_t const &start, std::size_t const &length)
     : data_(other.data_)
     , start_(start)
@@ -173,6 +175,7 @@ public:
 
   std::size_t capacity() const
   {
+    // TODO(private issue #228: why `data_.size() - 1`?)
     return data_.size() == 0 ? 0 : data_.size() - 1;
   }
 
@@ -311,6 +314,8 @@ protected:
     return arr_pointer_[n];
   }
 
+  // TODO(pbukva): (private issue #229: opening door for buffer overrun for sub arrays - when
+  // `start_ > 0` + confusion what method does - absolute vs relative[against `start_`] size)
   void Resize(std::size_t const &n)
   {
     if (data_.size() < n)
@@ -320,6 +325,8 @@ protected:
     length_ = n;
   }
 
+  // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
+  // details - absolute vs relative[against `start_`] size)
   void Reserve(std::size_t const &n)
   {
     if (n <= data_.size())
