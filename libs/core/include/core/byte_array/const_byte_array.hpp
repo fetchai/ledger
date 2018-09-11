@@ -373,13 +373,6 @@ protected:
     append_(size(), others...);
     return *this;
   }
-
-  //template<typename ...Arg>
-  //self_type & append(self_type const& other)
-  //{
-  //  append_(size(), other);
-  //  return *this;
-  //}
 };
 
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)

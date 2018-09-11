@@ -190,8 +190,18 @@ inline bool Identifier::operator!=(Identifier const &other) const
  */
 inline void Identifier::Append(string_type const &element)
 {
-  full_.append(separator_, element);
-  tokens_.push_back(element);
+  Identifier id_to_add{ element };
+
+  if (full_.size() > 0)
+  {
+    full_.append(separator_, id_to_add.full_name());
+  }
+  else
+  {
+    full_.append(id_to_add.full_name());
+  }
+
+  tokens_.insert(tokens_.end(), id_to_add.tokens_.begin(), id_to_add.tokens_.end());
 }
 
 }  // namespace ledger

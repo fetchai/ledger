@@ -51,12 +51,23 @@ void Identifier::Tokenise()
 
     if (index == string_type::NPOS)
     {
-      tokens_.push_back(full_.SubArray(offset, full_.size() - offset));
+      std::size_t const size = full_.size() - offset;
+      if (size == 0)
+      {
+        throw std::runtime_error("identifier contains empty tokens");
+      }
+
+      tokens_.push_back(full_.SubArray(offset, size));
       break;
     }
     else
     {
-      tokens_.push_back(full_.SubArray(offset, index - offset));
+      std::size_t const size = index - offset;
+      if (size == 0)
+      {
+        throw std::runtime_error("identifier contains empty tokens");
+      }
+      tokens_.push_back(full_.SubArray(offset, size));
       offset = index + 1;
     }
   }
