@@ -21,8 +21,7 @@
 #include "core/meta/is_log2.hpp"
 #include "miner/miner_interface.hpp"
 #include "miner/optimisation/bitvector.hpp"
-#include "network/details/thread_pool.hpp"
-
+#include "vectorise/threading/pool.hpp"
 #include <list>
 
 namespace fetch {
@@ -35,11 +34,8 @@ class BasicMiner : public MinerInterface
 {
 public:
 
-  static constexpr uint64_t     MAX_NUM_LANES       = 512;
-  static constexpr uint64_t     LOG2_MAX_NUM_LANES  = meta::Log2<MAX_NUM_LANES>::value;
-
   // Construction / Destruction
-  explicit BasicMiner(uint32_t log2_num_lanes);
+  explicit BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices);
   BasicMiner(BasicMiner const &) = delete;
   BasicMiner(BasicMiner &&) = delete;
   ~BasicMiner();
@@ -56,7 +52,7 @@ public:
 
 private:
 
-  using BitVector = bitmanip::FixedBitVector<MAX_NUM_LANES>;
+  using BitVector = bitmanip::BitVector;
 
   struct TransactionEntry
   {
@@ -69,17 +65,25 @@ private:
 
   using Mutex = mutex::Mutex;
   using TransactionList = std::list<TransactionEntry>;
+  using ThreadPool = threading::Pool;
+
+  static void GenerateSlices(TransactionList &tx, chain::BlockBody &block, std::size_t offset, std::size_t interval, std::size_t num_lanes);
+  static void GenerateSlice(TransactionList &tx, chain::BlockSlice &slice, std::size_t slice_index, std::size_t num_lanes);
+
+  static bool SortByFee(TransactionEntry const &a, TransactionEntry const &b);
 
   uint32_t const log2_num_lanes_;
+  uint32_t const num_slices_;
+  uint32_t const max_num_threads_;
+
+
+  ThreadPool thread_pool_;
 
   Mutex pending_lock_{__LINE__, __FILE__};
   TransactionList pending_;
 
   Mutex main_queue_lock_{__LINE__, __FILE__};
   TransactionList main_queue_;
-
-
-  static_assert(meta::IsLog2<MAX_NUM_LANES>::value, "The maximmum number of lanes must be a power of 2");
 };
 
 } // namespace miner

@@ -19,41 +19,61 @@
 #include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
 
+#include <algorithm>
+
+#include "core/byte_array/decoders.hpp"
+#include <iostream>
+
 namespace fetch {
 namespace miner {
 namespace {
 
-bool SortByFee(BasicMiner::TransactionEntry const &a, BasicMiner::TransactionEntry const &b)
+template <typename T>
+T Clip3(T value, T min_value, T max_value)
 {
-  return a.transaction.fee > b.transaction.fee;
+  return std::min(std::max(value, min_value), max_value);
+}
+
+uint32_t CalculateMaxNumThreads(uint32_t num_slices)
+{
+  return Clip3(num_slices / 128u, 1u, std::thread::hardware_concurrency());
 }
 
 } // namespace
 
 BasicMiner::TransactionEntry::TransactionEntry(chain::TransactionSummary const &summary, uint32_t log2_num_lanes)
-  : resources{}
+  : resources{1u << log2_num_lanes}
   , transaction{summary}
+
 {
+//  bool const debug = byte_array::FromBase64("1E5dUlev0nLllIXtWlNB3yRLMFQmO2xqsXeaBRHLe4U=") == transaction.transaction_hash;
+
   // update the resources array with the correct bits flags for the lanes
   for (auto const &resource : summary.resources)
   {
     // map the resource to a lane
     uint32_t const lane = MapResourceToLane(resource, summary.contract_name, log2_num_lanes);
 
+//    if (debug)
+//    {
+//      std::cout << "EJF: " << lane << std::endl;
+//    }
+
     // update the bit flag
     resources.set(lane, 1);
   }
 }
 
-BasicMiner::BasicMiner(uint32_t log2_num_lanes)
+BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices)
   : log2_num_lanes_{log2_num_lanes}
+  , num_slices_{num_slices}
+  , max_num_threads_{CalculateMaxNumThreads(num_slices)}
+  , thread_pool_{max_num_threads_}
 {
-  assert(log2_num_lanes <= LOG2_MAX_NUM_LANES);
 }
 
 BasicMiner::~BasicMiner()
 {
-
 }
 
 void BasicMiner::EnqueueTransaction(chain::TransactionSummary const &tx)
@@ -64,7 +84,7 @@ void BasicMiner::EnqueueTransaction(chain::TransactionSummary const &tx)
 
 void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices)
 {
-  assert(num_lanes < MAX_NUM_LANES);
+  assert(num_lanes == (1u << log2_num_lanes_));
 
   FETCH_LOCK(main_queue_lock_);
 
@@ -74,17 +94,127 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
     main_queue_.splice(main_queue_.end(), pending_);
   }
 
-  // sort the queue
-  main_queue_.sort(SortByFee);
+  // determine how many of the threads should be used in this block generation
+  std::size_t num_threads = Clip3<std::size_t>(main_queue_.size() / txs_per_thread_, 1u, max_num_threads_);
 
-  // resize the block correctly
-  block.slices.clear();
+
+  // prepare the basic formatting for the block
   block.slices.resize(num_slices);
-  for (std::size_t slice_idx = 0; slice_idx < num_slices; ++i)
-  {
-    BitVector state;
 
+  // skip thread generation in the simple case
+#if 1
+  if (num_threads == 1)
+  {
+    std::cout << "Num Threads: " << num_threads << std::endl;
+    std::cout << "Num Slice..: " << num_slices << std::endl;
+    std::cout << "Num TX.....: " << main_queue_.size() << std::endl;
+
+    GenerateSlices(main_queue_, block, 0, 1, num_lanes);
   }
+  else
+#endif
+  {
+    // split the main queue into a series of smaller lists
+    std::vector<TransactionList> transaction_lists(num_threads);
+
+    std::size_t const num_slices_per_thread = num_slices / num_threads;
+    std::size_t const num_tx_per_thread = main_queue_.size() / num_threads;
+
+    std::cout << "Num Threads: " << num_threads << std::endl;
+    std::cout << "Num Slice..: " << num_slices_per_thread << std::endl;
+    std::cout << "Num TX.....: " << num_tx_per_thread << std::endl;
+
+    for (std::size_t i = 0; i < num_threads; ++i)
+    {
+      TransactionList &txs = transaction_lists[i];
+
+      auto start = main_queue_.begin();
+      auto end   = start;
+      std::advance(end, std::min(num_tx_per_thread, main_queue_.size()));
+
+      // splice in the contents of the array
+      txs.splice(txs.end(), main_queue_, start, end);
+
+      thread_pool_.Dispatch([&txs, &block, i, num_threads, num_lanes]() {
+        GenerateSlices(txs, block, i, num_threads, num_lanes);
+      });
+    }
+
+    // wait for all the threads to complete
+    thread_pool_.Wait();
+
+    // return all the transactions to the main queue
+    for (std::size_t i = 0; i < num_threads; ++i)
+    {
+      main_queue_.splice(main_queue_.begin(), transaction_lists[i]);
+    }
+  }
+}
+
+void BasicMiner::GenerateSlices(TransactionList &tx, chain::BlockBody &block, std::size_t offset, std::size_t interval, std::size_t num_lanes)
+{
+  // sort the transaction list by fees
+  tx.sort(SortByFee);
+
+  for (std::size_t slice_idx = offset; slice_idx < block.slices.size(); slice_idx += interval)
+  {
+    auto &slice = block.slices[slice_idx];
+
+    // generate the slice
+    GenerateSlice(tx, slice, slice_idx, num_lanes);
+  }
+}
+
+void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice &slice, std::size_t slice_index, std::size_t num_lanes)
+{
+  BitVector slice_state{num_lanes};
+
+  auto it = tx.begin();
+  while (it != tx.end())
+  {
+//    bool const debug = (slice_index == 2) && (byte_array::FromBase64("1E5dUlev0nLllIXtWlNB3yRLMFQmO2xqsXeaBRHLe4U=") == it->transaction.transaction_hash);
+
+    // exit the search loop once the slice is full
+    if (slice_state.PopCount() == num_lanes)
+      break;
+
+    // calculate the collisions for this
+    BitVector const collisions = slice_state & it->resources;
+
+    // determine if there are collisions
+    if (collisions.PopCount() == 0)
+    {
+//      if (debug)
+//      {
+//        std::cout << "Collisions: " << collisions << std::endl;
+//        std::cout << "Resources.: " << it->resources << std::endl;
+//      }
+
+      // update the slice state
+      slice_state |= it->resources;
+
+//      if (debug)
+//      {
+//        std::cout << "State.....: " << slice_state << std::endl;
+//      }
+
+      // insert the transaction into the slice
+      slice.transactions.push_back(it->transaction);
+
+      // remove the transaction from the main queue
+      it = tx.erase(it);
+    }
+    else
+    {
+      // advance to the next iterator
+      ++it;
+    }
+  }
+}
+
+bool BasicMiner::SortByFee(TransactionEntry const &a, TransactionEntry const &b)
+{
+  return a.transaction.fee > b.transaction.fee;
 }
 
 } // namespace miner
