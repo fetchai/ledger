@@ -69,6 +69,9 @@ bool Dispatcher::Dispatch(PacketPtr packet)
   {
     assert(it->second.promise);
     it->second.promise->Fulfill(packet->GetPayload());
+    // finally remove the promise from the map (since it has been completed)
+    promises_.erase(it);
+
     success = true;
   }
 

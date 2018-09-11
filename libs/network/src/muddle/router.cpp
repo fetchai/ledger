@@ -632,8 +632,10 @@ void Router::DispatchPacket(PacketPtr packet)
 
   dispatch_thread_pool_->Post([this, packet]() {
 
+    bool const isPossibleExchangeResponse = !packet->IsExchange();
+
     // determine if this was an exchange based node
-    if (dispatcher_.Dispatch(packet))
+    if (isPossibleExchangeResponse && dispatcher_.Dispatch(packet))
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "==> Succesfully dispatched message to pending promise");
 
