@@ -47,7 +47,9 @@ public:
   void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices) override;
   /// @}
 
+#if 1
   void SetTxPerThread(std::size_t tx_per_thread) { txs_per_thread_ = tx_per_thread; }
+#endif
 
   // Operators
   BasicMiner &operator=(BasicMiner const &) = delete;
@@ -79,8 +81,9 @@ private:
   uint32_t const num_slices_;
   uint32_t const max_num_threads_;
 
-
+#if 1
   std::size_t txs_per_thread_{0};
+#endif
 
   ThreadPool thread_pool_;
 

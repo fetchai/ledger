@@ -21,8 +21,10 @@
 
 #include <algorithm>
 
+#if 1
 #include "core/byte_array/decoders.hpp"
 #include <iostream>
+#endif
 
 namespace fetch {
 namespace miner {
@@ -125,10 +127,12 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
   // determine how many of the threads should be used in this block generation
   std::size_t num_threads = Clip3<std::size_t>(main_queue_.size() / txs_per_thread_, 1u, max_num_threads_);
 
+#if 1
   if (txs_per_thread_)
   {
     num_threads = std::min<std::size_t>(txs_per_thread_, max_num_threads_);
   }
+#endif
 
   // prepare the basic formatting for the block
   block.slices.resize(num_slices);
@@ -136,9 +140,11 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
   // skip thread generation in the simple case
   if (num_threads == 1)
   {
+#if 1
     std::cout << "Num Threads: " << num_threads << std::endl;
     std::cout << "Num Slice..: " << num_slices << std::endl;
     std::cout << "Num TX.....: " << main_queue_.size() << std::endl;
+#endif
 
     GenerateSlices(main_queue_, block, 0, 1, num_lanes);
   }
@@ -150,9 +156,11 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
     std::size_t const num_slices_per_thread = num_slices / num_threads;
     std::size_t const num_tx_per_thread = main_queue_.size() / num_threads;
 
+#if 1
     std::cout << "Num Threads: " << num_threads << std::endl;
     std::cout << "Num Slice..: " << num_slices_per_thread << std::endl;
     std::cout << "Num TX.....: " << num_tx_per_thread << std::endl;
+#endif
 
     for (std::size_t i = 0; i < num_threads; ++i)
     {
