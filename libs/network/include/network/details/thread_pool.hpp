@@ -191,7 +191,10 @@ public:
     FETCH_LOG_DEBUG(LOGGING_NAME,"Removed work");
     cv_.notify_all();
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // TODO(EJF): Is this needed since the next operation if to wait for the threads to complete?
-
+    // KLL -- I think so. I'm trying to get any remaining unstarted
+    // threads to start, so they can read their terminate flag and
+    // exit. If they're not started they're not joinable and will
+    // error.
     FETCH_LOG_DEBUG(LOGGING_NAME,"Kill threads");
     for (auto &thread : threads_)
     {
@@ -235,15 +238,18 @@ private:
 
           std::unique_lock<std::mutex> lock(mutex_);
 
-          auto wait_duration = future_work_ . DueIn();
-          if (wait_duration < idle_work_ . DueIn())
-          {
-            wait_duration = idle_work_ . DueIn();
-          }
-          if (wait_duration < std::chrono::milliseconds(0))
-          {
-            wait_duration = std::chrono::milliseconds(0);
-          }
+          auto future_work_wait_duration = future_work_ . DueIn();
+          auto idle_work_wait_duration = idle_work_ . DueIn();
+
+          auto minimum_wait_duration = std::chrono::milliseconds(0);
+
+          //FETCH_LOG_WARN(LOGGING_NAME,"future_work_ due in milliseconds:", std::chrono::milliseconds(future_work_wait_duration).count());
+          //FETCH_LOG_WARN(LOGGING_NAME,"idle_work_ due in milliseconds:", std::chrono::milliseconds(idle_work_wait_duration).count());
+          //FETCH_LOG_WARN(LOGGING_NAME,"minimum_ due in milliseconds:", std::chrono::milliseconds(minimum_wait_duration).count());
+
+          auto wait_duration = std::max(std::min(future_work_wait_duration, idle_work_wait_duration), minimum_wait_duration);
+
+          //FETCH_LOG_WARN(LOGGING_NAME,"Sleeping for milliseconds:", std::chrono::milliseconds(wait_duration).count());
           cv_.wait_for(lock, wait_duration);
           // go round again.
         }

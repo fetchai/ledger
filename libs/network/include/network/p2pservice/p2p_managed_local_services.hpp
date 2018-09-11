@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <network/p2pservice/p2p_managed_local_service_state_machine.hpp>
+#include <network/p2pservice/p2p_managed_local_service.hpp>
 #include <network/p2pservice/p2p_service_defs.hpp>
 
 namespace fetch {
@@ -30,41 +31,52 @@ namespace p2p {
  */
 
 
-class P2PManagedLocalService
+class P2PManagedLocalServices
 {
-  
   using Uri = network::Uri;
   using ServiceType = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
-  using Peers = std::set<Uri>;
+  using Services = std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>>;
+  using ServiceIter = std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>>::iterator;
 
 public:
-  P2PManagedLocalService(Uri uri, ServiceIdentifier service_identifier)
-    : uri_(uri)
-    , service_identifier_(service_identifier)
+  P2PManagedLocalServices(const Manifest &manifest)
   {
+    manifest.ForEach([this](const ServiceIdentifier &ident, const Uri &uri){
+        this -> services_[ ident ] = std::make_shared<P2PManagedLocalService>(uri, ident);
+      });
   }
-
-  
 
 private:
-  P2PManagedLocalServiceStateMachine state_;
-  Uri uri_;
-  ServiceIdentifier service_identifier_;
-  Peers peers_;
-
-  void AddPeer(Uri remote_uri)
-  {
-    peers_.insert(remote_uri);
-  }
-  void RemovePeer(Uri remote_uri)
-  {
-    peers_.erase(remote_uri);
-  }
+  Services services_;
 
   void Refresh()
   {
-    // send it its entire peer list.
+    for(auto &service : services_)
+    {
+      service -> second -> Refresh();
+    }
+  }
+
+  void DistributeManifest(const Manifest &manifest)
+  {
+    manifest.ForEach([this](const ServiceIdentifier &ident, const Uri &uri){
+        auto iter = this -> services_ . find(ident);
+        if (iter != this -> services_ . end())
+        {
+          iter -> second -> AddPeer(uri);
+        }
+      });
+  }
+  void EraseManifest(const Manifest &manifest)
+  {
+    manifest.ForEach([this](const ServiceIdentifier &ident, const Uri &uri){
+        auto iter = this -> services_ . find(ident);
+        if (iter != this -> services_ . end())
+        {
+          iter -> second -> RemovePeer(uri);
+        }
+      });
   }
 };
 

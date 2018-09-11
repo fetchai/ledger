@@ -115,6 +115,14 @@ public:
     return data_.end();
   }
 
+  void ForEach(std::function<void (const ServiceIdentifier &, const Uri &)> cb)
+  {
+    for(auto &i : data_)
+    {
+      cb(i . first, i . second);
+    }
+  }
+
   Manifest& operator=(const Manifest& other)
   {
     if (&other != this)

@@ -109,7 +109,7 @@ public:
     {
       return -1;
     }
-    lastrun_ = std::chrono::system_clock::now();
+    lastrun_ = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
     int processed = 0;
     for(auto &work : store_)
     {

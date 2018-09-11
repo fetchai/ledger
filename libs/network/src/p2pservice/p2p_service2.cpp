@@ -169,6 +169,8 @@ void P2PService2::WorkCycle()
           auto identity = it->first;
 
           manifest_cache_ . ProvideUpdate(identity, new_manifest, 10);
+          thread_pool_ -> Post([this, identity](){ this -> DistributeUpdatedManifest(identity); });
+
           it = promised_manifests_ . erase(it);
           FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Success");
         }
@@ -192,6 +194,11 @@ void P2PService2::WorkCycle()
   }
 
   FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: COMPLETE.");
+}
+
+void P2PService2::DistributeUpdatedManifest(Identity identity_of_updated_peer)
+{
+  
 }
 
 network::Manifest P2PService2::GetLocalManifest()

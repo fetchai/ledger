@@ -72,6 +72,7 @@ public:
   void WorkCycle();
 
 private:
+  void DistributeUpdatedManifest(Identity identity_of_updated_peer);
 
   Muddle  &muddle_;
   MuddleEndpoint &muddle_ep_;
