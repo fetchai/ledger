@@ -368,18 +368,19 @@ private:
 
 protected:
   template<typename ...Arg>
-  self_type & append(self_type const& other, Arg const&... others)
+  self_type & append(Arg const&... others)
   {
-    append_(size() + other.size(), others...);
+    append_(size(), others...);
     return *this;
   }
 
-  template<typename ...Arg>
-  self_type & append(self_type const& other)
-  {
-    append_(size() + other.size(), other);
-    return *this;
-  }};
+  //template<typename ...Arg>
+  //self_type & append(self_type const& other)
+  //{
+  //  append_(size(), other);
+  //  return *this;
+  //}
+};
 
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
 {

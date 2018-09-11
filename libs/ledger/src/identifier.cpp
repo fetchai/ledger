@@ -51,7 +51,7 @@ void Identifier::Tokenise()
 
     if (index == string_type::NPOS)
     {
-      tokens_.push_back(full_);
+      tokens_.push_back(full_.SubArray(offset, full_.size() - offset));
       break;
     }
     else
