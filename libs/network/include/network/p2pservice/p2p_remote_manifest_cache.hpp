@@ -30,13 +30,14 @@ namespace p2p {
 
 class P2PRemoteManifestCache
 {
+  using Manifest = network::Manifest;
   using Clock = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
   using Identity = crypto::Identity;
-  using Stored   = std::pair<network::FutureTimepoint, network::Manifest>;
+  using Stored   = std::pair<network::FutureTimepoint, Manifest>;
   using Store    = std::map<Identity, Stored>;
   using Mutex    = mutex::Mutex;
-  using Lock     = std::lock_guard<Mutex>;
+  using Lock     = std::unique_lock<Mutex>;
 
 public:
   P2PRemoteManifestCache()
@@ -56,6 +57,17 @@ public:
       }
     }
     return res;
+  }
+
+  std::pair<bool, Manifest> Get(Identity identity) const
+  {
+    Lock lock(mutex_);
+    auto iter = data_.find(identity);
+    if (iter == data_.end())
+    {
+      return std::make_pair(false, Manifest());
+    }
+    return std::make_pair(true, iter -> second . second);
   }
 
   std::list<Identity> GetUpdatesNeeded(const std::list<Identity> &inputs)
@@ -83,7 +95,7 @@ public:
 
 private:
   Store data_;
-  Mutex mutex_{__LINE__, __FILE__};
+  mutable Mutex mutex_{__LINE__, __FILE__};
 };
 
 

@@ -166,10 +166,11 @@ void P2PService2::WorkCycle()
           FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Reading promised manifest from ", it->second.GetInnerPromise() -> Schmoo());
 
           auto new_manifest = it->second.Get();
-          auto identity = it->first;
+          auto moo_identity = it->first;
 
-          manifest_cache_ . ProvideUpdate(identity, new_manifest, 10);
-          thread_pool_ -> Post([this, identity](){ this -> DistributeUpdatedManifest(identity); });
+          manifest_cache_ . ProvideUpdate(moo_identity, new_manifest, 10);
+          auto cb = [ this, moo_identity ](){ this -> DistributeUpdatedManifest(moo_identity); };
+          thread_pool_ -> Post( cb );
 
           it = promised_manifests_ . erase(it);
           FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Success");
@@ -198,7 +199,18 @@ void P2PService2::WorkCycle()
 
 void P2PService2::DistributeUpdatedManifest(Identity identity_of_updated_peer)
 {
-  
+  auto possible_manifest = manifest_cache_ . Get( identity_of_updated_peer );
+  if (!possible_manifest.first)
+  {
+    return;
+  }
+  local_services_ . DistributeManifest(possible_manifest.second);
+  thread_pool_ -> Post( [this](){ this -> Refresh(); });
+}
+
+void P2PService2::Refresh()
+{
+  local_services_ . Refresh();
 }
 
 network::Manifest P2PService2::GetLocalManifest()
@@ -224,31 +236,9 @@ void P2PService2::PeerTrustEvent(const Identity &          identity
 void P2PService2::SetLocalManifest(const Manifest &manifest)
 {
   manifest_ = manifest;
+  local_services_ . MakeFromManifest(manifest);
 
-  for(auto &manifest_entry : manifest_)
-  {
-    auto service_id = manifest_entry.first;
-    auto uri = manifest_entry.second;
-
-    if (local_services_.find(service_id) != local_services_.end())
-    {
-      continue;
-    }
-
-    local_services_[service_id] = std::make_shared<P2PManagedLocalService>(uri, service_id);
-  }
-
-  for(auto local_service_entry : local_services_)
-  {
-    auto service_id = local_service_entry.first;
-    auto uri = local_service_entry.second;
-
-    if (!manifest_.ContainsService(service_id))
-    {
-      local_services_.erase(service_id);
-    }
-
-  }
+  thread_pool_ -> Post([this](){ this -> Refresh(); });
 }
 
 

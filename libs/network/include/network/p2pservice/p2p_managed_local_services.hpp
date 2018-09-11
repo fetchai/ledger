@@ -34,27 +34,35 @@ namespace p2p {
 class P2PManagedLocalServices
 {
   using Uri = network::Uri;
+  using Manifest = network::Manifest;
   using ServiceType = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
   using Services = std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>>;
   using ServiceIter = std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>>::iterator;
+  static constexpr char const *LOGGING_NAME = "P2PManagedLocalServices";
 
 public:
   P2PManagedLocalServices(const Manifest &manifest)
+  {
+    MakeFromManifest(manifest);
+  }
+
+  P2PManagedLocalServices()
+  {
+  }
+
+  void MakeFromManifest(const Manifest &manifest)
   {
     manifest.ForEach([this](const ServiceIdentifier &ident, const Uri &uri){
         this -> services_[ ident ] = std::make_shared<P2PManagedLocalService>(uri, ident);
       });
   }
 
-private:
-  Services services_;
-
   void Refresh()
   {
     for(auto &service : services_)
     {
-      service -> second -> Refresh();
+      service . second -> Refresh();
     }
   }
 
@@ -78,6 +86,8 @@ private:
         }
       });
   }
+private:
+  Services services_;
 };
 
 

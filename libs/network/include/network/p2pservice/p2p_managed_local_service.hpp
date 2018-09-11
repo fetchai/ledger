@@ -38,20 +38,14 @@ class P2PManagedLocalService
   using ServiceIdentifier = network::ServiceIdentifier;
   using Peers = std::set<Uri>;
 
+  static constexpr char const *LOGGING_NAME = "P2PManagedLocalService";
+
 public:
   P2PManagedLocalService(Uri uri, ServiceIdentifier service_identifier)
     : uri_(uri)
     , service_identifier_(service_identifier)
   {
   }
-
-  
-
-private:
-  P2PManagedLocalServiceStateMachine state_;
-  Uri uri_;
-  ServiceIdentifier service_identifier_;
-  Peers peers_;
 
   void AddPeer(Uri remote_uri)
   {
@@ -65,7 +59,19 @@ private:
   void Refresh()
   {
     // send it its entire peer list.
+    for(auto &peer : peers_)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,":",uri_.ToString(),":", service_identifier_.ToString(),":Refresh:",peer.ToString());
+    }
   }
+
+private:
+  P2PManagedLocalServiceStateMachine state_;
+  Uri uri_;
+  ServiceIdentifier service_identifier_;
+  Peers peers_;
+
+
 };
 
 

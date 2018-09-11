@@ -39,7 +39,7 @@ public:
           try
           {
             auto r = ParseLine(s);
-            temp[{std::get<0>(r), std::get<0>(r)}] = std::get<2>(r);
+            temp[{std::get<0>(r), std::get<1>(r)}] = std::get<2>(r);
           }
           catch (std::exception &ex)
           {
@@ -106,6 +106,11 @@ public:
     return *this;
   }
 
+  size_t size() const
+  {
+    return data_.size();
+  }
+
   std::map<ServiceIdentifier, Uri>::const_iterator begin() const
   {
     return data_.begin();
@@ -115,7 +120,7 @@ public:
     return data_.end();
   }
 
-  void ForEach(std::function<void (const ServiceIdentifier &, const Uri &)> cb)
+  void ForEach(std::function<void (const ServiceIdentifier &, const Uri &)> cb) const
   {
     for(auto &i : data_)
     {

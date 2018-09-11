@@ -11,6 +11,7 @@
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_managed_local_service.hpp"
+#include "network/p2pservice/p2p_managed_local_services.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/p2pservice/p2p_remote_manifest_cache.hpp"
 #include "network/muddle/rpc/client.hpp"
@@ -73,6 +74,7 @@ public:
 
 private:
   void DistributeUpdatedManifest(Identity identity_of_updated_peer);
+  void Refresh();
 
   Muddle  &muddle_;
   MuddleEndpoint &muddle_ep_;
@@ -90,7 +92,8 @@ private:
   Client client_;
   Manifest manifest_;
   std::map<Identity, Manifest> discovered_peers_;
-  std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>> local_services_;
+
+  P2PManagedLocalServices local_services_;
 
   PromisedManifests promised_manifests_;
 

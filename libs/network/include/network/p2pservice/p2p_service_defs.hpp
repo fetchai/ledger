@@ -27,6 +27,18 @@ struct ServiceIdentifier
     if (instance_number < other.instance_number) return true;
     return false;
   }
+
+  std::string ToString() const
+  {
+    const char *names[] = {
+      "MAINCHAIN",
+      "LANE",
+      "P2P",
+      "HTTP",
+    };
+    const char *p = names[service_type];
+    return std::string(p) + "/" + std::to_string(instance_number);
+  }
 };
 
 template <typename T>
