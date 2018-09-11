@@ -38,7 +38,7 @@ public:
   explicit BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices);
   BasicMiner(BasicMiner const &) = delete;
   BasicMiner(BasicMiner &&) = delete;
-  ~BasicMiner();
+  ~BasicMiner() = default;
 
   /// @name Miner Interface
   /// @{

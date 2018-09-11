@@ -115,8 +115,6 @@ TEST_P(BasicMinerTests, Sample)
 
     num_tx += slice.transactions.size();
 
-//    std::cout << "Slice " << i << std::endl;
-
     for (auto const &tx : slice.transactions)
     {
       total_fee += tx.fee;
@@ -128,8 +126,6 @@ TEST_P(BasicMinerTests, Sample)
       {
         // map the resource to a lane
         uint32_t const lane = fetch::miner::MapResourceToLane(resource, tx.contract_name, LOG2_NUM_LANES);
-
-//        std::cout << lanes << " (lane: " << (lane + 1) << ") " << ToBase64(tx.transaction_hash) << std::endl;
 
         // check the lane mapping
         resources.set(lane, 1);

@@ -46,18 +46,11 @@ BasicMiner::TransactionEntry::TransactionEntry(chain::TransactionSummary const &
   , transaction{summary}
 
 {
-//  bool const debug = byte_array::FromBase64("1E5dUlev0nLllIXtWlNB3yRLMFQmO2xqsXeaBRHLe4U=") == transaction.transaction_hash;
-
   // update the resources array with the correct bits flags for the lanes
   for (auto const &resource : summary.resources)
   {
     // map the resource to a lane
     uint32_t const lane = MapResourceToLane(resource, summary.contract_name, log2_num_lanes);
-
-//    if (debug)
-//    {
-//      std::cout << "EJF: " << lane << std::endl;
-//    }
 
     // update the bit flag
     resources.set(lane, 1);
@@ -69,10 +62,6 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices)
   , num_slices_{num_slices}
   , max_num_threads_{CalculateMaxNumThreads(num_slices)}
   , thread_pool_{max_num_threads_}
-{
-}
-
-BasicMiner::~BasicMiner()
 {
 }
 
@@ -106,7 +95,6 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
   block.slices.resize(num_slices);
 
   // skip thread generation in the simple case
-#if 1
   if (num_threads == 1)
   {
     std::cout << "Num Threads: " << num_threads << std::endl;
@@ -116,7 +104,6 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
     GenerateSlices(main_queue_, block, 0, 1, num_lanes);
   }
   else
-#endif
   {
     // split the main queue into a series of smaller lists
     std::vector<TransactionList> transaction_lists(num_threads);
@@ -176,8 +163,6 @@ void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice &slice, st
   auto it = tx.begin();
   while (it != tx.end())
   {
-//    bool const debug = (slice_index == 2) && (byte_array::FromBase64("1E5dUlev0nLllIXtWlNB3yRLMFQmO2xqsXeaBRHLe4U=") == it->transaction.transaction_hash);
-
     // exit the search loop once the slice is full
     if (slice_state.PopCount() == num_lanes)
       break;
@@ -188,19 +173,8 @@ void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice &slice, st
     // determine if there are collisions
     if (collisions.PopCount() == 0)
     {
-//      if (debug)
-//      {
-//        std::cout << "Collisions: " << collisions << std::endl;
-//        std::cout << "Resources.: " << it->resources << std::endl;
-//      }
-
       // update the slice state
       slice_state |= it->resources;
-
-//      if (debug)
-//      {
-//        std::cout << "State.....: " << slice_state << std::endl;
-//      }
 
       // insert the transaction into the slice
       slice.transactions.push_back(it->transaction);
