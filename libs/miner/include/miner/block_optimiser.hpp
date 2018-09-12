@@ -58,7 +58,7 @@ public:
   {
     ledger::Identifier identifier(contract);
     byte_array::ByteArray address;
-    address.append(identifier.name_space(), byte_array::ConstByteArray(".state."), resource);
+    address.Append(identifier.name_space(), byte_array::ConstByteArray(".state."), resource);
     return storage::ResourceAddress{address}.lane(
         log2_num_lanes);
   }

@@ -212,7 +212,7 @@ int main()
       ByteArray v2("kitty");
 
       ByteArray array;
-      array.append(v0, " ", v1, " ", v2, " :)");
+      array.Append(v0, " ", v1, " ", v2, " :)");
 
       EXPECT(array == "hello pretty kitty :)");
       EXPECT(v0 == "hello");

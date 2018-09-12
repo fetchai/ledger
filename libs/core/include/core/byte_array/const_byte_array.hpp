@@ -252,7 +252,7 @@ public:
   self_type operator+(self_type const &other) const
   {
     self_type ret;
-    ret.append(*this, other);
+    ret.Append(*this, other);
     return ret;
   }
 
@@ -348,17 +348,17 @@ protected:
   friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
 
 private:
-  void append_(std::size_t const acc_size, self_type const& other)
+  void AppendInternal(std::size_t const acc_size, self_type const &other)
   {
     std::size_t const size = acc_size + other.size();
     Resize(size);
     std::memcpy(pointer() + acc_size, other.pointer(), other.size());
   }
 
-  template<typename ...Arg>
-  void append_(std::size_t const acc_size, self_type const& other, Arg const&... others)
+  template <typename... Arg>
+  void AppendInternal(std::size_t const acc_size, self_type const &other, Arg const &... others)
   {
-    append_(acc_size + other.size(), others...);
+    AppendInternal(acc_size + other.size(), others...);
     std::memcpy(pointer() + acc_size, other.pointer(), other.size());
   }
 
@@ -368,9 +368,9 @@ private:
 
 protected:
   template<typename ...Arg>
-  self_type & append(Arg const&... others)
+  self_type & Append(Arg const &... others)
   {
-    append_(size(), others...);
+    AppendInternal(size(), others...);
     return *this;
   }
 };

@@ -194,11 +194,11 @@ inline void Identifier::Append(string_type const &element)
 
   if (full_.size() > 0)
   {
-    full_.append(separator_, id_to_add.full_name());
+    full_.Append(separator_, id_to_add.full_name());
   }
   else
   {
-    full_.append(id_to_add.full_name());
+    full_.Append(id_to_add.full_name());
   }
 
   tokens_.insert(tokens_.end(), id_to_add.tokens_.begin(), id_to_add.tokens_.end());

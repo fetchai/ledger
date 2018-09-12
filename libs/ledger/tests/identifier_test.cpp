@@ -88,7 +88,7 @@ int main()
       EXPECT(id.full_name() == "foo.bar.baz.x.y.z");
     };
 
-    SECTION("Append invalid namespac at beginning")
+    SECTION("Append invalid namespace at beginning")
     {
       Identifier id;
 
@@ -106,7 +106,7 @@ int main()
       EXPECT(exception_received);
     };
 
-    SECTION("Append invalid namespac in the middle")
+    SECTION("Append invalid namespace in the middle")
     {
       Identifier id;
       id.Append("foo");

@@ -41,7 +41,7 @@ public:
   using super_type::pointer;
   using super_type::char_pointer;
   using super_type::SubArray;
-  using super_type::append;
+  using super_type::Append;
 
   ByteArray(super_type const &other)
     : super_type(other.Copy())

@@ -64,7 +64,7 @@ public:
       for (auto const &handler : query_handlers)
       {
         byte_array::ConstByteArray const &query_name = handler.first;
-        api_path.append(query_name);
+        api_path.Append(query_name);
 
         fetch::logger.Info("API: ", api_path);
 
