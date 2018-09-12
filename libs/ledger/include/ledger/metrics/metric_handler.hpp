@@ -17,36 +17,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "ledger/metrics/metrics.hpp"
-#include "miner/miner_interface.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class TransactionProcessor
+class MetricHandler
 {
 public:
-  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner)
-    : storage_{storage}, miner_{miner}
-  {}
+  using Clock = std::chrono::high_resolution_clock;
+  using Timestamp = Clock::time_point;
+  using ConstByteArray = byte_array::ConstByteArray;
 
-  void AddTransaction(chain::Transaction const &tx)
+  enum class Instrument
   {
-    FETCH_METRIC_TX_SUBMITTED(tx.digest());
+    TRANSACTION
+  };
 
-    // tell the node about the transaction
-    storage_.AddTransaction(tx);
+  enum class Event
+  {
+    SUBMITTED,
+    QUEUED,
+    PACKED,
+    EXECUTION_STARTED,
+    EXECUTION_COMPLETE
+  };
 
-    // tell the miner about the transaction
-    miner_.EnqueueTransaction(tx.summary());
-  }
+  // Construction / Destruction
+  MetricHandler() = default;
+  virtual ~MetricHandler() = default;
 
-private:
-  StorageUnitInterface & storage_;
-  miner::MinerInterface &miner_;
+  virtual void RecordMetric(ConstByteArray const &identifier,
+                            Instrument instrument,
+                            Event event,
+                            Timestamp const &timestamp) = 0;
 };
 
-}  // namespace ledger
-}  // namespace fetch
+} // namespace ledger
+} // namespace fetch

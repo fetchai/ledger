@@ -22,6 +22,7 @@
 #include "miner/block_optimiser.hpp"
 #include "miner/miner_interface.hpp"
 #include "miner/transaction_item.hpp"
+#include "ledger/metrics/metrics.hpp"
 
 #include <iostream>
 
@@ -41,6 +42,8 @@ public:
 
   void EnqueueTransaction(chain::TransactionSummary const &tx) override
   {
+    FETCH_METRIC_TX_QUEUED(tx.transaction_hash);
+
     lock_guard_type lock(pending_queue_lock_);
 
     auto stx = std::make_shared<TransactionItem>(tx, transaction_index_++);
@@ -80,19 +83,21 @@ public:
 
     FETCH_LOG_INFO(LOGGING_NAME,"Finished block packing");
 
-#if 0
+#if 1
     // debugging interface
     if (num_transactions > 0)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"Block Structure: ");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Block Structure: ");
       std::size_t slice_index = 0;
       for (auto const &slice : block.slices)
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"  - Slice ", slice_index);
+        FETCH_LOG_DEBUG(LOGGING_NAME,"  - Slice ", slice_index);
 
         for (auto const &tx : slice.transactions)
         {
-          FETCH_LOG_INFO(LOGGING_NAME,"    - Tx: ", byte_array::ToBase64(tx.transaction_hash), " (fee: ", tx.fee, ")");
+          FETCH_LOG_DEBUG(LOGGING_NAME,"    - Tx: ", byte_array::ToBase64(tx.transaction_hash), " (fee: ", tx.fee, ")");
+
+          FETCH_METRIC_TX_PACKED(tx.transaction_hash);
         }
 
         ++slice_index;
@@ -124,8 +129,8 @@ private:
     generator_.ConfigureAnnealer(100, 0.1, 3.0);
 
     // TODO(issue 7):  Move to configuration variables
-    std::size_t const batch_size  = generator_.unspent_count();
-    std::size_t const explore     = 10;
+    std::size_t const batch_size  = std::min<std::size_t>(std::min(generator_.unspent_count(), num_lanes * num_slices), 2000); // magic number based on single threaded performance
+    std::size_t const explore     = 1;
     Strategy const strategy       = Strategy::FEE_OCCUPANCY;
 
     generator_.Reset();

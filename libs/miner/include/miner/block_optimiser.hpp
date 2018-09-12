@@ -28,7 +28,7 @@
 
 #include "miner/optimisation/binary_annealer.hpp"
 #include "miner/transaction_item.hpp"
-#include "storage/resource_mapper.hpp"
+#include "miner/resource_mapper.hpp"
 
 #include <algorithm>
 #include <numeric>
@@ -63,17 +63,6 @@ public:
   };
 
   static constexpr char const *LOGGING_NAME = "BlockGenerator";
-
-  static uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
-                                    std::string const &contract, uint32_t log2_num_lanes)
-  {
-    ledger::Identifier identifier(contract);
-
-    std::string const prefix = identifier.name_space() + ".state.";
-
-    return storage::ResourceAddress{prefix + static_cast<std::string>(resource)}.lane(
-        log2_num_lanes);
-  }
 
   /* Pushes a transaction into the queue of transactions that needs to
    * be mined.
@@ -327,8 +316,8 @@ private:
       for (auto &resource : tx->summary().resources)
       {
         // TODO(issue 30):  Move to Transaction item?
-        std::size_t const lane_index =
-            MapResourceToLane(resource, tx->summary().contract_name, log2_lane_count_);
+        uint32_t const lane_index =
+            miner::MapResourceToLane(resource, tx->summary().contract_name, log2_lane_count_);
 
         tx->lanes.insert(lane_index);
 

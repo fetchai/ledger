@@ -17,36 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "ledger/metrics/metrics.hpp"
-#include "miner/miner_interface.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "ledger/identifier.hpp"
+#include "storage/resource_mapper.hpp"
+
+#include <cstdint>
+#include <string>
 
 namespace fetch {
-namespace ledger {
+namespace miner {
 
-class TransactionProcessor
+inline uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
+                                  std::string const &contract, uint32_t log2_num_lanes)
 {
-public:
-  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner)
-    : storage_{storage}, miner_{miner}
-  {}
+  ledger::Identifier identifier(contract);
 
-  void AddTransaction(chain::Transaction const &tx)
-  {
-    FETCH_METRIC_TX_SUBMITTED(tx.digest());
+  std::string const prefix = identifier.name_space() + ".state.";
 
-    // tell the node about the transaction
-    storage_.AddTransaction(tx);
+  return storage::ResourceAddress{prefix + static_cast<std::string>(resource)}.lane(
+    log2_num_lanes);
+}
 
-    // tell the miner about the transaction
-    miner_.EnqueueTransaction(tx.summary());
-  }
-
-private:
-  StorageUnitInterface & storage_;
-  miner::MinerInterface &miner_;
-};
-
-}  // namespace ledger
-}  // namespace fetch
+} // namespace miner
+} // namespace fetch

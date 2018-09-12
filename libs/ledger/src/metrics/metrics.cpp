@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,36 +16,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/metrics/metrics.hpp"
-#include "miner/miner_interface.hpp"
+#include "ledger/metrics/metric_file_handler.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class TransactionProcessor
+Metrics &Metrics::Instance()
 {
-public:
-  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner)
-    : storage_{storage}, miner_{miner}
-  {}
+  static Metrics instance;
+  return instance;
+}
 
-  void AddTransaction(chain::Transaction const &tx)
+void Metrics::ConfigureFileHandler(std::string filename)
+{
+  SetMetricHandler(new MetricFileHandler(std::move(filename)));
+}
+
+void Metrics::SetMetricHandler(MetricHandler* handler)
+{
+  MetricHandler* old_handler = handler_.exchange(handler);
+  if (old_handler)
   {
-    FETCH_METRIC_TX_SUBMITTED(tx.digest());
-
-    // tell the node about the transaction
-    storage_.AddTransaction(tx);
-
-    // tell the miner about the transaction
-    miner_.EnqueueTransaction(tx.summary());
+    delete old_handler;
   }
+}
 
-private:
-  StorageUnitInterface & storage_;
-  miner::MinerInterface &miner_;
-};
-
-}  // namespace ledger
-}  // namespace fetch
+} // namespace ledger
+} // namespace fetch

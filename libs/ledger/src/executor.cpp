@@ -22,6 +22,7 @@
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
+#include "ledger/metrics/metrics.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -70,6 +71,8 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   FETCH_UNUSED(slice);
   FETCH_UNUSED(lanes);
 
+  Metrics::Timestamp const started = Metrics::Clock::now();
+
 #if 0
   return Status::SUCCESS;
 #endif
@@ -107,7 +110,12 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   // detach the chain code from the current context
   chain_code->Detach();
 
+  Metrics::Timestamp const completed = Metrics::Clock::now();
+
   FETCH_LOG_DEBUG(LOGGING_NAME,"Executing tx ", byte_array::ToBase64(hash), " (success)");
+
+  FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
+  FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed);
 
   return Status::SUCCESS;
 }
