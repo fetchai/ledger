@@ -178,9 +178,11 @@ private:
     if (prev_type != TOKEN_TYPE::IGNORE_TYPE)
     {
       if ((cur_type != prev_type) ||
-          ((prev_type == TOKEN_TYPE::OPERATOR) && (cur_type == TOKEN_TYPE::OPERATOR)) ||
-          ((prev_type == TOKEN_TYPE::OPEN_PAREN) && (cur_type == TOKEN_TYPE::OPEN_PAREN)) ||
-          ((prev_type == TOKEN_TYPE::CLOSE_PAREN) && (cur_type == TOKEN_TYPE::CLOSE_PAREN)))
+          ((prev_type == TOKEN_TYPE::OPERATOR) && (cur_type == TOKEN_TYPE::OPERATOR)))
+
+      //          ((prev_type == TOKEN_TYPE::OPERATOR) && (cur_type == TOKEN_TYPE::OPERATOR)) ||
+      //          ((prev_type == TOKEN_TYPE::OPEN_PAREN) && (cur_type == TOKEN_TYPE::OPEN_PAREN)) ||
+      //          ((prev_type == TOKEN_TYPE::CLOSE_PAREN) && (cur_type == TOKEN_TYPE::CLOSE_PAREN)))
       {
         change_type = true;
       }
@@ -311,13 +313,19 @@ public:
         std::cout << "unhandled errror!!!" << std::endl;
       }
 
-      // final character so push current token
+      // final character so push previous and then current token as necessary
       if (j == (input.size() - 1))
       {
+        if (NewTokenType(prev_type, cur_type))
+        {
+          token_types.push_back(prev_type);
+          ret.push_back(cur_token);
+          cur_token = {};
+        }
+
         if (cur_type != TOKEN_TYPE::IGNORE_TYPE)
         {
           token_types.push_back(cur_type);
-
           cur_token.push_back(input[j]);
           ret.push_back(cur_token);
         }
