@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "constellation.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
@@ -62,23 +61,23 @@ namespace {
  * @param db_prefix The database file(s) prefix
  */
 Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
-                             std::size_t num_executors, std::size_t num_lanes,
-                             std::size_t num_slices, std::string const &interface_address,
+                             uint32_t num_executors, uint32_t log2_num_lanes,
+                             uint32_t num_slices, std::string const &interface_address,
                              std::string const &db_prefix)
   : active_{true}
   , interface_address_{interface_address}
-  , num_lanes_{static_cast<uint32_t>(num_lanes)}
+  , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
   , num_slices_{static_cast<uint32_t>(num_slices)}
   , p2p_port_{static_cast<uint16_t>(port_start + P2P_PORT_OFFSET)}
   , http_port_{static_cast<uint16_t>(port_start + HTTP_PORT_OFFSET)}
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
-  , network_manager_{CalcNetworkManagerThreads(num_lanes)}
+  , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
   , muddle_{std::move(certificate), network_manager_}
-  , lane_control_(num_lanes)
   , p2p_{muddle_, lane_control_}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
+  , lane_control_(num_lanes_)
   , execution_manager_{
     std::make_shared<ExecutionManager>(
       num_executors,
@@ -89,9 +88,9 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
     )
   }
   , chain_{}
-  , block_packer_{}
+  , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
-  , miner_{num_lanes, num_slices, chain_, block_coordinator_, block_packer_, p2p_port_} // p2p_port_ fairly arbitrary
+  , miner_{num_lanes_, num_slices, chain_, block_coordinator_, block_packer_, p2p_port_} // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_)}
   , tx_processor_{*storage_, block_packer_}
   , http_{network_manager_}
@@ -101,7 +100,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
 {
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME,"Constellation :: ", interface_address, " P ", port_start, " E ",
-                     num_executors, " S ", num_lanes, "x", num_slices);
+                     num_executors, " S ", num_lanes_, "x", num_slices);
   FETCH_LOG_INFO(LOGGING_NAME,"              :: ", ToBase64(p2p_.identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME,"");
 

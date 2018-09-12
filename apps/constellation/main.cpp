@@ -82,6 +82,7 @@ struct CommandLineArguments
   peer_list_type peers;
   uint32_t       num_executors;
   uint32_t       num_lanes;
+  uint32_t       log2_num_lanes;
   uint32_t       num_slices;
   std::string    interface;
   bool           bootstrap{false};
@@ -125,6 +126,9 @@ struct CommandLineArguments
       std::cout << "Number of lanes is not a valid log2 number" << std::endl;
       std::exit(1);
     }
+
+    // calculate the log2 num lanes
+    args.log2_num_lanes = Log2(args.num_lanes);
 
     args.bootstrap = (!external_address.empty());
     if (args.bootstrap)
@@ -308,7 +312,7 @@ int main(int argc, char **argv)
 
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
-        std::move(p2p_key), args.port, args.num_executors, args.num_lanes, args.num_slices,
+        std::move(p2p_key), args.port, args.num_executors, args.log2_num_lanes, args.num_slices,
         args.interface, args.dbdir);
 
     // update the instance pointer
