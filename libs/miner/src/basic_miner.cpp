@@ -21,11 +21,6 @@
 
 #include <algorithm>
 
-#if 1
-#include "core/byte_array/decoders.hpp"
-#include <iostream>
-#endif
-
 namespace fetch {
 namespace miner {
 namespace {
@@ -43,21 +38,6 @@ template <typename T>
 T Clip3(T value, T min_value, T max_value)
 {
   return std::min(std::max(value, min_value), max_value);
-}
-
-/**
- * Calculate the max number of threads given the hardward and the number of slices
- *
- * @param num_slices The number of slices for the block
- * @return The maximum number of threads
- */
-uint32_t CalculateMaxNumThreads(uint32_t num_slices)
-{
-#if 1
-  return 32;
-#else
-  return Clip3(num_slices / 128u, 1u, std::thread::hardware_concurrency());
-#endif
 }
 
 } // namespace
@@ -92,7 +72,7 @@ BasicMiner::TransactionEntry::TransactionEntry(chain::TransactionSummary const &
  */
 BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices)
   : log2_num_lanes_{log2_num_lanes}
-  , max_num_threads_{CalculateMaxNumThreads(num_slices)}
+  , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_}
 {
 }
@@ -128,14 +108,7 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
   }
 
   // determine how many of the threads should be used in this block generation
-  std::size_t num_threads = Clip3<std::size_t>(main_queue_.size() / txs_per_thread_, 1u, max_num_threads_);
-
-#if 1
-  if (txs_per_thread_)
-  {
-    num_threads = std::min<std::size_t>(txs_per_thread_, max_num_threads_);
-  }
-#endif
+  std::size_t const num_threads = Clip3<std::size_t>(main_queue_.size() / 1000u, 1u, max_num_threads_);
 
   // prepare the basic formatting for the block
   block.slices.resize(num_slices);
@@ -143,12 +116,6 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
   // skip thread generation in the simple case
   if (num_threads == 1)
   {
-#if 1
-    std::cout << "Num Threads: " << num_threads << std::endl;
-    std::cout << "Num Slice..: " << num_slices << std::endl;
-    std::cout << "Num TX.....: " << main_queue_.size() << std::endl;
-#endif
-
     GenerateSlices(main_queue_, block, 0, 1, num_lanes);
   }
   else
@@ -156,14 +123,7 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
     // split the main queue into a series of smaller lists
     std::vector<TransactionList> transaction_lists(num_threads);
 
-    std::size_t const num_slices_per_thread = num_slices / num_threads;
     std::size_t const num_tx_per_thread = main_queue_.size() / num_threads;
-
-#if 1
-    std::cout << "Num Threads: " << num_threads << std::endl;
-    std::cout << "Num Slice..: " << num_slices_per_thread << std::endl;
-    std::cout << "Num TX.....: " << num_tx_per_thread << std::endl;
-#endif
 
     for (std::size_t i = 0; i < num_threads; ++i)
     {

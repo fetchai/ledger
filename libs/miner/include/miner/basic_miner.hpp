@@ -52,10 +52,6 @@ public:
   void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices) override;
   /// @}
 
-#if 1
-  void SetTxPerThread(std::size_t tx_per_thread) { txs_per_thread_ = tx_per_thread; }
-#endif
-
   // Operators
   BasicMiner &operator=(BasicMiner const &) = delete;
   BasicMiner &operator=(BasicMiner &&) = delete;
@@ -89,11 +85,6 @@ private:
   TransactionList pending_;                             ///< The pending transaction queue
   Mutex           main_queue_lock_{__LINE__, __FILE__}; ///< The lock for the main transaction queue
   TransactionList main_queue_;                          ///< The main transaction queue
-
-#if 1
-  std::size_t txs_per_thread_{0};
-#endif
-
 };
 
 } // namespace miner
