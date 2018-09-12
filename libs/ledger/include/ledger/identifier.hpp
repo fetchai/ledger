@@ -35,7 +35,7 @@ class Identifier
 {
 public:
   using string_type = byte_array::ConstByteArray;
-  using tokens_type = std::vector<byte_array::ByteArray>;
+  using tokens_type = std::vector<string_type>;
 
   static constexpr char SEPARATOR = '.';
 
@@ -71,9 +71,9 @@ public:
   bool               operator!=(Identifier const &other) const;
 
 private:
-  byte_array::ByteArray                   full_{};    ///< The fully qualified name
-  tokens_type                             tokens_{};  ///< The individual elements of the name
-  static byte_array::ConstByteArray const separator_;
+  byte_array::ByteArray    full_{};    ///< The fully qualified name
+  tokens_type              tokens_{};  ///< The individual elements of the name
+  static string_type const separator_;
 
   void Tokenise();
 };

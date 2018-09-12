@@ -68,7 +68,7 @@ struct TransactionSummary
 {
   using resource_type     = byte_array::ConstByteArray;
   using digest_type       = byte_array::ConstByteArray;
-  using contract_id_type  = std::string;
+  using contract_id_type  = byte_array::ConstByteArray;
   using resource_set_type = std::set<resource_type>;
 
   resource_set_type resources;
